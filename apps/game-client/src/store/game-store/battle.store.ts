@@ -24,7 +24,6 @@ export type BattleWarriorsWithAccountId = Record<
 interface BattleState {
   events: GameEvent[];
   battleState: "idle" | "in-battle";
-  lastBattleHash: string;
   lastKillHash: string;
   battleWarriors: BattleWarriorsWithAccountId;
 }
@@ -33,7 +32,6 @@ interface BattleActions {
   applyBatch: (batch: {
     battleState?: BattleState["battleState"];
     battleWarriors?: BattleWarriorsWithAccountId | null;
-    lastBattleHash?: string;
     lastKillHash?: string;
   }) => void;
   addEvent: (event: GameEvent) => boolean;
@@ -44,7 +42,6 @@ interface BattleActions {
     overflowed: boolean;
     turns: string[];
   };
-  startBattle: (hash: string) => void;
   endBattle: () => void;
   updateBattleWarriors: (warriors: BattleWarriorsWithAccountId | null) => void;
 }
@@ -64,7 +61,6 @@ export const useBattleStore = create<BattleState & BattleActions>(
     return {
       events: [],
       battleState: "idle",
-      lastBattleHash: "",
       lastKillHash: "",
       battleWarriors: {},
 
@@ -77,13 +73,6 @@ export const useBattleStore = create<BattleState & BattleActions>(
             batch.battleState !== state.battleState
           ) {
             nextState.battleState = batch.battleState;
-          }
-
-          if (
-            batch.lastBattleHash !== undefined &&
-            batch.lastBattleHash !== state.lastBattleHash
-          ) {
-            nextState.lastBattleHash = batch.lastBattleHash;
           }
 
           if (
@@ -153,12 +142,6 @@ export const useBattleStore = create<BattleState & BattleActions>(
         overflowed: captureOverflowed,
         turns: [...capturedTurns],
       }),
-
-      startBattle: (hash) =>
-        set({
-          battleState: "in-battle",
-          lastBattleHash: hash,
-        }),
 
       endBattle: () => set({ battleState: "idle" }),
 

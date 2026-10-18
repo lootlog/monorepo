@@ -4075,6 +4075,9 @@
                 "hasFlee": {
                   "type": "boolean"
                 },
+                "unfinished": {
+                  "type": "boolean"
+                },
                 "matchmaking": {
                   "type": "boolean"
                 },
@@ -4720,6 +4723,7 @@
                 "losingTeam",
                 "honorPoints",
                 "hasFlee",
+                "unfinished",
                 "matchmaking",
                 "statistics",
                 "difficultyRank",
@@ -6470,6 +6474,9 @@
           "hasFlee": {
             "type": "boolean"
           },
+          "unfinished": {
+            "type": "boolean"
+          },
           "matchmaking": {
             "type": "boolean"
           },
@@ -7115,6 +7122,7 @@
           "losingTeam",
           "honorPoints",
           "hasFlee",
+          "unfinished",
           "matchmaking",
           "statistics",
           "difficultyRank",

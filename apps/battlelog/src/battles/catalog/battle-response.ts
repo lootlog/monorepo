@@ -128,6 +128,7 @@ const BattleResponseSchema = Schema.Struct({
   losingTeam: Schema.Number,
   honorPoints: Schema.Number,
   hasFlee: Schema.Boolean,
+  unfinished: Schema.Boolean,
   matchmaking: Schema.Boolean,
   statistics: BattleComputedStatisticsSchema,
   difficultyRank: Schema.NullOr(Schema.Number),

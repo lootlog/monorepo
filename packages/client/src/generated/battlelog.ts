@@ -487,6 +487,7 @@ export interface BattleResponseDtoOutput {
   losingTeam: number;
   honorPoints: number;
   hasFlee: boolean;
+  unfinished: boolean;
   matchmaking: boolean;
   statistics: BattleResponseDtoOutputStatistics;
   /** @nullable */
@@ -1138,6 +1139,7 @@ export type BattlesListResponseDtoOutputBattlesItem = {
   losingTeam: number;
   honorPoints: number;
   hasFlee: boolean;
+  unfinished: boolean;
   matchmaking: boolean;
   statistics: BattlesListResponseDtoOutputBattlesItemStatistics;
   /** @nullable */

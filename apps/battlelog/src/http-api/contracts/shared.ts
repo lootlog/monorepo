@@ -187,6 +187,7 @@ export const BattleResponseFields = {
   losingTeam: FiniteNumber,
   honorPoints: FiniteNumber,
   hasFlee: Schema.Boolean,
+  unfinished: Schema.Boolean,
   matchmaking: Schema.Boolean,
   statistics: Schema.Struct({
     topDamageDealer: NullableBattleStatisticEntry,

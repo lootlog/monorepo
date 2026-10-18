@@ -41,6 +41,8 @@
     "honorPointsTooltip": "Otrzymane lub stracone punkty honoru",
     "flee": "Ucieczka",
     "fleeTooltip": "Walka przerwana przez ucieczkę",
+    "unfinished": "Niedokończona",
+    "unfinishedTooltip": "Zamknięto walkę przed jej końcem, więc nie ma wyniku",
     "matchmaking": "Otchłań",
     "matchmakingTooltip": "Walka z systemu matchmakingu (Otchłań)"
   },
