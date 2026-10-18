@@ -1077,6 +1077,7 @@ export const makeBattles = (
                   winningTeam: analysis.outcome.winningTeam,
                   losingTeam: analysis.outcome.losingTeam,
                   hasFlee: analysis.outcome.hasFlee,
+                  unfinished: analysis.outcome.unfinished,
                   matchmaking: !!analysis.matchmaking,
                   ...(analysis.matchmaking && {
                     difficultyRank: analysis.matchmaking.difficultyRank,

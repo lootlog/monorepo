@@ -46,6 +46,8 @@ export const battles = pgTable(
     losingTeam: integer("losingTeam").notNull(),
     honorPoints: integer("honorPoints").default(0).notNull(),
     hasFlee: boolean("hasFlee").default(false).notNull(),
+    // Closed by the submitter before Margonem ended it; both teams are 0.
+    unfinished: boolean("unfinished").default(false).notNull(),
     matchmaking: boolean("matchmaking").default(false).notNull(),
 
     difficultyRank: integer("difficultyRank"),

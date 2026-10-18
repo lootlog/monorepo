@@ -5,10 +5,16 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { BATTLE_BADGE_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { cn } from "cn";
-import { Flag, Trophy, XCircle, type LucideIcon } from "lucide-react";
+import {
+  CircleDashed,
+  Flag,
+  Trophy,
+  XCircle,
+  type LucideIcon,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-export type BattleResultStatusValue = "flee" | "lost" | "won";
+export type BattleResultStatusValue = "flee" | "lost" | "unfinished" | "won";
 
 type BattleResultStatusProps = {
   className?: string;
@@ -38,6 +44,11 @@ const BATTLE_RESULT_STATUS_CONFIG: Record<
     className: BATTLE_BADGE_COLORS.result.flee,
     icon: Flag,
     labelKey: "battlePanel.list.results.flee",
+  },
+  unfinished: {
+    className: BATTLE_BADGE_COLORS.result.unfinished,
+    icon: CircleDashed,
+    labelKey: "battlePanel.list.results.unfinished",
   },
 };
 

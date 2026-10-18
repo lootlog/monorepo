@@ -106,6 +106,7 @@ export const createBattle = (overrides: Partial<Battle> = {}): Battle => ({
   losingTeam: 0,
   honorPoints: 0,
   hasFlee: false,
+  unfinished: false,
   matchmaking: false,
   statistics: {
     topDamageDealer: null,
