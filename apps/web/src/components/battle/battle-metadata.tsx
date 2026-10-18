@@ -1,7 +1,7 @@
+import { MetaItem } from "@/components/common/meta-item";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import {
@@ -20,27 +20,23 @@ import { useTranslation } from "react-i18next";
 import { formatSeconds } from "@/utils/date/format-seconds";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { upperFirst } from "es-toolkit";
-import { cn } from "cn";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 export type BattleMetadataProps = {
   battle: Battle;
-  className?: string;
 };
 
 type BattleMetadataItem = {
   key: string;
-  icon: ReactNode;
+  icon: FC<{ className?: string }>;
   label: ReactNode;
   tooltip: string;
   className?: string;
 };
 
-export const BattleMetadata: FC<BattleMetadataProps> = ({
-  battle,
-  className,
-}) => {
+/** The battle's details as `MetaItem`s for the page's `DetailBar`. */
+export const BattleMetadata: FC<BattleMetadataProps> = ({ battle }) => {
   const { t } = useTranslation();
 
   const warrior = battle.warriors.find(
@@ -50,31 +46,31 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
   const items: BattleMetadataItem[] = [
     {
       key: "startTime",
-      icon: <Calendar size={14} />,
+      icon: Calendar,
       label: timestampToDate(battle.createdAt),
       tooltip: t("battleUi.metadata.startTime"),
     },
     {
       key: "duration",
-      icon: <Clock size={14} />,
+      icon: Clock,
       label: formatSeconds(battle.duration),
       tooltip: t("battleUi.metadata.duration"),
     },
     {
       key: "type",
-      icon: <Users size={14} />,
+      icon: Users,
       label: battle.type,
       tooltip: t("battleUi.metadata.battleType"),
     },
     {
       key: "world",
-      icon: <Earth size={14} />,
+      icon: Earth,
       label: upperFirst(battle.world),
       tooltip: t("battleUi.metadata.world"),
     },
     {
       key: "visibility",
-      icon: battle.public ? <Unlock size={14} /> : <Lock size={14} />,
+      icon: battle.public ? Unlock : Lock,
       label: battle.public
         ? t("battleUi.metadata.public")
         : t("battleUi.metadata.private"),
@@ -87,7 +83,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
   if (warrior?.ph !== 0 && warrior?.ph !== undefined) {
     items.push({
       key: "honorPoints",
-      icon: <Award size={14} />,
+      icon: Award,
       label: t("battleUi.metadata.honorPointsLabel", { value: warrior.ph }),
       tooltip: t("battleUi.metadata.honorPointsTooltip"),
     });
@@ -96,7 +92,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
   if (battle.hasFlee) {
     items.push({
       key: "flee",
-      icon: <EmergencyExitIcon size={14} />,
+      icon: EmergencyExitIcon,
       label: t("battleUi.metadata.flee"),
       tooltip: t("battleUi.metadata.fleeTooltip"),
     });
@@ -105,44 +101,29 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
   if (battle.matchmaking) {
     items.push({
       key: "matchmaking",
-      icon: <Swords size={14} />,
+      icon: Swords,
       label: t("battleUi.metadata.matchmaking"),
       tooltip: t("battleUi.metadata.matchmakingTooltip"),
       className: BATTLE_TEXT_COLORS.metric.secondary,
     });
   }
 
-  return (
-    <TooltipProvider>
-      <ul
-        className={cn(
-          "flex w-full flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground",
-          className,
-        )}
+  return items.map((item) => (
+    <Tooltip key={item.key}>
+      <TooltipTrigger
+        render={<span className="flex cursor-help" tabIndex={0} />}
       >
-        {items.map((item) => (
-          <li key={item.key} className="flex">
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <span
-                    className={cn(
-                      "flex cursor-help items-center gap-1.5 whitespace-nowrap tabular-nums",
-                      item.className,
-                    )}
-                  >
-                    {item.icon}
-                    {item.label}
-                  </span>
-                }
-              />
-              <TooltipContent side="top" sideOffset={8}>
-                <p>{item.tooltip}</p>
-              </TooltipContent>
-            </Tooltip>
-          </li>
-        ))}
-      </ul>
-    </TooltipProvider>
-  );
+        <MetaItem
+          icon={item.icon}
+          label={item.tooltip}
+          className={item.className}
+        >
+          {item.label}
+        </MetaItem>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={8}>
+        <p>{item.tooltip}</p>
+      </TooltipContent>
+    </Tooltip>
+  ));
 };

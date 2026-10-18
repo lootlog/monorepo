@@ -1,6 +1,10 @@
 import type { Battle, BattleWarrior } from "@/lib/api/battlelog-types";
 
-export const BATTLE_RANKING_METRICS = ["damageDealt", "damageTaken"] as const;
+export const BATTLE_RANKING_METRICS = [
+  "damageDealt",
+  "damageTaken",
+  "effectiveness",
+] as const;
 
 export type BattleRankingMetric = (typeof BATTLE_RANKING_METRICS)[number];
 
@@ -20,6 +24,8 @@ const METRIC_VALUE: Record<
 > = {
   damageDealt: (warrior) => warrior.damageDealt,
   damageTaken: (warrior) => warrior.damageTaken,
+  // The damage that got through the opponents' defences.
+  effectiveness: (warrior) => warrior.damageDealtAfterDefensive,
 };
 
 /** Every warrior of the battle, highest value first. */

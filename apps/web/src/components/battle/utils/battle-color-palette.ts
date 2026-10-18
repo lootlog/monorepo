@@ -160,18 +160,10 @@ export const BATTLE_SURFACE_COLORS = {
     positiveBox: "bg-green-500/10 border-green-500/20",
     negativeBox: "bg-red-500/10 border-red-500/20",
   },
-  overview: {
-    teamGradient:
-      "bg-gradient-to-r from-green-400/10 via-transparent to-red-400/10",
-  },
   team: {
     friendlyCell: "bg-green-400/10",
     enemyCell: "bg-red-400/10",
     friendlyHeader: "bg-green-950 text-green-50",
     enemyHeader: "bg-red-950 text-red-50",
-    currentCharacterBorder: "border-green-500",
-    currentCharacterStrongBorder: "border-green-500/70 bg-green-500/10",
-    friendlyStripe: "shadow-[inset_3px_0_0_0_var(--color-green-500)]",
-    enemyStripe: "shadow-[inset_3px_0_0_0_var(--color-red-400)]",
   },
 } as const;

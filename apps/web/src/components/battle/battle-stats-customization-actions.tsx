@@ -59,7 +59,9 @@ export function BattleStatsCustomizationActions({
           <TooltipTrigger
             render={
               <Button
+                variant="ghost"
                 size="icon-sm"
+                aria-pressed={hideZeros}
                 onClick={() => setHideZeros(!hideZeros)}
                 aria-label={
                   hideZeros
@@ -68,9 +70,9 @@ export function BattleStatsCustomizationActions({
                 }
               >
                 {hideZeros ? (
-                  <Eye className="h-4 w-4" />
+                  <Eye className="size-3.5" />
                 ) : (
-                  <EyeOff className="h-4 w-4" />
+                  <EyeOff className="size-3.5" />
                 )}
               </Button>
             }

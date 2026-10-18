@@ -33,7 +33,6 @@ import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";
 interface ExpandableDataTableProps<TData extends Warrior> {
   columns: ColumnDef<typeof sortedTableFeatures, TData>[];
   data: TData[];
-  getTeamClassName?: (warrior: TData) => string;
   expandedRows: Map<string, BattleStatsExpansionType>;
 }
 
@@ -60,7 +59,6 @@ const renderExpandedContent = (
 export function ExpandableDataTable<TData extends Warrior>({
   columns,
   data,
-  getTeamClassName,
   expandedRows,
 }: ExpandableDataTableProps<TData>) {
   const { t } = useTranslation();
@@ -78,7 +76,7 @@ export function ExpandableDataTable<TData extends Warrior>({
 
   return (
     <Table className="min-w-[700px] text-[13px]">
-      <TableHeader className="sticky top-0 z-20 bg-muted">
+      <TableHeader className="sticky top-0 z-20 bg-sidebar">
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id} className="hover:bg-transparent">
             {headerGroup.headers.map((header, headerIndex) => {
@@ -116,9 +114,9 @@ export function ExpandableDataTable<TData extends Warrior>({
                   key={header.id}
                   aria-sort={getColumnAriaSort(header.column)}
                   className={cn(
-                    "h-auto whitespace-normal px-0.5 py-1.5 align-bottom text-[11px]",
+                    "h-auto whitespace-normal px-0.5 py-1.5 align-bottom text-xs",
                     headerIndex === 0 &&
-                      "sticky left-0 z-10 w-40 bg-muted align-middle",
+                      "sticky left-0 z-10 w-40 bg-sidebar align-middle",
                   )}
                 >
                   {headerContent}
@@ -142,11 +140,9 @@ export function ExpandableDataTable<TData extends Warrior>({
                       key={cell.id}
                       className={cn(
                         "h-10 px-0.5 py-0.5",
-                        cellIndex === 0 && [
+                        cellIndex === 0 &&
                           // Opaque equivalents of the row backgrounds, so scrolled cells never show through.
-                          "sticky left-0 z-10 max-w-40 bg-card group-hover/row:bg-[color-mix(in_oklab,var(--accent)_35%,var(--card))]",
-                          getTeamClassName?.(warrior),
-                        ],
+                          "sticky left-0 z-10 max-w-40 bg-background group-hover/row:bg-[color-mix(in_oklab,var(--accent)_35%,var(--background))]",
                       )}
                     >
                       {flexRender(

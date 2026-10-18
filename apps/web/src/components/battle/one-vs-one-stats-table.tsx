@@ -1,6 +1,9 @@
 import { useBattleStatsSearchScroll } from "./use-battle-stats-search-scroll";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { SectionCard as Card } from "@/components/common/section-card/section-card";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import {
+  INLINE_SEARCH_INPUT_CLASS,
+  InlineSearchField,
+} from "@/components/common/inline-search-field";
 import { EmptyState } from "@/components/common/empty-state";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Swords } from "lucide-react";
@@ -14,7 +17,6 @@ import { useBattleStatsPinnedHeader } from "./use-battle-stats-pinned-header";
 import { useTranslation } from "react-i18next";
 import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
 import { cn } from "cn";
-import { SearchInput } from "@/components/ui/search-input";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import {
@@ -31,7 +33,6 @@ import { OneVsOneStatsTableBody } from "./one-vs-one-stats-table-body";
 
 interface OneVsOneStatsTableProps {
   battle: Battle;
-  cardClassName?: string;
   compact?: boolean;
   scrollClassName?: string;
   showHeader?: boolean;
@@ -67,14 +68,17 @@ const resolveStatsTableConfiguration = ({
   showHeader: showHeader ?? true,
 });
 
+// Pinned under the page's tabs, a pixel higher so its top rule covers theirs, like a band heading.
+const PINNED_HEADER_TOP_CLASS_NAME =
+  "top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)-1px)]";
+
 const getColumnHeaderTopClassName = (pinnedHeader: boolean) =>
   pinnedHeader
-    ? "top-[calc(var(--battle-detail-pin-top,0px)+var(--battle-stats-pinned-height,0px))]"
+    ? "top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)-1px+var(--battle-stats-pinned-height,0px))]"
     : "top-0";
 
 export function OneVsOneStatsTable({
   battle,
-  cardClassName,
   compact,
   scrollClassName,
   showHeader,
@@ -86,6 +90,7 @@ export function OneVsOneStatsTable({
   statsCustomizationConfig,
 }: OneVsOneStatsTableProps) {
   const { t } = useTranslation();
+  const headingId = useId();
   const [internalHideZeros, setInternalHideZeros] = useState(true);
   const [statSearchQuery, setStatSearchQuery] = useState("");
   const statsScrollViewportRef = useRef<HTMLDivElement>(null);
@@ -194,34 +199,37 @@ export function OneVsOneStatsTable({
   }
 
   return (
-    <Card
+    <section
       ref={cardRef}
-      className={cn(
-        // `isolate` keeps the sticky cells' z-indexes from competing with the pinned chart.
-        "isolate border-border bg-card gap-0 p-0 w-full",
-        // `overflow-clip` rounds the corners without becoming a scroll container, so the
-        // header can stick to the scroller the table lives in.
-        pinnedHeader ? "overflow-clip" : "overflow-hidden",
-        cardClassName,
-      )}
+      aria-labelledby={resolvedShowHeader ? headingId : undefined}
+      // `isolate` keeps the sticky cells' z-indexes from competing with the pinned chart.
+      className="isolate w-full"
     >
       {resolvedShowHeader && (
         <BattleStatsTableHeader
           ref={pinnedHeaderRef}
+          id={headingId}
           className={cn(
-            pinnedHeader &&
-              "sticky top-(--battle-detail-pin-top,0px) z-30 bg-card",
+            pinnedHeader && ["sticky z-30", PINNED_HEADER_TOP_CLASS_NAME],
           )}
           title={headerTitle ?? t("battlePanel.single.statistics.title")}
-          leading=<SearchInput
-            aria-label={t("battleUi.customization.searchStat")}
-            size="sm"
-            className="text-sm"
-            placeholder={t("battleUi.customization.searchStat")}
-            value={statSearchQuery}
-            wrapperClassName="w-full"
-            onChange={(event) => setStatSearchQuery(event.target.value)}
-          />
+          toolbar={
+            <InlineSearchField
+              clearLabel={t("common.clear")}
+              onClear={
+                statSearchQuery ? () => setStatSearchQuery("") : undefined
+              }
+            >
+              <input
+                type="search"
+                aria-label={t("battleUi.customization.searchStat")}
+                placeholder={t("battleUi.customization.searchStat")}
+                value={statSearchQuery}
+                onChange={(event) => setStatSearchQuery(event.target.value)}
+                className={INLINE_SEARCH_INPUT_CLASS}
+              />
+            </InlineSearchField>
+          }
           actions={
             headerActions ?? (
               <BattleStatsCustomizationActions
@@ -257,8 +265,8 @@ export function OneVsOneStatsTable({
           </colgroup>
           <TanStackTableHeader
             table={table}
-            className="[&_tr]:border-b [&_tr]:border-border/70"
-            rowClassName="border-b border-border/70"
+            className="[&_tr]:border-b [&_tr]:border-border"
+            rowClassName="border-b border-border"
             getHeadClassName={(header) =>
               getOneVsOneStatsHeadClassName({
                 columnId: header.column.id,
@@ -273,6 +281,6 @@ export function OneVsOneStatsTable({
           />
         </Table>
       </StatsScroller>
-    </Card>
+    </section>
   );
 }
