@@ -26,7 +26,7 @@ export const LiveFeedOrganizations = ({ organizations }: Props) => {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-wrap items-center justify-end gap-1.5">
+      <div className="flex items-center justify-end -space-x-1.5">
         {organizations.map((organization) => (
           <Tooltip key={organization.id}>
             <TooltipTrigger
@@ -36,10 +36,10 @@ export const LiveFeedOrganizations = ({ organizations }: Props) => {
                   guildId: organization.vanityUrl ?? organization.id,
                 }}
                 aria-label={organization.name}
-                className="size-8 shrink-0 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="size-6 shrink-0 rounded-md outline-none ring-2 ring-background focus-visible:ring-ring"
               />
             >
-              <Avatar className="size-8 rounded-lg" aria-hidden>
+              <Avatar className="size-6 rounded-md" aria-hidden>
                 <AvatarImage
                   src={
                     guilds?.find((guild) => guild.id === organization.id)
@@ -47,7 +47,7 @@ export const LiveFeedOrganizations = ({ organizations }: Props) => {
                   }
                   alt=""
                 />
-                <AvatarFallback className="rounded-none text-xs font-medium">
+                <AvatarFallback className="rounded-none text-[0.625rem] font-medium">
                   {organization.name.charAt(0).toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>

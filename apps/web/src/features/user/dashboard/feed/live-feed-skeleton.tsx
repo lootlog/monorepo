@@ -4,6 +4,7 @@ import { cn } from "cn";
 import {
   LIST_GROUP_HEADING_CLASS,
   LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 
 export function LiveFeedSkeleton() {
@@ -13,40 +14,30 @@ export function LiveFeedSkeleton() {
     <div role="status" aria-label={t("common.loading")}>
       <div
         aria-hidden="true"
-        className="relative before:absolute before:inset-y-0 before:left-[1.375rem] before:w-px before:bg-border/70 motion-reduce:[&_[data-slot=skeleton]]:animate-none"
+        className="motion-reduce:[&_[data-slot=skeleton]]:animate-none"
       >
         <div className={cn(LIST_GROUP_HEADING_CLASS, LIST_TILE_INSET_CLASS)}>
           <Skeleton className="h-3 w-28" />
         </div>
-        {Array.from({ length: 6 }, (_, index) => {
-          const hasLoot = index % 3 !== 1;
+        {Array.from({ length: 8 }, (_, index) => {
+          const hasLoot = index % 3 === 1;
 
           return (
             <div
               key={index}
-              className="grid grid-cols-[0.75rem_2.5rem_minmax(0,1fr)] gap-x-3 px-4 py-3"
+              className={cn(
+                "flex items-center gap-3 py-3",
+                LIST_TILE_INSET_CLASS,
+                LIST_TILE_RULE_CLASS,
+              )}
             >
-              <span className="flex justify-center pt-4">
-                <Skeleton className="relative size-3 rounded-full ring-4 ring-background" />
-              </span>
-              <Skeleton className="size-10" />
-              <div className="flex min-w-0 flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <Skeleton className={cn("h-4", hasLoot ? "w-40" : "w-32")} />
-                  <Skeleton className="h-4 w-12" />
-                  <Skeleton className="ml-auto size-8 rounded-lg" />
-                </div>
-                {hasLoot && (
-                  <div className="flex gap-1">
-                    <Skeleton className="size-9" />
-                    {index % 2 === 0 && <Skeleton className="size-9" />}
-                  </div>
-                )}
-                <div className="flex gap-4">
-                  <Skeleton className={cn("h-3", hasLoot ? "w-44" : "w-16")} />
-                  <Skeleton className="h-3 w-20" />
-                </div>
+              <Skeleton className="size-10 shrink-0" />
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <Skeleton className={cn("h-4", hasLoot ? "w-40" : "w-32")} />
+                <Skeleton className="h-3 w-52 max-w-full" />
               </div>
+              {hasLoot && <Skeleton className="size-9 shrink-0" />}
+              <Skeleton className="size-6 shrink-0 rounded-md" />
             </div>
           );
         })}
