@@ -140,7 +140,7 @@
   "feedKill": "Bicie: {{name}}",
   "feedLoot": "Nowy łup",
   "feedLootOf": "Łup: {{name}}",
-  "feedNoLoot": "Bez zapisanego łupu",
+  "feedJustNow": "przed chwilą",
   "feedPlayersCountLabel": "Liczba graczy:",
   "feedItemsCountLabel": "Liczba przedmiotów:",
   "feedItems": "Przedmioty",
@@ -216,5 +216,7 @@
     "minutes": "{{minutes}} min",
     "weekMonster": "Potwór tygodnia"
   },
-  "feedFilters": "Filtry feedu"
+  "feedFilters": "Filtry feedu",
+  "feedShowOlder": "Pokaż starsze ({{count}})",
+  "feedShowLess": "Pokaż mniej"
 }

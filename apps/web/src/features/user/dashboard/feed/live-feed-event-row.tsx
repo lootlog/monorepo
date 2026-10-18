@@ -1,9 +1,9 @@
 import { activityFeedNpcCategory } from "@lootlog/domain/activity-feed";
-import { Swords } from "lucide-react";
 import { NpcTypeIcon } from "@lootlog/ui/components/npc-type-icon";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { NpcTile } from "@/components/tiles/npc-tile";
+import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import { LEGENDARY_LOOT_ROW_CLASS } from "@/features/guild/loots-list/loots-list-layout";
 import { NPC_CATEGORY_APPEARANCE } from "../npc-category-appearance";
 import { LiveFeedEventLoot } from "./live-feed-event-loot";
@@ -17,9 +17,13 @@ type Props = {
   now: number;
 };
 
+/**
+ * One event as a list tile, like the recent battles beside it: the NPC, where
+ * and when, and the drop. A narrow feed moves the drop under the text.
+ */
 export function LiveFeedEventRow({ group, now }: Props) {
   const { t } = useTranslation();
-  const { npc, world, location, players, legendary } = describeFeedGroup(group);
+  const { npc, world, location, legendary } = describeFeedGroup(group);
 
   const category = activityFeedNpcCategory(npc?.type);
   const appearance = NPC_CATEGORY_APPEARANCE[category];
@@ -28,19 +32,12 @@ export function LiveFeedEventRow({ group, now }: Props) {
   return (
     <div
       className={cn(
-        "grid grid-cols-[0.75rem_2.5rem_minmax(0,1fr)] gap-x-3 px-4 py-3 transition-colors hover:bg-muted/20",
+        "grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 py-3 transition-colors hover:bg-muted/20 @lg:grid-cols-[2.5rem_minmax(0,1fr)_auto_auto]",
+        LIST_TILE_INSET_CLASS,
         legendary && LEGENDARY_LOOT_ROW_CLASS,
       )}
     >
-      <span className="flex justify-center pt-4" aria-hidden>
-        <span
-          className={cn(
-            "relative size-3 rounded-full border-2 ring-4 ring-background",
-            appearance.marker,
-          )}
-        />
-      </span>
-      <span className="flex min-h-10 items-start justify-center">
+      <span className="flex size-10 items-center justify-center">
         {npc?.icon ? (
           <NpcTile
             npc={{ name: npc.name, icon: npc.icon, lvl: npc.lvl ?? undefined }}
@@ -53,45 +50,38 @@ export function LiveFeedEventRow({ group, now }: Props) {
               appearance.color,
             )}
           >
-            <NpcTypeIcon type={category} className="size-8" />
+            <NpcTypeIcon type={category} className="size-7" />
           </span>
         )}
       </span>
-      <div className="flex min-w-0 flex-col gap-2">
-        <div className="flex items-start gap-2">
-          <div className="flex min-h-8 min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-            <LiveFeedEventTitle group={group} npc={npc} />
-            {npc?.type && (
-              <span
-                className={cn(
-                  "rounded-md px-1.5 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-wide",
-                  appearance.surface,
-                  appearance.color,
-                )}
-              >
-                {t(`npcType.${npc.type}`)}
-              </span>
-            )}
-            {count > 1 && (
-              <span
-                className="flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-xs font-semibold tabular-nums"
-                title={t("statistics.kills")}
-              >
-                <Swords className="size-3" aria-hidden />×{count}
-              </span>
-            )}
-          </div>
-          <LiveFeedOrganizations organizations={group.organizations} />
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-baseline gap-1.5">
+          <LiveFeedEventTitle group={group} npc={npc} />
+          {count > 1 && (
+            <span
+              className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground"
+              title={t("statistics.kills")}
+            >
+              ×{count}
+            </span>
+          )}
         </div>
-        {group.loots.length > 0 && <LiveFeedEventLoot loots={group.loots} />}
         <LiveFeedEventMeta
+          type={npc?.type ? t(`npcType.${npc.type}`) : undefined}
+          typeClassName={appearance.color}
           world={world}
           location={location}
           occurredAt={group.occurredAt}
           now={now}
-          players={players}
-          hasLoot={group.loots.length > 0}
         />
+      </div>
+      {group.loots.length > 0 && (
+        <div className="col-span-2 col-start-2 row-start-2 flex min-w-0 @lg:col-span-1 @lg:col-start-3 @lg:row-start-1 @lg:justify-end">
+          <LiveFeedEventLoot loots={group.loots} />
+        </div>
+      )}
+      <div className="col-start-3 row-start-1 @lg:col-start-4">
+        <LiveFeedOrganizations organizations={group.organizations} />
       </div>
     </div>
   );

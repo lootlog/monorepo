@@ -87,15 +87,13 @@ it("shows a kill and its loot as one row that opens the loot", async () => {
       "listitem",
     ),
   ).toHaveLength(2);
-  expect(screen.queryByText("Bez zapisanego łupu")).toBeNull();
 });
 
-it("links a kill without loot to the NPC statistics and says no loot was recorded", async () => {
+it("links a kill without loot to the NPC statistics", async () => {
   await renderRow([feedKill]);
 
   const link = await screen.findByRole("link", { name: "Bicie: Heros" });
   expect(link.getAttribute("href")).toBe("/organization/stats/npcs/1");
-  expect(screen.getByText("Bez zapisanego łupu")).toBeTruthy();
 });
 
 it("keeps loot without an NPC reachable through a named link", async () => {
