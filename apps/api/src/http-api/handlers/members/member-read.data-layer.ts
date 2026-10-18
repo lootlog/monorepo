@@ -1,5 +1,9 @@
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { and, asc, desc, eq, isNotNull, or } from "drizzle-orm";
+import {
+  activeGuildMemberJoin,
+  selectGuildIdsGrantingPermissions,
+} from "#src/members/member-access-query";
 import { Effect, Layer, Schema } from "effect";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { Permission } from "@lootlog/schema/permissions";
@@ -180,23 +184,31 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
               MemberLootlogConfigSummaryResponse,
               Effect.gen(function* () {
                 const members = yield* database
-                  .select()
+                  .select({ member: memberTable, ownerId: guildTable.ownerId })
                   .from(memberTable)
-                  .where(
-                    and(
-                      eq(memberTable.userId, discordId),
-                      eq(memberTable.guildId, guildId),
-                    ),
-                  )
+                  .innerJoin(guildTable, eq(guildTable.id, memberTable.guildId))
+                  .where(activeGuildMemberJoin(discordId, guildId))
                   .limit(1);
 
-                const member = members[0];
+                const [found] = members;
 
-                if (!member) {
+                if (!found) {
                   return yield* Effect.fail(
                     new ResourceNotFoundError("Member not found"),
                   );
                 }
+
+                const { member, ownerId } = found;
+
+                const granted = yield* selectGuildIdsGrantingPermissions(
+                  database,
+                  [discordId],
+                  [{ id: guildId, ownerId }],
+                  [Permission.LOOTLOG_LOOTS_WRITE],
+                );
+
+                const catchesForGuild =
+                  granted.get(discordId)?.has(guildId) ?? false;
 
                 const configs = yield* database
                   .select()
@@ -286,7 +298,9 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                   return {
                     accountId: config.accountId,
                     characterId: config.characterId,
-                    enabledForGuild: config.catchingGuildIds.includes(guildId),
+                    enabledForGuild:
+                      catchesForGuild &&
+                      config.catchingGuildIds.includes(guildId),
                     characterName: snapshot?.name ?? null,
                     world: snapshot?.world ?? null,
                     icon: snapshot?.icon ?? null,
