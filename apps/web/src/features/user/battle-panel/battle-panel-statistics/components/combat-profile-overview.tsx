@@ -1,17 +1,27 @@
-import { formatBattleMetric } from "@/components/battle/utils/value-utils";
+import {
+  formatBattleMetric,
+  formatSignedBattleMetric,
+} from "@/components/battle/utils/value-utils";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { formatDurationCompact } from "@/features/guild/events/utils/format-duration";
-import { KpiCard } from "@/components/common/kpi-card";
+import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
 import type { CombatProfileResponseDtoOutput } from "@lootlog/client/battlelog";
-import { Award, Crosshair, Hourglass, Sword, Trophy } from "lucide-react";
-import { cn } from "cn";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
+import {
+  Award,
+  Crosshair,
+  Hourglass,
+  Sword,
+  TrendingUp,
+  Trophy,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type CombatProfileOverviewProps = {
   data: CombatProfileResponseDtoOutput | undefined;
   isLoading: boolean;
-  /** The Abyss page already shows the season record above its tabs. */
-  showRecord?: boolean;
+  /** Abyss battles change the rating instead of earning honor points. */
+  rated?: boolean;
 };
 
 const compactFormatter = new Intl.NumberFormat("pl-PL", {
@@ -19,120 +29,129 @@ const compactFormatter = new Intl.NumberFormat("pl-PL", {
   maximumFractionDigits: 1,
 });
 
-const signedFormatter = new Intl.NumberFormat("pl-PL", {
-  maximumFractionDigits: 1,
-  signDisplay: "exceptZero",
-});
-
-const EMPTY_SUMMARY: CombatProfileResponseDtoOutput["summary"] = {
-  totalBattles: 0,
-  wins: 0,
-  losses: 0,
-  winRate: 0,
-  totalPH: 0,
-  totalRatingDelta: 0,
-  avgTurns: 0,
-  avgDuration: 0,
-  damagePerTurn: 0,
-  mitigationRate: 0,
-  controlRate: 0,
-};
-
+/** The battles' headline numbers, edge to edge under the filter bar. */
 export function CombatProfileOverview({
   data,
   isLoading,
-  showRecord = true,
+  rated = false,
 }: CombatProfileOverviewProps) {
   const { t } = useTranslation();
-  const summary = data?.summary ?? EMPTY_SUMMARY;
+  const summary = isLoading ? undefined : data?.summary;
 
-  const honorPointsPerBattle =
-    summary.totalBattles > 0 ? summary.totalPH / summary.totalBattles : 0;
+  // Each tile keeps its label while its numbers load.
+  const loading = (width: string) => <Skeleton className={`h-7 ${width}`} />;
+  const loadingDetail = <Skeleton className="h-4 w-20" />;
 
-  const kpis = [
-    {
-      key: "record",
-      icon: Trophy,
-      label: t("battlePanel.statistics.combatProfile.cards.record"),
-      value: (
-        <>
-          <span className={BATTLE_TEXT_COLORS.result.won}>{summary.wins}</span>
-          <span className="px-1.5 text-muted-foreground">–</span>
-          <span className={BATTLE_TEXT_COLORS.result.lost}>
-            {summary.losses}
-          </span>
-        </>
-      ),
-      detail: t("battlePanel.statistics.combatProfile.details.winRate", {
-        value: formatBattleMetric(summary.winRate),
-      }),
-    },
-    {
-      key: "honorPoints",
-      icon: Award,
-      label: t("battlePanel.statistics.combatProfile.cards.honorPoints"),
-      value: formatBattleMetric(summary.totalPH),
-      // Rating only changes in Abyss battles, so outside of them the average says more.
-      detail: summary.totalRatingDelta
-        ? t("battlePanel.statistics.combatProfile.details.rating", {
-            value: signedFormatter.format(summary.totalRatingDelta),
-          })
-        : t("battlePanel.statistics.combatProfile.details.perBattle", {
-            value: formatBattleMetric(honorPointsPerBattle),
-          }),
-    },
-    {
-      key: "turns",
-      icon: Hourglass,
-      label: t("battlePanel.statistics.combatProfile.cards.turns"),
-      value: formatBattleMetric(summary.avgTurns),
-      detail: t("battlePanel.statistics.combatProfile.details.duration", {
-        value: formatDurationCompact(Math.round(summary.avgDuration)),
-      }),
-    },
-    {
-      key: "damage",
-      icon: Sword,
-      label: t("battlePanel.statistics.combatProfile.cards.damage"),
-      value: compactFormatter.format(summary.damagePerTurn),
-      detail: t("battlePanel.statistics.combatProfile.details.damage"),
-    },
-    {
-      key: "control",
-      icon: Crosshair,
-      label: t("battlePanel.statistics.combatProfile.cards.control"),
-      value: `${formatBattleMetric(summary.controlRate)}%`,
-      detail: t("battlePanel.statistics.combatProfile.details.control"),
-    },
-  ];
+  const perBattle = (total: number) =>
+    summary && summary.totalBattles > 0 ? total / summary.totalBattles : 0;
 
-  const visibleKpis = showRecord
-    ? kpis
-    : kpis.filter((kpi) => kpi.key !== "record");
+  const ratingClassName =
+    (summary?.totalRatingDelta ?? 0) >= 0
+      ? BATTLE_TEXT_COLORS.result.won
+      : BATTLE_TEXT_COLORS.result.lost;
 
   return (
-    <div
-      className={cn(
-        "grid grid-cols-2 gap-3",
-        showRecord ? "lg:grid-cols-5" : "lg:grid-cols-4",
-      )}
-    >
-      {visibleKpis.map((kpi) => (
-        <KpiCard
-          // An odd number of tiles in two columns would leave the last one orphaned.
-          className={
-            visibleKpis.length % 2 === 1
-              ? "last:col-span-2 lg:last:col-span-1"
-              : undefined
+    <StatsTileGrid className="sm:grid-cols-3 xl:grid-cols-5">
+      <StatsTile
+        icon={Trophy}
+        label={t("battlePanel.statistics.combatProfile.cards.record")}
+        value={
+          summary ? (
+            <>
+              <span className={BATTLE_TEXT_COLORS.result.won}>
+                {summary.wins}
+              </span>
+              <span className="px-1.5 text-muted-foreground">–</span>
+              <span className={BATTLE_TEXT_COLORS.result.lost}>
+                {summary.losses}
+              </span>
+            </>
+          ) : (
+            loading("w-20")
+          )
+        }
+        detail={
+          summary
+            ? t("battlePanel.statistics.combatProfile.details.winRate", {
+                value: formatBattleMetric(summary.winRate),
+              })
+            : loadingDetail
+        }
+      />
+      {rated ? (
+        <StatsTile
+          icon={TrendingUp}
+          label={t("battlePanel.statistics.combatProfile.cards.rating")}
+          value={
+            summary ? (
+              <span className={ratingClassName}>
+                {formatSignedBattleMetric(summary.totalRatingDelta)}
+              </span>
+            ) : (
+              loading("w-16")
+            )
           }
-          key={kpi.key}
-          icon={kpi.icon}
-          label={kpi.label}
-          value={kpi.value}
-          detail={kpi.detail}
-          isLoading={isLoading || !data}
+          detail={
+            summary
+              ? t(
+                  "battlePanel.statistics.combatProfile.details.ratingPerBattle",
+                  {
+                    value: formatSignedBattleMetric(
+                      perBattle(summary.totalRatingDelta),
+                    ),
+                  },
+                )
+              : loadingDetail
+          }
         />
-      ))}
-    </div>
+      ) : (
+        <StatsTile
+          icon={Award}
+          label={t("battlePanel.statistics.combatProfile.cards.honorPoints")}
+          value={
+            summary ? formatBattleMetric(summary.totalPH) : loading("w-16")
+          }
+          detail={
+            summary
+              ? t("battlePanel.statistics.combatProfile.details.perBattle", {
+                  value: formatBattleMetric(perBattle(summary.totalPH)),
+                })
+              : loadingDetail
+          }
+        />
+      )}
+      <StatsTile
+        icon={Hourglass}
+        label={t("battlePanel.statistics.combatProfile.cards.turns")}
+        value={summary ? formatBattleMetric(summary.avgTurns) : loading("w-14")}
+        detail={
+          summary
+            ? t("battlePanel.statistics.combatProfile.details.duration", {
+                value: formatDurationCompact(Math.round(summary.avgDuration)),
+              })
+            : loadingDetail
+        }
+      />
+      <StatsTile
+        icon={Sword}
+        label={t("battlePanel.statistics.combatProfile.cards.damage")}
+        value={
+          summary
+            ? compactFormatter.format(summary.damagePerTurn)
+            : loading("w-16")
+        }
+        detail={t("battlePanel.statistics.combatProfile.details.damage")}
+      />
+      <StatsTile
+        icon={Crosshair}
+        label={t("battlePanel.statistics.combatProfile.cards.control")}
+        value={
+          summary
+            ? `${formatBattleMetric(summary.controlRate)}%`
+            : loading("w-14")
+        }
+        detail={t("battlePanel.statistics.combatProfile.details.control")}
+      />
+    </StatsTileGrid>
   );
 }

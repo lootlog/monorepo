@@ -505,21 +505,15 @@ function resolveUserNavigationInfo(
     );
   }
 
-  if (path === ROUTES.user.battlePanel.h2h) {
+  if (path === ROUTES.user.battlePanel.opponents) {
     return navigationInfo(
-      [
-        battlePanel,
-        {
-          label: t("layout.breadcrumbs.statistics"),
-          path: ROUTES.user.battlePanel.statistics,
-        },
-        { label: t("layout.breadcrumbs.headToHead"), path: null },
-      ],
-      ROUTES.user.battlePanel.statistics,
+      [battlePanel, { label: t("layout.breadcrumbs.opponents"), path: null }],
+      null,
     );
   }
 
-  if (path === ROUTES.user.battlePanel.matchmakingH2h) {
+  // An Abyss season and its tabs.
+  if (path.startsWith(`${ROUTES.user.battlePanel.abyss}/`)) {
     return navigationInfo(
       [
         battlePanel,
@@ -527,7 +521,7 @@ function resolveUserNavigationInfo(
           label: t("layout.breadcrumbs.abyss"),
           path: ROUTES.user.battlePanel.abyss,
         },
-        { label: t("layout.breadcrumbs.abyssHeadToHead"), path: null },
+        { label: t("layout.breadcrumbs.abyssSeason"), path: null },
       ],
       ROUTES.user.battlePanel.abyss,
     );
@@ -540,12 +534,12 @@ function resolveUserNavigationInfo(
       [
         battlePanel,
         {
-          label: t("layout.breadcrumbs.statistics"),
-          path: ROUTES.user.battlePanel.statistics,
+          label: t("layout.breadcrumbs.opponents"),
+          path: ROUTES.user.battlePanel.opponents,
         },
         { label: t("layout.breadcrumbs.playerVsPlayer"), path: null },
       ],
-      ROUTES.user.battlePanel.statistics,
+      ROUTES.user.battlePanel.opponents,
     );
   }
 

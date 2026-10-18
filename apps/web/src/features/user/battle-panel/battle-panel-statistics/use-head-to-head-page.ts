@@ -29,6 +29,13 @@ import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { createBattlePanelCursorActions } from "../components/battle-panel-cursor-actions";
 
+/** The battles of one Abyss season, which fix the character and dates. */
+export type HeadToHeadSeasonScope = {
+  characterId: string;
+  startDate: string;
+  endDate: string;
+};
+
 export type HeadToHeadPageVariantProps = {
   columns: ColumnDef<typeof sortingTableFeatures, HeadToHeadRecord>[];
   emptyDescriptionKey: string;
@@ -38,6 +45,7 @@ export type HeadToHeadPageVariantProps = {
   showRatingDelta?: boolean;
   titleKey: string;
   trailingSkeletonColumns?: number;
+  season?: HeadToHeadSeasonScope;
 };
 
 type HeadToHeadFilterPatch = {
@@ -53,9 +61,10 @@ export function useHeadToHeadPage({
   columns,
   matchmaking,
   showPhFilter,
+  season,
 }: Pick<
   HeadToHeadPageVariantProps,
-  "columns" | "matchmaking" | "showPhFilter"
+  "columns" | "matchmaking" | "showPhFilter" | "season"
 >) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -66,12 +75,14 @@ export function useHeadToHeadPage({
 
   const resolvePageState = () => ({
     pageIndex: getBattlePanelPageIndex(queryState.page),
-    currentCharacterId: normalizeBattlePanelCharacterId(queryState.characterId),
-    period: queryState.period ?? "30d",
+    currentCharacterId:
+      season?.characterId ??
+      normalizeBattlePanelCharacterId(queryState.characterId),
+    period: season ? ("all" as const) : (queryState.period ?? "30d"),
     minLevel: queryState.minLevel,
     maxLevel: queryState.maxLevel,
-    startDate: queryState.startDate ?? undefined,
-    endDate: queryState.endDate ?? undefined,
+    startDate: season?.startDate ?? queryState.startDate ?? undefined,
+    endDate: season?.endDate ?? queryState.endDate ?? undefined,
     ph: showPhFilter ? (queryState.ph ?? undefined) : undefined,
     cursor: queryState.cursor ?? undefined,
     search: queryState.search ?? undefined,
@@ -159,17 +170,28 @@ export function useHeadToHeadPage({
     ph: nextPh,
     search: nextSearch,
   }: HeadToHeadFilterPatch) => {
-    void setQueryState({
+    const filters = {
       ...resetBattlePanelCursorPagination(),
-      characterId: characterId ?? null,
-      period: nextPeriod,
       minLevel: nextMinLevel ?? 1,
       maxLevel: nextMaxLevel ?? 500,
-      startDate: startDate ?? null,
-      endDate: endDate ?? null,
       ph: showPhFilter ? (nextPh ?? null) : null,
       matchmaking: null,
       search: nextSearch ?? null,
+    };
+
+    // A season keeps its character and dates out of the address.
+    if (season) {
+      void setQueryState(filters);
+
+      return;
+    }
+
+    void setQueryState({
+      ...filters,
+      characterId: characterId ?? null,
+      period: nextPeriod,
+      startDate: startDate ?? null,
+      endDate: endDate ?? null,
     });
   };
 
@@ -293,11 +315,17 @@ export function useHeadToHeadPage({
     ...filterState,
     selectedWarriorsCount: selectedWarriors.length,
     translate: t,
-  }).map((chip) => ({
-    ...chip,
-    onRemove: () =>
-      applyFilterState(removeHeadToHeadFilter(filterState, chip.id)),
-  }));
+  })
+    // The character has its own picker in the bar, and a season fixes the
+    // dates, so neither is a chip to clear.
+    .filter(
+      (chip) => chip.id !== "character" && !(season && chip.id === "period"),
+    )
+    .map((chip) => ({
+      ...chip,
+      onRemove: () =>
+        applyFilterState(removeHeadToHeadFilter(filterState, chip.id)),
+    }));
 
   return {
     currentCharacterId,

@@ -18,6 +18,11 @@ export const BattlePanelLayout = () => {
       href: ROUTES.user.battlePanel.statistics,
     },
     {
+      id: "opponents",
+      label: t("battlePanel.navigation.opponents"),
+      href: ROUTES.user.battlePanel.opponents,
+    },
+    {
       id: "abyss",
       label: t("battlePanel.navigation.abyss"),
       href: ROUTES.user.battlePanel.abyss,
