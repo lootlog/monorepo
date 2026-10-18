@@ -18,7 +18,6 @@ export type SettingsIconName =
   | "mapPin"
   | "volume2"
   | "keyboard"
-  | "flaskConical"
   | "activity"
   | "info";
 
@@ -554,26 +553,6 @@ const MANIFEST = [
             id: "hotkeys",
             labelKey: "settings.hotkeys.title",
             settingKeys: ["controls.hotkeys"],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "experimental",
-    labelKey: "settings.domains.experimental",
-    icon: "flaskConical",
-    subsections: [
-      {
-        id: "experimental",
-        labelKey: "settings.subsections.experimentalFeatures",
-        controls: [
-          {
-            id: "air-tags",
-            labelKey: "settings.experimental.airTagsLabel",
-            descriptionKey: "settings.experimental.airTagsDescription",
-            aliases: ["airtag", "widoczność"],
-            settingKeys: ["gameData.airTags"],
           },
         ],
       },

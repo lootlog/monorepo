@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { formatLevel } from "@lootlog/domain/profession";
 import {
   getWhoIsHereRelationColor,
   startPrivateMessage,
@@ -8,6 +9,11 @@ import type { WhoIsHereAirTagEnemy } from "./who-is-here-air-tag-enemies";
 /** Game default for clan enemies, used until the game reports the player's colour. */
 const FALLBACK_ENEMY_COLOR = "#fc3e40";
 
+/**
+ * A row built from the game's own "one-other" classes, so it looks like the
+ * native rows above it: the relation colour, the AFK icon and the level on
+ * the right. The age stands where native rows show the battle icon.
+ */
 export function WhoIsHereAirTagRow({
   enemy,
   now,
@@ -21,33 +27,37 @@ export function WhoIsHereAirTagRow({
     getWhoIsHereRelationColor(enemy.targetId, enemy.effectiveRelation) ??
     FALLBACK_ENEMY_COLOR;
 
+  const seenSeconds = Math.max(0, Math.floor((now - enemy.observedAt) / 1_000));
+
   // Like a native row, a click starts a private message.
   return (
     <button
       type="button"
       onClick={() => startPrivateMessage(enemy.nickname)}
-      className="ll-custom-cursor-pointer ll:flex ll:w-full ll:min-w-0 ll:items-baseline ll:gap-1 ll:border-0 ll:bg-transparent ll:px-1 ll:py-0.5 ll:text-left ll:text-[11px] ll:text-foreground ll:hover:bg-white/10 ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring"
+      title={
+        enemy.clan ? `${enemy.nickname} · ${enemy.clan.name}` : enemy.nickname
+      }
+      className="one-other tw-list-item ll:block ll:w-full ll:border-0 ll:text-left ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring"
     >
-      <span className="ll:truncate ll:font-semibold" style={{ color }}>
-        {enemy.nickname}
-      </span>
-      {enemy.lvl !== undefined && (
-        <span className="ll:shrink-0">({enemy.lvl})</span>
-      )}
-      {enemy.clan && (
-        <span className="ll:truncate ll:text-muted-foreground">
-          {enemy.clan.name}
+      <span className="center" style={{ color }}>
+        <span className="name">
+          <span className="inner ll:block">{enemy.nickname}</span>
         </span>
-      )}
-      {enemy.stasis && (
-        <span className="ll:shrink-0 ll:text-orange-400">
-          {t("airTags.afk")}
+        <span className="icons">
+          {enemy.stasis && (
+            <span
+              role="img"
+              aria-label={t("airTags.afk")}
+              className="stasis active"
+            />
+          )}
+          <span className="ll:pl-1 ll:font-normal ll:text-muted-foreground">
+            {t("airTags.seenAgo", { seconds: seenSeconds })}
+          </span>
         </span>
-      )}
-      <span className="ll:ml-auto ll:shrink-0 ll:text-muted-foreground">
-        {t("airTags.seenSeconds", {
-          seconds: Math.max(0, Math.floor((now - enemy.observedAt) / 1_000)),
-        })}
+        {enemy.lvl !== undefined && (
+          <span className="lvl">{formatLevel(enemy.lvl, enemy.prof)}</span>
+        )}
       </span>
     </button>
   );

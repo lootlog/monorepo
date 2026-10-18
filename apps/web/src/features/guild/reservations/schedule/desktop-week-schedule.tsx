@@ -2,7 +2,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   DAYS,
   HEADER_HEIGHT,
@@ -10,9 +10,13 @@ import {
   LABEL_COLUMN_WIDTH,
   MIN_ROW_HEIGHT,
   SCHEDULE_BAR_HEIGHT,
+  SCHEDULE_HALF_HOUR_RULE_CLASS,
+  SCHEDULE_HOUR_LABEL_CLASS,
+  SCHEDULE_PAST_CLASS,
 } from "./constants";
 import { isEventInsideElement } from "./is-event-inside-element";
 import { ReservationBlock } from "./reservation-block";
+import { ScheduleNowLine } from "./schedule-now-line";
 import {
   clampReservationEndDate,
   isReservationStartSelectable,
@@ -21,6 +25,16 @@ import {
   useDesktopWeekSelection,
   type DesktopWeekScheduleProps,
 } from "./use-desktop-week-selection";
+
+/**
+ * A day column's horizontal position, for overlays laid over the grid. They
+ * are absolute, not grid items, which would take cells from the auto-placed
+ * hour slots and shift every row after them.
+ */
+const getDayColumnStyle = (day: number) => ({
+  left: `calc(${(day / DAYS.length) * 100}% + ${LABEL_COLUMN_WIDTH * (1 - day / DAYS.length)}px)`,
+  width: `calc(${100 / DAYS.length}% - ${LABEL_COLUMN_WIDTH / DAYS.length}px)`,
+});
 
 // The day headings pin under the schedule bar, which pins under the app bar.
 const dayHeadingTop = `calc(var(--page-sticky-top) + ${SCHEDULE_BAR_HEIGHT})`;
@@ -52,7 +66,6 @@ export function DesktopWeekSchedule({
     selection,
     pointFromDate,
     finishSelection,
-    now,
     nowDay,
     nowTop,
     selectionStyles,
@@ -65,6 +78,21 @@ export function DesktopWeekSchedule({
     onReservationCancel,
     cancellingReservationId,
   });
+
+  // The slot under the mouse: a line marks where a reservation would start
+  // across the week, and the day's column is lit, so both axes read at once.
+  const [hoverPoint, setHoverPoint] = useState<{
+    day: number;
+    minutes: number;
+  } | null>(null);
+
+  const hoverTop = hoverPoint
+    ? HEADER_HEIGHT + (hoverPoint.minutes / 60) * MIN_ROW_HEIGHT
+    : 0;
+
+  const hoverTime = hoverPoint
+    ? `${String(Math.floor(hoverPoint.minutes / 60)).padStart(2, "0")}:${String(hoverPoint.minutes % 60).padStart(2, "0")}`
+    : "";
 
   return (
     <ScrollArea data-under-top-bar className="min-h-0 flex-1 select-none">
@@ -111,11 +139,26 @@ export function DesktopWeekSchedule({
             event.target instanceof Element &&
             event.target.closest(".reservation-card") !== null;
 
-          setIsPointerOverUnavailableSlot(
+          const isUnavailable =
+            point !== null &&
+            !isReservationStartSelectable(dateFromPoint(point));
+
+          setIsPointerOverUnavailableSlot(!isOverReservation && isUnavailable);
+
+          const nextHover =
+            event.pointerType === "mouse" &&
+            point &&
             !isOverReservation &&
-              point !== null &&
-              !isReservationStartSelectable(dateFromPoint(point)),
-          );
+            !isUnavailable
+              ? point
+              : null;
+
+          if (
+            nextHover?.day !== hoverPoint?.day ||
+            nextHover?.minutes !== hoverPoint?.minutes
+          ) {
+            setHoverPoint(nextHover);
+          }
 
           if (!selection || !point) return;
           const anchorDate = dateFromPoint(selection.anchor);
@@ -140,7 +183,10 @@ export function DesktopWeekSchedule({
 
           finishSelection();
         }}
-        onPointerLeave={() => setIsPointerOverUnavailableSlot(false)}
+        onPointerLeave={() => {
+          setIsPointerOverUnavailableSlot(false);
+          setHoverPoint(null);
+        }}
         onPointerCancel={() => {
           setSelection(null);
           suppressSelectionRef.current = false;
@@ -154,24 +200,28 @@ export function DesktopWeekSchedule({
         {DAYS.map((_, index) => {
           const date = new Date(weekStart);
           date.setDate(date.getDate() + index);
-          const isToday = date.toDateString() === now.toDateString();
+          const isToday = index === nowDay;
 
           return (
             <div
               key={date.toISOString()}
-              className={cn(
-                "sticky z-30 flex flex-col items-center justify-center border-b border-r bg-background",
-                isToday && "border-b-primary",
-              )}
+              className="sticky z-30 flex flex-col items-center justify-center gap-0.5 border-b border-r bg-background"
               style={{ top: dayHeadingTop }}
             >
-              <span className="text-xs capitalize text-muted-foreground">
+              <span
+                className={cn(
+                  "text-xs text-muted-foreground first-letter:uppercase",
+                  isToday && "font-medium text-primary",
+                  hoverPoint?.day === index && !isToday && "text-foreground",
+                )}
+              >
                 {format(date, "EEE", { locale: pl })}
               </span>
               <span
+                aria-current={isToday ? "date" : undefined}
                 className={cn(
-                  "text-sm font-semibold",
-                  isToday && "text-primary",
+                  "flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums",
+                  isToday && "bg-primary text-primary-foreground",
                 )}
               >
                 {format(date, "d")}
@@ -183,7 +233,10 @@ export function DesktopWeekSchedule({
         {HOURS.flatMap((hour) => [
           <div
             key={`label-${hour}`}
-            className="sticky left-0 z-10 flex items-start justify-center border-b border-r bg-background pt-1 text-[10px] text-muted-foreground"
+            className={cn(
+              "sticky left-0 z-10 border-b border-r bg-background",
+              SCHEDULE_HOUR_LABEL_CLASS,
+            )}
           >
             {hour}
           </div>,
@@ -191,21 +244,69 @@ export function DesktopWeekSchedule({
             <div
               key={`${hour}-${dayIndex}`}
               className={cn(
-                "border-b border-r",
-                dayIndex % 2 === 1 && "bg-muted/20",
+                "relative border-b border-r",
+                SCHEDULE_HALF_HOUR_RULE_CLASS,
               )}
             />
           )),
         ])}
 
+        {/* Days and hours that have passed, where no reservation can start. */}
+        {DAYS.map((_, dayIndex) =>
+          dayIndex > nowDay ? null : (
+            <div
+              key={`past-${dayIndex}`}
+              aria-hidden="true"
+              className={cn(
+                "pointer-events-none absolute",
+                SCHEDULE_PAST_CLASS,
+              )}
+              style={{
+                ...getDayColumnStyle(dayIndex),
+                top: HEADER_HEIGHT,
+                height:
+                  dayIndex === nowDay
+                    ? nowTop - HEADER_HEIGHT
+                    : HOURS.length * MIN_ROW_HEIGHT,
+              }}
+            />
+          ),
+        )}
+
+        {hoverPoint && (
+          <>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute bg-foreground/[0.035]"
+              style={{
+                ...getDayColumnStyle(hoverPoint.day),
+                top: HEADER_HEIGHT,
+                height: HOURS.length * MIN_ROW_HEIGHT,
+              }}
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute right-0 z-20 border-t border-dashed border-primary/60"
+              style={{ top: hoverTop, left: LABEL_COLUMN_WIDTH }}
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute left-0 z-20 flex -translate-y-1/2 justify-end pr-1"
+              style={{ top: hoverTop, width: LABEL_COLUMN_WIDTH }}
+            >
+              <span className="rounded-sm bg-primary px-1 text-[11px] leading-4 font-medium tabular-nums text-primary-foreground">
+                {hoverTime}
+              </span>
+            </div>
+          </>
+        )}
+
         {isNowVisible && (
-          <div
+          <ScheduleNowLine
             ref={nowRef}
-            className="pointer-events-none absolute z-20 h-px bg-destructive"
             style={{
               top: nowTop,
-              left: `calc(${(nowDay / DAYS.length) * 100}% + ${LABEL_COLUMN_WIDTH * (1 - nowDay / DAYS.length)}px)`,
-              width: `calc(${100 / DAYS.length}% - ${LABEL_COLUMN_WIDTH / DAYS.length}px)`,
+              ...getDayColumnStyle(nowDay),
             }}
           />
         )}

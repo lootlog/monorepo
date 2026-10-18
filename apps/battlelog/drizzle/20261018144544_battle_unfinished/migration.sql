@@ -1,0 +1,1 @@
+ALTER TABLE "battles" ADD COLUMN "unfinished" boolean DEFAULT false NOT NULL;

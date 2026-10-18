@@ -329,6 +329,7 @@ export function ReservationsSchedule() {
         onOpenChange={(open) => !open && setCreateRange(null)}
         guildId={guildId}
         spotId={spotId}
+        spotName={spotName}
         settings={settings}
         initialStartsAt={createRange?.startsAt}
         initialEndsAt={createRange?.endsAt}

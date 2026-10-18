@@ -29,7 +29,7 @@ describe("selectUnseenAirTagEnemies", () => {
       {
         now: 5_000,
         ttlMs: 10_000,
-        isShownByGame: (targetId) => targetId === "visible",
+        isSeenByHero: ({ targetId }) => targetId === "visible",
       },
     );
 

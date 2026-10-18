@@ -109,7 +109,8 @@
     "results": {
       "won": "Wygrana",
       "lost": "Przegrana",
-      "flee": "Ucieczka"
+      "flee": "Ucieczka",
+      "unfinished": "Niedokończona"
     }
   },
   "bulk": {

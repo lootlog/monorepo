@@ -29,6 +29,10 @@ export const getBattleTeams = (battle: Battle) => {
 };
 
 export const getBattleResult = (battle: Battle): BattleResultStatusValue => {
+  if (battle.unfinished) {
+    return "unfinished";
+  }
+
   if (battle.hasFlee) {
     return "flee";
   }

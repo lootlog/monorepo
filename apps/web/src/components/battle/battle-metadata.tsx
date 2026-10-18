@@ -7,6 +7,7 @@ import {
 import {
   Award,
   Calendar,
+  CircleDashed,
   Clock,
   Earth,
   Lock,
@@ -86,6 +87,15 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({ battle }) => {
       icon: Award,
       label: t("battleUi.metadata.honorPointsLabel", { value: warrior.ph }),
       tooltip: t("battleUi.metadata.honorPointsTooltip"),
+    });
+  }
+
+  if (battle.unfinished) {
+    items.push({
+      key: "unfinished",
+      icon: CircleDashed,
+      label: t("battleUi.metadata.unfinished"),
+      tooltip: t("battleUi.metadata.unfinishedTooltip"),
     });
   }
 

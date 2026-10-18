@@ -137,6 +137,8 @@ export const makeBattleAnalyticsQuery = (
     return and(
       buildCombatProfileWhere(battlesRef, params),
       eq(battlesRef.type, "1v1"),
+      // An unfinished battle has no result to count.
+      eq(battlesRef.unfinished, false),
       params.hasFlee !== undefined
         ? eq(battlesRef.hasFlee, params.hasFlee)
         : undefined,

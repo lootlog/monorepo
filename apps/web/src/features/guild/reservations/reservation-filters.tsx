@@ -12,9 +12,12 @@ type ReservationFiltersProps = {
   onChange: (value: ReservationFilter) => void;
 };
 
-const FILTERS = ["available", "pinned", "partners"] as const;
+const FILTERS = ["all", "available", "pinned", "partners"] as const;
 
-/** Pills that narrow the spots to one kind; pressing the active one shows all. */
+/**
+ * Pills that show every spot or narrow them to one kind; pressing the active
+ * one shows every spot again.
+ */
 export function ReservationFilters({
   value,
   onChange,
@@ -26,7 +29,7 @@ export function ReservationFilters({
       variant="outline"
       size="sm"
       spacing={1.5}
-      value={value === "all" ? [] : [value]}
+      value={[value]}
       onValueChange={(values) =>
         onChange(FILTERS.find((filter) => filter === values[0]) ?? "all")
       }

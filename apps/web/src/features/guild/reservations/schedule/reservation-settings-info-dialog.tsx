@@ -2,19 +2,15 @@ import {
   CalendarClock,
   Clock3,
   Gauge,
+  Info,
   ListChecks,
   Ruler,
   ShieldAlert,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ReservationSettings } from "@lootlog/domain/reservations";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@lootlog/ui/components/dialog";
+import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 
 type ReservationSettingsInfoDialogProps = {
   open: boolean;
@@ -92,18 +88,15 @@ export const ReservationSettingsInfoDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
-        <DialogHeader className="pb-4">
-          <DialogTitle>
-            {t("reservations.schedule.infoDialog.title")}
-          </DialogTitle>
-          <DialogDescription>
-            {t("reservations.schedule.infoDialog.description")}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex flex-col gap-4 px-4 pb-5">
+      <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-xl">
+        <IconDialogHeader
+          icon={Info}
+          title={t("reservations.schedule.infoDialog.title")}
+          description={t("reservations.schedule.infoDialog.description")}
+        />
+        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto p-5">
           {/* Laid out as the reservation's own details are. */}
-          <dl className="divide-y border-y text-sm">
+          <dl className="-mt-3 divide-y text-sm">
             {sections.map(({ icon: Icon, title, value, description }) => (
               <div
                 key={title}

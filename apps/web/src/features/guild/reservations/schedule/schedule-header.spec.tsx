@@ -32,10 +32,12 @@ afterEach(() => {
 
 const renderHeader = async ({
   canManageReservationSettings = true,
+  date = new Date(2026, 7, 26),
   isCompact,
   isFindingNearestFreeSlot = false,
 }: {
   canManageReservationSettings?: boolean;
+  date?: Date;
   isCompact: boolean;
   isFindingNearestFreeSlot?: boolean;
 }) => {
@@ -45,7 +47,7 @@ const renderHeader = async ({
 
   const router = createOrganizationTestRouter(
     <ScheduleHeader
-      date={new Date(2026, 7, 26)}
+      date={date}
       isCompact={isCompact}
       settings={DEFAULT_RESERVATION_SETTINGS}
       settingsHref="/guild/settings/reservations"
@@ -72,7 +74,7 @@ const renderHeader = async ({
 };
 
 describe("ScheduleHeader", () => {
-  it("moves every compact action into a rounded floating toolbar", async () => {
+  it("moves every compact action into the floating dock", async () => {
     const {
       container,
       router,
@@ -87,43 +89,26 @@ describe("ScheduleHeader", () => {
       name: "Akcje kalendarza rezerwacji",
     });
 
-    const dock = toolbar.closest('[data-slot="schedule-action-dock"]');
-
     expect(header?.contains(toolbar)).toBe(false);
-    expect(dock?.className).toContain("pointer-events-none");
-    expect(dock?.className).toContain("absolute");
-    expect(dock?.className).toContain("inset-x-0");
-    expect(dock?.className).toContain("bottom-0");
-    expect(dock?.className).toContain(
-      "pb-[max(0.75rem,env(safe-area-inset-bottom))]",
-    );
-    expect(toolbar.className).toContain("pointer-events-auto");
-    expect(toolbar.className).toContain("rounded-xl");
-    expect(toolbar.className).toContain("border");
-    expect(toolbar.className).toContain("shadow-lg");
+    expect(
+      toolbar.closest('[data-slot="schedule-action-dock"]'),
+    ).not.toBeNull();
 
     const actions = within(toolbar).getAllByRole("button");
     expect(actions.map((action) => action.getAttribute("aria-label"))).toEqual([
       "Dzisiaj",
-      "Znajdź najbliższy wolny termin",
       "Zasady rezerwacji",
       "Ustawienia rezerwacji",
+      "Znajdź najbliższy wolny termin",
       "Dodaj rezerwację",
     ]);
 
-    const [
-      todayAction,
-      nearestSlotAction,
-      _infoAction,
-      settingsAction,
-      addAction,
-    ] = actions;
+    const [todayAction, , settingsAction, nearestSlotAction, addAction] =
+      actions;
 
     if (!todayAction || !nearestSlotAction || !settingsAction || !addAction) {
       throw new Error("Expected every compact schedule action");
     }
-
-    expect(todayAction.className).not.toContain("border border-input");
 
     fireEvent.click(todayAction);
     fireEvent.click(nearestSlotAction);
@@ -139,7 +124,7 @@ describe("ScheduleHeader", () => {
     expect(onAddReservation).toHaveBeenCalledOnce();
   });
 
-  it("keeps the toolbar in the header for the wide layout", async () => {
+  it("keeps the actions in the header for the wide layout, with today beside the week arrows", async () => {
     const { container } = await renderHeader({ isCompact: false });
     const header = container.querySelector("header");
 
@@ -149,11 +134,21 @@ describe("ScheduleHeader", () => {
 
     expect(header?.contains(toolbar)).toBe(true);
     expect(
-      within(toolbar).getByRole("button", { name: "Dzisiaj" }).className,
-    ).toContain("border border-input");
+      within(
+        container.querySelector('[data-slot="schedule-date-navigation"]')!,
+      ).getByRole("button", { name: "Dzisiaj" }),
+    ).not.toBeNull();
     expect(
       container.querySelector('[data-slot="schedule-action-dock"]'),
     ).toBeNull();
+  });
+
+  it("disables today while the visible week already holds it", async () => {
+    await renderHeader({ date: new Date(), isCompact: false });
+
+    expect(
+      screen.getByRole("button", { name: "Dzisiaj" }).hasAttribute("disabled"),
+    ).toBe(true);
   });
 
   it("announces date changes without changing the navigation controls", async () => {

@@ -96,4 +96,5 @@ Object.defineProperty(globalThis, "localStorage", {
 
 afterEach(() => {
   localStorageMock.clear();
+  sessionStorage.clear();
 });

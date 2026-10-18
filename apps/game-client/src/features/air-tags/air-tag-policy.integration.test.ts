@@ -66,7 +66,7 @@ it("keeps authorized air targets while coalescing grants and excludes revoked ta
       accessPolicy: initial,
       changes: diffAccessPolicies(makePolicy([]), initial),
     });
-    runtime.configure({ connected: true, enabled: true, joined: true });
+    runtime.configure({ connected: true, joined: true });
     await test.acknowledge();
     expect(
       airTagReceiveController.getRenderableTargets(Date.now(), 10_000),

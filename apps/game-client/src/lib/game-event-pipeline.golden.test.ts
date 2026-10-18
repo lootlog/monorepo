@@ -258,7 +258,6 @@ function resetPipelineState(): void {
     battleState: "idle",
     battleWarriors: {},
     events: [],
-    lastBattleHash: "",
     lastKillHash: "",
   });
   useBattlePanelStore.setState({ isBattleCollectionEnabled: true });
@@ -847,7 +846,7 @@ describe("game event pipeline golden replay", () => {
     secondDispatcher.cleanup();
   });
 
-  it("accepts an identical battle after the semantic replay window expires", async () => {
+  it("never resubmits a compact replay of a submitted battle, however late", async () => {
     const dateNow = vi
       .spyOn(Date, "now")
       .mockReturnValue(Date.parse("2026-07-26T18:52:57.000Z"));
@@ -869,7 +868,9 @@ describe("game event pipeline golden replay", () => {
       ev: 1_785_091_986.4,
     });
 
-    await vi.waitFor(() => expect(requestsFor("/battles")).toHaveLength(2));
+    runtimeEventPipeline.flush();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(requestsFor("/battles")).toHaveLength(1);
 
     dispatcher.cleanup();
     dateNow.mockRestore();

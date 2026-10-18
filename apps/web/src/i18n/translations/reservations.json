@@ -9,6 +9,7 @@
   },
   "filters": {
     "label": "Filtry expowisk",
+    "all": "Wszystkie",
     "available": "Wolne teraz",
     "pinned": "Przypięte",
     "partners": "Sojusz"
@@ -21,13 +22,13 @@
     "description": "Sprawdź połączenie i spróbuj ponownie."
   },
   "card": {
-    "occupied": "Zajęte teraz",
-    "next": "Najbliższa rezerwacja",
-    "noneDescription": "Kliknij, aby wybrać termin",
-    "open": "Otwórz rezerwacje: {{name}}",
+    "occupiedUntil": "Zajęte do {{time}}",
+    "next": "Następna rezerwacja",
+    "schedule": "Terminy",
+    "open": "Terminy expowiska {{name}}",
     "freeNow": "Wolne teraz",
     "freeUntil": "Wolne do {{time}}",
-    "level": "Poziom {{level}}",
+    "level": "{{level}} lvl",
     "partnerBadge": "Sojusz",
     "pin": "Przypnij expowisko {{name}}",
     "unpin": "Odepnij expowisko {{name}}"
@@ -54,7 +55,8 @@
       "nextWeek": "Następny tydzień",
       "previousDay": "Poprzedni dzień",
       "nextDay": "Następny dzień",
-      "today": "Dzisiaj"
+      "today": "Dzisiaj",
+      "rules": "Zasady"
     },
     "infoDialog": {
       "title": "Zasady rezerwacji",
@@ -99,6 +101,8 @@
     },
     "dialog": {
       "title": "Dodaj rezerwację",
+      "description": "Expowisko {{spot}}",
+      "submit": "Zarezerwuj",
       "startDate": "Data rozpoczęcia",
       "startDatePlaceholder": "Wybierz początek rezerwacji",
       "endDate": "Data zakończenia",
@@ -147,7 +151,7 @@
   },
   "details": {
     "title": "Szczegóły rezerwacji",
-    "description": "Szczegóły rezerwacji na {{spot}}",
+    "description": "Expowisko {{spot}}",
     "time": "Termin",
     "reminder": "Przypomnienie",
     "comment": "Komentarz",

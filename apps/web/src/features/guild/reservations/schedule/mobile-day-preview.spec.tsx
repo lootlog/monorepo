@@ -2,6 +2,7 @@
 
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { SCHEDULE_PAST_CLASS } from "./constants";
 import { MobileDayPreview } from "./mobile-day-preview";
 
 afterEach(() => {
@@ -30,7 +31,9 @@ describe("MobileDayPreview", () => {
       />,
     );
 
-    expect(getHourBackground(container, 8)?.className).toContain("bg-muted/20");
+    expect(getHourBackground(container, 8)?.className).toContain(
+      SCHEDULE_PAST_CLASS,
+    );
 
     rerender(
       <MobileDayPreview
@@ -40,10 +43,10 @@ describe("MobileDayPreview", () => {
       />,
     );
     expect(getHourBackground(container, 11)?.className).toContain(
-      "bg-muted/20",
+      SCHEDULE_PAST_CLASS,
     );
-    expect(getHourBackground(container, 13)?.className).toContain(
-      "bg-background",
+    expect(getHourBackground(container, 13)?.className).not.toContain(
+      SCHEDULE_PAST_CLASS,
     );
   });
 });

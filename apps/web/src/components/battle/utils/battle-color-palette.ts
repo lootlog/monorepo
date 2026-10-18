@@ -132,6 +132,7 @@ export const BATTLE_BADGE_COLORS = {
     won: "border-green-500/25 bg-green-500/10 text-green-400",
     lost: "border-red-500/25 bg-red-500/10 text-red-400",
     flee: "border-yellow-500/25 bg-yellow-500/10 text-yellow-400",
+    unfinished: "border-border bg-muted/40 text-muted-foreground",
   },
 } as const;
 
