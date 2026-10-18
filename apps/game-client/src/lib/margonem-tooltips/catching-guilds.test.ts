@@ -250,4 +250,19 @@ describe("appendCatchingGuildsTooltipSection", () => {
       }),
     ).toContain("Nie masz dostępu do graczy online");
   });
+
+  it("keeps the last presence answer while owners refresh", () => {
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    useOnlineCharacterOwnersStore.getState().setPresenceResponse({});
+    useOnlineCharacterOwnersStore.getState().setLoading();
+
+    expect(
+      appendCatchingGuildsTooltipSection({
+        baseHtml: "<div>Other</div>",
+        character: createOther(),
+        interface: "ni",
+        currentHtml: "<div>Other</div>",
+      }),
+    ).toContain("Nie gra z Twoim Lootlogiem");
+  });
 });
