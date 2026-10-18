@@ -22,13 +22,13 @@
     "description": "Sprawdź połączenie i spróbuj ponownie."
   },
   "card": {
-    "occupied": "Zajęte teraz",
-    "next": "Najbliższa rezerwacja",
-    "noneDescription": "Kliknij, aby wybrać termin",
-    "open": "Otwórz rezerwacje: {{name}}",
+    "occupiedUntil": "Zajęte do {{time}}",
+    "next": "Następna rezerwacja",
+    "schedule": "Terminy",
+    "open": "Terminy expowiska {{name}}",
     "freeNow": "Wolne teraz",
     "freeUntil": "Wolne do {{time}}",
-    "level": "Poziom {{level}}",
+    "level": "{{level}} lvl",
     "partnerBadge": "Sojusz",
     "pin": "Przypnij expowisko {{name}}",
     "unpin": "Odepnij expowisko {{name}}"
