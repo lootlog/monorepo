@@ -32,7 +32,6 @@ function createOther(): Other {
       nick: "Other",
       prof: "w",
     },
-    createStrTip: () => "<div>Other</div>",
     tipUpdate: vi.fn<() => void>(),
   };
 
