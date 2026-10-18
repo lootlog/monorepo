@@ -167,7 +167,12 @@ export const useOnlineCharacterOwnersStore =
         ),
         status: "success",
       }),
-    setLoading: () => set({ status: "loading" }),
+    // A refresh keeps the loaded owners, so it keeps their answer too:
+    // players missing from them still do not play with this Lootlog.
+    setLoading: () =>
+      set((state) =>
+        state.status === "success" ? state : { status: "loading" },
+      ),
     upsertPresence: (presence, guildMembersByUserId) =>
       set((state) => {
         const owner = toOwner(presence, guildMembersByUserId);
