@@ -125,7 +125,7 @@ export const LootsList = () => {
       <ScrollArea
         id="loots-list"
         data-under-top-bar
-        className="h-24 flex-1 relative"
+        className="min-h-0 flex-1"
         ref={setScrollElement}
         onScroll={resumeReconciliation}
       >
