@@ -22,6 +22,15 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 import { createKill, createBattle } from "@/api";
 import { toast } from "sonner";
 import { getFixedT } from "@/i18n/get-fixed-t";
+import {
+  getErrorStatusCode,
+  shouldRetryLoggedActionStatus,
+} from "@/lib/logs/log-actions";
+import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
+import {
+  claimBattleSubmission,
+  releaseBattleSubmission,
+} from "./battle-submission-ledger";
 
 const TRACKABLE_NPC_TYPES: ReadonlySet<NpcType> = new Set([
   NpcType.ELITE2,
@@ -30,8 +39,6 @@ const TRACKABLE_NPC_TYPES: ReadonlySet<NpcType> = new Set([
   NpcType.COLOSSUS,
   NpcType.TITAN,
 ]);
-
-const BATTLE_REPLAY_WINDOW_MS = 10_000;
 
 type BattleStoreState = ReturnType<typeof useBattleStore.getState>;
 
@@ -123,8 +130,22 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
   };
 };
 
+/**
+ * A player who dies in a group battle may close it while the others fight on.
+ * Margonem then sends `close` and never `endBattle`, so the capture so far is
+ * submitted as an unfinished battle. A `close` that arrives with `init` belongs
+ * to a battle that is already over.
+ */
+const getBattleEnding = (
+  battleData: BattleData,
+  startsBattle: boolean,
+): "ended" | "left" | null => {
+  if (battleData.endBattle === 1) return "ended";
+
+  return battleData.close !== undefined && !startsBattle ? "left" : null;
+};
+
 export class BattleEventProcessor {
-  private readonly recentBattleReplayKeys = new Map<string, number>();
   private observedTeams = new Set<number>();
   private hasMultipleTeams = false;
   // NPC battles are never submitted, so their packets are not worth capturing.
@@ -153,16 +174,11 @@ export class BattleEventProcessor {
     });
 
     const battleState = startsBattle ? "in-battle" : stateAtIngress.battleState;
-    const endsBattle = event.f.endBattle === 1 && battleState === "in-battle";
 
-    // A player who dies in a group battle may close it while the others fight
-    // on. Margonem then sends `close` and never `endBattle`, so the capture so
-    // far is submitted as an unfinished battle.
-    const leavesBattle =
-      !endsBattle &&
-      !startsBattle &&
-      event.f.close !== undefined &&
-      battleState === "in-battle";
+    const ending =
+      battleState === "in-battle"
+        ? getBattleEnding(event.f, startsBattle)
+        : null;
 
     if (
       battleState === "in-battle" &&
@@ -172,7 +188,7 @@ export class BattleEventProcessor {
       battleStore.addEvent(event);
     }
 
-    if (!endsBattle && !leavesBattle) {
+    if (!ending) {
       battleStore.applyBatch({
         battleState: startsBattle ? "in-battle" : undefined,
         battleWarriors: startsBattle || event.f.w ? battleWarriors : undefined,
@@ -196,34 +212,32 @@ export class BattleEventProcessor {
     const { deadNpcs, hasNpcInBattle, topNpc } =
       getNpcBattleSummary(battleWarriors);
 
-    const [killResult, battleResult] = await Promise.all([
+    const [killResult, battleIntent] = await Promise.all([
       // The NPCs of a battle that goes on without the player may still die.
       this.resolveKillIntent({
         deadNpcs,
         hasNpcInBattle,
         game,
         lastKillHash: stateAtIngress.lastKillHash,
-        topNpc: endsBattle ? topNpc : null,
+        topNpc: ending === "ended" ? topNpc : null,
       }),
       this.resolveBattleIntent({
         capture,
         hasNpcInBattle,
         hasMultipleTeams,
         game,
-        lastBattleHash: stateAtIngress.lastBattleHash,
       }),
     ]);
 
     if (endingGeneration === this.battleGeneration) {
-      battleStore.applyBatch({
-        lastBattleHash: battleResult.lastBattleHash,
-        lastKillHash: killResult.lastKillHash,
-      });
+      battleStore.applyBatch({ lastKillHash: killResult.lastKillHash });
     }
 
     this.submitIntents(
       killResult.intent,
-      this.deduplicateBattleIntent(battleResult.intent),
+      battleIntent && claimBattleSubmission(battleIntent.submissionId)
+        ? battleIntent
+        : null,
     );
   }
 
@@ -366,41 +380,29 @@ export class BattleEventProcessor {
     hasNpcInBattle: boolean;
     hasMultipleTeams: boolean;
     game: RuntimeGameSnapshot | null;
-    lastBattleHash: string | undefined;
-  }): Promise<{
-    intent: BattleIntent | null;
-    lastBattleHash: string | undefined;
-  }> {
-    if (!params.capture) {
-      return { intent: null, lastBattleHash: params.lastBattleHash };
-    }
+  }): Promise<BattleIntent | null> {
+    if (!params.capture) return null;
 
     if (params.capture.overflowed) {
       this.warnCaptureOverflow();
 
-      return { intent: null, lastBattleHash: params.lastBattleHash };
+      return null;
     }
 
     // Only multi-team battles without NPCs are submitted; decide that before
     // hashing and mapping the capture.
-    if (params.hasNpcInBattle || !params.hasMultipleTeams) {
-      return { intent: null, lastBattleHash: params.lastBattleHash };
-    }
+    if (params.hasNpcInBattle || !params.hasMultipleTeams) return null;
 
     const game = params.game;
 
-    if (!game) return { intent: null, lastBattleHash: params.lastBattleHash };
+    if (!game) return null;
 
     const { accountId, characterId } = game.hero;
     const { world } = game;
 
-    const battleHash = await createSHA256Hash(
-      JSON.stringify(params.capture.turns),
-    );
-
     const events = mapBattleEventsToPayload(params.capture.events);
 
-    if (!events) return { intent: null, lastBattleHash: battleHash };
+    if (!events) return null;
 
     const submissionId = await createSHA256Hash(
       JSON.stringify({
@@ -411,10 +413,7 @@ export class BattleEventProcessor {
       }),
     );
 
-    return {
-      intent: { accountId, characterId, submissionId, events, world },
-      lastBattleHash: battleHash,
-    };
+    return { accountId, characterId, submissionId, events, world };
   }
 
   private warnCaptureOverflow(): void {
@@ -423,17 +422,6 @@ export class BattleEventProcessor {
     console.warn(
       "[BattleEventProcessor] Battle capture exceeded its safety budget; skipping the partial payload.",
     );
-  }
-
-  private deduplicateBattleIntent(
-    intent: BattleIntent | null,
-  ): BattleIntent | null {
-    if (!intent) return null;
-
-    if (this.hasRecentBattleReplayKey(intent.submissionId)) return null;
-    this.recentBattleReplayKeys.set(intent.submissionId, Date.now());
-
-    return intent;
   }
 
   private submitIntents(
@@ -452,23 +440,21 @@ export class BattleEventProcessor {
           showBattleCreatedToast(response.battleId);
         })
         .catch((error) => {
+          // A battle that never reached the server may be sent by a repeat.
+          if (
+            shouldRetryLoggedActionStatus(
+              getErrorStatusCode(error),
+              GAME_EVENT_RETRY_OPTIONS,
+            )
+          ) {
+            releaseBattleSubmission(battleIntent.submissionId);
+          }
+
           console.warn(
             "[BattleEventProcessor] Failed to create battle:",
             error,
           );
         });
     }
-  }
-
-  private hasRecentBattleReplayKey(battleReplayKey: string): boolean {
-    const now = Date.now();
-
-    for (const [key, observedAt] of this.recentBattleReplayKeys) {
-      if (now - observedAt >= BATTLE_REPLAY_WINDOW_MS) {
-        this.recentBattleReplayKeys.delete(key);
-      }
-    }
-
-    return this.recentBattleReplayKeys.has(battleReplayKey);
   }
 }

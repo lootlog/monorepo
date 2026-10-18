@@ -67,8 +67,8 @@ export const createBattleTest = () => {
       ),
     kills: () =>
       requests.filter((request) => new URL(request.url).pathname === "/kills"),
-    fail: () => {
-      status = 400;
+    fail: (failureStatus = 400) => {
+      status = failureStatus;
     },
   };
 };
