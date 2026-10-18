@@ -1150,7 +1150,6 @@ function resolveEventRoutes(
 
   const eventDetail = `${routes.events}/${eventId}`;
   const eventRanking = `${eventDetail}/ranking`;
-  const eventCoordination = `${eventDetail}/coordination`;
 
   const eventBreadcrumb: Breadcrumb = {
     label: eventName ?? t("common.breadcrumbs.event"),
@@ -1249,19 +1248,6 @@ function resolveEventRoutes(
         { label: t("common.breadcrumbs.events"), path: routes.events },
         eventBreadcrumb,
         { label: t("common.breadcrumbs.ranking"), path: null },
-      ],
-      showBack: true,
-      backPath: eventDetail,
-    };
-  }
-
-  if (path === eventCoordination) {
-    return {
-      breadcrumbs: [
-        guildBreadcrumb,
-        { label: t("common.breadcrumbs.events"), path: routes.events },
-        eventBreadcrumb,
-        { label: t("common.breadcrumbs.coordination"), path: null },
       ],
       showBack: true,
       backPath: eventDetail,

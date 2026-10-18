@@ -185,54 +185,6 @@
   "actionsCard": {
     "subtitle": "Zarządzanie"
   },
-  "coordination": {
-    "trigger": "Koordynator",
-    "title": "Koordynator respów",
-    "description": "Priorytety okien, obsada map i szybkie akcje dla tego eventu.",
-    "empty": "Brak herosów do koordynowania.",
-    "error": "Nie udało się załadować koordynatora respów.",
-    "priority": {
-      "critical": "Pilne",
-      "warning": "Uwaga",
-      "ok": "Gotowe",
-      "idle": "Spokojnie"
-    },
-    "windowStatus": {
-      "open": "Okno",
-      "waiting": "Czeka",
-      "overdue": "Po czasie",
-      "none": "Brak timera"
-    },
-    "summary": {
-      "coverageLabel": "Pokrycie map",
-      "coveredMaps": "{{covered}}/{{total}} map",
-      "nextSpawnLabel": "Najbliższy respawn",
-      "noNextSpawn": "Brak"
-    },
-    "hero": {
-      "coverageShort": "{{covered}}/{{total}} map ({{percentage}}%)",
-      "moreGaps_one": "+{{count}} brak",
-      "moreGaps_few": "+{{count}} braki",
-      "moreGaps_many": "+{{count}} braków"
-    },
-    "actions": {
-      "openMaps": "Mapy",
-      "selfAssign": "Przypisz mnie",
-      "close_window": "Zamknij okno",
-      "assign_maps": "Uzupełnij obsadę",
-      "join_map": "Wejdź na mapę",
-      "wait": "Czekaj na okno",
-      "none": "Bez akcji"
-    },
-    "toasts": {
-      "selfAssignSuccess": "Przypisano Cię do mapy",
-      "selfAssignError": "Nie udało się przypisać do mapy"
-    },
-    "closeDialog": {
-      "title": "Zamknąć okno respawnu?",
-      "description": "Czy na pewno chcesz zamknąć okno respawnu dla „{{name}}”?"
-    }
-  },
   "confirmation": {
     "title": "Potwierdź udział",
     "description": "Potwierdź udział w obstawianiu, aby naliczyć punkty za te bicia.",
@@ -767,8 +719,7 @@
     "label": "Sekcje eventu",
     "overview": "Przegląd",
     "ranking": "Ranking",
-    "kills": "Historia bić",
-    "coordination": "Koordynator"
+    "kills": "Historia bić"
   },
   "score": {
     "place": "{{place}}. miejsce",

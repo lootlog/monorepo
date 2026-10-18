@@ -5,7 +5,6 @@ import {
   getEventsMonitoringControllerGetMapCoverageGapsQueryKey,
   getListEventMapsQueryKey,
 } from "@lootlog/client/main";
-import { invalidateEventCoordinationQuery } from "./invalidate-event-queries";
 
 export const isEventHeroGapPath = (
   path: string,
@@ -63,6 +62,4 @@ export function invalidateGapQueries(
       return path !== undefined && isEventHeroGapPath(path, guildId, eventId);
     },
   });
-
-  return invalidateEventCoordinationQuery(queryClient, guildId, eventId);
 }

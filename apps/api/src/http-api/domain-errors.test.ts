@@ -85,7 +85,6 @@ const unusedEvents = {
     updateEvent: unexpected,
   },
   monitoring: {
-    getCoordination: unexpected,
     getHeroCoverageGaps: unexpected,
     getMapCoverageGaps: unexpected,
     getActiveGapForMap: unexpected,

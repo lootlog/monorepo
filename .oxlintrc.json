@@ -813,26 +813,6 @@
       }
     },
     {
-      "files": [
-        "apps/api/src/events/coordination/event-coordination.service.ts"
-      ],
-      "rules": {
-        "anti-slop/no-unknown-parameters": [
-          "error",
-          {
-            "boundaryFunctions": ["extractNpcName"]
-          }
-        ],
-        "anti-slop/no-runtime-typeof": [
-          "error",
-          {
-            "allowInTypeGuards": true,
-            "boundaryFunctions": ["extractNpcName"]
-          }
-        ]
-      }
-    },
-    {
       "files": ["apps/api/src/notifications/notification-test-content.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [

@@ -6,7 +6,6 @@ import {
   getShowEventOverviewQueryKey,
 } from "@lootlog/client/main";
 import { invalidateRankingQueries } from "./invalidate-ranking-queries";
-import { invalidateEventCoordinationQuery } from "./invalidate-event-queries";
 
 const getEventHeroesPathPrefix = (guildId: string, eventId: string) =>
   `/guilds/${guildId}/events/${eventId}/heroes/`;
@@ -33,7 +32,6 @@ export function invalidateKillQueries(
   queryClient: QueryClient,
   guildId: string,
   eventId: string,
-  options: { invalidateCoordination?: boolean } = {},
 ) {
   queryClient.invalidateQueries({
     queryKey: getShowEventOverviewQueryKey({ guildId, eventId }),
@@ -54,8 +52,4 @@ export function invalidateKillQueries(
     }),
   });
   invalidateRankingQueries(queryClient, guildId, eventId);
-
-  if (options.invalidateCoordination !== false) {
-    return invalidateEventCoordinationQuery(queryClient, guildId, eventId);
-  }
 }

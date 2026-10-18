@@ -8,7 +8,6 @@ import {
   CloseRespawnWindowRequest,
   OpenRespawnWindowRequest,
 } from "#src/contracts/events/schemas";
-import type { EventCoordination } from "#src/events/coordination/event-coordination.service";
 import type { EventRespawn } from "#src/events/respawn/event-respawn.service";
 import type { EventPresenceStats } from "#src/events/monitoring/event-presence-stats";
 import { Effect } from "effect";
@@ -17,27 +16,12 @@ import type { EventGapReads } from "#src/events/monitoring/event-gap-reads";
 import type { EventRespawnCommands } from "#src/events/respawn/event-respawn-commands";
 
 export const makeEventsMonitoring = (
-  coordination: EventCoordination,
   presenceStats: EventPresenceStats,
   respawn: EventRespawn,
   eventAccess: EventAccess,
   gapReads: EventGapReads,
   respawnCommands: EventRespawnCommands,
 ) => ({
-  getCoordination(
-    guildData: { id: string },
-    eventId: string,
-    roles: Role[],
-    accessPolicy: AccessPolicy,
-  ) {
-    return coordination.getCoordination(
-      guildData.id,
-      eventId,
-      roles,
-      accessPolicy,
-    );
-  },
-
   getHeroCoverageGaps(
     guildData: { id: string },
     eventId: string,
