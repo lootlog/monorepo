@@ -4,7 +4,6 @@ import { LootFiltersRail } from "@/features/guild/loots-list/components/loots-fi
 import type { LootFilterSectionKey } from "@/features/guild/loots-list/components/loots-filters/loot-filter-sections";
 import { useLootFiltersSidebar } from "@/features/guild/loots-list/components/loots-filters/use-loot-filters-sidebar";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
-import { LootListHeaderActions } from "@/features/guild/loots-list/components/loots-filters/loot-list-header-actions";
 import { FiltersFab } from "@/components/filters/filters-fab";
 import { useState } from "react";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
@@ -111,10 +110,11 @@ export const LootsListPage: React.FC = () => {
       )}
 
       <GuildWorldHeaderSwitcher />
-      <LootListHeaderActions />
 
-      <div className="flex h-full w-full overflow-hidden">
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      {/* Phones scroll the document, where hiding the overflow would make
+          these the scroller the toolbar sticks to. */}
+      <div className="flex h-full w-full overflow-x-clip md:overflow-hidden">
+        <div className="flex min-w-0 flex-1 flex-col overflow-x-clip md:overflow-hidden">
           <LootsList />
         </div>
 

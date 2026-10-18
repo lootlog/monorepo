@@ -431,9 +431,13 @@ export const useLiveLootList = () => {
   const { allLoots, gridRows } = useStableLootCollections(getLootPages(loots));
   const totalCount = allLoots.length;
 
+  // The list starts under the toolbar that leads the page scroller.
+  const listRef = useRef<HTMLDivElement>(null);
+
   const listVirtualizer = usePageVirtualizer<HTMLDivElement>({
     count: totalCount + 1,
     scrollElement,
+    listRef,
     getItemKey: (index) => allLoots[index]?.id ?? "loots-loader",
     estimateSize: () => 180,
     overscan: 5,
@@ -444,6 +448,7 @@ export const useLiveLootList = () => {
   const gridVirtualizer = usePageVirtualizer<HTMLDivElement>({
     count: gridRows.length + 1,
     scrollElement,
+    listRef,
     getItemKey: (index) =>
       gridRows[index]?.map((loot) => loot.id).join(":") ?? "loots-loader",
     estimateSize: () => 220,
@@ -544,6 +549,7 @@ export const useLiveLootList = () => {
   return {
     queryIdentity,
     setScrollElement,
+    listRef,
     isEmpty,
     isError,
     isFailed,

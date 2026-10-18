@@ -3,6 +3,8 @@ import {
   ToggleGroupItem,
 } from "@lootlog/ui/components/toggle-group";
 import { useTranslation } from "react-i18next";
+import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
+import type { ViewMode } from "@/hooks/use-view-mode";
 import { FILTER_PILL_CLASS } from "@/components/common/filter-pill";
 import { ListToolbar } from "@/components/common/list-toolbar";
 
@@ -14,15 +16,25 @@ type TimersToolbarProps = {
   groups: TimerGroupOption[];
   selectedGroups: string[];
   onSelectedGroupsChange: (value: string[]) => void;
+  viewMode: ViewMode;
+  onViewModeChange: (value: ViewMode) => void;
+  /** False below the width where the grid gets a second column. */
+  canChooseViewMode: boolean;
 };
 
-/** The timer name filter, with pills that narrow the list to chosen groups. */
+/**
+ * The timer name filter, with pills that narrow the list to chosen groups,
+ * then the view control.
+ */
 export const TimersToolbar = ({
   search,
   onSearchChange,
   groups,
   selectedGroups,
   onSelectedGroupsChange,
+  viewMode,
+  onViewModeChange,
+  canChooseViewMode,
 }: TimersToolbarProps) => {
   const { t } = useTranslation();
 
@@ -58,6 +70,15 @@ export const TimersToolbar = ({
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
+      )}
+      {canChooseViewMode && (
+        <ViewModeToggle
+          value={viewMode}
+          onChange={onViewModeChange}
+          listLabel={t("timers.view.list")}
+          gridLabel={t("timers.view.grid")}
+          size="sm"
+        />
       )}
     </ListToolbar>
   );

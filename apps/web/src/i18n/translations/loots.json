@@ -97,6 +97,11 @@
     "listView": "Widok listy",
     "gridView": "Widok siatki"
   },
+  "searchBar": {
+    "label": "Szukaj łupów",
+    "placeholder": "Szukaj przedmiotu, potwora, gracza lub wklej HID...",
+    "clear": "Wyczyść wyszukiwanie"
+  },
   "searchCommand": {
     "dialogTitle": "Szukaj w Lootlogu",
     "dialogDescription": "Przejdź do strony, wyszukaj przedmiot, potwora lub gracza albo wklej identyfikator HID.",

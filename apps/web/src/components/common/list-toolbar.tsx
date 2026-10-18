@@ -5,6 +5,7 @@ import {
   InlineSearchField,
 } from "./inline-search-field";
 import { LIST_TILE_INSET_CLASS, LIST_TILE_RULE_CLASS } from "./list-tile";
+import { FilterBarContext } from "@lootlog/ui/components/filter-bar-context";
 
 type ListToolbarProps = {
   search: string;
@@ -40,21 +41,24 @@ export const ListToolbar = ({
       LIST_TILE_INSET_CLASS,
     )}
   >
-    {/* The bar's bottom rule lights up while the filter has focus. */}
-    <InlineSearchField
-      clearLabel={clearLabel}
-      onClear={search ? () => onSearchChange("") : undefined}
-    >
-      <input
-        type="search"
-        value={search}
-        disabled={disabled}
-        onChange={(event) => onSearchChange(event.target.value)}
-        placeholder={placeholder}
-        aria-label={label}
-        className={INLINE_SEARCH_INPUT_CLASS}
-      />
-    </InlineSearchField>
-    {children}
+    {/* The bar's bottom rule lights up while the filter has focus; its
+        controls look as they do in a `FilterBar`. */}
+    <FilterBarContext value>
+      <InlineSearchField
+        clearLabel={clearLabel}
+        onClear={search ? () => onSearchChange("") : undefined}
+      >
+        <input
+          type="search"
+          value={search}
+          disabled={disabled}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder={placeholder}
+          aria-label={label}
+          className={INLINE_SEARCH_INPUT_CLASS}
+        />
+      </InlineSearchField>
+      {children}
+    </FilterBarContext>
   </div>
 );
