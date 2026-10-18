@@ -3,7 +3,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useTranslation } from "react-i18next";
 import { EventHeaderSkeleton } from "./components/header/event-header-skeleton";
 import { EmbeddedLootRowsSkeleton } from "./components/shared/embedded-loot-rows-skeleton";
-import { EventOverviewColumns } from "./event-overview-columns";
+import { EventOverviewRail } from "./event-overview-rail";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 
 export const EventDetailSkeleton = () => {
@@ -13,7 +13,7 @@ export const EventDetailSkeleton = () => {
     <ScrollArea data-under-top-bar className="min-h-0 flex-1">
       <EventHeaderSkeleton tab="overview" />
       <div aria-busy="true" className="min-w-0">
-        <EventOverviewColumns
+        <EventOverviewRail
           heroes={
             <BandSection
               id="event-heroes-skeleton"
@@ -21,15 +21,6 @@ export const EventDetailSkeleton = () => {
               tiled
             >
               <TableRowsSkeleton rows={3} withHeader />
-            </BandSection>
-          }
-          loots={
-            <BandSection
-              id="event-loots-skeleton"
-              title={t("events.loots.title")}
-              tiled
-            >
-              <EmbeddedLootRowsSkeleton rows={3} />
             </BandSection>
           }
           ranking={
@@ -41,14 +32,23 @@ export const EventDetailSkeleton = () => {
               <TableRowsSkeleton rows={5} withHeader />
             </BandSection>
           }
-          kills={
-            <BandSection
-              id="event-kills-skeleton"
-              title={t("events.kills.recentTitle")}
-              tiled
-            >
-              <TableRowsSkeleton rows={10} withHeader />
-            </BandSection>
+          activity={
+            <>
+              <BandSection
+                id="event-kills-skeleton"
+                title={t("events.kills.recentTitle")}
+                tiled
+              >
+                <TableRowsSkeleton rows={10} withHeader />
+              </BandSection>
+              <BandSection
+                id="event-loots-skeleton"
+                title={t("events.loots.title")}
+                tiled
+              >
+                <EmbeddedLootRowsSkeleton rows={3} />
+              </BandSection>
+            </>
           }
         />
       </div>

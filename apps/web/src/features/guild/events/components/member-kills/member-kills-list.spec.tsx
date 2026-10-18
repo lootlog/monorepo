@@ -10,6 +10,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { stubResultsTableViewport } from "@/lib/testing/viewport";
@@ -84,7 +85,9 @@ describe("MemberKillsList", () => {
       />,
     );
 
-    expect(screen.getByRole("link")).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "events.kills.openKillDetails" }),
+    ).toBeTruthy();
     expect(screen.getAllByText("Zorin").length).toBeGreaterThan(0);
     expect(
       screen.getByRole("columnheader", { name: "events.kills.monster" }),
@@ -132,7 +135,24 @@ describe("MemberKillsList", () => {
     expect(link.getAttribute("href")).toBe(
       "/guild-1/events/event-1/heroes/hero-1/kills/kill-1",
     );
-    expect(link.textContent).toBe("Zorin");
+    expect(link.textContent).toContain("Zorin");
+
+    // The whole row opens the kill, tabbed once; the toggle stays outside.
+    const rowLinks = within(link.closest("tr") ?? document.body).getAllByRole(
+      "link",
+    );
+
+    expect(rowLinks.length).toBeGreaterThan(1);
+    expect(
+      rowLinks.every(
+        (rowLink) =>
+          rowLink.getAttribute("href") ===
+          "/guild-1/events/event-1/heroes/hero-1/kills/kill-1",
+      ),
+    ).toBe(true);
+    expect(rowLinks.filter((rowLink) => rowLink.tabIndex === 0)).toEqual([
+      link,
+    ]);
     expect(screen.getByText("1.5")).toBeTruthy();
     expect(screen.getByLabelText("events.points.modified")).toBeTruthy();
     expect(screen.queryByText("events.kills.manualClose")).toBeNull();
@@ -144,6 +164,7 @@ describe("MemberKillsList", () => {
       name: "events.kills.expandBreakdown",
     });
 
+    expect(expandButton.closest("a")).toBeNull();
     fireEvent.click(expandButton);
 
     expect(link.getAttribute("href")).toBe(

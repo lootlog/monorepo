@@ -45,7 +45,7 @@ export const MemberKillTiles = ({
           >
             <div
               className={cn(
-                "flex h-16 items-center gap-3",
+                "relative flex h-16 items-center gap-3 transition-colors hover:bg-muted/40",
                 LIST_TILE_INSET_CLASS,
               )}
             >
@@ -61,6 +61,7 @@ export const MemberKillTiles = ({
                   guildId={guildId}
                   kill={kill}
                   alwaysShowsDate
+                  linksTile
                 />
               </div>
               <div className="flex shrink-0 flex-col items-end gap-0.5 text-sm">
@@ -72,11 +73,14 @@ export const MemberKillTiles = ({
                   {trackingPercentage} · {trackingTime}
                 </span>
               </div>
-              <MemberKillBreakdownToggle
-                monsterName={kill.heroNpc.npcName}
-                isExpanded={isExpanded}
-                onToggle={() => onExpandedToggle(kill.id)}
-              />
+              {/* Above the tile's link, so it toggles instead of navigating. */}
+              <div className="relative z-10">
+                <MemberKillBreakdownToggle
+                  monsterName={kill.heroNpc.npcName}
+                  isExpanded={isExpanded}
+                  onToggle={() => onExpandedToggle(kill.id)}
+                />
+              </div>
             </div>
             {isExpanded && (
               <div className={cn("pb-3", LIST_TILE_INSET_CLASS)}>

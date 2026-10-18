@@ -437,6 +437,43 @@ describe("EventRankingTable", () => {
     expect(highlightedRows[0]?.textContent).toContain("Member 2");
   });
 
+  it.each([
+    [12, ["Member 1", "Member 2", "Member 3", "Member 12"], "12"],
+    [2, ["Member 1", "Member 2", "Member 3"], "3"],
+    [99, ["Member 1", "Member 2", "Member 3"], "3"],
+  ])(
+    "shows the leaders plus member %i's own place when it is outside them",
+    (currentMemberId, expectedNames, expectedLastPlace) => {
+      const rankings = Array.from({ length: 15 }, (_, index) =>
+        createRanking({
+          id: `ranking-${index + 1}`,
+          memberId: index + 1,
+          totalPoints: 100 - index,
+        }),
+      );
+
+      renderRankingTable(rankings, {
+        currentMemberId,
+        limit: 3,
+        variant: "compact",
+      });
+
+      const memberRows = screen
+        .getAllByRole("row")
+        .filter((row) => row.textContent?.includes("Member"));
+
+      expect(
+        memberRows.map(
+          (row) => within(row).getByText(/^Member \d+$/).textContent,
+        ),
+      ).toEqual(expectedNames);
+
+      expect(
+        memberRows[memberRows.length - 1]?.querySelector("td")?.textContent,
+      ).toBe(expectedLastPlace);
+    },
+  );
+
   it("marks manually modified points next to their value", () => {
     renderRankingTable(
       [createRanking({ id: "ranking-1", memberId: 1, pointsModified: true })],
@@ -546,6 +583,7 @@ type RankingTableOptions = {
   currentMemberId?: number;
   eventId?: string;
   guildId?: string;
+  limit?: number;
   variant?: "default" | "compact";
 };
 
@@ -571,6 +609,7 @@ function renderRankingTable(
         canEdit={options.canEdit ?? true}
         currentMemberId={options.currentMemberId}
         variant={options.variant}
+        limit={options.limit}
       />
     </QueryClientProvider>
   );
