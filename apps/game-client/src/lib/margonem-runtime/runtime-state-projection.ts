@@ -205,6 +205,17 @@ function resolveNpcLevel(
   return template?.level;
 }
 
+type MapFields = Partial<Omit<RuntimeGameSnapshot["map"], "id">>;
+
+/** The first source's map fields, each missing or blank one taken from the second. */
+function mergeMapFields(first: MapFields, second: MapFields): MapFields {
+  return {
+    name: first.name?.trim() || second.name?.trim() || undefined,
+    visibility: first.visibility ?? second.visibility,
+    pvp: first.pvp ?? second.pvp,
+  };
+}
+
 export class RuntimeStateProjection {
   private readonly adapter: MargonemRuntimeAdapter;
   private readonly icons = new Map<number, string>();
@@ -372,29 +383,35 @@ export class RuntimeStateProjection {
     town: NonNullable<GameEvent["town"]> = {},
   ): RuntimeGameSnapshot["map"] {
     const id = town.id ?? current.id;
-    const sameMap = id === current.id;
-    let name = town.name?.trim() || (sameMap ? current.name : "") || "";
+    const known = mergeMapFields(town, id === current.id ? current : {});
 
-    let visibility =
-      town.visibility ?? (sameMap ? current.visibility : undefined);
+    const map =
+      known.name && known.visibility !== undefined && known.pvp !== undefined
+        ? known
+        : mergeMapFields(known, this.readNativeMap(id) ?? {});
 
-    // NI and SI expose the applied native map through the same
-    // adapter. Only use native state for this map: the event queue may lag behind
-    // another map transition. Never carry the previous map's name to a new id.
-    if (!name.trim() || visibility === undefined) {
-      try {
-        const nativeMap = this.adapter.getGameSnapshot().map;
+    return Object.freeze({
+      id,
+      name: map.name ?? "",
+      visibility: map.visibility ?? 0,
+      ...(map.pvp !== undefined && { pvp: map.pvp }),
+    });
+  }
 
-        if (nativeMap.id === id) {
-          name = name.trim() ? name : nativeMap.name?.trim() || "";
-          visibility ??= nativeMap.visibility;
-        }
-      } catch {
-        // Native state may be unavailable while Margonem initializes a map.
-      }
+  /**
+   * NI and SI expose the applied native map through the same adapter. Only
+   * use native state for this map: the event queue may lag behind another map
+   * transition. Never carry the previous map's name to a new id.
+   */
+  private readNativeMap(id: number): RuntimeGameSnapshot["map"] | undefined {
+    try {
+      const nativeMap = this.adapter.getGameSnapshot().map;
+
+      return nativeMap.id === id ? nativeMap : undefined;
+    } catch {
+      // Native state may be unavailable while Margonem initializes a map.
+      return undefined;
     }
-
-    return Object.freeze({ id, name, visibility: visibility ?? 0 });
   }
 
   private cacheNpcMetadata(event: GameEvent): void {

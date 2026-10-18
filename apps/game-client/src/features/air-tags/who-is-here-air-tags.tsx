@@ -26,12 +26,10 @@ export function WhoIsHereAirTags() {
   return createPortal(
     <section
       aria-label={title}
-      className={cn(
-        getLootlogHostPortalThemeClassName(),
-        "ll:mt-1 ll:border-0 ll:border-t ll:border-solid ll:border-white/15 ll:pt-1",
-      )}
+      className={cn(getLootlogHostPortalThemeClassName(), "ll:mt-1")}
     >
-      <h3 className="ll:m-0 ll:px-1 ll:text-[11px] ll:font-semibold ll:text-muted-foreground">
+      <div className="c-line" />
+      <h3 className="ll:mb-1 ll:text-center ll:text-xs ll:font-bold ll:text-[#f5f5dc]">
         {title} ({enemies.length})
       </h3>
       {enemies.map((enemy) => (
