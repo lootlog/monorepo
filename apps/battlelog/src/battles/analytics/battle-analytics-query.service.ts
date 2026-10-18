@@ -13,6 +13,7 @@ import {
   inArray,
   isNotNull,
   lte,
+  ne,
   notInArray,
   sql,
   desc,
@@ -137,8 +138,11 @@ export const makeBattleAnalyticsQuery = (
     return and(
       buildCombatProfileWhere(battlesRef, params),
       eq(battlesRef.type, "1v1"),
-      // An unfinished battle has no result to count.
-      eq(battlesRef.unfinished, false),
+      // An unfinished battle has no result to count. It is stored with both
+      // teams 0; filtering on `unfinished` fails on TimescaleDB 2.24 chunks
+      // compressed before the column existed ("unexpected column type
+      // 'boolean'").
+      ne(battlesRef.winningTeam, 0),
       params.hasFlee !== undefined
         ? eq(battlesRef.hasFlee, params.hasFlee)
         : undefined,
