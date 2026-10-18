@@ -55,7 +55,8 @@
       "nextWeek": "Następny tydzień",
       "previousDay": "Poprzedni dzień",
       "nextDay": "Następny dzień",
-      "today": "Dzisiaj"
+      "today": "Dzisiaj",
+      "rules": "Zasady"
     },
     "infoDialog": {
       "title": "Zasady rezerwacji",
@@ -100,6 +101,8 @@
     },
     "dialog": {
       "title": "Dodaj rezerwację",
+      "description": "Expowisko {{spot}}",
+      "submit": "Zarezerwuj",
       "startDate": "Data rozpoczęcia",
       "startDatePlaceholder": "Wybierz początek rezerwacji",
       "endDate": "Data zakończenia",
@@ -148,7 +151,7 @@
   },
   "details": {
     "title": "Szczegóły rezerwacji",
-    "description": "Szczegóły rezerwacji na {{spot}}",
+    "description": "Expowisko {{spot}}",
     "time": "Termin",
     "reminder": "Przypomnienie",
     "comment": "Komentarz",

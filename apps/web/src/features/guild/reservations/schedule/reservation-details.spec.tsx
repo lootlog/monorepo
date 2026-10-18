@@ -78,15 +78,15 @@ describe("ReservationDetails", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     rerender(<ReservationDetails {...props} reservation={reservation} />);
     expect(await screen.findByRole("dialog")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "common.cancel" }));
+    fireEvent.click(screen.getByRole("button", { name: "common.close" }));
     expect(props.onOpenChange).toHaveBeenCalledWith(false);
     rerender(<ReservationDetails {...props} reservation={null} />);
     rerender(<ReservationDetails {...props} reservation={reservation} />);
     expect(await screen.findByRole("dialog")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "common.cancel" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "common.close" })).toBeTruthy();
   });
 
-  it("always renders a bordered footer with a dismiss action", () => {
+  it("offers a dismiss action without cancelling another player's reservation", () => {
     const onOpenChange = vi.fn();
     render(
       <ReservationDetails
@@ -99,11 +99,9 @@ describe("ReservationDetails", () => {
     );
 
     const dismissButton = screen.getByRole("button", {
-      name: "common.cancel",
+      name: "common.close",
     });
 
-    const footer = dismissButton.closest("footer");
-    expect(footer?.classList.contains("border-t")).toBe(true);
     expect(
       screen.queryByRole("button", {
         name: "reservations.details.cancel",

@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { addDays, format, startOfWeek } from "date-fns";
+import {
+  addDays,
+  format,
+  isSameDay,
+  isSameMonth,
+  isSameWeek,
+  isSameYear,
+  startOfWeek,
+} from "date-fns";
 import { pl } from "date-fns/locale";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -11,10 +19,17 @@ import {
   Settings,
   WandSparkles,
 } from "lucide-react";
+import { upperFirst } from "es-toolkit";
 import { useTranslation } from "react-i18next";
 import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { Button } from "@lootlog/ui/components/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
+import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { ReservationSettingsInfoDialog } from "./reservation-settings-info-dialog";
 import { ScheduleActionDock } from "./schedule-action-dock";
 import { ScheduleBar } from "./schedule-bar";
@@ -40,6 +55,22 @@ const compactValue = <Value,>(
   regularValue: Value,
 ) => (isCompact ? compactValue : regularValue);
 
+const formatDate = (date: Date, pattern: string) =>
+  format(date, pattern, { locale: pl });
+
+/** "12–18 października 2026", or both months and years where they differ. */
+const formatWeekRange = (weekStart: Date, weekEnd: Date) => {
+  if (isSameMonth(weekStart, weekEnd)) {
+    return `${formatDate(weekStart, "d")}–${formatDate(weekEnd, "d MMMM yyyy")}`;
+  }
+
+  const startPattern = isSameYear(weekStart, weekEnd)
+    ? "d MMMM"
+    : "d MMMM yyyy";
+
+  return `${formatDate(weekStart, startPattern)} – ${formatDate(weekEnd, "d MMMM yyyy")}`;
+};
+
 const getScheduleDateLabels = (date: Date, isCompact: boolean) => {
   const weekStart = startOfWeek(date, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -47,13 +78,13 @@ const getScheduleDateLabels = (date: Date, isCompact: boolean) => {
   return {
     label: compactValue(
       isCompact,
-      format(date, "EEE, d MMM", { locale: pl }),
-      `${format(weekStart, "d MMM", { locale: pl })} – ${format(weekEnd, "d MMM yyyy", { locale: pl })}`,
+      upperFirst(formatDate(date, "EEEE, d MMMM")),
+      formatWeekRange(weekStart, weekEnd),
     ),
-    shortCompactLabel: format(date, "d MMM", { locale: pl }),
+    shortCompactLabel: formatDate(date, "d MMM"),
     compactTitle: compactValue(
       isCompact,
-      format(date, "EEEE, d MMMM yyyy", { locale: pl }),
+      upperFirst(formatDate(date, "EEEE, d MMMM yyyy")),
       undefined,
     ),
   };
@@ -81,6 +112,28 @@ export function ScheduleHeader({
     isCompact,
   );
 
+  const now = new Date(useMinuteTimestamp());
+
+  const showsToday = isCompact
+    ? isSameDay(date, now)
+    : isSameWeek(date, now, { weekStartsOn: 1 });
+
+  const todayButton = (
+    <Button
+      type="button"
+      variant={compactValue(isCompact, "ghost", "outline")}
+      size={compactValue(isCompact, "icon-lg", "sm")}
+      disabled={showsToday}
+      onClick={onToday}
+      aria-label={t("reservations.schedule.header.today")}
+    >
+      <CalendarDays />
+      <span className={compactValue(isCompact, "sr-only", undefined)}>
+        {t("reservations.schedule.header.today")}
+      </span>
+    </Button>
+  );
+
   // Touch layouts use the largest control step; desktop icon buttons match
   // the 32px labelled buttons.
   const iconButtonSize = compactValue(isCompact, "icon-lg", "icon-sm");
@@ -98,33 +151,27 @@ export function ScheduleHeader({
         ),
       )}
     >
-      <Button
-        type="button"
-        variant={compactValue(isCompact, "ghost", "outline")}
-        size={compactValue(isCompact, "icon-lg", "sm")}
-        onClick={onToday}
-        aria-label={t("reservations.schedule.header.today")}
-      >
-        <CalendarDays />
-        <span className={compactValue(isCompact, "sr-only", undefined)}>
-          {t("reservations.schedule.header.today")}
-        </span>
-      </Button>
-      <ScheduleIconButton
-        label={t("reservations.schedule.header.findNearestSlot")}
-        size={iconButtonSize}
-        loading={isFindingNearestFreeSlot}
-        onClick={onFindNearestFreeSlot}
-      >
-        <WandSparkles />
-      </ScheduleIconButton>
-      <ScheduleIconButton
-        label={t("reservations.schedule.header.info")}
-        size={iconButtonSize}
-        onClick={() => setInfoOpen(true)}
-      >
-        <Info />
-      </ScheduleIconButton>
+      {isCompact && todayButton}
+      {isCompact ? (
+        <ScheduleIconButton
+          label={t("reservations.schedule.header.info")}
+          size={iconButtonSize}
+          onClick={() => setInfoOpen(true)}
+        >
+          <Info />
+        </ScheduleIconButton>
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          icon=<Info />
+          aria-label={t("reservations.schedule.header.info")}
+          onClick={() => setInfoOpen(true)}
+        >
+          {t("reservations.schedule.header.rules")}
+        </Button>
+      )}
       {canManageReservationSettings && (
         <ScheduleIconButton
           label={t("reservations.schedule.header.settings")}
@@ -134,6 +181,42 @@ export function ScheduleHeader({
         >
           <Settings />
         </ScheduleIconButton>
+      )}
+      {!isCompact && (
+        <div aria-hidden="true" className="mx-1.5 h-5 w-px bg-border" />
+      )}
+      {isCompact ? (
+        <ScheduleIconButton
+          label={t("reservations.schedule.header.findNearestSlot")}
+          size={iconButtonSize}
+          loading={isFindingNearestFreeSlot}
+          onClick={onFindNearestFreeSlot}
+        >
+          <WandSparkles />
+        </ScheduleIconButton>
+      ) : (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                loading={isFindingNearestFreeSlot}
+                icon=<WandSparkles />
+                aria-label={t("reservations.schedule.header.findNearestSlot")}
+                onClick={onFindNearestFreeSlot}
+              />
+            }
+          >
+            <span className="max-xl:sr-only">
+              {t("reservations.schedule.header.findNearestSlot")}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="xl:hidden">
+            {t("reservations.schedule.header.findNearestSlot")}
+          </TooltipContent>
+        </Tooltip>
       )}
       <Button
         type="button"
@@ -151,6 +234,30 @@ export function ScheduleHeader({
     </div>
   );
 
+  const dateLabel = (
+    <p
+      aria-live="polite"
+      className={cn(
+        "text-sm font-semibold",
+        compactValue(
+          isCompact,
+          "min-w-0 truncate text-center",
+          "ml-2 shrink-0 whitespace-nowrap text-base",
+        ),
+      )}
+      title={compactTitle}
+    >
+      <span
+        className={compactValue(isCompact, "max-[400px]:hidden", undefined)}
+      >
+        {label}
+      </span>
+      {isCompact && (
+        <span className="hidden max-[400px]:inline">{shortCompactLabel}</span>
+      )}
+    </p>
+  );
+
   return (
     <>
       <ScheduleBar isCompact={isCompact}>
@@ -161,10 +268,11 @@ export function ScheduleHeader({
             compactValue(
               isCompact,
               "grid w-full min-w-0 grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]",
-              "flex",
+              "flex min-w-0",
             ),
           )}
         >
+          {!isCompact && <div className="mr-1">{todayButton}</div>}
           <ScheduleIconButton
             label={compactValue(
               isCompact,
@@ -176,29 +284,7 @@ export function ScheduleHeader({
           >
             <ChevronLeft />
           </ScheduleIconButton>
-          <p
-            aria-live="polite"
-            className={cn(
-              "min-w-0 truncate text-center text-sm font-semibold capitalize",
-              compactValue(isCompact, undefined, "min-w-52"),
-            )}
-            title={compactTitle}
-          >
-            <span
-              className={compactValue(
-                isCompact,
-                "max-[400px]:hidden",
-                undefined,
-              )}
-            >
-              {label}
-            </span>
-            {isCompact && (
-              <span className="hidden max-[400px]:inline">
-                {shortCompactLabel}
-              </span>
-            )}
-          </p>
+          {isCompact ? dateLabel : null}
           <ScheduleIconButton
             label={compactValue(
               isCompact,
@@ -210,6 +296,7 @@ export function ScheduleHeader({
           >
             <ChevronRight />
           </ScheduleIconButton>
+          {isCompact ? null : dateLabel}
         </div>
 
         {!isCompact && actionToolbar}
