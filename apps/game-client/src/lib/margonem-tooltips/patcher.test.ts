@@ -1,10 +1,9 @@
 import type { RuntimeCanvasTip } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
 import { seedRuntimeOthers } from "@/test/runtime-other-fixtures";
+import { createNativeCharacterTips } from "@/test/native-character-tips";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   installCharacterTooltipTransforms,
-  patchOtherCharacterTooltip,
-  patchOtherCharacterTooltips,
   refreshActiveOtherCanvasTooltip,
 } from "./patcher";
 import { characterTooltipTransforms } from "./registry";
@@ -15,53 +14,46 @@ import { useOthersStore } from "@/store/others.store";
 import { testRuntimeWindow } from "@/test/test-runtime-window";
 import type { Other } from "@lootlog/margonem/others";
 
-type TestCharacter = Other & { canvasObjectType?: string };
-
 const originalWindowEngine = testRuntimeWindow.Engine;
 
-function createCharacter(nick: string): TestCharacter {
-  const character: TestCharacter = {
-    d: { nick, id: nick, account: 1, lvl: 300, prof: "w", icon: "other.gif" },
-    createStrTip: () => `<div>${nick}</div>`,
+const originalWindowApi = testRuntimeWindow.API;
+
+let tips: ReturnType<typeof createNativeCharacterTips>;
+
+function createCanvasTip() {
+  return {
+    hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
+    show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
   };
-
-  character.updateTip = vi.fn<() => void>(() => {
-    character.tip = [String(character.createStrTip?.() ?? ""), "t_other"];
-  });
-  character.tipUpdate = vi.fn<() => void>(() => {
-    character.tip = [String(character.createStrTip?.() ?? ""), "t_other"];
-  });
-
-  return character;
 }
 
-function setRuntime(
-  hero: TestCharacter,
-  others: Record<string, TestCharacter>,
-  canvasTip?: RuntimeCanvasTip,
-) {
+function setRuntime(canvasTip?: RuntimeCanvasTip) {
+  Object.defineProperty(window, "API", {
+    configurable: true,
+    value: tips.api,
+  });
   Object.defineProperty(window, "Engine", {
     configurable: true,
     value: {
+      apiData: tips.apiData,
       canvasTip,
-      hero,
-      others,
+      others: { createStrTip: tips.createStrTip },
     },
   });
 }
 
-function setOnlineOwner(character: TestCharacter): void {
+function setOnlineOwner(other: Other): void {
   useOnlineCharacterOwnersStore.getState().setPresenceResponse({
     "player-discord": [
       {
         discordId: "player-discord",
         isAfk: false,
         player: {
-          accountId: String(character.d.account),
-          characterId: String(character.d.id),
+          accountId: String(other.d.account),
+          characterId: String(other.d.id),
           icon: "",
           lvl: 300,
-          name: character.d.nick,
+          name: other.d.nick,
           prof: "w",
           world: "tempest",
         },
@@ -70,8 +62,19 @@ function setOnlineOwner(character: TestCharacter): void {
   });
 }
 
+function registerShiftSection(): void {
+  characterTooltipTransforms.register(({ currentHtml }) => {
+    if (!useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
+      return currentHtml;
+    }
+
+    return `${currentHtml}<span>shift</span>`;
+  });
+}
+
 describe("installCharacterTooltipTransforms", () => {
   beforeEach(() => {
+    tips = createNativeCharacterTips();
     characterTooltipTransforms.clear();
     useCharacterTooltipCatchingGuildsStore.getState().clear();
     useOnlineCharacterOwnersStore.getState().clearOwners();
@@ -90,245 +93,127 @@ describe("installCharacterTooltipTransforms", () => {
       configurable: true,
       value: originalWindowEngine,
     });
+    Object.defineProperty(window, "API", {
+      configurable: true,
+      value: originalWindowApi,
+    });
   });
 
-  it("patches the hero without scanning inactive other tooltips", () => {
-    const hero = createCharacter("Hero");
-    const other = createCharacter("Other");
-    setRuntime(hero, { 1: other });
-    seedRuntimeOthers({ 1: other });
-
-    characterTooltipTransforms.register(({ currentHtml }) => {
-      return `${currentHtml}<div class="ll-tooltip-extra">extra</div>`;
-    });
+  it("extends every other tooltip the game builds", () => {
+    const other = tips.createOther("Other");
+    setRuntime();
+    characterTooltipTransforms.register(
+      ({ currentHtml }) => `${currentHtml}<span>extra</span>`,
+    );
 
     const cleanup = installCharacterTooltipTransforms();
 
-    expect(hero.tip?.[0]).toBe(
-      '<div>Hero</div><div class="ll-tooltip-extra">extra</div>',
+    other.tipUpdate?.();
+    expect(other.tip?.[0]).toBe("<div>Other</div><span>extra</span>");
+    // WhoIsHere and the minimap build their own html from the same data.
+    expect(tips.createStrTip({ nick: "Other", object: other })).toBe(
+      "<div>Other</div><span>extra</span>",
     );
-    expect(other.tip).toBeUndefined();
-    expect(hero.updateTip).toHaveBeenCalledOnce();
-    expect(other.tipUpdate).not.toHaveBeenCalled();
 
     cleanup();
   });
 
-  it("does not patch twice", () => {
-    const hero = createCharacter("Hero");
-    const other = createCharacter("Other");
-    setRuntime(hero, { 1: other });
-    seedRuntimeOthers({ 1: other });
+  it("leaves party member and hero tooltips unchanged", () => {
+    setRuntime();
+    characterTooltipTransforms.register(() => "<div>replacement</div>");
 
-    characterTooltipTransforms.register(({ currentHtml }) => {
-      return `${currentHtml}<span>one</span>`;
+    const cleanup = installCharacterTooltipTransforms();
+
+    expect(tips.createStrTip({ nick: "Member" })).toBe("<div>Member</div>");
+    expect(
+      tips.createStrTip({ nick: "Hero", object: { canvasObjectType: "HERO" } }),
+    ).toBe("<div>Hero</div>");
+
+    cleanup();
+  });
+
+  it("keeps the native tooltip when a transform throws", () => {
+    const other = tips.createOther("Other");
+    setRuntime();
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    characterTooltipTransforms.register(() => {
+      throw new Error("broken");
     });
+
+    const cleanup = installCharacterTooltipTransforms();
+
+    expect(() => other.tipUpdate?.()).not.toThrow();
+    expect(other.tip?.[0]).toBe("<div>Other</div>");
+
+    cleanup();
+  });
+
+  it("subscribes once and unsubscribes on cleanup", () => {
+    const other = tips.createOther("Other");
+    setRuntime();
+    characterTooltipTransforms.register(() => "<div>replacement</div>");
 
     const cleanupA = installCharacterTooltipTransforms();
     const cleanupB = installCharacterTooltipTransforms();
 
     expect(cleanupA).toBe(cleanupB);
-    expect(hero.createStrTip?.()).toBe("<div>Hero</div><span>one</span>");
+    expect(tips.handlerCount()).toBe(1);
 
     cleanupA();
+
+    other.tipUpdate?.();
+    expect(tips.handlerCount()).toBe(0);
+    expect(other.tip?.[0]).toBe("<div>Other</div>");
   });
 
-  it("restores original methods on cleanup", () => {
-    const hero = createCharacter("Hero");
-    const other = createCharacter("Other");
-    const originalHeroCreateStrTip = hero.createStrTip;
-    const originalOtherCreateStrTip = other.createStrTip;
-    setRuntime(hero, { 1: other });
+  it("removes the Shift section from cached tooltips on cleanup", () => {
+    const other = tips.createOther("Other");
+    setRuntime();
     seedRuntimeOthers({ 1: other });
-
-    characterTooltipTransforms.register(() => "<div>replacement</div>");
+    registerShiftSection();
 
     const cleanup = installCharacterTooltipTransforms();
-    patchOtherCharacterTooltip(other);
-    expect(hero.createStrTip?.()).toBe("<div>replacement</div>");
-    expect(other.createStrTip?.()).toBe("<div>replacement</div>");
+
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    other.tipUpdate?.();
+    expect(other.tip?.[0]).toBe("<div>Other</div><span>shift</span>");
 
     cleanup();
 
-    expect(hero.createStrTip).toBe(originalHeroCreateStrTip);
-    expect(other.createStrTip).toBe(originalOtherCreateStrTip);
-    expect(hero.createStrTip?.()).toBe("<div>Hero</div>");
-    expect(other.createStrTip?.()).toBe("<div>Other</div>");
-  });
-
-  it("restores an own tooltip method when an other leaves the current map", () => {
-    const hero = createCharacter("Hero");
-    const other = createCharacter("Other");
-    const originalOtherCreateStrTip = other.createStrTip;
-    setRuntime(hero, { 1: other });
-    seedRuntimeOthers({ 1: other });
-    characterTooltipTransforms.register(() => "<div>replacement</div>");
-    const cleanup = installCharacterTooltipTransforms();
-    patchOtherCharacterTooltip(other);
-
-    try {
-      expect(other.createStrTip?.()).toBe("<div>replacement</div>");
-
-      runtimeOtherHandles.applyBatch({ removeIds: ["1"] });
-      useOthersStore.getState().applyBatch({ removeIds: ["1"] });
-      patchOtherCharacterTooltips([]);
-
-      expect(other.createStrTip).toBe(originalOtherCreateStrTip);
-      expect(other.createStrTip?.()).toBe("<div>Other</div>");
-    } finally {
-      cleanup();
-    }
-  });
-
-  it("keeps a live runtime tooltip patched when normalized other state updates", () => {
-    const hero = createCharacter("Hero");
-    const other = createCharacter("Other");
-    other.d.id = "1";
-    other.d.account = 2;
-    setRuntime(hero, { 1: other });
-    seedRuntimeOthers({ 1: other });
-    characterTooltipTransforms.register(() => "<div>replacement</div>");
-    const cleanup = installCharacterTooltipTransforms();
-    patchOtherCharacterTooltip(other);
-
-    try {
-      useOthersStore.getState().applyBatch({
-        upserts: {
-          1: {
-            accountId: "2",
-            characterId: "1",
-            icon: "other.gif",
-            level: 300,
-            name: "Other",
-            profession: "w",
-          },
-        },
-      });
-
-      expect(other.createStrTip?.()).toBe("<div>replacement</div>");
-    } finally {
-      cleanup();
-    }
-  });
-
-  it("patches a single new other character", () => {
-    const hero = createCharacter("Hero");
-    const other = createCharacter("Other");
-    const others: Record<string, TestCharacter> = {};
-    setRuntime(hero, others);
-
-    characterTooltipTransforms.register(({ currentHtml }) => {
-      return `${currentHtml}<span>new</span>`;
-    });
-
-    const cleanup = installCharacterTooltipTransforms();
-
-    others[1] = other;
-    patchOtherCharacterTooltip(other);
-
-    expect(other.tip?.[0]).toBe("<div>Other</div><span>new</span>");
-    expect(other.tipUpdate).toHaveBeenCalledOnce();
-
-    cleanup();
-  });
-
-  it("batch patches only provided other characters", () => {
-    const hero = createCharacter("Hero");
-    const first = createCharacter("First");
-    const second = createCharacter("Second");
-    const skipped = createCharacter("Skipped");
-    setRuntime(hero, { 1: first, 2: second, 3: skipped });
-
-    characterTooltipTransforms.register(({ currentHtml }) => {
-      return `${currentHtml}<span>batch</span>`;
-    });
-
-    const cleanup = installCharacterTooltipTransforms();
-
-    patchOtherCharacterTooltips([first, second]);
-
-    expect(first.tip?.[0]).toBe("<div>First</div><span>batch</span>");
-    expect(second.tip?.[0]).toBe("<div>Second</div><span>batch</span>");
-    expect(skipped.tip).toBeUndefined();
-
-    cleanup();
-  });
-
-  it("does not double-transform prototype-based other tooltips", () => {
-    const hero = createCharacter("Hero");
-
-    class PrototypeOther {
-      d = createCharacter("Other").d;
-      tip?: [string, string];
-      tipUpdate = vi.fn<() => void>(() => {
-        this.tip = [this.createStrTip(), "t_other"];
-      });
-
-      createStrTip() {
-        return "<div>Other</div>";
-      }
-    }
-
-    const other = new PrototypeOther();
-    setRuntime(hero, { 1: other });
-    seedRuntimeOthers({ 1: other });
-
-    characterTooltipTransforms.register(({ currentHtml }) => {
-      return `${currentHtml}<span>once</span>`;
-    });
-
-    const cleanup = installCharacterTooltipTransforms();
-    patchOtherCharacterTooltip(other);
-
-    expect(other.createStrTip()).toBe("<div>Other</div><span>once</span>");
-    expect(other.tip?.[0]).toBe("<div>Other</div><span>once</span>");
-
-    cleanup();
+    expect(other.tip?.[0]).toBe("<div>Other</div>");
   });
 
   it("tracks a canvas tooltip only while the Shift integration is active", () => {
-    const hero = createCharacter("Hero");
-    const first = createCharacter("First");
-    const second = createCharacter("Second");
+    const first = tips.createOther("First", "617");
+    const second = tips.createOther("Second", "30016");
+    const canvasTip = createCanvasTip();
 
-    const canvasTip = {
-      hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
-      show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
-    };
-
-    first.canvasObjectType = "OTHER";
-    first.d = { ...first.d, account: 9822301, id: "617", nick: "First" };
-    second.canvasObjectType = "OTHER";
-    second.d = { ...second.d, account: 9822301, id: "30016", nick: "Second" };
-    setRuntime(hero, { 1: first, 2: second }, canvasTip);
+    first.d.account = 9822301;
+    second.d.account = 9822301;
+    setRuntime(canvasTip);
     seedRuntimeOthers({ 1: first, 2: second });
     setOnlineOwner(first);
 
     const cleanup = installCharacterTooltipTransforms();
-    const runtimeCanvasTip = canvasTip;
 
-    second.tipUpdate?.();
-    expect(
-      useCharacterTooltipCatchingGuildsStore.getState().activeTarget,
-    ).toBeNull();
-
-    runtimeCanvasTip.show({}, first);
+    canvasTip.show({}, first);
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget,
     ).toBeNull();
 
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-    runtimeCanvasTip.show({}, first);
+    canvasTip.show({}, first);
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
     ).toBe("9822301:617");
 
+    // Another player's game update does not move the active target.
     second.tipUpdate?.();
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
     ).toBe("9822301:617");
 
-    runtimeCanvasTip.hide({});
+    canvasTip.hide({});
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget,
     ).toBeNull();
@@ -337,25 +222,18 @@ describe("installCharacterTooltipTransforms", () => {
   });
 
   it("clears active other state during canvas tip cleanup", () => {
-    const hero = createCharacter("Hero");
-    const other = createCharacter("Other");
+    const other = tips.createOther("Other", "617");
+    const canvasTip = createCanvasTip();
 
-    const canvasTip = {
-      hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
-      show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
-    };
-
-    other.canvasObjectType = "OTHER";
-    other.d = { ...other.d, account: 9822301, id: "617", nick: "Other" };
-    setRuntime(hero, { 1: other }, canvasTip);
+    other.d.account = 9822301;
+    setRuntime(canvasTip);
     seedRuntimeOthers({ 1: other });
     setOnlineOwner(other);
 
     const cleanup = installCharacterTooltipTransforms();
-    const runtimeCanvasTip = canvasTip;
 
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-    runtimeCanvasTip.show({}, other);
+    canvasTip.show({}, other);
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
     ).toBe("9822301:617");
@@ -367,68 +245,23 @@ describe("installCharacterTooltipTransforms", () => {
     ).toBeNull();
   });
 
-  it("refreshes the currently visible other canvas tooltip", () => {
-    const hero = createCharacter("Hero");
-    const other = createCharacter("Other");
-
-    const canvasTip = {
-      hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
-      show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
-    };
-
+  it("redraws the hovered tooltip with the section when Shift is pressed", () => {
+    const other = tips.createOther("Other");
+    const canvasTip = createCanvasTip();
     const originalCanvasTipShow = canvasTip.show;
-    other.canvasObjectType = "OTHER";
-    other.d = { ...other.d, account: 9822301, id: "617", nick: "Other" };
-    setRuntime(hero, { 1: other }, canvasTip);
+    setRuntime(canvasTip);
     seedRuntimeOthers({ 1: other });
+    registerShiftSection();
 
     const cleanup = installCharacterTooltipTransforms();
-    const runtimeCanvasTip = canvasTip;
     const hoverEvent = { clientX: 10, clientY: 20 };
 
-    runtimeCanvasTip.show(hoverEvent, other);
+    other.tipUpdate?.();
+    canvasTip.show(hoverEvent, other);
     originalCanvasTipShow.mockClear();
 
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     refreshActiveOtherCanvasTooltip();
-
-    expect(other.tip?.[0]).toBe("<div>Other</div>");
-    expect(originalCanvasTipShow).toHaveBeenCalledWith(hoverEvent, other);
-
-    cleanup();
-  });
-
-  it("refreshes a hovered other tooltip when shift is already pressed", () => {
-    const hero = createCharacter("Hero");
-    const other = createCharacter("Other");
-
-    const canvasTip = {
-      hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
-      show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
-    };
-
-    const originalCanvasTipShow = canvasTip.show;
-    other.canvasObjectType = "OTHER";
-    other.d = { ...other.d, account: 9822301, id: "617", nick: "Other" };
-    setRuntime(hero, { 1: other }, canvasTip);
-    seedRuntimeOthers({ 1: other });
-
-    characterTooltipTransforms.register(({ currentHtml }) => {
-      if (!useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
-        return currentHtml;
-      }
-
-      return `${currentHtml}<span>shift</span>`;
-    });
-
-    const cleanup = installCharacterTooltipTransforms();
-    const runtimeCanvasTip = canvasTip;
-    const hoverEvent = { clientX: 10, clientY: 20 };
-
-    expect(other.tip).toBeUndefined();
-
-    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-    runtimeCanvasTip.show(hoverEvent, other);
 
     expect(other.tip?.[0]).toBe("<div>Other</div><span>shift</span>");
     expect(originalCanvasTipShow).toHaveBeenCalledWith(hoverEvent, other);
@@ -436,35 +269,41 @@ describe("installCharacterTooltipTransforms", () => {
     cleanup();
   });
 
-  it("removes the appended section from the hovered tooltip when shift is released", () => {
-    const hero = createCharacter("Hero");
-    const other = createCharacter("Other");
-
-    const canvasTip = {
-      hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
-      show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
-    };
-
+  it("rebuilds a tooltip hovered while Shift is already pressed", () => {
+    const other = tips.createOther("Other");
+    const canvasTip = createCanvasTip();
     const originalCanvasTipShow = canvasTip.show;
-    other.canvasObjectType = "OTHER";
-    other.d = { ...other.d, account: 9822301, id: "617", nick: "Other" };
-    setRuntime(hero, { 1: other }, canvasTip);
+    setRuntime(canvasTip);
     seedRuntimeOthers({ 1: other });
-
-    characterTooltipTransforms.register(({ currentHtml }) => {
-      if (!useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
-        return currentHtml;
-      }
-
-      return `${currentHtml}<span>shift</span>`;
-    });
+    registerShiftSection();
 
     const cleanup = installCharacterTooltipTransforms();
-    const runtimeCanvasTip = canvasTip;
+    const hoverEvent = { clientX: 10, clientY: 20 };
+
+    // The game cached this html before Shift was pressed.
+    other.tipUpdate?.();
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    canvasTip.show(hoverEvent, other);
+
+    expect(other.tip?.[0]).toBe("<div>Other</div><span>shift</span>");
+    expect(originalCanvasTipShow).toHaveBeenCalledWith(hoverEvent, other);
+
+    cleanup();
+  });
+
+  it("removes the section from the hovered tooltip when Shift is released", () => {
+    const other = tips.createOther("Other");
+    const canvasTip = createCanvasTip();
+    const originalCanvasTipShow = canvasTip.show;
+    setRuntime(canvasTip);
+    seedRuntimeOthers({ 1: other });
+    registerShiftSection();
+
+    const cleanup = installCharacterTooltipTransforms();
     const hoverEvent = { clientX: 10, clientY: 20 };
 
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-    runtimeCanvasTip.show(hoverEvent, other);
+    canvasTip.show(hoverEvent, other);
     expect(other.tip?.[0]).toBe("<div>Other</div><span>shift</span>");
 
     originalCanvasTipShow.mockClear();
@@ -480,58 +319,44 @@ describe("installCharacterTooltipTransforms", () => {
     cleanup();
   });
 
-  it("removes the appended section from every other patched while shift was held", () => {
-    const hero = createCharacter("Hero");
-    const hovered = createCharacter("Hovered");
-    const idle = createCharacter("Idle");
-    const departed = createCharacter("Departed");
-
-    setRuntime(hero, { 1: hovered, 2: idle, 3: departed });
+  it("removes the section from every present other rebuilt while Shift was held", () => {
+    const hovered = tips.createOther("Hovered");
+    const idle = tips.createOther("Idle");
+    const departed = tips.createOther("Departed");
+    setRuntime();
     seedRuntimeOthers({ 1: hovered, 2: idle, 3: departed });
-
-    characterTooltipTransforms.register(({ currentHtml }) => {
-      if (!useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
-        return currentHtml;
-      }
-
-      return `${currentHtml}<span>shift</span>`;
-    });
+    registerShiftSection();
 
     const cleanup = installCharacterTooltipTransforms();
 
+    // The game rebuilds tips on its own updates while Shift is held.
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-    patchOtherCharacterTooltips([hovered, idle, departed]);
+    hovered.tipUpdate?.();
+    idle.tipUpdate?.();
+    departed.tipUpdate?.();
     expect(idle.tip?.[0]).toBe("<div>Idle</div><span>shift</span>");
 
     // A player who leaves the map while Shift is held is no longer drawn.
     seedRuntimeOthers({ 1: hovered, 2: idle });
-    const departedUpdateTip = vi.fn<() => void>();
+    const departedTipUpdate = vi.fn<() => void>();
 
-    departed.updateTip = departedUpdateTip;
+    departed.tipUpdate = departedTipUpdate;
 
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
     refreshActiveOtherCanvasTooltip();
 
     expect(hovered.tip?.[0]).toBe("<div>Hovered</div>");
     expect(idle.tip?.[0]).toBe("<div>Idle</div>");
-    expect(departedUpdateTip).not.toHaveBeenCalled();
+    expect(departedTipUpdate).not.toHaveBeenCalled();
 
     cleanup();
   });
 
-  it("leaves a hovered tooltip untouched when shift was never pressed", () => {
-    const hero = createCharacter("Hero");
-    const other = createCharacter("Other");
-
-    const canvasTip = {
-      hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
-      show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
-    };
-
+  it("does not rebuild a hovered tooltip when Shift was never pressed", () => {
+    const other = tips.createOther("Other");
+    const canvasTip = createCanvasTip();
     const originalCanvasTipShow = canvasTip.show;
-    other.canvasObjectType = "OTHER";
-    other.d = { ...other.d, account: 9822301, id: "617", nick: "Other" };
-    setRuntime(hero, { 1: other }, canvasTip);
+    setRuntime(canvasTip);
     seedRuntimeOthers({ 1: other });
 
     let builtTooltips = 0;
@@ -543,17 +368,16 @@ describe("installCharacterTooltipTransforms", () => {
     });
 
     const cleanup = installCharacterTooltipTransforms();
-    const runtimeCanvasTip = canvasTip;
 
-    // Patch the tooltip through an earlier Shift hover, then leave the character.
+    // An earlier Shift hover, then the player leaves the character.
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-    runtimeCanvasTip.show({ clientX: 1, clientY: 2 }, other);
+    canvasTip.show({ clientX: 1, clientY: 2 }, other);
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
     refreshActiveOtherCanvasTooltip();
-    runtimeCanvasTip.hide({});
+    canvasTip.hide({});
 
     // Hover again without Shift; a window blur still reports Shift as released.
-    runtimeCanvasTip.show({ clientX: 3, clientY: 4 }, other);
+    canvasTip.show({ clientX: 3, clientY: 4 }, other);
     originalCanvasTipShow.mockClear();
     const builtBeforeBlur = builtTooltips;
 

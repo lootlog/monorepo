@@ -1,21 +1,17 @@
-import type { Other, OtherHandle } from "@lootlog/margonem/others";
+import type { Other } from "@lootlog/margonem/others";
+import type { CharacterTipUpdate } from "@lootlog/margonem/tooltip";
 import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { characterTooltipTransforms } from "./registry";
-import type { CharacterTooltipKind, MargonemTooltipCharacter } from "./types";
 import {
   getRuntimeCanvasTip,
-  getRuntimeHeroTooltipOwner,
+  subscribeCharacterTipUpdates,
   type RuntimeCanvasTip,
 } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
-
-type OriginalCreateStrTip = (...args: unknown[]) => string;
 
 type OriginalCanvasTipHide = NonNullable<RuntimeCanvasTip["hide"]>;
 
 type OriginalCanvasTipShow = NonNullable<RuntimeCanvasTip["show"]>;
-
-const patchedCreateStrTip = new WeakMap<object, OriginalCreateStrTip>();
 
 let cleanupCurrentInstallation: (() => void) | null = null;
 
@@ -31,137 +27,10 @@ let lastOtherCanvasTipObject: Other | null = null;
 // section, so releasing Shift redraws only the tooltips that still show it.
 let shiftSectionDrawn = false;
 
-// Others whose cached tooltip html was rebuilt while Shift was held. The game
-// keeps that html until something rebuilds it, so releasing Shift rebuilds
-// exactly these instead of leaving the Shift-only section on them.
-const othersWithShiftSection = new Set<MargonemTooltipCharacter>();
-
-const patchedCharacters = new Set<MargonemTooltipCharacter>();
-
-const patchedOtherPrototypes = new Set<MargonemTooltipCharacter>();
-
-function patchCreateStrTip(
-  character: MargonemTooltipCharacter | undefined,
-  kind: CharacterTooltipKind,
-): boolean {
-  if (!character?.createStrTip || patchedCreateStrTip.has(character)) {
-    return false;
-  }
-
-  const originalCreateStrTip = character.createStrTip;
-
-  patchedCreateStrTip.set(character, originalCreateStrTip);
-  character.createStrTip = function patchedCharacterCreateStrTip(
-    this: MargonemTooltipCharacter,
-    ...args: unknown[]
-  ) {
-    const baseHtml = String(originalCreateStrTip.apply(this, args) ?? "");
-
-    return characterTooltipTransforms.apply({
-      kind,
-      character: this,
-      baseHtml,
-      currentHtml: baseHtml,
-    });
-  };
-
-  return true;
-}
-
-function restoreCreateStrTip(character: MargonemTooltipCharacter): void {
-  const originalCreateStrTip = patchedCreateStrTip.get(character);
-
-  if (!originalCreateStrTip) return;
-
-  character.createStrTip = originalCreateStrTip;
-  patchedCreateStrTip.delete(character);
-}
-
-function refreshCharacterTooltip(character: MargonemTooltipCharacter): void {
-  try {
-    character.updateTip?.();
-    character.tipUpdate?.();
-  } catch (error) {
-    console.warn("[MargonemTooltips] Failed to refresh tooltip:", error);
-  }
-}
-
-function patchOtherPrototype(other: MargonemTooltipCharacter): boolean {
-  // SAFETY: Other inherits Character.prototype (Other.js); the callable check
-  // below gates patching. Only createStrTip is read or replaced on this prototype.
-  const prototype = Object.getPrototypeOf(other) as
-    | (MargonemTooltipCharacter & { createStrTip?: OriginalCreateStrTip })
-    | null;
-
-  if (!prototype || typeof prototype.createStrTip !== "function") {
-    return false;
-  }
-
-  const originalCreateStrTip = prototype.createStrTip;
-  const prototypeAsCharacter = prototype;
-
-  if (patchedCreateStrTip.has(prototypeAsCharacter)) {
-    return false;
-  }
-
-  patchedCreateStrTip.set(prototypeAsCharacter, originalCreateStrTip);
-  prototype.createStrTip = function patchedOtherPrototypeCreateStrTip(
-    this: MargonemTooltipCharacter,
-    ...args: unknown[]
-  ) {
-    const baseHtml = String(originalCreateStrTip.apply(this, args) ?? "");
-
-    return characterTooltipTransforms.apply({
-      kind: "other",
-      character: this,
-      baseHtml,
-      currentHtml: baseHtml,
-    });
-  };
-
-  patchedCharacters.add(prototypeAsCharacter);
-  patchedOtherPrototypes.add(prototypeAsCharacter);
-
-  return true;
-}
-
-function prunePatchedCharacters(): void {
-  const hero = getRuntimeHeroTooltipOwner();
-  const currentOthers = Object.values(runtimeOtherHandles.getAll());
-  const retainedCharacters = new Set<MargonemTooltipCharacter>(currentOthers);
-
-  if (hero) {
-    retainedCharacters.add(hero);
-  }
-
-  const retainedPrototypes = new Set(
-    currentOthers.map((other) => Object.getPrototypeOf(other)),
-  );
-
-  for (const character of patchedCharacters) {
-    const isRetainedPrototype =
-      patchedOtherPrototypes.has(character) &&
-      retainedPrototypes.has(character);
-
-    if (retainedCharacters.has(character) || isRetainedPrototype) {
-      continue;
-    }
-
-    restoreCreateStrTip(character);
-    patchedCharacters.delete(character);
-    patchedOtherPrototypes.delete(character);
-  }
-}
-
-function hasOwnCreateStrTip(character: MargonemTooltipCharacter): boolean {
-  return Object.prototype.hasOwnProperty.call(character, "createStrTip");
-}
-
-function isPrototypePatched(character: MargonemTooltipCharacter): boolean {
-  const prototype = Object.getPrototypeOf(character);
-
-  return Boolean(prototype && patchedCreateStrTip.has(prototype));
-}
+// Others whose cached tooltip html gained the Shift-only section. The game
+// keeps that html in `other.tip` until something rebuilds it, so releasing
+// Shift rebuilds exactly these instead of leaving the section on them.
+const othersWithShiftSection = new Set<Other>();
 
 function isOtherCanvasObject(object: unknown): object is Other {
   return (
@@ -172,8 +41,37 @@ function isOtherCanvasObject(object: unknown): object is Other {
   );
 }
 
+function extendCharacterTip(update: CharacterTipUpdate): void {
+  const other = update.object;
+
+  if (!isOtherCanvasObject(other)) return;
+
+  const html = characterTooltipTransforms.apply({
+    character: other,
+    baseHtml: update.text,
+    currentHtml: update.text,
+  });
+
+  if (html === update.text) return;
+
+  update.text = html;
+
+  if (useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
+    othersWithShiftSection.add(other);
+  }
+}
+
+/** Rebuilds the html the game caches in `other.tip` for the canvas tooltip. */
+function rebuildOtherTip(other: Other): void {
+  try {
+    other.tipUpdate?.();
+  } catch (error) {
+    console.warn("[MargonemTooltips] Failed to refresh tooltip:", error);
+  }
+}
+
 function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
-  if (!canvasTip?.show || !canvasTip.hide || originalCanvasTipShow) {
+  if (!canvasTip.show || !canvasTip.hide || originalCanvasTipShow) {
     return null;
   }
 
@@ -189,7 +87,7 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
         useCharacterTooltipCatchingGuildsStore
           .getState()
           .setActiveOther(object);
-        patchOtherCharacterTooltip(object);
+        rebuildOtherTip(object);
         shiftSectionDrawn = true;
       }
     } else {
@@ -230,39 +128,25 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
   };
 }
 
-export function patchOtherCharacterTooltip(other: OtherHandle): void {
-  if (hasOwnCreateStrTip(other)) {
-    if (patchCreateStrTip(other, "other")) {
-      patchedCharacters.add(other);
-    }
-  } else if (!isPrototypePatched(other)) {
-    patchOtherPrototype(other);
-  }
-
-  refreshCharacterTooltip(other);
-
-  if (useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
-    othersWithShiftSection.add(other);
-  }
-}
-
 function removeShiftSections(): void {
   if (othersWithShiftSection.size === 0) return;
 
   // Others that left the map are no longer drawn, so only the present ones
   // need their html rebuilt.
-  const presentOthers = new Set<MargonemTooltipCharacter>(
+  const presentOthers = new Set<unknown>(
     Object.values(runtimeOtherHandles.getAll()),
   );
 
-  for (const other of othersWithShiftSection) {
-    if (presentOthers.has(other)) refreshCharacterTooltip(other);
-  }
+  const others = [...othersWithShiftSection];
 
   othersWithShiftSection.clear();
+
+  for (const other of others) {
+    if (presentOthers.has(other)) rebuildOtherTip(other);
+  }
 }
 
-function redrawOtherCanvasTooltip(other: MargonemTooltipCharacter): void {
+function redrawOtherCanvasTooltip(other: Other): void {
   const canvasTip = getRuntimeCanvasTip();
 
   if (!canvasTip?.show || !lastOtherCanvasTipEvent) return;
@@ -283,7 +167,7 @@ export function refreshActiveOtherCanvasTooltip(): void {
     // Releasing Shift must drop the appended section from the tooltip that is
     // still on screen, so rebuild its html and redraw the visible tip.
     shiftSectionDrawn = false;
-    refreshCharacterTooltip(hoveredOther);
+    rebuildOtherTip(hoveredOther);
     redrawOtherCanvasTooltip(hoveredOther);
 
     return;
@@ -292,19 +176,9 @@ export function refreshActiveOtherCanvasTooltip(): void {
   if (!hoveredOther) return;
 
   state.setActiveOther(hoveredOther);
-
-  patchOtherCharacterTooltip(hoveredOther);
-
   shiftSectionDrawn = true;
+  // The patched show rebuilds the cached html before drawing it.
   redrawOtherCanvasTooltip(hoveredOther);
-}
-
-export function patchOtherCharacterTooltips(others: OtherHandle[]): void {
-  prunePatchedCharacters();
-
-  for (const other of others) {
-    patchOtherCharacterTooltip(other);
-  }
 }
 
 export function installCharacterTooltipTransforms(): () => void {
@@ -312,31 +186,20 @@ export function installCharacterTooltipTransforms(): () => void {
     return cleanupCurrentInstallation;
   }
 
-  const hero = getRuntimeHeroTooltipOwner();
-  const canvasTip = getRuntimeCanvasTip();
+  const unsubscribeTipUpdates =
+    subscribeCharacterTipUpdates(extendCharacterTip);
 
-  if (!hero && !canvasTip) {
+  if (!unsubscribeTipUpdates) {
     return () => undefined;
   }
 
+  const canvasTip = getRuntimeCanvasTip();
   const cleanupCanvasTip = canvasTip ? patchCanvasTip(canvasTip) : null;
 
-  if (hero && patchCreateStrTip(hero, "hero")) {
-    patchedCharacters.add(hero);
-    refreshCharacterTooltip(hero);
-  }
-
   cleanupCurrentInstallation = () => {
+    unsubscribeTipUpdates();
     cleanupCanvasTip?.();
-
-    for (const character of patchedCharacters) {
-      restoreCreateStrTip(character);
-      refreshCharacterTooltip(character);
-    }
-
-    patchedCharacters.clear();
-    patchedOtherPrototypes.clear();
-    othersWithShiftSection.clear();
+    removeShiftSections();
 
     cleanupCurrentInstallation = null;
   };

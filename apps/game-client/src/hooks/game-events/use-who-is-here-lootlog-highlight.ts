@@ -1,7 +1,6 @@
 import type { Other } from "@lootlog/margonem/others";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { getLootlogOtherGlowColor } from "@/lib/margonem-runtime/adapters/glow-runtime-adapter";
-import { patchOtherCharacterTooltip } from "@/lib/margonem-tooltips/patcher";
 import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
 import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import {
@@ -108,7 +107,6 @@ function refreshWhoIsHereTooltip(row: HTMLElement, other: Other): void {
 
   if (!characterId) return;
 
-  patchOtherCharacterTooltip(other);
   refreshWhoIsHereRuntimeTooltip(characterId, row, other);
 }
 
