@@ -360,12 +360,19 @@ export class RuntimeStateProjection {
   ): RuntimeEventEnvelope["facts"] {
     const current = useGameStore.getState().game;
 
-    if (!current || current.map.name?.trim()) return facts;
+    if (!current) return facts;
+    const nameMissing = !current.map.name?.trim();
+
+    // AirTags, which run only on the new interface, need the map's PvP mode.
+    const pvpMissing =
+      current.map.pvp === undefined && current.interface === "ni";
+
+    if (!nameMissing && !pvpMissing) return facts;
 
     const map = this.resolveMap(current.map);
     useGameStore.getState().replaceGame({ ...current, map });
 
-    if (!map.name || event.town) return facts;
+    if (!nameMissing || !map.name || event.town) return facts;
 
     // Complete deferred map-change effects before ordinary packet facts. The
     // raw packet stays unchanged: recovery must not reset the map's new NPCs.
