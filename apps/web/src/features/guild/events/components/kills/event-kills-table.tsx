@@ -25,6 +25,9 @@ import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { EventHistoryResults } from "../shared/event-history-results";
 import { EventKillRowsSkeleton } from "./event-kill-rows-skeleton";
 import { EventKillTiles } from "./event-kill-tiles";
+import { KillCellLink } from "./kill-cell-link";
+
+const RIGHT_ALIGNED_COLUMN_IDS = new Set(["respawnTime", "participants"]);
 
 type EventKillsTableBaseProps = {
   eventId: string;
@@ -141,10 +144,25 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
         rowClassName="h-14 border-b border-border hover:bg-muted/40"
         getCellClassName={(cell) =>
           cn(
-            "h-14 overflow-hidden align-middle",
+            "h-14 overflow-hidden p-0! align-middle",
             getColumnClassName(cell.column.id, isPreview),
           )
         }
+        // The whole row opens the kill; only its first cell takes focus.
+        renderCellContent={(cell, content) => (
+          <KillCellLink
+            guildId={guildId}
+            eventId={eventId}
+            kill={cell.row.original}
+            primary={cell.column.id === "monster"}
+            className={cn(
+              cell.column.id === columns[0]?.id && "pl-4",
+              RIGHT_ALIGNED_COLUMN_IDS.has(cell.column.id) && "justify-end",
+            )}
+          >
+            {content}
+          </KillCellLink>
+        )}
       />
       {/* A failed refresh keeps the last kills; the notice says they may be stale. */}
       {isPreview && hasError && (

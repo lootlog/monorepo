@@ -15,6 +15,11 @@ type KillMonsterCellProps = {
    * it, such as in a preview card or a tile.
    */
   alwaysShowsDate?: boolean;
+  /**
+   * Links the whole tile, which must be `relative`, from the name. In a table
+   * the row's cells link instead, so the name is plain text.
+   */
+  linksTile?: boolean;
   kill: {
     heroNpc: Pick<KillHistoryEntryHeroNpc, "npcIcon" | "npcId" | "npcName">;
     heroNpcId: string;
@@ -27,6 +32,7 @@ export const KillMonsterCell = ({
   eventId,
   guildId,
   alwaysShowsDate = false,
+  linksTile = false,
   kill,
 }: KillMonsterCellProps) => {
   const { t } = useTranslation();
@@ -51,22 +57,30 @@ export const KillMonsterCell = ({
         )}
       </span>
       <div className="min-w-0 flex-1">
-        <TextLink
-          aria-label={detailLabel}
-          title={detailLabel}
-          className="inline-flex max-w-full min-w-0 items-center text-sm"
-          render=<Link
-            to="/$guildId/events/$eventId/heroes/$heroId/kills/$killId"
-            params={{
-              guildId,
-              eventId,
-              heroId: kill.heroNpcId,
-              killId: kill.id,
-            }}
-          />
-        >
-          <span className="truncate font-semibold">{kill.heroNpc.npcName}</span>
-        </TextLink>
+        {linksTile ? (
+          <TextLink
+            aria-label={detailLabel}
+            title={detailLabel}
+            className="inline-flex max-w-full min-w-0 items-center text-sm before:absolute before:inset-0"
+            render=<Link
+              to="/$guildId/events/$eventId/heroes/$heroId/kills/$killId"
+              params={{
+                guildId,
+                eventId,
+                heroId: kill.heroNpcId,
+                killId: kill.id,
+              }}
+            />
+          >
+            <span className="truncate font-semibold">
+              {kill.heroNpc.npcName}
+            </span>
+          </TextLink>
+        ) : (
+          <span className="block truncate text-sm font-semibold">
+            {kill.heroNpc.npcName}
+          </span>
+        )}
         <div
           className={cn(
             "mt-0.5 truncate text-[10px] text-muted-foreground tabular-nums",

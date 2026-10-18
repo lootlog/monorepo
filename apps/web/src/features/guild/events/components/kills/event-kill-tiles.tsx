@@ -29,7 +29,7 @@ export const EventKillTiles = ({
           key={kill.id}
           data-list-tile
           className={cn(
-            "flex h-16 items-center gap-3",
+            "relative flex h-16 items-center gap-3 transition-colors hover:bg-muted/40",
             LIST_TILE_RULE_CLASS,
             LIST_TILE_INSET_CLASS,
           )}
@@ -46,6 +46,7 @@ export const EventKillTiles = ({
               guildId={guildId}
               kill={kill}
               alwaysShowsDate
+              linksTile
             />
           </div>
           <div className="flex shrink-0 flex-col items-end gap-0.5 text-sm">

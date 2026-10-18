@@ -27,7 +27,6 @@ import {
   EventTimersResponse,
   PendingParticipationConfirmationsResponse,
 } from "#src/events/catalog/event-response.schema";
-import { EventCoordinationResponse } from "#src/events/coordination/event-coordination-response.schema";
 import {
   EventHeroStatsResponse,
   KillDetailResponse,
@@ -768,25 +767,6 @@ export const EventsHandlers = HttpApiBuilder.group(
                   ),
               ),
             ).pipe(Effect.asVoid),
-        ),
-      EventsMonitoringControllerGetCoordination: ({ params }) =>
-        event(
-          "EventsMonitoringControllerGetCoordination",
-          read,
-          params,
-          (caller, eventId) =>
-            operations.monitoring
-              .getCoordination(
-                caller.guild,
-                eventId,
-                [...caller.roles],
-                caller.accessPolicy,
-              )
-              .pipe(
-                Effect.map((value) =>
-                  encodeUnknownResponse(EventCoordinationResponse, value),
-                ),
-              ),
         ),
       EventsMonitoringControllerGetKillTimelineData: ({ params }) =>
         event(

@@ -16,7 +16,7 @@ import { useCurrentMember } from "./hooks/queries/use-current-member";
 import { getMyHeroScores } from "./utils/my-hero-scores";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
-import { EventOverviewColumns } from "./event-overview-columns";
+import { EventOverviewRail } from "./event-overview-rail";
 
 export const EventDetail = () => {
   const {
@@ -176,19 +176,24 @@ export const EventDetail = () => {
               className={LIST_TILE_RULE_CLASS}
             />
           )}
-          <EventOverviewColumns
+          <EventOverviewRail
             heroes={heroesTable}
-            loots={recentLoots}
+            activity={
+              <>
+                {recentKills}
+                {recentLoots}
+              </>
+            }
             ranking={
               <EventRankingPreview
                 rankings={rankings}
                 heroNpcs={heroes}
                 guildId={queryGuildId}
                 eventId={queryEventId}
-                limit={5}
+                limit={10}
+                currentMemberId={currentMember.data?.id}
               />
             }
-            kills={recentKills}
           />
         </div>
       </ScrollArea>

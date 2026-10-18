@@ -1296,14 +1296,6 @@ export const PUBLIC_API_OPERATIONS = [
   {
     service: "main",
     method: "GET",
-    path: "/guilds/{guildId}/events/{eventId}/coordination",
-    operationId: "EventsMonitoringController_getCoordination",
-    access: "read",
-    data: "organization",
-  },
-  {
-    service: "main",
-    method: "GET",
     path: "/guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills/{killId}/timeline",
     operationId: "EventsMonitoringController_getKillTimelineData",
     access: "read",

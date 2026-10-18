@@ -38,7 +38,13 @@ const time = (value: string) => new Date(`2026-09-27T${value}:00.000Z`);
 const uuid = (value: string) =>
   `${value.padStart(8, "0")}-1111-4111-8111-111111111111`;
 
-const orderedIds = ["f", "a", "d", "b", "c"].map(uuid);
+// Kills recorded before the move to UUIDs keep their cuid IDs, so the page
+// boundaries at limit 2 fall on those.
+const legacyId = (value: string) => `cm${value.padStart(23, "0")}`;
+
+const orderedIds = ["f", "a", "d", "b", "c"].map((value, index) =>
+  index === 0 || index === 4 ? uuid(value) : legacyId(value),
+);
 
 const hiddenId = uuid("ee");
 

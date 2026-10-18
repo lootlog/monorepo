@@ -79,9 +79,7 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
       return;
     }
 
-    invalidateKillQueries(queryClient, routeGuildId, payload.eventId, {
-      invalidateCoordination: false,
-    });
+    invalidateKillQueries(queryClient, routeGuildId, payload.eventId);
   });
 
   const handleRespawnWindowChange = useEffectEvent(
