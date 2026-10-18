@@ -64,7 +64,8 @@ export const MemberKillTiles = ({
                   linksTile
                 />
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-0.5 text-sm">
+              {/* Above the tile's link, so the corrected-points tooltip opens. */}
+              <div className="relative z-10 flex shrink-0 flex-col items-end gap-0.5 text-sm">
                 <MemberKillPoints kill={kill} />
                 <span
                   title={`${t("events.kills.timeCoverage")} · ${t("events.kills.trackingDurationTime")}`}

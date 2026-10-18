@@ -165,6 +165,9 @@ describe("MemberKillsList", () => {
     });
 
     expect(expandButton.closest("a")).toBeNull();
+    expect(
+      screen.getByLabelText("events.points.modified").closest("a"),
+    ).toBeNull();
     fireEvent.click(expandButton);
 
     expect(link.getAttribute("href")).toBe(
