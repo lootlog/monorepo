@@ -28,7 +28,7 @@ const activeMember = (discordId: string) =>
 
 export const activeGuildMemberJoin = (
   discordId: string,
-  guildId: AnyPgColumn = guildTable.id,
+  guildId: AnyPgColumn | string = guildTable.id,
 ) => and(eq(memberTable.guildId, guildId), activeMember(discordId));
 
 export const selectAccessibleGuilds = (
