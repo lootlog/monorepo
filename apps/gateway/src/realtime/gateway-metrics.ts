@@ -6,7 +6,7 @@ import type {
   RedisGatewayStore,
 } from "#src/platform/redis-store";
 import type { CommandIngress } from "#src/realtime/command-ingress";
-import type { JoinAdmission } from "#src/realtime/join-admission";
+import type { CommandAdmission } from "#src/realtime/command-admission";
 import {
   FEDERATION_VERSION,
   globalChatScope,
@@ -165,6 +165,12 @@ const runtimeGauges = {
   maxConnectionPending: Metric.gauge("lootlog_gateway_commands_connection_max"),
   joinsActive: Metric.gauge("lootlog_gateway_joins_active"),
   joinsRejected: Metric.gauge("lootlog_gateway_joins_rejected_total"),
+  airTagObservationsActive: Metric.gauge(
+    "lootlog_gateway_air_tag_observations_active",
+  ),
+  airTagObservationsRejected: Metric.gauge(
+    "lootlog_gateway_air_tag_observations_rejected_total",
+  ),
   bufferedBytes: Metric.gauge("lootlog_gateway_sockets_buffered_bytes"),
   maxBufferedBytes: Metric.gauge("lootlog_gateway_socket_buffered_bytes_max"),
 };
@@ -179,7 +185,11 @@ export class GatewayRuntimeMetrics {
       "getLocalSockets" | "unavailableReason"
     >,
     private readonly ingress: Pick<CommandIngress, "getDiagnostics">,
-    private readonly joins: Pick<JoinAdmission, "getDiagnostics">,
+    private readonly joins: Pick<CommandAdmission, "getDiagnostics">,
+    private readonly airTagObservations: Pick<
+      CommandAdmission,
+      "getDiagnostics"
+    >,
   ) {}
 
   readonly sample = Effect.fnUntraced(function* (this: GatewayRuntimeMetrics) {
@@ -192,11 +202,17 @@ export class GatewayRuntimeMetrics {
       maxBufferedBytes = Math.max(maxBufferedBytes, bytes);
     }
 
+    const joins = this.joins.getDiagnostics();
+    const airTagObservations = this.airTagObservations.getDiagnostics();
+
     const values = {
       available: this.hub.unavailableReason() === undefined ? 1 : 0,
       ...this.redis.getDiagnostics(),
       ...this.ingress.getDiagnostics(),
-      ...this.joins.getDiagnostics(),
+      joinsActive: joins.active,
+      joinsRejected: joins.rejected,
+      airTagObservationsActive: airTagObservations.active,
+      airTagObservationsRejected: airTagObservations.rejected,
       bufferedBytes,
       maxBufferedBytes,
     };
