@@ -8,6 +8,7 @@ import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { toast } from "sonner";
 import { useCreateReservation } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
+import { DialogFooter } from "@lootlog/ui/components/dialog";
 import { getReservationErrorMessage } from "../get-reservation-error-message";
 import {
   getReservationEarliestStartDate,
@@ -122,8 +123,8 @@ export function ReservationForm({
         minStart={minStart}
         maxStart={maxStart}
       />
-      <div className="flex justify-end gap-2 border-t pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+      <DialogFooter className="pt-1">
+        <Button type="button" variant="ghost" onClick={onCancel}>
           {t("common.cancel")}
         </Button>
         <Button
@@ -131,9 +132,9 @@ export function ReservationForm({
           disabled={!startsAt || !endsAt}
           loading={createMutation.isPending}
         >
-          {t("common.save")}
+          {t("reservations.schedule.dialog.submit")}
         </Button>
-      </div>
+      </DialogFooter>
     </form>
   );
 }

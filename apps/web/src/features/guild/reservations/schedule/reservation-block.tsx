@@ -1,10 +1,5 @@
 import { format } from "date-fns";
-import {
-  Building2,
-  CalendarClock,
-  MessageSquareText,
-  Trash2,
-} from "lucide-react";
+import { CalendarClock, MessageSquareText, Trash2 } from "lucide-react";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -13,7 +8,6 @@ import {
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { Button } from "@lootlog/ui/components/button";
-import { Badge } from "@lootlog/ui/components/badge";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -34,6 +28,26 @@ type ReservationBlockProps = {
   cancelDisabled?: boolean;
   onContextMenuOpenChange?: (open: boolean) => void;
   onContextMenuOutsidePress?: (event: Event) => void;
+};
+
+/**
+ * A partner's reservation shows its Lootlog's server icon instead of the
+ * author, whom players of this Lootlog rarely know.
+ */
+const getBlockAvatar = (
+  reservation: ReservationSegment["reservation"],
+  isPartner: boolean,
+) => {
+  const name = isPartner
+    ? reservation.sourceOrganization.name
+    : reservation.author.displayName;
+
+  return {
+    url: isPartner
+      ? reservation.sourceOrganization.iconUrl
+      : reservation.author.avatarUrl,
+    fallback: name.charAt(0).toUpperCase() || "?",
+  };
 };
 
 export function ReservationBlock({
@@ -72,8 +86,7 @@ export function ReservationBlock({
   const isPartner = !reservation.sourceOrganization.isCurrent;
   const time = `${format(segment.segmentStart, "HH:mm")}–${format(segment.segmentEnd, "HH:mm")}`;
 
-  const fallback =
-    reservation.author.displayName.charAt(0).toUpperCase() || "?";
+  const avatar = getBlockAvatar(reservation, isPartner);
 
   const block = (
     <button
@@ -89,7 +102,7 @@ export function ReservationBlock({
       className={cn(
         "reservation-card @container group flex min-w-0 cursor-pointer overflow-hidden rounded-md border px-1.5 py-1 text-left shadow-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         isPartner
-          ? "border-sky-500/45 bg-sky-500/15 hover:bg-sky-500/25"
+          ? "border-border bg-muted/70 hover:bg-muted"
           : "border-primary/50 bg-primary/20 hover:bg-primary/30",
         className,
       )}
@@ -97,17 +110,22 @@ export function ReservationBlock({
       <div className="flex min-w-0 flex-1 items-center gap-1.5">
         <Avatar
           data-slot="reservation-avatar"
-          className={cn("shrink-0", avatarClassName)}
+          className={cn(
+            "shrink-0",
+            avatarClassName,
+            isPartner && "rounded-[4px]",
+          )}
         >
-          <AvatarImage src={reservation.author.avatarUrl ?? undefined} alt="" />
-          <AvatarFallback>{fallback}</AvatarFallback>
+          <AvatarImage src={avatar.url ?? undefined} alt="" />
+          <AvatarFallback
+            className={cn("text-[10px]", isPartner && "rounded-[4px]")}
+          >
+            {avatar.fallback}
+          </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1">
-            {isPartner && (
-              <Building2 className="size-3 shrink-0" aria-hidden="true" />
-            )}
-            <span className="block truncate text-[11px] font-semibold leading-tight">
+            <span className="block truncate text-xs font-semibold leading-tight">
               {reservation.author.displayName}
             </span>
             {reservation.comment && showDetails && (
@@ -117,23 +135,20 @@ export function ReservationBlock({
               />
             )}
             {showInlineTime && (
-              <span className="ml-auto shrink-0 text-[10px] font-normal leading-tight text-muted-foreground">
+              <span className="ml-auto shrink-0 text-[11px] font-normal leading-tight tabular-nums text-muted-foreground">
                 {time}
               </span>
             )}
           </div>
           {showStackedTime && (
-            <span className="block truncate text-[10px] leading-tight text-muted-foreground">
+            <span className="mt-0.5 block truncate text-[11px] leading-tight tabular-nums text-muted-foreground">
               {time}
             </span>
           )}
           {showDetails && isPartner && (
-            <Badge
-              variant="outline"
-              className="mt-1 max-w-full truncate text-[9px]"
-            >
+            <span className="mt-0.5 block truncate text-[11px] leading-tight text-muted-foreground">
               {reservation.sourceOrganization.name}
-            </Badge>
+            </span>
           )}
         </div>
       </div>

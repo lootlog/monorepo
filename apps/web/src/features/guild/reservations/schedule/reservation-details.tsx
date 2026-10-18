@@ -16,9 +16,7 @@ import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+  DialogFooter,
 } from "@lootlog/ui/components/dialog";
 import {
   Drawer,
@@ -28,6 +26,7 @@ import {
   DrawerTitle,
 } from "@lootlog/ui/components/drawer";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { ReservationOrganizationBadge } from "@/components/reservation-organization-badge";
 import { useReservationOrganizationIcon } from "@/features/user/reservations/use-reservation-organization-icon";
 import { getReservationErrorMessage } from "../get-reservation-error-message";
@@ -103,9 +102,9 @@ export function ReservationDetails({
   });
 
   const content = (
-    <div className="space-y-4 px-4 pb-4">
+    <div className="space-y-4">
       <div className="flex min-w-0 items-center gap-3">
-        <Avatar className="size-12 shrink-0 border border-border">
+        <Avatar className="size-10 shrink-0 border border-border">
           <AvatarImage
             src={displayedReservation.author.avatarUrl ?? undefined}
             alt=""
@@ -113,13 +112,13 @@ export function ReservationDetails({
           <AvatarFallback>{fallback}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-base font-semibold">
+          <p className="truncate text-sm font-semibold">
             {displayedReservation.author.displayName}
           </p>
           <ReservationOrganizationBadge
             name={displayedReservation.sourceOrganization.name}
             iconUrl={organizationIconUrl}
-            className="mt-1.5"
+            className="mt-1"
           />
         </div>
       </div>
@@ -170,21 +169,19 @@ export function ReservationDetails({
   );
 
   const footer = (
-    <footer className="flex flex-col-reverse gap-2 border-t px-4 py-3 sm:flex-row sm:justify-end">
+    <DialogFooter>
       <Button
         type="button"
-        variant="outline"
-        className="w-full sm:w-auto"
+        variant="ghost"
         disabled={deleteMutation.isPending}
         onClick={() => onOpenChange(false)}
       >
-        {t("common.cancel")}
+        {t("common.close")}
       </Button>
       {displayedReservation.canCancel && (
         <Button
           type="button"
           variant="destructive"
-          className="w-full sm:w-auto"
           loading={deleteMutation.isPending}
           icon=<Trash2 />
           onClick={() =>
@@ -196,10 +193,14 @@ export function ReservationDetails({
             })
           }
         >
-          {t("reservations.details.cancel")}
+          {t(
+            displayedReservation.isMine
+              ? "reservations.details.cancel"
+              : "reservations.details.remove",
+          )}
         </Button>
       )}
-    </footer>
+    </DialogFooter>
   );
 
   if (isMobile) {
@@ -215,8 +216,10 @@ export function ReservationDetails({
             <DrawerTitle>{title}</DrawerTitle>
             <DrawerDescription>{description}</DrawerDescription>
           </DrawerHeader>
-          {content}
-          {footer}
+          <div className="space-y-4 p-4">
+            {content}
+            {footer}
+          </div>
         </DrawerContent>
       </Drawer>
     );
@@ -229,13 +232,16 @@ export function ReservationDetails({
         if (!deleteMutation.isPending) onOpenChange(open);
       }}
     >
-      <DialogContent className="max-w-md">
-        <DialogHeader className="pb-4">
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        {content}
-        {footer}
+      <DialogContent className="sm:max-w-md">
+        <IconDialogHeader
+          icon={CalendarClock}
+          title={title}
+          description={description}
+        />
+        <div className="space-y-4 p-5">
+          {content}
+          {footer}
+        </div>
       </DialogContent>
     </Dialog>
   );

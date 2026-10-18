@@ -8,13 +8,12 @@ import { ReservationCard } from "./reservation-card";
 
 await initializeTestTranslations({
   "reservations.card.freeNow": "Wolne teraz",
-  "reservations.card.noneDescription": "Kliknij, aby wybrać termin",
   "reservations.card.partnerBadge": "Sojusz",
   "reservations.card.pin": "Przypnij expowisko",
-  "reservations.card.occupied": "Zajęte teraz",
-  "reservations.card.next": "Najbliższa rezerwacja",
-  "reservations.card.level": "Poziom",
-  "reservations.card.open": "Otwórz rezerwacje",
+  "reservations.card.occupiedUntil": "Zajęte do",
+  "reservations.card.next": "Następna rezerwacja",
+  "reservations.card.level": "lvl",
+  "reservations.card.open": "Terminy expowiska",
 });
 
 afterEach(cleanup);
