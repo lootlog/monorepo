@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { useLiveLootList } from "./use-live-loot-list";
+import { LootsListToolbar } from "./loots-list-toolbar";
 import { LootListItemStacksProvider } from "./loot-list-item-stacks-provider";
 
 // Dimming the current page signals a reload without moving anything.
@@ -33,6 +34,7 @@ export const LootsList = () => {
 
   const {
     setScrollElement,
+    listRef,
     isEmpty,
     isError,
     isFailed,
@@ -85,6 +87,11 @@ export const LootsList = () => {
   if (isEmpty) {
     return (
       <div className="p-3">
+        {hasActiveFilters && (
+          <div className="-mx-3 -mt-3 mb-3">
+            <LootsListToolbar />
+          </div>
+        )}
         {hasActiveFilters ? (
           <EmptyState
             fill
@@ -122,10 +129,11 @@ export const LootsList = () => {
         ref={setScrollElement}
         onScroll={resumeReconciliation}
       >
+        <LootsListToolbar />
         {/* Phones scroll the document under the app bar; wider screens scroll this viewport. */}
         <div
           aria-live="polite"
-          className="pointer-events-none fixed inset-x-0 top-16 z-10 flex justify-center md:sticky md:inset-x-auto md:top-16 md:h-0"
+          className="pointer-events-none fixed inset-x-0 top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)+0.5rem)] z-10 flex justify-center md:sticky md:inset-x-auto md:h-0"
         >
           {newLootCount > 0 && (
             <Button
@@ -138,101 +146,109 @@ export const LootsList = () => {
             </Button>
           )}
         </div>
-        {isPending ? (
-          <LootsListSkeleton viewMode={viewMode} />
-        ) : viewMode === "grid" ? (
-          <div
-            aria-busy={isRefreshing}
-            className={cn(REFRESHABLE_LIST_CLASS, isRefreshing && "opacity-60")}
-            style={{ height: `${gridVirtualizer.getTotalSize()}px` }}
-          >
-            {gridVirtualItems.map((virtualRow) => {
-              const isLoaderRow = virtualRow.index >= gridRows.length;
-              const rowLoots = gridRows[virtualRow.index];
+        <div ref={listRef}>
+          {isPending ? (
+            <LootsListSkeleton viewMode={viewMode} />
+          ) : viewMode === "grid" ? (
+            <div
+              aria-busy={isRefreshing}
+              className={cn(
+                REFRESHABLE_LIST_CLASS,
+                isRefreshing && "opacity-60",
+              )}
+              style={{ height: `${gridVirtualizer.getTotalSize()}px` }}
+            >
+              {gridVirtualItems.map((virtualRow) => {
+                const isLoaderRow = virtualRow.index >= gridRows.length;
+                const rowLoots = gridRows[virtualRow.index];
 
-              return (
-                <div
-                  key={virtualRow.key}
-                  data-index={virtualRow.index}
-                  ref={gridVirtualizer.measureElement}
-                  className="absolute inset-x-0 top-0"
-                  style={{
-                    transform: `translateY(${virtualRow.start - gridVirtualizer.options.scrollMargin}px)`,
-                  }}
-                >
-                  {isLoaderRow ? (
-                    <div className="p-3">
-                      <InfiniteListStatusRow
-                        hasNextPage={hasNextPage}
-                        hasError={isError}
-                        onRetry={retry}
-                        loadingLabel={t(themedKey("loots.list.loadingMore"))}
-                        endLabel={t(themedKey("loots.list.end"))}
-                        errorLabel={t("loots.list.loadError")}
-                        retryLabel={t("common.actions.retry")}
-                      />
-                    </div>
-                  ) : rowLoots ? (
-                    <div className={cn(LOOTS_GRID_CLASS, "items-stretch")}>
-                      {rowLoots.map((loot) => (
-                        <div
-                          key={loot.id}
-                          data-list-tile
-                          className={LOOTS_GRID_CELL_CLASS}
-                        >
-                          <LootsListItem
-                            loot={loot}
-                            showWorld={world === null}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div
-            aria-busy={isRefreshing}
-            className={cn(REFRESHABLE_LIST_CLASS, isRefreshing && "opacity-60")}
-            style={{ height: `${virtualizer.getTotalSize()}px` }}
-          >
-            {virtualItems.map((virtualItem) => {
-              const isLoaderRow = virtualItem.index > totalCount - 1;
-              const loot = allLoots[virtualItem.index];
+                return (
+                  <div
+                    key={virtualRow.key}
+                    data-index={virtualRow.index}
+                    ref={gridVirtualizer.measureElement}
+                    className="absolute inset-x-0 top-0"
+                    style={{
+                      transform: `translateY(${virtualRow.start - gridVirtualizer.options.scrollMargin}px)`,
+                    }}
+                  >
+                    {isLoaderRow ? (
+                      <div className="p-3">
+                        <InfiniteListStatusRow
+                          hasNextPage={hasNextPage}
+                          hasError={isError}
+                          onRetry={retry}
+                          loadingLabel={t(themedKey("loots.list.loadingMore"))}
+                          endLabel={t(themedKey("loots.list.end"))}
+                          errorLabel={t("loots.list.loadError")}
+                          retryLabel={t("common.actions.retry")}
+                        />
+                      </div>
+                    ) : rowLoots ? (
+                      <div className={cn(LOOTS_GRID_CLASS, "items-stretch")}>
+                        {rowLoots.map((loot) => (
+                          <div
+                            key={loot.id}
+                            data-list-tile
+                            className={LOOTS_GRID_CELL_CLASS}
+                          >
+                            <LootsListItem
+                              loot={loot}
+                              showWorld={world === null}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div
+              aria-busy={isRefreshing}
+              className={cn(
+                REFRESHABLE_LIST_CLASS,
+                isRefreshing && "opacity-60",
+              )}
+              style={{ height: `${virtualizer.getTotalSize()}px` }}
+            >
+              {virtualItems.map((virtualItem) => {
+                const isLoaderRow = virtualItem.index > totalCount - 1;
+                const loot = allLoots[virtualItem.index];
 
-              return (
-                <div
-                  key={virtualItem.key}
-                  data-index={virtualItem.index}
-                  ref={virtualizer.measureElement}
-                  data-list-tile={isLoaderRow ? undefined : ""}
-                  className="absolute inset-x-0 top-0"
-                  style={{
-                    transform: `translateY(${virtualItem.start - virtualizer.options.scrollMargin}px)`,
-                  }}
-                >
-                  {isLoaderRow ? (
-                    <div className="p-3">
-                      <InfiniteListStatusRow
-                        hasNextPage={hasNextPage}
-                        hasError={isError}
-                        onRetry={retry}
-                        loadingLabel={t(themedKey("loots.list.loadingMore"))}
-                        endLabel={t(themedKey("loots.list.end"))}
-                        errorLabel={t("loots.list.loadError")}
-                        retryLabel={t("common.actions.retry")}
-                      />
-                    </div>
-                  ) : loot ? (
-                    <LootsListItem loot={loot} showWorld={world === null} />
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        )}
+                return (
+                  <div
+                    key={virtualItem.key}
+                    data-index={virtualItem.index}
+                    ref={virtualizer.measureElement}
+                    data-list-tile={isLoaderRow ? undefined : ""}
+                    className="absolute inset-x-0 top-0"
+                    style={{
+                      transform: `translateY(${virtualItem.start - virtualizer.options.scrollMargin}px)`,
+                    }}
+                  >
+                    {isLoaderRow ? (
+                      <div className="p-3">
+                        <InfiniteListStatusRow
+                          hasNextPage={hasNextPage}
+                          hasError={isError}
+                          onRetry={retry}
+                          loadingLabel={t(themedKey("loots.list.loadingMore"))}
+                          endLabel={t(themedKey("loots.list.end"))}
+                          errorLabel={t("loots.list.loadError")}
+                          retryLabel={t("common.actions.retry")}
+                        />
+                      </div>
+                    ) : loot ? (
+                      <LootsListItem loot={loot} showWorld={world === null} />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
         {/* Keeps the last loot clear of the phone's floating filters button. */}
         <div aria-hidden="true" className="h-20 md:hidden" />
       </ScrollArea>

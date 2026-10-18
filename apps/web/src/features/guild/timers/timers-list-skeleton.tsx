@@ -11,9 +11,17 @@ import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 const GROUP_SIZES = [3, 5];
 
 /** Mirrors the timer list: the toolbar row, then group headings above `SingleTimer` rows. */
-export const TimersListSkeleton = ({ viewMode }: { viewMode: ViewMode }) => (
+export const TimersListSkeleton = ({
+  viewMode,
+  canChooseViewMode,
+}: {
+  viewMode: ViewMode;
+  canChooseViewMode: boolean;
+}) => (
   <div aria-hidden="true">
-    <ListToolbarSkeleton />
+    <ListToolbarSkeleton>
+      {canChooseViewMode && <Skeleton className="h-8 w-16 rounded-lg" />}
+    </ListToolbarSkeleton>
     {GROUP_SIZES.map((size, groupIndex) => (
       <div key={groupIndex}>
         <div className={cn(LIST_GROUP_HEADING_CLASS, LIST_TILE_INSET_CLASS)}>
