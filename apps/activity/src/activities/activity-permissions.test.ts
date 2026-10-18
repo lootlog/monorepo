@@ -1,4 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
+import { Permission } from "@lootlog/schema/permissions";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Effect, Layer, Queue, Redacted } from "effect";
 import { Redis } from "effect/persistence";
@@ -7,23 +8,44 @@ import { ApiHttpClient } from "#src/http/api-http-client";
 import { Permissions } from "./activity-permissions.js";
 
 describe("Activity permissions", () => {
-  it("falls back to the API when the Redis cache is malformed", async () => {
+  it("drops an admin's access as soon as the API stops granting it", async () => {
+    const adminGrant = [
+      {
+        guild: { id: "guild-1", ownerId: "owner" },
+        roles: [
+          {
+            id: "admin",
+            lvlRangeFrom: 0,
+            lvlRangeTo: 999,
+            permissions: [Permission.ADMIN],
+          },
+        ],
+      },
+    ];
+
+    const responses = [adminGrant, []];
+
     const get = mock(() =>
       Effect.succeed({
         status: 200,
-        body: new TextEncoder().encode("[]"),
+        body: new TextEncoder().encode(JSON.stringify(responses.shift())),
       }),
     );
 
+    // A working Redis, so any cache placed in front of the API would serve
+    // the stale grant on the second read.
+    const store = new Map<string, string>();
+
     const redis = Redis.Redis.of({
-      send: <A>(command: string) => {
-        if (command !== "GET" && command !== "PING" && command !== "SET") {
-          return Effect.die(new Error(`Unexpected Redis command: ${command}`));
-        }
+      send: <A>(command: string, ...args: ReadonlyArray<string>) => {
+        const [key = "", value = ""] = args;
 
-        const reply = command === "GET" ? "not-json" : "OK";
+        if (command === "SET") store.set(key, value);
 
-        // SAFETY: This scenario calls GET as string | null and ignores PING/SET replies; Redis's caller-selected A is erased at this fake transport boundary.
+        const reply =
+          command === "GET" ? (store.get(key) ?? null) : ("OK" as const);
+
+        // SAFETY: This fake answers GET with string | null and PING/SET with "OK"; Redis's caller-selected A is erased at this fake transport boundary.
         return Effect.succeed(reply as A);
       },
       subscribe: () => Queue.unbounded<Redis.RedisMessage, Redis.RedisError>(),
@@ -50,10 +72,12 @@ describe("Activity permissions", () => {
       signatureSecret: Redacted.make("a".repeat(32)),
     });
 
-    const permissions = await Effect.runPromise(
-      Effect.flatMap(Permissions, (service) =>
-        service.getUserGuildPermissions("discord-1", "user-1", "guild-1"),
-      ).pipe(
+    const read = Effect.flatMap(Permissions, (service) =>
+      service.getUserGuildPermissions("discord-1", "user-1", "guild-1"),
+    );
+
+    const [before, after] = await Effect.runPromise(
+      Effect.all([read, read]).pipe(
         Effect.provide(Permissions.layer),
         Effect.provide(Layer.succeed(ApiHttpClient, ApiHttpClient.of({ get }))),
         Effect.provide(Layer.succeed(ActivityConfig, config)),
@@ -61,7 +85,7 @@ describe("Activity permissions", () => {
       ),
     );
 
-    expect(permissions).toEqual([]);
-    expect(get).toHaveBeenCalledTimes(1);
+    expect(before).toEqual([Permission.ADMIN]);
+    expect(after).toEqual([]);
   });
 });
