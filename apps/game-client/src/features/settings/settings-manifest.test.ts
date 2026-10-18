@@ -39,7 +39,6 @@ describe("settings manifest persistence references", () => {
       "pings",
       "sounds",
       "controls",
-      "experimental",
       "diagnostics",
       "information",
     ]);
@@ -65,7 +64,6 @@ describe("settings manifest persistence references", () => {
     expect(subsectionsOf("notifications")).toEqual(["notification-rules"]);
     expect(subsectionsOf("detector")).toEqual(["detector"]);
     expect(subsectionsOf("mutes")).toEqual(["muted-players", "muted-npcs"]);
-    expect(subsectionsOf("experimental")).toEqual(["experimental"]);
     expect(subsectionsOf("battle-panel")).toEqual(["battle-panel"]);
   });
 

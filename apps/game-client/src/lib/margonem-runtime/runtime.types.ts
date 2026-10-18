@@ -31,6 +31,8 @@ export type RuntimeMap = Readonly<{
   id: number;
   name: string;
   visibility: number;
+  /** Margonem PvP mode: 0 green, 1 yellow, 2 red (full PvP), 4 orange. */
+  pvp?: number;
 }>;
 
 export type RuntimeHero = Readonly<{

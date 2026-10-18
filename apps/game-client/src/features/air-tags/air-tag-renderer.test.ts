@@ -19,7 +19,12 @@ const createTarget = (overrides: Partial<AirTagTarget> = {}): AirTagTarget => ({
   ...overrides,
 });
 
+// AirTags show players only on red maps.
+const RED_MAP = { id: 42, name: "Ithan", visibility: 30, pvp: 2 };
+
 describe("AirTagRenderer", () => {
+  beforeEach(() => setTestRuntimeGame({ map: RED_MAP }));
+
   afterEach(() => {
     airTagReceiveController.clear();
     vi.useRealTimers();
@@ -74,6 +79,40 @@ describe("AirTagRenderer", () => {
     expect(removeCallbackFromEvent).toHaveBeenCalledTimes(1);
   });
 
+  it("draws nothing on a map without full PvP, where only timers count enemies", () => {
+    setTestRuntimeGame({ map: { ...RED_MAP, pvp: 1 } });
+    const addCallbackToEvent = vi.fn<() => void>();
+    testRuntimeWindow.Engine = {
+      apiData: { CALL_DRAW_ADD_TO_RENDERER: "draw" },
+    };
+    testRuntimeWindow.API = {
+      addCallbackToEvent,
+      removeCallbackFromEvent: vi.fn<() => void>(),
+    };
+    const renderer = new AirTagRenderer(() => 2_000);
+
+    renderer.register();
+    airTagReceiveController.beginSubscription("request", "aether", 42);
+    airTagReceiveController.applySubscriptionAck({
+      status: "accepted",
+      requestId: "request",
+      scopes: [
+        {
+          guildId: "guild-1",
+          world: "aether",
+          mapId: 42,
+          epochId: "epoch",
+          epochStartedAt: 100,
+          revision: 1,
+          targets: [createTarget({ x: 80, y: 80 })],
+        },
+      ],
+    });
+
+    expect(addCallbackToEvent).not.toHaveBeenCalled();
+    renderer.unregister();
+  });
+
   it("expires targets and detaches drawing even when no draw frame arrives", () => {
     vi.useFakeTimers();
     let now = 2_000;
@@ -112,8 +151,11 @@ describe("AirTagRenderer", () => {
     expect(removalCountBeforeCleanup).toBe(1);
   });
 
-  it("draws every target the game does not show on the minimap and only CLAN_ENEMY on main canvas", () => {
-    setTestRuntimeGame({ hero: { characterId: "hero" } });
+  it("draws every target the hero cannot see on the minimap and only CLAN_ENEMY on main canvas", () => {
+    setTestRuntimeGame({
+      hero: { characterId: "hero", x: 30, y: 30 },
+      map: { ...RED_MAP, visibility: 12 },
+    });
     useOthersStore.getState().replaceOthers({
       "in-sight": Object.freeze({
         accountId: "account",
@@ -195,6 +237,14 @@ describe("AirTagRenderer", () => {
               clanEnemyObservedAt: 1_000,
             }),
             createTarget({ targetId: "hero" }),
+            // A stale report from a tile the hero sees with nobody on it.
+            createTarget({
+              targetId: "left",
+              relation: 6,
+              clanEnemyObservedAt: 1_000,
+              x: 33,
+              y: 34,
+            }),
           ],
         },
       ],

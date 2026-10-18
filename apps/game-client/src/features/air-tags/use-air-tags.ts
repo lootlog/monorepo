@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { GatewayEvent } from "@/config/gateway";
-import { useCurrentGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { getSocket, type PermissionsUpdatedPayload } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import type {
@@ -10,17 +9,15 @@ import type {
 import { airTagRuntime } from "./air-tag-runtime";
 
 export const useAirTags = (): void => {
-  const { data: accountPreferences } = useCurrentGameAccountPreferences();
   const connected = useGlobalStore((state) => state.socketState.connected);
   const joined = useGlobalStore((state) => state.socketState.joined);
-  const enabled = accountPreferences?.airTags?.enabled ?? false;
 
   useEffect(() => {
-    airTagRuntime.configure({ enabled, connected, joined });
-  }, [connected, enabled, joined]);
+    airTagRuntime.configure({ connected, joined });
+  }, [connected, joined]);
 
   useEffect(() => {
-    if (!enabled || !connected || !joined) {
+    if (!connected || !joined) {
       return;
     }
 
@@ -47,7 +44,7 @@ export const useAirTags = (): void => {
       socket.off(GatewayEvent.AIR_TAG_SCOPE_UPDATE, handleScopeUpdate);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
     };
-  }, [connected, enabled, joined]);
+  }, [connected, joined]);
 
   useEffect(() => {
     return () => airTagRuntime.shutdown();

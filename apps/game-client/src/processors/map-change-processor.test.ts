@@ -200,11 +200,7 @@ describe("MapChangeProcessor", () => {
             joinedGuilds: ["guild-1"],
           },
         });
-        airTagRuntime.configure({
-          connected: true,
-          enabled: true,
-          joined: true,
-        });
+        airTagRuntime.configure({ connected: true, joined: true });
         dispatch(createMapChangeEvent(12, "Torneg"));
         useNpcDetectorStore.setState({ npcs: [npc] });
         useDialogStore.getState().setNpcContext({
@@ -270,7 +266,7 @@ describe("MapChangeProcessor", () => {
     useGlobalStore.setState({
       socketState: { connected: true, joined: true, joinedGuilds: ["guild-1"] },
     });
-    airTagRuntime.configure({ connected: true, enabled: true, joined: true });
+    airTagRuntime.configure({ connected: true, joined: true });
     test.wire.frames.length = 0;
     setTestRuntimeGame({
       world: "fobos",

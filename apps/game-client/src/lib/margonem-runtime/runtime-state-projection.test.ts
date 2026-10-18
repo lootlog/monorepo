@@ -36,7 +36,7 @@ const game = Object.freeze({
   }),
   gameVersion: "pl",
   interface: "ni",
-  map: Object.freeze({ id: 10, name: "Map", visibility: 30 }),
+  map: Object.freeze({ id: 10, name: "Map", visibility: 30, pvp: 0 }),
   world: "luvia",
 }) satisfies RuntimeGameSnapshot;
 
@@ -178,7 +178,7 @@ describe("RuntimeStateProjection", () => {
           x: 8,
           y: 9,
         }),
-        map: { id: 11, name: "New map", visibility: 25 },
+        map: { id: 11, name: "New map", visibility: 25, pvp: 0 },
       }),
     );
     expect(adapter.getStateSnapshot).toHaveBeenCalledOnce();
@@ -232,6 +232,36 @@ describe("RuntimeStateProjection", () => {
     projection.apply(createEnvelope({ town: { id: 11 } }));
     expect(useGameStore.getState().game?.map.name).toBe("");
     expect(useGameStore.getState().game?.map.id).toBe(11);
+  });
+
+  it("recovers the PvP mode once the native map catches up with a map change", () => {
+    const adapter = createAdapter();
+    const projection = new RuntimeStateProjection({ adapter });
+    projection.bootstrap();
+    // The native map still shows the previous location while the town packet arrives.
+    adapter.getGameSnapshot.mockReturnValue(game);
+    projection.apply(
+      createEnvelope({ town: { id: 11, name: "Red map", visibility: 20 } }),
+    );
+    expect(useGameStore.getState().game?.map.pvp).toBeUndefined();
+
+    adapter.getGameSnapshot.mockReturnValue({
+      ...game,
+      map: { id: 11, name: "Red map", visibility: 20, pvp: 2 },
+    });
+
+    const envelope = projection.captureIngress(
+      createEnvelope({ h: { stasis: 0 } }),
+    );
+
+    expect(useGameStore.getState().game?.map).toEqual({
+      id: 11,
+      name: "Red map",
+      visibility: 20,
+      pvp: 2,
+    });
+    // The map name was known, so the map change is not announced again.
+    expect(envelope.facts.map((fact) => fact.kind)).toEqual(["afk"]);
   });
 
   it("repairs a missing location before capturing a loot ingress snapshot", () => {
