@@ -5,7 +5,7 @@ import { getSocket } from "@/lib/socket";
 import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useOthersStore } from "@/store/others.store";
-import { isShownByGame } from "./air-tag-game-visibility";
+import { isSeenByHero, showsAirTagsOnMap } from "./air-tag-game-visibility";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import { AIR_TAG_TARGET_TTL_MS } from "./air-tag-renderer";
 import {
@@ -29,11 +29,12 @@ function getMemberSources() {
 }
 
 function readUnseenEnemies(now: number) {
+  if (!showsAirTagsOnMap()) return { enemies: [], hasCandidates: false };
   const members = getMemberSources();
 
   const candidates = selectUnseenAirTagEnemies(
     airTagReceiveController.getRenderableTargets(now, AIR_TAG_TARGET_TTL_MS),
-    { now, ttlMs: AIR_TAG_TARGET_TTL_MS, isShownByGame },
+    { now, ttlMs: AIR_TAG_TARGET_TTL_MS, isSeenByHero },
   );
 
   return {
@@ -64,9 +65,13 @@ export function useWhoIsHereAirTagEnemies() {
   // A fresh object re-renders even when two reads fall in the same millisecond.
   const [{ now }, setClock] = useState(() => ({ now: Date.now() }));
 
-  // Re-read when a player comes into sight or the Organizations change.
+  // Re-read when a player or the hero moves into sight or the Organizations change.
   useOthersStore((state) => state.othersById);
   useGameStore((state) => state.game?.hero.characterId);
+  useGameStore((state) => state.game?.hero.x);
+  useGameStore((state) => state.game?.hero.y);
+  useGameStore((state) => state.game?.map.visibility);
+  useGameStore((state) => state.game?.map.pvp);
   const world = useGameStore((state) => state.game?.world);
 
   const joinedGuilds = useGlobalStore(

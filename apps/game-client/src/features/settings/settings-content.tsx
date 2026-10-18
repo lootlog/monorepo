@@ -4,7 +4,6 @@ import { ChatAppearanceSettingsForm } from "@/features/settings/components/chat/
 import { ChatFiltersSettings } from "@/features/settings/components/chat/chat-filters-settings";
 import { DebugTab } from "@/features/settings/components/debug/debug-tab";
 import { DetectorSettingsTab } from "@/features/settings/components/detector/detector-settings-tab";
-import { ExperimentalSettingsTab } from "@/features/settings/components/experimental/experimental-settings-tab";
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
 import { HiddenTimersTab } from "@/features/settings/components/hidden-timers/hidden-timers-tab";
 import { HotkeysSettingsTab } from "@/features/settings/components/hotkeys/hotkeys-settings-tab";
@@ -29,7 +28,6 @@ import {
   BellOff,
   Clock,
   Crosshair,
-  FlaskConical,
   Info,
   Keyboard,
   MessageSquare,
@@ -63,7 +61,6 @@ export const SETTINGS_DOMAIN_ICONS = {
   mapPin: MapPin,
   volume2: Volume2,
   keyboard: Keyboard,
-  flaskConical: FlaskConical,
   activity: Activity,
   info: Info,
 } satisfies Record<SettingsIconName, LucideIcon>;
@@ -88,7 +85,6 @@ export const SETTINGS_SUBSECTION_CONTENT = {
   pings: PingsSettingsTab,
   sounds: SoundsSettingsTab,
   hotkeys: HotkeysSettingsTab,
-  experimental: ExperimentalSettingsTab,
   logs: LogsSettingsTab,
   debug: DebugTab,
   build: InformationSettingsTab,

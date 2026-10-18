@@ -20,11 +20,17 @@ const target = (overrides: Partial<AirTagTarget>): AirTagTarget => ({
   targetId: "1",
   nickname: "Target",
   relation: 6,
-  x: 1,
-  y: 1,
+  // Outside the test hero's war shadow range.
+  x: 80,
+  y: 80,
   observedAt: Date.now(),
   ...overrides,
 });
+
+// AirTags show players only on red maps.
+const RED_MAP = { id: 7, name: "Ithan", visibility: 30, pvp: 2 };
+
+beforeEach(() => setTestRuntimeGame({ map: RED_MAP }));
 
 afterEach(() => {
   airTagReceiveController.clear();
@@ -70,6 +76,8 @@ it("lists enemies seen through AirTags under the native players list and starts 
           targets: [
             target({ targetId: "hidden", nickname: "Hidden", lvl: 250 }),
             target({ targetId: "seen", nickname: "Seen" }),
+            // A stale report: the hero sees that tile and nobody is there.
+            target({ targetId: "left", nickname: "Left", x: 3, y: 4 }),
             target({ targetId: "neutral", nickname: "Neutral", relation: 1 }),
           ],
         },
@@ -165,7 +173,7 @@ it("hides an online member of the Organization whom another clan's member report
       "user",
     ),
   );
-  setTestRuntimeGame({ world: "alpha" });
+  setTestRuntimeGame({ world: "alpha", map: RED_MAP });
   useGlobalStore.getState().setSocketState({ joinedGuilds: ["guild-1"] });
   document.body.innerHTML =
     '<div class="whoishere-window"><div class="player-list"></div></div>';
@@ -204,4 +212,33 @@ it("hides an online member of the Organization whom another clan's member report
   );
   expect(screen.getByRole("button", { name: /Hidden/ })).toBeVisible();
   useGlobalStore.getState().setSocketState({ joinedGuilds: [] });
+});
+
+it("lists no enemies on a map without full PvP", async () => {
+  setTestRuntimeGame({ map: { ...RED_MAP, pvp: 0 } });
+  document.body.innerHTML =
+    '<div class="whoishere-window"><div class="player-list"></div></div>';
+  render(<WhoIsHereAirTags />);
+
+  act(() => {
+    airTagReceiveController.beginSubscription("request", "aether", 7);
+    airTagReceiveController.applySubscriptionAck({
+      status: "accepted",
+      requestId: "request",
+      scopes: [
+        {
+          guildId: "guild-1",
+          world: "aether",
+          mapId: 7,
+          epochId: "epoch",
+          epochStartedAt: 1,
+          revision: 1,
+          targets: [target({ targetId: "hidden", nickname: "Hidden" })],
+        },
+      ],
+    });
+  });
+  await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+
+  expect(screen.queryByRole("button", { name: /Hidden/ })).toBeNull();
 });

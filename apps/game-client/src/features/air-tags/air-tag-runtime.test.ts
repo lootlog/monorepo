@@ -6,7 +6,7 @@ describe("AirTagRuntime", () => {
   it("subscribes to the current map without republishing session presence", async () => {
     const test = createAirTagTest();
     onTestFinished(() => test.runtime.shutdown());
-    test.runtime.configure({ connected: true, enabled: true, joined: true });
+    test.runtime.configure({ connected: true, joined: true });
     expect(test.wire.frames).toEqual([
       expect.objectContaining({
         type: "air-tag.subscription",
@@ -21,7 +21,7 @@ describe("AirTagRuntime", () => {
   it("subscribes using raw map-change data before the normalized map updates", async () => {
     const test = createAirTagTest();
     onTestFinished(() => test.runtime.shutdown());
-    test.runtime.configure({ connected: true, enabled: true, joined: true });
+    test.runtime.configure({ connected: true, joined: true });
     await test.acknowledge();
     test.wire.frames.length = 0;
     test.runtime.handleMapChange(13, "Nithal");
@@ -38,21 +38,5 @@ describe("AirTagRuntime", () => {
     expect(
       airTagReceiveController.getRenderableTargets(Date.now(), 10000),
     ).toHaveLength(1);
-  });
-  it("unsubscribes and clears received state when disabled", async () => {
-    const test = createAirTagTest();
-    onTestFinished(() => test.runtime.shutdown());
-    test.runtime.configure({ connected: true, enabled: true, joined: true });
-    await test.acknowledge();
-    test.wire.frames.length = 0;
-    test.runtime.configure({ connected: true, enabled: false, joined: true });
-    expect(test.subscriptions()).toEqual([
-      expect.objectContaining({
-        data: expect.objectContaining({ enabled: false }),
-      }),
-    ]);
-    expect(
-      airTagReceiveController.getRenderableTargets(Date.now(), 10000),
-    ).toEqual([]);
   });
 });

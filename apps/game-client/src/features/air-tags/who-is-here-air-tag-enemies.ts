@@ -20,16 +20,16 @@ export function selectUnseenAirTagEnemies(
   {
     now,
     ttlMs,
-    isShownByGame,
+    isSeenByHero,
   }: {
     now: number;
     ttlMs: number;
-    isShownByGame: (targetId: string) => boolean;
+    isSeenByHero: (target: AirTagTarget) => boolean;
   },
 ): WhoIsHereAirTagEnemy[] {
   return targets
     .flatMap((target) => {
-      if (isShownByGame(target.targetId)) return [];
+      if (isSeenByHero(target)) return [];
       const effectiveRelation = getAirTagEffectiveRelation(target, now, ttlMs);
 
       return effectiveRelation === AIR_TAG_CLAN_ENEMY_RELATION ||
