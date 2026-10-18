@@ -24,8 +24,15 @@ export const EventOverviewRail = ({
       <div className="min-w-0 max-xl:order-3">{activity}</div>
     </div>
     <aside className="min-w-0 max-xl:order-2">
-      <div className="xl:sticky xl:top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)-1px)]">
-        {ranking}
+      {/* Never taller than the page view under the app bar (3.5rem, which
+          the page viewport insets) and the tabs, so a short screen scrolls
+          the rail instead of hiding its last rows. */}
+      <div className="xl:sticky xl:top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)-1px)] xl:max-h-[calc(100dvh-3.5rem-var(--page-sticky-top)-var(--filter-bar-height,0px)+1px)] xl:overflow-y-auto">
+        {/* The rail is its own scroller, so its section heading pins to its
+            top rather than the page's offset. */}
+        <div className="xl:[--filter-bar-height:0px] xl:[--page-sticky-top:0px]">
+          {ranking}
+        </div>
       </div>
     </aside>
   </StatsSectionColumns>
