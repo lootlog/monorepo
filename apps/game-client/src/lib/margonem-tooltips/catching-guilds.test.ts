@@ -95,26 +95,13 @@ describe("appendCatchingGuildsTooltipSection", () => {
     });
   });
 
-  it("does not extend non-other tooltips", () => {
-    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-
-    expect(
-      appendCatchingGuildsTooltipSection({
-        baseHtml: "<div>Hero</div>",
-        character: {},
-        currentHtml: "<div>Hero</div>",
-        kind: "hero",
-      }),
-    ).toBe("<div>Hero</div>");
-  });
-
   it("does not extend other tooltips while shift is not pressed", () => {
     expect(
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
-        kind: "other",
       }),
     ).toBe("<div>Other</div>");
   });
@@ -129,13 +116,13 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
-        kind: "other",
       }),
     ).toBe("<div>Other</div>");
   });
 
-  it("shows unavailable state before a cache entry exists", () => {
+  it("shows loading state before a cache entry exists", () => {
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     setOnlineOwner();
 
@@ -143,10 +130,10 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
-        kind: "other",
       }),
-    ).toContain("Brak informacji o graczu online");
+    ).toContain("Ładowanie…");
   });
 
   it("shows loading state when the cache entry is loading", () => {
@@ -159,8 +146,8 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
-        kind: "other",
       }),
     ).toContain("Ładowanie…");
   });
@@ -181,12 +168,11 @@ describe("appendCatchingGuildsTooltipSection", () => {
     const result = appendCatchingGuildsTooltipSection({
       baseHtml: "<div>Other</div>",
       character: createOther(),
+      interface: "ni",
       currentHtml: "<div>Other</div>",
-      kind: "other",
     });
 
     expect(result).toContain("Dodaje łupy i timery do:");
-    expect(result).toContain("Gra jako:");
     expect(result).toContain("Member &lt;One&gt;");
     expect(result).toContain("Alpha &lt;One&gt;");
     expect(result).toContain("Beta &amp; Co");
@@ -202,23 +188,23 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
-        kind: "other",
       }),
     ).toContain("Brak wspólnych Lootlogów");
   });
 
-  it("shows unavailable state while shift is pressed when the owner is missing", () => {
+  it("tells the player the character does not play with their Lootlog", () => {
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
 
     expect(
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
-        character: {},
+        character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
-        kind: "other",
       }),
-    ).toContain("Brak informacji o graczu online");
+    ).toContain("Nie gra z Twoim Lootlogiem");
   });
 
   it("shows an error state", () => {
@@ -231,10 +217,10 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
-        kind: "other",
       }),
-    ).toContain("Nie udało się pobrać Lootlogów");
+    ).toContain("Nie udało się pobrać danych z Lootloga");
   });
 
   it("shows an error state when the presence snapshot fails", () => {
@@ -245,9 +231,23 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
-        kind: "other",
       }),
-    ).toContain("Nie udało się pobrać Lootlogów");
+    ).toContain("Nie udało się pobrać danych z Lootloga");
+  });
+
+  it("explains missing access to online players", () => {
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    useOnlineCharacterOwnersStore.getState().setForbidden();
+
+    expect(
+      appendCatchingGuildsTooltipSection({
+        baseHtml: "<div>Other</div>",
+        character: createOther(),
+        interface: "ni",
+        currentHtml: "<div>Other</div>",
+      }),
+    ).toContain("Nie masz dostępu do graczy online");
   });
 });

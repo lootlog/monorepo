@@ -1,14 +1,10 @@
-import type { Hero } from "@lootlog/margonem/hero";
 import type { Other } from "@lootlog/margonem/others";
-import type { CharacterTooltipOwner } from "@lootlog/margonem/tooltip";
-
-export type CharacterTooltipKind = "hero" | "other";
-
-export type MargonemTooltipCharacter = Hero | Other | CharacterTooltipOwner;
+import type { RuntimeInterface } from "@/lib/margonem-runtime/runtime.types";
 
 export type CharacterTooltipTransformContext = {
-  kind: CharacterTooltipKind;
-  character: MargonemTooltipCharacter;
+  character: Other;
+  /** NI and SI draw tips with different markup and stylesheets. */
+  interface: RuntimeInterface;
   baseHtml: string;
   currentHtml: string;
 };

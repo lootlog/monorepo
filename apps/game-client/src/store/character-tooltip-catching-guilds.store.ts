@@ -85,7 +85,7 @@ export function getOtherCatchingGuildsTarget(
     accountId,
     characterId,
     key: getCharacterIdentityKey(accountId, characterId),
-    ownerName: owner.guildMemberName ?? owner.userId,
+    ownerName: owner.guildMemberName,
     playerName: owner.playerName,
     requestKey: `${owner.userId}:${accountId}:${characterId}`,
     userId: owner.userId,

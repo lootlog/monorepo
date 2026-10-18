@@ -89,16 +89,15 @@
     "action": "Otwórz stronę Lootloga"
   },
   "characterTooltip": {
-    "owner": {
-      "title": "Gra jako:",
-      "unavailable": "Brak informacji o graczu online"
-    },
+    "title": "Lootlog",
+    "loading": "Ładowanie…",
+    "error": "Nie udało się pobrać danych z Lootloga",
+    "forbidden": "Nie masz dostępu do graczy online",
+    "notInLootlog": "Nie gra z Twoim Lootlogiem",
     "catchingGuilds": {
       "title": "Dodaje łupy i timery do:",
-      "loading": "Ładowanie…",
       "empty": "Brak wspólnych Lootlogów",
-      "error": "Nie udało się pobrać Lootlogów",
-      "unavailable": "Brak informacji o graczu online"
+      "more": "+{{count}}"
     }
   },
   "worldSelector": {
