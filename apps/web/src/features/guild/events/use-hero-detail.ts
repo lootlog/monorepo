@@ -273,7 +273,6 @@ export const useHeroDetail = () => {
           queryClient,
           variables.pathParams.guildId,
           variables.pathParams.eventId,
-          { invalidateCoordination: false },
         );
       },
     },

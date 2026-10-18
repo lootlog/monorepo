@@ -4,7 +4,6 @@ import {
   getEventsMonitoringControllerGetHeroRespawnConfigQueryKey,
   getListEventMapsQueryKey,
 } from "@lootlog/client/main";
-import { invalidateEventCoordinationQuery } from "./invalidate-event-queries";
 import { isEventHeroGapPath } from "./invalidate-map-queries";
 
 const getEventTimersPath = (guildId: string, eventId: string) =>
@@ -58,6 +57,4 @@ export function invalidateRespawnQueries(
   queryClient.invalidateQueries({
     queryKey: getListEventMapsQueryKey({ guildId, eventId }),
   });
-
-  return invalidateEventCoordinationQuery(queryClient, guildId, eventId);
 }

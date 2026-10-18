@@ -39,8 +39,6 @@ import { makeEventsMonitoring } from "#src/events/monitoring/events-monitoring.o
 import { makeEventsPins } from "#src/events/pins/events-pins.operations";
 import { makeEventsRanking } from "#src/events/ranking/events-ranking.operations";
 import { makeActiveEventHeroStore } from "#src/events/kills/active-event-hero.repository";
-import { makeEventCoordinationStore } from "#src/events/coordination/event-coordination.repository";
-import { makeEventCoordination } from "#src/events/coordination/event-coordination.service";
 import { makeEventEmitter } from "#src/events/event-emitter";
 import { makeEventKillStore } from "#src/events/kills/event-kill.repository";
 import {
@@ -159,11 +157,6 @@ export const eventsServicesLive = Layer.effect(
       loots,
     );
 
-    const coordination = makeEventCoordination(
-      makeEventCoordinationStore(database),
-      timers,
-    );
-
     const presenceStats = makeEventPresenceStats(database, readCache);
     const rankingRead = makeEventRankingRead(database, readCache);
 
@@ -244,7 +237,6 @@ export const eventsServicesLive = Layer.effect(
         ),
       },
       monitoring: makeEventsMonitoring(
-        coordination,
         presenceStats,
         respawn,
         eventAccess,

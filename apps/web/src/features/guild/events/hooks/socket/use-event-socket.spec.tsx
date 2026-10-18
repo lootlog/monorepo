@@ -9,8 +9,9 @@ import {
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import {
-  getEventsMonitoringControllerGetCoordinationQueryKey,
+  getEventsMonitoringControllerGetActiveGapForMapQueryKey,
   getListEventMapsQueryKey,
+  getShowEventOverviewQueryKey,
 } from "@lootlog/client/main";
 import { createTestGateway } from "@/lib/testing/gateway";
 import { useEventSocket } from "./use-event-socket";
@@ -19,8 +20,15 @@ const routeScope = { guildId: "guild-alias", eventId: "event-1" };
 
 const mapsKey = getListEventMapsQueryKey(routeScope);
 
-const coordinationKey =
-  getEventsMonitoringControllerGetCoordinationQueryKey(routeScope);
+const overviewKey = getShowEventOverviewQueryKey(routeScope);
+
+type EventScope = { guildId: string; eventId: string };
+
+const mapGapKey = (scope: EventScope) =>
+  getEventsMonitoringControllerGetActiveGapForMapQueryKey({
+    ...scope,
+    mapId: "map-1",
+  });
 
 function setup(
   options = {
@@ -60,31 +68,22 @@ describe("useEventSocket", () => {
   });
 
   it.each([
-    ["event.map-status-updated", undefined],
-    ["event.map-status-updated", "presence"],
-    ["event.hero-killed", undefined],
-    ["event.respawn-window-opened", undefined],
-    ["event.respawn-window-closed", undefined],
+    ["event.map-status-updated", undefined, mapGapKey],
+    ["event.map-status-updated", "presence", mapGapKey],
+    ["event.hero-killed", undefined, getShowEventOverviewQueryKey],
+    ["event.respawn-window-opened", undefined, getListEventMapsQueryKey],
+    ["event.respawn-window-closed", undefined, getListEventMapsQueryKey],
   ] as const)(
-    "refreshes alias-scoped coordination for %s (%s)",
-    (type, reason) => {
+    "refreshes alias-scoped event data for %s (%s)",
+    (type, reason, getKey) => {
       const { gateway, queryClient } = setup();
-      queryClient.setQueryData(coordinationKey, { heroes: [] });
+      const routeKey = getKey(routeScope);
+      const otherGuildKey = getKey({ ...routeScope, guildId: "other-guild" });
+      const otherEventKey = getKey({ ...routeScope, eventId: "event-2" });
 
-      const otherGuildKey =
-        getEventsMonitoringControllerGetCoordinationQueryKey({
-          ...routeScope,
-          guildId: "other-guild",
-        });
-
-      const otherEventKey =
-        getEventsMonitoringControllerGetCoordinationQueryKey({
-          ...routeScope,
-          eventId: "event-2",
-        });
-
-      queryClient.setQueryData(otherGuildKey, { heroes: [] });
-      queryClient.setQueryData(otherEventKey, { heroes: [] });
+      for (const queryKey of [routeKey, otherGuildKey, otherEventKey]) {
+        queryClient.setQueryData(queryKey, { items: [] });
+      }
 
       act(() =>
         gateway.deliver({
@@ -103,9 +102,7 @@ describe("useEventSocket", () => {
         }),
       );
 
-      expect(queryClient.getQueryState(coordinationKey)?.isInvalidated).toBe(
-        true,
-      );
+      expect(queryClient.getQueryState(routeKey)?.isInvalidated).toBe(true);
       expect(queryClient.getQueryState(otherGuildKey)?.isInvalidated).toBe(
         false,
       );
@@ -124,7 +121,7 @@ describe("useEventSocket", () => {
     (payload) => {
       const { gateway, queryClient } = setup();
       queryClient.setQueryData(mapsKey, { heroNpcs: [] });
-      queryClient.setQueryData(coordinationKey, { heroes: [] });
+      queryClient.setQueryData(mapGapKey(routeScope), { items: [] });
 
       act(() =>
         gateway.deliver({
@@ -138,15 +135,15 @@ describe("useEventSocket", () => {
       );
 
       expect(queryClient.getQueryState(mapsKey)?.isInvalidated).toBe(false);
-      expect(queryClient.getQueryState(coordinationKey)?.isInvalidated).toBe(
-        false,
-      );
+      expect(
+        queryClient.getQueryState(mapGapKey(routeScope))?.isInvalidated,
+      ).toBe(false);
     },
   );
 
-  it("replaces an older coordination refresh when another event arrives", async () => {
+  it("replaces an older overview refresh when another kill arrives", async () => {
     const { gateway, queryClient } = setup();
-    queryClient.setQueryData(coordinationKey, { heroes: ["initial"] });
+    queryClient.setQueryData(overviewKey, { heroes: ["initial"] });
 
     const resolveOlderResponse =
       vi.fn<(response: { heroes: string[] }) => void>();
@@ -155,29 +152,17 @@ describe("useEventSocket", () => {
       resolveOlderResponse.mockImplementation(resolve);
     });
 
-    const fetchCoordination = vi
+    const fetchOverview = vi
       .fn()
       .mockReturnValueOnce(olderResponse)
       .mockResolvedValueOnce({ heroes: ["newest"] });
 
     const observer = new QueryObserver(queryClient, {
-      queryKey: coordinationKey,
-      queryFn: fetchCoordination,
+      queryKey: overviewKey,
+      queryFn: fetchOverview,
     });
 
     onTestFinished(observer.subscribe(() => {}));
-
-    await act(async () => {
-      gateway.deliver({
-        v: 1,
-        type: "event.map-status-updated",
-        data: {
-          organizationId: "guild-1",
-          payload: { guildId: "guild-1", eventId: "event-1", mapId: "map-1" },
-        },
-      });
-    });
-    expect(fetchCoordination).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       gateway.deliver({
@@ -189,13 +174,25 @@ describe("useEventSocket", () => {
         },
       });
     });
-    expect(fetchCoordination).toHaveBeenCalledTimes(2);
-    expect(queryClient.getQueryData(coordinationKey)).toEqual({
+    expect(fetchOverview).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      gateway.deliver({
+        v: 1,
+        type: "event.hero-killed",
+        data: {
+          organizationId: "guild-1",
+          payload: { guildId: "guild-1", eventId: "event-1" },
+        },
+      });
+    });
+    expect(fetchOverview).toHaveBeenCalledTimes(2);
+    expect(queryClient.getQueryData(overviewKey)).toEqual({
       heroes: ["newest"],
     });
 
     await act(async () => resolveOlderResponse({ heroes: ["older"] }));
-    expect(queryClient.getQueryData(coordinationKey)).toEqual({
+    expect(queryClient.getQueryData(overviewKey)).toEqual({
       heroes: ["newest"],
     });
   });
@@ -214,7 +211,7 @@ describe("useEventSocket", () => {
     const unrelatedKeys = [
       ["/guilds/guild-alias/events/event-2/kill-history"],
       ["/guilds/other-guild/events/event-1/kill-history"],
-      coordinationKey,
+      mapsKey,
     ];
 
     for (const queryKey of [...affectedKeys, ...unrelatedKeys]) {
@@ -246,17 +243,17 @@ describe("useEventSocket", () => {
       expect(queryClient.getQueryData(queryKey)).toEqual({ points: 2 });
   });
 
-  it("fetches coordination once for a realtime change and stops listening after unmount", async () => {
+  it("fetches the overview once for a realtime change and stops listening after unmount", async () => {
     const { gateway, queryClient, unmount } = setup();
-    queryClient.setQueryData(coordinationKey, { heroes: [] });
+    queryClient.setQueryData(overviewKey, { heroes: [] });
 
-    const fetchCoordination = vi
+    const fetchOverview = vi
       .fn()
       .mockResolvedValue({ heroes: ["updated-hero"] });
 
     const observer = new QueryObserver(queryClient, {
-      queryKey: coordinationKey,
-      queryFn: fetchCoordination,
+      queryKey: overviewKey,
+      queryFn: fetchOverview,
     });
 
     const unsubscribe = observer.subscribe(() => {});
@@ -274,14 +271,14 @@ describe("useEventSocket", () => {
     await act(async () => {
       gateway.deliver(event);
     });
-    expect(fetchCoordination).toHaveBeenCalledTimes(1);
-    expect(queryClient.getQueryData(coordinationKey)).toEqual({
+    expect(fetchOverview).toHaveBeenCalledTimes(1);
+    expect(queryClient.getQueryData(overviewKey)).toEqual({
       heroes: ["updated-hero"],
     });
     unmount();
     await act(async () => {
       gateway.deliver(event);
     });
-    expect(fetchCoordination).toHaveBeenCalledTimes(1);
+    expect(fetchOverview).toHaveBeenCalledTimes(1);
   });
 });

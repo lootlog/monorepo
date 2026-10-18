@@ -32,7 +32,6 @@ import {
   CloseRespawnWindowRequest,
   ActiveCoverageGapResponse,
   CoverageGapsResponse,
-  EventCoordinationResponse,
   HeroCoverageGapsResponse,
   HeroPresenceStatsResponse,
   HeroRespawnConfigResponse,
@@ -578,21 +577,6 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(
       OpenApi.Description,
       "Apply a signed manual points delta for a specific kill participant (OWNER/ADMIN only). Automatically recalculates ranking.",
-    ),
-  HttpApiEndpoint.get(
-    "EventsMonitoringControllerGetCoordination",
-    "/guilds/:guildId/events/:eventId/coordination",
-    {
-      params: EventPath,
-      success: EventCoordinationResponse,
-    },
-  )
-    .middleware(BearerSecurityMiddleware)
-    .annotate(OpenApi.Identifier, "EventsMonitoringController_getCoordination")
-    .annotate(OpenApi.Summary, "Get event coordination overview")
-    .annotate(
-      OpenApi.Description,
-      "Get respawn priorities, map coverage gaps, and recommended actions for an event",
     ),
   HttpApiEndpoint.get(
     "EventsMonitoringControllerGetKillTimelineData",

@@ -61,7 +61,6 @@ import { Route as AuthenticatedAtmeSettingsAppearanceRouteImport } from './route
 import { Route as AuthenticatedAtmeSettingsServersRouteImport } from './routes/_authenticated/@me/settings/servers'
 import { Route as AuthenticatedReservationSharingInvitationsTokenRouteImport } from './routes/_authenticated/reservation-sharing/invitations/$token'
 import { Route as AuthenticatedGuildIdEventsEventIdIndexRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_/index'
-import { Route as AuthenticatedGuildIdEventsEventIdCoordinationRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.coordination'
 import { Route as AuthenticatedGuildIdEventsEventIdEditRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit'
 import { Route as AuthenticatedGuildIdEventsEventIdKillsRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.kills'
 import { Route as AuthenticatedGuildIdEventsEventIdRankingRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.ranking'
@@ -391,12 +390,6 @@ const AuthenticatedGuildIdEventsEventIdIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
   } as any)
-const AuthenticatedGuildIdEventsEventIdCoordinationRoute =
-  AuthenticatedGuildIdEventsEventIdCoordinationRouteImport.update({
-    id: '/coordination',
-    path: '/coordination',
-    getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
 const AuthenticatedGuildIdEventsEventIdEditRoute =
   AuthenticatedGuildIdEventsEventIdEditRouteImport.update({
     id: '/edit',
@@ -602,7 +595,6 @@ export interface FileRoutesByFullPath {
   '/$guildId/stats/': typeof AuthenticatedGuildIdStatsIndexRoute
   '/@me/battle-panel/': typeof AuthenticatedAtmeBattlePanelIndexRoute
   '/@me/settings/': typeof AuthenticatedAtmeSettingsIndexRoute
-  '/$guildId/events/$eventId/coordination': typeof AuthenticatedGuildIdEventsEventIdCoordinationRoute
   '/$guildId/events/$eventId/edit': typeof AuthenticatedGuildIdEventsEventIdEditRouteWithChildren
   '/$guildId/events/$eventId/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   '/$guildId/events/$eventId/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
@@ -672,7 +664,6 @@ export interface FileRoutesByTo {
   '/$guildId/stats': typeof AuthenticatedGuildIdStatsIndexRoute
   '/@me/battle-panel': typeof AuthenticatedAtmeBattlePanelIndexRoute
   '/@me/settings': typeof AuthenticatedAtmeSettingsIndexRoute
-  '/$guildId/events/$eventId/coordination': typeof AuthenticatedGuildIdEventsEventIdCoordinationRoute
   '/$guildId/events/$eventId/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   '/$guildId/events/$eventId/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
   '/$guildId/settings/members/$memberId': typeof AuthenticatedGuildIdSettingsMembersMemberIdRoute
@@ -752,7 +743,6 @@ export interface FileRoutesById {
   '/_authenticated/$guildId/stats/': typeof AuthenticatedGuildIdStatsIndexRoute
   '/_authenticated/@me/battle-panel/': typeof AuthenticatedAtmeBattlePanelIndexRoute
   '/_authenticated/@me/settings/': typeof AuthenticatedAtmeSettingsIndexRoute
-  '/_authenticated/$guildId/events_/$eventId_/coordination': typeof AuthenticatedGuildIdEventsEventIdCoordinationRoute
   '/_authenticated/$guildId/events_/$eventId_/edit': typeof AuthenticatedGuildIdEventsEventIdEditRouteWithChildren
   '/_authenticated/$guildId/events_/$eventId_/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   '/_authenticated/$guildId/events_/$eventId_/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
@@ -834,7 +824,6 @@ export interface FileRouteTypes {
     | '/$guildId/stats/'
     | '/@me/battle-panel/'
     | '/@me/settings/'
-    | '/$guildId/events/$eventId/coordination'
     | '/$guildId/events/$eventId/edit'
     | '/$guildId/events/$eventId/kills'
     | '/$guildId/events/$eventId/ranking'
@@ -904,7 +893,6 @@ export interface FileRouteTypes {
     | '/$guildId/stats'
     | '/@me/battle-panel'
     | '/@me/settings'
-    | '/$guildId/events/$eventId/coordination'
     | '/$guildId/events/$eventId/kills'
     | '/$guildId/events/$eventId/ranking'
     | '/$guildId/settings/members/$memberId'
@@ -983,7 +971,6 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId/stats/'
     | '/_authenticated/@me/battle-panel/'
     | '/_authenticated/@me/settings/'
-    | '/_authenticated/$guildId/events_/$eventId_/coordination'
     | '/_authenticated/$guildId/events_/$eventId_/edit'
     | '/_authenticated/$guildId/events_/$eventId_/kills'
     | '/_authenticated/$guildId/events_/$eventId_/ranking'
@@ -1385,13 +1372,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdIndexRouteImport
       parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
     }
-    '/_authenticated/$guildId/events_/$eventId_/coordination': {
-      id: '/_authenticated/$guildId/events_/$eventId_/coordination'
-      path: '/coordination'
-      fullPath: '/$guildId/events/$eventId/coordination'
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdCoordinationRouteImport
-      parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
-    }
     '/_authenticated/$guildId/events_/$eventId_/edit': {
       id: '/_authenticated/$guildId/events_/$eventId_/edit'
       path: '/edit'
@@ -1728,7 +1708,6 @@ const AuthenticatedGuildIdEventsEventIdEditRouteWithChildren =
   )
 
 interface AuthenticatedGuildIdEventsEventIdRouteChildren {
-  AuthenticatedGuildIdEventsEventIdCoordinationRoute: typeof AuthenticatedGuildIdEventsEventIdCoordinationRoute
   AuthenticatedGuildIdEventsEventIdEditRoute: typeof AuthenticatedGuildIdEventsEventIdEditRouteWithChildren
   AuthenticatedGuildIdEventsEventIdKillsRoute: typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   AuthenticatedGuildIdEventsEventIdRankingRoute: typeof AuthenticatedGuildIdEventsEventIdRankingRoute
@@ -1741,8 +1720,6 @@ interface AuthenticatedGuildIdEventsEventIdRouteChildren {
 
 const AuthenticatedGuildIdEventsEventIdRouteChildren: AuthenticatedGuildIdEventsEventIdRouteChildren =
   {
-    AuthenticatedGuildIdEventsEventIdCoordinationRoute:
-      AuthenticatedGuildIdEventsEventIdCoordinationRoute,
     AuthenticatedGuildIdEventsEventIdEditRoute:
       AuthenticatedGuildIdEventsEventIdEditRouteWithChildren,
     AuthenticatedGuildIdEventsEventIdKillsRoute:
