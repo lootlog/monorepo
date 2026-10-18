@@ -135,13 +135,22 @@ export const makeEventsMonitoring = (
     eventId: string,
     heroId: string,
     data: CloseRespawnWindowRequest,
+    actorMemberId: number,
     roles: Role[],
     accessPolicy: AccessPolicy,
   ) {
     return eventAccess
       .getHero(guildData.id, eventId, heroId, roles, accessPolicy)
       .pipe(
-        Effect.andThen(respawnCommands.close(guildData, eventId, heroId, data)),
+        Effect.andThen(
+          respawnCommands.close(
+            guildData,
+            eventId,
+            heroId,
+            data,
+            actorMemberId,
+          ),
+        ),
       );
   },
 
@@ -150,13 +159,16 @@ export const makeEventsMonitoring = (
     eventId: string,
     heroId: string,
     data: OpenRespawnWindowRequest,
+    actorMemberId: number,
     roles: Role[],
     accessPolicy: AccessPolicy,
   ) {
     return eventAccess
       .getHero(guildData.id, eventId, heroId, roles, accessPolicy)
       .pipe(
-        Effect.andThen(respawnCommands.open(guildData, eventId, heroId, data)),
+        Effect.andThen(
+          respawnCommands.open(guildData, eventId, heroId, data, actorMemberId),
+        ),
       );
   },
 });

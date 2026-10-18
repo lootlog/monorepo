@@ -12,7 +12,6 @@ import {
   eventMapTable,
   eventMapToMemberTable,
   eventTable,
-  memberTable,
 } from "#src/database/drizzle/schema";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { RedisService } from "#src/redis/redis.service";
@@ -154,6 +153,7 @@ export const makeEventRespawnCommands = (
       eventId: string,
       heroId: string,
       data: OpenRespawnWindowRequest,
+      actorMemberId: number,
     ) =>
       Effect.gen(function* () {
         const heroRows = yield* query(
@@ -168,21 +168,6 @@ export const makeEventRespawnCommands = (
             new ResourceNotFoundError("Hero not found"),
           );
 
-        const memberRows = yield* query(
-          "events.respawn.open.member",
-          database
-            .select({ id: memberTable.id })
-            .from(memberTable)
-            .where(eq(memberTable.guildId, guild.id))
-            .limit(1),
-        );
-
-        const memberId = memberRows[0]?.id;
-
-        if (memberId === undefined)
-          return yield* Effect.fail(
-            new InvalidRequestError("No members found in guild"),
-          );
         const minSpawnTime = new Date(data.minSpawnTime);
         const maxSpawnTime = new Date(data.maxSpawnTime);
 
@@ -194,7 +179,7 @@ export const makeEventRespawnCommands = (
           npcIcon: row.hero.npcIcon ?? null,
           minSpawnTime,
           maxSpawnTime,
-          createdById: memberId,
+          createdById: actorMemberId,
           isUsingSyntheticId: row.hero.npcId === null,
         });
 
@@ -299,6 +284,7 @@ export const makeEventRespawnCommands = (
       eventId: string,
       heroId: string,
       data: CloseRespawnWindowRequest,
+      actorMemberId: number,
     ) =>
       Effect.gen(function* () {
         const heroRows = yield* query(
@@ -364,10 +350,16 @@ export const makeEventRespawnCommands = (
             publisher,
             manualKill,
             logger,
-          ).open(guild, eventId, heroId, {
-            minSpawnTime: data.newMinSpawnTime,
-            maxSpawnTime: data.newMaxSpawnTime,
-          });
+          ).open(
+            guild,
+            eventId,
+            heroId,
+            {
+              minSpawnTime: data.newMinSpawnTime,
+              maxSpawnTime: data.newMaxSpawnTime,
+            },
+            actorMemberId,
+          );
         }
 
         return { success: true };
