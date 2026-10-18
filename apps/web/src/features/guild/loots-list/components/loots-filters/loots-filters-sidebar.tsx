@@ -139,7 +139,7 @@ export const LootsFiltersSidebar = ({
       <div className="flex h-full min-h-0 w-full flex-col">
         <div
           className={cn(
-            "flex h-12 shrink-0 items-center gap-2 border-b border-sidebar-border pl-4",
+            "box-content flex h-12 shrink-0 items-center gap-2 border-b border-sidebar-border pl-4",
             hasOverlayCloseButton ? "pr-12" : "pr-2",
           )}
         >
