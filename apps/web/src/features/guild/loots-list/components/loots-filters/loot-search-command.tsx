@@ -5,11 +5,10 @@ import {
   CommandItem,
   CommandList,
 } from "@lootlog/ui/components/command";
-import { ItemImage } from "@lootlog/ui/components/item-image";
 import { LootSearchResults } from "./loot-search-results";
+import { LootSearchHitContent } from "./loot-search-hit-content";
 import { GuildSearchPages } from "./guild-search-pages";
 
-import { ItemRarity } from "@/lib/loots/loot-types";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { Kbd } from "@lootlog/ui/components/kbd";
@@ -316,18 +315,9 @@ export const LootSearchCommand = (
                   onSelect={() => handleSelectItemByHid(hidItem.hid)}
                   className="min-h-14 rounded-lg px-3 py-2"
                 >
-                  <ItemImage
-                    icon={hidItem.icon}
-                    rarity={hidItem.rarity ?? ItemRarity.COMMON}
+                  <LootSearchHitContent
+                    hit={{ kind: "hid", item: hidItem, term: trimmedSearch }}
                   />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-semibold">{hidItem.name}</div>
-                    <div className="mt-0.5 flex min-w-0 text-xs text-muted-foreground">
-                      <code className="truncate font-mono">
-                        {trimmedSearch}
-                      </code>
-                    </div>
-                  </div>
                   <ArrowRight className="size-4 text-primary" />
                 </CommandItem>
               </CommandGroup>
