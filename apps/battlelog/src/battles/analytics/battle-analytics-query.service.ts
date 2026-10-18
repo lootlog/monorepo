@@ -137,8 +137,12 @@ export const makeBattleAnalyticsQuery = (
     return and(
       buildCombatProfileWhere(battlesRef, params),
       eq(battlesRef.type, "1v1"),
-      // An unfinished battle has no result to count.
-      eq(battlesRef.unfinished, false),
+      // An unfinished battle has no result to count. Chunks compressed
+      // before `unfinished` existed hold only its default, and TimescaleDB
+      // 2.24 fails vectorized boolean filters on it ("unexpected column type
+      // 'boolean'"), including `= false` and `NOT`. `IS DISTINCT FROM` is
+      // not vectorized. Teams 0/0 cannot replace it: draws are stored so too.
+      sql`${battlesRef.unfinished} is distinct from true`,
       params.hasFlee !== undefined
         ? eq(battlesRef.hasFlee, params.hasFlee)
         : undefined,
