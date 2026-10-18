@@ -269,18 +269,16 @@ export const makeEventPresenceTracking = (
           query(
             "events.presence.assignments",
             database
-              .select({ mapId: eventMapToMemberTable.A })
+              .select({
+                mapId: eventMapToMemberTable.A,
+                active: memberTable.active,
+              })
               .from(eventMapToMemberTable)
               .innerJoin(
                 memberTable,
                 eq(memberTable.id, eventMapToMemberTable.B),
               )
-              .where(
-                and(
-                  inArray(eventMapToMemberTable.A, mapIds),
-                  eq(memberTable.active, true),
-                ),
-              ),
+              .where(inArray(eventMapToMemberTable.A, mapIds)),
           ),
           query(
             "events.presence.active",
@@ -324,9 +322,11 @@ export const makeEventPresenceTracking = (
         ),
         ({ map, hero, event }) =>
           Effect.gen(function* () {
-            const assigned = assignmentRows.some(
+            const mapAssignments = assignmentRows.filter(
               ({ mapId }) => mapId === map.id,
             );
+
+            const assigned = mapAssignments.some(({ active }) => active);
 
             const nonAfk = new Set(
               activeRows
@@ -368,9 +368,15 @@ export const makeEventPresenceTracking = (
               }
             }
 
-            if (!assigned) return;
+            // Everyone assigned here has left the Discord server, so the map
+            // is now unassigned rather than uncovered.
+            if (!assigned && mapAssignments.length === 0) return;
 
-            if (nonAfk.size === 0) yield* openUncoveredGap(map.id, hero.id);
+            if (!assigned) {
+              yield* closeUncoveredGap(map.id);
+              yield* openUnassignedGap(map.id, hero.id);
+            } else if (nonAfk.size === 0)
+              yield* openUncoveredGap(map.id, hero.id);
             else yield* closeUncoveredGap(map.id);
             yield* publisher.emit(RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE, {
               guildId,
