@@ -1,3 +1,4 @@
+import { formatSignedBattleMetric } from "@/components/battle/utils/value-utils";
 import i18n from "@/i18n/config";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
@@ -79,8 +80,6 @@ export const playerVsPlayerColumns: ColumnDef<
         );
       }
 
-      const sign = delta >= 0 ? "+" : "";
-
       return (
         <div className="text-center">
           <span
@@ -91,8 +90,7 @@ export const playerVsPlayerColumns: ColumnDef<
                 : BATTLE_TEXT_COLORS.result.lost,
             )}
           >
-            {sign}
-            {delta}
+            {formatSignedBattleMetric(delta)}
           </span>
         </div>
       );

@@ -1,3 +1,4 @@
+import { formatSignedBattleMetric } from "@/components/battle/utils/value-utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { SortableColumnHeader } from "@/components/ui/sortable-column-header";
 import { cn } from "cn";
@@ -34,8 +35,7 @@ const matchmakingRatingColumns: ColumnDef<
                 : BATTLE_TEXT_COLORS.result.lost,
             )}
           >
-            {delta >= 0 ? "+" : ""}
-            {delta}
+            {formatSignedBattleMetric(delta)}
           </span>
         </div>
       );

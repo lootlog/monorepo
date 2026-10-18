@@ -1,12 +1,6 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
-const FILTER_WIDTHS = [
-  "w-[150px]",
-  "w-[150px]",
-  "w-[220px]",
-  "w-[150px]",
-  "w-[94px]",
-];
+const FILTER_WIDTHS = ["w-[150px]", "w-[150px]", "w-[150px]", "w-[94px]"];
 
 /** Stands in for `BattlesListFilterToolbar`, which narrow pages move to a panel. */
 export const BattlesListFilterToolbarSkeleton = () =>

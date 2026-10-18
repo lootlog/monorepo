@@ -4,7 +4,7 @@ import {
 } from "@/components/common/page-sticky-table-header";
 import { useMediaQuery } from "usehooks-ts";
 import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { BattleCharacterSelect } from "@/features/user/battle-panel/components/battle-character-select";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
@@ -34,6 +34,7 @@ export function HeadToHeadPageVariant({
   showRatingDelta = false,
   titleKey,
   trailingSkeletonColumns,
+  season,
 }: HeadToHeadPageVariantProps) {
   const {
     currentCharacterId,
@@ -62,12 +63,9 @@ export function HeadToHeadPageVariant({
     handleRowKeyDown,
     activeFilterChips,
     applyFilterState,
-  } = useHeadToHeadPage({ columns, matchmaking, showPhFilter });
+  } = useHeadToHeadPage({ columns, matchmaking, showPhFilter, season });
 
   const filterProps = {
-    characterId: currentCharacterId,
-    onCharacterChange: handleCharacterChange,
-    allowAllCharacters: true,
     period,
     onPeriodChange: handlePeriodChange,
     minLevel,
@@ -182,18 +180,32 @@ export function HeadToHeadPageVariant({
   };
 
   return (
-    <ScrollArea data-under-top-bar className="h-full min-h-0">
-      <h1 className="sr-only">{t(titleKey)}</h1>
+    <>
+      {/* A season's page is named after the season. */}
+      {!season && <h1 className="sr-only">{t(titleKey)}</h1>}
       <ResultsSurface
         search={
-          <WarriorSearchFilter
-            selectedWarriors={selectedWarriors}
-            onWarriorToggle={handleWarriorToggle}
-            placeholder={t("battlePanel.filters.searchOpponent")}
-          />
+          // As on the kill statistics: the search, then the character.
+          <>
+            <WarriorSearchFilter
+              selectedWarriors={selectedWarriors}
+              onWarriorToggle={handleWarriorToggle}
+              placeholder={t("battlePanel.filters.searchOpponent")}
+            />
+            {!season && (
+              <BattleCharacterSelect
+                characterId={currentCharacterId}
+                onCharacterChange={handleCharacterChange}
+                allowAllCharacters
+              />
+            )}
+          </>
         }
-        filters={<StatisticsFilterToolbar {...filterProps} />}
-        stackedFilters={<StatisticsStackedFilters {...filterProps} />}
+        // A season has no filters beyond the opponent search.
+        filters={!season && <StatisticsFilterToolbar {...filterProps} />}
+        stackedFilters={
+          season ? undefined : <StatisticsStackedFilters {...filterProps} />
+        }
         filtersLabel={t("battlePanel.filters.title")}
         chips={activeFilterChips}
         clearFiltersLabel={t("battlePanel.filters.clear")}
@@ -203,6 +215,6 @@ export function HeadToHeadPageVariant({
       >
         {renderResults()}
       </ResultsSurface>
-    </ScrollArea>
+    </>
   );
 }

@@ -1,6 +1,4 @@
 import { getBattleFilterOptions } from "../utils/battle-filter-options";
-import { CharacterSelector } from "@/components/filters/character-selector";
-import { useBattleCharacters } from "@/components/filters/use-battle-characters";
 import { MoreFiltersPopover } from "@/components/filters/more-filters-popover";
 import { upperFirst } from "es-toolkit";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
@@ -10,7 +8,6 @@ import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-ba
 
 type BattlesListFilterToolbarProps = {
   filters: BattleFilters;
-  onCharacterChange: (value: string) => void;
   onMinLevelChange: (value: number | undefined) => void;
   onMaxLevelChange: (value: number | undefined) => void;
   onPhToggle: (checked: boolean) => void;
@@ -20,10 +17,9 @@ type BattlesListFilterToolbarProps = {
   worlds: string[];
 };
 
-/** The battle list filters for the filter bar, after its search. */
+/** The battle list filters for the filter bar, after its search and character. */
 export const BattlesListFilterToolbar = ({
   filters,
-  onCharacterChange,
   onMinLevelChange,
   onMaxLevelChange,
   onPhToggle,
@@ -32,7 +28,6 @@ export const BattlesListFilterToolbar = ({
   onWorldChange,
   worlds,
 }: BattlesListFilterToolbarProps) => {
-  const characters = useBattleCharacters();
   const { t } = useTranslation();
 
   const { battleTypes, battleResults } = getBattleFilterOptions(t);
@@ -69,14 +64,6 @@ export const BattlesListFilterToolbar = ({
 
           return t("battlePanel.filters.battleResultShort");
         }}
-      />
-
-      <CharacterSelector
-        characters={characters}
-        multiple
-        characterIds={filters.characterId}
-        onCharacterToggle={onCharacterChange}
-        className="w-[220px]"
       />
 
       <FilterPopover

@@ -1,3 +1,4 @@
+import { formatSignedBattleMetric } from "@/components/battle/utils/value-utils";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
@@ -28,8 +29,7 @@ export const BattlePanelPvpBattleCard = ({
   let ratingDeltaLabel = t("battlePanel.single.recentOpponent.noRating");
 
   if (ratingDelta !== null) {
-    const sign = ratingDelta >= 0 ? "+" : "";
-    ratingDeltaLabel = `${sign}${ratingDelta}`;
+    ratingDeltaLabel = formatSignedBattleMetric(ratingDelta);
   }
 
   return (

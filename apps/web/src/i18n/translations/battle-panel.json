@@ -5,7 +5,8 @@
     "analytics": "Analityka",
     "abyss": "Otchłań",
     "battleDuel": "{{first}} vs {{second}}",
-    "battleFallback": "Walka #{{id}}"
+    "battleFallback": "Walka #{{id}}",
+    "opponents": "Przeciwnicy"
   },
   "filters": {
     "title": "Filtry",
@@ -132,25 +133,12 @@
   "abyss": {
     "title": "Otchłań",
     "latestSeason": "Najnowszy sezon",
-    "noSeason": "Brak sezonów",
-    "selectSeason": "Wybierz sezon",
-    "seasonsTitle": "Sezony Otchłani",
-    "seasonsSubtitle": "Sezony wykrywamy po przerwach między walkami",
-    "currentSeason": "Wybrany",
     "emptyTitle": "Brak walk w Otchłani",
     "emptyDescription": "Ta postać nie ma zapisanych walk w Otchłani. Wybierz inną postać.",
-    "pointsUnavailable": "brak danych o punktach",
-    "cards": {
-      "record": "Bilans",
-      "winRate": "Skuteczność",
-      "rating": "Rating",
-      "points": "Punkty",
-      "peakRating": "Najwyższy rating"
-    },
     "tabs": {
       "battles": "Walki",
-      "analytics": "Analityka",
-      "seasons": "Sezony"
+      "opponents": "Przeciwnicy",
+      "analytics": "Analityka"
     },
     "seasonsTable": {
       "range": "Sezon",
@@ -160,20 +148,19 @@
       "ratingDelta": "Rating",
       "peakRating": "Najwyższy rating",
       "points": "Punkty",
-      "action": "Akcja"
+      "open": "Otwórz sezon"
     },
     "stats": {
       "totalBattles_one": "{{count}} walka",
       "totalBattles_few": "{{count}} walki",
       "totalBattles_many": "{{count}} walk"
     },
-    "details": {
-      "winRate": "wygranych walk",
-      "rating": "zmiana w sezonie",
-      "peakRating": "w tym sezonie",
-      "points": "zdobyte w sezonie"
-    },
-    "season": "Sezon"
+    "season": "Sezon",
+    "seasonTabs": "Sekcje sezonu",
+    "seasonTitle": "Sezon {{range}}",
+    "seasonNotFound": "Nie znaleziono tego sezonu",
+    "backToSeasons": "Wróć do sezonów",
+    "ratingValue": "{{value}} ratingu"
   },
   "single": {
     "statistics": {
@@ -295,34 +282,23 @@
         "honorPoints": "Punkty honoru",
         "turns": "Tury na walkę",
         "damage": "Obrażenia na turę",
-        "control": "Stracone tury"
+        "control": "Stracone tury",
+        "rating": "Rating"
       },
       "details": {
         "winRate": "{{value}}% wygranych",
-        "rating": "{{value}} ratingu",
         "perBattle": "średnio {{value}} na walkę",
         "duration": "średni czas {{value}}",
         "damage": "średnio zadane",
-        "control": "przez efekty kontroli"
+        "control": "przez efekty kontroli",
+        "ratingPerBattle": "{{value}} na walkę"
       }
     },
     "currentStreak": {
-      "title": "Aktualna passa",
-      "description": "Kolejne wygrane lub przegrane z rzędu",
-      "empty": "Brak aktywnej passy",
-      "winStreak": "Passa wygranych",
-      "lossStreak": "Passa przegranych",
-      "longestWins": "Rekord wygranych",
-      "longestLosses": "Rekord przegranych"
-    },
-    "battleDuration": {
-      "title": "Czas trwania walk",
-      "description": "Średni czas wygranych i przegranych oraz skrajne walki",
-      "empty": "Brak danych o walkach"
+      "title": "Aktualna passa"
     },
     "phGrowth": {
       "title": "Punkty honoru w czasie",
-      "description": "Suma punktów honoru zdobytych w walkach",
       "empty": "Brak danych o walkach z PH",
       "chartLabel": "Skumulowany PH",
       "tooltipDate": "Data: {{date}}",
@@ -330,7 +306,6 @@
     },
     "ratingGrowth": {
       "title": "Rating w czasie",
-      "description": "Rating po kolejnych walkach w Otchłani",
       "empty": "Brak danych o walkach w Otchłani",
       "chartLabel": "Rating",
       "tooltipDate": "Data: {{date}}",
@@ -338,7 +313,6 @@
     },
     "professionWinRate": {
       "title": "Skuteczność przeciwko profesjom",
-      "description": "Odsetek wygranych walk 1v1 z każdą profesją",
       "empty": "Brak danych o walkach",
       "tooltipBattles_one": "{{profession}} ({{count}} walka)",
       "tooltipBattles_few": "{{profession}} ({{count}} walki)",
@@ -346,21 +320,12 @@
     },
     "directMatchups": {
       "title": "Bilans z przeciwnikami",
-      "description": "Pięciu przeciwników, z którymi walczysz najczęściej",
-      "fullDescription": "Kompletna historia walk z konkretnymi przeciwnikami",
-      "link": "Pełny bilans",
       "emptyTitle": "Brak bilansów",
       "emptyDescription": "Nie znaleziono przeciwników dla wybranych filtrów."
     },
     "matchmaking": {
-      "title": "Bilans walk w Otchłani",
-      "description": "Pięciu przeciwników z największą zmianą Twojego ratingu",
-      "fullTitle": "Pełny bilans starć w Otchłani",
-      "fullDescription": "Kompletna historia walk rankingowych z konkretnymi przeciwnikami",
-      "empty": "Brak danych o walkach w Otchłani",
       "emptyTitle": "Brak bilansów Otchłani",
-      "emptyDescription": "Nie znaleziono rankingowych starć dla wybranych filtrów.",
-      "link": "Pełny bilans"
+      "emptyDescription": "Nie znaleziono rankingowych starć dla wybranych filtrów."
     },
     "playerVsPlayer": {
       "characterFallback": "Twoja postać",
@@ -368,11 +333,6 @@
       "subtitle": "Poziom {{level}} • Historia walk rankingowych",
       "emptyTitle": "Brak walk z tym przeciwnikiem",
       "emptyDescription": "Nie znaleziono walk dla wybranego pojedynku i filtrów."
-    },
-    "cards": {
-      "averageTime": "Średni czas",
-      "fastest": "Najszybsza",
-      "longest": "Najdłuższa"
     },
     "columns": {
       "name": "Nazwa",
@@ -390,6 +350,25 @@
       "avgRating": "Rating na walkę",
       "opponent": "Przeciwnik"
     },
-    "staleData": "Wyświetlane dane mogą być nieaktualne."
+    "staleData": "Wyświetlane dane mogą być nieaktualne.",
+    "records": {
+      "title": "Passa i czas walk",
+      "wins_one": "{{count}} wygrana",
+      "wins_few": "{{count}} wygrane",
+      "wins_many": "{{count}} wygranych",
+      "losses_one": "{{count}} przegrana",
+      "losses_few": "{{count}} przegrane",
+      "losses_many": "{{count}} przegranych",
+      "record": "rekord: {{value}}",
+      "averageDuration": "Średni czas walki",
+      "averageDurationDetail": "wygrana / przegrana",
+      "fastest": "Najszybsza walka",
+      "longestBattle": "Najdłuższa walka",
+      "openBattle": "Zobacz walkę"
+    },
+    "opponents": {
+      "title": "Najczęstsi przeciwnicy",
+      "all": "Wszyscy przeciwnicy"
+    }
   }
 }

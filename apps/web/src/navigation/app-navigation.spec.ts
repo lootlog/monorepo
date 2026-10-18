@@ -281,8 +281,9 @@ describe("resolveAppNavigation", () => {
     const navigation = resolveAppNavigation({
       matches: [
         createMatch({
-          pathname: "/@me/battle-panel/statistics/h2h",
-          routeId: "/_authenticated/@me/battle-panel/statistics_/h2h",
+          pathname: "/@me/battle-panel/statistics/player-vs-player/1/2",
+          routeId:
+            "/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId",
         }),
       ],
     });
@@ -290,12 +291,12 @@ describe("resolveAppNavigation", () => {
     expect(navigation.scope).toBe("user");
     expect(navigation.breadcrumbs).toEqual([
       { label: "Panel walk", path: "/@me/battle-panel" },
-      { label: "Analityka", path: "/@me/battle-panel/statistics" },
-      { label: "Bilans H2H", path: null },
+      { label: "Przeciwnicy", path: "/@me/battle-panel/opponents" },
+      { label: "Gracz vs Gracz", path: null },
     ]);
-    expect(navigation.parentPath).toBe("/@me/battle-panel/statistics");
+    expect(navigation.parentPath).toBe("/@me/battle-panel/opponents");
     expect(navigation.documentTitle).toBe(
-      "Bilans H2H - Panel walk - Lootlog.pl",
+      "Gracz vs Gracz - Panel walk - Lootlog.pl",
     );
     expect(
       navigation.sidebarItems.find(({ id }) => id === "user-battles"),
