@@ -1,7 +1,4 @@
-import {
-  seedRuntimeOthers,
-  upsertRuntimeOther,
-} from "@/test/runtime-other-fixtures";
+import { seedRuntimeOthers } from "@/test/runtime-other-fixtures";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Other } from "@lootlog/margonem/others";
@@ -17,7 +14,6 @@ import {
 
 import { createNativeRuntime } from "@/test/native-runtime";
 import { useSettingsStore } from "@/store/settings.store";
-import * as tooltipPatcher from "@/lib/margonem-tooltips/patcher";
 
 vi.stubGlobal("Engine", createNativeRuntime());
 
@@ -29,11 +25,6 @@ const { margonemRuntimeBridge } =
 
 const { useCharacterTooltipGameEvents } =
   await import("./use-character-tooltip-game-events");
-
-const patchOtherCharacterTooltips = vi.spyOn(
-  tooltipPatcher,
-  "patchOtherCharacterTooltips",
-);
 
 function dispatch(event: GameEvent) {
   act(() => {
@@ -54,7 +45,6 @@ function createRuntimeOther(nick: string): Other {
       nick,
       prof: "w",
     },
-    createStrTip: () => `<div>${nick}</div>`,
   };
 }
 
@@ -112,7 +102,6 @@ describe("useCharacterTooltipGameEvents", () => {
   beforeEach(() => {
     setTestRuntimeGame({ hero: { characterId: "hero-1" } });
     useSettingsStore.setState({ guildIdByCharId: { "hero-1": "guild-1" } });
-    patchOtherCharacterTooltips.mockClear();
     runtimeEventPipeline.install();
     runtimeEventPipeline.setReady(true);
     useCharacterTooltipCatchingGuildsStore.getState().clear();
@@ -124,225 +113,6 @@ describe("useCharacterTooltipGameEvents", () => {
       configurable: true,
       value: originalWindowEngine,
     });
-  });
-
-  it("scans current runtime handles only after Shift becomes active", () => {
-    const first = createRuntimeOther("first");
-    const second = createRuntimeOther("second");
-    const check = setRuntimeOthers({ 1: first, 2: second });
-
-    const { rerender } = renderHook(() => useCharacterTooltipGameEvents());
-
-    expect(check).not.toHaveBeenCalled();
-
-    act(() => {
-      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-    });
-    rerender();
-    rerender();
-
-    expect(check).not.toHaveBeenCalled();
-    expect(patchOtherCharacterTooltips).toHaveBeenCalledWith([first, second]);
-  });
-
-  it("stores and patches only runtime others touched by an other event", () => {
-    const first = createRuntimeOther("first");
-    const untouched = createRuntimeOther("untouched");
-    setRuntimeOthers({ 1: first, 2: untouched });
-
-    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-    renderHook(() => useCharacterTooltipGameEvents());
-    patchOtherCharacterTooltips.mockClear();
-
-    dispatch({
-      other: {
-        1: {
-          action: "CREATE",
-          account: 1,
-          nick: "Other",
-          icon: "other.gif",
-          x: 1,
-          y: 1,
-          dir: 0,
-          stasis: 0,
-          stasis_incoming_seconds: 0,
-          rights: 0,
-          lvl: 300,
-          oplvl: 0,
-          prof: "w",
-          attr: 0,
-          is_blessed: 0,
-          relation: 0,
-        },
-      },
-    });
-
-    expect(useOthersStore.getState().getOther("1")?.name).toBe("Other");
-    expect(useOthersStore.getState().getOther("2")?.name).toBe("untouched");
-    expect(patchOtherCharacterTooltips).toHaveBeenCalledWith([first]);
-  });
-
-  it("does not rebuild tooltips for movement-only updates", () => {
-    const first = createRuntimeOther("first");
-    const second = createRuntimeOther("second");
-    setRuntimeOthers({ 1: first, 2: second });
-
-    renderHook(() => useCharacterTooltipGameEvents());
-
-    dispatch({
-      other: {
-        2: {
-          x: 10,
-          y: 11,
-          dir: 2,
-        },
-      },
-    });
-
-    expect(useOthersStore.getState().getOther("2")?.name).toBe("second");
-    expect(useOthersStore.getState().getOther("1")?.name).toBe("first");
-    expect(patchOtherCharacterTooltips).not.toHaveBeenCalled();
-  });
-
-  it("does not patch a newly created other while Shift is inactive", () => {
-    const other = createRuntimeOther("inactive");
-    setRuntimeOthers({ 1: other });
-    renderHook(() => useCharacterTooltipGameEvents());
-
-    dispatch({
-      other: {
-        1: {
-          account: 1,
-          action: "CREATE",
-          attr: 0,
-          dir: 0,
-          icon: "inactive.gif",
-          is_blessed: 0,
-          lvl: 300,
-          nick: "inactive",
-          oplvl: 0,
-          prof: "w",
-          relation: 0,
-          rights: 0,
-          stasis: 0,
-          stasis_incoming_seconds: 0,
-          x: 1,
-          y: 2,
-        },
-      },
-    });
-
-    expect(patchOtherCharacterTooltips).not.toHaveBeenCalled();
-  });
-
-  it("does not scan or patch others without a concrete guild", () => {
-    const other = createRuntimeOther("inactive-guild");
-    setRuntimeOthers({ 1: other });
-    useSettingsStore.setState({ guildIdByCharId: { "hero-1": "all" } });
-    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-    renderHook(() => useCharacterTooltipGameEvents());
-
-    dispatch({
-      other: {
-        1: {
-          account: 1,
-          action: "CREATE",
-          attr: 0,
-          dir: 0,
-          icon: "inactive-guild.gif",
-          is_blessed: 0,
-          lvl: 300,
-          nick: "inactive-guild",
-          oplvl: 0,
-          prof: "w",
-          relation: 0,
-          rights: 0,
-          stasis: 0,
-          stasis_incoming_seconds: 0,
-          x: 1,
-          y: 2,
-        },
-      },
-    });
-
-    expect(patchOtherCharacterTooltips).not.toHaveBeenCalled();
-  });
-
-  it("does not patch deleted others", () => {
-    const first = createRuntimeOther("first");
-    setRuntimeOthers({ 1: first });
-    upsertRuntimeOther("1", first);
-
-    renderHook(() => useCharacterTooltipGameEvents());
-
-    dispatch({
-      other: {
-        1: {
-          del: 1,
-        },
-      },
-    });
-
-    expect(useOthersStore.getState().getOther("1")).toBeUndefined();
-    expect(patchOtherCharacterTooltips).not.toHaveBeenCalled();
-  });
-
-  it("ignores events without other payloads", () => {
-    renderHook(() => useCharacterTooltipGameEvents());
-
-    dispatch({ e: "ok" });
-
-    expect(patchOtherCharacterTooltips).not.toHaveBeenCalled();
-  });
-
-  it("clears old projected handles before observing town events", () => {
-    const oldOther = createRuntimeOther("old");
-    seedRuntimeOthers({ old: oldOther });
-
-    renderHook(() => useCharacterTooltipGameEvents());
-
-    dispatch(createTownEvent());
-
-    expect(useOthersStore.getState().getOther("old")).toBeUndefined();
-    expect(patchOtherCharacterTooltips).not.toHaveBeenCalled();
-  });
-
-  it("patches post-town handles supplied by RuntimeStateProjection while active", () => {
-    const oldOther = createRuntimeOther("old");
-    const newOther = createRuntimeOther("new");
-    seedRuntimeOthers({ old: oldOther });
-    setRuntimeOthers({ 3: newOther });
-
-    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-    renderHook(() => useCharacterTooltipGameEvents());
-    patchOtherCharacterTooltips.mockClear();
-
-    dispatch({
-      ...createTownEvent(),
-      other: {
-        3: {
-          action: "CREATE",
-          account: 1,
-          nick: "new",
-          icon: "new.gif",
-          x: 1,
-          y: 1,
-          dir: 0,
-          stasis: 0,
-          stasis_incoming_seconds: 0,
-          rights: 0,
-          lvl: 300,
-          oplvl: 0,
-          prof: "w",
-          attr: 0,
-          is_blessed: 0,
-          relation: 0,
-        },
-      },
-    });
-
-    expect(useOthersStore.getState().getOther("3")?.name).toBe("new");
-    expect(patchOtherCharacterTooltips).toHaveBeenCalledWith([newOther]);
   });
 
   it("clears the active tooltip target on town events", () => {

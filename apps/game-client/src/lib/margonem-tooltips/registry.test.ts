@@ -1,5 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
+import type { Other } from "@lootlog/margonem/others";
 import { CharacterTooltipTransformRegistry } from "./registry";
+
+const OTHER: Other = {
+  d: {
+    account: 1,
+    icon: "other.gif",
+    id: "1",
+    lvl: 300,
+    nick: "Other",
+    prof: "w",
+  },
+};
 
 describe("CharacterTooltipTransformRegistry", () => {
   it("runs transforms in registration order", () => {
@@ -10,8 +22,8 @@ describe("CharacterTooltipTransformRegistry", () => {
 
     expect(
       registry.apply({
-        kind: "hero",
-        character: {},
+        character: OTHER,
+        interface: "ni",
         baseHtml: "<div>base</div>",
         currentHtml: "<div>base</div>",
       }),
@@ -25,8 +37,8 @@ describe("CharacterTooltipTransformRegistry", () => {
 
     expect(
       registry.apply({
-        kind: "other",
-        character: {},
+        character: OTHER,
+        interface: "ni",
         baseHtml: "<div>base</div>",
         currentHtml: "<div>base</div>",
       }),
@@ -41,8 +53,8 @@ describe("CharacterTooltipTransformRegistry", () => {
 
     expect(
       registry.apply({
-        kind: "hero",
-        character: {},
+        character: OTHER,
+        interface: "ni",
         baseHtml: "<div>base</div>",
         currentHtml: "<div>base</div>",
       }),
@@ -54,8 +66,8 @@ describe("CharacterTooltipTransformRegistry", () => {
     registry.register(() => "");
     expect(
       registry.apply({
-        kind: "hero",
-        character: {},
+        character: OTHER,
+        interface: "ni",
         baseHtml: "base",
         currentHtml: "base",
       }),
@@ -73,8 +85,8 @@ describe("CharacterTooltipTransformRegistry", () => {
 
     expect(
       registry.apply({
-        kind: "hero",
-        character: {},
+        character: OTHER,
+        interface: "ni",
         baseHtml: "<div>base</div>",
         currentHtml: "<div>base</div>",
       }),

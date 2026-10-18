@@ -20,6 +20,8 @@ import { useSettingsStore } from "@/store/settings.store";
 import { testRuntimeWindow } from "@/test/test-runtime-window";
 
 import { createCatchingGuildsHttp } from "@/test/catching-guilds-http";
+import { createNativeCharacterTips } from "@/test/native-character-tips";
+import { installCharacterTooltipTransforms } from "@/lib/margonem-tooltips/patcher";
 
 let endpoint: ReturnType<typeof createCatchingGuildsHttp>;
 
@@ -32,6 +34,10 @@ const jqueryWindow: Window & { $?: unknown } = window;
 
 const originalWindowDollar = jqueryWindow.$;
 
+const originalWindowApi = testRuntimeWindow.API;
+
+let tips = createNativeCharacterTips();
+
 type WhoIsHereEntry = {
   $: {
     find: (selector: string) => Element | null;
@@ -40,6 +46,7 @@ type WhoIsHereEntry = {
 
 function createOther(id = "617"): Other {
   const other = {
+    canvasObjectType: "OTHER",
     d: {
       account: 9822301,
       icon: "other.gif",
@@ -50,7 +57,6 @@ function createOther(id = "617"): Other {
       x: 10,
       y: 10,
     },
-    createStrTip: () => `<div>Other ${id}</div>`,
     tipUpdate: vi.fn<() => void>(),
   };
 
@@ -131,15 +137,21 @@ function setRuntime(
     },
   };
 
+  Object.defineProperty(window, "API", {
+    configurable: true,
+    value: tips.api,
+  });
   Object.defineProperty(window, "Engine", {
     configurable: true,
     value: {
+      apiData: tips.apiData,
       hero: {
         d: {
           id: "hero-1",
         },
       },
       others: {
+        createStrTip: tips.createStrTip,
         check: vi.fn<() => { [x: number]: Other }>(() => ({
           [String(other.d.id)]: other,
         })),
@@ -233,6 +245,11 @@ describe("useWhoIsHereLootlogHighlight", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    tips = createNativeCharacterTips();
+    Object.defineProperty(window, "API", {
+      configurable: true,
+      value: originalWindowApi,
+    });
     Object.defineProperty(window, "Engine", {
       configurable: true,
       value: originalWindowEngine,
@@ -517,7 +534,11 @@ describe("useWhoIsHereLootlogHighlight", () => {
     const createTipWrapper = vi.fn<
       (container: Element | null, other: Other) => void
     >((_tipContainer, tooltipOther) => {
-      tooltipHtml = String(tooltipOther.createStrTip?.() ?? "");
+      // WhoIsHere.createTipWrapper builds its html through OthersManager.
+      tooltipHtml = tips.createStrTip({
+        nick: tooltipOther.d.nick,
+        object: tooltipOther,
+      });
     });
 
     characterTooltipTransforms.register(appendCatchingGuildsTooltipSection);
@@ -527,6 +548,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     setOnlineOwner("617", false);
     setSuccess();
 
+    const cleanupTransforms = installCharacterTooltipTransforms();
     renderHook(() => useWhoIsHereLootlogHighlight());
 
     act(() => {
@@ -544,9 +566,10 @@ describe("useWhoIsHereLootlogHighlight", () => {
     expect(useCharacterTooltipCatchingGuildsStore.getState().activeOther).toBe(
       other,
     );
-    expect(tooltipHtml).toContain("Gra jako:");
-    expect(tooltipHtml).toContain("player-discord");
+    expect(tooltipHtml).toContain("Dodaje łupy i timery do:");
     expect(tooltipHtml).toContain("Blue Guild");
+    // Without a Lootlog member name the Discord id stays out of the tooltip.
+    expect(tooltipHtml).not.toContain("player-discord");
 
     act(() => {
       row.dispatchEvent(
@@ -559,6 +582,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeOther,
     ).toBeNull();
+    cleanupTransforms();
   });
 
   it("refreshes the hovered whoIsHere tooltip when shift toggles off", async () => {
@@ -569,7 +593,11 @@ describe("useWhoIsHereLootlogHighlight", () => {
     const createTipWrapper = vi.fn<
       (container: Element | null, other: Other) => void
     >((_tipContainer, tooltipOther) => {
-      tooltipHtml = String(tooltipOther.createStrTip?.() ?? "");
+      // WhoIsHere.createTipWrapper builds its html through OthersManager.
+      tooltipHtml = tips.createStrTip({
+        nick: tooltipOther.d.nick,
+        object: tooltipOther,
+      });
     });
 
     characterTooltipTransforms.register(appendCatchingGuildsTooltipSection);
@@ -579,6 +607,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     setOnlineOwner();
     setSuccess();
 
+    const cleanupTransforms = installCharacterTooltipTransforms();
     renderHook(() => useWhoIsHereLootlogHighlight());
 
     act(() => {
@@ -599,7 +628,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     });
 
     await waitFor(() => {
-      expect(tooltipHtml).toContain("Gra jako:");
+      expect(tooltipHtml).toContain("Dodaje łupy i timery do:");
     });
     expect(tooltipHtml).toContain("Guild Member");
     expect(tooltipHtml).toContain("Blue Guild");
@@ -614,6 +643,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeOther,
     ).toBeNull();
+    cleanupTransforms();
   });
 
   it("fetches tooltip data when online owner becomes known after whoIsHere hover", async () => {
