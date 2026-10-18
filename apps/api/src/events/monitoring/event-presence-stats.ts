@@ -1,5 +1,5 @@
 import { queryEventHero } from "#src/events/event-scope-query";
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -49,7 +49,12 @@ export const makeEventPresenceStats = (
                   memberTable,
                   eq(memberTable.id, eventMapToMemberTable.B),
                 )
-                .where(inArray(eventMapToMemberTable.A, mapIds)),
+                .where(
+                  and(
+                    inArray(eventMapToMemberTable.A, mapIds),
+                    eq(memberTable.active, true),
+                  ),
+                ),
               database
                 .select({ log: eventPresenceLogTable, member: memberTable })
                 .from(eventPresenceLogTable)

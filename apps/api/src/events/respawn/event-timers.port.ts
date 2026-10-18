@@ -275,11 +275,14 @@ export const makeEventTimersPort = ({
               deletedAt: null,
             },
             {
+              createdById: input.createdById,
               minSpawnTime: input.minSpawnTime,
               maxSpawnTime: input.maxSpawnTime,
               wasReset: false,
               npc,
               windowOpenedAt,
+              actorCharacterSnapshotId: null,
+              actorCharacterLvl: null,
               deletedAt: null,
             },
           );
