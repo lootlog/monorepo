@@ -10,7 +10,7 @@ import {
 
 /** Route-level stand-in for the reservations page: its toolbar above the spots. */
 export const ReservationsPageSkeleton = () => {
-  const { viewMode } = useViewMode(
+  const { viewMode, canChooseViewMode } = useViewMode(
     RESERVATIONS_VIEW_MODE_KEY,
     "grid",
     RESERVATIONS_GRID_MEDIA_QUERY,
@@ -21,10 +21,12 @@ export const ReservationsPageSkeleton = () => {
     <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
       <ListToolbarSkeleton>
         <div className="flex gap-1.5">
+          <Skeleton className="h-8 w-22 rounded-lg" />
           <Skeleton className="h-8 w-24 rounded-lg" />
           <Skeleton className="h-8 w-20 rounded-lg" />
           <Skeleton className="h-8 w-16 rounded-lg" />
         </div>
+        {canChooseViewMode && <Skeleton className="h-8 w-16 rounded-lg" />}
       </ListToolbarSkeleton>
       <div className={getReservationCollectionClassName(viewMode)}>
         {Array.from({ length: 8 }).map((_, index) => (

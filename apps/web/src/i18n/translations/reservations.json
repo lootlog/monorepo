@@ -9,6 +9,7 @@
   },
   "filters": {
     "label": "Filtry expowisk",
+    "all": "Wszystkie",
     "available": "Wolne teraz",
     "pinned": "Przypięte",
     "partners": "Sojusz"
