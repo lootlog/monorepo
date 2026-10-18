@@ -194,6 +194,7 @@
   },
   "airTags": {
     "seenSeconds": "widziany {{seconds}} s temu",
+    "seenAgo": "{{seconds}} s",
     "whoIsHereTitle": "Widziani przez Lootloga",
     "afk": "AFK"
   },
