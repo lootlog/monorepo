@@ -185,7 +185,6 @@
     "diagnosticsDescription": "Dołącz je do zgłoszenia błędu. Zawierają wersję, sposób instalacji, przeglądarkę, stan sesji i połączeń oraz ostatnie nieudane żądania – bez haseł, tokenów, ciasteczek i adresu e-mail."
   },
   "airTags": {
-    "seenSeconds": "widziany {{seconds}} s temu",
     "seenAgo": "{{seconds}} s",
     "whoIsHereTitle": "Widziani przez Lootloga",
     "afk": "AFK"
