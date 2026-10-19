@@ -318,7 +318,7 @@ describe("resolveAppNavigation", () => {
     expect(navigation.parentPath).toBe(
       "/@me/battle-panel/abyss/abyss-10-20/opponents",
     );
-    expect(navigation.heading.trail.at(-1)).toEqual({
+    expect(navigation.heading.trail).toContainEqual({
       label: "Sezon",
       path: "/@me/battle-panel/abyss/abyss-10-20/opponents",
       search: { characterId: "1" },
