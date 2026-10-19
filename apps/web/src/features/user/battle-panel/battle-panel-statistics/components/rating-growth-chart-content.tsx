@@ -1,6 +1,7 @@
+import { formatSignedBattleMetric } from "@/components/battle/utils/value-utils";
 import { useTranslation } from "react-i18next";
 import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
-import { GrowthChartCard } from "./growth-chart-card";
+import { GrowthChartSection } from "./growth-chart-section";
 
 interface RatingGrowthDataPoint {
   date: string;
@@ -27,11 +28,10 @@ export function RatingGrowthChart({ data, isLoading }: RatingGrowthChartProps) {
   }));
 
   return (
-    <GrowthChartCard
+    <GrowthChartSection
       chartData={chartData}
       color={BATTLE_HEX_COLORS.chart.rating}
       dataKey="rating"
-      description={t("battlePanel.statistics.ratingGrowth.description")}
       emptyMessage={t("battlePanel.statistics.ratingGrowth.empty")}
       isLoading={isLoading}
       label={t("battlePanel.statistics.ratingGrowth.chartLabel")}
@@ -44,7 +44,7 @@ export function RatingGrowthChart({ data, isLoading }: RatingGrowthChartProps) {
 
         return t("battlePanel.statistics.ratingGrowth.tooltipValue", {
           value,
-          delta: `${ratingDelta >= 0 ? "+" : ""}${ratingDelta}`,
+          delta: formatSignedBattleMetric(ratingDelta),
         });
       }}
     />

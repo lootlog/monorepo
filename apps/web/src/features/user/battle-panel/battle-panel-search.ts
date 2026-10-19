@@ -35,13 +35,9 @@ export const HEAD_TO_HEAD_SORT_BY_VALUES = [
 
 const SORT_ORDER_VALUES = ["asc", "desc"] as const;
 
-const ABYSS_TAB_VALUES = ["battles", "analytics", "seasons"] as const;
-
 const BATTLE_TYPE_VALUES = ["solo", "group"] as const;
 
 const BATTLE_RESULT_VALUES = ["won", "lost", "flee"] as const;
-
-export type AbyssTab = (typeof ABYSS_TAB_VALUES)[number];
 
 type BattlePanelBattleResult = (typeof BATTLE_RESULT_VALUES)[number];
 
@@ -100,12 +96,11 @@ export const battlePanelStatisticsSearchParsers = {
 
 export const battlePanelAbyssSearchParsers = {
   characterId: parseAsString,
-  tab: parseAsStringLiteral(ABYSS_TAB_VALUES).withDefault("battles"),
-  seasonId: parseAsString,
-  startDate: parseAsString,
-  endDate: parseAsString,
-  minLevel: parseAsInteger.withDefault(1),
-  maxLevel: parseAsInteger.withDefault(500),
+};
+
+/** One Abyss season; its opponents tab adds the opponent search and sort. */
+export const battlePanelAbyssSeasonSearchParsers = {
+  characterId: parseAsString,
   ...battlePanelCursorSearchParsers,
 };
 
@@ -122,6 +117,8 @@ export const battlePanelHeadToHeadSearchParsers = {
 export const battlePanelPlayerVsPlayerSearchParsers = {
   ...battlePanelBaseSearchParsers,
   ...battlePanelCursorSearchParsers,
+  /** The Abyss season the page was opened from, to return to it. */
+  seasonId: parseAsString,
 };
 
 export const battlePanelSingleBattleSearchParsers = {
@@ -274,6 +271,13 @@ export const battlePanelAbyssSearchSchema = createStandardSchemaV1(
   },
 );
 
+export const battlePanelAbyssSeasonSearchSchema = createStandardSchemaV1(
+  battlePanelAbyssSeasonSearchParsers,
+  {
+    partialOutput: true,
+  },
+);
+
 export const battlePanelSingleBattleSearchSchema = createStandardSchemaV1(
   battlePanelSingleBattleSearchParsers,
   {
@@ -299,6 +303,10 @@ export const loadBattlePanelPlayerVsPlayerSearch = createLoader(
 
 export const loadBattlePanelAbyssSearch = createLoader(
   battlePanelAbyssSearchParsers,
+);
+
+export const loadBattlePanelAbyssSeasonSearch = createLoader(
+  battlePanelAbyssSeasonSearchParsers,
 );
 
 export const loadBattlePanelSingleBattleSearch = createLoader(

@@ -6,6 +6,8 @@ import {
 import { BattlesList } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list";
 import { useResetRejectedBattlePanelCursor } from "@/features/user/battle-panel/components/use-reset-rejected-battle-panel-cursor";
 import { BattlesListStackedFilters } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list-stacked-filters";
+import { CharacterSelector } from "@/components/filters/character-selector";
+import { useBattleCharacters } from "@/components/filters/use-battle-characters";
 import { BattlesListFilterToolbar } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list-filter-toolbar";
 import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter";
 import {
@@ -35,6 +37,7 @@ const optionalQueryValue = <Value,>(value: Value | null | undefined) =>
 
 export const BattlePanelBattlesList = () => {
   const { t } = useTranslation();
+  const characters = useBattleCharacters();
 
   const [queryState, setQueryState] = useQueryStates(
     battlePanelBattlesSearchParsers,
@@ -154,7 +157,6 @@ export const BattlePanelBattlesList = () => {
   const tableToolbar = (
     <BattlesListFilterToolbar
       filters={filters}
-      onCharacterChange={handleCharacterChange}
       onMinLevelChange={handleMinLevelChange}
       onMaxLevelChange={handleMaxLevelChange}
       onPhToggle={handlePhToggle}
@@ -194,10 +196,19 @@ export const BattlePanelBattlesList = () => {
       isRefreshing={isBattlesRefreshing}
       enableScrollToTop
       search={
-        <WarriorSearchFilter
-          selectedWarriors={selectedWarriors}
-          onWarriorToggle={handleWarriorToggle}
-        />
+        // As on the kill statistics: the search, then the character.
+        <>
+          <WarriorSearchFilter
+            selectedWarriors={selectedWarriors}
+            onWarriorToggle={handleWarriorToggle}
+          />
+          <CharacterSelector
+            characters={characters}
+            multiple
+            characterIds={filters.characterId}
+            onCharacterToggle={handleCharacterChange}
+          />
+        </>
       }
       toolbar={tableToolbar}
       stackedFilters={

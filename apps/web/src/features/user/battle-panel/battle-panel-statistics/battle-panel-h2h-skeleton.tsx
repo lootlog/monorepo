@@ -4,14 +4,13 @@ import { ResultsSurface } from "@/components/common/results-surface";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { TablePaginationFooterSkeleton } from "@/components/ui/table-pagination-footer-skeleton";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { InlineSearchFieldSkeleton } from "@/components/common/inline-search-field-skeleton";
 import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { useMediaQuery } from "usehooks-ts";
 import { StatisticsFilterToolbarSkeleton } from "./components/statistics-filter-toolbar-skeleton";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { HeadToHeadFilterChipsSkeleton } from "./components/head-to-head-filter-chips-skeleton";
 import type { HeadToHeadPageVariantProps } from "./use-head-to-head-page";
 
 type BattlePanelH2hSkeletonProps = {
@@ -19,7 +18,7 @@ type BattlePanelH2hSkeletonProps = {
   mobileCard: ReactNode;
 } & (
   | ({
-      /** `HeadToHeadPageVariant`: static titles, and the character filter chip once a character is known. */
+      /** `HeadToHeadPageVariant`: static titles. */
       variant: "head-to-head";
     } & Pick<HeadToHeadPageVariantProps, "titleKey">)
   | {
@@ -37,15 +36,19 @@ export const BattlePanelH2hSkeleton = (props: BattlePanelH2hSkeletonProps) => {
 
   const results = (
     <ResultsSurface
-      search={isHeadToHead && <InlineSearchFieldSkeleton />}
-      // Without a search, narrower pages leave no bar above the results.
-      filters={
-        (isHeadToHead || listsFilters) && (
-          <StatisticsFilterToolbarSkeleton withCharacter={isHeadToHead} />
+      search={
+        isHeadToHead && (
+          <>
+            <InlineSearchFieldSkeleton />
+            <Skeleton aria-hidden="true" className="h-10 w-55 rounded-lg" />
+          </>
         )
       }
+      // Without a search, narrower pages leave no bar above the results.
+      filters={
+        (isHeadToHead || listsFilters) && <StatisticsFilterToolbarSkeleton />
+      }
       filtersLabel={t("battlePanel.filters.title")}
-      chipsPlaceholder={isHeadToHead && <HeadToHeadFilterChipsSkeleton />}
       footer={<TablePaginationFooterSkeleton labelClassName="w-36" />}
     >
       <TableRowsSkeleton
@@ -70,10 +73,11 @@ export const BattlePanelH2hSkeleton = (props: BattlePanelH2hSkeletonProps) => {
     );
   }
 
+  // The opponents tab, inside the battle panel's page scroller.
   return (
-    <ScrollArea data-under-top-bar aria-busy="true" className="h-full min-h-0">
+    <div aria-busy="true" className="min-w-0">
       <h1 className="sr-only">{t(props.titleKey)}</h1>
       {results}
-    </ScrollArea>
+    </div>
   );
 };

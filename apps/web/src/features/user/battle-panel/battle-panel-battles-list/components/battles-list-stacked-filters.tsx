@@ -1,6 +1,4 @@
 import { getBattleFilterOptions } from "../utils/battle-filter-options";
-import { CharacterSelector } from "@/components/filters/character-selector";
-import { useBattleCharacters } from "@/components/filters/use-battle-characters";
 import { FilterPanelField } from "@/components/filters/filter-panel-field";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import {
@@ -26,10 +24,7 @@ export const BattlesListStackedFilters = ({
   onFiltersChange,
   worlds,
 }: BattlesListStackedFiltersProps) => {
-  const characters = useBattleCharacters();
-
   const {
-    handleCharacterChange,
     handleTypeChange,
     handleResultChange,
     handlePhToggle,
@@ -75,16 +70,6 @@ export const BattlesListStackedFilters = ({
               ? t("battlePanel.filters.selectedCount", { count })
               : t("battlePanel.filters.battleResult")
           }
-        />
-      </FilterPanelField>
-
-      <FilterPanelField label={t("battlePanel.filters.character")}>
-        <CharacterSelector
-          characters={characters}
-          multiple
-          characterIds={filters.characterId}
-          onCharacterToggle={handleCharacterChange}
-          className="w-full"
         />
       </FilterPanelField>
 

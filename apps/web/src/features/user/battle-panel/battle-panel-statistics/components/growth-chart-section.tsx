@@ -7,14 +7,13 @@ import {
   type ChartConfig,
 } from "@lootlog/ui/components/chart";
 import { BattlePanelChartFrame } from "./battle-panel-chart-frame";
-import { ChartCard } from "@/components/common/chart-card";
+import { ChartSection } from "@/components/common/chart-section";
 import { CHART_SERIES_ANIMATION } from "@/lib/motion";
 
-type GrowthChartCardProps<TData extends { date: string }> = {
+type GrowthChartSectionProps<TData extends { date: string }> = {
   chartData: TData[];
   color: string;
   dataKey: keyof TData & string;
-  description: string;
   emptyMessage: string;
   isLoading?: boolean;
   label: string;
@@ -23,26 +22,24 @@ type GrowthChartCardProps<TData extends { date: string }> = {
   tooltipValue: (value: TData[keyof TData], payload: TData) => string;
 };
 
-export function GrowthChartCard<TData extends { date: string }>({
+export function GrowthChartSection<TData extends { date: string }>({
   chartData,
   color,
   dataKey,
-  description,
   emptyMessage,
   isLoading,
   label,
   title,
   tooltipDate,
   tooltipValue,
-}: GrowthChartCardProps<TData>) {
+}: GrowthChartSectionProps<TData>) {
   const chartConfig = {
     [dataKey]: { label, color },
   } satisfies ChartConfig;
 
   return (
-    <ChartCard
+    <ChartSection
       title={title}
-      description={description}
       isLoading={isLoading}
       emptyMessage={chartData.length === 0 ? emptyMessage : undefined}
     >
@@ -94,6 +91,6 @@ export function GrowthChartCard<TData extends { date: string }>({
           </LineChart>
         </ChartContainer>
       </BattlePanelChartFrame>
-    </ChartCard>
+    </ChartSection>
   );
 }

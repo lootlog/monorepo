@@ -6,8 +6,8 @@ import {
 import { cn } from "cn";
 import { upperFirst } from "es-toolkit";
 import type { useEventHeader } from "../../use-event-header";
-import { EventHeaderFact } from "./event-header-fact";
-import { EventHeaderFacts } from "./event-header-facts";
+import { DetailBarFact } from "@/components/common/detail-bar-fact";
+import { DetailBarFacts } from "@/components/common/detail-bar-facts";
 
 type EventHeaderMetaProps = Pick<
   ReturnType<typeof useEventHeader>,
@@ -30,8 +30,8 @@ export const EventHeaderMeta = ({
   eventStatusLabel,
   eventDateRangeLabel,
 }: EventHeaderMetaProps) => (
-  <EventHeaderFacts>
-    <EventHeaderFact label={t("events.header.status")}>
+  <DetailBarFacts>
+    <DetailBarFact label={t("events.header.status")}>
       <span
         className={cn(
           "flex items-center gap-1.5",
@@ -41,11 +41,11 @@ export const EventHeaderMeta = ({
         <span aria-hidden className="size-2 shrink-0 rounded-full bg-current" />
         {eventStatusLabel}
       </span>
-    </EventHeaderFact>
-    <EventHeaderFact label={t("events.header.world")}>
+    </DetailBarFact>
+    <DetailBarFact label={t("events.header.world")}>
       {upperFirst(event.world)}
-    </EventHeaderFact>
-    <EventHeaderFact label={t("events.header.assignmentTimeout")}>
+    </DetailBarFact>
+    <DetailBarFact label={t("events.header.assignmentTimeout")}>
       <Tooltip>
         <TooltipTrigger
           render={
@@ -63,9 +63,9 @@ export const EventHeaderMeta = ({
           <p>{t("events.header.assignmentTimeoutTooltip")}</p>
         </TooltipContent>
       </Tooltip>
-    </EventHeaderFact>
-    <EventHeaderFact label={t("events.header.dates")}>
+    </DetailBarFact>
+    <DetailBarFact label={t("events.header.dates")}>
       {eventDateRangeLabel}
-    </EventHeaderFact>
-  </EventHeaderFacts>
+    </DetailBarFact>
+  </DetailBarFacts>
 );

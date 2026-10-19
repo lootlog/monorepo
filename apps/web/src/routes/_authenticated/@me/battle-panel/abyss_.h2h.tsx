@@ -1,76 +1,18 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import {
-  MatchmakingH2HFullPage,
-  matchmakingH2HPageCopy,
-} from "@/features/user/battle-panel/battle-panel-statistics/matchmaking-h2h-full-page";
-import { BattlePanelH2hSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-h2h-skeleton";
-import { BattlePanelH2hCardSkeleton } from "@/features/user/battle-panel/components/battle-panel-h2h-card-skeleton";
-import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
-import {
-  battlePanelHeadToHeadSearchSchema,
-  loadBattlePanelHeadToHeadSearch,
-  normalizeBattlePanelCharacterId,
+  battlePanelAbyssSearchSchema,
+  loadBattlePanelAbyssSearch,
 } from "@/features/user/battle-panel/battle-panel-search";
-import { getBattlesControllerGetHeadToHeadQueryOptions } from "@lootlog/client/battlelog";
-import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
+// Abyss opponents moved into each season's page; old links open the seasons.
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/abyss_/h2h",
 )({
-  validateSearch: battlePanelHeadToHeadSearchSchema,
-  loader: ({ abortController, context, location, preload }) =>
-    withRouteLoaderCancellation(abortController, async () => {
-      if (preload) {
-        return null;
-      }
-
-      const search = loadBattlePanelHeadToHeadSearch(location.searchStr);
-
-      const characterId = await ensureBattlePanelCharacterId({
-        queryClient: context.queryClient,
-        characterId: normalizeBattlePanelCharacterId(search.characterId),
-      });
-
-      if (!characterId) {
-        return null;
-      }
-
-      if (!search.characterId) {
-        throw redirect({
-          to: "/@me/battle-panel/abyss/h2h",
-          search: {
-            ...search,
-            characterId,
-          },
-        });
-      }
-
-      await context.queryClient.ensureQueryData(
-        getBattlesControllerGetHeadToHeadQueryOptions({
-          cursor: search.cursor ?? undefined,
-          characterId,
-          period: search.period,
-          startDate: search.startDate ?? undefined,
-          endDate: search.endDate ?? undefined,
-          search: search.search ?? undefined,
-          minLevel: search.minLevel,
-          maxLevel: search.maxLevel,
-          matchmaking: true,
-          sortBy: search.sortBy,
-          sortOrder: search.sortOrder,
-          size: 20,
-          includeTotal: true,
-        }),
-      );
-
-      return null;
-    }),
-  component: MatchmakingH2HFullPage,
-  pendingComponent: () => (
-    <BattlePanelH2hSkeleton
-      variant="head-to-head"
-      {...matchmakingH2HPageCopy}
-      mobileCard={<BattlePanelH2hCardSkeleton withRatingDelta />}
-    />
-  ),
+  validateSearch: battlePanelAbyssSearchSchema,
+  beforeLoad: ({ location }) => {
+    throw redirect({
+      to: "/@me/battle-panel/abyss",
+      search: loadBattlePanelAbyssSearch(location.searchStr),
+    });
+  },
 });

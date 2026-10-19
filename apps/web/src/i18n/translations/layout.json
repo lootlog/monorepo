@@ -39,9 +39,9 @@
   },
   "breadcrumbs": {
     "statistics": "Analityka",
+    "opponents": "Przeciwnicy",
     "abyss": "Otchłań",
-    "abyssHeadToHead": "Bilans H2H Otchłani",
-    "headToHead": "Bilans H2H",
+    "abyssSeason": "Sezon",
     "playerVsPlayer": "Gracz vs Gracz",
     "battles": "Walki",
     "npcRanking": "Ranking potworów"

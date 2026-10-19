@@ -18,6 +18,7 @@ export type AppNavigationMatch = {
   routeId: string;
   pathname: string;
   params?: Record<string, string | undefined>;
+  search?: unknown;
   status?: string;
   globalNotFound?: boolean;
   loaderData?: unknown;
@@ -52,7 +53,7 @@ export type AppNavigationSidebarItem = {
 export type AppNavigationHeading = {
   title: string;
   /** The pages above this one, from the section down; tabs of a section have none. */
-  trail: { label: string; path: string }[];
+  trail: { label: string; path: string; search?: BreadcrumbSearch }[];
   /** The sidebar item the page belongs to, whose icon leads the heading. */
   section: AppNavigationItemId | null;
 };
@@ -195,8 +196,8 @@ function resolveHeading(
 
   return {
     title: current?.label ?? "",
-    trail: upToParent.flatMap(({ label, path }) =>
-      path === null ? [] : [{ label, path }],
+    trail: upToParent.flatMap(({ label, path, search }) =>
+      path === null ? [] : [{ label, path, search }],
     ),
     section,
   };
@@ -401,9 +402,13 @@ export function getOrganizationLandingItemId(
   return item?.id ?? null;
 }
 
+/** Search params a breadcrumb's page needs, such as the character it shows. */
+type BreadcrumbSearch = Record<string, string>;
+
 type Breadcrumb = {
   label: string;
   path: string | null;
+  search?: BreadcrumbSearch;
 };
 
 type NavigationInfo = {
@@ -452,9 +457,59 @@ function navigationInfo(
   return info;
 }
 
+const abyssSeasonSearch = z.object({
+  seasonId: z.string(),
+  characterId: z.string(),
+});
+
+/** The Abyss season a page was opened from, as its search names it. */
+type AbyssSeasonOrigin = z.infer<typeof abyssSeasonSearch>;
+
+function resolvePlayerVsPlayerNavigation(
+  battlePanel: Breadcrumb,
+  abyssSeason: AbyssSeasonOrigin | undefined,
+): NavigationInfo {
+  // Opened from an Abyss season, the page returns to that season's opponents.
+  if (abyssSeason) {
+    const { seasonId, characterId } = abyssSeason;
+    const seasonOpponentsPath = `${ROUTES.user.battlePanel.abyss}/${seasonId}/opponents`;
+
+    return navigationInfo(
+      [
+        battlePanel,
+        {
+          label: t("layout.breadcrumbs.abyss"),
+          path: ROUTES.user.battlePanel.abyss,
+          search: { characterId },
+        },
+        {
+          label: t("layout.breadcrumbs.abyssSeason"),
+          path: seasonOpponentsPath,
+          search: { characterId },
+        },
+        { label: t("layout.breadcrumbs.playerVsPlayer"), path: null },
+      ],
+      seasonOpponentsPath,
+    );
+  }
+
+  return navigationInfo(
+    [
+      battlePanel,
+      {
+        label: t("layout.breadcrumbs.opponents"),
+        path: ROUTES.user.battlePanel.opponents,
+      },
+      { label: t("layout.breadcrumbs.playerVsPlayer"), path: null },
+    ],
+    ROUTES.user.battlePanel.opponents,
+  );
+}
+
 function resolveUserNavigationInfo(
   pathValue: string,
   battleLabel?: string,
+  abyssSeason?: AbyssSeasonOrigin,
 ): NavigationInfo {
   const path = normalizePath(pathValue);
 
@@ -505,21 +560,15 @@ function resolveUserNavigationInfo(
     );
   }
 
-  if (path === ROUTES.user.battlePanel.h2h) {
+  if (path === ROUTES.user.battlePanel.opponents) {
     return navigationInfo(
-      [
-        battlePanel,
-        {
-          label: t("layout.breadcrumbs.statistics"),
-          path: ROUTES.user.battlePanel.statistics,
-        },
-        { label: t("layout.breadcrumbs.headToHead"), path: null },
-      ],
-      ROUTES.user.battlePanel.statistics,
+      [battlePanel, { label: t("layout.breadcrumbs.opponents"), path: null }],
+      null,
     );
   }
 
-  if (path === ROUTES.user.battlePanel.matchmakingH2h) {
+  // An Abyss season and its tabs.
+  if (path.startsWith(`${ROUTES.user.battlePanel.abyss}/`)) {
     return navigationInfo(
       [
         battlePanel,
@@ -527,7 +576,7 @@ function resolveUserNavigationInfo(
           label: t("layout.breadcrumbs.abyss"),
           path: ROUTES.user.battlePanel.abyss,
         },
-        { label: t("layout.breadcrumbs.abyssHeadToHead"), path: null },
+        { label: t("layout.breadcrumbs.abyssSeason"), path: null },
       ],
       ROUTES.user.battlePanel.abyss,
     );
@@ -536,17 +585,7 @@ function resolveUserNavigationInfo(
   if (
     path.startsWith(`${ROUTES.user.battlePanel.statistics}/player-vs-player/`)
   ) {
-    return navigationInfo(
-      [
-        battlePanel,
-        {
-          label: t("layout.breadcrumbs.statistics"),
-          path: ROUTES.user.battlePanel.statistics,
-        },
-        { label: t("layout.breadcrumbs.playerVsPlayer"), path: null },
-      ],
-      ROUTES.user.battlePanel.statistics,
-    );
+    return resolvePlayerVsPlayerNavigation(battlePanel, abyssSeason);
   }
 
   const battleDetailsPath = `${ROUTES.user.battlePanel.base}/battles`;
@@ -706,6 +745,7 @@ function resolveUserAppNavigation(
   const userNavigation = resolveUserNavigationInfo(
     lastMatch.pathname,
     getBattleRouteLabel(lastMatch, t, { currentBattle }),
+    abyssSeasonSearch.safeParse(lastMatch.search).data,
   );
 
   const sidebarItems = resolveSidebarItems(

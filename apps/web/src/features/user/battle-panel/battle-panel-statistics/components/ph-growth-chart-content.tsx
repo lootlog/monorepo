@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
-import { GrowthChartCard } from "./growth-chart-card";
+import { GrowthChartSection } from "./growth-chart-section";
 
 interface PhGrowthDataPoint {
   date: string;
@@ -27,11 +27,10 @@ export function PhGrowthChart({ data, isLoading }: PhGrowthChartProps) {
   }));
 
   return (
-    <GrowthChartCard
+    <GrowthChartSection
       chartData={chartData}
       color={BATTLE_HEX_COLORS.chart.honorPoints}
       dataKey="cumulativePh"
-      description={t("battlePanel.statistics.phGrowth.description")}
       emptyMessage={t("battlePanel.statistics.phGrowth.empty")}
       isLoading={isLoading}
       label={t("battlePanel.statistics.phGrowth.chartLabel")}

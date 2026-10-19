@@ -281,8 +281,9 @@ describe("resolveAppNavigation", () => {
     const navigation = resolveAppNavigation({
       matches: [
         createMatch({
-          pathname: "/@me/battle-panel/statistics/h2h",
-          routeId: "/_authenticated/@me/battle-panel/statistics_/h2h",
+          pathname: "/@me/battle-panel/statistics/player-vs-player/1/2",
+          routeId:
+            "/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId",
         }),
       ],
     });
@@ -290,16 +291,38 @@ describe("resolveAppNavigation", () => {
     expect(navigation.scope).toBe("user");
     expect(navigation.breadcrumbs).toEqual([
       { label: "Panel walk", path: "/@me/battle-panel" },
-      { label: "Analityka", path: "/@me/battle-panel/statistics" },
-      { label: "Bilans H2H", path: null },
+      { label: "Przeciwnicy", path: "/@me/battle-panel/opponents" },
+      { label: "Gracz vs Gracz", path: null },
     ]);
-    expect(navigation.parentPath).toBe("/@me/battle-panel/statistics");
+    expect(navigation.parentPath).toBe("/@me/battle-panel/opponents");
     expect(navigation.documentTitle).toBe(
-      "Bilans H2H - Panel walk - Lootlog.pl",
+      "Gracz vs Gracz - Panel walk - Lootlog.pl",
     );
     expect(
       navigation.sidebarItems.find(({ id }) => id === "user-battles"),
     ).toMatchObject({ active: true, visible: true });
+  });
+
+  it("returns a head-to-head opened from an Abyss season to that season", () => {
+    const navigation = resolveAppNavigation({
+      matches: [
+        createMatch({
+          pathname: "/@me/battle-panel/statistics/player-vs-player/1/2",
+          routeId:
+            "/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId",
+          search: { characterId: "1", seasonId: "abyss-10-20" },
+        }),
+      ],
+    });
+
+    expect(navigation.parentPath).toBe(
+      "/@me/battle-panel/abyss/abyss-10-20/opponents",
+    );
+    expect(navigation.heading.trail).toContainEqual({
+      label: "Sezon",
+      path: "/@me/battle-panel/abyss/abyss-10-20/opponents",
+      search: { characterId: "1" },
+    });
   });
 
   it("treats a statistics tab as a top-level section without a back target", () => {

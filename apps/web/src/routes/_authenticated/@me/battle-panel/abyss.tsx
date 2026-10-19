@@ -1,27 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { AbyssHub } from "@/features/user/battle-panel/battle-panel-abyss/abyss-hub";
-import { AbyssHubSkeleton } from "@/features/user/battle-panel/battle-panel-abyss/abyss-hub-skeleton";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { AbyssSeasonsPage } from "@/features/user/battle-panel/battle-panel-abyss/abyss-seasons-page";
+import { AbyssSeasonsPageSkeleton } from "@/features/user/battle-panel/battle-panel-abyss/abyss-seasons-page-skeleton";
 import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
 import {
   battlePanelAbyssSearchSchema,
   loadBattlePanelAbyssSearch,
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-search";
-import {
-  getBattlesControllerGetAbyssSeasonsQueryOptions,
-  getBattlesControllerGetBattleDurationQueryOptions,
-  getBattlesControllerGetCombatProfileQueryOptions,
-  getBattlesControllerGetCurrentStreakQueryOptions,
-  getBattlesControllerGetDashboardBattlesQueryOptions,
-  getBattlesControllerGetProfessionWinRateQueryOptions,
-  getBattlesControllerGetRatingDeltaByOpponentQueryOptions,
-  getBattlesControllerGetRatingGrowthQueryOptions,
-} from "@lootlog/client/battlelog";
+import { getBattlesControllerGetAbyssSeasonsQueryOptions } from "@lootlog/client/battlelog";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
-import {
-  ensureRouteQueryData,
-  prefetchRouteQuery,
-} from "@/lib/router/route-prefetch";
+import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/abyss")({
   validateSearch: battlePanelAbyssSearchSchema,
@@ -42,77 +30,20 @@ export const Route = createFileRoute("/_authenticated/@me/battle-panel/abyss")({
         return null;
       }
 
-      const seasons = await ensureRouteQueryData(
+      if (!search.characterId) {
+        throw redirect({
+          to: "/@me/battle-panel/abyss",
+          search: { characterId },
+        });
+      }
+
+      await ensureRouteQueryData(
         context.queryClient,
         getBattlesControllerGetAbyssSeasonsQueryOptions({ characterId }),
       );
 
-      const selectedSeason =
-        seasons.find((season) => season.id === search.seasonId) ?? seasons[0];
-
-      const startDate = search.startDate ?? selectedSeason?.startedAt;
-      const endDate = search.endDate ?? selectedSeason?.endedAt;
-
-      const baseParams = {
-        characterId,
-        period: "all" as const,
-        minLevel: search.minLevel,
-        maxLevel: search.maxLevel,
-        startDate,
-        endDate,
-        matchmaking: true,
-      };
-
-      if (search.tab === "analytics") {
-        void Promise.all([
-          prefetchRouteQuery(
-            context.queryClient,
-            getBattlesControllerGetCombatProfileQueryOptions(baseParams),
-          ),
-          prefetchRouteQuery(
-            context.queryClient,
-            getBattlesControllerGetProfessionWinRateQueryOptions(baseParams),
-          ),
-          prefetchRouteQuery(
-            context.queryClient,
-            getBattlesControllerGetCurrentStreakQueryOptions(baseParams),
-          ),
-          prefetchRouteQuery(
-            context.queryClient,
-            getBattlesControllerGetBattleDurationQueryOptions(baseParams),
-          ),
-          prefetchRouteQuery(
-            context.queryClient,
-            getBattlesControllerGetRatingGrowthQueryOptions(baseParams),
-          ),
-          prefetchRouteQuery(
-            context.queryClient,
-            getBattlesControllerGetRatingDeltaByOpponentQueryOptions(
-              baseParams,
-            ),
-          ),
-        ]).catch(() => undefined);
-      }
-
-      if (search.tab === "battles") {
-        void prefetchRouteQuery(
-          context.queryClient,
-          getBattlesControllerGetDashboardBattlesQueryOptions({
-            cursor: search.cursor ?? undefined,
-            size: 20,
-            includeTotal: true,
-            matchmaking: true,
-            characterId: [characterId],
-            startDate,
-            endDate,
-            minLevel: search.minLevel,
-            maxLevel: search.maxLevel,
-          }),
-        ).catch(() => undefined);
-      }
-
       return null;
     }),
-  component: AbyssHub,
-  pendingComponent: AbyssHubSkeleton,
+  component: AbyssSeasonsPage,
+  pendingComponent: AbyssSeasonsPageSkeleton,
 });
