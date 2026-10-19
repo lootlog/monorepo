@@ -13,7 +13,6 @@ import type {
   AbyssSeasonResponseDtoOutput,
   HeadToHeadPaginatedResponseDtoOutputRecordsItem,
   PlayerVsPlayerPaginatedResponseDtoOutputBattlesItem,
-  RatingDeltaByOpponentResponseDtoOutput,
   StreakResponseDtoOutput,
 } from "@lootlog/client/battlelog";
 
@@ -39,9 +38,6 @@ export type HeadToHeadRecord = HeadToHeadPaginatedResponseDtoOutputRecordsItem;
 
 export type PlayerVsPlayerBattle =
   PlayerVsPlayerPaginatedResponseDtoOutputBattlesItem;
-
-export type RatingDeltaByOpponentRecord =
-  RatingDeltaByOpponentResponseDtoOutput;
 
 export type RawBattle = BattleRawResponseDtoOutputRawData;
 

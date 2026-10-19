@@ -3,8 +3,8 @@ import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { EventHeaderFact } from "./event-header-fact";
-import { EventHeaderFacts } from "./event-header-facts";
+import { DetailBarFact } from "@/components/common/detail-bar-fact";
+import { DetailBarFacts } from "@/components/common/detail-bar-facts";
 import { EventPageTabs, type EventTab } from "./event-page-tabs";
 
 const FACT_LABEL_KEYS = [
@@ -23,13 +23,13 @@ export const EventHeaderSkeleton = ({ tab }: { tab?: EventTab }) => {
     <>
       <DetailBar
         meta={
-          <EventHeaderFacts>
+          <DetailBarFacts>
             {FACT_LABEL_KEYS.map((key) => (
-              <EventHeaderFact key={key} label={t(key)}>
+              <DetailBarFact key={key} label={t(key)}>
                 <SkeletonLine className="h-3.5 w-20" />
-              </EventHeaderFact>
+              </DetailBarFact>
             ))}
-          </EventHeaderFacts>
+          </DetailBarFacts>
         }
         actions={<Skeleton className="h-10 w-96 max-w-full rounded-md" />}
       />

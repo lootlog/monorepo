@@ -65,3 +65,12 @@ const battleMetricFormatter = new Intl.NumberFormat("pl-PL", {
 
 export const formatBattleMetric = (value: number): string =>
   battleMetricFormatter.format(value);
+
+const signedBattleMetricFormatter = new Intl.NumberFormat("pl-PL", {
+  maximumFractionDigits: 1,
+  signDisplay: "exceptZero",
+});
+
+/** A change, such as a rating delta, with its sign: `+12`, `−3,5`, `0`. */
+export const formatSignedBattleMetric = (value: number): string =>
+  signedBattleMetricFormatter.format(value);

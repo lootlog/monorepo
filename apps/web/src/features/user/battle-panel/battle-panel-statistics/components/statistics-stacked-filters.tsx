@@ -1,5 +1,3 @@
-import { CharacterSelector } from "@/components/filters/character-selector";
-import { useBattleCharacters } from "@/components/filters/use-battle-characters";
 import { FilterPanelField } from "@/components/filters/filter-panel-field";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { PeriodSelector } from "@/components/filters/period-selector";
@@ -12,9 +10,6 @@ import type { StatisticsFiltersProps } from "./statistics-filter-toolbar";
 
 /** The battle statistics filters stacked for the panel narrow pages open. */
 export const StatisticsStackedFilters = ({
-  characterId,
-  onCharacterChange,
-  allowAllCharacters = false,
   period,
   onPeriodChange,
   minLevel,
@@ -24,24 +19,11 @@ export const StatisticsStackedFilters = ({
   ph,
   onPhChange,
 }: StatisticsFiltersProps) => {
-  const characters = useBattleCharacters();
   const { t } = useTranslation();
   const phCheckboxId = useId();
 
   return (
     <>
-      {onCharacterChange && (
-        <FilterPanelField label={t("battlePanel.filters.character")}>
-          <CharacterSelector
-            characters={characters}
-            characterId={characterId}
-            onCharacterChange={onCharacterChange}
-            allowAllCharacters={allowAllCharacters}
-            className="w-full"
-          />
-        </FilterPanelField>
-      )}
-
       <FilterPanelField label={t("battlePanel.filters.period")}>
         <PeriodSelector
           value={period}

@@ -60,11 +60,12 @@ describe("resolveDocumentTitle", () => {
       resolveDocumentTitle([
         createMatch({ routeId: "__root__" }),
         createMatch({
-          pathname: "/@me/battle-panel/statistics/h2h",
-          routeId: "/_authenticated/@me/battle-panel/statistics_/h2h",
+          pathname: "/@me/battle-panel/statistics/player-vs-player/1/2",
+          routeId:
+            "/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId",
         }),
       ]),
-    ).toBe("Bilans H2H - Panel walk - Lootlog.pl");
+    ).toBe("Gracz vs Gracz - Panel walk - Lootlog.pl");
   });
 
   it("uses 1v1 battle participants for user battle detail titles", () => {

@@ -10,10 +10,13 @@ import {
   getBattlesControllerGetHeadToHeadQueryOptions,
   getBattlesControllerGetPhGrowthQueryOptions,
   getBattlesControllerGetProfessionWinRateQueryOptions,
+  getBattlesControllerGetRatingGrowthQueryOptions,
   getBattlesControllerGetUserCharactersQueryOptions,
 } from "@lootlog/client/battlelog";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
+import { LEADERBOARD_SIZE } from "@/components/common/stats-leaderboard-section";
+import type { BattleAnalyticsParams } from "./battle-panel-statistics/components/battle-analytics-overview";
 
 import type { QueryClient } from "@tanstack/react-query";
 
@@ -36,6 +39,46 @@ export const ensureBattlePanelCharacterId = async ({
 
   return characterId ?? charactersResponse.characters[0]?.id;
 };
+
+/** Starts every query of `BattleAnalyticsOverview` for the same battles. */
+export const prefetchBattleAnalytics = (
+  queryClient: QueryClient,
+  params: BattleAnalyticsParams,
+) =>
+  Promise.all([
+    prefetchRouteQuery(
+      queryClient,
+      getBattlesControllerGetCombatProfileQueryOptions(params),
+    ),
+    prefetchRouteQuery(
+      queryClient,
+      getBattlesControllerGetCurrentStreakQueryOptions(params),
+    ),
+    prefetchRouteQuery(
+      queryClient,
+      getBattlesControllerGetBattleDurationQueryOptions(params),
+    ),
+    prefetchRouteQuery(
+      queryClient,
+      getBattlesControllerGetHeadToHeadQueryOptions({
+        ...params,
+        size: LEADERBOARD_SIZE,
+      }),
+    ),
+    prefetchRouteQuery(
+      queryClient,
+      getBattlesControllerGetProfessionWinRateQueryOptions(params),
+    ),
+    params.matchmaking
+      ? prefetchRouteQuery(
+          queryClient,
+          getBattlesControllerGetRatingGrowthQueryOptions(params),
+        )
+      : prefetchRouteQuery(
+          queryClient,
+          getBattlesControllerGetPhGrowthQueryOptions(params),
+        ),
+  ]).catch(() => undefined);
 
 export const loadBattlePanelStatistics = ({
   abortController,
@@ -78,7 +121,7 @@ export const loadBattlePanelStatistics = ({
       });
     }
 
-    const baseParams = {
+    void prefetchBattleAnalytics(context.queryClient, {
       characterId,
       period: search.period,
       minLevel: search.minLevel,
@@ -87,37 +130,7 @@ export const loadBattlePanelStatistics = ({
       endDate: search.endDate ?? undefined,
       ph: search.ph ?? undefined,
       matchmaking: false,
-    };
-
-    void Promise.all([
-      prefetchRouteQuery(
-        context.queryClient,
-        getBattlesControllerGetProfessionWinRateQueryOptions(baseParams),
-      ),
-      prefetchRouteQuery(
-        context.queryClient,
-        getBattlesControllerGetHeadToHeadQueryOptions({
-          ...baseParams,
-          size: 5,
-        }),
-      ),
-      prefetchRouteQuery(
-        context.queryClient,
-        getBattlesControllerGetCurrentStreakQueryOptions(baseParams),
-      ),
-      prefetchRouteQuery(
-        context.queryClient,
-        getBattlesControllerGetBattleDurationQueryOptions(baseParams),
-      ),
-      prefetchRouteQuery(
-        context.queryClient,
-        getBattlesControllerGetPhGrowthQueryOptions(baseParams),
-      ),
-      prefetchRouteQuery(
-        context.queryClient,
-        getBattlesControllerGetCombatProfileQueryOptions(baseParams),
-      ),
-    ]).catch(() => undefined);
+    });
 
     return null;
   });

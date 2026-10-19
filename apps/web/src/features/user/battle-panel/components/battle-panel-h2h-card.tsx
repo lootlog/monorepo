@@ -1,3 +1,4 @@
+import { formatSignedBattleMetric } from "@/components/battle/utils/value-utils";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
@@ -30,7 +31,6 @@ export const BattlePanelH2hCard = ({
   const { t } = useTranslation();
   const exactTime = timestampToDate(record.lastBattleDate);
   const totalRatingDelta = record.totalRatingDelta ?? 0;
-  const ratingDeltaSign = totalRatingDelta >= 0 ? "+" : "";
 
   return (
     <button
@@ -117,8 +117,7 @@ export const BattlePanelH2hCard = ({
                 : BATTLE_TEXT_COLORS.result.lost,
             )}
           >
-            {ratingDeltaSign}
-            {totalRatingDelta}
+            {formatSignedBattleMetric(totalRatingDelta)}
           </span>
         </div>
       )}
