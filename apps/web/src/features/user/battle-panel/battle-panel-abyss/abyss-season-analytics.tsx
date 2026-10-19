@@ -15,6 +15,7 @@ export function AbyssSeasonAnalytics() {
         startDate: season.startedAt,
         endDate: season.endedAt,
       })}
+      seasonId={season.id}
       allOpponentsLink={{
         to: "/@me/battle-panel/abyss/$seasonId/opponents",
         params: { seasonId: season.id },

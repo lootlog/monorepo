@@ -117,6 +117,8 @@ export const battlePanelHeadToHeadSearchParsers = {
 export const battlePanelPlayerVsPlayerSearchParsers = {
   ...battlePanelBaseSearchParsers,
   ...battlePanelCursorSearchParsers,
+  /** The Abyss season the page was opened from, to return to it. */
+  seasonId: parseAsString,
 };
 
 export const battlePanelSingleBattleSearchParsers = {

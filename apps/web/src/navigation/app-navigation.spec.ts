@@ -303,6 +303,28 @@ describe("resolveAppNavigation", () => {
     ).toMatchObject({ active: true, visible: true });
   });
 
+  it("returns a head-to-head opened from an Abyss season to that season", () => {
+    const navigation = resolveAppNavigation({
+      matches: [
+        createMatch({
+          pathname: "/@me/battle-panel/statistics/player-vs-player/1/2",
+          routeId:
+            "/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId",
+          search: { characterId: "1", seasonId: "abyss-10-20" },
+        }),
+      ],
+    });
+
+    expect(navigation.parentPath).toBe(
+      "/@me/battle-panel/abyss/abyss-10-20/opponents",
+    );
+    expect(navigation.heading.trail.at(-1)).toEqual({
+      label: "Sezon",
+      path: "/@me/battle-panel/abyss/abyss-10-20/opponents",
+      search: { characterId: "1" },
+    });
+  });
+
   it("treats a statistics tab as a top-level section without a back target", () => {
     const navigation = resolveAppNavigation({
       matches: [
