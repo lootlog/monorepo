@@ -1,5 +1,6 @@
 import { formatDistanceStrict } from "date-fns";
 import { pl } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 export const LiveFeedTime = ({
@@ -9,6 +10,7 @@ export const LiveFeedTime = ({
   occurredAt: string;
   now: number;
 }) => {
+  const { t } = useTranslation();
   const date = new Date(occurredAt);
 
   return (
@@ -17,10 +19,13 @@ export const LiveFeedTime = ({
       dateTime={occurredAt}
       title={timestampToDate(date)}
     >
-      {formatDistanceStrict(date, new Date(now), {
-        addSuffix: true,
-        locale: pl,
-      })}
+      {/* `now` ticks once a minute, so live entries can be newer than it. */}
+      {now - date.getTime() < 60_000
+        ? t("statistics.feedJustNow")
+        : formatDistanceStrict(date, new Date(now), {
+            addSuffix: true,
+            locale: pl,
+          })}
     </time>
   );
 };

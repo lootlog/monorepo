@@ -1,5 +1,6 @@
 import * as m from "framer-motion/m";
 import type { ComponentProps } from "react";
+import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
 import { LiveFeedEventRow } from "./live-feed-event-row";
 
 export function AnimatedLiveFeedRow({
@@ -8,7 +9,7 @@ export function AnimatedLiveFeedRow({
 }: ComponentProps<typeof LiveFeedEventRow> & { animateEntry?: boolean }) {
   return (
     <m.li
-      className="relative"
+      className={LIST_TILE_RULE_CLASS}
       initial={animateEntry ? { opacity: 0, y: -8 } : false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: animateEntry ? 0.22 : 0, ease: "easeOut" }}
