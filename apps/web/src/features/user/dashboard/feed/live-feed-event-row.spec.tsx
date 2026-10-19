@@ -87,15 +87,13 @@ it("shows a kill and its loot as one row that opens the loot", async () => {
       "listitem",
     ),
   ).toHaveLength(2);
-  expect(screen.queryByText("Bez zapisanego łupu")).toBeNull();
 });
 
-it("links a kill without loot to the NPC statistics and says no loot was recorded", async () => {
+it("links a kill without loot to the NPC statistics", async () => {
   await renderRow([feedKill]);
 
   const link = await screen.findByRole("link", { name: "Bicie: Heros" });
   expect(link.getAttribute("href")).toBe("/organization/stats/npcs/1");
-  expect(screen.getByText("Bez zapisanego łupu")).toBeTruthy();
 });
 
 it("keeps loot without an NPC reachable through a named link", async () => {
@@ -132,5 +130,21 @@ it("names items and Lootlogs for keyboard users through their tooltips", async (
   fireEvent.focus(lootlog);
   expect(
     within(await screen.findByRole("tooltip")).getByText("Drugi Lootlog"),
+  ).toBeTruthy();
+});
+
+it("keeps every Lootlog of a widely shared event named when the stack folds", async () => {
+  await renderRow(
+    ["A", "B", "C", "D", "E"].map((name) => ({
+      ...feedLoot,
+      id: `loot:42:${name}`,
+      guild: { id: name, name: `Lootlog ${name}`, vanityUrl: null },
+    })),
+  );
+
+  expect(await screen.findByRole("link", { name: "Lootlog C" })).toBeTruthy();
+  expect(screen.queryByRole("link", { name: "Lootlog D" })).toBeNull();
+  expect(
+    screen.getByRole("button", { name: "Lootlog D, Lootlog E" }),
   ).toBeTruthy();
 });

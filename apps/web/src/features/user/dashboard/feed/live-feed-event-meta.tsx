@@ -1,49 +1,43 @@
 import { upperFirst } from "es-toolkit";
-import { Clock, Globe, MapPin, PackageX, Users } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { MetaItem } from "@/components/common/meta-item";
+import { cn } from "cn";
 import { LiveFeedTime } from "./live-feed-time";
 
 type Props = {
+  /** The NPC's type, coloured like its group. */
+  type: string | undefined;
+  typeClassName: string;
   world: string;
   location: string | undefined;
   occurredAt: string;
   now: number;
-  players: number;
-  hasLoot: boolean;
 };
 
+/** The second line of a feed tile: type · world · place · time. */
 export function LiveFeedEventMeta({
+  type,
+  typeClassName,
   world,
   location,
   occurredAt,
   now,
-  players,
-  hasLoot,
 }: Props) {
-  const { t } = useTranslation();
   const place = [upperFirst(world), location].filter(Boolean).join(" · ");
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-      <MetaItem
-        icon={location ? MapPin : Globe}
-        className="min-w-0"
-        title={place}
-      >
-        <span className="truncate">{place}</span>
-      </MetaItem>
-      <MetaItem icon={Clock}>
-        <LiveFeedTime occurredAt={occurredAt} now={now} />
-      </MetaItem>
-      {players > 0 && (
-        <MetaItem icon={Users} label={t("statistics.feedPlayersCountLabel")}>
-          {players}
-        </MetaItem>
+    <p className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+      {type && (
+        <>
+          <span className={cn("shrink-0 font-medium", typeClassName)}>
+            {type}
+          </span>
+          <span aria-hidden>·</span>
+        </>
       )}
-      {!hasLoot && (
-        <MetaItem icon={PackageX}>{t("statistics.feedNoLoot")}</MetaItem>
-      )}
-    </div>
+      <span className="min-w-0 truncate" title={place}>
+        {place}
+      </span>
+      <span aria-hidden>·</span>
+      <LiveFeedTime occurredAt={occurredAt} now={now} />
+    </p>
   );
 }

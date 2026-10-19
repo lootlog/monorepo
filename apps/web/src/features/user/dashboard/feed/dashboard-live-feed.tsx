@@ -1,7 +1,5 @@
-import { AnimatePresence } from "framer-motion";
 import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "cn";
 import { ArrowUp, Pause, Play, Radio, SlidersHorizontal } from "lucide-react";
 import { DEFAULT_ACTIVITY_FEED_SETTINGS } from "@lootlog/domain/activity-feed";
 import { Button } from "@lootlog/ui/components/button";
@@ -9,35 +7,23 @@ import { LiveFeedSkeleton } from "./live-feed-skeleton";
 import { EmptyState } from "@/components/common/empty-state";
 import { BandSection } from "@/components/common/band-section";
 import { FilterCount } from "@/components/common/filter-count";
-import {
-  LIST_GROUP_HEADING_CLASS,
-  LIST_TILE_INSET_CLASS,
-} from "@/components/common/list-tile";
 import { FiltersOverlay } from "@/components/filters/filters-overlay";
 import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { useMediaQuery } from "usehooks-ts";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useLiveFeed } from "./use-live-feed";
 import { useActivityFeedSettings } from "./use-activity-feed-settings";
-import { AnimatedLiveFeedRow } from "./animated-live-feed-row";
+import { LiveFeedSections } from "./live-feed-sections";
 import { LiveFeedFilters } from "./live-feed-filters";
+import { LiveFeedShowOlder } from "./live-feed-show-older";
 import {
   FEED_WINDOW_MS,
   groupFeedItems,
   isGroupVisible,
-  type FeedGroup,
 } from "./live-feed-state";
 
-const TIME_SECTIONS = [
-  { key: "recent", maxAgeMs: 15 * 60_000 },
-  { key: "hour", maxAgeMs: 60 * 60_000 },
-  { key: "earlier", maxAgeMs: FEED_WINDOW_MS },
-] as const;
-
-const sectionOf = (group: FeedGroup, now: number) =>
-  TIME_SECTIONS.find(
-    ({ maxAgeMs }) => now - Date.parse(group.occurredAt) < maxAgeMs,
-  )?.key ?? "earlier";
+/** Events listed before the rest folds behind "show older". */
+const VISIBLE_GROUPS = 8;
 
 export function DashboardLiveFeed() {
   const { t } = useTranslation();
@@ -75,13 +61,17 @@ export function DashboardLiveFeed() {
 
     return () => observer.disconnect();
   }, []);
-  const animatedKeys = new Set(state.animatedKeys);
 
   const groups = groupFeedItems(
     state.items?.filter(
       (item) => new Date(item.occurredAt).getTime() >= now - FEED_WINDOW_MS,
     ) ?? [],
   ).filter((group) => isGroupVisible(group, settings));
+
+  // A fixed number of events keeps the feed's height steady while live
+  // entries arrive; older ones wait behind "show older".
+  const [expanded, setExpanded] = useState(false);
+  const shownGroups = expanded ? groups : groups.slice(0, VISIBLE_GROUPS);
 
   const activeFilterCount = [
     settings.excludedGuildIds.length > 0,
@@ -205,66 +195,48 @@ export function DashboardLiveFeed() {
           </Button>
         </div>
       )}
-      <div ref={top} className="h-px shrink-0" aria-hidden />
-      {state.items === undefined ? (
-        !state.isError && <LiveFeedSkeleton />
-      ) : (
-        <div aria-busy={state.isFetching}>
-          {groups.length === 0 && !state.isError && (
-            <EmptyState
-              icon={Radio}
-              title={t(
-                isFiltered
-                  ? "statistics.feedEmptyFiltered"
-                  : "statistics.feedEmpty",
-              )}
-              // Beside the side column, it centres in the screen it has.
-              fill={isWide}
-              compact={!isWide}
-              action={
-                isFiltered && canSave ? (
-                  <Button variant="outline" onClick={clearFilters}>
-                    {t("statistics.feedClearFilters")}
-                  </Button>
-                ) : undefined
-              }
+      <div aria-busy={state.isFetching} className="@container">
+        <div ref={top} className="h-px shrink-0" aria-hidden />
+        {state.items === undefined ? (
+          !state.isError && <LiveFeedSkeleton />
+        ) : (
+          <>
+            {groups.length === 0 && !state.isError && (
+              <EmptyState
+                icon={Radio}
+                title={t(
+                  isFiltered
+                    ? "statistics.feedEmptyFiltered"
+                    : "statistics.feedEmpty",
+                )}
+                // Beside the side column, it centres in the screen it has.
+                fill={isWide}
+                compact={!isWide}
+                action={
+                  isFiltered && canSave ? (
+                    <Button variant="outline" onClick={clearFilters}>
+                      {t("statistics.feedClearFilters")}
+                    </Button>
+                  ) : undefined
+                }
+              />
+            )}
+            <LiveFeedSections
+              titleId={titleId}
+              groups={shownGroups}
+              animatedKeys={state.animatedKeys}
+              now={now}
             />
-          )}
-          {TIME_SECTIONS.map(({ key }) => {
-            const sectionGroups = groups.filter(
-              (group) => sectionOf(group, now) === key,
-            );
-
-            if (sectionGroups.length === 0) return null;
-
-            return (
-              <section key={key} aria-labelledby={`${titleId}-${key}`}>
-                <h3
-                  id={`${titleId}-${key}`}
-                  className={cn(
-                    LIST_GROUP_HEADING_CLASS,
-                    LIST_TILE_INSET_CLASS,
-                  )}
-                >
-                  {t(`statistics.feedSection.${key}`)}
-                </h3>
-                <ol className="relative before:absolute before:inset-y-0 before:left-[1.375rem] before:w-px before:bg-border/70">
-                  <AnimatePresence initial={false}>
-                    {sectionGroups.map((group) => (
-                      <AnimatedLiveFeedRow
-                        key={group.key}
-                        animateEntry={animatedKeys.has(group.key)}
-                        group={group}
-                        now={now}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </ol>
-              </section>
-            );
-          })}
-        </div>
-      )}
+            {groups.length > VISIBLE_GROUPS && (
+              <LiveFeedShowOlder
+                expanded={expanded}
+                hiddenCount={groups.length - VISIBLE_GROUPS}
+                onToggle={() => setExpanded(!expanded)}
+              />
+            )}
+          </>
+        )}
+      </div>
     </BandSection>
   );
 }

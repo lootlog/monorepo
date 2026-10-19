@@ -34,7 +34,7 @@ export function LiveFeedEventTitle({ group, npc }: Props) {
 
   return (
     <TextLink
-      className="min-w-0 break-words text-sm font-bold text-foreground"
+      className="min-w-0 truncate text-sm font-semibold text-foreground"
       aria-label={t(loot ? "statistics.feedLootOf" : "statistics.feedKill", {
         name,
       })}
