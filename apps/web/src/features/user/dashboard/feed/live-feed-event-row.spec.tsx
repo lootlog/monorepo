@@ -132,3 +132,19 @@ it("names items and Lootlogs for keyboard users through their tooltips", async (
     within(await screen.findByRole("tooltip")).getByText("Drugi Lootlog"),
   ).toBeTruthy();
 });
+
+it("keeps every Lootlog of a widely shared event named when the stack folds", async () => {
+  await renderRow(
+    ["A", "B", "C", "D", "E"].map((name) => ({
+      ...feedLoot,
+      id: `loot:42:${name}`,
+      guild: { id: name, name: `Lootlog ${name}`, vanityUrl: null },
+    })),
+  );
+
+  expect(await screen.findByRole("link", { name: "Lootlog C" })).toBeTruthy();
+  expect(screen.queryByRole("link", { name: "Lootlog D" })).toBeNull();
+  expect(
+    screen.getByRole("button", { name: "Lootlog D, Lootlog E" }),
+  ).toBeTruthy();
+});
