@@ -19,6 +19,7 @@ export function AbyssSeasonOpponents() {
       titleKey="battlePanel.abyss.tabs.opponents"
       trailingSkeletonColumns={3}
       season={{
+        id: season.id,
         characterId,
         startDate: season.startedAt,
         endDate: season.endedAt,

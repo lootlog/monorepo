@@ -33,7 +33,7 @@ export const TopBarHeading = ({ heading, titleRef }: TopBarHeadingProps) => {
           variant="ghost"
           size="icon-sm"
           nativeButton={false}
-          render={<Link to={parent.path} />}
+          render={<Link to={parent.path} search={parent.search} />}
           aria-label={t("common.actions.backTo", { page: parent.label })}
           className="shrink-0 text-muted-foreground hover:text-foreground @2xl/top-bar:hidden"
         >
@@ -49,6 +49,7 @@ export const TopBarHeading = ({ heading, titleRef }: TopBarHeadingProps) => {
           >
             <Link
               to={page.path}
+              search={page.search}
               className="flex h-8 min-w-0 max-w-48 items-center gap-2 rounded-md px-2 text-sm font-medium text-muted-foreground outline-none transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
             >
               {index === 0 && SectionIcon && (

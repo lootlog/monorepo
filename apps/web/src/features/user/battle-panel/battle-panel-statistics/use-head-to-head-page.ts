@@ -31,6 +31,7 @@ import { createBattlePanelCursorActions } from "../components/battle-panel-curso
 
 /** The battles of one Abyss season, which fix the character and dates. */
 export type HeadToHeadSeasonScope = {
+  id: string;
   characterId: string;
   startDate: string;
   endDate: string;
@@ -127,6 +128,7 @@ export function useHeadToHeadPage({
         endDate,
         ph,
         matchmaking,
+        seasonId: season?.id,
       },
     });
   };

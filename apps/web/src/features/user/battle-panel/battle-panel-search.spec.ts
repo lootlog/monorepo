@@ -119,6 +119,7 @@ describe("battle panel search params", () => {
       matchmaking: null,
       cursor: "abc",
       page: 4,
+      seasonId: null,
     });
   });
 

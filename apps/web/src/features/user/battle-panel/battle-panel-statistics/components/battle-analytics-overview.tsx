@@ -36,6 +36,8 @@ type BattleAnalyticsOverviewProps = {
   params: BattleAnalyticsParams;
   /** The full list of opponents for the same battles. */
   allOpponentsLink: LinkProps;
+  /** The Abyss season shown, which an opponent's page returns to. */
+  seasonId?: string;
 };
 
 /**
@@ -46,6 +48,7 @@ type BattleAnalyticsOverviewProps = {
 export function BattleAnalyticsOverview({
   params,
   allOpponentsLink,
+  seasonId,
 }: BattleAnalyticsOverviewProps) {
   const { t } = useTranslation();
   const rated = params.matchmaking;
@@ -85,7 +88,7 @@ export function BattleAnalyticsOverview({
   const getOpponentLink = (opponentId: string): LinkProps => ({
     to: "/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId",
     params: { myId: params.characterId, opponentId },
-    search: params,
+    search: { ...params, seasonId },
   });
 
   return (
