@@ -23,7 +23,12 @@ export const docsChapters = [
     label: "Panel",
     color: "#3157f6",
     separator: "03 · Panel",
-    slugs: ["web-panel", "battle-panel", "battle-panel-mechanics"],
+    slugs: [
+      "web-panel",
+      "battle-panel",
+      "battle-panel-mechanics",
+      "faction-war",
+    ],
   },
   {
     id: "clan",
