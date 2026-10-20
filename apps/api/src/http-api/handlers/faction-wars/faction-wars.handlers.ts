@@ -4,6 +4,7 @@ import {
   statusCodeResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { createHash } from "node:crypto";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 import { and, asc, desc, eq, inArray, sql, sum } from "drizzle-orm";
@@ -23,6 +24,7 @@ import {
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   factionWarDailyPointsTable,
+  factionWarPickLockTable,
   factionWarPickTable,
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
@@ -38,6 +40,9 @@ import type {
 } from "#src/contracts/faction-wars/schemas";
 
 const LEADERBOARD_SIZE = 50;
+
+const hashDiscordId = (discordId: string) =>
+  createHash("sha256").update(discordId).digest("hex");
 
 type StoredPick = typeof factionWarPickTable.$inferSelect;
 
@@ -220,12 +225,28 @@ export class FactionWarsData extends Context.Service<
           ),
         createPick: (pick) =>
           persisted(
-            database
-              .insert(factionWarPickTable)
-              .values(pick)
-              .onConflictDoNothing()
-              .returning()
-              .pipe(Effect.map((rows) => rows[0] ?? null)),
+            database.transaction((transaction) =>
+              Effect.gen(function* () {
+                const locked = yield* transaction
+                  .insert(factionWarPickLockTable)
+                  .values({
+                    warId: pick.warId,
+                    discordIdHash: hashDiscordId(pick.discordId),
+                  })
+                  .onConflictDoNothing()
+                  .returning({ warId: factionWarPickLockTable.warId });
+
+                if (locked.length === 0) return null;
+
+                const [created] = yield* transaction
+                  .insert(factionWarPickTable)
+                  .values(pick)
+                  .onConflictDoNothing()
+                  .returning();
+
+                return created ?? null;
+              }),
+            ),
           ),
         updatePick: (warId, userId, payload) =>
           persisted(

@@ -2,9 +2,9 @@ CREATE TABLE "FactionWarAward" (
 	"warId" text,
 	"source" text,
 	"sourceKey" text,
-	"userId" text,
+	"userId" text NOT NULL,
 	"awardedAt" timestamp(3) NOT NULL,
-	CONSTRAINT "FactionWarAward_pkey" PRIMARY KEY("warId","source","sourceKey","userId")
+	CONSTRAINT "FactionWarAward_pkey" PRIMARY KEY("warId","source","sourceKey")
 );
 --> statement-breakpoint
 CREATE TABLE "FactionWarCursor" (
@@ -31,6 +31,12 @@ CREATE TABLE "FactionWarOnlineSegment" (
 	"startedAt" timestamp(3) with time zone NOT NULL,
 	"endedAt" timestamp(3) with time zone NOT NULL,
 	CONSTRAINT "FactionWarOnlineSegment_pkey" PRIMARY KEY("warId","userId","sessionId","segmentId")
+);
+--> statement-breakpoint
+CREATE TABLE "FactionWarPickLock" (
+	"warId" text,
+	"discordIdHash" text,
+	CONSTRAINT "FactionWarPickLock_pkey" PRIMARY KEY("warId","discordIdHash")
 );
 --> statement-breakpoint
 CREATE TABLE "FactionWarPick" (

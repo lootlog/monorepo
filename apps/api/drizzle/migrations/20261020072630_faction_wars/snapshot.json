@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "30daf2a4-67b3-450d-917c-799432a706ef",
+  "id": "8ace1117-cee7-4243-b0d8-4fd5d3256461",
   "prevIds": ["cea491b4-486a-45e9-ad50-ad98ec8fa002"],
   "ddl": [
     {
@@ -367,6 +367,12 @@
     {
       "isRlsEnabled": false,
       "name": "FactionWarOnlineSegment",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "FactionWarPickLock",
       "entityType": "tables",
       "schema": "public"
     },
@@ -2840,6 +2846,32 @@
       "entityType": "columns",
       "schema": "public",
       "table": "FactionWarOnlineSegment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "warId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FactionWarPickLock"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "discordIdHash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FactionWarPickLock"
     },
     {
       "type": "text",
@@ -13606,7 +13638,7 @@
       "table": "_EventMapToMember"
     },
     {
-      "columns": ["warId", "source", "sourceKey", "userId"],
+      "columns": ["warId", "source", "sourceKey"],
       "nameExplicit": true,
       "name": "FactionWarAward_pkey",
       "entityType": "pks",
@@ -13628,6 +13660,14 @@
       "entityType": "pks",
       "schema": "public",
       "table": "FactionWarOnlineSegment"
+    },
+    {
+      "columns": ["warId", "discordIdHash"],
+      "nameExplicit": true,
+      "name": "FactionWarPickLock_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "FactionWarPickLock"
     },
     {
       "columns": ["warId", "userId"],

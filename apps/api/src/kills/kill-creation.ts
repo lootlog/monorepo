@@ -25,6 +25,7 @@ import {
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import { getStableNpcId } from "#src/shared/margonem/stable-npc-id";
 import type { CreateKillRequest } from "#src/contracts/kills/schemas";
+import type { FactionWarTransaction } from "#src/faction-wars/faction-war-points";
 import {
   buildGuildKillDedupKey,
   buildMemberKillDedupKey,
@@ -81,9 +82,13 @@ export const makeKillCreation = (
   publishActivity: (
     input: KillInput & { readonly guildId: string },
   ) => Effect.Effect<void> = () => Effect.void,
+  /**
+   * Runs in the transaction that counts the kill for the User, so the kill
+   * dedup admits the war's points exactly when it admits the User's stats.
+   */
   awardFactionWarKill: (
-    discordId: string,
-    npcType: NpcType,
+    transaction: FactionWarTransaction,
+    kill: { discordId: string; npcType: NpcType; killedAt: Date },
   ) => Effect.Effect<void, unknown> = () => Effect.void,
 ) => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
@@ -254,6 +259,11 @@ export const makeKillCreation = (
                     ? characterCount
                     : { ...characterCount, ...characterDetails },
               }),
+            awardFactionWarKill(transaction, {
+              discordId: input.userId,
+              npcType: input.npcType,
+              killedAt: input.lastKilledAt,
+            }),
           ],
           { discard: true },
         ),
@@ -458,17 +468,6 @@ export const makeKillCreation = (
 
       if (personalUpdated) {
         yield* invalidate(`kill-stats:user:${discordId}`);
-        // The User dedup above admits a kill once, so the war counts it once.
-        yield* awardFactionWarKill(discordId, npcType).pipe(
-          Effect.catch((error) =>
-            Effect.sync(() =>
-              logger.error({
-                message: "Failed to award faction war kill points",
-                error,
-              }),
-            ),
-          ),
-        );
       }
     }
 

@@ -11,8 +11,11 @@ import {
 } from "@lootlog/client/main";
 import type { FactionWarFaction } from "@lootlog/domain/faction-war";
 
-/** Scores move while a war runs; the page follows them at this pace. */
-const RUNNING_WAR_REFETCH_MS = 60_000;
+/**
+ * Scores move while a war runs, and an upcoming war turns into a running one;
+ * the page follows both at this pace.
+ */
+const LIVE_WAR_REFETCH_MS = 60_000;
 
 export type FactionWar = FactionWarResponseDto;
 
@@ -21,14 +24,14 @@ export type FactionWarScoring = FactionWarScoringDto;
 export type FactionWarLeaderboardEntry =
   FactionWarLeaderboardResponseDto["entries"][number];
 
-const refetchWhileRunning = (status: FactionWar["status"] | undefined) =>
-  status === "RUNNING" ? RUNNING_WAR_REFETCH_MS : false;
+const refetchUntilEnded = (status: FactionWar["status"] | undefined) =>
+  status === "RUNNING" || status === "UPCOMING" ? LIVE_WAR_REFETCH_MS : false;
 
 /** The running war, else the next or the last one, with the caller's part in it. */
 export const useCurrentFactionWar = () =>
   useFactionWarsControllerGetCurrentWar({
     query: {
-      refetchInterval: (query) => refetchWhileRunning(query.state.data?.status),
+      refetchInterval: (query) => refetchUntilEnded(query.state.data?.status),
     },
   });
 
@@ -43,7 +46,7 @@ export const useFactionWarLeaderboard = (
       query: {
         enabled: war !== undefined,
         select: (leaderboard) => leaderboard.entries,
-        refetchInterval: refetchWhileRunning(war?.status),
+        refetchInterval: refetchUntilEnded(war?.status),
       },
     },
   );

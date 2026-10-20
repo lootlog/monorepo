@@ -233,11 +233,8 @@ function setLegacyOtherShiftSection(id: string): void {
   legacyOtherIdsWithShiftSection.add(id);
 }
 
-/**
- * Releasing Shift keeps the always-on sections (the transforms without the
- * Shift-only one); uninstalling restores the game's own tips.
- */
-function removeLegacyShiftSections(target: "transformed" | "native"): void {
+/** Releasing Shift keeps the always-on sections, dropping the Shift one. */
+function removeLegacyShiftSections(): void {
   const ids = [...legacyOtherIdsWithShiftSection];
 
   legacyOtherIdsWithShiftSection.clear();
@@ -246,12 +243,21 @@ function removeLegacyShiftSections(target: "transformed" | "native"): void {
     const tips = buildLegacyOtherTips(id);
 
     // An other that left the map took its element with it.
-    if (tips) {
-      setLegacyOtherTip(
-        id,
-        target === "transformed" ? tips.html : tips.baseHtml,
-      );
-    }
+    if (tips) setLegacyOtherTip(id, tips.html);
+  }
+}
+
+/**
+ * Uninstalling puts back the game's own tip on every other: always-on
+ * sections were written outside Shift, so no tracked set covers them.
+ */
+function restoreLegacyNativeTips(): void {
+  legacyOtherIdsWithShiftSection.clear();
+
+  for (const id of getLegacyRuntimeOtherIds()) {
+    const tips = buildLegacyOtherTips(id);
+
+    if (tips) setLegacyOtherTip(id, tips.baseHtml);
   }
 }
 
@@ -271,7 +277,7 @@ function refreshActiveLegacyOtherTooltip(): void {
 
   if (!state.isShiftPressed) {
     state.clearActiveOther();
-    removeLegacyShiftSections("transformed");
+    removeLegacyShiftSections();
 
     return;
   }
@@ -307,7 +313,7 @@ function installLegacyTooltips(): () => void {
     legacyTooltipsInstalled = false;
     hoveredLegacyOtherId = null;
     useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
-    removeLegacyShiftSections("native");
+    restoreLegacyNativeTips();
   };
 }
 
@@ -391,6 +397,9 @@ export function installCharacterTooltipTransforms(): () => void {
     unsubscribeTipUpdates();
     cleanupCanvasTip?.();
     removeShiftSections();
+    // NI caches each other's tip html; rebuilt without the subscription, the
+    // cache drops always-on sections such as the champion crest.
+    refreshCanvasOtherTips();
 
     cleanupCurrentInstallation = null;
   };
