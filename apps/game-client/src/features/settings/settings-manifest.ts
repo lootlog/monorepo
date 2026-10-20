@@ -173,6 +173,27 @@ const MANIFEST = [
           },
         ],
       },
+      {
+        id: "faction-war",
+        labelKey: "settings.subsections.factionWar",
+        controls: [
+          {
+            id: "faction-war-hide-others",
+            labelKey: "factionWar.settings.hideOthersLabel",
+            descriptionKey: "factionWar.settings.hideOthersDescription",
+            // The winner's own highlight row shows only for champions, so
+            // searches for it land on this section.
+            aliases: [
+              "wojna frakcji",
+              "zwycięzcy",
+              "zwycięzca",
+              "aura",
+              "poświata",
+              "moja poświata",
+            ],
+          },
+        ],
+      },
     ],
   },
   {

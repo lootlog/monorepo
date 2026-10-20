@@ -123,6 +123,32 @@ it("starts an initialized character without repeating HTTP snapshots or joining 
 
     if (path.endsWith("/members/@me")) return Response.json(null);
 
+    // The faction war pick screen and champion highlights each cost one
+    // request per session.
+    if (path === "/faction-wars/current")
+      return Response.json({
+        id: "2026-barbatos-tanroth",
+        status: "ENDED",
+        startsAt: "2026-10-20T00:00:00.000Z",
+        endsAt: "2026-11-17T00:00:00.000Z",
+        scoring: {
+          killPoints: {},
+          lootPoints: {},
+          onlineSecondsPerPoint: 600,
+          pvpWinPoints: 5,
+          underdogBonusCap: 2,
+          dailyCaps: { KILL: 0, LOOT: 0, ONLINE: 0, PVP: 0 },
+        },
+        totals: [],
+        winners: [],
+        days: [],
+        pick: null,
+        champion: null,
+      });
+
+    if (path === "/faction-wars/champions")
+      return Response.json({ warId: null, champions: [] });
+
     if (
       path === "/timers" ||
       path === "/messaging/party-gathering" ||
@@ -258,7 +284,7 @@ it("starts an initialized character without repeating HTTP snapshots or joining 
     expect(unexpected).toEqual([]);
     expect(webSocketFactory).toHaveBeenCalledTimes(1);
     expect(proofRequests).toHaveLength(1);
-    expect(requests).toHaveLength(11);
+    expect(requests).toHaveLength(13);
     expect(
       queryClient
         .getQueryCache()
@@ -284,6 +310,11 @@ it("starts an initialized character without repeating HTTP snapshots or joining 
         (path) => path === "GET /messaging/party-gathering/active",
       ),
     ).toHaveLength(1);
+    expect(
+      requests
+        .filter((path) => path.startsWith("GET /faction-wars/"))
+        .toSorted(),
+    ).toEqual(["GET /faction-wars/champions", "GET /faction-wars/current"]);
   } finally {
     cleanup();
     disposeSocket();

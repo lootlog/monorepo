@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   installCharacterTooltipTransforms,
   refreshActiveOtherTooltip,
+  refreshCharacterTooltips,
   restoreLegacyShiftSections,
 } from "./patcher";
 import { characterTooltipTransforms } from "./registry";
@@ -524,6 +525,44 @@ describe("installCharacterTooltipTransforms on SI", () => {
 
     expect(tipOf("617")).toBe("<b>Other 617</b><span>shift</span>");
     expect(tipOf("618")).toBe("<b>Other 618</b>");
+
+    cleanup();
+  });
+
+  it("keeps always-on sections when Shift is released", () => {
+    setLegacyRuntime(["617"]);
+    characterTooltipTransforms.register(
+      ({ currentHtml }) => `${currentHtml}<i>champion</i>`,
+    );
+    const cleanup = installCharacterTooltipTransforms();
+
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    hover("617");
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
+    refreshActiveOtherTooltip();
+
+    expect(tipOf("617")).toBe("<b>Other 617</b><i>champion</i>");
+
+    cleanup();
+  });
+
+  it("re-applies always-on sections after SI rewrote a tip", () => {
+    setLegacyRuntime(["617", "618"]);
+    characterTooltipTransforms.register(({ character, currentHtml }) =>
+      character.d.id === "617" ? `${currentHtml}<i>champion</i>` : currentHtml,
+    );
+    const cleanup = installCharacterTooltipTransforms();
+
+    refreshCharacterTooltips();
+    expect(tipOf("617")).toBe("<b>Other 617</b><i>champion</i>");
+    expect(tipOf("618")).toBe("<b>Other 618</b>");
+
+    document
+      .getElementById("other617")
+      ?.setAttribute("tip", "<b>Other 617</b>");
+    refreshCharacterTooltips(["617"]);
+
+    expect(tipOf("617")).toBe("<b>Other 617</b><i>champion</i>");
 
     cleanup();
   });
