@@ -123,7 +123,15 @@ export const FactionWarPickSide: FC<FactionWarPickSideProps> = ({
               {t("pick.bonus", { multiplier: formatMultiplier(bonus) })}
             </span>
           )}
-          <span className="ll-fw-cta">
+          <span className="ll-fw-cta" data-motion={motion || undefined}>
+            {motion ? (
+              <span className="ll-fw-cta-sparks">
+                <span
+                  className="ll-fw-cta-sparks-track"
+                  style={{ backgroundImage: `url(${asset("particles")})` }}
+                />
+              </span>
+            ) : null}
             <img
               className="ll-fw-cta-plate"
               src={asset("button")}
@@ -136,6 +144,7 @@ export const FactionWarPickSide: FC<FactionWarPickSideProps> = ({
               alt=""
               draggable={false}
             />
+            {motion ? <span className="ll-fw-cta-shine" /> : null}
             <span className="ll-fw-cta-label">
               {t(`factions.${faction}.choose`)}
             </span>

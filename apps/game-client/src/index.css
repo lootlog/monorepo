@@ -1133,6 +1133,133 @@ body.ll-mounted .right-main-column-wrapper > .bottom-wrapper > .banners {
   opacity: 1;
 }
 
+/* Hover life, only with animations on: the plate lifts, its glow breathes,
+   light sweeps across the panel and sparks drift around it. */
+.ll-fw-side[data-emphasis="active"] .ll-fw-cta[data-motion] {
+  transform: translate3d(0, -2px, 0) scale(1.04);
+}
+
+.ll-fw-side[data-emphasis="active"] .ll-fw-cta[data-motion] .ll-fw-cta-glow {
+  animation: ll-fw-cta-breathe 1.6s ease-in-out infinite alternate;
+}
+
+.ll-fw-choose:active .ll-fw-cta[data-motion] {
+  transform: scale(0.96);
+  transition-duration: 80ms;
+}
+
+@keyframes ll-fw-cta-breathe {
+  from {
+    opacity: 0.72;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Clipped to the plate's calm inner panel. */
+.ll-fw-cta-shine {
+  position: absolute;
+  inset: 30% 13%;
+  z-index: -1;
+  overflow: hidden;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.ll-fw-cta-shine::before {
+  content: "";
+  position: absolute;
+  inset: -50% auto -50% 0;
+  width: 35%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgb(255 255 255 / 55%) 50%,
+    transparent
+  );
+  mix-blend-mode: plus-lighter;
+  opacity: 0;
+  transform: translate3d(-120%, 0, 0);
+}
+
+.ll-fw-side[data-emphasis="active"] .ll-fw-cta-shine::before {
+  animation: ll-fw-cta-shine 2.6s ease-in-out infinite;
+}
+
+@keyframes ll-fw-cta-shine {
+  0% {
+    opacity: 0;
+    transform: translate3d(-120%, 0, 0);
+  }
+
+  8% {
+    opacity: 1;
+  }
+
+  40%,
+  100% {
+    opacity: 0;
+    transform: translate3d(320%, 0, 0);
+  }
+}
+
+.ll-fw-cta-sparks {
+  position: absolute;
+  inset: -90% -6%;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  mask-image: radial-gradient(closest-side, #000 55%, transparent);
+  transition: opacity var(--ll-transition-duration-medium) ease-out;
+}
+
+.ll-fw-side[data-emphasis="active"] .ll-fw-cta-sparks {
+  opacity: 1;
+}
+
+/* The sprite tiles every 240px, so shifting one tile loops without a seam. */
+.ll-fw-cta-sparks-track {
+  position: absolute;
+  top: -240px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-size: 240px 240px;
+  mix-blend-mode: screen;
+}
+
+.ll-fw-side[data-emphasis="active"] .ll-fw-cta-sparks-track {
+  animation: ll-fw-cta-rise 3.2s linear infinite;
+}
+
+.ll-fw-side[data-side="right"][data-emphasis="active"] .ll-fw-cta-sparks-track {
+  animation-name: ll-fw-cta-fall;
+  animation-duration: 4.4s;
+}
+
+@keyframes ll-fw-cta-rise {
+  from {
+    transform: translate3d(0, 240px, 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ll-fw-cta-fall {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, 240px, 0);
+  }
+}
+
 .ll-fw-header {
   position: absolute;
   top: 3.4cqh;
