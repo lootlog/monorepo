@@ -60,6 +60,18 @@ Scenario builders reuse
 `src/features/settings/components/debug/debug-game-events.ts`, which the
 settings debug tab also uses.
 
+## Faction war states
+
+- `?faction-war=pick` answers the faction war endpoints in the browser with a
+  running war and no pick, so the pick screen opens. Picking goes through the
+  real mutation against that fake and plays the full selection.
+- `?faction-war=champions` makes the hero, Aurelia (Barbatos) and Borgin
+  (Tanroth) champions and draws a small map (`?scene=map`): rings under them
+  and the crest in hovered tips, on NI (`/sandbox/?faction-war=champions`) and
+  SI (`&interface=si`). "Champion walks" moves Aurelia.
+- Both fall back to a fake session when the local auth service is down. The
+  art is served from `apps/web/public/faction-wars` by the sandbox server.
+
 ## Limits
 
 - The Margonem account proof request fails, so the gateway marks the character
@@ -67,6 +79,6 @@ settings debug tab also uses.
 - The character list comes from `fake-runtime/character-list.ts`. It is seeded into
   `localStorage.Margonem.charlist`, where the game caches its charlist response
   and where Lootlog reads first. The public API request with `hs3` never runs.
-- There is no game canvas, so glow, air tags and map-ping rendering are
-  inactive.
+- Without `?scene=map` there is no game canvas, so glow, air tags and
+  map-ping rendering are inactive.
 - The panel copy is English because it is dev tooling that never ships.

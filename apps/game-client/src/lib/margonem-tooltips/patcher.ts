@@ -7,8 +7,10 @@ import {
   buildLegacyOtherTip,
   getLegacyOtherIdAt,
   getLegacyRuntimeOther,
+  getLegacyRuntimeOtherIds,
   getRuntimeCanvasTip,
   isLegacyTooltipRuntimeAvailable,
+  refreshCanvasOtherTips,
   setLegacyOtherTip,
   subscribeCharacterTipUpdates,
   type RuntimeCanvasTip,
@@ -199,11 +201,18 @@ function toTooltipOther(other: LegacyGameOther): Other {
   return { d: { ...other, id: String(other.id) } };
 }
 
-function setLegacyOtherShiftSection(id: string): void {
+/**
+ * The tip SI builds for an other and the same tip with every transform that
+ * applies right now, or null while SI cannot build it. Without Shift only the
+ * always-on sections apply.
+ */
+function buildLegacyOtherTips(
+  id: string,
+): { baseHtml: string; html: string } | null {
   const legacyOther = getLegacyRuntimeOther(id);
   const baseHtml = legacyOther ? buildLegacyOtherTip(legacyOther) : null;
 
-  if (!legacyOther || baseHtml === null) return;
+  if (!legacyOther || baseHtml === null) return null;
 
   const html = characterTooltipTransforms.apply({
     character: toTooltipOther(legacyOther),
@@ -212,23 +221,37 @@ function setLegacyOtherShiftSection(id: string): void {
     currentHtml: baseHtml,
   });
 
-  if (html === baseHtml) return;
+  return { baseHtml, html };
+}
 
-  setLegacyOtherTip(id, html);
+function setLegacyOtherShiftSection(id: string): void {
+  const tips = buildLegacyOtherTips(id);
+
+  if (!tips || tips.html === tips.baseHtml) return;
+
+  setLegacyOtherTip(id, tips.html);
   legacyOtherIdsWithShiftSection.add(id);
 }
 
-function removeLegacyShiftSections(): void {
+/**
+ * Releasing Shift keeps the always-on sections (the transforms without the
+ * Shift-only one); uninstalling restores the game's own tips.
+ */
+function removeLegacyShiftSections(target: "transformed" | "native"): void {
   const ids = [...legacyOtherIdsWithShiftSection];
 
   legacyOtherIdsWithShiftSection.clear();
 
   for (const id of ids) {
-    const legacyOther = getLegacyRuntimeOther(id);
-    const baseHtml = legacyOther ? buildLegacyOtherTip(legacyOther) : null;
+    const tips = buildLegacyOtherTips(id);
 
     // An other that left the map took its element with it.
-    if (baseHtml !== null) setLegacyOtherTip(id, baseHtml);
+    if (tips) {
+      setLegacyOtherTip(
+        id,
+        target === "transformed" ? tips.html : tips.baseHtml,
+      );
+    }
   }
 }
 
@@ -248,7 +271,7 @@ function refreshActiveLegacyOtherTooltip(): void {
 
   if (!state.isShiftPressed) {
     state.clearActiveOther();
-    removeLegacyShiftSections();
+    removeLegacyShiftSections("transformed");
 
     return;
   }
@@ -284,7 +307,7 @@ function installLegacyTooltips(): () => void {
     legacyTooltipsInstalled = false;
     hoveredLegacyOtherId = null;
     useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
-    removeLegacyShiftSections();
+    removeLegacyShiftSections("native");
   };
 }
 
@@ -305,6 +328,29 @@ export function restoreLegacyShiftSections(otherIds: string[]): void {
     if (id === hoveredLegacyOtherId || legacyOtherIdsWithShiftSection.has(id)) {
       setLegacyOtherShiftSection(id);
     }
+  }
+}
+
+/**
+ * Re-applies the always-on tooltip sections after what they show changed.
+ * NI rebuilds the html it caches on every other; SI rewrites the `tip`
+ * attribute of the given others, or of every other on the map. SI's newOther
+ * rewrites that attribute on full updates, so callers pass the ids of each
+ * `other` packet that needs its section back.
+ */
+export function refreshCharacterTooltips(otherIds?: readonly string[]): void {
+  if (!cleanupCurrentInstallation) return;
+
+  if (!legacyTooltipsInstalled) {
+    refreshCanvasOtherTips();
+
+    return;
+  }
+
+  for (const id of otherIds ?? getLegacyRuntimeOtherIds()) {
+    const tips = buildLegacyOtherTips(id);
+
+    if (tips) setLegacyOtherTip(id, tips.html);
   }
 }
 

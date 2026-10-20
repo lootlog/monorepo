@@ -53,7 +53,7 @@ describe("settings manifest persistence references", () => {
     expect(subsectionsOf("general")).toEqual(["behavior"]);
     expect(subsectionsOf("catching")).toEqual(["catching"]);
     expect(subsectionsOf("servers")).toEqual(["visibility"]);
-    expect(subsectionsOf("appearance")).toEqual(["npc-colors"]);
+    expect(subsectionsOf("appearance")).toEqual(["npc-colors", "faction-war"]);
     expect(subsectionsOf("timers")).toEqual([
       "timer-behavior",
       "timer-appearance",
