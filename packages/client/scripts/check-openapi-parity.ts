@@ -2225,6 +2225,374 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           ],
         ),
       ),
+      // Verified by apps/api/src/faction-wars and the faction-wars handler tests.
+      "GET /faction-wars/current": {
+        operationId: "FactionWarsController_getCurrentWar",
+        parameters: [],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "FactionWarResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/FactionWarResponseDto",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+        description:
+          "The running faction war, else the next or the last one, with the caller's pick and points; 404 when no war is defined",
+      },
+      "POST /faction-wars/{warId}/pick": {
+        operationId: "FactionWarsController_pickFaction",
+        parameters: [
+          {
+            name: "warId",
+            in: "path",
+            schema: {
+              type: "string",
+            },
+            required: true,
+          },
+        ],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "201": {
+            description: "FactionWarResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/FactionWarResponseDto",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+          "409": {
+            description: "HttpErrorResponse",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/HttpErrorResponse",
+                },
+              },
+            },
+          },
+        },
+        description:
+          "Lock the caller's faction for a running war; fails with 409 once the caller picked or the war is not running",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/PickFactionDto",
+              },
+            },
+          },
+          required: true,
+        },
+      },
+      "PATCH /faction-wars/{warId}/pick": {
+        operationId: "FactionWarsController_updatePick",
+        parameters: [
+          {
+            name: "warId",
+            in: "path",
+            schema: {
+              type: "string",
+            },
+            required: true,
+          },
+        ],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "FactionWarResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/FactionWarResponseDto",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+        description:
+          "Hide or show the caller on the war leaderboard and their champion highlight; the faction itself cannot change",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/UpdateFactionWarPickDto",
+              },
+            },
+          },
+          required: true,
+        },
+      },
+      "GET /faction-wars/{warId}/leaderboard": {
+        operationId: "FactionWarsController_getLeaderboard",
+        parameters: [
+          {
+            name: "warId",
+            in: "path",
+            schema: {
+              type: "string",
+            },
+            required: true,
+          },
+          {
+            name: "faction",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: ["BARBATOS", "TANROTH"],
+            },
+            required: true,
+          },
+        ],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "FactionWarLeaderboardResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/FactionWarLeaderboardResponseDto",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+        description:
+          "Top players of one faction; players who hid themselves keep their rank without a name",
+      },
+      "GET /faction-wars/champions": {
+        operationId: "FactionWarsController_getChampions",
+        parameters: [],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "FactionWarChampionsResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/FactionWarChampionsResponseDto",
+                },
+              },
+            },
+          },
+        },
+        description:
+          "Characters of the last war's winners who show their highlight, for the Game client",
+      },
+      "GET /public/faction-wars/current": {
+        operationId: "FactionWarsController_getPublicCurrentWar",
+        parameters: [],
+        security: [],
+        responses: {
+          "200": {
+            description: "PublicFactionWarResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/PublicFactionWarResponseDto",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+        description:
+          "Dates, rules and faction totals of the current faction war, without any player data",
+      },
+    },
+    battlelog: {
+      // Internal API caller only; verified by the faction war PvP sync.
+      "GET /internal/pvp-wins": {
+        operationId: "InternalController_listPvpWins",
+        parameters: [
+          {
+            name: "authorization",
+            in: "header",
+            schema: {
+              nullable: true,
+              type: "string",
+            },
+            required: false,
+          },
+          {
+            name: "afterBattleId",
+            in: "query",
+            schema: {
+              nullable: true,
+              type: "string",
+            },
+            required: false,
+          },
+          {
+            name: "since",
+            in: "query",
+            schema: {
+              type: "string",
+            },
+            required: true,
+          },
+          {
+            name: "before",
+            in: "query",
+            schema: {
+              type: "string",
+            },
+            required: true,
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: {
+              nullable: true,
+              type: "string",
+            },
+            required: false,
+          },
+        ],
+        responses: {
+          "200": {
+            description: "",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/PvpWinsResponseDto",
+                },
+              },
+            },
+          },
+          "400": {
+            description: "",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: {
+                      type: "string",
+                    },
+                    message: {
+                      anyOf: [
+                        {
+                          type: "string",
+                        },
+                        {
+                          type: "array",
+                          items: {
+                            type: "object",
+                            properties: {
+                              path: {
+                                type: "array",
+                                items: {
+                                  anyOf: [
+                                    {
+                                      type: "string",
+                                    },
+                                    {
+                                      anyOf: [
+                                        {
+                                          type: "number",
+                                        },
+                                        {
+                                          type: "string",
+                                          enum: [
+                                            "Infinity",
+                                            "-Infinity",
+                                            "NaN",
+                                          ],
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              },
+                              message: {
+                                type: "string",
+                              },
+                            },
+                            required: ["path", "message"],
+                          },
+                        },
+                      ],
+                    },
+                    statusCode: {
+                      type: "number",
+                      enum: [400],
+                    },
+                  },
+                  required: ["error", "message", "statusCode"],
+                },
+              },
+            },
+          },
+          "401": {
+            description: "",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: {
+                      type: "string",
+                    },
+                    message: {
+                      type: "string",
+                    },
+                    statusCode: {
+                      type: "number",
+                      enum: [401],
+                    },
+                  },
+                  required: ["error", "message", "statusCode"],
+                },
+              },
+            },
+          },
+        },
+        description:
+          "Internal API caller only, for faction war points. Lists finished battles won by the submitter's team, ordered by battle ID. Requires the BATTLELOG_CLEANUP_SECRET bearer credential.",
+      },
     },
   } satisfies Record<string, Record<string, JsonValue>>),
 );

@@ -81,6 +81,10 @@ export const makeKillCreation = (
   publishActivity: (
     input: KillInput & { readonly guildId: string },
   ) => Effect.Effect<void> = () => Effect.void,
+  awardFactionWarKill: (
+    discordId: string,
+    npcType: NpcType,
+  ) => Effect.Effect<void, unknown> = () => Effect.void,
 ) => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -454,6 +458,17 @@ export const makeKillCreation = (
 
       if (personalUpdated) {
         yield* invalidate(`kill-stats:user:${discordId}`);
+        // The User dedup above admits a kill once, so the war counts it once.
+        yield* awardFactionWarKill(discordId, npcType).pipe(
+          Effect.catch((error) =>
+            Effect.sync(() =>
+              logger.error({
+                message: "Failed to award faction war kill points",
+                error,
+              }),
+            ),
+          ),
+        );
       }
     }
 

@@ -14,6 +14,8 @@ const compatibilityBoolean = (name: string) =>
   );
 
 export interface ApiConfiguration {
+  /** Verifies gateway online checkpoints; faction war online points need it. */
+  readonly activityEventSignatureSecret?: Redacted.Redacted<string>;
   readonly authIdpTokenSecret?: Redacted.Redacted<string>;
   readonly battlelogCleanupSecret?: Redacted.Redacted<string>;
   readonly environment: RuntimeEnvironment;
@@ -48,6 +50,9 @@ export interface ApiConfiguration {
 
 /** The complete API environment contract, decoded by Effect Config. */
 export const apiConfiguration = Config.all({
+  activityEventSignatureSecret: optionalRedacted(
+    "ACTIVITY_EVENT_SIGNATURE_SECRET",
+  ),
   authIdpTokenSecret: optionalRedacted("AUTH_IDP_TOKEN_SECRET"),
   battlelogCleanupSecret: optionalRedacted("BATTLELOG_CLEANUP_SECRET"),
   environment: Config.Literals(
