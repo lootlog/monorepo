@@ -82,7 +82,12 @@ export const FactionWarHeroSide = ({
         </p>
       )}
       {hasBonus && (
-        <p className="max-w-full rounded-md bg-black/45 px-2 py-0.5 text-xs font-medium text-white">
+        <p
+          className={cn(
+            "max-w-full rounded-full border bg-black/70 px-2.5 py-0.5 text-xs font-semibold text-white",
+            style.border,
+          )}
+        >
           {t("factionWar.hero.bonus", {
             multiplier: formatFactionWarMultiplier(standing.multiplier),
             opponent: t(`factionWar.factionsGenitive.${opponent.faction}`),
