@@ -29,6 +29,8 @@ const dateFormatter = new Intl.DateTimeFormat("pl-PL", {
   timeZone: "Europe/Warsaw",
 });
 
+const LIVE_WAR_REFRESH_MS = 60_000;
+
 const SIDE_STYLE = {
   BARBATOS: { fill: "bg-[#e0592a]", text: "text-[#ffb98a]" },
   TANROTH: { fill: "bg-[#3ba7e0]", text: "text-[#a9dcff]" },
@@ -42,14 +44,32 @@ export function FactionWarBanner() {
   const { t } = useTranslation();
   const [war, setWar] = useState<PublicFactionWar | null>(null);
 
+  // Scores move during a war and an upcoming war starts, so the banner
+  // refreshes until the war has ended; a failed refresh keeps the last score.
   useEffect(() => {
     const controller = new AbortController();
+    let timer: number | undefined;
 
-    fetchPublicFactionWar(controller.signal)
-      .then(setWar)
-      .catch(() => setWar(null));
+    const load = () =>
+      fetchPublicFactionWar(controller.signal)
+        .then((next) => {
+          if (next) setWar(next);
 
-    return () => controller.abort();
+          return next !== null && next.status !== "ENDED";
+        })
+        .catch(() => !controller.signal.aborted)
+        .then((keepRefreshing) => {
+          if (keepRefreshing && !controller.signal.aborted) {
+            timer = window.setTimeout(load, LIVE_WAR_REFRESH_MS);
+          }
+        });
+
+    void load();
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
   }, []);
 
   if (!war) return null;

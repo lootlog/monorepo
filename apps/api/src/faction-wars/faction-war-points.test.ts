@@ -28,7 +28,7 @@ const pick = (userId: string) => ({
   characterId: `character-${userId}`,
   characterName: `Hero ${userId}`,
   world: "tempest",
-  pickedAt: new Date("2026-10-20T08:00:00Z"),
+  pickedAt: new Date("2026-01-01T00:00:00Z"),
 });
 
 const withPoints = async (
@@ -73,11 +73,19 @@ const withPoints = async (
 describe("faction war points", () => {
   it("stops kill points at the daily cap and ignores Users without a faction", async () => {
     await withPoints(async ({ boundary, points, pointsOf }) => {
-      for (let kill = 0; kill < 9; kill += 1) {
-        await boundary.run(points.awardKill("discord-user-1", "TITAN"));
-      }
+      const kill = (discordId: string) =>
+        boundary.run(
+          boundary.database.transaction((transaction) =>
+            points.awardKill(transaction, {
+              discordId,
+              npcType: "TITAN",
+              killedAt: new Date("2026-10-21T10:00:00Z"),
+            }),
+          ),
+        );
 
-      await boundary.run(points.awardKill("discord-user-2", "TITAN"));
+      for (let titan = 0; titan < 9; titan += 1) await kill("discord-user-1");
+      await kill("discord-user-2");
 
       expect(await pointsOf("user-1", "KILL")).toEqual([
         war.scoring.dailyCaps.KILL,
@@ -129,6 +137,33 @@ describe("faction war points", () => {
       );
 
       expect(await pointsOf("user-1", "ONLINE")).toEqual([5]);
+    });
+  });
+
+  it("counts online time only from the moment of the pick", async () => {
+    await withPoints(async ({ boundary, points, pointsOf }) => {
+      await boundary.run(
+        boundary.database.insert(factionWarPickTable).values({
+          ...pick("user-2"),
+          pickedAt: new Date("2026-10-21T08:30:00Z"),
+        }),
+      );
+
+      // Online 08:00–09:00, picked at 08:30: half an hour counts.
+      await boundary.run(
+        points.recordOnline({
+          version: 1,
+          type: "checkpoint",
+          userId: "user-2",
+          sessionId: "tab-1",
+          segmentId: "segment-1",
+          startedAt: "2026-10-21T08:00:00Z",
+          endedAt: "2026-10-21T09:00:00Z",
+          observedAt: "2026-10-21T09:00:00Z",
+        }),
+      );
+
+      expect(await pointsOf("user-2", "ONLINE")).toEqual([3]);
     });
   });
 });

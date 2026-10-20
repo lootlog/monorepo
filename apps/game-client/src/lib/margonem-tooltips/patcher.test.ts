@@ -567,6 +567,21 @@ describe("installCharacterTooltipTransforms on SI", () => {
     cleanup();
   });
 
+  it("restores the game's own tips, without always-on sections, on cleanup", () => {
+    setLegacyRuntime(["617"]);
+    characterTooltipTransforms.register(
+      ({ currentHtml }) => `${currentHtml}<i>champion</i>`,
+    );
+    const cleanup = installCharacterTooltipTransforms();
+
+    refreshCharacterTooltips();
+    expect(tipOf("617")).toBe("<b>Other 617</b><i>champion</i>");
+
+    cleanup();
+
+    expect(tipOf("617")).toBe("<b>Other 617</b>");
+  });
+
   it("stops following the cursor and restores tooltips on cleanup", () => {
     setLegacyRuntime(["617"]);
     const cleanup = installCharacterTooltipTransforms();

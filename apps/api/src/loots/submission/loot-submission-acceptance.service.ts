@@ -268,6 +268,13 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           outcome.submissionData,
           mapPlayersSnapshot,
         );
+        // Retries reach here once the loot exists, so a failed award gets
+        // another chance; the war's ledger still pays each loot once.
+        yield* this.awardLootPoints(
+          options.discordId,
+          existingLootId,
+          options.submission,
+        );
 
         return this.createResponse(existingLootId, outcome);
       }
@@ -288,20 +295,31 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           }),
       });
 
-      // Only the submission that created the loot earns its points; the
-      // ledger in the war keeps a retried award from counting twice.
-      yield* this.awardFactionWarLoot(
+      yield* this.awardLootPoints(
         options.discordId,
         lootId,
-        options.submission.loots.map((item) => this.getItemStats(item).rarity),
-      ).pipe(
-        Effect.catch((error) =>
-          Effect.logError("Failed to award faction war loot points", error),
-        ),
+        options.submission,
       );
 
       return this.createResponse(lootId, outcome);
     });
+  }
+
+  /** Logged, never failed: an accepted loot must not be rejected for points. */
+  private awardLootPoints(
+    discordId: string,
+    lootId: number,
+    submission: CreateLootRequest,
+  ): Effect.Effect<void> {
+    return this.awardFactionWarLoot(
+      discordId,
+      lootId,
+      submission.loots.map((item) => this.getItemStats(item).rarity),
+    ).pipe(
+      Effect.catch((error) =>
+        Effect.logError("Failed to award faction war loot points", error),
+      ),
+    );
   }
 
   private resolveAcceptanceOutcome(options: {

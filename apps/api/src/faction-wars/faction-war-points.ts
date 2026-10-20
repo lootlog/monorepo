@@ -22,7 +22,11 @@ import {
 
 type Database = typeof ApiDatabase.Service;
 
-type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+export type FactionWarTransaction = Parameters<
+  Parameters<Database["transaction"]>[0]
+>[0];
+
+type Transaction = FactionWarTransaction;
 
 type Picker = { readonly discordId: string } | { readonly userId: string };
 
@@ -35,9 +39,10 @@ const OnlineSecondsResult = Schema.Struct({
 });
 
 /**
- * Awards faction war points. Every award is idempotent: kills rely on the
- * per-User kill dedup that runs before them, loots and battles on the award
- * ledger, and online points are recomputed from the stored segments.
+ * Awards faction war points, only for play after the User picked. Every award
+ * is idempotent: kills commit in the same transaction as the per-User kill
+ * stats their dedup guards, loots and battles claim the award ledger once,
+ * and online points are recomputed from the stored segments.
  */
 export const makeFactionWarPoints = (
   database: Database,
@@ -49,7 +54,10 @@ export const makeFactionWarPoints = (
     picker: Picker,
   ) =>
     executor
-      .select({ userId: factionWarPickTable.userId })
+      .select({
+        userId: factionWarPickTable.userId,
+        pickedAt: factionWarPickTable.pickedAt,
+      })
       .from(factionWarPickTable)
       .where(
         and(
@@ -60,7 +68,7 @@ export const makeFactionWarPoints = (
         ),
       )
       .limit(1)
-      .pipe(Effect.map((rows) => rows[0]?.userId));
+      .pipe(Effect.map((rows) => rows[0]));
 
   const addCapped = (
     transaction: Transaction,
@@ -96,71 +104,76 @@ export const makeFactionWarPoints = (
       });
   };
 
-  /**
-   * Adds points once per `sourceKey`; without a key the caller guarantees the
-   * award runs once.
-   */
-  const award = Effect.fn("FactionWarPoints.award")(function* (options: {
+  type AwardOptions = {
     readonly picker: Picker;
     readonly source: FactionWarPointSource;
     readonly at: Date;
+    /** Claims the award ledger, so the same loot or battle counts once. */
     readonly sourceKey?: string;
     readonly points: (war: FactionWar) => number;
-  }) {
+  };
+
+  const awardIn = Effect.fn("FactionWarPoints.awardIn")(function* (
+    transaction: Transaction,
+    options: AwardOptions,
+  ) {
     const war = findRunningFactionWar(options.at.getTime(), wars);
 
     if (!war) return;
     const points = options.points(war);
 
     if (points <= 0) return;
+    const pick = yield* findPick(transaction, war, options.picker);
 
-    yield* database.transaction((transaction) =>
-      Effect.gen(function* () {
-        const userId = yield* findPick(transaction, war, options.picker);
+    // Play before the pick never counts, however late its fact arrives.
+    if (!pick || options.at < pick.pickedAt) return;
 
-        if (!userId) return;
+    if (options.sourceKey !== undefined) {
+      const claimed = yield* transaction
+        .insert(factionWarAwardTable)
+        .values({
+          warId: war.id,
+          source: options.source,
+          sourceKey: options.sourceKey,
+          userId: pick.userId,
+          awardedAt: options.at,
+        })
+        .onConflictDoNothing()
+        .returning({ userId: factionWarAwardTable.userId });
 
-        if (options.sourceKey !== undefined) {
-          const claimed = yield* transaction
-            .insert(factionWarAwardTable)
-            .values({
-              warId: war.id,
-              source: options.source,
-              sourceKey: options.sourceKey,
-              userId,
-              awardedAt: options.at,
-            })
-            .onConflictDoNothing()
-            .returning({ userId: factionWarAwardTable.userId });
+      if (claimed.length === 0) return;
+    }
 
-          if (claimed.length === 0) return;
-        }
-
-        yield* addCapped(
-          transaction,
-          war,
-          userId,
-          options.source,
-          options.at,
-          points,
-        );
-      }),
+    yield* addCapped(
+      transaction,
+      war,
+      pick.userId,
+      options.source,
+      options.at,
+      points,
     );
   });
 
+  const award = (options: AwardOptions) =>
+    database.transaction((transaction) => awardIn(transaction, options));
+
   const now = Effect.map(Clock.currentTimeMillis, (millis) => new Date(millis));
 
-  const awardKill = Effect.fn("FactionWarPoints.awardKill")(function* (
-    discordId: string,
-    npcType: string,
-  ) {
-    yield* award({
-      picker: { discordId },
+  /** Runs in the transaction that counts the kill for the User. */
+  const awardKill = (
+    transaction: Transaction,
+    kill: {
+      readonly discordId: string;
+      readonly npcType: string;
+      readonly killedAt: Date;
+    },
+  ) =>
+    awardIn(transaction, {
+      picker: { discordId: kill.discordId },
       source: "KILL",
-      at: yield* now,
-      points: (war) => factionWarKillPoints(war, npcType),
+      at: kill.killedAt,
+      points: (war) => factionWarKillPoints(war, kill.npcType),
     });
-  });
 
   const awardLoot = Effect.fn("FactionWarPoints.awardLoot")(function* (
     discordId: string,
@@ -231,11 +244,17 @@ export const makeFactionWarPoints = (
 
     yield* database.transaction((transaction) =>
       Effect.gen(function* () {
-        const userId = yield* findPick(transaction, war, {
+        const pick = yield* findPick(transaction, war, {
           userId: checkpoint.userId,
         });
 
-        if (!userId) return;
+        // Only presence after the pick counts; a segment keeps its start, so
+        // every checkpoint of it clips to the same instant.
+        if (!pick || endedAt <= pick.pickedAt) return;
+        const userId = pick.userId;
+
+        const countedFrom =
+          startedAt < pick.pickedAt ? pick.pickedAt : startedAt;
 
         // A segment keeps its start and only grows, so redeliveries and
         // out-of-order checkpoints settle on the longest one.
@@ -246,7 +265,7 @@ export const makeFactionWarPoints = (
             userId,
             sessionId: checkpoint.sessionId,
             segmentId: checkpoint.segmentId,
-            startedAt,
+            startedAt: countedFrom,
             endedAt,
           })
           .onConflictDoUpdate({
@@ -264,7 +283,7 @@ export const makeFactionWarPoints = (
         const days = new Set<string>();
 
         for (
-          let at = startedAt.getTime();
+          let at = countedFrom.getTime();
           at < endedAt.getTime() + DAY_MS;
           at += DAY_MS
         ) {

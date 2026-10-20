@@ -1256,6 +1256,25 @@ export const factionWarPickTable = pgTable(
   ],
 );
 
+/**
+ * One pick per war per Discord account, kept when the account is deleted so a
+ * new account on the same Discord cannot pick again. Holds only a SHA-256 of
+ * the Discord id, never the id or anything about the player.
+ */
+export const factionWarPickLockTable = pgTable(
+  "FactionWarPickLock",
+  {
+    warId: text("warId").notNull(),
+    discordIdHash: text("discordIdHash").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      name: "FactionWarPickLock_pkey",
+      columns: [table["warId"], table["discordIdHash"]],
+    }),
+  ],
+);
+
 /** Capped points one User earned from one source on one Warsaw day. */
 export const factionWarDailyPointsTable = pgTable(
   "FactionWarDailyPoints",
@@ -1279,7 +1298,10 @@ export const factionWarDailyPointsTable = pgTable(
   ],
 );
 
-/** Records each loot or battle that already earned points, so retries cannot. */
+/**
+ * Records each loot or battle that already earned points: one award per item,
+ * so retries and other submitters of the same loot cannot add more.
+ */
 export const factionWarAwardTable = pgTable(
   "FactionWarAward",
   {
@@ -1292,12 +1314,7 @@ export const factionWarAwardTable = pgTable(
   (table) => [
     primaryKey({
       name: "FactionWarAward_pkey",
-      columns: [
-        table["warId"],
-        table["source"],
-        table["sourceKey"],
-        table["userId"],
-      ],
+      columns: [table["warId"], table["source"], table["sourceKey"]],
     }),
   ],
 );

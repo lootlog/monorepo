@@ -585,8 +585,9 @@ export const makeBattles = (
     },
 
     /**
-     * Finished battles the submitter's own team won, oldest first. Battlelog
-     * stores only fights between players, so each one is a PvP win.
+     * Finished battles the submitter's own team won without a flee, oldest
+     * first. Battlelog stores only fights between players, so each one is a
+     * PvP win.
      */
     listPvpWins(options: {
       readonly afterBattleId: string | undefined;
@@ -618,6 +619,8 @@ export const makeBattles = (
               gte(battles.createdAt, options.since),
               lt(battles.createdAt, options.before),
               eq(battles.unfinished, false),
+              // Analytics count a flee apart from a win; so does the war.
+              eq(battles.hasFlee, false),
             ),
           )
           .orderBy(asc(battles.id))
