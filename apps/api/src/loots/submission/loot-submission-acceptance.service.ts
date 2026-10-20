@@ -120,6 +120,11 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     private readonly repository: LootSubmissionAcceptancePersistence,
     private readonly lock: LootSubmissionLock,
     private readonly signalPublications: Effect.Effect<void>,
+    private readonly awardFactionWarLoot: (
+      discordId: string,
+      lootId: number,
+      rarities: readonly string[],
+    ) => Effect.Effect<void, unknown>,
   ) {}
 
   accept(options: {
@@ -282,6 +287,18 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
             submission: options.submission,
           }),
       });
+
+      // Only the submission that created the loot earns its points; the
+      // ledger in the war keeps a retried award from counting twice.
+      yield* this.awardFactionWarLoot(
+        options.discordId,
+        lootId,
+        options.submission.loots.map((item) => this.getItemStats(item).rarity),
+      ).pipe(
+        Effect.catch((error) =>
+          Effect.logError("Failed to award faction war loot points", error),
+        ),
+      );
 
       return this.createResponse(lootId, outcome);
     });
@@ -872,9 +889,15 @@ export const makeLootSubmissionAcceptance = (
   repository: LootSubmissionAcceptancePersistence,
   lock: LootSubmissionLock,
   signalPublications: Effect.Effect<void>,
+  awardFactionWarLoot: (
+    discordId: string,
+    lootId: number,
+    rarities: readonly string[],
+  ) => Effect.Effect<void, unknown> = () => Effect.void,
 ): LootSubmissionAcceptance =>
   new LootSubmissionAcceptanceImplementation(
     repository,
     lock,
     signalPublications,
+    awardFactionWarLoot,
   );

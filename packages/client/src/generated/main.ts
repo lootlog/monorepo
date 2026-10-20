@@ -46,6 +46,321 @@ export interface RequestValidationError {
   issues: RequestValidationErrorIssuesItem[];
 }
 
+export type PublicFactionWarResponseDtoStatus = typeof PublicFactionWarResponseDtoStatus[keyof typeof PublicFactionWarResponseDtoStatus];
+
+
+export const PublicFactionWarResponseDtoStatus = {
+  UPCOMING: 'UPCOMING',
+  RUNNING: 'RUNNING',
+  ENDED: 'ENDED',
+} as const;
+
+export type PublicFactionWarResponseDtoWinnersItem = typeof PublicFactionWarResponseDtoWinnersItem[keyof typeof PublicFactionWarResponseDtoWinnersItem];
+
+
+export const PublicFactionWarResponseDtoWinnersItem = {
+  BARBATOS: 'BARBATOS',
+  TANROTH: 'TANROTH',
+} as const;
+
+export type FactionWarScoringDtoKillPoints = {[key: string]: number};
+
+export type FactionWarScoringDtoLootPoints = {[key: string]: number};
+
+export type FactionWarScoringDtoDailyCaps = {
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  KILL: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  LOOT: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  ONLINE: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  PVP: number;
+};
+
+export interface FactionWarScoringDto {
+  killPoints: FactionWarScoringDtoKillPoints;
+  lootPoints: FactionWarScoringDtoLootPoints;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  onlineSecondsPerPoint: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  pvpWinPoints: number;
+  underdogBonusCap: number;
+  dailyCaps: FactionWarScoringDtoDailyCaps;
+}
+
+export type FactionWarFactionTotalDtoFaction = typeof FactionWarFactionTotalDtoFaction[keyof typeof FactionWarFactionTotalDtoFaction];
+
+
+export const FactionWarFactionTotalDtoFaction = {
+  BARBATOS: 'BARBATOS',
+  TANROTH: 'TANROTH',
+} as const;
+
+export interface FactionWarFactionTotalDto {
+  faction: FactionWarFactionTotalDtoFaction;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  points: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  rawPoints: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  players: number;
+  multiplier: number;
+}
+
+export interface PublicFactionWarResponseDto {
+  id: string;
+  status: PublicFactionWarResponseDtoStatus;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  startsAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  endsAt: string;
+  scoring: FactionWarScoringDto;
+  totals: FactionWarFactionTotalDto[];
+  winners: PublicFactionWarResponseDtoWinnersItem[];
+}
+
+export type _ReauthenticationRequiredEncodedTag = typeof _ReauthenticationRequiredEncodedTag[keyof typeof _ReauthenticationRequiredEncodedTag];
+
+
+export const _ReauthenticationRequiredEncodedTag = {
+  ReauthenticationRequired: 'ReauthenticationRequired',
+} as const;
+
+export interface ReauthenticationRequiredEncoded {
+  _tag: _ReauthenticationRequiredEncodedTag;
+  code: string;
+  requiresReauth: true;
+}
+
+export type FactionWarChampionGroupDtoFaction = typeof FactionWarChampionGroupDtoFaction[keyof typeof FactionWarChampionGroupDtoFaction];
+
+
+export const FactionWarChampionGroupDtoFaction = {
+  BARBATOS: 'BARBATOS',
+  TANROTH: 'TANROTH',
+} as const;
+
+export interface FactionWarChampionGroupDto {
+  faction: FactionWarChampionGroupDtoFaction;
+  characterIds: string[];
+}
+
+export interface FactionWarChampionsResponseDto {
+  /** @nullable */
+  warId: string | null;
+  champions: FactionWarChampionGroupDto[];
+}
+
+export type FactionWarLeaderboardResponseDtoFaction = typeof FactionWarLeaderboardResponseDtoFaction[keyof typeof FactionWarLeaderboardResponseDtoFaction];
+
+
+export const FactionWarLeaderboardResponseDtoFaction = {
+  BARBATOS: 'BARBATOS',
+  TANROTH: 'TANROTH',
+} as const;
+
+export interface FactionWarLeaderboardEntryDto {
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  rank: number;
+  /** @nullable */
+  characterName: string | null;
+  /** @nullable */
+  world: string | null;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  points: number;
+  isMe: boolean;
+}
+
+export interface FactionWarLeaderboardResponseDto {
+  faction: FactionWarLeaderboardResponseDtoFaction;
+  entries: FactionWarLeaderboardEntryDto[];
+}
+
+export type FactionWarResponseDtoStatus = typeof FactionWarResponseDtoStatus[keyof typeof FactionWarResponseDtoStatus];
+
+
+export const FactionWarResponseDtoStatus = {
+  UPCOMING: 'UPCOMING',
+  RUNNING: 'RUNNING',
+  ENDED: 'ENDED',
+} as const;
+
+export type FactionWarResponseDtoWinnersItem = typeof FactionWarResponseDtoWinnersItem[keyof typeof FactionWarResponseDtoWinnersItem];
+
+
+export const FactionWarResponseDtoWinnersItem = {
+  BARBATOS: 'BARBATOS',
+  TANROTH: 'TANROTH',
+} as const;
+
+export type FactionWarDayDtoFaction = typeof FactionWarDayDtoFaction[keyof typeof FactionWarDayDtoFaction];
+
+
+export const FactionWarDayDtoFaction = {
+  BARBATOS: 'BARBATOS',
+  TANROTH: 'TANROTH',
+} as const;
+
+export interface FactionWarDayDto {
+  day: string;
+  faction: FactionWarDayDtoFaction;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  points: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  activePlayers: number;
+  multiplier: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  score: number;
+}
+
+export type MyFactionWarPickDtoFaction = typeof MyFactionWarPickDtoFaction[keyof typeof MyFactionWarPickDtoFaction];
+
+
+export const MyFactionWarPickDtoFaction = {
+  BARBATOS: 'BARBATOS',
+  TANROTH: 'TANROTH',
+} as const;
+
+export type MyFactionWarPickDtoTodayBySource = {
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  KILL: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  LOOT: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  ONLINE: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  PVP: number;
+};
+
+export interface MyFactionWarPickDto {
+  faction: MyFactionWarPickDtoFaction;
+  characterName: string;
+  world: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  pickedAt: string;
+  hiddenFromLeaderboard: boolean;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  points: number;
+  todayBySource: MyFactionWarPickDtoTodayBySource;
+}
+
+export type FactionWarChampionDtoWinnersItem = typeof FactionWarChampionDtoWinnersItem[keyof typeof FactionWarChampionDtoWinnersItem];
+
+
+export const FactionWarChampionDtoWinnersItem = {
+  BARBATOS: 'BARBATOS',
+  TANROTH: 'TANROTH',
+} as const;
+
+export interface FactionWarChampionDto {
+  warId: string;
+  winners: FactionWarChampionDtoWinnersItem[];
+  isChampion: boolean;
+  highlightHidden: boolean;
+}
+
+export interface FactionWarResponseDto {
+  id: string;
+  status: FactionWarResponseDtoStatus;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  startsAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  endsAt: string;
+  scoring: FactionWarScoringDto;
+  totals: FactionWarFactionTotalDto[];
+  winners: FactionWarResponseDtoWinnersItem[];
+  days: FactionWarDayDto[];
+  pick: MyFactionWarPickDto | null;
+  champion: FactionWarChampionDto | null;
+}
+
+export interface UpdateFactionWarPickDto {
+  hiddenFromLeaderboard?: boolean;
+  championHighlightHidden?: boolean;
+}
+
+export type PickFactionDtoFaction = typeof PickFactionDtoFaction[keyof typeof PickFactionDtoFaction];
+
+
+export const PickFactionDtoFaction = {
+  BARBATOS: 'BARBATOS',
+  TANROTH: 'TANROTH',
+} as const;
+
+export interface PickFactionDto {
+  faction: PickFactionDtoFaction;
+  /** @minLength 1 */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
+  characterName: string;
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
+  world: string;
+}
+
 export type SharedUserThemeResponseDtoDefinitionBaseThemeId = typeof SharedUserThemeResponseDtoDefinitionBaseThemeId[keyof typeof SharedUserThemeResponseDtoDefinitionBaseThemeId];
 
 
@@ -210,19 +525,6 @@ export type SharedUserThemeResponseDtoDefinition = {
 export interface SharedUserThemeResponseDto {
   name: string;
   definition: SharedUserThemeResponseDtoDefinition;
-}
-
-export type _ReauthenticationRequiredEncodedTag = typeof _ReauthenticationRequiredEncodedTag[keyof typeof _ReauthenticationRequiredEncodedTag];
-
-
-export const _ReauthenticationRequiredEncodedTag = {
-  ReauthenticationRequired: 'ReauthenticationRequired',
-} as const;
-
-export interface ReauthenticationRequiredEncoded {
-  _tag: _ReauthenticationRequiredEncodedTag;
-  code: string;
-  requiresReauth: true;
 }
 
 export type UserThemeResponseDtoDefinitionBaseThemeId = typeof UserThemeResponseDtoDefinitionBaseThemeId[keyof typeof UserThemeResponseDtoDefinitionBaseThemeId];
@@ -14837,6 +15139,99 @@ export type UserThemesControllerGetSharedTheme403 = {
 };
 
 export type UserThemesControllerGetSharedTheme429 = {
+  message: string;
+};
+
+export type FactionWarsControllerGetCurrentWar401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type FactionWarsControllerGetCurrentWar403 = {
+  message: string;
+};
+
+export type FactionWarsControllerGetCurrentWar429 = {
+  message: string;
+};
+
+export type FactionWarsControllerPickFactionPathParameters = {
+ warId: string,
+ }
+export type FactionWarsControllerPickFaction401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type FactionWarsControllerPickFaction403 = {
+  message: string;
+};
+
+export type FactionWarsControllerPickFaction429 = {
+  message: string;
+};
+
+export type FactionWarsControllerUpdatePickPathParameters = {
+ warId: string,
+ }
+export type FactionWarsControllerUpdatePick401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type FactionWarsControllerUpdatePick403 = {
+  message: string;
+};
+
+export type FactionWarsControllerUpdatePick429 = {
+  message: string;
+};
+
+export type FactionWarsControllerGetLeaderboardPathParameters = {
+ warId: string,
+ }
+export type FactionWarsControllerGetLeaderboardParams = {
+faction: FactionWarsControllerGetLeaderboardFaction;
+};
+
+export type FactionWarsControllerGetLeaderboardFaction = typeof FactionWarsControllerGetLeaderboardFaction[keyof typeof FactionWarsControllerGetLeaderboardFaction];
+
+
+export const FactionWarsControllerGetLeaderboardFaction = {
+  BARBATOS: 'BARBATOS',
+  TANROTH: 'TANROTH',
+} as const;
+
+export type FactionWarsControllerGetLeaderboard401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type FactionWarsControllerGetLeaderboard403 = {
+  message: string;
+};
+
+export type FactionWarsControllerGetLeaderboard429 = {
+  message: string;
+};
+
+export type FactionWarsControllerGetChampions401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type FactionWarsControllerGetChampions403 = {
+  message: string;
+};
+
+export type FactionWarsControllerGetChampions429 = {
+  message: string;
+};
+
+export type FactionWarsControllerGetPublicCurrentWar401 = {
+  message: string;
+};
+
+export type FactionWarsControllerGetPublicCurrentWar403 = {
+  message: string;
+};
+
+export type FactionWarsControllerGetPublicCurrentWar429 = {
   message: string;
 };
 
@@ -39978,4 +40373,779 @@ export const useGetUserThemesControllerGetSharedThemeQueryData = () => {
   const queryClient = useQueryClient();
   return ({ shareToken }: UserThemesControllerGetSharedThemePathParameters,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>>(getUserThemesControllerGetSharedThemeQueryKey({ shareToken }));
+}
+
+
+
+export const getFactionWarsControllerGetCurrentWarUrl = () => {
+
+
+
+
+  return `/faction-wars/current`
+}
+
+/**
+ * The running faction war, else the next or the last one, with the caller's pick and points; 404 when no war is defined
+ * @summary Get current faction war
+ */
+export const factionWarsControllerGetCurrentWar = async ( options?: Parameters<typeof mainFetch>[1]): Promise<FactionWarResponseDto> => {
+
+  return mainFetch<FactionWarResponseDto>(getFactionWarsControllerGetCurrentWarUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getFactionWarsControllerGetCurrentWarQueryKey = () => {
+    return [
+    `/faction-wars/current`
+    ] as const;
+    }
+
+
+export const getFactionWarsControllerGetCurrentWarQueryOptions = <TData = Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetCurrentWar401 | FactionWarsControllerGetCurrentWar403 | void | FactionWarsControllerGetCurrentWar429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getFactionWarsControllerGetCurrentWarQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>> = ({ signal }) => factionWarsControllerGetCurrentWar({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type FactionWarsControllerGetCurrentWarQueryResult = NonNullable<Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>>
+export type FactionWarsControllerGetCurrentWarQueryError = ErrorType<RequestValidationError | FactionWarsControllerGetCurrentWar401 | FactionWarsControllerGetCurrentWar403 | void | FactionWarsControllerGetCurrentWar429>
+
+
+export function useFactionWarsControllerGetCurrentWar<TData = Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetCurrentWar401 | FactionWarsControllerGetCurrentWar403 | void | FactionWarsControllerGetCurrentWar429>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>,
+          TError,
+          Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFactionWarsControllerGetCurrentWar<TData = Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetCurrentWar401 | FactionWarsControllerGetCurrentWar403 | void | FactionWarsControllerGetCurrentWar429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>,
+          TError,
+          Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFactionWarsControllerGetCurrentWar<TData = Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetCurrentWar401 | FactionWarsControllerGetCurrentWar403 | void | FactionWarsControllerGetCurrentWar429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get current faction war
+ */
+
+export function useFactionWarsControllerGetCurrentWar<TData = Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetCurrentWar401 | FactionWarsControllerGetCurrentWar403 | void | FactionWarsControllerGetCurrentWar429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getFactionWarsControllerGetCurrentWarQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get current faction war
+ */
+export const prefetchFactionWarsControllerGetCurrentWarQuery = async <TData = Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetCurrentWar401 | FactionWarsControllerGetCurrentWar403 | void | FactionWarsControllerGetCurrentWar429>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getFactionWarsControllerGetCurrentWarQueryOptions(options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useFactionWarsControllerGetCurrentWar} query
+ */
+export const invalidateFactionWarsControllerGetCurrentWar = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getFactionWarsControllerGetCurrentWarQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get current faction war
+ */
+export const useSetFactionWarsControllerGetCurrentWarQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>> | undefined | ((old: Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>> | undefined) => Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>>({ exact: $exactMatch, queryKey: getFactionWarsControllerGetCurrentWarQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary Get current faction war
+ */
+export const useGetFactionWarsControllerGetCurrentWarQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof factionWarsControllerGetCurrentWar>>>(getFactionWarsControllerGetCurrentWarQueryKey());
+}
+
+
+
+export const getFactionWarsControllerPickFactionUrl = ({ warId }: FactionWarsControllerPickFactionPathParameters,) => {
+
+
+
+
+  return `/faction-wars/${warId}/pick`
+}
+
+/**
+ * Lock the caller's faction for a running war; fails with 409 once the caller picked or the war is not running
+ * @summary Pick a faction
+ */
+export const factionWarsControllerPickFaction = async ({ warId }: FactionWarsControllerPickFactionPathParameters,
+    pickFactionDto: PickFactionDto, options?: Parameters<typeof mainFetch>[1]): Promise<FactionWarResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<FactionWarResponseDto>(getFactionWarsControllerPickFactionUrl({ warId }),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(pickFactionDto)
+  }
+);}
+
+
+
+
+
+export const getFactionWarsControllerPickFactionMutationKey = () => ['factionWarsControllerPickFaction'] as const;
+
+export const getFactionWarsControllerPickFactionMutationOptions = <TError = ErrorType<RequestValidationError | FactionWarsControllerPickFaction401 | FactionWarsControllerPickFaction403 | void | HttpErrorResponse | FactionWarsControllerPickFaction429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof factionWarsControllerPickFaction>>, TError,FactionWarsControllerPickFactionMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof factionWarsControllerPickFaction>>, TError,FactionWarsControllerPickFactionMutationVariables, TContext> => {
+
+const mutationKey = getFactionWarsControllerPickFactionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof factionWarsControllerPickFaction>>, FactionWarsControllerPickFactionMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  factionWarsControllerPickFaction(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type FactionWarsControllerPickFactionMutationResult = NonNullable<Awaited<ReturnType<typeof factionWarsControllerPickFaction>>>
+    export type FactionWarsControllerPickFactionMutationBody = BodyType<PickFactionDto>
+    export type FactionWarsControllerPickFactionMutationError = ErrorType<RequestValidationError | FactionWarsControllerPickFaction401 | FactionWarsControllerPickFaction403 | void | HttpErrorResponse | FactionWarsControllerPickFaction429>
+    export type FactionWarsControllerPickFactionMutationVariables = {pathParams: FactionWarsControllerPickFactionPathParameters;data: BodyType<PickFactionDto>}
+
+    /**
+ * @summary Pick a faction
+ */
+export const useFactionWarsControllerPickFaction = <TError = ErrorType<RequestValidationError | FactionWarsControllerPickFaction401 | FactionWarsControllerPickFaction403 | void | HttpErrorResponse | FactionWarsControllerPickFaction429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof factionWarsControllerPickFaction>>, TError,FactionWarsControllerPickFactionMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof factionWarsControllerPickFaction>>,
+        TError,
+        FactionWarsControllerPickFactionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getFactionWarsControllerPickFactionMutationOptions(options), queryClient);
+    }
+
+export const getFactionWarsControllerUpdatePickUrl = ({ warId }: FactionWarsControllerUpdatePickPathParameters,) => {
+
+
+
+
+  return `/faction-wars/${warId}/pick`
+}
+
+/**
+ * Hide or show the caller on the war leaderboard and their champion highlight; the faction itself cannot change
+ * @summary Update faction war visibility
+ */
+export const factionWarsControllerUpdatePick = async ({ warId }: FactionWarsControllerUpdatePickPathParameters,
+    updateFactionWarPickDto: UpdateFactionWarPickDto, options?: Parameters<typeof mainFetch>[1]): Promise<FactionWarResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<FactionWarResponseDto>(getFactionWarsControllerUpdatePickUrl({ warId }),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateFactionWarPickDto)
+  }
+);}
+
+
+
+
+
+export const getFactionWarsControllerUpdatePickMutationKey = () => ['factionWarsControllerUpdatePick'] as const;
+
+export const getFactionWarsControllerUpdatePickMutationOptions = <TError = ErrorType<RequestValidationError | FactionWarsControllerUpdatePick401 | FactionWarsControllerUpdatePick403 | void | FactionWarsControllerUpdatePick429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof factionWarsControllerUpdatePick>>, TError,FactionWarsControllerUpdatePickMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof factionWarsControllerUpdatePick>>, TError,FactionWarsControllerUpdatePickMutationVariables, TContext> => {
+
+const mutationKey = getFactionWarsControllerUpdatePickMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof factionWarsControllerUpdatePick>>, FactionWarsControllerUpdatePickMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  factionWarsControllerUpdatePick(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type FactionWarsControllerUpdatePickMutationResult = NonNullable<Awaited<ReturnType<typeof factionWarsControllerUpdatePick>>>
+    export type FactionWarsControllerUpdatePickMutationBody = BodyType<UpdateFactionWarPickDto>
+    export type FactionWarsControllerUpdatePickMutationError = ErrorType<RequestValidationError | FactionWarsControllerUpdatePick401 | FactionWarsControllerUpdatePick403 | void | FactionWarsControllerUpdatePick429>
+    export type FactionWarsControllerUpdatePickMutationVariables = {pathParams: FactionWarsControllerUpdatePickPathParameters;data: BodyType<UpdateFactionWarPickDto>}
+
+    /**
+ * @summary Update faction war visibility
+ */
+export const useFactionWarsControllerUpdatePick = <TError = ErrorType<RequestValidationError | FactionWarsControllerUpdatePick401 | FactionWarsControllerUpdatePick403 | void | FactionWarsControllerUpdatePick429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof factionWarsControllerUpdatePick>>, TError,FactionWarsControllerUpdatePickMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof factionWarsControllerUpdatePick>>,
+        TError,
+        FactionWarsControllerUpdatePickMutationVariables,
+        TContext
+      > => {
+      return useMutation(getFactionWarsControllerUpdatePickMutationOptions(options), queryClient);
+    }
+
+export const getFactionWarsControllerGetLeaderboardUrl = ({ warId }: FactionWarsControllerGetLeaderboardPathParameters,
+    params: FactionWarsControllerGetLeaderboardParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/faction-wars/${warId}/leaderboard?${stringifiedParams}` : `/faction-wars/${warId}/leaderboard`
+}
+
+/**
+ * Top players of one faction; players who hid themselves keep their rank without a name
+ * @summary Get faction war leaderboard
+ */
+export const factionWarsControllerGetLeaderboard = async ({ warId }: FactionWarsControllerGetLeaderboardPathParameters,
+    params: FactionWarsControllerGetLeaderboardParams, options?: Parameters<typeof mainFetch>[1]): Promise<FactionWarLeaderboardResponseDto> => {
+
+  return mainFetch<FactionWarLeaderboardResponseDto>(getFactionWarsControllerGetLeaderboardUrl({ warId },params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getFactionWarsControllerGetLeaderboardQueryKey = ({ warId }: FactionWarsControllerGetLeaderboardPathParameters,
+    params?: FactionWarsControllerGetLeaderboardParams,) => {
+    return [
+    `/faction-wars/${warId}/leaderboard`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getFactionWarsControllerGetLeaderboardQueryOptions = <TData = Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetLeaderboard401 | FactionWarsControllerGetLeaderboard403 | void | FactionWarsControllerGetLeaderboard429>>({ warId }: FactionWarsControllerGetLeaderboardPathParameters,
+    params: FactionWarsControllerGetLeaderboardParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getFactionWarsControllerGetLeaderboardQueryKey({ warId },params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>> = ({ signal }) => factionWarsControllerGetLeaderboard({ warId },params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: warId !== null && warId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type FactionWarsControllerGetLeaderboardQueryResult = NonNullable<Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>>
+export type FactionWarsControllerGetLeaderboardQueryError = ErrorType<RequestValidationError | FactionWarsControllerGetLeaderboard401 | FactionWarsControllerGetLeaderboard403 | void | FactionWarsControllerGetLeaderboard429>
+
+
+export function useFactionWarsControllerGetLeaderboard<TData = Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetLeaderboard401 | FactionWarsControllerGetLeaderboard403 | void | FactionWarsControllerGetLeaderboard429>>(
+ pathParams: FactionWarsControllerGetLeaderboardPathParameters,
+    params: FactionWarsControllerGetLeaderboardParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>,
+          TError,
+          Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFactionWarsControllerGetLeaderboard<TData = Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetLeaderboard401 | FactionWarsControllerGetLeaderboard403 | void | FactionWarsControllerGetLeaderboard429>>(
+ pathParams: FactionWarsControllerGetLeaderboardPathParameters,
+    params: FactionWarsControllerGetLeaderboardParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>,
+          TError,
+          Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFactionWarsControllerGetLeaderboard<TData = Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetLeaderboard401 | FactionWarsControllerGetLeaderboard403 | void | FactionWarsControllerGetLeaderboard429>>(
+ pathParams: FactionWarsControllerGetLeaderboardPathParameters,
+    params: FactionWarsControllerGetLeaderboardParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get faction war leaderboard
+ */
+
+export function useFactionWarsControllerGetLeaderboard<TData = Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetLeaderboard401 | FactionWarsControllerGetLeaderboard403 | void | FactionWarsControllerGetLeaderboard429>>(
+ { warId }: FactionWarsControllerGetLeaderboardPathParameters,
+    params: FactionWarsControllerGetLeaderboardParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getFactionWarsControllerGetLeaderboardQueryOptions({ warId },params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get faction war leaderboard
+ */
+export const prefetchFactionWarsControllerGetLeaderboardQuery = async <TData = Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetLeaderboard401 | FactionWarsControllerGetLeaderboard403 | void | FactionWarsControllerGetLeaderboard429>>(
+ queryClient: QueryClient, { warId }: FactionWarsControllerGetLeaderboardPathParameters,
+    params: FactionWarsControllerGetLeaderboardParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getFactionWarsControllerGetLeaderboardQueryOptions({ warId },params,options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useFactionWarsControllerGetLeaderboard} query
+ */
+export const invalidateFactionWarsControllerGetLeaderboard = async (
+ queryClient: QueryClient, { warId }: FactionWarsControllerGetLeaderboardPathParameters,
+    params: FactionWarsControllerGetLeaderboardParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getFactionWarsControllerGetLeaderboardQueryKey({ warId },params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get faction war leaderboard
+ */
+export const useSetFactionWarsControllerGetLeaderboardQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ warId }: FactionWarsControllerGetLeaderboardPathParameters,
+    params: FactionWarsControllerGetLeaderboardParams | undefined,updater: Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>> | undefined | ((old: Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>> | undefined) => Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>>({ exact: $exactMatch, queryKey: getFactionWarsControllerGetLeaderboardQueryKey({ warId },params) }, updater);
+  };
+}
+
+/**
+ * @summary Get faction war leaderboard
+ */
+export const useGetFactionWarsControllerGetLeaderboardQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ warId }: FactionWarsControllerGetLeaderboardPathParameters,
+    params: FactionWarsControllerGetLeaderboardParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof factionWarsControllerGetLeaderboard>>>(getFactionWarsControllerGetLeaderboardQueryKey({ warId },params));
+}
+
+
+
+export const getFactionWarsControllerGetChampionsUrl = () => {
+
+
+
+
+  return `/faction-wars/champions`
+}
+
+/**
+ * Characters of the last war's winners who show their highlight, for the Game client
+ * @summary Get faction war champions
+ */
+export const factionWarsControllerGetChampions = async ( options?: Parameters<typeof mainFetch>[1]): Promise<FactionWarChampionsResponseDto> => {
+
+  return mainFetch<FactionWarChampionsResponseDto>(getFactionWarsControllerGetChampionsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getFactionWarsControllerGetChampionsQueryKey = () => {
+    return [
+    `/faction-wars/champions`
+    ] as const;
+    }
+
+
+export const getFactionWarsControllerGetChampionsQueryOptions = <TData = Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getFactionWarsControllerGetChampionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>> = ({ signal }) => factionWarsControllerGetChampions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type FactionWarsControllerGetChampionsQueryResult = NonNullable<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>>
+export type FactionWarsControllerGetChampionsQueryError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>
+
+
+export function useFactionWarsControllerGetChampions<TData = Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof factionWarsControllerGetChampions>>,
+          TError,
+          Awaited<ReturnType<typeof factionWarsControllerGetChampions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFactionWarsControllerGetChampions<TData = Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof factionWarsControllerGetChampions>>,
+          TError,
+          Awaited<ReturnType<typeof factionWarsControllerGetChampions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFactionWarsControllerGetChampions<TData = Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get faction war champions
+ */
+
+export function useFactionWarsControllerGetChampions<TData = Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getFactionWarsControllerGetChampionsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get faction war champions
+ */
+export const prefetchFactionWarsControllerGetChampionsQuery = async <TData = Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getFactionWarsControllerGetChampionsQueryOptions(options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useFactionWarsControllerGetChampions} query
+ */
+export const invalidateFactionWarsControllerGetChampions = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getFactionWarsControllerGetChampionsQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get faction war champions
+ */
+export const useSetFactionWarsControllerGetChampionsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof factionWarsControllerGetChampions>> | undefined | ((old: Awaited<ReturnType<typeof factionWarsControllerGetChampions>> | undefined) => Awaited<ReturnType<typeof factionWarsControllerGetChampions>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>>({ exact: $exactMatch, queryKey: getFactionWarsControllerGetChampionsQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary Get faction war champions
+ */
+export const useGetFactionWarsControllerGetChampionsQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>>(getFactionWarsControllerGetChampionsQueryKey());
+}
+
+
+
+export const getFactionWarsControllerGetPublicCurrentWarUrl = () => {
+
+
+
+
+  return `/public/faction-wars/current`
+}
+
+/**
+ * Dates, rules and faction totals of the current faction war, without any player data
+ * @summary Get public faction war score
+ */
+export const factionWarsControllerGetPublicCurrentWar = async ( options?: Parameters<typeof mainFetch>[1]): Promise<PublicFactionWarResponseDto> => {
+
+  return mainFetch<PublicFactionWarResponseDto>(getFactionWarsControllerGetPublicCurrentWarUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getFactionWarsControllerGetPublicCurrentWarQueryKey = () => {
+    return [
+    `/public/faction-wars/current`
+    ] as const;
+    }
+
+
+export const getFactionWarsControllerGetPublicCurrentWarQueryOptions = <TData = Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetPublicCurrentWar401 | FactionWarsControllerGetPublicCurrentWar403 | void | FactionWarsControllerGetPublicCurrentWar429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getFactionWarsControllerGetPublicCurrentWarQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>> = ({ signal }) => factionWarsControllerGetPublicCurrentWar({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type FactionWarsControllerGetPublicCurrentWarQueryResult = NonNullable<Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>>
+export type FactionWarsControllerGetPublicCurrentWarQueryError = ErrorType<RequestValidationError | FactionWarsControllerGetPublicCurrentWar401 | FactionWarsControllerGetPublicCurrentWar403 | void | FactionWarsControllerGetPublicCurrentWar429>
+
+
+export function useFactionWarsControllerGetPublicCurrentWar<TData = Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetPublicCurrentWar401 | FactionWarsControllerGetPublicCurrentWar403 | void | FactionWarsControllerGetPublicCurrentWar429>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>,
+          TError,
+          Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFactionWarsControllerGetPublicCurrentWar<TData = Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetPublicCurrentWar401 | FactionWarsControllerGetPublicCurrentWar403 | void | FactionWarsControllerGetPublicCurrentWar429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>,
+          TError,
+          Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFactionWarsControllerGetPublicCurrentWar<TData = Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetPublicCurrentWar401 | FactionWarsControllerGetPublicCurrentWar403 | void | FactionWarsControllerGetPublicCurrentWar429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get public faction war score
+ */
+
+export function useFactionWarsControllerGetPublicCurrentWar<TData = Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetPublicCurrentWar401 | FactionWarsControllerGetPublicCurrentWar403 | void | FactionWarsControllerGetPublicCurrentWar429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getFactionWarsControllerGetPublicCurrentWarQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get public faction war score
+ */
+export const prefetchFactionWarsControllerGetPublicCurrentWarQuery = async <TData = Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetPublicCurrentWar401 | FactionWarsControllerGetPublicCurrentWar403 | void | FactionWarsControllerGetPublicCurrentWar429>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getFactionWarsControllerGetPublicCurrentWarQueryOptions(options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useFactionWarsControllerGetPublicCurrentWar} query
+ */
+export const invalidateFactionWarsControllerGetPublicCurrentWar = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getFactionWarsControllerGetPublicCurrentWarQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get public faction war score
+ */
+export const useSetFactionWarsControllerGetPublicCurrentWarQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>> | undefined | ((old: Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>> | undefined) => Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>>({ exact: $exactMatch, queryKey: getFactionWarsControllerGetPublicCurrentWarQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary Get public faction war score
+ */
+export const useGetFactionWarsControllerGetPublicCurrentWarQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof factionWarsControllerGetPublicCurrentWar>>>(getFactionWarsControllerGetPublicCurrentWarQueryKey());
 }
