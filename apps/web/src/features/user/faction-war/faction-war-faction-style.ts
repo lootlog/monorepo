@@ -7,6 +7,8 @@ export const FACTION_WAR_STYLE: Record<
   {
     /** A bar, swatch or other fill. */
     fill: string;
+    /** A border in the faction's colour. */
+    border: string;
     /** Text on the page's own surfaces. */
     text: string;
     /** Text over the war art. */
@@ -17,12 +19,14 @@ export const FACTION_WAR_STYLE: Record<
 > = {
   BARBATOS: {
     fill: "bg-(--faction-barbatos)",
+    border: "border-(--faction-barbatos)",
     text: "text-(--faction-barbatos-text)",
     textOnArt: "text-(--faction-barbatos-on-art)",
     color: "var(--faction-barbatos)",
   },
   TANROTH: {
     fill: "bg-(--faction-tanroth)",
+    border: "border-(--faction-tanroth)",
     text: "text-(--faction-tanroth-text)",
     textOnArt: "text-(--faction-tanroth-on-art)",
     color: "var(--faction-tanroth)",
