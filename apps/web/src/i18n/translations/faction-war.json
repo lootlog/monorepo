@@ -1,0 +1,119 @@
+{
+  "factions": {
+    "BARBATOS": "Barbatos",
+    "TANROTH": "Tanroth"
+  },
+  "factionsGenitive": {
+    "BARBATOS": "Barbatosa",
+    "TANROTH": "Tanrotha"
+  },
+  "sources": {
+    "KILL": "Zabicia",
+    "LOOT": "Łupy",
+    "ONLINE": "Czas gry",
+    "PVP": "Wygrane PvP"
+  },
+  "tabs": {
+    "label": "Sekcje wojny frakcji",
+    "overview": "Przegląd",
+    "ranking": "Ranking"
+  },
+  "hero": {
+    "eyebrow": "Wojna frakcji",
+    "title": "{{left}} kontra {{right}}",
+    "dates": "{{start}} – {{end}} (czas polski)",
+    "pointsUnit": "pkt",
+    "players_one": "{{count}} gracz",
+    "players_few": "{{count}} graczy",
+    "players_many": "{{count}} graczy",
+    "players_other": "{{count}} gracza",
+    "rawPoints": "{{points}} pkt zdobytych przez graczy",
+    "bonus": "Bonus {{multiplier}} — przewaga liczebna {{opponent}}",
+    "winner": "Zwycięzca",
+    "share": "{{faction}}: {{share}} wyniku"
+  },
+  "status": {
+    "UPCOMING": "Start za {{remaining}}",
+    "UPCOMINGSoon": "Start za chwilę",
+    "RUNNING": "Koniec za {{remaining}}",
+    "RUNNINGSoon": "Kończy się za chwilę",
+    "winner": "Zakończona — wygrywa {{faction}}",
+    "tie": "Zakończona remisem — wygrywają obie frakcje",
+    "none": "Zakończona — bez zwycięzcy, żadna frakcja nie zdobyła punktów"
+  },
+  "contribution": {
+    "title": "Twój wkład",
+    "faction": "Twoja frakcja",
+    "points": "Twoje punkty",
+    "pickedAt": "Dołączono {{date}}",
+    "today": "Dzisiaj",
+    "todayDetail": "Limity odnawiają się o północy",
+    "ofCap": "{{points}} / {{cap}} pkt",
+    "capReached": "Limit {{cap}} pkt osiągnięty",
+    "noPick": {
+      "UPCOMING": {
+        "title": "Wojna jeszcze się nie zaczęła",
+        "description": "Gdy wystartuje, wybierzesz frakcję w dodatku Lootlog w grze. Wybór jest ostateczny do końca wojny."
+      },
+      "RUNNING": {
+        "title": "Nie wybrano frakcji",
+        "description": "Frakcję wybierasz w dodatku Lootlog w grze. Wybór jest ostateczny do końca wojny, a punkty zbierasz od tej chwili automatycznie."
+      },
+      "ENDED": {
+        "title": "Nie brałeś udziału w tej wojnie",
+        "description": "Frakcję w kolejnej wojnie wybierzesz w dodatku Lootlog w grze."
+      }
+    }
+  },
+  "chart": {
+    "title": "Wynik dzień po dniu",
+    "description": "Punkty frakcji w danym dniu razem z bonusem za przewagę liczebną przeciwnika.",
+    "empty": "Żadna frakcja nie zdobyła jeszcze punktów"
+  },
+  "ranking": {
+    "factionLabel": "Frakcja",
+    "rank": "Miejsce",
+    "player": "Postać",
+    "world": "Świat",
+    "points": "Punkty",
+    "hiddenPlayer": "Ukryty gracz",
+    "you": "Ty",
+    "empty": "Nikt z frakcji {{faction}} nie ma jeszcze punktów",
+    "error": "Nie udało się wczytać rankingu"
+  },
+  "privacy": {
+    "title": "Prywatność",
+    "hidden": "Ukryj mnie w rankingu",
+    "hiddenDescription": "Zachowujesz swoje miejsce, ale inni zobaczą „Ukryty gracz” zamiast nazwy postaci i świata.",
+    "highlight": "Pokazuj moją poświatę zwycięzcy w grze",
+    "highlightDescription": "Poświata i oznaczenie przy nicku zwycięskiej frakcji, widoczne do końca następnej wojny.",
+    "saveError": "Nie udało się zapisać ustawienia. Spróbuj ponownie."
+  },
+  "rules": {
+    "title": "Zasady",
+    "description": "Punkty zdobywasz automatycznie, grając z włączonym dodatkiem Lootlog. Każde źródło ma dzienny limit.",
+    "points_one": "{{count}} pkt",
+    "points_few": "{{count}} pkt",
+    "points_many": "{{count}} pkt",
+    "points_other": "{{count}} pkt",
+    "onlineRow": "Każde {{minutes}} min aktywnej gry",
+    "pvpRow": "Wygrana walka PvP",
+    "dailyCap_one": "Limit dzienny: {{count}} pkt",
+    "dailyCap_few": "Limit dzienny: {{count}} pkt",
+    "dailyCap_many": "Limit dzienny: {{count}} pkt",
+    "dailyCap_other": "Limit dzienny: {{count}} pkt",
+    "pick": "Frakcję wybierasz raz, w dodatku Lootlog w grze. Wyboru nie można zmienić do końca wojny.",
+    "days": "Dni liczą się według czasu polskiego — dzienne limity odnawiają się o północy.",
+    "underdog": "Każdego dnia frakcja z mniejszą liczbą aktywnych graczy (z co najmniej 1 punktem tego dnia) dostaje mnożnik równy stosunkowi aktywnych graczy obu frakcji, najwyżej {{cap}}. Mnożnik zmienia tylko wynik wojny — Twoje punkty i ranking graczy liczą się bez niego.",
+    "winner": "Wygrywa frakcja z wyższym wynikiem. Przy remisie wygrywają obie, a gdy żadna nie zdobyła punktów — nie wygrywa nikt.",
+    "reward": "Gracze zwycięskiej frakcji dostają w grze poświatę i oznaczenie przy nicku do końca następnej wojny. Możesz je wyłączyć w ustawieniach prywatności."
+  },
+  "empty": {
+    "title": "Brak wojny frakcji",
+    "description": "Gdy ogłosimy kolejną wojnę, zobaczysz ją tutaj."
+  },
+  "error": {
+    "title": "Nie udało się wczytać wojny frakcji",
+    "description": "Sprawdź połączenie i spróbuj ponownie."
+  }
+}
