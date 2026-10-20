@@ -66,9 +66,11 @@ export const FACTION_WARS: readonly FactionWar[] = [
         TITAN: 40,
       },
       lootPoints: { UNIQUE: 2, HEROIC: 10, LEGENDARY: 50 },
-      onlineSecondsPerPoint: 600,
+      onlineSecondsPerPoint: 300,
       pvpWinPoints: 5,
-      dailyCaps: { KILL: 300, LOOT: 150, ONLINE: 30, PVP: 50 },
+      // About the 99th percentile of a player's day on production in
+      // Sep–Oct 2026: only bots and all-day farming reach them.
+      dailyCaps: { KILL: 2000, LOOT: 1400, ONLINE: 200, PVP: 750 },
       underdogBonusCap: 2,
     },
   },

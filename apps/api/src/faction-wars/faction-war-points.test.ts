@@ -84,7 +84,8 @@ describe("faction war points", () => {
           ),
         );
 
-      for (let titan = 0; titan < 9; titan += 1) await kill("discord-user-1");
+      // 51 titans are worth 2040 points, past the daily cap.
+      for (let titan = 0; titan < 51; titan += 1) await kill("discord-user-1");
       await kill("discord-user-2");
 
       expect(await pointsOf("user-1", "KILL")).toEqual([
@@ -136,7 +137,7 @@ describe("faction war points", () => {
         checkpoint("tab-1", "2026-10-21T08:00:00Z", "2026-10-21T08:30:00Z"),
       );
 
-      expect(await pointsOf("user-1", "ONLINE")).toEqual([5]);
+      expect(await pointsOf("user-1", "ONLINE")).toEqual([10]);
     });
   });
 
@@ -163,7 +164,7 @@ describe("faction war points", () => {
         }),
       );
 
-      expect(await pointsOf("user-2", "ONLINE")).toEqual([3]);
+      expect(await pointsOf("user-2", "ONLINE")).toEqual([6]);
     });
   });
 });
