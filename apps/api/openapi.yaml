@@ -17347,14 +17347,21 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Top players of one faction; players who hid themselves keep their rank without a name
+      description: Top players of one faction; players who hid themselves keep their rank without a name, which only war admins still see
       summary: Get faction war leaderboard
   /faction-wars/champions:
     get:
       tags:
         - faction-wars
       operationId: FactionWarsController_getChampions
-      parameters: []
+      parameters:
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+          required: true
       security:
         - bearer: []
       responses:
@@ -17408,8 +17415,233 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Characters of the last war's winners who show their highlight, for the Game client
+      description: Characters on one world of the last war's winners who show their highlight, for the Game client
       summary: Get faction war champions
+  /faction-wars/{warId}/disqualifications:
+    get:
+      tags:
+        - faction-wars
+      operationId: FactionWarsController_getDisqualifications
+      parameters:
+        - name: warId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FactionWarDisqualificationDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: "War admins only: the players excluded from a war, with the reason"
+      summary: List disqualified faction war players
+  /faction-wars/{warId}/disqualifications/{userId}:
+    put:
+      tags:
+        - faction-wars
+      operationId: FactionWarsController_disqualifyPlayer
+      parameters:
+        - name: warId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: userId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FactionWarDisqualificationDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: "War admins only: the player's points stop counting for their faction, they leave the leaderboard and champions, and they earn nothing more"
+      summary: Disqualify a faction war player
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DisqualifyFactionWarPlayerDto"
+        required: true
+    delete:
+      tags:
+        - faction-wars
+      operationId: FactionWarsController_restorePlayer
+      parameters:
+        - name: warId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: userId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FactionWarDisqualificationDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: "War admins only: lifts a disqualification; points earned before it count again"
+      summary: Restore a disqualified faction war player
   /public/faction-wars/current:
     get:
       tags:
@@ -17651,6 +17883,45 @@ components:
         - code
         - requiresReauth
       additionalProperties: false
+    FactionWarDisqualificationDto:
+      type: object
+      properties:
+        userId:
+          type: string
+        faction:
+          type: string
+          enum:
+            - BARBATOS
+            - TANROTH
+        characterName:
+          type: string
+        world:
+          type: string
+        disqualifiedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        reason:
+          nullable: true
+          type: string
+      required:
+        - userId
+        - faction
+        - characterName
+        - world
+        - disqualifiedAt
+        - reason
+      additionalProperties: false
+    DisqualifyFactionWarPlayerDto:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required:
+        - reason
+      additionalProperties: false
     FactionWarChampionsResponseDto:
       type: object
       properties:
@@ -17716,12 +17987,16 @@ components:
           maximum: 9007199254740991
         isMe:
           type: boolean
+        userId:
+          nullable: true
+          type: string
       required:
         - rank
         - characterName
         - world
         - points
         - isMe
+        - userId
       additionalProperties: false
     FactionWarResponseDto:
       type: object
@@ -17765,6 +18040,8 @@ components:
         champion:
           nullable: true
           $ref: "#/components/schemas/FactionWarChampionDto"
+        isAdmin:
+          type: boolean
       required:
         - id
         - status
@@ -17776,6 +18053,7 @@ components:
         - days
         - pick
         - champion
+        - isAdmin
       additionalProperties: false
     FactionWarChampionDto:
       type: object
@@ -17817,6 +18095,8 @@ components:
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         hiddenFromLeaderboard:
           type: boolean
+        disqualified:
+          type: boolean
         points:
           type: integer
           minimum: 0
@@ -17852,6 +18132,7 @@ components:
         - world
         - pickedAt
         - hiddenFromLeaderboard
+        - disqualified
         - points
         - todayBySource
       additionalProperties: false
@@ -20291,8 +20572,26 @@ components:
           type: number
         deduplicated:
           type: boolean
+        factionWar:
+          $ref: "#/components/schemas/FactionWarAwardDto"
       required:
         - updated
+      additionalProperties: false
+    FactionWarAwardDto:
+      type: object
+      properties:
+        faction:
+          type: string
+          enum:
+            - BARBATOS
+            - TANROTH
+        points:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+      required:
+        - faction
+        - points
       additionalProperties: false
     CreateKillDto:
       type: object
@@ -24999,6 +25298,7 @@ components:
                 - NPC_SPAWNED
                 - WATCHED_ITEM_DROPPED
                 - SCHEDULED_MESSAGE
+                - FACTION_WAR
             guildId:
               nullable: true
               type: string
@@ -25363,6 +25663,7 @@ components:
                       - NPC_SPAWNED
                       - WATCHED_ITEM_DROPPED
                       - SCHEDULED_MESSAGE
+                      - FACTION_WAR
                   world:
                     nullable: true
                     type: string
@@ -25467,6 +25768,7 @@ components:
                       - NPC_SPAWNED
                       - WATCHED_ITEM_DROPPED
                       - SCHEDULED_MESSAGE
+                      - FACTION_WAR
                   guildId:
                     nullable: true
                     type: string
@@ -25813,6 +26115,7 @@ components:
                       - NPC_SPAWNED
                       - WATCHED_ITEM_DROPPED
                       - SCHEDULED_MESSAGE
+                      - FACTION_WAR
                   world:
                     nullable: true
                     type: string
@@ -25917,6 +26220,7 @@ components:
                       - NPC_SPAWNED
                       - WATCHED_ITEM_DROPPED
                       - SCHEDULED_MESSAGE
+                      - FACTION_WAR
                   guildId:
                     nullable: true
                     type: string
@@ -26285,6 +26589,7 @@ components:
             - NPC_SPAWNED
             - WATCHED_ITEM_DROPPED
             - SCHEDULED_MESSAGE
+            - FACTION_WAR
         targetIds:
           type: array
           items:
@@ -26390,6 +26695,7 @@ components:
             - NPC_SPAWNED
             - WATCHED_ITEM_DROPPED
             - SCHEDULED_MESSAGE
+            - FACTION_WAR
         targetIds:
           type: array
           items:
@@ -26657,6 +26963,7 @@ components:
             - NPC_SPAWNED
             - WATCHED_ITEM_DROPPED
             - SCHEDULED_MESSAGE
+            - FACTION_WAR
         guildId:
           nullable: true
           type: string
@@ -26926,6 +27233,7 @@ components:
                   - NPC_SPAWNED
                   - WATCHED_ITEM_DROPPED
                   - SCHEDULED_MESSAGE
+                  - FACTION_WAR
               guildId:
                 nullable: true
                 type: string
@@ -29026,6 +29334,8 @@ components:
               - guildName
               - reason
             additionalProperties: false
+        factionWar:
+          $ref: "#/components/schemas/FactionWarAwardDto"
       required:
         - id
         - submittedGuilds

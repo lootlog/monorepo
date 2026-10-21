@@ -9,6 +9,7 @@ import {
 import {
   factionWarDailyPointsTable,
   factionWarPickTable,
+  userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import { makeFactionWarPoints } from "./faction-war-points.js";
@@ -84,10 +85,14 @@ describe("faction war points", () => {
           ),
         );
 
-      // 51 titans are worth 2040 points, past the daily cap.
-      for (let titan = 0; titan < 51; titan += 1) await kill("discord-user-1");
-      await kill("discord-user-2");
+      // 50 titans reach 2000 points, the daily cap; the 51st adds nothing.
+      for (let titan = 0; titan < 50; titan += 1) await kill("discord-user-1");
 
+      expect(await kill("discord-user-1")).toEqual({
+        faction: "BARBATOS",
+        points: 0,
+      });
+      expect(await kill("discord-user-2")).toBeNull();
       expect(await pointsOf("user-1", "KILL")).toEqual([
         war.scoring.dailyCaps.KILL,
       ]);
@@ -95,16 +100,61 @@ describe("faction war points", () => {
     });
   });
 
-  it("counts a retried loot submission once", async () => {
+  it("pays a loot once to the submitter and once to each party member with Lootlog", async () => {
     await withPoints(async ({ boundary, points, pointsOf }) => {
       await boundary.run(
-        points.awardLoot("discord-user-1", 42, ["LEGENDARY", "UNIQUE"]),
-      );
-      await boundary.run(
-        points.awardLoot("discord-user-1", 42, ["LEGENDARY", "UNIQUE"]),
+        Effect.all([
+          boundary.database.insert(factionWarPickTable).values(pick("user-2")),
+          boundary.database.insert(userCharactersLootlogSettingsTable).values({
+            userId: "discord-user-2",
+            accountId: "77",
+            characterId: "7001",
+            updatedAt: new Date("2026-01-01T00:00:00Z"),
+          }),
+        ]),
       );
 
+      const loot = points.awardLoot({
+        submitterDiscordId: "discord-user-1",
+        lootId: 42,
+        rarities: ["LEGENDARY", "UNIQUE"],
+        party: [
+          { accountId: "77", characterId: "7001" },
+          { accountId: "88", characterId: "8001" },
+        ],
+      });
+
+      expect(await boundary.run(loot)).toEqual({
+        faction: "BARBATOS",
+        points: 52,
+      });
+      // A retry, or another member submitting the same loot, pays nobody again.
+      await boundary.run(loot);
+
       expect(await pointsOf("user-1", "LOOT")).toEqual([52]);
+      expect(await pointsOf("user-2", "LOOT")).toEqual([52]);
+    });
+  });
+
+  it("stops paying a disqualified pick", async () => {
+    await withPoints(async ({ boundary, points, pointsOf }) => {
+      await boundary.run(
+        boundary.database
+          .update(factionWarPickTable)
+          .set({ disqualifiedAt: new Date("2026-10-21T09:00:00Z") })
+          .where(eq(factionWarPickTable.userId, "user-1")),
+      );
+
+      expect(
+        await boundary.run(
+          points.awardPvpWin(
+            "user-1",
+            "battle-1",
+            new Date("2026-10-21T10:00:00Z"),
+          ),
+        ),
+      ).toBeNull();
+      expect(await pointsOf("user-1", "PVP")).toEqual([]);
     });
   });
 

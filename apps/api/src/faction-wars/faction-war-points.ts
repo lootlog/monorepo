@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import {
   FACTION_WARS,
@@ -9,6 +9,7 @@ import {
   factionWarOnlinePoints,
   findRunningFactionWar,
   type FactionWar,
+  type FactionWarFaction,
   type FactionWarPointSource,
 } from "@lootlog/domain/faction-war";
 import type { UserOnlineCheckpointV1 } from "@lootlog/protocol/rabbit/events";
@@ -18,6 +19,7 @@ import {
   factionWarDailyPointsTable,
   factionWarOnlineSegmentTable,
   factionWarPickTable,
+  userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
 
 type Database = typeof ApiDatabase.Service;
@@ -29,6 +31,12 @@ export type FactionWarTransaction = Parameters<
 type Transaction = FactionWarTransaction;
 
 type Picker = { readonly discordId: string } | { readonly userId: string };
+
+/** What one award added, for feedback to the player who earned it. */
+export type FactionWarAward = {
+  readonly faction: FactionWarFaction;
+  readonly points: number;
+};
 
 const DAY_MS = 86_400_000;
 
@@ -56,6 +64,7 @@ export const makeFactionWarPoints = (
     executor
       .select({
         userId: factionWarPickTable.userId,
+        faction: factionWarPickTable.faction,
         pickedAt: factionWarPickTable.pickedAt,
       })
       .from(factionWarPickTable)
@@ -65,29 +74,51 @@ export const makeFactionWarPoints = (
           "discordId" in picker
             ? eq(factionWarPickTable.discordId, picker.discordId)
             : eq(factionWarPickTable.userId, picker.userId),
+          // A disqualified pick earns nothing more.
+          isNull(factionWarPickTable.disqualifiedAt),
         ),
       )
       .limit(1)
       .pipe(Effect.map((rows) => rows[0]));
 
-  const addCapped = (
+  /** Adds up to the day's cap and returns how many points it really added. */
+  const addCapped = Effect.fn("FactionWarPoints.addCapped")(function* (
     transaction: Transaction,
     war: FactionWar,
     userId: string,
     source: FactionWarPointSource,
     at: Date,
     points: number,
-  ) => {
+  ) {
     const cap = war.scoring.dailyCaps[source];
+    const day = factionWarDay(at);
 
-    return transaction
+    const [current] = yield* transaction
+      .select({ points: factionWarDailyPointsTable.points })
+      .from(factionWarDailyPointsTable)
+      .where(
+        and(
+          eq(factionWarDailyPointsTable.warId, war.id),
+          eq(factionWarDailyPointsTable.userId, userId),
+          eq(factionWarDailyPointsTable.day, day),
+          eq(factionWarDailyPointsTable.source, source),
+        ),
+      )
+      .limit(1);
+
+    const added = Math.max(0, Math.min(points, cap - (current?.points ?? 0)));
+
+    if (added === 0) return 0;
+
+    // LEAST keeps the cap even if a concurrent award raced the read above.
+    yield* transaction
       .insert(factionWarDailyPointsTable)
       .values({
         warId: war.id,
         userId,
-        day: factionWarDay(at),
+        day,
         source,
-        points: Math.min(cap, points),
+        points: added,
         updatedAt: at,
       })
       .onConflictDoUpdate({
@@ -98,11 +129,13 @@ export const makeFactionWarPoints = (
           factionWarDailyPointsTable.source,
         ],
         set: {
-          points: sql`LEAST(${cap}, ${factionWarDailyPointsTable.points} + ${points})`,
+          points: sql`LEAST(${cap}, ${factionWarDailyPointsTable.points} + ${added})`,
           updatedAt: at,
         },
       });
-  };
+
+    return added;
+  });
 
   type AwardOptions = {
     readonly picker: Picker;
@@ -113,20 +146,21 @@ export const makeFactionWarPoints = (
     readonly points: (war: FactionWar) => number;
   };
 
+  /** The points the award really added for the picker's faction, if any. */
   const awardIn = Effect.fn("FactionWarPoints.awardIn")(function* (
     transaction: Transaction,
     options: AwardOptions,
   ) {
     const war = findRunningFactionWar(options.at.getTime(), wars);
 
-    if (!war) return;
+    if (!war) return null;
     const points = options.points(war);
 
-    if (points <= 0) return;
+    if (points <= 0) return null;
     const pick = yield* findPick(transaction, war, options.picker);
 
     // Play before the pick never counts, however late its fact arrives.
-    if (!pick || options.at < pick.pickedAt) return;
+    if (!pick || options.at < pick.pickedAt) return null;
 
     if (options.sourceKey !== undefined) {
       const claimed = yield* transaction
@@ -141,10 +175,10 @@ export const makeFactionWarPoints = (
         .onConflictDoNothing()
         .returning({ userId: factionWarAwardTable.userId });
 
-      if (claimed.length === 0) return;
+      if (claimed.length === 0) return null;
     }
 
-    yield* addCapped(
+    const added = yield* addCapped(
       transaction,
       war,
       pick.userId,
@@ -152,6 +186,8 @@ export const makeFactionWarPoints = (
       options.at,
       points,
     );
+
+    return { faction: pick.faction, points: added };
   });
 
   const award = (options: AwardOptions) =>
@@ -175,18 +211,67 @@ export const makeFactionWarPoints = (
       points: (war) => factionWarKillPoints(war, kill.npcType),
     });
 
-  const awardLoot = Effect.fn("FactionWarPoints.awardLoot")(function* (
-    discordId: string,
-    lootId: number,
-    rarities: readonly string[],
-  ) {
-    yield* award({
-      picker: { discordId },
-      source: "LOOT",
-      at: yield* now,
-      sourceKey: String(lootId),
-      points: (war) => factionWarLootPoints(war, rarities),
-    });
+  /**
+   * Pays the loot to the submitter and to every party member whose character
+   * a Lootlog User registered, each once per loot, as kills pay the party.
+   * Returns the submitter's award.
+   */
+  const awardLoot = Effect.fn("FactionWarPoints.awardLoot")(function* (loot: {
+    readonly submitterDiscordId: string;
+    readonly lootId: number;
+    readonly rarities: readonly string[];
+    readonly party: ReadonlyArray<{
+      readonly accountId: string;
+      readonly characterId: string;
+    }>;
+  }) {
+    const at = yield* now;
+
+    const partyDiscordIds =
+      loot.party.length === 0
+        ? []
+        : yield* database
+            .selectDistinct({
+              discordId: userCharactersLootlogSettingsTable.userId,
+            })
+            .from(userCharactersLootlogSettingsTable)
+            .where(
+              or(
+                ...loot.party.map((member) =>
+                  and(
+                    eq(
+                      userCharactersLootlogSettingsTable.accountId,
+                      member.accountId,
+                    ),
+                    eq(
+                      userCharactersLootlogSettingsTable.characterId,
+                      member.characterId,
+                    ),
+                  ),
+                ),
+              ),
+            );
+
+    const discordIds = new Set([
+      loot.submitterDiscordId,
+      ...partyDiscordIds.map((row) => row.discordId),
+    ]);
+
+    let submitterAward: FactionWarAward | null = null;
+
+    for (const discordId of discordIds) {
+      const awarded = yield* award({
+        picker: { discordId },
+        source: "LOOT",
+        at,
+        sourceKey: String(loot.lootId),
+        points: (war) => factionWarLootPoints(war, loot.rarities),
+      });
+
+      if (discordId === loot.submitterDiscordId) submitterAward = awarded;
+    }
+
+    return submitterAward;
   });
 
   const awardPvpWin = (userId: string, battleId: string, wonAt: Date) =>

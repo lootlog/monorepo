@@ -1,10 +1,11 @@
+ALTER TYPE "NotificationTriggerType" ADD VALUE 'FACTION_WAR';--> statement-breakpoint
 CREATE TABLE "FactionWarAward" (
 	"warId" text,
 	"source" text,
 	"sourceKey" text,
-	"userId" text NOT NULL,
+	"userId" text,
 	"awardedAt" timestamp(3) NOT NULL,
-	CONSTRAINT "FactionWarAward_pkey" PRIMARY KEY("warId","source","sourceKey")
+	CONSTRAINT "FactionWarAward_pkey" PRIMARY KEY("warId","source","sourceKey","userId")
 );
 --> statement-breakpoint
 CREATE TABLE "FactionWarCursor" (
@@ -50,6 +51,8 @@ CREATE TABLE "FactionWarPick" (
 	"hiddenFromLeaderboard" boolean DEFAULT false NOT NULL,
 	"championHighlightHidden" boolean DEFAULT false NOT NULL,
 	"pickedAt" timestamp(3) NOT NULL,
+	"disqualifiedAt" timestamp(3),
+	"disqualificationReason" text,
 	CONSTRAINT "FactionWarPick_pkey" PRIMARY KEY("warId","userId")
 );
 --> statement-breakpoint

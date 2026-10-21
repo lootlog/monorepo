@@ -1,6 +1,7 @@
 import { ReadyRoomData } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
 import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";
 import {
+  Clock,
   Effect,
   FiberSet,
   Layer,
@@ -31,6 +32,7 @@ import {
 } from "#src/members/member-refresh-queue";
 import { makeMemberRefreshProcessor } from "#src/members/member-refresh.processor";
 import { makeMemberBulkRefreshProcessor } from "#src/members/member-bulk-refresh.processor";
+import { makeFactionWarAnnouncements } from "#src/notifications/faction-war/faction-war-announcements";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/jobs/dispatch-queue";
 import { makeNotificationDispatchProcessor } from "#src/notifications/delivery/notifications-dispatch.processor";
 import { makeNotificationGuildLookup } from "#src/notifications/delivery/notification-guild-lookup";
@@ -386,6 +388,25 @@ export const ScheduledJobs = Layer.effectDiscard(
         "* * * * *",
       );
     }
+
+    const { scheduler } = yield* NotificationsServices;
+
+    const announceFactionWars = makeFactionWarAnnouncements({
+      database,
+      scheduler,
+      webAppUrl: config.webAppUrl,
+    });
+
+    // Every replica runs it; job idempotency keys send each one once.
+    yield* forkCronTask(
+      Clock.currentTimeMillis.pipe(
+        Effect.flatMap(announceFactionWars),
+        Effect.catch((error) =>
+          Effect.logError("Faction war announcements failed", error),
+        ),
+      ),
+      "*/5 * * * *",
+    );
 
     yield* forkCronTask(cleanupTimers, "0 3 * * *");
     yield* forkCronTask(cleanupReservations, "0 4 * * *");

@@ -7,7 +7,11 @@ import {
 } from "effect/http-api";
 import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
+  DisqualifyFactionWarPlayerRequest,
+  FactionWarChampionsQuery,
   FactionWarChampionsResponse,
+  FactionWarDisqualificationParams,
+  FactionWarDisqualificationsResponse,
   FactionWarLeaderboardQuery,
   FactionWarLeaderboardResponse,
   FactionWarParams,
@@ -85,19 +89,68 @@ export class FactionWarsGroup extends HttpApiGroup.make("faction-wars").add(
     .annotate(OpenApi.Summary, "Get faction war leaderboard")
     .annotate(
       OpenApi.Description,
-      "Top players of one faction; players who hid themselves keep their rank without a name",
+      "Top players of one faction; players who hid themselves keep their rank without a name, which only war admins still see",
     ),
   HttpApiEndpoint.get(
     "FactionWarsControllerGetChampions",
     "/faction-wars/champions",
-    { success: FactionWarChampionsResponse },
+    { query: FactionWarChampionsQuery, success: FactionWarChampionsResponse },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "FactionWarsController_getChampions")
     .annotate(OpenApi.Summary, "Get faction war champions")
     .annotate(
       OpenApi.Description,
-      "Characters of the last war's winners who show their highlight, for the Game client",
+      "Characters on one world of the last war's winners who show their highlight, for the Game client",
+    ),
+  HttpApiEndpoint.get(
+    "FactionWarsControllerGetDisqualifications",
+    "/faction-wars/:warId/disqualifications",
+    {
+      params: FactionWarParams,
+      success: FactionWarDisqualificationsResponse,
+      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "FactionWarsController_getDisqualifications")
+    .annotate(OpenApi.Summary, "List disqualified faction war players")
+    .annotate(
+      OpenApi.Description,
+      "War admins only: the players excluded from a war, with the reason",
+    ),
+  HttpApiEndpoint.put(
+    "FactionWarsControllerDisqualifyPlayer",
+    "/faction-wars/:warId/disqualifications/:userId",
+    {
+      params: FactionWarDisqualificationParams,
+      payload: DisqualifyFactionWarPlayerRequest,
+      success: FactionWarDisqualificationsResponse,
+      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "FactionWarsController_disqualifyPlayer")
+    .annotate(OpenApi.Summary, "Disqualify a faction war player")
+    .annotate(
+      OpenApi.Description,
+      "War admins only: the player's points stop counting for their faction, they leave the leaderboard and champions, and they earn nothing more",
+    ),
+  HttpApiEndpoint.delete(
+    "FactionWarsControllerRestorePlayer",
+    "/faction-wars/:warId/disqualifications/:userId",
+    {
+      params: FactionWarDisqualificationParams,
+      success: FactionWarDisqualificationsResponse,
+      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "FactionWarsController_restorePlayer")
+    .annotate(OpenApi.Summary, "Restore a disqualified faction war player")
+    .annotate(
+      OpenApi.Description,
+      "War admins only: lifts a disqualification; points earned before it count again",
     ),
   HttpApiEndpoint.get(
     "FactionWarsControllerGetPublicCurrentWar",

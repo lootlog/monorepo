@@ -25,7 +25,10 @@ import {
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import { getStableNpcId } from "#src/shared/margonem/stable-npc-id";
 import type { CreateKillRequest } from "#src/contracts/kills/schemas";
-import type { FactionWarTransaction } from "#src/faction-wars/faction-war-points";
+import type {
+  FactionWarAward,
+  FactionWarTransaction,
+} from "#src/faction-wars/faction-war-points";
 import {
   buildGuildKillDedupKey,
   buildMemberKillDedupKey,
@@ -67,6 +70,9 @@ type KillInput = {
   readonly lastKilledAt: Date;
 };
 
+/** The faction war points a kill earned, set inside the User's kill write. */
+type KillFactionWarAward = { award: FactionWarAward | null };
+
 type CharacterInput = {
   readonly characterId: string;
   readonly name: string | null;
@@ -89,7 +95,8 @@ export const makeKillCreation = (
   awardFactionWarKill: (
     transaction: FactionWarTransaction,
     kill: { discordId: string; npcType: NpcType; killedAt: Date },
-  ) => Effect.Effect<void, unknown> = () => Effect.void,
+  ) => Effect.Effect<FactionWarAward | null, unknown> = () =>
+    Effect.succeed(null),
 ) => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -259,13 +266,16 @@ export const makeKillCreation = (
                     ? characterCount
                     : { ...characterCount, ...characterDetails },
               }),
+          ],
+          { discard: true },
+        ).pipe(
+          Effect.andThen(
             awardFactionWarKill(transaction, {
               discordId: input.userId,
               npcType: input.npcType,
               killedAt: input.lastKilledAt,
             }),
-          ],
-          { discard: true },
+          ),
         ),
       ),
     );
@@ -436,6 +446,14 @@ export const makeKillCreation = (
     const apiKey = yield* requestApiKeyAccess;
     let personalUpdated = false;
 
+    // Filled inside the User's kill transaction; read once the kill is done.
+    const factionWar: KillFactionWarAward = { award: null };
+
+    const withFactionWar = <Response extends object>(response: Response) =>
+      factionWar.award && factionWar.award.points > 0
+        ? { ...response, factionWar: factionWar.award }
+        : response;
+
     if (!apiKey || apiKey.personalData) {
       personalUpdated = yield* writeOnce(
         userDedupKey,
@@ -450,6 +468,10 @@ export const makeKillCreation = (
             icon: data.character?.icon ?? null,
           },
           periodStart,
+        ).pipe(
+          Effect.map((award) => {
+            factionWar.award = award;
+          }),
         ),
       ).pipe(
         Effect.catch((error) =>
@@ -514,7 +536,7 @@ export const makeKillCreation = (
 
     if (guildIds.length === 0)
       return personalUpdated
-        ? { updated: 0 }
+        ? withFactionWar({ updated: 0 })
         : { deduplicated: true, updated: 0 };
 
     const members = yield* protect(
@@ -603,6 +625,6 @@ export const makeKillCreation = (
 
     return !personalUpdated && updated === 0
       ? { deduplicated: true, updated: 0 }
-      : { updated };
+      : withFactionWar({ updated });
   });
 };

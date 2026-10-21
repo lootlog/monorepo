@@ -160,6 +160,33 @@ export interface ReauthenticationRequiredEncoded {
   requiresReauth: true;
 }
 
+export type FactionWarDisqualificationDtoFaction = typeof FactionWarDisqualificationDtoFaction[keyof typeof FactionWarDisqualificationDtoFaction];
+
+
+export const FactionWarDisqualificationDtoFaction = {
+  BARBATOS: 'BARBATOS',
+  TANROTH: 'TANROTH',
+} as const;
+
+export interface FactionWarDisqualificationDto {
+  userId: string;
+  faction: FactionWarDisqualificationDtoFaction;
+  characterName: string;
+  world: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  disqualifiedAt: string;
+  /** @nullable */
+  reason: string | null;
+}
+
+export interface DisqualifyFactionWarPlayerDto {
+  /**
+     * @minLength 1
+     * @maxLength 500
+     */
+  reason: string;
+}
+
 export type FactionWarChampionGroupDtoFaction = typeof FactionWarChampionGroupDtoFaction[keyof typeof FactionWarChampionGroupDtoFaction];
 
 
@@ -203,6 +230,8 @@ export interface FactionWarLeaderboardEntryDto {
      */
   points: number;
   isMe: boolean;
+  /** @nullable */
+  userId: string | null;
 }
 
 export interface FactionWarLeaderboardResponseDto {
@@ -294,6 +323,7 @@ export interface MyFactionWarPickDto {
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   pickedAt: string;
   hiddenFromLeaderboard: boolean;
+  disqualified: boolean;
   /**
      * @minimum 0
      * @maximum 9007199254740991
@@ -330,6 +360,7 @@ export interface FactionWarResponseDto {
   days: FactionWarDayDto[];
   pick: MyFactionWarPickDto | null;
   champion: FactionWarChampionDto | null;
+  isAdmin: boolean;
 }
 
 export interface UpdateFactionWarPickDto {
@@ -1905,9 +1936,27 @@ export interface GuildKillStatsResponseDtoOutput {
   hourlyWeekday: GuildKillStatsResponseDtoOutputHourlyWeekdayItem[];
 }
 
+export type FactionWarAwardDtoFaction = typeof FactionWarAwardDtoFaction[keyof typeof FactionWarAwardDtoFaction];
+
+
+export const FactionWarAwardDtoFaction = {
+  BARBATOS: 'BARBATOS',
+  TANROTH: 'TANROTH',
+} as const;
+
+export interface FactionWarAwardDto {
+  faction: FactionWarAwardDtoFaction;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  points: number;
+}
+
 export interface CreateKillResponseDtoOutput {
   updated: number;
   deduplicated?: boolean;
+  factionWar?: FactionWarAwardDto;
 }
 
 export type CreateKillDtoNpc = {
@@ -4674,6 +4723,7 @@ export const WatchedItemResponseDtoNotificationRuleTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -4981,6 +5031,7 @@ export const NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType = 
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -5088,6 +5139,7 @@ export const NotificationJobsResponseDtoPendingItemRuleTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -5397,6 +5449,7 @@ export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType = 
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -5504,6 +5557,7 @@ export const NotificationJobsResponseDtoHistoryItemRuleTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -5796,6 +5850,7 @@ export const UpdateNotificationRuleDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 export interface UpdateNotificationRuleDto {
@@ -5913,6 +5968,7 @@ export const CreateNotificationRuleDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 export interface CreateNotificationRuleDto {
@@ -6188,6 +6244,7 @@ export const NotificationRuleResponseDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -6421,6 +6478,7 @@ export const GuildNotificationRulesResponseDtoItemsItemTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -7884,6 +7942,7 @@ export interface CreateLootResponseDtoOutput {
   id: number;
   submittedGuilds: CreateLootResponseDtoOutputSubmittedGuildsItem[];
   rejectedGuilds: CreateLootResponseDtoOutputRejectedGuildsItem[];
+  factionWar?: FactionWarAwardDto;
 }
 
 /**
@@ -11111,6 +11170,7 @@ export const NotificationJobPayloadSnapshotResponseDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -15211,6 +15271,14 @@ export type FactionWarsControllerGetLeaderboard429 = {
   message: string;
 };
 
+export type FactionWarsControllerGetChampionsParams = {
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
+world: string;
+};
+
 export type FactionWarsControllerGetChampions401 = ReauthenticationRequiredEncoded | {
   message: string;
 };
@@ -15220,6 +15288,53 @@ export type FactionWarsControllerGetChampions403 = {
 };
 
 export type FactionWarsControllerGetChampions429 = {
+  message: string;
+};
+
+export type FactionWarsControllerGetDisqualificationsPathParameters = {
+ warId: string,
+ }
+export type FactionWarsControllerGetDisqualifications401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type FactionWarsControllerGetDisqualifications403 = {
+  message: string;
+};
+
+export type FactionWarsControllerGetDisqualifications429 = {
+  message: string;
+};
+
+export type FactionWarsControllerDisqualifyPlayerPathParameters = {
+ warId: string,
+    userId: string,
+ }
+export type FactionWarsControllerDisqualifyPlayer401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type FactionWarsControllerDisqualifyPlayer403 = {
+  message: string;
+};
+
+export type FactionWarsControllerDisqualifyPlayer429 = {
+  message: string;
+};
+
+export type FactionWarsControllerRestorePlayerPathParameters = {
+ warId: string,
+    userId: string,
+ }
+export type FactionWarsControllerRestorePlayer401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type FactionWarsControllerRestorePlayer403 = {
+  message: string;
+};
+
+export type FactionWarsControllerRestorePlayer429 = {
   message: string;
 };
 
@@ -40718,7 +40833,7 @@ export const getFactionWarsControllerGetLeaderboardUrl = ({ warId }: FactionWars
 }
 
 /**
- * Top players of one faction; players who hid themselves keep their rank without a name
+ * Top players of one faction; players who hid themselves keep their rank without a name, which only war admins still see
  * @summary Get faction war leaderboard
  */
 export const factionWarsControllerGetLeaderboard = async ({ warId }: FactionWarsControllerGetLeaderboardPathParameters,
@@ -40864,21 +40979,28 @@ export const useGetFactionWarsControllerGetLeaderboardQueryData = () => {
 
 
 
-export const getFactionWarsControllerGetChampionsUrl = () => {
+export const getFactionWarsControllerGetChampionsUrl = (params: FactionWarsControllerGetChampionsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/faction-wars/champions`
+  return stringifiedParams.length > 0 ? `/faction-wars/champions?${stringifiedParams}` : `/faction-wars/champions`
 }
 
 /**
- * Characters of the last war's winners who show their highlight, for the Game client
+ * Characters on one world of the last war's winners who show their highlight, for the Game client
  * @summary Get faction war champions
  */
-export const factionWarsControllerGetChampions = async ( options?: Parameters<typeof mainFetch>[1]): Promise<FactionWarChampionsResponseDto> => {
+export const factionWarsControllerGetChampions = async (params: FactionWarsControllerGetChampionsParams, options?: Parameters<typeof mainFetch>[1]): Promise<FactionWarChampionsResponseDto> => {
 
-  return mainFetch<FactionWarChampionsResponseDto>(getFactionWarsControllerGetChampionsUrl(),
+  return mainFetch<FactionWarChampionsResponseDto>(getFactionWarsControllerGetChampionsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -40891,23 +41013,23 @@ export const factionWarsControllerGetChampions = async ( options?: Parameters<ty
 
 
 
-export const getFactionWarsControllerGetChampionsQueryKey = () => {
+export const getFactionWarsControllerGetChampionsQueryKey = (params?: FactionWarsControllerGetChampionsParams,) => {
     return [
-    `/faction-wars/champions`
+    `/faction-wars/champions`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getFactionWarsControllerGetChampionsQueryOptions = <TData = Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getFactionWarsControllerGetChampionsQueryOptions = <TData = Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>>(params: FactionWarsControllerGetChampionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getFactionWarsControllerGetChampionsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getFactionWarsControllerGetChampionsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>> = ({ signal }) => factionWarsControllerGetChampions({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>> = ({ signal }) => factionWarsControllerGetChampions(params, { signal, ...requestOptions });
 
 
 
@@ -40921,7 +41043,7 @@ export type FactionWarsControllerGetChampionsQueryError = ErrorType<RequestValid
 
 
 export function useFactionWarsControllerGetChampions<TData = Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>> & Pick<
+ params: FactionWarsControllerGetChampionsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof factionWarsControllerGetChampions>>,
           TError,
@@ -40931,7 +41053,7 @@ export function useFactionWarsControllerGetChampions<TData = Awaited<ReturnType<
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useFactionWarsControllerGetChampions<TData = Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>> & Pick<
+ params: FactionWarsControllerGetChampionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof factionWarsControllerGetChampions>>,
           TError,
@@ -40941,7 +41063,7 @@ export function useFactionWarsControllerGetChampions<TData = Awaited<ReturnType<
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useFactionWarsControllerGetChampions<TData = Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ params: FactionWarsControllerGetChampionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -40949,11 +41071,11 @@ export function useFactionWarsControllerGetChampions<TData = Awaited<ReturnType<
  */
 
 export function useFactionWarsControllerGetChampions<TData = Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ params: FactionWarsControllerGetChampionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getFactionWarsControllerGetChampionsQueryOptions(options)
+  const queryOptions = getFactionWarsControllerGetChampionsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -40964,11 +41086,11 @@ export function useFactionWarsControllerGetChampions<TData = Awaited<ReturnType<
  * @summary Get faction war champions
  */
 export const prefetchFactionWarsControllerGetChampionsQuery = async <TData = Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetChampions401 | FactionWarsControllerGetChampions403 | FactionWarsControllerGetChampions429>>(
- queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ queryClient: QueryClient, params: FactionWarsControllerGetChampionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
 
-  const queryOptions = getFactionWarsControllerGetChampionsQueryOptions(options)
+  const queryOptions = getFactionWarsControllerGetChampionsQueryOptions(params,options)
 
   await queryClient.query(queryOptions).catch(() => {});
 
@@ -40979,10 +41101,10 @@ export const prefetchFactionWarsControllerGetChampionsQuery = async <TData = Awa
  * @summary Invalidates the {@link useFactionWarsControllerGetChampions} query
  */
 export const invalidateFactionWarsControllerGetChampions = async (
- queryClient: QueryClient,  options?: InvalidateOptions
+ queryClient: QueryClient, params: FactionWarsControllerGetChampionsParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
 
-  await queryClient.invalidateQueries({ queryKey: getFactionWarsControllerGetChampionsQueryKey() }, options);
+  await queryClient.invalidateQueries({ queryKey: getFactionWarsControllerGetChampionsQueryKey(params) }, options);
 
   return queryClient;
 }
@@ -40992,8 +41114,8 @@ export const invalidateFactionWarsControllerGetChampions = async (
  */
 export const useSetFactionWarsControllerGetChampionsQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof factionWarsControllerGetChampions>> | undefined | ((old: Awaited<ReturnType<typeof factionWarsControllerGetChampions>> | undefined) => Awaited<ReturnType<typeof factionWarsControllerGetChampions>> | undefined), $exactMatch: boolean = true) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>>({ exact: $exactMatch, queryKey: getFactionWarsControllerGetChampionsQueryKey() }, updater);
+  return (params: FactionWarsControllerGetChampionsParams | undefined,updater: Awaited<ReturnType<typeof factionWarsControllerGetChampions>> | undefined | ((old: Awaited<ReturnType<typeof factionWarsControllerGetChampions>> | undefined) => Awaited<ReturnType<typeof factionWarsControllerGetChampions>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>>({ exact: $exactMatch, queryKey: getFactionWarsControllerGetChampionsQueryKey(params) }, updater);
   };
 }
 
@@ -41002,11 +41124,320 @@ export const useSetFactionWarsControllerGetChampionsQueryData = () => {
  */
 export const useGetFactionWarsControllerGetChampionsQueryData = () => {
   const queryClient = useQueryClient();
-  return () =>
-    queryClient.getQueryData<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>>(getFactionWarsControllerGetChampionsQueryKey());
+  return (params: FactionWarsControllerGetChampionsParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof factionWarsControllerGetChampions>>>(getFactionWarsControllerGetChampionsQueryKey(params));
 }
 
 
+
+export const getFactionWarsControllerGetDisqualificationsUrl = ({ warId }: FactionWarsControllerGetDisqualificationsPathParameters,) => {
+
+
+
+
+  return `/faction-wars/${warId}/disqualifications`
+}
+
+/**
+ * War admins only: the players excluded from a war, with the reason
+ * @summary List disqualified faction war players
+ */
+export const factionWarsControllerGetDisqualifications = async ({ warId }: FactionWarsControllerGetDisqualificationsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<FactionWarDisqualificationDto[]> => {
+
+  return mainFetch<FactionWarDisqualificationDto[]>(getFactionWarsControllerGetDisqualificationsUrl({ warId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getFactionWarsControllerGetDisqualificationsQueryKey = ({ warId }: FactionWarsControllerGetDisqualificationsPathParameters,) => {
+    return [
+    `/faction-wars/${warId}/disqualifications`
+    ] as const;
+    }
+
+
+export const getFactionWarsControllerGetDisqualificationsQueryOptions = <TData = Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetDisqualifications401 | FactionWarsControllerGetDisqualifications403 | void | FactionWarsControllerGetDisqualifications429>>({ warId }: FactionWarsControllerGetDisqualificationsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getFactionWarsControllerGetDisqualificationsQueryKey({ warId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>> = ({ signal }) => factionWarsControllerGetDisqualifications({ warId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: warId !== null && warId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type FactionWarsControllerGetDisqualificationsQueryResult = NonNullable<Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>>
+export type FactionWarsControllerGetDisqualificationsQueryError = ErrorType<RequestValidationError | FactionWarsControllerGetDisqualifications401 | FactionWarsControllerGetDisqualifications403 | void | FactionWarsControllerGetDisqualifications429>
+
+
+export function useFactionWarsControllerGetDisqualifications<TData = Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetDisqualifications401 | FactionWarsControllerGetDisqualifications403 | void | FactionWarsControllerGetDisqualifications429>>(
+ pathParams: FactionWarsControllerGetDisqualificationsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>,
+          TError,
+          Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFactionWarsControllerGetDisqualifications<TData = Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetDisqualifications401 | FactionWarsControllerGetDisqualifications403 | void | FactionWarsControllerGetDisqualifications429>>(
+ pathParams: FactionWarsControllerGetDisqualificationsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>,
+          TError,
+          Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFactionWarsControllerGetDisqualifications<TData = Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetDisqualifications401 | FactionWarsControllerGetDisqualifications403 | void | FactionWarsControllerGetDisqualifications429>>(
+ pathParams: FactionWarsControllerGetDisqualificationsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List disqualified faction war players
+ */
+
+export function useFactionWarsControllerGetDisqualifications<TData = Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetDisqualifications401 | FactionWarsControllerGetDisqualifications403 | void | FactionWarsControllerGetDisqualifications429>>(
+ { warId }: FactionWarsControllerGetDisqualificationsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getFactionWarsControllerGetDisqualificationsQueryOptions({ warId },options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List disqualified faction war players
+ */
+export const prefetchFactionWarsControllerGetDisqualificationsQuery = async <TData = Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>, TError = ErrorType<RequestValidationError | FactionWarsControllerGetDisqualifications401 | FactionWarsControllerGetDisqualifications403 | void | FactionWarsControllerGetDisqualifications429>>(
+ queryClient: QueryClient, { warId }: FactionWarsControllerGetDisqualificationsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getFactionWarsControllerGetDisqualificationsQueryOptions({ warId },options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useFactionWarsControllerGetDisqualifications} query
+ */
+export const invalidateFactionWarsControllerGetDisqualifications = async (
+ queryClient: QueryClient, { warId }: FactionWarsControllerGetDisqualificationsPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getFactionWarsControllerGetDisqualificationsQueryKey({ warId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary List disqualified faction war players
+ */
+export const useSetFactionWarsControllerGetDisqualificationsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ warId }: FactionWarsControllerGetDisqualificationsPathParameters,updater: Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>> | undefined | ((old: Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>> | undefined) => Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>>({ exact: $exactMatch, queryKey: getFactionWarsControllerGetDisqualificationsQueryKey({ warId }) }, updater);
+  };
+}
+
+/**
+ * @summary List disqualified faction war players
+ */
+export const useGetFactionWarsControllerGetDisqualificationsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ warId }: FactionWarsControllerGetDisqualificationsPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof factionWarsControllerGetDisqualifications>>>(getFactionWarsControllerGetDisqualificationsQueryKey({ warId }));
+}
+
+
+
+export const getFactionWarsControllerDisqualifyPlayerUrl = ({ warId, userId }: FactionWarsControllerDisqualifyPlayerPathParameters,) => {
+
+
+
+
+  return `/faction-wars/${warId}/disqualifications/${userId}`
+}
+
+/**
+ * War admins only: the player's points stop counting for their faction, they leave the leaderboard and champions, and they earn nothing more
+ * @summary Disqualify a faction war player
+ */
+export const factionWarsControllerDisqualifyPlayer = async ({ warId, userId }: FactionWarsControllerDisqualifyPlayerPathParameters,
+    disqualifyFactionWarPlayerDto: DisqualifyFactionWarPlayerDto, options?: Parameters<typeof mainFetch>[1]): Promise<FactionWarDisqualificationDto[]> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<FactionWarDisqualificationDto[]>(getFactionWarsControllerDisqualifyPlayerUrl({ warId, userId }),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(disqualifyFactionWarPlayerDto)
+  }
+);}
+
+
+
+
+
+export const getFactionWarsControllerDisqualifyPlayerMutationKey = () => ['factionWarsControllerDisqualifyPlayer'] as const;
+
+export const getFactionWarsControllerDisqualifyPlayerMutationOptions = <TError = ErrorType<RequestValidationError | FactionWarsControllerDisqualifyPlayer401 | FactionWarsControllerDisqualifyPlayer403 | void | FactionWarsControllerDisqualifyPlayer429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof factionWarsControllerDisqualifyPlayer>>, TError,FactionWarsControllerDisqualifyPlayerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof factionWarsControllerDisqualifyPlayer>>, TError,FactionWarsControllerDisqualifyPlayerMutationVariables, TContext> => {
+
+const mutationKey = getFactionWarsControllerDisqualifyPlayerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof factionWarsControllerDisqualifyPlayer>>, FactionWarsControllerDisqualifyPlayerMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  factionWarsControllerDisqualifyPlayer(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type FactionWarsControllerDisqualifyPlayerMutationResult = NonNullable<Awaited<ReturnType<typeof factionWarsControllerDisqualifyPlayer>>>
+    export type FactionWarsControllerDisqualifyPlayerMutationBody = BodyType<DisqualifyFactionWarPlayerDto>
+    export type FactionWarsControllerDisqualifyPlayerMutationError = ErrorType<RequestValidationError | FactionWarsControllerDisqualifyPlayer401 | FactionWarsControllerDisqualifyPlayer403 | void | FactionWarsControllerDisqualifyPlayer429>
+    export type FactionWarsControllerDisqualifyPlayerMutationVariables = {pathParams: FactionWarsControllerDisqualifyPlayerPathParameters;data: BodyType<DisqualifyFactionWarPlayerDto>}
+
+    /**
+ * @summary Disqualify a faction war player
+ */
+export const useFactionWarsControllerDisqualifyPlayer = <TError = ErrorType<RequestValidationError | FactionWarsControllerDisqualifyPlayer401 | FactionWarsControllerDisqualifyPlayer403 | void | FactionWarsControllerDisqualifyPlayer429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof factionWarsControllerDisqualifyPlayer>>, TError,FactionWarsControllerDisqualifyPlayerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof factionWarsControllerDisqualifyPlayer>>,
+        TError,
+        FactionWarsControllerDisqualifyPlayerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getFactionWarsControllerDisqualifyPlayerMutationOptions(options), queryClient);
+    }
+
+export const getFactionWarsControllerRestorePlayerUrl = ({ warId, userId }: FactionWarsControllerRestorePlayerPathParameters,) => {
+
+
+
+
+  return `/faction-wars/${warId}/disqualifications/${userId}`
+}
+
+/**
+ * War admins only: lifts a disqualification; points earned before it count again
+ * @summary Restore a disqualified faction war player
+ */
+export const factionWarsControllerRestorePlayer = async ({ warId, userId }: FactionWarsControllerRestorePlayerPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<FactionWarDisqualificationDto[]> => {
+
+  return mainFetch<FactionWarDisqualificationDto[]>(getFactionWarsControllerRestorePlayerUrl({ warId, userId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getFactionWarsControllerRestorePlayerMutationKey = () => ['factionWarsControllerRestorePlayer'] as const;
+
+export const getFactionWarsControllerRestorePlayerMutationOptions = <TError = ErrorType<RequestValidationError | FactionWarsControllerRestorePlayer401 | FactionWarsControllerRestorePlayer403 | void | FactionWarsControllerRestorePlayer429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof factionWarsControllerRestorePlayer>>, TError,FactionWarsControllerRestorePlayerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof factionWarsControllerRestorePlayer>>, TError,FactionWarsControllerRestorePlayerMutationVariables, TContext> => {
+
+const mutationKey = getFactionWarsControllerRestorePlayerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof factionWarsControllerRestorePlayer>>, FactionWarsControllerRestorePlayerMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  factionWarsControllerRestorePlayer(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type FactionWarsControllerRestorePlayerMutationResult = NonNullable<Awaited<ReturnType<typeof factionWarsControllerRestorePlayer>>>
+
+    export type FactionWarsControllerRestorePlayerMutationError = ErrorType<RequestValidationError | FactionWarsControllerRestorePlayer401 | FactionWarsControllerRestorePlayer403 | void | FactionWarsControllerRestorePlayer429>
+    export type FactionWarsControllerRestorePlayerMutationVariables = {pathParams: FactionWarsControllerRestorePlayerPathParameters}
+
+    /**
+ * @summary Restore a disqualified faction war player
+ */
+export const useFactionWarsControllerRestorePlayer = <TError = ErrorType<RequestValidationError | FactionWarsControllerRestorePlayer401 | FactionWarsControllerRestorePlayer403 | void | FactionWarsControllerRestorePlayer429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof factionWarsControllerRestorePlayer>>, TError,FactionWarsControllerRestorePlayerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof factionWarsControllerRestorePlayer>>,
+        TError,
+        FactionWarsControllerRestorePlayerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getFactionWarsControllerRestorePlayerMutationOptions(options), queryClient);
+    }
 
 export const getFactionWarsControllerGetPublicCurrentWarUrl = () => {
 
