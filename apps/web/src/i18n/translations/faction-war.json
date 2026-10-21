@@ -63,6 +63,10 @@
         "title": "Nie brałeś udziału w tej wojnie",
         "description": "Frakcję w kolejnej wojnie wybierzesz w dodatku Lootlog w grze."
       }
+    },
+    "disqualified": {
+      "title": "Twoja postać została wykluczona z wojny frakcji",
+      "description": "{{character}} ({{world}}) nie zdobywa już punktów, a punkty zdobyte w tej wojnie nie liczą się dla frakcji ani w rankingu."
     }
   },
   "chart": {
@@ -103,6 +107,7 @@
     "dailyCap_many": "Limit dzienny: {{count}} pkt",
     "dailyCap_other": "Limit dzienny: {{count}} pkt",
     "pick": "Frakcję wybierasz raz, w dodatku Lootlog w grze. Wyboru nie można zmienić do końca wojny.",
+    "loot": "Punkty za łup dostaje każdy członek drużyny, który gra z dodatkiem Lootlog — nie tylko osoba, która go zgłosiła.",
     "days": "Dni liczą się według czasu polskiego — dzienne limity odnawiają się o północy.",
     "underdog": "Każdego dnia frakcja z mniejszą liczbą aktywnych graczy (z co najmniej 1 punktem tego dnia) dostaje mnożnik równy stosunkowi aktywnych graczy obu frakcji, najwyżej {{cap}}. Mnożnik zmienia tylko wynik wojny — Twoje punkty i ranking graczy liczą się bez niego.",
     "winner": "Wygrywa frakcja z wyższym wynikiem. Przy remisie wygrywają obie, a gdy żadna nie zdobyła punktów — nie wygrywa nikt.",
@@ -115,5 +120,38 @@
   "error": {
     "title": "Nie udało się wczytać wojny frakcji",
     "description": "Sprawdź połączenie i spróbuj ponownie."
+  },
+  "moderation": {
+    "title": "Wykluczeni",
+    "description": "Wykluczeni nie zdobywają punktów, a ich dotychczasowe punkty nie liczą się dla frakcji ani w rankingu, dopóki ich nie przywrócisz.",
+    "actionsColumn": "Akcje",
+    "actions": "Akcje dla gracza {{name}}",
+    "disqualify": "Wyklucz z wojny",
+    "disqualifyDialog": {
+      "title": "Wykluczyć {{name}} z wojny?",
+      "description": "Punkty gracza przestaną liczyć się dla frakcji, zniknie z rankingu i nie zdobędzie kolejnych punktów. Możesz go później przywrócić.",
+      "reason": "Powód",
+      "reasonPlaceholder": "Np. zdobywanie punktów botem",
+      "reasonHint": "Widzą go tylko administratorzy wojny."
+    },
+    "disqualified": "Wykluczono: {{name}}",
+    "restore": "Przywróć",
+    "restorePlayer": "Przywróć: {{name}}",
+    "restoreDialog": {
+      "title": "Przywrócić {{name}} do wojny?",
+      "description": "Punkty zdobyte przed wykluczeniem znów będą liczyć się dla frakcji i w rankingu, a gracz będzie zdobywał kolejne."
+    },
+    "restored": "Przywrócono: {{name}}",
+    "refreshDelay": "Wyniki i ranking odświeżą się w ciągu pół minuty.",
+    "reason": "Powód",
+    "noReason": "Nie podano powodu",
+    "disqualifiedAt": "Wykluczono",
+    "empty": "Nikt nie został wykluczony z tej wojny",
+    "listError": "Nie udało się wczytać listy wykluczonych",
+    "errors": {
+      "forbidden": "Nie masz uprawnień do moderowania tej wojny.",
+      "notFound": "Nie znaleziono tego gracza w wojnie. Odśwież stronę i spróbuj ponownie.",
+      "generic": "Nie udało się zapisać zmiany. Spróbuj ponownie."
+    }
   }
 }

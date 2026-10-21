@@ -1,4 +1,4 @@
-import { Swords } from "lucide-react";
+import { Ban, Swords } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { sum } from "es-toolkit";
 import { cn } from "cn";
@@ -24,7 +24,10 @@ type FactionWarContributionProps = {
   war: Pick<FactionWar, "id" | "status" | "pick" | "scoring">;
 };
 
-/** The caller's faction and points, and how much of each daily limit they used today. */
+/**
+ * The caller's faction and points, and how much of each daily limit they used
+ * today; only a notice once they are disqualified.
+ */
 export const FactionWarContribution = ({
   war,
 }: FactionWarContributionProps) => {
@@ -44,6 +47,26 @@ export const FactionWarContribution = ({
           description={t(
             `factionWar.contribution.noPick.${war.status}.description`,
           )}
+        />
+      </BandSection>
+    );
+  }
+
+  if (pick.disqualified) {
+    // Nothing they earned counts, so no numbers suggest otherwise.
+    return (
+      <BandSection
+        id="faction-war-contribution"
+        title={t("factionWar.contribution.title")}
+      >
+        <EmptyState
+          compact
+          icon={Ban}
+          title={t("factionWar.contribution.disqualified.title")}
+          description={t("factionWar.contribution.disqualified.description", {
+            character: pick.characterName,
+            world: pick.world,
+          })}
         />
       </BandSection>
     );

@@ -5,6 +5,10 @@ import {
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 import { RankBadge } from "@/components/common/rank-badge";
+import {
+  FactionWarLeaderboardActions,
+  type FactionWarModeratedPlayer,
+} from "./faction-war-leaderboard-actions";
 import { hasFactionWarLeaderboardGapAfter } from "./faction-war-leaderboard-gap";
 import { FactionWarPlayerName } from "./faction-war-player-name";
 import type { FactionWarLeaderboardEntry } from "./faction-war-queries";
@@ -12,11 +16,14 @@ import { formatFactionWarPoints } from "./format-faction-war-number";
 
 type FactionWarLeaderboardTilesProps = {
   entries: readonly FactionWarLeaderboardEntry[];
+  /** Given to war admins only, it adds each player's actions. */
+  onDisqualify?: (player: FactionWarModeratedPlayer) => void;
 };
 
 /** The leaderboard where the table's columns don't fit: one tile per player. */
 export const FactionWarLeaderboardTiles = ({
   entries,
+  onDisqualify,
 }: FactionWarLeaderboardTilesProps) => (
   <ol>
     {entries.map((entry, index) => (
@@ -43,6 +50,15 @@ export const FactionWarLeaderboardTiles = ({
           <span className="shrink-0 text-sm font-semibold tabular-nums">
             {formatFactionWarPoints(entry.points)}
           </span>
+          {onDisqualify && (
+            // Every row keeps the slot, so the points stay in one column.
+            <span className="-mr-1 flex w-8 shrink-0 justify-end">
+              <FactionWarLeaderboardActions
+                entry={entry}
+                onDisqualify={onDisqualify}
+              />
+            </span>
+          )}
         </li>
         {hasFactionWarLeaderboardGapAfter(entries, index) && (
           <li

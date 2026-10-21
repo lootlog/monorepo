@@ -421,7 +421,8 @@
     },
     "groups": {
       "TIMER_BEFORE_SPAWN": "Przypomnienia przed spawnem",
-      "SCHEDULED_MESSAGE": "Zaplanowane wiadomości"
+      "SCHEDULED_MESSAGE": "Zaplanowane wiadomości",
+      "FACTION_WAR": "Wojna frakcji"
     },
     "rows": {
       "nextDelivery": "Następna wysyłka",
@@ -485,7 +486,8 @@
       "timerBeforeSpawn": "Przypomnienie przed spawnem",
       "npcSpawned": "Spawn potwora",
       "watchedItemDropped": "Drop obserwowanego przedmiotu",
-      "scheduledMessage": "Zaplanowana wiadomość"
+      "scheduledMessage": "Zaplanowana wiadomość",
+      "factionWar": "Komunikaty wojny frakcji"
     },
     "jobStatuses": {
       "pending": "Oczekuje",
@@ -544,6 +546,7 @@
     "inactiveTargetsWarning": "Niektóre kanały docelowe są nieaktywne - powiadomienia nie będą na nie wysyłane.",
     "allWorlds": "Wszystkie światy",
     "allNpcs": "Wszystkie NPC",
+    "factionWarSummary": "Start, podsumowanie każdego dnia i wynik wojny",
     "jobs": {
       "sendsIn": "Wysyłka za {{time}}",
       "sendsNow": "Wysyłka teraz",
@@ -693,10 +696,12 @@
       },
       "triggerOptions": {
         "timerBeforeSpawn": "Gdy zbliża się respawn potwora z ustawionym timerem.",
-        "scheduledMessage": "O wybranej porze, jednorazowo lub cyklicznie."
+        "scheduledMessage": "O wybranej porze, jednorazowo lub cyklicznie.",
+        "factionWar": "Start, codzienne wyniki i zwycięzca wojny frakcji Lootloga."
       },
       "whenTimer": "Lootlog wyśle przypomnienie, gdy ktoś z Lootloga ustawi timer wybranego potwora.",
       "whenScheduledMessage": "Lootlog wyśle wiadomość w wybranym terminie, a przy harmonogramie w każdym kolejnym.",
+      "whenFactionWar": "Lootlog ogłosi start wojny frakcji, po północy wyśle wynik poprzedniego dnia, a po zakończeniu wojny ogłosi zwycięzcę. Treść komunikatów przygotowuje Lootlog.",
       "unsavedNewRule": "Nowa reguła nie jest jeszcze zapisana",
       "targetsDescription": "Wybierz jeden lub więcej kanałów docelowych. Możesz też dodać nowy bez opuszczania formularza."
     },

@@ -8,23 +8,31 @@ import { StatsCountCell } from "@/components/common/stats-count-cell";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
+import {
+  FactionWarLeaderboardActions,
+  type FactionWarModeratedPlayer,
+} from "./faction-war-leaderboard-actions";
 import { hasFactionWarLeaderboardGapAfter } from "./faction-war-leaderboard-gap";
 import { FactionWarPlayerName } from "./faction-war-player-name";
 import type { FactionWarLeaderboardEntry } from "./faction-war-queries";
 
 type FactionWarLeaderboardTableProps = {
   entries: FactionWarLeaderboardEntry[];
+  /** Given to war admins only, it adds each player's actions. */
+  onDisqualify?: (player: FactionWarModeratedPlayer) => void;
 };
 
 const COLUMN_CLASS = new Map([
   ["rank", "w-16 pl-4 text-center"],
   ["world", "w-48"],
   ["points", "w-32 pr-4 text-right"],
+  ["actions", "w-16 pr-4 text-right"],
 ]);
 
 /** The leaderboard as a table, its header pinned under the faction tabs. */
 export const FactionWarLeaderboardTable = ({
   entries,
+  onDisqualify,
 }: FactionWarLeaderboardTableProps) => {
   const { t } = useTranslation();
 
@@ -60,6 +68,27 @@ export const FactionWarLeaderboardTable = ({
         <StatsCountCell value={Math.round(row.original.points)} emphasized />
       ),
     },
+    ...(onDisqualify
+      ? [
+          {
+            id: "actions",
+            header: () => (
+              <span className="sr-only">
+                {t("factionWar.moderation.actionsColumn")}
+              </span>
+            ),
+            cell: ({ row }) => (
+              <FactionWarLeaderboardActions
+                entry={row.original}
+                onDisqualify={onDisqualify}
+              />
+            ),
+          } satisfies ColumnDef<
+            typeof coreTableFeatures,
+            FactionWarLeaderboardEntry
+          >,
+        ]
+      : []),
   ];
 
   const table = useTable({

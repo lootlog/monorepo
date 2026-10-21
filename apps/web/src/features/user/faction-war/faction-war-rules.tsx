@@ -99,6 +99,7 @@ export const FactionWarRules = ({ scoring }: FactionWarRulesProps) => {
         )}
       >
         <li>{t("factionWar.rules.pick")}</li>
+        <li>{t("factionWar.rules.loot")}</li>
         <li>{t("factionWar.rules.days")}</li>
         <li>
           {t("factionWar.rules.underdog", {
