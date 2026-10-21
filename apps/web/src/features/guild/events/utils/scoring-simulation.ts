@@ -7,8 +7,10 @@ import {
 import {
   analyzeEventKillPresence,
   getPresenceScoringContext,
+  resolveEventScoringWindow,
   type EventKillPresence,
 } from "@lootlog/domain/scoring-presence";
+import { addDays, toUtcDateFromLocal } from "@lootlog/datetime";
 
 type SimulationInterval = { id: string; from: string; to: string };
 
@@ -39,34 +41,40 @@ export type SimulationResult = {
   results: SimulationParticipantResult[];
 };
 
-const DAY_MS = 86_400_000;
-
 /** The simulated kill happens on a fixed day; only clock times matter. */
-const SIMULATION_DAY = new Date(2026, 0, 15);
+const SIMULATION_DAY = { year: 2026, month: 1, day: 15 };
 
 const parseClock = (clock: string) => {
-  const [hours, minutes] = clock.split(":").map(Number);
+  const [hour, minute] = clock.split(":").map(Number);
 
-  return Number.isFinite(hours) && Number.isFinite(minutes)
-    ? (hours ?? 0) * 3_600_000 + (minutes ?? 0) * 60_000
+  return hour !== undefined &&
+    minute !== undefined &&
+    Number.isFinite(hour) &&
+    Number.isFinite(minute)
+    ? { hour, minute }
     : null;
 };
 
 /**
- * Places clock times on a timeline starting at the window start: a time
- * earlier than the start falls on the next day, so a night respawn works.
+ * Places wall-clock times in the rules' timezone, as the hour conditions read
+ * them, on a timeline starting at the window start: a time earlier than the
+ * start falls on the next day, so a night respawn works.
  */
-const makeClockResolver = (windowStart: string) => {
-  const startOffset = parseClock(windowStart) ?? 0;
+const makeClockResolver = (windowStart: string, timeZone: string) => {
+  const start = parseClock(windowStart);
+  const startMinutes = start ? start.hour * 60 + start.minute : 0;
 
   return (clock: string) => {
-    const offset = parseClock(clock);
+    const time = parseClock(clock);
 
-    if (offset === null) return null;
+    if (!time) return null;
 
-    const dayOffset = offset < startOffset ? DAY_MS : 0;
+    const day =
+      time.hour * 60 + time.minute < startMinutes
+        ? addDays(SIMULATION_DAY, 1)
+        : SIMULATION_DAY;
 
-    return new Date(SIMULATION_DAY.getTime() + offset + dayOffset);
+    return toUtcDateFromLocal(day, time.hour, time.minute, timeZone);
   };
 };
 
@@ -78,10 +86,18 @@ export function simulateScoringTimeline(
   rules: EventScoringRules,
   timeline: SimulationTimeline,
 ): SimulationResult {
-  const toDate = makeClockResolver(timeline.windowStart);
-  const windowStart = toDate(timeline.windowStart);
-  const killTime = toDate(timeline.killTime) ?? SIMULATION_DAY;
+  const toDate = makeClockResolver(timeline.windowStart, rules.timezone);
+  const startOfDay = toUtcDateFromLocal(SIMULATION_DAY, 0, 0, rules.timezone);
   const maxRespawn = toDate(timeline.maxRespawn);
+
+  // A kill after the maximum respawn ends the window there, as live scoring.
+  const window = resolveEventScoringWindow({
+    killedAt: toDate(timeline.killTime) ?? startOfDay,
+    minSpawnTimeAtKill: toDate(timeline.windowStart),
+    maxSpawnTimeAtKill: maxRespawn,
+  });
+
+  const killTime = window.end;
 
   const intervals = timeline.participants.flatMap((participant) =>
     participant.intervals.flatMap((interval) => {
@@ -95,10 +111,7 @@ export function simulateScoringTimeline(
   );
 
   const analysis = analyzeEventKillPresence({
-    window: {
-      start: windowStart && windowStart < killTime ? windowStart : null,
-      end: killTime,
-    },
+    window,
     participantIds: timeline.participants.map((participant) => participant.id),
     intervals,
   });
@@ -127,8 +140,7 @@ export function simulateScoringTimeline(
         respawnProgressPercentage: calculateRespawnProgressPercentage({
           killTime,
           respawnStartTime: presence.respawnStartTime,
-          maxRespawnTime:
-            maxRespawn && maxRespawn > killTime ? maxRespawn : null,
+          maxRespawnTime: maxRespawn,
         }),
         timeOnMapSeconds: presence.trackingDurationSeconds,
         afkPercentage: 0,
