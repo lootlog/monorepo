@@ -2,7 +2,7 @@ import { EventEditSkeleton } from "./event-edit-skeleton";
 import { EventLoadError } from "./components/event-load-error";
 import { useEventEditRoute } from "./hooks/queries/use-event-edit-route";
 import { BandSection } from "@/components/common/band-section";
-import { useEffect, useId } from "react";
+import { useId } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -45,17 +45,12 @@ export const EventEditRulebookPage = () => {
     },
   });
 
+  // React Compiler keeps the first `register` result, so a reset must keep
+  // the registered fields or typing stops reaching the form.
   const form = useForm<EventRulebookFormData>({
-    defaultValues: {
-      rulebookMarkdown: "",
-    },
+    values: event ? toRulebookDefaults(event) : undefined,
+    resetOptions: { keepFieldsRef: true },
   });
-
-  useEffect(() => {
-    if (event) {
-      form.reset(toRulebookDefaults(event));
-    }
-  }, [event, form]);
 
   const onSubmit = async (data: EventRulebookFormData) => {
     const normalizedRulebookMarkdown =
