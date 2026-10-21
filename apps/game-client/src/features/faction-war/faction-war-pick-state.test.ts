@@ -1,7 +1,7 @@
 import type { FactionWarResponseDto } from "@lootlog/client/main";
 import { describe, expect, it } from "vitest";
 import {
-  dismissFactionWarPick,
+  flagFactionWar,
   getFactionUnderdogBonus,
   shouldAutoOpenFactionWarPick,
 } from "./faction-war-pick-state";
@@ -27,6 +27,7 @@ describe("shouldAutoOpenFactionWarPick", () => {
       world: "luvia",
       pickedAt: "2026-10-20T10:00:00.000Z",
       hiddenFromLeaderboard: false,
+      disqualified: false,
       points: 0,
       todayBySource: { KILL: 0, LOOT: 0, ONLINE: 0, PVP: 0 },
     };
@@ -42,7 +43,7 @@ describe("shouldAutoOpenFactionWarPick", () => {
   });
 
   it("remembers 'Nie teraz' for that war only", () => {
-    const dismissed = dismissFactionWarPick({}, "2026-barbatos-tanroth");
+    const dismissed = flagFactionWar({}, "2026-barbatos-tanroth");
 
     expect(shouldAutoOpenFactionWarPick(war(), dismissed)).toBe(false);
     expect(

@@ -1,6 +1,6 @@
 import { useEffect, useRef, type FC } from "react";
 import {
-  dismissFactionWarPick,
+  flagFactionWar,
   shouldAutoOpenFactionWarPick,
 } from "./faction-war-pick-state";
 import { useFactionWarPickStore } from "./faction-war-pick.store";
@@ -34,7 +34,7 @@ export const FactionWarPick: FC = () => {
     <FactionWarPickScreen
       war={war}
       onDismiss={() => {
-        setDismissed(dismissFactionWarPick(dismissed, war.id));
+        setDismissed(flagFactionWar(dismissed, war.id));
         setOpen(false);
       }}
       onClose={() => setOpen(false)}

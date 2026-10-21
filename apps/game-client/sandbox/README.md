@@ -69,8 +69,19 @@ settings debug tab also uses.
   (Tanroth) champions and draws a small map (`?scene=map`): rings under them
   and the crest in hovered tips, on NI (`/sandbox/?faction-war=champions`) and
   SI (`&interface=si`). "Champion walks" moves Aurelia.
-- Both fall back to a fake session when the local auth service is down. The
-  art is served from `apps/web/public/faction-wars` by the sandbox server.
+- `?faction-war=ended` ends the war with Barbatos ahead; the hero picked
+  Barbatos and is a champion, so the result screen opens with every line.
+  The panel switches to `ended-tie` and `ended-none` (nobody scored), and
+  "Forget seen result" shows the screen again.
+- `?faction-war=disqualified` is a running war the hero picked in and was
+  excluded from: the settings say so and no point toasts appear.
+- While the hero has a pick, kills and loot the local API accepts come back
+  with 40 faction war points, so the point toasts follow real events. The
+  panel's "Point toasts (burst)" sends three awards inside the merge window.
+- The champions endpoint answers only with the hero's `world` query.
+- Every mode falls back to a fake session when the local auth service is
+  down. The art is served from `apps/web/public/faction-wars` by the sandbox
+  server.
 
 ## Limits
 

@@ -4,7 +4,7 @@ import type {
   MyFactionWarPickDto,
 } from "@lootlog/client/main";
 import { FACTION_WARS, FactionWarFaction } from "@lootlog/domain/faction-war";
-import { Schema } from "effect";
+import { Option, Schema } from "effect";
 import { logSandbox } from "./fake-runtime/sandbox-log";
 import type { SandboxWorld } from "./fake-runtime/world";
 
@@ -13,14 +13,37 @@ import type { SandboxWorld } from "./fake-runtime/world";
  * `?faction-war=champions`: the hero picked and is a champion of the war,
  * with two other champions on the map, so highlights show on both
  * interfaces.
+ * `?faction-war=ended`: the war ended with Barbatos ahead; the hero picked
+ * Barbatos and is a champion, so the result screen shows every line.
+ * `ended-tie` ends it on equal points, `ended-none` with nobody scoring.
+ * `disqualified`: a running war the hero picked in and was excluded from.
  */
-export type SandboxFactionWarMode = "pick" | "champions";
+const SANDBOX_FACTION_WAR_MODES = [
+  "pick",
+  "champions",
+  "ended",
+  "ended-tie",
+  "ended-none",
+  "disqualified",
+] as const;
+
+export type SandboxFactionWarMode = (typeof SANDBOX_FACTION_WAR_MODES)[number];
+
+const isSandboxFactionWarMode = (
+  mode: string | null,
+): mode is SandboxFactionWarMode =>
+  SANDBOX_FACTION_WAR_MODES.some((known) => known === mode);
 
 export const readSandboxFactionWarMode = (): SandboxFactionWarMode | null => {
   const mode = new URLSearchParams(window.location.search).get("faction-war");
 
-  return mode === "pick" || mode === "champions" ? mode : null;
+  return isSandboxFactionWarMode(mode) ? mode : null;
 };
+
+/** Points a fake kill or loot earns, so toasts show after real events. */
+const FAKE_AWARD_POINTS = 40;
+
+const CREATE_KILL_OR_LOOT_PATH = /\/api\/lootlog\/(kills|loots)$/;
 
 const FAKE_LATENCY_MS = 450;
 
@@ -80,6 +103,10 @@ const decodeUpdateBody = Schema.decodeUnknownSync(
   ),
 );
 
+const decodeJsonObject = Schema.decodeUnknownOption(
+  Schema.fromJsonString(Schema.Record(Schema.String, Schema.Unknown)),
+);
+
 const json = (
   status: number,
   body:
@@ -107,59 +134,103 @@ export function installFakeFactionWarApi(
 ): void {
   const [war] = FACTION_WARS;
   const heroId = String(world.hero.id);
+  const ended = mode.startsWith("ended");
+
+  const champion =
+    mode === "champions" || mode === "ended" || mode === "ended-tie";
+
   let highlightHidden = false;
+  let hiddenFromLeaderboard = false;
+
+  const createPick = (
+    faction: FactionWarFaction,
+    points: number,
+  ): MyFactionWarPickDto => ({
+    faction,
+    characterName: world.hero.nick,
+    world: world.world,
+    pickedAt: new Date().toISOString(),
+    hiddenFromLeaderboard,
+    disqualified: mode === "disqualified",
+    points,
+    todayBySource: { KILL: 84, LOOT: 20, ONLINE: 12, PVP: 5 },
+  });
 
   let pick: MyFactionWarPickDto | null =
-    mode === "champions"
-      ? {
-          faction: "BARBATOS",
-          characterName: world.hero.nick,
-          world: world.world,
-          pickedAt: new Date().toISOString(),
-          hiddenFromLeaderboard: false,
-          points: 1240,
-          todayBySource: { KILL: 84, LOOT: 20, ONLINE: 12, PVP: 5 },
-        }
-      : null;
+    mode === "pick" || mode === "ended-none"
+      ? null
+      : createPick("BARBATOS", 1240);
 
-  const currentWar = (): FactionWarResponseDto => ({
-    id: war.id,
-    status: "RUNNING",
-    startsAt: new Date(war.startsAt).toISOString(),
-    endsAt: new Date(war.endsAt).toISOString(),
-    scoring: { ...war.scoring, underdogBonusCap: 2 },
-    totals: [
+  const totals = (): FactionWarResponseDto["totals"] => {
+    if (mode === "ended-none") {
+      return [
+        {
+          faction: "BARBATOS",
+          points: 0,
+          rawPoints: 0,
+          players: 3,
+          multiplier: 1,
+        },
+        {
+          faction: "TANROTH",
+          points: 0,
+          rawPoints: 0,
+          players: 2,
+          multiplier: 1,
+        },
+      ];
+    }
+
+    const tanroth = mode === "ended-tie" ? 48_210 : 41_877;
+
+    return [
       {
         faction: "BARBATOS",
-        points: 18_242,
+        points: ended ? 48_210 : 18_242,
         rawPoints: 13_030,
         players: 412,
-        multiplier: 1.4,
+        multiplier: ended ? 1 : 1.4,
       },
       {
         faction: "TANROTH",
-        points: 21_410,
+        points: ended ? tanroth : 21_410,
         rawPoints: 21_410,
         players: 587,
         multiplier: 1,
       },
-    ],
-    winners: [],
+    ];
+  };
+
+  const winners = (): FactionWarResponseDto["winners"] => {
+    if (!ended || mode === "ended-none") return [];
+
+    return mode === "ended-tie" ? ["BARBATOS", "TANROTH"] : ["BARBATOS"];
+  };
+
+  const currentWar = (): FactionWarResponseDto => ({
+    id: war.id,
+    status: ended ? "ENDED" : "RUNNING",
+    startsAt: new Date(war.startsAt).toISOString(),
+    endsAt: new Date(war.endsAt).toISOString(),
+    scoring: { ...war.scoring, underdogBonusCap: 2 },
+    totals: totals(),
+    winners: winners(),
     days: [],
-    pick,
-    champion:
-      mode === "champions"
-        ? {
-            warId: war.id,
-            winners: ["BARBATOS"],
-            isChampion: true,
-            highlightHidden,
-          }
-        : null,
+    pick: pick && { ...pick, hiddenFromLeaderboard },
+    champion: champion
+      ? {
+          warId: war.id,
+          winners:
+            mode === "ended-tie" ? ["BARBATOS", "TANROTH"] : ["BARBATOS"],
+          isChampion: true,
+          highlightHidden,
+        }
+      : null,
+    isAdmin: false,
   });
 
   const champions = (): FactionWarChampionsResponseDto =>
-    mode === "champions"
+    champion
       ? {
           warId: war.id,
           champions: [
@@ -172,10 +243,22 @@ export function installFakeFactionWarApi(
         }
       : { warId: null, champions: [] };
 
-  const respond = (method: string, path: string, body: string) => {
+  const respond = (
+    method: string,
+    path: string,
+    query: URLSearchParams,
+    body: string,
+  ) => {
     if (method === "GET" && path === "current") return json(200, currentWar());
 
-    if (method === "GET" && path === "champions") return json(200, champions());
+    if (method === "GET" && path === "champions") {
+      // The API answers only for one world's characters.
+      if (!world.world || query.get("world") !== world.world) {
+        return json(400, { message: "Expected the hero's world" });
+      }
+
+      return json(200, champions());
+    }
 
     if (method === "POST" && path === `${war.id}/pick`) {
       if (pick) {
@@ -188,12 +271,9 @@ export function installFakeFactionWarApi(
       const data = decodePickBody(body);
 
       pick = {
-        faction: data.faction,
+        ...createPick(data.faction, 0),
         characterName: data.characterName,
         world: data.world,
-        pickedAt: new Date().toISOString(),
-        hiddenFromLeaderboard: false,
-        points: 0,
         todayBySource: { KILL: 0, LOOT: 0, ONLINE: 0, PVP: 0 },
       };
 
@@ -204,6 +284,8 @@ export function installFakeFactionWarApi(
       const data = decodeUpdateBody(body);
 
       highlightHidden = data.championHighlightHidden ?? highlightHidden;
+      hiddenFromLeaderboard =
+        data.hiddenFromLeaderboard ?? hiddenFromLeaderboard;
 
       return json(200, currentWar());
     }
@@ -212,6 +294,31 @@ export function installFakeFactionWarApi(
   };
 
   const originalFetch = window.fetch.bind(window);
+
+  // A kill or loot the local API accepted earns the hero's faction points,
+  // as the API does during a war, so the point toasts follow real events.
+  const withFakeAward = async (response: Response) => {
+    if (!response.ok || !pick || pick.disqualified || ended) return response;
+
+    const body = decodeJsonObject(
+      await response
+        .clone()
+        .text()
+        .catch(() => ""),
+    );
+
+    if (Option.isNone(body)) return response;
+
+    logSandbox("message", `fake +${FAKE_AWARD_POINTS} faction war points`);
+
+    return new Response(
+      JSON.stringify({
+        ...body.value,
+        factionWar: { faction: pick.faction, points: FAKE_AWARD_POINTS },
+      }),
+      { status: response.status, headers: response.headers },
+    );
+  };
 
   window.fetch = async (input, init) => {
     const url = new URL(readUrl(input), window.location.href);
@@ -234,6 +341,10 @@ export function installFakeFactionWarApi(
       return json(200, createOfflineSession());
     }
 
+    if (CREATE_KILL_OR_LOOT_PATH.test(url.pathname)) {
+      return withFakeAward(await originalFetch(input, init));
+    }
+
     const path = FACTION_WARS_PATH.exec(url.pathname)?.[1];
 
     if (!path) return originalFetch(input, init);
@@ -247,6 +358,6 @@ export function installFakeFactionWarApi(
     logSandbox("outbound", `fake ${method} /faction-wars/${path}`);
     await new Promise((resolve) => setTimeout(resolve, FAKE_LATENCY_MS));
 
-    return respond(method, path, body);
+    return respond(method, path, url.searchParams, body);
   };
 }
