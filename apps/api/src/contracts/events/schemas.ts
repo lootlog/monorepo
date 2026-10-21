@@ -8,6 +8,10 @@ import {
   EVENT_SCORING_NUMERIC_OPERATORS,
 } from "@lootlog/domain/scoring";
 import {
+  GROUP_COUNTINGS,
+  GROUP_SIZE_COMPARISONS,
+} from "@lootlog/domain/scoring-presence";
+import {
   SafeInteger,
   JsonValue,
   NonNegativeSafeInteger,
@@ -75,6 +79,39 @@ const RespawnWindowCoverageCondition = Schema.Struct({
   value: FiniteNumber,
 });
 
+const ScoringPercentage = FiniteNumber.check(
+  Schema.isGreaterThanOrEqualTo(0).annotate({
+    expected: "a value greater than or equal to 0",
+  }),
+).check(
+  Schema.isLessThanOrEqualTo(100).annotate({
+    expected: "a value less than or equal to 100",
+  }),
+);
+
+const GroupSize = SafeInteger.check(
+  Schema.isGreaterThanOrEqualTo(1).annotate({
+    expected: "a value greater than or equal to 1",
+  }),
+);
+
+const RespawnJoinCondition = Schema.Struct({
+  type: Schema.Literal("RESPAWN_JOIN"),
+  toleranceSeconds: NonNegativeSafeInteger,
+});
+
+const GroupSizeCondition = Schema.Struct({
+  type: Schema.Literal("GROUP_SIZE"),
+  counting: Schema.Literals(GROUP_COUNTINGS),
+  size: Schema.Struct({
+    comparison: Schema.Literals(GROUP_SIZE_COMPARISONS),
+    value: GroupSize,
+    to: GroupSize,
+  }),
+  minSharePercentage: ScoringPercentage,
+  minTimePercentage: ScoringPercentage,
+});
+
 const ScoringAction = Schema.Struct({
   type: Schema.Literals(EVENT_SCORING_ACTION_TYPES),
   points: Schema.optionalKey(
@@ -97,6 +134,8 @@ const ScoringRule = Schema.Struct({
         BooleanScoringCondition,
         KillTimeWindowCondition,
         RespawnWindowCoverageCondition,
+        RespawnJoinCondition,
+        GroupSizeCondition,
       ],
       { mode: "oneOf" },
     ),
@@ -132,7 +171,20 @@ const EventScoringRules = Schema.Struct({
     ),
   ),
   rules: Schema.Array(ScoringRule),
-});
+}).check(
+  Schema.makeFilter((scoring) =>
+    scoring.rules.every((rule) =>
+      rule.conditions.every(
+        (condition) =>
+          condition.type !== "GROUP_SIZE" ||
+          condition.size.comparison !== "BETWEEN" ||
+          condition.size.to >= condition.size.value,
+      ),
+    )
+      ? undefined
+      : { path: ["rules"], issue: "group size ranges must not be inverted" },
+  ),
+);
 
 const EventMapDefinition = Schema.Struct({
   mapId: SafeInteger,

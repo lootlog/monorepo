@@ -2855,7 +2855,7 @@ export type UpdateEventDtoHeroNpcsItem = {
 
 export type UpdateEventDtoScoringRulesRulesItemConditionsItem = {
   type: 'NUMERIC';
-  factor: 'trackingDurationPercentage' | 'trackingDurationSeconds' | 'assignedMembersCount' | 'minutesSinceLeaveToKill' | 'timeOnMapSeconds' | 'afkPercentage' | 'respawnDurationSeconds' | 'respawnProgressPercentage';
+  factor: 'trackingDurationPercentage' | 'trackingDurationSeconds' | 'assignedMembersCount' | 'minutesSinceLeaveToKill' | 'timeOnMapSeconds' | 'afkPercentage' | 'respawnDurationSeconds' | 'respawnProgressPercentage' | 'respawnJoinDelaySeconds';
   operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
   value: number;
 } | {
@@ -2876,6 +2876,39 @@ export type UpdateEventDtoScoringRulesRulesItemConditionsItem = {
   to: string;
   operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
   value: number;
+} | {
+  type: 'RESPAWN_JOIN';
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  toleranceSeconds: number;
+} | {
+  type: 'GROUP_SIZE';
+  counting: 'WINDOW' | 'AT_KILL' | 'MIN_SHARE' | 'TIMELINE';
+  size: {
+  comparison: 'EXACT' | 'AT_MOST' | 'AT_LEAST' | 'BETWEEN';
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  value: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  to: number;
+};
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  minSharePercentage: number;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  minTimePercentage: number;
 };
 
 export type UpdateEventDtoScoringRulesRulesItemActionType = typeof UpdateEventDtoScoringRulesRulesItemActionType[keyof typeof UpdateEventDtoScoringRulesRulesItemActionType];
@@ -3043,7 +3076,7 @@ export interface EventMutationResponseDto {
 
 export type CreateEventDtoScoringRulesRulesItemConditionsItem = {
   type: 'NUMERIC';
-  factor: 'trackingDurationPercentage' | 'trackingDurationSeconds' | 'assignedMembersCount' | 'minutesSinceLeaveToKill' | 'timeOnMapSeconds' | 'afkPercentage' | 'respawnDurationSeconds' | 'respawnProgressPercentage';
+  factor: 'trackingDurationPercentage' | 'trackingDurationSeconds' | 'assignedMembersCount' | 'minutesSinceLeaveToKill' | 'timeOnMapSeconds' | 'afkPercentage' | 'respawnDurationSeconds' | 'respawnProgressPercentage' | 'respawnJoinDelaySeconds';
   operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
   value: number;
 } | {
@@ -3064,6 +3097,39 @@ export type CreateEventDtoScoringRulesRulesItemConditionsItem = {
   to: string;
   operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
   value: number;
+} | {
+  type: 'RESPAWN_JOIN';
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  toleranceSeconds: number;
+} | {
+  type: 'GROUP_SIZE';
+  counting: 'WINDOW' | 'AT_KILL' | 'MIN_SHARE' | 'TIMELINE';
+  size: {
+  comparison: 'EXACT' | 'AT_MOST' | 'AT_LEAST' | 'BETWEEN';
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  value: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  to: number;
+};
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  minSharePercentage: number;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  minTimePercentage: number;
 };
 
 export type CreateEventDtoScoringRulesRulesItemActionType = typeof CreateEventDtoScoringRulesRulesItemActionType[keyof typeof CreateEventDtoScoringRulesRulesItemActionType];

@@ -2,7 +2,7 @@ import { useId } from "react";
 import { ScoringFactorSelect } from "./scoring-factor-select";
 import { Controller, type Control } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Label } from "@lootlog/ui/components/label";
+import { ScoringField } from "./scoring-field";
 import {
   Select,
   SelectContent,
@@ -29,14 +29,11 @@ export const ScoringConditionBoolean = ({
   const idPrefix = useId();
 
   return (
-    <div className="grid grid-cols-[1fr_100px] gap-1.5">
-      <div className="space-y-0.5">
-        <Label
-          htmlFor={`${idPrefix}-factor`}
-          className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
-        >
-          {t("events.scoring.conditionLabel.factor")}
-        </Label>
+    <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_8rem]">
+      <ScoringField
+        label={t("events.scoring.conditionLabel.factor")}
+        htmlFor={`${idPrefix}-factor`}
+      >
         <Controller
           control={control}
           name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor`}
@@ -49,14 +46,11 @@ export const ScoringConditionBoolean = ({
             />
           )}
         />
-      </div>
-      <div className="space-y-0.5">
-        <Label
-          htmlFor={`${idPrefix}-value`}
-          className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
-        >
-          {t("events.scoring.conditionLabel.value")}
-        </Label>
+      </ScoringField>
+      <ScoringField
+        label={t("events.scoring.conditionLabel.value")}
+        htmlFor={`${idPrefix}-value`}
+      >
         <Controller
           control={control}
           name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`}
@@ -75,11 +69,7 @@ export const ScoringConditionBoolean = ({
                 },
               ]}
             >
-              <SelectTrigger
-                id={`${idPrefix}-value`}
-                size="sm"
-                className="text-[12px]"
-              >
+              <SelectTrigger id={`${idPrefix}-value`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -93,7 +83,7 @@ export const ScoringConditionBoolean = ({
             </Select>
           )}
         />
-      </div>
+      </ScoringField>
     </div>
   );
 };

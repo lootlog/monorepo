@@ -11,7 +11,9 @@ import { Button } from "@lootlog/ui/components/button";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
@@ -20,12 +22,17 @@ import {
   EVENT_SCORING_CONDITION_TYPES,
   type EventScoringCondition,
 } from "@lootlog/domain/scoring";
-import { getScoringConditionTypeLabel } from "../../utils/scoring-rule-labels";
+import {
+  getScoringConditionTypeDescription,
+  getScoringConditionTypeLabel,
+} from "../../utils/scoring-rule-labels";
 import { createDefaultScoringCondition } from "../../utils/scoring-condition-defaults";
 import { ScoringConditionNumeric } from "./scoring-condition-numeric";
 import { ScoringConditionBoolean } from "./scoring-condition-boolean";
 import { ScoringConditionTimeWindow } from "./scoring-condition-time-window";
 import { ScoringConditionRespawn } from "./scoring-condition-respawn";
+import { ScoringConditionRespawnJoin } from "./scoring-condition-respawn-join";
+import { ScoringConditionGroupSize } from "./scoring-condition-group-size";
 
 import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
@@ -36,31 +43,18 @@ interface ScoringConditionsEditorProps {
   ruleIndex: number;
 }
 
-const CONDITION_COLORS: Record<
-  EventScoringCondition["type"],
-  { border: string; bg: string; dot: string }
-> = {
-  NUMERIC: {
-    border: "border-violet-500/25",
-    bg: "bg-violet-500/[0.02]",
-    dot: "bg-violet-500/60",
+/** Condition types grouped by what they look at, in picker order. */
+const CONDITION_GROUPS = [
+  {
+    id: "presence",
+    types: ["RESPAWN_JOIN", "GROUP_SIZE", "NUMERIC"],
   },
-  BOOLEAN: {
-    border: "border-sky-500/25",
-    bg: "bg-sky-500/[0.02]",
-    dot: "bg-sky-500/60",
+  {
+    id: "time",
+    types: ["KILL_TIME_IN_WINDOW", "RESPAWN_WINDOW_COVERAGE"],
   },
-  KILL_TIME_IN_WINDOW: {
-    border: "border-amber-500/25",
-    bg: "bg-amber-500/[0.02]",
-    dot: "bg-amber-500/60",
-  },
-  RESPAWN_WINDOW_COVERAGE: {
-    border: "border-teal-500/25",
-    bg: "bg-teal-500/[0.02]",
-    dot: "bg-teal-500/60",
-  },
-};
+  { id: "other", types: ["BOOLEAN"] },
+] satisfies Array<{ id: string; types: EventScoringCondition["type"][] }>;
 
 export const ScoringConditionsEditor = ({
   control,
@@ -76,7 +70,7 @@ export const ScoringConditionsEditor = ({
   });
 
   return (
-    <div className="space-y-0">
+    <div className="grid gap-2">
       {fields.map((field, conditionIndex) => (
         <ConditionRow
           key={field.id}
@@ -90,15 +84,15 @@ export const ScoringConditionsEditor = ({
           showAndConnector={conditionIndex > 0}
         />
       ))}
-      <div className="pt-1.5">
+      <div>
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className="text-[11px] text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground"
           onClick={() => append(createDefaultScoringCondition())}
         >
-          <Plus className="h-3 w-3 mr-1" />
+          <Plus className="size-4" />
           {t("events.scoring.addCondition")}
         </Button>
       </div>
@@ -127,36 +121,26 @@ const ConditionRow = ({
 }) => {
   const { t } = useTranslation();
 
-  const conditionType = useWatch({
-    control,
-    name: `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.type`,
-  });
-
   const conditionPath =
     `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}` as const;
 
-  const colors = CONDITION_COLORS[conditionType] ?? CONDITION_COLORS.NUMERIC;
+  const conditionType = useWatch({ control, name: `${conditionPath}.type` });
 
   return (
     <>
       {showAndConnector && (
-        <div className="flex items-center gap-2 py-1">
-          <div className="flex-1 h-px bg-border/40" />
-          <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/50 font-semibold px-1">
+        <div className="flex items-center gap-2 px-1" aria-hidden>
+          <span className="text-xs font-medium text-muted-foreground">
             {t("events.scoring.andLabel")}
           </span>
-          <div className="flex-1 h-px bg-border/40" />
+          <div className="h-px flex-1 bg-border" />
         </div>
       )}
-      <div
-        className={`rounded-md border ${colors.border} ${colors.bg} p-2.5 space-y-2`}
-      >
-        {/* Condition type + remove in a compact header */}
-        <div className="flex items-center gap-2">
-          <div className={`size-1.5 rounded-full ${colors.dot} shrink-0`} />
+      <div className="grid gap-3 rounded-lg border border-border bg-background/40 p-3">
+        <div className="flex items-start justify-between gap-2">
           <Controller
             control={control}
-            name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.type`}
+            name={`${conditionPath}.type`}
             render={({ field }) => (
               <Select
                 value={field.value}
@@ -165,58 +149,67 @@ const ConditionRow = ({
                     (type) => type === nextConditionType,
                   );
 
-                  if (!selectedType) return;
+                  if (!selectedType || selectedType === field.value) return;
                   setValue(
                     conditionPath,
                     createDefaultScoringCondition(selectedType),
                     { shouldDirty: true, shouldValidate: true },
                   );
                 }}
-                items={EVENT_SCORING_CONDITION_TYPES.map(
-                  (conditionTypeOption) => ({
-                    value: conditionTypeOption,
-                    label: (
-                      <>
-                        {getScoringConditionTypeLabel(conditionTypeOption, t)}
-                      </>
-                    ),
-                  }),
-                )}
+                items={EVENT_SCORING_CONDITION_TYPES.map((type) => ({
+                  value: type,
+                  label: <>{getScoringConditionTypeLabel(type, t)}</>,
+                }))}
               >
                 <SelectTrigger
-                  size="sm"
-                  className="text-[11px] bg-transparent border-0 shadow-none px-1 w-auto max-w-[200px] hover:bg-muted/40"
+                  className="min-w-0 flex-1 font-medium sm:max-w-80"
+                  aria-label={t("events.scoring.fieldLabel.conditionType", {
+                    rule: ruleIndex + 1,
+                    condition: conditionIndex + 1,
+                  })}
                 >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {EVENT_SCORING_CONDITION_TYPES.map((conditionTypeOption) => (
-                    <SelectItem
-                      key={conditionTypeOption}
-                      value={conditionTypeOption}
-                    >
-                      {getScoringConditionTypeLabel(conditionTypeOption, t)}
-                    </SelectItem>
+                  {CONDITION_GROUPS.map((group) => (
+                    <SelectGroup key={group.id}>
+                      <SelectLabel>
+                        {t(`events.scoring.conditionGroup.${group.id}`)}
+                      </SelectLabel>
+                      {group.types.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          <span className="grid gap-0.5 py-0.5">
+                            <span className="font-medium">
+                              {getScoringConditionTypeLabel(type, t)}
+                            </span>
+                            <span className="text-xs font-normal text-muted-foreground">
+                              {getScoringConditionTypeDescription(type, t)}
+                            </span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   ))}
                 </SelectContent>
               </Select>
             )}
           />
-          <div className="flex-1" />
           {canRemove && (
             <Button
               type="button"
               variant="ghost"
-              size="icon-sm"
-              aria-label={t("events.delete")}
+              size="icon"
+              className="text-muted-foreground"
+              aria-label={t("events.scoring.removeCondition", {
+                condition: conditionIndex + 1,
+              })}
               onClick={onRemove}
             >
-              <X className="size-3" />
+              <X className="size-4" />
             </Button>
           )}
         </div>
 
-        {/* Condition fields */}
         {conditionType === "NUMERIC" && (
           <ScoringConditionNumeric
             control={control}
@@ -246,6 +239,24 @@ const ConditionRow = ({
           <ScoringConditionRespawn
             control={control}
             register={register}
+            ruleIndex={ruleIndex}
+            conditionIndex={conditionIndex}
+          />
+        )}
+
+        {conditionType === "RESPAWN_JOIN" && (
+          <ScoringConditionRespawnJoin
+            control={control}
+            ruleIndex={ruleIndex}
+            conditionIndex={conditionIndex}
+          />
+        )}
+
+        {conditionType === "GROUP_SIZE" && (
+          <ScoringConditionGroupSize
+            control={control}
+            register={register}
+            setValue={setValue}
             ruleIndex={ruleIndex}
             conditionIndex={conditionIndex}
           />

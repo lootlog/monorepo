@@ -2,9 +2,7 @@ import { useId } from "react";
 import type { UseFormRegister } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
-import { Label } from "@lootlog/ui/components/label";
-import { ArrowRight } from "lucide-react";
-
+import { ScoringField } from "./scoring-field";
 import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
 interface ScoringConditionTimeWindowProps {
@@ -21,43 +19,33 @@ export const ScoringConditionTimeWindow = ({
   const { t } = useTranslation();
   const idPrefix = useId();
 
+  const path =
+    `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}` as const;
+
   return (
-    <div className="flex items-end gap-1.5">
-      <div className="space-y-0.5 flex-1">
-        <Label
-          htmlFor={`${idPrefix}-from`}
-          className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
-        >
-          {t("events.scoring.conditionLabel.from")}
-        </Label>
+    <div className="grid grid-cols-2 gap-2 sm:max-w-72">
+      <ScoringField
+        label={t("events.scoring.conditionLabel.from")}
+        htmlFor={`${idPrefix}-from`}
+      >
         <Input
           id={`${idPrefix}-from`}
           type="time"
-          size="sm"
-          className="text-[12px] font-mono"
-          {...register(
-            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.from`,
-          )}
+          className="tabular-nums"
+          {...register(`${path}.from`)}
         />
-      </div>
-      <ArrowRight className="size-3.5 text-muted-foreground/30 mb-2 shrink-0" />
-      <div className="space-y-0.5 flex-1">
-        <Label
-          htmlFor={`${idPrefix}-to`}
-          className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
-        >
-          {t("events.scoring.conditionLabel.to")}
-        </Label>
+      </ScoringField>
+      <ScoringField
+        label={t("events.scoring.conditionLabel.to")}
+        htmlFor={`${idPrefix}-to`}
+      >
         <Input
           id={`${idPrefix}-to`}
           type="time"
-          size="sm"
-          className="text-[12px] font-mono"
-          {...register(
-            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.to`,
-          )}
+          className="tabular-nums"
+          {...register(`${path}.to`)}
         />
-      </div>
+      </ScoringField>
     </div>
   );
 };

@@ -62,11 +62,16 @@ export const makeEventKillHistoryProjection = (
       ),
     );
 
+    // Reaches back to the minimum respawn time as well, so the breakdown can
+    // rebuild the whole scoring window's presence.
     const assignments = yield* repository.findAssignments({
       mapIds,
       memberIds,
       killedAt: effectiveKilledAt,
-      overlapStart: overlapWindowStartTime,
+      overlapStart:
+        overlapWindowStartTime < trackingWindowStartTime
+          ? overlapWindowStartTime
+          : trackingWindowStartTime,
     });
 
     const assignmentsByMember = Map.groupBy(

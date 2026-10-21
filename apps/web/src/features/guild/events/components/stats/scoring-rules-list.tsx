@@ -1,8 +1,8 @@
 import type { TFunction } from "i18next";
 import type { EventScoringRule } from "@lootlog/domain/scoring";
 import { cn } from "cn";
+import { formatScoringAction } from "../../utils/scoring-rule-labels";
 import {
-  getScoringRuleAction,
   getScoringRuleCondition,
   getScoringRuleName,
 } from "./scoring-rule-display";
@@ -79,7 +79,7 @@ export const ScoringRulesList = ({
                     : "bg-primary/10 text-primary",
                 )}
               >
-                {getScoringRuleAction(rule.action, t)}
+                {formatScoringAction(rule.action, t)}
               </span>
             </li>
           );

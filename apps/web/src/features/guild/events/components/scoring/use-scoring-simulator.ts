@@ -4,6 +4,13 @@ import {
   evaluateEventScoring,
   type EvaluationContext,
 } from "../../utils/scoring-applied-rules";
+import {
+  DEFAULT_SIMULATION_TIMELINE,
+  simulateScoringTimeline,
+  type SimulationTimeline,
+} from "../../utils/scoring-simulation";
+
+export type ScoringSimulatorMode = "timeline" | "manual";
 
 function buildContext(params: {
   trackingPercent: number;
@@ -95,6 +102,11 @@ export function useScoringSimulator(scoringRules: EventScoringRules) {
     useState<string>("");
 
   const [wasPresent, setWasPresent] = useState(true);
+  const [mode, setMode] = useState<ScoringSimulatorMode>("timeline");
+
+  const [timeline, setTimeline] = useState<SimulationTimeline>(() =>
+    structuredClone(DEFAULT_SIMULATION_TIMELINE),
+  );
 
   const [ruleOverrides, setRuleOverrides] = useState<Record<string, boolean>>(
     {},
@@ -133,10 +145,17 @@ export function useScoringSimulator(scoringRules: EventScoringRules) {
   });
 
   const result = evaluateEventScoring(rulesWithOverrides, context);
+  const timelineResult = simulateScoringTimeline(rulesWithOverrides, timeline);
 
   const killTimeStr = `${String(killTimeHour).padStart(2, "0")}:${String(killTimeMinute).padStart(2, "0")}`;
 
   return {
+    mode,
+    setMode,
+    timeline,
+    setTimeline,
+    timelineResult,
+    rulesWithOverrides,
     trackingPercent,
     setTrackingPercent,
     assignedMembers,

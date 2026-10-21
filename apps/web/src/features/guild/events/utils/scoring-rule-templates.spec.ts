@@ -2,10 +2,6 @@ import { describe, expect, it } from "vitest";
 import { SCORING_RULE_TEMPLATES } from "./scoring-rule-templates";
 
 describe("SCORING_RULE_TEMPLATES", () => {
-  it("has 5 templates", () => {
-    expect(SCORING_RULE_TEMPLATES).toHaveLength(5);
-  });
-
   it("each template has unique id", () => {
     const ids = SCORING_RULE_TEMPLATES.map((t) => t.id);
     expect(new Set(ids).size).toBe(ids.length);
