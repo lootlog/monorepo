@@ -967,7 +967,8 @@ body.ll-mounted .right-main-column-wrapper > .bottom-wrapper > .banners {
 }
 
 .ll-fw-overlay[data-state="chosen"] .ll-fw-seam,
-.ll-fw-overlay[data-state="choosing"] .ll-fw-seam {
+.ll-fw-overlay[data-state="choosing"] .ll-fw-seam,
+.ll-fw-overlay[data-state="result-winner"] .ll-fw-seam {
   opacity: 0;
   animation: none;
 }
@@ -985,21 +986,27 @@ body.ll-mounted .right-main-column-wrapper > .bottom-wrapper > .banners {
   }
 }
 
-/* The whole half is the button; its label sits at the outer bottom corner. */
-.ll-fw-choose {
+/* The whole half is the button; its label sits at the outer bottom corner.
+   The result screen keeps the same corner without the button. */
+.ll-fw-choose,
+.ll-fw-corner {
   position: absolute;
   inset: 0;
   z-index: 2;
   display: flex;
   align-items: flex-end;
   padding: 0 3cqw 11cqh;
-  border-radius: 0;
   text-align: left;
+}
+
+.ll-fw-choose {
+  border-radius: 0;
   cursor: pointer;
   outline: none;
 }
 
-.ll-fw-side[data-side="right"] .ll-fw-choose {
+.ll-fw-side[data-side="right"] .ll-fw-choose,
+.ll-fw-side[data-side="right"] .ll-fw-corner {
   justify-content: flex-end;
   text-align: right;
 }
@@ -1034,6 +1041,13 @@ body.ll-mounted .right-main-column-wrapper > .bottom-wrapper > .banners {
   opacity: 0;
 }
 
+/* The result keeps the beaten faction's score readable over its grey art. */
+.ll-fw-overlay[data-state="result-winner"]
+  .ll-fw-side[data-emphasis="lost"]
+  .ll-fw-info {
+  opacity: 0.75;
+}
+
 .ll-fw-emblem {
   width: clamp(40px, 7cqw, 104px);
   height: clamp(40px, 7cqw, 104px);
@@ -1066,6 +1080,18 @@ body.ll-mounted .right-main-column-wrapper > .bottom-wrapper > .banners {
   font-size: clamp(11px, 1.15cqw, 16px);
   color: rgb(255 255 255 / 62%);
   font-variant-numeric: tabular-nums;
+}
+
+.ll-fw-score {
+  margin-top: clamp(2px, 0.4cqw, 6px);
+  font-size: clamp(18px, 2.6cqw, 38px);
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  text-shadow:
+    0 0 16px color-mix(in srgb, var(--ll-fw-glow) 65%, transparent),
+    0 2px 2px rgb(0 0 0 / 70%);
 }
 
 .ll-fw-bonus {
@@ -1308,12 +1334,22 @@ body.ll-mounted .right-main-column-wrapper > .bottom-wrapper > .banners {
   text-shadow: 0 2px 16px rgb(0 0 0 / 80%);
 }
 
-.ll-fw-rules {
+.ll-fw-rules,
+.ll-fw-summary {
   margin: 0;
   font-size: clamp(11px, 1.2cqw, 17px);
   line-height: 1.5;
   color: rgb(255 255 255 / 80%);
   text-shadow: 0 1px 6px rgb(0 0 0 / 90%);
+}
+
+.ll-fw-summary + .ll-fw-summary {
+  margin-top: 0.4em;
+}
+
+.ll-fw-own {
+  font-weight: 700;
+  color: #fff;
 }
 
 .ll-fw-dismiss {
@@ -1394,6 +1430,13 @@ body.ll-mounted .right-main-column-wrapper > .bottom-wrapper > .banners {
   font-size: clamp(12px, 1.25cqw, 17px);
   line-height: 1.5;
   color: rgb(255 255 255 / 78%);
+}
+
+.ll-fw-card-note {
+  margin: 0;
+  font-size: clamp(11px, 1.05cqw, 14px);
+  line-height: 1.45;
+  color: rgb(255 255 255 / 58%);
 }
 
 @keyframes ll-fw-fade-in {

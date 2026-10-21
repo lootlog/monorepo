@@ -10,6 +10,7 @@ import { GlobalChat } from "@/features/global-chat/global-chat";
 import { useGlobalChatSync } from "@/features/global-chat/hooks/use-global-chat-sync";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
 import { FactionWarPick } from "@/features/faction-war/faction-war-pick";
+import { FactionWarResult } from "@/features/faction-war/faction-war-result";
 import { useFactionWarChampionHighlight } from "@/features/faction-war/use-faction-war-champion-highlight";
 import { BattlePingMarkers } from "@/features/pings/battle-ping-markers";
 import { BattlePingWindow } from "@/features/pings/battle-ping-window";
@@ -97,6 +98,7 @@ export const AppContent = () => {
           <BattlePingWindow />
           <WhoIsHereAirTags />
           <FactionWarPick />
+          <FactionWarResult />
         </>
       ) : null}
     </>

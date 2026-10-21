@@ -36,7 +36,7 @@ export const FactionWarPickConfirm: FC<FactionWarPickConfirmProps> = ({
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="ll-fw-confirm-title"
-        aria-describedby="ll-fw-confirm-text"
+        aria-describedby="ll-fw-confirm-text ll-fw-confirm-ranking"
       >
         <img className="ll-fw-emblem" src={emblemSrc} alt="" />
         <h3 id="ll-fw-confirm-title" className="ll-fw-card-title">
@@ -44,6 +44,9 @@ export const FactionWarPickConfirm: FC<FactionWarPickConfirmProps> = ({
         </h3>
         <p id="ll-fw-confirm-text" className="ll-fw-card-text">
           {t("confirm.description", { character: characterName, world })}
+        </p>
+        <p id="ll-fw-confirm-ranking" className="ll-fw-card-note">
+          {t("confirm.ranking")}
         </p>
         {error ? (
           <p role="alert" className="ll:m-0 ll:text-[13px] ll:text-red-300">

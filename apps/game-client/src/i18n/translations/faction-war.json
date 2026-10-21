@@ -4,13 +4,15 @@
       "name": "Barbatos",
       "title": "Smoczy Strażnik",
       "element": "Ogień",
-      "choose": "Wybieram Barbatosa"
+      "choose": "Wybieram Barbatosa",
+      "genitive": "Barbatosa"
     },
     "TANROTH": {
       "name": "Tanroth",
       "title": "",
       "element": "Lód",
-      "choose": "Wybieram Tanrotha"
+      "choose": "Wybieram Tanrotha",
+      "genitive": "Tanrotha"
     }
   },
   "pick": {
@@ -30,7 +32,8 @@
     "title": "Dołączyć do frakcji {{name}}?",
     "description": "Wybierasz dla postaci {{character}} ({{world}}). Wyboru nie można zmienić do końca wojny.",
     "accept": "Potwierdzam",
-    "back": "Wróć"
+    "back": "Wróć",
+    "ranking": "Nazwa postaci pojawi się w rankingu frakcji na stronie Lootloga. Możesz ją ukryć w ustawieniach: Wygląd → Wojna frakcji."
   },
   "chosen": {
     "title": "Frakcja {{name}}",
@@ -48,11 +51,35 @@
     "tooltip": "Zwycięzca wojny frakcji · {{name}}"
   },
   "settings": {
+    "warTitle": "Wojna frakcji",
+    "showPointsLabel": "Pokazuj punkty za zabicia i łupy",
+    "showPointsDescription": "Po zabiciu potwora lub zdobyciu łupu pojawi się krótkie powiadomienie z punktami dla Twojej frakcji.",
+    "hideFromLeaderboardLabel": "Ukryj mnie w rankingu",
+    "hideFromLeaderboardDescription": "Nazwa Twojej postaci nie pojawi się w rankingu frakcji na stronie Lootloga. Punkty nadal liczą się dla frakcji.",
+    "hideFromLeaderboardError": "Nie udało się zapisać widoczności w rankingu.",
+    "disqualified": "Twoja postać została wykluczona z wojny frakcji",
+    "disqualifiedDescription": "Twoje punkty nie liczą się już dla frakcji.",
     "title": "Zwycięzcy wojny frakcji",
     "hideOthersLabel": "Ukrywaj poświaty innych zwycięzców",
     "hideOthersDescription": "Aura i oznaczenie zwycięskiej frakcji przy innych graczach znikną tylko na Twoim ekranie.",
     "ownHighlightLabel": "Pokazuj moją poświatę zwycięzcy",
     "ownHighlightDescription": "Gracze z Lootlogiem widzą aurę i oznaczenie Twojej frakcji przy Twoich postaciach.",
     "ownHighlightError": "Nie udało się zapisać ustawienia poświaty."
+  },
+  "points": {
+    "toast": "+{{points}} dla {{faction}}"
+  },
+  "result": {
+    "eyebrow": "Wojna frakcji · {{startsAt}} – {{endsAt}}",
+    "winner": "{{name}} wygrywa wojnę frakcji!",
+    "tie": "Remis! Obie frakcje zwyciężają",
+    "none": "Wojna zakończona bez zwycięzcy",
+    "noneDescription": "Żadna frakcja nie zdobyła punktów.",
+    "victory": "Zwycięstwo",
+    "score": "{{points}} pkt",
+    "yourPoints": "Twoje punkty dla {{faction}}: {{points}}",
+    "disqualified": "Twoja postać została wykluczona z wojny frakcji.",
+    "champion": "Twoja postać nosi poświatę zwycięzców do końca następnej wojny. Wyłączysz ją w ustawieniach: Wygląd → Wojna frakcji.",
+    "close": "Zamknij"
   }
 }

@@ -1,4 +1,8 @@
-import type { FactionWarFaction } from "@lootlog/domain/faction-war";
+import { createCachedFormatter } from "@lootlog/datetime";
+import {
+  FACTION_WAR_TIMEZONE,
+  type FactionWarFaction,
+} from "@lootlog/domain/faction-war";
 import type { CSSProperties } from "react";
 
 /** Barbatos holds the left half of the pick screen and faces right. */
@@ -32,3 +36,20 @@ export const getFactionStyle = (faction: FactionWarFaction): CSSProperties => {
     "--ll-fw-glow": colors.glow,
   } as CSSProperties;
 };
+
+const getDayFormatter = createCachedFormatter("pl-PL", {
+  day: "numeric",
+  month: "long",
+});
+
+/** A war day such as "20 października", in the war's own time zone. */
+export const formatFactionWarDay = (at: number) =>
+  getDayFormatter(FACTION_WAR_TIMEZONE).format(new Date(at));
+
+/** `endsAt` is exclusive, so the last day of a war is the day before it. */
+export const formatFactionWarLastDay = (endsAt: string) =>
+  formatFactionWarDay(Date.parse(endsAt) - 1);
+
+/** Points as Polish players read them: "18 242". */
+export const formatFactionWarPoints = (points: number) =>
+  points.toLocaleString("pl-PL");

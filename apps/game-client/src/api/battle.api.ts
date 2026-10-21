@@ -8,6 +8,7 @@ import {
   type CreateBattleDto,
   type BattleCreatedResponseDtoOutput,
 } from "@lootlog/client/battlelog";
+import { announceFactionWarPoints } from "@/features/faction-war/faction-war-points-toast";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
 
@@ -25,6 +26,8 @@ export async function createKill(
     execute: () => killsControllerCreateKill(params),
     retry: GAME_EVENT_RETRY_OPTIONS,
   });
+
+  announceFactionWarPoints(response.factionWar);
 
   return response;
 }
