@@ -26,7 +26,10 @@ export const FactionWarPrivacy = ({ war }: FactionWarPrivacyProps) => {
   const updatePick = useUpdateFactionWarPick();
   const { pick, champion } = war;
 
-  if (!pick && !champion?.isChampion) return null;
+  // A disqualified player is off the leaderboard whatever they choose.
+  const ranked = pick && !pick.disqualified ? pick : undefined;
+
+  if (!ranked && !champion?.isChampion) return null;
 
   const update = (
     warId: string,
@@ -42,7 +45,7 @@ export const FactionWarPrivacy = ({ war }: FactionWarPrivacyProps) => {
 
   return (
     <BandSection id="faction-war-privacy" title={t("factionWar.privacy.title")}>
-      {pick && (
+      {ranked && (
         <Field orientation="horizontal">
           <FieldContent>
             <FieldLabel htmlFor={hiddenId}>
@@ -54,7 +57,7 @@ export const FactionWarPrivacy = ({ war }: FactionWarPrivacyProps) => {
           </FieldContent>
           <Switch
             id={hiddenId}
-            checked={pick.hiddenFromLeaderboard}
+            checked={ranked.hiddenFromLeaderboard}
             disabled={updatePick.isPending}
             onCheckedChange={(hiddenFromLeaderboard) =>
               update(war.id, { hiddenFromLeaderboard })

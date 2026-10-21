@@ -1,10 +1,15 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import {
   getFactionWarsControllerGetCurrentWarQueryKey,
+  getFactionWarsControllerGetDisqualificationsQueryKey,
   getFactionWarsControllerGetLeaderboardQueryKey,
+  useFactionWarsControllerDisqualifyPlayer,
   useFactionWarsControllerGetCurrentWar,
+  useFactionWarsControllerGetDisqualifications,
   useFactionWarsControllerGetLeaderboard,
+  useFactionWarsControllerRestorePlayer,
   useFactionWarsControllerUpdatePick,
+  type FactionWarDisqualificationDto,
   type FactionWarLeaderboardResponseDto,
   type FactionWarResponseDto,
   type FactionWarScoringDto,
@@ -23,6 +28,8 @@ export type FactionWarScoring = FactionWarScoringDto;
 
 export type FactionWarLeaderboardEntry =
   FactionWarLeaderboardResponseDto["entries"][number];
+
+export type FactionWarDisqualification = FactionWarDisqualificationDto;
 
 const refetchUntilEnded = (status: FactionWar["status"] | undefined) =>
   status === "RUNNING" || status === "UPCOMING" ? LIVE_WAR_REFETCH_MS : false;
@@ -68,6 +75,65 @@ export const useUpdateFactionWarPick = () => {
           queryKey: getFactionWarsControllerGetLeaderboardQueryKey(pathParams),
         });
       },
+    },
+  });
+};
+
+/** War admins only: the players excluded from the war, with the reason. */
+export const useFactionWarDisqualifications = (warId: string) =>
+  useFactionWarsControllerGetDisqualifications({ warId });
+
+/**
+ * A disqualification or a restore answers with the war's whole list; the
+ * faction scores and leaderboards it changes are refetched, though the
+ * server may serve them up to half a minute stale.
+ */
+const applyDisqualifications = (
+  queryClient: QueryClient,
+  warId: string,
+  disqualifications: FactionWarDisqualification[],
+) => {
+  queryClient.setQueryData(
+    getFactionWarsControllerGetDisqualificationsQueryKey({ warId }),
+    disqualifications,
+  );
+
+  void Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: getFactionWarsControllerGetLeaderboardQueryKey({ warId }),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: getFactionWarsControllerGetCurrentWarQueryKey(),
+    }),
+  ]);
+};
+
+export const useDisqualifyFactionWarPlayer = () => {
+  const queryClient = useQueryClient();
+
+  return useFactionWarsControllerDisqualifyPlayer({
+    mutation: {
+      onSuccess: (disqualifications, { pathParams }) =>
+        applyDisqualifications(
+          queryClient,
+          pathParams.warId,
+          disqualifications,
+        ),
+    },
+  });
+};
+
+export const useRestoreFactionWarPlayer = () => {
+  const queryClient = useQueryClient();
+
+  return useFactionWarsControllerRestorePlayer({
+    mutation: {
+      onSuccess: (disqualifications, { pathParams }) =>
+        applyDisqualifications(
+          queryClient,
+          pathParams.warId,
+          disqualifications,
+        ),
     },
   });
 };

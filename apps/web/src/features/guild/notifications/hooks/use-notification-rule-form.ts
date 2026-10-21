@@ -527,6 +527,8 @@ export const useNotificationRuleForm = () => {
 
   const {
     isScheduledMessage,
+    isTimerRule,
+    isFactionWar,
     isRecurring,
     showScheduledAtField,
     showTimeOfDayField,
@@ -630,30 +632,33 @@ export const useNotificationRuleForm = () => {
     };
 
     const payload =
-      values.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
-        ? {
-            ...basePayload,
-            ...getScheduledMessagePayload(values, rule?.scheduledUntil),
-          }
-        : (() => {
-            const npcFilterPayload = buildNotificationRuleNpcFilterPayload(
-              getNotificationRuleNpcIdsForSubmit(values),
-            );
-
-            return {
+      values.triggerType === NotificationTriggerType.FACTION_WAR
+        ? // Lootlog writes faction war announcements; no template applies.
+          { ...basePayload, contentTemplate: null }
+        : values.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
+          ? {
               ...basePayload,
-              world:
-                values.world !== ALL_WORLDS_VALUE
-                  ? (values.world ?? undefined)
-                  : undefined,
-              scheduleStrategy:
-                NotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE,
-              scheduleAnchor:
-                values.scheduleAnchor ?? NotificationScheduleAnchor.MIN_SPAWN,
-              scheduleOffsetMinutes: Number(values.scheduleOffsetMinutes),
-              ...npcFilterPayload,
-            };
-          })();
+              ...getScheduledMessagePayload(values, rule?.scheduledUntil),
+            }
+          : (() => {
+              const npcFilterPayload = buildNotificationRuleNpcFilterPayload(
+                getNotificationRuleNpcIdsForSubmit(values),
+              );
+
+              return {
+                ...basePayload,
+                world:
+                  values.world !== ALL_WORLDS_VALUE
+                    ? (values.world ?? undefined)
+                    : undefined,
+                scheduleStrategy:
+                  NotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE,
+                scheduleAnchor:
+                  values.scheduleAnchor ?? NotificationScheduleAnchor.MIN_SPAWN,
+                scheduleOffsetMinutes: Number(values.scheduleOffsetMinutes),
+                ...npcFilterPayload,
+              };
+            })();
 
     try {
       if (isCreateMode) {
@@ -700,6 +705,8 @@ export const useNotificationRuleForm = () => {
     isError,
     isSubmitting,
     isScheduledMessage,
+    isTimerRule,
+    isFactionWar,
     isRecurring,
     showScheduledAtField,
     showTimeOfDayField,

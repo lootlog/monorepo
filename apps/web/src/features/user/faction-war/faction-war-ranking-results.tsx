@@ -12,6 +12,9 @@ import { ResultsSurface } from "@/components/common/results-surface";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { Button } from "@lootlog/ui/components/button";
 import { getFactionWarFactionArt } from "./faction-war-art";
+import { FactionWarDisqualifiedSection } from "./faction-war-disqualified-section";
+import { FactionWarDisqualifyDialog } from "./faction-war-disqualify-dialog";
+import type { FactionWarModeratedPlayer } from "./faction-war-leaderboard-actions";
 import { FactionWarLeaderboardTable } from "./faction-war-leaderboard-table";
 import { FactionWarLeaderboardTiles } from "./faction-war-leaderboard-tiles";
 import {
@@ -23,13 +26,21 @@ import { FACTION_WAR_SIDES } from "./faction-war-standings";
 const isFaction = (value: string): value is FactionWarFaction =>
   FACTION_WAR_SIDES.some((faction) => faction === value);
 
-/** Each faction's top players, the caller's own place among them. */
+/**
+ * Each faction's top players, the caller's own place among them; war admins
+ * also exclude players here and see whom they excluded.
+ */
 export const FactionWarRankingResults = ({ war }: { war: FactionWar }) => {
   const { t } = useTranslation();
   const [chosen, setChosen] = useState<FactionWarFaction>();
   const faction = chosen ?? war.pick?.faction ?? FACTION_WAR_SIDES[0];
   const leaderboard = useFactionWarLeaderboard(war, faction);
   const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
+
+  const [disqualifying, setDisqualifying] =
+    useState<FactionWarModeratedPlayer>();
+
+  const onDisqualify = war.isAdmin ? setDisqualifying : undefined;
 
   const renderResults = () => {
     if (leaderboard.isPending) {
@@ -83,42 +94,61 @@ export const FactionWarRankingResults = ({ war }: { war: FactionWar }) => {
     }
 
     return usesTable ? (
-      <FactionWarLeaderboardTable entries={leaderboard.data} />
+      <FactionWarLeaderboardTable
+        entries={leaderboard.data}
+        onDisqualify={onDisqualify}
+      />
     ) : (
-      <FactionWarLeaderboardTiles entries={leaderboard.data} />
+      <FactionWarLeaderboardTiles
+        entries={leaderboard.data}
+        onDisqualify={onDisqualify}
+      />
     );
   };
 
   return (
-    <ResultsSurface
-      search={
-        // The factions lead the bar, as view tabs, where a search would sit.
-        <Tabs
-          value={faction}
-          onValueChange={(value: string) => {
-            if (isFaction(value)) setChosen(value);
-          }}
-          className="min-w-0 flex-1"
-        >
-          <TabsList aria-label={t("factionWar.ranking.factionLabel")} size="lg">
-            {FACTION_WAR_SIDES.map((side) => (
-              <TabsTrigger key={side} value={side}>
-                <img
-                  src={getFactionWarFactionArt(war.id, side).emblem}
-                  alt=""
-                  width={256}
-                  height={256}
-                  className="size-5"
-                />
-                {t(`factionWar.factions.${side}`)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      }
-      filtersLabel={t("factionWar.ranking.factionLabel")}
-    >
-      {renderResults()}
-    </ResultsSurface>
+    <>
+      <ResultsSurface
+        search={
+          // The factions lead the bar, as view tabs, where a search would sit.
+          <Tabs
+            value={faction}
+            onValueChange={(value: string) => {
+              if (isFaction(value)) setChosen(value);
+            }}
+            className="min-w-0 flex-1"
+          >
+            <TabsList
+              aria-label={t("factionWar.ranking.factionLabel")}
+              size="lg"
+            >
+              {FACTION_WAR_SIDES.map((side) => (
+                <TabsTrigger key={side} value={side}>
+                  <img
+                    src={getFactionWarFactionArt(war.id, side).emblem}
+                    alt=""
+                    width={256}
+                    height={256}
+                    className="size-5"
+                  />
+                  {t(`factionWar.factions.${side}`)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        }
+        filtersLabel={t("factionWar.ranking.factionLabel")}
+      >
+        {renderResults()}
+      </ResultsSurface>
+      {war.isAdmin && <FactionWarDisqualifiedSection warId={war.id} />}
+      {disqualifying && (
+        <FactionWarDisqualifyDialog
+          warId={war.id}
+          player={disqualifying}
+          onClose={() => setDisqualifying(undefined)}
+        />
+      )}
+    </>
   );
 };
