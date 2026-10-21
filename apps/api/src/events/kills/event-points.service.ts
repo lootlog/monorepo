@@ -15,9 +15,16 @@ import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
   type EventScoringAppliedBonus,
+  type EventScoringContext,
   type EventScoringMode,
   type EventScoringRules,
 } from "@lootlog/domain/scoring";
+import {
+  analyzeEventKillPresence,
+  resolveEventScoringWindow,
+  resolveKillPresenceState,
+  type EventKillPresence,
+} from "@lootlog/domain/scoring-presence";
 import { resolveEventWindowStart } from "#src/events/respawn/resolve-event-window-start";
 import type { EventPointsStore } from "#src/events/kills/event-points.repository";
 import {
@@ -42,6 +49,7 @@ type CalculateMemberPointsParams = {
   timeOnMapSeconds: number;
   afkPercentage: number;
   wasPresent: boolean;
+  presence?: EventScoringContext["presence"];
 };
 
 type CalculatedMemberPoints = {
@@ -75,6 +83,68 @@ type ExistingRankingSnapshot = {
 };
 
 type EventKillPoint = typeof eventKillPointTable.$inferSelect;
+
+/**
+ * One presence analysis per kill, shared by every participant: the kill's
+ * ranking members and their assignment records on the hero's maps.
+ */
+function analyzePresenceByKillId(params: {
+  killPointsByKillId: Record<
+    string,
+    ReadonlyArray<{
+      memberId: number;
+      kill: {
+        killedAt: Date;
+        minSpawnTimeAtKill: Date;
+        maxSpawnTimeAtKill: Date;
+      };
+    }>
+  >;
+  heroMapIdsByKillId: ReadonlyMap<string, ReadonlySet<string>>;
+  assignmentsByMember: Record<
+    string,
+    ReadonlyArray<{
+      mapId: string;
+      assignedAt: Date;
+      unassignedAt: Date | null;
+    }>
+  >;
+}) {
+  const presenceByKillId = new Map<string, EventKillPresence>();
+
+  for (const [killId, points] of Object.entries(params.killPointsByKillId)) {
+    const kill = points[0]?.kill;
+
+    if (!kill) continue;
+
+    const heroMapIds = params.heroMapIdsByKillId.get(killId) ?? new Set();
+    const memberIds = [...new Set(points.map((point) => point.memberId))];
+
+    presenceByKillId.set(
+      killId,
+      analyzeEventKillPresence({
+        window: resolveEventScoringWindow(kill),
+        participantIds: memberIds,
+        intervals: memberIds.flatMap((memberId) =>
+          (params.assignmentsByMember[String(memberId)] ?? []).flatMap(
+            (assignment) =>
+              heroMapIds.has(assignment.mapId)
+                ? [
+                    {
+                      participantId: memberId,
+                      start: assignment.assignedAt,
+                      end: assignment.unassignedAt,
+                    },
+                  ]
+                : [],
+          ),
+        ),
+      }),
+    );
+  }
+
+  return presenceByKillId;
+}
 
 export const makeEventPoints = (
   repository: EventPointsStore,
@@ -120,6 +190,7 @@ export const makeEventPoints = (
         timeOnMapSeconds: params.timeOnMapSeconds,
         afkPercentage: params.afkPercentage,
         wasPresent: params.wasPresent,
+        presence: params.presence,
       },
     });
   }
@@ -319,11 +390,14 @@ export const makeEventPoints = (
       const earliestOverlapWindowStart = new Date(
         Math.min(
           ...killPoints.map((point) =>
-            resolveEventWindowStart({
-              killedAt: point.kill.killedAt,
-              minSpawnTimeAtKill: point.kill.minSpawnTimeAtKill,
-              windowOpenedAt: windowOpenedAtByKillId.get(point.kill.id),
-            }).getTime(),
+            Math.min(
+              resolveEventWindowStart({
+                killedAt: point.kill.killedAt,
+                minSpawnTimeAtKill: point.kill.minSpawnTimeAtKill,
+                windowOpenedAt: windowOpenedAtByKillId.get(point.kill.id),
+              }).getTime(),
+              point.kill.minSpawnTimeAtKill.getTime(),
+            ),
           ),
         ),
       );
@@ -341,6 +415,18 @@ export const makeEventPoints = (
       const assignmentsByMember = Arr.groupBy(assignmentHistory, (assignment) =>
         String(assignment.memberId),
       );
+
+      const presenceByKillId = analyzePresenceByKillId({
+        killPointsByKillId,
+        heroMapIdsByKillId,
+        assignmentsByMember,
+      });
+
+      const presenceForKill = (killId: string, memberId: number) => {
+        const analysis = presenceByKillId.get(killId);
+
+        return analysis ? { analysis, participantId: memberId } : null;
+      };
 
       const recalculatedKillPoints = killPoints.map((killPoint) => {
         const assignedMembersCount =
@@ -363,11 +449,18 @@ export const makeEventPoints = (
         const trackingDurationPercentage =
           trackingMetrics.trackingDurationPercentage;
 
-        const memberState = getMemberKillState({
-          assignments: assignmentsByMember[String(killPoint.memberId)] ?? [],
-          heroMapIds: heroMapIdsByKillId.get(killPoint.killId) ?? new Set(),
-          killTime: killPoint.kill.killedAt,
-          respawnStartTime: trackingWindowStartTime,
+        const heroMapIds =
+          heroMapIdsByKillId.get(killPoint.killId) ?? new Set();
+
+        const memberState = resolveKillPresenceState({
+          intervals: (assignmentsByMember[String(killPoint.memberId)] ?? [])
+            .filter((assignment) => heroMapIds.has(assignment.mapId))
+            .map((assignment) => ({
+              start: assignment.assignedAt,
+              end: assignment.unassignedAt,
+            })),
+          windowStart: trackingWindowStartTime,
+          windowEnd: killPoint.kill.killedAt,
         });
 
         const { totalPoints, basePoints, appliedBonuses } =
@@ -388,6 +481,7 @@ export const makeEventPoints = (
             timeOnMapSeconds: killPoint.timeOnMapSeconds,
             afkPercentage: killPoint.afkPercentage,
             wasPresent: killPoint.wasPresent,
+            presence: presenceForKill(killPoint.killId, killPoint.memberId),
           });
 
         const effectivePoints = roundPoints(
@@ -575,58 +669,6 @@ export const makeEventPoints = (
 
       yield* emitRankingUpdateByEventId(eventId);
     }).pipe(Effect.withSpan("events.points.recalculate"));
-  }
-
-  function getMemberKillState(params: {
-    assignments: Array<{
-      mapId: string;
-      memberId: number;
-      assignedAt: Date;
-      unassignedAt: Date | null;
-    }>;
-    heroMapIds: Set<string>;
-    killTime: Date;
-    respawnStartTime: Date;
-  }) {
-    let memberLeaveTime: Date | null = null;
-    let memberPresentAtKill = false;
-
-    for (const assignment of params.assignments) {
-      if (!params.heroMapIds.has(assignment.mapId)) {
-        continue;
-      }
-
-      if (assignment.assignedAt > params.killTime) {
-        continue;
-      }
-
-      const assignmentEnd = assignment.unassignedAt ?? params.killTime;
-
-      if (assignmentEnd < params.respawnStartTime) {
-        continue;
-      }
-
-      if (
-        !assignment.unassignedAt ||
-        assignment.unassignedAt >= params.killTime
-      ) {
-        memberPresentAtKill = true;
-        continue;
-      }
-
-      if (
-        assignment.unassignedAt >= params.respawnStartTime &&
-        assignment.unassignedAt < params.killTime &&
-        (!memberLeaveTime || assignment.unassignedAt > memberLeaveTime)
-      ) {
-        memberLeaveTime = assignment.unassignedAt;
-      }
-    }
-
-    return {
-      memberLeaveTime,
-      memberPresentAtKill,
-    };
   }
 
   function getMemberPresenceStats(

@@ -22,7 +22,7 @@ import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { EventLoadError } from "./components/event-load-error";
 import { EventKillDetailSkeleton } from "./event-kill-detail-skeleton";
 import { getKillDetailErrorKind } from "./utils/kill-detail-error";
-import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
+import { getKillParticipantScoring } from "./utils/scoring-applied-rules";
 
 export const KillDetail = () => {
   const { t } = useTranslation();
@@ -94,6 +94,7 @@ export const KillDetail = () => {
 
   const { kill, eventConfig } = data;
   const participants = kill.points ?? [];
+  const scoring = getKillParticipantScoring(kill, eventConfig.scoringRules);
 
   const getMemberRoleColors = () => {
     const colors = new Map<number, string>();
@@ -117,12 +118,10 @@ export const KillDetail = () => {
         participants.flatMap((participant) => {
           if (participant.member.userId !== currentDiscordId) return [];
 
-          const evaluatedRuleIds = getAppliedRuleIdsForParticipant({
-            kill,
-            participant,
-            scoringRules: eventConfig.scoringRules,
-            assignedMembersCount: participants.length,
-          });
+          const evaluatedRuleIds =
+            scoring
+              ?.explain(participant)
+              .result.appliedRules.map((rule) => rule.ruleId) ?? [];
 
           const bonusBreakdownRuleIds = normalizeBonusBreakdown(
             participant.bonusBreakdown,
@@ -164,6 +163,7 @@ export const KillDetail = () => {
           participants={
             <KillParticipantsCard
               participants={participants}
+              scoring={scoring}
               guildId={guildId}
               eventId={eventId}
               killId={killId}

@@ -6,6 +6,7 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import { EVENT_SCORING_NUMERIC_OPERATORS } from "@lootlog/domain/scoring";
+import { OPERATOR_SYMBOLS } from "../../utils/scoring-rule-labels";
 
 export const ScoringOperatorSelect = ({
   id,
@@ -21,16 +22,16 @@ export const ScoringOperatorSelect = ({
     onValueChange={onChange}
     items={EVENT_SCORING_NUMERIC_OPERATORS.map((operator) => ({
       value: operator,
-      label: <>{operator}</>,
+      label: <>{OPERATOR_SYMBOLS[operator]}</>,
     }))}
   >
-    <SelectTrigger id={id} size="sm" className="text-[12px] font-mono">
+    <SelectTrigger id={id} className="w-full">
       <SelectValue />
     </SelectTrigger>
     <SelectContent>
       {EVENT_SCORING_NUMERIC_OPERATORS.map((operator) => (
-        <SelectItem key={operator} value={operator} className="font-mono">
-          {operator}
+        <SelectItem key={operator} value={operator}>
+          {OPERATOR_SYMBOLS[operator]}
         </SelectItem>
       ))}
     </SelectContent>

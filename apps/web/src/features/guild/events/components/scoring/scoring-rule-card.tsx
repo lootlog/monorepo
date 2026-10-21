@@ -14,18 +14,14 @@ import {
   CollapsibleTrigger,
 } from "@lootlog/ui/components/collapsible";
 import { Switch } from "@lootlog/ui/components/switch";
-import { Badge } from "@lootlog/ui/components/badge";
 import { Input } from "@lootlog/ui/components/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import { ChevronDown, GripVertical, Trash2, Info } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Trash2 } from "lucide-react";
 import { cn } from "cn";
+import { ScoringActionBadge } from "./scoring-action-badge";
 import { ScoringRuleSummary } from "./scoring-rule-summary";
 import { ScoringConditionsEditor } from "./scoring-conditions-editor";
 import { ScoringActionEditor } from "./scoring-action-editor";
+import { ScoringField } from "./scoring-field";
 
 import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
@@ -36,6 +32,8 @@ interface ScoringRuleCardProps {
   ruleIndex: number;
   canRemove: boolean;
   onRemove: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
   defaultOpen?: boolean;
 }
 
@@ -46,6 +44,8 @@ export const ScoringRuleCard = ({
   ruleIndex,
   canRemove,
   onRemove,
+  onMoveUp,
+  onMoveDown,
   defaultOpen = false,
 }: ScoringRuleCardProps) => {
   const { t } = useTranslation();
@@ -57,102 +57,125 @@ export const ScoringRuleCard = ({
   });
 
   const isEnabled = rule?.enabled !== false;
-  const conditionCount = rule?.conditions?.length ?? 0;
+  const ruleNumber = ruleIndex + 1;
+  const ruleName = rule?.name || t("events.scoring.unnamedRule");
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <div
         className={cn(
-          "border-b border-border/70 bg-transparent transition-[box-shadow,opacity] overflow-hidden last:border-b-0",
-          !isEnabled && "opacity-40",
-          open && "ring-1 ring-border/80",
+          "overflow-hidden rounded-xl border border-border bg-card transition-colors",
+          open && "border-input",
         )}
       >
-        {/* Collapsed header / trigger */}
-        <CollapsibleTrigger
-          render={
-            <button
-              type="button"
-              className={cn(
-                "flex w-full items-center gap-2.5 p-3 text-left transition-colors cursor-pointer",
-                "hover:bg-muted/30",
-              )}
-            >
-              <GripVertical className="size-3.5 text-muted-foreground/40 shrink-0" />
-
-              <span className="flex items-center justify-center size-5 rounded-md bg-muted/60 text-[10px] font-mono font-bold text-muted-foreground shrink-0">
-                {ruleIndex + 1}
-              </span>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium truncate">
-                    {rule?.name || t("events.scoring.unnamedRule")}
-                  </p>
-                  {!open && conditionCount > 1 && (
-                    <span className="text-[10px] text-muted-foreground/60 shrink-0">
-                      {conditionCount} {t("events.scoring.conditionsCount")}
-                    </span>
-                  )}
-                </div>
-                {!open && rule && (
-                  <div className="mt-0.5">
-                    <ScoringRuleSummary rule={rule} />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1.5 shrink-0">
-                {!isEnabled && (
-                  <Badge
-                    variant="secondary"
-                    className="text-[10px] px-1.5 py-0"
-                  >
-                    {t("events.scoring.ruleDisabledSuffix")}
-                  </Badge>
-                )}
-                <ChevronDown
+        <div className="flex items-stretch">
+          <CollapsibleTrigger
+            render={
+              <button
+                type="button"
+                className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 p-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+              >
+                <span
                   className={cn(
-                    "size-4 text-muted-foreground transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
+                    "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold tabular-nums text-muted-foreground",
+                    !isEnabled && "opacity-50",
+                  )}
+                >
+                  {ruleNumber}
+                </span>
+
+                <span
+                  className={cn(
+                    "grid min-w-0 flex-1 gap-0.5",
+                    !isEnabled && "opacity-60",
+                  )}
+                >
+                  <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="truncate text-sm font-medium">
+                      {ruleName}
+                    </span>
+                    {rule?.action ? (
+                      <ScoringActionBadge
+                        action={rule.action}
+                        muted={!isEnabled}
+                      />
+                    ) : null}
+                    {!isEnabled && (
+                      <span className="text-xs text-muted-foreground">
+                        {t("events.scoring.ruleDisabled")}
+                      </span>
+                    )}
+                  </span>
+                  {rule && <ScoringRuleSummary rule={rule} />}
+                </span>
+
+                <ChevronDown
+                  aria-hidden
+                  className={cn(
+                    "mt-1 size-4 shrink-0 text-muted-foreground transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
                     open && "rotate-180",
                   )}
                 />
-              </div>
-            </button>
-          }
-        />
+              </button>
+            }
+          />
 
-        {/* Expanded editor */}
+          <div className="flex shrink-0 flex-col justify-center border-l border-border/60 px-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              className="text-muted-foreground"
+              disabled={!onMoveUp}
+              onClick={onMoveUp}
+              aria-label={t("events.scoring.moveRuleUp", { rule: ruleNumber })}
+            >
+              <ArrowUp className="size-3.5" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              className="text-muted-foreground"
+              disabled={!onMoveDown}
+              onClick={onMoveDown}
+              aria-label={t("events.scoring.moveRuleDown", {
+                rule: ruleNumber,
+              })}
+            >
+              <ArrowDown className="size-3.5" />
+            </Button>
+          </div>
+        </div>
+
         <CollapsibleContent keepMounted className={cn(!open && "hidden")}>
-          <div className="border-t border-border/60">
-            {/* Rule name & enabled toggle */}
-            <div className="px-3 pt-3 pb-2">
-              <div className="flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <Input
-                    {...register(`scoringRules.rules.${ruleIndex}.name`)}
-                    placeholder={t("events.scoring.ruleName")}
-                    size="sm"
-                    className="text-sm bg-muted/30"
-                  />
-                  <p className="text-[10px] text-muted-foreground/60 mt-0.5 pl-0.5">
-                    {t("events.scoring.ruleNameHint")}
-                  </p>
-                </div>
-                <Controller
-                  control={control}
-                  name={`scoringRules.rules.${ruleIndex}.enabled`}
-                  render={({ field }) => (
-                    <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer shrink-0">
-                      <Switch
-                        checked={field.value !== false}
-                        onCheckedChange={field.onChange}
-                      />
-                      {t("events.scoring.ruleEnabled")}
-                    </label>
-                  )}
+          <div className="grid gap-4 border-t border-border p-3 sm:p-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <ScoringField
+                label={t("events.scoring.ruleName")}
+                htmlFor={`rule-${ruleIndex}-name`}
+                hint={t("events.scoring.ruleNameHint")}
+                className="min-w-48 flex-1"
+              >
+                <Input
+                  id={`rule-${ruleIndex}-name`}
+                  {...register(`scoringRules.rules.${ruleIndex}.name`)}
+                  placeholder={t("events.scoring.unnamedRule")}
                 />
-              </div>
+              </ScoringField>
+              <Controller
+                control={control}
+                name={`scoringRules.rules.${ruleIndex}.enabled`}
+                render={({ field }) => (
+                  <label className="mb-6 flex shrink-0 cursor-pointer items-center gap-2 text-sm">
+                    <Switch
+                      checked={field.value !== false}
+                      onCheckedChange={field.onChange}
+                    />
+                    {t("events.scoring.ruleEnabled")}
+                  </label>
+                )}
+              />
             </div>
 
             <input
@@ -160,66 +183,39 @@ export const ScoringRuleCard = ({
               {...register(`scoringRules.rules.${ruleIndex}.id`)}
             />
 
-            {/* IF section - blue accent */}
-            <div className="mx-3 mb-2 rounded-lg border border-blue-500/15 bg-blue-500/[0.03] overflow-hidden">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-blue-500/10 bg-blue-500/[0.04]">
-                <div className="size-1.5 rounded-full bg-blue-500/60" />
-                <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-blue-400">
-                  {t("events.scoring.ifLabel")}
+            <section className="grid gap-2">
+              <h4 className="text-sm font-semibold">
+                {t("events.scoring.ifLabel")}
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  {t("events.scoring.conditionAndHint")}
                 </span>
-                <Tooltip>
-                  <TooltipTrigger
-                    render=<Info className="size-3 text-blue-400/50 cursor-help" />
-                  />
-                  <TooltipContent>
-                    <p>{t("events.scoring.conditionAndHint")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <div className="p-2.5">
-                <ScoringConditionsEditor
-                  control={control}
-                  register={register}
-                  setValue={setValue}
-                  ruleIndex={ruleIndex}
-                />
-              </div>
-            </div>
+              </h4>
+              <ScoringConditionsEditor
+                control={control}
+                register={register}
+                setValue={setValue}
+                ruleIndex={ruleIndex}
+              />
+            </section>
 
-            {/* Flow connector */}
-            <div className="flex justify-center -my-0.5 relative z-10">
-              <div className="flex flex-col items-center">
-                <div className="w-px h-2 bg-gradient-to-b from-blue-500/20 to-green-500/20" />
-                <div className="size-4 rounded-full border border-border/60 bg-background flex items-center justify-center">
-                  <div className="size-1.5 rounded-full bg-muted-foreground/30" />
-                </div>
-                <div className="w-px h-2 bg-gradient-to-b from-green-500/20 to-green-500/30" />
-              </div>
-            </div>
-
-            {/* THEN section - green accent */}
-            <div className="mx-3 mt-0 mb-2 rounded-lg border border-green-500/15 bg-green-500/[0.03] overflow-hidden">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-green-500/10 bg-green-500/[0.04]">
-                <div className="size-1.5 rounded-full bg-green-500/60" />
-                <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-green-400">
-                  {t("events.scoring.thenLabel")}
-                </span>
-              </div>
-              <div className="p-2.5">
-                <ScoringActionEditor
-                  control={control}
-                  register={register}
-                  ruleIndex={ruleIndex}
-                />
-              </div>
-            </div>
+            <section className="grid gap-2">
+              <h4 className="text-sm font-semibold">
+                {t("events.scoring.thenLabel")}
+              </h4>
+              <ScoringActionEditor
+                control={control}
+                register={register}
+                ruleIndex={ruleIndex}
+              />
+            </section>
 
             {canRemove && (
-              <div className="flex justify-end px-3 py-4">
+              <div className="flex justify-end border-t border-border pt-3">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
+                  className="text-muted-foreground hover:text-destructive"
                   onClick={onRemove}
                 >
                   <Trash2 className="size-4" />

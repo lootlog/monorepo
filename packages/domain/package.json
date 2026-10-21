@@ -24,6 +24,7 @@
     "./profession": "./src/profession.ts",
     "./reservations": "./src/reservations.ts",
     "./scoring": "./src/scoring.ts",
+    "./scoring-presence": "./src/scoring-presence.ts",
     "./timers": "./src/timers.ts",
     "./timer-colors": "./src/timer-colors.ts",
     "./settings-documents": "./src/settings-documents.ts",
