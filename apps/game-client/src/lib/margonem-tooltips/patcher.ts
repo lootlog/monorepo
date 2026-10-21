@@ -237,9 +237,15 @@ function showLegacyOtherShiftSection(id: string): void {
 
   if (!legacyOther) return;
 
-  useCharacterTooltipCatchingGuildsStore
-    .getState()
-    .setActiveOther(toTooltipOther(legacyOther));
+  const state = useCharacterTooltipCatchingGuildsStore.getState();
+
+  // Every copy is a new object, so publishing one for the player that is
+  // already active would re-run the refresh effects in
+  // useCharacterTooltipCatchingGuilds, which refresh this tooltip again.
+  if (String(state.activeOther?.d.id) !== id) {
+    state.setActiveOther(toTooltipOther(legacyOther));
+  }
+
   setLegacyOtherShiftSection(id);
 }
 
