@@ -1,5 +1,5 @@
 import { UserThemesData } from "#src/http-api/handlers/user-themes/user-themes.handlers";
-import { FactionWarsData } from "#src/http-api/handlers/faction-wars/faction-wars.handlers";
+import { factionWarsData } from "#src/runtime/features/faction-wars";
 import {
   eventsData,
   eventsServicesLive,
@@ -59,7 +59,7 @@ import { timersData } from "#src/runtime/features/timers";
 const coreDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   UserThemesData.layerDatabase,
-  FactionWarsData.layerDatabase,
+  factionWarsData,
   LootlogConfigData.layerDatabase,
   SettingsData.layerDatabase,
   DocsData.layerDatabase,

@@ -1386,6 +1386,9 @@ type FactionWarApiContracts = Record<
   | "PATCH /faction-wars/{warId}/pick"
   | "GET /faction-wars/{warId}/leaderboard"
   | "GET /faction-wars/champions"
+  | "GET /faction-wars/{warId}/disqualifications"
+  | "PUT /faction-wars/{warId}/disqualifications/{userId}"
+  | "DELETE /faction-wars/{warId}/disqualifications/{userId}"
   | "GET /public/faction-wars/current",
   JsonValue
 >;
@@ -1566,7 +1569,18 @@ const FACTION_WAR_API_ADDITIONS: FactionWarApiContracts = {
   },
   "GET /faction-wars/champions": {
     operationId: "FactionWarsController_getChampions",
-    parameters: [],
+    parameters: [
+      {
+        name: "world",
+        in: "query",
+        schema: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        required: true,
+      },
+    ],
     security: [
       {
         bearer: [],
@@ -1585,7 +1599,147 @@ const FACTION_WAR_API_ADDITIONS: FactionWarApiContracts = {
       },
     },
     description:
-      "Characters of the last war's winners who show their highlight, for the Game client",
+      "Characters on one world of the last war's winners who show their highlight, for the Game client",
+  },
+  "GET /faction-wars/{warId}/disqualifications": {
+    operationId: "FactionWarsController_getDisqualifications",
+    parameters: [
+      {
+        name: "warId",
+        in: "path",
+        schema: {
+          type: "string",
+        },
+        required: true,
+      },
+    ],
+    security: [
+      {
+        bearer: [],
+      },
+    ],
+    responses: {
+      "200": {
+        description: "Success",
+        content: {
+          "application/json": {
+            schema: {
+              type: "array",
+              items: {
+                $ref: "#/components/schemas/FactionWarDisqualificationDto",
+              },
+            },
+          },
+        },
+      },
+      "404": {
+        description: "<No Content>",
+      },
+    },
+    description:
+      "War admins only: the players excluded from a war, with the reason",
+  },
+  "PUT /faction-wars/{warId}/disqualifications/{userId}": {
+    operationId: "FactionWarsController_disqualifyPlayer",
+    parameters: [
+      {
+        name: "warId",
+        in: "path",
+        schema: {
+          type: "string",
+        },
+        required: true,
+      },
+      {
+        name: "userId",
+        in: "path",
+        schema: {
+          type: "string",
+        },
+        required: true,
+      },
+    ],
+    security: [
+      {
+        bearer: [],
+      },
+    ],
+    responses: {
+      "200": {
+        description: "Success",
+        content: {
+          "application/json": {
+            schema: {
+              type: "array",
+              items: {
+                $ref: "#/components/schemas/FactionWarDisqualificationDto",
+              },
+            },
+          },
+        },
+      },
+      "404": {
+        description: "<No Content>",
+      },
+    },
+    description:
+      "War admins only: the player's points stop counting for their faction, they leave the leaderboard and champions, and they earn nothing more",
+    requestBody: {
+      content: {
+        "application/json": {
+          schema: {
+            $ref: "#/components/schemas/DisqualifyFactionWarPlayerDto",
+          },
+        },
+      },
+      required: true,
+    },
+  },
+  "DELETE /faction-wars/{warId}/disqualifications/{userId}": {
+    operationId: "FactionWarsController_restorePlayer",
+    parameters: [
+      {
+        name: "warId",
+        in: "path",
+        schema: {
+          type: "string",
+        },
+        required: true,
+      },
+      {
+        name: "userId",
+        in: "path",
+        schema: {
+          type: "string",
+        },
+        required: true,
+      },
+    ],
+    security: [
+      {
+        bearer: [],
+      },
+    ],
+    responses: {
+      "200": {
+        description: "Success",
+        content: {
+          "application/json": {
+            schema: {
+              type: "array",
+              items: {
+                $ref: "#/components/schemas/FactionWarDisqualificationDto",
+              },
+            },
+          },
+        },
+      },
+      "404": {
+        description: "<No Content>",
+      },
+    },
+    description:
+      "War admins only: lifts a disqualification; points earned before it count again",
   },
   "GET /public/faction-wars/current": {
     operationId: "FactionWarsController_getPublicCurrentWar",

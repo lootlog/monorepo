@@ -18,6 +18,15 @@ const FactionWarPointSourceSchema = Schema.Literals([
   FactionWarPointSource.PVP,
 ]);
 
+/**
+ * Points one kill or loot added for the player's faction, so the Game client
+ * can show them; absent when nothing counted (no pick, cap reached).
+ */
+export const FactionWarAwardResponse = Schema.Struct({
+  faction: FactionWarFactionSchema,
+  points: NonNegativeInt,
+}).annotate({ identifier: "FactionWarAwardDto" });
+
 const FactionWarStatus = Schema.Literals(["UPCOMING", "RUNNING", "ENDED"]);
 
 const FactionTotal = Schema.Struct({
@@ -71,6 +80,8 @@ const MyFactionWarPick = Schema.Struct({
   world: Schema.String,
   pickedAt: IsoDateTime,
   hiddenFromLeaderboard: Schema.Boolean,
+  /** A war admin excluded the pick: it earns and counts nothing. */
+  disqualified: Schema.Boolean,
   points: NonNegativeInt,
   todayBySource: Schema.Record(FactionWarPointSourceSchema, NonNegativeInt),
 }).annotate({ identifier: "MyFactionWarPickDto" });
@@ -89,6 +100,8 @@ export const FactionWarResponse = Schema.Struct({
   days: Schema.Array(FactionWarDay),
   pick: Schema.NullOr(MyFactionWarPick),
   champion: Schema.NullOr(FactionWarChampion),
+  /** Whether the caller may disqualify players in faction wars. */
+  isAdmin: Schema.Boolean,
 }).annotate({ identifier: "FactionWarResponseDto" });
 
 export type FactionWarResponse = typeof FactionWarResponse.Type;
@@ -126,6 +139,8 @@ export const FactionWarLeaderboardResponse = Schema.Struct({
       world: Schema.NullOr(Schema.String),
       points: NonNegativeInt,
       isMe: Schema.Boolean,
+      /** The player's User id, for war admins only; `null` for everyone else. */
+      userId: Schema.NullOr(Schema.String),
     }).annotate({ identifier: "FactionWarLeaderboardEntryDto" }),
   ),
 }).annotate({ identifier: "FactionWarLeaderboardResponseDto" });
@@ -146,3 +161,34 @@ export const FactionWarChampionsResponse = Schema.Struct({
 
 export type FactionWarChampionsResponse =
   typeof FactionWarChampionsResponse.Type;
+
+export const FactionWarChampionsQuery = Schema.Struct({
+  /** The Margonem world the Game client plays on; champions of other worlds are left out. */
+  world: Schema.NonEmptyString.check(Schema.isMaxLength(64)),
+});
+
+export const FactionWarDisqualificationParams = Schema.Struct({
+  warId: Schema.String,
+  userId: Schema.String,
+});
+
+export const DisqualifyFactionWarPlayerRequest = Schema.Struct({
+  reason: Schema.NonEmptyString.check(Schema.isMaxLength(500)),
+}).annotate({ identifier: "DisqualifyFactionWarPlayerDto" });
+
+export type DisqualifyFactionWarPlayerRequest =
+  typeof DisqualifyFactionWarPlayerRequest.Type;
+
+export const FactionWarDisqualificationsResponse = Schema.Array(
+  Schema.Struct({
+    userId: Schema.String,
+    faction: FactionWarFactionSchema,
+    characterName: Schema.String,
+    world: Schema.String,
+    disqualifiedAt: IsoDateTime,
+    reason: Schema.NullOr(Schema.String),
+  }).annotate({ identifier: "FactionWarDisqualificationDto" }),
+);
+
+export type FactionWarDisqualificationsResponse =
+  typeof FactionWarDisqualificationsResponse.Type;

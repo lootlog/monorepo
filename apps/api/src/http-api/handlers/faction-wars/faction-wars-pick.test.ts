@@ -1,13 +1,18 @@
 import { describe, expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
-import { Effect } from "effect";
+import { Effect, Layer } from "effect";
+import { FACTION_WARS } from "@lootlog/domain/faction-war";
 import {
   factionWarDailyPointsTable,
   factionWarPickTable,
 } from "#src/database/drizzle/schema";
 import { makeUserAccountDeletion } from "#src/http-api/handlers/account-organization/user-account-deletion.data-layer";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
-import { FactionWarsData } from "./faction-wars.handlers.js";
+import {
+  FactionWarsData,
+  FactionWarsIdentity,
+  setFactionWarDisqualification,
+} from "./faction-wars.handlers.js";
 
 const pick = (userId: string, discordId: string) => ({
   warId: "2026-barbatos-tanroth",
@@ -105,6 +110,97 @@ describe("faction war picks", () => {
       );
 
       expect(repick).toBeNull();
+    } finally {
+      await boundary.dispose();
+    }
+  });
+
+  it("leave a disqualified player out of scores and leaderboards until restored, for admins only", async () => {
+    const boundary = await createDatabaseBoundary();
+
+    try {
+      const identity = (isAdmin: boolean) =>
+        Layer.succeed(
+          FactionWarsIdentity,
+          FactionWarsIdentity.of({
+            caller: Effect.succeed({
+              userId: "admin",
+              discordId: "discord-admin",
+              isAdmin,
+            }),
+          }),
+        );
+
+      const run = <A, E>(
+        effect: Effect.Effect<A, E, FactionWarsData | FactionWarsIdentity>,
+        isAdmin = true,
+      ) =>
+        boundary.run(
+          effect.pipe(
+            Effect.provide(
+              Layer.merge(FactionWarsData.layerDatabase, identity(isAdmin)),
+            ),
+          ),
+        );
+
+      const war = FACTION_WARS[0]!;
+
+      await run(
+        Effect.gen(function* () {
+          const data = yield* FactionWarsData;
+
+          yield* data.createPick(pick("user-1", "discord-1"));
+          yield* data.createPick(pick("user-2", "discord-2"));
+          yield* boundary.database.insert(factionWarDailyPointsTable).values(
+            ["user-1", "user-2"].map((userId) => ({
+              warId: war.id,
+              userId,
+              day: "2026-10-20",
+              source: "KILL" as const,
+              points: 40,
+              updatedAt: new Date("2026-10-20T09:00:00Z"),
+            })),
+          );
+        }),
+      );
+
+      const standing = () =>
+        run(
+          Effect.gen(function* () {
+            const data = yield* FactionWarsData;
+            const input = yield* data.standingsInput(war);
+            const leaderboard = yield* data.leaderboard(war.id, "BARBATOS");
+
+            return {
+              players: input.players.BARBATOS,
+              points: input.stats.reduce((sum, row) => sum + row.points, 0),
+              leaderboard: leaderboard.map((row) => row.userId),
+            };
+          }),
+        );
+
+      await expect(
+        run(
+          setFactionWarDisqualification(war.id, "user-1", { reason: "bot" }),
+          false,
+        ),
+      ).rejects.toThrow();
+
+      await run(
+        setFactionWarDisqualification(war.id, "user-1", { reason: "bot" }),
+      );
+      expect(await standing()).toEqual({
+        players: 1,
+        points: 40,
+        leaderboard: ["user-2"],
+      });
+
+      await run(setFactionWarDisqualification(war.id, "user-1", null));
+      expect(await standing()).toEqual({
+        players: 2,
+        points: 80,
+        leaderboard: ["user-1", "user-2"],
+      });
     } finally {
       await boundary.dispose();
     }

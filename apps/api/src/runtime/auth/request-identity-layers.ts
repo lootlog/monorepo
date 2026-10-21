@@ -7,6 +7,7 @@ import { UserLootlogConfigIdentity } from "#src/http-api/handlers/user-lootlog-c
 import { UserThemesIdentity } from "#src/http-api/handlers/user-themes/user-themes.handlers";
 import { FactionWarsIdentity } from "#src/http-api/handlers/faction-wars/faction-wars.handlers";
 import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
+import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
 const SettingsIdentityLive = Layer.succeed(
   SettingsIdentity,
@@ -29,14 +30,17 @@ const UserThemesIdentityLive = Layer.succeed(
   }),
 );
 
-const FactionWarsIdentityLive = Layer.succeed(
+const FactionWarsIdentityLive = Layer.effect(
   FactionWarsIdentity,
-  FactionWarsIdentity.of({
-    caller: Effect.map(requestScopedIdentity, ({ userId, discordId }) => ({
-      userId,
-      discordId,
-    })),
-  }),
+  Effect.map(ApiRuntimeConfig, ({ factionWarAdminUserIds }) =>
+    FactionWarsIdentity.of({
+      caller: Effect.map(requestScopedIdentity, ({ userId, discordId }) => ({
+        userId,
+        discordId,
+        isAdmin: factionWarAdminUserIds.includes(userId),
+      })),
+    }),
+  ),
 );
 
 const MessagingIdentityLive = Layer.succeed(

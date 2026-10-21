@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "8ace1117-cee7-4243-b0d8-4fd5d3256461",
+  "id": "736c5446-8a6f-4725-9eab-5658459856d1",
   "prevIds": ["cea491b4-486a-45e9-ad50-ad98ec8fa002"],
   "ddl": [
     {
@@ -157,7 +157,8 @@
         "TIMER_BEFORE_SPAWN",
         "NPC_SPAWNED",
         "WATCHED_ITEM_DROPPED",
-        "SCHEDULED_MESSAGE"
+        "SCHEDULED_MESSAGE",
+        "FACTION_WAR"
       ],
       "name": "NotificationTriggerType",
       "entityType": "enums",
@@ -2999,6 +3000,32 @@
       "generated": null,
       "identity": null,
       "name": "pickedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FactionWarPick"
+    },
+    {
+      "type": "timestamp(3)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "disqualifiedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FactionWarPick"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "disqualificationReason",
       "entityType": "columns",
       "schema": "public",
       "table": "FactionWarPick"
@@ -13638,7 +13665,7 @@
       "table": "_EventMapToMember"
     },
     {
-      "columns": ["warId", "source", "sourceKey"],
+      "columns": ["warId", "source", "sourceKey", "userId"],
       "nameExplicit": true,
       "name": "FactionWarAward_pkey",
       "entityType": "pks",

@@ -182,6 +182,7 @@ export const notificationTriggerTypeEnum = pgEnum("NotificationTriggerType", [
   "NPC_SPAWNED",
   "WATCHED_ITEM_DROPPED",
   "SCHEDULED_MESSAGE",
+  "FACTION_WAR",
 ]);
 
 export const notificationScheduleStrategyEnum = pgEnum(
@@ -1239,6 +1240,9 @@ export const factionWarPickTable = pgTable(
       .default(false)
       .notNull(),
     pickedAt: timestamp("pickedAt", { mode: "date", precision: 3 }).notNull(),
+    /** Set by a war admin: the pick earns nothing and counts nowhere. */
+    disqualifiedAt: timestamp("disqualifiedAt", { mode: "date", precision: 3 }),
+    disqualificationReason: text("disqualificationReason"),
   },
   (table) => [
     primaryKey({
@@ -1299,8 +1303,8 @@ export const factionWarDailyPointsTable = pgTable(
 );
 
 /**
- * Records each loot or battle that already earned points: one award per item,
- * so retries and other submitters of the same loot cannot add more.
+ * Records each loot or battle that already earned a User points, so retries
+ * and other submitters of the same loot cannot pay that User twice.
  */
 export const factionWarAwardTable = pgTable(
   "FactionWarAward",
@@ -1314,7 +1318,12 @@ export const factionWarAwardTable = pgTable(
   (table) => [
     primaryKey({
       name: "FactionWarAward_pkey",
-      columns: [table["warId"], table["source"], table["sourceKey"]],
+      columns: [
+        table["warId"],
+        table["source"],
+        table["sourceKey"],
+        table["userId"],
+      ],
     }),
   ],
 );
