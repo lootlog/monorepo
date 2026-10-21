@@ -3,15 +3,15 @@ import { ScoringFactorSelect } from "./scoring-factor-select";
 import { ScoringOperatorSelect } from "./scoring-operator-select";
 import {
   Controller,
+  useWatch,
   type Control,
   type UseFormRegister,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Label } from "@lootlog/ui/components/label";
 import { EVENT_SCORING_NUMERIC_FACTORS } from "@lootlog/domain/scoring";
-
-import type { ScoringRulesFormValues } from "./scoring-rules-editor";
+import { ScoringField } from "./scoring-field";
 import { ScoringNumberInput } from "./scoring-number-input";
+import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
 interface ScoringConditionNumericProps {
   control: Control<ScoringRulesFormValues>;
@@ -19,6 +19,14 @@ interface ScoringConditionNumericProps {
   ruleIndex: number;
   conditionIndex: number;
 }
+
+const getFactorUnit = (factor: string | undefined) => {
+  if (!factor || factor === "assignedMembersCount") return undefined;
+
+  if (factor.endsWith("Percentage")) return "percent";
+
+  return factor === "minutesSinceLeaveToKill" ? "minutes" : "seconds";
+};
 
 export const ScoringConditionNumeric = ({
   control,
@@ -29,18 +37,21 @@ export const ScoringConditionNumeric = ({
   const { t } = useTranslation();
   const idPrefix = useId();
 
+  const path =
+    `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}` as const;
+
+  const factor = useWatch({ control, name: `${path}.factor` });
+  const unit = getFactorUnit(factor);
+
   return (
-    <div className="grid grid-cols-[1fr_80px_80px] gap-1.5">
-      <div className="space-y-0.5">
-        <Label
-          htmlFor={`${idPrefix}-factor`}
-          className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
-        >
-          {t("events.scoring.conditionLabel.factor")}
-        </Label>
+    <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_6rem_8rem]">
+      <ScoringField
+        label={t("events.scoring.conditionLabel.factor")}
+        htmlFor={`${idPrefix}-factor`}
+      >
         <Controller
           control={control}
-          name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor`}
+          name={`${path}.factor`}
           render={({ field }) => (
             <ScoringFactorSelect
               id={`${idPrefix}-factor`}
@@ -50,17 +61,14 @@ export const ScoringConditionNumeric = ({
             />
           )}
         />
-      </div>
-      <div className="space-y-0.5">
-        <Label
-          htmlFor={`${idPrefix}-operator`}
-          className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
-        >
-          {t("events.scoring.conditionLabel.operator")}
-        </Label>
+      </ScoringField>
+      <ScoringField
+        label={t("events.scoring.conditionLabel.operator")}
+        htmlFor={`${idPrefix}-operator`}
+      >
         <Controller
           control={control}
-          name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator`}
+          name={`${path}.operator`}
           render={({ field }) => (
             <ScoringOperatorSelect
               id={`${idPrefix}-operator`}
@@ -69,25 +77,25 @@ export const ScoringConditionNumeric = ({
             />
           )}
         />
-      </div>
-      <div className="space-y-0.5">
-        <Label
-          htmlFor={`${idPrefix}-value`}
-          className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
-        >
-          {t("events.scoring.conditionLabel.value")}
-        </Label>
+      </ScoringField>
+      <ScoringField
+        label={t("events.scoring.conditionLabel.value")}
+        htmlFor={`${idPrefix}-value`}
+      >
         <ScoringNumberInput
           id={`${idPrefix}-value`}
           control={control}
           register={register}
-          name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`}
+          name={`${path}.value`}
+          unit={
+            unit === "percent" ? "%" : unit && t(`events.scoring.unit.${unit}`)
+          }
           label={t("events.scoring.fieldLabel.conditionValue", {
             rule: ruleIndex + 1,
             condition: conditionIndex + 1,
           })}
         />
-      </div>
+      </ScoringField>
     </div>
   );
 };

@@ -28,10 +28,13 @@ import {
   normalizeEventScoringRules,
 } from "@lootlog/domain/scoring";
 import {
-  calculateTrackingDurationSeconds,
+  analyzeEventKillPresence,
+  getPresenceScoringContext,
+  resolveEventScoringWindow,
+} from "@lootlog/domain/scoring-presence";
+import {
   getEffectiveWindowEndAt,
   clipIntervalToWindow,
-  getTrackingWindowDurationSeconds,
   getTrackingWindowStartTime,
 } from "#src/events/monitoring/tracking-window";
 import { findActiveEventHeroesByNpc as findActiveEventHeroMatchesByNpc } from "#src/events/kills/find-active-event-heroes-by-npc";
@@ -53,17 +56,6 @@ type MapPresenceEntry = {
   mapName: string;
   presenceTimeSeconds: number;
   afkTimeSeconds: number;
-};
-
-type MemberAssignmentHistoryEntry = {
-  mapId: string;
-  assignedAt: Date;
-  unassignedAt: Date | null;
-};
-
-type TrackingInterval = {
-  start: Date;
-  end: Date;
 };
 
 type MemberPresenceStatsEntry = {
@@ -113,24 +105,7 @@ export const makeEventKills = (
   }) {
     const memberMapIds = new Map<number, Set<string>>();
 
-    const memberAssignmentsHistory = new Map<
-      number,
-      MemberAssignmentHistoryEntry[]
-    >();
-
-    const memberTrackingIntervals = new Map<number, TrackingInterval[]>();
-
     for (const historyEntry of params.assignmentHistory) {
-      if (!memberAssignmentsHistory.has(historyEntry.memberId)) {
-        memberAssignmentsHistory.set(historyEntry.memberId, []);
-      }
-
-      memberAssignmentsHistory.get(historyEntry.memberId)?.push({
-        mapId: historyEntry.mapId,
-        assignedAt: historyEntry.assignedAt,
-        unassignedAt: historyEntry.unassignedAt ?? null,
-      });
-
       const clippedTrackingInterval = clipIntervalToWindow({
         start: historyEntry.assignedAt,
         end: historyEntry.unassignedAt ?? params.killedAt,
@@ -147,23 +122,9 @@ export const makeEventKills = (
       }
 
       memberMapIds.get(historyEntry.memberId)?.add(historyEntry.mapId);
-
-      if (clippedTrackingInterval.end > clippedTrackingInterval.start) {
-        if (!memberTrackingIntervals.has(historyEntry.memberId)) {
-          memberTrackingIntervals.set(historyEntry.memberId, []);
-        }
-
-        memberTrackingIntervals
-          .get(historyEntry.memberId)
-          ?.push(clippedTrackingInterval);
-      }
     }
 
-    return {
-      memberAssignmentsHistory,
-      memberMapIds,
-      memberTrackingIntervals,
-    };
+    return memberMapIds;
   }
 
   function buildPresenceLookups(params: {
@@ -559,9 +520,6 @@ export const makeEventKills = (
       const trackingWindowStartTime =
         getTrackingWindowStartTime(trackingWindow);
 
-      const trackingWindowDurationSeconds =
-        getTrackingWindowDurationSeconds(trackingWindow);
-
       const heroMaps = yield* repository.findMaps(eventHero.id);
       const heroMapIds = heroMaps.map((map) => map.id);
       const mapIdToName = createMapNameLookup(heroMaps);
@@ -607,17 +565,33 @@ export const makeEventKills = (
               confirmedAt: Date | null;
             }> = [];
 
-            const {
-              memberAssignmentsHistory,
-              memberMapIds,
-              memberTrackingIntervals,
-            } = buildMemberAssignmentContext({
+            const memberMapIds = buildMemberAssignmentContext({
               assignmentHistory,
               killedAt: effectiveKilledAt,
               trackingWindowStartTime,
             });
 
             const assignedMemberIds = Array.from(memberMapIds.keys());
+
+            const presenceAnalysis = analyzeEventKillPresence({
+              window: resolveEventScoringWindow({
+                killedAt,
+                minSpawnTimeAtKill,
+                maxSpawnTimeAtKill,
+              }),
+              participantIds: assignedMemberIds,
+              intervals: assignmentHistory.flatMap((assignment) =>
+                memberMapIds.has(assignment.memberId)
+                  ? [
+                      {
+                        participantId: assignment.memberId,
+                        start: assignment.assignedAt,
+                        end: assignment.unassignedAt,
+                      },
+                    ]
+                  : [],
+              ),
+            });
 
             if (assignedMemberIds.length === 0) {
               logger.log({
@@ -654,34 +628,13 @@ export const makeEventKills = (
                 presenceByMemberMapKey,
               });
 
-              const trackingIntervals =
-                memberTrackingIntervals.get(memberId) ?? [];
-
-              const trackingDurationSeconds =
-                calculateTrackingDurationSeconds(trackingIntervals);
-
-              const trackingDurationPercentage =
-                trackingDurationSeconds !== null &&
-                trackingWindowDurationSeconds > 0
-                  ? Math.min(
-                      100,
-                      Math.round(
-                        (trackingDurationSeconds /
-                          trackingWindowDurationSeconds) *
-                          100,
-                      ),
-                    )
-                  : undefined;
-
-              const memberAssignments =
-                memberAssignmentsHistory.get(memberId) ?? [];
-
-              const { memberPresentAtKill, memberLeaveTime } =
-                getMemberKillState({
-                  assignments: memberAssignments,
-                  killedAt: effectiveKilledAt,
-                  trackingWindowStartTime,
-                });
+              const {
+                trackingDurationSeconds,
+                trackingDurationPercentage,
+                memberPresentAtKill,
+                memberLeaveTime,
+                presence,
+              } = getPresenceScoringContext(presenceAnalysis, memberId);
 
               const { totalPoints, basePoints, appliedBonuses } =
                 pointsService.calculateMemberPoints({
@@ -689,16 +642,17 @@ export const makeEventKills = (
                   scoringRules,
                   eligible: true,
                   trackingDurationPercentage,
-                  trackingDurationSeconds: trackingDurationSeconds ?? undefined,
+                  trackingDurationSeconds,
                   assignedMembersCount: assignedMemberIds.length,
                   killTime: effectiveKilledAt,
                   respawnStartTime: trackingWindowStartTime,
                   maxRespawnTime: maxSpawnTimeAtKill,
-                  memberLeaveTime: memberPresentAtKill ? null : memberLeaveTime,
+                  memberLeaveTime,
                   memberPresentAtKill,
                   timeOnMapSeconds: presenceStats.timeOnMapSeconds,
                   afkPercentage: presenceStats.afkPercentage,
                   wasPresent: presenceStats.wasPresent,
+                  presence,
                 });
 
               const memberLeftBeforeKill =
@@ -844,37 +798,6 @@ export const makeEventKills = (
           : null,
       autoConfirmedAt: confirmationMinutes > 0 ? null : killedAt,
     };
-  }
-
-  function getMemberKillState(params: {
-    assignments: MemberAssignmentHistoryEntry[];
-    killedAt: Date;
-    trackingWindowStartTime: Date;
-  }) {
-    let memberPresentAtKill = false;
-    let memberLeaveTime: Date | null = null;
-
-    for (const assignment of params.assignments) {
-      if (assignment.assignedAt > params.killedAt) continue;
-
-      if (
-        !assignment.unassignedAt ||
-        assignment.unassignedAt >= params.killedAt
-      ) {
-        memberPresentAtKill = true;
-        continue;
-      }
-
-      if (
-        assignment.unassignedAt >= params.trackingWindowStartTime &&
-        assignment.unassignedAt < params.killedAt &&
-        (!memberLeaveTime || assignment.unassignedAt > memberLeaveTime)
-      ) {
-        memberLeaveTime = assignment.unassignedAt;
-      }
-    }
-
-    return { memberPresentAtKill, memberLeaveTime };
   }
 
   function cancelScheduledAutoClose(heroId: string) {

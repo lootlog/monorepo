@@ -30,6 +30,16 @@ export const createDefaultScoringCondition = (
         operator: ">=",
         value: 0,
       };
+    case "RESPAWN_JOIN":
+      return { type: "RESPAWN_JOIN", toleranceSeconds: 300 };
+    case "GROUP_SIZE":
+      return {
+        type: "GROUP_SIZE",
+        counting: "TIMELINE",
+        size: { comparison: "AT_MOST", value: 4, to: 4 },
+        minSharePercentage: 50,
+        minTimePercentage: 90,
+      };
     default:
       return {
         type: "NUMERIC",
