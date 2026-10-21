@@ -30,10 +30,14 @@ import {
 } from "../../utils/scoring-presentation";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
 import { ScoringBreakdownList } from "../shared/scoring-breakdown-list";
+import { ScoringPresenceBreakdown } from "../shared/scoring-presence-breakdown";
+import type { KillParticipantScoring } from "../../utils/scoring-applied-rules";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 
 interface KillParticipantRowProps {
   participant: KillDetailParticipant;
+  scoring?: KillParticipantScoring | null;
+  participantNames?: ReadonlyMap<number, string>;
   rank: number;
   isExpanded: boolean;
   onToggle: () => void;
@@ -87,6 +91,8 @@ const buildParticipantScoringView = (
 
 export const KillParticipantRow = ({
   participant,
+  scoring = null,
+  participantNames,
   rank,
   isExpanded,
   onToggle,
@@ -282,6 +288,26 @@ export const KillParticipantRow = ({
               totalPoints={participant.points}
             />
           </div>
+
+          {scoring ? (
+            <div className="min-w-0 lg:col-span-2 lg:row-start-2">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                {t("events.kills.presenceBreakdown")}
+              </p>
+              <p className="mb-2 text-xs text-muted-foreground">
+                {t("events.kills.presenceBreakdownHint")}
+              </p>
+              <ScoringPresenceBreakdown
+                analysis={scoring.analysis}
+                participantId={participant.memberId}
+                explanation={scoring.explain(participant)}
+                rules={scoring.rules.rules}
+                nameOf={(memberId) =>
+                  participantNames?.get(Number(memberId)) ?? String(memberId)
+                }
+              />
+            </div>
+          ) : null}
 
           <div className="min-w-0">
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">

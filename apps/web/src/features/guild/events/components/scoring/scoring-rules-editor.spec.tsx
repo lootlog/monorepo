@@ -243,3 +243,44 @@ it.each([
     });
   },
 );
+
+it("stores the join tolerance typed as minutes and seconds in whole seconds", async () => {
+  const onSave = vi.fn<(values: ParentValues) => void>();
+
+  const rules: EventScoringRules = {
+    ...initialRules,
+    rules: [
+      {
+        id: "on-time",
+        name: "On time",
+        conditions: [{ type: "RESPAWN_JOIN", toleranceSeconds: 300 }],
+        action: { type: "SET_BASE", points: 1 },
+      },
+    ],
+  };
+
+  render(<ParentForm rules={rules} onSave={onSave} />);
+  fireEvent.click(screen.getByRole("button", { name: /On time/ }));
+
+  const minutes = screen.getByRole("spinbutton", {
+    name: "events.scoring.fieldLabel.toleranceMinutes",
+  });
+
+  const seconds = screen.getByRole("spinbutton", {
+    name: "events.scoring.fieldLabel.toleranceSeconds",
+  });
+
+  fireEvent.change(minutes, { target: { value: "" } });
+  fireEvent.change(seconds, { target: { value: "" } });
+  fireEvent.submit(screen.getByRole("form"));
+  await waitFor(() => expect(document.activeElement).toBe(minutes));
+  expect(onSave).not.toHaveBeenCalled();
+
+  fireEvent.change(minutes, { target: { value: "4" } });
+  fireEvent.change(seconds, { target: { value: "30" } });
+  fireEvent.submit(screen.getByRole("form"));
+  await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+  expect(onSave.mock.calls[0]?.[0].scoringRules.rules[0]?.conditions).toEqual([
+    { type: "RESPAWN_JOIN", toleranceSeconds: 270 },
+  ]);
+});

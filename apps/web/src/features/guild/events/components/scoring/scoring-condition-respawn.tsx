@@ -7,10 +7,10 @@ import {
   type UseFormRegister,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Label } from "@lootlog/ui/components/label";
-
-import type { ScoringRulesFormValues } from "./scoring-rules-editor";
+import { PERCENTAGE_BOUNDS } from "../../utils/scoring-number-validation";
+import { ScoringField } from "./scoring-field";
 import { ScoringNumberInput } from "./scoring-number-input";
+import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
 interface ScoringConditionRespawnProps {
   control: Control<ScoringRulesFormValues>;
@@ -28,26 +28,24 @@ export const ScoringConditionRespawn = ({
   const { t } = useTranslation();
   const idPrefix = useId();
 
+  const path =
+    `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}` as const;
+
   return (
-    <div className="space-y-2">
-      {/* Time range row */}
+    <div className="grid gap-2">
       <ScoringConditionTimeWindow
         register={register}
         ruleIndex={ruleIndex}
         conditionIndex={conditionIndex}
       />
-      {/* Coverage threshold row */}
-      <div className="grid grid-cols-2 gap-1.5">
-        <div className="space-y-0.5">
-          <Label
-            htmlFor={`${idPrefix}-operator`}
-            className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
-          >
-            {t("events.scoring.conditionLabel.coverage")}
-          </Label>
+      <div className="grid grid-cols-[6rem_8rem] gap-2">
+        <ScoringField
+          label={t("events.scoring.conditionLabel.coverage")}
+          htmlFor={`${idPrefix}-operator`}
+        >
           <Controller
             control={control}
-            name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator`}
+            name={`${path}.operator`}
             render={({ field }) => (
               <ScoringOperatorSelect
                 id={`${idPrefix}-operator`}
@@ -56,31 +54,24 @@ export const ScoringConditionRespawn = ({
               />
             )}
           />
-        </div>
-        <div className="space-y-0.5">
-          <Label
-            htmlFor={`${idPrefix}-value`}
-            className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
-          >
-            {t("events.scoring.conditionLabel.value")}
-          </Label>
-          <div className="flex items-center gap-1">
-            <ScoringNumberInput
-              id={`${idPrefix}-value`}
-              control={control}
-              register={register}
-              name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`}
-              label={t("events.scoring.fieldLabel.conditionValue", {
-                rule: ruleIndex + 1,
-                condition: conditionIndex + 1,
-              })}
-              max={100}
-            />
-            <span className="text-[11px] text-muted-foreground/50 shrink-0 font-mono">
-              %
-            </span>
-          </div>
-        </div>
+        </ScoringField>
+        <ScoringField
+          label={t("events.scoring.conditionLabel.value")}
+          htmlFor={`${idPrefix}-value`}
+        >
+          <ScoringNumberInput
+            id={`${idPrefix}-value`}
+            control={control}
+            register={register}
+            name={`${path}.value`}
+            bounds={PERCENTAGE_BOUNDS}
+            unit="%"
+            label={t("events.scoring.fieldLabel.conditionValue", {
+              rule: ruleIndex + 1,
+              condition: conditionIndex + 1,
+            })}
+          />
+        </ScoringField>
       </div>
     </div>
   );

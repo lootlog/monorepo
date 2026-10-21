@@ -34611,7 +34611,8 @@
                                   "timeOnMapSeconds",
                                   "afkPercentage",
                                   "respawnDurationSeconds",
-                                  "respawnProgressPercentage"
+                                  "respawnProgressPercentage",
+                                  "respawnJoinDelaySeconds"
                                 ]
                               },
                               "operator": {
@@ -34695,6 +34696,84 @@
                               "to",
                               "operator",
                               "value"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": ["RESPAWN_JOIN"]
+                              },
+                              "toleranceSeconds": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": ["type", "toleranceSeconds"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": ["GROUP_SIZE"]
+                              },
+                              "counting": {
+                                "type": "string",
+                                "enum": [
+                                  "WINDOW",
+                                  "AT_KILL",
+                                  "MIN_SHARE",
+                                  "TIMELINE"
+                                ]
+                              },
+                              "size": {
+                                "type": "object",
+                                "properties": {
+                                  "comparison": {
+                                    "type": "string",
+                                    "enum": [
+                                      "EXACT",
+                                      "AT_MOST",
+                                      "AT_LEAST",
+                                      "BETWEEN"
+                                    ]
+                                  },
+                                  "value": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "to": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991
+                                  }
+                                },
+                                "required": ["comparison", "value", "to"],
+                                "additionalProperties": false
+                              },
+                              "minSharePercentage": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 100
+                              },
+                              "minTimePercentage": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 100
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "counting",
+                              "size",
+                              "minSharePercentage",
+                              "minTimePercentage"
                             ],
                             "additionalProperties": false
                           }
@@ -35039,7 +35118,8 @@
                                   "timeOnMapSeconds",
                                   "afkPercentage",
                                   "respawnDurationSeconds",
-                                  "respawnProgressPercentage"
+                                  "respawnProgressPercentage",
+                                  "respawnJoinDelaySeconds"
                                 ]
                               },
                               "operator": {
@@ -35123,6 +35203,84 @@
                               "to",
                               "operator",
                               "value"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": ["RESPAWN_JOIN"]
+                              },
+                              "toleranceSeconds": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": ["type", "toleranceSeconds"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": ["GROUP_SIZE"]
+                              },
+                              "counting": {
+                                "type": "string",
+                                "enum": [
+                                  "WINDOW",
+                                  "AT_KILL",
+                                  "MIN_SHARE",
+                                  "TIMELINE"
+                                ]
+                              },
+                              "size": {
+                                "type": "object",
+                                "properties": {
+                                  "comparison": {
+                                    "type": "string",
+                                    "enum": [
+                                      "EXACT",
+                                      "AT_MOST",
+                                      "AT_LEAST",
+                                      "BETWEEN"
+                                    ]
+                                  },
+                                  "value": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "to": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991
+                                  }
+                                },
+                                "required": ["comparison", "value", "to"],
+                                "additionalProperties": false
+                              },
+                              "minSharePercentage": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 100
+                              },
+                              "minTimePercentage": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 100
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "counting",
+                              "size",
+                              "minSharePercentage",
+                              "minTimePercentage"
                             ],
                             "additionalProperties": false
                           }

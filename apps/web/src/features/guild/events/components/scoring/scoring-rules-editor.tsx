@@ -1,7 +1,11 @@
-import { makeRuleId } from "../../utils/scoring-rule-templates";
+import {
+  applyGroupRulebook,
+  makeRuleId,
+} from "../../utils/scoring-rule-templates";
 import {
   useEffect,
   useEffectEvent,
+  useId,
   useImperativeHandle,
   useRef,
   useState,
@@ -11,14 +15,14 @@ import { isEqual } from "es-toolkit";
 import { useFieldArray, useWatch, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
-import { Separator } from "@lootlog/ui/components/separator";
-import { Plus, ListChecks, FlaskConical } from "lucide-react";
+import { Plus, FlaskConical } from "lucide-react";
 import type { EventScoringRules } from "@lootlog/domain/scoring";
 import {
   createDefaultScoringAction,
   createDefaultScoringCondition,
 } from "../../utils/scoring-condition-defaults";
 import { ScoringGlobalSettings } from "./scoring-global-settings";
+import { ScoringHowItWorks } from "./scoring-how-it-works";
 import { ScoringRuleCard } from "./scoring-rule-card";
 import { ScoringRuleTemplatesMenu } from "./scoring-rule-templates-menu";
 import { ScoringSimulatorDialog } from "./scoring-simulator-dialog";
@@ -50,6 +54,7 @@ export const ScoringRulesEditor = ({
 }: ScoringRulesEditorProps) => {
   const { t } = useTranslation();
   const [simulatorOpen, setSimulatorOpen] = useState(false);
+  const headingId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useImperativeHandle(ref, () => ({
@@ -85,7 +90,7 @@ export const ScoringRulesEditor = ({
     setValue: scopedSetValue,
   } = form;
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, move } = useFieldArray({
     control: scopedControl,
     name: "scoringRules.rules",
   });
@@ -95,60 +100,94 @@ export const ScoringRulesEditor = ({
     name: "scoringRules",
   });
 
+  const applyRulebook = () => {
+    const next = applyGroupRulebook(form.getValues("scoringRules"));
+
+    form.setValue("scoringRules.hardCapPoints", next.hardCapPoints, {
+      shouldDirty: true,
+    });
+    form.setValue("scoringRules.rules", next.rules, { shouldDirty: true });
+  };
+
   return (
-    <div ref={containerRef} className="space-y-4 rounded-lg">
+    <div ref={containerRef} className="grid gap-5">
       <ScoringGlobalSettings
         control={scopedControl}
         register={scopedRegister}
       />
 
-      <Separator className="opacity-50" />
-
-      <div className="space-y-2.5">
-        <div className="flex items-center gap-1.5">
-          <ListChecks className="size-3.5 text-muted-foreground/50" />
-          <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <section className="grid gap-3" aria-labelledby={`${headingId}-rules`}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3
+            id={`${headingId}-rules`}
+            className="flex items-baseline gap-2 text-sm font-semibold"
+          >
             {t("events.scoring.rules")}
+            <span className="text-xs font-normal tabular-nums text-muted-foreground">
+              {fields.length}
+            </span>
           </h3>
-          <span className="text-[10px] text-muted-foreground/40 font-mono ml-1">
-            ({fields.length})
-          </span>
+          <div className="flex flex-wrap gap-2">
+            <ScoringRuleTemplatesMenu
+              onSelectTemplate={(rule) => append(rule)}
+              onApplyGroupRulebook={applyRulebook}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setSimulatorOpen(true)}
+            >
+              <FlaskConical className="size-4" />
+              {t("events.scoring.simulator.buttonLabel")}
+            </Button>
+          </div>
         </div>
 
-        {fields.map((field, ruleIndex) => (
-          <ScoringRuleCard
-            key={field.id}
-            control={scopedControl}
-            register={scopedRegister}
-            setValue={scopedSetValue}
-            ruleIndex={ruleIndex}
-            canRemove={fields.length > 1}
-            onRemove={() => remove(ruleIndex)}
-          />
-        ))}
+        <ScoringHowItWorks
+          hardCapPoints={currentRules?.hardCapPoints ?? Number.NaN}
+          minTrackingPercentForBonuses={
+            currentRules?.minTrackingPercentForBonuses ?? Number.NaN
+          }
+        />
 
-        <div className="flex gap-2 pt-1">
+        <ol className="grid gap-2">
+          {fields.map((field, ruleIndex) => (
+            <li key={field.id}>
+              <ScoringRuleCard
+                control={scopedControl}
+                register={scopedRegister}
+                setValue={scopedSetValue}
+                ruleIndex={ruleIndex}
+                canRemove={fields.length > 1}
+                onRemove={() => remove(ruleIndex)}
+                onMoveUp={
+                  ruleIndex > 0
+                    ? () => move(ruleIndex, ruleIndex - 1)
+                    : undefined
+                }
+                onMoveDown={
+                  ruleIndex < fields.length - 1
+                    ? () => move(ruleIndex, ruleIndex + 1)
+                    : undefined
+                }
+              />
+            </li>
+          ))}
+        </ol>
+
+        <div>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => append(defaultRule())}
           >
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            <Plus className="size-4" />
             {t("events.scoring.addRule")}
           </Button>
-          <ScoringRuleTemplatesMenu onSelectTemplate={(rule) => append(rule)} />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setSimulatorOpen(true)}
-          >
-            <FlaskConical className="mr-1.5 h-3.5 w-3.5" />
-            {t("events.scoring.simulator.buttonLabel")}
-          </Button>
         </div>
-      </div>
+      </section>
 
       <input
         type="hidden"

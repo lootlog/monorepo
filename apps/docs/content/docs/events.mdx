@@ -101,6 +101,40 @@ rankingu nie zmienia osoby, której dotyczy otwarta korekta.
   dopiero potem wprowadź ręczną wartość.
 </Callout>
 
+## Reguły obstawki: spóźnienie i wielkość grupy
+
+Reguły są sprawdzane od góry do dołu. Podstawę ustawia ostatnia spełniona
+reguła z listy, a bonusy się sumują. Wyższą podstawę umieść więc niżej niż
+niższą: gracz solo spełnia też warunek grupy do 4 osób, a reguła solo pod nią
+zachowuje mu 3 pkt. Kolejność zmienisz strzałkami przy regule.
+
+Okno obstawki zaczyna się w minimalnym czasie respawnu i kończy w chwili bicia.
+Liczy się zaliczony czas przypisania do map herosa. Ta sama osoba na kilku
+mapach lub w kilku wpisach to jeden uczestnik, a jej czas nie liczy się
+podwójnie.
+
+- **Dołączył od początku respawnu** sprawdza tylko moment pierwszego
+  dołączenia w oknie. Dopuszczalne spóźnienie wpisujesz w minutach i sekundach;
+  0 oznacza brak tolerancji. Długość obstawki sprawdź osobnym warunkiem, np.
+  „% respawnu obstawionego co najmniej 90%”. To samo spóźnienie jest dostępne
+  jako wartość liczbowa **Spóźnienie od początku respawnu**.
+- **Wielkość grupy** liczy osoby razem z ocenianym graczem. Do wyboru są:
+  wszyscy uczestnicy w oknie, obecni przy biciu, uczestnicy z wymaganym
+  udziałem w całym oknie oraz liczebność zmieniająca się w czasie. Ostatni
+  sposób sprawdza, jaki procent własnej obstawki gracz spędził solo lub w grupie
+  danej wielkości. Osoba obecna tylko przez ostatnie 5 minut zwiększa grupę
+  tylko w tych 5 minutach.
+
+Gotowy zestaw **Solo, mała grupa i zwykła podstawa** z menu szablonów ustawia
+reguły 0,5 / 1 / 2 / 3 pkt we właściwej kolejności. Symulator pozwala ułożyć
+obecność kilku uczestników na osi czasu i sprawdzić wynik każdego z nich.
+
+Gdy brakuje danych, np. zapisów obecności części uczestników lub początku
+respawnu, warunek nie może zostać oceniony i reguła nie przyznaje punktów.
+Rozwinięty uczestnik bicia pokazuje okno, pierwsze dołączenie, zaliczony czas,
+liczebność w czasie i ocenę każdego warunku według aktualnych reguł. Zmiana
+reguł nie przelicza wcześniejszych bić; użyj **Przelicz punkty**.
+
 ## Widoczność herosów
 
 Zakres poziomów w rolach obejmuje również luki w obstawie,
