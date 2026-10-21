@@ -7,7 +7,13 @@ import {
   createRouter,
   RouterProvider,
 } from "@tanstack/react-router";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, expect, it, onTestFinished } from "vitest";
 import { getShowEventOverviewQueryKey } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
@@ -89,6 +95,10 @@ it.each(["settings", "rulebook"] as const)(
       </QueryClientProvider>,
     );
 
+    const saveButton = () =>
+      screen.queryByRole("button", { name: /common.save/ });
+
+    // Each save resets the form; the next edit must still make it dirty.
     for (const [index, value] of ["Zima 2026", "Lato 2027"].entries()) {
       fireEvent.change(await page.field(), { target: { value } });
       fireEvent.click(
@@ -98,6 +108,18 @@ it.each(["settings", "rulebook"] as const)(
       expect(await requests[index]?.json()).toEqual(
         expect.objectContaining({ [page.key]: value }),
       );
+      await waitFor(() => expect(saveButton()).toBeNull());
     }
+
+    // So must an edit after discarding changes with the bar's reset.
+    fireEvent.change(await page.field(), { target: { value: "Jesień" } });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "common.reset" }),
+    );
+    await waitFor(() => expect(saveButton()).toBeNull());
+    fireEvent.change(await page.field(), { target: { value: "Wiosna" } });
+    expect(
+      await screen.findByRole("button", { name: /common.save/ }),
+    ).toBeTruthy();
   },
 );
