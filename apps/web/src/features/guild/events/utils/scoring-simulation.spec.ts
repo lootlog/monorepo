@@ -85,3 +85,43 @@ it("raises the cap so the solo base and existing bonuses are not cut", () => {
     { type: "ADD_BONUS", points: 0.5 },
   ]);
 });
+
+it("ends the simulated window at the maximum respawn like live scoring", () => {
+  const { analysis, results } = simulateScoringTimeline(rulebook, {
+    windowStart: "08:00",
+    killTime: "11:00",
+    maxRespawn: "10:00",
+    participants: [
+      {
+        id: "a",
+        name: "Gracz A",
+        intervals: [{ id: "a-0", from: "08:00", to: "11:00" }],
+      },
+      {
+        id: "b",
+        name: "Gracz B",
+        intervals: [{ id: "b-0", from: "10:00", to: "11:00" }],
+      },
+    ],
+  });
+
+  // B arrives only after the maximum respawn, so A watched the whole window solo.
+  expect(analysis.window.end.toISOString()).toBe("2026-01-15T09:00:00.000Z");
+  expect(results.map((entry) => entry.explanation.result.basePoints)).toEqual([
+    3, 0,
+  ]);
+});
+
+it("reads entered clock times in the rules' timezone, not the browser's", () => {
+  const preset = SIMULATION_PRESETS.find(
+    (entry) => entry.id === "lateSecondMember",
+  );
+
+  if (!preset) throw new Error("Missing preset");
+
+  const { analysis } = simulateScoringTimeline(rulebook, preset.timeline);
+
+  // 08:00 and 09:40 Europe/Warsaw in January (UTC+1).
+  expect(analysis.window.start?.toISOString()).toBe("2026-01-15T07:00:00.000Z");
+  expect(analysis.window.end.toISOString()).toBe("2026-01-15T08:40:00.000Z");
+});
