@@ -282,26 +282,20 @@ export const requestServerPresence = async (
   }
 };
 
+// The gateway lists every permission an owner or administrator holds, and
+// leaves out presence where this character does not publish its own, so the
+// listed permissions alone decide.
 export const canReadPresence = (
   policy: OrganizationAccessPolicy | undefined,
 ): boolean =>
-  Boolean(
-    policy &&
-    (policy.owner ||
-      policy.permissions.includes(Permission.ADMIN) ||
-      policy.permissions.includes(Permission.LOOTLOG_ONLINE_PLAYERS_READ)),
-  );
+  policy?.permissions.includes(Permission.LOOTLOG_ONLINE_PLAYERS_READ) ?? false;
 
 export const canReadPresenceLocation = (
   policy: OrganizationAccessPolicy | undefined,
 ): boolean =>
   canReadPresence(policy) &&
-  Boolean(
-    policy &&
-    (policy.owner ||
-      policy.permissions.includes(Permission.ADMIN) ||
-      policy.permissions.includes(Permission.LOOTLOG_PRESENCE_LOCATION_READ)),
-  );
+  (policy?.permissions.includes(Permission.LOOTLOG_PRESENCE_LOCATION_READ) ??
+    false);
 
 export const filterPresenceByPolicy = (
   players: PlayerPresenceResponse,

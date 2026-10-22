@@ -316,20 +316,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         hasJoined = true;
         joinedConnection = true;
       }
-
-      // Emit initial presence after successful join
-      // This ensures presence is sent even after browser refresh
-      // (when town change event is not fired)
-      const map = useGameStore.getState().game?.map;
-
-      if (!map) {
-        return;
-      }
-
-      socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
-        mapId: map.id,
-        mapName: map.name,
-      });
     };
 
     const handlePermissionsUpdated = (data: PermissionsUpdatedPayload) => {

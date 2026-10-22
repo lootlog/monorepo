@@ -59,6 +59,7 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
     expect(
       screen.getByRole("button", { name: "Łączenie z serwerem…" }),
     ).toBeVisible();
+    getSocket().setPresenceOrganizations(["guild-1"]);
     act(() => gateway.wire.open());
     await gateway.join(["guild-2", "guild-1"]);
 

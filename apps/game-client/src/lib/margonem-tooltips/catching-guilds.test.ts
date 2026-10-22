@@ -172,7 +172,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
       currentHtml: "<div>Other</div>",
     });
 
-    expect(result).toContain("Dodaje łupy i timery do:");
+    expect(result).toContain("Gra dla:");
     expect(result).toContain("Member &lt;One&gt;");
     expect(result).toContain("Alpha &lt;One&gt;");
     expect(result).toContain("Beta &amp; Co");
