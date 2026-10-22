@@ -567,12 +567,22 @@ const session = (permissions: Permission[]): SessionData => ({
   confidence: "reported",
 });
 
+// Reads presence outside the game, where no publication is required.
+const webViewer = (permissions: Permission[]): SessionData => ({
+  ...session(permissions),
+  platform: "web-app",
+});
+
 const socket = (data: SessionData): GatewaySocket => ({
   data,
   send: () => 0,
   close: () => {},
   getBufferedAmount: () => 0,
 });
+
+// Publishes to every Lootlog of the session, as a client whose character catches for all of them.
+const joinedOrganizations = (target: GatewaySocket) =>
+  target.data.guilds.map(({ guild }) => guild.id);
 
 const secondGuild = (permissions: Permission[]) => ({
   guild: { id: "organization-2", ownerId: "someone-else" },
@@ -658,7 +668,11 @@ describe("PresenceStore", () => {
     const hub = new RecordingHub();
     const store = new PresenceStore({ command: redis }, hub, () => 10_000);
     const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
-    await Effect.runPromise(store.publish(publisher, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(publisher, {
+        organizationIds: joinedOrganizations(publisher),
+      }),
+    );
     await flush(store);
     hub.presenceEvents.length = 0;
     const started = Promise.withResolvers<void>();
@@ -675,7 +689,10 @@ describe("PresenceStore", () => {
     const controller = new AbortController();
 
     const publication = Effect.runPromiseExit(
-      store.publish(publisher, { organizationIds: [], isAfk: true }),
+      store.publish(publisher, {
+        organizationIds: joinedOrganizations(publisher),
+        isAfk: true,
+      }),
       { signal: controller.signal },
     );
 
@@ -707,7 +724,11 @@ describe("PresenceStore", () => {
         discordId: `discord-${index}`,
       });
 
-      await Effect.runPromise(store.publish(joining, { organizationIds: [] }));
+      await Effect.runPromise(
+        store.publish(joining, {
+          organizationIds: joinedOrganizations(joining),
+        }),
+      );
       // Every joining client fetches the Organization snapshot.
       await Effect.runPromise(store.snapshot(joining.data, "organization-1"));
     };
@@ -751,9 +772,16 @@ describe("PresenceStore", () => {
     );
 
     const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
-    await Effect.runPromise(store.publish(publisher, { organizationIds: [] }));
     await Effect.runPromise(
-      store.publish(publisher, { organizationIds: [], isAfk: true }),
+      store.publish(publisher, {
+        organizationIds: joinedOrganizations(publisher),
+      }),
+    );
+    await Effect.runPromise(
+      store.publish(publisher, {
+        organizationIds: joinedOrganizations(publisher),
+        isAfk: true,
+      }),
     );
     await flush(store);
     expect(deltaChanges(hub, "upsert")).toMatchObject([
@@ -762,7 +790,10 @@ describe("PresenceStore", () => {
 
     hub.presenceEvents.length = 0;
     await Effect.runPromise(
-      store.publish(publisher, { organizationIds: [], isAfk: false }),
+      store.publish(publisher, {
+        organizationIds: joinedOrganizations(publisher),
+        isAfk: false,
+      }),
     );
     await Effect.runPromise(store.disconnect(publisher.data));
     await flush(store);
@@ -789,8 +820,12 @@ describe("PresenceStore", () => {
       connectionId: "session-2",
     });
 
-    await Effect.runPromise(store.publish(first, { organizationIds: [] }));
-    await Effect.runPromise(store.publish(second, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(first, { organizationIds: joinedOrganizations(first) }),
+    );
+    await Effect.runPromise(
+      store.publish(second, { organizationIds: joinedOrganizations(second) }),
+    );
     spyOn(hub, "publishPresence").mockImplementationOnce(async () => {
       // A departure queued while the failed flush is in flight is newer.
       await Effect.runPromise(store.disconnect(second.data));
@@ -826,7 +861,7 @@ describe("PresenceStore", () => {
             ...session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
             connectionId: `session-${index}`,
           }),
-          { organizationIds: [] },
+          { organizationIds: ["organization-1"] },
         ),
       );
 
@@ -1080,9 +1115,9 @@ describe("PresenceStore", () => {
     });
 
     const smembers = spyOn(redis, "smembers");
-    const basic = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+    const basic = webViewer([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
 
-    const precise = session([
+    const precise = webViewer([
       Permission.LOOTLOG_ONLINE_PLAYERS_READ,
       Permission.LOOTLOG_PRESENCE_LOCATION_READ,
     ]);
@@ -1366,14 +1401,14 @@ describe("PresenceStore", () => {
 
     const basic = await Effect.runPromise(
       store.snapshot(
-        session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+        webViewer([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
         "organization-1",
       ),
     );
 
     const precise = await Effect.runPromise(
       store.snapshot(
-        session([
+        webViewer([
           Permission.LOOTLOG_ONLINE_PLAYERS_READ,
           Permission.LOOTLOG_PRESENCE_LOCATION_READ,
         ]),
@@ -1443,7 +1478,7 @@ describe("PresenceStore", () => {
             connectionId: `burst-${index}`,
             userId: `user-${index}`,
           }),
-          { organizationIds: [] },
+          { organizationIds: ["organization-1"] },
         ),
       );
     }
@@ -1476,7 +1511,9 @@ describe("PresenceStore", () => {
     const hub = new RecordingHub();
     const store = new PresenceStore({ command: redis }, hub, () => now);
     const game = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
-    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(game, { organizationIds: joinedOrganizations(game) }),
+    );
     await flush(store);
     now += PRESENCE_EXPIRY_MS;
     const evaluate = redis.eval.bind(redis);
@@ -1508,7 +1545,9 @@ describe("PresenceStore", () => {
     const hub = new RecordingHub();
     const store = new PresenceStore({ command: redis }, hub, () => now);
     const game = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
-    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(game, { organizationIds: joinedOrganizations(game) }),
+    );
     await flush(store);
     const oldDue = new Map(redis.sortedSets.get("presence:expiry:due"));
     now += PRESENCE_EXPIRY_MS - 1_000;
@@ -1553,7 +1592,11 @@ describe("PresenceStore", () => {
 
     publisher.data.guilds = [];
     await expect(
-      Effect.runPromise(store.publish(publisher, { organizationIds: [] })),
+      Effect.runPromise(
+        store.publish(publisher, {
+          organizationIds: joinedOrganizations(publisher),
+        }),
+      ),
     ).resolves.toBeUndefined();
     expect(publisher.data.presence).toBeUndefined();
     expect(
@@ -1573,13 +1616,16 @@ describe("PresenceStore", () => {
     });
   });
 
-  test.each([
-    { organizationIds: [] },
-    { organizationIds: ["organization-1"] },
-    { organizationIds: ["unauthorized-organization"] },
+  test.each<{ organizationIds: string[]; published: string[] }>([
+    { organizationIds: [], published: [] },
+    { organizationIds: ["organization-2"], published: ["organization-2"] },
+    {
+      organizationIds: ["organization-2", "unauthorized-organization"],
+      published: ["organization-2"],
+    },
   ])(
-    "publishes to every authorized organization despite client selection %j",
-    async ({ organizationIds }) => {
+    "publishes only to the selected Lootlogs the session belongs to: %j",
+    async ({ organizationIds, published }) => {
       const redis = new MemoryRedis();
       const hub = new RecordingHub();
       const coverage = new RecordingCoverage();
@@ -1606,33 +1652,26 @@ describe("PresenceStore", () => {
         }),
       );
 
-      expect(publisher.data.presence?.organizationIds).toEqual([
+      expect(publisher.data.presence?.organizationIds ?? []).toEqual(published);
+
+      for (const organizationId of [
         "organization-1",
         "organization-2",
-      ]);
-
-      for (const organizationId of ["organization-1", "organization-2"]) {
+        "unauthorized-organization",
+      ]) {
         const snapshot = await Effect.runPromise(
-          store.snapshot(publisher.data, organizationId),
+          store.snapshot(
+            session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+            organizationId,
+          ),
         );
 
-        expect(snapshot.presences).toHaveLength(1);
-        expect(coverage.events).toContainEqual({
-          guildId: organizationId,
-          mapName: "Kwieciste Przejście",
-          discordId: "discord-1",
-          hasPlayer: true,
-          isAfk: false,
-        });
+        expect(snapshot.presences).toHaveLength(
+          published.includes(organizationId) ? 1 : 0,
+        );
       }
 
-      await flush(store);
-      expect(hub.presenceEvents).toHaveLength(2);
-      expect(
-        await Effect.runPromise(
-          store.snapshot(publisher.data, "unauthorized-organization"),
-        ),
-      ).toMatchObject({ presences: [] });
+      expect(coverage.events.map(({ guildId }) => guildId)).toEqual(published);
     },
   );
 
@@ -1646,7 +1685,7 @@ describe("PresenceStore", () => {
     );
     await Effect.runPromise(
       store.publish(publisher, {
-        organizationIds: [],
+        organizationIds: joinedOrganizations(publisher),
         location: { map: "Target" },
       }),
     );
@@ -1715,7 +1754,7 @@ describe("PresenceStore", () => {
 
       await Effect.runPromise(
         store.publish(publisher, {
-          organizationIds: [],
+          organizationIds: joinedOrganizations(publisher),
           location: { map: "Target" },
         }),
       );
@@ -1725,7 +1764,10 @@ describe("PresenceStore", () => {
       );
       await Effect.runPromise(store.reconcileAccess(publisher));
       await Effect.runPromise(
-        store.publish(publisher, { organizationIds: [], location: { map } }),
+        store.publish(publisher, {
+          organizationIds: joinedOrganizations(publisher),
+          location: { map },
+        }),
       );
       expect(
         coverage.events.filter((event) => event.guildId === "organization-2"),
@@ -1740,7 +1782,10 @@ describe("PresenceStore", () => {
       ]);
       coverage.events.length = 0;
       await Effect.runPromise(
-        store.publish(publisher, { organizationIds: [], location: { map } }),
+        store.publish(publisher, {
+          organizationIds: joinedOrganizations(publisher),
+          location: { map },
+        }),
       );
       expect(coverage.events).toEqual([]);
     },
@@ -1893,7 +1938,9 @@ describe("game character offline grace", () => {
 
     const first = makeStore();
     const game = socket({ ...session([]), character });
-    await Effect.runPromise(first.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(
+      first.publish(game, { organizationIds: joinedOrganizations(game) }),
+    );
     await Effect.runPromise(first.disconnect(game.data));
 
     const web = socket({
@@ -1903,7 +1950,9 @@ describe("game character offline grace", () => {
       character,
     });
 
-    await Effect.runPromise(first.publish(web, { organizationIds: [] }));
+    await Effect.runPromise(
+      first.publish(web, { organizationIds: joinedOrganizations(web) }),
+    );
     now = 9_999;
     await Effect.runPromise(makeStore().sweepOffline());
     expect(events).toEqual([]);
@@ -1948,7 +1997,9 @@ describe("game character offline grace", () => {
         character,
       });
 
-      await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+      await Effect.runPromise(
+        store.publish(game, { organizationIds: joinedOrganizations(game) }),
+      );
       await Effect.runPromise(store.disconnect(game.data));
     }
 
@@ -1979,7 +2030,9 @@ describe("game character offline grace", () => {
     );
 
     const game = socket({ ...session([]), character });
-    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(game, { organizationIds: joinedOrganizations(game) }),
+    );
     await Effect.runPromise(store.disconnect(game.data));
 
     for (const index of ["pending", "outbox"]) {
@@ -1997,7 +2050,9 @@ describe("game character offline grace", () => {
     }
 
     // A later sweep remains usable after malformed persisted values.
-    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(game, { organizationIds: joinedOrganizations(game) }),
+    );
     await Effect.runPromise(store.disconnect(game.data));
     now += 10_000;
     await Effect.runPromise(store.sweepOffline());
@@ -2204,7 +2259,9 @@ describe("game character offline grace", () => {
     );
 
     const first = socket({ ...session([]), character });
-    await Effect.runPromise(store.publish(first, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(first, { organizationIds: joinedOrganizations(first) }),
+    );
     await Effect.runPromise(store.disconnect(first.data));
     now = 5_000;
 
@@ -2214,7 +2271,9 @@ describe("game character offline grace", () => {
       character,
     });
 
-    await Effect.runPromise(store.publish(second, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(second, { organizationIds: joinedOrganizations(second) }),
+    );
     now = 6_000;
     await Effect.runPromise(store.disconnect(second.data));
     now = 10_000;
@@ -2244,7 +2303,9 @@ describe("game character offline grace", () => {
       );
 
     const game = socket({ ...session([]), character });
-    await Effect.runPromise(makeStore().publish(game, { organizationIds: [] }));
+    await Effect.runPromise(
+      makeStore().publish(game, { organizationIds: joinedOrganizations(game) }),
+    );
     redis.values.delete("presence:organization-1:session-1");
     now = PRESENCE_EXPIRY_MS + 10_000;
     await Effect.runPromise(makeStore().sweepExpired());
@@ -2272,10 +2333,16 @@ describe("game character offline grace", () => {
     );
 
     const abandoned = socket({ ...session([]), character });
-    await Effect.runPromise(store.publish(abandoned, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(abandoned, {
+        organizationIds: joinedOrganizations(abandoned),
+      }),
+    );
     now = PRESENCE_EXPIRY_MS + 5_000;
     const fresh = socket({ ...session([]), connectionId: "fresh", character });
-    await Effect.runPromise(store.publish(fresh, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(fresh, { organizationIds: joinedOrganizations(fresh) }),
+    );
     now += 5_000;
     await Effect.runPromise(store.disconnect(fresh.data));
     now += 5_000;
@@ -2324,14 +2391,16 @@ describe("game character offline grace", () => {
     );
 
     const game = socket({ ...session([]), character });
-    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(game, { organizationIds: joinedOrganizations(game) }),
+    );
     await Effect.runPromise(store.disconnect(game.data));
     now = 10_000;
     reconnect = async () => {
       await Effect.runPromise(
         store.publish(
           socket({ ...session([]), connectionId: "new", character }),
-          { organizationIds: [] },
+          { organizationIds: ["organization-1"] },
         ),
       );
     };
@@ -2354,7 +2423,9 @@ describe("game character offline grace", () => {
     );
 
     const game = socket({ ...session([]), character });
-    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(game, { organizationIds: joinedOrganizations(game) }),
+    );
     await Effect.runPromise(store.disconnect(game.data));
     now = 10_000;
     await Effect.runPromise(store.sweepOffline().pipe(Effect.flip));
@@ -2394,9 +2465,13 @@ describe("game character offline grace", () => {
     );
 
     const game = socket({ ...session([]), character });
-    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(game, { organizationIds: joinedOrganizations(game) }),
+    );
     game.data.character = { ...character, characterId: "other-character" };
-    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(game, { organizationIds: joinedOrganizations(game) }),
+    );
     now = 10_000;
     await Effect.runPromise(store.sweepOffline());
     expect(events.map((event) => event.characterId)).toEqual(["character-1"]);
@@ -2427,8 +2502,12 @@ describe("game character offline grace", () => {
       character,
     });
 
-    await Effect.runPromise(store.publish(first, { organizationIds: [] }));
-    await Effect.runPromise(store.publish(second, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(first, { organizationIds: joinedOrganizations(first) }),
+    );
+    await Effect.runPromise(
+      store.publish(second, { organizationIds: joinedOrganizations(second) }),
+    );
     await Effect.runPromise(store.disconnect(first.data));
     now = 10_000;
     await Effect.runPromise(store.sweepOffline());

@@ -141,7 +141,7 @@ try {
         };
 
         await Effect.runPromise(
-          publisher.publish(socket, { organizationIds: [] }),
+          publisher.publish(socket, { organizationIds: [`o-${organization}`] }),
         );
       }
     }

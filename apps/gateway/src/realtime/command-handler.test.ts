@@ -128,7 +128,8 @@ class FakeActivity {
 class FakePresence {
   heartbeat: PresenceStore["heartbeat"] = () =>
     Effect.die("Unexpected heartbeat");
-  publish = () => Effect.die("Unexpected presence publish");
+  publish: PresenceStore["publish"] = () =>
+    Effect.die("Unexpected presence publish");
   snapshot: PresenceStore["snapshot"] = () => Effect.die("Unexpected snapshot");
   readonly reconciled: GatewaySocket[] = [];
 
@@ -156,14 +157,14 @@ class FakePresence {
   }
 }
 
-const makeSocket = () => {
+const makeSocket = (platform: SessionData["platform"] = "web-app") => {
   const closes: number[] = [];
 
   const data: SessionData = {
     discordId: "discord-1",
     userId: "user-1",
     connectionId: "connection-1",
-    platform: "web-app",
+    platform,
     joined: false,
     guilds: [],
     subscriptions: new Map(),
@@ -558,6 +559,84 @@ describe("presence fetch delivery", () => {
         },
       },
     ]);
+  });
+});
+
+describe("presence reciprocity", () => {
+  test("a game session reads a Lootlog's presence only while it publishes its own there", async () => {
+    const { handler, hub, presence } = setup();
+    const { socket } = makeSocket("game");
+    socket.data.joined = true;
+    socket.data.guilds = [guild()];
+
+    presence.snapshot = (_viewer, organizationId) =>
+      Effect.succeed({ organizationId, revision: 1, presences: [] });
+
+    presence.publish = (target, data) =>
+      Effect.sync(() => {
+        target.data.presence =
+          data.organizationIds.length === 0
+            ? undefined
+            : {
+                userId: target.data.userId,
+                sessionId: target.data.connectionId,
+                organizationIds: data.organizationIds,
+                platform: target.data.platform,
+                status: "online",
+                confidence: "reported",
+                isAfk: false,
+                lastSeen: 1,
+              };
+
+        return undefined;
+      });
+
+    const send = (command: ClientCommand) =>
+      Effect.runPromise(handler.handle(socket, Buffer.from(encode(command))));
+
+    const publish = (requestId: string, organizationIds: string[]) =>
+      send({
+        v: 1,
+        type: "presence.publish",
+        requestId,
+        data: { organizationIds },
+      });
+
+    const fetchResponse = async (requestId: string) => {
+      await send({
+        v: 1,
+        type: "presence.fetch",
+        requestId,
+        data: { organizationId: "organization-1", delivery: "response" },
+      });
+
+      return hub.responses.at(-1);
+    };
+
+    expect(await fetchResponse("before")).toMatchObject({ status: "error" });
+
+    await publish("visible", ["organization-1"]);
+    expect(hub.events.at(-1)).toMatchObject({
+      type: "permissions.updated",
+      data: {
+        changes: [{ organizationId: "organization-1", expanded: true }],
+        subscriptionScopes: expect.arrayContaining([
+          { topic: "organization.presence", organizationId: "organization-1" },
+        ]),
+      },
+    });
+    expect(await fetchResponse("while-visible")).toMatchObject({
+      status: "success",
+    });
+
+    await publish("hidden", []);
+    expect(hub.events.at(-1)).toMatchObject({
+      type: "permissions.updated",
+      data: {
+        changes: [{ organizationId: "organization-1", restricted: true }],
+      },
+    });
+    expect(await fetchResponse("after")).toMatchObject({ status: "error" });
   });
 });
 

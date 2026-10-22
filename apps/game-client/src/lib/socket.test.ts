@@ -126,6 +126,8 @@ it.each(["success", "legacy", "policy", "player"])(
       listeners.get("open")?.({});
       expect(activeFacade.connected).toBe(true);
 
+      activeFacade.setPresenceOrganizations(["organization-1"]);
+
       const { createAccessPolicySnapshot } =
         await import("@lootlog/protocol/realtime/access-policy");
 

@@ -1,4 +1,5 @@
-import { act, render, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { configureApiClients } from "@lootlog/client/transport";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -7,12 +8,9 @@ import {
   createGameRealtimeClient,
 } from "@/lib/game-client-platform";
 import { queryClient } from "@/lib/query-client";
-import { storageKey } from "@/lib/storage-key";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useWindowsStore } from "@/store/windows.store";
 import { CatchingWhitelistWarning } from "./catching-whitelist-warning";
-
-const CHECKLIST_DISMISSED_KEY = storageKey("ll:setup-checklist-dismissed");
 
 const MEMBER_GUILD = {
   id: "guild-1",
@@ -45,8 +43,14 @@ const SESSION = {
 
 const restores: Array<() => void> = [];
 
-/** A signed-in player whose character has no catching scope yet. */
-const serve = ({ guilds }: { guilds: (typeof MEMBER_GUILD)[] }) => {
+/** A signed-in player whose character catches for `catchingGuildIds`, or has no scope yet. */
+const serve = ({
+  guilds,
+  catchingGuildIds,
+}: {
+  guilds: (typeof MEMBER_GUILD)[];
+  catchingGuildIds?: string[];
+}) => {
   const requested: string[] = [];
 
   const http: typeof fetch = async (input, init) => {
@@ -68,7 +72,21 @@ const serve = ({ guilds }: { guilds: (typeof MEMBER_GUILD)[] }) => {
       });
 
     if (path === "/users/@me/lootlog-config/accounts/202")
-      return Response.json({});
+      return Response.json(
+        catchingGuildIds
+          ? {
+              "101": {
+                id: 1,
+                userId: "discord-1",
+                accountId: "202",
+                characterId: "101",
+                catchingGuildIds,
+                createdAt: "2026-01-01T00:00:00.000Z",
+                updatedAt: "2026-01-01T00:00:00.000Z",
+              },
+            }
+          : {},
+      );
 
     return new Response(null, { status: 404 });
   };
@@ -119,8 +137,7 @@ describe("CatchingWhitelistWarning", () => {
     for (const restore of restores.splice(0)) restore();
   });
 
-  it("reminds a member who dismissed the checklist, after any other notice closes", async () => {
-    window.localStorage.setItem(CHECKLIST_DISMISSED_KEY, "true");
+  it("waits until any other notice closes", async () => {
     useWindowsStore.getState().setOpen("backend-preferences-warning", true);
     const requested = serve({ guilds: [MEMBER_GUILD] });
     renderWarning();
@@ -137,8 +154,26 @@ describe("CatchingWhitelistWarning", () => {
     await waitFor(() => expect(isWarningOpen()).toBe(true));
   });
 
+  it("asks a character with a saved scope once, until the player confirms it", async () => {
+    const user = userEvent.setup();
+    serve({ guilds: [MEMBER_GUILD], catchingGuildIds: ["guild-1"] });
+    const view = renderWarning();
+
+    await waitFor(() => expect(isWarningOpen()).toBe(true));
+    expect(
+      await screen.findByRole("button", { name: /Test guild/, pressed: true }),
+    ).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Gotowe" }));
+    expect(isWarningOpen()).toBe(false);
+
+    view.unmount();
+    renderWarning();
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+    expect(isWarningOpen()).toBe(false);
+  });
+
   it("stays closed for a player without any Lootlog", async () => {
-    window.localStorage.setItem(CHECKLIST_DISMISSED_KEY, "true");
     const requested = serve({ guilds: [] });
     renderWarning();
 
@@ -149,14 +184,10 @@ describe("CatchingWhitelistWarning", () => {
     expect(isWarningOpen()).toBe(false);
   });
 
-  it("leaves the missing scope to the first-run checklist while it is shown", async () => {
-    const requested = serve({ guilds: [MEMBER_GUILD] });
+  it("asks a new character right away, while the first-run checklist is still shown", async () => {
+    serve({ guilds: [MEMBER_GUILD] });
     renderWarning();
 
-    await waitFor(() =>
-      expect(requested).toContain("/users/@me/lootlog-config/accounts/202"),
-    );
-    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
-    expect(isWarningOpen()).toBe(false);
+    await waitFor(() => expect(isWarningOpen()).toBe(true));
   });
 });

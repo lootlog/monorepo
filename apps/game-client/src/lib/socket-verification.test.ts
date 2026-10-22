@@ -150,10 +150,7 @@ describe("game realtime verification and presence selection", () => {
         });
       },
     );
-    useSettingsStore.setState({
-      guildIdByCharId: {},
-      presenceOrganizationIdsByCharId: {},
-    });
+    useSettingsStore.setState({ guildIdByCharId: {} });
   });
 
   it("hydrates via the response without replaying legacy snapshots as deltas", async () => {
@@ -542,48 +539,18 @@ describe("game realtime verification and presence selection", () => {
     );
   });
 
-  it("publishes to the joined organization by default", async () => {
-    useGameStore.getState().replaceGame({
-      hero: {
-        accountId: "20",
-        characterId: "10",
-        clan: { id: 30, name: "Clan", rank: 1 },
-        currentHp: 100,
-        icon: "hero.gif",
-        level: 100,
-        maxHp: 100,
-        name: "Hero",
-        profession: "w",
-        stasis: false,
-        x: 1,
-        y: 2,
-      },
-      gameVersion: "pl",
-      interface: "ni",
-      map: { id: 100, name: "Karka-han", visibility: 0 },
-      world: "alpha",
-    });
-    useSettingsStore.setState({
-      guildIdByCharId: { "10": "organization-1" },
-    });
-    const socket = createSocket();
-    await socket.join(joinData);
-    socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: false });
-    await vi.waitFor(() => expect(mocks.request).toHaveBeenCalled());
-
-    expect(mocks.request).toHaveBeenCalledWith(
-      "presence.publish",
-      expect.objectContaining({ organizationIds: ["organization-1"] }),
-    );
-  });
-
   it.each([
-    { selectedIds: [] },
-    { selectedIds: ["organization-2"] },
-    { selectedIds: ["removed-organization"] },
+    { scope: undefined, publishedAtJoin: [], publications: 0 },
+    {
+      scope: ["organization-2"],
+      publishedAtJoin: [
+        expect.objectContaining({ organizationIds: ["organization-2"] }),
+      ],
+      publications: 2,
+    },
   ])(
-    "publishes to all joined organizations despite stored selection $selectedIds",
-    async ({ selectedIds }) => {
+    "publishes only the character's catching scope, before announcing the join ($scope)",
+    async ({ scope, publishedAtJoin, publications }) => {
       useGameStore.getState().replaceGame({
         hero: {
           accountId: "20",
@@ -603,25 +570,32 @@ describe("game realtime verification and presence selection", () => {
         map: { id: 100, name: "Karka-han", visibility: 0 },
         world: "alpha",
       });
-      useSettingsStore.setState({
-        presenceOrganizationIdsByCharId: { "10": selectedIds },
-      });
       const socket = createSocket();
+
+      if (scope) socket.setPresenceOrganizations(scope);
       mocks.join.mockResolvedValue({
         connectionId: "connection-1",
         organizationIds: ["organization-1", "organization-2"],
       });
+
+      const scopesAtJoin: unknown[] = [];
+
+      socket.on(GatewayEvent.JOIN, () => {
+        for (const [type, data] of mocks.request.mock.calls) {
+          if (type === "presence.publish") scopesAtJoin.push(data);
+        }
+      });
+
       const { clan: _clan, ...clanlessJoinData } = joinData;
       await socket.join(clanlessJoinData);
       socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: false });
-      await vi.waitFor(() => expect(mocks.request).toHaveBeenCalled());
 
-      expect(mocks.request).toHaveBeenCalledWith(
-        "presence.publish",
-        expect.objectContaining({
-          organizationIds: ["organization-1", "organization-2"],
-        }),
-      );
+      expect(scopesAtJoin).toEqual(publishedAtJoin);
+      expect(
+        mocks.request.mock.calls.filter(
+          ([type]) => type === "presence.publish",
+        ),
+      ).toHaveLength(publications);
     },
   );
 

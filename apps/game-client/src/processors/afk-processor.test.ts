@@ -25,6 +25,7 @@ describe("AfkProcessor", () => {
       fetch: globalThis.fetch,
       createRealtime: () => realtime,
     });
+    getSocket().setPresenceOrganizations(["guild-1"]);
     getSocket().connect();
     wire.open();
     processor = new AfkProcessor();

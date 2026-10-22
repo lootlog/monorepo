@@ -134,6 +134,7 @@ describe("SocketProvider", () => {
         }),
       );
     });
+    getSocket().setPresenceOrganizations(["guild-1"]);
     act(() =>
       useGlobalStore.setState({ gameState: { gameInitialized: true } }),
     );

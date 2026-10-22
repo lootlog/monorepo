@@ -38,7 +38,6 @@ describe("ServerVisibilitySettingsTab", () => {
     useGameStore.getState().clearGame();
     useSettingsStore.setState({
       guildIdByCharId: {},
-      presenceOrganizationIdsByCharId: {},
     });
   });
 
@@ -137,46 +136,6 @@ describe("ServerVisibilitySettingsTab", () => {
       ),
     );
   });
-
-  it("hides presence publication controls while preserving stored preferences", () => {
-    useGameStore.getState().replaceGame({
-      hero: {
-        accountId: "20",
-        characterId: "10",
-        clan: { id: 30, name: "Clan", rank: 1 },
-        currentHp: 100,
-        icon: "hero.gif",
-        level: 100,
-        maxHp: 100,
-        name: "Hero",
-        profession: "w",
-        stasis: false,
-        x: 1,
-        y: 2,
-      },
-      gameVersion: "pl",
-      interface: "ni",
-      map: { id: 100, name: "Karka-han", visibility: 0 },
-      world: "alpha",
-    });
-    useSettingsStore.setState({
-      guildIdByCharId: { "10": "guild-1" },
-      presenceOrganizationIdsByCharId: { "10": ["guild-1"] },
-    });
-
-    render();
-
-    expect(
-      screen.queryByRole("button", {
-        name: "Publikuj obecność w Lootlogu Alpha",
-      }),
-    ).not.toBeInTheDocument();
-    expect(useSettingsStore.getState().presenceOrganizationIdsByCharId).toEqual(
-      {
-        "10": ["guild-1"],
-      },
-    );
-  });
 });
 
 describe("ServerVisibilitySettingsTab ordering", () => {
@@ -186,7 +145,6 @@ describe("ServerVisibilitySettingsTab ordering", () => {
     useGameStore.getState().clearGame();
     useSettingsStore.setState({
       guildIdByCharId: {},
-      presenceOrganizationIdsByCharId: {},
     });
   });
 

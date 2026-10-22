@@ -429,7 +429,7 @@
     }
   },
   "catching": {
-    "description": "Skonfiguruj, do których Lootlogów trafiają łupy i timery z każdej postaci.",
+    "description": "Skonfiguruj, dla których Lootlogów gra każda postać: tam trafiają jej łupy, timery i obecność.",
     "characterTitle": "Postać",
     "characterDescription": "Każda postać ma własny zakres zbierania. Wybierz postać, której ustawienia chcesz zmienić.",
     "characterLabel": "Postać",
@@ -441,7 +441,7 @@
       "collectionRangeTitle": "Zakres zbierania",
       "serversTitle": "Do których Lootlogów",
       "serversLabel": "Lootlogi",
-      "serversDescription": "Łupy i timery tej postaci trafiają tylko do zaznaczonych Lootlogów; kliknij Lootlog, aby ją włączyć lub wyłączyć.",
+      "serversDescription": "Łupy, timery i obecność tej postaci trafiają tylko do zaznaczonych Lootlogów, a graczy na mapie widzisz tylko w nich. Kliknij Lootlog, aby go włączyć lub wyłączyć.",
       "activeCount": "{{selectedCount}} z {{totalCount}}"
     }
   },

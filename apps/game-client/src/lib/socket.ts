@@ -217,6 +217,8 @@ export class AppSocket {
   private disposed = false;
   private joinedOrganizationIds: string[] = [];
   private lastIsAfk = false;
+  /** The current character's Lootlogs; nothing is published until they are known. */
+  private presenceOrganizationIds: readonly string[] | undefined;
   private currentAccessPolicy: AccessPolicySnapshot | undefined;
   private wasConnected = false;
   private connectionStateValue: RealtimeConnectionState = "disconnected";
@@ -629,6 +631,11 @@ export class AppSocket {
 
     if (response.accessPolicy) this.applyAccessPolicy(response.accessPolicy);
 
+    // The gateway grants presence only where this character publishes and
+    // runs one connection's commands in order, so the publication sent here
+    // settles before anything joined starts reading presence.
+    void this.publishPresence();
+
     this.dispatchJoin(response, data);
 
     const channel = this.globalChatChannel;
@@ -702,15 +709,30 @@ export class AppSocket {
     };
   }
 
+  /** Follows the catching scope of the current character. */
+  setPresenceOrganizations(organizationIds: readonly string[]): void {
+    const current = this.presenceOrganizationIds;
+
+    if (
+      current?.length === organizationIds.length &&
+      organizationIds.every((id) => current.includes(id))
+    )
+      return;
+    this.presenceOrganizationIds = [...organizationIds];
+
+    if (this.id && this.connectionState === "ready")
+      void this.publishPresence();
+  }
+
   private async publishPresence(): Promise<void> {
     const game = useGameStore.getState().game;
+    const organizationIds = this.presenceOrganizationIds;
 
-    if (!game) return;
+    if (!game || !organizationIds) return;
 
-    // Presence publication opt-out is temporarily disabled; keep stored preferences intact.
     try {
       await this.realtime.request("presence.publish", {
-        organizationIds: this.joinedOrganizationIds,
+        organizationIds: [...organizationIds],
         isAfk: this.lastIsAfk,
         character: {
           world: game.world,
