@@ -40,12 +40,17 @@ export class ActivityPublisher {
             ).filter((id) => !recorded.has(id))
           : (requestedIds ?? [...recorded]).filter((id) => recorded.has(id));
 
-      for (const id of organizationIds) {
-        if (type === "CONNECT_EVENT") recorded.add(id);
-        else recorded.delete(id);
-      }
+      // Changed only after a confirmed publication, so a failed connection
+      // is retried by the next one and a disconnection never precedes it.
+      const record = (guildId: string) =>
+        Effect.sync(() => {
+          const current = session.activityOrganizationIds ?? [];
 
-      session.activityOrganizationIds = [...recorded];
+          session.activityOrganizationIds =
+            type === "CONNECT_EVENT"
+              ? [...new Set([...current, guildId])]
+              : current.filter((id) => id !== guildId);
+        });
 
       const timestamp = yield* Clock.currentTimeMillis;
       yield* Effect.forEach(
@@ -94,6 +99,7 @@ export class ActivityPublisher {
               headers: { [ACTIVITY_EVENT_SIGNATURE_HEADER]: signature },
             })
             .pipe(
+              Effect.andThen(record(guildId)),
               Effect.catch((error) =>
                 Effect.logWarning("Activity event publication failed").pipe(
                   Effect.annotateLogs({ error, guildId, type }),
