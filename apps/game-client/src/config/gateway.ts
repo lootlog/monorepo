@@ -30,6 +30,8 @@ export enum GatewayEvent {
 
   // current player presence
   PLAYER_PRESENCE_UPDATE = "player-presence:update",
+  /** The gateway accepted this character's presence in the listed Lootlogs. */
+  PRESENCE_PUBLISHED = "player-presence:published",
 
   // timers
   TIMERS_CREATE = "timers-create",

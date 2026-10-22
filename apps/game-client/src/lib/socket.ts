@@ -763,6 +763,11 @@ export class AppSocket {
         },
         clientObservedAt: Date.now(),
       });
+      // The gateway opens a Lootlog's presence once this character is
+      // visible there, and announces that before it answers.
+      this.listeners.emit(GatewayEvent.PRESENCE_PUBLISHED, {
+        organizationIds,
+      });
     } catch {
       // Presence is best effort; the next publication carries the current state.
       if (import.meta.env.DEV)
