@@ -643,10 +643,31 @@ export class CommandHandler {
     return Effect.suspend(() => {
       const previousPolicy = sessionAccessPolicy(socket.data);
 
+      const previouslyPublished = new Set(
+        socket.data.presence?.organizationIds ?? [],
+      );
+
       return this.presence.publish(socket, data).pipe(
-        // A failed write may still have changed the published Lootlogs.
-        Effect.ensuring(
+        Effect.onExit((exit) =>
           Effect.suspend(() => {
+            const current = socket.data.presence;
+
+            // A failed write may have stored only some of the requested
+            // Lootlogs, so it opens none of them; reads stay where the
+            // session was already visible. Partial records expire.
+            if (Exit.isFailure(exit) && current) {
+              const kept = current.organizationIds.filter((id) =>
+                previouslyPublished.has(id),
+              );
+
+              this.hub.setPresence(
+                socket,
+                kept.length === 0
+                  ? undefined
+                  : { ...current, organizationIds: kept },
+              );
+            }
+
             const accessPolicy = sessionAccessPolicy(socket.data);
             const changes = diffAccessPolicies(previousPolicy, accessPolicy);
 

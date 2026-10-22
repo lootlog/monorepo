@@ -10,6 +10,6 @@ export const usePresencePublicationScope = (): void => {
   const organizationIds = useCurrentCharacterCatchingGuildIds();
 
   useEffect(() => {
-    if (organizationIds) getSocket().setPresenceOrganizations(organizationIds);
+    getSocket().setPresenceOrganizations(organizationIds);
   }, [organizationIds]);
 };
