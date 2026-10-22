@@ -188,11 +188,16 @@ export class AirTagRuntime {
   }
 
   /**
-   * This character's own publication opened the pending Lootlogs, so they
-   * need no role-change debounce: subscribe to them right away.
+   * This character's own publication opened a pending Lootlog, so it needs
+   * no role-change debounce: subscribe right away. Other publications, such
+   * as AFK or map changes, leave the debounce alone.
    */
-  handlePresencePublished(): void {
-    if (this.policyRefreshTimer === null) return;
+  handlePresencePublished(organizationIds: readonly string[]): void {
+    if (
+      this.policyRefreshTimer === null ||
+      !organizationIds.some((id) => this.pendingOrganizations.has(id))
+    )
+      return;
     clearTimeout(this.policyRefreshTimer);
     this.policyRefreshTimer = null;
     this.subscribeCurrentMap(undefined, true);

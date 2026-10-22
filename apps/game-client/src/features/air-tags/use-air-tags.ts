@@ -35,8 +35,10 @@ export const useAirTags = (): void => {
       airTagRuntime.handlePermissionsUpdated(payload);
     };
 
-    const handlePresencePublished = () => {
-      airTagRuntime.handlePresencePublished();
+    const handlePresencePublished = (payload: {
+      organizationIds: readonly string[];
+    }) => {
+      airTagRuntime.handlePresencePublished(payload.organizationIds);
     };
 
     socket.on(GatewayEvent.AIR_TAG_UPDATE, handleUpdate);
