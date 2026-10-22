@@ -49,6 +49,76 @@ const delta = (...presences: PresenceWithLocation[]): ServerEvent => ({
 describe("shared presence map projection", () => {
   afterEach(() => vi.restoreAllMocks());
 
+  it("reads a Lootlog as soon as this character becomes visible there, without the policy debounce", async () => {
+    const harness = createOnlinePlayersTest();
+    getSocket().connect();
+    harness.open();
+    // The gateway withholds presence until the character publishes there.
+    await harness.join(["guild-1"], policy());
+    await harness.receive({
+      v: 1,
+      type: "permissions.updated",
+      data: {
+        organizationIds: ["guild-1"],
+        subscriptionScopes: [],
+        accessPolicy: createAccessPolicySnapshot(
+          [{ guild: { id: "guild-1", ownerId: "owner" }, roles: [] }],
+          "user",
+        ),
+        changes: [
+          {
+            organizationId: "guild-1",
+            areas: ["presence"],
+            restricted: true,
+            expanded: false,
+          },
+        ],
+      },
+    });
+    const source = getPlayersPresenceSource(getSocket(), "guild-1", "alpha");
+    const release = source.subscribe(() => {});
+    await source.refresh();
+    expect(source.getSnapshot().accessState).toBe("forbidden");
+
+    act(() => getSocket().setPresenceOrganizations(["guild-1"]));
+
+    const publication = harness.wire.frames.findLast(
+      (frame) => "type" in frame && frame.type === "presence.publish",
+    );
+
+    if (!publication || !("requestId" in publication) || !publication.requestId)
+      throw new Error("Expected presence publication");
+    await harness.receive({
+      v: 1,
+      type: "permissions.updated",
+      data: {
+        organizationIds: ["guild-1"],
+        subscriptionScopes: [],
+        accessPolicy: policy(),
+        changes: [
+          {
+            organizationId: "guild-1",
+            areas: ["presence"],
+            restricted: false,
+            expanded: true,
+          },
+        ],
+      },
+    });
+    harness.wire.receive({
+      v: 1,
+      requestId: publication.requestId,
+      status: "success",
+      data: { sessionId: "presence-session" },
+    });
+
+    await waitFor(() => expect(harness.fetchPresence).toHaveBeenCalledOnce());
+    await waitFor(() =>
+      expect(source.getSnapshot().accessState).toBe("allowed"),
+    );
+    release();
+  });
+
   it("shares one snapshot with rows and does no map notifications or animation work for a thousand same-map position updates", async () => {
     const harness = createOnlinePlayersTest();
     getSocket().connect();
