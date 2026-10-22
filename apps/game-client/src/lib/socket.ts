@@ -709,9 +709,20 @@ export class AppSocket {
     };
   }
 
-  /** Follows the catching scope of the current character. */
-  setPresenceOrganizations(organizationIds: readonly string[]): void {
+  /**
+   * Follows the catching scope of the current character; `undefined` while it
+   * is unknown, so a scope of another account or character is never published.
+   */
+  setPresenceOrganizations(
+    organizationIds: readonly string[] | undefined,
+  ): void {
     const current = this.presenceOrganizationIds;
+
+    if (!organizationIds) {
+      this.presenceOrganizationIds = undefined;
+
+      return;
+    }
 
     if (
       current?.length === organizationIds.length &&

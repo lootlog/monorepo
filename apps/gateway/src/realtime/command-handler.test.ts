@@ -638,6 +638,63 @@ describe("presence reciprocity", () => {
     });
     expect(await fetchResponse("after")).toMatchObject({ status: "error" });
   });
+
+  test("a failed publication opens no Lootlog the session was not already visible in", async () => {
+    const { handler, hub, presence } = setup();
+    const { socket } = makeSocket("game");
+    socket.data.joined = true;
+    socket.data.guilds = [guild()];
+
+    presence.snapshot = (_viewer, organizationId) =>
+      Effect.succeed({ organizationId, revision: 1, presences: [] });
+
+    // The local record changes before the Redis write fails.
+    presence.publish = (target, data) =>
+      Effect.sync(() => {
+        target.data.presence = {
+          userId: target.data.userId,
+          sessionId: target.data.connectionId,
+          organizationIds: data.organizationIds,
+          platform: target.data.platform,
+          status: "online",
+          confidence: "reported",
+          isAfk: false,
+          lastSeen: 1,
+        };
+      }).pipe(
+        Effect.andThen(
+          Effect.fail(
+            new RealtimeStoreError({
+              operation: "presence.publish",
+              cause: new Error("Redis unavailable"),
+            }),
+          ),
+        ),
+      );
+
+    const send = (command: ClientCommand) =>
+      Effect.runPromise(handler.handle(socket, Buffer.from(encode(command))));
+
+    await send({
+      v: 1,
+      type: "presence.publish",
+      requestId: "failed",
+      data: { organizationIds: ["organization-1"] },
+    });
+    await send({
+      v: 1,
+      type: "presence.fetch",
+      requestId: "after-failure",
+      data: { organizationId: "organization-1", delivery: "response" },
+    });
+
+    expect(socket.data.presence).toBeUndefined();
+    expect(hub.events).toEqual([]);
+    expect(hub.responses.at(-1)).toMatchObject({
+      requestId: "after-failure",
+      status: "error",
+    });
+  });
 });
 
 describe("CommandHandler session lifecycle", () => {

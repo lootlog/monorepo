@@ -539,18 +539,28 @@ describe("game realtime verification and presence selection", () => {
     );
   });
 
-  it.each([
-    { scope: undefined, publishedAtJoin: [], publications: 0 },
+  it.each<{
+    scopes: (string[] | undefined)[];
+    publishedAtJoin: unknown[];
+    publications: number;
+  }>([
+    { scopes: [], publishedAtJoin: [], publications: 0 },
+    // Another account's scope is dropped while the next one loads.
     {
-      scope: ["organization-2"],
+      scopes: [["organization-2"], undefined],
+      publishedAtJoin: [],
+      publications: 0,
+    },
+    {
+      scopes: [["organization-2"]],
       publishedAtJoin: [
         expect.objectContaining({ organizationIds: ["organization-2"] }),
       ],
       publications: 2,
     },
   ])(
-    "publishes only the character's catching scope, before announcing the join ($scope)",
-    async ({ scope, publishedAtJoin, publications }) => {
+    "publishes only the character's known catching scope, before announcing the join ($scopes)",
+    async ({ scopes, publishedAtJoin, publications }) => {
       useGameStore.getState().replaceGame({
         hero: {
           accountId: "20",
@@ -572,7 +582,7 @@ describe("game realtime verification and presence selection", () => {
       });
       const socket = createSocket();
 
-      if (scope) socket.setPresenceOrganizations(scope);
+      for (const scope of scopes) socket.setPresenceOrganizations(scope);
       mocks.join.mockResolvedValue({
         connectionId: "connection-1",
         organizationIds: ["organization-1", "organization-2"],
