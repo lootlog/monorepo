@@ -57,6 +57,8 @@ export interface SessionData extends AuthenticatedIdentity {
   subscriptions: Map<string, typeof SubscriptionScope.Type>;
   airTagScopes: AirTagScope[];
   npcPresence?: NpcPresenceState;
+  /** Lootlogs whose activity log recorded this session's connection. */
+  activityOrganizationIds?: string[];
   character?: typeof PresenceCharacter.Type;
   confidence: typeof PresenceConfidence.Type;
   presence?: typeof BasicPresence.Type & {
