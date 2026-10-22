@@ -338,6 +338,7 @@ export class PlayersPresenceSource {
     this.socket.on(GatewayEvent.PERMISSIONS_UPDATED, this.handlePermissions);
     this.socket.on(GatewayEvent.JOIN, this.handleJoin);
     this.socket.on(GatewayEvent.DISCONNECT, this.handleDisconnect);
+    this.socket.on(GatewayEvent.PRESENCE_PUBLISHED, this.handlePublished);
 
     if (hydrate) void this.refresh();
   }
@@ -352,6 +353,7 @@ export class PlayersPresenceSource {
     this.socket.off(GatewayEvent.PERMISSIONS_UPDATED, this.handlePermissions);
     this.socket.off(GatewayEvent.JOIN, this.handleJoin);
     this.socket.off(GatewayEvent.DISCONNECT, this.handleDisconnect);
+    this.socket.off(GatewayEvent.PRESENCE_PUBLISHED, this.handlePublished);
     this.invalidate();
 
     if (this.policyTimer !== null) clearTimeout(this.policyTimer);
@@ -376,6 +378,18 @@ export class PlayersPresenceSource {
 
   private handleJoin = (payload: { status: string }): void => {
     if (payload.status === "success") void this.refresh();
+  };
+
+  // Unlike a role change, this character's own publication needs no
+  // debounce: read the Lootlog it just became visible in right away.
+  private handlePublished = (payload: {
+    organizationIds: readonly string[];
+  }): void => {
+    if (
+      payload.organizationIds.includes(this.guildId) &&
+      (this.snapshot.accessState === "forbidden" || !this.snapshot.isCurrent)
+    )
+      void this.refresh();
   };
 
   private handleDisconnect = (): void => {

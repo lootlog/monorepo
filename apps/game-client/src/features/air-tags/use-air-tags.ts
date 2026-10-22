@@ -35,14 +35,20 @@ export const useAirTags = (): void => {
       airTagRuntime.handlePermissionsUpdated(payload);
     };
 
+    const handlePresencePublished = () => {
+      airTagRuntime.handlePresencePublished();
+    };
+
     socket.on(GatewayEvent.AIR_TAG_UPDATE, handleUpdate);
     socket.on(GatewayEvent.AIR_TAG_SCOPE_UPDATE, handleScopeUpdate);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+    socket.on(GatewayEvent.PRESENCE_PUBLISHED, handlePresencePublished);
 
     return () => {
       socket.off(GatewayEvent.AIR_TAG_UPDATE, handleUpdate);
       socket.off(GatewayEvent.AIR_TAG_SCOPE_UPDATE, handleScopeUpdate);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+      socket.off(GatewayEvent.PRESENCE_PUBLISHED, handlePresencePublished);
     };
   }, [connected, joined]);
 
