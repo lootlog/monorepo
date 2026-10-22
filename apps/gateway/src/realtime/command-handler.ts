@@ -73,6 +73,9 @@ import {
   canSubscribe,
   defaultScopes,
   organizationIds,
+  PRESENCE_PERMISSIONS,
+  publishesPresenceTo,
+  type PermissionViewer,
 } from "#src/realtime/subscription-policy";
 
 type Command = typeof ClientCommand.Type;
@@ -102,18 +105,33 @@ const scopedGuilds = (
     : guilds;
 };
 
-const sessionAccessPolicy = (
-  session: Pick<SessionData, "guilds" | "discordId">,
-) => {
-  const snapshot = createAccessPolicySnapshot(
+const sessionAccessPolicy = (session: PermissionViewer) => {
+  const organizations = createAccessPolicySnapshot(
     session.guilds,
     session.discordId,
+  ).organizations.map((organization) =>
+    publishesPresenceTo(session, organization.organizationId)
+      ? organization
+      : {
+          ...organization,
+          permissions: organization.permissions.filter(
+            (permission) => !PRESENCE_PERMISSIONS.has(permission),
+          ),
+        },
   );
 
   return {
-    ...snapshot,
-    version: createHash("sha256").update(snapshot.version).digest("hex"),
+    organizations,
+    version: createHash("sha256")
+      .update(JSON.stringify(organizations))
+      .digest("hex"),
   };
+};
+
+/** Whether a socket kept its subscriptions, and what to log about the change. */
+type AccessAnnouncement = {
+  readonly resubscribed: boolean;
+  readonly warnings: ReadonlyArray<Effect.Effect<void>>;
 };
 
 const errorResponse = (
@@ -491,8 +509,8 @@ export class CommandHandler {
         const previousPolicy = sessionAccessPolicy(socket.data);
 
         const accessPolicy = sessionAccessPolicy({
+          ...socket.data,
           guilds: allowedGuilds,
-          discordId,
         });
 
         const changes = diffAccessPolicies(previousPolicy, accessPolicy);
@@ -505,53 +523,10 @@ export class CommandHandler {
           .map(({ organizationId }) => organizationId)
           .filter((id) => !updatedIds.has(id));
 
-        socket.data.airTagScopes = socket.data.airTagScopes.filter((scope) =>
-          canSubscribe(socket.data, scope.subscription),
-        );
-        const scopes = defaultScopes(socket.data);
-        const scopeKeys = new Set(scopes.map(getScopeKey));
+        const announced = this.announceAccess(socket, accessPolicy, changes);
+        sideEffects.push(...announced.warnings);
 
-        for (const scope of socket.data.subscriptions.values()) {
-          if (
-            canSubscribe(socket.data, scope) &&
-            !scopeKeys.has(getScopeKey(scope))
-          ) {
-            scopes.push(scope);
-            scopeKeys.add(getScopeKey(scope));
-          }
-        }
-
-        try {
-          hub.replaceSubscriptions(socket, scopes);
-        } catch (cause) {
-          socket.data.subscriptions.clear();
-          socket.data.airTagScopes = [];
-          socket.close(1008, "subscription reconciliation failed");
-          sideEffects.push(
-            Effect.logWarning("Subscription reconciliation failed", cause),
-          );
-          continue;
-        }
-
-        const event = {
-          v: 1,
-          type: "permissions.updated",
-          data: {
-            accessPolicy,
-            changes,
-            organizationIds: organizationIds(socket.data),
-            subscriptionScopes: scopes,
-          },
-        } satisfies Event;
-
-        try {
-          hub.sendEvent(socket, event);
-        } catch (cause) {
-          socket.close(1013, "permission update delivery failed");
-          sideEffects.push(
-            Effect.logWarning("Permission update delivery failed", cause),
-          );
-        }
+        if (!announced.resubscribed) continue;
 
         if (!socket.data.apiKeyAccess) {
           if (removedIds.length > 0) {
@@ -588,6 +563,102 @@ export class CommandHandler {
       }
 
       return Effect.all(sideEffects, { concurrency: 8, discard: true });
+    });
+  }
+
+  /** Moves one socket to its changed access policy and tells its client. */
+  private announceAccess(
+    socket: GatewaySocket,
+    accessPolicy: ReturnType<typeof sessionAccessPolicy>,
+    changes: ReturnType<typeof diffAccessPolicies>,
+  ): AccessAnnouncement {
+    const { hub } = this;
+
+    socket.data.airTagScopes = socket.data.airTagScopes.filter((scope) =>
+      canSubscribe(socket.data, scope.subscription),
+    );
+    const scopes = defaultScopes(socket.data);
+    const scopeKeys = new Set(scopes.map(getScopeKey));
+
+    for (const scope of socket.data.subscriptions.values()) {
+      if (
+        canSubscribe(socket.data, scope) &&
+        !scopeKeys.has(getScopeKey(scope))
+      ) {
+        scopes.push(scope);
+        scopeKeys.add(getScopeKey(scope));
+      }
+    }
+
+    try {
+      hub.replaceSubscriptions(socket, scopes);
+    } catch (cause) {
+      socket.data.subscriptions.clear();
+      socket.data.airTagScopes = [];
+      socket.close(1008, "subscription reconciliation failed");
+
+      return {
+        resubscribed: false,
+        warnings: [
+          Effect.logWarning("Subscription reconciliation failed", cause),
+        ],
+      };
+    }
+
+    const event = {
+      v: 1,
+      type: "permissions.updated",
+      data: {
+        accessPolicy,
+        changes,
+        organizationIds: organizationIds(socket.data),
+        subscriptionScopes: scopes,
+      },
+    } satisfies Event;
+
+    try {
+      hub.sendEvent(socket, event);
+    } catch (cause) {
+      socket.close(1013, "permission update delivery failed");
+
+      return {
+        resubscribed: true,
+        warnings: [
+          Effect.logWarning("Permission update delivery failed", cause),
+        ],
+      };
+    }
+
+    return { resubscribed: true, warnings: [] };
+  }
+
+  /**
+   * A game session reads presence only where it publishes its own, so a
+   * publication that changes those Lootlogs changes its access as well.
+   */
+  private publishPresence(
+    socket: GatewaySocket,
+    data: Extract<Command, { type: "presence.publish" }>["data"],
+  ) {
+    return Effect.suspend(() => {
+      const previousPolicy = sessionAccessPolicy(socket.data);
+
+      return this.presence.publish(socket, data).pipe(
+        // A failed write may still have changed the published Lootlogs.
+        Effect.ensuring(
+          Effect.suspend(() => {
+            const accessPolicy = sessionAccessPolicy(socket.data);
+            const changes = diffAccessPolicies(previousPolicy, accessPolicy);
+
+            if (changes.length === 0) return Effect.void;
+
+            return Effect.all(
+              this.announceAccess(socket, accessPolicy, changes).warnings,
+              { discard: true },
+            );
+          }),
+        ),
+      );
     });
   }
 
@@ -661,7 +732,7 @@ export class CommandHandler {
         return Effect.succeed({});
       case "presence.publish":
         return requireJoined.pipe(
-          Effect.andThen(this.presence.publish(socket, command.data)),
+          Effect.andThen(this.publishPresence(socket, command.data)),
         );
       case "presence.fetch": {
         const scope = {

@@ -132,6 +132,10 @@ const makeSocket = (connectionId: string) => {
   return { socket, frames };
 };
 
+// Publishes to every Lootlog of the session, as a client whose character catches for all of them.
+const joinedOrganizations = (target: GatewaySocket) =>
+  target.data.guilds.map(({ guild }) => guild.id);
+
 const setSocketPresence = (
   socket: GatewaySocket,
   presence: SessionData["presence"],
@@ -985,12 +989,16 @@ describe("realtime Dragonfly integration", () => {
       let presence = makePresence();
       const game = makeSocket("offline").socket;
       game.data.character = game.data.presence?.character;
-      await Effect.runPromise(presence.publish(game, { organizationIds: [] }));
+      await Effect.runPromise(
+        presence.publish(game, { organizationIds: joinedOrganizations(game) }),
+      );
       await Effect.runPromise(presence.disconnect(game.data));
       now += 10_000;
       beforeClaim = async () => {
         await Effect.runPromise(
-          presence.publish(game, { organizationIds: [] }),
+          presence.publish(game, {
+            organizationIds: joinedOrganizations(game),
+          }),
         );
       };
 
@@ -1103,7 +1111,9 @@ describe("realtime Dragonfly integration", () => {
       for (const socket of [first, second]) {
         socket.data.character = socket.data.presence?.character;
         await Effect.runPromise(
-          presence.publish(socket, { organizationIds: [] }),
+          presence.publish(socket, {
+            organizationIds: joinedOrganizations(socket),
+          }),
         );
         await Effect.runPromise(presence.disconnect(socket.data));
       }
@@ -1134,7 +1144,9 @@ describe("realtime Dragonfly integration", () => {
       afterFirstClaim = async () => {
         pauseReconnect = true;
         reconnecting = Effect.runPromise(
-          presence.publish(second, { organizationIds: [] }),
+          presence.publish(second, {
+            organizationIds: joinedOrganizations(second),
+          }),
         );
         await reconnectStored.promise;
         expect(
@@ -1233,7 +1245,9 @@ describe("realtime Dragonfly integration", () => {
       for (const socket of [departed, reconnected, replacement]) {
         socket.data.character = socket.data.presence?.character;
         await Effect.runPromise(
-          presence.publish(socket, { organizationIds: [] }),
+          presence.publish(socket, {
+            organizationIds: joinedOrganizations(socket),
+          }),
         );
         await Effect.runPromise(presence.disconnect(socket.data));
       }
@@ -1258,7 +1272,9 @@ describe("realtime Dragonfly integration", () => {
 
       beforeClaim = async () => {
         await Effect.runPromise(
-          presence.publish(reconnected, { organizationIds: [] }),
+          presence.publish(reconnected, {
+            organizationIds: joinedOrganizations(reconnected),
+          }),
         );
         await store.command.set(replacementKey, newerDeparture);
       };
@@ -1267,7 +1283,9 @@ describe("realtime Dragonfly integration", () => {
         // The old departure is already durable in the outbox. Returning online
         // starts a new period and must not erase its accepted publication.
         await Effect.runPromise(
-          presence.publish(departed, { organizationIds: [] }),
+          presence.publish(departed, {
+            organizationIds: joinedOrganizations(departed),
+          }),
         );
       };
 
@@ -1345,7 +1363,9 @@ describe("realtime Dragonfly integration", () => {
 
       const game = makeSocket("heartbeat").socket;
       game.data.character = game.data.presence?.character;
-      await Effect.runPromise(presence.publish(game, { organizationIds: [] }));
+      await Effect.runPromise(
+        presence.publish(game, { organizationIds: joinedOrganizations(game) }),
+      );
 
       for (const lostKey of [
         "presence:index:organization-1",
@@ -1447,7 +1467,9 @@ describe("realtime Dragonfly integration", () => {
         const departed = makeSocket("departed").socket;
         departed.data.character = departed.data.presence?.character;
         await Effect.runPromise(
-          publisher.publish(departed, { organizationIds: [] }),
+          publisher.publish(departed, {
+            organizationIds: joinedOrganizations(departed),
+          }),
         );
         await Effect.runPromise(publisher.disconnect(departed.data));
         const returning = makeSocket("returning").socket;
@@ -1470,7 +1492,9 @@ describe("realtime Dragonfly integration", () => {
                 const publish = async () => {
                   published = true;
                   await Effect.runPromise(
-                    publisher.publish(returning, { organizationIds: [] }),
+                    publisher.publish(returning, {
+                      organizationIds: joinedOrganizations(returning),
+                    }),
                   );
                 };
 
@@ -1653,7 +1677,9 @@ describe("realtime Dragonfly integration", () => {
           publishOffline,
         );
 
-        await Effect.runPromise(first.publish(game, { organizationIds: [] }));
+        await Effect.runPromise(
+          first.publish(game, { organizationIds: joinedOrganizations(game) }),
+        );
         await flushBoth();
         now += PRESENCE_EXPIRY_MS;
         let refreshed = false;
@@ -1773,7 +1799,9 @@ describe("realtime Dragonfly integration", () => {
       game.data.guilds = guilds.slice(0, 1);
       game.data.character = game.data.presence?.character;
       setSocketPresence(game, undefined);
-      await Effect.runPromise(successor.publish(game, { organizationIds: [] }));
+      await Effect.runPromise(
+        successor.publish(game, { organizationIds: joinedOrganizations(game) }),
+      );
       now += PRESENCE_EXPIRY_MS + 10_000;
       let transferred = false;
 
@@ -1864,7 +1892,9 @@ describe("realtime Dragonfly integration", () => {
         game.data.guilds = guilds.slice(0, 1);
         game.data.character = game.data.presence?.character;
         await Effect.runPromise(
-          publisher.publish(game, { organizationIds: [] }),
+          publisher.publish(game, {
+            organizationIds: joinedOrganizations(game),
+          }),
         );
         keys.push(`presence:organization-1:${game.data.connectionId}`);
       }
@@ -1999,7 +2029,9 @@ describe("realtime Dragonfly integration", () => {
       const active = makeSocket("active").socket;
       active.data.character = active.data.presence?.character;
       await Effect.runPromise(
-        presence.publish(active, { organizationIds: [] }),
+        presence.publish(active, {
+          organizationIds: joinedOrganizations(active),
+        }),
       );
       const keys: string[] = [];
 
@@ -2059,7 +2091,9 @@ describe("realtime Dragonfly integration", () => {
         },
       };
       await Effect.runPromise(
-        presence.publish(reconnected, { organizationIds: [] }),
+        presence.publish(reconnected, {
+          organizationIds: joinedOrganizations(reconnected),
+        }),
       );
       pause = false;
       resumeRead.resolve();

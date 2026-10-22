@@ -11,6 +11,8 @@ export const createAirTagTest = () => {
     world: "fobos",
     map: { id: 12, name: "Torneg", visibility: 30 },
   });
+  // The character catches for both Lootlogs, so it is visible in them.
+  getSocket().setPresenceOrganizations(["guild-1", "guild-2"]);
   getSocket().connect();
   test.open();
   const runtime = new AirTagRuntime();

@@ -1,4 +1,4 @@
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
@@ -17,6 +17,8 @@ type WarningWindowProps = {
   /** The one thing the player should do about the warning. */
   primaryAction: { label: string; onClick: () => void };
   onClose: () => void;
+  /** A choice the player makes right here, between the message and the actions. */
+  children?: ReactNode;
 };
 
 /**
@@ -32,6 +34,7 @@ export const WarningWindow: FC<WarningWindowProps> = ({
   description,
   primaryAction,
   onClose,
+  children,
 }) => {
   const { t } = useTranslation("common");
   const size = useWindowsStore((state) => state[id].size);
@@ -50,6 +53,7 @@ export const WarningWindow: FC<WarningWindowProps> = ({
       contentClassName="ll:flex ll:flex-col"
     >
       <WarningMessage icon={icon} heading={heading} description={description} />
+      {children}
       <WindowFooter rowClassName="ll:justify-end ll:gap-1 ll:px-1">
         <Button type="button" variant="ghost" size="xs" onClick={onClose}>
           {t("actions.close")}
