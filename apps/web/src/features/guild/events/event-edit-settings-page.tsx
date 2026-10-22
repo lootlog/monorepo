@@ -2,7 +2,7 @@ import { EventEditSkeleton } from "./event-edit-skeleton";
 import { EventLoadError } from "./components/event-load-error";
 import { useEventEditRoute } from "./hooks/queries/use-event-edit-route";
 import { BandSection } from "@/components/common/band-section";
-import { useEffect, useId } from "react";
+import { useId } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -60,22 +60,12 @@ export const EventEditSettingsPage = () => {
     },
   });
 
+  // React Compiler keeps the first `register` result, so a reset must keep
+  // the registered fields or typing stops reaching the form.
   const form = useForm<EventSettingsFormData>({
-    defaultValues: {
-      name: "",
-      startsAt: "",
-      endsAt: "",
-      assignmentTimeoutMinutes: 5,
-      participationConfirmationMinutes: 0,
-      mapAssignmentCap: 0,
-    },
+    values: event ? toSettingsDefaults(event) : undefined,
+    resetOptions: { keepFieldsRef: true },
   });
-
-  useEffect(() => {
-    if (event) {
-      form.reset(toSettingsDefaults(event));
-    }
-  }, [event, form]);
 
   const onSubmit = async (data: EventSettingsFormData) => {
     if (!event) {
