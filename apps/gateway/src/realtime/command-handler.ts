@@ -671,16 +671,38 @@ export class CommandHandler {
             const accessPolicy = sessionAccessPolicy(socket.data);
             const changes = diffAccessPolicies(previousPolicy, accessPolicy);
 
-            if (changes.length === 0) return Effect.void;
+            const warnings =
+              changes.length === 0
+                ? []
+                : this.announceAccess(socket, accessPolicy, changes).warnings;
 
             return Effect.all(
-              this.announceAccess(socket, accessPolicy, changes).warnings,
+              [...warnings, this.recordPresenceActivity(socket)],
               { discard: true },
             );
           }),
         ),
       );
     });
+  }
+
+  /** The activity log of a Lootlog follows where a character is visible. */
+  private recordPresenceActivity(socket: GatewaySocket): Effect.Effect<void> {
+    if (socket.data.platform !== "game" || socket.data.apiKeyAccess)
+      return Effect.void;
+    const published = socket.data.presence?.organizationIds ?? [];
+
+    const hidden = (socket.data.activityOrganizationIds ?? []).filter(
+      (id) => !published.includes(id),
+    );
+
+    return Effect.all(
+      [
+        this.activity.publish("DISCONNECT_EVENT", socket.data, hidden),
+        this.activity.publish("CONNECT_EVENT", socket.data, published),
+      ],
+      { discard: true },
+    );
   }
 
   private dispatch(
@@ -1071,7 +1093,13 @@ export class CommandHandler {
 
       hub.sendEvent(socket, event);
 
-      if (!wasJoined && !socket.data.apiKeyAccess)
+      // A game session connects to a Lootlog when it starts publishing
+      // presence there, so a Lootlog never logs a character hidden from it.
+      if (
+        !wasJoined &&
+        !socket.data.apiKeyAccess &&
+        socket.data.platform !== "game"
+      )
         yield* activity.publish("CONNECT_EVENT", socket.data);
 
       return event.data;
