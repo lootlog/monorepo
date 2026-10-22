@@ -567,7 +567,7 @@ describe("presence fetch delivery", () => {
 
 describe("presence reciprocity", () => {
   test("a game session reads a Lootlog's presence only while it publishes its own there", async () => {
-    const { handler, hub, presence } = setup();
+    const { handler, hub, presence, activity } = setup();
     const { socket } = makeSocket("game");
     socket.data.joined = true;
     socket.data.guilds = [guild()];
@@ -619,6 +619,10 @@ describe("presence reciprocity", () => {
     expect(await fetchResponse("before")).toMatchObject({ status: "error" });
 
     await publish("visible", ["organization-1"]);
+    expect(activity.calls).toContainEqual({
+      type: "CONNECT_EVENT",
+      ids: ["organization-1"],
+    });
     expect(hub.events.at(-1)).toMatchObject({
       type: "permissions.updated",
       data: {
@@ -1054,7 +1058,7 @@ describe("CommandHandler session lifecycle", () => {
   });
 
   test("keeps game sessions available when Margonem proof is unavailable", async () => {
-    const { handler, hub } = setup();
+    const { handler, hub, activity } = setup();
     const { socket } = makeSocket();
     socket.data = { ...socket.data, platform: "game" };
 
@@ -1081,6 +1085,8 @@ describe("CommandHandler session lifecycle", () => {
 
     expect(socket.data.joined).toBe(true);
     expect(socket.data.confidence).toBe("reported");
+    // A Lootlog logs the character only once it publishes presence there.
+    expect(activity.calls).toEqual([]);
     expect(hub.responses).toContainEqual(
       expect.objectContaining({ requestId: "request-1", status: "success" }),
     );
