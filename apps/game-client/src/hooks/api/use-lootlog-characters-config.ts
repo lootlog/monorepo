@@ -28,3 +28,24 @@ export const useLootlogCharactersConfig = ({ enabled = true } = {}) => {
     },
   );
 };
+
+const NO_ORGANIZATIONS: readonly string[] = [];
+
+/**
+ * The Lootlogs the current character plays for: its loot, timers and
+ * presence go there. A loaded configuration without this character catches
+ * for none; `undefined` until the configuration loads.
+ */
+export const useCurrentCharacterCatchingGuildIds = ():
+  | readonly string[]
+  | undefined => {
+  const characterId = useGameStore(
+    (state) => state.game?.hero.characterId ?? null,
+  );
+
+  const { data: charactersConfig } = useLootlogCharactersConfig();
+
+  return charactersConfig && characterId
+    ? (charactersConfig[characterId]?.catchingGuildIds ?? NO_ORGANIZATIONS)
+    : undefined;
+};

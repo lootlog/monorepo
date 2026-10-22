@@ -9,8 +9,29 @@ type Topic = typeof RealtimeLogicalTopic.Type;
 
 type Scope = typeof SubscriptionScope.Type;
 
-/** The identity and Organization grants that every permission check reads. */
-export type PermissionViewer = Pick<SessionData, "discordId" | "guilds">;
+/**
+ * The identity and Organization grants that every permission check reads. A
+ * game session also brings the Organizations it publishes its presence to.
+ */
+export type PermissionViewer = Pick<SessionData, "discordId" | "guilds"> &
+  Partial<Pick<SessionData, "platform" | "presence">>;
+
+/** Permissions that reveal where other players are. */
+export const PRESENCE_PERMISSIONS: ReadonlySet<Permission> = new Set([
+  Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+  Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+]);
+
+/**
+ * A character in game sees other players of a Lootlog only while it is
+ * visible there itself, so nobody can watch a Lootlog incognito.
+ */
+export const publishesPresenceTo = (
+  viewer: PermissionViewer,
+  organizationId: string,
+): boolean =>
+  viewer.platform !== "game" ||
+  (viewer.presence?.organizationIds.includes(organizationId) ?? false);
 
 const TOPIC_PERMISSION = new Map<Topic, Permission>([
   ["organization.activity", Permission.LOOTLOG_ACCESS],
@@ -36,6 +57,12 @@ export const hasPermission = (
   );
 
   if (!guild) return false;
+
+  if (
+    PRESENCE_PERMISSIONS.has(permission) &&
+    !publishesPresenceTo(session, organizationId)
+  )
+    return false;
 
   return (
     guild.guild.ownerId === session.discordId ||

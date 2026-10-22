@@ -1,11 +1,9 @@
-import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import type { SettingsSaveBadgeStatus } from "@/components/settings/settings-save-badge";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
-import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
 import { useTranslation } from "react-i18next";
-import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-characters-config";
+import { useCharacterCatchingSelection } from "@/hooks/use-character-catching-selection";
 
 type CatchingSettingsFormProps = {
   characterId: string;
@@ -16,12 +14,7 @@ type CatchingSettingsFormProps = {
   onSaveStateChange?: (status: SettingsSaveBadgeStatus) => void;
 };
 
-/**
- * Lootlogi one character reports to. The selection is the cached config
- * itself: each toggle writes the next list straight through the mutation,
- * which updates the cache optimistically and serializes rapid clicks, so a
- * click never snaps back when an earlier response lands.
- */
+/** Lootlogi one character plays for: its loot, timers and presence go there. */
 export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   characterId,
   disabled = false,
@@ -29,15 +22,14 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   onSaveStateChange,
 }) => {
   const { t } = useTranslation();
-  const { orderedGuilds: guilds } = useLootlogGuilds();
-
-  const { data: lootlogCharactersConfig, isPending: isLootlogConfigLoading } =
-    useLootlogCharactersConfig();
 
   const {
-    mutateFromCurrent: updateLootlogCharacterConfig,
+    guilds,
+    selectedGuildIds,
+    toggle: handleGuildToggle,
+    isConfigLoading,
     status: updateStatus,
-  } = useUpdateLootlogCharactersConfig();
+  } = useCharacterCatchingSelection(characterId);
 
   // The callback is read through a ref so the report follows the mutation
   // status alone; a parent re-render (e.g. from the report itself) must not
@@ -55,30 +47,11 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     else if (updateStatus === "error") onSaveStateChangeRef.current?.("error");
   }, [updateStatus]);
 
-  const selectedGuildIds =
-    lootlogCharactersConfig?.[characterId]?.catchingGuildIds ?? [];
-
   // The write is optimistic and replaces the whole list, so the picker stays
   // usable while a save is in flight; only the initial load blocks it.
-  const isInteractionDisabled = isLootlogConfigLoading || disabled;
+  const isInteractionDisabled = isConfigLoading || disabled;
   const totalGuilds = guilds.length;
   const selectedCount = selectedGuildIds.length;
-
-  // Derived from the cache at click time, not from this render: a re-render
-  // lags the cache by a tick, so the previous click of a rapid series would
-  // otherwise be missing from the saved list.
-  const handleGuildToggle = (guildId: string) => {
-    updateLootlogCharacterConfig((current) => {
-      const currentGuildIds = current?.[characterId]?.catchingGuildIds ?? [];
-
-      return {
-        characterId,
-        catchingGuildIds: currentGuildIds.includes(guildId)
-          ? currentGuildIds.filter((id) => id !== guildId)
-          : [...currentGuildIds, guildId],
-      };
-    });
-  };
 
   return (
     <SettingsSection
