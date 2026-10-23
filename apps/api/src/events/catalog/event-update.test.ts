@@ -17,6 +17,7 @@ import {
 } from "#src/database/drizzle/schema";
 import {
   InvalidRequestError,
+  ResourceConflictError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { UpdateEventRequest } from "#src/contracts/events/schemas";
@@ -495,9 +496,9 @@ describe("event hero list history", () => {
 
       const store = makeEventPointsStore(boundary.database);
 
-      const addKill = (heroNpcName: string, killId: string) =>
+      const addKill = (killId: string) =>
         boundary.run(
-          store.addKillToRankings("event-1", heroNpcName, killId, [
+          store.addKillToRankings("event-1", killId, [
             {
               memberId: 1,
               points: 10,
@@ -508,10 +509,78 @@ describe("event hero list history", () => {
           ]),
         );
 
-      expect(await addKill("Kotołak", "kill-a")).toBe(false);
-      expect(await addKill("Mietek", "kill-b")).toBe(true);
+      expect(await addKill("kill-a")).toBe(false);
+      expect(await addKill("kill-b")).toBe(true);
       expect((await readHistory(boundary)).rankings).toEqual([
         { heroNpcName: "Mietek", totalPoints: 20 },
       ]);
     }));
+
+  const renameHero = (boundary: DatabaseBoundary, npcName: string) =>
+    boundary.run(
+      makeEventCatalogMutations(boundary.database, redis, logger).updateHero(
+        { id: "guild-1" },
+        "event-1",
+        "hero-a",
+        { npcName },
+      ),
+    );
+
+  it("moves rankings with a renamed hero and credits later kills to the new name", () =>
+    withSeededEvent(async (boundary) => {
+      await renameHero(boundary, "Kotołak Wielki");
+
+      await boundary.run(
+        makeEventPointsStore(boundary.database).addKillToRankings(
+          "event-1",
+          "kill-a",
+          [
+            {
+              memberId: 1,
+              points: 5,
+              trackingSeconds: 60,
+              afkPercentage: 0,
+              pointsModified: false,
+            },
+          ],
+        ),
+      );
+
+      expect((await readHistory(boundary)).rankings).toEqual([
+        { heroNpcName: "Kotołak Wielki", totalPoints: 15 },
+        { heroNpcName: "Mietek", totalPoints: 10 },
+      ]);
+    }));
+
+  it.each([
+    { name: "another hero", npcName: "Mietek", orphan: false },
+    { name: "leftover rankings", npcName: "Kotołak Wielki", orphan: true },
+  ])(
+    "rejects renaming onto a name used by $name without changing anything",
+    ({ npcName, orphan }) =>
+      withSeededEvent(async (boundary) => {
+        if (orphan)
+          await boundary.run(
+            boundary.database.insert(eventRankingTable).values({
+              id: "ranking-orphan",
+              eventId: "event-1",
+              memberId: 1,
+              heroNpcName: npcName,
+              totalPoints: 3,
+              totalKills: 1,
+              updatedAt: new Date("2026-09-02T10:00:00.000Z"),
+            }),
+          );
+
+        const history = await readHistory(boundary);
+        const catalog = await readCatalog(boundary);
+
+        await expect(renameHero(boundary, npcName)).rejects.toBeInstanceOf(
+          ResourceConflictError,
+        );
+
+        expect(await readCatalog(boundary)).toEqual(catalog);
+        expect(await readHistory(boundary)).toEqual(history);
+      }),
+  );
 });
