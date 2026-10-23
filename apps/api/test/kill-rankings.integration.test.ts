@@ -28,7 +28,10 @@ import { makeKillStatsPersistence } from "../src/kills/kill-stats-persistence.js
 import { makeGuildKillQueries } from "../src/kills/guild-kill-queries.js";
 import { getKillStatsBucketStart } from "../src/kills/kill-stats-period.js";
 import { applicationLogger } from "../src/shared/application-logger.js";
-import { ResourceConflictError } from "../src/shared/http/http-errors.js";
+import {
+  ResourceConflictError,
+  ResourceNotFoundError,
+} from "../src/shared/http/http-errors.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
 
@@ -838,6 +841,67 @@ test("concurrent hero renames onto one name give it to exactly one hero", async 
           .from(eventHeroNpcTable)
           .where(eq(eventHeroNpcTable.npcName, npcName)),
       ).toHaveLength(1);
+    }),
+  );
+});
+
+test("renaming a hero deleted while the rename waits for its row is a 404", async () => {
+  await runtime.runPromise(
+    Effect.gen(function* () {
+      const db = yield* ApiDatabase;
+      const eventId = randomUUID();
+      const heroId = `${eventId}-a`;
+
+      const mutations = makeEventCatalogMutations(
+        db,
+        {
+          invalidateScopes: () => Promise.resolve(),
+          deleteByPattern: () => Promise.resolve(0),
+        },
+        applicationLogger,
+      );
+
+      yield* db.insert(eventTable).values({
+        id: eventId,
+        guildId,
+        name: "Deleted hero rename",
+        world: "a",
+        updatedAt: new Date(),
+      });
+      yield* db
+        .insert(eventHeroNpcTable)
+        .values({ id: heroId, eventId, npcName: "Heros" });
+
+      // The rename still finds the hero, then waits for the deleting
+      // transaction's row lock and only sees the row gone afterwards.
+      const deleteHero = db.transaction((transaction) =>
+        Effect.gen(function* () {
+          yield* transaction
+            .delete(eventHeroNpcTable)
+            .where(eq(eventHeroNpcTable.id, heroId));
+          yield* transaction.execute(sql`select pg_sleep(0.5)`);
+        }),
+      );
+
+      const [, renamed] = yield* Effect.all(
+        [
+          deleteHero,
+          Effect.result(
+            Effect.andThen(
+              Effect.sleep("100 millis"),
+              mutations.updateHero({ id: guildId }, eventId, heroId, {
+                npcName: "Nowa nazwa",
+              }),
+            ),
+          ),
+        ],
+        { concurrency: "unbounded" },
+      );
+
+      expect(
+        Result.isFailure(renamed) &&
+          renamed.failure instanceof ResourceNotFoundError,
+      ).toBe(true);
     }),
   );
 });

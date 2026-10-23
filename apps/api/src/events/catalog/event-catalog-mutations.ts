@@ -329,7 +329,10 @@ export const makeEventCatalogMutations = (
                 .where(eq(eventHeroNpcTable.id, heroId))
                 .for("update");
 
-              const previousName = locked[0]?.npcName ?? hero.npcName;
+              const previousName = locked[0]?.npcName;
+
+              if (previousName === undefined) return { missing: true as const };
+
               const renamed = data.npcName !== previousName;
 
               if (renamed) {
@@ -360,6 +363,11 @@ export const makeEventCatalogMutations = (
             }),
           ),
         );
+
+        if ("missing" in rows)
+          return yield* Effect.fail(
+            new ResourceNotFoundError("Hero not found"),
+          );
 
         if ("taken" in rows) return yield* Effect.fail(heroNameTakenError());
 
