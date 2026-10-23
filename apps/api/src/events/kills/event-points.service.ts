@@ -827,7 +827,6 @@ export const makeEventPoints = (
 
   function updateRankingAfterKill(
     eventId: string,
-    heroNpcName: string,
     killPoints: EventKillPoint[],
   ) {
     const rankableKillPoints = killPoints.filter((killPoint) =>
@@ -847,7 +846,6 @@ export const makeEventPoints = (
         ([killId, points]) =>
           repository.addKillToRankings(
             eventId,
-            heroNpcName,
             killId,
             points.map((killPoint) => ({
               memberId: killPoint.memberId,

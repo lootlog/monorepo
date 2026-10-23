@@ -16152,7 +16152,7 @@ export const getEventsAssignmentControllerUpdateHeroUrl = ({ guildId, eventId, h
 }
 
 /**
- * Update an existing hero details
+ * Update an existing hero details. Renaming moves the hero's ranking entries to the new name and is rejected with 409 when another hero or ranking entries in the event already use that name.
  * @summary Update hero
  */
 export const eventsAssignmentControllerUpdateHero = async ({ guildId, eventId, heroId }: EventsAssignmentControllerUpdateHeroPathParameters,

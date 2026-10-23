@@ -81,14 +81,14 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
   }
 
   /**
-   * Adds one kill's points to the name-keyed rankings. The kill row is locked
-   * for the transaction, so a concurrent hero deletion either waits for these
-   * writes and then removes them, or has already removed the kill and no
-   * ranking is written.
+   * Adds one kill's points to the name-keyed rankings. The kill and its hero
+   * are locked for the transaction, so a concurrent hero deletion or rename
+   * either waits for these writes and then removes or renames them, or has
+   * already happened: the kill is gone and no ranking is written, or the
+   * rankings go to the hero's current name.
    */
   function addKillToRankings(
     eventId: string,
-    heroNpcName: string,
     killId: string,
     entries: ReadonlyArray<{
       memberId: number;
@@ -102,12 +102,18 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
       database.transaction((transaction) =>
         Effect.gen(function* () {
           const kills = yield* transaction
-            .select({ id: eventHeroKillTable.id })
+            .select({ heroNpcName: eventHeroNpcTable.npcName })
             .from(eventHeroKillTable)
+            .innerJoin(
+              eventHeroNpcTable,
+              eq(eventHeroNpcTable.id, eventHeroKillTable.heroNpcId),
+            )
             .where(eq(eventHeroKillTable.id, killId))
             .for("share");
 
-          if (kills.length === 0) return false;
+          const heroNpcName = kills[0]?.heroNpcName;
+
+          if (heroNpcName === undefined) return false;
 
           const now = new Date(yield* Clock.currentTimeMillis);
 

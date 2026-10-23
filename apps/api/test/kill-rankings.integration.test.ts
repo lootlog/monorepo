@@ -671,13 +671,11 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
         [
           store.addKillToRankings(
             eventId,
-            heroNpcName,
             firstKill,
             crew.map((memberId) => entry(memberId, 1, 40)),
           ),
           store.addKillToRankings(
             eventId,
-            heroNpcName,
             secondKill,
             crew
               .map((memberId) =>
@@ -694,7 +692,7 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
       // The first attempt fails after `second` sorts ahead of a member that
       // no longer exists; none of it may survive into the retry.
       const failedAttempt = yield* Effect.exit(
-        store.addKillToRankings(eventId, heroNpcName, retriedKill, [
+        store.addKillToRankings(eventId, retriedKill, [
           entry(2_147_483_647, 100, 100),
           entry(memberIds.second, 100, 100),
         ]),
@@ -702,7 +700,7 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
 
       expect(failedAttempt._tag).toBe("Failure");
       expect(
-        yield* store.addKillToRankings(eventId, heroNpcName, retriedKill, [
+        yield* store.addKillToRankings(eventId, retriedKill, [
           entry(memberIds.second, 1, 0),
         ]),
       ).toBe(true);

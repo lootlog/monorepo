@@ -289,12 +289,19 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventHeroPath,
       payload: UpdateEventHeroRequest,
       success: HttpApiSchema.Empty(200),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "EventsAssignmentController_updateHero")
     .annotate(OpenApi.Summary, "Update hero")
-    .annotate(OpenApi.Description, "Update an existing hero details"),
+    .annotate(
+      OpenApi.Description,
+      "Update an existing hero details. Renaming moves the hero's ranking entries to the new name and is rejected with 409 when another hero or ranking entries in the event already use that name.",
+    ),
   HttpApiEndpoint.post(
     "EventsAssignmentControllerAddMap",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/maps",
