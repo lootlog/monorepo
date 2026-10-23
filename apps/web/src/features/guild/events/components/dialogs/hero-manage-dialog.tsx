@@ -108,8 +108,8 @@ export const HeroManageDialog = ({
       onOpenChange(false);
     } catch (error) {
       toast.error(
-        getApiErrorMessage(error) === "EVENT_HERO_NAME_LOCKED"
-          ? t("events.heroes.nameLockedError")
+        getApiErrorMessage(error) === "EVENT_HERO_NAME_TAKEN"
+          ? t("events.heroes.nameTakenError")
           : t("events.heroes.saveError"),
       );
     }

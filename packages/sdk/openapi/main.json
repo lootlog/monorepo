@@ -15152,6 +15152,26 @@
               }
             }
           },
+          "404": {
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Error",
             "content": {
@@ -15170,7 +15190,7 @@
             }
           }
         },
-        "description": "Add a new hero to an existing event",
+        "description": "Add a new hero to an existing event. Rejected with 409 when another hero or ranking entries in the event already use the name.",
         "summary": "Add hero to event",
         "requestBody": {
           "content": {
@@ -15388,6 +15408,26 @@
               }
             }
           },
+          "404": {
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Error",
             "content": {
@@ -15406,7 +15446,7 @@
             }
           }
         },
-        "description": "Update an existing hero details",
+        "description": "Update an existing hero details. Renaming moves the hero's ranking entries to the new name and is rejected with 409 when another hero or ranking entries in the event already use that name.",
         "summary": "Update hero",
         "requestBody": {
           "content": {

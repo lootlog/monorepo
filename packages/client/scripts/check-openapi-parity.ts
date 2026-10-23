@@ -392,6 +392,17 @@ const API_ERROR_RESPONSE_MIGRATIONS = [
     add: [],
     operations: ["PUT /guilds/{guildId}/events/{eventId}/pin"],
   },
+  // Verified by the hero name cases in the event update spec: adding or
+  // renaming a hero onto a name used by another hero or leftover rankings is
+  // a 409.
+  {
+    restore: [],
+    add: ["404", "409"],
+    operations: [
+      "POST /guilds/{guildId}/events/{eventId}/heroes",
+      "PATCH /guilds/{guildId}/events/{eventId}/heroes/{heroId}",
+    ],
+  },
 ] as const;
 
 const apiErrorResponseMigrations = new Map<

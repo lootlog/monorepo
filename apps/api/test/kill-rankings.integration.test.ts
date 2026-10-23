@@ -4,8 +4,8 @@ import { randomUUID } from "node:crypto";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
-import { eq, inArray } from "drizzle-orm";
-import { Effect, ManagedRuntime } from "effect";
+import { eq, inArray, sql } from "drizzle-orm";
+import { Effect, ManagedRuntime, Result } from "effect";
 import {
   ApiDatabase,
   ApiDatabaseLive,
@@ -22,11 +22,16 @@ import {
   guildKillBucketTable,
   guildKillTotalTable,
 } from "../src/database/drizzle/schema.js";
+import { makeEventCatalogMutations } from "../src/events/catalog/event-catalog-mutations.js";
 import { makeEventPointsStore } from "../src/events/kills/event-points.repository.js";
 import { makeKillStatsPersistence } from "../src/kills/kill-stats-persistence.js";
 import { makeGuildKillQueries } from "../src/kills/guild-kill-queries.js";
 import { getKillStatsBucketStart } from "../src/kills/kill-stats-period.js";
 import { applicationLogger } from "../src/shared/application-logger.js";
+import {
+  ResourceConflictError,
+  ResourceNotFoundError,
+} from "../src/shared/http/http-errors.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
 
@@ -671,13 +676,11 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
         [
           store.addKillToRankings(
             eventId,
-            heroNpcName,
             firstKill,
             crew.map((memberId) => entry(memberId, 1, 40)),
           ),
           store.addKillToRankings(
             eventId,
-            heroNpcName,
             secondKill,
             crew
               .map((memberId) =>
@@ -694,7 +697,7 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
       // The first attempt fails after `second` sorts ahead of a member that
       // no longer exists; none of it may survive into the retry.
       const failedAttempt = yield* Effect.exit(
-        store.addKillToRankings(eventId, heroNpcName, retriedKill, [
+        store.addKillToRankings(eventId, retriedKill, [
           entry(2_147_483_647, 100, 100),
           entry(memberIds.second, 100, 100),
         ]),
@@ -702,7 +705,7 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
 
       expect(failedAttempt._tag).toBe("Failure");
       expect(
-        yield* store.addKillToRankings(eventId, heroNpcName, retriedKill, [
+        yield* store.addKillToRankings(eventId, retriedKill, [
           entry(memberIds.second, 1, 0),
         ]),
       ).toBe(true);
@@ -760,6 +763,145 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
             };
           }),
       );
+    }),
+  );
+});
+
+test("concurrent hero renames onto one name give it to exactly one hero", async () => {
+  await runtime.runPromise(
+    Effect.gen(function* () {
+      const db = yield* ApiDatabase;
+      const eventId = randomUUID();
+      const now = new Date();
+
+      const mutations = makeEventCatalogMutations(
+        db,
+        {
+          invalidateScopes: () => Promise.resolve(),
+          deleteByPattern: () => Promise.resolve(0),
+        },
+        applicationLogger,
+      );
+
+      yield* db.insert(eventTable).values({
+        id: eventId,
+        guildId,
+        name: "Hero names",
+        world: "a",
+        updatedAt: now,
+      });
+      yield* db.insert(eventHeroNpcTable).values(
+        ["a", "b"].map((key) => ({
+          id: `${eventId}-${key}`,
+          eventId,
+          npcName: `Heros ${key}`,
+        })),
+      );
+
+      const guild = { id: guildId };
+      const npcName = "Wspólna nazwa";
+
+      // Holding both hero rows queues the renames behind one lock, so their
+      // name checks start together once it is released.
+      const holdHeroes = db.transaction((transaction) =>
+        Effect.gen(function* () {
+          yield* transaction
+            .select({ id: eventHeroNpcTable.id })
+            .from(eventHeroNpcTable)
+            .where(eq(eventHeroNpcTable.eventId, eventId))
+            .for("update");
+          yield* transaction.execute(sql`select pg_sleep(0.5)`);
+        }),
+      );
+
+      const rename = (heroId: string) =>
+        Effect.result(
+          Effect.andThen(
+            Effect.sleep("100 millis"),
+            mutations.updateHero(guild, eventId, heroId, { npcName }),
+          ),
+        );
+
+      const [, ...results] = yield* Effect.all(
+        [holdHeroes, rename(`${eventId}-a`), rename(`${eventId}-b`)],
+        { concurrency: "unbounded" },
+      );
+
+      const failures = results.flatMap((result) =>
+        Result.isFailure(result) ? [result.failure] : [],
+      );
+
+      expect(failures).toHaveLength(1);
+      expect(
+        failures.every((failure) => failure instanceof ResourceConflictError),
+      ).toBe(true);
+      expect(
+        yield* db
+          .select({ id: eventHeroNpcTable.id })
+          .from(eventHeroNpcTable)
+          .where(eq(eventHeroNpcTable.npcName, npcName)),
+      ).toHaveLength(1);
+    }),
+  );
+});
+
+test("renaming a hero deleted while the rename waits for its row is a 404", async () => {
+  await runtime.runPromise(
+    Effect.gen(function* () {
+      const db = yield* ApiDatabase;
+      const eventId = randomUUID();
+      const heroId = `${eventId}-a`;
+
+      const mutations = makeEventCatalogMutations(
+        db,
+        {
+          invalidateScopes: () => Promise.resolve(),
+          deleteByPattern: () => Promise.resolve(0),
+        },
+        applicationLogger,
+      );
+
+      yield* db.insert(eventTable).values({
+        id: eventId,
+        guildId,
+        name: "Deleted hero rename",
+        world: "a",
+        updatedAt: new Date(),
+      });
+      yield* db
+        .insert(eventHeroNpcTable)
+        .values({ id: heroId, eventId, npcName: "Heros" });
+
+      // The rename still finds the hero, then waits for the deleting
+      // transaction's row lock and only sees the row gone afterwards.
+      const deleteHero = db.transaction((transaction) =>
+        Effect.gen(function* () {
+          yield* transaction
+            .delete(eventHeroNpcTable)
+            .where(eq(eventHeroNpcTable.id, heroId));
+          yield* transaction.execute(sql`select pg_sleep(0.5)`);
+        }),
+      );
+
+      const [, renamed] = yield* Effect.all(
+        [
+          deleteHero,
+          Effect.result(
+            Effect.andThen(
+              Effect.sleep("100 millis"),
+              mutations.updateHero({ id: guildId }, eventId, heroId, {
+                npcName: "Nowa nazwa",
+              }),
+            ),
+          ),
+        ],
+        { concurrency: "unbounded" },
+      );
+
+      expect(
+        Result.isFailure(renamed) &&
+          renamed.failure instanceof ResourceNotFoundError,
+      ).toBe(true);
     }),
   );
 });
