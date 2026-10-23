@@ -684,11 +684,7 @@ export const makeEventKills = (
       );
 
       if (kill.points.length > 0) {
-        yield* pointsService.updateRankingAfterKill(
-          event.id,
-          eventHero.npcName,
-          kill.points,
-        );
+        yield* pointsService.updateRankingAfterKill(event.id, kill.points);
       }
 
       yield* trackingService.closeAllGapsForHero(eventHero.id);

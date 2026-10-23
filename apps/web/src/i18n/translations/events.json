@@ -318,7 +318,7 @@
     "saveError": "Nie udało się zapisać herosa",
     "mapsHint": "Mapy dla herosa dodasz po jego utworzeniu.",
     "idHint": "Jeśli nie znasz ID lub jest niedostępne - zostanie ustawione automatycznie po pierwszym zbiciu herosa (wymaga poprawnej nazwy).",
-    "nameLockedError": "Nie można zmienić nazwy herosa po ustawieniu jego ID.",
+    "nameTakenError": "W tym evencie jest już heros lub ranking o tej nazwie.",
     "added": "Dodano herosa",
     "updated": "Zaktualizowano herosa",
     "deleted": "Usunięto herosa",
