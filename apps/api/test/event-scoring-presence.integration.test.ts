@@ -13,6 +13,7 @@ import {
   eventKillPointTable,
   eventMapAssignmentHistoryTable,
   eventMapTable,
+  eventRankingTable,
   eventTable,
   guildTable,
   memberTable,
@@ -120,11 +121,18 @@ afterAll(async () => {
 
 /**
  * Seeds one 100-minute kill (08:00–09:40) and its kill points, then runs the
- * explicit recalculation and returns each member's stored base points.
+ * explicit recalculation and returns each member's stored base points and the
+ * solo member's ranking total.
  */
 const recalculate = (params: {
   assignments: Array<{ member: "solo" | "late"; from: string; to: string }>;
   pointMembers: Array<"solo" | "late">;
+  soloKillPointAdjustment?: number;
+  soloRanking?: {
+    totalPoints: number;
+    manualAdjustmentPoints: number;
+    pointsModified: boolean;
+  };
 }) =>
   runtime.runPromise(
     Effect.gen(function* () {
@@ -192,13 +200,28 @@ const recalculate = (params: {
           killId,
           memberId: memberIds[member],
           basePoints: 0,
-          points: 0,
+          points: member === "solo" ? (params.soloKillPointAdjustment ?? 0) : 0,
+          manualAdjustmentPoints:
+            member === "solo" ? (params.soloKillPointAdjustment ?? 0) : 0,
           timeOnMapSeconds: 0,
           afkPercentage: 0,
           wasPresent: true,
           confirmedAt: at("09:40:00"),
         })),
       );
+
+      if (params.soloRanking)
+        yield* db.insert(eventRankingTable).values({
+          id: randomUUID(),
+          eventId,
+          memberId: memberIds.solo,
+          heroNpcName: "Kotołak",
+          totalKills: 1,
+          totalTimeSeconds: 0,
+          avgAfkPercentage: 0,
+          updatedAt: now,
+          ...params.soloRanking,
+        });
 
       yield* (yield* points).recalculateEventPoints(eventId, 1);
 
@@ -212,9 +235,20 @@ const recalculate = (params: {
         .from(eventKillPointTable)
         .where(eq(eventKillPointTable.killId, killId));
 
+      const rankings = yield* db
+        .select({
+          memberId: eventRankingTable.memberId,
+          totalPoints: eventRankingTable.totalPoints,
+        })
+        .from(eventRankingTable)
+        .where(eq(eventRankingTable.eventId, eventId));
+
       return {
         solo: rows.find((row) => row.memberId === memberIds.solo),
         late: rows.find((row) => row.memberId === memberIds.late),
+        soloRankingPoints: rankings.find(
+          (ranking) => ranking.memberId === memberIds.solo,
+        )?.totalPoints,
       };
     }),
   );
@@ -245,4 +279,20 @@ test("recalculation does not read missing participant history as solo", async ()
   });
 
   expect(result.solo?.basePoints).toBe(1);
+});
+
+test("recalculation keeps base changes for a ranking modified only by kill-point edits", async () => {
+  const result = await recalculate({
+    assignments: [{ member: "solo", from: "07:50:00", to: "09:40:00" }],
+    pointMembers: ["solo"],
+    soloKillPointAdjustment: 1,
+    soloRanking: {
+      totalPoints: 1,
+      manualAdjustmentPoints: 0,
+      pointsModified: true,
+    },
+  });
+
+  expect(result.solo?.basePoints).toBe(3);
+  expect(result.soloRankingPoints).toBe(4);
 });
