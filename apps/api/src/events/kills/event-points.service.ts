@@ -73,15 +73,6 @@ type PresenceLogAggregation = {
   mapName: string;
 };
 
-type ExistingRankingSnapshot = {
-  id: string;
-  memberId: number;
-  heroNpcName: string;
-  totalPoints: number;
-  manualAdjustmentPoints: number;
-  pointsModified: boolean;
-};
-
 type EventKillPoint = typeof eventKillPointTable.$inferSelect;
 
 /**
@@ -195,32 +186,21 @@ export const makeEventPoints = (
     });
   }
 
+  /**
+   * Kill-point edits are already part of the recalculated kill points, so only
+   * the ranking's own stored adjustment carries over.
+   */
+  function resolveManualAdjustmentPoints(existingRanking?: {
+    manualAdjustmentPoints: number;
+  }): number {
+    return roundPoints(existingRanking?.manualAdjustmentPoints ?? 0);
+  }
+
   function createRankingKey(params: {
     memberId: number;
     heroNpcName: string;
   }): string {
     return `${params.memberId}:${params.heroNpcName}`;
-  }
-
-  function resolveManualAdjustmentPoints(params: {
-    existingRanking?: ExistingRankingSnapshot;
-    computedTotalPoints: number;
-  }): number {
-    const { existingRanking, computedTotalPoints } = params;
-
-    if (!existingRanking) {
-      return 0;
-    }
-
-    if (existingRanking.manualAdjustmentPoints !== 0) {
-      return roundPoints(existingRanking.manualAdjustmentPoints);
-    }
-
-    if (!existingRanking.pointsModified) {
-      return 0;
-    }
-
-    return roundPoints(existingRanking.totalPoints - computedTotalPoints);
   }
 
   function calculateTrackingDurationPercentage(params: {
@@ -590,10 +570,8 @@ export const makeEventPoints = (
 
         const existingRanking = existingRankingsByKey.get(rankingKey);
 
-        const manualAdjustmentPoints = resolveManualAdjustmentPoints({
-          existingRanking,
-          computedTotalPoints: ranking.totalPoints,
-        });
+        const manualAdjustmentPoints =
+          resolveManualAdjustmentPoints(existingRanking);
 
         const persistedRankingData = {
           totalPoints: roundPoints(
@@ -641,10 +619,8 @@ export const makeEventPoints = (
           continue;
         }
 
-        const manualAdjustmentPoints = resolveManualAdjustmentPoints({
-          existingRanking,
-          computedTotalPoints: 0,
-        });
+        const manualAdjustmentPoints =
+          resolveManualAdjustmentPoints(existingRanking);
 
         if (manualAdjustmentPoints !== 0) {
           rankingUpdates.push({
