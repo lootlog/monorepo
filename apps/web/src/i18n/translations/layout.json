@@ -7,6 +7,7 @@
     "beta": "BETA",
     "dashboard": "Dashboard",
     "battlePanel": "Panel walk",
+    "factionWar": "Wojna frakcji",
     "notifications": "Powiadomienia",
     "settings": "Ustawienia",
     "timers": "Timery",
@@ -44,6 +45,7 @@
     "abyssSeason": "Sezon",
     "playerVsPlayer": "Gracz vs Gracz",
     "battles": "Walki",
-    "npcRanking": "Ranking potworów"
+    "npcRanking": "Ranking potworów",
+    "ranking": "Ranking"
   }
 }

@@ -10,6 +10,7 @@ import {
   FiniteNumber,
 } from "@lootlog/schema/http-scalars";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { FactionWarAwardResponse } from "#src/contracts/faction-wars/schemas";
 
 export const KillStatsPeriodSchema = Schema.Literals([
   "all",
@@ -87,6 +88,7 @@ export type CreateKillResponse = typeof CreateKillResponse.Type;
 export const CreateKillResponse = Schema.Struct({
   updated: FiniteNumber,
   deduplicated: Schema.optionalKey(Schema.Boolean),
+  factionWar: Schema.optionalKey(FactionWarAwardResponse),
 }).annotate({ identifier: "CreateKillResponseDto_Output" });
 
 export type GuildKillStatsResponse = typeof GuildKillStatsResponse.Type;

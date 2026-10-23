@@ -38,6 +38,8 @@ export const NotificationRuleFormPage = () => {
     isError,
     isSubmitting,
     isScheduledMessage,
+    isTimerRule,
+    isFactionWar,
     maxNpcCount,
     npcSearch,
     setNpcSearch,
@@ -159,14 +161,16 @@ export const NotificationRuleFormPage = () => {
             <BandSection
               id="rule-form-when"
               title={t("settings.notifications.ruleDialog.sections.when")}
-              description={
-                isScheduledMessage
-                  ? t("settings.notifications.ruleDialog.whenScheduledMessage")
-                  : t("settings.notifications.ruleDialog.whenTimer")
-              }
+              description={t(
+                isFactionWar
+                  ? "settings.notifications.ruleDialog.whenFactionWar"
+                  : isScheduledMessage
+                    ? "settings.notifications.ruleDialog.whenScheduledMessage"
+                    : "settings.notifications.ruleDialog.whenTimer",
+              )}
             >
               <NotificationNpcFields
-                isScheduledMessage={isScheduledMessage}
+                isTimerRule={isTimerRule}
                 form={form}
                 t={t}
                 worldOptions={worldOptions}
@@ -182,7 +186,7 @@ export const NotificationRuleFormPage = () => {
                 hasAllWorldTimerNpcSelection={hasAllWorldTimerNpcSelection}
               />
               <NotificationTimerFields
-                isScheduledMessage={isScheduledMessage}
+                isTimerRule={isTimerRule}
                 form={form}
                 t={t}
               />
@@ -241,37 +245,40 @@ export const NotificationRuleFormPage = () => {
               />
             </BandSection>
 
-            <BandSection
-              id="rule-form-content"
-              title={t("settings.notifications.ruleDialog.sections.content")}
-            >
-              <FormField
-                control={form.control}
-                name="contentTemplate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t("settings.notifications.fields.contentTemplate")}
-                    </FormLabel>
-                    <FormControl
-                      render=<NotificationTemplateEditor
-                        key={`${rule?.id ?? "create"}-${watchedTriggerType}-${formResetKey}`}
-                        value={field.value ?? ""}
-                        onChange={field.onChange}
-                        roles={guildRoles}
-                        triggerType={watchedTriggerType}
-                        disabled={isSubmitting}
+            {/* Lootlog writes faction war announcements itself. */}
+            {!isFactionWar && (
+              <BandSection
+                id="rule-form-content"
+                title={t("settings.notifications.ruleDialog.sections.content")}
+              >
+                <FormField
+                  control={form.control}
+                  name="contentTemplate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {t("settings.notifications.fields.contentTemplate")}
+                      </FormLabel>
+                      <FormControl
+                        render=<NotificationTemplateEditor
+                          key={`${rule?.id ?? "create"}-${watchedTriggerType}-${formResetKey}`}
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                          roles={guildRoles}
+                          triggerType={watchedTriggerType}
+                          disabled={isSubmitting}
+                        />
                       />
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <NotificationMessagePreview
-                contentTemplate={contentTemplate}
-                guildRoles={guildRoles}
-              />
-            </BandSection>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <NotificationMessagePreview
+                  contentTemplate={contentTemplate}
+                  guildRoles={guildRoles}
+                />
+              </BandSection>
+            )}
 
             <UnsavedChangesBar
               isDirty={isCreateMode || isDirty}

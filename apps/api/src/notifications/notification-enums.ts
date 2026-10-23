@@ -27,6 +27,7 @@ export const NotificationTriggerType = {
   NPC_SPAWNED: "NPC_SPAWNED",
   WATCHED_ITEM_DROPPED: "WATCHED_ITEM_DROPPED",
   SCHEDULED_MESSAGE: "SCHEDULED_MESSAGE",
+  FACTION_WAR: "FACTION_WAR",
 } as const;
 
 export type NotificationTriggerType =

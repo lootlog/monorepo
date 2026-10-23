@@ -9,6 +9,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeJsonCodec } from "#src/redis/redis.service";
 import { makeGuildKillQueries } from "#src/kills/guild-kill-queries";
 import { makeKillCreation } from "#src/kills/kill-creation";
+import { makeFactionWarPoints } from "#src/faction-wars/faction-war-points";
 import type { KillQueryCache } from "#src/kills/kill-query-support";
 import { makeKillStatsPersistence } from "#src/kills/kill-stats-persistence";
 import { makeMemberKillQuery } from "#src/kills/member-kill-query";
@@ -86,6 +87,8 @@ export const recordsServicesLive = Layer.effect(
       dispatchLootPublications(),
     );
 
+    const factionWarPoints = makeFactionWarPoints(database);
+
     const acceptance = makeLootSubmissionAcceptance(
       makeLootSubmissionAcceptancePersistence(database),
       {
@@ -115,6 +118,7 @@ export const recordsServicesLive = Layer.effect(
           ),
       },
       lootPublications.signal,
+      factionWarPoints.awardLoot,
     );
 
     const loots = makeLootsOperations({
@@ -167,6 +171,7 @@ export const recordsServicesLive = Layer.effect(
           },
           applicationLogger,
           makeGuildKillActivityPublisher(database, rabbit),
+          factionWarPoints.awardKill,
         ),
         guildKillQueries: makeGuildKillQueries(
           killStatsPersistence,

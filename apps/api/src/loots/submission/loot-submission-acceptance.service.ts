@@ -18,6 +18,10 @@ import {
 import { createHash } from "node:crypto";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
+import type {
+  FactionWarAward,
+  FactionWarPoints,
+} from "#src/faction-wars/faction-war-points";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
@@ -108,6 +112,10 @@ const LOOT_LOCK_RETRY_OPTIONS = {
   retryJitter: 50,
 } as const;
 
+type AwardFactionWarLoot = (
+  loot: Parameters<FactionWarPoints["awardLoot"]>[0],
+) => Effect.Effect<FactionWarAward | null, unknown>;
+
 export interface LootSubmissionAcceptance {
   readonly accept: (options: {
     discordId: string;
@@ -120,6 +128,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     private readonly repository: LootSubmissionAcceptancePersistence,
     private readonly lock: LootSubmissionLock,
     private readonly signalPublications: Effect.Effect<void>,
+    private readonly awardFactionWarLoot: AwardFactionWarLoot,
   ) {}
 
   accept(options: {
@@ -264,7 +273,15 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           mapPlayersSnapshot,
         );
 
-        return this.createResponse(existingLootId, outcome);
+        // Retries reach here once the loot exists, so a failed award gets
+        // another chance; the war's ledger still pays each player once.
+        const award = yield* this.awardLootPoints(
+          options.discordId,
+          existingLootId,
+          options.submission,
+        );
+
+        return this.createResponse(existingLootId, outcome, award);
       }
 
       const lootId = yield* this.createNewLoot({
@@ -283,8 +300,47 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           }),
       });
 
-      return this.createResponse(lootId, outcome);
+      const award = yield* this.awardLootPoints(
+        options.discordId,
+        lootId,
+        options.submission,
+      );
+
+      return this.createResponse(lootId, outcome, award);
     });
+  }
+
+  /**
+   * Pays the whole party in the faction war and returns the submitter's part.
+   * Logged, never failed: an accepted loot must not be rejected for points.
+   */
+  private awardLootPoints(
+    discordId: string,
+    lootId: number,
+    submission: CreateLootRequest,
+  ): Effect.Effect<FactionWarAward | null> {
+    return this.awardFactionWarLoot({
+      submitterDiscordId: discordId,
+      lootId,
+      rarities: submission.loots.map((item) => this.getItemStats(item).rarity),
+      party: submission.players.map((player) => {
+        const { accountId, characterId } = this.normalizeCharacterAndAccount(
+          player.id,
+          player.accountId,
+        );
+
+        return {
+          accountId: String(accountId),
+          characterId: String(characterId),
+        };
+      }),
+    }).pipe(
+      Effect.catch((error) =>
+        Effect.logError("Failed to award faction war loot points", error).pipe(
+          Effect.as(null),
+        ),
+      ),
+    );
   }
 
   private resolveAcceptanceOutcome(options: {
@@ -815,11 +871,13 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   private createResponse(
     id: number,
     outcome: Omit<AcceptanceOutcome, "submissionData">,
+    factionWar: FactionWarAward | null,
   ): CreateLootResponse {
     return {
       id,
       submittedGuilds: outcome.submittedGuilds,
       rejectedGuilds: outcome.rejectedGuilds,
+      ...(factionWar && factionWar.points > 0 && { factionWar }),
     };
   }
 
@@ -872,9 +930,11 @@ export const makeLootSubmissionAcceptance = (
   repository: LootSubmissionAcceptancePersistence,
   lock: LootSubmissionLock,
   signalPublications: Effect.Effect<void>,
+  awardFactionWarLoot: AwardFactionWarLoot = () => Effect.succeed(null),
 ): LootSubmissionAcceptance =>
   new LootSubmissionAcceptanceImplementation(
     repository,
     lock,
     signalPublications,
+    awardFactionWarLoot,
   );

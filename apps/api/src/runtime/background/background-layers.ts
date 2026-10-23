@@ -1,7 +1,23 @@
 import { ReadyRoomData } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
 import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";
-import { Effect, FiberSet, Layer, Schedule } from "effect";
-import { RabbitMessaging } from "@lootlog/messaging";
+import {
+  Clock,
+  Effect,
+  FiberSet,
+  Layer,
+  Option,
+  Redacted,
+  Schedule,
+  Schema,
+} from "effect";
+import {
+  ACTIVITY_EVENT_SIGNATURE_HEADER,
+  verifyActivityEventSignature,
+} from "@lootlog/protocol/rabbit/activity-signature";
+import { makeFactionWarPoints } from "#src/faction-wars/faction-war-points";
+import { makeFactionWarPvpSync } from "#src/faction-wars/faction-war-pvp-sync";
+import { HttpClient } from "effect/http";
+import { RabbitMessaging, UnprocessableDelivery } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 
 import { Worker } from "bullmq";
@@ -16,6 +32,7 @@ import {
 } from "#src/members/member-refresh-queue";
 import { makeMemberRefreshProcessor } from "#src/members/member-refresh.processor";
 import { makeMemberBulkRefreshProcessor } from "#src/members/member-bulk-refresh.processor";
+import { makeFactionWarAnnouncements } from "#src/notifications/faction-war/faction-war-announcements";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/jobs/dispatch-queue";
 import { makeNotificationDispatchProcessor } from "#src/notifications/delivery/notifications-dispatch.processor";
 import { makeNotificationGuildLookup } from "#src/notifications/delivery/notification-guild-lookup";
@@ -165,6 +182,42 @@ export const RabbitConsumers = Layer.effectDiscard(
       apiRabbitFailurePolicies.presenceCoverage,
       orderedHandlerRetry,
     );
+
+    const config = yield* ApiRuntimeConfig;
+
+    if (config.activityEventSignatureSecret) {
+      const secret = Redacted.value(config.activityEventSignatureSecret);
+      const factionWarPoints = makeFactionWarPoints(database);
+
+      yield* consume(
+        ApiQueue.FACTION_WAR_ONLINE_CHECKPOINT,
+        RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
+        (event, delivery) =>
+          Effect.gen(function* () {
+            const signed = verifyActivityEventSignature({
+              payload: JSON.parse(new TextDecoder().decode(delivery.content)),
+              secret,
+              signature: Schema.decodeUnknownOption(Schema.String)(
+                delivery.properties.headers?.[ACTIVITY_EVENT_SIGNATURE_HEADER],
+              ).pipe(Option.getOrUndefined),
+            });
+
+            if (!signed)
+              return yield* new UnprocessableDelivery({
+                cause: new Error("Invalid online checkpoint signature"),
+              });
+
+            if (event.type === "checkpoint")
+              yield* factionWarPoints.recordOnline(event);
+          }),
+        apiRabbitFailurePolicies.factionWarOnline,
+        orderedHandlerRetry,
+      );
+    } else {
+      yield* Effect.logWarning(
+        "ACTIVITY_EVENT_SIGNATURE_SECRET is not set; faction wars award no online points",
+      );
+    }
 
     yield* consume(
       "backend-notifications-timer-updated",
@@ -316,6 +369,45 @@ export const ScheduledJobs = Layer.effectDiscard(
       ),
       "15 * * * *",
     );
+
+    if (config.battlelogCleanupSecret) {
+      const syncPvpWins = makeFactionWarPvpSync({
+        database,
+        httpClient: yield* HttpClient.HttpClient,
+        battlelogServiceUrl: config.battlelogServiceUrl,
+        serviceSecret: config.battlelogCleanupSecret,
+        points: makeFactionWarPoints(database),
+      });
+
+      yield* forkCronTask(
+        syncPvpWins.pipe(
+          Effect.catch((error) =>
+            Effect.logError("Faction war PvP sync failed", error),
+          ),
+        ),
+        "* * * * *",
+      );
+    }
+
+    const { scheduler } = yield* NotificationsServices;
+
+    const announceFactionWars = makeFactionWarAnnouncements({
+      database,
+      scheduler,
+      webAppUrl: config.webAppUrl,
+    });
+
+    // Every replica runs it; job idempotency keys send each one once.
+    yield* forkCronTask(
+      Clock.currentTimeMillis.pipe(
+        Effect.flatMap(announceFactionWars),
+        Effect.catch((error) =>
+          Effect.logError("Faction war announcements failed", error),
+        ),
+      ),
+      "*/5 * * * *",
+    );
+
     yield* forkCronTask(cleanupTimers, "0 3 * * *");
     yield* forkCronTask(cleanupReservations, "0 4 * * *");
   }),

@@ -2,6 +2,7 @@ import { ArrowUpRight, MessageCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { ClosingCta } from "@/src/components/landing/closing-cta";
+import { FactionWarBanner } from "@/src/components/landing/faction-war-banner";
 import { FaqPanel } from "@/src/components/landing/faq-panel";
 import { FeatureBand } from "@/src/components/landing/feature-band";
 import { GuidesShowcase } from "@/src/components/landing/guides-showcase";
@@ -22,6 +23,7 @@ export function HomeContent() {
 
       <main>
         <HeroSection />
+        <FactionWarBanner />
         <FeatureBand />
         <ProductProof />
         <HowItWorks />

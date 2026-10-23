@@ -10,6 +10,7 @@ const PUBLIC_ENDPOINTS = [
   "maps.MapsControllerGetMaps",
   "public-guild-stats-card.PublicGuildStatsCardControllerGetStatsCard",
   "user-themes.UserThemesControllerGetSharedTheme",
+  "faction-wars.FactionWarsControllerGetPublicCurrentWar",
 ];
 
 test("requires bearer authentication outside the explicit public allowlist", () => {

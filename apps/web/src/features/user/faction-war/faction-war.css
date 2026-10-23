@@ -1,0 +1,22 @@
+/*
+ * Faction colours: fire for Barbatos, ice for Tanroth. Fills keep their hue in
+ * every theme; text mixes it with the theme's foreground so it keeps AA
+ * contrast on light and dark surfaces alike. Over the war art, which is always
+ * dark, text uses the light `on-art` tints.
+ */
+:root {
+  --faction-barbatos: oklch(0.66 0.2 38);
+  --faction-tanroth: oklch(0.7 0.13 230);
+  --faction-barbatos-text: color-mix(
+    in oklab,
+    var(--faction-barbatos) 65%,
+    var(--foreground)
+  );
+  --faction-tanroth-text: color-mix(
+    in oklab,
+    var(--faction-tanroth) 65%,
+    var(--foreground)
+  );
+  --faction-barbatos-on-art: oklch(0.83 0.12 60);
+  --faction-tanroth-on-art: oklch(0.86 0.09 225);
+}
