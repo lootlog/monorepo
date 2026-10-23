@@ -1,7 +1,18 @@
 import { selectEventKillPoints } from "#src/events/kills/event-point-query";
 import { randomUUID } from "node:crypto";
 
-import { and, asc, eq, gte, inArray, isNull, lte, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 import { Clock, Effect } from "effect";
 import { chunk } from "es-toolkit";
@@ -12,6 +23,7 @@ import {
   eventKillPointTable,
   eventMapAssignmentHistoryTable,
   eventMapTable,
+  eventPointsEditHistoryTable,
   eventPresenceLogTable,
   eventRankingTable,
   eventRespawnWindowSummaryTable,
@@ -77,6 +89,53 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
         .select()
         .from(eventRankingTable)
         .where(eq(eventRankingTable.eventId, eventId)),
+    );
+  }
+
+  /**
+   * Sums each ranking's manual adjustments from its edit history: every
+   * ranking edit, plus kill-point edits made before kill points tracked their
+   * own adjustment.
+   */
+  function findRankingAdjustments(
+    eventId: string,
+    legacyKillPointsBefore: Date,
+  ) {
+    return run((database) =>
+      database
+        .select({
+          rankingId: eventPointsEditHistoryTable.rankingId,
+          points:
+            sql<number>`sum(${eventPointsEditHistoryTable.newPoints} - ${eventPointsEditHistoryTable.previousPoints})`.mapWith(
+              Number,
+            ),
+        })
+        .from(eventPointsEditHistoryTable)
+        .innerJoin(
+          eventRankingTable,
+          eq(eventRankingTable.id, eventPointsEditHistoryTable.rankingId),
+        )
+        .where(
+          and(
+            eq(eventRankingTable.eventId, eventId),
+            or(
+              eq(eventPointsEditHistoryTable.editType, "RANKING"),
+              and(
+                eq(eventPointsEditHistoryTable.editType, "KILL_POINT"),
+                lt(
+                  eventPointsEditHistoryTable.editedAt,
+                  legacyKillPointsBefore,
+                ),
+              ),
+            ),
+          ),
+        )
+        .groupBy(eventPointsEditHistoryTable.rankingId),
+    ).pipe(
+      Effect.map(
+        (rows) =>
+          new Map(rows.map(({ rankingId, points }) => [rankingId, points])),
+      ),
     );
   }
 
@@ -330,6 +389,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
     findKillPointsForEvent,
     findMaps,
     findPresenceLogs,
+    findRankingAdjustments,
     findRankings,
     findWindowSummaries,
   };

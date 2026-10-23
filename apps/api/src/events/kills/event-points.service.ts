@@ -1,6 +1,7 @@
 import {
   getTrackingDurationSecondsForRanking,
   isKillPointCountedInRanking,
+  KILL_POINT_ADJUSTMENTS_TRACKED_SINCE,
   roundPoints,
 } from "#src/events/kills/event-ranking-policy";
 import type { eventKillPointTable } from "#src/database/drizzle/schema";
@@ -187,13 +188,17 @@ export const makeEventPoints = (
   }
 
   /**
-   * Kill-point edits are already part of the recalculated kill points, so only
-   * the ranking's own stored adjustment carries over.
+   * The ranking's manual adjustment comes from its edit history rather than
+   * the stored column: recalculation before 5ef9e687a3 wrote unrecorded
+   * adjustments there, and an adjustment backed by no edit is not one.
    */
-  function resolveManualAdjustmentPoints(existingRanking?: {
-    manualAdjustmentPoints: number;
-  }): number {
-    return roundPoints(existingRanking?.manualAdjustmentPoints ?? 0);
+  function resolveManualAdjustmentPoints(
+    adjustments: ReadonlyMap<string, number>,
+    existingRanking?: { id: string },
+  ): number {
+    return roundPoints(
+      (existingRanking && adjustments.get(existingRanking.id)) ?? 0,
+    );
   }
 
   function createRankingKey(params: {
@@ -300,6 +305,11 @@ export const makeEventPoints = (
           : null;
 
       const existingRankings = yield* repository.findRankings(eventId);
+
+      const rankingAdjustments = yield* repository.findRankingAdjustments(
+        eventId,
+        KILL_POINT_ADJUSTMENTS_TRACKED_SINCE,
+      );
 
       const existingRankingsByKey = new Map(
         existingRankings.map((ranking) => [
@@ -570,8 +580,10 @@ export const makeEventPoints = (
 
         const existingRanking = existingRankingsByKey.get(rankingKey);
 
-        const manualAdjustmentPoints =
-          resolveManualAdjustmentPoints(existingRanking);
+        const manualAdjustmentPoints = resolveManualAdjustmentPoints(
+          rankingAdjustments,
+          existingRanking,
+        );
 
         const persistedRankingData = {
           totalPoints: roundPoints(
@@ -619,8 +631,10 @@ export const makeEventPoints = (
           continue;
         }
 
-        const manualAdjustmentPoints =
-          resolveManualAdjustmentPoints(existingRanking);
+        const manualAdjustmentPoints = resolveManualAdjustmentPoints(
+          rankingAdjustments,
+          existingRanking,
+        );
 
         if (manualAdjustmentPoints !== 0) {
           rankingUpdates.push({
