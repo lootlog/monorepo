@@ -583,4 +583,35 @@ describe("event hero list history", () => {
         expect(await readHistory(boundary)).toEqual(history);
       }),
   );
+
+  it("rejects adding a hero under a name left on rankings without picking them up", () =>
+    withSeededEvent(async (boundary) => {
+      await boundary.run(
+        boundary.database.insert(eventRankingTable).values({
+          id: "ranking-orphan",
+          eventId: "event-1",
+          memberId: 1,
+          heroNpcName: "Usunięty",
+          totalPoints: 3,
+          totalKills: 1,
+          updatedAt: new Date("2026-09-02T10:00:00.000Z"),
+        }),
+      );
+
+      const history = await readHistory(boundary);
+      const catalog = await readCatalog(boundary);
+
+      await expect(
+        boundary.run(
+          makeEventCatalogMutations(boundary.database, redis, logger).addHero(
+            { id: "guild-1" },
+            "event-1",
+            { npcId: 30, npcName: "Usunięty" },
+          ),
+        ),
+      ).rejects.toBeInstanceOf(ResourceConflictError);
+
+      expect(await readCatalog(boundary)).toEqual(catalog);
+      expect(await readHistory(boundary)).toEqual(history);
+    }));
 });

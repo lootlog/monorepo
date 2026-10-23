@@ -31927,7 +31927,7 @@ export const getEventsAssignmentControllerAddHeroUrl = ({ guildId, eventId }: Ev
 }
 
 /**
- * Add a new hero to an existing event
+ * Add a new hero to an existing event. Rejected with 409 when another hero or ranking entries in the event already use the name.
  * @summary Add hero to event
  */
 export const eventsAssignmentControllerAddHero = async ({ guildId, eventId }: EventsAssignmentControllerAddHeroPathParameters,
@@ -31962,7 +31962,7 @@ return mainFetch<void>(getEventsAssignmentControllerAddHeroUrl({ guildId, eventI
 
 export const getEventsAssignmentControllerAddHeroMutationKey = () => ['eventsAssignmentControllerAddHero'] as const;
 
-export const getEventsAssignmentControllerAddHeroMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerAddHero401 | EventsAssignmentControllerAddHero403 | EventsAssignmentControllerAddHero429>,
+export const getEventsAssignmentControllerAddHeroMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerAddHero401 | EventsAssignmentControllerAddHero403 | HttpErrorResponse | EventsAssignmentControllerAddHero429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAddHero>>, TError,EventsAssignmentControllerAddHeroMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAddHero>>, TError,EventsAssignmentControllerAddHeroMutationVariables, TContext> => {
 
@@ -31991,13 +31991,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type EventsAssignmentControllerAddHeroMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAssignmentControllerAddHero>>>
     export type EventsAssignmentControllerAddHeroMutationBody = BodyType<CreateHeroDto>
-    export type EventsAssignmentControllerAddHeroMutationError = ErrorType<RequestValidationError | EventsAssignmentControllerAddHero401 | EventsAssignmentControllerAddHero403 | EventsAssignmentControllerAddHero429>
+    export type EventsAssignmentControllerAddHeroMutationError = ErrorType<RequestValidationError | EventsAssignmentControllerAddHero401 | EventsAssignmentControllerAddHero403 | HttpErrorResponse | EventsAssignmentControllerAddHero429>
     export type EventsAssignmentControllerAddHeroMutationVariables = {pathParams: EventsAssignmentControllerAddHeroPathParameters;data: BodyType<CreateHeroDto>}
 
     /**
  * @summary Add hero to event
  */
-export const useEventsAssignmentControllerAddHero = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerAddHero401 | EventsAssignmentControllerAddHero403 | EventsAssignmentControllerAddHero429>,
+export const useEventsAssignmentControllerAddHero = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerAddHero401 | EventsAssignmentControllerAddHero403 | HttpErrorResponse | EventsAssignmentControllerAddHero429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAddHero>>, TError,EventsAssignmentControllerAddHeroMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof eventsAssignmentControllerAddHero>>,

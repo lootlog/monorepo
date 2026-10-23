@@ -11615,6 +11615,18 @@ paths:
                 required:
                   - message
                 additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -11627,7 +11639,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Add a new hero to an existing event
+      description: Add a new hero to an existing event. Rejected with 409 when another hero or ranking entries in the event already use the name.
       summary: Add hero to event
       requestBody:
         content:

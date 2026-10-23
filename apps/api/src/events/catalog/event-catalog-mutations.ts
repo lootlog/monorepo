@@ -9,7 +9,10 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
-import { ApiDatabase } from "#src/database/drizzle/database";
+import {
+  ApiDatabase,
+  type ApiDatabaseValue,
+} from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
   eventMapCoverageGapTable,
@@ -36,6 +39,57 @@ import type {
   UpdateEventHeroRequest,
   UpdateEventLocationRequest,
 } from "#src/contracts/events/schemas";
+
+type Transaction = Parameters<
+  Parameters<ApiDatabaseValue["transaction"]>[0]
+>[0];
+
+/**
+ * Reports whether a hero name is free in the event: no hero and no ranking
+ * (rankings are keyed by hero name) uses it. Locking the event row serializes
+ * every name assignment in the event, so two of them cannot both see the
+ * name as free. The lock leaves the foreign-key share locks of kill and
+ * ranking writes alone.
+ */
+const isHeroNameTaken = (
+  transaction: Transaction,
+  eventId: string,
+  npcName: string,
+) =>
+  Effect.gen(function* () {
+    yield* transaction
+      .select({ id: eventTable.id })
+      .from(eventTable)
+      .where(eq(eventTable.id, eventId))
+      .for("no key update");
+
+    const taken = yield* transaction
+      .select({ id: eventRankingTable.id })
+      .from(eventRankingTable)
+      .where(
+        and(
+          eq(eventRankingTable.eventId, eventId),
+          eq(eventRankingTable.heroNpcName, npcName),
+        ),
+      )
+      .union(
+        transaction
+          .select({ id: eventHeroNpcTable.id })
+          .from(eventHeroNpcTable)
+          .where(
+            and(
+              eq(eventHeroNpcTable.eventId, eventId),
+              eq(eventHeroNpcTable.npcName, npcName),
+            ),
+          ),
+      )
+      .limit(1);
+
+    return taken.length > 0;
+  });
+
+const heroNameTakenError = () =>
+  new ResourceConflictError({ message: "EVENT_HERO_NAME_TAKEN" });
 
 class EventCatalogMutationError extends TaggedErrorClass<EventCatalogMutationError>()(
   "EventCatalogMutationError",
@@ -196,10 +250,14 @@ export const makeEventCatalogMutations = (
         }
 
         const heroId = randomUUID();
-        yield* query(
+
+        const added = yield* query(
           "events.catalog.addHero.transaction",
           database.transaction((transaction) =>
             Effect.gen(function* () {
+              if (yield* isHeroNameTaken(transaction, eventId, data.npcName))
+                return false;
+
               yield* transaction.insert(eventHeroNpcTable).values({
                 id: heroId,
                 eventId,
@@ -219,9 +277,13 @@ export const makeEventCatalogMutations = (
                   })),
                 );
               }
+
+              return true;
             }),
           ),
         );
+
+        if (!added) return yield* Effect.fail(heroNameTakenError());
 
         const heroes = yield* query(
           "events.catalog.addHero.result",
@@ -271,29 +333,8 @@ export const makeEventCatalogMutations = (
               const renamed = data.npcName !== previousName;
 
               if (renamed) {
-                const taken = yield* transaction
-                  .select({ id: eventRankingTable.id })
-                  .from(eventRankingTable)
-                  .where(
-                    and(
-                      eq(eventRankingTable.eventId, eventId),
-                      eq(eventRankingTable.heroNpcName, data.npcName),
-                    ),
-                  )
-                  .union(
-                    transaction
-                      .select({ id: eventHeroNpcTable.id })
-                      .from(eventHeroNpcTable)
-                      .where(
-                        and(
-                          eq(eventHeroNpcTable.eventId, eventId),
-                          eq(eventHeroNpcTable.npcName, data.npcName),
-                        ),
-                      ),
-                  )
-                  .limit(1);
-
-                if (taken.length > 0) return { taken: true as const };
+                if (yield* isHeroNameTaken(transaction, eventId, data.npcName))
+                  return { taken: true as const };
 
                 yield* transaction
                   .update(eventRankingTable)
@@ -320,10 +361,7 @@ export const makeEventCatalogMutations = (
           ),
         );
 
-        if ("taken" in rows)
-          return yield* Effect.fail(
-            new ResourceConflictError({ message: "EVENT_HERO_NAME_TAKEN" }),
-          );
+        if ("taken" in rows) return yield* Effect.fail(heroNameTakenError());
 
         yield* invalidate(guild.id, eventId);
 
