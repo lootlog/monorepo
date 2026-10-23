@@ -261,12 +261,19 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       params: EventPath,
       payload: CreateEventHeroRequest,
       success: HttpApiSchema.Empty(201),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "EventsAssignmentController_addHero")
     .annotate(OpenApi.Summary, "Add hero to event")
-    .annotate(OpenApi.Description, "Add a new hero to an existing event"),
+    .annotate(
+      OpenApi.Description,
+      "Add a new hero to an existing event. Rejected with 409 when another hero or ranking entries in the event already use the name.",
+    ),
   HttpApiEndpoint.delete(
     "EventsAssignmentControllerDeleteHero",
     "/guilds/:guildId/events/:eventId/heroes/:heroId",
