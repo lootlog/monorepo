@@ -13,6 +13,7 @@ import {
   eventKillPointTable,
   eventMapAssignmentHistoryTable,
   eventMapTable,
+  eventPointsEditHistoryTable,
   eventRankingTable,
   eventTable,
   guildTable,
@@ -133,6 +134,11 @@ const recalculate = (params: {
     manualAdjustmentPoints: number;
     pointsModified: boolean;
   };
+  soloRankingEdits?: ReadonlyArray<{
+    editType: "RANKING" | "KILL_POINT";
+    points: number;
+    editedAt: Date;
+  }>;
 }) =>
   runtime.runPromise(
     Effect.gen(function* () {
@@ -210,9 +216,11 @@ const recalculate = (params: {
         })),
       );
 
+      const soloRankingId = randomUUID();
+
       if (params.soloRanking)
         yield* db.insert(eventRankingTable).values({
-          id: randomUUID(),
+          id: soloRankingId,
           eventId,
           memberId: memberIds.solo,
           heroNpcName: "Kotołak",
@@ -222,6 +230,19 @@ const recalculate = (params: {
           updatedAt: now,
           ...params.soloRanking,
         });
+
+      if (params.soloRankingEdits?.length)
+        yield* db.insert(eventPointsEditHistoryTable).values(
+          params.soloRankingEdits.map((edit) => ({
+            id: randomUUID(),
+            rankingId: soloRankingId,
+            previousPoints: 0,
+            newPoints: edit.points,
+            editType: edit.editType,
+            editedByUserId: "editor",
+            editedAt: edit.editedAt,
+          })),
+        );
 
       yield* (yield* points).recalculateEventPoints(eventId, 1);
 
@@ -296,3 +317,52 @@ test("recalculation keeps base changes for a ranking modified only by kill-point
   expect(result.solo?.basePoints).toBe(3);
   expect(result.soloRankingPoints).toBe(4);
 });
+
+test.each([
+  {
+    name: "drops an adjustment that no edit backs",
+    manualAdjustmentPoints: -1,
+    edits: [],
+    expected: 3,
+  },
+  {
+    name: "keeps ranking edits",
+    manualAdjustmentPoints: 0.5,
+    edits: [
+      {
+        editType: "RANKING" as const,
+        points: 0.5,
+        editedAt: new Date("2026-10-23T07:00:00.000Z"),
+      },
+    ],
+    expected: 3.5,
+  },
+  {
+    name: "keeps kill-point edits made before kill points tracked them",
+    manualAdjustmentPoints: 0,
+    edits: [
+      {
+        editType: "KILL_POINT" as const,
+        points: 1,
+        editedAt: new Date("2026-03-01T12:00:00.000Z"),
+      },
+    ],
+    expected: 4,
+  },
+])(
+  "recalculation $name on the ranking",
+  async ({ manualAdjustmentPoints, edits, expected }) => {
+    const result = await recalculate({
+      assignments: [{ member: "solo", from: "07:50:00", to: "09:40:00" }],
+      pointMembers: ["solo"],
+      soloRanking: {
+        totalPoints: 3 + manualAdjustmentPoints,
+        manualAdjustmentPoints,
+        pointsModified: true,
+      },
+      soloRankingEdits: edits,
+    });
+
+    expect(result.soloRankingPoints).toBe(expected);
+  },
+);
