@@ -3,6 +3,7 @@ import { Effect } from "effect";
 
 // Margonem has renamed NPCs mid-event (Doppelgänger became Doppelganger), so a
 // hero typed with the old spelling must still match until it learns the NPC id.
+// A hero that already knows a different NPC id is another NPC.
 const comparableNpcName = (name: string) =>
   name
     .normalize("NFD")
@@ -27,7 +28,9 @@ export function findActiveEventHeroesByNpc(
         .filter(
           ({ eventHero }) =>
             eventHero.npcId === npcId ||
-            comparableNpcName(eventHero.npcName) === killedName,
+            eventHero.npcName === npcName ||
+            (eventHero.npcId === null &&
+              comparableNpcName(eventHero.npcName) === killedName),
         )
         .sort((leftHero, rightHero) => {
           const leftStart =
