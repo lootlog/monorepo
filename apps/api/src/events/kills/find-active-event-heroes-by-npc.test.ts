@@ -33,6 +33,12 @@ it("credits a kill to a hero typed with the NPC's spelling before a Margonem ren
       database.insert(eventHeroNpcTable).values([
         { id: "doppelganger", eventId: "halloween", npcName: "Doppelgänger" },
         { id: "drude", eventId: "halloween", npcName: "Drude" },
+        {
+          id: "other-npc",
+          eventId: "halloween",
+          npcId: 415999,
+          npcName: "DOPPELGANGER",
+        },
       ]),
     );
 

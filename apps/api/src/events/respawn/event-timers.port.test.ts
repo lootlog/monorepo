@@ -117,7 +117,12 @@ it("follows an event hero to its NPC's timer after Margonem renames the NPC", as
         ]),
     );
 
-    const timer = (name: string, updatedAt: number, guildId = "guild-1") => ({
+    const timer = (
+      name: string,
+      updatedAt: number,
+      guildId = "guild-1",
+      deletedAt: Date | null = null,
+    ) => ({
       guildId,
       world: "Aldous",
       npcId: 415782,
@@ -127,16 +132,21 @@ it("follows an event hero to its NPC's timer after Margonem renames the NPC", as
       maxSpawnTime: new Date(updatedAt + 1000),
       updatedAt: new Date(updatedAt),
       npc: { name },
+      deletedAt,
     });
 
     await boundary.run(
-      database
-        .insert(timerTable)
-        .values([
-          timer("Doppelgänger", 0),
-          timer("Doppelganger", 60_000),
-          timer("Doppelganger", 120_000, "guild-2"),
-        ]),
+      database.insert(timerTable).values([
+        timer("Doppelgänger", 0),
+        timer("Doppelganger", 60_000),
+        timer("Doppelganger", 120_000, "guild-2"),
+        timer("Doppelgaenger", 180_000, "guild-1", new Date(180_000)),
+        {
+          ...timer("Drude", 0, "guild-1", new Date(60_000)),
+          npcId: 415783,
+          timerKey: buildTimerKey(415783, "Drude"),
+        },
+      ]),
     );
 
     const timers = makeEventTimersPort({
@@ -172,6 +182,7 @@ it("follows an event hero to its NPC's timer after Margonem renames the NPC", as
       timers.hasEventRespawnTimers([
         hero,
         { ...hero, npcId: 1, npcName: "Doppelganger" },
+        { ...hero, npcId: 415783, npcName: "Drüde" },
       ]),
     );
 
@@ -180,7 +191,7 @@ it("follows an event hero to its NPC's timer after Margonem renames the NPC", as
     expect(heroTimers.map((row) => row.timerKey)).toEqual([
       buildTimerKey(415782, "Doppelganger"),
     ]);
-    expect(hasTimers).toEqual([true, false]);
+    expect(hasTimers).toEqual([true, false, false]);
   } finally {
     await boundary.dispose();
   }

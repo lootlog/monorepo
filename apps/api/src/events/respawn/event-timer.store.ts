@@ -1,6 +1,6 @@
 import { selectTimersWithActors } from "#src/timers/timer-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, asc, desc, eq, inArray, isNotNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { timerTable } from "#src/database/drizzle/schema";
@@ -148,12 +148,15 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
             )
             .from(timerTable)
             .where(
-              or(
-                ...lookups.map((lookup) =>
-                  and(
-                    eq(timerTable.guildId, lookup.guildId),
-                    eq(timerTable.world, lookup.world),
-                    eq(timerTable.npcId, lookup.npcId),
+              and(
+                isNull(timerTable.deletedAt),
+                or(
+                  ...lookups.map((lookup) =>
+                    and(
+                      eq(timerTable.guildId, lookup.guildId),
+                      eq(timerTable.world, lookup.world),
+                      eq(timerTable.npcId, lookup.npcId),
+                    ),
                   ),
                 ),
               ),
@@ -162,7 +165,6 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
               timerTable.guildId,
               timerTable.world,
               timerTable.npcId,
-              asc(isNotNull(timerTable.deletedAt)),
               desc(timerTable.updatedAt),
             ),
         );
