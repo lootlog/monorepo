@@ -19,7 +19,6 @@ import type { EventReadCache } from "#src/events/catalog/event-read-cache.servic
 import { isEventActiveAt } from "#src/events/monitoring/event-activity";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
-import { buildTimerKey } from "#src/timers/timer-key";
 
 type GapType = typeof eventMapCoverageGapTable.$inferSelect.gapType;
 
@@ -300,26 +299,18 @@ export const makeEventPresenceTracking = (
         { concurrency: "unbounded" },
       );
 
-      const timerKeys = yield* timers.getActiveTimerKeys(
+      const hasTimer = yield* timers.hasEventRespawnTimers(
         mapRows.map(({ hero, event }) => ({
           guildId,
           world: event.world,
           npcId: hero.npcId ?? getSyntheticNpcId(hero.id),
           npcName: hero.npcName,
         })),
-        referenceTime,
       );
 
       const member = memberRows[0] ?? null;
       yield* Effect.forEach(
-        mapRows.filter(({ hero, event }) =>
-          timerKeys.has(
-            `${guildId}:${event.world}:${buildTimerKey(
-              hero.npcId ?? getSyntheticNpcId(hero.id),
-              hero.npcName,
-            )}`,
-          ),
-        ),
+        mapRows.filter((_, index) => hasTimer[index]),
         ({ map, hero, event }) =>
           Effect.gen(function* () {
             const mapAssignments = assignmentRows.filter(
