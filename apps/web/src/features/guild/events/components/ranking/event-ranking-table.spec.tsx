@@ -16,13 +16,20 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { stubResultsTableViewport } from "@/lib/testing/viewport";
 
+import type { MemberReferenceResponseDtoOutput } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
 import type { EventRanking } from "../../types/api";
 import { EventRankingTable } from "./event-ranking-table";
 
 const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
+  memberReferences: new Array<MemberReferenceResponseDtoOutput>(),
 }));
+
+const isMemberReferencesRequest = (input: RequestInfo | URL) =>
+  new URL(input instanceof Request ? input.url : input).pathname.endsWith(
+    "/members/references",
+  );
 
 await initializeTestTranslations();
 
@@ -36,6 +43,7 @@ describe("EventRankingTable", () => {
   beforeEach(() => {
     stubResultsTableViewport();
     vi.clearAllMocks();
+    mocks.memberReferences = [];
     mocks.fetch.mockResolvedValue(
       new Response(JSON.stringify([]), {
         headers: { "content-type": "application/json" },
@@ -45,7 +53,16 @@ describe("EventRankingTable", () => {
     restoreApiClients = configureApiClients({
       main: {
         baseUrl: "https://api.test",
-        fetch: mocks.fetch,
+        // Rows look up who left the Lootlog; the assertions count only ranking requests.
+        fetch: (input, init) =>
+          isMemberReferencesRequest(input)
+            ? Promise.resolve(
+                new Response(JSON.stringify(mocks.memberReferences), {
+                  headers: { "content-type": "application/json" },
+                  status: 200,
+                }),
+              )
+            : mocks.fetch(input, init),
       },
     });
   });
@@ -429,12 +446,41 @@ describe("EventRankingTable", () => {
       { currentMemberId: 2 },
     );
 
-    const highlightedRows = container.querySelectorAll(
-      '[aria-selected="true"]',
-    );
+    const highlightedRows = container.querySelectorAll('[aria-current="true"]');
 
     expect(highlightedRows).toHaveLength(1);
     expect(highlightedRows[0]?.textContent).toContain("Member 2");
+  });
+
+  it("marks members who left the Lootlog as inactive", async () => {
+    mocks.memberReferences = [
+      {
+        id: 1,
+        userId: "discord-1",
+        name: "Member 1",
+        color: null,
+        active: true,
+      },
+      {
+        id: 2,
+        userId: "discord-2",
+        name: "Member 2",
+        color: null,
+        active: false,
+      },
+    ];
+
+    renderRankingTable([
+      createRanking({ id: "ranking-1", memberId: 1, totalPoints: 200 }),
+      createRanking({ id: "ranking-2", memberId: 2 }),
+    ]);
+
+    const [firstRow, secondRow] = screen.getAllByRole("row").slice(1);
+
+    await waitFor(() =>
+      expect(secondRow?.textContent).toContain("common.inactiveMember"),
+    );
+    expect(firstRow?.textContent).not.toContain("common.inactiveMember");
   });
 
   it.each([

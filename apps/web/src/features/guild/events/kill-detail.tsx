@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Permission } from "@lootlog/schema/permissions";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import { useSession } from "@/hooks/auth/use-session";
+import { useIsViewer } from "@/hooks/auth/use-is-viewer";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
@@ -27,7 +27,7 @@ import { getKillParticipantScoring } from "./utils/scoring-applied-rules";
 export const KillDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId, killId } = useParams({ strict: false });
-  const { data: session } = useSession();
+  const isViewer = useIsViewer();
   const { data: accessPolicy } = useGuildPermissions();
 
   const canEditPoints =
@@ -111,12 +111,10 @@ export const KillDetail = () => {
   };
 
   const getHighlightedRuleIds = () => {
-    const currentDiscordId = session?.user?.discordId;
-
     return Array.from(
       new Set(
         participants.flatMap((participant) => {
-          if (participant.member.userId !== currentDiscordId) return [];
+          if (!isViewer(participant.member.userId)) return [];
 
           const evaluatedRuleIds =
             scoring

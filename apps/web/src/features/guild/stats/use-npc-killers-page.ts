@@ -8,7 +8,7 @@ import {
   getKillsControllerGetNpcKillersQueryKey,
   useKillsControllerGetNpcKillers,
 } from "@lootlog/client/main";
-import { useGuildMemberMap } from "./hooks/use-guild-member-map";
+import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { buildNpcKillersParams } from "./utils/build-stats-query-params";
 
