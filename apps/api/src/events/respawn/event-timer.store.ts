@@ -1,6 +1,6 @@
 import { selectTimersWithActors } from "#src/timers/timer-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { timerTable } from "#src/database/drizzle/schema";
@@ -123,6 +123,52 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
             ),
         );
 
+  // A Margonem rename gives the same NPC a new timer key, so an event hero
+  // follows its NPC id to the live timer instead of the name typed in the event.
+  const findHeroTimerKeys = (
+    lookups: ReadonlyArray<{
+      readonly guildId: string;
+      readonly world: string;
+      readonly npcId: number;
+    }>,
+  ) =>
+    lookups.length === 0
+      ? Effect.succeed([])
+      : operation(
+          "eventTimerStore.findHeroKeys",
+          database
+            .selectDistinctOn(
+              [timerTable.guildId, timerTable.world, timerTable.npcId],
+              {
+                guildId: timerTable.guildId,
+                world: timerTable.world,
+                npcId: timerTable.npcId,
+                timerKey: timerTable.timerKey,
+              },
+            )
+            .from(timerTable)
+            .where(
+              and(
+                isNull(timerTable.deletedAt),
+                or(
+                  ...lookups.map((lookup) =>
+                    and(
+                      eq(timerTable.guildId, lookup.guildId),
+                      eq(timerTable.world, lookup.world),
+                      eq(timerTable.npcId, lookup.npcId),
+                    ),
+                  ),
+                ),
+              ),
+            )
+            .orderBy(
+              timerTable.guildId,
+              timerTable.world,
+              timerTable.npcId,
+              desc(timerTable.updatedAt),
+            ),
+        );
+
   const heroProjection = {
     npcId: timerTable.npcId,
     timerKey: timerTable.timerKey,
@@ -176,6 +222,7 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
     upsertTimer,
     deleteTimer,
     findActiveTimerKeys,
+    findHeroTimerKeys,
     findEventHeroTimersByKeys,
     findEventHeroTimersByNames,
   };

@@ -105,6 +105,12 @@ Zmiana nazwy herosa przenosi jego ranking pod nową nazwę razem z historią
 korekt. Nie można nadać nazwy, której w tym evencie używa już inny heros lub
 ranking.
 
+Heros nie musi mieć nazwy identycznej z grą. Zabicie trafia do herosa, gdy
+nazwy różnią się tylko wielkością liter lub znakami diakrytycznymi, np.
+„Doppelgänger” i „Doppelganger”. Od tego zabicia Lootlog rozpoznaje herosa po
+ID NPC, więc timer, okno respawnu i punkty działają dalej także wtedy, gdy
+Margonem zmieni nazwę NPC w trakcie eventu.
+
 ## Reguły obstawki: spóźnienie i wielkość grupy
 
 Reguły są sprawdzane od góry do dołu. Podstawę ustawia ostatnia spełniona
