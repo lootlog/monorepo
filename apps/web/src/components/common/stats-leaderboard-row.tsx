@@ -5,6 +5,7 @@ import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
+import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
 import { cn } from "cn";
 
 type StatsLeaderboardRowProps = {
@@ -14,6 +15,8 @@ type StatsLeaderboardRowProps = {
   subtitle?: ReactNode;
   value: number;
   link?: LinkProps;
+  /** Marks the viewer's own place. */
+  isViewer?: boolean;
 };
 
 const numberFormatter = new Intl.NumberFormat("pl-PL");
@@ -25,6 +28,7 @@ export const StatsLeaderboardRow = ({
   subtitle,
   value,
   link,
+  isViewer = false,
 }: StatsLeaderboardRowProps) => {
   const content = (
     <span className="flex min-w-0 flex-1 items-center gap-3">
@@ -52,19 +56,26 @@ export const StatsLeaderboardRow = ({
   );
 
   return (
-    <li data-list-tile className={LIST_TILE_RULE_CLASS}>
+    <li
+      data-list-tile
+      aria-current={isViewer || undefined}
+      className={LIST_TILE_RULE_CLASS}
+    >
       {link ? (
         <Link
           {...link}
           className={cn(
             className,
             "outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+            isViewer && VIEWER_ROW_CLASS,
           )}
         >
           {content}
         </Link>
       ) : (
-        <div className={className}>{content}</div>
+        <div className={cn(className, isViewer && VIEWER_ROW_CLASS)}>
+          {content}
+        </div>
       )}
     </li>
   );

@@ -33,12 +33,18 @@ import { ScoringBreakdownList } from "../shared/scoring-breakdown-list";
 import { ScoringPresenceBreakdown } from "../shared/scoring-presence-breakdown";
 import type { KillParticipantScoring } from "../../utils/scoring-applied-rules";
 import { EMPTY_VALUE } from "@/constants/empty-value";
+import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
+import { InactiveMemberSuffix } from "@/components/common/inactive-member-suffix";
 
 interface KillParticipantRowProps {
   participant: KillDetailParticipant;
   scoring?: KillParticipantScoring | null;
   participantNames?: ReadonlyMap<number, string>;
   rank: number;
+  /** Marks the viewer's own place. */
+  isViewer?: boolean;
+  /** The member has left the Lootlog. */
+  isInactive?: boolean;
   isExpanded: boolean;
   onToggle: () => void;
   guildId?: string;
@@ -94,6 +100,8 @@ export const KillParticipantRow = ({
   scoring = null,
   participantNames,
   rank,
+  isViewer,
+  isInactive,
   isExpanded,
   onToggle,
   guildId,
@@ -143,9 +151,24 @@ export const KillParticipantRow = ({
     await onEditPoints?.(participant.id, pointsDelta, comment);
   };
 
+  const memberName = (
+    <>
+      {participant.member.name}
+      {isInactive && <InactiveMemberSuffix />}
+    </>
+  );
+
   return (
-    <div className="border-b border-border last:border-b-0">
-      <div className="grid min-h-14 grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_5.5rem] items-center gap-2 px-3 py-0 transition-colors hover:bg-muted/40 lg:grid-cols-[2rem_minmax(0,1fr)_7rem_5rem_6.5rem_5rem]">
+    <div
+      aria-current={isViewer || undefined}
+      className="border-b border-border last:border-b-0"
+    >
+      <div
+        className={cn(
+          "grid min-h-14 grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_5.5rem] items-center gap-2 px-3 py-0 transition-colors hover:bg-muted/40 lg:grid-cols-[2rem_minmax(0,1fr)_7rem_5rem_6.5rem_5rem]",
+          isViewer && VIEWER_ROW_CLASS,
+        )}
+      >
         <span className="text-center text-xs font-medium tabular-nums text-muted-foreground">
           {rank}
         </span>
@@ -166,14 +189,14 @@ export const KillParticipantRow = ({
                   params={memberLinkParams}
                 />
               >
-                <span className="truncate">{participant.member.name}</span>
+                <span className="truncate">{memberName}</span>
               </TextLink>
             ) : (
               <span
                 className="block truncate text-sm font-semibold"
                 style={roleCssColor ? { color: roleCssColor } : undefined}
               >
-                {participant.member.name}
+                {memberName}
               </span>
             )}
             <div className="mt-0.5 flex min-w-0 items-center gap-1.5 truncate text-[10px] tabular-nums text-muted-foreground lg:hidden">
