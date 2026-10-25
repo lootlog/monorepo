@@ -62,7 +62,7 @@
     "dprint": "^0.57.4",
     "fast-check": "^4.10.2",
     "glob": "^13.0.6",
-    "happy-dom": "^20.14.5",
+    "happy-dom": "^21.0.4",
     "jscodeshift": "^17.4.0",
     "lalph": "^0.3.139",
     "madge": "^8.0.0",
