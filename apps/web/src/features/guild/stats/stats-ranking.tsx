@@ -28,6 +28,8 @@ import {
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 import { useStatsRankingModel } from "./use-stats-ranking-model";
+import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
+import { useIsViewer } from "@/hooks/auth/use-is-viewer";
 
 export const StatsRanking = () => {
   const {
@@ -51,6 +53,8 @@ export const StatsRanking = () => {
     handlePreviousPage,
     handleNextPage,
   } = useStatsRankingModel();
+
+  const isViewer = useIsViewer();
 
   type RankingColumn = ColumnDef<
     typeof coreTableFeatures,
@@ -173,6 +177,7 @@ export const StatsRanking = () => {
               <li
                 key={member.memberId}
                 data-list-tile
+                aria-current={isViewer(member.memberUserId) || undefined}
                 className={LIST_TILE_RULE_CLASS}
               >
                 <Link
@@ -181,6 +186,7 @@ export const StatsRanking = () => {
                   className={cn(
                     "block py-3 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                     LIST_TILE_INSET_CLASS,
+                    isViewer(member.memberUserId) && VIEWER_ROW_CLASS,
                   )}
                 >
                   <span className="flex min-w-0 items-center gap-3">
@@ -222,6 +228,7 @@ export const StatsRanking = () => {
             table={table}
             className="hidden border-b xl:table"
             onRowClick={(member) => handleRowClick(member.memberId)}
+            isViewerRow={(member) => isViewer(member.memberUserId)}
           />
         </StatsTableResults>
       </ResultsSurface>

@@ -189,5 +189,6 @@
   "filters": {
     "title": "Filtry",
     "activeCount": "Aktywne filtry: {{count}}"
-  }
+  },
+  "inactiveMember": "(nieaktywny)"
 }

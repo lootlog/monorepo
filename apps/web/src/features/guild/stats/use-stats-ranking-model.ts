@@ -11,7 +11,7 @@ import {
 } from "@lootlog/client/main";
 
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
-import { useGuildMemberMap } from "./hooks/use-guild-member-map";
+import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { buildGuildKillStatsParams } from "./utils/build-stats-query-params";
 

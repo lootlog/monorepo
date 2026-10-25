@@ -5,7 +5,7 @@ import type {
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { useGuildMemberMap } from "../hooks/use-guild-member-map";
+import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { MemberNameWithColor } from "./member-name-with-color";
 import { MemberAvatar } from "@/components/common/member-avatar";
 import {
@@ -13,6 +13,12 @@ import {
   StatsLeaderboardSection,
 } from "@/components/common/stats-leaderboard-section";
 import { StatsLeaderboardRow } from "@/components/common/stats-leaderboard-row";
+import { useIsViewer } from "@/hooks/auth/use-is-viewer";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
+import { cn } from "cn";
 
 type MemberLeaderboardCardProps = {
   data?: GuildKillStatsResponseDtoOutputMemberRankingItem[];
@@ -31,15 +37,51 @@ export const MemberLeaderboardCard = ({
 }: MemberLeaderboardCardProps) => {
   const { t } = useTranslation();
   const membersMap = useGuildMemberMap(guildId);
+  const isViewer = useIsViewer();
 
-  const leaders = (data ?? [])
+  const ranked = (data ?? [])
     .flatMap((member) => {
       const participations = member.participationsByType[npcType] ?? 0;
 
       return participations > 0 ? [{ ...member, participations }] : [];
     })
-    .sort((a, b) => b.participations - a.participations)
-    .slice(0, LEADERBOARD_SIZE);
+    .sort((a, b) => b.participations - a.participations);
+
+  const leaders = ranked.slice(0, LEADERBOARD_SIZE);
+
+  // The viewer's own place follows the leaders when it falls outside them.
+  const ownIndex = ranked.findIndex(
+    (member, index) =>
+      index >= LEADERBOARD_SIZE && isViewer(member.memberUserId),
+  );
+
+  const renderRow = (member: (typeof ranked)[number], rank: number) => (
+    <StatsLeaderboardRow
+      key={member.memberId}
+      rank={rank}
+      media={
+        <MemberAvatar
+          userId={member.memberUserId}
+          avatar={member.memberAvatar}
+          name={member.memberName}
+        />
+      }
+      title={
+        <MemberNameWithColor
+          name={member.memberName}
+          member={membersMap.get(member.memberUserId)}
+        />
+      }
+      value={member.participations}
+      isViewer={isViewer(member.memberUserId)}
+      link={{
+        to: "/$guildId/stats/members/$memberId",
+        params: { guildId, memberId: String(member.memberId) },
+      }}
+    />
+  );
+
+  const ownMember = ranked[ownIndex];
 
   return (
     <StatsLeaderboardSection
@@ -65,30 +107,23 @@ export const MemberLeaderboardCard = ({
         </ChevronLink>
       }
     >
-      {leaders.map((member, index) => (
-        <StatsLeaderboardRow
-          key={member.memberId}
-          rank={index + 1}
-          media={
-            <MemberAvatar
-              userId={member.memberUserId}
-              avatar={member.memberAvatar}
-              name={member.memberName}
-            />
-          }
-          title={
-            <MemberNameWithColor
-              name={member.memberName}
-              member={membersMap.get(member.memberUserId)}
-            />
-          }
-          value={member.participations}
-          link={{
-            to: "/$guildId/stats/members/$memberId",
-            params: { guildId, memberId: String(member.memberId) },
-          }}
-        />
-      ))}
+      {leaders.map((member, index) => renderRow(member, index + 1))}
+      {ownMember && (
+        <>
+          {/* The places skipped between the leaders and the viewer's own. */}
+          <li
+            aria-hidden="true"
+            className={cn(
+              "flex h-6 items-center text-xs leading-none text-muted-foreground",
+              LIST_TILE_RULE_CLASS,
+              LIST_TILE_INSET_CLASS,
+            )}
+          >
+            ⋯
+          </li>
+          {renderRow(ownMember, ownIndex + 1)}
+        </>
+      )}
     </StatsLeaderboardSection>
   );
 };

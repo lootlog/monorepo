@@ -28,6 +28,7 @@ import { DetailPage } from "@/components/common/detail-page";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { StatsDetailPageSkeleton } from "./stats-detail-page-skeleton";
 import { useNpcKillersPage } from "./use-npc-killers-page";
+import { useIsViewer } from "@/hooks/auth/use-is-viewer";
 
 export const NpcKillersPage = () => {
   const {
@@ -50,6 +51,8 @@ export const NpcKillersPage = () => {
     handlePreviousPage,
     handleNextPage,
   } = useNpcKillersPage();
+
+  const isViewer = useIsViewer();
 
   const columns: ColumnDef<
     typeof coreTableFeatures,
@@ -182,7 +185,11 @@ export const NpcKillersPage = () => {
               : undefined
           }
         >
-          <StatsTable table={table} className="border-b" />
+          <StatsTable
+            table={table}
+            className="border-b"
+            isViewerRow={(killer) => isViewer(killer.memberUserId)}
+          />
         </StatsTableResults>
       </ResultsSurface>
     </DetailPage>
