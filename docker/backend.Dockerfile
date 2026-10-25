@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.27.0
 
-FROM oven/bun:1.4.3-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373 AS build-base
+FROM oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a AS build-base
 
 ENV HUSKY=0
 ENV TURBO_TELEMETRY_DISABLED=1
@@ -43,7 +43,7 @@ RUN --mount=type=cache,id=bun,target=/root/.bun/install/cache,sharing=locked \
 COPY --from=pruner /pruned/full/ .
 COPY --from=builder "/usr/src/app/${APP_DIR}/dist" "/usr/src/app/${APP_DIR}/dist"
 
-FROM oven/bun:1.4.3-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373 AS runtime
+FROM oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a AS runtime
 
 ARG APP_DIR
 ARG GITHUB_SHA
