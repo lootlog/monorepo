@@ -29,6 +29,8 @@ import { RankingMemberName } from "./ranking-member-name";
 import { TableCellLink } from "@/components/ui/table-cell-link";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { EMPTY_VALUE } from "@/constants/empty-value";
+import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
+import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 
 type EventRankingTableProps = {
   rankings: EventRanking[];
@@ -102,6 +104,13 @@ export const EventRankingTable = ({
   const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const queryClient = useQueryClient();
   const [editingRankingId, setEditingRankingId] = useState<string | null>(null);
+  const membersMap = useGuildMemberMap(guildId);
+
+  const inactiveMemberIds = new Set(
+    [...membersMap.values()].flatMap((member) =>
+      member.active ? [] : [member.id],
+    ),
+  );
 
   const editingRanking = rankings.find(
     (ranking) => ranking.id === editingRankingId,
@@ -190,6 +199,7 @@ export const EventRankingTable = ({
       cell: ({ row }) => (
         <RankingMemberName
           ranking={row.original}
+          inactive={inactiveMemberIds.has(row.original.memberId)}
           className="text-xs @md/ranking:text-sm"
         />
       ),
@@ -345,6 +355,7 @@ export const EventRankingTable = ({
           eventId={eventId}
           canEdit={canEdit}
           currentMemberId={currentMemberId}
+          inactiveMemberIds={inactiveMemberIds}
           onEditPoints={setEditingRankingId}
           isEditPending={updateRankingPoints.isPending}
         />
@@ -380,8 +391,7 @@ export const EventRankingTable = ({
           getRowClassName={(row) =>
             cn(
               "h-14 border-b border-border hover:bg-muted/40",
-              row.original.memberId === currentMemberId &&
-                "bg-primary/10 hover:bg-primary/15",
+              row.original.memberId === currentMemberId && VIEWER_ROW_CLASS,
             )
           }
           getCellClassName={(cell) =>
@@ -393,7 +403,7 @@ export const EventRankingTable = ({
           }
           getRowProps={(row) => ({
             id: `event-ranking-row-${row.original.id}`,
-            "aria-selected":
+            "aria-current":
               row.original.memberId === currentMemberId || undefined,
           })}
           renderCellContent={renderRankingLinkCell}

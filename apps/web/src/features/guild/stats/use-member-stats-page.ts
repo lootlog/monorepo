@@ -8,7 +8,7 @@ import { useKillsControllerGetMemberKills } from "@lootlog/client/main";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 
 import { getMemberColor } from "@/utils/get-member-color";
-import { useGuildMemberMap } from "./hooks/use-guild-member-map";
+import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";

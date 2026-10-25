@@ -1,7 +1,7 @@
 import type { LootStatsResponseDtoOutputTopContributorsItem } from "@lootlog/client/main";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useTranslation } from "react-i18next";
-import { useGuildMemberMap } from "../hooks/use-guild-member-map";
+import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { MemberNameWithColor } from "./member-name-with-color";
 import { MemberAvatar } from "@/components/common/member-avatar";
 import {
@@ -9,6 +9,7 @@ import {
   StatsLeaderboardSection,
 } from "@/components/common/stats-leaderboard-section";
 import { StatsLeaderboardRow } from "@/components/common/stats-leaderboard-row";
+import { useIsViewer } from "@/hooks/auth/use-is-viewer";
 
 type LootTopContributorsProps = {
   data?: LootStatsResponseDtoOutputTopContributorsItem[];
@@ -21,6 +22,7 @@ export const LootTopContributors = ({
 }: LootTopContributorsProps) => {
   const { t } = useTranslation();
   const membersMap = useGuildMemberMap(useGuildId());
+  const isViewer = useIsViewer();
   const contributors = data?.slice(0, LEADERBOARD_SIZE) ?? [];
 
   return (
@@ -52,6 +54,7 @@ export const LootTopContributors = ({
             />
           }
           value={member.count}
+          isViewer={isViewer(member.userId)}
         />
       ))}
     </StatsLeaderboardSection>
