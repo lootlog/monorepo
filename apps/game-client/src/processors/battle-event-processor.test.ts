@@ -95,6 +95,7 @@ it("records the hero's finishing blow with the worn weapon even when battles are
     characterId: "12345",
     world: "luvia",
     weaponItemId: "987654",
+    battleKey: expect.stringMatching(/^[0-9a-f-]{36}$/),
     events: [
       { f: { m: ["12345=100;222=0;+dmg=900;-dmg=900"] } },
       { f: { m: ["end"], endBattle: 1 } },

@@ -13,6 +13,10 @@ export const RecordWeaponKillsSchema = Schema.Struct({
   characterId: MargonemId,
   world: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64)),
   weaponItemId: MargonemId,
+  battleKey: Schema.String.check(
+    Schema.isMinLength(1),
+    Schema.isMaxLength(128),
+  ),
   events: CreateBattleSchema.fields.events,
 });
 
@@ -21,16 +25,19 @@ export type RecordWeaponKillsInput = typeof RecordWeaponKillsSchema.Type;
 export type WeaponKillsQuery = { world: string; characterId: string };
 
 /**
- * Identifies a finishing blow by the battle log up to the row that dealt it,
- * so a log cut short when its submitter left and the whole log agree.
+ * Identifies a finishing blow by its battle and the log up to the row that
+ * dealt it. The client names the battle, so two battles with the same rows
+ * stay apart, while a log cut short when its submitter left and the whole
+ * log of that battle agree.
  */
 const createKillFingerprint = (
-  { characterId, events, world }: RecordWeaponKillsInput,
+  { battleKey, characterId, events, world }: RecordWeaponKillsInput,
   moveIndex: number,
 ) =>
   createHash("sha256")
     .update(
       JSON.stringify({
+        battleKey,
         characterId,
         moves: events
           .flatMap((event) => event.f.m ?? [])

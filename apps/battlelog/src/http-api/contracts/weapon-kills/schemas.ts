@@ -23,6 +23,15 @@ export const RecordWeaponKillsDto = Schema.Struct({
     }),
   ),
   weaponItemId: MargonemIdDto,
+  battleKey: Schema.String.check(
+    Schema.isMinLength(1).annotate({
+      expected: "a value with a length of at least 1",
+    }),
+  ).check(
+    Schema.isMaxLength(128).annotate({
+      expected: "a value with a length of at most 128",
+    }),
+  ),
   events: CreateBattleDto.fields.events,
 }).annotate({ identifier: "RecordWeaponKillsDto" });
 

@@ -159,6 +159,9 @@ export class BattleEventProcessor {
   private hasNpcWarrior = false;
   private hasWarnedCaptureOverflow = false;
   private battleGeneration = 0;
+  // Names the battle to the weapon kill counters, so a repeated battle with
+  // the same rows is not taken for a resubmission.
+  private battleKey = "";
 
   async handle(
     event: GameEvent,
@@ -258,6 +261,7 @@ export class BattleEventProcessor {
   ): void {
     if (!startsBattle) return;
     this.battleGeneration += 1;
+    this.battleKey = crypto.randomUUID();
     battleStore.clearEvents();
     this.observedTeams.clear();
     this.hasMultipleTeams = false;
@@ -450,7 +454,13 @@ export class BattleEventProcessor {
 
     if (!weaponItemId) return null;
 
-    return { characterId, world: game.world, weaponItemId, events };
+    return {
+      characterId,
+      world: game.world,
+      weaponItemId,
+      battleKey: this.battleKey,
+      events,
+    };
   }
 
   private warnCaptureOverflow(): void {

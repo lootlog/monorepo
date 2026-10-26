@@ -16,6 +16,9 @@ const MAIN_WEAPON_CLASSES = new Set([1, 2, 3, 4, 6]);
 
 const COUNTERS_TTL_MS = 5 * 60_000;
 
+// A failed read keeps what was shown before and is retried this much later.
+const FAILED_READ_RETRY_MS = 30_000;
+
 const MAX_CACHED_CHARACTERS = 200;
 
 // The line sits in the game's own `t_item` tip, so it keeps its palette.
@@ -23,7 +26,7 @@ const LINE_STYLE = "margin-top:3px;font-size:11px;color:#e6d6bf;";
 
 type CharacterCounters = {
   weapons: Map<string, number>;
-  fetchedAt: number;
+  expiresAt: number;
 };
 
 const counters = new Map<string, CharacterCounters>();
@@ -77,20 +80,25 @@ function loadCounters(world: string, characterId: string): void {
   pendingLoads.add(key);
 
   weaponKillsControllerGetCharacterWeaponKills({ world, characterId })
-    .then(
-      ({ weapons }) =>
-        new Map(weapons.map(({ itemId, kills }) => [itemId, kills])),
-    )
+    .then(({ weapons: loaded }) => {
+      const weapons = new Map(
+        loaded.map(({ itemId, kills }) => [itemId, kills]),
+      );
+
+      storeCounters(key, { weapons, expiresAt: Date.now() + COUNTERS_TTL_MS });
+      refreshCharacterItems(key, characterId, weapons);
+    })
     .catch((error) => {
       console.warn("[WeaponKills] Failed to load weapon counters:", error);
 
-      // Keep the previous counters, or none, until the next attempt.
-      return counters.get(key)?.weapons ?? new Map<string, number>();
+      // Items keep waiting; a tip built after the retry delay asks again.
+      storeCounters(key, {
+        weapons: counters.get(key)?.weapons ?? new Map<string, number>(),
+        expiresAt: Date.now() + FAILED_READ_RETRY_MS,
+      });
     })
-    .then((weapons) => {
+    .finally(() => {
       pendingLoads.delete(key);
-      storeCounters(key, { weapons, fetchedAt: Date.now() });
-      refreshCharacterItems(key, characterId, weapons);
     });
 }
 
@@ -112,7 +120,7 @@ function extendItemTip(item: RuntimeTipItem, html: string): string {
   const key = toKey(world, ownerId);
   const entry = counters.get(key);
 
-  if (!entry || Date.now() - entry.fetchedAt > COUNTERS_TTL_MS) {
+  if (!entry || Date.now() >= entry.expiresAt) {
     const awaiting = itemsAwaitingCounters.get(key) ?? new Set();
     awaiting.add(item);
     itemsAwaitingCounters.set(key, awaiting);
@@ -136,7 +144,7 @@ export function setWeaponKills(
   const weapons = new Map(entry?.weapons);
 
   weapons.set(itemId, kills);
-  storeCounters(key, { weapons, fetchedAt: entry?.fetchedAt ?? 0 });
+  storeCounters(key, { weapons, expiresAt: entry?.expiresAt ?? 0 });
   refreshCharacterItems(key, characterId, new Map([[itemId, kills]]));
 }
 

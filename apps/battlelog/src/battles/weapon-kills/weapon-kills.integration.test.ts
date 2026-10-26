@@ -97,10 +97,12 @@ const submission = (
   characterId: string,
   weaponItemId: string,
   rows: string[],
+  battleKey = "battle-1",
 ): RecordWeaponKillsInput => ({
   characterId,
   world: "tempest",
   weaponItemId,
+  battleKey,
   events: [{ f: { init: "1", w: warriors, m: rows } }],
 });
 
@@ -159,4 +161,22 @@ it("starts a weapon from zero for its new owner", async () => {
 
   expect(newOwner).toEqual({ itemId: "555", kills: 1 });
   expect(previousOwner).toEqual({ weapons: [{ itemId: "555", kills: 1 }] });
+});
+
+it("counts a repeated battle with the same rows again", async () => {
+  await run((weaponKills) =>
+    weaponKills.recordWeaponKills(
+      submission("101", "555", firstRows, "battle-1"),
+      "user-a",
+    ),
+  );
+
+  const repeated = await run((weaponKills) =>
+    weaponKills.recordWeaponKills(
+      submission("101", "555", firstRows, "battle-2"),
+      "user-a",
+    ),
+  );
+
+  expect(repeated).toEqual({ itemId: "555", kills: 2 });
 });

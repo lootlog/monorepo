@@ -608,6 +608,11 @@ export interface RecordWeaponKillsDto {
      */
   world: string;
   weaponItemId: string;
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  battleKey: string;
   /** @minItems 1 */
   events: RecordWeaponKillsDtoEventsItem[];
 }
