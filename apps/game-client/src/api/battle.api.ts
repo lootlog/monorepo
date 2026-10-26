@@ -5,8 +5,11 @@ import {
 } from "@lootlog/client/main";
 import {
   battlesControllerCreateBattle,
+  weaponKillsControllerRecordWeaponKills,
   type CreateBattleDto,
   type BattleCreatedResponseDtoOutput,
+  type RecordWeaponKillsDto,
+  type WeaponKillsDtoOutput,
 } from "@lootlog/client/battlelog";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
@@ -55,4 +58,22 @@ export async function createBattle(
   });
 
   return response;
+}
+
+export function recordWeaponKills(
+  options: RecordWeaponKillsDto,
+): Promise<WeaponKillsDtoOutput> {
+  const { events, ...killsContext } = options;
+
+  return runSingleLoggedAction({
+    actionType: "record_weapon_kills",
+    actionPayload: { ...killsContext, eventCount: events.length },
+    request: {
+      method: "POST",
+      endpoint: "/weapon-kills",
+      payload: options,
+    },
+    execute: () => weaponKillsControllerRecordWeaponKills(options),
+    retry: GAME_EVENT_RETRY_OPTIONS,
+  });
 }

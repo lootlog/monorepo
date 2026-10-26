@@ -35,7 +35,7 @@ type RuntimeWindow = Window & {
 
 const getRuntimeWindow = (): RuntimeWindow => window;
 
-const isRuntimeFunction = (value: unknown): value is RuntimeFunction =>
+export const isRuntimeFunction = (value: unknown): value is RuntimeFunction =>
   typeof value === "function";
 
 type BridgeOptions = {

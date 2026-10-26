@@ -26,6 +26,7 @@ import { makeBattleReadBudget } from "#src/database/battle-read-budget";
 import { drizzleDatabaseEffect, PgClientLive } from "#src/database/database";
 import { makeBattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import { makeRedisStore } from "#src/infrastructure/redis-store";
+import { makeWeaponKills } from "#src/battles/weapon-kills/weapon-kills";
 
 RedisConnection.clientFactory = (options) => {
   if (!options.url) {
@@ -101,6 +102,7 @@ export class BattlelogApplication extends Context.Service<
         battlesService,
         analyticsService,
         { add: (name, data) => queue.add(name, data).then(() => undefined) },
+        makeWeaponKills(drizzle, read),
       );
 
       yield* Effect.logInfo("Battlelog application initialized").pipe(

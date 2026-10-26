@@ -2,6 +2,7 @@ import type { RedisStore } from "../src/infrastructure/redis-store.js";
 import { Effect } from "effect";
 import type { Battles } from "../src/battles/battles.service.js";
 import type { BattleAnalytics } from "../src/battles/analytics/battle-analytics.service.js";
+import type { WeaponKills } from "#src/battles/weapon-kills/weapon-kills";
 import type { BattleWithRelations } from "#src/battles/battle-service";
 import { getColumns } from "drizzle-orm";
 import { battleWarriors, type BattleWarrior } from "#src/database/schema";
@@ -125,6 +126,11 @@ export const unusedBattleAnalytics = {
   getRatingGrowthTimeSeries: unexpectedOperation,
   invalidateAnalyticsCache: unexpectedOperation,
 } satisfies BattleAnalytics;
+
+export const unusedWeaponKills = {
+  getCharacterWeaponKills: unexpectedOperation,
+  recordWeaponKills: unexpectedOperation,
+} satisfies WeaponKills;
 
 export const unusedDeleteQueue = {
   add: () => Promise.reject(new Error("Unexpected delete job")),

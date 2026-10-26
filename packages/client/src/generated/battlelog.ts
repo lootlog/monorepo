@@ -529,6 +529,89 @@ export interface BattleResponseDtoOutput {
   warriors: BattleResponseDtoOutputWarriorsItem[];
 }
 
+export interface WeaponKillsDtoOutput {
+  itemId: string;
+  kills: number;
+}
+
+export interface CharacterWeaponKillsResponseDtoOutput {
+  weapons: WeaponKillsDtoOutput[];
+}
+
+export type RecordWeaponKillsDtoEventsItemPartyMembers = {[key: string]: {
+  id: number;
+  account: number;
+  nick: string;
+  icon: string;
+  commander?: number;
+}};
+
+export type RecordWeaponKillsDtoEventsItemParty = {
+  members: RecordWeaponKillsDtoEventsItemPartyMembers;
+};
+
+export type RecordWeaponKillsDtoEventsItemFW = {[key: string]: {
+  originalId: number;
+  name: string;
+  lvl: number;
+  prof: string;
+  icon: string;
+  team: number;
+}};
+
+export type RecordWeaponKillsDtoEventsItemF = {
+  m?: string[];
+  endBattle?: number;
+  init?: string;
+  auto?: string;
+  w?: RecordWeaponKillsDtoEventsItemFW;
+};
+
+export type RecordWeaponKillsDtoEventsItemMatchSummaryDailyStage = {
+  id: number;
+  points_cur: number;
+  points_max: number;
+  points_step: number;
+  rewards_last: number;
+  rewards_cur: number;
+  rewards_max: number;
+};
+
+export type RecordWeaponKillsDtoEventsItemMatchSummary = {
+  difficulty_rank: number;
+  result: number;
+  rating_delta: number;
+  opponent_lvl: number;
+  opponent_oplvl: number;
+  opponent_rating: number;
+  rating: number;
+  status: number;
+  placement_cur?: number;
+  placement_max?: number;
+  points_gained?: number;
+  daily_stage?: RecordWeaponKillsDtoEventsItemMatchSummaryDailyStage;
+};
+
+export type RecordWeaponKillsDtoEventsItem = {
+  party?: RecordWeaponKillsDtoEventsItemParty;
+  f: RecordWeaponKillsDtoEventsItemF;
+  ev?: number;
+  match_summary?: RecordWeaponKillsDtoEventsItemMatchSummary;
+  matchmaking_state?: number;
+};
+
+export interface RecordWeaponKillsDto {
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
+  world: string;
+  weaponItemId: string;
+  /** @minItems 1 */
+  events: RecordWeaponKillsDtoEventsItem[];
+}
+
 export interface UpdateBattleDto {
   public: boolean;
 }
@@ -2414,6 +2497,70 @@ export type BattlesControllerGetBattleRawData403 = {
 };
 
 export type BattlesControllerGetBattleRawData429 = {
+  message: string;
+};
+
+export type WeaponKillsControllerRecordWeaponKills400Message = string | ({
+  path: (string | number | 'Infinity' | '-Infinity' | 'NaN')[];
+  message: string;
+})[];
+
+export type WeaponKillsControllerRecordWeaponKills400StatusCode = typeof WeaponKillsControllerRecordWeaponKills400StatusCode[keyof typeof WeaponKillsControllerRecordWeaponKills400StatusCode];
+
+
+export const WeaponKillsControllerRecordWeaponKills400StatusCode = {
+  NUMBER_400: 400,
+} as const;
+
+export type WeaponKillsControllerRecordWeaponKills400 = {
+  error: string;
+  message: WeaponKillsControllerRecordWeaponKills400Message;
+  statusCode: WeaponKillsControllerRecordWeaponKills400StatusCode;
+};
+
+export type WeaponKillsControllerRecordWeaponKills401 = {
+  message: string;
+};
+
+export type WeaponKillsControllerRecordWeaponKills403 = {
+  message: string;
+};
+
+export type WeaponKillsControllerRecordWeaponKills429 = {
+  message: string;
+};
+
+export type WeaponKillsControllerGetCharacterWeaponKillsPathParameters = {
+ world: string,
+    characterId: string,
+ }
+export type WeaponKillsControllerGetCharacterWeaponKills400Message = string | ({
+  path: (string | number | 'Infinity' | '-Infinity' | 'NaN')[];
+  message: string;
+})[];
+
+export type WeaponKillsControllerGetCharacterWeaponKills400StatusCode = typeof WeaponKillsControllerGetCharacterWeaponKills400StatusCode[keyof typeof WeaponKillsControllerGetCharacterWeaponKills400StatusCode];
+
+
+export const WeaponKillsControllerGetCharacterWeaponKills400StatusCode = {
+  NUMBER_400: 400,
+} as const;
+
+export type WeaponKillsControllerGetCharacterWeaponKills400 = {
+  error: string;
+  message: WeaponKillsControllerGetCharacterWeaponKills400Message;
+  statusCode: WeaponKillsControllerGetCharacterWeaponKills400StatusCode;
+};
+
+export type WeaponKillsControllerGetCharacterWeaponKills401 = {
+  message: string;
+};
+
+export type WeaponKillsControllerGetCharacterWeaponKills403 = {
+  message: string;
+};
+
+export type WeaponKillsControllerGetCharacterWeaponKills429 = {
   message: string;
 };
 
@@ -5579,6 +5726,238 @@ export const useGetBattlesControllerGetBattleRawDataQueryData = () => {
   const queryClient = useQueryClient();
   return ({ battleId }: BattlesControllerGetBattleRawDataPathParameters,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>>(getBattlesControllerGetBattleRawDataQueryKey({ battleId }));
+}
+
+
+
+export const getWeaponKillsControllerRecordWeaponKillsUrl = () => {
+
+
+
+
+  return `/weapon-kills`
+}
+
+/**
+ * Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. A resubmitted log counts once.
+ * @summary Record finishing blows dealt with a weapon
+ */
+export const weaponKillsControllerRecordWeaponKills = async (recordWeaponKillsDto: RecordWeaponKillsDto, options?: Parameters<typeof battlelogFetch>[1]): Promise<WeaponKillsDtoOutput> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return battlelogFetch<WeaponKillsDtoOutput>(getWeaponKillsControllerRecordWeaponKillsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(recordWeaponKillsDto)
+  }
+);}
+
+
+
+
+
+export const getWeaponKillsControllerRecordWeaponKillsMutationKey = () => ['weaponKillsControllerRecordWeaponKills'] as const;
+
+export const getWeaponKillsControllerRecordWeaponKillsMutationOptions = <TError = ErrorType<WeaponKillsControllerRecordWeaponKills400 | WeaponKillsControllerRecordWeaponKills401 | WeaponKillsControllerRecordWeaponKills403 | WeaponKillsControllerRecordWeaponKills429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weaponKillsControllerRecordWeaponKills>>, TError,WeaponKillsControllerRecordWeaponKillsMutationVariables, TContext>, request?: SecondParameter<typeof battlelogFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof weaponKillsControllerRecordWeaponKills>>, TError,WeaponKillsControllerRecordWeaponKillsMutationVariables, TContext> => {
+
+const mutationKey = getWeaponKillsControllerRecordWeaponKillsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof weaponKillsControllerRecordWeaponKills>>, WeaponKillsControllerRecordWeaponKillsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  weaponKillsControllerRecordWeaponKills(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WeaponKillsControllerRecordWeaponKillsMutationResult = NonNullable<Awaited<ReturnType<typeof weaponKillsControllerRecordWeaponKills>>>
+    export type WeaponKillsControllerRecordWeaponKillsMutationBody = BodyType<RecordWeaponKillsDto>
+    export type WeaponKillsControllerRecordWeaponKillsMutationError = ErrorType<WeaponKillsControllerRecordWeaponKills400 | WeaponKillsControllerRecordWeaponKills401 | WeaponKillsControllerRecordWeaponKills403 | WeaponKillsControllerRecordWeaponKills429>
+    export type WeaponKillsControllerRecordWeaponKillsMutationVariables = {data: BodyType<RecordWeaponKillsDto>}
+
+    /**
+ * @summary Record finishing blows dealt with a weapon
+ */
+export const useWeaponKillsControllerRecordWeaponKills = <TError = ErrorType<WeaponKillsControllerRecordWeaponKills400 | WeaponKillsControllerRecordWeaponKills401 | WeaponKillsControllerRecordWeaponKills403 | WeaponKillsControllerRecordWeaponKills429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weaponKillsControllerRecordWeaponKills>>, TError,WeaponKillsControllerRecordWeaponKillsMutationVariables, TContext>, request?: SecondParameter<typeof battlelogFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof weaponKillsControllerRecordWeaponKills>>,
+        TError,
+        WeaponKillsControllerRecordWeaponKillsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getWeaponKillsControllerRecordWeaponKillsMutationOptions(options), queryClient);
+    }
+
+export const getWeaponKillsControllerGetCharacterWeaponKillsUrl = ({ world, characterId }: WeaponKillsControllerGetCharacterWeaponKillsPathParameters,) => {
+
+
+
+
+  return `/weapon-kills/${world}/${characterId}`
+}
+
+/**
+ * @summary Get the weapon kill counters of a character
+ */
+export const weaponKillsControllerGetCharacterWeaponKills = async ({ world, characterId }: WeaponKillsControllerGetCharacterWeaponKillsPathParameters, options?: Parameters<typeof battlelogFetch>[1]): Promise<CharacterWeaponKillsResponseDtoOutput> => {
+
+  return battlelogFetch<CharacterWeaponKillsResponseDtoOutput>(getWeaponKillsControllerGetCharacterWeaponKillsUrl({ world, characterId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getWeaponKillsControllerGetCharacterWeaponKillsQueryKey = ({ world, characterId }: WeaponKillsControllerGetCharacterWeaponKillsPathParameters,) => {
+    return [
+    `/weapon-kills/${world}/${characterId}`
+    ] as const;
+    }
+
+
+export const getWeaponKillsControllerGetCharacterWeaponKillsQueryOptions = <TData = Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>, TError = ErrorType<WeaponKillsControllerGetCharacterWeaponKills400 | WeaponKillsControllerGetCharacterWeaponKills401 | WeaponKillsControllerGetCharacterWeaponKills403 | WeaponKillsControllerGetCharacterWeaponKills429>>({ world, characterId }: WeaponKillsControllerGetCharacterWeaponKillsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>, TError, TData>>, request?: SecondParameter<typeof battlelogFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getWeaponKillsControllerGetCharacterWeaponKillsQueryKey({ world, characterId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>> = ({ signal }) => weaponKillsControllerGetCharacterWeaponKills({ world, characterId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: world !== null && world !== undefined && characterId !== null && characterId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type WeaponKillsControllerGetCharacterWeaponKillsQueryResult = NonNullable<Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>>
+export type WeaponKillsControllerGetCharacterWeaponKillsQueryError = ErrorType<WeaponKillsControllerGetCharacterWeaponKills400 | WeaponKillsControllerGetCharacterWeaponKills401 | WeaponKillsControllerGetCharacterWeaponKills403 | WeaponKillsControllerGetCharacterWeaponKills429>
+
+
+export function useWeaponKillsControllerGetCharacterWeaponKills<TData = Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>, TError = ErrorType<WeaponKillsControllerGetCharacterWeaponKills400 | WeaponKillsControllerGetCharacterWeaponKills401 | WeaponKillsControllerGetCharacterWeaponKills403 | WeaponKillsControllerGetCharacterWeaponKills429>>(
+ pathParams: WeaponKillsControllerGetCharacterWeaponKillsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>,
+          TError,
+          Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof battlelogFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useWeaponKillsControllerGetCharacterWeaponKills<TData = Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>, TError = ErrorType<WeaponKillsControllerGetCharacterWeaponKills400 | WeaponKillsControllerGetCharacterWeaponKills401 | WeaponKillsControllerGetCharacterWeaponKills403 | WeaponKillsControllerGetCharacterWeaponKills429>>(
+ pathParams: WeaponKillsControllerGetCharacterWeaponKillsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>,
+          TError,
+          Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof battlelogFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useWeaponKillsControllerGetCharacterWeaponKills<TData = Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>, TError = ErrorType<WeaponKillsControllerGetCharacterWeaponKills400 | WeaponKillsControllerGetCharacterWeaponKills401 | WeaponKillsControllerGetCharacterWeaponKills403 | WeaponKillsControllerGetCharacterWeaponKills429>>(
+ pathParams: WeaponKillsControllerGetCharacterWeaponKillsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>, TError, TData>>, request?: SecondParameter<typeof battlelogFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get the weapon kill counters of a character
+ */
+
+export function useWeaponKillsControllerGetCharacterWeaponKills<TData = Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>, TError = ErrorType<WeaponKillsControllerGetCharacterWeaponKills400 | WeaponKillsControllerGetCharacterWeaponKills401 | WeaponKillsControllerGetCharacterWeaponKills403 | WeaponKillsControllerGetCharacterWeaponKills429>>(
+ { world, characterId }: WeaponKillsControllerGetCharacterWeaponKillsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>, TError, TData>>, request?: SecondParameter<typeof battlelogFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getWeaponKillsControllerGetCharacterWeaponKillsQueryOptions({ world, characterId },options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get the weapon kill counters of a character
+ */
+export const prefetchWeaponKillsControllerGetCharacterWeaponKillsQuery = async <TData = Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>, TError = ErrorType<WeaponKillsControllerGetCharacterWeaponKills400 | WeaponKillsControllerGetCharacterWeaponKills401 | WeaponKillsControllerGetCharacterWeaponKills403 | WeaponKillsControllerGetCharacterWeaponKills429>>(
+ queryClient: QueryClient, { world, characterId }: WeaponKillsControllerGetCharacterWeaponKillsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>, TError, TData>>, request?: SecondParameter<typeof battlelogFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getWeaponKillsControllerGetCharacterWeaponKillsQueryOptions({ world, characterId },options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useWeaponKillsControllerGetCharacterWeaponKills} query
+ */
+export const invalidateWeaponKillsControllerGetCharacterWeaponKills = async (
+ queryClient: QueryClient, { world, characterId }: WeaponKillsControllerGetCharacterWeaponKillsPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getWeaponKillsControllerGetCharacterWeaponKillsQueryKey({ world, characterId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get the weapon kill counters of a character
+ */
+export const useSetWeaponKillsControllerGetCharacterWeaponKillsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ world, characterId }: WeaponKillsControllerGetCharacterWeaponKillsPathParameters,updater: Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>> | undefined | ((old: Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>> | undefined) => Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>>({ exact: $exactMatch, queryKey: getWeaponKillsControllerGetCharacterWeaponKillsQueryKey({ world, characterId }) }, updater);
+  };
+}
+
+/**
+ * @summary Get the weapon kill counters of a character
+ */
+export const useGetWeaponKillsControllerGetCharacterWeaponKillsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ world, characterId }: WeaponKillsControllerGetCharacterWeaponKillsPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof weaponKillsControllerGetCharacterWeaponKills>>>(getWeaponKillsControllerGetCharacterWeaponKillsQueryKey({ world, characterId }));
 }
 
 

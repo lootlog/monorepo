@@ -3,6 +3,7 @@ import { useGlobalStore } from "@/store/global.store";
 import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
 import { useEffect, useRef } from "react";
 import { installCharacterTooltipTransforms } from "@/lib/margonem-tooltips/patcher";
+import { installWeaponKillsTooltips } from "@/lib/margonem-tooltips/weapon-kills";
 import { runtimeEventPipeline } from "@/lib/margonem-runtime/runtime-event-pipeline";
 import { runtimeStateProjection } from "@/lib/margonem-runtime/runtime-state-projection";
 import { runtimeInteractionCoordinator } from "@/lib/margonem-runtime/runtime-interaction-coordinator";
@@ -13,6 +14,7 @@ export const useInit = () => {
   const setGameState = useGlobalStore((state) => state.setGameState);
   const initialized = useRef(false);
   const cleanupTooltipTransforms = useRef<(() => void) | null>(null);
+  const cleanupWeaponKillsTooltips = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const checkAndInitialize = () => {
@@ -36,6 +38,7 @@ export const useInit = () => {
 
       runtimeEventPipeline.setReady(true);
       cleanupTooltipTransforms.current = installCharacterTooltipTransforms();
+      cleanupWeaponKillsTooltips.current = installWeaponKillsTooltips();
 
       return true;
     };
@@ -57,6 +60,8 @@ export const useInit = () => {
       initialized.current = false;
       cleanupTooltipTransforms.current?.();
       cleanupTooltipTransforms.current = null;
+      cleanupWeaponKillsTooltips.current?.();
+      cleanupWeaponKillsTooltips.current = null;
       runtimeInteractionCoordinator.cleanup();
       runtimeEventPipeline.cleanup();
       runtimeStateProjection.cleanup();
