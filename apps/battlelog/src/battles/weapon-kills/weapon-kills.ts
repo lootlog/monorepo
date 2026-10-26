@@ -93,6 +93,8 @@ export const makeWeaponKills = (
           bindingId: data.battleKey,
           accountId: data.accountId,
           characterId: data.characterId,
+          // The clan is the client's own claim; only the account is signed.
+          clanId: data.margonemAccountProof.clanId,
         });
 
         if (!verification.valid) {

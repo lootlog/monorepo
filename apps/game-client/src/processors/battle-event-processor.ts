@@ -23,7 +23,7 @@ import { createKill, createBattle, recordWeaponKills } from "@/api";
 import { findFinishingBlows } from "@lootlog/battle-processor";
 import { getHeroMainWeaponItemId } from "@/lib/margonem-runtime/adapters/item-tip-runtime-adapter";
 import { setWeaponKills } from "@/lib/margonem-tooltips/weapon-kills";
-import { requestMargonemAccountProof } from "@/lib/margonem-account-proof";
+import { markBattleKeyEnded, resolveBattleKey } from "./battle-key";
 import { toast } from "sonner";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import {
@@ -56,10 +56,7 @@ type BattleIntent = Parameters<typeof createBattle>[0];
 
 type BattleEvents = BattleIntent["events"];
 
-type WeaponKillsIntent = Omit<
-  Parameters<typeof recordWeaponKills>[0],
-  "margonemAccountProof"
->;
+type WeaponKillsIntent = Parameters<typeof recordWeaponKills>[0];
 
 type KillResolution = {
   intent: KillIntent | null;
@@ -163,8 +160,8 @@ export class BattleEventProcessor {
   private hasNpcWarrior = false;
   private hasWarnedCaptureOverflow = false;
   private battleGeneration = 0;
-  // Names the battle to the weapon kill counters, so a repeated battle with
-  // the same rows is not taken for a resubmission.
+  // Names the battle to the weapon kill counters: the same battle sent again
+  // after a reload keeps it, a new battle with the same rows does not.
   private battleKey = "";
 
   async handle(
@@ -178,7 +175,7 @@ export class BattleEventProcessor {
     const stateAtIngress = useBattleStore.getState();
     const startsBattle = event.f.init === "1";
 
-    this.beginBattleIfNeeded(startsBattle, battleStore);
+    this.beginBattleIfNeeded(startsBattle, battleStore, event.f);
 
     const battleWarriors = this.resolveBattleWarriors({
       battleData: event.f,
@@ -210,6 +207,8 @@ export class BattleEventProcessor {
     }
 
     const endingGeneration = this.battleGeneration;
+
+    markBattleKeyEnded(this.battleKey);
 
     const capture = battleStore.getCaptureSnapshot();
 
@@ -262,10 +261,18 @@ export class BattleEventProcessor {
   private beginBattleIfNeeded(
     startsBattle: boolean,
     battleStore: BattleStoreState,
+    battleData: BattleData,
   ): void {
     if (!startsBattle) return;
     this.battleGeneration += 1;
-    this.battleKey = crypto.randomUUID();
+    // The opponents identify the battle; its first rows are missing from the
+    // `init` of a battle that just started.
+    this.battleKey = resolveBattleKey(
+      Object.keys(battleData.w ?? {})
+        .sort()
+        .join(","),
+      getBattleEnding(battleData, false) !== null,
+    );
     battleStore.clearEvents();
     this.observedTeams.clear();
     this.hasMultipleTeams = false;
@@ -482,15 +489,7 @@ export class BattleEventProcessor {
     weaponKillsIntent: WeaponKillsIntent | null,
   ): void {
     if (weaponKillsIntent) {
-      // Margonem signs that this account plays the character, for this battle.
-      requestMargonemAccountProof({
-        bindingId: weaponKillsIntent.battleKey,
-        accountId: weaponKillsIntent.accountId,
-        characterId: weaponKillsIntent.characterId,
-      })
-        .then((margonemAccountProof) =>
-          recordWeaponKills({ ...weaponKillsIntent, margonemAccountProof }),
-        )
+      recordWeaponKills(weaponKillsIntent)
         .then(({ itemId, kills }) => {
           setWeaponKills(
             weaponKillsIntent.world,
