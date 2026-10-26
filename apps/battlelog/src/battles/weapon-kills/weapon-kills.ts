@@ -11,13 +11,14 @@ import type { DrizzleDatabase } from "#src/database/database";
 import { weaponKills } from "#src/database/schema";
 import { CreateBattleSchema } from "#src/battles/submission/create-battle";
 import { PermissionDeniedError } from "#src/infrastructure/http-error";
+import type { MargonemOnlinePlayers } from "#src/infrastructure/margonem-online-players";
 
 const MargonemId = Schema.String.check(Schema.isPattern(/^\d{1,20}$/));
 
 export const RecordWeaponKillsSchema = Schema.Struct({
   accountId: MargonemId,
   characterId: MargonemId,
-  world: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64)),
+  world: Schema.String.check(Schema.isPattern(/^[\w-]{1,64}$/)),
   weaponItemId: MargonemId,
   // The proof token carries the key between colons.
   battleKey: Schema.String.check(Schema.isPattern(/^[\w-]{1,128}$/)),
@@ -58,6 +59,7 @@ export const makeWeaponKills = (
   drizzle: WeaponKillsDatabase,
   read: BattleReadBudget,
   proofs: MargonemProofVerifier,
+  onlinePlayers: MargonemOnlinePlayers,
 ) => {
   const countWeaponKills = (
     { world, characterId }: WeaponKillsQuery,
@@ -78,10 +80,11 @@ export const makeWeaponKills = (
   return {
     /**
      * Credits the submitter's finishing blows in a battle to the main weapon
-     * it wore. A Margonem-signed proof for this battle shows the submitter
-     * plays the character; the server reads the blows from the log, and the
-     * client only names the weapon. A blow submitted again keeps the weapon
-     * it was first credited to.
+     * it wore. Margonem signs only the account in the proof, which must be
+     * requested for this battle; the character must be online under that
+     * account. The server reads the blows from the log, and the client only
+     * names the weapon. A blow submitted again keeps the weapon it was first
+     * credited to.
      */
     recordWeaponKills(data: RecordWeaponKillsInput, userId: string) {
       return Effect.gen(function* () {
@@ -96,6 +99,16 @@ export const makeWeaponKills = (
           return yield* Effect.fail(
             new PermissionDeniedError(
               "The Margonem account proof does not match this battle",
+            ),
+          );
+        }
+
+        const playsCharacter = yield* onlinePlayers.isOnlineUnderAccount(data);
+
+        if (!playsCharacter) {
+          return yield* Effect.fail(
+            new PermissionDeniedError(
+              "The character is not online under the proven Margonem account",
             ),
           );
         }

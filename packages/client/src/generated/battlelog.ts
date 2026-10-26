@@ -613,10 +613,6 @@ export interface MargonemAccountProofDto {
 export interface RecordWeaponKillsDto {
   accountId: string;
   characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 64
-     */
   world: string;
   weaponItemId: string;
   battleKey: string;
@@ -5756,7 +5752,7 @@ export const getWeaponKillsControllerRecordWeaponKillsUrl = () => {
 }
 
 /**
- * Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. The Margonem account proof must be requested for the submitted battle key and character; otherwise the request is rejected with 403. A resubmitted log counts once.
+ * Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. The Margonem account proof must be requested for the submitted battle key, and Margonem must list the character online under the proven account; otherwise the request is rejected with 403. A resubmitted log counts once.
  * @summary Record finishing blows dealt with a weapon
  */
 export const weaponKillsControllerRecordWeaponKills = async (recordWeaponKillsDto: RecordWeaponKillsDto, options?: Parameters<typeof battlelogFetch>[1]): Promise<WeaponKillsDtoOutput> => {

@@ -29,6 +29,7 @@ import { makeRedisStore } from "#src/infrastructure/redis-store";
 import { makeWeaponKills } from "#src/battles/weapon-kills/weapon-kills";
 import { makeMargonemProofVerifier } from "@lootlog/protocol/http/margonem-account-proof";
 import { FetchHttpClient, HttpClient } from "effect/http";
+import { makeMargonemOnlinePlayers } from "#src/infrastructure/margonem-online-players";
 
 RedisConnection.clientFactory = (options) => {
   if (!options.url) {
@@ -52,6 +53,7 @@ export class BattlelogApplication extends Context.Service<
     BattlelogApplication,
     Effect.gen(function* () {
       const config = yield* BattlelogConfig;
+      const httpClient = yield* HttpClient.HttpClient;
       const drizzle = yield* drizzleDatabaseEffect;
       const redisClient = yield* Redis.Redis;
       const redisFibers = yield* FiberSet.make<unknown, unknown>();
@@ -109,7 +111,11 @@ export class BattlelogApplication extends Context.Service<
           read,
           makeMargonemProofVerifier(
             { signingKeyUrl: config.margonemSigningKeyUrl },
-            yield* HttpClient.HttpClient,
+            httpClient,
+          ),
+          makeMargonemOnlinePlayers(
+            { onlinePlayersUrl: config.margonemOnlinePlayersUrl },
+            httpClient,
           ),
         ),
       );
