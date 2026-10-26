@@ -12,6 +12,7 @@ import pg from "pg";
 import { makeBattleReadBudget } from "#src/database/battle-read-budget";
 import { drizzleDatabaseEffect } from "#src/database/database";
 import { PermissionDeniedError } from "#src/infrastructure/http-error";
+import { makeMargonemOnlinePlayers } from "#src/infrastructure/margonem-online-players";
 import {
   makeWeaponKills,
   type RecordWeaponKillsInput,
@@ -55,16 +56,24 @@ beforeEach(async () => {
   await pool.query("TRUNCATE weapon_kills");
 });
 
-// Margonem signs account proofs; the test serves its own signing key.
+// Margonem signs account proofs and lists who plays which character; the
+// test serves its own signing key and online players.
 const signingKey = generateKeyPairSync("rsa", { modulusLength: 2048 });
 
-const signingKeyClient = HttpClient.make((request) =>
+const onlinePlayers = [
+  { a: "9101", c: "101", n: "Warrior101" },
+  { a: "9102", c: "102", n: "Warrior102" },
+];
+
+const margonemClient = HttpClient.make((request) =>
   Effect.succeed(
     HttpClientResponse.fromWeb(
       request,
-      new Response(
-        signingKey.publicKey.export({ type: "spki", format: "pem" }),
-      ),
+      request.url === "https://margonem.test/online/tempest.json"
+        ? Response.json(onlinePlayers)
+        : new Response(
+            signingKey.publicKey.export({ type: "spki", format: "pem" }),
+          ),
     ),
   ),
 );
@@ -106,7 +115,11 @@ const run = <A, E>(
           makeBattleReadBudget(drizzle),
           makeMargonemProofVerifier(
             { signingKeyUrl: "https://margonem.test/signing-key.pem" },
-            signingKeyClient,
+            margonemClient,
+          ),
+          makeMargonemOnlinePlayers(
+            { onlinePlayersUrl: "https://margonem.test/online" },
+            margonemClient,
           ),
         ),
       );
@@ -232,10 +245,13 @@ it("counts a repeated battle with the same rows again", async () => {
   expect(repeated).toEqual({ itemId: "555", kills: 2 });
 });
 
-it("rejects a submission whose proof was issued for another character", async () => {
+it("rejects a character the proven account does not play", async () => {
+  // Margonem signs only the account; the character in the token is the
+  // submitter's own claim.
   const forged = {
     ...submission("101", "555", firstRows),
-    margonemAccountProof: proofFor("battle-1", "9102", "102"),
+    accountId: "9102",
+    margonemAccountProof: proofFor("battle-1", "9102", "101"),
   };
 
   const rejection = await run((weaponKills) =>

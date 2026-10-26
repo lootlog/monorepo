@@ -25,12 +25,8 @@ export const RecordWeaponKillsDto = Schema.Struct({
   accountId: MargonemIdDto,
   characterId: MargonemIdDto,
   world: Schema.String.check(
-    Schema.isMinLength(1).annotate({
-      expected: "a value with a length of at least 1",
-    }),
-  ).check(
-    Schema.isMaxLength(64).annotate({
-      expected: "a value with a length of at most 64",
+    Schema.isPattern(/^[\w-]{1,64}$/).annotate({
+      expected: "a Margonem world name",
     }),
   ),
   weaponItemId: MargonemIdDto,

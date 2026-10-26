@@ -13,6 +13,7 @@ export interface BattlelogConfiguration {
   };
   readonly r2: R2Config;
   readonly margonemSigningKeyUrl: string;
+  readonly margonemOnlinePlayersUrl: string;
 }
 
 const loadConfiguration = Effect.gen(function* () {
@@ -64,6 +65,13 @@ const loadConfiguration = Effect.gen(function* () {
         new URL("https://staticinfo.margonem.pl/.well-known/signing-key.pem"),
       ),
     )).toString(),
+    margonemOnlinePlayersUrl: (yield* Config.URL(
+      "MARGONEM_ONLINE_PLAYERS_URL",
+    ).pipe(
+      Config.withDefault(new URL("https://staticinfo.margonem.pl/online")),
+    ))
+      .toString()
+      .replace(/\/$/, ""),
     r2: {
       accessKeyId: r2AccessKeyId,
       secretAccessKey: r2SecretAccessKey,
