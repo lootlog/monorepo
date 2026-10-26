@@ -1,23 +1,28 @@
 import { createHash } from "node:crypto";
 import { findFinishingBlows } from "@lootlog/battle-processor";
+import {
+  MargonemAccountProof,
+  type MargonemProofVerifier,
+} from "@lootlog/protocol/http/margonem-account-proof";
 import { and, count, eq } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { BattleReadBudget } from "#src/database/battle-read-budget";
 import type { DrizzleDatabase } from "#src/database/database";
 import { weaponKills } from "#src/database/schema";
 import { CreateBattleSchema } from "#src/battles/submission/create-battle";
+import { PermissionDeniedError } from "#src/infrastructure/http-error";
 
 const MargonemId = Schema.String.check(Schema.isPattern(/^\d{1,20}$/));
 
 export const RecordWeaponKillsSchema = Schema.Struct({
+  accountId: MargonemId,
   characterId: MargonemId,
   world: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64)),
   weaponItemId: MargonemId,
-  battleKey: Schema.String.check(
-    Schema.isMinLength(1),
-    Schema.isMaxLength(128),
-  ),
+  // The proof token carries the key between colons.
+  battleKey: Schema.String.check(Schema.isPattern(/^[\w-]{1,128}$/)),
   events: CreateBattleSchema.fields.events,
+  margonemAccountProof: MargonemAccountProof,
 });
 
 export type RecordWeaponKillsInput = typeof RecordWeaponKillsSchema.Type;
@@ -52,6 +57,7 @@ type WeaponKillsDatabase = Pick<DrizzleDatabase, "insert" | "select">;
 export const makeWeaponKills = (
   drizzle: WeaponKillsDatabase,
   read: BattleReadBudget,
+  proofs: MargonemProofVerifier,
 ) => {
   const countWeaponKills = (
     { world, characterId }: WeaponKillsQuery,
@@ -72,11 +78,28 @@ export const makeWeaponKills = (
   return {
     /**
      * Credits the submitter's finishing blows in a battle to the main weapon
-     * it wore. The server reads them from the log; the client only names the
-     * weapon. A blow submitted again keeps the weapon it was first credited to.
+     * it wore. A Margonem-signed proof for this battle shows the submitter
+     * plays the character; the server reads the blows from the log, and the
+     * client only names the weapon. A blow submitted again keeps the weapon
+     * it was first credited to.
      */
     recordWeaponKills(data: RecordWeaponKillsInput, userId: string) {
       return Effect.gen(function* () {
+        const verification = yield* proofs.verify({
+          proof: data.margonemAccountProof,
+          bindingId: data.battleKey,
+          accountId: data.accountId,
+          characterId: data.characterId,
+        });
+
+        if (!verification.valid) {
+          return yield* Effect.fail(
+            new PermissionDeniedError(
+              "The Margonem account proof does not match this battle",
+            ),
+          );
+        }
+
         const kills = findFinishingBlows(data.events)
           .filter((blow) => blow.killerId === data.characterId)
           .map((blow) => ({

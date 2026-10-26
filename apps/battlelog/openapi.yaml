@@ -2521,12 +2521,27 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                      message:
+                        type: string
+                      statusCode:
+                        type: number
+                        enum:
+                          - 403
+                    required:
+                      - error
+                      - message
+                      - statusCode
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "429":
           description: ""
           content:
@@ -2538,7 +2553,7 @@ paths:
                     type: string
                 required:
                   - message
-      description: Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. A resubmitted log counts once.
+      description: Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. The Margonem account proof must be requested for the submitted battle key and character; otherwise the request is rejected with 403. A resubmitted log counts once.
       summary: Record finishing blows dealt with a weapon
       requestBody:
         content:
@@ -4080,6 +4095,8 @@ components:
     RecordWeaponKillsDto:
       type: object
       properties:
+        accountId:
+          type: string
         characterId:
           type: string
         world:
@@ -4090,8 +4107,6 @@ components:
           type: string
         battleKey:
           type: string
-          minLength: 1
-          maxLength: 128
         events:
           type: array
           items:
@@ -4225,12 +4240,40 @@ components:
             required:
               - f
           minItems: 1
+        margonemAccountProof:
+          $ref: "#/components/schemas/MargonemAccountProofDto"
       required:
+        - accountId
         - characterId
         - world
         - weaponItemId
         - battleKey
         - events
+        - margonemAccountProof
+    MargonemAccountProofDto:
+      type: object
+      properties:
+        userId:
+          type: string
+        characterId:
+          type: string
+        clanId:
+          type: number
+        token:
+          type: string
+        ts:
+          type: number
+        validatedString:
+          type: string
+        signatureBase64:
+          type: string
+      required:
+        - userId
+        - characterId
+        - token
+        - ts
+        - validatedString
+        - signatureBase64
     UpdateBattleDto:
       type: object
       properties:

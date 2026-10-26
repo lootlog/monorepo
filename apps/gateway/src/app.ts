@@ -42,7 +42,7 @@ import { Headers, HttpClient, HttpTraceContext } from "effect/http";
 import { Redis } from "effect/persistence";
 import { makeGatewayAuth, type GatewayAuth } from "#src/auth/auth-service";
 import { ApiKeyLeases } from "#src/auth/api-key-leases";
-import { makeMargonemProofVerifier } from "#src/auth/margonem-proof";
+import { makeMargonemProofVerifier } from "@lootlog/protocol/http/margonem-account-proof";
 import {
   GatewayConfig,
   type GatewayConfiguration,
@@ -200,7 +200,10 @@ class GatewayApplication extends Context.Service<
 
       const commands = new CommandHandler(
         guilds,
-        makeMargonemProofVerifier(config, httpClient),
+        makeMargonemProofVerifier(
+          { signingKeyUrl: config.margonemSigningKeyUrl },
+          httpClient,
+        ),
         presence,
         hub,
         activity,
