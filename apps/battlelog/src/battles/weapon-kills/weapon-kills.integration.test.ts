@@ -3,11 +3,15 @@ import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
+import { generateKeyPairSync, sign } from "node:crypto";
 import { makePostgresLayer } from "@lootlog/database";
+import { makeMargonemProofVerifier } from "@lootlog/protocol/http/margonem-account-proof";
 import { Effect, Redacted } from "effect";
+import { HttpClient, HttpClientResponse } from "effect/http";
 import pg from "pg";
 import { makeBattleReadBudget } from "#src/database/battle-read-budget";
 import { drizzleDatabaseEffect } from "#src/database/database";
+import { PermissionDeniedError } from "#src/infrastructure/http-error";
 import {
   makeWeaponKills,
   type RecordWeaponKillsInput,
@@ -51,6 +55,44 @@ beforeEach(async () => {
   await pool.query("TRUNCATE weapon_kills");
 });
 
+// Margonem signs account proofs; the test serves its own signing key.
+const signingKey = generateKeyPairSync("rsa", { modulusLength: 2048 });
+
+const signingKeyClient = HttpClient.make((request) =>
+  Effect.succeed(
+    HttpClientResponse.fromWeb(
+      request,
+      new Response(
+        signingKey.publicKey.export({ type: "spki", format: "pem" }),
+      ),
+    ),
+  ),
+);
+
+const proofFor = (
+  battleKey: string,
+  accountId: string,
+  characterId: string,
+) => {
+  const characterHex = BigInt(characterId).toString(16).padStart(16, "0");
+  const token = `lootlog:${battleKey}:${accountId}:02${characterHex}ffffffffffffffff${"a".repeat(32)}`;
+  const ts = Date.now();
+  const validatedString = `${accountId}+${token}+${ts}`;
+
+  return {
+    userId: accountId,
+    characterId,
+    token,
+    ts,
+    validatedString,
+    signatureBase64: sign(
+      "sha256",
+      Buffer.from(validatedString),
+      signingKey.privateKey,
+    ).toString("base64"),
+  };
+};
+
 const run = <A, E>(
   use: (weaponKills: ReturnType<typeof makeWeaponKills>) => Effect.Effect<A, E>,
 ) =>
@@ -59,7 +101,14 @@ const run = <A, E>(
       const drizzle = yield* drizzleDatabaseEffect;
 
       return yield* use(
-        makeWeaponKills(drizzle, makeBattleReadBudget(drizzle)),
+        makeWeaponKills(
+          drizzle,
+          makeBattleReadBudget(drizzle),
+          makeMargonemProofVerifier(
+            { signingKeyUrl: "https://margonem.test/signing-key.pem" },
+            signingKeyClient,
+          ),
+        ),
       );
     }).pipe(
       Effect.provide(
@@ -99,11 +148,13 @@ const submission = (
   rows: string[],
   battleKey = "battle-1",
 ): RecordWeaponKillsInput => ({
+  accountId: `9${characterId}`,
   characterId,
   world: "tempest",
   weaponItemId,
   battleKey,
   events: [{ f: { init: "1", w: warriors, m: rows } }],
+  margonemAccountProof: proofFor(battleKey, `9${characterId}`, characterId),
 });
 
 it("counts each finishing blow once across a cut-short and a whole log", async () => {
@@ -179,4 +230,18 @@ it("counts a repeated battle with the same rows again", async () => {
   );
 
   expect(repeated).toEqual({ itemId: "555", kills: 2 });
+});
+
+it("rejects a submission whose proof was issued for another character", async () => {
+  const forged = {
+    ...submission("101", "555", firstRows),
+    margonemAccountProof: proofFor("battle-1", "9102", "102"),
+  };
+
+  const rejection = await run((weaponKills) =>
+    weaponKills.recordWeaponKills(forged, "user-b").pipe(Effect.flip),
+  );
+
+  expect(rejection).toBeInstanceOf(PermissionDeniedError);
+  expect((await pool.query("SELECT * FROM weapon_kills")).rows).toEqual([]);
 });

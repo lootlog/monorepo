@@ -21,7 +21,7 @@ import {
   type ServerEvent,
 } from "@lootlog/protocol/realtime";
 import { chunk } from "es-toolkit";
-import { SingleFlight } from "#src/platform/single-flight";
+import { SingleFlight } from "@lootlog/protocol/effect/single-flight";
 import { yieldToEventLoop } from "#src/platform/background-tasks";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";

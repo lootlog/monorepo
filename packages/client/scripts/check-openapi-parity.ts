@@ -2242,7 +2242,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
       "POST /weapon-kills": {
         operationId: "WeaponKillsController_recordWeaponKills",
         description:
-          "Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. A resubmitted log counts once.",
+          "Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. The Margonem account proof must be requested for the submitted battle key and character; otherwise the request is rejected with 403. A resubmitted log counts once.",
         parameters: [],
         security: [{ bearer: [] }],
         requestBody: {
@@ -2264,6 +2264,22 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           "400": {
             content: {
               "application/json": { schema: BATTLELOG_INVALID_REQUEST_SCHEMA },
+            },
+          },
+          // A Margonem account proof that does not match the submission.
+          "403": {
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                    message: { type: "string" },
+                    statusCode: { type: "number", enum: [403] },
+                  },
+                  required: ["error", "message", "statusCode"],
+                },
+              },
             },
           },
         },

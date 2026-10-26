@@ -1,6 +1,12 @@
 /** Endpoints owned by the weapon-kills HTTP module. */
 import { BadRequestResponse } from "../request-error.js";
-import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
+import { Schema } from "effect";
+import {
+  HttpApiEndpoint,
+  HttpApiGroup,
+  HttpApiSchema,
+  OpenApi,
+} from "effect/http-api";
 import { BearerSecurityMiddleware } from "../battles/security.js";
 import {
   CharacterWeaponKillsResponseDto_Output,
@@ -15,7 +21,14 @@ export class WeaponKillsGroup extends HttpApiGroup.make("weapon-kills").add(
     "/weapon-kills",
     {
       payload: RecordWeaponKillsDto,
-      error: BadRequestResponse,
+      error: [
+        BadRequestResponse,
+        Schema.Struct({
+          error: Schema.String,
+          message: Schema.String,
+          statusCode: Schema.Literal(403),
+        }).pipe(HttpApiSchema.status(403)),
+      ],
       success: WeaponKillsDto_Output,
     },
   )
@@ -24,7 +37,7 @@ export class WeaponKillsGroup extends HttpApiGroup.make("weapon-kills").add(
     .annotate(OpenApi.Summary, "Record finishing blows dealt with a weapon")
     .annotate(
       OpenApi.Description,
-      "Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. A resubmitted log counts once.",
+      "Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. The Margonem account proof must be requested for the submitted battle key and character; otherwise the request is rejected with 403. A resubmitted log counts once.",
     ),
   HttpApiEndpoint.get(
     "WeaponKillsControllerGetCharacterWeaponKills",

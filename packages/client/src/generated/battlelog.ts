@@ -600,7 +600,18 @@ export type RecordWeaponKillsDtoEventsItem = {
   matchmaking_state?: number;
 };
 
+export interface MargonemAccountProofDto {
+  userId: string;
+  characterId: string;
+  clanId?: number;
+  token: string;
+  ts: number;
+  validatedString: string;
+  signatureBase64: string;
+}
+
 export interface RecordWeaponKillsDto {
+  accountId: string;
   characterId: string;
   /**
      * @minLength 1
@@ -608,13 +619,10 @@ export interface RecordWeaponKillsDto {
      */
   world: string;
   weaponItemId: string;
-  /**
-     * @minLength 1
-     * @maxLength 128
-     */
   battleKey: string;
   /** @minItems 1 */
   events: RecordWeaponKillsDtoEventsItem[];
+  margonemAccountProof: MargonemAccountProofDto;
 }
 
 export interface UpdateBattleDto {
@@ -2528,6 +2536,10 @@ export type WeaponKillsControllerRecordWeaponKills401 = {
 };
 
 export type WeaponKillsControllerRecordWeaponKills403 = {
+  error: string;
+  message: string;
+  statusCode: 403;
+} | {
   message: string;
 };
 
@@ -5744,7 +5756,7 @@ export const getWeaponKillsControllerRecordWeaponKillsUrl = () => {
 }
 
 /**
- * Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. A resubmitted log counts once.
+ * Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. The Margonem account proof must be requested for the submitted battle key and character; otherwise the request is rejected with 403. A resubmitted log counts once.
  * @summary Record finishing blows dealt with a weapon
  */
 export const weaponKillsControllerRecordWeaponKills = async (recordWeaponKillsDto: RecordWeaponKillsDto, options?: Parameters<typeof battlelogFetch>[1]): Promise<WeaponKillsDtoOutput> => {

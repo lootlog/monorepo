@@ -23,6 +23,7 @@ import { createKill, createBattle, recordWeaponKills } from "@/api";
 import { findFinishingBlows } from "@lootlog/battle-processor";
 import { getHeroMainWeaponItemId } from "@/lib/margonem-runtime/adapters/item-tip-runtime-adapter";
 import { setWeaponKills } from "@/lib/margonem-tooltips/weapon-kills";
+import { requestMargonemAccountProof } from "@/lib/margonem-account-proof";
 import { toast } from "sonner";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import {
@@ -55,7 +56,10 @@ type BattleIntent = Parameters<typeof createBattle>[0];
 
 type BattleEvents = BattleIntent["events"];
 
-type WeaponKillsIntent = Parameters<typeof recordWeaponKills>[0];
+type WeaponKillsIntent = Omit<
+  Parameters<typeof recordWeaponKills>[0],
+  "margonemAccountProof"
+>;
 
 type KillResolution = {
   intent: KillIntent | null;
@@ -442,7 +446,7 @@ export class BattleEventProcessor {
   ): WeaponKillsIntent | null {
     if (!events || !game) return null;
 
-    const { characterId } = game.hero;
+    const { accountId, characterId } = game.hero;
 
     const hasFinishingBlow = findFinishingBlows(events).some(
       (blow) => blow.killerId === characterId,
@@ -455,6 +459,7 @@ export class BattleEventProcessor {
     if (!weaponItemId) return null;
 
     return {
+      accountId,
       characterId,
       world: game.world,
       weaponItemId,
@@ -477,7 +482,15 @@ export class BattleEventProcessor {
     weaponKillsIntent: WeaponKillsIntent | null,
   ): void {
     if (weaponKillsIntent) {
-      recordWeaponKills(weaponKillsIntent)
+      // Margonem signs that this account plays the character, for this battle.
+      requestMargonemAccountProof({
+        bindingId: weaponKillsIntent.battleKey,
+        accountId: weaponKillsIntent.accountId,
+        characterId: weaponKillsIntent.characterId,
+      })
+        .then((margonemAccountProof) =>
+          recordWeaponKills({ ...weaponKillsIntent, margonemAccountProof }),
+        )
         .then(({ itemId, kills }) => {
           setWeaponKills(
             weaponKillsIntent.world,

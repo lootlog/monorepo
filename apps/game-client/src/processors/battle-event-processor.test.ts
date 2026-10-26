@@ -10,6 +10,7 @@ import { createBattleTest, createBattleWarrior } from "./battle-test-fixtures";
 import { BattleEventProcessor } from "./battle-event-processor";
 import { EventDispatcher } from "@/lib/event-dispatcher";
 import { testRuntimeWindow } from "@/test/test-runtime-window";
+import { MARGONEM_ACCOUNT_VALIDATE_URL } from "@/config/api";
 
 const pvpStart = (moves = ["start"]): GameEvent => ({
   f: {
@@ -76,6 +77,30 @@ const wearMainWeapon = (itemId: number) => {
   });
 };
 
+// Margonem answers the account proof request with a signature of the token.
+const signMargonemProofs = () => {
+  const realFetch = globalThis.fetch;
+
+  vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+    if (String(input) !== MARGONEM_ACCOUNT_VALIDATE_URL) {
+      return realFetch(input, init);
+    }
+
+    const token = new URLSearchParams(String(init?.body)).get("token") ?? "";
+    const ts = 1_700_000_000;
+
+    return Promise.resolve(
+      Response.json({
+        user_id: "67890",
+        token,
+        ts,
+        validatedString: `67890+${token}+${ts}`,
+        signatureBase64: "signature",
+      }),
+    );
+  });
+};
+
 const weaponKills = (requests: Request[]) =>
   requests.filter(
     (request) => new URL(request.url).pathname === "/weapon-kills",
@@ -85,15 +110,19 @@ it("records the hero's finishing blow with the worn weapon even when battles are
   const fixture = createBattleTest();
   useBattlePanelStore.setState({ isBattleCollectionEnabled: false });
   wearMainWeapon(987654);
+  signMargonemProofs();
   const processor = new BattleEventProcessor();
   await processor.handle(heroDuel(["12345=100;222=0;+dmg=900;-dmg=900"]));
   await processor.handle(end);
 
   await waitFor(() => expect(weaponKills(fixture.requests)).toHaveLength(1));
   expect(fixture.battles()).toHaveLength(0);
-  expect(await weaponKills(fixture.requests)[0]?.json()).toMatchObject({
+  const submission = await weaponKills(fixture.requests)[0]?.json();
+
+  expect(submission).toMatchObject({
     characterId: "12345",
     world: "luvia",
+    accountId: "67890",
     weaponItemId: "987654",
     battleKey: expect.stringMatching(/^[0-9a-f-]{36}$/),
     events: [
@@ -101,6 +130,10 @@ it("records the hero's finishing blow with the worn weapon even when battles are
       { f: { m: ["end"], endBattle: 1 } },
     ],
   });
+  // The proof is bound to this battle, so it cannot vouch for another one.
+  expect(submission.margonemAccountProof.token).toMatch(
+    new RegExp(`^lootlog:${submission.battleKey}:67890:`),
+  );
 });
 
 it("sends no weapon kills when the hero dealt no finishing blow", async () => {

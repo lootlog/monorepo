@@ -12,6 +12,7 @@ export interface BattlelogConfiguration {
     readonly password: Redacted.Redacted<string>;
   };
   readonly r2: R2Config;
+  readonly margonemSigningKeyUrl: string;
 }
 
 const loadConfiguration = Effect.gen(function* () {
@@ -58,6 +59,11 @@ const loadConfiguration = Effect.gen(function* () {
       username: redisUsername,
       prefix: serviceName,
     },
+    margonemSigningKeyUrl: (yield* Config.URL("MARGONEM_SIGNING_KEY_URL").pipe(
+      Config.withDefault(
+        new URL("https://staticinfo.margonem.pl/.well-known/signing-key.pem"),
+      ),
+    )).toString(),
     r2: {
       accessKeyId: r2AccessKeyId,
       secretAccessKey: r2SecretAccessKey,
