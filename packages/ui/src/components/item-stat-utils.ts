@@ -910,6 +910,19 @@ const STAT_SECTIONS = [
   },
 ] as const satisfies readonly StatSectionDefinition[];
 
+/** Binding and requirement sections, shown in the tooltip footer. */
+export const ITEM_STAT_FOOTER_SECTIONS: ReadonlySet<number> = new Set([8, 9]);
+
+/** Classes of the markup tags in the `itemStats` translations. */
+export const ITEM_STAT_TAG_CLASS_NAMES = {
+  description:
+    "block text-center italic leading-relaxed text-pretty text-muted-foreground",
+  gold: "text-amber-300",
+  legbon:
+    "block w-full rounded-md bg-emerald-400/10 px-2 py-1.5 text-emerald-300 ring-1 ring-emerald-400/20 ring-inset",
+  value: "font-semibold text-primary tabular-nums",
+} as const;
+
 function createStatDefinitions(): ReadonlyMap<string, StatDefinition> {
   const definitions = new Map<string, StatDefinition>();
   let order = 0;

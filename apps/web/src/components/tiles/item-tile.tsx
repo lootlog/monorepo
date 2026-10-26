@@ -40,7 +40,6 @@ export const ItemTile: FC<ItemTileProps> = ({
       [ItemRarity.UPGRADED]: t("itemRarity.UPGRADED"),
     },
     type: typeLabels,
-    typePrefix: t("itemType.prefix"),
   };
 
   return (
