@@ -2,6 +2,7 @@ import {
   unusedBattles,
   unusedBattleAnalytics,
   unusedDeleteQueue,
+  unusedWeaponKills,
   createBattleFixture,
 } from "../../test/battle-fixtures.js";
 import { describe, expect, it, mock } from "bun:test";
@@ -23,6 +24,7 @@ describe("Battlelog operations", () => {
       { ...unusedBattles, getBattleTimeline },
       unusedBattleAnalytics,
       unusedDeleteQueue,
+      unusedWeaponKills,
     );
 
     await expect(
@@ -46,6 +48,7 @@ describe("Battlelog operations", () => {
       { ...unusedBattles, assertBattleOwner, resolveBattleId, updateBattle },
       unusedBattleAnalytics,
       unusedDeleteQueue,
+      unusedWeaponKills,
     );
 
     await Effect.runPromise(
@@ -77,6 +80,7 @@ describe("Battlelog operations", () => {
       { ...unusedBattles, getPublicBattle },
       unusedBattleAnalytics,
       unusedDeleteQueue,
+      unusedWeaponKills,
     );
 
     const battle = await Effect.runPromise(

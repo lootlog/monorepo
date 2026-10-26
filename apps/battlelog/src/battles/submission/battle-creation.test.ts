@@ -7,6 +7,7 @@ import { relations } from "#src/database/relations";
 import {
   unusedBattleAnalytics,
   unusedDeleteQueue,
+  unusedWeaponKills,
 } from "../../../test/battle-fixtures.js";
 import {
   afterAll,
@@ -402,7 +403,12 @@ const createTestApplication = ({
   const battlesService = battlesModule;
 
   const boundary = makeBattlelogTestBoundary(
-    makeBattlelogOperations(battlesModule, analyticsService, unusedDeleteQueue),
+    makeBattlelogOperations(
+      battlesModule,
+      analyticsService,
+      unusedDeleteQueue,
+      unusedWeaponKills,
+    ),
   );
 
   const app: TestApplication = {

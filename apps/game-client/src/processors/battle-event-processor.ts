@@ -19,7 +19,10 @@ import {
   type BattleWarriorsWithAccountId,
 } from "@/store/game-store/battle.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import { createKill, createBattle } from "@/api";
+import { createKill, createBattle, recordWeaponKills } from "@/api";
+import { findFinishingBlows } from "@lootlog/battle-processor";
+import { getHeroMainWeaponItemId } from "@/lib/margonem-runtime/adapters/item-tip-runtime-adapter";
+import { setWeaponKills } from "@/lib/margonem-tooltips/weapon-kills";
 import { toast } from "sonner";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import {
@@ -49,6 +52,10 @@ type BattleData = NonNullable<GameEvent["f"]>;
 type KillIntent = Parameters<typeof createKill>[0];
 
 type BattleIntent = Parameters<typeof createBattle>[0];
+
+type BattleEvents = BattleIntent["events"];
+
+type WeaponKillsIntent = Parameters<typeof recordWeaponKills>[0];
 
 type KillResolution = {
   intent: KillIntent | null;
@@ -180,11 +187,9 @@ export class BattleEventProcessor {
         ? getBattleEnding(event.f, startsBattle)
         : null;
 
-    if (
-      battleState === "in-battle" &&
-      battlePanelStore.isBattleCollectionEnabled &&
-      !this.hasNpcWarrior
-    ) {
+    // PvP battles are captured whether or not the player saves them: the
+    // weapon kill counters are read from the same log.
+    if (battleState === "in-battle" && !this.hasNpcWarrior) {
       battleStore.addEvent(event);
     }
 
@@ -199,9 +204,7 @@ export class BattleEventProcessor {
 
     const endingGeneration = this.battleGeneration;
 
-    const capture = battlePanelStore.isBattleCollectionEnabled
-      ? battleStore.getCaptureSnapshot()
-      : null;
+    const capture = battleStore.getCaptureSnapshot();
 
     const game = ingress?.game ?? useGameStore.getState().game;
     const hasMultipleTeams = this.hasMultipleTeams;
@@ -211,6 +214,14 @@ export class BattleEventProcessor {
 
     const { deadNpcs, hasNpcInBattle, topNpc } =
       getNpcBattleSummary(battleWarriors);
+
+    const pvpEvents = this.getPvpBattleEvents({
+      capture,
+      hasNpcInBattle,
+      hasMultipleTeams,
+    });
+
+    const weaponKillsIntent = this.resolveWeaponKillsIntent(pvpEvents, game);
 
     const [killResult, battleIntent] = await Promise.all([
       // The NPCs of a battle that goes on without the player may still die.
@@ -222,9 +233,8 @@ export class BattleEventProcessor {
         topNpc: ending === "ended" ? topNpc : null,
       }),
       this.resolveBattleIntent({
-        capture,
-        hasNpcInBattle,
-        hasMultipleTeams,
+        events: battlePanelStore.isBattleCollectionEnabled ? pvpEvents : null,
+        turns: capture.turns,
         game,
       }),
     ]);
@@ -238,6 +248,7 @@ export class BattleEventProcessor {
       battleIntent && claimBattleSubmission(battleIntent.submissionId)
         ? battleIntent
         : null,
+      weaponKillsIntent,
     );
   }
 
@@ -375,13 +386,13 @@ export class BattleEventProcessor {
     };
   }
 
-  private async resolveBattleIntent(params: {
-    capture: BattleCapture | null;
+  /** The submittable events of a finished multi-team battle without NPCs. */
+  private getPvpBattleEvents(params: {
+    capture: BattleCapture;
     hasNpcInBattle: boolean;
     hasMultipleTeams: boolean;
-    game: RuntimeGameSnapshot | null;
-  }): Promise<BattleIntent | null> {
-    if (!params.capture) return null;
+  }): BattleEvents | null {
+    if (params.hasNpcInBattle || !params.hasMultipleTeams) return null;
 
     if (params.capture.overflowed) {
       this.warnCaptureOverflow();
@@ -389,31 +400,57 @@ export class BattleEventProcessor {
       return null;
     }
 
-    // Only multi-team battles without NPCs are submitted; decide that before
-    // hashing and mapping the capture.
-    if (params.hasNpcInBattle || !params.hasMultipleTeams) return null;
+    return mapBattleEventsToPayload(params.capture.events);
+  }
 
-    const game = params.game;
+  private async resolveBattleIntent(params: {
+    events: BattleEvents | null;
+    turns: string[];
+    game: RuntimeGameSnapshot | null;
+  }): Promise<BattleIntent | null> {
+    const { events, game } = params;
 
-    if (!game) return null;
+    if (!events || !game) return null;
 
     const { accountId, characterId } = game.hero;
     const { world } = game;
-
-    const events = mapBattleEventsToPayload(params.capture.events);
-
-    if (!events) return null;
 
     const submissionId = await createSHA256Hash(
       JSON.stringify({
         accountId,
         characterId,
-        moves: params.capture.turns,
+        moves: params.turns,
         world,
       }),
     );
 
     return { accountId, characterId, submissionId, events, world };
+  }
+
+  /**
+   * The server credits the hero's finishing blows itself; the client sends
+   * the log only when it contains one, together with the weapon the hero
+   * wore. Equipment cannot change during a battle.
+   */
+  private resolveWeaponKillsIntent(
+    events: BattleEvents | null,
+    game: RuntimeGameSnapshot | null,
+  ): WeaponKillsIntent | null {
+    if (!events || !game) return null;
+
+    const { characterId } = game.hero;
+
+    const hasFinishingBlow = findFinishingBlows(events).some(
+      (blow) => blow.killerId === characterId,
+    );
+
+    if (!hasFinishingBlow) return null;
+
+    const weaponItemId = getHeroMainWeaponItemId();
+
+    if (!weaponItemId) return null;
+
+    return { characterId, world: game.world, weaponItemId, events };
   }
 
   private warnCaptureOverflow(): void {
@@ -427,7 +464,26 @@ export class BattleEventProcessor {
   private submitIntents(
     killIntent: KillIntent | null,
     battleIntent: BattleIntent | null,
+    weaponKillsIntent: WeaponKillsIntent | null,
   ): void {
+    if (weaponKillsIntent) {
+      recordWeaponKills(weaponKillsIntent)
+        .then(({ itemId, kills }) => {
+          setWeaponKills(
+            weaponKillsIntent.world,
+            weaponKillsIntent.characterId,
+            itemId,
+            kills,
+          );
+        })
+        .catch((error) => {
+          console.warn(
+            "[BattleEventProcessor] Failed to record weapon kills:",
+            error,
+          );
+        });
+    }
+
     if (killIntent) {
       createKill(killIntent).catch((error) => {
         console.warn("[BattleEventProcessor] Failed to create kill:", error);

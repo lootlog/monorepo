@@ -19,6 +19,11 @@ import type {
 } from "#src/battles/battle-service";
 import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import type { DeleteUserData } from "./internal-operations.js";
+import type {
+  RecordWeaponKillsInput,
+  WeaponKills,
+  WeaponKillsQuery,
+} from "#src/battles/weapon-kills/weapon-kills";
 
 const normalizeBattleResponse = (battle: BattleWithRelations) =>
   Schema.decodeUnknownSync(BattleResponseSchemas.battle)({
@@ -48,6 +53,7 @@ export const makeBattlelogOperations = (
       data: DeleteUserBattlesJobData,
     ) => Promise<void>;
   },
+  weaponKills: WeaponKills,
 ) => {
   const withBattleId = <A, E>(
     battleId: string,
@@ -175,6 +181,17 @@ export const makeBattlelogOperations = (
               .assertBattleOwner(id, userId)
               .pipe(Effect.andThen(battles.deleteBattle(id))),
           ),
+      ),
+    },
+    weaponKills: {
+      recordWeaponKills: battlelogOperation(
+        "WeaponKillsController_recordWeaponKills",
+        (data: RecordWeaponKillsInput, userId: string) =>
+          weaponKills.recordWeaponKills(data, userId),
+      ),
+      getCharacterWeaponKills: battlelogOperation(
+        "WeaponKillsController_getCharacterWeaponKills",
+        (query: WeaponKillsQuery) => weaponKills.getCharacterWeaponKills(query),
       ),
     },
     publicBattles: {

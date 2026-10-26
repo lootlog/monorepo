@@ -9,6 +9,7 @@ import { useBattlePanelStore } from "@/store/battle-panel.store";
 import { createBattleTest, createBattleWarrior } from "./battle-test-fixtures";
 import { BattleEventProcessor } from "./battle-event-processor";
 import { EventDispatcher } from "@/lib/event-dispatcher";
+import { testRuntimeWindow } from "@/test/test-runtime-window";
 
 const pvpStart = (moves = ["start"]): GameEvent => ({
   f: {
@@ -43,7 +44,7 @@ it("ignores nonbattle packets and publishes combined initialization/warriors in 
   }
 });
 
-it("does not capture or send PvP battles when collection is disabled", async () => {
+it("does not send PvP battles when collection is disabled", async () => {
   const fixture = createBattleTest();
   useBattlePanelStore.setState({ isBattleCollectionEnabled: false });
   const processor = new BattleEventProcessor();
@@ -51,6 +52,65 @@ it("does not capture or send PvP battles when collection is disabled", async () 
   await processor.handle(end);
   expect(useBattleStore.getState().events).toEqual([]);
   expect(fixture.battles()).toHaveLength(0);
+});
+
+const heroDuel = (moves: string[]): GameEvent => ({
+  f: {
+    init: "1",
+    m: moves,
+    w: {
+      "12345": createBattleWarrior(12345, { team: 1 }),
+      "222": createBattleWarrior(222),
+    },
+  },
+});
+
+const wearMainWeapon = (itemId: number) => {
+  testRuntimeWindow.Engine = {
+    heroEquipment: {
+      getItemBySt: (st: number) => (st === 5 ? { id: itemId, st } : false),
+    },
+  };
+  onTestFinished(() => {
+    delete testRuntimeWindow.Engine;
+  });
+};
+
+const weaponKills = (requests: Request[]) =>
+  requests.filter(
+    (request) => new URL(request.url).pathname === "/weapon-kills",
+  );
+
+it("records the hero's finishing blow with the worn weapon even when battles are not collected", async () => {
+  const fixture = createBattleTest();
+  useBattlePanelStore.setState({ isBattleCollectionEnabled: false });
+  wearMainWeapon(987654);
+  const processor = new BattleEventProcessor();
+  await processor.handle(heroDuel(["12345=100;222=0;+dmg=900;-dmg=900"]));
+  await processor.handle(end);
+
+  await waitFor(() => expect(weaponKills(fixture.requests)).toHaveLength(1));
+  expect(fixture.battles()).toHaveLength(0);
+  expect(await weaponKills(fixture.requests)[0]?.json()).toMatchObject({
+    characterId: "12345",
+    world: "luvia",
+    weaponItemId: "987654",
+    events: [
+      { f: { m: ["12345=100;222=0;+dmg=900;-dmg=900"] } },
+      { f: { m: ["end"], endBattle: 1 } },
+    ],
+  });
+});
+
+it("sends no weapon kills when the hero dealt no finishing blow", async () => {
+  const fixture = createBattleTest();
+  wearMainWeapon(987654);
+  const processor = new BattleEventProcessor();
+  await processor.handle(heroDuel(["222=100;12345=0;+dmg=900;-dmg=900"]));
+  await processor.handle(end);
+
+  await waitFor(() => expect(fixture.battles()).toHaveLength(1));
+  expect(weaponKills(fixture.requests)).toHaveLength(0);
 });
 
 it("never submits a partial battle after the capture budget overflows", async () => {

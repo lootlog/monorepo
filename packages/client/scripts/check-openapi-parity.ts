@@ -2237,6 +2237,64 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
         ),
       ),
     },
+    // Verified by apps/battlelog/src/battles/weapon-kills/weapon-kills.integration.test.ts.
+    battlelog: {
+      "POST /weapon-kills": {
+        operationId: "WeaponKillsController_recordWeaponKills",
+        description:
+          "Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. A resubmitted log counts once.",
+        parameters: [],
+        security: [{ bearer: [] }],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/RecordWeaponKillsDto" },
+            },
+          },
+          required: true,
+        },
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/WeaponKillsDto_Output" },
+              },
+            },
+          },
+          "400": {
+            content: {
+              "application/json": { schema: BATTLELOG_INVALID_REQUEST_SCHEMA },
+            },
+          },
+        },
+      },
+      "GET /weapon-kills/{world}/{characterId}": {
+        operationId: "WeaponKillsController_getCharacterWeaponKills",
+        parameters: ["world", "characterId"].map((name) => ({
+          name,
+          in: "path",
+          schema: { type: "string" },
+          required: true,
+        })),
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CharacterWeaponKillsResponseDto_Output",
+                },
+              },
+            },
+          },
+          "400": {
+            content: {
+              "application/json": { schema: BATTLELOG_INVALID_REQUEST_SCHEMA },
+            },
+          },
+        },
+      },
+    },
   } satisfies Record<string, Record<string, JsonValue>>),
 );
 
