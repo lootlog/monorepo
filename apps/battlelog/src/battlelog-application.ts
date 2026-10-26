@@ -29,7 +29,7 @@ import { makeRedisStore } from "#src/infrastructure/redis-store";
 import { makeWeaponKills } from "#src/battles/weapon-kills/weapon-kills";
 import { makeMargonemProofVerifier } from "@lootlog/protocol/http/margonem-account-proof";
 import { FetchHttpClient, HttpClient } from "effect/http";
-import { makeMargonemOnlinePlayers } from "#src/infrastructure/margonem-online-players";
+import { makeMargonemAccountProfiles } from "#src/infrastructure/margonem-account-profiles";
 
 RedisConnection.clientFactory = (options) => {
   if (!options.url) {
@@ -113,8 +113,8 @@ export class BattlelogApplication extends Context.Service<
             { signingKeyUrl: config.margonemSigningKeyUrl },
             httpClient,
           ),
-          makeMargonemOnlinePlayers(
-            { onlinePlayersUrl: config.margonemOnlinePlayersUrl },
+          makeMargonemAccountProfiles(
+            { profileUrl: config.margonemProfileUrl },
             httpClient,
           ),
         ),
