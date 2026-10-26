@@ -68,3 +68,32 @@ it("leaves the tips of other item classes unchanged", async () => {
 
   expect(getTip(shield)).toBe("<b>Item</b>");
 });
+
+it("retries a failed counter read shortly instead of holding it for minutes", async () => {
+  const { fetch, getTip } = setUp();
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+  onTestFinished(() => warn.mockRestore());
+  fetch.mockImplementationOnce(() =>
+    Promise.resolve(Response.json({ message: "down" }, { status: 503 })),
+  );
+
+  const weapon = {
+    id: 555,
+    cl: 1,
+    own: 12345,
+    setTip: vi.fn(() => getTip(weapon)),
+  };
+
+  getTip(weapon);
+  await waitFor(() => expect(warn).toHaveBeenCalled());
+
+  const now = Date.now();
+  const clock = vi.spyOn(Date, "now").mockReturnValue(now + 31_000);
+
+  onTestFinished(() => clock.mockRestore());
+  getTip(weapon);
+  await waitFor(() => expect(weapon.setTip).toHaveBeenCalled());
+
+  expect(getTip(weapon)).toContain("Zabici gracze: 3");
+});

@@ -4088,6 +4088,10 @@ components:
           maxLength: 64
         weaponItemId:
           type: string
+        battleKey:
+          type: string
+          minLength: 1
+          maxLength: 128
         events:
           type: array
           items:
@@ -4225,6 +4229,7 @@ components:
         - characterId
         - world
         - weaponItemId
+        - battleKey
         - events
     UpdateBattleDto:
       type: object

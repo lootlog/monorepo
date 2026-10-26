@@ -501,7 +501,7 @@
     "actionTypes": {
       "create_kill": "Dodanie zabicia",
       "create_battle": "Dodanie walki",
-      "record_weapon_kills": "Zapisanie zabitych graczy broni",
+      "record_weapon_kills": "Zapisanie graczy zabitych bronią",
       "create_loot": "Dodanie łupu",
       "update_loot": "Aktualizacja łupu",
       "create_timer": "Dodanie timera",
