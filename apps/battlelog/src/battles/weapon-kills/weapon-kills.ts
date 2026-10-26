@@ -11,7 +11,7 @@ import type { DrizzleDatabase } from "#src/database/database";
 import { weaponKills } from "#src/database/schema";
 import { CreateBattleSchema } from "#src/battles/submission/create-battle";
 import { PermissionDeniedError } from "#src/infrastructure/http-error";
-import type { MargonemOnlinePlayers } from "#src/infrastructure/margonem-online-players";
+import type { MargonemAccountProfiles } from "#src/infrastructure/margonem-account-profiles";
 
 const MargonemId = Schema.String.check(Schema.isPattern(/^\d{1,20}$/));
 
@@ -59,7 +59,7 @@ export const makeWeaponKills = (
   drizzle: WeaponKillsDatabase,
   read: BattleReadBudget,
   proofs: MargonemProofVerifier,
-  onlinePlayers: MargonemOnlinePlayers,
+  accountProfiles: MargonemAccountProfiles,
 ) => {
   const countWeaponKills = (
     { world, characterId }: WeaponKillsQuery,
@@ -81,8 +81,8 @@ export const makeWeaponKills = (
     /**
      * Credits the submitter's finishing blows in a battle to the main weapon
      * it wore. Margonem signs only the account in the proof, which must be
-     * requested for this battle; the character must be online under that
-     * account. The server reads the blows from the log, and the client only
+     * requested for this battle; the account's public profile must list the
+     * character. The server reads the blows from the log, and the client only
      * names the weapon. A blow submitted again keeps the weapon it was first
      * credited to.
      */
@@ -105,12 +105,12 @@ export const makeWeaponKills = (
           );
         }
 
-        const playsCharacter = yield* onlinePlayers.isOnlineUnderAccount(data);
+        const playsCharacter = yield* accountProfiles.listsCharacter(data);
 
         if (!playsCharacter) {
           return yield* Effect.fail(
             new PermissionDeniedError(
-              "The character is not online under the proven Margonem account",
+              "The proven Margonem account does not list this character",
             ),
           );
         }

@@ -12,7 +12,7 @@ import pg from "pg";
 import { makeBattleReadBudget } from "#src/database/battle-read-budget";
 import { drizzleDatabaseEffect } from "#src/database/database";
 import { PermissionDeniedError } from "#src/infrastructure/http-error";
-import { makeMargonemOnlinePlayers } from "#src/infrastructure/margonem-online-players";
+import { makeMargonemAccountProfiles } from "#src/infrastructure/margonem-account-profiles";
 import {
   makeWeaponKills,
   type RecordWeaponKillsInput,
@@ -56,27 +56,35 @@ beforeEach(async () => {
   await pool.query("TRUNCATE weapon_kills");
 });
 
-// Margonem signs account proofs and lists who plays which character; the
-// test serves its own signing key and online players.
+// Margonem signs account proofs and lists each account's characters on its
+// public profile; the test serves its own signing key and profiles.
 const signingKey = generateKeyPairSync("rsa", { modulusLength: 2048 });
 
-const onlinePlayers = [
-  { a: "9101", c: "101", n: "Warrior101" },
-  { a: "9102", c: "102", n: "Warrior102" },
-];
+const profile = (characterId: string) =>
+  new Response(
+    `<ul><li data-nick="Warrior${characterId}" data-world="#tempest" class="char-row " data-id="${characterId}"></li></ul>`,
+  );
 
-const margonemClient = HttpClient.make((request) =>
-  Effect.succeed(
+// Account 9101 plays character 101, account 9102 plays character 102.
+const profileCharacters = new Map([
+  ["https://margonem.test/profile/view,9101", "101"],
+  ["https://margonem.test/profile/view,9102", "102"],
+]);
+
+const margonemClient = HttpClient.make((request) => {
+  const characterId = profileCharacters.get(request.url);
+
+  return Effect.succeed(
     HttpClientResponse.fromWeb(
       request,
-      request.url === "https://margonem.test/online/tempest.json"
-        ? Response.json(onlinePlayers)
+      characterId
+        ? profile(characterId)
         : new Response(
             signingKey.publicKey.export({ type: "spki", format: "pem" }),
           ),
     ),
-  ),
-);
+  );
+});
 
 const proofFor = (
   battleKey: string,
@@ -117,8 +125,8 @@ const run = <A, E>(
             { signingKeyUrl: "https://margonem.test/signing-key.pem" },
             margonemClient,
           ),
-          makeMargonemOnlinePlayers(
-            { onlinePlayersUrl: "https://margonem.test/online" },
+          makeMargonemAccountProfiles(
+            { profileUrl: "https://margonem.test/profile/view" },
             margonemClient,
           ),
         ),

@@ -2242,7 +2242,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
       "POST /weapon-kills": {
         operationId: "WeaponKillsController_recordWeaponKills",
         description:
-          "Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. The Margonem account proof must be requested for the submitted battle key, and Margonem must list the character online under the proven account; otherwise the request is rejected with 403. A resubmitted log counts once.",
+          "Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. The Margonem account proof must be requested for the submitted battle key, and the proven account's public Margonem profile must list the character on the world; otherwise the request is rejected with 403. A resubmitted log counts once.",
         parameters: [],
         security: [{ bearer: [] }],
         requestBody: {
