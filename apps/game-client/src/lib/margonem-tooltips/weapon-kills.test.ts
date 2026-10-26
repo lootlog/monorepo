@@ -11,12 +11,15 @@ type TipWindow = Window & {
 
 const tipWindow: TipWindow = window;
 
-const setUp = () => {
+// `firstRead` answers the hero's counters read that installation starts.
+const setUp = (firstRead?: () => Promise<Response>) => {
   setTestRuntimeGame({ hero: { characterId: "12345" }, world: "luvia" });
 
   const fetch = vi.fn<typeof globalThis.fetch>(() =>
     Promise.resolve(Response.json({ weapons: [{ itemId: "555", kills: 3 }] })),
   );
+
+  if (firstRead) fetch.mockImplementationOnce(firstRead);
 
   onTestFinished(
     configureApiClients({
@@ -70,11 +73,11 @@ it("leaves the tips of other item classes unchanged", async () => {
 });
 
 it("retries a failed counter read shortly instead of holding it for minutes", async () => {
-  const { fetch, getTip } = setUp();
   const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
   onTestFinished(() => warn.mockRestore());
-  fetch.mockImplementationOnce(() =>
+
+  const { getTip } = setUp(() =>
     Promise.resolve(Response.json({ message: "down" }, { status: 503 })),
   );
 
@@ -96,4 +99,25 @@ it("retries a failed counter read shortly instead of holding it for minutes", as
   await waitFor(() => expect(weapon.setTip).toHaveBeenCalled());
 
   expect(getTip(weapon)).toContain("Zabici gracze: 3");
+});
+
+it("keeps a counter recorded while an older read was in flight", async () => {
+  let answerRead: (response: Response) => void = () => {};
+
+  const { fetch, getTip } = setUp(
+    () =>
+      new Promise((resolve) => {
+        answerRead = resolve;
+      }),
+  );
+
+  const weapon = { id: 555, cl: 1, own: 12345, setTip: vi.fn() };
+
+  await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+  setWeaponKills("luvia", "12345", "555", 4);
+  answerRead(Response.json({ weapons: [{ itemId: "555", kills: 3 }] }));
+  // Let the read's response settle into the cache.
+  await new Promise((resolve) => setTimeout(resolve, 10));
+
+  expect(getTip(weapon)).toContain("Zabici gracze: 4");
 });

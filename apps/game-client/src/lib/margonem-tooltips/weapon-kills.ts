@@ -31,7 +31,9 @@ type CharacterCounters = {
 
 const counters = new Map<string, CharacterCounters>();
 
-const pendingLoads = new Set<string>();
+// Counters the server returned after recording kills while a read of the
+// same owner was in flight; they are newer than what the read returns.
+const pendingLoads = new Map<string, Map<string, number>>();
 
 // Items whose tip was built before their owner's counters arrived.
 const itemsAwaitingCounters = new Map<string, Set<RuntimeTipItem>>();
@@ -77,13 +79,16 @@ function loadCounters(world: string, characterId: string): void {
   const key = toKey(world, characterId);
 
   if (pendingLoads.has(key)) return;
-  pendingLoads.add(key);
+
+  const recordedDuringLoad = new Map<string, number>();
+  pendingLoads.set(key, recordedDuringLoad);
 
   weaponKillsControllerGetCharacterWeaponKills({ world, characterId })
     .then(({ weapons: loaded }) => {
-      const weapons = new Map(
-        loaded.map(({ itemId, kills }) => [itemId, kills]),
-      );
+      const weapons = new Map([
+        ...loaded.map(({ itemId, kills }): [string, number] => [itemId, kills]),
+        ...recordedDuringLoad,
+      ]);
 
       storeCounters(key, { weapons, expiresAt: Date.now() + COUNTERS_TTL_MS });
       refreshCharacterItems(key, characterId, weapons);
@@ -98,7 +103,8 @@ function loadCounters(world: string, characterId: string): void {
       });
     })
     .finally(() => {
-      pendingLoads.delete(key);
+      if (pendingLoads.get(key) === recordedDuringLoad)
+        pendingLoads.delete(key);
     });
 }
 
@@ -144,6 +150,7 @@ export function setWeaponKills(
   const weapons = new Map(entry?.weapons);
 
   weapons.set(itemId, kills);
+  pendingLoads.get(key)?.set(itemId, kills);
   storeCounters(key, { weapons, expiresAt: entry?.expiresAt ?? 0 });
   refreshCharacterItems(key, characterId, new Map([[itemId, kills]]));
 }

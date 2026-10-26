@@ -136,6 +136,58 @@ it("records the hero's finishing blow with the worn weapon even when battles are
   );
 });
 
+const submittedBattleKeys = async (requests: Request[]) =>
+  Promise.all(
+    weaponKills(requests).map(async (request) => {
+      const { battleKey } = await request.clone().json();
+
+      return battleKey;
+    }),
+  );
+
+it("keeps the battle key when a reload makes Margonem send the battle again", async () => {
+  const fixture = createBattleTest();
+  wearMainWeapon(987654);
+  signMargonemProofs();
+  const firstRow = "12345=100;222=40;+dmg=600;-dmg=600";
+  const blow = "12345=100;222=0;+dmg=400;-dmg=400";
+
+  // The battle starts, then the page reloads and Margonem resends it.
+  await new BattleEventProcessor().handle(heroDuel([firstRow]));
+  const reloaded = new BattleEventProcessor();
+  await reloaded.handle(heroDuel([firstRow]));
+  await reloaded.handle({ f: { m: [blow] } });
+  await reloaded.handle(end);
+  // Margonem repeats the ended battle after another reload.
+  await new BattleEventProcessor().handle({
+    f: { ...heroDuel([firstRow, blow]).f, endBattle: 1 },
+  });
+
+  await waitFor(() => expect(weaponKills(fixture.requests)).toHaveLength(2));
+  const [first, repeated] = await submittedBattleKeys(fixture.requests);
+
+  expect(repeated).toBe(first);
+});
+
+it("gives a new battle against the same opponents its own key", async () => {
+  const fixture = createBattleTest();
+  wearMainWeapon(987654);
+  signMargonemProofs();
+  const processor = new BattleEventProcessor();
+
+  const duel = heroDuel(["12345=100;222=0;+dmg=900;-dmg=900"]);
+
+  await processor.handle(duel);
+  await processor.handle(end);
+  await processor.handle(duel);
+  await processor.handle(end);
+
+  await waitFor(() => expect(weaponKills(fixture.requests)).toHaveLength(2));
+  const [first, second] = await submittedBattleKeys(fixture.requests);
+
+  expect(second).not.toBe(first);
+});
+
 it("sends no weapon kills when the hero dealt no finishing blow", async () => {
   const fixture = createBattleTest();
   wearMainWeapon(987654);
