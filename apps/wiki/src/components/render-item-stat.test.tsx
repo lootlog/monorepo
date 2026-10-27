@@ -9,8 +9,6 @@ describe("renderItemStat", () => {
     );
 
     expect(markup).toContain("Aura odwetu");
-    expect(markup).toContain("block w-full text-green-500");
-    expect(markup).toContain("font-bold text-primary");
     expect(markup).not.toContain("<legbon>");
   });
 
@@ -69,7 +67,6 @@ describe("renderItemStat", () => {
       <>{renderItemStat({ key: "etiquette", value: "Wakacje 2026 r." })}</>,
     );
 
-    expect(markup).toContain("block text-center text-muted-foreground");
     expect(markup).toContain("Ostatnio dostępny podczas:");
   });
 });

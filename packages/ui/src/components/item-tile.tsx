@@ -1,6 +1,7 @@
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
 import {
+  ITEM_STAT_FOOTER_SECTIONS,
   mapStatsToDisplaySections,
   parseItemStats,
   type ItemDisplayValue,
@@ -27,7 +28,6 @@ export type ItemTileLabels = {
   obtainedBy?: string;
   rarity: Record<string, string>;
   type: Record<string, string>;
-  typePrefix: string;
 };
 
 export type ItemTileProps = {
@@ -64,6 +64,46 @@ const fallbackRenderStat = (displayValue: ItemDisplayValue) => {
   );
 };
 
+/**
+ * Each rarity tints the tooltip frame and the ornament under the header
+ * through `--item-rarity`, and colours the rarity label.
+ */
+const RARITY_STYLES: Record<ItemRarity, { accent: string; label: string }> = {
+  [ItemRarity.COMMON]: {
+    accent: "[--item-rarity:var(--muted-foreground)]",
+    label: "text-muted-foreground",
+  },
+  [ItemRarity.HEROIC]: {
+    accent: "[--item-rarity:#3b82f6]",
+    label: "text-blue-400",
+  },
+  [ItemRarity.LEGENDARY]: {
+    accent: "[--item-rarity:#f97316]",
+    label: "text-orange-400",
+  },
+  [ItemRarity.UNIQUE]: {
+    accent: "[--item-rarity:#fcd34d]",
+    label: "text-amber-300",
+  },
+  [ItemRarity.UPGRADED]: {
+    accent: "[--item-rarity:var(--primary)]",
+    label: "text-primary",
+  },
+};
+
+const renderStatRows = (
+  values: ItemDisplayValue[],
+  renderStat: (displayValue: ItemDisplayValue) => ReactNode,
+) =>
+  values.map((displayValue) => (
+    <div
+      key={`${displayValue.key}-${formatFallbackValue(displayValue.value)}`}
+      className="whitespace-pre-line"
+    >
+      {renderStat(displayValue)}
+    </div>
+  ));
+
 const ItemTileTooltipBody: FC<
   Required<Pick<ItemTileProps, "color" | "labels" | "renderStat">> & {
     icon: string;
@@ -84,58 +124,68 @@ const ItemTileTooltipBody: FC<
   stat,
   type,
 }) => {
-  const rarityClassName = cn("text-xs font-semibold", {
-    "text-amber-300": rarity === ItemRarity.UNIQUE,
-    "text-blue-500": rarity === ItemRarity.HEROIC,
-    "text-muted-foreground": rarity === ItemRarity.COMMON,
-    "text-orange-600": rarity === ItemRarity.LEGENDARY,
-    "text-primary text-sm": rarity === ItemRarity.UPGRADED,
-  });
-
   const statSections = mapStatsToDisplaySections(parseItemStats(stat));
+
+  const bodySections = statSections.filter(
+    ({ index }) => !ITEM_STAT_FOOTER_SECTIONS.has(index),
+  );
+
+  const footerValues = statSections
+    .filter(({ index }) => ITEM_STAT_FOOTER_SECTIONS.has(index))
+    .flatMap(({ values }) => values);
+
+  const showObtainedBy = Boolean(shareNickname && labels.obtainedBy);
+
+  const typeLabel = type ? (labels.type[type] ?? type) : null;
 
   return (
     <>
-      <div className="flex flex-row items-center justify-between border-b border-border/50 pb-2">
-        <div className="flex flex-col justify-between">
-          <p className="font-heading mr-8 mt-0 text-md font-semibold tracking-tight text-foreground">
+      <div className="flex items-center gap-3 px-3 pt-3 pb-2.5">
+        <ItemImage
+          className="shrink-0"
+          color={color}
+          icon={icon}
+          rarity={rarity}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="font-heading text-sm leading-snug font-semibold text-balance text-foreground">
             {name}
           </p>
-          <p className={rarityClassName}>{labels.rarity[rarity] ?? rarity}</p>
-          <p className="text-xs text-muted-foreground">
-            {labels.typePrefix}
-            {labels.type[type] ?? type}
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            <span className={cn("font-medium", RARITY_STYLES[rarity].label)}>
+              {labels.rarity[rarity] ?? rarity}
+            </span>
+            {typeLabel ? <> · {typeLabel}</> : null}
           </p>
         </div>
-        <ItemImage color={color} icon={icon} rarity={rarity} />
       </div>
-      <div className="flex flex-col gap-2 pt-2 text-xs">
-        {statSections.map(({ index: sectionIndex, values }, index) => {
-          return (
-            <div
-              key={sectionIndex}
-              className={cn("flex flex-col gap-0.5 pb-2", {
-                "border-b border-border/50": index < statSections.length - 1,
-              })}
-            >
-              {values.map((displayValue) => (
-                <div
-                  key={`${displayValue.key}-${formatFallbackValue(
-                    displayValue.value,
-                  )}`}
-                  className="whitespace-pre-line text-xs text-foreground"
-                >
-                  {renderStat(displayValue)}
-                </div>
-              ))}
+      <div aria-hidden="true" className="flex items-center gap-1.5 px-3">
+        <span className="h-px flex-1 bg-[color-mix(in_oklab,var(--item-rarity)_45%,transparent)]" />
+        <span className="size-1 rotate-45 bg-[color-mix(in_oklab,var(--item-rarity)_60%,transparent)]" />
+        <span className="size-1.5 rotate-45 bg-(--item-rarity)" />
+        <span className="size-1 rotate-45 bg-[color-mix(in_oklab,var(--item-rarity)_60%,transparent)]" />
+        <span className="h-px flex-1 bg-[color-mix(in_oklab,var(--item-rarity)_45%,transparent)]" />
+      </div>
+      {bodySections.length > 0 ? (
+        <div className="flex flex-col divide-y divide-border px-3 text-xs leading-5 text-pretty text-foreground/85">
+          {bodySections.map(({ index, values }) => (
+            <div key={index} className="flex flex-col gap-0.5 py-2">
+              {renderStatRows(values, renderStat)}
             </div>
-          );
-        })}
-      </div>
-      {shareNickname && labels.obtainedBy ? (
-        <div className="py-2 text-xs text-muted-foreground">
-          {labels.obtainedBy}{" "}
-          <span className="font-semibold text-foreground">{shareNickname}</span>
+          ))}
+        </div>
+      ) : null}
+      {footerValues.length > 0 || showObtainedBy ? (
+        <div className="flex flex-col gap-0.5 border-t border-border bg-muted/30 px-3 py-2 text-xs leading-5 text-pretty text-muted-foreground">
+          {renderStatRows(footerValues, renderStat)}
+          {showObtainedBy ? (
+            <div>
+              {labels.obtainedBy}{" "}
+              <span className="font-semibold text-foreground">
+                {shareNickname}
+              </span>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </>
@@ -155,15 +205,8 @@ export const ItemTile: FC<ItemTileProps> = ({
   const triggerClassName = "w-fit appearance-none border-0 bg-transparent p-0";
 
   const tooltipBorderClassName = cn(
-    "w-80 p-3 pb-0 bg-popover/95 backdrop-blur-md",
-    {
-      "border border-border/50": normalizedRarity === ItemRarity.COMMON,
-      "border-2 border-amber-300/80": normalizedRarity === ItemRarity.UNIQUE,
-      "border-2 border-blue-500/80": normalizedRarity === ItemRarity.HEROIC,
-      "border-2 border-orange-600/80":
-        normalizedRarity === ItemRarity.LEGENDARY,
-      "border-2 border-primary/40": normalizedRarity === ItemRarity.UPGRADED,
-    },
+    "w-80 overflow-hidden rounded-xl border-[color-mix(in_oklab,var(--item-rarity)_40%,var(--border))] bg-popover/95 p-0 text-left text-wrap backdrop-blur-md",
+    RARITY_STYLES[normalizedRarity].accent,
   );
 
   const itemImage = (
