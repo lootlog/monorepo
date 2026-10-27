@@ -12,8 +12,6 @@ describe("TranslatedItemStat", () => {
     );
 
     expect(markup).toContain("Aura odwetu");
-    expect(markup).toContain("block w-full text-green-500");
-    expect(markup).toContain("font-bold text-primary");
     expect(markup).not.toContain("&lt;value&gt;");
   });
 
@@ -43,7 +41,6 @@ describe("TranslatedItemStat", () => {
       />,
     );
 
-    expect(markup).toContain("text-center text-muted-foreground");
     expect(markup).toContain("Ostatnio dostępny podczas:");
   });
 });

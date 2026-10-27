@@ -2,19 +2,13 @@ import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
 import {
   formatItemDisplayValue,
   getItemStatTemplateValues,
+  ITEM_STAT_TAG_CLASS_NAMES,
   type ItemDisplayValue,
 } from "@lootlog/ui/components/item-stat-utils";
 import itemStats from "@lootlog/ui/i18n/translations/item-stats.json";
 import type { ReactNode } from "react";
 
-const tagClassNames = new Map(
-  Object.entries({
-    description: "block text-center text-muted-foreground",
-    gold: "text-primary",
-    legbon: "block w-full text-green-500",
-    value: "font-bold text-primary",
-  }),
-);
+const tagClassNames = new Map(Object.entries(ITEM_STAT_TAG_CLASS_NAMES));
 
 const translations = createTranslationLookup(itemStats);
 

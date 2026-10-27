@@ -443,7 +443,6 @@ function ItemsRoute() {
     type: Object.fromEntries(
       itemTypeOptions.map((type) => [type, t(`itemType.${type}`)]),
     ),
-    typePrefix: t("itemType.prefix"),
   };
 
   return (
