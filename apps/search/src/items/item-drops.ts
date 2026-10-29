@@ -1,6 +1,6 @@
 import type { GameVersion } from "@lootlog/schema/game-version";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
-import { npcCatalogKey } from "#src/npcs/npcs.service";
+import { npcCatalogKey, npcMonsterKey } from "#src/npcs/npcs.service";
 import { earliestSeenAt, toSeenAt } from "#src/shared/first-seen";
 import type { IndexItemsCommand } from "./index-items-command.js";
 
@@ -10,6 +10,8 @@ export const MAX_DROP_SOURCES = 20;
 /** An NPC an item drops from, as the NPC catalog names it. */
 export type DropSource = {
   key: string;
+  /** The monster across its catalog identities, as `npcMonsterKey` names it. */
+  monsterKey: string;
   id: number;
   identityNamespace: NpcIdentityNamespace;
   gameVersion: GameVersion;
@@ -24,6 +26,8 @@ export type ItemDropFields = {
   firstSeenAt: number | null;
   droppedBy: DropSource[];
   droppedByKeys: string[];
+  /** The monsters of `droppedBy`, so any identity of one finds its drops. */
+  droppedByMonsterKeys: string[];
   /** The NPC types of `droppedBy`, for filtering by the kind of boss. */
   droppedByTypes: string[];
 };
@@ -38,6 +42,7 @@ const toDropSource = (
     ? null
     : {
         key: npcCatalogKey({ ...npc, margonemType: npc.margonemType }),
+        monsterKey: npcMonsterKey(npc),
         id: npc.id,
         identityNamespace: npc.identityNamespace,
         gameVersion: npc.gameVersion,
@@ -54,6 +59,7 @@ export const toItemDropFields = (item: IndexItem): ItemDropFields => {
     firstSeenAt: toSeenAt(item.observedAt),
     droppedBy: source ? [source] : [],
     droppedByKeys: source ? [source.key] : [],
+    droppedByMonsterKeys: source ? [source.monsterKey] : [],
     droppedByTypes: source?.type ? [source.type] : [],
   };
 };
@@ -82,6 +88,11 @@ export const mergeItemDropFields = (
     firstSeenAt: earliestSeenAt(incoming.firstSeenAt, stored?.firstSeenAt),
     droppedBy,
     droppedByKeys: droppedBy.map(({ key }) => key),
+    droppedByMonsterKeys: [
+      ...new Set(
+        droppedBy.flatMap(({ monsterKey }) => (monsterKey ? [monsterKey] : [])),
+      ),
+    ],
     droppedByTypes: [
       ...new Set(droppedBy.flatMap(({ type }) => (type ? [type] : []))),
     ],

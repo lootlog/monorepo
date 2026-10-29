@@ -76,10 +76,54 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const levelFilter = (operator: ">=" | "<=", level: number | undefined) =>
   level === undefined ? undefined : `lvl ${operator} ${Math.floor(level)}`;
 
+/** The item filters of a query; `monsterKey` is the drop source's monster. */
+const itemFilters = (
+  query: CatalogControllerGetItemsQuery,
+  monsterKey: string | undefined,
+) => {
+  const types = query.types?.filter((type) => ITEM_TYPE.test(type));
+
+  return [
+    query.ids?.length ? inFilter("id", query.ids) : undefined,
+    query.rarities?.length ? inFilter("rarity", query.rarities) : undefined,
+    types?.length ? inFilter("type", types) : undefined,
+    query.professions?.length
+      ? inFilter("requiredProfessions", query.professions)
+      : undefined,
+    levelFilter(">=", query.minLevel),
+    levelFilter("<=", query.maxLevel),
+    ...(query.statKeys ?? []).map(
+      (key) => `statsKeys = ${JSON.stringify(key)}`,
+    ),
+    query.dropSourceTypes?.length
+      ? inFilter("droppedByTypes", query.dropSourceTypes)
+      : undefined,
+    query.firstSeenWithinDays === undefined
+      ? undefined
+      : `firstSeenAt >= ${Date.now() - Math.max(query.firstSeenWithinDays, 0) * DAY_MS}`,
+    monsterKey === undefined
+      ? undefined
+      : `droppedByMonsterKeys = ${JSON.stringify(monsterKey)}`,
+    query.droppedBy === undefined || monsterKey !== undefined
+      ? undefined
+      : `droppedByKeys = ${JSON.stringify(query.droppedBy)}`,
+  ].filter((filter) => filter !== undefined);
+};
+
 export const makeCatalogModule = (
   meilisearch: Meilisearch,
   logger: AppLogger,
 ) => {
+  /** The monster an NPC key belongs to; none for an entry indexed before. */
+  const findMonsterKey = (npcKey: string) =>
+    attemptMeilisearch("catalog.npcs.monster", () =>
+      meilisearch.index<{ monsterKey?: string }>(NPCS_INDEX).search("", {
+        filter: `uid = ${JSON.stringify(npcKey)}`,
+        limit: 1,
+        attributesToRetrieve: ["monsterKey"],
+      }),
+    ).pipe(Effect.map(({ hits }) => hits[0]?.monsterKey));
+
   const getItems = Effect.fn("Catalog.items")(function* (
     query: CatalogControllerGetItemsQuery,
   ) {
@@ -88,30 +132,13 @@ export const makeCatalogModule = (
       return { hits: [], estimatedTotalHits: 0 };
     }
 
-    const types = query.types?.filter((type) => ITEM_TYPE.test(type));
-
-    const filters = [
-      query.ids?.length ? inFilter("id", query.ids) : undefined,
-      query.rarities?.length ? inFilter("rarity", query.rarities) : undefined,
-      types?.length ? inFilter("type", types) : undefined,
-      query.professions?.length
-        ? inFilter("requiredProfessions", query.professions)
-        : undefined,
-      levelFilter(">=", query.minLevel),
-      levelFilter("<=", query.maxLevel),
-      ...(query.statKeys ?? []).map(
-        (key) => `statsKeys = ${JSON.stringify(key)}`,
-      ),
-      query.dropSourceTypes?.length
-        ? inFilter("droppedByTypes", query.dropSourceTypes)
-        : undefined,
-      query.firstSeenWithinDays === undefined
-        ? undefined
-        : `firstSeenAt >= ${Date.now() - Math.max(query.firstSeenWithinDays, 0) * DAY_MS}`,
+    // Any identity of a monster lists the drops of all of them.
+    const monsterKey =
       query.droppedBy === undefined
         ? undefined
-        : `droppedByKeys = ${JSON.stringify(query.droppedBy)}`,
-    ].filter((filter) => filter !== undefined);
+        : yield* findMonsterKey(query.droppedBy);
+
+    const filters = itemFilters(query, monsterKey);
 
     const params: SearchParams = {
       ...page(query),
@@ -152,6 +179,7 @@ export const makeCatalogModule = (
           ({
             identityNamespace: _namespace,
             gameVersion: _edition,
+            monsterKey: _monster,
             ...source
           }) => source,
         ),
@@ -188,6 +216,8 @@ export const makeCatalogModule = (
       ],
       filter: filters.length > 0 ? filters.join(" AND ") : undefined,
       sort: sortBy(query.sort),
+      // Pages and counts are over monsters, not over their catalog identities.
+      distinct: "monsterKey",
     };
 
     const response = yield* attemptMeilisearch("catalog.npcs", () =>

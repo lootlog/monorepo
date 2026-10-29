@@ -233,6 +233,7 @@ function npcDrop(id: number, name: string) {
     indexed,
     source: {
       key: npcCatalogKey(indexed),
+      monsterKey: `pl_${name}_HERO`,
       id,
       identityNamespace: "template",
       gameVersion: "pl",
