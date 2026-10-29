@@ -86,10 +86,9 @@ export interface GameSessionJoinData {
 }
 
 export const getGameSessionIdentity = (
-  data: Pick<
-    GameSessionJoinData,
-    "world" | "accountId" | "characterId" | "clan"
-  >,
+  data: Pick<GameSessionJoinData, "world" | "accountId" | "characterId"> & {
+    readonly clan?: { readonly id: number };
+  },
 ): string =>
   JSON.stringify([data.world, data.accountId, data.characterId, data.clan?.id]);
 
