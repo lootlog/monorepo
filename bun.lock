@@ -444,6 +444,7 @@
       "version": "0.1.10",
       "dependencies": {
         "@lootlog/client": "workspace:*",
+        "@lootlog/domain": "workspace:*",
         "@lootlog/ui": "workspace:*",
         "@tanstack/react-query": "catalog:",
         "@tanstack/react-query-devtools": "catalog:",

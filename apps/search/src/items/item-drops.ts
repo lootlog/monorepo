@@ -53,7 +53,12 @@ const toDropSource = (
       };
 
 export const toItemDropFields = (item: IndexItem): ItemDropFields => {
-  const source = item.droppedBy && toDropSource(item.droppedBy);
+  // Some older loots name another edition's NPC; its page lists none of the
+  // item's edition, so it is no source of it.
+  const source =
+    item.droppedBy?.gameVersion === item.gameVersion
+      ? toDropSource(item.droppedBy)
+      : null;
 
   return {
     firstSeenAt: toSeenAt(item.observedAt),

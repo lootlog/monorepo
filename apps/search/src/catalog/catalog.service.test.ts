@@ -107,14 +107,18 @@ test("lists a monster's drops from any of its identities, without worlds or when
   expect(searches[0]?.attributesToRetrieve).not.toContain("firstSeenAt");
 });
 
-test("a malformed NPC key matches nothing instead of reaching the filter", async () => {
+test("a malformed NPC key or event slug matches nothing instead of reaching the filter", async () => {
   const { catalog, searches } = catalogWith([]);
 
-  const response = await Effect.runPromise(
-    catalog.getItems({ droppedBy: 'x" OR rarity EXISTS OR "' }),
-  );
+  for (const query of [
+    { droppedBy: 'x" OR rarity EXISTS OR "' },
+    { event: 'wakacje-2026" OR rarity EXISTS OR "' },
+  ]) {
+    const response = await Effect.runPromise(catalog.getItems(query));
 
-  expect(response).toEqual({ hits: [], estimatedTotalHits: 0 });
+    expect(response).toEqual({ hits: [], estimatedTotalHits: 0 });
+  }
+
   expect(searches).toEqual([]);
 });
 
@@ -131,19 +135,21 @@ test("finds one edition's NPCs by id", async () => {
   expect(npcSearches[0]?.attributesToRetrieve).not.toContain("firstSeenAt");
 });
 
-test("narrows items to one edition's drops of a kind of boss that carry the required stats and bonuses", async () => {
+test("narrows items to one edition's event drops of a kind of boss that carry the required stats and bonuses and lack the excluded ones", async () => {
   const { catalog, searches } = catalogWith([]);
 
   await Effect.runPromise(
     catalog.getItems({
       gameVersion: "pl",
       statKeys: ["legbon", "crit"],
+      excludedStatKeys: ["etiquette"],
       legendaryBonuses: ["verycrit", "curse"],
       dropSourceTypes: ["TITAN"],
+      event: "wakacje-2026",
     }),
   );
 
   expect(searches[0]?.filter).toBe(
-    `gameVersion = "pl" AND statsKeys = "legbon" AND statsKeys = "crit" AND legendaryBonus IN ["verycrit", "curse"] AND droppedByTypes IN ["TITAN"]`,
+    `gameVersion = "pl" AND statsKeys = "legbon" AND statsKeys = "crit" AND NOT statsKeys = "etiquette" AND legendaryBonus IN ["verycrit", "curse"] AND droppedByTypes IN ["TITAN"] AND eventSlugs = "wakacje-2026"`,
   );
 });

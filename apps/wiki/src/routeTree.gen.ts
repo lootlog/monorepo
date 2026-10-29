@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ItemsRouteImport } from './routes/items'
 import { Route as NpcsRouteImport } from './routes/npcs'
+import { Route as EventsEventSlugRouteImport } from './routes/events.$eventSlug'
 import { Route as ItemsItemSlugRouteImport } from './routes/items_.$itemSlug'
 import { Route as NpcsNpcSlugRouteImport } from './routes/npcs_.$npcSlug'
 import { Route as ThemesSplatRouteImport } from './routes/themes.$'
@@ -29,6 +30,11 @@ const ItemsRoute = ItemsRouteImport.update({
 const NpcsRoute = NpcsRouteImport.update({
   id: '/npcs',
   path: '/npcs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsEventSlugRoute = EventsEventSlugRouteImport.update({
+  id: '/events/$eventSlug',
+  path: '/events/$eventSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ItemsItemSlugRoute = ItemsItemSlugRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
+  '/events/$eventSlug': typeof EventsEventSlugRoute
   '/items/$itemSlug': typeof ItemsItemSlugRoute
   '/npcs/$npcSlug': typeof NpcsNpcSlugRoute
   '/themes/$': typeof ThemesSplatRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
+  '/events/$eventSlug': typeof EventsEventSlugRoute
   '/items/$itemSlug': typeof ItemsItemSlugRoute
   '/npcs/$npcSlug': typeof NpcsNpcSlugRoute
   '/themes/$': typeof ThemesSplatRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
+  '/events/$eventSlug': typeof EventsEventSlugRoute
   '/items_/$itemSlug': typeof ItemsItemSlugRoute
   '/npcs_/$npcSlug': typeof NpcsNpcSlugRoute
   '/themes/$': typeof ThemesSplatRoute
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
     | '/'
     | '/items'
     | '/npcs'
+    | '/events/$eventSlug'
     | '/items/$itemSlug'
     | '/npcs/$npcSlug'
     | '/themes/$'
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/items'
     | '/npcs'
+    | '/events/$eventSlug'
     | '/items/$itemSlug'
     | '/npcs/$npcSlug'
     | '/themes/$'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/items'
     | '/npcs'
+    | '/events/$eventSlug'
     | '/items_/$itemSlug'
     | '/npcs_/$npcSlug'
     | '/themes/$'
@@ -103,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ItemsRoute: typeof ItemsRoute
   NpcsRoute: typeof NpcsRoute
+  EventsEventSlugRoute: typeof EventsEventSlugRoute
   ItemsItemSlugRoute: typeof ItemsItemSlugRoute
   NpcsNpcSlugRoute: typeof NpcsNpcSlugRoute
   ThemesSplatRoute: typeof ThemesSplatRoute
@@ -129,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/npcs'
       fullPath: '/npcs'
       preLoaderRoute: typeof NpcsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events/$eventSlug': {
+      id: '/events/$eventSlug'
+      path: '/events/$eventSlug'
+      fullPath: '/events/$eventSlug'
+      preLoaderRoute: typeof EventsEventSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/items_/$itemSlug': {
@@ -159,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ItemsRoute: ItemsRoute,
   NpcsRoute: NpcsRoute,
+  EventsEventSlugRoute: EventsEventSlugRoute,
   ItemsItemSlugRoute: ItemsItemSlugRoute,
   NpcsNpcSlugRoute: NpcsNpcSlugRoute,
   ThemesSplatRoute: ThemesSplatRoute,
