@@ -106,10 +106,15 @@ redis.call('ZREM', KEYS[5], ARGV[4])
 return 1
 `;
 
+// One call removes a session from every Organization: KEYS 1 is the expiry
+// index, then presence, metadata and Organization index per Organization.
 export const REMOVE_PRESENCE = `
 -- presence:remove
-redis.call('DEL', KEYS[1], KEYS[2])
-redis.call('SREM', KEYS[3], ARGV[1])
-redis.call('ZREM', KEYS[4], ARGV[2])
+for key = 2, #KEYS, 3 do
+  local arg = 1 + ((key - 2) / 3) * 2
+  redis.call('DEL', KEYS[key], KEYS[key + 1])
+  redis.call('SREM', KEYS[key + 2], ARGV[arg])
+  redis.call('ZREM', KEYS[1], ARGV[arg + 1])
+end
 return 1
 `;

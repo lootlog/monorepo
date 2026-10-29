@@ -68,8 +68,7 @@ describe("AirTagService legacy parity", () => {
         serverTime: 150,
         targets: [],
       }),
-      [1, 0],
-      [1, 0],
+      [1, 0, 0],
       JSON.stringify({
         epochId: "epoch",
         epochStartedAt: 100,
@@ -89,8 +88,7 @@ describe("AirTagService legacy parity", () => {
         removed: [],
         remoteRecipients: true,
       }),
-      [1, 0],
-      [1, 0],
+      [1, 0, 0],
       JSON.stringify({
         epochId: "epoch",
         epochStartedAt: 100,
@@ -132,7 +130,7 @@ describe("AirTagService legacy parity", () => {
       {
         command: {
           ...unusedSetCommands,
-          get: async () => null,
+          mget: async (keys: string[]) => keys.map(() => null),
           eval: async () => {
             const reply = evaluations.shift();
 
@@ -245,7 +243,7 @@ describe("AirTagService legacy parity", () => {
 
             return null;
           },
-          get: () => Promise.reject(new Error("Unexpected Redis read")),
+          mget: () => Promise.reject(new Error("Unexpected Redis read")),
         },
       },
       {
@@ -280,8 +278,7 @@ describe("AirTagService map threats", () => {
     };
 
     const evaluations: Array<string | number[]> = [
-      [1, 0],
-      [1, 0],
+      [1, 0, 0],
       JSON.stringify({
         epochId: "epoch",
         epochStartedAt: 100,
@@ -301,7 +298,7 @@ describe("AirTagService map threats", () => {
     const service = new AirTagService(
       {
         command: {
-          get: async () => null,
+          mget: async (keys: string[]) => keys.map(() => null),
           sadd: async () => 1,
           expire: async () => 1,
           smembers: async () => [],

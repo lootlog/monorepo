@@ -163,8 +163,14 @@ const getLocationAudienceKey = (
   mapId: number,
 ): string => JSON.stringify(["recipient-location", platform, world, mapId]);
 
+// Candidate selection and scope visibility both match a delivered scope.
+const scopeAudienceKeys = new WeakMap<Scope, string[]>();
+
 // Four optional fields produce at most 16 exact/wildcard subscription keys.
 const matchingScopeAudienceKeys = (scope: Scope): string[] => {
+  const cached = scopeAudienceKeys.get(scope);
+
+  if (cached) return cached;
   let keys: Array<Array<string | number | undefined>> = [[scope.topic]];
 
   for (const value of [
@@ -183,7 +189,10 @@ const matchingScopeAudienceKeys = (scope: Scope): string[] => {
     );
   }
 
-  return keys.map((key) => JSON.stringify(key));
+  const audienceKeys = keys.map((key) => JSON.stringify(key));
+  scopeAudienceKeys.set(scope, audienceKeys);
+
+  return audienceKeys;
 };
 
 type RealtimeFederationStore = Pick<RedisGatewayStore, "publish" | "subscribe">;
@@ -203,8 +212,8 @@ export class RealtimeHub {
   private readonly audiences = new Map<string, Set<GatewaySocket>>();
   private readonly locationKeys = new WeakMap<GatewaySocket, string>();
   private readonly backpressuredSockets = new WeakSet<GatewaySocket>();
+  // Insertion order makes the first entry the oldest.
   private readonly seenEventIds = new Set<string>();
-  private readonly seenEventOrder: string[] = [];
   private readonly permissionRebalanceListeners = new Set<
     (discordId: string, userId: string) => Effect.Effect<void, unknown>
   >();
@@ -324,13 +333,13 @@ export class RealtimeHub {
 
     if (!removed) return;
     socket.data.subscriptions.delete(key);
+    const audienceKey = getScopeAudienceKey(removed);
 
     for (const subscription of socket.data.subscriptions.values()) {
-      if (getScopeAudienceKey(subscription) === getScopeAudienceKey(removed))
-        return;
+      if (getScopeAudienceKey(subscription) === audienceKey) return;
     }
 
-    this.removeAudience(getScopeAudienceKey(removed), socket);
+    this.removeAudience(audienceKey, socket);
   }
 
   replaceSubscriptions(
@@ -1118,12 +1127,11 @@ export class RealtimeHub {
   private remember(id: string): boolean {
     if (this.seenEventIds.has(id)) return false;
     this.seenEventIds.add(id);
-    this.seenEventOrder.push(id);
 
-    if (this.seenEventOrder.length > MAX_DEDUPLICATION_ENTRIES) {
-      const evicted = this.seenEventOrder.shift();
+    if (this.seenEventIds.size > MAX_DEDUPLICATION_ENTRIES) {
+      const evicted = this.seenEventIds.values().next().value;
 
-      if (evicted) this.seenEventIds.delete(evicted);
+      if (evicted !== undefined) this.seenEventIds.delete(evicted);
     }
 
     return true;
