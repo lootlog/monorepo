@@ -3,6 +3,8 @@ import { parseRuntimeFacts } from "@/lib/margonem-runtime/runtime-event-parser";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
 import { configureApiClients } from "@lootlog/client/transport";
+import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/client/main";
+import { queryClient } from "@/lib/query-client";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
 import { useLootStore } from "@/store/game-store/loot.store";
@@ -63,6 +65,17 @@ const setDialogNpcContext = (
     .getState()
     .setNpcContext({ npcId, npc, source: "talk-request" });
 
+const configKey =
+  getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+    accountId: "202",
+  });
+
+const seedCatchingGuildIds = (
+  catchingGuildIds: string[],
+  options: { updatedAt?: number } = {},
+) =>
+  queryClient.setQueryData(configKey, { "101": { catchingGuildIds } }, options);
+
 const createFixture = () => {
   const processor = new LootEventProcessor();
   const requests: Request[] = [];
@@ -103,6 +116,7 @@ const createFixture = () => {
 };
 
 beforeEach(() => {
+  queryClient.clear();
   useBattleStore.setState({
     battleWarriors: {
       "101": {
@@ -141,7 +155,10 @@ beforeEach(() => {
   useSettingsStore.getState().setLootDebugLoggingEnabled(false);
 });
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  queryClient.clear();
+  vi.restoreAllMocks();
+});
 
 it("captures map characters and the hero once for a legendary elite II loot", async () => {
   const fixture = createFixture();
@@ -242,6 +259,7 @@ it.each([
   "missing-fight-data",
   "empty-parsed-loots",
   "npc-wt-too-low",
+  "no-catching-organization",
   "unknown-game-version",
 ])("reports why battle loot was skipped: %s", (reason) => {
   const fixture = createFixture();
@@ -258,6 +276,8 @@ it.each([
 
   if (reason === "unknown-game-version")
     setTestRuntimeGame({ ...useGameStore.getState().game, gameVersion: null });
+
+  if (reason === "no-catching-organization") seedCatchingGuildIds([]);
 
   if (reason === "npc-wt-too-low")
     useBattleStore.setState({
@@ -319,6 +339,66 @@ it("submits different loot effects that share an event id", async () => {
   expect(await fixture.payload(0)).toMatchObject({ loots: [{ id: 1 }] });
   expect(await fixture.payload(1)).toMatchObject({ loots: [{ id: 2 }] });
   expect(fixture.requests).toHaveLength(2);
+});
+
+// The API rejects loot from a character that catches for no Organization;
+// submitting it only produces a 400 response.
+it.each(["no Organization", "another character only"] as const)(
+  "skips battle and dialog loot while the character catches for %s",
+  (whitelist) => {
+    const fixture = createFixture();
+
+    if (whitelist === "no Organization") seedCatchingGuildIds([]);
+    else
+      queryClient.setQueryData(configKey, {
+        "999": { catchingGuildIds: ["guild-1"] },
+      });
+    fixture.processor.handleLootFromBattle(createBattleLootEvent());
+    setDialogNpcContext(501, createRuntimeNpc());
+    fixture.processor.handleDialogLoot(createLootEvent("dialog"));
+    expect(fixture.requests).toHaveLength(0);
+    expect(useDialogStore.getState().npcContext).toBeNull();
+  },
+);
+
+// Only certain rejections may be skipped: without a current catching scope
+// the API decides, otherwise loot it would accept disappears silently.
+it.each<[string, () => Promise<void>]>([
+  ["has not loaded", async () => {}],
+  [
+    "failed to refresh an empty whitelist",
+    async () => {
+      seedCatchingGuildIds([]);
+      await queryClient
+        .fetchQuery({
+          queryKey: configKey,
+          queryFn: () => Promise.reject(new Error("Configuration unavailable")),
+          retry: false,
+          staleTime: 0,
+        })
+        .catch(() => undefined);
+    },
+  ],
+  [
+    "is older than its stale time",
+    async () => {
+      seedCatchingGuildIds([], { updatedAt: Date.now() - 60_000 });
+    },
+  ],
+  [
+    "catches for an Organization",
+    async () => {
+      seedCatchingGuildIds(["guild-1"]);
+    },
+  ],
+])("submits loot while the catching configuration %s", async (_state, seed) => {
+  const fixture = createFixture();
+  await seed();
+  fixture.processor.handleLootFromBattle(createBattleLootEvent());
+  setDialogNpcContext(501, createRuntimeNpc());
+  fixture.processor.handleDialogLoot(createLootEvent("dialog"));
+  expect(await fixture.payload(0)).toMatchObject({ source: "FIGHT" });
+  expect(await fixture.payload(1)).toMatchObject({ source: "DIALOG" });
 });
 
 it("ignores dialog loot without a tracked NPC", () => {

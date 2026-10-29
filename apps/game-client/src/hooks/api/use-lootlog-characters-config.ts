@@ -5,7 +5,10 @@ import {
   type UserLootlogConfigAccountResponseDtoOutput,
 } from "@lootlog/client/main";
 import { readGameClientBootstrap } from "@/lib/game-client-bootstrap";
+import { queryClient } from "@/lib/query-client";
 import { useGameStore } from "@/store/game.store";
+
+const CHARACTERS_CONFIG_STALE_TIME = 60_000;
 
 /**
  * The catching scope of every character on the current game account, keyed
@@ -36,7 +39,7 @@ export const useLootlogCharactersConfig = ({ enabled = true } = {}) => {
         enabled: enabled && accountId !== "",
         refetchOnMount: false,
         refetchOnWindowFocus: false,
-        staleTime: 60_000,
+        staleTime: CHARACTERS_CONFIG_STALE_TIME,
       },
     },
   );
@@ -61,4 +64,31 @@ export const useCurrentCharacterCatchingGuildIds = ():
   return charactersConfig && characterId
     ? (charactersConfig[characterId]?.catchingGuildIds ?? NO_ORGANIZATIONS)
     : undefined;
+};
+
+/**
+ * The catching scope of a character outside React. A loaded configuration
+ * without this character catches for none. A pending, failed or older load
+ * leaves the scope unknown (`undefined`), so callers defer to the API: it
+ * may already know a scope this cache has not seen.
+ */
+export const getFreshCharacterCatchingGuildIds = (
+  accountId: string,
+  characterId: string,
+): readonly string[] | undefined => {
+  const state =
+    queryClient.getQueryState<UserLootlogConfigAccountResponseDtoOutput>(
+      getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+        accountId,
+      }),
+    );
+
+  if (
+    state?.status !== "success" ||
+    Date.now() - state.dataUpdatedAt >= CHARACTERS_CONFIG_STALE_TIME
+  ) {
+    return undefined;
+  }
+
+  return state.data?.[characterId]?.catchingGuildIds ?? NO_ORGANIZATIONS;
 };
