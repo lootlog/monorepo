@@ -22,6 +22,7 @@ import { makeNotificationGuildLookup } from "#src/notifications/delivery/notific
 import { makeNotificationsEvents } from "#src/notifications/delivery/notifications-events.handler";
 import { makeTimersCleanup } from "#src/timers/timers-cleanup";
 import { makeReservationsCleanup } from "#src/reservations/reservations-cleanup";
+import { makeRetiredDropsPublisher } from "#src/loots/retired-drops";
 import { applicationLogger } from "#src/shared/application-logger";
 import { getUserGuildPermissionsCacheScope } from "#src/shared/cache";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
@@ -297,6 +298,7 @@ export const ScheduledJobs = Layer.effectDiscard(
   Effect.gen(function* () {
     const config = yield* ApiRuntimeConfig;
     const database = yield* ApiDatabase;
+    const rabbit = yield* RabbitMessaging;
 
     const cleanupReservations = makeReservationsCleanup(database, {
       enabled: config.reservationsCleanup.enabled !== "false",
@@ -318,5 +320,9 @@ export const ScheduledJobs = Layer.effectDiscard(
     );
     yield* forkCronTask(cleanupTimers, "0 3 * * *");
     yield* forkCronTask(cleanupReservations, "0 4 * * *");
+    yield* forkCronTask(
+      makeRetiredDropsPublisher(database, rabbit),
+      "30 5 * * *",
+    );
   }),
 );

@@ -1,3 +1,4 @@
+import { sortBy } from "es-toolkit";
 import { Link, Navigate, createFileRoute } from "@tanstack/react-router";
 import { useCatalogControllerGetItems } from "@lootlog/client/search";
 import { Card } from "@lootlog/ui/components/card";
@@ -104,39 +105,50 @@ function ItemRoute() {
               </p>
             ) : (
               <ul className="flex flex-col gap-2">
-                {item.droppedBy.map((npc) => (
-                  <li
-                    key={npc.key}
-                    className="flex items-center gap-3 rounded-lg border border-border/50 bg-card p-3"
-                  >
-                    <NpcTile
-                      npc={{
-                        icon: npc.icon,
-                        lvl: npc.lvl ?? undefined,
-                        name: npc.name,
-                      }}
-                      levelLabel={(level) => t("common.levelShort", { level })}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground">
-                        {npc.name}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {npc.type ? t(`npcTypes.${npc.type}`) : null}
-                        {npc.lvl === null
-                          ? null
-                          : ` · ${t("common.levelShort", { level: npc.lvl })}`}
-                      </p>
-                    </div>
-                    <ChevronLink
-                      render={
-                        <Link to="/npcs/$npcSlug" params={npcPageParams(npc)} />
-                      }
+                {/* Monsters that still drop the item come first. */}
+                {sortBy(item.droppedBy, [({ retired }) => retired]).map(
+                  (npc) => (
+                    <li
+                      key={npc.key}
+                      className="flex items-center gap-3 rounded-lg border border-border/50 bg-card p-3"
                     >
-                      {t("home.open")}
-                    </ChevronLink>
-                  </li>
-                ))}
+                      <NpcTile
+                        npc={{
+                          icon: npc.icon,
+                          lvl: npc.lvl ?? undefined,
+                          name: npc.name,
+                        }}
+                        levelLabel={(level) =>
+                          t("common.levelShort", { level })
+                        }
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {npc.name}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {npc.type ? t(`npcTypes.${npc.type}`) : null}
+                          {npc.lvl === null
+                            ? null
+                            : ` · ${t("common.levelShort", { level: npc.lvl })}`}
+                          {npc.retired
+                            ? ` · ${t("catalog.retiredDrop")}`
+                            : null}
+                        </p>
+                      </div>
+                      <ChevronLink
+                        render={
+                          <Link
+                            to="/npcs/$npcSlug"
+                            params={npcPageParams(npc)}
+                          />
+                        }
+                      >
+                        {t("home.open")}
+                      </ChevronLink>
+                    </li>
+                  ),
+                )}
               </ul>
             )}
           </section>

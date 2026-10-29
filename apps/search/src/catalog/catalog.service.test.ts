@@ -50,7 +50,17 @@ const stored = (
   identityNamespace: "template" | "runtime",
 ) => ({ ...source, identityNamespace, gameVersion: "pl" });
 
-test("lists a monster's drops from any of its identities, without worlds or when Lootlog first saw them", async () => {
+const kostucha = {
+  key: "pl_template_7002_2",
+  monsterKey: "pl_Kostucha_HERO",
+  id: 7002,
+  name: "Kostucha",
+  lvl: 140,
+  icon: "kostucha.gif",
+  type: "HERO",
+};
+
+test("lists a monster's drops from any of its identities, marking the monsters that no longer drop them, without worlds or when Lootlog first saw them", async () => {
   const { catalog, searches } = catalogWith(
     [
       {
@@ -68,7 +78,9 @@ test("lists a monster's drops from any of its identities, without worlds or when
             "runtime",
           ),
           stored(nosferatu, "template"),
+          stored(kostucha, "template"),
         ],
+        retiredDropMonsterKeys: [nosferatu.monsterKey],
       },
     ],
     [{ monsterKey: nosferatu.monsterKey }],
@@ -93,6 +105,16 @@ test("lists a monster's drops from any of its identities, without worlds or when
           lvl: 120,
           icon: "nosferatu.gif",
           type: "HERO",
+          retired: true,
+        },
+        {
+          key: "pl_template_7002_2",
+          id: 7002,
+          name: "Kostucha",
+          lvl: 140,
+          icon: "kostucha.gif",
+          type: "HERO",
+          retired: false,
         },
       ],
     }),
