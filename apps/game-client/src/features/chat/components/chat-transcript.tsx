@@ -27,6 +27,7 @@ import { EmptyState } from "@/components/empty-state";
 import { ScrollToLatestButton } from "@/components/common/scroll-to-latest-button";
 import type { useChatGuildData } from "../hooks/use-chat-guild-data";
 import {
+  getMessageRows,
   getViewportPosition,
   useTranscriptFollow,
 } from "../hooks/use-transcript-follow";
@@ -149,16 +150,18 @@ export const ChatTranscript = ({
     const box = viewport.current.getBoundingClientRect();
 
     if (box.height === 0 || box.width === 0) return;
+    // The scroller's IntersectionObserver narrows the rows to measure; only
+    // rows strictly inside the viewport count as seen.
+    const candidates = new Set(visibleMessageIds);
 
     const visible = new Set(
-      Array.from(
-        viewport.current.querySelectorAll<HTMLElement>("[data-message-id]"),
-      ).flatMap((element) => {
+      getMessageRows(viewport.current).flatMap((element) => {
+        const id = element.dataset.messageId;
+
+        if (id === undefined || !candidates.has(id)) return [];
         const row = element.getBoundingClientRect();
 
-        return row.bottom > box.top && row.top < box.bottom
-          ? [element.dataset.messageId]
-          : [];
+        return row.bottom > box.top && row.top < box.bottom ? [id] : [];
       }),
     );
 

@@ -1,5 +1,5 @@
 import { prepareApiKeyEventVisibility } from "#src/realtime/api-key-event-visibility";
-import type { GuildLootEventNpc } from "@lootlog/protocol/rabbit/events";
+import type { GuildLootEventNpc } from "@lootlog/protocol/loot-events";
 import { Option, Schema } from "effect";
 import {
   canViewLoot,
