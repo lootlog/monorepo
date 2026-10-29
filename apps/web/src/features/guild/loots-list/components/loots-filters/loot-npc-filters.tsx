@@ -5,7 +5,7 @@ import {
   SearchCombobox,
   type SearchComboboxOption,
 } from "@/components/filters/search-combobox";
-import { LootFilterPills } from "./loot-filter-pills";
+import { FilterPills } from "@lootlog/ui/components/filter-pills";
 import { LootLevelRangeFilter } from "./loot-level-range-filter";
 import type { useLootFiltersSidebar } from "./use-loot-filters-sidebar";
 
@@ -50,7 +50,7 @@ export const LootNpcFilters = ({
 
   return (
     <>
-      <LootFilterPills
+      <FilterPills
         label={t("loots.filtersPanel.npcSection.npcTypesLabel")}
         options={npcTypeOptions}
         value={filters.npcTypes}

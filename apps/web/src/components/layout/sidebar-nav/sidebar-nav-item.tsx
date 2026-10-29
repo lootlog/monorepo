@@ -1,6 +1,4 @@
-import { Badge } from "@lootlog/ui/components/badge";
-import { Button } from "@lootlog/ui/components/button";
-import { cn } from "cn";
+import { SidebarNavButton } from "@lootlog/ui/components/sidebar-nav-button";
 import { type MouseEvent, type ReactNode, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import * as m from "framer-motion/m";
@@ -40,9 +38,8 @@ export const SidebarNavItem = ({
   const [isHovered, setIsHovered] = useState(false);
 
   const buttonContent = (
-    <Button
-      variant="ghost"
-      render={
+    <SidebarNavButton
+      link={
         available ? (
           <Link
             to={url}
@@ -52,27 +49,11 @@ export const SidebarNavItem = ({
           />
         ) : undefined
       }
-      nativeButton={!available}
-      role={available ? "link" : undefined}
-      className={cn(
-        "justify-between w-full transition-colors duration-200 relative",
-        isActive
-          ? "!bg-primary/12 font-semibold text-primary hover:!bg-primary/15 hover:text-primary"
-          : "font-medium text-muted-foreground hover:text-primary hover:!bg-primary/10",
-      )}
-      disabled={!available}
+      isActive={isActive}
+      icon={icon}
+      label={label}
+      badge={badge}
     >
-      <div
-        className={cn("flex items-center", isActive && "[&_svg]:text-primary")}
-      >
-        {icon}
-        {label}
-      </div>
-      {badge && (
-        <Badge variant={badge.variant ?? "default"} className="ml-auto">
-          {badge.content}
-        </Badge>
-      )}
       {isCatTheme && isHovered && !badge ? (
         <span
           className="absolute right-2 top-1/2 pointer-events-none"
@@ -87,7 +68,7 @@ export const SidebarNavItem = ({
           </svg>
         </span>
       ) : null}
-    </Button>
+    </SidebarNavButton>
   );
 
   return (

@@ -4,7 +4,7 @@ import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
-import { surfaceFromColor } from "@/themes/custom-theme";
+import { surfaceFromColor } from "@lootlog/ui/themes/custom-theme";
 import { useRootColors } from "@/themes/root-colors";
 import { withAccent, withSurface } from "@lootlog/domain/custom-theme";
 import { CUSTOM_THEME_TOKEN_KEYS } from "@lootlog/schema/custom-theme";

@@ -1391,6 +1391,283 @@ const ACTIVITY_READINESS_ADDITION: JsonValue = {
 // Intentional additions verified against HTTP, persistence and authorization tests:
 // activity/src/online/online-repository.integration.test.ts;
 // api/test/kill-analytics.integration.test.ts, user-feed.integration.test.ts and records.operations.test.ts.
+// The public catalog, readable without signing in. Verified by
+// apps/search/test/http-handler.test.ts and
+// apps/search/src/catalog/catalog.service.test.ts.
+const CATALOG_ITEMS_ADDITION: JsonValue = {
+  operationId: "CatalogController_getItems",
+  parameters: [
+    {
+      name: "search",
+      in: "query",
+      schema: {
+        type: "string",
+      },
+      required: false,
+    },
+    {
+      name: "ids",
+      in: "query",
+      schema: {
+        type: "array",
+        items: {
+          type: "integer",
+          minimum: -9007199254740991,
+          maximum: 9007199254740991,
+        },
+      },
+      required: false,
+      style: "form",
+      explode: true,
+    },
+    {
+      name: "rarities",
+      in: "query",
+      schema: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+      },
+      required: false,
+      style: "form",
+      explode: true,
+    },
+    {
+      name: "types",
+      in: "query",
+      schema: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+      },
+      required: false,
+      style: "form",
+      explode: true,
+    },
+    {
+      name: "professions",
+      in: "query",
+      schema: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+      },
+      required: false,
+      style: "form",
+      explode: true,
+    },
+    {
+      name: "minLevel",
+      in: "query",
+      schema: {
+        type: "number",
+      },
+      required: false,
+    },
+    {
+      name: "maxLevel",
+      in: "query",
+      schema: {
+        type: "number",
+      },
+      required: false,
+    },
+    {
+      name: "statKeys",
+      in: "query",
+      schema: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+      },
+      required: false,
+      style: "form",
+      explode: true,
+    },
+    {
+      name: "dropSourceTypes",
+      in: "query",
+      schema: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+      },
+      required: false,
+      style: "form",
+      explode: true,
+    },
+    {
+      name: "firstSeenWithinDays",
+      in: "query",
+      schema: {
+        type: "number",
+      },
+      required: false,
+    },
+    {
+      name: "droppedBy",
+      in: "query",
+      schema: {
+        type: "string",
+        description: "Items that drop from the NPC with this catalog key.",
+      },
+      required: false,
+    },
+    {
+      name: "sort",
+      in: "query",
+      schema: {
+        type: "string",
+        enum: [
+          "relevance",
+          "newest",
+          "lvl:asc",
+          "lvl:desc",
+          "name:asc",
+          "name:desc",
+        ],
+        description: "`newest` orders by the first observation, latest first.",
+      },
+      required: false,
+    },
+    {
+      name: "limit",
+      in: "query",
+      schema: {
+        type: "number",
+        default: 24,
+      },
+      required: false,
+    },
+    {
+      name: "offset",
+      in: "query",
+      schema: {
+        type: "number",
+        default: 0,
+      },
+      required: false,
+    },
+  ],
+  responses: {
+    "200": {
+      description: "Public catalog items",
+      content: {
+        "application/json": {
+          schema: {
+            $ref: "#/components/schemas/CatalogItemsResponseDto_Output",
+          },
+        },
+      },
+    },
+    "503": {
+      description: "",
+      content: {
+        "application/json": {
+          schema: {
+            $ref: "#/components/schemas/SearchUnavailableEncoded",
+          },
+        },
+      },
+    },
+  },
+};
+
+const CATALOG_NPCS_ADDITION: JsonValue = {
+  operationId: "CatalogController_getNpcs",
+  parameters: [
+    {
+      name: "search",
+      in: "query",
+      schema: {
+        type: "string",
+      },
+      required: false,
+    },
+    {
+      name: "keys",
+      in: "query",
+      schema: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+      },
+      required: false,
+      style: "form",
+      explode: true,
+    },
+    {
+      name: "types",
+      in: "query",
+      schema: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+      },
+      required: false,
+      style: "form",
+      explode: true,
+    },
+    {
+      name: "sort",
+      in: "query",
+      schema: {
+        type: "string",
+        enum: ["relevance", "newest"],
+        description: "`newest` orders by the first observation, latest first.",
+      },
+      required: false,
+    },
+    {
+      name: "limit",
+      in: "query",
+      schema: {
+        type: "number",
+        default: 24,
+      },
+      required: false,
+    },
+    {
+      name: "offset",
+      in: "query",
+      schema: {
+        type: "number",
+        default: 0,
+      },
+      required: false,
+    },
+  ],
+  responses: {
+    "200": {
+      description: "Public catalog NPCs",
+      content: {
+        "application/json": {
+          schema: {
+            $ref: "#/components/schemas/CatalogNpcsResponseDto_Output",
+          },
+        },
+      },
+    },
+    "503": {
+      description: "",
+      content: {
+        "application/json": {
+          schema: {
+            $ref: "#/components/schemas/SearchUnavailableEncoded",
+          },
+        },
+      },
+    },
+  },
+};
+
 type FactionWarApiContracts = Record<
   | "GET /faction-wars/current"
   | "POST /faction-wars/{warId}/pick"
@@ -1928,6 +2205,10 @@ const PVP_WINS_BATTLELOG_ADDITIONS: PvpWinsBattlelogContracts = {
 const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
   Object.entries({
     auth: authApiAdditions,
+    search: {
+      "GET /public/catalog/items": CATALOG_ITEMS_ADDITION,
+      "GET /public/catalog/npcs": CATALOG_NPCS_ADDITION,
+    },
     activity: {
       "GET /readyz": ACTIVITY_READINESS_ADDITION,
       "GET /users/@me/activity/online": {

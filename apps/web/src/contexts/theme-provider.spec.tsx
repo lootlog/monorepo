@@ -16,7 +16,7 @@ import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { useTheme } from "@/hooks/context/use-theme";
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { createUserPreferences } from "@/lib/testing/preferences";
-import { THEME_STORAGE_KEY } from "@/themes/catalog";
+import { THEME_STORAGE_KEY } from "@lootlog/ui/themes/catalog";
 import { ThemeProvider } from "./theme-provider";
 
 await initializeTestTranslations();

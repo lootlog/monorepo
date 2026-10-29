@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ItemsRouteImport } from './routes/items'
 import { Route as NpcsRouteImport } from './routes/npcs'
-import { Route as PlayersRouteImport } from './routes/players'
+import { Route as ItemsItemIdRouteImport } from './routes/items_.$itemId'
+import { Route as NpcsNpcKeyRouteImport } from './routes/npcs_.$npcKey'
+import { Route as ThemesSplatRouteImport } from './routes/themes.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,9 +31,19 @@ const NpcsRoute = NpcsRouteImport.update({
   path: '/npcs',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlayersRoute = PlayersRouteImport.update({
-  id: '/players',
-  path: '/players',
+const ItemsItemIdRoute = ItemsItemIdRouteImport.update({
+  id: '/items_/$itemId',
+  path: '/items/$itemId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NpcsNpcKeyRoute = NpcsNpcKeyRouteImport.update({
+  id: '/npcs_/$npcKey',
+  path: '/npcs/$npcKey',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ThemesSplatRoute = ThemesSplatRouteImport.update({
+  id: '/themes/$',
+  path: '/themes/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -39,34 +51,51 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
-  '/players': typeof PlayersRoute
+  '/items/$itemId': typeof ItemsItemIdRoute
+  '/npcs/$npcKey': typeof NpcsNpcKeyRoute
+  '/themes/$': typeof ThemesSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
-  '/players': typeof PlayersRoute
+  '/items/$itemId': typeof ItemsItemIdRoute
+  '/npcs/$npcKey': typeof NpcsNpcKeyRoute
+  '/themes/$': typeof ThemesSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
-  '/players': typeof PlayersRoute
+  '/items_/$itemId': typeof ItemsItemIdRoute
+  '/npcs_/$npcKey': typeof NpcsNpcKeyRoute
+  '/themes/$': typeof ThemesSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/items' | '/npcs' | '/players'
+  fullPaths:
+    '/' | '/items' | '/npcs' | '/items/$itemId' | '/npcs/$npcKey' | '/themes/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/items' | '/npcs' | '/players'
-  id: '__root__' | '/' | '/items' | '/npcs' | '/players'
+  to:
+    '/' | '/items' | '/npcs' | '/items/$itemId' | '/npcs/$npcKey' | '/themes/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/items'
+    | '/npcs'
+    | '/items_/$itemId'
+    | '/npcs_/$npcKey'
+    | '/themes/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ItemsRoute: typeof ItemsRoute
   NpcsRoute: typeof NpcsRoute
-  PlayersRoute: typeof PlayersRoute
+  ItemsItemIdRoute: typeof ItemsItemIdRoute
+  NpcsNpcKeyRoute: typeof NpcsNpcKeyRoute
+  ThemesSplatRoute: typeof ThemesSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -92,11 +121,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NpcsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/players': {
-      id: '/players'
-      path: '/players'
-      fullPath: '/players'
-      preLoaderRoute: typeof PlayersRouteImport
+    '/items_/$itemId': {
+      id: '/items_/$itemId'
+      path: '/items/$itemId'
+      fullPath: '/items/$itemId'
+      preLoaderRoute: typeof ItemsItemIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/npcs_/$npcKey': {
+      id: '/npcs_/$npcKey'
+      path: '/npcs/$npcKey'
+      fullPath: '/npcs/$npcKey'
+      preLoaderRoute: typeof NpcsNpcKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/themes/$': {
+      id: '/themes/$'
+      path: '/themes/$'
+      fullPath: '/themes/$'
+      preLoaderRoute: typeof ThemesSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -106,7 +149,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ItemsRoute: ItemsRoute,
   NpcsRoute: NpcsRoute,
-  PlayersRoute: PlayersRoute,
+  ItemsItemIdRoute: ItemsItemIdRoute,
+  NpcsNpcKeyRoute: NpcsNpcKeyRoute,
+  ThemesSplatRoute: ThemesSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

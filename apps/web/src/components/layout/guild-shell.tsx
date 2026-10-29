@@ -1,6 +1,6 @@
-import { AppContentFrame } from "./app-content-frame";
+import { AppContentFrame } from "@lootlog/ui/components/app-content-frame";
 import { GuildNavigationTopBar } from "@/components/layout/guild-navigation-top-bar";
-import { AppTopBar } from "@/components/layout/app-top-bar";
+import { AppTopBar } from "@lootlog/ui/components/app-top-bar";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { GuildSearchContext } from "@/contexts/guild-search-context";
 import { HeaderSlotsContext } from "@/contexts/header-slots-context";
