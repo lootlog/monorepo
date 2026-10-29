@@ -10287,6 +10287,166 @@ export interface UpdateUserGameAccountPreferencesDto {
   airTags?: UpdateUserGameAccountPreferencesDtoAirTags;
 }
 
+export type GameClientBootstrapResponseDtoOutputUserPreferencesChatAppearanceNpcLayout = typeof GameClientBootstrapResponseDtoOutputUserPreferencesChatAppearanceNpcLayout[keyof typeof GameClientBootstrapResponseDtoOutputUserPreferencesChatAppearanceNpcLayout];
+
+
+export const GameClientBootstrapResponseDtoOutputUserPreferencesChatAppearanceNpcLayout = {
+  tile: 'tile',
+  inline: 'inline',
+  text: 'text',
+} as const;
+
+export type GameClientBootstrapResponseDtoOutputUserPreferencesChatAppearance = {
+  npcLayout: GameClientBootstrapResponseDtoOutputUserPreferencesChatAppearanceNpcLayout;
+  /**
+     * @minimum 70
+     * @maximum 150
+     */
+  fontScalePercent: number;
+  /**
+     * @minimum 0
+     * @maximum 16
+     */
+  messageGapPx: number;
+  showTimestamp: boolean;
+  showGuildLabel: boolean;
+  showNpcAvatar: boolean;
+  showNpcLevel: boolean;
+  showNpcLocationAndCoordinates: boolean;
+};
+
+export type GameClientBootstrapResponseDtoOutputUserPreferencesMutesPlayersItem = {
+  /** @minLength 1 */
+  discordId: string;
+  displayName: string;
+};
+
+export type GameClientBootstrapResponseDtoOutputUserPreferencesMutesNpcsItemNpcType = typeof GameClientBootstrapResponseDtoOutputUserPreferencesMutesNpcsItemNpcType[keyof typeof GameClientBootstrapResponseDtoOutputUserPreferencesMutesNpcsItemNpcType];
+
+
+export const GameClientBootstrapResponseDtoOutputUserPreferencesMutesNpcsItemNpcType = {
+  ELITE2: 'ELITE2',
+  HERO: 'HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+} as const;
+
+export type GameClientBootstrapResponseDtoOutputUserPreferencesMutesNpcsItem = {
+  /** @minLength 1 */
+  npcKey: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcId: number;
+  /** @minLength 1 */
+  name: string;
+  npcType: GameClientBootstrapResponseDtoOutputUserPreferencesMutesNpcsItemNpcType;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  lvl: number;
+  /** @nullable */
+  prof: string | null;
+  /** @nullable */
+  icon: string | null;
+};
+
+export type GameClientBootstrapResponseDtoOutputUserPreferencesMutes = {
+  players: GameClientBootstrapResponseDtoOutputUserPreferencesMutesPlayersItem[];
+  npcs: GameClientBootstrapResponseDtoOutputUserPreferencesMutesNpcsItem[];
+};
+
+/**
+ * @nullable
+ */
+export type GameClientBootstrapResponseDtoOutputUserPreferences = {
+  userId: string;
+  guildsOrder: string[];
+  hiddenGuildIds: string[];
+  theme: string;
+  chatAppearance: GameClientBootstrapResponseDtoOutputUserPreferencesChatAppearance;
+  mutes: GameClientBootstrapResponseDtoOutputUserPreferencesMutes;
+} | null;
+
+/**
+ * @nullable
+ */
+export type GameClientBootstrapResponseDtoOutputLootlogConfig = {[key: string]: {
+  userId: string;
+  accountId: string;
+  characterId: string;
+  catchingGuildIds: string[];
+}} | null;
+
+export type GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsEffective = { [key: string]: unknown };
+
+export type GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsLayersItemScopeType = typeof GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsLayersItemScopeType[keyof typeof GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsLayersItemScopeType];
+
+
+export const GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsLayersItemScopeType = {
+  USER: 'USER',
+  GAME_ACCOUNT: 'GAME_ACCOUNT',
+  CHARACTER: 'CHARACTER',
+  GUILD: 'GUILD',
+} as const;
+
+export type GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsLayersItemScope = {
+  type: GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsLayersItemScopeType;
+  /** @minLength 1 */
+  id: string;
+};
+
+export type GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsLayersItemOverrides = { [key: string]: unknown };
+
+export type GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsLayersItem = {
+  scope: GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsLayersItemScope;
+  overrides: GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsLayersItemOverrides;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  schemaVersion?: number;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  updatedAt?: string;
+};
+
+export type GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsSources = {[key: string]: 'DEFAULT' | {
+  type: 'USER' | 'GAME_ACCOUNT' | 'CHARACTER' | 'GUILD';
+  /** @minLength 1 */
+  id: string;
+}};
+
+export type GameClientBootstrapResponseDtoOutputSettingsDocumentsDomains = {[key: string]: {
+  effective: GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsEffective;
+  layers: GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsLayersItem[];
+  sources: GameClientBootstrapResponseDtoOutputSettingsDocumentsDomainsSources;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  schemaVersion: number;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  updatedAt?: string;
+}};
+
+/**
+ * @nullable
+ */
+export type GameClientBootstrapResponseDtoOutputSettingsDocuments = {
+  domains: GameClientBootstrapResponseDtoOutputSettingsDocumentsDomains;
+} | null;
+
+export type GameClientBootstrapResponseDtoOutputGuildTimerDocumentsGuilds = {[key: string]: SettingsDocumentsResponseDtoOutput};
+
+/**
+ * @nullable
+ */
+export type GameClientBootstrapResponseDtoOutputGuildTimerDocuments = {
+  guilds: GameClientBootstrapResponseDtoOutputGuildTimerDocumentsGuilds;
+} | null;
+
 export interface UserCurrentGuildResponseDtoOutput {
   id: string;
   name: string;
@@ -10298,6 +10458,19 @@ export interface UserCurrentGuildResponseDtoOutput {
   publicStatsCardEnabled: boolean;
   hasLootlogAccess: boolean;
   isAccessDataStale: boolean;
+}
+
+export interface GameClientBootstrapResponseDtoOutput {
+  /** @nullable */
+  accessibleGuilds: UserCurrentGuildResponseDtoOutput[] | null;
+  /** @nullable */
+  userPreferences: GameClientBootstrapResponseDtoOutputUserPreferences;
+  /** @nullable */
+  lootlogConfig: GameClientBootstrapResponseDtoOutputLootlogConfig;
+  /** @nullable */
+  settingsDocuments: GameClientBootstrapResponseDtoOutputSettingsDocuments;
+  /** @nullable */
+  guildTimerDocuments: GameClientBootstrapResponseDtoOutputGuildTimerDocuments;
 }
 
 export type UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout[keyof typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout];
@@ -11061,6 +11234,29 @@ export type UsersControllerGetCurrentUserAccessibleGuilds403 = {
 };
 
 export type UsersControllerGetCurrentUserAccessibleGuilds429 = {
+  message: string;
+};
+
+export type UsersControllerGetGameClientBootstrapParams = {
+/**
+ * @minLength 1
+ */
+gameAccountId: string;
+/**
+ * @minLength 1
+ */
+characterId?: string;
+};
+
+export type UsersControllerGetGameClientBootstrap401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type UsersControllerGetGameClientBootstrap403 = {
+  message: string;
+};
+
+export type UsersControllerGetGameClientBootstrap429 = {
   message: string;
 };
 
@@ -15750,6 +15946,157 @@ export const useGetUsersControllerGetCurrentUserAccessibleGuildsQueryData = () =
   const queryClient = useQueryClient();
   return () =>
     queryClient.getQueryData<Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>>>(getUsersControllerGetCurrentUserAccessibleGuildsQueryKey());
+}
+
+
+
+export const getUsersControllerGetGameClientBootstrapUrl = (params: UsersControllerGetGameClientBootstrapParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/users/@me/game-client/bootstrap?${stringifiedParams}` : `/users/@me/game-client/bootstrap`
+}
+
+/**
+ * Return in one request what the game client reads at startup: accessible guilds, user preferences, the Lootlog configuration of the game account, its settings documents and the timer documents of every accessible guild. Each part applies the access policy of its own endpoint; a part that could not be read is null and must be read from that endpoint.
+ * @summary Get the game client startup data
+ */
+export const usersControllerGetGameClientBootstrap = async (params: UsersControllerGetGameClientBootstrapParams, options?: Parameters<typeof mainFetch>[1]): Promise<GameClientBootstrapResponseDtoOutput> => {
+
+  return mainFetch<GameClientBootstrapResponseDtoOutput>(getUsersControllerGetGameClientBootstrapUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersControllerGetGameClientBootstrapQueryKey = (params?: UsersControllerGetGameClientBootstrapParams,) => {
+    return [
+    `/users/@me/game-client/bootstrap`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getUsersControllerGetGameClientBootstrapQueryOptions = <TData = Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>, TError = ErrorType<RequestValidationError | UsersControllerGetGameClientBootstrap401 | UsersControllerGetGameClientBootstrap403 | UsersControllerGetGameClientBootstrap429>>(params: UsersControllerGetGameClientBootstrapParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersControllerGetGameClientBootstrapQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>> = ({ signal }) => usersControllerGetGameClientBootstrap(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersControllerGetGameClientBootstrapQueryResult = NonNullable<Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>>
+export type UsersControllerGetGameClientBootstrapQueryError = ErrorType<RequestValidationError | UsersControllerGetGameClientBootstrap401 | UsersControllerGetGameClientBootstrap403 | UsersControllerGetGameClientBootstrap429>
+
+
+export function useUsersControllerGetGameClientBootstrap<TData = Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>, TError = ErrorType<RequestValidationError | UsersControllerGetGameClientBootstrap401 | UsersControllerGetGameClientBootstrap403 | UsersControllerGetGameClientBootstrap429>>(
+ params: UsersControllerGetGameClientBootstrapParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersControllerGetGameClientBootstrap<TData = Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>, TError = ErrorType<RequestValidationError | UsersControllerGetGameClientBootstrap401 | UsersControllerGetGameClientBootstrap403 | UsersControllerGetGameClientBootstrap429>>(
+ params: UsersControllerGetGameClientBootstrapParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersControllerGetGameClientBootstrap<TData = Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>, TError = ErrorType<RequestValidationError | UsersControllerGetGameClientBootstrap401 | UsersControllerGetGameClientBootstrap403 | UsersControllerGetGameClientBootstrap429>>(
+ params: UsersControllerGetGameClientBootstrapParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get the game client startup data
+ */
+
+export function useUsersControllerGetGameClientBootstrap<TData = Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>, TError = ErrorType<RequestValidationError | UsersControllerGetGameClientBootstrap401 | UsersControllerGetGameClientBootstrap403 | UsersControllerGetGameClientBootstrap429>>(
+ params: UsersControllerGetGameClientBootstrapParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersControllerGetGameClientBootstrapQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get the game client startup data
+ */
+export const prefetchUsersControllerGetGameClientBootstrapQuery = async <TData = Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>, TError = ErrorType<RequestValidationError | UsersControllerGetGameClientBootstrap401 | UsersControllerGetGameClientBootstrap403 | UsersControllerGetGameClientBootstrap429>>(
+ queryClient: QueryClient, params: UsersControllerGetGameClientBootstrapParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getUsersControllerGetGameClientBootstrapQueryOptions(params,options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useUsersControllerGetGameClientBootstrap} query
+ */
+export const invalidateUsersControllerGetGameClientBootstrap = async (
+ queryClient: QueryClient, params: UsersControllerGetGameClientBootstrapParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getUsersControllerGetGameClientBootstrapQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get the game client startup data
+ */
+export const useSetUsersControllerGetGameClientBootstrapQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: UsersControllerGetGameClientBootstrapParams | undefined,updater: Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>> | undefined) => Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>>({ exact: $exactMatch, queryKey: getUsersControllerGetGameClientBootstrapQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary Get the game client startup data
+ */
+export const useGetUsersControllerGetGameClientBootstrapQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: UsersControllerGetGameClientBootstrapParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof usersControllerGetGameClientBootstrap>>>(getUsersControllerGetGameClientBootstrapQueryKey(params));
 }
 
 
