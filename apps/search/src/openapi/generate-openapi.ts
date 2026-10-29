@@ -63,12 +63,24 @@ preserveOpenApi30Contract(
     "CatalogController_getItems:minLevel": { schema: { type: "number" } },
     "CatalogController_getItems:maxLevel": { schema: { type: "number" } },
     "CatalogController_getItems:statKeys": formArray({ type: "string" }),
+    "CatalogController_getItems:legendaryBonuses": formArray({
+      type: "string",
+    }),
     "CatalogController_getItems:dropSourceTypes": formArray({ type: "string" }),
-    "CatalogController_getItems:firstSeenWithinDays": {
-      schema: { type: "number" },
-    },
     "CatalogController_getItems:limit": numberWithDefault(24),
     "CatalogController_getItems:offset": numberWithDefault(0),
+    "CatalogController_getNpcs:ids": {
+      schema: {
+        type: "array",
+        items: {
+          type: "integer",
+          minimum: Number.MIN_SAFE_INTEGER,
+          maximum: Number.MAX_SAFE_INTEGER,
+        },
+      },
+      style: "form",
+      explode: true,
+    },
     "CatalogController_getNpcs:keys": formArray({ type: "string" }),
     "CatalogController_getNpcs:types": formArray({ type: "string" }),
     "CatalogController_getNpcs:limit": numberWithDefault(24),

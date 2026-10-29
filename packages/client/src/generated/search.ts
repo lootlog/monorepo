@@ -71,11 +71,6 @@ export interface CatalogNpcDtoOutput {
   lvl: number;
   type: CatalogNpcDtoOutputType;
   gameVersion: CatalogNpcDtoOutputGameVersion;
-  /**
-     * The day Lootlog first observed it, `YYYY-MM-DD` in Polish time; null when unknown.
-     * @nullable
-     */
-  firstSeenOn: string | null;
 }
 
 /**
@@ -115,11 +110,6 @@ export interface CatalogItemDtoOutput {
   rarity: string | null;
   /** @nullable */
   type: string | null;
-  /**
-     * The day Lootlog first observed it, `YYYY-MM-DD` in Polish time; null when unknown.
-     * @nullable
-     */
-  firstSeenOn: string | null;
   droppedBy: CatalogDropSourceDtoOutput[];
 }
 
@@ -430,6 +420,10 @@ export type AllControllerSearchAll429 = {
 export type CatalogControllerGetItemsParams = {
 search?: string;
 /**
+ * Only entries of this game edition.
+ */
+gameVersion?: CatalogControllerGetItemsGameVersion;
+/**
  * @items.minimum -9007199254740991
  * @items.maximum 9007199254740991
  */
@@ -440,26 +434,30 @@ professions?: string[];
 minLevel?: number;
 maxLevel?: number;
 statKeys?: string[];
+legendaryBonuses?: string[];
 dropSourceTypes?: string[];
-firstSeenWithinDays?: number;
 /**
  * Items that drop from the NPC with this catalog key.
  */
 droppedBy?: string;
-/**
- * `newest` orders by the first observation, latest first.
- */
 sort?: CatalogControllerGetItemsSort;
 limit?: number;
 offset?: number;
 };
+
+export type CatalogControllerGetItemsGameVersion = typeof CatalogControllerGetItemsGameVersion[keyof typeof CatalogControllerGetItemsGameVersion];
+
+
+export const CatalogControllerGetItemsGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
 
 export type CatalogControllerGetItemsSort = typeof CatalogControllerGetItemsSort[keyof typeof CatalogControllerGetItemsSort];
 
 
 export const CatalogControllerGetItemsSort = {
   relevance: 'relevance',
-  newest: 'newest',
   'lvl:asc': 'lvl:asc',
   'lvl:desc': 'lvl:desc',
   'name:asc': 'name:asc',
@@ -480,22 +478,27 @@ export type CatalogControllerGetItems429 = {
 
 export type CatalogControllerGetNpcsParams = {
 search?: string;
+/**
+ * Only entries of this game edition.
+ */
+gameVersion?: CatalogControllerGetNpcsGameVersion;
+/**
+ * @items.minimum -9007199254740991
+ * @items.maximum 9007199254740991
+ */
+ids?: number[];
 keys?: string[];
 types?: string[];
-/**
- * `newest` orders by the first observation, latest first.
- */
-sort?: CatalogControllerGetNpcsSort;
 limit?: number;
 offset?: number;
 };
 
-export type CatalogControllerGetNpcsSort = typeof CatalogControllerGetNpcsSort[keyof typeof CatalogControllerGetNpcsSort];
+export type CatalogControllerGetNpcsGameVersion = typeof CatalogControllerGetNpcsGameVersion[keyof typeof CatalogControllerGetNpcsGameVersion];
 
 
-export const CatalogControllerGetNpcsSort = {
-  relevance: 'relevance',
-  newest: 'newest',
+export const CatalogControllerGetNpcsGameVersion = {
+  en: 'en',
+  pl: 'pl',
 } as const;
 
 export type CatalogControllerGetNpcs401 = {
@@ -1301,7 +1304,7 @@ export const getCatalogControllerGetItemsUrl = (params?: CatalogControllerGetIte
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["ids","rarities","types","professions","statKeys","dropSourceTypes"];
+    const explodeParameters = ["ids","rarities","types","professions","statKeys","legendaryBonuses","dropSourceTypes"];
 
     if (Array.isArray(value) && explodeParameters.includes(key)) {
       value.forEach((v) => {
@@ -1459,7 +1462,7 @@ export const getCatalogControllerGetNpcsUrl = (params?: CatalogControllerGetNpcs
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["keys","types"];
+    const explodeParameters = ["ids","keys","types"];
 
     if (Array.isArray(value) && explodeParameters.includes(key)) {
       value.forEach((v) => {

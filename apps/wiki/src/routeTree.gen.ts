@@ -12,8 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ItemsRouteImport } from './routes/items'
 import { Route as NpcsRouteImport } from './routes/npcs'
-import { Route as ItemsItemIdRouteImport } from './routes/items_.$itemId'
-import { Route as NpcsNpcKeyRouteImport } from './routes/npcs_.$npcKey'
+import { Route as ItemsItemSlugRouteImport } from './routes/items_.$itemSlug'
+import { Route as NpcsNpcSlugRouteImport } from './routes/npcs_.$npcSlug'
 import { Route as ThemesSplatRouteImport } from './routes/themes.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -31,14 +31,14 @@ const NpcsRoute = NpcsRouteImport.update({
   path: '/npcs',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ItemsItemIdRoute = ItemsItemIdRouteImport.update({
-  id: '/items_/$itemId',
-  path: '/items/$itemId',
+const ItemsItemSlugRoute = ItemsItemSlugRouteImport.update({
+  id: '/items_/$itemSlug',
+  path: '/items/$itemSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NpcsNpcKeyRoute = NpcsNpcKeyRouteImport.update({
-  id: '/npcs_/$npcKey',
-  path: '/npcs/$npcKey',
+const NpcsNpcSlugRoute = NpcsNpcSlugRouteImport.update({
+  id: '/npcs_/$npcSlug',
+  path: '/npcs/$npcSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ThemesSplatRoute = ThemesSplatRouteImport.update({
@@ -51,16 +51,16 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
-  '/items/$itemId': typeof ItemsItemIdRoute
-  '/npcs/$npcKey': typeof NpcsNpcKeyRoute
+  '/items/$itemSlug': typeof ItemsItemSlugRoute
+  '/npcs/$npcSlug': typeof NpcsNpcSlugRoute
   '/themes/$': typeof ThemesSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
-  '/items/$itemId': typeof ItemsItemIdRoute
-  '/npcs/$npcKey': typeof NpcsNpcKeyRoute
+  '/items/$itemSlug': typeof ItemsItemSlugRoute
+  '/npcs/$npcSlug': typeof NpcsNpcSlugRoute
   '/themes/$': typeof ThemesSplatRoute
 }
 export interface FileRoutesById {
@@ -68,24 +68,34 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
-  '/items_/$itemId': typeof ItemsItemIdRoute
-  '/npcs_/$npcKey': typeof NpcsNpcKeyRoute
+  '/items_/$itemSlug': typeof ItemsItemSlugRoute
+  '/npcs_/$npcSlug': typeof NpcsNpcSlugRoute
   '/themes/$': typeof ThemesSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/items' | '/npcs' | '/items/$itemId' | '/npcs/$npcKey' | '/themes/$'
+    | '/'
+    | '/items'
+    | '/npcs'
+    | '/items/$itemSlug'
+    | '/npcs/$npcSlug'
+    | '/themes/$'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/items' | '/npcs' | '/items/$itemId' | '/npcs/$npcKey' | '/themes/$'
+    | '/'
+    | '/items'
+    | '/npcs'
+    | '/items/$itemSlug'
+    | '/npcs/$npcSlug'
+    | '/themes/$'
   id:
     | '__root__'
     | '/'
     | '/items'
     | '/npcs'
-    | '/items_/$itemId'
-    | '/npcs_/$npcKey'
+    | '/items_/$itemSlug'
+    | '/npcs_/$npcSlug'
     | '/themes/$'
   fileRoutesById: FileRoutesById
 }
@@ -93,8 +103,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ItemsRoute: typeof ItemsRoute
   NpcsRoute: typeof NpcsRoute
-  ItemsItemIdRoute: typeof ItemsItemIdRoute
-  NpcsNpcKeyRoute: typeof NpcsNpcKeyRoute
+  ItemsItemSlugRoute: typeof ItemsItemSlugRoute
+  NpcsNpcSlugRoute: typeof NpcsNpcSlugRoute
   ThemesSplatRoute: typeof ThemesSplatRoute
 }
 
@@ -121,18 +131,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NpcsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/items_/$itemId': {
-      id: '/items_/$itemId'
-      path: '/items/$itemId'
-      fullPath: '/items/$itemId'
-      preLoaderRoute: typeof ItemsItemIdRouteImport
+    '/items_/$itemSlug': {
+      id: '/items_/$itemSlug'
+      path: '/items/$itemSlug'
+      fullPath: '/items/$itemSlug'
+      preLoaderRoute: typeof ItemsItemSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/npcs_/$npcKey': {
-      id: '/npcs_/$npcKey'
-      path: '/npcs/$npcKey'
-      fullPath: '/npcs/$npcKey'
-      preLoaderRoute: typeof NpcsNpcKeyRouteImport
+    '/npcs_/$npcSlug': {
+      id: '/npcs_/$npcSlug'
+      path: '/npcs/$npcSlug'
+      fullPath: '/npcs/$npcSlug'
+      preLoaderRoute: typeof NpcsNpcSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/themes/$': {
@@ -149,8 +159,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ItemsRoute: ItemsRoute,
   NpcsRoute: NpcsRoute,
-  ItemsItemIdRoute: ItemsItemIdRoute,
-  NpcsNpcKeyRoute: NpcsNpcKeyRoute,
+  ItemsItemSlugRoute: ItemsItemSlugRoute,
+  NpcsNpcSlugRoute: NpcsNpcSlugRoute,
   ThemesSplatRoute: ThemesSplatRoute,
 }
 export const routeTree = rootRouteImport

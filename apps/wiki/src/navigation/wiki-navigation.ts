@@ -12,8 +12,8 @@ export const EMPTY_ITEMS_SEARCH: ItemsSearch = {
   minLevel: "",
   maxLevel: "",
   stats: "",
+  bonuses: "",
   bosses: "",
-  recent: "",
   sort: "relevance",
 };
 

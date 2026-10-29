@@ -21,9 +21,9 @@ export const SUMMED_STAT_KEYS = [
   "heal",
 ] as const;
 
-export type StatTotals = Partial<
-  Record<(typeof SUMMED_STAT_KEYS)[number], number>
->;
+export type SummedStatKey = (typeof SUMMED_STAT_KEYS)[number];
+
+export type StatTotals = Partial<Record<SummedStatKey, number>>;
 
 const NUMERIC_VALUE = /^[+-]?\d+(?:\.\d+)?$/;
 

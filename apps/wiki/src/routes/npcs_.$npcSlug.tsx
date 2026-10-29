@@ -1,17 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router";
-import {
-  useCatalogControllerGetItems,
-  useCatalogControllerGetNpcs,
-} from "@lootlog/client/search";
+import { Navigate, createFileRoute } from "@tanstack/react-router";
+import { useCatalogControllerGetNpcs } from "@lootlog/client/search";
 import { NpcTile } from "@lootlog/ui/components/npc-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
+import { NpcDrops } from "@/components/npcs/npc-drops";
 import { t } from "@/i18n/messages";
-import { formatFirstSeenOn } from "@/lib/item-options";
+import {
+  catalogSlug,
+  isNpcCatalogKey,
+  npcPageParams,
+  readPageSegment,
+  WIKI_GAME_VERSION,
+} from "@/lib/catalog-links";
 
-const DROPS_LIMIT = 96;
+// A template, a legacy and a runtime identity may share an id.
+const NPC_IDENTITIES = 3;
 
-export const Route = createFileRoute("/npcs_/$npcKey")({
+export const Route = createFileRoute("/npcs_/$npcSlug")({
   component: NpcRoute,
   head: () => ({
     meta: [{ title: `${t("meta.npcTitle")} | ${t("meta.title")}` }],
@@ -19,17 +24,32 @@ export const Route = createFileRoute("/npcs_/$npcKey")({
 });
 
 function NpcRoute() {
-  const { npcKey } = Route.useParams();
+  const { npcSlug } = Route.useParams();
 
-  const npcQuery = useCatalogControllerGetNpcs({ keys: [npcKey], limit: 1 });
+  const segment = readPageSegment(npcSlug);
 
-  const dropsQuery = useCatalogControllerGetItems({
-    droppedBy: npcKey,
-    sort: "newest",
-    limit: DROPS_LIMIT,
-  });
+  // The id finds the monster; old links carry the catalog key instead and
+  // move to the id and name once it loads.
+  const npcQuery = useCatalogControllerGetNpcs(
+    {
+      ...(isNpcCatalogKey(npcSlug)
+        ? { keys: [npcSlug] }
+        : { ids: segment ? [segment.id] : [] }),
+      gameVersion: WIKI_GAME_VERSION,
+      limit: NPC_IDENTITIES,
+    },
+    { query: { enabled: segment !== undefined || isNpcCatalogKey(npcSlug) } },
+  );
 
-  const npc = npcQuery.data?.hits[0];
+  // One id may name monsters of several identities; the name picks one.
+  const npc =
+    npcQuery.data?.hits.find(
+      (hit) => catalogSlug(hit.name) === segment?.slug,
+    ) ?? npcQuery.data?.hits[0];
+
+  if (npc && npcPageParams(npc).npcSlug !== npcSlug) {
+    return <Navigate to="/npcs/$npcSlug" params={npcPageParams(npc)} replace />;
+  }
 
   return (
     <div className="flex flex-col gap-6 py-6">
@@ -37,7 +57,7 @@ function NpcRoute() {
         <p role="alert" className="text-sm text-destructive">
           {t("catalog.loadError")}
         </p>
-      ) : npcQuery.data && !npc ? (
+      ) : (!segment && !isNpcCatalogKey(npcSlug)) || (npcQuery.data && !npc) ? (
         <p className="text-sm text-muted-foreground">
           {t("catalog.npcNotFound")}
         </p>
@@ -61,9 +81,6 @@ function NpcRoute() {
                   <p className="text-sm text-muted-foreground">
                     {t(`npcTypes.${npc.type}`)} ·{" "}
                     {t("common.levelShort", { level: npc.lvl })}
-                    {npc.firstSeenOn
-                      ? ` · ${t("catalog.firstSeenOn", { day: formatFirstSeenOn(npc.firstSeenOn) })}`
-                      : null}
                   </p>
                 </>
               ) : (
@@ -82,13 +99,16 @@ function NpcRoute() {
             >
               {t("catalog.dropsTitle")}
             </h2>
-            <CatalogItemGrid
-              items={dropsQuery.data?.hits}
-              isError={dropsQuery.isError}
-              placeholders={8}
-              emptyLabel={t("catalog.noDropsYet")}
-              showSource={false}
-            />
+            {npc ? (
+              <NpcDrops npcKey={npc.key} />
+            ) : (
+              <CatalogItemGrid
+                items={undefined}
+                isError={false}
+                placeholders={8}
+                emptyLabel=""
+              />
+            )}
           </section>
         </>
       )}

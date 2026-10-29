@@ -21,6 +21,7 @@ describe("createItemSearchFields", () => {
       },
       statsKeys: ["lvl", "upgraded", "soulbound", "ratio", "rarity"],
       requiredProfessions: ["w", "p", "h", "m", "b", "t"],
+      legendaryBonus: null,
     });
   });
 
@@ -35,6 +36,13 @@ describe("createItemSearchFields", () => {
       },
       statsKeys: ["reqp", "lvl"],
       requiredProfessions: ["w", "m"],
+      legendaryBonus: null,
     });
+  });
+
+  it("keeps the legendary bonus without the level it scales with", () => {
+    expect(
+      createItemSearchFields("legbon=lastheal,200;lvl=200").legendaryBonus,
+    ).toBe("lastheal");
   });
 });

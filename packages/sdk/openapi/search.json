@@ -549,6 +549,16 @@
             "required": false
           },
           {
+            "name": "gameVersion",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["en", "pl"],
+              "description": "Only entries of this game edition."
+            },
+            "required": false
+          },
+          {
             "name": "ids",
             "in": "query",
             "schema": {
@@ -632,7 +642,7 @@
             "explode": true
           },
           {
-            "name": "dropSourceTypes",
+            "name": "legendaryBonuses",
             "in": "query",
             "schema": {
               "type": "array",
@@ -645,12 +655,17 @@
             "explode": true
           },
           {
-            "name": "firstSeenWithinDays",
+            "name": "dropSourceTypes",
             "in": "query",
             "schema": {
-              "type": "number"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             },
-            "required": false
+            "required": false,
+            "style": "form",
+            "explode": true
           },
           {
             "name": "droppedBy",
@@ -668,13 +683,11 @@
               "type": "string",
               "enum": [
                 "relevance",
-                "newest",
                 "lvl:asc",
                 "lvl:desc",
                 "name:asc",
                 "name:desc"
-              ],
-              "description": "`newest` orders by the first observation, latest first."
+              ]
             },
             "required": false
           },
@@ -791,6 +804,31 @@
             "required": false
           },
           {
+            "name": "gameVersion",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["en", "pl"],
+              "description": "Only entries of this game edition."
+            },
+            "required": false
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
             "name": "keys",
             "in": "query",
             "schema": {
@@ -815,16 +853,6 @@
             "required": false,
             "style": "form",
             "explode": true
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": ["relevance", "newest"],
-              "description": "`newest` orders by the first observation, latest first."
-            },
-            "required": false
           },
           {
             "name": "limit",
@@ -1368,11 +1396,6 @@
             "nullable": true,
             "type": "string"
           },
-          "firstSeenOn": {
-            "description": "The day Lootlog first observed it, `YYYY-MM-DD` in Polish time; null when unknown.",
-            "nullable": true,
-            "type": "string"
-          },
           "droppedBy": {
             "type": "array",
             "items": {
@@ -1388,7 +1411,6 @@
           "lvl",
           "rarity",
           "type",
-          "firstSeenOn",
           "droppedBy"
         ],
         "description": "A Margonem item in the public catalog"
@@ -1474,23 +1496,9 @@
           "gameVersion": {
             "type": "string",
             "enum": ["en", "pl"]
-          },
-          "firstSeenOn": {
-            "description": "The day Lootlog first observed it, `YYYY-MM-DD` in Polish time; null when unknown.",
-            "nullable": true,
-            "type": "string"
           }
         },
-        "required": [
-          "key",
-          "id",
-          "name",
-          "icon",
-          "lvl",
-          "type",
-          "gameVersion",
-          "firstSeenOn"
-        ],
+        "required": ["key", "id", "name", "icon", "lvl", "type", "gameVersion"],
         "description": "A Margonem NPC in the public catalog"
       }
     }

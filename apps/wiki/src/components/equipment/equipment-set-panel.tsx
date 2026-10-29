@@ -13,6 +13,7 @@ import {
 import { useEquipmentPreview } from "@/contexts/equipment-preview-context";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
+import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import {
   encodeEquipmentSet,
   EQUIPMENT_SET_PARAM,
@@ -50,7 +51,7 @@ export function EquipmentSetPanel() {
   const ids = Object.values(set.items);
 
   const { data } = useCatalogControllerGetItems(
-    { ids, limit: ids.length },
+    { ids, gameVersion: WIKI_GAME_VERSION, limit: ids.length },
     {
       query: {
         enabled: ids.length > 0,
@@ -101,7 +102,7 @@ export function EquipmentSetPanel() {
         {t("equipment.title")}
       </h2>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_4.5rem] gap-2">
+      <div className="grid grid-cols-[minmax(0,1fr)_4rem] gap-2">
         <Select
           value={set.profession ?? ANY_PROFESSION}
           onValueChange={(value) =>
@@ -158,14 +159,18 @@ export function EquipmentSetPanel() {
             <EquipmentSetSlot
               slot={slot}
               item={itemId === undefined ? undefined : itemsById.get(itemId)}
-              isPreviewTarget={previewSlot?.id === slot.id}
+              preview={previewSlot?.id === slot.id ? preview : null}
             />
           );
         }}
       />
 
       <div className="border-t border-border/50 pt-3">
-        <EquipmentSetTotals totals={totals} previewTotals={previewTotals} />
+        <EquipmentSetTotals
+          totals={totals}
+          previewTotals={previewTotals}
+          previewName={previewTotals ? (preview?.name ?? null) : null}
+        />
       </div>
 
       <div className="flex gap-2">
