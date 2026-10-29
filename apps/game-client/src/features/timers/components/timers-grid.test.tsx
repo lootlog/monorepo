@@ -289,3 +289,46 @@ it.each([false, true])(
     expect(fixture.requests).toHaveLength(0);
   },
 );
+
+it("opens the shared menu only from a tile and closes it when that timer leaves the grid", async () => {
+  const user = userEvent.setup();
+  const fixture = createTimerHttpFixture();
+
+  const content = (timers: ReturnType<typeof createTimer>[]) => (
+    <QueryClientProvider client={fixture.queryClient}>
+      <TimersGrid
+        timers={timers}
+        settingsKey="guild-1"
+        hiddenTimers={[]}
+        minColumnWidth={120}
+      />
+    </QueryClientProvider>
+  );
+
+  const tanroth = createTimer("Tanroth");
+  const view = render(content([tanroth, createTimer("Mushita")]));
+
+  onTestFinished(() => {
+    view.unmount();
+    fixture.cleanup();
+  });
+
+  const grid = view.container.querySelector<HTMLElement>(".ll\\:grid");
+
+  if (!grid) throw new Error("Timer grid did not render");
+
+  await user.pointer({ keys: "[MouseRight]", target: grid });
+  expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+
+  await user.pointer({
+    keys: "[MouseRight]",
+    target: screen.getByText(/Mushita/),
+  });
+  expect(await screen.findByRole("menu")).toBeVisible();
+
+  view.rerender(content([tanroth]));
+
+  await waitFor(() =>
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument(),
+  );
+});
