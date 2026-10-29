@@ -243,13 +243,13 @@ export class MapThreatSource {
   private readonly handleMembersChange = (presence?: PlayerPresence): void => {
     if (this.membersChanged || this.sightings.size === 0) return;
 
-    // Members move between maps all the time; an online update changes only
-    // whether its own character counts as a member. An offline one may close
-    // another character's session, so it re-projects everything.
-    if (presence?.status === "online") {
-      const characterId = presence.player?.characterId;
+    // Members move between maps all the time; an online update keyed by its
+    // character changes only whether that character counts as a member. Any
+    // other update may replace or close another character, so it re-projects.
+    if (presence?.status === "online" && presence.player?.accountId) {
+      const characterId = presence.player.characterId;
 
-      if (characterId === undefined || !this.isSighted(characterId)) return;
+      if (characterId && !this.isSighted(characterId)) return;
     }
 
     this.membersChanged = true;

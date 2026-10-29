@@ -209,6 +209,14 @@ describe("map threat source", () => {
 
     await changeMembers(["3"], onlineMember("3"));
     expect(source.getMapThreat("Karka-han")).toBeUndefined();
+
+    // Without an account id the update is keyed by its Discord user alone, so
+    // it may have replaced the sighted character.
+    await changeMembers([], {
+      ...onlineMember("8"),
+      player: { ...onlineMember("8").player!, accountId: "" },
+    });
+    expect(source.getMapThreat("Karka-han")).toBeDefined();
     release();
   });
 
