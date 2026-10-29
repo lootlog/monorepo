@@ -33,6 +33,7 @@ import {
 import type { ChatRenderableMessage } from "../chat.helpers";
 import { getChatDensityStyle } from "../chat-density";
 import { subscribeToChatScrollToMessage } from "../chat-scroll-to-message";
+import { ChatTranscriptPopups } from "./chat-transcript-popups";
 import { ChatTranscriptRow } from "./chat-transcript-row";
 
 export type ChatScrollPosition = {
@@ -247,52 +248,54 @@ export const ChatTranscript = ({
         }}
         onWheel={resumeOnWheel}
       >
-        <BaseScrollArea.Content
-          render=<MessageScroller.Content />
-          role="list"
-          aria-live="off"
-          className="ll-chat-message-list ll:flex ll:h-max ll:min-h-full ll:w-full ll:min-w-0 ll:flex-col"
-          style={getChatDensityStyle(appearance.fontScalePercent)}
-        >
-          {renderables.map((row) => {
-            const message = row.kind === "date-divider" ? null : row.message;
+        <ChatTranscriptPopups>
+          <BaseScrollArea.Content
+            render=<MessageScroller.Content />
+            role="list"
+            aria-live="off"
+            className="ll-chat-message-list ll:flex ll:h-max ll:min-h-full ll:w-full ll:min-w-0 ll:flex-col"
+            style={getChatDensityStyle(appearance.fontScalePercent)}
+          >
+            {renderables.map((row) => {
+              const message = row.kind === "date-divider" ? null : row.message;
 
-            return (
-              <ChatTranscriptRow
-                key={row.key}
-                row={row}
-                highlighted={
-                  isActive &&
-                  message !== null &&
-                  message.id === highlightedMessageId
-                }
-                appearance={appearance}
-                npcTypeColors={npcTypeColors}
-                all={selectedGuildId === "all"}
-                guildName={
-                  message ? guildNamesById[message.guildId] : undefined
-                }
-                member={
-                  message
-                    ? membersByGuildId[message.guildId]?.[message.senderId]
-                    : undefined
-                }
-                mentionContext={
-                  message
-                    ? mentionContextsByGuildId[message.guildId]
-                    : undefined
-                }
-                isDeleting={
-                  message
-                    ? (deletingMessageIds?.has(message.id) ?? false)
-                    : false
-                }
-                onReplyToMessage={onReplyToMessage}
-                onDeleteMessage={onDeleteMessage}
-              />
-            );
-          })}
-        </BaseScrollArea.Content>
+              return (
+                <ChatTranscriptRow
+                  key={row.key}
+                  row={row}
+                  highlighted={
+                    isActive &&
+                    message !== null &&
+                    message.id === highlightedMessageId
+                  }
+                  appearance={appearance}
+                  npcTypeColors={npcTypeColors}
+                  all={selectedGuildId === "all"}
+                  guildName={
+                    message ? guildNamesById[message.guildId] : undefined
+                  }
+                  member={
+                    message
+                      ? membersByGuildId[message.guildId]?.[message.senderId]
+                      : undefined
+                  }
+                  mentionContext={
+                    message
+                      ? mentionContextsByGuildId[message.guildId]
+                      : undefined
+                  }
+                  isDeleting={
+                    message
+                      ? (deletingMessageIds?.has(message.id) ?? false)
+                      : false
+                  }
+                  onReplyToMessage={onReplyToMessage}
+                  onDeleteMessage={onDeleteMessage}
+                />
+              );
+            })}
+          </BaseScrollArea.Content>
+        </ChatTranscriptPopups>
       </BaseScrollArea.Viewport>
       <ScrollBar />
       <ScrollToLatestButton label={t("navigation.latest")} />

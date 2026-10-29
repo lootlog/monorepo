@@ -1,30 +1,10 @@
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
-import type { BaseUIEvent } from "@base-ui/react/types";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+import { SharedContextMenu } from "@/components/common/shared-context-menu";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
-import {
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type CSSProperties,
-  type ReactNode,
-  type Ref,
-  type SyntheticEvent,
-} from "react";
+import { useState, type CSSProperties, type ReactNode, type Ref } from "react";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
-import { TimerActiveContextMenu } from "./timer-active-context-menu";
-import {
-  createTimerMenuRegistry,
-  TIMER_POPUP_KEY_ATTRIBUTE,
-  TimerPopupsContext,
-} from "./timer-popups-context";
+import { TimerTooltipContext } from "./timer-tooltip-context";
 import { TimerSharedTooltip } from "./timer-shared-tooltip";
-
-const TILE_SELECTOR = `[${TIMER_POPUP_KEY_ATTRIBUTE}]`;
 
 type TimerGridPopupsProps = {
   children: ReactNode;
@@ -48,90 +28,15 @@ export const TimerGridPopups = ({
   style,
   timersByKey,
 }: TimerGridPopupsProps) => {
-  const [popups] = useState(() => ({
-    menuRegistry: createTimerMenuRegistry(),
-    tooltipHandle: BaseTooltip.createHandle<string>(),
-  }));
-
-  const { menuRegistry, tooltipHandle } = popups;
-  const [menuTimerKey, setMenuTimerKey] = useState<string | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const menuTileRef = useRef<{
-    grid: HTMLElement;
-    index: number;
-    tile: HTMLElement;
-  } | null>(null);
-
-  const menuProps = useSyncExternalStore(menuRegistry.subscribe, () =>
-    menuTimerKey === null ? undefined : menuRegistry.get(menuTimerKey),
-  );
-
-  // A tile that leaves the grid closes its menu, as its own menu did.
-  if (menuOpen && !menuProps) setMenuOpen(false);
-
-  // Right-click, long press and the keyboard shortcut all reach the grid from
-  // a tile; anywhere else in the grid keeps the menu closed.
-  const selectMenuTile = (event: BaseUIEvent<SyntheticEvent<HTMLElement>>) => {
-    const tile =
-      event.target instanceof Element
-        ? event.target.closest<HTMLElement>(TILE_SELECTOR)
-        : null;
-
-    const timerKey = tile?.getAttribute(TIMER_POPUP_KEY_ATTRIBUTE);
-
-    if (!tile || !timerKey || !event.currentTarget.contains(tile)) {
-      event.preventBaseUIHandler();
-
-      return;
-    }
-
-    const tiles = event.currentTarget.querySelectorAll(TILE_SELECTOR);
-
-    menuTileRef.current = {
-      grid: event.currentTarget,
-      index: [...tiles].indexOf(tile),
-      tile,
-    };
-    setMenuTimerKey(timerKey);
-  };
-
-  // Focus goes back to the tile; when its timer left the grid meanwhile, to
-  // the tile now in its place, so a keyboard user keeps their position.
-  const getMenuFinalFocus = () => {
-    const opened = menuTileRef.current;
-
-    if (!opened || opened.tile.isConnected) return opened?.tile ?? null;
-    const tiles = opened.grid.querySelectorAll<HTMLElement>(TILE_SELECTOR);
-
-    return tiles[Math.min(opened.index, tiles.length - 1)] ?? null;
-  };
+  const [tooltipHandle] = useState(() => BaseTooltip.createHandle<string>());
 
   return (
-    <TimerPopupsContext.Provider value={popups}>
-      <ContextMenu open={menuOpen && !!menuProps} onOpenChange={setMenuOpen}>
-        <ContextMenuTrigger
-          asChild
-          onContextMenu={selectMenuTile}
-          onTouchStart={selectMenuTile}
-        >
-          <span ref={gridRef} className={className} style={style}>
-            {children}
-          </span>
-        </ContextMenuTrigger>
-
-        <ContextMenuContent
-          className="ll:w-48 ll:flex ll:flex-col"
-          finalFocus={getMenuFinalFocus}
-        >
-          {menuTimerKey !== null && (
-            <TimerActiveContextMenu
-              registry={menuRegistry}
-              timerKey={menuTimerKey}
-            />
-          )}
-        </ContextMenuContent>
-      </ContextMenu>
+    <TimerTooltipContext.Provider value={tooltipHandle}>
+      <SharedContextMenu>
+        <span ref={gridRef} className={className} style={style}>
+          {children}
+        </span>
+      </SharedContextMenu>
 
       <Tooltip handle={tooltipHandle}>
         {({ payload }) => {
@@ -148,6 +53,6 @@ export const TimerGridPopups = ({
           ) : null;
         }}
       </Tooltip>
-    </TimerPopupsContext.Provider>
+    </TimerTooltipContext.Provider>
   );
 };
