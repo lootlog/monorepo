@@ -16,11 +16,14 @@ import {
 } from "@lootlog/protocol/realtime/codec";
 import {
   type Response as RealtimeResponse,
+  RealtimeFrame,
   type ServerEvent,
   isServerEventFrame,
+  REALTIME_SERVER_CLOSE_CODES,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect, Result } from "effect";
+import { decode as decodeMessagePack } from "@msgpack/msgpack";
+import { Effect, Predicate, Result, Schema } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
   type BackgroundTaskRunner,
@@ -54,6 +57,21 @@ type Event = typeof ServerEvent.Type;
 
 type Response = typeof RealtimeResponse.Type;
 
+interface PublishedFrame {
+  readonly event: Event;
+  /** Canonical MessagePack bytes, encoded on first use when absent. */
+  binary?: Uint8Array;
+  json?: string;
+}
+
+const encodePublishedFrame = (
+  frame: PublishedFrame,
+  session: SessionData,
+): string | Uint8Array =>
+  session.frameEncoding === "json"
+    ? (frame.json ??= JSON.stringify(frame.event))
+    : (frame.binary ??= encodeRealtimeFrame(frame.event));
+
 // ponytail: replay deduplication covers 10,000 events per live instance; use a durable inbox if retries must survive eviction or restarts.
 const MAX_DEDUPLICATION_ENTRIES = 10_000;
 
@@ -67,7 +85,7 @@ const MAX_SCOPE_BYTES = 1_024;
  * once `clusterFederationVersion` reaches it: a replica drops a frame its
  * schema does not know.
  */
-export const FEDERATION_VERSION = 7;
+export const FEDERATION_VERSION = 8;
 
 export const PARTY_GATHERING_STATE_FEDERATION_VERSION = 3;
 
@@ -82,6 +100,18 @@ export const GLOBAL_CHAT_FEDERATION_VERSION = 6;
 
 /** Replicas from this version decode `global-chat.deleted` and `global-chat.pinned`. */
 export const GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION = 7;
+
+/** Replicas from this version deliver `preciseFrame` of a presence publication. */
+export const PRESENCE_PAIR_FEDERATION_VERSION = 8;
+
+/**
+ * Identifies the frame schema of this build. A replica with the same schema
+ * produced its frame bytes through that schema, so they carry no field this
+ * replica would strip, and it forwards them without decoding and re-encoding.
+ */
+const FRAME_SCHEMA = Bun.hash(
+  JSON.stringify(Schema.toJsonSchemaDocument(RealtimeFrame)),
+).toString(36);
 
 const CLOSE_BATCH_INTERVAL_MS = 100;
 
@@ -493,6 +523,24 @@ export class RealtimeHub {
 
     const scopeKey = getScopeKey(scope);
 
+    // `frame` stays the basic variant: a replica that predates the pair
+    // ignores `preciseFrame` and degrades its readers to basic presence.
+    if (this.clusterFederationVersion >= PRESENCE_PAIR_FEDERATION_VERSION) {
+      const { message, prepared, preparedPrecise } =
+        this.createFederatedMessage({
+          scopeKey,
+          scope,
+          organizationId,
+          frame: basicEvent,
+          preciseFrame: preciseEvent,
+        });
+
+      this.deliver(message, prepared, preparedPrecise);
+      await this.redis.publish(message);
+
+      return;
+    }
+
     const messages = [
       this.createFederatedMessage({
         scopeKey,
@@ -561,7 +609,10 @@ export class RealtimeHub {
     for (const socket of this.getLocalSocketsForUser(userId)) {
       if (socket.data.discordId !== discordId) continue;
       this.detach(socket);
-      socket.close(1013, "authorization temporarily unavailable");
+      socket.close(
+        REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+        "authorization temporarily unavailable",
+      );
     }
   }
 
@@ -660,7 +711,11 @@ export class RealtimeHub {
       closeGradually(
         sockets,
         this.federationRecovery.closeSpreadMs ?? FEDERATION_CLOSE_SPREAD_MS,
-        (socket) => socket.close(1013, "realtime federation unavailable"),
+        (socket) =>
+          socket.close(
+            REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+            "realtime federation unavailable",
+          ),
       ),
     );
   }
@@ -682,11 +737,16 @@ export class RealtimeHub {
     readonly organizationId?: string;
     readonly presenceAudience?: "basic" | "precise";
     readonly frame: Event;
+    readonly preciseFrame?: Event;
   }) {
     const prepared = prepareRealtimeFrame(options.frame);
 
+    const preparedPrecise =
+      options.preciseFrame && prepareRealtimeFrame(options.preciseFrame);
+
     return {
       prepared,
+      preparedPrecise,
       message: {
         id: options.id ?? crypto.randomUUID(),
         sourceInstanceId: this.instanceId,
@@ -704,7 +764,9 @@ export class RealtimeHub {
         recipientCharacterIds: options.recipientCharacterIds,
         organizationId: options.organizationId,
         presenceAudience: options.presenceAudience,
+        frameSchema: FRAME_SCHEMA,
         frame: toBase64(prepared.bytes),
+        preciseFrame: preparedPrecise && toBase64(preparedPrecise.bytes),
       },
     };
   }
@@ -728,15 +790,35 @@ export class RealtimeHub {
     this.deliver(message);
   }
 
+  /** The event of a frame and, when they are canonical, its MessagePack bytes. */
   private publicationFrame(
-    message: FederatedRealtimeMessage,
+    frame: string | undefined,
+    frameSchema: string | undefined,
     local?: ReturnType<typeof prepareRealtimeFrame>,
-  ): Event | undefined {
-    if (!message.frame) return;
+  ): PublishedFrame | undefined {
+    if (frame === undefined) return;
+
+    const bytes = local?.bytes ?? fromBase64(frame);
+    // Bytes from another schema must be re-encoded after validation strips
+    // the fields this replica does not know.
+    const canonical = local !== undefined || frameSchema === FRAME_SCHEMA;
 
     const decoded = local?.frame
       ? Result.succeed(local.frame)
-      : tryDecodeRealtimeFrame(local?.bytes ?? fromBase64(message.frame));
+      : canonical
+        ? Result.try({
+            try: () => {
+              const value = decodeMessagePack(bytes);
+
+              if (!Predicate.isObject(value))
+                throw new Error("Federation frame is not an object");
+
+              // SAFETY: a replica with this schema encoded these bytes through it.
+              return value as RealtimeFrame;
+            },
+            catch: (cause) => cause,
+          })
+        : tryDecodeRealtimeFrame(bytes);
 
     if (Result.isFailure(decoded)) {
       this.logger.warn(
@@ -749,23 +831,31 @@ export class RealtimeHub {
 
     if (!isServerEventFrame(decoded.success)) return;
 
-    return decoded.success;
+    return { event: decoded.success, binary: canonical ? bytes : undefined };
   }
 
   private deliver(
     message: FederatedRealtimeMessage,
     local?: ReturnType<typeof prepareRealtimeFrame>,
+    localPrecise?: ReturnType<typeof prepareRealtimeFrame>,
   ): void {
     if (!this.remember(message.id)) return;
     const candidates = this.candidates(message);
 
     if (candidates.size === 0) return;
-    const frame = this.publicationFrame(message, local);
 
-    if (!frame) return;
-    let jsonFrame: string | undefined;
-    // Remote frames must be re-encoded after validation strips unknown fields.
-    let binaryFrame = local?.bytes;
+    const published = this.publicationFrame(
+      message.frame,
+      message.frameSchema,
+      local,
+    );
+
+    if (!published) return;
+    const frame = published.event;
+
+    const precise = this.preciseFrame(message, localPrecise);
+
+    if (precise === null) return;
     const chatFrames = new Map<string, string | Uint8Array>();
 
     const legacyAirTagFrames = new Map<
@@ -829,13 +919,34 @@ export class RealtimeHub {
         continue;
       }
 
-      const encoded =
-        socket.data.frameEncoding === "json"
-          ? (jsonFrame ??= JSON.stringify(frame))
-          : (binaryFrame ??= encodeRealtimeFrame(frame));
+      const variant =
+        precise && canReadPreciseLocation(socket.data, precise.organizationId)
+          ? precise.published
+          : published;
 
-      this.send(socket, encoded);
+      this.send(socket, encodePublishedFrame(variant, socket.data));
     }
+  }
+
+  /**
+   * The variant of a presence publication for readers of the Organization's
+   * precise location; `null` when that variant cannot be decoded.
+   */
+  private preciseFrame(
+    message: FederatedRealtimeMessage,
+    local?: ReturnType<typeof prepareRealtimeFrame>,
+  ) {
+    if (message.preciseFrame === undefined || !message.organizationId) return;
+
+    const published = this.publicationFrame(
+      message.preciseFrame,
+      message.frameSchema,
+      local,
+    );
+
+    return published
+      ? { organizationId: message.organizationId, published }
+      : null;
   }
 
   private canReadOrganization(
@@ -1152,7 +1263,10 @@ export class RealtimeHub {
       socket.send(data, true) === 0
     ) {
       this.backpressuredSockets.add(socket);
-      socket.close(1013, "backpressure limit exceeded");
+      socket.close(
+        REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+        "backpressure limit exceeded",
+      );
 
       return false;
     }

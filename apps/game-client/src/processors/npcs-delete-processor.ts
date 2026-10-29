@@ -6,13 +6,9 @@ import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
-import { queryClient } from "@/lib/query-client";
 import { isSignedOut } from "@/lib/auth-client";
 import { createAutoTimer } from "@/api";
-import {
-  getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
-  type UserLootlogConfigAccountResponseDtoOutput,
-} from "@lootlog/client/main";
+import { getFreshCharacterCatchingGuildIds } from "@/hooks/api/use-lootlog-characters-config";
 
 export class NpcsDeleteProcessor {
   handle(event: GameEvent, ingress?: RuntimeIngressSnapshot): void {
@@ -35,7 +31,7 @@ export class NpcsDeleteProcessor {
     let timerContext: {
       accountId: string;
       characterId: string;
-      catchingGuildIds: string[] | undefined;
+      catchingGuildIds: readonly string[] | undefined;
       mapId: number | string;
       mapName: string;
     } | null = null;
@@ -49,22 +45,10 @@ export class NpcsDeleteProcessor {
       const characterId = game.hero.characterId;
       const map = game.map;
 
-      const lootlogCharacterConfigQueryKey =
-        getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
-          accountId,
-        });
-
-      const configQuery =
-        queryClient.getQueryState<UserLootlogConfigAccountResponseDtoOutput>(
-          lootlogCharacterConfigQueryKey,
-        );
-
-      // A loaded configuration without this character matches the server's
-      // empty whitelist. A pending or failed load leaves the check to the server.
-      const catchingGuildIds =
-        configQuery?.status === "success"
-          ? (configQuery.data?.[characterId]?.catchingGuildIds ?? [])
-          : undefined;
+      const catchingGuildIds = getFreshCharacterCatchingGuildIds(
+        accountId,
+        characterId,
+      );
 
       timerContext = {
         accountId,

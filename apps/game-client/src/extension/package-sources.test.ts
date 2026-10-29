@@ -14,6 +14,12 @@ import path from "node:path";
 
 const directories: string[] = [];
 
+// A Git hook exports GIT_DIR, GIT_INDEX_FILE and the like; inherited, they
+// point the fixture's Git commands at the repository being committed.
+const env = Object.fromEntries(
+  Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")),
+);
+
 afterEach(async () => {
   await Promise.all(
     directories
@@ -39,8 +45,8 @@ async function repository() {
     path.join(root, ".gitignore"),
     "node_modules\n.output/\n.env\n",
   );
-  execFileSync("git", ["init", "--quiet"], { cwd: root });
-  execFileSync("git", ["add", "."], { cwd: root });
+  execFileSync("git", ["init", "--quiet"], { cwd: root, env });
+  execFileSync("git", ["add", "."], { cwd: root, env });
   execFileSync(
     "git",
     [
@@ -55,7 +61,7 @@ async function repository() {
       "-m",
       "fixture",
     ],
-    { cwd: root },
+    { cwd: root, env },
   );
   await symlink(
     path.resolve(import.meta.dirname, "../../node_modules"),
@@ -71,6 +77,7 @@ async function repository() {
   const run = () =>
     spawnSync("bun", [path.join(client, "extension/package-sources.ts")], {
       cwd: client,
+      env,
       encoding: "utf8",
     });
 
@@ -107,7 +114,7 @@ it.each(["untracked", "modified", "staged"])(
     await writeFile(target, existing + "\n// PRIVATE_FIXTURE_VALUE\n");
 
     if (state === "staged")
-      execFileSync("git", ["add", "."], { cwd: fixture.root });
+      execFileSync("git", ["add", "."], { cwd: fixture.root, env });
     const result = fixture.run();
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain(
