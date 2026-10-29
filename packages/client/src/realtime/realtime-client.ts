@@ -6,6 +6,8 @@ import {
   REALTIME_PING_CAPABILITY,
   REALTIME_PROTOCOL_VERSION,
   REALTIME_CLIENT_CLOSE_CODES,
+  REALTIME_SERVER_CLOSE_CODES,
+  REALTIME_SERVER_CLOSE_RECONNECT_WINDOW_MS,
   type ClientCommand,
   type ServerEvent,
   type SubscriptionScope,
@@ -38,7 +40,10 @@ export interface RealtimeWebSocket {
   readonly readyState: number;
   addEventListener(
     type: "open" | "close" | "error" | "message",
-    listener: (event: { readonly data?: unknown }) => void,
+    listener: (event: {
+      readonly data?: unknown;
+      readonly code?: number;
+    }) => void,
   ): void;
   send(data: string | Uint8Array<ArrayBuffer>): void;
   close(code?: number, reason?: string): void;
@@ -125,6 +130,10 @@ const toBytes = async (data: unknown): Promise<Uint8Array> => {
   if (data instanceof Blob) return new Uint8Array(await data.arrayBuffer());
   throw new Error("Gateway returned a non-binary realtime frame");
 };
+
+const SERVER_CLOSE_CODES: ReadonlySet<number> = new Set(
+  Object.values(REALTIME_SERVER_CLOSE_CODES),
+);
 
 const getPresenceSessionId = (data: unknown): string | null => {
   if (!data || typeof data !== "object" || !("sessionId" in data)) return null;
@@ -406,9 +415,17 @@ export class RealtimeClient {
           ),
         );
     });
-    socket.addEventListener("close", () => {
+    socket.addEventListener("close", (event) => {
       if (this.socket !== socket) return;
       this.socket = null;
+
+      // Every session of a restarting replica closes within seconds; spread
+      // their rejoins and the HTTP resyncs that follow them.
+      if (event.code !== undefined && SERVER_CLOSE_CODES.has(event.code))
+        this.reconnectNotBeforeMs = Math.round(
+          this.random() * REALTIME_SERVER_CLOSE_RECONNECT_WINDOW_MS,
+        );
+
       this.clearHeartbeat();
       this.pingSupported = false;
       this.rejectPending(new Error("Realtime connection closed"));

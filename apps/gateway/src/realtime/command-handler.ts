@@ -15,6 +15,7 @@ import {
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_PING_CAPABILITY,
   REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
+  REALTIME_SERVER_CLOSE_CODES,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   type ClientCommand,
   type Response,
@@ -333,7 +334,10 @@ export class CommandHandler {
           );
         } else {
           // Legacy fire-and-forget commands cannot receive a correlated error.
-          socket.close(1013, "command capacity exceeded");
+          socket.close(
+            REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+            "command capacity exceeded",
+          );
         }
       });
     }
@@ -401,7 +405,10 @@ export class CommandHandler {
             );
           // A join without a request ID would wait for session.joined forever.
           else if (error instanceof JoinCapacityExceeded)
-            socket.close(1013, "gateway is busy");
+            socket.close(
+              REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+              "gateway is busy",
+            );
         });
       }),
       Effect.asVoid,
@@ -628,7 +635,10 @@ export class CommandHandler {
     try {
       hub.sendEvent(socket, event);
     } catch (cause) {
-      socket.close(1013, "permission update delivery failed");
+      socket.close(
+        REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+        "permission update delivery failed",
+      );
 
       return {
         resubscribed: true,
