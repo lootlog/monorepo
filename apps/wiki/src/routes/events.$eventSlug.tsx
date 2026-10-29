@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { groupBy, orderBy } from "es-toolkit";
+import { orderBy } from "es-toolkit";
 import { itemEventSlug } from "@lootlog/domain/item-events";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { EventMonsterItems } from "@/components/events/event-monster-items";
 import { useEventItems } from "@/hooks/use-event-items";
 import { t } from "@/i18n/messages";
-import { dropSourceMonsterKey } from "@/lib/catalog-links";
+import { groupItemsByMonster } from "@/lib/group-items-by-monster";
 import { itemEvents } from "@/lib/item-events";
 
 export const Route = createFileRoute("/events/$eventSlug")({
@@ -46,16 +46,7 @@ function EventRoute() {
   // The strongest monsters come first, an event boss's kinds side by side,
   // and items of no known monster last.
   const monsters = orderBy(
-    Object.values(
-      groupBy(items ?? [], (item) => {
-        const [monster] = item.droppedBy;
-
-        return monster ? dropSourceMonsterKey(monster) : "";
-      }),
-    ).map((monsterItems) => ({
-      monster: monsterItems[0]?.droppedBy[0],
-      items: monsterItems,
-    })),
+    groupItemsByMonster(items ?? []),
     [
       ({ monster }) => (monster ? 1 : 0),
       ({ monster }) => monster?.lvl ?? 0,
