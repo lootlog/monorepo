@@ -2005,6 +2005,22 @@ export const PUBLIC_API_OPERATIONS = [
     access: "read",
     data: "public",
   },
+  {
+    service: "search",
+    method: "GET",
+    path: "/public/catalog/items",
+    operationId: "CatalogController_getItems",
+    access: "read",
+    data: "public",
+  },
+  {
+    service: "search",
+    method: "GET",
+    path: "/public/catalog/npcs",
+    operationId: "CatalogController_getNpcs",
+    access: "read",
+    data: "public",
+  },
 ] as const satisfies readonly PublicApiOperation[];
 
 export function getPublicApiOperation(

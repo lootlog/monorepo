@@ -13,6 +13,11 @@ import { ITEMS_INDEX } from "./search-index.js";
 import type { IndexItemsCommand } from "./index-items-command.js";
 import type { ItemHit } from "./item-hit.js";
 import { createItemSearchFields } from "./item-search-fields.js";
+import {
+  mergeItemDropFields,
+  toItemDropFields,
+  type ItemDropFields,
+} from "./item-drops.js";
 
 type SearchItemsResponse = {
   estimatedTotalHits: number;
@@ -23,10 +28,11 @@ type SearchItemsResponse = {
 
 type IndexItem = IndexItemsCommand["items"][number];
 
-type IndexedItem = IndexItem & {
-  uid: string;
-  worlds: string[];
-};
+type IndexedItem = Omit<IndexItem, "droppedBy" | "observedAt"> &
+  ItemDropFields & {
+    uid: string;
+    worlds: string[];
+  };
 
 const itemAttributesToRetrieve = [
   "id",
@@ -71,7 +77,13 @@ const mergeItemsByCatalogKey = (
 ): IndexedItem[] => {
   const itemsByKey = new Map<string, IndexedItem>();
 
-  for (const item of items) {
+  for (const incoming of items) {
+    const {
+      droppedBy: _droppedBy,
+      observedAt: _observedAt,
+      ...item
+    } = incoming;
+
     const worlds = itemWorlds(item);
     const uid = itemCatalogKey(item);
     const existingItem = itemsByKey.get(uid);
@@ -79,6 +91,7 @@ const mergeItemsByCatalogKey = (
     itemsByKey.set(uid, {
       ...existingItem,
       ...item,
+      ...mergeItemDropFields(toItemDropFields(incoming), existingItem),
       uid,
       worlds: uniqueWorlds([...(existingItem?.worlds ?? []), ...worlds]),
     });
@@ -208,6 +221,7 @@ export const makeItemsModule = (
       itemsWithSearchFields,
       (item, stored) => ({
         ...item,
+        ...mergeItemDropFields(item, stored),
         worlds: uniqueWorlds([...item.worlds, ...(stored?.worlds ?? [])]),
       }),
     );

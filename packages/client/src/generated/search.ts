@@ -36,6 +36,101 @@ export interface SearchUnavailableEncoded {
   message: string;
 }
 
+export type CatalogNpcDtoOutputType = typeof CatalogNpcDtoOutputType[keyof typeof CatalogNpcDtoOutputType];
+
+
+export const CatalogNpcDtoOutputType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  NPC: 'NPC',
+} as const;
+
+export type CatalogNpcDtoOutputGameVersion = typeof CatalogNpcDtoOutputGameVersion[keyof typeof CatalogNpcDtoOutputGameVersion];
+
+
+export const CatalogNpcDtoOutputGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+/**
+ * A Margonem NPC in the public catalog
+ */
+export interface CatalogNpcDtoOutput {
+  /** Stable catalog key of the NPC, used to link its page. */
+  key: string;
+  id: number;
+  name: string;
+  icon: string;
+  lvl: number;
+  type: CatalogNpcDtoOutputType;
+  gameVersion: CatalogNpcDtoOutputGameVersion;
+  /**
+     * The day Lootlog first observed it, `YYYY-MM-DD` in Polish time; null when unknown.
+     * @nullable
+     */
+  firstSeenOn: string | null;
+}
+
+/**
+ * Public catalog NPCs
+ */
+export interface CatalogNpcsResponseDtoOutput {
+  hits: CatalogNpcDtoOutput[];
+  estimatedTotalHits: number;
+}
+
+/**
+ * An NPC an item drops from
+ */
+export interface CatalogDropSourceDtoOutput {
+  /** The NPC's catalog key, as `CatalogNpcDto_Output.key`. */
+  key: string;
+  id: number;
+  name: string;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  type: string | null;
+}
+
+/**
+ * A Margonem item in the public catalog
+ */
+export interface CatalogItemDtoOutput {
+  id: number;
+  name: string;
+  icon: string;
+  stat: string;
+  lvl: number;
+  /** @nullable */
+  rarity: string | null;
+  /** @nullable */
+  type: string | null;
+  /**
+     * The day Lootlog first observed it, `YYYY-MM-DD` in Polish time; null when unknown.
+     * @nullable
+     */
+  firstSeenOn: string | null;
+  droppedBy: CatalogDropSourceDtoOutput[];
+}
+
+/**
+ * Public catalog items
+ */
+export interface CatalogItemsResponseDtoOutput {
+  hits: CatalogItemDtoOutput[];
+  estimatedTotalHits: number;
+}
+
 /**
  * Item search hit
  */
@@ -329,6 +424,89 @@ export type AllControllerSearchAll403 = {
 };
 
 export type AllControllerSearchAll429 = {
+  message: string;
+};
+
+export type CatalogControllerGetItemsParams = {
+search?: string;
+/**
+ * @items.minimum -9007199254740991
+ * @items.maximum 9007199254740991
+ */
+ids?: number[];
+rarities?: string[];
+types?: string[];
+professions?: string[];
+minLevel?: number;
+maxLevel?: number;
+statKeys?: string[];
+dropSourceTypes?: string[];
+firstSeenWithinDays?: number;
+/**
+ * Items that drop from the NPC with this catalog key.
+ */
+droppedBy?: string;
+/**
+ * `newest` orders by the first observation, latest first.
+ */
+sort?: CatalogControllerGetItemsSort;
+limit?: number;
+offset?: number;
+};
+
+export type CatalogControllerGetItemsSort = typeof CatalogControllerGetItemsSort[keyof typeof CatalogControllerGetItemsSort];
+
+
+export const CatalogControllerGetItemsSort = {
+  relevance: 'relevance',
+  newest: 'newest',
+  'lvl:asc': 'lvl:asc',
+  'lvl:desc': 'lvl:desc',
+  'name:asc': 'name:asc',
+  'name:desc': 'name:desc',
+} as const;
+
+export type CatalogControllerGetItems401 = {
+  message: string;
+};
+
+export type CatalogControllerGetItems403 = {
+  message: string;
+};
+
+export type CatalogControllerGetItems429 = {
+  message: string;
+};
+
+export type CatalogControllerGetNpcsParams = {
+search?: string;
+keys?: string[];
+types?: string[];
+/**
+ * `newest` orders by the first observation, latest first.
+ */
+sort?: CatalogControllerGetNpcsSort;
+limit?: number;
+offset?: number;
+};
+
+export type CatalogControllerGetNpcsSort = typeof CatalogControllerGetNpcsSort[keyof typeof CatalogControllerGetNpcsSort];
+
+
+export const CatalogControllerGetNpcsSort = {
+  relevance: 'relevance',
+  newest: 'newest',
+} as const;
+
+export type CatalogControllerGetNpcs401 = {
+  message: string;
+};
+
+export type CatalogControllerGetNpcs403 = {
+  message: string;
+};
+
+export type CatalogControllerGetNpcs429 = {
   message: string;
 };
 
@@ -1115,4 +1293,320 @@ export const useGetAllControllerSearchAllQueryData = () => {
   const queryClient = useQueryClient();
   return (params?: AllControllerSearchAllParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof allControllerSearchAll>>>(getAllControllerSearchAllQueryKey(params));
+}
+
+
+
+export const getCatalogControllerGetItemsUrl = (params?: CatalogControllerGetItemsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["ids","rarities","types","professions","statKeys","dropSourceTypes"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/public/catalog/items?${stringifiedParams}` : `/public/catalog/items`
+}
+
+/**
+ * @summary List items in the public catalog
+ */
+export const catalogControllerGetItems = async (params?: CatalogControllerGetItemsParams, options?: Parameters<typeof searchFetch>[1]): Promise<CatalogItemsResponseDtoOutput> => {
+
+  return searchFetch<CatalogItemsResponseDtoOutput>(getCatalogControllerGetItemsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCatalogControllerGetItemsQueryKey = (params?: CatalogControllerGetItemsParams,) => {
+    return [
+    `/public/catalog/items`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCatalogControllerGetItemsQueryOptions = <TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>>(params?: CatalogControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCatalogControllerGetItemsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof catalogControllerGetItems>>> = ({ signal }) => catalogControllerGetItems(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CatalogControllerGetItemsQueryResult = NonNullable<Awaited<ReturnType<typeof catalogControllerGetItems>>>
+export type CatalogControllerGetItemsQueryError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>
+
+
+export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>>(
+ params: undefined |  CatalogControllerGetItemsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogControllerGetItems>>,
+          TError,
+          Awaited<ReturnType<typeof catalogControllerGetItems>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof searchFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>>(
+ params?: CatalogControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogControllerGetItems>>,
+          TError,
+          Awaited<ReturnType<typeof catalogControllerGetItems>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof searchFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>>(
+ params?: CatalogControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List items in the public catalog
+ */
+
+export function useCatalogControllerGetItems<TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>>(
+ params?: CatalogControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCatalogControllerGetItemsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List items in the public catalog
+ */
+export const prefetchCatalogControllerGetItemsQuery = async <TData = Awaited<ReturnType<typeof catalogControllerGetItems>>, TError = ErrorType<CatalogControllerGetItems401 | CatalogControllerGetItems403 | CatalogControllerGetItems429 | SearchUnavailableEncoded>>(
+ queryClient: QueryClient, params?: CatalogControllerGetItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetItems>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getCatalogControllerGetItemsQueryOptions(params,options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useCatalogControllerGetItems} query
+ */
+export const invalidateCatalogControllerGetItems = async (
+ queryClient: QueryClient, params?: CatalogControllerGetItemsParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getCatalogControllerGetItemsQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary List items in the public catalog
+ */
+export const useSetCatalogControllerGetItemsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: CatalogControllerGetItemsParams | undefined,updater: Awaited<ReturnType<typeof catalogControllerGetItems>> | undefined | ((old: Awaited<ReturnType<typeof catalogControllerGetItems>> | undefined) => Awaited<ReturnType<typeof catalogControllerGetItems>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof catalogControllerGetItems>>>({ exact: $exactMatch, queryKey: getCatalogControllerGetItemsQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary List items in the public catalog
+ */
+export const useGetCatalogControllerGetItemsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params?: CatalogControllerGetItemsParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof catalogControllerGetItems>>>(getCatalogControllerGetItemsQueryKey(params));
+}
+
+
+
+export const getCatalogControllerGetNpcsUrl = (params?: CatalogControllerGetNpcsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["keys","types"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/public/catalog/npcs?${stringifiedParams}` : `/public/catalog/npcs`
+}
+
+/**
+ * @summary List NPCs in the public catalog
+ */
+export const catalogControllerGetNpcs = async (params?: CatalogControllerGetNpcsParams, options?: Parameters<typeof searchFetch>[1]): Promise<CatalogNpcsResponseDtoOutput> => {
+
+  return searchFetch<CatalogNpcsResponseDtoOutput>(getCatalogControllerGetNpcsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCatalogControllerGetNpcsQueryKey = (params?: CatalogControllerGetNpcsParams,) => {
+    return [
+    `/public/catalog/npcs`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCatalogControllerGetNpcsQueryOptions = <TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>>(params?: CatalogControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCatalogControllerGetNpcsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof catalogControllerGetNpcs>>> = ({ signal }) => catalogControllerGetNpcs(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CatalogControllerGetNpcsQueryResult = NonNullable<Awaited<ReturnType<typeof catalogControllerGetNpcs>>>
+export type CatalogControllerGetNpcsQueryError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>
+
+
+export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>>(
+ params: undefined |  CatalogControllerGetNpcsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogControllerGetNpcs>>,
+          TError,
+          Awaited<ReturnType<typeof catalogControllerGetNpcs>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof searchFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>>(
+ params?: CatalogControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogControllerGetNpcs>>,
+          TError,
+          Awaited<ReturnType<typeof catalogControllerGetNpcs>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof searchFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>>(
+ params?: CatalogControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List NPCs in the public catalog
+ */
+
+export function useCatalogControllerGetNpcs<TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>>(
+ params?: CatalogControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCatalogControllerGetNpcsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List NPCs in the public catalog
+ */
+export const prefetchCatalogControllerGetNpcsQuery = async <TData = Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError = ErrorType<CatalogControllerGetNpcs401 | CatalogControllerGetNpcs403 | CatalogControllerGetNpcs429 | SearchUnavailableEncoded>>(
+ queryClient: QueryClient, params?: CatalogControllerGetNpcsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetNpcs>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getCatalogControllerGetNpcsQueryOptions(params,options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useCatalogControllerGetNpcs} query
+ */
+export const invalidateCatalogControllerGetNpcs = async (
+ queryClient: QueryClient, params?: CatalogControllerGetNpcsParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getCatalogControllerGetNpcsQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary List NPCs in the public catalog
+ */
+export const useSetCatalogControllerGetNpcsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: CatalogControllerGetNpcsParams | undefined,updater: Awaited<ReturnType<typeof catalogControllerGetNpcs>> | undefined | ((old: Awaited<ReturnType<typeof catalogControllerGetNpcs>> | undefined) => Awaited<ReturnType<typeof catalogControllerGetNpcs>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof catalogControllerGetNpcs>>>({ exact: $exactMatch, queryKey: getCatalogControllerGetNpcsQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary List NPCs in the public catalog
+ */
+export const useGetCatalogControllerGetNpcsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params?: CatalogControllerGetNpcsParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof catalogControllerGetNpcs>>>(getCatalogControllerGetNpcsQueryKey(params));
 }
