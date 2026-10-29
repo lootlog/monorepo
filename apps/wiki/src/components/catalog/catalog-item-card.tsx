@@ -10,7 +10,7 @@ import { renderItemStat } from "@/components/render-item-stat";
 import { useSetEquipmentPreview } from "@/contexts/equipment-preview-context";
 import { t } from "@/i18n/messages";
 import { itemPageParams, npcPageParams } from "@/lib/catalog-links";
-import { formatFirstSeenOn, ITEM_TILE_LABELS } from "@/lib/item-options";
+import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import { findLegendaryBonus } from "@/lib/legendary-bonuses";
 
 type CatalogItemCardProps = {
@@ -81,10 +81,6 @@ export function CatalogItemCard({
                 </span>
               </span>
             </>
-          ) : item.firstSeenOn ? (
-            <span className="truncate">
-              · {formatFirstSeenOn(item.firstSeenOn)}
-            </span>
           ) : null}
         </p>
         {showSource && source ? (

@@ -6,7 +6,6 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { BasicSearchForm } from "@/components/basic-search-form";
 import { t } from "@/i18n/messages";
 import { npcPageParams, WIKI_GAME_VERSION } from "@/lib/catalog-links";
-import { formatFirstSeenOn } from "@/lib/item-options";
 import { useBasicSearchForm } from "./-use-basic-search-form";
 import {
   getQueryRouteSearchParams,
@@ -37,13 +36,11 @@ function NpcsRoute() {
     SEARCH_LIMIT,
   );
 
-  // Without a name, the page lists the NPCs Lootlog saw first most recently.
   const { data, isError } = useCatalogControllerGetNpcs(
     {
       search: query,
       gameVersion: WIKI_GAME_VERSION,
       limit,
-      sort: query ? "relevance" : "newest",
     },
     { query: { placeholderData: (previousData) => previousData } },
   );
@@ -91,9 +88,6 @@ function NpcsRoute() {
                       <span className="truncate text-xs text-muted-foreground">
                         {t(`npcTypes.${npc.type}`)} ·{" "}
                         {t("common.levelShort", { level: npc.lvl })}
-                        {npc.firstSeenOn
-                          ? ` · ${formatFirstSeenOn(npc.firstSeenOn)}`
-                          : null}
                       </span>
                     </span>
                   </Link>

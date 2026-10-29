@@ -77,15 +77,6 @@ const activeFilters = (search: ItemsSearch): ActiveFilter[] => [
         },
       ]
     : []),
-  ...(search.recent
-    ? [
-        {
-          key: "recent",
-          label: t(`filters.recentOptions.${search.recent}`),
-          clear: { recent: "" },
-        },
-      ]
-    : []),
   ...LIST_FILTERS.flatMap(({ key, label }) => {
     const values = splitList(search[key]);
 

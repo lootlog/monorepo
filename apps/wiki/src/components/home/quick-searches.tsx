@@ -22,7 +22,10 @@ const QUICK_SEARCHES: ReadonlyArray<{
     key: "heroHeroics",
     search: { rarities: ItemRarity.HEROIC, bosses: "HERO" },
   },
-  { key: "thisWeek", search: { recent: "7", sort: "newest" } },
+  {
+    key: "highLevelLegendaries",
+    search: { rarities: ItemRarity.LEGENDARY, minLevel: "250" },
+  },
 ];
 
 export function QuickSearches() {

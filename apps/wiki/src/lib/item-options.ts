@@ -55,14 +55,3 @@ export const ITEM_TILE_LABELS = {
     ITEM_TYPE_OPTIONS.map((type) => [type, t(`itemType.${type}`)]),
   ),
 };
-
-const firstSeenFormatter = new Intl.DateTimeFormat("pl-PL", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
-/** A catalog day, `YYYY-MM-DD`, as players read it. */
-export const formatFirstSeenOn = (day: string) =>
-  firstSeenFormatter.format(new Date(`${day}T12:00:00Z`));

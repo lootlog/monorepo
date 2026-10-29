@@ -86,21 +86,13 @@ const messages = {
     searchPlaceholder: "Wpisz nazwę przedmiotu, np. dria, serce, łowca",
     searchSubmit: "Szukaj",
     raritiesTitle: "Przeglądaj według rzadkości",
-    newDropsTitle: "Nowe legendarne i heroiczne dropy",
-    newDropsDescription:
-      "Przedmioty, które gracze Lootloga zdobyli po raz pierwszy w ostatnim czasie.",
-    newDropsEmpty: "Nie ma jeszcze nowych dropów.",
-    newMonstersTitle: "Nowe potwory",
-    newMonstersDescription:
-      "Herosi, tytani i kolosi, których Lootlog widział po raz pierwszy, razem z ich dropami.",
-    newMonstersEmpty: "Nie ma jeszcze nowych potworów.",
     sectionsTitle: "Działy wiki",
     quickSearchesLabel: "Szybkie wyszukiwania",
     quickSearches: {
       titanLegendaries: "Legendy z tytanów",
       colossusLegendaries: "Legendy z kolosów",
       heroHeroics: "Heroiki z herosów",
-      thisWeek: "Nowości z tego tygodnia",
+      highLevelLegendaries: "Legendy 250+ lvl",
     },
     bonusesTitle: "Szukaj po bonusie legendarnym",
     bonusUpcoming: "Wkrótce w grze",
@@ -123,7 +115,6 @@ const messages = {
       UPGRADED: "Ulepszone",
       COMMON: "Zwykłe",
     },
-    firstSeenOn: "Pierwszy drop: {{day}}",
     noSourcesYet: "Lootlog nie zna jeszcze potwora, z którego wypada.",
     noDropsYet: "Lootlog nie zna jeszcze dropów tego potwora.",
     itemNotFound: "Nie znaleziono przedmiotu.",
@@ -150,17 +141,6 @@ const messages = {
     slot: "Slot ekwipunku",
     level: "Poziom",
     levelChip: "Poziom {{min}}–{{max}}",
-    recent: "Pierwszy drop",
-    recentOptions: {
-      "1": "Ostatnie 24 h",
-      "7": "Ostatnie 7 dni",
-      "30": "Ostatnie 30 dni",
-    },
-    recentShort: {
-      "1": "24 h",
-      "7": "7 dni",
-      "30": "30 dni",
-    },
     anySlot: "Każdy slot",
     levelBracket: "{{min}}–{{max}}",
     levelFrom: "{{min}}+",
@@ -192,7 +172,6 @@ const messages = {
     sort: "Sortowanie",
     sortOptions: {
       relevance: "Trafność",
-      newest: "Najnowsze",
       "lvl:asc": "Poziom rosnąco",
       "lvl:desc": "Poziom malejąco",
       "name:asc": "Nazwa A-Z",
@@ -282,8 +261,7 @@ const messages = {
   },
   npcs: {
     title: "Wyszukiwarka NPC",
-    description:
-      "Znajdź NPC-a lub potwora po nazwie. Bez frazy widzisz potwory, które Lootlog zobaczył ostatnio po raz pierwszy.",
+    description: "Znajdź NPC-a lub potwora po nazwie.",
   },
 } as const;
 
