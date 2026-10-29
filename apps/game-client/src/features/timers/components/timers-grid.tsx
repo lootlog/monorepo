@@ -14,6 +14,12 @@ import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { TimerClockProvider } from "./timer-clock-provider";
 import { TimerMapPresenceProvider } from "./timer-map-presence-provider";
 import { getTimerGroupingKey } from "../timer-list-projection";
+import { TimerGridPopups } from "./timer-grid-popups";
+
+const getTimerTileKey = (timer: TimerWithTimeLeft) =>
+  timer.mergedGuildIds
+    ? `${timer.world}-${getTimerGroupingKey(timer)}`
+    : `${timer.world}-${timer.guildId}-${timer.timerKey}`;
 
 type TimersGridProps = {
   timers: TimerWithTimeLeft[];
@@ -101,6 +107,11 @@ export const TimersGrid: FC<TimersGridProps> = ({
   );
 
   const hiddenTimerNames = new Set(hiddenTimers);
+
+  const timersByKey = new Map(
+    timers.map((timer) => [getTimerTileKey(timer), timer]),
+  );
+
   const { gridRef, gridWidth } = useGridWidth();
 
   const columnCount = countGridColumns(
@@ -116,8 +127,8 @@ export const TimersGrid: FC<TimersGridProps> = ({
   return (
     <TimerMapPresenceProvider timers={timers}>
       <TimerClockProvider>
-        <span
-          ref={gridRef}
+        <TimerGridPopups
+          gridRef={gridRef}
           className={cn(
             "ll:grid ll:w-full ll:pb-1",
             legacyAppearance && "ll:gap-0.5",
@@ -125,17 +136,17 @@ export const TimersGrid: FC<TimersGridProps> = ({
           style={{
             gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${minColumnWidth}px), 1fr))`,
           }}
+          guildNamesById={guildNamesById}
+          timersByKey={timersByKey}
         >
           {timers.map((timer) => {
             const isHidden = hiddenTimerNames.has(timer.npc.name);
+            const tileKey = getTimerTileKey(timer);
 
             return (
               <SingleTimer
-                key={
-                  timer.mergedGuildIds
-                    ? `${timer.world}-${getTimerGroupingKey(timer)}`
-                    : `${timer.world}-${timer.guildId}-${timer.timerKey}`
-                }
+                key={tileKey}
+                popupKey={tileKey}
                 guildIds={guildIds}
                 guildNamesById={guildNamesById}
                 accessPolicy={accessPoliciesByGuildId[timer.guildId]}
@@ -146,7 +157,7 @@ export const TimersGrid: FC<TimersGridProps> = ({
               />
             );
           })}
-        </span>
+        </TimerGridPopups>
       </TimerClockProvider>
     </TimerMapPresenceProvider>
   );

@@ -38,7 +38,7 @@ const getResetScopeLabel = (
     .map((guildId) => guildNamesById[guildId] ?? guildId)
     .join(", ");
 
-type TimerContextMenuContentProps = {
+export type TimerContextMenuContentProps = {
   timer: TimerWithTimeLeft;
   isPending: boolean;
   isPinned: boolean;
