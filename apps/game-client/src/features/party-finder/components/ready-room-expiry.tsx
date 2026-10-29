@@ -14,7 +14,10 @@ type ReadyRoomExpiryProps = {
 /** Whole minutes left before the gathering lapses, rounded up. */
 export function ReadyRoomExpiry({ expiresAt }: ReadyRoomExpiryProps) {
   const { t } = useTranslation("partyFinder");
-  const [now, setNow] = useState(Date.now);
+  // A fresh sample per fire: a coarse clock may repeat the last value, and
+  // React would skip the identical update and leave no timer armed.
+  const [clock, setClock] = useState(() => ({ now: Date.now() }));
+  const { now } = clock;
   const expiresAtMs = Date.parse(expiresAt);
   const remainingMs = expiresAtMs - now;
   const shownMinutes = getShownMinutes(remainingMs);
@@ -31,10 +34,14 @@ export function ReadyRoomExpiry({ expiresAt }: ReadyRoomExpiryProps) {
           : null;
 
     if (delay === null) return;
-    const timeout = window.setTimeout(() => setNow(Date.now()), delay);
+
+    const timeout = window.setTimeout(
+      () => setClock({ now: Date.now() }),
+      delay,
+    );
 
     return () => window.clearTimeout(timeout);
-  }, [expiresAtMs, now, shownMinutes]);
+  }, [clock, expiresAtMs, shownMinutes]);
 
   return (
     <span className="ll:shrink-0 ll:tabular-nums ll:text-muted-foreground">
