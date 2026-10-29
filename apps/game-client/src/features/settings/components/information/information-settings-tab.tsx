@@ -11,15 +11,21 @@ import {
 } from "@/config/app";
 import { createDiagnosticsReport } from "@/lib/diagnostics-report";
 import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
+import { once } from "es-toolkit";
 import { Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
-const buildTimestampFormatter = new Intl.DateTimeFormat("pl-PL", {
-  dateStyle: "medium",
-  timeStyle: "medium",
-  timeZone: "UTC",
-});
+// Built on first use so the bundle does not load locale data while it
+// evaluates during the game's startup.
+const getBuildTimestampFormatter = once(
+  () =>
+    new Intl.DateTimeFormat("pl-PL", {
+      dateStyle: "medium",
+      timeStyle: "medium",
+      timeZone: "UTC",
+    }),
+);
 
 export const InformationSettingsTab = () => {
   const { t } = useTranslation();
@@ -48,7 +54,7 @@ export const InformationSettingsTab = () => {
     {
       label: t("settings.information.buildTimestampLabel"),
       value: BUILD_TIMESTAMP
-        ? buildTimestampFormatter.format(new Date(BUILD_TIMESTAMP))
+        ? getBuildTimestampFormatter().format(new Date(BUILD_TIMESTAMP))
         : notAvailable,
     },
   ];
