@@ -411,9 +411,9 @@ describe("realtime Dragonfly integration", () => {
         if (cacheState === "populated") {
           await firstRedis.command.set(
             cacheKey,
-            JSON.stringify({ guilds, cachedAt: Date.now() - 90_000 }),
+            JSON.stringify({ guilds, cachedAt: Date.now() - 700_000 }),
             "EX",
-            120,
+            900,
           );
         }
 
