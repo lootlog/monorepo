@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",
+    "@lootlog/datetime": "workspace:*",
     "@lootlog/domain": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/messaging": "workspace:*",

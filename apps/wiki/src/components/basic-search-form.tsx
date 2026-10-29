@@ -6,19 +6,12 @@ import { t } from "@/i18n/messages";
 export function BasicSearchForm({
   queryValue,
   setQueryValue,
-  hasWorldField,
-  worldValue,
-  setWorldValue,
   handleSubmit,
   handleReset,
 }: ReturnType<typeof useBasicSearchForm>) {
   return (
     <form
-      className={
-        hasWorldField
-          ? "grid gap-3 md:grid-cols-[1.6fr_1fr_auto_auto]"
-          : "grid gap-3 md:grid-cols-[1fr_auto_auto]"
-      }
+      className="grid gap-3 md:grid-cols-[1fr_auto_auto]"
       onSubmit={handleSubmit}
     >
       <SearchTextField
@@ -27,14 +20,6 @@ export function BasicSearchForm({
         onValueChange={setQueryValue}
         placeholder={t("search.queryPlaceholder")}
       />
-      {hasWorldField ? (
-        <SearchTextField
-          label={t("search.worldLabel")}
-          value={worldValue}
-          onValueChange={setWorldValue}
-          placeholder={t("search.worldPlaceholder")}
-        />
-      ) : null}
       <Button className="self-end" type="submit">
         {t("search.submit")}
       </Button>

@@ -18,11 +18,12 @@ import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes";
 import { Toaster } from "@lootlog/ui/components/sonner";
 
 import "@lootlog/ui/globals.css";
-import "@/themes/default.css";
-import "@/themes/muted.css";
-import "@/themes/backgrounds.css";
+import "@lootlog/ui/themes/default.css";
+import "@lootlog/ui/themes/muted.css";
+import "@lootlog/ui/themes/backgrounds.css";
+import "@lootlog/ui/scrollbars.css";
 import "../scrollbars.css";
-import "../page-scroll.css";
+import "@lootlog/ui/page-scroll.css";
 import "@/i18n/config";
 
 const ReactQueryDevtools = lazy(() =>
