@@ -507,6 +507,16 @@ export class PresenceStore {
 
       if (!presence) return;
 
+      yield* this.remove(
+        presence.organizationIds,
+        presence.userId,
+        presence.sessionId,
+        session.discordId,
+      );
+
+      yield* this.scheduleOffline(presence);
+
+      // Coverage is derived; a failed event must not keep the session online.
       if ("location" in presence && presence.location?.map && this.coverage)
         for (const organizationId of presence.organizationIds)
           yield* this.coverage.publish({
@@ -516,15 +526,6 @@ export class PresenceStore {
             hasPlayer: false,
             isAfk: presence.isAfk,
           });
-
-      yield* this.remove(
-        presence.organizationIds,
-        presence.userId,
-        presence.sessionId,
-        session.discordId,
-      );
-
-      yield* this.scheduleOffline(presence);
     });
   }
 
