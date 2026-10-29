@@ -34,32 +34,25 @@ type NpcsState = {
 const createNpcSnapshot = (npc: RuntimeNpc): NpcSnapshot =>
   Object.freeze({ ...npc });
 
-const NPC_SNAPSHOT_FIELDS = [
-  "actions",
-  "groupId",
-  "icon",
-  "id",
-  "level",
-  "name",
-  "profession",
-  "respawnRandomness",
-  "templateId",
-  "type",
-  "weight",
-  "x",
-  "y",
-] as const satisfies readonly (keyof RuntimeNpc)[];
-
+// Spelled out instead of looping over field names: a keyed load per field
+// name goes megamorphic, and this runs for every NPC of every npcs packet.
 const areNpcSnapshotsEqual = (
   current: NpcSnapshot,
   next: RuntimeNpc,
-): boolean => {
-  for (const field of NPC_SNAPSHOT_FIELDS) {
-    if (current[field] !== next[field]) return false;
-  }
-
-  return true;
-};
+): boolean =>
+  current.id === next.id &&
+  current.x === next.x &&
+  current.y === next.y &&
+  current.templateId === next.templateId &&
+  current.name === next.name &&
+  current.level === next.level &&
+  current.icon === next.icon &&
+  current.type === next.type &&
+  current.weight === next.weight &&
+  current.profession === next.profession &&
+  current.actions === next.actions &&
+  current.groupId === next.groupId &&
+  current.respawnRandomness === next.respawnRandomness;
 
 // Margonem keeps every removed NPC until the map changes. Lootlog needs one only
 // for a battle or loot shortly after its removal, so the oldest are dropped.
