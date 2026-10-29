@@ -331,4 +331,10 @@ it("opens the shared menu only from a tile and closes it when that timer leaves 
   await waitFor(() =>
     expect(screen.queryByRole("menu")).not.toBeInTheDocument(),
   );
+  // Focus moves to the tile that took the removed tile's place.
+  await waitFor(() =>
+    expect(document.activeElement).toBe(
+      screen.getByText(/\[H\] Tanroth/).closest("[data-timer-popup-key]"),
+    ),
+  );
 });

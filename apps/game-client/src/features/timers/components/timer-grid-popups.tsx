@@ -24,6 +24,8 @@ import {
 } from "./timer-popups-context";
 import { TimerSharedTooltip } from "./timer-shared-tooltip";
 
+const TILE_SELECTOR = `[${TIMER_POPUP_KEY_ATTRIBUTE}]`;
+
 type TimerGridPopupsProps = {
   children: ReactNode;
   className?: string;
@@ -54,7 +56,12 @@ export const TimerGridPopups = ({
   const { menuRegistry, tooltipHandle } = popups;
   const [menuTimerKey, setMenuTimerKey] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuTileRef = useRef<HTMLElement | null>(null);
+
+  const menuTileRef = useRef<{
+    grid: HTMLElement;
+    index: number;
+    tile: HTMLElement;
+  } | null>(null);
 
   const menuProps = useSyncExternalStore(menuRegistry.subscribe, () =>
     menuTimerKey === null ? undefined : menuRegistry.get(menuTimerKey),
@@ -68,7 +75,7 @@ export const TimerGridPopups = ({
   const selectMenuTile = (event: BaseUIEvent<SyntheticEvent<HTMLElement>>) => {
     const tile =
       event.target instanceof Element
-        ? event.target.closest<HTMLElement>(`[${TIMER_POPUP_KEY_ATTRIBUTE}]`)
+        ? event.target.closest<HTMLElement>(TILE_SELECTOR)
         : null;
 
     const timerKey = tile?.getAttribute(TIMER_POPUP_KEY_ATTRIBUTE);
@@ -79,8 +86,25 @@ export const TimerGridPopups = ({
       return;
     }
 
-    menuTileRef.current = tile;
+    const tiles = event.currentTarget.querySelectorAll(TILE_SELECTOR);
+
+    menuTileRef.current = {
+      grid: event.currentTarget,
+      index: [...tiles].indexOf(tile),
+      tile,
+    };
     setMenuTimerKey(timerKey);
+  };
+
+  // Focus goes back to the tile; when its timer left the grid meanwhile, to
+  // the tile now in its place, so a keyboard user keeps their position.
+  const getMenuFinalFocus = () => {
+    const opened = menuTileRef.current;
+
+    if (!opened || opened.tile.isConnected) return opened?.tile ?? null;
+    const tiles = opened.grid.querySelectorAll<HTMLElement>(TILE_SELECTOR);
+
+    return tiles[Math.min(opened.index, tiles.length - 1)] ?? null;
   };
 
   return (
@@ -98,7 +122,7 @@ export const TimerGridPopups = ({
 
         <ContextMenuContent
           className="ll:w-48 ll:flex ll:flex-col"
-          finalFocus={() => menuTileRef.current}
+          finalFocus={getMenuFinalFocus}
         >
           {menuTimerKey !== null && (
             <TimerActiveContextMenu
