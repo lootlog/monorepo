@@ -478,6 +478,79 @@ paths:
                 additionalProperties: false
       description: Retrieve the authenticated user's Lootlog guilds where cached member data indicates access
       summary: Get accessible current user guilds
+  /users/@me/game-client/bootstrap:
+    get:
+      tags:
+        - users
+      operationId: UsersController_getGameClientBootstrap
+      parameters:
+        - name: gameAccountId
+          in: query
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: characterId
+          in: query
+          schema:
+            type: string
+            minLength: 1
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: GameClientBootstrapResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameClientBootstrapResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: "Return in one request what the game client reads at startup: accessible guilds, user preferences, the Lootlog configuration of the game account, its settings documents and the timer documents of every accessible guild. Each part applies the access policy of its own endpoint; a part that could not be read is null and must be read from that endpoint."
+      summary: Get the game client startup data
   /users/@me/game-preferences/accounts/{accountId}:
     get:
       tags:
@@ -32358,6 +32431,264 @@ components:
             enabled:
               type: boolean
           additionalProperties: false
+      additionalProperties: false
+    GameClientBootstrapResponseDto_Output:
+      type: object
+      properties:
+        accessibleGuilds:
+          nullable: true
+          type: array
+          items:
+            $ref: "#/components/schemas/UserCurrentGuildResponseDto_Output"
+        userPreferences:
+          nullable: true
+          type: object
+          properties:
+            userId:
+              type: string
+            guildsOrder:
+              type: array
+              items:
+                type: string
+            hiddenGuildIds:
+              type: array
+              items:
+                type: string
+            theme:
+              type: string
+            chatAppearance:
+              type: object
+              properties:
+                npcLayout:
+                  type: string
+                  enum:
+                    - tile
+                    - inline
+                    - text
+                fontScalePercent:
+                  type: number
+                  minimum: 70
+                  maximum: 150
+                messageGapPx:
+                  type: number
+                  minimum: 0
+                  maximum: 16
+                showTimestamp:
+                  type: boolean
+                showGuildLabel:
+                  type: boolean
+                showNpcAvatar:
+                  type: boolean
+                showNpcLevel:
+                  type: boolean
+                showNpcLocationAndCoordinates:
+                  type: boolean
+              required:
+                - npcLayout
+                - fontScalePercent
+                - messageGapPx
+                - showTimestamp
+                - showGuildLabel
+                - showNpcAvatar
+                - showNpcLevel
+                - showNpcLocationAndCoordinates
+              additionalProperties: false
+            mutes:
+              type: object
+              properties:
+                players:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      discordId:
+                        type: string
+                        minLength: 1
+                      displayName:
+                        type: string
+                    required:
+                      - discordId
+                      - displayName
+                    additionalProperties: false
+                npcs:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      npcKey:
+                        type: string
+                        minLength: 1
+                      npcId:
+                        type: integer
+                        minimum: -9007199254740991
+                        maximum: 9007199254740991
+                      name:
+                        type: string
+                        minLength: 1
+                      npcType:
+                        type: string
+                        enum:
+                          - ELITE2
+                          - HERO
+                          - COLOSSUS
+                          - TITAN
+                      lvl:
+                        type: integer
+                        minimum: 1
+                        maximum: 9007199254740991
+                      prof:
+                        nullable: true
+                        type: string
+                      icon:
+                        nullable: true
+                        type: string
+                    required:
+                      - npcKey
+                      - npcId
+                      - name
+                      - npcType
+                      - lvl
+                      - prof
+                      - icon
+                    additionalProperties: false
+              required:
+                - players
+                - npcs
+              additionalProperties: false
+          required:
+            - userId
+            - guildsOrder
+            - hiddenGuildIds
+            - theme
+            - chatAppearance
+            - mutes
+          additionalProperties: false
+        lootlogConfig:
+          nullable: true
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              userId:
+                type: string
+              accountId:
+                type: string
+              characterId:
+                type: string
+              catchingGuildIds:
+                type: array
+                items:
+                  type: string
+            required:
+              - userId
+              - accountId
+              - characterId
+              - catchingGuildIds
+            additionalProperties: false
+        settingsDocuments:
+          nullable: true
+          type: object
+          properties:
+            domains:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  effective:
+                    type: object
+                  layers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        scope:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                              enum:
+                                - USER
+                                - GAME_ACCOUNT
+                                - CHARACTER
+                                - GUILD
+                            id:
+                              type: string
+                              minLength: 1
+                          required:
+                            - type
+                            - id
+                          additionalProperties: false
+                        overrides:
+                          type: object
+                        schemaVersion:
+                          type: integer
+                          minimum: 1
+                          maximum: 9007199254740991
+                        updatedAt:
+                          type: string
+                          format: date-time
+                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                      required:
+                        - scope
+                        - overrides
+                      additionalProperties: false
+                  sources:
+                    type: object
+                    additionalProperties:
+                      anyOf:
+                        - type: string
+                          enum:
+                            - DEFAULT
+                        - type: object
+                          properties:
+                            type:
+                              type: string
+                              enum:
+                                - USER
+                                - GAME_ACCOUNT
+                                - CHARACTER
+                                - GUILD
+                            id:
+                              type: string
+                              minLength: 1
+                          required:
+                            - type
+                            - id
+                          additionalProperties: false
+                  schemaVersion:
+                    type: integer
+                    minimum: 1
+                    maximum: 9007199254740991
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                required:
+                  - effective
+                  - layers
+                  - sources
+                  - schemaVersion
+                additionalProperties: false
+          required:
+            - domains
+          additionalProperties: false
+        guildTimerDocuments:
+          nullable: true
+          type: object
+          properties:
+            guilds:
+              type: object
+              additionalProperties:
+                $ref: "#/components/schemas/SettingsDocumentsResponseDto_Output"
+          required:
+            - guilds
+          additionalProperties: false
+      required:
+        - accessibleGuilds
+        - userPreferences
+        - lootlogConfig
+        - settingsDocuments
+        - guildTimerDocuments
       additionalProperties: false
     UserCurrentGuildResponseDto_Output:
       type: object

@@ -13,7 +13,9 @@ import {
   getGuildTimersDocumentsQueryKey,
   getSettingsDocumentsParams,
   type GuildSettingsDocuments,
+  type SettingsDocuments,
 } from "./settings-documents";
+import { readGameClientBootstrap } from "@/lib/game-client-bootstrap";
 
 const QUERY_OPTIONS = {
   staleTime: 60_000,
@@ -36,13 +38,15 @@ export const useSettingsDocuments = () => {
   );
 
   const params = getSettingsDocumentsParams(useSettingsDocumentsContext());
+  const queryKey = getSettingsDocumentsControllerGetPreferencesQueryKey(params);
 
   return useQuery({
     queryFn: async ({ signal }) =>
+      (await readGameClientBootstrap<SettingsDocuments>(queryKey)) ??
       decodeSettingsDocuments(
         await settingsDocumentsControllerGetPreferences(params, { signal }),
       ),
-    queryKey: getSettingsDocumentsControllerGetPreferencesQueryKey(params),
+    queryKey,
     enabled: gameInitialized,
     ...QUERY_OPTIONS,
   });
@@ -55,10 +59,12 @@ export const useGuildTimersDocuments = (guildIds: readonly string[]) => {
   );
 
   const params = getGuildTimersDocumentsParams(guildIds);
+  const queryKey = getGuildTimersDocumentsQueryKey(guildIds);
 
   return useQuery({
-    queryKey: getGuildTimersDocumentsQueryKey(guildIds),
+    queryKey,
     queryFn: async ({ signal }): Promise<GuildSettingsDocuments> =>
+      (await readGameClientBootstrap<GuildSettingsDocuments>(queryKey)) ??
       decodeGuildSettingsDocuments(
         await settingsDocumentsControllerGetGuildPreferences(params, {
           signal,

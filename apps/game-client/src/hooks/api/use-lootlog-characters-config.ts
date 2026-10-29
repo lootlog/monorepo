@@ -1,7 +1,10 @@
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
+  userLootlogConfigControllerGetUserLootlogConfigByAccountId,
+  type UserLootlogConfigAccountResponseDtoOutput,
 } from "@lootlog/client/main";
+import { readGameClientBootstrap } from "@/lib/game-client-bootstrap";
 import { useGameStore } from "@/store/game.store";
 
 /**
@@ -12,13 +15,23 @@ import { useGameStore } from "@/store/game.store";
 export const useLootlogCharactersConfig = ({ enabled = true } = {}) => {
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
 
+  const queryKey =
+    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+      accountId,
+    });
+
   return useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
     { accountId },
     {
       query: {
-        queryKey:
-          getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey(
+        queryKey,
+        queryFn: async ({ signal }) =>
+          (await readGameClientBootstrap<UserLootlogConfigAccountResponseDtoOutput>(
+            queryKey,
+          )) ??
+          userLootlogConfigControllerGetUserLootlogConfigByAccountId(
             { accountId },
+            { signal },
           ),
         enabled: enabled && accountId !== "",
         refetchOnMount: false,
