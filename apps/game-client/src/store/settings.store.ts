@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
+import { createChangedOnlyStorage } from "./changed-only-storage";
 import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
 
 const STORAGE_KEY = storageKey("ll:settings:state");
@@ -108,7 +109,7 @@ export const useSettingsStore = create<SettingsState>()(
         worldByGuildId: state.worldByGuildId,
         guildIdByCharId: state.guildIdByCharId,
       }),
-      storage: createJSONStorage(() => localStorage),
+      storage: createChangedOnlyStorage(createJSONStorage(() => localStorage)),
       version: 6,
     },
   ),

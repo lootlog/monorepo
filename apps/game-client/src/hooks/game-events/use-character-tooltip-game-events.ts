@@ -12,7 +12,13 @@ export function useCharacterTooltipGameEvents(): void {
         useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
       }
 
-      if (event?.other) restoreLegacyShiftSections(Object.keys(event.other));
+      // Shift sections exist only while Shift is held; skip listing the ids otherwise.
+      if (
+        event?.other &&
+        useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed
+      ) {
+        restoreLegacyShiftSections(Object.keys(event.other));
+      }
     });
   }, []);
 }

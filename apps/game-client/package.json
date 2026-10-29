@@ -19,6 +19,7 @@
     "test:ui": "vitest --ui",
     "test:watch": "vitest",
     "bench:runtime": "vitest bench src/lib/margonem-runtime/runtime-replay.bench.ts",
+    "bench:presence": "vitest bench --reporter=verbose src/lib/map-threat-presence.bench.ts",
     "dev:extension": "wxt -b chrome --mv3",
     "dev:extension:firefox": "wxt -b firefox --mv3",
     "build:extension": "bun extension/build.ts build local chrome",

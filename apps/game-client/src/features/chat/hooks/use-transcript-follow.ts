@@ -9,20 +9,48 @@ import {
 } from "react";
 import type { ChatScrollPosition } from "../components/chat-transcript";
 
+/** The transcript's message rows in document order, without date dividers. */
+export const getMessageRows = (viewport: HTMLElement): HTMLElement[] => {
+  const list = viewport.querySelector("[data-message-id]")?.parentElement;
+
+  if (!list) return [];
+
+  return Array.from(list.children).filter(
+    (element): element is HTMLElement =>
+      element instanceof HTMLElement && element.dataset.messageId !== undefined,
+  );
+};
+
 export const getViewportPosition = (
   viewport: HTMLElement,
 ): ChatScrollPosition => {
   const box = viewport.getBoundingClientRect();
+  const rows = getMessageRows(viewport);
+  // Rows stack top to bottom, so the first one reaching into the viewport is
+  // found by bisection instead of measuring every row above it.
+  let low = 0;
+  let high = rows.length;
+  let rowTop = 0;
 
-  const row = Array.from(
-    viewport.querySelectorAll<HTMLElement>("[data-message-id]"),
-  ).find((element) => element.getBoundingClientRect().bottom > box.top);
+  while (low < high) {
+    const middle = (low + high) >>> 1;
+    const rect = rows[middle]?.getBoundingClientRect();
+
+    if (rect !== undefined && rect.bottom > box.top) {
+      high = middle;
+      rowTop = rect.top;
+    } else {
+      low = middle + 1;
+    }
+  }
+
+  const row = rows[low];
 
   return {
     atEnd:
       viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop <= 1,
     messageId: row?.dataset.messageId,
-    offset: row ? row.getBoundingClientRect().top - box.top : 0,
+    offset: row ? rowTop - box.top : 0,
   };
 };
 

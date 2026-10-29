@@ -8,6 +8,15 @@
 @variant dark (&:where(#lootlog-root.dark-theme, .ll-theme-boundary.dark-theme, #lootlog-root.dark-theme *, .ll-theme-boundary.dark-theme *));
 
 /*
+ * shadcn's versions of these variants also accept Radix's `data-state`
+ * spelling. Two alternatives make a stacked variant (`data-active:hover:`)
+ * compile to a multi-argument `:is()` subject that the browser tries against
+ * every game element. Base UI and Lootlog only set the attribute itself.
+ */
+@custom-variant data-active (&:where([data-active]:not([data-active="false"])));
+@custom-variant data-disabled (&:where([data-disabled]:not([data-disabled="false"])));
+
+/*
  * Scoped stand-in for the Tailwind preflight, which cannot be loaded because
  * it would restyle the game page. shadcn primitives assume border-box sizing
  * and a solid zero-width border on every element.
@@ -30,8 +39,16 @@
   font-family: Arimo, Calibri, Segoe;
 }
 
-:where(#lootlog-root) :is(button, input, select, textarea, optgroup),
-:where(.ll-theme-boundary) :is(button, input, select, textarea, optgroup) {
+:where(#lootlog-root) button,
+:where(#lootlog-root) input,
+:where(#lootlog-root) select,
+:where(#lootlog-root) textarea,
+:where(#lootlog-root) optgroup,
+:where(.ll-theme-boundary) button,
+:where(.ll-theme-boundary) input,
+:where(.ll-theme-boundary) select,
+:where(.ll-theme-boundary) textarea,
+:where(.ll-theme-boundary) optgroup {
   font: inherit;
   color: inherit;
 }
@@ -48,11 +65,11 @@
  * the bag ends short of the strips above it. Own the rule here so it ships
  * with the rest of the stylesheet on every installation method.
  */
-[data-ll-scroll-area-viewport] {
+.ll-scroll-area-viewport {
   scrollbar-width: none;
 }
 
-[data-ll-scroll-area-viewport]::-webkit-scrollbar {
+.ll-scroll-area-viewport::-webkit-scrollbar {
   display: none;
 }
 
@@ -519,17 +536,15 @@ body.ll-mounted .right-main-column-wrapper > .bottom-wrapper > .banners {
   appearance: textfield;
 }
 
-:is(#lootlog-root, .ll-theme-boundary)
-  .ll-action-menu
-  :is([role="menuitem"], [data-variant="menu"]) {
+:is(#lootlog-root, .ll-theme-boundary) .ll-action-menu .ll-action-menu-item {
   position: relative;
   border-radius: 0;
 }
 
 :is(#lootlog-root, .ll-theme-boundary)
   .ll-action-menu
-  :is([role="menuitem"], [data-variant="menu"])
-  ~ :is([role="menuitem"], [data-variant="menu"])::before {
+  .ll-action-menu-item
+  ~ .ll-action-menu-item::before {
   content: "";
   position: absolute;
   inset: 0 0 auto;
