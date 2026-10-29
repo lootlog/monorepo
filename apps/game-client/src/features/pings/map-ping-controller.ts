@@ -11,12 +11,14 @@ import {
   type RuntimeCharacterBounds,
   type RuntimeCharacterRef,
   type RuntimeDrawable,
+  type RuntimeMapGeometry,
 } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
 import {
   PING_ICONS,
   PING_TONES,
   getPingPresentation,
   type PingIconName,
+  type PingTone,
 } from "./ping-presentation";
 
 const MAIN_MAP_CANVAS_ID = "GAME_CANVAS";
@@ -26,6 +28,10 @@ const HANDHELD_MINI_MAP_CANVAS_CLASS = "handheld-mini-map-canvas";
 const MAX_NETWORK_COORDINATE = 65_535;
 
 const MAX_ACTIVE_MAP_PINGS = 256;
+
+const PLATE_FONT = "bold 11px Arimo, Arial, sans-serif";
+
+const PLATE_SEPARATOR = " · ";
 
 export type MapTile = { x: number; y: number };
 
@@ -42,6 +48,93 @@ const getIconPath = (icon: PingIconName) => {
   return path;
 };
 
+/**
+ * Room around a ground ring for its glow: a canvas shadow blur of 8 reaches
+ * about three standard deviations, 12 px.
+ */
+const GROUND_RING_GLOW_PADDING = 12;
+
+/** Steps of the expanding ground ring: under half a pixel apart. */
+const GROUND_RING_PULSE_STEPS = 32;
+
+/** Marker sizes kept per colour; the minimap size follows its zoom. */
+const MAX_GROUND_RING_SIZES = 8;
+
+/** One marker size's rings: the resting ring and each pulse step. */
+type GroundRings = {
+  ring?: HTMLCanvasElement | null;
+  pulses: (HTMLCanvasElement | null | undefined)[];
+};
+
+const groundRings = new Map<string, Map<number, GroundRings>>();
+
+const getGroundRings = (color: string, baseRadius: number) => {
+  let sizes = groundRings.get(color);
+
+  if (!sizes) {
+    sizes = new Map();
+    groundRings.set(color, sizes);
+  }
+
+  let rings = sizes.get(baseRadius);
+
+  if (!rings) {
+    if (sizes.size >= MAX_GROUND_RING_SIZES) sizes.clear();
+    rings = { pulses: [] };
+    sizes.set(baseRadius, rings);
+  }
+
+  return rings;
+};
+
+/**
+ * A glowing ground ellipse, blurred once into its own canvas. A shadow blur
+ * on the game canvas costs a blur pass per ring on every frame.
+ */
+const renderGroundRing = (color: string, radiusX: number, radiusY: number) => {
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) return null;
+
+  canvas.width = Math.ceil(radiusX + GROUND_RING_GLOW_PADDING) * 2;
+  canvas.height = Math.ceil(radiusY + GROUND_RING_GLOW_PADDING) * 2;
+  context.lineWidth = 2;
+  context.strokeStyle = color;
+  context.shadowColor = color;
+  context.shadowBlur = 8;
+  context.beginPath();
+  context.ellipse(
+    canvas.width / 2,
+    canvas.height / 2,
+    radiusX,
+    radiusY,
+    0,
+    0,
+    Math.PI * 2,
+  );
+  context.stroke();
+
+  return canvas;
+};
+
+const drawCentred = (
+  context: CanvasRenderingContext2D,
+  image: HTMLCanvasElement | null,
+  x: number,
+  y: number,
+) => {
+  if (image)
+    context.drawImage(image, x - image.width / 2, y - image.height / 2);
+};
+
+/** Text widths of a ping's name plate in `PLATE_FONT`. */
+type PlateWidths = {
+  label: number;
+  sender: number;
+  separator: number;
+};
+
 type ActiveMapPing = {
   id: string;
   mapId: number;
@@ -49,6 +142,10 @@ type ActiveMapPing = {
   character?: RuntimeCharacterRef;
   /** The marked character was on this map; once it is gone, so is the ping. */
   characterSeen?: boolean;
+  durationMs: number;
+  icon: PingIconName;
+  plateWidths?: PlateWidths;
+  tone: PingTone;
   x: number;
   y: number;
   senderName: string;
@@ -80,14 +177,19 @@ export const getMapPingPresentation = (
   character: RuntimeCharacterRef | undefined,
 ) => getPingPresentation(character?.kind === "npc" ? "attack" : type);
 
-const getPingStyle = (ping: ActiveMapPing) => {
-  const presentation = getMapPingPresentation(ping.type, ping.character);
+/** What a ping looks like and how long it lasts; fixed for its lifetime. */
+const getPingStyle = (
+  type: MapPingType,
+  character: RuntimeCharacterRef | undefined,
+) => {
+  const presentation = getMapPingPresentation(type, character);
 
   return {
-    durationMs: ping.character
+    durationMs: character
       ? CHARACTER_PING_DURATION_MS
       : presentation.durationMs,
-    presentation,
+    icon: presentation.icon,
+    tone: presentation.tone,
   };
 };
 
@@ -209,6 +311,14 @@ export class MapPingController {
   private enabled = false;
   private readonly drawable: RuntimeDrawable;
   private readonly characterGlows = new Map<string, TrackedCharacterGlow>();
+  /** When the expiry timer fires; the frame loop keeps it unless it changes. */
+  private expiryAt = Number.POSITIVE_INFINITY;
+  /**
+   * Read once per frame by the draw callback and reused by the main map
+   * drawable, which the renderer draws later in the same frame.
+   */
+  private frameGeometry: RuntimeMapGeometry | null = null;
+  private frameNow = 0;
 
   constructor(
     private readonly now: () => number = () => performance.now(),
@@ -216,7 +326,7 @@ export class MapPingController {
     private readonly createGlow: typeof createCharacterGlow = createCharacterGlow,
   ) {
     this.drawable = {
-      draw: (context) => this.drawMainMap(context),
+      draw: (context) => this.drawMainMap(context, this.frameGeometry),
       getOrder: () => this.renderer.getHighestOrder(),
       getAlwaysDraw: () => true,
     };
@@ -256,6 +366,7 @@ export class MapPingController {
       id,
       mapId,
       character,
+      ...getPingStyle(type, character),
       x: tile.x,
       y: tile.y,
       senderName,
@@ -275,10 +386,12 @@ export class MapPingController {
     }
 
     this.retainCapacityFor(event.pingId);
+    const character = getMapPingCharacter(event);
     this.activePings.set(event.pingId, {
       id: event.pingId,
       mapId: event.mapId,
-      character: getMapPingCharacter(event),
+      character,
+      ...getPingStyle(event.type, character),
       x: event.x,
       y: event.y,
       senderName: event.sender.name,
@@ -382,8 +495,13 @@ export class MapPingController {
   }
 
   private readonly handleDrawFrame = () => {
-    this.pruneExpired();
-    this.pruneDepartedCharacters();
+    const geometry = this.renderer.getMapGeometry();
+    this.frameGeometry = geometry;
+    this.frameNow = this.now();
+
+    const pingCount = this.activePings.size;
+    this.pruneExpired(this.frameNow);
+    this.pruneDepartedCharacters(geometry?.id);
 
     if (this.activePings.size === 0) {
       this.cancelExpiry();
@@ -392,10 +510,10 @@ export class MapPingController {
       return;
     }
 
-    this.scheduleExpiry();
+    if (this.activePings.size !== pingCount) this.scheduleExpiry();
     this.renderer.addDrawable(this.drawable);
-    this.addCharacterGlows();
-    this.drawHandheldMiniMap();
+    this.addCharacterGlows(geometry?.id);
+    this.drawHandheldMiniMap(geometry);
   };
 
   /**
@@ -403,9 +521,7 @@ export class MapPingController {
    * instead of letting the marker jump back to the tile it was pinged on. A
    * character this client never saw keeps the tile marker.
    */
-  private pruneDepartedCharacters() {
-    const currentMapId = this.renderer.getMapGeometry()?.id;
-
+  private pruneDepartedCharacters(currentMapId: number | undefined) {
     for (const [id, ping] of this.activePings) {
       if (!ping.character || ping.mapId !== currentMapId) continue;
 
@@ -418,9 +534,7 @@ export class MapPingController {
   }
 
   /** Lights up each pinged character's sprite, drawn just behind it. */
-  private addCharacterGlows() {
-    const currentMapId = this.renderer.getMapGeometry()?.id;
-
+  private addCharacterGlows(currentMapId: number | undefined) {
     for (const id of this.characterGlows.keys()) {
       if (!this.activePings.has(id)) this.characterGlows.delete(id);
     }
@@ -433,17 +547,17 @@ export class MapPingController {
       let glow = this.characterGlows.get(ping.id);
 
       if (!glow) {
-        const tone = PING_TONES[getPingStyle(ping).presentation.tone];
-
-        glow = this.createGlow(ping.character, tone.glow);
+        glow = this.createGlow(ping.character, PING_TONES[ping.tone].glow);
         this.characterGlows.set(ping.id, glow);
       }
 
-      if (!glow.isPresent()) {
+      if (!glow.refresh()) {
         continue;
       }
 
-      const pulse = 0.75 + Math.sin((this.now() - ping.startedAt) / 180) * 0.25;
+      const pulse =
+        0.75 + Math.sin((this.frameNow - ping.startedAt) / 180) * 0.25;
+
       glow.setAlpha(this.getFade(ping) * pulse);
       this.renderer.addDrawable(glow);
     }
@@ -453,14 +567,16 @@ export class MapPingController {
   private getFade(ping: ActiveMapPing) {
     const progress = Math.min(
       1,
-      (this.now() - ping.startedAt) / getPingStyle(ping).durationMs,
+      (this.frameNow - ping.startedAt) / ping.durationMs,
     );
 
     return Math.min(1, (1 - progress) / 0.3);
   }
 
-  private drawMainMap(context: CanvasRenderingContext2D) {
-    const geometry = this.renderer.getMapGeometry();
+  private drawMainMap(
+    context: CanvasRenderingContext2D,
+    geometry: RuntimeMapGeometry | null,
+  ) {
     const offset = geometry?.offset;
     const currentMapId = geometry?.id;
 
@@ -506,8 +622,7 @@ export class MapPingController {
     }
   }
 
-  private drawHandheldMiniMap() {
-    const geometry = this.renderer.getMapGeometry();
+  private drawHandheldMiniMap(geometry: RuntimeMapGeometry | null) {
     const currentMapId = geometry?.id;
     const miniMap = this.renderer.getHandheldMiniMap();
 
@@ -575,9 +690,8 @@ export class MapPingController {
       x,
     } = placement;
 
-    const elapsed = this.now() - ping.startedAt;
-    const { presentation } = getPingStyle(ping);
-    const tone = PING_TONES[presentation.tone];
+    const elapsed = this.frameNow - ping.startedAt;
+    const tone = PING_TONES[ping.tone];
     const fade = this.getFade(ping);
 
     if (ground) {
@@ -585,7 +699,7 @@ export class MapPingController {
     }
 
     if (!showSender) {
-      this.drawIcon(context, presentation.icon, x, y, baseRadius * 1.1);
+      this.drawIcon(context, ping.icon, x, y, baseRadius * 1.1);
 
       return;
     }
@@ -615,7 +729,7 @@ export class MapPingController {
     context.lineWidth = 1;
     context.strokeStyle = tone.border;
     context.stroke();
-    this.drawIcon(context, presentation.icon, x, badgeY, 15);
+    this.drawIcon(context, ping.icon, x, badgeY, 15);
 
     this.drawPlate(context, ping, tone.glow, x, badgeY - badgeRadius - 6);
     context.restore();
@@ -630,33 +744,36 @@ export class MapPingController {
     elapsed: number,
     fade: number,
   ) {
-    context.save();
-    context.globalAlpha = fade;
-    context.lineWidth = 2;
-    context.strokeStyle = color;
-    context.shadowColor = color;
-    context.shadowBlur = 8;
-
     const radiusX = baseRadius * 1.3;
     const radiusY = baseRadius * 0.6;
-    context.beginPath();
-    context.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
-    context.stroke();
+    const rings = getGroundRings(color, baseRadius);
+    const previousAlpha = context.globalAlpha;
 
-    const pulse = (elapsed % 1_000) / 1_000;
-    context.globalAlpha *= 1 - pulse;
-    context.beginPath();
-    context.ellipse(
-      x,
-      y,
-      radiusX * (0.6 + pulse * 0.9),
-      radiusY * (0.6 + pulse * 0.9),
-      0,
-      0,
-      Math.PI * 2,
+    if (rings.ring === undefined) {
+      rings.ring = renderGroundRing(color, radiusX, radiusY);
+    }
+
+    context.globalAlpha = fade;
+    drawCentred(context, rings.ring, x, y);
+
+    const step = Math.round(
+      ((elapsed % 1_000) / 1_000) * GROUND_RING_PULSE_STEPS,
     );
-    context.stroke();
-    context.restore();
+
+    const pulse = step / GROUND_RING_PULSE_STEPS;
+
+    if (rings.pulses[step] === undefined) {
+      const scale = 0.6 + pulse * 0.9;
+      rings.pulses[step] = renderGroundRing(
+        color,
+        radiusX * scale,
+        radiusY * scale,
+      );
+    }
+
+    context.globalAlpha = fade * (1 - pulse);
+    drawCentred(context, rings.pulses[step], x, y);
+    context.globalAlpha = previousAlpha;
   }
 
   private drawIcon(
@@ -687,13 +804,15 @@ export class MapPingController {
     x: number,
     bottom: number,
   ) {
-    const separator = " · ";
-    context.font = "bold 11px Arimo, Arial, sans-serif";
+    context.font = PLATE_FONT;
     context.textBaseline = "middle";
 
-    const senderWidth = context.measureText(ping.senderName).width;
-    const separatorWidth = context.measureText(separator).width;
-    const labelWidth = context.measureText(ping.typeLabel).width;
+    const {
+      label: labelWidth,
+      sender: senderWidth,
+      separator: separatorWidth,
+    } = this.getPlateWidths(context, ping);
+
     const width = senderWidth + separatorWidth + labelWidth + 12;
     const height = 18;
     const left = Math.round(x - width / 2);
@@ -719,19 +838,37 @@ export class MapPingController {
     context.fillText(ping.senderName, textX, textY);
     textX += senderWidth;
     context.fillStyle = "#bebebe";
-    context.fillText(separator, textX, textY);
+    context.fillText(PLATE_SEPARATOR, textX, textY);
     textX += separatorWidth;
     context.fillStyle = accent;
     context.fillText(ping.typeLabel, textX, textY);
   }
 
-  private pruneExpired() {
-    const now = this.now();
+  /**
+   * The plate's text and font are fixed for a ping's lifetime, so it is
+   * measured once. A web font still loading may change the widths, so they
+   * are kept only once fonts settled.
+   */
+  private getPlateWidths(
+    context: CanvasRenderingContext2D,
+    ping: ActiveMapPing,
+  ): PlateWidths {
+    if (ping.plateWidths) return ping.plateWidths;
 
+    const widths = {
+      label: context.measureText(ping.typeLabel).width,
+      sender: context.measureText(ping.senderName).width,
+      separator: context.measureText(PLATE_SEPARATOR).width,
+    };
+
+    if (document.fonts.status === "loaded") ping.plateWidths = widths;
+
+    return widths;
+  }
+
+  private pruneExpired(now = this.now()) {
     for (const [id, ping] of this.activePings) {
-      const { durationMs } = getPingStyle(ping);
-
-      if (now - ping.startedAt >= durationMs) {
+      if (now - ping.startedAt >= ping.durationMs) {
         this.activePings.delete(id);
       }
     }
@@ -753,19 +890,27 @@ export class MapPingController {
   }
 
   private scheduleExpiry(): void {
-    this.cancelExpiry();
+    if (!this.enabled || this.activePings.size === 0) {
+      this.cancelExpiry();
 
-    if (!this.enabled || this.activePings.size === 0) return;
+      return;
+    }
 
-    const now = this.now();
     let nearestExpiryAt = Number.POSITIVE_INFINITY;
 
     for (const ping of this.activePings.values()) {
-      const expiresAt = ping.startedAt + getPingStyle(ping).durationMs;
-
-      nearestExpiryAt = Math.min(nearestExpiryAt, expiresAt);
+      nearestExpiryAt = Math.min(
+        nearestExpiryAt,
+        ping.startedAt + ping.durationMs,
+      );
     }
 
+    if (this.expiryTimeoutId !== null && nearestExpiryAt === this.expiryAt) {
+      return;
+    }
+
+    this.cancelExpiry();
+    this.expiryAt = nearestExpiryAt;
     this.expiryTimeoutId = window.setTimeout(
       () => {
         this.expiryTimeoutId = null;
@@ -779,7 +924,7 @@ export class MapPingController {
 
         this.scheduleExpiry();
       },
-      Math.max(0, Math.ceil(nearestExpiryAt - now)),
+      Math.max(0, Math.ceil(nearestExpiryAt - this.now())),
     );
   }
 

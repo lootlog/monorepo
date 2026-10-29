@@ -269,7 +269,7 @@ describe("map ping coordinates", () => {
       draw: vi.fn<(context: CanvasRenderingContext2D) => void>(),
       getAlwaysDraw: () => true,
       getOrder: () => 9.1,
-      isPresent: () => npcPresent,
+      refresh: () => npcPresent,
       setAlpha: vi.fn<(alpha: number) => void>(),
     };
 
@@ -369,7 +369,7 @@ describe("map ping coordinates", () => {
         draw: () => undefined,
         getAlwaysDraw: () => true,
         getOrder: () => 9.1,
-        isPresent: () => true,
+        refresh: () => true,
         setAlpha: () => undefined,
       }),
     );

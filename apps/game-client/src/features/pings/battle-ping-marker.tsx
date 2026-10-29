@@ -1,10 +1,10 @@
 import { getLootlogHostPortalThemeClassName } from "@/components/ui/theme-boundary";
 import { useSettingsStore } from "@/store/settings.store";
-import { useEffect, type FC } from "react";
+import type { FC } from "react";
+import { BattlePingGlow } from "./battle-ping-glow";
 import { BattlePingGround } from "./battle-ping-ground";
 import { BattlePingIcon } from "./battle-ping-icon";
 import type { BattlePingMark, BattlePingTarget } from "./battle-ping-store";
-import { glowBattleWarrior } from "./battle-warriors";
 import { PING_TONES, getPingPresentation } from "./ping-presentation";
 import { useAnimationEffects } from "@/hooks/use-animation-effects";
 
@@ -12,8 +12,6 @@ import { useAnimationEffects } from "@/hooks/use-animation-effects";
 const HIGHLIGHT_GLOW = "#ffffff";
 
 type BattlePingMarkerProps = {
-  /** The game's warrior element this marker is portalled into. */
-  element: HTMLElement;
   /** A history entry about this warrior is under the pointer. */
   highlighted: boolean;
   mark: BattlePingMark | undefined;
@@ -22,7 +20,6 @@ type BattlePingMarkerProps = {
 
 /** Rendered inside the warrior element, so it follows the battle scaling. */
 export const BattlePingMarker: FC<BattlePingMarkerProps> = ({
-  element,
   highlighted,
   mark,
   target,
@@ -40,12 +37,6 @@ export const BattlePingMarker: FC<BattlePingMarkerProps> = ({
   // Only the shared target lights the warrior up; marks stay icons.
   const glow = highlighted ? HIGHLIGHT_GLOW : targetColor;
 
-  useEffect(() => {
-    if (!glow) return;
-
-    return glowBattleWarrior(element, glow);
-  }, [element, glow]);
-
   return (
     // `display: contents` keeps the warrior element as the positioning box.
     // The marker lives outside #lootlog-root, so it stills its own animations.
@@ -53,6 +44,7 @@ export const BattlePingMarker: FC<BattlePingMarkerProps> = ({
       className={`${getLootlogHostPortalThemeClassName()} ll:contents${pulse ? "" : " ll-battle-ping-still"}`}
     >
       {targetColor ? <BattlePingGround color={targetColor} /> : null}
+      {glow ? <BattlePingGlow color={glow} /> : null}
       {/* Docked on the sprite's top-right corner, below the warrior's name,
           so the rows behind stay visible. */}
       <div
