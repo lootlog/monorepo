@@ -1,5 +1,10 @@
 import "@/index.css";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render as renderUi,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlayerPresence } from "@/lib/online-players-presence";
@@ -18,7 +23,18 @@ import type {
   showCharacterProfile,
 } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
 import { PLAYER_AFK_FILL, PLAYER_RELATION_FILLS } from "@/lib/player-relation";
+import type { ReactElement, ReactNode } from "react";
 import { OnlinePlayersAccountListEntry } from "./online-players-account-list-entry";
+import { OnlinePlayersPopups } from "./online-players-popups";
+
+// The list hosts the shared tooltip and context menu of its rows.
+const ListWrapper = ({ children }: { children: ReactNode }) => (
+  <OnlinePlayersPopups>
+    <div>{children}</div>
+  </OnlinePlayersPopups>
+);
+
+const render = (ui: ReactElement) => renderUi(ui, { wrapper: ListWrapper });
 
 const getHighlightFill = (container: HTMLElement) =>
   container
