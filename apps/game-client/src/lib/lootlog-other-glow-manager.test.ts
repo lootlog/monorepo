@@ -251,14 +251,16 @@ describe("lootlogOtherGlowManager", () => {
 
     lootlogOtherGlowManager.install();
     lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_BLUE);
+    getRuntimeDrawableList();
+
+    // A frame moves characters before it collects and draws drawables.
+    moveOther(other, { rx: 20, ry: 21, x: 20, y: 21 });
     const glow = getRuntimeDrawableList()[1];
 
     if (!glow || glow === "base" || !("draw" in glow))
       throw new Error("Expected glow drawable");
 
     drawImage.mockClear();
-    moveOther(other, { rx: 20, ry: 21, x: 20, y: 21 });
-
     glow.draw(context);
 
     expect(drawImage).toHaveBeenLastCalledWith(
