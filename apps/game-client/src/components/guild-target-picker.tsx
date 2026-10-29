@@ -88,12 +88,12 @@ export const GuildTargetPicker: FC<GuildTargetPickerProps> = ({
           className={cn(selectTriggerClassName, "ll:w-auto", className)}
         >
           <span>
-            <span className="ll:flex ll:shrink-0 ll:-space-x-1">
+            <span className="ll:flex ll:shrink-0">
               {targets.slice(0, MAX_TRIGGER_AVATARS).map((guild) => (
                 <GuildAvatar
                   key={guild.id}
                   guild={guild}
-                  className="ll:ring-1 ll:ring-black"
+                  className="ll:ring-1 ll:ring-black ll:not-last:-me-1"
                 />
               ))}
             </span>
