@@ -24,6 +24,7 @@ import { useGameEventHandlers } from "@/hooks/game-events/use-game-event-handler
 import { useGlobalStore } from "@/store/global.store";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import { useInit } from "@/hooks/use-init";
+import { useGameClientBootstrap } from "@/hooks/use-game-client-bootstrap";
 import { usePings } from "@/features/pings/use-pings";
 import { useAirTags } from "@/features/air-tags/use-air-tags";
 import { WhoIsHereAirTags } from "@/features/air-tags/who-is-here-air-tags";
@@ -38,6 +39,7 @@ import { useSettingsHydration } from "@/features/settings/persistence/use-settin
 import { useSelectedLootlogGuildInitialization } from "@/hooks/use-selected-lootlog-guild";
 
 export const AppContent = () => {
+  useGameClientBootstrap();
   useGameEventHandlers();
   useInit();
   useSelectedLootlogGuildInitialization();
