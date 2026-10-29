@@ -10,6 +10,7 @@ const messages = {
     npcsTitle: "NPC i potwory",
     itemTitle: "Przedmiot",
     npcTitle: "Potwór",
+    eventTitle: "Event",
   },
   navigation: {
     ariaLabel: "Wiki",
@@ -86,6 +87,15 @@ const messages = {
     searchPlaceholder: "Wpisz nazwę przedmiotu, np. dria, serce, łowca",
     searchSubmit: "Szukaj",
     raritiesTitle: "Przeglądaj według rzadkości",
+    newMonstersTitle: "Nowe potwory",
+    newMonstersDescription:
+      "Herosi, tytani i kolosi z najnowszymi przedmiotami w grze.",
+    newMonstersEmpty: "Lootlog nie zna jeszcze nowych potworów.",
+    newEventItemsTitle: "Nowe przedmioty eventowe",
+    newEventItemsDescription: "Najnowsze przedmioty z ostatnich eventów.",
+    showAllEventItems: "Pokaż wszystkie",
+    newEventItemsEmpty:
+      "Lootlog nie zna jeszcze nowych przedmiotów eventowych.",
     sectionsTitle: "Działy wiki",
     quickSearchesLabel: "Szybkie wyszukiwania",
     quickSearches: {
@@ -119,6 +129,10 @@ const messages = {
     noDropsYet: "Lootlog nie zna jeszcze dropów tego potwora.",
     itemNotFound: "Nie znaleziono przedmiotu.",
     npcNotFound: "Nie znaleziono potwora.",
+    eventNotFound: "Nie znaleziono eventu.",
+    eventDescription:
+      "Przedmioty z eventu: {{count}}, według potworów i rzadkości.",
+    eventOtherItems: "Pozostałe przedmioty",
     loadError: "Nie udało się pobrać danych. Spróbuj ponownie.",
   },
   search: {
@@ -172,6 +186,7 @@ const messages = {
     sort: "Sortowanie",
     sortOptions: {
       relevance: "Trafność",
+      "id:desc": "Najnowsze w grze",
       "lvl:asc": "Poziom rosnąco",
       "lvl:desc": "Poziom malejąco",
       "name:asc": "Nazwa A-Z",

@@ -434,12 +434,20 @@ professions?: string[];
 minLevel?: number;
 maxLevel?: number;
 statKeys?: string[];
+excludedStatKeys?: string[];
 legendaryBonuses?: string[];
 dropSourceTypes?: string[];
+/**
+ * Items of the event with this slug: its name and year, such as `wakacje-2026`.
+ */
+event?: string;
 /**
  * Items that drop from the NPC with this catalog key.
  */
 droppedBy?: string;
+/**
+ * `id:desc` lists the items Margonem added most recently first.
+ */
 sort?: CatalogControllerGetItemsSort;
 limit?: number;
 offset?: number;
@@ -458,6 +466,7 @@ export type CatalogControllerGetItemsSort = typeof CatalogControllerGetItemsSort
 
 export const CatalogControllerGetItemsSort = {
   relevance: 'relevance',
+  'id:desc': 'id:desc',
   'lvl:asc': 'lvl:asc',
   'lvl:desc': 'lvl:desc',
   'name:asc': 'name:asc',
@@ -1304,7 +1313,7 @@ export const getCatalogControllerGetItemsUrl = (params?: CatalogControllerGetIte
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["ids","rarities","types","professions","statKeys","legendaryBonuses","dropSourceTypes"];
+    const explodeParameters = ["ids","rarities","types","professions","statKeys","excludedStatKeys","legendaryBonuses","dropSourceTypes"];
 
     if (Array.isArray(value) && explodeParameters.includes(key)) {
       value.forEach((v) => {

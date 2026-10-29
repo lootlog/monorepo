@@ -7,13 +7,18 @@ import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 
 // When Lootlog first saw an item or a boss tells when that boss was killed,
 // and so when it respawns; the public catalog never serves or orders by it.
+// Margonem numbers items in the order it adds them, so `id:desc` lists the
+// game's newest items without dating anyone's drop.
 const CatalogItemSort = Schema.Literals([
   "relevance",
+  "id:desc",
   "lvl:asc",
   "lvl:desc",
   "name:asc",
   "name:desc",
-]);
+]).annotate({
+  description: "`id:desc` lists the items Margonem added most recently first.",
+});
 
 const Profession = Schema.Literals(["w", "p", "h", "m", "b", "t"]);
 
@@ -31,6 +36,8 @@ export const CATALOG_STAT_KEYS = [
   "heal",
   "energybon",
   "manabon",
+  // The events an item belongs to, such as `Wakacje 2026 r.`.
+  "etiquette",
 ] as const;
 
 const CatalogStatKey = Schema.Literals(CATALOG_STAT_KEYS);
@@ -124,6 +131,12 @@ export const CatalogControllerGetItemsQuery = Schema.Struct({
       description: "Items that have every one of these stats.",
     }),
   ),
+  excludedStatKeys: Schema.optionalKey(
+    Schema.Array(CatalogStatKey).annotate({
+      description:
+        "Items that have none of these stats; `etiquette` leaves out event items.",
+    }),
+  ),
   legendaryBonuses: Schema.optionalKey(
     Schema.Array(CatalogLegendaryBonus).annotate({
       description: "Items with any of these legendary bonuses.",
@@ -132,6 +145,12 @@ export const CatalogControllerGetItemsQuery = Schema.Struct({
   dropSourceTypes: Schema.optionalKey(
     Schema.Array(NpcTypeSchema).annotate({
       description: "Items that drop from an NPC of any of these types.",
+    }),
+  ),
+  event: Schema.optionalKey(
+    Schema.String.annotate({
+      description:
+        "Items of the event with this slug: its name and year, such as `wakacje-2026`.",
     }),
   ),
   droppedBy: Schema.optionalKey(

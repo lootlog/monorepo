@@ -22,6 +22,7 @@ describe("createItemSearchFields", () => {
       statsKeys: ["lvl", "upgraded", "soulbound", "ratio", "rarity"],
       requiredProfessions: ["w", "p", "h", "m", "b", "t"],
       legendaryBonus: null,
+      eventSlugs: [],
     });
   });
 
@@ -37,6 +38,7 @@ describe("createItemSearchFields", () => {
       statsKeys: ["reqp", "lvl"],
       requiredProfessions: ["w", "m"],
       legendaryBonus: null,
+      eventSlugs: [],
     });
   });
 
@@ -44,5 +46,13 @@ describe("createItemSearchFields", () => {
     expect(
       createItemSearchFields("legbon=lastheal,200;lvl=200").legendaryBonus,
     ).toBe("lastheal");
+  });
+
+  it("files an item under every year of its event, so each year's page lists it", () => {
+    expect(
+      createItemSearchFields(
+        "etiquette=Wielkanoc 2025 r.|Wielkanoc 2026 r.\n|Wielkanoc 2026 r.;lvl=75",
+      ).eventSlugs,
+    ).toEqual(["wielkanoc-2025", "wielkanoc-2026"]);
   });
 });

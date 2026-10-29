@@ -1391,10 +1391,12 @@ const ACTIVITY_READINESS_ADDITION: JsonValue = {
 // Intentional additions verified against HTTP, persistence and authorization tests:
 // activity/src/online/online-repository.integration.test.ts;
 // api/test/kill-analytics.integration.test.ts, user-feed.integration.test.ts and records.operations.test.ts.
-// The public catalog, readable without signing in, with its edition, NPC id
-// and legendary bonus filters, and without first sightings, which date boss
-// kills. Verified by apps/search/test/http-handler.test.ts
-// and apps/search/src/catalog/catalog.service.test.ts.
+// The public catalog, readable without signing in, with its edition, NPC id,
+// legendary bonus, excluded stat and event filters, sorted by the order
+// Margonem added items, and without first sightings, which date boss kills.
+// Verified by
+// apps/search/test/http-handler.test.ts and
+// apps/search/src/catalog/catalog.service.test.ts.
 const CATALOG_ITEMS_ADDITION: JsonValue = {
   operationId: "CatalogController_getItems",
   parameters: [
@@ -1500,6 +1502,19 @@ const CATALOG_ITEMS_ADDITION: JsonValue = {
       explode: true,
     },
     {
+      name: "excludedStatKeys",
+      in: "query",
+      schema: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+      },
+      required: false,
+      style: "form",
+      explode: true,
+    },
+    {
       name: "legendaryBonuses",
       in: "query",
       schema: {
@@ -1526,6 +1541,16 @@ const CATALOG_ITEMS_ADDITION: JsonValue = {
       explode: true,
     },
     {
+      name: "event",
+      in: "query",
+      schema: {
+        type: "string",
+        description:
+          "Items of the event with this slug: its name and year, such as `wakacje-2026`.",
+      },
+      required: false,
+    },
+    {
       name: "droppedBy",
       in: "query",
       schema: {
@@ -1539,7 +1564,16 @@ const CATALOG_ITEMS_ADDITION: JsonValue = {
       in: "query",
       schema: {
         type: "string",
-        enum: ["relevance", "lvl:asc", "lvl:desc", "name:asc", "name:desc"],
+        enum: [
+          "relevance",
+          "id:desc",
+          "lvl:asc",
+          "lvl:desc",
+          "name:asc",
+          "name:desc",
+        ],
+        description:
+          "`id:desc` lists the items Margonem added most recently first.",
       },
       required: false,
     },

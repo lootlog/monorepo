@@ -1,17 +1,4 @@
-// Letters NFD does not split into a base letter and a mark.
-const UNDECOMPOSED_LETTERS = new Map(
-  Object.entries({ ł: "l", ß: "ss", æ: "ae", ø: "o", œ: "oe" }),
-);
-
-/** A name as a URL slug: `Łowczyni Wspomnień` → `lowczyni-wspomnien`. */
-export const catalogSlug = (name: string) =>
-  name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Mark}/gu, "")
-    .replace(/[łßæøœ]/g, (letter) => UNDECOMPOSED_LETTERS.get(letter) ?? letter)
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+import { catalogSlug } from "@lootlog/domain/catalog-slug";
 
 /** The wiki covers the Polish edition of Margonem for now. */
 export const WIKI_GAME_VERSION = "pl";
@@ -43,3 +30,12 @@ export const npcPageParams = (npc: { id: number; name: string }) => ({
 const CATALOG_KEY = /^[a-z]{2}(?:_[a-z]+)?_\d+_\d+$/;
 
 export const isNpcCatalogKey = (segment: string) => CATALOG_KEY.test(segment);
+
+/**
+ * The monster a drop source belongs to. Items name a monster by any of its
+ * identities; the catalog tells monsters apart by name and type.
+ */
+export const dropSourceMonsterKey = (source: {
+  name: string;
+  type: string | null;
+}) => `${source.name}|${source.type}`;
