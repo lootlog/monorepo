@@ -8,7 +8,7 @@ import {
   type UserLootlogConfigAccountResponseDtoOutput,
 } from "@lootlog/client/main";
 
-const MUTATION_KEY = [
+export const LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY = [
   "userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig",
 ];
 
@@ -32,10 +32,12 @@ export const useUpdateLootlogCharactersConfig = () => {
     : ["user-lootlog-config", "unavailable"];
 
   const hasLaterUpdates = () =>
-    queryClient.isMutating({ mutationKey: MUTATION_KEY }) > 1;
+    queryClient.isMutating({
+      mutationKey: LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY,
+    }) > 1;
 
   const mutation = useMutation({
-    mutationKey: MUTATION_KEY,
+    mutationKey: LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY,
     // Writes for one account go out in order, so the last click wins.
     scope: { id: "lootlog-characters-config" },
     mutationFn: (options: CreateOrUpdateLootlogCharacterConfigDto) => {
@@ -85,9 +87,17 @@ export const useUpdateLootlogCharactersConfig = () => {
 
       return { previousData };
     },
+    // The snapshot may hold an earlier write's optimistic state that also
+    // failed, so it goes back as outdated rather than confirmed, and a
+    // refetch replaces it.
     onError: (_err, variables, context) => {
-      if (context?.previousData && !hasLaterUpdates()) {
-        queryClient.setQueryData(queryKey, context.previousData);
+      if (!hasLaterUpdates()) {
+        if (context?.previousData)
+          queryClient.setQueryData(queryKey, context.previousData, {
+            updatedAt: 0,
+          });
+
+        void queryClient.invalidateQueries({ queryKey });
       }
 
       reportSettingsSave.failed(() => mutation.mutate(variables));

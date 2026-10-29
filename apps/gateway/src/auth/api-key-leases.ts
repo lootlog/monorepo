@@ -1,5 +1,6 @@
 import { API_KEY_LEASE_MS, ApiKeyStatus } from "@lootlog/schema/api-key-access";
 import { Effect, Redacted, Schedule, Schema } from "effect";
+import { REALTIME_SERVER_CLOSE_CODES } from "@lootlog/protocol/realtime";
 import { chunk } from "es-toolkit";
 import { HttpClientRequest, type HttpClient } from "effect/http";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
@@ -50,7 +51,10 @@ export class ApiKeyLeases {
     const closeUnavailablePermissions = (sockets: Iterable<GatewaySocket>) => {
       for (const socket of sockets) {
         socket.data.apiKeyLeaseExpiresAt = 0;
-        socket.close(1013, "Organization permissions temporarily unavailable");
+        socket.close(
+          REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+          "Organization permissions temporarily unavailable",
+        );
         pendingPermissions.delete(socket);
       }
     };
