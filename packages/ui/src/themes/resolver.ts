@@ -9,7 +9,10 @@ import {
   type ThemeFamily,
   type ThemeId,
 } from "./catalog";
+import type { CustomThemeDefinition } from "@lootlog/schema/custom-theme";
 import {
+  applyThemeToRoot,
+  createDefinitionFromBase,
   readCustomThemeId,
   toCustomThemePreference,
   type CustomThemeSelection,
@@ -125,6 +128,42 @@ export const resolveStoredSelection = (
   return customThemeId
     ? toCustomThemePreference(customThemeId)
     : resolveStoredTheme(value);
+};
+
+/**
+ * The built-in theme a selection paints with: a custom theme's base, the
+ * picked theme itself, or the default while a custom theme is unknown.
+ */
+export const resolveSelectionTheme = (
+  selection: ThemeSelection,
+  definition: CustomThemeDefinition | null,
+): ThemeId =>
+  definition?.baseThemeId ??
+  (readCustomThemeId(selection) === null
+    ? resolveStoredTheme(selection)
+    : DEFAULT_THEME_ID);
+
+/**
+ * Puts a theme on the document root: its class, then its tokens, font and
+ * radius. Returns the class it applied, a concrete cat for the cat roulette.
+ */
+export const applyThemeToDocument = ({
+  root,
+  theme,
+  definition,
+  currentResolvedTheme = getRootResolvedTheme(root),
+}: {
+  root: HTMLElement;
+  theme: ThemeId;
+  definition: CustomThemeDefinition | null;
+  currentResolvedTheme?: ResolvedThemeId | null;
+}): ResolvedThemeId => {
+  const resolvedTheme = resolveThemeClass(theme, currentResolvedTheme);
+
+  applyThemeClassToRoot({ root, resolvedTheme });
+  applyThemeToRoot(root, definition ?? createDefinitionFromBase(theme));
+
+  return resolvedTheme;
 };
 
 /** The class that previews a theme on one element; the cat roulette shows one cat. */

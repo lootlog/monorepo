@@ -4,14 +4,14 @@ import { SettingsTabPage } from "@/components/common/settings-tab-page";
 import { ROUTES } from "@/config/routes";
 import { useUserThemes } from "@/hooks/api/user/use-user-themes";
 import { useTheme } from "@/hooks/context/use-theme";
-import { THEME_CATALOG } from "@/themes/catalog";
+import { THEME_CATALOG } from "@lootlog/ui/themes/catalog";
 import {
   createDefinitionFromBase,
   customThemeStyle,
   loadCustomThemeFont,
   toCustomThemePreference,
-} from "@/themes/custom-theme";
-import { isThemeId, previewThemeClass } from "@/themes/resolver";
+} from "@lootlog/ui/themes/custom-theme";
+import { isThemeId, previewThemeClass } from "@lootlog/ui/themes/resolver";
 import {
   getBuiltInThemePreview,
   getCustomThemePreview,

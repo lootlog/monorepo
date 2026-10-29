@@ -4,8 +4,8 @@ import type {
   CustomThemeRadius,
 } from "@lootlog/schema/custom-theme";
 import { deriveCustomThemeTokens } from "@lootlog/domain/custom-theme";
-import { THEME_CATALOG } from "./catalog";
-import { findWallpaper } from "./wallpapers";
+import { THEME_CATALOG } from "@lootlog/ui/themes/catalog";
+import { findWallpaper } from "@lootlog/ui/themes/wallpapers";
 
 /** What a theme's row shows: its wallpaper, or a plain fill, and palette. */
 export interface ThemePreview {

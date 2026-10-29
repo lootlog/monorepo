@@ -128,6 +128,8 @@ const setup = async () => {
       searchNpcs: () => Effect.die("unused"),
       searchItems: () => Effect.die("unused"),
       searchAll: () => Effect.die("unused"),
+      catalogItems: () => Effect.die("unused"),
+      catalogNpcs: () => Effect.die("unused"),
     }),
   );
 

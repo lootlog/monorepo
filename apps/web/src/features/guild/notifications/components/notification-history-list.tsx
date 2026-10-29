@@ -1,5 +1,5 @@
 import { EmptyState } from "@/components/common/empty-state";
-import { FILTER_PILL_CLASS } from "@/components/common/filter-pill";
+import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import { ListToolbar } from "@/components/common/list-toolbar";
 import type { NotificationJobsResponseDto } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";

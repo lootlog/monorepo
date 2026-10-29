@@ -18,6 +18,8 @@ const IndexNpc = Schema.Struct({
   snapshotHash: Schema.optional(Schema.String),
   // The loot that observed it; older publishers omit it.
   lootId: Schema.optional(Schema.Number),
+  // When the API accepted that loot; older publishers omit it.
+  observedAt: Schema.optional(Schema.String),
 });
 
 export const IndexNpcsPayload = Schema.Array(IndexNpc);

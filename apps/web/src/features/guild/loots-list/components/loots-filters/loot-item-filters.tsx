@@ -12,8 +12,8 @@ import {
 import {
   LOOT_RARITY_PILL_CLASS,
   LOOT_RARITY_TEXT_CLASS,
-} from "@/features/guild/loots-list/loot-rarity-colors";
-import { LootFilterPills } from "./loot-filter-pills";
+} from "@lootlog/ui/lib/item-rarity-colors";
+import { FilterPills } from "@lootlog/ui/components/filter-pills";
 import { LootLevelRangeFilter } from "./loot-level-range-filter";
 import type { useLootFiltersSidebar } from "./use-loot-filters-sidebar";
 
@@ -73,7 +73,7 @@ export const LootItemFilters = ({
 
   return (
     <>
-      <LootFilterPills
+      <FilterPills
         label={t("loots.filtersPanel.itemSection.raritiesLabel")}
         options={rarityOptions.map((rarity) => ({
           ...rarity,
@@ -83,7 +83,7 @@ export const LootItemFilters = ({
         onValueChange={(rarities) => updateFilters({ rarities })}
       />
 
-      <LootFilterPills
+      <FilterPills
         label={t("loots.filtersPanel.itemSection.professionsLabel")}
         options={professionOptions}
         value={filters.professions}

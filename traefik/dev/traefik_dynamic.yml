@@ -56,6 +56,18 @@ http:
       entryPoints:
         - "web"
 
+    search-public:
+      rule: "PathPrefix(`/api/search/public`)"
+      service: "search"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "stripAuthIdentity"
+        - "apiCompress"
+      priority: 15
+      entryPoints:
+        - "web"
+
     battlelog-public:
       rule: "PathPrefix(`/api/battlelog/battles/public`)"
       service: "battlelog"
@@ -234,6 +246,7 @@ http:
           - "^http://localhost$"
           - "^http://localhost:3001$"
           - "^http://localhost:3005$"
+          - "^http://localhost:3006$"
         accessControlAllowMethods:
           - "GET"
           - "POST"

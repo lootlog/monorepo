@@ -1,6 +1,7 @@
 import { Context, Effect, Layer, Predicate, Redacted } from "effect";
 import { Meilisearch } from "meilisearch";
 import { SearchConfig } from "#src/config/search-config";
+import { makeCatalogModule } from "#src/catalog/catalog.service";
 import { makeItemsModule } from "#src/items/items.service";
 import { configureMeilisearchIndexes } from "#src/meilisearch/meilisearch-indexes.service";
 import {
@@ -17,6 +18,12 @@ import type {
   AllControllerSearchAllQuery,
   SearchAllResponseDto_Output,
 } from "./contracts/all/schemas.js";
+import type {
+  CatalogControllerGetItemsQuery,
+  CatalogControllerGetNpcsQuery,
+  CatalogItemsResponseDto_Output,
+  CatalogNpcsResponseDto_Output,
+} from "./contracts/catalog/schemas.js";
 import type {
   ItemsControllerGetItemsQuery,
   SearchItemsResponseDto_Output,
@@ -51,6 +58,15 @@ export interface SearchOperationsValue {
   readonly searchAll: (
     query: AllControllerSearchAllQuery,
   ) => Effect.Effect<SearchAllResponseDto_Output, SearchOperationFailureType>;
+  readonly catalogItems: (
+    query: CatalogControllerGetItemsQuery,
+  ) => Effect.Effect<
+    CatalogItemsResponseDto_Output,
+    SearchOperationFailureType
+  >;
+  readonly catalogNpcs: (
+    query: CatalogControllerGetNpcsQuery,
+  ) => Effect.Effect<CatalogNpcsResponseDto_Output, SearchOperationFailureType>;
   readonly indexItems: (
     data: IndexItemsCommand,
   ) => Effect.Effect<void, SearchOperationFailureType>;
@@ -79,10 +95,13 @@ export class SearchOperations extends Context.Service<
       const items = makeItemsModule(meilisearch, effectLogger);
       const npcs = makeNpcsModule(meilisearch, effectLogger);
       const players = makePlayersModule(meilisearch, effectLogger);
+      const catalog = makeCatalogModule(meilisearch, effectLogger);
 
       yield* configureMeilisearchIndexes(meilisearch, effectLogger);
 
       return SearchOperations.of({
+        catalogItems: catalog.getItems,
+        catalogNpcs: catalog.getNpcs,
         searchPlayers: (query) =>
           players.getPlayers({
             ...query,

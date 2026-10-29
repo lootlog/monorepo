@@ -3,8 +3,10 @@
  *
  * Each index is rebuilt in a shadow index (`<name>_rebuild`) that receives the
  * service settings, retained NPC revisions, player snapshots, and one item
- * document per edition, item id and name, loaded in one query per entity and
- * pushed in large batches. Batches are enqueued without waiting, so
+ * document per edition, item id and name, loaded by a query or two per entity and
+ * pushed in large batches. Items and NPCs keep the first time any loot
+ * observed them, and items the NPCs they dropped from, by the rule the API
+ * applies to live loots. Batches are enqueued without waiting, so
  * Meilisearch merges them into a few indexing runs; the script waits once,
  * then swaps the shadow indexes into place in a single atomic task, so
  * searches never see a half-built index. The three entities run concurrently.
@@ -20,8 +22,9 @@
  */
 import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
-import { Config, Effect, Redacted } from "effect";
-import { chunk } from "es-toolkit";
+import { Config, Effect, Redacted, Schema } from "effect";
+import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
+import { chunk, groupBy } from "es-toolkit";
 import { Meilisearch, type EnqueuedTask, type Task } from "meilisearch";
 import { ITEMS_INDEX } from "#src/items/search-index";
 import { toItemDocuments } from "#src/items/items.service";
@@ -33,8 +36,15 @@ import { getMeilisearchErrorCode } from "#src/meilisearch/query-builder";
 import { NPCS_INDEX } from "#src/npcs/search-index";
 import { PLAYERS_INDEX } from "#src/players/search-index";
 import { toPlayerDocument } from "#src/players/players.service";
-import { buildItemSeedQuery } from "./item-seed-query.js";
+import {
+  buildItemDropSourceQuery,
+  buildItemSeedQuery,
+} from "./item-seed-query.js";
 import { buildNpcSeedQuery, toNpcSeedDocuments } from "./npc-seed-query.js";
+
+const decodeIdentityNamespace = Schema.decodeUnknownSync(
+  NpcIdentityNamespaceSchema,
+);
 
 const DOCUMENTS_PER_BATCH = 10_000;
 
@@ -251,10 +261,35 @@ const seedPlayers = async () => {
 const seedItems = async () => {
   const startedAt = performance.now();
 
+  // One after the other: both aggregate every loot link.
   const rows = await buildItemSeedQuery(database);
+  const sources = await buildItemDropSourceQuery(database);
 
+  const sourcesBySnapshot = groupBy(sources, (source) => source.itemSnapshotId);
+
+  // Each source joins its revision as one more observation, so merging the
+  // rows collects every NPC as live indexing does.
   const documents = toItemDocuments(
-    rows.map((item) => ({ ...item, lvl: item.lvl ?? 0 })),
+    rows.flatMap(({ snapshotId, firstSeenAt, ...item }) => {
+      const observation = {
+        ...item,
+        lvl: item.lvl ?? 0,
+        observedAt: new Date(firstSeenAt).toISOString(),
+      };
+
+      return [
+        observation,
+        ...(sourcesBySnapshot[snapshotId] ?? []).map(
+          ({ itemSnapshotId: _itemSnapshotId, identityNamespace, ...npc }) => ({
+            ...observation,
+            droppedBy: {
+              ...npc,
+              identityNamespace: decodeIdentityNamespace(identityNamespace),
+            },
+          }),
+        ),
+      ];
+    }),
   );
 
   await indexDocuments(ITEMS_INDEX, documents, formatDuration(startedAt));
