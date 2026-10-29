@@ -449,6 +449,15 @@ paths:
           required: false
           style: form
           explode: true
+        - name: excludedStatKeys
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          required: false
+          style: form
+          explode: true
         - name: legendaryBonuses
           in: query
           schema:
@@ -467,6 +476,12 @@ paths:
           required: false
           style: form
           explode: true
+        - name: event
+          in: query
+          schema:
+            type: string
+            description: "Items of the event with this slug: its name and year, such as `wakacje-2026`."
+          required: false
         - name: droppedBy
           in: query
           schema:
@@ -479,10 +494,12 @@ paths:
             type: string
             enum:
               - relevance
+              - id:desc
               - lvl:asc
               - lvl:desc
               - name:asc
               - name:desc
+            description: "`id:desc` lists the items Margonem added most recently first."
           required: false
         - name: limit
           in: query

@@ -23,6 +23,9 @@ const ITEM_TYPE = /^[A-Z_]+$/;
 // namespace and numeric ids, such as `pl_template_257636_2`.
 const CATALOG_KEY = /^[a-z]{2}(?:_[a-z]+)?_\d+_\d+$/;
 
+// Event slugs are `itemEventSlug`'s: lower-case words joined by hyphens.
+const EVENT_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 type CatalogItemDocument = {
   id: number;
   name: string;
@@ -84,12 +87,18 @@ const itemFilters = (
     ...(query.statKeys ?? []).map(
       (key) => `statsKeys = ${JSON.stringify(key)}`,
     ),
+    ...(query.excludedStatKeys ?? []).map(
+      (key) => `NOT statsKeys = ${JSON.stringify(key)}`,
+    ),
     query.legendaryBonuses?.length
       ? inFilter("legendaryBonus", query.legendaryBonuses)
       : undefined,
     query.dropSourceTypes?.length
       ? inFilter("droppedByTypes", query.dropSourceTypes)
       : undefined,
+    query.event === undefined
+      ? undefined
+      : `eventSlugs = ${JSON.stringify(query.event)}`,
     monsterKey === undefined
       ? undefined
       : `droppedByMonsterKeys = ${JSON.stringify(monsterKey)}`,
@@ -116,8 +125,12 @@ export const makeCatalogModule = (
   const getItems = Effect.fn("Catalog.items")(function* (
     query: CatalogControllerGetItemsQuery,
   ) {
-    // An unknown key matches no NPC, so it matches no item either.
-    if (query.droppedBy !== undefined && !CATALOG_KEY.test(query.droppedBy)) {
+    // An unknown key matches no NPC, and a malformed event slug no event, so
+    // neither matches an item.
+    if (
+      (query.droppedBy !== undefined && !CATALOG_KEY.test(query.droppedBy)) ||
+      (query.event !== undefined && !EVENT_SLUG.test(query.event))
+    ) {
       return { hits: [], estimatedTotalHits: 0 };
     }
 

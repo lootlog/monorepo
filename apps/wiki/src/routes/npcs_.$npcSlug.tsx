@@ -1,12 +1,13 @@
 import { Navigate, createFileRoute } from "@tanstack/react-router";
 import { useCatalogControllerGetNpcs } from "@lootlog/client/search";
+import { catalogSlug } from "@lootlog/domain/catalog-slug";
 import { NpcTile } from "@lootlog/ui/components/npc-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { NpcDrops } from "@/components/npcs/npc-drops";
 import { t } from "@/i18n/messages";
+import { npcSummary } from "@/lib/npc-summary";
 import {
-  catalogSlug,
   isNpcCatalogKey,
   npcPageParams,
   readPageSegment,
@@ -79,8 +80,7 @@ function NpcRoute() {
                     {npc.name}
                   </h1>
                   <p className="text-sm text-muted-foreground">
-                    {t(`npcTypes.${npc.type}`)} ·{" "}
-                    {t("common.levelShort", { level: npc.lvl })}
+                    {npcSummary(npc)}
                   </p>
                 </>
               ) : (
