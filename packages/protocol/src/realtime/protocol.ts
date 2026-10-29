@@ -33,7 +33,7 @@ import {
   GuildLootCreatedMessageV2,
   GuildLootShareUpdatedEventV2,
   ReservationChangedEventV2,
-} from "../rabbit/events.js";
+} from "../loot-events.js";
 
 export const REALTIME_PROTOCOL_VERSION = 1;
 
