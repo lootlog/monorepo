@@ -55,7 +55,14 @@ interface ConsumerSpec {
   readonly retryRoutingKey?: RabbitRoutingKeyName;
   readonly deadLetterRoutingKey?: RabbitRoutingKeyName;
   readonly installRetryQueue?: boolean;
+  /** Deliveries handled at once; 1 keeps the queue's order. */
+  readonly prefetch?: number;
 }
+
+// A role edit queues one event per role holder, and each rebalance can wait
+// on the API. Rebalances read current permissions and are idempotent, so they
+// need no order and run side by side.
+const MEMBER_ACCESS_PREFETCH = 8;
 
 const retryable = (
   queue: string,
@@ -144,30 +151,42 @@ export const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
     RabbitRoutingKey.GUILDS_MEMBERS_ADD_RETRY,
     RabbitRoutingKey.GUILDS_MEMBERS_ADD_DLQ,
   ),
-  retryable(
-    "gateway-guilds-members-update",
-    RabbitRoutingKey.GUILDS_MEMBERS_UPDATE,
-    RabbitRoutingKey.GUILDS_MEMBERS_UPDATE_RETRY,
-    RabbitRoutingKey.GUILDS_MEMBERS_UPDATE_DLQ,
-  ),
-  retryable(
-    "gateway-guilds-members-remove",
-    RabbitRoutingKey.GUILDS_MEMBERS_REMOVE,
-    RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_RETRY,
-    RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
-  ),
-  retryable(
-    "gateway-guilds-members-add-role",
-    RabbitRoutingKey.GUILDS_MEMBERS_ADD_ROLE,
-    RabbitRoutingKey.GUILDS_MEMBERS_ADD_ROLE_RETRY,
-    RabbitRoutingKey.GUILDS_MEMBERS_ADD_ROLE_DLQ,
-  ),
-  retryable(
-    "gateway-guilds-members-remove-role",
-    RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE,
-    RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE_RETRY,
-    RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE_DLQ,
-  ),
+  {
+    ...retryable(
+      "gateway-guilds-members-update",
+      RabbitRoutingKey.GUILDS_MEMBERS_UPDATE,
+      RabbitRoutingKey.GUILDS_MEMBERS_UPDATE_RETRY,
+      RabbitRoutingKey.GUILDS_MEMBERS_UPDATE_DLQ,
+    ),
+    prefetch: MEMBER_ACCESS_PREFETCH,
+  },
+  {
+    ...retryable(
+      "gateway-guilds-members-remove",
+      RabbitRoutingKey.GUILDS_MEMBERS_REMOVE,
+      RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_RETRY,
+      RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
+    ),
+    prefetch: MEMBER_ACCESS_PREFETCH,
+  },
+  {
+    ...retryable(
+      "gateway-guilds-members-add-role",
+      RabbitRoutingKey.GUILDS_MEMBERS_ADD_ROLE,
+      RabbitRoutingKey.GUILDS_MEMBERS_ADD_ROLE_RETRY,
+      RabbitRoutingKey.GUILDS_MEMBERS_ADD_ROLE_DLQ,
+    ),
+    prefetch: MEMBER_ACCESS_PREFETCH,
+  },
+  {
+    ...retryable(
+      "gateway-guilds-members-remove-role",
+      RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE,
+      RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE_RETRY,
+      RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE_DLQ,
+    ),
+    prefetch: MEMBER_ACCESS_PREFETCH,
+  },
   retryable(
     "gateway-guilds-send-notification",
     RabbitRoutingKey.GUILDS_NOTIFICATIONS_SEND,
@@ -412,7 +431,7 @@ export class RabbitBridge {
         const consumer = yield* messaging.consume(
           {
             queue: spec.queue,
-            prefetch: 1,
+            prefetch: spec.prefetch ?? 1,
             failurePolicy:
               spec.retryRoutingKey && spec.deadLetterRoutingKey
                 ? {
