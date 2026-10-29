@@ -5,6 +5,7 @@ import {
 } from "@lootlog/database/snapshot-hash";
 import { parseItemStats, splitItemStat } from "@lootlog/database/item-stat";
 import { Effect, Schema } from "effect";
+import { once } from "es-toolkit";
 import { getNpcTypeByWt, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
 import {
   resolveLootAcceptance,
@@ -318,8 +319,10 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       ),
       loot: {
         npcType: options.primaryNpcType,
-        rarities: options.submission.loots.map(
-          (item) => this.getItemStats(item).rarity,
+        rarities: once(() =>
+          options.submission.loots.map(
+            (item) => this.getItemStats(item).rarity,
+          ),
         ),
       },
     });

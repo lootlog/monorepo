@@ -30,7 +30,11 @@ export type LootAcceptanceInput<TMember> = {
   readonly loot?: {
     /** Type of the strongest NPC of the loot. */
     readonly npcType: NpcType;
-    readonly rarities: ReadonlyArray<ItemRarity | undefined>;
+    /**
+     * Called only for an Organization whose config covers `npcType`, so a
+     * stat no config needs is never parsed.
+     */
+    readonly rarities: () => ReadonlyArray<ItemRarity | undefined>;
   };
 };
 
@@ -53,10 +57,12 @@ const isAcceptedByConfig = (
 
   return (
     npcConfig !== undefined &&
-    loot.rarities.some(
-      (rarity) =>
-        rarity !== undefined && npcConfig.allowedRarities.includes(rarity),
-    )
+    loot
+      .rarities()
+      .some(
+        (rarity) =>
+          rarity !== undefined && npcConfig.allowedRarities.includes(rarity),
+      )
   );
 };
 

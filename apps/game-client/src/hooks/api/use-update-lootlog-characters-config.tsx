@@ -8,7 +8,7 @@ import {
   type UserLootlogConfigAccountResponseDtoOutput,
 } from "@lootlog/client/main";
 
-const MUTATION_KEY = [
+export const LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY = [
   "userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig",
 ];
 
@@ -32,10 +32,12 @@ export const useUpdateLootlogCharactersConfig = () => {
     : ["user-lootlog-config", "unavailable"];
 
   const hasLaterUpdates = () =>
-    queryClient.isMutating({ mutationKey: MUTATION_KEY }) > 1;
+    queryClient.isMutating({
+      mutationKey: LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY,
+    }) > 1;
 
   const mutation = useMutation({
-    mutationKey: MUTATION_KEY,
+    mutationKey: LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY,
     // Writes for one account go out in order, so the last click wins.
     scope: { id: "lootlog-characters-config" },
     mutationFn: (options: CreateOrUpdateLootlogCharacterConfigDto) => {
