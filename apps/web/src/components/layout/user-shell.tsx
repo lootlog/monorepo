@@ -1,4 +1,4 @@
-import { AppContentFrame } from "./app-content-frame";
+import { AppContentFrame } from "@lootlog/ui/components/app-content-frame";
 import { AppNavigationTopBar } from "./app-navigation-top-bar";
 import { HeaderSlotsContext } from "@/contexts/header-slots-context";
 import { useHeaderSlotTargets } from "@/hooks/use-header-slot-targets";

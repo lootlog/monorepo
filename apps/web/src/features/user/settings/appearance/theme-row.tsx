@@ -3,7 +3,7 @@ import {
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
-import type { CustomThemeStyle } from "@/themes/custom-theme";
+import type { CustomThemeStyle } from "@lootlog/ui/themes/custom-theme";
 import type { ThemePreview } from "@/themes/theme-preview";
 import { cn } from "cn";
 import { Link2 } from "lucide-react";

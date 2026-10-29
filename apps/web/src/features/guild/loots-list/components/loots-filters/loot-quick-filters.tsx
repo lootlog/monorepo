@@ -2,7 +2,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { toggleVariants } from "@lootlog/ui/lib/toggle-variants";
 import { cn } from "cn";
 import { BookmarkPlus, X, Zap } from "lucide-react";
-import { FILTER_PILL_CLASS } from "@/components/common/filter-pill";
+import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import type { LootFiltersState } from "./loot-filter-sections";
 
 type LootQuickFiltersProps = Pick<

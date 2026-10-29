@@ -1,6 +1,6 @@
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import type { ReactNode, Ref } from "react";
-import { AppTopBar } from "@/components/layout/app-top-bar";
+import { AppTopBar } from "@lootlog/ui/components/app-top-bar";
 import { TopBarHeading } from "@/components/layout/top-bar-heading";
 import type { AppNavigationHeading } from "@/navigation/app-navigation";
 
