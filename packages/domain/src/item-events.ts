@@ -23,4 +23,4 @@ export const latestItemEvent = (labels: readonly string[]) =>
 
 /** An event's URL slug, without the year's `r.`: `wakacje-2026`. */
 export const itemEventSlug = (label: string) =>
-  catalogSlug(label.replace(/\s+r\.$/, ""));
+  catalogSlug(label.endsWith(" r.") ? label.slice(0, -3) : label);
