@@ -3,8 +3,13 @@ const CACHE_KEYS = {
 } as const;
 
 export const CACHE_TTL = {
-  /** Age after which a join serves the projection while refreshing it. */
-  USER_GUILDS: 60,
+  /**
+   * Age after which a join serves the projection while refreshing it. Every
+   * access change already reaches the gateway as a member delivery event
+   * (`guilds.members.*`), which invalidates the projection and rebalances the
+   * user's sockets, so age only bounds how long a lost event can delay a grant.
+   */
+  USER_GUILDS: 600,
   /**
    * Retention and maximum age of a projection served to a join. Explicit
    * invalidation, not age, revokes access, so a projection that has not been

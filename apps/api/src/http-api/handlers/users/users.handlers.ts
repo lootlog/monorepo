@@ -14,6 +14,7 @@ import {
   updateCurrentUserGamePreferences,
   updateCurrentUserPreferences,
 } from "../account-organization/account-organization.operations.js";
+import { getGameClientBootstrap } from "./game-client-bootstrap.operations.js";
 
 export const UsersHandlers = HttpApiBuilder.group(
   LootlogApi,
@@ -40,6 +41,9 @@ export const UsersHandlers = HttpApiBuilder.group(
       )
       .handle("UsersControllerGetCurrentUserAccessibleGuilds", () =>
         toAccountOrganizationHttpResponse(getCurrentUserAccessibleGuilds()),
+      )
+      .handle("UsersControllerGetGameClientBootstrap", ({ query }) =>
+        getGameClientBootstrap(query),
       )
       .handle("UsersControllerGetUserGameAccountPreferences", ({ params }) =>
         toAccountOrganizationHttpResponse(

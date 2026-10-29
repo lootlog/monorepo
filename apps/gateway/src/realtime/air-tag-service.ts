@@ -88,10 +88,25 @@ const BATCH_RATE_WINDOW_MS = 3_000;
 
 const WORLD_PATTERN = /^[a-z0-9-]{1,64}$/i;
 
-const RATE_LIMIT_SCRIPT = slidingWindowRateLimitScript({
-  refreshExpiryOnReject: true,
-  includeTimestamp: false,
-});
+// One round trip admits a batch: the connection limit, then the user limit, then
+// each scope's disabled flag. The shared limiter reads KEYS and ARGV, so it runs
+// as a function whose parameters shadow them.
+const ADMISSION_SCRIPT = `
+local function consume(KEYS, ARGV)
+${slidingWindowRateLimitScript({ refreshExpiryOnReject: true, includeTimestamp: false })}
+end
+local connection=consume({KEYS[1]},{ARGV[1],ARGV[2],ARGV[4]})
+if connection[1] ~= 1 then return connection end
+local user=consume({KEYS[2]},{ARGV[1],ARGV[3],ARGV[4]})
+if user[1] ~= 1 then return user end
+local result={1,0}
+for i=3,#KEYS do
+  if redis.call("GET",KEYS[i]) == "1" then result[i]=1 else result[i]=0 end
+end
+return result
+`;
+
+const AdmissionReply = Schema.Array(Schema.Number);
 
 // Shared by the observation and snapshot scripts.
 const LUA_COMMON = `
@@ -443,7 +458,7 @@ const ThreatSnapshotJson = Schema.fromJsonString(
 type ScriptStore = {
   command: Pick<
     RedisGatewayStore["command"],
-    "get" | "sadd" | "smembers" | "expire"
+    "mget" | "sadd" | "smembers" | "expire"
   > & {
     eval(
       ...args: Parameters<RedisGatewayStore["command"]["eval"]>
@@ -515,11 +530,13 @@ export class AirTagService {
       };
 
     try {
-      const enabledScopes: AirTagScope[] = [];
+      const disabled = await this.redis.command.mget(
+        eligibleScopes.map((scope) => this.disabledKey(scope)),
+      );
 
-      for (const scope of eligibleScopes) {
-        if (!(await this.isDisabled(scope))) enabledScopes.push(scope);
-      }
+      const enabledScopes = eligibleScopes.filter(
+        (_, index) => disabled[index] !== "1",
+      );
 
       if (enabledScopes.length === 0)
         return {
@@ -568,27 +585,16 @@ export class AirTagService {
 
     if (scopes.length === 0) return { status: "rejected", code: "forbidden" };
 
-    const connectionLimit = await this.consumeRateLimit(
-      `air-tag:rate:connection:${socket.data.connectionId}`,
-      CONNECTION_BATCH_RATE_LIMIT,
-    );
+    const admission = await this.admitBatch(socket, scopes);
 
-    const rateLimit =
-      connectionLimit?.[0] === 1
-        ? await this.consumeRateLimit(
-            `air-tag:rate:${socket.data.userId}`,
-            USER_BATCH_RATE_LIMIT,
-          )
-        : connectionLimit;
-
-    if (!rateLimit)
+    if (!admission)
       return { status: "rejected", code: "temporarily-unavailable" };
 
-    if (rateLimit[0] !== 1)
+    if (admission.status === "rate-limited")
       return {
         status: "rejected",
         code: "rate-limited",
-        retryAfterMs: rateLimit[1],
+        retryAfterMs: admission.retryAfterMs,
       };
 
     const observations = [
@@ -612,9 +618,7 @@ export class AirTagService {
       context.mapName.length <= AIR_TAG_MAX_MAP_NAME_LENGTH;
 
     const results = await Promise.allSettled(
-      scopes.map(async (scope) => {
-        if (await this.isDisabled(scope)) return null;
-
+      admission.enabledScopes.map(async (scope) => {
         return {
           scope,
           result: await this.merge(scope, {
@@ -1058,35 +1062,47 @@ export class AirTagService {
     return `air-tag:threat-maps:${guildId}:${world}`;
   }
 
-  private async consumeRateLimit(key: string, limit: number) {
+  private async admitBatch(
+    socket: GatewaySocket,
+    scopes: ReadonlyArray<AirTagScope>,
+  ): Promise<
+    | { status: "admitted"; enabledScopes: AirTagScope[] }
+    | { status: "rate-limited"; retryAfterMs: number }
+    | null
+  > {
     try {
-      const result = await this.redis.command.eval(
-        RATE_LIMIT_SCRIPT,
-        1,
-        key,
+      const reply = await this.redis.command.eval(
+        ADMISSION_SCRIPT,
+        2 + scopes.length,
+        `air-tag:rate:connection:${socket.data.connectionId}`,
+        `air-tag:rate:${socket.data.userId}`,
+        ...scopes.map((scope) => this.disabledKey(scope)),
         BATCH_RATE_WINDOW_MS,
-        limit,
+        CONNECTION_BATCH_RATE_LIMIT,
+        USER_BATCH_RATE_LIMIT,
         crypto.randomUUID(),
       );
 
-      if (!Array.isArray(result)) return null;
+      if (!Array.isArray(reply)) return null;
 
-      return Schema.decodeUnknownSync(
-        Schema.Tuple([Schema.Number, Schema.Number]),
-      )(result.map(Number));
+      const [admitted, retryAfterMs = 0, ...disabled] =
+        Schema.decodeUnknownSync(AdmissionReply)(reply.map(Number));
+
+      if (admitted !== 1) return { status: "rate-limited", retryAfterMs };
+
+      return {
+        status: "admitted",
+        enabledScopes: scopes.filter((_, index) => disabled[index] !== 1),
+      };
     } catch (error) {
-      this.logger.warn("Failed to apply air tag rate limit", error);
+      this.logger.warn("Failed to admit air tag observations", error);
 
       return null;
     }
   }
 
-  private async isDisabled(scope: AirTagScope): Promise<boolean> {
-    return (
-      (await this.redis.command.get(
-        `air-tag:disabled:${scope.guildId}:${scope.world}`,
-      )) === "1"
-    );
+  private disabledKey(scope: Pick<AirTagScope, "guildId" | "world">): string {
+    return `air-tag:disabled:${scope.guildId}:${scope.world}`;
   }
 
   private keys(scope: AirTagScope): [string, string, string] {

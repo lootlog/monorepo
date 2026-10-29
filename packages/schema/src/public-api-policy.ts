@@ -79,6 +79,14 @@ export const PUBLIC_API_OPERATIONS = [
   {
     service: "main",
     method: "GET",
+    path: "/users/@me/game-client/bootstrap",
+    operationId: "UsersController_getGameClientBootstrap",
+    access: "session-only",
+    data: "mixed",
+  },
+  {
+    service: "main",
+    method: "GET",
     path: "/users/@me/game-preferences/accounts/{accountId}",
     operationId: "UsersController_getUserGameAccountPreferences",
     access: "read",
