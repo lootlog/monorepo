@@ -1,56 +1,57 @@
 import { cn } from "cn";
-import { renderItemStat } from "@/components/render-item-stat";
 import { t } from "@/i18n/messages";
 import { SUMMED_STAT_KEYS, type StatTotals } from "@/lib/item-stat-totals";
+import { EquipmentStatRow } from "./equipment-stat-row";
 
 type EquipmentSetTotalsProps = {
   totals: StatTotals;
   /** The totals with the previewed item worn, shown as a change. */
   previewTotals: StatTotals | null;
+  /** The previewed item's name, while one is previewed. */
+  previewName: string | null;
 };
 
-const signed = (value: number) =>
-  `${value > 0 ? "+" : "−"}${Math.abs(Math.round(value)).toLocaleString("pl-PL")}`;
-
-/** The set's stats added up, with the change a previewed item would make. */
+/**
+ * The set's stats added up, with the change a previewed item would make.
+ * Every stat keeps a row that opens when the set or the preview has it.
+ */
 export function EquipmentSetTotals({
   totals,
   previewTotals,
+  previewName,
 }: EquipmentSetTotalsProps) {
-  const keys = SUMMED_STAT_KEYS.filter(
-    (key) => totals[key] !== undefined || previewTotals?.[key] !== undefined,
-  );
+  const hasTotals = SUMMED_STAT_KEYS.some((key) => totals[key] !== undefined);
 
-  if (keys.length === 0) {
-    return (
-      <p className="text-xs text-muted-foreground">{t("equipment.empty")}</p>
-    );
-  }
+  const caption =
+    previewName !== null
+      ? t("equipment.previewing", { item: previewName })
+      : hasTotals
+        ? t("equipment.previewHint")
+        : t("equipment.empty");
 
   return (
-    <ul className="flex flex-col gap-1 text-xs">
-      {keys.map((key) => {
-        const total = totals[key] ?? 0;
-        const change = previewTotals ? (previewTotals[key] ?? 0) - total : 0;
-
-        return (
-          <li key={key} className="flex items-baseline justify-between gap-2">
-            <span className="min-w-0 truncate">
-              {renderItemStat({ key, value: String(Math.round(total)) })}
-            </span>
-            {change !== 0 ? (
-              <span
-                className={cn(
-                  "shrink-0 font-semibold tabular-nums",
-                  change > 0 ? "text-signal-ready" : "text-destructive",
-                )}
-              >
-                {signed(change)}
-              </span>
-            ) : null}
-          </li>
-        );
-      })}
-    </ul>
+    <div className="flex flex-col gap-2 text-xs">
+      <p
+        aria-live="polite"
+        className={cn(
+          "line-clamp-2 min-h-8 transition-colors duration-200 motion-reduce:transition-none",
+          previewName === null
+            ? "text-muted-foreground"
+            : "font-medium text-foreground",
+        )}
+      >
+        {caption}
+      </p>
+      <ul className="flex flex-col">
+        {SUMMED_STAT_KEYS.map((key) => (
+          <EquipmentStatRow
+            key={key}
+            statKey={key}
+            total={totals[key]}
+            previewTotal={previewTotals === null ? null : previewTotals[key]}
+          />
+        ))}
+      </ul>
+    </div>
   );
 }

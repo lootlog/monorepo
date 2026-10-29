@@ -1,6 +1,7 @@
 import { useCatalogControllerGetNpcs } from "@lootlog/client/search";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { t } from "@/i18n/messages";
+import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { NewMonsterCard } from "./new-monster-card";
 
 // Bosses an event or an update adds; common monsters would crowd them out.
@@ -14,6 +15,7 @@ const NEW_MONSTERS = {
 export function NewMonsters() {
   const { data, isError } = useCatalogControllerGetNpcs({
     ...NEW_MONSTERS,
+    gameVersion: WIKI_GAME_VERSION,
     types: [...NEW_MONSTERS.types],
   });
 

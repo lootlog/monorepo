@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, UserRound } from "lucide-react";
 import { startTransition, useEffect, useState } from "react";
-import { useCatalogControllerGetItems } from "@lootlog/client/search";
 import { Button } from "@lootlog/ui/components/button";
 import { FilterChipButton } from "@lootlog/ui/components/filter-chip-button";
 import {
@@ -19,11 +18,14 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetTitle,
   SheetTrigger,
 } from "@lootlog/ui/components/sheet";
-import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
+import { ItemResults } from "@/components/items/item-results";
 import { ItemsFilterPanel } from "@/components/items/items-filter-panel";
+import { ItemsFiltersHeader } from "@/components/items/items-filters-header";
+import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
 import {
   type ItemsSearch,
@@ -37,14 +39,16 @@ import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-const SEARCH_LIMIT = 96;
-
 const LIST_FILTERS = [
   {
     key: "professions",
     label: (value: string) => t(`filters.professions.${value}`),
   },
   { key: "rarities", label: (value: string) => t(`itemRarity.${value}`) },
+  {
+    key: "bonuses",
+    label: (value: string) => t(`legendaryBonus.${value}`),
+  },
   { key: "bosses", label: (value: string) => t(`npcTypes.${value}`) },
   { key: "stats", label: (value: string) => t(`filters.statOptions.${value}`) },
   { key: "types", label: (value: string) => t(`itemType.${value}`) },
@@ -105,11 +109,8 @@ function ItemsRoute() {
   const navigate = Route.useNavigate();
   const search = Route.useSearch();
   const [query, setQuery] = useState(search.query);
-
-  const { data, isError } = useCatalogControllerGetItems(
-    toCatalogParams(search, SEARCH_LIMIT),
-    { query: { placeholderData: (previous) => previous } },
-  );
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { set } = useEquipmentSet();
 
   const change = (update: Partial<ItemsSearch>) =>
     startTransition(() => {
@@ -141,15 +142,30 @@ function ItemsRoute() {
   }, [navigate, query, search.query]);
 
   const filters = activeFilters(search);
+
+  // The set's character as filters: its profession and what its level wears.
+  const character = {
+    professions: set.profession ?? "",
+    maxLevel: set.level === null ? "" : String(set.level),
+  };
+
+  const hasCharacter = set.profession !== null || set.level !== null;
+
+  const isForCharacter =
+    hasCharacter &&
+    search.professions === character.professions &&
+    search.maxLevel === character.maxLevel;
+
   const panel = <ItemsFilterPanel search={search} onChange={change} />;
 
   return (
-    <div className="grid items-start gap-6 py-6 md:grid-cols-[15.5rem_minmax(0,1fr)]">
+    <div className="grid items-start gap-6 py-6 md:grid-cols-[17rem_minmax(0,1fr)]">
       <aside
         aria-label={t("filters.title")}
-        className="sticky top-20 hidden max-h-[calc(100dvh-6rem)] overflow-y-auto pr-1 md:block"
+        className="sticky top-20 hidden max-h-[calc(100dvh-6rem)] flex-col overflow-hidden rounded-xl border border-border/50 bg-card md:flex"
       >
-        {panel}
+        <ItemsFiltersHeader count={filters.length} />
+        <div className="min-h-0 overflow-y-auto px-3">{panel}</div>
       </aside>
 
       <div className="flex min-w-0 flex-col gap-4">
@@ -200,7 +216,28 @@ function ItemsRoute() {
               ))}
             </SelectContent>
           </Select>
-          <Sheet>
+          {hasCharacter ? (
+            <Button
+              type="button"
+              variant={isForCharacter ? "secondary" : "outline"}
+              size="lg"
+              aria-pressed={isForCharacter}
+              title={t("filters.forCharacterTitle")}
+              onClick={() =>
+                change(
+                  isForCharacter
+                    ? { professions: "", maxLevel: "" }
+                    : character,
+                )
+              }
+            >
+              <UserRound aria-hidden="true" />
+              <span className="max-sm:sr-only">
+                {t("filters.forCharacter")}
+              </span>
+            </Button>
+          ) : null}
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger
               render={
                 <Button variant="outline" size="lg" className="md:hidden" />
@@ -208,10 +245,31 @@ function ItemsRoute() {
             >
               <SlidersHorizontal aria-hidden="true" />
               {t("filters.title")}
+              {filters.length > 0 ? (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground tabular-nums">
+                  {filters.length}
+                </span>
+              ) : null}
             </SheetTrigger>
-            <SheetContent side="left" className="overflow-y-auto p-4">
-              <SheetTitle>{t("filters.title")}</SheetTitle>
-              {panel}
+            <SheetContent side="left" className="gap-0 bg-card p-0">
+              <ItemsFiltersHeader
+                count={filters.length}
+                className="pr-12"
+                renderTitle={(title) => (
+                  <SheetTitle className="text-sm">{title}</SheetTitle>
+                )}
+              />
+              <div className="min-h-0 flex-1 overflow-y-auto px-3">{panel}</div>
+              <SheetFooter className="mt-0 border-t border-border/50 p-3">
+                <Button
+                  type="button"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => setIsSheetOpen(false)}
+                >
+                  {t("filters.showResults")}
+                </Button>
+              </SheetFooter>
             </SheetContent>
           </Sheet>
         </div>
@@ -239,25 +297,7 @@ function ItemsRoute() {
           </div>
         ) : null}
 
-        <section
-          aria-labelledby="items-results"
-          className="flex flex-col gap-3"
-        >
-          <h2
-            id="items-results"
-            className="text-sm font-semibold text-foreground"
-          >
-            {data
-              ? t("search.results", { count: data.estimatedTotalHits })
-              : t("search.loading")}
-          </h2>
-          <CatalogItemGrid
-            items={data?.hits}
-            isError={isError}
-            placeholders={12}
-            emptyLabel={t("search.noResults")}
-          />
-        </section>
+        <ItemResults params={toCatalogParams(search)} query={search.query} />
       </div>
     </div>
   );

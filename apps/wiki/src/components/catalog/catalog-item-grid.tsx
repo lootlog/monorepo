@@ -10,6 +10,8 @@ type CatalogItemGridProps = {
   placeholders: number;
   emptyLabel: string;
   showSource?: boolean;
+  /** The searched phrase, marked in item names. */
+  highlight?: string;
 };
 
 const GRID = "grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-3";
@@ -20,6 +22,7 @@ export function CatalogItemGrid({
   placeholders,
   emptyLabel,
   showSource,
+  highlight,
 }: CatalogItemGridProps) {
   if (isError) {
     return (
@@ -47,7 +50,11 @@ export function CatalogItemGrid({
     <ul className={GRID}>
       {items.map((item) => (
         <li key={item.id}>
-          <CatalogItemCard item={item} showSource={showSource} />
+          <CatalogItemCard
+            item={item}
+            showSource={showSource}
+            highlight={highlight}
+          />
         </li>
       ))}
     </ul>

@@ -11,6 +11,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { renderItemStat } from "@/components/render-item-stat";
 import { t } from "@/i18n/messages";
+import { npcPageParams, WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { formatFirstSeenOn, ITEM_TILE_LABELS } from "@/lib/item-options";
 
 const DROPS_SHOWN = 8;
@@ -19,6 +20,7 @@ const DROPS_SHOWN = 8;
 export function NewMonsterCard({ npc }: { npc: CatalogNpcDtoOutput }) {
   const { data } = useCatalogControllerGetItems({
     droppedBy: npc.key,
+    gameVersion: WIKI_GAME_VERSION,
     sort: "newest",
     limit: DROPS_SHOWN,
   });
@@ -43,7 +45,7 @@ export function NewMonsterCard({ npc }: { npc: CatalogNpcDtoOutput }) {
           </p>
         </div>
         <ChevronLink
-          render={<Link to="/npcs/$npcKey" params={{ npcKey: npc.key }} />}
+          render={<Link to="/npcs/$npcSlug" params={npcPageParams(npc)} />}
         >
           {t("home.open")}
         </ChevronLink>

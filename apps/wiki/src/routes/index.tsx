@@ -7,9 +7,12 @@ import {
 } from "@lootlog/ui/components/card";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { HomeSearch } from "@/components/home/home-search";
+import { LegendaryBonusShortcuts } from "@/components/home/legendary-bonus-shortcuts";
 import { NewDrops } from "@/components/home/new-drops";
 import { NewMonsters } from "@/components/home/new-monsters";
+import { QuickSearches } from "@/components/home/quick-searches";
 import { RarityShortcuts } from "@/components/home/rarity-shortcuts";
+import { SlotShortcuts } from "@/components/home/slot-shortcuts";
 import { t } from "@/i18n/messages";
 import { WIKI_NAVIGATION } from "@/navigation/wiki-navigation";
 
@@ -46,8 +49,9 @@ function HomeRoute() {
         <p className="mt-3 max-w-2xl text-sm text-pretty text-muted-foreground md:text-base">
           {t("home.description")}
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex flex-col gap-3">
           <HomeSearch />
+          <QuickSearches />
         </div>
       </header>
 
@@ -84,15 +88,45 @@ function HomeRoute() {
         <NewMonsters />
       </section>
 
-      <section aria-labelledby="home-rarities" className="flex flex-col gap-4">
-        <h2
-          id="home-rarities"
-          className="text-base font-semibold text-foreground"
-        >
-          {t("home.raritiesTitle")}
-        </h2>
-        <RarityShortcuts />
+      <section aria-labelledby="home-bonuses" className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2
+            id="home-bonuses"
+            className="text-base font-semibold text-foreground"
+          >
+            {t("home.bonusesTitle")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t("home.bonusesDescription")}
+          </p>
+        </div>
+        <LegendaryBonusShortcuts />
       </section>
+
+      <div className="grid gap-10 lg:grid-cols-2 lg:gap-6">
+        <section aria-labelledby="home-slots" className="flex flex-col gap-4">
+          <h2
+            id="home-slots"
+            className="text-base font-semibold text-foreground"
+          >
+            {t("home.slotsTitle")}
+          </h2>
+          <SlotShortcuts />
+        </section>
+
+        <section
+          aria-labelledby="home-rarities"
+          className="flex flex-col gap-4"
+        >
+          <h2
+            id="home-rarities"
+            className="text-base font-semibold text-foreground"
+          >
+            {t("home.raritiesTitle")}
+          </h2>
+          <RarityShortcuts />
+        </section>
+      </div>
 
       <section aria-labelledby="home-sections" className="flex flex-col gap-4">
         <h2
