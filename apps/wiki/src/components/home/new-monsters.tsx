@@ -1,15 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { groupBy } from "es-toolkit";
 import { useCatalogControllerGetItems } from "@lootlog/client/search";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { NpcTile } from "@lootlog/ui/components/npc-tile";
 import { t } from "@/i18n/messages";
 import { npcSummary } from "@/lib/npc-summary";
-import {
-  dropSourceMonsterKey,
-  npcPageParams,
-  WIKI_GAME_VERSION,
-} from "@/lib/catalog-links";
+import { npcPageParams, WIKI_GAME_VERSION } from "@/lib/catalog-links";
+import { groupItemsByMonster } from "@/lib/group-items-by-monster";
 import { NewItemsCard } from "./new-items-card";
 import { NewItemsCardsSkeleton } from "./new-items-cards-skeleton";
 
@@ -23,6 +19,8 @@ const NEW_BOSS_ITEMS = {
   sort: "id:desc",
   limit: 96,
 } as const;
+
+const BOSS_TYPES = new Set<string>(NEW_BOSS_ITEMS.dropSourceTypes);
 
 const MONSTERS_SHOWN = 4;
 
@@ -47,16 +45,12 @@ export function NewMonsters() {
 
   if (!data) return <NewItemsCardsSkeleton count={MONSTERS_SHOWN} />;
 
-  const monsters = Object.values(
-    groupBy(
-      data.hits.filter((item) => item.droppedBy.length > 0),
-      (item) => {
-        const [monster] = item.droppedBy;
-
-        return monster ? dropSourceMonsterKey(monster) : "";
-      },
-    ),
-  ).slice(0, MONSTERS_SHOWN);
+  // An item may drop from minions too; the card belongs to its boss.
+  const monsters = groupItemsByMonster(data.hits, ({ type }) =>
+    BOSS_TYPES.has(type ?? ""),
+  )
+    .flatMap(({ monster, items }) => (monster ? [{ monster, items }] : []))
+    .slice(0, MONSTERS_SHOWN);
 
   if (monsters.length === 0) {
     return (
@@ -68,38 +62,34 @@ export function NewMonsters() {
 
   return (
     <ul className="grid gap-4 lg:grid-cols-2">
-      {monsters.map((items) => {
-        const [monster] = items[0]?.droppedBy ?? [];
-
-        return monster ? (
-          <li key={monster.key}>
-            <NewItemsCard
-              title={monster.name}
-              details={npcSummary(monster)}
-              media={
-                <NpcTile
-                  npc={{
-                    icon: monster.icon,
-                    lvl: monster.lvl ?? undefined,
-                    name: monster.name,
-                  }}
-                  levelLabel={(level) => t("common.levelShort", { level })}
-                />
-              }
-              action={
-                <ChevronLink
-                  render={
-                    <Link to="/npcs/$npcSlug" params={npcPageParams(monster)} />
-                  }
-                >
-                  {t("home.open")}
-                </ChevronLink>
-              }
-              items={items.slice(0, ITEMS_SHOWN)}
-            />
-          </li>
-        ) : null;
-      })}
+      {monsters.map(({ monster, items }) => (
+        <li key={monster.key}>
+          <NewItemsCard
+            title={monster.name}
+            details={npcSummary(monster)}
+            media={
+              <NpcTile
+                npc={{
+                  icon: monster.icon,
+                  lvl: monster.lvl ?? undefined,
+                  name: monster.name,
+                }}
+                levelLabel={(level) => t("common.levelShort", { level })}
+              />
+            }
+            action={
+              <ChevronLink
+                render={
+                  <Link to="/npcs/$npcSlug" params={npcPageParams(monster)} />
+                }
+              >
+                {t("home.open")}
+              </ChevronLink>
+            }
+            items={items.slice(0, ITEMS_SHOWN)}
+          />
+        </li>
+      ))}
     </ul>
   );
 }

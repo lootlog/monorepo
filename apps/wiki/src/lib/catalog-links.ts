@@ -30,12 +30,3 @@ export const npcPageParams = (npc: { id: number; name: string }) => ({
 const CATALOG_KEY = /^[a-z]{2}(?:_[a-z]+)?_\d+_\d+$/;
 
 export const isNpcCatalogKey = (segment: string) => CATALOG_KEY.test(segment);
-
-/**
- * The monster a drop source belongs to. Items name a monster by any of its
- * identities; the catalog tells monsters apart by name and type.
- */
-export const dropSourceMonsterKey = (source: {
-  name: string;
-  type: string | null;
-}) => `${source.name}|${source.type}`;
