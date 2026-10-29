@@ -63,6 +63,9 @@ preserveOpenApi30Contract(
     "CatalogController_getItems:minLevel": { schema: { type: "number" } },
     "CatalogController_getItems:maxLevel": { schema: { type: "number" } },
     "CatalogController_getItems:statKeys": formArray({ type: "string" }),
+    "CatalogController_getItems:excludedStatKeys": formArray({
+      type: "string",
+    }),
     "CatalogController_getItems:legendaryBonuses": formArray({
       type: "string",
     }),

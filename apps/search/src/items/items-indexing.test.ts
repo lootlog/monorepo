@@ -154,7 +154,7 @@ test("failed existing-world reads prevent overwriting indexed worlds", async () 
   expect(requests).toEqual(["/indexes/items/documents"]);
 });
 
-test("keeps an item's earliest sighting and every NPC it dropped from across reordered deliveries", async () => {
+test("keeps an item's earliest sighting and every NPC of its edition it dropped from across reordered deliveries", async () => {
   const written: Array<{ uid: string; firstSeenAt: number | null }> = [];
   const nosferatu = npcDrop(7001, "Nosferatu");
   const stored = itemCatalogKey(item(1));
@@ -203,6 +203,15 @@ test("keeps an item's earliest sighting and every NPC it dropped from across reo
           ...item(1),
           observedAt: "2026-10-18T21:30:00.000Z",
           droppedBy: vampire.indexed,
+        },
+        // An older loot names the English edition's boss.
+        {
+          ...item(1),
+          observedAt: "2026-10-19T10:00:00.000Z",
+          droppedBy: {
+            ...npcDrop(7003, "Negthotep the Abyss Priest").indexed,
+            gameVersion: "en",
+          },
         },
       ],
     }),
