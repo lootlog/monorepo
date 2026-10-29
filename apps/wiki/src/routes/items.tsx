@@ -28,6 +28,7 @@ import { ItemsFiltersHeader } from "@/components/items/items-filters-header";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
 import {
+  effectiveSort,
   type ItemsSearch,
   joinList,
   SORT_OPTIONS,
@@ -183,7 +184,7 @@ function ItemsRoute() {
             />
           </InputGroup>
           <Select
-            value={search.sort}
+            value={effectiveSort(search)}
             onValueChange={(sort) => {
               if (sort !== null) change({ sort });
             }}
