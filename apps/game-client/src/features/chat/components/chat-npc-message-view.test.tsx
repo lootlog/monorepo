@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
+import { createChatTestWrapper } from "../chat-test-wrapper";
 import { ChatNpcMessageView } from "./chat-npc-message-view";
 
 const message: ChatMessageType = {
@@ -57,6 +58,7 @@ describe("ChatNpcMessageView", () => {
         message={message}
         senderName="Arianna"
       />,
+      { wrapper: createChatTestWrapper().wrapper },
     );
 
     expect(screen.queryByText("[Northern Guard]")).not.toBeInTheDocument();
@@ -85,6 +87,7 @@ describe("ChatNpcMessageView", () => {
         message={message}
         senderName="Arianna"
       />,
+      { wrapper: createChatTestWrapper().wrapper },
     );
 
     expect(screen.queryByText(/Old Ruins/)).not.toBeInTheDocument();

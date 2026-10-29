@@ -334,7 +334,9 @@ it("opens the shared menu only from a tile and closes it when that timer leaves 
   // Focus moves to the tile that took the removed tile's place.
   await waitFor(() =>
     expect(document.activeElement).toBe(
-      screen.getByText(/\[H\] Tanroth/).closest("[data-timer-popup-key]"),
+      screen
+        .getByText(/\[H\] Tanroth/)
+        .closest("[data-shared-context-menu-key]"),
     ),
   );
 });
