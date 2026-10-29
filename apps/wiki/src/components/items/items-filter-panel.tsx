@@ -23,7 +23,6 @@ import {
   type ItemsSearch,
   joinList,
   readLevel,
-  RECENT_OPTIONS,
   splitList,
   STAT_OPTIONS,
 } from "@/lib/items-search";
@@ -303,27 +302,6 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
               }
               pressed={bosses.isPressed(value)}
               onPressedChange={bosses.toggle(value)}
-            />
-          ))}
-        </div>
-      </FilterSection>
-
-      <FilterSection
-        title={t("filters.recent")}
-        count={search.recent ? 1 : 0}
-        onClear={() => onChange({ recent: "" })}
-      >
-        <div className="grid grid-cols-3 gap-1.5">
-          {RECENT_OPTIONS.map((value) => (
-            <FilterTile
-              key={value}
-              label={t(`filters.recentShort.${value}`)}
-              pressed={search.recent === value}
-              // One reach at a time: a pick replaces the previous one.
-              onPressedChange={(pressed) =>
-                onChange({ recent: pressed ? value : "" })
-              }
-              centered
             />
           ))}
         </div>

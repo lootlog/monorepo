@@ -14,7 +14,6 @@ export const EMPTY_ITEMS_SEARCH: ItemsSearch = {
   stats: "",
   bonuses: "",
   bosses: "",
-  recent: "",
   sort: "relevance",
 };
 

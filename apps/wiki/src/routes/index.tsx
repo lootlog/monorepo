@@ -8,8 +8,6 @@ import {
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { HomeSearch } from "@/components/home/home-search";
 import { LegendaryBonusShortcuts } from "@/components/home/legendary-bonus-shortcuts";
-import { NewDrops } from "@/components/home/new-drops";
-import { NewMonsters } from "@/components/home/new-monsters";
 import { QuickSearches } from "@/components/home/quick-searches";
 import { RarityShortcuts } from "@/components/home/rarity-shortcuts";
 import { SlotShortcuts } from "@/components/home/slot-shortcuts";
@@ -54,39 +52,6 @@ function HomeRoute() {
           <QuickSearches />
         </div>
       </header>
-
-      <section aria-labelledby="home-new-drops" className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <h2
-            id="home-new-drops"
-            className="text-base font-semibold text-foreground"
-          >
-            {t("home.newDropsTitle")}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {t("home.newDropsDescription")}
-          </p>
-        </div>
-        <NewDrops />
-      </section>
-
-      <section
-        aria-labelledby="home-new-monsters"
-        className="flex flex-col gap-4"
-      >
-        <div className="flex flex-col gap-1">
-          <h2
-            id="home-new-monsters"
-            className="text-base font-semibold text-foreground"
-          >
-            {t("home.newMonstersTitle")}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {t("home.newMonstersDescription")}
-          </p>
-        </div>
-        <NewMonsters />
-      </section>
 
       <section aria-labelledby="home-bonuses" className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">

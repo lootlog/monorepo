@@ -12,7 +12,6 @@ import {
   readPageSegment,
   WIKI_GAME_VERSION,
 } from "@/lib/catalog-links";
-import { formatFirstSeenOn } from "@/lib/item-options";
 
 // A template, a legacy and a runtime identity may share an id.
 const NPC_IDENTITIES = 3;
@@ -82,9 +81,6 @@ function NpcRoute() {
                   <p className="text-sm text-muted-foreground">
                     {t(`npcTypes.${npc.type}`)} ·{" "}
                     {t("common.levelShort", { level: npc.lvl })}
-                    {npc.firstSeenOn
-                      ? ` · ${t("catalog.firstSeenOn", { day: formatFirstSeenOn(npc.firstSeenOn) })}`
-                      : null}
                   </p>
                 </>
               ) : (

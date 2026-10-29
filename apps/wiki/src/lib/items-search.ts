@@ -20,7 +20,6 @@ export type ItemsSearch = {
   stats: string;
   bonuses: string;
   bosses: string;
-  recent: string;
   sort: string;
 };
 
@@ -30,9 +29,6 @@ type SortOption = (typeof SORT_OPTIONS)[number];
 
 const isSortOption = (value: string): value is SortOption =>
   SORT_OPTIONS.some((option) => option === value);
-
-/** Days a "first drop" filter reaches back. */
-export const RECENT_OPTIONS = ["1", "7", "30"] as const;
 
 /** Bosses an item can come from, strongest first. */
 export const BOSS_OPTIONS = [
@@ -74,7 +70,6 @@ export function validateItemsSearch(search: {
   stats?: unknown;
   bonuses?: unknown;
   bosses?: unknown;
-  recent?: unknown;
   sort?: unknown;
 }): ItemsSearch {
   return {
@@ -99,7 +94,6 @@ export function validateItemsSearch(search: {
     stats: typeof search.stats === "string" ? search.stats : "",
     bonuses: typeof search.bonuses === "string" ? search.bonuses : "",
     bosses: typeof search.bosses === "string" ? search.bosses : "",
-    recent: typeof search.recent === "string" ? search.recent : "",
     sort:
       typeof search.sort === "string" && isSortOption(search.sort)
         ? search.sort
@@ -111,12 +105,6 @@ export const readLevel = (value: string) => {
   const level = Number.parseInt(value, 10);
 
   return Number.isInteger(level) && level > 0 ? level : undefined;
-};
-
-const recentDays = (value: string) => {
-  const days = Number(value);
-
-  return Number.isInteger(days) && days > 0 ? days : undefined;
 };
 
 /** The public catalog filters of a search; a slot adds the types it holds. */
@@ -136,6 +124,5 @@ export const toCatalogParams = (
   statKeys: splitList(search.stats),
   legendaryBonuses: splitList(search.bonuses),
   dropSourceTypes: splitList(search.bosses),
-  firstSeenWithinDays: recentDays(search.recent),
   sort: isSortOption(search.sort) ? search.sort : undefined,
 });

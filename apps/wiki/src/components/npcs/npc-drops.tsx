@@ -11,12 +11,12 @@ import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 
 const DROPS_LIMIT = 96;
 
-/** A monster's drops, the most valuable rarity first, newest within each. */
+/** A monster's drops, the most valuable rarity first, highest level within each. */
 export function NpcDrops({ npcKey }: { npcKey: string }) {
   const { data, isError } = useCatalogControllerGetItems({
     droppedBy: npcKey,
     gameVersion: WIKI_GAME_VERSION,
-    sort: "newest",
+    sort: "lvl:desc",
     limit: DROPS_LIMIT,
   });
 

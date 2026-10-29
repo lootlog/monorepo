@@ -19,7 +19,7 @@ import {
   readPageSegment,
   WIKI_GAME_VERSION,
 } from "@/lib/catalog-links";
-import { formatFirstSeenOn, ITEM_TILE_LABELS } from "@/lib/item-options";
+import { ITEM_TILE_LABELS } from "@/lib/item-options";
 
 export const Route = createFileRoute("/items_/$itemSlug")({
   component: ItemRoute,
@@ -97,13 +97,6 @@ function ItemRoute() {
               >
                 {t("catalog.droppedByTitle")}
               </h2>
-              {item.firstSeenOn ? (
-                <p className="text-sm text-muted-foreground">
-                  {t("catalog.firstSeenOn", {
-                    day: formatFirstSeenOn(item.firstSeenOn),
-                  })}
-                </p>
-              ) : null}
             </div>
             {item.droppedBy.length === 0 ? (
               <p className="text-sm text-muted-foreground">
