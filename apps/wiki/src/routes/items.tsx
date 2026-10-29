@@ -1,16 +1,14 @@
-import { SearchTextField } from "@/components/search-text-field";
-import { SearchResultsHeader } from "@/components/search-results-header";
-import { SearchStatusCard } from "@/components/search-status-card";
 import { createFileRoute } from "@tanstack/react-router";
-import { type FormEvent, startTransition, useEffect, useState } from "react";
-import { Badge } from "@lootlog/ui/components/badge";
+import { Search, SlidersHorizontal } from "lucide-react";
+import { startTransition, useEffect, useState } from "react";
+import { useCatalogControllerGetItems } from "@lootlog/client/search";
 import { Button } from "@lootlog/ui/components/button";
-import { Card, CardContent, CardHeader } from "@lootlog/ui/components/card";
-import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { ItemRarity, resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
-import { ItemTile } from "@lootlog/ui/components/item-tile";
-import { Label } from "@lootlog/ui/components/label";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { FilterChipButton } from "@lootlog/ui/components/filter-chip-button";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@lootlog/ui/components/input-group";
 import {
   Select,
   SelectContent,
@@ -18,644 +16,249 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
-import { getRuntimeConfig } from "@/config/runtime-config";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@lootlog/ui/components/sheet";
+import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
+import { ItemsFilterPanel } from "@/components/items/items-filter-panel";
 import { t } from "@/i18n/messages";
 import {
-  getItemsControllerGetItemsQueryKey,
-  useItemsControllerGetItems,
-} from "@lootlog/client/search";
-import { renderItemStat } from "@/components/render-item-stat";
-
-import { getSearchStatus } from "./-search-route.utils";
+  type ItemsSearch,
+  joinList,
+  SORT_OPTIONS,
+  splitList,
+  toCatalogParams,
+  validateItemsSearch,
+} from "@/lib/items-search";
+import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
 const SEARCH_LIMIT = 96;
 
-type ItemsRouteSearch = {
-  advancedFilter: string;
-  maxLevel: string;
-  minLevel: string;
-  professions: string;
-  query: string;
-  rarities: string;
-  sort: string;
-  types: string;
-};
-
-const displayRarityOptions = [
-  ItemRarity.COMMON,
-  ItemRarity.UNIQUE,
-  ItemRarity.HEROIC,
-  ItemRarity.UPGRADED,
-  ItemRarity.LEGENDARY,
+const LIST_FILTERS = [
+  {
+    key: "professions",
+    label: (value: string) => t(`filters.professions.${value}`),
+  },
+  { key: "rarities", label: (value: string) => t(`itemRarity.${value}`) },
+  { key: "bosses", label: (value: string) => t(`npcTypes.${value}`) },
+  { key: "stats", label: (value: string) => t(`filters.statOptions.${value}`) },
+  { key: "types", label: (value: string) => t(`itemType.${value}`) },
 ] as const;
 
-const rarityOptions = displayRarityOptions.filter(
-  (rarity) => rarity !== ItemRarity.COMMON,
-);
-
-const professionOptions = ["w", "p", "h", "m", "b", "t"] as const;
-
-const itemTypeOptions = [
-  "ONE_HAND_WEAPON",
-  "TWO_HAND_WEAPON",
-  "ONE_AND_HALF_HAND_WEAPON",
-  "DISTANCE_WEAPON",
-  "HELP_WEAPON",
-  "WAND_WEAPON",
-  "ORB_WEAPON",
-  "ARMOR",
-  "HELMET",
-  "BOOTS",
-  "GLOVES",
-  "RING",
-  "NECKLACE",
-  "SHIELD",
-  "NEUTRAL",
-  "CONSUME",
-  "OUTFITS",
-  "PETS",
-  "TELEPORTS",
-  "GOLD",
-  "KEYS",
-  "QUEST",
-  "RENEWABLE",
-  "BOOK",
-  "BAG",
-  "BLESS",
-  "UPGRADE",
-  "RECIPE",
-  "COINAGE",
-] as const;
-
-const sortOptions = [
-  "relevance",
-  "lvl:asc",
-  "lvl:desc",
-  "name:asc",
-  "name:desc",
-  "rarity:asc",
-  "type:asc",
-] as const;
-
-const isSortOption = (value: string): value is (typeof sortOptions)[number] =>
-  sortOptions.some((option) => option === value);
-
-const normalizeLevelValue = (value: string) => {
-  const normalizedValue = value.trim();
-
-  if (!normalizedValue) {
-    return undefined;
-  }
-
-  const level = Number(normalizedValue);
-
-  if (!Number.isFinite(level)) {
-    return undefined;
-  }
-
-  return Math.max(0, Math.floor(level));
+type ActiveFilter = {
+  key: string;
+  label: string;
+  clear: Partial<ItemsSearch>;
 };
 
-function validateSearch(search: {
-  advancedFilter?: unknown;
-  maxLevel?: unknown;
-  minLevel?: unknown;
-  professions?: unknown;
-  query?: unknown;
-  rarities?: unknown;
-  sort?: unknown;
-  types?: unknown;
-}): ItemsRouteSearch {
-  return {
-    advancedFilter:
-      typeof search.advancedFilter === "string" ? search.advancedFilter : "",
-    maxLevel: typeof search.maxLevel === "string" ? search.maxLevel : "",
-    minLevel: typeof search.minLevel === "string" ? search.minLevel : "",
-    professions:
-      typeof search.professions === "string" ? search.professions : "",
-    query: typeof search.query === "string" ? search.query : "",
-    rarities: typeof search.rarities === "string" ? search.rarities : "",
-    sort:
-      typeof search.sort === "string" && isSortOption(search.sort)
-        ? search.sort
-        : "relevance",
-    types: typeof search.types === "string" ? search.types : "",
-  };
-}
+/** One removable chip per active filter, in the panel's order. */
+const activeFilters = (search: ItemsSearch): ActiveFilter[] => [
+  ...(search.slot
+    ? [{ key: "slot", label: t(`slots.${search.slot}`), clear: { slot: "" } }]
+    : []),
+  ...(search.minLevel || search.maxLevel
+    ? [
+        {
+          key: "level",
+          label: t("filters.levelChip", {
+            min: search.minLevel || "1",
+            max: search.maxLevel || "∞",
+          }),
+          clear: { minLevel: "", maxLevel: "" },
+        },
+      ]
+    : []),
+  ...(search.recent
+    ? [
+        {
+          key: "recent",
+          label: t(`filters.recentOptions.${search.recent}`),
+          clear: { recent: "" },
+        },
+      ]
+    : []),
+  ...LIST_FILTERS.flatMap(({ key, label }) => {
+    const values = splitList(search[key]);
 
-const splitSearchList = (value: string) =>
-  value
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter(Boolean);
-
-const joinSearchList = (value: readonly string[]) => value.join(",");
-
-const toggleSearchValue = (currentValue: string, nextValue: string) => {
-  const currentValues = splitSearchList(currentValue);
-
-  if (currentValues.includes(nextValue)) {
-    return joinSearchList(
-      currentValues.filter((currentValue) => currentValue !== nextValue),
-    );
-  }
-
-  return joinSearchList([...currentValues, nextValue]);
-};
-
-const buildInFilter = (attribute: string, values: readonly string[]) => {
-  if (values.length === 0) {
-    return undefined;
-  }
-
-  return `${attribute} IN [${values.map((value) => JSON.stringify(value)).join(", ")}]`;
-};
-
-const buildFilters = (search: ItemsRouteSearch) => {
-  const minLevel = normalizeLevelValue(search.minLevel);
-  const maxLevel = normalizeLevelValue(search.maxLevel);
-
-  const filters = [
-    minLevel === undefined ? undefined : `lvl >= ${minLevel}`,
-    maxLevel === undefined ? undefined : `lvl <= ${maxLevel}`,
-    buildInFilter("rarity", splitSearchList(search.rarities)),
-    buildInFilter("type", splitSearchList(search.types)),
-    buildInFilter("requiredProfessions", splitSearchList(search.professions)),
-    search.advancedFilter.trim() || undefined,
-  ];
-
-  return filters.filter((filter): filter is string => Boolean(filter));
-};
-
-const getSearchState = ({
-  advancedFilterValue,
-  maxLevelValue,
-  minLevelValue,
-  professionsValue,
-  queryValue,
-  raritiesValue,
-  sortValue,
-  typesValue,
-}: {
-  advancedFilterValue: string;
-  maxLevelValue: string;
-  minLevelValue: string;
-  professionsValue: string;
-  queryValue: string;
-  raritiesValue: string;
-  sortValue: string;
-  typesValue: string;
-}): ItemsRouteSearch => ({
-  advancedFilter: advancedFilterValue.trim(),
-  maxLevel: maxLevelValue.trim(),
-  minLevel: minLevelValue.trim(),
-  professions: professionsValue,
-  query: queryValue.trim(),
-  rarities: raritiesValue,
-  sort: sortValue,
-  types: typesValue,
-});
-
-const itemSearchKeys: Array<keyof ItemsRouteSearch> = [
-  "advancedFilter",
-  "maxLevel",
-  "minLevel",
-  "professions",
-  "query",
-  "rarities",
-  "sort",
-  "types",
+    return values.map((value) => ({
+      key: `${key}-${value}`,
+      label: label(value),
+      clear: { [key]: joinList(values.filter((current) => current !== value)) },
+    }));
+  }),
 ];
-
-const isSameSearchState = (
-  first: ItemsRouteSearch,
-  second: ItemsRouteSearch,
-): boolean => itemSearchKeys.every((key) => first[key] === second[key]);
-
-const getItemsSearchRequest = (search: ItemsRouteSearch, filters: string[]) => {
-  const hasActiveSearch = search.query.trim() !== "" || filters.length > 0;
-
-  return {
-    hasActiveSearch,
-    queryParams: {
-      facets: ["rarity", "type"],
-      filter: filters.length > 0 ? filters : undefined,
-      limit: SEARCH_LIMIT,
-      offset: 0,
-      search: search.query.trim() || undefined,
-      sort:
-        search.sort && search.sort !== "relevance" ? [search.sort] : undefined,
-    },
-  };
-};
 
 export const Route = createFileRoute("/items")({
   component: ItemsRoute,
   head: () => ({
-    meta: [
-      {
-        title: `${t("meta.itemsTitle")} | ${t("meta.title")}`,
-      },
-    ],
+    meta: [{ title: `${t("meta.itemsTitle")} | ${t("meta.title")}` }],
   }),
-  loader: () => getRuntimeConfig(),
-  validateSearch,
+  validateSearch: validateItemsSearch,
 });
 
 function ItemsRoute() {
   const navigate = Route.useNavigate();
-  const { searchApiUrl } = Route.useLoaderData();
   const search = Route.useSearch();
-  const [queryValue, setQueryValue] = useState(search.query);
-  const [minLevelValue, setMinLevelValue] = useState(search.minLevel);
-  const [maxLevelValue, setMaxLevelValue] = useState(search.maxLevel);
-  const [raritiesValue, setRaritiesValue] = useState(search.rarities);
-  const [typesValue, setTypesValue] = useState(search.types);
-  const [professionsValue, setProfessionsValue] = useState(search.professions);
-  const [sortValue, setSortValue] = useState(search.sort || "relevance");
+  const [query, setQuery] = useState(search.query);
 
-  const [advancedFilterValue, setAdvancedFilterValue] = useState(
-    search.advancedFilter,
+  const { data, isError } = useCatalogControllerGetItems(
+    toCatalogParams(search, SEARCH_LIMIT),
+    { query: { placeholderData: (previous) => previous } },
   );
 
-  const filters = buildFilters(search);
-
-  const { hasActiveSearch, queryParams } = getItemsSearchRequest(
-    search,
-    filters,
-  );
-
-  const itemsQuery = useItemsControllerGetItems(queryParams, {
-    query: {
-      enabled: hasActiveSearch,
-      placeholderData: (previousData) => previousData,
-      queryKey: getItemsControllerGetItemsQueryKey(queryParams),
-    },
-    request: {
-      apiClient: {
-        baseUrl: searchApiUrl,
-      },
-    },
-  });
-
-  const data = hasActiveSearch ? itemsQuery.data : undefined;
-
-  const status = getSearchStatus(
-    hasActiveSearch,
-    itemsQuery.isError,
-    itemsQuery.isPending,
-  );
-
-  useEffect(() => {
-    setQueryValue(search.query);
-    setMinLevelValue(search.minLevel);
-    setMaxLevelValue(search.maxLevel);
-    setRaritiesValue(search.rarities);
-    setTypesValue(search.types);
-    setProfessionsValue(search.professions);
-    setSortValue(search.sort || "relevance");
-    setAdvancedFilterValue(search.advancedFilter);
-  }, [
-    search.advancedFilter,
-    search.maxLevel,
-    search.minLevel,
-    search.professions,
-    search.query,
-    search.rarities,
-    search.sort,
-    search.types,
-  ]);
-
-  useEffect(() => {
-    const nextSearch = getSearchState({
-      advancedFilterValue,
-      maxLevelValue,
-      minLevelValue,
-      professionsValue,
-      queryValue,
-      raritiesValue,
-      sortValue,
-      typesValue,
+  const change = (update: Partial<ItemsSearch>) =>
+    startTransition(() => {
+      void navigate({
+        replace: true,
+        search: (current) => ({ ...current, ...update }),
+      });
     });
 
-    if (
-      isSameSearchState(nextSearch, {
-        advancedFilter: search.advancedFilter,
-        maxLevel: search.maxLevel,
-        minLevel: search.minLevel,
-        professions: search.professions,
-        query: search.query,
-        rarities: search.rarities,
-        sort: search.sort,
-        types: search.types,
-      })
-    ) {
-      return;
-    }
+  useEffect(() => {
+    setQuery(search.query);
+  }, [search.query]);
+
+  useEffect(() => {
+    const nextQuery = query.trim();
+
+    if (nextQuery === search.query) return;
 
     const timeoutId = setTimeout(() => {
       startTransition(() => {
         void navigate({
           replace: true,
-          search: nextSearch,
+          search: (current) => ({ ...current, query: nextQuery }),
         });
       });
     }, SEARCH_DEBOUNCE_MS);
 
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [
-    advancedFilterValue,
-    maxLevelValue,
-    minLevelValue,
-    navigate,
-    professionsValue,
-    queryValue,
-    raritiesValue,
-    search.advancedFilter,
-    search.maxLevel,
-    search.minLevel,
-    search.professions,
-    search.query,
-    search.rarities,
-    search.sort,
-    search.types,
-    sortValue,
-    typesValue,
-  ]);
+    return () => clearTimeout(timeoutId);
+  }, [navigate, query, search.query]);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    startTransition(() => {
-      void navigate({
-        search: getSearchState({
-          advancedFilterValue,
-          maxLevelValue,
-          minLevelValue,
-          professionsValue,
-          queryValue,
-          raritiesValue,
-          sortValue,
-          typesValue,
-        }),
-      });
-    });
-  }
-
-  function handleReset() {
-    setQueryValue("");
-    setMinLevelValue("");
-    setMaxLevelValue("");
-    setRaritiesValue("");
-    setTypesValue("");
-    setProfessionsValue("");
-    setSortValue("relevance");
-    setAdvancedFilterValue("");
-
-    startTransition(() => {
-      void navigate({
-        search: {
-          advancedFilter: "",
-          maxLevel: "",
-          minLevel: "",
-          professions: "",
-          query: "",
-          rarities: "",
-          sort: "relevance",
-          types: "",
-        },
-      });
-    });
-  }
-
-  const activeRarities = splitSearchList(raritiesValue);
-  const activeTypes = splitSearchList(typesValue);
-  const activeProfessions = splitSearchList(professionsValue);
-
-  const itemLabels = {
-    rarity: Object.fromEntries(
-      displayRarityOptions.map((rarity) => [rarity, t(`itemRarity.${rarity}`)]),
-    ),
-    type: Object.fromEntries(
-      itemTypeOptions.map((type) => [type, t(`itemType.${type}`)]),
-    ),
-  };
+  const filters = activeFilters(search);
+  const panel = <ItemsFilterPanel search={search} onChange={change} />;
 
   return (
-    <main className="page-wrap overflow-x-hidden px-3 pb-10 pt-6">
-      <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
-        <CardHeader className="px-0">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-4xl">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
-                {t("items.eyebrow")}
-              </p>
-              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                {t("items.title")}
-              </h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                {t("items.description")}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">
-                {t("search.limitBadge", { count: SEARCH_LIMIT })}
-              </Badge>
-              {status === "ready" && data ? (
-                <Badge variant="outline">
-                  {t("search.results", { count: data.estimatedTotalHits })}
-                </Badge>
-              ) : null}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="px-0">
-          <form className="grid gap-3" onSubmit={handleSubmit}>
-            <div className="grid gap-3 lg:grid-cols-[1.4fr_0.6fr_0.6fr_0.75fr_auto]">
-              <SearchTextField
-                label={t("search.queryLabel")}
-                value={queryValue}
-                onValueChange={setQueryValue}
-                placeholder={t("search.queryPlaceholder")}
-              />
-              <SearchTextField
-                label={t("filters.minLevel")}
-                min={0}
-                type="number"
-                value={minLevelValue}
-                onValueChange={setMinLevelValue}
-                placeholder={t("filters.minLevelPlaceholder")}
-              />
-              <SearchTextField
-                label={t("filters.maxLevel")}
-                min={0}
-                type="number"
-                value={maxLevelValue}
-                onValueChange={setMaxLevelValue}
-                placeholder={t("filters.maxLevelPlaceholder")}
-              />
-              <Label className="grid gap-2">
-                <span>{t("filters.sort")}</span>
-                <Select
-                  value={sortValue}
-                  onValueChange={(value) => {
-                    if (value !== null) setSortValue(value);
-                  }}
-                  items={sortOptions.map((sortOption) => ({
-                    value: sortOption,
-                    label: <>{t(`filters.sortOptions.${sortOption}`)}</>,
-                  }))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortOptions.map((sortOption) => (
-                      <SelectItem key={sortOption} value={sortOption}>
-                        {t(`filters.sortOptions.${sortOption}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Label>
-              <div className="flex items-end gap-2">
-                <Button className="w-full" type="submit">
-                  {t("search.submit")}
-                </Button>
-                <Button
-                  className="w-full"
-                  type="button"
-                  variant="outline"
-                  onClick={handleReset}
-                >
-                  {t("search.reset")}
-                </Button>
-              </div>
-            </div>
+    <div className="grid items-start gap-6 py-6 md:grid-cols-[15.5rem_minmax(0,1fr)]">
+      <aside
+        aria-label={t("filters.title")}
+        className="sticky top-20 hidden max-h-[calc(100dvh-6rem)] overflow-y-auto pr-1 md:block"
+      >
+        {panel}
+      </aside>
 
-            <div className="grid gap-3 xl:grid-cols-[1fr_1.6fr_1fr]">
-              <div className="rounded-xl border border-border bg-background/35 p-3">
-                <p className="mb-3 text-xs font-semibold text-muted-foreground">
-                  {t("filters.rarity")}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {rarityOptions.map((rarity) => (
-                    <Label
-                      key={rarity}
-                      className="flex items-center gap-2 rounded-lg border border-border bg-card/40 px-2 py-1.5 text-xs"
-                    >
-                      <Checkbox
-                        checked={activeRarities.includes(rarity)}
-                        onCheckedChange={() =>
-                          setRaritiesValue(
-                            toggleSearchValue(raritiesValue, rarity),
-                          )
-                        }
-                      />
-                      {t(`itemRarity.${rarity}`)}
-                    </Label>
-                  ))}
-                </div>
-              </div>
+      <div className="flex min-w-0 flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {t("items.title")}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t("items.description")}
+          </p>
+        </div>
 
-              <div className="rounded-xl border border-border bg-background/35 p-3">
-                <p className="mb-3 text-xs font-semibold text-muted-foreground">
-                  {t("filters.itemType")}
-                </p>
-                <ScrollArea className="h-24">
-                  <div className="flex flex-wrap gap-2 pr-3">
-                    {itemTypeOptions.map((type) => (
-                      <Label
-                        key={type}
-                        className="flex items-center gap-2 rounded-lg border border-border bg-card/40 px-2 py-1.5 text-xs"
-                      >
-                        <Checkbox
-                          checked={activeTypes.includes(type)}
-                          onCheckedChange={() =>
-                            setTypesValue(toggleSearchValue(typesValue, type))
-                          }
-                        />
-                        {t(`itemType.${type}`)}
-                      </Label>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
-
-              <div className="rounded-xl border border-border bg-background/35 p-3">
-                <p className="mb-3 text-xs font-semibold text-muted-foreground">
-                  {t("filters.profession")}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {professionOptions.map((profession) => (
-                    <Label
-                      key={profession}
-                      className="flex items-center gap-2 rounded-lg border border-border bg-card/40 px-2 py-1.5 text-xs"
-                    >
-                      <Checkbox
-                        checked={activeProfessions.includes(profession)}
-                        onCheckedChange={() =>
-                          setProfessionsValue(
-                            toggleSearchValue(professionsValue, profession),
-                          )
-                        }
-                      />
-                      {t(`filters.professions.${profession}`)}
-                    </Label>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <SearchTextField
-              label={t("filters.advancedFilter")}
-              value={advancedFilterValue}
-              onValueChange={setAdvancedFilterValue}
-              placeholder={t("filters.advancedFilterPlaceholder")}
+        <div className="flex flex-wrap items-center gap-2">
+          <InputGroup size="lg" className="min-w-48 flex-1">
+            <InputGroupAddon>
+              <Search aria-hidden="true" />
+            </InputGroupAddon>
+            <InputGroupInput
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              aria-label={t("search.queryLabel")}
+              placeholder={t("search.queryPlaceholder")}
             />
-          </form>
-        </CardContent>
-      </Card>
-
-      <section className="mt-4">
-        <SearchStatusCard
-          status={status}
-          empty={Boolean(data && data.hits.length === 0)}
-        />
-        {status === "ready" && data && data.hits.length > 0 ? (
-          <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
-            <SearchResultsHeader
-              count={data.estimatedTotalHits}
-              start={1}
-              end={data.hits.length}
-            />
-            <div className="grid grid-flow-dense grid-cols-[repeat(auto-fill,minmax(42px,1fr))] gap-2">
-              {data.hits.map((item) => (
-                <div
-                  key={item.id}
-                  className="group flex min-h-12 items-center justify-center rounded-lg border border-border bg-background/40 p-1 transition-colors hover:border-primary/60 hover:bg-primary/5"
-                >
-                  <ItemTile
-                    item={{
-                      icon: item.icon,
-                      name: item.name,
-                      rarity: resolveItemRarity(item.rarity),
-                      stat: item.stat,
-                      type: item.type,
-                    }}
-                    labels={itemLabels}
-                    renderStat={renderItemStat}
-                  />
-                </div>
+          </InputGroup>
+          <Select
+            value={search.sort}
+            onValueChange={(sort) => {
+              if (sort !== null) change({ sort });
+            }}
+            items={SORT_OPTIONS.map((value) => ({
+              value,
+              label: t(`filters.sortOptions.${value}`),
+            }))}
+          >
+            <SelectTrigger
+              size="lg"
+              className="w-44"
+              aria-label={t("filters.sort")}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {t(`filters.sortOptions.${value}`)}
+                </SelectItem>
               ))}
-            </div>
-          </Card>
+            </SelectContent>
+          </Select>
+          <Sheet>
+            <SheetTrigger
+              render={
+                <Button variant="outline" size="lg" className="md:hidden" />
+              }
+            >
+              <SlidersHorizontal aria-hidden="true" />
+              {t("filters.title")}
+            </SheetTrigger>
+            <SheetContent side="left" className="overflow-y-auto p-4">
+              <SheetTitle>{t("filters.title")}</SheetTitle>
+              {panel}
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {filters.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {filters.map((filter) => (
+              <FilterChipButton
+                key={filter.key}
+                removeLabel={t("filters.remove", { filter: filter.label })}
+                onRemove={() => change(filter.clear)}
+              >
+                {filter.label}
+              </FilterChipButton>
+            ))}
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={() =>
+                change({ ...EMPTY_ITEMS_SEARCH, query: search.query })
+              }
+            >
+              {t("filters.clearAll")}
+            </Button>
+          </div>
         ) : null}
-      </section>
-    </main>
+
+        <section
+          aria-labelledby="items-results"
+          className="flex flex-col gap-3"
+        >
+          <h2
+            id="items-results"
+            className="text-sm font-semibold text-foreground"
+          >
+            {data
+              ? t("search.results", { count: data.estimatedTotalHits })
+              : t("search.loading")}
+          </h2>
+          <CatalogItemGrid
+            items={data?.hits}
+            isError={isError}
+            placeholders={12}
+            emptyLabel={t("search.noResults")}
+          />
+        </section>
+      </div>
+    </div>
   );
 }

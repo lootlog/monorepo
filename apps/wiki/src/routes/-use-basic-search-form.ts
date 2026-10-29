@@ -1,80 +1,55 @@
 import { type FormEvent, startTransition, useEffect, useState } from "react";
-import {
-  areBasicRouteSearchStatesEqual,
-  getBasicRouteSearchState,
-  type BasicRouteSearch,
-} from "./-search-route.utils";
+import type { QueryRouteSearch } from "./-search-route.utils";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-/** Shows the world field only when the route's search has `world`. */
-export const useBasicSearchForm = <TSearch extends BasicRouteSearch>(
-  search: TSearch,
-  navigate: (options: { search: TSearch; replace?: boolean }) => Promise<void>,
+/** A name search that follows the route's `query` and updates it as the User types. */
+export const useBasicSearchForm = (
+  search: QueryRouteSearch,
+  navigate: (options: {
+    search: QueryRouteSearch;
+    replace?: boolean;
+  }) => Promise<void>,
 ) => {
-  const routeWorld = "world" in search ? search.world : undefined;
   const [queryValue, setQueryValue] = useState(search.query);
-  const [worldValue, setWorldValue] = useState(routeWorld ?? "");
+
   useEffect(() => {
     setQueryValue(search.query);
-    setWorldValue(routeWorld ?? "");
-  }, [search.query, routeWorld]);
+  }, [search.query]);
 
   useEffect(() => {
-    const nextSearch = getBasicRouteSearchState(search, {
-      queryValue,
-      worldValue,
-    });
+    const query = queryValue.trim();
 
-    if (areBasicRouteSearchStatesEqual(nextSearch, search)) {
+    if (query === search.query) {
       return;
     }
 
     const timeoutId = setTimeout(() => {
       startTransition(() => {
-        void navigate({
-          replace: true,
-          search: nextSearch,
-        });
+        void navigate({ replace: true, search: { query } });
       });
     }, SEARCH_DEBOUNCE_MS);
 
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [navigate, queryValue, search, worldValue]);
+  }, [navigate, queryValue, search.query]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     startTransition(() => {
-      void navigate({
-        search: getBasicRouteSearchState(search, { queryValue, worldValue }),
-      });
+      void navigate({ search: { query: queryValue.trim() } });
     });
   }
 
   function handleReset() {
     setQueryValue("");
-    setWorldValue("");
 
     startTransition(() => {
-      void navigate({
-        search: getBasicRouteSearchState(search, {
-          queryValue: "",
-          worldValue: "",
-        }),
-      });
+      void navigate({ search: { query: "" } });
     });
   }
 
-  return {
-    queryValue,
-    setQueryValue,
-    hasWorldField: routeWorld !== undefined,
-    worldValue,
-    setWorldValue,
-    handleSubmit,
-    handleReset,
-  };
+  return { queryValue, setQueryValue, handleSubmit, handleReset };
 };
