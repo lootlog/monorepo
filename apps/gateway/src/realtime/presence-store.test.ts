@@ -1863,6 +1863,55 @@ describe("PresenceStore", () => {
     });
   });
 
+  test("disconnect removes every organization's presence when a coverage event fails", async () => {
+    const redis = new MemoryRedis();
+    const publisherData = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+    publisherData.guilds.push(
+      secondGuild([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+    );
+    const publisher = socket(publisherData);
+
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => 10_000,
+      {
+        publish: (event) =>
+          event.hasPlayer
+            ? Effect.void
+            : Effect.fail(new Error("Coverage unavailable")),
+      },
+    );
+
+    await Effect.runPromise(
+      store.publish(publisher, {
+        organizationIds: ["organization-1", "organization-2"],
+        location: { map: "Kwieciste Przejście" },
+      }),
+    );
+
+    const exit = await Effect.runPromiseExit(store.disconnect(publisher.data));
+
+    expect(Exit.isFailure(exit)).toBe(true);
+
+    for (const [organizationId, guild] of [
+      ["organization-1", publisherData.guilds[0]],
+      ["organization-2", secondGuild([Permission.LOOTLOG_ONLINE_PLAYERS_READ])],
+    ] as const) {
+      const snapshot = await Effect.runPromise(
+        store.snapshot(
+          {
+            ...session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+            guilds: guild ? [guild] : [],
+          },
+          organizationId,
+        ),
+      );
+
+      expect(snapshot.presences).toEqual([]);
+    }
+  });
+
   test("heartbeat refreshes stored presence without broadcasting an unchanged profile", async () => {
     let now = 10_000;
     const redis = new MemoryRedis();
