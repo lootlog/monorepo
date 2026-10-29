@@ -35,7 +35,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("starts an initialized character without repeating HTTP snapshots or joining twice", async () => {
+it("starts an initialized character with one bootstrap request, without repeating HTTP snapshots or joining twice", async () => {
   queryClient.clear();
   useGlobalStore.setState({ gameState: { gameInitialized: false } });
   useWindowsStore.getState().setOpen("chat", true);
@@ -48,6 +48,36 @@ it("starts an initialized character without repeating HTTP snapshots or joining 
     "gameData.detector": createDetectorSettings(),
     "gameData.airTags": { enabled: true },
   });
+
+  const accessibleGuilds = [
+    {
+      id: "guild-1",
+      name: "Test guild",
+      icon: null,
+      ownerId: "discord-1",
+      publicStatsCardEnabled: false,
+      hasLootlogAccess: true,
+      isAccessDataStale: false,
+    },
+  ];
+
+  const userPreferences = {
+    userId: "user",
+    guildsOrder: ["guild-1"],
+    hiddenGuildIds: [],
+    theme: "default",
+    chatAppearance: {
+      npcLayout: "tile",
+      fontScalePercent: 100,
+      messageGapPx: 4,
+      showTimestamp: true,
+      showGuildLabel: true,
+      showNpcAvatar: true,
+      showNpcLevel: true,
+      showNpcLocationAndCoordinates: true,
+    },
+    mutes: { players: [], npcs: [] },
+  };
 
   const requests: string[] = [];
   const unexpected: string[] = [];
@@ -79,46 +109,15 @@ it("starts an initialized character without repeating HTTP snapshots or joining 
         },
       });
 
-    if (path === "/users/@me/guilds/accessible")
-      return Response.json([
-        {
-          id: "guild-1",
-          name: "Test guild",
-          icon: null,
-          ownerId: "discord-1",
-          publicStatsCardEnabled: false,
-          hasLootlogAccess: true,
-          isAccessDataStale: false,
-        },
-      ]);
-
-    if (path === "/users/@me/preferences")
+    if (path === "/users/@me/game-client/bootstrap")
       return Response.json({
-        userId: "user",
-        guildsOrder: ["guild-1"],
-        hiddenGuildIds: [],
-        theme: "default",
-        chatAppearance: {
-          npcLayout: "tile",
-          fontScalePercent: 100,
-          messageGapPx: 4,
-          showTimestamp: true,
-          showGuildLabel: true,
-          showNpcAvatar: true,
-          showNpcLevel: true,
-          showNpcLocationAndCoordinates: true,
+        accessibleGuilds,
+        userPreferences,
+        lootlogConfig: {},
+        settingsDocuments: documents,
+        guildTimerDocuments: {
+          guilds: { "guild-1": createSettingsDocuments() },
         },
-        mutes: { players: [], npcs: [] },
-      });
-
-    if (path === "/users/@me/lootlog-config/accounts/202")
-      return Response.json({});
-
-    if (path === "/preferences") return Response.json(documents);
-
-    if (path === "/preferences/guilds")
-      return Response.json({
-        guilds: { "guild-1": createSettingsDocuments() },
       });
 
     if (path.endsWith("/members/@me")) return Response.json(null);
@@ -258,7 +257,14 @@ it("starts an initialized character without repeating HTTP snapshots or joining 
     expect(unexpected).toEqual([]);
     expect(webSocketFactory).toHaveBeenCalledTimes(1);
     expect(proofRequests).toHaveLength(1);
-    expect(requests).toHaveLength(11);
+    // The startup reads of guilds, preferences, the Lootlog configuration and
+    // the settings documents arrive in one bootstrap response.
+    expect(requests).toHaveLength(7);
+    expect(
+      requests.filter(
+        (path) => path === "GET /users/@me/game-client/bootstrap",
+      ),
+    ).toHaveLength(1);
     expect(
       queryClient
         .getQueryCache()
@@ -273,9 +279,6 @@ it("starts an initialized character without repeating HTTP snapshots or joining 
     ).toHaveLength(1);
     expect(commands.filter((type) => type === "session.join")).toHaveLength(1);
     expect(requests.filter((path) => path === "GET /timers")).toHaveLength(1);
-    expect(
-      requests.filter((path) => path === "GET /users/@me/guilds/accessible"),
-    ).toHaveLength(1);
     expect(
       requests.filter((path) => path === "GET /messaging/party-gathering"),
     ).toHaveLength(1);

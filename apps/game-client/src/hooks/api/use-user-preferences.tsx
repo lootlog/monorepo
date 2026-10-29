@@ -7,17 +7,25 @@ import {
 import {
   getUsersControllerGetUserPreferencesQueryKey,
   useUsersControllerGetUserPreferences,
+  usersControllerGetUserPreferences,
   usersControllerUpdateUserPreferences,
   type UpdateUserPreferencesDto,
   type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
+import { readGameClientBootstrap } from "@/lib/game-client-bootstrap";
 
 const MUTATION_KEY = ["usersControllerUpdateUserPreferences"];
 
 export const useUserPreferences = (enabled = true) => {
+  const queryKey = getUsersControllerGetUserPreferencesQueryKey();
+
   return useUsersControllerGetUserPreferences({
     query: {
-      queryKey: getUsersControllerGetUserPreferencesQueryKey(),
+      queryKey,
+      queryFn: async ({ signal }) =>
+        (await readGameClientBootstrap<UserPreferencesResponseDtoOutput>(
+          queryKey,
+        )) ?? usersControllerGetUserPreferences({ signal }),
       enabled,
       staleTime: 60_000,
       refetchOnMount: false,

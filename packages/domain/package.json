@@ -13,6 +13,7 @@
     "./chat-appearance": "./src/chat-appearance.ts",
     "./event-hero-visibility": "./src/event-hero-visibility.ts",
     "./item-type": "./src/item-type.ts",
+    "./loot-acceptance": "./src/loot-acceptance.ts",
     "./loot-visibility": "./src/loot-visibility.ts",
     "./member-display-role": "./src/member-display-role.ts",
     "./npc-appearance": "./src/npc-appearance.ts",

@@ -5,7 +5,12 @@ import {
 } from "@lootlog/database/snapshot-hash";
 import { parseItemStats, splitItemStat } from "@lootlog/database/item-stat";
 import { Effect, Schema } from "effect";
+import { once } from "es-toolkit";
 import { getNpcTypeByWt, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
+import {
+  resolveLootAcceptance,
+  type LootAcceptance,
+} from "@lootlog/domain/loot-acceptance";
 import type {
   GuildLootCreatedEventV2,
   GuildLootEventNpc,
@@ -177,21 +182,27 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         return yield* Effect.fail(new PermissionDeniedError());
       }
 
-      const whitelistedGuildIds = new Set(
-        characterConfig?.catchingGuildIds ?? [],
-      );
+      const guildById = new Map(guilds.map((guild) => [guild.id, guild]));
+      const organizationIds = guilds.map((guild) => guild.id);
+      const catchingGuildIds = characterConfig?.catchingGuildIds ?? [];
 
-      const filteredGuildIds = guilds
-        .filter((guild) => whitelistedGuildIds.has(guild.id))
-        .map((guild) => guild.id);
+      const whitelisted = resolveLootAcceptance({
+        organizationIds,
+        catchingGuildIds,
+      });
+
+      const filteredGuildIds = whitelisted.accepted.map(
+        ({ organizationId }) => organizationId,
+      );
 
       if (filteredGuildIds.length === 0) {
         return yield* Effect.fail(
           new InvalidRequestError({
             message: ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
             submittedGuilds: [],
-            rejectedGuilds: guilds.map((guild) =>
-              this.createRejectedGuild(guild, "NOT_ON_CHARACTER_WHITELIST"),
+            rejectedGuilds: this.mapRejectedGuilds(
+              guildById,
+              whitelisted.rejected,
             ),
           }),
         );
@@ -230,12 +241,13 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       );
 
       const outcome = this.resolveAcceptanceOutcome({
-        guilds,
+        catchingGuildIds,
+        guildById,
         lootlogConfigs,
         members,
+        organizationIds,
         primaryNpcType,
         submission: options.submission,
-        whitelistedGuildIds,
       });
 
       if (outcome.submissionData.length === 0) {
@@ -288,79 +300,70 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private resolveAcceptanceOutcome(options: {
-    guilds: Guild[];
+    catchingGuildIds: readonly string[];
+    guildById: ReadonlyMap<string, Guild>;
     lootlogConfigs: Array<{ id: string; npcs: LootlogConfigNpc[] }>;
     members: Array<{ id: number; guildId: string }>;
+    organizationIds: readonly string[];
     primaryNpcType: NpcType;
     submission: CreateLootRequest;
-    whitelistedGuildIds: Set<string>;
   }): AcceptanceOutcome {
-    const lootlogConfigByGuildId = new Map(
-      options.lootlogConfigs.map((config) => [config.id, config]),
-    );
-
-    const memberByGuildId = new Map(
-      options.members.map((member) => [member.guildId, member]),
-    );
-
-    return options.guilds.reduce<AcceptanceOutcome>(
-      (outcome, guild) => {
-        if (!options.whitelistedGuildIds.has(guild.id)) {
-          outcome.rejectedGuilds.push(
-            this.createRejectedGuild(guild, "NOT_ON_CHARACTER_WHITELIST"),
-          );
-
-          return outcome;
-        }
-
-        const config = lootlogConfigByGuildId.get(guild.id);
-
-        if (!config) {
-          outcome.rejectedGuilds.push(
-            this.createRejectedGuild(guild, "MISSING_LOOTLOG_CONFIG"),
-          );
-
-          return outcome;
-        }
-
-        if (
-          !this.isAcceptedByConfig(
-            options.submission.loots,
-            config.npcs,
-            options.primaryNpcType,
-          )
-        ) {
-          outcome.rejectedGuilds.push(
-            this.createRejectedGuild(guild, "LOOT_NOT_ACCEPTED_BY_CONFIG"),
-          );
-
-          return outcome;
-        }
-
-        const member = memberByGuildId.get(guild.id);
-
-        if (!member) {
-          outcome.rejectedGuilds.push(
-            this.createRejectedGuild(guild, "MISSING_MEMBER"),
-          );
-
-          return outcome;
-        }
-
-        outcome.submissionData.push({
-          guildId: guild.id,
-          guildName: guild.name,
-          memberId: member.id,
-        });
-        outcome.submittedGuilds.push({
-          guildId: guild.id,
-          guildName: guild.name,
-        });
-
-        return outcome;
+    const acceptance = resolveLootAcceptance({
+      organizationIds: options.organizationIds,
+      catchingGuildIds: options.catchingGuildIds,
+      configs: new Map(
+        options.lootlogConfigs.map((config) => [config.id, config]),
+      ),
+      members: new Map(
+        options.members.map((member) => [member.guildId, member]),
+      ),
+      loot: {
+        npcType: options.primaryNpcType,
+        rarities: once(() =>
+          options.submission.loots.map(
+            (item) => this.getItemStats(item).rarity,
+          ),
+        ),
       },
-      { submissionData: [], submittedGuilds: [], rejectedGuilds: [] },
-    );
+    });
+
+    const outcome: AcceptanceOutcome = {
+      submissionData: [],
+      submittedGuilds: [],
+      rejectedGuilds: this.mapRejectedGuilds(
+        options.guildById,
+        acceptance.rejected,
+      ),
+    };
+
+    for (const { organizationId, member } of acceptance.accepted) {
+      const guild = options.guildById.get(organizationId);
+
+      if (!guild || !member) continue;
+
+      outcome.submissionData.push({
+        guildId: guild.id,
+        guildName: guild.name,
+        memberId: member.id,
+      });
+      outcome.submittedGuilds.push({
+        guildId: guild.id,
+        guildName: guild.name,
+      });
+    }
+
+    return outcome;
+  }
+
+  private mapRejectedGuilds(
+    guildById: ReadonlyMap<string, Guild>,
+    rejected: LootAcceptance<unknown>["rejected"],
+  ): CreateLootRejectedGuild[] {
+    return rejected.flatMap(({ organizationId, reason }) => {
+      const guild = guildById.get(organizationId);
+
+      return guild ? [this.createRejectedGuild(guild, reason)] : [];
+    });
   }
 
   private acceptExistingLoot(
@@ -654,22 +657,6 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     return [...npcs]
       .sort((left, right) => (right.wt ?? 0) - (left.wt ?? 0))
       .map(({ lvl, prof, type, wt }) => ({ lvl, prof, type, wt }));
-  }
-
-  private isAcceptedByConfig(
-    loots: CreateLootRequest["loots"],
-    npcs: LootlogConfigNpc[],
-    primaryNpcType: NpcType,
-  ): boolean {
-    const targetNpc = npcs.find((npc) => npc.npcType === primaryNpcType);
-
-    if (!targetNpc) {
-      return false;
-    }
-
-    return loots.some((item) =>
-      targetNpc.allowedRarities.includes(this.getItemStats(item).rarity),
-    );
   }
 
   private getItemStats(item: CreateLootRequest["loots"][number]) {
