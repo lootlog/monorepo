@@ -1391,9 +1391,10 @@ const ACTIVITY_READINESS_ADDITION: JsonValue = {
 // Intentional additions verified against HTTP, persistence and authorization tests:
 // activity/src/online/online-repository.integration.test.ts;
 // api/test/kill-analytics.integration.test.ts, user-feed.integration.test.ts and records.operations.test.ts.
-// The public catalog, readable without signing in. Verified by
-// apps/search/test/http-handler.test.ts and
-// apps/search/src/catalog/catalog.service.test.ts.
+// The public catalog, readable without signing in, with its edition, NPC id
+// and legendary bonus filters, and without first sightings, which date boss
+// kills. Verified by apps/search/test/http-handler.test.ts
+// and apps/search/src/catalog/catalog.service.test.ts.
 const CATALOG_ITEMS_ADDITION: JsonValue = {
   operationId: "CatalogController_getItems",
   parameters: [
@@ -1402,6 +1403,16 @@ const CATALOG_ITEMS_ADDITION: JsonValue = {
       in: "query",
       schema: {
         type: "string",
+      },
+      required: false,
+    },
+    {
+      name: "gameVersion",
+      in: "query",
+      schema: {
+        type: "string",
+        enum: ["en", "pl"],
+        description: "Only entries of this game edition.",
       },
       required: false,
     },
@@ -1489,7 +1500,7 @@ const CATALOG_ITEMS_ADDITION: JsonValue = {
       explode: true,
     },
     {
-      name: "dropSourceTypes",
+      name: "legendaryBonuses",
       in: "query",
       schema: {
         type: "array",
@@ -1502,12 +1513,17 @@ const CATALOG_ITEMS_ADDITION: JsonValue = {
       explode: true,
     },
     {
-      name: "firstSeenWithinDays",
+      name: "dropSourceTypes",
       in: "query",
       schema: {
-        type: "number",
+        type: "array",
+        items: {
+          type: "string",
+        },
       },
       required: false,
+      style: "form",
+      explode: true,
     },
     {
       name: "droppedBy",
@@ -1523,15 +1539,7 @@ const CATALOG_ITEMS_ADDITION: JsonValue = {
       in: "query",
       schema: {
         type: "string",
-        enum: [
-          "relevance",
-          "newest",
-          "lvl:asc",
-          "lvl:desc",
-          "name:asc",
-          "name:desc",
-        ],
-        description: "`newest` orders by the first observation, latest first.",
+        enum: ["relevance", "lvl:asc", "lvl:desc", "name:asc", "name:desc"],
       },
       required: false,
     },
@@ -1590,6 +1598,31 @@ const CATALOG_NPCS_ADDITION: JsonValue = {
       required: false,
     },
     {
+      name: "gameVersion",
+      in: "query",
+      schema: {
+        type: "string",
+        enum: ["en", "pl"],
+        description: "Only entries of this game edition.",
+      },
+      required: false,
+    },
+    {
+      name: "ids",
+      in: "query",
+      schema: {
+        type: "array",
+        items: {
+          type: "integer",
+          minimum: -9007199254740991,
+          maximum: 9007199254740991,
+        },
+      },
+      required: false,
+      style: "form",
+      explode: true,
+    },
+    {
       name: "keys",
       in: "query",
       schema: {
@@ -1614,16 +1647,6 @@ const CATALOG_NPCS_ADDITION: JsonValue = {
       required: false,
       style: "form",
       explode: true,
-    },
-    {
-      name: "sort",
-      in: "query",
-      schema: {
-        type: "string",
-        enum: ["relevance", "newest"],
-        description: "`newest` orders by the first observation, latest first.",
-      },
-      required: false,
     },
     {
       name: "limit",

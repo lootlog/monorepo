@@ -30,6 +30,7 @@
     "@tanstack/react-start": "^1.169.1",
     "better-auth": "1.7.7",
     "cn": "catalog:",
+    "es-toolkit": "catalog:",
     "lucide-react": "^1.56.0",
     "react": "catalog:",
     "react-dom": "catalog:"

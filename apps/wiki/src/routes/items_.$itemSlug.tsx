@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, Navigate, createFileRoute } from "@tanstack/react-router";
 import { useCatalogControllerGetItems } from "@lootlog/client/search";
 import { Card } from "@lootlog/ui/components/card";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
@@ -13,9 +13,15 @@ import { cn } from "cn";
 import { EquipButton } from "@/components/equipment/equip-button";
 import { renderItemStat } from "@/components/render-item-stat";
 import { t } from "@/i18n/messages";
-import { formatFirstSeenOn, ITEM_TILE_LABELS } from "@/lib/item-options";
+import {
+  itemPageParams,
+  npcPageParams,
+  readPageSegment,
+  WIKI_GAME_VERSION,
+} from "@/lib/catalog-links";
+import { ITEM_TILE_LABELS } from "@/lib/item-options";
 
-export const Route = createFileRoute("/items_/$itemId")({
+export const Route = createFileRoute("/items_/$itemSlug")({
   component: ItemRoute,
   head: () => ({
     meta: [{ title: `${t("meta.itemTitle")} | ${t("meta.title")}` }],
@@ -23,15 +29,26 @@ export const Route = createFileRoute("/items_/$itemId")({
 });
 
 function ItemRoute() {
-  const { itemId } = Route.useParams();
-  const id = Number(itemId);
+  const { itemSlug } = Route.useParams();
+  const id = readPageSegment(itemSlug)?.id;
 
   const { data, isError } = useCatalogControllerGetItems(
-    { ids: [id], limit: 1 },
-    { query: { enabled: Number.isSafeInteger(id) } },
+    {
+      ids: id === undefined ? [] : [id],
+      gameVersion: WIKI_GAME_VERSION,
+      limit: 1,
+    },
+    { query: { enabled: id !== undefined } },
   );
 
   const item = data?.hits[0];
+
+  // An old link, or one with an outdated name, moves to the item's own URL.
+  if (item && itemPageParams(item).itemSlug !== itemSlug) {
+    return (
+      <Navigate to="/items/$itemSlug" params={itemPageParams(item)} replace />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 py-6">
@@ -39,7 +56,7 @@ function ItemRoute() {
         <p role="alert" className="text-sm text-destructive">
           {t("catalog.loadError")}
         </p>
-      ) : !Number.isSafeInteger(id) || (data && !item) ? (
+      ) : id === undefined || (data && !item) ? (
         <p className="text-sm text-muted-foreground">
           {t("catalog.itemNotFound")}
         </p>
@@ -80,13 +97,6 @@ function ItemRoute() {
               >
                 {t("catalog.droppedByTitle")}
               </h2>
-              {item.firstSeenOn ? (
-                <p className="text-sm text-muted-foreground">
-                  {t("catalog.firstSeenOn", {
-                    day: formatFirstSeenOn(item.firstSeenOn),
-                  })}
-                </p>
-              ) : null}
             </div>
             {item.droppedBy.length === 0 ? (
               <p className="text-sm text-muted-foreground">
@@ -120,7 +130,7 @@ function ItemRoute() {
                     </div>
                     <ChevronLink
                       render={
-                        <Link to="/npcs/$npcKey" params={{ npcKey: npc.key }} />
+                        <Link to="/npcs/$npcSlug" params={npcPageParams(npc)} />
                       }
                     >
                       {t("home.open")}

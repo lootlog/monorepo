@@ -90,7 +90,7 @@ describe("Search HttpApi contract", () => {
     });
 
     for (const search of [
-      "rarities=LEGENDARY&sort=newest",
+      "rarities=LEGENDARY&sort=lvl:desc",
       "rarities=LEGENDARY&rarities=HEROIC&droppedBy=pl_template_7001_2",
     ]) {
       const response = await handler(
@@ -101,7 +101,7 @@ describe("Search HttpApi contract", () => {
     }
 
     expect(queries).toEqual([
-      { rarities: ["LEGENDARY"], sort: "newest" },
+      { rarities: ["LEGENDARY"], sort: "lvl:desc" },
       { rarities: ["LEGENDARY", "HEROIC"], droppedBy: "pl_template_7001_2" },
     ]);
     await dispose();
