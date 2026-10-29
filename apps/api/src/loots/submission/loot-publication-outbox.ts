@@ -2,7 +2,7 @@ import { readPublishedFeedEntry } from "#src/feed/user-feed";
 import { and, asc, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
 import { Clock, Effect, Metric, Schema } from "effect";
 import { GuildLootCreatedEventV2Schema } from "@lootlog/schema/loot-events";
-import type { GuildLootCreatedMessageV2 } from "@lootlog/protocol/rabbit/events";
+import type { GuildLootCreatedMessageV2 } from "@lootlog/protocol/loot-events";
 import type { LootSnapshot } from "@lootlog/protocol/loot-summary";
 import type { LootQueryOperations } from "#src/loots/query/loot-query.operations";
 import { LootResponse } from "#src/loots/loot-response.schema";
