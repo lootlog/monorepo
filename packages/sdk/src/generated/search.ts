@@ -400,6 +400,10 @@ export type AllControllerSearchAll429 = {
 export type CatalogControllerGetItemsParams = {
 search?: string;
 /**
+ * Only entries of this game edition.
+ */
+gameVersion?: CatalogControllerGetItemsGameVersion;
+/**
  * @items.minimum -9007199254740991
  * @items.maximum 9007199254740991
  */
@@ -410,6 +414,7 @@ professions?: string[];
 minLevel?: number;
 maxLevel?: number;
 statKeys?: string[];
+legendaryBonuses?: string[];
 dropSourceTypes?: string[];
 firstSeenWithinDays?: number;
 /**
@@ -423,6 +428,14 @@ sort?: CatalogControllerGetItemsSort;
 limit?: number;
 offset?: number;
 };
+
+export type CatalogControllerGetItemsGameVersion = typeof CatalogControllerGetItemsGameVersion[keyof typeof CatalogControllerGetItemsGameVersion];
+
+
+export const CatalogControllerGetItemsGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
 
 export type CatalogControllerGetItemsSort = typeof CatalogControllerGetItemsSort[keyof typeof CatalogControllerGetItemsSort];
 
@@ -450,6 +463,15 @@ export type CatalogControllerGetItems429 = {
 
 export type CatalogControllerGetNpcsParams = {
 search?: string;
+/**
+ * Only entries of this game edition.
+ */
+gameVersion?: CatalogControllerGetNpcsGameVersion;
+/**
+ * @items.minimum -9007199254740991
+ * @items.maximum 9007199254740991
+ */
+ids?: number[];
 keys?: string[];
 types?: string[];
 /**
@@ -459,6 +481,14 @@ sort?: CatalogControllerGetNpcsSort;
 limit?: number;
 offset?: number;
 };
+
+export type CatalogControllerGetNpcsGameVersion = typeof CatalogControllerGetNpcsGameVersion[keyof typeof CatalogControllerGetNpcsGameVersion];
+
+
+export const CatalogControllerGetNpcsGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
 
 export type CatalogControllerGetNpcsSort = typeof CatalogControllerGetNpcsSort[keyof typeof CatalogControllerGetNpcsSort];
 
@@ -632,7 +662,7 @@ export const getCatalogControllerGetItemsUrl = (params?: CatalogControllerGetIte
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["ids","rarities","types","professions","statKeys","dropSourceTypes"];
+    const explodeParameters = ["ids","rarities","types","professions","statKeys","legendaryBonuses","dropSourceTypes"];
 
     if (Array.isArray(value) && explodeParameters.includes(key)) {
       value.forEach((v) => {
@@ -671,7 +701,7 @@ export const getCatalogControllerGetNpcsUrl = (params?: CatalogControllerGetNpcs
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["keys","types"];
+    const explodeParameters = ["ids","keys","types"];
 
     if (Array.isArray(value) && explodeParameters.includes(key)) {
       value.forEach((v) => {

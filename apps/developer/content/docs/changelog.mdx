@@ -18,8 +18,11 @@ game facts only. No player, world or Organization appears in a response.
 - `sort=newest` orders by first sighting, latest first; items also sort by
   `lvl` or `name`. Items filter by `ids`, `rarities`, `types`, `professions`,
   `minLevel`, `maxLevel`, `droppedBy` (an NPC `key`), `dropSourceTypes`,
-  `statKeys` (a listed set of stats, all required) and `firstSeenWithinDays`;
-  NPCs filter by `keys` and `types`. `limit` is capped at 96.
+  `statKeys` (a listed set of stats, all required), `legendaryBonuses` (any
+  of the listed bonuses, such as `verycrit` or `curse`) and
+  `firstSeenWithinDays`; NPCs filter by `ids`, `keys` and `types`. Both
+  endpoints accept `gameVersion` (`pl` or `int`) to list one edition.
+  `limit` is capped at 96.
 - Requests share the public rate limit of the main API's `/public` routes.
 
 ## Unreleased (breaking): Gains and best days removed from personal kill analytics

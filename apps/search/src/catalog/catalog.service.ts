@@ -73,6 +73,11 @@ const sortBy = (sort: CatalogControllerGetItemsQuery["sort"]) => {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const gameVersionFilter = (gameVersion: string | undefined) =>
+  gameVersion === undefined
+    ? undefined
+    : `gameVersion = ${JSON.stringify(gameVersion)}`;
+
 const levelFilter = (operator: ">=" | "<=", level: number | undefined) =>
   level === undefined ? undefined : `lvl ${operator} ${Math.floor(level)}`;
 
@@ -84,6 +89,7 @@ const itemFilters = (
   const types = query.types?.filter((type) => ITEM_TYPE.test(type));
 
   return [
+    gameVersionFilter(query.gameVersion),
     query.ids?.length ? inFilter("id", query.ids) : undefined,
     query.rarities?.length ? inFilter("rarity", query.rarities) : undefined,
     types?.length ? inFilter("type", types) : undefined,
@@ -95,6 +101,9 @@ const itemFilters = (
     ...(query.statKeys ?? []).map(
       (key) => `statsKeys = ${JSON.stringify(key)}`,
     ),
+    query.legendaryBonuses?.length
+      ? inFilter("legendaryBonus", query.legendaryBonuses)
+      : undefined,
     query.dropSourceTypes?.length
       ? inFilter("droppedByTypes", query.dropSourceTypes)
       : undefined,
@@ -197,6 +206,8 @@ export const makeCatalogModule = (
     }
 
     const filters = [
+      gameVersionFilter(query.gameVersion),
+      query.ids?.length ? inFilter("id", query.ids) : undefined,
       keys?.length ? inFilter("uid", keys) : undefined,
       query.types?.length ? inFilter("type", query.types) : undefined,
     ].filter((filter) => filter !== undefined);
