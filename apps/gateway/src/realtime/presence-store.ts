@@ -136,8 +136,25 @@ local complete = (redis.call('GET', KEYS[3]) or '0') == '0' and redis.call('LLEN
 return '{"keys":' .. (#result == 0 and '[]' or cjson.encode(result)) .. ',"complete":' .. tostring(complete) .. '}'
 `;
 
+// Departure keys are their own index members. The keys after the indexes are
+// departures a reconnect or a newer departure supersedes.
+const cancelDepartures = (pending: number, index: number, due: number) => `
+for key = ${due + 1}, #KEYS do
+  redis.call('DEL', KEYS[key])
+  redis.call('SREM', KEYS[${pending}], KEYS[key])
+  redis.call('SREM', KEYS[${index}], KEYS[key])
+  redis.call('ZREM', KEYS[${due}], KEYS[key])
+end`;
+
+const CANCEL_OFFLINE = `
+-- presence:offline-cancel
+${cancelDepartures(1, 2, 3)}
+return 1
+`;
+
 const SCHEDULE_OFFLINE = `
 -- presence:offline-schedule
+${cancelDepartures(2, 3, 4)}
 redis.call('SET', KEYS[1], ARGV[1])
 redis.call('SADD', KEYS[2], ARGV[2])
 redis.call('SADD', KEYS[3], ARGV[2])
@@ -180,11 +197,6 @@ redis.call('DEL', KEYS[2])
 redis.call('SREM', KEYS[3], ARGV[3])
 redis.call('ZREM', KEYS[4], ARGV[3])
 return 1
-`;
-
-const UNINDEX_OFFLINE_DUE = `
--- presence:offline-unindex-due
-return redis.call('ZREM', KEYS[1], unpack(ARGV))
 `;
 
 const RELEASE_OFFLINE_LEASE = `
@@ -295,8 +307,6 @@ const PresenceMetadataJson = Schema.fromJsonString(
   }),
 );
 
-const decodePresence = Schema.decodeUnknownSync(PresenceJson);
-
 const decodePresenceMetadata = Schema.decodeUnknownSync(PresenceMetadataJson);
 
 const decodeExpiryMember = Schema.decodeUnknownEffect(
@@ -345,15 +355,7 @@ export class PresenceStore {
     private readonly redis: {
       readonly command: Pick<
         RedisGatewayStore["command"],
-        | "get"
-        | "set"
-        | "del"
-        | "sadd"
-        | "srem"
-        | "smembers"
-        | "mget"
-        | "incr"
-        | "eval"
+        "get" | "set" | "sadd" | "smembers" | "mget" | "incr" | "eval"
       >;
     },
     private readonly hub: Pick<
@@ -429,13 +431,14 @@ export class PresenceStore {
         yield* this.scheduleOffline(previousPresence);
       }
 
+      yield* this.refresh(
+        selectedOrganizationIds,
+        presence,
+        socket.data.discordId,
+        true,
+      );
+
       for (const organizationId of selectedOrganizationIds) {
-        yield* this.refresh(
-          [organizationId],
-          presence,
-          socket.data.discordId,
-          true,
-        );
         yield* this.publishCoverageChange(
           socket.data.discordId,
           organizationId,
@@ -504,25 +507,22 @@ export class PresenceStore {
 
       if (!presence) return;
 
-      for (const organizationId of presence.organizationIds) {
-        if ("location" in presence && presence.location?.map) {
-          if (this.coverage)
-            yield* this.coverage.publish({
-              guildId: organizationId,
-              mapName: presence.location.map,
-              discordId: session.discordId,
-              hasPlayer: false,
-              isAfk: presence.isAfk,
-            });
-        }
+      if ("location" in presence && presence.location?.map && this.coverage)
+        for (const organizationId of presence.organizationIds)
+          yield* this.coverage.publish({
+            guildId: organizationId,
+            mapName: presence.location.map,
+            discordId: session.discordId,
+            hasPlayer: false,
+            isAfk: presence.isAfk,
+          });
 
-        yield* this.remove(
-          organizationId,
-          presence.userId,
-          presence.sessionId,
-          session.discordId,
-        );
-      }
+      yield* this.remove(
+        presence.organizationIds,
+        presence.userId,
+        presence.sessionId,
+        session.discordId,
+      );
 
       yield* this.scheduleOffline(presence);
     });
@@ -547,26 +547,16 @@ export class PresenceStore {
       );
 
       if (keys.length > 0)
-        yield* fromPromise("presence.offline-unindex-due", () =>
+        yield* fromPromise("presence.offline-cancel", () =>
           this.redis.command.eval(
-            UNINDEX_OFFLINE_DUE,
-            1,
+            CANCEL_OFFLINE,
+            3 + keys.length,
+            OFFLINE_PENDING_INDEX,
+            index,
             OFFLINE_DUE_INDEX,
             ...keys,
           ),
         );
-
-      for (const key of keys) {
-        yield* fromPromise("presence.offline-cancel", () =>
-          this.redis.command.del(key),
-        );
-        yield* fromPromise("presence.offline-unindex", () =>
-          this.redis.command.srem(OFFLINE_PENDING_INDEX, key),
-        );
-        yield* fromPromise("presence.offline-character-unindex", () =>
-          this.redis.command.srem(index, key),
-        );
-      }
     });
   }
 
@@ -583,17 +573,16 @@ export class PresenceStore {
 
       if (pending.hasNewerDeparture) return;
 
-      yield* this.cancelOffline(presence);
-
       const key = `${this.offlineCharacterKey(presence)}:session:${presence.sessionId}:${crypto.randomUUID()}`;
       yield* fromPromise("presence.offline-schedule", () =>
         this.redis.command.eval(
           SCHEDULE_OFFLINE,
-          4,
+          4 + pending.keys.length,
           key,
           OFFLINE_PENDING_INDEX,
           this.offlineCharacterKey(presence),
           OFFLINE_DUE_INDEX,
+          ...pending.keys,
           JSON.stringify(event),
           key,
           disconnectedAt + 10_000,
@@ -1454,43 +1443,47 @@ export class PresenceStore {
     previousPresence = socket.data.presence,
   ): Effect.Effect<void, unknown> {
     return Effect.gen({ self: this }, function* () {
-      const previous = previousPresence?.organizationIds ?? [];
       const selectedSet = new Set(selected);
 
-      for (const organizationId of previous) {
-        if (!selectedSet.has(organizationId)) {
-          const cleanup = [
-            this.remove(
-              organizationId,
-              socket.data.userId,
-              socket.data.connectionId,
-              socket.data.discordId,
-            ),
-          ];
+      const removed = (previousPresence?.organizationIds ?? []).filter(
+        (organizationId) => !selectedSet.has(organizationId),
+      );
 
-          if (
-            previousPresence &&
-            "location" in previousPresence &&
-            previousPresence.location?.map &&
-            this.coverage
-          ) {
-            cleanup.push(
-              this.coverage.publish({
-                guildId: organizationId,
-                mapName: previousPresence.location.map,
-                discordId: socket.data.discordId,
-                hasPlayer: false,
-                isAfk: previousPresence.isAfk,
-              }),
-            );
-          }
+      if (removed.length === 0) return;
 
-          yield* Effect.all(cleanup, {
-            concurrency: "unbounded",
-            discard: true,
-          });
-        }
+      const cleanup = [
+        this.remove(
+          removed,
+          socket.data.userId,
+          socket.data.connectionId,
+          socket.data.discordId,
+        ),
+      ];
+
+      if (
+        previousPresence &&
+        "location" in previousPresence &&
+        previousPresence.location?.map &&
+        this.coverage
+      ) {
+        const mapName = previousPresence.location.map;
+
+        for (const organizationId of removed)
+          cleanup.push(
+            this.coverage.publish({
+              guildId: organizationId,
+              mapName,
+              discordId: socket.data.discordId,
+              hasPlayer: false,
+              isAfk: previousPresence.isAfk,
+            }),
+          );
       }
+
+      yield* Effect.all(cleanup, {
+        concurrency: "unbounded",
+        discard: true,
+      });
     });
   }
 
@@ -1546,35 +1539,43 @@ export class PresenceStore {
   }
 
   private remove(
-    organizationId: string,
+    organizationIds: ReadonlyArray<string>,
     userId: string,
     sessionId: string,
     discordId: string,
   ): Effect.Effect<void, unknown> {
-    return Effect.gen({ self: this }, function* () {
-      const key = this.presenceKey(organizationId, sessionId);
-      yield* fromPromise("presence.remove", () =>
-        this.redis.command
-          .eval(
-            REMOVE_PRESENCE,
-            4,
-            key,
-            this.metadataKey(organizationId, sessionId),
-            this.indexKey(organizationId),
-            EXPIRY_DUE_INDEX,
-            key,
-            JSON.stringify([organizationId, sessionId]),
-          )
-          .then(() => {
+    if (organizationIds.length === 0) return Effect.void;
+
+    const keys = organizationIds.flatMap((organizationId) => [
+      this.presenceKey(organizationId, sessionId),
+      this.metadataKey(organizationId, sessionId),
+      this.indexKey(organizationId),
+    ]);
+
+    const members = organizationIds.flatMap((organizationId) => [
+      this.presenceKey(organizationId, sessionId),
+      JSON.stringify([organizationId, sessionId]),
+    ]);
+
+    return fromPromise("presence.remove", () =>
+      this.redis.command
+        .eval(
+          REMOVE_PRESENCE,
+          1 + keys.length,
+          EXPIRY_DUE_INDEX,
+          ...keys,
+          ...members,
+        )
+        .then(() => {
+          for (const organizationId of organizationIds)
             this.queueChange(organizationId, {
               action: "remove",
               userId,
               discordId,
               sessionId,
             });
-          }),
-      );
-    });
+        }),
+    );
   }
 
   private queueChange(organizationId: string, change: Change): void {
@@ -1751,32 +1752,45 @@ export class PresenceStore {
         this.redis.command.mget(keys),
       );
 
-      const presences: Array<Basic | Precise> = [];
+      const presences = values.flatMap((value) => {
+        const presence = value ? decodePresenceOption(value) : Option.none();
 
-      for (const value of values) {
-        if (!value) {
-          continue;
-        }
+        return Option.isSome(presence) &&
+          this.now() - presence.value.lastSeen < PRESENCE_EXPIRY_MS
+          ? [presence.value]
+          : [];
+      });
 
-        try {
-          const presence = decodePresence(value);
+      // Records from older replicas carry the Discord ID only in metadata.
+      const anonymous = presences.filter((presence) => !presence.discordId);
 
-          if (this.now() - presence.lastSeen >= PRESENCE_EXPIRY_MS) {
-            continue;
-          } else {
-            const discordId =
-              presence.discordId ??
-              (yield* this.readMetadata(organizationId, presence.sessionId))
-                ?.discordId;
+      if (anonymous.length === 0) return presences;
 
-            presences.push(discordId ? { ...presence, discordId } : presence);
-          }
-        } catch {
-          continue;
-        }
-      }
+      const metadata = yield* fromPromise("presence.read-metadata", () =>
+        this.redis.command.mget(
+          anonymous.map((presence) =>
+            this.metadataKey(organizationId, presence.sessionId),
+          ),
+        ),
+      );
 
-      return presences;
+      const discordIds = new Map(
+        anonymous.flatMap((presence, index) => {
+          const value = metadata[index];
+          const decoded = value ? decodeMetadataOption(value) : Option.none();
+
+          return Option.isSome(decoded)
+            ? [[presence.sessionId, decoded.value.discordId] as const]
+            : [];
+        }),
+      );
+
+      return presences.map((presence) => {
+        const discordId =
+          presence.discordId ?? discordIds.get(presence.sessionId);
+
+        return discordId ? { ...presence, discordId } : presence;
+      });
     });
   }
 
@@ -1802,32 +1816,6 @@ export class PresenceStore {
 
   private metadataKey(organizationId: string, sessionId: string): string {
     return `presence:metadata:${organizationId}:${sessionId}`;
-  }
-
-  private readMetadata(
-    organizationId: string,
-    sessionId: string,
-  ): Effect.Effect<
-    {
-      readonly userId: string;
-      readonly discordId: string;
-      readonly presence?: Basic;
-    } | null,
-    unknown
-  > {
-    return fromPromise("presence.read-metadata", () =>
-      this.redis.command.get(this.metadataKey(organizationId, sessionId)),
-    ).pipe(
-      Effect.map((value) => {
-        if (!value) return null;
-
-        try {
-          return decodePresenceMetadata(value);
-        } catch {
-          return null;
-        }
-      }),
-    );
   }
 
   private publishCoverageChange(

@@ -63,7 +63,7 @@ class MemoryRedis {
       return this.removeExpired(args, _numberOfKeys);
 
     if (_script.includes("-- presence:remove"))
-      return this.removePresence(args);
+      return this.removePresence(args, _numberOfKeys);
 
     if (_script.includes("-- presence:prune-organization")) {
       if (this.sets.get(args[0]!)?.size) return 0;
@@ -75,7 +75,7 @@ class MemoryRedis {
       return this.readBatch(args);
 
     if (_script.includes("-- presence:offline-schedule"))
-      return this.scheduleOffline(args);
+      return this.scheduleOffline(args, _numberOfKeys);
 
     if (_script.includes("-- presence:offline-index-due"))
       return this.indexOfflineDue(args, _numberOfKeys);
@@ -86,8 +86,11 @@ class MemoryRedis {
     if (_script.includes("-- presence:offline-drop"))
       return this.dropOffline(args);
 
-    if (_script.includes("-- presence:offline-unindex-due"))
-      return this.unindexOfflineDue(args);
+    if (_script.includes("-- presence:offline-cancel")) {
+      await this.cancelDepartures(args.slice(0, 3), args.slice(3));
+
+      return 1;
+    }
 
     if (_script.includes("-- presence:offline-renew"))
       return Number(this.values.get(args[0]!) === args[1]);
@@ -256,12 +259,39 @@ class MemoryRedis {
     return 1;
   }
 
-  private async removePresence(args: string[]): Promise<number> {
-    await this.del(args[0]!, args[1]!);
-    await this.srem(args[2]!, args[4]!);
-    this.sortedSets.get(args[3]!)?.delete(args[5]!);
+  private async removePresence(
+    args: string[],
+    numberOfKeys: number,
+  ): Promise<number> {
+    const [dueIndex] = args;
+    const values = args.slice(numberOfKeys);
+
+    for (let key = 1; key < numberOfKeys; key += 3) {
+      const [presence, metadata, index] = args.slice(key, key + 3);
+
+      const [member, dueMember] = values.slice(
+        ((key - 1) / 3) * 2,
+        ((key - 1) / 3) * 2 + 2,
+      );
+
+      await this.del(presence!, metadata!);
+      await this.srem(index!, member!);
+      this.sortedSets.get(dueIndex!)?.delete(dueMember!);
+    }
 
     return 1;
+  }
+
+  private async cancelDepartures(
+    [pending, index, due]: string[],
+    departures: string[],
+  ): Promise<void> {
+    for (const key of departures) {
+      await this.del(key);
+      await this.srem(pending!, key);
+      await this.srem(index!, key);
+      this.sortedSets.get(due!)?.delete(key);
+    }
   }
 
   private async refresh(
@@ -296,14 +326,19 @@ class MemoryRedis {
     return 1;
   }
 
-  private async scheduleOffline(args: string[]): Promise<string | number> {
+  private async scheduleOffline(
+    args: string[],
+    numberOfKeys: number,
+  ): Promise<string | number> {
     const key = args[0]!;
+    const [event, member, dueAt] = args.slice(numberOfKeys);
 
-    await this.set(key, args[4]!);
-    await this.sadd(args[1]!, args[5]!);
-    await this.sadd(args[2]!, args[5]!);
+    await this.cancelDepartures(args.slice(1, 4), args.slice(4, numberOfKeys));
+    await this.set(key, event!);
+    await this.sadd(args[1]!, member!);
+    await this.sadd(args[2]!, member!);
     const due = this.sortedSets.get(args[3]!) ?? new Map<string, number>();
-    due.set(args[5]!, Number(args[6]));
+    due.set(member!, Number(dueAt));
     this.sortedSets.set(args[3]!, due);
 
     return 1;
@@ -359,17 +394,6 @@ class MemoryRedis {
     this.sortedSets.get(args[3]!)?.delete(args[6]!);
 
     return 1;
-  }
-
-  private async unindexOfflineDue(args: string[]): Promise<string | number> {
-    const key = args[0]!;
-
-    let removed = 0;
-
-    for (const member of args.slice(1))
-      if (this.sortedSets.get(key)?.delete(member)) removed++;
-
-    return removed;
   }
 
   private async releaseOffline(args: string[]): Promise<string | number> {
@@ -919,18 +943,16 @@ describe("PresenceStore", () => {
       const metadataGate = Promise.withResolvers<void>();
       const replacementStarted = Promise.withResolvers<void>();
       const replacementGate = Promise.withResolvers<void>();
-      const originalGet = redis.get.bind(redis);
       const originalMget = redis.mget.bind(redis);
-      spyOn(redis, "get").mockImplementation(async (key) => {
-        if (key.startsWith("presence:metadata:")) {
-          metadataStarted.resolve();
-          await metadataGate.promise;
-        }
-
-        return originalGet(key);
-      });
       let reads = 0;
       spyOn(redis, "mget").mockImplementation(async (keys) => {
+        if (keys[0]?.startsWith("presence:metadata:")) {
+          metadataStarted.resolve();
+          await metadataGate.promise;
+
+          return originalMget(keys);
+        }
+
         reads++;
 
         if (reads === 2) {
@@ -1018,21 +1040,17 @@ describe("PresenceStore", () => {
 
       const originalSmembers = redis.smembers.bind(redis);
       const originalMget = redis.mget.bind(redis);
-      const originalGet = redis.get.bind(redis);
       spyOn(redis, "smembers").mockImplementation(async (key) => {
         await pause("smembers");
 
         return originalSmembers(key);
       });
       spyOn(redis, "mget").mockImplementation(async (keys) => {
-        await pause("mget");
+        await pause(
+          keys[0]?.startsWith("presence:metadata:") ? "metadata" : "mget",
+        );
 
         return originalMget(keys);
-      });
-      spyOn(redis, "get").mockImplementation(async (key) => {
-        if (key.startsWith("presence:metadata:")) await pause("metadata");
-
-        return originalGet(key);
       });
       const errors: unknown[] = [];
 
