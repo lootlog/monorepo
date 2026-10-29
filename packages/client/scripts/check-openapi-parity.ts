@@ -1391,9 +1391,9 @@ const ACTIVITY_READINESS_ADDITION: JsonValue = {
 // Intentional additions verified against HTTP, persistence and authorization tests:
 // activity/src/online/online-repository.integration.test.ts;
 // api/test/kill-analytics.integration.test.ts, user-feed.integration.test.ts and records.operations.test.ts.
-// The public catalog, readable without signing in. Verified by
-// apps/search/test/http-handler.test.ts and
-// apps/search/src/catalog/catalog.service.test.ts.
+// The public catalog, readable without signing in, with its edition, NPC id
+// and legendary bonus filters. Verified by apps/search/test/http-handler.test.ts
+// and apps/search/src/catalog/catalog.service.test.ts.
 const CATALOG_ITEMS_ADDITION: JsonValue = {
   operationId: "CatalogController_getItems",
   parameters: [
@@ -1402,6 +1402,16 @@ const CATALOG_ITEMS_ADDITION: JsonValue = {
       in: "query",
       schema: {
         type: "string",
+      },
+      required: false,
+    },
+    {
+      name: "gameVersion",
+      in: "query",
+      schema: {
+        type: "string",
+        enum: ["en", "pl"],
+        description: "Only entries of this game edition.",
       },
       required: false,
     },
@@ -1477,6 +1487,19 @@ const CATALOG_ITEMS_ADDITION: JsonValue = {
     },
     {
       name: "statKeys",
+      in: "query",
+      schema: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+      },
+      required: false,
+      style: "form",
+      explode: true,
+    },
+    {
+      name: "legendaryBonuses",
       in: "query",
       schema: {
         type: "array",
@@ -1588,6 +1611,31 @@ const CATALOG_NPCS_ADDITION: JsonValue = {
         type: "string",
       },
       required: false,
+    },
+    {
+      name: "gameVersion",
+      in: "query",
+      schema: {
+        type: "string",
+        enum: ["en", "pl"],
+        description: "Only entries of this game edition.",
+      },
+      required: false,
+    },
+    {
+      name: "ids",
+      in: "query",
+      schema: {
+        type: "array",
+        items: {
+          type: "integer",
+          minimum: -9007199254740991,
+          maximum: 9007199254740991,
+        },
+      },
+      required: false,
+      style: "form",
+      explode: true,
     },
     {
       name: "keys",
