@@ -87,9 +87,17 @@ export const useUpdateLootlogCharactersConfig = () => {
 
       return { previousData };
     },
+    // The snapshot may hold an earlier write's optimistic state that also
+    // failed, so it goes back as outdated rather than confirmed, and a
+    // refetch replaces it.
     onError: (_err, variables, context) => {
-      if (context?.previousData && !hasLaterUpdates()) {
-        queryClient.setQueryData(queryKey, context.previousData);
+      if (!hasLaterUpdates()) {
+        if (context?.previousData)
+          queryClient.setQueryData(queryKey, context.previousData, {
+            updatedAt: 0,
+          });
+
+        void queryClient.invalidateQueries({ queryKey });
       }
 
       reportSettingsSave.failed(() => mutation.mutate(variables));

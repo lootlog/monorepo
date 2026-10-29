@@ -70,9 +70,10 @@ export const useCurrentCharacterCatchingGuildIds = ():
 /**
  * The catching scope of a character outside React. A loaded configuration
  * without this character catches for none. A pending, failed or older load,
- * or a save still in flight whose optimistic scope the API has not
- * confirmed, leaves the scope unknown (`undefined`), so callers defer to the
- * API: it may already know a scope this cache has not seen.
+ * a save still in flight, or a failed save's rollback (stored as outdated),
+ * none of which the API has confirmed, leaves the scope unknown
+ * (`undefined`), so callers defer to the API: it may already know a scope
+ * this cache has not seen.
  */
 export const getFreshCharacterCatchingGuildIds = (
   accountId: string,
