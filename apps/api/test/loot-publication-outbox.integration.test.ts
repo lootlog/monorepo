@@ -362,6 +362,43 @@ describe("durable loot publications", () => {
     ).toEqual([183, 210, 210]);
   });
 
+  it("attributes a group fight's items to its boss, not to the escort", async () => {
+    const { request } = await seed();
+    const [boss] = request.submission.npcs;
+
+    if (!boss) throw new Error("Expected a seeded NPC");
+
+    const result = await runtime.runPromise(
+      acceptance().accept({
+        ...request,
+        submission: {
+          ...request.submission,
+          npcs: [
+            boss,
+            { ...boss, id: boss.id + 1, name: "Test escort", wt: 1 },
+          ],
+        },
+      }),
+    );
+
+    snapshotTestLootIds.push(result.id);
+
+    const search = (await publications(result.id)).find(
+      (intent) =>
+        intent.kind === "rabbit" &&
+        intent.routingKey === RabbitRoutingKey.SEARCH_ITEMS_INDEX,
+    );
+
+    expect(search).toMatchObject({
+      data: [
+        {
+          droppedBy: { id: boss.id, name: boss.name, type: "HERO" },
+          observedAt: expect.any(String),
+        },
+      ],
+    });
+  });
+
   it.each([
     ["name", { name: "Renamed hero" }, { name: "Renamed hero" }],
     ["icon", { icon: "revised.png" }, { icon: "revised.png" }],

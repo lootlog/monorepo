@@ -4,8 +4,12 @@ import {
   createItemStatsHash,
 } from "@lootlog/database/snapshot-hash";
 import { parseItemStats, splitItemStat } from "@lootlog/database/item-stat";
-import { Effect, Schema } from "effect";
-import { getNpcTypeByWt, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
+import { Clock, Effect, Schema } from "effect";
+import {
+  DROP_SOURCE_BOSS_TYPES,
+  getNpcTypeByWt,
+  MIN_LOOT_NPC_WT,
+} from "@lootlog/domain/npc-type";
 import type {
   GuildLootCreatedEventV2,
   GuildLootEventNpc,
@@ -99,6 +103,10 @@ const lootNpcIdentity = (npc: CreateLootRequest["npcs"][number]) => {
 
   return { identityNamespace: NpcIdentityNamespace.LEGACY, npcId: npc.id };
 };
+
+const dropSourceBossTypes: ReadonlySet<string> = new Set(
+  DROP_SOURCE_BOSS_TYPES,
+);
 
 const LOOT_LOCK_TTL_MS = 30_000;
 
@@ -267,6 +275,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         return this.createResponse(existingLootId, outcome);
       }
 
+      const observedAt = new Date(yield* Clock.currentTimeMillis);
+
       const lootId = yield* this.createNewLoot({
         mapPlayersSnapshot,
         npcData,
@@ -278,6 +288,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           this.newLootPublications({
             lootId,
             npcs,
+            observedAt,
             outcome,
             submission: options.submission,
           }),
@@ -462,6 +473,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   private newLootPublications(options: {
     lootId: number;
     npcs: AcceptedNpcSnapshot[];
+    /** When the API accepted the loot; the catalog keeps the earliest. */
+    observedAt: Date;
     outcome: AcceptanceOutcome;
     submission: CreateLootRequest;
   }): LootPublication[] {
@@ -499,25 +512,34 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         world: options.submission.world,
       })),
     );
+
+    const searchNpc = (npc: AcceptedNpcSnapshot) => ({
+      id: npc.npcId,
+      identityNamespace: npc.identityNamespace,
+      name: npc.name,
+      lvl: npc.lvl,
+      prof: npc.prof ?? "",
+      icon: npc.icon,
+      wt: npc.wt,
+      type: npc.type,
+      margonemType: npc.margonemType,
+      gameVersion: npc.gameVersion,
+    });
+
+    const observedAt = options.observedAt.toISOString();
+    const dropSource = this.findDropSource(options.npcs, options.submission);
+
     rabbit(
       RabbitRoutingKey.SEARCH_NPCS_INDEX,
       options.npcs.map((npc) => ({
-        id: npc.npcId,
+        ...searchNpc(npc),
         // Search keeps the latest observation of a catalog entry; loot ids
         // order observations even when deliveries arrive out of order.
         lootId: options.lootId,
-        identityNamespace: npc.identityNamespace,
         snapshotHash: npc.snapshotHash ?? undefined,
-        name: npc.name,
-        lvl: npc.lvl,
-        prof: npc.prof ?? "",
-        icon: npc.icon,
-        wt: npc.wt,
-        type: npc.type,
-        margonemType: npc.margonemType,
         location: options.submission.location,
         world: options.submission.world,
-        gameVersion: npc.gameVersion,
+        observedAt,
       })),
     );
     const items = this.mapItems(options.submission.loots);
@@ -536,6 +558,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           type: item.type,
           world: options.submission.world,
           gameVersion: options.submission.gameVersion,
+          observedAt,
+          droppedBy: dropSource && searchNpc(dropSource),
         })),
       );
     rabbit(RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED, {
@@ -648,6 +672,25 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     }
 
     return { primary };
+  }
+
+  /**
+   * The NPC a fight's items dropped from, by `DROP_SOURCE_BOSS_TYPES`.
+   * Other sources, such as a lootbox, have none.
+   */
+  private findDropSource(
+    npcs: AcceptedNpcSnapshot[],
+    submission: CreateLootRequest,
+  ): AcceptedNpcSnapshot | undefined {
+    if (submission.source !== "FIGHT") return undefined;
+
+    if (npcs.length === 1) return npcs[0];
+
+    const bosses = npcs.filter(
+      (npc) => npc.type !== null && dropSourceBossTypes.has(npc.type),
+    );
+
+    return bosses.length === 1 ? bosses[0] : undefined;
   }
 
   private mapNpcEvents(npcs: AcceptedNpcSnapshot[]): GuildLootEventNpc[] {

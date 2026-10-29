@@ -25,6 +25,8 @@ const makeBoundary = (overrides: Partial<SearchOperationsValue> = {}) => {
     searchNpcs: () => Effect.succeed([]),
     searchPlayers: () => Effect.succeed([]),
     searchAll: () => Effect.succeed({ items: [], npcs: [], players: [] }),
+    catalogItems: () => Effect.succeed({ hits: [], estimatedTotalHits: 0 }),
+    catalogNpcs: () => Effect.succeed({ hits: [], estimatedTotalHits: 0 }),
     indexItems: () => Effect.void,
     indexNpcs: () => Effect.void,
     indexPlayers: () => Effect.void,
@@ -73,6 +75,35 @@ describe("Search HttpApi contract", () => {
       filter: "worlds = berufs",
       facets: ["rarity", "type"],
     });
+    await dispose();
+  });
+
+  test("decodes the public catalog filters from one value or several", async () => {
+    const queries: unknown[] = [];
+
+    const { dispose, handler } = makeBoundary({
+      catalogItems: (query) => {
+        queries.push(query);
+
+        return Effect.succeed({ hits: [], estimatedTotalHits: 0 });
+      },
+    });
+
+    for (const search of [
+      "rarities=LEGENDARY&sort=newest",
+      "rarities=LEGENDARY&rarities=HEROIC&droppedBy=pl_template_7001_2",
+    ]) {
+      const response = await handler(
+        new Request(`http://localhost/public/catalog/items?${search}`),
+      );
+
+      expect(response.status).toBe(200);
+    }
+
+    expect(queries).toEqual([
+      { rarities: ["LEGENDARY"], sort: "newest" },
+      { rarities: ["LEGENDARY", "HEROIC"], droppedBy: "pl_template_7001_2" },
+    ]);
     await dispose();
   });
 
