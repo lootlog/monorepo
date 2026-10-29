@@ -9,7 +9,10 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
-import { ApiDatabase } from "#src/database/drizzle/database";
+import {
+  ApiDatabase,
+  type ApiDatabaseValue,
+} from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
   eventMapCoverageGapTable,
@@ -22,6 +25,7 @@ import {
 import type { RedisService } from "#src/redis/redis.service";
 import {
   InvalidRequestError,
+  ResourceConflictError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
@@ -35,6 +39,57 @@ import type {
   UpdateEventHeroRequest,
   UpdateEventLocationRequest,
 } from "#src/contracts/events/schemas";
+
+type Transaction = Parameters<
+  Parameters<ApiDatabaseValue["transaction"]>[0]
+>[0];
+
+/**
+ * Reports whether a hero name is free in the event: no hero and no ranking
+ * (rankings are keyed by hero name) uses it. Locking the event row serializes
+ * every name assignment in the event, so two of them cannot both see the
+ * name as free. The lock leaves the foreign-key share locks of kill and
+ * ranking writes alone.
+ */
+const isHeroNameTaken = (
+  transaction: Transaction,
+  eventId: string,
+  npcName: string,
+) =>
+  Effect.gen(function* () {
+    yield* transaction
+      .select({ id: eventTable.id })
+      .from(eventTable)
+      .where(eq(eventTable.id, eventId))
+      .for("no key update");
+
+    const taken = yield* transaction
+      .select({ id: eventRankingTable.id })
+      .from(eventRankingTable)
+      .where(
+        and(
+          eq(eventRankingTable.eventId, eventId),
+          eq(eventRankingTable.heroNpcName, npcName),
+        ),
+      )
+      .union(
+        transaction
+          .select({ id: eventHeroNpcTable.id })
+          .from(eventHeroNpcTable)
+          .where(
+            and(
+              eq(eventHeroNpcTable.eventId, eventId),
+              eq(eventHeroNpcTable.npcName, npcName),
+            ),
+          ),
+      )
+      .limit(1);
+
+    return taken.length > 0;
+  });
+
+const heroNameTakenError = () =>
+  new ResourceConflictError({ message: "EVENT_HERO_NAME_TAKEN" });
 
 class EventCatalogMutationError extends TaggedErrorClass<EventCatalogMutationError>()(
   "EventCatalogMutationError",
@@ -195,10 +250,14 @@ export const makeEventCatalogMutations = (
         }
 
         const heroId = randomUUID();
-        yield* query(
+
+        const added = yield* query(
           "events.catalog.addHero.transaction",
           database.transaction((transaction) =>
             Effect.gen(function* () {
+              if (yield* isHeroNameTaken(transaction, eventId, data.npcName))
+                return false;
+
               yield* transaction.insert(eventHeroNpcTable).values({
                 id: heroId,
                 eventId,
@@ -218,9 +277,13 @@ export const makeEventCatalogMutations = (
                   })),
                 );
               }
+
+              return true;
             }),
           ),
         );
+
+        if (!added) return yield* Effect.fail(heroNameTakenError());
 
         const heroes = yield* query(
           "events.catalog.addHero.result",
@@ -244,27 +307,73 @@ export const makeEventCatalogMutations = (
       data: UpdateEventHeroRequest,
     ) =>
       Effect.gen(function* () {
-        if (!(yield* findHero(guild.id, eventId, heroId))) {
+        const hero = yield* findHero(guild.id, eventId, heroId);
+
+        if (!hero) {
           return yield* Effect.fail(
             new ResourceNotFoundError("Hero not found"),
           );
         }
 
+        // Rankings are keyed by hero name, so a rename moves them in place,
+        // keeping their ids for edit history. Locking the hero row first
+        // waits for kill ranking writes, which read the name under a share
+        // lock on the same row.
         const rows = yield* query(
           "events.catalog.updateHero",
-          database
-            .update(eventHeroNpcTable)
-            .set({
-              npcName: data.npcName,
-              ...(data.npcId !== undefined && { npcId: data.npcId }),
-            })
-            .where(eq(eventHeroNpcTable.id, heroId))
-            .returning(),
+          database.transaction((transaction) =>
+            Effect.gen(function* () {
+              const locked = yield* transaction
+                .select({ npcName: eventHeroNpcTable.npcName })
+                .from(eventHeroNpcTable)
+                .where(eq(eventHeroNpcTable.id, heroId))
+                .for("update");
+
+              const previousName = locked[0]?.npcName;
+
+              if (previousName === undefined) return { missing: true as const };
+
+              const renamed = data.npcName !== previousName;
+
+              if (renamed) {
+                if (yield* isHeroNameTaken(transaction, eventId, data.npcName))
+                  return { taken: true as const };
+
+                yield* transaction
+                  .update(eventRankingTable)
+                  .set({ heroNpcName: data.npcName })
+                  .where(
+                    and(
+                      eq(eventRankingTable.eventId, eventId),
+                      eq(eventRankingTable.heroNpcName, previousName),
+                    ),
+                  );
+              }
+
+              const updated = yield* transaction
+                .update(eventHeroNpcTable)
+                .set({
+                  npcName: data.npcName,
+                  ...(data.npcId !== undefined && { npcId: data.npcId }),
+                })
+                .where(eq(eventHeroNpcTable.id, heroId))
+                .returning();
+
+              return { updated };
+            }),
+          ),
         );
+
+        if ("missing" in rows)
+          return yield* Effect.fail(
+            new ResourceNotFoundError("Hero not found"),
+          );
+
+        if ("taken" in rows) return yield* Effect.fail(heroNameTakenError());
 
         yield* invalidate(guild.id, eventId);
 
-        return rows[0] ?? null;
+        return rows.updated[0] ?? null;
       }).pipe(Effect.withSpan("EventsAssignmentController_updateHero")),
 
     deleteHero: (guild: { id: string }, eventId: string, heroId: string) =>

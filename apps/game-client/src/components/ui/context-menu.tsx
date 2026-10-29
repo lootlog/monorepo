@@ -54,7 +54,7 @@ const ContextMenuContent = React.forwardRef<
 ContextMenuContent.displayName = "ContextMenuContent";
 
 const contextMenuItemClassName =
-  "ll:relative ll:flex ll-custom-cursor-pointer ll:select-none ll:items-center ll:rounded-none ll:outline-none ll:data-[disabled]:pointer-events-none ll:data-[disabled]:opacity-50 ll:text-popover-foreground ll:data-[highlighted]:bg-muted ll:hover:bg-muted ll:focus-visible:bg-muted ll:text-[11px] ll:font-semibold ll:border-0 ll:min-h-6 ll:py-1.5 ll:px-2";
+  "ll-action-menu-item ll:relative ll:flex ll-custom-cursor-pointer ll:select-none ll:items-center ll:rounded-none ll:outline-none ll:data-[disabled]:pointer-events-none ll:data-[disabled]:opacity-50 ll:text-popover-foreground ll:data-[highlighted]:bg-muted ll:hover:bg-muted ll:focus-visible:bg-muted ll:text-[11px] ll:font-semibold ll:border-0 ll:min-h-6 ll:py-1.5 ll:px-2";
 
 type ContextMenuItemProps = BaseContextMenu.Item.Props & {
   inset?: boolean;

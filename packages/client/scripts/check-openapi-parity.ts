@@ -392,6 +392,17 @@ const API_ERROR_RESPONSE_MIGRATIONS = [
     add: [],
     operations: ["PUT /guilds/{guildId}/events/{eventId}/pin"],
   },
+  // Verified by the hero name cases in the event update spec: adding or
+  // renaming a hero onto a name used by another hero or leftover rankings is
+  // a 409.
+  {
+    restore: [],
+    add: ["404", "409"],
+    operations: [
+      "POST /guilds/{guildId}/events/{eventId}/heroes",
+      "PATCH /guilds/{guildId}/events/{eventId}/heroes/{heroId}",
+    ],
+  },
 ] as const;
 
 const apiErrorResponseMigrations = new Map<
@@ -2361,6 +2372,37 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
                   items: {
                     $ref: "#/components/schemas/UserCurrentGuildResponseDto_Output",
                   },
+                },
+              },
+            },
+          },
+        },
+      },
+      // Verified by game-client-bootstrap.operations.test.ts: each part runs
+      // the operation of the endpoint it replaces, and a failed part is null.
+      "GET /users/@me/game-client/bootstrap": {
+        operationId: "UsersController_getGameClientBootstrap",
+        parameters: [
+          {
+            name: "gameAccountId",
+            in: "query",
+            required: true,
+            schema: { type: "string", minLength: 1 },
+          },
+          {
+            name: "characterId",
+            in: "query",
+            required: false,
+            schema: { type: "string", minLength: 1 },
+          },
+        ],
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/GameClientBootstrapResponseDto_Output",
                 },
               },
             },

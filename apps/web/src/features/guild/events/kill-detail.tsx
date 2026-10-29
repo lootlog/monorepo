@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Permission } from "@lootlog/schema/permissions";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import { useSession } from "@/hooks/auth/use-session";
+import { useIsViewer } from "@/hooks/auth/use-is-viewer";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
@@ -22,12 +22,12 @@ import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { EventLoadError } from "./components/event-load-error";
 import { EventKillDetailSkeleton } from "./event-kill-detail-skeleton";
 import { getKillDetailErrorKind } from "./utils/kill-detail-error";
-import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
+import { getKillParticipantScoring } from "./utils/scoring-applied-rules";
 
 export const KillDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId, killId } = useParams({ strict: false });
-  const { data: session } = useSession();
+  const isViewer = useIsViewer();
   const { data: accessPolicy } = useGuildPermissions();
 
   const canEditPoints =
@@ -94,6 +94,7 @@ export const KillDetail = () => {
 
   const { kill, eventConfig } = data;
   const participants = kill.points ?? [];
+  const scoring = getKillParticipantScoring(kill, eventConfig.scoringRules);
 
   const getMemberRoleColors = () => {
     const colors = new Map<number, string>();
@@ -110,19 +111,15 @@ export const KillDetail = () => {
   };
 
   const getHighlightedRuleIds = () => {
-    const currentDiscordId = session?.user?.discordId;
-
     return Array.from(
       new Set(
         participants.flatMap((participant) => {
-          if (participant.member.userId !== currentDiscordId) return [];
+          if (!isViewer(participant.member.userId)) return [];
 
-          const evaluatedRuleIds = getAppliedRuleIdsForParticipant({
-            kill,
-            participant,
-            scoringRules: eventConfig.scoringRules,
-            assignedMembersCount: participants.length,
-          });
+          const evaluatedRuleIds =
+            scoring
+              ?.explain(participant)
+              .result.appliedRules.map((rule) => rule.ruleId) ?? [];
 
           const bonusBreakdownRuleIds = normalizeBonusBreakdown(
             participant.bonusBreakdown,
@@ -164,6 +161,7 @@ export const KillDetail = () => {
           participants={
             <KillParticipantsCard
               participants={participants}
+              scoring={scoring}
               guildId={guildId}
               eventId={eventId}
               killId={killId}

@@ -486,6 +486,29 @@ describe("installCharacterTooltipTransforms on SI", () => {
     cleanup();
   });
 
+  it("keeps the active player when the hovered SI tooltip is refreshed", () => {
+    setLegacyRuntime(["617"]);
+    const cleanup = installCharacterTooltipTransforms();
+
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    hover("617");
+
+    const listener = vi.fn();
+
+    const unsubscribe =
+      useCharacterTooltipCatchingGuildsStore.subscribe(listener);
+
+    // The catching guilds hook refreshes the tooltip whenever the active
+    // player changes, so a refresh that republishes it loops React.
+    refreshActiveOtherTooltip();
+
+    expect(listener).not.toHaveBeenCalled();
+    expect(tipOf("617")).toBe("<b>Other 617</b><span>shift</span>");
+
+    unsubscribe();
+    cleanup();
+  });
+
   it("removes the section from every SI tooltip when Shift is released", () => {
     setLegacyRuntime(["617", "618"]);
     const cleanup = installCharacterTooltipTransforms();

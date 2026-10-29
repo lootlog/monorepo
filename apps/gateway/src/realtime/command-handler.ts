@@ -15,6 +15,7 @@ import {
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_PING_CAPABILITY,
   REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
+  REALTIME_SERVER_CLOSE_CODES,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   type ClientCommand,
   type Response,
@@ -78,6 +79,9 @@ import {
   canSubscribe,
   defaultScopes,
   organizationIds,
+  PRESENCE_PERMISSIONS,
+  publishesPresenceTo,
+  type PermissionViewer,
 } from "#src/realtime/subscription-policy";
 
 type Command = typeof ClientCommand.Type;
@@ -107,18 +111,33 @@ const scopedGuilds = (
     : guilds;
 };
 
-const sessionAccessPolicy = (
-  session: Pick<SessionData, "guilds" | "discordId">,
-) => {
-  const snapshot = createAccessPolicySnapshot(
+const sessionAccessPolicy = (session: PermissionViewer) => {
+  const organizations = createAccessPolicySnapshot(
     session.guilds,
     session.discordId,
+  ).organizations.map((organization) =>
+    publishesPresenceTo(session, organization.organizationId)
+      ? organization
+      : {
+          ...organization,
+          permissions: organization.permissions.filter(
+            (permission) => !PRESENCE_PERMISSIONS.has(permission),
+          ),
+        },
   );
 
   return {
-    ...snapshot,
-    version: createHash("sha256").update(snapshot.version).digest("hex"),
+    organizations,
+    version: createHash("sha256")
+      .update(JSON.stringify(organizations))
+      .digest("hex"),
   };
+};
+
+/** Whether a socket kept its subscriptions, and what to log about the change. */
+type AccessAnnouncement = {
+  readonly resubscribed: boolean;
+  readonly warnings: ReadonlyArray<Effect.Effect<void>>;
 };
 
 const errorResponse = (
@@ -315,7 +334,10 @@ export class CommandHandler {
           );
         } else {
           // Legacy fire-and-forget commands cannot receive a correlated error.
-          socket.close(1013, "command capacity exceeded");
+          socket.close(
+            REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+            "command capacity exceeded",
+          );
         }
       });
     }
@@ -383,7 +405,10 @@ export class CommandHandler {
             );
           // A join without a request ID would wait for session.joined forever.
           else if (error instanceof JoinCapacityExceeded)
-            socket.close(1013, "gateway is busy");
+            socket.close(
+              REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+              "gateway is busy",
+            );
         });
       }),
       Effect.asVoid,
@@ -500,8 +525,8 @@ export class CommandHandler {
         const previousPolicy = sessionAccessPolicy(socket.data);
 
         const accessPolicy = sessionAccessPolicy({
+          ...socket.data,
           guilds: allowedGuilds,
-          discordId,
         });
 
         const changes = diffAccessPolicies(previousPolicy, accessPolicy);
@@ -514,53 +539,10 @@ export class CommandHandler {
           .map(({ organizationId }) => organizationId)
           .filter((id) => !updatedIds.has(id));
 
-        socket.data.airTagScopes = socket.data.airTagScopes.filter((scope) =>
-          canSubscribe(socket.data, scope.subscription),
-        );
-        const scopes = defaultScopes(socket.data);
-        const scopeKeys = new Set(scopes.map(getScopeKey));
+        const announced = this.announceAccess(socket, accessPolicy, changes);
+        sideEffects.push(...announced.warnings);
 
-        for (const scope of socket.data.subscriptions.values()) {
-          if (
-            canSubscribe(socket.data, scope) &&
-            !scopeKeys.has(getScopeKey(scope))
-          ) {
-            scopes.push(scope);
-            scopeKeys.add(getScopeKey(scope));
-          }
-        }
-
-        try {
-          hub.replaceSubscriptions(socket, scopes);
-        } catch (cause) {
-          socket.data.subscriptions.clear();
-          socket.data.airTagScopes = [];
-          socket.close(1008, "subscription reconciliation failed");
-          sideEffects.push(
-            Effect.logWarning("Subscription reconciliation failed", cause),
-          );
-          continue;
-        }
-
-        const event = {
-          v: 1,
-          type: "permissions.updated",
-          data: {
-            accessPolicy,
-            changes,
-            organizationIds: organizationIds(socket.data),
-            subscriptionScopes: scopes,
-          },
-        } satisfies Event;
-
-        try {
-          hub.sendEvent(socket, event);
-        } catch (cause) {
-          socket.close(1013, "permission update delivery failed");
-          sideEffects.push(
-            Effect.logWarning("Permission update delivery failed", cause),
-          );
-        }
+        if (!announced.resubscribed) continue;
 
         if (!socket.data.apiKeyAccess) {
           if (removedIds.length > 0) {
@@ -598,6 +580,148 @@ export class CommandHandler {
 
       return Effect.all(sideEffects, { concurrency: 8, discard: true });
     });
+  }
+
+  /** Moves one socket to its changed access policy and tells its client. */
+  private announceAccess(
+    socket: GatewaySocket,
+    accessPolicy: ReturnType<typeof sessionAccessPolicy>,
+    changes: ReturnType<typeof diffAccessPolicies>,
+  ): AccessAnnouncement {
+    const { hub } = this;
+
+    socket.data.airTagScopes = socket.data.airTagScopes.filter((scope) =>
+      canSubscribe(socket.data, scope.subscription),
+    );
+    const scopes = defaultScopes(socket.data);
+    const scopeKeys = new Set(scopes.map(getScopeKey));
+
+    for (const scope of socket.data.subscriptions.values()) {
+      if (
+        canSubscribe(socket.data, scope) &&
+        !scopeKeys.has(getScopeKey(scope))
+      ) {
+        scopes.push(scope);
+        scopeKeys.add(getScopeKey(scope));
+      }
+    }
+
+    try {
+      hub.replaceSubscriptions(socket, scopes);
+    } catch (cause) {
+      socket.data.subscriptions.clear();
+      socket.data.airTagScopes = [];
+      socket.close(1008, "subscription reconciliation failed");
+
+      return {
+        resubscribed: false,
+        warnings: [
+          Effect.logWarning("Subscription reconciliation failed", cause),
+        ],
+      };
+    }
+
+    const event = {
+      v: 1,
+      type: "permissions.updated",
+      data: {
+        accessPolicy,
+        changes,
+        organizationIds: organizationIds(socket.data),
+        subscriptionScopes: scopes,
+      },
+    } satisfies Event;
+
+    try {
+      hub.sendEvent(socket, event);
+    } catch (cause) {
+      socket.close(
+        REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+        "permission update delivery failed",
+      );
+
+      return {
+        resubscribed: true,
+        warnings: [
+          Effect.logWarning("Permission update delivery failed", cause),
+        ],
+      };
+    }
+
+    return { resubscribed: true, warnings: [] };
+  }
+
+  /**
+   * A game session reads presence only where it publishes its own, so a
+   * publication that changes those Lootlogs changes its access as well.
+   */
+  private publishPresence(
+    socket: GatewaySocket,
+    data: Extract<Command, { type: "presence.publish" }>["data"],
+  ) {
+    return Effect.suspend(() => {
+      const previousPolicy = sessionAccessPolicy(socket.data);
+
+      const previouslyPublished = new Set(
+        socket.data.presence?.organizationIds ?? [],
+      );
+
+      return this.presence.publish(socket, data).pipe(
+        Effect.onExit((exit) =>
+          Effect.suspend(() => {
+            const current = socket.data.presence;
+
+            // A failed write may have stored only some of the requested
+            // Lootlogs, so it opens none of them; reads stay where the
+            // session was already visible. Partial records expire.
+            if (Exit.isFailure(exit) && current) {
+              const kept = current.organizationIds.filter((id) =>
+                previouslyPublished.has(id),
+              );
+
+              this.hub.setPresence(
+                socket,
+                kept.length === 0
+                  ? undefined
+                  : { ...current, organizationIds: kept },
+              );
+            }
+
+            const accessPolicy = sessionAccessPolicy(socket.data);
+            const changes = diffAccessPolicies(previousPolicy, accessPolicy);
+
+            const warnings =
+              changes.length === 0
+                ? []
+                : this.announceAccess(socket, accessPolicy, changes).warnings;
+
+            return Effect.all(
+              [...warnings, this.recordPresenceActivity(socket)],
+              { discard: true },
+            );
+          }),
+        ),
+      );
+    });
+  }
+
+  /** The activity log of a Lootlog follows where a character is visible. */
+  private recordPresenceActivity(socket: GatewaySocket): Effect.Effect<void> {
+    if (socket.data.platform !== "game" || socket.data.apiKeyAccess)
+      return Effect.void;
+    const published = socket.data.presence?.organizationIds ?? [];
+
+    const hidden = (socket.data.activityOrganizationIds ?? []).filter(
+      (id) => !published.includes(id),
+    );
+
+    return Effect.all(
+      [
+        this.activity.publish("DISCONNECT_EVENT", socket.data, hidden),
+        this.activity.publish("CONNECT_EVENT", socket.data, published),
+      ],
+      { discard: true },
+    );
   }
 
   private dispatch(
@@ -670,7 +794,7 @@ export class CommandHandler {
         return Effect.succeed({});
       case "presence.publish":
         return requireJoined.pipe(
-          Effect.andThen(this.presence.publish(socket, command.data)),
+          Effect.andThen(this.publishPresence(socket, command.data)),
         );
       case "presence.fetch": {
         const scope = {
@@ -999,7 +1123,13 @@ export class CommandHandler {
 
       hub.sendEvent(socket, event);
 
-      if (!wasJoined && !socket.data.apiKeyAccess)
+      // A game session connects to a Lootlog when it starts publishing
+      // presence there, so a Lootlog never logs a character hidden from it.
+      if (
+        !wasJoined &&
+        !socket.data.apiKeyAccess &&
+        socket.data.platform !== "game"
+      )
         yield* activity.publish("CONNECT_EVENT", socket.data);
 
       return event.data;

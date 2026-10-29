@@ -184,9 +184,8 @@ class CharacterGlow<Master extends GlowMaster> {
     this.drawMask = null;
   }
 
+  /** Draws at the position of the last `update()`, run once per frame. */
   draw(ctx: CanvasRenderingContext2D): void {
-    this.update();
-
     const runtimeWindow = getRuntimeWindow();
     const engine = runtimeWindow.Engine;
 
@@ -327,54 +326,62 @@ export type TrackedCharacterGlow = {
   draw: (context: CanvasRenderingContext2D) => void;
   getAlwaysDraw: () => boolean;
   getOrder: () => number;
-  /** False once the character left the map; the glow then draws nothing. */
-  isPresent: () => boolean;
+  /**
+   * Looks the character up for this frame; call it once per frame before
+   * adding the glow to the renderer. False once the character left the map,
+   * and the glow then draws nothing.
+   */
+  refresh: () => boolean;
   setAlpha: (alpha: number) => void;
 };
 
 /**
  * A glow behind a monster's or player's sprite, like the game's own group
- * glow. It looks the character up on every frame, so a respawned or moved
- * character keeps its glow; add it to the renderer each frame it should show.
+ * glow. `refresh()` looks the character up once per frame, so a respawned or
+ * moved character keeps its glow while the game's sort reads a cached order;
+ * add it to the renderer each frame it should show.
  */
 export const createCharacterGlow = (
   { id, kind }: RuntimeCharacterRef,
   color: string,
 ): TrackedCharacterGlow => {
-  const findCharacter = () => {
-    const engine = getRuntimeWindow().Engine;
-
-    return (kind === "npc" ? engine?.npcs : engine?.others)?.getById?.(id);
-  };
-
   let glow: CharacterGlow<GlowMaster> | null = null;
+  let present = false;
+  let order = 0;
+  let alpha = 1;
 
   tintedGlowMasks.request();
 
-  const resolve = () => {
-    const character = findCharacter();
-
-    if (!character) return null;
-
-    glow ??= new CharacterGlow(character, color, tintedGlowMasks.get);
-    glow.master = character;
-
-    return glow;
-  };
-
-  let alpha = 1;
-
   return {
     draw: (context) => {
-      const current = resolve();
-
-      if (!current) return;
-      current.setAlpha(alpha);
-      current.draw(context);
+      if (!present || !glow) return;
+      glow.setAlpha(alpha);
+      glow.draw(context);
     },
     getAlwaysDraw: () => true,
-    getOrder: () => resolve()?.getOrder() ?? 0,
-    isPresent: () => findCharacter() !== undefined,
+    getOrder: () => order,
+    refresh: () => {
+      const engine = getRuntimeWindow().Engine;
+
+      const character = (
+        kind === "npc" ? engine?.npcs : engine?.others
+      )?.getById?.(id);
+
+      present = character !== undefined;
+
+      if (!character) return false;
+
+      if (glow) {
+        glow.master = character;
+        glow.update();
+      } else {
+        glow = new CharacterGlow(character, color, tintedGlowMasks.get);
+      }
+
+      order = glow.getOrder();
+
+      return true;
+    },
     setAlpha: (next) => {
       alpha = next;
     },

@@ -79,7 +79,7 @@ packages/
 Requirements:
 
 - Node.js 26.8.1
-- Bun 1.4.3
+- Bun 1.4.4
 - Docker with Docker Compose
 
 ```bash

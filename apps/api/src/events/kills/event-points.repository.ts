@@ -1,7 +1,18 @@
 import { selectEventKillPoints } from "#src/events/kills/event-point-query";
 import { randomUUID } from "node:crypto";
 
-import { and, asc, eq, gte, inArray, isNull, lte, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 import { Clock, Effect } from "effect";
 import { chunk } from "es-toolkit";
@@ -12,6 +23,7 @@ import {
   eventKillPointTable,
   eventMapAssignmentHistoryTable,
   eventMapTable,
+  eventPointsEditHistoryTable,
   eventPresenceLogTable,
   eventRankingTable,
   eventRespawnWindowSummaryTable,
@@ -81,14 +93,61 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
   }
 
   /**
-   * Adds one kill's points to the name-keyed rankings. The kill row is locked
-   * for the transaction, so a concurrent hero deletion either waits for these
-   * writes and then removes them, or has already removed the kill and no
-   * ranking is written.
+   * Sums each ranking's manual adjustments from its edit history: every
+   * ranking edit, plus kill-point edits made before kill points tracked their
+   * own adjustment.
+   */
+  function findRankingAdjustments(
+    eventId: string,
+    legacyKillPointsBefore: Date,
+  ) {
+    return run((database) =>
+      database
+        .select({
+          rankingId: eventPointsEditHistoryTable.rankingId,
+          points:
+            sql<number>`sum(${eventPointsEditHistoryTable.newPoints} - ${eventPointsEditHistoryTable.previousPoints})`.mapWith(
+              Number,
+            ),
+        })
+        .from(eventPointsEditHistoryTable)
+        .innerJoin(
+          eventRankingTable,
+          eq(eventRankingTable.id, eventPointsEditHistoryTable.rankingId),
+        )
+        .where(
+          and(
+            eq(eventRankingTable.eventId, eventId),
+            or(
+              eq(eventPointsEditHistoryTable.editType, "RANKING"),
+              and(
+                eq(eventPointsEditHistoryTable.editType, "KILL_POINT"),
+                lt(
+                  eventPointsEditHistoryTable.editedAt,
+                  legacyKillPointsBefore,
+                ),
+              ),
+            ),
+          ),
+        )
+        .groupBy(eventPointsEditHistoryTable.rankingId),
+    ).pipe(
+      Effect.map(
+        (rows) =>
+          new Map(rows.map(({ rankingId, points }) => [rankingId, points])),
+      ),
+    );
+  }
+
+  /**
+   * Adds one kill's points to the name-keyed rankings. The kill and its hero
+   * are locked for the transaction, so a concurrent hero deletion or rename
+   * either waits for these writes and then removes or renames them, or has
+   * already happened: the kill is gone and no ranking is written, or the
+   * rankings go to the hero's current name.
    */
   function addKillToRankings(
     eventId: string,
-    heroNpcName: string,
     killId: string,
     entries: ReadonlyArray<{
       memberId: number;
@@ -102,12 +161,18 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
       database.transaction((transaction) =>
         Effect.gen(function* () {
           const kills = yield* transaction
-            .select({ id: eventHeroKillTable.id })
+            .select({ heroNpcName: eventHeroNpcTable.npcName })
             .from(eventHeroKillTable)
+            .innerJoin(
+              eventHeroNpcTable,
+              eq(eventHeroNpcTable.id, eventHeroKillTable.heroNpcId),
+            )
             .where(eq(eventHeroKillTable.id, killId))
             .for("share");
 
-          if (kills.length === 0) return false;
+          const heroNpcName = kills[0]?.heroNpcName;
+
+          if (heroNpcName === undefined) return false;
 
           const now = new Date(yield* Clock.currentTimeMillis);
 
@@ -324,6 +389,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
     findKillPointsForEvent,
     findMaps,
     findPresenceLogs,
+    findRankingAdjustments,
     findRankings,
     findWindowSummaries,
   };

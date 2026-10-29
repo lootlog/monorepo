@@ -4,6 +4,16 @@ import {
   calculateLocalWindowOverlapMs,
   isLocalTimeInRange,
 } from "@lootlog/datetime";
+import {
+  GROUP_COUNTINGS,
+  GROUP_SIZE_COMPARISONS,
+  getGroupTimeShare,
+  isGroupSizeInRange,
+  type EventKillPresence,
+  type GroupCounting,
+  type GroupSizeRange,
+  type PresenceParticipantId,
+} from "./scoring-presence.js";
 
 const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -29,6 +39,7 @@ export const EVENT_SCORING_NUMERIC_FACTORS = [
   "afkPercentage",
   "respawnDurationSeconds",
   "respawnProgressPercentage",
+  "respawnJoinDelaySeconds",
 ] as const;
 
 export const EVENT_SCORING_BOOLEAN_FACTORS = [
@@ -42,6 +53,8 @@ export const EVENT_SCORING_CONDITION_TYPES = [
   "BOOLEAN",
   "KILL_TIME_IN_WINDOW",
   "RESPAWN_WINDOW_COVERAGE",
+  "RESPAWN_JOIN",
+  "GROUP_SIZE",
 ] as const;
 
 export const EVENT_SCORING_ACTION_TYPES = [
@@ -84,6 +97,20 @@ export type EventScoringCondition =
       to: string;
       operator: EventScoringNumericOperator;
       value: number;
+    }
+  | {
+      /** The member's first counted presence came at most this late. */
+      type: "RESPAWN_JOIN";
+      toleranceSeconds: number;
+    }
+  | {
+      type: "GROUP_SIZE";
+      counting: GroupCounting;
+      size: GroupSizeRange;
+      /** `MIN_SHARE`: share of the whole window a member needs to count. */
+      minSharePercentage: number;
+      /** `TIMELINE`: share of the member's own counted time in the group. */
+      minTimePercentage: number;
     };
 
 export type EventScoringAction =
@@ -121,6 +148,45 @@ export type EventScoringContext = {
   timeOnMapSeconds: number;
   afkPercentage: number;
   wasPresent: boolean;
+  /**
+   * The kill's shared presence analysis and the evaluated member. Without it
+   * the presence conditions cannot be determined and never award points.
+   */
+  presence?: {
+    analysis: EventKillPresence;
+    participantId: PresenceParticipantId;
+  } | null;
+};
+
+export type EventScoringUnknownReason =
+  | "NO_PRESENCE_DATA"
+  | "WINDOW_UNKNOWN"
+  | "PARTICIPANT_DATA_MISSING"
+  | "GROUP_DATA_INCOMPLETE";
+
+export type EventScoringConditionOutcome =
+  | { status: "MET" | "NOT_MET" }
+  | { status: "UNKNOWN"; reason: EventScoringUnknownReason };
+
+export type EventScoringRuleExplanation = {
+  ruleId: string;
+  ruleName: string | null;
+  enabled: boolean;
+  conditions: Array<{
+    condition: EventScoringCondition;
+    outcome: EventScoringConditionOutcome;
+  }>;
+  /** Every condition is met. */
+  matched: boolean;
+  /** The rule changed the points (a bonus also needs the minimum tracking). */
+  applied: boolean;
+  /** A later base rule replaced the base this rule set. */
+  overridden: boolean;
+};
+
+export type EventScoringExplanation = {
+  result: EventScoringResult;
+  rules: EventScoringRuleExplanation[];
 };
 
 export type EventScoringAppliedBonus = {
@@ -129,7 +195,7 @@ export type EventScoringAppliedBonus = {
   points: number;
 };
 
-type EventScoringResult = {
+export type EventScoringResult = {
   totalPoints: number;
   basePoints: number;
   bonusPoints: number;
@@ -389,6 +455,18 @@ function parseCondition(value: unknown): EventScoringCondition | null {
     };
   }
 
+  if (value.type === "RESPAWN_JOIN") {
+    const toleranceSeconds = toNumber(value.toleranceSeconds, Number.NaN);
+
+    return Number.isFinite(toleranceSeconds)
+      ? { type: "RESPAWN_JOIN", toleranceSeconds: Math.round(toleranceSeconds) }
+      : null;
+  }
+
+  if (value.type === "GROUP_SIZE") {
+    return parseGroupSizeCondition(value);
+  }
+
   if (!isOneOf(EVENT_SCORING_NUMERIC_OPERATORS, value.operator)) {
     return null;
   }
@@ -404,6 +482,44 @@ function parseCondition(value: unknown): EventScoringCondition | null {
         value: Math.round(parsedValue * 100) / 100,
       }
     : null;
+}
+
+function toPercentage(value: unknown, fallback: number) {
+  return Math.round(toNumber(value, fallback, 0, 100) * 100) / 100;
+}
+
+function parseGroupSizeCondition(value: unknown): EventScoringCondition | null {
+  if (!Predicate.isObject(value)) {
+    return null;
+  }
+
+  const size = Predicate.isObject(value.size) ? value.size : null;
+
+  if (
+    !size ||
+    !isOneOf(GROUP_COUNTINGS, value.counting) ||
+    !isOneOf(GROUP_SIZE_COMPARISONS, size.comparison)
+  ) {
+    return null;
+  }
+
+  const sizeValue = Math.round(toNumber(size.value, Number.NaN, 1));
+
+  if (!Number.isFinite(sizeValue)) {
+    return null;
+  }
+
+  return {
+    type: "GROUP_SIZE",
+    counting: value.counting,
+    size: {
+      comparison: size.comparison,
+      value: sizeValue,
+      to: Math.max(sizeValue, Math.round(toNumber(size.to, sizeValue, 1))),
+    },
+    minSharePercentage: toPercentage(value.minSharePercentage, 50),
+    minTimePercentage: toPercentage(value.minTimePercentage, 90),
+  };
 }
 
 function cloneDefaultRules(): EventScoringRules {
@@ -501,33 +617,138 @@ function compareNumeric(
   }
 }
 
+const MET: EventScoringConditionOutcome = { status: "MET" };
+
+const NOT_MET: EventScoringConditionOutcome = { status: "NOT_MET" };
+
+const unknown = (
+  reason: EventScoringUnknownReason,
+): EventScoringConditionOutcome => ({ status: "UNKNOWN", reason });
+
+const toOutcome = (met: boolean) => (met ? MET : NOT_MET);
+
+type EventScoringJoin =
+  | { status: "UNKNOWN"; reason: EventScoringUnknownReason }
+  | { status: "ABSENT" }
+  | { status: "JOINED"; delayMs: number };
+
+/** When the member first joined the respawn window, relative to its start. */
+export function resolveEventScoringJoin(
+  presence: EventScoringContext["presence"],
+): EventScoringJoin {
+  if (!presence) return { status: "UNKNOWN", reason: "NO_PRESENCE_DATA" };
+
+  if (presence.analysis.windowMs === null) {
+    return { status: "UNKNOWN", reason: "WINDOW_UNKNOWN" };
+  }
+
+  const participant = presence.analysis.participants.get(
+    presence.participantId,
+  );
+
+  if (!participant?.hasData) {
+    return { status: "UNKNOWN", reason: "PARTICIPANT_DATA_MISSING" };
+  }
+
+  return participant.joinDelayMs === null
+    ? { status: "ABSENT" }
+    : { status: "JOINED", delayMs: participant.joinDelayMs };
+}
+
+function evaluateJoinCondition(
+  toleranceSeconds: number,
+  presence: EventScoringContext["presence"],
+): EventScoringConditionOutcome {
+  const join = resolveEventScoringJoin(presence);
+
+  if (join.status === "UNKNOWN") return unknown(join.reason);
+
+  return toOutcome(
+    join.status === "JOINED" && join.delayMs <= toleranceSeconds * 1000,
+  );
+}
+
+function evaluateGroupSizeCondition(
+  condition: Extract<EventScoringCondition, { type: "GROUP_SIZE" }>,
+  presence: EventScoringContext["presence"],
+): EventScoringConditionOutcome {
+  if (!presence) return unknown("NO_PRESENCE_DATA");
+
+  const { analysis } = presence;
+
+  if (analysis.windowMs === null) return unknown("WINDOW_UNKNOWN");
+
+  if (analysis.missingParticipantIds.length > 0) {
+    return unknown("GROUP_DATA_INCOMPLETE");
+  }
+
+  if (condition.counting === "TIMELINE") {
+    const participant = analysis.participants.get(presence.participantId);
+
+    if (!participant?.hasData) return unknown("PARTICIPANT_DATA_MISSING");
+
+    const share = getGroupTimeShare(participant, condition.size);
+
+    return toOutcome(
+      share.ownMs > 0 &&
+        share.matchedMs * 100 >= condition.minTimePercentage * share.ownMs,
+    );
+  }
+
+  const count = analysis
+    .groupMembership(condition.counting, condition.minSharePercentage)
+    .filter((member) => member.included).length;
+
+  return toOutcome(isGroupSizeInRange(count, condition.size));
+}
+
 function evaluateCondition(params: {
   condition: EventScoringCondition;
   rules: EventScoringRules;
   context: EventScoringContext;
   minutesSinceLeaveToKill: number | null;
   respawnDurationSeconds: number;
-}): boolean {
+}): EventScoringConditionOutcome {
   const { condition, context } = params;
 
   if (condition.type === "NUMERIC") {
-    const values: Record<EventScoringNumericFactor, number | null | undefined> =
-      {
-        trackingDurationPercentage: context.trackingDurationPercentage,
-        trackingDurationSeconds: context.trackingDurationSeconds,
-        assignedMembersCount: context.assignedMembersCount,
-        minutesSinceLeaveToKill: params.minutesSinceLeaveToKill,
-        timeOnMapSeconds: context.timeOnMapSeconds,
-        afkPercentage: context.afkPercentage,
-        respawnDurationSeconds: params.respawnDurationSeconds,
-        respawnProgressPercentage: context.respawnProgressPercentage,
-      };
+    if (condition.factor === "respawnJoinDelaySeconds") {
+      const join = resolveEventScoringJoin(context.presence);
+
+      if (join.status === "UNKNOWN") return unknown(join.reason);
+
+      return toOutcome(
+        join.status === "JOINED" &&
+          compareNumeric(
+            join.delayMs / 1000,
+            condition.operator,
+            condition.value,
+          ),
+      );
+    }
+
+    const values: Record<
+      Exclude<EventScoringNumericFactor, "respawnJoinDelaySeconds">,
+      number | null | undefined
+    > = {
+      trackingDurationPercentage: context.trackingDurationPercentage,
+      trackingDurationSeconds: context.trackingDurationSeconds,
+      assignedMembersCount: context.assignedMembersCount,
+      minutesSinceLeaveToKill: params.minutesSinceLeaveToKill,
+      timeOnMapSeconds: context.timeOnMapSeconds,
+      afkPercentage: context.afkPercentage,
+      respawnDurationSeconds: params.respawnDurationSeconds,
+      respawnProgressPercentage: context.respawnProgressPercentage,
+    };
 
     const left = values[condition.factor];
 
-    return left !== null && left !== undefined && Number.isFinite(left)
-      ? compareNumeric(left, condition.operator, condition.value)
-      : false;
+    return toOutcome(
+      left !== null &&
+        left !== undefined &&
+        Number.isFinite(left) &&
+        compareNumeric(left, condition.operator, condition.value),
+    );
   }
 
   if (condition.type === "BOOLEAN") {
@@ -537,20 +758,30 @@ function evaluateCondition(params: {
       wasPresent: context.wasPresent,
     };
 
-    return values[condition.factor] === condition.value;
+    return toOutcome(values[condition.factor] === condition.value);
   }
 
   if (condition.type === "KILL_TIME_IN_WINDOW") {
-    return isLocalTimeInRange({
-      date: context.killTime,
-      timeZone: params.rules.timezone,
-      from: condition.from,
-      to: condition.to,
-    });
+    return toOutcome(
+      isLocalTimeInRange({
+        date: context.killTime,
+        timeZone: params.rules.timezone,
+        from: condition.from,
+        to: condition.to,
+      }),
+    );
+  }
+
+  if (condition.type === "RESPAWN_JOIN") {
+    return evaluateJoinCondition(condition.toleranceSeconds, context.presence);
+  }
+
+  if (condition.type === "GROUP_SIZE") {
+    return evaluateGroupSizeCondition(condition, context.presence);
   }
 
   if (context.killTime <= context.respawnStartTime) {
-    return false;
+    return NOT_MET;
   }
 
   const totalDurationMs =
@@ -564,10 +795,12 @@ function evaluateCondition(params: {
     windowTo: condition.to,
   });
 
-  return compareNumeric(
-    (overlapMs / totalDurationMs) * 100,
-    condition.operator,
-    condition.value,
+  return toOutcome(
+    compareNumeric(
+      (overlapMs / totalDurationMs) * 100,
+      condition.operator,
+      condition.value,
+    ),
   );
 }
 
@@ -576,17 +809,45 @@ export function evaluateEventScoring(params: {
   rules: EventScoringRules;
   context: EventScoringContext;
 }): EventScoringResult {
+  return explainEventScoring(params).result;
+}
+
+function meetsBonusMinimum(
+  trackingDurationPercentage: number | null | undefined,
+  minimumTrackingPercentage: number,
+) {
+  return (
+    trackingDurationPercentage !== null &&
+    trackingDurationPercentage !== undefined &&
+    Number.isFinite(trackingDurationPercentage) &&
+    trackingDurationPercentage >= minimumTrackingPercentage
+  );
+}
+
+/**
+ * Evaluates the rules in order and reports every condition's outcome. A
+ * matching base rule replaces the base set by earlier rules, so the last
+ * matching base rule on the list wins; bonuses add up.
+ */
+export function explainEventScoring(params: {
+  mode: EventScoringMode;
+  rules: EventScoringRules;
+  context: EventScoringContext;
+}): EventScoringExplanation {
   const { mode, rules, context } = params;
 
   if (mode === "SIMPLE") {
     const basePoints = context.eligible ? 1 : 0;
 
     return {
-      totalPoints: basePoints,
-      basePoints,
-      bonusPoints: 0,
-      appliedBonuses: [],
-      appliedRules: [],
+      result: {
+        totalPoints: basePoints,
+        basePoints,
+        bonusPoints: 0,
+        appliedBonuses: [],
+        appliedRules: [],
+      },
+      rules: [],
     };
   }
 
@@ -594,6 +855,8 @@ export function evaluateEventScoring(params: {
   let bonusPoints = 0;
   const appliedBonuses: EventScoringAppliedBonus[] = [];
   const appliedRules: EventScoringAppliedRule[] = [];
+  const explanations: EventScoringRuleExplanation[] = [];
+  let lastBaseExplanation: EventScoringRuleExplanation | null = null;
 
   const minutesSinceLeaveToKill =
     context.minutesSinceLeaveToKill ??
@@ -617,42 +880,55 @@ export function evaluateEventScoring(params: {
   );
 
   for (const rule of rules.rules) {
-    if (
-      rule.enabled === false ||
-      !rule.conditions.every((condition) =>
-        evaluateCondition({
-          condition,
-          rules,
-          context,
-          minutesSinceLeaveToKill,
-          respawnDurationSeconds,
-        }),
-      )
-    ) {
+    const enabled = rule.enabled !== false;
+
+    const conditions = rule.conditions.map((condition) => ({
+      condition,
+      outcome: evaluateCondition({
+        condition,
+        rules,
+        context,
+        minutesSinceLeaveToKill,
+        respawnDurationSeconds,
+      }),
+    }));
+
+    const explanation: EventScoringRuleExplanation = {
+      ruleId: rule.id,
+      ruleName: rule.name ?? null,
+      enabled,
+      conditions,
+      matched: conditions.every(({ outcome }) => outcome.status === "MET"),
+      applied: false,
+      overridden: false,
+    };
+
+    explanations.push(explanation);
+
+    if (!enabled || !explanation.matched) {
       continue;
     }
 
-    if (rule.action.type === "SET_BASE") {
-      basePoints = rule.action.points;
+    if (rule.action.type === "SET_BASE" || rule.action.type === "ZERO_BASE") {
+      const points = rule.action.type === "SET_BASE" ? rule.action.points : 0;
+
+      basePoints = points;
       appliedRules.push({
         ruleId: rule.id,
         ruleName: rule.name ?? null,
-        points: rule.action.points,
+        points,
         actionType: rule.action.type,
       });
-    } else if (rule.action.type === "ZERO_BASE") {
-      basePoints = 0;
-      appliedRules.push({
-        ruleId: rule.id,
-        ruleName: rule.name ?? null,
-        points: 0,
-        actionType: rule.action.type,
-      });
+      explanation.applied = true;
+
+      if (lastBaseExplanation) lastBaseExplanation.overridden = true;
+
+      lastBaseExplanation = explanation;
     } else if (
-      context.trackingDurationPercentage !== null &&
-      context.trackingDurationPercentage !== undefined &&
-      Number.isFinite(context.trackingDurationPercentage) &&
-      context.trackingDurationPercentage >= minimumTrackingPercentage
+      meetsBonusMinimum(
+        context.trackingDurationPercentage,
+        minimumTrackingPercentage,
+      )
     ) {
       bonusPoints += rule.action.points;
       appliedBonuses.push({
@@ -666,14 +942,18 @@ export function evaluateEventScoring(params: {
         points: rule.action.points,
         actionType: rule.action.type,
       });
+      explanation.applied = true;
     }
   }
 
   return {
-    totalPoints: Math.min(basePoints + bonusPoints, rules.hardCapPoints),
-    basePoints,
-    bonusPoints,
-    appliedBonuses,
-    appliedRules,
+    result: {
+      totalPoints: Math.min(basePoints + bonusPoints, rules.hardCapPoints),
+      basePoints,
+      bonusPoints,
+      appliedBonuses,
+      appliedRules,
+    },
+    rules: explanations,
   };
 }

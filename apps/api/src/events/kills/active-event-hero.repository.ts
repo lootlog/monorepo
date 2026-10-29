@@ -1,16 +1,10 @@
 import { activeEventCondition } from "#src/events/event-scope-query";
-import { and, eq, or } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { eventHeroNpcTable, eventTable } from "#src/database/drizzle/schema";
 
 export const makeActiveEventHeroStore = (database: ApiDatabaseValue) => ({
-  findMatches(
-    guildId: string,
-    world: string,
-    npcId: number,
-    npcName: string,
-    referenceTime: Date,
-  ) {
+  findActiveHeroes(guildId: string, world: string, referenceTime: Date) {
     return database
       .select({ eventHero: eventHeroNpcTable, event: eventTable })
       .from(eventHeroNpcTable)
@@ -19,10 +13,6 @@ export const makeActiveEventHeroStore = (database: ApiDatabaseValue) => ({
         and(
           eq(eventTable.guildId, guildId),
           eq(eventTable.world, world),
-          or(
-            eq(eventHeroNpcTable.npcId, npcId),
-            eq(eventHeroNpcTable.npcName, npcName),
-          ),
           activeEventCondition(referenceTime),
         ),
       );

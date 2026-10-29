@@ -1,3 +1,4 @@
+import { InactiveMemberSuffix } from "@/components/common/inactive-member-suffix";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import { cn } from "cn";
@@ -8,12 +9,15 @@ import { getRankingMemberName } from "./get-ranking-member-name";
 type RankingMemberNameProps = {
   ranking: EventRanking;
   className?: string;
+  /** The member has left the Lootlog. */
+  inactive?: boolean;
 };
 
 /** A ranked member's name in their role's colour. */
 export const RankingMemberName = ({
   ranking,
   className,
+  inactive = false,
 }: RankingMemberNameProps) => {
   const { t } = useTranslation();
 
@@ -27,6 +31,7 @@ export const RankingMemberName = ({
       style={roleCssColor ? { color: roleCssColor } : undefined}
     >
       {getRankingMemberName(ranking, t)}
+      {inactive && <InactiveMemberSuffix />}
     </span>
   );
 };

@@ -70,7 +70,7 @@ export const GuildListPopover = () => {
             <Loader2 className="ll:h-4 ll:w-4 ll:animate-spin ll:text-muted-foreground" />
           </div>
         ) : (
-          <div className="ll:space-y-0">
+          <div>
             <Button
               size="xs"
               variant="menu"
@@ -104,7 +104,7 @@ export const GuildListPopover = () => {
               <ScrollArea
                 className={`ll:max-h-[240px] ${guilds.length <= 6 ? "ll:h-auto" : ""}`}
               >
-                <div className="ll:space-y-0">
+                <div>
                   {guilds.map((guild) => (
                     <Button
                       size="xs"

@@ -88,6 +88,8 @@ export const SETTINGS_SUBSECTION_CONTENT = {
   sounds: SoundsSettingsTab,
   hotkeys: HotkeysSettingsTab,
   logs: LogsSettingsTab,
-  debug: DebugTab,
+  // The debug subsection is visible only in development; a constant `DEV`
+  // lets production builds drop the tab and everything only it imports.
+  debug: import.meta.env.DEV ? DebugTab : () => null,
   build: InformationSettingsTab,
 } satisfies Record<SettingsSubsectionValue, ComponentType>;

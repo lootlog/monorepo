@@ -48,8 +48,9 @@ it("places an open tooltip on every pointer move without measuring it again", ()
   }
 
   expect(element.style.position).toBe("fixed");
-  expect(element.style.left).toBe(`${319 - OFFSETS.alignOffset - 120}px`);
-  expect(element.style.top).toBe(`${219 + OFFSETS.sideOffset}px`);
+  expect(element.style.transform).toBe(
+    `translate(${319 - OFFSETS.alignOffset - 120}px, ${219 + OFFSETS.sideOffset}px)`,
+  );
   expect(offsetWidth.mock.calls.length).toBe(readsAfterRegistration);
   expect(offsetHeight).toHaveBeenCalledTimes(1);
 

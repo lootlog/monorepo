@@ -566,7 +566,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     expect(useCharacterTooltipCatchingGuildsStore.getState().activeOther).toBe(
       other,
     );
-    expect(tooltipHtml).toContain("Dodaje łupy i timery do:");
+    expect(tooltipHtml).toContain("Gra dla:");
     expect(tooltipHtml).toContain("Blue Guild");
     // Without a Lootlog member name the Discord id stays out of the tooltip.
     expect(tooltipHtml).not.toContain("player-discord");
@@ -628,7 +628,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     });
 
     await waitFor(() => {
-      expect(tooltipHtml).toContain("Dodaje łupy i timery do:");
+      expect(tooltipHtml).toContain("Gra dla:");
     });
     expect(tooltipHtml).toContain("Guild Member");
     expect(tooltipHtml).toContain("Blue Guild");

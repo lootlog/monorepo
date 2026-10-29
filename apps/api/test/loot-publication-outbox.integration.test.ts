@@ -51,7 +51,7 @@ import {
   makeLootPublicationDispatcher,
   makeLootSnapshotReader,
 } from "#src/loots/submission/loot-publication-outbox";
-import { GuildLootCreatedMessageV2 } from "@lootlog/protocol/rabbit/events";
+import { GuildLootCreatedMessageV2 } from "@lootlog/protocol/loot-events";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { makeLootsOperations } from "#src/loots/loots.operations";
 import { makeLootPersistence } from "#src/loots/loot-persistence";

@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
 import { useGameStore } from "@/store/game.store";
+import i18n from "@/i18n/config";
+import settingsDebugTranslations from "@/i18n/translations/settings-debug.json";
 import { createDebugLegendaryLootEvent } from "./debug-legendary-loot-event";
 import {
   createDetectorEvent,
@@ -26,35 +28,33 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 
+// Module-level values stay free of property reads and unannotated calls so
+// production builds, which never render this tab, can drop the module.
 const DETECTOR_NPC_ENTRIES = [
   {
     key: "titan",
-    preset: DETECTOR_NPC_PRESETS.titan,
     eventLabelKey: "settings.debug.events.detectTitan",
     npcTypeKey: "common:npcTypes.titan",
   },
   {
     key: "hero",
-    preset: DETECTOR_NPC_PRESETS.hero,
     eventLabelKey: "settings.debug.events.detectHero",
     npcTypeKey: "common:npcTypes.hero",
   },
   {
     key: "colossus",
-    preset: DETECTOR_NPC_PRESETS.colossus,
     eventLabelKey: "settings.debug.events.detectColossus",
     npcTypeKey: "common:npcTypes.colossus",
   },
   {
     key: "elite2",
-    preset: DETECTOR_NPC_PRESETS.elite2,
     eventLabelKey: "settings.debug.events.detectElite2",
     npcTypeKey: "common:npcTypes.elite2",
   },
 ] as const;
 
 // SAFETY: This exported literal defines every own enumerable template key; it is never mutated.
-const eventTemplateKeys = Object.keys(
+const eventTemplateKeys = /* @__PURE__ */ Object.keys(
   DEBUG_EVENT_TEMPLATES,
 ) as (keyof typeof DEBUG_EVENT_TEMPLATES)[];
 
@@ -65,7 +65,21 @@ type LogEntry = {
   success: boolean;
 };
 
+/**
+ * The debug strings ship only with the development-only debug tab, so they are
+ * registered when it first renders instead of in the production bundle.
+ */
+const registerDebugTranslations = () => {
+  i18n.addResourceBundle(
+    "pl",
+    "translation",
+    { settings: { debug: settingsDebugTranslations } },
+    true,
+  );
+};
+
 export const DebugTab: FC = () => {
+  useState(registerDebugTranslations);
   const { t } = useTranslation();
 
   const eventLabels = {
@@ -196,15 +210,16 @@ export const DebugTab: FC = () => {
       </SettingsSection>
 
       <SettingsSection title={t("settings.debug.npcDetectorTitle")}>
-        {DETECTOR_NPC_ENTRIES.map(
-          ({ key, preset, eventLabelKey, npcTypeKey }) => (
-            <SettingsRow key={key} label={t(npcTypeKey)}>
-              {renderRunButton(() =>
-                triggerEvent(createDetectorEvent(preset), t(eventLabelKey)),
-              )}
-            </SettingsRow>
-          ),
-        )}
+        {DETECTOR_NPC_ENTRIES.map(({ key, eventLabelKey, npcTypeKey }) => (
+          <SettingsRow key={key} label={t(npcTypeKey)}>
+            {renderRunButton(() =>
+              triggerEvent(
+                createDetectorEvent(DETECTOR_NPC_PRESETS[key]),
+                t(eventLabelKey),
+              ),
+            )}
+          </SettingsRow>
+        ))}
       </SettingsSection>
 
       <SettingsSection title={t("settings.debug.partyEventsTitle")}>

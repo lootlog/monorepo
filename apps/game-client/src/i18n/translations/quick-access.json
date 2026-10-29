@@ -42,7 +42,7 @@
       },
       "catching": {
         "label": "Wybierz Lootlogi dla tej postaci",
-        "hint": "Łupy i timery tej postaci trafią tylko do zaznaczonych Lootlogów.",
+        "hint": "Łupy, timery i obecność tej postaci trafią tylko do zaznaczonych Lootlogów.",
         "action": "Wybierz"
       },
       "realtime": {

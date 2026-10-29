@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
+import { createChangedOnlyStorage } from "./changed-only-storage";
 import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
 
 const STORAGE_KEY = storageKey("ll:settings:state");
@@ -13,13 +14,8 @@ interface SettingsState {
   allowWorldSelection?: boolean;
   worldByGuildId: Record<string, string>;
   guildIdByCharId: Record<string, string>;
-  presenceOrganizationIdsByCharId: Record<string, string[]>;
   ensureGuildId: (charId: string, orderedGuildIds: string[]) => void;
   setGuildId: (charId: string, guildId: string) => void;
-  setPresenceOrganizationIds: (
-    charId: string,
-    organizationIds: string[],
-  ) => void;
   setLootDebugLoggingEnabled: (enabled: boolean) => void;
   setMasterVolume: (volume: number) => void;
   setWorld: (guildId: string, world: string) => void;
@@ -39,7 +35,6 @@ export const useSettingsStore = create<SettingsState>()(
       allowWorldSelection: false,
       worldByGuildId: {},
       guildIdByCharId: {},
-      presenceOrganizationIdsByCharId: {},
       ensureGuildId: (charId, orderedGuildIds) => {
         set((state) => {
           const currentGuildId = state.guildIdByCharId[charId];
@@ -68,14 +63,6 @@ export const useSettingsStore = create<SettingsState>()(
         set((state) => ({
           guildIdByCharId: { ...state.guildIdByCharId, [charId]: guildId },
         })),
-      setPresenceOrganizationIds: (charId, organizationIds) => {
-        set((state) => ({
-          presenceOrganizationIdsByCharId: {
-            ...state.presenceOrganizationIdsByCharId,
-            [charId]: [...new Set(organizationIds)],
-          },
-        }));
-      },
       setLootDebugLoggingEnabled: (lootDebugLoggingEnabled) => {
         set({ lootDebugLoggingEnabled });
       },
@@ -121,9 +108,8 @@ export const useSettingsStore = create<SettingsState>()(
         allowWorldSelection: state.allowWorldSelection,
         worldByGuildId: state.worldByGuildId,
         guildIdByCharId: state.guildIdByCharId,
-        presenceOrganizationIdsByCharId: state.presenceOrganizationIdsByCharId,
       }),
-      storage: createJSONStorage(() => localStorage),
+      storage: createChangedOnlyStorage(createJSONStorage(() => localStorage)),
       version: 6,
     },
   ),

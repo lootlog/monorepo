@@ -1,12 +1,14 @@
 {
   "window": {
-    "title": "Zakres zbierania"
+    "title": "Lootlogi postaci"
   },
   "content": {
-    "title": "Ta postać nie zbiera danych do żadnego Lootloga",
-    "description": "Wybierz Lootlogi, do których mają trafiać łupy i timery tej postaci."
+    "title": "Dla których Lootlogów grasz tą postacią?",
+    "description": "Łupy, timery i Twoja obecność trafią tylko do zaznaczonych Lootlogów. Graczy na mapie zobaczysz tylko w tych, w których sam jesteś widoczny.",
+    "pickerLabel": "Lootlogi tej postaci",
+    "settingsHint": "Wybór zmienisz w Ustawieniach, w zakładce Zakres zbierania."
   },
   "actions": {
-    "chooseLootlogs": "Wybierz Lootlogi"
+    "done": "Gotowe"
   }
 }

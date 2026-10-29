@@ -1,9 +1,6 @@
 import { copyChatText } from "../chat-copy-text";
 import { ConfirmPopover } from "@/components/confirm-popover";
-import {
-  ContextMenuContent,
-  ContextMenuItem,
-} from "@/components/ui/context-menu";
+import { ContextMenuItem } from "@/components/ui/context-menu";
 import {
   inviteCharacterToFriends,
   inviteCharacterToParty,
@@ -38,6 +35,7 @@ export type ChatMessageContextMenuProps = {
   onReply?: () => void;
 };
 
+/** The items of a player message's menu in the transcript's shared context menu. */
 export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
   canDelete,
   canReply,
@@ -55,7 +53,7 @@ export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   return (
-    <ContextMenuContent className="ll:w-44 ll:flex ll:flex-col">
+    <>
       <ContextMenuItem onClick={() => void copyChatText(message.message)}>
         <Copy
           aria-hidden="true"
@@ -176,6 +174,6 @@ export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
           {t("contextMenu.showProfile")}
         </ContextMenuItem>
       )}
-    </ContextMenuContent>
+    </>
   );
 };

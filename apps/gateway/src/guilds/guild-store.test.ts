@@ -121,7 +121,7 @@ describe("Gateway guild store", () => {
   );
 
   test("serves a bounded stale projection during an outage without renewing its age", async () => {
-    const stale = JSON.stringify({ guilds, cachedAt: Date.now() - 90_000 });
+    const stale = JSON.stringify({ guilds, cachedAt: Date.now() - 700_000 });
     const redis = makeGuildStoreRedis(options, stale);
 
     const store = makeGuildStore(
@@ -378,7 +378,7 @@ describe("Gateway guild store", () => {
   test("serves an aged projection immediately and refreshes it for the next join", async () => {
     const redis = makeGuildStoreRedis(
       options,
-      JSON.stringify({ guilds, cachedAt: Date.now() - 90_000 }),
+      JSON.stringify({ guilds, cachedAt: Date.now() - 700_000 }),
     );
 
     const response = Promise.withResolvers<Response>();

@@ -23,6 +23,7 @@ import {
 import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { TimerClockProvider } from "./timer-clock-provider";
 import { SingleTimer } from "./single-timer";
+import { TimerGridPopups } from "./timer-grid-popups";
 
 const NOW = new Date("2026-04-22T10:00:00.000Z").getTime();
 
@@ -115,18 +116,25 @@ describe("SingleTimer", () => {
       const view = render(
         <QueryClientProvider client={fixture.queryClient}>
           <TimerClockProvider>
-            <SingleTimer
-              guildIds={[displayedTimer.guildId]}
+            <TimerGridPopups
+              gridRef={null}
               guildNamesById={{}}
-              accessPolicy={createAccessPolicy({
-                capabilities: [
-                  Permission.LOOTLOG_TIMERS_DELETE,
-                  Permission.LOOTLOG_TIMERS_RESET,
-                ],
-              })}
-              timer={displayedTimer}
-              settingsKey={displayedTimer.guildId}
-            />
+              timersByKey={new Map()}
+            >
+              <SingleTimer
+                popupKey="tile"
+                guildIds={[displayedTimer.guildId]}
+                guildNamesById={{}}
+                accessPolicy={createAccessPolicy({
+                  capabilities: [
+                    Permission.LOOTLOG_TIMERS_DELETE,
+                    Permission.LOOTLOG_TIMERS_RESET,
+                  ],
+                })}
+                timer={displayedTimer}
+                settingsKey={displayedTimer.guildId}
+              />
+            </TimerGridPopups>
           </TimerClockProvider>
         </QueryClientProvider>,
       );
@@ -194,13 +202,20 @@ describe("SingleTimer", () => {
       const content = (capabilities: Permission[]) => (
         <QueryClientProvider client={fixture.queryClient}>
           <TimerClockProvider>
-            <SingleTimer
-              guildIds={["guild-1", "guild-2"]}
+            <TimerGridPopups
+              gridRef={null}
               guildNamesById={{ "guild-1": "Alpha" }}
-              accessPolicy={createAccessPolicy({ capabilities })}
-              timer={timer}
-              settingsKey="guild-1"
-            />
+              timersByKey={new Map([["tile", timer]])}
+            >
+              <SingleTimer
+                popupKey="tile"
+                guildIds={["guild-1", "guild-2"]}
+                guildNamesById={{ "guild-1": "Alpha" }}
+                accessPolicy={createAccessPolicy({ capabilities })}
+                timer={timer}
+                settingsKey="guild-1"
+              />
+            </TimerGridPopups>
           </TimerClockProvider>
         </QueryClientProvider>
       );
@@ -246,15 +261,22 @@ describe("SingleTimer", () => {
     const view = render(
       <QueryClientProvider client={fixture.queryClient}>
         <TimerClockProvider>
-          <SingleTimer
-            guildIds={["guild-1"]}
+          <TimerGridPopups
+            gridRef={null}
             guildNamesById={{}}
-            accessPolicy={createAccessPolicy({
-              capabilities: [Permission.LOOTLOG_TIMERS_DELETE],
-            })}
-            timer={createTimer()}
-            settingsKey="guild-1"
-          />
+            timersByKey={new Map()}
+          >
+            <SingleTimer
+              popupKey="tile"
+              guildIds={["guild-1"]}
+              guildNamesById={{}}
+              accessPolicy={createAccessPolicy({
+                capabilities: [Permission.LOOTLOG_TIMERS_DELETE],
+              })}
+              timer={createTimer()}
+              settingsKey="guild-1"
+            />
+          </TimerGridPopups>
         </TimerClockProvider>
       </QueryClientProvider>,
     );
@@ -296,14 +318,21 @@ describe("SingleTimer", () => {
     const view = render(
       <QueryClientProvider client={fixture.queryClient}>
         <TimerClockProvider>
-          <SingleTimer
-            guildIds={["guild-1"]}
+          <TimerGridPopups
+            gridRef={null}
             guildNamesById={{}}
-            accessPolicy={createAccessPolicy({ capabilities: [] })}
-            timer={{ ...createTimer(), isPending: true }}
-            settingsKey="guild-1"
-            isHidden
-          />
+            timersByKey={new Map()}
+          >
+            <SingleTimer
+              popupKey="tile"
+              guildIds={["guild-1"]}
+              guildNamesById={{}}
+              accessPolicy={createAccessPolicy({ capabilities: [] })}
+              timer={{ ...createTimer(), isPending: true }}
+              settingsKey="guild-1"
+              isHidden
+            />
+          </TimerGridPopups>
         </TimerClockProvider>
       </QueryClientProvider>,
     );

@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { getCurrentSettingsDocumentsQueryKey } from "@/features/settings/persistence/settings-patch-client";
 import { createChatTestWrapper } from "../chat-test-wrapper";
+import { ChatTranscriptPopups } from "./chat-transcript-popups";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import userEvent from "@testing-library/user-event";
 import {
@@ -119,13 +120,17 @@ describe("ChatNpcMessage", () => {
 
     harness.request.mockImplementation(patchRequest);
     renderUi(
-      <ChatNpcMessage
-        all={false}
-        guildName="Guild"
-        message={makeChatMessage({
-          npc: { ...makeChatMessage().npc!, wt: 100, prof: "w", type: 3 },
-        })}
-      />,
+      <ChatTranscriptPopups>
+        <div>
+          <ChatNpcMessage
+            all={false}
+            guildName="Guild"
+            message={makeChatMessage({
+              npc: { ...makeChatMessage().npc!, wt: 100, prof: "w", type: 3 },
+            })}
+          />
+        </div>
+      </ChatTranscriptPopups>,
       { wrapper: harness.wrapper },
     );
 

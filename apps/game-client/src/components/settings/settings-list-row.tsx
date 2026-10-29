@@ -29,6 +29,7 @@ export const SettingsListRow: FC<SettingsListRowProps> = ({
     style={style}
     className={cn(
       "ll:flex ll:min-h-9 ll:items-center ll:gap-2.5 ll:rounded-sm ll:px-2 ll:py-1.5 ll:transition-colors ll:hover:bg-white/5",
+      "ll:in-[.ll-settings-list]:rounded-none ll:in-[.ll-settings-list]:first:rounded-t-sm ll:in-[.ll-settings-list]:last:rounded-b-sm ll:in-[.ll-settings-list]:not-first:border-t ll:in-[.ll-settings-list]:not-first:border-solid ll:in-[.ll-settings-list]:not-first:border-border",
       className,
     )}
   >

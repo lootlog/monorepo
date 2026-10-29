@@ -101,7 +101,6 @@ const messages = {
     LEGENDARY: "Legendarny",
   },
   itemType: {
-    prefix: "Typ: ",
     ONE_HAND_WEAPON: "Broń jednoręczna",
     TWO_HAND_WEAPON: "Broń dwuręczna",
     ONE_AND_HALF_HAND_WEAPON: "Broń półtoraręczna",

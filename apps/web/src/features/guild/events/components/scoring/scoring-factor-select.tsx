@@ -37,7 +37,7 @@ export const ScoringFactorSelect = ({
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex min-w-0 items-center gap-1.5">
       <Select
         value={value}
         onValueChange={onChange}
@@ -46,7 +46,7 @@ export const ScoringFactorSelect = ({
           label: <>{getScoringFactorLabel(factor, t)}</>,
         }))}
       >
-        <SelectTrigger id={id} size="sm" className="text-[12px]">
+        <SelectTrigger id={id} className="w-full min-w-0">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -59,7 +59,10 @@ export const ScoringFactorSelect = ({
       </Select>
       <Tooltip>
         <TooltipTrigger
-          render=<HelpCircle className="size-3.5 text-muted-foreground/30 shrink-0 cursor-help" />
+          render=<HelpCircle
+            aria-label={getScoringFactorDescription(value, t)}
+            className="size-4 shrink-0 cursor-help text-muted-foreground"
+          />
         />
         <TooltipContent side="top" className="max-w-[220px]">
           <p className="text-xs">{getScoringFactorDescription(value, t)}</p>

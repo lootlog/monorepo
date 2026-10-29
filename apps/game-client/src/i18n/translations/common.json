@@ -95,7 +95,7 @@
     "forbidden": "Nie masz dostępu do graczy online",
     "notInLootlog": "Nie gra z Twoim Lootlogiem",
     "catchingGuilds": {
-      "title": "Dodaje łupy i timery do:",
+      "title": "Gra dla:",
       "empty": "Brak wspólnych Lootlogów",
       "more": "+{{count}}"
     }

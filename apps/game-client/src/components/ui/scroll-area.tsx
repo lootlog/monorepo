@@ -91,7 +91,7 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
         <BaseScrollArea.Viewport
           ref={setViewportRef}
           data-ll-scroll-area-viewport=""
-          className="ll:h-full ll:w-full ll:max-h-[inherit] ll:rounded-[inherit] ll:select-text"
+          className="ll-scroll-area-viewport ll:h-full ll:w-full ll:max-h-[inherit] ll:rounded-[inherit] ll:select-text"
           style={{ ...overflowStyle, ...viewportStyle }}
         >
           <BaseScrollArea.Content
