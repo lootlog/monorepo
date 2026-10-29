@@ -5,16 +5,23 @@ import { makeCatalogModule } from "./catalog.service.js";
 
 const logger = { info() {}, warn() {}, error() {} };
 
-const catalogWith = (hits: unknown[]) => {
+/** A Meilisearch that answers item searches with `hits` and NPC searches with `npcs`. */
+const catalogWith = (hits: unknown[], npcs: unknown[] = []) => {
   const searches: Array<{ filter?: string; attributesToRetrieve?: string[] }> =
     [];
 
   const client = new Meilisearch({
     host: "http://search.invalid",
-    httpClient: (_input, init) => {
-      searches.push(JSON.parse(String(init?.body)));
+    httpClient: (input, init) => {
+      const isNpcSearch = String(input).includes("/indexes/npcs/");
+      const results = isNpcSearch ? npcs : hits;
 
-      return Promise.resolve({ hits, estimatedTotalHits: hits.length });
+      if (!isNpcSearch) searches.push(JSON.parse(String(init?.body)));
+
+      return Promise.resolve({
+        hits: results,
+        estimatedTotalHits: results.length,
+      });
     },
   });
 
@@ -23,6 +30,7 @@ const catalogWith = (hits: unknown[]) => {
 
 const nosferatu = {
   key: "pl_template_7001_2",
+  monsterKey: "pl_Nosferatu_HERO",
   id: 7001,
   name: "Nosferatu",
   lvl: 120,
@@ -35,29 +43,35 @@ const stored = (
   identityNamespace: "template" | "runtime",
 ) => ({ ...source, identityNamespace, gameVersion: "pl" });
 
-test("lists an NPC's newest drops by the players' day, once per monster, without the time or worlds", async () => {
-  const { catalog, searches } = catalogWith([
-    {
-      id: 1,
-      name: "Kieł Nosferatu",
-      icon: "kiel.gif",
-      stat: "",
-      lvl: 120,
-      rarity: "LEGENDARY",
-      type: "ONE_HAND_WEAPON",
-      // 23:30 UTC is already the next day in Poland.
-      firstSeenAt: Date.parse("2026-10-28T23:30:00.000Z"),
-      // The same boss as seen by an older client and by a current one.
-      droppedBy: [
-        stored({ ...nosferatu, key: "pl_runtime_9001_2", id: 9001 }, "runtime"),
-        stored(nosferatu, "template"),
-      ],
-    },
-  ]);
+test("lists a monster's newest drops from any of its identities, by the players' day, without the time or worlds", async () => {
+  const { catalog, searches } = catalogWith(
+    [
+      {
+        id: 1,
+        name: "Kieł Nosferatu",
+        icon: "kiel.gif",
+        stat: "",
+        lvl: 120,
+        rarity: "LEGENDARY",
+        type: "ONE_HAND_WEAPON",
+        // 23:30 UTC is already the next day in Poland.
+        firstSeenAt: Date.parse("2026-10-28T23:30:00.000Z"),
+        // The same boss as seen by an older client and by a current one.
+        droppedBy: [
+          stored(
+            { ...nosferatu, key: "pl_runtime_9001_2", id: 9001 },
+            "runtime",
+          ),
+          stored(nosferatu, "template"),
+        ],
+      },
+    ],
+    [{ monsterKey: nosferatu.monsterKey }],
+  );
 
   const response = await Effect.runPromise(
     catalog.getItems({
-      droppedBy: "pl_template_7001_2",
+      droppedBy: "pl_runtime_9001_2",
       rarities: ["LEGENDARY"],
       sort: "newest",
     }),
@@ -67,12 +81,22 @@ test("lists an NPC's newest drops by the players' day, once per monster, without
     expect.objectContaining({
       name: "Kieł Nosferatu",
       firstSeenOn: "2026-10-29",
-      droppedBy: [nosferatu],
+      droppedBy: [
+        {
+          key: "pl_template_7001_2",
+          id: 7001,
+          name: "Nosferatu",
+          lvl: 120,
+          icon: "nosferatu.gif",
+          type: "HERO",
+        },
+      ],
     }),
   ]);
   expect(response.hits[0]).not.toHaveProperty("firstSeenAt");
   expect(searches[0]).toMatchObject({
-    filter: 'rarity IN ["LEGENDARY"] AND droppedByKeys = "pl_template_7001_2"',
+    filter:
+      'rarity IN ["LEGENDARY"] AND droppedByMonsterKeys = "pl_Nosferatu_HERO"',
     sort: ["firstSeenAt:desc"],
   });
   expect(searches[0]?.attributesToRetrieve).not.toContain("worlds");

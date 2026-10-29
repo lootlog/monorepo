@@ -27,7 +27,7 @@ export const SEARCH_INDEX_PRIMARY_KEY = "uid";
 /** The settings every index runs with; the seed script applies the same ones. */
 export const searchIndexSettings: IndexSettings = {
   [NPCS_INDEX]: {
-    filterableAttributes: ["id", "name", "type", "uid"],
+    filterableAttributes: ["id", "name", "type", "uid", "monsterKey"],
     sortableAttributes: ["firstSeenAt"],
   },
   [PLAYERS_INDEX]: { filterableAttributes: ["name", "world"] },
@@ -43,6 +43,7 @@ export const searchIndexSettings: IndexSettings = {
       "requiredProfessions",
       "statsKeys",
       "droppedByKeys",
+      "droppedByMonsterKeys",
       "droppedByTypes",
       "firstSeenAt",
     ],

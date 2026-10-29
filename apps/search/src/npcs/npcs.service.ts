@@ -48,6 +48,18 @@ const NAMESPACE_PREFERENCE: Record<NpcIdentityNamespace, number> = {
   [NpcIdentityNamespace.RUNTIME]: 2,
 };
 
+/**
+ * One monster across its catalog identities: a boss seen by older clients
+ * keeps runtime or legacy entries beside its template one, all with the
+ * edition, name and type in common. Equal names in different editions are
+ * different monsters.
+ */
+export const npcMonsterKey = (npc: {
+  gameVersion: GameVersion;
+  name: string;
+  type: string | null;
+}) => `${npc.gameVersion}_${npc.name}_${npc.type}`;
+
 export const collapseByNameAndType = <
   Hit extends {
     gameVersion: GameVersion;
@@ -61,8 +73,7 @@ export const collapseByNameAndType = <
   const preferred = new Map<string, Hit>();
 
   for (const hit of hits) {
-    // Equal names in different editions are different NPCs.
-    const key = `${hit.gameVersion}_${hit.name}_${hit.type}`;
+    const key = npcMonsterKey(hit);
     const current = preferred.get(key);
 
     if (
@@ -106,6 +117,7 @@ export const toNpcDocument = (npc: IndexNpc) => {
     worlds: [npc.world],
     gameVersion: npc.gameVersion,
     uid: npcCatalogKey({ ...npc, identityNamespace }),
+    monsterKey: npcMonsterKey({ ...npc, type }),
     observedLootId: npc.lootId ?? null,
     firstSeenAt: toSeenAt(npc.observedAt),
   };
