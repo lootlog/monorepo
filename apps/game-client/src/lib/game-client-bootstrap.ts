@@ -66,12 +66,16 @@ const waitForCharacter = (signal: AbortSignal) =>
     signal.addEventListener("abort", abort);
   });
 
+// The startup queries wait for this one request, so a hung request must
+// fail into their own fetches instead of holding all of them.
+const BOOTSTRAP_REQUEST_TIMEOUT_MS = 10_000;
+
 const load = async (queryClient: QueryClient, signal: AbortSignal) => {
   const { accountId, characterId } = await waitForCharacter(signal);
 
   const response = await usersControllerGetGameClientBootstrap(
     { gameAccountId: accountId, characterId },
-    { signal },
+    { signal, apiClient: { timeoutMs: BOOTSTRAP_REQUEST_TIMEOUT_MS } },
   );
 
   const parts = new Map<string, unknown>();
