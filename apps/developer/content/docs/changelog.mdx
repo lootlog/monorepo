@@ -7,22 +7,18 @@ description: A reference for HTTP, realtime, and game client integrations.
 
 The Search API adds two read-only endpoints that work without an API key or a
 session: `GET /public/catalog/items` and `GET /public/catalog/npcs`. They serve
-game facts only. No player, world or Organization appears in a response.
+game facts only. No player, world or Organization appears in a response, and
+neither does when Lootlog first saw an item or NPC, which would date boss kills.
 
-- `firstSeenOn` is the day Lootlog first observed the item or NPC, as
-  `YYYY-MM-DD` in Polish time, or `null` for entries observed before Lootlog
-  recorded first sightings.
 - Each item lists `droppedBy`, up to 20 NPCs it dropped from. A fight's drop
   counts for its only NPC, or for its only boss (elite II or III, hero, event
   hero, titan or colossus) when it fought a group.
-- `sort=newest` orders by first sighting, latest first; items also sort by
-  `lvl` or `name`. Items filter by `ids`, `rarities`, `types`, `professions`,
-  `minLevel`, `maxLevel`, `droppedBy` (an NPC `key`), `dropSourceTypes`,
-  `statKeys` (a listed set of stats, all required), `legendaryBonuses` (any
-  of the listed bonuses, such as `verycrit` or `curse`) and
-  `firstSeenWithinDays`; NPCs filter by `ids`, `keys` and `types`. Both
-  endpoints accept `gameVersion` (`pl` or `en`) to list one edition.
-  `limit` is capped at 96.
+- Items sort by `lvl` or `name`. They filter by `ids`, `rarities`, `types`,
+  `professions`, `minLevel`, `maxLevel`, `droppedBy` (an NPC `key`),
+  `dropSourceTypes`, `statKeys` (a listed set of stats, all required) and
+  `legendaryBonuses` (any of the listed bonuses, such as `verycrit` or
+  `curse`); NPCs filter by `ids`, `keys` and `types`. Both endpoints accept
+  `gameVersion` (`pl` or `en`) to list one edition. `limit` is capped at 96.
 - Requests share the public rate limit of the main API's `/public` routes.
 
 ## Unreleased (breaking): Gains and best days removed from personal kill analytics

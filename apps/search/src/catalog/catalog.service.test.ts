@@ -1,4 +1,4 @@
-import { expect, setSystemTime, test } from "bun:test";
+import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { Meilisearch } from "meilisearch";
 import { makeCatalogModule } from "./catalog.service.js";
@@ -10,7 +10,10 @@ const catalogWith = (hits: unknown[], npcs: unknown[] = []) => {
   const searches: Array<{ filter?: string; attributesToRetrieve?: string[] }> =
     [];
 
-  const npcSearches: Array<{ filter?: string }> = [];
+  const npcSearches: Array<{
+    filter?: string;
+    attributesToRetrieve?: string[];
+  }> = [];
 
   const client = new Meilisearch({
     host: "http://search.invalid",
@@ -47,7 +50,7 @@ const stored = (
   identityNamespace: "template" | "runtime",
 ) => ({ ...source, identityNamespace, gameVersion: "pl" });
 
-test("lists a monster's newest drops from any of its identities, by the players' day, without the time or worlds", async () => {
+test("lists a monster's drops from any of its identities, without worlds or when Lootlog first saw them", async () => {
   const { catalog, searches } = catalogWith(
     [
       {
@@ -58,8 +61,6 @@ test("lists a monster's newest drops from any of its identities, by the players'
         lvl: 120,
         rarity: "LEGENDARY",
         type: "ONE_HAND_WEAPON",
-        // 23:30 UTC is already the next day in Poland.
-        firstSeenAt: Date.parse("2026-10-28T23:30:00.000Z"),
         // The same boss as seen by an older client and by a current one.
         droppedBy: [
           stored(
@@ -77,14 +78,13 @@ test("lists a monster's newest drops from any of its identities, by the players'
     catalog.getItems({
       droppedBy: "pl_runtime_9001_2",
       rarities: ["LEGENDARY"],
-      sort: "newest",
+      sort: "lvl:desc",
     }),
   );
 
   expect(response.hits).toEqual([
     expect.objectContaining({
       name: "Kieł Nosferatu",
-      firstSeenOn: "2026-10-29",
       droppedBy: [
         {
           key: "pl_template_7001_2",
@@ -97,13 +97,14 @@ test("lists a monster's newest drops from any of its identities, by the players'
       ],
     }),
   ]);
-  expect(response.hits[0]).not.toHaveProperty("firstSeenAt");
   expect(searches[0]).toMatchObject({
     filter:
       'rarity IN ["LEGENDARY"] AND droppedByMonsterKeys = "pl_Nosferatu_HERO"',
-    sort: ["firstSeenAt:desc"],
+    sort: ["lvl:desc"],
   });
+  // A first sighting dates a boss kill, and so its respawn.
   expect(searches[0]?.attributesToRetrieve).not.toContain("worlds");
+  expect(searches[0]?.attributesToRetrieve).not.toContain("firstSeenAt");
 });
 
 test("a malformed NPC key matches nothing instead of reaching the filter", async () => {
@@ -124,30 +125,25 @@ test("finds one edition's NPCs by id", async () => {
     catalog.getNpcs({ gameVersion: "pl", ids: [257036, 257037] }),
   );
 
-  expect(npcSearches[0]?.filter).toBe(
-    'gameVersion = "pl" AND id IN [257036, 257037]',
-  );
+  expect(npcSearches[0]).toMatchObject({
+    filter: 'gameVersion = "pl" AND id IN [257036, 257037]',
+  });
+  expect(npcSearches[0]?.attributesToRetrieve).not.toContain("firstSeenAt");
 });
 
-test("narrows items to one edition's recent drops of a kind of boss that carry the required stats and bonuses", async () => {
+test("narrows items to one edition's drops of a kind of boss that carry the required stats and bonuses", async () => {
   const { catalog, searches } = catalogWith([]);
-  setSystemTime(new Date("2026-10-29T12:00:00.000Z"));
 
-  try {
-    await Effect.runPromise(
-      catalog.getItems({
-        gameVersion: "pl",
-        statKeys: ["legbon", "crit"],
-        legendaryBonuses: ["verycrit", "curse"],
-        dropSourceTypes: ["TITAN"],
-        firstSeenWithinDays: 7,
-      }),
-    );
-  } finally {
-    setSystemTime();
-  }
+  await Effect.runPromise(
+    catalog.getItems({
+      gameVersion: "pl",
+      statKeys: ["legbon", "crit"],
+      legendaryBonuses: ["verycrit", "curse"],
+      dropSourceTypes: ["TITAN"],
+    }),
+  );
 
   expect(searches[0]?.filter).toBe(
-    `gameVersion = "pl" AND statsKeys = "legbon" AND statsKeys = "crit" AND legendaryBonus IN ["verycrit", "curse"] AND droppedByTypes IN ["TITAN"] AND firstSeenAt >= ${Date.parse("2026-10-22T12:00:00.000Z")}`,
+    `gameVersion = "pl" AND statsKeys = "legbon" AND statsKeys = "crit" AND legendaryBonus IN ["verycrit", "curse"] AND droppedByTypes IN ["TITAN"]`,
   );
 });

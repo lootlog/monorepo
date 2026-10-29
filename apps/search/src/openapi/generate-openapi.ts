@@ -67,9 +67,6 @@ preserveOpenApi30Contract(
       type: "string",
     }),
     "CatalogController_getItems:dropSourceTypes": formArray({ type: "string" }),
-    "CatalogController_getItems:firstSeenWithinDays": {
-      schema: { type: "number" },
-    },
     "CatalogController_getItems:limit": numberWithDefault(24),
     "CatalogController_getItems:offset": numberWithDefault(0),
     "CatalogController_getNpcs:ids": {

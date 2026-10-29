@@ -1,4 +1,3 @@
-import { getDateFormatter } from "@lootlog/datetime";
 import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { attemptMeilisearch } from "#src/meilisearch/search-operation-failure";
@@ -24,9 +23,6 @@ const ITEM_TYPE = /^[A-Z_]+$/;
 // namespace and numeric ids, such as `pl_template_257636_2`.
 const CATALOG_KEY = /^[a-z]{2}(?:_[a-z]+)?_\d+_\d+$/;
 
-/** The players' calendar day; the catalog never shows the time of a drop. */
-const POLISH_TIME_ZONE = "Europe/Warsaw";
-
 type CatalogItemDocument = {
   id: number;
   name: string;
@@ -35,7 +31,6 @@ type CatalogItemDocument = {
   lvl: number;
   rarity: string | null;
   type: string | null;
-  firstSeenAt?: number | null;
   droppedBy?: DropSource[];
 };
 
@@ -48,13 +43,7 @@ type CatalogNpcDocument = {
   lvl: number;
   type: CatalogNpcsResponseDto_Output["hits"][number]["type"];
   gameVersion: CatalogNpcsResponseDto_Output["hits"][number]["gameVersion"];
-  firstSeenAt?: number | null;
 };
-
-const toFirstSeenOn = (firstSeenAt: number | null | undefined) =>
-  firstSeenAt === null || firstSeenAt === undefined
-    ? null
-    : getDateFormatter(POLISH_TIME_ZONE).format(new Date(firstSeenAt));
 
 const inFilter = (attribute: string, values: ReadonlyArray<string | number>) =>
   `${attribute} IN [${values.map((value) => JSON.stringify(value)).join(", ")}]`;
@@ -64,14 +53,8 @@ const page = (query: { limit?: number; offset?: number }) => ({
   offset: Math.max(Math.floor(query.offset ?? 0), 0),
 });
 
-/** Newest first; entries without a first sighting sort after every dated one. */
-const sortBy = (sort: CatalogControllerGetItemsQuery["sort"]) => {
-  if (sort === undefined || sort === "relevance") return undefined;
-
-  return [sort === "newest" ? "firstSeenAt:desc" : sort];
-};
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+const sortBy = (sort: CatalogControllerGetItemsQuery["sort"]) =>
+  sort === undefined || sort === "relevance" ? undefined : [sort];
 
 const gameVersionFilter = (gameVersion: string | undefined) =>
   gameVersion === undefined
@@ -107,9 +90,6 @@ const itemFilters = (
     query.dropSourceTypes?.length
       ? inFilter("droppedByTypes", query.dropSourceTypes)
       : undefined,
-    query.firstSeenWithinDays === undefined
-      ? undefined
-      : `firstSeenAt >= ${Date.now() - Math.max(query.firstSeenWithinDays, 0) * DAY_MS}`,
     monsterKey === undefined
       ? undefined
       : `droppedByMonsterKeys = ${JSON.stringify(monsterKey)}`,
@@ -160,7 +140,6 @@ export const makeCatalogModule = (
         "lvl",
         "rarity",
         "type",
-        "firstSeenAt",
         "droppedBy",
       ],
       filter: filters.length > 0 ? filters.join(" AND ") : undefined,
@@ -179,9 +158,8 @@ export const makeCatalogModule = (
 
     return {
       estimatedTotalHits: response.estimatedTotalHits ?? response.hits.length,
-      hits: response.hits.map(({ firstSeenAt, droppedBy, ...item }) => ({
+      hits: response.hits.map(({ droppedBy, ...item }) => ({
         ...item,
-        firstSeenOn: toFirstSeenOn(firstSeenAt),
         // A boss seen by older clients keeps a runtime or legacy entry beside
         // its template one; each monster is listed once.
         droppedBy: collapseByNameAndType(droppedBy ?? []).map(
@@ -223,10 +201,8 @@ export const makeCatalogModule = (
         "lvl",
         "type",
         "gameVersion",
-        "firstSeenAt",
       ],
       filter: filters.length > 0 ? filters.join(" AND ") : undefined,
-      sort: sortBy(query.sort),
       // Pages and counts are over monsters, not over their catalog identities.
       distinct: "monsterKey",
     };
@@ -244,10 +220,9 @@ export const makeCatalogModule = (
     return {
       estimatedTotalHits: response.estimatedTotalHits ?? response.hits.length,
       hits: collapseByNameAndType(response.hits).map(
-        ({ uid, firstSeenAt, identityNamespace: _namespace, ...npc }) => ({
+        ({ uid, identityNamespace: _namespace, ...npc }) => ({
           ...npc,
           key: uid,
-          firstSeenOn: toFirstSeenOn(firstSeenAt),
         }),
       ),
     } satisfies CatalogNpcsResponseDto_Output;
