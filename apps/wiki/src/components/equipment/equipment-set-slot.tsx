@@ -11,27 +11,34 @@ import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import type { EquipmentSlot } from "@/lib/equipment-slots";
 import { findRequirementIssues } from "@/lib/item-stat-totals";
 import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
+import { EquipmentSlotPreview } from "./equipment-slot-preview";
 
 const SLOT_FRAME =
-  "relative flex size-11 items-center justify-center rounded-md border bg-background/60";
+  "relative flex size-11 items-center justify-center rounded-md border bg-background/60 transition-[color,border-color,box-shadow] duration-200 motion-reduce:transition-none";
 
 type EquipmentSetSlotProps = {
   slot: EquipmentSlot;
   item: CatalogItemDtoOutput | undefined;
-  /** The item the User points at would replace this slot's. */
-  isPreviewTarget: boolean;
+  /** The item the User points at, which this slot would wear instead. */
+  preview: CatalogItemDtoOutput | null;
 };
 
 /** One worn item, or an empty slot that opens a search for it. */
 export function EquipmentSetSlot({
   slot,
   item,
-  isPreviewTarget,
+  preview,
 }: EquipmentSetSlotProps) {
   const { set, unequip } = useEquipmentSet();
   const label = t(`slots.${slot.id}`);
   const Icon = slot.icon;
-  const previewClass = isPreviewTarget && "border-dashed border-primary";
+
+  const previewClass =
+    preview && "border-dashed border-primary ring-2 ring-primary/25";
+
+  const overlay = preview ? (
+    <EquipmentSlotPreview key={preview.id} item={preview} />
+  ) : null;
 
   if (!item) {
     return (
@@ -47,11 +54,12 @@ export function EquipmentSetSlot({
         title={label}
         className={cn(
           SLOT_FRAME,
-          "border-border/60 text-muted-foreground outline-none transition-colors hover:border-primary/50 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none",
+          "border-border/60 text-muted-foreground outline-none hover:border-primary/50 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring",
           previewClass,
         )}
       >
         <Icon aria-hidden="true" className="size-5" />
+        {overlay}
       </Link>
     );
   }
@@ -78,6 +86,7 @@ export function EquipmentSetSlot({
         labels={ITEM_TILE_LABELS}
         renderStat={renderItemStat}
       />
+      {overlay}
       {issues.length > 0 ? (
         <span
           role="img"

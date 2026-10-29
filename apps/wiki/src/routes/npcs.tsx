@@ -5,6 +5,7 @@ import { NpcTile } from "@lootlog/ui/components/npc-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { BasicSearchForm } from "@/components/basic-search-form";
 import { t } from "@/i18n/messages";
+import { npcPageParams, WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { formatFirstSeenOn } from "@/lib/item-options";
 import { useBasicSearchForm } from "./-use-basic-search-form";
 import {
@@ -38,7 +39,12 @@ function NpcsRoute() {
 
   // Without a name, the page lists the NPCs Lootlog saw first most recently.
   const { data, isError } = useCatalogControllerGetNpcs(
-    { search: query, limit, sort: query ? "relevance" : "newest" },
+    {
+      search: query,
+      gameVersion: WIKI_GAME_VERSION,
+      limit,
+      sort: query ? "relevance" : "newest",
+    },
     { query: { placeholderData: (previousData) => previousData } },
   );
 
@@ -70,8 +76,8 @@ function NpcsRoute() {
             ? data.hits.map((npc) => (
                 <li key={npc.key}>
                   <Link
-                    to="/npcs/$npcKey"
-                    params={{ npcKey: npc.key }}
+                    to="/npcs/$npcSlug"
+                    params={npcPageParams(npc)}
                     className="flex items-center gap-3 rounded-lg border border-border/50 bg-card p-3 outline-none transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
                   >
                     <NpcTile
