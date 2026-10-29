@@ -7,7 +7,8 @@ import { findEquipmentSlotById } from "@/lib/equipment-slots";
 
 /**
  * The item search as the address bar holds it, so a link opens the same
- * search. Lists are comma separated; empty means no filter.
+ * search. Lists are comma separated; empty means no filter, and an empty sort
+ * follows the query (`effectiveSort`).
  */
 export type ItemsSearch = {
   query: string;
@@ -29,6 +30,18 @@ type SortOption = (typeof SORT_OPTIONS)[number];
 
 const isSortOption = (value: string): value is SortOption =>
   SORT_OPTIONS.some((option) => option === value);
+
+/**
+ * The chosen sort, or relevance for a query and the highest level without
+ * one: with no words to match, every item is equally relevant.
+ */
+export const effectiveSort = (
+  search: Pick<ItemsSearch, "query" | "sort">,
+): SortOption => {
+  if (isSortOption(search.sort)) return search.sort;
+
+  return search.query.trim() ? "relevance" : "lvl:desc";
+};
 
 /** Bosses an item can come from, strongest first. */
 export const BOSS_OPTIONS = [
@@ -97,7 +110,7 @@ export function validateItemsSearch(search: {
     sort:
       typeof search.sort === "string" && isSortOption(search.sort)
         ? search.sort
-        : "relevance",
+        : "",
   };
 }
 
@@ -124,5 +137,5 @@ export const toCatalogParams = (
   statKeys: splitList(search.stats),
   legendaryBonuses: splitList(search.bonuses),
   dropSourceTypes: splitList(search.bosses),
-  sort: isSortOption(search.sort) ? search.sort : undefined,
+  sort: effectiveSort(search),
 });
