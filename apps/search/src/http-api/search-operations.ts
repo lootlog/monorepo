@@ -12,6 +12,7 @@ import { makeNpcsModule } from "#src/npcs/npcs.service";
 import { makePlayersModule } from "#src/players/players.service";
 import { effectLogger } from "#src/shared/logger";
 import type { IndexItemsCommand } from "#src/items/index-items-command";
+import type { RetiredDropsCommand } from "#src/items/retired-drops-command";
 import type { IndexNpcsCommand } from "#src/npcs/index-npcs-command";
 import type { IndexPlayersCommand } from "#src/players/index-players-command";
 import type {
@@ -69,6 +70,9 @@ export interface SearchOperationsValue {
   ) => Effect.Effect<CatalogNpcsResponseDto_Output, SearchOperationFailureType>;
   readonly indexItems: (
     data: IndexItemsCommand,
+  ) => Effect.Effect<void, SearchOperationFailureType>;
+  readonly markRetiredDrops: (
+    data: RetiredDropsCommand,
   ) => Effect.Effect<void, SearchOperationFailureType>;
   readonly indexNpcs: (
     data: IndexNpcsCommand,
@@ -151,6 +155,7 @@ export class SearchOperations extends Context.Service<
             { concurrency: "unbounded" },
           ),
         indexItems: items.indexItems,
+        markRetiredDrops: items.markRetiredDrops,
         indexNpcs: npcs.indexNpcs,
         indexPlayers: players.indexPlayers,
       });

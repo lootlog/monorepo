@@ -800,6 +800,9 @@ components:
         type:
           nullable: true
           type: string
+        retired:
+          type: boolean
+          description: "Whether the NPC no longer drops the item: it has been killed far too often since its last drop for the drop to be chance."
       required:
         - key
         - id
@@ -807,6 +810,7 @@ components:
         - lvl
         - icon
         - type
+        - retired
       description: An NPC an item drops from
     SearchAllResponseDto_Output:
       type: object

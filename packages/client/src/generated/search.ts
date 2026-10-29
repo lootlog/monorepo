@@ -95,6 +95,8 @@ export interface CatalogDropSourceDtoOutput {
   icon: string | null;
   /** @nullable */
   type: string | null;
+  /** Whether the NPC no longer drops the item: it has been killed far too often since its last drop for the drop to be chance. */
+  retired: boolean;
 }
 
 /**

@@ -154,7 +154,7 @@ test("failed existing-world reads prevent overwriting indexed worlds", async () 
   expect(requests).toEqual(["/indexes/items/documents"]);
 });
 
-test("keeps an item's earliest sighting and every NPC of its edition it dropped from across reordered deliveries", async () => {
+test("keeps an item's earliest sighting, every NPC of its edition it dropped from, and the retirements no drop disproved across reordered deliveries", async () => {
   const written: Array<{ uid: string; firstSeenAt: number | null }> = [];
   const nosferatu = npcDrop(7001, "Nosferatu");
   const stored = itemCatalogKey(item(1));
@@ -176,6 +176,10 @@ test("keeps an item's earliest sighting and every NPC of its edition it dropped 
                     firstSeenAt: Date.parse("2026-10-20T12:00:00.000Z"),
                     droppedBy: [nosferatu.source],
                     droppedByKeys: [nosferatu.source.key],
+                    retiredDropMonsterKeys: [
+                      nosferatu.source.monsterKey,
+                      "pl_Kostucha_HERO",
+                    ],
                   },
                 ],
               },
@@ -222,7 +226,67 @@ test("keeps an item's earliest sighting and every NPC of its edition it dropped 
       uid: stored,
       firstSeenAt: Date.parse("2026-10-18T21:30:00.000Z"),
       droppedByKeys: [nosferatu.source.key, vampire.source.key],
+      // Nosferatu dropped it again; Kostucha has not.
+      retiredDropMonsterKeys: ["pl_Kostucha_HERO"],
     }),
+  ]);
+});
+
+test("replaces one monster's retired drops without touching other monsters' or unchanged entries", async () => {
+  const fetches: Array<{ filter: string }> = [];
+  const written: unknown[] = [];
+
+  const stored = [
+    { uid: "pl_1_a", id: 1 },
+    {
+      uid: "pl_2_a",
+      id: 2,
+      retiredDropMonsterKeys: ["pl_Nosferatu_HERO", "pl_Kostucha_HERO"],
+    },
+    { uid: "pl_3_a", id: 3, retiredDropMonsterKeys: ["pl_Nosferatu_HERO"] },
+  ];
+
+  const client = new Meilisearch({
+    host: "http://search.invalid",
+    httpClient: (input, init) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.startsWith("/tasks/"))
+        return Promise.resolve({ uid: 1, status: "succeeded" });
+
+      if (url.pathname.endsWith("/documents/fetch")) {
+        fetches.push(JSON.parse(String(init?.body)));
+
+        return Promise.resolve({ results: stored });
+      }
+
+      expect(init?.method).toBe("PUT");
+      written.push(...JSON.parse(String(init?.body)));
+
+      return Promise.resolve({ taskUid: 1, status: "enqueued" });
+    },
+  });
+
+  await Effect.runPromise(
+    makeItemsModule(client, logger).markRetiredDrops({
+      monsters: [
+        {
+          gameVersion: "pl",
+          name: "Nosferatu",
+          type: "HERO",
+          retiredItemIds: [1, 3],
+        },
+      ],
+    }),
+  );
+
+  expect(fetches[0]?.filter).toBe(
+    'droppedByMonsterKeys = "pl_Nosferatu_HERO" AND (retiredDropMonsterKeys = "pl_Nosferatu_HERO" OR id IN [1, 3])',
+  );
+  // Only the retired field is written, so drops indexed meanwhile survive.
+  expect(written).toEqual([
+    { uid: "pl_1_a", retiredDropMonsterKeys: ["pl_Nosferatu_HERO"] },
+    { uid: "pl_2_a", retiredDropMonsterKeys: ["pl_Kostucha_HERO"] },
   ]);
 });
 

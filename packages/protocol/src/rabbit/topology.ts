@@ -135,6 +135,7 @@ export const RabbitRoutingKey = {
   PRESENCE_COVERAGE_CHECK: "presence.coverage.check",
   PRESENCE_COVERAGE_CHECK_DLQ: "presence.coverage.check.dlq",
   SEARCH_ITEMS_INDEX: "search.items.index",
+  SEARCH_ITEMS_RETIRED_DROPS: "search.items.retired-drops",
   SEARCH_NPCS_INDEX: "search.npcs.index",
   SEARCH_PLAYERS_INDEX: "search.players.index",
   USERS_PARTY_READY_ROOM_UPDATED: "users.party-ready-room.updated",

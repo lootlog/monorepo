@@ -9,6 +9,7 @@ const source = (name: string, type: string) => ({
   lvl: 100,
   icon: null,
   type,
+  retired: false,
 });
 
 const item = (

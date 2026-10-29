@@ -8,9 +8,9 @@ export const getMeilisearchErrorCode = Function.compose(
   (result) => Option.getOrNull(Option.map(result, (error) => error.cause.code)),
 );
 
-export function buildMeilisearchStringInFilter(
+export function buildMeilisearchInFilter(
   fieldName: string,
-  values: string[],
+  values: ReadonlyArray<string | number>,
 ): string {
   const formattedValues = values.map((value) => JSON.stringify(value));
 
@@ -24,7 +24,7 @@ export function buildMeilisearchSearchTermFilter(
   if (Array.isArray(search)) {
     return {
       searchTerm: "",
-      filter: buildMeilisearchStringInFilter(fieldName, search),
+      filter: buildMeilisearchInFilter(fieldName, search),
     };
   }
 
@@ -56,7 +56,7 @@ export function buildMeilisearchNameQuery({
   }
 
   if (ids && ids.length > 0) {
-    filters.push(`id IN [${ids.join(", ")}]`);
+    filters.push(buildMeilisearchInFilter("id", ids));
   }
 
   if (world) {
