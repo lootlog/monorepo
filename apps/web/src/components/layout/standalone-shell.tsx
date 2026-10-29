@@ -1,5 +1,5 @@
-import { AppContentFrame } from "./app-content-frame";
-import { AppTopBar } from "@/components/layout/app-top-bar";
+import { AppContentFrame } from "@lootlog/ui/components/app-content-frame";
+import { AppTopBar } from "@lootlog/ui/components/app-top-bar";
 import { ROUTES } from "@/config/routes";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";

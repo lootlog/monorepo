@@ -1,6 +1,6 @@
 import type { LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem as LootlogConfigNpcAllowedRarity } from "@lootlog/client/main";
 import { Crown, Sparkles, Swords, type LucideIcon } from "lucide-react";
-import { LOOT_RARITY_TEXT_CLASS } from "@/features/guild/loots-list/loot-rarity-colors";
+import { LOOT_RARITY_TEXT_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 
 export const NPC_RARITY_CONFIG = [
   {

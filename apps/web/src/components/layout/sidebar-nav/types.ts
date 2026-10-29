@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { SidebarNavBadge } from "@lootlog/ui/components/sidebar-nav-button";
 
 export interface MenuItem {
   active: boolean;
@@ -8,8 +9,5 @@ export interface MenuItem {
   available: boolean;
   enabled: boolean;
   group?: string;
-  badge?: {
-    content: string | number;
-    variant?: "default" | "secondary" | "destructive" | "outline" | "white";
-  };
+  badge?: SidebarNavBadge;
 }

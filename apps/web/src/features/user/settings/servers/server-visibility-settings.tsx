@@ -1,4 +1,4 @@
-import { FILTER_PILL_CLASS } from "@/components/common/filter-pill";
+import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,

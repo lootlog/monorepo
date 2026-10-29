@@ -1,8 +1,8 @@
 import { createContext } from "react";
 import type { CustomThemeDefinition } from "@lootlog/schema/custom-theme";
-import type { ThemeId, ResolvedThemeId } from "@/themes";
-import type { AppliedCustomTheme } from "@/themes/custom-theme";
-import type { ThemeSelection } from "@/themes/resolver";
+import type { ThemeId, ResolvedThemeId } from "@lootlog/ui/themes/catalog";
+import type { AppliedCustomTheme } from "@lootlog/ui/themes/custom-theme";
+import type { ThemeSelection } from "@lootlog/ui/themes/resolver";
 
 export interface ThemeContextType {
   /** The built-in theme in effect: the pick itself or a custom theme's base. */

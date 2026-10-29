@@ -3,7 +3,7 @@ import { SettingsDetailNotFound } from "@/components/common/settings-detail-not-
 import { ROUTES } from "@/config/routes";
 import { useUserThemes } from "@/hooks/api/user/use-user-themes";
 import { useTheme } from "@/hooks/context/use-theme";
-import { toCustomThemePreference } from "@/themes/custom-theme";
+import { toCustomThemePreference } from "@lootlog/ui/themes/custom-theme";
 import { getCustomThemePreview } from "@/themes/theme-preview";
 import { Button } from "@lootlog/ui/components/button";
 import { useNavigate, useParams } from "@tanstack/react-router";

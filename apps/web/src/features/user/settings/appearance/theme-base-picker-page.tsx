@@ -2,11 +2,11 @@ import { BandSection } from "@/components/common/band-section";
 import { DetailPage } from "@/components/common/detail-page";
 import { MetaItem } from "@/components/common/meta-item";
 import { useUserThemes } from "@/hooks/api/user/use-user-themes";
-import { THEME_CATALOG } from "@/themes/catalog";
+import { THEME_CATALOG } from "@lootlog/ui/themes/catalog";
 import {
   createDefinitionFromBase,
   customThemeStyle,
-} from "@/themes/custom-theme";
+} from "@lootlog/ui/themes/custom-theme";
 import { getBuiltInThemePreview } from "@/themes/theme-preview";
 import { CUSTOM_THEME_LIMIT } from "@lootlog/schema/custom-theme";
 import { Dices, Palette } from "lucide-react";
@@ -14,9 +14,9 @@ import { useTranslation } from "react-i18next";
 import { randomizeCustomTheme } from "@lootlog/domain/custom-theme";
 import { Button } from "@lootlog/ui/components/button";
 import { sample } from "es-toolkit";
-import { WALLPAPERS } from "@/themes/wallpapers";
+import { WALLPAPERS } from "@lootlog/ui/themes/wallpapers";
 import { ThemeRow } from "./theme-row";
-import { previewThemeClass } from "@/themes/resolver";
+import { previewThemeClass } from "@lootlog/ui/themes/resolver";
 import { useCreateTheme } from "./use-create-theme";
 
 /** A random theme starts from one fixed palette, not the cat roulette. */

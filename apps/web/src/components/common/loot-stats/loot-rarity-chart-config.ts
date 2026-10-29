@@ -1,6 +1,6 @@
 import type { ChartConfig } from "@lootlog/ui/components/chart";
 import type { TFunction } from "i18next";
-import { LOOT_RARITY_CHART_COLORS } from "@/features/guild/loots-list/loot-rarity-colors";
+import { LOOT_RARITY_CHART_COLORS } from "@lootlog/ui/lib/item-rarity-colors";
 
 export const getLootRarityChartConfig = (t: TFunction): ChartConfig => ({
   LEGENDARY: {

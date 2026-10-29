@@ -1,4 +1,4 @@
-import { FILTER_PILL_CLASS } from "@/components/common/filter-pill";
+import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import { ListToolbar } from "@/components/common/list-toolbar";
 import { OrganizationPresenceStatus } from "@/components/common/organization-presence-status";
 import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";

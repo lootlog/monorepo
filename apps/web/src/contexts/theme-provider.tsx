@@ -1,11 +1,6 @@
 /* eslint-disable react-doctor/jsx-no-constructed-context-values -- Vite React Compiler output caches this provider value and its callbacks by their actual dependencies; verified through the running Vite module transform. */
 import { ThemeContext } from "./theme-context";
 import {
-  resolveStoredSelection,
-  resolveStoredTheme,
-  type ThemeSelection,
-} from "@/themes/resolver";
-import {
   useEffect,
   useLayoutEffect,
   useState,
@@ -23,22 +18,23 @@ import {
 } from "@lootlog/client/main";
 import type { CustomThemeDefinition } from "@lootlog/schema/custom-theme";
 import {
-  applyThemeClassToRoot,
+  applyThemeToDocument,
   getRootResolvedTheme,
+  resolveSelectionTheme,
+  resolveStoredSelection,
   resolveThemeClass,
+  type ThemeSelection,
+} from "@lootlog/ui/themes/resolver";
+import {
+  DEFAULT_THEME_ID,
   THEME_STORAGE_KEY,
   type ResolvedThemeId,
-  type ThemeId,
-} from "@/themes";
-import { DEFAULT_THEME_ID } from "@/themes/catalog";
+} from "@lootlog/ui/themes/catalog";
 import {
-  applyThemeToRoot,
-  createDefinitionFromBase,
-  readCachedCustomTheme,
+  findSelectedCustomTheme,
   readCustomThemeId,
   writeCachedCustomTheme,
-  type AppliedCustomTheme,
-} from "@/themes/custom-theme";
+} from "@lootlog/ui/themes/custom-theme";
 
 interface ThemeProviderProps {
   children: ReactNode;
@@ -77,26 +73,11 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
     enabled: !!session?.user && customThemeId !== null,
   });
 
-  const customTheme = ((): AppliedCustomTheme | null => {
-    if (customThemeId === null) return null;
-
-    if (userThemes) {
-      const stored = userThemes.find(({ id }) => id === customThemeId);
-
-      return stored ? { id: stored.id, definition: stored.definition } : null;
-    }
-
-    // Until the list loads, the last applied copy keeps the page as it was.
-    const cached = readCachedCustomTheme();
-
-    return cached?.id === customThemeId ? cached : null;
-  })();
+  const customTheme = findSelectedCustomTheme(customThemeId, userThemes);
 
   const definition = preview ?? customTheme?.definition ?? null;
 
-  const theme: ThemeId =
-    definition?.baseThemeId ??
-    (customThemeId === null ? resolveStoredTheme(selection) : DEFAULT_THEME_ID);
+  const theme = resolveSelectionTheme(selection, definition);
 
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedThemeId>(() =>
     resolveThemeClass(
@@ -119,14 +100,14 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   useLayoutEffect(() => {
     const root = document.documentElement;
 
-    const nextResolvedTheme = resolveThemeClass(
-      theme,
-      getRootResolvedTheme(root) ?? resolvedTheme,
+    setResolvedTheme(
+      applyThemeToDocument({
+        root,
+        theme,
+        definition,
+        currentResolvedTheme: getRootResolvedTheme(root) ?? resolvedTheme,
+      }),
     );
-
-    applyThemeClassToRoot({ root, resolvedTheme: nextResolvedTheme });
-    applyThemeToRoot(root, definition ?? createDefinitionFromBase(theme));
-    setResolvedTheme(nextResolvedTheme);
   }, [theme, definition, resolvedTheme]);
 
   const setTheme = (nextSelection: ThemeSelection) => {
