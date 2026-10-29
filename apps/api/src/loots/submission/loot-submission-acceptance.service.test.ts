@@ -78,6 +78,7 @@ const accept = (options: {
   catchingGuildIds: string[] | null;
   configs?: Record<string, readonly ItemRarity[]>;
   memberGuildIds?: string[];
+  submission?: CreateLootRequest;
 }) => {
   const created: NewLootPersistence[] = [];
   const now = new Date(0);
@@ -141,7 +142,10 @@ const accept = (options: {
       { withLock: (_resource, _ttl, _options, effect) => effect },
       Effect.void,
     )
-      .accept({ discordId: "discord-1", submission })
+      .accept({
+        discordId: "discord-1",
+        submission: options.submission ?? submission,
+      })
       .pipe(
         Effect.match({
           onFailure: (failure) => ({ failure }),
@@ -211,6 +215,27 @@ describe("loot submission acceptance", () => {
       ],
     });
     expect(created).toEqual([]);
+  });
+
+  // The request schema accepts any stat text; a rarity no config needs must
+  // not turn the structured rejection into a server error.
+  it("rejects without parsing rarities when no configuration covers the NPC", async () => {
+    const { outcome } = accept({
+      guilds: [guild("a")],
+      catchingGuildIds: ["a"],
+      submission: {
+        ...submission,
+        loots: submission.loots.map((item) => ({
+          ...item,
+          stat: "rarity=mythic",
+        })),
+      },
+    });
+
+    expect(await rejection(outcome)).toMatchObject({
+      message: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
+      rejectedGuilds: [{ guildId: "a", reason: "MISSING_LOOTLOG_CONFIG" }],
+    });
   });
 
   it("records the loot only for accepting Organizations and reports the others", async () => {

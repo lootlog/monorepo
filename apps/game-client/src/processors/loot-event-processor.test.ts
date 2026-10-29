@@ -5,6 +5,7 @@ import { waitFor } from "@testing-library/react";
 import { configureApiClients } from "@lootlog/client/transport";
 import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/client/main";
 import { queryClient } from "@/lib/query-client";
+import { LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY } from "@/hooks/api/use-update-lootlog-characters-config";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
 import { useLootStore } from "@/store/game-store/loot.store";
@@ -377,6 +378,20 @@ it.each<[string, () => Promise<void>]>([
           staleTime: 0,
         })
         .catch(() => undefined);
+    },
+  ],
+  [
+    "shows an empty whitelist that is still saving",
+    async () => {
+      seedCatchingGuildIds([]);
+      void queryClient
+        .getMutationCache()
+        .build(queryClient, {
+          mutationKey: LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY,
+          mutationFn: () => new Promise(() => {}),
+        })
+        .execute(undefined);
+      await waitFor(() => expect(queryClient.isMutating()).toBe(1));
     },
   ],
   [

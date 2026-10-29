@@ -16,7 +16,7 @@ const configs = new Map([
 
 const heroicElite2 = {
   npcType: "ELITE2",
-  rarities: [undefined, "HEROIC"],
+  rarities: () => [undefined, "HEROIC"] as const,
 } as const;
 
 describe("resolveLootAcceptance", () => {

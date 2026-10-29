@@ -4,6 +4,7 @@ import {
   userLootlogConfigControllerGetUserLootlogConfigByAccountId,
   type UserLootlogConfigAccountResponseDtoOutput,
 } from "@lootlog/client/main";
+import { LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY } from "@/hooks/api/use-update-lootlog-characters-config";
 import { readGameClientBootstrap } from "@/lib/game-client-bootstrap";
 import { queryClient } from "@/lib/query-client";
 import { useGameStore } from "@/store/game.store";
@@ -68,9 +69,10 @@ export const useCurrentCharacterCatchingGuildIds = ():
 
 /**
  * The catching scope of a character outside React. A loaded configuration
- * without this character catches for none. A pending, failed or older load
- * leaves the scope unknown (`undefined`), so callers defer to the API: it
- * may already know a scope this cache has not seen.
+ * without this character catches for none. A pending, failed or older load,
+ * or a save still in flight whose optimistic scope the API has not
+ * confirmed, leaves the scope unknown (`undefined`), so callers defer to the
+ * API: it may already know a scope this cache has not seen.
  */
 export const getFreshCharacterCatchingGuildIds = (
   accountId: string,
@@ -85,7 +87,10 @@ export const getFreshCharacterCatchingGuildIds = (
 
   if (
     state?.status !== "success" ||
-    Date.now() - state.dataUpdatedAt >= CHARACTERS_CONFIG_STALE_TIME
+    Date.now() - state.dataUpdatedAt >= CHARACTERS_CONFIG_STALE_TIME ||
+    queryClient.isMutating({
+      mutationKey: LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY,
+    }) > 0
   ) {
     return undefined;
   }
