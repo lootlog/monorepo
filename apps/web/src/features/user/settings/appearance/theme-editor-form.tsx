@@ -1,6 +1,6 @@
 import { BandSection } from "@/components/common/band-section";
 import { DetailPage } from "@/components/common/detail-page";
-import { WALLPAPERS } from "@/themes/wallpapers";
+import { WALLPAPERS } from "@lootlog/ui/themes/wallpapers";
 import { randomizeCustomTheme } from "@lootlog/domain/custom-theme";
 import { Button } from "@lootlog/ui/components/button";
 import { Dices } from "lucide-react";
@@ -8,8 +8,8 @@ import { OptionCardGroup } from "@/components/common/option-card-group";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useUpdateUserTheme } from "@/hooks/api/user/use-user-themes";
 import { useTheme } from "@/hooks/context/use-theme";
-import { CUSTOM_THEME_FONTS } from "@/themes/custom-theme";
-import { FILTER_PILL_CLASS } from "@/components/common/filter-pill";
+import { CUSTOM_THEME_FONTS } from "@lootlog/ui/themes/custom-theme";
+import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { UserThemeResponseDto } from "@lootlog/client/main";
 import {

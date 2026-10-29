@@ -1,4 +1,4 @@
-import type { ItemRarity } from "@lootlog/ui/lib/item-rarity";
+import type { ItemRarity } from "./item-rarity";
 
 /**
  * Rarity accents, matching the frame colors of `ItemImage` in `@lootlog/ui`:

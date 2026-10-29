@@ -1,6 +1,6 @@
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
-import { FilterChipButton } from "./filter-chip-button";
+import { FilterChipButton } from "@lootlog/ui/components/filter-chip-button";
 
 export type FilterChip = {
   id: string;

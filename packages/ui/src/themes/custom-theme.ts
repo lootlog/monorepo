@@ -203,6 +203,27 @@ export const readCachedCustomTheme = (): AppliedCustomTheme | null => {
   }
 };
 
+/**
+ * The custom theme a selection names: from the User's themes once they load,
+ * and until then the last applied copy, which keeps the page as it was.
+ */
+export const findSelectedCustomTheme = (
+  customThemeId: string | null,
+  userThemes: readonly AppliedCustomTheme[] | undefined,
+): AppliedCustomTheme | null => {
+  if (customThemeId === null) return null;
+
+  if (userThemes) {
+    const stored = userThemes.find(({ id }) => id === customThemeId);
+
+    return stored ? { id: stored.id, definition: stored.definition } : null;
+  }
+
+  const cached = readCachedCustomTheme();
+
+  return cached?.id === customThemeId ? cached : null;
+};
+
 export const writeCachedCustomTheme = (theme: AppliedCustomTheme | null) => {
   try {
     if (theme) {

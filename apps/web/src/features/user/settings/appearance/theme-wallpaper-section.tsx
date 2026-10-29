@@ -1,6 +1,6 @@
 import { BandSection } from "@/components/common/band-section";
 import { getBuiltInThemePreview } from "@/themes/theme-preview";
-import { WALLPAPERS, type Wallpaper } from "@/themes/wallpapers";
+import { WALLPAPERS, type Wallpaper } from "@lootlog/ui/themes/wallpapers";
 import { cn } from "cn";
 import { Check } from "lucide-react";
 import { useId } from "react";

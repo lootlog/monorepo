@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { Meilisearch } from "meilisearch";
+import { npcCatalogKey } from "#src/npcs/npcs.service";
 import { itemCatalogKey, makeItemsModule } from "./items.service.js";
 
 const logger = { info() {}, warn() {}, error() {} };
@@ -152,3 +153,94 @@ test("failed existing-world reads prevent overwriting indexed worlds", async () 
   expect(failure._tag).toBe("SearchOperationFailure");
   expect(requests).toEqual(["/indexes/items/documents"]);
 });
+
+test("keeps an item's earliest sighting and every NPC it dropped from across reordered deliveries", async () => {
+  const written: Array<{ uid: string; firstSeenAt: number | null }> = [];
+  const nosferatu = npcDrop(7001, "Nosferatu");
+  const stored = itemCatalogKey(item(1));
+
+  const client = new Meilisearch({
+    host: "http://search.invalid",
+    httpClient: (input, init) => {
+      const url = new URL(String(input));
+
+      if ((init?.method ?? "GET").toUpperCase() === "GET") {
+        return Promise.resolve(
+          url.pathname.startsWith("/tasks/")
+            ? { uid: 1, status: "succeeded" }
+            : {
+                results: [
+                  {
+                    uid: stored,
+                    worlds: ["new"],
+                    firstSeenAt: Date.parse("2026-10-20T12:00:00.000Z"),
+                    droppedBy: [nosferatu.source],
+                    droppedByKeys: [nosferatu.source.key],
+                  },
+                ],
+              },
+        );
+      }
+
+      written.push(...JSON.parse(String(init?.body)));
+
+      return Promise.resolve({ taskUid: 1, status: "enqueued" });
+    },
+  });
+
+  const vampire = npcDrop(7002, "Wampir");
+
+  await Effect.runPromise(
+    makeItemsModule(client, logger).indexItems({
+      items: [
+        // A redelivered later sighting, then an earlier one from another NPC.
+        {
+          ...item(1),
+          observedAt: "2026-10-25T08:00:00.000Z",
+          droppedBy: nosferatu.indexed,
+        },
+        {
+          ...item(1),
+          observedAt: "2026-10-18T21:30:00.000Z",
+          droppedBy: vampire.indexed,
+        },
+      ],
+    }),
+  );
+
+  expect(written).toEqual([
+    expect.objectContaining({
+      uid: stored,
+      firstSeenAt: Date.parse("2026-10-18T21:30:00.000Z"),
+      droppedByKeys: [nosferatu.source.key, vampire.source.key],
+    }),
+  ]);
+});
+
+function npcDrop(id: number, name: string) {
+  const indexed = {
+    id,
+    identityNamespace: "template" as const,
+    name,
+    lvl: 100,
+    icon: "npc.gif",
+    type: "HERO",
+    margonemType: 2,
+    gameVersion: "pl" as const,
+  };
+
+  return {
+    indexed,
+    source: {
+      key: npcCatalogKey(indexed),
+      monsterKey: `pl_${name}_HERO`,
+      id,
+      identityNamespace: "template",
+      gameVersion: "pl",
+      name,
+      lvl: 100,
+      icon: "npc.gif",
+      type: "HERO",
+    },
+  };
+}

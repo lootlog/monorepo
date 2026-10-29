@@ -5,29 +5,29 @@ import {
 import { Label } from "@lootlog/ui/components/label";
 import { cn } from "cn";
 import { useId } from "react";
-import { FILTER_PILL_CLASS } from "@/components/common/filter-pill";
+import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 
-export type LootFilterPillOption = {
+export type FilterPillOption = {
   value: string;
   label: string;
   /** Recolors one pill, e.g. in its item rarity's frame color. */
   className?: string;
 };
 
-type LootFilterPillsProps = {
+type FilterPillsProps = {
   label: string;
-  options: LootFilterPillOption[];
+  options: FilterPillOption[];
   value: string[];
   onValueChange: (value: string[]) => void;
 };
 
 /** A labelled multi-select row of pills; a pressed pill narrows the list. */
-export const LootFilterPills = ({
+export const FilterPills = ({
   label,
   options,
   value,
   onValueChange,
-}: LootFilterPillsProps) => {
+}: FilterPillsProps) => {
   const labelId = useId();
 
   return (

@@ -1,4 +1,5 @@
 import { uniqueWorlds } from "#src/shared/unique-worlds";
+import { earliestSeenAt, toSeenAt } from "#src/shared/first-seen";
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { NpcTypeEnum, NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
@@ -47,12 +48,32 @@ const NAMESPACE_PREFERENCE: Record<NpcIdentityNamespace, number> = {
   [NpcIdentityNamespace.RUNTIME]: 2,
 };
 
-const collapseByNameAndType = (hits: readonly NpcHit[]) => {
-  const preferred = new Map<string, NpcHit>();
+/**
+ * One monster across its catalog identities: a boss seen by older clients
+ * keeps runtime or legacy entries beside its template one, all with the
+ * edition, name and type in common. Equal names in different editions are
+ * different monsters.
+ */
+export const npcMonsterKey = (npc: {
+  gameVersion: GameVersion;
+  name: string;
+  type: string | null;
+}) => `${npc.gameVersion}_${npc.name}_${npc.type}`;
+
+export const collapseByNameAndType = <
+  Hit extends {
+    gameVersion: GameVersion;
+    name: string;
+    type: string | null;
+    identityNamespace: NpcIdentityNamespace;
+  },
+>(
+  hits: readonly Hit[],
+) => {
+  const preferred = new Map<string, Hit>();
 
   for (const hit of hits) {
-    // Equal names in different editions are different NPCs.
-    const key = `${hit.gameVersion}_${hit.name}_${hit.type}`;
+    const key = npcMonsterKey(hit);
     const current = preferred.get(key);
 
     if (
@@ -96,7 +117,9 @@ export const toNpcDocument = (npc: IndexNpc) => {
     worlds: [npc.world],
     gameVersion: npc.gameVersion,
     uid: npcCatalogKey({ ...npc, identityNamespace }),
+    monsterKey: npcMonsterKey({ ...npc, type }),
     observedLootId: npc.lootId ?? null,
+    firstSeenAt: toSeenAt(npc.observedAt),
   };
 };
 
@@ -118,8 +141,8 @@ const toNpcHit = (document: NpcDocument): NpcHit =>
   ]);
 
 /**
- * One catalog entry from two observations: the later loot's attributes, and
- * every world of both. Delivery order is not chronology: a retried or
+ * One catalog entry from two observations: the later loot's attributes,
+ * every world of both and the earlier first sighting. Delivery order is not chronology: a retried or
  * redelivered publication can arrive after a newer one. An observation
  * without a loot id, from an older publisher, counts as the latest.
  */
@@ -135,6 +158,8 @@ export const mergeNpcDocument = (
   return {
     ...(storedIsNewer ? stored : incoming),
     worlds: uniqueWorlds([...incoming.worlds, ...stored.worlds]),
+    // Entries indexed before first sightings were recorded have none.
+    firstSeenAt: earliestSeenAt(incoming.firstSeenAt, stored.firstSeenAt),
   };
 };
 

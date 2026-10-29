@@ -3,7 +3,7 @@ import {
   ToggleGroupItem,
 } from "@lootlog/ui/components/toggle-group";
 import { useTranslation } from "react-i18next";
-import { FILTER_PILL_CLASS } from "@/components/common/filter-pill";
+import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 
 export type ReservationFilter = "all" | "available" | "pinned" | "partners";
 

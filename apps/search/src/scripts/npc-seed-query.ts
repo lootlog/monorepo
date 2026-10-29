@@ -30,6 +30,11 @@ export const buildNpcSeedQuery = (database: SeedDatabase) => {
         latestLootId: sql<number>`max(${lootNpcTable.lootId})`.as(
           "latest_loot_id",
         ),
+        // Epoch milliseconds; `extract` reads the stored UTC time as UTC.
+        firstSeenAt:
+          sql<number>`(extract(epoch from min(${lootTable.createdAt})) * 1000)::float8`.as(
+            "first_seen_at",
+          ),
       })
       .from(lootNpcTable)
       .innerJoin(lootTable, eq(lootTable.id, lootNpcTable.lootId))
@@ -51,6 +56,7 @@ export const buildNpcSeedQuery = (database: SeedDatabase) => {
       world: snapshotWorlds.world,
       gameVersion: npcSnapshotTable.gameVersion,
       latestLootId: snapshotWorlds.latestLootId,
+      firstSeenAt: snapshotWorlds.firstSeenAt,
     })
     .from(snapshotWorlds)
     .innerJoin(
@@ -83,6 +89,7 @@ export const toNpcSeedDocuments = (rows: readonly NpcSeedRow[]) =>
         world: npc.world,
         gameVersion: npc.gameVersion,
         lootId: npc.latestLootId,
+        observedAt: new Date(npc.firstSeenAt).toISOString(),
       }),
     ),
   );
