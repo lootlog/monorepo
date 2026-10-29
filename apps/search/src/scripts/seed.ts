@@ -24,7 +24,7 @@ import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
 import { Config, Effect, Redacted, Schema } from "effect";
 import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
-import { chunk, groupBy } from "es-toolkit";
+import { groupBy } from "es-toolkit";
 import { Meilisearch, type EnqueuedTask, type Task } from "meilisearch";
 import { ITEMS_INDEX } from "#src/items/search-index";
 import { toItemDocuments } from "#src/items/items.service";
@@ -47,6 +47,10 @@ const decodeIdentityNamespace = Schema.decodeUnknownSync(
 );
 
 const DOCUMENTS_PER_BATCH = 10_000;
+
+// Meilisearch rejects request bodies over 12.5 MB; items carrying their drop
+// sources pass that well before DOCUMENTS_PER_BATCH.
+const BATCH_PAYLOAD_LIMIT_BYTES = 8 * 1024 * 1024;
 
 const TASK_POLL_INTERVAL_MS = 500;
 
@@ -184,6 +188,35 @@ const publishRebuildIndexes = async () => {
   console.log(`Indexes swapped in ${formatDuration(startedAt)}`);
 };
 
+/** Splits documents into batches under both the count and the payload limit. */
+const toBatches = <Document>(documents: ReadonlyArray<Document>) => {
+  const batches: Document[][] = [];
+  let batch: Document[] = [];
+  let batchBytes = 0;
+
+  for (const document of documents) {
+    // One more byte for the separating comma.
+    const bytes = Buffer.byteLength(JSON.stringify(document)) + 1;
+
+    if (
+      batch.length > 0 &&
+      (batch.length === DOCUMENTS_PER_BATCH ||
+        batchBytes + bytes > BATCH_PAYLOAD_LIMIT_BYTES)
+    ) {
+      batches.push(batch);
+      batch = [];
+      batchBytes = 0;
+    }
+
+    batch.push(document);
+    batchBytes += bytes;
+  }
+
+  if (batch.length > 0) batches.push(batch);
+
+  return batches;
+};
+
 /** Enqueues every batch first; Meilisearch merges queued batches of one index. */
 const indexDocuments = async <Document extends { uid: string }>(
   indexName: string,
@@ -194,7 +227,7 @@ const indexDocuments = async <Document extends { uid: string }>(
   const index = meilisearch.index<Document>(rebuildIndexName(indexName));
   const enqueued: EnqueuedTask[] = [];
 
-  for (const batch of chunk(documents, DOCUMENTS_PER_BATCH)) {
+  for (const batch of toBatches(documents)) {
     enqueued.push(
       await index.addDocuments(batch, { primaryKey: SEARCH_INDEX_PRIMARY_KEY }),
     );
