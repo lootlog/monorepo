@@ -3,18 +3,14 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { getLootlogHostPortalThemeClassName } from "@/components/ui/theme-boundary";
-import {
-  getWhoIsHereAirTagHost,
-  refreshWhoIsHereScroll,
-} from "@/lib/margonem-runtime/adapters/who-is-here-runtime-adapter";
+import { refreshWhoIsHereScroll } from "@/lib/margonem-runtime/adapters/who-is-here-runtime-adapter";
 import { useWhoIsHereAirTagEnemies } from "./use-who-is-here-air-tag-enemies";
 import { WhoIsHereAirTagRow } from "./who-is-here-air-tag-row";
 
 /** Enemies other members see on this map, listed under the game's "Gracze na mapie". */
 export function WhoIsHereAirTags() {
   const { t } = useTranslation("settings");
-  const { enemies, now } = useWhoIsHereAirTagEnemies();
-  const host = enemies.length > 0 ? getWhoIsHereAirTagHost() : null;
+  const { enemies, host, now } = useWhoIsHereAirTagEnemies();
 
   useEffect(() => {
     refreshWhoIsHereScroll();
