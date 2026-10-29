@@ -89,6 +89,9 @@ const LEGENDARY_BONUS_VALUES = new Map(
   }),
 );
 
+/** Every legendary bonus Margonem items carry, by its stat name. */
+export const LEGENDARY_BONUS_NAMES = [...LEGENDARY_BONUS_VALUES.keys()];
+
 const TECHNICAL_STAT_KEYS = new Set([
   "animation",
   "battlestats",
