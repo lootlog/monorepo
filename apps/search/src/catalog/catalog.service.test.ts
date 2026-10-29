@@ -10,13 +10,17 @@ const catalogWith = (hits: unknown[], npcs: unknown[] = []) => {
   const searches: Array<{ filter?: string; attributesToRetrieve?: string[] }> =
     [];
 
+  const npcSearches: Array<{ filter?: string }> = [];
+
   const client = new Meilisearch({
     host: "http://search.invalid",
     httpClient: (input, init) => {
       const isNpcSearch = String(input).includes("/indexes/npcs/");
       const results = isNpcSearch ? npcs : hits;
 
-      if (!isNpcSearch) searches.push(JSON.parse(String(init?.body)));
+      (isNpcSearch ? npcSearches : searches).push(
+        JSON.parse(String(init?.body)),
+      );
 
       return Promise.resolve({
         hits: results,
@@ -25,7 +29,7 @@ const catalogWith = (hits: unknown[], npcs: unknown[] = []) => {
     },
   });
 
-  return { catalog: makeCatalogModule(client, logger), searches };
+  return { catalog: makeCatalogModule(client, logger), searches, npcSearches };
 };
 
 const nosferatu = {
@@ -113,14 +117,28 @@ test("a malformed NPC key matches nothing instead of reaching the filter", async
   expect(searches).toEqual([]);
 });
 
-test("narrows items to recent drops of a kind of boss that carry the required stats", async () => {
+test("finds one edition's NPCs by id", async () => {
+  const { catalog, npcSearches } = catalogWith([]);
+
+  await Effect.runPromise(
+    catalog.getNpcs({ gameVersion: "pl", ids: [257036, 257037] }),
+  );
+
+  expect(npcSearches[0]?.filter).toBe(
+    'gameVersion = "pl" AND id IN [257036, 257037]',
+  );
+});
+
+test("narrows items to one edition's recent drops of a kind of boss that carry the required stats and bonuses", async () => {
   const { catalog, searches } = catalogWith([]);
   setSystemTime(new Date("2026-10-29T12:00:00.000Z"));
 
   try {
     await Effect.runPromise(
       catalog.getItems({
+        gameVersion: "pl",
         statKeys: ["legbon", "crit"],
+        legendaryBonuses: ["verycrit", "curse"],
         dropSourceTypes: ["TITAN"],
         firstSeenWithinDays: 7,
       }),
@@ -130,6 +148,6 @@ test("narrows items to recent drops of a kind of boss that carry the required st
   }
 
   expect(searches[0]?.filter).toBe(
-    `statsKeys = "legbon" AND statsKeys = "crit" AND droppedByTypes IN ["TITAN"] AND firstSeenAt >= ${Date.parse("2026-10-22T12:00:00.000Z")}`,
+    `gameVersion = "pl" AND statsKeys = "legbon" AND statsKeys = "crit" AND legendaryBonus IN ["verycrit", "curse"] AND droppedByTypes IN ["TITAN"] AND firstSeenAt >= ${Date.parse("2026-10-22T12:00:00.000Z")}`,
   );
 });

@@ -549,6 +549,16 @@
             "required": false
           },
           {
+            "name": "gameVersion",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["en", "pl"],
+              "description": "Only entries of this game edition."
+            },
+            "required": false
+          },
+          {
             "name": "ids",
             "in": "query",
             "schema": {
@@ -620,6 +630,19 @@
           },
           {
             "name": "statKeys",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "legendaryBonuses",
             "in": "query",
             "schema": {
               "type": "array",
@@ -789,6 +812,31 @@
               "type": "string"
             },
             "required": false
+          },
+          {
+            "name": "gameVersion",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["en", "pl"],
+              "description": "Only entries of this game edition."
+            },
+            "required": false
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
           },
           {
             "name": "keys",

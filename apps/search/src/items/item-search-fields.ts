@@ -11,6 +11,8 @@ export type ItemSearchFields = {
   numericStats: Record<string, number>;
   statsKeys: string[];
   requiredProfessions: string[];
+  /** The legendary bonus without its level, such as `verycrit`; null without one. */
+  legendaryBonus: string | null;
 };
 
 const normalizeStatValue = (value: string): string | number | boolean => {
@@ -37,6 +39,7 @@ export const createItemSearchFields = (statRaw: string): ItemSearchFields => {
   const numericStats: Record<string, number> = {};
   const statsKeys: string[] = [];
   let requiredProfessions: string[] = [...DEFAULT_REQUIRED_PROFESSIONS];
+  let legendaryBonus: string | null = null;
 
   for (const statEntry of statRaw.split(";")) {
     const [key, value] = statEntry.split("=");
@@ -54,6 +57,11 @@ export const createItemSearchFields = (statRaw: string): ItemSearchFields => {
       continue;
     }
 
+    // `legbon` holds the bonus and the level it scales with, `verycrit,200`.
+    if (key === "legbon") {
+      legendaryBonus = value.split(",")[0] || null;
+    }
+
     const normalizedValue = normalizeStatValue(value);
     stats[key] = normalizedValue;
 
@@ -67,5 +75,6 @@ export const createItemSearchFields = (statRaw: string): ItemSearchFields => {
     numericStats,
     statsKeys,
     requiredProfessions,
+    legendaryBonus,
   };
 };

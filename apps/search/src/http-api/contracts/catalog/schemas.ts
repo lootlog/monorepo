@@ -45,6 +45,27 @@ export const CATALOG_STAT_KEYS = [
 
 const CatalogStatKey = Schema.Literals(CATALOG_STAT_KEYS);
 
+/** Legendary bonuses Margonem items carry, by their stat names. */
+export const CATALOG_LEGENDARY_BONUSES = [
+  "anguish",
+  "cleanse",
+  "critred",
+  "curse",
+  "dmgred",
+  "facade",
+  "frenzy",
+  "glare",
+  "holytouch",
+  "lastheal",
+  "puncture",
+  "pushback",
+  "resgain",
+  "retaliation",
+  "verycrit",
+] as const;
+
+const CatalogLegendaryBonus = Schema.Literals(CATALOG_LEGENDARY_BONUSES);
+
 export const CatalogDropSourceDto_Output = Schema.Struct({
   key: Schema.String.annotate({
     description: "The NPC's catalog key, as `CatalogNpcDto_Output.key`.",
@@ -88,8 +109,13 @@ export const CatalogItemsResponseDto_Output = Schema.Struct({
 export type CatalogControllerGetItemsQuery =
   typeof CatalogControllerGetItemsQuery.Type;
 
+const CatalogGameVersion = GameVersionSchema.annotate({
+  description: "Only entries of this game edition.",
+});
+
 export const CatalogControllerGetItemsQuery = Schema.Struct({
   search: Schema.optionalKey(Schema.String),
+  gameVersion: Schema.optionalKey(CatalogGameVersion),
   ids: Schema.optionalKey(Schema.Array(SafeInteger)),
   rarities: Schema.optionalKey(Schema.Array(ItemRaritySchema)),
   types: Schema.optionalKey(
@@ -107,6 +133,11 @@ export const CatalogControllerGetItemsQuery = Schema.Struct({
   statKeys: Schema.optionalKey(
     Schema.Array(CatalogStatKey).annotate({
       description: "Items that have every one of these stats.",
+    }),
+  ),
+  legendaryBonuses: Schema.optionalKey(
+    Schema.Array(CatalogLegendaryBonus).annotate({
+      description: "Items with any of these legendary bonuses.",
     }),
   ),
   dropSourceTypes: Schema.optionalKey(
@@ -161,6 +192,12 @@ export type CatalogControllerGetNpcsQuery =
 
 export const CatalogControllerGetNpcsQuery = Schema.Struct({
   search: Schema.optionalKey(Schema.String),
+  gameVersion: Schema.optionalKey(CatalogGameVersion),
+  ids: Schema.optionalKey(
+    Schema.Array(SafeInteger).annotate({
+      description: "NPC ids, as `CatalogNpcDto_Output.id`.",
+    }),
+  ),
   keys: Schema.optionalKey(Schema.Array(Schema.String)),
   types: Schema.optionalKey(Schema.Array(NpcTypeSchema)),
   sort: Schema.optionalKey(CatalogSort),
