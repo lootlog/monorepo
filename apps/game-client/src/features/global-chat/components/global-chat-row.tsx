@@ -1,13 +1,10 @@
 import { MessageScroller } from "@shadcn/react/message-scroller";
-import { memo, useState } from "react";
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
-import {
-  ContextMenu,
-  ContextMenuTrigger,
-  openContextMenuOnKeyDown,
-} from "@/components/ui/context-menu";
+import { openContextMenuOnKeyDown } from "@/components/ui/context-menu";
+import { useSharedContextMenuTarget } from "@/components/common/shared-context-menu-registry";
 import { toWorldOption } from "@/components/world-combobox";
 import { ChatDateDivider } from "@/features/chat/components/chat-date-divider";
 import { ChatPlayerMessageView } from "@/features/chat/components/chat-player-message-view";
@@ -52,7 +49,8 @@ const areRowPropsEqual = (
  * Memoized like ChatTranscriptRow, where every incoming message re-rendered
  * every row (measured 502 row renders per message without it). Rows are
  * rebuilt per render, but their message objects keep their identity across
- * live appends. The action menu mounts only while open.
+ * live appends. The transcript's shared context menu renders the action menu
+ * only while it is open.
  */
 export const GlobalChatRow = memo(function GlobalChatRow({
   appearance,
@@ -60,8 +58,24 @@ export const GlobalChatRow = memo(function GlobalChatRow({
   row,
 }: GlobalChatRowProps) {
   const { t } = useTranslation("globalChat");
-  const [menuOpen, setMenuOpen] = useState(false);
   const messageGap = appearance.messageGapPx;
+
+  const menuTarget = useSharedContextMenuTarget(
+    row.key,
+    row.kind === "message"
+      ? {
+          "aria-label": t("messageActions.label"),
+          className: "ll:w-44 ll:flex ll:flex-col",
+          items: (
+            <GlobalChatMessageMenu
+              channel={context.channel}
+              message={row.message}
+              canModerate={context.canModerate}
+            />
+          ),
+        }
+      : null,
+  );
 
   if (row.kind === "date-divider") {
     return (
@@ -92,69 +106,57 @@ export const GlobalChatRow = memo(function GlobalChatRow({
       }}
       className="ll:min-w-0 ll:shrink-0 ll:pl-1.5 ll:pr-0.5 ll:odd:bg-white/5 ll:even:bg-black/25 ll:odd:hover:bg-white/10 ll:even:hover:bg-white/10"
     >
-      <ContextMenu open={menuOpen} onOpenChange={setMenuOpen}>
-        <ContextMenuTrigger
-          asChild
-          tabIndex={0}
-          onKeyDown={openContextMenuOnKeyDown}
-        >
-          <ChatPlayerMessageView
-            all={false}
-            appearance={appearance}
-            guildName=""
-            isMsgYesterday={isMsgYesterday}
-            messageId={message.id}
-            timestamp={message.timestamp}
-            sender={
-              <>
-                {originWorld ? (
-                  <span
-                    className="ll:mr-1 ll:text-[0.85em] ll:font-semibold"
-                    style={{ color: getGlobalChatColor(originWorld) }}
-                    title={t("message.originWorld", {
-                      world: toWorldOption(originWorld).label,
-                    })}
-                  >
-                    {toWorldOption(originWorld).label}
-                  </span>
-                ) : null}
-                {message.isAdmin ? (
-                  <span className="ll:sr-only">{t("message.admin")}</span>
-                ) : null}
-                <span
-                  // Underlines the caller's own name; the narrow window has no
-                  // room for a box. An admin's name already stands out in red.
-                  className={cn("ll:font-bold ll:mr-0.5", {
-                    "ll:underline ll:underline-offset-2":
-                      message.isOwn && !message.isAdmin,
-                  })}
-                  style={{ color: getGlobalChatSenderColor(message) }}
-                >
-                  {message.displayName}:
-                </span>
-              </>
-            }
-            body={
+      <ChatPlayerMessageView
+        {...menuTarget}
+        tabIndex={0}
+        onKeyDown={openContextMenuOnKeyDown}
+        all={false}
+        appearance={appearance}
+        guildName=""
+        isMsgYesterday={isMsgYesterday}
+        messageId={message.id}
+        timestamp={message.timestamp}
+        sender={
+          <>
+            {originWorld ? (
               <span
-                data-slot="bubble"
-                className={cn("ll:whitespace-pre-wrap ll:select-text", {
-                  "ll:text-gray-200": isMsgYesterday,
+                className="ll:mr-1 ll:text-[0.85em] ll:font-semibold"
+                style={{ color: getGlobalChatColor(originWorld) }}
+                title={t("message.originWorld", {
+                  world: toWorldOption(originWorld).label,
                 })}
-                style={{ overflowWrap: "anywhere", wordBreak: "normal" }}
               >
-                {message.message}
+                {toWorldOption(originWorld).label}
               </span>
-            }
-          />
-        </ContextMenuTrigger>
-        {menuOpen ? (
-          <GlobalChatMessageMenu
-            channel={context.channel}
-            message={message}
-            canModerate={context.canModerate}
-          />
-        ) : null}
-      </ContextMenu>
+            ) : null}
+            {message.isAdmin ? (
+              <span className="ll:sr-only">{t("message.admin")}</span>
+            ) : null}
+            <span
+              // Underlines the caller's own name; the narrow window has no
+              // room for a box. An admin's name already stands out in red.
+              className={cn("ll:font-bold ll:mr-0.5", {
+                "ll:underline ll:underline-offset-2":
+                  message.isOwn && !message.isAdmin,
+              })}
+              style={{ color: getGlobalChatSenderColor(message) }}
+            >
+              {message.displayName}:
+            </span>
+          </>
+        }
+        body={
+          <span
+            data-slot="bubble"
+            className={cn("ll:whitespace-pre-wrap ll:select-text", {
+              "ll:text-gray-200": isMsgYesterday,
+            })}
+            style={{ overflowWrap: "anywhere", wordBreak: "normal" }}
+          >
+            {message.message}
+          </span>
+        }
+      />
     </MessageScroller.Item>
   );
 }, areRowPropsEqual);

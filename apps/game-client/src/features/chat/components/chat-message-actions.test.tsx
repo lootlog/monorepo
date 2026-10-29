@@ -59,6 +59,49 @@ describe("chat message actions", () => {
     },
   );
 
+  it("opens one message's actions by long press and returns focus to it", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, "writeText");
+
+    render(
+      <>
+        <ChatMessage
+          all={false}
+          guildName="Guild"
+          message={createChatMessage({ id: "first", message: "First" })}
+        />
+        <ChatMessage
+          all={false}
+          guildName="Guild"
+          message={createChatMessage({ id: "second", message: "Second" })}
+        />
+      </>,
+      { wrapper: createChatTestWrapper().wrapper },
+    );
+
+    fireEvent.touchStart(screen.getByText("Second"), {
+      touches: [{ clientX: 10, clientY: 10 }],
+    });
+    await user.click(
+      await screen.findByRole(
+        "menuitem",
+        { name: "Kopiuj wiadomość" },
+        { timeout: 2000 },
+      ),
+    );
+    expect(writeText).toHaveBeenCalledWith("Second");
+
+    const second = screen
+      .getByText("Second")
+      .closest<HTMLElement>("[tabindex]");
+
+    await waitFor(() => expect(second).toHaveFocus());
+    await user.keyboard("{Shift>}{F10}{/Shift}");
+    expect(await screen.findByRole("menu")).toBeVisible();
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(second).toHaveFocus());
+  });
+
   it("deletes a message only after the confirmation is accepted", async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();

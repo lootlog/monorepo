@@ -5,12 +5,16 @@ import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { cn } from "cn";
 import { useTimersStore } from "@/store/timers.store";
 import { Loader2 } from "lucide-react";
-import { useLayoutEffect, type FC } from "react";
+import type { FC } from "react";
 import { useTimerActions } from "../hooks/use-timer-actions";
 import { useTimerDisplay } from "../hooks/use-timer-display";
 import { useTimerNpcPresence } from "../hooks/use-timer-npc-presence";
-import type { TimerContextMenuContentProps } from "./timer-context-menu-content";
-import { useTimerPopups } from "./timer-popups-context";
+import {
+  TimerContextMenuContent,
+  type TimerContextMenuContentProps,
+} from "./timer-context-menu-content";
+import { useSharedContextMenuTarget } from "@/components/common/shared-context-menu-registry";
+import { useTimerTooltipHandle } from "./timer-tooltip-context";
 import { TimerLiveTile } from "./timer-live-tile";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
 import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
@@ -94,7 +98,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     countdownMode,
   } = useTimerDisplay(timer);
 
-  const { menuRegistry, tooltipHandle } = useTimerPopups();
+  const tooltipHandle = useTimerTooltipHandle();
   const occupancy = useTimerMapPresence(timer);
   const threat = useTimerMapThreat(timer);
   const isStanding = useTimerNpcPresence(timer);
@@ -131,19 +135,15 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
   // The tile keeps its actions and their in-flight state; the grid's shared
   // menu shows the latest props of the tile it was opened on.
-  useLayoutEffect(() => {
-    menuRegistry.set(popupKey, menuProps);
+  const menuTarget = useSharedContextMenuTarget(popupKey, {
+    className: "ll:w-48 ll:flex ll:flex-col",
+    items: <TimerContextMenuContent {...menuProps} />,
   });
-
-  useLayoutEffect(
-    () => () => menuRegistry.delete(popupKey),
-    [menuRegistry, popupKey],
-  );
 
   return (
     <TooltipTrigger handle={tooltipHandle} payload={popupKey} asChild>
       <div
-        data-timer-popup-key={popupKey}
+        {...menuTarget}
         tabIndex={0}
         onKeyDown={openContextMenuOnKeyDown}
         className="ll:h-full ll:rounded-[2px] ll:outline-none ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring"
