@@ -23,7 +23,6 @@
   },
   "dependencies": {
     "@lootlog/client": "workspace:*",
-    "@lootlog/schema": "workspace:*",
     "@lootlog/ui": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-devtools": "catalog:",
