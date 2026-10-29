@@ -71,11 +71,6 @@ export interface CatalogNpcDtoOutput {
   lvl: number;
   type: CatalogNpcDtoOutputType;
   gameVersion: CatalogNpcDtoOutputGameVersion;
-  /**
-     * The day Lootlog first observed it, `YYYY-MM-DD` in Polish time; null when unknown.
-     * @nullable
-     */
-  firstSeenOn: string | null;
 }
 
 /**
@@ -115,11 +110,6 @@ export interface CatalogItemDtoOutput {
   rarity: string | null;
   /** @nullable */
   type: string | null;
-  /**
-     * The day Lootlog first observed it, `YYYY-MM-DD` in Polish time; null when unknown.
-     * @nullable
-     */
-  firstSeenOn: string | null;
   droppedBy: CatalogDropSourceDtoOutput[];
 }
 
@@ -446,14 +436,10 @@ maxLevel?: number;
 statKeys?: string[];
 legendaryBonuses?: string[];
 dropSourceTypes?: string[];
-firstSeenWithinDays?: number;
 /**
  * Items that drop from the NPC with this catalog key.
  */
 droppedBy?: string;
-/**
- * `newest` orders by the first observation, latest first.
- */
 sort?: CatalogControllerGetItemsSort;
 limit?: number;
 offset?: number;
@@ -472,7 +458,6 @@ export type CatalogControllerGetItemsSort = typeof CatalogControllerGetItemsSort
 
 export const CatalogControllerGetItemsSort = {
   relevance: 'relevance',
-  newest: 'newest',
   'lvl:asc': 'lvl:asc',
   'lvl:desc': 'lvl:desc',
   'name:asc': 'name:asc',
@@ -504,10 +489,6 @@ gameVersion?: CatalogControllerGetNpcsGameVersion;
 ids?: number[];
 keys?: string[];
 types?: string[];
-/**
- * `newest` orders by the first observation, latest first.
- */
-sort?: CatalogControllerGetNpcsSort;
 limit?: number;
 offset?: number;
 };
@@ -518,14 +499,6 @@ export type CatalogControllerGetNpcsGameVersion = typeof CatalogControllerGetNpc
 export const CatalogControllerGetNpcsGameVersion = {
   en: 'en',
   pl: 'pl',
-} as const;
-
-export type CatalogControllerGetNpcsSort = typeof CatalogControllerGetNpcsSort[keyof typeof CatalogControllerGetNpcsSort];
-
-
-export const CatalogControllerGetNpcsSort = {
-  relevance: 'relevance',
-  newest: 'newest',
 } as const;
 
 export type CatalogControllerGetNpcs401 = {

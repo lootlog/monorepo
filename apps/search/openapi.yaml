@@ -467,11 +467,6 @@ paths:
           required: false
           style: form
           explode: true
-        - name: firstSeenWithinDays
-          in: query
-          schema:
-            type: number
-          required: false
         - name: droppedBy
           in: query
           schema:
@@ -484,12 +479,10 @@ paths:
             type: string
             enum:
               - relevance
-              - newest
               - lvl:asc
               - lvl:desc
               - name:asc
               - name:desc
-            description: "`newest` orders by the first observation, latest first."
           required: false
         - name: limit
           in: query
@@ -599,15 +592,6 @@ paths:
           required: false
           style: form
           explode: true
-        - name: sort
-          in: query
-          schema:
-            type: string
-            enum:
-              - relevance
-              - newest
-            description: "`newest` orders by the first observation, latest first."
-          required: false
         - name: limit
           in: query
           schema:
@@ -725,10 +709,6 @@ components:
           enum:
             - en
             - pl
-        firstSeenOn:
-          description: The day Lootlog first observed it, `YYYY-MM-DD` in Polish time; null when unknown.
-          nullable: true
-          type: string
       required:
         - key
         - id
@@ -737,7 +717,6 @@ components:
         - lvl
         - type
         - gameVersion
-        - firstSeenOn
       description: A Margonem NPC in the public catalog
     CatalogItemsResponseDto_Output:
       type: object
@@ -771,10 +750,6 @@ components:
         type:
           nullable: true
           type: string
-        firstSeenOn:
-          description: The day Lootlog first observed it, `YYYY-MM-DD` in Polish time; null when unknown.
-          nullable: true
-          type: string
         droppedBy:
           type: array
           items:
@@ -787,7 +762,6 @@ components:
         - lvl
         - rarity
         - type
-        - firstSeenOn
         - droppedBy
       description: A Margonem item in the public catalog
     CatalogDropSourceDto_Output:

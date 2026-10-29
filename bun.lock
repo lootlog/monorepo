@@ -345,7 +345,6 @@
       "version": "1.0.11",
       "dependencies": {
         "@effect/platform-bun": "catalog:",
-        "@lootlog/datetime": "workspace:*",
         "@lootlog/domain": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
