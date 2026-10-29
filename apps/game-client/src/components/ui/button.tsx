@@ -38,7 +38,7 @@ const buttonVariants = cva(
           "ll:text-gray-400 ll:hover:bg-destructive/15 ll:hover:text-destructive",
         taskbar:
           "ll:text-gray-300 ll:hover:bg-white/10 ll:hover:text-white ll:aria-expanded:bg-white/15 ll:aria-expanded:text-white ll:aria-pressed:bg-white/15 ll:aria-pressed:text-white ll:aria-pressed:shadow-[inset_0_-2px_0_var(--ll-color-blue-400)]",
-        menu: "ll:h-auto ll:min-h-7 ll:justify-start ll:px-2 ll:py-1.5 ll:text-xs ll:font-semibold ll:text-popover-foreground ll:hover:bg-muted ll:focus-visible:bg-muted ll:disabled:text-muted-foreground",
+        menu: "ll-action-menu-item ll:h-auto ll:min-h-7 ll:justify-start ll:px-2 ll:py-1.5 ll:text-xs ll:font-semibold ll:text-popover-foreground ll:hover:bg-muted ll:focus-visible:bg-muted ll:disabled:text-muted-foreground",
       },
       size: {
         default:

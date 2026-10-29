@@ -32,7 +32,7 @@ export const SettingsHelpPopover = ({
       <PopoverContent
         side="right"
         align="start"
-        className="ll:w-56 ll:space-y-2 ll:text-xs ll:leading-4"
+        className="ll:flex ll:w-56 ll:flex-col ll:gap-2 ll:text-xs ll:leading-4"
       >
         {description ? (
           <p className="ll:m-0 ll:text-popover-foreground">{description}</p>
