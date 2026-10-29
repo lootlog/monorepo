@@ -18,6 +18,7 @@ import {
   type Response as RealtimeResponse,
   type ServerEvent,
   isServerEventFrame,
+  REALTIME_SERVER_CLOSE_CODES,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
 import { Effect, Result } from "effect";
@@ -561,7 +562,10 @@ export class RealtimeHub {
     for (const socket of this.getLocalSocketsForUser(userId)) {
       if (socket.data.discordId !== discordId) continue;
       this.detach(socket);
-      socket.close(1013, "authorization temporarily unavailable");
+      socket.close(
+        REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+        "authorization temporarily unavailable",
+      );
     }
   }
 
@@ -660,7 +664,11 @@ export class RealtimeHub {
       closeGradually(
         sockets,
         this.federationRecovery.closeSpreadMs ?? FEDERATION_CLOSE_SPREAD_MS,
-        (socket) => socket.close(1013, "realtime federation unavailable"),
+        (socket) =>
+          socket.close(
+            REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+            "realtime federation unavailable",
+          ),
       ),
     );
   }
@@ -1152,7 +1160,10 @@ export class RealtimeHub {
       socket.send(data, true) === 0
     ) {
       this.backpressuredSockets.add(socket);
-      socket.close(1013, "backpressure limit exceeded");
+      socket.close(
+        REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+        "backpressure limit exceeded",
+      );
 
       return false;
     }
