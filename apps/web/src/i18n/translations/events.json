@@ -318,7 +318,7 @@
     "saveError": "Nie udało się zapisać herosa",
     "mapsHint": "Mapy dla herosa dodasz po jego utworzeniu.",
     "idHint": "Jeśli nie znasz ID lub jest niedostępne - zostanie ustawione automatycznie po pierwszym zbiciu herosa (wymaga poprawnej nazwy).",
-    "nameLockedError": "Nie można zmienić nazwy herosa po ustawieniu jego ID.",
+    "nameTakenError": "W tym evencie jest już heros lub ranking o tej nazwie.",
     "added": "Dodano herosa",
     "updated": "Zaktualizowano herosa",
     "deleted": "Usunięto herosa",
@@ -386,7 +386,9 @@
     },
     "loading": "Ładowanie...",
     "endOfList": "To wszystkie bicia",
-    "manualClose": "Ręczne zamknięcie okna"
+    "manualClose": "Ręczne zamknięcie okna",
+    "presenceBreakdown": "Ocena obstawki",
+    "presenceBreakdownHint": "Według aktualnych reguł eventu. Zapisane punkty mogły zostać naliczone według reguł obowiązujących w chwili bicia."
   },
   "respawn": {
     "openWindow": "Otwórz okno respawnu",
@@ -507,7 +509,10 @@
       "finiteNumber": "Wpisz poprawną liczbę.",
       "nonNegative": "Wartość nie może być ujemna.",
       "percentage": "Wpisz wartość od 0 do 100.",
-      "invalidRules": "Popraw błędne wartości punktacji."
+      "invalidRules": "Popraw błędne wartości punktacji.",
+      "wholeNumber": "Wpisz liczbę całkowitą.",
+      "groupSize": "Wpisz co najmniej 1 osobę.",
+      "invertedRange": "Górna granica nie może być mniejsza od dolnej."
     },
     "title": "Punktacja",
     "description": "Jak przyznawać punkty za bicia",
@@ -525,8 +530,8 @@
     "modeAdvancedTitle": "Zaawansowany",
     "modeAdvancedDescription": "Tworzysz własne reguły - decydujesz ile punktów i za jakie warunki.",
     "rules": "Reguły punktacji",
-    "ifLabel": "JEŻELI",
-    "thenLabel": "WTEDY",
+    "ifLabel": "Jeżeli",
+    "thenLabel": "Wtedy",
     "andLabel": "i",
     "always": "zawsze",
     "timezoneLabel": "Strefa czasowa",
@@ -540,17 +545,19 @@
     "addRule": "Dodaj regułę",
     "addCondition": "Dodaj warunek",
     "conditionsCount": "war.",
-    "conditionAndHint": "Wszystkie warunki muszą być spełnione jednocześnie",
+    "conditionAndHint": "wszystkie warunki muszą być spełnione",
     "conditionType": {
       "NUMERIC": "Wartość liczbowa",
       "BOOLEAN": "Tak / nie",
       "KILL_TIME_IN_WINDOW": "Godzina bicia",
-      "RESPAWN_WINDOW_COVERAGE": "% respawnu w godzinach"
+      "RESPAWN_WINDOW_COVERAGE": "% respawnu w godzinach",
+      "RESPAWN_JOIN": "Dołączył od początku respawnu",
+      "GROUP_SIZE": "Wielkość grupy"
     },
     "actionType": {
       "SET_BASE": "Ustaw punkty bazowe",
       "ADD_BONUS": "Dodaj bonus",
-      "ZERO_BASE": "Zeruj punkty"
+      "ZERO_BASE": "Zeruj podstawę"
     },
     "actionSummary": {
       "basePoints": "{{points}} pkt",
@@ -567,7 +574,8 @@
       "respawnProgressPercentage": "% maksymalnego respawnu przy biciu",
       "eligible": "Gracz się kwalifikuje",
       "memberPresentAtKill": "Był na mapie przy biciu",
-      "wasPresent": "Pojawił się na mapie"
+      "wasPresent": "Pojawił się na mapie",
+      "respawnJoinDelaySeconds": "Spóźnienie od początku respawnu"
     },
     "booleanValue": {
       "true": "tak",
@@ -575,7 +583,12 @@
     },
     "conditionSummary": {
       "killTimeInWindow": "Bicie w godzinach {{from}}–{{to}}",
-      "respawnWindowCoverage": "% respawnu w godz. {{from}}–{{to}} {{operator}} {{value}}%"
+      "respawnWindowCoverage": "% respawnu w godz. {{from}}–{{to}} {{operator}} {{value}}%",
+      "respawnJoin": "Dołączył do {{duration}} po początku respawnu",
+      "respawnJoinExact": "Dołączył od początku respawnu",
+      "groupTimeShare": "Co najmniej {{percentage}}% własnej obstawki spędził {{group}}",
+      "groupCount": "Obstawiający ({{counting}}) {{range}}",
+      "groupCount_minShare": "Obstawiający z udziałem co najmniej {{share}}% okna {{range}}"
     },
     "summary": {
       "cap": "Max {{points}} pkt za bicie",
@@ -601,11 +614,25 @@
       "to": "Do",
       "coverage": "Porównanie",
       "action": "Co zrobić",
-      "points": "Ile punktów"
+      "points": "Ile punktów",
+      "countingMode": "Sposób liczenia",
+      "groupSize": "Liczebność grupy",
+      "groupSizeTo": "do",
+      "minShare": "Udział w całym oknie respawnu (co najmniej)",
+      "minTime": "Część własnej obstawki (co najmniej)",
+      "tolerance": "Dopuszczalne spóźnienie"
     },
     "fieldLabel": {
       "conditionValue": "Reguła {{rule}}, warunek {{condition}}: wartość",
-      "actionPoints": "Reguła {{rule}}: ile punktów"
+      "actionPoints": "Reguła {{rule}}: ile punktów",
+      "conditionType": "Reguła {{rule}}, warunek {{condition}}: rodzaj",
+      "toleranceMinutes": "Reguła {{rule}}, warunek {{condition}}: minuty spóźnienia",
+      "toleranceSeconds": "Reguła {{rule}}, warunek {{condition}}: sekundy spóźnienia",
+      "groupSizeComparison": "Reguła {{rule}}, warunek {{condition}}: porównanie liczebności",
+      "groupSizeValue": "Reguła {{rule}}, warunek {{condition}}: liczebność",
+      "groupSizeTo": "Reguła {{rule}}, warunek {{condition}}: górna granica liczebności",
+      "minShare": "Reguła {{rule}}, warunek {{condition}}: udział w oknie",
+      "minTime": "Reguła {{rule}}, warunek {{condition}}: część własnej obstawki"
     },
     "factorHint": {
       "trackingDurationPercentage": "Jaki % czasu respawnu gracz obstawiał herosa",
@@ -618,7 +645,8 @@
       "respawnProgressPercentage": "Ile % respawnu minęło w momencie bicia",
       "eligible": "Czy gracz spełnia podstawowe wymagania",
       "memberPresentAtKill": "Czy gracz był na mapie gdy padł heros",
-      "wasPresent": "Czy gracz w ogóle pojawił się na mapie"
+      "wasPresent": "Czy gracz w ogóle pojawił się na mapie",
+      "respawnJoinDelaySeconds": "Ile sekund minęło od początku respawnu do pierwszego dołączenia gracza. Gdy nie da się tego ustalić, warunek nie jest spełniony."
     },
     "template": {
       "menuLabel": "Wybierz szablon",
@@ -631,12 +659,24 @@
       "killTimeBonus": "Bonus za godzinę bicia",
       "killTimeBonusDesc": "Dodatkowe punkty za bicie o wybranej porze",
       "leaveGrace": "Kara za zejście z mapy",
-      "leaveGraceDesc": "Zeruj punkty jeśli gracz zszedł za długo przed biciem"
+      "leaveGraceDesc": "Zeruj punkty jeśli gracz zszedł za długo przed biciem",
+      "sectionSets": "Zestawy",
+      "sectionRules": "Pojedyncze reguły",
+      "groupRulebook": "Solo, mała grupa i zwykła podstawa",
+      "groupRulebookDesc": "Zastępuje reguły podstawy: 0,5 / 1 / 2 / 3 pkt we właściwej kolejności. Bonusy zostają, a limit rośnie, żeby ich nie obcinać.",
+      "halfBase": "Połowa obstawki",
+      "halfBaseDesc": "0,5 pkt za co najmniej 50% respawnu",
+      "fullFromStart": "Pełna obstawka od początku",
+      "fullFromStartDesc": "1 pkt za co najmniej 90% respawnu przy dołączeniu do 5 min po początku",
+      "soloBase": "Podstawa solo",
+      "soloBaseDesc": "3 pkt za co najmniej 50% respawnu, z czego 90% własnej obstawki solo",
+      "smallGroupBase": "Podstawa małej grupy",
+      "smallGroupBaseDesc": "2 pkt za co najmniej 50% respawnu, z czego 90% własnej obstawki w grupie do 4 osób"
     },
     "simulator": {
       "buttonLabel": "Symuluj",
       "dialogTitle": "Symulator punktacji",
-      "dialogDescription": "Ustaw wartości i sprawdź ile punktów dostanie gracz",
+      "dialogDescription": "Ułóż obstawkę na osi czasu i sprawdź, ile punktów dostanie każdy uczestnik.",
       "trackingPercent": "% respawnu obstawionego",
       "assignedMembers": "Liczba obstawiających",
       "presentAtKill": "Obecny przy biciu",
@@ -659,7 +699,176 @@
       "firedRules": "Zadziałały",
       "context": "Scenariusz gracza",
       "minutesUnit": "min",
-      "secondsUnit": "sek"
+      "secondsUnit": "sek",
+      "modeLabel": "Rodzaj symulacji",
+      "mode": {
+        "timeline": "Oś czasu",
+        "manual": "Wartości ręczne"
+      },
+      "manualNote": "Tryb uproszczony do starszych warunków: liczbę obstawiających i udział wpisujesz ręcznie. Warunki dołączenia i wielkości grupy w czasie wymagają osi czasu, więc tutaj nie da się ich ustalić.",
+      "presets": "Przykłady",
+      "preset": {
+        "joinWithinTolerance": "Dołączenie w tolerancji",
+        "lateSecondMember": "Druga osoba na końcu",
+        "handover": "Zmiana bez nakładania",
+        "shortFifthMember": "Krótko pięć osób"
+      },
+      "windowStart": "Początek respawnu",
+      "maxRespawn": "Maks. respawn",
+      "participants": "Uczestnicy i ich obecność",
+      "participantName": "Gracz {{number}}",
+      "participantNameLabel": "Nazwa uczestnika {{number}}",
+      "removeParticipant": "Usuń uczestnika {{name}}",
+      "addParticipant": "Dodaj uczestnika",
+      "interval": {
+        "from": "{{name}}, przedział {{number}}: od",
+        "to": "{{name}}, przedział {{number}}: do",
+        "remove": "Usuń przedział {{number}} uczestnika {{name}}",
+        "add": "Dodaj przedział"
+      },
+      "noParticipants": "Dodaj uczestnika, żeby zobaczyć wynik.",
+      "pointsParts": "baza {{base}} + bonus {{bonus}}"
+    },
+    "ruleDisabled": "wyłączona",
+    "removeCondition": "Usuń warunek {{condition}}",
+    "moveRuleUp": "Przesuń regułę {{rule}} wyżej",
+    "moveRuleDown": "Przesuń regułę {{rule}} niżej",
+    "capWarning": "Reguła ustawia {{points}} pkt, ale limit za bicie to {{cap}} pkt, więc gracz dostanie najwyżej {{cap}} pkt.",
+    "howItWorks": {
+      "title": "Jak liczymy punkty",
+      "order": "Reguły są sprawdzane od góry do dołu.",
+      "base": "Podstawę ustawia ostatnia spełniona reguła z listy, dlatego wyższą podstawę (np. solo) umieść niżej niż niższą (np. mała grupa).",
+      "bonus": "Bonusy się sumują i wymagają co najmniej {{percentage}}% obstawki. Wynik ogranicza limit {{cap}} pkt za bicie."
+    },
+    "duration": {
+      "seconds": "{{seconds}} s",
+      "minutes": "{{minutes}} min",
+      "minutesSeconds": "{{minutes}} min {{seconds}} s"
+    },
+    "unit": {
+      "minutes": "min",
+      "seconds": "s",
+      "people": "os.",
+      "percent": "%"
+    },
+    "conditionTypeHint": {
+      "NUMERIC": "Porównaj wartość, np. % obstawionego respawnu albo spóźnienie",
+      "BOOLEAN": "Sprawdź, czy coś zaszło, np. obecność przy biciu",
+      "KILL_TIME_IN_WINDOW": "Godzina, o której padł heros",
+      "RESPAWN_WINDOW_COVERAGE": "Jaka część okna respawnu przypadła na wybrane godziny",
+      "RESPAWN_JOIN": "Jak późno po początku respawnu gracz dołączył do obstawki",
+      "GROUP_SIZE": "Ile osób obstawiało herosa razem z graczem"
+    },
+    "conditionGroup": {
+      "presence": "Obstawka",
+      "time": "Pora",
+      "other": "Inne"
+    },
+    "actionHint": {
+      "SET_BASE": "Zastępuje podstawę ustawioną przez reguły wyżej na liście.",
+      "ADD_BONUS": "Dolicza się do podstawy, jeśli gracz obstawiał co najmniej {{percentage}}% respawnu.",
+      "ZERO_BASE": "Ustawia podstawę na 0 pkt."
+    },
+    "groupSize": {
+      "solo": "solo",
+      "EXACT_one": "w grupie {{count}}-osobowej",
+      "EXACT_few": "w grupie {{count}}-osobowej",
+      "EXACT_many": "w grupie {{count}}-osobowej",
+      "EXACT_other": "w grupie {{count}}-osobowej",
+      "AT_MOST_one": "w grupie do {{count}} osoby",
+      "AT_MOST_few": "w grupie do {{count}} osób",
+      "AT_MOST_many": "w grupie do {{count}} osób",
+      "AT_MOST_other": "w grupie do {{count}} osób",
+      "AT_LEAST_one": "w grupie od {{count}} osoby",
+      "AT_LEAST_few": "w grupie od {{count}} osób",
+      "AT_LEAST_many": "w grupie od {{count}} osób",
+      "AT_LEAST_other": "w grupie od {{count}} osób",
+      "BETWEEN_one": "w grupie od {{from}} do {{count}} osoby",
+      "BETWEEN_few": "w grupie od {{from}} do {{count}} osób",
+      "BETWEEN_many": "w grupie od {{from}} do {{count}} osób",
+      "BETWEEN_other": "w grupie od {{from}} do {{count}} osób"
+    },
+    "groupCounting": {
+      "WINDOW": "wszyscy w oknie",
+      "AT_KILL": "obecni przy biciu",
+      "MIN_SHARE": "z wymaganym udziałem",
+      "TIMELINE": "zmieniająca się w czasie"
+    },
+    "groupCountingTitle": {
+      "WINDOW": "Wszyscy uczestnicy w oknie",
+      "AT_KILL": "Obecni przy biciu",
+      "MIN_SHARE": "Uczestnicy z wymaganym udziałem",
+      "TIMELINE": "Liczebność zmieniająca się w czasie"
+    },
+    "groupCountingHint": {
+      "WINDOW": "Każdy, kto obstawiał herosa choćby chwilę w tym oknie respawnu.",
+      "AT_KILL": "Osoby obstawiające herosa w chwili bicia.",
+      "MIN_SHARE": "Osoby, które obstawiały co najmniej wskazany % całego okna respawnu. Punkty nie mają tu znaczenia.",
+      "TIMELINE": "Liczebność w każdej chwili obstawki. Sprawdza, jaką część własnej obstawki gracz spędził w grupie danej wielkości."
+    },
+    "groupSizeComparison": {
+      "EXACT": "Dokładnie",
+      "AT_MOST": "Nie więcej niż",
+      "AT_LEAST": "Co najmniej",
+      "BETWEEN": "Od"
+    },
+    "groupShortcut": {
+      "solo": "Solo",
+      "smallGroup": "Do 4 osób"
+    },
+    "hint": {
+      "respawnJoin": "Ocenia tylko moment dołączenia. Długość obstawki sprawdza osobny warunek, np. „% respawnu obstawionego”. 0 oznacza brak tolerancji.",
+      "groupIncludesPlayer": "Liczebność obejmuje ocenianego gracza: solo to grupa jednej osoby.",
+      "minShare": "Procent całego okna respawnu. Ten próg decyduje tylko o tym, kogo liczymy do grupy.",
+      "minTime": "Procent własnego zaliczonego czasu gracza. Czas, gdy gracza nie było, się nie liczy.",
+      "hardCap": "Najwięcej punktów za jedno bicie.",
+      "minTrackingForBonuses": "Bonusy dostaje tylko gracz z co najmniej takim udziałem w respawnie.",
+      "timezone": "Według niej sprawdzamy godziny bicia i respawnu."
+    },
+    "presence": {
+      "window": "Okno respawnu",
+      "firstJoin": "Pierwsze dołączenie",
+      "counted": "Zaliczony czas",
+      "distribution": "Liczebność w czasie",
+      "windowRange": "{{start}} – {{end}} ({{duration}})",
+      "joinedAt": "{{time}}, spóźnienie {{delay}}",
+      "absent": "brak obecności w oknie",
+      "countedTime": "{{duration}}, {{share}} okna",
+      "distributionEntry_one": "{{count}} osoba: {{duration}}, {{percentage}}",
+      "distributionEntry_few": "{{count}} osoby: {{duration}}, {{percentage}}",
+      "distributionEntry_many": "{{count}} osób: {{duration}}, {{percentage}}",
+      "distributionEntry_other": "{{count}} osoby: {{duration}}, {{percentage}}",
+      "joinMeasurement": "Spóźnienie {{delay}}, dopuszczalne {{tolerance}}",
+      "timeShareMeasurement": "{{matched}} z {{own}} własnej obstawki ({{percentage}}), liczebność {{counting}}",
+      "countMeasurement_one": "Policzono {{count}} osobę ({{counting}})",
+      "countMeasurement_few": "Policzono {{count}} osoby ({{counting}})",
+      "countMeasurement_many": "Policzono {{count}} osób ({{counting}})",
+      "countMeasurement_other": "Policzono {{count}} osoby ({{counting}})",
+      "memberShare": "{{name}} ({{share}})",
+      "included": "Wliczeni: {{members}}",
+      "excluded": "Pominięci: {{members}}",
+      "exclusion": {
+        "NO_COUNTED_TIME": "{{name}} (bez zaliczonego czasu)",
+        "BELOW_MIN_SHARE": "{{name}} (udział {{share}}, wymagane {{threshold}}%)",
+        "NOT_PRESENT_AT_KILL": "{{name}} (nie było przy biciu)"
+      },
+      "unknownReason": {
+        "NO_PRESENCE_DATA": "Nie można ustalić: brak danych o obecności.",
+        "WINDOW_UNKNOWN": "Nie można ustalić: brak wiarygodnego początku respawnu.",
+        "PARTICIPANT_DATA_MISSING": "Nie można ustalić: brak zapisów obecności gracza.",
+        "GROUP_DATA_INCOMPLETE": "Nie można ustalić: brak zapisów obecności części uczestników."
+      }
+    },
+    "evaluation": {
+      "applied": "zastosowana",
+      "overridden": "zastąpiona przez regułę niżej",
+      "blocked": "spełniona, ale bonus wymaga większego udziału",
+      "notMatched": "niespełniona",
+      "outcome": {
+        "MET": "spełniony",
+        "NOT_MET": "niespełniony",
+        "UNKNOWN": "nie można ustalić"
+      }
     }
   },
   "header": {

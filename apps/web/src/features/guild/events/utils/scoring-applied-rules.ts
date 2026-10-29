@@ -1,9 +1,17 @@
 import {
   calculateRespawnProgressPercentage,
   evaluateEventScoring as evaluateSharedEventScoring,
+  explainEventScoring,
   type EventScoringContext,
+  type EventScoringExplanation,
   type EventScoringRules,
 } from "@lootlog/domain/scoring";
+import {
+  analyzeEventKillPresence,
+  getPresenceScoringContext,
+  resolveEventScoringWindow,
+  type EventKillPresence,
+} from "@lootlog/domain/scoring-presence";
 import type {
   KillDetail,
   KillDetailParticipant,
@@ -22,6 +30,7 @@ export type EvaluationContext = {
   timeOnMapSeconds: number;
   afkPercentage: number;
   wasPresent: boolean;
+  presence?: EventScoringContext["presence"];
 };
 
 export type ScoringSimulationAppliedRule = {
@@ -48,39 +57,36 @@ function parseDateIfValid(value: string | null | undefined): Date | null {
   return Number.isFinite(date.getTime()) ? date : null;
 }
 
-function getMemberKillState(params: {
-  participant: KillDetailParticipant;
-  killTime: Date;
-  respawnStartTime: Date;
-}) {
-  let memberLeaveTime: Date | null = null;
-  let memberPresentAtKill = false;
+/**
+ * The kill's presence analysis from every participant's assignment records,
+ * built once and shared by each participant's breakdown.
+ */
+function analyzeKillPresence(kill: KillDetail): EventKillPresence {
+  const participants = kill.points ?? [];
 
-  for (const assignment of params.participant.mapData ?? []) {
-    const assignedAt = parseDateIfValid(assignment.assignedAt);
+  return analyzeEventKillPresence({
+    window: resolveEventScoringWindow({
+      killedAt: new Date(kill.killedAt),
+      minSpawnTimeAtKill: parseDateIfValid(kill.minSpawnTimeAtKill),
+      maxSpawnTimeAtKill: parseDateIfValid(kill.maxSpawnTimeAtKill),
+    }),
+    participantIds: participants.map((participant) => participant.memberId),
+    intervals: participants.flatMap((participant) =>
+      (participant.mapData ?? []).flatMap((assignment) => {
+        const start = parseDateIfValid(assignment.assignedAt);
 
-    if (!assignedAt || assignedAt > params.killTime) {
-      continue;
-    }
-
-    const unassignedAt = parseDateIfValid(assignment.unassignedAt);
-    const assignmentEnd = unassignedAt ?? params.killTime;
-
-    if (assignmentEnd < params.respawnStartTime) {
-      continue;
-    }
-
-    if (!unassignedAt || unassignedAt >= params.killTime) {
-      memberPresentAtKill = true;
-    } else if (
-      unassignedAt >= params.respawnStartTime &&
-      (!memberLeaveTime || unassignedAt > memberLeaveTime)
-    ) {
-      memberLeaveTime = unassignedAt;
-    }
-  }
-
-  return { memberLeaveTime, memberPresentAtKill };
+        return start
+          ? [
+              {
+                participantId: participant.memberId,
+                start,
+                end: parseDateIfValid(assignment.unassignedAt),
+              },
+            ]
+          : [];
+      }),
+    ),
+  });
 }
 
 function toSharedContext(context: EvaluationContext): EventScoringContext {
@@ -97,6 +103,7 @@ function toSharedContext(context: EvaluationContext): EventScoringContext {
     timeOnMapSeconds: context.timeOnMapSeconds,
     afkPercentage: context.afkPercentage,
     wasPresent: context.wasPresent,
+    presence: context.presence,
   };
 }
 
@@ -118,75 +125,81 @@ export function evaluateEventScoring(
   };
 }
 
-export function getAppliedRuleIdsForParticipant(params: {
+/** The kill's shared analysis and current rules for every breakdown. */
+export type KillParticipantScoring = {
+  rules: EventScoringRules;
+  analysis: EventKillPresence;
+  explain: (participant: KillDetailParticipant) => EventScoringExplanation;
+};
+
+/**
+ * Re-evaluates the event's current rules for one kill participant: tracking
+ * comes from the stored kill point, presence from the kill's analysis.
+ */
+function explainParticipantScoring(params: {
   kill: KillDetail;
   participant: KillDetailParticipant;
-  scoringRules: EventScoringRules | null;
-  assignedMembersCount: number;
-}): string[] {
-  const { kill, participant, scoringRules, assignedMembersCount } = params;
-
-  if (!scoringRules) {
-    return [];
-  }
-
-  const killTime = new Date(kill.killedAt);
-  const minSpawnTimeAtKill = new Date(kill.minSpawnTimeAtKill);
-  const maxSpawnTimeAtKill = new Date(kill.maxSpawnTimeAtKill);
-
-  if (!Number.isFinite(killTime.getTime())) {
-    return [];
-  }
-
-  const respawnStartTime =
-    minSpawnTimeAtKill > killTime ? killTime : minSpawnTimeAtKill;
-
-  const { memberLeaveTime, memberPresentAtKill } = getMemberKillState({
-    participant,
-    killTime,
-    respawnStartTime,
-  });
+  scoringRules: EventScoringRules;
+  analysis: EventKillPresence;
+}): EventScoringExplanation {
+  const { kill, participant, scoringRules, analysis } = params;
+  const presence = getPresenceScoringContext(analysis, participant.memberId);
+  const { killTime, respawnStartTime } = presence;
 
   const minutesSinceLeaveToKill =
-    memberLeaveTime && memberLeaveTime < killTime
-      ? (killTime.getTime() - memberLeaveTime.getTime()) / 60_000
+    presence.memberLeaveTime && presence.memberLeaveTime < killTime
+      ? (killTime.getTime() - presence.memberLeaveTime.getTime()) / 60_000
       : null;
 
-  const context: EvaluationContext = {
-    trackingDurationPercentage:
-      participant.trackingDurationPercentage !== null &&
-      participant.trackingDurationPercentage !== undefined &&
-      Number.isFinite(participant.trackingDurationPercentage)
+  return explainEventScoring({
+    mode: "ADVANCED",
+    rules: scoringRules,
+    context: toSharedContext({
+      trackingDurationPercentage: Number.isFinite(
+        participant.trackingDurationPercentage,
+      )
         ? participant.trackingDurationPercentage
         : null,
-    trackingDurationSeconds:
-      participant.trackingDurationSeconds !== null &&
-      participant.trackingDurationSeconds !== undefined &&
-      Number.isFinite(participant.trackingDurationSeconds)
+      trackingDurationSeconds: Number.isFinite(
+        participant.trackingDurationSeconds,
+      )
         ? participant.trackingDurationSeconds
         : null,
-    assignedMembersCount,
-    killTime,
-    respawnStartTime,
-    respawnDurationSeconds: Math.max(
-      0,
-      Math.floor((killTime.getTime() - respawnStartTime.getTime()) / 1000),
-    ),
-    respawnProgressPercentage: calculateRespawnProgressPercentage({
+      assignedMembersCount: kill.points?.length ?? 0,
       killTime,
       respawnStartTime,
-      maxRespawnTime: Number.isFinite(maxSpawnTimeAtKill.getTime())
-        ? maxSpawnTimeAtKill
-        : null,
+      respawnDurationSeconds: Math.max(
+        0,
+        Math.floor((killTime.getTime() - respawnStartTime.getTime()) / 1000),
+      ),
+      respawnProgressPercentage: calculateRespawnProgressPercentage({
+        killTime,
+        respawnStartTime,
+        maxRespawnTime: parseDateIfValid(kill.maxSpawnTimeAtKill),
+      }),
+      minutesSinceLeaveToKill,
+      memberPresentAtKill: presence.memberPresentAtKill,
+      timeOnMapSeconds: participant.timeOnMapSeconds,
+      afkPercentage: participant.afkPercentage,
+      wasPresent: participant.wasPresent,
+      presence: presence.presence,
     }),
-    minutesSinceLeaveToKill,
-    memberPresentAtKill,
-    timeOnMapSeconds: participant.timeOnMapSeconds,
-    afkPercentage: participant.afkPercentage,
-    wasPresent: participant.wasPresent,
-  };
+  });
+}
 
-  return evaluateEventScoring(scoringRules, context).appliedRules.map(
-    (rule) => rule.ruleId,
-  );
+/** Current rules and presence for a kill's breakdowns, or none in simple mode. */
+export function getKillParticipantScoring(
+  kill: KillDetail,
+  scoringRules: EventScoringRules | null,
+): KillParticipantScoring | null {
+  if (!scoringRules) return null;
+
+  const analysis = analyzeKillPresence(kill);
+
+  return {
+    rules: scoringRules,
+    analysis,
+    explain: (participant) =>
+      explainParticipantScoring({ kill, participant, scoringRules, analysis }),
+  };
 }

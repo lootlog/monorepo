@@ -9,7 +9,10 @@ import {
 import { afterEach, describe, expect, it, vi } from "#test/bun-test";
 import { RealtimeClient, type RealtimeWebSocket } from "./realtime-client.js";
 
-type Listener = (event: { readonly data?: unknown }) => void;
+type Listener = (event: {
+  readonly data?: unknown;
+  readonly code?: number;
+}) => void;
 
 class TestWebSocket implements RealtimeWebSocket {
   binaryType: BinaryType = "blob";
@@ -41,6 +44,11 @@ class TestWebSocket implements RealtimeWebSocket {
     this.dispatch("close");
   }
 
+  closeFromServer(code: number): void {
+    this.readyState = 3;
+    this.dispatch("close", { code });
+  }
+
   open(): void {
     this.readyState = 1;
     this.dispatch("open");
@@ -50,10 +58,7 @@ class TestWebSocket implements RealtimeWebSocket {
     this.dispatch("message", { data });
   }
 
-  private dispatch(
-    type: string,
-    event: { readonly data?: unknown } = {},
-  ): void {
+  private dispatch(type: string, event: Parameters<Listener>[0] = {}): void {
     for (const listener of this.listeners.get(type) ?? []) listener(event);
   }
 }
@@ -752,6 +757,42 @@ describe("RealtimeClient", () => {
     // The delay applies to that rejection only.
     socketAt(sockets, 1).close();
     await vi.advanceTimersByTimeAsync(1_000);
+    expect(sockets).toHaveLength(3);
+    client.disconnect();
+  });
+
+  it("spreads rejoins across the reconnect window when a gateway replica restarts", async () => {
+    vi.useFakeTimers();
+    const sockets: TestWebSocket[] = [];
+
+    const client = new RealtimeClient({
+      url: "https://gateway.example.test",
+      reconnectBaseDelayMs: 1_000,
+      random: () => 0.5,
+      webSocketFactory: () => {
+        const socket = new TestWebSocket();
+        sockets.push(socket);
+
+        return socket;
+      },
+    });
+
+    client.connect();
+    socketAt(sockets, 0).open();
+    const joined = client.join(joinData);
+    respondToLastRequest(socketAt(sockets, 0));
+    await flushMessages();
+    await joined;
+
+    socketAt(sockets, 0).closeFromServer(1012);
+    await vi.advanceTimersByTimeAsync(14_999);
+    expect(sockets).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(sockets).toHaveLength(2);
+
+    // A dropped connection keeps the short backoff.
+    socketAt(sockets, 1).close();
+    await vi.advanceTimersByTimeAsync(2_000);
     expect(sockets).toHaveLength(3);
     client.disconnect();
   });

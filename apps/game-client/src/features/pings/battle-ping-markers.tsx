@@ -52,7 +52,6 @@ export const BattlePingMarkers = () => {
 
     return createPortal(
       <BattlePingMarker
-        element={element}
         highlighted={highlightedWarriorId === warriorId}
         mark={marks.get(warriorId)}
         target={target?.warriorId === warriorId ? target : undefined}

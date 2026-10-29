@@ -6788,7 +6788,7 @@ export interface EventMutationResponseDto {
 
 export type CreateEventDtoScoringRulesRulesItemConditionsItem = {
   type: 'NUMERIC';
-  factor: 'trackingDurationPercentage' | 'trackingDurationSeconds' | 'assignedMembersCount' | 'minutesSinceLeaveToKill' | 'timeOnMapSeconds' | 'afkPercentage' | 'respawnDurationSeconds' | 'respawnProgressPercentage';
+  factor: 'trackingDurationPercentage' | 'trackingDurationSeconds' | 'assignedMembersCount' | 'minutesSinceLeaveToKill' | 'timeOnMapSeconds' | 'afkPercentage' | 'respawnDurationSeconds' | 'respawnProgressPercentage' | 'respawnJoinDelaySeconds';
   operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
   value: number;
 } | {
@@ -6809,6 +6809,39 @@ export type CreateEventDtoScoringRulesRulesItemConditionsItem = {
   to: string;
   operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
   value: number;
+} | {
+  type: 'RESPAWN_JOIN';
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  toleranceSeconds: number;
+} | {
+  type: 'GROUP_SIZE';
+  counting: 'WINDOW' | 'AT_KILL' | 'MIN_SHARE' | 'TIMELINE';
+  size: {
+  comparison: 'EXACT' | 'AT_MOST' | 'AT_LEAST' | 'BETWEEN';
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  value: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  to: number;
+};
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  minSharePercentage: number;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  minTimePercentage: number;
 };
 
 export type CreateEventDtoScoringRulesRulesItemActionType = typeof CreateEventDtoScoringRulesRulesItemActionType[keyof typeof CreateEventDtoScoringRulesRulesItemActionType];
@@ -6989,7 +7022,7 @@ export type UpdateEventDtoHeroNpcsItem = {
 
 export type UpdateEventDtoScoringRulesRulesItemConditionsItem = {
   type: 'NUMERIC';
-  factor: 'trackingDurationPercentage' | 'trackingDurationSeconds' | 'assignedMembersCount' | 'minutesSinceLeaveToKill' | 'timeOnMapSeconds' | 'afkPercentage' | 'respawnDurationSeconds' | 'respawnProgressPercentage';
+  factor: 'trackingDurationPercentage' | 'trackingDurationSeconds' | 'assignedMembersCount' | 'minutesSinceLeaveToKill' | 'timeOnMapSeconds' | 'afkPercentage' | 'respawnDurationSeconds' | 'respawnProgressPercentage' | 'respawnJoinDelaySeconds';
   operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
   value: number;
 } | {
@@ -7010,6 +7043,39 @@ export type UpdateEventDtoScoringRulesRulesItemConditionsItem = {
   to: string;
   operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
   value: number;
+} | {
+  type: 'RESPAWN_JOIN';
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  toleranceSeconds: number;
+} | {
+  type: 'GROUP_SIZE';
+  counting: 'WINDOW' | 'AT_KILL' | 'MIN_SHARE' | 'TIMELINE';
+  size: {
+  comparison: 'EXACT' | 'AT_MOST' | 'AT_LEAST' | 'BETWEEN';
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  value: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  to: number;
+};
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  minSharePercentage: number;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  minTimePercentage: number;
 };
 
 export type UpdateEventDtoScoringRulesRulesItemActionType = typeof UpdateEventDtoScoringRulesRulesItemActionType[keyof typeof UpdateEventDtoScoringRulesRulesItemActionType];
@@ -16049,7 +16115,7 @@ export const getEventsAssignmentControllerAddHeroUrl = ({ guildId, eventId }: Ev
 }
 
 /**
- * Add a new hero to an existing event
+ * Add a new hero to an existing event. Rejected with 409 when another hero or ranking entries in the event already use the name.
  * @summary Add hero to event
  */
 export const eventsAssignmentControllerAddHero = async ({ guildId, eventId }: EventsAssignmentControllerAddHeroPathParameters,
@@ -16114,7 +16180,7 @@ export const getEventsAssignmentControllerUpdateHeroUrl = ({ guildId, eventId, h
 }
 
 /**
- * Update an existing hero details
+ * Update an existing hero details. Renaming moves the hero's ranking entries to the new name and is rejected with 409 when another hero or ranking entries in the event already use that name.
  * @summary Update hero
  */
 export const eventsAssignmentControllerUpdateHero = async ({ guildId, eventId, heroId }: EventsAssignmentControllerUpdateHeroPathParameters,

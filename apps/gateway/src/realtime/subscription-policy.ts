@@ -9,8 +9,29 @@ type Topic = typeof RealtimeLogicalTopic.Type;
 
 type Scope = typeof SubscriptionScope.Type;
 
-/** The identity and Organization grants that every permission check reads. */
-export type PermissionViewer = Pick<SessionData, "discordId" | "guilds">;
+/**
+ * The identity and Organization grants that every permission check reads. A
+ * game session also brings the Organizations it publishes its presence to.
+ */
+export type PermissionViewer = Pick<SessionData, "discordId" | "guilds"> &
+  Partial<Pick<SessionData, "platform" | "presence">>;
+
+/** Permissions that reveal where other players are. */
+export const PRESENCE_PERMISSIONS: ReadonlySet<Permission> = new Set([
+  Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+  Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+]);
+
+/**
+ * A character in game sees other players of a Lootlog only while it is
+ * visible there itself, so nobody can watch a Lootlog incognito.
+ */
+export const publishesPresenceTo = (
+  viewer: PermissionViewer,
+  organizationId: string,
+): boolean =>
+  viewer.platform !== "game" ||
+  (viewer.presence?.organizationIds.includes(organizationId) ?? false);
 
 const TOPIC_PERMISSION = new Map<Topic, Permission>([
   ["organization.activity", Permission.LOOTLOG_ACCESS],
@@ -26,25 +47,60 @@ const TOPIC_PERMISSION = new Map<Topic, Permission>([
   ["map.pings", Permission.LOOTLOG_ONLINE_PLAYERS_READ],
 ]);
 
+interface PermissionIndex {
+  readonly discordId: string;
+  /** `true` grants every permission: the owner and ADMIN roles. */
+  readonly organizations: ReadonlyMap<string, ReadonlySet<Permission> | true>;
+}
+
+// Delivery checks every socket of an audience for each event. Sessions
+// replace their grants array on every access change, so the array identity
+// keys a precomputed lookup that cannot outlive the grants it describes.
+const permissionIndexes = new WeakMap<
+  PermissionViewer["guilds"],
+  PermissionIndex
+>();
+
+const indexPermissions = (session: PermissionViewer): PermissionIndex => {
+  const cached = permissionIndexes.get(session.guilds);
+
+  if (cached?.discordId === session.discordId) return cached;
+  const organizations = new Map<string, ReadonlySet<Permission> | true>();
+
+  for (const { guild, roles } of session.guilds) {
+    if (organizations.has(guild.id)) continue;
+    const permissions = new Set(roles.flatMap((role) => role.permissions));
+
+    organizations.set(
+      guild.id,
+      guild.ownerId === session.discordId || permissions.has(Permission.ADMIN)
+        ? true
+        : permissions,
+    );
+  }
+
+  const index = { discordId: session.discordId, organizations };
+  permissionIndexes.set(session.guilds, index);
+
+  return index;
+};
+
 export const hasPermission = (
   session: PermissionViewer,
   organizationId: string,
   permission: Permission,
 ): boolean => {
-  const guild = session.guilds.find(
-    (entry) => entry.guild.id === organizationId,
-  );
+  const granted = indexPermissions(session).organizations.get(organizationId);
 
-  if (!guild) return false;
+  if (!granted) return false;
 
-  return (
-    guild.guild.ownerId === session.discordId ||
-    guild.roles.some(
-      (role) =>
-        role.permissions.includes(Permission.ADMIN) ||
-        role.permissions.includes(permission),
-    )
-  );
+  if (
+    PRESENCE_PERMISSIONS.has(permission) &&
+    !publishesPresenceTo(session, organizationId)
+  )
+    return false;
+
+  return granted === true || granted.has(permission);
 };
 
 export const canSubscribe = (session: SessionData, scope: Scope): boolean => {

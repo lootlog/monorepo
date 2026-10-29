@@ -97,3 +97,102 @@ it("credits a reopened respawn window to the member who opened it", async () => 
     await boundary.dispose();
   }
 });
+
+it("follows an event hero to its NPC's timer after Margonem renames the NPC", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    const database = boundary.database;
+    await boundary.run(
+      database
+        .insert(guildTable)
+        .values([createGuildFixture(), createGuildFixture({ id: "guild-2" })]),
+    );
+    await boundary.run(
+      database
+        .insert(memberTable)
+        .values([
+          createMemberFixture({ id: 1 }),
+          createMemberFixture({ id: 2, guildId: "guild-2", userId: "other" }),
+        ]),
+    );
+
+    const timer = (
+      name: string,
+      updatedAt: number,
+      guildId = "guild-1",
+      deletedAt: Date | null = null,
+    ) => ({
+      guildId,
+      world: "Aldous",
+      npcId: 415782,
+      timerKey: buildTimerKey(415782, name),
+      createdById: guildId === "guild-1" ? 1 : 2,
+      minSpawnTime: new Date(updatedAt),
+      maxSpawnTime: new Date(updatedAt + 1000),
+      updatedAt: new Date(updatedAt),
+      npc: { name },
+      deletedAt,
+    });
+
+    await boundary.run(
+      database.insert(timerTable).values([
+        timer("Doppelgänger", 0),
+        timer("Doppelganger", 60_000),
+        timer("Doppelganger", 120_000, "guild-2"),
+        timer("Doppelgaenger", 180_000, "guild-1", new Date(180_000)),
+        {
+          ...timer("Drude", 0, "guild-1", new Date(60_000)),
+          npcId: 415783,
+          timerKey: buildTimerKey(415783, "Drude"),
+        },
+      ]),
+    );
+
+    const timers = makeEventTimersPort({
+      store: makeEventTimerStore(database),
+      redis: new RedisService(
+        {
+          send: () => Effect.die("unused"),
+          eval: () => () => Effect.die("unused"),
+          subscribe: () => Queue.unbounded(),
+        },
+        {},
+        Effect.runPromise,
+      ),
+      redlock: new RedlockService({ eval: mock().mockResolvedValue(1) }),
+      logger: applicationLogger,
+      amqp: { publish: () => Effect.void },
+    });
+
+    const hero = {
+      guildId: "guild-1",
+      world: "Aldous",
+      npcId: 415782,
+      npcName: "Doppelgänger",
+    };
+
+    const respawnTimer = await boundary.run(timers.getEventRespawnTimer(hero));
+
+    const heroTimers = await boundary.run(
+      timers.getTimersForEventHeroFilters("guild-1", "Aldous", [hero]),
+    );
+
+    const hasTimers = await boundary.run(
+      timers.hasEventRespawnTimers([
+        hero,
+        { ...hero, npcId: 1, npcName: "Doppelganger" },
+        { ...hero, npcId: 415783, npcName: "Drüde" },
+      ]),
+    );
+
+    expect(respawnTimer?.timerKey).toBe(buildTimerKey(415782, "Doppelganger"));
+    expect(respawnTimer?.guildId).toBe("guild-1");
+    expect(heroTimers.map((row) => row.timerKey)).toEqual([
+      buildTimerKey(415782, "Doppelganger"),
+    ]);
+    expect(hasTimers).toEqual([true, false, false]);
+  } finally {
+    await boundary.dispose();
+  }
+});

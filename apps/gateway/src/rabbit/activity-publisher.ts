@@ -10,18 +10,48 @@ import type { SessionData } from "#src/realtime/session";
 
 export class ActivityPublisher {
   constructor(
-    private readonly messaging: RabbitMessagingService,
-    private readonly config: GatewayConfiguration,
+    private readonly messaging: Pick<RabbitMessagingService, "publish">,
+    private readonly config: Pick<
+      GatewayConfiguration,
+      "activityEventSignatureSecret"
+    >,
   ) {}
 
+  /**
+   * Records a connection once per Lootlog and a disconnection only where the
+   * connection was recorded, so each Lootlog sees a session only while it is
+   * visible there. Without `requestedIds` a connection goes to every
+   * Lootlog of the session and a disconnection to every recorded one.
+   */
   publish(
     type: "CONNECT_EVENT" | "DISCONNECT_EVENT",
     session: SessionData,
-    organizationIds = session.guilds.map(({ guild }) => guild.id),
+    requestedIds?: readonly string[],
   ): Effect.Effect<void> {
     const { config, messaging } = this;
 
     return Effect.gen(function* () {
+      const recorded = new Set(session.activityOrganizationIds);
+
+      const organizationIds =
+        type === "CONNECT_EVENT"
+          ? (
+              requestedIds ?? session.guilds.map(({ guild }) => guild.id)
+            ).filter((id) => !recorded.has(id))
+          : (requestedIds ?? [...recorded]).filter((id) => recorded.has(id));
+
+      // Changed only after a confirmed publication, so a failed connection
+      // is retried by the next one and a disconnection never precedes it.
+      const record = (guildId: string) =>
+        Effect.sync(() => {
+          const current = session.activityOrganizationIds ?? [];
+
+          session.activityOrganizationIds =
+            type === "CONNECT_EVENT"
+              ? [...new Set([...current, guildId])]
+              : current.filter((id) => id !== guildId);
+        });
+
       const timestamp = yield* Clock.currentTimeMillis;
       yield* Effect.forEach(
         organizationIds,
@@ -69,6 +99,7 @@ export class ActivityPublisher {
               headers: { [ACTIVITY_EVENT_SIGNATURE_HEADER]: signature },
             })
             .pipe(
+              Effect.andThen(record(guildId)),
               Effect.catch((error) =>
                 Effect.logWarning("Activity event publication failed").pipe(
                   Effect.annotateLogs({ error, guildId, type }),

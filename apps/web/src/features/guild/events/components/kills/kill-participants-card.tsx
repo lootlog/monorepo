@@ -8,10 +8,14 @@ import { EmptyState } from "@/components/common/empty-state";
 import { useEventsRankingControllerUpdateKillPoint } from "@lootlog/client/main";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { invalidateKillQueries } from "../../hooks/mutations/invalidate-kill-queries";
+import type { KillParticipantScoring } from "../../utils/scoring-applied-rules";
 import { KillParticipantRow } from "./kill-participant-row";
+import { useIsViewer } from "@/hooks/auth/use-is-viewer";
+import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 
 interface KillParticipantsCardProps {
   participants: KillDetailParticipant[];
+  scoring?: KillParticipantScoring | null;
   guildId?: string;
   eventId?: string;
   killId?: string;
@@ -20,6 +24,7 @@ interface KillParticipantsCardProps {
 
 export const KillParticipantsCard = ({
   participants,
+  scoring = null,
   guildId,
   eventId,
   killId,
@@ -27,6 +32,8 @@ export const KillParticipantsCard = ({
 }: KillParticipantsCardProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const isViewer = useIsViewer();
+  const membersMap = useGuildMemberMap(guildId);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const updateKillPoint = useEventsRankingControllerUpdateKillPoint({
@@ -42,6 +49,13 @@ export const KillParticipantsCard = ({
   const sortedParticipants = [...participants].sort(
     (leftParticipant, rightParticipant) =>
       rightParticipant.points - leftParticipant.points,
+  );
+
+  const participantNames = new Map(
+    participants.map((participant) => [
+      participant.memberId,
+      participant.member.name,
+    ]),
   );
 
   const toggleExpanded = (participantId: string) => {
@@ -115,7 +129,13 @@ export const KillParticipantsCard = ({
               <KillParticipantRow
                 key={participant.id}
                 participant={participant}
+                scoring={scoring}
+                participantNames={participantNames}
                 rank={index + 1}
+                isViewer={isViewer(participant.member.userId)}
+                isInactive={
+                  membersMap.get(participant.member.userId)?.active === false
+                }
                 isExpanded={expandedIds.has(participant.id)}
                 onToggle={() => toggleExpanded(participant.id)}
                 guildId={guildId}

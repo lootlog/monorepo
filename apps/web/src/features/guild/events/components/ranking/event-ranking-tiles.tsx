@@ -4,6 +4,7 @@ import {
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 import { RankBadge } from "@/components/common/rank-badge";
+import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
 import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
@@ -21,6 +22,8 @@ type EventRankingTilesProps = {
   eventId: string;
   canEdit: boolean;
   currentMemberId?: number;
+  /** Members who have left the Lootlog. */
+  inactiveMemberIds: ReadonlySet<number>;
   onEditPoints: (rankingId: string) => void;
   isEditPending: boolean;
 };
@@ -32,6 +35,7 @@ export const EventRankingTiles = ({
   eventId,
   canEdit,
   currentMemberId,
+  inactiveMemberIds,
   onEditPoints,
   isEditPending,
 }: EventRankingTilesProps) => {
@@ -52,7 +56,7 @@ export const EventRankingTiles = ({
             className={cn(
               "flex min-h-16 items-center",
               LIST_TILE_RULE_CLASS,
-              isCurrentMember && "bg-primary/10",
+              isCurrentMember && VIEWER_ROW_CLASS,
             )}
           >
             <Link
@@ -65,7 +69,11 @@ export const EventRankingTiles = ({
             >
               <RankBadge rank={index + 1} />
               <span className="min-w-0 flex-1">
-                <RankingMemberName ranking={ranking} className="text-sm" />
+                <RankingMemberName
+                  ranking={ranking}
+                  inactive={inactiveMemberIds.has(ranking.memberId)}
+                  className="text-sm"
+                />
                 <span className="block truncate text-xs text-muted-foreground tabular-nums">
                   {t("events.ranking.kills")} {ranking.totalKills} ·{" "}
                   {t("events.ranking.time")}{" "}

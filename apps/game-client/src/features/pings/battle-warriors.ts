@@ -32,25 +32,6 @@ export const getBattleWarriorElement = (warriorId: number) =>
     `${WARRIOR_SELECTOR}.other-id-battle-${warriorId}`,
   );
 
-/** The warrior's sprite canvas, drawn by the game inside its element. */
-const WARRIOR_SPRITE_SELECTOR = ":scope > .canvas-warrior-icon";
-
-/**
- * Outlines a warrior's sprite in a ping's colour, like the map glow, and
- * returns the undo. The game never sets a filter on the sprite.
- */
-export const glowBattleWarrior = (element: HTMLElement, color: string) => {
-  const sprite = element.querySelector<HTMLElement>(WARRIOR_SPRITE_SELECTOR);
-
-  if (!sprite) return () => undefined;
-
-  sprite.style.filter = `drop-shadow(0 0 1px ${color}) drop-shadow(0 0 4px ${color})`;
-
-  return () => {
-    sprite.style.filter = "";
-  };
-};
-
 export const getBattleWarrior = (
   warriors: BattleWarriorsWithAccountId,
   warriorId: number,

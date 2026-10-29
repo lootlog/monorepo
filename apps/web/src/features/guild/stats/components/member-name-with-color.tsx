@@ -1,3 +1,4 @@
+import { InactiveMemberSuffix } from "@/components/common/inactive-member-suffix";
 import { getMemberColor } from "@/utils/get-member-color";
 import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/client/main";
 
@@ -21,6 +22,7 @@ export const MemberNameWithColor: React.FC<MemberNameWithColorProps> = ({
   return (
     <span className="font-medium" style={{ color }}>
       {name}
+      {member?.active === false && <InactiveMemberSuffix />}
     </span>
   );
 };

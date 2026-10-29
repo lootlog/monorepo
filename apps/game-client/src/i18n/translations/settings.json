@@ -422,7 +422,7 @@
     }
   },
   "catching": {
-    "description": "Skonfiguruj, do których Lootlogów trafiają łupy i timery z każdej postaci.",
+    "description": "Skonfiguruj, dla których Lootlogów gra każda postać: tam trafiają jej łupy, timery i obecność.",
     "characterTitle": "Postać",
     "characterDescription": "Każda postać ma własny zakres zbierania. Wybierz postać, której ustawienia chcesz zmienić.",
     "characterLabel": "Postać",
@@ -434,7 +434,7 @@
       "collectionRangeTitle": "Zakres zbierania",
       "serversTitle": "Do których Lootlogów",
       "serversLabel": "Lootlogi",
-      "serversDescription": "Łupy i timery tej postaci trafiają tylko do zaznaczonych Lootlogów; kliknij Lootlog, aby ją włączyć lub wyłączyć.",
+      "serversDescription": "Łupy, timery i obecność tej postaci trafiają tylko do zaznaczonych Lootlogów, a graczy na mapie widzisz tylko w nich. Kliknij Lootlog, aby go włączyć lub wyłączyć.",
       "activeCount": "{{selectedCount}} z {{totalCount}}"
     }
   },
@@ -534,73 +534,6 @@
       "status": "Status",
       "time": "Czas"
     }
-  },
-  "debug": {
-    "description": "Narzędzia pomocnicze do ręcznego wywoływania zdarzeń i podglądu stanu klienta.",
-    "eventTemplatesTitle": "Szablony zdarzeń",
-    "npcDetectorTitle": "Zdarzenia wykrywacza NPC",
-    "partyEventsTitle": "Zdarzenia grupy",
-    "rawJsonTitle": "Surowe zdarzenie JSON",
-    "eventLogTitle": "Dziennik zdarzeń",
-    "partyStateTitle": "Stan grupy",
-    "characterTooltipStateTitle": "Stan dymka postaci",
-    "othersStateTitle": "Stan graczy na mapie",
-    "othersCount": "Liczba graczy: {{count}}",
-    "systemInfoTitle": "Informacje systemowe",
-    "triggerCustomEvent": "Wywołaj własne zdarzenie",
-    "noEvents": "Nie wywołano żadnych zdarzeń",
-    "noPartyMembers": "Brak członków grupy",
-    "partyMemberId": "(ID: {{id}})",
-    "zoomFactor": "Skala powiększenia: {{value}}",
-    "mode": "Tryb: {{mode}}",
-    "notAvailable": "Brak",
-    "leader": "Lider",
-    "statusOk": "OK",
-    "statusFail": "Błąd",
-    "invalidJson": "Nieprawidłowy JSON",
-    "characterTooltip": {
-      "shiftPressed": "Shift: {{value}}",
-      "activeTarget": "Aktywny cel: {{value}}",
-      "activeOther": "Aktywny gracz: {{value}}",
-      "pressed": "wciśnięty",
-      "released": "puszczony"
-    },
-    "events": {
-      "npcSpawn": "Pojawienie się NPC",
-      "npcDelete": "Usunięcie NPC",
-      "killNpc": "Zabicie NPC",
-      "killNpcUnique": "Zabij NPC (unikalny)",
-      "townChange": "Zmiana mapy",
-      "afkOn": "AFK włączone",
-      "afkOff": "AFK wyłączone",
-      "lootFight": "Łup (walka)",
-      "lootLegendary": "Łup legendarny (elita II)",
-      "lootDialog": "Łup (dialog)",
-      "detectTitan": "Wykryj tytana",
-      "detectHero": "Wykryj herosa",
-      "detectColossus": "Wykryj kolosa",
-      "detectElite2": "Wykryj elitę II",
-      "partyJoin": "Dołączenie do grupy",
-      "partyLeave": "Opuszczenie grupy",
-      "customJson": "Własny JSON"
-    },
-    "run": "Wywołaj",
-    "rawJsonLabel": "Treść zdarzenia",
-    "rawJsonDescription": "Wklej obiekt zdarzenia Margonem i wywołaj go ręcznie w kliencie.",
-    "actions": {
-      "npcSpawnDescription": "Dodaje testowego NPC o id 999999 na aktualnej mapie.",
-      "npcDeleteDescription": "Usuwa testowego NPC o id 999999.",
-      "killNpcDescription": "Kończy walkę z tym samym testowym bossem.",
-      "killNpcUniqueDescription": "Kończy walkę z bossem o losowym id, więc każde wywołanie tworzy nowy wpis.",
-      "townChangeDescription": "Symuluje przejście na testową mapę.",
-      "lootFightDescription": "Wywołuje okno łupu po walce.",
-      "lootDialogDescription": "Wywołuje okno łupu z dialogu.",
-      "lootLegendaryDescription": "Wywołuje łup legendarny z elity II na podstawie aktualnego stanu gry.",
-      "partyJoinDescription": "Ustawia grupę z dwoma testowymi członkami.",
-      "partyLeaveDescription": "Opróżnia listę członków grupy."
-    },
-    "templateLabel": "Szablon",
-    "templateDescription": "Wczytuje wybrany szablon do pola poniżej."
   },
   "chatFilters": {
     "npcMessages": {

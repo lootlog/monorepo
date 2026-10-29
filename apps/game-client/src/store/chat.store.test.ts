@@ -39,21 +39,25 @@ describe("organization composer state", () => {
     localStorage.removeItem(key);
   });
   it("ignores a prior per-character selector that is not a stored string", () => {
-    setTestRuntimeGame({
-      hero: { accountId: "legacy-account", characterId: "legacy-character" },
-    });
+    for (const [index, stored] of [
+      "{",
+      "7",
+      "null",
+      '["guild"]',
+      "old-organization",
+    ].entries()) {
+      setTestRuntimeGame({
+        hero: { accountId: "legacy-account", characterId: `legacy-${index}` },
+      });
 
-    const key = storageKey(
-      "ll:chat:selected-guild:legacy-account:legacy-character",
-    );
+      const key = storageKey(
+        `ll:chat:selected-guild:legacy-account:legacy-${index}`,
+      );
 
-    for (const stored of ["{", "7", "null", '["guild"]', "old-organization"]) {
       localStorage.setItem(key, stored);
       expect(getSelectedChatGuildId()).toBe("");
+      localStorage.removeItem(key);
     }
-
-    localStorage.removeItem(key);
-    expect(getSelectedChatGuildId()).toBe("");
   });
   it("keeps independent drafts and replies through presentation changes and clears only the submitted reply", () => {
     const state = useChatStore.getState();

@@ -2,16 +2,10 @@ import { useId } from "react";
 import type { Control, UseFormRegister } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
-import { Label } from "@lootlog/ui/components/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import { Shield, Percent, Globe, HelpCircle } from "lucide-react";
-
-import type { ScoringRulesFormValues } from "./scoring-rules-editor";
+import { PERCENTAGE_BOUNDS } from "../../utils/scoring-number-validation";
+import { ScoringField } from "./scoring-field";
 import { ScoringNumberInput } from "./scoring-number-input";
+import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
 interface ScoringGlobalSettingsProps {
   control: Control<ScoringRulesFormValues>;
@@ -26,80 +20,48 @@ export const ScoringGlobalSettings = ({
   const idPrefix = useId();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-      <div className="space-y-1">
-        <div className="flex items-center gap-1.5">
-          <Shield className="size-3 text-muted-foreground/50" />
-          <Label
-            htmlFor={`${idPrefix}-cap`}
-            className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
-          >
-            {t("events.scoring.hardCapPoints")}
-          </Label>
-          <Tooltip>
-            <TooltipTrigger
-              render=<HelpCircle className="size-3 text-muted-foreground/30 cursor-help" />
-            />
-            <TooltipContent>
-              <p className="text-xs">
-                {t("events.scoring.summary.cap", { points: "X" })}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      <ScoringField
+        label={t("events.scoring.hardCapPoints")}
+        htmlFor={`${idPrefix}-cap`}
+        hint={t("events.scoring.hint.hardCap")}
+      >
         <ScoringNumberInput
           id={`${idPrefix}-cap`}
           control={control}
           register={register}
           name="scoringRules.hardCapPoints"
+          unit={t("events.common.pointsShort")}
           label={t("events.scoring.hardCapPoints")}
-          className="text-sm font-mono"
         />
-      </div>
-      <div className="space-y-1">
-        <div className="flex items-center gap-1.5">
-          <Percent className="size-3 text-muted-foreground/50" />
-          <Label
-            htmlFor={`${idPrefix}-minTracking`}
-            className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
-          >
-            {t("events.scoring.minTrackingPercentForBonuses")}
-          </Label>
-        </div>
-        <div className="flex items-center gap-1">
-          <ScoringNumberInput
-            id={`${idPrefix}-minTracking`}
-            control={control}
-            register={register}
-            name="scoringRules.minTrackingPercentForBonuses"
-            label={t("events.scoring.minTrackingPercentForBonuses")}
-            max={100}
-            step={1}
-            className="text-sm font-mono"
-          />
-          <span className="text-[11px] text-muted-foreground/50 shrink-0 font-mono">
-            %
-          </span>
-        </div>
-      </div>
-      <div className="space-y-1">
-        <div className="flex items-center gap-1.5">
-          <Globe className="size-3 text-muted-foreground/50" />
-          <Label
-            htmlFor={`${idPrefix}-timezone`}
-            className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
-          >
-            {t("events.scoring.timezoneLabel")}
-          </Label>
-        </div>
+      </ScoringField>
+      <ScoringField
+        label={t("events.scoring.minTrackingPercentForBonuses")}
+        htmlFor={`${idPrefix}-minTracking`}
+        hint={t("events.scoring.hint.minTrackingForBonuses")}
+      >
+        <ScoringNumberInput
+          id={`${idPrefix}-minTracking`}
+          control={control}
+          register={register}
+          name="scoringRules.minTrackingPercentForBonuses"
+          label={t("events.scoring.minTrackingPercentForBonuses")}
+          bounds={PERCENTAGE_BOUNDS}
+          step={1}
+          unit="%"
+        />
+      </ScoringField>
+      <ScoringField
+        label={t("events.scoring.timezoneLabel")}
+        htmlFor={`${idPrefix}-timezone`}
+        hint={t("events.scoring.hint.timezone")}
+      >
         <Input
           id={`${idPrefix}-timezone`}
           {...register("scoringRules.timezone")}
-          size="sm"
-          className="text-sm"
           placeholder="Europe/Warsaw"
         />
-      </div>
+      </ScoringField>
     </div>
   );
 };

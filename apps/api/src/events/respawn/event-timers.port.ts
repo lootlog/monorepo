@@ -47,10 +47,9 @@ export interface EventTimersPort {
   readonly closeEventRespawnTimer: (
     input: EventTimerLookupInput,
   ) => Effect.Effect<Timer | null, EventTimersError>;
-  readonly getActiveTimerKeys: (
+  readonly hasEventRespawnTimers: (
     lookups: ReadonlyArray<EventTimerLookupInput>,
-    now: Date,
-  ) => Effect.Effect<Set<string>, EventTimersError>;
+  ) => Effect.Effect<boolean[], EventTimersError>;
   readonly getTimersForEventHeroFilters: (
     guildId: string,
     world: string,
@@ -214,213 +213,274 @@ export const makeEventTimersPort = ({
     );
   };
 
+  const resolveTimerKeys = (lookups: ReadonlyArray<EventTimerLookupInput>) =>
+    mapped(
+      "eventTimers.resolveKeys",
+      store.findHeroTimerKeys(lookups).pipe(
+        Effect.map((rows) => {
+          const keysByNpc = new Map(
+            rows.map((row) => [
+              `${row.guildId}:${row.world}:${row.npcId}`,
+              row.timerKey,
+            ]),
+          );
+
+          return lookups.map((lookup) => ({
+            guildId: lookup.guildId,
+            world: lookup.world,
+            timerKey:
+              keysByNpc.get(
+                `${lookup.guildId}:${lookup.world}:${lookup.npcId}`,
+              ) ?? buildTimerKey(lookup.npcId, lookup.npcName),
+          }));
+        }),
+      ),
+    );
+
+  const resolveTimerKey = (lookup: EventTimerLookupInput) =>
+    resolveTimerKeys([lookup]).pipe(
+      Effect.map(
+        ([resolved]) =>
+          resolved?.timerKey ?? buildTimerKey(lookup.npcId, lookup.npcName),
+      ),
+    );
+
   return {
-    getEventRespawnTimer: ({ guildId, world, npcId, npcName }) =>
-      mapped(
-        "eventTimers.getRespawn",
-        store.findTimer(guildId, world, buildTimerKey(npcId, npcName)),
+    getEventRespawnTimer: (lookup) =>
+      resolveTimerKey(lookup).pipe(
+        Effect.flatMap((timerKey) =>
+          mapped(
+            "eventTimers.getRespawn",
+            store.findTimer(lookup.guildId, lookup.world, timerKey),
+          ),
+        ),
       ),
 
-    openEventRespawnTimer: (input) => {
-      const timerKey = buildTimerKey(input.npcId, input.npcName);
-      const operation = "eventTimers.openRespawn";
-      const lockKey = `timer:lock:${input.guildId}:${input.world}:${timerKey}`;
+    openEventRespawnTimer: (input) =>
+      resolveTimerKey(input).pipe(
+        Effect.flatMap((timerKey) => openRespawnTimer(input, timerKey)),
+      ),
 
-      const work = withLock(operation, lockKey, () =>
-        Effect.gen(function* () {
-          const windowOpenedAt = new Date(yield* Clock.currentTimeMillis);
+    closeEventRespawnTimer: (lookup) =>
+      resolveTimerKey(lookup).pipe(
+        Effect.flatMap((timerKey) => closeRespawnTimer(lookup, timerKey)),
+      ),
 
-          // The event window replaces the NPC description; keep the template
-          // an automatic timer observed so template-level rules still match.
-          const existing = yield* store.findTimer(
-            input.guildId,
-            input.world,
-            timerKey,
-          );
-
-          const npc = {
-            id: input.npcId,
-            templateId: timerNpcTemplateId(existing?.npc),
-            name: input.npcName,
-            prof: "",
-            location: "",
-            wt: "",
-            lvl: 0,
-            type: "hero",
-            icon: input.npcIcon ?? "",
-            margonemType: input.isUsingSyntheticId
-              ? String(TIMER_TYPES.CUSTOM_MANUAL)
-              : "0",
-          };
-
-          const timer = yield* store.upsertTimer(
-            {
-              guildId: input.guildId,
-              createdById: input.createdById,
-              world: input.world,
-              npcId: input.npcId,
-              timerKey,
-              minSpawnTime: input.minSpawnTime,
-              maxSpawnTime: input.maxSpawnTime,
-              latestRespBaseSeconds: Math.round(
-                (input.maxSpawnTime.getTime() - input.minSpawnTime.getTime()) /
-                  2_000,
-              ),
-              latestRespawnRandomness: DEFAULT_RESPAWN_RANDOMNESS,
-              wasReset: false,
-              npc,
-              windowOpenedAt,
-              actorCharacterSnapshotId: null,
-              actorCharacterLvl: null,
-              deletedAt: null,
-            },
-            {
-              createdById: input.createdById,
-              minSpawnTime: input.minSpawnTime,
-              maxSpawnTime: input.maxSpawnTime,
-              wasReset: false,
-              npc,
-              windowOpenedAt,
-              actorCharacterSnapshotId: null,
-              actorCharacterLvl: null,
-              deletedAt: null,
-            },
-          );
-
-          yield* invalidateCache(input.guildId);
-          yield* publishUpdate(timer);
-
-          return timer;
-        }),
-      );
-
-      return work.pipe(
-        Effect.catch((error) => {
-          if (
-            error instanceof EventTimersError &&
-            error.cause instanceof ExecutionError
-          ) {
-            return findAfterLockFailure(
-              input.guildId,
-              input.world,
-              timerKey,
-            ).pipe(
-              Effect.flatMap((timer) =>
-                timer
-                  ? Effect.succeed(timer)
-                  : Effect.fail(
-                      new ResourceConflictError({
-                        message: ErrorKey.TIMER_RACE_CONDITION,
-                      }),
-                    ),
-              ),
-              Effect.mapError(
-                (cause) => new EventTimersError({ operation, cause }),
-              ),
-            );
-          }
-
-          return Effect.fail(
-            error instanceof EventTimersError
-              ? error
-              : new EventTimersError({ operation, cause: error }),
-          );
-        }),
-      );
-    },
-
-    closeEventRespawnTimer: ({ guildId, world, npcId, npcName }) => {
-      const timerKey = buildTimerKey(npcId, npcName);
-      const operation = "eventTimers.closeRespawn";
-
-      return withLock(
-        operation,
-        `timer:lock:${guildId}:${world}:${timerKey}`,
-        () =>
-          Effect.gen(function* () {
-            const timer = yield* store.findTimer(guildId, world, timerKey);
-
-            if (!timer) return null;
-            yield* store.deleteTimer(guildId, world, timerKey);
-            yield* invalidateCache(guildId);
-            yield* publishDelete(timer);
-
-            return timer;
-          }),
-      ).pipe(
-        Effect.mapError(
-          (cause) =>
-            new EventTimersError({
-              operation,
-              cause:
-                cause instanceof EventTimersError &&
-                cause.cause instanceof ExecutionError
-                  ? new ResourceConflictError({
-                      message: ErrorKey.TIMER_RACE_CONDITION,
-                    })
-                  : cause,
-            }),
-        ),
-      );
-    },
-
-    getActiveTimerKeys: (lookups) =>
-      mapped(
-        "eventTimers.getActiveKeys",
-        store
-          .findActiveTimerKeys(
-            lookups.map((lookup) => ({
-              guildId: lookup.guildId,
-              world: lookup.world,
-              timerKey: buildTimerKey(lookup.npcId, lookup.npcName),
-            })),
-          )
-          .pipe(
-            Effect.map(
-              (timers) =>
-                new Set(
-                  timers.map(
-                    (timer) =>
-                      `${timer.guildId}:${timer.world}:${timer.timerKey}`,
-                  ),
+    hasEventRespawnTimers: (lookups) =>
+      resolveTimerKeys(lookups).pipe(
+        Effect.flatMap((resolved) =>
+          mapped(
+            "eventTimers.getActiveKeys",
+            store.findActiveTimerKeys(resolved),
+          ).pipe(
+            Effect.map((timers) => {
+              const existing = new Set(
+                timers.map(
+                  (timer) =>
+                    `${timer.guildId}:${timer.world}:${timer.timerKey}`,
                 ),
-            ),
+              );
+
+              return resolved.map((lookup) =>
+                existing.has(
+                  `${lookup.guildId}:${lookup.world}:${lookup.timerKey}`,
+                ),
+              );
+            }),
           ),
+        ),
       ),
 
     getTimersForEventHeroFilters: (guildId, world, heroes) => {
       if (heroes.length === 0) return Effect.succeed([]);
 
-      const timerKeys = heroes
-        .filter((hero) => hero.npcId !== null)
-        .map((hero) => buildTimerKey(hero.npcId, hero.npcName));
+      const heroesWithNpcId = heroes.flatMap((hero) =>
+        hero.npcId === null
+          ? []
+          : [{ guildId, world, npcId: hero.npcId, npcName: hero.npcName }],
+      );
 
       const npcNames = heroes
         .filter((hero) => hero.npcId === null)
         .map((hero) => hero.npcName);
 
-      return mapped(
-        "eventTimers.getHeroTimers",
-        Effect.all(
-          [
-            timerKeys.length > 0
-              ? store.findEventHeroTimersByKeys(guildId, world, timerKeys)
-              : Effect.succeed([]),
-            npcNames.length > 0
-              ? store.findEventHeroTimersByNames(guildId, world, npcNames)
-              : Effect.succeed([]),
-          ],
-          { concurrency: "unbounded" },
-        ).pipe(
-          Effect.map(([byKey, byName]) =>
-            Array.from(
-              new Map(
-                [...byKey, ...byName].map((timer) => [timer.timerKey, timer]),
-              ).values(),
-            ),
+      return Effect.all(
+        [
+          heroesWithNpcId.length > 0
+            ? resolveTimerKeys(heroesWithNpcId).pipe(
+                Effect.flatMap((resolved) =>
+                  mapped(
+                    "eventTimers.getHeroTimers",
+                    store.findEventHeroTimersByKeys(
+                      guildId,
+                      world,
+                      resolved.map(({ timerKey }) => timerKey),
+                    ),
+                  ),
+                ),
+              )
+            : Effect.succeed([]),
+          npcNames.length > 0
+            ? mapped(
+                "eventTimers.getHeroTimers",
+                store.findEventHeroTimersByNames(guildId, world, npcNames),
+              )
+            : Effect.succeed([]),
+        ],
+        { concurrency: "unbounded" },
+      ).pipe(
+        Effect.map(([byKey, byName]) =>
+          Array.from(
+            new Map(
+              [...byKey, ...byName].map((timer) => [timer.timerKey, timer]),
+            ).values(),
           ),
         ),
       );
     },
   };
+
+  function openRespawnTimer(input: EventRespawnTimerInput, timerKey: string) {
+    const operation = "eventTimers.openRespawn";
+    const lockKey = `timer:lock:${input.guildId}:${input.world}:${timerKey}`;
+
+    const work = withLock(operation, lockKey, () =>
+      Effect.gen(function* () {
+        const windowOpenedAt = new Date(yield* Clock.currentTimeMillis);
+
+        // The event window replaces the NPC description; keep the template
+        // an automatic timer observed so template-level rules still match.
+        const existing = yield* store.findTimer(
+          input.guildId,
+          input.world,
+          timerKey,
+        );
+
+        const npc = {
+          id: input.npcId,
+          templateId: timerNpcTemplateId(existing?.npc),
+          name: input.npcName,
+          prof: "",
+          location: "",
+          wt: "",
+          lvl: 0,
+          type: "hero",
+          icon: input.npcIcon ?? "",
+          margonemType: input.isUsingSyntheticId
+            ? String(TIMER_TYPES.CUSTOM_MANUAL)
+            : "0",
+        };
+
+        const timer = yield* store.upsertTimer(
+          {
+            guildId: input.guildId,
+            createdById: input.createdById,
+            world: input.world,
+            npcId: input.npcId,
+            timerKey,
+            minSpawnTime: input.minSpawnTime,
+            maxSpawnTime: input.maxSpawnTime,
+            latestRespBaseSeconds: Math.round(
+              (input.maxSpawnTime.getTime() - input.minSpawnTime.getTime()) /
+                2_000,
+            ),
+            latestRespawnRandomness: DEFAULT_RESPAWN_RANDOMNESS,
+            wasReset: false,
+            npc,
+            windowOpenedAt,
+            actorCharacterSnapshotId: null,
+            actorCharacterLvl: null,
+            deletedAt: null,
+          },
+          {
+            createdById: input.createdById,
+            minSpawnTime: input.minSpawnTime,
+            maxSpawnTime: input.maxSpawnTime,
+            wasReset: false,
+            npc,
+            windowOpenedAt,
+            actorCharacterSnapshotId: null,
+            actorCharacterLvl: null,
+            deletedAt: null,
+          },
+        );
+
+        yield* invalidateCache(input.guildId);
+        yield* publishUpdate(timer);
+
+        return timer;
+      }),
+    );
+
+    return work.pipe(
+      Effect.catch((error) => {
+        if (
+          error instanceof EventTimersError &&
+          error.cause instanceof ExecutionError
+        ) {
+          return findAfterLockFailure(
+            input.guildId,
+            input.world,
+            timerKey,
+          ).pipe(
+            Effect.flatMap((timer) =>
+              timer
+                ? Effect.succeed(timer)
+                : Effect.fail(
+                    new ResourceConflictError({
+                      message: ErrorKey.TIMER_RACE_CONDITION,
+                    }),
+                  ),
+            ),
+            Effect.mapError(
+              (cause) => new EventTimersError({ operation, cause }),
+            ),
+          );
+        }
+
+        return Effect.fail(
+          error instanceof EventTimersError
+            ? error
+            : new EventTimersError({ operation, cause: error }),
+        );
+      }),
+    );
+  }
+
+  function closeRespawnTimer(
+    { guildId, world }: EventTimerLookupInput,
+    timerKey: string,
+  ) {
+    const operation = "eventTimers.closeRespawn";
+
+    return withLock(
+      operation,
+      `timer:lock:${guildId}:${world}:${timerKey}`,
+      () =>
+        Effect.gen(function* () {
+          const timer = yield* store.findTimer(guildId, world, timerKey);
+
+          if (!timer) return null;
+          yield* store.deleteTimer(guildId, world, timerKey);
+          yield* invalidateCache(guildId);
+          yield* publishDelete(timer);
+
+          return timer;
+        }),
+    ).pipe(
+      Effect.mapError(
+        (cause) =>
+          new EventTimersError({
+            operation,
+            cause:
+              cause instanceof EventTimersError &&
+              cause.cause instanceof ExecutionError
+                ? new ResourceConflictError({
+                    message: ErrorKey.TIMER_RACE_CONDITION,
+                  })
+                : cause,
+          }),
+      ),
+    );
+  }
 };

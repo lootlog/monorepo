@@ -12,10 +12,11 @@ import {
  * listener records the pointer and every open tooltip is placed straight on
  * its positioner element, at most once per animation frame.
  *
- * A frame only writes styles. Reading `offsetWidth` or `innerWidth` would
- * force the game document to lay out on every pointer move, so the tooltip
- * size is measured once on registration and refreshed by ResizeObserver, and
- * the viewport size is cached until the window resizes.
+ * A frame only writes styles and moves the tooltip with `transform`, which
+ * needs no layout. Reading `offsetWidth` or `innerWidth` would force the game
+ * document to lay out on every pointer move, so the tooltip size is measured
+ * once on registration and refreshed by ResizeObserver, and the viewport size
+ * is cached until the window resizes.
  */
 type CursorFollower = {
   element: HTMLElement;
@@ -50,9 +51,9 @@ const placeFollower = ({ element, offsets, size }: CursorFollower) => {
   );
 
   element.style.position = "fixed";
-  element.style.left = `${placement.left}px`;
-  element.style.top = `${placement.top}px`;
-  element.style.transform = "none";
+  element.style.left = "0px";
+  element.style.top = "0px";
+  element.style.transform = `translate(${Math.round(placement.left)}px, ${Math.round(placement.top)}px)`;
 };
 
 const scheduleFollowerPlacement = () => {

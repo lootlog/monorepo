@@ -1,13 +1,4 @@
-import {
-  ContextMenu,
-  ContextMenuTrigger,
-  ContextMenuContent,
-  ContextMenuItem,
-} from "@/components/ui/context-menu";
-import { Copy, MapPin } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { copyChatText } from "../chat-copy-text";
-import { getChatNpcLocation } from "./chat-message.helpers";
+import { useSharedContextMenuTarget } from "@/components/common/shared-context-menu-registry";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import type {
   ChatMessageResponseDtoOutput as ChatMessageType,
@@ -19,7 +10,7 @@ import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import type { FC } from "react";
 import { ChatCharacterTooltip } from "./chat-character-tooltip";
 import { ChatNpcMessageView } from "./chat-npc-message-view";
-import { ChatNpcHideTypeMenuItem } from "./chat-npc-hide-type-menu-item";
+import { ChatNpcMessageMenu } from "./chat-npc-message-menu";
 
 type ChatNpcMessageProps = {
   all: boolean;
@@ -40,51 +31,37 @@ export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
   message,
   npcTypeColors,
 }) => {
-  const { t } = useTranslation("chat");
   const memberColor = useMemberColor(member);
+  const { npc } = message;
 
-  if (!message.npc || !guildName) return null;
+  const menuTarget = useSharedContextMenuTarget(
+    message.id,
+    npc && guildName
+      ? {
+          items: <ChatNpcMessageMenu message={message.message} npc={npc} />,
+        }
+      : null,
+  );
 
-  const location = getChatNpcLocation(message.npc);
+  if (!npc || !guildName) return null;
 
   return (
-    <ContextMenu>
-      <ContextMenuTrigger>
-        <ChatNpcMessageView
-          all={all}
-          appearance={appearance}
-          count={count}
-          guildName={guildName}
-          memberColor={memberColor}
-          message={message}
-          npcTypeColors={npcTypeColors}
-          senderName={member?.name ?? message.characterData.nick}
-          wrapSender={(sender) => (
-            <ChatCharacterTooltip character={message.characterData}>
-              {sender}
-            </ChatCharacterTooltip>
-          )}
-        />
-      </ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem onClick={() => void copyChatText(message.message)}>
-          <Copy
-            aria-hidden="true"
-            strokeWidth={1.5}
-            className="ll:mr-2 ll:size-3.5 ll:shrink-0"
-          />
-          {t("messageActions.copy")}
-        </ContextMenuItem>
-        <ContextMenuItem onClick={() => void copyChatText(location)}>
-          <MapPin
-            aria-hidden="true"
-            strokeWidth={1.5}
-            className="ll:mr-2 ll:size-3.5 ll:shrink-0"
-          />
-          {t("messageActions.copyLocation")}
-        </ContextMenuItem>
-        <ChatNpcHideTypeMenuItem npc={message.npc} />
-      </ContextMenuContent>
-    </ContextMenu>
+    <div {...menuTarget}>
+      <ChatNpcMessageView
+        all={all}
+        appearance={appearance}
+        count={count}
+        guildName={guildName}
+        memberColor={memberColor}
+        message={message}
+        npcTypeColors={npcTypeColors}
+        senderName={member?.name ?? message.characterData.nick}
+        wrapSender={(sender) => (
+          <ChatCharacterTooltip character={message.characterData}>
+            {sender}
+          </ChatCharacterTooltip>
+        )}
+      />
+    </div>
   );
 };

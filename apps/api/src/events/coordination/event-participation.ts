@@ -279,8 +279,26 @@ export const makeEventParticipation = (
           database.transaction((transaction) =>
             Effect.forEach(
               confirmable,
-              ({ point, heroName }) =>
+              ({ point }) =>
                 Effect.gen(function* () {
+                  // Rankings are keyed by the hero's current name; the share
+                  // lock makes a concurrent rename wait for this write and
+                  // then move it, and is taken before the kill point lock in
+                  // the same order as hero deletion.
+                  const heroes = yield* transaction
+                    .select({ heroName: eventHeroNpcTable.npcName })
+                    .from(eventHeroKillTable)
+                    .innerJoin(
+                      eventHeroNpcTable,
+                      eq(eventHeroNpcTable.id, eventHeroKillTable.heroNpcId),
+                    )
+                    .where(eq(eventHeroKillTable.id, point.killId))
+                    .for("share");
+
+                  const heroName = heroes[0]?.heroName;
+
+                  if (heroName === undefined) return;
+
                   const confirmed = yield* transaction
                     .update(eventKillPointTable)
                     .set({ confirmedAt: now })
