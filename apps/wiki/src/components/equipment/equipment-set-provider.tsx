@@ -71,22 +71,38 @@ export function EquipmentSetProvider({ children }: { children: ReactNode }) {
     <EquipmentSetContext
       value={{
         set: set ?? EMPTY_EQUIPMENT_SET,
-        equip: (item) => {
+        equip: (item, upgrade) => {
           const slot = findEquipmentSlot(item.type);
 
           if (!slot) return;
 
-          update((current) => ({
-            ...current,
-            items: { ...current.items, [slot.id]: item.id },
-          }));
+          update((current) => {
+            const {
+              items: { [slot.id]: wornId },
+              upgrades: { [slot.id]: wornUpgrade, ...upgrades },
+            } = current;
+
+            const nextUpgrade =
+              upgrade ?? (wornId === item.id ? wornUpgrade : undefined);
+
+            return {
+              ...current,
+              items: { ...current.items, [slot.id]: item.id },
+              upgrades: nextUpgrade
+                ? { ...upgrades, [slot.id]: nextUpgrade }
+                : upgrades,
+            };
+          });
           setPreview(null);
         },
         unequip: (slotId) =>
-          update(({ items: { [slotId]: _removed, ...items }, ...current }) => ({
-            ...current,
-            items,
-          })),
+          update(
+            ({
+              items: { [slotId]: _removed, ...items },
+              upgrades: { [slotId]: _upgrade, ...upgrades },
+              ...current
+            }) => ({ ...current, items, upgrades }),
+          ),
         clear: () => setSet(EMPTY_EQUIPMENT_SET),
         setCharacter: (character) =>
           update((current) => ({ ...current, ...character })),

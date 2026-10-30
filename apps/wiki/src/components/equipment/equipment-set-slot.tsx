@@ -6,6 +6,7 @@ import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { cn } from "cn";
 import { renderItemStat } from "@/components/render-item-stat";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
+import type { WornItem } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import type { EquipmentSlot } from "@/lib/equipment-slots";
@@ -18,7 +19,7 @@ const SLOT_FRAME =
 
 type EquipmentSetSlotProps = {
   slot: EquipmentSlot;
-  item: CatalogItemDtoOutput | undefined;
+  worn: WornItem | undefined;
   /** The item the User points at, which this slot would wear instead. */
   preview: CatalogItemDtoOutput | null;
 };
@@ -26,9 +27,10 @@ type EquipmentSetSlotProps = {
 /** One worn item, or an empty slot that opens a search for it. */
 export function EquipmentSetSlot({
   slot,
-  item,
+  worn,
   preview,
 }: EquipmentSetSlotProps) {
+  const item = worn?.item;
   const { set, unequip } = useEquipmentSet();
   const label = t(`slots.${slot.id}`);
   const Icon = slot.icon;
@@ -86,6 +88,14 @@ export function EquipmentSetSlot({
         labels={ITEM_TILE_LABELS}
         renderStat={renderItemStat}
       />
+      {worn && worn.upgrade > 0 ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-1.5 -bottom-1.5 rounded-full border border-border bg-popover px-1 text-[10px] leading-3.5 font-semibold text-primary tabular-nums"
+        >
+          +{worn.upgrade}
+        </span>
+      ) : null}
       {overlay}
       {issues.length > 0 ? (
         <span

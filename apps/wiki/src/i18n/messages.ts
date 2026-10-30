@@ -54,6 +54,16 @@ const messages = {
       profession: "Inna profesja.",
       level: "Za wysoki poziom.",
     },
+    comparedWith: "Założony w zestawie",
+  },
+  upgrade: {
+    label: "Ulepszenie",
+    level: "+{{level}}",
+    none: "Bez ulepszenia",
+    virtualLevel: "Statystyki jak na {{level}} poziomie",
+    notUpgradable: "Tego przedmiotu nie da się ulepszyć.",
+    increased: "wzrasta po ulepszeniu",
+    decreased: "maleje po ulepszeniu",
   },
   uiLabels: {
     close: "Zamknij",
@@ -282,7 +292,8 @@ const messages = {
   },
   npcs: {
     title: "Wyszukiwarka NPC",
-    description: "Znajdź NPC-a lub potwora po nazwie.",
+    description: "Znajdź NPC-a lub potwora po nazwie i typie.",
+    types: "Typ potwora",
   },
 } as const;
 

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Check, Link2, Trash2 } from "lucide-react";
-import { useCatalogControllerGetItems } from "@lootlog/client/search";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import {
@@ -12,8 +11,8 @@ import {
 } from "@lootlog/ui/components/select";
 import { useEquipmentPreview } from "@/contexts/equipment-preview-context";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
+import { useWornItems } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
-import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import {
   encodeEquipmentSet,
   EQUIPMENT_SET_PARAM,
@@ -48,35 +47,20 @@ export function EquipmentSetPanel() {
     "idle",
   );
 
-  const ids = Object.values(set.items);
-
-  const { data } = useCatalogControllerGetItems(
-    { ids, gameVersion: WIKI_GAME_VERSION, limit: ids.length },
-    {
-      query: {
-        enabled: ids.length > 0,
-        placeholderData: (previous) => previous,
-      },
-    },
-  );
-
-  const itemsById = new Map((data?.hits ?? []).map((item) => [item.id, item]));
-
-  const worn = Object.entries(set.items).flatMap(([slotId, itemId]) => {
-    const item = itemsById.get(itemId);
-
-    return item ? [{ slotId, item }] : [];
-  });
+  const wornItems = useWornItems();
 
   const previewSlot = preview ? findEquipmentSlot(preview.type) : undefined;
-  const totals = sumItemStats(worn.map(({ item }) => item.stat));
+
+  const totals = sumItemStats(
+    [...wornItems.values()].map(({ item }) => item.stat),
+  );
 
   const previewTotals =
     preview && previewSlot
       ? sumItemStats([
-          ...worn
-            .filter(({ slotId }) => slotId !== previewSlot.id)
-            .map(({ item }) => item.stat),
+          ...[...wornItems].flatMap(([slotId, { item }]) =>
+            slotId === previewSlot.id ? [] : [item.stat],
+          ),
           preview.stat,
         ])
       : null;
@@ -152,17 +136,13 @@ export function EquipmentSetPanel() {
 
       <EquipmentGrid
         className="mx-auto"
-        renderSlot={(slot) => {
-          const itemId = set.items[slot.id];
-
-          return (
-            <EquipmentSetSlot
-              slot={slot}
-              item={itemId === undefined ? undefined : itemsById.get(itemId)}
-              preview={previewSlot?.id === slot.id ? preview : null}
-            />
-          );
-        }}
+        renderSlot={(slot) => (
+          <EquipmentSetSlot
+            slot={slot}
+            worn={wornItems.get(slot.id)}
+            preview={previewSlot?.id === slot.id ? preview : null}
+          />
+        )}
       />
 
       <div className="border-t border-border/50 pt-3">

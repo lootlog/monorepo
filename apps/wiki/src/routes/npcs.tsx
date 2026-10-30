@@ -2,17 +2,26 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { useCatalogControllerGetNpcs } from "@lootlog/client/search";
 import { Card, CardContent, CardHeader } from "@lootlog/ui/components/card";
 import { NpcTile } from "@lootlog/ui/components/npc-tile";
+import { NpcTypeIcon } from "@lootlog/ui/components/npc-type-icon";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { BasicSearchForm } from "@/components/basic-search-form";
+import { FilterTile } from "@/components/filter-tile";
 import { t } from "@/i18n/messages";
 import { npcPageParams, WIKI_GAME_VERSION } from "@/lib/catalog-links";
+import { joinList, splitList } from "@/lib/items-search";
+import { NPC_TYPE_ICONS, NPC_TYPE_OPTIONS } from "@/lib/npc-types";
 import { useBasicSearchForm } from "./-use-basic-search-form";
 import {
-  getQueryRouteSearchParams,
-  validateQueryRouteSearch,
+  getNpcsRouteSearchParams,
+  validateNpcsRouteSearch,
 } from "./-search-route.utils";
 
 const SEARCH_LIMIT = 72;
+
+// The catalog keeps no event heroes of their own, so the filter offers none.
+const TYPE_FILTER_OPTIONS = NPC_TYPE_OPTIONS.filter(
+  (type) => type !== "EVENT_HERO",
+);
 
 export const Route = createFileRoute("/npcs")({
   component: NpcsRoute,
@@ -23,7 +32,7 @@ export const Route = createFileRoute("/npcs")({
       },
     ],
   }),
-  validateSearch: validateQueryRouteSearch,
+  validateSearch: validateNpcsRouteSearch,
 });
 
 function NpcsRoute() {
@@ -31,15 +40,32 @@ function NpcsRoute() {
   const search = Route.useSearch();
   const searchForm = useBasicSearchForm(search, navigate);
 
-  const { search: query, limit } = getQueryRouteSearchParams(
-    search,
-    SEARCH_LIMIT,
-  );
+  const {
+    search: query,
+    types,
+    limit,
+  } = getNpcsRouteSearchParams(search, SEARCH_LIMIT);
+
+  const selectedTypes = splitList(search.types);
+
+  const toggleType = (type: string) => (pressed: boolean) =>
+    void navigate({
+      replace: true,
+      search: (current) => ({
+        ...current,
+        types: joinList(
+          pressed
+            ? [...selectedTypes, type]
+            : selectedTypes.filter((selected) => selected !== type),
+        ),
+      }),
+    });
 
   const { data, isError } = useCatalogControllerGetNpcs(
     {
       search: query,
       gameVersion: WIKI_GAME_VERSION,
+      types,
       limit,
     },
     { query: { placeholderData: (previousData) => previousData } },
@@ -56,8 +82,30 @@ function NpcsRoute() {
             {t("npcs.description")}
           </p>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="flex flex-col gap-3 px-0">
           <BasicSearchForm {...searchForm} />
+          <fieldset className="flex flex-col gap-1.5">
+            <legend className="mb-1.5 text-xs font-medium text-muted-foreground">
+              {t("npcs.types")}
+            </legend>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-1.5">
+              {TYPE_FILTER_OPTIONS.map((type) => (
+                <FilterTile
+                  key={type}
+                  label={t(`npcTypes.${type}`)}
+                  icon={
+                    <NpcTypeIcon
+                      type={NPC_TYPE_ICONS[type]}
+                      aria-hidden="true"
+                      className="size-4"
+                    />
+                  }
+                  pressed={selectedTypes.includes(type)}
+                  onPressedChange={toggleType(type)}
+                />
+              ))}
+            </div>
+          </fieldset>
         </CardContent>
       </Card>
 

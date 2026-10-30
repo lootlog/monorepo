@@ -3,11 +3,14 @@ import type { QueryRouteSearch } from "./-search-route.utils";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-/** A name search that follows the route's `query` and updates it as the User types. */
-export const useBasicSearchForm = (
-  search: QueryRouteSearch,
+/**
+ * A name search that follows the route's `query` and updates it as the User
+ * types, keeping the route's other filters.
+ */
+export const useBasicSearchForm = <Search extends QueryRouteSearch>(
+  search: Search,
   navigate: (options: {
-    search: QueryRouteSearch;
+    search: (current: Search) => Search;
     replace?: boolean;
   }) => Promise<void>,
 ) => {
@@ -26,7 +29,10 @@ export const useBasicSearchForm = (
 
     const timeoutId = setTimeout(() => {
       startTransition(() => {
-        void navigate({ replace: true, search: { query } });
+        void navigate({
+          replace: true,
+          search: (current) => ({ ...current, query }),
+        });
       });
     }, SEARCH_DEBOUNCE_MS);
 
@@ -39,7 +45,9 @@ export const useBasicSearchForm = (
     event.preventDefault();
 
     startTransition(() => {
-      void navigate({ search: { query: queryValue.trim() } });
+      void navigate({
+        search: (current) => ({ ...current, query: queryValue.trim() }),
+      });
     });
   }
 
@@ -47,7 +55,7 @@ export const useBasicSearchForm = (
     setQueryValue("");
 
     startTransition(() => {
-      void navigate({ search: { query: "" } });
+      void navigate({ search: (current) => ({ ...current, query: "" }) });
     });
   }
 
