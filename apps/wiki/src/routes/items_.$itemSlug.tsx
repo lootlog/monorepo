@@ -12,7 +12,8 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { cn } from "cn";
 import { EquipButton } from "@/components/equipment/equip-button";
-import { renderItemStat } from "@/components/render-item-stat";
+import { ItemUpgradePicker } from "@/components/items/item-upgrade-picker";
+import { renderStatChanges } from "@/components/render-stat-changes";
 import { t } from "@/i18n/messages";
 import {
   itemPageParams,
@@ -21,16 +22,34 @@ import {
   WIKI_GAME_VERSION,
 } from "@/lib/catalog-links";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
+import {
+  isUpgradable,
+  isUpgradeLevel,
+  upgradeItemStat,
+  type UpgradeLevel,
+} from "@/lib/item-upgrade";
+
+/** The upgrade the page shows the item at, so a link keeps it. */
+type ItemRouteSearch = { ulepszenie?: UpgradeLevel };
 
 export const Route = createFileRoute("/items_/$itemSlug")({
   component: ItemRoute,
   head: () => ({
     meta: [{ title: `${t("meta.itemTitle")} | ${t("meta.title")}` }],
   }),
+  validateSearch: (search: { ulepszenie?: unknown }): ItemRouteSearch => {
+    const upgrade = Number(search.ulepszenie);
+
+    return isUpgradeLevel(upgrade) && upgrade > 0
+      ? { ulepszenie: upgrade }
+      : {};
+  },
 });
 
 function ItemRoute() {
   const { itemSlug } = Route.useParams();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const id = readPageSegment(itemSlug)?.id;
 
   const { data, isError } = useCatalogControllerGetItems(
@@ -47,9 +66,18 @@ function ItemRoute() {
   // An old link, or one with an outdated name, moves to the item's own URL.
   if (item && itemPageParams(item).itemSlug !== itemSlug) {
     return (
-      <Navigate to="/items/$itemSlug" params={itemPageParams(item)} replace />
+      <Navigate
+        to="/items/$itemSlug"
+        params={itemPageParams(item)}
+        search={search}
+        replace
+      />
     );
   }
+
+  const canUpgrade = item !== undefined && isUpgradable(item);
+  const upgrade = canUpgrade ? (search.ulepszenie ?? 0) : 0;
+  const stat = item ? upgradeItemStat(item, upgrade) : "";
 
   return (
     <div className="flex flex-col gap-6 py-6">
@@ -79,12 +107,25 @@ function ItemRoute() {
                 labels={ITEM_TILE_LABELS}
                 name={item.name}
                 rarity={resolveItemRarity(item.rarity)}
-                renderStat={renderItemStat}
-                stat={item.stat}
+                renderStat={renderStatChanges(item.stat, stat)}
+                stat={stat}
                 type={item.type ?? ""}
               />
             </Card>
-            <EquipButton item={item} />
+            {canUpgrade ? (
+              <ItemUpgradePicker
+                itemLevel={item.lvl}
+                value={upgrade}
+                onChange={(next) =>
+                  void navigate({
+                    replace: true,
+                    resetScroll: false,
+                    search: next === 0 ? {} : { ulepszenie: next },
+                  })
+                }
+              />
+            ) : null}
+            <EquipButton item={item} upgrade={upgrade} />
           </div>
 
           <section

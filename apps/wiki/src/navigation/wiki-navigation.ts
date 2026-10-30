@@ -34,7 +34,7 @@ export const WIKI_NAVIGATION = [
     icon: Package,
   },
   {
-    link: linkOptions({ to: "/npcs", search: { query: "" } }),
+    link: linkOptions({ to: "/npcs", search: { query: "", types: "" } }),
     labelKey: "navigation.npcs",
     descriptionKey: "home.npcsDescription",
     icon: Skull,

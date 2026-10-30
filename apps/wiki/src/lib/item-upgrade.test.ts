@@ -1,0 +1,71 @@
+import { describe, expect, it } from "vitest";
+import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
+import { upgradedItemLevel, upgradeItemStat } from "./item-upgrade";
+
+const statOf = (stat: string, key: string) =>
+  parseItemStats(stat).find((entry) => entry.key === key)?.value;
+
+// Real catalog items at level 227, whose +5 virtual level is 262.
+const necklace = {
+  stat: "act=5;binds;crit=3;da=122;evade=23;heal=514;lowcrit=4;lowevade=23;lvl=227;rarity=heroic;sa=178",
+  lvl: 227,
+  rarity: "HEROIC",
+  type: "NECKLACE",
+};
+
+const sword = {
+  stat: "abdest=551;acdmg=33;binds;crit=1;dmg=4793,5858;hp=1722;lvl=227;rarity=heroic;reqp=w;sa=122",
+  lvl: 227,
+  rarity: "HEROIC",
+  type: "ONE_AND_HALF_HAND_WEAPON",
+};
+
+describe("item upgrade", () => {
+  it("raises the virtual level by 3% of the item level per upgrade", () => {
+    expect(upgradedItemLevel(227, 5)).toBe(262);
+    expect(upgradedItemLevel(20, 1)).toBe(21);
+  });
+
+  it("computes bonuses at the virtual level from the number the item was given", () => {
+    const upgraded = upgradeItemStat(necklace, 5);
+
+    // Two "all attributes" bonuses: 0.25 * 262 * 2 + 8.
+    expect(statOf(upgraded, "da")).toBe("139");
+    // Three attack speed bonuses: 8 + 0.25 * 262 * 3, in hundredths.
+    expect(statOf(upgraded, "sa")).toBe("205");
+    expect(statOf(upgraded, "heal")).toBe("628");
+    // Critical chance does not depend on level, and wearing it still takes 227.
+    expect(statOf(upgraded, "crit")).toBe("3");
+    expect(statOf(upgraded, "lvl")).toBe("227");
+    expect(statOf(upgraded, "enhancement_upgrade_lvl")).toBe("5");
+  });
+
+  it("grows weapon damage with the rarity and level power", () => {
+    // 8 * 0.3984 * (rarity_power + level_power) at 262, with a 10% spread.
+    expect(statOf(upgradeItemStat(sword, 5), "dmg")).toBe("6050,7394");
+  });
+
+  it("makes a legendary bonus as strong as the virtual level", () => {
+    const upgraded = upgradeItemStat(
+      {
+        stat: "crit=4;legbon=lastheal,200;lvl=200;rarity=legendary",
+        lvl: 200,
+        rarity: "LEGENDARY",
+        type: "NECKLACE",
+      },
+      5,
+    );
+
+    expect(statOf(upgraded, "legbon")).toBe("lastheal,230");
+  });
+
+  it("leaves items the game cannot upgrade as they are", () => {
+    for (const item of [
+      { ...necklace, stat: "da=12;lvl=19", lvl: 19 },
+      { ...necklace, stat: `${necklace.stat};cursed` },
+      { ...necklace, type: "BAG" },
+    ]) {
+      expect(upgradeItemStat(item, 5)).toBe(item.stat);
+    }
+  });
+});

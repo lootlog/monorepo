@@ -2,11 +2,16 @@ import { createContext, useContext } from "react";
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import type { EquipmentSet } from "@/lib/equipment-set";
 import type { EquipmentSlotId } from "@/lib/equipment-slots";
+import type { UpgradeLevel } from "@/lib/item-upgrade";
 
 type EquipmentSetContextValue = {
   set: EquipmentSet;
-  /** Wears the item in the slot its type belongs to. */
-  equip: (item: CatalogItemDtoOutput) => void;
+  /**
+   * Wears the item in the slot its type belongs to, upgraded to `upgrade`;
+   * without one, an item already worn keeps its upgrade and another is worn
+   * as dropped.
+   */
+  equip: (item: CatalogItemDtoOutput, upgrade?: UpgradeLevel) => void;
   unequip: (slot: EquipmentSlotId) => void;
   /** Takes off every item and forgets the character. */
   clear: () => void;
