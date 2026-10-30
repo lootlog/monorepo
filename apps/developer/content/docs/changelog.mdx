@@ -13,6 +13,13 @@ neither does when Lootlog first saw an item or NPC, which would date boss kills.
 - Each item lists `droppedBy`, up to 20 NPCs it dropped from. A fight's drop
   counts for its only NPC, or for its only boss (elite II or III, hero, event
   hero, titan or colossus) when it fought a group.
+- Each `droppedBy` entry carries `retired`: `true` when the NPC no longer drops
+  the item, such as after a rework replaced its loot. An entry is retired when
+  Lootlog has recorded the NPC's loot far too often since the item's last drop
+  for the gap to be chance at the item's own drop rate. Lootlog records a fight
+  only when it drops something above common, so the rate is per recorded
+  fight, not per kill. Lootlog recomputes it daily, and a new drop clears it
+  at once.
 - Items sort by `lvl`, `name` or `id:desc`, which lists the items Margonem
   added most recently first. They filter by `ids`, `rarities`, `types`,
   `professions`, `minLevel`, `maxLevel`, `droppedBy` (an NPC `key`),

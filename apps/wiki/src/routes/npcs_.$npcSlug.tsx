@@ -100,7 +100,7 @@ function NpcRoute() {
               {t("catalog.dropsTitle")}
             </h2>
             {npc ? (
-              <NpcDrops npcKey={npc.key} />
+              <NpcDrops npc={npc} />
             ) : (
               <CatalogItemGrid
                 items={undefined}

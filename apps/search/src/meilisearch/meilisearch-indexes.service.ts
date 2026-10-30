@@ -55,6 +55,7 @@ export const searchIndexSettings: IndexSettings = {
       "droppedByKeys",
       "droppedByMonsterKeys",
       "droppedByTypes",
+      "retiredDropMonsterKeys",
       "firstSeenAt",
     ],
     searchableAttributes: ["name", "stat"],

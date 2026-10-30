@@ -127,6 +127,12 @@ const messages = {
     },
     noSourcesYet: "Lootlog nie zna jeszcze potwora, z którego wypada.",
     noDropsYet: "Lootlog nie zna jeszcze dropów tego potwora.",
+    noCurrentDrops:
+      "Z tego potwora nie wypada już żaden znany Lootlogowi drop.",
+    retiredDrop: "Już nie wypada",
+    retiredDropsTitle: "Dawniej wypadało",
+    retiredDropsDescription:
+      "Lootlog od dawna nie widział tych przedmiotów, choć wielokrotnie zapisywał inny łup z tego potwora. Najpewniej po zmianie łupu już z niego nie wypadają.",
     itemNotFound: "Nie znaleziono przedmiotu.",
     npcNotFound: "Nie znaleziono potwora.",
     eventNotFound: "Nie znaleziono eventu.",

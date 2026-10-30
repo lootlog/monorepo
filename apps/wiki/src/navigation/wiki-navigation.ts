@@ -14,7 +14,7 @@ export const EMPTY_ITEMS_SEARCH: ItemsSearch = {
   stats: "",
   bonuses: "",
   bosses: "",
-  sort: "relevance",
+  sort: "",
 };
 
 /** Every wiki section, in sidebar order; links open a section's empty search. */

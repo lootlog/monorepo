@@ -72,6 +72,10 @@ export const CatalogDropSourceDto_Output = Schema.Struct({
   lvl: Schema.Union([FiniteNumber, Schema.Null]),
   icon: Schema.Union([Schema.String, Schema.Null]),
   type: Schema.Union([Schema.String, Schema.Null]),
+  retired: Schema.Boolean.annotate({
+    description:
+      "Whether the NPC no longer drops the item: Lootlog has recorded its loot far too often since the item's last drop for the gap to be chance.",
+  }),
 }).annotate({
   description: "An NPC an item drops from",
   identifier: "CatalogDropSourceDto_Output",
