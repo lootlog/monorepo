@@ -21,36 +21,49 @@ import {
  */
 const RETIREMENT_LIKELIHOOD = 1e-6;
 
-// Too few kills since the last drop prove nothing, whatever the likelihood.
-const MIN_KILLS_SINCE_LAST_DROP = 500;
+// Too few fights since the last drop prove nothing, whatever the likelihood.
+const MIN_FIGHTS_SINCE_LAST_DROP = 500;
 
 const MONSTERS_PER_MESSAGE = 200;
 
 // One run at a time across API replicas; the key is arbitrary but fixed.
 const RETIRED_DROPS_LOCK = 7_316_204;
 
+/**
+ * A monster's drop statistics over its recorded fights. The game client
+ * records a fight only when it drops something above common, so fights are a
+ * sample of kills, not every kill.
+ */
 export type DropStatistics = {
   /** Fights the item dropped in. */
   readonly drops: number;
-  /** The monster's kill, counted from its first, that last dropped the item. */
-  readonly lastDropKill: number;
-  /** Every kill of the monster. */
-  readonly kills: number;
+  /** The monster's fight, counted from its first, that last dropped the item. */
+  readonly lastDropFight: number;
+  /** Every recorded fight of the monster. */
+  readonly fights: number;
 };
 
 /**
  * Whether a monster no longer drops an item. While it does, its drops spread
- * evenly over the monster's kills, so all `drops` falling within the first
- * `lastDropKill` of `kills` has the likelihood `(lastDropKill / kills) ^ drops`.
+ * evenly over the monster's recorded fights, so all `drops` falling within the
+ * first `lastDropFight` of `fights` has the likelihood
+ * `(lastDropFight / fights) ^ drops`. That holds while the item's share of
+ * recorded fights is steady; only a loot change that makes other drops
+ * several times more common could pass for a retirement, and a new drop of
+ * the item clears it.
  */
-export const isRetiredDrop = ({ drops, lastDropKill, kills }: DropStatistics) =>
-  kills - lastDropKill >= MIN_KILLS_SINCE_LAST_DROP &&
-  drops * Math.log(lastDropKill / kills) < Math.log(RETIREMENT_LIKELIHOOD);
+export const isRetiredDrop = ({
+  drops,
+  lastDropFight,
+  fights,
+}: DropStatistics) =>
+  fights - lastDropFight >= MIN_FIGHTS_SINCE_LAST_DROP &&
+  drops * Math.log(lastDropFight / fights) < Math.log(RETIREMENT_LIKELIHOOD);
 
 /**
  * Every item each monster dropped, with its drop statistics. A monster is
  * its edition, name and type, as the search catalog names it, so a rework
- * that gives it a new id keeps counting its kills. Fights name their only
+ * that gives it a new id keeps counting its fights. Fights name their only
  * NPC or the only boss among a group, as drop sources do.
  */
 const buildDropStatisticsQuery = (database: ApiDatabaseValue) => {
@@ -76,7 +89,7 @@ const buildDropStatisticsQuery = (database: ApiDatabaseValue) => {
       .groupBy(lootNpcTable.lootId),
   );
 
-  const kills = database.$with("kills").as(
+  const fights = database.$with("fights").as(
     database
       .with(fightSources)
       .select({
@@ -86,10 +99,10 @@ const buildDropStatisticsQuery = (database: ApiDatabaseValue) => {
         ),
         name: sql<string>`${npcSnapshotTable.name}`.as("name"),
         type: sql<string | null>`${npcSnapshotTable.type}`.as("type"),
-        kill: sql<number>`row_number() over (
+        fight: sql<number>`row_number() over (
           partition by ${npcSnapshotTable.gameVersion}, ${npcSnapshotTable.name}, ${npcSnapshotTable.type}
           order by ${lootTable.createdAt}, ${lootTable.id}
-        )`.as("kill"),
+        )`.as("fight"),
       })
       .from(fightSources)
       .innerJoin(lootTable, eq(lootTable.id, fightSources.lootId))
@@ -99,52 +112,52 @@ const buildDropStatisticsQuery = (database: ApiDatabaseValue) => {
       ),
   );
 
-  const monsterKills = database.$with("monster_kills").as(
+  const monsterFights = database.$with("monster_fights").as(
     database
-      .with(kills)
+      .with(fights)
       .select({
-        gameVersion: kills.gameVersion,
-        name: kills.name,
-        type: kills.type,
-        kills: sql<number>`max(${kills.kill})::int`.as("kills"),
+        gameVersion: fights.gameVersion,
+        name: fights.name,
+        type: fights.type,
+        fights: sql<number>`max(${fights.fight})::int`.as("fights"),
       })
-      .from(kills)
-      .groupBy(kills.gameVersion, kills.name, kills.type),
+      .from(fights)
+      .groupBy(fights.gameVersion, fights.name, fights.type),
   );
 
   return database
-    .with(kills, monsterKills)
+    .with(fights, monsterFights)
     .select({
-      gameVersion: kills.gameVersion,
-      name: kills.name,
-      type: kills.type,
+      gameVersion: fights.gameVersion,
+      name: fights.name,
+      type: fights.type,
       itemId: itemSnapshotTable.itemId,
-      drops: sql<number>`count(distinct ${kills.lootId})::int`,
-      lastDropKill: sql<number>`max(${kills.kill})::int`,
-      kills: sql<number>`max(${monsterKills.kills})`,
+      drops: sql<number>`count(distinct ${fights.lootId})::int`,
+      lastDropFight: sql<number>`max(${fights.fight})::int`,
+      fights: sql<number>`max(${monsterFights.fights})`,
     })
-    .from(kills)
+    .from(fights)
     .innerJoin(
-      monsterKills,
+      monsterFights,
       and(
-        eq(monsterKills.gameVersion, kills.gameVersion),
-        eq(monsterKills.name, kills.name),
-        sql`${monsterKills.type} is not distinct from ${kills.type}`,
+        eq(monsterFights.gameVersion, fights.gameVersion),
+        eq(monsterFights.name, fights.name),
+        sql`${monsterFights.type} is not distinct from ${fights.type}`,
       ),
     )
-    .innerJoin(lootItemTable, eq(lootItemTable.lootId, kills.lootId))
+    .innerJoin(lootItemTable, eq(lootItemTable.lootId, fights.lootId))
     .innerJoin(
       itemSnapshotTable,
       and(
         eq(itemSnapshotTable.id, lootItemTable.itemSnapshotId),
         // Some older loots name another edition's NPC, as drop sources skip.
-        sql`${itemSnapshotTable.gameVersion}::text = ${kills.gameVersion}::text`,
+        sql`${itemSnapshotTable.gameVersion}::text = ${fights.gameVersion}::text`,
       ),
     )
     .groupBy(
-      kills.gameVersion,
-      kills.name,
-      kills.type,
+      fights.gameVersion,
+      fights.name,
+      fights.type,
       itemSnapshotTable.itemId,
     );
 };
