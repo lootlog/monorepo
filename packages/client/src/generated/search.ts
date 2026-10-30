@@ -95,6 +95,8 @@ export interface CatalogDropSourceDtoOutput {
   icon: string | null;
   /** @nullable */
   type: string | null;
+  /** Whether the NPC no longer drops the item: Lootlog has recorded its loot far too often since the item's last drop for the gap to be chance. */
+  retired: boolean;
 }
 
 /**

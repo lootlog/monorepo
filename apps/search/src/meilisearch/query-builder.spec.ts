@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
   buildMeilisearchSearchTermFilter,
-  buildMeilisearchStringInFilter,
+  buildMeilisearchInFilter,
   getMeilisearchErrorCode,
 } from "./query-builder.js";
 
@@ -25,15 +25,15 @@ describe("getMeilisearchErrorCode", () => {
   });
 });
 
-describe("buildMeilisearchStringInFilter", () => {
+describe("buildMeilisearchInFilter", () => {
   it("formats string values for a Meilisearch IN filter", () => {
-    expect(buildMeilisearchStringInFilter("name", ["Hero", "Villain"])).toBe(
+    expect(buildMeilisearchInFilter("name", ["Hero", "Villain"])).toBe(
       'name IN ["Hero", "Villain"]',
     );
   });
 
   it("quotes values using JSON string escaping", () => {
-    expect(buildMeilisearchStringInFilter("name", ['Hero "The One"'])).toBe(
+    expect(buildMeilisearchInFilter("name", ['Hero "The One"'])).toBe(
       'name IN ["Hero \\"The One\\""]',
     );
   });

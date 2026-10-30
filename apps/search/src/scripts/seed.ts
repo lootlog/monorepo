@@ -6,8 +6,9 @@
  * document per edition, item id and name, loaded by a query or two per entity and
  * pushed in large batches. Items and NPCs keep the first time any loot
  * observed them, and items the NPCs they dropped from, by the rule the API
- * applies to live loots. Batches are enqueued without waiting, so
- * Meilisearch merges them into a few indexing runs; the script waits once,
+ * applies to live loots; items keep the retired drops the live index holds.
+ * Batches are enqueued without waiting, so Meilisearch merges them into a
+ * few indexing runs; the script waits once,
  * then swaps the shadow indexes into place in a single atomic task, so
  * searches never see a half-built index. The three entities run concurrently.
  *
@@ -291,8 +292,48 @@ const seedPlayers = async () => {
   await indexDocuments(PLAYERS_INDEX, documents, formatDuration(startedAt));
 };
 
+const RETIRED_DROPS_PAGE = 10_000;
+
+/**
+ * The live index's retired drops by catalog key. The API publishes them on a
+ * schedule, not from loots, so the rebuild carries them over; a live index
+ * without the field yet has none.
+ */
+const loadRetiredDrops = async () => {
+  const index = meilisearch.index<{
+    uid: string;
+    retiredDropMonsterKeys: string[];
+  }>(ITEMS_INDEX);
+
+  const retiredDrops = new Map<string, string[]>();
+
+  try {
+    for (let offset = 0; ; offset += RETIRED_DROPS_PAGE) {
+      const page = await index.getDocuments({
+        filter: "retiredDropMonsterKeys IS NOT EMPTY",
+        fields: ["uid", "retiredDropMonsterKeys"],
+        limit: RETIRED_DROPS_PAGE,
+        offset,
+      });
+
+      for (const { uid, retiredDropMonsterKeys } of page.results) {
+        retiredDrops.set(uid, retiredDropMonsterKeys);
+      }
+
+      if (page.results.length < RETIRED_DROPS_PAGE) return retiredDrops;
+    }
+  } catch (error) {
+    if (getMeilisearchErrorCode(error) !== "invalid_document_filter") {
+      throw error;
+    }
+
+    return retiredDrops;
+  }
+};
+
 const seedItems = async () => {
   const startedAt = performance.now();
+  const retiredDrops = await loadRetiredDrops();
 
   // One after the other: both aggregate every loot link.
   const rows = await buildItemSeedQuery(database);
@@ -325,7 +366,20 @@ const seedItems = async () => {
     }),
   );
 
-  await indexDocuments(ITEMS_INDEX, documents, formatDuration(startedAt));
+  await indexDocuments(
+    ITEMS_INDEX,
+    documents.map((document) => {
+      // Only monsters the rebuilt entry still names can retire it.
+      const retiredDropMonsterKeys = retiredDrops
+        .get(document.uid)
+        ?.filter((key) => document.droppedByMonsterKeys.includes(key));
+
+      return retiredDropMonsterKeys?.length
+        ? { ...document, retiredDropMonsterKeys }
+        : document;
+    }),
+    formatDuration(startedAt),
+  );
 };
 
 const main = async () => {

@@ -29,7 +29,11 @@ export function CatalogItemCard({
 }: CatalogItemCardProps) {
   const setPreview = useSetEquipmentPreview();
   const rarity = resolveItemRarity(item.rarity);
-  const [source] = item.droppedBy;
+
+  // Name a monster that still drops the item.
+  const source =
+    item.droppedBy.find(({ retired }) => !retired) ?? item.droppedBy[0];
+
   const bonus = findLegendaryBonus(item.stat);
 
   // Pointing at an item compares it with the set; leaving it ends the preview.

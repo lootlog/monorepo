@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { attemptMeilisearch } from "#src/meilisearch/search-operation-failure";
+import { buildMeilisearchInFilter } from "#src/meilisearch/query-builder";
 import { ITEMS_INDEX } from "#src/items/search-index";
 import type { DropSource } from "#src/items/item-drops";
 import { collapseByNameAndType } from "#src/npcs/npcs.service";
@@ -35,6 +36,7 @@ type CatalogItemDocument = {
   rarity: string | null;
   type: string | null;
   droppedBy?: DropSource[];
+  retiredDropMonsterKeys?: string[];
 };
 
 type CatalogNpcDocument = {
@@ -47,9 +49,6 @@ type CatalogNpcDocument = {
   type: CatalogNpcsResponseDto_Output["hits"][number]["type"];
   gameVersion: CatalogNpcsResponseDto_Output["hits"][number]["gameVersion"];
 };
-
-const inFilter = (attribute: string, values: ReadonlyArray<string | number>) =>
-  `${attribute} IN [${values.map((value) => JSON.stringify(value)).join(", ")}]`;
 
 const page = (query: { limit?: number; offset?: number }) => ({
   limit: Math.min(Math.max(Math.floor(query.limit ?? 24), 1), MAX_LIMIT),
@@ -76,11 +75,13 @@ const itemFilters = (
 
   return [
     gameVersionFilter(query.gameVersion),
-    query.ids?.length ? inFilter("id", query.ids) : undefined,
-    query.rarities?.length ? inFilter("rarity", query.rarities) : undefined,
-    types?.length ? inFilter("type", types) : undefined,
+    query.ids?.length ? buildMeilisearchInFilter("id", query.ids) : undefined,
+    query.rarities?.length
+      ? buildMeilisearchInFilter("rarity", query.rarities)
+      : undefined,
+    types?.length ? buildMeilisearchInFilter("type", types) : undefined,
     query.professions?.length
-      ? inFilter("requiredProfessions", query.professions)
+      ? buildMeilisearchInFilter("requiredProfessions", query.professions)
       : undefined,
     levelFilter(">=", query.minLevel),
     levelFilter("<=", query.maxLevel),
@@ -91,10 +92,10 @@ const itemFilters = (
       (key) => `NOT statsKeys = ${JSON.stringify(key)}`,
     ),
     query.legendaryBonuses?.length
-      ? inFilter("legendaryBonus", query.legendaryBonuses)
+      ? buildMeilisearchInFilter("legendaryBonus", query.legendaryBonuses)
       : undefined,
     query.dropSourceTypes?.length
-      ? inFilter("droppedByTypes", query.dropSourceTypes)
+      ? buildMeilisearchInFilter("droppedByTypes", query.dropSourceTypes)
       : undefined,
     query.event === undefined
       ? undefined
@@ -154,6 +155,7 @@ export const makeCatalogModule = (
         "rarity",
         "type",
         "droppedBy",
+        "retiredDropMonsterKeys",
       ],
       filter: filters.length > 0 ? filters.join(" AND ") : undefined,
       sort: sortBy(query.sort),
@@ -171,19 +173,24 @@ export const makeCatalogModule = (
 
     return {
       estimatedTotalHits: response.estimatedTotalHits ?? response.hits.length,
-      hits: response.hits.map(({ droppedBy, ...item }) => ({
-        ...item,
-        // A boss seen by older clients keeps a runtime or legacy entry beside
-        // its template one; each monster is listed once.
-        droppedBy: collapseByNameAndType(droppedBy ?? []).map(
-          ({
-            identityNamespace: _namespace,
-            gameVersion: _edition,
-            monsterKey: _monster,
-            ...source
-          }) => source,
-        ),
-      })),
+      hits: response.hits.map(
+        ({ droppedBy, retiredDropMonsterKeys, ...item }) => ({
+          ...item,
+          // A boss seen by older clients keeps a runtime or legacy entry beside
+          // its template one; each monster is listed once.
+          droppedBy: collapseByNameAndType(droppedBy ?? []).map(
+            ({
+              identityNamespace: _namespace,
+              gameVersion: _edition,
+              monsterKey,
+              ...source
+            }) => ({
+              ...source,
+              retired: retiredDropMonsterKeys?.includes(monsterKey) ?? false,
+            }),
+          ),
+        }),
+      ),
     } satisfies CatalogItemsResponseDto_Output;
   });
 
@@ -198,9 +205,11 @@ export const makeCatalogModule = (
 
     const filters = [
       gameVersionFilter(query.gameVersion),
-      query.ids?.length ? inFilter("id", query.ids) : undefined,
-      keys?.length ? inFilter("uid", keys) : undefined,
-      query.types?.length ? inFilter("type", query.types) : undefined,
+      query.ids?.length ? buildMeilisearchInFilter("id", query.ids) : undefined,
+      keys?.length ? buildMeilisearchInFilter("uid", keys) : undefined,
+      query.types?.length
+        ? buildMeilisearchInFilter("type", query.types)
+        : undefined,
     ].filter((filter) => filter !== undefined);
 
     const params: SearchParams = {
