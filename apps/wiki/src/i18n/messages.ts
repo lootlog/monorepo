@@ -132,7 +132,7 @@ const messages = {
     retiredDrop: "Już nie wypada",
     retiredDropsTitle: "Dawniej wypadało",
     retiredDropsDescription:
-      "Lootlog od dawna nie widział tych przedmiotów, choć potwór był bity wielokrotnie. Najpewniej po zmianie łupu już z niego nie wypadają.",
+      "Lootlog od dawna nie widział tych przedmiotów, choć wielokrotnie zapisywał inny łup z tego potwora. Najpewniej po zmianie łupu już z niego nie wypadają.",
     itemNotFound: "Nie znaleziono przedmiotu.",
     npcNotFound: "Nie znaleziono potwora.",
     eventNotFound: "Nie znaleziono eventu.",
