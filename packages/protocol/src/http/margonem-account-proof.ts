@@ -2,8 +2,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { verify as verifySignatureValue } from "node:crypto";
 import { Cause, Clock, Effect, Option, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
-import { SingleFlight } from "#src/platform/single-flight";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
+import { SingleFlight } from "../effect/single-flight.js";
 
 const FORCED_REFRESH_INTERVAL_MS = 60_000;
 
@@ -25,7 +24,8 @@ const ENCODED_ID_HEX_LENGTH = 16;
 
 const NONCE_PATTERN = /^[a-f0-9]{32}$/;
 
-const Proof = Schema.Struct({
+/** The signed answer Margonem gives the game client for a proof token. */
+export const MargonemAccountProof = Schema.Struct({
   userId: Schema.String,
   characterId: Schema.String,
   clanId: Schema.optional(Schema.Number),
@@ -35,7 +35,7 @@ const Proof = Schema.Struct({
   signatureBase64: Schema.String,
 });
 
-const decodeProof = Schema.decodeUnknownOption(Proof);
+const decodeProof = Schema.decodeUnknownOption(MargonemAccountProof);
 
 export type ProofVerification =
   | { readonly valid: true }
@@ -43,7 +43,11 @@ export type ProofVerification =
 
 export interface ProofVerificationOptions {
   readonly proof: unknown;
-  readonly socketId: string;
+  /**
+   * What the proof was requested for: the token's second segment. The
+   * gateway binds a proof to its socket, Battlelog to the battle it records.
+   */
+  readonly bindingId: string;
   readonly accountId: string;
   readonly characterId: string;
   readonly clanId?: number;
@@ -108,7 +112,7 @@ const parseToken = (
 };
 
 export const makeMargonemProofVerifier = (
-  config: Pick<GatewayConfiguration, "margonemSigningKeyUrl">,
+  config: { readonly signingKeyUrl: string },
   httpClient: HttpClientValue,
 ): MargonemProofVerifier => {
   let cachedKey: { readonly pem: string; readonly expiresAt: number } | null =
@@ -125,7 +129,7 @@ export const makeMargonemProofVerifier = (
   const fetchKey = Effect.fn("MargonemProofVerifier_fetchKey")(function* () {
     const now = yield* Clock.currentTimeMillis;
 
-    const response = yield* httpClient.get(config.margonemSigningKeyUrl).pipe(
+    const response = yield* httpClient.get(config.signingKeyUrl).pipe(
       Effect.timeout("10 seconds"),
       Effect.mapError(
         (error) =>
@@ -254,7 +258,7 @@ export const makeMargonemProofVerifier = (
       return invalid("validated string mismatch");
     }
 
-    const prefix = `${TOKEN_PREFIX}:${options.socketId}:${options.accountId}:`;
+    const prefix = `${TOKEN_PREFIX}:${options.bindingId}:${options.accountId}:`;
 
     if (!proof.token.startsWith(prefix)) return invalid("proof token mismatch");
     const payload = parseToken(proof.token.slice(prefix.length));

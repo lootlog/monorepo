@@ -17,6 +17,7 @@ export type LogStatusFilter = (typeof LOG_STATUS_VALUES)[number];
 export const ACTION_TYPE_LABEL_KEYS: Record<LogActionType, string> = {
   create_kill: "settings.logs.actionTypes.create_kill",
   create_battle: "settings.logs.actionTypes.create_battle",
+  record_weapon_kills: "settings.logs.actionTypes.record_weapon_kills",
   create_loot: "settings.logs.actionTypes.create_loot",
   update_loot: "settings.logs.actionTypes.update_loot",
   create_timer: "settings.logs.actionTypes.create_timer",

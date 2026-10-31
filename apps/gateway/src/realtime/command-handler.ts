@@ -32,7 +32,7 @@ import {
   Schema,
 } from "effect";
 import type { GuildStore, GuildStoreFailure } from "#src/guilds/guild-store";
-import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
+import type { MargonemProofVerifier } from "@lootlog/protocol/http/margonem-account-proof";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import type { AirTagService } from "#src/realtime/air-tag-service";
 import type { BattlePingService } from "#src/realtime/battle-ping-service";
@@ -1022,7 +1022,7 @@ export class CommandHandler {
       if (data.character) {
         const verification = yield* proofVerifier.verify({
           proof: data.margonemAccountProof,
-          socketId: socket.data.connectionId,
+          bindingId: socket.data.connectionId,
           accountId: data.character.accountId,
           characterId: data.character.characterId,
           clanId: data.character.clan?.id,

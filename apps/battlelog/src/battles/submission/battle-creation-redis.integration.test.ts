@@ -22,7 +22,10 @@ import { drizzleDatabaseEffect } from "#src/database/database";
 import { makeBattleReadBudget } from "#src/database/battle-read-budget";
 import { migrateBattlelogDatabase } from "#src/database/migrate";
 import { makeRedisStore } from "#src/infrastructure/redis-store";
-import { unusedDeleteQueue } from "../../../test/battle-fixtures.js";
+import {
+  unusedDeleteQueue,
+  unusedWeaponKills,
+} from "../../../test/battle-fixtures.js";
 import { makeBattlelogOperations } from "#src/battles/battlelog-operations";
 import { makeBattlelogTestBoundary } from "#src/http/battlelog-http";
 import { makeBattles } from "#src/battles/battles.service";
@@ -964,6 +967,7 @@ it("keeps HTTP submissions durable and retry-safe during concurrent catalog read
       services.battles,
       services.analytics,
       unusedDeleteQueue,
+      unusedWeaponKills,
     ),
   );
 

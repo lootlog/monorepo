@@ -45,6 +45,10 @@ import {
   DeleteUserDataSchema,
   type DeleteUserData,
 } from "#src/battles/internal-operations";
+import {
+  RecordWeaponKillsSchema,
+  type RecordWeaponKillsInput,
+} from "#src/battles/weapon-kills/weapon-kills";
 import { BattlelogApi } from "../http-api/battlelog-api.js";
 import { BearerSecurityMiddleware } from "../http-api/contracts/battles/security.js";
 import type {
@@ -381,6 +385,39 @@ const BattlelogHandlers = Layer.mergeAll(
       .handleRaw("BattlesControllerGetBattleRawData", ({ params }) =>
         secured("BattlesController_getBattleRawData", ({ battles }, userId) =>
           battles.getBattleRawData(params.battleId, userId),
+        ),
+      ),
+  ),
+  HttpApiBuilder.group(BattlelogApi, "weapon-kills", (handlers) =>
+    handlers
+      .handleRaw("WeaponKillsControllerRecordWeaponKills", () =>
+        toResponse(
+          Effect.gen(function* () {
+            const userId = yield* currentUserId();
+
+            const data: RecordWeaponKillsInput =
+              yield* HttpServerRequest.schemaBodyJson(RecordWeaponKillsSchema, {
+                onExcessProperty: "error",
+              }).pipe(
+                Effect.mapError(
+                  (cause) =>
+                    new BattlelogOperationFailure({
+                      operation: "WeaponKillsController_recordWeaponKills",
+                      cause,
+                    }),
+                ),
+              );
+
+            const services = yield* operations;
+
+            return yield* services.weaponKills.recordWeaponKills(data, userId);
+          }),
+        ),
+      )
+      .handleRaw("WeaponKillsControllerGetCharacterWeaponKills", ({ params }) =>
+        secured(
+          "WeaponKillsController_getCharacterWeaponKills",
+          ({ weaponKills }) => weaponKills.getCharacterWeaponKills(params),
         ),
       ),
   ),

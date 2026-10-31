@@ -2,6 +2,7 @@ import {
   unusedBattles,
   unusedBattleAnalytics,
   unusedDeleteQueue,
+  unusedWeaponKills,
 } from "../../test/battle-fixtures.js";
 import { makeBattlelogOperations } from "../battles/battlelog-operations.js";
 import { afterAll, describe, expect, it } from "bun:test";
@@ -13,6 +14,7 @@ const boundary = makeBattlelogTestBoundary(
     unusedBattles,
     unusedBattleAnalytics,
     unusedDeleteQueue,
+    unusedWeaponKills,
   ),
   Redacted.make("cleanup-test-secret"),
 );
@@ -130,11 +132,16 @@ it("only queues account cleanup for an authenticated service caller", async () =
   const queued: unknown[] = [];
 
   const cleanup = makeBattlelogTestBoundary(
-    makeBattlelogOperations(unusedBattles, unusedBattleAnalytics, {
-      add: async (...args) => {
-        queued.push(args);
+    makeBattlelogOperations(
+      unusedBattles,
+      unusedBattleAnalytics,
+      {
+        add: async (...args) => {
+          queued.push(args);
+        },
       },
-    }),
+      unusedWeaponKills,
+    ),
     Redacted.make("cleanup-test-secret"),
   );
 
@@ -185,6 +192,7 @@ it("fails closed when no cleanup credential is configured", async () => {
       unusedBattles,
       unusedBattleAnalytics,
       unusedDeleteQueue,
+      unusedWeaponKills,
     ),
   );
 

@@ -63,13 +63,14 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await pool.query(
-    "TRUNCATE battles, battle_warriors, battle_timelines, battle_submissions, battle_legacy_ids, user_characters, battle_object_deletions",
+    "TRUNCATE battles, battle_warriors, battle_timelines, battle_submissions, battle_legacy_ids, user_characters, battle_object_deletions, weapon_kills",
   );
   await pool.query(`INSERT INTO battles (id, "createdAt", "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", public)
     SELECT id, battle_id_created_at(id), owner, 'account', 'character', 'world', 1, 'pvp', 'winner', 'loser', 1, 2, true
     FROM (VALUES ('${BATTLE_IDS.one}'::uuid, 'owner'), ('${BATTLE_IDS.two}'::uuid, 'owner'), ('${BATTLE_IDS.other}'::uuid, 'other-owner')) AS seed(id, owner);
     INSERT INTO battle_legacy_ids ("legacyId", "battleId") VALUES ('${LEGACY_ONE}', '${BATTLE_IDS.one}');
     INSERT INTO user_characters (id, "userId", "characterId", name, world) VALUES ('character', 'owner', 'character', 'name', 'world');
+    INSERT INTO weapon_kills (world, "characterId", "killFingerprint", "itemId", "userId") VALUES ('world', 'character', 'owner-kill', 'item', 'owner'), ('world', 'character', 'other-kill', 'item', 'other-owner');
     INSERT INTO battle_warriors ("battleId", "originalId", name, lvl, prof, icon, team, turns)
     SELECT id, 'character', 'name', 1, 'w', 'icon', 1, 1 FROM battles;
     INSERT INTO battle_submissions ("userId", "submissionId", "battleId")
@@ -137,6 +138,18 @@ for (const mode of ["single", "user"] as const) {
       expect((await pool.query("SELECT * FROM user_characters")).rows).toEqual(
         [],
       );
+
+    expect(
+      (
+        await pool.query(
+          'SELECT "killFingerprint" FROM weapon_kills ORDER BY "killFingerprint"',
+        )
+      ).rows,
+    ).toEqual(
+      mode === "single"
+        ? [{ killFingerprint: "other-kill" }, { killFingerprint: "owner-kill" }]
+        : [{ killFingerprint: "other-kill" }],
+    );
 
     // Battle hypertables have no cascading foreign keys.
     for (const table of [

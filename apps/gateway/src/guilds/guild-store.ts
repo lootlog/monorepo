@@ -10,7 +10,7 @@ import type {
   RedisGatewayStore,
   RedisScriptReply,
 } from "#src/platform/redis-store";
-import { SingleFlight } from "#src/platform/single-flight";
+import { SingleFlight } from "@lootlog/protocol/effect/single-flight";
 
 const UserGuildsJson = Schema.fromJsonString(
   Schema.Array(UserGuildPermissionsDtoSchema),

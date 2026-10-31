@@ -19,6 +19,7 @@ import {
   unusedBattles,
   unusedBattleAnalytics,
   unusedDeleteQueue,
+  unusedWeaponKills,
 } from "../../test/battle-fixtures.js";
 import { makeBattlelogOperations } from "../battles/battlelog-operations.js";
 import { makeBattlelogTestBoundary } from "../http/battlelog-http.js";
@@ -146,6 +147,7 @@ for (const connection of ["postgres", "pgbouncer"] as const) {
           },
           unusedBattleAnalytics,
           unusedDeleteQueue,
+          unusedWeaponKills,
         ),
       );
 

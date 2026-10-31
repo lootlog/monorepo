@@ -11,6 +11,7 @@ import {
   battleTimelines,
   battleWarriors,
   userCharacters,
+  weaponKills,
 } from "#src/database/schema";
 import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import type { BattleObjectStorage } from "#src/infrastructure/battle-object-storage";
@@ -199,6 +200,10 @@ export const makeBattleDeletion = (
           yield* transaction
             .delete(userCharacters)
             .where(eq(userCharacters.userId, userId));
+
+          yield* transaction
+            .delete(weaponKills)
+            .where(eq(weaponKills.userId, userId));
 
           return removed;
         }),

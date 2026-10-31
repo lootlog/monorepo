@@ -310,6 +310,39 @@ export const battleWarriors = pgTable(
   ],
 );
 
+/**
+ * One finishing blow a character dealt to a player with the main weapon it
+ * wore. A weapon's counter is the count of its rows for its current owner, so
+ * a weapon that changes hands starts again from zero. The kill fingerprint
+ * hashes the battle log up to the blow, so every capture of the same battle,
+ * whole or cut short, records each blow once.
+ */
+export const weaponKills = pgTable(
+  "weapon_kills",
+  {
+    world: text("world").notNull(),
+    characterId: text("characterId").notNull(),
+    killFingerprint: text("killFingerprint").notNull(),
+    itemId: text("itemId").notNull(),
+    userId: text("userId").notNull(),
+    createdAt: timestamp("createdAt", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    primaryKey({
+      name: "weapon_kills_pkey",
+      columns: [table.world, table.characterId, table.killFingerprint],
+    }),
+    index("weapon_kills_world_characterId_itemId_idx").on(
+      table.world,
+      table.characterId,
+      table.itemId,
+    ),
+    index("weapon_kills_userId_idx").on(table.userId),
+  ],
+);
+
 export type Battle = typeof battles.$inferSelect;
 
 export type NewBattle = typeof battles.$inferInsert;
