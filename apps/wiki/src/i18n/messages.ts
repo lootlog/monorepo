@@ -203,6 +203,13 @@ const messages = {
     retiredDropsTitle: "Dawniej wypadało",
     retiredDropsDescription:
       "Lootlog od dawna nie widział tych przedmiotów, choć wielokrotnie zapisywał inny łup z tego potwora. Najpewniej po zmianie łupu już z niego nie wypadają.",
+    locationsTitle: "Lokacje",
+    locationsDescription:
+      "Udział map w ostatnich walkach z tym potworem zapisanych przez Lootlog.",
+    locationShare: "{{share}}%",
+    noLocationsYet: "Lootlog nie zna jeszcze map tego potwora.",
+    showAllLocations: "Pokaż wszystkie mapy ({{count}})",
+    showFewerLocations: "Pokaż mniej",
     itemNotFound: "Nie znaleziono przedmiotu.",
     npcNotFound: "Nie znaleziono potwora.",
     eventNotFound: "Nie znaleziono eventu.",

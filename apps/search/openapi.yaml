@@ -726,6 +726,21 @@ components:
           enum:
             - en
             - pl
+        locations:
+          type: array
+          items:
+            type: object
+            properties:
+              map:
+                type: string
+                description: The map's name.
+              share:
+                type: number
+                description: The share of the NPC's latest recorded fights on the map, from 0 to 1, rounded to a hundredth.
+            required:
+              - map
+              - share
+          description: Maps the NPC is fought on, most fought first, from its latest 1000 recorded fights; maps under 1% of them are left out. Lootlog recomputes them daily, so an NPC first seen today may have none yet.
       required:
         - key
         - id
@@ -734,6 +749,7 @@ components:
         - lvl
         - type
         - gameVersion
+        - locations
       description: A Margonem NPC in the public catalog
     CatalogItemsResponseDto_Output:
       type: object

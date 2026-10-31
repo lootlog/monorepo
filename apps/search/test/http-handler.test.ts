@@ -30,6 +30,7 @@ const makeBoundary = (overrides: Partial<SearchOperationsValue> = {}) => {
     indexItems: () => Effect.void,
     markRetiredDrops: () => Effect.void,
     indexNpcs: () => Effect.void,
+    setNpcLocations: () => Effect.void,
     indexPlayers: () => Effect.void,
     ...overrides,
   };

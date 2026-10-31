@@ -14,7 +14,9 @@ type CatalogItemGridProps = {
   highlight?: string;
 };
 
-const GRID = "grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-3";
+/** The catalog's grid of tiles, as many columns as fit. */
+export const CATALOG_GRID =
+  "grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-3";
 
 export function CatalogItemGrid({
   items,
@@ -34,7 +36,7 @@ export function CatalogItemGrid({
 
   if (!items) {
     return (
-      <div className={GRID} aria-busy="true">
+      <div className={CATALOG_GRID} aria-busy="true">
         {Array.from({ length: placeholders }, (_, index) => (
           <Skeleton key={index} className="h-[4.75rem] rounded-lg" />
         ))}
@@ -47,7 +49,7 @@ export function CatalogItemGrid({
   }
 
   return (
-    <ul className={GRID}>
+    <ul className={CATALOG_GRID}>
       {items.map((item) => (
         <li key={item.id}>
           <CatalogItemCard
