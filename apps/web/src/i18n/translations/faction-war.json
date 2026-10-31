@@ -109,7 +109,7 @@
     "pick": "Frakcję wybierasz raz, w dodatku Lootlog w grze. Wyboru nie można zmienić do końca wojny.",
     "loot": "Punkty za łup dostaje każdy członek drużyny, który gra z dodatkiem Lootlog — nie tylko osoba, która go zgłosiła.",
     "days": "Dni liczą się według czasu polskiego — dzienne limity odnawiają się o północy.",
-    "delay": "Wynik wojny i wykres odświeżają się co 5 minut. Ranking graczy obejmuje punkty do końca poprzedniego dnia — dzisiejsze dojdą po północy. Twoje dzisiejsze punkty widzisz od razu w sekcji „Twój wkład”.",
+    "delay": "Wynik wojny i wykres odświeżają się co 5 minut, a punkty w rankingu graczy co 3 godziny. Twoje dzisiejsze punkty widzisz od razu w sekcji „Twój wkład”.",
     "underdog": "Każdego dnia frakcja z mniejszą liczbą aktywnych graczy (z co najmniej 1 punktem tego dnia) dostaje mnożnik równy stosunkowi aktywnych graczy obu frakcji, najwyżej {{cap}}. Mnożnik zmienia tylko wynik wojny — Twoje punkty i ranking graczy liczą się bez niego.",
     "winner": "Wygrywa frakcja z wyższym wynikiem. Przy remisie wygrywają obie, a gdy żadna nie zdobyła punktów — nie wygrywa nikt.",
     "reward": "Gracze zwycięskiej frakcji dostają w grze poświatę i oznaczenie przy nicku postaci, którą wybrali frakcję, do końca następnej wojny. Możesz je wyłączyć w ustawieniach prywatności."
