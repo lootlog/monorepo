@@ -209,12 +209,12 @@ jobs:
           rollback="$RUNNER_TEMP/cloudflare-rollback.jsonl"
           # The newest production deployment that went live. Pages also lists
           # deployments that never served traffic, such as idle Git builds,
-          # and refuses to roll back to them.
+          # and skipped ones, and refuses to roll back to them.
           live_pages_deployment() {
             curl --fail-with-body --silent --show-error \
               --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
               "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$1/deployments?env=production" |
-              jq -r 'first(.result[] | select(.latest_stage.status == "success") | .id) // empty'
+              jq -r 'first(.result[] | select(.latest_stage.status == "success" and (.is_skipped | not)) | .id) // empty'
           }
           while IFS= read -r target; do
             id="$(jq -r '.id' <<< "$target")"
