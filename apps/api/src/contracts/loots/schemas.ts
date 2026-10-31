@@ -22,6 +22,7 @@ import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { LootSourceSchema } from "@lootlog/schema/loot";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { FactionWarAwardResponse } from "#src/contracts/faction-wars/schemas";
 import {
   CharacterIdQuery,
   characterNeedsWorld,
@@ -323,6 +324,7 @@ export const CreateLootResponse = Schema.Struct({
       ]),
     }),
   ),
+  factionWar: Schema.optionalKey(FactionWarAwardResponse),
 }).annotate({ identifier: "CreateLootResponseDto_Output" });
 
 export type LootCommentResponse = typeof LootCommentResponse.Type;

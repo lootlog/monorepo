@@ -14,6 +14,7 @@
     "doctor": "react-doctor ."
   },
   "dependencies": {
+    "@lootlog/domain": "workspace:*",
     "@lootlog/ui": "workspace:*",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "^1.169.1",
