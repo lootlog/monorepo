@@ -77,10 +77,15 @@ describe("item upgrade", () => {
   });
 
   it("adds the chosen +5 bonus from the item's class pool at the virtual level", () => {
-    // One strength bonus at 262: 5 * 262 / 9 + 4.
+    // One strength bonus at 262: 5 * 262 / 9 + 4, a stat the necklace lacked.
+    const withStrength = upgradeItemStat(necklace, { level: 5, bonus: "ds" });
+
+    expect(statOf(withStrength, "bonus")).toBe("ds,150");
+    expect(statOf(withStrength, "ds")).toBe("150");
+    // Its healing, 628 at +5, grows by one bonus: 8 + 0.8 * 262 + 0.2 * level_power.
     expect(
-      statOf(upgradeItemStat(necklace, { level: 5, bonus: "ds" }), "bonus"),
-    ).toBe("ds,150");
+      statOf(upgradeItemStat(necklace, { level: 5, bonus: "heal" }), "heal"),
+    ).toBe("1256");
     // A necklace cannot draw a weapon bonus, and below +5 there is none.
     expect(
       statOf(upgradeItemStat(necklace, { level: 5, bonus: "acdmg" }), "bonus"),

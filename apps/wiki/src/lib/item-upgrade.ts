@@ -252,10 +252,28 @@ export const upgradeItemStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
       ? upgradeBonusOptions(item).find(({ key }) => key === upgrade.bonus)
       : undefined;
 
+  if (!bonus) {
+    return [...entries, `enhancement_upgrade_lvl=${upgrade.level}`].join(";");
+  }
+
+  // The chosen bonus adds to the item's own stat, or gives it one, and the
+  // item also lists it as the bonus it was given.
+  const bonusPrefix = `${bonus.key}=`;
+  const statIndex = entries.findIndex((entry) => entry.startsWith(bonusPrefix));
+
+  const withBonus =
+    statIndex === -1
+      ? [...entries, `${bonusPrefix}${bonus.value}`]
+      : entries.map((entry, index) =>
+          index === statIndex
+            ? `${bonusPrefix}${Number(entry.slice(bonusPrefix.length)) + bonus.value}`
+            : entry,
+        );
+
   return [
-    ...entries,
+    ...withBonus,
     `enhancement_upgrade_lvl=${upgrade.level}`,
-    ...(bonus ? [`bonus=${bonus.key},${bonus.value}`] : []),
+    `bonus=${bonus.key},${bonus.value}`,
   ].join(";");
 };
 

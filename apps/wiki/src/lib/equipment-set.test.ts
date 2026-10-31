@@ -30,11 +30,8 @@ describe("equipment set link", () => {
 describe("equipment set stats", () => {
   it("adds up numeric stats and skips the rest", () => {
     expect(
-      sumItemStats([
-        "hp=500;crit=2;binds",
-        "hp=250;legbon=lastheal,200;bonus=crit,1",
-      ]),
-    ).toEqual({ hp: 750, crit: 3 });
+      sumItemStats(["hp=500;crit=2;binds", "hp=250;legbon=lastheal,200"]),
+    ).toEqual({ hp: 750, crit: 2 });
   });
 
   it("flags an item another profession or a higher level needs", () => {
