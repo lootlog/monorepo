@@ -16,6 +16,7 @@ import { PingsSettingsTab } from "@/features/settings/components/pings/pings-set
 import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
 import { ServerVisibilitySettingsTab } from "@/features/settings/components/servers/server-visibility-settings-tab";
 import { NpcColorsSettings } from "@/features/settings/components/npc-colors/npc-colors-settings";
+import { FactionWarSettings } from "@/features/faction-war/faction-war-settings";
 import { TimersSettingsAppearance } from "@/features/settings/components/timers/timers-settings-appearance";
 import { TimersSettingsColors } from "@/features/settings/components/timers/timers-settings-colors";
 import { TimersSettingsLists } from "@/features/settings/components/timers/timers-settings-lists";
@@ -70,6 +71,7 @@ export const SETTINGS_SUBSECTION_CONTENT = {
   catching: CatchingSettings,
   behavior: GeneralSettingsTab,
   "npc-colors": NpcColorsSettings,
+  "faction-war": FactionWarSettings,
   "chat-appearance": ChatAppearanceSettingsForm,
   "chat-filters": ChatFiltersSettings,
   "timer-behavior": TimersSettingsGeneral,

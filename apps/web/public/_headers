@@ -1,0 +1,4 @@
+# The Game client draws faction war auras on the Margonem canvas, which needs
+# CORS so the images do not taint it.
+/faction-wars/*
+  Access-Control-Allow-Origin: *

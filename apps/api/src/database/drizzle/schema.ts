@@ -1,4 +1,8 @@
 import type { JsonValue } from "#src/database/json";
+import type {
+  FactionWarFaction,
+  FactionWarPointSource,
+} from "@lootlog/domain/faction-war";
 // Hand-maintained API database schema. Generate SQL migrations from this source.
 import { sql } from "drizzle-orm";
 import {
@@ -178,6 +182,7 @@ export const notificationTriggerTypeEnum = pgEnum("NotificationTriggerType", [
   "NPC_SPAWNED",
   "WATCHED_ITEM_DROPPED",
   "SCHEDULED_MESSAGE",
+  "FACTION_WAR",
 ]);
 
 export const notificationScheduleStrategyEnum = pgEnum(
@@ -1214,6 +1219,151 @@ export const userThemeTable = pgTable(
     uniqueIndex("UserTheme_shareToken_key").on(table["shareToken"]),
   ],
 );
+
+/** A User's locked faction in a war defined in `@lootlog/domain/faction-war`. */
+export const factionWarPickTable = pgTable(
+  "FactionWarPick",
+  {
+    warId: text("warId").notNull(),
+    userId: text("userId").notNull(),
+    /** Kill stats and character settings are keyed by Discord id. */
+    discordId: text("discordId").notNull(),
+    faction: text("faction").$type<FactionWarFaction>().notNull(),
+    /** The character the User picked with; it names them on the leaderboard. */
+    characterId: text("characterId").notNull(),
+    characterName: text("characterName").notNull(),
+    world: text("world").notNull(),
+    hiddenFromLeaderboard: boolean("hiddenFromLeaderboard")
+      .default(false)
+      .notNull(),
+    championHighlightHidden: boolean("championHighlightHidden")
+      .default(false)
+      .notNull(),
+    pickedAt: timestamp("pickedAt", { mode: "date", precision: 3 }).notNull(),
+    /** Set by a war admin: the pick earns nothing and counts nowhere. */
+    disqualifiedAt: timestamp("disqualifiedAt", { mode: "date", precision: 3 }),
+    disqualificationReason: text("disqualificationReason"),
+  },
+  (table) => [
+    primaryKey({
+      name: "FactionWarPick_pkey",
+      columns: [table["warId"], table["userId"]],
+    }),
+    index("FactionWarPick_warId_faction_idx").on(
+      table["warId"],
+      table["faction"],
+    ),
+    uniqueIndex("FactionWarPick_warId_discordId_key").on(
+      table["warId"],
+      table["discordId"],
+    ),
+  ],
+);
+
+/**
+ * One pick per war per Discord account, kept when the account is deleted so a
+ * new account on the same Discord cannot pick again. Holds only a SHA-256 of
+ * the Discord id, never the id or anything about the player.
+ */
+export const factionWarPickLockTable = pgTable(
+  "FactionWarPickLock",
+  {
+    warId: text("warId").notNull(),
+    discordIdHash: text("discordIdHash").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      name: "FactionWarPickLock_pkey",
+      columns: [table["warId"], table["discordIdHash"]],
+    }),
+  ],
+);
+
+/** Capped points one User earned from one source on one Warsaw day. */
+export const factionWarDailyPointsTable = pgTable(
+  "FactionWarDailyPoints",
+  {
+    warId: text("warId").notNull(),
+    userId: text("userId").notNull(),
+    day: text("day").notNull(),
+    source: text("source").$type<FactionWarPointSource>().notNull(),
+    points: integer("points").notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
+  },
+  (table) => [
+    primaryKey({
+      name: "FactionWarDailyPoints_pkey",
+      columns: [table["warId"], table["userId"], table["day"], table["source"]],
+    }),
+    index("FactionWarDailyPoints_warId_day_idx").on(
+      table["warId"],
+      table["day"],
+    ),
+  ],
+);
+
+/**
+ * Records each loot or battle that already earned a User points, so retries
+ * and other submitters of the same loot cannot pay that User twice.
+ */
+export const factionWarAwardTable = pgTable(
+  "FactionWarAward",
+  {
+    warId: text("warId").notNull(),
+    source: text("source").$type<FactionWarPointSource>().notNull(),
+    sourceKey: text("sourceKey").notNull(),
+    userId: text("userId").notNull(),
+    awardedAt: timestamp("awardedAt", { mode: "date", precision: 3 }).notNull(),
+  },
+  (table) => [
+    primaryKey({
+      name: "FactionWarAward_pkey",
+      columns: [
+        table["warId"],
+        table["source"],
+        table["sourceKey"],
+        table["userId"],
+      ],
+    }),
+  ],
+);
+
+/** Confirmed online presence of a picked User, from gateway checkpoints. */
+export const factionWarOnlineSegmentTable = pgTable(
+  "FactionWarOnlineSegment",
+  {
+    warId: text("warId").notNull(),
+    userId: text("userId").notNull(),
+    sessionId: text("sessionId").notNull(),
+    segmentId: text("segmentId").notNull(),
+    startedAt: timestamp("startedAt", {
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+    endedAt: timestamp("endedAt", {
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+  },
+  (table) => [
+    primaryKey({
+      name: "FactionWarOnlineSegment_pkey",
+      columns: [
+        table["warId"],
+        table["userId"],
+        table["sessionId"],
+        table["segmentId"],
+      ],
+    }),
+  ],
+);
+
+/** How far the API has read PvP wins from the battlelog for each war. */
+export const factionWarCursorTable = pgTable("FactionWarCursor", {
+  warId: text("warId").notNull().primaryKey(),
+  pvpBattleId: text("pvpBattleId").notNull(),
+  updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
+});
 
 export const userSettingDocumentTable = pgTable(
   "UserSettingDocument",

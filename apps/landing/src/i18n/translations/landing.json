@@ -36,6 +36,35 @@
     "installAddon": "Zainstaluj dodatek",
     "openDashboard": "Otwórz Lootloga"
   },
+  "factionWar": {
+    "eyebrow": "Wojna frakcji w Lootlogu",
+    "title": "{{left}} kontra {{right}}",
+    "factions": {
+      "BARBATOS": "Barbatos",
+      "TANROTH": "Tanroth"
+    },
+    "factionsGenitive": {
+      "BARBATOS": "Barbatosa",
+      "TANROTH": "Tanrotha"
+    },
+    "status": {
+      "UPCOMING": "Start {{date}} — wybierz frakcję w dodatku w grze.",
+      "RUNNING": "Trwa do {{date}} — punkty zbierasz, grając z dodatkiem Lootlog.",
+      "winner": "Zakończona — wygrywa {{faction}}.",
+      "tie": "Zakończona remisem — wygrywają obie frakcje.",
+      "noWinner": "Zakończona bez zwycięzcy."
+    },
+    "pointsUnit": "pkt",
+    "players_one": "{{count}} gracz",
+    "players_few": "{{count}} graczy",
+    "players_many": "{{count}} graczy",
+    "players_other": "{{count}} gracza",
+    "bonus": "Bonus {{multiplier}} — przewaga liczebna {{opponent}}",
+    "winner": "Zwycięzca",
+    "share": "{{faction}}: {{share}} wyniku",
+    "open": "Zobacz swój wkład",
+    "guide": "Zasady wojny"
+  },
   "band": {
     "timers": "Wspólne timery",
     "drops": "Historia dropów",

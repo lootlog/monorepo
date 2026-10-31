@@ -32,6 +32,7 @@ export const getJobStatusBadgeProps = (
 const SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES = [
   NotificationTriggerType.TIMER_BEFORE_SPAWN,
   NotificationTriggerType.SCHEDULED_MESSAGE,
+  NotificationTriggerType.FACTION_WAR,
 ] as const;
 
 export const getNotificationTriggerTranslationKey = (
@@ -46,6 +47,8 @@ export const getNotificationTriggerTranslationKey = (
       return "settings.notifications.triggers.watchedItemDropped";
     case NotificationTriggerType.SCHEDULED_MESSAGE:
       return "settings.notifications.triggers.scheduledMessage";
+    case NotificationTriggerType.FACTION_WAR:
+      return "settings.notifications.triggers.factionWar";
   }
 };
 

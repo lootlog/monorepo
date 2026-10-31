@@ -46,6 +46,26 @@ describe("resolveAppNavigation", () => {
     ).toEqual(["user-statistics"]);
     expect(navigation.documentTitle).toBe("Statystyki - Lootlog.pl");
   });
+  it("keeps the faction war section active on its ranking tab", () => {
+    const navigation = resolveAppNavigation({
+      matches: [
+        createMatch({
+          pathname: "/@me/faction-war/ranking",
+          routeId: "/_authenticated/@me/faction-war/ranking",
+        }),
+      ],
+    });
+
+    expect(navigation.breadcrumbs).toEqual([
+      { label: "Wojna frakcji", path: "/@me/faction-war" },
+      { label: "Ranking", path: null },
+    ]);
+    expect(
+      navigation.sidebarItems
+        .filter((item) => item.active)
+        .map((item) => item.id),
+    ).toEqual(["user-faction-war"]);
+  });
   it("resolves one Organization hierarchy for breadcrumbs, title, parent, and sidebar", () => {
     const navigation = resolveAppNavigation({
       currentEntityLabel: "Alicja",
