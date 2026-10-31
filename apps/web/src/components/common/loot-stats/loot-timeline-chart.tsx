@@ -8,7 +8,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
 import type { LootStatsResponseDtoOutputTimelineItem } from "@lootlog/client/main";
-import { LOOT_RARITY_CHART_COLORS } from "@/features/guild/loots-list/loot-rarity-colors";
+import { LOOT_RARITY_CHART_COLORS } from "@lootlog/ui/lib/item-rarity-colors";
 import { getLootRarityChartConfig } from "./loot-rarity-chart-config";
 import { ChartSection } from "@/components/common/chart-section";
 import { CHART_SERIES_ANIMATION } from "@/lib/motion";

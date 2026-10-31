@@ -6,6 +6,7 @@ import {
   type LootShareResponseDto,
   type UpdateLootDto,
 } from "@lootlog/client/main";
+import { announceFactionWarPoints } from "@/features/faction-war/faction-war-points-toast";
 import {
   logLootCreateDebug,
   type LootCreateDebugContext,
@@ -64,6 +65,8 @@ export async function createLoot(
     },
     retry: GAME_EVENT_RETRY_OPTIONS,
   });
+
+  announceFactionWarPoints(response.factionWar);
 
   return response;
 }

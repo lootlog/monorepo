@@ -8,6 +8,15 @@
 @variant dark (&:where(#lootlog-root.dark-theme, .ll-theme-boundary.dark-theme, #lootlog-root.dark-theme *, .ll-theme-boundary.dark-theme *));
 
 /*
+ * shadcn's versions of these variants also accept Radix's `data-state`
+ * spelling. Two alternatives make a stacked variant (`data-active:hover:`)
+ * compile to a multi-argument `:is()` subject that the browser tries against
+ * every game element. Base UI and Lootlog only set the attribute itself.
+ */
+@custom-variant data-active (&:where([data-active]:not([data-active="false"])));
+@custom-variant data-disabled (&:where([data-disabled]:not([data-disabled="false"])));
+
+/*
  * Scoped stand-in for the Tailwind preflight, which cannot be loaded because
  * it would restyle the game page. shadcn primitives assume border-box sizing
  * and a solid zero-width border on every element.
@@ -30,8 +39,16 @@
   font-family: Arimo, Calibri, Segoe;
 }
 
-:where(#lootlog-root) :is(button, input, select, textarea, optgroup),
-:where(.ll-theme-boundary) :is(button, input, select, textarea, optgroup) {
+:where(#lootlog-root) button,
+:where(#lootlog-root) input,
+:where(#lootlog-root) select,
+:where(#lootlog-root) textarea,
+:where(#lootlog-root) optgroup,
+:where(.ll-theme-boundary) button,
+:where(.ll-theme-boundary) input,
+:where(.ll-theme-boundary) select,
+:where(.ll-theme-boundary) textarea,
+:where(.ll-theme-boundary) optgroup {
   font: inherit;
   color: inherit;
 }
@@ -48,11 +65,11 @@
  * the bag ends short of the strips above it. Own the rule here so it ships
  * with the rest of the stylesheet on every installation method.
  */
-[data-ll-scroll-area-viewport] {
+.ll-scroll-area-viewport {
   scrollbar-width: none;
 }
 
-[data-ll-scroll-area-viewport]::-webkit-scrollbar {
+.ll-scroll-area-viewport::-webkit-scrollbar {
   display: none;
 }
 
@@ -519,17 +536,15 @@ body.ll-mounted .right-main-column-wrapper > .bottom-wrapper > .banners {
   appearance: textfield;
 }
 
-:is(#lootlog-root, .ll-theme-boundary)
-  .ll-action-menu
-  :is([role="menuitem"], [data-variant="menu"]) {
+:is(#lootlog-root, .ll-theme-boundary) .ll-action-menu .ll-action-menu-item {
   position: relative;
   border-radius: 0;
 }
 
 :is(#lootlog-root, .ll-theme-boundary)
   .ll-action-menu
-  :is([role="menuitem"], [data-variant="menu"])
-  ~ :is([role="menuitem"], [data-variant="menu"])::before {
+  .ll-action-menu-item
+  ~ .ll-action-menu-item::before {
   content: "";
   position: absolute;
   inset: 0 0 auto;
@@ -554,4 +569,910 @@ body.ll-mounted .right-main-column-wrapper > .bottom-wrapper > .banners {
 #lootlog-root .ll-party-gathering-card .ll\:text-inherit {
   color: #e5e5e5;
   line-height: 14px;
+}
+
+/*
+ * Faction war pick screen. Art stays at full contrast: every effect is light
+ * added on top with `screen`/`plus-lighter` blending, and idle motion only
+ * moves transform and opacity. The losing half is the one filter transition,
+ * played once when a faction is chosen.
+ */
+.ll-fw-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: rgb(3 4 8 / 74%);
+  opacity: 0;
+  transition: opacity var(--ll-transition-duration-long) var(--ll-ease-enter);
+}
+
+.ll-fw-overlay[data-ready="true"] {
+  opacity: 1;
+}
+
+/*
+ * The stage keeps the art's 13:8 frame and takes as much of the screen as
+ * fits: up to 1400px wide, 92% of the width and 90% of the height. It is a
+ * size container, so type, crests, buttons and effects scale with it in
+ * `cqw`/`cqh` instead of fixed pixels.
+ */
+.ll-fw-stage {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: min(1400px, 92vw, 90vh * 13 / 8);
+  aspect-ratio: 13 / 8;
+  container-type: size;
+  overflow: hidden;
+  border-radius: clamp(8px, 1cqw, 14px);
+  background: #06070a;
+  box-shadow:
+    0 32px 90px rgb(0 0 0 / 65%),
+    0 0 0 1px rgb(255 255 255 / 8%);
+  transform: scale(0.97);
+  transition: transform 420ms var(--ll-ease-enter);
+}
+
+.ll-fw-overlay[data-ready="true"] .ll-fw-stage {
+  transform: none;
+}
+
+.ll-fw-side {
+  position: relative;
+  overflow: hidden;
+}
+
+.ll-fw-art {
+  position: absolute;
+  inset: 0;
+  transition:
+    filter 650ms ease-out,
+    transform 650ms var(--ll-ease-enter);
+}
+
+.ll-fw-side[data-emphasis="lost"] .ll-fw-art {
+  filter: grayscale(0.85) brightness(0.4);
+}
+
+.ll-fw-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.02);
+  transition: transform 700ms var(--ll-ease-enter);
+}
+
+.ll-fw-side[data-emphasis="active"] .ll-fw-backdrop,
+.ll-fw-side[data-emphasis="chosen"] .ll-fw-backdrop {
+  transform: scale(1.06);
+}
+
+/* Darkens a half while the other one is hovered: shade, never a tint. */
+.ll-fw-dim {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ll-transition-duration-long) ease-out;
+}
+
+.ll-fw-side[data-emphasis="muted"] .ll-fw-dim {
+  opacity: 0.5;
+}
+
+/* Bottom scrim that keeps the crest and name readable over the art. */
+.ll-fw-scrim {
+  position: absolute;
+  inset: auto 0 0;
+  height: 55%;
+  background: linear-gradient(
+    to top,
+    rgb(3 4 8 / 92%),
+    rgb(3 4 8 / 55%) 45%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.ll-fw-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  mix-blend-mode: screen;
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 600ms ease-out;
+}
+
+.ll-fw-side[data-emphasis="active"] .ll-fw-particles {
+  opacity: 0.75;
+}
+
+.ll-fw-side[data-emphasis="chosen"] .ll-fw-particles {
+  opacity: 1;
+}
+
+.ll-fw-particles-track {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.ll-fw-particle {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.ll-fw-particles[data-drift="rise"] .ll-fw-particles-track {
+  animation: ll-fw-rise 16s linear infinite;
+}
+
+.ll-fw-particles[data-drift="fall"] .ll-fw-particles-track {
+  animation: ll-fw-fall 22s linear infinite;
+}
+
+@keyframes ll-fw-rise {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, -33.3333%, 0);
+  }
+}
+
+@keyframes ll-fw-fall {
+  from {
+    transform: translate3d(0, -33.3333%, 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* The character, its ground ring, rim light and burst move as one figure. */
+.ll-fw-figure {
+  position: absolute;
+  bottom: -3%;
+  height: 86%;
+  aspect-ratio: 2 / 3;
+  transform-origin: 50% 100%;
+  transition: transform 520ms var(--ll-ease-overshoot);
+  pointer-events: none;
+}
+
+.ll-fw-side[data-side="left"] .ll-fw-figure {
+  right: 7%;
+}
+
+.ll-fw-side[data-side="right"] .ll-fw-figure {
+  left: 7%;
+}
+
+.ll-fw-side[data-side="left"][data-emphasis="active"] .ll-fw-figure {
+  transform: translate3d(0.8cqw, 0, 0) scale(1.035);
+}
+
+.ll-fw-side[data-side="right"][data-emphasis="active"] .ll-fw-figure {
+  transform: translate3d(-0.8cqw, 0, 0) scale(1.035);
+}
+
+.ll-fw-side[data-emphasis="chosen"] .ll-fw-figure {
+  transform: scale(1.08);
+}
+
+.ll-fw-side[data-emphasis="lost"] .ll-fw-figure {
+  transform: scale(0.96);
+}
+
+.ll-fw-breathe {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  animation: ll-fw-breathe 5.5s ease-in-out infinite;
+}
+
+@keyframes ll-fw-breathe {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(0, -3px, 0) scale(1.012);
+  }
+}
+
+.ll-fw-character,
+.ll-fw-rim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 100%;
+}
+
+/* A blurred, brightened copy behind the sprite: light around its edges. */
+.ll-fw-rim {
+  filter: blur(clamp(6px, 1cqw, 14px)) brightness(1.9) saturate(1.5);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 400ms ease-out;
+}
+
+.ll-fw-side[data-emphasis="active"] .ll-fw-rim {
+  opacity: 0.6;
+}
+
+.ll-fw-side[data-emphasis="chosen"] .ll-fw-rim {
+  animation: ll-fw-rim-flash 1.1s ease-out both;
+}
+
+@keyframes ll-fw-rim-flash {
+  0% {
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.55;
+  }
+}
+
+.ll-fw-aura {
+  position: absolute;
+  left: 2%;
+  bottom: 2%;
+  width: 96%;
+  aspect-ratio: 2 / 1;
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  transform-origin: 50% 50%;
+  animation: ll-fw-aura-breathe 3.6s ease-in-out infinite;
+}
+
+@keyframes ll-fw-aura-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.97);
+  }
+
+  50% {
+    opacity: 0.85;
+    transform: scale(1.03);
+  }
+}
+
+.ll-fw-burst {
+  position: absolute;
+  top: 6%;
+  left: -40%;
+  width: 180%;
+  aspect-ratio: 1;
+  mix-blend-mode: plus-lighter;
+  opacity: 0;
+  transform: scale(0.2);
+}
+
+.ll-fw-side[data-emphasis="chosen"] .ll-fw-burst {
+  animation: ll-fw-burst 900ms cubic-bezier(0.12, 0.8, 0.3, 1) both;
+}
+
+@keyframes ll-fw-burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(-8deg);
+  }
+
+  14% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.7) rotate(6deg);
+  }
+}
+
+/* A second scatter of the side's particles thrown out by the burst. */
+.ll-fw-spray {
+  position: absolute;
+  top: 0;
+  left: -25%;
+  width: 150%;
+  aspect-ratio: 1;
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+
+.ll-fw-side[data-emphasis="chosen"] .ll-fw-spray {
+  animation: ll-fw-spray 1.2s ease-out 80ms both;
+}
+
+@keyframes ll-fw-spray {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 4cqh, 0) scale(0.6);
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -9cqh, 0) scale(1.45);
+  }
+}
+
+.ll-fw-cracks {
+  position: absolute;
+  left: -15%;
+  bottom: -14%;
+  width: 130%;
+  aspect-ratio: 3 / 2;
+  mix-blend-mode: screen;
+  opacity: 0;
+  clip-path: inset(0 50% 0 50%);
+  pointer-events: none;
+}
+
+.ll-fw-side[data-emphasis="chosen"] .ll-fw-cracks {
+  animation:
+    ll-fw-cracks-open 650ms cubic-bezier(0.2, 0.7, 0.2, 1) 120ms both,
+    ll-fw-cracks-glow 2.4s ease-in-out 800ms infinite;
+}
+
+@keyframes ll-fw-cracks-open {
+  from {
+    opacity: 0;
+    clip-path: inset(0 50% 0 50%);
+  }
+
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes ll-fw-cracks-glow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.ll-fw-seam {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 1;
+  width: 14.5cqw;
+  height: 100%;
+  margin-left: -7.25cqw;
+  object-fit: cover;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 22%,
+    #000 70%,
+    transparent
+  );
+  animation: ll-fw-seam-shimmer 3.2s ease-in-out infinite;
+  transition: opacity 600ms ease-out;
+}
+
+.ll-fw-overlay[data-state="chosen"] .ll-fw-seam,
+.ll-fw-overlay[data-state="choosing"] .ll-fw-seam,
+.ll-fw-overlay[data-state="result-winner"] .ll-fw-seam {
+  opacity: 0;
+  animation: none;
+}
+
+@keyframes ll-fw-seam-shimmer {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1, 1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.12, 1.01);
+  }
+}
+
+/* The whole half is the button; its label sits at the outer bottom corner.
+   The result screen keeps the same corner without the button. */
+.ll-fw-choose,
+.ll-fw-corner {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 3cqw 11cqh;
+  text-align: left;
+}
+
+.ll-fw-choose {
+  border-radius: 0;
+  cursor: pointer;
+  outline: none;
+}
+
+.ll-fw-side[data-side="right"] .ll-fw-choose,
+.ll-fw-side[data-side="right"] .ll-fw-corner {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.ll-fw-choose:disabled {
+  cursor: default;
+}
+
+.ll-fw-choose:focus-visible .ll-fw-cta {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.ll-fw-info {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(3px, 0.6cqw, 9px);
+  max-width: 31cqw;
+  transition: opacity var(--ll-transition-duration-long) ease-out;
+}
+
+.ll-fw-side[data-side="left"] .ll-fw-info {
+  align-items: flex-start;
+}
+
+.ll-fw-side[data-side="right"] .ll-fw-info {
+  align-items: flex-end;
+}
+
+.ll-fw-side[data-emphasis="lost"] .ll-fw-info,
+.ll-fw-overlay[data-state="chosen"] .ll-fw-info {
+  opacity: 0;
+}
+
+/* The result keeps the beaten faction's score readable over its grey art. */
+.ll-fw-overlay[data-state="result-winner"]
+  .ll-fw-side[data-emphasis="lost"]
+  .ll-fw-info {
+  opacity: 0.75;
+}
+
+.ll-fw-emblem {
+  width: clamp(40px, 7cqw, 104px);
+  height: clamp(40px, 7cqw, 104px);
+  margin-bottom: 0.2cqw;
+  filter: drop-shadow(0 0 14px var(--ll-fw-glow));
+}
+
+.ll-fw-name {
+  margin: 0;
+  font-size: clamp(22px, 3.9cqw, 56px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ll-fw-text);
+  text-shadow:
+    0 0 18px color-mix(in srgb, var(--ll-fw-glow) 70%, transparent),
+    0 2px 2px rgb(0 0 0 / 70%);
+}
+
+.ll-fw-title {
+  font-size: clamp(10px, 1.15cqw, 16px);
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 82%);
+}
+
+.ll-fw-meta {
+  font-size: clamp(11px, 1.15cqw, 16px);
+  color: rgb(255 255 255 / 62%);
+  font-variant-numeric: tabular-nums;
+}
+
+.ll-fw-score {
+  margin-top: clamp(2px, 0.4cqw, 6px);
+  font-size: clamp(18px, 2.6cqw, 38px);
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  text-shadow:
+    0 0 16px color-mix(in srgb, var(--ll-fw-glow) 65%, transparent),
+    0 2px 2px rgb(0 0 0 / 70%);
+}
+
+.ll-fw-bonus {
+  padding: 0.25em 0.75em;
+  border: 1px solid color-mix(in srgb, var(--ll-fw-glow) 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ll-fw-glow) 22%, rgb(0 0 0 / 60%));
+  font-size: clamp(11px, 1.15cqw, 16px);
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--ll-fw-glow) 45%, transparent);
+}
+
+.ll-fw-cta {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: clamp(210px, 29cqw, 420px);
+  aspect-ratio: 4 / 1;
+  margin-top: clamp(4px, 0.8cqw, 12px);
+  font-size: clamp(10px, 1.1cqw, 16px);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ll-fw-text) 35%, #fff);
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 95%),
+    0 0 12px color-mix(in srgb, var(--ll-fw-glow) 80%, transparent);
+  transform: translate3d(0, 4px, 0);
+  opacity: 0.9;
+  transition:
+    transform var(--ll-transition-duration-medium) var(--ll-ease-enter),
+    opacity var(--ll-transition-duration-medium) ease-out;
+}
+
+/* Forged plates from the war art; the glowing one crossfades in on hover. */
+.ll-fw-cta-plate {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ll-fw-cta-glow {
+  opacity: 0;
+  transition: opacity var(--ll-transition-duration-medium) ease-out;
+}
+
+/* The plate's calm centre spans about 64% of its width. */
+.ll-fw-cta-label {
+  position: relative;
+  padding: 0 19%;
+  white-space: nowrap;
+}
+
+.ll-fw-side[data-emphasis="active"] .ll-fw-cta {
+  transform: none;
+  opacity: 1;
+}
+
+.ll-fw-side[data-emphasis="active"] .ll-fw-cta-glow {
+  opacity: 1;
+}
+
+/* Hover life, only with animations on: the plate lifts, its glow breathes,
+   light sweeps across the panel and sparks drift around it. */
+.ll-fw-side[data-emphasis="active"] .ll-fw-cta[data-motion] {
+  transform: translate3d(0, -2px, 0) scale(1.04);
+}
+
+.ll-fw-side[data-emphasis="active"] .ll-fw-cta[data-motion] .ll-fw-cta-glow {
+  animation: ll-fw-cta-breathe 1.6s ease-in-out infinite alternate;
+}
+
+.ll-fw-choose:active .ll-fw-cta[data-motion] {
+  transform: scale(0.96);
+  transition-duration: 80ms;
+}
+
+@keyframes ll-fw-cta-breathe {
+  from {
+    opacity: 0.72;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Clipped to the plate's calm inner panel. */
+.ll-fw-cta-shine {
+  position: absolute;
+  inset: 30% 13%;
+  z-index: -1;
+  overflow: hidden;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.ll-fw-cta-shine::before {
+  content: "";
+  position: absolute;
+  inset: -50% auto -50% 0;
+  width: 35%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgb(255 255 255 / 55%) 50%,
+    transparent
+  );
+  mix-blend-mode: plus-lighter;
+  opacity: 0;
+  transform: translate3d(-120%, 0, 0);
+}
+
+.ll-fw-side[data-emphasis="active"] .ll-fw-cta-shine::before {
+  animation: ll-fw-cta-shine 2.6s ease-in-out infinite;
+}
+
+@keyframes ll-fw-cta-shine {
+  0% {
+    opacity: 0;
+    transform: translate3d(-120%, 0, 0);
+  }
+
+  8% {
+    opacity: 1;
+  }
+
+  40%,
+  100% {
+    opacity: 0;
+    transform: translate3d(320%, 0, 0);
+  }
+}
+
+.ll-fw-cta-sparks {
+  position: absolute;
+  inset: -90% -6%;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  mask-image: radial-gradient(closest-side, #000 55%, transparent);
+  transition: opacity var(--ll-transition-duration-medium) ease-out;
+}
+
+.ll-fw-side[data-emphasis="active"] .ll-fw-cta-sparks {
+  opacity: 1;
+}
+
+/* The sprite tiles every 240px, so shifting one tile loops without a seam. */
+.ll-fw-cta-sparks-track {
+  position: absolute;
+  top: -240px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-size: 240px 240px;
+  mix-blend-mode: screen;
+}
+
+.ll-fw-side[data-emphasis="active"] .ll-fw-cta-sparks-track {
+  animation: ll-fw-cta-rise 3.2s linear infinite;
+}
+
+.ll-fw-side[data-side="right"][data-emphasis="active"] .ll-fw-cta-sparks-track {
+  animation-name: ll-fw-cta-fall;
+  animation-duration: 4.4s;
+}
+
+@keyframes ll-fw-cta-rise {
+  from {
+    transform: translate3d(0, 240px, 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ll-fw-cta-fall {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, 240px, 0);
+  }
+}
+
+.ll-fw-header {
+  position: absolute;
+  top: 3.4cqh;
+  left: 50%;
+  z-index: 3;
+  width: 54cqw;
+  margin-left: -27cqw;
+  text-align: center;
+  pointer-events: none;
+  transition: opacity var(--ll-transition-duration-long) ease-out;
+}
+
+/* A soft shade behind the title keeps it readable over fire and ice. */
+.ll-fw-header::before {
+  content: "";
+  position: absolute;
+  inset: -6cqh -9cqw -5cqh;
+  z-index: -1;
+  background: radial-gradient(
+    closest-side,
+    rgb(3 4 8 / 78%),
+    rgb(3 4 8 / 45%) 60%,
+    transparent
+  );
+}
+
+.ll-fw-overlay[data-state="choosing"] .ll-fw-header,
+.ll-fw-overlay[data-state="chosen"] .ll-fw-header {
+  opacity: 0;
+}
+
+.ll-fw-eyebrow {
+  font-size: clamp(9px, 1.05cqw, 15px);
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 66%);
+}
+
+.ll-fw-heading {
+  margin: 0.6cqh 0 1.2cqh;
+  font-size: clamp(20px, 2.9cqw, 42px);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow: 0 2px 16px rgb(0 0 0 / 80%);
+}
+
+.ll-fw-rules,
+.ll-fw-summary {
+  margin: 0;
+  font-size: clamp(11px, 1.2cqw, 17px);
+  line-height: 1.5;
+  color: rgb(255 255 255 / 80%);
+  text-shadow: 0 1px 6px rgb(0 0 0 / 90%);
+}
+
+.ll-fw-summary + .ll-fw-summary {
+  margin-top: 0.4em;
+}
+
+.ll-fw-own {
+  font-weight: 700;
+  color: #fff;
+}
+
+.ll-fw-dismiss {
+  position: absolute;
+  bottom: 2.8cqh;
+  left: 50%;
+  z-index: 3;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: clamp(150px, 15cqw, 230px);
+  aspect-ratio: 4 / 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: clamp(11px, 1.05cqw, 15px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgb(255 255 255 / 72%);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 95%);
+  cursor: pointer;
+  transform: translateX(-50%);
+  transition: color var(--ll-transition-duration-medium) ease-out;
+}
+
+.ll-fw-dismiss:hover {
+  color: #fff;
+}
+
+.ll-fw-dismiss:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+/* Confirmation and the chosen state share one card over the stage. */
+.ll-fw-dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 45%);
+}
+
+.ll-fw-overlay[data-state="chosen"] .ll-fw-dialog {
+  place-items: end center;
+  padding-bottom: 8cqh;
+  background: transparent;
+  animation: ll-fw-fade-in 420ms ease-out 700ms both;
+}
+
+.ll-fw-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(6px, 1cqw, 14px);
+  width: clamp(280px, 38cqw, 520px);
+  max-width: 90%;
+  padding: clamp(14px, 2.1cqw, 30px) clamp(16px, 2.3cqw, 32px);
+  border: 1px solid color-mix(in srgb, var(--ll-fw-glow) 45%, transparent);
+  border-radius: 10px;
+  background: rgb(8 10 16 / 92%);
+  box-shadow:
+    0 20px 60px rgb(0 0 0 / 60%),
+    0 0 40px color-mix(in srgb, var(--ll-fw-glow) 20%, transparent);
+  text-align: center;
+}
+
+.ll-fw-card-title {
+  margin: 0;
+  font-size: clamp(15px, 1.75cqw, 24px);
+  font-weight: 800;
+  color: var(--ll-fw-text);
+}
+
+.ll-fw-card-text {
+  margin: 0;
+  font-size: clamp(12px, 1.25cqw, 17px);
+  line-height: 1.5;
+  color: rgb(255 255 255 / 78%);
+}
+
+.ll-fw-card-note {
+  margin: 0;
+  font-size: clamp(11px, 1.05cqw, 14px);
+  line-height: 1.45;
+  color: rgb(255 255 255 / 58%);
+}
+
+@keyframes ll-fw-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Small stages (laptops in a small window): drop the rules and the title
+   line so both factions, their crests and buttons keep their room. */
+@container (max-width: 760px) {
+  .ll-fw-rules,
+  .ll-fw-title {
+    display: none;
+  }
+
+  .ll-fw-info {
+    max-width: 40cqw;
+  }
 }

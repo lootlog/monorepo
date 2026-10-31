@@ -3,9 +3,13 @@
  *
  * Each index is rebuilt in a shadow index (`<name>_rebuild`) that receives the
  * service settings, retained NPC revisions, player snapshots, and one item
- * document per edition, item id and name, loaded in one query per entity and
- * pushed in large batches. Batches are enqueued without waiting, so
- * Meilisearch merges them into a few indexing runs; the script waits once,
+ * document per edition, item id and name, loaded by a query or two per entity and
+ * pushed in large batches. Items and NPCs keep the first time any loot
+ * observed them, and items the NPCs they dropped from, by the rule the API
+ * applies to live loots; items keep the retired drops and NPCs the locations
+ * the live index holds.
+ * Batches are enqueued without waiting, so Meilisearch merges them into a
+ * few indexing runs; the script waits once,
  * then swaps the shadow indexes into place in a single atomic task, so
  * searches never see a half-built index. The three entities run concurrently.
  *
@@ -20,8 +24,9 @@
  */
 import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
-import { Config, Effect, Redacted } from "effect";
-import { chunk } from "es-toolkit";
+import { Config, Effect, Redacted, Schema } from "effect";
+import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
+import { groupBy } from "es-toolkit";
 import { Meilisearch, type EnqueuedTask, type Task } from "meilisearch";
 import { ITEMS_INDEX } from "#src/items/search-index";
 import { toItemDocuments } from "#src/items/items.service";
@@ -30,13 +35,25 @@ import {
   searchIndexSettings,
 } from "#src/meilisearch/meilisearch-indexes.service";
 import { getMeilisearchErrorCode } from "#src/meilisearch/query-builder";
+import type { MonsterLocation } from "#src/npcs/monster-locations-command";
 import { NPCS_INDEX } from "#src/npcs/search-index";
 import { PLAYERS_INDEX } from "#src/players/search-index";
 import { toPlayerDocument } from "#src/players/players.service";
-import { buildItemSeedQuery } from "./item-seed-query.js";
+import {
+  buildItemDropSourceQuery,
+  buildItemSeedQuery,
+} from "./item-seed-query.js";
 import { buildNpcSeedQuery, toNpcSeedDocuments } from "./npc-seed-query.js";
 
+const decodeIdentityNamespace = Schema.decodeUnknownSync(
+  NpcIdentityNamespaceSchema,
+);
+
 const DOCUMENTS_PER_BATCH = 10_000;
+
+// Meilisearch rejects request bodies over 12.5 MB; items carrying their drop
+// sources pass that well before DOCUMENTS_PER_BATCH.
+const BATCH_PAYLOAD_LIMIT_BYTES = 8 * 1024 * 1024;
 
 const TASK_POLL_INTERVAL_MS = 500;
 
@@ -174,6 +191,35 @@ const publishRebuildIndexes = async () => {
   console.log(`Indexes swapped in ${formatDuration(startedAt)}`);
 };
 
+/** Splits documents into batches under both the count and the payload limit. */
+const toBatches = <Document>(documents: ReadonlyArray<Document>) => {
+  const batches: Document[][] = [];
+  let batch: Document[] = [];
+  let batchBytes = 0;
+
+  for (const document of documents) {
+    // One more byte for the separating comma.
+    const bytes = Buffer.byteLength(JSON.stringify(document)) + 1;
+
+    if (
+      batch.length > 0 &&
+      (batch.length === DOCUMENTS_PER_BATCH ||
+        batchBytes + bytes > BATCH_PAYLOAD_LIMIT_BYTES)
+    ) {
+      batches.push(batch);
+      batch = [];
+      batchBytes = 0;
+    }
+
+    batch.push(document);
+    batchBytes += bytes;
+  }
+
+  if (batch.length > 0) batches.push(batch);
+
+  return batches;
+};
+
 /** Enqueues every batch first; Meilisearch merges queued batches of one index. */
 const indexDocuments = async <Document extends { uid: string }>(
   indexName: string,
@@ -184,7 +230,7 @@ const indexDocuments = async <Document extends { uid: string }>(
   const index = meilisearch.index<Document>(rebuildIndexName(indexName));
   const enqueued: EnqueuedTask[] = [];
 
-  for (const batch of chunk(documents, DOCUMENTS_PER_BATCH)) {
+  for (const batch of toBatches(documents)) {
     enqueued.push(
       await index.addDocuments(batch, { primaryKey: SEARCH_INDEX_PRIMARY_KEY }),
     );
@@ -197,10 +243,54 @@ const indexDocuments = async <Document extends { uid: string }>(
   );
 };
 
+const NPC_LOCATIONS_PAGE = 10_000;
+
+/**
+ * The live index's NPC locations by monster. The API publishes them on a
+ * schedule, not from loots, so the rebuild carries them over to every
+ * identity of the monster.
+ */
+const loadNpcLocations = async () => {
+  const index = meilisearch.index<{
+    monsterKey: string;
+    locations?: ReadonlyArray<typeof MonsterLocation.Type>;
+  }>(NPCS_INDEX);
+
+  const locations = new Map<
+    string,
+    ReadonlyArray<typeof MonsterLocation.Type>
+  >();
+
+  for (let offset = 0; ; offset += NPC_LOCATIONS_PAGE) {
+    const page = await index.getDocuments({
+      fields: ["monsterKey", "locations"],
+      limit: NPC_LOCATIONS_PAGE,
+      offset,
+    });
+
+    for (const document of page.results) {
+      if (document.locations) {
+        locations.set(document.monsterKey, document.locations);
+      }
+    }
+
+    if (page.results.length < NPC_LOCATIONS_PAGE) return locations;
+  }
+};
+
 const seedNpcs = async () => {
   const startedAt = performance.now();
+  const locations = await loadNpcLocations();
 
-  const documents = toNpcSeedDocuments(await buildNpcSeedQuery(database));
+  const documents = toNpcSeedDocuments(await buildNpcSeedQuery(database)).map(
+    (document) => {
+      const monsterLocations = locations.get(document.monsterKey);
+
+      return monsterLocations
+        ? { ...document, locations: monsterLocations }
+        : document;
+    },
+  );
 
   await indexDocuments(NPCS_INDEX, documents, formatDuration(startedAt));
 };
@@ -248,16 +338,94 @@ const seedPlayers = async () => {
   await indexDocuments(PLAYERS_INDEX, documents, formatDuration(startedAt));
 };
 
+const RETIRED_DROPS_PAGE = 10_000;
+
+/**
+ * The live index's retired drops by catalog key. The API publishes them on a
+ * schedule, not from loots, so the rebuild carries them over; a live index
+ * without the field yet has none.
+ */
+const loadRetiredDrops = async () => {
+  const index = meilisearch.index<{
+    uid: string;
+    retiredDropMonsterKeys: string[];
+  }>(ITEMS_INDEX);
+
+  const retiredDrops = new Map<string, string[]>();
+
+  try {
+    for (let offset = 0; ; offset += RETIRED_DROPS_PAGE) {
+      const page = await index.getDocuments({
+        filter: "retiredDropMonsterKeys IS NOT EMPTY",
+        fields: ["uid", "retiredDropMonsterKeys"],
+        limit: RETIRED_DROPS_PAGE,
+        offset,
+      });
+
+      for (const { uid, retiredDropMonsterKeys } of page.results) {
+        retiredDrops.set(uid, retiredDropMonsterKeys);
+      }
+
+      if (page.results.length < RETIRED_DROPS_PAGE) return retiredDrops;
+    }
+  } catch (error) {
+    if (getMeilisearchErrorCode(error) !== "invalid_document_filter") {
+      throw error;
+    }
+
+    return retiredDrops;
+  }
+};
+
 const seedItems = async () => {
   const startedAt = performance.now();
+  const retiredDrops = await loadRetiredDrops();
 
+  // One after the other: both aggregate every loot link.
   const rows = await buildItemSeedQuery(database);
+  const sources = await buildItemDropSourceQuery(database);
 
+  const sourcesBySnapshot = groupBy(sources, (source) => source.itemSnapshotId);
+
+  // Each source joins its revision as one more observation, so merging the
+  // rows collects every NPC as live indexing does.
   const documents = toItemDocuments(
-    rows.map((item) => ({ ...item, lvl: item.lvl ?? 0 })),
+    rows.flatMap(({ snapshotId, firstSeenAt, ...item }) => {
+      const observation = {
+        ...item,
+        lvl: item.lvl ?? 0,
+        observedAt: new Date(firstSeenAt).toISOString(),
+      };
+
+      return [
+        observation,
+        ...(sourcesBySnapshot[snapshotId] ?? []).map(
+          ({ itemSnapshotId: _itemSnapshotId, identityNamespace, ...npc }) => ({
+            ...observation,
+            droppedBy: {
+              ...npc,
+              identityNamespace: decodeIdentityNamespace(identityNamespace),
+            },
+          }),
+        ),
+      ];
+    }),
   );
 
-  await indexDocuments(ITEMS_INDEX, documents, formatDuration(startedAt));
+  await indexDocuments(
+    ITEMS_INDEX,
+    documents.map((document) => {
+      // Only monsters the rebuilt entry still names can retire it.
+      const retiredDropMonsterKeys = retiredDrops
+        .get(document.uid)
+        ?.filter((key) => document.droppedByMonsterKeys.includes(key));
+
+      return retiredDropMonsterKeys?.length
+        ? { ...document, retiredDropMonsterKeys }
+        : document;
+    }),
+    formatDuration(startedAt),
+  );
 };
 
 const main = async () => {

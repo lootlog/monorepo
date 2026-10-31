@@ -1,0 +1,223 @@
+/** Transport schemas owned by the public catalog HTTP module. */
+import * as Schema from "effect/Schema";
+import { GameVersionSchema } from "@lootlog/schema/game-version";
+import { FiniteNumber, SafeInteger } from "@lootlog/schema/http-scalars";
+import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+
+// When Lootlog first saw an item or a boss tells when that boss was killed,
+// and so when it respawns; the public catalog never serves or orders by it.
+// Margonem numbers items in the order it adds them, so `id:desc` lists the
+// game's newest items without dating anyone's drop.
+const CatalogItemSort = Schema.Literals([
+  "relevance",
+  "id:desc",
+  "lvl:asc",
+  "lvl:desc",
+  "name:asc",
+  "name:desc",
+]).annotate({
+  description: "`id:desc` lists the items Margonem added most recently first.",
+});
+
+const Profession = Schema.Literals(["w", "p", "h", "m", "b", "t"]);
+
+/** Stats a public search may require; the rest stay out of the filter. */
+export const CATALOG_STAT_KEYS = [
+  "legbon",
+  "hp",
+  "crit",
+  "critval",
+  "evade",
+  "sa",
+  "pierce",
+  "blok",
+  "absorb",
+  "heal",
+  "energybon",
+  "manabon",
+  // The events an item belongs to, such as `Wakacje 2026 r.`.
+  "etiquette",
+] as const;
+
+const CatalogStatKey = Schema.Literals(CATALOG_STAT_KEYS);
+
+/** Legendary bonuses Margonem items carry, by their stat names. */
+export const CATALOG_LEGENDARY_BONUSES = [
+  "anguish",
+  "cleanse",
+  "critred",
+  "curse",
+  "dmgred",
+  "facade",
+  "frenzy",
+  "glare",
+  "holytouch",
+  "lastheal",
+  "puncture",
+  "pushback",
+  "resgain",
+  "retaliation",
+  "verycrit",
+] as const;
+
+const CatalogLegendaryBonus = Schema.Literals(CATALOG_LEGENDARY_BONUSES);
+
+export const CatalogDropSourceDto_Output = Schema.Struct({
+  key: Schema.String.annotate({
+    description: "The NPC's catalog key, as `CatalogNpcDto_Output.key`.",
+  }),
+  id: FiniteNumber,
+  name: Schema.String,
+  lvl: Schema.Union([FiniteNumber, Schema.Null]),
+  icon: Schema.Union([Schema.String, Schema.Null]),
+  type: Schema.Union([Schema.String, Schema.Null]),
+  retired: Schema.Boolean.annotate({
+    description:
+      "Whether the NPC no longer drops the item: Lootlog has recorded its loot far too often since the item's last drop for the gap to be chance.",
+  }),
+}).annotate({
+  description: "An NPC an item drops from",
+  identifier: "CatalogDropSourceDto_Output",
+});
+
+export const CatalogItemDto_Output = Schema.Struct({
+  id: FiniteNumber,
+  name: Schema.String,
+  icon: Schema.String,
+  stat: Schema.String,
+  lvl: FiniteNumber,
+  rarity: Schema.Union([Schema.String, Schema.Null]),
+  type: Schema.Union([Schema.String, Schema.Null]),
+  droppedBy: Schema.Array(CatalogDropSourceDto_Output),
+}).annotate({
+  description: "A Margonem item in the public catalog",
+  identifier: "CatalogItemDto_Output",
+});
+
+export type CatalogItemsResponseDto_Output =
+  typeof CatalogItemsResponseDto_Output.Type;
+
+export const CatalogItemsResponseDto_Output = Schema.Struct({
+  hits: Schema.Array(CatalogItemDto_Output),
+  estimatedTotalHits: FiniteNumber,
+}).annotate({
+  description: "Public catalog items",
+  identifier: "CatalogItemsResponseDto_Output",
+});
+
+export type CatalogControllerGetItemsQuery =
+  typeof CatalogControllerGetItemsQuery.Type;
+
+const CatalogGameVersion = GameVersionSchema.annotate({
+  description: "Only entries of this game edition.",
+});
+
+export const CatalogControllerGetItemsQuery = Schema.Struct({
+  search: Schema.optionalKey(Schema.String),
+  gameVersion: Schema.optionalKey(CatalogGameVersion),
+  ids: Schema.optionalKey(Schema.Array(SafeInteger)),
+  rarities: Schema.optionalKey(Schema.Array(ItemRaritySchema)),
+  types: Schema.optionalKey(
+    Schema.Array(Schema.String).annotate({
+      description: "Item types, such as `ONE_HAND_WEAPON`.",
+    }),
+  ),
+  professions: Schema.optionalKey(
+    Schema.Array(Profession).annotate({
+      description: "Items any of these professions can use.",
+    }),
+  ),
+  minLevel: Schema.optionalKey(FiniteNumber),
+  maxLevel: Schema.optionalKey(FiniteNumber),
+  statKeys: Schema.optionalKey(
+    Schema.Array(CatalogStatKey).annotate({
+      description: "Items that have every one of these stats.",
+    }),
+  ),
+  excludedStatKeys: Schema.optionalKey(
+    Schema.Array(CatalogStatKey).annotate({
+      description:
+        "Items that have none of these stats; `etiquette` leaves out event items.",
+    }),
+  ),
+  legendaryBonuses: Schema.optionalKey(
+    Schema.Array(CatalogLegendaryBonus).annotate({
+      description: "Items with any of these legendary bonuses.",
+    }),
+  ),
+  dropSourceTypes: Schema.optionalKey(
+    Schema.Array(NpcTypeSchema).annotate({
+      description: "Items that drop from an NPC of any of these types.",
+    }),
+  ),
+  event: Schema.optionalKey(
+    Schema.String.annotate({
+      description:
+        "Items of the event with this slug: its name and year, such as `wakacje-2026`.",
+    }),
+  ),
+  droppedBy: Schema.optionalKey(
+    Schema.String.annotate({
+      description: "Items that drop from the NPC with this catalog key.",
+    }),
+  ),
+  sort: Schema.optionalKey(CatalogItemSort),
+  limit: Schema.optionalKey(FiniteNumber.annotate({ default: 24 })),
+  offset: Schema.optionalKey(FiniteNumber.annotate({ default: 0 })),
+});
+
+export const CatalogNpcDto_Output = Schema.Struct({
+  key: Schema.String.annotate({
+    description: "Stable catalog key of the NPC, used to link its page.",
+  }),
+  id: FiniteNumber,
+  name: Schema.String,
+  icon: Schema.String,
+  lvl: FiniteNumber,
+  type: NpcTypeSchema,
+  gameVersion: GameVersionSchema,
+  locations: Schema.Array(
+    Schema.Struct({
+      map: Schema.String.annotate({ description: "The map's name." }),
+      share: FiniteNumber.annotate({
+        description:
+          "The share of the NPC's latest recorded fights on the map, from 0 to 1, rounded to a hundredth.",
+      }),
+    }),
+  ).annotate({
+    description:
+      "Maps the NPC is fought on, most fought first, from its latest 1000 recorded fights; maps under 1% of them are left out. Lootlog recomputes them daily, so an NPC first seen today may have none yet.",
+  }),
+}).annotate({
+  description: "A Margonem NPC in the public catalog",
+  identifier: "CatalogNpcDto_Output",
+});
+
+export type CatalogNpcsResponseDto_Output =
+  typeof CatalogNpcsResponseDto_Output.Type;
+
+export const CatalogNpcsResponseDto_Output = Schema.Struct({
+  hits: Schema.Array(CatalogNpcDto_Output),
+  estimatedTotalHits: FiniteNumber,
+}).annotate({
+  description: "Public catalog NPCs",
+  identifier: "CatalogNpcsResponseDto_Output",
+});
+
+export type CatalogControllerGetNpcsQuery =
+  typeof CatalogControllerGetNpcsQuery.Type;
+
+export const CatalogControllerGetNpcsQuery = Schema.Struct({
+  search: Schema.optionalKey(Schema.String),
+  gameVersion: Schema.optionalKey(CatalogGameVersion),
+  ids: Schema.optionalKey(
+    Schema.Array(SafeInteger).annotate({
+      description: "NPC ids, as `CatalogNpcDto_Output.id`.",
+    }),
+  ),
+  keys: Schema.optionalKey(Schema.Array(Schema.String)),
+  types: Schema.optionalKey(Schema.Array(NpcTypeSchema)),
+  limit: Schema.optionalKey(FiniteNumber.annotate({ default: 24 })),
+  offset: Schema.optionalKey(FiniteNumber.annotate({ default: 0 })),
+});

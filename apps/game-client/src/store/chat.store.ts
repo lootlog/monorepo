@@ -4,6 +4,7 @@ import { useGameStore } from "@/store/game.store";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
+import { createChangedOnlyStorage } from "./changed-only-storage";
 import type { MessageType } from "@/api/chat.api";
 
 const STORAGE_KEY = storageKey("ll:chat:state");
@@ -122,7 +123,7 @@ export const useChatStore = create<ChatState>()(
         chatFilter: state.chatFilter,
         filtersVisible: state.filtersVisible,
       }),
-      storage: createJSONStorage(() => localStorage),
+      storage: createChangedOnlyStorage(createJSONStorage(() => localStorage)),
       version: 2,
       migrate: (persisted) => {
         if (!isObjectRecord(persisted)) return { chatFilter: "all" as const };
@@ -139,15 +140,10 @@ const getChatCharacterKey = () => {
   return `${hero?.accountId ?? ""}:${hero?.characterId ?? ""}`;
 };
 
-export const getSelectedChatGuildId = (
-  state: Pick<ChatState, "selectedGuildByCharacter"> = useChatStore.getState(),
-): string => {
-  const key = getChatCharacterKey();
-  const selected = state.selectedGuildByCharacter[key];
+/** The pre-store selector preference per character; nothing writes it any more, so it is read once. */
+const legacySelectedGuildByCharacter = new Map<string, string>();
 
-  if (selected !== undefined) return selected;
-
-  // Preserve the existing per-character selector preference on first use.
+const readLegacySelectedGuild = (key: string): string => {
   try {
     return Option.getOrElse(
       decodeLegacySelectedGuild(
@@ -159,4 +155,22 @@ export const getSelectedChatGuildId = (
   } catch {
     return "";
   }
+};
+
+export const getSelectedChatGuildId = (
+  state: Pick<ChatState, "selectedGuildByCharacter"> = useChatStore.getState(),
+): string => {
+  const key = getChatCharacterKey();
+  const selected = state.selectedGuildByCharacter[key];
+
+  if (selected !== undefined) return selected;
+  // Preserve the existing per-character selector preference on first use.
+  let legacy = legacySelectedGuildByCharacter.get(key);
+
+  if (legacy === undefined) {
+    legacy = readLegacySelectedGuild(key);
+    legacySelectedGuildByCharacter.set(key, legacy);
+  }
+
+  return legacy;
 };

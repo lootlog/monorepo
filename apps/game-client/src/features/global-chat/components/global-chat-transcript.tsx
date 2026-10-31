@@ -14,6 +14,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { getChatDensityStyle } from "@/features/chat/chat-density";
 import { useTranscriptFollow } from "@/features/chat/hooks/use-transcript-follow";
 import type { GlobalChatRow as GlobalChatRowData } from "../global-chat.helpers";
+import { SharedContextMenu } from "@/components/common/shared-context-menu";
 import { GlobalChatRow, type GlobalChatRowContext } from "./global-chat-row";
 
 type GlobalChatTranscriptProps = {
@@ -95,22 +96,24 @@ export const GlobalChatTranscript = ({
         onScroll={resumeAtEnd}
         onWheel={resumeOnWheel}
       >
-        <BaseScrollArea.Content
-          render=<MessageScroller.Content />
-          role="list"
-          aria-live="off"
-          className="ll-chat-message-list ll:flex ll:h-max ll:min-h-full ll:w-full ll:min-w-0 ll:flex-col"
-          style={getChatDensityStyle(appearance.fontScalePercent)}
-        >
-          {rows.map((row) => (
-            <GlobalChatRow
-              key={row.key}
-              appearance={appearance}
-              context={rowContext}
-              row={row}
-            />
-          ))}
-        </BaseScrollArea.Content>
+        <SharedContextMenu>
+          <BaseScrollArea.Content
+            render=<MessageScroller.Content />
+            role="list"
+            aria-live="off"
+            className="ll-chat-message-list ll:flex ll:h-max ll:min-h-full ll:w-full ll:min-w-0 ll:flex-col"
+            style={getChatDensityStyle(appearance.fontScalePercent)}
+          >
+            {rows.map((row) => (
+              <GlobalChatRow
+                key={row.key}
+                appearance={appearance}
+                context={rowContext}
+                row={row}
+              />
+            ))}
+          </BaseScrollArea.Content>
+        </SharedContextMenu>
       </BaseScrollArea.Viewport>
       <ScrollBar />
       <ScrollToLatestButton label={t("navigation.latest")} />

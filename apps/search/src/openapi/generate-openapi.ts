@@ -45,6 +45,49 @@ preserveOpenApi30Contract(
     "ItemsController_getItems:facets": formArray({ type: "string" }),
     "ItemsController_getItems:sort": formArray({ type: "string" }),
     "AllController_searchAll:limit": numberWithDefault(10),
+    "CatalogController_getItems:ids": {
+      schema: {
+        type: "array",
+        items: {
+          type: "integer",
+          minimum: Number.MIN_SAFE_INTEGER,
+          maximum: Number.MAX_SAFE_INTEGER,
+        },
+      },
+      style: "form",
+      explode: true,
+    },
+    "CatalogController_getItems:rarities": formArray({ type: "string" }),
+    "CatalogController_getItems:types": formArray({ type: "string" }),
+    "CatalogController_getItems:professions": formArray({ type: "string" }),
+    "CatalogController_getItems:minLevel": { schema: { type: "number" } },
+    "CatalogController_getItems:maxLevel": { schema: { type: "number" } },
+    "CatalogController_getItems:statKeys": formArray({ type: "string" }),
+    "CatalogController_getItems:excludedStatKeys": formArray({
+      type: "string",
+    }),
+    "CatalogController_getItems:legendaryBonuses": formArray({
+      type: "string",
+    }),
+    "CatalogController_getItems:dropSourceTypes": formArray({ type: "string" }),
+    "CatalogController_getItems:limit": numberWithDefault(24),
+    "CatalogController_getItems:offset": numberWithDefault(0),
+    "CatalogController_getNpcs:ids": {
+      schema: {
+        type: "array",
+        items: {
+          type: "integer",
+          minimum: Number.MIN_SAFE_INTEGER,
+          maximum: Number.MAX_SAFE_INTEGER,
+        },
+      },
+      style: "form",
+      explode: true,
+    },
+    "CatalogController_getNpcs:keys": formArray({ type: "string" }),
+    "CatalogController_getNpcs:types": formArray({ type: "string" }),
+    "CatalogController_getNpcs:limit": numberWithDefault(24),
+    "CatalogController_getNpcs:offset": numberWithDefault(0),
     "AllController_searchAll:world": {
       schema: { type: "string" },
       description:
@@ -56,6 +99,8 @@ preserveOpenApi30Contract(
     "PlayersController_getPlayers:200": "List of matching players",
     "NpcsController_getNpcs:200": "List of matching NPCs",
     "ItemsController_getItems:200": "Item search results",
+    "CatalogController_getItems:200": "Public catalog items",
+    "CatalogController_getNpcs:200": "Public catalog NPCs",
     "AllController_searchAll:200":
       "Aggregated search results across items, players, and NPCs",
   },

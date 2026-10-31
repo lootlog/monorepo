@@ -202,9 +202,11 @@ describe("shared presence map projection", () => {
       },
     });
     expect(changed).not.toHaveBeenCalled();
+    expect(source.isOnlineMember("10")).toBe(true);
     await harness.receive(delta({ ...second, status: "offline" }));
     await waitFor(() => expect(changed).toHaveBeenCalledOnce());
     expect(source.getMapOccupancy("Karka-han")?.players).toHaveLength(1);
+    expect(source.isOnlineMember("11")).toBe(false);
     await harness.receive(
       delta(
         createOnlinePresence({ sessionId: "replacement", status: "offline" }),
@@ -212,6 +214,7 @@ describe("shared presence map projection", () => {
     );
     await waitFor(() => expect(changed).toHaveBeenCalledTimes(2));
     expect(source.isMapOccupied("Karka-han")).toBe(false);
+    expect(source.isOnlineMember("10")).toBe(false);
     unsubscribe();
     rows.unmount();
   });

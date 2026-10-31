@@ -29,7 +29,10 @@ function TooltipProvider({
   );
 }
 
-function Tooltip({ onOpenChange, ...props }: BaseTooltip.Root.Props) {
+function Tooltip<Payload>({
+  onOpenChange,
+  ...props
+}: BaseTooltip.Root.Props<Payload>) {
   const hasProvider = React.useContext(TooltipProviderContext);
   const [followsCursor, setFollowsCursor] = React.useState(false);
 

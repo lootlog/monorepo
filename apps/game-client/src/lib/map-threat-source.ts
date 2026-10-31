@@ -5,11 +5,15 @@ import {
   type AirTagMapThreatEvent,
 } from "@lootlog/schema/air-tag";
 import { GatewayEvent } from "@/config/gateway";
-import { canReadPresenceLocation } from "./online-players-presence";
+import {
+  canReadPresenceLocation,
+  type PlayerPresence,
+} from "./online-players-presence";
 import {
   getPlayersPresenceSource,
   type PlayersPresenceSource,
 } from "./players-presence-source";
+import { groupByToMap } from "./group-by-to-map";
 import type { AppSocket } from "./socket";
 
 type Listener = () => void;
@@ -236,14 +240,32 @@ export class MapThreatSource {
   };
 
   /** A target becomes a known member once presence loads; re-project once per burst. */
-  private readonly handleMembersChange = (): void => {
+  private readonly handleMembersChange = (presence?: PlayerPresence): void => {
     if (this.membersChanged || this.sightings.size === 0) return;
+
+    // Members move between maps all the time; an online update keyed by its
+    // character changes only whether that character counts as a member. Any
+    // other update may replace or close another character, so it re-projects.
+    if (presence?.status === "online" && presence.player?.accountId) {
+      const characterId = presence.player.characterId;
+
+      if (characterId && !this.isSighted(characterId)) return;
+    }
+
     this.membersChanged = true;
     queueMicrotask(() => {
       this.membersChanged = false;
       this.update(this.projectedMapNames());
     });
   };
+
+  private isSighted(targetId: string): boolean {
+    for (const { enemies } of this.sightings.values()) {
+      if (enemies.some((enemy) => enemy.targetId === targetId)) return true;
+    }
+
+    return false;
+  }
 
   private projectedMapNames(): string[] {
     return [
@@ -272,8 +294,13 @@ export class MapThreatSource {
         this.sightings.set(mapId, { ...sightings, enemies: live });
     }
 
+    const sightingsByMapName = groupByToMap(
+      [...this.sightings.values()],
+      (sightings) => sightings.mapName,
+    );
+
     for (const mapName of new Set(mapNames)) {
-      const next = this.project(mapName, now);
+      const next = this.project(sightingsByMapName.get(mapName) ?? [], now);
       const previous = this.threats.get(mapName);
 
       if (!previous && !next) continue;
@@ -293,12 +320,13 @@ export class MapThreatSource {
   }
 
   /** Several map ids may share a name; a target seen on more than one keeps its latest sighting. */
-  private project(mapName: string, now: number): MapThreat | undefined {
+  private project(
+    mapSightings: readonly MapSightings[],
+    now: number,
+  ): MapThreat | undefined {
     const latest = new Map<string, MapThreatEnemy>();
 
-    for (const sightings of this.sightings.values()) {
-      if (sightings.mapName !== mapName) continue;
-
+    for (const sightings of mapSightings) {
       for (const enemy of sightings.enemies) {
         if (this.members.isOnlineMember(enemy.targetId)) continue;
         const known = latest.get(enemy.targetId);

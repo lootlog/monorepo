@@ -1,35 +1,25 @@
-import { THEME_STORAGE_KEY } from "./catalog";
+import { THEME_STORAGE_KEY } from "@lootlog/ui/themes/catalog";
 import {
-  applyThemeToRoot,
-  createDefinitionFromBase,
-  readCachedCustomTheme,
+  findSelectedCustomTheme,
   readCustomThemeId,
-} from "./custom-theme";
+} from "@lootlog/ui/themes/custom-theme";
 import {
-  applyThemeClassToRoot,
-  resolveStoredTheme,
-  getRootResolvedTheme,
-  resolveThemeClass,
-} from "./resolver";
+  applyThemeToDocument,
+  resolveSelectionTheme,
+  resolveStoredSelection,
+} from "@lootlog/ui/themes/resolver";
 
-const root = document.documentElement;
+const selection = resolveStoredSelection(
+  localStorage.getItem(THEME_STORAGE_KEY),
+);
 
-const stored = localStorage.getItem(THEME_STORAGE_KEY);
+// Before React starts only the cached copy of a custom theme is known.
+const definition =
+  findSelectedCustomTheme(readCustomThemeId(selection), undefined)
+    ?.definition ?? null;
 
-const customThemeId = readCustomThemeId(stored);
-
-const cachedCustomTheme = readCachedCustomTheme();
-
-const customDefinition =
-  customThemeId !== null && cachedCustomTheme?.id === customThemeId
-    ? cachedCustomTheme.definition
-    : null;
-
-const theme = customDefinition?.baseThemeId ?? resolveStoredTheme(stored);
-
-applyThemeClassToRoot({
-  root,
-  resolvedTheme: resolveThemeClass(theme, getRootResolvedTheme(root)),
+applyThemeToDocument({
+  root: document.documentElement,
+  theme: resolveSelectionTheme(selection, definition),
+  definition,
 });
-
-applyThemeToRoot(root, customDefinition ?? createDefinitionFromBase(theme));

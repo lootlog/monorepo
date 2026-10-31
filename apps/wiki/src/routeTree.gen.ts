@@ -10,13 +10,28 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CalculatorsRouteImport } from './routes/calculators'
+import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ItemsRouteImport } from './routes/items'
 import { Route as NpcsRouteImport } from './routes/npcs'
-import { Route as PlayersRouteImport } from './routes/players'
+import { Route as EventsEventSlugRouteImport } from './routes/events.$eventSlug'
+import { Route as ItemsItemSlugRouteImport } from './routes/items_.$itemSlug'
+import { Route as NpcsNpcSlugRouteImport } from './routes/npcs_.$npcSlug'
+import { Route as ThemesSplatRouteImport } from './routes/themes.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalculatorsRoute = CalculatorsRouteImport.update({
+  id: '/calculators',
+  path: '/calculators',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompareRoute = CompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ItemsRoute = ItemsRouteImport.update({
@@ -29,44 +44,107 @@ const NpcsRoute = NpcsRouteImport.update({
   path: '/npcs',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlayersRoute = PlayersRouteImport.update({
-  id: '/players',
-  path: '/players',
+const EventsEventSlugRoute = EventsEventSlugRouteImport.update({
+  id: '/events/$eventSlug',
+  path: '/events/$eventSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ItemsItemSlugRoute = ItemsItemSlugRouteImport.update({
+  id: '/items_/$itemSlug',
+  path: '/items/$itemSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NpcsNpcSlugRoute = NpcsNpcSlugRouteImport.update({
+  id: '/npcs_/$npcSlug',
+  path: '/npcs/$npcSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ThemesSplatRoute = ThemesSplatRouteImport.update({
+  id: '/themes/$',
+  path: '/themes/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/calculators': typeof CalculatorsRoute
+  '/compare': typeof CompareRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
-  '/players': typeof PlayersRoute
+  '/events/$eventSlug': typeof EventsEventSlugRoute
+  '/items/$itemSlug': typeof ItemsItemSlugRoute
+  '/npcs/$npcSlug': typeof NpcsNpcSlugRoute
+  '/themes/$': typeof ThemesSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/calculators': typeof CalculatorsRoute
+  '/compare': typeof CompareRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
-  '/players': typeof PlayersRoute
+  '/events/$eventSlug': typeof EventsEventSlugRoute
+  '/items/$itemSlug': typeof ItemsItemSlugRoute
+  '/npcs/$npcSlug': typeof NpcsNpcSlugRoute
+  '/themes/$': typeof ThemesSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/calculators': typeof CalculatorsRoute
+  '/compare': typeof CompareRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
-  '/players': typeof PlayersRoute
+  '/events/$eventSlug': typeof EventsEventSlugRoute
+  '/items_/$itemSlug': typeof ItemsItemSlugRoute
+  '/npcs_/$npcSlug': typeof NpcsNpcSlugRoute
+  '/themes/$': typeof ThemesSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/items' | '/npcs' | '/players'
+  fullPaths:
+    | '/'
+    | '/calculators'
+    | '/compare'
+    | '/items'
+    | '/npcs'
+    | '/events/$eventSlug'
+    | '/items/$itemSlug'
+    | '/npcs/$npcSlug'
+    | '/themes/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/items' | '/npcs' | '/players'
-  id: '__root__' | '/' | '/items' | '/npcs' | '/players'
+  to:
+    | '/'
+    | '/calculators'
+    | '/compare'
+    | '/items'
+    | '/npcs'
+    | '/events/$eventSlug'
+    | '/items/$itemSlug'
+    | '/npcs/$npcSlug'
+    | '/themes/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/calculators'
+    | '/compare'
+    | '/items'
+    | '/npcs'
+    | '/events/$eventSlug'
+    | '/items_/$itemSlug'
+    | '/npcs_/$npcSlug'
+    | '/themes/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CalculatorsRoute: typeof CalculatorsRoute
+  CompareRoute: typeof CompareRoute
   ItemsRoute: typeof ItemsRoute
   NpcsRoute: typeof NpcsRoute
-  PlayersRoute: typeof PlayersRoute
+  EventsEventSlugRoute: typeof EventsEventSlugRoute
+  ItemsItemSlugRoute: typeof ItemsItemSlugRoute
+  NpcsNpcSlugRoute: typeof NpcsNpcSlugRoute
+  ThemesSplatRoute: typeof ThemesSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -76,6 +154,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calculators': {
+      id: '/calculators'
+      path: '/calculators'
+      fullPath: '/calculators'
+      preLoaderRoute: typeof CalculatorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compare': {
+      id: '/compare'
+      path: '/compare'
+      fullPath: '/compare'
+      preLoaderRoute: typeof CompareRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/items': {
@@ -92,11 +184,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NpcsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/players': {
-      id: '/players'
-      path: '/players'
-      fullPath: '/players'
-      preLoaderRoute: typeof PlayersRouteImport
+    '/events/$eventSlug': {
+      id: '/events/$eventSlug'
+      path: '/events/$eventSlug'
+      fullPath: '/events/$eventSlug'
+      preLoaderRoute: typeof EventsEventSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/items_/$itemSlug': {
+      id: '/items_/$itemSlug'
+      path: '/items/$itemSlug'
+      fullPath: '/items/$itemSlug'
+      preLoaderRoute: typeof ItemsItemSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/npcs_/$npcSlug': {
+      id: '/npcs_/$npcSlug'
+      path: '/npcs/$npcSlug'
+      fullPath: '/npcs/$npcSlug'
+      preLoaderRoute: typeof NpcsNpcSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/themes/$': {
+      id: '/themes/$'
+      path: '/themes/$'
+      fullPath: '/themes/$'
+      preLoaderRoute: typeof ThemesSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -104,9 +217,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CalculatorsRoute: CalculatorsRoute,
+  CompareRoute: CompareRoute,
   ItemsRoute: ItemsRoute,
   NpcsRoute: NpcsRoute,
-  PlayersRoute: PlayersRoute,
+  EventsEventSlugRoute: EventsEventSlugRoute,
+  ItemsItemSlugRoute: ItemsItemSlugRoute,
+  NpcsNpcSlugRoute: NpcsNpcSlugRoute,
+  ThemesSplatRoute: ThemesSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

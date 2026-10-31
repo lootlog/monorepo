@@ -15,6 +15,10 @@ import {
   userSettingDocumentTable,
   userSettingsTable,
   userThemeTable,
+  factionWarAwardTable,
+  factionWarDailyPointsTable,
+  factionWarOnlineSegmentTable,
+  factionWarPickTable,
 } from "#src/database/drizzle/schema";
 import { getGuildMemberNotFoundCacheKey } from "#src/discord/discord-cache.util";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
@@ -120,6 +124,20 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userPinnedEventTable)
         .where(eq(userPinnedEventTable.userId, identity.userId));
+      // The faction war forgets the User: their pick, character name and
+      // points leave the leaderboards, champions and faction scores.
+      yield* transaction
+        .delete(factionWarDailyPointsTable)
+        .where(eq(factionWarDailyPointsTable.userId, identity.userId));
+      yield* transaction
+        .delete(factionWarAwardTable)
+        .where(eq(factionWarAwardTable.userId, identity.userId));
+      yield* transaction
+        .delete(factionWarOnlineSegmentTable)
+        .where(eq(factionWarOnlineSegmentTable.userId, identity.userId));
+      yield* transaction
+        .delete(factionWarPickTable)
+        .where(eq(factionWarPickTable.userId, identity.userId));
 
       const deactivatedAt = new Date(yield* Clock.currentTimeMillis);
 

@@ -5,7 +5,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import type { ViewMode } from "@/hooks/use-view-mode";
-import { FILTER_PILL_CLASS } from "@/components/common/filter-pill";
+import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import { ListToolbar } from "@/components/common/list-toolbar";
 
 export type TimerGroupOption = { key: string; label: string; count: number };

@@ -56,7 +56,8 @@ describe("ChatMessage", () => {
       <ChatMessage all={false} member={member} message={makeChatMessage()} />,
     );
 
-    expect(container).toBeEmptyDOMElement();
+    // The wrapper's list element stands in for the transcript.
+    expect(container.firstChild).toBeEmptyDOMElement();
   });
 
   it("falls back to the character nick when member metadata is missing", () => {

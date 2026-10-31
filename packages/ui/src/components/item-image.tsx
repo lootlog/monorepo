@@ -5,6 +5,10 @@ import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
 
 const MARGONEM_CDN_ITEMS_URL = "https://micc.garmory-cdn.cloud/obrazki/itemy";
 
+/** Where Margonem serves an item's icon. */
+export const itemIconUrl = (icon: string) =>
+  `${MARGONEM_CDN_ITEMS_URL}/${icon}`;
+
 type ItemImageProps = {
   className?: string;
   color?: string;
@@ -37,7 +41,7 @@ export const ItemImage: FC<ItemImageProps> = ({
           },
         )}
         style={{
-          backgroundImage: `url(${MARGONEM_CDN_ITEMS_URL}/${icon})`,
+          backgroundImage: `url(${itemIconUrl(icon)})`,
         }}
       />
       {shareIndex !== undefined && (

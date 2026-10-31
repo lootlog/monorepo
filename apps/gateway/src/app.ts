@@ -27,6 +27,7 @@ import {
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
   REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_JSON_SUBPROTOCOL,
+  REALTIME_SERVER_CLOSE_CODES,
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/protocol/realtime";
 import {
@@ -599,13 +600,19 @@ export const createGatewayWebSocket = (
     open(socket: GatewaySocket) {
       // Federation can drop between the upgrade check and this callback.
       if (application.hub.unavailableReason() !== undefined) {
-        socket.close(1013, "gateway unavailable");
+        socket.close(
+          REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+          "gateway unavailable",
+        );
 
         return;
       }
 
       if (!application.ingress.open(socket)) {
-        socket.close(1013, "connection capacity exceeded");
+        socket.close(
+          REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+          "connection capacity exceeded",
+        );
 
         return;
       }
@@ -669,7 +676,11 @@ export const drainGateway = (
     yield* closeGradually(
       application.hub.getLocalSockets(),
       Duration.toMillis(timing.closeSpread),
-      (socket) => socket.close(1012, "gateway restarting"),
+      (socket) =>
+        socket.close(
+          REALTIME_SERVER_CLOSE_CODES.restarting,
+          "gateway restarting",
+        ),
     );
 
     const cleaned = yield* Effect.sleep("50 millis").pipe(

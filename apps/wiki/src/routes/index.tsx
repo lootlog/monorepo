@@ -1,23 +1,25 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@lootlog/ui/components/card";
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
+import { HomeSearch } from "@/components/home/home-search";
+import { LegendaryBonusShortcuts } from "@/components/home/legendary-bonus-shortcuts";
+import { NewEventItems } from "@/components/home/new-event-items";
+import { NewMonsters } from "@/components/home/new-monsters";
+import { QuickSearches } from "@/components/home/quick-searches";
+import { RarityShortcuts } from "@/components/home/rarity-shortcuts";
+import { SlotShortcuts } from "@/components/home/slot-shortcuts";
 import { t } from "@/i18n/messages";
+import { WIKI_NAVIGATION } from "@/navigation/wiki-navigation";
 
-const sections = [
-  {
-    descriptionKey: "home.itemsDescription",
-    href: "/items",
-    titleKey: "home.itemsTitle",
-  },
-  {
-    descriptionKey: "home.npcsDescription",
-    href: "/npcs",
-    titleKey: "home.npcsTitle",
-  },
-  {
-    descriptionKey: "home.playersDescription",
-    href: "/players",
-    titleKey: "home.playersTitle",
-  },
-] as const;
+// The sections that search, which the home page introduces.
+const sections = WIKI_NAVIGATION.flatMap(({ descriptionKey, ...section }) =>
+  descriptionKey ? [{ ...section, descriptionKey }] : [],
+);
 
 export const Route = createFileRoute("/")({
   component: HomeRoute,
@@ -32,79 +34,136 @@ export const Route = createFileRoute("/")({
 
 function HomeRoute() {
   return (
-    <main className="page-wrap px-4 pb-8 pt-14">
-      <section className="hero-shell rise-in relative overflow-hidden rounded-[2rem] px-6 py-10 sm:px-10 sm:py-14">
-        <div className="pointer-events-none absolute -left-20 -top-24 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(215,167,57,0.28),transparent_66%)]" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(51,102,74,0.16),transparent_66%)]" />
-        <p className="island-kicker mb-3">{t("home.eyebrow")}</p>
-        <h1 className="display-title mb-5 max-w-3xl text-4xl leading-[1.02] font-bold tracking-tight text-[var(--sea-ink)] sm:text-6xl">
+    <div className="flex flex-col gap-10 py-6">
+      <header className="relative isolate overflow-hidden rounded-xl border border-border/50 bg-card px-5 py-8 md:px-10 md:py-12">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-10 bg-[radial-gradient(60%_80%_at_85%_0%,color-mix(in_oklab,var(--primary)_18%,transparent),transparent_70%)]"
+        />
+        <p className="text-xs font-semibold tracking-wider text-primary uppercase">
+          {t("home.eyebrow")}
+        </p>
+        <h1 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
           {t("home.title")}
         </h1>
-        <p className="mb-8 max-w-2xl text-base text-[var(--sea-ink-soft)] sm:text-lg">
+        <p className="mt-3 max-w-2xl text-sm text-pretty text-muted-foreground md:text-base">
           {t("home.description")}
         </p>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            to="/items"
-            search={{
-              advancedFilter: "",
-              maxLevel: "",
-              minLevel: "",
-              professions: "",
-              query: "",
-              rarities: "",
-              sort: "relevance",
-              types: "",
-            }}
-            className="rounded-full border border-[rgba(126,94,40,0.3)] bg-[rgba(215,167,57,0.12)] px-5 py-2.5 text-sm font-semibold text-[var(--accent-deep)] no-underline transition hover:-translate-y-0.5 hover:bg-[rgba(215,167,57,0.2)]"
-          >
-            {t("home.ctaItems")}
-          </Link>
-          <Link
-            to="/npcs"
-            search={{ query: "" }}
-            className="rounded-full border border-[rgba(41,69,53,0.22)] bg-white/55 px-5 py-2.5 text-sm font-semibold text-[var(--sea-ink)] no-underline transition hover:-translate-y-0.5 hover:border-[rgba(41,69,53,0.35)]"
-          >
-            {t("home.ctaNpcs")}
-          </Link>
+        <div className="mt-6 flex flex-col gap-3">
+          <HomeSearch />
+          <QuickSearches />
         </div>
-      </section>
+      </header>
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {sections.map((section, index) => (
-          <article
-            key={section.href}
-            className="island-shell feature-card rise-in rounded-2xl p-5"
-            style={{ animationDelay: `${index * 90 + 80}ms` }}
+      <section
+        aria-labelledby="home-new-monsters"
+        className="flex flex-col gap-4"
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            id="home-new-monsters"
+            className="text-base font-semibold text-foreground"
           >
-            <h2 className="mb-2 text-base font-semibold text-[var(--sea-ink)]">
-              {t(section.titleKey)}
-            </h2>
-            <p className="m-0 text-sm text-[var(--sea-ink-soft)]">
-              {t(section.descriptionKey)}
-            </p>
-          </article>
-        ))}
+            {t("home.newMonstersTitle")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t("home.newMonstersDescription")}
+          </p>
+        </div>
+        <NewMonsters />
       </section>
 
-      <section className="island-shell mt-8 rounded-2xl p-6">
-        <p className="island-kicker mb-2">{t("home.statusEyebrow")}</p>
-        <h2 className="display-title mb-3 text-3xl text-[var(--sea-ink)] sm:text-4xl">
-          {t("home.statusTitle")}
+      <section
+        aria-labelledby="home-new-event-items"
+        className="flex flex-col gap-4"
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            id="home-new-event-items"
+            className="text-base font-semibold text-foreground"
+          >
+            {t("home.newEventItemsTitle")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t("home.newEventItemsDescription")}
+          </p>
+        </div>
+        <NewEventItems />
+      </section>
+
+      <section aria-labelledby="home-bonuses" className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2
+            id="home-bonuses"
+            className="text-base font-semibold text-foreground"
+          >
+            {t("home.bonusesTitle")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t("home.bonusesDescription")}
+          </p>
+        </div>
+        <LegendaryBonusShortcuts />
+      </section>
+
+      <div className="grid gap-10 lg:grid-cols-2 lg:gap-6">
+        <section aria-labelledby="home-slots" className="flex flex-col gap-4">
+          <h2
+            id="home-slots"
+            className="text-base font-semibold text-foreground"
+          >
+            {t("home.slotsTitle")}
+          </h2>
+          <SlotShortcuts />
+        </section>
+
+        <section
+          aria-labelledby="home-rarities"
+          className="flex flex-col gap-4"
+        >
+          <h2
+            id="home-rarities"
+            className="text-base font-semibold text-foreground"
+          >
+            {t("home.raritiesTitle")}
+          </h2>
+          <RarityShortcuts />
+        </section>
+      </div>
+
+      <section aria-labelledby="home-sections" className="flex flex-col gap-4">
+        <h2
+          id="home-sections"
+          className="text-base font-semibold text-foreground"
+        >
+          {t("home.sectionsTitle")}
         </h2>
-        <p className="m-0 max-w-3xl text-base leading-8 text-[var(--sea-ink-soft)]">
-          {t("home.statusDescription")}
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            to="/players"
-            search={{ query: "", world: "" }}
-            className="rounded-full border border-[rgba(41,69,53,0.22)] bg-[var(--chip-bg)] px-5 py-2.5 text-sm font-semibold text-[var(--sea-ink)] no-underline transition hover:-translate-y-0.5"
-          >
-            {t("home.ctaPlayers")}
-          </Link>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {sections.map((section) => {
+            const Icon = section.icon;
+
+            return (
+              <Card key={section.link.to} className="gap-2">
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="flex items-center gap-2">
+                      <Icon
+                        aria-hidden="true"
+                        className="size-4 text-primary"
+                      />
+                      {t(section.labelKey)}
+                    </CardTitle>
+                    <ChevronLink render={<Link {...section.link} />}>
+                      {t("home.open")}
+                    </ChevronLink>
+                  </div>
+                  <CardDescription>{t(section.descriptionKey)}</CardDescription>
+                </CardHeader>
+              </Card>
+            );
+          })}
         </div>
       </section>
-    </main>
+    </div>
   );
 }

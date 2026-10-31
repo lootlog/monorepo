@@ -4,8 +4,17 @@ import {
   createItemStatsHash,
 } from "@lootlog/database/snapshot-hash";
 import { parseItemStats, splitItemStat } from "@lootlog/database/item-stat";
-import { Effect, Schema } from "effect";
-import { getNpcTypeByWt, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
+import { Clock, Effect, Schema } from "effect";
+import { once } from "es-toolkit";
+import {
+  DROP_SOURCE_BOSS_TYPES,
+  getNpcTypeByWt,
+  MIN_LOOT_NPC_WT,
+} from "@lootlog/domain/npc-type";
+import {
+  resolveLootAcceptance,
+  type LootAcceptance,
+} from "@lootlog/domain/loot-acceptance";
 import type {
   GuildLootCreatedEventV2,
   GuildLootEventNpc,
@@ -18,6 +27,10 @@ import {
 import { createHash } from "node:crypto";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
+import type {
+  FactionWarAward,
+  FactionWarPoints,
+} from "#src/faction-wars/faction-war-points";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
@@ -100,6 +113,10 @@ const lootNpcIdentity = (npc: CreateLootRequest["npcs"][number]) => {
   return { identityNamespace: NpcIdentityNamespace.LEGACY, npcId: npc.id };
 };
 
+const dropSourceBossTypes: ReadonlySet<string> = new Set(
+  DROP_SOURCE_BOSS_TYPES,
+);
+
 const LOOT_LOCK_TTL_MS = 30_000;
 
 const LOOT_LOCK_RETRY_OPTIONS = {
@@ -107,6 +124,10 @@ const LOOT_LOCK_RETRY_OPTIONS = {
   retryDelay: 100,
   retryJitter: 50,
 } as const;
+
+type AwardFactionWarLoot = (
+  loot: Parameters<FactionWarPoints["awardLoot"]>[0],
+) => Effect.Effect<FactionWarAward | null, unknown>;
 
 export interface LootSubmissionAcceptance {
   readonly accept: (options: {
@@ -120,6 +141,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     private readonly repository: LootSubmissionAcceptancePersistence,
     private readonly lock: LootSubmissionLock,
     private readonly signalPublications: Effect.Effect<void>,
+    private readonly awardFactionWarLoot: AwardFactionWarLoot,
   ) {}
 
   accept(options: {
@@ -177,21 +199,27 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         return yield* Effect.fail(new PermissionDeniedError());
       }
 
-      const whitelistedGuildIds = new Set(
-        characterConfig?.catchingGuildIds ?? [],
-      );
+      const guildById = new Map(guilds.map((guild) => [guild.id, guild]));
+      const organizationIds = guilds.map((guild) => guild.id);
+      const catchingGuildIds = characterConfig?.catchingGuildIds ?? [];
 
-      const filteredGuildIds = guilds
-        .filter((guild) => whitelistedGuildIds.has(guild.id))
-        .map((guild) => guild.id);
+      const whitelisted = resolveLootAcceptance({
+        organizationIds,
+        catchingGuildIds,
+      });
+
+      const filteredGuildIds = whitelisted.accepted.map(
+        ({ organizationId }) => organizationId,
+      );
 
       if (filteredGuildIds.length === 0) {
         return yield* Effect.fail(
           new InvalidRequestError({
             message: ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
             submittedGuilds: [],
-            rejectedGuilds: guilds.map((guild) =>
-              this.createRejectedGuild(guild, "NOT_ON_CHARACTER_WHITELIST"),
+            rejectedGuilds: this.mapRejectedGuilds(
+              guildById,
+              whitelisted.rejected,
             ),
           }),
         );
@@ -230,12 +258,13 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       );
 
       const outcome = this.resolveAcceptanceOutcome({
-        guilds,
+        catchingGuildIds,
+        guildById,
         lootlogConfigs,
         members,
+        organizationIds,
         primaryNpcType,
         submission: options.submission,
-        whitelistedGuildIds,
       });
 
       if (outcome.submissionData.length === 0) {
@@ -264,8 +293,18 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           mapPlayersSnapshot,
         );
 
-        return this.createResponse(existingLootId, outcome);
+        // Retries reach here once the loot exists, so a failed award gets
+        // another chance; the war's ledger still pays each player once.
+        const award = yield* this.awardLootPoints(
+          options.discordId,
+          existingLootId,
+          options.submission,
+        );
+
+        return this.createResponse(existingLootId, outcome, award);
       }
+
+      const observedAt = new Date(yield* Clock.currentTimeMillis);
 
       const lootId = yield* this.createNewLoot({
         mapPlayersSnapshot,
@@ -278,89 +317,120 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           this.newLootPublications({
             lootId,
             npcs,
+            observedAt,
             outcome,
             submission: options.submission,
           }),
       });
 
-      return this.createResponse(lootId, outcome);
+      const award = yield* this.awardLootPoints(
+        options.discordId,
+        lootId,
+        options.submission,
+      );
+
+      return this.createResponse(lootId, outcome, award);
     });
   }
 
+  /**
+   * Pays the whole party in the faction war and returns the submitter's part.
+   * Logged, never failed: an accepted loot must not be rejected for points.
+   */
+  private awardLootPoints(
+    discordId: string,
+    lootId: number,
+    submission: CreateLootRequest,
+  ): Effect.Effect<FactionWarAward | null> {
+    return this.awardFactionWarLoot({
+      submitterDiscordId: discordId,
+      lootId,
+      rarities: submission.loots.map((item) => this.getItemStats(item).rarity),
+      party: submission.players.map((player) => {
+        const { accountId, characterId } = this.normalizeCharacterAndAccount(
+          player.id,
+          player.accountId,
+        );
+
+        return {
+          accountId: String(accountId),
+          characterId: String(characterId),
+        };
+      }),
+    }).pipe(
+      Effect.catch((error) =>
+        Effect.logError("Failed to award faction war loot points", error).pipe(
+          Effect.as(null),
+        ),
+      ),
+    );
+  }
+
   private resolveAcceptanceOutcome(options: {
-    guilds: Guild[];
+    catchingGuildIds: readonly string[];
+    guildById: ReadonlyMap<string, Guild>;
     lootlogConfigs: Array<{ id: string; npcs: LootlogConfigNpc[] }>;
     members: Array<{ id: number; guildId: string }>;
+    organizationIds: readonly string[];
     primaryNpcType: NpcType;
     submission: CreateLootRequest;
-    whitelistedGuildIds: Set<string>;
   }): AcceptanceOutcome {
-    const lootlogConfigByGuildId = new Map(
-      options.lootlogConfigs.map((config) => [config.id, config]),
-    );
-
-    const memberByGuildId = new Map(
-      options.members.map((member) => [member.guildId, member]),
-    );
-
-    return options.guilds.reduce<AcceptanceOutcome>(
-      (outcome, guild) => {
-        if (!options.whitelistedGuildIds.has(guild.id)) {
-          outcome.rejectedGuilds.push(
-            this.createRejectedGuild(guild, "NOT_ON_CHARACTER_WHITELIST"),
-          );
-
-          return outcome;
-        }
-
-        const config = lootlogConfigByGuildId.get(guild.id);
-
-        if (!config) {
-          outcome.rejectedGuilds.push(
-            this.createRejectedGuild(guild, "MISSING_LOOTLOG_CONFIG"),
-          );
-
-          return outcome;
-        }
-
-        if (
-          !this.isAcceptedByConfig(
-            options.submission.loots,
-            config.npcs,
-            options.primaryNpcType,
-          )
-        ) {
-          outcome.rejectedGuilds.push(
-            this.createRejectedGuild(guild, "LOOT_NOT_ACCEPTED_BY_CONFIG"),
-          );
-
-          return outcome;
-        }
-
-        const member = memberByGuildId.get(guild.id);
-
-        if (!member) {
-          outcome.rejectedGuilds.push(
-            this.createRejectedGuild(guild, "MISSING_MEMBER"),
-          );
-
-          return outcome;
-        }
-
-        outcome.submissionData.push({
-          guildId: guild.id,
-          guildName: guild.name,
-          memberId: member.id,
-        });
-        outcome.submittedGuilds.push({
-          guildId: guild.id,
-          guildName: guild.name,
-        });
-
-        return outcome;
+    const acceptance = resolveLootAcceptance({
+      organizationIds: options.organizationIds,
+      catchingGuildIds: options.catchingGuildIds,
+      configs: new Map(
+        options.lootlogConfigs.map((config) => [config.id, config]),
+      ),
+      members: new Map(
+        options.members.map((member) => [member.guildId, member]),
+      ),
+      loot: {
+        npcType: options.primaryNpcType,
+        rarities: once(() =>
+          options.submission.loots.map(
+            (item) => this.getItemStats(item).rarity,
+          ),
+        ),
       },
-      { submissionData: [], submittedGuilds: [], rejectedGuilds: [] },
-    );
+    });
+
+    const outcome: AcceptanceOutcome = {
+      submissionData: [],
+      submittedGuilds: [],
+      rejectedGuilds: this.mapRejectedGuilds(
+        options.guildById,
+        acceptance.rejected,
+      ),
+    };
+
+    for (const { organizationId, member } of acceptance.accepted) {
+      const guild = options.guildById.get(organizationId);
+
+      if (!guild || !member) continue;
+
+      outcome.submissionData.push({
+        guildId: guild.id,
+        guildName: guild.name,
+        memberId: member.id,
+      });
+      outcome.submittedGuilds.push({
+        guildId: guild.id,
+        guildName: guild.name,
+      });
+    }
+
+    return outcome;
+  }
+
+  private mapRejectedGuilds(
+    guildById: ReadonlyMap<string, Guild>,
+    rejected: LootAcceptance<unknown>["rejected"],
+  ): CreateLootRejectedGuild[] {
+    return rejected.flatMap(({ organizationId, reason }) => {
+      const guild = guildById.get(organizationId);
+
+      return guild ? [this.createRejectedGuild(guild, reason)] : [];
+    });
   }
 
   private acceptExistingLoot(
@@ -462,6 +532,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   private newLootPublications(options: {
     lootId: number;
     npcs: AcceptedNpcSnapshot[];
+    /** When the API accepted the loot; the catalog keeps the earliest. */
+    observedAt: Date;
     outcome: AcceptanceOutcome;
     submission: CreateLootRequest;
   }): LootPublication[] {
@@ -499,25 +571,34 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         world: options.submission.world,
       })),
     );
+
+    const searchNpc = (npc: AcceptedNpcSnapshot) => ({
+      id: npc.npcId,
+      identityNamespace: npc.identityNamespace,
+      name: npc.name,
+      lvl: npc.lvl,
+      prof: npc.prof ?? "",
+      icon: npc.icon,
+      wt: npc.wt,
+      type: npc.type,
+      margonemType: npc.margonemType,
+      gameVersion: npc.gameVersion,
+    });
+
+    const observedAt = options.observedAt.toISOString();
+    const dropSource = this.findDropSource(options.npcs, options.submission);
+
     rabbit(
       RabbitRoutingKey.SEARCH_NPCS_INDEX,
       options.npcs.map((npc) => ({
-        id: npc.npcId,
+        ...searchNpc(npc),
         // Search keeps the latest observation of a catalog entry; loot ids
         // order observations even when deliveries arrive out of order.
         lootId: options.lootId,
-        identityNamespace: npc.identityNamespace,
         snapshotHash: npc.snapshotHash ?? undefined,
-        name: npc.name,
-        lvl: npc.lvl,
-        prof: npc.prof ?? "",
-        icon: npc.icon,
-        wt: npc.wt,
-        type: npc.type,
-        margonemType: npc.margonemType,
         location: options.submission.location,
         world: options.submission.world,
-        gameVersion: npc.gameVersion,
+        observedAt,
       })),
     );
     const items = this.mapItems(options.submission.loots);
@@ -536,6 +617,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           type: item.type,
           world: options.submission.world,
           gameVersion: options.submission.gameVersion,
+          observedAt,
+          droppedBy: dropSource && searchNpc(dropSource),
         })),
       );
     rabbit(RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED, {
@@ -650,26 +733,29 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     return { primary };
   }
 
+  /**
+   * The NPC a fight's items dropped from, by `DROP_SOURCE_BOSS_TYPES`.
+   * Other sources, such as a lootbox, have none.
+   */
+  private findDropSource(
+    npcs: AcceptedNpcSnapshot[],
+    submission: CreateLootRequest,
+  ): AcceptedNpcSnapshot | undefined {
+    if (submission.source !== "FIGHT") return undefined;
+
+    if (npcs.length === 1) return npcs[0];
+
+    const bosses = npcs.filter(
+      (npc) => npc.type !== null && dropSourceBossTypes.has(npc.type),
+    );
+
+    return bosses.length === 1 ? bosses[0] : undefined;
+  }
+
   private mapNpcEvents(npcs: AcceptedNpcSnapshot[]): GuildLootEventNpc[] {
     return [...npcs]
       .sort((left, right) => (right.wt ?? 0) - (left.wt ?? 0))
       .map(({ lvl, prof, type, wt }) => ({ lvl, prof, type, wt }));
-  }
-
-  private isAcceptedByConfig(
-    loots: CreateLootRequest["loots"],
-    npcs: LootlogConfigNpc[],
-    primaryNpcType: NpcType,
-  ): boolean {
-    const targetNpc = npcs.find((npc) => npc.npcType === primaryNpcType);
-
-    if (!targetNpc) {
-      return false;
-    }
-
-    return loots.some((item) =>
-      targetNpc.allowedRarities.includes(this.getItemStats(item).rarity),
-    );
   }
 
   private getItemStats(item: CreateLootRequest["loots"][number]) {
@@ -815,11 +901,13 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   private createResponse(
     id: number,
     outcome: Omit<AcceptanceOutcome, "submissionData">,
+    factionWar: FactionWarAward | null,
   ): CreateLootResponse {
     return {
       id,
       submittedGuilds: outcome.submittedGuilds,
       rejectedGuilds: outcome.rejectedGuilds,
+      ...(factionWar && factionWar.points > 0 && { factionWar }),
     };
   }
 
@@ -872,9 +960,11 @@ export const makeLootSubmissionAcceptance = (
   repository: LootSubmissionAcceptancePersistence,
   lock: LootSubmissionLock,
   signalPublications: Effect.Effect<void>,
+  awardFactionWarLoot: AwardFactionWarLoot = () => Effect.succeed(null),
 ): LootSubmissionAcceptance =>
   new LootSubmissionAcceptanceImplementation(
     repository,
     lock,
     signalPublications,
+    awardFactionWarLoot,
   );

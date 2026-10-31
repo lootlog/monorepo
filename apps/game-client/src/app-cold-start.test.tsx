@@ -35,7 +35,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("starts an initialized character without repeating HTTP snapshots or joining twice", async () => {
+it("starts an initialized character with one bootstrap request, without repeating HTTP snapshots or joining twice", async () => {
   queryClient.clear();
   useGlobalStore.setState({ gameState: { gameInitialized: false } });
   useWindowsStore.getState().setOpen("chat", true);
@@ -48,6 +48,36 @@ it("starts an initialized character without repeating HTTP snapshots or joining 
     "gameData.detector": createDetectorSettings(),
     "gameData.airTags": { enabled: true },
   });
+
+  const accessibleGuilds = [
+    {
+      id: "guild-1",
+      name: "Test guild",
+      icon: null,
+      ownerId: "discord-1",
+      publicStatsCardEnabled: false,
+      hasLootlogAccess: true,
+      isAccessDataStale: false,
+    },
+  ];
+
+  const userPreferences = {
+    userId: "user",
+    guildsOrder: ["guild-1"],
+    hiddenGuildIds: [],
+    theme: "default",
+    chatAppearance: {
+      npcLayout: "tile",
+      fontScalePercent: 100,
+      messageGapPx: 4,
+      showTimestamp: true,
+      showGuildLabel: true,
+      showNpcAvatar: true,
+      showNpcLevel: true,
+      showNpcLocationAndCoordinates: true,
+    },
+    mutes: { players: [], npcs: [] },
+  };
 
   const requests: string[] = [];
   const unexpected: string[] = [];
@@ -79,49 +109,44 @@ it("starts an initialized character without repeating HTTP snapshots or joining 
         },
       });
 
-    if (path === "/users/@me/guilds/accessible")
-      return Response.json([
-        {
-          id: "guild-1",
-          name: "Test guild",
-          icon: null,
-          ownerId: "discord-1",
-          publicStatsCardEnabled: false,
-          hasLootlogAccess: true,
-          isAccessDataStale: false,
-        },
-      ]);
-
-    if (path === "/users/@me/preferences")
+    if (path === "/users/@me/game-client/bootstrap")
       return Response.json({
-        userId: "user",
-        guildsOrder: ["guild-1"],
-        hiddenGuildIds: [],
-        theme: "default",
-        chatAppearance: {
-          npcLayout: "tile",
-          fontScalePercent: 100,
-          messageGapPx: 4,
-          showTimestamp: true,
-          showGuildLabel: true,
-          showNpcAvatar: true,
-          showNpcLevel: true,
-          showNpcLocationAndCoordinates: true,
+        accessibleGuilds,
+        userPreferences,
+        lootlogConfig: {},
+        settingsDocuments: documents,
+        guildTimerDocuments: {
+          guilds: { "guild-1": createSettingsDocuments() },
         },
-        mutes: { players: [], npcs: [] },
-      });
-
-    if (path === "/users/@me/lootlog-config/accounts/202")
-      return Response.json({});
-
-    if (path === "/preferences") return Response.json(documents);
-
-    if (path === "/preferences/guilds")
-      return Response.json({
-        guilds: { "guild-1": createSettingsDocuments() },
       });
 
     if (path.endsWith("/members/@me")) return Response.json(null);
+
+    // The faction war pick screen and champion highlights each cost one
+    // request per session.
+    if (path === "/faction-wars/current")
+      return Response.json({
+        id: "2026-barbatos-tanroth",
+        status: "ENDED",
+        startsAt: "2026-10-20T00:00:00.000Z",
+        endsAt: "2026-11-17T00:00:00.000Z",
+        scoring: {
+          killPoints: {},
+          lootPoints: {},
+          onlineSecondsPerPoint: 600,
+          pvpWinPoints: 5,
+          underdogBonusCap: 2,
+          dailyCaps: { KILL: 0, LOOT: 0, ONLINE: 0, PVP: 0 },
+        },
+        totals: [],
+        winners: [],
+        days: [],
+        pick: null,
+        champion: null,
+      });
+
+    if (path === "/faction-wars/champions")
+      return Response.json({ warId: null, champions: [] });
 
     if (
       path === "/timers" ||
@@ -258,7 +283,15 @@ it("starts an initialized character without repeating HTTP snapshots or joining 
     expect(unexpected).toEqual([]);
     expect(webSocketFactory).toHaveBeenCalledTimes(1);
     expect(proofRequests).toHaveLength(1);
-    expect(requests).toHaveLength(11);
+    // The startup reads of guilds, preferences, the Lootlog configuration and
+    // the settings documents arrive in one bootstrap response; the faction
+    // war adds the current war and its champions.
+    expect(requests).toHaveLength(9);
+    expect(
+      requests.filter(
+        (path) => path === "GET /users/@me/game-client/bootstrap",
+      ),
+    ).toHaveLength(1);
     expect(
       queryClient
         .getQueryCache()
@@ -274,9 +307,6 @@ it("starts an initialized character without repeating HTTP snapshots or joining 
     expect(commands.filter((type) => type === "session.join")).toHaveLength(1);
     expect(requests.filter((path) => path === "GET /timers")).toHaveLength(1);
     expect(
-      requests.filter((path) => path === "GET /users/@me/guilds/accessible"),
-    ).toHaveLength(1);
-    expect(
       requests.filter((path) => path === "GET /messaging/party-gathering"),
     ).toHaveLength(1);
     expect(
@@ -284,6 +314,11 @@ it("starts an initialized character without repeating HTTP snapshots or joining 
         (path) => path === "GET /messaging/party-gathering/active",
       ),
     ).toHaveLength(1);
+    expect(
+      requests
+        .filter((path) => path.startsWith("GET /faction-wars/"))
+        .toSorted(),
+    ).toEqual(["GET /faction-wars/champions", "GET /faction-wars/current"]);
   } finally {
     cleanup();
     disposeSocket();

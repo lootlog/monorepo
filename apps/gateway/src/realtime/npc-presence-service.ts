@@ -414,34 +414,37 @@ export class NpcPresenceService {
     socket: GatewaySocket,
     operations: readonly Operation[],
   ): Promise<void> {
-    for (const { organizationId, world, npcs } of operations) {
-      const changes = decodeChanges(
-        String(
-          await this.redis.command.eval(
-            APPLY_SCRIPT,
-            3,
-            ...keys(organizationId, world),
-            socket.data.connectionId,
-            NPC_PRESENCE_TTL_MS,
-            JSON.stringify(npcs),
-            REVISION_TTL_MS,
+    // Organizations are independent; each keeps its own change order.
+    await Promise.all(
+      operations.map(async ({ organizationId, world, npcs }) => {
+        const changes = decodeChanges(
+          String(
+            await this.redis.command.eval(
+              APPLY_SCRIPT,
+              3,
+              ...keys(organizationId, world),
+              socket.data.connectionId,
+              NPC_PRESENCE_TTL_MS,
+              JSON.stringify(npcs),
+              REVISION_TTL_MS,
+            ),
           ),
-        ),
-      );
+        );
 
-      for (const change of changes) {
-        try {
-          await this.hub.publishToScopes(
-            [{ topic: "organization.timers", organizationId }],
-            presenceEvent(organizationId, world, change),
-            // Any world: timers can show a world other than the recipient's own.
-            { recipientPlatform: "game" },
-          );
-        } catch (error) {
-          this.logger.warn("Failed to publish NPC presence", error);
+        for (const change of changes) {
+          try {
+            await this.hub.publishToScopes(
+              [{ topic: "organization.timers", organizationId }],
+              presenceEvent(organizationId, world, change),
+              // Any world: timers can show a world other than the recipient's own.
+              { recipientPlatform: "game" },
+            );
+          } catch (error) {
+            this.logger.warn("Failed to publish NPC presence", error);
+          }
         }
-      }
-    }
+      }),
+    );
   }
 
   private serialize<T>(

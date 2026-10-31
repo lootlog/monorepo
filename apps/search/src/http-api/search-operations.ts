@@ -1,6 +1,7 @@
 import { Context, Effect, Layer, Predicate, Redacted } from "effect";
 import { Meilisearch } from "meilisearch";
 import { SearchConfig } from "#src/config/search-config";
+import { makeCatalogModule } from "#src/catalog/catalog.service";
 import { makeItemsModule } from "#src/items/items.service";
 import { configureMeilisearchIndexes } from "#src/meilisearch/meilisearch-indexes.service";
 import {
@@ -11,12 +12,20 @@ import { makeNpcsModule } from "#src/npcs/npcs.service";
 import { makePlayersModule } from "#src/players/players.service";
 import { effectLogger } from "#src/shared/logger";
 import type { IndexItemsCommand } from "#src/items/index-items-command";
+import type { RetiredDropsCommand } from "#src/items/retired-drops-command";
 import type { IndexNpcsCommand } from "#src/npcs/index-npcs-command";
+import type { MonsterLocationsCommand } from "#src/npcs/monster-locations-command";
 import type { IndexPlayersCommand } from "#src/players/index-players-command";
 import type {
   AllControllerSearchAllQuery,
   SearchAllResponseDto_Output,
 } from "./contracts/all/schemas.js";
+import type {
+  CatalogControllerGetItemsQuery,
+  CatalogControllerGetNpcsQuery,
+  CatalogItemsResponseDto_Output,
+  CatalogNpcsResponseDto_Output,
+} from "./contracts/catalog/schemas.js";
 import type {
   ItemsControllerGetItemsQuery,
   SearchItemsResponseDto_Output,
@@ -51,11 +60,26 @@ export interface SearchOperationsValue {
   readonly searchAll: (
     query: AllControllerSearchAllQuery,
   ) => Effect.Effect<SearchAllResponseDto_Output, SearchOperationFailureType>;
+  readonly catalogItems: (
+    query: CatalogControllerGetItemsQuery,
+  ) => Effect.Effect<
+    CatalogItemsResponseDto_Output,
+    SearchOperationFailureType
+  >;
+  readonly catalogNpcs: (
+    query: CatalogControllerGetNpcsQuery,
+  ) => Effect.Effect<CatalogNpcsResponseDto_Output, SearchOperationFailureType>;
   readonly indexItems: (
     data: IndexItemsCommand,
   ) => Effect.Effect<void, SearchOperationFailureType>;
+  readonly markRetiredDrops: (
+    data: RetiredDropsCommand,
+  ) => Effect.Effect<void, SearchOperationFailureType>;
   readonly indexNpcs: (
     data: IndexNpcsCommand,
+  ) => Effect.Effect<void, SearchOperationFailureType>;
+  readonly setNpcLocations: (
+    data: MonsterLocationsCommand,
   ) => Effect.Effect<void, SearchOperationFailureType>;
   readonly indexPlayers: (
     data: IndexPlayersCommand,
@@ -79,10 +103,13 @@ export class SearchOperations extends Context.Service<
       const items = makeItemsModule(meilisearch, effectLogger);
       const npcs = makeNpcsModule(meilisearch, effectLogger);
       const players = makePlayersModule(meilisearch, effectLogger);
+      const catalog = makeCatalogModule(meilisearch, effectLogger);
 
       yield* configureMeilisearchIndexes(meilisearch, effectLogger);
 
       return SearchOperations.of({
+        catalogItems: catalog.getItems,
+        catalogNpcs: catalog.getNpcs,
         searchPlayers: (query) =>
           players.getPlayers({
             ...query,
@@ -132,7 +159,9 @@ export class SearchOperations extends Context.Service<
             { concurrency: "unbounded" },
           ),
         indexItems: items.indexItems,
+        markRetiredDrops: items.markRetiredDrops,
         indexNpcs: npcs.indexNpcs,
+        setNpcLocations: npcs.setLocations,
         indexPlayers: players.indexPlayers,
       });
     }),

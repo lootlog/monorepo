@@ -4,6 +4,12 @@ import { Config, Option, type Redacted, Schema } from "effect";
 const optionalRedacted = (name: string) =>
   Config.option(Config.Redacted(name)).pipe(Config.map(Option.getOrUndefined));
 
+// Matches the Discord bot: each cluster links to its own Web app.
+const WEB_APP_URL_BY_ENVIRONMENT = new Map([
+  ["prod", "https://lootlog.pl"],
+  ["dev", "https://dev.lootlog.pl"],
+]);
+
 const enabledValue = (value: string): boolean =>
   ["1", "true", "yes", "on"].includes(value.toLowerCase());
 
@@ -14,6 +20,8 @@ const compatibilityBoolean = (name: string) =>
   );
 
 export interface ApiConfiguration {
+  /** Verifies gateway online checkpoints; faction war online points need it. */
+  readonly activityEventSignatureSecret?: Redacted.Redacted<string>;
   readonly authIdpTokenSecret?: Redacted.Redacted<string>;
   readonly battlelogCleanupSecret?: Redacted.Redacted<string>;
   readonly environment: RuntimeEnvironment;
@@ -31,6 +39,8 @@ export interface ApiConfiguration {
   readonly battlelogServiceUrl: URL;
   readonly discordBotServiceUrl: URL;
   readonly reservationsCardsUrl: URL;
+  /** The Web app origin that Discord notifications link players to. */
+  readonly webAppUrl: URL;
   readonly mapsApiUrl: URL;
   readonly timerCleanup: {
     readonly enabled: string;
@@ -43,11 +53,16 @@ export interface ApiConfiguration {
   readonly nodeWarningDiagnosticsEnabled: boolean;
   /** Internal User ids shown as global chat admins and allowed to moderate it. */
   readonly globalChatAdminUserIds: ReadonlyArray<string>;
+  /** Internal User ids allowed to disqualify faction war players. */
+  readonly factionWarAdminUserIds: ReadonlyArray<string>;
   readonly hostName: string | undefined;
 }
 
 /** The complete API environment contract, decoded by Effect Config. */
 export const apiConfiguration = Config.all({
+  activityEventSignatureSecret: optionalRedacted(
+    "ACTIVITY_EVENT_SIGNATURE_SECRET",
+  ),
   authIdpTokenSecret: optionalRedacted("AUTH_IDP_TOKEN_SECRET"),
   battlelogCleanupSecret: optionalRedacted("BATTLELOG_CLEANUP_SECRET"),
   environment: Config.Literals(
@@ -85,6 +100,20 @@ export const apiConfiguration = Config.all({
     "RESERVATIONS_CARDS_URL",
   ),
   mapsApiUrl: Config.schema(Schema.URLFromString, "MAPS_API_URL"),
+  webAppUrl: Config.all({
+    environment: Config.String("ENV").pipe(Config.withDefault("local")),
+    url: Config.option(Config.schema(Schema.URLFromString, "WEB_APP_URL")),
+  }).pipe(
+    Config.map(({ environment, url }) =>
+      Option.getOrElse(
+        url,
+        () =>
+          new URL(
+            WEB_APP_URL_BY_ENVIRONMENT.get(environment) ?? "http://localhost",
+          ),
+      ),
+    ),
+  ),
   timerCleanup: Config.all({
     enabled: Config.String("TIMER_CLEANUP_ENABLED").pipe(
       Config.withDefault("true"),
@@ -105,6 +134,15 @@ export const apiConfiguration = Config.all({
     "NODE_WARNING_DIAGNOSTICS_ENABLED",
   ),
   globalChatAdminUserIds: Config.String("GLOBAL_CHAT_ADMIN_USER_IDS").pipe(
+    Config.withDefault(""),
+    Config.map((value) =>
+      value
+        .split(",")
+        .map((userId) => userId.trim())
+        .filter((userId) => userId !== ""),
+    ),
+  ),
+  factionWarAdminUserIds: Config.String("FACTION_WAR_ADMIN_USER_IDS").pipe(
     Config.withDefault(""),
     Config.map((value) =>
       value

@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { addRecentWorld } from "@/lib/recent-worlds";
 import { storageKey } from "@/lib/storage-key";
+import { createChangedOnlyStorage } from "./changed-only-storage";
 
 const STORAGE_KEY = storageKey("ll:global-chat");
 
@@ -83,7 +84,7 @@ export const useGlobalChatStore = create<GlobalChatState>()(
         recentWorlds: state.recentWorlds,
         recentEmoji: state.recentEmoji,
       }),
-      storage: createJSONStorage(() => localStorage),
+      storage: createChangedOnlyStorage(createJSONStorage(() => localStorage)),
     },
   ),
 );

@@ -58,6 +58,22 @@ const firstNonNullish = <T>(
 const isScheduledMessage = (triggerType: NotificationTriggerTypeValue) =>
   triggerType === NotificationTriggerType.SCHEDULED_MESSAGE;
 
+// Faction war announcements are global events: no world, NPC or schedule.
+const isFactionWar = (triggerType: NotificationTriggerTypeValue) =>
+  triggerType === NotificationTriggerType.FACTION_WAR;
+
+// The cron announces faction wars to Organization channels only.
+const requireOrganizationForFactionWar = (
+  ownerType: NotificationOwnerTypeValue,
+  triggerType: NotificationTriggerTypeValue,
+) => {
+  if (isFactionWar(triggerType) && ownerType !== NotificationOwnerType.GUILD) {
+    throw new InvalidRequestError(
+      NotificationError.FACTION_WAR_NOTIFICATIONS_REQUIRE_ORGANIZATION,
+    );
+  }
+};
+
 const validateNpcSelection = (data: RuleInput) => {
   const npcIds = new Set<number>();
 
@@ -324,17 +340,20 @@ export const createNotificationRuleValues = (
 ) => {
   const triggerType = data.triggerType;
   const scheduled = isScheduledMessage(triggerType);
+  const untargeted = scheduled || isFactionWar(triggerType);
 
-  if (!scheduled) validateNpcSelection(data);
+  requireOrganizationForFactionWar(ownerType, triggerType);
+
+  if (!untargeted) validateNpcSelection(data);
 
   return {
     ownerType,
     ownerId,
     triggerType,
     guildId: ownerType === NotificationOwnerType.GUILD ? ownerId : null,
-    world: scheduled ? null : (data.world ?? null),
+    world: untargeted ? null : (data.world ?? null),
     name: data.name ?? null,
-    filters: scheduled ? null : buildFilters(data),
+    filters: untargeted ? null : buildFilters(data),
     contentTemplate: normalizeContentTemplate(data.contentTemplate),
     ...scheduleConfig(triggerType, data),
     ...scheduledMessageFields(ownerType, scheduled ? data : null),
@@ -350,8 +369,11 @@ export const updateNotificationRuleValues = (
 ) => {
   const triggerType = data.triggerType ?? existing.triggerType;
   const scheduled = isScheduledMessage(triggerType);
+  const untargeted = scheduled || isFactionWar(triggerType);
 
-  if (!scheduled) validateNpcSelection(data);
+  requireOrganizationForFactionWar(ownerType, triggerType);
+
+  if (!untargeted) validateNpcSelection(data);
 
   const hasFilterUpdate =
     data.npcId !== undefined ||
@@ -363,7 +385,7 @@ export const updateNotificationRuleValues = (
   let world = existing.world;
   let filters = existing.filters;
 
-  if (scheduled) {
+  if (untargeted) {
     world = null;
     filters = null;
   } else {

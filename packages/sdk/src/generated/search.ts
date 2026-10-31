@@ -220,6 +220,102 @@ export interface SearchAllResponseDtoOutput {
   npcs: SearchAllResponseDtoOutputNpcsItem[];
 }
 
+/**
+ * An NPC an item drops from
+ */
+export interface CatalogDropSourceDtoOutput {
+  /** The NPC's catalog key, as `CatalogNpcDto_Output.key`. */
+  key: string;
+  id: number;
+  name: string;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  type: string | null;
+  /** Whether the NPC no longer drops the item: Lootlog has recorded its loot far too often since the item's last drop for the gap to be chance. */
+  retired: boolean;
+}
+
+/**
+ * A Margonem item in the public catalog
+ */
+export interface CatalogItemDtoOutput {
+  id: number;
+  name: string;
+  icon: string;
+  stat: string;
+  lvl: number;
+  /** @nullable */
+  rarity: string | null;
+  /** @nullable */
+  type: string | null;
+  droppedBy: CatalogDropSourceDtoOutput[];
+}
+
+/**
+ * Public catalog items
+ */
+export interface CatalogItemsResponseDtoOutput {
+  hits: CatalogItemDtoOutput[];
+  estimatedTotalHits: number;
+}
+
+export type CatalogNpcDtoOutputType = typeof CatalogNpcDtoOutputType[keyof typeof CatalogNpcDtoOutputType];
+
+
+export const CatalogNpcDtoOutputType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  NPC: 'NPC',
+} as const;
+
+export type CatalogNpcDtoOutputGameVersion = typeof CatalogNpcDtoOutputGameVersion[keyof typeof CatalogNpcDtoOutputGameVersion];
+
+
+export const CatalogNpcDtoOutputGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+export type CatalogNpcDtoOutputLocationsItem = {
+  /** The map's name. */
+  map: string;
+  /** The share of the NPC's latest recorded fights on the map, from 0 to 1, rounded to a hundredth. */
+  share: number;
+};
+
+/**
+ * A Margonem NPC in the public catalog
+ */
+export interface CatalogNpcDtoOutput {
+  /** Stable catalog key of the NPC, used to link its page. */
+  key: string;
+  id: number;
+  name: string;
+  icon: string;
+  lvl: number;
+  type: CatalogNpcDtoOutputType;
+  gameVersion: CatalogNpcDtoOutputGameVersion;
+  /** Maps the NPC is fought on, most fought first, from its latest 1000 recorded fights; maps under 1% of them are left out. Lootlog recomputes them daily, so an NPC first seen today may have none yet. */
+  locations: CatalogNpcDtoOutputLocationsItem[];
+}
+
+/**
+ * Public catalog NPCs
+ */
+export interface CatalogNpcsResponseDtoOutput {
+  hits: CatalogNpcDtoOutput[];
+  estimatedTotalHits: number;
+}
+
 export type PlayersControllerGetPlayersParams = {
 limit?: number;
 search?: string | string[];
@@ -299,6 +395,111 @@ export type AllControllerSearchAll403 = {
 };
 
 export type AllControllerSearchAll429 = {
+  message: string;
+};
+
+export type CatalogControllerGetItemsParams = {
+search?: string;
+/**
+ * Only entries of this game edition.
+ */
+gameVersion?: CatalogControllerGetItemsGameVersion;
+/**
+ * @items.minimum -9007199254740991
+ * @items.maximum 9007199254740991
+ */
+ids?: number[];
+rarities?: string[];
+types?: string[];
+professions?: string[];
+minLevel?: number;
+maxLevel?: number;
+statKeys?: string[];
+excludedStatKeys?: string[];
+legendaryBonuses?: string[];
+dropSourceTypes?: string[];
+/**
+ * Items of the event with this slug: its name and year, such as `wakacje-2026`.
+ */
+event?: string;
+/**
+ * Items that drop from the NPC with this catalog key.
+ */
+droppedBy?: string;
+/**
+ * `id:desc` lists the items Margonem added most recently first.
+ */
+sort?: CatalogControllerGetItemsSort;
+limit?: number;
+offset?: number;
+};
+
+export type CatalogControllerGetItemsGameVersion = typeof CatalogControllerGetItemsGameVersion[keyof typeof CatalogControllerGetItemsGameVersion];
+
+
+export const CatalogControllerGetItemsGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+export type CatalogControllerGetItemsSort = typeof CatalogControllerGetItemsSort[keyof typeof CatalogControllerGetItemsSort];
+
+
+export const CatalogControllerGetItemsSort = {
+  relevance: 'relevance',
+  'id:desc': 'id:desc',
+  'lvl:asc': 'lvl:asc',
+  'lvl:desc': 'lvl:desc',
+  'name:asc': 'name:asc',
+  'name:desc': 'name:desc',
+} as const;
+
+export type CatalogControllerGetItems401 = {
+  message: string;
+};
+
+export type CatalogControllerGetItems403 = {
+  message: string;
+};
+
+export type CatalogControllerGetItems429 = {
+  message: string;
+};
+
+export type CatalogControllerGetNpcsParams = {
+search?: string;
+/**
+ * Only entries of this game edition.
+ */
+gameVersion?: CatalogControllerGetNpcsGameVersion;
+/**
+ * @items.minimum -9007199254740991
+ * @items.maximum 9007199254740991
+ */
+ids?: number[];
+keys?: string[];
+types?: string[];
+limit?: number;
+offset?: number;
+};
+
+export type CatalogControllerGetNpcsGameVersion = typeof CatalogControllerGetNpcsGameVersion[keyof typeof CatalogControllerGetNpcsGameVersion];
+
+
+export const CatalogControllerGetNpcsGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+export type CatalogControllerGetNpcs401 = {
+  message: string;
+};
+
+export type CatalogControllerGetNpcs403 = {
+  message: string;
+};
+
+export type CatalogControllerGetNpcs429 = {
   message: string;
 };
 
@@ -440,6 +641,84 @@ export const getAllControllerSearchAllUrl = (params?: AllControllerSearchAllPara
 export const allControllerSearchAll = async (params?: AllControllerSearchAllParams, options?: Parameters<typeof searchFetch>[1]): Promise<SearchAllResponseDtoOutput> => {
 
   return searchFetch<SearchAllResponseDtoOutput>(getAllControllerSearchAllUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export const getCatalogControllerGetItemsUrl = (params?: CatalogControllerGetItemsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["ids","rarities","types","professions","statKeys","excludedStatKeys","legendaryBonuses","dropSourceTypes"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/public/catalog/items?${stringifiedParams}` : `/public/catalog/items`
+}
+
+/**
+ * @summary List items in the public catalog
+ */
+export const catalogControllerGetItems = async (params?: CatalogControllerGetItemsParams, options?: Parameters<typeof searchFetch>[1]): Promise<CatalogItemsResponseDtoOutput> => {
+
+  return searchFetch<CatalogItemsResponseDtoOutput>(getCatalogControllerGetItemsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export const getCatalogControllerGetNpcsUrl = (params?: CatalogControllerGetNpcsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["ids","keys","types"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/public/catalog/npcs?${stringifiedParams}` : `/public/catalog/npcs`
+}
+
+/**
+ * @summary List NPCs in the public catalog
+ */
+export const catalogControllerGetNpcs = async (params?: CatalogControllerGetNpcsParams, options?: Parameters<typeof searchFetch>[1]): Promise<CatalogNpcsResponseDtoOutput> => {
+
+  return searchFetch<CatalogNpcsResponseDtoOutput>(getCatalogControllerGetNpcsUrl(params),
   {
     ...options,
     method: 'GET'

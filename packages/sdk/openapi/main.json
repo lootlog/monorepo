@@ -27426,9 +27426,28 @@
               "required": ["guildId", "guildName", "reason"],
               "additionalProperties": false
             }
+          },
+          "factionWar": {
+            "$ref": "#/components/schemas/FactionWarAwardDto"
           }
         },
         "required": ["id", "submittedGuilds", "rejectedGuilds"],
+        "additionalProperties": false
+      },
+      "FactionWarAwardDto": {
+        "type": "object",
+        "properties": {
+          "faction": {
+            "type": "string",
+            "enum": ["BARBATOS", "TANROTH"]
+          },
+          "points": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": ["faction", "points"],
         "additionalProperties": false
       },
       "CreateLootDto": {
@@ -29673,7 +29692,8 @@
                     "TIMER_BEFORE_SPAWN",
                     "NPC_SPAWNED",
                     "WATCHED_ITEM_DROPPED",
-                    "SCHEDULED_MESSAGE"
+                    "SCHEDULED_MESSAGE",
+                    "FACTION_WAR"
                   ]
                 },
                 "guildId": {
@@ -30094,7 +30114,8 @@
               "TIMER_BEFORE_SPAWN",
               "NPC_SPAWNED",
               "WATCHED_ITEM_DROPPED",
-              "SCHEDULED_MESSAGE"
+              "SCHEDULED_MESSAGE",
+              "FACTION_WAR"
             ]
           },
           "guildId": {
@@ -30521,7 +30542,8 @@
               "TIMER_BEFORE_SPAWN",
               "NPC_SPAWNED",
               "WATCHED_ITEM_DROPPED",
-              "SCHEDULED_MESSAGE"
+              "SCHEDULED_MESSAGE",
+              "FACTION_WAR"
             ]
           },
           "targetIds": {
@@ -30647,7 +30669,8 @@
               "TIMER_BEFORE_SPAWN",
               "NPC_SPAWNED",
               "WATCHED_ITEM_DROPPED",
-              "SCHEDULED_MESSAGE"
+              "SCHEDULED_MESSAGE",
+              "FACTION_WAR"
             ]
           },
           "targetIds": {
@@ -30786,7 +30809,8 @@
                         "TIMER_BEFORE_SPAWN",
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
-                        "SCHEDULED_MESSAGE"
+                        "SCHEDULED_MESSAGE",
+                        "FACTION_WAR"
                       ]
                     },
                     "world": {
@@ -30913,7 +30937,8 @@
                         "TIMER_BEFORE_SPAWN",
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
-                        "SCHEDULED_MESSAGE"
+                        "SCHEDULED_MESSAGE",
+                        "FACTION_WAR"
                       ]
                     },
                     "guildId": {
@@ -31327,7 +31352,8 @@
                         "TIMER_BEFORE_SPAWN",
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
-                        "SCHEDULED_MESSAGE"
+                        "SCHEDULED_MESSAGE",
+                        "FACTION_WAR"
                       ]
                     },
                     "world": {
@@ -31454,7 +31480,8 @@
                         "TIMER_BEFORE_SPAWN",
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
-                        "SCHEDULED_MESSAGE"
+                        "SCHEDULED_MESSAGE",
+                        "FACTION_WAR"
                       ]
                     },
                     "guildId": {
@@ -32032,7 +32059,8 @@
                   "TIMER_BEFORE_SPAWN",
                   "NPC_SPAWNED",
                   "WATCHED_ITEM_DROPPED",
-                  "SCHEDULED_MESSAGE"
+                  "SCHEDULED_MESSAGE",
+                  "FACTION_WAR"
                 ]
               },
               "guildId": {
@@ -38030,6 +38058,9 @@
           },
           "deduplicated": {
             "type": "boolean"
+          },
+          "factionWar": {
+            "$ref": "#/components/schemas/FactionWarAwardDto"
           }
         },
         "required": ["updated"],

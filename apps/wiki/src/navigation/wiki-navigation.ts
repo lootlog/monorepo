@@ -1,0 +1,60 @@
+import { linkOptions } from "@tanstack/react-router";
+import { Calculator, House, Package, Scale, Skull } from "lucide-react";
+import type { ItemsSearch } from "@/lib/items-search";
+
+/** The item search with no filters, which links extend with their own. */
+export const EMPTY_ITEMS_SEARCH: ItemsSearch = {
+  query: "",
+  slot: "",
+  types: "",
+  professions: "",
+  rarities: "",
+  minLevel: "",
+  maxLevel: "",
+  stats: "",
+  bonuses: "",
+  bosses: "",
+  sort: "",
+};
+
+/** Every wiki section, in sidebar order; links open a section's empty search. */
+export const WIKI_NAVIGATION = [
+  {
+    link: linkOptions({ to: "/" }),
+    labelKey: "navigation.home",
+    icon: House,
+  },
+  {
+    link: linkOptions({
+      to: "/items",
+      search: EMPTY_ITEMS_SEARCH,
+    }),
+    labelKey: "navigation.items",
+    descriptionKey: "home.itemsDescription",
+    icon: Package,
+  },
+  {
+    link: linkOptions({ to: "/npcs", search: { query: "", types: "" } }),
+    labelKey: "navigation.npcs",
+    descriptionKey: "home.npcsDescription",
+    icon: Skull,
+  },
+  {
+    link: linkOptions({ to: "/compare" }),
+    labelKey: "navigation.compare",
+    descriptionKey: "home.compareDescription",
+    icon: Scale,
+  },
+  {
+    link: linkOptions({ to: "/calculators" }),
+    labelKey: "navigation.calculators",
+    descriptionKey: "home.calculatorsDescription",
+    icon: Calculator,
+  },
+];
+
+/** The section a path belongs to. */
+export const findWikiSection = (pathname: string) =>
+  WIKI_NAVIGATION.find(({ link }) =>
+    link.to === "/" ? pathname === "/" : pathname.startsWith(link.to),
+  );

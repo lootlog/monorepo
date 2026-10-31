@@ -1,6 +1,6 @@
 import { NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
 import { formatLevel } from "@lootlog/domain/profession";
-import { LOOT_RARITY_TEXT_CLASS } from "@/features/guild/loots-list/loot-rarity-colors";
+import { LOOT_RARITY_TEXT_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { ItemRarity } from "@/lib/loots/loot-types";

@@ -1,6 +1,6 @@
 import { useLottieAnimation } from "./use-lottie-animation";
 import { lazy, Suspense } from "react";
-import type { ResolvedThemeId } from "../catalog";
+import type { ResolvedThemeId } from "@lootlog/ui/themes/catalog";
 
 const CatLottiePlayer = lazy(() =>
   import("./cat-lottie-player").then((module) => ({

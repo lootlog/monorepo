@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { WindowId } from "@/store/windows.store";
 import { SANDBOX_SCENARIOS, type SandboxScenario } from "../scenarios";
 import type { SandboxController } from "./mount-sandbox-panel";
+import { FactionWarControls } from "./faction-war-controls";
 import { RawEventForm } from "./raw-event-form";
 import { SandboxLogList } from "./sandbox-log-list";
 import { SessionStatus } from "./session-status";
@@ -114,6 +115,8 @@ export function SandboxPanel({
           </button>
         </div>
       </section>
+
+      <FactionWarControls />
 
       {timerStatesOpen && (
         <TimerStatesPreview onClose={() => setTimerStatesOpen(false)} />

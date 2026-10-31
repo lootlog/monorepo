@@ -15,7 +15,9 @@ import {
 } from "effect";
 import { SearchConfig } from "#src/config/search-config";
 import { IndexItemsPayload } from "#src/items/index-items-command";
+import { RetiredDropsPayload } from "#src/items/retired-drops-command";
 import { IndexNpcsPayload } from "#src/npcs/index-npcs-command";
+import { MonsterLocationsPayload } from "#src/npcs/monster-locations-command";
 import { IndexPlayersPayload } from "#src/players/index-players-command";
 import { SearchHttpServer } from "#src/http-api/search-http";
 import { SearchOperations } from "#src/http-api/search-operations";
@@ -25,7 +27,15 @@ const batchMessageLimit = 50;
 
 const searchQueues = {
   items: queue("search.items.index", RabbitRoutingKey.SEARCH_ITEMS_INDEX),
+  retiredDrops: queue(
+    "search.items.retired-drops",
+    RabbitRoutingKey.SEARCH_ITEMS_RETIRED_DROPS,
+  ),
   npcs: queue("search-npcs-index", RabbitRoutingKey.SEARCH_NPCS_INDEX),
+  npcLocations: queue(
+    "search.npcs.locations",
+    RabbitRoutingKey.SEARCH_NPCS_LOCATIONS,
+  ),
   players: queue("search-players-index", RabbitRoutingKey.SEARCH_PLAYERS_INDEX),
 };
 
@@ -112,8 +122,18 @@ export const SearchConsumers = Layer.effectDiscard(
     yield* consume(searchQueues.items.name, IndexItemsPayload, (items) =>
       search.indexItems({ items: [...items] }),
     );
+    yield* consume(
+      searchQueues.retiredDrops.name,
+      RetiredDropsPayload,
+      (monsters) => search.markRetiredDrops({ monsters: [...monsters] }),
+    );
     yield* consume(searchQueues.npcs.name, IndexNpcsPayload, (npcs) =>
       search.indexNpcs({ npcs: [...npcs] }),
+    );
+    yield* consume(
+      searchQueues.npcLocations.name,
+      MonsterLocationsPayload,
+      (monsters) => search.setNpcLocations({ monsters: [...monsters] }),
     );
     yield* consume(searchQueues.players.name, IndexPlayersPayload, (players) =>
       search.indexPlayers({ players: [...players] }),

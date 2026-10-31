@@ -1,83 +1,41 @@
+import { joinList, splitList } from "@/lib/items-search";
+import { NPC_TYPE_OPTIONS, type NpcTypeOption } from "@/lib/npc-types";
+
 export type QueryRouteSearch = {
   query: string;
 };
 
-export type QueryAndWorldRouteSearch = QueryRouteSearch & {
-  world: string;
+/** The NPC search as the address bar holds it; `types` is comma separated. */
+export type NpcsRouteSearch = QueryRouteSearch & {
+  types: string;
 };
 
-export type BasicRouteSearch = QueryRouteSearch | QueryAndWorldRouteSearch;
+const isNpcType = (value: string): value is NpcTypeOption =>
+  NPC_TYPE_OPTIONS.some((type) => type === value);
 
-export type SearchStatus = "error" | "idle" | "loading" | "ready";
-
-export function validateQueryRouteSearch(search: {
+export function validateNpcsRouteSearch(search: {
   query?: unknown;
-}): QueryRouteSearch {
+  types?: unknown;
+}): NpcsRouteSearch {
   return {
     query: typeof search.query === "string" ? search.query : "",
+    types:
+      typeof search.types === "string"
+        ? joinList(splitList(search.types).filter(isNpcType))
+        : "",
   };
 }
 
-export function validateQueryAndWorldRouteSearch(search: {
-  query?: unknown;
-  world?: unknown;
-}): QueryAndWorldRouteSearch {
-  return {
-    query: typeof search.query === "string" ? search.query : "",
-    world: typeof search.world === "string" ? search.world : "",
-  };
-}
-
-const getWorld = (search: BasicRouteSearch) =>
-  "world" in search ? search.world : undefined;
-
-/** Keeps the shape of `search`: `world` is set only on routes that have it. */
-export function getBasicRouteSearchState<TSearch extends BasicRouteSearch>(
-  search: TSearch,
-  { queryValue, worldValue }: { queryValue: string; worldValue: string },
-): TSearch {
-  const query = queryValue.trim();
-
-  return "world" in search
-    ? { ...search, query, world: worldValue.trim() }
-    : { ...search, query };
-}
-
-export function isBasicRouteSearchActive(search: BasicRouteSearch): boolean {
-  return search.query.trim() !== "" || Boolean(getWorld(search)?.trim());
-}
-
-export function areBasicRouteSearchStatesEqual(
-  firstSearch: BasicRouteSearch,
-  secondSearch: BasicRouteSearch,
-): boolean {
-  return (
-    firstSearch.query === secondSearch.query &&
-    getWorld(firstSearch) === getWorld(secondSearch)
-  );
-}
-
-export function getBasicRouteSearchQueryParams(
-  search: BasicRouteSearch,
+export const getNpcsRouteSearchParams = (
+  search: NpcsRouteSearch,
   limit: number,
-) {
+) => {
   const query = search.query.trim();
-  const params = { limit, search: query === "" ? undefined : query };
-  const world = getWorld(search)?.trim();
+  const types = splitList(search.types).filter(isNpcType);
 
-  return world ? { ...params, world } : params;
-}
-
-export const getSearchStatus = (
-  hasActiveSearch: boolean,
-  isError: boolean,
-  isPending: boolean,
-): SearchStatus => {
-  if (!hasActiveSearch) return "idle";
-
-  if (isError) return "error";
-
-  if (isPending) return "loading";
-
-  return "ready";
+  return {
+    limit,
+    search: query === "" ? undefined : query,
+    types: types.length === 0 ? undefined : types,
+  };
 };

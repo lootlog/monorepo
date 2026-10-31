@@ -30,7 +30,10 @@ type GlobalChatMessageMenuProps = {
   canModerate: boolean;
 };
 
-/** Copy for everyone; pin, delete and mute for global chat admins. */
+/**
+ * Copy for everyone; pin, delete and mute for global chat admins. The items of
+ * the transcript's shared context menu.
+ */
 export const GlobalChatMessageMenu = ({
   channel,
   message,
@@ -43,10 +46,7 @@ export const GlobalChatMessageMenu = ({
     useGlobalChatModeration(channel);
 
   return (
-    <ContextMenuContent
-      aria-label={t("messageActions.label")}
-      className="ll:w-44 ll:flex ll:flex-col"
-    >
+    <>
       <ContextMenuItem onClick={() => void copyChatText(message.message)}>
         <Copy aria-hidden strokeWidth={1.5} className={ICON_CLASS_NAME} />
         {t("messageActions.copy")}
@@ -119,6 +119,6 @@ export const GlobalChatMessageMenu = ({
           />
         </>
       ) : null}
-    </ContextMenuContent>
+    </>
   );
 };

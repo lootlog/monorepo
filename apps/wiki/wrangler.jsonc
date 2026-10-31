@@ -12,7 +12,10 @@
     },
   ],
   "vars": {
+    "VITE_API_URL": "https://api.lootlog.pl",
+    "VITE_AUTH_SERVICE_URL": "https://auth.lootlog.pl",
     "VITE_SEARCH_API_URL": "https://search.lootlog.pl",
+    "VITE_WEB_APP_URL": "https://lootlog.pl",
   },
   "env": {
     "develop": {
@@ -24,7 +27,10 @@
         },
       ],
       "vars": {
+        "VITE_API_URL": "https://dev-api.lootlog.pl",
+        "VITE_AUTH_SERVICE_URL": "https://dev-auth.lootlog.pl",
         "VITE_SEARCH_API_URL": "https://dev-search.lootlog.pl",
+        "VITE_WEB_APP_URL": "https://dev.lootlog.pl",
       },
     },
   },

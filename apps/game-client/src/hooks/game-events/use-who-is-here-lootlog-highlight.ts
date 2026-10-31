@@ -49,14 +49,26 @@ function getWhoIsHereRows(): HTMLElement[] {
   );
 }
 
+// classList and style writes rewrite the game's attribute even when the value
+// is unchanged, so each row is written only when its highlight changes.
 function clearRowHighlight(row: HTMLElement): void {
-  row.classList.remove(HIGHLIGHT_CLASS);
-  row.style.removeProperty(WHO_IS_HERE_COLOR_PROPERTY);
+  if (row.classList.contains(HIGHLIGHT_CLASS)) {
+    row.classList.remove(HIGHLIGHT_CLASS);
+  }
+
+  if (row.style.getPropertyValue(WHO_IS_HERE_COLOR_PROPERTY)) {
+    row.style.removeProperty(WHO_IS_HERE_COLOR_PROPERTY);
+  }
 }
 
 function setRowHighlight(row: HTMLElement, color: string): void {
-  row.classList.add(HIGHLIGHT_CLASS);
-  row.style.setProperty(WHO_IS_HERE_COLOR_PROPERTY, color);
+  if (!row.classList.contains(HIGHLIGHT_CLASS)) {
+    row.classList.add(HIGHLIGHT_CLASS);
+  }
+
+  if (row.style.getPropertyValue(WHO_IS_HERE_COLOR_PROPERTY) !== color) {
+    row.style.setProperty(WHO_IS_HERE_COLOR_PROPERTY, color);
+  }
 }
 
 function installStyle(): () => void {
