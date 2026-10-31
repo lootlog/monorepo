@@ -115,6 +115,28 @@ describe("item upgrade", () => {
     ).toBe(87);
   });
 
+  it("grows native armor and absorption apart from the bonuses added to them", () => {
+    // A mage's heroic helmet at 300: native absorption 8 * 0.375 * 0.33 *
+    // (rarity_power + level_power) = 2613.8, plus two bonuses of
+    // 0.6 * level_power * 0.33 = 510.8 each.
+    const helmet = {
+      stat: "absorb=3635;lvl=300;rarity=heroic;reqp=m",
+      lvl: 300,
+      rarity: "HEROIC",
+      type: "HELMET",
+    };
+
+    // At 345 the native part is 3310.6 and the bonuses 1297.9; scaling the
+    // whole value by rarity_power + level_power would give 4604.
+    expect(statOf(upgradeItemStat(helmet, { level: 5 }), "absorb")).toBe(
+      "4608",
+    );
+    // The +5 bonus is a third absorption bonus: 649 more.
+    expect(
+      statOf(upgradeItemStat(helmet, { level: 5, bonus: "absorb" }), "bonus"),
+    ).toBe("absorb,649");
+  });
+
   it("offers stronger groups more often, three bonuses at a time", () => {
     const options = upgradeBonusOptions(necklace);
 
