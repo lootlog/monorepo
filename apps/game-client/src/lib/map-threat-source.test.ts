@@ -8,6 +8,7 @@ import type { AirTagMapThreatEvent } from "@lootlog/schema/air-tag";
 import { Permission } from "@lootlog/schema/permissions";
 import { createOnlinePlayersTest } from "@/features/online-players/online-players-test-fixtures";
 import { MapThreatSource } from "./map-threat-source";
+import type { PlayerPresence } from "./online-players-presence";
 import { getSocket } from "./socket";
 
 const policy = (location = true) =>
@@ -46,6 +47,22 @@ const threatData = (
   })),
 });
 
+const onlineMember = (characterId: string): PlayerPresence => ({
+  discordId: `discord-${characterId}`,
+  status: "online",
+  isAfk: false,
+  mapName: "Ithan",
+  player: {
+    world: "alpha",
+    name: "Member",
+    lvl: 1,
+    icon: "",
+    characterId,
+    accountId: "1",
+    prof: "w",
+  },
+});
+
 const threat = (...args: Parameters<typeof threatData>): ServerEvent => ({
   v: 1,
   type: "air-tag.map-threat-updated",
@@ -66,7 +83,7 @@ async function setup({
   harness.open();
   await harness.join(["guild-1"], policy(location), capabilities);
   let now = 1_000_000;
-  const memberListeners = new Set<() => void>();
+  const memberListeners = new Set<(presence?: PlayerPresence) => void>();
 
   const source = new MapThreatSource(
     getSocket(),
@@ -83,12 +100,15 @@ async function setup({
     () => now,
   );
 
-  const changeMembers = async (next: Iterable<string>) => {
+  const changeMembers = async (
+    next: Iterable<string>,
+    presence?: PlayerPresence,
+  ) => {
     members.clear();
 
     for (const characterId of next) members.add(characterId);
 
-    for (const listener of memberListeners) listener();
+    for (const listener of memberListeners) listener(presence);
     await Promise.resolve();
   };
 
@@ -183,8 +203,20 @@ describe("map threat source", () => {
     await harness.receive(threat([{ targetId: "3", ageMs: 0 }]));
     expect(source.getMapThreat("Karka-han")).toBeDefined();
 
-    await changeMembers(["3"]);
+    // Another member moving between maps leaves the threat as it is.
+    await changeMembers([], onlineMember("8"));
+    expect(source.getMapThreat("Karka-han")).toBeDefined();
+
+    await changeMembers(["3"], onlineMember("3"));
     expect(source.getMapThreat("Karka-han")).toBeUndefined();
+
+    // Without an account id the update is keyed by its Discord user alone, so
+    // it may have replaced the sighted character.
+    await changeMembers([], {
+      ...onlineMember("8"),
+      player: { ...onlineMember("8").player!, accountId: "" },
+    });
+    expect(source.getMapThreat("Karka-han")).toBeDefined();
     release();
   });
 

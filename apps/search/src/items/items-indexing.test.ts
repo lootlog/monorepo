@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { Meilisearch } from "meilisearch";
+import { npcCatalogKey } from "#src/npcs/npcs.service";
 import { itemCatalogKey, makeItemsModule } from "./items.service.js";
 
 const logger = { info() {}, warn() {}, error() {} };
@@ -152,3 +153,167 @@ test("failed existing-world reads prevent overwriting indexed worlds", async () 
   expect(failure._tag).toBe("SearchOperationFailure");
   expect(requests).toEqual(["/indexes/items/documents"]);
 });
+
+test("keeps an item's earliest sighting, every NPC of its edition it dropped from, and the retirements no drop disproved across reordered deliveries", async () => {
+  const written: Array<{ uid: string; firstSeenAt: number | null }> = [];
+  const nosferatu = npcDrop(7001, "Nosferatu");
+  const stored = itemCatalogKey(item(1));
+
+  const client = new Meilisearch({
+    host: "http://search.invalid",
+    httpClient: (input, init) => {
+      const url = new URL(String(input));
+
+      if ((init?.method ?? "GET").toUpperCase() === "GET") {
+        return Promise.resolve(
+          url.pathname.startsWith("/tasks/")
+            ? { uid: 1, status: "succeeded" }
+            : {
+                results: [
+                  {
+                    uid: stored,
+                    worlds: ["new"],
+                    firstSeenAt: Date.parse("2026-10-20T12:00:00.000Z"),
+                    droppedBy: [nosferatu.source],
+                    droppedByKeys: [nosferatu.source.key],
+                    retiredDropMonsterKeys: [
+                      nosferatu.source.monsterKey,
+                      "pl_Kostucha_HERO",
+                    ],
+                  },
+                ],
+              },
+        );
+      }
+
+      written.push(...JSON.parse(String(init?.body)));
+
+      return Promise.resolve({ taskUid: 1, status: "enqueued" });
+    },
+  });
+
+  const vampire = npcDrop(7002, "Wampir");
+
+  await Effect.runPromise(
+    makeItemsModule(client, logger).indexItems({
+      items: [
+        // A redelivered later sighting, then an earlier one from another NPC.
+        {
+          ...item(1),
+          observedAt: "2026-10-25T08:00:00.000Z",
+          droppedBy: nosferatu.indexed,
+        },
+        {
+          ...item(1),
+          observedAt: "2026-10-18T21:30:00.000Z",
+          droppedBy: vampire.indexed,
+        },
+        // An older loot names the English edition's boss.
+        {
+          ...item(1),
+          observedAt: "2026-10-19T10:00:00.000Z",
+          droppedBy: {
+            ...npcDrop(7003, "Negthotep the Abyss Priest").indexed,
+            gameVersion: "en",
+          },
+        },
+      ],
+    }),
+  );
+
+  expect(written).toEqual([
+    expect.objectContaining({
+      uid: stored,
+      firstSeenAt: Date.parse("2026-10-18T21:30:00.000Z"),
+      droppedByKeys: [nosferatu.source.key, vampire.source.key],
+      // Nosferatu dropped it again; Kostucha has not.
+      retiredDropMonsterKeys: ["pl_Kostucha_HERO"],
+    }),
+  ]);
+});
+
+test("replaces one monster's retired drops without touching other monsters' or unchanged entries", async () => {
+  const fetches: Array<{ filter: string }> = [];
+  const written: unknown[] = [];
+
+  const stored = [
+    { uid: "pl_1_a", id: 1 },
+    {
+      uid: "pl_2_a",
+      id: 2,
+      retiredDropMonsterKeys: ["pl_Nosferatu_HERO", "pl_Kostucha_HERO"],
+    },
+    { uid: "pl_3_a", id: 3, retiredDropMonsterKeys: ["pl_Nosferatu_HERO"] },
+  ];
+
+  const client = new Meilisearch({
+    host: "http://search.invalid",
+    httpClient: (input, init) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.startsWith("/tasks/"))
+        return Promise.resolve({ uid: 1, status: "succeeded" });
+
+      if (url.pathname.endsWith("/documents/fetch")) {
+        fetches.push(JSON.parse(String(init?.body)));
+
+        return Promise.resolve({ results: stored });
+      }
+
+      expect(init?.method).toBe("PUT");
+      written.push(...JSON.parse(String(init?.body)));
+
+      return Promise.resolve({ taskUid: 1, status: "enqueued" });
+    },
+  });
+
+  await Effect.runPromise(
+    makeItemsModule(client, logger).markRetiredDrops({
+      monsters: [
+        {
+          gameVersion: "pl",
+          name: "Nosferatu",
+          type: "HERO",
+          retiredItemIds: [1, 3],
+        },
+      ],
+    }),
+  );
+
+  expect(fetches[0]?.filter).toBe(
+    'droppedByMonsterKeys = "pl_Nosferatu_HERO" AND (retiredDropMonsterKeys = "pl_Nosferatu_HERO" OR id IN [1, 3])',
+  );
+  // Only the retired field is written, so drops indexed meanwhile survive.
+  expect(written).toEqual([
+    { uid: "pl_1_a", retiredDropMonsterKeys: ["pl_Nosferatu_HERO"] },
+    { uid: "pl_2_a", retiredDropMonsterKeys: ["pl_Kostucha_HERO"] },
+  ]);
+});
+
+function npcDrop(id: number, name: string) {
+  const indexed = {
+    id,
+    identityNamespace: "template" as const,
+    name,
+    lvl: 100,
+    icon: "npc.gif",
+    type: "HERO",
+    margonemType: 2,
+    gameVersion: "pl" as const,
+  };
+
+  return {
+    indexed,
+    source: {
+      key: npcCatalogKey(indexed),
+      monsterKey: `pl_${name}_HERO`,
+      id,
+      identityNamespace: "template",
+      gameVersion: "pl",
+      name,
+      lvl: 100,
+      icon: "npc.gif",
+      type: "HERO",
+    },
+  };
+}

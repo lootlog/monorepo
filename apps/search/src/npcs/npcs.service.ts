@@ -1,14 +1,19 @@
 import { uniqueWorlds } from "#src/shared/unique-worlds";
+import { earliestSeenAt, toSeenAt } from "#src/shared/first-seen";
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { NpcTypeEnum, NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import type { GameVersion } from "@lootlog/schema/game-version";
 import { Effect, Schema } from "effect";
-import { partition, pick } from "es-toolkit";
+import { chunk, partition, pick } from "es-toolkit";
 import type { Meilisearch } from "meilisearch";
-import { buildMeilisearchNameQuery } from "#src/meilisearch/query-builder";
+import {
+  buildMeilisearchInFilter,
+  buildMeilisearchNameQuery,
+} from "#src/meilisearch/query-builder";
 import {
   attemptMeilisearch,
+  completeMeilisearchTask,
   type SearchOperationFailure,
 } from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
@@ -16,6 +21,10 @@ import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import type { NpcSearchQuery } from "./npc-search-query.js";
 import { NPCS_INDEX } from "./search-index.js";
 import type { IndexNpcsCommand } from "./index-npcs-command.js";
+import type {
+  MonsterLocation,
+  MonsterLocationsCommand,
+} from "./monster-locations-command.js";
 import type { NpcHit } from "./npc-hit.js";
 
 type IndexNpc = IndexNpcsCommand["npcs"][number];
@@ -47,12 +56,32 @@ const NAMESPACE_PREFERENCE: Record<NpcIdentityNamespace, number> = {
   [NpcIdentityNamespace.RUNTIME]: 2,
 };
 
-const collapseByNameAndType = (hits: readonly NpcHit[]) => {
-  const preferred = new Map<string, NpcHit>();
+/**
+ * One monster across its catalog identities: a boss seen by older clients
+ * keeps runtime or legacy entries beside its template one, all with the
+ * edition, name and type in common. Equal names in different editions are
+ * different monsters.
+ */
+export const npcMonsterKey = (npc: {
+  gameVersion: GameVersion;
+  name: string;
+  type: string | null;
+}) => `${npc.gameVersion}_${npc.name}_${npc.type}`;
+
+export const collapseByNameAndType = <
+  Hit extends {
+    gameVersion: GameVersion;
+    name: string;
+    type: string | null;
+    identityNamespace: NpcIdentityNamespace;
+  },
+>(
+  hits: readonly Hit[],
+) => {
+  const preferred = new Map<string, Hit>();
 
   for (const hit of hits) {
-    // Equal names in different editions are different NPCs.
-    const key = `${hit.gameVersion}_${hit.name}_${hit.type}`;
+    const key = npcMonsterKey(hit);
     const current = preferred.get(key);
 
     if (
@@ -96,11 +125,23 @@ export const toNpcDocument = (npc: IndexNpc) => {
     worlds: [npc.world],
     gameVersion: npc.gameVersion,
     uid: npcCatalogKey({ ...npc, identityNamespace }),
+    monsterKey: npcMonsterKey({ ...npc, type }),
     observedLootId: npc.lootId ?? null,
+    firstSeenAt: toSeenAt(npc.observedAt),
   };
 };
 
-type NpcDocument = ReturnType<typeof toNpcDocument>;
+/**
+ * A stored catalog entry. `locations` comes from the API's daily monster
+ * statistics, not from loots; entries it has not reached yet have none.
+ */
+type NpcDocument = ReturnType<typeof toNpcDocument> & {
+  locations?: ReadonlyArray<typeof MonsterLocation.Type>;
+};
+
+const LOCATIONS_MONSTERS_PER_READ = 100;
+
+const LOCATIONS_PAGE = 1000;
 
 const toNpcHit = (document: NpcDocument): NpcHit =>
   pick(document, [
@@ -118,8 +159,8 @@ const toNpcHit = (document: NpcDocument): NpcHit =>
   ]);
 
 /**
- * One catalog entry from two observations: the later loot's attributes, and
- * every world of both. Delivery order is not chronology: a retried or
+ * One catalog entry from two observations: the later loot's attributes,
+ * every world of both, the earlier first sighting and the stored locations. Delivery order is not chronology: a retried or
  * redelivered publication can arrive after a newer one. An observation
  * without a loot id, from an older publisher, counts as the latest.
  */
@@ -132,9 +173,14 @@ export const mergeNpcDocument = (
     stored.observedLootId !== null &&
     stored.observedLootId > incoming.observedLootId;
 
+  const locations = stored.locations ?? incoming.locations;
+
   return {
     ...(storedIsNewer ? stored : incoming),
     worlds: uniqueWorlds([...incoming.worlds, ...stored.worlds]),
+    // Entries indexed before first sightings were recorded have none.
+    firstSeenAt: earliestSeenAt(incoming.firstSeenAt, stored.firstSeenAt),
+    ...(locations && { locations }),
   };
 };
 
@@ -213,12 +259,70 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
     );
   });
 
-  return { getNpcs, indexNpcs } satisfies {
+  /**
+   * Replaces each monster's locations on every catalog identity of it. Only
+   * the locations are written, so observations indexed meanwhile are kept.
+   */
+  const setLocations = Effect.fn("SearchNpcs.setLocations")(function* (
+    data: MonsterLocationsCommand,
+  ) {
+    const index = meilisearch.index<NpcDocument>(NPCS_INDEX);
+
+    const locationsByMonster = new Map(
+      data.monsters.map((monster) => [
+        npcMonsterKey(monster),
+        monster.locations,
+      ]),
+    );
+
+    const changed: Array<Pick<NpcDocument, "uid" | "locations">> = [];
+
+    for (const monsterKeys of chunk(
+      [...locationsByMonster.keys()],
+      LOCATIONS_MONSTERS_PER_READ,
+    )) {
+      for (let offset = 0; ; offset += LOCATIONS_PAGE) {
+        const page = yield* attemptMeilisearch(
+          "search.npcs.locations.existing",
+          () =>
+            index.getDocuments<
+              Pick<NpcDocument, "uid" | "monsterKey" | "locations">
+            >({
+              filter: buildMeilisearchInFilter("monsterKey", monsterKeys),
+              fields: ["uid", "monsterKey", "locations"],
+              limit: LOCATIONS_PAGE,
+              offset,
+            }),
+        );
+
+        for (const document of page.results) {
+          const locations = locationsByMonster.get(document.monsterKey);
+
+          if (locations && !Bun.deepEquals(locations, document.locations)) {
+            changed.push({ uid: document.uid, locations });
+          }
+        }
+
+        if (page.results.length < LOCATIONS_PAGE) break;
+      }
+    }
+
+    for (const batch of chunk(changed, 500)) {
+      yield* completeMeilisearchTask("search.npcs.locations.index", () =>
+        index.updateDocuments(batch),
+      );
+    }
+  });
+
+  return { getNpcs, indexNpcs, setLocations } satisfies {
     readonly getNpcs: (
       input: NpcSearchQuery,
     ) => Effect.Effect<ReadonlyArray<NpcHit>, SearchOperationFailure>;
     readonly indexNpcs: (
       data: IndexNpcsCommand,
+    ) => Effect.Effect<void, SearchOperationFailure>;
+    readonly setLocations: (
+      data: MonsterLocationsCommand,
     ) => Effect.Effect<void, SearchOperationFailure>;
   };
 };

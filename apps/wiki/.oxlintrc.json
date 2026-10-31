@@ -2,13 +2,13 @@
   "extends": ["../../.oxlintrc.react.json"],
   "overrides": [
     {
-      "files": ["src/routes/items.tsx"],
+      "files": ["src/lib/items-search.ts"],
       "rules": {
         "anti-slop/no-runtime-typeof": [
           "error",
           {
             "allowInTypeGuards": true,
-            "boundaryFunctions": ["validateSearch"]
+            "boundaryFunctions": ["validateItemsSearch"]
           }
         ]
       }
@@ -20,16 +20,17 @@
           "error",
           {
             "allowInTypeGuards": true,
-            "boundaryFunctions": [
-              "validateQueryRouteSearch",
-              "validateQueryAndWorldRouteSearch"
-            ]
+            "boundaryFunctions": ["validateNpcsRouteSearch"]
           }
         ]
       }
     },
     {
-      "files": ["src/routes/-use-basic-search-form.ts", "src/routes/items.tsx"],
+      "files": [
+        "src/routes/-use-basic-search-form.ts",
+        "src/routes/items.tsx",
+        "src/components/equipment/equipment-set-provider.tsx"
+      ],
       "rules": {
         "react/set-state-in-effect": "off"
       }

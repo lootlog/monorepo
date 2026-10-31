@@ -1,25 +1,28 @@
-import { SearchResultsHeader } from "@/components/search-results-header";
-import { SearchStatusCard } from "@/components/search-status-card";
-import { BasicSearchForm } from "@/components/basic-search-form";
-import { createFileRoute } from "@tanstack/react-router";
-import { useBasicSearchForm } from "./-use-basic-search-form";
-import { Badge } from "@lootlog/ui/components/badge";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { useCatalogControllerGetNpcs } from "@lootlog/client/search";
 import { Card, CardContent, CardHeader } from "@lootlog/ui/components/card";
 import { NpcTile } from "@lootlog/ui/components/npc-tile";
-import { getRuntimeConfig } from "@/config/runtime-config";
+import { NpcTypeIcon } from "@lootlog/ui/components/npc-type-icon";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { BasicSearchForm } from "@/components/basic-search-form";
+import { CATALOG_GRID } from "@/components/catalog/catalog-item-grid";
+import { FilterTile } from "@/components/filter-tile";
 import { t } from "@/i18n/messages";
+import { npcPageParams, WIKI_GAME_VERSION } from "@/lib/catalog-links";
+import { joinList, splitList } from "@/lib/items-search";
+import { NPC_TYPE_ICONS, NPC_TYPE_OPTIONS } from "@/lib/npc-types";
+import { useBasicSearchForm } from "./-use-basic-search-form";
 import {
-  getNpcsControllerGetNpcsQueryKey,
-  useNpcsControllerGetNpcs,
-} from "@lootlog/client/search";
-import {
-  getBasicRouteSearchQueryParams,
-  isBasicRouteSearchActive,
-  getSearchStatus,
-  validateQueryRouteSearch,
+  getNpcsRouteSearchParams,
+  validateNpcsRouteSearch,
 } from "./-search-route.utils";
 
 const SEARCH_LIMIT = 72;
+
+// The catalog keeps no event heroes of their own, so the filter offers none.
+const TYPE_FILTER_OPTIONS = NPC_TYPE_OPTIONS.filter(
+  (type) => type !== "EVENT_HERO",
+);
 
 export const Route = createFileRoute("/npcs")({
   component: NpcsRoute,
@@ -30,101 +33,122 @@ export const Route = createFileRoute("/npcs")({
       },
     ],
   }),
-  loader: () => getRuntimeConfig(),
-  validateSearch: validateQueryRouteSearch,
+  validateSearch: validateNpcsRouteSearch,
 });
 
 function NpcsRoute() {
   const navigate = Route.useNavigate();
-  const { searchApiUrl } = Route.useLoaderData();
   const search = Route.useSearch();
   const searchForm = useBasicSearchForm(search, navigate);
-  const hasActiveSearch = isBasicRouteSearchActive(search);
-  const queryParams = getBasicRouteSearchQueryParams(search, SEARCH_LIMIT);
 
-  const npcsQuery = useNpcsControllerGetNpcs(queryParams, {
-    query: {
-      enabled: hasActiveSearch,
-      placeholderData: (previousData) => previousData,
-      queryKey: getNpcsControllerGetNpcsQueryKey(queryParams),
+  const {
+    search: query,
+    types,
+    limit,
+  } = getNpcsRouteSearchParams(search, SEARCH_LIMIT);
+
+  const selectedTypes = splitList(search.types);
+
+  const toggleType = (type: string) => (pressed: boolean) =>
+    void navigate({
+      replace: true,
+      search: (current) => ({
+        ...current,
+        types: joinList(
+          pressed
+            ? [...selectedTypes, type]
+            : selectedTypes.filter((selected) => selected !== type),
+        ),
+      }),
+    });
+
+  const { data, isError } = useCatalogControllerGetNpcs(
+    {
+      search: query,
+      gameVersion: WIKI_GAME_VERSION,
+      types,
+      limit,
     },
-    request: {
-      apiClient: {
-        baseUrl: searchApiUrl,
-      },
-    },
-  });
-
-  const data = hasActiveSearch ? (npcsQuery.data ?? []) : [];
-
-  const status = getSearchStatus(
-    hasActiveSearch,
-    npcsQuery.isError,
-    npcsQuery.isPending,
+    { query: { placeholderData: (previousData) => previousData } },
   );
 
   return (
-    <main className="page-wrap overflow-x-hidden px-3 pb-10 pt-6">
-      <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+    <div className="flex flex-col gap-4 py-6">
+      <Card className="gap-4 p-4">
         <CardHeader className="px-0">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-4xl">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
-                {t("npcs.eyebrow")}
-              </p>
-              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                {t("npcs.title")}
-              </h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                {t("npcs.description")}
-              </p>
-            </div>
-            <Badge variant="secondary">
-              {t("search.limitBadge", { count: SEARCH_LIMIT })}
-            </Badge>
-          </div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {t("npcs.title")}
+          </h1>
+          <p className="max-w-3xl text-sm text-muted-foreground">
+            {t("npcs.description")}
+          </p>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="flex flex-col gap-3 px-0">
           <BasicSearchForm {...searchForm} />
+          <fieldset className="flex flex-col gap-1.5">
+            <legend className="mb-1.5 text-xs font-medium text-muted-foreground">
+              {t("npcs.types")}
+            </legend>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-1.5">
+              {TYPE_FILTER_OPTIONS.map((type) => (
+                <FilterTile
+                  key={type}
+                  label={t(`npcTypes.${type}`)}
+                  icon={
+                    <NpcTypeIcon
+                      type={NPC_TYPE_ICONS[type]}
+                      aria-hidden="true"
+                      className="size-4"
+                    />
+                  }
+                  pressed={selectedTypes.includes(type)}
+                  onPressedChange={toggleType(type)}
+                />
+              ))}
+            </div>
+          </fieldset>
         </CardContent>
       </Card>
 
-      <section className="mt-4">
-        <SearchStatusCard status={status} empty={data.length === 0} />
-        {status === "ready" && data.length > 0 ? (
-          <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
-            <SearchResultsHeader
-              count={data.length}
-              start={1}
-              end={data.length}
-            />
-            <div className="grid grid-flow-dense grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
-              {data.map((npc) => (
-                <article
-                  key={`${npc.gameVersion}_${npc.identityNamespace}_${npc.id}_${npc.margonemType}`}
-                  className="flex items-center gap-3 rounded-xl border border-border bg-background/40 p-3"
-                >
-                  <NpcTile
-                    levelLabel={(level) => t("common.levelShort", { level })}
-                    npc={npc}
-                  />
-                  <div className="min-w-0">
-                    <h2 className="truncate text-sm font-semibold text-foreground">
-                      {npc.name}
-                    </h2>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {t(`npcTypes.${npc.type}`)}
-                      {npc.gameVersion
-                        ? ` · ${t(`npcs.gameVersions.${npc.gameVersion}`)}`
-                        : null}
-                    </p>
-                  </div>
-                </article>
+      {isError ? (
+        <p role="alert" className="text-sm text-destructive">
+          {t("catalog.loadError")}
+        </p>
+      ) : data?.hits.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t("search.noResults")}</p>
+      ) : (
+        <ul className={CATALOG_GRID}>
+          {data
+            ? data.hits.map((npc) => (
+                <li key={npc.key}>
+                  <Link
+                    to="/npcs/$npcSlug"
+                    params={npcPageParams(npc)}
+                    className="flex items-center gap-3 rounded-lg border border-border/50 bg-card p-3 outline-none transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
+                  >
+                    <NpcTile
+                      npc={npc}
+                      levelLabel={(level) => t("common.levelShort", { level })}
+                    />
+                    <span className="flex min-w-0 flex-col gap-1">
+                      <span className="truncate text-sm font-semibold text-foreground">
+                        {npc.name}
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {t(`npcTypes.${npc.type}`)} ·{" "}
+                        {t("common.levelShort", { level: npc.lvl })}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))
+            : Array.from({ length: 12 }, (_, index) => (
+                <li key={index}>
+                  <Skeleton className="h-[4.25rem] rounded-lg" />
+                </li>
               ))}
-            </div>
-          </Card>
-        ) : null}
-      </section>
-    </main>
+        </ul>
+      )}
+    </div>
   );
 }

@@ -3134,14 +3134,22 @@ test.each(["msgpack", "json"] as const)(
   },
 );
 
-test.each(["msgpack", "json"] as const)(
-  "keeps basic and precise %s presence private for local and remote recipients",
-  async (frameEncoding) => {
+test.each([
+  ["msgpack", 7],
+  ["json", 7],
+  ["msgpack", 8],
+  ["json", 8],
+] as const)(
+  "keeps basic and precise %s presence private for local and remote recipients at federation version %d",
+  async (frameEncoding, clusterFederationVersion) => {
     const bus = new FederationBus();
     const local = new RealtimeHub(config, new FakeRedisStore(bus));
     const remote = new RealtimeHub(config, new FakeRedisStore(bus));
 
-    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+    for (const hub of [local, remote]) {
+      hub.clusterFederationVersion = clusterFederationVersion;
+      await Effect.runPromise(hub.start());
+    }
 
     const scope = {
       topic: "organization.presence",
@@ -3186,7 +3194,7 @@ test.each(["msgpack", "json"] as const)(
         hub.register(socket);
         hub.subscribe(socket, scope);
 
-        return { sent, role, precise };
+        return { sent, session, role, precise };
       }),
     );
 
@@ -3229,11 +3237,24 @@ test.each(["msgpack", "json"] as const)(
 
     await local.publishPresence(scope, basic, precise);
 
+    // A permission change replaces the session's grants, as commitAccess does.
     for (const target of targets) {
-      target.role.permissions = [Permission.LOOTLOG_ONLINE_PLAYERS_READ];
-
-      if (!target.precise)
-        target.role.permissions.push(Permission.LOOTLOG_PRESENCE_LOCATION_READ);
+      target.session.guilds = [
+        {
+          guild: { id: scope.organizationId, ownerId: "owner" },
+          roles: [
+            {
+              ...target.role,
+              permissions: target.precise
+                ? [Permission.LOOTLOG_ONLINE_PLAYERS_READ]
+                : [
+                    Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+                    Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+                  ],
+            },
+          ],
+        },
+      ];
     }
 
     await local.publishPresence(scope, basic, precise);

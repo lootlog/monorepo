@@ -13,7 +13,7 @@ import {
 } from "@lootlog/ui/components/combobox";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { cn } from "cn";
-import { FilterChipButton } from "@/components/common/filter-chip-button";
+import { FilterChipButton } from "@lootlog/ui/components/filter-chip-button";
 import { ThemeInteractiveFrame } from "@/themes";
 
 export type SearchComboboxOption = {

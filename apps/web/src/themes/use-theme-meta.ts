@@ -5,7 +5,7 @@ import {
   isCatTheme,
   isRiasTheme,
   isRukiaTheme,
-} from "./resolver";
+} from "@lootlog/ui/themes/resolver";
 
 export const useThemeMeta = () => {
   const themeState = useTheme();

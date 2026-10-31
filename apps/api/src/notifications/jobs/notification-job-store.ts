@@ -1,7 +1,19 @@
 import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
+import { FACTION_WAR_NOTIFICATION_SOURCE } from "#src/notifications/faction-war/faction-war-announcements";
 import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, asc, desc, eq, inArray, isNull, lt, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  isNull,
+  lt,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
@@ -342,6 +354,15 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
             eq(notificationJobTable.ownerType, ownerType),
             eq(notificationJobTable.ownerId, ownerId),
             inArray(notificationJobTable.status, [...statuses]),
+            // A faction war announcement's row is what keeps the cron from
+            // sending it again; a war leaves only a few per channel.
+            or(
+              isNull(notificationJobTable.sourceEntityType),
+              ne(
+                notificationJobTable.sourceEntityType,
+                FACTION_WAR_NOTIFICATION_SOURCE,
+              ),
+            ),
           ),
         )
         .orderBy(desc(notificationJobTable.updatedAt))

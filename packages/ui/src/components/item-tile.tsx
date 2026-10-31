@@ -1,10 +1,11 @@
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
+import type { ItemDisplayValue } from "@lootlog/ui/components/item-stat-utils";
 import {
-  mapStatsToDisplaySections,
-  parseItemStats,
-  type ItemDisplayValue,
-} from "@lootlog/ui/components/item-stat-utils";
+  fallbackRenderStat,
+  ITEM_RARITY_STYLES,
+  ItemTileDetails,
+} from "@lootlog/ui/components/item-tile-details";
 import { useSharedTooltip } from "@lootlog/ui/components/shared-tooltip-provider";
 import {
   Tooltip,
@@ -27,11 +28,18 @@ export type ItemTileLabels = {
   obtainedBy?: string;
   rarity: Record<string, string>;
   type: Record<string, string>;
-  typePrefix: string;
+};
+
+/** An item the tooltip shows beside this one, such as the one worn instead. */
+export type ItemTileComparison = {
+  item: GameItem;
+  /** What the compared item is, shown above it. */
+  label: string;
 };
 
 export type ItemTileProps = {
   color?: string;
+  comparison?: ItemTileComparison;
   item: GameItem;
   labels: ItemTileLabels;
   renderStat?: (displayValue: ItemDisplayValue) => ReactNode;
@@ -39,111 +47,12 @@ export type ItemTileProps = {
   shareNickname?: string;
 };
 
-const formatFallbackValue = (
-  rawValue: string | string[] | number | boolean | undefined,
-) => {
-  if (Array.isArray(rawValue)) {
-    return rawValue.join(", ");
-  }
-
-  return String(rawValue ?? "");
-};
-
-const fallbackRenderStat = (displayValue: ItemDisplayValue) => {
-  if (!displayValue.key) {
-    return null;
-  }
-
-  return (
-    <span>
-      <span className="text-muted-foreground">{displayValue.key}: </span>
-      <span className="font-semibold text-primary">
-        {formatFallbackValue(displayValue.value)}
-      </span>
-    </span>
-  );
-};
-
-const ItemTileTooltipBody: FC<
-  Required<Pick<ItemTileProps, "color" | "labels" | "renderStat">> & {
-    icon: string;
-    name: string;
-    rarity: ItemRarity;
-    shareNickname?: string;
-    stat: string;
-    type: string;
-  }
-> = ({
-  color,
-  icon,
-  labels,
-  name,
-  rarity,
-  renderStat,
-  shareNickname,
-  stat,
-  type,
-}) => {
-  const rarityClassName = cn("text-xs font-semibold", {
-    "text-amber-300": rarity === ItemRarity.UNIQUE,
-    "text-blue-500": rarity === ItemRarity.HEROIC,
-    "text-muted-foreground": rarity === ItemRarity.COMMON,
-    "text-orange-600": rarity === ItemRarity.LEGENDARY,
-    "text-primary text-sm": rarity === ItemRarity.UPGRADED,
-  });
-
-  const statSections = mapStatsToDisplaySections(parseItemStats(stat));
-
-  return (
-    <>
-      <div className="flex flex-row items-center justify-between border-b border-border/50 pb-2">
-        <div className="flex flex-col justify-between">
-          <p className="font-heading mr-8 mt-0 text-md font-semibold tracking-tight text-foreground">
-            {name}
-          </p>
-          <p className={rarityClassName}>{labels.rarity[rarity] ?? rarity}</p>
-          <p className="text-xs text-muted-foreground">
-            {labels.typePrefix}
-            {labels.type[type] ?? type}
-          </p>
-        </div>
-        <ItemImage color={color} icon={icon} rarity={rarity} />
-      </div>
-      <div className="flex flex-col gap-2 pt-2 text-xs">
-        {statSections.map(({ index: sectionIndex, values }, index) => {
-          return (
-            <div
-              key={sectionIndex}
-              className={cn("flex flex-col gap-0.5 pb-2", {
-                "border-b border-border/50": index < statSections.length - 1,
-              })}
-            >
-              {values.map((displayValue) => (
-                <div
-                  key={`${displayValue.key}-${formatFallbackValue(
-                    displayValue.value,
-                  )}`}
-                  className="whitespace-pre-line text-xs text-foreground"
-                >
-                  {renderStat(displayValue)}
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-      {shareNickname && labels.obtainedBy ? (
-        <div className="py-2 text-xs text-muted-foreground">
-          {labels.obtainedBy}{" "}
-          <span className="font-semibold text-foreground">{shareNickname}</span>
-        </div>
-      ) : null}
-    </>
-  );
-};
+const TOOLTIP_FRAME_CLASS_NAME =
+  "w-80 overflow-hidden rounded-xl border-[color-mix(in_oklab,var(--item-rarity)_40%,var(--border))] bg-popover/95 text-left text-wrap backdrop-blur-md";
 
 export const ItemTile: FC<ItemTileProps> = ({
   color = "",
+  comparison,
   item: { icon, name, rarity, stat, type },
   labels,
   renderStat = fallbackRenderStat,
@@ -154,17 +63,13 @@ export const ItemTile: FC<ItemTileProps> = ({
   const normalizedRarity = rarity ?? ItemRarity.COMMON;
   const triggerClassName = "w-fit appearance-none border-0 bg-transparent p-0";
 
-  const tooltipBorderClassName = cn(
-    "w-80 p-3 pb-0 bg-popover/95 backdrop-blur-md",
-    {
-      "border border-border/50": normalizedRarity === ItemRarity.COMMON,
-      "border-2 border-amber-300/80": normalizedRarity === ItemRarity.UNIQUE,
-      "border-2 border-blue-500/80": normalizedRarity === ItemRarity.HEROIC,
-      "border-2 border-orange-600/80":
-        normalizedRarity === ItemRarity.LEGENDARY,
-      "border-2 border-primary/40": normalizedRarity === ItemRarity.UPGRADED,
-    },
-  );
+  const tooltipBorderClassName = comparison
+    ? "w-fit border-0 bg-transparent p-0 text-left text-wrap"
+    : cn(
+        TOOLTIP_FRAME_CLASS_NAME,
+        "p-0",
+        ITEM_RARITY_STYLES[normalizedRarity].accent,
+      );
 
   const itemImage = (
     <ItemImage
@@ -175,8 +80,8 @@ export const ItemTile: FC<ItemTileProps> = ({
     />
   );
 
-  const tooltipContent = (
-    <ItemTileTooltipBody
+  const details = (
+    <ItemTileDetails
       color={color}
       icon={icon}
       labels={labels}
@@ -187,6 +92,47 @@ export const ItemTile: FC<ItemTileProps> = ({
       stat={stat}
       type={type ?? ""}
     />
+  );
+
+  const comparedRarity = comparison?.item.rarity ?? ItemRarity.COMMON;
+
+  // Side by side where there is room, the item first and then the one it is
+  // compared with, each in its own rarity's frame.
+  const tooltipContent = comparison ? (
+    <div className="flex flex-col items-start gap-2 sm:flex-row">
+      <div
+        className={cn(
+          TOOLTIP_FRAME_CLASS_NAME,
+          "border",
+          ITEM_RARITY_STYLES[normalizedRarity].accent,
+        )}
+      >
+        {details}
+      </div>
+      <div
+        className={cn(
+          TOOLTIP_FRAME_CLASS_NAME,
+          "border",
+          ITEM_RARITY_STYLES[comparedRarity].accent,
+        )}
+      >
+        <p className="border-b border-border bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+          {comparison.label}
+        </p>
+        <ItemTileDetails
+          color=""
+          icon={comparison.item.icon}
+          labels={labels}
+          name={comparison.item.name}
+          rarity={comparedRarity}
+          renderStat={renderStat}
+          stat={comparison.item.stat}
+          type={comparison.item.type ?? ""}
+        />
+      </div>
+    </div>
+  ) : (
+    details
   );
 
   if (sharedTooltip) {

@@ -37,7 +37,11 @@ export interface FederatedRealtimeMessage {
   readonly recipientCharacterIds?: ReadonlyArray<string>;
   readonly presenceAudience?: "basic" | "precise";
   readonly organizationId?: string;
+  /** `FRAME_SCHEMA` of the publishing replica; absent before version 8. */
+  readonly frameSchema?: string;
   readonly frame?: string;
+  /** Precise presence variant of `frame` for readers of precise location. */
+  readonly preciseFrame?: string;
   readonly control?: {
     readonly type: "permissions.rebalance";
     readonly discordId: string;
@@ -71,7 +75,9 @@ const FederatedRealtimeMessageJson = Schema.fromJsonString(
     recipientCharacterIds: Schema.optional(Schema.Array(Schema.String)),
     presenceAudience: Schema.optional(Schema.Literals(["basic", "precise"])),
     organizationId: Schema.optional(Schema.String),
+    frameSchema: Schema.optional(Schema.String),
     frame: Schema.optional(Schema.String),
+    preciseFrame: Schema.optional(Schema.String),
     control: Schema.optional(
       Schema.Struct({
         type: Schema.Literal("permissions.rebalance"),

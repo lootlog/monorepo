@@ -6,6 +6,7 @@
   "sideEffects": false,
   "exports": {
     "./feed": "./src/feed.ts",
+    "./loot-events": "./src/loot-events.ts",
     "./loot-summary": "./src/loot-summary.ts",
     "./http/service-auth": "./src/http/service-auth.ts",
     "./http/margonem-account-proof": "./src/http/margonem-account-proof.ts",

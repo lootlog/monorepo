@@ -27,11 +27,21 @@ export const SEARCH_INDEX_PRIMARY_KEY = "uid";
 /** The settings every index runs with; the seed script applies the same ones. */
 export const searchIndexSettings: IndexSettings = {
   [NPCS_INDEX]: {
-    filterableAttributes: ["id", "name", "type"],
+    filterableAttributes: [
+      "id",
+      "name",
+      "type",
+      "uid",
+      "monsterKey",
+      "gameVersion",
+    ],
+    sortableAttributes: ["firstSeenAt"],
   },
   [PLAYERS_INDEX]: { filterableAttributes: ["name", "world"] },
   [ITEMS_INDEX]: {
     filterableAttributes: [
+      "id",
+      "gameVersion",
       "worlds",
       "type",
       "rarity",
@@ -40,9 +50,16 @@ export const searchIndexSettings: IndexSettings = {
       "numericStats",
       "requiredProfessions",
       "statsKeys",
+      "legendaryBonus",
+      "eventSlugs",
+      "droppedByKeys",
+      "droppedByMonsterKeys",
+      "droppedByTypes",
+      "retiredDropMonsterKeys",
+      "firstSeenAt",
     ],
     searchableAttributes: ["name", "stat"],
-    sortableAttributes: ["name", "lvl", "rarity", "type"],
+    sortableAttributes: ["id", "name", "lvl", "rarity", "type", "firstSeenAt"],
     distinctAttribute: "id",
   },
 };

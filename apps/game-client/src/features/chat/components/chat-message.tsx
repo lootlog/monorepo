@@ -9,11 +9,8 @@ import type {
 
 import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
-import {
-  ContextMenu,
-  ContextMenuTrigger,
-  openContextMenuOnKeyDown,
-} from "@/components/ui/context-menu";
+import { openContextMenuOnKeyDown } from "@/components/ui/context-menu";
+import { useSharedContextMenuTarget } from "@/components/common/shared-context-menu-registry";
 import { useGameStore } from "@/store/game.store";
 import {
   getChatMessageBody,
@@ -69,6 +66,31 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   const senderName =
     member?.name ?? message.characterData?.nick ?? t("contextMenu.unknownUser");
 
+  const isPlayerMessage =
+    Boolean(message.characterData && guildName && messageBody) &&
+    message.type !== MessageType.NPC;
+
+  const menuTarget = useSharedContextMenuTarget(
+    message.id,
+    isPlayerMessage
+      ? {
+          className: "ll:w-44 ll:flex ll:flex-col",
+          items: (
+            <ChatMessageContextMenu
+              canDelete={canDeleteMessage}
+              canReply={canReplyMessage}
+              gameInterface={gameInterface}
+              heroName={heroName}
+              isDeleting={isDeleting}
+              message={message}
+              onReply={onReply}
+              onDelete={() => onDelete?.()}
+            />
+          ),
+        }
+      : null,
+  );
+
   if (!message.characterData) return null;
 
   if (!guildName) return null;
@@ -93,63 +115,45 @@ export const ChatMessage: FC<ChatMessageProps> = ({
     dispatchChatScrollToMessage(message.replyTo.messageId);
   };
 
-  const actionProps = {
-    canDelete: canDeleteMessage,
-    canReply: canReplyMessage,
-    gameInterface,
-    heroName,
-    isDeleting,
-    message,
-    onReply,
-    onDelete: () => onDelete?.(),
-  };
-
   return (
-    <ContextMenu>
-      <ContextMenuTrigger
-        asChild
-        tabIndex={0}
-        onKeyDown={openContextMenuOnKeyDown}
-      >
-        <ChatPlayerMessageView
-          all={all}
-          appearance={appearance}
-          body=<ChatMessageBody
-            isDeleting={isDeleting}
-            isMsgYesterday={isMsgYesterday}
-            mentionContext={mentionContext}
-            message={message}
+    <ChatPlayerMessageView
+      {...menuTarget}
+      tabIndex={0}
+      onKeyDown={openContextMenuOnKeyDown}
+      all={all}
+      appearance={appearance}
+      body=<ChatMessageBody
+        isDeleting={isDeleting}
+        isMsgYesterday={isMsgYesterday}
+        mentionContext={mentionContext}
+        message={message}
+      />
+      replyPreview={
+        message.replyTo ? (
+          <ChatReplyPreview
+            variant="compact"
+            reply={message.replyTo}
+            onClick={scrollToOriginalMessage}
+            className="ll:mb-0.5 ll:-ml-1.5 ll:-mr-0.5 ll:w-[calc(100%+8px)] ll:max-w-none ll:pl-1.5 ll:pr-0.5"
           />
-          replyPreview={
-            message.replyTo ? (
-              <ChatReplyPreview
-                variant="compact"
-                reply={message.replyTo}
-                onClick={scrollToOriginalMessage}
-                className="ll:mb-0.5 ll:-ml-1.5 ll:-mr-0.5 ll:w-[calc(100%+8px)] ll:max-w-none ll:pl-1.5 ll:pr-0.5"
-              />
-            ) : null
-          }
-          guildName={guildName}
-          isMsgYesterday={isMsgYesterday}
-          messageId={message.id}
-          sender={
-            <ChatCharacterTooltip character={message.characterData}>
-              <span
-                className={cn(
-                  "ll:inline-block ll:font-bold ll:mr-0.5 ll:select-text",
-                )}
-                style={{ color: `#${memberColor}` }}
-              >
-                {senderName}:
-              </span>
-            </ChatCharacterTooltip>
-          }
-          timestamp={message.timestamp}
-        />
-      </ContextMenuTrigger>
-
-      <ChatMessageContextMenu {...actionProps} />
-    </ContextMenu>
+        ) : null
+      }
+      guildName={guildName}
+      isMsgYesterday={isMsgYesterday}
+      messageId={message.id}
+      sender={
+        <ChatCharacterTooltip character={message.characterData}>
+          <span
+            className={cn(
+              "ll:inline-block ll:font-bold ll:mr-0.5 ll:select-text",
+            )}
+            style={{ color: `#${memberColor}` }}
+          >
+            {senderName}:
+          </span>
+        </ChatCharacterTooltip>
+      }
+      timestamp={message.timestamp}
+    />
   );
 };

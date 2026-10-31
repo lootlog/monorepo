@@ -1,6 +1,6 @@
 import { useDeleteUserTheme } from "@/hooks/api/user/use-user-themes";
 import { useTheme } from "@/hooks/context/use-theme";
-import { toCustomThemePreference } from "@/themes/custom-theme";
+import { toCustomThemePreference } from "@lootlog/ui/themes/custom-theme";
 import type { UserThemeResponseDto } from "@lootlog/client/main";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import type { ReactNode } from "react";

@@ -3,6 +3,40 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased: Public item and NPC catalog
+
+The Search API adds two read-only endpoints that work without an API key or a
+session: `GET /public/catalog/items` and `GET /public/catalog/npcs`. They serve
+game facts only. No player, world or Organization appears in a response, and
+neither does when Lootlog first saw an item or NPC, which would date boss kills.
+
+- Each item lists `droppedBy`, up to 20 NPCs it dropped from. A fight's drop
+  counts for its only NPC, or for its only boss (elite II or III, hero, event
+  hero, titan or colossus) when it fought a group.
+- Each `droppedBy` entry carries `retired`: `true` when the NPC no longer drops
+  the item, such as after a rework replaced its loot. An entry is retired when
+  Lootlog has recorded the NPC's loot far too often since the item's last drop
+  for the gap to be chance at the item's own drop rate. Lootlog records a fight
+  only when it drops something above common, so the rate is per recorded
+  fight, not per kill. Lootlog recomputes it daily, and a new drop clears it
+  at once.
+- Each NPC lists `locations`: the maps it is fought on, most fought first,
+  each with its `share` of the NPC's latest 1000 recorded fights, from 0 to 1
+  and rounded to a hundredth. Maps under 1% of those fights are left out, so
+  maps players only carry loot to stay off the list, while a hero keeps every
+  map it spawns on. Lootlog recomputes them daily, so an NPC first seen today
+  may have none yet.
+- Items sort by `lvl`, `name` or `id:desc`, which lists the items Margonem
+  added most recently first. They filter by `ids`, `rarities`, `types`,
+  `professions`, `minLevel`, `maxLevel`, `droppedBy` (an NPC `key`),
+  `dropSourceTypes`, `statKeys` (a listed set of stats, all required;
+  `etiquette` marks event items), `excludedStatKeys` (stats an item must not
+  have), `event` (an event's name and year as a slug,
+  such as `wakacje-2026` or `dzien-mlodego-smoka`) and `legendaryBonuses` (any
+  of the listed bonuses, such as `verycrit` or `curse`); NPCs filter by `ids`, `keys` and `types`. Both endpoints accept
+  `gameVersion` (`pl` or `en`) to list one edition. `limit` is capped at 96.
+- Requests share the public rate limit of the main API's `/public` routes.
+
 ## Unreleased (breaking): Gains and best days removed from personal kill analytics
 
 `GET /users/@me/stats/kills/analytics` no longer returns `npcGains` or the

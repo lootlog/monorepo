@@ -30,6 +30,7 @@ import { GuildStatsCardGroup } from "./contracts/guild-stats-card/api.js";
 import { PublicGuildStatsCardGroup } from "./contracts/public-guild-stats-card/api.js";
 import { DocsGroup } from "./contracts/docs/api.js";
 import { UserThemesGroup } from "./contracts/user-themes/api.js";
+import { FactionWarsGroup } from "./contracts/faction-wars/api.js";
 
 export class LootlogApi extends HttpApi.make("LootlogApi")
   .annotate(OpenApi.Title, "Lootlog API")
@@ -65,6 +66,7 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     PublicGuildStatsCardGroup,
     DocsGroup,
     UserThemesGroup,
+    FactionWarsGroup,
   )
   .middleware(ApiKeyEndpointPolicy)
   .middleware(SchemaErrorResponse) {}

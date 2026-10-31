@@ -51,7 +51,7 @@ import {
   makeLootPublicationDispatcher,
   makeLootSnapshotReader,
 } from "#src/loots/submission/loot-publication-outbox";
-import { GuildLootCreatedMessageV2 } from "@lootlog/protocol/rabbit/events";
+import { GuildLootCreatedMessageV2 } from "@lootlog/protocol/loot-events";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { makeLootsOperations } from "#src/loots/loots.operations";
 import { makeLootPersistence } from "#src/loots/loot-persistence";
@@ -360,6 +360,43 @@ describe("durable loot publications", () => {
     expect(
       (await lootList(id)).map((loot) => loot.npcs[0]?.lvl).sort(),
     ).toEqual([183, 210, 210]);
+  });
+
+  it("attributes a group fight's items to its boss, not to the escort", async () => {
+    const { request } = await seed();
+    const [boss] = request.submission.npcs;
+
+    if (!boss) throw new Error("Expected a seeded NPC");
+
+    const result = await runtime.runPromise(
+      acceptance().accept({
+        ...request,
+        submission: {
+          ...request.submission,
+          npcs: [
+            boss,
+            { ...boss, id: boss.id + 1, name: "Test escort", wt: 1 },
+          ],
+        },
+      }),
+    );
+
+    snapshotTestLootIds.push(result.id);
+
+    const search = (await publications(result.id)).find(
+      (intent) =>
+        intent.kind === "rabbit" &&
+        intent.routingKey === RabbitRoutingKey.SEARCH_ITEMS_INDEX,
+    );
+
+    expect(search).toMatchObject({
+      data: [
+        {
+          droppedBy: { id: boss.id, name: boss.name, type: "HERO" },
+          observedAt: expect.any(String),
+        },
+      ],
+    });
   });
 
   it.each([

@@ -15,8 +15,22 @@ export function createChangedOnlyStorage<State>(
 
   let lastWritten: StorageValue<State> | null = null;
 
+  // Hydration keeps the stored values, so the first set that changes only
+  // transient fields must not write them back over another tab's update.
+  const remember = (value: StorageValue<State> | null) => {
+    lastWritten = value;
+
+    return value;
+  };
+
   return {
-    getItem: (name) => storage.getItem(name),
+    getItem: (name) => {
+      const stored = storage.getItem(name);
+
+      return stored instanceof Promise
+        ? stored.then(remember)
+        : remember(stored);
+    },
     setItem: (name, value) => {
       if (
         lastWritten !== null &&

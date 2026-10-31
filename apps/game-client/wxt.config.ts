@@ -1,8 +1,40 @@
 import { defineConfig, type UserManifest } from "wxt";
-import { loadEnv } from "vite";
+import { loadEnv, type Plugin } from "vite";
 import { buildProfile } from "./extension/build-profile";
 import { checkBuild } from "./extension/check-build";
 import { gameClientViteConfig } from "./vite.shared";
+
+const UNICODE_NONCHARACTER =
+  /[\uFDD0-\uFDEF\uFFFE\uFFFF]|[\uD83F\uD87F\uD8BF\uD8FF\uD93F\uD97F\uD9BF\uD9FF\uDA3F\uDA7F\uDABF\uDAFF\uDB3F\uDB7F\uDBBF\uDBFF][\uDFFE\uDFFF]/g;
+
+const escapeCodeUnits = (character: string) =>
+  character
+    .split("")
+    .map((unit) => `\\u${unit.charCodeAt(0).toString(16).padStart(4, "0")}`)
+    .join("");
+
+/**
+ * Chrome refuses to load a content script that contains a literal Unicode
+ * noncharacter (Lexical uses U+FFFF), and terser writes escaped ones back as
+ * literals. A noncharacter can only sit in a string, template, regular
+ * expression or comment, where its `\uXXXX` escape means the same (only a
+ * template's raw text differs), so escape just those after minification
+ * instead of making terser escape every non-ASCII character.
+ */
+const escapeUnicodeNoncharacters = (): Plugin => ({
+  name: "lootlog:escape-unicode-noncharacters",
+  apply: "build",
+  enforce: "post",
+  generateBundle(_options, bundle) {
+    for (const output of Object.values(bundle)) {
+      if (output.type === "chunk")
+        output.code = output.code.replace(
+          UNICODE_NONCHARACTER,
+          escapeCodeUnits,
+        );
+    }
+  },
+});
 
 export default defineConfig({
   srcDir: "src",
@@ -99,12 +131,8 @@ export default defineConfig({
       build: {
         ...config.build,
         minify: "terser",
-        terserOptions: {
-          ...config.build?.terserOptions,
-          // Chrome rejects literal Unicode noncharacters (e.g. Lexical's U+FFFF).
-          format: { ascii_only: true },
-        },
       },
+      plugins: [...(config.plugins ?? []), escapeUnicodeNoncharacters()],
     };
   },
 });

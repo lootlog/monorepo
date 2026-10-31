@@ -9,6 +9,10 @@ const ROUTES = {
     dashboard: USER_BASE,
     statistics: `${USER_BASE}/statistics`,
     reservations: `${USER_BASE}/reservations`,
+    factionWar: {
+      base: `${USER_BASE}/faction-war`,
+      ranking: `${USER_BASE}/faction-war/ranking`,
+    },
     battlePanel: {
       base: `${USER_BASE}/battle-panel`,
       statistics: `${USER_BASE}/battle-panel/statistics`,

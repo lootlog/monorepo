@@ -89,6 +89,9 @@ const LEGENDARY_BONUS_VALUES = new Map(
   }),
 );
 
+/** Every legendary bonus Margonem items carry, by its stat name. */
+export const LEGENDARY_BONUS_NAMES = [...LEGENDARY_BONUS_VALUES.keys()];
+
 const TECHNICAL_STAT_KEYS = new Set([
   "animation",
   "battlestats",
@@ -353,11 +356,29 @@ const formatNestedBonus: StatValueFormatter = (_key, value) => {
   }
 
   const supportedBonusNames = new Set([
+    "abdest",
+    "absorb",
+    "absorbm",
     "ac",
+    "acdmg",
     "act",
+    "blok",
     "crit",
     "critmval",
     "critval",
+    "da",
+    "di",
+    "ds",
+    "dz",
+    "endest",
+    "energybon",
+    "evade",
+    "heal",
+    "hp",
+    "lowcrit",
+    "lowevade",
+    "manabon",
+    "manadest",
     "resdmg",
     "resfire",
     "resfrost",
@@ -909,6 +930,19 @@ const STAT_SECTIONS = [
     sectionIndex: 9,
   },
 ] as const satisfies readonly StatSectionDefinition[];
+
+/** Binding and requirement sections, shown in the tooltip footer. */
+export const ITEM_STAT_FOOTER_SECTIONS: ReadonlySet<number> = new Set([8, 9]);
+
+/** Classes of the markup tags in the `itemStats` translations. */
+export const ITEM_STAT_TAG_CLASS_NAMES = {
+  description:
+    "block text-center italic leading-relaxed text-pretty text-muted-foreground",
+  gold: "text-amber-300",
+  legbon:
+    "block w-full rounded-md bg-emerald-400/10 px-2 py-1.5 text-emerald-300 ring-1 ring-emerald-400/20 ring-inset",
+  value: "font-semibold text-primary tabular-nums",
+} as const;
 
 function createStatDefinitions(): ReadonlyMap<string, StatDefinition> {
   const definitions = new Map<string, StatDefinition>();

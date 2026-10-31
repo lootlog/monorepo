@@ -48,6 +48,8 @@ export class PresenceMapIndex {
   private readonly sessions = new Map<string, string>();
   private readonly maps = new Map<string, Map<string, PlayerPresence>>();
   private readonly occupancy = new Map<string, MapOccupancy>();
+  // Presence counts per character id: the lookup runs per enemy per projection.
+  private readonly characterCounts = new Map<string, number>();
 
   getOccupancy(mapName: string): MapOccupancy | undefined {
     const cached = this.occupancy.get(mapName);
@@ -84,11 +86,7 @@ export class PresenceMapIndex {
   }
 
   hasCharacter(characterId: string): boolean {
-    for (const presence of this.characters.values()) {
-      if (presence.player?.characterId === characterId) return true;
-    }
-
-    return false;
+    return this.characterCounts.has(characterId);
   }
 
   toPlayers(): PlayerPresenceResponse {
@@ -111,6 +109,7 @@ export class PresenceMapIndex {
     );
 
     this.characters.clear();
+    this.characterCounts.clear();
     this.sessions.clear();
     this.maps.clear();
     this.occupancy.clear();
@@ -143,6 +142,7 @@ export class PresenceMapIndex {
     if (presence.status === "offline") {
       if (!previous) return [];
       this.characters.delete(identity);
+      this.countCharacter(previous, -1);
 
       if (previous.sessionId) this.sessions.delete(previous.sessionId);
 
@@ -156,6 +156,9 @@ export class PresenceMapIndex {
     }
 
     this.characters.set(identity, presence);
+
+    if (previous) this.countCharacter(previous, -1);
+    this.countCharacter(presence, 1);
 
     if (presence.sessionId) this.sessions.set(presence.sessionId, identity);
 
@@ -173,6 +176,16 @@ export class PresenceMapIndex {
       ...this.leave(previous?.mapName, identity),
       ...this.enter(presence.mapName, identity, presence),
     ];
+  }
+
+  private countCharacter(presence: PlayerPresence, delta: 1 | -1): void {
+    const characterId = presence.player?.characterId;
+
+    if (characterId === undefined) return;
+    const count = (this.characterCounts.get(characterId) ?? 0) + delta;
+
+    if (count > 0) this.characterCounts.set(characterId, count);
+    else this.characterCounts.delete(characterId);
   }
 
   private enter(

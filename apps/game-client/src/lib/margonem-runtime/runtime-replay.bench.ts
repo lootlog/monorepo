@@ -113,7 +113,7 @@ const game = Object.freeze({
   }),
   gameVersion: "pl",
   interface: "si" as const,
-  map: Object.freeze({ id: 1, name: "Benchmark", visibility: 30 }),
+  map: Object.freeze({ id: 1, name: "Benchmark", visibility: 30, pvp: 0 }),
   world: "benchmark",
 });
 
@@ -212,7 +212,9 @@ function createReplayState() {
     y: 8,
   };
 
-  const rawMap = { id: 1, name: "Benchmark", visibility: 30 };
+  // Margonem sends the PvP mode with every town; without it NI map recovery
+  // would rebuild the game snapshot on every replayed packet.
+  const rawMap = { id: 1, name: "Benchmark", visibility: 30, pvp: 0 };
 
   const rawNpcs = Object.fromEntries(
     npcs.map((entry) => [

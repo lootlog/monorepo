@@ -9,6 +9,9 @@ import { CommandWindow } from "@/features/command/command";
 import { GlobalChat } from "@/features/global-chat/global-chat";
 import { useGlobalChatSync } from "@/features/global-chat/hooks/use-global-chat-sync";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
+import { FactionWarPick } from "@/features/faction-war/faction-war-pick";
+import { FactionWarResult } from "@/features/faction-war/faction-war-result";
+import { useFactionWarChampionHighlight } from "@/features/faction-war/use-faction-war-champion-highlight";
 import { BattlePingMarkers } from "@/features/pings/battle-ping-markers";
 import { BattlePingWindow } from "@/features/pings/battle-ping-window";
 import { PingWheel } from "@/features/pings/ping-wheel";
@@ -24,6 +27,7 @@ import { useGameEventHandlers } from "@/hooks/game-events/use-game-event-handler
 import { useGlobalStore } from "@/store/global.store";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import { useInit } from "@/hooks/use-init";
+import { useGameClientBootstrap } from "@/hooks/use-game-client-bootstrap";
 import { usePings } from "@/features/pings/use-pings";
 import { useAirTags } from "@/features/air-tags/use-air-tags";
 import { WhoIsHereAirTags } from "@/features/air-tags/who-is-here-air-tags";
@@ -38,6 +42,7 @@ import { useSettingsHydration } from "@/features/settings/persistence/use-settin
 import { useSelectedLootlogGuildInitialization } from "@/hooks/use-selected-lootlog-guild";
 
 export const AppContent = () => {
+  useGameClientBootstrap();
   useGameEventHandlers();
   useInit();
   useSelectedLootlogGuildInitialization();
@@ -58,6 +63,7 @@ export const AppContent = () => {
   usePartyReadyRoomExpiry();
   usePartyReadyRoomObserver();
   useGlobalChatSync();
+  useFactionWarChampionHighlight();
 
   const gameInitialized = useGlobalStore((state) =>
     Boolean(state.gameState.gameInitialized),
@@ -95,6 +101,8 @@ export const AppContent = () => {
           <BattlePingMarkers />
           <BattlePingWindow />
           <WhoIsHereAirTags />
+          <FactionWarPick />
+          <FactionWarResult />
         </>
       ) : null}
     </>

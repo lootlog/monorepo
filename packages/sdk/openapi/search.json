@@ -534,6 +534,448 @@
         "x-lootlog-access": "read",
         "x-lootlog-data": "public"
       }
+    },
+    "/public/catalog/items": {
+      "get": {
+        "tags": ["Catalog"],
+        "operationId": "CatalogController_getItems",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "gameVersion",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["en", "pl"],
+              "description": "Only entries of this game edition."
+            },
+            "required": false
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "rarities",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "types",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "professions",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "minLevel",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          },
+          {
+            "name": "maxLevel",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          },
+          {
+            "name": "statKeys",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "excludedStatKeys",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "legendaryBonuses",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "dropSourceTypes",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "event",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Items of the event with this slug: its name and year, such as `wakacje-2026`."
+            },
+            "required": false
+          },
+          {
+            "name": "droppedBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Items that drop from the NPC with this catalog key."
+            },
+            "required": false
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "relevance",
+                "id:desc",
+                "lvl:asc",
+                "lvl:desc",
+                "name:asc",
+                "name:desc"
+              ],
+              "description": "`id:desc` lists the items Margonem added most recently first."
+            },
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "default": 24
+            },
+            "required": false
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "default": 0
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public catalog items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogItemsResponseDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUnavailableEncoded"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List items in the public catalog",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-lootlog-access": "read",
+        "x-lootlog-data": "public"
+      }
+    },
+    "/public/catalog/npcs": {
+      "get": {
+        "tags": ["Catalog"],
+        "operationId": "CatalogController_getNpcs",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "gameVersion",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["en", "pl"],
+              "description": "Only entries of this game edition."
+            },
+            "required": false
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "keys",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "types",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "default": 24
+            },
+            "required": false
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "default": 0
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public catalog NPCs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNpcsResponseDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUnavailableEncoded"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List NPCs in the public catalog",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-lootlog-access": "read",
+        "x-lootlog-data": "public"
+      }
     }
   },
   "components": {
@@ -935,6 +1377,184 @@
         },
         "required": ["items", "players", "npcs"],
         "description": "Aggregated search results"
+      },
+      "CatalogItemsResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "hits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogItemDto_Output"
+            }
+          },
+          "estimatedTotalHits": {
+            "type": "number"
+          }
+        },
+        "required": ["hits", "estimatedTotalHits"],
+        "description": "Public catalog items"
+      },
+      "CatalogItemDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "stat": {
+            "type": "string"
+          },
+          "lvl": {
+            "type": "number"
+          },
+          "rarity": {
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "nullable": true,
+            "type": "string"
+          },
+          "droppedBy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogDropSourceDto_Output"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "icon",
+          "stat",
+          "lvl",
+          "rarity",
+          "type",
+          "droppedBy"
+        ],
+        "description": "A Margonem item in the public catalog"
+      },
+      "CatalogDropSourceDto_Output": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The NPC's catalog key, as `CatalogNpcDto_Output.key`."
+          },
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "lvl": {
+            "nullable": true,
+            "type": "number"
+          },
+          "icon": {
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "nullable": true,
+            "type": "string"
+          },
+          "retired": {
+            "type": "boolean",
+            "description": "Whether the NPC no longer drops the item: Lootlog has recorded its loot far too often since the item's last drop for the gap to be chance."
+          }
+        },
+        "required": ["key", "id", "name", "lvl", "icon", "type", "retired"],
+        "description": "An NPC an item drops from"
+      },
+      "CatalogNpcsResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "hits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogNpcDto_Output"
+            }
+          },
+          "estimatedTotalHits": {
+            "type": "number"
+          }
+        },
+        "required": ["hits", "estimatedTotalHits"],
+        "description": "Public catalog NPCs"
+      },
+      "CatalogNpcDto_Output": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Stable catalog key of the NPC, used to link its page."
+          },
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "lvl": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "COMMON",
+              "ELITE",
+              "ELITE2",
+              "ELITE3",
+              "HERO",
+              "EVENT_HERO",
+              "COLOSSUS",
+              "TITAN",
+              "NPC"
+            ]
+          },
+          "gameVersion": {
+            "type": "string",
+            "enum": ["en", "pl"]
+          },
+          "locations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "map": {
+                  "type": "string",
+                  "description": "The map's name."
+                },
+                "share": {
+                  "type": "number",
+                  "description": "The share of the NPC's latest recorded fights on the map, from 0 to 1, rounded to a hundredth."
+                }
+              },
+              "required": ["map", "share"]
+            },
+            "description": "Maps the NPC is fought on, most fought first, from its latest 1000 recorded fights; maps under 1% of them are left out. Lootlog recomputes them daily, so an NPC first seen today may have none yet."
+          }
+        },
+        "required": [
+          "key",
+          "id",
+          "name",
+          "icon",
+          "lvl",
+          "type",
+          "gameVersion",
+          "locations"
+        ],
+        "description": "A Margonem NPC in the public catalog"
       }
     }
   }

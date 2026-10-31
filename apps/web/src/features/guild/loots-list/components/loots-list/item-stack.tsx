@@ -1,5 +1,6 @@
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import { ItemImage } from "@lootlog/ui/components/item-image";
+import { ITEM_RARITIES_BY_VALUE } from "@lootlog/ui/lib/item-rarity";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import { ItemRarity, type Item, type Loot } from "@/lib/loots/loot-types";
 import { cn } from "cn";
@@ -10,20 +11,11 @@ import { ItemStackExpanded } from "@/features/guild/loots-list/components/loots-
 import { Check } from "lucide-react";
 import { useItemStackExpansion } from "./use-item-stack-expansion";
 
-const RARITY_PRIORITY: Record<ItemRarity, number> = {
-  [ItemRarity.LEGENDARY]: 4,
-  [ItemRarity.HEROIC]: 3,
-  [ItemRarity.UNIQUE]: 2,
-  [ItemRarity.UPGRADED]: 1,
-  [ItemRarity.COMMON]: 0,
-};
+const rarityRank = (item: Item) =>
+  ITEM_RARITIES_BY_VALUE.indexOf(item.rarity ?? ItemRarity.COMMON);
 
 const sortByRarity = (items: Item[]): Item[] =>
-  [...items].sort(
-    (a, b) =>
-      (RARITY_PRIORITY[b.rarity ?? ItemRarity.COMMON] ?? 0) -
-      (RARITY_PRIORITY[a.rarity ?? ItemRarity.COMMON] ?? 0),
-  );
+  [...items].sort((a, b) => rarityRank(a) - rarityRank(b));
 
 type Props = {
   playerId: Loot["players"][number]["id"];

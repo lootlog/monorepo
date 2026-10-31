@@ -1,5 +1,7 @@
 import { getNpcTypeByWt, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
 import { getProfByShortname } from "@lootlog/domain/profession";
+import { resolveLootAcceptance } from "@lootlog/domain/loot-acceptance";
+import { getFreshCharacterCatchingGuildIds } from "@/hooks/api/use-lootlog-characters-config";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import {
   CreateLootDtoSource,
@@ -182,7 +184,7 @@ export class LootEventProcessor {
       game,
     );
 
-    if (this.isRejectedByEveryOrganization(npcs, debugContext)) return;
+    if (this.isRejectedByEveryOrganization(npcs, game, debugContext)) return;
 
     const { hero, map, gameVersion } = game;
 
@@ -231,17 +233,38 @@ export class LootEventProcessor {
       });
   }
 
-  // The API rejects loot from weaker NPCs for every Organization, so
-  // submitting it only produces a 400 response.
+  // The API rejects these submissions for every Organization, so sending
+  // them only produces a 400 response. Unknown inputs never reject: the API
+  // stays authoritative for everything the client cannot see.
   private isRejectedByEveryOrganization(
     npcs: ReadonlyArray<Pick<Npc, "wt">>,
+    game: RuntimeGameSnapshot,
     debugContext: LootCreateDebugContext,
   ): boolean {
-    if (npcs.some((npc) => npc.wt >= MIN_LOOT_NPC_WT)) return false;
+    if (!npcs.some((npc) => npc.wt >= MIN_LOOT_NPC_WT)) {
+      logLootCreateDebug("skipped", {
+        ...debugContext,
+        reason: "npc-wt-too-low",
+      });
+
+      return true;
+    }
+
+    const catchingGuildIds = getFreshCharacterCatchingGuildIds(
+      game.hero.accountId,
+      game.hero.characterId,
+    );
+
+    if (
+      catchingGuildIds === undefined ||
+      resolveLootAcceptance({ catchingGuildIds }).accepted.length > 0
+    ) {
+      return false;
+    }
 
     logLootCreateDebug("skipped", {
       ...debugContext,
-      reason: "npc-wt-too-low",
+      reason: "no-catching-organization",
     });
 
     return true;
@@ -355,7 +378,7 @@ export class LootEventProcessor {
       },
     ];
 
-    if (this.isRejectedByEveryOrganization(npcs, debugContext)) {
+    if (this.isRejectedByEveryOrganization(npcs, game, debugContext)) {
       useDialogStore.getState().clearNpcContext();
 
       return;

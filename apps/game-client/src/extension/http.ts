@@ -33,6 +33,7 @@ const encoder = new TextEncoder();
 const mainRoutes: ReadonlyArray<readonly [string, RegExp]> = [
   ["GET PATCH", /^\/users\/@me\/preferences$/],
   ["GET", /^\/users\/@me\/guilds\/accessible$/],
+  ["GET", /^\/users\/@me\/game-client\/bootstrap$/],
   ["GET PATCH", /^\/users\/@me\/game-preferences\/accounts\/[^/]+$/],
   ["GET PUT", /^\/users\/@me\/lootlog-config\/accounts\/[^/]+$/],
   ["POST", /^\/users\/@me\/lootlog-config\/players\/catching-guilds\/batch$/],

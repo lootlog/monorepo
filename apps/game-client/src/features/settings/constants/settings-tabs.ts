@@ -45,6 +45,7 @@ export const SETTINGS_SUBSECTION_DOMAINS = {
   catching: "catching",
   behavior: "general",
   "npc-colors": "appearance",
+  "faction-war": "appearance",
   "chat-appearance": "chat",
   "chat-filters": "chat",
   "timer-behavior": "timers",

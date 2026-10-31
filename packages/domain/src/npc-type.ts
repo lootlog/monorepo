@@ -16,6 +16,19 @@ type NpcTypeValues<TNpcType extends string> = {
  */
 export const MIN_LOOT_NPC_WT = 10;
 
+/**
+ * NPC types that lead a group fight. A fight's drops come from its only NPC
+ * or from the only one of these among a group, never from the escort.
+ */
+export const DROP_SOURCE_BOSS_TYPES = [
+  "ELITE2",
+  "ELITE3",
+  "HERO",
+  "EVENT_HERO",
+  "TITAN",
+  "COLOSSUS",
+] as const;
+
 export const getNpcTypeByWt = <TNpcType extends string>(
   npcTypes: NpcTypeValues<TNpcType>,
   wt: number,

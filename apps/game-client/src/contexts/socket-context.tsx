@@ -150,13 +150,27 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
   const setSocketState = useGlobalStore((s) => s.setSocketState);
 
-  const characterIdentity = useGameStore((state) => {
-    const game = state.game;
+  // Primitive selectors: the game store updates on every hero step.
+  const sessionWorld = useGameStore((state) => state.game?.world);
+  const sessionAccountId = useGameStore((state) => state.game?.hero.accountId);
 
-    return game
-      ? getGameSessionIdentity({ world: game.world, ...game.hero })
-      : null;
-  });
+  const sessionCharacterId = useGameStore(
+    (state) => state.game?.hero.characterId,
+  );
+
+  const sessionClanId = useGameStore((state) => state.game?.hero.clan?.id);
+
+  const characterIdentity =
+    sessionWorld === undefined ||
+    sessionAccountId === undefined ||
+    sessionCharacterId === undefined
+      ? null
+      : getGameSessionIdentity({
+          world: sessionWorld,
+          accountId: sessionAccountId,
+          characterId: sessionCharacterId,
+          clan: sessionClanId === undefined ? undefined : { id: sessionClanId },
+        });
 
   const joined =
     characterIdentity !== null && joinedCharacterIdentity === characterIdentity;

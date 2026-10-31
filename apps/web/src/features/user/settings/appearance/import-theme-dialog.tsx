@@ -1,6 +1,9 @@
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
-import { customThemeStyle, loadCustomThemeFont } from "@/themes/custom-theme";
-import { previewThemeClass } from "@/themes/resolver";
+import {
+  customThemeStyle,
+  loadCustomThemeFont,
+} from "@lootlog/ui/themes/custom-theme";
+import { previewThemeClass } from "@lootlog/ui/themes/resolver";
 import { getCustomThemePreview } from "@/themes/theme-preview";
 import { useUserThemesControllerGetSharedTheme } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";

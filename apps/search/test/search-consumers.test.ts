@@ -122,12 +122,16 @@ const setup = async () => {
     SearchOperations,
     SearchOperations.of({
       indexItems: items.indexItems,
+      markRetiredDrops: items.markRetiredDrops,
       indexNpcs: npcs.indexNpcs,
+      setNpcLocations: npcs.setLocations,
       indexPlayers: players.indexPlayers,
       searchPlayers: () => Effect.die("unused"),
       searchNpcs: () => Effect.die("unused"),
       searchItems: () => Effect.die("unused"),
       searchAll: () => Effect.die("unused"),
+      catalogItems: () => Effect.die("unused"),
+      catalogNpcs: () => Effect.die("unused"),
     }),
   );
 

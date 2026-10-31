@@ -33,7 +33,7 @@ import {
   GuildLootCreatedMessageV2,
   GuildLootShareUpdatedEventV2,
   ReservationChangedEventV2,
-} from "../rabbit/events.js";
+} from "../loot-events.js";
 
 export const REALTIME_PROTOCOL_VERSION = 1;
 
@@ -122,6 +122,18 @@ export const REALTIME_CLIENT_CLOSE_CODES = {
   malformedFrame: 4007,
   sessionJoinFailed: 4008,
 } as const;
+
+// Sent by a gateway that sheds sessions: a draining replica restarts (1012),
+// and an overloaded or degraded one asks clients to try again later (1013).
+export const REALTIME_SERVER_CLOSE_CODES = {
+  restarting: 1012,
+  tryAgainLater: 1013,
+} as const;
+
+// Clients closed by REALTIME_SERVER_CLOSE_CODES reconnect after a uniformly
+// random delay up to this window, so a deploy spreads rejoins and their HTTP
+// resyncs across it instead of hitting the API at once.
+export const REALTIME_SERVER_CLOSE_RECONNECT_WINDOW_MS = 30_000;
 
 export const PRESENCE_HEARTBEAT_INTERVAL_MS = 25_000;
 

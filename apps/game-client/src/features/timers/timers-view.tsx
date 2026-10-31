@@ -7,11 +7,10 @@ import { DraggableWindow } from "@/components/draggable-window/draggable-window"
 import { AddTimerPanel } from "@/features/timers/components/add-timer-panel";
 import { TimersActions } from "@/features/timers/components/timers-actions";
 import { TimersContent } from "@/features/timers/components/timers-content";
+import { useTimersWorld } from "@/features/timers/hooks/use-timers-world";
 import { useTimerListProjection } from "@/features/timers/hooks/use-timer-list-projection";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
 import { useTimers } from "@/hooks/api/use-timers";
-import { useGameStore } from "@/store/game.store";
-import { useSettingsStore } from "@/store/settings.store";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
 
@@ -58,26 +57,11 @@ const getTimersViewState = ({
 export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const { t } = useTranslation("timers");
 
-  const characterId = useGameStore(
-    (state) => state.game?.hero.characterId ?? "",
-  );
-
-  const defaultWorld = useGameStore((state) => state.game?.world ?? "unknown");
-
-  const { worldByGuildId, allowWorldSelection, guildIdByCharId } =
-    useSettingsStore(
-      useShallow((state) => ({
-        worldByGuildId: state.worldByGuildId,
-        allowWorldSelection: state.allowWorldSelection,
-        guildIdByCharId: state.guildIdByCharId,
-      })),
-    );
-
-  const guildId = guildIdByCharId[characterId];
-  const selectedWorld = guildId ? worldByGuildId[guildId] : undefined;
-
-  const desiredWorld =
-    selectedWorld && allowWorldSelection ? selectedWorld : defaultWorld;
+  const {
+    allowWorldSelection,
+    guildId,
+    world: desiredWorld,
+  } = useTimersWorld();
 
   const setOpen = useWindowsStore((state) => state.setOpen);
   const [addTimerOpen, setAddTimerOpen] = useState(false);
