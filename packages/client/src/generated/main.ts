@@ -40914,7 +40914,7 @@ export const getFactionWarsControllerGetCurrentWarUrl = () => {
 }
 
 /**
- * The running faction war, else the next or the last one, with the caller's pick and points; faction scores count finished Warsaw days only, the caller's own points are current. 404 when no war is defined
+ * The running faction war, else the next or the last one, with the caller's pick and points; faction scores refresh every five minutes. 404 when no war is defined
  * @summary Get current faction war
  */
 export const factionWarsControllerGetCurrentWar = async ( options?: Parameters<typeof mainFetch>[1]): Promise<FactionWarResponseDto> => {
@@ -41861,7 +41861,7 @@ export const getFactionWarsControllerGetPublicCurrentWarUrl = () => {
 }
 
 /**
- * Dates, rules and faction totals of finished Warsaw days of the current faction war, without any player data
+ * Dates, rules and faction totals of the current faction war, refreshed every five minutes, without any player data
  * @summary Get public faction war score
  */
 export const factionWarsControllerGetPublicCurrentWar = async ( options?: Parameters<typeof mainFetch>[1]): Promise<PublicFactionWarResponseDto> => {
