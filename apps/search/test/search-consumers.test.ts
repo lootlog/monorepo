@@ -124,6 +124,7 @@ const setup = async () => {
       indexItems: items.indexItems,
       markRetiredDrops: items.markRetiredDrops,
       indexNpcs: npcs.indexNpcs,
+      setNpcLocations: npcs.setLocations,
       indexPlayers: players.indexPlayers,
       searchPlayers: () => Effect.die("unused"),
       searchNpcs: () => Effect.die("unused"),

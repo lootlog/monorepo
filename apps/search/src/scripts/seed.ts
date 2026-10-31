@@ -6,7 +6,8 @@
  * document per edition, item id and name, loaded by a query or two per entity and
  * pushed in large batches. Items and NPCs keep the first time any loot
  * observed them, and items the NPCs they dropped from, by the rule the API
- * applies to live loots; items keep the retired drops the live index holds.
+ * applies to live loots; items keep the retired drops and NPCs the locations
+ * the live index holds.
  * Batches are enqueued without waiting, so Meilisearch merges them into a
  * few indexing runs; the script waits once,
  * then swaps the shadow indexes into place in a single atomic task, so
@@ -34,6 +35,7 @@ import {
   searchIndexSettings,
 } from "#src/meilisearch/meilisearch-indexes.service";
 import { getMeilisearchErrorCode } from "#src/meilisearch/query-builder";
+import type { MonsterLocation } from "#src/npcs/monster-locations-command";
 import { NPCS_INDEX } from "#src/npcs/search-index";
 import { PLAYERS_INDEX } from "#src/players/search-index";
 import { toPlayerDocument } from "#src/players/players.service";
@@ -241,10 +243,54 @@ const indexDocuments = async <Document extends { uid: string }>(
   );
 };
 
+const NPC_LOCATIONS_PAGE = 10_000;
+
+/**
+ * The live index's NPC locations by monster. The API publishes them on a
+ * schedule, not from loots, so the rebuild carries them over to every
+ * identity of the monster.
+ */
+const loadNpcLocations = async () => {
+  const index = meilisearch.index<{
+    monsterKey: string;
+    locations?: ReadonlyArray<typeof MonsterLocation.Type>;
+  }>(NPCS_INDEX);
+
+  const locations = new Map<
+    string,
+    ReadonlyArray<typeof MonsterLocation.Type>
+  >();
+
+  for (let offset = 0; ; offset += NPC_LOCATIONS_PAGE) {
+    const page = await index.getDocuments({
+      fields: ["monsterKey", "locations"],
+      limit: NPC_LOCATIONS_PAGE,
+      offset,
+    });
+
+    for (const document of page.results) {
+      if (document.locations) {
+        locations.set(document.monsterKey, document.locations);
+      }
+    }
+
+    if (page.results.length < NPC_LOCATIONS_PAGE) return locations;
+  }
+};
+
 const seedNpcs = async () => {
   const startedAt = performance.now();
+  const locations = await loadNpcLocations();
 
-  const documents = toNpcSeedDocuments(await buildNpcSeedQuery(database));
+  const documents = toNpcSeedDocuments(await buildNpcSeedQuery(database)).map(
+    (document) => {
+      const monsterLocations = locations.get(document.monsterKey);
+
+      return monsterLocations
+        ? { ...document, locations: monsterLocations }
+        : document;
+    },
+  );
 
   await indexDocuments(NPCS_INDEX, documents, formatDuration(startedAt));
 };

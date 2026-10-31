@@ -3,6 +3,7 @@ import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { LOOT_RARITY_TEXT_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 import { cn } from "cn";
+import { CompareButton } from "@/components/comparison/compare-button";
 import { EquipButton } from "@/components/equipment/equip-button";
 import { HighlightedText } from "@/components/highlighted-text";
 import { CatalogItemTile } from "./catalog-item-tile";
@@ -88,7 +89,10 @@ export function CatalogItemCard({
           </p>
         ) : null}
       </div>
-      <EquipButton item={item} compact />
+      <div className="flex flex-col gap-1">
+        <EquipButton item={item} compact />
+        <CompareButton item={item} compact />
+      </div>
     </article>
   );
 }
