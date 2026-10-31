@@ -30,7 +30,7 @@ import {
 } from "../src/rabbit/rabbit-bridge.js";
 import { ActivityPublisher } from "../src/rabbit/activity-publisher.js";
 import { CoveragePublisher } from "../src/rabbit/coverage-publisher.js";
-import { makeMargonemProofVerifier } from "@lootlog/protocol/http/margonem-account-proof";
+import { makeMargonemProofVerifier } from "../src/auth/margonem-proof.js";
 import { CommandHandler } from "../src/realtime/command-handler.js";
 import { PresenceStore } from "../src/realtime/presence-store.js";
 import { MapPingService } from "../src/realtime/map-ping-service.js";
@@ -202,10 +202,7 @@ const setup = async () => {
 
     const commands = new CommandHandler(
       store,
-      makeMargonemProofVerifier(
-        { signingKeyUrl: config.margonemSigningKeyUrl },
-        http,
-      ),
+      makeMargonemProofVerifier(config, http),
       presence,
       hub,
       activity,
