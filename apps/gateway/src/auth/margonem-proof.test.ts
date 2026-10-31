@@ -1,35 +1,20 @@
+import { httpClientFromResponses } from "../../test/http-fixtures.js";
 import { describe, expect, mock, test } from "bun:test";
 import { generateKeyPairSync, sign } from "node:crypto";
 import { TestClock } from "effect/testing";
 import { Effect, Fiber } from "effect";
-import { HttpClient, HttpClientError, HttpClientResponse } from "effect/http";
-import { makeMargonemProofVerifier } from "../src/http/margonem-account-proof.js";
-
-const httpClientFromResponses = (
-  respond: () => Effect.Effect<Response, Error>,
-) =>
-  HttpClient.make((request) =>
-    respond().pipe(
-      Effect.map((response) => HttpClientResponse.fromWeb(request, response)),
-      Effect.mapError(
-        (cause) =>
-          new HttpClientError.HttpClientError({
-            reason: new HttpClientError.TransportError({ request, cause }),
-          }),
-      ),
-    ),
-  );
+import { makeMargonemProofVerifier } from "./margonem-proof.js";
 
 const config = {
-  signingKeyUrl: "https://margonem.example/signing-key.pem",
+  margonemSigningKeyUrl: "https://margonem.example/signing-key.pem",
 };
 
 const proofOptions = () => {
   const accountId = "7";
   const characterId = "11";
-  const bindingId = "connection-1";
+  const socketId = "connection-1";
 
-  const token = `lootlog:${bindingId}:${accountId}:02${BigInt(characterId)
+  const token = `lootlog:${socketId}:${accountId}:02${BigInt(characterId)
     .toString(16)
     .padStart(16, "0")}ffffffffffffffff${"a".repeat(32)}`;
 
@@ -38,7 +23,7 @@ const proofOptions = () => {
   return {
     accountId,
     characterId,
-    bindingId,
+    socketId,
     proof: {
       userId: accountId,
       characterId,

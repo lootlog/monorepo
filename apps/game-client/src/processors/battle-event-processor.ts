@@ -23,7 +23,6 @@ import { createKill, createBattle, recordWeaponKills } from "@/api";
 import { findFinishingBlows } from "@lootlog/battle-processor";
 import { getHeroMainWeaponItemId } from "@/lib/margonem-runtime/adapters/item-tip-runtime-adapter";
 import { setWeaponKills } from "@/lib/margonem-tooltips/weapon-kills";
-import { markBattleKeyEnded, resolveBattleKey } from "./battle-key";
 import { toast } from "sonner";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import {
@@ -160,9 +159,6 @@ export class BattleEventProcessor {
   private hasNpcWarrior = false;
   private hasWarnedCaptureOverflow = false;
   private battleGeneration = 0;
-  // Names the battle to the weapon kill counters: the same battle sent again
-  // after a reload keeps it, a new battle with the same rows does not.
-  private battleKey = "";
 
   async handle(
     event: GameEvent,
@@ -175,7 +171,7 @@ export class BattleEventProcessor {
     const stateAtIngress = useBattleStore.getState();
     const startsBattle = event.f.init === "1";
 
-    this.beginBattleIfNeeded(startsBattle, battleStore, event.f);
+    this.beginBattleIfNeeded(startsBattle, battleStore);
 
     const battleWarriors = this.resolveBattleWarriors({
       battleData: event.f,
@@ -207,8 +203,6 @@ export class BattleEventProcessor {
     }
 
     const endingGeneration = this.battleGeneration;
-
-    markBattleKeyEnded(this.battleKey);
 
     const capture = battleStore.getCaptureSnapshot();
 
@@ -261,18 +255,9 @@ export class BattleEventProcessor {
   private beginBattleIfNeeded(
     startsBattle: boolean,
     battleStore: BattleStoreState,
-    battleData: BattleData,
   ): void {
     if (!startsBattle) return;
     this.battleGeneration += 1;
-    // The opponents identify the battle; its first rows are missing from the
-    // `init` of a battle that just started.
-    this.battleKey = resolveBattleKey(
-      Object.keys(battleData.w ?? {})
-        .sort()
-        .join(","),
-      getBattleEnding(battleData, false) !== null,
-    );
     battleStore.clearEvents();
     this.observedTeams.clear();
     this.hasMultipleTeams = false;
@@ -470,7 +455,6 @@ export class BattleEventProcessor {
       characterId,
       world: game.world,
       weaponItemId,
-      battleKey: this.battleKey,
       events,
     };
   }
@@ -490,14 +474,7 @@ export class BattleEventProcessor {
   ): void {
     if (weaponKillsIntent) {
       recordWeaponKills(weaponKillsIntent)
-        .then(({ itemId, kills }) => {
-          setWeaponKills(
-            weaponKillsIntent.world,
-            weaponKillsIntent.characterId,
-            itemId,
-            kills,
-          );
-        })
+        .then(({ itemId, kills }) => setWeaponKills(itemId, kills))
         .catch((error) => {
           console.warn(
             "[BattleEventProcessor] Failed to record weapon kills:",
