@@ -19,7 +19,12 @@ import {
 import { makeNotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
 import { makeFactionWarAnnouncements } from "./faction-war-announcements.js";
 
-const war = FACTION_WARS[0]!;
+// Its own calendar, so moving the real war's dates keeps the expectations.
+const war = {
+  ...FACTION_WARS[0]!,
+  startsAt: "2026-10-20T00:00:00+02:00",
+  endsAt: "2026-11-17T00:00:00+01:00",
+};
 
 // 00:30 on 22 October in Warsaw, still 21 October in UTC.
 const AT = Date.parse("2026-10-21T22:30:00.000Z");
@@ -152,6 +157,7 @@ describe("faction war announcements", () => {
             }),
         }),
         webAppUrl: new URL("https://lootlog.example"),
+        wars: [war],
       });
 
       await boundary.run(announce(AT));
