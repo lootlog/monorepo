@@ -35,7 +35,7 @@ export class FactionWarsGroup extends HttpApiGroup.make("faction-wars").add(
     .annotate(OpenApi.Summary, "Get current faction war")
     .annotate(
       OpenApi.Description,
-      "The running faction war, else the next or the last one, with the caller's pick and points; 404 when no war is defined",
+      "The running faction war, else the next or the last one, with the caller's pick and points; faction scores count finished Warsaw days only, the caller's own points are current. 404 when no war is defined",
     ),
   HttpApiEndpoint.post(
     "FactionWarsControllerPickFaction",
@@ -55,7 +55,7 @@ export class FactionWarsGroup extends HttpApiGroup.make("faction-wars").add(
     .annotate(OpenApi.Summary, "Pick a faction")
     .annotate(
       OpenApi.Description,
-      "Lock the caller's faction for a running war; fails with 409 once the caller picked or the war is not running",
+      "Lock the caller's faction for a running war with a character the caller's account already reported a kill with on that world or configured; the pick starts hidden from the leaderboard. Fails with 409 once the caller picked, the war is not running, or the character is unknown to the account",
     ),
   HttpApiEndpoint.patch(
     "FactionWarsControllerUpdatePick",
@@ -89,7 +89,7 @@ export class FactionWarsGroup extends HttpApiGroup.make("faction-wars").add(
     .annotate(OpenApi.Summary, "Get faction war leaderboard")
     .annotate(
       OpenApi.Description,
-      "Top players of one faction; players who hid themselves keep their rank without a name, which only war admins still see",
+      "Top players of one faction by points of finished Warsaw days; players who hid themselves keep their rank without a name, which only war admins still see",
     ),
   HttpApiEndpoint.get(
     "FactionWarsControllerGetChampions",
@@ -101,7 +101,7 @@ export class FactionWarsGroup extends HttpApiGroup.make("faction-wars").add(
     .annotate(OpenApi.Summary, "Get faction war champions")
     .annotate(
       OpenApi.Description,
-      "Characters on one world of the last war's winners who show their highlight, for the Game client",
+      "The picking characters on one world of the last war's winners who show their highlight, for the Game client",
     ),
   HttpApiEndpoint.get(
     "FactionWarsControllerGetDisqualifications",
@@ -164,6 +164,6 @@ export class FactionWarsGroup extends HttpApiGroup.make("faction-wars").add(
     .annotate(OpenApi.Summary, "Get public faction war score")
     .annotate(
       OpenApi.Description,
-      "Dates, rules and faction totals of the current faction war, without any player data",
+      "Dates, rules and faction totals of finished Warsaw days of the current faction war, without any player data",
     ),
 ) {}
