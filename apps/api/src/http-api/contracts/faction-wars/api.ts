@@ -89,7 +89,7 @@ export class FactionWarsGroup extends HttpApiGroup.make("faction-wars").add(
     .annotate(OpenApi.Summary, "Get faction war leaderboard")
     .annotate(
       OpenApi.Description,
-      "Top players of one faction by points of finished Warsaw days; players who hid themselves keep their rank without a name, which only war admins still see",
+      "Top players of one faction by points in a snapshot taken every three hours; players who hid themselves keep their rank without a name, which only war admins still see",
     ),
   HttpApiEndpoint.get(
     "FactionWarsControllerGetChampions",
