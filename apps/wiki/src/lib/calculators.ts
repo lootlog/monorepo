@@ -225,7 +225,11 @@ export const questExperience = ({
   experience: number;
   blessingPercent: number;
   clanPercent: number;
-}) =>
-  Math.floor(
-    experience * (1 + blessingPercent / 100) * (1 + clanPercent / 100),
-  );
+}) => {
+  // Whole percents keep the product whole until the one division; the
+  // tolerance covers tenths such as 12.3%, which binary floats round down.
+  const exact =
+    (experience * (100 + blessingPercent) * (100 + clanPercent)) / 10_000;
+
+  return Math.floor(exact * (1 + 1e-12));
+};
