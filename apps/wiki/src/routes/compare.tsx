@@ -26,7 +26,7 @@ function CompareRoute() {
   const { items, clear } = useItemComparison();
   const ids = items.map(({ id }) => id);
 
-  const { data, isError } = useCatalogControllerGetItems(
+  const { data, isError, isFetching } = useCatalogControllerGetItems(
     { ids, gameVersion: WIKI_GAME_VERSION, limit: MAX_COMPARED_ITEMS },
     {
       query: {
@@ -96,8 +96,16 @@ function CompareRoute() {
             {t("comparison.searchItems")}
           </Button>
         </div>
-      ) : !data ? (
-        <Skeleton className="h-96 w-full rounded-xl" />
+      ) : compared.length === 0 ? (
+        // An item just added may still be loading; ids the catalog no longer
+        // has, from an old visit or a shared link, never load.
+        !data || isFetching ? (
+          <Skeleton className="h-96 w-full rounded-xl" />
+        ) : (
+          <p className="rounded-xl border border-dashed border-border px-5 py-6 text-sm text-muted-foreground">
+            {t("comparison.notFound")}
+          </p>
+        )
       ) : (
         <>
           <ItemComparisonTable items={compared} />

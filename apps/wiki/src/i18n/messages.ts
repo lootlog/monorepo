@@ -308,6 +308,8 @@ const messages = {
     clear: "Wyczyść porównanie",
     empty:
       "Nie porównujesz jeszcze żadnego przedmiotu. Dodaj go przyciskiem Porównaj na stronie przedmiotu albo w wynikach wyszukiwania.",
+    notFound:
+      "Katalog nie zna już porównywanych przedmiotów. Wyczyść porównanie i dodaj je od nowa.",
     searchItems: "Szukaj przedmiotów",
     addMore: "Dodaj jeszcze {{count}}",
     statsTitle: "Statystyki",

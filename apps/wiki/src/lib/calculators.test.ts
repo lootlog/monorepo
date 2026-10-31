@@ -7,6 +7,7 @@ import {
   legendaryBonusStrength,
   legendaryBonusValue,
   pointsForMaxDefence,
+  questExperience,
 } from "./calculators";
 
 // The examples and tables below are the game's, from its combat mechanics
@@ -74,5 +75,19 @@ describe("calculators", () => {
     expect(anguishDamage({ itemLevel: 290, upgrade: 5, ...attributes })).toBe(
       anguishDamage({ itemLevel: 300, upgrade: 0, ...attributes }),
     );
+  });
+
+  it("does not lose a point of quest experience to float rounding", () => {
+    // 100 * 1.15 is 114.99999999999999 in floating point.
+    expect(
+      questExperience({ experience: 100, blessingPercent: 15, clanPercent: 0 }),
+    ).toBe(115);
+    expect(
+      questExperience({
+        experience: 1000,
+        blessingPercent: 12.3,
+        clanPercent: 10,
+      }),
+    ).toBe(1235);
   });
 });
