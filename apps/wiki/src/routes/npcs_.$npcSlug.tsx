@@ -5,6 +5,7 @@ import { NpcTile } from "@lootlog/ui/components/npc-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { NpcDrops } from "@/components/npcs/npc-drops";
+import { NpcLocations } from "@/components/npcs/npc-locations";
 import { t } from "@/i18n/messages";
 import { npcSummary } from "@/lib/npc-summary";
 import {
@@ -91,6 +92,23 @@ function NpcRoute() {
               )}
             </div>
           </header>
+
+          <section
+            aria-labelledby="npc-locations"
+            className="flex flex-col gap-4"
+          >
+            <h2
+              id="npc-locations"
+              className="text-base font-semibold text-foreground"
+            >
+              {t("catalog.locationsTitle")}
+            </h2>
+            {npc ? (
+              <NpcLocations locations={npc.locations} />
+            ) : (
+              <Skeleton className="h-11 w-full max-w-sm rounded-lg" />
+            )}
+          </section>
 
           <section aria-labelledby="npc-drops" className="flex flex-col gap-4">
             <h2

@@ -14,6 +14,7 @@ import { effectLogger } from "#src/shared/logger";
 import type { IndexItemsCommand } from "#src/items/index-items-command";
 import type { RetiredDropsCommand } from "#src/items/retired-drops-command";
 import type { IndexNpcsCommand } from "#src/npcs/index-npcs-command";
+import type { MonsterLocationsCommand } from "#src/npcs/monster-locations-command";
 import type { IndexPlayersCommand } from "#src/players/index-players-command";
 import type {
   AllControllerSearchAllQuery,
@@ -76,6 +77,9 @@ export interface SearchOperationsValue {
   ) => Effect.Effect<void, SearchOperationFailureType>;
   readonly indexNpcs: (
     data: IndexNpcsCommand,
+  ) => Effect.Effect<void, SearchOperationFailureType>;
+  readonly setNpcLocations: (
+    data: MonsterLocationsCommand,
   ) => Effect.Effect<void, SearchOperationFailureType>;
   readonly indexPlayers: (
     data: IndexPlayersCommand,
@@ -157,6 +161,7 @@ export class SearchOperations extends Context.Service<
         indexItems: items.indexItems,
         markRetiredDrops: items.markRetiredDrops,
         indexNpcs: npcs.indexNpcs,
+        setNpcLocations: npcs.setLocations,
         indexPlayers: players.indexPlayers,
       });
     }),

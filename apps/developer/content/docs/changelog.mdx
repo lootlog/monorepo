@@ -20,6 +20,12 @@ neither does when Lootlog first saw an item or NPC, which would date boss kills.
   only when it drops something above common, so the rate is per recorded
   fight, not per kill. Lootlog recomputes it daily, and a new drop clears it
   at once.
+- Each NPC lists `locations`: the maps it is fought on, most fought first,
+  each with its `share` of the NPC's latest 1000 recorded fights, from 0 to 1
+  and rounded to a hundredth. Maps under 1% of those fights are left out, so
+  maps players only carry loot to stay off the list, while a hero keeps every
+  map it spawns on. Lootlog recomputes them daily, so an NPC first seen today
+  may have none yet.
 - Items sort by `lvl`, `name` or `id:desc`, which lists the items Margonem
   added most recently first. They filter by `ids`, `rarities`, `types`,
   `professions`, `minLevel`, `maxLevel`, `droppedBy` (an NPC `key`),

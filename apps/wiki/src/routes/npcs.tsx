@@ -5,6 +5,7 @@ import { NpcTile } from "@lootlog/ui/components/npc-tile";
 import { NpcTypeIcon } from "@lootlog/ui/components/npc-type-icon";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { BasicSearchForm } from "@/components/basic-search-form";
+import { CATALOG_GRID } from "@/components/catalog/catalog-item-grid";
 import { FilterTile } from "@/components/filter-tile";
 import { t } from "@/i18n/messages";
 import { npcPageParams, WIKI_GAME_VERSION } from "@/lib/catalog-links";
@@ -116,7 +117,7 @@ function NpcsRoute() {
       ) : data?.hits.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("search.noResults")}</p>
       ) : (
-        <ul className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-3">
+        <ul className={CATALOG_GRID}>
           {data
             ? data.hits.map((npc) => (
                 <li key={npc.key}>
