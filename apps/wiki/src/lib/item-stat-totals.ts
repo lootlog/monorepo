@@ -36,10 +36,14 @@ export const sumItemStats = (stats: ReadonlyArray<string>): StatTotals => {
   const totals: StatTotals = {};
 
   for (const stat of stats) {
-    for (const { key, value } of parseItemStats(stat)) {
-      const summedKey = SUMMED_STAT_KEYS.find((summed) => summed === key);
+    for (const parsed of parseItemStats(stat)) {
+      // A +5 upgrade's extra bonus adds to the stat it names.
+      const [key, text] =
+        parsed.key === "bonus"
+          ? (textValue(parsed.value)?.split(",") ?? [])
+          : [parsed.key, textValue(parsed.value)];
 
-      const text = textValue(value);
+      const summedKey = SUMMED_STAT_KEYS.find((summed) => summed === key);
 
       if (summedKey && text !== undefined && NUMERIC_VALUE.test(text)) {
         totals[summedKey] = (totals[summedKey] ?? 0) + Number(text);

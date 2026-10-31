@@ -20,6 +20,16 @@ const MIN_UPGRADE_ITEM_LEVEL = 20;
 export const upgradedItemLevel = (level: number, upgrade: UpgradeLevel) =>
   level + Math.round(level * 0.03) * upgrade;
 
+/**
+ * How far an item is upgraded and, from +5, the extra bonus the player chose
+ * for it.
+ */
+export type ItemUpgrade = { level: UpgradeLevel; bonus?: UpgradeBonusKey };
+
+export const NO_UPGRADE: ItemUpgrade = { level: 0 };
+
+const MAX_UPGRADE_LEVEL = 5;
+
 const levelPower = (level: number) => 0.02 * level ** 2 + 2.6 * level;
 
 const RARITY_FACTOR = new Map(
@@ -192,23 +202,25 @@ export const isUpgradable = (item: UpgradableItem) =>
     .some((entry) => /^(cursed|expire_duration)(=|$)/.test(entry));
 
 /**
- * The item's stats once upgraded to `upgrade`, in the game's stat format,
- * with the upgrade level among them as the game lists it. The required level
- * stays: upgrading raises only the level the stats are computed at.
+ * The item's stats once upgraded, in the game's stat format, with the upgrade
+ * level among them as the game lists it and, at +5, the chosen extra bonus as
+ * the game stores it: `bonus=<stat>,<value>`. The required level stays:
+ * upgrading raises only the level the stats are computed at.
  */
-export const upgradeItemStat = (
-  item: UpgradableItem,
-  upgrade: UpgradeLevel,
-) => {
-  if (upgrade === 0 || !isUpgradable(item)) return item.stat;
+export const upgradeItemStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
+  if (upgrade.level === 0 || !isUpgradable(item)) return item.stat;
 
-  const toLevel = upgradedItemLevel(item.lvl, upgrade);
+  const toLevel = upgradedItemLevel(item.lvl, upgrade.level);
   const rules = statRules(item.rarity, item.type);
 
   const entries = item.stat
     .split(";")
     .filter(Boolean)
-    .filter((entry) => !entry.startsWith("enhancement_upgrade_lvl="))
+    .filter(
+      (entry) =>
+        !entry.startsWith("enhancement_upgrade_lvl=") &&
+        !entry.startsWith("bonus="),
+    )
     .map((entry) => {
       const separator = entry.indexOf("=");
 
@@ -235,5 +247,234 @@ export const upgradeItemStat = (
       return `${key}=${scaled.join(",")}`;
     });
 
-  return [...entries, `enhancement_upgrade_lvl=${upgrade}`].join(";");
+  const bonus =
+    upgrade.level === MAX_UPGRADE_LEVEL && upgrade.bonus
+      ? upgradeBonusOptions(item).find(({ key }) => key === upgrade.bonus)
+      : undefined;
+
+  return [
+    ...entries,
+    `enhancement_upgrade_lvl=${upgrade.level}`,
+    ...(bonus ? [`bonus=${bonus.key},${bonus.value}`] : []),
+  ].join(";");
+};
+
+/**
+ * The extra bonus a +5 item offers: three drawn without repeats from its
+ * class's pool, each with a chance by its group's power, the player keeping
+ * one. Its value is one bonus of that stat at the item's +5 virtual level.
+ */
+export const UPGRADE_BONUS_KEYS = [
+  "da",
+  "di",
+  "ds",
+  "dz",
+  "sa",
+  "crit",
+  "acdmg",
+  "resdmg",
+  "endest",
+  "manadest",
+  "abdest",
+  "ac",
+  "resfire",
+  "resfrost",
+  "reslight",
+  "act",
+  "hp",
+  "blok",
+  "absorb",
+  "absorbm",
+  "evade",
+  "energybon",
+  "manabon",
+  "critval",
+  "critmval",
+  "lowcrit",
+  "heal",
+  "slow",
+  "lowevade",
+] as const;
+
+export type UpgradeBonusKey = (typeof UPGRADE_BONUS_KEYS)[number];
+
+export const isUpgradeBonusKey = (value: string): value is UpgradeBonusKey =>
+  UPGRADE_BONUS_KEYS.some((key) => key === value);
+
+/** A bonus group's power, which weighs its chance to be drawn. */
+export const UPGRADE_BONUS_GROUP_POWER = [10, 5, 1] as const;
+
+const ATTRIBUTES = ["da", "di", "ds", "dz"] as const;
+
+/** Each class set's pool, as its three groups. */
+const BONUS_POOLS: ReadonlyArray<{
+  types: ReadonlySet<string>;
+  groups: readonly [
+    ReadonlyArray<UpgradeBonusKey>,
+    ReadonlyArray<UpgradeBonusKey>,
+    ReadonlyArray<UpgradeBonusKey>,
+  ];
+}> = [
+  {
+    types: new Set([...WEAPON_TYPES, "QUIVER"]),
+    groups: [
+      ATTRIBUTES,
+      ["sa", "crit"],
+      ["acdmg", "resdmg", "endest", "manadest", "abdest"],
+    ],
+  },
+  {
+    types: new Set(["ARMOR", "HELMET", "GLOVES", "BOOTS", "SHIELD"]),
+    groups: [
+      ATTRIBUTES,
+      ["ac", "resfire", "resfrost", "reslight", "act"],
+      ["hp", "blok", "absorb", "absorbm", "evade"],
+    ],
+  },
+  {
+    types: new Set(["RING", "NECKLACE"]),
+    groups: [
+      ATTRIBUTES,
+      ["energybon", "manabon", "critval", "critmval", "lowcrit"],
+      ["heal", "slow", "lowevade"],
+    ],
+  },
+];
+
+// Absorption destruction, per weapon class, as a share of its power.
+const ABSORB_DESTRUCTION_SHARE = new Map(
+  Object.entries({
+    ONE_AND_HALF_HAND_WEAPON: 0.33,
+    TWO_HAND_WEAPON: 0.36,
+    HELP_WEAPON: 0.24,
+    ORB_WEAPON: 0.21,
+  }),
+);
+
+/** What one bonus's value depends on. */
+type BonusContext = {
+  level: number;
+  levelPower: number;
+  rarityPower: number;
+  classPower: number;
+  type: string;
+};
+
+/** One bonus of each stat, as the game's bonus table gives it. */
+const BONUS_VALUES: Record<UpgradeBonusKey, (context: BonusContext) => number> =
+  {
+    da: ({ level }) => 0.25 * level + 8,
+    ds: ({ level }) => (5 * level) / 9 + 4,
+    dz: ({ level }) => (5 * level) / 9 + 4,
+    di: ({ level }) => (5 * level) / 9 + 4,
+    // Attack speed and slowing are kept in hundredths.
+    sa: ({ level }) => 8 + 0.25 * level,
+    slow: ({ level }) => 8 + (2 * level) / 7,
+    crit: () => 1,
+    resdmg: () => 1,
+    acdmg: ({ levelPower, type }) =>
+      1 + ((WEAPON_TYPES.has(type) ? 1 : 0.75) * levelPower) / 50,
+    endest: ({ level }) => 2 + 0.02 * level,
+    manadest: ({ level }) => 5 + 0.04 * level,
+    abdest: ({ levelPower, rarityPower, type }) =>
+      (ABSORB_DESTRUCTION_SHARE.get(type) ?? 0.3) * (rarityPower + levelPower),
+    ac: ({ levelPower, classPower }) => 0.15 * levelPower * classPower,
+    resfire: () => 3,
+    resfrost: () => 3,
+    reslight: () => 3,
+    act: () => 5,
+    hp: ({ level, levelPower, classPower }) =>
+      3.08 * Math.round(8 + level + 0.2 * levelPower * classPower),
+    blok: ({ level }) => (3 * level) / 20,
+    absorb: ({ levelPower, classPower }) => 0.6 * levelPower * classPower,
+    absorbm: ({ levelPower, classPower }) => 0.6 * levelPower * classPower,
+    evade: ({ level }) => level / 10,
+    lowevade: ({ level }) => level / 10,
+    energybon: ({ level }) => 10 + level / 15,
+    manabon: ({ level }) => 5 + level / 4,
+    critval: () => 6,
+    critmval: () => 6,
+    lowcrit: () => 2,
+    heal: ({ level, levelPower, classPower }) =>
+      8 + 0.8 * level + 0.2 * levelPower * classPower,
+  };
+
+export type UpgradeBonusOption = {
+  key: UpgradeBonusKey;
+  /** Its group, 0 for the most likely. */
+  group: number;
+  /** The stat value it adds at +5. */
+  value: number;
+  /** The chance it is one of the three bonuses offered at +5. */
+  offerChance: number;
+};
+
+/**
+ * The chance each bonus is among `draws` drawn without repeats, each draw
+ * weighted by power among the bonuses left.
+ */
+const offerChances = (powers: ReadonlyArray<number>, draws: number) => {
+  const chances = powers.map(() => 0);
+
+  const draw = (taken: ReadonlySet<number>, chance: number, left: number) => {
+    if (left === 0 || chance === 0) return;
+
+    const remaining = powers.reduce(
+      (sum, power, index) => (taken.has(index) ? sum : sum + power),
+      0,
+    );
+
+    powers.forEach((power, index) => {
+      if (taken.has(index) || remaining === 0) return;
+
+      const drawn = (chance * power) / remaining;
+
+      chances[index] = (chances[index] ?? 0) + drawn;
+      draw(new Set([...taken, index]), drawn, left - 1);
+    });
+  };
+
+  draw(new Set(), 1, draws);
+
+  return chances;
+};
+
+const OFFERED_BONUSES = 3;
+
+/** The extra bonuses the item's class can draw at +5; none when it cannot. */
+export const upgradeBonusOptions = (
+  item: UpgradableItem,
+): UpgradeBonusOption[] => {
+  const pool = BONUS_POOLS.find(({ types }) => types.has(item.type ?? ""));
+
+  if (!pool || !isUpgradable(item)) return [];
+
+  const level = upgradedItemLevel(item.lvl, MAX_UPGRADE_LEVEL);
+
+  const context: BonusContext = {
+    level,
+    levelPower: levelPower(level),
+    rarityPower: rarityPower(
+      level,
+      RARITY_FACTOR.get(item.rarity ?? "COMMON") ?? 0,
+    ),
+    classPower: CLASS_POWER.get(item.type ?? "") ?? 1,
+    type: item.type ?? "",
+  };
+
+  const bonuses = pool.groups.flatMap((keys, group) =>
+    keys.map((key) => ({ key, group })),
+  );
+
+  const chances = offerChances(
+    bonuses.map(({ group }) => UPGRADE_BONUS_GROUP_POWER[group] ?? 0),
+    OFFERED_BONUSES,
+  );
+
+  return bonuses.map(({ key, group }, index) => ({
+    key,
+    group,
+    value: Math.round(BONUS_VALUES[key](context)),
+    offerChance: chances[index] ?? 0,
+  }));
 };

@@ -6,12 +6,16 @@ import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import type { EquipmentSet } from "@/lib/equipment-set";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-slots";
-import { upgradeItemStat, type UpgradeLevel } from "@/lib/item-upgrade";
+import {
+  type ItemUpgrade,
+  NO_UPGRADE,
+  upgradeItemStat,
+} from "@/lib/item-upgrade";
 
 export type WornItem = {
   /** The item with the stats its upgrade gives it. */
   item: CatalogItemDtoOutput;
-  upgrade: UpgradeLevel;
+  upgrade: ItemUpgrade;
 };
 
 /** The set and its items by id; every reader shares one catalog request. */
@@ -41,7 +45,7 @@ const wornIn = (
 ): WornItem | undefined => {
   const itemId: EquipmentSet["items"][EquipmentSlotId] = set.items[slotId];
   const item = itemId === undefined ? undefined : itemsById.get(itemId);
-  const upgrade = set.upgrades[slotId] ?? 0;
+  const upgrade = set.upgrades[slotId] ?? NO_UPGRADE;
 
   return item
     ? { item: { ...item, stat: upgradeItemStat(item, upgrade) }, upgrade }

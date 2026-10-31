@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
-import { upgradedItemLevel, upgradeItemStat } from "./item-upgrade";
+import {
+  upgradeBonusOptions,
+  upgradedItemLevel,
+  upgradeItemStat,
+} from "./item-upgrade";
 
 const statOf = (stat: string, key: string) =>
   parseItemStats(stat).find((entry) => entry.key === key)?.value;
@@ -27,7 +31,7 @@ describe("item upgrade", () => {
   });
 
   it("computes bonuses at the virtual level from the number the item was given", () => {
-    const upgraded = upgradeItemStat(necklace, 5);
+    const upgraded = upgradeItemStat(necklace, { level: 5 });
 
     // Two "all attributes" bonuses: 0.25 * 262 * 2 + 8.
     expect(statOf(upgraded, "da")).toBe("139");
@@ -42,7 +46,9 @@ describe("item upgrade", () => {
 
   it("grows weapon damage with the rarity and level power", () => {
     // 8 * 0.3984 * (rarity_power + level_power) at 262, with a 10% spread.
-    expect(statOf(upgradeItemStat(sword, 5), "dmg")).toBe("6050,7394");
+    expect(statOf(upgradeItemStat(sword, { level: 5 }), "dmg")).toBe(
+      "6050,7394",
+    );
   });
 
   it("makes a legendary bonus as strong as the virtual level", () => {
@@ -53,7 +59,7 @@ describe("item upgrade", () => {
         rarity: "LEGENDARY",
         type: "NECKLACE",
       },
-      5,
+      { level: 5 },
     );
 
     expect(statOf(upgraded, "legbon")).toBe("lastheal,230");
@@ -65,7 +71,36 @@ describe("item upgrade", () => {
       { ...necklace, stat: `${necklace.stat};cursed` },
       { ...necklace, type: "BAG" },
     ]) {
-      expect(upgradeItemStat(item, 5)).toBe(item.stat);
+      expect(upgradeItemStat(item, { level: 5, bonus: "ds" })).toBe(item.stat);
+      expect(upgradeBonusOptions(item)).toEqual([]);
     }
+  });
+
+  it("adds the chosen +5 bonus from the item's class pool at the virtual level", () => {
+    // One strength bonus at 262: 5 * 262 / 9 + 4.
+    expect(
+      statOf(upgradeItemStat(necklace, { level: 5, bonus: "ds" }), "bonus"),
+    ).toBe("ds,150");
+    // A necklace cannot draw a weapon bonus, and below +5 there is none.
+    expect(
+      statOf(upgradeItemStat(necklace, { level: 5, bonus: "acdmg" }), "bonus"),
+    ).toBeUndefined();
+    expect(
+      statOf(upgradeItemStat(necklace, { level: 4, bonus: "ds" }), "bonus"),
+    ).toBeUndefined();
+  });
+
+  it("offers stronger groups more often, three bonuses at a time", () => {
+    const options = upgradeBonusOptions(necklace);
+
+    const chanceOf = (key: string) =>
+      options.find((option) => option.key === key)?.offerChance ?? 0;
+
+    expect(options).toHaveLength(12);
+    expect(
+      options.reduce((sum, { offerChance }) => sum + offerChance, 0),
+    ).toBeCloseTo(3);
+    expect(chanceOf("ds")).toBeGreaterThan(chanceOf("critval"));
+    expect(chanceOf("critval")).toBeGreaterThan(chanceOf("heal"));
   });
 });
