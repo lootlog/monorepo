@@ -158,11 +158,22 @@ export const holyTouchHeal = (maxHealth: number) =>
   Math.round(0.06 * maxHealth);
 
 /**
- * Moving a character to another world costs 75 dragon scales a level, at
- * least 10 000; from https://pomoc.margonem.pl/index/view,322.
+ * Where a character moves: most routes pay the full cost, and a move from
+ * the Unia world to a private one 60% of it.
  */
-export const characterTransferCost = (level: number) =>
-  Math.max(10_000, level * 75);
+export type TransferRoute = "standard" | "uniaToPrivate";
+
+/**
+ * Moving a character to another world costs 75 dragon scales a level, at
+ * least 10 000, and 60% of that from Unia to a private world, where creating
+ * the character there is paid apart; from
+ * https://pomoc.margonem.pl/index/view,322.
+ */
+export const characterTransferCost = (level: number, route: TransferRoute) => {
+  const cost = Math.max(10_000, level * 75);
+
+  return route === "uniaToPrivate" ? Math.round(cost * 0.6) : cost;
+};
 
 export const UNBIND_RARITIES = [
   "COMMON",

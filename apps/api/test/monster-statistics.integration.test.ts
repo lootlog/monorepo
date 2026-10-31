@@ -93,10 +93,19 @@ it("publishes a monster's maps from its latest fights and the drops it no longer
     }),
   );
 
+  // Both publications name each monster; the rest is what the test asserts.
+  type PublishedMonster = {
+    gameVersion: string;
+    name: string;
+    type: string | null;
+    locations?: Array<{ map: string; share: number }>;
+    retiredItemIds?: number[];
+  };
+
   const monster = (routingKey: string) =>
     published
       .filter((message) => message.routingKey === routingKey)
-      .flatMap((message): Array<{ name: string }> =>
+      .flatMap((message): PublishedMonster[] =>
         JSON.parse(new TextDecoder().decode(message.content)),
       )
       .find((entry) => entry.name === name);

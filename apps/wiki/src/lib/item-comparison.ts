@@ -57,12 +57,20 @@ export const decodeItemComparison = (value: string): ComparedItem[] =>
 // text that only starts with one, such as an event's name, is no number.
 const NUMERIC_STAT = /^[+-]?\d+(?:\.\d+)?(?:,[+-]?\d+(?:\.\d+)?)*$/;
 
-// Flags such as `binds` read as `true`, which is no number either.
-const statNumber = (value: string | boolean | undefined) => {
+/** Each number of a stat value; none for text, and for flags such as `binds`. */
+const statNumbers = (value: string | boolean | undefined) => {
   const text = String(value);
 
-  return NUMERIC_STAT.test(text) ? Number.parseFloat(text) : Number.NaN;
+  return NUMERIC_STAT.test(text) ? text.split(",").map(Number) : undefined;
 };
+
+/**
+ * Whether one value is at least another in every number, as a damage range
+ * must be at both ends; crossing ranges cover neither.
+ */
+const covers = (value: number[], other: number[]) =>
+  value.length === other.length &&
+  value.every((number, index) => number >= (other[index] ?? number));
 
 // Stats where more is not better: a higher required level only narrows who
 // can wear the item.
@@ -98,7 +106,7 @@ export const compareItemStats = (
 
     return {
       entries: displayValues(stat),
-      numberOf: (key: string) => statNumber(raw.get(key)),
+      numbersOf: (key: string) => statNumbers(raw.get(key)),
     };
   });
 
@@ -121,22 +129,27 @@ export const compareItemStats = (
     const baseKey = key.split(".")[0] ?? "";
 
     const numbers = items.map((item, index) =>
-      values[index] === undefined ? Number.NaN : item.numberOf(baseKey),
+      values[index] === undefined ? undefined : item.numbersOf(baseKey),
     );
 
-    const present = numbers.filter(Number.isFinite);
-    const max = Math.max(...present);
+    const present = numbers.filter((number) => number !== undefined);
+
+    const isBest = (number: number[] | undefined) =>
+      number !== undefined && present.every((other) => covers(number, other));
+
+    const winner = present.find(isBest);
 
     const isRanked =
       items.length > 1 &&
       !UNRANKED_STATS.has(baseKey) &&
-      present.length > 0 &&
-      (present.length < items.length || present.some((n) => n < max));
+      winner !== undefined &&
+      (present.length < items.length ||
+        present.some((other) => !covers(other, winner)));
 
     return {
       key,
       values,
-      best: numbers.map((number) => isRanked && number === max),
+      best: numbers.map((number) => isRanked && isBest(number)),
     };
   });
 };

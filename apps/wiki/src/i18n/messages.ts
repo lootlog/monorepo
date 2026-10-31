@@ -400,9 +400,15 @@ const messages = {
     transfer: {
       title: "Koszt przeniesienia postaci",
       description: "Przeniesienie postaci na inny świat.",
+      route: "Trasa",
+      routes: {
+        standard: "Na inny świat",
+        uniaToPrivate: "Z Unii na świat prywatny",
+      },
       cost: "Koszt",
+      uniaFee: "Plus opłata za stworzenie postaci na świecie docelowym.",
       formula:
-        "koszt = poziom × 75 SŁ, ale nie mniej niż 10 000 SŁ. Ze świata Unia na prywatny płacisz 60% tej kwoty.",
+        "koszt = poziom × 75 SŁ, ale nie mniej niż 10 000 SŁ. Ze świata Unia na prywatny płacisz 60% tej kwoty i osobno opłatę za stworzenie postaci na świecie docelowym, według jego cennika.",
     },
     unbind: {
       title: "Koszt odwiązania przedmiotu",
