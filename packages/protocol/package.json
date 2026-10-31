@@ -9,8 +9,6 @@
     "./loot-events": "./src/loot-events.ts",
     "./loot-summary": "./src/loot-summary.ts",
     "./http/service-auth": "./src/http/service-auth.ts",
-    "./http/margonem-account-proof": "./src/http/margonem-account-proof.ts",
-    "./effect/single-flight": "./src/effect/single-flight.ts",
     "./openapi": "./src/openapi/sanitize.ts",
     "./rabbit/events": "./src/rabbit/events.ts",
     "./rabbit/topology": "./src/rabbit/topology.ts",

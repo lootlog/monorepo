@@ -3,16 +3,11 @@ import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
-import { generateKeyPairSync, sign } from "node:crypto";
 import { makePostgresLayer } from "@lootlog/database";
-import { makeMargonemProofVerifier } from "@lootlog/protocol/http/margonem-account-proof";
 import { Effect, Redacted } from "effect";
-import { HttpClient, HttpClientResponse } from "effect/http";
 import pg from "pg";
 import { makeBattleReadBudget } from "#src/database/battle-read-budget";
 import { drizzleDatabaseEffect } from "#src/database/database";
-import { PermissionDeniedError } from "#src/infrastructure/http-error";
-import { makeMargonemAccountProfiles } from "#src/infrastructure/margonem-account-profiles";
 import {
   makeWeaponKills,
   type RecordWeaponKillsInput,
@@ -56,60 +51,6 @@ beforeEach(async () => {
   await pool.query("TRUNCATE weapon_kills");
 });
 
-// Margonem signs account proofs and lists each account's characters on its
-// public profile; the test serves its own signing key and profiles.
-const signingKey = generateKeyPairSync("rsa", { modulusLength: 2048 });
-
-const profile = (characterId: string) =>
-  new Response(
-    `<ul><li data-nick="Warrior${characterId}" data-world="#tempest" class="char-row " data-id="${characterId}"></li></ul>`,
-  );
-
-// Account 9101 plays character 101, account 9102 plays character 102.
-const profileCharacters = new Map([
-  ["https://margonem.test/profile/view,9101", "101"],
-  ["https://margonem.test/profile/view,9102", "102"],
-]);
-
-const margonemClient = HttpClient.make((request) => {
-  const characterId = profileCharacters.get(request.url);
-
-  return Effect.succeed(
-    HttpClientResponse.fromWeb(
-      request,
-      characterId
-        ? profile(characterId)
-        : new Response(
-            signingKey.publicKey.export({ type: "spki", format: "pem" }),
-          ),
-    ),
-  );
-});
-
-const proofFor = (
-  battleKey: string,
-  accountId: string,
-  characterId: string,
-) => {
-  const characterHex = BigInt(characterId).toString(16).padStart(16, "0");
-  const token = `lootlog:${battleKey}:${accountId}:02${characterHex}ffffffffffffffff${"a".repeat(32)}`;
-  const ts = Date.now();
-  const validatedString = `${accountId}+${token}+${ts}`;
-
-  return {
-    userId: accountId,
-    characterId,
-    token,
-    ts,
-    validatedString,
-    signatureBase64: sign(
-      "sha256",
-      Buffer.from(validatedString),
-      signingKey.privateKey,
-    ).toString("base64"),
-  };
-};
-
 const run = <A, E>(
   use: (weaponKills: ReturnType<typeof makeWeaponKills>) => Effect.Effect<A, E>,
 ) =>
@@ -118,18 +59,7 @@ const run = <A, E>(
       const drizzle = yield* drizzleDatabaseEffect;
 
       return yield* use(
-        makeWeaponKills(
-          drizzle,
-          makeBattleReadBudget(drizzle),
-          makeMargonemProofVerifier(
-            { signingKeyUrl: "https://margonem.test/signing-key.pem" },
-            margonemClient,
-          ),
-          makeMargonemAccountProfiles(
-            { profileUrl: "https://margonem.test/profile/view" },
-            margonemClient,
-          ),
-        ),
+        makeWeaponKills(drizzle, makeBattleReadBudget(drizzle)),
       );
     }).pipe(
       Effect.provide(
@@ -167,18 +97,15 @@ const submission = (
   characterId: string,
   weaponItemId: string,
   rows: string[],
-  battleKey = "battle-1",
 ): RecordWeaponKillsInput => ({
   accountId: `9${characterId}`,
   characterId,
   world: "tempest",
   weaponItemId,
-  battleKey,
   events: [{ f: { init: "1", w: warriors, m: rows } }],
-  margonemAccountProof: proofFor(battleKey, `9${characterId}`, characterId),
 });
 
-it("counts each finishing blow once across a cut-short and a whole log", async () => {
+it("counts each finishing blow once across a cut-short, a whole and a resent log", async () => {
   const cutShort = await run((weaponKills) =>
     weaponKills.recordWeaponKills(
       submission("101", "555", firstRows),
@@ -193,8 +120,17 @@ it("counts each finishing blow once across a cut-short and a whole log", async (
     ),
   );
 
+  // Margonem sends the whole battle again after a page reload.
+  const resent = await run((weaponKills) =>
+    weaponKills.recordWeaponKills(
+      submission("101", "555", [...firstRows, ...lastRows]),
+      "user-a",
+    ),
+  );
+
   expect(cutShort).toEqual({ itemId: "555", kills: 1 });
   expect(whole).toEqual({ itemId: "555", kills: 1 });
+  expect(resent).toEqual({ itemId: "555", kills: 1 });
 });
 
 it("credits only the submitter's finishing blows", async () => {
@@ -233,39 +169,4 @@ it("starts a weapon from zero for its new owner", async () => {
 
   expect(newOwner).toEqual({ itemId: "555", kills: 1 });
   expect(previousOwner).toEqual({ weapons: [{ itemId: "555", kills: 1 }] });
-});
-
-it("counts a repeated battle with the same rows again", async () => {
-  await run((weaponKills) =>
-    weaponKills.recordWeaponKills(
-      submission("101", "555", firstRows, "battle-1"),
-      "user-a",
-    ),
-  );
-
-  const repeated = await run((weaponKills) =>
-    weaponKills.recordWeaponKills(
-      submission("101", "555", firstRows, "battle-2"),
-      "user-a",
-    ),
-  );
-
-  expect(repeated).toEqual({ itemId: "555", kills: 2 });
-});
-
-it("rejects a character the proven account does not play", async () => {
-  // Margonem signs only the account; the character in the token is the
-  // submitter's own claim.
-  const forged = {
-    ...submission("101", "555", firstRows),
-    accountId: "9102",
-    margonemAccountProof: proofFor("battle-1", "9102", "101"),
-  };
-
-  const rejection = await run((weaponKills) =>
-    weaponKills.recordWeaponKills(forged, "user-b").pipe(Effect.flip),
-  );
-
-  expect(rejection).toBeInstanceOf(PermissionDeniedError);
-  expect((await pool.query("SELECT * FROM weapon_kills")).rows).toEqual([]);
 });

@@ -2,7 +2,10 @@ import { configureApiClients } from "@lootlog/client/transport";
 import { waitFor } from "@testing-library/react";
 import { expect, it, onTestFinished, vi } from "vitest";
 import type { RuntimeTipItem } from "@/lib/margonem-runtime/adapters/item-tip-runtime-adapter";
-import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import {
+  setTestRuntimeGame,
+  testRuntimeWindow,
+} from "@/test/test-runtime-window";
 import { installWeaponKillsTooltips, setWeaponKills } from "./weapon-kills";
 
 type TipWindow = Window & {
@@ -10,6 +13,9 @@ type TipWindow = Window & {
 };
 
 const tipWindow: TipWindow = window;
+
+// The hero's items the game holds, which the counters refresh.
+const heroItems = new Map<string, RuntimeTipItem>();
 
 // `firstRead` answers the hero's counters read that installation starts.
 const setUp = (firstRead?: () => Promise<Response>) => {
@@ -29,11 +35,16 @@ const setUp = (firstRead?: () => Promise<Response>) => {
   );
 
   tipWindow.MargoTipsParser = { getTip: () => "<b>Item</b>" };
+  testRuntimeWindow.Engine = {
+    items: { getItemById: (id: string) => heroItems.get(id) },
+  };
   const uninstall = installWeaponKillsTooltips();
 
   onTestFinished(() => {
     uninstall();
     delete tipWindow.MargoTipsParser;
+    delete testRuntimeWindow.Engine;
+    heroItems.clear();
   });
 
   return {
@@ -42,7 +53,7 @@ const setUp = (firstRead?: () => Promise<Response>) => {
   };
 };
 
-it("adds the counter to a main weapon tip once its owner's counters arrive", async () => {
+it("adds the counter to a main weapon tip once the hero's counters arrive", async () => {
   const { fetch, getTip } = setUp();
 
   const weapon = {
@@ -51,6 +62,8 @@ it("adds the counter to a main weapon tip once its owner's counters arrive", asy
     own: 12345,
     setTip: vi.fn(() => getTip(weapon)),
   };
+
+  heroItems.set("555", weapon);
 
   // The game built this tip before the counters were loaded.
   expect(getTip(weapon)).toBe("<b>Item</b>");
@@ -67,7 +80,7 @@ it("leaves the tips of other item classes unchanged", async () => {
   const { getTip } = setUp();
   const shield = { id: 555, cl: 14, own: 12345 };
 
-  setWeaponKills("luvia", "12345", "555", 3);
+  setWeaponKills("555", 3);
 
   expect(getTip(shield)).toBe("<b>Item</b>");
 });
@@ -87,6 +100,8 @@ it("retries a failed counter read shortly instead of holding it for minutes", as
     own: 12345,
     setTip: vi.fn(() => getTip(weapon)),
   };
+
+  heroItems.set("555", weapon);
 
   getTip(weapon);
   await waitFor(() => expect(warn).toHaveBeenCalled());
@@ -114,7 +129,7 @@ it("keeps a counter recorded while an older read was in flight", async () => {
   const weapon = { id: 555, cl: 1, own: 12345, setTip: vi.fn() };
 
   await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
-  setWeaponKills("luvia", "12345", "555", 4);
+  setWeaponKills("555", 4);
   answerRead(Response.json({ weapons: [{ itemId: "555", kills: 3 }] }));
   // Let the read's response settle into the cache.
   await new Promise((resolve) => setTimeout(resolve, 10));
