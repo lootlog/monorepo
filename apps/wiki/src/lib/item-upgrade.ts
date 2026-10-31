@@ -164,6 +164,7 @@ const scaleValue = (
   scale: Scale,
   fromLevel: number,
   toLevel: number,
+  extraAmount = 0,
 ) => {
   const shown = Number(value);
   const from = scale.growth(fromLevel);
@@ -179,7 +180,12 @@ const scaleValue = (
       ? roundAmount
       : amount;
 
-  return String(roundTo(scale.base + exact * scale.growth(toLevel), decimals));
+  return String(
+    roundTo(
+      scale.base + (exact + extraAmount) * scale.growth(toLevel),
+      decimals,
+    ),
+  );
 };
 
 type UpgradableItem = {
@@ -201,19 +207,11 @@ export const isUpgradable = (item: UpgradableItem) =>
     .split(";")
     .some((entry) => /^(cursed|expire_duration)(=|$)/.test(entry));
 
-/**
- * The item's stats once upgraded, in the game's stat format, with the upgrade
- * level among them as the game lists it and, at +5, the chosen extra bonus as
- * the game stores it: `bonus=<stat>,<value>`. The required level stays:
- * upgrading raises only the level the stats are computed at.
- */
-export const upgradeItemStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
-  if (upgrade.level === 0 || !isUpgradable(item)) return item.stat;
-
-  const toLevel = upgradedItemLevel(item.lvl, upgrade.level);
+/** The item's stats computed at `toLevel`, without its upgrade entries. */
+const scaleStats = (item: UpgradableItem, toLevel: number) => {
   const rules = statRules(item.rarity, item.type);
 
-  const entries = item.stat
+  return item.stat
     .split(";")
     .filter(Boolean)
     .filter(
@@ -246,35 +244,77 @@ export const upgradeItemStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
 
       return `${key}=${scaled.join(",")}`;
     });
+};
+
+/**
+ * The item's own stat names the +5 bonus raises: one more bonus of that
+ * stat, so a base the stat already has is not added again; 0.94 attack speed
+ * from one bonus at 345 becomes `round(8 + 2 * 0.25 * 345)` = 1.81, not 1.88.
+ * An item without the stat gains it as one bonus.
+ */
+const addUpgradeBonus = (
+  entries: ReadonlyArray<string>,
+  key: UpgradeBonusKey,
+  item: UpgradableItem,
+  toLevel: number,
+) => {
+  const formula = BONUS_VALUES[key];
+  const perBonus = formula.perBonus(bonusContext(item, toLevel));
+  const prefix = `${key}=`;
+  const index = entries.findIndex((entry) => entry.startsWith(prefix));
+
+  const current =
+    index === -1 ? undefined : entries[index]?.slice(prefix.length);
+
+  if (current === undefined) {
+    const value = Math.round(formula.base + perBonus);
+
+    return { entries: [...entries, `${prefix}${value}`], added: value };
+  }
+
+  const scale = statRules(item.rarity, item.type).get(key)?.[0];
+
+  const next =
+    scale && AMOUNT_SCALED_BONUSES.has(key)
+      ? scaleValue(current, scale, toLevel, toLevel, 1)
+      : String(Math.round(Number(current) + perBonus));
+
+  return {
+    entries: entries.map((entry, entryIndex) =>
+      entryIndex === index ? `${prefix}${next}` : entry,
+    ),
+    added: Number(next) - Number(current),
+  };
+};
+
+/**
+ * The item's stats once upgraded, in the game's stat format, with the upgrade
+ * level among them as the game lists it and, at +5, the chosen extra bonus:
+ * it raises the item's own stat and is listed as the game stores it,
+ * `bonus=<stat>,<increase>`. The required level stays: upgrading raises only
+ * the level the stats are computed at.
+ */
+export const upgradeItemStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
+  if (upgrade.level === 0 || !isUpgradable(item)) return item.stat;
+
+  const toLevel = upgradedItemLevel(item.lvl, upgrade.level);
+  const entries = scaleStats(item, toLevel);
+  const level = `enhancement_upgrade_lvl=${upgrade.level}`;
 
   const bonus =
     upgrade.level === MAX_UPGRADE_LEVEL && upgrade.bonus
-      ? upgradeBonusOptions(item).find(({ key }) => key === upgrade.bonus)
+      ? upgrade.bonus
       : undefined;
 
-  if (!bonus) {
-    return [...entries, `enhancement_upgrade_lvl=${upgrade.level}`].join(";");
+  if (!bonus || !bonusPool(item)?.includes(bonus)) {
+    return [...entries, level].join(";");
   }
 
-  // The chosen bonus adds to the item's own stat, or gives it one, and the
-  // item also lists it as the bonus it was given.
-  const bonusPrefix = `${bonus.key}=`;
-  const statIndex = entries.findIndex((entry) => entry.startsWith(bonusPrefix));
+  const upgraded = addUpgradeBonus(entries, bonus, item, toLevel);
 
-  const withBonus =
-    statIndex === -1
-      ? [...entries, `${bonusPrefix}${bonus.value}`]
-      : entries.map((entry, index) =>
-          index === statIndex
-            ? `${bonusPrefix}${Number(entry.slice(bonusPrefix.length)) + bonus.value}`
-            : entry,
-        );
-
-  return [
-    ...withBonus,
-    `enhancement_upgrade_lvl=${upgrade.level}`,
-    `bonus=${bonus.key},${bonus.value}`,
-  ].join(";");
+  return [...upgraded.entries, level, `bonus=${bonus},${upgraded.added}`].join(
+    ";",
+  );
 };
 
 /**
@@ -378,50 +418,115 @@ type BonusContext = {
   type: string;
 };
 
-/** One bonus of each stat, as the game's bonus table gives it. */
-const BONUS_VALUES: Record<UpgradeBonusKey, (context: BonusContext) => number> =
-  {
-    da: ({ level }) => 0.25 * level + 8,
-    ds: ({ level }) => (5 * level) / 9 + 4,
-    dz: ({ level }) => (5 * level) / 9 + 4,
-    di: ({ level }) => (5 * level) / 9 + 4,
-    // Attack speed and slowing are kept in hundredths.
-    sa: ({ level }) => 8 + 0.25 * level,
-    slow: ({ level }) => 8 + (2 * level) / 7,
-    crit: () => 1,
-    resdmg: () => 1,
-    acdmg: ({ levelPower, type }) =>
-      1 + ((WEAPON_TYPES.has(type) ? 1 : 0.75) * levelPower) / 50,
-    endest: ({ level }) => 2 + 0.02 * level,
-    manadest: ({ level }) => 5 + 0.04 * level,
-    abdest: ({ levelPower, rarityPower, type }) =>
+/**
+ * Each stat's bonus formula from the game's bonus table, `base + amount *
+ * perBonus`: the base comes once with the stat, whatever its bonus count.
+ */
+const BONUS_VALUES: Record<
+  UpgradeBonusKey,
+  { base: number; perBonus: (context: BonusContext) => number }
+> = {
+  da: { base: 8, perBonus: ({ level }) => 0.25 * level },
+  ds: { base: 4, perBonus: ({ level }) => (5 * level) / 9 },
+  dz: { base: 4, perBonus: ({ level }) => (5 * level) / 9 },
+  di: { base: 4, perBonus: ({ level }) => (5 * level) / 9 },
+  // Attack speed and slowing are kept in hundredths.
+  sa: { base: 8, perBonus: ({ level }) => 0.25 * level },
+  slow: { base: 8, perBonus: ({ level }) => (2 * level) / 7 },
+  crit: { base: 0, perBonus: () => 1 },
+  resdmg: { base: 0, perBonus: () => 1 },
+  acdmg: {
+    base: 1,
+    perBonus: ({ levelPower, type }) =>
+      ((WEAPON_TYPES.has(type) ? 1 : 0.75) * levelPower) / 50,
+  },
+  endest: { base: 0, perBonus: ({ level }) => 2 + 0.02 * level },
+  manadest: { base: 0, perBonus: ({ level }) => 5 + 0.04 * level },
+  abdest: {
+    base: 0,
+    perBonus: ({ levelPower, rarityPower, type }) =>
       (ABSORB_DESTRUCTION_SHARE.get(type) ?? 0.3) * (rarityPower + levelPower),
-    ac: ({ levelPower, classPower }) => 0.15 * levelPower * classPower,
-    resfire: () => 3,
-    resfrost: () => 3,
-    reslight: () => 3,
-    act: () => 5,
-    hp: ({ level, levelPower, classPower }) =>
+  },
+  ac: {
+    base: 0,
+    perBonus: ({ levelPower, classPower }) => 0.15 * levelPower * classPower,
+  },
+  resfire: { base: 0, perBonus: () => 3 },
+  resfrost: { base: 0, perBonus: () => 3 },
+  reslight: { base: 0, perBonus: () => 3 },
+  act: { base: 0, perBonus: () => 5 },
+  hp: {
+    base: 0,
+    perBonus: ({ level, levelPower, classPower }) =>
       3.08 * Math.round(8 + level + 0.2 * levelPower * classPower),
-    blok: ({ level }) => (3 * level) / 20,
-    absorb: ({ levelPower, classPower }) => 0.6 * levelPower * classPower,
-    absorbm: ({ levelPower, classPower }) => 0.6 * levelPower * classPower,
-    evade: ({ level }) => level / 10,
-    lowevade: ({ level }) => level / 10,
-    energybon: ({ level }) => 10 + level / 15,
-    manabon: ({ level }) => 5 + level / 4,
-    critval: () => 6,
-    critmval: () => 6,
-    lowcrit: () => 2,
-    heal: ({ level, levelPower, classPower }) =>
-      8 + 0.8 * level + 0.2 * levelPower * classPower,
-  };
+  },
+  blok: { base: 0, perBonus: ({ level }) => (3 * level) / 20 },
+  absorb: {
+    base: 0,
+    perBonus: ({ levelPower, classPower }) => 0.6 * levelPower * classPower,
+  },
+  absorbm: {
+    base: 0,
+    perBonus: ({ levelPower, classPower }) => 0.6 * levelPower * classPower,
+  },
+  evade: { base: 0, perBonus: ({ level }) => level / 10 },
+  lowevade: { base: 0, perBonus: ({ level }) => level / 10 },
+  energybon: { base: 0, perBonus: ({ level }) => 10 + level / 15 },
+  manabon: { base: 5, perBonus: ({ level }) => level / 4 },
+  critval: { base: 0, perBonus: () => 6 },
+  critmval: { base: 0, perBonus: () => 6 },
+  lowcrit: { base: 0, perBonus: () => 2 },
+  heal: {
+    base: 8,
+    perBonus: ({ level, levelPower, classPower }) =>
+      0.8 * level + 0.2 * levelPower * classPower,
+  },
+};
+
+/**
+ * Stats whose value the item's stat rules already count in bonuses of this
+ * formula, so the +5 bonus is one more of them. Armor, absorption and its
+ * destruction come from the item's quality too, so the bonus adds on top.
+ */
+const AMOUNT_SCALED_BONUSES: ReadonlySet<UpgradeBonusKey> = new Set([
+  "da",
+  "ds",
+  "dz",
+  "di",
+  "sa",
+  "slow",
+  "acdmg",
+  "endest",
+  "manadest",
+  "hp",
+  "blok",
+  "evade",
+  "lowevade",
+  "energybon",
+  "manabon",
+  "heal",
+]);
+
+const bonusContext = (item: UpgradableItem, level: number): BonusContext => ({
+  level,
+  levelPower: levelPower(level),
+  rarityPower: rarityPower(
+    level,
+    RARITY_FACTOR.get(item.rarity ?? "COMMON") ?? 0,
+  ),
+  classPower: CLASS_POWER.get(item.type ?? "") ?? 1,
+  type: item.type ?? "",
+});
+
+/** The +5 bonuses the item's class draws from; none for other items. */
+const bonusPool = (item: UpgradableItem) =>
+  BONUS_POOLS.find(({ types }) => types.has(item.type ?? ""))?.groups.flat();
 
 export type UpgradeBonusOption = {
   key: UpgradeBonusKey;
   /** Its group, 0 for the most likely. */
   group: number;
-  /** The stat value it adds at +5. */
+  /** How much it raises the item's stat at +5. */
   value: number;
   /** The chance it is one of the three bonuses offered at +5. */
   offerChance: number;
@@ -468,17 +573,7 @@ export const upgradeBonusOptions = (
   if (!pool || !isUpgradable(item)) return [];
 
   const level = upgradedItemLevel(item.lvl, MAX_UPGRADE_LEVEL);
-
-  const context: BonusContext = {
-    level,
-    levelPower: levelPower(level),
-    rarityPower: rarityPower(
-      level,
-      RARITY_FACTOR.get(item.rarity ?? "COMMON") ?? 0,
-    ),
-    classPower: CLASS_POWER.get(item.type ?? "") ?? 1,
-    type: item.type ?? "",
-  };
+  const entries = scaleStats(item, level);
 
   const bonuses = pool.groups.flatMap((keys, group) =>
     keys.map((key) => ({ key, group })),
@@ -492,7 +587,7 @@ export const upgradeBonusOptions = (
   return bonuses.map(({ key, group }, index) => ({
     key,
     group,
-    value: Math.round(BONUS_VALUES[key](context)),
+    value: addUpgradeBonus(entries, key, item, level).added,
     offerChance: chances[index] ?? 0,
   }));
 };
