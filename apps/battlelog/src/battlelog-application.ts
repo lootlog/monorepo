@@ -26,6 +26,10 @@ import { makeBattleReadBudget } from "#src/database/battle-read-budget";
 import { drizzleDatabaseEffect, PgClientLive } from "#src/database/database";
 import { makeBattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import { makeRedisStore } from "#src/infrastructure/redis-store";
+import { makeWeaponKills } from "#src/battles/weapon-kills/weapon-kills";
+import { makeMargonemProofVerifier } from "@lootlog/protocol/http/margonem-account-proof";
+import { FetchHttpClient, HttpClient } from "effect/http";
+import { makeMargonemAccountProfiles } from "#src/infrastructure/margonem-account-profiles";
 
 RedisConnection.clientFactory = (options) => {
   if (!options.url) {
@@ -49,6 +53,7 @@ export class BattlelogApplication extends Context.Service<
     BattlelogApplication,
     Effect.gen(function* () {
       const config = yield* BattlelogConfig;
+      const httpClient = yield* HttpClient.HttpClient;
       const drizzle = yield* drizzleDatabaseEffect;
       const redisClient = yield* Redis.Redis;
       const redisFibers = yield* FiberSet.make<unknown, unknown>();
@@ -101,6 +106,18 @@ export class BattlelogApplication extends Context.Service<
         battlesService,
         analyticsService,
         { add: (name, data) => queue.add(name, data).then(() => undefined) },
+        makeWeaponKills(
+          drizzle,
+          read,
+          makeMargonemProofVerifier(
+            { signingKeyUrl: config.margonemSigningKeyUrl },
+            httpClient,
+          ),
+          makeMargonemAccountProfiles(
+            { profileUrl: config.margonemProfileUrl },
+            httpClient,
+          ),
+        ),
       );
 
       yield* Effect.logInfo("Battlelog application initialized").pipe(
@@ -120,6 +137,7 @@ export class BattlelogApplication extends Context.Service<
 
   static readonly layer = this.layerWithoutConfig.pipe(
     Layer.provide(PgClientLive),
+    Layer.provide(FetchHttpClient.layer),
     Layer.provide(BattlelogConfig.layer),
     Layer.provide(
       Layer.unwrap(

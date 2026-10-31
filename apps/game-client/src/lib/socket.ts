@@ -572,7 +572,7 @@ export class AppSocket {
     const proofTimeout = setTimeout(() => proofController.abort(), 5_000);
 
     const margonemAccountProof = await requestMargonemAccountProof({
-      socketId: connectionId,
+      bindingId: connectionId,
       accountId: data.accountId,
       characterId: data.characterId,
       clanId: data.clan?.id,

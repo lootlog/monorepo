@@ -2449,6 +2449,218 @@ paths:
                 required:
                   - message
       summary: Get raw battle payload
+  /weapon-kills:
+    post:
+      tags:
+        - weapon-kills
+      operationId: WeaponKillsController_recordWeaponKills
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeaponKillsDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    anyOf:
+                      - type: string
+                      - type: array
+                        items:
+                          type: object
+                          properties:
+                            path:
+                              type: array
+                              items:
+                                anyOf:
+                                  - type: string
+                                  - anyOf:
+                                      - type: number
+                                      - type: string
+                                        enum:
+                                          - Infinity
+                                          - -Infinity
+                                          - NaN
+                            message:
+                              type: string
+                          required:
+                            - path
+                            - message
+                  statusCode:
+                    type: number
+                    enum:
+                      - 400
+                required:
+                  - error
+                  - message
+                  - statusCode
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                      message:
+                        type: string
+                      statusCode:
+                        type: number
+                        enum:
+                          - 403
+                    required:
+                      - error
+                      - message
+                      - statusCode
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+      description: Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. The Margonem account proof must be requested for the submitted battle key, and the proven account's public Margonem profile must list the character on the world; otherwise the request is rejected with 403. A resubmitted log counts once.
+      summary: Record finishing blows dealt with a weapon
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecordWeaponKillsDto"
+        required: true
+  /weapon-kills/{world}/{characterId}:
+    get:
+      tags:
+        - weapon-kills
+      operationId: WeaponKillsController_getCharacterWeaponKills
+      parameters:
+        - name: world
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: characterId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterWeaponKillsResponseDto_Output"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    anyOf:
+                      - type: string
+                      - type: array
+                        items:
+                          type: object
+                          properties:
+                            path:
+                              type: array
+                              items:
+                                anyOf:
+                                  - type: string
+                                  - anyOf:
+                                      - type: number
+                                      - type: string
+                                        enum:
+                                          - Infinity
+                                          - -Infinity
+                                          - NaN
+                            message:
+                              type: string
+                          required:
+                            - path
+                            - message
+                  statusCode:
+                    type: number
+                    enum:
+                      - 400
+                required:
+                  - error
+                  - message
+                  - statusCode
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+      summary: Get the weapon kill counters of a character
   /battles/public/{battleId}:
     get:
       tags:
@@ -4013,6 +4225,205 @@ components:
         - dailyRewardsCur
         - dailyRewardsMax
         - warriors
+    CharacterWeaponKillsResponseDto_Output:
+      type: object
+      properties:
+        weapons:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeaponKillsDto_Output"
+      required:
+        - weapons
+    WeaponKillsDto_Output:
+      type: object
+      properties:
+        itemId:
+          type: string
+        kills:
+          type: number
+      required:
+        - itemId
+        - kills
+    RecordWeaponKillsDto:
+      type: object
+      properties:
+        accountId:
+          type: string
+        characterId:
+          type: string
+        world:
+          type: string
+        weaponItemId:
+          type: string
+        battleKey:
+          type: string
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              party:
+                type: object
+                properties:
+                  members:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        account:
+                          type: number
+                        nick:
+                          type: string
+                        icon:
+                          type: string
+                        commander:
+                          type: number
+                      required:
+                        - id
+                        - account
+                        - nick
+                        - icon
+                required:
+                  - members
+              f:
+                type: object
+                properties:
+                  m:
+                    type: array
+                    items:
+                      type: string
+                  endBattle:
+                    type: number
+                  init:
+                    type: string
+                  auto:
+                    type: string
+                  w:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        originalId:
+                          type: number
+                        name:
+                          type: string
+                        lvl:
+                          type: number
+                        prof:
+                          type: string
+                        icon:
+                          type: string
+                        team:
+                          type: number
+                      required:
+                        - originalId
+                        - name
+                        - lvl
+                        - prof
+                        - icon
+                        - team
+              ev:
+                type: number
+              match_summary:
+                type: object
+                properties:
+                  difficulty_rank:
+                    type: number
+                  result:
+                    type: number
+                  rating_delta:
+                    type: number
+                  opponent_lvl:
+                    type: number
+                  opponent_oplvl:
+                    type: number
+                  opponent_rating:
+                    type: number
+                  rating:
+                    type: number
+                  status:
+                    type: number
+                  placement_cur:
+                    type: number
+                  placement_max:
+                    type: number
+                  points_gained:
+                    type: number
+                  daily_stage:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                      points_cur:
+                        type: number
+                      points_max:
+                        type: number
+                      points_step:
+                        type: number
+                      rewards_last:
+                        type: number
+                      rewards_cur:
+                        type: number
+                      rewards_max:
+                        type: number
+                    required:
+                      - id
+                      - points_cur
+                      - points_max
+                      - points_step
+                      - rewards_last
+                      - rewards_cur
+                      - rewards_max
+                required:
+                  - difficulty_rank
+                  - result
+                  - rating_delta
+                  - opponent_lvl
+                  - opponent_oplvl
+                  - opponent_rating
+                  - rating
+                  - status
+              matchmaking_state:
+                type: number
+            required:
+              - f
+          minItems: 1
+        margonemAccountProof:
+          $ref: "#/components/schemas/MargonemAccountProofDto"
+      required:
+        - accountId
+        - characterId
+        - world
+        - weaponItemId
+        - battleKey
+        - events
+        - margonemAccountProof
+    MargonemAccountProofDto:
+      type: object
+      properties:
+        userId:
+          type: string
+        characterId:
+          type: string
+        clanId:
+          type: number
+        token:
+          type: string
+        ts:
+          type: number
+        validatedString:
+          type: string
+        signatureBase64:
+          type: string
+      required:
+        - userId
+        - characterId
+        - token
+        - ts
+        - validatedString
+        - signatureBase64
     UpdateBattleDto:
       type: object
       properties:

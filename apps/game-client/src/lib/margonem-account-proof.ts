@@ -25,7 +25,8 @@ type ParsedMargonemAccountProofResponse = Omit<
 >;
 
 type RequestMargonemAccountProofOptions = {
-  socketId: string;
+  /** What the proof is for: the gateway socket, or a recorded battle. */
+  bindingId: string;
   accountId: string;
   characterId: string;
   clanId?: number;
@@ -42,13 +43,13 @@ const NO_CLAN_HEX = "ffffffffffffffff";
 const MAX_UINT64 = 0xffffffffffffffffn;
 
 export function createMargonemAccountProofToken({
-  socketId,
+  bindingId,
   accountId,
   characterId,
   clanId,
   nonce = createNonce(),
 }: {
-  socketId: string;
+  bindingId: string;
   accountId: string;
   characterId: string;
   clanId?: number;
@@ -59,11 +60,11 @@ export function createMargonemAccountProofToken({
   const encodedClanId =
     clanId === undefined ? NO_CLAN_HEX : encodeUnsignedInt64Hex(clanId);
 
-  return `lootlog:${socketId}:${accountId}:${TOKEN_VERSION_PREFIX}${encodedCharacterId}${encodedClanId}${nonce}`;
+  return `lootlog:${bindingId}:${accountId}:${TOKEN_VERSION_PREFIX}${encodedCharacterId}${encodedClanId}${nonce}`;
 }
 
 export async function requestMargonemAccountProof({
-  socketId,
+  bindingId,
   accountId,
   characterId,
   clanId,
@@ -71,7 +72,7 @@ export async function requestMargonemAccountProof({
   signal,
 }: RequestMargonemAccountProofOptions): Promise<MargonemAccountProof> {
   const token = createMargonemAccountProofToken({
-    socketId,
+    bindingId,
     accountId,
     characterId,
     clanId,

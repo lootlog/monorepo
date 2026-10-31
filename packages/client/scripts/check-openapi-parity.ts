@@ -3141,7 +3141,81 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
       ),
       ...FACTION_WAR_API_ADDITIONS,
     },
-    battlelog: PVP_WINS_BATTLELOG_ADDITIONS,
+    battlelog: {
+      ...PVP_WINS_BATTLELOG_ADDITIONS,
+      // Verified by apps/battlelog/src/battles/weapon-kills/weapon-kills.integration.test.ts.
+      "POST /weapon-kills": {
+        operationId: "WeaponKillsController_recordWeaponKills",
+        description:
+          "Credits the finishing blows the character dealt to players in the submitted battle log to its main weapon, and returns that weapon's counter. The Margonem account proof must be requested for the submitted battle key, and the proven account's public Margonem profile must list the character on the world; otherwise the request is rejected with 403. A resubmitted log counts once.",
+        parameters: [],
+        security: [{ bearer: [] }],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/RecordWeaponKillsDto" },
+            },
+          },
+          required: true,
+        },
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/WeaponKillsDto_Output" },
+              },
+            },
+          },
+          "400": {
+            content: {
+              "application/json": { schema: BATTLELOG_INVALID_REQUEST_SCHEMA },
+            },
+          },
+          // A Margonem account proof that does not match the submission.
+          "403": {
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                    message: { type: "string" },
+                    statusCode: { type: "number", enum: [403] },
+                  },
+                  required: ["error", "message", "statusCode"],
+                },
+              },
+            },
+          },
+        },
+      },
+      "GET /weapon-kills/{world}/{characterId}": {
+        operationId: "WeaponKillsController_getCharacterWeaponKills",
+        parameters: ["world", "characterId"].map((name) => ({
+          name,
+          in: "path",
+          schema: { type: "string" },
+          required: true,
+        })),
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CharacterWeaponKillsResponseDto_Output",
+                },
+              },
+            },
+          },
+          "400": {
+            content: {
+              "application/json": { schema: BATTLELOG_INVALID_REQUEST_SCHEMA },
+            },
+          },
+        },
+      },
+    },
   } satisfies Record<string, Record<string, JsonValue>>),
 );
 

@@ -1,0 +1,63 @@
+/** Transport definitions for weapon kill counters. */
+import * as Schema from "effect/Schema";
+import { FiniteNumber } from "@lootlog/schema/http-scalars";
+import { CreateBattleDto } from "../battles/creation.schemas.js";
+
+const MargonemIdDto = Schema.String.check(
+  Schema.isPattern(/^\d{1,20}$/).annotate({
+    expected: "a Margonem identifier of up to 20 digits",
+  }),
+);
+
+export type RecordWeaponKillsDto = typeof RecordWeaponKillsDto.Type;
+
+export const MargonemAccountProofDto = Schema.Struct({
+  userId: Schema.String,
+  characterId: Schema.String,
+  clanId: Schema.optionalKey(FiniteNumber),
+  token: Schema.String,
+  ts: FiniteNumber,
+  validatedString: Schema.String,
+  signatureBase64: Schema.String,
+}).annotate({ identifier: "MargonemAccountProofDto" });
+
+export const RecordWeaponKillsDto = Schema.Struct({
+  accountId: MargonemIdDto,
+  characterId: MargonemIdDto,
+  world: Schema.String.check(
+    Schema.isPattern(/^[\w-]{1,64}$/).annotate({
+      expected: "a Margonem world name",
+    }),
+  ),
+  weaponItemId: MargonemIdDto,
+  battleKey: Schema.String.check(
+    Schema.isPattern(/^[\w-]{1,128}$/).annotate({
+      expected: "up to 128 letters, digits, underscores or hyphens",
+    }),
+  ),
+  events: CreateBattleDto.fields.events,
+  margonemAccountProof: MargonemAccountProofDto,
+}).annotate({ identifier: "RecordWeaponKillsDto" });
+
+export type WeaponKillsDto_Output = typeof WeaponKillsDto_Output.Type;
+
+export const WeaponKillsDto_Output = Schema.Struct({
+  itemId: Schema.String,
+  kills: FiniteNumber,
+}).annotate({ identifier: "WeaponKillsDto_Output" });
+
+export type CharacterWeaponKillsResponseDto_Output =
+  typeof CharacterWeaponKillsResponseDto_Output.Type;
+
+export const CharacterWeaponKillsResponseDto_Output = Schema.Struct({
+  weapons: Schema.Array(WeaponKillsDto_Output),
+}).annotate({ identifier: "CharacterWeaponKillsResponseDto_Output" });
+
+export type WeaponKillsControllerGetCharacterWeaponKillsPathParams =
+  typeof WeaponKillsControllerGetCharacterWeaponKillsPathParams.Type;
+
+export const WeaponKillsControllerGetCharacterWeaponKillsPathParams =
+  Schema.Struct({
+    world: Schema.String,
+    characterId: MargonemIdDto,
+  });

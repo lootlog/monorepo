@@ -37,6 +37,7 @@
     "@hookform/resolvers": "catalog:",
     "@lexical/react": "catalog:",
     "@lexical/utils": "catalog:",
+    "@lootlog/battle-processor": "workspace:*",
     "@lootlog/client": "workspace:*",
     "@lootlog/datetime": "workspace:*",
     "@lootlog/domain": "workspace:*",
