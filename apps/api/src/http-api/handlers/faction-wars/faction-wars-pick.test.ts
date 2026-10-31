@@ -169,13 +169,13 @@ describe("faction war picks", () => {
         }),
       );
 
-      // Today's points stay out until the day ends, so no one can time a
-      // player's hero or titan kill from their jump in the leaderboard.
+      // Today's points stay off the leaderboard until the day ends, so no one
+      // can time a player's hero or titan kill from their jump there.
       const standing = () =>
         run(
           Effect.gen(function* () {
             const data = yield* FactionWarsData;
-            const input = yield* data.standingsInput(war, "2026-10-21");
+            const input = yield* data.standingsInput(war);
 
             const leaderboard = yield* data.leaderboard(
               war.id,
@@ -186,7 +186,7 @@ describe("faction war picks", () => {
             return {
               players: input.players.BARBATOS,
               points: input.stats.reduce((sum, row) => sum + row.points, 0),
-              leaderboard: leaderboard.map((row) => row.userId),
+              leaderboard: leaderboard.map((row) => [row.userId, row.points]),
             };
           }),
         );
@@ -203,15 +203,18 @@ describe("faction war picks", () => {
       );
       expect(await standing()).toEqual({
         players: 1,
-        points: 40,
-        leaderboard: ["user-2"],
+        points: 80,
+        leaderboard: [["user-2", 40]],
       });
 
       await run(setFactionWarDisqualification(war.id, "user-1", null));
       expect(await standing()).toEqual({
         players: 2,
-        points: 80,
-        leaderboard: ["user-1", "user-2"],
+        points: 160,
+        leaderboard: [
+          ["user-1", 40],
+          ["user-2", 40],
+        ],
       });
     } finally {
       await boundary.dispose();
