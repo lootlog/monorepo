@@ -4,14 +4,14 @@ import { Button } from "@lootlog/ui/components/button";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
-import type { UpgradeLevel } from "@/lib/item-upgrade";
+import { type ItemUpgrade, NO_UPGRADE } from "@/lib/item-upgrade";
 
 type EquipButtonProps = {
   item: CatalogItemDtoOutput;
   /** A compact icon button for item lists; the full label elsewhere. */
   compact?: boolean;
   /** The upgrade to wear the item at; without one, a worn item keeps its own. */
-  upgrade?: UpgradeLevel;
+  upgrade?: ItemUpgrade;
 };
 
 /** Wears the item in the User's set; nothing for items no slot holds. */
@@ -25,9 +25,12 @@ export function EquipButton({
 
   if (!slot) return null;
 
+  const worn = set.upgrades[slot.id] ?? NO_UPGRADE;
+
   const isWorn =
     set.items[slot.id] === item.id &&
-    (upgrade === undefined || (set.upgrades[slot.id] ?? 0) === upgrade);
+    (upgrade === undefined ||
+      (worn.level === upgrade.level && worn.bonus === upgrade.bonus));
 
   const label = isWorn ? t("equipment.worn") : t("equipment.equip");
 

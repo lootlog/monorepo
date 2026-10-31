@@ -7,6 +7,7 @@ import {
   encodeEquipmentSet,
   EQUIPMENT_SET_PARAM,
   type EquipmentSet,
+  LEGACY_EQUIPMENT_SET_PARAM,
 } from "@/lib/equipment-set";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
 
@@ -19,10 +20,14 @@ const STORAGE_KEY = "lootlog-wiki-equipment-set";
  */
 const readInitialSet = (): EquipmentSet => {
   const url = new URL(window.location.href);
-  const shared = url.searchParams.get(EQUIPMENT_SET_PARAM);
+
+  const shared =
+    url.searchParams.get(EQUIPMENT_SET_PARAM) ??
+    url.searchParams.get(LEGACY_EQUIPMENT_SET_PARAM);
 
   if (shared !== null) {
     url.searchParams.delete(EQUIPMENT_SET_PARAM);
+    url.searchParams.delete(LEGACY_EQUIPMENT_SET_PARAM);
     window.history.replaceState(window.history.state, "", url);
 
     return decodeEquipmentSet(shared);
@@ -88,13 +93,28 @@ export function EquipmentSetProvider({ children }: { children: ReactNode }) {
             return {
               ...current,
               items: { ...current.items, [slot.id]: item.id },
-              upgrades: nextUpgrade
-                ? { ...upgrades, [slot.id]: nextUpgrade }
-                : upgrades,
+              upgrades:
+                nextUpgrade && nextUpgrade.level > 0
+                  ? { ...upgrades, [slot.id]: nextUpgrade }
+                  : upgrades,
             };
           });
           setPreview(null);
         },
+        upgrade: (slotId, upgrade) =>
+          update((current) => {
+            if (current.items[slotId] === undefined) return current;
+
+            const { [slotId]: _previous, ...upgrades } = current.upgrades;
+
+            return {
+              ...current,
+              upgrades:
+                upgrade.level > 0
+                  ? { ...upgrades, [slotId]: upgrade }
+                  : upgrades,
+            };
+          }),
         unequip: (slotId) =>
           update(
             ({

@@ -1,18 +1,23 @@
 import { PROFESSION_OPTIONS } from "@/lib/item-options";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-slots";
-import { isUpgradeLevel, type UpgradeLevel } from "@/lib/item-upgrade";
+import {
+  type ItemUpgrade,
+  isUpgradeBonusKey,
+  isUpgradeLevel,
+} from "@/lib/item-upgrade";
 
 export type Profession = (typeof PROFESSION_OPTIONS)[number];
 
 /**
  * A character's equipment: who wears it, the item id in each slot and how far
- * each worn item is upgraded; a slot without an upgrade wears it as dropped.
+ * each worn item is upgraded, with its +5 bonus; a slot without an upgrade
+ * wears it as dropped.
  */
 export type EquipmentSet = {
   profession: Profession | null;
   level: number | null;
   items: Partial<Record<EquipmentSlotId, number>>;
-  upgrades: Partial<Record<EquipmentSlotId, UpgradeLevel>>;
+  upgrades: Partial<Record<EquipmentSlotId, ItemUpgrade>>;
 };
 
 export const EMPTY_EQUIPMENT_SET: EquipmentSet = {
@@ -23,7 +28,10 @@ export const EMPTY_EQUIPMENT_SET: EquipmentSet = {
 };
 
 /** The query parameter a shared set travels in. */
-export const EQUIPMENT_SET_PARAM = "zestaw";
+export const EQUIPMENT_SET_PARAM = "set";
+
+/** The parameter links shared before it was renamed still carry. */
+export const LEGACY_EQUIPMENT_SET_PARAM = "zestaw";
 
 const MAX_LEVEL = 500;
 
@@ -33,7 +41,8 @@ const isProfession = (value: string): value is Profession =>
 /**
  * A set as a short, readable link value: the character first, then one
  * `<slot letter><item id>` per worn item, with `u<level>` after an upgraded
- * one, such as `h250_h12345u5_b678`. An unknown character is `-`.
+ * one and the +5 bonus's stat after that, such as `h250_h12345u5ds_b678u2`.
+ * An unknown character is `-`.
  */
 export const encodeEquipmentSet = (set: EquipmentSet) =>
   [
@@ -44,7 +53,11 @@ export const encodeEquipmentSet = (set: EquipmentSet) =>
 
       if (itemId === undefined) return [];
 
-      return [`${slot.code}${itemId}${upgrade ? `u${upgrade}` : ""}`];
+      const upgradePart = upgrade
+        ? `u${upgrade.level}${upgrade.bonus ?? ""}`
+        : "";
+
+      return [`${slot.code}${itemId}${upgradePart}`];
     }),
   ].join("_");
 
@@ -62,15 +75,19 @@ export const decodeEquipmentSet = (value: string): EquipmentSet => {
   const upgrades: EquipmentSet["upgrades"] = {};
 
   for (const part of parts) {
-    const match = /^([a-z])(\d{1,12})(?:u(\d))?$/.exec(part);
+    const match = /^([a-z])(\d{1,12})(?:u(\d)([a-z]*))?$/.exec(part);
     const slot = EQUIPMENT_SLOTS.find(({ code }) => code === match?.[1]);
-    const upgrade = Number(match?.[3]);
+    const level = Number(match?.[3]);
+    const bonus = match?.[4] ?? "";
 
     if (!match || !slot) continue;
 
     items[slot.id] = Number(match[2]);
 
-    if (isUpgradeLevel(upgrade) && upgrade > 0) upgrades[slot.id] = upgrade;
+    if (isUpgradeLevel(level) && level > 0) {
+      upgrades[slot.id] =
+        level === 5 && isUpgradeBonusKey(bonus) ? { level, bonus } : { level };
+    }
   }
 
   return {

@@ -14,7 +14,7 @@ import { ITEM_TILE_LABELS } from "@/lib/item-options";
 export function CatalogItemTile({ item }: { item: CatalogItemDtoOutput }) {
   const worn = useWornItem(findEquipmentSlot(item.type)?.id);
 
-  const isSameItem = worn?.item.id === item.id && worn.upgrade === 0;
+  const isSameItem = worn?.item.id === item.id && worn.upgrade.level === 0;
 
   return (
     <ItemTile
