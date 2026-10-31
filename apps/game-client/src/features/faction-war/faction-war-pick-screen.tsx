@@ -94,6 +94,9 @@ export const FactionWarPickScreen: FC<FactionWarPickScreenProps> = ({
 
     if (code === "FACTION_WAR_NOT_RUNNING") return t("errors.notRunning");
 
+    if (code === "FACTION_WAR_CHARACTER_UNKNOWN")
+      return t("errors.characterUnknown");
+
     return t("errors.generic");
   };
 

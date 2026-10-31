@@ -40914,7 +40914,7 @@ export const getFactionWarsControllerGetCurrentWarUrl = () => {
 }
 
 /**
- * The running faction war, else the next or the last one, with the caller's pick and points; 404 when no war is defined
+ * The running faction war, else the next or the last one, with the caller's pick and points; faction scores count finished Warsaw days only, the caller's own points are current. 404 when no war is defined
  * @summary Get current faction war
  */
 export const factionWarsControllerGetCurrentWar = async ( options?: Parameters<typeof mainFetch>[1]): Promise<FactionWarResponseDto> => {
@@ -41058,7 +41058,7 @@ export const getFactionWarsControllerPickFactionUrl = ({ warId }: FactionWarsCon
 }
 
 /**
- * Lock the caller's faction for a running war; fails with 409 once the caller picked or the war is not running
+ * Lock the caller's faction for a running war with a character the caller's account already reported a kill with on that world or configured; the pick starts hidden from the leaderboard. Fails with 409 once the caller picked, the war is not running, or the character is unknown to the account
  * @summary Pick a faction
  */
 export const factionWarsControllerPickFaction = async ({ warId }: FactionWarsControllerPickFactionPathParameters,
@@ -41246,7 +41246,7 @@ export const getFactionWarsControllerGetLeaderboardUrl = ({ warId }: FactionWars
 }
 
 /**
- * Top players of one faction; players who hid themselves keep their rank without a name, which only war admins still see
+ * Top players of one faction by points of finished Warsaw days; players who hid themselves keep their rank without a name, which only war admins still see
  * @summary Get faction war leaderboard
  */
 export const factionWarsControllerGetLeaderboard = async ({ warId }: FactionWarsControllerGetLeaderboardPathParameters,
@@ -41408,7 +41408,7 @@ export const getFactionWarsControllerGetChampionsUrl = (params: FactionWarsContr
 }
 
 /**
- * Characters on one world of the last war's winners who show their highlight, for the Game client
+ * The picking characters on one world of the last war's winners who show their highlight, for the Game client
  * @summary Get faction war champions
  */
 export const factionWarsControllerGetChampions = async (params: FactionWarsControllerGetChampionsParams, options?: Parameters<typeof mainFetch>[1]): Promise<FactionWarChampionsResponseDto> => {
@@ -41861,7 +41861,7 @@ export const getFactionWarsControllerGetPublicCurrentWarUrl = () => {
 }
 
 /**
- * Dates, rules and faction totals of the current faction war, without any player data
+ * Dates, rules and faction totals of finished Warsaw days of the current faction war, without any player data
  * @summary Get public faction war score
  */
 export const factionWarsControllerGetPublicCurrentWar = async ( options?: Parameters<typeof mainFetch>[1]): Promise<PublicFactionWarResponseDto> => {

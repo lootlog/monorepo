@@ -15,6 +15,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  lt,
   sql,
   sum,
 } from "drizzle-orm";
@@ -35,6 +36,7 @@ import {
   factionWarDailyPointsTable,
   factionWarPickLockTable,
   factionWarPickTable,
+  userCharactersLootlogSettingsTable,
   userKillCharacterTable,
 } from "#src/database/drizzle/schema";
 import { LootlogApi } from "../../lootlog-api.js";
@@ -52,7 +54,11 @@ import type {
 
 const LEADERBOARD_SIZE = 50;
 
-/** Scores and leaderboards move slowly enough to share across viewers. */
+/**
+ * Scores and leaderboards count only finished Warsaw days, so a player's
+ * jump of a hero's or titan's points cannot time that kill for a rival
+ * Organization; they still share a short cache for late submissions.
+ */
 const STANDINGS_CACHE_SECONDS = 30;
 
 /** Champions change only when a winner hides or shows their highlight. */
@@ -110,6 +116,7 @@ export class FactionWarConflict extends TaggedErrorClass<FactionWarConflict>()(
     code: Schema.Literals([
       "FACTION_WAR_ALREADY_PICKED",
       "FACTION_WAR_NOT_RUNNING",
+      "FACTION_WAR_CHARACTER_UNKNOWN",
     ]),
   },
 ) {}
@@ -156,8 +163,14 @@ type Disqualification = FactionWarDisqualificationsResponse[number];
 export class FactionWarsData extends Context.Service<
   FactionWarsData,
   {
-    /** Daily points and players of every faction, without disqualified picks. */
-    readonly standingsInput: (war: FactionWar) => Persisted<StandingsInput>;
+    /**
+     * Daily points of every faction on days before `before`, and its players,
+     * without disqualified picks.
+     */
+    readonly standingsInput: (
+      war: FactionWar,
+      before: string,
+    ) => Persisted<StandingsInput>;
     readonly findPick: (
       warId: string,
       userId: string,
@@ -172,6 +185,16 @@ export class FactionWarsData extends Context.Service<
         points: number;
       }>
     >;
+    /**
+     * The character as the caller's Lootlog account knows it, from a reported
+     * kill on that world or its catching settings; `null` when it never
+     * played with Lootlog on that account.
+     */
+    readonly findOwnCharacter: (
+      discordId: string,
+      characterId: string,
+      world: string,
+    ) => Persisted<{ readonly name: string | null } | null>;
     /** Returns `null` when the User or their Discord account already picked. */
     readonly createPick: (pick: NewPick) => Persisted<StoredPick | null>;
     readonly updatePick: (
@@ -179,9 +202,11 @@ export class FactionWarsData extends Context.Service<
       userId: string,
       payload: UpdateFactionWarPickRequest,
     ) => Persisted<StoredPick | null>;
+    /** Players of one faction ranked by their points on days before `before`. */
     readonly leaderboard: (
       warId: string,
       faction: FactionWarFaction,
+      before: string,
     ) => Persisted<LeaderboardRows>;
     readonly championCharacterIds: (
       warId: string,
@@ -235,9 +260,9 @@ export class FactionWarsData extends Context.Service<
         const total = sql<number>`COALESCE(${sum(factionWarDailyPointsTable.points)}, 0)::int`;
 
         return FactionWarsData.of({
-          standingsInput: (war) =>
+          standingsInput: (war, before) =>
             cached(
-              `faction-war:${war.id}:standings`,
+              `faction-war:${war.id}:standings:${before}`,
               CachedStandingsInput,
               Effect.all({
                 stats: database
@@ -249,7 +274,12 @@ export class FactionWarsData extends Context.Service<
                   })
                   .from(factionWarDailyPointsTable)
                   .innerJoin(factionWarPickTable, and(pointsOfPick, counting))
-                  .where(eq(factionWarDailyPointsTable.warId, war.id))
+                  .where(
+                    and(
+                      eq(factionWarDailyPointsTable.warId, war.id),
+                      lt(factionWarDailyPointsTable.day, before),
+                    ),
+                  )
                   .groupBy(
                     factionWarDailyPointsTable.day,
                     factionWarPickTable.faction,
@@ -301,6 +331,40 @@ export class FactionWarsData extends Context.Service<
                   ),
                 ),
             ),
+          findOwnCharacter: (discordId, characterId, world) =>
+            persisted(
+              Effect.gen(function* () {
+                const [reported] = yield* database
+                  .select({ name: userKillCharacterTable.name })
+                  .from(userKillCharacterTable)
+                  .where(
+                    and(
+                      eq(userKillCharacterTable.discordUserId, discordId),
+                      eq(userKillCharacterTable.characterId, characterId),
+                      eq(userKillCharacterTable.world, world),
+                    ),
+                  )
+                  .limit(1);
+
+                if (reported) return reported;
+
+                const [configured] = yield* database
+                  .select({ id: userCharactersLootlogSettingsTable.id })
+                  .from(userCharactersLootlogSettingsTable)
+                  .where(
+                    and(
+                      eq(userCharactersLootlogSettingsTable.userId, discordId),
+                      eq(
+                        userCharactersLootlogSettingsTable.characterId,
+                        characterId,
+                      ),
+                    ),
+                  )
+                  .limit(1);
+
+                return configured ? { name: null } : null;
+              }),
+            ),
           createPick: (pick) =>
             persisted(
               database.transaction((transaction) =>
@@ -342,9 +406,9 @@ export class FactionWarsData extends Context.Service<
                     .returning()
                     .pipe(Effect.map((rows) => rows[0] ?? null)),
             ),
-          leaderboard: (warId, faction) =>
+          leaderboard: (warId, faction, before) =>
             cached(
-              `faction-war:${warId}:leaderboard:${faction}`,
+              `faction-war:${warId}:leaderboard:${faction}:${before}`,
               CachedLeaderboard,
               database
                 .select({
@@ -355,7 +419,10 @@ export class FactionWarsData extends Context.Service<
                   points: total,
                 })
                 .from(factionWarPickTable)
-                .leftJoin(factionWarDailyPointsTable, pointsOfPick)
+                .leftJoin(
+                  factionWarDailyPointsTable,
+                  and(pointsOfPick, lt(factionWarDailyPointsTable.day, before)),
+                )
                 .where(
                   and(
                     eq(factionWarPickTable.warId, warId),
@@ -373,47 +440,24 @@ export class FactionWarsData extends Context.Service<
               : cached(
                   `faction-war:${warId}:champions:${world}`,
                   CachedChampions,
-                  Effect.gen(function* () {
-                    const champions = and(
-                      eq(factionWarPickTable.warId, warId),
-                      inArray(factionWarPickTable.faction, [...factions]),
-                      eq(factionWarPickTable.championHighlightHidden, false),
-                      counting,
-                    );
-
-                    // The picking character, plus every character the
-                    // champion's account played on this world.
-                    const [picked, played] = yield* Effect.all([
-                      database
-                        .select({
-                          faction: factionWarPickTable.faction,
-                          characterId: factionWarPickTable.characterId,
-                        })
-                        .from(factionWarPickTable)
-                        .where(
-                          and(champions, eq(factionWarPickTable.world, world)),
-                        ),
-                      database
-                        .selectDistinct({
-                          faction: factionWarPickTable.faction,
-                          characterId: userKillCharacterTable.characterId,
-                        })
-                        .from(factionWarPickTable)
-                        .innerJoin(
-                          userKillCharacterTable,
-                          and(
-                            eq(
-                              userKillCharacterTable.discordUserId,
-                              factionWarPickTable.discordId,
-                            ),
-                            eq(userKillCharacterTable.world, world),
-                          ),
-                        )
-                        .where(champions),
-                    ]);
-
-                    return [...picked, ...played];
-                  }),
+                  // Only the character the User picked with: their other
+                  // characters, maybe on other Margonem accounts, must not
+                  // reveal that one Discord account plays them all.
+                  database
+                    .select({
+                      faction: factionWarPickTable.faction,
+                      characterId: factionWarPickTable.characterId,
+                    })
+                    .from(factionWarPickTable)
+                    .where(
+                      and(
+                        eq(factionWarPickTable.warId, warId),
+                        inArray(factionWarPickTable.faction, [...factions]),
+                        eq(factionWarPickTable.championHighlightHidden, false),
+                        eq(factionWarPickTable.world, world),
+                        counting,
+                      ),
+                    ),
                   CHAMPIONS_CACHE_SECONDS,
                 ),
           disqualifications: (warId) =>
@@ -475,7 +519,12 @@ const statusOf = (war: FactionWar, at: number) =>
 const standingsOf = Effect.fn("standingsOf")(function* (war: FactionWar) {
   const data = yield* FactionWarsData;
   const at = yield* now;
-  const { stats, players } = yield* data.standingsInput(war);
+
+  const { stats, players } = yield* data.standingsInput(
+    war,
+    factionWarDay(new Date(at)),
+  );
+
   const standings = factionWarStandings(war, stats);
   const status = statusOf(war, at);
 
@@ -641,15 +690,28 @@ export const pickFaction = Effect.fn("pickFaction")(function* (
   const data = yield* FactionWarsData;
   const { userId, discordId } = yield* caller;
 
+  const character = yield* data.findOwnCharacter(
+    discordId,
+    payload.characterId,
+    payload.world,
+  );
+
+  if (character === null)
+    return yield* new FactionWarConflict({
+      status: 409,
+      code: "FACTION_WAR_CHARACTER_UNKNOWN",
+    });
+
   const created = yield* data.createPick({
     warId: war.id,
     userId,
     discordId,
     faction: payload.faction,
     characterId: payload.characterId,
-    characterName: payload.characterName,
+    characterName: character.name ?? payload.characterName,
     world: payload.world,
-    hiddenFromLeaderboard: false,
+    // Players join the public leaderboard only when they choose to.
+    hiddenFromLeaderboard: true,
     championHighlightHidden: false,
     pickedAt: new Date(at),
   });
@@ -683,7 +745,12 @@ export const getFactionWarLeaderboard = Effect.fn("getFactionWarLeaderboard")(
     const war = yield* requireWar(warId);
     const data = yield* FactionWarsData;
     const { userId, isAdmin } = yield* caller;
-    const rows = yield* data.leaderboard(war.id, faction);
+
+    const rows = yield* data.leaderboard(
+      war.id,
+      faction,
+      factionWarDay(new Date(yield* now)),
+    );
 
     const entries = rows
       .map((row, index) => ({

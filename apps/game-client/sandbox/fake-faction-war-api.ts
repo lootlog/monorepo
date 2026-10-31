@@ -140,7 +140,7 @@ export function installFakeFactionWarApi(
     mode === "champions" || mode === "ended" || mode === "ended-tie";
 
   let highlightHidden = false;
-  let hiddenFromLeaderboard = false;
+  let hiddenFromLeaderboard = true;
 
   const createPick = (
     faction: FactionWarFaction,
