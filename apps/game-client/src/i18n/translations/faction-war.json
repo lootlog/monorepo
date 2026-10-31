@@ -33,7 +33,7 @@
     "description": "Wybierasz dla postaci {{character}} ({{world}}). Wyboru nie można zmienić do końca wojny.",
     "accept": "Potwierdzam",
     "back": "Wróć",
-    "ranking": "Nazwa postaci pojawi się w rankingu frakcji na stronie Lootloga. Możesz ją ukryć w ustawieniach: Wygląd → Wojna frakcji."
+    "ranking": "W rankingu frakcji na stronie Lootloga będziesz widoczny jako „Ukryty gracz”. Nazwę postaci i świat pokażesz w ustawieniach: Wygląd → Wojna frakcji."
   },
   "chosen": {
     "title": "Frakcja {{name}}",
@@ -42,6 +42,7 @@
   "errors": {
     "alreadyPicked": "Frakcja jest już wybrana na tę wojnę.",
     "notRunning": "Ta wojna frakcji już nie trwa.",
+    "characterUnknown": "Lootlog nie zna jeszcze tej postaci. Zabij nią elitę II, herosa lub mocniejszego potwora z włączonym dodatkiem, a potem wybierz frakcję.",
     "generic": "Nie udało się zapisać wyboru. Spróbuj ponownie."
   },
   "quickAccess": {
@@ -63,7 +64,7 @@
     "hideOthersLabel": "Ukrywaj poświaty innych zwycięzców",
     "hideOthersDescription": "Aura i oznaczenie zwycięskiej frakcji przy innych graczach znikną tylko na Twoim ekranie.",
     "ownHighlightLabel": "Pokazuj moją poświatę zwycięzcy",
-    "ownHighlightDescription": "Gracze z Lootlogiem widzą aurę i oznaczenie Twojej frakcji przy Twoich postaciach.",
+    "ownHighlightDescription": "Gracze z Lootlogiem widzą aurę i oznaczenie Twojej frakcji przy postaci, którą wybrałeś frakcję.",
     "ownHighlightError": "Nie udało się zapisać ustawienia poświaty."
   },
   "points": {
