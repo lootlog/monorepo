@@ -37,9 +37,8 @@ export const sumItemStats = (stats: ReadonlyArray<string>): StatTotals => {
 
   for (const stat of stats) {
     for (const { key, value } of parseItemStats(stat)) {
-      const summedKey = SUMMED_STAT_KEYS.find((summed) => summed === key);
-
       const text = textValue(value);
+      const summedKey = SUMMED_STAT_KEYS.find((summed) => summed === key);
 
       if (summedKey && text !== undefined && NUMERIC_VALUE.test(text)) {
         totals[summedKey] = (totals[summedKey] ?? 0) + Number(text);

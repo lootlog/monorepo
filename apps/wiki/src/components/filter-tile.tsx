@@ -16,7 +16,7 @@ type FilterTileProps = {
   centered?: boolean;
 };
 
-/** One option of the item filters: a tile that is pressed while it filters. */
+/** One option of a filter: a tile that is pressed while it filters. */
 export function FilterTile({
   label,
   pressed,

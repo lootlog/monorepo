@@ -4,21 +4,34 @@ import { Button } from "@lootlog/ui/components/button";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
+import { type ItemUpgrade, NO_UPGRADE } from "@/lib/item-upgrade";
 
 type EquipButtonProps = {
   item: CatalogItemDtoOutput;
   /** A compact icon button for item lists; the full label elsewhere. */
   compact?: boolean;
+  /** The upgrade to wear the item at; without one, a worn item keeps its own. */
+  upgrade?: ItemUpgrade;
 };
 
 /** Wears the item in the User's set; nothing for items no slot holds. */
-export function EquipButton({ item, compact = false }: EquipButtonProps) {
+export function EquipButton({
+  item,
+  compact = false,
+  upgrade,
+}: EquipButtonProps) {
   const { set, equip } = useEquipmentSet();
   const slot = findEquipmentSlot(item.type);
 
   if (!slot) return null;
 
-  const isWorn = set.items[slot.id] === item.id;
+  const worn = set.upgrades[slot.id] ?? NO_UPGRADE;
+
+  const isWorn =
+    set.items[slot.id] === item.id &&
+    (upgrade === undefined ||
+      (worn.level === upgrade.level && worn.bonus === upgrade.bonus));
+
   const label = isWorn ? t("equipment.worn") : t("equipment.equip");
 
   return (
@@ -29,7 +42,7 @@ export function EquipButton({ item, compact = false }: EquipButtonProps) {
       aria-label={compact ? `${label}: ${item.name}` : undefined}
       aria-pressed={isWorn}
       title={compact ? label : undefined}
-      onClick={() => equip(item)}
+      onClick={() => equip(item, upgrade)}
     >
       {isWorn ? <Check aria-hidden="true" /> : <Plus aria-hidden="true" />}
       {compact ? null : label}

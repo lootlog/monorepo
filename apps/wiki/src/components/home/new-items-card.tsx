@@ -1,10 +1,7 @@
 import type { ReactNode } from "react";
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import { Card } from "@lootlog/ui/components/card";
-import { ItemTile } from "@lootlog/ui/components/item-tile";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
-import { renderItemStat } from "@/components/render-item-stat";
-import { ITEM_TILE_LABELS } from "@/lib/item-options";
+import { CatalogItemTile } from "@/components/catalog/catalog-item-tile";
 
 type NewItemsCardProps = {
   title: string;
@@ -41,17 +38,7 @@ export function NewItemsCard({
       <ul className="flex flex-wrap gap-2">
         {items.map((item) => (
           <li key={item.id}>
-            <ItemTile
-              item={{
-                icon: item.icon,
-                name: item.name,
-                rarity: resolveItemRarity(item.rarity),
-                stat: item.stat,
-                type: item.type,
-              }}
-              labels={ITEM_TILE_LABELS}
-              renderStat={renderItemStat}
-            />
+            <CatalogItemTile item={item} />
           </li>
         ))}
       </ul>
