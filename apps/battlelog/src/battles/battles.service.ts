@@ -613,11 +613,12 @@ export const makeBattles = (
           )
           .where(
             and(
+              // Bounds on the ID, the hypertable's partition column, prune
+              // chunks; bounds on `createdAt` scanned every chunk of history.
               options.afterBattleId === undefined
-                ? undefined
+                ? gte(battles.id, firstBattleIdAt(options.since))
                 : gt(battles.id, options.afterBattleId),
-              gte(battles.createdAt, options.since),
-              lt(battles.createdAt, options.before),
+              lt(battles.id, firstBattleIdAt(options.before)),
               eq(battles.unfinished, false),
               // Analytics count a flee apart from a win; so does the war.
               eq(battles.hasFlee, false),

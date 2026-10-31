@@ -1,6 +1,6 @@
 import { Clock, Effect, Redacted, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { FACTION_WARS, type FactionWar } from "@lootlog/domain/faction-war";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { factionWarCursorTable } from "#src/database/drizzle/schema";
@@ -8,6 +8,13 @@ import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import type { FactionWarPoints } from "./faction-war-points.js";
 
 const PAGE_SIZE = 500;
+
+// One API replica syncs at a time; the key is arbitrary but fixed.
+const PVP_SYNC_LOCK = 7_316_205;
+
+const LockResult = Schema.Struct({
+  rows: Schema.Array(Schema.Struct({ acquired: Schema.Boolean })),
+});
 
 /** Battles commit after their ID is drawn; reading only older ones skips none. */
 const SETTLE_MS = 60_000;
@@ -127,6 +134,24 @@ export const makeFactionWarPvpSync = (options: {
         Date.parse(war.startsAt) <= at && at < Date.parse(war.endsAt) + TAIL_MS,
     );
 
-    yield* Effect.forEach(wars, (war) => syncWar(war, at), { discard: true });
+    if (wars.length === 0) return;
+
+    // Every replica runs this cron; the lock lives until the transaction ends,
+    // which also works through the transaction-mode pooler.
+    yield* database.transaction((transaction) =>
+      Effect.gen(function* () {
+        const { rows } = yield* transaction
+          .execute(
+            sql`SELECT pg_try_advisory_xact_lock(${PVP_SYNC_LOCK}) AS acquired`,
+          )
+          .pipe(Effect.flatMap(Schema.decodeUnknownEffect(LockResult)));
+
+        if (!rows[0]?.acquired) return;
+
+        yield* Effect.forEach(wars, (war) => syncWar(war, at), {
+          discard: true,
+        });
+      }),
+    );
   });
 };
