@@ -3,6 +3,7 @@ import { useState } from "react";
 import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-provider";
 import { UiLabelsProvider } from "@lootlog/ui/components/ui-labels";
 import { EquipmentPreviewProvider } from "@/components/equipment/equipment-preview-provider";
+import { ItemComparisonProvider } from "@/components/comparison/item-comparison-provider";
 import { EquipmentSetProvider } from "@/components/equipment/equipment-set-provider";
 import { WikiLayout } from "@/components/layout/wiki-layout";
 import QueryProvider from "@/components/query-provider";
@@ -98,7 +99,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <UserTheme storedSelection={storedThemeSelection} />
                 <EquipmentPreviewProvider>
                   <EquipmentSetProvider>
-                    <WikiLayout>{children}</WikiLayout>
+                    <ItemComparisonProvider>
+                      <WikiLayout>{children}</WikiLayout>
+                    </ItemComparisonProvider>
                   </EquipmentSetProvider>
                 </EquipmentPreviewProvider>
               </SharedTooltipProvider>

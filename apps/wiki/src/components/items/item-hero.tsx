@@ -97,7 +97,7 @@ export function ItemHero({ item, upgrade, actions }: ItemHeroProps) {
               </div>
             ) : null}
           </dl>
-          <div className="flex">{actions}</div>
+          <div className="flex flex-wrap gap-2">{actions}</div>
         </div>
 
         <div className="sm:col-span-2 lg:col-span-1 lg:border-l lg:border-border/60 lg:pl-6">

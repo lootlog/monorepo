@@ -486,6 +486,33 @@ export type UpgradeBonusKey = (typeof UPGRADE_BONUS_KEYS)[number];
 export const isUpgradeBonusKey = (value: string): value is UpgradeBonusKey =>
   UPGRADE_BONUS_KEYS.some((key) => key === value);
 
+/**
+ * An upgrade as a link writes it after an item id: `u` with its level, then
+ * the +5 bonus's stat, such as `u5ds`. An item worn as dropped writes nothing.
+ */
+export const encodeItemUpgrade = (upgrade: ItemUpgrade | undefined) =>
+  upgrade && upgrade.level > 0 ? `u${upgrade.level}${upgrade.bonus ?? ""}` : "";
+
+/** Matches `encodeItemUpgrade`'s text, capturing its level and bonus. */
+export const ITEM_UPGRADE_PATTERN = "(?:u(\\d)([a-z]*))?";
+
+/**
+ * The upgrade a link's captured level and bonus name. A level it cannot read
+ * is none, and a bonus counts only on a +5.
+ */
+export const decodeItemUpgrade = (
+  level: string | undefined,
+  bonus: string | undefined,
+): ItemUpgrade | undefined => {
+  const value = Number(level);
+
+  if (!isUpgradeLevel(value) || value === 0) return undefined;
+
+  return value === 5 && bonus !== undefined && isUpgradeBonusKey(bonus)
+    ? { level: value, bonus }
+    : { level: value };
+};
+
 /** A bonus group's power, which weighs its chance to be drawn. */
 export const UPGRADE_BONUS_GROUP_POWER = [10, 5, 1] as const;
 

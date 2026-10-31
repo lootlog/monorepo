@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
+import { cn } from "cn";
 import { t } from "@/i18n/messages";
 import {
   isUpgradeLevel,
@@ -16,24 +17,29 @@ import {
 
 const UPGRADE_OPTIONS = UPGRADE_LEVELS.map((level) => ({
   value: String(level),
-  label: t("calculators.upgradeLevel", { level }),
+  label: t("upgrade.level", { level }),
 }));
 
-/** An item's upgrade, +0 to +5, as one field of a calculator. */
-export function CalculatorUpgradeSelect({
+/** An item's upgrade, +0 to +5, as one field of a form. */
+export function UpgradeSelect({
   value,
   onChange,
-  label = t("calculators.upgrade"),
+  label = t("upgrade.label"),
+  compact = false,
 }: {
   value: UpgradeLevel;
   onChange: (value: UpgradeLevel) => void;
   label?: string;
+  /** A smaller field whose label only screen readers read, for tight spots. */
+  compact?: boolean;
 }) {
   const id = useId();
 
   return (
     <Field>
-      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <FieldLabel htmlFor={id} className={cn(compact && "sr-only")}>
+        {label}
+      </FieldLabel>
       <Select
         value={String(value)}
         onValueChange={(next) => {
@@ -43,7 +49,11 @@ export function CalculatorUpgradeSelect({
         }}
         items={UPGRADE_OPTIONS}
       >
-        <SelectTrigger id={id} className="w-full">
+        <SelectTrigger
+          id={id}
+          size={compact ? "sm" : "default"}
+          className="w-full"
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
