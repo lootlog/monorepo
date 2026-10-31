@@ -207,14 +207,14 @@ jobs:
         run: |
           state="$INFRA_REPO_PATH/$PRODUCTION_STATE"
           rollback="$RUNNER_TEMP/cloudflare-rollback.jsonl"
-          # The newest production deployment that went live. Pages also lists
-          # deployments that never served traffic, such as idle Git builds,
-          # and skipped ones, and refuses to roll back to them.
+          set -o pipefail
+          # The deployment that serves production now and its commit. A
+          # rollback changes it, and idle or skipped deployments never become it.
           live_pages_deployment() {
             curl --fail-with-body --silent --show-error \
               --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$1/deployments?env=production" |
-              jq -r 'first(.result[] | select(.latest_stage.status == "success" and (.is_skipped | not)) | .id) // empty'
+              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$1" |
+              jq -r '.result.canonical_deployment // empty | "\(.id) \(.deployment_trigger.metadata.commit_hash)"'
           }
           while IFS= read -r target; do
             id="$(jq -r '.id' <<< "$target")"
@@ -255,12 +255,23 @@ jobs:
             bunx turbo run build --filter="$package_name"
 
             if [[ "$kind" == "pages" ]]; then
-              previous_id="$(live_pages_deployment "$project")"
+              live="$(live_pages_deployment "$project")"
+              read -r previous_id _ <<< "$live"
               jq -cn --arg id "$id" --arg kind "$kind" --arg previousId "$previous_id" --arg project "$project" \
                 '{id: $id, kind: $kind, previousId: $previousId, project: $project}' >> "$rollback"
               bunx wrangler pages deploy "$artifact_path" --project-name "$project" --branch main \
                 --commit-hash "$SOURCE_SHA" --commit-message "Deploy $package_name from $SOURCE_SHA" --commit-dirty=false
-              deployment_id="$(live_pages_deployment "$project")"
+              # Wrangler can exit before the new deployment serves production.
+              for _ in {1..12}; do
+                live="$(live_pages_deployment "$project")" || live=""
+                read -r deployment_id live_sha <<< "$live"
+                [[ "$live_sha" == "$SOURCE_SHA" ]] && break
+                sleep 5
+              done
+              if [[ "$live_sha" != "$SOURCE_SHA" ]]; then
+                echo "::error::$project does not serve $SOURCE_SHA after its deployment"
+                exit 1
+              fi
             else
               previous_id="$(bunx wrangler deployments list --config "$config_path" --env="" --name "$project" --json | jq -r 'sort_by(.created_on) | last | .versions[] | select(.percentage == 100) | .version_id' | head -n 1)"
               jq -cn --arg configPath "$config_path" --arg id "$id" --arg kind "$kind" --arg previousId "$previous_id" --arg project "$project" \
