@@ -1,9 +1,6 @@
 import { Gem } from "lucide-react";
 import { LevelRangeInputs } from "@lootlog/ui/components/level-range-inputs";
-import {
-  NpcTypeIcon,
-  type NpcTypeIconType,
-} from "@lootlog/ui/components/npc-type-icon";
+import { NpcTypeIcon } from "@lootlog/ui/components/npc-type-icon";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import {
   LOOT_RARITY_PILL_CLASS,
@@ -27,8 +24,9 @@ import {
   STAT_OPTIONS,
 } from "@/lib/items-search";
 import { SEARCHABLE_LEGENDARY_BONUSES } from "@/lib/legendary-bonuses";
+import { NPC_TYPE_ICONS } from "@/lib/npc-types";
 import { FilterSection } from "./filter-section";
-import { FilterTile } from "./filter-tile";
+import { FilterTile } from "@/components/filter-tile";
 
 type ItemsFilterPanelProps = {
   search: ItemsSearch;
@@ -49,16 +47,6 @@ const LEVEL_BRACKETS = [
   { min: 200, max: 249 },
   { min: 250, max: undefined },
 ] as const;
-
-/** The game's pixel sprite for each kind of boss. */
-const BOSS_ICONS = {
-  TITAN: "TITAN",
-  COLOSSUS: "COLOSSUS",
-  HERO: "HERO",
-  EVENT_HERO: "HERO",
-  ELITE3: "ELITE2",
-  ELITE2: "ELITE2",
-} as const satisfies Record<(typeof BOSS_OPTIONS)[number], NpcTypeIconType>;
 
 const TILE_GRID = "grid grid-cols-2 gap-1.5";
 
@@ -295,7 +283,7 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
               label={t(`npcTypes.${value}`)}
               icon={
                 <NpcTypeIcon
-                  type={BOSS_ICONS[value]}
+                  type={NPC_TYPE_ICONS[value]}
                   aria-hidden="true"
                   className="size-4"
                 />

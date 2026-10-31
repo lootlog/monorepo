@@ -8,16 +8,21 @@ describe("equipment set link", () => {
       profession: "h" as const,
       level: 250,
       items: { helmet: 12_345, weapon: 678, boots: 9 },
+      upgrades: {
+        weapon: { level: 5 as const, bonus: "ds" as const },
+        boots: { level: 2 as const },
+      },
     };
 
     expect(decodeEquipmentSet(encodeEquipmentSet(set))).toEqual(set);
   });
 
   it("keeps the readable parts of a mangled link", () => {
-    expect(decodeEquipmentSet("x999_h12_zz_q5_b7")).toEqual({
+    expect(decodeEquipmentSet("x999_h12u9_zz_q5_b7u3ds_g4u5xyz")).toEqual({
       profession: null,
       level: null,
-      items: { helmet: 12, boots: 7 },
+      items: { helmet: 12, boots: 7, gloves: 4 },
+      upgrades: { boots: { level: 3 }, gloves: { level: 5 } },
     });
   });
 });

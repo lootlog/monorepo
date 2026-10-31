@@ -1,16 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
-import { ItemTile } from "@lootlog/ui/components/item-tile";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { LOOT_RARITY_TEXT_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 import { cn } from "cn";
 import { EquipButton } from "@/components/equipment/equip-button";
 import { HighlightedText } from "@/components/highlighted-text";
-import { renderItemStat } from "@/components/render-item-stat";
+import { CatalogItemTile } from "./catalog-item-tile";
 import { useSetEquipmentPreview } from "@/contexts/equipment-preview-context";
 import { t } from "@/i18n/messages";
 import { itemPageParams, npcPageParams } from "@/lib/catalog-links";
-import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import { findLegendaryBonus } from "@/lib/legendary-bonuses";
 
 type CatalogItemCardProps = {
@@ -49,17 +47,7 @@ export function CatalogItemCard({
         }
       }}
     >
-      <ItemTile
-        item={{
-          icon: item.icon,
-          name: item.name,
-          rarity,
-          stat: item.stat,
-          type: item.type,
-        }}
-        labels={ITEM_TILE_LABELS}
-        renderStat={renderItemStat}
-      />
+      <CatalogItemTile item={item} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <Link
           to="/items/$itemSlug"
