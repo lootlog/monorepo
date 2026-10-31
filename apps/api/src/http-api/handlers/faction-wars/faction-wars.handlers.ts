@@ -15,7 +15,6 @@ import {
   inArray,
   isNotNull,
   isNull,
-  lt,
   sql,
   sum,
 } from "drizzle-orm";
@@ -61,11 +60,15 @@ const LEADERBOARD_SIZE = 50;
 const SCORE_CACHE_SECONDS = 300;
 
 /**
- * Leaderboards count only finished Warsaw days, so a named player's jump of a
- * hero's or titan's points cannot time that kill for a rival Organization;
- * the short cache still picks up late submissions.
+ * Leaderboard points are a snapshot taken once per period and shared by every
+ * replica, so a named player's jump of a hero's or titan's points shows up
+ * only with up to three hours of other play and cannot time that kill for a
+ * rival Organization.
  */
-const LEADERBOARD_CACHE_SECONDS = 30;
+const LEADERBOARD_SNAPSHOT_MS = 3 * 60 * 60 * 1000;
+
+/** Names, visibility and disqualifications apply within half a minute. */
+const LEADERBOARD_PICKS_CACHE_SECONDS = 30;
 
 /** Champions change only when a winner hides or shows their highlight. */
 const CHAMPIONS_CACHE_SECONDS = 300;
@@ -91,13 +94,16 @@ const CachedStandingsInput = Schema.Struct({
   players: Schema.Struct({ BARBATOS: Schema.Number, TANROTH: Schema.Number }),
 });
 
-const CachedLeaderboard = Schema.Array(
+const CachedLeaderboardPoints = Schema.Array(
+  Schema.Struct({ userId: Schema.String, points: Schema.Number }),
+);
+
+const CachedLeaderboardPicks = Schema.Array(
   Schema.Struct({
     userId: Schema.String,
     characterName: Schema.String,
     world: Schema.String,
     hidden: Schema.Boolean,
-    points: Schema.Number,
   }),
 );
 
@@ -162,7 +168,9 @@ type Persisted<A> = Effect.Effect<A, FactionWarsPersistenceError>;
 
 type StandingsInput = typeof CachedStandingsInput.Type;
 
-type LeaderboardRows = typeof CachedLeaderboard.Type;
+type LeaderboardRows = ReadonlyArray<
+  (typeof CachedLeaderboardPicks.Type)[number] & { readonly points: number }
+>;
 
 type Disqualification = FactionWarDisqualificationsResponse[number];
 
@@ -202,11 +210,14 @@ export class FactionWarsData extends Context.Service<
       userId: string,
       payload: UpdateFactionWarPickRequest,
     ) => Persisted<StoredPick | null>;
-    /** Players of one faction ranked by their points on days before `before`. */
+    /**
+     * Players of one faction ranked by their points in the snapshot of the
+     * period containing `at`; ties keep the earlier pick first.
+     */
     readonly leaderboard: (
       warId: string,
       faction: FactionWarFaction,
-      before: string,
+      at: number,
     ) => Persisted<LeaderboardRows>;
     readonly championCharacterIds: (
       warId: string,
@@ -401,34 +412,67 @@ export class FactionWarsData extends Context.Service<
                     .returning()
                     .pipe(Effect.map((rows) => rows[0] ?? null)),
             ),
-          leaderboard: (warId, faction, before) =>
-            cached(
-              `faction-war:${warId}:leaderboard:${faction}:${before}`,
-              CachedLeaderboard,
-              database
-                .select({
-                  userId: factionWarPickTable.userId,
-                  characterName: factionWarPickTable.characterName,
-                  world: factionWarPickTable.world,
-                  hidden: factionWarPickTable.hiddenFromLeaderboard,
-                  points: total,
-                })
-                .from(factionWarPickTable)
-                .leftJoin(
-                  factionWarDailyPointsTable,
-                  and(pointsOfPick, lt(factionWarDailyPointsTable.day, before)),
-                )
-                .where(
-                  and(
-                    eq(factionWarPickTable.warId, warId),
-                    eq(factionWarPickTable.faction, faction),
-                    counting,
-                  ),
-                )
-                .groupBy(factionWarPickTable.warId, factionWarPickTable.userId)
-                .orderBy(desc(total), asc(factionWarPickTable.pickedAt)),
-              LEADERBOARD_CACHE_SECONDS,
-            ),
+          leaderboard: (warId, faction, at) =>
+            Effect.gen(function* () {
+              const snapshot =
+                Math.floor(at / LEADERBOARD_SNAPSHOT_MS) *
+                LEADERBOARD_SNAPSHOT_MS;
+
+              const [points, picks] = yield* Effect.all([
+                cached(
+                  `faction-war:${warId}:leaderboard-points:${faction}:${snapshot}`,
+                  CachedLeaderboardPoints,
+                  database
+                    .select({
+                      userId: factionWarDailyPointsTable.userId,
+                      points: total,
+                    })
+                    .from(factionWarDailyPointsTable)
+                    .innerJoin(factionWarPickTable, pointsOfPick)
+                    .where(
+                      and(
+                        eq(factionWarDailyPointsTable.warId, warId),
+                        eq(factionWarPickTable.faction, faction),
+                      ),
+                    )
+                    .groupBy(factionWarDailyPointsTable.userId),
+                  LEADERBOARD_SNAPSHOT_MS / 1000,
+                ),
+                cached(
+                  `faction-war:${warId}:leaderboard-picks:${faction}`,
+                  CachedLeaderboardPicks,
+                  database
+                    .select({
+                      userId: factionWarPickTable.userId,
+                      characterName: factionWarPickTable.characterName,
+                      world: factionWarPickTable.world,
+                      hidden: factionWarPickTable.hiddenFromLeaderboard,
+                    })
+                    .from(factionWarPickTable)
+                    .where(
+                      and(
+                        eq(factionWarPickTable.warId, warId),
+                        eq(factionWarPickTable.faction, faction),
+                        counting,
+                      ),
+                    )
+                    .orderBy(asc(factionWarPickTable.pickedAt)),
+                  LEADERBOARD_PICKS_CACHE_SECONDS,
+                ),
+              ]);
+
+              const pointsByUser = new Map(
+                points.map((row) => [row.userId, row.points]),
+              );
+
+              // A stable sort keeps the pick order between equal scores.
+              return picks
+                .map((pick) => ({
+                  ...pick,
+                  points: pointsByUser.get(pick.userId) ?? 0,
+                }))
+                .toSorted((left, right) => right.points - left.points);
+            }),
           championCharacterIds: (warId, factions, world) =>
             factions.length === 0
               ? Effect.succeed([])
@@ -738,11 +782,7 @@ export const getFactionWarLeaderboard = Effect.fn("getFactionWarLeaderboard")(
     const data = yield* FactionWarsData;
     const { userId, isAdmin } = yield* caller;
 
-    const rows = yield* data.leaderboard(
-      war.id,
-      faction,
-      factionWarDay(new Date(yield* now)),
-    );
+    const rows = yield* data.leaderboard(war.id, faction, yield* now);
 
     const entries = rows
       .map((row, index) => ({

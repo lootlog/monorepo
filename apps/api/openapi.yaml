@@ -17444,7 +17444,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Top players of one faction by points of finished Warsaw days; players who hid themselves keep their rank without a name, which only war admins still see
+      description: Top players of one faction by points in a snapshot taken every three hours; players who hid themselves keep their rank without a name, which only war admins still see
       summary: Get faction war leaderboard
   /faction-wars/champions:
     get:
