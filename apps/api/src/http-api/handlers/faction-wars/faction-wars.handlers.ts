@@ -55,11 +55,17 @@ import type {
 const LEADERBOARD_SIZE = 50;
 
 /**
- * Scores and leaderboards count only finished Warsaw days, so a player's
- * jump of a hero's or titan's points cannot time that kill for a rival
- * Organization; they still share a short cache for late submissions.
+ * Faction scores sum every player on every world, so they count today too;
+ * five minutes of points from both factions blur any single kill.
  */
-const STANDINGS_CACHE_SECONDS = 30;
+const SCORE_CACHE_SECONDS = 300;
+
+/**
+ * Leaderboards count only finished Warsaw days, so a named player's jump of a
+ * hero's or titan's points cannot time that kill for a rival Organization;
+ * the short cache still picks up late submissions.
+ */
+const LEADERBOARD_CACHE_SECONDS = 30;
 
 /** Champions change only when a winner hides or shows their highlight. */
 const CHAMPIONS_CACHE_SECONDS = 300;
@@ -163,14 +169,8 @@ type Disqualification = FactionWarDisqualificationsResponse[number];
 export class FactionWarsData extends Context.Service<
   FactionWarsData,
   {
-    /**
-     * Daily points of every faction on days before `before`, and its players,
-     * without disqualified picks.
-     */
-    readonly standingsInput: (
-      war: FactionWar,
-      before: string,
-    ) => Persisted<StandingsInput>;
+    /** Daily points and players of every faction, without disqualified picks. */
+    readonly standingsInput: (war: FactionWar) => Persisted<StandingsInput>;
     readonly findPick: (
       warId: string,
       userId: string,
@@ -260,9 +260,9 @@ export class FactionWarsData extends Context.Service<
         const total = sql<number>`COALESCE(${sum(factionWarDailyPointsTable.points)}, 0)::int`;
 
         return FactionWarsData.of({
-          standingsInput: (war, before) =>
+          standingsInput: (war) =>
             cached(
-              `faction-war:${war.id}:standings:${before}`,
+              `faction-war:${war.id}:standings`,
               CachedStandingsInput,
               Effect.all({
                 stats: database
@@ -274,12 +274,7 @@ export class FactionWarsData extends Context.Service<
                   })
                   .from(factionWarDailyPointsTable)
                   .innerJoin(factionWarPickTable, and(pointsOfPick, counting))
-                  .where(
-                    and(
-                      eq(factionWarDailyPointsTable.warId, war.id),
-                      lt(factionWarDailyPointsTable.day, before),
-                    ),
-                  )
+                  .where(eq(factionWarDailyPointsTable.warId, war.id))
                   .groupBy(
                     factionWarDailyPointsTable.day,
                     factionWarPickTable.faction,
@@ -304,7 +299,7 @@ export class FactionWarsData extends Context.Service<
                     }),
                   ),
               }),
-              STANDINGS_CACHE_SECONDS,
+              SCORE_CACHE_SECONDS,
             ),
           findPick: (warId, userId) =>
             persisted(
@@ -432,7 +427,7 @@ export class FactionWarsData extends Context.Service<
                 )
                 .groupBy(factionWarPickTable.warId, factionWarPickTable.userId)
                 .orderBy(desc(total), asc(factionWarPickTable.pickedAt)),
-              STANDINGS_CACHE_SECONDS,
+              LEADERBOARD_CACHE_SECONDS,
             ),
           championCharacterIds: (warId, factions, world) =>
             factions.length === 0
@@ -520,10 +515,7 @@ const standingsOf = Effect.fn("standingsOf")(function* (war: FactionWar) {
   const data = yield* FactionWarsData;
   const at = yield* now;
 
-  const { stats, players } = yield* data.standingsInput(
-    war,
-    factionWarDay(new Date(at)),
-  );
+  const { stats, players } = yield* data.standingsInput(war);
 
   const standings = factionWarStandings(war, stats);
   const status = statusOf(war, at);
