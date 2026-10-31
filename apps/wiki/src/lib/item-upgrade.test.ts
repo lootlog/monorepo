@@ -82,10 +82,11 @@ describe("item upgrade", () => {
 
     expect(statOf(withStrength, "bonus")).toBe("ds,150");
     expect(statOf(withStrength, "ds")).toBe("150");
-    // Its healing, 628 at +5, grows by one bonus: 8 + 0.8 * 262 + 0.2 * level_power.
+    // One more healing bonus: 8 + 2 * (0.8 * 262 + 0.2 * level_power), the
+    // base counted once, not 628 + 628.
     expect(
       statOf(upgradeItemStat(necklace, { level: 5, bonus: "heal" }), "heal"),
-    ).toBe("1256");
+    ).toBe("1249");
     // A necklace cannot draw a weapon bonus, and below +5 there is none.
     expect(
       statOf(upgradeItemStat(necklace, { level: 5, bonus: "acdmg" }), "bonus"),
@@ -93,6 +94,25 @@ describe("item upgrade", () => {
     expect(
       statOf(upgradeItemStat(necklace, { level: 4, bonus: "ds" }), "bonus"),
     ).toBeUndefined();
+  });
+
+  it("makes the +5 bonus one more of the item's bonuses, its base counted once", () => {
+    // Oko mrozu: one attack speed bonus, 0.94 at 345; a second gives
+    // round(8 + 2 * 0.25 * 345) = 1.81, not 0.94 + 0.94.
+    const orb = {
+      stat: "binds;crit=1;di=171;frost=220,2861;heal=764;lvl=300;manabon=80;rarity=heroic;reqp=m;resdmg=1;sa=83",
+      lvl: 300,
+      rarity: "HEROIC",
+      type: "ORB_WEAPON",
+    };
+
+    const upgraded = upgradeItemStat(orb, { level: 5, bonus: "sa" });
+
+    expect(statOf(upgraded, "sa")).toBe("181");
+    expect(statOf(upgraded, "bonus")).toBe("sa,87");
+    expect(
+      upgradeBonusOptions(orb).find(({ key }) => key === "sa")?.value,
+    ).toBe(87);
   });
 
   it("offers stronger groups more often, three bonuses at a time", () => {
