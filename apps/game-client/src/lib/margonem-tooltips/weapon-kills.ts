@@ -14,97 +14,46 @@ import { escapeTooltipHtml } from "./html";
 // go into the main weapon slot.
 const MAIN_WEAPON_CLASSES = new Set([1, 2, 3, 4, 6]);
 
-const COUNTERS_TTL_MS = 5 * 60_000;
-
-// A failed read keeps what was shown before and is retried this much later.
+// A failed read is retried by the next weapon tip built after this delay.
 const FAILED_READ_RETRY_MS = 30_000;
-
-const MAX_CACHED_CHARACTERS = 200;
 
 // The line sits in the game's own `t_item` tip, so it keeps its palette.
 const LINE_STYLE = "margin-top:3px;font-size:11px;color:#e6d6bf;";
 
-type CharacterCounters = {
-  weapons: Map<string, number>;
-  expiresAt: number;
-};
+// The hero's counters by item id. A character switch reloads the page.
+const counters = new Map<string, number>();
 
-const counters = new Map<string, CharacterCounters>();
+let loadState: "idle" | "loading" | "loaded" = "idle";
 
-// Counters the server returned after recording kills while a read of the
-// same owner was in flight; they are newer than what the read returns.
-const pendingLoads = new Map<string, Map<string, number>>();
+let nextLoadAt = 0;
 
-// Items whose tip was built before their owner's counters arrived.
-const itemsAwaitingCounters = new Map<string, Set<RuntimeTipItem>>();
+function refreshHeroWeapons(itemIds: Iterable<string>): void {
+  const items = [...itemIds].flatMap((itemId) => getHeroItem(itemId) ?? []);
 
-const toKey = (world: string, characterId: string) => `${world}:${characterId}`;
-
-function storeCounters(key: string, entry: CharacterCounters): void {
-  counters.delete(key);
-  counters.set(key, entry);
-
-  if (counters.size > MAX_CACHED_CHARACTERS) {
-    const oldest = counters.keys().next().value;
-
-    if (oldest !== undefined) counters.delete(oldest);
-  }
-}
-
-function refreshCharacterItems(
-  key: string,
-  characterId: string,
-  weapons: Map<string, number>,
-): void {
-  const items = new Set(itemsAwaitingCounters.get(key));
-
-  itemsAwaitingCounters.delete(key);
-
-  for (const itemId of weapons.keys()) {
-    const item = getHeroItem(itemId);
-
-    if (item && String(item.own) === characterId) items.add(item);
-  }
-
-  const changed = [...items].filter((item) => {
-    const itemId = getItemId(item);
-
-    return itemId !== null && weapons.has(itemId);
-  });
-
-  if (changed.length > 0) refreshItemTips(changed);
+  if (items.length > 0) refreshItemTips(items);
 }
 
 function loadCounters(world: string, characterId: string): void {
-  const key = toKey(world, characterId);
+  if (loadState !== "idle" || Date.now() < nextLoadAt) return;
 
-  if (pendingLoads.has(key)) return;
-
-  const recordedDuringLoad = new Map<string, number>();
-  pendingLoads.set(key, recordedDuringLoad);
+  loadState = "loading";
 
   weaponKillsControllerGetCharacterWeaponKills({ world, characterId })
-    .then(({ weapons: loaded }) => {
-      const weapons = new Map([
-        ...loaded.map(({ itemId, kills }): [string, number] => [itemId, kills]),
-        ...recordedDuringLoad,
-      ]);
+    .then(({ weapons }) => {
+      loadState = "loaded";
 
-      storeCounters(key, { weapons, expiresAt: Date.now() + COUNTERS_TTL_MS });
-      refreshCharacterItems(key, characterId, weapons);
+      // A counter recorded while the read was in flight is newer.
+      for (const { itemId, kills } of weapons) {
+        if (!counters.has(itemId)) counters.set(itemId, kills);
+      }
+
+      // The game built these tips before the counters arrived.
+      refreshHeroWeapons(weapons.map(({ itemId }) => itemId));
     })
     .catch((error) => {
       console.warn("[WeaponKills] Failed to load weapon counters:", error);
-
-      // Items keep waiting; a tip built after the retry delay asks again.
-      storeCounters(key, {
-        weapons: counters.get(key)?.weapons ?? new Map<string, number>(),
-        expiresAt: Date.now() + FAILED_READ_RETRY_MS,
-      });
-    })
-    .finally(() => {
-      if (pendingLoads.get(key) === recordedDuringLoad)
-        pendingLoads.delete(key);
+      loadState = "idle";
+      nextLoadAt = Date.now() + FAILED_READ_RETRY_MS;
     });
 }
 
@@ -117,47 +66,27 @@ function renderWeaponKills(kills: number): string {
 function extendItemTip(item: RuntimeTipItem, html: string): string {
   if (!MAIN_WEAPON_CLASSES.has(Number(item.cl))) return html;
 
+  const game = useGameStore.getState().game;
+
+  if (!game || String(item.own) !== game.hero.characterId) return html;
+
+  loadCounters(game.world, game.hero.characterId);
+
   const itemId = getItemId(item);
-  const ownerId = item.own === undefined ? "" : String(item.own);
-  const world = useGameStore.getState().game?.world;
-
-  if (!itemId || !/^\d+$/.test(ownerId) || !world) return html;
-
-  const key = toKey(world, ownerId);
-  const entry = counters.get(key);
-
-  if (!entry || Date.now() >= entry.expiresAt) {
-    const awaiting = itemsAwaitingCounters.get(key) ?? new Set();
-    awaiting.add(item);
-    itemsAwaitingCounters.set(key, awaiting);
-    loadCounters(world, ownerId);
-  }
-
-  const kills = entry?.weapons.get(itemId);
+  const kills = itemId ? counters.get(itemId) : undefined;
 
   return kills ? html + renderWeaponKills(kills) : html;
 }
 
 /** Applies a counter the server returned after recording the hero's kills. */
-export function setWeaponKills(
-  world: string,
-  characterId: string,
-  itemId: string,
-  kills: number,
-): void {
-  const key = toKey(world, characterId);
-  const entry = counters.get(key);
-  const weapons = new Map(entry?.weapons);
-
-  weapons.set(itemId, kills);
-  pendingLoads.get(key)?.set(itemId, kills);
-  storeCounters(key, { weapons, expiresAt: entry?.expiresAt ?? 0 });
-  refreshCharacterItems(key, characterId, new Map([[itemId, kills]]));
+export function setWeaponKills(itemId: string, kills: number): void {
+  counters.set(itemId, kills);
+  refreshHeroWeapons([itemId]);
 }
 
 /**
- * Adds the "players killed" line to main weapon tips in both interfaces and
- * loads the hero's counters, whose tips the game built before this ran.
+ * Adds the "players killed" line to the tips of the hero's main weapons in
+ * both interfaces and loads the hero's counters.
  */
 export function installWeaponKillsTooltips(): () => void {
   const restore = wrapItemTipBuilder(extendItemTip);
@@ -171,6 +100,7 @@ export function installWeaponKillsTooltips(): () => void {
   return () => {
     restore();
     counters.clear();
-    itemsAwaitingCounters.clear();
+    loadState = "idle";
+    nextLoadAt = 0;
   };
 }

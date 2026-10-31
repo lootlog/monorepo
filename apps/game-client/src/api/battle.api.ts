@@ -13,7 +13,6 @@ import {
 } from "@lootlog/client/battlelog";
 import { announceFactionWarPoints } from "@/features/faction-war/faction-war-points-toast";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
-import { requestMargonemAccountProof } from "@/lib/margonem-account-proof";
 import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
 
 export async function createKill(
@@ -64,14 +63,8 @@ export async function createBattle(
   return response;
 }
 
-/** Margonem's account proof is requested here, fresh for every attempt. */
-export type RecordWeaponKillsOptions = Omit<
-  RecordWeaponKillsDto,
-  "margonemAccountProof"
->;
-
 export function recordWeaponKills(
-  options: RecordWeaponKillsOptions,
+  options: RecordWeaponKillsDto,
 ): Promise<WeaponKillsDtoOutput> {
   const { events, ...killsContext } = options;
 
@@ -83,16 +76,7 @@ export function recordWeaponKills(
       endpoint: "/weapon-kills",
       payload: options,
     },
-    execute: async () =>
-      weaponKillsControllerRecordWeaponKills({
-        ...options,
-        // Margonem signs that this account plays, for this battle only.
-        margonemAccountProof: await requestMargonemAccountProof({
-          bindingId: options.battleKey,
-          accountId: options.accountId,
-          characterId: options.characterId,
-        }),
-      }),
+    execute: () => weaponKillsControllerRecordWeaponKills(options),
     retry: GAME_EVENT_RETRY_OPTIONS,
   });
 }
