@@ -55,8 +55,8 @@ export const FACTION_WARS: readonly FactionWar[] = [
   {
     id: "2026-barbatos-tanroth",
     factions: [FactionWarFaction.BARBATOS, FactionWarFaction.TANROTH],
-    startsAt: "2026-10-20T00:00:00+02:00",
-    endsAt: "2026-11-17T00:00:00+01:00",
+    startsAt: "2026-10-31T00:00:00+01:00",
+    endsAt: "2026-12-01T00:00:00+01:00",
     scoring: {
       killPoints: {
         ELITE: 1,
