@@ -7,14 +7,14 @@ import {
 describe("margonem-account-proof", () => {
   it("creates per-socket, per-account tokens with a fresh nonce", () => {
     const tokenA = createMargonemAccountProofToken({
-      bindingId: "socket-1",
+      socketId: "socket-1",
       accountId: "20",
       characterId: "10",
       clanId: 15191,
     });
 
     const tokenB = createMargonemAccountProofToken({
-      bindingId: "socket-1",
+      socketId: "socket-1",
       accountId: "20",
       characterId: "10",
       clanId: 15191,
@@ -31,7 +31,7 @@ describe("margonem-account-proof", () => {
 
   it("uses a no-clan sentinel when the current character has no clan", () => {
     const token = createMargonemAccountProofToken({
-      bindingId: "socket-1",
+      socketId: "socket-1",
       accountId: "20",
       characterId: "10",
       nonce: "0123456789abcdef0123456789abcdef",
@@ -65,7 +65,7 @@ describe("margonem-account-proof", () => {
 
     await expect(
       requestMargonemAccountProof({
-        bindingId: "socket-1",
+        socketId: "socket-1",
         accountId: "20",
         characterId: "10",
         clanId: 15191,
@@ -118,7 +118,7 @@ describe("margonem-account-proof", () => {
 
     await expect(
       requestMargonemAccountProof({
-        bindingId: "socket-1",
+        socketId: "socket-1",
         accountId: "20",
         characterId: "10",
         clanId: 15191,
@@ -144,7 +144,7 @@ describe("margonem-account-proof", () => {
 
     await expect(
       requestMargonemAccountProof({
-        bindingId: "socket-1",
+        socketId: "socket-1",
         accountId: "20",
         characterId: "10",
         clanId: 15191,

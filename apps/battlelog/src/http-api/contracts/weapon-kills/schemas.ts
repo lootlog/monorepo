@@ -11,16 +11,6 @@ const MargonemIdDto = Schema.String.check(
 
 export type RecordWeaponKillsDto = typeof RecordWeaponKillsDto.Type;
 
-export const MargonemAccountProofDto = Schema.Struct({
-  userId: Schema.String,
-  characterId: Schema.String,
-  clanId: Schema.optionalKey(FiniteNumber),
-  token: Schema.String,
-  ts: FiniteNumber,
-  validatedString: Schema.String,
-  signatureBase64: Schema.String,
-}).annotate({ identifier: "MargonemAccountProofDto" });
-
 export const RecordWeaponKillsDto = Schema.Struct({
   accountId: MargonemIdDto,
   characterId: MargonemIdDto,
@@ -30,13 +20,7 @@ export const RecordWeaponKillsDto = Schema.Struct({
     }),
   ),
   weaponItemId: MargonemIdDto,
-  battleKey: Schema.String.check(
-    Schema.isPattern(/^[\w-]{1,128}$/).annotate({
-      expected: "up to 128 letters, digits, underscores or hyphens",
-    }),
-  ),
   events: CreateBattleDto.fields.events,
-  margonemAccountProof: MargonemAccountProofDto,
 }).annotate({ identifier: "RecordWeaponKillsDto" });
 
 export type WeaponKillsDto_Output = typeof WeaponKillsDto_Output.Type;
