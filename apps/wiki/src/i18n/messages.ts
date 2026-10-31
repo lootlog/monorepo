@@ -18,6 +18,7 @@ const messages = {
     home: "Start",
     items: "Przedmioty",
     npcs: "Potwory",
+    compare: "Porównywarka",
     calculators: "Kalkulatory",
   },
   header: {
@@ -48,9 +49,6 @@ const messages = {
     worn: "Założony",
     unequip: "Zdejmij: {{item}}",
     findForSlot: "Szukaj: {{slot}}",
-    share: "Udostępnij",
-    copied: "Skopiowano link",
-    failed: "Nie udało się skopiować",
     clear: "Wyczyść zestaw",
     issues: {
       profession: "Inna profesja.",
@@ -183,6 +181,8 @@ const messages = {
     itemsDescription:
       "Szukaj przedmiotów po nazwie, poziomie, rzadkości i profesji.",
     npcsDescription: "Szukaj NPC-ów i potworów po nazwie.",
+    compareDescription:
+      "Zestaw do czterech przedmiotów obok siebie i zobacz, który ma lepsze statystyki.",
     calculatorsDescription:
       "Policz unik, blok, bonusy legendarne i koszty usług według wzorów z gry.",
     open: "Otwórz",
@@ -289,6 +289,31 @@ const messages = {
       t: "Tropiciel",
     },
   },
+  share: {
+    share: "Udostępnij",
+    copied: "Skopiowano link",
+    failed: "Nie udało się skopiować",
+  },
+  comparison: {
+    metaTitle: "Porównywarka przedmiotów",
+    title: "Porównywarka",
+    description:
+      "Porównaj do {{count}} przedmiotów obok siebie, każdy z własnym ulepszeniem. Najlepsza wartość każdej statystyki jest wyróżniona.",
+    add: "Porównaj",
+    compared: "W porównywarce",
+    full: "Porównasz najwyżej {{count}} przedmioty",
+    open: "Otwórz porównywarkę ({{count}})",
+    remove: "Usuń z porównania: {{name}}",
+    upgradeOf: "Ulepszenie: {{name}}",
+    clear: "Wyczyść porównanie",
+    empty:
+      "Nie porównujesz jeszcze żadnego przedmiotu. Dodaj go przyciskiem Porównaj na stronie przedmiotu albo w wynikach wyszukiwania.",
+    searchItems: "Szukaj przedmiotów",
+    addMore: "Dodaj jeszcze {{count}}",
+    statsTitle: "Statystyki",
+    best: "najlepsza wartość",
+    missing: "brak",
+  },
   calculators: {
     metaTitle: "Kalkulatory",
     title: "Kalkulatory",
@@ -310,8 +335,6 @@ const messages = {
     characterLevel: "Poziom postaci",
     enemyLevel: "Poziom przeciwnika",
     itemLevel: "Poziom przedmiotu",
-    upgrade: "Ulepszenie",
-    upgradeLevel: "+{{level}}",
     defence: {
       title: "Szansa na unik i blok",
       description:

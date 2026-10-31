@@ -1,5 +1,5 @@
 import { linkOptions } from "@tanstack/react-router";
-import { Calculator, House, Package, Skull } from "lucide-react";
+import { Calculator, House, Package, Scale, Skull } from "lucide-react";
 import type { ItemsSearch } from "@/lib/items-search";
 
 /** The item search with no filters, which links extend with their own. */
@@ -38,6 +38,12 @@ export const WIKI_NAVIGATION = [
     labelKey: "navigation.npcs",
     descriptionKey: "home.npcsDescription",
     icon: Skull,
+  },
+  {
+    link: linkOptions({ to: "/compare" }),
+    labelKey: "navigation.compare",
+    descriptionKey: "home.compareDescription",
+    icon: Scale,
   },
   {
     link: linkOptions({ to: "/calculators" }),

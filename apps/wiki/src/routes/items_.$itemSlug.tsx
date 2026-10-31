@@ -8,6 +8,7 @@ import {
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { cn } from "cn";
+import { CompareButton } from "@/components/comparison/compare-button";
 import { EquipButton } from "@/components/equipment/equip-button";
 import { ItemHero } from "@/components/items/item-hero";
 import { ItemUpgradeSection } from "@/components/items/item-upgrade-section";
@@ -135,7 +136,12 @@ function ItemRoute() {
       <ItemHero
         item={item}
         upgrade={upgrade.level}
-        actions={<EquipButton item={item} upgrade={upgrade} />}
+        actions={
+          <>
+            <EquipButton item={item} upgrade={upgrade} />
+            <CompareButton item={item} upgrade={upgrade} />
+          </>
+        }
       />
 
       <div className="grid items-start gap-6 lg:grid-cols-[20rem_minmax(0,1fr)] xl:gap-8">

@@ -24,11 +24,11 @@ import {
 import { formatPercent } from "@/lib/calculator-format";
 import { upgradedItemLevel, type UpgradeLevel } from "@/lib/item-upgrade";
 import { readNumberInput } from "@/lib/number-input";
+import { UpgradeSelect } from "@/components/common/upgrade-select";
 import { CalculatorCard } from "./calculator-card";
 import { CalculatorFromSetButton } from "./calculator-from-set-button";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
-import { CalculatorUpgradeSelect } from "./calculator-upgrade-select";
 
 // A set holds at most this many items, so no more can share a bonus.
 const MAX_ITEMS = 10;
@@ -187,7 +187,7 @@ export function LegendaryBonusCalculator() {
                   min={1}
                   max={300}
                 />
-                <CalculatorUpgradeSelect
+                <UpgradeSelect
                   value={item.upgrade}
                   onChange={(upgrade) => updateItem(item.id, { upgrade })}
                 />

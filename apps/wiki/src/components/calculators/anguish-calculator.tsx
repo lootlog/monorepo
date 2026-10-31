@@ -7,10 +7,10 @@ import {
 } from "@/lib/calculators";
 import type { UpgradeLevel } from "@/lib/item-upgrade";
 import { readNumberInput } from "@/lib/number-input";
+import { UpgradeSelect } from "@/components/common/upgrade-select";
 import { CalculatorCard } from "./calculator-card";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
-import { CalculatorUpgradeSelect } from "./calculator-upgrade-select";
 
 const ATTRIBUTE_LIMIT = { min: 0, max: 100_000 };
 
@@ -58,7 +58,7 @@ export function AnguishCalculator() {
           min={1}
           max={300}
         />
-        <CalculatorUpgradeSelect value={upgrade} onChange={setUpgrade} />
+        <UpgradeSelect value={upgrade} onChange={setUpgrade} />
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <CalculatorNumberField

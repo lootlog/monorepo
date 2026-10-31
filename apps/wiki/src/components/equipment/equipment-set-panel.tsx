@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Check, Link2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import {
@@ -9,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
+import { ShareLinkButton } from "@/components/common/share-link-button";
 import { useEquipmentPreview } from "@/contexts/equipment-preview-context";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { useWornItems } from "@/hooks/use-worn-items";
@@ -43,10 +43,6 @@ export function EquipmentSetPanel() {
   const { set, setCharacter, clear } = useEquipmentSet();
   const preview = useEquipmentPreview();
 
-  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
-    "idle",
-  );
-
   const wornItems = useWornItems();
 
   const previewSlot = preview ? findEquipmentSlot(preview.type) : undefined;
@@ -64,21 +60,6 @@ export function EquipmentSetPanel() {
           preview.stat,
         ])
       : null;
-
-  const share = async () => {
-    const url = new URL(window.location.origin);
-
-    url.searchParams.set(EQUIPMENT_SET_PARAM, encodeEquipmentSet(set));
-
-    try {
-      await navigator.clipboard.writeText(url.toString());
-      setCopyState("copied");
-    } catch {
-      setCopyState("failed");
-    }
-
-    setTimeout(() => setCopyState("idle"), 2000);
-  };
 
   return (
     <section aria-labelledby="equipment-set" className="flex flex-col gap-4">
@@ -154,24 +135,12 @@ export function EquipmentSetPanel() {
       </div>
 
       <div className="flex gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
+        <ShareLinkButton
+          path="/"
+          param={EQUIPMENT_SET_PARAM}
+          value={encodeEquipmentSet(set)}
           className="flex-1"
-          onClick={() => void share()}
-        >
-          {copyState === "copied" ? (
-            <Check aria-hidden="true" />
-          ) : (
-            <Link2 aria-hidden="true" />
-          )}
-          <span aria-live="polite">
-            {copyState === "idle"
-              ? t("equipment.share")
-              : t(`equipment.${copyState}`)}
-          </span>
-        </Button>
+        />
         <Button
           type="button"
           variant="ghost"
