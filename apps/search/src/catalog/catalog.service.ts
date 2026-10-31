@@ -48,6 +48,7 @@ type CatalogNpcDocument = {
   lvl: number;
   type: CatalogNpcsResponseDto_Output["hits"][number]["type"];
   gameVersion: CatalogNpcsResponseDto_Output["hits"][number]["gameVersion"];
+  locations?: CatalogNpcsResponseDto_Output["hits"][number]["locations"];
 };
 
 const page = (query: { limit?: number; offset?: number }) => ({
@@ -223,6 +224,7 @@ export const makeCatalogModule = (
         "lvl",
         "type",
         "gameVersion",
+        "locations",
       ],
       filter: filters.length > 0 ? filters.join(" AND ") : undefined,
       // Pages and counts are over monsters, not over their catalog identities.
@@ -242,9 +244,10 @@ export const makeCatalogModule = (
     return {
       estimatedTotalHits: response.estimatedTotalHits ?? response.hits.length,
       hits: collapseByNameAndType(response.hits).map(
-        ({ uid, identityNamespace: _namespace, ...npc }) => ({
+        ({ uid, identityNamespace: _namespace, locations, ...npc }) => ({
           ...npc,
           key: uid,
+          locations: locations ?? [],
         }),
       ),
     } satisfies CatalogNpcsResponseDto_Output;

@@ -177,6 +177,18 @@ export const CatalogNpcDto_Output = Schema.Struct({
   lvl: FiniteNumber,
   type: NpcTypeSchema,
   gameVersion: GameVersionSchema,
+  locations: Schema.Array(
+    Schema.Struct({
+      map: Schema.String.annotate({ description: "The map's name." }),
+      share: FiniteNumber.annotate({
+        description:
+          "The share of the NPC's latest recorded fights on the map, from 0 to 1, rounded to a hundredth.",
+      }),
+    }),
+  ).annotate({
+    description:
+      "Maps the NPC is fought on, most fought first, from its latest 1000 recorded fights; maps under 1% of them are left out. Lootlog recomputes them daily, so an NPC first seen today may have none yet.",
+  }),
 }).annotate({
   description: "A Margonem NPC in the public catalog",
   identifier: "CatalogNpcDto_Output",
