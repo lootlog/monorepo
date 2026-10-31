@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CalculatorsRouteImport } from './routes/calculators'
 import { Route as ItemsRouteImport } from './routes/items'
 import { Route as NpcsRouteImport } from './routes/npcs'
 import { Route as EventsEventSlugRouteImport } from './routes/events.$eventSlug'
@@ -20,6 +21,11 @@ import { Route as ThemesSplatRouteImport } from './routes/themes.$'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalculatorsRoute = CalculatorsRouteImport.update({
+  id: '/calculators',
+  path: '/calculators',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ItemsRoute = ItemsRouteImport.update({
@@ -55,6 +61,7 @@ const ThemesSplatRoute = ThemesSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/calculators': typeof CalculatorsRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
   '/events/$eventSlug': typeof EventsEventSlugRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/calculators': typeof CalculatorsRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
   '/events/$eventSlug': typeof EventsEventSlugRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/calculators': typeof CalculatorsRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
   '/events/$eventSlug': typeof EventsEventSlugRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/calculators'
     | '/items'
     | '/npcs'
     | '/events/$eventSlug'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/calculators'
     | '/items'
     | '/npcs'
     | '/events/$eventSlug'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/calculators'
     | '/items'
     | '/npcs'
     | '/events/$eventSlug'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CalculatorsRoute: typeof CalculatorsRoute
   ItemsRoute: typeof ItemsRoute
   NpcsRoute: typeof NpcsRoute
   EventsEventSlugRoute: typeof EventsEventSlugRoute
@@ -128,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calculators': {
+      id: '/calculators'
+      path: '/calculators'
+      fullPath: '/calculators'
+      preLoaderRoute: typeof CalculatorsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/items': {
@@ -177,6 +197,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CalculatorsRoute: CalculatorsRoute,
   ItemsRoute: ItemsRoute,
   NpcsRoute: NpcsRoute,
   EventsEventSlugRoute: EventsEventSlugRoute,

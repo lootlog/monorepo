@@ -18,6 +18,7 @@ const messages = {
     home: "Start",
     items: "Przedmioty",
     npcs: "Potwory",
+    calculators: "Kalkulatory",
   },
   header: {
     searchLabel: "Szukaj przedmiotu",
@@ -182,6 +183,8 @@ const messages = {
     itemsDescription:
       "Szukaj przedmiotów po nazwie, poziomie, rzadkości i profesji.",
     npcsDescription: "Szukaj NPC-ów i potworów po nazwie.",
+    calculatorsDescription:
+      "Policz unik, blok, bonusy legendarne i koszty usług według wzorów z gry.",
     open: "Otwórz",
   },
   catalog: {
@@ -284,6 +287,123 @@ const messages = {
       m: "Mag",
       b: "Tancerz ostrzy",
       t: "Tropiciel",
+    },
+  },
+  calculators: {
+    metaTitle: "Kalkulatory",
+    title: "Kalkulatory",
+    description:
+      "Wyniki liczą się od razu. Przy każdym kalkulatorze widać, skąd pochodzi wzór: z dokumentacji gry albo z obserwacji graczy, których gra nie potwierdza.",
+    contents: "Spis kalkulatorów",
+    official: "Dokumentacja gry",
+    community: "Niepotwierdzone",
+    communityDescription:
+      "Wzór z obserwacji graczy. Gra go nie dokumentuje, więc sprawdź wynik w grze.",
+    howItWorks: "Jak to liczymy",
+    sourceLink: "Źródło: dokumentacja Margonem",
+    fromSet: "Weź z zestawu",
+    fromSetDescription:
+      "Uzupełnia pola przedmiotami i poziomem z Twojego zestawu.",
+    noValue: "—",
+    percent: "{{value}}%",
+    scales: "{{value}} SŁ",
+    characterLevel: "Poziom postaci",
+    enemyLevel: "Poziom przeciwnika",
+    itemLevel: "Poziom przedmiotu",
+    upgrade: "Ulepszenie",
+    upgradeLevel: "+{{level}}",
+    defence: {
+      title: "Szansa na unik i blok",
+      description:
+        "Szansa zależy od poziomu przeciwnika, który atakuje, nie od Twojego.",
+      evadePoints: "Punkty uniku",
+      blockPoints: "Punkty bloku",
+      evadeChance: "Szansa na unik",
+      blockChance: "Szansa na blok",
+      pointsForMax: "Punkty do limitu 50%",
+      fromSetHint:
+        "Z zestawu bierzemy tylko punkty z przedmiotów, bez umiejętności.",
+      formula:
+        "szansa = min(50%, punkty × 20 / min(poziom przeciwnika, 300)). Blok działa tylko z tarczą. Punkty ponad limit też się liczą: efekty obniżające unik zabierają najpierw nadwyżkę.",
+    },
+    attackSpeed: {
+      title: "Szybkość ataku i unik ze zręczności",
+      description: "Ile szybkości ataku i punktów uniku daje sama zręczność.",
+      agility: "Zręczność",
+      attackSpeed: "Szybkość ataku",
+      evade: "Punkty uniku",
+      formula:
+        "SA = min(2; 0,02 × zręczność) + max(0; 0,002 × (zręczność − 100)), unik = round(zręczność / 30). Szybkość ataku z przedmiotów dolicza się osobno.",
+    },
+    legendary: {
+      title: "Bonus legendarny",
+      description:
+        "Siła bonusu z kilku przedmiotów i jej spadek, gdy postać przerasta przedmiot.",
+      bonus: "Bonus",
+      items: "Przedmioty z bonusem",
+      item: "Przedmiot {{index}}",
+      addItem: "Dodaj przedmiot",
+      removeItem: "Usuń przedmiot {{index}}",
+      itemStrength: "Siła {{value}}%",
+      parameter: {
+        chance: "Szansa na zadziałanie",
+        reduction: "Redukcja obrażeń",
+        ignore: "Ignorowana obrona celu",
+      },
+      noItems: "Dodaj przedmiot z tym bonusem.",
+      formula:
+        "Każdy kolejny przedmiot dodaje połowę tego, co dodał poprzedni (np. Fasada opieki: 13, 20, 23, 25, 26, 26%). Bonus słabnie od poziomu 30 + lvl (przedmioty poniżej 120 lvl) albo 1,25 × lvl i znika 50 poziomów później. Poziom przedmiotu to poziom po ulepszeniu. Najmniej osłabiony przedmiot liczy się pierwszy. Łączenie słabnięcia z kumulacją to nasza interpretacja dokumentacji. Postać powyżej 300 poziomu liczy się poziomem operacyjnym.",
+    },
+    anguish: {
+      title: "Krwawa udręka",
+      description: "Obrażenia krwawienia na turę i przez całe 5 tur.",
+      strength: "Siła",
+      intellect: "Intelekt",
+      agility: "Zręczność",
+      perTurn: "Na turę",
+      total: "Łącznie (5 tur)",
+      formula:
+        "obrażenia = round((0,0025 × poziom + 0,3) × (siła + intelekt + 0,8 × zręczność)), gdzie poziom to poziom przedmiotu po ulepszeniu, najwyżej 300. Krwawienia się nie kumulują, kolejne tylko je przedłuża.",
+    },
+    holyTouch: {
+      title: "Dotyk anioła",
+      description: "Leczenie z jednego zadziałania bonusu.",
+      health: "Punkty życia",
+      perTurn: "Na turę",
+      total: "Łącznie (3 tury)",
+      formula:
+        "Leczy 6% punktów życia przez 3 tury, ale nigdy ponad zdrowie z początku walki. Kolejne zadziałanie odnawia efekt zamiast go kumulować, więc w walce leczy zwykle mniej niż 18%. Dokumentacja nie podaje zaokrąglenia, więc zaokrąglamy do punktu.",
+    },
+    transfer: {
+      title: "Koszt przeniesienia postaci",
+      description: "Przeniesienie postaci na inny świat.",
+      cost: "Koszt",
+      formula:
+        "koszt = poziom × 75 SŁ, ale nie mniej niż 10 000 SŁ. Ze świata Unia na prywatny płacisz 60% tej kwoty.",
+    },
+    unbind: {
+      title: "Koszt odwiązania przedmiotu",
+      description: "Smocze łuski za odwiązanie przedmiotu od postaci.",
+      rarity: "Rzadkość",
+      cost: "Koszt",
+      formula:
+        "baza = 750 + 7,5 × poziom przedmiotu, koszt = ⌈baza × mnożnik⌉. Zwykły: bez limitu bazy, ×1. Unikat: baza do 4950, ×1,2. Heroik: baza do 2250, ×1,5. Legendarny: baza do 2250, ×3.",
+    },
+    profession: {
+      title: "Koszt zmiany profesji",
+      description: "Smocze łuski za zmianę profesji.",
+      cost: "Koszt",
+      formula: "koszt = ⌈poziom / 2⌉ × 75 SŁ.",
+    },
+    quest: {
+      title: "Doświadczenie z questa",
+      description: "Nagroda z questa z błogosławieństwem i bonusem klanu.",
+      experience: "Doświadczenie bez bonusów",
+      blessing: "Bonus z błogosławieństwa (%)",
+      clan: "Bonus z klanu (%)",
+      result: "Doświadczenie z bonusami",
+      formula:
+        "doświadczenie = ⌊bazowe × (1 + błogosławieństwo / 100) × (1 + klan / 100)⌋. Bonusy mnożą się, a nie sumują.",
     },
   },
   legendaryBonus: {
