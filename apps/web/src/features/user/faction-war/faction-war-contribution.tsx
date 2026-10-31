@@ -39,6 +39,7 @@ export const FactionWarContribution = ({
       <BandSection
         id="faction-war-contribution"
         title={t("factionWar.contribution.title")}
+        wide
       >
         <EmptyState
           compact
@@ -58,6 +59,7 @@ export const FactionWarContribution = ({
       <BandSection
         id="faction-war-contribution"
         title={t("factionWar.contribution.title")}
+        wide
       >
         <EmptyState
           compact
