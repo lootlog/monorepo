@@ -26,6 +26,14 @@ describe("item comparison", () => {
     expect(bestOf("crit")).toEqual([false, false]);
   });
 
+  it("ranks a damage range only when it is no worse at either end", () => {
+    const damage = (...stats: string[]) =>
+      compareItemStats(stats).find((row) => row.key.startsWith("dmg"))?.best;
+
+    expect(damage("dmg=100,300", "dmg=90,200")).toEqual([true, false]);
+    expect(damage("dmg=100,300", "dmg=101,102")).toEqual([false, false]);
+  });
+
   it("does not rank the required level or text that starts with a number", () => {
     expect(bestOf("lvl")).toEqual([false, false]);
 
