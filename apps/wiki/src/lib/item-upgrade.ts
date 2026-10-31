@@ -1,3 +1,5 @@
+import { range } from "es-toolkit";
+import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
 
 /**
@@ -207,6 +209,117 @@ export const isUpgradable = (item: UpgradableItem) =>
     .split(";")
     .some((entry) => /^(cursed|expire_duration)(=|$)/.test(entry));
 
+const ARMOR_PIECES = new Set(["ARMOR", "HELMET", "GLOVES", "BOOTS", "SHIELD"]);
+
+/**
+ * An armor piece's armor and absorption factors by the professions it is
+ * for, their letters in alphabetical order, from the game's armor table;
+ * only magic users' pieces absorb.
+ */
+const ARMOR_FACTOR = new Map(
+  Object.entries({
+    b: 0.1125,
+    w: 0.135,
+    p: 0.125,
+    m: 0.0625,
+    t: 0.0875,
+    h: 0.1,
+    bw: 0.12375,
+    bp: 0.11875,
+    bt: 0.1,
+    bh: 0.10625,
+    pw: 0.13,
+    mp: 0.09375,
+    pt: 0.115,
+    mt: 0.075,
+    ht: 0.09375,
+    bpw: 0.12,
+    bhw: 0.11625,
+    bht: 0.1,
+    mpt: 0.09375,
+    bhpw: 0.12,
+    bhmptw: 0.1125,
+  }),
+);
+
+const ABSORB_FACTOR = new Map(
+  Object.entries({
+    m: 0.375,
+    t: 0.25,
+    mp: 0.1875,
+    pt: 0.075,
+    mt: 0.3125,
+    mpt: 0.21,
+  }),
+);
+
+/**
+ * Armor and absorption an item has natively, `scale * factor * class_power *
+ * (rarity_power + level_power)`, plus the bonuses it was given, each
+ * `perBonus * level_power * class_power`: the two grow differently.
+ */
+const DEFENSE_STATS = new Map(
+  Object.entries({
+    ac: { scale: 8, factors: ARMOR_FACTOR, perBonus: 0.15 },
+    absorb: { scale: 8, factors: ABSORB_FACTOR, perBonus: 0.6 },
+    absorbm: { scale: 4, factors: ABSORB_FACTOR, perBonus: 0.6 },
+  }),
+);
+
+// An armor bonus raises the native value's quality by one, up to three.
+const MAX_QUALITY_BONUS = 3;
+
+// The most bonuses of one kind the game's table hands out.
+const MAX_DEFENSE_BONUSES = 6;
+
+/**
+ * The item's armor or absorption at a level and with extra bonuses, from
+ * the native part and bonus count that give the value it shows; none when
+ * no split gives it, and the stat's own rule scales it instead.
+ */
+const defenseScale = (item: UpgradableItem, key: string, shown: number) => {
+  const defense = DEFENSE_STATS.get(key);
+
+  if (!defense) return undefined;
+
+  const professions = [
+    ...String(
+      parseItemStats(item.stat).find((stat) => stat.key === "reqp")?.value ??
+        "bhmptw",
+    ),
+  ]
+    .sort()
+    .join("");
+
+  const factor = ARMOR_PIECES.has(item.type ?? "")
+    ? (defense.factors.get(professions) ?? 0)
+    : 0;
+
+  const classPower = CLASS_POWER.get(item.type ?? "") ?? 1;
+  const rarity = RARITY_FACTOR.get(item.rarity ?? "COMMON") ?? 0;
+
+  const valueAt = (level: number, quality: number, bonuses: number) =>
+    defense.scale *
+      factor *
+      classPower *
+      (rarityPower(level, quality) + levelPower(level)) +
+    bonuses * defense.perBonus * levelPower(level) * classPower;
+
+  for (const qualityBonus of range(factor === 0 ? 1 : MAX_QUALITY_BONUS + 1)) {
+    for (const halfBonuses of range(MAX_DEFENSE_BONUSES * 2 + 1)) {
+      const quality = rarity + qualityBonus;
+      const bonuses = halfBonuses / 2;
+
+      if (Math.round(valueAt(item.lvl, quality, bonuses)) === shown) {
+        return (level: number, extraBonuses: number) =>
+          Math.round(valueAt(level, quality, bonuses + extraBonuses));
+      }
+    }
+  }
+
+  return undefined;
+};
+
 /** The item's stats computed at `toLevel`, without its upgrade entries. */
 const scaleStats = (item: UpgradableItem, toLevel: number) => {
   const rules = statRules(item.rarity, item.type);
@@ -231,6 +344,13 @@ const scaleStats = (item: UpgradableItem, toLevel: number) => {
       if (key === "legbon" && values.length === 2) {
         return `${key}=${values[0]},${toLevel}`;
       }
+
+      const defense =
+        values.length === 1
+          ? defenseScale(item, key, Number(values[0]))
+          : undefined;
+
+      if (defense) return `${key}=${defense(toLevel, 0)}`;
 
       const scales = rules.get(key);
 
@@ -274,8 +394,15 @@ const addUpgradeBonus = (
 
   const scale = statRules(item.rarity, item.type).get(key)?.[0];
 
-  const next =
-    scale && AMOUNT_SCALED_BONUSES.has(key)
+  const baseValue = parseItemStats(item.stat).find(
+    (stat) => stat.key === key,
+  )?.value;
+
+  const defense = defenseScale(item, key, Number(baseValue));
+
+  const next = defense
+    ? String(defense(toLevel, 1))
+    : scale && AMOUNT_SCALED_BONUSES.has(key)
       ? scaleValue(current, scale, toLevel, toLevel, 1)
       : String(Math.round(Number(current) + perBonus));
 
@@ -485,8 +612,9 @@ const BONUS_VALUES: Record<
 
 /**
  * Stats whose value the item's stat rules already count in bonuses of this
- * formula, so the +5 bonus is one more of them. Armor, absorption and its
- * destruction come from the item's quality too, so the bonus adds on top.
+ * formula, so the +5 bonus is one more of them. Armor and absorption are
+ * split into their native part and bonuses first; absorption destruction
+ * comes from the item's quality, so its bonus adds on top.
  */
 const AMOUNT_SCALED_BONUSES: ReadonlySet<UpgradeBonusKey> = new Set([
   "da",
