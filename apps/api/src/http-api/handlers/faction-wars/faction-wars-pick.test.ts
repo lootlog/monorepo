@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Schema } from "effect";
 import { TestClock } from "effect/testing";
 import { FACTION_WARS } from "@lootlog/domain/faction-war";
 import {
@@ -169,8 +169,6 @@ describe("faction war picks", () => {
         }),
       );
 
-      // Today's points stay off the leaderboard until the day ends, so no one
-      // can time a player's hero or titan kill from their jump there.
       const standing = () =>
         run(
           Effect.gen(function* () {
@@ -180,7 +178,7 @@ describe("faction war picks", () => {
             const leaderboard = yield* data.leaderboard(
               war.id,
               "BARBATOS",
-              "2026-10-21",
+              Date.parse("2026-10-21T10:00:00Z"),
             );
 
             return {
@@ -204,7 +202,7 @@ describe("faction war picks", () => {
       expect(await standing()).toEqual({
         players: 1,
         points: 80,
-        leaderboard: [["user-2", 40]],
+        leaderboard: [["user-2", 80]],
       });
 
       await run(setFactionWarDisqualification(war.id, "user-1", null));
@@ -212,8 +210,8 @@ describe("faction war picks", () => {
         players: 2,
         points: 160,
         leaderboard: [
-          ["user-1", 40],
-          ["user-2", 40],
+          ["user-1", 80],
+          ["user-2", 80],
         ],
       });
     } finally {
@@ -324,6 +322,74 @@ describe("faction war picks", () => {
       );
 
       expect(characterIds).toEqual(["character-user-1"]);
+    } finally {
+      await boundary.dispose();
+    }
+  });
+
+  it("move leaderboard points only once per snapshot period, so a single kill cannot be timed", async () => {
+    const boundary = await createDatabaseBoundary();
+
+    try {
+      const entries = new Map<string, unknown>();
+
+      // Redis in production: one value per key, shared by every replica.
+      const data = FactionWarsData.make({
+        getOrSet: (key, schema, load) =>
+          entries.has(key)
+            ? Schema.decodeUnknownEffect(schema)(entries.get(key))
+            : Effect.tap(load, (value) =>
+                Effect.sync(() => entries.set(key, value)),
+              ),
+      });
+
+      const war = FACTION_WARS[0]!;
+
+      const run = <A, E>(effect: Effect.Effect<A, E, FactionWarsData>) =>
+        boundary.run(effect.pipe(Effect.provide(data)));
+
+      const killPoints = (points: number) =>
+        boundary.run(
+          boundary.database
+            .insert(factionWarDailyPointsTable)
+            .values({
+              warId: war.id,
+              userId: "user-1",
+              day: "2026-10-21",
+              source: "KILL",
+              points,
+              updatedAt: new Date("2026-10-21T10:00:00Z"),
+            })
+            .onConflictDoUpdate({
+              target: [
+                factionWarDailyPointsTable.warId,
+                factionWarDailyPointsTable.userId,
+                factionWarDailyPointsTable.day,
+                factionWarDailyPointsTable.source,
+              ],
+              set: { points },
+            }),
+        );
+
+      const pointsAt = (at: string) =>
+        run(
+          Effect.flatMap(FactionWarsData, (factionWars) =>
+            factionWars.leaderboard(war.id, "BARBATOS", Date.parse(at)),
+          ),
+        ).then((rows) => rows.map((row) => row.points));
+
+      await run(
+        Effect.flatMap(FactionWarsData, (factionWars) =>
+          factionWars.createPick(pick("user-1", "discord-1")),
+        ),
+      );
+      await killPoints(10);
+      expect(await pointsAt("2026-10-21T09:05:00Z")).toEqual([10]);
+
+      // A hero kill later in the same period stays out of the leaderboard.
+      await killPoints(25);
+      expect(await pointsAt("2026-10-21T11:55:00Z")).toEqual([10]);
+      expect(await pointsAt("2026-10-21T12:00:00Z")).toEqual([25]);
     } finally {
       await boundary.dispose();
     }

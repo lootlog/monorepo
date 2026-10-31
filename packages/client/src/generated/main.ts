@@ -41246,7 +41246,7 @@ export const getFactionWarsControllerGetLeaderboardUrl = ({ warId }: FactionWars
 }
 
 /**
- * Top players of one faction by points of finished Warsaw days; players who hid themselves keep their rank without a name, which only war admins still see
+ * Top players of one faction by points in a snapshot taken every three hours; players who hid themselves keep their rank without a name, which only war admins still see
  * @summary Get faction war leaderboard
  */
 export const factionWarsControllerGetLeaderboard = async ({ warId }: FactionWarsControllerGetLeaderboardPathParameters,
