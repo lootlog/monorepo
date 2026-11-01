@@ -1,5 +1,5 @@
 import { useChatSendError } from "@/features/chat/hooks/use-chat-send-error";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import type { InputVariant } from "@/components/ui/input";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
@@ -629,7 +629,7 @@ export function useChatInputController({
       });
       completeSubmission();
     } catch {
-      toast.error(t("errors.clearFailed"));
+      showRuntimeMessage(t("errors.clearFailed"));
       focusEditorCaret(caretIndex);
     }
   };

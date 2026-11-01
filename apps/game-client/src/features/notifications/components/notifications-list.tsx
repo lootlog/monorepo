@@ -31,7 +31,7 @@ import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { type FC, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { getFixedT } from "@/i18n/get-fixed-t";
 
 type NotificationsListProps = {
@@ -234,7 +234,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
 
   const handleJoinReadyRoom = (notification: StoredNotification) => {
     const reportJoinFailure = () =>
-      toast.error(getFixedT("chat")("gatherings.applyFailed"));
+      showRuntimeMessage(getFixedT("chat")("gatherings.applyFailed"));
 
     const character = buildCurrentCharacterPayload();
 

@@ -1,4 +1,3 @@
-import { type toast as SonnerToast, toast } from "sonner";
 import {
   act,
   fireEvent,
@@ -20,14 +19,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
 import { useChatStore } from "@/store/chat.store";
-import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import {
+  captureRuntimeMessages,
+  setTestRuntimeGame,
+} from "@/test/test-runtime-window";
 import { createTestGuild } from "@/test/guild-preferences-test";
 import { COMMAND_DRAFT_KEY } from "./command-draft";
 import { CommandWindow } from "./command";
-
-vi.mock("sonner", () => ({
-  toast: { error: vi.fn<typeof SonnerToast.error>() },
-}));
 
 const notificationRequest = vi.fn<typeof fetch>();
 
@@ -222,10 +220,11 @@ describe("CommandWindow", () => {
     notificationRequest.mockResolvedValue(
       Response.json({ message: "unavailable" }, { status: 503 }),
     );
+    const messages = captureRuntimeMessages();
     mount();
     const user = await type("!alarm");
     await user.keyboard("{Enter}");
-    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    await waitFor(() => expect(messages).toHaveLength(1));
     expect(getDraft()).toBe("!alarm");
     expect(useWindowsStore.getState().command.open).toBe(true);
     expect(chatRequest).not.toHaveBeenCalled();
@@ -234,15 +233,15 @@ describe("CommandWindow", () => {
     notificationRequest.mockResolvedValue(
       Response.json({ retryAfterMs: 1000 }, { status: 429 }),
     );
+    const messages = captureRuntimeMessages();
     mount();
     const user = await type("!alarm");
     await user.keyboard("{Enter}");
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith(
+      expect(messages).toEqual([
         "Wysyłasz zbyt szybko. Spróbuj ponownie za chwilę.",
-      ),
+      ]),
     );
-    expect(toast.error).toHaveBeenCalledTimes(1);
     expect(getDraft()).toBe("!alarm");
   });
   it("keeps the draft after a stray click outside but drops it on Escape", async () => {

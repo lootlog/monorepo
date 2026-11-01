@@ -35,7 +35,7 @@ import {
   type LoggedApiRequest,
 } from "@/store/logs.store";
 import { useSettingsStore } from "@/store/settings.store";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -92,9 +92,9 @@ export const LogsSettingsTab: FC = () => {
   ) => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(log, null, 2));
-      toast.success(successMessage);
+      showRuntimeMessage(successMessage);
     } catch {
-      toast.error(t("settings.logs.copyFailed"));
+      showRuntimeMessage(t("settings.logs.copyFailed"));
     }
   };
 
@@ -132,9 +132,9 @@ export const LogsSettingsTab: FC = () => {
       link.remove();
       window.URL.revokeObjectURL(downloadUrl);
 
-      toast.success(t("settings.logs.exportSuccess"));
+      showRuntimeMessage(t("settings.logs.exportSuccess"));
     } catch {
-      toast.error(t("settings.logs.exportFailed"));
+      showRuntimeMessage(t("settings.logs.exportFailed"));
     }
   };
 

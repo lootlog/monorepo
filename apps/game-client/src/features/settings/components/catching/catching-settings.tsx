@@ -15,7 +15,7 @@ import { CatchingSettingsForm } from "@/features/settings/components/catching/ca
 import { reportSettingsSave } from "@/features/settings/persistence/settings-save-status.store";
 import { useGameStore } from "@/store/game.store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -147,12 +147,12 @@ export const CatchingSettings = () => {
       }
 
       if (successCount === 0) {
-        toast.error(t("settings.catching.applyNoneFailed"));
+        showRuntimeMessage(t("settings.catching.applyNoneFailed"));
 
         return;
       }
 
-      toast.error(
+      showRuntimeMessage(
         t("settings.catching.applyPartialFailed", {
           successCount,
           totalCount,
@@ -167,7 +167,7 @@ export const CatchingSettings = () => {
         queryClient.setQueryData(queryKey, context.previousData);
       }
 
-      toast.error(t("settings.catching.applyFailed"));
+      showRuntimeMessage(t("settings.catching.applyFailed"));
     },
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey });

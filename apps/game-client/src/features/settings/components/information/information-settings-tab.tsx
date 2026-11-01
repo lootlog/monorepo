@@ -14,7 +14,7 @@ import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-b
 import { once } from "es-toolkit";
 import { Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 // Built on first use so the bundle does not load locale data while it
 // evaluates during the game's startup.
@@ -62,9 +62,9 @@ export const InformationSettingsTab = () => {
   const copyToClipboard = async (value: string) => {
     try {
       await navigator.clipboard.writeText(value);
-      toast.success(t("settings.information.copied"));
+      showRuntimeMessage(t("settings.information.copied"));
     } catch {
-      toast.error(t("settings.information.copyFailed"));
+      showRuntimeMessage(t("settings.information.copyFailed"));
     }
   };
 
