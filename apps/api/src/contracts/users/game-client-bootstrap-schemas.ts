@@ -5,6 +5,10 @@ import {
 } from "@lootlog/schema/settings-documents";
 import { AccountLootlogConfigResponse } from "#src/contracts/user-lootlog-config/schemas";
 import {
+  CharacterAurasResponse,
+  OwnCharacterAuraResponse,
+} from "#src/contracts/character-auras/schemas";
+import {
   CurrentOrganizationsResponse,
   UserPreferencesResponse,
 } from "#src/contracts/users/schemas";
@@ -43,6 +47,10 @@ export const GameClientBootstrapResponse = Schema.Struct({
   guildTimerDocuments: Schema.NullOr(
     Schema.Struct(GuildSettingsDocumentsResponseSchema.fields),
   ),
+  /** GET /users/@me/character-aura */
+  characterAura: Schema.NullOr(Schema.Struct(OwnCharacterAuraResponse.fields)),
+  /** GET /character-auras */
+  characterAuras: Schema.NullOr(Schema.Struct(CharacterAurasResponse.fields)),
 }).annotate({ identifier: "GameClientBootstrapResponseDto_Output" });
 
 export type GameClientBootstrapResponse =

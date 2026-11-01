@@ -3,6 +3,11 @@ import type {
   SettingsSubsectionValue,
 } from "./constants/settings-tabs";
 import type { SettingsCatalogKey } from "@lootlog/domain/settings-documents";
+import {
+  getCharacterAurasControllerGetOwnAuraQueryKey,
+  type OwnCharacterAuraResponseDto,
+} from "@lootlog/client/main";
+import { queryClient } from "@/lib/query-client";
 
 export type SettingsIconName =
   | "settings"
@@ -170,6 +175,26 @@ const MANIFEST = [
               "appearance.npcColors.COLOSSUS",
               "appearance.npcColors.TITAN",
             ],
+          },
+        ],
+      },
+      {
+        id: "character-aura",
+        labelKey: "settings.subsections.characterAura",
+        // Shown to Users who may choose an aura or still wear one.
+        visible: () => {
+          const own = queryClient.getQueryData<OwnCharacterAuraResponseDto>(
+            getCharacterAurasControllerGetOwnAuraQueryKey(),
+          );
+
+          return Boolean(own?.canChange || own?.auraId);
+        },
+        controls: [
+          {
+            id: "character-aura",
+            labelKey: "settings.characterAura.title",
+            descriptionKey: "settings.characterAura.description",
+            aliases: ["aura", "efekt postaci", "wygląd postaci"],
           },
         ],
       },

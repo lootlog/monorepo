@@ -487,6 +487,53 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   }
 }
 
+/*
+ * A character tip with an aura: one canvas over the whole page follows the
+ * tip, and the nick shimmers in the aura's three tones, stepping like the
+ * game's animated icons. `CharacterAuraTooltip` marks the tip wrapper.
+ */
+.ll-aura-tip-canvas {
+  position: fixed;
+  z-index: 2147483000;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+.tip-wrapper[data-ll-aura] .info-wrapper .nick {
+  background: linear-gradient(
+    100deg,
+    var(--ll-aura-a) 0%,
+    var(--ll-aura-b) 30%,
+    var(--ll-aura-c) 50%,
+    var(--ll-aura-b) 70%,
+    var(--ll-aura-a) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: ll-aura-nick 2.4s steps(12) infinite;
+}
+
+.tip-wrapper[data-ll-aura] .info-wrapper .nick * {
+  color: inherit;
+}
+
+@keyframes ll-aura-nick {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tip-wrapper[data-ll-aura] .info-wrapper .nick {
+    animation: none;
+  }
+}
+
 #lootlog-root .ll-npc-list-row {
   content-visibility: auto;
   contain-intrinsic-block-size: 40px;

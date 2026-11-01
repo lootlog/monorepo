@@ -46,6 +46,112 @@ export interface RequestValidationError {
   issues: RequestValidationErrorIssuesItem[];
 }
 
+export type _ReauthenticationRequiredEncodedTag = typeof _ReauthenticationRequiredEncodedTag[keyof typeof _ReauthenticationRequiredEncodedTag];
+
+
+export const _ReauthenticationRequiredEncodedTag = {
+  ReauthenticationRequired: 'ReauthenticationRequired',
+} as const;
+
+export interface ReauthenticationRequiredEncoded {
+  _tag: _ReauthenticationRequiredEncodedTag;
+  code: string;
+  requiresReauth: true;
+}
+
+/**
+ * @nullable
+ */
+export type OwnCharacterAuraResponseDtoAuraId = typeof OwnCharacterAuraResponseDtoAuraId[keyof typeof OwnCharacterAuraResponseDtoAuraId] | null;
+
+
+export const OwnCharacterAuraResponseDtoAuraId = {
+  divine: 'divine',
+  hellfire: 'hellfire',
+  frost: 'frost',
+  void: 'void',
+  storm: 'storm',
+  venom: 'venom',
+  bloodmoon: 'bloodmoon',
+  astral: 'astral',
+  prism: 'prism',
+  spirit: 'spirit',
+  sakura: 'sakura',
+  sandstorm: 'sandstorm',
+  necro: 'necro',
+  tide: 'tide',
+  arcane: 'arcane',
+  aurora: 'aurora',
+} as const;
+
+export interface OwnCharacterAuraResponseDto {
+  /** @nullable */
+  auraId: OwnCharacterAuraResponseDtoAuraId;
+  canChange: boolean;
+  gameAccountIds: string[];
+}
+
+/**
+ * @nullable
+ */
+export type UpdateOwnCharacterAuraDtoAuraId = typeof UpdateOwnCharacterAuraDtoAuraId[keyof typeof UpdateOwnCharacterAuraDtoAuraId] | null;
+
+
+export const UpdateOwnCharacterAuraDtoAuraId = {
+  divine: 'divine',
+  hellfire: 'hellfire',
+  frost: 'frost',
+  void: 'void',
+  storm: 'storm',
+  venom: 'venom',
+  bloodmoon: 'bloodmoon',
+  astral: 'astral',
+  prism: 'prism',
+  spirit: 'spirit',
+  sakura: 'sakura',
+  sandstorm: 'sandstorm',
+  necro: 'necro',
+  tide: 'tide',
+  arcane: 'arcane',
+  aurora: 'aurora',
+} as const;
+
+export interface UpdateOwnCharacterAuraDto {
+  /** @nullable */
+  auraId: UpdateOwnCharacterAuraDtoAuraId;
+}
+
+export type CharacterAuraResponseDtoAuraId = typeof CharacterAuraResponseDtoAuraId[keyof typeof CharacterAuraResponseDtoAuraId];
+
+
+export const CharacterAuraResponseDtoAuraId = {
+  divine: 'divine',
+  hellfire: 'hellfire',
+  frost: 'frost',
+  void: 'void',
+  storm: 'storm',
+  venom: 'venom',
+  bloodmoon: 'bloodmoon',
+  astral: 'astral',
+  prism: 'prism',
+  spirit: 'spirit',
+  sakura: 'sakura',
+  sandstorm: 'sandstorm',
+  necro: 'necro',
+  tide: 'tide',
+  arcane: 'arcane',
+  aurora: 'aurora',
+} as const;
+
+export interface CharacterAuraResponseDto {
+  gameAccountId: string;
+  auraId: CharacterAuraResponseDtoAuraId;
+}
+
+export interface CharacterAurasResponseDto {
+  auras: CharacterAuraResponseDto[];
+}
+
 export type SharedUserThemeResponseDtoDefinitionBaseThemeId = typeof SharedUserThemeResponseDtoDefinitionBaseThemeId[keyof typeof SharedUserThemeResponseDtoDefinitionBaseThemeId];
 
 
@@ -210,19 +316,6 @@ export type SharedUserThemeResponseDtoDefinition = {
 export interface SharedUserThemeResponseDto {
   name: string;
   definition: SharedUserThemeResponseDtoDefinition;
-}
-
-export type _ReauthenticationRequiredEncodedTag = typeof _ReauthenticationRequiredEncodedTag[keyof typeof _ReauthenticationRequiredEncodedTag];
-
-
-export const _ReauthenticationRequiredEncodedTag = {
-  ReauthenticationRequired: 'ReauthenticationRequired',
-} as const;
-
-export interface ReauthenticationRequiredEncoded {
-  _tag: _ReauthenticationRequiredEncodedTag;
-  code: string;
-  requiresReauth: true;
 }
 
 export type UserThemeResponseDtoDefinitionBaseThemeId = typeof UserThemeResponseDtoDefinitionBaseThemeId[keyof typeof UserThemeResponseDtoDefinitionBaseThemeId];
@@ -10447,6 +10540,48 @@ export type GameClientBootstrapResponseDtoOutputGuildTimerDocuments = {
   guilds: GameClientBootstrapResponseDtoOutputGuildTimerDocumentsGuilds;
 } | null;
 
+/**
+ * @nullable
+ */
+export type GameClientBootstrapResponseDtoOutputCharacterAuraAuraId = typeof GameClientBootstrapResponseDtoOutputCharacterAuraAuraId[keyof typeof GameClientBootstrapResponseDtoOutputCharacterAuraAuraId] | null;
+
+
+export const GameClientBootstrapResponseDtoOutputCharacterAuraAuraId = {
+  divine: 'divine',
+  hellfire: 'hellfire',
+  frost: 'frost',
+  void: 'void',
+  storm: 'storm',
+  venom: 'venom',
+  bloodmoon: 'bloodmoon',
+  astral: 'astral',
+  prism: 'prism',
+  spirit: 'spirit',
+  sakura: 'sakura',
+  sandstorm: 'sandstorm',
+  necro: 'necro',
+  tide: 'tide',
+  arcane: 'arcane',
+  aurora: 'aurora',
+} as const;
+
+/**
+ * @nullable
+ */
+export type GameClientBootstrapResponseDtoOutputCharacterAura = {
+  /** @nullable */
+  auraId: GameClientBootstrapResponseDtoOutputCharacterAuraAuraId;
+  canChange: boolean;
+  gameAccountIds: string[];
+} | null;
+
+/**
+ * @nullable
+ */
+export type GameClientBootstrapResponseDtoOutputCharacterAuras = {
+  auras: CharacterAuraResponseDto[];
+} | null;
+
 export interface UserCurrentGuildResponseDtoOutput {
   id: string;
   name: string;
@@ -10471,6 +10606,10 @@ export interface GameClientBootstrapResponseDtoOutput {
   settingsDocuments: GameClientBootstrapResponseDtoOutputSettingsDocuments;
   /** @nullable */
   guildTimerDocuments: GameClientBootstrapResponseDtoOutputGuildTimerDocuments;
+  /** @nullable */
+  characterAura: GameClientBootstrapResponseDtoOutputCharacterAura;
+  /** @nullable */
+  characterAuras: GameClientBootstrapResponseDtoOutputCharacterAuras;
 }
 
 export type UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout[keyof typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout];
@@ -15099,6 +15238,57 @@ export type UserThemesControllerGetSharedTheme403 = {
 };
 
 export type UserThemesControllerGetSharedTheme429 = {
+  message: string;
+};
+
+export type CharacterAurasControllerGetAuras401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type CharacterAurasControllerGetAuras403 = {
+  message: string;
+};
+
+export type CharacterAurasControllerGetAuras429 = {
+  message: string;
+};
+
+export type CharacterAurasControllerGetOwnAura401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type CharacterAurasControllerGetOwnAura403 = {
+  message: string;
+};
+
+export type CharacterAurasControllerGetOwnAura429 = {
+  message: string;
+};
+
+export type CharacterAurasControllerUpdateOwnAura401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type CharacterAurasControllerUpdateOwnAura403 = {
+  message: string;
+};
+
+export type CharacterAurasControllerUpdateOwnAura429 = {
+  message: string;
+};
+
+export type CharacterAurasControllerLinkGameAccountPathParameters = {
+ gameAccountId: string,
+ }
+export type CharacterAurasControllerLinkGameAccount401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type CharacterAurasControllerLinkGameAccount403 = {
+  message: string;
+};
+
+export type CharacterAurasControllerLinkGameAccount429 = {
   message: string;
 };
 
@@ -40392,3 +40582,457 @@ export const useGetUserThemesControllerGetSharedThemeQueryData = () => {
   return ({ shareToken }: UserThemesControllerGetSharedThemePathParameters,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>>(getUserThemesControllerGetSharedThemeQueryKey({ shareToken }));
 }
+
+
+
+export const getCharacterAurasControllerGetAurasUrl = () => {
+
+
+
+
+  return `/character-auras`
+}
+
+/**
+ * List every Margonem account whose characters wear an aura, for any signed-in user; the list names no Lootlog user
+ * @summary Get character auras
+ */
+export const characterAurasControllerGetAuras = async ( options?: Parameters<typeof mainFetch>[1]): Promise<CharacterAurasResponseDto> => {
+
+  return mainFetch<CharacterAurasResponseDto>(getCharacterAurasControllerGetAurasUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCharacterAurasControllerGetAurasQueryKey = () => {
+    return [
+    `/character-auras`
+    ] as const;
+    }
+
+
+export const getCharacterAurasControllerGetAurasQueryOptions = <TData = Awaited<ReturnType<typeof characterAurasControllerGetAuras>>, TError = ErrorType<RequestValidationError | CharacterAurasControllerGetAuras401 | CharacterAurasControllerGetAuras403 | CharacterAurasControllerGetAuras429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetAuras>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCharacterAurasControllerGetAurasQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof characterAurasControllerGetAuras>>> = ({ signal }) => characterAurasControllerGetAuras({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetAuras>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CharacterAurasControllerGetAurasQueryResult = NonNullable<Awaited<ReturnType<typeof characterAurasControllerGetAuras>>>
+export type CharacterAurasControllerGetAurasQueryError = ErrorType<RequestValidationError | CharacterAurasControllerGetAuras401 | CharacterAurasControllerGetAuras403 | CharacterAurasControllerGetAuras429>
+
+
+export function useCharacterAurasControllerGetAuras<TData = Awaited<ReturnType<typeof characterAurasControllerGetAuras>>, TError = ErrorType<RequestValidationError | CharacterAurasControllerGetAuras401 | CharacterAurasControllerGetAuras403 | CharacterAurasControllerGetAuras429>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetAuras>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof characterAurasControllerGetAuras>>,
+          TError,
+          Awaited<ReturnType<typeof characterAurasControllerGetAuras>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCharacterAurasControllerGetAuras<TData = Awaited<ReturnType<typeof characterAurasControllerGetAuras>>, TError = ErrorType<RequestValidationError | CharacterAurasControllerGetAuras401 | CharacterAurasControllerGetAuras403 | CharacterAurasControllerGetAuras429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetAuras>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof characterAurasControllerGetAuras>>,
+          TError,
+          Awaited<ReturnType<typeof characterAurasControllerGetAuras>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCharacterAurasControllerGetAuras<TData = Awaited<ReturnType<typeof characterAurasControllerGetAuras>>, TError = ErrorType<RequestValidationError | CharacterAurasControllerGetAuras401 | CharacterAurasControllerGetAuras403 | CharacterAurasControllerGetAuras429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetAuras>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get character auras
+ */
+
+export function useCharacterAurasControllerGetAuras<TData = Awaited<ReturnType<typeof characterAurasControllerGetAuras>>, TError = ErrorType<RequestValidationError | CharacterAurasControllerGetAuras401 | CharacterAurasControllerGetAuras403 | CharacterAurasControllerGetAuras429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetAuras>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCharacterAurasControllerGetAurasQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get character auras
+ */
+export const prefetchCharacterAurasControllerGetAurasQuery = async <TData = Awaited<ReturnType<typeof characterAurasControllerGetAuras>>, TError = ErrorType<RequestValidationError | CharacterAurasControllerGetAuras401 | CharacterAurasControllerGetAuras403 | CharacterAurasControllerGetAuras429>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetAuras>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getCharacterAurasControllerGetAurasQueryOptions(options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useCharacterAurasControllerGetAuras} query
+ */
+export const invalidateCharacterAurasControllerGetAuras = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getCharacterAurasControllerGetAurasQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get character auras
+ */
+export const useSetCharacterAurasControllerGetAurasQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof characterAurasControllerGetAuras>> | undefined | ((old: Awaited<ReturnType<typeof characterAurasControllerGetAuras>> | undefined) => Awaited<ReturnType<typeof characterAurasControllerGetAuras>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof characterAurasControllerGetAuras>>>({ exact: $exactMatch, queryKey: getCharacterAurasControllerGetAurasQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary Get character auras
+ */
+export const useGetCharacterAurasControllerGetAurasQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof characterAurasControllerGetAuras>>>(getCharacterAurasControllerGetAurasQueryKey());
+}
+
+
+
+export const getCharacterAurasControllerGetOwnAuraUrl = () => {
+
+
+
+
+  return `/users/@me/character-aura`
+}
+
+/**
+ * Retrieve the aura the authenticated user wears, whether they may choose one, and the Margonem accounts it shows on
+ * @summary Get own character aura
+ */
+export const characterAurasControllerGetOwnAura = async ( options?: Parameters<typeof mainFetch>[1]): Promise<OwnCharacterAuraResponseDto> => {
+
+  return mainFetch<OwnCharacterAuraResponseDto>(getCharacterAurasControllerGetOwnAuraUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCharacterAurasControllerGetOwnAuraQueryKey = () => {
+    return [
+    `/users/@me/character-aura`
+    ] as const;
+    }
+
+
+export const getCharacterAurasControllerGetOwnAuraQueryOptions = <TData = Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>, TError = ErrorType<RequestValidationError | CharacterAurasControllerGetOwnAura401 | CharacterAurasControllerGetOwnAura403 | CharacterAurasControllerGetOwnAura429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCharacterAurasControllerGetOwnAuraQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>> = ({ signal }) => characterAurasControllerGetOwnAura({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CharacterAurasControllerGetOwnAuraQueryResult = NonNullable<Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>>
+export type CharacterAurasControllerGetOwnAuraQueryError = ErrorType<RequestValidationError | CharacterAurasControllerGetOwnAura401 | CharacterAurasControllerGetOwnAura403 | CharacterAurasControllerGetOwnAura429>
+
+
+export function useCharacterAurasControllerGetOwnAura<TData = Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>, TError = ErrorType<RequestValidationError | CharacterAurasControllerGetOwnAura401 | CharacterAurasControllerGetOwnAura403 | CharacterAurasControllerGetOwnAura429>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>,
+          TError,
+          Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCharacterAurasControllerGetOwnAura<TData = Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>, TError = ErrorType<RequestValidationError | CharacterAurasControllerGetOwnAura401 | CharacterAurasControllerGetOwnAura403 | CharacterAurasControllerGetOwnAura429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>,
+          TError,
+          Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCharacterAurasControllerGetOwnAura<TData = Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>, TError = ErrorType<RequestValidationError | CharacterAurasControllerGetOwnAura401 | CharacterAurasControllerGetOwnAura403 | CharacterAurasControllerGetOwnAura429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get own character aura
+ */
+
+export function useCharacterAurasControllerGetOwnAura<TData = Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>, TError = ErrorType<RequestValidationError | CharacterAurasControllerGetOwnAura401 | CharacterAurasControllerGetOwnAura403 | CharacterAurasControllerGetOwnAura429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCharacterAurasControllerGetOwnAuraQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get own character aura
+ */
+export const prefetchCharacterAurasControllerGetOwnAuraQuery = async <TData = Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>, TError = ErrorType<RequestValidationError | CharacterAurasControllerGetOwnAura401 | CharacterAurasControllerGetOwnAura403 | CharacterAurasControllerGetOwnAura429>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getCharacterAurasControllerGetOwnAuraQueryOptions(options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useCharacterAurasControllerGetOwnAura} query
+ */
+export const invalidateCharacterAurasControllerGetOwnAura = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getCharacterAurasControllerGetOwnAuraQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get own character aura
+ */
+export const useSetCharacterAurasControllerGetOwnAuraQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>> | undefined | ((old: Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>> | undefined) => Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>>({ exact: $exactMatch, queryKey: getCharacterAurasControllerGetOwnAuraQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary Get own character aura
+ */
+export const useGetCharacterAurasControllerGetOwnAuraQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof characterAurasControllerGetOwnAura>>>(getCharacterAurasControllerGetOwnAuraQueryKey());
+}
+
+
+
+export const getCharacterAurasControllerUpdateOwnAuraUrl = () => {
+
+
+
+
+  return `/users/@me/character-aura`
+}
+
+/**
+ * Choose the aura the authenticated user wears, or remove it with null; choosing one fails with 403 for users without access to auras
+ * @summary Update own character aura
+ */
+export const characterAurasControllerUpdateOwnAura = async (updateOwnCharacterAuraDto: UpdateOwnCharacterAuraDto, options?: Parameters<typeof mainFetch>[1]): Promise<OwnCharacterAuraResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<OwnCharacterAuraResponseDto>(getCharacterAurasControllerUpdateOwnAuraUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateOwnCharacterAuraDto)
+  }
+);}
+
+
+
+
+
+export const getCharacterAurasControllerUpdateOwnAuraMutationKey = () => ['characterAurasControllerUpdateOwnAura'] as const;
+
+export const getCharacterAurasControllerUpdateOwnAuraMutationOptions = <TError = ErrorType<RequestValidationError | CharacterAurasControllerUpdateOwnAura401 | CharacterAurasControllerUpdateOwnAura403 | CharacterAurasControllerUpdateOwnAura429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerUpdateOwnAura>>, TError,CharacterAurasControllerUpdateOwnAuraMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerUpdateOwnAura>>, TError,CharacterAurasControllerUpdateOwnAuraMutationVariables, TContext> => {
+
+const mutationKey = getCharacterAurasControllerUpdateOwnAuraMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof characterAurasControllerUpdateOwnAura>>, CharacterAurasControllerUpdateOwnAuraMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  characterAurasControllerUpdateOwnAura(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CharacterAurasControllerUpdateOwnAuraMutationResult = NonNullable<Awaited<ReturnType<typeof characterAurasControllerUpdateOwnAura>>>
+    export type CharacterAurasControllerUpdateOwnAuraMutationBody = BodyType<UpdateOwnCharacterAuraDto>
+    export type CharacterAurasControllerUpdateOwnAuraMutationError = ErrorType<RequestValidationError | CharacterAurasControllerUpdateOwnAura401 | CharacterAurasControllerUpdateOwnAura403 | CharacterAurasControllerUpdateOwnAura429>
+    export type CharacterAurasControllerUpdateOwnAuraMutationVariables = {data: BodyType<UpdateOwnCharacterAuraDto>}
+
+    /**
+ * @summary Update own character aura
+ */
+export const useCharacterAurasControllerUpdateOwnAura = <TError = ErrorType<RequestValidationError | CharacterAurasControllerUpdateOwnAura401 | CharacterAurasControllerUpdateOwnAura403 | CharacterAurasControllerUpdateOwnAura429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerUpdateOwnAura>>, TError,CharacterAurasControllerUpdateOwnAuraMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof characterAurasControllerUpdateOwnAura>>,
+        TError,
+        CharacterAurasControllerUpdateOwnAuraMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCharacterAurasControllerUpdateOwnAuraMutationOptions(options), queryClient);
+    }
+
+export const getCharacterAurasControllerLinkGameAccountUrl = ({ gameAccountId }: CharacterAurasControllerLinkGameAccountPathParameters,) => {
+
+
+
+
+  return `/users/@me/character-aura/game-accounts/${gameAccountId}`
+}
+
+/**
+ * Show the authenticated user's aura on the characters of a Margonem account they play; fails with 403 while they wear no aura they may use
+ * @summary Show own aura on a Margonem account
+ */
+export const characterAurasControllerLinkGameAccount = async ({ gameAccountId }: CharacterAurasControllerLinkGameAccountPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<OwnCharacterAuraResponseDto> => {
+
+  return mainFetch<OwnCharacterAuraResponseDto>(getCharacterAurasControllerLinkGameAccountUrl({ gameAccountId }),
+  {
+    ...options,
+    method: 'PUT'
+
+
+  }
+);}
+
+
+
+
+
+export const getCharacterAurasControllerLinkGameAccountMutationKey = () => ['characterAurasControllerLinkGameAccount'] as const;
+
+export const getCharacterAurasControllerLinkGameAccountMutationOptions = <TError = ErrorType<RequestValidationError | CharacterAurasControllerLinkGameAccount401 | CharacterAurasControllerLinkGameAccount403 | CharacterAurasControllerLinkGameAccount429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerLinkGameAccount>>, TError,CharacterAurasControllerLinkGameAccountMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerLinkGameAccount>>, TError,CharacterAurasControllerLinkGameAccountMutationVariables, TContext> => {
+
+const mutationKey = getCharacterAurasControllerLinkGameAccountMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof characterAurasControllerLinkGameAccount>>, CharacterAurasControllerLinkGameAccountMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  characterAurasControllerLinkGameAccount(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CharacterAurasControllerLinkGameAccountMutationResult = NonNullable<Awaited<ReturnType<typeof characterAurasControllerLinkGameAccount>>>
+
+    export type CharacterAurasControllerLinkGameAccountMutationError = ErrorType<RequestValidationError | CharacterAurasControllerLinkGameAccount401 | CharacterAurasControllerLinkGameAccount403 | CharacterAurasControllerLinkGameAccount429>
+    export type CharacterAurasControllerLinkGameAccountMutationVariables = {pathParams: CharacterAurasControllerLinkGameAccountPathParameters}
+
+    /**
+ * @summary Show own aura on a Margonem account
+ */
+export const useCharacterAurasControllerLinkGameAccount = <TError = ErrorType<RequestValidationError | CharacterAurasControllerLinkGameAccount401 | CharacterAurasControllerLinkGameAccount403 | CharacterAurasControllerLinkGameAccount429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof characterAurasControllerLinkGameAccount>>, TError,CharacterAurasControllerLinkGameAccountMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof characterAurasControllerLinkGameAccount>>,
+        TError,
+        CharacterAurasControllerLinkGameAccountMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCharacterAurasControllerLinkGameAccountMutationOptions(options), queryClient);
+    }

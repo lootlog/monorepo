@@ -15,6 +15,10 @@ import {
   UserLootlogConfigIdentity,
   UserLootlogConfigOperationError,
 } from "../user-lootlog-config/user-lootlog-config.handlers.js";
+import {
+  CharacterAurasData,
+  CharacterAurasIdentity,
+} from "../character-auras/character-auras.handlers.js";
 import { getGameClientBootstrap } from "./game-client-bootstrap.operations.js";
 
 const identity = { userId: "user-a", discordId: "discord-a" };
@@ -139,6 +143,26 @@ const run = ({
                 ),
               upsertCharacter: notReadAtStartup,
               getPlayersCatchingGuilds: notReadAtStartup,
+            }),
+          ),
+          Layer.succeed(
+            CharacterAurasIdentity,
+            CharacterAurasIdentity.of({
+              userId: Effect.succeed(identity.userId),
+            }),
+          ),
+          Layer.succeed(
+            CharacterAurasData,
+            CharacterAurasData.of({
+              getAuras: () => Effect.succeed({ auras: [] }),
+              getOwnAura: () =>
+                Effect.succeed({
+                  auraId: null,
+                  canChange: false,
+                  gameAccountIds: [],
+                }),
+              updateOwnAura: notReadAtStartup,
+              linkGameAccount: notReadAtStartup,
             }),
           ),
         ),
