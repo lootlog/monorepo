@@ -17484,6 +17484,7 @@ components:
             - tide
             - arcane
             - aurora
+            - conqueror
         canChange:
           type: boolean
         gameAccountIds:
@@ -17518,6 +17519,7 @@ components:
             - tide
             - arcane
             - aurora
+            - conqueror
       required:
         - auraId
       additionalProperties: false
@@ -17555,6 +17557,7 @@ components:
             - tide
             - arcane
             - aurora
+            - conqueror
       required:
         - gameAccountId
         - auraId
@@ -33059,6 +33062,7 @@ components:
                 - tide
                 - arcane
                 - aurora
+                - conqueror
             canChange:
               type: boolean
             gameAccountIds:

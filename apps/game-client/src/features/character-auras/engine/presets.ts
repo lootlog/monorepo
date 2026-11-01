@@ -20,7 +20,8 @@ export type AuraFx =
   | "glyph-orbit"
   | "curtain"
   | "footprints"
-  | "raincloud";
+  | "raincloud"
+  | "haki";
 
 /**
  * The aura's own short animation every few seconds, like the burst of the game's animated
@@ -42,7 +43,8 @@ export type BurstKind =
   | "souls"
   | "splash"
   | "ascend"
-  | "aurora-flare";
+  | "aurora-flare"
+  | "conqueror";
 
 export type GroundStyle =
   | "disc"
@@ -54,7 +56,8 @@ export type GroundStyle =
   | "runes"
   | "ripples"
   | "circle"
-  | "dust";
+  | "dust"
+  | "cracks";
 
 /** What decorates the tooltip box beyond the outline, so each aura's tip has its own look. */
 export type TipDeco =
@@ -73,7 +76,8 @@ export type TipDeco =
   | "skull-corners"
   | "waves"
   | "sigils"
-  | "curtain";
+  | "curtain"
+  | "cracks";
 
 export interface AuraPreset {
   id: CharacterAuraId;
@@ -1167,5 +1171,67 @@ export const AURAS: Record<CharacterAuraId, AuraPreset> = {
     tip: "curtain",
     nick: ["#c8ffe8", "#3ad8ff", "#b47aff"],
     tones: ["#d8fff0", "#3ad8b0", "#3a3aa0"],
+  },
+  conqueror: {
+    id: "conqueror",
+    tier: "legendary",
+    description:
+      "Czarne pioruny w czerwonej poświacie trzaskają wokół postaci, a nacisk jej woli podrywa kamienie z ziemi.",
+    particles: ["#ff6a6a", "#e01828", "#7a0010", "#2a2226", "#5a4e52"],
+    rim: "#ff3040",
+    haze: "#0a0004",
+    near: 0.9,
+    far: 0.75,
+    darkHaze: true,
+    inner: 0.05,
+    pulse: (t) => 0.85 + Math.max(0, noise1(t * 6, 13)) * 0.3,
+    ground: { style: "cracks", color: "#e01828", alpha: 0.7 },
+    emitters: [
+      {
+        kind: "grain",
+        rate: 4,
+        from: "feet",
+        life: [1.5, 2.5],
+        speed: [30, 55],
+        spread: 0.5,
+        gravity: 90,
+        size: [1, 2],
+        colors: 2,
+        colorFrom: 3,
+        front: 0.5,
+        land: "bounce",
+        groundOnly: true,
+      },
+      {
+        kind: "spark",
+        rate: 4,
+        from: "edge",
+        life: [0.2, 0.4],
+        speed: [40, 70],
+        spread: 6.28,
+        outward: 0.8,
+        size: [0.8, 1.2],
+        colors: 2,
+        front: 0.6,
+      },
+      {
+        kind: "mote",
+        rate: 3,
+        from: "edge",
+        life: [0.8, 1.2],
+        speed: [6, 12],
+        spread: 6.28,
+        outward: 0.6,
+        size: [0.8, 1.2],
+        colors: 2,
+        colorFrom: 1,
+        front: 0.5,
+      },
+    ],
+    fx: ["lightning", "haki"],
+    burst: "conqueror",
+    tip: "cracks",
+    nick: ["#ff8a8a", "#e01828", "#2a0006"],
+    tones: ["#ff5a5a", "#c0101e", "#1a0004"],
   },
 };

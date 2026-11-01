@@ -570,6 +570,36 @@ function drawSigils({ b, L, T, W, H, R, B, light, mid, a }: TipFrame): void {
   }
 }
 
+/** Cracks splitting from each corner, glowing red on the pulse, black between. */
+function drawCracks({ b, corners, light, a }: TipFrame): void {
+  const glowing = b.tick % 7 < 3;
+
+  for (const [i, [x, y, sx, sy]] of corners.entries()) {
+    let px = x + sx;
+    let py = y + sy;
+
+    for (let s = 0; s < 4; s++) {
+      const nx = px + sx * (3 + ((i + s) % 2) * 2);
+      const ny = py + sy * (2 + ((i * 3 + s) % 3));
+      pixelLine(b.dim(), px, py, nx, ny, [16, 0, 4], a, a);
+
+      if (glowing)
+        pixelLine(
+          b.lit,
+          px + sx,
+          py,
+          nx + sx,
+          ny,
+          light,
+          a * (1 - s / 4),
+          a * (1 - s / 4),
+        );
+      px = nx;
+      py = ny;
+    }
+  }
+}
+
 function drawTipCurtain({ b, L, T, W, boost }: TipFrame): void {
   drawCurtain(b, L + W / 2, T - 24, W / 2 + 6, 26, boost);
 }
@@ -598,6 +628,7 @@ const TIP_DECO_PAINTERS: Record<
   waves: { front: true, draw: drawWaves },
   sigils: { front: true, draw: drawSigils },
   curtain: { front: false, draw: drawTipCurtain },
+  cracks: { front: true, draw: drawCracks },
 };
 
 /** The aura's own dressing round a tooltip box; `front` draws what may overlap the box. */
