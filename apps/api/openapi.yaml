@@ -17154,6 +17154,260 @@ paths:
                 additionalProperties: false
       description: Read a theme shared by link; the response names no author
       summary: Get shared theme
+  /character-auras:
+    get:
+      tags:
+        - character-auras
+      operationId: CharacterAurasController_getAuras
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: CharacterAurasResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterAurasResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: List every Margonem account whose characters wear an aura, for any signed-in user; the list names no Lootlog user
+      summary: Get character auras
+  /users/@me/character-aura:
+    get:
+      tags:
+        - character-auras
+      operationId: CharacterAurasController_getOwnAura
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: OwnCharacterAuraResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnCharacterAuraResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Retrieve the aura the authenticated user wears, whether they may choose one, and the Margonem accounts it shows on
+      summary: Get own character aura
+    put:
+      tags:
+        - character-auras
+      operationId: CharacterAurasController_updateOwnAura
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: OwnCharacterAuraResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnCharacterAuraResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Choose the aura the authenticated user wears, or remove it with null; choosing one fails with 403 for users without access to auras
+      summary: Update own character aura
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOwnCharacterAuraDto"
+        required: true
+  /users/@me/character-aura/game-accounts/{gameAccountId}:
+    put:
+      tags:
+        - character-auras
+      operationId: CharacterAurasController_linkGameAccount
+      parameters:
+        - name: gameAccountId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: OwnCharacterAuraResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnCharacterAuraResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Show the authenticated user's aura on the characters of a Margonem account they play; fails with 403 while they wear no aura they may use
+      summary: Show own aura on a Margonem account
 components:
   schemas:
     RequestValidationError:
@@ -17188,6 +17442,122 @@ components:
         - code
         - message
         - issues
+      additionalProperties: false
+    ReauthenticationRequiredEncoded:
+      type: object
+      properties:
+        _tag:
+          type: string
+          enum:
+            - ReauthenticationRequired
+        code:
+          type: string
+        requiresReauth:
+          type: boolean
+          enum:
+            - true
+      required:
+        - _tag
+        - code
+        - requiresReauth
+      additionalProperties: false
+    OwnCharacterAuraResponseDto:
+      type: object
+      properties:
+        auraId:
+          nullable: true
+          type: string
+          enum:
+            - divine
+            - hellfire
+            - frost
+            - void
+            - storm
+            - venom
+            - bloodmoon
+            - astral
+            - prism
+            - spirit
+            - sakura
+            - sandstorm
+            - necro
+            - tide
+            - arcane
+            - aurora
+        canChange:
+          type: boolean
+        gameAccountIds:
+          type: array
+          items:
+            type: string
+      required:
+        - auraId
+        - canChange
+        - gameAccountIds
+      additionalProperties: false
+    UpdateOwnCharacterAuraDto:
+      type: object
+      properties:
+        auraId:
+          nullable: true
+          type: string
+          enum:
+            - divine
+            - hellfire
+            - frost
+            - void
+            - storm
+            - venom
+            - bloodmoon
+            - astral
+            - prism
+            - spirit
+            - sakura
+            - sandstorm
+            - necro
+            - tide
+            - arcane
+            - aurora
+      required:
+        - auraId
+      additionalProperties: false
+    CharacterAurasResponseDto:
+      type: object
+      properties:
+        auras:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterAuraResponseDto"
+      required:
+        - auras
+      additionalProperties: false
+    CharacterAuraResponseDto:
+      type: object
+      properties:
+        gameAccountId:
+          type: string
+        auraId:
+          type: string
+          enum:
+            - divine
+            - hellfire
+            - frost
+            - void
+            - storm
+            - venom
+            - bloodmoon
+            - astral
+            - prism
+            - spirit
+            - sakura
+            - sandstorm
+            - necro
+            - tide
+            - arcane
+            - aurora
+      required:
+        - gameAccountId
+        - auraId
       additionalProperties: false
     SharedUserThemeResponseDto:
       type: object
@@ -17391,24 +17761,6 @@ components:
       required:
         - name
         - definition
-      additionalProperties: false
-    ReauthenticationRequiredEncoded:
-      type: object
-      properties:
-        _tag:
-          type: string
-          enum:
-            - ReauthenticationRequired
-        code:
-          type: string
-        requiresReauth:
-          type: boolean
-          enum:
-            - true
-      required:
-        - _tag
-        - code
-        - requiresReauth
       additionalProperties: false
     UserThemeResponseDto:
       type: object
@@ -32683,12 +33035,60 @@ components:
           required:
             - guilds
           additionalProperties: false
+        characterAura:
+          nullable: true
+          type: object
+          properties:
+            auraId:
+              nullable: true
+              type: string
+              enum:
+                - divine
+                - hellfire
+                - frost
+                - void
+                - storm
+                - venom
+                - bloodmoon
+                - astral
+                - prism
+                - spirit
+                - sakura
+                - sandstorm
+                - necro
+                - tide
+                - arcane
+                - aurora
+            canChange:
+              type: boolean
+            gameAccountIds:
+              type: array
+              items:
+                type: string
+          required:
+            - auraId
+            - canChange
+            - gameAccountIds
+          additionalProperties: false
+        characterAuras:
+          nullable: true
+          type: object
+          properties:
+            auras:
+              type: array
+              items:
+                $ref: "#/components/schemas/CharacterAuraResponseDto"
+          required:
+            - auras
+          additionalProperties: false
       required:
         - accessibleGuilds
         - userPreferences
         - lootlogConfig
         - settingsDocuments
         - guildTimerDocuments
+        - characterAura
+        - characterAuras
       additionalProperties: false
     UserCurrentGuildResponseDto_Output:
       type: object
@@ -33399,4 +33799,5 @@ tags:
   - name: public-guild-stats-card
   - name: docs
   - name: user-themes
+  - name: character-auras
 servers: []

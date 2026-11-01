@@ -118,6 +118,8 @@ it("starts an initialized character with one bootstrap request, without repeatin
         guildTimerDocuments: {
           guilds: { "guild-1": createSettingsDocuments() },
         },
+        characterAura: { auraId: null, canChange: false, gameAccountIds: [] },
+        characterAuras: { auras: [] },
       });
 
     if (path.endsWith("/members/@me")) return Response.json(null);

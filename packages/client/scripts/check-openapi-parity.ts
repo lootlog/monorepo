@@ -2028,6 +2028,118 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
         },
         description: "Revoke the theme's share link so it no longer resolves",
       },
+      // Verified by apps/api/src/http-api/handlers/character-auras/character-auras.data-layer.test.ts.
+      "GET /character-auras": {
+        operationId: "CharacterAurasController_getAuras",
+        parameters: [],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "CharacterAurasResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CharacterAurasResponseDto",
+                },
+              },
+            },
+          },
+        },
+        description:
+          "List every Margonem account whose characters wear an aura, for any signed-in user; the list names no Lootlog user",
+      },
+      "GET /users/@me/character-aura": {
+        operationId: "CharacterAurasController_getOwnAura",
+        parameters: [],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "OwnCharacterAuraResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/OwnCharacterAuraResponseDto",
+                },
+              },
+            },
+          },
+        },
+        description:
+          "Retrieve the aura the authenticated user wears, whether they may choose one, and the Margonem accounts it shows on",
+      },
+      "PUT /users/@me/character-aura": {
+        operationId: "CharacterAurasController_updateOwnAura",
+        parameters: [],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "OwnCharacterAuraResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/OwnCharacterAuraResponseDto",
+                },
+              },
+            },
+          },
+        },
+        description:
+          "Choose the aura the authenticated user wears, or remove it with null; choosing one fails with 403 for users without access to auras",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/UpdateOwnCharacterAuraDto",
+              },
+            },
+          },
+          required: true,
+        },
+      },
+      "PUT /users/@me/character-aura/game-accounts/{gameAccountId}": {
+        operationId: "CharacterAurasController_linkGameAccount",
+        parameters: [
+          {
+            name: "gameAccountId",
+            in: "path",
+            schema: {
+              type: "string",
+            },
+            required: true,
+          },
+        ],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "OwnCharacterAuraResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/OwnCharacterAuraResponseDto",
+                },
+              },
+            },
+          },
+        },
+        description:
+          "Show the authenticated user's aura on the characters of a Margonem account they play; fails with 403 while they wear no aura they may use",
+      },
       "GET /public/themes/{shareToken}": {
         operationId: "UserThemesController_getSharedTheme",
         parameters: [

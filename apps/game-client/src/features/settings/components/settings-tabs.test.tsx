@@ -10,6 +10,8 @@ import { useWindowsStore } from "@/store/windows.store";
 import { useSettingsUiStore } from "@/features/settings/settings-ui.store";
 import { SETTINGS_MANIFEST } from "@/features/settings/settings-manifest";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { getCharacterAurasControllerGetOwnAuraQueryKey } from "@lootlog/client/main";
+import { queryClient } from "@/lib/query-client";
 
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { createSoundSettings } from "@/test/sound-settings-fixtures";
@@ -275,6 +277,18 @@ describe("SettingsTabs manifest coverage", () => {
       harness.queryClient,
       soundSettingValues(createSoundSettings()),
     );
+
+    // The aura subsection shows only to Users who may choose an aura; the
+    // navigation reads the app's client, the panel the harness's.
+    const ownAura = { auraId: null, canChange: true, gameAccountIds: [] };
+
+    for (const client of [harness.queryClient, queryClient]) {
+      client.setQueryData(
+        getCharacterAurasControllerGetOwnAuraQueryKey(),
+        ownAura,
+      );
+    }
+
     useSettingsUiStore.getState().reset();
     useWindowsStore.setState((state) => ({
       ...state,

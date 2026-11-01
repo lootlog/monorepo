@@ -40,7 +40,8 @@
     "sounds": "Dźwięki",
     "hotkeys": "Skróty klawiszowe",
     "logs": "Logi",
-    "debug": "Debugowanie"
+    "debug": "Debugowanie",
+    "characterAura": "Aura postaci"
   },
   "servers": {
     "title": "Widoczność Lootlogów",
@@ -139,6 +140,29 @@
     "notificationPreview": "Powiadomienie o wykryciu potwora",
     "detectorPreview": "Potwór widoczny w wykrywaczu",
     "resetAllDescription": "Wraca do domyślnej palety dla wszystkich typów potworów."
+  },
+  "characterAura": {
+    "title": "Aura postaci",
+    "description": "Pikselowa aura wokół każdej twojej postaci i jej dymka. Widzą ją wszyscy gracze z Lootlogiem, na każdym koncie Margonem, na którym grasz.",
+    "none": "Brak",
+    "auras": {
+      "divine": "Boski blask",
+      "hellfire": "Piekielny ogień",
+      "frost": "Lodowe serce",
+      "void": "Otchłań",
+      "storm": "Gniew burzy",
+      "venom": "Jadowity opar",
+      "bloodmoon": "Krwawy księżyc",
+      "astral": "Gwiezdny pył",
+      "prism": "Pryzmat",
+      "spirit": "Duch lasu",
+      "sakura": "Kwiat wiśni",
+      "sandstorm": "Burza piasków",
+      "necro": "Nekromancja",
+      "tide": "Głębia oceanu",
+      "arcane": "Arkana",
+      "aurora": "Zorza polarna"
+    }
   },
   "general": {
     "description": "Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.",

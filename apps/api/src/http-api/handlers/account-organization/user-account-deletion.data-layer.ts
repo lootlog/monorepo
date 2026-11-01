@@ -6,6 +6,8 @@ import {
   memberKillBucketTable,
   memberTable,
   memberToRoleTable,
+  userCharacterAuraGameAccountTable,
+  userCharacterAuraTable,
   userCharacterKillBucketTable,
   userCharactersLootlogSettingsTable,
   userKillCharacterTable,
@@ -117,6 +119,12 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userSettingDocumentTable)
         .where(eq(userSettingDocumentTable.userId, identity.userId));
+      yield* transaction
+        .delete(userCharacterAuraTable)
+        .where(eq(userCharacterAuraTable.userId, identity.userId));
+      yield* transaction
+        .delete(userCharacterAuraGameAccountTable)
+        .where(eq(userCharacterAuraGameAccountTable.userId, identity.userId));
       yield* transaction
         .delete(userPinnedEventTable)
         .where(eq(userPinnedEventTable.userId, identity.userId));

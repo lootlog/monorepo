@@ -1,4 +1,5 @@
 import { Effect, Layer } from "effect";
+import { CharacterAurasIdentity } from "#src/http-api/handlers/character-auras/character-auras.handlers";
 import { GlobalChatIdentity } from "#src/http-api/handlers/global-chat/global-chat.handlers";
 import { MessagingIdentity } from "#src/http-api/handlers/messaging/messaging.handlers";
 import { ReadyRoomAuthorization } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
@@ -28,6 +29,13 @@ const UserThemesIdentityLive = Layer.succeed(
   }),
 );
 
+const CharacterAurasIdentityLive = Layer.succeed(
+  CharacterAurasIdentity,
+  CharacterAurasIdentity.of({
+    userId: Effect.map(requestScopedIdentity, ({ userId }) => userId),
+  }),
+);
+
 const MessagingIdentityLive = Layer.succeed(
   MessagingIdentity,
   MessagingIdentity.of({ caller: requestScopedIdentity }),
@@ -48,6 +56,7 @@ export const RequestIdentityLayers = Layer.mergeAll(
   SettingsIdentityLive,
   UserLootlogConfigIdentityLive,
   UserThemesIdentityLive,
+  CharacterAurasIdentityLive,
   MessagingIdentityLive,
   GlobalChatIdentityLive,
   ReadyRoomAuthorizationLive,
