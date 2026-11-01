@@ -21,6 +21,7 @@ import { useGameStore } from "@/store/game.store";
 import { useSocialRelationsStore } from "@/store/social-relations.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useOthersStore } from "@/store/others.store";
+import { testRuntimeWindow } from "@/test/test-runtime-window";
 
 const effects = {
   cancelMapPingInteraction: vi.spyOn(pingInteractionController, "cancel"),
@@ -53,6 +54,9 @@ async function captureHttp(
   if (path === "/kills") return Response.json({ updated: 1 });
 
   if (path === "/battles") return Response.json({ battleId: "battle-1" });
+
+  if (path === "/weapon-kills")
+    return Response.json({ itemId: "987654", kills: 1 });
 
   return new Response(null, { status: 404 });
 }
@@ -874,5 +878,61 @@ describe("game event pipeline golden replay", () => {
 
     dispatcher.cleanup();
     dateNow.mockRestore();
+  });
+
+  it("records the hero's finishing blow when the final packet patches only the victim's HP", async () => {
+    resetPipelineState();
+    useBattlePanelStore.setState({ isBattleCollectionEnabled: false });
+    const dispatcher = new EventDispatcher();
+    pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
+    margonemRuntimeBridge.setupProxies();
+    dispatcher.register();
+    testRuntimeWindow.Engine = {
+      heroEquipment: {
+        getItemBySt: (st: number) => (st === 5 ? { id: 987_654, st } : false),
+      },
+    };
+
+    const warrior = (id: number, team: number) => ({
+      hp: { cur: 1_000, hpp: 100, max: 1_000 },
+      hpp: 100,
+      icon: "warrior.gif",
+      id,
+      lvl: 300,
+      name: `Player ${id}`,
+      originalId: id,
+      prof: "w",
+      team,
+      type: 0,
+      wt: 0,
+    });
+
+    dispatchRuntimeEvents([
+      {
+        f: {
+          init: "1",
+          m: ["12345=100;222=40;+dmg=600;-dmg=600"],
+          w: { "12345": warrior(12_345, 1), "222": warrior(222, 2) },
+        },
+      },
+      {
+        f: {
+          endBattle: 1,
+          m: ["12345=100;222=0;+dmg=400;-dmg=400", "0;0;winner=Player 12345"],
+          w: { "222": { hp: { cur: 0 } } },
+        },
+      },
+    ]);
+
+    await vi.waitFor(() =>
+      expect(requestsFor("/weapon-kills")).toHaveLength(1),
+    );
+    expect(requestsFor("/weapon-kills")[0]?.body).toMatchObject({
+      characterId: "12345",
+      weaponItemId: "987654",
+    });
+
+    dispatcher.cleanup();
+    delete testRuntimeWindow.Engine;
   });
 });

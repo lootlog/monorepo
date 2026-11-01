@@ -32,6 +32,11 @@ const mapBattleWarriorToPayload = ({
   team,
 });
 
+// `W` types every warrior as a full snapshot, but Margonem's patches are not.
+const isCompleteBattleWarrior = (
+  warrior: Partial<CreateBattleDtoEventsItemFW[string]>,
+): boolean => Object.values(warrior).every((value) => value !== undefined);
+
 export const mapBattleEventsToPayload = (
   events: GameEvent[],
 ): CreateBattleDtoEventsItem[] | null => {
@@ -44,6 +49,11 @@ export const mapBattleEventsToPayload = (
     const fightWarriors: CreateBattleDtoEventsItemFW = {};
     Object.entries(event.f.w ?? {}).forEach(([key, warrior]) => {
       const entry = mapBattleWarriorToPayload(warrior);
+
+      // Later packets patch a warrior with only its changed fields, such as
+      // HP. The contract carries complete snapshots, and a patch without its
+      // team would hide the warrior's side from the finishing blow check.
+      if (!isCompleteBattleWarrior(entry)) return;
 
       fightWarriors[key] = entry;
     });
