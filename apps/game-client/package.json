@@ -61,7 +61,6 @@
     "react-error-boundary": "^6.1.6",
     "react-hook-form": "catalog:",
     "react-i18next": "^17.0.16",
-    "sonner": "^2.0.8",
     "usehooks-ts": "^3.1.1",
     "zustand": "^5.0.15"
   },

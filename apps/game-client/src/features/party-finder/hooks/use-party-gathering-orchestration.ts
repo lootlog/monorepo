@@ -276,9 +276,7 @@ export const usePartyGatheringOrchestration = () => {
       if (!chatMessageOptions) return;
 
       await sendChatMessageAsync(chatMessageOptions).catch((cause: unknown) => {
-        throw new NotificationChatPublishError(cause, async () => {
-          await sendChatMessageAsync(chatMessageOptions);
-        });
+        throw new NotificationChatPublishError(cause);
       });
 
       return {

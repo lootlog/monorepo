@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { normalizeTimerResponse } from "@/api/timers.api";
 import { useTimersCache } from "@/hooks/api/use-timers-cache";
 import {
@@ -23,7 +23,7 @@ export const useRestoreTimer = (onRestored: () => void) => {
       {
         onSuccess: (timer) => {
           upsertTimer(normalizeTimerResponse(timer));
-          toast.success(
+          showRuntimeMessage(
             t(
               entry.action === "RESET"
                 ? "history.undoResetSuccess"
@@ -33,7 +33,7 @@ export const useRestoreTimer = (onRestored: () => void) => {
           onRestored();
         },
         onError: () =>
-          toast.error(
+          showRuntimeMessage(
             t(
               entry.action === "RESET"
                 ? "history.undoResetFailed"

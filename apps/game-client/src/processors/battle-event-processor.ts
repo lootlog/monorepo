@@ -1,7 +1,6 @@
 import { createSHA256Hash } from "@/helpers/create-sha-256-hash";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
-import { LOOTLOG_APP_URL } from "@/config/app";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { NpcType } from "@/api/npcs.api";
 import {
@@ -23,7 +22,7 @@ import { createKill, createBattle, recordWeaponKills } from "@/api";
 import { findFinishingBlows } from "@lootlog/battle-processor";
 import { getHeroMainWeaponItemId } from "@/lib/margonem-runtime/adapters/item-tip-runtime-adapter";
 import { setWeaponKills } from "@/lib/margonem-tooltips/weapon-kills";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import {
   getErrorStatusCode,
@@ -60,22 +59,6 @@ type WeaponKillsIntent = Parameters<typeof recordWeaponKills>[0];
 type KillResolution = {
   intent: KillIntent | null;
   lastKillHash: string | undefined;
-};
-
-const showBattleCreatedToast = (battleId: string) => {
-  const t = getFixedT("timers");
-  const battleUrl = `${LOOTLOG_APP_URL}/@me/battle-panel/battles/${battleId}`;
-
-  toast(t("messages.battleLinkCreated"), {
-    duration: 10000,
-    action: {
-      label: t("messages.copyBattleLink"),
-      onClick: () => {
-        navigator.clipboard.writeText(battleUrl);
-        toast.success(t("messages.battleLinkCopied"));
-      },
-    },
-  });
 };
 
 type DeadNpc = {
@@ -491,8 +474,8 @@ export class BattleEventProcessor {
 
     if (battleIntent) {
       createBattle(battleIntent)
-        .then((response) => {
-          showBattleCreatedToast(response.battleId);
+        .then(() => {
+          showRuntimeMessage(getFixedT("timers")("messages.battleLinkCreated"));
         })
         .catch((error) => {
           // A battle that never reached the server may be sent by a repeat.

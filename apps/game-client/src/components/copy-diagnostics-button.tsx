@@ -20,7 +20,8 @@ const COPY_ICON = {
 
 /**
  * The one "copy diagnostics" action. It reports the outcome in its own label,
- * so it also works where no toaster is mounted, such as the app error window.
+ * so it also works where the game cannot show messages, such as the app error
+ * window.
  */
 export const CopyDiagnosticsButton: FC<CopyDiagnosticsButtonProps> = ({
   getReport,

@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { captureRuntimeMessages } from "@/test/test-runtime-window";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { expect, it, onTestFinished, vi } from "vitest";
 import type { SearchTimersNpcResponseDtoOutput } from "@lootlog/client/main";
-import { toast } from "sonner";
 import { createAddTimerFixture } from "../add-timer-fixtures";
 import { AddTimerForm } from "./add-timer-form";
 
@@ -88,16 +88,13 @@ it("submits durations to the window's guild and closes on success", async () => 
 });
 
 it("keeps the form open and reports a timer the server did not create", async () => {
-  const toastError = vi.spyOn(toast, "error").mockImplementation(() => "");
-  onTestFinished(() => toastError.mockRestore());
+  const messages = captureRuntimeMessages();
   const user = userEvent.setup();
   const fixture = mountForm("guild-1", [], 500);
   await fillDurations(user);
   await submit(user, fixture);
   await waitFor(() =>
-    expect(toastError).toHaveBeenCalledWith(
-      "Nie udało się dodać timera Tanroth.",
-    ),
+    expect(messages).toContain("Nie udało się dodać timera Tanroth."),
   );
   expect(fixture.onClose).not.toHaveBeenCalled();
   expect(screen.getByLabelText("Nazwa")).toHaveValue("Tanroth");

@@ -1,4 +1,3 @@
-import type { toast as SonnerToast, Action, ExternalToast } from "sonner";
 import {
   act,
   fireEvent,
@@ -9,23 +8,14 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement } from "react";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
-import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import {
+  captureRuntimeMessages,
+  setTestRuntimeGame,
+} from "@/test/test-runtime-window";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { GuildSwitcher } from "./guild-switcher";
-
-const isToastAction = (action: ExternalToast["action"]): action is Action =>
-  typeof action === "object" && action !== null && "onClick" in action;
-
-const mockToastSuccess = vi.hoisted(() => vi.fn<typeof SonnerToast.success>());
-
-vi.mock("sonner", () => ({
-  toast: {
-    error: vi.fn<typeof SonnerToast.error>(),
-    success: mockToastSuccess,
-  },
-}));
 
 let harness: ReturnType<typeof createGuildPreferencesTest>;
 
@@ -69,8 +59,9 @@ describe("GuildSwitcher", () => {
     }));
   });
 
-  it("hides a guild from its context menu and can undo the change", async () => {
-    const { rerender } = render(<GuildSwitcher />);
+  it("hides a guild from its context menu", async () => {
+    const messages = captureRuntimeMessages();
+    render(<GuildSwitcher />);
 
     fireEvent.contextMenu(screen.getByRole("button", { name: "Alpha" }));
     fireEvent.click(
@@ -87,29 +78,7 @@ describe("GuildSwitcher", () => {
     expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
       JSON.stringify({ hiddenGuildIds: ["guild-1"] }),
     );
-    await waitFor(() => expect(mockToastSuccess).toHaveBeenCalledOnce());
-    const action = mockToastSuccess.mock.calls[0]?.[1]?.action;
-
-    if (!isToastAction(action)) throw new Error("Expected undo action");
-    act(() =>
-      harness.setPreferences({ hiddenGuildIds: ["guild-1", "guild-2"] }),
-    );
-    rerender(<GuildSwitcher />);
-    fireEvent.click(document.body);
-    renderUi(<button onClick={action.onClick}>Undo hidden guild</button>);
-    fireEvent.click(screen.getByRole("button", { name: "Undo hidden guild" }));
-    await waitFor(() =>
-      expect(
-        harness.request.mock.calls.filter(
-          ([, init]) => init?.method === "PATCH",
-        ),
-      ).toHaveLength(2),
-    );
-    expect(
-      harness.request.mock.calls.filter(
-        ([, init]) => init?.method === "PATCH",
-      )[1]?.[1]?.body,
-    ).toBe(JSON.stringify({ hiddenGuildIds: ["guild-2"] }));
+    await waitFor(() => expect(messages).toEqual(["Ukryto Alpha w grze"]));
   });
 
   it("keeps cached guilds visible after a preferences refetch error", async () => {

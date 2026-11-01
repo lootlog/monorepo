@@ -12,8 +12,10 @@ import {
 } from "vitest";
 import { useTimersStore } from "@/store/timers.store";
 import { useGameStore } from "@/store/game.store";
-import { toast } from "sonner";
-import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import {
+  captureRuntimeMessages,
+  setTestRuntimeGame,
+} from "@/test/test-runtime-window";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import {
   createTimerFixture,
@@ -22,6 +24,8 @@ import {
 import { getTimersControllerGetRecentTimerHistoryQueryOptions } from "@lootlog/client/main";
 import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { useTimerActions } from "./use-timer-actions";
+
+let messages: string[];
 
 beforeEach(() => {
   useTimersStore.setState(useTimersStore.getInitialState(), true);
@@ -34,8 +38,7 @@ beforeEach(() => {
       level: 300,
     },
   });
-  vi.spyOn(toast, "success").mockImplementation(() => "success");
-  vi.spyOn(toast, "error").mockImplementation(() => "error");
+  messages = captureRuntimeMessages();
 });
 
 afterEach(() => {
@@ -162,7 +165,7 @@ describe("useTimerActions", () => {
           lvl: 300,
         },
       });
-      expect(toast.success).toHaveBeenCalledWith(
+      expect(messages).toContain(
         getFixedT("timers")("messages.resetSuccess", { name: "Tanroth" }),
       );
     },
@@ -177,7 +180,7 @@ describe("useTimerActions", () => {
     );
 
     await act(() => result.current.handleRestartTimer());
-    expect(toast.error).toHaveBeenCalledWith(
+    expect(messages).toContain(
       getFixedT("timers")("messages.resetEventWindowForbidden"),
     );
   });
@@ -262,8 +265,7 @@ describe("useTimerActions", () => {
         ).toBe(true),
       );
       expect(result.current.isRestartingTimer).toBe(true);
-      expect(toast.success).not.toHaveBeenCalled();
-      expect(toast.error).not.toHaveBeenCalled();
+      expect(messages).toEqual([]);
       expect(await queryClient.fetchQuery(histories[0])).toMatchObject([
         { action: "RESET" },
       ]);
@@ -281,14 +283,13 @@ describe("useTimerActions", () => {
         expect(await reset).toBe(false);
       });
       await waitFor(() => expect(result.current.isRestartingTimer).toBe(false));
-      expect(toast.error).toHaveBeenCalledWith(
+      expect(messages).toEqual([
         getFixedT("timers")("messages.resetPartialFailure", {
           name: "Tanroth",
           succeeded: 1,
           failed: 1,
         }),
-      );
-      expect(toast.success).not.toHaveBeenCalled();
+      ]);
       recovering = true;
       await act(async () => {
         if (nextAction === "new-confirmation")
@@ -310,7 +311,10 @@ describe("useTimerActions", () => {
       expect(await queryClient.fetchQuery(histories[1])).toMatchObject([
         { action: "RESET" },
       ]);
-      expect(toast.success).toHaveBeenCalledOnce();
+      expect(messages).toHaveLength(2);
+      expect(messages.at(-1)).toBe(
+        getFixedT("timers")("messages.resetSuccess", { name: "Tanroth" }),
+      );
     },
   );
 
@@ -343,7 +347,7 @@ describe("useTimerActions", () => {
     });
     expect(requests).toHaveLength(1);
     await waitFor(() =>
-      expect(toast.success).toHaveBeenCalledWith(
+      expect(messages).toContain(
         getFixedT("timers")("messages.deleteSuccess", { name: "Tanroth" }),
       ),
     );
@@ -357,7 +361,7 @@ describe("useTimerActions", () => {
       await result.current.handleDeleteTimer("guild-1", "timer-1");
     });
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith(
+      expect(messages).toContain(
         getFixedT("timers")("messages.deleteEventWindowForbidden"),
       ),
     );

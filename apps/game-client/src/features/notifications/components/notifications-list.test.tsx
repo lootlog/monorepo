@@ -21,13 +21,15 @@ import { configureApiClients } from "@lootlog/client/transport";
 import { createChatReadyRoom } from "@/features/chat/chat-test-fixtures";
 import { readSeededReadyRoomCache } from "@/test/ready-room-fixtures";
 import { useWindowsStore } from "@/store/windows.store";
-import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import {
+  captureRuntimeMessages,
+  setTestRuntimeGame,
+} from "@/test/test-runtime-window";
 import { useSettingsStore } from "@/store/settings.store";
 import {
   type StoredNotification,
   useNotificationsStore,
 } from "@/store/notifications.store";
-import { toast } from "sonner";
 import { NotificationsList } from "./notifications-list";
 
 let test: ReturnType<typeof createNotificationTest>;
@@ -150,8 +152,7 @@ describe("NotificationsList", () => {
   });
 
   it("reports a rejected application and keeps the notification", async () => {
-    const toastError = vi.spyOn(toast, "error");
-    onTestFinished(() => toastError.mockRestore());
+    const messages = captureRuntimeMessages();
 
     const { apply, gathering } = renderGatheringNotification(() =>
       Response.json({ code: "ALREADY_JOINED_ELSEWHERE" }, { status: 409 }),
@@ -161,7 +162,7 @@ describe("NotificationsList", () => {
       screen.getByRole("button", { name: "Zgłoś się do zbiórki" }),
     );
 
-    await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(messages).toHaveLength(1));
     expect(apply).toHaveBeenCalledTimes(1);
     expect(useWindowsStore.getState().chat.open).toBe(false);
     expect(useNotificationsStore.getState().notifications).toEqual([gathering]);

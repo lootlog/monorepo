@@ -1,18 +1,13 @@
-import {
-  act,
-  render,
-  renderHook,
-  screen,
-  waitFor,
-} from "@testing-library/react";
-import { Toaster } from "@lootlog/ui/components/sonner";
-import { toast } from "sonner";
+import { act, render, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
 import { getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
-import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import {
+  captureRuntimeMessages,
+  setTestRuntimeGame,
+} from "@/test/test-runtime-window";
 import { createRealtimeTest } from "@/test/realtime-test";
 import { useChatGuildData } from "@/features/chat/hooks/use-chat-guild-data";
 import { useSocket } from "./socket-context";
@@ -351,7 +346,6 @@ describe("SocketProvider", () => {
     test: ReturnType<typeof setup>,
     message: string,
   ) => {
-    render(<Toaster />);
     act(() =>
       useGlobalStore.setState({ gameState: { gameInitialized: true } }),
     );
@@ -382,30 +376,22 @@ describe("SocketProvider", () => {
     );
   };
 
-  it("tells the player why the gateway refused the session and offers a reconnect", async () => {
+  it("tells the player why the gateway refused the session", async () => {
+    const messages = captureRuntimeMessages();
     const test = setup();
     await refuseJoin(test, "organization access denied");
 
-    expect(
-      await screen.findByText(
-        "Serwer Lootloga odrzucił połączenie tej postaci",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Nie masz już dostępu do tego Lootloga."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Połącz ponownie" }),
-    ).toBeInTheDocument();
+    expect(messages).toEqual([
+      "Serwer Lootloga odrzucił połączenie tej postaci. Nie masz już dostępu do tego Lootloga.",
+    ]);
   });
 
   it("does not report a user without an Organization as a connection failure", async () => {
-    const warning = vi.spyOn(toast, "warning");
+    const messages = captureRuntimeMessages();
     const test = setup();
     await refuseJoin(test, "no authorized organizations");
 
-    expect(warning).not.toHaveBeenCalled();
-    warning.mockRestore();
+    expect(messages).toEqual([]);
   });
 
   it("clears joined state after the transport disconnects", async () => {

@@ -5,7 +5,7 @@ import {
   refreshChatAfterReconnect,
 } from "@/features/chat/chat-access-policy";
 import { RealtimeRequestError } from "@lootlog/client/realtime";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { reconcileNotificationAccess } from "@/features/notifications/notification-access-policy";
@@ -50,8 +50,6 @@ const EMPTY_JOINED_GUILDS: string[] = [];
 const JOIN_RETRY_BASE_DELAY_MS = 1_000;
 
 const JOIN_RETRY_MAX_DELAY_MS = 30_000;
-
-const JOIN_REJECTION_TOAST_ID = "realtime-join-rejected";
 
 // The gateway's static refusal messages (apps/gateway realtime-errors.ts).
 const getJoinRejectionReasonKey = (reason: string) => {
@@ -136,8 +134,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const joinAttempt = useRef(0);
   const joinFailures = useRef(0);
   const joinRetryTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  // One warning per run of refusals, so retries do not bring back a toast the
-  // player dismissed.
+  // One message per run of refusals, so retries do not repeat it.
   const joinRejectionShown = useRef(false);
   const [guildIds, setJoinedGuilds] = useState<string[]>([]);
 
@@ -246,18 +243,12 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
             if (rejection && !joinRejectionShown.current) {
               const t = getFixedT("common");
               joinRejectionShown.current = true;
-              toast.warning(t("realtimeJoin.rejected"), {
-                id: JOIN_REJECTION_TOAST_ID,
-                description: rejection,
-                action: {
-                  label: t("realtimeJoin.reconnect"),
-                  onClick: () => socket.connect(),
-                },
-              });
+              showRuntimeMessage(`${t("realtimeJoin.rejected")} ${rejection}`);
             }
 
             // A closed socket reconnects through the realtime client's backoff
-            // or, after a non-retryable refusal, through the reconnect action.
+            // or, after a non-retryable refusal, through the reconnect button
+            // in the connection status.
             if (!socket.connected) return;
 
             const delay = Math.min(
@@ -313,10 +304,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       setJoinFailed(false);
       joinFailures.current = 0;
 
-      if (joinRejectionShown.current) {
-        joinRejectionShown.current = false;
-        toast.dismiss(JOIN_REJECTION_TOAST_ID);
-      }
+      joinRejectionShown.current = false;
 
       setJoinedGuilds(data.guildIds ?? []);
 

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useWindowsStore } from "@/store/windows.store";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 export const WindowLayoutSection: FC = () => {
   const { t } = useTranslation();
@@ -24,7 +24,7 @@ export const WindowLayoutSection: FC = () => {
           variant="outline"
           onClick={() => {
             resetWindowLayout();
-            toast.success(t("settings.general.resetWindowLayoutDone"));
+            showRuntimeMessage(t("settings.general.resetWindowLayoutDone"));
           }}
         >
           {t("settings.general.resetWindowLayoutAction")}

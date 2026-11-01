@@ -12,6 +12,7 @@ export type TestRuntimeWindow = Window & {
   Engine?: TestRuntimeEngine;
   _g?: (command: string, ...args: unknown[]) => unknown;
   getCookie?: (name: string) => string | null | undefined;
+  message?: (text: string) => void;
 };
 
 export const testRuntimeWindow: TestRuntimeWindow = window;
@@ -44,8 +45,40 @@ export const setTestRuntimeGame = (
   });
 };
 
+import { onTestFinished } from "vitest";
 import { useGameStore } from "@/store/game.store";
 import type {
   RuntimeGameSnapshot,
   RuntimeHero,
 } from "@/lib/margonem-runtime/runtime.types";
+
+const parseInertHtml = (html: string): Document =>
+  new DOMParser().parseFromString(html, "text/html");
+
+/**
+ * Renders a message() argument the way the game does, in an inert document:
+ * the game decodes HTML entities like a textarea and renders the result as
+ * HTML. `decoded` is the text the game's BB-code parser receives.
+ */
+export const renderRuntimeMessage = (text: string) => {
+  const decoded =
+    parseInertHtml(`<textarea>${text}</textarea>`).querySelector("textarea")
+      ?.value ?? "";
+
+  return { decoded, rendered: parseInertHtml(decoded) };
+};
+
+/** Records each game message as the player reads it. */
+export const captureRuntimeMessages = (): string[] => {
+  const messages: string[] = [];
+
+  testRuntimeWindow.message = (text) => {
+    messages.push(renderRuntimeMessage(text).rendered.body.textContent ?? "");
+  };
+
+  onTestFinished(() => {
+    delete testRuntimeWindow.message;
+  });
+
+  return messages;
+};
