@@ -83,6 +83,17 @@ const ALPHA_LEVELS = 4;
 
 const COLOR_LEVELS = 7;
 
+/** The black core of a conqueror's bolt. */
+const HAKI_CORE: Rgb = [14, 0, 4];
+
+/** Where a conqueror's bolt's red rim sits round its core, in units of the rim width. */
+const HAKI_RIM = [
+  [-1, 0],
+  [1, 0],
+  [0, -1],
+  [0, 1],
+] as const;
+
 interface Bolt {
   /** Silhouette-local points, so a bolt rides along while the character walks. */
   points: number[];
@@ -94,6 +105,8 @@ interface Bolt {
   life: number;
   /** A strike from the sky: drawn thicker. */
   heavy?: boolean;
+  /** Conqueror's will: a black core in a red glow instead of white in blue. */
+  haki?: boolean;
 }
 
 /** How long each burst runs, in seconds. */
@@ -114,6 +127,7 @@ const BURST_DURATION: Record<BurstKind, number> = {
   splash: 1,
   ascend: 1.2,
   "aurora-flare": 1.2,
+  conqueror: 0.9,
 };
 
 /** Astral orbits: height on the body, angular speed, tilt and palette colour. */
@@ -123,12 +137,13 @@ const ORBITS = [
   { at: 0.86, speed: 2.1, tilt: -0.08, color: 2 },
 ];
 
-/** An offscreen layer, re-rendered only when its tick or position changes. */
+/** An offscreen buffer of one side's light (`lit`) or covering (`dim`) pixels. */
 interface Layer {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
-  key: string;
   used: boolean;
+  /** Something soft (gradient blobs) was drawn, so it needs the pixel finish; pixel-only layers skip it. */
+  soft: boolean;
 }
 
 /** What every burst visual draws from: the placement, the burst's progress and the tones. */
@@ -168,9 +183,55 @@ function createLayer(): Layer {
   return {
     canvas,
     ctx: context2d(canvas, { willReadFrequently: true }),
-    key: "",
     used: false,
+    soft: true,
   };
+}
+
+/**
+ * One side (behind or in front of the character) rendered at a tick. What hangs on the body
+ * (ground, rays, flames, orbits…) and the particles, which live on the map, sit in separate
+ * buffers: between ticks the first moves with the character and the second with the camera,
+ * so neither needs redrawing until the next tick.
+ */
+interface Snapshot {
+  key: string;
+  box: Box;
+  /** The character's and the camera's screen position when it was rendered. */
+  x: number;
+  y: number;
+  viewX: number;
+  viewY: number;
+  bodyLit: Layer;
+  bodyDim: Layer;
+  worldLit: Layer;
+  worldDim: Layer;
+}
+
+function createSnapshot(): Snapshot {
+  return {
+    key: "",
+    box: { ox: 0, oy: 0, w: 0, h: 0 },
+    x: 0,
+    y: 0,
+    viewX: 0,
+    viewY: 0,
+    bodyLit: createLayer(),
+    bodyDim: createLayer(),
+    worldLit: createLayer(),
+    worldDim: createLayer(),
+  };
+}
+
+/** A tinted mask composited once per tick and silhouette, then only copied each frame. */
+interface Composite {
+  silhouette: AuraSilhouette | null;
+  key: string;
+  canvas: HTMLCanvasElement;
+}
+
+function createComposite(): Composite {
+  return { silhouette: null, key: "", canvas: createCanvas(1, 1) };
 }
 
 /** A live aura on one character or tooltip: its own particles, clock and signature effects. */
@@ -202,16 +263,15 @@ export class Aura {
   /** The head in particle space at the last tick: where the spring is pulled to. */
   private headTarget = { x: 0, y: 0 };
   private rgb: AuraColors;
-  private readonly layers = {
-    backDim: createLayer(),
-    backLit: createLayer(),
-    frontDim: createLayer(),
-    frontLit: createLayer(),
-  };
+  private readonly back = createSnapshot();
+  private readonly front = createSnapshot();
+  private readonly outline = createComposite();
+  private readonly inner = createComposite();
   /** The layer pair drawn into right now; draw helpers pick `lit` (additive) or `dim` (covering). */
   private lit!: CanvasRenderingContext2D;
   private dim!: CanvasRenderingContext2D;
   private dimLayer!: Layer;
+  private litLayer!: Layer;
 
   constructor(id: CharacterAuraId, seed = Math.floor(Math.random() * 1e9)) {
     this.rng = mulberry32(seed);
@@ -231,8 +291,10 @@ export class Aura {
     this.field.clear();
     this.bolts = [];
     this.burst = -1;
-
-    for (const layer of Object.values(this.layers)) layer.key = "";
+    this.back.key = "";
+    this.front.key = "";
+    this.outline.key = "";
+    this.inner.key = "";
   }
 
   /** Moves particles along when particle space jumps, e.g. the camera snapping on a teleport. */
@@ -380,10 +442,8 @@ export class Aura {
   ): void {
     const p = this.preset;
     const glow = this.glow(intensity);
-    const box = boxOf(place);
-    const { backDim, backLit } = this.layers;
 
-    if (this.begin(backLit, backDim, box, place)) {
+    this.snapshot(this.back, place, false, () => {
       if (place.ground && p.ground && this.showGround)
         this.drawGround(place, p.ground, intensity);
 
@@ -399,17 +459,15 @@ export class Aura {
         this.drawShards(place, intensity, false);
       this.drawDecor(place, intensity, false);
       this.drawBurst(place, intensity, false);
-      this.drawParticles(place, false);
-      this.finish(backLit, backDim, box);
-    }
+    });
 
     // The game's context goes back as it came, even if a draw throws.
     ctx.save();
 
     try {
-      blitLayer(ctx, backDim, box, "source-over");
+      this.blit(ctx, this.back, place, "dim");
       this.drawOutline(ctx, place, glow);
-      blitLayer(ctx, backLit, box, "lighter");
+      this.blit(ctx, this.back, place, "lit");
     } finally {
       ctx.restore();
     }
@@ -422,55 +480,94 @@ export class Aura {
   ): void {
     const p = this.preset;
     const glow = this.glow(intensity);
-    const box = boxOf(place);
-    const { frontDim, frontLit } = this.layers;
 
-    if (this.begin(frontLit, frontDim, box, place)) {
+    this.snapshot(this.front, place, true, () => {
       if (p.fx.includes("frost-shards") && place.ground && this.showGround)
         this.drawShards(place, intensity, true);
-      this.drawParticles(place, true);
 
       if (p.fx.includes("orbits")) this.drawOrbits(place, intensity, true);
 
       if (p.fx.includes("lightning")) this.drawBolts(place, intensity);
       this.drawDecor(place, intensity, true);
       this.drawBurst(place, intensity, true);
-      this.finish(frontLit, frontDim, box);
-    }
+    });
 
     ctx.save();
 
     try {
-      if (place.ground) {
-        ctx.globalCompositeOperation = "lighter";
-        this.blitMask(
-          ctx,
-          place,
-          place.silhouette.sil,
-          this.rgb.tones[0],
-          Math.min(0.5, p.inner * glow),
-        );
-      }
-
-      blitLayer(ctx, frontDim, box, "source-over");
-      blitLayer(ctx, frontLit, box, "lighter");
+      if (place.ground) this.drawInner(ctx, place, glow);
+      this.blit(ctx, this.front, place, "dim");
+      this.blit(ctx, this.front, place, "lit");
     } finally {
       ctx.restore();
     }
   }
 
-  /** Prepares both buffers of a layer pair; false when the cached render is still valid. */
-  private begin(
-    lit: Layer,
-    dim: Layer,
-    box: Box,
+  /**
+   * Renders a side's buffers once per tick: the body pieces through `body`, then the
+   * particles. The animation only changes on ticks, so other frames just move the buffers.
+   */
+  private snapshot(
+    snap: Snapshot,
     place: AuraPlacement,
-  ): boolean {
-    const key = `${this.tick}|${box.ox}|${box.oy}|${Math.round(place.viewX)}|${Math.round(place.viewY)}|${box.w}x${box.h}`;
+    front: boolean,
+    body: () => void,
+  ): void {
+    const box = boxOf(place);
+    const key = `${this.tick}|${box.w}x${box.h}`;
 
-    if (lit.key === key) return false;
-    lit.key = key;
+    if (snap.key === key) return;
+    snap.key = key;
+    snap.box = box;
+    snap.x = Math.round(place.x);
+    snap.y = Math.round(place.y);
+    snap.viewX = Math.round(place.viewX);
+    snap.viewY = Math.round(place.viewY);
+    this.prepare(snap.bodyLit, snap.bodyDim, box);
+    body();
+    snap.bodyLit.used = true;
+    this.finish(snap.bodyLit, snap.bodyDim, box);
+    this.prepare(snap.worldLit, snap.worldDim, box);
+    // Particles are plotted pixel by pixel; only smoke, wisps and firefly glows are soft.
+    snap.worldLit.soft = false;
+    snap.worldDim.soft = false;
+    this.drawParticles(place, front);
+    this.finish(snap.worldLit, snap.worldDim, box);
+  }
 
+  /** Copies a side's buffers to the screen: body ones follow the character, world ones the camera. */
+  private blit(
+    ctx: CanvasRenderingContext2D,
+    snap: Snapshot,
+    place: AuraPlacement,
+    which: "lit" | "dim",
+  ): void {
+    const mode = which === "lit" ? "lighter" : "source-over";
+    const bodyX = Math.round(place.x) - snap.x;
+    const bodyY = Math.round(place.y) - snap.y;
+    const worldX = snap.viewX - Math.round(place.viewX);
+    const worldY = snap.viewY - Math.round(place.viewY);
+
+    blitLayer(
+      ctx,
+      which === "lit" ? snap.bodyLit : snap.bodyDim,
+      snap.box,
+      mode,
+      bodyX,
+      bodyY,
+    );
+    blitLayer(
+      ctx,
+      which === "lit" ? snap.worldLit : snap.worldDim,
+      snap.box,
+      mode,
+      worldX,
+      worldY,
+    );
+  }
+
+  /** Clears a buffer pair for a render at `box`. */
+  private prepare(lit: Layer, dim: Layer, box: Box): void {
     for (const layer of [lit, dim]) {
       const { canvas, ctx } = layer;
 
@@ -487,21 +584,19 @@ export class Aura {
 
       if (layer === lit) ctx.globalCompositeOperation = "lighter";
       layer.used = false;
+      layer.soft = true;
     }
 
     this.lit = lit.ctx;
     this.dim = dim.ctx;
+    this.litLayer = lit;
     this.dimLayer = dim;
-
-    return true;
   }
 
   /** Snaps what was drawn to the pixel grid: stepped alpha and flat, dithered tones. */
   private finish(lit: Layer, dim: Layer, box: Box): void {
-    lit.used = true;
-
     for (const layer of [lit, dim]) {
-      if (!layer.used) continue;
+      if (!layer.used || !layer.soft) continue;
       const image = layer.ctx.getImageData(0, 0, box.w, box.h);
       posterizeAlpha(
         image.data,
@@ -535,29 +630,35 @@ export class Aura {
     const p = this.preset;
 
     if (silhouette.bands) {
-      const [light, mid, dark] = this.rgb.tones;
-      const alphas = [0.95, 0.8, 0.7, 0.55];
-      const tones = [light, mid, dark, dark];
+      const bands = silhouette.bands;
+
+      const composite = this.composite(this.outline, silhouette, (octx) => {
+        const [light, mid, dark] = this.rgb.tones;
+        const alphas = [0.95, 0.8, 0.7, 0.55];
+        const tones = [light, mid, dark, dark];
+
+        for (const [band, mask] of bands.entries()) {
+          // The outer dither only shows near the top of a pulse, so the glow visibly breathes.
+          const alpha = alphas[band] ?? 0;
+
+          const a =
+            band === 3
+              ? smoothstep(0.75, 1.05, glow) * alpha
+              : clamp(alpha * glow, 0, 1);
+
+          this.paintMask(octx, mask, tones[band] ?? dark, a, band);
+        }
+
+        const inner = bands[0];
+
+        if (this.flash > 0.05 && inner) {
+          octx.globalCompositeOperation = "lighter";
+          this.paintMask(octx, inner, [255, 255, 255], this.flash * 0.7);
+        }
+      });
+
       ctx.globalCompositeOperation = "source-over";
-
-      for (const [band, mask] of silhouette.bands.entries()) {
-        // The outer dither only shows near the top of a pulse, so the glow visibly breathes.
-        const alpha = alphas[band] ?? 0;
-
-        const a =
-          band === 3
-            ? smoothstep(0.75, 1.05, glow) * alpha
-            : clamp(alpha * glow, 0, 1);
-
-        this.blitMask(ctx, place, mask, tones[band] ?? dark, a, band);
-      }
-
-      const inner = silhouette.bands[0];
-
-      if (this.flash > 0.05 && inner) {
-        ctx.globalCompositeOperation = "lighter";
-        this.blitMask(ctx, place, inner, [255, 255, 255], this.flash * 0.7);
-      }
+      this.blitComposite(ctx, place, composite);
 
       return;
     }
@@ -583,6 +684,96 @@ export class Aura {
         Math.min(1, p.near * glow),
       );
     }
+  }
+
+  /** The character lit by its own aura: its silhouette tinted and added over it. */
+  private drawInner(
+    ctx: CanvasRenderingContext2D,
+    place: AuraPlacement,
+    glow: number,
+  ): void {
+    const alpha = Math.min(0.5, this.preset.inner * glow);
+
+    if (alpha <= 0.02) return;
+
+    const composite = this.composite(this.inner, place.silhouette, (octx) =>
+      this.paintMask(octx, place.silhouette.sil, this.rgb.tones[0], alpha),
+    );
+
+    ctx.globalCompositeOperation = "lighter";
+    this.blitComposite(ctx, place, composite);
+  }
+
+  /** Rebuilds `composite` for this tick and silhouette when stale, via `paint` on a cleared canvas. */
+  private composite(
+    composite: Composite,
+    silhouette: AuraSilhouette,
+    paint: (ctx: CanvasRenderingContext2D) => void,
+  ): HTMLCanvasElement {
+    const key = String(this.tick);
+
+    if (composite.silhouette === silhouette && composite.key === key)
+      return composite.canvas;
+    composite.silhouette = silhouette;
+    composite.key = key;
+    const { canvas } = composite;
+
+    if (
+      canvas.width !== silhouette.sil.width ||
+      canvas.height !== silhouette.sil.height
+    ) {
+      canvas.width = silhouette.sil.width;
+      canvas.height = silhouette.sil.height;
+    }
+
+    const octx = context2d(canvas);
+    octx.globalCompositeOperation = "source-over";
+    octx.globalAlpha = 1;
+    octx.clearRect(0, 0, canvas.width, canvas.height);
+    paint(octx);
+    octx.globalAlpha = 1;
+    octx.globalCompositeOperation = "source-over";
+
+    return canvas;
+  }
+
+  private blitComposite(
+    ctx: CanvasRenderingContext2D,
+    place: AuraPlacement,
+    canvas: HTMLCanvasElement,
+  ): void {
+    const pad = place.silhouette.pad;
+    ctx.globalAlpha = 1;
+    ctx.drawImage(canvas, Math.round(place.x) - pad, Math.round(place.y) - pad);
+  }
+
+  /** Draws `mask` tinted (rainbow for the prism) at `alpha` onto a padded-silhouette-sized canvas. */
+  private paintMask(
+    octx: CanvasRenderingContext2D,
+    mask: HTMLCanvasElement,
+    color: Rgb,
+    alpha: number,
+    band = 0,
+  ): void {
+    if (alpha <= 0.02) return;
+    const prism = this.preset.fx.includes("prism");
+
+    const tinted = tint(mask, (sctx, w, h) =>
+      prism ? this.rainbow(sctx, w, h, band) : rgba(color, 1),
+    );
+
+    octx.globalAlpha = alpha;
+    octx.drawImage(
+      tinted,
+      0,
+      0,
+      mask.width,
+      mask.height,
+      0,
+      0,
+      mask.width,
+      mask.height,
+    );
   }
 
   private blitMask(
@@ -925,6 +1116,9 @@ export class Aura {
       case "splash":
         this.startSplash(place, frame, k);
         break;
+      case "conqueror":
+        this.startConqueror(place, frame, k);
+        break;
       case "sandspout":
         this.field.emit(
           {
@@ -1058,6 +1252,36 @@ export class Aura {
     }
   }
 
+  /** Conqueror: the will released at once, a ring of heavy bolts outwards, stones thrown up, a shockwave. */
+  private startConqueror(
+    place: AuraPlacement,
+    frame: SpawnFrame,
+    k: number,
+  ): void {
+    this.hakiBolts(place, 7, true);
+    this.field.emit(
+      {
+        kind: "grain",
+        rate: 0,
+        from: "feet",
+        life: [1.5, 2.2],
+        speed: [60, 100],
+        spread: 1.4,
+        gravity: 160,
+        size: [1.6, 2],
+        colors: 2,
+        colorFrom: 3,
+        front: 0.5,
+        land: "bounce",
+        groundOnly: true,
+      },
+      frame,
+      Math.round(14 * k),
+    );
+    this.burstRing(place, frame, frame.feet.rx * 2.2, 1);
+    this.burstRing(place, frame, frame.feet.rx * 1.4, 0);
+  }
+
   /** Splash: drops thrown up from the feet, or off the bottom edge of a tooltip. */
   private startSplash(
     place: AuraPlacement,
@@ -1177,6 +1401,9 @@ export class Aura {
         break;
       case "ascend":
         this.drawAscendBurst(scene);
+        break;
+      case "conqueror":
+        this.drawConquerorBurst(scene);
         break;
       case "eruption":
       case "freeze":
@@ -1523,6 +1750,47 @@ export class Aura {
     else drawMagicCircle(this.brush(fade), cx, y, rx, ry, 1);
   }
 
+  private drawConquerorBurst({
+    place,
+    intensity,
+    front,
+    t,
+    bounds,
+    light,
+    mid,
+    cx,
+  }: BurstScene): void {
+    // A dark pressure wave rolling out from the body, its leading edge red.
+    if (front || t > 0.7) return;
+    const cy = place.y + bounds.y + bounds.h * 0.55;
+    const r = 6 + (t / 0.7) * (Math.max(bounds.w, bounds.h) * 0.5 + 34);
+    const squash = place.ground ? 0.7 : bounds.h / bounds.w;
+    const a = (1 - t / 0.7) * intensity;
+    pixelEllipse(
+      this.useDim(),
+      cx,
+      cy,
+      r - 1,
+      Math.max(1, (r - 1) * squash),
+      [20, 0, 6],
+      a,
+      0,
+      1,
+    );
+    pixelEllipse(this.lit, cx, cy, r, Math.max(1, r * squash), light, a, 0, 1);
+    pixelEllipse(
+      this.lit,
+      cx,
+      cy,
+      r + 2,
+      Math.max(1, (r + 2) * squash),
+      mid,
+      a * 0.5,
+      0,
+      2,
+    );
+  }
+
   // --- ground ------------------------------------------------------------------------------
 
   private drawGround(
@@ -1652,6 +1920,9 @@ export class Aura {
         }
 
         break;
+      case "cracks":
+        this.drawCrackedGround(x, y, rx, ry, color, a, intensity);
+        break;
       case "mist":
         for (let i = 0; i < 5; i++) {
           const ox = noise1(t * 0.35 + i * 7.1, 11) * rx * 0.8;
@@ -1669,6 +1940,58 @@ export class Aura {
 
         break;
     }
+  }
+
+  /** Ground split by the pressure: jagged cracks from the feet, glowing red in pulses. */
+  private drawCrackedGround(
+    x: number,
+    y: number,
+    rx: number,
+    ry: number,
+    color: Rgb,
+    a: number,
+    intensity: number,
+  ): void {
+    const lit = this.lit;
+    const dim = this.useDim();
+    const glowing = this.tick % 7 < 3 || this.flash > 0.3;
+
+    for (let i = 0; i < 7; i++) {
+      const angle = (i / 7) * TAU + 0.4;
+      let px = x;
+      let py = y;
+
+      for (let s = 1; s <= 5; s++) {
+        const bend = noise1(i * 9.7 + s, 17) * 0.5;
+        const nx = x + Math.cos(angle + bend) * rx * (s / 5) * 1.15;
+        const ny = y + Math.sin(angle + bend) * ry * (s / 5) * 1.15;
+        pixelLine(dim, px, py, nx, ny, [20, 4, 6], a, a * 0.7);
+
+        if (glowing)
+          pixelLine(
+            lit,
+            px,
+            py - 1,
+            nx,
+            ny - 1,
+            color,
+            a * (1 - s / 6),
+            a * (1 - s / 5),
+          );
+        px = nx;
+        py = ny;
+      }
+    }
+
+    softEllipse(
+      this.useDim(),
+      x,
+      y,
+      rx * 0.6,
+      ry * 0.6,
+      [10, 0, 4],
+      0.6 * intensity,
+    );
   }
 
   // --- signature effects -------------------------------------------------------------------
@@ -1956,6 +2279,14 @@ export class Aura {
     this.nextBolt -= TICK * clamp(intensity, 0.3, 1.5);
 
     if (this.nextBolt > 0 || edge.length < 2) return;
+
+    if (this.preset.fx.includes("haki")) {
+      this.nextBolt = 0.15 + this.rng() * 0.3;
+      this.hakiBolts(place, 1 + Math.floor(this.rng() * 2), false);
+
+      return;
+    }
+
     this.nextBolt = 0.4 + this.rng() * 1;
     const ground = place.ground && this.rng() < 0.4;
     const a = edge[Math.floor(this.rng() * edge.length)];
@@ -2028,12 +2359,104 @@ export class Aura {
     }
   }
 
+  /**
+   * Conqueror's will: black bolts cracking outwards from the outline, a few px to a couple of
+   * tiles long, rather than arcing between two points of the body.
+   */
+  private hakiBolts(place: AuraPlacement, count: number, heavy: boolean): void {
+    const edge = place.silhouette.edge;
+
+    for (let n = 0; n < count; n++) {
+      const a = edge[Math.floor(this.rng() * edge.length)];
+
+      if (!a) continue;
+      const reach = (heavy ? 22 : 10) + this.rng() * (heavy ? 22 : 16);
+      const side = (this.rng() - 0.5) * reach * 0.6;
+      const ax = a.x + a.nx;
+      const ay = a.y + a.ny;
+      const bx = a.x + a.nx * reach - a.ny * side;
+      const by = a.y + a.ny * reach + a.nx * side;
+      this.bolts.push({
+        points: jagged(ax, ay, bx, by, this.rng),
+        ax,
+        ay,
+        bx,
+        by,
+        age: 0,
+        life: TICK * (heavy ? 3 : 2),
+        heavy,
+        haki: true,
+      });
+    }
+
+    this.flash = Math.max(this.flash, heavy ? 1 : 0.4);
+  }
+
+  /**
+   * A black bolt in a red rim, all in pixels on the covering layer (additive light can't draw
+   * black): red on the neighbouring pixels first, the black core over it, a hot tip.
+   */
+  private drawHakiBolt(place: AuraPlacement, bolt: Bolt, alpha: number): void {
+    const dim = this.useDim();
+    const [light, mid] = this.rgb.tones;
+    const points = bolt.points;
+
+    const segments = (
+      fn: (x0: number, y0: number, x1: number, y1: number) => void,
+    ) => {
+      for (let i = 0; i < points.length - 2; i += 2)
+        fn(
+          place.x + (points[i] ?? 0),
+          place.y + (points[i + 1] ?? 0),
+          place.x + (points[i + 2] ?? 0),
+          place.y + (points[i + 3] ?? 0),
+        );
+    };
+
+    const rim = bolt.heavy ? 2 : 1;
+
+    for (const [ox, oy] of HAKI_RIM) {
+      const dx = ox * rim;
+      const dy = oy * rim;
+      segments((x0, y0, x1, y1) =>
+        pixelLine(
+          dim,
+          x0 + dx,
+          y0 + dy,
+          x1 + dx,
+          y1 + dy,
+          mid,
+          alpha * 0.9,
+          alpha * 0.6,
+        ),
+      );
+    }
+
+    segments((x0, y0, x1, y1) =>
+      pixelLine(dim, x0, y0, x1, y1, HAKI_CORE, alpha, alpha),
+    );
+
+    if (bolt.heavy)
+      segments((x0, y0, x1, y1) =>
+        pixelLine(dim, x0 + 1, y0, x1 + 1, y1, HAKI_CORE, alpha, alpha),
+      );
+    const tipX = place.x + (points[points.length - 2] ?? 0);
+    const tipY = place.y + (points[points.length - 1] ?? 0);
+    pixelGlint(this.lit, tipX, tipY, 1, [255, 220, 220], light, alpha);
+  }
+
   private drawBolts(place: AuraPlacement, intensity: number): void {
     const ctx = this.lit;
     const mid = this.rgb.tones[1];
 
     for (const bolt of this.bolts) {
       const fade = bolt.age < TICK ? 1 : 0.6;
+
+      if (bolt.haki) {
+        this.drawHakiBolt(place, bolt, fade * Math.min(1, intensity));
+        continue;
+      }
+
       ctx.lineJoin = "round";
       ctx.lineCap = "round";
       ctx.strokeStyle = rgba(mid, 0.6 * fade * intensity);
@@ -2099,13 +2522,18 @@ export class Aura {
 
     for (const p of this.field.particles) {
       if (p.front !== front) continue;
+      this.litLayer.used = true;
       const x = Math.round(p.x - place.viewX);
       const y = Math.round(p.y - place.viewY);
       const age = p.age / p.life;
       const color = palette[p.color % palette.length] ?? this.rgb.rim;
 
-      const covering =
-        p.kind === "leaf" || p.kind === "smoke" || p.kind === "wisp";
+      const covering = COVERING_PARTICLES.has(p.kind);
+
+      if (SOFT_PARTICLES.has(p.kind)) {
+        this.litLayer.soft = true;
+        this.dimLayer.soft = true;
+      }
 
       PARTICLE_PAINTERS[p.kind](
         this.lit,
@@ -2407,15 +2835,25 @@ function drawFeatherParticle(
 }
 
 function drawGrainParticle(
-  _lit: CanvasRenderingContext2D,
+  lit: CanvasRenderingContext2D,
   dim: CanvasRenderingContext2D,
-  _p: Particle,
+  p: Particle,
   x: number,
   y: number,
   age: number,
   color: Rgb,
+  palette: Rgb[],
 ): void {
-  plot(dim, x, y, color, envelope(age, 0.05, 0.3));
+  const a = envelope(age, 0.05, 0.3);
+  plot(dim, x, y, color, a);
+
+  // Bigger grains are 2×2 stones with a lit top edge.
+  if (p.size > 1.5) {
+    plot(dim, x + 1, y, color, a);
+    plot(dim, x, y + 1, STONE_SHADE, a);
+    plot(dim, x + 1, y + 1, STONE_SHADE, a);
+    plot(lit, x, y - 1, palette[1] ?? color, a * 0.4);
+  }
 }
 
 function drawRockParticle(
@@ -2573,6 +3011,30 @@ function drawRingParticle(
   );
 }
 
+/** Particles drawn on the covering layer: opaque things that hide what is under them. */
+const COVERING_PARTICLES: ReadonlySet<ParticleKind> = new Set<ParticleKind>([
+  "leaf",
+  "smoke",
+  "wisp",
+  "feather",
+  "grain",
+  "rock",
+  "bat",
+  "puddle",
+  "print",
+  "scorch",
+]);
+
+/** Particles drawn with soft gradients, so their layers need the pixel finish. */
+const SOFT_PARTICLES: ReadonlySet<ParticleKind> = new Set<ParticleKind>([
+  "smoke",
+  "wisp",
+  "firefly",
+]);
+
+/** The shaded underside of a 2×2 stone grain. */
+const STONE_SHADE: Rgb = [18, 14, 16];
+
 const PARTICLE_PAINTERS: Record<ParticleKind, ParticlePainter> = {
   mote: drawMoteParticle,
   ember: drawEmberParticle,
@@ -2669,11 +3131,23 @@ function blitLayer(
   layer: Layer,
   box: Box,
   mode: GlobalCompositeOperation,
+  dx: number,
+  dy: number,
 ): void {
   if (!layer.used) return;
   ctx.globalCompositeOperation = mode;
   ctx.globalAlpha = 1;
-  ctx.drawImage(layer.canvas, 0, 0, box.w, box.h, box.ox, box.oy, box.w, box.h);
+  ctx.drawImage(
+    layer.canvas,
+    0,
+    0,
+    box.w,
+    box.h,
+    box.ox + dx,
+    box.oy + dy,
+    box.w,
+    box.h,
+  );
 }
 
 function spawnFrame(place: AuraPlacement): SpawnFrame {

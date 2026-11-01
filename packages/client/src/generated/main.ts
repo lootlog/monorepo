@@ -82,6 +82,7 @@ export const OwnCharacterAuraResponseDtoAuraId = {
   tide: 'tide',
   arcane: 'arcane',
   aurora: 'aurora',
+  conqueror: 'conqueror',
 } as const;
 
 export interface OwnCharacterAuraResponseDto {
@@ -114,6 +115,7 @@ export const UpdateOwnCharacterAuraDtoAuraId = {
   tide: 'tide',
   arcane: 'arcane',
   aurora: 'aurora',
+  conqueror: 'conqueror',
 } as const;
 
 export interface UpdateOwnCharacterAuraDto {
@@ -141,6 +143,7 @@ export const CharacterAuraResponseDtoAuraId = {
   tide: 'tide',
   arcane: 'arcane',
   aurora: 'aurora',
+  conqueror: 'conqueror',
 } as const;
 
 export interface CharacterAuraResponseDto {
@@ -10563,6 +10566,7 @@ export const GameClientBootstrapResponseDtoOutputCharacterAuraAuraId = {
   tide: 'tide',
   arcane: 'arcane',
   aurora: 'aurora',
+  conqueror: 'conqueror',
 } as const;
 
 /**
