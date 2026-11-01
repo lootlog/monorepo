@@ -18,7 +18,7 @@ import type {
   GetAllBattlesResult,
 } from "#src/battles/battle-service";
 import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
-import type { DeleteUserData, PvpWinsQuery } from "./internal-operations.js";
+import type { DeleteUserData } from "./internal-operations.js";
 import type {
   RecordWeaponKillsInput,
   WeaponKills,
@@ -230,26 +230,6 @@ export const makeBattlelogOperations = (
       ),
     },
     internal: {
-      listPvpWins: battlelogOperation(
-        "InternalController_listPvpWins",
-        (query: PvpWinsQuery) =>
-          battles
-            .listPvpWins({
-              afterBattleId: query.afterBattleId,
-              since: new Date(query.since),
-              before: new Date(query.before),
-              limit: Math.min(Math.max(query.limit ?? 500, 1), 1000),
-            })
-            .pipe(
-              Effect.map((wins) => ({
-                wins: wins.map((win) => ({
-                  battleId: win.battleId,
-                  userId: win.userId,
-                  wonAt: win.wonAt.toISOString(),
-                })),
-              })),
-            ),
-      ),
       deleteUserData: battlelogOperation(
         "InternalController_deleteUserData",
         (body: DeleteUserData) =>

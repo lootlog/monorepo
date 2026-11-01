@@ -34,7 +34,6 @@ type TooltipRuntimeWindow = Window & {
   Engine?: {
     apiData?: { AFTER_CHARACTER_TIP_UPDATE?: string };
     canvasTip?: RuntimeCanvasTip;
-    others?: { otherTipRefresh?: () => void };
     whoIsHere?: {
       createTipWrapper?: (tipContainer: unknown, value: Other) => void;
       getWhoIsHereOther?: (id: string) => { $?: JQueryLike } | undefined;
@@ -103,23 +102,6 @@ export function getLegacyOtherIdAt(target: EventTarget | null): string | null {
   if (!id?.startsWith(LEGACY_OTHER_ELEMENT_PREFIX)) return null;
 
   return id.slice(LEGACY_OTHER_ELEMENT_PREFIX.length) || null;
-}
-
-/**
- * Rebuilds the tooltip html NI caches on every other player, so a change in
- * what Lootlog adds to it shows on the next hover.
- */
-export function refreshCanvasOtherTips(): void {
-  try {
-    getRuntimeWindow().Engine?.others?.otherTipRefresh?.();
-  } catch (error) {
-    console.warn("[MargonemTooltips] Failed to refresh tooltips:", error);
-  }
-}
-
-/** Ids of the players SI keeps on the current map. */
-export function getLegacyRuntimeOtherIds(): string[] {
-  return Object.keys(getRuntimeWindow().g?.other ?? {});
 }
 
 export function isLegacyTooltipRuntimeAvailable(): boolean {

@@ -5,9 +5,7 @@ import { ReadyRoomAuthorization } from "#src/http-api/handlers/party-ready-room/
 import { SettingsIdentity } from "#src/http-api/handlers/settings/settings.operations";
 import { UserLootlogConfigIdentity } from "#src/http-api/handlers/user-lootlog-config/user-lootlog-config.handlers";
 import { UserThemesIdentity } from "#src/http-api/handlers/user-themes/user-themes.handlers";
-import { FactionWarsIdentity } from "#src/http-api/handlers/faction-wars/faction-wars.handlers";
 import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
-import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
 const SettingsIdentityLive = Layer.succeed(
   SettingsIdentity,
@@ -30,19 +28,6 @@ const UserThemesIdentityLive = Layer.succeed(
   }),
 );
 
-const FactionWarsIdentityLive = Layer.effect(
-  FactionWarsIdentity,
-  Effect.map(ApiRuntimeConfig, ({ factionWarAdminUserIds }) =>
-    FactionWarsIdentity.of({
-      caller: Effect.map(requestScopedIdentity, ({ userId, discordId }) => ({
-        userId,
-        discordId,
-        isAdmin: factionWarAdminUserIds.includes(userId),
-      })),
-    }),
-  ),
-);
-
 const MessagingIdentityLive = Layer.succeed(
   MessagingIdentity,
   MessagingIdentity.of({ caller: requestScopedIdentity }),
@@ -63,7 +48,6 @@ export const RequestIdentityLayers = Layer.mergeAll(
   SettingsIdentityLive,
   UserLootlogConfigIdentityLive,
   UserThemesIdentityLive,
-  FactionWarsIdentityLive,
   MessagingIdentityLive,
   GlobalChatIdentityLive,
   ReadyRoomAuthorizationLive,

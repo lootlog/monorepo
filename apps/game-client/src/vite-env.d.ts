@@ -14,8 +14,6 @@ interface ImportMetaEnv {
   readonly VITE_GAME_CLIENT_PACKAGE_VERSION: string;
   readonly VITE_GAME_CLIENT_VERSION: string;
   readonly VITE_MARGONEM_ACCOUNT_VALIDATE_URL?: string;
-  /** Overrides where faction war art is served from; the Web app by default. */
-  readonly VITE_FACTION_WAR_ASSETS_URL?: string;
 }
 
 interface ImportMeta {

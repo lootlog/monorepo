@@ -1,11 +1,5 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { seedMargonemCharacterList } from "./character-list";
-import {
-  installNiMapScene,
-  installSiMapScene,
-  isMapSceneRequested,
-  rewriteSiOtherTips,
-} from "./map-scene";
 import { createNiEngine } from "./ni-runtime";
 import { logSandbox } from "./sandbox-log";
 import { createSiGlobals } from "./si-runtime";
@@ -57,22 +51,10 @@ export function installSandboxRuntime(
   runtimeWindow.message = (text) => logSandbox("message", text);
   runtimeWindow._g = (command) => logSandbox("outbound", command);
 
-  const mapScene = isMapSceneRequested();
-
   if (runtimeInterface === "ni") {
-    const engine = createNiEngine(world);
-    runtimeWindow.Engine = engine;
-
-    if (mapScene) installNiMapScene(world, engine);
+    runtimeWindow.Engine = createNiEngine(world);
   } else {
-    Object.assign(
-      runtimeWindow,
-      createSiGlobals(world, (event) => {
-        if (mapScene && event.other) rewriteSiOtherTips(world, event.other);
-      }),
-    );
-
-    if (mapScene) installSiMapScene(world);
+    Object.assign(runtimeWindow, createSiGlobals(world));
   }
 
   // Resolve the seam on every emit: Lootlog wraps it after bootstrap.

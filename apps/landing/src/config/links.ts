@@ -19,6 +19,4 @@ export const links = {
   discord: "https://discord.gg/mPcczaeYMu",
   support: "https://buycoffee.to/lootlog",
   dashboard: "/signin",
-  factionWar: "/@me/faction-war",
-  factionWarGuide: "https://docs.lootlog.pl/docs/faction-war",
 } as const;
