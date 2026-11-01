@@ -6,7 +6,6 @@ import { QuickAccessCollapseButton } from "@/features/quick-access/components/qu
 import { QuickAccessCollapsedBar } from "@/features/quick-access/components/quick-access-collapsed-bar";
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
 import { SetupChecklistButton } from "@/features/setup-checklist/components/setup-checklist-button";
-import { FactionWarPickButton } from "@/features/faction-war/faction-war-pick-button";
 import {
   QuickAccessWindowButton,
   type QuickAccessWindowButtonProps,
@@ -136,7 +135,6 @@ export const QuickAccess = () => {
       >
         <div className="ll:flex ll:h-full ll:w-max ll:min-w-full ll:items-center ll:gap-0.5 ll:px-0.5">
           <SetupChecklistButton />
-          <FactionWarPickButton />
           {buttons.map((button) => (
             <QuickAccessWindowButton key={button.windowId} {...button} />
           ))}

@@ -99,14 +99,9 @@ jobs:
               "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT"
           )"
 
-          optional_keys=()
-
           case "$PACKAGE" in
             @lootlog/landing)
               keys=(VITE_ADDON_URL VITE_AUTH_SERVICE_URL)
-              # The faction war score needs it; until the Pages project sets
-              # it, the landing builds without the score banner.
-              optional_keys=(VITE_API_URL)
               ;;
             @lootlog/web)
               keys=(
@@ -146,23 +141,6 @@ jobs:
                 '.result.deployment_configs.preview.env_vars[$key] | select(.type == "plain_text") | .value' \
                 <<< "$settings"
             )"
-            if [[ "$value" == *$'\n'* ]]; then
-              echo "::error::Cloudflare variable $key contains a newline."
-              exit 1
-            fi
-            echo "$key=$value" >> "$GITHUB_ENV"
-          done
-
-          for key in "${optional_keys[@]}"; do
-            value="$(
-              jq --raw-output \
-                --arg key "$key" \
-                '.result.deployment_configs.preview.env_vars[$key] | select(. != null and .type == "plain_text") | .value' \
-                <<< "$settings"
-            )"
-            if [[ -z "$value" ]]; then
-              continue
-            fi
             if [[ "$value" == *$'\n'* ]]; then
               echo "::error::Cloudflare variable $key contains a newline."
               exit 1

@@ -227,8 +227,6 @@ jobs:
               @lootlog/landing)
                 export VITE_ADDON_URL="$LANDING_VITE_ADDON_URL"
                 export VITE_AUTH_SERVICE_URL="$LANDING_VITE_AUTH_SERVICE_URL"
-                # The landing reads the public faction war score from the same API.
-                export VITE_API_URL="$WEB_VITE_API_URL"
                 ;;
               @lootlog/web)
                 export VITE_ACTIVITY_API_URL="$WEB_VITE_ACTIVITY_API_URL"

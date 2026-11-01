@@ -28,7 +28,6 @@ export type AppNavigationItemId =
   | "user-dashboard"
   | "user-statistics"
   | "user-battles"
-  | "user-faction-war"
   | "user-notifications"
   | "user-settings"
   | "organization-loots"
@@ -294,12 +293,6 @@ function buildUserSidebarRegistry(): RegistryItem[] {
       visible: alwaysVisible,
     },
     {
-      id: "user-faction-war",
-      labelKey: "layout.navigation.factionWar",
-      path: ROUTES.user.factionWar.base,
-      visible: alwaysVisible,
-    },
-    {
       id: "user-notifications",
       labelKey: "layout.navigation.notifications",
       groupKey: "layout.navigation.groups.account",
@@ -513,34 +506,6 @@ function resolvePlayerVsPlayerNavigation(
   );
 }
 
-/**
- * Personal statistics and the faction war's tabs: the overview names the
- * section, the ranking sits under it.
- */
-function resolveUserSectionNavigationInfo(path: string) {
-  if (path === ROUTES.user.statistics) {
-    return navigationInfo([{ label: t("statistics.title"), path: null }], null);
-  }
-
-  const factionWar = {
-    label: t("layout.navigation.factionWar"),
-    path: ROUTES.user.factionWar.base,
-  };
-
-  if (path === ROUTES.user.factionWar.base) {
-    return navigationInfo([{ ...factionWar, path: null }], null);
-  }
-
-  if (path === ROUTES.user.factionWar.ranking) {
-    return navigationInfo(
-      [factionWar, { label: t("layout.breadcrumbs.ranking"), path: null }],
-      null,
-    );
-  }
-
-  return undefined;
-}
-
 function resolveUserNavigationInfo(
   pathValue: string,
   battleLabel?: string,
@@ -560,6 +525,10 @@ function resolveUserNavigationInfo(
     );
   }
 
+  if (path === ROUTES.user.statistics) {
+    return navigationInfo([{ label: t("statistics.title"), path: null }], null);
+  }
+
   if (path === ROUTES.user.reservations) {
     return navigationInfo(
       [
@@ -576,10 +545,6 @@ function resolveUserNavigationInfo(
   if (path === ROUTES.user.battlePanel.base) {
     return navigationInfo([{ ...battlePanel, path: null }], null);
   }
-
-  const sectionInfo = resolveUserSectionNavigationInfo(path);
-
-  if (sectionInfo) return sectionInfo;
 
   if (path === ROUTES.user.battlePanel.statistics) {
     return navigationInfo(

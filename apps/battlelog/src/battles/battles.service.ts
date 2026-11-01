@@ -12,7 +12,7 @@ import {
   makeJsonCodec,
   type RedisStore,
 } from "#src/infrastructure/redis-store";
-import { and, asc, eq, gt, gte, lt } from "drizzle-orm";
+import { and, eq, gte, lt } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { CreateBattleInput } from "#src/battles/submission/create-battle";
 import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
@@ -582,51 +582,6 @@ export const makeBattles = (
 
     getUserCharacters(userId: string) {
       return battleMetadataService.getUserCharacters(userId);
-    },
-
-    /**
-     * Finished battles the submitter's own team won without a flee, oldest
-     * first. Battlelog stores only fights between players, so each one is a
-     * PvP win.
-     */
-    listPvpWins(options: {
-      readonly afterBattleId: string | undefined;
-      readonly since: Date;
-      readonly before: Date;
-      readonly limit: number;
-    }) {
-      return adapter("Battles_listPvpWins", () =>
-        drizzle
-          .select({
-            battleId: battles.id,
-            userId: battles.userId,
-            wonAt: battles.createdAt,
-          })
-          .from(battles)
-          .innerJoin(
-            battleWarriors,
-            and(
-              eq(battleWarriors.battleId, battles.id),
-              eq(battleWarriors.originalId, battles.characterId),
-              eq(battleWarriors.team, battles.winningTeam),
-            ),
-          )
-          .where(
-            and(
-              // Bounds on the ID, the hypertable's partition column, prune
-              // chunks; bounds on `createdAt` scanned every chunk of history.
-              options.afterBattleId === undefined
-                ? gte(battles.id, firstBattleIdAt(options.since))
-                : gt(battles.id, options.afterBattleId),
-              lt(battles.id, firstBattleIdAt(options.before)),
-              eq(battles.unfinished, false),
-              // Analytics count a flee apart from a win; so does the war.
-              eq(battles.hasFlee, false),
-            ),
-          )
-          .orderBy(asc(battles.id))
-          .limit(options.limit),
-      );
     },
 
     getUserWorlds(userId: string) {
@@ -1316,7 +1271,6 @@ export type Battles = Pick<
   | "getPublicBattleTimeline"
   | "getUserCharacters"
   | "getUserWorlds"
-  | "listPvpWins"
   | "resolveBattleId"
   | "searchWarriors"
   | "updateBattle"

@@ -68,7 +68,7 @@ const getRecurringScheduleLabel = (rule: NotificationRule, t: Translator) => {
 };
 
 const getNpcLabel = (rule: NotificationRule, t: Translator) => {
-  if (rule.triggerType !== NotificationTriggerType.TIMER_BEFORE_SPAWN) {
+  if (rule.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE) {
     return undefined;
   }
 
@@ -90,10 +90,6 @@ const getRuleSummary = (
     npcLabel: string | undefined;
   },
 ) => {
-  if (rule.triggerType === NotificationTriggerType.FACTION_WAR) {
-    return [t("settings.notifications.factionWarSummary")];
-  }
-
   const world = rule.world
     ? upperFirst(rule.world)
     : t("settings.notifications.allWorlds");

@@ -16,7 +16,7 @@ import { ALL_WORLDS_VALUE } from "./utils/notification-rule-form.schema";
 
 type Props = Pick<
   ReturnType<typeof useNotificationRuleForm>,
-  | "isTimerRule"
+  | "isScheduledMessage"
   | "form"
   | "t"
   | "worldOptions"
@@ -33,7 +33,7 @@ type Props = Pick<
 >;
 
 export const NotificationNpcFields = ({
-  isTimerRule,
+  isScheduledMessage,
   form,
   t,
   worldOptions,
@@ -49,7 +49,7 @@ export const NotificationNpcFields = ({
   hasAllWorldTimerNpcSelection,
 }: Props) => (
   <>
-    {isTimerRule ? (
+    {!isScheduledMessage ? (
       <>
         <FormField
           control={form.control}

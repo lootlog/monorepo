@@ -7,10 +7,8 @@ import {
   buildLegacyOtherTip,
   getLegacyOtherIdAt,
   getLegacyRuntimeOther,
-  getLegacyRuntimeOtherIds,
   getRuntimeCanvasTip,
   isLegacyTooltipRuntimeAvailable,
-  refreshCanvasOtherTips,
   setLegacyOtherTip,
   subscribeCharacterTipUpdates,
   type RuntimeCanvasTip,
@@ -201,18 +199,11 @@ function toTooltipOther(other: LegacyGameOther): Other {
   return { d: { ...other, id: String(other.id) } };
 }
 
-/**
- * The tip SI builds for an other and the same tip with every transform that
- * applies right now, or null while SI cannot build it. Without Shift only the
- * always-on sections apply.
- */
-function buildLegacyOtherTips(
-  id: string,
-): { baseHtml: string; html: string } | null {
+function setLegacyOtherShiftSection(id: string): void {
   const legacyOther = getLegacyRuntimeOther(id);
   const baseHtml = legacyOther ? buildLegacyOtherTip(legacyOther) : null;
 
-  if (!legacyOther || baseHtml === null) return null;
+  if (!legacyOther || baseHtml === null) return;
 
   const html = characterTooltipTransforms.apply({
     character: toTooltipOther(legacyOther),
@@ -221,43 +212,23 @@ function buildLegacyOtherTips(
     currentHtml: baseHtml,
   });
 
-  return { baseHtml, html };
-}
+  if (html === baseHtml) return;
 
-function setLegacyOtherShiftSection(id: string): void {
-  const tips = buildLegacyOtherTips(id);
-
-  if (!tips || tips.html === tips.baseHtml) return;
-
-  setLegacyOtherTip(id, tips.html);
+  setLegacyOtherTip(id, html);
   legacyOtherIdsWithShiftSection.add(id);
 }
 
-/** Releasing Shift keeps the always-on sections, dropping the Shift one. */
 function removeLegacyShiftSections(): void {
   const ids = [...legacyOtherIdsWithShiftSection];
 
   legacyOtherIdsWithShiftSection.clear();
 
   for (const id of ids) {
-    const tips = buildLegacyOtherTips(id);
+    const legacyOther = getLegacyRuntimeOther(id);
+    const baseHtml = legacyOther ? buildLegacyOtherTip(legacyOther) : null;
 
     // An other that left the map took its element with it.
-    if (tips) setLegacyOtherTip(id, tips.html);
-  }
-}
-
-/**
- * Uninstalling puts back the game's own tip on every other: always-on
- * sections were written outside Shift, so no tracked set covers them.
- */
-function restoreLegacyNativeTips(): void {
-  legacyOtherIdsWithShiftSection.clear();
-
-  for (const id of getLegacyRuntimeOtherIds()) {
-    const tips = buildLegacyOtherTips(id);
-
-    if (tips) setLegacyOtherTip(id, tips.baseHtml);
+    if (baseHtml !== null) setLegacyOtherTip(id, baseHtml);
   }
 }
 
@@ -319,7 +290,7 @@ function installLegacyTooltips(): () => void {
     legacyTooltipsInstalled = false;
     hoveredLegacyOtherId = null;
     useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
-    restoreLegacyNativeTips();
+    removeLegacyShiftSections();
   };
 }
 
@@ -340,29 +311,6 @@ export function restoreLegacyShiftSections(otherIds: string[]): void {
     if (id === hoveredLegacyOtherId || legacyOtherIdsWithShiftSection.has(id)) {
       setLegacyOtherShiftSection(id);
     }
-  }
-}
-
-/**
- * Re-applies the always-on tooltip sections after what they show changed.
- * NI rebuilds the html it caches on every other; SI rewrites the `tip`
- * attribute of the given others, or of every other on the map. SI's newOther
- * rewrites that attribute on full updates, so callers pass the ids of each
- * `other` packet that needs its section back.
- */
-export function refreshCharacterTooltips(otherIds?: readonly string[]): void {
-  if (!cleanupCurrentInstallation) return;
-
-  if (!legacyTooltipsInstalled) {
-    refreshCanvasOtherTips();
-
-    return;
-  }
-
-  for (const id of otherIds ?? getLegacyRuntimeOtherIds()) {
-    const tips = buildLegacyOtherTips(id);
-
-    if (tips) setLegacyOtherTip(id, tips.html);
   }
 }
 
@@ -403,9 +351,6 @@ export function installCharacterTooltipTransforms(): () => void {
     unsubscribeTipUpdates();
     cleanupCanvasTip?.();
     removeShiftSections();
-    // NI caches each other's tip html; rebuilt without the subscription, the
-    // cache drops always-on sections such as the champion crest.
-    refreshCanvasOtherTips();
 
     cleanupCurrentInstallation = null;
   };

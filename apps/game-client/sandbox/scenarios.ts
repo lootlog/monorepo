@@ -125,23 +125,6 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
     },
   },
   {
-    id: "champion-walk",
-    label: "Champion walks",
-    group: "Players",
-    build: (world) => {
-      const champion = world.others["800001"];
-
-      if (!champion) return null;
-
-      return {
-        ...createBaseEvent(),
-        other: {
-          "800001": { x: (champion.x ?? 12) > 12 ? 10 : 15, y: champion.y },
-        },
-      };
-    },
-  },
-  {
     id: "party-join",
     label: "Party join",
     group: "Players",

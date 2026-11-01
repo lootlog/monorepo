@@ -21,15 +21,6 @@ const retried = (
   });
 
 export const apiRabbitQueues = [
-  queue(
-    Queue.FACTION_WAR_ONLINE_CHECKPOINT,
-    RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
-  ),
-  queue(
-    Queue.FACTION_WAR_ONLINE_CHECKPOINT_DLQ,
-    RabbitRoutingKey.FACTION_WAR_ONLINE_CHECKPOINT_DLQ,
-    { exchange: RabbitExchange.DEAD_LETTER },
-  ),
   queue(Queue.GAME_CHARACTER_OFFLINE, RabbitRoutingKey.GAME_CHARACTER_OFFLINE),
   queue(
     Queue.GAME_CHARACTER_OFFLINE_DLQ,
@@ -217,11 +208,6 @@ export const apiRabbitFailurePolicies = {
   characterOffline: {
     strategy: "dead-letter",
     deadLetterRoutingKey: RabbitRoutingKey.GAME_CHARACTER_OFFLINE_DLQ,
-  },
-  // Online checkpoints only grow a segment, so a late retry cannot undo one.
-  factionWarOnline: {
-    strategy: "dead-letter",
-    deadLetterRoutingKey: RabbitRoutingKey.FACTION_WAR_ONLINE_CHECKPOINT_DLQ,
   },
   presenceCoverage: {
     strategy: "dead-letter",

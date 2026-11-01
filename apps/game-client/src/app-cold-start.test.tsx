@@ -122,32 +122,6 @@ it("starts an initialized character with one bootstrap request, without repeatin
 
     if (path.endsWith("/members/@me")) return Response.json(null);
 
-    // The faction war pick screen and champion highlights each cost one
-    // request per session.
-    if (path === "/faction-wars/current")
-      return Response.json({
-        id: "2026-barbatos-tanroth",
-        status: "ENDED",
-        startsAt: "2026-10-20T00:00:00.000Z",
-        endsAt: "2026-11-17T00:00:00.000Z",
-        scoring: {
-          killPoints: {},
-          lootPoints: {},
-          onlineSecondsPerPoint: 600,
-          pvpWinPoints: 5,
-          underdogBonusCap: 2,
-          dailyCaps: { KILL: 0, LOOT: 0, ONLINE: 0, PVP: 0 },
-        },
-        totals: [],
-        winners: [],
-        days: [],
-        pick: null,
-        champion: null,
-      });
-
-    if (path === "/faction-wars/champions")
-      return Response.json({ warId: null, champions: [] });
-
     if (
       path === "/timers" ||
       path === "/messaging/party-gathering" ||
@@ -284,9 +258,8 @@ it("starts an initialized character with one bootstrap request, without repeatin
     expect(webSocketFactory).toHaveBeenCalledTimes(1);
     expect(proofRequests).toHaveLength(1);
     // The startup reads of guilds, preferences, the Lootlog configuration and
-    // the settings documents arrive in one bootstrap response; the faction
-    // war adds the current war and its champions.
-    expect(requests).toHaveLength(9);
+    // the settings documents arrive in one bootstrap response.
+    expect(requests).toHaveLength(7);
     expect(
       requests.filter(
         (path) => path === "GET /users/@me/game-client/bootstrap",
@@ -314,11 +287,6 @@ it("starts an initialized character with one bootstrap request, without repeatin
         (path) => path === "GET /messaging/party-gathering/active",
       ),
     ).toHaveLength(1);
-    expect(
-      requests
-        .filter((path) => path.startsWith("GET /faction-wars/"))
-        .toSorted(),
-    ).toEqual(["GET /faction-wars/champions", "GET /faction-wars/current"]);
   } finally {
     cleanup();
     disposeSocket();

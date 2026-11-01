@@ -4,10 +4,7 @@ import type { SandboxWorld } from "./world";
 
 // Legacy interface globals. g.npc, g.other, hero and map are the live objects
 // the SI adapter reads directly.
-export function createSiGlobals(
-  world: SandboxWorld,
-  afterApply?: (event: GameEvent) => void,
-) {
+export function createSiGlobals(world: SandboxWorld) {
   return {
     g: {
       init: 5,
@@ -22,7 +19,6 @@ export function createSiGlobals(
       const event: GameEvent = JSON.parse(payload);
 
       applyGameEvent(world, event);
-      afterApply?.(event);
     },
   };
 }
