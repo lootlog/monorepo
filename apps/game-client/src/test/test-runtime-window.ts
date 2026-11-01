@@ -52,19 +52,28 @@ import type {
   RuntimeHero,
 } from "@/lib/margonem-runtime/runtime.types";
 
+const parseInertHtml = (html: string): Document =>
+  new DOMParser().parseFromString(html, "text/html");
+
 /**
- * Records each game message as the player reads it: message() decodes HTML
- * entities and renders the result as HTML.
+ * Renders a message() argument the way the game does, in an inert document:
+ * the game decodes HTML entities like a textarea and renders the result as
+ * HTML. `decoded` is the text the game's BB-code parser receives.
  */
+export const renderRuntimeMessage = (text: string) => {
+  const decoded =
+    parseInertHtml(`<textarea>${text}</textarea>`).querySelector("textarea")
+      ?.value ?? "";
+
+  return { decoded, rendered: parseInertHtml(decoded) };
+};
+
+/** Records each game message as the player reads it. */
 export const captureRuntimeMessages = (): string[] => {
   const messages: string[] = [];
 
   testRuntimeWindow.message = (text) => {
-    const decoder = document.createElement("textarea");
-    decoder.innerHTML = text;
-    const rendered = document.createElement("div");
-    rendered.innerHTML = decoder.value;
-    messages.push(rendered.textContent ?? "");
+    messages.push(renderRuntimeMessage(text).rendered.body.textContent ?? "");
   };
 
   onTestFinished(() => {

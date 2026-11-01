@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { showRuntimeMessage } from "./legacy-ui-runtime-adapter";
-import { testRuntimeWindow } from "@/test/test-runtime-window";
+import {
+  renderRuntimeMessage,
+  testRuntimeWindow,
+} from "@/test/test-runtime-window";
 
 afterEach(() => {
   delete testRuntimeWindow.message;
@@ -9,21 +12,16 @@ afterEach(() => {
 describe("game messages", () => {
   it("shows player-chosen names literally instead of as markup or BB codes", () => {
     const text = `Ukryto <img src=x onerror="alert(1)"> [b]Klan[/b] & 'co'`;
-    let decoded = "";
+    let shown: ReturnType<typeof renderRuntimeMessage> | undefined;
     testRuntimeWindow.message = (raw) => {
-      // message() decodes entities before parsing BB codes and rendering HTML.
-      const decoder = document.createElement("textarea");
-      decoder.innerHTML = raw;
-      decoded = decoder.value;
+      shown = renderRuntimeMessage(raw);
     };
 
     showRuntimeMessage(text);
 
-    expect(decoded).not.toMatch(/[<>[\]]/);
-    const rendered = document.createElement("div");
-    rendered.innerHTML = decoded;
-    expect(rendered.querySelector("img")).toBeNull();
-    expect(rendered.textContent).toBe(text);
+    expect(shown?.decoded).not.toMatch(/[<>[\]]/);
+    expect(shown?.rendered.querySelector("img")).toBeNull();
+    expect(shown?.rendered.body.textContent).toBe(text);
   });
 
   it("drops a message the game cannot show yet without breaking the caller", () => {
