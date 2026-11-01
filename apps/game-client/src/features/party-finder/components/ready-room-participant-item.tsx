@@ -6,7 +6,7 @@ import {
 import { Plus, UserMinus, UserPlus } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { cn } from "cn";
 import { CharacterTile } from "@/components/character-tile";
 import { ListRow } from "@/components/list-row";
@@ -68,7 +68,7 @@ export function ReadyRoomParticipantItem({
       applyUpdate(decodePartyReadyRoomClientUpdate(update));
     },
     onError: () => {
-      toast.error(t("messages.removeFailed"));
+      showRuntimeMessage(t("messages.removeFailed"));
     },
   });
 
@@ -78,7 +78,7 @@ export function ReadyRoomParticipantItem({
     if (!canInvite) return;
 
     void inviteParticipants([participant.participantId]).catch(() => {
-      toast.error(t("gatherings.inviteFailed", { ns: "chat" }));
+      showRuntimeMessage(t("gatherings.inviteFailed", { ns: "chat" }));
     });
   };
 

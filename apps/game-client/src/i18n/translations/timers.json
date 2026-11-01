@@ -135,9 +135,7 @@
     "createFailed": "Nie udało się dodać timera {{name}}.",
     "resetSuccess": "Zresetowano timer {{name}}.",
     "deleteSuccess": "Usunięto timer {{name}}.",
-    "battleLinkCreated": "Walka została dodana",
-    "copyBattleLink": "Kopiuj link",
-    "battleLinkCopied": "Link skopiowany do schowka"
+    "battleLinkCreated": "Walka została dodana"
   },
   "colorNames": {
     "red": "Czerwony",

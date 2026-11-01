@@ -12,6 +12,7 @@ export type TestRuntimeWindow = Window & {
   Engine?: TestRuntimeEngine;
   _g?: (command: string, ...args: unknown[]) => unknown;
   getCookie?: (name: string) => string | null | undefined;
+  message?: (text: string) => void;
 };
 
 export const testRuntimeWindow: TestRuntimeWindow = window;
@@ -44,8 +45,31 @@ export const setTestRuntimeGame = (
   });
 };
 
+import { onTestFinished } from "vitest";
 import { useGameStore } from "@/store/game.store";
 import type {
   RuntimeGameSnapshot,
   RuntimeHero,
 } from "@/lib/margonem-runtime/runtime.types";
+
+/**
+ * Records each game message as the player reads it: message() decodes HTML
+ * entities and renders the result as HTML.
+ */
+export const captureRuntimeMessages = (): string[] => {
+  const messages: string[] = [];
+
+  testRuntimeWindow.message = (text) => {
+    const decoder = document.createElement("textarea");
+    decoder.innerHTML = text;
+    const rendered = document.createElement("div");
+    rendered.innerHTML = decoder.value;
+    messages.push(rendered.textContent ?? "");
+  };
+
+  onTestFinished(() => {
+    delete testRuntimeWindow.message;
+  });
+
+  return messages;
+};

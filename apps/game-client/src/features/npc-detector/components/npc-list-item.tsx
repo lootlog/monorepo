@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { ListRow } from "@/components/list-row";
 import { ListRowArrival } from "@/components/list-row-arrival";
 import { NpcTile } from "@/components/npc-tile";
@@ -96,7 +96,7 @@ export const NpcListItem = ({
 
   const handleSendNotification = async (npc: GameNpcWithLocation) => {
     if (resolvedGuildIds.length === 0) {
-      toast.error(t("actions.noMatchingGuilds"));
+      showRuntimeMessage(t("actions.noMatchingGuilds"));
 
       return;
     }
@@ -123,48 +123,22 @@ export const NpcListItem = ({
     } catch (error) {
       if (error instanceof NotificationChatPublishError) {
         console.warn("Failed to publish notification to chat:", error.cause);
+        // The alert was accepted, so the row leaves its sendable state:
+        // another alert would reopen the recipients' alarm.
         markNotificationSent();
-        reportChatPublishFailure(error.retryChat);
+        showRuntimeMessage(t("actions.chatPublishFailed"));
 
         return;
       }
 
       console.warn("Failed to send notification:", error);
-      toast.error(t("actions.messageFailed"));
+      showRuntimeMessage(t("actions.messageFailed"));
     }
-  };
-
-  // The alert was accepted, so retrying must repeat only the chat step:
-  // another alert would reopen the recipients' alarm and replay its sound.
-  // The warning stays until dismissed so the retry is not lost on a timer.
-  const reportChatPublishFailure = (
-    retryChat: NotificationChatPublishError["retryChat"],
-  ) => {
-    toast.warning(t("actions.chatPublishFailed"), {
-      id: `npc-chat-publish-${npc.id}`,
-      duration: Number.POSITIVE_INFINITY,
-      closeButton: true,
-      action: {
-        label: t("common:actions.retry"),
-        onClick: () => {
-          retryChat().then(
-            () => toast.success(t("actions.chatPublished")),
-            (retryError) => {
-              console.warn(
-                "Failed to publish notification to chat:",
-                retryError,
-              );
-              reportChatPublishFailure(retryChat);
-            },
-          );
-        },
-      },
-    });
   };
 
   const handleGatherParty = async (npc: GameNpcWithLocation) => {
     if (resolvedGuildIds.length === 0) {
-      toast.error(t("actions.noMatchingGuilds"));
+      showRuntimeMessage(t("actions.noMatchingGuilds"));
 
       return;
     }
@@ -184,7 +158,7 @@ export const NpcListItem = ({
       });
     } catch (error) {
       console.warn("Failed to gather party:", error);
-      toast.error(t("actions.gatherPartyFailed"));
+      showRuntimeMessage(t("actions.gatherPartyFailed"));
     }
   };
 

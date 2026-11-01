@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import {
   NotificationChatPublishError,
   isNotificationRateLimitError,
@@ -10,9 +10,9 @@ export const useChatSendError = () => {
 
   return (cause: unknown) => {
     if (cause instanceof NotificationChatPublishError) {
-      toast.warning(t("quickActions.partialDelivery"));
+      showRuntimeMessage(t("quickActions.partialDelivery"));
     } else {
-      toast.error(
+      showRuntimeMessage(
         t(
           isNotificationRateLimitError(cause)
             ? "errors.rateLimited"

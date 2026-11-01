@@ -356,24 +356,6 @@
       }
     },
     {
-      "files": [
-        "src/components/guild-switcher.test.tsx",
-        "src/processors/battle-event-processor.golden.test.ts",
-        "src/processors/battle-event-processor.test.ts",
-        "src/features/command/command.test.tsx",
-        "src/features/chat/components/chat-input.test.tsx",
-        "src/features/settings/components/logs/logs-settings-tab.test.tsx"
-      ],
-      "rules": {
-        "anti-slop/no-module-mocking": [
-          "error",
-          {
-            "externalModules": ["sonner"]
-          }
-        ]
-      }
-    },
-    {
       "files": ["src/hooks/use-local-storage.ts"],
       "rules": {
         "anti-slop/no-runtime-typeof": [

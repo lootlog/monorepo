@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getApiErrorStatus } from "@lootlog/client/transport";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import {
   getGlobalChatControllerGetMutesQueryKey,
   useGlobalChatControllerDeleteMessage,
@@ -46,7 +46,7 @@ export const useGlobalChatModeration = (channel: GlobalChatChannel) => {
     );
 
   const onError = () => {
-    toast.error(t("errors.moderationFailed"));
+    showRuntimeMessage(t("errors.moderationFailed"));
   };
 
   const deleteMutation = useGlobalChatControllerDeleteMessage({
@@ -75,7 +75,7 @@ export const useGlobalChatModeration = (channel: GlobalChatChannel) => {
   const muteMutation = useGlobalChatControllerMuteSender({
     mutation: {
       onSuccess: (mute) => {
-        toast.success(t("mute.muted", { name: mute.displayName }));
+        showRuntimeMessage(t("mute.muted", { name: mute.displayName }));
         void queryClient.invalidateQueries({
           queryKey: getGlobalChatControllerGetMutesQueryKey(),
         });
@@ -87,13 +87,14 @@ export const useGlobalChatModeration = (channel: GlobalChatChannel) => {
   const unmuteMutation = useGlobalChatControllerUnmuteMessageSender({
     mutation: {
       onSuccess: () => {
-        toast.success(t("mute.unmuted"));
+        showRuntimeMessage(t("mute.unmuted"));
         void queryClient.invalidateQueries({
           queryKey: getGlobalChatControllerGetMutesQueryKey(),
         });
       },
       onError: (error) => {
-        if (getApiErrorStatus(error) === 404) toast.info(t("mute.notMuted"));
+        if (getApiErrorStatus(error) === 404)
+          showRuntimeMessage(t("mute.notMuted"));
         else onError();
       },
     },
@@ -138,7 +139,7 @@ export const useGlobalChatUnmute = () => {
           queryKey: getGlobalChatControllerGetMutesQueryKey(),
         }),
       onError: () => {
-        toast.error(t("errors.moderationFailed"));
+        showRuntimeMessage(t("errors.moderationFailed"));
       },
     },
   });

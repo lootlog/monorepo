@@ -1,4 +1,3 @@
-import { toast } from "sonner";
 import { useWindowsStore } from "@/store/windows.store";
 import userEvent from "@testing-library/user-event";
 import { ChatQuickActionStrip } from "../components/chat-quick-action-strip";
@@ -19,7 +18,10 @@ import {
 import type { ReactNode } from "react";
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
 import { useChatQuickActions } from "./use-chat-quick-actions";
-import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import {
+  captureRuntimeMessages,
+  setTestRuntimeGame,
+} from "@/test/test-runtime-window";
 import { useChatStore } from "@/store/chat.store";
 
 const request = vi.fn<typeof fetch>();
@@ -32,9 +34,10 @@ const wrapper = ({ children }: { children: ReactNode }) => (
   <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 );
 
+let messages: string[];
+
 beforeEach(() => {
-  vi.spyOn(toast, "error").mockImplementation(() => "error");
-  vi.spyOn(toast, "warning").mockImplementation(() => "warning");
+  messages = captureRuntimeMessages();
   setTestRuntimeGame();
   useChatStore.setState(useChatStore.getInitialState(), true);
   queryClient = new QueryClient({
@@ -92,7 +95,7 @@ it("handles partial alarm delivery without retrying or changing a draft", async 
     .mockRejectedValueOnce(new Error("chat offline"));
   const { result } = renderHook(useChatQuickActions, { wrapper });
   await act(() => result.current.sendHelp());
-  expect(toast.warning).toHaveBeenCalledWith(
+  expect(messages).toContainEqual(
     expect.stringContaining("Nie wysyłaj ponownie"),
   );
   expect(request).toHaveBeenCalledTimes(2);
@@ -220,7 +223,5 @@ it("reports failed position delivery without retrying", async () => {
   const { result } = renderHook(useChatQuickActions, { wrapper });
   await act(() => result.current.sendPosition());
   expect(request).toHaveBeenCalledTimes(1);
-  expect(toast.error).toHaveBeenCalledWith(
-    "Nie udało się wysłać wiadomości na czat",
-  );
+  expect(messages).toContain("Nie udało się wysłać wiadomości na czat");
 });
