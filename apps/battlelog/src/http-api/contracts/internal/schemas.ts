@@ -24,20 +24,3 @@ export type InternalControllerDeleteUserData201 =
 
 export const InternalControllerDeleteUserData201 =
   BattleAcceptedResponseDto_Output;
-
-export const InternalControllerListPvpWinsQuery = Schema.Struct({
-  afterBattleId: Schema.optional(Schema.String),
-  since: Schema.String,
-  before: Schema.String,
-  limit: Schema.optional(Schema.NumberFromString),
-});
-
-export const InternalControllerListPvpWins200 = Schema.Struct({
-  wins: Schema.Array(
-    Schema.Struct({
-      battleId: Schema.String,
-      userId: Schema.String,
-      wonAt: Schema.String,
-    }),
-  ),
-}).annotate({ identifier: "PvpWinsResponseDto" });

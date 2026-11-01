@@ -27,7 +27,6 @@ import { TimersHandlers } from "./timers/timers.handlers.js";
 import { UserLootlogConfigHandlers } from "./user-lootlog-config/user-lootlog-config.handlers.js";
 import { UsersHandlers } from "./users/users.handlers.js";
 import { UserThemesHandlers } from "./user-themes/user-themes.handlers.js";
-import { FactionWarsHandlers } from "./faction-wars/faction-wars.handlers.js";
 
 export const LootlogApiHandlers = Layer.mergeAll(
   UsersHandlers,
@@ -58,5 +57,4 @@ export const LootlogApiHandlers = Layer.mergeAll(
   PublicGuildStatsCardHandlers,
   DocsHandlers,
   UserThemesHandlers,
-  FactionWarsHandlers,
 );

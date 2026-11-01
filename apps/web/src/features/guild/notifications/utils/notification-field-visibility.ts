@@ -18,8 +18,6 @@ export const getNotificationFieldVisibility = (
 
   return {
     isScheduledMessage,
-    isTimerRule: triggerType === NotificationTriggerType.TIMER_BEFORE_SPAWN,
-    isFactionWar: triggerType === NotificationTriggerType.FACTION_WAR,
     isRecurring,
     showScheduledAtField:
       isScheduledMessage &&

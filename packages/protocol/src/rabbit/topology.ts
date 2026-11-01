@@ -18,7 +18,6 @@ export const RabbitRoutingKey = {
   USERS_ONLINE_CHECKPOINT_V1: "users.online.checkpoint.v1",
   USERS_ONLINE_CHECKPOINT_V1_RETRY: "users.online.checkpoint.v1.retry",
   USERS_ONLINE_CHECKPOINT_V1_DLQ: "users.online.checkpoint.v1.dlq",
-  FACTION_WAR_ONLINE_CHECKPOINT_DLQ: "faction-war.online.checkpoint.dlq",
   ACTIVITY_LOG_CREATE: "activity.log.create",
   ACTIVITY_LOG_CREATE_DLQ: "activity.log.create.dlq",
   ACTIVITY_LOG_CREATE_RETRY: "activity.log.create.retry",

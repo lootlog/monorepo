@@ -2392,28 +2392,10 @@ export type CreateLootResponseDtoOutputRejectedGuildsItem = {
   reason: CreateLootResponseDtoOutputRejectedGuildsItemReason;
 };
 
-export type FactionWarAwardDtoFaction = typeof FactionWarAwardDtoFaction[keyof typeof FactionWarAwardDtoFaction];
-
-
-export const FactionWarAwardDtoFaction = {
-  BARBATOS: 'BARBATOS',
-  TANROTH: 'TANROTH',
-} as const;
-
-export interface FactionWarAwardDto {
-  faction: FactionWarAwardDtoFaction;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  points: number;
-}
-
 export interface CreateLootResponseDtoOutput {
   id: number;
   submittedGuilds: CreateLootResponseDtoOutputSubmittedGuildsItem[];
   rejectedGuilds: CreateLootResponseDtoOutputRejectedGuildsItem[];
-  factionWar?: FactionWarAwardDto;
 }
 
 /**
@@ -3663,7 +3645,6 @@ export const GuildNotificationRulesResponseDtoItemsItemTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -3961,7 +3942,6 @@ export const NotificationRuleResponseDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -4215,7 +4195,6 @@ export const CreateNotificationRuleDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 export interface CreateNotificationRuleDto {
@@ -4333,7 +4312,6 @@ export const UpdateNotificationRuleDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 export interface UpdateNotificationRuleDto {
@@ -4473,7 +4451,6 @@ export const NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType = 
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -4581,7 +4558,6 @@ export const NotificationJobsResponseDtoPendingItemRuleTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -4891,7 +4867,6 @@ export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType = 
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -4999,7 +4974,6 @@ export const NotificationJobsResponseDtoHistoryItemRuleTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -5381,7 +5355,6 @@ export const WatchedItemResponseDtoNotificationRuleTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-  FACTION_WAR: 'FACTION_WAR',
 } as const;
 
 /**
@@ -8304,7 +8277,6 @@ export interface StatusOkResponseDtoOutput {
 export interface CreateKillResponseDtoOutput {
   updated: number;
   deduplicated?: boolean;
-  factionWar?: FactionWarAwardDto;
 }
 
 export type CreateKillDtoNpc = {

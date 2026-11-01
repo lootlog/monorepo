@@ -447,70 +447,46 @@ const BattlelogHandlers = Layer.mergeAll(
       ),
   ),
   HttpApiBuilder.group(BattlelogApi, "internal", (handlers) =>
-    handlers
-      .handleRaw("InternalControllerListPvpWins", ({ query }) =>
-        toResponse(
-          Effect.gen(function* () {
-            const request = yield* HttpServerRequest.HttpServerRequest;
-            const application = yield* BattlelogApplication;
+    handlers.handleRaw("InternalControllerDeleteUserData", () =>
+      toResponse(
+        Effect.gen(function* () {
+          const request = yield* HttpServerRequest.HttpServerRequest;
+          const application = yield* BattlelogApplication;
 
-            if (
-              !hasServiceAuthorization(
-                request.headers.authorization,
-                application.cleanupSecret,
-              )
-            ) {
-              return yield* new BattlelogOperationFailure({
-                operation: "InternalController_listPvpWins",
-                cause: new AuthenticationRequiredError(),
-              });
-            }
+          if (
+            !hasServiceAuthorization(
+              request.headers.authorization,
+              application.cleanupSecret,
+            )
+          ) {
+            return yield* new BattlelogOperationFailure({
+              operation: "InternalController_deleteUserData",
+              cause: new AuthenticationRequiredError(),
+            });
+          }
 
-            const services = yield* operations;
+          const body: DeleteUserData = yield* HttpServerRequest.schemaBodyJson(
+            DeleteUserDataSchema,
+            {
+              onExcessProperty: "error",
+            },
+          ).pipe(
+            Effect.mapError(
+              (cause) =>
+                new BattlelogOperationFailure({
+                  operation: "InternalController_deleteUserData",
+                  cause,
+                }),
+            ),
+          );
 
-            return yield* services.internal.listPvpWins(query);
-          }),
-          200,
-        ),
-      )
-      .handleRaw("InternalControllerDeleteUserData", () =>
-        toResponse(
-          Effect.gen(function* () {
-            const request = yield* HttpServerRequest.HttpServerRequest;
-            const application = yield* BattlelogApplication;
+          const services = yield* operations;
 
-            if (
-              !hasServiceAuthorization(
-                request.headers.authorization,
-                application.cleanupSecret,
-              )
-            ) {
-              return yield* new BattlelogOperationFailure({
-                operation: "InternalController_deleteUserData",
-                cause: new AuthenticationRequiredError(),
-              });
-            }
-
-            const body: DeleteUserData =
-              yield* HttpServerRequest.schemaBodyJson(DeleteUserDataSchema, {
-                onExcessProperty: "error",
-              }).pipe(
-                Effect.mapError(
-                  (cause) =>
-                    new BattlelogOperationFailure({
-                      operation: "InternalController_deleteUserData",
-                      cause,
-                    }),
-                ),
-              );
-
-            const services = yield* operations;
-
-            return yield* services.internal.deleteUserData(body);
-          }),
-          201,
-        ),
+          return yield* services.internal.deleteUserData(body);
+        }),
+        201,
       ),
+    ),
   ),
 ).pipe(
   Layer.provide(
