@@ -13,6 +13,10 @@ import {
   getPreferences,
 } from "../settings/settings.operations.js";
 import { getUserLootlogAccountConfig } from "../user-lootlog-config/user-lootlog-config.handlers.js";
+import {
+  getCharacterAuras,
+  getOwnCharacterAura,
+} from "../character-auras/character-auras.handlers.js";
 
 // A failed part is reported as unavailable instead of failing the others; the
 // client reads it again from the endpoint the part stands for.
@@ -69,6 +73,8 @@ export const getGameClientBootstrap = Effect.fn("getGameClientBootstrap")(
       userPreferences,
       lootlogConfig,
       settingsDocuments,
+      characterAura,
+      characterAuras,
     ] = yield* Effect.all(
       [
         guilds,
@@ -77,6 +83,8 @@ export const getGameClientBootstrap = Effect.fn("getGameClientBootstrap")(
           orUnavailable("lootlogConfig"),
         ),
         getPreferences(settingsQuery).pipe(orUnavailable("settingsDocuments")),
+        getOwnCharacterAura().pipe(orUnavailable("characterAura")),
+        getCharacterAuras().pipe(orUnavailable("characterAuras")),
       ],
       { concurrency: "unbounded" },
     );
@@ -87,6 +95,8 @@ export const getGameClientBootstrap = Effect.fn("getGameClientBootstrap")(
       lootlogConfig,
       settingsDocuments,
       guildTimerDocuments,
+      characterAura,
+      characterAuras,
     };
   },
 );

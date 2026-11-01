@@ -1,3 +1,4 @@
+import { useCharacterAuras } from "@/features/character-auras/hooks/use-character-auras";
 import { useEffect } from "react";
 import { useGlobalStore } from "@/store/global.store";
 import { EventDispatcher } from "@/lib/event-dispatcher";
@@ -47,6 +48,7 @@ const handleInitialEventsOnce = () => {
 export const useGameEventHandlers = () => {
   useCharacterTooltipCatchingGuilds();
   useCharacterTooltipGameEvents();
+  useCharacterAuras();
   useOnlineCharacterOwners();
   useOtherCatchingGuildGlow();
   useWhoIsHereLootlogHighlight();
