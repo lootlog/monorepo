@@ -4,6 +4,8 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import {
+  getCharacterAurasControllerGetAurasQueryKey,
+  getCharacterAurasControllerGetOwnAuraQueryKey,
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
@@ -124,6 +126,18 @@ const load = async (queryClient: QueryClient, signal: AbortSignal) => {
         accountId,
       }),
       response.lootlogConfig,
+    );
+
+  if (response.characterAura)
+    seed(
+      getCharacterAurasControllerGetOwnAuraQueryKey(),
+      response.characterAura,
+    );
+
+  if (response.characterAuras)
+    seed(
+      getCharacterAurasControllerGetAurasQueryKey(),
+      response.characterAuras,
     );
 
   if (response.settingsDocuments)

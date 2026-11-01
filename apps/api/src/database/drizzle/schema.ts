@@ -1190,6 +1190,33 @@ export const userSettingsTable = pgTable(
 );
 
 /**
+ * The aura a User wears on every character they play with Lootlog. Users live
+ * in the auth service, so `userId` has no foreign key.
+ */
+export const userCharacterAuraTable = pgTable("UserCharacterAura", {
+  userId: text("userId").notNull().primaryKey(),
+  auraId: text("auraId").notNull(),
+  updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
+});
+
+/**
+ * Margonem accounts the Game client played with while its User wore an aura,
+ * so other players' clients can find the aura by the account they see. An
+ * account belongs to the User who played it last.
+ */
+export const userCharacterAuraGameAccountTable = pgTable(
+  "UserCharacterAuraGameAccount",
+  {
+    gameAccountId: text("gameAccountId").notNull().primaryKey(),
+    userId: text("userId").notNull(),
+    linkedAt: timestamp("linkedAt", { mode: "date", precision: 3 }).notNull(),
+  },
+  (table) => [
+    index("UserCharacterAuraGameAccount_userId_idx").on(table.userId),
+  ],
+);
+
+/**
  * A User's own web theme: a built-in base plus their changes. A share token,
  * while set, lets anyone with the link read the theme to save a copy.
  */

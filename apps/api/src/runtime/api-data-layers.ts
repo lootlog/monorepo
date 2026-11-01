@@ -31,6 +31,7 @@ import {
 } from "#src/runtime/background/background-layers";
 import { chatData } from "#src/runtime/features/chat";
 import { globalChatData } from "#src/runtime/features/global-chat";
+import { characterAurasData } from "#src/runtime/features/character-auras";
 import { messagingData } from "#src/runtime/features/messaging";
 import { publicSystemData } from "#src/runtime/features/public-system";
 import {
@@ -67,6 +68,7 @@ const coreDataLayers = Layer.mergeAll(
   readyRoomData,
   chatData,
   globalChatData,
+  characterAurasData,
   userLootlogConfigData,
   rolesData,
   guildConfigurationData,
