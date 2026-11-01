@@ -56,8 +56,6 @@ import { Route as AuthenticatedAtmeBattlePanelIndexRouteImport } from './routes/
 import { Route as AuthenticatedAtmeBattlePanelAbyssRouteImport } from './routes/_authenticated/@me/battle-panel/abyss'
 import { Route as AuthenticatedAtmeBattlePanelOpponentsRouteImport } from './routes/_authenticated/@me/battle-panel/opponents'
 import { Route as AuthenticatedAtmeBattlePanelStatisticsRouteImport } from './routes/_authenticated/@me/battle-panel/statistics'
-import { Route as AuthenticatedAtmeFactionWarIndexRouteImport } from './routes/_authenticated/@me/faction-war/index'
-import { Route as AuthenticatedAtmeFactionWarRankingRouteImport } from './routes/_authenticated/@me/faction-war/ranking'
 import { Route as AuthenticatedAtmeSettingsIndexRouteImport } from './routes/_authenticated/@me/settings/index'
 import { Route as AuthenticatedAtmeSettingsAccountRouteImport } from './routes/_authenticated/@me/settings/account'
 import { Route as AuthenticatedAtmeSettingsAppearanceRouteImport } from './routes/_authenticated/@me/settings/appearance'
@@ -367,18 +365,6 @@ const AuthenticatedAtmeBattlePanelStatisticsRoute =
     path: '/statistics',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
   } as any)
-const AuthenticatedAtmeFactionWarIndexRoute =
-  AuthenticatedAtmeFactionWarIndexRouteImport.update({
-    id: '/faction-war/',
-    path: '/faction-war/',
-    getParentRoute: () => AuthenticatedAtmeRoute,
-  } as any)
-const AuthenticatedAtmeFactionWarRankingRoute =
-  AuthenticatedAtmeFactionWarRankingRouteImport.update({
-    id: '/faction-war/ranking',
-    path: '/faction-war/ranking',
-    getParentRoute: () => AuthenticatedAtmeRoute,
-  } as any)
 const AuthenticatedAtmeSettingsIndexRoute =
   AuthenticatedAtmeSettingsIndexRouteImport.update({
     id: '/',
@@ -634,7 +620,6 @@ export interface FileRoutesByFullPath {
   '/@me/battle-panel/abyss': typeof AuthenticatedAtmeBattlePanelAbyssRoute
   '/@me/battle-panel/opponents': typeof AuthenticatedAtmeBattlePanelOpponentsRoute
   '/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
-  '/@me/faction-war/ranking': typeof AuthenticatedAtmeFactionWarRankingRoute
   '/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
   '/@me/settings/servers': typeof AuthenticatedAtmeSettingsServersRoute
@@ -645,7 +630,6 @@ export interface FileRoutesByFullPath {
   '/$guildId/settings/': typeof AuthenticatedGuildIdSettingsIndexRoute
   '/$guildId/stats/': typeof AuthenticatedGuildIdStatsIndexRoute
   '/@me/battle-panel/': typeof AuthenticatedAtmeBattlePanelIndexRoute
-  '/@me/faction-war/': typeof AuthenticatedAtmeFactionWarIndexRoute
   '/@me/settings/': typeof AuthenticatedAtmeSettingsIndexRoute
   '/$guildId/events/$eventId/edit': typeof AuthenticatedGuildIdEventsEventIdEditRouteWithChildren
   '/$guildId/events/$eventId/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
@@ -710,7 +694,6 @@ export interface FileRoutesByTo {
   '/@me/battle-panel/abyss': typeof AuthenticatedAtmeBattlePanelAbyssRoute
   '/@me/battle-panel/opponents': typeof AuthenticatedAtmeBattlePanelOpponentsRoute
   '/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
-  '/@me/faction-war/ranking': typeof AuthenticatedAtmeFactionWarRankingRoute
   '/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
   '/@me/settings/servers': typeof AuthenticatedAtmeSettingsServersRoute
@@ -721,7 +704,6 @@ export interface FileRoutesByTo {
   '/$guildId/settings': typeof AuthenticatedGuildIdSettingsIndexRoute
   '/$guildId/stats': typeof AuthenticatedGuildIdStatsIndexRoute
   '/@me/battle-panel': typeof AuthenticatedAtmeBattlePanelIndexRoute
-  '/@me/faction-war': typeof AuthenticatedAtmeFactionWarIndexRoute
   '/@me/settings': typeof AuthenticatedAtmeSettingsIndexRoute
   '/$guildId/events/$eventId/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   '/$guildId/events/$eventId/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
@@ -795,7 +777,6 @@ export interface FileRoutesById {
   '/_authenticated/@me/battle-panel/abyss': typeof AuthenticatedAtmeBattlePanelAbyssRoute
   '/_authenticated/@me/battle-panel/opponents': typeof AuthenticatedAtmeBattlePanelOpponentsRoute
   '/_authenticated/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
-  '/_authenticated/@me/faction-war/ranking': typeof AuthenticatedAtmeFactionWarRankingRoute
   '/_authenticated/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/_authenticated/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
   '/_authenticated/@me/settings/servers': typeof AuthenticatedAtmeSettingsServersRoute
@@ -806,7 +787,6 @@ export interface FileRoutesById {
   '/_authenticated/$guildId/settings/': typeof AuthenticatedGuildIdSettingsIndexRoute
   '/_authenticated/$guildId/stats/': typeof AuthenticatedGuildIdStatsIndexRoute
   '/_authenticated/@me/battle-panel/': typeof AuthenticatedAtmeBattlePanelIndexRoute
-  '/_authenticated/@me/faction-war/': typeof AuthenticatedAtmeFactionWarIndexRoute
   '/_authenticated/@me/settings/': typeof AuthenticatedAtmeSettingsIndexRoute
   '/_authenticated/$guildId/events_/$eventId_/edit': typeof AuthenticatedGuildIdEventsEventIdEditRouteWithChildren
   '/_authenticated/$guildId/events_/$eventId_/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
@@ -883,7 +863,6 @@ export interface FileRouteTypes {
     | '/@me/battle-panel/abyss'
     | '/@me/battle-panel/opponents'
     | '/@me/battle-panel/statistics'
-    | '/@me/faction-war/ranking'
     | '/@me/settings/account'
     | '/@me/settings/appearance'
     | '/@me/settings/servers'
@@ -894,7 +873,6 @@ export interface FileRouteTypes {
     | '/$guildId/settings/'
     | '/$guildId/stats/'
     | '/@me/battle-panel/'
-    | '/@me/faction-war/'
     | '/@me/settings/'
     | '/$guildId/events/$eventId/edit'
     | '/$guildId/events/$eventId/kills'
@@ -959,7 +937,6 @@ export interface FileRouteTypes {
     | '/@me/battle-panel/abyss'
     | '/@me/battle-panel/opponents'
     | '/@me/battle-panel/statistics'
-    | '/@me/faction-war/ranking'
     | '/@me/settings/account'
     | '/@me/settings/appearance'
     | '/@me/settings/servers'
@@ -970,7 +947,6 @@ export interface FileRouteTypes {
     | '/$guildId/settings'
     | '/$guildId/stats'
     | '/@me/battle-panel'
-    | '/@me/faction-war'
     | '/@me/settings'
     | '/$guildId/events/$eventId/kills'
     | '/$guildId/events/$eventId/ranking'
@@ -1043,7 +1019,6 @@ export interface FileRouteTypes {
     | '/_authenticated/@me/battle-panel/abyss'
     | '/_authenticated/@me/battle-panel/opponents'
     | '/_authenticated/@me/battle-panel/statistics'
-    | '/_authenticated/@me/faction-war/ranking'
     | '/_authenticated/@me/settings/account'
     | '/_authenticated/@me/settings/appearance'
     | '/_authenticated/@me/settings/servers'
@@ -1054,7 +1029,6 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId/settings/'
     | '/_authenticated/$guildId/stats/'
     | '/_authenticated/@me/battle-panel/'
-    | '/_authenticated/@me/faction-war/'
     | '/_authenticated/@me/settings/'
     | '/_authenticated/$guildId/events_/$eventId_/edit'
     | '/_authenticated/$guildId/events_/$eventId_/kills'
@@ -1425,20 +1399,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/@me/battle-panel/statistics'
       preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsRouteImport
       parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
-    }
-    '/_authenticated/@me/faction-war/': {
-      id: '/_authenticated/@me/faction-war/'
-      path: '/faction-war'
-      fullPath: '/@me/faction-war/'
-      preLoaderRoute: typeof AuthenticatedAtmeFactionWarIndexRouteImport
-      parentRoute: typeof AuthenticatedAtmeRoute
-    }
-    '/_authenticated/@me/faction-war/ranking': {
-      id: '/_authenticated/@me/faction-war/ranking'
-      path: '/faction-war/ranking'
-      fullPath: '/@me/faction-war/ranking'
-      preLoaderRoute: typeof AuthenticatedAtmeFactionWarRankingRouteImport
-      parentRoute: typeof AuthenticatedAtmeRoute
     }
     '/_authenticated/@me/settings/': {
       id: '/_authenticated/@me/settings/'
@@ -2017,8 +1977,6 @@ interface AuthenticatedAtmeRouteChildren {
   AuthenticatedAtmeSettingsRoute: typeof AuthenticatedAtmeSettingsRouteWithChildren
   AuthenticatedAtmeStatisticsRoute: typeof AuthenticatedAtmeStatisticsRoute
   AuthenticatedAtmeIndexRoute: typeof AuthenticatedAtmeIndexRoute
-  AuthenticatedAtmeFactionWarRankingRoute: typeof AuthenticatedAtmeFactionWarRankingRoute
-  AuthenticatedAtmeFactionWarIndexRoute: typeof AuthenticatedAtmeFactionWarIndexRoute
 }
 
 const AuthenticatedAtmeRouteChildren: AuthenticatedAtmeRouteChildren = {
@@ -2030,9 +1988,6 @@ const AuthenticatedAtmeRouteChildren: AuthenticatedAtmeRouteChildren = {
   AuthenticatedAtmeSettingsRoute: AuthenticatedAtmeSettingsRouteWithChildren,
   AuthenticatedAtmeStatisticsRoute: AuthenticatedAtmeStatisticsRoute,
   AuthenticatedAtmeIndexRoute: AuthenticatedAtmeIndexRoute,
-  AuthenticatedAtmeFactionWarRankingRoute:
-    AuthenticatedAtmeFactionWarRankingRoute,
-  AuthenticatedAtmeFactionWarIndexRoute: AuthenticatedAtmeFactionWarIndexRoute,
 }
 
 const AuthenticatedAtmeRouteWithChildren =

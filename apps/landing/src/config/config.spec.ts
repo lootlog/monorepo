@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { resolveAddonUrl } from "./addon";
-import { resolveApiUrl } from "./api";
 import { createAuthCallbackUrl, resolveAuthServiceUrl } from "./auth";
 
 describe("public landing configuration", () => {
@@ -11,7 +10,6 @@ describe("public landing configuration", () => {
     expect(resolveAuthServiceUrl("https://auth.example")).toBe(
       "https://auth.example",
     );
-    expect(resolveApiUrl("https://api.example")).toBe("https://api.example");
   });
 
   it("keeps the local and release fallbacks", () => {
@@ -19,7 +17,6 @@ describe("public landing configuration", () => {
       "https://github.com/lootlog/monorepo/releases/latest",
     );
     expect(resolveAuthServiceUrl()).toBe("http://localhost/api/auth");
-    expect(resolveApiUrl()).toBe("http://localhost/api/lootlog");
   });
 
   it("preserves the Better Auth callback path", () => {

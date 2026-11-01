@@ -18,12 +18,16 @@ import type { useNotificationRuleForm } from "./hooks/use-notification-rule-form
 
 type Props = Pick<
   ReturnType<typeof useNotificationRuleForm>,
-  "isTimerRule" | "form" | "t"
+  "isScheduledMessage" | "form" | "t"
 >;
 
-export const NotificationTimerFields = ({ isTimerRule, form, t }: Props) => (
+export const NotificationTimerFields = ({
+  isScheduledMessage,
+  form,
+  t,
+}: Props) => (
   <>
-    {isTimerRule ? (
+    {!isScheduledMessage ? (
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField
           control={form.control}

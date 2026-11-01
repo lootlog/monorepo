@@ -25,9 +25,6 @@ export enum Queue {
   // game
   GAME_CHARACTER_OFFLINE = "backend-game-character-offline",
   GAME_CHARACTER_OFFLINE_DLQ = "backend-game-character-offline.dlq",
-  // faction wars
-  FACTION_WAR_ONLINE_CHECKPOINT = "backend-faction-war-online-checkpoint-v1",
-  FACTION_WAR_ONLINE_CHECKPOINT_DLQ = "backend-faction-war-online-checkpoint-v1.dlq",
   // notifications
   NOTIFICATIONS_LOOT_CREATED = "backend-notifications-loot-created",
   NOTIFICATIONS_LOOT_CREATED_DLQ = "backend-notifications-loot-created.dlq",

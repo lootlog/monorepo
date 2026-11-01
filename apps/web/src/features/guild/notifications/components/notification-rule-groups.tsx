@@ -15,7 +15,6 @@ import { useCancelNotificationJob } from "./use-cancel-notification-job";
 const GROUP_ORDER = [
   NotificationTriggerType.TIMER_BEFORE_SPAWN,
   NotificationTriggerType.SCHEDULED_MESSAGE,
-  NotificationTriggerType.FACTION_WAR,
 ] as const;
 
 type NotificationRuleGroupsProps = {
@@ -24,10 +23,7 @@ type NotificationRuleGroupsProps = {
   emptyLabel: string;
 };
 
-/**
- * Rules grouped by what triggers them: spawn reminders, scheduled messages,
- * then faction war announcements.
- */
+/** Rules grouped by what triggers them: spawn reminders, then scheduled messages. */
 export const NotificationRuleGroups = ({
   overview,
   rules,

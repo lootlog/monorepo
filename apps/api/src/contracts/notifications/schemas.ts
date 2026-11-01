@@ -380,7 +380,6 @@ export const CreateNotificationRuleRequest = Schema.Struct({
   .check(
     Schema.makeFilter((data) =>
       data.triggerType === "SCHEDULED_MESSAGE" ||
-      data.triggerType === "FACTION_WAR" ||
       (data.world !== undefined && data.world.length > 0)
         ? undefined
         : {

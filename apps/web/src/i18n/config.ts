@@ -21,7 +21,6 @@ import auth from "./translations/auth.json";
 import layout from "./translations/layout.json";
 import ui from "./translations/ui.json";
 import docs from "./translations/docs.json";
-import factionWar from "./translations/faction-war.json";
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -47,7 +46,6 @@ i18n.use(initReactI18next).init({
         layout,
         ui,
         docs,
-        factionWar,
       },
     },
   },

@@ -11,10 +11,7 @@ type Props = Pick<
   "form" | "t" | "getDefaultContentTemplate"
 >;
 
-/**
- * What triggers the rule: a monster's spawn window, a time of day, or the
- * faction war.
- */
+/** What triggers the rule: a monster's spawn window, or a time of day. */
 export const NotificationTriggerField = ({
   form,
   t,
@@ -29,12 +26,10 @@ export const NotificationTriggerField = ({
     form.setValue("triggerType", nextType, { shouldDirty: true });
     form.setValue("contentTemplate", getDefaultContentTemplate(nextType));
 
-    if (nextType !== NotificationTriggerType.TIMER_BEFORE_SPAWN) {
+    if (nextType === NotificationTriggerType.SCHEDULED_MESSAGE) {
       form.setValue("world", ALL_WORLDS_VALUE);
       form.setValue("npcIds", []);
-    }
-
-    if (nextType !== NotificationTriggerType.SCHEDULED_MESSAGE) {
+    } else {
       form.setValue("scheduledAt", "");
     }
   };
@@ -69,17 +64,6 @@ export const NotificationTriggerField = ({
             ),
             description: t(
               "settings.notifications.ruleDialog.triggerOptions.scheduledMessage",
-            ),
-          },
-          {
-            value: NotificationTriggerType.FACTION_WAR,
-            title: t(
-              getNotificationTriggerTranslationKey(
-                NotificationTriggerType.FACTION_WAR,
-              ),
-            ),
-            description: t(
-              "settings.notifications.ruleDialog.triggerOptions.factionWar",
             ),
           },
         ]}
