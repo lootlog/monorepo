@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2, Megaphone } from "lucide-react";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { getApiErrorStatus } from "@lootlog/client/transport";
 import {
   useGlobalChatControllerSendMessage,
@@ -70,7 +70,7 @@ export const GlobalChatInput = ({
       onError: (error) => {
         const status = getApiErrorStatus(error);
 
-        toast.error(t(sendErrorKey(status)));
+        showRuntimeMessage(t(sendErrorKey(status)));
 
         if (status === 403) onRefused();
       },

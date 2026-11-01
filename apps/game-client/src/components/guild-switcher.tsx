@@ -15,7 +15,7 @@ import { useWindowsStore } from "@/store/windows.store";
 import { Settings } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { GuildSwitcherItem } from "@/components/guild-switcher-item";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 /**
  * The one Lootlog picker for in-game windows: a flat, full-width tile row the
@@ -171,28 +171,18 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
       return;
     }
 
-    // Both writes derive from the cache at the moment they run, so a hide
-    // followed by a quick undo, or two hides in a row, never drop each other.
+    // The write derives from the cache at the moment it runs, so two hides in
+    // a row never drop each other.
     updatePreferences.mutateFromCurrent(
       (current) => ({
         hiddenGuildIds: [...(current?.hiddenGuildIds ?? []), guildIdToHide],
       }),
       {
         onSuccess: () => {
-          toast.success(t("guildSwitcher.hidden", { name: guildName }), {
-            action: {
-              label: t("actions.undo"),
-              onClick: () =>
-                updatePreferences.mutateFromCurrent((current) => ({
-                  hiddenGuildIds: (current?.hiddenGuildIds ?? []).filter(
-                    (hiddenGuildId) => hiddenGuildId !== guildIdToHide,
-                  ),
-                })),
-            },
-          });
+          showRuntimeMessage(t("guildSwitcher.hidden", { name: guildName }));
         },
         onError: () => {
-          toast.error(t("guildSwitcher.hideError"));
+          showRuntimeMessage(t("guildSwitcher.hideError"));
         },
       },
     );

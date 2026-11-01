@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useCurrentGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
@@ -81,7 +81,7 @@ export const areMapPingsEnabled = () =>
   Boolean(useGameStore.getState().game?.hero.accountId) &&
   normalizePings(readSettingsValue("gameData.pings")).enabled;
 
-/** Throttled toast for rejections the player can act on. */
+/** Throttled game message for rejections the player can act on. */
 export const useRejectedPingHint = () => {
   const lastHintAtRef = useRef(0);
   const { t } = useTranslation("pings");
@@ -102,7 +102,7 @@ export const useRejectedPingHint = () => {
 
     lastHintAtRef.current = now;
 
-    toast.warning(
+    showRuntimeMessage(
       acknowledgement.code === "rate-limited"
         ? t("rateLimited", {
             seconds: Math.max(

@@ -15,7 +15,7 @@ import {
   useTimersControllerSearchNpcsWithTimerData,
 } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 const SECONDS_IN_HOUR = 3600;
 
@@ -466,7 +466,7 @@ export function useAddTimerForm({
     // organization's request settles on its own: a rejected one is counted in
     // the result instead of failing the mutation.
     const reportFailure = () =>
-      toast.error(t("messages.createFailed", { name: data.name }));
+      showRuntimeMessage(t("messages.createFailed", { name: data.name }));
 
     createManualTimer(timerData, {
       onSuccess: ({ failureCount }) => {

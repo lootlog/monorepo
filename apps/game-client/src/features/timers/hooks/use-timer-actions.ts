@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import {
   timersControllerDeleteTimer,
   timersControllerResetTimer,
@@ -181,11 +181,13 @@ export const useTimerActions = (
         );
 
         if (failures.length === 0) {
-          toast.success(t("messages.resetSuccess", { name: timer.npc.name }));
+          showRuntimeMessage(
+            t("messages.resetSuccess", { name: timer.npc.name }),
+          );
         } else if (failures.length === results.length) {
-          toast.error(getResetTimerErrorMessage(failures[0]?.reason));
+          showRuntimeMessage(getResetTimerErrorMessage(failures[0]?.reason));
         } else {
-          toast.error(
+          showRuntimeMessage(
             t("messages.resetPartialFailure", {
               name: timer.npc.name,
               succeeded: results.length - failures.length,
@@ -195,7 +197,7 @@ export const useTimerActions = (
         }
       },
       onError: (error) => {
-        toast.error(getResetTimerErrorMessage(error));
+        showRuntimeMessage(getResetTimerErrorMessage(error));
       },
     });
 
@@ -219,10 +221,10 @@ export const useTimerActions = (
         timerKey,
         world: deleteWorld,
       });
-      toast.success(t("messages.deleteSuccess", { name: timer.npc.name }));
+      showRuntimeMessage(t("messages.deleteSuccess", { name: timer.npc.name }));
     },
     onError: (error) => {
-      toast.error(getDeleteTimerErrorMessage(error));
+      showRuntimeMessage(getDeleteTimerErrorMessage(error));
     },
   });
 

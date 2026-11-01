@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,7 +83,7 @@ export const CreatePartyGatheringForm = () => {
 
   const onSubmit = async (data: FormData) => {
     if (targetGuildIds.length === 0) {
-      toast.error(t("form.selectGuild"));
+      showRuntimeMessage(t("form.selectGuild"));
 
       return;
     }
@@ -101,7 +101,7 @@ export const CreatePartyGatheringForm = () => {
       });
       reset();
     } catch (error) {
-      toast.error(getCreatePartyGatheringErrorMessage(error));
+      showRuntimeMessage(getCreatePartyGatheringErrorMessage(error));
     }
   };
 

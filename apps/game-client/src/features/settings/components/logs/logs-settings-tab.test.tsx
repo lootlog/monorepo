@@ -1,4 +1,3 @@
-import type { toast as SonnerToast } from "sonner";
 import {
   fireEvent,
   render,
@@ -11,11 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LogsSettingsTab } from "./logs-settings-tab";
 import { LOGS_STORAGE_KEY, useLogsStore } from "@/store/logs.store";
 import { useSettingsStore } from "@/store/settings.store";
-
-const toastMocks = vi.hoisted(() => ({
-  success: vi.fn<typeof SonnerToast.success>(),
-  error: vi.fn<typeof SonnerToast.error>(),
-}));
+import { captureRuntimeMessages } from "@/test/test-runtime-window";
 
 const mockClipboardWriteText = vi.fn<Clipboard["writeText"]>();
 
@@ -25,16 +20,12 @@ const mockRevokeObjectURL = vi.fn<typeof URL.revokeObjectURL>();
 
 const mockAnchorClick = vi.fn<HTMLAnchorElement["click"]>();
 
-vi.mock("sonner", () => ({
-  toast: {
-    success: toastMocks.success,
-    error: toastMocks.error,
-  },
-}));
+let messages: string[];
 
 describe("LogsSettingsTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    messages = captureRuntimeMessages();
     window.localStorage.removeItem(LOGS_STORAGE_KEY);
     useLogsStore.getState().clearActions();
     useSettingsStore.getState().setLootDebugLoggingEnabled(false);
@@ -270,9 +261,7 @@ describe("LogsSettingsTab", () => {
     );
 
     await waitFor(() => {
-      expect(toastMocks.success).toHaveBeenCalledWith(
-        "Akcja skopiowana do schowka",
-      );
+      expect(messages).toContain("Akcja skopiowana do schowka");
     });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
   });
@@ -300,10 +289,7 @@ describe("LogsSettingsTab", () => {
     expect(mockClipboardWriteText.mock.calls[0][0]).toContain(
       '"endpoint": "/loots"',
     );
-    expect(toastMocks.success).toHaveBeenCalledWith(
-      "Akcja skopiowana do schowka",
-    );
-    expect(toastMocks.error).not.toHaveBeenCalled();
+    expect(messages).toEqual(["Akcja skopiowana do schowka"]);
   });
 
   it("exports currently visible actions to json", async () => {
@@ -328,9 +314,7 @@ describe("LogsSettingsTab", () => {
     expect(exportedText).toContain('"actionType": "create_loot"');
     expect(exportedText).toContain('"endpoint": "/loots"');
     expect(exportedText).not.toContain('"actionType": "create_timer"');
-    expect(toastMocks.success).toHaveBeenCalledWith(
-      "Logi wyeksportowane do pliku",
-    );
+    expect(messages).toContain("Logi wyeksportowane do pliku");
   });
 
   it("shows request details and request copy button after expansion", async () => {
@@ -352,9 +336,7 @@ describe("LogsSettingsTab", () => {
     await user.click(screen.getByRole("button", { name: "Kopiuj żądanie" }));
 
     await waitFor(() => {
-      expect(toastMocks.success).toHaveBeenCalledWith(
-        "Żądanie skopiowane do schowka",
-      );
+      expect(messages).toContain("Żądanie skopiowane do schowka");
     });
     expect(screen.getByText("Odpowiedź")).toBeInTheDocument();
   });

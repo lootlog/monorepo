@@ -1,13 +1,6 @@
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { Profiler, type ProfilerOnRenderCallback } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@lootlog/ui/components/sonner";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
 import {
@@ -19,7 +12,10 @@ import {
   type GameNpcWithLocation,
 } from "@/store/npc-detector.store";
 import { useSettingsStore } from "@/store/settings.store";
-import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import {
+  captureRuntimeMessages,
+  setTestRuntimeGame,
+} from "@/test/test-runtime-window";
 import { NpcsList } from "./npcs-list";
 
 const createNpc = (id: number): GameNpcWithLocation => ({
@@ -339,7 +335,7 @@ it("restarts the countdown when the same NPC is notified again mid-cooldown", ()
   ).toBeNull();
 });
 
-it("keeps an accepted alert sent when chat publishing fails and retries only the chat step", async () => {
+it("keeps an accepted alert sent when chat publishing fails", async () => {
   const notify = vi.fn<(request: Request) => Promise<Response>>(() =>
     Promise.resolve(
       Response.json({ notificationId: "alert-1", guildIds: ["guild-1"] }),
@@ -368,8 +364,7 @@ it("keeps an accepted alert sent when chat publishing fails and retries only the
   );
   setTestRuntimeGame();
   vi.spyOn(console, "warn").mockImplementation(() => undefined);
-  const toaster = render(<Toaster />);
-  onTestFinished(() => toaster.unmount());
+  const messages = captureRuntimeMessages();
 
   mountNpcs([createNpc(1)], false, undefined, {
     ...defaultDetectorSettings,
@@ -383,19 +378,8 @@ it("keeps an accepted alert sent when chat publishing fails and retries only the
   // Clicking again would send another alert, so the row must leave its
   // sendable state even though chat failed.
   expect(await screen.findByRole("button", { name: "Wysłano" })).toBeDisabled();
-  expect(
-    screen.queryByText("Nie udało się wysłać komunikatu"),
-  ).not.toBeInTheDocument();
-
-  sendChat.mockResolvedValue(Response.json({ id: "message-1" }));
-  fireEvent.click(
-    await screen.findByRole("button", { name: "Spróbuj ponownie" }),
-  );
-  await waitFor(() => expect(sendChat).toHaveBeenCalledTimes(2));
-
+  expect(messages).toEqual([
+    "Powiadomienie wysłano, ale nie udało się zapisać go w czacie.",
+  ]);
   expect(notify).toHaveBeenCalledTimes(1);
-  expect(await sendChat.mock.calls[1]?.[0].json()).toMatchObject({
-    type: "NPC",
-    npc: { name: "NPC 1" },
-  });
 });

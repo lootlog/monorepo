@@ -2,7 +2,7 @@ import {
   applyGatheringUpdate,
   type ActivePartyGatheringsCache,
 } from "@/features/chat/active-party-gatherings-cache";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { ACTIVE_GATHERINGS_QUERY_KEY } from "@/features/chat/hooks/use-active-party-gatherings";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { decodePartyReadyRoomClientUpdate } from "@lootlog/schema/party-ready-room";
@@ -71,11 +71,11 @@ export const useCancelPartyGathering = () => {
     },
     onSuccess: () => {
       setOpen("party-finder", false);
-      toast.success(t("messages.cancelSuccess"));
+      showRuntimeMessage(t("messages.cancelSuccess"));
     },
     onError: (error) => {
       console.warn("Failed to cancel party gathering:", error);
-      toast.error(t("messages.cancelFailed"));
+      showRuntimeMessage(t("messages.cancelFailed"));
     },
   });
 };

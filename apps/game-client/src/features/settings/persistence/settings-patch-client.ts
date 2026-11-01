@@ -11,7 +11,7 @@ import {
   type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
 import type { QueryKey } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import {
   decodeSettingsDocuments,
   applyGuildSettingsOperation,
@@ -210,7 +210,7 @@ export const settingsPatchQueue = createSettingsPatchQueue({
       .getState()
       .setStatus(status, () => void settingsPatchQueue.retry()),
   onError: () => {
-    toast.error(getFixedT("settings")("saveStatus.error"));
+    showRuntimeMessage(getFixedT("settings")("saveStatus.error"));
   },
 });
 

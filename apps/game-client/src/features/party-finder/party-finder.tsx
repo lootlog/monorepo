@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
 import { cn } from "cn";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { ConfirmPopover } from "@/components/confirm-popover";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { WindowFooter } from "@/components/draggable-window/window-footer";
@@ -109,7 +109,9 @@ export const PartyFinder = () => {
               className="ll:min-w-0 ll:flex-1"
               onClick={() => {
                 void inviteParticipants().catch(() => {
-                  toast.error(t("gatherings.inviteFailed", { ns: "chat" }));
+                  showRuntimeMessage(
+                    t("gatherings.inviteFailed", { ns: "chat" }),
+                  );
                 });
               }}
               disabled={waitingCount === 0 || !canInviteParticipants()}

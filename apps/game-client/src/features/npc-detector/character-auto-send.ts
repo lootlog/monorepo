@@ -5,11 +5,11 @@ import {
   readCurrentSettingsDocuments,
 } from "@/features/settings/persistence/settings-patch-client";
 import { useGameStore } from "@/store/game.store";
-import { toast } from "sonner";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 /**
  * Flips the current character's detector auto-send switch for every monster
- * type. Skips the toast while the character is unknown and nothing was saved.
+ * type. Skips the message while the character is unknown and nothing was saved.
  */
 export const toggleCharacterDetectorAutoSend = () => {
   const enabled = !selectSettingsValue(
@@ -28,7 +28,7 @@ export const toggleCharacterDetectorAutoSend = () => {
   const t = getFixedT("npcDetector");
   const name = useGameStore.getState().game?.hero.name ?? "";
 
-  toast.success(
+  showRuntimeMessage(
     t(enabled ? "autoSend.enabled" : "autoSend.disabled", { name }),
   );
 };

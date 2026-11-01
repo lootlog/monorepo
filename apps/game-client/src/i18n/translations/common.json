@@ -14,7 +14,6 @@
     "clear": "Wyczyść",
     "close": "Zamknij",
     "openSettings": "Otwórz ustawienia",
-    "undo": "Cofnij",
     "copyAction": "Kopiuj akcję",
     "copyRequest": "Kopiuj żądanie",
     "exportJson": "Eksportuj JSON",
@@ -157,8 +156,7 @@
     }
   },
   "realtimeJoin": {
-    "rejected": "Serwer Lootloga odrzucił połączenie tej postaci",
-    "reconnect": "Połącz ponownie",
+    "rejected": "Serwer Lootloga odrzucił połączenie tej postaci.",
     "reasons": {
       "organizationAccessDenied": "Nie masz już dostępu do tego Lootloga.",
       "characterRequired": "Połączenie wymaga zalogowanej postaci w grze.",

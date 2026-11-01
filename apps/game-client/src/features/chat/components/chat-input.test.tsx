@@ -1,4 +1,3 @@
-import { toast } from "sonner";
 import {
   act,
   fireEvent,
@@ -26,7 +25,10 @@ import { useChatStore } from "@/store/chat.store";
 
 import { configureApiClients } from "@lootlog/client/transport";
 import { MessageType } from "@/api/chat.api";
-import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import {
+  captureRuntimeMessages,
+  setTestRuntimeGame,
+} from "@/test/test-runtime-window";
 
 import { ChatInput } from "./chat-input";
 
@@ -34,9 +36,10 @@ beforeEach(() =>
   setTestRuntimeGame({ world: "tempest", hero: { name: "CurrentHero" } }),
 );
 
+let messages: string[];
+
 beforeEach(() => {
-  vi.spyOn(toast, "error").mockImplementation(() => "error");
-  vi.spyOn(toast, "warning").mockImplementation(() => "warning");
+  messages = captureRuntimeMessages();
 });
 
 const sendRequest = vi.fn<typeof fetch>();
@@ -740,7 +743,7 @@ describe("ChatInput", () => {
     await waitFor(() => expect(notificationRequest).toHaveBeenCalledTimes(1));
     expect(sendRequest).not.toHaveBeenCalled();
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith(
+      expect(messages).toContain(
         "Wysyłasz zbyt szybko. Spróbuj ponownie za chwilę.",
       ),
     );
@@ -959,7 +962,7 @@ describe("ChatInput", () => {
     mockGuildPermissions = [Permission.OWNER];
     clearRequest.mockResolvedValue(Response.json({}, { status: 500 }));
     render(<ChatInput selectedGuildId="guild-1" />);
-    const messages = queryClient.getQueryData(chatQueryKey);
+    const chatMessages = queryClient.getQueryData(chatQueryKey);
 
     const editor = getEditor();
     await user.click(editor);
@@ -969,12 +972,12 @@ describe("ChatInput", () => {
     await user.click(screen.getByRole("button", { name: "Wyczyść" }));
 
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith(
+      expect(messages).toContain(
         "Nie udało się wyczyścić czatu. Spróbuj ponownie.",
       ),
     );
     expect(clearRequest).toHaveBeenCalledOnce();
-    expect(queryClient.getQueryData(chatQueryKey)).toBe(messages);
+    expect(queryClient.getQueryData(chatQueryKey)).toBe(chatMessages);
   });
 
   it("stops keyboard events from bubbling outside the editor", async () => {
@@ -1040,9 +1043,7 @@ describe("ChatInput", () => {
     await waitFor(() => {
       expect(editor).toHaveFocus();
     });
-    expect(toast.error).toHaveBeenCalledWith(
-      "Nie udało się wysłać wiadomości na czat",
-    );
+    expect(messages).toContain("Nie udało się wysłać wiadomości na czat");
     expect(editor.textContent).toBe("hello");
   });
 });
