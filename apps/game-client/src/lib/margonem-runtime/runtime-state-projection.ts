@@ -584,11 +584,25 @@ export class RuntimeStateProjection {
       });
     }
 
+    let native: RuntimeNpc | undefined;
+
     try {
-      return this.adapter.getNpc(entry.id);
+      native = this.adapter.getNpc(entry.id);
     } catch {
       return undefined;
     }
+
+    if (!native) return undefined;
+
+    // The game's NPC carries no entrance countdown; keep the projected one.
+    const nativeEntranceClosesAt = getProjectedEntranceClosesAt(
+      entry,
+      native.name,
+    );
+
+    return nativeEntranceClosesAt === undefined
+      ? native
+      : Object.freeze({ ...native, entranceClosesAt: nativeEntranceClosesAt });
   }
 
   // NpcManager.mergeNpcDataWithNpcIconData resolves raw icon.id to its string

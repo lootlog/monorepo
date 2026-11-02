@@ -1,5 +1,6 @@
 /** Pixel-art drawing primitives shared by the aura renderer and its decorations. */
-import { clamp, hslToRgb, rgba, TAU, type Rgb, type Rng } from "./math";
+import { clamp } from "es-toolkit";
+import { hslToRgb, rgba, TAU, type Rgb, type Rng } from "./math";
 import { context2d, createCanvas } from "./silhouette";
 
 export const ORTHO = [

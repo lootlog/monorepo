@@ -124,6 +124,10 @@ const getMergedServers = (
   ...new Set([...currentNotification.servers, ...nextNotification.servers]),
 ];
 
+/** One NPC on one world, the unit notification rows group by. */
+const getNpcWorldKey = (npcId: number | string, world: string) =>
+  `${npcId}:${world}`;
+
 /**
  * Players with automatic sending report the same NPC every few seconds, so
  * reports of one NPC on one world share a row while it is listed: the first
@@ -142,7 +146,7 @@ const getNpcGroupKey = (
     return undefined;
   }
 
-  return `${notification.npc.id}:${notification.world}${getHeroTrackerGroupKeySuffix(notification)}`;
+  return `${getNpcWorldKey(notification.npc.id, notification.world)}${getHeroTrackerGroupKeySuffix(notification)}`;
 };
 
 // Once a Hero Tracker's entrance opens, the row announcing it unclaimed is
@@ -156,7 +160,7 @@ const getSupersededHeroTrackerNotifications = (
   for (const notification of notifications) {
     if (!("heroTracker" in notification) || !notification.npc) continue;
 
-    const key = `${notification.npc.id}:${notification.world}`;
+    const key = getNpcWorldKey(notification.npc.id, notification.world);
 
     if (notification.heroTracker?.state === "open") openTrackerKeys.add(key);
     else if (notification.heroTracker?.state === "unclaimed")

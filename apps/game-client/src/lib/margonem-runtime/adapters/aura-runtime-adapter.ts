@@ -56,6 +56,12 @@ type AuraRuntimeWindow = Window & {
     rajCharacterHide?: {
       checkHideObject?: (character: RuntimeCanvasCharacter) => boolean;
     };
+    rajMassObjectHide?: {
+      checkMassObjectsHide?: (character: RuntimeCanvasCharacter) => boolean;
+    };
+    rajCharacterImageChangerManager?: {
+      checkHideObject?: (character: RuntimeCanvasCharacter) => boolean;
+    };
     interface?: { get$tipLayer?: () => ArrayLike<HTMLElement> | undefined };
   };
 };
@@ -153,14 +159,21 @@ export function captureCharacterFrame(
   return hasPixels(frame.image) ? frame : null;
 }
 
+/** The same checks that skip a character in Character.js `draw`. */
+function isHiddenByGame(character: RuntimeCanvasCharacter): boolean {
+  const engine = getRuntimeWindow().Engine;
+
+  return Boolean(
+    engine?.rajCharacterHide?.checkHideObject?.(character) ||
+    engine?.rajMassObjectHide?.checkMassObjectsHide?.(character) ||
+    engine?.rajCharacterImageChangerManager?.checkHideObject?.(character),
+  );
+}
+
 function toAuraCharacter(
   character: RuntimeCanvasCharacter | undefined,
 ): RuntimeAuraCharacter | null {
-  const engine = getRuntimeWindow().Engine;
-
-  if (!character || engine?.rajCharacterHide?.checkHideObject?.(character)) {
-    return null;
-  }
+  if (!character || isHiddenByGame(character)) return null;
 
   const frame = captureCharacterFrame(character);
 

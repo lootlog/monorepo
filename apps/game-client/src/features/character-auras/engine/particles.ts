@@ -1,4 +1,5 @@
-import { clamp, noise1, range, TAU, type Rng } from "./math";
+import { clamp } from "es-toolkit";
+import { noise1, range, TAU, type Rng } from "./math";
 
 /** How a particle moves and how the renderer draws it. */
 export type ParticleKind =

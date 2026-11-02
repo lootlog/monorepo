@@ -97,7 +97,17 @@ export class CharacterAuraTooltip {
     this.canvas.hidden = true;
   }
 
+  // A throw ends the loop and hides the canvas instead of leaving it frozen over the tip.
   private readonly render = (now: number): void => {
+    try {
+      this.renderFrame(now);
+    } catch (error) {
+      this.stop();
+      console.warn("[CharacterAuras] Tooltip aura failed:", error);
+    }
+  };
+
+  private renderFrame(now: number): void {
     this.frame = 0;
     const tip = this.tip;
     const aura = this.aura;
@@ -162,5 +172,5 @@ export class CharacterAuraTooltip {
     }
 
     this.frame = requestAnimationFrame(this.render);
-  };
+  }
 }
