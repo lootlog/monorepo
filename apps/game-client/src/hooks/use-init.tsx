@@ -45,7 +45,7 @@ export const useInit = () => {
 
     runtimeEventPipeline.install();
     runtimeInteractionCoordinator.install();
-    margonemRuntimeBridge.setupProxies();
+    margonemRuntimeBridge.install();
 
     margonemRuntimeBridge.setGameInitCallback(() => {
       if (!initialized.current) {

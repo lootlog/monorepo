@@ -3,7 +3,6 @@ import type {
   ChatMessageResponseDtoOutput as ChatMessageType,
   MemberSummaryResponseDtoOutput as GuildMember,
 } from "@lootlog/client/main";
-import { MessageScroller } from "@shadcn/react/message-scroller";
 import { memo } from "react";
 import type { ChatMentionContext } from "../chat-mentions.helpers";
 import {
@@ -14,6 +13,7 @@ import type { ChatTranscriptProps } from "./chat-transcript";
 import { ChatDateDivider } from "./chat-date-divider";
 import { ChatMessage } from "./chat-message";
 import { ChatNpcMessage } from "./chat-npc-message";
+import { ChatTranscriptItem } from "./chat-transcript-item";
 
 type Props = Pick<ChatTranscriptProps, "appearance" | "npcTypeColors"> & {
   row: ChatRenderableMessage;
@@ -63,18 +63,11 @@ export const ChatTranscriptRow = memo(function ChatTranscriptRow({
     .messageGapPx;
 
   return (
-    <MessageScroller.Item
+    <ChatTranscriptItem
       messageId={row.kind === "date-divider" ? undefined : row.message.id}
-      data-chat-row-key={row.key}
-      data-chat-highlighted={highlighted || undefined}
-      role="listitem"
-      style={{
-        backgroundColor: highlighted ? "rgba(255, 255, 255, 0.18)" : undefined,
-        paddingBlockStart:
-          row.kind === "npc-group" ? messageGap : messageGap / 2,
-        paddingBlockEnd: row.kind === "npc-group" ? 0 : messageGap / 2,
-      }}
-      className={`ll:min-w-0 ll:shrink-0 ll:pl-1.5 ll:pr-0.5 ll:odd:bg-white/5 ll:even:bg-black/25 ${row.kind !== "date-divider" ? "ll:odd:hover:bg-white/10 ll:even:hover:bg-white/10" : ""}`}
+      messageGap={messageGap}
+      flushBottom={row.kind === "npc-group"}
+      highlighted={highlighted}
     >
       {row.kind === "date-divider" ? (
         <ChatDateDivider timestamp={row.timestamp} />
@@ -102,6 +95,6 @@ export const ChatTranscriptRow = memo(function ChatTranscriptRow({
           onDelete={() => onDeleteMessage(row.message)}
         />
       )}
-    </MessageScroller.Item>
+    </ChatTranscriptItem>
   );
 }, areRowPropsEqual);

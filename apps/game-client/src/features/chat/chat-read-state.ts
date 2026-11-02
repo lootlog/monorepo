@@ -12,10 +12,13 @@ type ChatReadEntry = {
 
 export type ChatReadState = Record<string, ChatReadEntry[]>;
 
+/**
+ * Records an unread arrival. Whether it needs the player's attention is
+ * decided by `reconcileChatReadState` once the message is in the history.
+ */
 export const receiveChatMessage = (
   state: ChatReadState,
   message: ChatMessageResponseDtoOutput,
-  attention: boolean,
 ) => {
   if (message.type === "PARTY_GATHERING") return state;
   const entries = state[message.guildId] ?? [];
@@ -26,7 +29,7 @@ export const receiveChatMessage = (
     ...state,
     [message.guildId]: [
       ...entries,
-      { id: message.id, type: message.type, attention, read: false },
+      { id: message.id, type: message.type, attention: false, read: false },
     ].slice(-CHAT_MESSAGE_LIMIT),
   };
 };

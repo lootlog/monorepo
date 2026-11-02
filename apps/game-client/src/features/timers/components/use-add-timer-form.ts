@@ -458,15 +458,15 @@ export function useAddTimerForm({
       timerData.maxSeconds = parseDurationToSeconds(data.maxDuration);
     }
 
-    // The form stays open on failure so the player can retry. Each
-    // organization's request settles on its own: a rejected one is counted in
-    // the result instead of failing the mutation.
+    // The form stays open on failure so the player can retry. The request
+    // settles per Lootlog: a rejected one is listed in the result instead of
+    // failing the mutation.
     const reportFailure = () =>
       showRuntimeMessage(t("messages.createFailed", { name: data.name }));
 
     createManualTimer(timerData, {
-      onSuccess: ({ failureCount }) => {
-        if (failureCount > 0) {
+      onSuccess: ({ failed }) => {
+        if (failed.length > 0) {
           reportFailure();
 
           return;

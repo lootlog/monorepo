@@ -58,6 +58,11 @@ export type WindowFocusRequest = {
   returnFocusTo: HTMLElement | null;
 };
 
+const withFocusedWindow = (
+  state: { windowFocusHistory: WindowId[] },
+  windowId: WindowId,
+) => [windowId, ...state.windowFocusHistory.filter((id) => id !== windowId)];
+
 const createFocusRequest = (windowId: WindowId): WindowFocusRequest => {
   const activeElement = document.activeElement;
 
@@ -77,7 +82,7 @@ type WindowEntries = Record<Exclude<WindowId, "settings">, WindowData> & {
 };
 
 interface WindowsState extends WindowEntries {
-  currentWindowFocus?: WindowId;
+  /** Windows by recency of focus, most recent first; drives stacking. */
   windowFocusHistory: WindowId[];
   /**
    * The window a player just opened on purpose, waiting for its frame to move
@@ -103,7 +108,6 @@ interface WindowsState extends WindowEntries {
   setCollapsed: (window: WindowId, collapsed: boolean) => void;
   /** A player action: opening this way also moves keyboard focus into the window. */
   toggleOpen: (window: WindowId) => void;
-  setSettingsActiveTab: (activeTab?: SettingsTabValue) => void;
   /**
    * Restores every window's default geometry, opacity and lock while keeping
    * open state and window payloads, so the window the player is using stays
@@ -183,7 +187,6 @@ const RUNTIME_WINDOW_IDS = new Set<WindowId>(["extension-login", "app-error"]);
  * persisted state matches what hydration reads back from storage.
  */
 const TRANSIENT_FIELDS = new Set<string>([
-  "currentWindowFocus",
   "windowFocusHistory",
   "focusRequest",
   ...RUNTIME_WINDOW_IDS,
@@ -262,15 +265,6 @@ const migrateLegacyCommand = (state: RawPersistedWindows): void => {
     state.command = state["chat-input"];
     delete state["chat-input"];
   }
-
-  if (Array.isArray(state.windowFocusHistory)) {
-    state.windowFocusHistory = state.windowFocusHistory.map((id) =>
-      id === "chat-input" ? "command" : id,
-    );
-  }
-
-  if (state.currentWindowFocus === "chat-input")
-    state.currentWindowFocus = "command";
 };
 
 const migrateQuickAccessWidth = (state: RawPersistedWindows): void => {
@@ -284,13 +278,29 @@ const migrateQuickAccessWidth = (state: RawPersistedWindows): void => {
   }
 };
 
-const migrateSettingsTabToPath = (state: RawPersistedWindows): void => {
+const readSettingsState = (state: RawPersistedWindows) => {
   const settings = isObjectRecord(state.settings) ? state.settings : {};
   const settingsState = isObjectRecord(settings.state) ? settings.state : {};
 
-  const previousTab = isSettingsTab(settingsState.activeTab)
-    ? settingsState.activeTab
-    : undefined;
+  return { settings, settingsState };
+};
+
+const writeSettingsPath = (
+  state: RawPersistedWindows,
+  activeTab: string,
+  activeSubsection: string,
+): void => {
+  const { settings, settingsState } = readSettingsState(state);
+
+  state.settings = {
+    ...settings,
+    state: { ...settingsState, activeTab, activeSubsection },
+  };
+};
+
+const migrateSettingsTabToPath = (state: RawPersistedWindows): void => {
+  const { activeTab } = readSettingsState(state).settingsState;
+  const previousTab = isSettingsTab(activeTab) ? activeTab : undefined;
 
   // Version 12 mapped "appearance" to its chat subsection, which version 14
   // later moved into the chat domain; keep that historical destination.
@@ -299,97 +309,43 @@ const migrateSettingsTabToPath = (state: RawPersistedWindows): void => {
       ? { domain: "chat", subsection: "chat-appearance" }
       : resolveSettingsPath(previousTab);
 
-  state.settings = {
-    ...settings,
-    state: {
-      ...settingsState,
-      activeTab: nextPath.domain,
-      activeSubsection: nextPath.subsection,
-    },
-  };
+  writeSettingsPath(state, nextPath.domain, nextPath.subsection);
 };
 
 const migrateChatSettingsPath = (state: RawPersistedWindows): void => {
-  const settings = isObjectRecord(state.settings) ? state.settings : {};
-  const settingsState = isObjectRecord(settings.state) ? settings.state : {};
+  const { settingsState } = readSettingsState(state);
 
   if (
-    settingsState.activeTab !== "appearance" ||
-    settingsState.activeSubsection !== "chat"
+    settingsState.activeTab === "appearance" &&
+    settingsState.activeSubsection === "chat"
   ) {
-    return;
+    writeSettingsPath(state, "chat", "chat-appearance");
   }
-
-  state.settings = {
-    ...settings,
-    state: {
-      ...settingsState,
-      activeTab: "chat",
-      activeSubsection: "chat-appearance",
-    },
-  };
 };
 
 const migrateRoutingSettingsPath = (state: RawPersistedWindows): void => {
-  const settings = isObjectRecord(state.settings) ? state.settings : {};
-  const settingsState = isObjectRecord(settings.state) ? settings.state : {};
-
-  if (settingsState.activeSubsection !== "routing") return;
-
-  state.settings = {
-    ...settings,
-    state: {
-      ...settingsState,
-      activeTab: "detector",
-      activeSubsection: "detector",
-    },
-  };
+  if (readSettingsState(state).settingsState.activeSubsection === "routing") {
+    writeSettingsPath(state, "detector", "detector");
+  }
 };
 
 /** Moves the retired appearance/interface page into general and catching into its own domain. */
 const migrateGeneralSettingsPath = (state: RawPersistedWindows): void => {
-  const settings = isObjectRecord(state.settings) ? state.settings : {};
-  const settingsState = isObjectRecord(settings.state) ? settings.state : {};
+  const { activeSubsection } = readSettingsState(state).settingsState;
 
-  if (settingsState.activeSubsection === "interface") {
-    state.settings = {
-      ...settings,
-      state: {
-        ...settingsState,
-        activeTab: "general",
-        activeSubsection: "behavior",
-      },
-    };
-
-    return;
-  }
-
-  if (settingsState.activeSubsection === "catching") {
-    state.settings = {
-      ...settings,
-      state: {
-        ...settingsState,
-        activeTab: "catching",
-        activeSubsection: "catching",
-      },
-    };
+  if (activeSubsection === "interface") {
+    writeSettingsPath(state, "general", "behavior");
+  } else if (activeSubsection === "catching") {
+    writeSettingsPath(state, "catching", "catching");
   }
 };
 
 const migrateMutesSettingsPath = (state: RawPersistedWindows): void => {
-  const settings = isObjectRecord(state.settings) ? state.settings : {};
-  const settingsState = isObjectRecord(settings.state) ? settings.state : {};
+  const { activeSubsection } = readSettingsState(state).settingsState;
 
-  if (settingsState.activeSubsection !== "notification-mutes") return;
-
-  state.settings = {
-    ...settings,
-    state: {
-      ...settingsState,
-      activeTab: "mutes",
-      activeSubsection: "muted-players",
-    },
-  };
+  if (activeSubsection === "notification-mutes") {
+    writeSettingsPath(state, "mutes", "muted-players");
+  }
 };
 
 /** Settings-page relocations, applied in order for persisted versions below `since`. */
@@ -435,8 +391,9 @@ export const migrateWindowsState = (
 
   migrateLegacyWindowEntries(state);
 
+  // Focus became transient in version 10.
   if (version < 10) {
-    state.currentWindowFocus = undefined;
+    delete state.currentWindowFocus;
     state.windowFocusHistory = [];
   }
 
@@ -559,53 +516,28 @@ export const useWindowsStore = create<WindowsState>()(
   persist<WindowsState, [], [], RawPersistedWindows>(
     (set, get) => ({
       ...createDefaultWindows(),
-      currentWindowFocus: undefined,
       windowFocusHistory: [],
       focusRequest: undefined,
       setCurrentWindowFocus: (key: WindowId) =>
-        set((state) => {
-          if (
-            state.currentWindowFocus === key &&
-            state.windowFocusHistory[0] === key
-          ) {
-            return state;
-          }
-
-          const newHistory = [
-            key,
-            ...state.windowFocusHistory.filter((id) => id !== key),
-          ];
-
-          return {
-            currentWindowFocus: key,
-            windowFocusHistory: newHistory,
-          };
-        }),
+        set((state) =>
+          state.windowFocusHistory[0] === key
+            ? state
+            : { windowFocusHistory: withFocusedWindow(state, key) },
+        ),
       setOpen: (key, open, windowState) => {
         // Resolved outside `set`: a no-op call (detector or notification bursts
         // re-open an already focused window) must not run the persist write.
         const state = get();
         const currentWindow = state[key];
-        const hasWindowState = "state" in currentWindow;
-        let nextState = hasWindowState ? currentWindow.state : undefined;
-
-        if (windowState !== undefined) {
-          nextState = windowState;
-        }
 
         let nextHistory = state.windowFocusHistory;
 
         if (open) {
-          const isAlreadyFirst = state.windowFocusHistory[0] === key;
-
-          if (!isAlreadyFirst) {
-            nextHistory = [
-              key,
-              ...state.windowFocusHistory.filter((id) => id !== key),
-            ];
+          if (nextHistory[0] !== key) {
+            nextHistory = withFocusedWindow(state, key);
           }
-        } else if (state.windowFocusHistory.includes(key)) {
-          nextHistory = state.windowFocusHistory.filter((id) => id !== key);
+        } else if (nextHistory.includes(key)) {
+          nextHistory = nextHistory.filter((id) => id !== key);
         }
 
         const nextFocusRequest =
@@ -613,44 +545,25 @@ export const useWindowsStore = create<WindowsState>()(
             ? undefined
             : state.focusRequest;
 
-        let nextCurrentWindowFocus = state.currentWindowFocus;
-
-        if (open) {
-          nextCurrentWindowFocus = key;
-        } else if (state.currentWindowFocus === key) {
-          nextCurrentWindowFocus = undefined;
-        }
-
         const hasSameWindowState =
-          nextState === undefined ||
-          (hasWindowState && Object.is(currentWindow.state, nextState));
+          windowState === undefined ||
+          ("state" in currentWindow &&
+            Object.is(currentWindow.state, windowState));
 
         if (
           currentWindow.open === open &&
           hasSameWindowState &&
-          state.currentWindowFocus === nextCurrentWindowFocus &&
           state.windowFocusHistory === nextHistory &&
           state.focusRequest === nextFocusRequest
         ) {
           return;
         }
 
-        let nextWindow: WindowsState[WindowId] = {
-          ...currentWindow,
-          open,
-        };
-
-        if (nextState !== undefined) {
-          nextWindow = {
-            ...currentWindow,
-            open,
-            state: nextState,
-          };
-        }
-
         set({
-          [key]: nextWindow,
-          currentWindowFocus: nextCurrentWindowFocus,
+          [key]:
+            windowState === undefined
+              ? { ...currentWindow, open }
+              : { ...currentWindow, open, state: windowState },
           windowFocusHistory: nextHistory,
           focusRequest: nextFocusRequest,
         });
@@ -734,28 +647,6 @@ export const useWindowsStore = create<WindowsState>()(
             ? state
             : { [key]: { ...state[key], collapsed } },
         ),
-      setSettingsActiveTab: (activeTab) =>
-        set((state) => {
-          const nextPath = resolveSettingsPath(activeTab);
-
-          if (
-            state.settings.state.activeTab === nextPath.domain &&
-            state.settings.state.activeSubsection === nextPath.subsection
-          ) {
-            return state;
-          }
-
-          return {
-            settings: {
-              ...state.settings,
-              state: {
-                ...state.settings.state,
-                activeTab: nextPath.domain,
-                activeSubsection: nextPath.subsection,
-              },
-            },
-          };
-        }),
       resetWindowLayout: () =>
         set((state) => {
           const defaults = useWindowsStore.getInitialState();
@@ -793,27 +684,8 @@ export const useWindowsStore = create<WindowsState>()(
           },
         })),
       toggleOpen: (key: WindowId) => {
-        const curr = get()[key].open;
-        const focusRequest = curr ? undefined : createFocusRequest(key);
-        set((state) => {
-          const newHistory = !curr
-            ? [key, ...state.windowFocusHistory.filter((id) => id !== key)]
-            : state.windowFocusHistory.filter((id) => id !== key);
-
-          return {
-            [key]: {
-              ...state[key],
-              open: !curr,
-            },
-            currentWindowFocus: !curr ? key : undefined,
-            windowFocusHistory: newHistory,
-            focusRequest:
-              focusRequest ??
-              (state.focusRequest?.windowId === key
-                ? undefined
-                : state.focusRequest),
-          };
-        });
+        if (get()[key].open) get().setOpen(key, false);
+        else get().openAndFocus(key);
       },
     }),
     {

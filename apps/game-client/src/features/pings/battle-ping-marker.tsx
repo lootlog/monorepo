@@ -1,5 +1,4 @@
 import { getLootlogHostPortalThemeClassName } from "@/components/ui/theme-boundary";
-import { useSettingsStore } from "@/store/settings.store";
 import type { FC } from "react";
 import { BattlePingGlow } from "./battle-ping-glow";
 import { BattlePingGround } from "./battle-ping-ground";
@@ -24,10 +23,6 @@ export const BattlePingMarker: FC<BattlePingMarkerProps> = ({
   mark,
   target,
 }) => {
-  const animationEffectsEnabled = useSettingsStore(
-    (state) => state.animationEffectsEnabled,
-  );
-
   const pulse = useAnimationEffects();
 
   const attack = getPingPresentation("attack");
@@ -61,7 +56,7 @@ export const BattlePingMarker: FC<BattlePingMarkerProps> = ({
         {mark && markPresentation ? (
           <BattlePingIcon
             countdown={
-              animationEffectsEnabled
+              pulse
                 ? {
                     durationMs: markPresentation.durationMs,
                     expiresAt: mark.expiresAt,

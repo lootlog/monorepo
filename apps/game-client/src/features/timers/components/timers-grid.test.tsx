@@ -15,7 +15,7 @@ import {
 } from "../timer-fixtures";
 import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { TimersGrid } from "./timers-grid";
-import { getTimerListRemovalTimers } from "../timer-list-projection";
+import { getListedTimers } from "../timer-list-projection";
 import type { Timer } from "@/api/timers.api";
 
 const NOW = Date.parse("2026-04-22T10:00:00.000Z");
@@ -32,8 +32,6 @@ const createTimer = (name: string, guildId = "guild-1") => {
     ...timer,
     npc: { ...timer.npc, name },
     members: [createTimerMemberFixture()],
-    minTimeLeft: 5000,
-    maxTimeLeft: 10000,
   };
 };
 
@@ -195,7 +193,7 @@ it("keeps grouped reset pending and retryable when a refreshed snapshot changes 
   const content = (timers: Timer[]) => (
     <QueryClientProvider client={fixture.queryClient}>
       <TimersGrid
-        timers={getTimerListRemovalTimers(timers, true)}
+        timers={getListedTimers(timers, true)}
         settingsKey="global"
         hiddenTimers={[]}
         minColumnWidth={120}
@@ -264,7 +262,7 @@ it.each([false, true])(
     const content = (world: string) => (
       <QueryClientProvider client={fixture.queryClient}>
         <TimersGrid
-          timers={getTimerListRemovalTimers([{ ...timer, world }], grouped)}
+          timers={getListedTimers([{ ...timer, world }], grouped)}
           settingsKey={grouped ? "global" : timer.guildId}
           hiddenTimers={[]}
           minColumnWidth={120}

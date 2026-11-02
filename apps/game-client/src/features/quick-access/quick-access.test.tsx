@@ -40,7 +40,6 @@ describe("QuickAccess", () => {
         open: true,
         collapsed: false,
       },
-      currentWindowFocus: undefined,
       windowFocusHistory: [],
     }));
   });

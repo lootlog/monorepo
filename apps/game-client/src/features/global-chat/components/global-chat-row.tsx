@@ -1,4 +1,3 @@
-import { MessageScroller } from "@shadcn/react/message-scroller";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
@@ -8,6 +7,7 @@ import { useSharedContextMenuTarget } from "@/components/common/shared-context-m
 import { toWorldOption } from "@/components/world-combobox";
 import { ChatDateDivider } from "@/features/chat/components/chat-date-divider";
 import { ChatPlayerMessageView } from "@/features/chat/components/chat-player-message-view";
+import { ChatTranscriptItem } from "@/features/chat/components/chat-transcript-item";
 import { isChatMessageYesterdayOrOlder } from "@/features/chat/components/chat-message.helpers";
 import type { GlobalChatChannel } from "@/store/global-chat.store";
 import {
@@ -79,16 +79,9 @@ export const GlobalChatRow = memo(function GlobalChatRow({
 
   if (row.kind === "date-divider") {
     return (
-      <MessageScroller.Item
-        role="listitem"
-        style={{
-          paddingBlockStart: messageGap / 2,
-          paddingBlockEnd: messageGap / 2,
-        }}
-        className="ll:min-w-0 ll:shrink-0 ll:pl-1.5 ll:pr-0.5 ll:odd:bg-white/5 ll:even:bg-black/25"
-      >
+      <ChatTranscriptItem messageGap={messageGap}>
         <ChatDateDivider timestamp={row.timestamp} />
-      </MessageScroller.Item>
+      </ChatTranscriptItem>
     );
   }
 
@@ -97,15 +90,7 @@ export const GlobalChatRow = memo(function GlobalChatRow({
   const originWorld = context.showOriginWorld ? message.originWorld : undefined;
 
   return (
-    <MessageScroller.Item
-      messageId={message.id}
-      role="listitem"
-      style={{
-        paddingBlockStart: messageGap / 2,
-        paddingBlockEnd: messageGap / 2,
-      }}
-      className="ll:min-w-0 ll:shrink-0 ll:pl-1.5 ll:pr-0.5 ll:odd:bg-white/5 ll:even:bg-black/25 ll:odd:hover:bg-white/10 ll:even:hover:bg-white/10"
-    >
+    <ChatTranscriptItem messageId={message.id} messageGap={messageGap}>
       <ChatPlayerMessageView
         {...menuTarget}
         tabIndex={0}
@@ -157,6 +142,6 @@ export const GlobalChatRow = memo(function GlobalChatRow({
           </span>
         }
       />
-    </MessageScroller.Item>
+    </ChatTranscriptItem>
   );
 }, areRowPropsEqual);

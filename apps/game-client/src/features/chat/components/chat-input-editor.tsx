@@ -1,4 +1,4 @@
-import { getTextColor } from "@/utils/notifications-and-detector/background";
+import { getNotificationColors } from "@/utils/notifications-and-detector/background";
 import {
   CHAT_COMMAND_COLOR_KEYS,
   getChatCommandPrefix,
@@ -138,10 +138,10 @@ export const ChatInputEditor = forwardRef<
             data-slot="chat-input"
             style={{
               color: commandPrefix
-                ? getTextColor(
+                ? getNotificationColors(
                     CHAT_COMMAND_COLOR_KEYS[commandPrefix.mode],
                     true,
-                  )
+                  ).text
                 : undefined,
             }}
             className={cn(

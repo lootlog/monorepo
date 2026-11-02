@@ -76,16 +76,20 @@ describe("settings patch queue", () => {
 
   it("merges writes to the same document within the debounce window and sends one request", async () => {
     const { queue, send, applyOptimistic, statuses } = createHarness();
+    const invalidateLists = vi.fn();
+    const markSaved = vi.fn();
 
     queue.enqueue({
       operation: operation({ set: { notificationsVolume: 0.2 } }),
       queryKeys: [["/preferences"]],
+      afterSave: invalidateLists,
     });
     queue.enqueue({
       operation: operation({
         set: { notificationsConfig: { HERO: { soundUrl: "a" } } },
       }),
       queryKeys: [["/preferences"]],
+      afterSave: markSaved,
     });
     queue.enqueue({
       operation: operation({
@@ -109,6 +113,9 @@ describe("settings patch queue", () => {
       ],
     ]);
     expect(statuses.at(-1)).toBe("saved");
+    // A merged write must not drop the follow-up work of the earlier one.
+    expect(invalidateLists).toHaveBeenCalledOnce();
+    expect(markSaved).toHaveBeenCalledOnce();
   });
 
   describe.each([false, true])(
@@ -285,11 +292,9 @@ describe("settings patch queue", () => {
     await saving;
 
     expect(statuses.at(-1)).toBe("error");
-    expect(queue.hasPending()).toBe(true);
     await queue.retry();
 
     expect(statuses.at(-1)).toBe("saved");
-    expect(queue.hasPending()).toBe(false);
     expect(stored).toEqual(expected);
     expect(cached).toEqual(expected);
   });
@@ -426,7 +431,6 @@ describe("settings patch queue", () => {
       timers: { timersColors: { Heros: "red" } },
     });
     expect(statuses.at(-1)).toBe("saved");
-    expect(queue.hasPending()).toBe(false);
   });
 
   it("keeps the new color visible while its preceding reset response is applied", async () => {
@@ -491,7 +495,7 @@ describe("settings patch queue", () => {
 
     let failSave: (error: Error) => void = () => {};
 
-    const { queue, send } = createHarness((operations) => {
+    const { queue, send, statuses } = createHarness((operations) => {
       persisted = applyOperations(persisted, operations);
 
       return Promise.resolve({});
@@ -533,7 +537,7 @@ describe("settings patch queue", () => {
     expect(persisted).toEqual({
       timers: { timersColors: { Heros: "red" } },
     });
-    expect(queue.hasPending()).toBe(false);
+    expect(statuses.at(-1)).toBe("saved");
   });
 
   it("uses the save response instead of refetching when it fits the cache", async () => {
@@ -662,7 +666,6 @@ describe("settings patch queue", () => {
 
     expect(statuses.at(-1)).toBe("error");
     expect(reconcile).toHaveBeenCalledWith([["/preferences"]]);
-    expect(queue.hasPending()).toBe(true);
 
     shouldFail = false;
     await queue.retry();
@@ -672,7 +675,6 @@ describe("settings patch queue", () => {
       [operation({ set: { detectorVolume: 0.7 } })],
     ]);
     expect(statuses.at(-1)).toBe("saved");
-    expect(queue.hasPending()).toBe(false);
   });
 
   it("retries newer edits and other documents queued while a failed request was in flight", async () => {
@@ -716,7 +718,6 @@ describe("settings patch queue", () => {
 
     expect(send).toHaveBeenCalledTimes(1);
     expect(statuses.at(-1)).toBe("error");
-    expect(queue.hasPending()).toBe(true);
 
     await queue.retry();
 
@@ -745,7 +746,6 @@ describe("settings patch queue", () => {
       ["/guild-preferences"],
     ]);
     expect(statuses.at(-1)).toBe("saved");
-    expect(queue.hasPending()).toBe(false);
   });
 
   it.each([
@@ -802,14 +802,12 @@ describe("settings patch queue", () => {
     });
     await queue.flush();
 
-    expect(queue.hasPending()).toBe(true);
     expect(statuses.at(-1)).toBe("error");
 
     await queue.retry();
 
     expect(sentOperations(send)[2]).toEqual([failedOperation]);
     expect(statuses.at(-1)).toBe("saved");
-    expect(queue.hasPending()).toBe(false);
   });
 
   it("sends writes queued during an in-flight request afterwards instead of dropping them", async () => {

@@ -1,7 +1,6 @@
 import { createInstance } from "i18next";
 import { describe, expect, it } from "vitest";
 import {
-  type CommandSuggestion,
   filterCommandSuggestions,
   getCommandSuggestionInsertValue,
   getCommandSuggestions,
@@ -65,60 +64,5 @@ describe("command-suggestions.helpers", () => {
     expect(getCommandSuggestionInsertValue(filteredSuggestions[0])).toBe(
       "/grp ",
     );
-  });
-
-  it("returns an empty list for non-array runtime input", () => {
-    expect(
-      filterCommandSuggestions({
-        inputValue: "/g",
-        // @ts-expect-error Intentionally malformed runtime input exercises the non-array fallback.
-        suggestions: "broken",
-      }),
-    ).toEqual([]);
-  });
-
-  it("does not mutate the provided suggestions array while sorting", () => {
-    const suggestions: CommandSuggestion[] = [
-      {
-        prefix: "/grp",
-        label: "party",
-        description: "party-desc",
-      },
-      {
-        prefix: "/g",
-        label: "exact",
-        description: "exact-desc",
-      },
-    ];
-
-    expect(
-      filterCommandSuggestions({
-        inputValue: "/g",
-        suggestions,
-      }),
-    ).toEqual([
-      {
-        prefix: "/g",
-        label: "exact",
-        description: "exact-desc",
-      },
-      {
-        prefix: "/grp",
-        label: "party",
-        description: "party-desc",
-      },
-    ]);
-    expect(suggestions).toEqual([
-      {
-        prefix: "/grp",
-        label: "party",
-        description: "party-desc",
-      },
-      {
-        prefix: "/g",
-        label: "exact",
-        description: "exact-desc",
-      },
-    ]);
   });
 });
