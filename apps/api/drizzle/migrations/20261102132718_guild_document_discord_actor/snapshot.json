@@ -1,67 +1,41 @@
 {
   "id": "a1445489-9983-431f-83a4-36e892030817",
-  "prevIds": [
-    "db9b389c-b9f0-421f-bdcd-0f874a23d10b"
-  ],
+  "prevIds": ["db9b389c-b9f0-421f-bdcd-0f874a23d10b"],
   "version": "8",
   "dialect": "postgres",
   "ddl": [
     {
-      "values": [
-        "UNASSIGNED",
-        "UNCOVERED"
-      ],
+      "values": ["UNASSIGNED", "UNCOVERED"],
       "name": "CoverageGapType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "SYNCED",
-        "SYNCING",
-        "FAILED",
-        "STALE",
-        "NOT_FOUND"
-      ],
+      "values": ["SYNCED", "SYNCING", "FAILED", "STALE", "NOT_FOUND"],
       "name": "DiscordGuildSyncStatus",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "SIMPLE",
-        "ADVANCED"
-      ],
+      "values": ["SIMPLE", "ADVANCED"],
       "name": "EventScoringMode",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "pl",
-        "en"
-      ],
+      "values": ["pl", "en"],
       "name": "GameVersion",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "SAVE",
-        "DELETE",
-        "RESTORE"
-      ],
+      "values": ["SAVE", "DELETE", "RESTORE"],
       "name": "GuildDocumentHistoryAction",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "UNIQUE",
-        "HEROIC",
-        "LEGENDARY",
-        "UPGRADED"
-      ],
+      "values": ["UNIQUE", "HEROIC", "LEGENDARY", "UPGRADED"],
       "name": "ItemRarity",
       "entityType": "enums",
       "schema": "public"
@@ -106,42 +80,25 @@
       "schema": "public"
     },
     {
-      "values": [
-        "NONE",
-        "ITEM_OWNER",
-        "CHAT_MESSAGE"
-      ],
+      "values": ["NONE", "ITEM_OWNER", "CHAT_MESSAGE"],
       "name": "LootShareSource",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "LOOTBOX",
-        "DIALOG",
-        "FIGHT"
-      ],
+      "values": ["LOOTBOX", "DIALOG", "FIGHT"],
       "name": "LootSource",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "OWNER",
-        "ADMIN",
-        "USER",
-        "BOT"
-      ],
+      "values": ["OWNER", "ADMIN", "USER", "BOT"],
       "name": "MemberType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "SCHEDULED",
-        "INSTANT",
-        "TEST"
-      ],
+      "values": ["SCHEDULED", "INSTANT", "TEST"],
       "name": "NotificationJobKind",
       "entityType": "enums",
       "schema": "public"
@@ -160,56 +117,37 @@
       "schema": "public"
     },
     {
-      "values": [
-        "GUILD",
-        "USER"
-      ],
+      "values": ["GUILD", "USER"],
       "name": "NotificationOwnerType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "DISCORD"
-      ],
+      "values": ["DISCORD"],
       "name": "NotificationProvider",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "MIN_SPAWN",
-        "MAX_SPAWN"
-      ],
+      "values": ["MIN_SPAWN", "MAX_SPAWN"],
       "name": "NotificationScheduleAnchor",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "ONCE",
-        "HOURLY",
-        "DAILY",
-        "WEEKLY"
-      ],
+      "values": ["ONCE", "HOURLY", "DAILY", "WEEKLY"],
       "name": "NotificationScheduleIntervalType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "SPAWN_WINDOW_RELATIVE",
-        "FIXED_DATETIME"
-      ],
+      "values": ["SPAWN_WINDOW_RELATIVE", "FIXED_DATETIME"],
       "name": "NotificationScheduleStrategy",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "CHANNEL",
-        "DM"
-      ],
+      "values": ["CHANNEL", "DM"],
       "name": "NotificationTargetType",
       "entityType": "enums",
       "schema": "public"
@@ -283,10 +221,7 @@
       "schema": "public"
     },
     {
-      "values": [
-        "KILL_POINT",
-        "RANKING"
-      ],
+      "values": ["KILL_POINT", "RANKING"],
       "name": "PointsEditType",
       "entityType": "enums",
       "schema": "public"
@@ -305,34 +240,19 @@
       "schema": "public"
     },
     {
-      "values": [
-        "PENDING",
-        "PROCESSING",
-        "COMPLETED",
-        "FAILED"
-      ],
+      "values": ["PENDING", "PROCESSING", "COMPLETED", "FAILED"],
       "name": "RefreshJobStatus",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "USER",
-        "GAME_ACCOUNT",
-        "CHARACTER",
-        "GUILD"
-      ],
+      "values": ["USER", "GAME_ACCOUNT", "CHARACTER", "GUILD"],
       "name": "SettingsScopeType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "CREATE",
-        "RESET",
-        "DELETE",
-        "RESTORE"
-      ],
+      "values": ["CREATE", "RESET", "DELETE", "RESTORE"],
       "name": "TimerHistoryAction",
       "entityType": "enums",
       "schema": "public"
@@ -12394,14 +12314,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "DiscordGuildChannelSnapshot_guildId_fkey",
@@ -12411,14 +12327,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "DiscordGuildSyncState_guildId_fkey",
@@ -12428,14 +12340,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "heroNpcId"
-      ],
+      "columns": ["heroNpcId"],
       "schemaTo": "public",
       "tableTo": "EventHeroNpc",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EventHeroKill_heroNpcId_fkey",
@@ -12445,14 +12353,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "timerCreatedById"
-      ],
+      "columns": ["timerCreatedById"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "EventHeroKill_timerCreatedById_fkey",
@@ -12462,14 +12366,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "eventId"
-      ],
+      "columns": ["eventId"],
       "schemaTo": "public",
       "tableTo": "Event",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EventHeroNpc_eventId_fkey",
@@ -12479,14 +12379,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "killId"
-      ],
+      "columns": ["killId"],
       "schemaTo": "public",
       "tableTo": "EventHeroKill",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EventKillPoint_killId_fkey",
@@ -12496,14 +12392,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "memberId"
-      ],
+      "columns": ["memberId"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "EventKillPoint_memberId_fkey",
@@ -12513,14 +12405,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "mapId"
-      ],
+      "columns": ["mapId"],
       "schemaTo": "public",
       "tableTo": "EventMap",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EventMapAssignmentHistory_mapId_fkey",
@@ -12530,14 +12418,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "heroNpcId"
-      ],
+      "columns": ["heroNpcId"],
       "schemaTo": "public",
       "tableTo": "EventHeroNpc",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EventMapAssignmentHistory_heroNpcId_fkey",
@@ -12547,14 +12431,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "memberId"
-      ],
+      "columns": ["memberId"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "EventMapAssignmentHistory_memberId_fkey",
@@ -12564,14 +12444,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "mapId"
-      ],
+      "columns": ["mapId"],
       "schemaTo": "public",
       "tableTo": "EventMap",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EventMapCoverageGap_mapId_fkey",
@@ -12581,14 +12457,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "heroNpcId"
-      ],
+      "columns": ["heroNpcId"],
       "schemaTo": "public",
       "tableTo": "EventHeroNpc",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EventMapCoverageGap_heroNpcId_fkey",
@@ -12598,14 +12470,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "heroNpcId"
-      ],
+      "columns": ["heroNpcId"],
       "schemaTo": "public",
       "tableTo": "EventHeroNpc",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EventMapLocation_heroNpcId_fkey",
@@ -12615,14 +12483,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "heroNpcId"
-      ],
+      "columns": ["heroNpcId"],
       "schemaTo": "public",
       "tableTo": "EventHeroNpc",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EventMap_heroNpcId_fkey",
@@ -12632,14 +12496,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "locationId"
-      ],
+      "columns": ["locationId"],
       "schemaTo": "public",
       "tableTo": "EventMapLocation",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "EventMap_locationId_fkey",
@@ -12649,14 +12509,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "A"
-      ],
+      "columns": ["A"],
       "schemaTo": "public",
       "tableTo": "EventMap",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "_EventMapToMember_A_fkey",
@@ -12666,14 +12522,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "B"
-      ],
+      "columns": ["B"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "_EventMapToMember_B_fkey",
@@ -12683,14 +12535,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "rankingId"
-      ],
+      "columns": ["rankingId"],
       "schemaTo": "public",
       "tableTo": "EventRanking",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EventPointsEditHistory_rankingId_fkey",
@@ -12700,14 +12548,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "mapId"
-      ],
+      "columns": ["mapId"],
       "schemaTo": "public",
       "tableTo": "EventMap",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EventPresenceLog_mapId_fkey",
@@ -12717,14 +12561,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "memberId"
-      ],
+      "columns": ["memberId"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "EventPresenceLog_memberId_fkey",
@@ -12734,14 +12574,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "eventId"
-      ],
+      "columns": ["eventId"],
       "schemaTo": "public",
       "tableTo": "Event",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EventRanking_eventId_fkey",
@@ -12751,14 +12587,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "memberId"
-      ],
+      "columns": ["memberId"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "EventRanking_memberId_fkey",
@@ -12768,14 +12600,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "heroNpcId"
-      ],
+      "columns": ["heroNpcId"],
       "schemaTo": "public",
       "tableTo": "EventHeroNpc",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "EventRespawnWindowSummary_heroNpcId_fkey",
@@ -12785,14 +12613,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "killId"
-      ],
+      "columns": ["killId"],
       "schemaTo": "public",
       "tableTo": "EventHeroKill",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "EventRespawnWindowSummary_killId_fkey",
@@ -12802,14 +12626,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "Event_guildId_fkey",
@@ -12819,14 +12639,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "documentId"
-      ],
+      "columns": ["documentId"],
       "schemaTo": "public",
       "tableTo": "GuildDocument",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "GuildDocumentHistory_documentId_fkey",
@@ -12836,14 +12652,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "GuildDocumentHistory_guildId_fkey",
@@ -12853,14 +12665,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "GuildDocument_guildId_fkey",
@@ -12870,14 +12678,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "GuildKillActivity_guildId_Guild_id_fkey",
@@ -12887,14 +12691,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "GuildKillBucket_guildId_fkey",
@@ -12904,14 +12704,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "GuildKillTotal_guildId_fkey",
@@ -12921,14 +12717,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "organizationLootRecordId"
-      ],
+      "columns": ["organizationLootRecordId"],
       "schemaTo": "public",
       "tableTo": "OrganizationLootRecord",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "LootComment_organizationLootRecordId_fkey",
@@ -12938,14 +12730,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "memberId"
-      ],
+      "columns": ["memberId"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "LootComment_memberId_fkey",
@@ -12955,14 +12743,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "lootId"
-      ],
+      "columns": ["lootId"],
       "schemaTo": "public",
       "tableTo": "Loot",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "LootItem_lootId_fkey",
@@ -12972,14 +12756,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "itemSnapshotId"
-      ],
+      "columns": ["itemSnapshotId"],
       "schemaTo": "public",
       "tableTo": "ItemSnapshot",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "LootItem_itemSnapshotId_fkey",
@@ -12989,14 +12769,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "organizationLootRecordId"
-      ],
+      "columns": ["organizationLootRecordId"],
       "schemaTo": "public",
       "tableTo": "OrganizationLootRecord",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "LootMapPlayer_organizationLootRecordId_fkey",
@@ -13006,14 +12782,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "playerSnapshotId"
-      ],
+      "columns": ["playerSnapshotId"],
       "schemaTo": "public",
       "tableTo": "PlayerSnapshot",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "LootMapPlayer_playerSnapshotId_fkey",
@@ -13023,14 +12795,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "lootId"
-      ],
+      "columns": ["lootId"],
       "schemaTo": "public",
       "tableTo": "Loot",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "LootNpc_lootId_fkey",
@@ -13040,14 +12808,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "npcSnapshotId"
-      ],
+      "columns": ["npcSnapshotId"],
       "schemaTo": "public",
       "tableTo": "NpcSnapshot",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "LootNpc_npcSnapshotId_fkey",
@@ -13057,14 +12821,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "lootId"
-      ],
+      "columns": ["lootId"],
       "schemaTo": "public",
       "tableTo": "Loot",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "LootPlayer_lootId_fkey",
@@ -13074,14 +12834,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "playerSnapshotId"
-      ],
+      "columns": ["playerSnapshotId"],
       "schemaTo": "public",
       "tableTo": "PlayerSnapshot",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "LootPlayer_playerSnapshotId_fkey",
@@ -13091,14 +12847,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "organizationLootRecordId"
-      ],
+      "columns": ["organizationLootRecordId"],
       "schemaTo": "public",
       "tableTo": "OrganizationLootRecord",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "LootSubmission_organizationLootRecordId_fkey",
@@ -13108,14 +12860,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "memberId"
-      ],
+      "columns": ["memberId"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "LootSubmission_memberId_fkey",
@@ -13125,14 +12873,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "lootlogConfigId"
-      ],
+      "columns": ["lootlogConfigId"],
       "schemaTo": "public",
       "tableTo": "LootlogConfig",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "LootlogConfigNpc_lootlogConfigId_fkey",
@@ -13142,14 +12886,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "MapTemplate_guildId_fkey",
@@ -13159,14 +12899,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "MemberKillBucket_guildId_fkey",
@@ -13176,14 +12912,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "memberId"
-      ],
+      "columns": ["memberId"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "MemberKillBucket_memberId_fkey",
@@ -13193,14 +12925,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "MemberKillTotal_guildId_fkey",
@@ -13210,14 +12938,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "memberId"
-      ],
+      "columns": ["memberId"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "MemberKillTotal_memberId_fkey",
@@ -13227,14 +12951,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "memberId"
-      ],
+      "columns": ["memberId"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "MemberSyncDelivery_memberId_Member_id_fkey",
@@ -13244,14 +12964,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "Member_guildId_fkey",
@@ -13261,14 +12977,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "A"
-      ],
+      "columns": ["A"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "_MemberToRole_A_fkey",
@@ -13278,14 +12990,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "B"
-      ],
+      "columns": ["B"],
       "schemaTo": "public",
       "tableTo": "Role",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "_MemberToRole_B_fkey",
@@ -13295,14 +13003,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "ruleId"
-      ],
+      "columns": ["ruleId"],
       "schemaTo": "public",
       "tableTo": "NotificationRule",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "NotificationJob_ruleId_fkey",
@@ -13312,14 +13016,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "targetId"
-      ],
+      "columns": ["targetId"],
       "schemaTo": "public",
       "tableTo": "NotificationTarget",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "NotificationJob_targetId_fkey",
@@ -13329,14 +13029,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "NotificationRule_guildId_fkey",
@@ -13346,14 +13042,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "ruleId"
-      ],
+      "columns": ["ruleId"],
       "schemaTo": "public",
       "tableTo": "NotificationRule",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "NotificationRuleTarget_ruleId_fkey",
@@ -13363,14 +13055,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "targetId"
-      ],
+      "columns": ["targetId"],
       "schemaTo": "public",
       "tableTo": "NotificationTarget",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "NotificationRuleTarget_targetId_fkey",
@@ -13380,14 +13068,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "lootId"
-      ],
+      "columns": ["lootId"],
       "schemaTo": "public",
       "tableTo": "Loot",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "OrganizationLootRecord_lootId_fkey",
@@ -13397,14 +13081,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "OrganizationLootRecord_guildId_fkey",
@@ -13414,14 +13094,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "archivedByMemberId"
-      ],
+      "columns": ["archivedByMemberId"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "OrganizationLootRecord_archivedByMemberId_fkey",
@@ -13431,14 +13107,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "sourceGuildId"
-      ],
+      "columns": ["sourceGuildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "ReservationShareInvitation_sourceGuildId_fkey",
@@ -13448,14 +13120,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "targetGuildId"
-      ],
+      "columns": ["targetGuildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "ReservationShareInvitation_targetGuildId_fkey",
@@ -13465,14 +13133,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "firstGuildId"
-      ],
+      "columns": ["firstGuildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "ReservationShare_firstGuildId_fkey",
@@ -13482,14 +13146,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "secondGuildId"
-      ],
+      "columns": ["secondGuildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "ReservationShare_secondGuildId_fkey",
@@ -13499,14 +13159,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "Reservation_guildId_fkey",
@@ -13516,14 +13172,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "Role_guildId_fkey",
@@ -13533,14 +13185,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "TimerHistoryEntry_guildId_fkey",
@@ -13550,14 +13198,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "actorMemberId"
-      ],
+      "columns": ["actorMemberId"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "TimerHistoryEntry_actorMemberId_fkey",
@@ -13567,14 +13211,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "actorCharacterSnapshotId"
-      ],
+      "columns": ["actorCharacterSnapshotId"],
       "schemaTo": "public",
       "tableTo": "PlayerSnapshot",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "TimerHistoryEntry_actorCharacterSnapshotId_fkey",
@@ -13584,14 +13224,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "timerCreatedById"
-      ],
+      "columns": ["timerCreatedById"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "TimerHistoryEntry_timerCreatedById_fkey",
@@ -13601,14 +13237,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "timerActorCharacterSnapshotId"
-      ],
+      "columns": ["timerActorCharacterSnapshotId"],
       "schemaTo": "public",
       "tableTo": "PlayerSnapshot",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "TimerHistoryEntry_timerActorCharacterSnapshotId_fkey",
@@ -13618,14 +13250,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "createdById"
-      ],
+      "columns": ["createdById"],
       "schemaTo": "public",
       "tableTo": "Member",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "Timer_createdById_fkey",
@@ -13635,14 +13263,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "Timer_guildId_fkey",
@@ -13652,14 +13276,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "actorCharacterSnapshotId"
-      ],
+      "columns": ["actorCharacterSnapshotId"],
       "schemaTo": "public",
       "tableTo": "PlayerSnapshot",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Timer_actorCharacterSnapshotId_fkey",
@@ -13669,14 +13289,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "eventId"
-      ],
+      "columns": ["eventId"],
       "schemaTo": "public",
       "tableTo": "Event",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "UserPinnedEvent_eventId_fkey",
@@ -13686,14 +13302,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "schemaTo": "public",
       "tableTo": "Guild",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "UserPinnedReservationSpot_guildId_fkey",
@@ -13703,14 +13315,10 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "notificationRuleId"
-      ],
+      "columns": ["notificationRuleId"],
       "schemaTo": "public",
       "tableTo": "NotificationRule",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "WatchedItem_notificationRuleId_fkey",
@@ -13720,14 +13328,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "lootId"
-      ],
+      "columns": ["lootId"],
       "schemaTo": "public",
       "tableTo": "Loot",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "LootPublicationOutbox_lootId_Loot_id_fkey",
@@ -13736,10 +13340,7 @@
       "table": "LootPublicationOutbox"
     },
     {
-      "columns": [
-        "A",
-        "B"
-      ],
+      "columns": ["A", "B"],
       "nameExplicit": true,
       "name": "_EventMapToMember_AB_pkey",
       "entityType": "pks",
@@ -13747,12 +13348,7 @@
       "table": "_EventMapToMember"
     },
     {
-      "columns": [
-        "guildId",
-        "world",
-        "npcId",
-        "periodStart"
-      ],
+      "columns": ["guildId", "world", "npcId", "periodStart"],
       "nameExplicit": true,
       "name": "GuildKillBucket_pkey",
       "entityType": "pks",
@@ -13760,11 +13356,7 @@
       "table": "GuildKillBucket"
     },
     {
-      "columns": [
-        "guildId",
-        "world",
-        "npcId"
-      ],
+      "columns": ["guildId", "world", "npcId"],
       "nameExplicit": true,
       "name": "GuildKillTotal_pkey",
       "entityType": "pks",
@@ -13772,10 +13364,7 @@
       "table": "GuildKillTotal"
     },
     {
-      "columns": [
-        "organizationLootRecordId",
-        "playerSnapshotId"
-      ],
+      "columns": ["organizationLootRecordId", "playerSnapshotId"],
       "nameExplicit": true,
       "name": "LootMapPlayer_pkey",
       "entityType": "pks",
@@ -13783,10 +13372,7 @@
       "table": "LootMapPlayer"
     },
     {
-      "columns": [
-        "lootId",
-        "id"
-      ],
+      "columns": ["lootId", "id"],
       "nameExplicit": true,
       "name": "LootPlayer_pkey",
       "entityType": "pks",
@@ -13794,10 +13380,7 @@
       "table": "LootPlayer"
     },
     {
-      "columns": [
-        "organizationLootRecordId",
-        "memberId"
-      ],
+      "columns": ["organizationLootRecordId", "memberId"],
       "nameExplicit": true,
       "name": "LootSubmission_pkey",
       "entityType": "pks",
@@ -13805,13 +13388,7 @@
       "table": "LootSubmission"
     },
     {
-      "columns": [
-        "guildId",
-        "memberId",
-        "world",
-        "npcId",
-        "periodStart"
-      ],
+      "columns": ["guildId", "memberId", "world", "npcId", "periodStart"],
       "nameExplicit": true,
       "name": "MemberKillBucket_pkey",
       "entityType": "pks",
@@ -13819,12 +13396,7 @@
       "table": "MemberKillBucket"
     },
     {
-      "columns": [
-        "guildId",
-        "memberId",
-        "world",
-        "npcId"
-      ],
+      "columns": ["guildId", "memberId", "world", "npcId"],
       "nameExplicit": true,
       "name": "MemberKillTotal_pkey",
       "entityType": "pks",
@@ -13832,10 +13404,7 @@
       "table": "MemberKillTotal"
     },
     {
-      "columns": [
-        "A",
-        "B"
-      ],
+      "columns": ["A", "B"],
       "nameExplicit": true,
       "name": "_MemberToRole_AB_pkey",
       "entityType": "pks",
@@ -13843,10 +13412,7 @@
       "table": "_MemberToRole"
     },
     {
-      "columns": [
-        "ruleId",
-        "targetId"
-      ],
+      "columns": ["ruleId", "targetId"],
       "nameExplicit": true,
       "name": "NotificationRuleTarget_pkey",
       "entityType": "pks",
@@ -13854,11 +13420,7 @@
       "table": "NotificationRuleTarget"
     },
     {
-      "columns": [
-        "guildId",
-        "world",
-        "timerKey"
-      ],
+      "columns": ["guildId", "world", "timerKey"],
       "nameExplicit": true,
       "name": "Timer_pkey",
       "entityType": "pks",
@@ -13880,12 +13442,7 @@
       "table": "UserCharacterKillBucket"
     },
     {
-      "columns": [
-        "discordUserId",
-        "world",
-        "npcId",
-        "periodStart"
-      ],
+      "columns": ["discordUserId", "world", "npcId", "periodStart"],
       "nameExplicit": true,
       "name": "UserKillBucket_pkey",
       "entityType": "pks",
@@ -13893,11 +13450,7 @@
       "table": "UserKillBucket"
     },
     {
-      "columns": [
-        "discordUserId",
-        "world",
-        "characterId"
-      ],
+      "columns": ["discordUserId", "world", "characterId"],
       "nameExplicit": true,
       "name": "UserKillCharacter_pkey",
       "entityType": "pks",
@@ -13905,11 +13458,7 @@
       "table": "UserKillCharacter"
     },
     {
-      "columns": [
-        "discordUserId",
-        "world",
-        "npcId"
-      ],
+      "columns": ["discordUserId", "world", "npcId"],
       "nameExplicit": true,
       "name": "UserKillTotal_pkey",
       "entityType": "pks",
@@ -13917,10 +13466,7 @@
       "table": "UserKillTotal"
     },
     {
-      "columns": [
-        "userId",
-        "accountId"
-      ],
+      "columns": ["userId", "accountId"],
       "nameExplicit": true,
       "name": "UserMargonemAccount_pkey",
       "entityType": "pks",
@@ -13928,9 +13474,7 @@
       "table": "UserMargonemAccount"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "DiscordGuildChannelSnapshot_pkey",
       "schema": "public",
@@ -13938,9 +13482,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "guildId"
-      ],
+      "columns": ["guildId"],
       "nameExplicit": false,
       "name": "DiscordGuildSyncState_pkey",
       "schema": "public",
@@ -13948,9 +13490,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "EventHeroKill_pkey",
       "schema": "public",
@@ -13958,9 +13498,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "EventHeroNpc_pkey",
       "schema": "public",
@@ -13968,9 +13506,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "EventKillPoint_pkey",
       "schema": "public",
@@ -13978,9 +13514,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "EventMapAssignmentHistory_pkey",
       "schema": "public",
@@ -13988,9 +13522,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "EventMapCoverageGap_pkey",
       "schema": "public",
@@ -13998,9 +13530,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "EventMapLocation_pkey",
       "schema": "public",
@@ -14008,9 +13538,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "EventMap_pkey",
       "schema": "public",
@@ -14018,9 +13546,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "EventPointsEditHistory_pkey",
       "schema": "public",
@@ -14028,9 +13554,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "EventPresenceLog_pkey",
       "schema": "public",
@@ -14038,9 +13562,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "EventRanking_pkey",
       "schema": "public",
@@ -14048,9 +13570,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "EventRespawnWindowSummary_pkey",
       "schema": "public",
@@ -14058,9 +13578,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Event_pkey",
       "schema": "public",
@@ -14068,9 +13586,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "GlobalChatMute_pkey",
       "schema": "public",
@@ -14078,9 +13594,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "GuildDocumentHistory_pkey",
       "schema": "public",
@@ -14088,9 +13602,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "GuildDocument_pkey",
       "schema": "public",
@@ -14098,9 +13610,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "GuildKillActivity_pkey",
       "schema": "public",
@@ -14108,9 +13618,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Guild_pkey",
       "schema": "public",
@@ -14118,9 +13626,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ItemSnapshot_pkey",
       "schema": "public",
@@ -14128,9 +13634,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "LootComment_pkey",
       "schema": "public",
@@ -14138,9 +13642,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "LootItem_pkey",
       "schema": "public",
@@ -14148,9 +13650,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "LootNpc_pkey",
       "schema": "public",
@@ -14158,9 +13658,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Loot_pkey",
       "schema": "public",
@@ -14168,9 +13666,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "LootlogConfigNpc_pkey",
       "schema": "public",
@@ -14178,9 +13674,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "LootlogConfig_pkey",
       "schema": "public",
@@ -14188,9 +13682,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "MapTemplate_pkey",
       "schema": "public",
@@ -14198,9 +13690,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "MemberRefreshJob_pkey",
       "schema": "public",
@@ -14208,9 +13698,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "memberId"
-      ],
+      "columns": ["memberId"],
       "nameExplicit": false,
       "name": "MemberSyncDelivery_pkey",
       "schema": "public",
@@ -14218,9 +13706,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Member_pkey",
       "schema": "public",
@@ -14228,9 +13714,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "NotificationJob_pkey",
       "schema": "public",
@@ -14238,9 +13722,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "NotificationRule_pkey",
       "schema": "public",
@@ -14248,9 +13730,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "NotificationTarget_pkey",
       "schema": "public",
@@ -14258,9 +13738,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "NpcSnapshot_pkey",
       "schema": "public",
@@ -14268,9 +13746,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "OrganizationLootRecord_pkey",
       "schema": "public",
@@ -14278,9 +13754,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "PlayerSnapshot_pkey",
       "schema": "public",
@@ -14288,9 +13762,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ReservationShareInvitation_pkey",
       "schema": "public",
@@ -14298,9 +13770,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "ReservationShare_pkey",
       "schema": "public",
@@ -14308,9 +13778,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Reservation_pkey",
       "schema": "public",
@@ -14318,9 +13786,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "Role_pkey",
       "schema": "public",
@@ -14328,9 +13794,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "TimerHistoryEntry_pkey",
       "schema": "public",
@@ -14338,9 +13802,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "gameAccountId"
-      ],
+      "columns": ["gameAccountId"],
       "nameExplicit": false,
       "name": "UserCharacterAuraGameAccount_pkey",
       "schema": "public",
@@ -14348,9 +13810,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "userId"
-      ],
+      "columns": ["userId"],
       "nameExplicit": false,
       "name": "UserCharacterAura_pkey",
       "schema": "public",
@@ -14358,9 +13818,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "UserCharactersLootlogSettings_pkey",
       "schema": "public",
@@ -14368,9 +13826,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "UserPinnedEvent_pkey",
       "schema": "public",
@@ -14378,9 +13834,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "UserPinnedReservationSpot_pkey",
       "schema": "public",
@@ -14388,9 +13842,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "UserSettingDocument_pkey",
       "schema": "public",
@@ -14398,9 +13850,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "UserSettings_pkey",
       "schema": "public",
@@ -14408,9 +13858,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "UserTheme_pkey",
       "schema": "public",
@@ -14418,9 +13866,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "WatchedItem_pkey",
       "schema": "public",
@@ -14428,9 +13874,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "LootPublicationOutbox_pkey",
       "schema": "public",
