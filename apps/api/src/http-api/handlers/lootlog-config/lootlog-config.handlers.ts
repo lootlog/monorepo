@@ -1,3 +1,5 @@
+import { AccessRequirement } from "@lootlog/domain/access-policy";
+import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 import {
   optionalPathString,
   statusCodeResponse,
@@ -11,10 +13,6 @@ import { HttpApiBuilder } from "effect/http-api";
 import { decodeDomainJson } from "../../domain-json.schema.js";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import {
-  Permission,
-  type Permission as PermissionValue,
-} from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   lootlogConfigNpcTable,
@@ -43,7 +41,7 @@ export class LootlogConfigAuthorization extends Context.Service<
   {
     readonly requireCapability: (options: {
       readonly guildId: string;
-      readonly capability: PermissionValue;
+      readonly anyOf: ReadonlyArray<PermissionValue>;
     }) => Effect.Effect<
       { readonly guildId: string },
       LootlogConfigAccessDenied | ReauthenticationRequired
@@ -145,7 +143,10 @@ const authorize = (guildId: string | undefined) => {
   }
 
   return Effect.flatMap(LootlogConfigAuthorization, (authorization) =>
-    authorization.requireCapability({ guildId, capability: Permission.ADMIN }),
+    authorization.requireCapability({
+      guildId,
+      anyOf: AccessRequirement.ADMINISTER,
+    }),
   );
 };
 

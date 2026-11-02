@@ -28,7 +28,7 @@ let boundary: Awaited<ReturnType<typeof createDatabaseBoundary>>;
 
 const guild = createGuildFixture();
 
-const member = createMemberFixture();
+const member = createMemberFixture({ globalUserId: "user-1" });
 
 const access: TimersGuildAccess = {
   guild,

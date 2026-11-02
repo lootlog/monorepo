@@ -1,9 +1,9 @@
+import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 
 import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Clock, Effect, Layer } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -59,7 +59,11 @@ export const makeReservationSharingDataLayer = (
         );
 
       const administrativeGuilds = (discordId: string) =>
-        selectAccessibleGuilds(database, discordId, [Permission.ADMIN]).pipe(
+        selectAccessibleGuilds(
+          database,
+          discordId,
+          AccessRequirement.ADMINISTER,
+        ).pipe(
           Effect.map((rows) =>
             rows.map(({ guild }) => ({
               id: guild.id,

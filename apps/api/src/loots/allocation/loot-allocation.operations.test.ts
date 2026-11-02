@@ -4,7 +4,10 @@ import { describe, expect, it } from "bun:test";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import type { LootAllocationPersistence } from "#src/loots/allocation/loot-allocation-persistence";
 import type { LootShare } from "#src/loots/loot-response.schema";
-import { PermissionDeniedError } from "#src/shared/http/http-errors";
+import {
+  PermissionDeniedError,
+  ResourceNotFoundError,
+} from "#src/shared/http/http-errors";
 import { makeLootAllocationOperations } from "#src/loots/allocation/loot-allocation.operations";
 
 type AuthorizedLoot = NonNullable<
@@ -78,12 +81,13 @@ const authorizedLoot: AuthorizedLoot = {
   organizationLootRecords: [{ guildId: "guild-1" }],
 };
 
-const setup = (loot: AuthorizedLoot | null) => {
+const setup = (loot: AuthorizedLoot | null, visible = true) => {
   const writes: LootShare[] = [];
   const published: LootShare[] = [];
 
   const operations = makeLootAllocationOperations({
     persistence: {
+      isLootVisible: () => Effect.succeed(visible),
       findAuthorizedLoot: () => Effect.succeed(loot),
       compareAndSetChatAllocation: ({ lootShare }) => {
         writes.push(lootShare);
@@ -107,7 +111,7 @@ const setup = (loot: AuthorizedLoot | null) => {
   const confirm = (message: string) =>
     Effect.runPromise(
       operations.confirmFromChat({
-        actorUserId: "user-1",
+        actorDiscordId: "discord-1",
         lootId: 42,
         message,
       }),
@@ -125,6 +129,15 @@ describe("loot allocation Effect module", () => {
     );
     expect(writes).toEqual([]);
     expect(published).toEqual([]);
+  });
+
+  it("reports a loot the actor cannot read as missing", async () => {
+    const { confirm, writes } = setup(null, false);
+
+    await expect(confirm("allocation")).rejects.toBeInstanceOf(
+      ResourceNotFoundError,
+    );
+    expect(writes).toEqual([]);
   });
 
   it("accepts a chat share without any loot item and keeps the allocation", async () => {

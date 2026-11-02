@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "764cffe3-8462-4b3a-b00d-b24c09360e63",
-  "prevIds": ["db9b389c-b9f0-421f-bdcd-0f874a23d10b"],
+  "id": "dad37a3b-6a24-42c7-9ad6-85d338824773",
+  "prevIds": ["a1445489-9983-431f-83a4-36e892030817"],
   "ddl": [
     {
       "values": ["UNASSIGNED", "UNCOVERED"],
@@ -2760,7 +2760,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "actorMemberId",
+      "name": "actorDiscordId",
       "entityType": "columns",
       "schema": "public",
       "table": "GuildDocumentHistory"
@@ -2851,7 +2851,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "createdByMemberId",
+      "name": "createdByDiscordId",
       "entityType": "columns",
       "schema": "public",
       "table": "GuildDocument"
@@ -2864,7 +2864,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "updatedByMemberId",
+      "name": "updatedByDiscordId",
       "entityType": "columns",
       "schema": "public",
       "table": "GuildDocument"
@@ -2890,7 +2890,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "deletedByMemberId",
+      "name": "deletedByDiscordId",
       "entityType": "columns",
       "schema": "public",
       "table": "GuildDocument"

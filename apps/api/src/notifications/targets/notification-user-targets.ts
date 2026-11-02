@@ -1,7 +1,5 @@
-import {
-  notificationApiKeyOrganizations,
-  notificationRulesInApiKeyScope,
-} from "../notification-api-key-scope.js";
+import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
+import { notificationRulesInApiKeyScope } from "../notification-api-key-scope.js";
 import {
   deleteNotificationTargetAndOrphanedRules,
   readNotificationTargetRuleIds,
@@ -116,7 +114,7 @@ export const makeNotificationUserTargets = (
 
   const requireTargetScope = (targetId: number) =>
     Effect.gen(function* () {
-      const organizations = yield* notificationApiKeyOrganizations(database);
+      const organizations = yield* apiKeyAccessibleGuilds(database);
 
       if (!organizations) return;
       const organizationIds = organizations.map((guild) => guild.id);
@@ -197,7 +195,7 @@ export const makeNotificationUserTargets = (
       );
     }
 
-    const organizations = yield* notificationApiKeyOrganizations(database);
+    const organizations = yield* apiKeyAccessibleGuilds(database);
 
     if (organizations) {
       const existing = yield* database

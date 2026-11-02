@@ -323,7 +323,7 @@ export const recordsDataLayer = (services: RecordsServices) =>
       lootOperation(
         "LootsController_updateLoot",
         services.lootAllocation.confirmFromChat({
-          actorUserId: caller.userId,
+          actorDiscordId: caller.discordId,
           lootId,
           message: payload.msg,
         }),
