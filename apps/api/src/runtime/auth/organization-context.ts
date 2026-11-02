@@ -1,12 +1,16 @@
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import { createSelectSchema } from "drizzle-orm/effect-schema";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Clock, Context, Effect, Layer, Schema } from "effect";
+import { Clock, Context, Effect, Layer, Option, Schema } from "effect";
 import { resolveCapabilities } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { guildTable } from "#src/database/drizzle/schema";
+import {
+  guildTable,
+  memberTable,
+  roleTable,
+} from "#src/database/drizzle/schema";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import {
   readCachedGuild,
@@ -22,7 +26,6 @@ import {
 import { MembersData } from "#src/http-api/handlers/members/members.handlers";
 import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
-import { decodeJsonUnknown } from "#src/shared/schema/json";
 
 const CachedGuild = createSelectSchema(guildTable, {
   createdAt: IsoDateTime,
@@ -79,51 +82,64 @@ export class OrganizationNotFound extends TaggedErrorClass<OrganizationNotFound>
   { guildId: Schema.String },
 ) {}
 
-const parseDate = (value: unknown): Date | null => {
-  if (value instanceof Date) return value;
+// The cache holds only the member and its roles, which cost a Discord sync to
+// refresh. The guild row and the capabilities derived from it are read on every
+// lookup, so a configuration change applies without evicting member entries.
+const CachedMemberEntry = Schema.Struct({
+  member: Schema.Struct({
+    ...createSelectSchema(memberTable, {
+      createdAt: IsoDateTime,
+      updatedAt: IsoDateTime,
+      lastDiscordSyncAt: Schema.NullOr(IsoDateTime),
+      lastDiscordAttemptAt: Schema.NullOr(IsoDateTime),
+    }).fields,
+    roles: Schema.mutable(
+      Schema.Array(
+        createSelectSchema(roleTable, {
+          permissions: (permissions) => Schema.mutable(permissions),
+          createdAt: IsoDateTime,
+          updatedAt: IsoDateTime,
+        }),
+      ),
+    ),
+  }),
+});
 
-  if (typeof value !== "string") return null;
-  const parsed = new Date(value);
+const decodeCachedMemberEntry = Schema.decodeUnknownOption(
+  Schema.fromJsonString(CachedMemberEntry),
+);
 
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const cachedContextIsFresh = (
-  context: unknown,
-  environment: RuntimeEnvironment,
-  now: number,
-): context is OrganizationContext => {
-  if (
-    typeof context !== "object" ||
-    context === null ||
-    !("member" in context) ||
-    typeof context.member !== "object" ||
-    context.member === null ||
-    !("active" in context.member) ||
-    context.member.active !== true ||
-    !("lastDiscordSyncAt" in context.member)
-  ) {
-    return false;
-  }
-
-  const lastSync = parseDate(context.member.lastDiscordSyncAt);
-
-  return Boolean(
-    lastSync && lastSync.getTime() >= now - getMemberCacheSoftTtl(environment),
-  );
-};
-
-const decodeCachedContext = (
+/** The cached member, while it is active and inside the soft TTL. */
+const readFreshCachedMember = (
   value: string,
   environment: RuntimeEnvironment,
   now: number,
-): Effect.Effect<OrganizationContext | null> =>
-  Effect.try(() => decodeJsonUnknown(value)).pipe(
-    Effect.map((context) =>
-      cachedContextIsFresh(context, environment, now) ? context : null,
-    ),
-    Effect.catch(() => Effect.succeed(null)),
-  );
+): MemberWithRoles | null => {
+  const member = Option.getOrNull(decodeCachedMemberEntry(value))?.member;
+  const syncedAt = member?.lastDiscordSyncAt?.getTime() ?? 0;
+
+  return member?.active && syncedAt >= now - getMemberCacheSoftTtl(environment)
+    ? member
+    : null;
+};
+
+const toOrganizationContext = (
+  guild: typeof guildTable.$inferSelect,
+  member: MemberWithRoles,
+  discordId: string,
+): OrganizationContext => ({
+  guildId: guild.id,
+  ownerId: guild.ownerId,
+  permissions: resolveCapabilities({
+    capabilities:
+      guild.ownerId === discordId
+        ? Object.values(Permission)
+        : member.roles.flatMap((role) => role.permissions),
+  }),
+  guild,
+  member,
+  roles: member.roles,
+});
 
 export class OrganizationContextLookup extends Context.Service<
   OrganizationContextLookup,
@@ -246,21 +262,25 @@ export class OrganizationContextLookup extends Context.Service<
               const now = yield* Clock.currentTimeMillis;
 
               if (cached) {
-                const context = yield* decodeCachedContext(
+                const member = readFreshCachedMember(
                   cached,
                   config.environment,
                   now,
                 );
 
-                if (context) {
+                if (member) {
                   yield* refreshAhead(
                     options,
                     guild.id,
-                    parseDate(context.member.lastDiscordSyncAt),
+                    member.lastDiscordSyncAt,
                     now,
                   );
 
-                  return context;
+                  return toOrganizationContext(
+                    guild,
+                    member,
+                    options.discordId,
+                  );
                 }
 
                 yield* cache.del(permissionsKey).pipe(Effect.ignore);
@@ -276,39 +296,23 @@ export class OrganizationContextLookup extends Context.Service<
 
               if (!member?.active) return null;
 
-              const permissions = resolveCapabilities({
-                capabilities:
-                  guild.ownerId === options.discordId
-                    ? Object.values(Permission)
-                    : member.roles.flatMap((role) => role.permissions),
-              });
-
-              const context: OrganizationContext = {
-                guildId: guild.id,
-                ownerId: guild.ownerId,
-                permissions,
-                guild,
-                member,
-                roles: member.roles,
-              };
-
               if (!member.isStale && !member.refreshQueued) {
                 yield* refreshAhead(
                   options,
                   guild.id,
-                  parseDate(member.lastDiscordSyncAt),
+                  member.lastDiscordSyncAt,
                   now,
                 );
                 yield* cache
                   .set(
                     permissionsKey,
-                    JSON.stringify(context),
+                    JSON.stringify({ member }),
                     PERMISSIONS_CACHE_TTL_SECONDS,
                   )
                   .pipe(Effect.ignore);
               }
 
-              return context;
+              return toOrganizationContext(guild, member, options.discordId);
             }).pipe(
               Effect.withSpan("organization-context.lookup", {
                 attributes: {
