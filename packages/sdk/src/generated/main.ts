@@ -12921,7 +12921,7 @@ export const getMembersControllerGetMemberLootlogConfigSummaryUrl = ({ guildId, 
 }
 
 /**
- * Retrieve guild-scoped lootlog configuration summary for a specific member (admin only)
+ * Retrieve a member's character configuration summary for this Lootlog (admin only). Lists only characters set up to submit loot to this Lootlog; characters set up only for other Lootlogs are never included.
  * @summary Get member lootlog config summary
  */
 export const membersControllerGetMemberLootlogConfigSummary = async ({ guildId, discordId }: MembersControllerGetMemberLootlogConfigSummaryPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<MemberLootlogConfigSummaryResponseDtoOutput> => {
