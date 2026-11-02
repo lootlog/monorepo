@@ -5876,6 +5876,7 @@ export interface CreateNotificationDto {
   message?: string;
   npc?: CreateNotificationDtoNpc;
   /**
+     * Lootlogs (Discord guilds) that receive the notification. A party gathering (`isGatheringParty`) belongs to exactly one.
      * @minItems 1
      * @maxItems 10
      * @items.maxLength 50
@@ -6186,11 +6187,17 @@ export type CreatePartyGatheringDtoCharacter = {
 
 export interface CreatePartyGatheringDto {
   /**
+     * The one Lootlog (Discord guild) the gathering belongs to.
+     * @maxLength 50
+     */
+  guildId?: string;
+  /**
+     * Deprecated: send `guildId`. Accepted only with exactly one Lootlog.
      * @minItems 1
-     * @maxItems 10
+     * @maxItems 1
      * @items.maxLength 50
      */
-  guildIds: string[];
+  guildIds?: string[];
   /**
      * @minLength 1
      * @maxLength 50
