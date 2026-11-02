@@ -45,7 +45,10 @@ version.
 - `activeOnly` on `GET /guilds/{guildId}/events` accepts only `true` or
   `false`; any other value is a `400`. Omitting it still lists active events.
 - `world` on event and timer endpoints, including the `world` of a new event,
-  is trimmed and lower-cased, and an empty `world` is a `400`.
+  is trimmed and lower-cased, and an empty `world` is a `400`. The same applies
+  to the `world` written by `POST /loots`, `POST /kills` and the timer create
+  and reset requests, so a record is always found by the filter that names its
+  world.
 - NPC level filters are named `npcLevelMin` and `npcLevelMax` everywhere.
 - A Member inside another resource is always `member: { id, name, avatar, userId }`,
   with `avatar` set to `null` when there is none.

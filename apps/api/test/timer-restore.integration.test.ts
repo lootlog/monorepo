@@ -14,6 +14,7 @@ import {
 import { makeDeleteTimer } from "#src/http-api/handlers/timers/timer-delete.data-layer";
 import { makeRestoreTimer } from "#src/http-api/handlers/timers/timer-restore.data-layer";
 import { makeResetTimer } from "#src/http-api/handlers/timers/timer-reset.data-layer";
+import { makeTimersCleanup } from "#src/timers/timers-cleanup";
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
 import { createGuildFixture } from "./organization-fixtures.js";
 
@@ -474,3 +475,93 @@ it.each(["rollback", "new spawn", "identical reset", "delete"] as const)(
   },
   10_000,
 );
+
+it("restores a deleted manual timer until cleanup removes it with its history", async () => {
+  const now = new Date();
+  const guild = createGuildFixture({ id: crypto.randomUUID() });
+  await runtime.runPromise(database.insert(guildTable).values(guild));
+
+  const [member] = await runtime.runPromise(
+    database
+      .insert(memberTable)
+      .values({
+        guildId: guild.id,
+        userId: crypto.randomUUID(),
+        globalUserId: crypto.randomUUID(),
+        name: "Manual",
+        updatedAt: now,
+      })
+      .returning(),
+  );
+
+  if (!member) throw new Error("Member fixture missing");
+
+  const timer = {
+    guildId: guild.id,
+    world: "manual-timer-lifecycle",
+    timerKey: "900001:boss",
+    npcId: 900_001,
+    npc: { id: 900_001, name: "Boss", lvl: 0, type: "", margonemType: 999 },
+    createdById: member.id,
+    minSpawnTime: new Date(now.getTime() - 120_000),
+    maxSpawnTime: new Date(now.getTime() - 60_000),
+    latestRespBaseSeconds: 60,
+    latestRespawnRandomness: 0,
+    updatedAt: now,
+  };
+
+  const scope = and(
+    eq(timerTable.guildId, timer.guildId),
+    eq(timerTable.world, timer.world),
+    eq(timerTable.timerKey, timer.timerKey),
+  );
+
+  const history = database
+    .select()
+    .from(timerHistoryEntryTable)
+    .where(eq(timerHistoryEntryTable.guildId, guild.id))
+    .orderBy(desc(timerHistoryEntryTable.id));
+
+  await runtime.runPromise(database.insert(timerTable).values(timer));
+
+  const access = {
+    guild,
+    userId: member.userId,
+    discordId: member.userId,
+    roles: [],
+    accessPolicy: createAccessPolicy({ capabilities: [Permission.ADMIN] }),
+  };
+
+  const ports = {
+    invalidateList: () => Effect.void,
+    publish: () => Effect.void,
+  };
+
+  await runtime.runPromise(
+    makeDeleteTimer(database, ports)(access, timer.timerKey, timer.world),
+  );
+
+  const [deletion] = await runtime.runPromise(history);
+  expect(deletion?.action).toBe("DELETE");
+
+  if (!deletion) throw new Error("Deletion history missing");
+
+  await runtime.runPromise(
+    makeRestoreTimer(database, ports)(access, deletion.id),
+  );
+
+  await expect(
+    runtime.runPromise(database.select().from(timerTable).where(scope)),
+  ).resolves.toMatchObject([
+    { deletedAt: null, maxSpawnTime: timer.maxSpawnTime },
+  ]);
+
+  await runtime.runPromise(
+    makeTimersCleanup(database, { enabled: true, retentionDays: 0 }),
+  );
+
+  await expect(
+    runtime.runPromise(database.select().from(timerTable).where(scope)),
+  ).resolves.toEqual([]);
+  await expect(runtime.runPromise(history)).resolves.toEqual([]);
+});

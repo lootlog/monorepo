@@ -1,9 +1,10 @@
-import type {
-  SettingsDocuments,
-  SettingsDocumentsFailure,
-  SettingsDocumentsResponse,
+import {
+  NEVER_STORED_AT,
+  type SettingsDocuments,
+  type SettingsDocumentsFailure,
+  type SettingsDocumentsResponse,
 } from "#src/settings-documents/settings-documents.service";
-import { Effect, Schema, Predicate } from "effect";
+import { Effect, Schema, Predicate, type Types } from "effect";
 import type {
   MigrateTimerSettingsRequest,
   UpdateOrganizationTimerSettingsRequest,
@@ -91,7 +92,7 @@ const mapGlobalSettingsResponse = (
     .sort((left, right) => left.getTime() - right.getTime());
 
   const updatedAtValue = updatedAtValues[updatedAtValues.length - 1];
-  const updatedAt = updatedAtValue ?? new Date();
+  const updatedAt = updatedAtValue ?? NEVER_STORED_AT;
 
   const timersSortOrder: "asc" | "desc" =
     effectiveTimers.timersSortOrder === "desc" ? "desc" : "asc";
@@ -128,7 +129,7 @@ const mapGuildSettingsResponse = (
   response: SettingsDocumentsResponse,
 ) => {
   const timers = response.domains.timers;
-  const updatedAt = timers?.updatedAt ?? new Date();
+  const updatedAt = timers?.updatedAt ?? NEVER_STORED_AT;
 
   return {
     userId,
@@ -140,25 +141,58 @@ const mapGuildSettingsResponse = (
   };
 };
 
+const LOCAL_OBJECT_FIELDS = [
+  "generalConfig",
+  "displayConfig",
+  "customColors",
+  "timersColors",
+  "alwaysVisibleExpiredTimers",
+  "defaultColorNames",
+  "overriddenDefaultColors",
+] as const;
+
+const isBoolean = Schema.is(Schema.Boolean);
+
+const LOCAL_BOOLEAN_FIELDS = [
+  "timerFiltersEnabled",
+  "colorFiltersEnabled",
+  "syncEnabled",
+] as const;
+
+/**
+ * Copies only the settings the browser actually stored; a missing field keeps
+ * the stored or catalog value instead of being written as a guessed default.
+ */
 const extractGlobalSettingsFromLocal = (
   localData: MigrateTimerSettingsRequest["localData"],
-) => ({
-  generalConfig: asJsonObject(localData.generalConfig),
-  displayConfig: asJsonObject(localData.displayConfig),
-  customColors: asJsonObject(localData.customColors),
-  timersColors: asJsonObject(localData.timersColors),
-  alwaysVisibleExpiredTimers: asJsonObject(
-    localData.alwaysVisibleExpiredTimers,
-  ),
-  defaultColorNames: asJsonObject(localData.defaultColorNames),
-  overriddenDefaultColors: asJsonObject(localData.overriddenDefaultColors),
-  hiddenDefaultColors: asStringArray(localData.hiddenDefaultColors),
-  timerFiltersEnabled: localData.timerFiltersEnabled !== false,
-  colorFiltersEnabled: localData.colorFiltersEnabled === true,
-  timersSortOrder:
-    localData.timersSortOrder === "asc" ? ("asc" as const) : ("desc" as const),
-  syncEnabled: localData.syncEnabled !== false,
-});
+) => {
+  const settings: JsonObject = {};
+
+  for (const field of LOCAL_OBJECT_FIELDS) {
+    if (Predicate.isObject(localData[field])) {
+      settings[field] = asJsonObject(localData[field]);
+    }
+  }
+
+  if (Array.isArray(localData.hiddenDefaultColors)) {
+    settings.hiddenDefaultColors = asStringArray(localData.hiddenDefaultColors);
+  }
+
+  for (const field of LOCAL_BOOLEAN_FIELDS) {
+    const value = localData[field];
+
+    if (isBoolean(value)) settings[field] = value;
+  }
+
+  if (
+    localData.timersSortOrder === "asc" ||
+    localData.timersSortOrder === "desc"
+  ) {
+    settings.timersSortOrder = localData.timersSortOrder;
+  }
+
+  return settings;
+};
 
 const extractGuildSettingsFromLocal = (
   localData: MigrateTimerSettingsRequest["localData"],
@@ -171,16 +205,21 @@ const extractGuildSettingsFromLocal = (
     ...Object.keys(pinnedTimers),
   ]);
 
-  const guildSettings: Record<
-    string,
-    { hiddenTimers: string[]; pinnedTimers: string[] }
-  > = {};
+  const guildSettings: Record<string, UpdateOrganizationTimerSettingsRequest> =
+    {};
 
   for (const guildId of guildIds) {
-    guildSettings[guildId] = {
-      hiddenTimers: asStringArray(hiddenTimers[guildId]),
-      pinnedTimers: asStringArray(pinnedTimers[guildId]),
-    };
+    const settings: Types.Mutable<UpdateOrganizationTimerSettingsRequest> = {};
+
+    if (guildId in hiddenTimers) {
+      settings.hiddenTimers = asStringArray(hiddenTimers[guildId]);
+    }
+
+    if (guildId in pinnedTimers) {
+      settings.pinnedTimers = asStringArray(pinnedTimers[guildId]);
+    }
+
+    guildSettings[guildId] = settings;
   }
 
   return guildSettings;
@@ -196,7 +235,7 @@ export const makeTimerSettings = (
         Effect.map((response) => mapGlobalSettingsResponse(userId, response)),
       );
 
-  const updateGlobalSettings = (userId: string, dto: JsonObject) => {
+  const globalOperations = (userId: string, dto: JsonObject) => {
     const appearanceSet: JsonObject = {};
     const timersSet: JsonObject = {};
 
@@ -208,7 +247,7 @@ export const makeTimerSettings = (
       }
     }
 
-    const operations = [
+    return [
       ...(Object.keys(appearanceSet).length > 0
         ? [
             {
@@ -230,6 +269,20 @@ export const makeTimerSettings = (
           ]
         : []),
     ];
+  };
+
+  const guildOperation = (
+    guildId: string,
+    dto: UpdateOrganizationTimerSettingsRequest,
+  ) => ({
+    domain: "timers" as const,
+    scope: { type: "GUILD" as const, id: guildId },
+    set: { ...dto },
+    unset: [],
+  });
+
+  const updateGlobalSettings = (userId: string, dto: JsonObject) => {
+    const operations = globalOperations(userId, dto);
 
     return operations.length === 0
       ? getGlobalSettings(userId)
@@ -258,14 +311,7 @@ export const makeTimerSettings = (
   ) =>
     settingsDocuments
       .patchPreferences(userId, {
-        operations: [
-          {
-            domain: "timers",
-            scope: { type: "GUILD", id: guildId },
-            set: { ...dto },
-            unset: [],
-          },
-        ],
+        operations: [guildOperation(guildId, dto)],
       })
       .pipe(
         Effect.map((response) =>
@@ -296,14 +342,28 @@ export const makeTimerSettings = (
         };
       }
 
-      const global = yield* updateGlobalSettings(
-        userId,
-        extractGlobalSettingsFromLocal(localData),
+      const guildSettings = Object.entries(
+        extractGuildSettingsFromLocal(localData),
       );
 
+      // One transaction for the whole import: a guild the user cannot access
+      // rejects the migration before the global settings are written.
+      const operations = [
+        ...globalOperations(userId, extractGlobalSettingsFromLocal(localData)),
+        ...guildSettings.map(([guildId, settings]) =>
+          guildOperation(guildId, settings),
+        ),
+      ];
+
+      if (operations.length > 0) {
+        yield* settingsDocuments.applyOperations(userId, operations);
+      }
+
+      const global = yield* getGlobalSettings(userId);
+
       const guilds = yield* Effect.forEach(
-        Object.entries(extractGuildSettingsFromLocal(localData)),
-        ([guildId, settings]) => updateGuildSettings(userId, guildId, settings),
+        guildSettings,
+        ([guildId]) => getGuildSettings(userId, guildId),
         { concurrency: "unbounded" },
       );
 

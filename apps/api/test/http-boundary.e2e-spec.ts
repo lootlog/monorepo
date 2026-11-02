@@ -29,7 +29,7 @@ import {
 import { LootlogApiRouter } from "../src/runtime/application/http-routes.js";
 import { ApiRedis } from "../src/runtime/infrastructure/api-redis.js";
 import { ApiRuntimeConfig } from "../src/runtime/infrastructure/api-runtime-config.js";
-import { and, count, eq, sql } from "drizzle-orm";
+import { and, count, eq, isNull, sql } from "drizzle-orm";
 import {
   ApiDatabase,
   ApiDatabaseLive,
@@ -60,7 +60,8 @@ const authorizedGuildId = "guild-authorized";
 
 const forbiddenGuildId = "guild-forbidden";
 
-const world = "Aldous";
+// Stored worlds are lower-case; `world` filters compare in lower case.
+const world = "aldous";
 
 const publishedMessages: Parameters<RabbitMessagingService["publish"]>[0][] =
   [];
@@ -144,10 +145,14 @@ describe("API HTTP boundary", () => {
   const databaseRuntime = ManagedRuntime.make(ApiDatabaseLive);
   let database: ApiDatabaseValue;
 
+  /** Live timers; a deleted timer keeps its row so it can be restored. */
   const countTimers = async () =>
     (
       await databaseRuntime.runPromise(
-        database.select({ value: count() }).from(timerTable),
+        database
+          .select({ value: count() })
+          .from(timerTable)
+          .where(isNull(timerTable.deletedAt)),
       )
     )[0]?.value;
 
@@ -575,6 +580,15 @@ describe("API HTTP boundary", () => {
     expect(deletedResponse.status).toBe(200);
     expect(await countTimers()).toBe(0);
 
+    const [deletedTimer] = await databaseRuntime.runPromise(
+      database
+        .select({ deletedAt: timerTable.deletedAt })
+        .from(timerTable)
+        .where(eq(timerTable.timerKey, created.timerKey)),
+    );
+
+    expect(deletedTimer?.deletedAt).toBeInstanceOf(Date);
+
     const afterDeleteResponse = await request(
       `/guilds/${authorizedGuildId}/timers?world=${world}`,
     );
@@ -628,7 +642,7 @@ describe("API HTTP boundary", () => {
         .insert(timerTable)
         .values([
           timer(authorizedGuildId, world, 1),
-          timer(authorizedGuildId, "Other world", 2),
+          timer(authorizedGuildId, "other world", 2),
           timer(forbiddenGuildId, world, 3),
         ]),
     );
@@ -640,7 +654,7 @@ describe("API HTTP boundary", () => {
     expect(byTemplate.status).toBe(200);
     expect(await byTemplate.json()).toEqual([
       expect.objectContaining({ world, npcId: 1, templateId: 77 }),
-      expect.objectContaining({ world: "Other world", npcId: 2 }),
+      expect.objectContaining({ world: "other world", npcId: 2 }),
     ]);
 
     const byRuntimeIds = await search(`npcIds=1&npcIds=2&world=${world}`);
@@ -951,7 +965,7 @@ describe("API HTTP boundary", () => {
     for (const guildId of [authorizedGuildId, "current-loot-alias"]) {
       const list = await request(`/guilds/${guildId}/loots`);
       expect(list.status).toBe(200);
-      expect(await list.json()).toEqual([]);
+      expect(await list.json()).toEqual({ items: [], nextCursor: null });
 
       const missingLoot = await request(`/guilds/${guildId}/loots/42`);
       expect(missingLoot.status).toBe(404);
@@ -1004,19 +1018,19 @@ describe("API HTTP boundary", () => {
   });
 
   it.each([
-    ["123456789012345678", "errors.guilds.vanityUrlInvalid"],
-    ["---", "errors.guilds.vanityUrlInvalid"],
-    ["Battles!", "errors.guilds.vanityUrlRestricted"],
+    ["123456789012345678", "GUILDS_VANITY_URL_INVALID"],
+    ["---", "GUILDS_VANITY_URL_INVALID"],
+    ["Battles!", "GUILDS_VANITY_URL_RESTRICTED"],
   ])(
     "rejects the vanity URL %p with %p without storing it",
-    async (vanityUrl, message) => {
+    async (vanityUrl, code) => {
       const response = await request(`/guilds/${authorizedGuildId}/config`, {
         method: "PATCH",
         body: JSON.stringify({ vanityUrl }),
       });
 
       expect(response.status).toBe(400);
-      expect(await response.json()).toMatchObject({ message });
+      expect(await response.json()).toEqual({ code });
 
       const [guild] = await databaseRuntime.runPromise(
         database
@@ -1237,9 +1251,9 @@ describe("API HTTP boundary", () => {
       );
 
       expect(missing.status).toBe(404);
-      expect(await missing.text()).toBe("");
+      expect(await missing.json()).toEqual({ code: "GUILD_NOT_FOUND" });
       expect(forbidden.status).toBe(403);
-      expect(await forbidden.text()).toBe("");
+      expect(await forbidden.json()).toEqual({ code: "FORBIDDEN" });
     },
   );
 });

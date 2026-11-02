@@ -23,7 +23,6 @@ import {
   InvalidRequestError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 
@@ -112,67 +111,46 @@ export const makeDeleteTimer = (
           );
         }
 
-        const manual =
-          Number(timerNpcField(timer.npc, "margonemType")) ===
-          TIMER_TYPES.CUSTOM_MANUAL;
+        const actor = yield* findActiveGuildMember(
+          transaction,
+          access.discordId,
+          access.guild.id,
+        );
 
-        if (!manual) {
-          const actor = yield* findActiveGuildMember(
-            transaction,
-            access.discordId,
-            access.guild.id,
+        const actorMemberId = actor?.id;
+
+        if (actorMemberId === undefined) {
+          return yield* Effect.die(
+            new TimersInvariantViolation({ code: "HISTORY_ACTOR_NOT_FOUND" }),
           );
+        }
 
-          const actorMemberId = actor?.id;
+        yield* transaction.insert(timerHistoryEntryTable).values({
+          ...getTimerHistoryValues(timer),
+          guildId: access.guild.id,
+          world,
+          timerKey: timer.timerKey,
+          action: TimerHistoryAction.DELETE,
+          actorMemberId,
+        });
 
-          if (actorMemberId === undefined) {
-            return yield* Effect.die(
-              new TimersInvariantViolation({ code: "HISTORY_ACTOR_NOT_FOUND" }),
-            );
-          }
+        yield* pruneTimerHistory(
+          transaction,
+          access.guild.id,
+          world,
+          timer.timerKey,
+        );
 
-          yield* transaction.insert(timerHistoryEntryTable).values({
-            ...getTimerHistoryValues(timer),
-            guildId: access.guild.id,
-            world,
-            timerKey: timer.timerKey,
-            action: TimerHistoryAction.DELETE,
-            actorMemberId,
-          });
+        const updated = yield* transaction
+          .update(timerTable)
+          .set({ deletedAt: now, updatedAt: now })
+          .where(timerCondition)
+          .returning();
 
-          yield* pruneTimerHistory(
-            transaction,
-            access.guild.id,
-            world,
-            timer.timerKey,
+        if (!updated[0]) {
+          return yield* Effect.fail(
+            new ResourceNotFoundError({ code: ErrorKey.TIMER_NOT_FOUND }),
           );
-
-          const updated = yield* transaction
-            .update(timerTable)
-            .set({ deletedAt: now, updatedAt: now })
-            .where(timerCondition)
-            .returning();
-
-          if (!updated[0]) {
-            return yield* Effect.fail(
-              new ResourceNotFoundError({
-                code: ErrorKey.TIMER_NOT_FOUND,
-              }),
-            );
-          }
-        } else {
-          const deleted = yield* transaction
-            .delete(timerTable)
-            .where(timerCondition)
-            .returning();
-
-          if (!deleted[0]) {
-            return yield* Effect.fail(
-              new ResourceNotFoundError({
-                code: ErrorKey.TIMER_NOT_FOUND,
-              }),
-            );
-          }
         }
 
         return timer;

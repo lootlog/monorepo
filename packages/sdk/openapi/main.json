@@ -26662,7 +26662,8 @@
           },
           "world": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 64
           },
           "npc": {
             "type": "object",
@@ -26770,7 +26771,8 @@
         "properties": {
           "world": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 64
           },
           "actorCharacter": {
             "type": "object",
@@ -26845,7 +26847,8 @@
           },
           "world": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 64
           },
           "actorCharacter": {
             "type": "object",
@@ -28230,7 +28233,8 @@
           },
           "world": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 64
           },
           "gameVersion": {
             "type": "string",
@@ -38659,7 +38663,8 @@
         "properties": {
           "world": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 64
           },
           "npc": {
             "type": "object",

@@ -148,7 +148,7 @@ export const CreateAutoTimerRequest = Schema.Struct({
         "Deprecated: send `entranceSecondsLeft`. When the open entrance of a Hero Tracker closes, on the reporter's clock; ignored when `entranceSecondsLeft` is present.",
     }),
   ),
-  world: NonEmptyString,
+  world: WorldParam,
   npc: Schema.Struct({
     id: FiniteNumber.annotate({
       description: "Margonem runtime NPC id (`npc.id`) of the removed spawn.",
@@ -202,7 +202,7 @@ export const CreateAutoTimerResponse = Schema.Struct({
 export type ResetTimerRequest = typeof ResetTimerRequest.Type;
 
 export const ResetTimerRequest = Schema.Struct({
-  world: NonEmptyString,
+  world: WorldParam,
   actorCharacter: Schema.optionalKey(TimerActorCharacterInput),
 }).annotate({ identifier: "ResetTimerDto" });
 
@@ -235,7 +235,7 @@ export const CreateManualTimerRequest = Schema.Struct({
   ),
   customMinSpawnTime: Schema.optionalKey(DateTimeString),
   customMaxSpawnTime: Schema.optionalKey(DateTimeString),
-  world: NonEmptyString,
+  world: WorldParam,
   actorCharacter: Schema.optionalKey(TimerActorCharacterInput),
 }).annotate({ identifier: "CreateManualTimerDto" });
 
