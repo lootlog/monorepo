@@ -13,8 +13,11 @@ import {
   timerTable,
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
-import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
-import { buildTimerKey, getTimerNpcId } from "#src/timers/timer-key";
+import { buildTimerKey } from "#src/timers/timer-key";
+import {
+  getEventHeroSyntheticNpcId,
+  getTimerNpcId,
+} from "#src/shared/margonem/npc-identity";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -240,7 +243,7 @@ it.each([false, true])(
       });
 
       const now = new Date();
-      const syntheticNpcId = getSyntheticNpcId("hero");
+      const syntheticNpcId = getEventHeroSyntheticNpcId("hero");
       await boundary.run(database.insert(guildTable).values(guild));
       await boundary.run(database.insert(memberTable).values(member));
       await boundary.run(

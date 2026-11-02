@@ -6,24 +6,15 @@ import {
   ApplicationError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import {
-  and,
-  count,
-  desc,
-  eq,
-  inArray,
-  isNotNull,
-  isNull,
-  sql,
-} from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildDocumentHistoryTable,
   guildDocumentTable,
   guildTable,
-  memberTable,
 } from "#src/database/drizzle/schema";
+import { findMemberNames } from "#src/members/member-names";
 import type { GuildDocumentContent } from "./guild-document-content.schema.js";
 
 type DocsDatabase = typeof ApiDatabase.Service;
@@ -44,7 +35,7 @@ export type StoredDocument = typeof guildDocumentTable.$inferSelect;
 
 export type DocumentSummary = Omit<
   StoredDocument,
-  "content" | "deletedAt" | "deletedByMemberId"
+  "content" | "deletedAt" | "deletedByDiscordId"
 >;
 
 export type StoredDocumentHistory =
@@ -65,7 +56,7 @@ export interface DocsRepositoryService {
   ) => Effect.Effect<DocumentListing, DocsRepositoryFailure>;
   readonly createDocument: (options: {
     guildId: string;
-    memberId: string;
+    discordId: string;
     title: string;
     content: GuildDocumentContent;
     defaultLimit: number;
@@ -77,7 +68,7 @@ export interface DocsRepositoryService {
   readonly updateDocument: (options: {
     guildId: string;
     documentId: string;
-    memberId: string;
+    discordId: string;
     title: string;
     content: GuildDocumentContent;
     /** Rejects the save when another one advanced the document past it. */
@@ -101,20 +92,17 @@ export interface DocsRepositoryService {
   readonly changeTrashState: (options: {
     guildId: string;
     documentId: string;
-    memberId: string;
+    discordId: string;
     action: "DELETE" | "RESTORE";
   }) => Effect.Effect<void, DocsRepositoryFailure>;
   readonly purge: (
     guildId: string,
     documentId: string,
   ) => Effect.Effect<void, DocsRepositoryFailure>;
-  readonly findEditors: (
+  readonly findEditorNames: (
     guildId: string,
-    memberIds: ReadonlyArray<string>,
-  ) => Effect.Effect<
-    ReadonlyArray<{ userId: string; name: string }>,
-    DocsRepositoryFailure
-  >;
+    discordIds: Iterable<string>,
+  ) => Effect.Effect<ReadonlyMap<string, string>, DocsRepositoryFailure>;
 }
 
 export class DocsRepository extends Context.Service<
@@ -138,7 +126,7 @@ const documentHistoryValues = (
   title: document.title,
   content: document.content,
   action,
-  actorMemberId: document.updatedByMemberId,
+  actorDiscordId: document.updatedByDiscordId,
   editedAt: document.updatedAt,
 });
 
@@ -173,23 +161,13 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
       }),
     );
 
-  const findEditors: DocsRepositoryService["findEditors"] = (
+  const findEditorNames: DocsRepositoryService["findEditorNames"] = (
     guildId,
-    memberIds,
+    discordIds,
   ) =>
-    memberIds.length === 0
-      ? Effect.succeed([])
-      : protect(
-          database
-            .select({ userId: memberTable.userId, name: memberTable.name })
-            .from(memberTable)
-            .where(
-              and(
-                eq(memberTable.guildId, guildId),
-                inArray(memberTable.userId, [...memberIds]),
-              ),
-            ),
-        );
+    protect(findMemberNames(database, guildId, { discordIds })).pipe(
+      Effect.map(({ byDiscordId }) => byDiscordId),
+    );
 
   return DocsRepository.of({
     listDocuments: (guildId) =>
@@ -209,8 +187,8 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
                 guildId: guildDocumentTable.guildId,
                 title: guildDocumentTable.title,
                 version: guildDocumentTable.version,
-                createdByMemberId: guildDocumentTable.createdByMemberId,
-                updatedByMemberId: guildDocumentTable.updatedByMemberId,
+                createdByDiscordId: guildDocumentTable.createdByDiscordId,
+                updatedByDiscordId: guildDocumentTable.updatedByDiscordId,
                 createdAt: guildDocumentTable.createdAt,
                 updatedAt: guildDocumentTable.updatedAt,
               })
@@ -275,8 +253,8 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
               title: options.title,
               content: options.content,
               version: 1,
-              createdByMemberId: options.memberId,
-              updatedByMemberId: options.memberId,
+              createdByDiscordId: options.discordId,
+              updatedByDiscordId: options.discordId,
               createdAt: now,
               updatedAt: now,
             })
@@ -358,7 +336,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             .set({
               title: options.title,
               content: options.content,
-              updatedByMemberId: options.memberId,
+              updatedByDiscordId: options.discordId,
               version: sql`${guildDocumentTable.version} + 1`,
               updatedAt: now,
             })
@@ -390,7 +368,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             version: guildDocumentHistoryTable.version,
             title: guildDocumentHistoryTable.title,
             action: guildDocumentHistoryTable.action,
-            actorMemberId: guildDocumentHistoryTable.actorMemberId,
+            actorDiscordId: guildDocumentHistoryTable.actorDiscordId,
             editedAt: guildDocumentHistoryTable.editedAt,
           })
           .from(guildDocumentHistoryTable)
@@ -469,9 +447,9 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             .update(guildDocumentTable)
             .set({
               deletedAt: options.action === "DELETE" ? now : null,
-              deletedByMemberId:
-                options.action === "DELETE" ? options.memberId : null,
-              updatedByMemberId: options.memberId,
+              deletedByDiscordId:
+                options.action === "DELETE" ? options.discordId : null,
+              updatedByDiscordId: options.discordId,
               updatedAt: now,
             })
             .where(eq(guildDocumentTable.id, options.documentId))
@@ -531,6 +509,6 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           attributes: { adapter: "docs.drizzle", retryCount: 0 },
         }),
       ),
-    findEditors,
+    findEditorNames,
   });
 }

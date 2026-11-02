@@ -6,7 +6,7 @@ import { ManagedRuntime, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import { makeUserLootStats } from "#src/loots/query/user-loot-stats";
-import { getStableNpcId } from "#src/shared/margonem/stable-npc-id";
+import { getKillNpcId } from "#src/shared/margonem/npc-identity";
 
 const client = new Client({ connectionString: requireIsolatedTestDatabase() });
 
@@ -312,7 +312,7 @@ describe("personal loot statistics", () => {
     });
     await client.query(
       `INSERT INTO "UserKillBucket" ("periodStart","discordUserId",world,"npcId","npcName","npcType","npcLvl",kills,"lastKilledAt") VALUES (now(),$1,'tempest',$2,'Hero','COLOSSUS',100,12,now())`,
-      [user, getStableNpcId(77, "Hero", "COLOSSUS")],
+      [user, getKillNpcId({ id: 77, name: "Hero" }, "COLOSSUS")],
     );
 
     await client.query(
@@ -333,7 +333,7 @@ describe("personal loot statistics", () => {
       }),
       expect.objectContaining({
         npc: expect.objectContaining({
-          id: getStableNpcId(77, "Hero", "COLOSSUS"),
+          id: getKillNpcId({ id: 77, name: "Hero" }, "COLOSSUS"),
         }),
         kills: 12,
         legends: 1,

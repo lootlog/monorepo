@@ -1,7 +1,7 @@
 import { Clock, Effect } from "effect";
 import { HeroRespawnConfigResponse } from "#src/events/monitoring/event-monitoring-response.schema";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
+import { getEventHeroNpcId } from "#src/shared/margonem/npc-identity";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import type { EventRespawnStore } from "#src/events/respawn/event-respawn.repository";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
@@ -24,7 +24,7 @@ export const makeEventRespawn = (
       const timer = yield* timers.getEventRespawnTimer({
         guildId,
         world: hero.event.world,
-        npcId: hero.npcId ?? getSyntheticNpcId(heroId),
+        npcId: getEventHeroNpcId(hero),
         npcName: hero.npcName,
       });
 
