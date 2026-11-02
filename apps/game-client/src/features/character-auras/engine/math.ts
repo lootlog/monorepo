@@ -1,3 +1,4 @@
+import { clamp } from "es-toolkit";
 /** Small deterministic helpers shared by the aura simulation and its renderer. */
 
 export type Rng = () => number;
@@ -17,10 +18,6 @@ export function mulberry32(seed: number): Rng {
 }
 
 export const TAU = Math.PI * 2;
-
-export function clamp(value: number, min: number, max: number): number {
-  return value < min ? min : value > max ? max : value;
-}
 
 export function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
@@ -80,12 +77,6 @@ export function envelope(age: number, fadeIn: number, fadeOut: number): number {
 }
 
 export type Rgb = readonly [number, number, number];
-
-export function hexToRgb(hex: string): Rgb {
-  const value = Number.parseInt(hex.replace("#", ""), 16);
-
-  return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
-}
 
 export function rgba([r, g, b]: Rgb, alpha: number): string {
   return `rgba(${r},${g},${b},${clamp(alpha, 0, 1).toFixed(3)})`;

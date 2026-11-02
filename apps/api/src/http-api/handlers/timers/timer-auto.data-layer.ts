@@ -9,6 +9,7 @@ import { Clock, Effect, Predicate, Result, Schema } from "effect";
 import { partition } from "es-toolkit";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { getNpcType, isHeroTrackerName } from "@lootlog/domain/npc-type";
+import { isSameHeroTrackerEntrance } from "@lootlog/domain/timers";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -300,6 +301,24 @@ const badRequest = (message: ErrorKey, rejectedGuilds: unknown[]) =>
     rejectedGuilds,
   });
 
+/**
+ * Every client on the map, after a reload too, reports an open entrance again
+ * with the seconds Margonem still counts down; one that closes when the stored
+ * entrance does is that entrance.
+ */
+const isReportedEntrance = (
+  timer: typeof timerTable.$inferSelect | null,
+  payload: CreateAutoTimerRequest,
+): timer is typeof timerTable.$inferSelect =>
+  payload.entranceClosesAt !== undefined &&
+  timer !== null &&
+  timer.deletedAt === null &&
+  timer.entranceClosesAt !== null &&
+  isSameHeroTrackerEntrance(
+    Date.parse(payload.entranceClosesAt),
+    timer.entranceClosesAt.getTime(),
+  );
+
 const findRecentlyCreatedTimer = Effect.fnUntraced(function* (
   database: Pick<typeof ApiDatabase.Service, "select">,
   timer: typeof timerTable.$inferSelect | null,
@@ -403,6 +422,10 @@ export const makeAutoTimer = (
                     message: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
                   }),
           });
+
+          if (isReportedEntrance(previousTimer, payload)) {
+            return { _tag: "Duplicate" as const, projection: previousTimer };
+          }
 
           const completedTimer = yield* findRecentlyCreatedTimer(
             transaction,

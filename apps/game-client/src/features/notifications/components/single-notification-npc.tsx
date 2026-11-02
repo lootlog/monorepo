@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { CountBadge } from "@/components/count-badge";
 import { HeroTrackerStatus } from "@/components/hero-tracker-status";
+import { getHeroTrackerEntranceClosesAtMs } from "@/features/notifications/utils/hero-tracker-notification";
 import {
   getNotificationReportCount,
   type NotificationWithServers,
@@ -31,11 +32,7 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
         </span>
         {notification.heroTracker && (
           <HeroTrackerStatus
-            entranceClosesAt={
-              notification.heroTracker.state === "open"
-                ? Date.parse(notification.heroTracker.entranceClosesAt)
-                : undefined
-            }
+            entranceClosesAt={getHeroTrackerEntranceClosesAtMs(notification)}
           />
         )}
         <CountBadge count={getNotificationReportCount(notification)} />

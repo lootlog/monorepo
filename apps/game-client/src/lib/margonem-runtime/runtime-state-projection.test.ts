@@ -442,6 +442,45 @@ describe("RuntimeStateProjection", () => {
     });
   });
 
+  it("keeps the entrance countdown of a Hero Tracker read from the game when its template was not seen", () => {
+    const adapter = createAdapter();
+
+    const tracker = Object.freeze({
+      ...npc,
+      id: 190436,
+      name: "Doświadczony Tropiciel Herosów",
+      profession: "",
+      type: 0,
+      weight: 0,
+    });
+
+    adapter.getNpc.mockReturnValue(tracker);
+    const projection = new RuntimeStateProjection({ adapter });
+
+    projection.bootstrap();
+
+    // The claim packet names a template this client never received.
+    projection.apply(
+      createEnvelope({
+        npcs: [
+          {
+            icon: { id: 9791 },
+            id: 190436,
+            tpl: 190436,
+            x: 17,
+            y: 22,
+            killSeconds: 663,
+          },
+        ],
+      }),
+    );
+
+    expect(useNpcsStore.getState().getNpc(190436)).toMatchObject({
+      name: tracker.name,
+      entranceClosesAt: expect.any(Number),
+    });
+  });
+
   it("uses the hero level for NPC templates with a zero elastic factor", () => {
     const adapter = createAdapter();
     const projection = new RuntimeStateProjection({ adapter });

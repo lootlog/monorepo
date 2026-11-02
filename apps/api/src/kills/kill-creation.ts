@@ -34,6 +34,15 @@ import { getKillStatsBucketStart } from "./kill-stats-period.js";
 
 const DEDUP_TTL_SECONDS = 30;
 
+/** Kills that also land in the Organization activity journal. */
+const JOURNALED_NPC_TYPES: ReadonlySet<NpcType> = new Set([
+  NpcType.ELITE2,
+  NpcType.HERO,
+  NpcType.EVENT_HERO,
+  NpcType.COLOSSUS,
+  NpcType.TITAN,
+]);
+
 export class KillCreationError extends TaggedErrorClass<KillCreationError>()(
   "KillCreationError",
   { operation: Schema.String, cause: Schema.Defect() },
@@ -364,12 +373,7 @@ export const makeKillCreation = (
                     ...descriptive(input),
                   },
                 }),
-              ...(new Set<NpcType>([
-                NpcType.ELITE2,
-                NpcType.HERO,
-                NpcType.COLOSSUS,
-                NpcType.TITAN,
-              ]).has(input.npcType)
+              ...(JOURNALED_NPC_TYPES.has(input.npcType)
                 ? [
                     transaction.insert(guildKillActivityTable).values({
                       id: randomUUID(),

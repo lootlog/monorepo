@@ -708,3 +708,107 @@ it("keeps one timer per Hero Tracker across hiding places, measuring its respawn
     await boundary.dispose();
   }
 });
+
+it("merges later reports of one Hero Tracker entrance by the closing time Margonem counts down", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    const { database } = boundary;
+    const guild = createGuildFixture();
+
+    const member = createMemberFixture({
+      userId: guild.ownerId,
+      globalUserId: "user",
+    });
+
+    const now = new Date();
+    const trackerName = "Doświadczony Tropiciel Herosów";
+    await boundary.run(database.insert(guildTable).values(guild));
+    await boundary.run(database.insert(memberTable).values(member));
+    await boundary.run(
+      database.insert(userCharactersLootlogSettingsTable).values({
+        userId: member.userId,
+        accountId: "1",
+        characterId: "2",
+        catchingGuildIds: [guild.id],
+        updatedAt: now,
+      }),
+    );
+    const trackerTimerNpcId = getTimerNpcId({ id: 190436, name: trackerName });
+    const entranceClosesAt = new Date(now.getTime() + 8 * 60_000);
+    const minSpawnTime = new Date(entranceClosesAt.getTime() + 30 * 60_000);
+
+    // Reported minutes ago, so its CREATE history is past the dedup window.
+    await boundary.run(
+      database.insert(timerTable).values({
+        guildId: guild.id,
+        world: "world",
+        npcId: trackerTimerNpcId,
+        timerKey: buildTimerKey(trackerTimerNpcId, trackerName),
+        createdById: member.id,
+        npc: { id: 190436, name: trackerName, lvl: 282, type: "HERO_TRACKER" },
+        latestRespBaseSeconds: 5400,
+        entranceClosesAt,
+        minSpawnTime,
+        maxSpawnTime: new Date(entranceClosesAt.getTime() + 90 * 60_000),
+        updatedAt: new Date(now.getTime() - 3 * 60_000),
+      }),
+    );
+
+    const create = makeAutoTimer(database, {
+      get: () => Effect.succeed(null),
+      set: () => Effect.void,
+      setNx: () => Effect.succeed(true),
+      releaseDedup: () => Effect.void,
+      invalidateList: () => Effect.void,
+      enqueueEventHeroCheck: () => Effect.void,
+      withLock: (_key, operation) => operation,
+      publish: () => Effect.void,
+    });
+
+    const report = (closesAt: Date) =>
+      boundary.run(
+        create(
+          { discordId: member.userId, userId: "user" },
+          {
+            respBaseSeconds: 5400,
+            respawnRandomness: 50,
+            entranceClosesAt: closesAt.toISOString(),
+            world: "world",
+            npc: {
+              id: 190436,
+              name: trackerName,
+              location: "Jaskinia Piaskowej Burzy s.1",
+              lvl: 282,
+              wt: 0,
+              icon: "npc/tropiciel.gif",
+              type: 0,
+            },
+            accountId: "1",
+            characterId: "2",
+          },
+        ),
+      );
+
+    // A player entering the map whose clock runs a few seconds ahead.
+    await report(new Date(entranceClosesAt.getTime() + 4_000));
+
+    expect(
+      await boundary.run(database.select().from(timerHistoryEntryTable)),
+    ).toEqual([]);
+    expect(
+      await boundary.run(database.select().from(timerTable)),
+    ).toMatchObject([{ entranceClosesAt, minSpawnTime }]);
+
+    // Margonem counts down another entrance than the stored one.
+    const nextClosesAt = new Date(entranceClosesAt.getTime() + 5 * 60_000);
+
+    await report(nextClosesAt);
+
+    expect(
+      await boundary.run(database.select().from(timerTable)),
+    ).toMatchObject([{ entranceClosesAt: nextClosesAt }]);
+  } finally {
+    await boundary.dispose();
+  }
+});

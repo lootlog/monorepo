@@ -2,7 +2,8 @@
  * Signature pieces drawn around a character or a tooltip box: the newer auras' effects and
  * the per-aura tooltip decorations, all in pixels on the renderer's layer buffers.
  */
-import { clamp, hslToRgb, noise1, ramp, TAU, type Rgb } from "./math";
+import { clamp } from "es-toolkit";
+import { hslToRgb, noise1, ramp, TAU, type Rgb } from "./math";
 import {
   DIAG,
   ORTHO,
@@ -16,8 +17,8 @@ import type { TipDeco } from "./presets";
 
 /** What a decoration draws with: the layer buffers, the stepped clock and the aura's colours. */
 export interface Brush {
-  /** Additive layer, for light. */
-  lit: CanvasRenderingContext2D;
+  /** Additive layer, for light; reaching for it marks it drawn. */
+  lit: () => CanvasRenderingContext2D;
   /** Covering layer, for opaque things (petals, bone, vines). */
   dim: () => CanvasRenderingContext2D;
   time: number;
@@ -133,7 +134,7 @@ export function drawCurtain(
       // The curtain's hem swings behind a walk, like cloth hung from the top.
       const sway = b.lag.x * 1.2 * (j / length);
       plot(
-        b.lit,
+        b.lit(),
         x + sway,
         start + j,
         color,
@@ -164,7 +165,7 @@ export function drawSkulls(b: Brush, box: Box, front: boolean): void {
 
     if (Math.abs(b.lag.x) > 3)
       sprite(
-        b.lit,
+        b.lit(),
         x - b.lag.x * 0.6,
         y - b.lag.y * 0.6,
         SKULL,
@@ -172,7 +173,7 @@ export function drawSkulls(b: Brush, box: Box, front: boolean): void {
         0.3 * b.intensity,
       );
     sprite(b.dim(), x, y, SKULL, { "#": BONE }, 0.95 * b.intensity);
-    sprite(b.lit, x, y, SKULL, { o: eye }, b.intensity);
+    sprite(b.lit(), x, y, SKULL, { o: eye }, b.intensity);
   }
 }
 
@@ -196,7 +197,7 @@ export function drawGlyphOrbit(b: Brush, box: Box, front: boolean): void {
     const color = depth > 0 ? b.tones[0] : b.tones[1];
 
     for (const [dx, dy] of glyph)
-      plot(b.lit, x + dx, y + dy, color, (depth > 0 ? 1 : 0.6) * b.intensity);
+      plot(b.lit(), x + dx, y + dy, color, (depth > 0 ? 1 : 0.6) * b.intensity);
   }
 }
 
@@ -217,7 +218,7 @@ export function drawDustSwirl(b: Brush, box: Box, front: boolean): void {
 
         if (depth > 0 !== front) continue;
         plot(
-          b.lit,
+          b.lit(),
           cx + Math.cos(angle) * rx,
           cy + depth * ry,
           s < 2 ? b.tones[0] : b.tones[1],
@@ -247,7 +248,7 @@ export function drawSouls(
       (local < 0.2 ? local / 0.2 : 1 - (local - 0.2) / 0.8) * b.intensity;
 
     sprite(
-      b.lit,
+      b.lit(),
       x,
       y,
       GHOST,
@@ -303,19 +304,19 @@ function drawHolyCorners({
         [r, r - 2],
         [-r, r - 2],
       ] as const)
-        plot(b.lit, cx + dx, cy + dy, mid, a);
+        plot(b.lit(), cx + dx, cy + dy, mid, a);
     }
 
-    plot(b.lit, cx, cy, light, a);
+    plot(b.lit(), cx, cy, light, a);
 
     if ((b.tick + i * 5) % 20 < 3)
-      pixelGlint(b.lit, cx, cy, 2, [255, 255, 255], light, a);
+      pixelGlint(b.lit(), cx, cy, 2, [255, 255, 255], light, a);
   }
 
   for (let i = 0; i < 7; i++)
-    plot(b.lit, L + W / 2, T - 3 - i, i < 2 ? mid : light, a);
+    plot(b.lit(), L + W / 2, T - 3 - i, i < 2 ? mid : light, a);
 
-  for (let i = -2; i <= 2; i++) plot(b.lit, L + W / 2 + i, T - 7, light, a);
+  for (let i = -2; i <= 2; i++) plot(b.lit(), L + W / 2 + i, T - 7, light, a);
 }
 
 /** Icicles of varied length hanging off the bottom edge, growing and melting slowly. */
@@ -327,13 +328,13 @@ function drawIcicles({ b, L, R, B, light, mid, dark, a }: TipFrame): void {
 
     for (let j = 0; j < length; j++) {
       const color = j < 2 ? light : j < length - 1 ? mid : dark;
-      plot(b.lit, x, B + 1 + j, color, a);
+      plot(b.lit(), x, B + 1 + j, color, a);
 
-      if (j < 2) plot(b.lit, x + 1, B + 1 + j, mid, a * 0.8);
+      if (j < 2) plot(b.lit(), x + 1, B + 1 + j, mid, a * 0.8);
     }
 
     if ((b.tick + i * 7) % 30 === 0)
-      pixelGlint(b.lit, x, B + length, 1, [255, 255, 255], light, a);
+      pixelGlint(b.lit(), x, B + length, 1, [255, 255, 255], light, a);
   }
 }
 
@@ -351,7 +352,7 @@ function drawTendrils({ b, corners, light, a }: TipFrame): void {
         const py = y + dy * s + dx * curl;
         plot(b.dim(), px, py, [30, 6, 48], (1 - u) * 0.9 * a);
 
-        if (s > 12) plot(b.lit, px, py, light, (1 - u) * 1.5 * a);
+        if (s > 12) plot(b.lit(), px, py, light, (1 - u) * 1.5 * a);
       }
     }
   }
@@ -368,7 +369,7 @@ function drawBoltCorners({ b, corners, light, a }: TipFrame): void {
       const nx = px + sx * (2 + (k % 2) * 2);
       const ny = py + sy * (k % 2 ? 1 : 3);
       pixelLine(
-        b.lit,
+        b.lit(),
         px,
         py,
         nx,
@@ -390,9 +391,9 @@ function drawDrips({ b, deco, L, R, B, mid, a }: TipFrame): void {
   for (let x = L + 5, i = 0; x < R - 3; x += 9, i++) {
     const swell = ((b.time * 0.7 + i * 0.37) % 1) * 3;
 
-    for (let j = 0; j < swell; j++) plot(b.lit, x, B + 1 + j, color, a);
+    for (let j = 0; j < swell; j++) plot(b.lit(), x, B + 1 + j, color, a);
 
-    if (swell > 2) plot(b.lit, x - 1, B + 3, color, a * 0.6);
+    if (swell > 2) plot(b.lit(), x - 1, B + 3, color, a * 0.6);
   }
 }
 
@@ -422,12 +423,12 @@ function drawConstellation({
 
   for (const [i, [x0, y0]] of stars.entries()) {
     const [x1, y1] = stars[(i + 1) % stars.length] ?? [x0, y0];
-    pixelLine(b.lit, x0, y0, x1, y1, dark, 0.35 * a, 0.35 * a);
+    pixelLine(b.lit(), x0, y0, x1, y1, dark, 0.35 * a, 0.35 * a);
   }
 
   for (const [i, [x, y]] of stars.entries())
     pixelGlint(
-      b.lit,
+      b.lit(),
       x,
       y,
       (b.tick + i * 3) % 12 < 3 ? 2 : 1,
@@ -444,10 +445,10 @@ function drawPrismCorners({ b, corners, a }: TipFrame): void {
     const cy = y + sy * 3;
 
     for (let r = -3; r <= 3; r++)
-      plot(b.lit, cx, cy + r, Math.abs(r) < 2 ? [255, 255, 255] : color, a);
+      plot(b.lit(), cx, cy + r, Math.abs(r) < 2 ? [255, 255, 255] : color, a);
 
     for (const [dx, dy] of [...ORTHO, ...DIAG])
-      plot(b.lit, cx + dx, cy + dy, color, a * 0.7);
+      plot(b.lit(), cx + dx, cy + dy, color, a * 0.7);
   }
 }
 
@@ -478,7 +479,7 @@ function drawVines({ b, L, T, R, B, light, mid, a }: TipFrame): void {
     }
 
     if (i % 23 === 11)
-      plot(b.lit, px + nx * 2, py + ny * 2, b.palette[2] ?? light, a);
+      plot(b.lit(), px + nx * 2, py + ny * 2, b.palette[2] ?? light, a);
   }
 }
 
@@ -519,7 +520,7 @@ function drawSand({ b, L, T, W, light, mid, a }: TipFrame): void {
     const y = T - 3 - (k % 3) * 2;
 
     for (let s = 0; s < 6; s++)
-      plot(b.lit, x - s, y, s < 2 ? light : mid, (1 - s / 6) * a);
+      plot(b.lit(), x - s, y, s < 2 ? light : mid, (1 - s / 6) * a);
   }
 }
 
@@ -529,7 +530,7 @@ function drawSkullCorners({ b, corners, mid, a }: TipFrame): void {
     const cy = y + sy * 3;
     sprite(b.dim(), cx, cy, SKULL, { "#": BONE }, a);
     sprite(
-      b.lit,
+      b.lit(),
       cx,
       cy,
       SKULL,
@@ -544,9 +545,9 @@ function drawWaves({ b, L, R, B, light, mid, dark, a }: TipFrame): void {
   for (let x = L - 2; x <= R + 2; x++) {
     const phase = x * 0.3 - b.time * 4;
     const y = Math.round(B + 3 + Math.sin(phase) * 1.6);
-    plot(b.lit, x, y, Math.sin(phase) < -0.7 ? [255, 255, 255] : light, a);
-    plot(b.lit, x, y + 1, mid, a * 0.8);
-    plot(b.lit, x, y + 2, dark, a * 0.5);
+    plot(b.lit(), x, y, Math.sin(phase) < -0.7 ? [255, 255, 255] : light, a);
+    plot(b.lit(), x, y + 1, mid, a * 0.8);
+    plot(b.lit(), x, y + 2, dark, a * 0.5);
   }
 }
 
@@ -566,7 +567,7 @@ function drawSigils({ b, L, T, W, H, R, B, light, mid, a }: TipFrame): void {
     const glyph = RUNES[(i + Math.floor(b.time)) % RUNES.length] ?? [];
 
     for (const [dx, dy] of glyph)
-      plot(b.lit, x + dx, y + dy, i % 2 ? light : (b.palette[3] ?? mid), a);
+      plot(b.lit(), x + dx, y + dy, i % 2 ? light : (b.palette[3] ?? mid), a);
   }
 }
 
@@ -585,7 +586,7 @@ function drawCracks({ b, corners, light, a }: TipFrame): void {
 
       if (glowing)
         pixelLine(
-          b.lit,
+          b.lit(),
           px + sx,
           py,
           nx + sx,
@@ -680,9 +681,9 @@ export function drawMagicCircle(
   alpha: number,
 ): void {
   const [light, mid] = b.tones;
-  pixelEllipse(b.lit, cx, cy, rx, ry, light, alpha, 0, 1);
+  pixelEllipse(b.lit(), cx, cy, rx, ry, light, alpha, 0, 1);
   pixelEllipse(
-    b.lit,
+    b.lit(),
     cx,
     cy,
     Math.round(rx * 0.78),
@@ -704,6 +705,6 @@ export function drawMagicCircle(
 
   for (const [i, [x0, y0]] of points.entries()) {
     const [x1, y1] = points[(i + 2) % 5] ?? [x0, y0];
-    pixelLine(b.lit, x0, y0, x1, y1, mid, alpha * 0.8, alpha * 0.8);
+    pixelLine(b.lit(), x0, y0, x1, y1, mid, alpha * 0.8, alpha * 0.8);
   }
 }

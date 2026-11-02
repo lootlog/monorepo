@@ -128,3 +128,16 @@ export const getTimerCountdownMs = (
 
   return countdownMode === "max" || minTimeLeft < 0 ? maxTimeLeft : minTimeLeft;
 };
+
+// Margonem sends the seconds left on a Hero Tracker's entrance; each client
+// turns them into a closing time on its own clock, so reports of one entrance
+// differ by clock skew and latency, never by minutes.
+const SAME_HERO_TRACKER_ENTRANCE_TOLERANCE_MS = 60_000;
+
+/** Whether two closing times, in epoch ms, belong to one Hero Tracker entrance. */
+export const isSameHeroTrackerEntrance = (
+  closesAtMs: number,
+  otherClosesAtMs: number,
+): boolean =>
+  Math.abs(closesAtMs - otherClosesAtMs) <
+  SAME_HERO_TRACKER_ENTRANCE_TOLERANCE_MS;

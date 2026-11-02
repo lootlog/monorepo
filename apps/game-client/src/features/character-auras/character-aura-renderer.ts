@@ -7,17 +7,22 @@ import {
   rendererRuntimeAdapter,
   type RuntimeDrawable,
 } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
-import { Aura, type AuraPlacement } from "./engine/render";
+import { Aura, type AuraPlacement, isAuraInView } from "./engine/render";
 import { SilhouetteCache } from "./engine/silhouette";
 
 /** The key of the hero among the drawn characters; others use their character id. */
 export const HERO_AURA_KEY = "hero";
 
-/** Consecutive failing frames (about two seconds) before the auras give up for the session. */
+/** Consecutive failing frames (about two seconds) before a step gives up for the session. */
 const MAX_FAILURES = 120;
+
+/** The failure key of the per-frame work shared by every aura. */
+const FRAME_KEY = "*";
 
 /** Just under and just over the character in the draw order, between it and the next row. */
 const ORDER_EPSILON = 0.001;
+
+type AuraView = NonNullable<ReturnType<typeof auraRuntimeAdapter.getView>>;
 
 type DrawnAura = {
   aura: Aura;
@@ -40,7 +45,10 @@ class CharacterAuraRenderer {
   private unsubscribe: (() => void) | null = null;
   private mapId: number | undefined;
   private last = 0;
-  private failures = 0;
+  /** Consecutive failures by `FRAME_KEY` or aura key. */
+  private readonly failures = new Map<string, number>();
+  /** Auras that kept failing and are no longer drawn. */
+  private readonly disabled = new Set<string>();
   private broken = false;
 
   /** Characters to draw an aura on, by `HERO_AURA_KEY` or character id. */
@@ -66,24 +74,45 @@ class CharacterAuraRenderer {
     this.unsubscribe?.();
     this.unsubscribe = null;
     this.drawn.clear();
+    this.silhouettes.clear();
   }
 
-  private readonly onFrame = (): void => this.guard(() => this.drawFrame());
+  private readonly onFrame = (): void => this.drawFrame();
 
   // Errors never leave the game's frame loop or renderer. A passing one (a
-  // map change, a sprite still loading) skips the frame; only a long unbroken
-  // run, a game build the adapter no longer matches, turns the auras off.
-  private guard(step: () => void): void {
-    if (this.broken) return;
+  // map change, a sprite still loading) skips the step. A long unbroken run
+  // turns off only what keeps failing: one aura (a character the adapter
+  // cannot read), or every aura when the shared frame work fails (a game
+  // build the adapter no longer matches).
+  private guard<T>(key: string, step: () => T): T | undefined {
+    if (this.broken || this.disabled.has(key)) return undefined;
 
     try {
-      step();
-      this.failures = 0;
+      const result = step();
+      this.failures.delete(key);
+
+      return result;
     } catch (error) {
-      if (++this.failures < MAX_FAILURES) return;
-      this.broken = true;
-      this.stop();
+      const failures = (this.failures.get(key) ?? 0) + 1;
+
+      if (failures < MAX_FAILURES) {
+        this.failures.set(key, failures);
+
+        return undefined;
+      }
+
+      this.failures.delete(key);
       console.warn("[CharacterAuras] Drawing disabled after errors:", error);
+
+      if (key === FRAME_KEY) {
+        this.broken = true;
+        this.stop();
+      } else {
+        this.disabled.add(key);
+        this.drawn.delete(key);
+      }
+
+      return undefined;
     }
   }
 
@@ -91,6 +120,16 @@ class CharacterAuraRenderer {
     const now = performance.now();
     const dt = (now - this.last) / 1000;
     this.last = now;
+    const view = this.guard(FRAME_KEY, () => this.currentView());
+
+    if (view === undefined) return;
+
+    for (const [key, auraId] of this.targets) {
+      this.guard(key, () => this.drawTarget(key, auraId, view, dt));
+    }
+  }
+
+  private currentView(): AuraView | null {
     const view = auraRuntimeAdapter.getView();
 
     // Particles live in map pixels; a new map starts every aura over.
@@ -99,23 +138,30 @@ class CharacterAuraRenderer {
       this.drawn.clear();
     }
 
-    for (const [key, auraId] of this.targets) {
-      const character = view
-        ? key === HERO_AURA_KEY
-          ? auraRuntimeAdapter.getHero()
-          : auraRuntimeAdapter.getOther(key)
-        : null;
+    return view;
+  }
 
-      const drawn = this.drawnAura(key, auraId, character);
+  private drawTarget(
+    key: string,
+    auraId: CharacterAuraId,
+    view: AuraView | null,
+    dt: number,
+  ): void {
+    const character = view
+      ? key === HERO_AURA_KEY
+        ? auraRuntimeAdapter.getHero()
+        : auraRuntimeAdapter.getOther(key)
+      : null;
 
-      drawn.place =
-        view && character ? this.placement(character, view.camera) : null;
-      drawn.aura.update(dt, drawn.place, 1);
+    const drawn = this.drawnAura(key, auraId, character);
 
-      if (!drawn.place) continue;
-      rendererRuntimeAdapter.addDrawable(drawn.back);
-      rendererRuntimeAdapter.addDrawable(drawn.front);
-    }
+    drawn.place =
+      view && character ? this.placement(character, view.camera) : null;
+    drawn.aura.update(dt, drawn.place, 1);
+
+    if (!drawn.place) return;
+    rendererRuntimeAdapter.addDrawable(drawn.back);
+    rendererRuntimeAdapter.addDrawable(drawn.front);
   }
 
   private drawnAura(
@@ -132,6 +178,8 @@ class CharacterAuraRenderer {
       return existing;
     }
 
+    // The game draws these whatever their position (`getAlwaysDraw`), so an
+    // aura off the visible canvas skips its tick render and blits here.
     const drawn: DrawnAura = {
       aura: new Aura(auraId),
       place: null,
@@ -140,16 +188,18 @@ class CharacterAuraRenderer {
         getAlwaysDraw: () => true,
         getOrder: () => drawn.order - ORDER_EPSILON,
         draw: (context) =>
-          this.guard(() => {
-            if (drawn.place) drawn.aura.drawBack(context, drawn.place, 1);
+          this.guard(key, () => {
+            if (drawn.place && isInCanvas(drawn.place, context))
+              drawn.aura.drawBack(context, drawn.place, 1);
           }),
       },
       front: {
         getAlwaysDraw: () => true,
         getOrder: () => drawn.order + ORDER_EPSILON,
         draw: (context) =>
-          this.guard(() => {
-            if (drawn.place) drawn.aura.drawFront(context, drawn.place, 1);
+          this.guard(key, () => {
+            if (drawn.place && isInCanvas(drawn.place, context))
+              drawn.aura.drawFront(context, drawn.place, 1);
           }),
       },
     };
@@ -180,6 +230,20 @@ class CharacterAuraRenderer {
       feetY: frame.dy + feetHeight,
     };
   }
+}
+
+/** Whether an aura shows on the game canvas; the game scales the context by its zoom. */
+function isInCanvas(
+  place: AuraPlacement,
+  context: CanvasRenderingContext2D,
+): boolean {
+  const { a: scaleX, d: scaleY } = context.getTransform();
+
+  return isAuraInView(
+    place,
+    context.canvas.width / scaleX,
+    context.canvas.height / scaleY,
+  );
 }
 
 export const characterAuraRenderer = new CharacterAuraRenderer();
