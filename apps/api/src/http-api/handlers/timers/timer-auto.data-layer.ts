@@ -66,13 +66,6 @@ const publishTimerEvents = Effect.fnUntraced(function* (
   for (const result of results) yield* Effect.fromResult(result);
 });
 
-const RELEASE_DEDUP_LOCK_SCRIPT = `
-if redis.call("get", KEYS[1]) == ARGV[1] then
-  return redis.call("del", KEYS[1])
-end
-return 0
-`;
-
 type EventHeroCheck = {
   readonly guildId: string;
   readonly world: string;
@@ -107,7 +100,6 @@ export interface AutoTimerPorts {
     payload: TimerPublishedEvent<Key>,
   ) => Effect.Effect<unknown, unknown>;
   readonly releaseDedup: (
-    script: string,
     key: string,
     token: string,
   ) => Effect.Effect<unknown, never>;
@@ -664,7 +656,7 @@ export const makeAutoTimer = (
 
           return response;
         }),
-        ports.releaseDedup(RELEASE_DEDUP_LOCK_SCRIPT, dedupLockKey, token),
+        ports.releaseDedup(dedupLockKey, token),
       );
     });
   };
