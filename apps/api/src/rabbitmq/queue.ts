@@ -25,6 +25,8 @@ export enum Queue {
   // game
   GAME_CHARACTER_OFFLINE = "backend-game-character-offline",
   GAME_CHARACTER_OFFLINE_DLQ = "backend-game-character-offline.dlq",
+  MARGONEM_ACCOUNT_VERIFIED = "backend-margonem-account-verified-v1",
+  MARGONEM_ACCOUNT_VERIFIED_DLQ = "backend-margonem-account-verified-v1.dlq",
   // notifications
   NOTIFICATIONS_LOOT_CREATED = "backend-notifications-loot-created",
   NOTIFICATIONS_LOOT_CREATED_DLQ = "backend-notifications-loot-created.dlq",

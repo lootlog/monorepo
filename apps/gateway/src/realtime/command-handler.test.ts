@@ -35,6 +35,8 @@ import {
   unusedFederationStore,
 } from "../../test/realtime-fixtures.js";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
+import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
+import type { MargonemAccountVerifiedV1 } from "@lootlog/protocol/rabbit/events";
 import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import type { UserGuildData } from "#src/guilds/guild";
 
@@ -189,13 +191,19 @@ const setup = (
   guildStore?: GuildStore,
   updateSubscription: AirTagService["updateSubscription"] = () =>
     Promise.reject(new Error("Unexpected air tag subscribe")),
-  realtimeHub?: ConstructorParameters<typeof CommandHandler>[3],
+  realtimeHub?: ConstructorParameters<typeof CommandHandler>[4],
   joinAdmission?: CommandAdmission,
   registerInterest: AirTagService["registerInterest"] = () =>
     Promise.reject(new Error("Unexpected air tag interest")),
   publishObservations: AirTagService["publishObservations"] = () =>
     Promise.reject(new Error("Unexpected air tag observation")),
   airTagObservationAdmission?: CommandAdmission,
+  accounts: {
+    readonly verifier?: MargonemProofVerifier;
+    readonly publishAccountVerified?: ConstructorParameters<
+      typeof CommandHandler
+    >[2];
+  } = {},
 ) => {
   const guilds = new FakeGuildStore();
   const hub = new FakeHub();
@@ -204,9 +212,10 @@ const setup = (
 
   const handler = new CommandHandler(
     guildStore ?? guilds,
-    {
+    accounts.verifier ?? {
       verify: () => Effect.succeed({ valid: false, reason: "not supplied" }),
     },
+    accounts.publishAccountVerified ?? (() => Effect.void),
     presence,
     realtimeHub ?? hub,
     activity,
@@ -929,6 +938,7 @@ describe("CommandHandler session lifecycle", () => {
           verify: () =>
             Effect.succeed({ valid: false, reason: "not supplied" }),
         },
+        () => Effect.void,
         presence,
         hub,
         activity,
@@ -1055,6 +1065,64 @@ describe("CommandHandler session lifecycle", () => {
         status: "success",
       }),
     );
+  });
+
+  test("announces a verified Margonem account once and joins even when the announcement fails", async () => {
+    const published: MargonemAccountVerifiedV1[] = [];
+
+    const join = encode({
+      v: 1,
+      type: "session.join",
+      requestId: "request-1",
+      data: {
+        world: "alpha",
+        character: {
+          world: "alpha",
+          name: "Hero",
+          lvl: 100,
+          icon: "hero.gif",
+          characterId: "10",
+          accountId: "20",
+          prof: "w",
+        },
+        margonemAccountProof: {},
+      },
+    });
+
+    for (const publishAccountVerified of [
+      (event: MargonemAccountVerifiedV1) =>
+        Effect.sync(() => published.push(event)),
+      () => Effect.fail(new Error("RabbitMQ unavailable")),
+    ]) {
+      const { handler } = setup(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        {
+          verifier: { verify: () => Effect.succeed({ valid: true }) },
+          publishAccountVerified,
+        },
+      );
+
+      const { socket } = makeSocket("game");
+      await Effect.runPromise(handler.handle(socket, Buffer.from(join)));
+      expect(socket.data.joined).toBe(true);
+      expect(socket.data.confidence).toBe("verified");
+    }
+
+    expect(published).toEqual([
+      expect.objectContaining({
+        version: 1,
+        userId: "user-1",
+        accountId: "20",
+        characterId: "10",
+        world: "alpha",
+      }),
+    ]);
   });
 
   test("keeps game sessions available when Margonem proof is unavailable", async () => {
@@ -1811,6 +1879,7 @@ describe("CommandHandler session lifecycle", () => {
         invalidate: () => Effect.void,
       },
       { verify: () => Effect.succeed({ valid: false, reason: "unused" }) },
+      () => Effect.void,
       {
         ...new FakePresence(),
         reconcileAccess: (socket) =>

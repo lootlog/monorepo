@@ -34,6 +34,21 @@ export const GameCharacterOffline = Schema.Struct({
 
 export type GameCharacterOffline = typeof GameCharacterOffline.Type;
 
+/**
+ * The gateway verified Margonem's signed proof that the User plays this
+ * Margonem account. Facts may arrive late or twice; `verifiedAt` orders them.
+ */
+export const MargonemAccountVerifiedV1 = Schema.Struct({
+  version: Schema.Literal(1),
+  userId: Schema.NonEmptyString,
+  accountId: Schema.NonEmptyString,
+  characterId: Schema.NonEmptyString,
+  world: Schema.NonEmptyString,
+  verifiedAt: DateTimeWithOffsetString,
+});
+
+export type MargonemAccountVerifiedV1 = typeof MargonemAccountVerifiedV1.Type;
+
 const NullableString = Schema.NullOr(Schema.String);
 
 const NullableNumber = Schema.NullOr(Schema.Number);
@@ -319,6 +334,7 @@ export type UserOnlineEventV1 = typeof UserOnlineEventV1.Type;
 
 const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.GAME_CHARACTER_OFFLINE]: GameCharacterOffline,
+  [RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1]: MargonemAccountVerifiedV1,
   [RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1]: GuildKillsAcceptedV1,
   [RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1]: UserOnlineEventV1,
   [RabbitRoutingKey.ACTIVITY_LOG_CREATE]: ActivityLogCreated,

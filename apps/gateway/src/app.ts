@@ -202,6 +202,13 @@ class GatewayApplication extends Context.Service<
       const commands = new CommandHandler(
         guilds,
         makeMargonemProofVerifier(config, httpClient),
+        (event) =>
+          messaging
+            .publish({
+              routingKey: RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1,
+              content: new TextEncoder().encode(JSON.stringify(event)),
+            })
+            .pipe(Effect.asVoid),
         presence,
         hub,
         activity,
