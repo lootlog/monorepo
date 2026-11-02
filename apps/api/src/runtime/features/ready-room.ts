@@ -52,7 +52,7 @@ export const readyRoomData = Layer.unwrap(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
 
-    const chat = yield* makeChatOperations(
+    const chat = makeChatOperations(
       makeChatRedis(redis),
       makeChatEvents(rabbit),
     );

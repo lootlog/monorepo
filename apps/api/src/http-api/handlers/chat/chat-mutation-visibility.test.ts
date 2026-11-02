@@ -1,10 +1,5 @@
 import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
-import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
-import {
-  createGuildFixture,
-  createMemberFixture,
-} from "../../../../test/organization-fixtures.js";
-import { afterEach, describe, expect, it } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { Effect, Layer } from "effect";
 import { BunHttpServer } from "@effect/platform-bun";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
@@ -14,13 +9,7 @@ import { ChatGroup } from "../../contracts/chat/api.js";
 import { BearerSecurityMiddleware } from "../../contracts/shared.js";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { Permission } from "@lootlog/schema/permissions";
-import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  guildTable,
-  memberTable,
-  memberToRoleTable,
-  roleTable,
-} from "#src/database/drizzle/schema";
+import type { roleTable } from "#src/database/drizzle/schema";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import {
   ChatOperationError,
@@ -57,14 +46,7 @@ const message = {
   },
 };
 
-const boundaries: Array<Awaited<ReturnType<typeof createDatabaseBoundary>>> =
-  [];
-
-afterEach(async () => {
-  await Promise.all(boundaries.splice(0).map((boundary) => boundary.dispose()));
-});
-
-const setup = async (permissions: Permission[], levelFrom = 200) => {
+const setup = (permissions: Permission[], levelFrom = 200) => {
   const roles: Array<typeof roleTable.$inferSelect> = [
     {
       id: "role",
@@ -80,37 +62,6 @@ const setup = async (permissions: Permission[], levelFrom = 200) => {
     },
   ];
 
-  const boundary = await createDatabaseBoundary();
-  boundaries.push(boundary);
-  const database = boundary.database;
-  await boundary.run(
-    database
-      .insert(guildTable)
-      .values(createGuildFixture({ id: "organization", ownerId: "owner" })),
-  );
-  await boundary.run(
-    database.insert(memberTable).values([
-      createMemberFixture({
-        id: 1,
-        guildId: "organization",
-        userId: "author",
-        globalUserId: "author-user",
-      }),
-      createMemberFixture({
-        id: 2,
-        guildId: "organization",
-        userId: "administrator",
-        globalUserId: "admin-user",
-      }),
-    ]),
-  );
-  await boundary.run(database.insert(roleTable).values(roles));
-  await boundary.run(
-    database.insert(memberToRoleTable).values([
-      { A: 1, B: "role" },
-      { A: 2, B: "role" },
-    ]),
-  );
   const records = [JSON.stringify(message)];
   const published: unknown[] = [];
 
@@ -137,16 +88,17 @@ const setup = async (permissions: Permission[], levelFrom = 200) => {
     ltrim: () => Effect.void,
   };
 
-  const operations = await Effect.runPromise(
-    makeChatOperations(redis, {
-      publish: (_key, payload) =>
-        Effect.sync(() => {
-          published.push(payload);
-        }),
-    }).pipe(Effect.provideService(ApiDatabase, database)),
-  );
+  const operations = makeChatOperations(redis, {
+    publish: (_key, payload) =>
+      Effect.sync(() => {
+        published.push(payload);
+      }),
+  });
+
+  const viewer = (discordId: string) => ({ discordId, permissions, roles });
 
   return {
+    viewer,
     operations: operations.service,
     endPartyGatheringMessages: operations.endPartyGatheringMessages,
     records,
@@ -156,7 +108,7 @@ const setup = async (permissions: Permission[], levelFrom = 200) => {
 
 describe("chat mutation source visibility", () => {
   it("rejects the removed PATCH endpoint without changing stored messages", async () => {
-    const fixture = await setup(
+    const fixture = setup(
       [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
       0,
     );
@@ -174,6 +126,7 @@ describe("chat mutation source visibility", () => {
               Permission.LOOTLOG_CHAT_READ,
               Permission.LOOTLOG_CHAT_WRITE,
             ],
+            roles: [],
           }),
       }),
     );
@@ -219,13 +172,13 @@ describe("chat mutation source visibility", () => {
   });
 
   it("rejects deletion after the author loses the source level", async () => {
-    const fixture = await setup([
+    const fixture = setup([
       Permission.LOOTLOG_CHAT_READ,
       Permission.LOOTLOG_CHAT_WRITE,
     ]);
 
     const operation = fixture.operations.deleteMessage(
-      "author",
+      fixture.viewer("author"),
       "organization",
       "message",
     );
@@ -238,20 +191,24 @@ describe("chat mutation source visibility", () => {
   });
 
   it("retains author deletion for a visible source and broadcasts their result", async () => {
-    const fixture = await setup(
+    const fixture = setup(
       [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
       0,
     );
 
     await Effect.runPromise(
-      fixture.operations.deleteMessage("author", "organization", "message"),
+      fixture.operations.deleteMessage(
+        fixture.viewer("author"),
+        "organization",
+        "message",
+      ),
     );
     expect(fixture.records).toEqual([]);
     expect(fixture.published).toHaveLength(1);
   });
 
   it("preserves system updates when a party gathering ends", async () => {
-    const fixture = await setup([Permission.LOOTLOG_CHAT_READ]);
+    const fixture = setup([Permission.LOOTLOG_CHAT_READ]);
     fixture.records[0] = JSON.stringify({
       ...message,
       type: "PARTY_GATHERING",
@@ -278,15 +235,31 @@ describe("chat mutation source visibility", () => {
   });
 
   it("allows administrators to delete messages outside their role range", async () => {
-    const fixture = await setup([Permission.ADMIN]);
+    const fixture = setup([Permission.ADMIN]);
     await Effect.runPromise(
       fixture.operations.deleteMessage(
-        "administrator",
+        fixture.viewer("administrator"),
         "organization",
         "message",
       ),
     );
     expect(fixture.records).toEqual([]);
     expect(fixture.published).toHaveLength(1);
+  });
+
+  it("lets moderators delete another member's visible message", async () => {
+    const fixture = setup(
+      [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_MANAGE],
+      0,
+    );
+
+    await Effect.runPromise(
+      fixture.operations.deleteMessage(
+        fixture.viewer("moderator"),
+        "organization",
+        "message",
+      ),
+    );
+    expect(fixture.records).toEqual([]);
   });
 });

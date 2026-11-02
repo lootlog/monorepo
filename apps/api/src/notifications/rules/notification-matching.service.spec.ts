@@ -1,7 +1,28 @@
 import { describe, expect, it } from "bun:test";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
-import { notificationMatchingPolicy as service } from "#src/notifications/rules/notification-matching.service";
+import { memberCapabilities } from "@lootlog/domain/access-policy";
+import {
+  notificationMatchingPolicy as service,
+  type NotificationMemberRoleInfo,
+} from "#src/notifications/rules/notification-matching.service";
+
+const canRolesViewLoot = (
+  roles: NotificationMemberRoleInfo["roles"],
+  npcs: Parameters<typeof service.canMemberViewLoot>[1],
+  isGuildOwner = false,
+) =>
+  service.canMemberViewLoot(
+    {
+      roles,
+      permissions: memberCapabilities({
+        ownerId: "owner",
+        viewerId: isGuildOwner ? "owner" : "member",
+        roles,
+      }),
+    },
+    npcs,
+  );
 
 describe("NotificationMatchingService", () => {
   it("returns empty filters for invalid filter payloads", () => {
@@ -12,13 +33,13 @@ describe("NotificationMatchingService", () => {
 
   it("allows guild owners to view any loot", () => {
     expect(
-      service.canRolesViewLoot([], [{ type: NpcType.TITAN, level: 300 }], true),
+      canRolesViewLoot([], [{ type: NpcType.TITAN, level: 300 }], true),
     ).toBe(true);
   });
 
   it("does not give administrators a loot visibility bypass", () => {
     expect(
-      service.canRolesViewLoot(
+      canRolesViewLoot(
         [
           {
             id: "admin",
@@ -34,7 +55,7 @@ describe("NotificationMatchingService", () => {
 
   it("blocks access when no readable role exists", () => {
     expect(
-      service.canRolesViewLoot(
+      canRolesViewLoot(
         [
           {
             id: "titan-only",
@@ -50,7 +71,7 @@ describe("NotificationMatchingService", () => {
 
   it("requires a single role to satisfy loot read, tier permission and level range", () => {
     expect(
-      service.canRolesViewLoot(
+      canRolesViewLoot(
         [
           {
             id: "read",
@@ -72,7 +93,7 @@ describe("NotificationMatchingService", () => {
 
   it("allows access when one role fully matches loot read, tier permission and level range", () => {
     expect(
-      service.canRolesViewLoot(
+      canRolesViewLoot(
         [
           {
             id: "complete-titan",
@@ -91,7 +112,7 @@ describe("NotificationMatchingService", () => {
 
   it("fails closed for unknown NPC levels", () => {
     expect(
-      service.canRolesViewLoot(
+      canRolesViewLoot(
         [
           {
             id: "complete-titan",
@@ -110,7 +131,7 @@ describe("NotificationMatchingService", () => {
 
   it("blocks heroes without heroes read permission", () => {
     expect(
-      service.canRolesViewLoot(
+      canRolesViewLoot(
         [
           {
             id: "base",

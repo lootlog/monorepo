@@ -3,7 +3,10 @@ import {
   createMemberFixture,
 } from "../../../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
-import { createAccessPolicy } from "@lootlog/domain/access-policy";
+import {
+  createAccessPolicy,
+  AccessRequirement,
+} from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Layer } from "effect";
 import type { DocsService } from "#src/docs/docs.service";
@@ -310,7 +313,7 @@ describe("Docs HttpApi handlers", () => {
     expect(authorizationCalls).toEqual([
       {
         guildId: "guild-a",
-        capabilities: [Permission.OWNER, Permission.ADMIN],
+        capabilities: AccessRequirement.ADMINISTER,
         mode: "any",
       },
     ]);
