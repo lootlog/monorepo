@@ -9,6 +9,7 @@ import { Clock, Effect, Predicate, Result, Schema } from "effect";
 import { partition } from "es-toolkit";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { getNpcType, isHeroTrackerName } from "@lootlog/domain/npc-type";
+import { isSameHeroTrackerEntrance } from "@lootlog/domain/timers";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -146,11 +147,10 @@ const getReportedEntranceClosesAt = (
   return payload.entranceClosesAt ? new Date(payload.entranceClosesAt) : null;
 };
 
-// Every player near a tracker sees the same countdown; reports this close to
-// the stored entrance describe that entrance and keep its window.
-const SAME_ENTRANCE_TOLERANCE_MS = 60_000;
-
-/** The stored timer when a report repeats the entrance it already counts. */
+/**
+ * The stored timer when a report repeats the entrance it already counts:
+ * every player near a tracker sees the same countdown.
+ */
 const findSameEntranceTimer = (
   timer: typeof timerTable.$inferSelect | null,
   entranceClosesAt: Date | null,
@@ -159,8 +159,10 @@ const findSameEntranceTimer = (
   entranceClosesAt &&
   timer.deletedAt === null &&
   timer.entranceClosesAt !== null &&
-  Math.abs(timer.entranceClosesAt.getTime() - entranceClosesAt.getTime()) <
-    SAME_ENTRANCE_TOLERANCE_MS
+  isSameHeroTrackerEntrance(
+    timer.entranceClosesAt.getTime(),
+    entranceClosesAt.getTime(),
+  )
     ? timer
     : null;
 

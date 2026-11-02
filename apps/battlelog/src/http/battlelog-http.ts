@@ -395,9 +395,11 @@ const BattlelogHandlers = Layer.mergeAll(
           Effect.gen(function* () {
             const userId = yield* currentUserId();
 
+            // Game clients loaded before the proof was dropped still send
+            // `battleKey` and `margonemAccountProof`; their kills still count.
             const data: RecordWeaponKillsInput =
               yield* HttpServerRequest.schemaBodyJson(RecordWeaponKillsSchema, {
-                onExcessProperty: "error",
+                onExcessProperty: "ignore",
               }).pipe(
                 Effect.mapError(
                   (cause) =>

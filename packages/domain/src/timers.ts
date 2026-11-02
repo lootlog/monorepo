@@ -144,3 +144,16 @@ export const getTimerSortTimeLeft = (timeLeft: TimerTimeLeft): number =>
   timeLeft.entranceTimeLeft !== undefined && isEntranceOpen(timeLeft)
     ? timeLeft.entranceTimeLeft
     : timeLeft.maxTimeLeft;
+
+// Margonem sends the seconds left on a Hero Tracker's entrance, so closing
+// times of one entrance differ only by latency (and by the reporter's clock
+// for clients that still send their own close time), never by minutes.
+const SAME_HERO_TRACKER_ENTRANCE_TOLERANCE_MS = 60_000;
+
+/** Whether two closing times, in epoch ms, belong to one Hero Tracker entrance. */
+export const isSameHeroTrackerEntrance = (
+  closesAtMs: number,
+  otherClosesAtMs: number,
+): boolean =>
+  Math.abs(closesAtMs - otherClosesAtMs) <
+  SAME_HERO_TRACKER_ENTRANCE_TOLERANCE_MS;

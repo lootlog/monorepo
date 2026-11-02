@@ -515,10 +515,6 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   animation: ll-aura-nick 2.4s steps(12) infinite;
 }
 
-.tip-wrapper[data-ll-aura] .info-wrapper .nick * {
-  color: inherit;
-}
-
 @keyframes ll-aura-nick {
   from {
     background-position: 200% 0;

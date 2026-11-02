@@ -11,6 +11,7 @@ import {
   userKillTotalTable,
   memberKillBucketTable,
   memberKillTotalTable,
+  guildKillActivityTable,
   guildKillBucketTable,
   guildKillTotalTable,
 } from "#src/database/drizzle/schema";
@@ -239,6 +240,63 @@ it("stores the relative NPC icon when a sender reports its CDN URL", async () =>
         ),
       ).toEqual(["her/mushita.gif"]);
     }
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+it("journals an event hero kill in the Organization activity feed", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  const cache: KillCreationCache = {
+    invalidateScopes: () => Effect.succeed(0),
+    deleteIfValue: () => Effect.succeed(0),
+    setNx: () => Effect.succeed(true),
+  };
+
+  try {
+    const database = boundary.database;
+    await boundary.run(
+      database
+        .insert(guildTable)
+        .values(createGuildFixture({ id: "123", ownerId: "discord-1" })),
+    );
+    await boundary.run(
+      database.insert(memberTable).values(
+        createMemberFixture({
+          id: 1,
+          guildId: "123",
+          userId: "discord-1",
+          globalUserId: "user",
+        }),
+      ),
+    );
+    await boundary.run(
+      database.insert(userCharactersLootlogSettingsTable).values({
+        userId: "discord-1",
+        accountId: payload.accountId,
+        characterId: payload.characterId,
+        catchingGuildIds: ["123"],
+        updatedAt: new Date(),
+      }),
+    );
+
+    await boundary.run(
+      makeKillCreation(
+        database,
+        cache,
+        logger,
+      )("discord-1", {
+        ...payload,
+        npc: { ...payload.npc, icon: "hev/mushita.gif" },
+      }),
+    );
+
+    expect(
+      (await boundary.run(database.select().from(guildKillActivityTable))).map(
+        ({ guildId, npcType }) => ({ guildId, npcType }),
+      ),
+    ).toEqual([{ guildId: "123", npcType: "EVENT_HERO" }]);
   } finally {
     await boundary.dispose();
   }

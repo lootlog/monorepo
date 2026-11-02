@@ -340,7 +340,7 @@ function ellipseSites(bounds: AuraSilhouette["bounds"]): EdgeSite[] {
  * multiply that, so each image keeps at most `perImage` silhouettes and starts over past it.
  */
 export class SilhouetteCache {
-  private readonly byImage = new WeakMap<object, Map<string, AuraSilhouette>>();
+  private byImage = new WeakMap<object, Map<string, AuraSilhouette>>();
 
   constructor(private readonly perImage = 128) {}
 
@@ -368,5 +368,10 @@ export class SilhouetteCache {
     }
 
     return silhouette;
+  }
+
+  /** Drops every silhouette, for when no aura is drawn. */
+  clear(): void {
+    this.byImage = new WeakMap();
   }
 }

@@ -1,7 +1,7 @@
+import { clamp } from "es-toolkit";
+import { hexToRgb } from "@lootlog/domain/color";
 import {
-  clamp,
   envelope,
-  hexToRgb,
   hslToRgb,
   mulberry32,
   noise1,
@@ -268,7 +268,7 @@ export class Aura {
   private readonly outline = createComposite();
   private readonly inner = createComposite();
   /** The layer pair drawn into right now; draw helpers pick `lit` (additive) or `dim` (covering). */
-  private lit!: CanvasRenderingContext2D;
+  private litCtx!: CanvasRenderingContext2D;
   private dim!: CanvasRenderingContext2D;
   private dimLayer!: Layer;
   private litLayer!: Layer;
@@ -525,7 +525,6 @@ export class Aura {
     snap.viewY = Math.round(place.viewY);
     this.prepare(snap.bodyLit, snap.bodyDim, box);
     body();
-    snap.bodyLit.used = true;
     this.finish(snap.bodyLit, snap.bodyDim, box);
     this.prepare(snap.worldLit, snap.worldDim, box);
     // Particles are plotted pixel by pixel; only smoke, wisps and firefly glows are soft.
@@ -587,7 +586,7 @@ export class Aura {
       layer.soft = true;
     }
 
-    this.lit = lit.ctx;
+    this.litCtx = lit.ctx;
     this.dim = dim.ctx;
     this.litLayer = lit;
     this.dimLayer = dim;
@@ -610,6 +609,13 @@ export class Aura {
       );
       layer.ctx.putImageData(image, 0, 0);
     }
+  }
+
+  /** The additive buffer; reaching for it marks it drawn, so `finish` skips untouched ones. */
+  private get lit(): CanvasRenderingContext2D {
+    this.litLayer.used = true;
+
+    return this.litCtx;
   }
 
   private useDim(): CanvasRenderingContext2D {
@@ -830,7 +836,7 @@ export class Aura {
 
   private brush(intensity: number): Brush {
     return {
-      lit: this.lit,
+      lit: () => this.lit,
       dim: () => this.useDim(),
       time: this.time,
       tick: this.tick,
@@ -3113,6 +3119,25 @@ function drawVortexArms(
 
 function groundRadius(place: AuraPlacement): number {
   return Math.round(clamp(place.silhouette.bounds.w * 0.7, 14, 30));
+}
+
+/** Camera drift a world buffer can move by between ticks. */
+const VIEW_SLACK = 16;
+
+/** Whether an aura at `place` lands inside a `width`×`height` view at all. */
+export function isAuraInView(
+  place: AuraPlacement,
+  width: number,
+  height: number,
+): boolean {
+  const box = boxOf(place);
+
+  return (
+    box.ox < width + VIEW_SLACK &&
+    box.oy < height + VIEW_SLACK &&
+    box.ox + box.w > -VIEW_SLACK &&
+    box.oy + box.h > -VIEW_SLACK
+  );
 }
 
 function boxOf(place: AuraPlacement): Box {
