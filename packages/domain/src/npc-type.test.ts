@@ -44,6 +44,9 @@ describe("Hero Tracker classification", () => {
     "Tropiciel Herosów",
     "Wtajemniczony Tropiciel Herosów",
     "Doświadczony Tropiciel Herosów",
+    "Hero Hunter",
+    "Initiated Hero Hunter",
+    "Experienced Hero Hunter",
   ])("classifies %s, whose template has no weight, as a tracker", (name) => {
     expect(getNpcType(NpcTypeEnum, { wt: 0, name })).toBe(
       NpcTypeEnum.HERO_TRACKER,
