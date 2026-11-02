@@ -10,11 +10,8 @@ import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { getEntranceClosesAt } from "@/utils/game/hero-tracker-entrance";
 import { isHeroTrackerName } from "@lootlog/domain/npc-type";
+import { isSameHeroTrackerEntrance } from "@lootlog/domain/timers";
 import type { GameEvent } from "@lootlog/margonem/game-events";
-
-// Every player on the map sees the same countdown; one report per entrance is
-// enough, and the API merges reports from other players.
-const SAME_ENTRANCE_TOLERANCE_MS = 60_000;
 
 type EventNpc = NonNullable<GameEvent["npcs"]>[number];
 
@@ -81,9 +78,10 @@ export class HeroTrackerTimerProcessor {
   private isNewEntrance({ npc, entranceClosesAt }: ClaimedTracker): boolean {
     const reported = this.reportedEntrances.get(npc.id);
 
+    // One report per entrance is enough; the API merges other players' ones.
     return (
       reported === undefined ||
-      Math.abs(reported - entranceClosesAt) >= SAME_ENTRANCE_TOLERANCE_MS
+      !isSameHeroTrackerEntrance(reported, entranceClosesAt)
     );
   }
 
