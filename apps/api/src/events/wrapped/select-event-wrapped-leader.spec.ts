@@ -7,9 +7,7 @@ const candidate = (
   primaryValue: number,
   secondaryValue = 0,
 ) => ({
-  memberId,
-  name,
-  avatar: null,
+  member: { id: memberId, name, avatar: null, userId: `user-${memberId}` },
   primaryValue,
   secondaryValue,
 });
@@ -24,9 +22,7 @@ describe("selectEventWrappedLeader", () => {
 
     expect(result).toEqual({
       winner: {
-        memberId: 1,
-        name: "Ada",
-        avatar: null,
+        member: { id: 1, name: "Ada", avatar: null, userId: "user-1" },
         primaryValue: 12,
         secondaryValue: 3,
       },
@@ -79,7 +75,7 @@ describe("selectEventWrappedLeader", () => {
     );
 
     expect(result.candidateCount).toBe(1);
-    expect(result.winner?.name).toBe("Bartek");
+    expect(result.winner?.member.name).toBe("Bartek");
   });
 
   it("omits a non-finite secondary value without rejecting the candidate", () => {

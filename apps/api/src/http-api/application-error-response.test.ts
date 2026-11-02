@@ -11,34 +11,38 @@ import { applicationErrorResponse } from "./application-error-response.js";
 
 it.each([
   {
-    error: new InvalidRequestError("MISSING_MESSAGE_OR_NPC"),
+    error: new InvalidRequestError({ code: "MISSING_MESSAGE_OR_NPC" }),
     status: 400,
-    body: { message: "MISSING_MESSAGE_OR_NPC" },
+    body: { code: "MISSING_MESSAGE_OR_NPC" },
+    retryAfter: null,
   },
   {
     error: new RateLimitedError({
-      message: "NOTIFICATION_RATE_LIMITED",
-      retryAfterMs: 2000,
+      code: "NOTIFICATION_RATE_LIMITED",
+      retryAfterMs: 1500,
     }),
     status: 429,
-    body: { message: "NOTIFICATION_RATE_LIMITED", retryAfterMs: 2000 },
+    body: { code: "NOTIFICATION_RATE_LIMITED" },
+    retryAfter: "2",
   },
   {
     error: new DependencyUnavailableError({
       message: "private connection details",
     }),
     status: 503,
-    body: { statusCode: 503, message: "Service unavailable" },
+    body: { code: "SERVICE_UNAVAILABLE", message: "Service unavailable" },
+    retryAfter: null,
   },
 ])(
   "preserves status $status and safe error details",
-  async ({ error, status, body }) => {
+  async ({ error, status, body, retryAfter }) => {
     const response = HttpServerResponse.toWeb(
       await Effect.runPromise(applicationErrorResponse(error)),
     );
 
     expect(response.status).toBe(status);
     expect(await response.json()).toEqual(body);
+    expect(response.headers.get("retry-after")).toBe(retryAfter);
   },
 );
 

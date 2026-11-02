@@ -39,6 +39,8 @@ export function validateReservationTime(options: {
   const issue = getReservationTimeValidationIssue(options);
 
   if (issue) {
-    throw new InvalidEntityError(issue);
+    const { code, ...details } = issue;
+
+    throw new InvalidEntityError({ code, details });
   }
 }

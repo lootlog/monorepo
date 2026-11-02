@@ -27,15 +27,19 @@ export class BearerSecurityMiddleware extends HttpApiMiddleware.Service<
   error: ReauthenticationRequired,
 }) {}
 
-export const OrganizationWorkspaceErrorResponse = Schema.StructWithRest(
-  Schema.Struct({ code: Schema.String }),
-  [Schema.Record(Schema.String, JsonValue)],
-).annotate({ identifier: "OrganizationWorkspaceErrorResponse" });
+/**
+ * Body of every 4xx/5xx response except the 401 that asks for sign-in again.
+ * `code` is the stable, machine-readable reason (`NOT_FOUND`,
+ * `VALIDATION_ERROR`, `RESERVATION_OVERLAP`); `message` is for people and may
+ * change; `details` holds the values a client needs to explain the reason.
+ * A 429 also sends `Retry-After` in seconds when the wait is known.
+ */
+export const HttpErrorResponse = Schema.Struct({
+  code: Schema.String,
+  message: Schema.optional(Schema.String),
+  details: Schema.optional(Schema.Record(Schema.String, JsonValue)),
+}).annotate({ identifier: "HttpErrorResponse" });
 
-export const HttpErrorResponse = Schema.StructWithRest(
-  Schema.Struct({
-    code: Schema.optionalKey(Schema.String),
-    message: Schema.optionalKey(JsonValue),
-  }),
-  [Schema.Record(Schema.String, JsonValue)],
-).annotate({ identifier: "HttpErrorResponse" });
+export type HttpErrorResponse = typeof HttpErrorResponse.Type;
+
+export type JsonValue = typeof JsonValue.Type;

@@ -11,12 +11,12 @@ import {
 describe("timer failure classification", () => {
   it("preserves domain reasons and details for the HTTP response", () => {
     const failure = new ResourceConflictError({
-      message: "EXISTING_TIMER",
-      timerId: "timer-1",
+      code: "EXISTING_TIMER",
+      details: { timerId: "timer-1" },
     });
 
     expect(toTimersDataFailure(failure)).toBe(failure);
-    const invalid = new InvalidRequestError({ message: "SPAWN_TIME_IN_PAST" });
+    const invalid = new InvalidRequestError({ code: "SPAWN_TIME_IN_PAST" });
     expect(toTimersDataFailure(invalid)).toBe(invalid);
   });
 

@@ -1,20 +1,108 @@
-import { asc, count, desc, eq, max, sql, sum, type SQL } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  lt,
+  max,
+  or,
+  sql,
+  sum,
+  type SQL,
+} from "drizzle-orm";
 import { QueryBuilder } from "drizzle-orm/pg-core";
 import { Effect, Schema } from "effect";
+import { FiniteNumber } from "@lootlog/schema/http-scalars";
+import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import type { ApiDatabase } from "#src/database/drizzle/database";
-import { UserNpcKillsResponse } from "#src/contracts/kills/schemas";
+import {
+  UserNpcKillsResponse,
+  type MemberKillsQuery,
+  type UserNpcKillsQuery,
+} from "#src/contracts/kills/schemas";
+import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { decodePageCursor, toPage } from "#src/shared/keyset-page";
 import type { MemberKillSource, UserKillSource } from "./kill-source.js";
+
+type SortBy = "kills" | "level";
+
+type SortOrder = "asc" | "desc";
+
+/** The sort key and NPC ID of the last NPC on the previous page. */
+export type NpcKillPageAfter = {
+  readonly sortValue: number;
+  readonly npcId: number;
+};
 
 type PageOptions = {
   readonly limit: number;
-  readonly cursor: number;
-  readonly sortBy?: "kills" | "level";
-  readonly sortOrder?: "asc" | "desc";
+  readonly after?: NpcKillPageAfter | undefined;
+  readonly sortBy?: SortBy | undefined;
+  readonly sortOrder?: SortOrder | undefined;
   readonly includeOverview?: boolean;
 };
 
+const NpcKillPageCursor = Schema.Struct({
+  /** Fingerprint of the filters and sort the cursor was issued for. */
+  filters: Schema.String,
+  sortValue: FiniteNumber,
+  npcId: FiniteNumber,
+});
+
+/** The filters and sort of a page request, without its cursor and size. */
+export type NpcKillPageFilters =
+  | Omit<UserNpcKillsQuery, "cursor" | "limit">
+  | Omit<MemberKillsQuery, "cursor" | "limit">;
+
+const filtersFingerprint = (filters: NpcKillPageFilters) =>
+  new Bun.CryptoHasher("sha256")
+    .update(stableJsonStringify(filters))
+    .digest("base64url")
+    .slice(0, 22);
+
+/**
+ * Reads the keyset position of an NPC kill page cursor, rejecting a cursor
+ * issued for other filters or another sort with a 400 `INVALID_CURSOR`.
+ */
+export const decodeNpcKillPageCursor = (
+  cursor: string | undefined,
+  filters: NpcKillPageFilters,
+): Effect.Effect<NpcKillPageAfter | undefined, InvalidRequestError> =>
+  cursor === undefined
+    ? Effect.succeed(undefined)
+    : decodePageCursor(NpcKillPageCursor, cursor).pipe(
+        Effect.flatMap(({ filters: issuedFor, sortValue, npcId }) =>
+          issuedFor === filtersFingerprint(filters)
+            ? Effect.succeed({ sortValue, npcId })
+            : Effect.fail(new InvalidRequestError({ code: "INVALID_CURSOR" })),
+        ),
+      );
+
+type KilledNpc = (typeof UserNpcKillsResponse.Type.items)[number];
+
+/**
+ * Turns a `limit + 1` NPC page into its items and the opaque cursor of the
+ * next page.
+ */
+export const toNpcKillPage = (
+  npcs: ReadonlyArray<KilledNpc>,
+  limit: number,
+  filters: NpcKillPageFilters,
+  sortBy: SortBy | undefined,
+) => {
+  const fingerprint = filtersFingerprint(filters);
+
+  return toPage([...npcs], limit, NpcKillPageCursor, (npc) => ({
+    filters: fingerprint,
+    sortValue: sortBy === "level" ? npc.npcLvl : npc.totalKills,
+    npcId: npc.npcId,
+  }));
+};
+
 const NpcKillPage = Schema.Struct({
-  npcs: UserNpcKillsResponse.fields.npcs,
+  npcs: UserNpcKillsResponse.fields.items,
   total: Schema.Number,
   totalParticipations: Schema.Number,
   participationsByType: Schema.Record(Schema.String, Schema.Number),
@@ -27,6 +115,7 @@ export const buildNpcKillPageSql = (
 ) => {
   const query = new QueryBuilder();
   const direction = options.sortOrder === "asc" ? asc : desc;
+  const beyond = options.sortOrder === "asc" ? gt : lt;
 
   // PostgreSQL materializes this multiply referenced CTE, keeping the page and
   // its unpaginated overview on the same filtered rows in one MVCC snapshot.
@@ -59,18 +148,26 @@ export const buildNpcKillPageSql = (
       .groupBy(filtered.npcId),
   );
 
+  const sortKey =
+    options.sortBy === "level" ? totals.npcLvl : totals.totalKills;
+
+  const { after } = options;
+
+  // Keyset continuation: NPCs after the previous page's last (sort key, NPC ID).
   const page = query.$with("page").as(
     query
       .select()
       .from(totals)
-      .orderBy(
-        direction(
-          options.sortBy === "level" ? totals.npcLvl : totals.totalKills,
-        ),
-        totals.npcId,
+      .where(
+        after
+          ? or(
+              beyond(sortKey, after.sortValue),
+              and(eq(sortKey, after.sortValue), gt(totals.npcId, after.npcId)),
+            )
+          : undefined,
       )
-      .limit(options.limit)
-      .offset(options.cursor),
+      .orderBy(direction(sortKey), totals.npcId)
+      .limit(options.limit),
   );
 
   // Rank before reading descriptions so only the requested page is sorted.

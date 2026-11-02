@@ -26,6 +26,7 @@ import {
   playerSnapshotTable,
 } from "#src/database/drizzle/schema";
 import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
+import { containsPattern } from "#src/shared/sql-like";
 
 export type LootQueryFilters = {
   readonly npcTypes?: ReadonlyArray<string>;
@@ -286,7 +287,7 @@ const searchRelationArm = (
 
 const searchCondition = (search: ResolvedLootSearch | undefined) => {
   if (!search) return undefined;
-  const pattern = `%${search.pattern}%`;
+  const pattern = containsPattern(search.pattern);
 
   return (
     or(

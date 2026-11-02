@@ -235,9 +235,9 @@ export const makeNotificationWatchedItems = (
 
       if (uniqueIds.length === 0) {
         return yield* Effect.fail(
-          new InvalidRequestError(
-            NotificationError.AT_LEAST_ONE_GUILD_REQUIRED,
-          ),
+          new InvalidRequestError({
+            code: NotificationError.AT_LEAST_ONE_GUILD_REQUIRED,
+          }),
         );
       }
 
@@ -252,9 +252,9 @@ export const makeNotificationWatchedItems = (
 
       if (resolved.some((id) => id === null)) {
         return yield* Effect.fail(
-          new InvalidRequestError(
-            NotificationError.SELECTED_GUILDS_NOT_AVAILABLE_FOR_AUTHENTICATED_USER,
-          ),
+          new InvalidRequestError({
+            code: NotificationError.SELECTED_GUILDS_NOT_AVAILABLE_FOR_AUTHENTICATED_USER,
+          }),
         );
       }
 
@@ -296,9 +296,9 @@ export const makeNotificationWatchedItems = (
 
     if (targetIds.length === 0) {
       return yield* Effect.fail(
-        new ResourceConflictError(
-          NotificationError.ACTIVE_DISCORD_DM_TARGET_REQUIRED,
-        ),
+        new ResourceConflictError({
+          code: NotificationError.ACTIVE_DISCORD_DM_TARGET_REQUIRED,
+        }),
       );
     }
 
@@ -328,9 +328,11 @@ export const makeNotificationWatchedItems = (
       if (currentCount >= WATCHED_ITEM_LIMIT) {
         return yield* Effect.fail(
           new ResourceConflictError({
-            message: NotificationError.USER_WATCHED_ITEM_LIMIT_REACHED,
-            watchedItemLimit: WATCHED_ITEM_LIMIT,
-            watchedItemCount: currentCount,
+            code: NotificationError.USER_WATCHED_ITEM_LIMIT_REACHED,
+            details: {
+              watchedItemLimit: WATCHED_ITEM_LIMIT,
+              watchedItemCount: currentCount,
+            },
           }),
         );
       }
@@ -467,7 +469,9 @@ export const makeNotificationWatchedItems = (
 
     if (!item) {
       return yield* Effect.fail(
-        new ResourceNotFoundError(NotificationError.WATCHED_ITEM_NOT_FOUND),
+        new ResourceNotFoundError({
+          code: NotificationError.WATCHED_ITEM_NOT_FOUND,
+        }),
       );
     }
 

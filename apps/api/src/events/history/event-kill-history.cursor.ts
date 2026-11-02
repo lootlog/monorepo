@@ -1,5 +1,6 @@
 import { Effect, Schema } from "effect";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { decodePageCursor, encodePageCursor } from "#src/shared/keyset-page";
 
 const CursorScope = Schema.Struct({
   guildId: Schema.NonEmptyString,
@@ -18,11 +19,6 @@ const CursorPayload = Schema.Struct({
   scope: CursorScope,
 });
 
-const EncodedCursor = Schema.String.check(
-  Schema.isPattern(/^[A-Za-z0-9_-]+$/u),
-  Schema.isMaxLength(4096),
-);
-
 export type HistoryCursorScope = typeof CursorScope.Type;
 
 export type HistoryBoundary = { killedAt: Date; id: string };
@@ -31,29 +27,18 @@ export const encodeHistoryCursor = (
   boundary: HistoryBoundary,
   scope: HistoryCursorScope,
 ): string =>
-  Buffer.from(
-    JSON.stringify({
-      v: 1,
-      killedAt: boundary.killedAt.toISOString(),
-      id: boundary.id,
-      scope,
-    } satisfies typeof CursorPayload.Type),
-  ).toString("base64url");
+  encodePageCursor(CursorPayload, {
+    v: 1,
+    killedAt: boundary.killedAt.toISOString(),
+    id: boundary.id,
+    scope,
+  });
 
 export const decodeHistoryCursor = Effect.fnUntraced(function* (
   cursor: string,
   scope: HistoryCursorScope,
 ) {
-  const encoded = yield* Schema.decodeUnknownEffect(EncodedCursor)(cursor).pipe(
-    Effect.mapError(() => new InvalidRequestError("Invalid cursor")),
-  );
-
-  const payload = yield* Schema.decodeUnknownEffect(
-    Schema.fromJsonString(CursorPayload),
-    { onExcessProperty: "error" },
-  )(Buffer.from(encoded, "base64url").toString("utf8")).pipe(
-    Effect.mapError(() => new InvalidRequestError("Invalid cursor")),
-  );
+  const payload = yield* decodePageCursor(CursorPayload, cursor);
 
   const killedAt = new Date(payload.killedAt);
 
@@ -65,47 +50,10 @@ export const decodeHistoryCursor = Effect.fnUntraced(function* (
     payload.scope.heroId !== scope.heroId ||
     payload.scope.memberId !== scope.memberId
   ) {
-    return yield* Effect.fail(new InvalidRequestError("Invalid cursor"));
+    return yield* Effect.fail(
+      new InvalidRequestError({ code: "INVALID_CURSOR" }),
+    );
   }
 
   return { killedAt, id: payload.id };
-});
-
-const PositiveIntegerString = Schema.String.check(
-  Schema.isPattern(/^[1-9]\d*$/u),
-);
-
-const decodeInteger = Effect.fnUntraced(function* (
-  value: string,
-  name: string,
-) {
-  yield* Schema.decodeUnknownEffect(PositiveIntegerString)(value).pipe(
-    Effect.mapError(() => new InvalidRequestError(`Invalid ${name}`)),
-  );
-
-  return yield* Schema.decodeUnknownEffect(Schema.Int)(Number(value)).pipe(
-    Effect.mapError(() => new InvalidRequestError(`Invalid ${name}`)),
-  );
-});
-
-export const parseHistoryLimit = Effect.fnUntraced(function* (value?: string) {
-  if (value === undefined) return 20;
-  const limit = yield* decodeInteger(value, "limit");
-
-  if (limit > 100)
-    return yield* Effect.fail(new InvalidRequestError("Invalid limit"));
-
-  return limit;
-});
-
-export const parseHistoryMemberId = Effect.fnUntraced(function* (
-  value: string,
-) {
-  const memberId = yield* decodeInteger(value, "member ID");
-
-  return yield* Schema.decodeUnknownEffect(
-    Schema.Int.check(Schema.isLessThanOrEqualTo(2147483647)),
-  )(memberId).pipe(
-    Effect.mapError(() => new InvalidRequestError("Invalid member ID")),
-  );
 });

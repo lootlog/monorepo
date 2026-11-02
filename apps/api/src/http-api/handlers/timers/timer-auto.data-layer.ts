@@ -35,6 +35,7 @@ import {
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
 import { getProfByShortname } from "@lootlog/domain/profession";
+import type { JsonValue } from "#src/http-api/contracts/shared";
 import {
   InvalidRequestError,
   ResourceConflictError,
@@ -183,7 +184,7 @@ const getRespawnStart = (payload: CreateAutoTimerRequest, now: Date) => {
     offsetSeconds < -TIMER_LIMITS.MAX_HERO_TRACKER_ENTRANCE_PAST_SECONDS
   ) {
     throw new InvalidRequestError({
-      message: ErrorKey.INVALID_ENTRANCE_CLOSE_TIME,
+      code: ErrorKey.INVALID_ENTRANCE_CLOSE_TIME,
     });
   }
 
@@ -201,12 +202,12 @@ const calculateSpawnWindow = (
 
     if (maxSpawnTime <= minSpawnTime) {
       throw new InvalidRequestError({
-        message: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
+        code: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
       });
     }
 
     if (minSpawnTime < now) {
-      throw new InvalidRequestError({ message: ErrorKey.SPAWN_TIME_IN_PAST });
+      throw new InvalidRequestError({ code: ErrorKey.SPAWN_TIME_IN_PAST });
     }
 
     if (
@@ -214,7 +215,7 @@ const calculateSpawnWindow = (
       TIMER_LIMITS.MAX_SPAWN_WINDOW_DAYS * 24 * 60 * 60 * 1000
     ) {
       throw new InvalidRequestError({
-        message: ErrorKey.SPAWN_WINDOW_TOO_LARGE,
+        code: ErrorKey.SPAWN_WINDOW_TOO_LARGE,
       });
     }
 
@@ -331,11 +332,10 @@ const projectionFromCache = (value: string) =>
     catch: (cause) => new TimersInfrastructureError({ cause }),
   });
 
-const badRequest = (message: ErrorKey, rejectedGuilds: unknown[]) =>
+const badRequest = (code: ErrorKey, rejectedGuilds: ReadonlyArray<JsonValue>) =>
   new InvalidRequestError({
-    message,
-    submittedGuilds: [],
-    rejectedGuilds,
+    code,
+    details: { submittedGuilds: [], rejectedGuilds },
   });
 
 const findRecentlyCreatedTimer = Effect.fnUntraced(function* (
@@ -437,7 +437,7 @@ export const makeAutoTimer = (
               cause instanceof InvalidRequestError
                 ? cause
                 : new InvalidRequestError({
-                    message: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
+                    code: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
                   }),
           });
 
@@ -567,7 +567,7 @@ export const makeAutoTimer = (
     return Effect.gen(function* () {
       if (!hasTimerWeight(payload)) {
         return yield* Effect.fail(
-          new InvalidRequestError({ message: ErrorKey.WT_TOO_LOW }),
+          new InvalidRequestError({ code: ErrorKey.WT_TOO_LOW }),
         );
       }
 
@@ -591,7 +591,7 @@ export const makeAutoTimer = (
         if (!acquired) {
           return yield* Effect.fail(
             new ResourceConflictError({
-              message: ErrorKey.TIMER_RACE_CONDITION,
+              code: ErrorKey.TIMER_RACE_CONDITION,
             }),
           );
         }
@@ -686,7 +686,7 @@ export const makeAutoTimer = (
   ) {
     if (!hasTimerWeight(payload)) {
       return yield* Effect.fail(
-        new InvalidRequestError({ message: ErrorKey.WT_TOO_LOW }),
+        new InvalidRequestError({ code: ErrorKey.WT_TOO_LOW }),
       );
     }
 
@@ -698,7 +698,7 @@ export const makeAutoTimer = (
         cause instanceof InvalidRequestError
           ? cause
           : new InvalidRequestError({
-              message: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
+              code: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
             }),
     });
 

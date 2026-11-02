@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   CharacterAuraGameAccountParams,
   CharacterAurasResponse,
@@ -44,7 +44,7 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
     {
       payload: UpdateOwnCharacterAuraRequest,
       success: OwnCharacterAuraResponse,
-      error: HttpApiSchema.Empty(403),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(403)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -60,7 +60,7 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
     {
       params: CharacterAuraGameAccountParams,
       success: OwnCharacterAuraResponse,
-      error: HttpApiSchema.Empty(403),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(403)),
     },
   )
     .middleware(BearerSecurityMiddleware)

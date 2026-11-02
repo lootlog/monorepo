@@ -146,7 +146,7 @@ export class DiscordUserGuildsClient {
           userId,
         });
         throw new DependencyUnavailableError({
-          message: "DISCORD_GUILDS_LOCK_UNAVAILABLE",
+          code: "DISCORD_GUILDS_LOCK_UNAVAILABLE",
         });
       }
 
@@ -374,7 +374,7 @@ export class DiscordUserGuildsClient {
           userId,
         });
         throw new DependencyUnavailableError({
-          message: "DISCORD_GUILDS_SINGLE_FLIGHT_LOCK_UNAVAILABLE",
+          code: "DISCORD_GUILDS_SINGLE_FLIGHT_LOCK_UNAVAILABLE",
         });
       }
 
@@ -554,7 +554,7 @@ export class DiscordUserGuildsClient {
 
     if (!lastGuild || lastGuild.id === after) {
       throw new DependencyUnavailableError({
-        message: "DISCORD_GUILDS_PAGINATION_INCOMPLETE",
+        code: "DISCORD_GUILDS_PAGINATION_INCOMPLETE",
       });
     }
 

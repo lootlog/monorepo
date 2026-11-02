@@ -1,6 +1,6 @@
 import type { BoundaryDecoder } from "#src/shared/schema/json";
 import {
-  emptyStatusResponse,
+  statusCodeResponse,
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -438,12 +438,12 @@ export const purgeDocument = (guildId: string, documentId: string) =>
 
 const toHttpResponse = <A, R>(effect: Effect.Effect<A, DocsHttpFailure, R>) =>
   Effect.catchTags(effect, {
-    DocsAccessDenied: emptyStatusResponse,
+    DocsAccessDenied: statusCodeResponse,
     ReauthenticationRequired: reauthenticationRequiredResponse,
-    DocsConflict: emptyStatusResponse,
+    DocsConflict: statusCodeResponse,
     DocsDataError: (error) => Effect.die(error.cause),
-    DocsInvalidInput: emptyStatusResponse,
-    DocsNotFound: emptyStatusResponse,
+    DocsInvalidInput: statusCodeResponse,
+    DocsNotFound: statusCodeResponse,
   });
 
 export const DocsHandlers = HttpApiBuilder.group(

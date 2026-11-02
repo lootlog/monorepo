@@ -1,5 +1,5 @@
 import {
-  emptyStatusResponse,
+  statusCodeResponse,
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -246,8 +246,8 @@ const toHttpResponse = <A, R>(
   effect: Effect.Effect<A, MapTemplatesHttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
-    MapTemplateNotFound: emptyStatusResponse,
-    MapTemplatesAccessDenied: emptyStatusResponse,
+    MapTemplateNotFound: statusCodeResponse,
+    MapTemplatesAccessDenied: statusCodeResponse,
     ReauthenticationRequired: reauthenticationRequiredResponse,
     MapTemplatesPersistenceError: (error) => Effect.die(error.cause),
   });

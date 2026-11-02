@@ -51,7 +51,7 @@ const recentKillsResponse = () =>
   Promise.resolve(
     Response.json({
       kind: "event",
-      data: [createHeroKill()],
+      items: [createHeroKill()],
       nextCursor: null,
     }),
   );
@@ -173,7 +173,7 @@ describe("RecentKillsPreview", () => {
             );
 
           return Promise.resolve(
-            Response.json({ kind: "event", data: [], nextCursor: null }),
+            Response.json({ kind: "event", items: [], nextCursor: null }),
           );
         },
       );

@@ -39,7 +39,7 @@ const provideServices = (
 describe("lootlog config HttpApi handlers", () => {
   it("uses the canonical Organization and ADMIN capability for updates", async () => {
     const authorizationCalls: unknown[] = [];
-    const dataCalls: Array<[string, string]> = [];
+    const dataCalls: Array<[string, number]> = [];
 
     const layer = provideServices(
       makeData({
@@ -59,7 +59,7 @@ describe("lootlog config HttpApi handlers", () => {
     );
 
     const response = await Effect.runPromise(
-      updateLootlogConfigNpc("guild-alias", "1", {
+      updateLootlogConfigNpc("guild-alias", 1, {
         allowedRarities: ["LEGENDARY"],
       }).pipe(Effect.provide(layer)),
     );
@@ -67,7 +67,7 @@ describe("lootlog config HttpApi handlers", () => {
     expect(authorizationCalls).toEqual([
       { guildId: "guild-alias", anyOf: AccessRequirement.ADMINISTER },
     ]);
-    expect(dataCalls).toEqual([["guild-a", "1"]]);
+    expect(dataCalls).toEqual([["guild-a", 1]]);
     expect(Schema.is(NpcLootlogConfigResponse)(response)).toBe(true);
   });
 
@@ -120,7 +120,7 @@ describe("lootlog configuration response conversion", () => {
     );
 
     const response = await Effect.runPromise(
-      updateLootlogConfigNpc("guild-a", "1", {
+      updateLootlogConfigNpc("guild-a", 1, {
         allowedRarities: ["LEGENDARY"],
       }).pipe(Effect.provide(layer)),
     );
@@ -172,7 +172,7 @@ describe("lootlog configuration response conversion", () => {
 
       const error = await Effect.runPromise(
         Effect.flip(
-          updateLootlogConfigNpc("guild-a", "1", { allowedRarities: [] }).pipe(
+          updateLootlogConfigNpc("guild-a", 1, { allowedRarities: [] }).pipe(
             Effect.provide(layer),
           ),
         ),

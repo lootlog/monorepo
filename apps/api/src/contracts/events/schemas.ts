@@ -18,7 +18,10 @@ import {
   NonEmptyString,
   DateTimeString,
   FiniteNumber,
+  BooleanQuery,
+  WorldParam,
 } from "@lootlog/schema/http-scalars";
+import { MemberIdParam, MemberSummary } from "#src/contracts/shared";
 
 const SpawnWindowTimestamp = DateTimeString.check(
   Schema.isMinLength(1).annotate({
@@ -202,15 +205,8 @@ const EventRoleAppearance = Schema.Struct({
   color: Schema.Union([FiniteNumber, Schema.Null]),
 });
 
-const EventParticipant = Schema.Struct({
-  id: FiniteNumber,
-  name: Schema.String,
-  avatar: Schema.Union([Schema.String, Schema.Null]),
-  userId: Schema.String,
-});
-
 const EventAssignedMember = Schema.Struct({
-  ...EventParticipant.fields,
+  ...MemberSummary.fields,
   roles: Schema.Array(EventRoleAppearance),
 });
 
@@ -229,21 +225,13 @@ const EventRarityTotals = Schema.Struct({
 });
 
 const EventLeaderboard = Schema.Struct({
-  winner: Schema.Union([
-    Schema.StructWithRest(
-      Schema.Struct({
-        memberId: FiniteNumber,
-        name: Schema.String,
-        avatar: Schema.Union([Schema.String, Schema.Null]),
-        primaryValue: FiniteNumber,
-        secondaryValue: Schema.optionalKey(
-          Schema.Union([FiniteNumber, Schema.Null]),
-        ),
-      }),
-      [Schema.Record(Schema.String, JsonValue)],
-    ),
-    Schema.Null,
-  ]),
+  winner: Schema.NullOr(
+    Schema.Struct({
+      member: MemberSummary,
+      primaryValue: FiniteNumber,
+      secondaryValue: Schema.optionalKey(Schema.NullOr(FiniteNumber)),
+    }),
+  ),
   candidateCount: FiniteNumber,
   tiedWinnerCount: FiniteNumber,
 });
@@ -324,7 +312,7 @@ export type CreateEventRequest = typeof CreateEventRequest.Type;
 
 export const CreateEventRequest = Schema.Struct({
   name: Schema.String,
-  world: Schema.String,
+  world: WorldParam,
   startsAt: Schema.optionalKey(DateTimeString),
   endsAt: Schema.optionalKey(DateTimeString),
   ...eventConfigurationInputFields,
@@ -629,8 +617,7 @@ export const EventRankingEntryResponse = Schema.Struct({
   pointsModified: Schema.Boolean,
   updatedAt: DateTimeString,
   member: Schema.Struct({
-    id: FiniteNumber,
-    name: Schema.String,
+    ...MemberSummary.fields,
     roles: Schema.Array(EventRoleAppearance),
   }),
   editHistory: Schema.Array(
@@ -701,12 +688,7 @@ export const EventKillDetailResponse = Schema.Struct({
         world: Schema.String,
       }),
     }),
-    timerCreatedBy: Schema.Union([
-      Schema.StructWithRest(EventParticipant, [
-        Schema.Record(Schema.String, JsonValue),
-      ]),
-      Schema.Null,
-    ]),
+    timerCreatedBy: Schema.NullOr(MemberSummary),
     points: Schema.Array(
       Schema.Struct({
         id: Schema.String,
@@ -723,7 +705,7 @@ export const EventKillDetailResponse = Schema.Struct({
         wasPresent: Schema.Boolean,
         bonusBreakdown: Schema.optionalKey(KillScoringState),
         member: Schema.Struct({
-          ...EventParticipant.fields,
+          ...MemberSummary.fields,
           roles: Schema.Array(
             Schema.Struct({
               position: Schema.Union([FiniteNumber, Schema.Null]),
@@ -767,10 +749,7 @@ export const KillTimelineMapResponse = Schema.Struct({
   numericMapId: FiniteNumber,
   assignments: Schema.Array(
     Schema.Struct({
-      memberId: FiniteNumber,
-      memberName: Schema.String,
-      memberAvatar: Schema.Union([Schema.String, Schema.Null]),
-      memberUserId: Schema.String,
+      member: MemberSummary,
       assignedAt: DateTimeString,
       unassignedAt: Schema.Union([DateTimeString, Schema.Null]),
     }),
@@ -819,9 +798,7 @@ export const HeroPresenceStatsResponse = Schema.Struct({
   presencePercentage: FiniteNumber,
   memberStats: Schema.Array(
     Schema.Struct({
-      memberId: FiniteNumber,
-      memberName: Schema.String,
-      memberAvatar: Schema.Union([Schema.String, Schema.Null]),
+      member: MemberSummary,
       totalTimeSeconds: FiniteNumber,
       afkTimeSeconds: FiniteNumber,
       afkPercentage: FiniteNumber,
@@ -888,8 +865,13 @@ export const EventOrganizationPath = Schema.Struct({ guildId: Schema.String });
 export type EventListQuery = typeof EventListQuery.Type;
 
 export const EventListQuery = Schema.Struct({
-  world: Schema.optionalKey(Schema.String),
-  activeOnly: Schema.optionalKey(Schema.String),
+  world: Schema.optionalKey(WorldParam),
+  activeOnly: Schema.optionalKey(
+    BooleanQuery.annotate({
+      default: true,
+      description: "When true or omitted, list only active events.",
+    }),
+  ),
 });
 
 export type EventListResponse = typeof EventListResponse.Type;
@@ -914,7 +896,7 @@ export const EventMapPath = Schema.Struct({
 export type UnassignEventMemberQuery = typeof UnassignEventMemberQuery.Type;
 
 export const UnassignEventMemberQuery = Schema.Struct({
-  memberId: Schema.optionalKey(Schema.String),
+  memberId: Schema.optionalKey(MemberIdParam),
 });
 
 export type EventHeroPath = typeof EventHeroPath.Type;
@@ -965,7 +947,7 @@ export const EventRankingPath = Schema.Struct({
 
 export type EventTimersQuery = typeof EventTimersQuery.Type;
 
-export const EventTimersQuery = Schema.Struct({ world: Schema.String });
+export const EventTimersQuery = Schema.Struct({ world: WorldParam });
 
 export type EventTimersResponse = typeof EventTimersResponse.Type;
 

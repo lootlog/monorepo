@@ -10,6 +10,7 @@ import type {
   KillTimelineMapResponseDto,
   KillTimelineMapResponseDtoAssignmentsItem,
   KillTimelineMapResponseDtoGapsItem,
+  MemberSummary,
 } from "@lootlog/client/main";
 
 export type MemberRole =
@@ -56,9 +57,7 @@ export type EventMapsResponse = Omit<EventMapsResponseDtoOutput, "heroNpcs"> & {
 };
 
 export type EventWrappedLeader = {
-  memberId: number;
-  name: string;
-  avatar: string | null;
+  member: MemberSummary;
   primaryValue: number;
   secondaryValue?: number | null;
 };

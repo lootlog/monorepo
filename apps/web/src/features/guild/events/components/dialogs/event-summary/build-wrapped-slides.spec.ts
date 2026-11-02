@@ -9,9 +9,7 @@ const leaderResult = (
   candidateCount = 2,
 ) => ({
   winner: {
-    memberId: 1,
-    name,
-    avatar: null,
+    member: { id: 1, name, avatar: null, userId: "user-1" },
     primaryValue,
     secondaryValue: null,
   },

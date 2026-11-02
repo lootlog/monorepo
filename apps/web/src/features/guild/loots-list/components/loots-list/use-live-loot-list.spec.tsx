@@ -81,6 +81,8 @@ const loot = {
   commentsCount: 0,
 };
 
+const lootPage = (items: Array<typeof loot>) => ({ items, nextCursor: null });
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.stubGlobal("localStorage", new MemoryStorage());
@@ -167,7 +169,7 @@ async function mount(
 it.each(["filter", "world"])(
   "changing the %s returns to the top and resumes live reconciliation",
   async (change) => {
-    const listRequests = vi.fn(async () => Response.json([loot]));
+    const listRequests = vi.fn(async () => Response.json(lootPage([loot])));
     const { gateway, changeWorld } = await mount(listRequests);
     const viewport = screen.getByTestId("loot-scroll");
 
@@ -203,7 +205,7 @@ it.each(["filter", "world"])(
 );
 
 it("delivered duplicate, share and reconnect events reconcile once through the filtered server list without detail GETs", async () => {
-  const listRequests = vi.fn(async () => Response.json([loot]));
+  const listRequests = vi.fn(async () => Response.json(lootPage([loot])));
   const { gateway, fetch } = await mount(listRequests);
   expect(screen.getByRole("status").textContent).toContain('"ids":[1]');
   await act(async () => {
@@ -258,7 +260,7 @@ const snapshot = (id: number, world = "tempest") =>
 const listState = () => JSON.parse(screen.getByRole("status").textContent);
 
 it("places delivered loot snapshots without requests, holding them while the reader is scrolled down", async () => {
-  const listRequests = vi.fn(async () => Response.json([loot]));
+  const listRequests = vi.fn(async () => Response.json(lootPage([loot])));
   const { gateway, fetch } = await mount(listRequests, undefined, "");
   const viewport = screen.getByTestId("loot-scroll");
 
@@ -294,7 +296,7 @@ it.each([
   { case: "a search the server must match", searchParams: "search=sword" },
   { case: "a snapshot without its loot", searchParams: "" },
 ])("reconciles through the server list for $case", async ({ searchParams }) => {
-  const listRequests = vi.fn(async () => Response.json([loot]));
+  const listRequests = vi.fn(async () => Response.json(lootPage([loot])));
   const { gateway } = await mount(listRequests, undefined, searchParams);
   const { loot: _loot, ...withoutLoot } = snapshot(2).data;
 
@@ -316,7 +318,7 @@ it("drops a waiting snapshot when loot access is restricted", async () => {
   let page = [loot];
 
   const { gateway } = await mount(
-    async () => Response.json(page),
+    async () => Response.json(lootPage(page)),
     undefined,
     "",
   );
@@ -382,9 +384,9 @@ it("retains visible loots through reconnect, background refresh and its failure"
 
   const listRequests = vi
     .fn<() => Promise<Response>>()
-    .mockResolvedValueOnce(Response.json([loot]))
+    .mockResolvedValueOnce(Response.json(lootPage([loot])))
     .mockReturnValueOnce(pending)
-    .mockResolvedValueOnce(Response.json([{ ...loot, id: 2 }]));
+    .mockResolvedValueOnce(Response.json(lootPage([{ ...loot, id: 2 }])));
 
   const { gateway } = await mount(listRequests);
 
@@ -433,9 +435,9 @@ it.each(["permissions", "reconnect"] as const)(
 
     const listRequests = vi
       .fn<() => Promise<Response>>()
-      .mockResolvedValueOnce(Response.json([loot]))
+      .mockResolvedValueOnce(Response.json(lootPage([loot])))
       .mockReturnValueOnce(oldResponse)
-      .mockResolvedValue(Response.json([]));
+      .mockResolvedValue(Response.json(lootPage([])));
 
     const { gateway, client } = await mount(listRequests);
     client.setQueryData(["/guilds/one/loots/1"], loot);
@@ -480,7 +482,7 @@ it.each(["permissions", "reconnect"] as const)(
       count: 1,
     });
     await act(async () => {
-      resolveOld(Response.json([loot]));
+      resolveOld(Response.json(lootPage([loot])));
       await vi.advanceTimersByTimeAsync(1);
     });
     expect(screen.getByRole("status").textContent).toContain('"ids":[]');
@@ -499,7 +501,9 @@ it.each([
 ])(
   "handles $change loot access after reconnect without assuming a revocation",
   async ({ levelTo, visibleIds }) => {
-    const { gateway } = await mount(async () => Response.json([loot]));
+    const { gateway } = await mount(async () =>
+      Response.json(lootPage([loot])),
+    );
 
     const joined = (to: number) =>
       gateway.deliver({
@@ -545,7 +549,7 @@ it.each([
 );
 
 it("reports a fetched empty page as empty but a policy clear as pending", async () => {
-  const { gateway } = await mount(async () => Response.json([]));
+  const { gateway } = await mount(async () => Response.json(lootPage([])));
 
   expect(screen.getByRole("status").textContent).toContain(
     '"isEmpty":true,"isPending":false',
@@ -588,7 +592,9 @@ it("reports a fetched empty page as empty but a policy clear as pending", async 
 it.each(["reconnect", "permissions"] as const)(
   "%s restrictions clear only the affected Organization's canonical and alias caches",
   async (event) => {
-    const { gateway, client } = await mount(async () => Response.json([loot]));
+    const { gateway, client } = await mount(async () =>
+      Response.json(lootPage([loot])),
+    );
 
     const policy = (restricted: boolean) =>
       createAccessPolicySnapshot(
@@ -622,8 +628,8 @@ it.each(["reconnect", "permissions"] as const)(
     }
 
     client.setQueryData(["/guilds/second-alias/loots", { search: "old" }], {
-      pages: [[loot]],
-      pageParams: [0],
+      pages: [lootPage([loot])],
+      pageParams: [""],
     });
     await act(async () => {
       if (event === "reconnect") {
@@ -664,9 +670,11 @@ it.each(["reconnect", "permissions"] as const)(
 it("resumes event reconciliation for new filters after an old filter's refresh fails", async () => {
   const listRequests = vi
     .fn<() => Promise<Response>>()
-    .mockResolvedValueOnce(Response.json([loot]))
+    .mockResolvedValueOnce(Response.json(lootPage([loot])))
     .mockResolvedValueOnce(new Response(null, { status: 503 }))
-    .mockImplementation(async () => Response.json([{ ...loot, id: 2 }]));
+    .mockImplementation(async () =>
+      Response.json(lootPage([{ ...loot, id: 2 }])),
+    );
 
   const { gateway, fetch } = await mount(listRequests);
   await act(async () => {
@@ -700,7 +708,7 @@ it("resumes event reconciliation for new filters after an old filter's refresh f
 
 it("does not refetch the list after the page's first join", async () => {
   vi.spyOn(RealtimeClient.prototype, "connect").mockReturnValue(undefined);
-  const listRequests = vi.fn(async () => Response.json([loot]));
+  const listRequests = vi.fn(async () => Response.json(lootPage([loot])));
   const { gateway } = await mount(listRequests);
   gateway.socket.connect();
   await act(async () => {
@@ -726,7 +734,7 @@ it("keeps fetched loots when joining before the route alias is resolved", async 
     resolveGuilds = resolve;
   });
 
-  const listRequests = vi.fn(async () => Response.json([loot]));
+  const listRequests = vi.fn(async () => Response.json(lootPage([loot])));
   const { gateway } = await mount(listRequests, () => pendingGuilds);
 
   expect(screen.getByRole("status").textContent).toContain('"ids":[1]');

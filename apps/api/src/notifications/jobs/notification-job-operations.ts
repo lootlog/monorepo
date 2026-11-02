@@ -141,15 +141,17 @@ export const makeNotificationJobOperations = (
 
     if (!job) {
       return yield* Effect.fail(
-        new ResourceNotFoundError(NotificationError.NOTIFICATION_JOB_NOT_FOUND),
+        new ResourceNotFoundError({
+          code: NotificationError.NOTIFICATION_JOB_NOT_FOUND,
+        }),
       );
     }
 
     if (!cancelableStatuses.some((status) => status === job.status)) {
       return yield* Effect.fail(
-        new InvalidRequestError(
-          NotificationError.ONLY_PENDING_NOTIFICATION_JOBS_CAN_BE_CANCELED,
-        ),
+        new InvalidRequestError({
+          code: NotificationError.ONLY_PENDING_NOTIFICATION_JOBS_CAN_BE_CANCELED,
+        }),
       );
     }
 

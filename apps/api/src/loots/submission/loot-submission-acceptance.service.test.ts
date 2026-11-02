@@ -166,7 +166,7 @@ const rejection = async (outcome: ReturnType<typeof accept>["outcome"]) => {
   )
     throw new Error("Expected the API to reject the loot");
 
-  return result.failure.getResponse();
+  return result.failure.body;
 };
 
 describe("loot submission acceptance", () => {
@@ -179,20 +179,22 @@ describe("loot submission acceptance", () => {
     });
 
     expect(await rejection(outcome)).toEqual({
-      message: ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
-      submittedGuilds: [],
-      rejectedGuilds: [
-        {
-          guildId: "a",
-          guildName: "Lootlog a",
-          reason: "NOT_ON_CHARACTER_WHITELIST",
-        },
-        {
-          guildId: "b",
-          guildName: "Lootlog b",
-          reason: "NOT_ON_CHARACTER_WHITELIST",
-        },
-      ],
+      code: ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
+      details: {
+        submittedGuilds: [],
+        rejectedGuilds: [
+          {
+            guildId: "a",
+            guildName: "Lootlog a",
+            reason: "NOT_ON_CHARACTER_WHITELIST",
+          },
+          {
+            guildId: "b",
+            guildName: "Lootlog b",
+            reason: "NOT_ON_CHARACTER_WHITELIST",
+          },
+        ],
+      },
     });
     expect(created).toEqual([]);
   });
@@ -206,13 +208,15 @@ describe("loot submission acceptance", () => {
     });
 
     expect(await rejection(outcome)).toMatchObject({
-      message: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
-      rejectedGuilds: [
-        { guildId: "a", reason: "NOT_ON_CHARACTER_WHITELIST" },
-        { guildId: "b", reason: "LOOT_NOT_ACCEPTED_BY_CONFIG" },
-        { guildId: "c", reason: "MISSING_LOOTLOG_CONFIG" },
-        { guildId: "d", reason: "MISSING_MEMBER" },
-      ],
+      code: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
+      details: {
+        rejectedGuilds: [
+          { guildId: "a", reason: "NOT_ON_CHARACTER_WHITELIST" },
+          { guildId: "b", reason: "LOOT_NOT_ACCEPTED_BY_CONFIG" },
+          { guildId: "c", reason: "MISSING_LOOTLOG_CONFIG" },
+          { guildId: "d", reason: "MISSING_MEMBER" },
+        ],
+      },
     });
     expect(created).toEqual([]);
   });
@@ -233,8 +237,10 @@ describe("loot submission acceptance", () => {
     });
 
     expect(await rejection(outcome)).toMatchObject({
-      message: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
-      rejectedGuilds: [{ guildId: "a", reason: "MISSING_LOOTLOG_CONFIG" }],
+      code: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
+      details: {
+        rejectedGuilds: [{ guildId: "a", reason: "MISSING_LOOTLOG_CONFIG" }],
+      },
     });
   });
 

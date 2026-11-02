@@ -323,7 +323,13 @@ describe("Kills and Loots HttpApi handlers", () => {
       lootId: 42,
       guildId: "guild-a",
       content: "gg",
-      member: { name: "Member", userId: "user-1" },
+      member: {
+        id: 1,
+        name: "Member",
+        avatar: null,
+        userId: "user-1",
+        roles: [],
+      },
       createdAt: "2026-09-01T00:00:00.000Z",
       updatedAt: "2026-09-01T00:00:00.000Z",
     } satisfies LootCommentResponse;
@@ -367,7 +373,8 @@ describe("Kills and Loots HttpApi handlers", () => {
       member: null,
       overview: null,
       npcs: [],
-      pagination: null,
+      total: 0,
+      nextCursor: null,
     });
   });
 });

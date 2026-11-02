@@ -6,6 +6,7 @@ import {
   createApiClient,
   executeApiRequest,
   getApiErrorMessage,
+  getApiErrorStringDetail,
   getApiErrorStringField,
   getApiErrorStatus,
   isApiError,
@@ -537,12 +538,16 @@ describe("raw API error string fields", () => {
       message: "fallback",
       method: "POST",
       url: "/rooms",
-      data: { message: "  exact text  ", code: "", notificationId: "room-1" },
+      data: {
+        message: "  exact text  ",
+        code: "",
+        details: { notificationId: "room-1" },
+      },
     });
 
     expect(getApiErrorStringField(cause, "message")).toBe("  exact text  ");
     expect(getApiErrorStringField(cause, "code")).toBe("");
-    expect(getApiErrorStringField(cause, "notificationId")).toBe("room-1");
+    expect(getApiErrorStringDetail(cause, "notificationId")).toBe("room-1");
   });
 
   it("keeps raw field extraction distinct from display-message normalization", () => {
@@ -550,11 +555,10 @@ describe("raw API error string fields", () => {
       message: "fallback",
       method: "POST",
       url: "/rooms",
-      data: { message: ["  first message  "], notificationId: 123 },
+      data: { message: ["  first message  "] },
     });
 
     expect(getApiErrorStringField(cause, "message")).toBeUndefined();
-    expect(getApiErrorStringField(cause, "notificationId")).toBeUndefined();
     expect(getApiErrorMessage(cause)).toBe("first message");
     expect(
       getApiErrorStringField({ data: { code: "FORBIDDEN" } }, "code"),

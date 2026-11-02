@@ -4,7 +4,11 @@ import {
   type UserKillAnalyticsQuery,
   type UserKillActivityQuery,
 } from "#src/contracts/kills/analytics-schemas";
-import { readNpcKillPage } from "./npc-kill-page.js";
+import {
+  decodeNpcKillPageCursor,
+  readNpcKillPage,
+  toNpcKillPage,
+} from "./npc-kill-page.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, gte, ilike, inArray, lte, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -15,17 +19,23 @@ import {
 } from "#src/database/drizzle/schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
+  USER_TOP_NPCS_DEFAULT_LIMIT,
   UserKillStatsResponse,
   UserNpcKillsResponse,
   type UserKillStatsQuery as GetUserKillStatsDto,
   type UserNpcKillsQuery as GetUserNpcKillsDto,
 } from "#src/contracts/kills/schemas";
+import { DEFAULT_PAGE_SIZE } from "#src/shared/keyset-page";
+import { containsPattern } from "#src/shared/sql-like";
 
 import {
   buildKillQueryCacheKey,
   type KillQueryCache,
 } from "./kill-query-support.js";
-import { currentStatsPeriodStart } from "./kill-stats-period.js";
+import {
+  currentStatsPeriodStart,
+  resolveKillStatsPeriod,
+} from "./kill-stats-period.js";
 import { userKillSource, type UserKillSource } from "./kill-source.js";
 
 const CACHE_TTL_SECONDS = 30;
@@ -59,8 +69,8 @@ export const makeUserKillQueries = (
       readonly world?: string;
       readonly npcTypes?: ReadonlyArray<NpcType>;
       readonly search?: string;
-      readonly minLvl?: number;
-      readonly maxLvl?: number;
+      readonly npcLevelMin?: number;
+      readonly npcLevelMax?: number;
     },
   ) =>
     and(
@@ -69,12 +79,14 @@ export const makeUserKillQueries = (
       options.npcTypes && options.npcTypes.length > 0
         ? inArray(source.npcType, [...options.npcTypes])
         : undefined,
-      options.search ? ilike(source.npcName, `%${options.search}%`) : undefined,
-      options.minLvl !== undefined && options.minLvl > 0
-        ? gte(source.npcLvl, options.minLvl)
+      options.search
+        ? ilike(source.npcName, containsPattern(options.search))
         : undefined,
-      options.maxLvl !== undefined && options.maxLvl > 0
-        ? lte(source.npcLvl, options.maxLvl)
+      options.npcLevelMin !== undefined && options.npcLevelMin > 0
+        ? gte(source.npcLvl, options.npcLevelMin)
+        : undefined,
+      options.npcLevelMax !== undefined && options.npcLevelMax > 0
+        ? lte(source.npcLvl, options.npcLevelMax)
         : undefined,
     );
 
@@ -126,12 +138,13 @@ export const makeUserKillQueries = (
         ? [query.npcType, ...(query.npcTypes ?? [])]
         : query.npcTypes;
 
-      const periodStart = yield* currentStatsPeriodStart(query.period);
+      const period = resolveKillStatsPeriod(query.period);
+      const periodStart = yield* currentStatsPeriodStart(period);
 
       return yield* cached(
         userId,
         buildKillQueryCacheKey("user-overview", userId, {
-          query: { ...query, npcTypes },
+          query: { ...query, npcTypes, period },
         }),
         "user kill stats",
         UserKillStatsResponse,
@@ -158,7 +171,7 @@ export const makeUserKillQueries = (
                 topNpcs: stats
                   .map(({ world: _world, ...npc }) => npc)
                   .sort((left, right) => right.totalKills - left.totalKills)
-                  .slice(0, query.topNpcsLimit ?? 5),
+                  .slice(0, query.topNpcsLimit ?? USER_TOP_NPCS_DEFAULT_LIMIT),
               };
             }),
           ),
@@ -168,47 +181,45 @@ export const makeUserKillQueries = (
 
   const getUserNpcKills = (userId: string, query: GetUserNpcKillsDto) =>
     Effect.gen(function* () {
-      const limit = query.limit ?? 20;
-      const cursor = query.cursor ?? 0;
-      const periodStart = yield* currentStatsPeriodStart(query.period);
+      const limit = query.limit ?? DEFAULT_PAGE_SIZE;
+      const period = resolveKillStatsPeriod(query.period);
+      const periodStart = yield* currentStatsPeriodStart(period);
+      const { cursor, limit: _limit, ...filters } = { ...query, period };
 
-      return yield* cached(
-        userId,
-        buildKillQueryCacheKey("user-npcs", userId, { query }),
-        "user npc kills",
-        UserNpcKillsResponse,
-        protect(
-          "kills.user-npcs.query",
-          Effect.suspend(() => {
-            const source = userKillSource(periodStart);
+      return yield* decodeNpcKillPageCursor(cursor, filters).pipe(
+        Effect.flatMap((after) =>
+          cached(
+            userId,
+            buildKillQueryCacheKey("user-npcs", userId, {
+              filters,
+              after,
+              limit,
+            }),
+            "user npc kills",
+            UserNpcKillsResponse,
+            protect(
+              "kills.user-npcs.query",
+              Effect.suspend(() => {
+                const source = userKillSource(periodStart);
 
-            return readNpcKillPage(
-              database,
-              source,
-              statsCondition(source, userId, {
-                world: query.world,
-                npcTypes: query.npcTypes,
-                search: query.search,
-                minLvl: query.minLvl,
-                maxLvl: query.maxLvl,
-              }),
-              {
-                limit,
-                cursor,
-                sortBy: query.sortBy,
-                sortOrder: query.sortOrder,
-              },
-            );
-          }).pipe(
-            Effect.map(({ npcs, total }) => ({
-              npcs,
-              pagination: {
-                total,
-                cursor,
-                limit,
-                hasNext: cursor + limit < total,
-              },
-            })),
+                return readNpcKillPage(
+                  database,
+                  source,
+                  statsCondition(source, userId, query),
+                  {
+                    limit: limit + 1,
+                    after,
+                    sortBy: query.sortBy,
+                    sortOrder: query.sortOrder,
+                  },
+                );
+              }).pipe(
+                Effect.map(({ npcs, total }) => ({
+                  ...toNpcKillPage(npcs, limit, filters, query.sortBy),
+                  total,
+                })),
+              ),
+            ),
           ),
         ),
       );

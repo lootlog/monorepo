@@ -1,4 +1,4 @@
-import { emptyStatusResponse } from "#src/shared/http/handler-response";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
@@ -79,7 +79,7 @@ const toHttpResponse = <A, R>(
   >,
 ) =>
   Effect.catchTags(effect, {
-    CharacterAuraAccessDenied: emptyStatusResponse,
+    CharacterAuraAccessDenied: statusCodeResponse,
     CharacterAurasOperationError: (error) => Effect.die(error.cause),
   });
 

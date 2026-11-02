@@ -69,8 +69,8 @@ const validateNpcSelection = (data: RuleInput) => {
 
   if (npcIds.size + templateIds.size > MAX_NPCS_PER_RULE) {
     throw new InvalidRequestError({
-      message: NotificationError.NOTIFICATION_RULE_MAX_NPCS_EXCEEDED,
-      maxNpcsPerRule: MAX_NPCS_PER_RULE,
+      code: NotificationError.NOTIFICATION_RULE_MAX_NPCS_EXCEEDED,
+      details: { maxNpcsPerRule: MAX_NPCS_PER_RULE },
     });
   }
 };
@@ -127,24 +127,24 @@ const scheduleConfig = (
     data.scheduleOffsetMinutes ?? existing?.scheduleOffsetMinutes ?? null;
 
   if (strategy !== NotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE) {
-    throw new InvalidRequestError(
-      NotificationError.TIMER_NOTIFICATION_REQUIRES_SPAWN_WINDOW_RELATIVE_STRATEGY,
-    );
+    throw new InvalidRequestError({
+      code: NotificationError.TIMER_NOTIFICATION_REQUIRES_SPAWN_WINDOW_RELATIVE_STRATEGY,
+    });
   }
 
   if (
     anchor !== NotificationScheduleAnchor.MIN_SPAWN &&
     anchor !== NotificationScheduleAnchor.MAX_SPAWN
   ) {
-    throw new InvalidRequestError(
-      NotificationError.TIMER_NOTIFICATION_REQUIRES_VALID_SCHEDULE_ANCHOR,
-    );
+    throw new InvalidRequestError({
+      code: NotificationError.TIMER_NOTIFICATION_REQUIRES_VALID_SCHEDULE_ANCHOR,
+    });
   }
 
   if (offset === null || offset < 0) {
-    throw new InvalidRequestError(
-      NotificationError.TIMER_NOTIFICATION_REQUIRES_NON_NEGATIVE_SCHEDULE_OFFSET,
-    );
+    throw new InvalidRequestError({
+      code: NotificationError.TIMER_NOTIFICATION_REQUIRES_NON_NEGATIVE_SCHEDULE_OFFSET,
+    });
   }
 
   return {
@@ -163,9 +163,9 @@ const scheduleTimezone = (
 
   if (normalized.length > 0) {
     if (!isValidTimeZone(normalized)) {
-      throw new InvalidRequestError(
-        NotificationError.INVALID_NOTIFICATION_SCHEDULE_TIMEZONE,
-      );
+      throw new InvalidRequestError({
+        code: NotificationError.INVALID_NOTIFICATION_SCHEDULE_TIMEZONE,
+      });
     }
 
     return normalized;
@@ -292,9 +292,9 @@ const scheduledMessageFields = (
     isRecurringScheduleInterval(intervalType) &&
     !timezone
   ) {
-    throw new InvalidRequestError(
-      NotificationError.RECURRING_USER_SCHEDULED_MESSAGES_REQUIRE_TIMEZONE,
-    );
+    throw new InvalidRequestError({
+      code: NotificationError.RECURRING_USER_SCHEDULED_MESSAGES_REQUIRE_TIMEZONE,
+    });
   }
 
   const scheduledAt = firstScheduledOccurrence({

@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   RolesResponse,
   RoleOrganizationPath,
@@ -21,7 +21,7 @@ export class RolesGroup extends HttpApiGroup.make("roles").add(
     {
       params: RoleOrganizationPath,
       success: RolesResponse,
-      error: HttpApiSchema.Empty(403),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(403)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -35,7 +35,10 @@ export class RolesGroup extends HttpApiGroup.make("roles").add(
       params: RolePath,
       payload: UpdateRolePermissionsRequest,
       success: RoleResponse,
-      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)

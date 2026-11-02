@@ -10,6 +10,7 @@ import { HttpApi, HttpApiBuilder, HttpApiGroup } from "effect/http-api";
 import { TimersGroup } from "./contracts/timers/api.js";
 import { MessagingGroup } from "./contracts/messaging/api.js";
 import { LootsGroup } from "./contracts/loots/api.js";
+import { KillsGroup } from "./contracts/kills/api.js";
 import { BearerSecurityMiddleware } from "./contracts/shared.js";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 
@@ -17,6 +18,8 @@ const group = HttpApiGroup.make("validation").add(
   TimersGroup.endpoints.TimersControllerCreateAutoTimer,
   MessagingGroup.endpoints.MessagingControllerSendNotification,
   LootsGroup.endpoints.LootsControllerCreateLoot,
+  LootsGroup.endpoints.LootsControllerFetchLootsByGuildId,
+  KillsGroup.endpoints.KillsControllerGetGuildTopNpcs,
 );
 
 const api = HttpApi.make("ValidationTest")
@@ -38,7 +41,9 @@ const boundary = HttpRouter.toWebHandler(
         handlers
           .handle("TimersControllerCreateAutoTimer", accepted)
           .handle("MessagingControllerSendNotification", accepted)
-          .handle("LootsControllerCreateLoot", accepted),
+          .handle("LootsControllerCreateLoot", accepted)
+          .handle("LootsControllerFetchLootsByGuildId", accepted)
+          .handle("KillsControllerGetGuildTopNpcs", accepted),
       ),
     ),
     Layer.provide(
@@ -194,3 +199,48 @@ it("explains invalid values without echoing submitted private data", async () =>
   expect(body).toContain("Expected string");
   expect(body).not.toContain("private-value-do-not-echo");
 });
+
+const get = (path: string) =>
+  boundary.handler(
+    new Request(`http://api.test${path}`, {
+      headers: { authorization: "Bearer forwarded" },
+    }),
+  );
+
+// An unknown NPC type used to reach the enum column and fail as a 500.
+it("rejects an unknown loot npcTypes value as a 400 before the handler", async () => {
+  const previousCalls = handlerCalls;
+
+  const response = await get("/guilds/guild/loots?npcTypes=BOGUS");
+
+  expect(response.status).toBe(400);
+  expect(await response.json()).toMatchObject({ code: "VALIDATION_ERROR" });
+  expect(handlerCalls).toBe(previousCalls);
+});
+
+it("accepts one or repeated npcTypes values", async () => {
+  const previousCalls = handlerCalls;
+
+  expect((await get("/guilds/guild/loots?npcTypes=HERO")).status).toBe(204);
+  expect(
+    (await get("/guilds/guild/loots?npcTypes=HERO&npcTypes=TITAN")).status,
+  ).toBe(204);
+  expect(handlerCalls).toBe(previousCalls + 2);
+});
+
+// Top NPCs used to take any number and load every row into memory.
+for (const path of [
+  "/guilds/guild/loots?limit=101",
+  "/guilds/guild/stats/kills/top-npcs?limit=101",
+  "/guilds/guild/stats/kills/top-npcs?limit=1.5",
+]) {
+  it(`rejects an unbounded page size: ${path}`, async () => {
+    const previousCalls = handlerCalls;
+
+    const response = await get(path);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ code: "VALIDATION_ERROR" });
+    expect(handlerCalls).toBe(previousCalls);
+  });
+}

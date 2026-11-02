@@ -5,8 +5,6 @@ import {
   type LootsControllerFetchLootsByGuildIdParams,
 } from "@lootlog/client/main";
 
-import type { Loot } from "@/lib/loots/loot-types";
-
 interface UseEventLootsOptions {
   guildId: string;
   npcNames: string[];
@@ -28,13 +26,14 @@ export const useEventLoots = ({
     world,
   } satisfies LootsControllerFetchLootsByGuildIdParams;
 
-  return useQuery<Loot[]>({
+  return useQuery({
     queryKey: getLootsControllerFetchLootsByGuildIdQueryKey(
       { guildId },
       params,
     ),
     queryFn: ({ signal }) =>
       lootsControllerFetchLootsByGuildId({ guildId }, params, { signal }),
+    select: (page) => page.items,
     enabled: !!guildId && !!world && npcNames.length > 0,
     staleTime: EVENT_LIVE_QUERY_STALE_TIME_MS,
   });

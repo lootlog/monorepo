@@ -12,6 +12,44 @@ description: Distinguish access denials, rate limits, and service outages.
 | `429`  | Wait for the duration specified by `Retry-After` before retrying                                |
 | `5xx`  | The service is unavailable; show an error state and retry reads cautiously                      |
 
+## Error body
+
+Every `4xx` and `5xx` response from the main API has the same JSON body:
+
+```json
+{ "code": "RESERVATION_OVERLAP", "message": "optional text", "details": {} }
+```
+
+- `code` is always present. Branch on it: it is stable and machine-readable,
+  such as `NOT_FOUND`, `FORBIDDEN`, `VALIDATION_ERROR`, `INVALID_CURSOR`,
+  `RATE_LIMITED` or a reason specific to the operation.
+- `message` is optional text for people. It can change at any time; do not
+  parse it.
+- `details` is optional and holds the values that explain the reason, such as
+  `limit` for `ACTIVE_LIMIT_REACHED`. A `VALIDATION_ERROR` lists the rejected
+  fields in `details.issues`, each with a `path` and a `message`.
+
+A `401` that asks the user to sign in again carries `code` and
+`requiresReauth: true`. A `429` sends `Retry-After` in seconds whenever the
+wait is known.
+
+## Lists and filters
+
+A paginated list takes `limit` (1 to 100) and returns
+`{ "items": [...], "nextCursor": "..." }`. Pass `nextCursor` back as `cursor`
+with the same filters to read the next page; it is `null` on the last page. A
+cursor is opaque and bound to the filters it was issued for, so a cursor sent
+with other filters returns `400` with `INVALID_CURSOR`.
+
+Filters share one meaning across operations: `world` is trimmed and compared
+in lower case, `search` matches its text literally (`%` and `_` are not
+wildcards), `npcTypes` repeats the parameter once per type, an unknown NPC
+type is a `400`, `npcLevelMin` must not exceed `npcLevelMax`, and `period`
+is one of `24h`, `3d`, `7d`, `14d`, `30d`, `90d`, `180d` or `all`, defaulting
+to `7d`.
+
+## Rate limits
+
 The initial limit is 120 requests per key in a 60-second window starting with the first accepted request. Later requests do not extend the window. All auth replicas share the same Redis counter. If the counter is unavailable, authentication returns `503` instead of bypassing the limit. Operation-specific limits still apply. Do not bypass them by creating additional keys.
 
 Do not turn a failed data fetch into an empty list. Keep the last result marked as stale, or show that data is unavailable. For writes, losing the response does not prove that the operation failed.

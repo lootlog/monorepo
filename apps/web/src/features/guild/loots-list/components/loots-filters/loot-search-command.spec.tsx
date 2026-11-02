@@ -82,9 +82,10 @@ it("cancels obsolete HID lookups and can fetch again after unmounting", async ()
   const lootResponse = (hid: string) => {
     const loot = createLoot();
 
-    return Response.json([
-      { ...loot, items: loot.items.map((item) => ({ ...item, hid })) },
-    ]);
+    return Response.json({
+      items: [{ ...loot, items: loot.items.map((item) => ({ ...item, hid })) }],
+      nextCursor: null,
+    });
   };
 
   try {

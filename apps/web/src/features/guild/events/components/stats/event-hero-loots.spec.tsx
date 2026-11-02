@@ -26,7 +26,10 @@ describe("EventHeroLoots", () => {
               new URL(input instanceof Request ? input.url : input.toString()),
             );
 
-            return Response.json([createLoot(1), createLoot(2)]);
+            return Response.json({
+              items: [createLoot(1), createLoot(2)],
+              nextCursor: null,
+            });
           },
         },
       }),

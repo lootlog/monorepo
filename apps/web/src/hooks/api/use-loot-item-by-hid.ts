@@ -34,7 +34,9 @@ export const useLootItemByHid = (
         { signal },
       );
 
-      return response[0]?.items.find((item) => item.hid === params.hid) ?? null;
+      return (
+        response.items[0]?.items.find((item) => item.hid === params.hid) ?? null
+      );
     },
     enabled: !!guildId && !!params,
     staleTime: 5 * 60 * 1000,

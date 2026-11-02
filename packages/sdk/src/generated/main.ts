@@ -152,15 +152,19 @@ export const RequestValidationErrorCode = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
 } as const;
 
-export type RequestValidationErrorIssuesItem = {
+export type RequestValidationErrorDetailsIssuesItem = {
   path: (string | number)[];
   message: string;
+};
+
+export type RequestValidationErrorDetails = {
+  issues: RequestValidationErrorDetailsIssuesItem[];
 };
 
 export interface RequestValidationError {
   code: RequestValidationErrorCode;
   message: string;
-  issues: RequestValidationErrorIssuesItem[];
+  details: RequestValidationErrorDetails;
 }
 
 export type _ReauthenticationRequiredEncodedTag = typeof _ReauthenticationRequiredEncodedTag[keyof typeof _ReauthenticationRequiredEncodedTag];
@@ -258,10 +262,18 @@ export interface UserPreferencesResponseDtoOutput {
   mutes: UserPreferencesResponseDtoOutputMutes;
 }
 
-export type HttpErrorResponse = {[key: string]: unknown} & {
-  code?: string;
-  message?: unknown;
-};
+/**
+ * @nullable
+ */
+export type HttpErrorResponseDetails = { [key: string]: unknown } | null;
+
+export interface HttpErrorResponse {
+  code: string;
+  /** @nullable */
+  message?: string | null;
+  /** @nullable */
+  details?: HttpErrorResponseDetails;
+}
 
 export type UpdateUserPreferencesDtoChatAppearanceNpcLayout = typeof UpdateUserPreferencesDtoChatAppearanceNpcLayout[keyof typeof UpdateUserPreferencesDtoChatAppearanceNpcLayout];
 
@@ -1800,7 +1812,10 @@ export interface CreateTimerFromGameClientDto {
      * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
      */
   entranceClosesAt?: string;
-  /** @minLength 1 */
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
   world: string;
   npc: CreateTimerFromGameClientDtoNpc;
   /** @minLength 1 */
@@ -1830,7 +1845,10 @@ export type ResetTimerDtoActorCharacter = {
 };
 
 export interface ResetTimerDto {
-  /** @minLength 1 */
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
   world: string;
   actorCharacter?: ResetTimerDtoActorCharacter;
 }
@@ -1882,7 +1900,10 @@ export interface CreateManualTimerDto {
   customMinSpawnTime?: string;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   customMaxSpawnTime?: string;
-  /** @minLength 1 */
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
   world: string;
   actorCharacter?: CreateManualTimerDtoActorCharacter;
 }
@@ -1969,20 +1990,6 @@ export const LootResponseDtoItemsItemProfItem = {
   TRACKER: 'TRACKER',
 } as const;
 
-export type LootResponseDtoItemsItem = {
-  id: number;
-  hid: string;
-  name: string;
-  icon: string;
-  stat: string;
-  /** @nullable */
-  type: string | null;
-  /** @nullable */
-  rarity: LootResponseDtoItemsItemRarity;
-  lvl: number;
-  prof: LootResponseDtoItemsItemProfItem[];
-};
-
 /**
  * @nullable
  */
@@ -1998,23 +2005,6 @@ export const LootResponseDtoPlayersItemProf = {
   TRACKER: 'TRACKER',
 } as const;
 
-export type LootResponseDtoPlayersItem = {
-  id: string | number;
-  name: string;
-  /** @nullable */
-  lvl: number | null;
-  /** @nullable */
-  prof: LootResponseDtoPlayersItemProf;
-  /** @nullable */
-  icon: string | null;
-  /** @nullable */
-  characterId: number | null;
-  /** @nullable */
-  accountId: number | null;
-  /** @nullable */
-  hpp: number | null;
-};
-
 /**
  * @nullable
  */
@@ -2029,25 +2019,6 @@ export const LootResponseDtoMapPlayersSnapshotItemProf = {
   BLADE_DANCER: 'BLADE_DANCER',
   TRACKER: 'TRACKER',
 } as const;
-
-export type LootResponseDtoMapPlayersSnapshotItem = {
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  accountId: number;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  characterId: number;
-  /** @minLength 1 */
-  name: string;
-  /** @nullable */
-  prof: LootResponseDtoMapPlayersSnapshotItemProf;
-  /** @nullable */
-  icon: string | null;
-};
 
 /**
  * @nullable
@@ -2083,6 +2054,64 @@ export const LootResponseDtoNpcsItemType = {
   NPC: 'NPC',
 } as const;
 
+export interface MemberSummary {
+  id: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+}
+
+export type LootResponseDtoItemsItem = {
+  id: number;
+  hid: string;
+  name: string;
+  icon: string;
+  stat: string;
+  /** @nullable */
+  type: string | null;
+  /** @nullable */
+  rarity: LootResponseDtoItemsItemRarity;
+  lvl: number;
+  prof: LootResponseDtoItemsItemProfItem[];
+};
+
+export type LootResponseDtoPlayersItem = {
+  id: string | number;
+  name: string;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  prof: LootResponseDtoPlayersItemProf;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  characterId: number | null;
+  /** @nullable */
+  accountId: number | null;
+  /** @nullable */
+  hpp: number | null;
+};
+
+export type LootResponseDtoMapPlayersSnapshotItem = {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  accountId: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  characterId: number;
+  /** @minLength 1 */
+  name: string;
+  /** @nullable */
+  prof: LootResponseDtoMapPlayersSnapshotItemProf;
+  /** @nullable */
+  icon: string | null;
+};
+
 export type LootResponseDtoNpcsItem = {
   id: number;
   name: string;
@@ -2102,18 +2131,11 @@ export type LootResponseDtoNpcsItem = {
 
 export type LootResponseDtoLootShare = {[key: string]: string[]};
 
-export type LootResponseDtoSubmissionsItemMember = {
-  name: string;
-  /** @nullable */
-  avatar?: string | null;
-  userId: string;
-};
-
 export type LootResponseDtoSubmissionsItem = {
   guildId: string;
   memberId: number;
   lootId: number;
-  member: LootResponseDtoSubmissionsItemMember;
+  member: MemberSummary;
 };
 
 export interface LootResponseDto {
@@ -2137,6 +2159,12 @@ export interface LootResponseDto {
   updatedAt: string;
   submissions?: LootResponseDtoSubmissionsItem[];
   commentsCount: number;
+}
+
+export interface LootPageResponseDto {
+  items: LootResponseDto[];
+  /** @nullable */
+  nextCursor: string | null;
 }
 
 export type LootStatsResponseDtoOutputOverview = {
@@ -2441,18 +2469,11 @@ export type NullableLootResponseDtoNpcsItem = {
 
 export type NullableLootResponseDtoLootShare = {[key: string]: string[]};
 
-export type NullableLootResponseDtoSubmissionsItemMember = {
-  name: string;
-  /** @nullable */
-  avatar?: string | null;
-  userId: string;
-};
-
 export type NullableLootResponseDtoSubmissionsItem = {
   guildId: string;
   memberId: number;
   lootId: number;
-  member: NullableLootResponseDtoSubmissionsItemMember;
+  member: MemberSummary;
 };
 
 /**
@@ -2637,7 +2658,10 @@ export interface CreateLootDto {
   npcs: CreateLootDtoNpcsItem[];
   /** @minItems 1 */
   players: CreateLootDtoPlayersItem[];
-  /** @minLength 1 */
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
   world: string;
   /** Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API. */
   gameVersion: CreateLootDtoGameVersion;
@@ -2652,15 +2676,16 @@ export interface CreateLootDto {
 
 export type LootCommentResponseDtoMemberRolesItem = {
   /** @nullable */
-  color?: number | null;
+  color: number | null;
 };
 
 export type LootCommentResponseDtoMember = {
+  id: number;
   name: string;
   /** @nullable */
-  avatar?: string | null;
+  avatar: string | null;
   userId: string;
-  roles?: LootCommentResponseDtoMemberRolesItem[];
+  roles: LootCommentResponseDtoMemberRolesItem[];
 };
 
 export interface LootCommentResponseDto {
@@ -2676,7 +2701,6 @@ export interface LootCommentResponseDto {
 }
 
 export interface CreateCommentDto {
-  /** @minLength 1 */
   content: string;
 }
 
@@ -3179,10 +3203,6 @@ export type ReservationSpotsResponseDtoItem = {
 };
 
 export type ReservationSpotsResponseDto = ReservationSpotsResponseDtoItem[];
-
-export type OrganizationWorkspaceErrorResponse = {[key: string]: unknown} & {
-  code: string;
-};
 
 export type ReservationWindowResponseDtoItemsItemAuthor = {
   displayName: string;
@@ -5778,22 +5798,6 @@ export interface NotificationResponseDtoOutput {
   guildIds: string[];
 }
 
-export type NotificationRateLimitResponseDtoMessage = typeof NotificationRateLimitResponseDtoMessage[keyof typeof NotificationRateLimitResponseDtoMessage];
-
-
-export const NotificationRateLimitResponseDtoMessage = {
-  NOTIFICATION_RATE_LIMITED: 'NOTIFICATION_RATE_LIMITED',
-} as const;
-
-export interface NotificationRateLimitResponseDto {
-  message: NotificationRateLimitResponseDtoMessage;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  retryAfterMs: number;
-}
-
 export type CreateNotificationDtoNpc = {
   id: number;
   /** @minLength 1 */
@@ -7084,6 +7088,10 @@ export type CreateEventDtoHeroNpcsItem = {
 
 export interface CreateEventDto {
   name: string;
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
   world: string;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   startsAt?: string;
@@ -7376,15 +7384,12 @@ export type EventWrappedApiResponseDtoOutputOverview = {
 /**
  * @nullable
  */
-export type EventWrappedApiResponseDtoOutputLeadersTopHunterWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
+export type EventWrappedApiResponseDtoOutputLeadersTopHunterWinner = {
+  member: MemberSummary;
   primaryValue: number;
   /** @nullable */
   secondaryValue?: number | null;
-} | null) | null;
+} | null;
 
 export type EventWrappedApiResponseDtoOutputLeadersTopHunter = {
   /** @nullable */
@@ -7396,15 +7401,12 @@ export type EventWrappedApiResponseDtoOutputLeadersTopHunter = {
 /**
  * @nullable
  */
-export type EventWrappedApiResponseDtoOutputLeadersTopScorerWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
+export type EventWrappedApiResponseDtoOutputLeadersTopScorerWinner = {
+  member: MemberSummary;
   primaryValue: number;
   /** @nullable */
   secondaryValue?: number | null;
-} | null) | null;
+} | null;
 
 export type EventWrappedApiResponseDtoOutputLeadersTopScorer = {
   /** @nullable */
@@ -7416,15 +7418,12 @@ export type EventWrappedApiResponseDtoOutputLeadersTopScorer = {
 /**
  * @nullable
  */
-export type EventWrappedApiResponseDtoOutputLeadersLongestDutyWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
+export type EventWrappedApiResponseDtoOutputLeadersLongestDutyWinner = {
+  member: MemberSummary;
   primaryValue: number;
   /** @nullable */
   secondaryValue?: number | null;
-} | null) | null;
+} | null;
 
 export type EventWrappedApiResponseDtoOutputLeadersLongestDuty = {
   /** @nullable */
@@ -7436,15 +7435,12 @@ export type EventWrappedApiResponseDtoOutputLeadersLongestDuty = {
 /**
  * @nullable
  */
-export type EventWrappedApiResponseDtoOutputLeadersTopAfkWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
+export type EventWrappedApiResponseDtoOutputLeadersTopAfkWinner = {
+  member: MemberSummary;
   primaryValue: number;
   /** @nullable */
   secondaryValue?: number | null;
-} | null) | null;
+} | null;
 
 export type EventWrappedApiResponseDtoOutputLeadersTopAfk = {
   /** @nullable */
@@ -7456,15 +7452,12 @@ export type EventWrappedApiResponseDtoOutputLeadersTopAfk = {
 /**
  * @nullable
  */
-export type EventWrappedApiResponseDtoOutputLeadersMostFlexibleWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
+export type EventWrappedApiResponseDtoOutputLeadersMostFlexibleWinner = {
+  member: MemberSummary;
   primaryValue: number;
   /** @nullable */
   secondaryValue?: number | null;
-} | null) | null;
+} | null;
 
 export type EventWrappedApiResponseDtoOutputLeadersMostFlexible = {
   /** @nullable */
@@ -7476,15 +7469,12 @@ export type EventWrappedApiResponseDtoOutputLeadersMostFlexible = {
 /**
  * @nullable
  */
-export type EventWrappedApiResponseDtoOutputLeadersTopEfficiencyWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
+export type EventWrappedApiResponseDtoOutputLeadersTopEfficiencyWinner = {
+  member: MemberSummary;
   primaryValue: number;
   /** @nullable */
   secondaryValue?: number | null;
-} | null) | null;
+} | null;
 
 export type EventWrappedApiResponseDtoOutputLeadersTopEfficiency = {
   /** @nullable */
@@ -7551,15 +7541,12 @@ export type EventWrappedApiResponseDtoOutputHeroesItemRarityTotals = {
 /**
  * @nullable
  */
-export type EventWrappedApiResponseDtoOutputHeroesItemTopHunterWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
+export type EventWrappedApiResponseDtoOutputHeroesItemTopHunterWinner = {
+  member: MemberSummary;
   primaryValue: number;
   /** @nullable */
   secondaryValue?: number | null;
-} | null) | null;
+} | null;
 
 export type EventWrappedApiResponseDtoOutputHeroesItemTopHunter = {
   /** @nullable */
@@ -7856,6 +7843,9 @@ export type EventRankingEntryResponseDtoMemberRolesItem = {
 export type EventRankingEntryResponseDtoMember = {
   id: number;
   name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
   roles: EventRankingEntryResponseDtoMemberRolesItem[];
 };
 
@@ -7978,7 +7968,7 @@ export interface KillHistoryEntry {
 
 export interface KillHistoryEventResponse {
   kind: KillHistoryEventResponseKind;
-  data: KillHistoryEntry[];
+  items: KillHistoryEntry[];
   /** @nullable */
   nextCursor: string | null;
 }
@@ -8041,22 +8031,10 @@ export interface KillHistoryMemberEntry {
   memberPoint: KillHistoryMemberPoint;
 }
 
-export type KillHistoryMemberResponseMember = {
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  id: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  userId: string;
-};
-
 export interface KillHistoryMemberResponse {
   kind: KillHistoryMemberResponseKind;
-  member: KillHistoryMemberResponseMember;
-  data: KillHistoryMemberEntry[];
+  member: MemberSummary;
+  items: KillHistoryMemberEntry[];
   /** @nullable */
   nextCursor: string | null;
 }
@@ -8080,17 +8058,6 @@ export type KillDetailResponseDtoKillHeroNpc = {
   npcLvl: number | null;
   event: KillDetailResponseDtoKillHeroNpcEvent;
 };
-
-/**
- * @nullable
- */
-export type KillDetailResponseDtoKillTimerCreatedBy = {[key: string]: unknown} & ({
-  id: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  userId: string;
-} | null) | null;
 
 export type KillDetailResponseDtoKillPointsItemMemberRolesItem = {
   /** @nullable */
@@ -8163,8 +8130,7 @@ export type KillDetailResponseDtoKill = {
   /** @nullable */
   resolvedAfterMaxSpawnTimeMs: number | null;
   heroNpc: KillDetailResponseDtoKillHeroNpc;
-  /** @nullable */
-  timerCreatedBy: KillDetailResponseDtoKillTimerCreatedBy;
+  timerCreatedBy: MemberSummary | null;
   points: KillDetailResponseDtoKillPointsItem[];
 };
 
@@ -8193,11 +8159,7 @@ export interface UpdateKillPointDto {
 }
 
 export type KillTimelineMapResponseDtoAssignmentsItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
+  member: MemberSummary;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   assignedAt: string;
   /**
@@ -8319,10 +8281,7 @@ export type NullableCoverageGapResponseDto = {[key: string]: unknown} & ({
 } | null) | null;
 
 export type HeroPresenceStatsResponseDtoMemberStatsItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
+  member: MemberSummary;
   totalTimeSeconds: number;
   afkTimeSeconds: number;
   afkPercentage: number;
@@ -8498,7 +8457,10 @@ export type CreateKillDtoCharacter = {
 };
 
 export interface CreateKillDto {
-  /** @minLength 1 */
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
   world: string;
   npc: CreateKillDtoNpc;
   /** @minLength 1 */
@@ -8552,11 +8514,7 @@ export type GuildKillStatsResponseDtoOutputMemberRankingItemParticipationsByType
 };
 
 export type GuildKillStatsResponseDtoOutputMemberRankingItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
+  member: MemberSummary;
   totalParticipations: number;
   participationsByType: GuildKillStatsResponseDtoOutputMemberRankingItemParticipationsByType;
 };
@@ -8592,6 +8550,22 @@ export interface GuildKillStatsResponseDtoOutput {
   timeline: GuildKillStatsResponseDtoOutputTimeline;
   hourlyWeekday: GuildKillStatsResponseDtoOutputHourlyWeekdayItem[];
 }
+
+export type NpcType = typeof NpcType[keyof typeof NpcType];
+
+
+export const NpcType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
+  NPC: 'NPC',
+} as const;
 
 export type UserKillStatsResponseDtoOutputOverviewKillsByType = {
   COMMON?: number;
@@ -8629,22 +8603,6 @@ export interface UserKillStatsResponseDtoOutput {
   overview: UserKillStatsResponseDtoOutputOverview;
   topNpcs: UserKillStatsResponseDtoOutputTopNpcsItem[];
 }
-
-export type NpcType = typeof NpcType[keyof typeof NpcType];
-
-
-export const NpcType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
-  ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
-  HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
-  COLOSSUS: 'COLOSSUS',
-  TITAN: 'TITAN',
-  HERO_TRACKER: 'HERO_TRACKER',
-  NPC: 'NPC',
-} as const;
 
 export type UserKillAnalyticsResponseDtoOutputMetaTimezone = typeof UserKillAnalyticsResponseDtoOutputMetaTimezone[keyof typeof UserKillAnalyticsResponseDtoOutputMetaTimezone];
 
@@ -8991,7 +8949,7 @@ export interface UserKillActivityResponseDtoOutput {
   daily: UserKillActivityResponseDtoOutputDailyItem[];
 }
 
-export type UserNpcKillsResponseDtoOutputNpcsItem = {
+export type UserNpcKillsResponseDtoOutputItemsItem = {
   npcId: number;
   npcName: string;
   npcType: string;
@@ -9003,16 +8961,11 @@ export type UserNpcKillsResponseDtoOutputNpcsItem = {
   totalKills: number;
 };
 
-export type UserNpcKillsResponseDtoOutputPagination = {
-  total: number;
-  cursor: number;
-  limit: number;
-  hasNext: boolean;
-};
-
 export interface UserNpcKillsResponseDtoOutput {
-  npcs: UserNpcKillsResponseDtoOutputNpcsItem[];
-  pagination: UserNpcKillsResponseDtoOutputPagination;
+  items: UserNpcKillsResponseDtoOutputItemsItem[];
+  /** @nullable */
+  nextCursor: string | null;
+  total: number;
 }
 
 export type GuildTopNpcsResponseDtoOutputTopNpcsItem = {
@@ -9030,29 +8983,17 @@ export interface GuildTopNpcsResponseDtoOutput {
 }
 
 export type GuildTopKillersByTypeResponseDtoOutputTITANItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
+  member: MemberSummary;
   totalParticipations: number;
 };
 
 export type GuildTopKillersByTypeResponseDtoOutputHEROItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
+  member: MemberSummary;
   totalParticipations: number;
 };
 
 export type GuildTopKillersByTypeResponseDtoOutputEVENTHEROItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
+  member: MemberSummary;
   totalParticipations: number;
 };
 
@@ -9079,11 +9020,7 @@ export type NpcKillersResponseDtoOutputNpc = {[key: string]: unknown} & ({
 } | null) | null;
 
 export type NpcKillersResponseDtoOutputKillersItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
+  member: MemberSummary;
   participationCount: number;
 };
 
@@ -9092,17 +9029,6 @@ export interface NpcKillersResponseDtoOutput {
   npc: NpcKillersResponseDtoOutputNpc;
   killers: NpcKillersResponseDtoOutputKillersItem[];
 }
-
-/**
- * @nullable
- */
-export type MemberKillsResponseDtoOutputMember = {[key: string]: unknown} & ({
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
-} | null) | null;
 
 export type MemberKillsResponseDtoOutputOverviewParticipationsByType = {[key: string]: number};
 
@@ -9126,24 +9052,14 @@ export type MemberKillsResponseDtoOutputNpcsItem = {
   totalKills: number;
 };
 
-/**
- * @nullable
- */
-export type MemberKillsResponseDtoOutputPagination = {[key: string]: unknown} & ({
-  total: number;
-  cursor: number;
-  limit: number;
-  hasNext: boolean;
-} | null) | null;
-
 export interface MemberKillsResponseDtoOutput {
-  /** @nullable */
-  member: MemberKillsResponseDtoOutputMember;
+  member: MemberSummary | null;
   /** @nullable */
   overview: MemberKillsResponseDtoOutputOverview;
   npcs: MemberKillsResponseDtoOutputNpcsItem[];
+  total: number;
   /** @nullable */
-  pagination: MemberKillsResponseDtoOutputPagination;
+  nextCursor: string | null;
 }
 
 export type GuildDocumentListResponseDtoItemsItemCreatedBy = {
@@ -9457,7 +9373,7 @@ export type MembersControllerGetMemberLootlogConfigSummary401 = Reauthentication
   message: string;
 };
 
-export type MembersControllerGetMemberLootlogConfigSummary403 = {
+export type MembersControllerGetMemberLootlogConfigSummary403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -9476,7 +9392,7 @@ export type MembersControllerGetGuildMembers401 = ReauthenticationRequiredEncode
   message: string;
 };
 
-export type MembersControllerGetGuildMembers403 = {
+export type MembersControllerGetGuildMembers403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -9495,7 +9411,7 @@ export type MembersControllerGetGuildMemberReferences401 = ReauthenticationRequi
   message: string;
 };
 
-export type MembersControllerGetGuildMemberReferences403 = {
+export type MembersControllerGetGuildMemberReferences403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -9510,7 +9426,7 @@ export type MembersControllerGetGuildMembersSummary401 = ReauthenticationRequire
   message: string;
 };
 
-export type MembersControllerGetGuildMembersSummary403 = {
+export type MembersControllerGetGuildMembersSummary403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -9525,7 +9441,7 @@ export type MembersControllerGetLatestRefreshJob401 = ReauthenticationRequiredEn
   message: string;
 };
 
-export type MembersControllerGetLatestRefreshJob403 = {
+export type MembersControllerGetLatestRefreshJob403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -9541,7 +9457,7 @@ export type MembersControllerGetRefreshJobStatus401 = ReauthenticationRequiredEn
   message: string;
 };
 
-export type MembersControllerGetRefreshJobStatus403 = {
+export type MembersControllerGetRefreshJobStatus403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -9710,7 +9626,7 @@ export type RolesControllerGetGuildRoles401 = ReauthenticationRequiredEncoded | 
   message: string;
 };
 
-export type RolesControllerGetGuildRoles403 = {
+export type RolesControllerGetGuildRoles403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -9726,7 +9642,7 @@ export type RolesControllerUpdateGuildRole401 = ReauthenticationRequiredEncoded 
   message: string;
 };
 
-export type RolesControllerUpdateGuildRole403 = {
+export type RolesControllerUpdateGuildRole403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -9735,6 +9651,10 @@ export type RolesControllerUpdateGuildRole429 = {
 };
 
 export type TimersControllerGetAllTimersParams = {
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world?: string;
 };
 
@@ -9752,8 +9672,16 @@ export type TimersControllerGetAllTimers429 = {
 
 export type TimersControllerGetRecentTimerHistoryParams = {
 guildId: string;
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world: string;
-limit?: unknown;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
 };
 
 export type TimersControllerGetRecentTimerHistory401 = ReauthenticationRequiredEncoded | {
@@ -9772,6 +9700,10 @@ export type TimersControllerGetTimersPathParameters = {
  guildId: string,
  }
 export type TimersControllerGetTimersParams = {
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world?: string;
 };
 
@@ -9792,13 +9724,12 @@ export type TimersControllerSearchNpcsWithTimerDataPathParameters = {
  }
 export type TimersControllerSearchNpcsWithTimerDataParams = {
 /**
- * Case-insensitive substring of the NPC name.
- * @minLength 1
+ * @maxLength 100
  */
 search?: string;
 /**
- * World to search. When omitted, every world of the Organization is searched.
  * @minLength 1
+ * @maxLength 64
  */
 world?: string;
 /**
@@ -9815,7 +9746,7 @@ npcIds?: number[];
 templateIds?: number[];
 /**
  * @minimum 1
- * @maximum 50
+ * @maximum 100
  */
 limit?: number;
 };
@@ -9865,6 +9796,10 @@ export type TimersControllerDeleteTimerPathParameters = {
     timerIdentifier: string,
  }
 export type TimersControllerDeleteTimerParams = {
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world?: string;
 };
 
@@ -9885,8 +9820,16 @@ export type TimersControllerGetTimerHistoryPathParameters = {
     timerIdentifier: string,
  }
 export type TimersControllerGetTimerHistoryParams = {
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world: string;
-limit?: unknown;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
 };
 
 export type TimersControllerGetTimerHistory401 = ReauthenticationRequiredEncoded | {
@@ -9984,15 +9927,19 @@ export type LootsControllerFetchLootsByGuildIdParams = {
  */
 limit?: number;
 /**
- * @minimum -9007199254740991
- * @maximum 9007199254740991
+ * @minLength 1
+ * @maxLength 512
  */
-cursor?: number;
+cursor?: string;
 npcs?: string[];
 players?: string[];
-rarities?: string[];
+rarities?: LootsControllerFetchLootsByGuildIdRaritiesItem[];
 professions?: string[];
-npcTypes?: string[];
+npcTypes?: LootsControllerFetchLootsByGuildIdNpcTypesItem[];
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world?: string;
 /**
  * @minimum 0
@@ -10024,6 +9971,9 @@ playerLevelMin?: number;
  * @maximum 500
  */
 playerLevelMax?: number;
+/**
+ * @maxLength 100
+ */
 search?: string;
 hid?: string;
 itemNames?: string[];
@@ -10036,6 +9986,32 @@ createdAtMin?: string;
  */
 createdAtMax?: string;
 };
+
+export type LootsControllerFetchLootsByGuildIdRaritiesItem = typeof LootsControllerFetchLootsByGuildIdRaritiesItem[keyof typeof LootsControllerFetchLootsByGuildIdRaritiesItem];
+
+
+export const LootsControllerFetchLootsByGuildIdRaritiesItem = {
+  UNIQUE: 'UNIQUE',
+  HEROIC: 'HEROIC',
+  LEGENDARY: 'LEGENDARY',
+  UPGRADED: 'UPGRADED',
+} as const;
+
+export type LootsControllerFetchLootsByGuildIdNpcTypesItem = typeof LootsControllerFetchLootsByGuildIdNpcTypesItem[keyof typeof LootsControllerFetchLootsByGuildIdNpcTypesItem];
+
+
+export const LootsControllerFetchLootsByGuildIdNpcTypesItem = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
+  NPC: 'NPC',
+} as const;
 
 export type LootsControllerFetchLootsByGuildId401 = ReauthenticationRequiredEncoded | {
   message: string;
@@ -10054,8 +10030,12 @@ export type LootsControllerGetLootStatsPathParameters = {
  }
 export type LootsControllerGetLootStatsParams = {
 period?: LootsControllerGetLootStatsPeriod;
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world?: string;
-npcTypes?: string;
+npcTypes?: LootsControllerGetLootStatsNpcTypesItem[];
 excludeColossus?: boolean;
 };
 
@@ -10071,6 +10051,22 @@ export const LootsControllerGetLootStatsPeriod = {
   '90d': '90d',
   '180d': '180d',
   all: 'all',
+} as const;
+
+export type LootsControllerGetLootStatsNpcTypesItem = typeof LootsControllerGetLootStatsNpcTypesItem[keyof typeof LootsControllerGetLootStatsNpcTypesItem];
+
+
+export const LootsControllerGetLootStatsNpcTypesItem = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
+  NPC: 'NPC',
 } as const;
 
 export type LootsControllerGetLootStats401 = ReauthenticationRequiredEncoded | {
@@ -10093,6 +10089,10 @@ export type LootsControllerResolveLootItemByHidParams = {
  * @minLength 1
  */
 hid: string;
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world?: string;
 };
 
@@ -10216,7 +10216,7 @@ export type LootlogConfigControllerGetLootlogConfig429 = {
 
 export type LootlogConfigControllerUpdateNpcPathParameters = {
  guildId: string,
-    npcId: string,
+    npcId: number,
  }
 export type LootlogConfigControllerUpdateNpc401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
@@ -10237,7 +10237,7 @@ export type ChatControllerGetChatMessages401 = ReauthenticationRequiredEncoded |
   message: string;
 };
 
-export type ChatControllerGetChatMessages403 = {
+export type ChatControllerGetChatMessages403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10252,7 +10252,7 @@ export type ChatControllerSendChatMessage401 = ReauthenticationRequiredEncoded |
   message: string;
 };
 
-export type ChatControllerSendChatMessage403 = {
+export type ChatControllerSendChatMessage403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10267,7 +10267,7 @@ export type ChatControllerClearChatMessages401 = ReauthenticationRequiredEncoded
   message: string;
 };
 
-export type ChatControllerClearChatMessages403 = {
+export type ChatControllerClearChatMessages403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10283,7 +10283,7 @@ export type ChatControllerDeleteChatMessage401 = ReauthenticationRequiredEncoded
   message: string;
 };
 
-export type ChatControllerDeleteChatMessage403 = {
+export type ChatControllerDeleteChatMessage403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10294,11 +10294,11 @@ export type ChatControllerDeleteChatMessage429 = {
 export type ListReservationSpotsPathParameters = {
  guildId: string,
  }
-export type ListReservationSpots401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type ListReservationSpots401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
-export type ListReservationSpots403 = OrganizationWorkspaceErrorResponse | {
+export type ListReservationSpots403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10321,11 +10321,11 @@ from: string;
 to: string;
 };
 
-export type ListSpotReservations401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type ListSpotReservations401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
-export type ListSpotReservations403 = OrganizationWorkspaceErrorResponse | {
+export type ListSpotReservations403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10337,11 +10337,11 @@ export type CreateReservationPathParameters = {
  guildId: string,
     spotId: string,
  }
-export type CreateReservation401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type CreateReservation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
-export type CreateReservation403 = OrganizationWorkspaceErrorResponse | {
+export type CreateReservation403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10353,11 +10353,11 @@ export type DeleteReservationPathParameters = {
  guildId: string,
     reservationId: number,
  }
-export type DeleteReservation401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type DeleteReservation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
-export type DeleteReservation403 = OrganizationWorkspaceErrorResponse | {
+export type DeleteReservation403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10369,11 +10369,11 @@ export type PinReservationSpotPathParameters = {
  guildId: string,
     spotId: string,
  }
-export type PinReservationSpot401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type PinReservationSpot401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
-export type PinReservationSpot403 = OrganizationWorkspaceErrorResponse | {
+export type PinReservationSpot403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10385,11 +10385,11 @@ export type UnpinReservationSpotPathParameters = {
  guildId: string,
     spotId: string,
  }
-export type UnpinReservationSpot401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type UnpinReservationSpot401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
-export type UnpinReservationSpot403 = OrganizationWorkspaceErrorResponse | {
+export type UnpinReservationSpot403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10409,7 +10409,7 @@ export const ListMyReservationsStatus = {
   past: 'past',
 } as const;
 
-export type ListMyReservations401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type ListMyReservations401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
@@ -10424,7 +10424,7 @@ export type ListMyReservations429 = {
 export type DeleteMyReservationPathParameters = {
  reservationId: number,
  }
-export type DeleteMyReservation401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type DeleteMyReservation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
@@ -10439,7 +10439,7 @@ export type DeleteMyReservation429 = {
 export type UpdateMyReservationPathParameters = {
  reservationId: number,
  }
-export type UpdateMyReservation401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type UpdateMyReservation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
@@ -10454,11 +10454,11 @@ export type UpdateMyReservation429 = {
 export type ListReservationSharesPathParameters = {
  guildId: string,
  }
-export type ListReservationShares401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type ListReservationShares401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
-export type ListReservationShares403 = OrganizationWorkspaceErrorResponse | {
+export type ListReservationShares403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10469,11 +10469,11 @@ export type ListReservationShares429 = {
 export type CreateReservationShareInvitationPathParameters = {
  guildId: string,
  }
-export type CreateReservationShareInvitation401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type CreateReservationShareInvitation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
-export type CreateReservationShareInvitation403 = OrganizationWorkspaceErrorResponse | {
+export type CreateReservationShareInvitation403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10485,11 +10485,11 @@ export type RevokeReservationShareInvitationPathParameters = {
  guildId: string,
     invitationId: string,
  }
-export type RevokeReservationShareInvitation401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type RevokeReservationShareInvitation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
-export type RevokeReservationShareInvitation403 = OrganizationWorkspaceErrorResponse | {
+export type RevokeReservationShareInvitation403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10501,11 +10501,11 @@ export type RevokeReservationSharePathParameters = {
  guildId: string,
     shareId: string,
  }
-export type RevokeReservationShare401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type RevokeReservationShare401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
-export type RevokeReservationShare403 = OrganizationWorkspaceErrorResponse | {
+export type RevokeReservationShare403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -10516,7 +10516,7 @@ export type RevokeReservationShare429 = {
 export type PreviewReservationShareInvitationPathParameters = {
  token: string,
  }
-export type PreviewReservationShareInvitation401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type PreviewReservationShareInvitation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
@@ -10531,7 +10531,7 @@ export type PreviewReservationShareInvitation429 = {
 export type AcceptReservationShareInvitationPathParameters = {
  token: string,
  }
-export type AcceptReservationShareInvitation401 = OrganizationWorkspaceErrorResponse | ReauthenticationRequiredEncoded | {
+export type AcceptReservationShareInvitation401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
   message: string;
 };
 
@@ -10939,7 +10939,7 @@ export type MessagingControllerSendNotification403 = HttpErrorResponse | {
   message: string;
 };
 
-export type MessagingControllerSendNotification429 = NotificationRateLimitResponseDto | {
+export type MessagingControllerSendNotification429 = HttpErrorResponse | {
   message: string;
 };
 
@@ -11115,8 +11115,12 @@ export type ListEventsPathParameters = {
  guildId: string,
  }
 export type ListEventsParams = {
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world?: string;
-activeOnly?: string;
+activeOnly?: boolean;
 };
 
 export type ListEvents401 = ReauthenticationRequiredEncoded | {
@@ -11281,7 +11285,11 @@ export type EventsAssignmentControllerUnassignMemberPathParameters = {
     mapId: string,
  }
 export type EventsAssignmentControllerUnassignMemberParams = {
-memberId?: string;
+/**
+ * @minimum 1
+ * @maximum 2147483647
+ */
+memberId?: number;
 };
 
 export type EventsAssignmentControllerUnassignMember401 = ReauthenticationRequiredEncoded | {
@@ -11607,6 +11615,10 @@ export type ListEventHeroTimersPathParameters = {
     eventId: string,
  }
 export type ListEventHeroTimersParams = {
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world: string;
 };
 
@@ -11644,14 +11656,14 @@ export type ListEventKillHistoryPathParameters = {
  }
 export type ListEventKillHistoryParams = {
 /**
- * Page size from 1 to 100. Defaults to 20.
- * @pattern ^(?:[1-9]\d?|100)$
+ * @minimum 1
+ * @maximum 100
  */
-limit?: string;
+limit?: number;
 /**
  * Opaque continuation token returned by this endpoint. Keep the Organization, event and filters unchanged.
  * @minLength 1
- * @maxLength 4096
+ * @maxLength 512
  */
 cursor?: string;
 /**
@@ -11659,9 +11671,10 @@ cursor?: string;
  */
 heroId?: string;
 /**
- * @pattern ^[1-9]\d*$
+ * @minimum 1
+ * @maximum 2147483647
  */
-memberId?: string;
+memberId?: number;
 };
 
 export type ListEventKillHistory401 = ReauthenticationRequiredEncoded | {
@@ -12008,12 +12021,16 @@ npcTypes?: KillsControllerGetGuildKillStatsNpcTypesItem[];
  * @minimum 0
  * @maximum 500
  */
-minLvl?: number;
+npcLevelMin?: number;
 /**
  * @minimum 0
  * @maximum 500
  */
-maxLvl?: number;
+npcLevelMax?: number;
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world?: string;
 period?: KillsControllerGetGuildKillStatsPeriod;
 };
@@ -12030,6 +12047,7 @@ export const KillsControllerGetGuildKillStatsNpcTypesItem = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -12037,12 +12055,14 @@ export type KillsControllerGetGuildKillStatsPeriod = typeof KillsControllerGetGu
 
 
 export const KillsControllerGetGuildKillStatsPeriod = {
-  all: 'all',
   '24h': '24h',
   '3d': '3d',
   '7d': '7d',
   '14d': '14d',
   '30d': '30d',
+  '90d': '90d',
+  '180d': '180d',
+  all: 'all',
 } as const;
 
 export type KillsControllerGetGuildKillStats401 = ReauthenticationRequiredEncoded | {
@@ -12059,11 +12079,15 @@ export type KillsControllerGetGuildKillStats429 = {
 
 export type KillsControllerGetUserKillStatsParams = {
 npcTypes?: KillsControllerGetUserKillStatsNpcTypesItem[];
-npcType?: KillsControllerGetUserKillStatsNpcType;
+npcType?: NpcType;
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world?: string;
 /**
  * @minimum 1
- * @maximum 9007199254740991
+ * @maximum 100
  */
 topNpcsLimit?: number;
 period?: KillsControllerGetUserKillStatsPeriod;
@@ -12081,21 +12105,7 @@ export const KillsControllerGetUserKillStatsNpcTypesItem = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
-  NPC: 'NPC',
-} as const;
-
-export type KillsControllerGetUserKillStatsNpcType = typeof KillsControllerGetUserKillStatsNpcType[keyof typeof KillsControllerGetUserKillStatsNpcType];
-
-
-export const KillsControllerGetUserKillStatsNpcType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
-  ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
-  HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
-  COLOSSUS: 'COLOSSUS',
-  TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -12103,12 +12113,14 @@ export type KillsControllerGetUserKillStatsPeriod = typeof KillsControllerGetUse
 
 
 export const KillsControllerGetUserKillStatsPeriod = {
-  all: 'all',
   '24h': '24h',
   '3d': '3d',
   '7d': '7d',
   '14d': '14d',
   '30d': '30d',
+  '90d': '90d',
+  '180d': '180d',
+  all: 'all',
 } as const;
 
 export type KillsControllerGetUserKillStats401 = ReauthenticationRequiredEncoded | {
@@ -12127,7 +12139,7 @@ export type KillsControllerGetUserKillAnalyticsParams = {
 days?: KillsControllerGetUserKillAnalyticsDays;
 /**
  * @minLength 1
- * @maxLength 100
+ * @maxLength 64
  */
 world?: string;
 npcType?: NpcType;
@@ -12163,7 +12175,7 @@ export type KillsControllerGetUserKillAnalytics429 = {
 export type KillsControllerGetUserKillActivityParams = {
 /**
  * @minLength 1
- * @maxLength 100
+ * @maxLength 64
  */
 world?: string;
 /**
@@ -12187,13 +12199,20 @@ export type KillsControllerGetUserKillActivity429 = {
 
 export type KillsControllerGetUserNpcKillsParams = {
 npcTypes?: KillsControllerGetUserNpcKillsNpcTypesItem[];
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world?: string;
+/**
+ * @maxLength 100
+ */
 search?: string;
 /**
- * @minimum 0
- * @maximum 9007199254740991
+ * @minLength 1
+ * @maxLength 512
  */
-cursor?: number;
+cursor?: string;
 /**
  * @minimum 1
  * @maximum 100
@@ -12205,12 +12224,12 @@ sortBy?: KillsControllerGetUserNpcKillsSortBy;
  * @minimum 0
  * @maximum 500
  */
-minLvl?: number;
+npcLevelMin?: number;
 /**
  * @minimum 0
  * @maximum 500
  */
-maxLvl?: number;
+npcLevelMax?: number;
 period?: KillsControllerGetUserNpcKillsPeriod;
 };
 
@@ -12226,6 +12245,7 @@ export const KillsControllerGetUserNpcKillsNpcTypesItem = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -12249,12 +12269,14 @@ export type KillsControllerGetUserNpcKillsPeriod = typeof KillsControllerGetUser
 
 
 export const KillsControllerGetUserNpcKillsPeriod = {
-  all: 'all',
   '24h': '24h',
   '3d': '3d',
   '7d': '7d',
   '14d': '14d',
   '30d': '30d',
+  '90d': '90d',
+  '180d': '180d',
+  all: 'all',
 } as const;
 
 export type KillsControllerGetUserNpcKills401 = ReauthenticationRequiredEncoded | {
@@ -12273,14 +12295,47 @@ export type KillsControllerGetGuildTopNpcsPathParameters = {
  guildId: string,
  }
 export type KillsControllerGetGuildTopNpcsParams = {
-limit: number;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
 npcType?: NpcType;
-world: string;
-search: string;
-minLvl: string;
-maxLvl: string;
-period: string;
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
+world?: string;
+/**
+ * @maxLength 100
+ */
+search?: string;
+/**
+ * @minimum 0
+ * @maximum 500
+ */
+npcLevelMin?: number;
+/**
+ * @minimum 0
+ * @maximum 500
+ */
+npcLevelMax?: number;
+period?: KillsControllerGetGuildTopNpcsPeriod;
 };
+
+export type KillsControllerGetGuildTopNpcsPeriod = typeof KillsControllerGetGuildTopNpcsPeriod[keyof typeof KillsControllerGetGuildTopNpcsPeriod];
+
+
+export const KillsControllerGetGuildTopNpcsPeriod = {
+  '24h': '24h',
+  '3d': '3d',
+  '7d': '7d',
+  '14d': '14d',
+  '30d': '30d',
+  '90d': '90d',
+  '180d': '180d',
+  all: 'all',
+} as const;
 
 export type KillsControllerGetGuildTopNpcs401 = ReauthenticationRequiredEncoded | {
   message: string;
@@ -12298,9 +12353,27 @@ export type KillsControllerGetGuildTopKillersByTypePathParameters = {
  guildId: string,
  }
 export type KillsControllerGetGuildTopKillersByTypeParams = {
-limit: number;
-period: string;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+period?: KillsControllerGetGuildTopKillersByTypePeriod;
 };
+
+export type KillsControllerGetGuildTopKillersByTypePeriod = typeof KillsControllerGetGuildTopKillersByTypePeriod[keyof typeof KillsControllerGetGuildTopKillersByTypePeriod];
+
+
+export const KillsControllerGetGuildTopKillersByTypePeriod = {
+  '24h': '24h',
+  '3d': '3d',
+  '7d': '7d',
+  '14d': '14d',
+  '30d': '30d',
+  '90d': '90d',
+  '180d': '180d',
+  all: 'all',
+} as const;
 
 export type KillsControllerGetGuildTopKillersByType401 = ReauthenticationRequiredEncoded | {
   message: string;
@@ -12324,6 +12397,10 @@ export type KillsControllerGetNpcKillersParams = {
  * @maximum 100
  */
 limit?: number;
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world?: string;
 period?: KillsControllerGetNpcKillersPeriod;
 };
@@ -12332,12 +12409,14 @@ export type KillsControllerGetNpcKillersPeriod = typeof KillsControllerGetNpcKil
 
 
 export const KillsControllerGetNpcKillersPeriod = {
-  all: 'all',
   '24h': '24h',
   '3d': '3d',
   '7d': '7d',
   '14d': '14d',
   '30d': '30d',
+  '90d': '90d',
+  '180d': '180d',
+  all: 'all',
 } as const;
 
 export type KillsControllerGetNpcKillers401 = ReauthenticationRequiredEncoded | {
@@ -12361,14 +12440,21 @@ export type KillsControllerGetMemberKillsParams = {
  * @minimum 0
  * @maximum 500
  */
-minLvl?: number;
+npcLevelMin?: number;
 /**
  * @minimum 0
  * @maximum 500
  */
-maxLvl?: number;
+npcLevelMax?: number;
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
 world?: string;
 npcTypes?: KillsControllerGetMemberKillsNpcTypesItem[];
+/**
+ * @maxLength 100
+ */
 search?: string;
 /**
  * @minimum 1
@@ -12376,10 +12462,10 @@ search?: string;
  */
 limit?: number;
 /**
- * @minimum 0
- * @maximum 9007199254740991
+ * @minLength 1
+ * @maxLength 512
  */
-cursor?: number;
+cursor?: string;
 period?: KillsControllerGetMemberKillsPeriod;
 };
 
@@ -12395,6 +12481,7 @@ export const KillsControllerGetMemberKillsNpcTypesItem = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -12402,12 +12489,14 @@ export type KillsControllerGetMemberKillsPeriod = typeof KillsControllerGetMembe
 
 
 export const KillsControllerGetMemberKillsPeriod = {
-  all: 'all',
   '24h': '24h',
   '3d': '3d',
   '7d': '7d',
   '14d': '14d',
   '30d': '30d',
+  '90d': '90d',
+  '180d': '180d',
+  all: 'all',
 } as const;
 
 export type KillsControllerGetMemberKills401 = ReauthenticationRequiredEncoded | {
@@ -12444,7 +12533,7 @@ export type DocsControllerGetDocuments401 = ReauthenticationRequiredEncoded | {
   message: string;
 };
 
-export type DocsControllerGetDocuments403 = {
+export type DocsControllerGetDocuments403 = HttpErrorResponse | {
   message: string;
 };
 
@@ -13753,13 +13842,13 @@ export const getLootsControllerFetchLootsByGuildIdUrl = ({ guildId }: LootsContr
 }
 
 /**
- * Retrieve paginated loots for a guild with optional filters
+ * Retrieve one page of a guild's loots, newest first, with optional filters. Pass the `nextCursor` of a page as `cursor` to read the next page with the same filters; `nextCursor` is null on the last page. A cursor replayed with different filters, or one that cannot be decoded, is rejected with 400 `INVALID_CURSOR`.
  * @summary Get guild loots
  */
 export const lootsControllerFetchLootsByGuildId = async ({ guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
-    params?: LootsControllerFetchLootsByGuildIdParams, options?: Parameters<typeof mainFetch>[1]): Promise<LootResponseDto[]> => {
+    params?: LootsControllerFetchLootsByGuildIdParams, options?: Parameters<typeof mainFetch>[1]): Promise<LootPageResponseDto> => {
 
-  return mainFetch<LootResponseDto[]>(getLootsControllerFetchLootsByGuildIdUrl({ guildId },params),
+  return mainFetch<LootPageResponseDto>(getLootsControllerFetchLootsByGuildIdUrl({ guildId },params),
   {
     ...options,
     method: 'GET'
@@ -13775,6 +13864,14 @@ export const getLootsControllerGetLootStatsUrl = ({ guildId }: LootsControllerGe
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["npcTypes"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
 
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : String(value))
@@ -17680,7 +17777,7 @@ export const killsControllerGetUserNpcKills = async (params?: KillsControllerGet
 
 
 export const getKillsControllerGetGuildTopNpcsUrl = ({ guildId }: KillsControllerGetGuildTopNpcsPathParameters,
-    params: KillsControllerGetGuildTopNpcsParams,) => {
+    params?: KillsControllerGetGuildTopNpcsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -17700,7 +17797,7 @@ export const getKillsControllerGetGuildTopNpcsUrl = ({ guildId }: KillsControlle
  * @summary Get top killed NPCs in guild
  */
 export const killsControllerGetGuildTopNpcs = async ({ guildId }: KillsControllerGetGuildTopNpcsPathParameters,
-    params: KillsControllerGetGuildTopNpcsParams, options?: Parameters<typeof mainFetch>[1]): Promise<GuildTopNpcsResponseDtoOutput> => {
+    params?: KillsControllerGetGuildTopNpcsParams, options?: Parameters<typeof mainFetch>[1]): Promise<GuildTopNpcsResponseDtoOutput> => {
 
   return mainFetch<GuildTopNpcsResponseDtoOutput>(getKillsControllerGetGuildTopNpcsUrl({ guildId },params),
   {
@@ -17714,7 +17811,7 @@ export const killsControllerGetGuildTopNpcs = async ({ guildId }: KillsControlle
 
 
 export const getKillsControllerGetGuildTopKillersByTypeUrl = ({ guildId }: KillsControllerGetGuildTopKillersByTypePathParameters,
-    params: KillsControllerGetGuildTopKillersByTypeParams,) => {
+    params?: KillsControllerGetGuildTopKillersByTypeParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -17734,7 +17831,7 @@ export const getKillsControllerGetGuildTopKillersByTypeUrl = ({ guildId }: Kills
  * @summary Get top killers by NPC type in guild
  */
 export const killsControllerGetGuildTopKillersByType = async ({ guildId }: KillsControllerGetGuildTopKillersByTypePathParameters,
-    params: KillsControllerGetGuildTopKillersByTypeParams, options?: Parameters<typeof mainFetch>[1]): Promise<GuildTopKillersByTypeResponseDtoOutput> => {
+    params?: KillsControllerGetGuildTopKillersByTypeParams, options?: Parameters<typeof mainFetch>[1]): Promise<GuildTopKillersByTypeResponseDtoOutput> => {
 
   return mainFetch<GuildTopKillersByTypeResponseDtoOutput>(getKillsControllerGetGuildTopKillersByTypeUrl({ guildId },params),
   {

@@ -18,9 +18,10 @@ export const DomainDateTime = Schema.Union([
 
 export const nullableIsoDatetimeCodec = Schema.NullOr(IsoDateTime);
 
-const DateOrIsoString = Schema.Union([Schema.Date, Schema.String]);
+const DateOrIsoString = Schema.Union([Schema.Date, DateTimeString]);
 
-export const flexibleIsoDatetimeCodec = Schema.String.pipe(
+/** Encodes a domain `Date` or an already-serialized UTC datetime, rejecting anything else. */
+export const flexibleIsoDatetimeCodec = DateTimeString.pipe(
   Schema.decodeTo(
     DateOrIsoString,
     SchemaTransformation.transform({

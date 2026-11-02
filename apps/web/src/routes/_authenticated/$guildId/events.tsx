@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/$guildId/events")({
             guildId: params.guildId,
           },
           {
-            activeOnly: "false",
+            activeOnly: false,
           },
         ),
       );

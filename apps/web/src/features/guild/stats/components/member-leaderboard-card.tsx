@@ -50,31 +50,31 @@ export const MemberLeaderboardCard = ({
   // The viewer's own place follows the leaders when it falls outside them.
   const ownIndex = ranked.findIndex(
     (member, index) =>
-      index >= LEADERBOARD_SIZE && isViewer(member.memberUserId),
+      index >= LEADERBOARD_SIZE && isViewer(member.member.userId),
   );
 
   const renderRow = (member: (typeof ranked)[number], rank: number) => (
     <StatsLeaderboardRow
-      key={member.memberId}
+      key={member.member.id}
       rank={rank}
       media={
         <MemberAvatar
-          userId={member.memberUserId}
-          avatar={member.memberAvatar}
-          name={member.memberName}
+          userId={member.member.userId}
+          avatar={member.member.avatar}
+          name={member.member.name}
         />
       }
       title={
         <MemberNameWithColor
-          name={member.memberName}
-          member={membersMap.get(member.memberUserId)}
+          name={member.member.name}
+          member={membersMap.get(member.member.userId)}
         />
       }
       value={member.participations}
-      isViewer={isViewer(member.memberUserId)}
+      isViewer={isViewer(member.member.userId)}
       link={{
         to: "/$guildId/stats/members/$memberId",
-        params: { guildId, memberId: String(member.memberId) },
+        params: { guildId, memberId: String(member.member.id) },
       }}
     />
   );

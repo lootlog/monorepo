@@ -17,7 +17,7 @@ const AUTH_TOKEN_CACHE_KEY_PREFIX = "auth:idp-token";
 
 const USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX = "user-lootlog-config";
 
-const EVENT_WRAPPED_CACHE_KEY_PREFIX = "event-wrapped:v2";
+const EVENT_WRAPPED_CACHE_KEY_PREFIX = "event-wrapped:v3";
 
 const MEMBER_READ_CACHE_KEY_PREFIX = "member-read";
 

@@ -9,6 +9,9 @@ import {
   JsonValue,
   DateTimeString,
   FiniteNumber,
+  PageSize,
+  SearchText,
+  WorldParam,
 } from "@lootlog/schema/http-scalars";
 import { MemberProfile } from "#src/contracts/members/schemas";
 
@@ -145,7 +148,7 @@ export const CreateAutoTimerRequest = Schema.Struct({
         "Deprecated: send `entranceSecondsLeft`. When the open entrance of a Hero Tracker closes, on the reporter's clock; ignored when `entranceSecondsLeft` is present.",
     }),
   ),
-  world: NonEmptyString,
+  world: WorldParam,
   npc: Schema.Struct({
     id: FiniteNumber.annotate({
       description: "Margonem runtime NPC id (`npc.id`) of the removed spawn.",
@@ -199,7 +202,7 @@ export const CreateAutoTimerResponse = Schema.Struct({
 export type ResetTimerRequest = typeof ResetTimerRequest.Type;
 
 export const ResetTimerRequest = Schema.Struct({
-  world: NonEmptyString,
+  world: WorldParam,
   actorCharacter: Schema.optionalKey(TimerActorCharacterInput),
 }).annotate({ identifier: "ResetTimerDto" });
 
@@ -232,14 +235,14 @@ export const CreateManualTimerRequest = Schema.Struct({
   ),
   customMinSpawnTime: Schema.optionalKey(DateTimeString),
   customMaxSpawnTime: Schema.optionalKey(DateTimeString),
-  world: NonEmptyString,
+  world: WorldParam,
   actorCharacter: Schema.optionalKey(TimerActorCharacterInput),
 }).annotate({ identifier: "CreateManualTimerDto" });
 
 export type TimersQuery = typeof TimersQuery.Type;
 
 export const TimersQuery = Schema.Struct({
-  world: Schema.optionalKey(Schema.String),
+  world: Schema.optionalKey(WorldParam),
 });
 
 export type TimersResponse = typeof TimersResponse.Type;
@@ -248,10 +251,17 @@ export const TimersResponse = Schema.Array(TimerResponse);
 
 export type RecentTimerHistoryQuery = typeof RecentTimerHistoryQuery.Type;
 
+const TimerHistoryLimit = Schema.optionalKey(
+  PageSize.annotate({
+    default: 5,
+    description: "Number of latest history entries to return.",
+  }),
+);
+
 export const RecentTimerHistoryQuery = Schema.Struct({
   guildId: Schema.String,
-  world: Schema.String,
-  limit: Schema.optionalKey(JsonValue),
+  world: WorldParam,
+  limit: TimerHistoryLimit,
 });
 
 export type TimerHistoryListResponse = typeof TimerHistoryListResponse.Type;
@@ -286,12 +296,12 @@ export type TimerNpcSearchQuery = typeof TimerNpcSearchQuery.Type;
 
 export const TimerNpcSearchQuery = Schema.Struct({
   search: Schema.optionalKey(
-    NonEmptyString.annotate({
+    SearchText.annotate({
       description: "Case-insensitive substring of the NPC name.",
     }),
   ),
   world: Schema.optionalKey(
-    NonEmptyString.annotate({
+    WorldParam.annotate({
       description:
         "World to search. When omitted, every world of the Organization is searched.",
     }),
@@ -306,23 +316,10 @@ export const TimerNpcSearchQuery = Schema.Struct({
       description: "Return timers observed with a template id in this list.",
     }),
   ),
-  limit: Schema.optionalKey(
-    Schema.Number.annotate({ default: 10 })
-      .check(Schema.isFinite().annotate({ expected: "a finite number" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(50).annotate({
-          expected: "a value less than or equal to 50",
-        }),
-      ),
-  ),
+  limit: Schema.optionalKey(PageSize.annotate({ default: 10 })),
 }).check(
   Schema.makeFilter((query) =>
-    query.search !== undefined ||
+    (query.search ?? "") !== "" ||
     (query.npcIds?.length ?? 0) > 0 ||
     (query.templateIds?.length ?? 0) > 0
       ? undefined
@@ -347,8 +344,8 @@ export const TimerPath = Schema.Struct({
 export type TimerHistoryQuery = typeof TimerHistoryQuery.Type;
 
 export const TimerHistoryQuery = Schema.Struct({
-  world: Schema.String,
-  limit: Schema.optionalKey(JsonValue),
+  world: WorldParam,
+  limit: TimerHistoryLimit,
 });
 
 export type TimerHistoryEntryPath = typeof TimerHistoryEntryPath.Type;

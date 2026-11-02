@@ -47,8 +47,8 @@ const getPrimaryLeader = (
       id: "top-scorer",
       kind: "fact",
       value: quality.leaders.topScorer.leader.primaryValue,
-      subject: quality.leaders.topScorer.leader.name,
-      avatar: quality.leaders.topScorer.leader.avatar,
+      subject: quality.leaders.topScorer.leader.member.name,
+      avatar: quality.leaders.topScorer.leader.member.avatar,
     };
   }
 
@@ -57,8 +57,8 @@ const getPrimaryLeader = (
       id: "top-hunter",
       kind: "fact",
       value: quality.leaders.topHunter.leader.primaryValue,
-      subject: quality.leaders.topHunter.leader.name,
-      avatar: quality.leaders.topHunter.leader.avatar,
+      subject: quality.leaders.topHunter.leader.member.name,
+      avatar: quality.leaders.topHunter.leader.member.avatar,
     };
   }
 
@@ -132,8 +132,8 @@ export const buildWrappedDeck = (quality: WrappedQualityModel): WrappedDeck => {
           id: "longest-duty",
           kind: "fact",
           value: quality.leaders.longestDuty.leader.primaryValue,
-          subject: quality.leaders.longestDuty.leader.name,
-          avatar: quality.leaders.longestDuty.leader.avatar,
+          subject: quality.leaders.longestDuty.leader.member.name,
+          avatar: quality.leaders.longestDuty.leader.member.avatar,
         }
       : null,
     validPositive(data.overview.participantCount)

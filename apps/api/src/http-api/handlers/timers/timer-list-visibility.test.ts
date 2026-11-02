@@ -253,7 +253,7 @@ it("keeps owner access, API-key scope, worlds and selected expired timers fresh 
       (await boundary.run(scoped(["2"]))).map((timer) => timer.timerKey),
     ).toEqual(["other-organization"]);
     expect(await boundary.run(scoped([]).pipe(Effect.result))).toMatchObject({
-      failure: { kind: "forbidden", response: { statusCode: 403 } },
+      failure: { kind: "forbidden", body: { code: "FORBIDDEN" } },
     });
 
     for (const organizationIds of [["2"], []]) {
@@ -305,7 +305,7 @@ it("keeps owner access, API-key scope, worlds and selected expired timers fresh 
     ).toMatchObject({
       failure: {
         kind: "forbidden",
-        response: { statusCode: 403 },
+        body: { code: "FORBIDDEN" },
       },
     });
 
@@ -357,7 +357,7 @@ it("keeps owner access, API-key scope, worlds and selected expired timers fresh 
     ).toMatchObject({
       failure: {
         kind: "forbidden",
-        response: { statusCode: 403 },
+        body: { code: "FORBIDDEN" },
       },
     });
   } finally {
@@ -455,7 +455,7 @@ it("applies role and membership revocation on the next timer read without retain
     await boundary.run(database.update(memberTable).set({ active: false }));
     await expect(read()).rejects.toMatchObject({
       kind: "forbidden",
-      response: { statusCode: 403 },
+      body: { code: "FORBIDDEN" },
     });
     await boundary.run(database.update(memberTable).set({ active: true }));
     expect(await read()).toEqual([]);
@@ -464,7 +464,7 @@ it("applies role and membership revocation on the next timer read without retain
     );
     await expect(read()).rejects.toMatchObject({
       kind: "forbidden",
-      response: { statusCode: 403 },
+      body: { code: "FORBIDDEN" },
     });
   } finally {
     await boundary.dispose();

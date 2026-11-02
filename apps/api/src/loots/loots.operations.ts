@@ -11,15 +11,22 @@ import { Clock, Effect, Schema } from "effect";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import {
+  InvalidRequestError,
   PermissionDeniedError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
+import {
+  DEFAULT_PAGE_SIZE,
+  decodePageCursor,
+  toPage,
+} from "#src/shared/keyset-page";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   type CreateLootCommentRequest,
-  type LootsQuery as FetchLootsParamsDto,
+  type LootsQuery,
   LootListResponse,
 } from "#src/contracts/loots/schemas";
+import { PositiveSafeInteger } from "@lootlog/schema/http-scalars";
 
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 import { ErrorKey } from "#src/loots/error-key";
@@ -28,6 +35,7 @@ import type {
   LootPersistenceError,
 } from "#src/loots/loot-persistence";
 import type {
+  LootListParams,
   LootNpcNameSummary,
   LootQueryError,
   LootQueryOperations,
@@ -56,7 +64,13 @@ class LootsOperationError extends TaggedErrorClass<LootsOperationError>()(
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
+export type LootPage = {
+  readonly items: LootQueryResult[];
+  readonly nextCursor: string | null;
+};
+
 type LootsFailure =
+  | InvalidRequestError
   | PermissionDeniedError
   | LootPersistenceError
   | LootQueryError
@@ -91,8 +105,8 @@ export interface LootsOperations {
     guild: Guild,
     accessPolicy: AccessPolicy,
     roles: Role[],
-    params: FetchLootsParamsDto,
-  ) => LootsEffect<LootQueryResult[]>;
+    params: LootsQuery,
+  ) => LootsEffect<LootPage>;
   readonly fetchLootById: (
     guild: Guild,
     accessPolicy: AccessPolicy,
@@ -125,11 +139,27 @@ const CACHE_TTL_SECONDS = 10;
 
 const MAX_PENDING_DETAIL_READS = 1_024;
 
+/**
+ * Keyset of the loot list, newest first: the last returned loot ID, and a
+ * fingerprint of the filters the page was read with, so a cursor replayed
+ * with other filters is rejected instead of skipping or repeating rows.
+ */
+const LootListCursor = Schema.Struct({
+  id: PositiveSafeInteger,
+  filters: Schema.String,
+});
+
+const filtersFingerprint = (filters: Omit<LootListParams, "cursor">) =>
+  new Bun.CryptoHasher("sha256")
+    .update(stableJsonStringify(filters))
+    .digest("base64url")
+    .slice(0, 16);
+
 const cacheKey = (
   guild: Guild,
   permissions: Permission[],
   roles: Role[],
-  params: FetchLootsParamsDto,
+  params: Omit<LootListParams, "cursor">,
 ) => {
   return [
     "loots",
@@ -144,10 +174,9 @@ const cacheKey = (
   ].join(":");
 };
 
-const normalizeCachedLoots = (
-  loots: typeof LootListResponse.Type,
-): LootQueryResult[] =>
-  loots.map((loot) => ({
+const normalizeCachedPage = (page: typeof LootListResponse.Type): LootPage => ({
+  nextCursor: page.nextCursor,
+  items: page.items.map((loot) => ({
     ...loot,
     createdAt: new Date(loot.createdAt),
     updatedAt: new Date(loot.updatedAt),
@@ -165,12 +194,10 @@ const normalizeCachedLoots = (
     ),
     submissions: (loot.submissions ?? []).map((submission) => ({
       ...submission,
-      member: {
-        ...submission.member,
-        avatar: submission.member.avatar ?? null,
-      },
+      member: { ...submission.member },
     })),
-  }));
+  })),
+});
 
 export const makeLootsOperations = ({
   persistence,
@@ -255,7 +282,7 @@ export const makeLootsOperations = ({
 
         if (!loot) {
           return yield* Effect.fail(
-            new ResourceNotFoundError(ErrorKey.CANT_DELETE_LOOT),
+            new ResourceNotFoundError({ code: ErrorKey.CANT_DELETE_LOOT }),
           );
         }
 
@@ -268,7 +295,7 @@ export const makeLootsOperations = ({
 
         if (!archived) {
           return yield* Effect.fail(
-            new ResourceNotFoundError(ErrorKey.CANT_DELETE_LOOT),
+            new ResourceNotFoundError({ code: ErrorKey.CANT_DELETE_LOOT }),
           );
         }
 
@@ -304,38 +331,57 @@ export const makeLootsOperations = ({
         return comment;
       }),
 
-    fetchLootsByGuildId: (guild, accessPolicy, roles, params) => {
-      const permissions = getEffectiveCapabilities(accessPolicy);
+    fetchLootsByGuildId: (guild, accessPolicy, roles, params) =>
+      Effect.gen(function* () {
+        const permissions = getEffectiveCapabilities(accessPolicy);
+        const { cursor, limit = DEFAULT_PAGE_SIZE, ...rest } = params;
+        const filters = { ...rest, limit };
+        const fingerprint = filtersFingerprint(filters);
 
-      const { cursor, ...firstPageParams } = params;
+        const after =
+          cursor === undefined
+            ? undefined
+            : yield* decodePageCursor(LootListCursor, cursor);
 
-      if (cursor !== undefined && cursor > 0) {
-        return query.fetchLootsByGuildId(guild, permissions, roles, params);
-      }
+        if (after && after.filters !== fingerprint) {
+          return yield* Effect.fail(
+            new InvalidRequestError({ code: "INVALID_CURSOR" }),
+          );
+        }
 
-      // A non-positive cursor means the first page; the cached page and the
-      // query must both read it without a cursor bound.
-      const key = cacheKey(guild, permissions, roles, firstPageParams);
-      const wireCodec = makeJsonCodec(LootListResponse);
+        const read = query
+          .fetchLootsByGuildId(guild, permissions, roles, {
+            ...filters,
+            cursor: after?.id,
+            limit: limit + 1,
+          })
+          .pipe(
+            Effect.map((loots): LootPage =>
+              toPage(loots, limit, LootListCursor, (loot) => ({
+                id: loot.id,
+                filters: fingerprint,
+              })),
+            ),
+          );
 
-      return redis.getOrSetJsonEffect({
-        key,
-        scopes: [getLootListCacheScope(guild.id)],
-        codec: {
-          stringify: wireCodec.stringify,
-          parse: (text) => normalizeCachedLoots(wireCodec.parse(text)),
-        },
-        ttlSeconds: CACHE_TTL_SECONDS,
-        factory: query.fetchLootsByGuildId(
-          guild,
-          permissions,
-          roles,
-          firstPageParams,
-        ),
-        onError: (error) =>
-          logger.warn("Loots list cache unavailable", { error }),
-      });
-    },
+        // Only the first page is cached: it is the one live views reread.
+        if (after) return yield* read;
+
+        const wireCodec = makeJsonCodec(LootListResponse);
+
+        return yield* redis.getOrSetJsonEffect({
+          key: cacheKey(guild, permissions, roles, filters),
+          scopes: [getLootListCacheScope(guild.id)],
+          codec: {
+            stringify: wireCodec.stringify,
+            parse: (text) => normalizeCachedPage(wireCodec.parse(text)),
+          },
+          ttlSeconds: CACHE_TTL_SECONDS,
+          factory: read,
+          onError: (error) =>
+            logger.warn("Loots list cache unavailable", { error }),
+        });
+      }),
 
     fetchLootById: (guild, accessPolicy, roles, lootId) =>
       Effect.uninterruptibleMask((restore) =>

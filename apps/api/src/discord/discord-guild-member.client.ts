@@ -209,7 +209,7 @@ export class DiscordGuildMemberClient {
 // The shape toDiscordRequestError gives any Discord 4xx without its own error.
 function discordForbiddenError(): DependencyUnavailableError {
   return new DependencyUnavailableError({
-    message: "DISCORD_HTTP_ERROR",
-    status: HttpStatus.FORBIDDEN,
+    code: "DISCORD_HTTP_ERROR",
+    details: { status: HttpStatus.FORBIDDEN },
   });
 }

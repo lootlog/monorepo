@@ -1,4 +1,4 @@
-import { useWorldScopedCursor } from "./hooks/use-world-scoped-cursor";
+import { useCursorStack } from "@/hooks/use-cursor-stack";
 import { findKilledNpcType } from "@/constants/npc";
 import { useParams } from "@tanstack/react-router";
 import { useState } from "react";
@@ -29,20 +29,17 @@ const getMemberKillsQueryParams = ({
   debouncedSearch,
   debouncedMinLvl,
   debouncedMaxLvl,
-  cursor,
 }: {
   settings: StatsSettings;
   debouncedSearch: string;
   debouncedMinLvl: number | undefined;
   debouncedMaxLvl: number | undefined;
-  cursor: number;
 }) =>
   buildMemberKillsParams({
     world: settings.world ?? undefined,
     npcTypes: getNpcTypeFilter(settings.npcType),
     search: debouncedSearch || undefined,
     limit: ITEMS_PER_PAGE,
-    cursor,
     minLvl: debouncedMinLvl,
     maxLvl: debouncedMaxLvl,
     period: settings.period,
@@ -68,20 +65,24 @@ export function useMemberStatsPage() {
     setPeriod,
   } = useStatsSettings("member");
 
-  const [cursor, setCursor] = useWorldScopedCursor(settings.world);
+  const filterParams = getMemberKillsQueryParams({
+    settings,
+    debouncedSearch,
+    debouncedMinLvl,
+    debouncedMaxLvl,
+  });
+
+  // A cursor is valid only for the filters it was issued for.
+  const pages = useCursorStack(JSON.stringify(filterParams));
 
   const { data, isLoading } = useKillsControllerGetMemberKills(
     {
       guildId,
       memberId,
     },
-    getMemberKillsQueryParams({
-      settings,
-      debouncedSearch,
-      debouncedMinLvl,
-      debouncedMaxLvl,
-      cursor,
-    }),
+    pages.cursor === undefined
+      ? filterParams
+      : { ...filterParams, cursor: pages.cursor },
   );
 
   const membersMap = useGuildMemberMap(guildId);
@@ -92,42 +93,29 @@ export function useMemberStatsPage() {
 
     if (value !== "ALL" && !npcType) return;
     setNpcType(npcType ?? "ALL");
-    setCursor(0);
   };
 
   const handleMinLvlChange = (value: string) => {
     setMinLvl(value);
-    setCursor(0);
   };
 
   const handleMaxLvlChange = (value: string) => {
     setMaxLvl(value);
-    setCursor(0);
   };
 
   const handlePeriodChange = (value: KillStatsPeriod) => {
     setPeriod(value);
-    setCursor(0);
   };
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    setCursor(0);
   };
 
   const handleNextPage = () => {
-    if (data?.pagination?.hasNext) {
-      setCursor(cursor + ITEMS_PER_PAGE);
-    }
+    if (data?.nextCursor) pages.goToNext(data.nextCursor);
   };
 
-  const handlePreviousPage = () => {
-    if (cursor > 0) {
-      setCursor(Math.max(0, cursor - ITEMS_PER_PAGE));
-    }
-  };
-
-  const guildMember = membersMap.get(data?.member?.memberUserId ?? "");
+  const guildMember = membersMap.get(data?.member?.userId ?? "");
 
   const adaptedMember = guildMember
     ? {
@@ -146,7 +134,8 @@ export function useMemberStatsPage() {
     data,
     settings,
     debouncedSearch,
-    cursor,
+    firstRank: pages.pageIndex * ITEMS_PER_PAGE,
+    hasPrev: pages.hasPrev,
     memberColor,
     search,
     handleSearchChange,
@@ -155,7 +144,7 @@ export function useMemberStatsPage() {
     handleMaxLvlChange,
     handlePeriodChange,
     guildId,
-    handlePreviousPage,
+    handlePreviousPage: pages.goToPrevious,
     handleNextPage,
   };
 }

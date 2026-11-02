@@ -352,12 +352,12 @@ describe("kill history database reads", () => {
       );
 
       const before = await f.run(
-        f.history.list(context(), { memberId: "2", limit: "1" }),
+        f.history.list(context(), { memberId: 2, limit: 1 }),
       );
 
       expect(before).toMatchObject({
         kind: "member",
-        data: [{ id: orderedIds[0], memberPoint: { points: 7.25 } }],
+        items: [{ id: orderedIds[0], memberPoint: { points: 7.25 } }],
       });
 
       const published: {
@@ -390,10 +390,10 @@ describe("kill history database reads", () => {
 
       expect(updated?.points).toBe(10.25);
       expect(
-        await f.run(f.history.list(context(), { memberId: "2", limit: "1" })),
+        await f.run(f.history.list(context(), { memberId: 2, limit: 1 })),
       ).toMatchObject({
         kind: "member",
-        data: [
+        items: [
           {
             id: orderedIds[0],
             memberPoint: { points: 10.25, manualAdjustmentPoints: 5 },
@@ -423,8 +423,8 @@ describe("kill history database reads", () => {
       for (const query of [
         {},
         { heroId: "low" },
-        { memberId: "1" },
-        { memberId: "1", heroId: "low" },
+        { memberId: 1 },
+        { memberId: 1, heroId: "low" },
       ]) {
         // Kill numbers follow the hero's full history, not the filtered page.
         const expected: Array<[string, number]> =
@@ -441,11 +441,11 @@ describe("kill history database reads", () => {
 
         do {
           const page = await f.run(
-            f.history.list(context(), { ...query, limit: "2", cursor }),
+            f.history.list(context(), { ...query, limit: 2, cursor }),
           );
 
           actual.push(
-            ...page.data.map((kill): [string, number] => [
+            ...page.items.map((kill): [string, number] => [
               kill.id,
               kill.killNumber,
             ]),
@@ -456,20 +456,22 @@ describe("kill history database reads", () => {
         expect(actual).toEqual(expected);
       }
 
-      const first = await f.run(f.history.list(context(), { limit: "1" }));
-      expect(first.data[0]).toMatchObject({
+      const first = await f.run(f.history.list(context(), { limit: 1 }));
+      expect(first.items[0]).toMatchObject({
         id: orderedIds[0],
         participantCount: 2,
       });
 
       const member = await f.run(
-        f.history.list(context(), { memberId: "1", limit: "1" }),
+        f.history.list(context(), { memberId: 1, limit: 1 }),
       );
 
       expect(member).toMatchObject({
         kind: "member",
         member: { id: 1 },
-        data: [{ memberPoint: { points: 7.25, trackingDurationSeconds: 240 } }],
+        items: [
+          { memberPoint: { points: 7.25, trackingDurationSeconds: 240 } },
+        ],
       });
     } finally {
       await f.dispose();
@@ -480,27 +482,27 @@ describe("kill history database reads", () => {
     const f = await fixture();
 
     try {
-      const broad = await f.run(f.history.list(context(500), { limit: "1" }));
-      expect(broad.data.map((kill) => kill.id)).toEqual([hiddenId]);
-      const narrow = await f.run(f.history.list(context(), { limit: "1" }));
-      expect(narrow.data.map((kill) => kill.id)).toEqual([orderedIds[0]]);
+      const broad = await f.run(f.history.list(context(500), { limit: 1 }));
+      expect(broad.items.map((kill) => kill.id)).toEqual([hiddenId]);
+      const narrow = await f.run(f.history.list(context(), { limit: 1 }));
+      expect(narrow.items.map((kill) => kill.id)).toEqual([orderedIds[0]]);
 
       const continuation = await f.run(
         f.history.list(context(), {
           cursor: broad.nextCursor ?? undefined,
-          limit: "20",
+          limit: 20,
         }),
       );
 
-      expect(continuation.data.map((kill) => kill.id)).toEqual(orderedIds);
+      expect(continuation.items.map((kill) => kill.id)).toEqual(orderedIds);
       const none = await f.run(f.history.list(context(20), {}));
-      expect(none).toMatchObject({ data: [], nextCursor: null });
+      expect(none).toMatchObject({ items: [], nextCursor: null });
 
       await expect(
         f.run(f.history.list(context(), { heroId: "high" })),
       ).rejects.toThrow("Hero not found");
       await expect(
-        f.run(f.history.list(context(), { memberId: "3" })),
+        f.run(f.history.list(context(), { memberId: 3 })),
       ).rejects.toThrow("Member not found");
       await expect(
         f.run(f.history.list({ ...context(), guildId: "guild-2" }, {})),
@@ -514,7 +516,7 @@ describe("kill history database reads", () => {
     const f = await fixture();
 
     try {
-      const first = await f.run(f.history.list(context(), { limit: "2" }));
+      const first = await f.run(f.history.list(context(), { limit: 2 }));
       await f.run(
         f.database
           .delete(eventHeroKillTable)
@@ -533,12 +535,12 @@ describe("kill history database reads", () => {
 
       const next = await f.run(
         f.history.list(context(), {
-          limit: "20",
+          limit: 20,
           cursor: first.nextCursor ?? undefined,
         }),
       );
 
-      expect(next.data.map((kill) => kill.id)).toEqual(orderedIds.slice(2));
+      expect(next.items.map((kill) => kill.id)).toEqual(orderedIds.slice(2));
       expect(next.nextCursor).toBeNull();
     } finally {
       await f.dispose();
@@ -549,18 +551,13 @@ describe("kill history database reads", () => {
     const f = await fixture();
 
     try {
-      const first = await f.run(f.history.list(context(), { limit: "1" }));
+      const first = await f.run(f.history.list(context(), { limit: 1 }));
 
       for (const query of [
         { cursor: "not-a-cursor" },
         { cursor: orderedIds[0] },
         { cursor: first.nextCursor ?? undefined, heroId: "low" },
-        { cursor: first.nextCursor ?? undefined, memberId: "1" },
-        { limit: "0" },
-        { limit: "101" },
-        { limit: "1.5" },
-        { limit: "2garbage" },
-        { limit: "-1" },
+        { cursor: first.nextCursor ?? undefined, memberId: 1 },
       ]) {
         await expect(f.run(f.history.list(context(), query))).rejects.toThrow();
       }
@@ -584,7 +581,7 @@ describe("kill history database reads", () => {
 
         await expect(
           f.run(f.history.list(context(), { cursor })),
-        ).rejects.toThrow("Invalid cursor");
+        ).rejects.toThrow("INVALID_CURSOR");
       }
 
       await expect(
@@ -594,7 +591,7 @@ describe("kill history database reads", () => {
             { cursor: first.nextCursor ?? undefined },
           ),
         ),
-      ).rejects.toThrow("Invalid cursor");
+      ).rejects.toThrow("INVALID_CURSOR");
     } finally {
       await f.dispose();
     }
@@ -737,12 +734,12 @@ describe("kill history database reads", () => {
           mapId: "map",
           assignments: [
             {
-              memberId: 1,
+              member: { id: 1 },
               assignedAt: time("09:00").toISOString(),
               unassignedAt: time("12:30").toISOString(),
             },
             {
-              memberId: 2,
+              member: { id: 2 },
               assignedAt: time("09:00").toISOString(),
               unassignedAt: time("12:30").toISOString(),
             },

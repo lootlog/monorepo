@@ -71,14 +71,14 @@ export const makeDeleteTimer = (
 
         if (timers.some((timer) => !canViewTimer(access, timer))) {
           return yield* Effect.fail(
-            new ResourceNotFoundError({ message: ErrorKey.TIMER_NOT_FOUND }),
+            new ResourceNotFoundError({ code: ErrorKey.TIMER_NOT_FOUND }),
           );
         }
 
         if (timers.length > 1) {
           return yield* Effect.fail(
             new InvalidRequestError({
-              message: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
+              code: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
             }),
           );
         }
@@ -88,7 +88,7 @@ export const makeDeleteTimer = (
         if (!timer) {
           return yield* Effect.fail(
             new ResourceNotFoundError({
-              message: ErrorKey.TIMER_NOT_FOUND,
+              code: ErrorKey.TIMER_NOT_FOUND,
             }),
           );
         }
@@ -106,7 +106,7 @@ export const makeDeleteTimer = (
         if (activeEventHero.length > 0) {
           return yield* Effect.fail(
             new InvalidRequestError({
-              message: ErrorKey.EVENT_TIMER_MUST_USE_EVENT_CLOSE,
+              code: ErrorKey.EVENT_TIMER_MUST_USE_EVENT_CLOSE,
             }),
           );
         }
@@ -149,9 +149,7 @@ export const makeDeleteTimer = (
 
         if (!updated[0]) {
           return yield* Effect.fail(
-            new ResourceNotFoundError({
-              message: ErrorKey.TIMER_NOT_FOUND,
-            }),
+            new ResourceNotFoundError({ code: ErrorKey.TIMER_NOT_FOUND }),
           );
         }
 

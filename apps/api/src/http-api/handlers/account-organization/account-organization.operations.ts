@@ -148,7 +148,7 @@ export class AccountOrganizationData extends Context.Service<
 
 const invalidReservationRange = () =>
   new InvalidRequestError({
-    message: ErrorKey.GUILDS_RESERVATION_DURATION_RANGE_INVALID,
+    code: ErrorKey.GUILDS_RESERVATION_DURATION_RANGE_INVALID,
   });
 
 const validateGuildConfiguration = (
@@ -257,7 +257,7 @@ export class GuildConfigurationData extends Context.Service<
                 if (!guild) {
                   return yield* Effect.fail(
                     new ResourceNotFoundError({
-                      message: ErrorKey.GUILD_NOT_FOUND,
+                      code: ErrorKey.GUILD_NOT_FOUND,
                     }),
                   );
                 }
@@ -284,7 +284,7 @@ export class GuildConfigurationData extends Context.Service<
 
                 if (vanityUrl?.error) {
                   return yield* Effect.fail(
-                    new InvalidRequestError({ message: vanityUrl.error }),
+                    new InvalidRequestError({ code: vanityUrl.error }),
                   );
                 }
 
@@ -319,7 +319,7 @@ export class GuildConfigurationData extends Context.Service<
                 if (!guild) {
                   return yield* Effect.fail(
                     new ResourceNotFoundError({
-                      message: ErrorKey.GUILD_NOT_FOUND,
+                      code: ErrorKey.GUILD_NOT_FOUND,
                     }),
                   );
                 }
@@ -427,7 +427,7 @@ export const toAccountOrganizationHttpResponse = <A, R>(
       ) {
         return applicationErrorResponse(
           new ResourceConflictError({
-            message: "errors.guilds.vanityUrlTaken",
+            code: ErrorKey.GUILDS_VANITY_URL_TAKEN,
           }),
         );
       }
