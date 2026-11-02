@@ -29,7 +29,7 @@ import {
 import { LootlogApiRouter } from "../src/runtime/application/http-routes.js";
 import { ApiRedis } from "../src/runtime/infrastructure/api-redis.js";
 import { ApiRuntimeConfig } from "../src/runtime/infrastructure/api-runtime-config.js";
-import { and, count, eq, sql } from "drizzle-orm";
+import { and, count, eq, isNull, sql } from "drizzle-orm";
 import {
   ApiDatabase,
   ApiDatabaseLive,
@@ -144,10 +144,14 @@ describe("API HTTP boundary", () => {
   const databaseRuntime = ManagedRuntime.make(ApiDatabaseLive);
   let database: ApiDatabaseValue;
 
+  /** Live timers; a deleted timer keeps its row so it can be restored. */
   const countTimers = async () =>
     (
       await databaseRuntime.runPromise(
-        database.select({ value: count() }).from(timerTable),
+        database
+          .select({ value: count() })
+          .from(timerTable)
+          .where(isNull(timerTable.deletedAt)),
       )
     )[0]?.value;
 
@@ -574,6 +578,15 @@ describe("API HTTP boundary", () => {
 
     expect(deletedResponse.status).toBe(200);
     expect(await countTimers()).toBe(0);
+
+    const [deletedTimer] = await databaseRuntime.runPromise(
+      database
+        .select({ deletedAt: timerTable.deletedAt })
+        .from(timerTable)
+        .where(eq(timerTable.timerKey, created.timerKey)),
+    );
+
+    expect(deletedTimer?.deletedAt).toBeInstanceOf(Date);
 
     const afterDeleteResponse = await request(
       `/guilds/${authorizedGuildId}/timers?world=${world}`,
