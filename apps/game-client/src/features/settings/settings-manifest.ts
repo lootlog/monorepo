@@ -165,6 +165,7 @@ const MANIFEST = [
               "heros",
               "kolos",
               "tytan",
+              "tropiciel",
             ],
             settingKeys: [
               "appearance.npcColors.ELITE",
@@ -174,6 +175,7 @@ const MANIFEST = [
               "appearance.npcColors.EVENT_HERO",
               "appearance.npcColors.COLOSSUS",
               "appearance.npcColors.TITAN",
+              "appearance.npcColors.HERO_TRACKER",
             ],
           },
         ],

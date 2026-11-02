@@ -10,7 +10,7 @@ import {
 } from "discord.js";
 import {
   DEFAULT_NPC_TYPE_COLORS,
-  isCombatNpcType,
+  isAppearanceNpcType,
 } from "@lootlog/schema/npc-appearance";
 import type { Effect } from "effect";
 import type { BotConfig } from "#src/config/bot-config";
@@ -94,7 +94,7 @@ export const lootlogEmbed = (title: string, color = LOOTLOG_COLOR) =>
 
 /** The default NPC type colors of the Game client, so both surfaces match. */
 export const npcTypeColor = (type: string) =>
-  isCombatNpcType(type)
+  isAppearanceNpcType(type)
     ? Number.parseInt(DEFAULT_NPC_TYPE_COLORS[type].slice(1), 16)
     : LOOTLOG_COLOR;
 
