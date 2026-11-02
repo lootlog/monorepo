@@ -20,7 +20,6 @@ export type DraggableWindowFrameProps = {
   onClose?: () => void;
   variant?: "default" | "small";
   heightMode?: "fixed" | "auto-up-to-max";
-  widthMode?: "fixed" | "fit-content";
   resizable?: boolean;
   minWidth?: number;
   minHeight?: number;
@@ -49,22 +48,6 @@ const SCROLL_AREA_VIEWPORT_SELECTOR = "[data-ll-scroll-area-viewport]";
 export const MAX_HEIGHT_PREVIEW_LINE_HEIGHT = 1;
 
 const TRANSFORMED_MEASUREMENT_TOLERANCE = 4;
-
-const reconcileObservedElements = (
-  observer: ResizeObserver,
-  current: Set<HTMLElement>,
-  next: Set<HTMLElement>,
-) => {
-  for (const element of current) {
-    if (!next.has(element)) observer.unobserve(element);
-  }
-
-  for (const element of next) {
-    if (!current.has(element)) observer.observe(element);
-  }
-
-  return next;
-};
 
 type WindowContentMeasurements = {
   chromeHeight: number;
@@ -211,26 +194,6 @@ const getMeasuredContentHeight = (
   return maxScrollHeight;
 };
 
-const getMeasuredContentWidth = (contentElement: HTMLDivElement) => {
-  const measurementElements = getContentMeasurementElements(contentElement);
-  let maxScrollWidth = 0;
-
-  for (const element of measurementElements) {
-    maxScrollWidth = Math.max(
-      maxScrollWidth,
-      element.scrollWidth,
-      Math.ceil(element.getBoundingClientRect().width),
-    );
-  }
-
-  return maxScrollWidth;
-};
-
-const getWindowHorizontalChromeWidth = (
-  windowBody: HTMLDivElement,
-  contentElement: HTMLDivElement,
-) => Math.max(0, windowBody.offsetWidth - contentElement.clientWidth);
-
 const getNumericStyleValue = (
   styles: CSSStyleDeclaration,
   propertyName:
@@ -311,7 +274,6 @@ const resolveDraggableWindowFrameProps = (
   minHeight: props.minHeight ?? 240,
   minWidth: props.minWidth ?? 242,
   resizable: props.resizable ?? true,
-  widthMode: props.widthMode ?? "fixed",
 });
 
 const resolveWindowResizeState = ({
@@ -322,7 +284,6 @@ const resolveWindowResizeState = ({
   minHeight,
   previewMaxContentHeight,
   resizable,
-  widthMode,
 }: {
   chromeHeight: number;
   heightMode: NonNullable<DraggableWindowFrameProps["heightMode"]>;
@@ -331,10 +292,8 @@ const resolveWindowResizeState = ({
   minHeight: number;
   previewMaxContentHeight: number | null;
   resizable: boolean;
-  widthMode: NonNullable<DraggableWindowFrameProps["widthMode"]>;
 }) => {
   const isAutoHeightMode = heightMode === "auto-up-to-max";
-  const isAutoWidthMode = widthMode === "fit-content";
 
   const isAdjustingMaxHeight =
     isAutoHeightMode &&
@@ -343,12 +302,11 @@ const resolveWindowResizeState = ({
     previewMaxContentHeight !== null;
 
   return {
-    allowsHorizontalResize: resizable && !isAutoWidthMode,
+    allowsHorizontalResize: resizable,
     allowsVerticalResize:
       resizable && (!isAutoHeightMode || isMaxHeightAdjustmentArmed),
     isAdjustingMaxHeight,
     isAutoHeightMode,
-    isAutoWidthMode,
     previewWindowHeight:
       previewMaxContentHeight === null
         ? null
@@ -357,24 +315,20 @@ const resolveWindowResizeState = ({
 };
 
 const resolveWindowFrameMeasurements = ({
-  autoWidth,
   contentMeasurements,
   dynamicHeight,
   isAdjustingMaxHeight,
   isAutoHeightMode,
-  isAutoWidthMode,
   localSize,
   minHeight,
   previewMaxContentHeight,
   previewWindowHeight,
   resolvedMaxContentHeight,
 }: {
-  autoWidth: number;
   contentMeasurements: WindowContentMeasurements;
   dynamicHeight: boolean;
   isAdjustingMaxHeight: boolean;
   isAutoHeightMode: boolean;
-  isAutoWidthMode: boolean;
   localSize: { height: number; width: number };
   minHeight: number;
   previewMaxContentHeight: number | null;
@@ -387,7 +341,7 @@ const resolveWindowFrameMeasurements = ({
     effectiveHeight = previewWindowHeight;
   }
 
-  const effectiveWidth = isAutoWidthMode ? autoWidth : localSize.width;
+  const effectiveWidth = localSize.width;
 
   // Auto height follows the content in CSS, capped by the content max height;
   // only a max-height adjustment pins it to the previewed height.
@@ -447,7 +401,6 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     title,
     onClose,
     heightMode,
-    widthMode,
     resizable,
     minWidth,
     minHeight,
@@ -503,8 +456,6 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
   });
 
   const [isResizing, setIsResizing] = useState(false);
-  const [autoWidth, setAutoWidth] = useState(minWidth);
-  const autoWidthRef = useRef(minWidth);
 
   const [previewMaxContentHeight, setPreviewMaxContentHeight] = useState<
     number | null
@@ -534,7 +485,6 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     allowsVerticalResize,
     isAdjustingMaxHeight,
     isAutoHeightMode,
-    isAutoWidthMode,
     previewWindowHeight,
   } = resolveWindowResizeState({
     chromeHeight: contentMeasurements.chromeHeight,
@@ -544,7 +494,6 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     minHeight,
     previewMaxContentHeight: activePreviewMaxContentHeight,
     resizable: resizable && !collapsed,
-    widthMode,
   });
 
   const {
@@ -555,12 +504,10 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     previewShadeOffset,
     style,
   } = resolveWindowFrameMeasurements({
-    autoWidth: isAutoWidthMode ? autoWidth : minWidth,
     contentMeasurements,
     dynamicHeight,
     isAdjustingMaxHeight,
     isAutoHeightMode,
-    isAutoWidthMode,
     localSize,
     minHeight,
     previewMaxContentHeight: activePreviewMaxContentHeight,
@@ -818,127 +765,6 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     id,
     setSizeInStore,
   ]);
-
-  useLayoutEffect(() => {
-    if (!isAutoWidthMode) {
-      autoWidthRef.current = minWidth;
-
-      return () => undefined;
-    }
-
-    let animationFrameId: number | null = null;
-    let observedContentElements = new Set<HTMLElement>();
-
-    const updateAutoWidth = () => {
-      const windowBody = windowBodyRef.current;
-      const contentElement = contentRef.current;
-
-      if (!windowBody || !contentElement) {
-        return;
-      }
-
-      const viewportWidth = Math.max(
-        1,
-        Math.floor(window.visualViewport?.width ?? window.innerWidth),
-      );
-
-      const resolvedMaxWidth = Math.min(
-        maxWidth ?? viewportWidth,
-        viewportWidth,
-      );
-
-      const measuredContentWidth = getMeasuredContentWidth(contentElement);
-
-      const horizontalChromeWidth = getWindowHorizontalChromeWidth(
-        windowBody,
-        contentElement,
-      );
-
-      const nextAutoWidth = Math.max(
-        1,
-        Math.min(
-          Math.max(minWidth, measuredContentWidth + horizontalChromeWidth),
-          resolvedMaxWidth,
-        ),
-      );
-
-      if (Math.abs(autoWidthRef.current - nextAutoWidth) < 1) {
-        return;
-      }
-
-      autoWidthRef.current = nextAutoWidth;
-      setAutoWidth(nextAutoWidth);
-    };
-
-    const scheduleAutoWidthUpdate = () => {
-      if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
-      }
-
-      animationFrameId = requestAnimationFrame(() => {
-        animationFrameId = null;
-        updateAutoWidth();
-      });
-    };
-
-    const resizeObserver = new ResizeObserver(scheduleAutoWidthUpdate);
-
-    const updateObservedContentElements = () => {
-      const contentElement = contentRef.current;
-
-      if (!contentElement) {
-        observedContentElements.forEach((element) => {
-          resizeObserver.unobserve(element);
-        });
-        observedContentElements = new Set<HTMLElement>();
-
-        return;
-      }
-
-      const nextObservedContentElements = new Set(
-        getContentMeasurementElements(contentElement),
-      );
-
-      observedContentElements = reconcileObservedElements(
-        resizeObserver,
-        observedContentElements,
-        nextObservedContentElements,
-      );
-    };
-
-    const mutationObserver = new MutationObserver(() => {
-      updateObservedContentElements();
-      scheduleAutoWidthUpdate();
-    });
-
-    const visualViewport = window.visualViewport;
-
-    // Fit-content width follows text, so text edits count here.
-    if (contentRef.current) {
-      mutationObserver.observe(contentRef.current, {
-        characterData: true,
-        childList: true,
-        subtree: true,
-      });
-    }
-
-    window.addEventListener("resize", scheduleAutoWidthUpdate);
-    visualViewport?.addEventListener("resize", scheduleAutoWidthUpdate);
-    updateObservedContentElements();
-    updateAutoWidth();
-    scheduleAutoWidthUpdate();
-
-    return () => {
-      if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
-      }
-
-      window.removeEventListener("resize", scheduleAutoWidthUpdate);
-      visualViewport?.removeEventListener("resize", scheduleAutoWidthUpdate);
-      mutationObserver.disconnect();
-      resizeObserver.disconnect();
-    };
-  }, [isAutoWidthMode, maxWidth, minWidth]);
 
   const handleLockToggle = () => {
     setLockedInStore(id, !isLocked);

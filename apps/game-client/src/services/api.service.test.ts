@@ -1,12 +1,8 @@
 import { configureApiClients } from "@lootlog/client/transport";
 import { beforeEach, describe, expect, it, vi, onTestFinished } from "vitest";
-import {
-  createLoot,
-  createNotification,
-  MessageType,
-  sendChatMessage,
-  updateLoot,
-} from "@/api";
+import { MessageType, sendChatMessage } from "@/api/chat.api";
+import { createLoot, updateLoot } from "@/api/loot.api";
+import { createNotification } from "@/api/messaging.api";
 import type {
   CreateLootDto,
   CreateLootDtoLootsItem,

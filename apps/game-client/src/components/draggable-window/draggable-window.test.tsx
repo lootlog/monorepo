@@ -70,12 +70,6 @@ vi.stubGlobal("ResizeObserver", ResizeObserverMock);
 
 vi.stubGlobal("MutationObserver", MutationObserverMock);
 
-const triggerResizeObservers = async () => {
-  await act(() => {
-    resizeObserverCallbacks.forEach((callback) => callback());
-  });
-};
-
 const flushAnimationFrame = async () => {
   await act(async () => {
     await new Promise<void>((resolve) => {
@@ -246,82 +240,6 @@ describe("DraggableWindow", () => {
     act(() => windowBody.dispatchEvent(animationCancelEvent));
 
     expect(windowBody).not.toHaveClass("ll-window-enter");
-  });
-
-  it("fits width to changing content and caps it at the viewport", async () => {
-    const { container } = render(
-      <DraggableWindow
-        isOpen
-        id="notifications"
-        title="Powiadomienia"
-        minWidth={250}
-        minHeight={56}
-        widthMode="fit-content"
-        resizable={false}
-      >
-        <div className="ll:w-max">Treść</div>
-      </DraggableWindow>,
-    );
-
-    const { windowElement, windowBody, contentElement } = getWindowElements(
-      container,
-      { requireResizeHandle: false },
-    );
-
-    const contentRoot = contentElement.firstElementChild;
-
-    if (!(contentRoot instanceof HTMLDivElement)) {
-      throw new Error("Expected draggable window content root");
-    }
-
-    Object.defineProperty(windowBody, "offsetWidth", {
-      configurable: true,
-      value: 250,
-    });
-    Object.defineProperty(contentElement, "clientWidth", {
-      configurable: true,
-      value: 240,
-    });
-    Object.defineProperty(contentRoot, "scrollWidth", {
-      configurable: true,
-      value: 320,
-    });
-
-    await triggerResizeObservers();
-    await flushAnimationFrame();
-
-    await waitFor(() => {
-      expect(windowElement.style.width).toBe("330px");
-    });
-
-    Object.defineProperty(contentRoot, "scrollWidth", {
-      configurable: true,
-      value: 180,
-    });
-    await triggerResizeObservers();
-    await flushAnimationFrame();
-
-    await waitFor(() => {
-      expect(windowElement.style.width).toBe("250px");
-    });
-
-    Object.defineProperty(window, "innerWidth", {
-      configurable: true,
-      value: 300,
-    });
-    Object.defineProperty(contentRoot, "scrollWidth", {
-      configurable: true,
-      value: 500,
-    });
-    window.dispatchEvent(new Event("resize"));
-    await flushAnimationFrame();
-
-    await waitFor(() => {
-      expect(windowElement.style.width).toBe("300px");
-    });
-    expect(
-      container.querySelector("[data-ll-window-resize-handle]"),
-    ).toBeNull();
   });
 
   it("sizes auto height with CSS up to the content limit without content observers", () => {

@@ -18,7 +18,7 @@ import {
   type BattleWarriorsWithAccountId,
 } from "@/store/game-store/battle.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import { createKill, createBattle, recordWeaponKills } from "@/api";
+import { createKill, createBattle, recordWeaponKills } from "@/api/battle.api";
 import { findFinishingBlows } from "@lootlog/battle-processor";
 import { getHeroMainWeaponItemId } from "@/lib/margonem-runtime/adapters/item-tip-runtime-adapter";
 import { setWeaponKills } from "@/lib/margonem-tooltips/weapon-kills";

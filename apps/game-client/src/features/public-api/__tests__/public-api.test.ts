@@ -9,7 +9,7 @@ import {
   type GuildResponseDtoOutput,
 } from "@lootlog/client/main";
 
-import type { Timer } from "@/api";
+import type { Timer } from "@/api/timers.api";
 import type { ApiEventMap } from "@lootlog/game-client-api";
 
 const makeGuild = (

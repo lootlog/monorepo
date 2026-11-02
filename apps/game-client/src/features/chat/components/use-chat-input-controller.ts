@@ -36,14 +36,11 @@ import {
 import { usePartyCommand } from "@/features/command/hooks/use-party-command";
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import {
-  getGuildsControllerGetGuildPermissionsQueryKey,
   useGuildsControllerGetGuildPermissions,
   useChatControllerClearChatMessages,
   useChatControllerSendChatMessage,
-  getMembersControllerGetMeQueryKey,
   useMembersControllerGetMe,
   type ChatMessageResponseDtoOutput,
-  getRolesControllerGetGuildRolesQueryKey,
   useRolesControllerGetGuildRoles,
 } from "@lootlog/client/main";
 import { buildChatCharacterData } from "@/lib/api/generated-helpers";
@@ -332,9 +329,6 @@ export function useChatInputController({
     { guildId: resolvedGuildId },
     {
       query: {
-        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-          guildId: resolvedGuildId,
-        }),
         enabled: Boolean(selectedGuildId),
         staleTime: 5 * 60 * 1000,
       },
@@ -356,9 +350,6 @@ export function useChatInputController({
     { guildId: resolvedGuildId },
     {
       query: {
-        queryKey: getRolesControllerGetGuildRolesQueryKey({
-          guildId: resolvedGuildId,
-        }),
         enabled: shouldLoadMentionData,
         gcTime: CHAT_QUERY_GC_TIME_MS,
         staleTime: 5 * 60 * 1000,
@@ -377,9 +368,6 @@ export function useChatInputController({
     { guildId: resolvedGuildId },
     {
       query: {
-        queryKey: getMembersControllerGetMeQueryKey({
-          guildId: resolvedGuildId,
-        }),
         enabled: shouldLoadMentionData,
         gcTime: CHAT_QUERY_GC_TIME_MS,
         staleTime: 5 * 60 * 1000,

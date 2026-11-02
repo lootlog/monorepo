@@ -231,14 +231,8 @@ export class AppSocket {
     promise: Promise<JoinResult>;
     cancel: () => void;
   } | null = null;
-  private gatheringStateSupported = false;
-  private battlePingsSupported = false;
-  private teamBattlePingsSupported = false;
-  private airTagMapThreatsSupported = false;
-  private airTagDeparturesSupported = false;
-  private npcPresenceSupported = false;
-  private globalChatSupported = false;
-  private globalChatChannelsSupported = false;
+  /** What the joined gateway advertised; empty until a join succeeds. */
+  private capabilities: ReadonlySet<string> = new Set();
   /** The followed global chat channel, if any; every join drops the subscription. */
   private globalChatChannel: GlobalChatChannel | undefined;
   id: string | undefined;
@@ -269,14 +263,7 @@ export class AppSocket {
         this.joinAttempt = null;
         this.joinedOrganizationIds = [];
         // The next connection may reach an older gateway.
-        this.gatheringStateSupported = false;
-        this.battlePingsSupported = false;
-        this.teamBattlePingsSupported = false;
-        this.airTagMapThreatsSupported = false;
-        this.airTagDeparturesSupported = false;
-        this.npcPresenceSupported = false;
-        this.globalChatSupported = false;
-        this.globalChatChannelsSupported = false;
+        this.capabilities = new Set();
       }
 
       this.listeners.emit(
@@ -286,7 +273,7 @@ export class AppSocket {
   }
 
   get supportsGatheringState(): boolean {
-    return this.gatheringStateSupported;
+    return this.capabilities.has(REALTIME_PARTY_GATHERING_STATE_CAPABILITY);
   }
 
   get connected(): boolean {
@@ -318,17 +305,17 @@ export class AppSocket {
 
   /** Whether the joined gateway accepts `battle-ping.send`; older gateways close the socket on it. */
   supportsBattlePings(): boolean {
-    return this.battlePingsSupported;
+    return this.capabilities.has(REALTIME_BATTLE_PING_CAPABILITY);
   }
 
   /** Whether the joined gateway accepts team battle pings such as `quick-fight`. */
   supportsTeamBattlePings(): boolean {
-    return this.teamBattlePingsSupported;
+    return this.capabilities.has(REALTIME_TEAM_BATTLE_PING_CAPABILITY);
   }
 
   /** Whether the joined gateway accepts AirTag departures; older gateways reject a batch without observations. */
   supportsAirTagDepartures(): boolean {
-    return this.airTagDeparturesSupported;
+    return this.capabilities.has(REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY);
   }
 
   /** Current map threats, or null when the joined gateway predates `air-tag.map-threats.fetch`. */
@@ -336,7 +323,8 @@ export class AppSocket {
     organizationId: string,
     world: string,
   ): Promise<readonly AirTagMapThreatEvent[] | null> {
-    if (!this.airTagMapThreatsSupported) return null;
+    if (!this.capabilities.has(REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY))
+      return null;
 
     const response = await this.realtime.request("air-tag.map-threats.fetch", {
       organizationId,
@@ -351,7 +339,7 @@ export class AppSocket {
 
   /** Whether the joined gateway accepts `npc-presence.report` and `npc-presence.fetch`. */
   supportsNpcPresence(): boolean {
-    return this.npcPresenceSupported;
+    return this.capabilities.has(REALTIME_NPC_PRESENCE_CAPABILITY);
   }
 
   /** Replaces the timer NPCs this character reports standing on its map. */
@@ -371,7 +359,7 @@ export class AppSocket {
     organizationId: string,
     world: string,
   ): Promise<NpcPresenceSnapshot | null> {
-    if (!this.npcPresenceSupported) return null;
+    if (!this.capabilities.has(REALTIME_NPC_PRESENCE_CAPABILITY)) return null;
 
     const response = await this.realtime.request("npc-presence.fetch", {
       organizationId,
@@ -406,8 +394,8 @@ export class AppSocket {
   /** Older gateways close the socket on a topic they do not know. */
   private supportsGlobalChatChannel(channel: GlobalChatChannel): boolean {
     return channel === GLOBAL_CHAT_SHARED_CHANNEL
-      ? this.globalChatSupported
-      : this.globalChatChannelsSupported;
+      ? this.capabilities.has(REALTIME_GLOBAL_CHAT_CAPABILITY)
+      : this.capabilities.has(REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY);
   }
 
   private async requestGlobalChatSubscription(
@@ -598,33 +586,8 @@ export class AppSocket {
 
     this.id = response.connectionId;
 
-    const capabilities = hasRealtimeCapabilities(response)
-      ? response.capabilities
-      : [];
-
-    this.gatheringStateSupported = capabilities.includes(
-      REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
-    );
-    this.battlePingsSupported = capabilities.includes(
-      REALTIME_BATTLE_PING_CAPABILITY,
-    );
-    this.teamBattlePingsSupported = capabilities.includes(
-      REALTIME_TEAM_BATTLE_PING_CAPABILITY,
-    );
-    this.airTagMapThreatsSupported = capabilities.includes(
-      REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
-    );
-    this.airTagDeparturesSupported = capabilities.includes(
-      REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
-    );
-    this.npcPresenceSupported = capabilities.includes(
-      REALTIME_NPC_PRESENCE_CAPABILITY,
-    );
-    this.globalChatSupported = capabilities.includes(
-      REALTIME_GLOBAL_CHAT_CAPABILITY,
-    );
-    this.globalChatChannelsSupported = capabilities.includes(
-      REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
+    this.capabilities = new Set(
+      hasRealtimeCapabilities(response) ? response.capabilities : [],
     );
     this.joinedOrganizationIds = [...response.organizationIds];
 

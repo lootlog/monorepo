@@ -11,7 +11,6 @@ import {
   CreateManualTimerDtoType,
   type CreateManualTimerDto,
   type SearchTimersNpcResponseDtoOutput,
-  getTimersControllerSearchNpcsWithTimerDataQueryKey,
   useTimersControllerSearchNpcsWithTimerData,
 } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
@@ -338,10 +337,6 @@ export function useAddTimerForm({
     npcSearchParams,
     {
       query: {
-        queryKey: getTimersControllerSearchNpcsWithTimerDataQueryKey(
-          { guildId: searchGuildId },
-          getNpcSearchParams(world, debouncedSearch),
-        ),
         enabled: debouncedSearch.length >= 2 && !!searchGuildId,
         staleTime: 60000,
       },

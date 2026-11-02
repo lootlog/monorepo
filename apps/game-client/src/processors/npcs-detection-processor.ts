@@ -22,7 +22,8 @@ import {
   type DetectorSettings,
   type DetectorTypeSettings,
 } from "@lootlog/schema/account-preferences";
-import { sendChatMessage, createNotification, MessageType } from "@/api";
+import { sendChatMessage, MessageType } from "@/api/chat.api";
+import { createNotification } from "@/api/messaging.api";
 import {
   buildNpcChatMessagePayload,
   buildNpcNotificationPayload,

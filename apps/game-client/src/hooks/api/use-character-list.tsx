@@ -2,7 +2,7 @@ import {
   CHARACTER_LIST_CACHE_FRESH_TTL_MS,
   CHARACTER_LIST_CACHE_STALE_TTL_MS,
   fetchCharacterList,
-} from "@/api";
+} from "@/api/characters.api";
 import { useGameStore } from "@/store/game.store";
 import { useQuery } from "@tanstack/react-query";
 import type { GameVersion } from "@lootlog/schema/game-version";
