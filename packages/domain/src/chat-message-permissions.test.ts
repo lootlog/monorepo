@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { Capability } from "./access-policy.js";
 import { canDeleteChatMessage } from "./chat-message-permissions.js";
 
-test("chat deletion permits authors with write capability and administrators", () => {
+test("chat deletion permits authors with write capability and moderators", () => {
   const message = { senderId: "author" };
 
   for (const viewer of [
@@ -13,6 +13,11 @@ test("chat deletion permits authors with write capability and administrators", (
       remove: true,
     },
     { discordId: "other", permissions: [], remove: false },
+    {
+      discordId: "moderator",
+      permissions: [Capability.LOOTLOG_MANAGE],
+      remove: true,
+    },
     {
       discordId: "admin",
       permissions: [Capability.ADMIN],

@@ -17,10 +17,7 @@ import {
 } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { canViewTimer } from "./timer-selection.js";
-import {
-  canViewNpcTimer,
-  type RolePermissionData,
-} from "@lootlog/domain/npc-permissions";
+import { canViewNpcTimer } from "@lootlog/domain/npc-permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberTable,
@@ -30,7 +27,11 @@ import {
   userSettingDocumentTable,
 } from "#src/database/drizzle/schema";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
-import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
+import {
+  createAccessPolicy,
+  AccessRequirement,
+  memberCapabilities,
+} from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import type { TimersGuildAccess } from "./timers.handlers.js";
@@ -186,25 +187,34 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
       return yield* Effect.fail(new PermissionDeniedError());
     }
 
-    const rolesByGuild = new Map<string, RolePermissionData[]>();
-    const administrativeGuilds = new Set<string>();
+    const rolesByGuild = new Map<
+      string,
+      NonNullable<(typeof accessRows)[number]["role"]>[]
+    >();
+
+    const ownerByGuild = new Map<string, string>();
 
     for (const { guildId, ownerId, role } of accessRows) {
       const roles = rolesByGuild.get(guildId) ?? [];
 
       if (role) roles.push(role);
       rolesByGuild.set(guildId, roles);
-
-      if (
-        ownerId === identity.discordId ||
-        (role &&
-          createAccessPolicy({ capabilities: role.permissions }).allows(
-            Capability.ADMIN,
-          ))
-      ) {
-        administrativeGuilds.add(guildId);
-      }
+      ownerByGuild.set(guildId, ownerId);
     }
+
+    const administrativeGuilds = new Set(
+      [...rolesByGuild].flatMap(([guildId, roles]) =>
+        createAccessPolicy({
+          capabilities: memberCapabilities({
+            ownerId: ownerByGuild.get(guildId) ?? "",
+            viewerId: identity.discordId,
+            roles,
+          }),
+        }).allowsAny(AccessRequirement.ADMINISTER)
+          ? [guildId]
+          : [],
+      ),
+    );
 
     const timers = yield* readVisibleTimers(
       database,

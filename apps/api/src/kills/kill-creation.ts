@@ -1,8 +1,11 @@
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
-import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import {
+  selectAccessibleGuilds,
+  selectActiveGuildMembers,
+} from "#src/members/member-access-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, isNotNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { activityFeedNpcCategory } from "@lootlog/domain/activity-feed";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
@@ -16,7 +19,6 @@ import {
   guildKillTotalTable,
   memberKillBucketTable,
   memberKillTotalTable,
-  memberTable,
   userCharacterKillBucketTable,
   userCharactersLootlogSettingsTable,
   userKillBucketTable,
@@ -507,17 +509,7 @@ export const makeKillCreation = (
 
     const members = yield* protect(
       "kills.create.members",
-      database
-        .select({ id: memberTable.id, guildId: memberTable.guildId })
-        .from(memberTable)
-        .where(
-          and(
-            eq(memberTable.userId, discordId),
-            eq(memberTable.active, true),
-            isNotNull(memberTable.globalUserId),
-            or(...guildIds.map((guildId) => eq(memberTable.guildId, guildId))),
-          ),
-        ),
+      selectActiveGuildMembers(database, discordId, guildIds),
     );
 
     const memberByGuild = new Map(

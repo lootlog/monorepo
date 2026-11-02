@@ -8,6 +8,7 @@ import {
   isCurrentTimerReset,
 } from "./timer-restore-snapshot.js";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { findActiveGuildMember } from "#src/members/member-access-query";
 import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -216,18 +217,11 @@ export const makeRestoreTimer = (
             new ResourceConflictError({ message: ErrorKey.EXISTING_TIMER }),
           );
 
-        const actors = yield* transaction
-          .select()
-          .from(memberTable)
-          .where(
-            and(
-              eq(memberTable.userId, access.discordId),
-              eq(memberTable.guildId, access.guild.id),
-            ),
-          )
-          .limit(1);
-
-        const actor = actors[0];
+        const actor = yield* findActiveGuildMember(
+          transaction,
+          access.discordId,
+          access.guild.id,
+        );
 
         if (!actor)
           return yield* Effect.die(

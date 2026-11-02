@@ -21,6 +21,7 @@ const access = {
   ...identity,
   guildId: "guild-canonical",
   permissions: [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
+  roles: [],
 };
 
 const message = {
@@ -80,8 +81,8 @@ describe("Chat HttpApi handlers", () => {
     const layer = provideServices(
       makeAuthorization(),
       makeData({
-        getMessages: (discordId, guildId) => {
-          calls.push({ discordId, guildId });
+        getMessages: (viewer, guildId) => {
+          calls.push({ discordId: viewer.discordId, guildId });
 
           return Effect.succeed([message]);
         },
@@ -168,10 +169,10 @@ describe("Chat HttpApi handlers", () => {
         },
       }),
       makeData({
-        deleteMessage: (discordId, guildId, messageId) => {
+        deleteMessage: (viewer, guildId, messageId) => {
           mutationCalls.push({
             kind: "delete",
-            discordId,
+            discordId: viewer.discordId,
             guildId,
             messageId,
           });
