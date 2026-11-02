@@ -1791,6 +1791,7 @@ export interface CreateTimerFromGameClientDto {
   customMaxSpawnTime?: string;
   /**
      * Seconds left until the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from the close time on the server clock instead of from the request.
+     * @maximum 3600
      * @exclusiveMinimum 0
      */
   entranceSecondsLeft?: number;
@@ -5855,7 +5856,10 @@ export type CreateNotificationDtoHeroTracker = {
   state: 'unclaimed';
 } | {
   state: 'open';
-  /** @exclusiveMinimum 0 */
+  /**
+     * @maximum 3600
+     * @exclusiveMinimum 0
+     */
   entranceSecondsLeft: number;
 } | {
   state: 'open';
@@ -9332,6 +9336,8 @@ export interface UpdateGuildDocumentDto {
      * @maxLength 120
      */
   title: string;
+  /** The document version the edit started from. When another save has advanced the document past it, the save fails with 409 instead of overwriting that save. */
+  baseVersion?: number;
 }
 
 export interface DocsMutationResponseDto {
@@ -18016,7 +18022,7 @@ export const getDocsControllerUpdateDocumentUrl = ({ guildId, docId }: DocsContr
 }
 
 /**
- * Save document title and Lexical state
+ * Save document title and Lexical state; fails with 409 when `baseVersion` is older than the current version
  * @summary Update guild document
  */
 export const docsControllerUpdateDocument = async ({ guildId, docId }: DocsControllerUpdateDocumentPathParameters,

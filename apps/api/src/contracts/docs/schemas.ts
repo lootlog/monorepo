@@ -112,6 +112,12 @@ export type UpdateDocumentRequest = typeof UpdateDocumentRequest.Type;
 export const UpdateDocumentRequest = Schema.Struct({
   content: UpdatedDocumentContent,
   title: DocumentTitle,
+  baseVersion: Schema.optionalKey(
+    FiniteNumber.annotate({
+      description:
+        "The document version the edit started from. When another save has advanced the document past it, the save fails with 409 instead of overwriting that save.",
+    }),
+  ),
 }).annotate({ identifier: "UpdateGuildDocumentDto" });
 
 export type DocumentMutationResponse = typeof DocumentMutationResponse.Type;

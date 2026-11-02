@@ -392,6 +392,13 @@ const API_ERROR_RESPONSE_MIGRATIONS = [
     add: [],
     operations: ["PUT /guilds/{guildId}/events/{eventId}/pin"],
   },
+  // Verified by the stale baseVersion case in the docs repository integration
+  // test: a save from an older version than the document's is a 409.
+  {
+    restore: [],
+    add: ["409"],
+    operations: ["PUT /guilds/{guildId}/docs/{docId}"],
+  },
   // Verified by the hero name cases in the event update spec: adding or
   // renaming a hero onto a name used by another hero or leftover rankings is
   // a 409.

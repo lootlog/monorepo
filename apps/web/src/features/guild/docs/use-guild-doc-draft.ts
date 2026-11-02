@@ -47,6 +47,8 @@ export const useGuildDocDraft = () => {
   );
 
   const [savedSignature, setSavedSignature] = useState("");
+  // The version the draft is based on; a save from an older one is refused.
+  const [baseVersion, setBaseVersion] = useState<number | undefined>();
   const [editorSeed, setEditorSeed] = useState(0);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [trashConfirmOpen, setTrashConfirmOpen] = useState(false);
@@ -74,6 +76,7 @@ export const useGuildDocDraft = () => {
     setTitle(document.title);
     setContent(normalizedContent);
     setSavedSignature(createDraftSignature(document.title, normalizedContent));
+    setBaseVersion(document.version);
     setEditorSeed((seed) => seed + 1);
   };
 
@@ -81,7 +84,8 @@ export const useGuildDocDraft = () => {
     useState<typeof document>(undefined);
 
   // A newer version replaces the draft only when it has no unsaved edits, so
-  // a save's refetch or another member's change never discards typing.
+  // a save's refetch or another member's change never discards typing. A
+  // draft kept over another member's version cannot overwrite it.
   if (
     previousDocument?.id !== document?.id ||
     previousDocument?.version !== document?.version
@@ -144,15 +148,23 @@ export const useGuildDocDraft = () => {
         data: {
           title: title.trim(),
           content,
+          baseVersion,
         },
       },
       {
-        onError: () => {
-          toast.error(t("docs.editor.saveError"));
+        onError: (error) => {
+          toast.error(
+            t(
+              error.status === 409
+                ? "docs.editor.conflict"
+                : "docs.editor.saveError",
+            ),
+          );
         },
-        onSuccess: async () => {
+        onSuccess: async (updatedDocument) => {
           // Edits made while the request ran stay in the editor, unsaved.
           setSavedSignature(submittedSignature);
+          setBaseVersion(updatedDocument.version);
           await invalidateGuildDocsQueries(queryClient, guildId, docId);
           toast.success(t("docs.editor.saved"));
         },

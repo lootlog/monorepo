@@ -1,4 +1,5 @@
 import { GameCharacter } from "../game-character.schema.js";
+import { HeroTrackerEntranceSecondsLeft } from "#src/contracts/timers/schemas";
 /** Shared input and output schemas for the messaging feature. */
 import * as Schema from "effect/Schema";
 import {
@@ -67,7 +68,7 @@ export const SendNotificationRequest = Schema.Struct({
       Schema.Struct({ state: Schema.Literal("unclaimed") }),
       Schema.Struct({
         state: Schema.Literal("open"),
-        entranceSecondsLeft: FiniteNumber.check(Schema.isGreaterThan(0)),
+        entranceSecondsLeft: HeroTrackerEntranceSecondsLeft,
       }),
       Schema.Struct({
         state: Schema.Literal("open"),

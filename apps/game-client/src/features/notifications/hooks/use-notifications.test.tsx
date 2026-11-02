@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { useNotifications } from "./use-notifications";
+import { getHeroTrackerEntranceClosesAtMs } from "../utils/hero-tracker-notification";
 import { createNotificationTest } from "../notification-test";
 import { useGameStore } from "@/store/game.store";
 import { useNotificationsStore } from "@/store/notifications.store";
@@ -81,6 +82,55 @@ describe("useNotifications", () => {
         }),
       ]),
     );
+  });
+
+  it("counts an open Hero Tracker entrance down from receipt, whatever this device's clock says", async () => {
+    const test = createNotificationTest();
+    setTestRuntimeGame({ hero: { accountId: "1" } });
+    test.setPreferences();
+    renderHook(() => useNotifications(), { wrapper: test.wrapper });
+    test.open();
+    // The server sent it long ago by this device's clock, two minutes before
+    // the entrance closed by its own.
+    await test.receive({
+      v: 1,
+      type: "notification.sent",
+      data: {
+        organizationId: "guild-1",
+        payload: {
+          notificationId: "tracker-open",
+          guildId: "guild-1",
+          discordId: "other-discord-id",
+          world: "luvia",
+          createdAt: "2026-04-22T10:00:00.000Z",
+          npc: {
+            id: 500,
+            name: "Tropiciel Herosów",
+            lvl: 200,
+            prof: "w",
+            wt: 0,
+            type: 2,
+            location: "Swamp",
+          },
+          heroTracker: {
+            state: "open",
+            entranceClosesAt: "2026-04-22T10:02:00.000Z",
+          },
+        },
+      },
+    });
+
+    await waitFor(() =>
+      expect(useNotificationsStore.getState().notifications).toHaveLength(1),
+    );
+
+    const [shown = {}] = useNotificationsStore.getState().notifications;
+
+    const secondsLeft =
+      ((getHeroTrackerEntranceClosesAtMs(shown) ?? 0) - Date.now()) / 1000;
+
+    expect(secondsLeft).toBeGreaterThan(110);
+    expect(secondsLeft).toBeLessThanOrEqual(120);
   });
 
   it("shows own reports only for gatherings organized on another Margonem account", async () => {

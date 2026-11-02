@@ -12,7 +12,10 @@ import { useGameStore } from "@/store/game.store";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { PartyGatheringCharacterBase } from "@/types/party-gathering";
 import { useEffect, useRef } from "react";
-import type { HeroTrackerNotificationState } from "@/features/notifications/utils/hero-tracker-notification";
+import {
+  toLocalEntranceDeadline,
+  type HeroTrackerNotificationState,
+} from "@/features/notifications/utils/hero-tracker-notification";
 import {
   getNotificationSettingsKey,
   isNotificationSettingsKey,
@@ -92,7 +95,10 @@ export const useNotifications = () => {
 
         return [
           {
-            notification: { ...data, servers: [data.guildId] },
+            notification: {
+              ...toLocalEntranceDeadline(data),
+              servers: [data.guildId],
+            },
           },
         ];
       });
