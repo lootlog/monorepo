@@ -5,7 +5,7 @@ import {
 } from "@lootlog/schema/battle-ping";
 import type { MapPingAck } from "@lootlog/schema/map-ping";
 import { Schema } from "effect";
-import { Logger } from "#src/platform/logger";
+import { ContextLogger } from "@lootlog/instrumentation";
 import {
   consumePingRateLimit,
   getPingScopes,
@@ -22,7 +22,7 @@ const RATE_LIMIT_WINDOW_MS = 10_000;
 const isBattlePingSendPayload = Schema.is(BattlePingSendPayloadSchema);
 
 export class BattlePingService {
-  private readonly logger = new Logger(BattlePingService.name);
+  private readonly logger = new ContextLogger(BattlePingService.name);
 
   constructor(
     private readonly redis: PingScriptStore,

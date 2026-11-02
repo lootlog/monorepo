@@ -1,6 +1,6 @@
 import type { Job } from "bullmq";
 import { Effect } from "effect";
-import { Logger } from "#src/infrastructure/logger";
+import { ContextLogger } from "@lootlog/instrumentation";
 import type { Battles } from "#src/battles/battles.service";
 
 export interface DeleteUserBattlesJobData {
@@ -10,14 +10,14 @@ export interface DeleteUserBattlesJobData {
 export const makeDeleteUserBattlesProcessor = (
   battles: Pick<Battles, "deleteUserBattles">,
 ) => {
-  const logger = new Logger("DeleteUserBattlesProcessor");
+  const logger = new ContextLogger("DeleteUserBattlesProcessor");
 
   const process = (job: Job<DeleteUserBattlesJobData>) =>
     Effect.gen(function* () {
       const { userId } = job.data;
-      logger.log(`Processing delete-user-battles job for user ${userId}`);
+      logger.info(`Processing delete-user-battles job for user ${userId}`);
       const result = yield* battles.deleteUserBattles(userId);
-      logger.log(
+      logger.info(
         `Completed delete-user-battles job for user ${userId}: ${result.deletedCount} battles deleted`,
       );
     }).pipe(

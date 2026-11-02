@@ -1,7 +1,7 @@
 import { slidingWindowRateLimitScript } from "@lootlog/database/sliding-window-rate-limit";
 import type { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { Schema } from "effect";
-import type { Logger } from "#src/platform/logger";
+import type { ContextLogger } from "@lootlog/instrumentation";
 import type {
   RedisGatewayStore,
   RedisScriptReply,
@@ -79,7 +79,7 @@ export const getPingScopes = (
  */
 export const consumePingRateLimit = async (
   redis: PingScriptStore,
-  logger: Pick<Logger, "warn">,
+  logger: Pick<ContextLogger, "warn">,
   options: {
     readonly key: string;
     readonly windowMs: number;
