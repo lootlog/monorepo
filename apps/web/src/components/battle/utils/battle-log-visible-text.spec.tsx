@@ -1,4 +1,4 @@
-import { normalizeBattleSearchText } from "./normalize-battle-search-text";
+import { normalizeSearchText } from "@/lib/utils/normalize-search-text";
 import { createBattleWarrior as buildBattleWarrior } from "@/lib/testing/battle";
 // @vitest-environment happy-dom
 import { describe, expect, it } from "vitest";
@@ -100,7 +100,7 @@ describe("battle log visible search text", () => {
         </I18nextProvider>,
       );
       expect(
-        normalizeBattleSearchText(
+        normalizeSearchText(
           buildBattleLogVisibleText({
             event,
             attacker,
@@ -109,7 +109,7 @@ describe("battle log visible search text", () => {
             t: i18n.t,
           }),
         ),
-      ).toBe(normalizeBattleSearchText(element.textContent ?? ""));
+      ).toBe(normalizeSearchText(element.textContent ?? ""));
     },
   );
 
@@ -159,7 +159,7 @@ describe("battle log visible search text", () => {
       ],
     };
 
-    const text = normalizeBattleSearchText(
+    const text = normalizeSearchText(
       buildBattleLogVisibleText({
         event,
         attacker,
