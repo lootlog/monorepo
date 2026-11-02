@@ -3,6 +3,25 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased (breaking): Game client API v2 lists online characters
+
+`window.lootlogGameClientApi` now reports `apiVersion: 2`. Only the
+online-players contract changed:
+
+- `getOnlinePlayers()` results and `online-players:changed` events carry
+  `players` as a `PublicOnlinePlayer[]` sorted by name, instead of a map from
+  Discord ID to sessions.
+- Entries no longer include `discordId`, `sessionId`, `platform`, `status`,
+  `guildId`, `characterId`, or `accountId`. Character fields moved from
+  `player` to the entry itself. Web app sessions, which have no character, are
+  left out.
+
+To migrate, accept `apiVersion === 2`
+and read `result.players` as an array. Timers and Organizations are unchanged.
+
+Public battle links no longer return the uploader's `userId` from
+`GET /battles/public/{battleId}`.
+
 ## Unreleased (breaking): One error body, filter and page shape across the main API
 
 Every main API operation now fails, filters and pages the same way, as

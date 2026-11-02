@@ -2,8 +2,8 @@
 import * as Schema from "effect/Schema";
 import {
   BattleRawResponseDto_Output,
-  BattleResponseDto_Output,
   BattleTimelineResponseDto_Output,
+  PublicBattleResponseDto_Output,
 } from "../shared.js";
 
 export type PublicBattlesControllerGetPublicBattlePathParams =
@@ -17,7 +17,7 @@ export type PublicBattlesControllerGetPublicBattle200 =
   typeof PublicBattlesControllerGetPublicBattle200.Type;
 
 export const PublicBattlesControllerGetPublicBattle200 =
-  BattleResponseDto_Output;
+  PublicBattleResponseDto_Output;
 
 export type PublicBattlesControllerGetPublicBattleRawPathParams =
   typeof PublicBattlesControllerGetPublicBattleRawPathParams.Type;

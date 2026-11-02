@@ -75,8 +75,8 @@ assert.deepEqual(await usersControllerGetCurrentUserGuilds(),[]);
 assert.equal(calls,1); restore();
 const realtime = new RealtimeClient({url:'wss://gateway.lootlog.pl/ws',protocols:[REALTIME_JSON_SUBPROTOCOL]});
 assert.equal(realtime.state,'disconnected');
-const version: LootlogGameClientApi['apiVersion'] = 1;
-assert.equal(version,1);
+const version: LootlogGameClientApi['apiVersion'] = 2;
+assert.equal(version,2);
 `,
 );
 

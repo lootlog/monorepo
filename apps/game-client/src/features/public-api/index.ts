@@ -34,7 +34,7 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
   );
 
   const api: LootlogGameClientApi = Object.freeze({
-    apiVersion: 1 as const,
+    apiVersion: 2 as const,
 
     get ready(): boolean {
       return useGlobalStore.getState().gameState.gameInitialized;
