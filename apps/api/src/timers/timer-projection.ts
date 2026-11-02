@@ -43,6 +43,8 @@ export const CachedTimerProjectionSchema = Schema.Struct({
   wasReset: Schema.Boolean,
   actorCharacterLvl: Schema.NullOr(Schema.Number),
   deletedAt: nullableIsoDatetimeCodec,
+  // Optional: cached projections written before Hero Trackers lack it.
+  entranceClosesAt: Schema.optionalKey(nullableIsoDatetimeCodec),
   updatedAt: IsoDateTime,
   member: Schema.optionalKey(Schema.NullOr(CachedTimerMember)),
   actorCharacter: Schema.optionalKey(Schema.NullOr(CachedTimerCharacter)),
@@ -194,6 +196,7 @@ export const mapTimerResponse = (timer: CachedTimerProjection) => {
     npc: mapTimerNpc(timer.npc),
     wasReset: timer.wasReset,
     deletedAt: toTimerDate(timer.deletedAt),
+    entranceClosesAt: toTimerDate(timer.entranceClosesAt),
     updatedAt: toTimerDate(timer.updatedAt) ?? new Date(),
   };
 };

@@ -34,6 +34,7 @@ const timerView = timerIdentity.extend({
     icon: z.string().nullable(),
   }),
   member: z.object({ name: z.string() }).optional(),
+  entranceClosesAt: z.iso.datetime().nullable().optional(),
 });
 
 type Options = {

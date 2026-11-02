@@ -65,8 +65,14 @@
     "event_hero": "Heros eventowy",
     "colossus": "Kolos",
     "titan": "Tytan",
+    "hero_tracker": "Tropiciel herosów",
     "message": "Komunikaty",
     "partyGathering": "Zbiórki"
+  },
+  "heroTracker": {
+    "unclaimed": "Nikt go jeszcze nie odkrył",
+    "open": "Wejście otwarte: {{time}}",
+    "closed": "Wejście zamknięte"
   },
   "windowControls": {
     "opacityLevel": "Krycie tła: {{level}}/{{max}}. Kliknij, aby zmienić",

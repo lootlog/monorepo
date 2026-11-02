@@ -111,6 +111,7 @@ const DEFAULT_SELECTED_NPC_TYPES = [
   NpcType.HERO,
   NpcType.EVENT_HERO,
   NpcType.TITAN,
+  NpcType.HERO_TRACKER,
 ];
 
 type StoredTimersFilters = Record<string, TimersFilters>;
@@ -133,6 +134,33 @@ const withEventHeroType = (
         : filter,
     ]),
   );
+
+// Hero Tracker timers are new in version 9; no stored filter could hide them.
+const withHeroTrackerType = (
+  filters: StoredTimersFilters | undefined,
+): StoredTimersFilters | undefined =>
+  filters &&
+  Object.fromEntries(
+    Object.entries(filters).map(([key, filter]) => [
+      key,
+      filter.selectedNpcTypes.includes(NpcType.HERO_TRACKER)
+        ? filter
+        : {
+            ...filter,
+            selectedNpcTypes: [
+              ...filter.selectedNpcTypes,
+              NpcType.HERO_TRACKER,
+            ],
+          },
+    ]),
+  );
+
+// Each type joins stored filters once, in the version that introduced it; a
+// later choice to hide it stays.
+const withNewNpcTypes = (
+  filters: StoredTimersFilters | undefined,
+  version: number,
+) => withHeroTrackerType(version < 8 ? withEventHeroType(filters) : filters);
 
 export const DEFAULT_TIMERS_FILTERS: TimersFilters = {
   minLvl: 0,
@@ -517,7 +545,7 @@ export const useTimersStore = create<TimersState>()(
             persisted.timersSortOrder ?? currentState.timersSortOrder,
         };
       },
-      version: 8,
+      version: 9,
       migrate: (persistedState, version) => {
         const persisted = decodeTimerSettings(persistedState);
 
@@ -526,14 +554,17 @@ export const useTimersStore = create<TimersState>()(
             ...persisted,
             timersFilters: {},
             legacyTimersFilters:
-              withEventHeroType(persisted.timersFilters) ?? {},
+              withNewNpcTypes(persisted.timersFilters, version) ?? {},
           };
         }
 
         return {
           ...persisted,
-          timersFilters: withEventHeroType(persisted.timersFilters),
-          legacyTimersFilters: withEventHeroType(persisted.legacyTimersFilters),
+          timersFilters: withNewNpcTypes(persisted.timersFilters, version),
+          legacyTimersFilters: withNewNpcTypes(
+            persisted.legacyTimersFilters,
+            version,
+          ),
         };
       },
     },

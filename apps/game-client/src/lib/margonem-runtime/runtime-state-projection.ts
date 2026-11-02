@@ -1,4 +1,6 @@
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
+import { isHeroTrackerName } from "@lootlog/domain/npc-type";
+import { getEntranceClosesAt } from "@/utils/game/hero-tracker-entrance";
 import { createsOther } from "./runtime-event-parser";
 import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
@@ -35,6 +37,7 @@ type AppliedNpcEntry = Readonly<{
   grp?: number;
   icon?: string | Readonly<{ id: number }>;
   id: number;
+  killSeconds?: number;
   level?: number;
   lvl?: number;
   nick?: string;
@@ -54,11 +57,32 @@ type NpcTemplate = Readonly<{
   isHeroFromEvent?: boolean;
   level?: number;
   nick: string;
-  prof: string;
+  // Hero Tracker templates carry neither.
+  prof?: string;
   resp_rand?: number;
-  type: number;
+  type?: number;
   warrior_type?: number;
 }>;
+
+/** A Hero Tracker template has no profession, type or weight. */
+const withHeroTrackerDefaults = (
+  template: NpcTemplate | undefined,
+  name: string | undefined,
+): NpcTemplate | undefined =>
+  name !== undefined && isHeroTrackerName(name)
+    ? { id: 0, nick: name, prof: "", type: 0, warrior_type: 0, ...template }
+    : template;
+
+const getProjectedEntranceClosesAt = (
+  entry: AppliedNpcEntry,
+  name: string | undefined,
+) =>
+  name !== undefined && isHeroTrackerName(name)
+    ? getEntranceClosesAt(
+        entry.killSeconds,
+        useNpcsStore.getState().getNpc(entry.id)?.entranceClosesAt,
+      )
+    : undefined;
 
 type Dependencies = {
   adapter: MargonemRuntimeAdapter;
@@ -517,14 +541,17 @@ export class RuntimeStateProjection {
 
     const icon = this.resolveNpcIcon(entry.icon);
     const name = valueOrCurrent(entry.nick, template?.nick);
-    const profession = valueOrCurrent(entry.prof, template?.prof);
-    const type = valueOrCurrent(entry.type, template?.type);
+    const npcTemplate = withHeroTrackerDefaults(template, name);
+    const profession = valueOrCurrent(entry.prof, npcTemplate?.prof);
+    const type = valueOrCurrent(entry.type, npcTemplate?.type);
     const level = resolveNpcLevel(entry, template, heroLevel);
 
     const weight = valueOrCurrent(
       entry.wt,
-      valueOrCurrent(entry.warrior_type, template?.warrior_type),
+      valueOrCurrent(entry.warrior_type, npcTemplate?.warrior_type),
     );
+
+    const entranceClosesAt = getProjectedEntranceClosesAt(entry, name);
 
     const { x, y } = entry;
 
@@ -544,6 +571,7 @@ export class RuntimeStateProjection {
         icon,
         id: entry.id,
         isHeroFromEvent: template?.isHeroFromEvent,
+        ...(entranceClosesAt !== undefined && { entranceClosesAt }),
         level,
         name,
         profession,

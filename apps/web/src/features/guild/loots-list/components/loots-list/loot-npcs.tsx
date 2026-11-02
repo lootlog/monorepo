@@ -49,8 +49,11 @@ const getNpcBadgeStyle = (type: LootNpcType) => {
   }
 };
 
+const isLootNpcType = (type: LootNpc["type"]): type is LootNpcType =>
+  type !== null && type !== undefined && type in NPC_TYPE_PRIORITY;
+
 const normalizeNpcType = (type: LootNpc["type"]): LootNpcType =>
-  type && type in NPC_TYPE_PRIORITY ? type : DEFAULT_NPC_TYPE;
+  isLootNpcType(type) ? type : DEFAULT_NPC_TYPE;
 
 const isSpecialNpcType = (
   type: LootNpcType,

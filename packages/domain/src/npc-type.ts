@@ -9,6 +9,7 @@ type NpcTypeValues<TNpcType extends string> = {
   EVENT_HERO: TNpcType;
   COLOSSUS: TNpcType;
   TITAN: TNpcType;
+  HERO_TRACKER: TNpcType;
   NPC: TNpcType;
 };
 
@@ -40,6 +41,8 @@ export type NpcClassification = Readonly<{
   icon?: string;
   /** Set by Margonem on the NPC template of a hero spawned by an event. */
   isHeroFromEvent?: boolean;
+  /** The NPC name; the only signal that identifies a Hero Tracker. */
+  name?: string;
 }>;
 
 // Margonem keeps the graphics of every event NPC in this directory, including
@@ -59,11 +62,24 @@ export const isEventHero = (npc: NpcClassification): boolean =>
     (npc.icon !== undefined &&
       normalizeNpcIcon(npc.icon).startsWith(EVENT_NPC_ICON_DIRECTORY)));
 
+// Margonem gives Hero Tracker templates no weight, profession or type, and
+// its `detector` flag marks every special NPC, so only the name identifies
+// them: "Tropiciel Herosów", "Wtajemniczony Tropiciel Herosów", and so on.
+// "Tropicielka Albiona" in Tuzmer must not match.
+const HERO_TRACKER_NAME = /(?:^|\s)Tropiciel Herosów$/u;
+
+export const isHeroTrackerName = (name: string): boolean =>
+  HERO_TRACKER_NAME.test(name.trim());
+
 export const getNpcType = <TNpcType extends string>(
   npcTypes: NpcTypeValues<TNpcType>,
   npc: NpcClassification,
 ): TNpcType => {
-  const { wt, prof, type } = npc;
+  const { wt, prof, type, name } = npc;
+
+  if (name !== undefined && isHeroTrackerName(name)) {
+    return npcTypes.HERO_TRACKER;
+  }
 
   if (type === 0 && wt > 29 && wt < 80) {
     return npcTypes.ELITE3;

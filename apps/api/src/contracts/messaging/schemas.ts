@@ -1,7 +1,11 @@
 import { GameCharacter } from "../game-character.schema.js";
 /** Shared input and output schemas for the messaging feature. */
 import * as Schema from "effect/Schema";
-import { NonEmptyString, FiniteNumber } from "@lootlog/schema/http-scalars";
+import {
+  DateTimeString,
+  NonEmptyString,
+  FiniteNumber,
+} from "@lootlog/schema/http-scalars";
 
 export type SendNotificationRequest = typeof SendNotificationRequest.Type;
 
@@ -58,6 +62,18 @@ export const SendNotificationRequest = Schema.Struct({
   ),
   isGatheringParty: Schema.optionalKey(Schema.Boolean),
   character: Schema.optionalKey(GameCharacter),
+  heroTracker: Schema.optionalKey(
+    Schema.Union([
+      Schema.Struct({ state: Schema.Literal("unclaimed") }),
+      Schema.Struct({
+        state: Schema.Literal("open"),
+        entranceClosesAt: DateTimeString,
+      }),
+    ]).annotate({
+      description:
+        "State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open until `entranceClosesAt`.",
+    }),
+  ),
 })
   .check(
     Schema.makeFilter((notification) => {

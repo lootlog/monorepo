@@ -101,7 +101,7 @@ describe("timers.store", () => {
     });
   });
 
-  it("keeps showing event hero timers in a stored filter that showed heroes", async () => {
+  it("shows event hero timers where heroes showed, and Hero Tracker timers in every stored filter", async () => {
     const filter = (selectedNpcTypes: string[]) => ({
       minLvl: 0,
       maxLvl: 300,
@@ -130,8 +130,37 @@ describe("timers.store", () => {
       "HERO",
       "TITAN",
       "EVENT_HERO",
+      "HERO_TRACKER",
     ]);
-    expect(timersFilters.titans?.selectedNpcTypes).toEqual(["TITAN"]);
+    expect(timersFilters.titans?.selectedNpcTypes).toEqual([
+      "TITAN",
+      "HERO_TRACKER",
+    ]);
+  });
+
+  it("adds Hero Trackers to a version 8 filter without restoring hidden event heroes", async () => {
+    localStorage.setItem(
+      TIMERS_STORAGE_KEY,
+      JSON.stringify({
+        version: 8,
+        state: {
+          timersFilters: {
+            heroes: {
+              minLvl: 0,
+              maxLvl: 300,
+              selectedNpcTypes: ["HERO", "TITAN"],
+              selectedColors: [],
+              selectedLists: [],
+            },
+          },
+        },
+      }),
+    );
+    await useTimersStore.persist.rehydrate();
+
+    expect(
+      useTimersStore.getState().timersFilters.heroes?.selectedNpcTypes,
+    ).toEqual(["HERO", "TITAN", "HERO_TRACKER"]);
   });
 
   it.each([true, false])(
@@ -535,7 +564,7 @@ describe("timers.store", () => {
       window.localStorage.getItem(TIMERS_STORAGE_KEY) ?? "null",
     );
 
-    expect(persistedState.version).toBe(8);
+    expect(persistedState.version).toBe(9);
     expect(persistedState.state.generalConfig).toEqual({
       removeTimerAfterMs: 60000,
       timersGrouping: true,

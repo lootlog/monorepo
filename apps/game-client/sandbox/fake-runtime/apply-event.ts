@@ -132,8 +132,9 @@ function composeNpc(
     x: entry.x,
     y: entry.y,
     nick: template.nick,
-    prof: template.prof,
-    type: template.type,
+    // Margonem's NPC objects default what a Hero Tracker template omits.
+    prof: template.prof ?? "",
+    type: template.type ?? 0,
     wt: template.warrior_type ?? 0,
     lvl:
       template.elasticLevelFactor === 0

@@ -4,6 +4,7 @@ import type { CommandFailure } from "./lootlog-client.js";
 const NPC_TYPE_LABELS = new Map(
   Object.entries({
     TITAN: "Tytan",
+    HERO_TRACKER: "Tropiciel herosów",
     COLOSSUS: "Kolos",
     HERO: "Heros",
     EVENT_HERO: "Heros eventowy",
@@ -92,6 +93,8 @@ export const COMMAND_TEXT = {
     title: "⏱️ Najbliższe respawny",
     empty: "Brak aktywnych timerów.",
     windowOpen: (until: string) => `🟢 okno trwa, koniec ${until}`,
+    entranceOpen: (until: string) =>
+      `🚪 wejście do kolosa otwarte, zamyka się ${until}`,
     window: (from: string, until: string) => `⏳ od ${from} do ${until}`,
     more: (count: number) => `…i ${count} więcej na stronie Lootloga.`,
   },

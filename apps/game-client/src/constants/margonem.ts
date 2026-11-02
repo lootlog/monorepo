@@ -8,6 +8,7 @@ export const NPC_NAMES = {
   COLOSSUS: { shortname: "K" },
   HERO: { shortname: "H" },
   EVENT_HERO: { shortname: "HE" },
+  HERO_TRACKER: { shortname: "TH" },
   ELITE3: { shortname: "E3" },
   ELITE2: { shortname: "E2" },
   ELITE: { shortname: "E" },
@@ -22,3 +23,9 @@ export const getNpcTypeNames = (type: NpcTypeEnum) => {
 export const MIN_RESP_BASE_SECONDS = 2;
 
 export const MIN_NPC_WT = 20;
+
+/**
+ * Hero Trackers return about 90 minutes after their entrance closes on public
+ * worlds. The API keeps a faster base observed on a private world instead.
+ */
+export const HERO_TRACKER_RESP_BASE_SECONDS = 90 * 60;

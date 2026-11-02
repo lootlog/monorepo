@@ -25,6 +25,7 @@ const TIMER_NPC_TYPES = [
   "EVENT_HERO",
   "ELITE3",
   "ELITE",
+  "HERO_TRACKER",
 ] as const;
 
 const Timer = Schema.Struct({
@@ -42,6 +43,7 @@ const Timer = Schema.Struct({
   }),
   member: Schema.optionalKey(Schema.Struct({ name: Schema.String })),
   deletedAt: Schema.optionalKey(Schema.NullOr(Schema.String)),
+  entranceClosesAt: Schema.optionalKey(Schema.NullOr(Schema.String)),
 });
 
 type Timer = typeof Timer.Type;
@@ -65,19 +67,36 @@ const readCurrentTimers = (session: MemberSession, world?: string) =>
           !timer.deletedAt && new Date(timer.maxSpawnTime).getTime() > now,
       )
       .sort(
-        (left, right) =>
-          new Date(left.minSpawnTime).getTime() -
-          new Date(right.minSpawnTime).getTime(),
+        (left, right) => nextEventTime(left, now) - nextEventTime(right, now),
       );
   });
 
-const spawnWindow = (timer: Timer, now: number) =>
-  new Date(timer.minSpawnTime).getTime() <= now
+const openEntranceClosesAt = (timer: Timer, now: number) =>
+  timer.entranceClosesAt && new Date(timer.entranceClosesAt).getTime() > now
+    ? timer.entranceClosesAt
+    : null;
+
+// An open Hero Tracker entrance matters before its later respawn.
+const nextEventTime = (timer: Timer, now: number) => {
+  const entranceClosesAt = openEntranceClosesAt(timer, now);
+
+  return new Date(entranceClosesAt ?? timer.minSpawnTime).getTime();
+};
+
+const spawnWindow = (timer: Timer, now: number) => {
+  const entranceClosesAt = openEntranceClosesAt(timer, now);
+
+  if (entranceClosesAt) {
+    return COMMAND_TEXT.timers.entranceOpen(discordTime(entranceClosesAt));
+  }
+
+  return new Date(timer.minSpawnTime).getTime() <= now
     ? COMMAND_TEXT.timers.windowOpen(discordTime(timer.maxSpawnTime))
     : COMMAND_TEXT.timers.window(
         discordTime(timer.minSpawnTime),
         discordTime(timer.maxSpawnTime, "t"),
       );
+};
 
 const timerName = (timer: Timer) =>
   `${escapeMarkdown(timer.npc.name)} (${timer.npc.lvl})`;

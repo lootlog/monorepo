@@ -1,4 +1,7 @@
-import { getTimerTimeLeft as getSharedTimerTimeLeft } from "@lootlog/domain/timers";
+import {
+  getTimerTimeLeft as getSharedTimerTimeLeft,
+  type TimerTimeLeft,
+} from "@lootlog/domain/timers";
 import type { Timer } from "@/api/timers.api";
 import type { GuildMember } from "@/types/guild-member";
 
@@ -51,5 +54,4 @@ export const isManualTimer = (timer: Timer) =>
 export const getTimerTimeLeft = (
   timer: Timer,
   now = Date.now(),
-): Pick<TimerWithTimeLeft, "maxTimeLeft" | "minTimeLeft"> =>
-  getSharedTimerTimeLeft(timer, now, getTimerEpoch);
+): TimerTimeLeft => getSharedTimerTimeLeft(timer, now, getTimerEpoch);

@@ -6,7 +6,7 @@ import {
 import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
 import { cn } from "cn";
 import { upperFirst } from "es-toolkit";
-import { Globe, User } from "lucide-react";
+import { DoorOpen, Globe, User } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import type { TimerResponseDto } from "@lootlog/client/main";
@@ -28,9 +28,11 @@ import {
 import { MetaItem } from "@/components/common/meta-item";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 
-// The game client's colours: white until the spawn window opens, orange
-// inside it, red past the maximum, and a dimmed red for a kept timer.
+// The game client's colours: green while a Hero Tracker's entrance is open,
+// white until the spawn window opens, orange inside it, red past the maximum,
+// and a dimmed red for a kept timer.
 const PHASE_TEXT_CLASS = {
+  entrance: "text-emerald-300",
   waiting: "text-foreground",
   window: "text-orange-300",
   overdue: "text-red-400",
@@ -132,16 +134,36 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             </span>
             <span
               className={cn(
-                "shrink-0 text-[15px] leading-5 font-semibold tabular-nums",
+                "flex shrink-0 items-center gap-1 text-[15px] leading-5 font-semibold tabular-nums",
                 PHASE_TEXT_CLASS[phase],
               )}
             >
+              {phase === "entrance" && (
+                <DoorOpen
+                  aria-label={t("timers.entranceOpen")}
+                  role="img"
+                  className="size-4"
+                />
+              )}
               {parseMsToTime(getTimerCountdownMs(timeLeft, countdownMode))}
             </span>
           </button>
         }
       />
       <TooltipContent className="grid gap-2">
+        {phase === "entrance" && timer.entranceClosesAt && (
+          <div>
+            <span className="block text-xs text-muted-foreground">
+              {t("timers.details.entranceClosesAt")}
+            </span>
+            <span className="block text-sm font-semibold tabular-nums">
+              {timestampToDate(
+                timer.entranceClosesAt,
+                DATE_TIME_WITH_SECONDS_FORMAT,
+              )}
+            </span>
+          </div>
+        )}
         <div>
           <span className="block text-xs text-muted-foreground">
             {t("timers.details.minSpawnTime")}

@@ -14,6 +14,7 @@ import {
   isNotificationSettingsKey,
 } from "@/features/notifications/utils/get-notification-settings-key";
 import { getNotificationAutoHideDeadlineMs } from "@/features/notifications/notification-auto-hide";
+import { getHeroTrackerEntranceClosesAtMs } from "@/features/notifications/utils/hero-tracker-notification";
 
 interface UseVisibleNotificationsOptions {
   autoCleanup?: boolean;
@@ -65,11 +66,24 @@ const getScheduledExpirationTimeMs = ({
     return null;
   }
 
-  return getNotificationAutoHideDeadlineMs({
+  const autoHideDeadlineMs = getNotificationAutoHideDeadlineMs({
     autoHideState: notificationAutoHideByListKey[notification.listKey],
     durationMs: (settings[key]?.autoHideTimeout ?? 0) * 1000,
     receivedAtMs: notification.receivedAtMs,
   });
+
+  // An open Hero Tracker entrance ends the row when it closes, even with
+  // auto-hide off or paused by the player.
+  const entranceClosesAtMs =
+    "heroTracker" in notification
+      ? getHeroTrackerEntranceClosesAtMs(notification)
+      : undefined;
+
+  if (entranceClosesAtMs === undefined) return autoHideDeadlineMs;
+
+  return autoHideDeadlineMs === null
+    ? entranceClosesAtMs
+    : Math.min(autoHideDeadlineMs, entranceClosesAtMs);
 };
 
 const isNotificationVisible = ({

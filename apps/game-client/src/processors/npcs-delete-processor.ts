@@ -1,7 +1,7 @@
 import { MIN_NPC_WT, MIN_RESP_BASE_SECONDS } from "@/constants/margonem";
 import { SpecialE2 } from "@/constants/special-e2";
 import { NpcType } from "@/api/npcs.api";
-import { getNpcType } from "@lootlog/domain/npc-type";
+import { getNpcType, isHeroTrackerName } from "@lootlog/domain/npc-type";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
@@ -66,9 +66,10 @@ export class NpcsDeleteProcessor {
     if (game?.hero.stasis) return;
 
     deletedNpcs.forEach(({ data, deletion }) => {
-      if (!data || !deletion.respBaseSeconds || data.weight < MIN_NPC_WT) {
-        return;
-      }
+      if (!data || !deletion.respBaseSeconds) return;
+
+      // A Hero Tracker has no weight; its departure reports its respawn.
+      if (data.weight < MIN_NPC_WT && !isHeroTrackerName(data.name)) return;
 
       if (deletion.respBaseSeconds < MIN_RESP_BASE_SECONDS) {
         return;
@@ -85,6 +86,7 @@ export class NpcsDeleteProcessor {
         type: data.type,
         icon: data.icon,
         isHeroFromEvent: data.isHeroFromEvent,
+        name: data.name,
       });
 
       const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.name;

@@ -578,6 +578,74 @@ describe("NpcsDetectionProcessor", () => {
     expect(useWindowsStore.getState().currentWindowFocus).toBe("chat");
   });
 
+  it("detects an unclaimed Hero Tracker and announces its entrance once a player claims it", async () => {
+    readyPreferences({
+      npcType: "HERO_TRACKER",
+      autoSend: true,
+      routingRules: [
+        { id: "rule-1", minLevel: 200, maxLevel: 300, guildIds: ["guild-1"] },
+      ],
+    });
+    // The template as Margonem sent it on 2026-09-12: no weight, profession
+    // or type.
+
+    const tracker = {
+      npc_tpls: [
+        {
+          id: 190436,
+          level: 282,
+          nick: "Doświadczony Tropiciel Herosów",
+          resp_rand: 50,
+        },
+      ],
+      icons: [{ id: 9791, icon: "npc/tropiciel.gif" }],
+    } satisfies GameEvent;
+
+    const position = { id: 190436, tpl: 190436, x: 17, y: 22 };
+    // Later packets omit the template; the runtime projection supplies it.
+    setInitialNpcs([
+      createGameNpc({
+        ...position,
+        nick: "Doświadczony Tropiciel Herosów",
+        icon: "npc/tropiciel.gif",
+        prof: "",
+        type: 0,
+        wt: 0,
+        lvl: 282,
+      }),
+    ]);
+
+    processor.handle({
+      ...tracker,
+      npcs: [{ ...position, icon: { id: 9791 } }],
+    });
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(await requests[0]?.json()).toMatchObject({
+      npc: { name: "Doświadczony Tropiciel Herosów", lvl: 282 },
+      heroTracker: { state: "unclaimed" },
+    });
+
+    // Moving without a countdown is no news.
+    processor.handle({ npcs: [{ ...position, icon: { id: 9791 } }] });
+    const claimedAt = Date.now();
+    processor.handle({
+      npcs: [{ ...position, icon: { id: 9791 }, killSeconds: 1200 }],
+    });
+
+    await waitFor(() => expect(requests).toHaveLength(2));
+    const opened = await requests[1]?.json();
+    expect(opened).toMatchObject({ heroTracker: { state: "open" } });
+    expect(
+      Date.parse(opened.heroTracker.entranceClosesAt) - claimedAt,
+    ).toBeGreaterThanOrEqual(1_200_000);
+    expect(useNpcDetectorStore.getState().npcs).toEqual([
+      expect.objectContaining({
+        id: 190436,
+        entranceClosesAt: expect.any(Number),
+      }),
+    ]);
+  });
+
   it("ignores detections when template is missing or detector type is disabled", () => {
     readyPreferences({
       detect: false,
