@@ -1,4 +1,5 @@
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
+import { HeroTrackerStatus } from "@/components/hero-tracker-status";
 import { ListRow } from "@/components/list-row";
 import { ListRowArrival } from "@/components/list-row-arrival";
 import { NpcTile } from "@/components/npc-tile";
@@ -74,7 +75,7 @@ export const NpcListItem = ({
     startNpcPartyGathering,
   } = orchestration;
 
-  const npcType = getNpcType(NpcType, npc);
+  const npcType = getNpcType(NpcType, { ...npc, name: npc.nick });
   const settingsByNpcType = getDetectorNpcSettings(detectorSettings, npcType);
 
   const { guildIds: resolvedGuildIds, world } = resolveNpcNotificationRouting({
@@ -202,6 +203,9 @@ export const NpcListItem = ({
             ({npc.lvl}
             {npc.prof})
           </span>
+          {npcType === NpcType.HERO_TRACKER && (
+            <HeroTrackerStatus entranceClosesAt={npc.entranceClosesAt} />
+          )}
         </div>
         <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-[11px] ll:text-gray-300">
           <span className="ll:min-w-0 ll:truncate">{npc.location}</span>

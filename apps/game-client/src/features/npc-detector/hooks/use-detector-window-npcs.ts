@@ -13,7 +13,7 @@ export const useDetectorWindowNpcs = () => {
   const { settings } = useCurrentGameAccountDetectorSettings();
 
   const windowNpcs = npcs.filter((npc) => {
-    const npcType = getNpcType(NpcType, npc);
+    const npcType = getNpcType(NpcType, { ...npc, name: npc.nick });
     const settingsByNpcType = getDetectorNpcSettings(settings, npcType);
 
     return settingsByNpcType?.notifyWindow && settingsByNpcType?.detect;

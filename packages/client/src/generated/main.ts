@@ -1181,6 +1181,7 @@ export const NpcType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -3410,6 +3411,15 @@ export type UpdateSoundSettingsDtoNotificationsConfigEVENTHERO = {
   soundUrl?: '' | string;
 };
 
+export type UpdateSoundSettingsDtoNotificationsConfigHEROTRACKER = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
 export type UpdateSoundSettingsDtoNotificationsConfigTITAN = {
   /**
      * @minimum 0
@@ -3441,6 +3451,7 @@ export type UpdateSoundSettingsDtoNotificationsConfig = {
   ELITE2?: UpdateSoundSettingsDtoNotificationsConfigELITE2;
   HERO?: UpdateSoundSettingsDtoNotificationsConfigHERO;
   EVENT_HERO?: UpdateSoundSettingsDtoNotificationsConfigEVENTHERO;
+  HERO_TRACKER?: UpdateSoundSettingsDtoNotificationsConfigHEROTRACKER;
   TITAN?: UpdateSoundSettingsDtoNotificationsConfigTITAN;
   COLOSSUS?: UpdateSoundSettingsDtoNotificationsConfigCOLOSSUS;
   message?: UpdateSoundSettingsDtoNotificationsConfigMessage;
@@ -3465,6 +3476,15 @@ export type UpdateSoundSettingsDtoDetectorConfigHERO = {
 };
 
 export type UpdateSoundSettingsDtoDetectorConfigEVENTHERO = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoDetectorConfigHEROTRACKER = {
   /**
      * @minimum 0
      * @maximum 1
@@ -3504,6 +3524,7 @@ export type UpdateSoundSettingsDtoDetectorConfig = {
   ELITE2?: UpdateSoundSettingsDtoDetectorConfigELITE2;
   HERO?: UpdateSoundSettingsDtoDetectorConfigHERO;
   EVENT_HERO?: UpdateSoundSettingsDtoDetectorConfigEVENTHERO;
+  HERO_TRACKER?: UpdateSoundSettingsDtoDetectorConfigHEROTRACKER;
   TITAN?: UpdateSoundSettingsDtoDetectorConfigTITAN;
   COLOSSUS?: UpdateSoundSettingsDtoDetectorConfigCOLOSSUS;
   message?: UpdateSoundSettingsDtoDetectorConfigMessage;
@@ -3528,6 +3549,15 @@ export type UpdateSoundSettingsDtoTimersConfigHERO = {
 };
 
 export type UpdateSoundSettingsDtoTimersConfigEVENTHERO = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoTimersConfigHEROTRACKER = {
   /**
      * @minimum 0
      * @maximum 1
@@ -3567,6 +3597,7 @@ export type UpdateSoundSettingsDtoTimersConfig = {
   ELITE2?: UpdateSoundSettingsDtoTimersConfigELITE2;
   HERO?: UpdateSoundSettingsDtoTimersConfigHERO;
   EVENT_HERO?: UpdateSoundSettingsDtoTimersConfigEVENTHERO;
+  HERO_TRACKER?: UpdateSoundSettingsDtoTimersConfigHEROTRACKER;
   TITAN?: UpdateSoundSettingsDtoTimersConfigTITAN;
   COLOSSUS?: UpdateSoundSettingsDtoTimersConfigCOLOSSUS;
   message?: UpdateSoundSettingsDtoTimersConfigMessage;
@@ -4465,6 +4496,17 @@ export type CreateNotificationDtoCharacter = {
   clan?: CreateNotificationDtoCharacterClan;
 };
 
+/**
+ * State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open until `entranceClosesAt`.
+ */
+export type CreateNotificationDtoHeroTracker = {
+  state: 'unclaimed';
+} | {
+  state: 'open';
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  entranceClosesAt: string;
+};
+
 export interface CreateNotificationDto {
   /** @maxLength 500 */
   message?: string;
@@ -4482,6 +4524,8 @@ export interface CreateNotificationDto {
   world: string;
   isGatheringParty?: boolean;
   character?: CreateNotificationDtoCharacter;
+  /** State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open until `entranceClosesAt`. */
+  heroTracker?: CreateNotificationDtoHeroTracker;
 }
 
 export type WatchedItemResponseDtoSchema0 = string | number | boolean | (WatchedItemResponseDtoSchema0 | null)[] | {[key: string]: WatchedItemResponseDtoSchema0 | null} | null;
@@ -8070,6 +8114,7 @@ export const NullableLootResponseDtoNpcsItemType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -8203,6 +8248,7 @@ export const UserLootStatsResponseDtoOutputTopNpcsItemType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -8312,6 +8358,7 @@ export const LootStatsResponseDtoOutputTopNpcsItemType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -8515,6 +8562,7 @@ export const LootResponseDtoNpcsItemType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -8947,6 +8995,7 @@ export const TimerHistoryResponseDtoNpcType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -9148,6 +9197,7 @@ export const TimerResponseDtoNpcType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -9318,6 +9368,12 @@ export interface TimerResponseDto {
      * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
      */
   deletedAt?: string | null;
+  /**
+     * When a Hero Tracker's open entrance closes; the respawn window follows it. Null for every other timer.
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  entranceClosesAt?: string | null;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   updatedAt: string;
 }
@@ -9422,6 +9478,11 @@ export interface CreateTimerFromGameClientDto {
   customMinSpawnTime?: string;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   customMaxSpawnTime?: string;
+  /**
+     * When the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from it instead of from the request.
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  entranceClosesAt?: string;
   /** @minLength 1 */
   world: string;
   npc: CreateTimerFromGameClientDtoNpc;
@@ -9444,6 +9505,7 @@ export const SearchTimersNpcResponseDtoOutputType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -10183,6 +10245,16 @@ export type UserGameAccountPreferencesResponseDtoOutputNotificationsTITAN = {
   sound: boolean;
 };
 
+export type UserGameAccountPreferencesResponseDtoOutputNotificationsHEROTRACKER = {
+  show: boolean;
+  highlight: boolean;
+  ignoreOtherWorlds: boolean;
+  /** @minimum 0 */
+  autoHideTimeout?: number;
+  guildIds: string[];
+  sound: boolean;
+};
+
 export type UserGameAccountPreferencesResponseDtoOutputNotificationsMessage = {
   show: boolean;
   highlight: boolean;
@@ -10210,6 +10282,7 @@ export type UserGameAccountPreferencesResponseDtoOutputNotifications = {
   EVENT_HERO: UserGameAccountPreferencesResponseDtoOutputNotificationsEVENTHERO;
   COLOSSUS: UserGameAccountPreferencesResponseDtoOutputNotificationsCOLOSSUS;
   TITAN: UserGameAccountPreferencesResponseDtoOutputNotificationsTITAN;
+  HERO_TRACKER: UserGameAccountPreferencesResponseDtoOutputNotificationsHEROTRACKER;
   message: UserGameAccountPreferencesResponseDtoOutputNotificationsMessage;
   'party-gathering': UserGameAccountPreferencesResponseDtoOutputNotificationsPartyGathering;
 };
@@ -10272,6 +10345,14 @@ export type UserGameAccountPreferencesResponseDtoOutputDetectorTITAN = {
   notifySound: boolean;
 };
 
+export type UserGameAccountPreferencesResponseDtoOutputDetectorHEROTRACKER = {
+  detect: boolean;
+  autoSend: boolean;
+  notifyWindow: boolean;
+  highlight: boolean;
+  notifySound: boolean;
+};
+
 export type UserGameAccountPreferencesResponseDtoOutputDetector = {
   routingRules: UserGameAccountPreferencesResponseDtoOutputDetectorRoutingRulesItem[];
   ELITE2: UserGameAccountPreferencesResponseDtoOutputDetectorELITE2;
@@ -10279,6 +10360,7 @@ export type UserGameAccountPreferencesResponseDtoOutputDetector = {
   EVENT_HERO: UserGameAccountPreferencesResponseDtoOutputDetectorEVENTHERO;
   COLOSSUS: UserGameAccountPreferencesResponseDtoOutputDetectorCOLOSSUS;
   TITAN: UserGameAccountPreferencesResponseDtoOutputDetectorTITAN;
+  HERO_TRACKER: UserGameAccountPreferencesResponseDtoOutputDetectorHEROTRACKER;
 };
 
 export type UserGameAccountPreferencesResponseDtoOutputPings = {
@@ -10353,6 +10435,16 @@ export type UpdateUserGameAccountPreferencesDtoNotificationsTITAN = {
   sound?: boolean;
 };
 
+export type UpdateUserGameAccountPreferencesDtoNotificationsHEROTRACKER = {
+  show?: boolean;
+  highlight?: boolean;
+  ignoreOtherWorlds?: boolean;
+  /** @minimum 0 */
+  autoHideTimeout?: number;
+  guildIds?: string[];
+  sound?: boolean;
+};
+
 export type UpdateUserGameAccountPreferencesDtoNotificationsMessage = {
   show?: boolean;
   highlight?: boolean;
@@ -10380,6 +10472,7 @@ export type UpdateUserGameAccountPreferencesDtoNotifications = {
   EVENT_HERO?: UpdateUserGameAccountPreferencesDtoNotificationsEVENTHERO;
   COLOSSUS?: UpdateUserGameAccountPreferencesDtoNotificationsCOLOSSUS;
   TITAN?: UpdateUserGameAccountPreferencesDtoNotificationsTITAN;
+  HERO_TRACKER?: UpdateUserGameAccountPreferencesDtoNotificationsHEROTRACKER;
   message?: UpdateUserGameAccountPreferencesDtoNotificationsMessage;
   'party-gathering'?: UpdateUserGameAccountPreferencesDtoNotificationsPartyGathering;
 };
@@ -10442,6 +10535,14 @@ export type UpdateUserGameAccountPreferencesDtoDetectorTITAN = {
   notifySound?: boolean;
 };
 
+export type UpdateUserGameAccountPreferencesDtoDetectorHEROTRACKER = {
+  detect?: boolean;
+  autoSend?: boolean;
+  notifyWindow?: boolean;
+  highlight?: boolean;
+  notifySound?: boolean;
+};
+
 export type UpdateUserGameAccountPreferencesDtoDetector = {
   routingRules?: UpdateUserGameAccountPreferencesDtoDetectorRoutingRulesItem[];
   ELITE2?: UpdateUserGameAccountPreferencesDtoDetectorELITE2;
@@ -10449,6 +10550,7 @@ export type UpdateUserGameAccountPreferencesDtoDetector = {
   EVENT_HERO?: UpdateUserGameAccountPreferencesDtoDetectorEVENTHERO;
   COLOSSUS?: UpdateUserGameAccountPreferencesDtoDetectorCOLOSSUS;
   TITAN?: UpdateUserGameAccountPreferencesDtoDetectorTITAN;
+  HERO_TRACKER?: UpdateUserGameAccountPreferencesDtoDetectorHEROTRACKER;
 };
 
 export type UpdateUserGameAccountPreferencesDtoPings = {
@@ -10509,6 +10611,7 @@ export const GameClientBootstrapResponseDtoOutputUserPreferencesMutesNpcsItemNpc
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
 } as const;
 
 export type GameClientBootstrapResponseDtoOutputUserPreferencesMutesNpcsItem = {
@@ -10743,6 +10846,7 @@ export const UserPreferencesResponseDtoOutputMutesNpcsItemNpcType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
 } as const;
 
 export type UserPreferencesResponseDtoOutputMutesNpcsItem = {
@@ -10816,6 +10920,7 @@ export const UpdateUserPreferencesDtoMutesNpcsItemNpcType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
 } as const;
 
 export type UpdateUserPreferencesDtoMutesNpcsItem = {
@@ -10971,7 +11076,7 @@ export type UserFeedResponseDtoOutputItemsItem = {
   /** @nullable */
   icon: string | null;
   /** @nullable */
-  type: 'COMMON' | 'ELITE' | 'ELITE2' | 'ELITE3' | 'HERO' | 'EVENT_HERO' | 'COLOSSUS' | 'TITAN' | 'NPC' | null;
+  type: 'COMMON' | 'ELITE' | 'ELITE2' | 'ELITE3' | 'HERO' | 'EVENT_HERO' | 'COLOSSUS' | 'TITAN' | 'HERO_TRACKER' | 'NPC' | null;
   /** @nullable */
   margonemType: number | null;
 })[];
@@ -11011,6 +11116,7 @@ export const TimerNpcResponseDtoType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -11189,6 +11295,7 @@ export const LootNpcResponseDtoType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 

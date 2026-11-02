@@ -11,6 +11,7 @@ const TEXT_COLORS_BY_KEY = {
   [NpcType.HERO]: "rgba(249, 137, 72, 1)",
   [NpcType.ELITE2]: "rgba(219, 90, 186, 1)",
   [NpcType.TITAN]: "rgba(25, 72, 148, 1)",
+  [NpcType.HERO_TRACKER]: "rgba(16, 185, 129, 1)",
   message: "rgba(219, 39, 99, 1)",
   "party-gathering": "rgba(147, 51, 234, 1)",
 };
@@ -20,6 +21,7 @@ const BACKGROUND_COLORS_BY_KEY = {
   [NpcType.HERO]: "rgba(249, 137, 72, 0.4)",
   [NpcType.ELITE2]: "rgba(219, 90, 186, 0.4)",
   [NpcType.TITAN]: "rgba(25, 72, 148, 0.4)",
+  [NpcType.HERO_TRACKER]: "rgba(16, 185, 129, 0.4)",
   message: "rgba(219, 39, 99, 0.4)",
   "party-gathering": "rgba(147, 51, 234, 0.4)",
 };
@@ -94,6 +96,7 @@ export const getArrivalStrength = (key?: string) => {
       return 1;
     case NpcType.HERO:
     case NpcType.EVENT_HERO:
+    case NpcType.HERO_TRACKER:
       return 0.85;
     case NpcType.ELITE2:
       return 0.65;

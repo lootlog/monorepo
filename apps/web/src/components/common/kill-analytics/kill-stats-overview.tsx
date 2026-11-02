@@ -2,7 +2,7 @@ import {
   STATS_TILE_CELL_CLASS,
   StatsTileGrid,
 } from "@/components/common/stats-tile";
-import type { NpcType } from "@lootlog/client/main";
+import type { KilledNpcType } from "@/constants/npc";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import { sum } from "es-toolkit";
@@ -11,7 +11,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 // One hue, as on the activity heatmaps: the most common type is the brightest.
-const NPC_TYPE_FILLS: Partial<Record<NpcType, string>> = {
+const NPC_TYPE_FILLS: Partial<Record<KilledNpcType, string>> = {
   ELITE2: "bg-primary",
   ELITE3: "bg-primary/85",
   COLOSSUS: "bg-primary/70",
@@ -32,11 +32,11 @@ type KillStatsOverviewProps = {
   /** A line under the total, such as its change or the participations. */
   totalDetail?: ReactNode;
   /** One tile per NPC type, in this order. */
-  types: { type: NpcType; kills: number; detail?: ReactNode }[];
+  types: { type: KilledNpcType; kills: number; detail?: ReactNode }[];
   isLoading?: boolean;
   /** The type the page narrows to; omit where a tile only opens the type. */
-  selectedType?: NpcType;
-  onSelectType?: (type: NpcType) => void;
+  selectedType?: KilledNpcType;
+  onSelectType?: (type: KilledNpcType) => void;
 };
 
 /**

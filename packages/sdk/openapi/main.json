@@ -23071,6 +23071,7 @@
                                   "EVENT_HERO",
                                   "COLOSSUS",
                                   "TITAN",
+                                  "HERO_TRACKER",
                                   "NPC"
                                 ]
                               },
@@ -23344,7 +23345,8 @@
                         "HERO",
                         "EVENT_HERO",
                         "COLOSSUS",
-                        "TITAN"
+                        "TITAN",
+                        "HERO_TRACKER"
                       ]
                     },
                     "lvl": {
@@ -23529,7 +23531,8 @@
                         "HERO",
                         "EVENT_HERO",
                         "COLOSSUS",
-                        "TITAN"
+                        "TITAN",
+                        "HERO_TRACKER"
                       ]
                     },
                     "lvl": {
@@ -23795,6 +23798,41 @@
                 ],
                 "additionalProperties": false
               },
+              "HERO_TRACKER": {
+                "type": "object",
+                "properties": {
+                  "show": {
+                    "type": "boolean"
+                  },
+                  "highlight": {
+                    "type": "boolean"
+                  },
+                  "ignoreOtherWorlds": {
+                    "type": "boolean"
+                  },
+                  "autoHideTimeout": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "sound": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "show",
+                  "highlight",
+                  "ignoreOtherWorlds",
+                  "guildIds",
+                  "sound"
+                ],
+                "additionalProperties": false
+              },
               "message": {
                 "type": "object",
                 "properties": {
@@ -23873,6 +23911,7 @@
               "EVENT_HERO",
               "COLOSSUS",
               "TITAN",
+              "HERO_TRACKER",
               "message",
               "party-gathering"
             ],
@@ -24056,6 +24095,34 @@
                   "notifySound"
                 ],
                 "additionalProperties": false
+              },
+              "HERO_TRACKER": {
+                "type": "object",
+                "properties": {
+                  "detect": {
+                    "type": "boolean"
+                  },
+                  "autoSend": {
+                    "type": "boolean"
+                  },
+                  "notifyWindow": {
+                    "type": "boolean"
+                  },
+                  "highlight": {
+                    "type": "boolean"
+                  },
+                  "notifySound": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "detect",
+                  "autoSend",
+                  "notifyWindow",
+                  "highlight",
+                  "notifySound"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -24064,7 +24131,8 @@
               "HERO",
               "EVENT_HERO",
               "COLOSSUS",
-              "TITAN"
+              "TITAN",
+              "HERO_TRACKER"
             ],
             "additionalProperties": false
           },
@@ -24270,6 +24338,34 @@
                 },
                 "additionalProperties": false
               },
+              "HERO_TRACKER": {
+                "type": "object",
+                "properties": {
+                  "show": {
+                    "type": "boolean"
+                  },
+                  "highlight": {
+                    "type": "boolean"
+                  },
+                  "ignoreOtherWorlds": {
+                    "type": "boolean"
+                  },
+                  "autoHideTimeout": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "sound": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
               "message": {
                 "type": "object",
                 "properties": {
@@ -24453,6 +24549,27 @@
                 "additionalProperties": false
               },
               "TITAN": {
+                "type": "object",
+                "properties": {
+                  "detect": {
+                    "type": "boolean"
+                  },
+                  "autoSend": {
+                    "type": "boolean"
+                  },
+                  "notifyWindow": {
+                    "type": "boolean"
+                  },
+                  "highlight": {
+                    "type": "boolean"
+                  },
+                  "notifySound": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "HERO_TRACKER": {
                 "type": "object",
                 "properties": {
                   "detect": {
@@ -25485,6 +25602,7 @@
                   "EVENT_HERO",
                   "COLOSSUS",
                   "TITAN",
+                  "HERO_TRACKER",
                   "NPC"
                 ]
               },
@@ -25721,6 +25839,13 @@
             "format": "date-time",
             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
           },
+          "entranceClosesAt": {
+            "description": "When a Hero Tracker's open entrance closes; the respawn window follows it. Null for every other timer.",
+            "nullable": true,
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
           "updatedAt": {
             "type": "string",
             "format": "date-time",
@@ -25800,6 +25925,7 @@
                   "EVENT_HERO",
                   "COLOSSUS",
                   "TITAN",
+                  "HERO_TRACKER",
                   "NPC"
                 ]
               },
@@ -26105,6 +26231,7 @@
               "EVENT_HERO",
               "COLOSSUS",
               "TITAN",
+              "HERO_TRACKER",
               "NPC"
             ]
           },
@@ -26215,6 +26342,12 @@
             "type": "string",
             "format": "date-time",
             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "entranceClosesAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "description": "When the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from it instead of from the request."
           },
           "world": {
             "type": "string",
@@ -26810,6 +26943,7 @@
                     "EVENT_HERO",
                     "COLOSSUS",
                     "TITAN",
+                    "HERO_TRACKER",
                     "NPC"
                   ]
                 },
@@ -26999,6 +27133,7 @@
                     "EVENT_HERO",
                     "COLOSSUS",
                     "TITAN",
+                    "HERO_TRACKER",
                     "NPC"
                   ]
                 },
@@ -27414,6 +27549,7 @@
                     "EVENT_HERO",
                     "COLOSSUS",
                     "TITAN",
+                    "HERO_TRACKER",
                     "NPC"
                   ]
                 },
@@ -32736,6 +32872,38 @@
               "icon"
             ],
             "additionalProperties": false
+          },
+          "heroTracker": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "type": "string",
+                    "enum": ["unclaimed"]
+                  }
+                },
+                "required": ["state"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "type": "string",
+                    "enum": ["open"]
+                  },
+                  "entranceClosesAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                  }
+                },
+                "required": ["state", "entranceClosesAt"],
+                "additionalProperties": false
+              }
+            ],
+            "description": "State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open until `entranceClosesAt`."
           }
         },
         "required": ["guildIds", "world"],
@@ -34108,6 +34276,29 @@
                 },
                 "additionalProperties": false
               },
+              "HERO_TRACKER": {
+                "type": "object",
+                "properties": {
+                  "volume": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "soundUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [""]
+                      },
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
               "TITAN": {
                 "type": "object",
                 "properties": {
@@ -34252,6 +34443,29 @@
                 },
                 "additionalProperties": false
               },
+              "HERO_TRACKER": {
+                "type": "object",
+                "properties": {
+                  "volume": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "soundUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [""]
+                      },
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
               "TITAN": {
                 "type": "object",
                 "properties": {
@@ -34374,6 +34588,29 @@
                 "additionalProperties": false
               },
               "EVENT_HERO": {
+                "type": "object",
+                "properties": {
+                  "volume": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "soundUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [""]
+                      },
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "HERO_TRACKER": {
                 "type": "object",
                 "properties": {
                   "volume": {
@@ -38638,6 +38875,7 @@
           "EVENT_HERO",
           "COLOSSUS",
           "TITAN",
+          "HERO_TRACKER",
           "NPC"
         ]
       },

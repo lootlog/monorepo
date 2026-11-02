@@ -63,6 +63,12 @@ export const TimerResponse = Schema.Struct({
   member: Schema.optionalKey(MemberProfile),
   actorCharacter: Schema.optionalKey(TimerActorCharacter),
   deletedAt: Schema.optionalKey(Schema.Union([DateTimeString, Schema.Null])),
+  entranceClosesAt: Schema.optionalKey(
+    Schema.NullOr(DateTimeString).annotate({
+      description:
+        "When a Hero Tracker's open entrance closes; the respawn window follows it. Null for every other timer.",
+    }),
+  ),
   updatedAt: DateTimeString,
 }).annotate({ identifier: "TimerResponseDto" });
 
@@ -117,6 +123,12 @@ export const CreateAutoTimerRequest = Schema.Struct({
   respawnRandomness: Schema.optionalKey(FiniteNumber),
   customMinSpawnTime: Schema.optionalKey(DateTimeString),
   customMaxSpawnTime: Schema.optionalKey(DateTimeString),
+  entranceClosesAt: Schema.optionalKey(
+    DateTimeString.annotate({
+      description:
+        "When the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from it instead of from the request.",
+    }),
+  ),
   world: NonEmptyString,
   npc: Schema.Struct({
     id: FiniteNumber.annotate({

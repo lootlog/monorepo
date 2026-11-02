@@ -42,6 +42,25 @@ describe("timer phases, as the game client and web app show them", () => {
     expect(getTimerPhase(timeLeft, 30_000)).toBe("overdue");
   });
 
+  it("counts a Hero Tracker down to its entrance closing, then to its respawn", () => {
+    const timer = {
+      entranceClosesAt: at(60_000),
+      minSpawnTime: at(60_000 + 45 * 60_000),
+      maxSpawnTime: at(60_000 + 135 * 60_000),
+    };
+
+    const open = getTimerTimeLeft(timer, NOW);
+
+    expect(getTimerPhase(open, 30_000)).toBe("entrance");
+    expect(getTimerCountdownMs(open, "max")).toBe(60_000);
+    expect(getTimerCountdownMs(open, "min")).toBe(60_000);
+
+    const closed = getTimerTimeLeft(timer, NOW + 60_000);
+
+    expect(getTimerPhase(closed, 30_000)).toBe("waiting");
+    expect(getTimerCountdownMs(closed, "min")).toBe(45 * 60_000);
+  });
+
   it("counts to the minimum spawn only in min mode and only until it passes", () => {
     expect(
       getTimerCountdownMs({ minTimeLeft: 5_000, maxTimeLeft: 10_000 }, "max"),

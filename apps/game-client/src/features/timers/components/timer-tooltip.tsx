@@ -2,7 +2,13 @@ import type { Timer } from "@/api/timers.api";
 import type { MapThreat } from "@/lib/map-threat-source";
 import type { MapOccupancy } from "@/lib/presence-map-index";
 import { format } from "@/utils/local-date";
-import { ClockArrowDown, ClockArrowUp, RotateCcw, Swords } from "lucide-react";
+import {
+  ClockArrowDown,
+  ClockArrowUp,
+  DoorOpen,
+  RotateCcw,
+  Swords,
+} from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -72,6 +78,21 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
 
       <TimerTooltipSection>
         <div className="ll:grid ll:grid-cols-[auto_auto_1fr] ll:items-center ll:gap-x-1.5 ll:gap-y-0.5">
+          {timer.entranceClosesAt && (
+            <>
+              <DoorOpen
+                size={12}
+                aria-hidden="true"
+                className="ll:text-emerald-300"
+              />
+              <span className="ll:text-muted-foreground">
+                {t("tooltip.entrance")}
+              </span>
+              <span className="ll:tabular-nums">
+                {format(new Date(timer.entranceClosesAt), DATE_FORMAT)}
+              </span>
+            </>
+          )}
           <ClockArrowDown
             size={12}
             aria-hidden="true"

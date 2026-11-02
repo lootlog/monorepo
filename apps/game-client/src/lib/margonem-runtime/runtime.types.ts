@@ -18,6 +18,11 @@ export type RuntimeNpc = Readonly<{
   id: number;
   /** Margonem flags the template of a hero spawned by an event. */
   isHeroFromEvent?: boolean;
+  /**
+   * Epoch ms when a claimed Hero Tracker's colossus entrance closes, from the
+   * countdown Margonem sends with it; absent while nobody has claimed it.
+   */
+  entranceClosesAt?: number;
   level: number;
   name: string;
   profession: string;

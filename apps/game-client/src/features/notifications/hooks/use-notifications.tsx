@@ -12,6 +12,7 @@ import { useGameStore } from "@/store/game.store";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { PartyGatheringCharacterBase } from "@/types/party-gathering";
 import { useEffect, useRef } from "react";
+import type { HeroTrackerNotificationState } from "@/features/notifications/utils/hero-tracker-notification";
 import {
   getNotificationSettingsKey,
   isNotificationSettingsKey,
@@ -28,6 +29,7 @@ export type Notification = {
   isGatheringParty?: boolean;
   /** The organizer character of a party gathering report. */
   character?: PartyGatheringCharacterBase;
+  heroTracker?: HeroTrackerNotificationState;
 };
 
 export const useNotifications = () => {

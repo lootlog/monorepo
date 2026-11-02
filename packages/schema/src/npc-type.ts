@@ -9,6 +9,7 @@ export const NpcTypeEnum = {
   EVENT_HERO: "EVENT_HERO",
   COLOSSUS: "COLOSSUS",
   TITAN: "TITAN",
+  HERO_TRACKER: "HERO_TRACKER",
   NPC: "NPC",
 } as const;
 
@@ -23,5 +24,6 @@ export const NpcTypeSchema = Schema.Literals([
   NpcTypeEnum.EVENT_HERO,
   NpcTypeEnum.COLOSSUS,
   NpcTypeEnum.TITAN,
+  NpcTypeEnum.HERO_TRACKER,
   NpcTypeEnum.NPC,
 ]);

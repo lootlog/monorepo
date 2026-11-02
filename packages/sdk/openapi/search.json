@@ -1077,6 +1077,7 @@
               "EVENT_HERO",
               "COLOSSUS",
               "TITAN",
+              "HERO_TRACKER",
               "NPC"
             ]
           },
@@ -1338,6 +1339,7 @@
                     "EVENT_HERO",
                     "COLOSSUS",
                     "TITAN",
+                    "HERO_TRACKER",
                     "NPC"
                   ]
                 },
@@ -1518,6 +1520,7 @@
               "EVENT_HERO",
               "COLOSSUS",
               "TITAN",
+              "HERO_TRACKER",
               "NPC"
             ]
           },

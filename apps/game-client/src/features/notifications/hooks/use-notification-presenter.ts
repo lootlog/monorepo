@@ -3,6 +3,7 @@ import {
   isNotificationSettingsKey,
 } from "@/features/notifications/utils/get-notification-settings-key";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
+import { getHeroTrackerEntranceClosesAtMs } from "@/features/notifications/utils/hero-tracker-notification";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import {
   type NotificationPresentation,
@@ -35,7 +36,7 @@ export const useNotificationPresenter = () => {
 
     const audibleSettingsKeys = new Map<NotificationPresentation, string>();
 
-    const presentations = requests.map(
+    const presentations = requests.flatMap(
       ({ notification, playSound: audible }) => {
         const settingsKey = getNotificationSettingsKey(notification);
 
@@ -44,6 +45,20 @@ export const useNotificationPresenter = () => {
           : undefined;
 
         const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
+
+        // A report of an entrance that already closed is stale on arrival;
+        // the cleanup sweep removes an open one when it closes.
+        const entranceClosesAtMs =
+          "heroTracker" in notification
+            ? getHeroTrackerEntranceClosesAtMs(notification)
+            : undefined;
+
+        if (
+          entranceClosesAtMs !== undefined &&
+          entranceClosesAtMs <= Date.now()
+        ) {
+          return [];
+        }
 
         const presentation = {
           notification,
@@ -54,9 +69,13 @@ export const useNotificationPresenter = () => {
           audibleSettingsKeys.set(presentation, settingsKey);
         }
 
-        return presentation;
+        return [presentation];
       },
     );
+
+    if (presentations.length === 0) {
+      return;
+    }
 
     let addedPresentations: ReadonlySet<NotificationPresentation> = new Set();
 

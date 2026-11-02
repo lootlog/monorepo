@@ -85,6 +85,38 @@ describe("notification mutes", () => {
     expect(firstKey).toBe(secondKey);
   });
 
+  it("keeps a Hero Tracker muted after it moves to a hiding place with another id", () => {
+    const trackerNotification = (id: number, location: string) => ({
+      notificationId: `notification-${id}`,
+      discordId: "discord-1",
+      guildId: "guild-1",
+      world: "Aequus",
+      createdAt: "2026-11-06T17:00:00.000Z",
+      npc: {
+        id,
+        name: "Doświadczony Tropiciel Herosów",
+        nick: "Doświadczony Tropiciel Herosów",
+        lvl: 282,
+        prof: "",
+        icon: "npc/tropiciel.gif",
+        tpl: 190436,
+        wt: 0,
+        type: 0,
+        x: 1,
+        y: 1,
+        location,
+      },
+    });
+
+    expect(
+      getNotificationNpcMuteKey(
+        trackerNotification(190436, "Jaskinia Piaskowej Burzy s.1"),
+      ),
+    ).toBe(
+      getNotificationNpcMuteKey(trackerNotification(190999, "Grobowiec Seta")),
+    );
+  });
+
   it("replaces duplicated mute entries with the latest payload", () => {
     const mutedNpc = createMutedNpcPreference({
       notificationId: "notification-1",

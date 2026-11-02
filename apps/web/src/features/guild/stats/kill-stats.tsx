@@ -1,8 +1,8 @@
+import type { KilledNpcType } from "@/constants/npc";
 import { countActiveKillStatsFilters } from "@/features/kills/components/count-active-kill-stats-filters";
 import {
   getKillsControllerGetGuildKillStatsQueryKey,
   useKillsControllerGetGuildKillStats,
-  type NpcType,
 } from "@lootlog/client/main";
 import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -32,7 +32,7 @@ export const KillStats = () => {
   const { t } = useTranslation();
   const { guildId } = useParams({ from: "/_authenticated/$guildId" });
 
-  const [storedNpcType, setNpcType] = useLocalStorage<NpcType>(
+  const [storedNpcType, setNpcType] = useLocalStorage<KilledNpcType>(
     NPC_TYPE_STORAGE_KEY,
     "ELITE2",
   );

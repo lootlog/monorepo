@@ -6,6 +6,8 @@ export type GameNpcWithLocation = Omit<GameNpc, "tpl"> & {
   location: string;
   /** Epoch ms of the last sent notification; drives the resend cooldown. */
   notificationSentAt: number | null;
+  /** Epoch ms when a claimed Hero Tracker's entrance closes. */
+  entranceClosesAt?: number;
 };
 
 type AddNpcOptions = {

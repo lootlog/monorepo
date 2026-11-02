@@ -188,6 +188,58 @@ describe("useVisibleNotifications", () => {
     ).toEqual(["notification-1"]);
   });
 
+  it("removes an open Hero Tracker entrance when it closes, even while held", () => {
+    useNotificationsStore.setState({
+      notifications: [
+        createStoredNotification({
+          message: undefined,
+          npc: {
+            id: 190436,
+            name: "Doświadczony Tropiciel Herosów",
+            nick: "Doświadczony Tropiciel Herosów",
+            lvl: 282,
+            prof: "",
+            icon: "npc/tropiciel.gif",
+            tpl: 190436,
+            wt: 0,
+            type: 0,
+            x: 17,
+            y: 22,
+            location: "Jaskinia Piaskowej Burzy s.1",
+          },
+          heroTracker: {
+            state: "open",
+            entranceClosesAt: new Date(Date.now() + 60_000).toISOString(),
+          },
+        }),
+      ],
+      // The player holds the row: its own countdown is paused.
+      notificationAutoHideByListKey: {
+        "notification-1": {
+          deadlineMs: null,
+          pausedRemainingMs: 1_000,
+          durationMs: 1_000,
+        },
+      },
+    });
+
+    renderHook(() => useVisibleNotifications({ autoCleanup: true }), {
+      wrapper: test.wrapper,
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(59_000);
+    });
+
+    expect(useNotificationsStore.getState().notifications).toHaveLength(1);
+
+    act(() => {
+      vi.advanceTimersByTime(2_000);
+    });
+
+    expect(useNotificationsStore.getState().notifications).toEqual([]);
+  });
+
   it("falls back to notification timeout when auto-hide state is missing", () => {
     useNotificationsStore.setState({
       notifications: [

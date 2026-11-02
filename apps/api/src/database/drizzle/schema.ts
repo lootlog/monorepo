@@ -71,6 +71,7 @@ export const npcTypeEnum = pgEnum("NpcType", [
   "TITAN",
   "COLOSSUS",
   "NPC",
+  "HERO_TRACKER",
 ]);
 
 export const itemTypeEnum = pgEnum("ItemType", [
@@ -410,6 +411,10 @@ export const timerTable = pgTable(
     wasReset: boolean("wasReset").default(false).notNull(),
     npc: jsonb("npc").notNull(),
     windowOpenedAt: timestamp("windowOpenedAt", { mode: "date", precision: 3 }),
+    entranceClosesAt: timestamp("entranceClosesAt", {
+      mode: "date",
+      precision: 3,
+    }),
     actorCharacterSnapshotId: integer("actorCharacterSnapshotId"),
     actorCharacterLvl: integer("actorCharacterLvl"),
     deletedAt: timestamp("deletedAt", { mode: "date", precision: 3 }),

@@ -206,6 +206,7 @@ it("keeps members who left the Discord server off map assignments", async () => 
             wasReset: false,
             npc: {},
             windowOpenedAt: null,
+            entranceClosesAt: null,
             actorCharacterSnapshotId: null,
             actorCharacterLvl: null,
             deletedAt: null,

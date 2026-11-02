@@ -403,6 +403,45 @@ describe("RuntimeStateProjection", () => {
     expect(adapter.getNpc).not.toHaveBeenCalled();
   });
 
+  it("keeps a Hero Tracker, whose template has no combat stats, and its entrance countdown", () => {
+    const adapter = createAdapter();
+    const projection = new RuntimeStateProjection({ adapter });
+    projection.bootstrap();
+    const position = { icon: { id: 9791 }, id: 190436, tpl: 190436, x: 17 };
+
+    projection.apply(
+      createEnvelope({
+        icons: [{ icon: "npc/tropiciel.gif", id: 9791 }],
+        npc_tpls: [
+          {
+            id: 190436,
+            level: 282,
+            nick: "Doświadczony Tropiciel Herosów",
+            resp_rand: 50,
+          },
+        ],
+        npcs: [{ ...position, y: 22, killSeconds: 663 }],
+      } satisfies GameEvent),
+    );
+
+    const claimed = useNpcsStore.getState().getNpc(190436);
+
+    expect(claimed).toMatchObject({
+      name: "Doświadczony Tropiciel Herosów",
+      level: 282,
+      weight: 0,
+      entranceClosesAt: expect.any(Number),
+    });
+    expect(adapter.getNpc).not.toHaveBeenCalled();
+
+    projection.apply(createEnvelope({ npcs: [{ ...position, y: 23 }] }));
+
+    expect(useNpcsStore.getState().getNpc(190436)).toMatchObject({
+      y: 23,
+      entranceClosesAt: claimed?.entranceClosesAt,
+    });
+  });
+
   it("uses the hero level for NPC templates with a zero elastic factor", () => {
     const adapter = createAdapter();
     const projection = new RuntimeStateProjection({ adapter });
