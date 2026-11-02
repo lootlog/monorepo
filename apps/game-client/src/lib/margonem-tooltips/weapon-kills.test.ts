@@ -18,7 +18,10 @@ const tipWindow: TipWindow = window;
 const heroItems = new Map<string, RuntimeTipItem>();
 
 // `firstRead` answers the hero's counters read that installation starts.
-const setUp = (firstRead?: () => Promise<Response>) => {
+const setUp = (
+  firstRead?: () => Promise<Response>,
+  gameTip = "<b>Item</b>",
+) => {
   setTestRuntimeGame({ hero: { characterId: "12345" }, world: "luvia" });
 
   const fetch = vi.fn<typeof globalThis.fetch>(() =>
@@ -34,11 +37,11 @@ const setUp = (firstRead?: () => Promise<Response>) => {
     }),
   );
 
-  tipWindow.MargoTipsParser = { getTip: () => "<b>Item</b>" };
+  tipWindow.MargoTipsParser = { getTip: () => gameTip };
   testRuntimeWindow.Engine = {
     items: { getItemById: (id: string) => heroItems.get(id) },
   };
-  const uninstall = installWeaponKillsTooltips();
+  let uninstall = installWeaponKillsTooltips();
 
   onTestFinished(() => {
     uninstall();
@@ -50,6 +53,10 @@ const setUp = (firstRead?: () => Promise<Response>) => {
   return {
     fetch,
     getTip: (item: RuntimeTipItem) => tipWindow.MargoTipsParser?.getTip(item),
+    reinstall: () => {
+      uninstall();
+      uninstall = installWeaponKillsTooltips();
+    },
   };
 };
 
@@ -70,10 +77,45 @@ it("adds the counter to a main weapon tip once the hero's counters arrive", asyn
 
   await waitFor(() => expect(weapon.setTip).toHaveBeenCalled());
 
-  expect(getTip(weapon)).toContain("Zabici gracze: 3");
+  expect(getTip(weapon)).toMatch(/Zabici gracze:.*>3</);
   expect(new URL(String(fetch.mock.calls[0]?.[0])).pathname).toBe(
     "/weapon-kills/luvia/12345",
   );
+});
+
+it("places the counter above the weapon's requirements and value", () => {
+  const requirements =
+    '<div class="item-tip-section s-9">Wymagany poziom: 300</div>';
+
+  const { getTip } = setUp(
+    undefined,
+    `<div class="item-tip-section s-8">Związany</div>${requirements}`,
+  );
+
+  setWeaponKills("555", 3);
+
+  const tip = getTip({ id: 555, cl: 1, own: 12345 }) ?? "";
+
+  expect(tip.indexOf("Zabici gracze")).toBeGreaterThan(tip.indexOf("Związany"));
+  expect(tip.indexOf("Zabici gracze")).toBeLessThan(tip.indexOf(requirements));
+});
+
+it("shows the counter once after reinstalling under another addon's wrapper", () => {
+  const { getTip, reinstall } = setUp();
+  const parser = tipWindow.MargoTipsParser;
+
+  if (!parser) throw new Error("The parser is not installed");
+
+  // Another addon wraps the tip builder on top of Lootlog's wrapper, so
+  // uninstalling cannot unwrap it before Lootlog installs again.
+  const lootlogGetTip = parser.getTip;
+  parser.getTip = (item) => lootlogGetTip(item);
+  reinstall();
+  setWeaponKills("555", 3);
+
+  const tip = getTip({ id: 555, cl: 1, own: 12345 }) ?? "";
+
+  expect(tip.split("Zabici gracze")).toHaveLength(2);
 });
 
 it("leaves the tips of other item classes unchanged", async () => {
@@ -113,7 +155,7 @@ it("retries a failed counter read shortly instead of holding it for minutes", as
   getTip(weapon);
   await waitFor(() => expect(weapon.setTip).toHaveBeenCalled());
 
-  expect(getTip(weapon)).toContain("Zabici gracze: 3");
+  expect(getTip(weapon)).toMatch(/Zabici gracze:.*>3</);
 });
 
 it("keeps a counter recorded while an older read was in flight", async () => {
@@ -134,5 +176,5 @@ it("keeps a counter recorded while an older read was in flight", async () => {
   // Let the read's response settle into the cache.
   await new Promise((resolve) => setTimeout(resolve, 10));
 
-  expect(getTip(weapon)).toContain("Zabici gracze: 4");
+  expect(getTip(weapon)).toMatch(/Zabici gracze:.*>4</);
 });

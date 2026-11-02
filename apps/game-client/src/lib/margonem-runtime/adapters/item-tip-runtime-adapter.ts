@@ -42,6 +42,10 @@ const MAIN_WEAPON_ST = 5;
  * calls `MargoTipsParser.getTip(item, cmpStats)`; the wrapper keeps the
  * receiver, arguments and return value, and a failing `extend` leaves the
  * game's html unchanged. Returns null while the parser is not loaded.
+ *
+ * Another addon may wrap `getTip` on top of this wrapper, which then cannot
+ * be unwrapped. Restoring therefore also turns it into a pass-through, so a
+ * reinstalled wrapper does not extend the same tip twice.
  */
 const isTipHtml = (value: unknown): value is string =>
   typeof value === "string";
@@ -54,11 +58,13 @@ export function wrapItemTipBuilder(
 
   if (!parser || !isRuntimeFunction(original)) return null;
 
+  let active = true;
+
   const wrapped: RuntimeFunction = function (...args) {
     const html = original.apply(this, args);
     const [item] = args;
 
-    if (!isTipHtml(html) || !isObjectRecord(item)) return html;
+    if (!active || !isTipHtml(html) || !isObjectRecord(item)) return html;
 
     try {
       return extend(item, html);
@@ -72,6 +78,8 @@ export function wrapItemTipBuilder(
   parser.getTip = wrapped;
 
   return () => {
+    active = false;
+
     if (parser.getTip === wrapped) parser.getTip = original;
   };
 }
