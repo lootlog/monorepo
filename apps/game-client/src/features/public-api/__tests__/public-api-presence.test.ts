@@ -135,14 +135,19 @@ describe("Public API presence over the realtime transport", () => {
 
     if (result.status !== "success") throw new Error("Expected success");
     expect(result.players.map(({ name }) => name)).toEqual(["Alt", "Hero"]);
-    expect(result.players[1]).toMatchObject({
-      isAfk: false,
-      mapName: "Karka-han",
+    expect(result.players[1]).toStrictEqual({
+      world: "alpha",
+      name: "Hero",
       lvl: 123,
+      icon: "hero.png",
+      prof: "w",
+      clan: { id: 15191, name: "Karhu", rank: 100 },
+      location: { map: "Karka-han", x: 1, y: 2 },
+      mapName: "Karka-han",
+      isAfk: false,
+      margonemAccountVerified: false,
+      updatedAt: Date.parse("2026-09-01T00:00:00.000Z"),
     });
-    expect(JSON.stringify(result)).not.toMatch(
-      /discord-1|user-1|session-|"(characterId|accountId)"/,
-    );
     expect(harness.fetchPresence).toHaveBeenCalledWith("guild-1", "alpha");
   });
   it("waits for the complete first snapshot before publishing buffered live changes", async () => {
