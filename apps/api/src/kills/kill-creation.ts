@@ -544,26 +544,16 @@ export const makeKillCreation = (
 
           if (!newMemberKill) return { guildId, updated: false };
 
-          const first = yield* cache
-            .setNx(
-              buildGuildKillDedupKey(guildId, {
-                world: data.world,
-                npcId,
-              }),
-              "1",
-              DEDUP_TTL_SECONDS,
-            )
-            .pipe(
-              Effect.mapError(
-                (cause) =>
-                  new KillCreationError({
-                    operation: "kills.dedup.guild",
-                    cause,
-                  }),
-              ),
-            );
-
-          if (first) yield* incrementGuild({ ...input, guildId }, periodStart);
+          // A failed guild write releases its claim, so a report from another
+          // member can still count the kill.
+          yield* writeOnce(
+            buildGuildKillDedupKey(guildId, {
+              world: data.world,
+              npcId,
+            }),
+            "kills.dedup.guild",
+            incrementGuild({ ...input, guildId }, periodStart),
+          );
 
           return { guildId, updated: true };
         }).pipe(

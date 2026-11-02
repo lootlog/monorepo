@@ -443,12 +443,19 @@ export const makeAutoTimer = (
             startedAt,
           );
 
-          const duplicate =
-            completedTimer ??
-            findSameEntranceTimer(previousTimer, entranceClosesAt);
+          if (completedTimer) {
+            // Redis records a result only after publication, so this is a
+            // committed attempt whose publication may not have happened.
+            return { _tag: "Unpublished" as const, projection: completedTimer };
+          }
 
-          if (duplicate) {
-            return { _tag: "Duplicate" as const, projection: duplicate };
+          const sameEntrance = findSameEntranceTimer(
+            previousTimer,
+            entranceClosesAt,
+          );
+
+          if (sameEntrance) {
+            return { _tag: "Duplicate" as const, projection: sameEntrance };
           }
 
           const actorCharacter = yield* upsertActorCharacter(
@@ -598,14 +605,14 @@ export const makeAutoTimer = (
 
           if (Predicate.isTagged(result, "Duplicate")) return response;
 
-          yield* ports.set(
-            dedupKey,
-            JSON.stringify(result.projection),
-            DEDUP_TTL_SECONDS,
-          );
+          // The dedup entry is written only after publication succeeds, so a
+          // retry of a failed attempt republishes instead of returning it.
           yield* ports.invalidateList(guildId);
 
-          if (result.migratedSyntheticNpcId !== null) {
+          if (
+            Predicate.isTagged(result, "Created") &&
+            result.migratedSyntheticNpcId !== null
+          ) {
             const deletion = {
               guildId,
               world: payload.world,
@@ -633,6 +640,14 @@ export const makeAutoTimer = (
               response,
             ),
           );
+          yield* ports.set(
+            dedupKey,
+            JSON.stringify(result.projection),
+            DEDUP_TTL_SECONDS,
+          );
+
+          if (Predicate.isTagged(result, "Unpublished")) return response;
+
           yield* ports
             .enqueueEventHeroCheck({
               guildId,

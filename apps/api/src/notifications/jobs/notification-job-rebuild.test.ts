@@ -692,6 +692,66 @@ describe("notification job rebuild", () => {
     }
   });
 
+  it("fails a timer fact whose rule could not be rebuilt so the consumer retries it", async () => {
+    const now = Date.now();
+
+    const fixture = await seedTimerNotifications({
+      rules: [timerRule(7, [101])],
+      links: [{ ruleId: 7, targetId: 1 }],
+      now,
+    });
+
+    try {
+      const rebuild = fixture.makeRebuild(false);
+      let failRebuild = true;
+
+      const events = makeNotificationsEvents({
+        store: makeNotificationEventStore(fixture.database),
+        scheduler: fixture.scheduler,
+        matching: fixture.matching,
+        guildTargets: makeNotificationGuildTargets(
+          fixture.database,
+          { selectable: () => Effect.die("channels must not be listed") },
+          fixture.scheduler,
+        ),
+        findGuilds: () => Effect.succeed([]),
+        delivery: () => Effect.void,
+        rebuild: {
+          ...rebuild,
+          rebuildTimer: (ruleIds, event) =>
+            failRebuild
+              ? Effect.fail(new Error("database unavailable"))
+              : rebuild.rebuildTimer(ruleIds, event),
+        },
+        logger: applicationLogger,
+      });
+
+      const event = {
+        guildId: "guild-1",
+        world: "fobos",
+        npcId: 101,
+        timerKey: "hero:101",
+        minSpawnTime: new Date(now + 90 * minute),
+        maxSpawnTime: new Date(now + 120 * minute),
+        npc: { name: "NPC 101" },
+      };
+
+      const failed = await fixture.boundary.run(
+        events.handleTimerUpdated(event).pipe(Effect.result),
+      );
+
+      expect(failed._tag).toBe("Failure");
+      expect(await fixture.jobs()).toEqual([]);
+
+      failRebuild = false;
+      await fixture.boundary.run(events.handleTimerUpdated(event));
+
+      expect((await fixture.jobs()).map(({ ruleId }) => ruleId)).toEqual([7]);
+    } finally {
+      await fixture.boundary.dispose();
+    }
+  });
+
   it("does not rebuild a timer for a rule disabled after it was listed", async () => {
     const now = Date.now();
 

@@ -137,7 +137,7 @@ const cacheKey = (
     guild.id,
     Buffer.from(
       stableJsonStringify({
-        params: { ...params, cursor: 0 },
+        params,
         visibilityScope: buildLootVisibilityCacheScope(permissions, roles),
       }),
     ).toString("base64url"),
@@ -307,16 +307,15 @@ export const makeLootsOperations = ({
     fetchLootsByGuildId: (guild, accessPolicy, roles, params) => {
       const permissions = getEffectiveCapabilities(accessPolicy);
 
-      const firstPage =
-        params.cursor === undefined ||
-        params.cursor === null ||
-        params.cursor <= 0;
+      const { cursor, ...firstPageParams } = params;
 
-      if (!firstPage) {
+      if (cursor !== undefined && cursor > 0) {
         return query.fetchLootsByGuildId(guild, permissions, roles, params);
       }
 
-      const key = cacheKey(guild, permissions, roles, params);
+      // A non-positive cursor means the first page; the cached page and the
+      // query must both read it without a cursor bound.
+      const key = cacheKey(guild, permissions, roles, firstPageParams);
       const wireCodec = makeJsonCodec(LootListResponse);
 
       return redis.getOrSetJsonEffect({
@@ -327,7 +326,12 @@ export const makeLootsOperations = ({
           parse: (text) => normalizeCachedLoots(wireCodec.parse(text)),
         },
         ttlSeconds: CACHE_TTL_SECONDS,
-        factory: query.fetchLootsByGuildId(guild, permissions, roles, params),
+        factory: query.fetchLootsByGuildId(
+          guild,
+          permissions,
+          roles,
+          firstPageParams,
+        ),
         onError: (error) =>
           logger.warn("Loots list cache unavailable", { error }),
       });
