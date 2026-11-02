@@ -136,9 +136,15 @@ describe("SocketProvider", () => {
     await waitFor(() =>
       expect(useGlobalStore.getState().socketState.joined).toBe(true),
     );
-    act(() =>
-      getSocket().emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: true }),
-    );
+    act(() => {
+      const game = useGameStore.getState().game;
+
+      if (!game) throw new Error("Expected current character");
+      useGameStore
+        .getState()
+        .replaceGame({ ...game, hero: { ...game.hero, stasis: true } });
+      getSocket().emit(GatewayEvent.PLAYER_PRESENCE_UPDATE);
+    });
     const firstCount = test.wire.frames.length;
     act(() => test.wire.close());
     expect(useGlobalStore.getState().socketState.joined).toBe(false);
@@ -183,9 +189,10 @@ describe("SocketProvider", () => {
 
     if (!game) throw new Error("Expected current character");
     act(() =>
-      useGameStore
-        .getState()
-        .replaceGame({ ...game, hero: { ...game.hero, characterId: "11" } }),
+      useGameStore.getState().replaceGame({
+        ...game,
+        hero: { ...game.hero, characterId: "11", stasis: false },
+      }),
     );
     expect(useGlobalStore.getState().socketState.joined).toBe(false);
     connection = "connection-3";

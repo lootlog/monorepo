@@ -7,11 +7,9 @@ import { create } from "zustand";
 
 type PartyState = {
   members: readonly RuntimePartyMember[];
-  revision: number;
   status: RuntimeStatus;
   clearParty: () => void;
   replaceParty: (members: readonly RuntimePartyMember[]) => void;
-  setMembers: (members: readonly RuntimePartyMember[]) => void;
 };
 
 const PARTY_MEMBER_FIELDS = [
@@ -25,9 +23,8 @@ const PARTY_MEMBER_FIELDS = [
   "profession",
 ] as const satisfies readonly (keyof RuntimePartyMember)[];
 
-export const usePartyStore = create<PartyState>()((set, get) => ({
+export const usePartyStore = create<PartyState>()((set) => ({
   members: [],
-  revision: 0,
   status: "uninitialized",
   clearParty: () =>
     set((state) => {
@@ -37,7 +34,6 @@ export const usePartyStore = create<PartyState>()((set, get) => ({
 
       return {
         members: Object.freeze([]),
-        revision: state.revision + 1,
         status: "uninitialized",
       };
     }),
@@ -55,9 +51,7 @@ export const usePartyStore = create<PartyState>()((set, get) => ({
 
       return {
         members: reconciled,
-        revision: state.revision + 1,
         status: "ready",
       };
     }),
-  setMembers: (members) => get().replaceParty(members),
 }));

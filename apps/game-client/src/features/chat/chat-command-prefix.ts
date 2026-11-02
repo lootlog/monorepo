@@ -3,7 +3,7 @@ export type ChatCommandMode = "notification" | "party";
 /** What the composer shows in place of a hidden prefix while nothing follows it. */
 export type ChatCommandHints = Record<ChatCommandMode, string>;
 
-/** Colour keys (`getTextColor`) shared with notification messages and gathering alerts. */
+/** Colour keys (`getNotificationColors`) shared with notification messages and gathering alerts. */
 export const CHAT_COMMAND_COLOR_KEYS = {
   notification: "message",
   party: "party-gathering",

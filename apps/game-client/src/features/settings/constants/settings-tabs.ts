@@ -1,3 +1,5 @@
+import { SETTINGS_MANIFEST } from "../settings-manifest";
+
 export const SETTINGS_DOMAIN_VALUES = [
   "general",
   "catching",
@@ -84,31 +86,20 @@ const DEFAULT_SETTINGS_PATH: SettingsPath = {
   subsection: "behavior",
 };
 
-const CATCHING_SETTINGS_PATH: SettingsPath = {
-  domain: "catching",
-  subsection: "catching",
-};
-
+/**
+ * A domain opens on its first subsection; tab ids persisted by earlier
+ * releases keep the destinations they had when they were retired.
+ */
 const SETTINGS_PATHS: Record<SettingsTabValue, SettingsPath> = {
-  general: DEFAULT_SETTINGS_PATH,
-  catching: CATCHING_SETTINGS_PATH,
-  servers: { domain: "servers", subsection: "visibility" },
-  appearance: { domain: "appearance", subsection: "npc-colors" },
-  chat: { domain: "chat", subsection: "chat-appearance" },
-  timers: { domain: "timers", subsection: "timer-behavior" },
-  notifications: {
-    domain: "notifications",
-    subsection: "notification-rules",
-  },
-  detector: { domain: "detector", subsection: "detector" },
-  mutes: { domain: "mutes", subsection: "muted-players" },
-  "battle-panel": { domain: "battle-panel", subsection: "battle-panel" },
-  pings: { domain: "pings", subsection: "pings" },
-  sounds: { domain: "sounds", subsection: "sounds" },
-  controls: { domain: "controls", subsection: "hotkeys" },
-  diagnostics: { domain: "diagnostics", subsection: "logs" },
-  information: { domain: "information", subsection: "build" },
-  "game-data": CATCHING_SETTINGS_PATH,
+  // SAFETY: the manifest declares every domain exactly once, which
+  // settings-manifest.test.ts checks against SETTINGS_DOMAIN_VALUES.
+  ...(Object.fromEntries(
+    SETTINGS_MANIFEST.map(({ id, subsections: [first] }) => [
+      id,
+      { domain: id, subsection: first.id },
+    ]),
+  ) as Record<SettingsDomainValue, SettingsPath>),
+  "game-data": { domain: "catching", subsection: "catching" },
   "hidden-timers": { domain: "timers", subsection: "hidden-timers" },
   "npc-detector": { domain: "detector", subsection: "detector" },
   "notification-mutes": { domain: "mutes", subsection: "muted-players" },

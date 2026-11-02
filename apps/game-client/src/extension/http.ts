@@ -1,6 +1,7 @@
 import { isPlainObject } from "es-toolkit";
 import { Schema } from "effect";
 import { API_URL, AUTH_API_URL, BATTLELOG_API_URL } from "@/config/api";
+import type { ExtensionHttpResponse } from "./protocol";
 
 const requestSchema = Schema.Struct({
   url: Schema.String.check(Schema.isMaxLength(8192)),
@@ -17,13 +18,6 @@ export type ExtensionHttpRequest = typeof requestSchema.Type;
 const decodeRequest = Schema.decodeUnknownSync(requestSchema, {
   onExcessProperty: "error",
 });
-
-export type ExtensionHttpResponse = {
-  status: number;
-  statusText: string;
-  headers: Record<string, string>;
-  body: string;
-};
 
 // Battle submissions include the complete fight event sequence.
 export const MAX_EXTENSION_HTTP_BYTES = 16 * 1024 * 1024;

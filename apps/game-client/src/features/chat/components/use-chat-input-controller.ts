@@ -241,7 +241,7 @@ export function useChatInputController({
 
   const clearReplyDraft = () => {
     if (handlesReplies)
-      useChatStore.getState().clearReplyDraft(selectedGuildId);
+      useChatStore.getState().clearReplyDraft(selectedGuildId ?? "");
   };
 
   const editorRef = useRef<ChatInputEditorHandle>(null);

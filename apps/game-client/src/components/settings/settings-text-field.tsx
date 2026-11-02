@@ -1,6 +1,7 @@
 import { Input, type InputVariant } from "@/components/ui/input";
 import { cn } from "cn";
-import { useState, type FC, type KeyboardEvent } from "react";
+import type { FC, KeyboardEvent } from "react";
+import { useSourceDraft } from "./use-source-draft";
 
 type SettingsTextFieldProps = {
   id?: string;
@@ -30,14 +31,10 @@ export const SettingsTextField: FC<SettingsTextFieldProps> = ({
   className,
   onCommit,
 }) => {
-  const [draft, setDraft] = useState<{ source: string; text: string } | null>(
-    null,
-  );
-
-  const text = draft && draft.source === value ? draft.text : value;
+  const [text, setText, clearDraft] = useSourceDraft(value, value);
 
   const commit = () => {
-    setDraft(null);
+    clearDraft();
 
     if (text !== value) onCommit(text);
   };
@@ -51,7 +48,7 @@ export const SettingsTextField: FC<SettingsTextFieldProps> = ({
     // Escape reverts the draft; consuming it keeps the window open.
     if (event.key === "Escape") {
       event.preventDefault();
-      setDraft(null);
+      clearDraft();
       event.currentTarget.blur();
     }
   };
@@ -65,9 +62,7 @@ export const SettingsTextField: FC<SettingsTextFieldProps> = ({
       disabled={disabled}
       aria-label={ariaLabel}
       variant={variant}
-      onChange={(event) =>
-        setDraft({ source: value, text: event.target.value })
-      }
+      onChange={(event) => setText(event.target.value)}
       onBlur={commit}
       onKeyDown={handleKeyDown}
       className={cn(className)}

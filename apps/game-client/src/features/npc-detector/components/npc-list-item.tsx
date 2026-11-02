@@ -19,8 +19,7 @@ import type {
 import { AlertTriangle, Megaphone, Users, XIcon } from "lucide-react";
 import {
   getArrivalStrength,
-  getBackgroundColor,
-  getBorderColor,
+  getNotificationColors,
 } from "@/utils/notifications-and-detector/background";
 import { resolveNpcNotificationRouting } from "@/utils/notifications-and-detector/npc-notification";
 import type { useWindowsStore } from "@/store/windows.store";
@@ -48,7 +47,7 @@ type NpcListItemProps = {
     | "startNpcPartyGathering"
   >;
   removeNpc: NpcDetectorState["removeNpc"];
-  setNpcState: NpcDetectorState["setNpcState"];
+  setNpcStates: NpcDetectorState["setNpcStates"];
   setOpen: ReturnType<typeof useWindowsStore.getState>["setOpen"];
   npcTypeColors?: NpcTypeColors;
 };
@@ -62,7 +61,7 @@ export const NpcListItem = ({
   hasMultipleNpcs,
   orchestration,
   removeNpc,
-  setNpcState,
+  setNpcStates,
   setOpen,
   npcTypeColors,
 }: NpcListItemProps) => {
@@ -83,50 +82,35 @@ export const NpcListItem = ({
     npcLevel: npc.lvl,
   });
 
-  const key = npcType;
-
-  const handleRemoveNpc = (npcId: number) => {
-    removeNpc(npcId);
-  };
-
   const handleOpenDetectorSettings = () => {
     setOpen("settings", true, {
       activeTab: "npc-detector" satisfies SettingsTabValue,
     });
   };
 
-  const handleSendNotification = async (npc: GameNpcWithLocation) => {
-    if (resolvedGuildIds.length === 0) {
-      showRuntimeMessage(t("actions.noMatchingGuilds"));
+  // Only the cooldown changes: the detection may have moved or updated while
+  // the request was in flight.
+  const markNotificationSent = () =>
+    setNpcStates([{ npcId: npc.id, npc: { notificationSentAt: Date.now() } }]);
 
-      return;
-    }
-
-    if (!npc || !world) return;
-
-    const markNotificationSent = () => {
-      setNpcState(npc.id, {
-        ...npc,
-        notificationSentAt: Date.now(),
-      });
+  // Both actions show only while routing resolves an Organization.
+  const handleSendNotification = async () => {
+    const markAlertSent = () => {
+      markNotificationSent();
 
       if (selectOwnedReadyRoom(readReadyRoomCache()))
         setOpen("party-finder", true);
     };
 
     try {
-      await startNpcNotification({
-        npc,
-        guildIds: resolvedGuildIds,
-        world,
-      });
-      markNotificationSent();
+      await startNpcNotification({ npc, guildIds: resolvedGuildIds, world });
+      markAlertSent();
     } catch (error) {
       if (error instanceof NotificationChatPublishError) {
         console.warn("Failed to publish notification to chat:", error.cause);
         // The alert was accepted, so the row leaves its sendable state:
         // another alert would reopen the recipients' alarm.
-        markNotificationSent();
+        markAlertSent();
         showRuntimeMessage(t("actions.chatPublishFailed"));
 
         return;
@@ -137,40 +121,18 @@ export const NpcListItem = ({
     }
   };
 
-  const handleGatherParty = async (npc: GameNpcWithLocation) => {
-    if (resolvedGuildIds.length === 0) {
-      showRuntimeMessage(t("actions.noMatchingGuilds"));
-
-      return;
-    }
-
-    if (!npc || !world) return;
-
+  const handleGatherParty = async () => {
     try {
-      await startNpcPartyGathering({
-        npc,
-        guildIds: resolvedGuildIds,
-        world,
-      });
-
-      setNpcState(npc.id, {
-        ...npc,
-        notificationSentAt: Date.now(),
-      });
+      await startNpcPartyGathering({ npc, guildIds: resolvedGuildIds, world });
+      markNotificationSent();
     } catch (error) {
       console.warn("Failed to gather party:", error);
       showRuntimeMessage(t("actions.gatherPartyFailed"));
     }
   };
 
-  const background = getBackgroundColor(
-    key,
-    settingsByNpcType?.highlight,
-    npcTypeColors,
-  );
-
-  const borderColor = getBorderColor(
-    key,
+  const colors = getNotificationColors(
+    npcType,
     settingsByNpcType?.highlight,
     npcTypeColors,
   );
@@ -180,7 +142,7 @@ export const NpcListItem = ({
 
   return (
     <ListRow
-      fill={background}
+      fill={colors.background}
       className={cn(
         "ll:relative ll:h-full ll:gap-1.5 ll:overflow-hidden ll:font-normal",
         shouldPlayDetectionAnimation && "ll-row-settle",
@@ -189,8 +151,8 @@ export const NpcListItem = ({
       {shouldPlayDetectionAnimation ? (
         <ListRowArrival
           key={detectionAnimationCycle}
-          accent={borderColor}
-          strength={getArrivalStrength(key)}
+          accent={colors.border}
+          strength={getArrivalStrength(npcType)}
         />
       ) : null}
       <NpcTile npc={npc} />
@@ -236,7 +198,7 @@ export const NpcListItem = ({
               disabled={
                 isSendingNpcNotification || npc.notificationSentAt !== null
               }
-              onClick={() => void handleSendNotification(npc)}
+              onClick={() => void handleSendNotification()}
             >
               {npc.notificationSentAt !== null ? (
                 <NpcNotificationCooldown
@@ -258,7 +220,7 @@ export const NpcListItem = ({
               }
               loading={isCreatingNpcPartyGathering}
               disabled={hasActivePartyGathering}
-              onClick={() => void handleGatherParty(npc)}
+              onClick={() => void handleGatherParty()}
             >
               <Users aria-hidden />
             </IconButton>
@@ -268,7 +230,7 @@ export const NpcListItem = ({
           <IconButton
             variant="quiet-destructive"
             label={t("actions.removeNpcAria")}
-            onClick={() => handleRemoveNpc(npc.id)}
+            onClick={() => removeNpc(npc.id)}
           >
             <XIcon aria-hidden />
           </IconButton>

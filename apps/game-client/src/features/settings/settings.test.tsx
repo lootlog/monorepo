@@ -40,7 +40,6 @@ describe("Settings", () => {
         size: { width: 640, height: 440 },
         state: {},
       },
-      currentWindowFocus: undefined,
       windowFocusHistory: [],
     }));
   });

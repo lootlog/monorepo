@@ -1,6 +1,7 @@
 /** Shared input and output schemas for the timers feature. */
 import * as Schema from "effect/Schema";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { MIN_RESP_BASE_SECONDS } from "@lootlog/domain/timers";
 import { ProfessionSchema } from "@lootlog/schema/loot";
 import {
   NonEmptyString,
@@ -125,8 +126,8 @@ export const HeroTrackerEntranceSecondsLeft = FiniteNumber.check(
 
 export const CreateAutoTimerRequest = Schema.Struct({
   respBaseSeconds: FiniteNumber.check(
-    Schema.isGreaterThanOrEqualTo(2).annotate({
-      expected: "a value greater than or equal to 2",
+    Schema.isGreaterThanOrEqualTo(MIN_RESP_BASE_SECONDS).annotate({
+      expected: `a value greater than or equal to ${MIN_RESP_BASE_SECONDS}`,
     }),
   ),
   respawnRandomness: Schema.optionalKey(FiniteNumber),

@@ -3,7 +3,7 @@ import type { FC } from "react";
 import { cn } from "cn";
 import { CHAT_COMMAND_COLOR_KEYS } from "@/features/chat/chat-command-prefix";
 import type { CommandMode } from "@/features/command/command-mode.helpers";
-import { getTextColor } from "@/utils/notifications-and-detector/background";
+import { getNotificationColors } from "@/utils/notifications-and-detector/background";
 
 const MODE_ICONS = {
   message: MessageSquare,
@@ -37,7 +37,10 @@ export const ChatComposeModeIcon: FC<ChatComposeModeIconProps> = ({
       style={
         mode === "message"
           ? undefined
-          : { color: getTextColor(CHAT_COMMAND_COLOR_KEYS[mode], true) }
+          : {
+              color: getNotificationColors(CHAT_COMMAND_COLOR_KEYS[mode], true)
+                .text,
+            }
       }
     />
   );

@@ -2,9 +2,9 @@ import { create } from "zustand";
 
 export type SettingsSaveStatus = "idle" | "saving" | "saved" | "error";
 
-export type SettingsKeySaveStatus = "saving" | "saved" | "error";
+export type SettingsSaveMarkStatus = "saving" | "saved" | "error";
 
-export type SettingsKeySaveMark = { status: SettingsKeySaveStatus; at: number };
+export type SettingsSaveMark = { status: SettingsSaveMarkStatus; at: number };
 
 /** How long a resolved per-key mark stays before it clears itself. */
 const KEY_MARK_VISIBLE_MS = 1500;
@@ -15,13 +15,14 @@ interface SettingsSaveStatusState {
   /** Re-sends the write that failed; set together with the "error" status. */
   retry: (() => void) | null;
   /**
-   * Save state per catalog key (`domain.path`) of the patches in flight, so a
-   * row can show which of its settings is being written. Resolved marks
-   * clear themselves after a moment.
+   * Save state per written item: a catalog key (`domain.path`) of the patches
+   * in flight, so a row can show which of its settings is being written, or
+   * another item a plain mutation saves (e.g. one character's Lootlogi).
+   * Resolved marks clear themselves after a moment.
    */
-  keyMarks: Record<string, SettingsKeySaveMark>;
+  keyMarks: Record<string, SettingsSaveMark>;
   setStatus: (status: SettingsSaveStatus, retry?: () => void) => void;
-  markKeys: (keys: readonly string[], status: SettingsKeySaveStatus) => void;
+  markKeys: (keys: readonly string[], status: SettingsSaveMarkStatus) => void;
 }
 
 const keyMarkTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
@@ -111,7 +112,7 @@ export const useSettingsKeysSaveMark = (
 ) =>
   useSettingsSaveStatusStore((state) => {
     if (!settingKeys || settingKeys.length === 0) return null;
-    let match: SettingsKeySaveMark | null = null;
+    let match: SettingsSaveMark | null = null;
 
     for (const [savedKey, mark] of Object.entries(state.keyMarks)) {
       if (!settingKeys.some((rowKey) => settingsKeyMatches(rowKey, savedKey))) {
@@ -139,9 +140,14 @@ export const useSettingsSaveStatus = () =>
 /**
  * Reports one write that runs outside the settings patch queue (a plain
  * mutation) to the title bar indicator, with a retry for the failed call.
+ * Keys marked "saving" for it follow the reported outcome.
  */
 export const reportSettingsSave = {
-  saving: () => useSettingsSaveStatusStore.getState().setStatus("saving"),
+  saving: (keys: readonly string[] = []) => {
+    const store = useSettingsSaveStatusStore.getState();
+    store.markKeys(keys, "saving");
+    store.setStatus("saving");
+  },
   saved: () => useSettingsSaveStatusStore.getState().setStatus("saved"),
   failed: (retry: () => void) =>
     useSettingsSaveStatusStore.getState().setStatus("error", retry),

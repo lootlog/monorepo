@@ -69,31 +69,19 @@ const observe = (observations: readonly PlayerRelationObservation[]) => {
   useSocialRelationsStore.getState().observePlayers(scopes, observations);
 };
 
-/** Learns from the relation each player on the map arrives with. */
-export function observeOtherEntries(
-  others: Readonly<Record<string, OtherEntry>>,
+/**
+ * Learns from the relation each player on the map arrives with: packet
+ * entries, or the handles of players already there when Lootlog started.
+ */
+export function observeOthers(
+  others: Readonly<Record<string, OtherEntry | OtherHandle>>,
 ): void {
   const observations: PlayerRelationObservation[] = [];
 
-  for (const [characterId, entry] of Object.entries(others)) {
-    const observation = toObservation(characterId, entry);
-
-    if (observation) observations.push(observation);
-  }
-
-  observe(observations);
-}
-
-/** Learns from players who were already on the map when Lootlog started. */
-export function observeOtherHandles(
-  handles: Readonly<Record<string, OtherHandle>>,
-): void {
-  const observations: PlayerRelationObservation[] = [];
-
-  for (const [characterId, handle] of Object.entries(handles)) {
+  for (const [characterId, other] of Object.entries(others)) {
     const observation = toObservation(
       characterId,
-      "d" in handle ? handle.d : handle,
+      "d" in other ? other.d : other,
     );
 
     if (observation) observations.push(observation);

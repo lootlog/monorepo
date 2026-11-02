@@ -25,12 +25,6 @@ type NpcsListProps = {
 
 const NPC_ROW_HEIGHT_PX = 40;
 
-const NPC_ROW_GAP_PX = 0;
-
-const NPC_LIST_PADDING_TOP_PX = 0;
-
-const NPC_ROW_STRIDE_PX = NPC_ROW_HEIGHT_PX + NPC_ROW_GAP_PX;
-
 const NPC_LIST_OVERSCAN = 4;
 
 const NPC_LIST_FALLBACK_HEIGHT_PX = 320;
@@ -58,7 +52,6 @@ export const NpcsList: FC<NpcsListProps> = ({
     clearDetectionAnimation,
     latestDetectionAnimationCycle,
     removeNpc,
-    setNpcState,
     setNpcStates,
   } = useNpcDetectorStore(
     useShallow((state) => ({
@@ -66,7 +59,6 @@ export const NpcsList: FC<NpcsListProps> = ({
       clearDetectionAnimation: state.clearDetectionAnimation,
       latestDetectionAnimationCycle: state.latestDetectionAnimationCycle,
       removeNpc: state.removeNpc,
-      setNpcState: state.setNpcState,
       setNpcStates: state.setNpcStates,
     })),
   );
@@ -151,16 +143,10 @@ export const NpcsList: FC<NpcsListProps> = ({
       ? 0
       : Math.min(
           itemCount - 1,
-          Math.max(
-            0,
-            Math.floor(
-              (viewport.scrollTop - NPC_LIST_PADDING_TOP_PX) /
-                NPC_ROW_STRIDE_PX,
-            ),
-          ),
+          Math.max(0, Math.floor(viewport.scrollTop / NPC_ROW_HEIGHT_PX)),
         );
 
-  const visibleItemCount = Math.ceil(viewportHeight / NPC_ROW_STRIDE_PX) + 1;
+  const visibleItemCount = Math.ceil(viewportHeight / NPC_ROW_HEIGHT_PX) + 1;
   const startIndex = Math.max(0, firstVisibleIndex - NPC_LIST_OVERSCAN);
 
   const endIndex = Math.min(
@@ -168,12 +154,7 @@ export const NpcsList: FC<NpcsListProps> = ({
     firstVisibleIndex + visibleItemCount + NPC_LIST_OVERSCAN,
   );
 
-  const totalHeight =
-    itemCount === 0
-      ? 0
-      : NPC_LIST_PADDING_TOP_PX +
-        itemCount * NPC_ROW_STRIDE_PX -
-        NPC_ROW_GAP_PX;
+  const totalHeight = itemCount * NPC_ROW_HEIGHT_PX;
 
   const visibleNpcs = npcs?.slice(startIndex, endIndex) ?? [];
 
@@ -190,17 +171,12 @@ export const NpcsList: FC<NpcsListProps> = ({
     endIndex,
     animationEffectsEnabled: motionEnabled,
     listContentRef,
-    rowStride: NPC_ROW_STRIDE_PX,
+    rowStride: NPC_ROW_HEIGHT_PX,
   });
 
   const renderedTotalHeight = Math.max(
     totalHeight,
-    ...exitingNpcRows.map(
-      (row) =>
-        NPC_LIST_PADDING_TOP_PX +
-        row.index * NPC_ROW_STRIDE_PX +
-        NPC_ROW_HEIGHT_PX,
-    ),
+    ...exitingNpcRows.map((row) => (row.index + 1) * NPC_ROW_HEIGHT_PX),
   );
 
   return (
@@ -225,7 +201,7 @@ export const NpcsList: FC<NpcsListProps> = ({
               className="ll-npc-list-row ll:absolute ll:left-0 ll:w-full"
               style={{
                 height: NPC_ROW_HEIGHT_PX,
-                top: NPC_LIST_PADDING_TOP_PX + npcIndex * NPC_ROW_STRIDE_PX,
+                top: npcIndex * NPC_ROW_HEIGHT_PX,
               }}
             >
               <NpcListItem
@@ -240,7 +216,7 @@ export const NpcsList: FC<NpcsListProps> = ({
                 hasMultipleNpcs={hasMultipleNpcs}
                 orchestration={orchestration}
                 removeNpc={removeNpc}
-                setNpcState={setNpcState}
+                setNpcStates={setNpcStates}
                 setOpen={setOpen}
               />
             </li>
@@ -253,7 +229,7 @@ export const NpcsList: FC<NpcsListProps> = ({
             className="ll:pointer-events-none ll:absolute ll:left-0 ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-right-3 ll:duration-short ll:ease-exit ll:transition-none"
             style={{
               height: NPC_ROW_HEIGHT_PX,
-              top: NPC_LIST_PADDING_TOP_PX + index * NPC_ROW_STRIDE_PX,
+              top: index * NPC_ROW_HEIGHT_PX,
             }}
             onAnimationEnd={(event) => {
               if (event.currentTarget !== event.target) return;
@@ -274,7 +250,7 @@ export const NpcsList: FC<NpcsListProps> = ({
               hasMultipleNpcs={hasMultipleNpcs}
               orchestration={orchestration}
               removeNpc={removeNpc}
-              setNpcState={setNpcState}
+              setNpcStates={setNpcStates}
               setOpen={setOpen}
             />
           </li>

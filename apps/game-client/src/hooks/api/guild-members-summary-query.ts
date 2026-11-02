@@ -1,6 +1,5 @@
 import type { UseQueryOptions } from "@tanstack/react-query";
 import {
-  getMembersControllerGetGuildMembersSummaryQueryKey,
   getMembersControllerGetGuildMembersSummaryQueryOptions as getGeneratedGuildMembersSummaryQueryOptions,
   type MembersControllerGetGuildMembersSummaryQueryError,
   type MembersControllerGetGuildMembersSummaryQueryResult,
@@ -31,9 +30,6 @@ type GuildMembersSummaryQueryOptions<
   query?: GuildMembersSummaryQuery<TData, TError>;
   request?: RequestInit;
 };
-
-export const getGuildMembersSummaryQueryKey =
-  getMembersControllerGetGuildMembersSummaryQueryKey;
 
 const withGuildMembersSummaryDefaults = <TData, TError>(
   options?: GuildMembersSummaryQueryOptions<TData, TError>,

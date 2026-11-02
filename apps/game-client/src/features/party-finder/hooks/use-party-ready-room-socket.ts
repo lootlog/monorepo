@@ -1,4 +1,7 @@
-import type { PartyReadyRoomClientUpdate } from "@lootlog/schema/party-ready-room";
+import {
+  decodePartyReadyRoomClientUpdate,
+  type PartyReadyRoomClientUpdate,
+} from "@lootlog/schema/party-ready-room";
 import { useEffect, useEffectEvent } from "react";
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
@@ -8,8 +11,14 @@ export function usePartyReadyRoomSocket(): void {
   const { socket, connected } = useSocket();
   const { applyUpdate } = useReadyRoomsCache();
 
-  const handleUpdate = useEffectEvent((update: PartyReadyRoomClientUpdate) => {
-    if (update.schemaVersion !== 3) {
+  // Gateway payloads are unchecked until here; an update this client cannot
+  // decode, such as a newer schema version, is skipped.
+  const handleUpdate = useEffectEvent((payload: PartyReadyRoomClientUpdate) => {
+    let update: PartyReadyRoomClientUpdate;
+
+    try {
+      update = decodePartyReadyRoomClientUpdate(payload);
+    } catch {
       return;
     }
 
@@ -19,8 +28,8 @@ export function usePartyReadyRoomSocket(): void {
   useEffect(() => {
     if (!socket || !connected) return;
 
-    const onUpdate = (update: PartyReadyRoomClientUpdate) => {
-      handleUpdate(update);
+    const onUpdate = (payload: PartyReadyRoomClientUpdate) => {
+      handleUpdate(payload);
     };
 
     socket.on(GatewayEvent.PARTY_READY_ROOM_UPDATE, onUpdate);

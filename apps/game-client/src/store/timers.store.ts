@@ -12,6 +12,7 @@ import {
   type CustomTimerList,
 } from "@lootlog/schema/timer-settings";
 import { NpcType } from "@/api/npcs.api";
+import { omit } from "es-toolkit";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { createChangedOnlyStorage } from "./changed-only-storage";
@@ -57,10 +58,10 @@ interface TimersState {
   timersFilters: Record<string, TimersFilters>;
   legacyTimersFilters: Record<string, TimersFilters>;
   initializeCharacterFilters: (scopeKey: string) => void;
-  timerFiltersEnabled?: boolean;
-  colorFiltersEnabled?: boolean;
-  timerFiltersSearchText?: string;
-  timersSortOrder?: "asc" | "desc";
+  timerFiltersEnabled: boolean;
+  colorFiltersEnabled: boolean;
+  timerFiltersSearchText: string;
+  timersSortOrder: "asc" | "desc";
   generalConfig: TimersGeneralConfig;
   setGeneralConfig: (config: TimersGeneralConfig) => void;
   displayConfig: TimersDisplayConfig;
@@ -76,13 +77,16 @@ interface TimersState {
   setTimerFiltersSearchText: (text: string) => void;
   hideTimer: (guildId: string, timerId: string) => void;
   revealTimer: (guildId: string, timerId: string) => void;
-  showExpiredTimerAlways: (world: string, timerKey: string) => void;
-  hideExpiredTimerAlways: (world: string, timerKey: string) => void;
+  setExpiredTimerAlwaysVisible: (
+    world: string,
+    timerKey: string,
+    visible: boolean,
+  ) => void;
   pinTimer: (guildId: string, timerId: string) => void;
   unpinTimer: (guildId: string, timerId: string) => void;
   setTimerColor: (npcName: string, color?: string) => void;
-  addCustomColor: (color: CustomTimerColor) => void;
-  updateCustomColor: (id: string, color: CustomTimerColor) => void;
+  /** Adds the colour or replaces the one with its id. */
+  setCustomColor: (color: CustomTimerColor) => void;
   deleteCustomColor: (id: string) => void;
   setDefaultColorName: (colorId: string, name: string) => void;
   updateDefaultColor: (
@@ -116,51 +120,59 @@ const DEFAULT_SELECTED_NPC_TYPES = [
 
 type StoredTimersFilters = Record<string, TimersFilters>;
 
-// Event hero timers were hero timers before version 8; a filter that showed
-// heroes keeps showing them.
-const withEventHeroType = (
+const withNpcType = (
   filters: StoredTimersFilters | undefined,
+  npcType: NpcType,
+  shouldAdd: (filter: TimersFilters) => boolean,
 ): StoredTimersFilters | undefined =>
   filters &&
   Object.fromEntries(
     Object.entries(filters).map(([key, filter]) => [
       key,
-      filter.selectedNpcTypes.includes(NpcType.HERO) &&
-      !filter.selectedNpcTypes.includes(NpcType.EVENT_HERO)
-        ? {
-            ...filter,
-            selectedNpcTypes: [...filter.selectedNpcTypes, NpcType.EVENT_HERO],
-          }
+      !filter.selectedNpcTypes.includes(npcType) && shouldAdd(filter)
+        ? { ...filter, selectedNpcTypes: [...filter.selectedNpcTypes, npcType] }
         : filter,
     ]),
   );
 
-// Hero Tracker timers are new in version 9; no stored filter could hide them.
-const withHeroTrackerType = (
-  filters: StoredTimersFilters | undefined,
-): StoredTimersFilters | undefined =>
-  filters &&
-  Object.fromEntries(
-    Object.entries(filters).map(([key, filter]) => [
-      key,
-      filter.selectedNpcTypes.includes(NpcType.HERO_TRACKER)
-        ? filter
-        : {
-            ...filter,
-            selectedNpcTypes: [
-              ...filter.selectedNpcTypes,
-              NpcType.HERO_TRACKER,
-            ],
-          },
-    ]),
-  );
-
 // Each type joins stored filters once, in the version that introduced it; a
-// later choice to hide it stays.
+// later choice to hide it stays. Event hero timers were hero timers before
+// version 8, so a filter that showed heroes keeps showing them; Hero Tracker
+// timers are new in version 9, so no stored filter could hide them.
 const withNewNpcTypes = (
   filters: StoredTimersFilters | undefined,
   version: number,
-) => withHeroTrackerType(version < 8 ? withEventHeroType(filters) : filters);
+) =>
+  withNpcType(
+    version < 8
+      ? withNpcType(filters, NpcType.EVENT_HERO, (filter) =>
+          filter.selectedNpcTypes.includes(NpcType.HERO),
+        )
+      : filters,
+    NpcType.HERO_TRACKER,
+    () => true,
+  );
+
+/** Timer colours left without the given colour; its timers fall back to the default. */
+const withoutTimerColor = (
+  timersColors: TimersState["timersColors"],
+  colorId: string,
+) =>
+  Object.fromEntries(
+    Object.entries(timersColors).map(([npcName, value]) => [
+      npcName,
+      value === colorId ? undefined : value,
+    ]),
+  );
+
+/** Drops a default colour's custom look and name. */
+const withoutDefaultColorChanges = (
+  state: Pick<TimersState, "overriddenDefaultColors" | "defaultColorNames">,
+  colorId: string,
+) => ({
+  overriddenDefaultColors: omit(state.overriddenDefaultColors, [colorId]),
+  defaultColorNames: omit(state.defaultColorNames, [colorId]),
+});
 
 export const DEFAULT_TIMERS_FILTERS: TimersFilters = {
   minLvl: 0,
@@ -274,19 +286,13 @@ export const useTimersStore = create<TimersState>()(
           setGlobalSettings({ timersSortOrder: order });
         },
         toggleTimerFiltersEnabled: () => {
-          setWithTimestamp((state) => ({
-            timerFiltersEnabled: !state.timerFiltersEnabled,
-          }));
-          syncTimerSettings({
-            timerFiltersEnabled: get().timerFiltersEnabled,
+          setGlobalSettings({
+            timerFiltersEnabled: !get().timerFiltersEnabled,
           });
         },
         toggleColorFiltersEnabled: () => {
-          setWithTimestamp((state) => ({
-            colorFiltersEnabled: !state.colorFiltersEnabled,
-          }));
-          syncTimerSettings({
-            colorFiltersEnabled: get().colorFiltersEnabled,
+          setGlobalSettings({
+            colorFiltersEnabled: !get().colorFiltersEnabled,
           });
         },
         setTimerFiltersSearchText: (text: string) => {
@@ -296,38 +302,17 @@ export const useTimersStore = create<TimersState>()(
           updateGuildTimerList("hiddenTimers", guildId, timerId, true),
         revealTimer: (guildId: string, timerId: string) =>
           updateGuildTimerList("hiddenTimers", guildId, timerId, false),
-        showExpiredTimerAlways: (world: string, timerKey: string) => {
-          const currentTimerKeys =
-            get().alwaysVisibleExpiredTimers[world] ?? [];
-
-          const updatedTimerKeys = [
-            ...new Set([...currentTimerKeys, timerKey]),
-          ];
-
-          const updatedAlwaysVisibleExpiredTimers = {
-            ...get().alwaysVisibleExpiredTimers,
-            [world]: updatedTimerKeys,
-          };
+        setExpiredTimerAlwaysVisible: (world, timerKey, visible) => {
+          const { alwaysVisibleExpiredTimers } = get();
+          const timerKeys = alwaysVisibleExpiredTimers[world] ?? [];
 
           setGlobalSettings({
-            alwaysVisibleExpiredTimers: updatedAlwaysVisibleExpiredTimers,
-          });
-        },
-        hideExpiredTimerAlways: (world: string, timerKey: string) => {
-          const currentTimerKeys =
-            get().alwaysVisibleExpiredTimers[world] ?? [];
-
-          const updatedTimerKeys = currentTimerKeys.filter(
-            (key) => key !== timerKey,
-          );
-
-          const updatedAlwaysVisibleExpiredTimers = {
-            ...get().alwaysVisibleExpiredTimers,
-            [world]: updatedTimerKeys,
-          };
-
-          setGlobalSettings({
-            alwaysVisibleExpiredTimers: updatedAlwaysVisibleExpiredTimers,
+            alwaysVisibleExpiredTimers: {
+              ...alwaysVisibleExpiredTimers,
+              [world]: visible
+                ? [...new Set([...timerKeys, timerKey])]
+                : timerKeys.filter((key) => key !== timerKey),
+            },
           });
         },
         pinTimer: (guildId: string, timerId: string) =>
@@ -342,37 +327,15 @@ export const useTimersStore = create<TimersState>()(
 
           setGlobalSettings({ timersColors: updatedTimersColors });
         },
-        addCustomColor: (color: CustomTimerColor) => {
-          const updatedCustomColors = {
-            ...get().customColors,
-            [color.id]: color,
-          };
-
-          setGlobalSettings({ customColors: updatedCustomColors });
-        },
-        updateCustomColor: (id: string, color: CustomTimerColor) => {
-          const updatedCustomColors = {
-            ...get().customColors,
-            [id]: color,
-          };
-
-          setGlobalSettings({ customColors: updatedCustomColors });
+        setCustomColor: (color: CustomTimerColor) => {
+          setGlobalSettings({
+            customColors: { ...get().customColors, [color.id]: color },
+          });
         },
         deleteCustomColor: (id: string) => {
-          const state = get();
-          const newCustomColors = { ...state.customColors };
-          delete newCustomColors[id];
-
-          const newTimersColors = { ...state.timersColors };
-          Object.keys(newTimersColors).forEach((npcName) => {
-            if (newTimersColors[npcName] === id) {
-              newTimersColors[npcName] = undefined;
-            }
-          });
-
           setGlobalSettings({
-            customColors: newCustomColors,
-            timersColors: newTimersColors,
+            customColors: omit(get().customColors, [id]),
+            timersColors: withoutTimerColor(get().timersColors, id),
           });
         },
         setDefaultColorName: (colorId: string, name: string) => {
@@ -398,16 +361,7 @@ export const useTimersStore = create<TimersState>()(
           });
         },
         resetDefaultColor: (colorId: string) => {
-          const state = get();
-
-          const overriddenDefaultColors = {
-            ...state.overriddenDefaultColors,
-          };
-
-          const defaultColorNames = { ...state.defaultColorNames };
-          delete overriddenDefaultColors[colorId];
-          delete defaultColorNames[colorId];
-          setGlobalSettings({ overriddenDefaultColors, defaultColorNames });
+          setGlobalSettings(withoutDefaultColorChanges(get(), colorId));
         },
         resetAllDefaultColors: () => {
           setGlobalSettings({
@@ -418,38 +372,19 @@ export const useTimersStore = create<TimersState>()(
         deleteDefaultColor: (colorId: string) => {
           const state = get();
 
-          const updatedHiddenDefaultColors = [
-            ...state.hiddenDefaultColors,
-            colorId,
-          ];
-
-          const updatedTimersColors = Object.fromEntries(
-            Object.entries(state.timersColors).map(([key, value]) =>
-              value === colorId ? [key, undefined] : [key, value],
-            ),
-          );
-
           setGlobalSettings({
-            hiddenDefaultColors: updatedHiddenDefaultColors,
-            timersColors: updatedTimersColors,
+            hiddenDefaultColors: [...state.hiddenDefaultColors, colorId],
+            timersColors: withoutTimerColor(state.timersColors, colorId),
           });
         },
         restoreDefaultColor: (colorId: string) => {
           const state = get();
 
-          const updatedHiddenDefaultColors = state.hiddenDefaultColors.filter(
-            (id) => id !== colorId,
-          );
-
-          const newOverriddenColors = { ...state.overriddenDefaultColors };
-          delete newOverriddenColors[colorId];
-          const newDefaultColorNames = { ...state.defaultColorNames };
-          delete newDefaultColorNames[colorId];
-
           setGlobalSettings({
-            hiddenDefaultColors: updatedHiddenDefaultColors,
-            overriddenDefaultColors: newOverriddenColors,
-            defaultColorNames: newDefaultColorNames,
+            hiddenDefaultColors: state.hiddenDefaultColors.filter(
+              (id) => id !== colorId,
+            ),
+            ...withoutDefaultColorChanges(state, colorId),
           });
         },
         addCustomList: (name: string, npcNames: string[] = []) => {

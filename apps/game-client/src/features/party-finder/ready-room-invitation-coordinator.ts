@@ -45,15 +45,6 @@ let pendingInvitation: PendingInvitation | null = null;
 
 let coordinatorGeneration = 0;
 
-function getOrganizerCharacterIdentity(
-  room: PartyReadyRoomOrganizerProjection,
-): ReadyRoomCharacterIdentity {
-  return {
-    accountId: room.organizerCharacter.accountId,
-    characterId: room.organizerCharacter.characterId,
-  };
-}
-
 function hasReadyRoomGameContext(
   room: PartyReadyRoomOrganizerProjection,
 ): boolean {
@@ -66,7 +57,7 @@ function hasReadyRoomGameContext(
     !isReadyRoomExpired(room) &&
     characterIdentitiesMatch(
       getCurrentReadyRoomCharacterIdentity(),
-      getOrganizerCharacterIdentity(room),
+      room.organizerCharacter,
     )
   );
 }
@@ -112,7 +103,10 @@ function captureInvitationIntent(
 
   return {
     notificationId: room.notificationId,
-    organizerCharacter: getOrganizerCharacterIdentity(room),
+    organizerCharacter: {
+      accountId: room.organizerCharacter.accountId,
+      characterId: room.organizerCharacter.characterId,
+    },
     participantIds: capturedParticipantIds,
   };
 }
@@ -126,8 +120,8 @@ function getCurrentIntentRoom(
     !projection ||
     projection.viewer !== "ORGANIZER" ||
     !characterIdentitiesMatch(
-      getOrganizerCharacterIdentity(projection),
       intent.organizerCharacter,
+      projection.organizerCharacter,
     ) ||
     !hasReadyRoomGameContext(projection)
   ) {

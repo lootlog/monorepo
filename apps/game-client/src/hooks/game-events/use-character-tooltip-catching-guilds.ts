@@ -3,12 +3,12 @@ import { characterTooltipCatchingGuildsCoordinator } from "@/lib/character-toolt
 import { appendCatchingGuildsTooltipSection } from "@/lib/margonem-tooltips/catching-guilds";
 import { refreshActiveOtherTooltip } from "@/lib/margonem-tooltips/patcher";
 import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
-import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
-import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
-
-const EMPTY_OWNERS_BY_CHARACTER_KEY = Object.freeze({});
+import {
+  EMPTY_SHIFT_VIEW_RECORD,
+  useShiftCatchingGuildsGuildId,
+} from "./use-shift-catching-guilds-guild-id";
 
 function refreshActiveOtherTooltipIfCurrent(key: string): void {
   const state = useCharacterTooltipCatchingGuildsStore.getState();
@@ -23,8 +23,8 @@ export function useCharacterTooltipCatchingGuilds(): void {
     (state) => state.isShiftPressed,
   );
 
-  const selectedGuildId = useSelectedLootlogGuildId();
-  const active = isShiftPressed && isConcreteLootlogGuildId(selectedGuildId);
+  const guildId = useShiftCatchingGuildsGuildId();
+  const active = guildId !== null;
 
   const activeOther = useCharacterTooltipCatchingGuildsStore((state) =>
     active ? state.activeOther : null,
@@ -39,7 +39,7 @@ export function useCharacterTooltipCatchingGuilds(): void {
   );
 
   const ownersByCharacterKey = useOnlineCharacterOwnersStore((state) =>
-    active ? state.ownersByCharacterKey : EMPTY_OWNERS_BY_CHARACTER_KEY,
+    active ? state.ownersByCharacterKey : EMPTY_SHIFT_VIEW_RECORD,
   );
 
   useEffect(() => {
@@ -98,18 +98,11 @@ export function useCharacterTooltipCatchingGuilds(): void {
   }, [active, activeOther, ownersByCharacterKey]);
 
   useEffect(() => {
-    if (
-      !isShiftPressed ||
-      !activeOther ||
-      !activeTarget ||
-      !isConcreteLootlogGuildId(selectedGuildId)
-    ) {
-      return;
-    }
+    if (!activeOther || !activeTarget) return;
 
     characterTooltipCatchingGuildsCoordinator.prioritize(activeTarget);
     refreshActiveOtherTooltipIfCurrent(activeTarget.key);
-  }, [activeOther, activeTarget, isShiftPressed, selectedGuildId]);
+  }, [activeOther, activeTarget, guildId]);
 
   useEffect(() => {
     if (!isShiftPressed || !activeTarget || !activeEntry) return;

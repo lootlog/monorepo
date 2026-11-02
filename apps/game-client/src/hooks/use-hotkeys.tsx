@@ -1,10 +1,5 @@
 import { useWindowsStore, type WindowId } from "@/store/windows.store";
-import {
-  HOTKEY_ACTIONS,
-  useHotkeysStore,
-  type HotkeyActionConfig,
-  type HotkeyBinding,
-} from "@/store/hotkeys.store";
+import { useHotkeysStore, type HotkeyBinding } from "@/store/hotkeys.store";
 import { useEffect, useRef } from "react";
 import {
   canEnqueueReadyRoomInvitations,
@@ -14,7 +9,7 @@ import { toggleCharacterDetectorAutoSend } from "@/features/npc-detector/charact
 import {
   createPingPressIdentity,
   isSamePingPressIdentity,
-  type PingPressIdentity,
+  pingInteractionController,
 } from "@/features/pings/ping-interaction-controller";
 
 type HotkeyEvent = KeyboardEvent | MouseEvent;
@@ -68,9 +63,18 @@ const isEditableElementActive = () => {
   );
 };
 
-const hotkeyScopes = new Map<string, HotkeyActionConfig["scope"]>(
-  HOTKEY_ACTIONS.map(({ action, scope }) => [action, scope]),
-);
+const isPingActive = () =>
+  pingInteractionController.getActiveIdentity() !== null;
+
+/** The event releases the key or button that holds the active ping. */
+const releasesActivePing = (event: HotkeyEvent) => {
+  const activeIdentity = pingInteractionController.getActiveIdentity();
+
+  return (
+    activeIdentity !== null &&
+    isSamePingPressIdentity(activeIdentity, createPingPressIdentity(event))
+  );
+};
 
 export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
   // Callers pass fresh callbacks on every render. The listeners read the
@@ -84,7 +88,6 @@ export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
 
   const toggleOpen = useWindowsStore((state) => state.toggleOpen);
   const bindings = useHotkeysStore((s) => s.bindings);
-  const activePingIdentityRef = useRef<PingPressIdentity | null>(null);
 
   const handledMouseRef = useRef<{
     button: number;
@@ -114,11 +117,10 @@ export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
     };
 
     const cancelActivePing = () => {
-      if (!activePingIdentityRef.current) {
+      if (!isPingActive()) {
         return false;
       }
 
-      activePingIdentityRef.current = null;
       handlersRef.current.onPingCancel?.();
 
       return true;
@@ -138,55 +140,53 @@ export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
       ["toggle-detector-auto-send", toggleCharacterDetectorAutoSend],
     ]);
 
-    const executeAction = (event: HotkeyEvent) => {
-      for (const [action, binding] of Object.entries(bindings)) {
-        if (!matchesBinding(event, binding)) {
-          continue;
-        }
+    /**
+     * Runs the first binding the event matches, if `allows` lets it run, and
+     * returns its action; null when nothing ran.
+     */
+    const executeAction = (
+      event: HotkeyEvent,
+      allows: (action: string) => boolean = () => true,
+    ): string | null => {
+      const match = Object.entries(bindings).find(([, binding]) =>
+        matchesBinding(event, binding),
+      );
 
-        const quickAction = quickActions.get(action);
+      if (!match || !allows(match[0])) return null;
+      const [action] = match;
+      const isRepeat = event instanceof KeyboardEvent && event.repeat;
+      const quickAction = quickActions.get(action);
 
-        if (quickAction) {
-          if (event instanceof KeyboardEvent && event.repeat) return true;
-          quickAction();
+      if (quickAction) {
+        if (!isRepeat) quickAction();
 
-          return true;
-        }
-
-        const windowId = ACTION_TO_WINDOW.get(action);
-
-        if (windowId) {
-          toggleOpen(windowId);
-
-          return true;
-        }
-
-        if (action === "invite-all" && canEnqueueReadyRoomInvitations()) {
-          void enqueueReadyRoomInvitations().catch((cause: unknown) => {
-            console.warn("Failed to resolve party invitations", cause);
-          });
-
-          return true;
-        }
-
-        if (action === "map-ping") {
-          if (event instanceof KeyboardEvent && event.repeat) {
-            return activePingIdentityRef.current !== null;
-          }
-
-          const handled = handlersRef.current.onPingStart?.(event) ?? false;
-
-          if (handled) {
-            activePingIdentityRef.current = createPingPressIdentity(event);
-          }
-
-          return handled || activePingIdentityRef.current !== null;
-        }
-
-        return false;
+        return action;
       }
 
-      return false;
+      const windowId = ACTION_TO_WINDOW.get(action);
+
+      if (windowId) {
+        toggleOpen(windowId);
+
+        return action;
+      }
+
+      if (action === "invite-all" && canEnqueueReadyRoomInvitations()) {
+        void enqueueReadyRoomInvitations().catch((cause: unknown) => {
+          console.warn("Failed to resolve party invitations", cause);
+        });
+
+        return action;
+      }
+
+      if (action === "map-ping") {
+        const started =
+          !isRepeat && (handlersRef.current.onPingStart?.(event) ?? false);
+
+        return started || isPingActive() ? action : null;
+      }
+
+      return null;
     };
 
     // Margonem reads keys from a bubbling document listener and ignores
@@ -219,17 +219,8 @@ export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
-      const activeIdentity = activePingIdentityRef.current;
+      if (!releasesActivePing(event)) return;
 
-      if (
-        !activeIdentity ||
-        activeIdentity.kind !== "keyboard" ||
-        !isSamePingPressIdentity(activeIdentity, createPingPressIdentity(event))
-      ) {
-        return;
-      }
-
-      activePingIdentityRef.current = null;
       handlersRef.current.onPingEnd?.(event);
       event.preventDefault();
     };
@@ -237,41 +228,24 @@ export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
     const handleMouseDown = (event: MouseEvent) => {
       if (isRecordingBinding()) return;
 
-      const matchingAction = Object.entries(bindings).find(
-        ([action, binding]) =>
-          binding.type === "mouse" &&
-          matchesBinding(event, binding) &&
-          (hotkeyScopes.get(action) === "global" ||
-            hotkeyScopes.get(action) === "map-surface"),
+      // A map ping still starts while a text input keeps focus.
+      const action = executeAction(
+        event,
+        (matched) => matched === "map-ping" || !isEditableElementActive(),
       );
 
-      if (
-        !matchingAction ||
-        (isEditableElementActive() && matchingAction[0] !== "map-ping") ||
-        !executeAction(event)
-      ) {
-        return;
-      }
+      if (!action) return;
 
       event.preventDefault();
 
-      if (matchingAction[0] !== "map-ping") {
+      if (action !== "map-ping") {
         rememberHandledMouse(event);
       }
     };
 
     const handleMouseUp = (event: MouseEvent) => {
-      const activeIdentity = activePingIdentityRef.current;
+      if (!releasesActivePing(event)) return;
 
-      if (
-        !activeIdentity ||
-        activeIdentity.kind !== "mouse" ||
-        !isSamePingPressIdentity(activeIdentity, createPingPressIdentity(event))
-      ) {
-        return;
-      }
-
-      activePingIdentityRef.current = null;
       handlersRef.current.onPingEnd?.(event);
       event.preventDefault();
       rememberHandledMouse(event);

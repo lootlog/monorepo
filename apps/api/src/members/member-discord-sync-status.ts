@@ -1,3 +1,4 @@
+import { Option, Schema } from "effect";
 import {
   ApplicationError,
   applicationErrorStatus,
@@ -69,6 +70,12 @@ export function getTransientMemberSyncStatus(error: unknown): MemberSyncStatus {
       return MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE;
     }
 
+    const discordStatus = getDiscordHttpErrorStatus(error);
+
+    if (discordStatus !== null) {
+      return toDiscordHttpSyncStatus(discordStatus);
+    }
+
     return MEMBER_DISCORD_SYNC_STATUS.DISCORD_SERVICE_UNAVAILABLE;
   }
 
@@ -77,6 +84,32 @@ export function getTransientMemberSyncStatus(error: unknown): MemberSyncStatus {
   }
 
   return MEMBER_DISCORD_SYNC_STATUS.ERROR;
+}
+
+/**
+ * Discord is reachable and refused this member's request (for example 403),
+ * so the failure belongs to the member, not to Discord or Lootlog.
+ */
+export function isDiscordRefusalSyncStatus(status: MemberSyncStatus): boolean {
+  return /^DISCORD_HTTP_4\d\d$/.test(status);
+}
+
+// toDiscordRequestError keeps a Discord 4xx it has no dedicated error for as
+// DISCORD_HTTP_ERROR with Discord's status.
+const decodeDiscordHttpError = Schema.decodeUnknownOption(
+  Schema.Struct({
+    message: Schema.Literal("DISCORD_HTTP_ERROR"),
+    status: Schema.Number,
+  }),
+);
+
+function getDiscordHttpErrorStatus(
+  error: DependencyUnavailableError,
+): number | null {
+  return Option.match(decodeDiscordHttpError(error.getResponse()), {
+    onNone: () => null,
+    onSome: ({ status }) => status,
+  });
 }
 
 function getApplicationErrorMessage(error: ApplicationError): string | null {
