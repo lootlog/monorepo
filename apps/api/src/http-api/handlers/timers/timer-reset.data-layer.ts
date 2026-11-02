@@ -20,7 +20,6 @@ import {
   InvalidRequestError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
 
@@ -31,7 +30,7 @@ import {
   publishTimerUpdate,
   type TimerUpdatePorts,
 } from "./timer-update-publication.js";
-import { parseTimerNpc, timerNpcField } from "#src/timers/timer-projection";
+import { parseTimerNpc } from "#src/timers/timer-projection";
 import { canResetTimerNpc } from "@lootlog/domain/timers";
 
 export interface ResetTimerPorts extends TimerUpdatePorts {
@@ -208,31 +207,25 @@ export const makeResetTimer = (
             );
           }
 
-          const manual =
-            Number(timerNpcField(updated.npc, "margonemType")) ===
-            TIMER_TYPES.CUSTOM_MANUAL;
+          yield* transaction.insert(timerHistoryEntryTable).values({
+            ...getTimerHistoryValues(updated),
+            guildId: access.guild.id,
+            world: payload.world,
+            timerKey: updated.timerKey,
+            action: TimerHistoryAction.RESET,
+            actorMemberId: member.id,
+            actorCharacterSnapshotId: actorCharacter?.id,
+            actorCharacterLvl: actor?.lvl,
+            minSpawnTime,
+            maxSpawnTime,
+          });
 
-          if (!manual) {
-            yield* transaction.insert(timerHistoryEntryTable).values({
-              ...getTimerHistoryValues(updated),
-              guildId: access.guild.id,
-              world: payload.world,
-              timerKey: updated.timerKey,
-              action: TimerHistoryAction.RESET,
-              actorMemberId: member.id,
-              actorCharacterSnapshotId: actorCharacter?.id,
-              actorCharacterLvl: actor?.lvl,
-              minSpawnTime,
-              maxSpawnTime,
-            });
-
-            yield* pruneTimerHistory(
-              transaction,
-              access.guild.id,
-              payload.world,
-              updated.timerKey,
-            );
-          }
+          yield* pruneTimerHistory(
+            transaction,
+            access.guild.id,
+            payload.world,
+            updated.timerKey,
+          );
 
           return { ...updated, member, actorCharacter };
         }),

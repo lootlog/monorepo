@@ -1,17 +1,15 @@
 import type { NpcTypeSoundConfig } from "@lootlog/schema/sound-settings";
 import type { SettingsDomainResolution } from "@lootlog/schema/settings-documents";
-import type {
-  SettingsDocuments,
-  SettingsDocumentsFailure,
+import {
+  NEVER_STORED_AT,
+  type SettingsDocuments,
+  type SettingsDocumentsFailure,
 } from "#src/settings-documents/settings-documents.service";
-import { Effect, Schema, Predicate } from "effect";
+import { decodeSettingsRecord } from "@lootlog/domain/settings-paths";
+import { Effect, Predicate } from "effect";
 import type { UpdateSoundSettingsRequest } from "#src/contracts/sound-settings/schemas";
 
 type SoundConfigMap = Record<string, NpcTypeSoundConfig>;
-
-type SoundConfigPatch = Record<string, Partial<NpcTypeSoundConfig> | undefined>;
-
-type JsonValue = typeof Schema.Json.Type;
 
 type SoundEffect = Effect.Effect<unknown, SettingsDocumentsFailure>;
 
@@ -54,7 +52,6 @@ const getVolume = (value: unknown, fallback: number) =>
 const mergeSoundConfigMap = (
   storedValue: unknown,
   defaults: SoundConfigMap,
-  patch?: SoundConfigPatch,
 ): SoundConfigMap => {
   const merged: SoundConfigMap = structuredClone(defaults);
 
@@ -75,26 +72,8 @@ const mergeSoundConfigMap = (
     }
   }
 
-  if (patch) {
-    for (const [key, partialConfig] of Object.entries(patch)) {
-      if (!partialConfig) continue;
-      merged[key] = {
-        ...(merged[key] ?? { volume: 0.5, soundUrl: "" }),
-        ...partialConfig,
-      };
-    }
-  }
-
   return merged;
 };
-
-const soundConfigMapToJson = (configs: SoundConfigMap): JsonValue =>
-  Object.fromEntries(
-    Object.entries(configs).map(([key, config]) => [
-      key,
-      { volume: config.volume, soundUrl: config.soundUrl },
-    ]),
-  );
 
 const toCompatibilitySettings = (
   userId: string,
@@ -102,7 +81,7 @@ const toCompatibilitySettings = (
 ) => {
   const defaults = getDefaultSettingsData();
   const effective = resolution?.effective ?? {};
-  const updatedAt = resolution?.updatedAt ?? new Date();
+  const updatedAt = resolution?.updatedAt ?? NEVER_STORED_AT;
 
   return {
     userId,
@@ -150,34 +129,15 @@ export const makeSoundSettings = (
     getSettings,
     updateSettings: (userId, dto) =>
       Effect.gen(function* () {
-        const currentSettings = yield* getSettings(userId);
+        // The master volume is a device setting (`DEVICE_SETTINGS_CATALOG`);
+        // the route accepts it for old clients and never stores it.
+        const { masterVolume: _deviceLocalMasterVolume, ...patch } = dto;
 
-        const {
-          masterVolume: _deviceLocalMasterVolume,
-          notificationsConfig,
-          detectorConfig,
-          timersConfig,
-          ...scalarPatch
-        } = dto;
+        // Each changed leaf is written by path inside the document
+        // transaction, so concurrent patches of different sounds both land.
+        const set = decodeSettingsRecord(patch);
 
-        const set: Partial<
-          Record<keyof UpdateSoundSettingsRequest, JsonValue>
-        > = { ...scalarPatch };
-
-        const defaults = getDefaultSettingsData();
-
-        for (const [key, patch] of [
-          ["notificationsConfig", notificationsConfig],
-          ["detectorConfig", detectorConfig],
-          ["timersConfig", timersConfig],
-        ] as const) {
-          if (!patch) continue;
-          set[key] = soundConfigMapToJson(
-            mergeSoundConfigMap(currentSettings[key], defaults[key], patch),
-          );
-        }
-
-        if (Object.keys(set).length === 0) return currentSettings;
+        if (Object.keys(set).length === 0) return yield* getSettings(userId);
 
         const response = yield* settingsDocuments.patchPreferences(userId, {
           operations: [

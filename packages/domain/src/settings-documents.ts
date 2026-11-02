@@ -152,7 +152,6 @@ export const SETTINGS_CATALOG = {
     schemaVersion: 1,
     migrations: [],
     fields: {
-      guildsOrder: field<string[]>([], userScopes, isStringArray),
       allowWorldSelection: field(false, userScopes, isBoolean),
       // Exclusions keep newly joined Lootlogs and new NPC groups visible.
       "activityFeed.excludedGuildIds": field<readonly string[]>(
@@ -192,7 +191,6 @@ export const SETTINGS_CATALOG = {
       },
     ],
     fields: {
-      theme: field("default", userScopes, isString),
       "chat.npcLayout": field(
         CHAT_APPEARANCE_READABLE_PRESET.npcLayout,
         userScopes,
