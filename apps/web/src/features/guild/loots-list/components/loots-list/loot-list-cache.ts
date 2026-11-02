@@ -155,12 +155,19 @@ const placeLoot = (
   };
 };
 
+// Event pages and the HID lookup cache plain results under the same path as
+// the paged lists, so lists are told apart by their data.
+const LootPages = z.object({ pages: z.array(z.array(z.unknown())) });
+
+const isLootPages = (data: unknown): data is LootsInfiniteData =>
+  LootPages.safeParse(data).success;
+
 const cachedLootLists = (queryClient: QueryClient, guildId: string) => {
   const path = `/guilds/${guildId}/loots`;
 
   return queryClient
-    .getQueriesData<LootsInfiniteData>({ queryKey: [path] })
-    .filter(([key]) => key[0] === path);
+    .getQueriesData({ queryKey: [path] })
+    .filter(([key, data]) => key[0] === path && isLootPages(data));
 };
 
 /**
@@ -241,18 +248,16 @@ export async function reconcileActiveLootLists(
   const queryKey = [`/guilds/${guildId}/loots`];
   await queryClient.cancelQueries({ queryKey, type: "active" });
 
-  for (const [key] of queryClient.getQueriesData({
+  for (const [key, data] of queryClient.getQueriesData({
     queryKey,
     type: "active",
   })) {
-    queryClient.setQueryData<InfiniteData<Loot[]>>(key, (old) =>
-      old
-        ? {
-            pages: old.pages.slice(0, 1),
-            pageParams: [0],
-          }
-        : old,
-    );
+    if (!isLootPages(data)) continue;
+
+    queryClient.setQueryData<LootsInfiniteData>(key, {
+      pages: data.pages.slice(0, 1),
+      pageParams: [0],
+    });
   }
 
   // Inactive filters retain their history and become stale without HTTP work.
@@ -286,14 +291,17 @@ export async function clearLootPolicyData(
   await queryClient.cancelQueries(filters);
   queryClient.removeQueries({ ...filters, type: "inactive" });
 
-  for (const [key] of queryClient.getQueriesData({
+  for (const [key, data] of queryClient.getQueriesData({
     ...filters,
     type: "active",
   })) {
-    const isList = z.string().endsWith("/loots").safeParse(key[0]).success;
     queryClient.setQueryData(
       key,
-      isList ? { pages: [], pageParams: [] } : null,
+      isLootPages(data)
+        ? { pages: [], pageParams: [] }
+        : Array.isArray(data)
+          ? []
+          : null,
     );
   }
 
