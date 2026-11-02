@@ -465,3 +465,56 @@ describe("loot detail concurrent reads", () => {
     expect(reads).toBe(1_027);
   });
 });
+
+describe("loot list first page", () => {
+  it("reads and caches a non-positive cursor as the unbounded first page", async () => {
+    const reads: unknown[] = [];
+    const cachedKeys: string[] = [];
+
+    const operations = makeLootsOperations({
+      query: {
+        fetchLootById: () => Effect.die("Unexpected detail read"),
+        isLootVisible: () => Effect.succeed(true),
+        fetchLootsByGuildId: (_guild, _permissions, _roles, params) =>
+          Effect.sync(() => {
+            reads.push(params);
+
+            return [loot];
+          }),
+        resolveLootItemByHid: () => Effect.die("Unexpected item read"),
+        summarizeLootsByNpcName: () => Effect.die("Unexpected summary read"),
+        fetchOrganizationLoot: () => Effect.die("Unexpected snapshot read"),
+      },
+      persistence: {
+        archive: () => Effect.succeed(true),
+        listComments: () => Effect.succeed([]),
+        createComment: () => Effect.succeed({}),
+      },
+      stats: { invalidateCache: () => Effect.void },
+      redis: {
+        invalidateScopes: async () => undefined,
+        getOrSetJsonEffect: ({ key, factory }) => {
+          cachedKeys.push(key);
+
+          return factory;
+        },
+      },
+      logger: applicationLogger,
+    });
+
+    for (const params of [
+      { limit: 20 },
+      { limit: 20, cursor: 0 },
+      { limit: 20, cursor: -1 },
+    ]) {
+      const page = await Effect.runPromise(
+        operations.fetchLootsByGuildId(guild, policy, [role], params),
+      );
+
+      expect(page).toHaveLength(1);
+    }
+
+    expect(reads).toEqual([{ limit: 20 }, { limit: 20 }, { limit: 20 }]);
+    expect(new Set(cachedKeys).size).toBe(1);
+  });
+});

@@ -8,6 +8,7 @@ import type {
   eventHeroNpcTable,
   eventTable,
 } from "#src/database/drizzle/schema";
+import { randomUUID } from "node:crypto";
 import { RedisService } from "#src/redis/redis.service";
 import type { EventEmitter } from "#src/events/event-emitter";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -273,12 +274,10 @@ export const makeEventKills = (
       }
 
       // Try to acquire lock - if another request already has it, silently return
+      const lockToken = randomUUID();
+
       const lockAcquired = yield* runPromiseAdapter("redis.setNX", () =>
-        redis.setNX(
-          lockKey,
-          Date.now().toString(),
-          EVENT_KILL_LOCK_TTL_SECONDS,
-        ),
+        redis.setNX(lockKey, lockToken, EVENT_KILL_LOCK_TTL_SECONDS),
       );
 
       if (!lockAcquired) {
@@ -457,7 +456,10 @@ export const makeEventKills = (
 
       yield* recordWhileLocked.pipe(
         Effect.ensuring(
-          runPromiseAdapter("redis.del", () => redis.del(lockKey)).pipe(
+          // A lock that expired mid-write may belong to another request now.
+          runPromiseAdapter("redis.deleteIfValue", () =>
+            redis.deleteIfValue(lockKey, lockToken),
+          ).pipe(
             Effect.tapError((error) =>
               Effect.sync(() =>
                 logger.error({
@@ -539,6 +541,7 @@ export const makeEventKills = (
           maxSpawnTimeAtKill,
           timerCreatedById: timerData.memberId,
           isManualClose,
+          windowKey: getEventHeroKillWindowKey(timerData),
           mapIds: heroMapIds,
           assignmentOverlapStart: scoringWindowStartTime,
         },
@@ -682,6 +685,18 @@ export const makeEventKills = (
             return killPointsData;
           }),
       );
+
+      if (kill === null) {
+        logger.debug({
+          message:
+            "Skipping duplicate event hero kill - window already recorded",
+          guildId,
+          heroId: eventHero.id,
+          eventId: event.id,
+        });
+
+        return;
+      }
 
       if (kill.points.length > 0) {
         yield* pointsService.updateRankingAfterKill(event.id, kill.points);

@@ -1,4 +1,5 @@
-import { Effect, Result } from "effect";
+import { Effect, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type {
   DiscordGuildChannelDeletedEvent,
   DiscordNotificationDeliveryResultEvent,
@@ -27,6 +28,11 @@ export interface TimerDeletedEvent {
   readonly timerKey: string;
   readonly npcId?: number;
 }
+
+export class NotificationTimerRebuildError extends TaggedErrorClass<NotificationTimerRebuildError>()(
+  "NotificationTimerRebuildError",
+  { ruleIds: Schema.Array(Schema.Number) },
+) {}
 
 const causeMessage = (cause: unknown) =>
   cause instanceof Error ? cause.message : String(cause);
@@ -75,6 +81,16 @@ export const makeNotificationsEvents = (options: {
           `Failed to rebuild timer jobs for rule ${ruleId}: ${causeMessage(cause)}`,
         );
       }
+
+      // Rebuilding cancels and recreates a rule's jobs, so redelivering the
+      // whole fact is safe and keeps a failed rule from staying stale.
+      if (failures.length > 0) {
+        return yield* Effect.fail(
+          new NotificationTimerRebuildError({
+            ruleIds: failures.map(({ ruleId }) => ruleId),
+          }),
+        );
+      }
     },
   );
 
@@ -86,17 +102,13 @@ export const makeNotificationsEvents = (options: {
           sourceEntityId: timerSourceEntityId(event),
         })
         .pipe(
-          Effect.result,
-          Effect.tap((result) =>
-            Result.isFailure(result)
-              ? Effect.sync(() =>
-                  options.logger.error(
-                    `Failed to cancel pending jobs for deleted timer ${event.timerKey}: ${causeMessage(result.failure)}`,
-                  ),
-                )
-              : Effect.void,
+          Effect.tapError((cause) =>
+            Effect.sync(() =>
+              options.logger.error(
+                `Failed to cancel pending jobs for deleted timer ${event.timerKey}: ${causeMessage(cause)}`,
+              ),
+            ),
           ),
-          Effect.asVoid,
         ),
   );
 

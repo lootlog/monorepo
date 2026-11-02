@@ -5,6 +5,7 @@ import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { apiKeyCacheSuffix } from "#src/runtime/auth/organization-scope";
 import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -167,9 +168,11 @@ export const makeAccessibleGuilds = (
         const hasAccess = Boolean(
           owner ||
           (member?.active &&
-            member.roles.some((role) =>
-              role.permissions.includes(Permission.LOOTLOG_ACCESS),
-            )),
+            createAccessPolicy({
+              capabilities: member.roles.flatMap(
+                ({ permissions }) => permissions,
+              ),
+            }).allows(Permission.LOOTLOG_ACCESS)),
         );
 
         const lastSync = member?.lastDiscordSyncAt ?? member?.updatedAt;
