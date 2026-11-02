@@ -7,25 +7,15 @@ import { getOffsetPagination } from "./utils/offset-pagination";
 import {
   getKillsControllerGetGuildKillStatsQueryKey,
   useKillsControllerGetGuildKillStats,
-  type NpcType,
 } from "@lootlog/client/main";
 
+import { NPC_TYPES_STRONGEST_FIRST } from "@/constants/npc";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { buildGuildKillStatsParams } from "./utils/build-stats-query-params";
 
 const ITEMS_PER_PAGE = 20;
-
-const NPC_TYPE_ORDER: NpcType[] = [
-  "TITAN",
-  "COLOSSUS",
-  "HERO",
-  "ELITE3",
-  "ELITE2",
-  "ELITE",
-  "COMMON",
-];
 
 export const useStatsRankingModel = () => {
   const { t } = useTranslation();
@@ -119,7 +109,7 @@ export const useStatsRankingModel = () => {
   const { hasNext, hasPrev, handleNextPage, handlePreviousPage } =
     getOffsetPagination(cursor, total, ITEMS_PER_PAGE, setCursor);
 
-  const activeNpcTypes = NPC_TYPE_ORDER.filter((type) =>
+  const activeNpcTypes = NPC_TYPES_STRONGEST_FIRST.filter((type) =>
     memberRanking.some(
       (member) => (member.participationsByType[type] ?? 0) > 0,
     ),

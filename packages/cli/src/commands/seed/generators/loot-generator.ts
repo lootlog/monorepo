@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcType } from "@lootlog/domain/npc-type";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { SCRAPER_CONFIG, SEED_CONFIG } from "../config.js";
 import type { GeneratedPlayer } from "./players-generator.js";
@@ -237,7 +237,12 @@ export class LootGenerator {
           icon: npc.icon,
           name: npc.name,
           prof: getProfByShortname(npc.prof) ?? "WARRIOR",
-          type: getNpcTypeByWt(NpcTypeEnum, npc.wt, npc.prof, npc.type),
+          type: getNpcType(NpcTypeEnum, {
+            wt: npc.wt,
+            prof: npc.prof,
+            type: npc.type,
+            icon: npc.icon,
+          }),
           location,
           margonemType: npc.type,
         },

@@ -14,7 +14,7 @@ import {
   type EventNpcTemplatesById,
   getNpcTplFromEvent,
 } from "@/utils/game/events/get-npc-tpl-from-event";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcType } from "@lootlog/domain/npc-type";
 import {
   isDetectorNpcType,
   type DetectorNpcType,
@@ -251,12 +251,13 @@ export class NpcsDetectionProcessor {
                 prof: runtimeNpc.profession,
                 type: runtimeNpc.type,
                 wt: runtimeNpc.weight,
+                isHeroFromEvent: runtimeNpc.isHeroFromEvent,
               }
             : undefined);
 
         if (!tpl) return acc;
 
-        const npcType = getNpcTypeByWt(NpcType, tpl.wt, tpl.prof, tpl.type);
+        const npcType = getNpcType(NpcType, tpl);
 
         if (!isDetectorNpcType(npcType)) return acc;
 
@@ -331,12 +332,13 @@ export class NpcsDetectionProcessor {
       npcs.reduce<GameNpcWithLocation[]>((acc, npc) => {
         if (!npc) return acc;
 
-        const npcType = getNpcTypeByWt(
-          NpcType,
-          npc.weight,
-          npc.profession,
-          npc.type,
-        );
+        const npcType = getNpcType(NpcType, {
+          wt: npc.weight,
+          prof: npc.profession,
+          type: npc.type,
+          icon: npc.icon,
+          isHeroFromEvent: npc.isHeroFromEvent,
+        });
 
         if (!isDetectorNpcType(npcType)) return acc;
 
@@ -360,6 +362,7 @@ export class NpcsDetectionProcessor {
           prof: npc.profession,
           resp_rand: npc.respawnRandomness,
           type: npc.type,
+          isHeroFromEvent: npc.isHeroFromEvent,
           wt: npc.weight,
           x: npc.x,
           y: npc.y,

@@ -16,6 +16,7 @@ const NPC_TYPE_FILLS: Partial<Record<NpcType, string>> = {
   ELITE3: "bg-primary/85",
   COLOSSUS: "bg-primary/70",
   HERO: "bg-primary/45",
+  EVENT_HERO: "bg-primary/35",
   TITAN: "bg-primary/25",
 };
 
@@ -57,9 +58,11 @@ export const KillStatsOverview = ({
     <StatsTileGrid
       className={cn(
         "grid-cols-2 [&>:last-child:nth-child(even)]:col-span-2 lg:[&>:last-child:nth-child(even)]:col-span-1",
-        types.length > 4
-          ? "lg:grid-cols-[minmax(0,1.4fr)_repeat(5,minmax(0,1fr))]"
-          : "lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]",
+        types.length > 5
+          ? "lg:grid-cols-[minmax(0,1.4fr)_repeat(6,minmax(0,1fr))]"
+          : types.length > 4
+            ? "lg:grid-cols-[minmax(0,1.4fr)_repeat(5,minmax(0,1fr))]"
+            : "lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]",
       )}
     >
       <div

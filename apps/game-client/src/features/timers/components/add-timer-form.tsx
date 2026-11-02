@@ -35,6 +35,7 @@ const MANUAL_TIMER_NPC_TYPE_TRANSLATION_KEYS = {
   [CreateManualTimerDtoType.ELITE2]: "elite2",
   [CreateManualTimerDtoType.ELITE3]: "elite3",
   [CreateManualTimerDtoType.HERO]: "hero",
+  [CreateManualTimerDtoType.EVENT_HERO]: "event_hero",
   [CreateManualTimerDtoType.TITAN]: "titan",
 } as const satisfies Record<(typeof MANUAL_TIMER_NPC_TYPES)[number], string>;
 

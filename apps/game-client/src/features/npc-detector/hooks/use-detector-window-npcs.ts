@@ -1,7 +1,7 @@
 import { NpcType } from "@/api/npcs.api";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcType } from "@lootlog/domain/npc-type";
 import { getDetectorNpcSettings } from "@lootlog/schema/account-preferences";
 
 /**
@@ -13,7 +13,7 @@ export const useDetectorWindowNpcs = () => {
   const { settings } = useCurrentGameAccountDetectorSettings();
 
   const windowNpcs = npcs.filter((npc) => {
-    const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
+    const npcType = getNpcType(NpcType, npc);
     const settingsByNpcType = getDetectorNpcSettings(settings, npcType);
 
     return settingsByNpcType?.notifyWindow && settingsByNpcType?.detect;

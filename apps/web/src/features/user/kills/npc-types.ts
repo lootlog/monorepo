@@ -9,6 +9,7 @@ export const TRACKABLE_NPC_TYPES: NpcType[] = [
   KillsControllerGetUserKillStatsNpcTypesItem.TITAN,
   KillsControllerGetUserKillStatsNpcTypesItem.COLOSSUS,
   KillsControllerGetUserKillStatsNpcTypesItem.HERO,
+  KillsControllerGetUserKillStatsNpcTypesItem.EVENT_HERO,
   KillsControllerGetUserKillStatsNpcTypesItem.ELITE3,
   KillsControllerGetUserKillStatsNpcTypesItem.ELITE2,
 ];

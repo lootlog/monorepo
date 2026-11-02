@@ -4,8 +4,11 @@ import type {
   PartyGatheringNotification,
   StoredNotification,
 } from "@/store/notifications.store";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
-import type { DetectorNpcType } from "@lootlog/schema/account-preferences";
+import { getNpcType } from "@lootlog/domain/npc-type";
+import {
+  isDetectorNpcType,
+  type DetectorNpcType,
+} from "@lootlog/schema/account-preferences";
 import type {
   MutedNpcPreference,
   MutedPlayerPreference,
@@ -48,18 +51,13 @@ const getDetectorNpcType = (
     return null;
   }
 
-  const npcType = getNpcTypeByWt(NpcType, notification.npc.wt);
+  const npcType = getNpcType(NpcType, {
+    wt: notification.npc.wt,
+    icon: notification.npc.icon,
+    isHeroFromEvent: notification.npc.isHeroFromEvent,
+  });
 
-  if (
-    npcType !== NpcType.ELITE2 &&
-    npcType !== NpcType.HERO &&
-    npcType !== NpcType.COLOSSUS &&
-    npcType !== NpcType.TITAN
-  ) {
-    return null;
-  }
-
-  return npcType;
+  return isDetectorNpcType(npcType) ? npcType : null;
 };
 
 export const getNotificationNpcMuteKey = (

@@ -19958,6 +19958,9 @@ components:
               type: number
             icon:
               type: string
+            isHeroFromEvent:
+              type: boolean
+              description: Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it.
           required:
             - id
             - name
@@ -23155,6 +23158,21 @@ components:
                     - type: string
                       format: uri
               additionalProperties: false
+            EVENT_HERO:
+              type: object
+              properties:
+                volume:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                soundUrl:
+                  anyOf:
+                    - type: string
+                      enum:
+                        - ""
+                    - type: string
+                      format: uri
+              additionalProperties: false
             TITAN:
               type: object
               properties:
@@ -23234,6 +23252,21 @@ components:
                     - type: string
                       format: uri
               additionalProperties: false
+            EVENT_HERO:
+              type: object
+              properties:
+                volume:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                soundUrl:
+                  anyOf:
+                    - type: string
+                      enum:
+                        - ""
+                    - type: string
+                      format: uri
+              additionalProperties: false
             TITAN:
               type: object
               properties:
@@ -23299,6 +23332,21 @@ components:
                       format: uri
               additionalProperties: false
             HERO:
+              type: object
+              properties:
+                volume:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                soundUrl:
+                  anyOf:
+                    - type: string
+                      enum:
+                        - ""
+                    - type: string
+                      format: uri
+              additionalProperties: false
+            EVENT_HERO:
               type: object
               properties:
                 volume:
@@ -24555,6 +24603,9 @@ components:
               minLength: 1
             type:
               type: number
+            isHeroFromEvent:
+              type: boolean
+              description: Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it.
           required:
             - id
             - name
@@ -28366,6 +28417,9 @@ components:
               minLength: 1
             type:
               type: number
+            isHeroFromEvent:
+              type: boolean
+              description: Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it.
             x:
               type: number
             y:
@@ -28518,6 +28572,9 @@ components:
               minLength: 1
             type:
               type: number
+            isHeroFromEvent:
+              type: boolean
+              description: Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it.
             x:
               type: number
             y:
@@ -28923,6 +28980,9 @@ components:
                 minLength: 1
               type:
                 type: number
+              isHeroFromEvent:
+                type: boolean
+                description: Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it.
               x:
                 type: number
               y:
@@ -30494,6 +30554,7 @@ components:
             - ELITE2
             - ELITE3
             - HERO
+            - EVENT_HERO
             - TITAN
         customMinSpawnTime:
           type: string
@@ -31188,6 +31249,9 @@ components:
               type: string
             type:
               type: number
+            isHeroFromEvent:
+              type: boolean
+              description: Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it.
             x:
               type: number
             y:
@@ -32292,6 +32356,31 @@ components:
                 - guildIds
                 - sound
               additionalProperties: false
+            EVENT_HERO:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+              additionalProperties: false
             COLOSSUS:
               type: object
               properties:
@@ -32396,6 +32485,7 @@ components:
             - guildIds
             - ELITE2
             - HERO
+            - EVENT_HERO
             - COLOSSUS
             - TITAN
             - message
@@ -32474,6 +32564,26 @@ components:
                 - highlight
                 - notifySound
               additionalProperties: false
+            EVENT_HERO:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+              required:
+                - detect
+                - autoSend
+                - notifyWindow
+                - highlight
+                - notifySound
+              additionalProperties: false
             COLOSSUS:
               type: object
               properties:
@@ -32518,6 +32628,7 @@ components:
             - routingRules
             - ELITE2
             - HERO
+            - EVENT_HERO
             - COLOSSUS
             - TITAN
           additionalProperties: false
@@ -32589,6 +32700,25 @@ components:
                   type: boolean
               additionalProperties: false
             HERO:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              additionalProperties: false
+            EVENT_HERO:
               type: object
               properties:
                 show:
@@ -32732,6 +32862,20 @@ components:
                   type: boolean
               additionalProperties: false
             HERO:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+              additionalProperties: false
+            EVENT_HERO:
               type: object
               properties:
                 detect:
@@ -32885,6 +33029,7 @@ components:
                         enum:
                           - ELITE2
                           - HERO
+                          - EVENT_HERO
                           - COLOSSUS
                           - TITAN
                       lvl:
@@ -33212,6 +33357,7 @@ components:
                     enum:
                       - ELITE2
                       - HERO
+                      - EVENT_HERO
                       - COLOSSUS
                       - TITAN
                   lvl:
@@ -33345,6 +33491,7 @@ components:
                     enum:
                       - ELITE2
                       - HERO
+                      - EVENT_HERO
                       - COLOSSUS
                       - TITAN
                   lvl:

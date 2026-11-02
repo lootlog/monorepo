@@ -44,6 +44,7 @@ const buildNotificationNpcPayload = (npc: GameNpcWithLocation) => ({
   prof: npc.prof,
   icon: npc.icon,
   type: npc.type,
+  isHeroFromEvent: npc.isHeroFromEvent,
 });
 
 export const resolveNpcNotificationRouting = ({

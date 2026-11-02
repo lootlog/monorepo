@@ -23339,7 +23339,13 @@
                     },
                     "npcType": {
                       "type": "string",
-                      "enum": ["ELITE2", "HERO", "COLOSSUS", "TITAN"]
+                      "enum": [
+                        "ELITE2",
+                        "HERO",
+                        "EVENT_HERO",
+                        "COLOSSUS",
+                        "TITAN"
+                      ]
                     },
                     "lvl": {
                       "type": "integer",
@@ -23518,7 +23524,13 @@
                     },
                     "npcType": {
                       "type": "string",
-                      "enum": ["ELITE2", "HERO", "COLOSSUS", "TITAN"]
+                      "enum": [
+                        "ELITE2",
+                        "HERO",
+                        "EVENT_HERO",
+                        "COLOSSUS",
+                        "TITAN"
+                      ]
                     },
                     "lvl": {
                       "type": "integer",
@@ -23644,6 +23656,41 @@
                 "additionalProperties": false
               },
               "HERO": {
+                "type": "object",
+                "properties": {
+                  "show": {
+                    "type": "boolean"
+                  },
+                  "highlight": {
+                    "type": "boolean"
+                  },
+                  "ignoreOtherWorlds": {
+                    "type": "boolean"
+                  },
+                  "autoHideTimeout": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "sound": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "show",
+                  "highlight",
+                  "ignoreOtherWorlds",
+                  "guildIds",
+                  "sound"
+                ],
+                "additionalProperties": false
+              },
+              "EVENT_HERO": {
                 "type": "object",
                 "properties": {
                   "show": {
@@ -23823,6 +23870,7 @@
               "guildIds",
               "ELITE2",
               "HERO",
+              "EVENT_HERO",
               "COLOSSUS",
               "TITAN",
               "message",
@@ -23925,6 +23973,34 @@
                 ],
                 "additionalProperties": false
               },
+              "EVENT_HERO": {
+                "type": "object",
+                "properties": {
+                  "detect": {
+                    "type": "boolean"
+                  },
+                  "autoSend": {
+                    "type": "boolean"
+                  },
+                  "notifyWindow": {
+                    "type": "boolean"
+                  },
+                  "highlight": {
+                    "type": "boolean"
+                  },
+                  "notifySound": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "detect",
+                  "autoSend",
+                  "notifyWindow",
+                  "highlight",
+                  "notifySound"
+                ],
+                "additionalProperties": false
+              },
               "COLOSSUS": {
                 "type": "object",
                 "properties": {
@@ -23982,7 +24058,14 @@
                 "additionalProperties": false
               }
             },
-            "required": ["routingRules", "ELITE2", "HERO", "COLOSSUS", "TITAN"],
+            "required": [
+              "routingRules",
+              "ELITE2",
+              "HERO",
+              "EVENT_HERO",
+              "COLOSSUS",
+              "TITAN"
+            ],
             "additionalProperties": false
           },
           "pings": {
@@ -24076,6 +24159,34 @@
                 "additionalProperties": false
               },
               "HERO": {
+                "type": "object",
+                "properties": {
+                  "show": {
+                    "type": "boolean"
+                  },
+                  "highlight": {
+                    "type": "boolean"
+                  },
+                  "ignoreOtherWorlds": {
+                    "type": "boolean"
+                  },
+                  "autoHideTimeout": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "sound": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "EVENT_HERO": {
                 "type": "object",
                 "properties": {
                   "show": {
@@ -24279,6 +24390,27 @@
                 "additionalProperties": false
               },
               "HERO": {
+                "type": "object",
+                "properties": {
+                  "detect": {
+                    "type": "boolean"
+                  },
+                  "autoSend": {
+                    "type": "boolean"
+                  },
+                  "notifyWindow": {
+                    "type": "boolean"
+                  },
+                  "highlight": {
+                    "type": "boolean"
+                  },
+                  "notifySound": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "EVENT_HERO": {
                 "type": "object",
                 "properties": {
                   "detect": {
@@ -26126,6 +26258,10 @@
               "type": {
                 "type": "number"
               },
+              "isHeroFromEvent": {
+                "type": "boolean",
+                "description": "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it."
+              },
               "x": {
                 "type": "number"
               },
@@ -26251,7 +26387,7 @@
           },
           "type": {
             "type": "string",
-            "enum": ["ELITE2", "ELITE3", "HERO", "TITAN"]
+            "enum": ["ELITE2", "ELITE3", "HERO", "EVENT_HERO", "TITAN"]
           },
           "customMinSpawnTime": {
             "type": "string",
@@ -27577,6 +27713,10 @@
                 "type": {
                   "type": "number"
                 },
+                "isHeroFromEvent": {
+                  "type": "boolean",
+                  "description": "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it."
+                },
                 "x": {
                   "type": "number"
                 },
@@ -27958,6 +28098,10 @@
               "type": {
                 "type": "number"
               },
+              "isHeroFromEvent": {
+                "type": "boolean",
+                "description": "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it."
+              },
               "x": {
                 "type": "number"
               },
@@ -28127,6 +28271,10 @@
               },
               "type": {
                 "type": "number"
+              },
+              "isHeroFromEvent": {
+                "type": "boolean",
+                "description": "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it."
               },
               "x": {
                 "type": "number"
@@ -32508,6 +32656,10 @@
               },
               "type": {
                 "type": "number"
+              },
+              "isHeroFromEvent": {
+                "type": "boolean",
+                "description": "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it."
               }
             },
             "required": ["id", "name", "location", "lvl", "wt", "icon", "type"],
@@ -33933,6 +34085,29 @@
                 },
                 "additionalProperties": false
               },
+              "EVENT_HERO": {
+                "type": "object",
+                "properties": {
+                  "volume": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "soundUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [""]
+                      },
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
               "TITAN": {
                 "type": "object",
                 "properties": {
@@ -34054,6 +34229,29 @@
                 },
                 "additionalProperties": false
               },
+              "EVENT_HERO": {
+                "type": "object",
+                "properties": {
+                  "volume": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "soundUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [""]
+                      },
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
               "TITAN": {
                 "type": "object",
                 "properties": {
@@ -34153,6 +34351,29 @@
                 "additionalProperties": false
               },
               "HERO": {
+                "type": "object",
+                "properties": {
+                  "volume": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "soundUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [""]
+                      },
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "EVENT_HERO": {
                 "type": "object",
                 "properties": {
                   "volume": {
@@ -38063,6 +38284,10 @@
               },
               "icon": {
                 "type": "string"
+              },
+              "isHeroFromEvent": {
+                "type": "boolean",
+                "description": "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it."
               }
             },
             "required": ["id", "name", "lvl", "wt"],

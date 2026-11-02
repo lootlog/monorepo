@@ -136,6 +136,12 @@ export const CreateAutoTimerRequest = Schema.Struct({
     hpp: Schema.optionalKey(FiniteNumber),
     icon: Schema.String,
     type: FiniteNumber,
+    isHeroFromEvent: Schema.optionalKey(
+      Schema.Boolean.annotate({
+        description:
+          "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it.",
+      }),
+    ),
     x: Schema.optionalKey(FiniteNumber),
     y: Schema.optionalKey(FiniteNumber),
   }),
@@ -194,7 +200,7 @@ export const CreateManualTimerRequest = Schema.Struct({
   lvl: Schema.optionalKey(FiniteNumber),
   prof: Schema.optionalKey(Schema.String),
   type: Schema.optionalKey(
-    Schema.Literals(["ELITE2", "ELITE3", "HERO", "TITAN"]),
+    Schema.Literals(["ELITE2", "ELITE3", "HERO", "EVENT_HERO", "TITAN"]),
   ),
   customMinSpawnTime: Schema.optionalKey(DateTimeString),
   customMaxSpawnTime: Schema.optionalKey(DateTimeString),

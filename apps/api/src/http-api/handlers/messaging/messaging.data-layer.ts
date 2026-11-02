@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { v4 as uuid } from "uuid";
 
 import { Clock, Effect, Layer, Schema } from "effect";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcType } from "@lootlog/domain/npc-type";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { NOTIFICATION_SEND_PERMISSIONS } from "@lootlog/domain/npc-permissions";
@@ -244,12 +244,7 @@ export const makeMessagingDataLayer = (
                   npc: data.npc
                     ? {
                         ...data.npc,
-                        type: getNpcTypeByWt(
-                          NpcType,
-                          data.npc.wt,
-                          data.npc.prof,
-                          data.npc.type,
-                        ),
+                        type: getNpcType(NpcType, data.npc),
                       }
                     : undefined,
                 });
@@ -271,12 +266,7 @@ export const makeMessagingDataLayer = (
                       ...base,
                       npc: {
                         ...npc,
-                        type: getNpcTypeByWt(
-                          NpcType,
-                          npc.wt,
-                          npc.prof,
-                          npc.type,
-                        ),
+                        type: getNpcType(NpcType, npc),
                       },
                     };
 

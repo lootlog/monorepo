@@ -1,7 +1,7 @@
 import { MIN_NPC_WT, MIN_RESP_BASE_SECONDS } from "@/constants/margonem";
 import { SpecialE2 } from "@/constants/special-e2";
 import { NpcType } from "@/api/npcs.api";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcType } from "@lootlog/domain/npc-type";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
@@ -79,12 +79,13 @@ export class NpcsDeleteProcessor {
       if (!context) return;
       const elite2Name = SpecialE2.get(String(context.mapId)) || data.name;
 
-      const npcType = getNpcTypeByWt(
-        NpcType,
-        data.weight,
-        data.profession,
-        data.type,
-      );
+      const npcType = getNpcType(NpcType, {
+        wt: data.weight,
+        prof: data.profession,
+        type: data.type,
+        icon: data.icon,
+        isHeroFromEvent: data.isHeroFromEvent,
+      });
 
       const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.name;
 
@@ -106,6 +107,7 @@ export class NpcsDeleteProcessor {
           wt: data.weight,
           hpp: 0,
           type: data.type,
+          isHeroFromEvent: data.isHeroFromEvent,
           lvl: data.level,
           name: npcName,
           location: context.mapName,

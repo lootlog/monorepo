@@ -270,6 +270,12 @@ export const CreateLootRequest = Schema.Struct({
       hpp: Schema.optionalKey(FiniteNumber),
       icon: NonEmptyString,
       type: FiniteNumber,
+      isHeroFromEvent: Schema.optionalKey(
+        Schema.Boolean.annotate({
+          description:
+            "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it.",
+        }),
+      ),
       x: Schema.optionalKey(FiniteNumber),
       y: Schema.optionalKey(FiniteNumber),
     }),

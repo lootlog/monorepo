@@ -16,6 +16,8 @@ export const NpcRoutingDataSchema = Schema.Struct({
   wt: Schema.optionalKey(
     Schema.NullOr(Schema.Union([Schema.Number, Schema.String])),
   ),
+  icon: Schema.optionalKey(Schema.NullOr(Schema.String)),
+  isHeroFromEvent: Schema.optionalKey(Schema.Boolean),
 });
 
 export type NpcRoutingData = typeof NpcRoutingDataSchema.Type;

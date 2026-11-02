@@ -31,6 +31,7 @@ export type Npc = {
   wt: number;
   location: string;
   type: number;
+  isHeroFromEvent?: boolean;
 };
 
 export const getBattleParticipants = (
@@ -80,6 +81,7 @@ export const getBattleParticipants = (
         wt: npcData.weight,
         location: game?.map.name ?? "",
         type: npcData.type,
+        isHeroFromEvent: npcData.isHeroFromEvent,
       });
 
       return;

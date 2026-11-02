@@ -16,6 +16,8 @@ export type RuntimeNpc = Readonly<{
   groupId?: number;
   icon: string;
   id: number;
+  /** Margonem flags the template of a hero spawned by an event. */
+  isHeroFromEvent?: boolean;
   level: number;
   name: string;
   profession: string;

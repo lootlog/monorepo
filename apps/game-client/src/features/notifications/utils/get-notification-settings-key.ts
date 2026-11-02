@@ -1,10 +1,11 @@
 import { NpcType } from "@/api/npcs.api";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcType } from "@lootlog/domain/npc-type";
 import type { NotificationType } from "@lootlog/schema/account-preferences";
 
 const notificationSettingsKeys = [
   NpcType.ELITE2,
   NpcType.HERO,
+  NpcType.EVENT_HERO,
   NpcType.COLOSSUS,
   NpcType.TITAN,
   "message",
@@ -17,6 +18,8 @@ type NotificationSettingsKeySource = {
   type?: string;
   npc?: {
     wt?: number | null;
+    icon?: string;
+    isHeroFromEvent?: boolean;
   } | null;
 };
 
@@ -37,5 +40,9 @@ export const getNotificationSettingsKey = (
     return "message";
   }
 
-  return getNpcTypeByWt(NpcType, notification.npc.wt);
+  return getNpcType(NpcType, {
+    wt: notification.npc.wt,
+    icon: notification.npc.icon,
+    isHeroFromEvent: notification.npc.isHeroFromEvent,
+  });
 };

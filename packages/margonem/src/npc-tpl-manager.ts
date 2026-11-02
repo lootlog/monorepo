@@ -8,6 +8,7 @@ export type NpcTpl = {
   actions?: number;
   grp?: number;
   lvl: number;
+  isHeroFromEvent?: boolean;
 };
 
 export type NpcTplManager = {

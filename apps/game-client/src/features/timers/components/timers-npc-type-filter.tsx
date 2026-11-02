@@ -15,6 +15,7 @@ export const NPC_TYPE_FILTER_OPTIONS = [
   NpcType.ELITE2,
   NpcType.ELITE3,
   NpcType.HERO,
+  NpcType.EVENT_HERO,
   NpcType.TITAN,
 ];
 
