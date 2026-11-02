@@ -135,7 +135,7 @@ export function useEventCreateDialog({ onOpenChange }: EventCreateDialogProps) {
           if (guildId) {
             const listEventsQueryKey = getListEventsQueryKey(
               { guildId },
-              { activeOnly: "false" },
+              { activeOnly: false },
             );
 
             queryClient.setQueryData<EventListItemResponseDto[]>(

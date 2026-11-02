@@ -247,9 +247,9 @@ export const makeNotificationRuleOperations = (
                 Effect.as(rows[0]),
               )
             : Effect.fail(
-                new ResourceNotFoundError(
-                  NotificationError.NOTIFICATION_RULE_NOT_FOUND,
-                ),
+                new ResourceNotFoundError({
+                  code: NotificationError.NOTIFICATION_RULE_NOT_FOUND,
+                }),
               ),
         ),
       );
@@ -266,9 +266,9 @@ export const makeNotificationRuleOperations = (
         return rule
           ? Effect.succeed(rule)
           : Effect.fail(
-              new ResourceNotFoundError(
-                NotificationError.NOTIFICATION_RULE_NOT_FOUND,
-              ),
+              new ResourceNotFoundError({
+                code: NotificationError.NOTIFICATION_RULE_NOT_FOUND,
+              }),
             );
       }),
     );
@@ -281,9 +281,9 @@ export const makeNotificationRuleOperations = (
     Effect.gen(function* () {
       if (targetIds.length === 0) {
         return yield* Effect.fail(
-          new InvalidRequestError(
-            NotificationError.AT_LEAST_ONE_TARGET_REQUIRED,
-          ),
+          new InvalidRequestError({
+            code: NotificationError.AT_LEAST_ONE_TARGET_REQUIRED,
+          }),
         );
       }
 
@@ -301,9 +301,9 @@ export const makeNotificationRuleOperations = (
 
       if (rows.length !== targetIds.length) {
         return yield* Effect.fail(
-          new InvalidRequestError(
-            NotificationError.INVALID_NOTIFICATION_TARGETS,
-          ),
+          new InvalidRequestError({
+            code: NotificationError.INVALID_NOTIFICATION_TARGETS,
+          }),
         );
       }
 
@@ -340,9 +340,8 @@ export const makeNotificationRuleOperations = (
         if (ruleCount >= USER_RULE_LIMIT) {
           return yield* Effect.fail(
             new ResourceConflictError({
-              message: NotificationError.USER_NOTIFICATION_RULE_LIMIT_REACHED,
-              ruleLimit: USER_RULE_LIMIT,
-              ruleCount,
+              code: NotificationError.USER_NOTIFICATION_RULE_LIMIT_REACHED,
+              details: { ruleLimit: USER_RULE_LIMIT, ruleCount },
             }),
           );
         }
@@ -360,16 +359,17 @@ export const makeNotificationRuleOperations = (
 
       if (!guild) {
         return yield* Effect.fail(
-          new ResourceNotFoundError(NotificationError.GUILD_NOT_FOUND),
+          new ResourceNotFoundError({
+            code: NotificationError.GUILD_NOT_FOUND,
+          }),
         );
       }
 
       if (ruleCount >= guild.notificationRuleLimit) {
         return yield* Effect.fail(
           new ResourceConflictError({
-            message: NotificationError.GUILD_NOTIFICATION_RULE_LIMIT_REACHED,
-            ruleLimit: guild.notificationRuleLimit,
-            ruleCount,
+            code: NotificationError.GUILD_NOTIFICATION_RULE_LIMIT_REACHED,
+            details: { ruleLimit: guild.notificationRuleLimit, ruleCount },
           }),
         );
       }
@@ -540,17 +540,17 @@ export const makeNotificationRuleOperations = (
 
     if (!rule) {
       return yield* Effect.fail(
-        new ResourceNotFoundError(
-          NotificationError.NOTIFICATION_RULE_NOT_FOUND,
-        ),
+        new ResourceNotFoundError({
+          code: NotificationError.NOTIFICATION_RULE_NOT_FOUND,
+        }),
       );
     }
 
     if (!rule.enabled) {
       return yield* Effect.fail(
-        new ResourceConflictError(
-          NotificationError.ONLY_ENABLED_RULES_CAN_BE_TEST_TRIGGERED,
-        ),
+        new ResourceConflictError({
+          code: NotificationError.ONLY_ENABLED_RULES_CAN_BE_TEST_TRIGGERED,
+        }),
       );
     }
 
@@ -560,9 +560,9 @@ export const makeNotificationRuleOperations = (
 
     if (activeTargets.length === 0) {
       return yield* Effect.fail(
-        new ResourceConflictError(
-          NotificationError.NOTIFICATION_RULE_REQUIRES_ACTIVE_SENDABLE_TARGET,
-        ),
+        new ResourceConflictError({
+          code: NotificationError.NOTIFICATION_RULE_REQUIRES_ACTIVE_SENDABLE_TARGET,
+        }),
       );
     }
 
@@ -580,10 +580,12 @@ export const makeNotificationRuleOperations = (
 
       return yield* Effect.fail(
         new ResourceConflictError({
-          message: NotificationError.TEST_TRIGGER_LIMIT_REACHED_FOR_RULE,
-          limit: worst.limit,
-          windowSeconds: worst.windowSeconds,
-          nextAvailableAt: worst.nextAvailableAt,
+          code: NotificationError.TEST_TRIGGER_LIMIT_REACHED_FOR_RULE,
+          details: {
+            limit: worst.limit,
+            windowSeconds: worst.windowSeconds,
+            nextAvailableAt: worst.nextAvailableAt,
+          },
         }),
       );
     }
@@ -632,9 +634,9 @@ export const makeNotificationRuleOperations = (
 
     if (created.length === 0) {
       return yield* Effect.fail(
-        new ResourceConflictError(
-          NotificationError.NO_TEST_JOBS_CREATED_FOR_RULE,
-        ),
+        new ResourceConflictError({
+          code: NotificationError.NO_TEST_JOBS_CREATED_FOR_RULE,
+        }),
       );
     }
 

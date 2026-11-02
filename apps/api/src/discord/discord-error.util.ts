@@ -48,12 +48,9 @@ export function isDiscordUnauthorizedError(error: unknown): boolean {
 }
 
 function createDiscordRateLimitError(retryAfterMs?: number): ApplicationError {
-  const retryAfterSeconds =
-    retryAfterMs === undefined ? undefined : Math.ceil(retryAfterMs / 1000);
-
   return new RateLimitedError({
-    message: "DISCORD_RATE_LIMITED",
-    retryAfter: retryAfterSeconds,
+    code: "DISCORD_RATE_LIMITED",
+    retryAfterMs,
   });
 }
 
@@ -113,10 +110,7 @@ export function toDiscordRequestError(error: unknown): Error {
   const status = extractHttpStatus(error);
 
   if (status === HttpStatus.UNAUTHORIZED) {
-    return new AuthenticationRequiredError({
-      message: "DISCORD_UNAUTHORIZED",
-      requiresReauth: true,
-    });
+    return new AuthenticationRequiredError({ code: "DISCORD_UNAUTHORIZED" });
   }
 
   if (status === HttpStatus.NOT_FOUND) {
@@ -129,21 +123,15 @@ export function toDiscordRequestError(error: unknown): Error {
 
   if (status !== null && status >= 500) {
     return new DependencyUnavailableError({
-      message: "DISCORD_SERVICE_UNAVAILABLE",
-      status,
+      code: "DISCORD_SERVICE_UNAVAILABLE",
     });
   }
 
   if (status !== null) {
-    return new DependencyUnavailableError({
-      message: "DISCORD_HTTP_ERROR",
-      status,
-    });
+    return new DependencyUnavailableError({ code: "DISCORD_HTTP_ERROR" });
   }
 
-  return new DependencyUnavailableError({
-    message: "DISCORD_REQUEST_FAILED",
-  });
+  return new DependencyUnavailableError({ code: "DISCORD_REQUEST_FAILED" });
 }
 
 function getInvalidDiscordRequestStatus(

@@ -3,39 +3,20 @@ import type {
   EventWrappedLeaderDto,
   EventWrappedLeaderResultDto,
 } from "#src/events/wrapped/event-wrapped.model";
+import type { MemberSummary } from "#src/contracts/shared";
 
-type EventWrappedLeaderCandidate = {
-  memberId: number;
-  member?: { id: number; name: string; avatar: string | null };
-  name?: string;
-  avatar?: string | null;
-};
+type EventWrappedLeaderCandidate = { member: MemberSummary };
 
-const toLeader = <T extends EventWrappedLeaderCandidate>(
-  entry: T,
+const toLeader = (
+  { member: { id, name, avatar, userId } }: EventWrappedLeaderCandidate,
   primaryValue: number,
   secondaryValue: number | null,
-): EventWrappedLeaderDto => {
-  if (entry.member) {
-    return {
-      memberId: entry.member.id,
-      name: entry.member.name,
-      avatar: entry.member.avatar,
-      primaryValue: roundEventDisplayValue(primaryValue),
-      secondaryValue:
-        secondaryValue === null ? null : roundEventDisplayValue(secondaryValue),
-    };
-  }
-
-  return {
-    memberId: entry.memberId,
-    name: entry.name ?? "Unknown",
-    avatar: entry.avatar ?? null,
-    primaryValue: roundEventDisplayValue(primaryValue),
-    secondaryValue:
-      secondaryValue === null ? null : roundEventDisplayValue(secondaryValue),
-  };
-};
+): EventWrappedLeaderDto => ({
+  member: { id, name, avatar, userId },
+  primaryValue: roundEventDisplayValue(primaryValue),
+  secondaryValue:
+    secondaryValue === null ? null : roundEventDisplayValue(secondaryValue),
+});
 
 export const selectEventWrappedLeader = <T extends EventWrappedLeaderCandidate>(
   entries: T[],

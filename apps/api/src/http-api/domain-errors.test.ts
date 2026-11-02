@@ -168,13 +168,15 @@ const unusedTimers = {
 describe("domain errors across the HTTP boundary", () => {
   it.each([
     {
-      message: "USER_DM_TEST_TRIGGER_LIMIT_REACHED",
-      limit: 3,
-      windowSeconds: 3600,
-      nextAvailableAt: "2026-09-05T15:00:00Z",
+      code: "USER_DM_TEST_TRIGGER_LIMIT_REACHED",
+      details: {
+        limit: 3,
+        windowSeconds: 3600,
+        nextAvailableAt: "2026-09-05T15:00:00Z",
+      },
     },
-    { message: "USER_DISCORD_DM_TARGET_MUST_BE_ACTIVE_AND_CAN_SEND" },
-  ])("preserves notification conflict $message", async (body) => {
+    { code: "USER_DISCORD_DM_TARGET_MUST_BE_ACTIVE_AND_CAN_SEND" },
+  ])("preserves notification conflict $code", async (body) => {
     const result = await Effect.runPromise(
       Effect.scoped(
         Effect.gen(function* () {
@@ -222,7 +224,7 @@ describe("domain errors across the HTTP boundary", () => {
   });
 
   it("keeps a timer lock race a conflict through the event endpoint", async () => {
-    const body = { message: "TIMER_RACE_CONDITION" };
+    const body = { code: "TIMER_RACE_CONDITION" };
 
     const result = await Effect.runPromise(
       Effect.scoped(
@@ -282,7 +284,7 @@ describe("domain errors across the HTTP boundary", () => {
     expect(JSON.parse(result.text)).toEqual(body);
   });
   it("preserves the reason when restoring a timer conflicts", async () => {
-    const body = { message: "EXISTING_TIMER" };
+    const body = { code: "EXISTING_TIMER" };
     const failure = toTimersDataFailure(new ResourceConflictError(body));
 
     const services = Layer.mergeAll(

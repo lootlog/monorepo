@@ -11,11 +11,11 @@ describe("notification rejection messages", () => {
     ],
     ["USER_DM_TEST_TRIGGER_LIMIT_REACHED", "dmTestLimitReached"],
     ["USER_WATCHED_ITEM_LIMIT_REACHED", "watchLimitReached"],
-  ])("translates %s from the API response body", (message, key) => {
+  ])("translates %s from the API response body", (code, key) => {
     const translate = vi.fn((value: string) => `translated:${value}`);
 
     const error = new ApiError({
-      data: { message },
+      data: { code },
       message: "Conflict",
       method: "POST",
       status: 409,

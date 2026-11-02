@@ -1,6 +1,6 @@
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
-import { emptyStatusResponse } from "#src/shared/http/handler-response";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import {
   selectAccessibleGuilds,
   selectGuildIdsGrantingPermissions,
@@ -423,7 +423,7 @@ const orDieHttpFailure = <A, R>(
   effect: Effect.Effect<A, UserLootlogConfigHttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
-    UserLootlogConfigAccessDenied: emptyStatusResponse,
+    UserLootlogConfigAccessDenied: statusCodeResponse,
     UserLootlogConfigOperationError: (error) => Effect.die(error.cause),
   });
 

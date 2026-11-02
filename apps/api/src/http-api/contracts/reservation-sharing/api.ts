@@ -5,10 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import {
-  BearerSecurityMiddleware,
-  OrganizationWorkspaceErrorResponse,
-} from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   AcceptedReservationShareResponse,
   ReservationShareTokenPath,
@@ -30,9 +27,9 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     {
       params: ReservationSharingOrganizationPath,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
       ],
       success: ReservationSharesResponse,
     },
@@ -49,9 +46,9 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     {
       params: ReservationSharingOrganizationPath,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
       ],
       success: CreatedReservationShareInvitationResponse.pipe(
         HttpApiSchema.status(201),
@@ -70,9 +67,9 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     {
       params: ReservationShareInvitationPath,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
       ],
       success: HttpApiSchema.Empty(204),
     },
@@ -89,9 +86,9 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     {
       params: ReservationSharePath,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
       ],
       success: HttpApiSchema.Empty(204),
     },
@@ -105,10 +102,10 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
     {
       params: ReservationShareTokenPath,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(409)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(410)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(410)),
       ],
       success: ReservationShareInvitationPreviewResponse,
     },
@@ -123,10 +120,10 @@ export class ReservationSharingGroup extends HttpApiGroup.make(
       params: ReservationShareTokenPath,
       payload: AcceptReservationShareInvitationRequest,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(409)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(410)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(410)),
       ],
       success: AcceptedReservationShareResponse.pipe(HttpApiSchema.status(201)),
     },

@@ -20,10 +20,6 @@ const DISCORD_HTTP_SYNC_STATUS_PREFIX = "DISCORD_HTTP_";
 type MemberDiscordSyncStatusValue =
   (typeof MEMBER_DISCORD_SYNC_STATUS)[keyof typeof MEMBER_DISCORD_SYNC_STATUS];
 
-type ExceptionResponseWithMessage = {
-  message: string;
-};
-
 export type DiscordHttpSyncStatus =
   `${typeof DISCORD_HTTP_SYNC_STATUS_PREFIX}${number}`;
 
@@ -63,8 +59,7 @@ export function isRetryableMemberRefreshStatus(
 export function getTransientMemberSyncStatus(error: unknown): MemberSyncStatus {
   if (error instanceof DependencyUnavailableError) {
     if (
-      getApplicationErrorMessage(error) ===
-      MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE
+      error.body.code === MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE
     ) {
       return MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE;
     }
@@ -77,28 +72,4 @@ export function getTransientMemberSyncStatus(error: unknown): MemberSyncStatus {
   }
 
   return MEMBER_DISCORD_SYNC_STATUS.ERROR;
-}
-
-function getApplicationErrorMessage(error: ApplicationError): string | null {
-  const response = error.getResponse();
-
-  if (typeof response === "string") {
-    return response;
-  }
-
-  if (!hasMessage(response)) {
-    return null;
-  }
-
-  return response.message;
-}
-
-function hasMessage(
-  response: unknown,
-): response is ExceptionResponseWithMessage {
-  if (typeof response !== "object" || response === null) {
-    return false;
-  }
-
-  return "message" in response && typeof response.message === "string";
 }

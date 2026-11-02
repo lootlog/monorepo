@@ -5,10 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import {
-  BearerSecurityMiddleware,
-  OrganizationWorkspaceErrorResponse,
-} from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   ReservationResponse,
   ReservationSpotParams,
@@ -31,9 +28,9 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
     {
       params: OrganizationReservationParams,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
       ],
       success: ReservationSpotsResponse,
     },
@@ -51,10 +48,10 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
       params: ReservationSpotParams,
       query: ReservationWindowQuery,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(400)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
       ],
       success: ReservationWindowResponse,
     },
@@ -72,11 +69,11 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
       params: ReservationSpotParams,
       payload: CreateReservationRequest,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(409)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(422)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(422)),
       ],
       success: ReservationResponse.pipe(HttpApiSchema.status(201)),
     },
@@ -93,9 +90,9 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
     {
       params: OrganizationReservationParamsWithId,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
       ],
       success: HttpApiSchema.Empty(204),
     },
@@ -112,9 +109,9 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
     {
       params: ReservationSpotParams,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
       ],
       success: HttpApiSchema.Empty(204),
     },
@@ -128,9 +125,9 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
     {
       params: ReservationSpotParams,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(403)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
       ],
       success: HttpApiSchema.Empty(204),
     },
@@ -140,7 +137,7 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
     .annotate(OpenApi.Summary, "Unpin a reservation spot for the current user"),
   HttpApiEndpoint.get("listMyReservations", "/users/@me/reservations", {
     query: MyReservationsQuery,
-    error: [OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401))],
+    error: [HttpErrorResponse.pipe(HttpApiSchema.status(401))],
     success: MyReservationsResponse,
   })
     .middleware(BearerSecurityMiddleware)
@@ -152,8 +149,8 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
     {
       params: ReservationParams,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
       ],
       success: HttpApiSchema.Empty(204),
     },
@@ -168,10 +165,10 @@ export class ReservationsGroup extends HttpApiGroup.make("reservations").add(
       params: ReservationParams,
       payload: UpdateReservationRequest,
       error: [
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(401)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(404)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(409)),
-        OrganizationWorkspaceErrorResponse.pipe(HttpApiSchema.status(422)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(422)),
       ],
       success: ReservationResponse,
     },

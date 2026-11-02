@@ -15,8 +15,8 @@ afterEach(cleanup);
 describe("useEventKillHistory", () => {
   it("aborts a pending next page when the hero filter changes and loads the new history", async () => {
     const scope = { guildId: "guild-1", eventId: "event-1" };
-    const firstPage = { kind: "event", data: [], nextCursor: "next-page" };
-    const selectedHeroPage = { kind: "event", data: [], nextCursor: null };
+    const firstPage = { kind: "event", items: [], nextCursor: "next-page" };
+    const selectedHeroPage = { kind: "event", items: [], nextCursor: null };
     const requests: URL[] = [];
     const abortedRequests: URL[] = [];
 
@@ -90,7 +90,7 @@ describe("useEventKillHistory", () => {
     expect(
       client.getQueryData(
         getListEventKillHistoryQueryKey(scope, {
-          limit: "20",
+          limit: 20,
         }),
       ),
     ).toEqual({ pages: [firstPage], pageParams: [undefined] });
@@ -131,7 +131,7 @@ describe("useEventKillHistory", () => {
             return Response.json({
               kind: "member",
               member,
-              data: [
+              items: [
                 { ...firstKill, id: cursor ? "older-kill" : "first-kill" },
               ],
               nextCursor: cursor ? null : "history-cursor",
@@ -169,7 +169,7 @@ describe("useEventKillHistory", () => {
     await waitFor(() => expect(result.current.isFetchNextPageError).toBe(true));
     expect(
       result.current.data?.pages.flatMap((page) =>
-        page.data.map((kill) => kill.id),
+        page.items.map((kill) => kill.id),
       ),
     ).toEqual(["first-kill"]);
 
@@ -180,7 +180,7 @@ describe("useEventKillHistory", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(
       result.current.data?.pages.flatMap((page) =>
-        page.data.map((kill) => kill.id),
+        page.items.map((kill) => kill.id),
       ),
     ).toEqual(["first-kill", "older-kill"]);
     expect(requests.map((url) => url.searchParams.get("cursor"))).toEqual([

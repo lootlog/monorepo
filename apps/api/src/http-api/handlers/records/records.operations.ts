@@ -348,7 +348,8 @@ export const getMemberKills = Effect.fn("kills.getMemberKills")(function* (
       member: null,
       overview: null,
       npcs: [],
-      pagination: null,
+      total: 0,
+      nextCursor: null,
     }
   );
 });

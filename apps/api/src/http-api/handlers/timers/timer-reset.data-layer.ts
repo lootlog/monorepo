@@ -59,14 +59,14 @@ export const makeResetTimer = (
 
     if (matches.some((timer) => !canViewTimer(access, timer))) {
       return yield* Effect.fail(
-        new ResourceNotFoundError({ message: ErrorKey.TIMER_NOT_FOUND }),
+        new ResourceNotFoundError({ code: ErrorKey.TIMER_NOT_FOUND }),
       );
     }
 
     if (matches.length > 1) {
       return yield* Effect.fail(
         new InvalidRequestError({
-          message: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
+          code: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
         }),
       );
     }
@@ -75,7 +75,7 @@ export const makeResetTimer = (
 
     if (!resolved) {
       return yield* Effect.fail(
-        new ResourceNotFoundError({ message: ErrorKey.TIMER_NOT_FOUND }),
+        new ResourceNotFoundError({ code: ErrorKey.TIMER_NOT_FOUND }),
       );
     }
 
@@ -84,7 +84,7 @@ export const makeResetTimer = (
     if (resolvedNpc && !canResetTimerNpc(resolvedNpc)) {
       return yield* Effect.fail(
         new InvalidRequestError({
-          message: ErrorKey.HERO_TRACKER_TIMER_CANNOT_BE_RESET,
+          code: ErrorKey.HERO_TRACKER_TIMER_CANNOT_BE_RESET,
         }),
       );
     }
@@ -102,7 +102,7 @@ export const makeResetTimer = (
     if (activeEventHero.length > 0) {
       return yield* Effect.fail(
         new InvalidRequestError({
-          message: ErrorKey.EVENT_TIMER_CANNOT_BE_RESET,
+          code: ErrorKey.EVENT_TIMER_CANNOT_BE_RESET,
         }),
       );
     }
@@ -129,7 +129,7 @@ export const makeResetTimer = (
           if (!current || !canViewTimer(access, current)) {
             return yield* Effect.fail(
               new ResourceNotFoundError({
-                message: ErrorKey.TIMER_NOT_FOUND,
+                code: ErrorKey.TIMER_NOT_FOUND,
               }),
             );
           }
@@ -203,7 +203,7 @@ export const makeResetTimer = (
           if (!updated) {
             return yield* Effect.fail(
               new ResourceNotFoundError({
-                message: ErrorKey.TIMER_NOT_FOUND,
+                code: ErrorKey.TIMER_NOT_FOUND,
               }),
             );
           }

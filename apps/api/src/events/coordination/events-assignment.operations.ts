@@ -293,7 +293,7 @@ export const makeEventsAssignment = (
     guildData: { id: string },
     eventId: string,
     mapId: string,
-    memberId: string | undefined,
+    memberId: number | undefined,
     roles: Role[],
     accessPolicy: AccessPolicy,
   ) {
@@ -301,12 +301,7 @@ export const makeEventsAssignment = (
       .getMap(guildData.id, eventId, mapId, roles, accessPolicy)
       .pipe(
         Effect.andThen(
-          mapAssignments.unassignMember(
-            guildData,
-            eventId,
-            mapId,
-            memberId ? Number.parseInt(memberId, 10) : undefined,
-          ),
+          mapAssignments.unassignMember(guildData, eventId, mapId, memberId),
         ),
       );
   },

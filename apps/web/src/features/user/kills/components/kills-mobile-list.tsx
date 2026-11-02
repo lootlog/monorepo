@@ -6,12 +6,12 @@ import {
 import { formatLevel } from "@lootlog/domain/profession";
 import { Badge } from "@lootlog/ui/components/badge";
 import { NpcTile } from "@/components/tiles/npc-tile";
-import type { UserNpcKillsResponseDtoOutputNpcsItem } from "@lootlog/client/main";
+import type { UserNpcKillsResponseDtoOutputItemsItem } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
 import { formatNumber } from "@/lib/format-number";
 
 type KillsMobileListProps = {
-  npcs: UserNpcKillsResponseDtoOutputNpcsItem[];
+  npcs: UserNpcKillsResponseDtoOutputItemsItem[];
   startRank: number;
 };
 

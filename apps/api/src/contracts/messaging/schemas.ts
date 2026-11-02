@@ -112,24 +112,6 @@ export const SentNotificationResponse = Schema.Struct({
   guildIds: Schema.Array(NonEmptyString),
 }).annotate({ identifier: "NotificationResponseDto_Output" });
 
-export type NotificationRateLimitResponse =
-  typeof NotificationRateLimitResponse.Type;
-
-export const NotificationRateLimitResponse = Schema.Struct({
-  message: Schema.Literal("NOTIFICATION_RATE_LIMITED"),
-  retryAfterMs: Schema.Number.check(
-    Schema.isInt().annotate({ expected: "an integer" }),
-  )
-    .check(
-      Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-        expected: "a value less than or equal to 9007199254740991",
-      }),
-    )
-    .check(
-      Schema.isGreaterThan(0).annotate({ expected: "a value greater than 0" }),
-    ),
-}).annotate({ identifier: "NotificationRateLimitResponseDto" });
-
 export type VolunteerForPartyRequest = typeof VolunteerForPartyRequest.Type;
 
 export const VolunteerForPartyRequest = Schema.Struct({

@@ -240,7 +240,7 @@ export const EventMemberKillsPageContent = ({
   }
 
   const heroes = event.heroNpcs ?? [];
-  const allKills = killsData?.pages.flatMap((page) => page.data) ?? [];
+  const allKills = killsData?.pages.flatMap((page) => page.items) ?? [];
   const member = killsData?.pages[0]?.member;
   const memberIdNumber = Number.parseInt(queryMemberId, 10);
 

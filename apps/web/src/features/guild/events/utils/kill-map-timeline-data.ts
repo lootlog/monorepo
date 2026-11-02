@@ -177,10 +177,10 @@ const normalizeAssignmentPeriods = (
 
   for (const assignment of assignments) {
     const memberAssignments =
-      assignmentsByMember.get(assignment.memberId) ?? [];
+      assignmentsByMember.get(assignment.member.id) ?? [];
 
     memberAssignments.push(assignment);
-    assignmentsByMember.set(assignment.memberId, memberAssignments);
+    assignmentsByMember.set(assignment.member.id, memberAssignments);
   }
 
   const groups: GroupedMapAssignment[] = [];
@@ -232,9 +232,9 @@ const normalizeAssignmentPeriods = (
 
     groups.push({
       memberId,
-      memberName: representative.memberName,
-      memberAvatar: representative.memberAvatar,
-      memberUserId: representative.memberUserId,
+      memberName: representative.member.name,
+      memberAvatar: representative.member.avatar,
+      memberUserId: representative.member.userId,
       periods,
       totalDurationSeconds: periods.reduce(
         (sum, period) => sum + period.durationSeconds,

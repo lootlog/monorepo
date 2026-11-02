@@ -1,7 +1,6 @@
 import { KillHistoryResponse } from "#src/events/history/event-kill-history.schema";
 import { operationIdentifiers } from "../../operation-identifiers.js";
 import {
-  optionalPathString,
   statusCodeResponse,
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
@@ -249,8 +248,8 @@ export const EventsHandlers = HttpApiBuilder.group(
             .getEvents(
               caller.guild,
               caller.accessPolicy,
-              optionalPathString(query.world),
-              optionalPathString(query.activeOnly),
+              query.world,
+              query.activeOnly,
               [...caller.roles],
             )
             .pipe(
@@ -374,7 +373,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                 caller.guild,
                 eventId,
                 mapId,
-                optionalPathString(query.memberId),
+                query.memberId,
                 [...caller.roles],
                 caller.accessPolicy,
               ),
@@ -686,7 +685,7 @@ export const EventsHandlers = HttpApiBuilder.group(
             .getEventHeroTimers(
               caller.guild,
               eventId,
-              optionalPathString(query.world) ?? "",
+              query.world,
               [...caller.roles],
               caller.accessPolicy,
             )

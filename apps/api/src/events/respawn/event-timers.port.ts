@@ -428,7 +428,7 @@ export const makeEventTimersPort = ({
                 ? Effect.succeed(timer)
                 : Effect.fail(
                     new ResourceConflictError({
-                      message: ErrorKey.TIMER_RACE_CONDITION,
+                      code: ErrorKey.TIMER_RACE_CONDITION,
                     }),
                   ),
             ),
@@ -476,7 +476,7 @@ export const makeEventTimersPort = ({
               cause instanceof EventTimersError &&
               cause.cause instanceof ExecutionError
                 ? new ResourceConflictError({
-                    message: ErrorKey.TIMER_RACE_CONDITION,
+                    code: ErrorKey.TIMER_RACE_CONDITION,
                   })
                 : cause,
           }),

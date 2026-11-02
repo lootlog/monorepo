@@ -59,13 +59,13 @@ export const useTimerActions = (
   );
 
   const getResetTimerErrorMessage = (cause: unknown) => {
-    const apiMessage = getApiErrorStringField(cause, "message");
+    const code = getApiErrorStringField(cause, "code");
 
-    if (apiMessage === "EVENT_TIMER_CANNOT_BE_RESET") {
+    if (code === "EVENT_TIMER_CANNOT_BE_RESET") {
       return t("messages.resetEventWindowForbidden");
     }
 
-    if (apiMessage === "HERO_TRACKER_TIMER_CANNOT_BE_RESET") {
+    if (code === "HERO_TRACKER_TIMER_CANNOT_BE_RESET") {
       return t("messages.resetHeroTrackerForbidden");
     }
 
@@ -73,9 +73,9 @@ export const useTimerActions = (
   };
 
   const getDeleteTimerErrorMessage = (cause: unknown) => {
-    const apiMessage = getApiErrorStringField(cause, "message");
+    const code = getApiErrorStringField(cause, "code");
 
-    if (apiMessage === "EVENT_TIMER_MUST_USE_EVENT_CLOSE") {
+    if (code === "EVENT_TIMER_MUST_USE_EVENT_CLOSE") {
       return t("messages.deleteEventWindowForbidden");
     }
 

@@ -1,3 +1,4 @@
+import { LIFETIME_KILL_STATS_PARAMS } from "@/features/kills/lifetime-kill-stats-params";
 import {
   findTrackableNpcType,
   TRACKABLE_NPC_TYPES,
@@ -39,11 +40,14 @@ export const useKillsFilterProps = ({
   onMaxLvlChange,
   onPeriodChange,
 }: UseKillsFilterPropsOptions): KillStatsFiltersProps => {
-  const { data } = useKillsControllerGetUserKillStats(undefined, {
-    query: {
-      staleTime: 30_000,
+  const { data } = useKillsControllerGetUserKillStats(
+    LIFETIME_KILL_STATS_PARAMS,
+    {
+      query: {
+        staleTime: 30_000,
+      },
     },
-  });
+  );
 
   const worlds = data?.overview.killsByWorld
     ? Object.keys(data.overview.killsByWorld).sort()

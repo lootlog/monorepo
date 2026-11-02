@@ -20,7 +20,7 @@ import {
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
-import { HttpServerResponse } from "effect/http";
+import { applicationErrorResponse } from "#src/http-api/application-error-response";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -504,11 +504,7 @@ export const toOrganizationWorkspaceHttpResponse = <A, R>(
       if (Schema.is(ApplicationError)(cause)) {
         const status = applicationErrorStatus(cause);
 
-        if (status < 500) {
-          return Effect.succeed(
-            HttpServerResponse.jsonUnsafe(cause.getResponse(), { status }),
-          );
-        }
+        if (status < 500) return applicationErrorResponse(cause);
       }
 
       return Effect.die(cause);

@@ -392,9 +392,7 @@ describe("event wrapped summary", () => {
       expect(owner.overview.avgMapsPerSpawnWindow).toBe(2);
       expect(owner.leaders.mostFlexible).toEqual({
         winner: {
-          memberId: 1,
-          name: "A",
-          avatar: null,
+          member: { id: 1, name: "A", avatar: null, userId: "a" },
           primaryValue: 2,
           secondaryValue: 1.33,
         },

@@ -17,7 +17,7 @@ import { Permission } from "@lootlog/schema/permissions";
 import type { Event } from "./types/api";
 
 const listEventsParams = {
-  activeOnly: "false",
+  activeOnly: false,
 };
 
 export const useEventList = () => {

@@ -1,15 +1,14 @@
-import { DateTime, Schema } from "effect";
+import { DateTime } from "effect";
+import { DEFAULT_PERIOD, type Period } from "@lootlog/schema/http-scalars";
 
-import { KillStatsPeriodSchema } from "#src/contracts/kills/schemas";
-
-export type KillStatsPeriod = typeof KillStatsPeriodSchema.Type;
-
-const PERIOD_HOURS: Record<Exclude<KillStatsPeriod, "all">, number> = {
+const PERIOD_HOURS: Record<Exclude<Period, "all">, number> = {
   "24h": 24,
   "3d": 72,
   "7d": 168,
   "14d": 336,
   "30d": 720,
+  "90d": 2160,
+  "180d": 4320,
 };
 
 export const getKillStatsBucketStart = (date: Date): Date => {
@@ -19,21 +18,15 @@ export const getKillStatsBucketStart = (date: Date): Date => {
   return bucketStart;
 };
 
-export const normalizeKillStatsPeriod = (
-  period: string | undefined,
-): KillStatsPeriod | undefined => {
-  if (!period) {
-    return undefined;
-  }
-
-  return Schema.is(KillStatsPeriodSchema)(period) ? period : undefined;
-};
+/** The requested period, or the shared default when the query omits it. */
+export const resolveKillStatsPeriod = (period: Period | undefined): Period =>
+  period ?? DEFAULT_PERIOD;
 
 export const getKillStatsPeriodStart = (
-  period: KillStatsPeriod | undefined,
+  period: Period,
   now = new Date(),
 ): Date | undefined => {
-  if (!period || period === "all") {
+  if (period === "all") {
     return undefined;
   }
 
@@ -46,9 +39,8 @@ export const getKillStatsPeriodStart = (
 export type KillTimelineUnit = "hour" | "day";
 
 /** Hours for the shortest periods, Warsaw calendar days otherwise. */
-export const getKillTimelineUnit = (
-  period: KillStatsPeriod | undefined,
-): KillTimelineUnit => (period === "24h" || period === "3d" ? "hour" : "day");
+export const getKillTimelineUnit = (period: Period): KillTimelineUnit =>
+  period === "24h" || period === "3d" ? "hour" : "day";
 
 const HOUR_MS = 3_600_000;
 

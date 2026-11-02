@@ -1,6 +1,7 @@
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import { EVENT_SCORING_MODES } from "@lootlog/domain/scoring";
 import { Schema } from "effect";
+import { MemberSummary } from "#src/contracts/shared";
 import {
   jsonValueSchema,
   nullableIsoDatetimeCodec,
@@ -20,10 +21,7 @@ const EventMemberRoleResponse = Schema.Struct({
 });
 
 const EventAssignedMemberResponse = Schema.Struct({
-  id: Schema.Number,
-  name: Schema.String,
-  avatar: Schema.NullOr(Schema.String),
-  userId: Schema.String,
+  ...MemberSummary.fields,
   roles: Schema.Array(EventMemberRoleResponse),
 });
 
@@ -92,8 +90,7 @@ export const EventMapsResponse = Schema.Struct({
 export const EventsListResponse = Schema.Array(EventListItemResponse);
 
 const EventRankingMemberResponse = Schema.Struct({
-  id: Schema.Number,
-  name: Schema.String,
+  ...MemberSummary.fields,
   roles: Schema.Array(EventMemberRoleResponse),
 });
 

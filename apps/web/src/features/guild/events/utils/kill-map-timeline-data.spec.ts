@@ -258,10 +258,7 @@ function createAssignment(
   unassignedAt: string | null,
 ): MapTimelineData["assignments"][number] {
   return {
-    memberId: 7,
-    memberName: "Tester",
-    memberAvatar: null,
-    memberUserId: "user-7",
+    member: { id: 7, name: "Tester", avatar: null, userId: "user-7" },
     assignedAt,
     unassignedAt,
   };

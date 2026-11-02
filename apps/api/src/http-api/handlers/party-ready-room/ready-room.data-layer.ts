@@ -126,7 +126,7 @@ export const createReadyRoomForNotification = (
           return Effect.fail(
             new ResourceConflictError({
               code: "ACTIVE_GATHERING_EXISTS",
-              notificationId: result.notificationId,
+              details: { notificationId: result.notificationId },
             }),
           );
         }
@@ -135,7 +135,7 @@ export const createReadyRoomForNotification = (
           return Effect.fail(
             new ResourceConflictError({
               code: "ALREADY_JOINED_ELSEWHERE",
-              notificationId: result.notificationId,
+              details: { notificationId: result.notificationId },
             }),
           );
         }
@@ -494,7 +494,7 @@ export const makeReadyRoomDataLayer = (
             return yield* Effect.fail(
               new ResourceConflictError({
                 code: "ALREADY_JOINED_ELSEWHERE",
-                notificationId: result.notificationId,
+                details: { notificationId: result.notificationId },
               }),
             );
           }
@@ -907,7 +907,7 @@ export const makeReadyRoomDataLayer = (
                 return yield* Effect.fail(
                   new ResourceConflictError({
                     code: "ACTIVE_GATHERING_EXISTS",
-                    notificationId: result.notificationId,
+                    details: { notificationId: result.notificationId },
                   }),
                 );
               }
@@ -916,7 +916,7 @@ export const makeReadyRoomDataLayer = (
                 return yield* Effect.fail(
                   new ResourceConflictError({
                     code: "ALREADY_JOINED_ELSEWHERE",
-                    notificationId: result.notificationId,
+                    details: { notificationId: result.notificationId },
                   }),
                 );
               }

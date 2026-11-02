@@ -15,15 +15,17 @@ import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import {
   decodeHistoryCursor,
   encodeHistoryCursor,
-  parseHistoryLimit,
-  parseHistoryMemberId,
   type HistoryCursorScope,
 } from "#src/events/history/event-kill-history.cursor";
 import {
   makeEventKillHistoryProjection,
   normalizeKillPointTracking,
 } from "#src/events/history/event-kill-history.projection";
-import { KillHistoryResponse } from "#src/events/history/event-kill-history.schema";
+import {
+  KillHistoryResponse,
+  type KillHistoryQuery,
+} from "#src/events/history/event-kill-history.schema";
+import { DEFAULT_PAGE_SIZE } from "#src/shared/keyset-page";
 import {
   makeEventKillHistoryStore,
   type LeanHistoryRow,
@@ -34,13 +36,6 @@ export type HistoryContext = {
   eventId: string;
   roles: Array<typeof roleTable.$inferSelect>;
   accessPolicy: AccessPolicy;
-};
-
-export type HistoryQuery = {
-  limit?: string;
-  cursor?: string;
-  heroId?: string;
-  memberId?: string;
 };
 
 type Dependencies = {
@@ -75,12 +70,9 @@ export const makeEventKillHistory = ({
 }: Dependencies) => {
   const authorize = Effect.fnUntraced(function* (
     context: HistoryContext,
-    query: Pick<HistoryQuery, "heroId" | "memberId">,
+    query: Pick<KillHistoryQuery, "heroId" | "memberId">,
   ) {
-    const memberId =
-      query.memberId === undefined
-        ? undefined
-        : yield* parseHistoryMemberId(query.memberId);
+    const { memberId } = query;
 
     const rows = yield* database
       .select({ id: eventTable.id, hero: eventHeroNpcTable })
@@ -163,9 +155,9 @@ export const makeEventKillHistory = ({
 
   const list = Effect.fn("events.history.list")(function* (
     context: HistoryContext,
-    query: HistoryQuery,
+    query: KillHistoryQuery,
   ) {
-    const limit = yield* parseHistoryLimit(query.limit);
+    const limit = query.limit ?? DEFAULT_PAGE_SIZE;
     const authorized = yield* authorize(context, query);
 
     const boundary =
@@ -177,7 +169,7 @@ export const makeEventKillHistory = ({
       readCache.getEventEntry(
         context.guildId,
         context.eventId,
-        "kill-history:v2",
+        "kill-history:v3",
         {
           ...authorized.scope,
           visibleHeroIds: authorized.heroIds,
@@ -210,7 +202,7 @@ export const makeEventKillHistory = ({
             return {
               kind: "member" as const,
               member: authorized.member,
-              data: result.rows.map((row) => ({
+              items: result.rows.map((row) => ({
                 ...toHistorySummary(row),
                 memberPoint: normalizeKillPointTracking(
                   row.memberPoint,
@@ -224,7 +216,7 @@ export const makeEventKillHistory = ({
 
           return {
             kind: "event" as const,
-            data: result.rows.map(toHistorySummary),
+            items: result.rows.map(toHistorySummary),
             nextCursor,
           };
         }),

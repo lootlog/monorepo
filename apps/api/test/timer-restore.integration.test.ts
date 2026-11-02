@@ -177,7 +177,7 @@ it.each(["restore", "new spawn"] as const)(
     expect(blocked).toBe(restoreCount);
     expect(results.filter(Result.isFailure)).toMatchObject([
       {
-        failure: { kind: "conflict", response: { message: "EXISTING_TIMER" } },
+        failure: { kind: "conflict", body: { code: "EXISTING_TIMER" } },
       },
     ]);
     const successfulRestores = competingWrite === "restore" ? 1 : 0;

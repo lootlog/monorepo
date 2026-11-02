@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   ApplicationError,
-  ApplicationErrorKind,
+  RateLimitedError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { Clock, Effect, Schema } from "effect";
@@ -171,17 +171,19 @@ export const makePublicGuildStatsCard = (options: {
         );
 
         if (!acquired) {
-          const activeNextRefreshAt = yield* options.cache.get(cooldownKey);
+          const activeNextRefreshAt =
+            (yield* options.cache.get(cooldownKey)) ?? nextRefreshAt;
 
           return yield* Effect.fail(
-            new ApplicationError(
-              ApplicationErrorKind.RATE_LIMITED,
-              {
-                message: "Stats card refresh is rate limited",
-                nextRefreshAt: activeNextRefreshAt ?? nextRefreshAt,
-              },
-              "Stats card refresh is rate limited",
-            ),
+            new RateLimitedError({
+              code: "STATS_CARD_REFRESH_COOLDOWN",
+              message: "Stats card refresh is rate limited",
+              details: { nextRefreshAt: activeNextRefreshAt },
+              retryAfterMs: Math.max(
+                0,
+                new Date(activeNextRefreshAt).getTime() - now,
+              ),
+            }),
           );
         }
 

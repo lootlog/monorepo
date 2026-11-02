@@ -2,31 +2,29 @@ import {
   FiniteNumber,
   JsonValue,
   NonNegativeSafeInteger,
+  Page,
+  PageCursor,
+  PageSize,
   PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
+import { MemberIdParam, MemberSummary } from "#src/contracts/shared";
+import { DEFAULT_PAGE_SIZE } from "#src/shared/keyset-page";
 
 export const KillHistoryQuery = Schema.Struct({
-  limit: Schema.optionalKey(
-    Schema.String.check(Schema.isPattern(/^(?:[1-9]\d?|100)$/u)).annotate({
-      description: "Page size from 1 to 100. Defaults to 20.",
-    }),
-  ),
+  limit: Schema.optionalKey(PageSize.annotate({ default: DEFAULT_PAGE_SIZE })),
   cursor: Schema.optionalKey(
-    Schema.String.check(
-      Schema.isMinLength(1),
-      Schema.isMaxLength(4096),
-    ).annotate({
+    PageCursor.annotate({
       description:
         "Opaque continuation token returned by this endpoint. Keep the Organization, event and filters unchanged.",
     }),
   ),
   heroId: Schema.optionalKey(Schema.String.check(Schema.isMinLength(1))),
-  memberId: Schema.optionalKey(
-    Schema.String.check(Schema.isPattern(/^[1-9]\d*$/u)),
-  ),
+  memberId: Schema.optionalKey(MemberIdParam),
 }).annotate({ identifier: "KillHistoryQuery" });
+
+export type KillHistoryQuery = typeof KillHistoryQuery.Type;
 
 export const KillHistoryMemberPoint = Schema.Struct({
   points: FiniteNumber,
@@ -65,25 +63,18 @@ export const KillHistoryEntry = Schema.Struct({
 
 export const KillHistoryEventResponse = Schema.Struct({
   kind: Schema.Literal("event"),
-  data: Schema.Array(KillHistoryEntry),
-  nextCursor: Schema.NullOr(Schema.String),
+  ...Page(KillHistoryEntry).fields,
 }).annotate({ identifier: "KillHistoryEventResponse" });
 
 export const KillHistoryMemberResponse = Schema.Struct({
   kind: Schema.Literal("member"),
-  member: Schema.Struct({
-    id: PositiveSafeInteger,
-    name: Schema.String,
-    avatar: Schema.NullOr(Schema.String),
-    userId: Schema.String,
-  }),
-  data: Schema.Array(
+  member: MemberSummary,
+  ...Page(
     Schema.Struct({
       ...KillHistoryEntry.fields,
       memberPoint: KillHistoryMemberPoint,
     }).annotate({ identifier: "KillHistoryMemberEntry" }),
-  ),
-  nextCursor: Schema.NullOr(Schema.String),
+  ).fields,
 }).annotate({ identifier: "KillHistoryMemberResponse" });
 
 export const KillHistoryResponse = Schema.Union([

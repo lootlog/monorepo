@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   CharacterLootlogConfigResponse,
   LootlogAccountPath,
@@ -24,7 +24,7 @@ export class UserLootlogConfigGroup extends HttpApiGroup.make(
     {
       params: LootlogAccountPath,
       success: AccountLootlogConfigResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)

@@ -89,7 +89,7 @@ const isHeroNameTaken = (
   });
 
 const heroNameTakenError = () =>
-  new ResourceConflictError({ message: "EVENT_HERO_NAME_TAKEN" });
+  new ResourceConflictError({ code: "EVENT_HERO_NAME_TAKEN" });
 
 class EventCatalogMutationError extends TaggedErrorClass<EventCatalogMutationError>()(
   "EventCatalogMutationError",

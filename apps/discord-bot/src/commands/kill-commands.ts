@@ -28,6 +28,9 @@ import {
 
 const RANKING_LIMIT = 15;
 
+// The longest NPC search text the API accepts.
+const SEARCH_TEXT_MAX_LENGTH = 100;
+
 const NPC_KILLERS_LIMIT = 10;
 
 // The largest page the API serves, so the invoker is found beyond the top.
@@ -41,13 +44,17 @@ const RANKED_NPC_TYPES = [
   "EVENT_HERO",
 ] as const;
 
+// A Member's `userId` is the Discord identity of that Member.
+const RankedMember = Schema.Struct({
+  name: Schema.String,
+  userId: Schema.String,
+});
+
 const GuildKillStats = Schema.Struct({
   overview: Schema.Struct({ guildUniqueKills: Schema.Number }),
   memberRanking: Schema.Array(
     Schema.Struct({
-      memberName: Schema.String,
-      // A Member's `userId` is the Discord identity of that Member.
-      memberUserId: Schema.String,
+      member: RankedMember,
       totalParticipations: Schema.Number,
       participationsByType: Schema.Record(Schema.String, Schema.Number),
     }),
@@ -79,8 +86,7 @@ const NpcKillers = Schema.Struct({
   ),
   killers: Schema.Array(
     Schema.Struct({
-      memberName: Schema.String,
-      memberUserId: Schema.String,
+      member: RankedMember,
       participationCount: Schema.Number,
     }),
   ),
@@ -96,10 +102,7 @@ export const searchKilledNpcs = (session: MemberSession, search: string) =>
       `${killStatsPath(session.guildId)}/top-npcs`,
       {
         limit: MAX_AUTOCOMPLETE_CHOICES,
-        search,
-        world: "",
-        minLvl: "",
-        maxLvl: "",
+        search: search.slice(0, SEARCH_TEXT_MAX_LENGTH),
         period: "all",
       },
       TopNpcs,
@@ -150,10 +153,10 @@ export const rankingCommand: SlashCommand = {
           ? COMMAND_TEXT.ranking.empty
           : rankedLines(ranking, {
               limit: RANKING_LIMIT,
-              name: (entry) => escapeMarkdown(entry.memberName),
+              name: (entry) => escapeMarkdown(entry.member.name),
               detail: (entry) =>
                 COMMAND_TEXT.ranking.kills(entry.totalParticipations),
-              isOwn: (entry) => entry.memberUserId === invocation.discordId,
+              isOwn: (entry) => entry.member.userId === invocation.discordId,
               ownDiscordId: invocation.discordId,
               ownMissing: COMMAND_TEXT.ranking.ownMissing,
             }).join("\n"),
@@ -202,7 +205,7 @@ export const statisticsCommand: SlashCommand = {
       );
 
       const position = stats.memberRanking.findIndex(
-        (entry) => entry.memberUserId === target,
+        (entry) => entry.member.userId === target,
       );
 
       const entry = stats.memberRanking[position];
@@ -224,7 +227,7 @@ export const statisticsCommand: SlashCommand = {
         .map(([type, count]) => `${npcTypeLabel(type)}: **${count}**`);
 
       const embed = lootlogEmbed(
-        COMMAND_TEXT.statistics.title(entry.memberName, PERIOD_LABELS[period]),
+        COMMAND_TEXT.statistics.title(entry.member.name, PERIOD_LABELS[period]),
       )
         .setDescription(`<@${target}>`)
         .addFields(
@@ -320,11 +323,11 @@ export const npcCommand: SlashCommand = {
                 ? COMMAND_TEXT.npc.empty
                 : rankedLines(killers, {
                     limit: NPC_KILLERS_LIMIT,
-                    name: (killer) => escapeMarkdown(killer.memberName),
+                    name: (killer) => escapeMarkdown(killer.member.name),
                     detail: (killer) =>
                       COMMAND_TEXT.ranking.kills(killer.participationCount),
                     isOwn: (killer) =>
-                      killer.memberUserId === invocation.discordId,
+                      killer.member.userId === invocation.discordId,
                     ownDiscordId: invocation.discordId,
                     ownMissing:
                       killers.length < NPC_KILLERS_LOOKUP

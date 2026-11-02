@@ -85,9 +85,9 @@ export const makeNotificationGuildTargets = (
           rows[0]
             ? Effect.succeed(rows[0])
             : Effect.fail(
-                new ResourceNotFoundError(
-                  NotificationError.NOTIFICATION_TARGET_NOT_FOUND,
-                ),
+                new ResourceNotFoundError({
+                  code: NotificationError.NOTIFICATION_TARGET_NOT_FOUND,
+                }),
               ),
         ),
       );
@@ -119,17 +119,17 @@ export const makeNotificationGuildTargets = (
   ) {
     if (data.targetType !== NotificationTargetType.CHANNEL) {
       return yield* Effect.fail(
-        new InvalidRequestError(
-          NotificationError.GUILD_TARGETS_MUST_BE_CHANNELS,
-        ),
+        new InvalidRequestError({
+          code: NotificationError.GUILD_TARGETS_MUST_BE_CHANNELS,
+        }),
       );
     }
 
     if (!data.externalId) {
       return yield* Effect.fail(
-        new InvalidRequestError(
-          NotificationError.GUILD_CHANNEL_TARGET_REQUIRES_EXTERNAL_ID,
-        ),
+        new InvalidRequestError({
+          code: NotificationError.GUILD_CHANNEL_TARGET_REQUIRES_EXTERNAL_ID,
+        }),
       );
     }
 
@@ -141,9 +141,9 @@ export const makeNotificationGuildTargets = (
 
     if (!selected) {
       return yield* Effect.fail(
-        new InvalidRequestError(
-          NotificationError.SELECTED_DISCORD_CHANNEL_NOT_AVAILABLE,
-        ),
+        new InvalidRequestError({
+          code: NotificationError.SELECTED_DISCORD_CHANNEL_NOT_AVAILABLE,
+        }),
       );
     }
 

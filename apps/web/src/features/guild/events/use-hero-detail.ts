@@ -533,7 +533,7 @@ export const useHeroDetail = () => {
           mapId: selectedMapId,
         },
         params: {
-          memberId: String(memberId),
+          memberId,
         },
       });
       toast.success(t("events.maps.unassignSuccess"));

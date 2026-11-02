@@ -69,9 +69,9 @@ export const NpcKillersPage = () => {
       cell: ({ row: { original: killer } }) => (
         <div className="flex min-w-0 items-center gap-2.5">
           <MemberAvatar
-            userId={killer.memberUserId}
-            avatar={killer.memberAvatar}
-            name={killer.memberName}
+            userId={killer.member.userId}
+            avatar={killer.member.avatar}
+            name={killer.member.name}
             className="size-7"
           />
           <TextLink
@@ -80,13 +80,13 @@ export const NpcKillersPage = () => {
               to="/$guildId/stats/members/$memberId"
               params={{
                 guildId,
-                memberId: String(killer.memberId),
+                memberId: String(killer.member.id),
               }}
             />
           >
             <MemberNameWithColor
-              name={killer.memberName}
-              member={membersMap.get(killer.memberUserId)}
+              name={killer.member.name}
+              member={membersMap.get(killer.member.userId)}
             />
           </TextLink>
         </div>
@@ -110,7 +110,7 @@ export const NpcKillersPage = () => {
     features: coreTableFeatures,
     data: paginatedKillers,
     columns,
-    getRowId: (killer) => String(killer.memberId),
+    getRowId: (killer) => String(killer.member.id),
   });
 
   if (isLoading) {
@@ -188,7 +188,7 @@ export const NpcKillersPage = () => {
           <StatsTable
             table={table}
             className="border-b"
-            isViewerRow={(killer) => isViewer(killer.memberUserId)}
+            isViewerRow={(killer) => isViewer(killer.member.userId)}
           />
         </StatsTableResults>
       </ResultsSurface>

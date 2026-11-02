@@ -332,7 +332,7 @@ it.each([
       expect(rejected).toMatchObject({
         failure: {
           kind: "invalid-request",
-          response: { message: "EVENT_TIMER_CANNOT_BE_RESET" },
+          body: { code: "EVENT_TIMER_CANNOT_BE_RESET" },
         },
       });
       expect(await boundary.run(database.select().from(timerTable))).toEqual(
@@ -456,7 +456,7 @@ it.each([
       );
 
       expect(result).toMatchObject({
-        failure: { response: { message: "EVENT_TIMER_CANNOT_BE_RESET" } },
+        failure: { body: { code: "EVENT_TIMER_CANNOT_BE_RESET" } },
       });
       expect(await boundary.run(database.select().from(timerTable))).toEqual(
         timersBefore,
@@ -769,7 +769,7 @@ it.each([
 
         if (tierOnly) {
           expect(result).toMatchObject({
-            failure: { kind: "forbidden", response: { statusCode: 403 } },
+            failure: { kind: "forbidden", body: { code: "FORBIDDEN" } },
           });
 
           return [];
@@ -1080,7 +1080,7 @@ it("only offers recovery for a complete deletion in its organization and world, 
 
     expect(incomplete).toMatchObject({
       failure: {
-        response: { message: "TIMER_HISTORY_ENTRY_CANNOT_BE_RESTORED" },
+        body: { code: "TIMER_HISTORY_ENTRY_CANNOT_BE_RESTORED" },
       },
     });
     expect(publications).toEqual([]);
@@ -1251,7 +1251,7 @@ it("refuses to reset a Hero Tracker timer and leaves it unchanged", async () => 
     expect(result).toMatchObject({
       failure: {
         kind: "invalid-request",
-        response: { message: "HERO_TRACKER_TIMER_CANNOT_BE_RESET" },
+        body: { code: "HERO_TRACKER_TIMER_CANNOT_BE_RESET" },
       },
     });
     expect(await boundary.run(database.select().from(timerTable))).toEqual(

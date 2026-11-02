@@ -180,7 +180,7 @@ export const makeLootAllocationOperations = (options: {
 
         if (!authorized) {
           return yield* Effect.fail(
-            new PermissionDeniedError(ErrorKey.CANT_UPDATE_LOOT),
+            new PermissionDeniedError({ code: ErrorKey.CANT_UPDATE_LOOT }),
           );
         }
 
@@ -188,7 +188,7 @@ export const makeLootAllocationOperations = (options: {
 
         if (Object.keys(parsed).length === 0) {
           return yield* Effect.fail(
-            new InvalidRequestError(ErrorKey.MISSING_LOOT_SHARE),
+            new InvalidRequestError({ code: ErrorKey.MISSING_LOOT_SHARE }),
           );
         }
 
@@ -271,7 +271,7 @@ export const makeLootAllocationOperations = (options: {
 
           if (!state) {
             return yield* Effect.fail(
-              new PermissionDeniedError(ErrorKey.CANT_UPDATE_LOOT),
+              new PermissionDeniedError({ code: ErrorKey.CANT_UPDATE_LOOT }),
             );
           }
 

@@ -1,16 +1,19 @@
 import { Effect, Predicate, Schema, SchemaIssue } from "effect";
-import { HttpServerResponse } from "effect/http";
+import { httpErrorResponse } from "#src/shared/http/handler-response";
 import { HttpApiMiddleware, HttpApiSchema } from "effect/http-api";
 
+// The `HttpErrorResponse` shape with its validation code and issues spelled out.
 const RequestValidationError = Schema.Struct({
   code: Schema.Literal("VALIDATION_ERROR"),
   message: Schema.String,
-  issues: Schema.Array(
-    Schema.Struct({
-      path: Schema.Array(Schema.Union([Schema.String, Schema.Int])),
-      message: Schema.String,
-    }),
-  ),
+  details: Schema.Struct({
+    issues: Schema.Array(
+      Schema.Struct({
+        path: Schema.Array(Schema.Union([Schema.String, Schema.Int])),
+        message: Schema.String,
+      }),
+    ),
+  }),
 })
   .annotate({ identifier: "RequestValidationError" })
   .pipe(HttpApiSchema.status(400));
@@ -40,13 +43,13 @@ export const SchemaErrorResponseLive =
       .map(({ path, message }) => `${path.join(".") || error.kind}: ${message}`)
       .join("; ");
 
-    const body: typeof RequestValidationError.Type = {
-      code: "VALIDATION_ERROR",
-      message: `Invalid request: ${details}`,
-      issues,
-    };
-
     // A failure would be encoded by the first endpoint or middleware error
     // schema that accepts it, so an open 401/403/404 schema could claim it.
-    return Effect.succeed(HttpServerResponse.jsonUnsafe(body, { status: 400 }));
+    return Effect.succeed(
+      httpErrorResponse(400, {
+        code: "VALIDATION_ERROR",
+        message: `Invalid request: ${details}`,
+        details: { issues },
+      }),
+    );
   });

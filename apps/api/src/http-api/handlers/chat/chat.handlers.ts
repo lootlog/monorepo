@@ -1,12 +1,12 @@
 import {
   pathString,
-  emptyStatusResponse,
+  statusCodeResponse,
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
-import { HttpServerResponse } from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
+import { applicationErrorResponse } from "#src/http-api/application-error-response";
 import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
 import {
   Permission,
@@ -105,14 +105,14 @@ type ChatFailure =
 const declaredHttpFailure = <A, R>(effect: Effect.Effect<A, ChatFailure, R>) =>
   Effect.catchTags(effect, {
     ChatAccessDenied: (error) =>
-      error.status === 403 ? emptyStatusResponse(error) : Effect.die(error),
+      error.status === 403 ? statusCodeResponse(error) : Effect.die(error),
     ReauthenticationRequired: reauthenticationRequiredResponse,
-    ChatNotFound: emptyStatusResponse,
+    ChatNotFound: statusCodeResponse,
     ChatOperationError: (error) => {
       const status = applicationErrorStatusOrUndefined(error.cause);
 
       return status === 403 || status === 404
-        ? Effect.succeed(HttpServerResponse.empty({ status }))
+        ? applicationErrorResponse(error.cause)
         : Effect.die(error.cause);
     },
   });

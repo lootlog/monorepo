@@ -156,10 +156,8 @@ it("preserves notification rate-limit status and retry delay through HTTP", asyn
   });
 
   expect(response.status).toBe(429);
-  expect(await response.json()).toEqual({
-    message: "NOTIFICATION_RATE_LIMITED",
-    retryAfterMs: 2000,
-  });
+  expect(response.headers.get("retry-after")).toBe("2");
+  expect(await response.json()).toEqual({ code: "NOTIFICATION_RATE_LIMITED" });
 });
 
 it("preserves missing notification content as a client error", async () => {
@@ -171,17 +169,18 @@ it("preserves missing notification content as a client error", async () => {
   });
 
   expect(response.status).toBe(400);
-  expect(await response.json()).toEqual({ message: "MISSING_MESSAGE_OR_NPC" });
+  expect(await response.json()).toEqual({ code: "MISSING_MESSAGE_OR_NPC" });
 });
 
-it("returns 404 for an invalid NPC configuration identifier before database access", async () => {
+it("rejects a non-integer NPC configuration identifier as a bad request", async () => {
   const response = await request(
     "PUT",
     "/guilds/guild/lootlog-config/not-a-number",
     { allowedRarities: [] },
   );
 
-  expect(response.status).toBe(404);
+  expect(response.status).toBe(400);
+  expect(await response.json()).toMatchObject({ code: "VALIDATION_ERROR" });
 });
 
 for (const { method, path, payload, status, code } of [

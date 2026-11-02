@@ -46,7 +46,7 @@ export class UserThemesGroup extends HttpApiGroup.make("user-themes").add(
     {
       params: UserThemeParams,
       success: UserThemeResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -60,7 +60,7 @@ export class UserThemesGroup extends HttpApiGroup.make("user-themes").add(
       params: UserThemeParams,
       payload: UpdateUserThemeRequest,
       success: UserThemeResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -73,7 +73,7 @@ export class UserThemesGroup extends HttpApiGroup.make("user-themes").add(
     {
       params: UserThemeParams,
       success: SuccessResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -89,7 +89,7 @@ export class UserThemesGroup extends HttpApiGroup.make("user-themes").add(
     {
       params: UserThemeParams,
       success: UserThemeResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -105,7 +105,7 @@ export class UserThemesGroup extends HttpApiGroup.make("user-themes").add(
     {
       params: UserThemeParams,
       success: UserThemeResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -121,7 +121,7 @@ export class UserThemesGroup extends HttpApiGroup.make("user-themes").add(
     {
       params: SharedUserThemeParams,
       success: SharedUserThemeResponse,
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .annotate(OpenApi.Identifier, "UserThemesController_getSharedTheme")

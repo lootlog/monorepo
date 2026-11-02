@@ -8,7 +8,6 @@ import {
 import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   SentNotificationResponse,
-  NotificationRateLimitResponse,
   SendNotificationRequest,
   NotificationPath,
   VolunteerForPartyRequest,
@@ -23,7 +22,7 @@ export class MessagingGroup extends HttpApiGroup.make("messaging").add(
       HttpErrorResponse.pipe(HttpApiSchema.status(401)),
       HttpErrorResponse.pipe(HttpApiSchema.status(403)),
       HttpErrorResponse.pipe(HttpApiSchema.status(409)),
-      NotificationRateLimitResponse.pipe(HttpApiSchema.status(429)),
+      HttpErrorResponse.pipe(HttpApiSchema.status(429)),
       HttpErrorResponse.pipe(HttpApiSchema.status(503)),
     ],
   })

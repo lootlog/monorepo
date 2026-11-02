@@ -189,7 +189,10 @@ describe("usePartyGatheringOrchestration", () => {
     createRoom.mockImplementation(() =>
       Promise.resolve(
         Response.json(
-          { code: "ACTIVE_GATHERING_EXISTS", notificationId: "room-1" },
+          {
+            code: "ACTIVE_GATHERING_EXISTS",
+            details: { notificationId: "room-1" },
+          },
           { status: 409 },
         ),
       ),
