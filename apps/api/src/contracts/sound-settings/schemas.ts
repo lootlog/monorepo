@@ -49,6 +49,7 @@ const SoundUpdate = Schema.Struct({
 const SoundCategoryUpdates = Schema.Struct({
   ELITE2: Schema.optionalKey(SoundUpdate),
   HERO: Schema.optionalKey(SoundUpdate),
+  EVENT_HERO: Schema.optionalKey(SoundUpdate),
   TITAN: Schema.optionalKey(SoundUpdate),
   COLOSSUS: Schema.optionalKey(SoundUpdate),
   message: Schema.optionalKey(SoundUpdate),

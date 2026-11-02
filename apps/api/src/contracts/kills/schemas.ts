@@ -68,6 +68,12 @@ export const CreateKillRequest = Schema.Struct({
     prof: Schema.optionalKey(Schema.String),
     wt: FiniteNumber,
     icon: Schema.optionalKey(Schema.String),
+    isHeroFromEvent: Schema.optionalKey(
+      Schema.Boolean.annotate({
+        description:
+          "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it.",
+      }),
+    ),
   }),
   characterId: NonEmptyString,
   accountId: NonEmptyString,

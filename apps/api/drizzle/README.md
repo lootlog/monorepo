@@ -1011,3 +1011,41 @@ tracked kill. Apply the migration before deploying the API.
 Rolling the API back stops new per-character rows but leaves the tables in
 place. The older API's account deletion does not clear them, so after rolling
 forward, delete their rows for accounts deleted in the meantime.
+
+## Event heroes
+
+`getNpcType` (`@lootlog/domain/npc-type`) makes an NPC of weight 80–89 an
+`EVENT_HERO` when Margonem flags its template with `isHeroFromEvent` or its
+graphic is in the event directory `hev/`; every such NPC was a `HERO` before.
+Event colossi and event monsters, also drawn from `hev/`, keep their type.
+`20261102002614_event_heroes` reclassifies the stored rows by the same graphic
+rule: kill totals, buckets and activity, `NpcSnapshot`, `Timer` and
+`TimerHistoryEntry`. A reclassified revision gets the `snapshotHash` of
+`createNpcSnapshotHash` with the new type; one whose observation the new API
+already stored as an `EVENT_HERO` revision is merged into it, as in the
+relative icon repair.
+
+The kill buckets are compressed hypertables segmented by Organization or user,
+and nearly every segment holds an event hero, so the migration lifts
+`timescaledb.max_tuples_decompressed_per_dml_transaction` and rewrites most
+compressed batches; the compression policy recompresses the chunks later. On
+the local production copy (November 2026) it changed 107 revisions, 7,784
+timers, 8,065 history entries and about 470,000 bucket rows in under a minute,
+and every recomputed hash matched the TypeScript function.
+
+### Rollout
+
+1. Deploy the API that classifies event heroes. Until step 2, statistics,
+   timers and loot NPC lists show the same event hero under both types.
+2. Apply the migration with `bun run db:api:migrate:deploy` outside peak
+   hours; updated rows stay locked until it commits.
+3. Rebuild the search indexes with `bun run seed` in `apps/search`: the NPC
+   monster key contains the type, so reclassified heroes get new documents.
+   Locations and retired drops carried over by the old key return with the
+   next monster statistics publication (daily at 05:30), so seed shortly
+   before it.
+4. Release the Game client that reports `isHeroFromEvent`.
+
+Organizations accept event hero loots by their `EVENT_HERO` loot setting from
+step 1 onwards. Most settings match the hero setting; those that differ change
+which event hero loots are accepted.

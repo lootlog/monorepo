@@ -16,6 +16,8 @@ export type GameNpc = {
   grp?: number;
   lvl: number;
   resp_rand?: number;
+  /** Copied from the NPC template of a hero spawned by an event. */
+  isHeroFromEvent?: boolean;
 };
 
 export type NpcMap = {

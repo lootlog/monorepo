@@ -5,7 +5,7 @@ import { NpcTile } from "@/components/npc-tile";
 import { IconButton } from "@/components/ui/icon-button";
 import { NpcType } from "@/api/npcs.api";
 import { cn } from "cn";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcType } from "@lootlog/domain/npc-type";
 import {
   getDetectorNpcSettings,
   type DetectorSettings,
@@ -74,7 +74,7 @@ export const NpcListItem = ({
     startNpcPartyGathering,
   } = orchestration;
 
-  const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
+  const npcType = getNpcType(NpcType, npc);
   const settingsByNpcType = getDetectorNpcSettings(detectorSettings, npcType);
 
   const { guildIds: resolvedGuildIds, world } = resolveNpcNotificationRouting({

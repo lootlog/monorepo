@@ -6,7 +6,7 @@ import {
 import type { ChatMessageResponseDtoOutputNpc as ChatNpc } from "@lootlog/client/main";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { isYesterday } from "@/utils/local-date";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcType } from "@lootlog/domain/npc-type";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { NpcType } from "@/api/npcs.api";
 
@@ -55,7 +55,7 @@ export const getChatNpcTextColor = (
   npc: ChatNpc,
   npcTypeColors?: NpcTypeColors,
 ) => {
-  const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
+  const npcType = getNpcType(NpcType, npc);
 
   return getTextColor(npcType, true, npcTypeColors);
 };

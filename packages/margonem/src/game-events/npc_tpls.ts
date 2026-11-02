@@ -7,4 +7,6 @@ export type NpcTpl = {
   warrior_type?: number;
   resp_rand: number;
   elasticLevelFactor?: number;
+  /** Present on the template of a hero spawned by an event. */
+  isHeroFromEvent?: boolean;
 };

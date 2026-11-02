@@ -30,6 +30,7 @@ const createProjectionInput = (
     selectedLists: [],
     selectedNpcTypes: [
       NpcType.HERO,
+      NpcType.EVENT_HERO,
       NpcType.ELITE2,
       NpcType.ELITE3,
       NpcType.TITAN,

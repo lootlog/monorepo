@@ -96,3 +96,21 @@ test("routing normalization retains positional identifiers and clamps legacy lev
     },
   ]);
 });
+
+test("event heroes keep the hero settings a player chose until set apart", () => {
+  const notifications = normalizeNotifications({
+    HERO: { show: false, sound: true },
+  });
+
+  const detector = normalizeDetector({ HERO: { detect: false } });
+
+  expect(notifications.EVENT_HERO).toEqual(notifications.HERO);
+  expect(detector.EVENT_HERO).toEqual(detector.HERO);
+
+  const separated = normalizeDetector({
+    HERO: { detect: false },
+    EVENT_HERO: { detect: true },
+  });
+
+  expect(separated.EVENT_HERO.detect).toBe(true);
+});

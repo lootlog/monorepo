@@ -5,6 +5,7 @@ import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 export const CHAT_NPC_TYPES = [
   NpcTypeEnum.ELITE2,
   NpcTypeEnum.HERO,
+  NpcTypeEnum.EVENT_HERO,
   NpcTypeEnum.COLOSSUS,
   NpcTypeEnum.TITAN,
 ] as const;

@@ -17,7 +17,7 @@ import {
   type SearchOperationFailure,
 } from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcType } from "@lootlog/domain/npc-type";
 import type { NpcSearchQuery } from "./npc-search-query.js";
 import { NPCS_INDEX } from "./search-index.js";
 import type { IndexNpcsCommand } from "./index-npcs-command.js";
@@ -110,7 +110,12 @@ export const toNpcDocument = (npc: IndexNpc) => {
 
   const type = Schema.is(NpcTypeSchema)(npc.type)
     ? npc.type
-    : getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, npc.margonemType);
+    : getNpcType(NpcTypeEnum, {
+        wt: npc.wt,
+        prof,
+        type: npc.margonemType,
+        icon: npc.icon,
+      });
 
   return {
     id: npc.id,

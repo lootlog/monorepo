@@ -1,5 +1,5 @@
 import { getSubtleBackgroundColor } from "@/utils/notifications-and-detector/background";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcType } from "@lootlog/domain/npc-type";
 import { NpcType } from "@/api/npcs.api";
 import { Message } from "@/components/ui/message";
 import { cn } from "cn";
@@ -51,7 +51,7 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
   const npcTextColor = getChatNpcTextColor(npc, npcTypeColors);
 
   const npcBackgroundColor = getSubtleBackgroundColor(
-    getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
+    getNpcType(NpcType, npc),
     npcTypeColors,
   );
 

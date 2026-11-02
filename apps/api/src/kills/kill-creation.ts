@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { and, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcType } from "@lootlog/domain/npc-type";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -396,7 +396,13 @@ export const makeKillCreation = (
     discordId: string,
     data: CreateKillRequest,
   ) {
-    const npcType = getNpcTypeByWt(NpcType, data.npc.wt, data.npc.prof);
+    const npcType = getNpcType(NpcType, {
+      wt: data.npc.wt,
+      prof: data.npc.prof,
+      icon: data.npc.icon,
+      isHeroFromEvent: data.npc.isHeroFromEvent,
+    });
+
     const npcId = getStableNpcId(data.npc.id, data.npc.name, npcType);
     const killedAt = new Date(yield* Clock.currentTimeMillis);
     const periodStart = getKillStatsBucketStart(killedAt);

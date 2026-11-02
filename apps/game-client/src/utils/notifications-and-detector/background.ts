@@ -93,6 +93,7 @@ export const getArrivalStrength = (key?: string) => {
     case NpcType.COLOSSUS:
       return 1;
     case NpcType.HERO:
+    case NpcType.EVENT_HERO:
       return 0.85;
     case NpcType.ELITE2:
       return 0.65;

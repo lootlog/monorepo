@@ -105,6 +105,7 @@ const isDetectorSettingsRecord = Schema.is(
     routingRules: Schema.optionalKey(Schema.Array(UnknownRecord)),
     ELITE2: Schema.optionalKey(UnknownRecord),
     HERO: Schema.optionalKey(UnknownRecord),
+    EVENT_HERO: Schema.optionalKey(UnknownRecord),
     COLOSSUS: Schema.optionalKey(UnknownRecord),
     TITAN: Schema.optionalKey(UnknownRecord),
   }),
