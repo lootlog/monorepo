@@ -29,6 +29,7 @@
     "history": "Historia",
     "saved": "Dokument zapisany",
     "saveError": "Nie udało się zapisać dokumentu.",
+    "conflict": "Ktoś zapisał nowszą wersję tego dokumentu. Twoje zmiany zostały w edytorze: skopiuj je, a potem kliknij Resetuj, aby wczytać nową wersję.",
     "loadError": "Nie udało się wczytać dokumentu",
     "loadErrorDescription": "Sprawdź połączenie i spróbuj ponownie.",
     "titleLabel": "Tytuł",

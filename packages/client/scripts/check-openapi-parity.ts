@@ -392,6 +392,13 @@ const API_ERROR_RESPONSE_MIGRATIONS = [
     add: [],
     operations: ["PUT /guilds/{guildId}/events/{eventId}/pin"],
   },
+  // Verified by the stale baseVersion case in the docs repository integration
+  // test: a save from an older version than the document's is a 409.
+  {
+    restore: [],
+    add: ["409"],
+    operations: ["PUT /guilds/{guildId}/docs/{docId}"],
+  },
   // Verified by the hero name cases in the event update spec: adding or
   // renaming a hero onto a name used by another hero or leftover rankings is
   // a 409.
@@ -2138,7 +2145,8 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           },
         },
         description:
-          "Show the authenticated user's aura on the characters of a Margonem account they play; fails with 403 while they wear no aura they may use",
+          "Deprecated: an aura shows on the Margonem accounts its user proved to play when the Game client connected, so this changes nothing. Returns the own aura, or 403 while the user wears no aura they may use",
+        deprecated: true,
       },
       "GET /public/themes/{shareToken}": {
         operationId: "UserThemesController_getSharedTheme",

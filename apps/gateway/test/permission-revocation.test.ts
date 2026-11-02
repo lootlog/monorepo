@@ -203,6 +203,7 @@ const setup = async () => {
     const commands = new CommandHandler(
       store,
       makeMargonemProofVerifier(config, http),
+      () => Effect.void,
       presence,
       hub,
       activity,

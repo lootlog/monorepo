@@ -1,11 +1,8 @@
 import { useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   characterAurasControllerGetAuras,
-  characterAurasControllerLinkGameAccount,
   type CharacterAurasResponseDto,
   getCharacterAurasControllerGetAurasQueryKey,
-  getCharacterAurasControllerGetOwnAuraQueryKey,
   useCharacterAurasControllerGetAuras,
 } from "@lootlog/client/main";
 import type { CharacterAuraId } from "@lootlog/schema/character-aura";
@@ -31,7 +28,6 @@ const AURAS_REFRESH_INTERVAL_MS = 5 * 60_000;
  * only on the NI canvas.
  */
 export const useCharacterAuras = () => {
-  const queryClient = useQueryClient();
   const available = auraRuntimeAdapter.isAvailable();
   const heroAccountId = useGameStore((state) => state.game?.hero.accountId);
   const othersById = useOthersStore((state) => state.othersById);
@@ -64,39 +60,6 @@ export const useCharacterAuras = () => {
 
   const accountAuras = useRef(targets.byAccount);
   const drawn = useRef<ReadonlyMap<string, CharacterAuraId>>(new Map());
-
-  // Other players learn which accounts show the aura from the account list.
-  const linkedAccount = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (
-      !available ||
-      !heroAccountId ||
-      !heroAura ||
-      !own ||
-      own.gameAccountIds.includes(heroAccountId) ||
-      linkedAccount.current === heroAccountId
-    ) {
-      return;
-    }
-
-    linkedAccount.current = heroAccountId;
-    characterAurasControllerLinkGameAccount({ gameAccountId: heroAccountId })
-      .then((updated) => {
-        queryClient.setQueryData(
-          getCharacterAurasControllerGetOwnAuraQueryKey(),
-          updated,
-        );
-
-        return queryClient.invalidateQueries({
-          queryKey: getCharacterAurasControllerGetAurasQueryKey(),
-        });
-      })
-      .catch((error) => {
-        linkedAccount.current = null;
-        console.warn("[CharacterAuras] Failed to link the account:", error);
-      });
-  }, [available, heroAccountId, heroAura, own, queryClient]);
 
   const hasAuras = targets.byCharacter.size > 0;
 

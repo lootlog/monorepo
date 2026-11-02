@@ -10,6 +10,7 @@ import {
   LOOTS_QUERY_GC_TIME_MS,
   applyLootSnapshots,
   lootMatchesListParams,
+  patchLootShare,
   reconcileActiveLootLists,
 } from "./loot-list-cache";
 
@@ -195,4 +196,31 @@ it("places snapshots by id among loaded pages and leaves unread pages to paginat
   // Older than the full last page: its page has not been read yet.
   applyLootSnapshots(client, "one", [lootWith(50)]);
   expect(ids()).not.toContain(50);
+});
+
+it("patches loot lists while event pages cache plain loots under the same path", () => {
+  const client = new QueryClient();
+  const listKey = ["/guilds/one/loots", { world: "tempest" }];
+  const eventKey = ["/guilds/one/loots", { world: "tempest", npcs: ["Hero"] }];
+
+  client.setQueryData(eventKey, [lootWith(1)]);
+  client.setQueryData<InfiniteData<Loot[]>>(listKey, {
+    pages: [[lootWith(1)]],
+    pageParams: [0],
+  });
+
+  const lootShare: Loot["lootShare"] = { "1": [] };
+  patchLootShare(client, "one", 1, lootShare);
+  applyLootSnapshots(client, "one", [lootWith(2)]);
+
+  expect(
+    client
+      .getQueryData<InfiniteData<Loot[]>>(listKey)
+      ?.pages.flat()
+      .map((loot) => [loot.id, loot.lootShare]),
+  ).toEqual([
+    [2, {}],
+    [1, lootShare],
+  ]);
+  expect(client.getQueryData(eventKey)).toEqual([lootWith(1)]);
 });

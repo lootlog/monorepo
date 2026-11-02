@@ -853,6 +853,8 @@ export interface UpdateGuildDocumentDto {
      * @maxLength 120
      */
   title: string;
+  /** The document version the edit started from. When another save has advanced the document past it, the save fails with 409 instead of overwriting that save. */
+  baseVersion?: number;
 }
 
 export type GuildDocumentHistorySnapshotResponseDtoAction = typeof GuildDocumentHistorySnapshotResponseDtoAction[keyof typeof GuildDocumentHistorySnapshotResponseDtoAction];
@@ -4497,10 +4499,17 @@ export type CreateNotificationDtoCharacter = {
 };
 
 /**
- * State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open until `entranceClosesAt`.
+ * State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open for `entranceSecondsLeft` more seconds, from its in-game countdown. Recipients receive `entranceClosesAt` on the server clock. Deprecated: an open entrance sent as `entranceClosesAt`, on the reporter's clock.
  */
 export type CreateNotificationDtoHeroTracker = {
   state: 'unclaimed';
+} | {
+  state: 'open';
+  /**
+     * @maximum 3600
+     * @exclusiveMinimum 0
+     */
+  entranceSecondsLeft: number;
 } | {
   state: 'open';
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
@@ -4524,7 +4533,7 @@ export interface CreateNotificationDto {
   world: string;
   isGatheringParty?: boolean;
   character?: CreateNotificationDtoCharacter;
-  /** State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open until `entranceClosesAt`. */
+  /** State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open for `entranceSecondsLeft` more seconds, from its in-game countdown. Recipients receive `entranceClosesAt` on the server clock. Deprecated: an open entrance sent as `entranceClosesAt`, on the reporter's clock. */
   heroTracker?: CreateNotificationDtoHeroTracker;
 }
 
@@ -9480,6 +9489,7 @@ export interface CreateTimerFromGameClientDto {
   customMaxSpawnTime?: string;
   /**
      * Seconds left until the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from the close time on the server clock instead of from the request.
+     * @maximum 3600
      * @exclusiveMinimum 0
      */
   entranceSecondsLeft?: number;
@@ -39645,7 +39655,7 @@ export const getDocsControllerUpdateDocumentUrl = ({ guildId, docId }: DocsContr
 }
 
 /**
- * Save document title and Lexical state
+ * Save document title and Lexical state; fails with 409 when `baseVersion` is older than the current version
  * @summary Update guild document
  */
 export const docsControllerUpdateDocument = async ({ guildId, docId }: DocsControllerUpdateDocumentPathParameters,
@@ -39680,7 +39690,7 @@ return mainFetch<GuildDocumentResponseDto>(getDocsControllerUpdateDocumentUrl({ 
 
 export const getDocsControllerUpdateDocumentMutationKey = () => ['docsControllerUpdateDocument'] as const;
 
-export const getDocsControllerUpdateDocumentMutationOptions = <TError = ErrorType<RequestValidationError | DocsControllerUpdateDocument401 | DocsControllerUpdateDocument403 | DocsControllerUpdateDocument429>,
+export const getDocsControllerUpdateDocumentMutationOptions = <TError = ErrorType<RequestValidationError | DocsControllerUpdateDocument401 | DocsControllerUpdateDocument403 | HttpErrorResponse | DocsControllerUpdateDocument429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof docsControllerUpdateDocument>>, TError,DocsControllerUpdateDocumentMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof docsControllerUpdateDocument>>, TError,DocsControllerUpdateDocumentMutationVariables, TContext> => {
 
@@ -39709,13 +39719,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DocsControllerUpdateDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof docsControllerUpdateDocument>>>
     export type DocsControllerUpdateDocumentMutationBody = BodyType<UpdateGuildDocumentDto>
-    export type DocsControllerUpdateDocumentMutationError = ErrorType<RequestValidationError | DocsControllerUpdateDocument401 | DocsControllerUpdateDocument403 | DocsControllerUpdateDocument429>
+    export type DocsControllerUpdateDocumentMutationError = ErrorType<RequestValidationError | DocsControllerUpdateDocument401 | DocsControllerUpdateDocument403 | HttpErrorResponse | DocsControllerUpdateDocument429>
     export type DocsControllerUpdateDocumentMutationVariables = {pathParams: DocsControllerUpdateDocumentPathParameters;data: BodyType<UpdateGuildDocumentDto>}
 
     /**
  * @summary Update guild document
  */
-export const useDocsControllerUpdateDocument = <TError = ErrorType<RequestValidationError | DocsControllerUpdateDocument401 | DocsControllerUpdateDocument403 | DocsControllerUpdateDocument429>,
+export const useDocsControllerUpdateDocument = <TError = ErrorType<RequestValidationError | DocsControllerUpdateDocument401 | DocsControllerUpdateDocument403 | HttpErrorResponse | DocsControllerUpdateDocument429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof docsControllerUpdateDocument>>, TError,DocsControllerUpdateDocumentMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof docsControllerUpdateDocument>>,
@@ -41173,7 +41183,8 @@ export const getCharacterAurasControllerLinkGameAccountUrl = ({ gameAccountId }:
 }
 
 /**
- * Show the authenticated user's aura on the characters of a Margonem account they play; fails with 403 while they wear no aura they may use
+ * Deprecated: an aura shows on the Margonem accounts its user proved to play when the Game client connected, so this changes nothing. Returns the own aura, or 403 while the user wears no aura they may use
+ * @deprecated
  * @summary Show own aura on a Margonem account
  */
 export const characterAurasControllerLinkGameAccount = async ({ gameAccountId }: CharacterAurasControllerLinkGameAccountPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<OwnCharacterAuraResponseDto> => {
@@ -41226,6 +41237,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CharacterAurasControllerLinkGameAccountMutationVariables = {pathParams: CharacterAurasControllerLinkGameAccountPathParameters}
 
     /**
+ * @deprecated
  * @summary Show own aura on a Margonem account
  */
 export const useCharacterAurasControllerLinkGameAccount = <TError = ErrorType<RequestValidationError | CharacterAurasControllerLinkGameAccount401 | CharacterAurasControllerLinkGameAccount403 | CharacterAurasControllerLinkGameAccount429>,

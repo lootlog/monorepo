@@ -627,17 +627,16 @@ describe("NpcsDetectionProcessor", () => {
 
     // Moving without a countdown is no news.
     processor.handle({ npcs: [{ ...position, icon: { id: 9791 } }] });
-    const claimedAt = Date.now();
     processor.handle({
       npcs: [{ ...position, icon: { id: 9791 }, killSeconds: 1200 }],
     });
 
     await waitFor(() => expect(requests).toHaveLength(2));
-    const opened = await requests[1]?.json();
-    expect(opened).toMatchObject({ heroTracker: { state: "open" } });
-    expect(
-      Date.parse(opened.heroTracker.entranceClosesAt) - claimedAt,
-    ).toBeGreaterThanOrEqual(1_200_000);
+    // The game's countdown, which the API turns into a close time on its own
+    // clock, not the reporter's.
+    expect(await requests[1]?.json()).toMatchObject({
+      heroTracker: { state: "open", entranceSecondsLeft: 1200 },
+    });
     expect(useNpcDetectorStore.getState().npcs).toEqual([
       expect.objectContaining({
         id: 190436,

@@ -13,6 +13,7 @@ import {
   userKillCharacterTable,
   userKillTotalTable,
   userKillBucketTable,
+  userMargonemAccountTable,
   userPinnedEventTable,
   userSettingDocumentTable,
   userSettingsTable,
@@ -125,6 +126,9 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userCharacterAuraGameAccountTable)
         .where(eq(userCharacterAuraGameAccountTable.userId, identity.userId));
+      yield* transaction
+        .delete(userMargonemAccountTable)
+        .where(eq(userMargonemAccountTable.userId, identity.userId));
       yield* transaction
         .delete(userPinnedEventTable)
         .where(eq(userPinnedEventTable.userId, identity.userId));

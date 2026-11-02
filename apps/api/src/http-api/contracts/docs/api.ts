@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   DocumentResponse,
   DocumentOrganizationPath,
@@ -107,12 +107,16 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
       params: DocumentPath,
       payload: UpdateDocumentRequest,
       success: DocumentResponse,
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(409)),
     },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "DocsController_updateDocument")
     .annotate(OpenApi.Summary, "Update guild document")
-    .annotate(OpenApi.Description, "Save document title and Lexical state"),
+    .annotate(
+      OpenApi.Description,
+      "Save document title and Lexical state; fails with 409 when `baseVersion` is older than the current version",
+    ),
   HttpApiEndpoint.delete(
     "DocsControllerDeleteDocument",
     "/guilds/:guildId/docs/:docId",
