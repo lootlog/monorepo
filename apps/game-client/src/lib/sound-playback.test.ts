@@ -77,6 +77,23 @@ describe("playSound", () => {
     expect(audioInstances[0]?.play).toHaveBeenCalledTimes(1);
   });
 
+  it("plays the hero sound a player chose for event heroes without their own", () => {
+    const heroSound = "https://example.com/hero.mp3";
+
+    seedSettingsDocumentValues(
+      queryClient,
+      soundSettingValues(
+        createSoundSettings({
+          detectorConfig: { HERO: { volume: 0.5, soundUrl: heroSound } },
+        }),
+      ),
+    );
+
+    playSound("detector", "EVENT_HERO");
+
+    expect(audioInstances[0]?.src).toBe(heroSound);
+  });
+
   it("reuses the preloaded media element for repeated pings", () => {
     seedSettingsDocumentValues(
       queryClient,

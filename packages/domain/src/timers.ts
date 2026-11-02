@@ -129,9 +129,25 @@ export const getTimerCountdownMs = (
   return countdownMode === "max" || minTimeLeft < 0 ? maxTimeLeft : minTimeLeft;
 };
 
-// Margonem sends the seconds left on a Hero Tracker's entrance; each client
-// turns them into a closing time on its own clock, so reports of one entrance
-// differ by clock skew and latency, never by minutes.
+/**
+ * A Hero Tracker's window comes from the entrance countdown the game reports,
+ * so a reset from the moment someone clicks would only make it wrong.
+ */
+export const canResetTimerNpc = (npc: { readonly type?: string | null }) =>
+  npc.type !== "HERO_TRACKER";
+
+/**
+ * What every timer list orders a timer by: the time left to an open entrance's
+ * close, otherwise to its maximum spawn time (or its deletion).
+ */
+export const getTimerSortTimeLeft = (timeLeft: TimerTimeLeft): number =>
+  timeLeft.entranceTimeLeft !== undefined && isEntranceOpen(timeLeft)
+    ? timeLeft.entranceTimeLeft
+    : timeLeft.maxTimeLeft;
+
+// Margonem sends the seconds left on a Hero Tracker's entrance, so closing
+// times of one entrance differ only by latency (and by the reporter's clock
+// for clients that still send their own close time), never by minutes.
 const SAME_HERO_TRACKER_ENTRANCE_TOLERANCE_MS = 60_000;
 
 /** Whether two closing times, in epoch ms, belong to one Hero Tracker entrance. */

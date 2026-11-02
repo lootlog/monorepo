@@ -1,5 +1,6 @@
 import { escapeMarkdown } from "discord.js";
 import { npcIconUrl } from "@lootlog/domain/npc-icon";
+import { getTimerSortTimeLeft, getTimerTimeLeft } from "@lootlog/domain/timers";
 import { Clock, Effect, Schema } from "effect";
 import { BotConfig } from "#src/config/bot-config";
 import { guildCommand, visibilityOption } from "./command-builders.js";
@@ -67,7 +68,9 @@ const readCurrentTimers = (session: MemberSession, world?: string) =>
           !timer.deletedAt && new Date(timer.maxSpawnTime).getTime() > now,
       )
       .sort(
-        (left, right) => nextEventTime(left, now) - nextEventTime(right, now),
+        (left, right) =>
+          getTimerSortTimeLeft(getTimerTimeLeft(left, now)) -
+          getTimerSortTimeLeft(getTimerTimeLeft(right, now)),
       );
   });
 
@@ -75,13 +78,6 @@ const openEntranceClosesAt = (timer: Timer, now: number) =>
   timer.entranceClosesAt && new Date(timer.entranceClosesAt).getTime() > now
     ? timer.entranceClosesAt
     : null;
-
-// An open Hero Tracker entrance matters before its later respawn.
-const nextEventTime = (timer: Timer, now: number) => {
-  const entranceClosesAt = openEntranceClosesAt(timer, now);
-
-  return new Date(entranceClosesAt ?? timer.minSpawnTime).getTime();
-};
 
 const spawnWindow = (timer: Timer, now: number) => {
   const entranceClosesAt = openEntranceClosesAt(timer, now);

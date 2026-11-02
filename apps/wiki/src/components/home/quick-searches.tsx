@@ -20,7 +20,7 @@ const QUICK_SEARCHES: ReadonlyArray<{
   },
   {
     key: "heroHeroics",
-    search: { rarities: ItemRarity.HEROIC, bosses: "HERO" },
+    search: { rarities: ItemRarity.HEROIC, bosses: "HERO,EVENT_HERO" },
   },
   {
     key: "highLevelLegendaries",

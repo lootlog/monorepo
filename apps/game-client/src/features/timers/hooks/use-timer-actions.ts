@@ -65,6 +65,10 @@ export const useTimerActions = (
       return t("messages.resetEventWindowForbidden");
     }
 
+    if (apiMessage === "HERO_TRACKER_TIMER_CANNOT_BE_RESET") {
+      return t("messages.resetHeroTrackerForbidden");
+    }
+
     return t("messages.resetFailed", { name: timer.npc.name });
   };
 

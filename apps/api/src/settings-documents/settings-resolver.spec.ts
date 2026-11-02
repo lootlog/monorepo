@@ -135,6 +135,15 @@ describe("settings resolver", () => {
     ).toBe(false);
   });
 
+  it("keeps event heroes hidden in chat for players who hid heroes", () => {
+    expect(
+      migrateSettingsDocument("chat", { hiddenNpcTypes: ["HERO", "TITAN"] }, 1),
+    ).toEqual({ hiddenNpcTypes: ["HERO", "TITAN", "EVENT_HERO"] });
+    expect(
+      migrateSettingsDocument("chat", { hiddenNpcTypes: ["TITAN"] }, 1),
+    ).toEqual({ hiddenNpcTypes: ["TITAN"] });
+  });
+
   it("accepts only known NPC ranks for hidden chat NPC types", () => {
     const { isValid } = SETTINGS_CATALOG.chat.fields.hiddenNpcTypes;
 

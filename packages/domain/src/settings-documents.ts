@@ -304,8 +304,25 @@ export const SETTINGS_CATALOG = {
     },
   },
   chat: {
-    schemaVersion: 1,
-    migrations: [],
+    schemaVersion: 2,
+    migrations: [
+      {
+        fromVersion: 1,
+        // Event heroes were chat heroes; a player who hid heroes keeps them hidden.
+        migrate: (overrides) => {
+          const { hiddenNpcTypes } = overrides;
+
+          return isNpcTypeArray(hiddenNpcTypes) &&
+            hiddenNpcTypes.includes("HERO") &&
+            !hiddenNpcTypes.includes("EVENT_HERO")
+            ? {
+                ...overrides,
+                hiddenNpcTypes: [...hiddenNpcTypes, "EVENT_HERO"],
+              }
+            : overrides;
+        },
+      },
+    ],
     fields: {
       hiddenNpcTypes: field<NpcTypeEnum[]>([], userScopes, isNpcTypeArray),
     },
