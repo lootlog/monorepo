@@ -36,6 +36,13 @@ export const getChatReplySnippet = (reply: ReplyLike) => {
   return `${replyText.slice(0, MAX_REPLY_SNIPPET_LENGTH - ELLIPSIS.length)}${ELLIPSIS}`;
 };
 
+// Transcript rows are memoized on message identity, so a renamed reply keeps
+// one object for as long as its source message and resolved name do.
+const resolvedReplies = new WeakMap<
+  ChatMessageResponseDtoOutput,
+  ChatMessageResponseDtoOutput
+>();
+
 export const resolveChatReplyNames = (
   messages: ChatMessageResponseDtoOutput[],
   messagesByGuildId: Record<string, ChatMessageResponseDtoOutput[]>,
@@ -61,7 +68,17 @@ export const resolveChatReplyNames = (
       ?.get(message.replyTo.messageId);
 
     if (!name || name === message.replyTo.senderNick) return message;
+    const cached = resolvedReplies.get(message);
 
-    return { ...message, replyTo: { ...message.replyTo, senderNick: name } };
+    if (cached?.replyTo?.senderNick === name) return cached;
+
+    const resolved = {
+      ...message,
+      replyTo: { ...message.replyTo, senderNick: name },
+    };
+
+    resolvedReplies.set(message, resolved);
+
+    return resolved;
   });
 };

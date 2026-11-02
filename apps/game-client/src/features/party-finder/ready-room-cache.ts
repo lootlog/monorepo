@@ -109,8 +109,7 @@ export function selectReadyRoomParticipantForCharacter(
       (participant) =>
         (ownedParticipantIds === null ||
           ownedParticipantIds.has(participant.participantId)) &&
-        participant.character.accountId === identity.accountId &&
-        participant.character.characterId === identity.characterId,
+        characterIdentitiesMatch(identity, participant.character),
     ) ?? null
   );
 }
@@ -141,12 +140,6 @@ export function captureReadyRoomSyncBaseline(
   cache: ReadyRoomProjections,
 ): ReadyRoomSyncBaseline {
   return structuredClone(cache.roomVersions);
-}
-
-function isSchemaVersionThree(
-  projection: PartyReadyRoomProjection,
-): projection is PartyReadyRoomProjection {
-  return projection.schemaVersion === 3;
 }
 
 function pruneExpiredRoomTombstones(
@@ -190,10 +183,6 @@ export function mergeReadyRoomProjection(
     roomVersions,
     observedAtMs,
   );
-
-  if (!isSchemaVersionThree(projection)) {
-    return { projections, roomVersions: retainedRoomVersions };
-  }
 
   const notificationId = projection.notificationId;
   const currentVersion = retainedRoomVersions[notificationId];
@@ -293,8 +282,6 @@ export function applyReadyRoomUpdate(
   cache: ReadyRoomProjections,
   update: PartyReadyRoomClientUpdate,
 ): ReadyRoomProjections {
-  if (update.schemaVersion !== 3) return cache;
-
   if (update.type === "UPSERT") {
     return mergeReadyRoomProjection(cache, update.projection);
   }
@@ -329,19 +316,12 @@ export function applyAuthoritativeReadyRoomSync(
   incomingProjections: PartyReadyRoomProjection[],
   baseline: ReadyRoomSyncBaseline,
 ): ReadyRoomProjections {
-  const validIncomingProjections =
-    incomingProjections.filter(isSchemaVersionThree);
-
   const incomingIds = new Set(
-    validIncomingProjections.map(({ notificationId }) => notificationId),
+    incomingProjections.map(({ notificationId }) => notificationId),
   );
 
-  let nextCache = validIncomingProjections.reduce(mergeReadyRoomProjection, {
-    projections: Object.fromEntries(
-      Object.entries(cache.projections).filter(([, projection]) =>
-        isSchemaVersionThree(projection),
-      ),
-    ),
+  let nextCache = incomingProjections.reduce(mergeReadyRoomProjection, {
+    projections: cache.projections,
     roomVersions: cache.roomVersions,
   });
 

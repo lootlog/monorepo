@@ -1,11 +1,11 @@
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import {
-  getGuildMembersSummaryQueryKey,
-  getGuildMembersSummaryQueryOptions,
-} from "@/hooks/api/guild-members-summary-query";
+import { getGuildMembersSummaryQueryOptions } from "@/hooks/api/guild-members-summary-query";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
-import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
+import {
+  getMembersControllerGetGuildMembersSummaryQueryKey,
+  type MemberSummaryResponseDtoOutput,
+} from "@lootlog/client/main";
 import type { StoredNotification } from "@/store/notifications.store";
 
 export type NotificationGuildMembersByGuildId = Record<
@@ -119,7 +119,9 @@ export const useNotificationGuildMembers = (
 
     guildIdsToInvalidate.forEach((guildId) => {
       void queryClient.invalidateQueries({
-        queryKey: getGuildMembersSummaryQueryKey({ guildId }),
+        queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
+          guildId,
+        }),
       });
     });
   }, [membersByGuildId, notifications, queryClient]);

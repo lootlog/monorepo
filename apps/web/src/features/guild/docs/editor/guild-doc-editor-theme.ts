@@ -41,11 +41,17 @@ export const guildDocEditorTheme: EditorThemeClasses = {
   paragraph: "m-0 min-h-5 leading-5",
   quote:
     "my-3 rounded-md border border-border bg-muted/30 px-4 py-3 text-muted-foreground",
-  table:
-    "my-4 w-full table-fixed border-collapse overflow-hidden rounded-md border border-border",
-  tableCell: "border border-border px-3 py-2 align-top",
-  tableCellHeader:
-    "border border-border bg-muted/70 px-3 py-2 text-left font-semibold",
+  // A table may be wider than the reading column: it grows to the page's right
+  // edge (the editor is the inline-size container) and then scrolls sideways,
+  // so every column keeps a readable width instead of squeezing letters.
+  tableScrollableWrapper:
+    "my-4 w-[calc(100cqw-1.5rem)] overflow-x-auto overscroll-x-contain sm:w-[calc(100cqw-2rem)]",
+  table: "min-w-[min(100%,48rem)] border-collapse",
+  // The editor breaks words anywhere, which lets a table squeeze its columns
+  // down to single letters; cells wrap between words instead.
+  tableCell:
+    "min-w-28 border border-border px-3 py-2 text-left align-top [word-break:normal] break-words",
+  tableCellHeader: "bg-muted/70 font-semibold",
   text: {
     bold: "font-semibold",
     italic: "italic",

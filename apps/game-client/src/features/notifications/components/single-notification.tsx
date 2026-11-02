@@ -18,8 +18,7 @@ import {
 import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
 import {
   getArrivalStrength,
-  getBackgroundColor,
-  getBorderColor,
+  getNotificationColors,
 } from "@/utils/notifications-and-detector/background";
 import { format } from "@/utils/local-date";
 import { Swords, XIcon } from "lucide-react";
@@ -56,7 +55,6 @@ type SingleNotificationProps = {
   animationEffectsEnabled: boolean;
   isJoiningReadyRoom: boolean;
   isMutesReady: boolean;
-  isMutePending: boolean;
   mutes: NotificationMutes;
   onJoinReadyRoom: (notification: StoredNotification) => void;
   onPauseAutoHide: (
@@ -158,13 +156,18 @@ const resolveNotificationAppearance = ({
   });
 
   const time = format(new Date(notification.createdAt), "HH:mm");
-  const highlight = categorySettings?.highlight;
+
+  const colors = getNotificationColors(
+    key,
+    categorySettings?.highlight,
+    npcTypeColors,
+  );
 
   return {
     arrivalStrength: getArrivalStrength(key),
     autoHideDurationMs,
-    background: getBackgroundColor(key, highlight, npcTypeColors),
-    borderColor: getBorderColor(key, highlight, npcTypeColors),
+    background: colors.background,
+    borderColor: colors.border,
     metaText: [time, serverNames.join(", "), notification.world]
       .filter(Boolean)
       .join(" · "),
@@ -208,7 +211,6 @@ export const SingleNotification = memo(function SingleNotification({
   guildNamesById,
   isJoiningReadyRoom,
   isMutesReady,
-  isMutePending,
   mutes,
   notification,
   onJoinReadyRoom,
@@ -422,7 +424,6 @@ export const SingleNotification = memo(function SingleNotification({
             notification={notification}
             senderName={senderName}
             isReady={isMutesReady}
-            isPending={isMutePending}
             mutes={mutes}
             onUpdateMutes={onUpdateMutes}
             onOpenChange={(open) => setAutoHideHold("menu", open)}

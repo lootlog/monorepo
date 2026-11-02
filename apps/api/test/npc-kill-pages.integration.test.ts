@@ -34,7 +34,7 @@ const userId = `${guildId}-user`;
 
 const otherUserId = `${userId}-other`;
 
-const policy = createAccessPolicy({ capabilities: [Permission.ADMIN] });
+const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });
 
 const restricted = createAccessPolicy({
   capabilities: [Permission.LOOTLOG_LOOTS_READ],

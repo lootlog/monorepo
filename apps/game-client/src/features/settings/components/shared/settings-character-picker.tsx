@@ -6,7 +6,7 @@ import {
   SettingsPickerCard,
   settingsPickerGridClassName,
 } from "@/features/settings/components/shared/settings-picker-card";
-import type { SaveMark } from "@/features/settings/components/shared/use-save-marks";
+import type { SettingsSaveMark } from "@/features/settings/persistence/settings-save-status.store";
 import { cn } from "cn";
 import type { FC } from "react";
 
@@ -18,7 +18,7 @@ type SettingsCharacterPickerProps = {
   value: string;
   onValueChange: (characterId: string) => void;
   /** Save badge per character id; badges that appear together are staggered. */
-  saveMarkByCharacterId?: Record<string, SaveMark>;
+  saveMarkByCharacterId?: Record<string, SettingsSaveMark>;
   "aria-label"?: string;
   className?: string;
   disabled?: boolean;

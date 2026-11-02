@@ -1,12 +1,7 @@
 import { uniqBy } from "es-toolkit";
 import { useGuildWorld } from "@/hooks/context/use-guild-world";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getLootsControllerFetchLootsByGuildIdQueryKey,
-  lootsControllerFetchLootsByGuildId,
-  type LootsControllerFetchLootsByGuildIdParams,
-} from "@lootlog/client/main";
-import { useQuery } from "@tanstack/react-query";
+import { useLootItemByHid } from "@/hooks/api/use-loot-item-by-hid";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
@@ -23,6 +18,7 @@ import {
 import { ROUTES } from "@/config/routes";
 import type { AppNavigationItemId } from "@/navigation/app-navigation";
 import { parseItemHid } from "@/lib/utils/hid-detection";
+import { normalizeSearchText } from "@/lib/utils/normalize-search-text";
 import { useTranslation } from "react-i18next";
 
 export type GuildSearchPage = {
@@ -41,12 +37,6 @@ export type LootSearchCommandProps = {
 };
 
 type LootFiltersUpdate = Parameters<typeof serializeLootsFilters>[1];
-
-const normalizeForMatch = (value: string) =>
-  value
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLocaleLowerCase("pl");
 
 import { allTrue, anyTrue } from "./loot-search-presentation";
 
@@ -77,10 +67,10 @@ export const useLootSearchCommand = ({
   const lootsPath = ROUTES.guild.base(guildId ?? "");
   const isOnLootsPage = pathname.replace(/\/$/, "") === lootsPath;
 
-  const pageQuery = normalizeForMatch(trimmedSearch);
+  const pageQuery = normalizeSearchText(trimmedSearch);
 
   const pageResults = pages.filter((page) =>
-    normalizeForMatch(page.label).includes(pageQuery),
+    normalizeSearchText(page.label).includes(pageQuery),
   );
 
   // Items and monsters are shared by every world; `world` narrows only the
@@ -98,51 +88,12 @@ export const useLootSearchCommand = ({
 
   const isHid = !!parsedHid;
 
-  const hidLootQueryParams:
-    | LootsControllerFetchLootsByGuildIdParams
-    | undefined = parsedHid
-    ? {
-        hid: parsedHid.hid,
-        world: parsedHid.world,
-        limit: 1,
-      }
-    : undefined;
-
   const {
     data: hidItem,
     isError: isHidError,
     isFetched: isHidFetched,
     isFetching: isHidLoading,
-  } = useQuery({
-    queryKey: hidLootQueryParams
-      ? getLootsControllerFetchLootsByGuildIdQueryKey(
-          { guildId: guildId ?? "" },
-          hidLootQueryParams,
-        )
-      : ["loot-search", "hid-item"],
-    queryFn: async ({ signal }) => {
-      if (!guildId || !hidLootQueryParams) {
-        return null;
-      }
-
-      const response = await lootsControllerFetchLootsByGuildId(
-        {
-          guildId,
-        },
-        hidLootQueryParams,
-        { signal },
-      );
-
-      const firstLoot = response[0];
-
-      return (
-        firstLoot?.items.find((item) => item.hid === hidLootQueryParams.hid) ??
-        null
-      );
-    },
-    enabled: !!guildId && !!hidLootQueryParams,
-    staleTime: 5 * 60 * 1000,
-  });
+  } = useLootItemByHid(guildId, parsedHid);
 
   const close = () => {
     onOpenChange(false);

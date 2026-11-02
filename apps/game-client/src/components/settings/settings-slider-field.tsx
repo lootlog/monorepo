@@ -1,6 +1,7 @@
 import { Slider } from "@/components/ui/slider";
 import { cn } from "cn";
-import { useState, type FC } from "react";
+import type { FC } from "react";
+import { useSourceDraft } from "./use-source-draft";
 
 type SettingsSliderFieldProps = {
   id?: string;
@@ -39,11 +40,7 @@ export const SettingsSliderField: FC<SettingsSliderFieldProps> = ({
   onValueChange,
   onCommit,
 }) => {
-  const [draft, setDraft] = useState<{ source: number; value: number } | null>(
-    null,
-  );
-
-  const current = draft && draft.source === value ? draft.value : value;
+  const [current, setCurrent, clearDraft] = useSourceDraft(value, value);
   const readout = formatValue ? formatValue(current) : `${current}${unit}`;
 
   return (
@@ -63,11 +60,11 @@ export const SettingsSliderField: FC<SettingsSliderFieldProps> = ({
           disabled={disabled}
           value={current}
           onValueChange={(next) => {
-            setDraft({ source: value, value: next });
+            setCurrent(next);
             onValueChange?.(next);
           }}
           onValueCommitted={(next) => {
-            setDraft(null);
+            clearDraft();
             onCommit(next);
           }}
         />

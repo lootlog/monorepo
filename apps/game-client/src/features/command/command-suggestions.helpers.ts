@@ -51,23 +51,10 @@ export const filterCommandSuggestions = ({
 }: {
   inputValue: string;
   suggestions: CommandSuggestion[];
-}) => {
-  const sortableSuggestions = Array.isArray(suggestions) ? suggestions : [];
-
-  return sortableSuggestions
+}) =>
+  suggestions
     .filter((suggestion) => suggestion.prefix.startsWith(inputValue))
-    .slice()
-    .sort((left, right) => {
-      const leftIsExactMatch = left.prefix === inputValue;
-      const rightIsExactMatch = right.prefix === inputValue;
-
-      if (leftIsExactMatch !== rightIsExactMatch) {
-        return leftIsExactMatch ? -1 : 1;
-      }
-
-      return left.prefix.localeCompare(right.prefix);
-    });
-};
+    .toSorted((left, right) => left.prefix.localeCompare(right.prefix));
 
 export const getCommandSuggestionInsertValue = (
   suggestion: CommandSuggestion,

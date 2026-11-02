@@ -1,4 +1,8 @@
-import { useQueries, useQueryClient } from "@tanstack/react-query";
+import {
+  useQueries,
+  useQueryClient,
+  type UseQueryResult,
+} from "@tanstack/react-query";
 import { CHAT_QUERY_GC_TIME_MS } from "@/features/chat/chat.constants";
 import { mergeChatMessageHistories } from "@/features/chat/chat.helpers";
 import { getGuildMembersSummaryQueryOptions } from "@/hooks/api/guild-members-summary-query";
@@ -35,12 +39,6 @@ type UseChatGuildDataOptions = {
   currentCharacterNick: string;
   guilds?: GuildIdentity[];
   selectedGuildId?: string;
-};
-
-type ChatGuildData = {
-  memberLookup: Record<string, GuildMember>;
-  mentionContext: ChatMentionContext;
-  messages: ChatMessageType[];
 };
 
 type MentionContextInput = {
@@ -138,6 +136,24 @@ const reconcileChatMessageRefetch = ({
   );
 };
 
+/**
+ * `useQueries` returns a new array on every render; combining keeps each
+ * result structurally shared, so derived records keep their identity until a
+ * query actually changes.
+ */
+const combineData = <Data>(results: UseQueryResult<Data>[]) =>
+  results.map((result) => result.data);
+
+const combineMessageQueries = (
+  results: UseQueryResult<ChatMessageType[]>[],
+) => ({
+  data: results.map((result) => result.data),
+  failed: results.map((result) => result.isError),
+  firstError: results.find((result) => result.isError)?.error ?? null,
+  pending: results.some((result) => result.isPending || result.isFetching),
+  fetching: results.some((result) => result.isFetching),
+});
+
 export const useChatGuildData = ({
   currentCharacterNick,
   guilds,
@@ -182,128 +198,92 @@ export const useChatGuildData = ({
         staleTime: 5 * 60 * 1000,
       };
     }),
+    combine: combineMessageQueries,
   });
 
-  const memberQueries = useQueries({
+  const members = useQueries({
     queries: guildIdsToLoad.map((guildId) =>
       getGuildMembersSummaryQueryOptions({ guildId }),
     ),
+    combine: combineData,
   });
 
-  const hasMentionCandidatesByGuildId = guildIdsToLoad.reduce<
-    Record<string, boolean>
-  >((result, guildId, index) => {
-    const messages = messageQueries[index]?.data ?? [];
+  const hasMentionCandidates = messageQueries.data.map(
+    (messages) =>
+      messages?.some((message) => hasChatMentionToken(message.message)) ??
+      false,
+  );
 
-    result[guildId] = messages.some((message) => {
-      return hasChatMentionToken(message.message);
-    });
-
-    return result;
-  }, {});
-
-  const currentMemberQueries = useQueries({
-    queries: guildIdsToLoad.map((guildId) => ({
+  const currentMembers = useQueries({
+    queries: guildIdsToLoad.map((guildId, index) => ({
       queryKey: getMembersControllerGetMeQueryKey({ guildId }),
       queryFn: () => membersControllerGetMe({ guildId }),
-      enabled: Boolean(guildId) && hasMentionCandidatesByGuildId[guildId],
+      enabled: Boolean(guildId) && hasMentionCandidates[index],
       gcTime: CHAT_QUERY_GC_TIME_MS,
       staleTime: 5 * 60 * 1000,
     })),
+    combine: combineData,
   });
 
-  const roleQueries = useQueries({
-    queries: guildIdsToLoad.map((guildId) => ({
+  const roles = useQueries({
+    queries: guildIdsToLoad.map((guildId, index) => ({
       queryKey: getRolesControllerGetGuildRolesQueryKey({ guildId }),
       queryFn: () => rolesControllerGetGuildRoles({ guildId }),
-      enabled: Boolean(guildId) && hasMentionCandidatesByGuildId[guildId],
+      enabled: Boolean(guildId) && hasMentionCandidates[index],
       gcTime: CHAT_QUERY_GC_TIME_MS,
       staleTime: 5 * 60 * 1000,
     })),
+    combine: combineData,
   });
 
-  const hasMessagesResponse = messageQueries.some(
-    (query) => query.data !== undefined,
+  const hasMessagesResponse = messageQueries.data.some(
+    (messages) => messages !== undefined,
   );
 
   const failedGuildIds = guildIdsToLoad.filter(
-    (_guildId, index) => messageQueries[index]?.isError,
+    (_guildId, index) => messageQueries.failed[index],
   );
 
-  const firstMessageError = messageQueries.find(
-    (query) => query.isError,
-  )?.error;
-
-  const initialLoading =
-    guildIdsToLoad.length > 0 &&
-    !hasMessagesResponse &&
-    messageQueries.some((query) => query.isPending || query.isFetching);
-
-  const refreshing =
-    hasMessagesResponse && messageQueries.some((query) => query.isFetching);
-
   const retryFailed = () => {
-    messageQueries.forEach((query) => {
-      if (query.isError) {
-        void query.refetch();
-      }
-    });
+    for (const guildId of failedGuildIds) {
+      void queryClient.refetchQueries({
+        queryKey: getChatControllerGetChatMessagesQueryKey({ guildId }),
+        exact: true,
+      });
+    }
   };
 
   const resourceState: AsyncResourceState = {
-    error: hasMessagesResponse ? null : (firstMessageError ?? null),
-    initialLoading,
-    refreshing,
+    error: hasMessagesResponse ? null : messageQueries.firstError,
+    initialLoading:
+      guildIdsToLoad.length > 0 &&
+      !hasMessagesResponse &&
+      messageQueries.pending,
+    refreshing: hasMessagesResponse && messageQueries.fetching,
     retry: retryFailed,
   };
 
-  const guildDataById = guildIdsToLoad.reduce<Record<string, ChatGuildData>>(
-    (result, guildId, index) => {
-      const messages = messageQueries[index]?.data ?? EMPTY_MESSAGES;
-      const members = memberQueries[index]?.data;
+  const messagesByGuildId: Record<string, ChatMessageType[]> = {};
+  const membersByGuildId: Record<string, Record<string, GuildMember>> = {};
+  const mentionContextsByGuildId: Record<string, ChatMentionContext> = {};
 
-      result[guildId] = {
-        messages,
-        memberLookup: mapGuildMembersByUserId(members),
-        mentionContext: getStableChatMentionContext(guildId, {
-          currentCharacterNick,
-          currentMember: currentMemberQueries[index]?.data,
-          members,
-          messages,
-          roles: roleQueries[index]?.data,
-        }),
-      };
+  for (const [index, guildId] of guildIdsToLoad.entries()) {
+    const messages = messageQueries.data[index] ?? EMPTY_MESSAGES;
 
-      return result;
-    },
-    {},
-  );
-
-  const messagesByGuildId = Object.fromEntries(
-    Object.entries(guildDataById).map(([guildId, guildData]) => [
-      guildId,
-      guildData.messages,
-    ]),
-  );
-
-  const membersByGuildId = Object.fromEntries(
-    Object.entries(guildDataById).map(([guildId, guildData]) => [
-      guildId,
-      guildData.memberLookup,
-    ]),
-  );
-
-  const mentionContextsByGuildId = Object.fromEntries(
-    Object.entries(guildDataById).map(([guildId, guildData]) => [
-      guildId,
-      guildData.mentionContext,
-    ]),
-  );
+    messagesByGuildId[guildId] = messages;
+    membersByGuildId[guildId] = mapGuildMembersByUserId(members[index]);
+    mentionContextsByGuildId[guildId] = getStableChatMentionContext(guildId, {
+      currentCharacterNick,
+      currentMember: currentMembers[index],
+      members: members[index],
+      messages,
+      roles: roles[index],
+    });
+  }
 
   return {
     ...resourceState,
     failedGuildIds,
-    guildIdsToLoad,
     hasMessagesResponse,
     membersByGuildId,
     mentionContextsByGuildId,

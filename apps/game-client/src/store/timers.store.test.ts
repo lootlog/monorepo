@@ -295,11 +295,11 @@ describe("timers.store", () => {
   it("updates always visible expired timers and syncs global settings", () => {
     const store = useTimersStore.getState();
 
-    store.showExpiredTimerAlways("experimental", "123:test-boss");
+    store.setExpiredTimerAlwaysVisible("experimental", "123:test-boss", true);
     vi.advanceTimersByTime(500);
-    store.showExpiredTimerAlways("experimental", "123:test-boss");
+    store.setExpiredTimerAlwaysVisible("experimental", "123:test-boss", true);
     vi.advanceTimersByTime(500);
-    store.hideExpiredTimerAlways("experimental", "123:test-boss");
+    store.setExpiredTimerAlwaysVisible("experimental", "123:test-boss", false);
     vi.advanceTimersByTime(500);
 
     expect(useTimersStore.getState().alwaysVisibleExpiredTimers).toEqual({

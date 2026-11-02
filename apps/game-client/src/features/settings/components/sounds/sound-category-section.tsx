@@ -11,7 +11,6 @@ type SoundCategorySectionProps = {
   description: string;
   /** Volume in [0, 1]; 0 means muted. */
   volume: number;
-  onVolumeChange: (value: number) => void;
   onVolumeCommit: (value: number) => void;
   onMuteToggle: () => void;
   /** Header actions, e.g. a play button for a category with one fixed sound. */
@@ -29,7 +28,6 @@ export const SoundCategorySection: FC<SoundCategorySectionProps> = ({
   title,
   description,
   volume,
-  onVolumeChange,
   onVolumeCommit,
   onMuteToggle,
   actions,
@@ -51,7 +49,6 @@ export const SoundCategorySection: FC<SoundCategorySectionProps> = ({
           unmuteLabel={t("common:actions.unmute")}
           volume={volume}
           muted={volume === 0}
-          onVolumeChange={onVolumeChange}
           onVolumeCommit={onVolumeCommit}
           onMuteToggle={onMuteToggle}
         />

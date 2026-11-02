@@ -53,6 +53,12 @@ export function getGuildMemberNotFoundCacheKey(
   return `guild:${identity.guildId}:member:${identity.userId}:discord:${identity.discordId}:not-found`;
 }
 
+export function getGuildMemberForbiddenCacheKey(
+  identity: DiscordGuildMemberIdentity,
+): string {
+  return `guild:${identity.guildId}:member:${identity.userId}:discord:${identity.discordId}:forbidden`;
+}
+
 export function isApiGuildArray(
   value: unknown,
 ): value is RESTGetAPICurrentUserGuildsResult {

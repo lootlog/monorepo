@@ -5,7 +5,7 @@ import {
   CHAT_APPEARANCE_READABLE_PRESET,
   type ChatAppearanceSettings,
 } from "@lootlog/schema/chat-appearance";
-import { useState } from "react";
+import { useSourceDraft } from "@/components/settings/use-source-draft";
 
 /**
  * Local draft for slider-style controls: the value follows the pointer while
@@ -14,15 +14,10 @@ import { useState } from "react";
 export function useChatAppearanceDraft() {
   const { chatAppearance, data } = useChatAppearanceSettings();
 
-  const [draftState, setDraftState] = useState<{
-    source: typeof data;
-    value: ChatAppearanceSettings;
-  }>({ source: data, value: chatAppearance });
-
-  const draft = draftState.source === data ? draftState.value : chatAppearance;
+  const [draft, setDraft] = useSourceDraft(data, chatAppearance);
 
   const updateDraft = (patch: Partial<ChatAppearanceSettings>) => {
-    setDraftState({ source: data, value: { ...draft, ...patch } });
+    setDraft({ ...draft, ...patch });
   };
 
   const commit = (patch: Partial<ChatAppearanceSettings>) => {
