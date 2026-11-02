@@ -216,6 +216,7 @@ export type UserPreferencesResponseDtoOutputMutesNpcsItemNpcType = typeof UserPr
 export const UserPreferencesResponseDtoOutputMutesNpcsItemNpcType = {
   ELITE2: 'ELITE2',
   HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
 } as const;
@@ -293,6 +294,7 @@ export type UpdateUserPreferencesDtoMutesNpcsItemNpcType = typeof UpdateUserPref
 export const UpdateUserPreferencesDtoMutesNpcsItemNpcType = {
   ELITE2: 'ELITE2',
   HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
 } as const;
@@ -367,6 +369,16 @@ export type UserGameAccountPreferencesResponseDtoOutputNotificationsHERO = {
   sound: boolean;
 };
 
+export type UserGameAccountPreferencesResponseDtoOutputNotificationsEVENTHERO = {
+  show: boolean;
+  highlight: boolean;
+  ignoreOtherWorlds: boolean;
+  /** @minimum 0 */
+  autoHideTimeout?: number;
+  guildIds: string[];
+  sound: boolean;
+};
+
 export type UserGameAccountPreferencesResponseDtoOutputNotificationsCOLOSSUS = {
   show: boolean;
   highlight: boolean;
@@ -411,6 +423,7 @@ export type UserGameAccountPreferencesResponseDtoOutputNotifications = {
   guildIds: string[];
   ELITE2: UserGameAccountPreferencesResponseDtoOutputNotificationsELITE2;
   HERO: UserGameAccountPreferencesResponseDtoOutputNotificationsHERO;
+  EVENT_HERO: UserGameAccountPreferencesResponseDtoOutputNotificationsEVENTHERO;
   COLOSSUS: UserGameAccountPreferencesResponseDtoOutputNotificationsCOLOSSUS;
   TITAN: UserGameAccountPreferencesResponseDtoOutputNotificationsTITAN;
   message: UserGameAccountPreferencesResponseDtoOutputNotificationsMessage;
@@ -451,6 +464,14 @@ export type UserGameAccountPreferencesResponseDtoOutputDetectorHERO = {
   notifySound: boolean;
 };
 
+export type UserGameAccountPreferencesResponseDtoOutputDetectorEVENTHERO = {
+  detect: boolean;
+  autoSend: boolean;
+  notifyWindow: boolean;
+  highlight: boolean;
+  notifySound: boolean;
+};
+
 export type UserGameAccountPreferencesResponseDtoOutputDetectorCOLOSSUS = {
   detect: boolean;
   autoSend: boolean;
@@ -471,6 +492,7 @@ export type UserGameAccountPreferencesResponseDtoOutputDetector = {
   routingRules: UserGameAccountPreferencesResponseDtoOutputDetectorRoutingRulesItem[];
   ELITE2: UserGameAccountPreferencesResponseDtoOutputDetectorELITE2;
   HERO: UserGameAccountPreferencesResponseDtoOutputDetectorHERO;
+  EVENT_HERO: UserGameAccountPreferencesResponseDtoOutputDetectorEVENTHERO;
   COLOSSUS: UserGameAccountPreferencesResponseDtoOutputDetectorCOLOSSUS;
   TITAN: UserGameAccountPreferencesResponseDtoOutputDetectorTITAN;
 };
@@ -508,6 +530,16 @@ export type UpdateUserGameAccountPreferencesDtoNotificationsELITE2 = {
 };
 
 export type UpdateUserGameAccountPreferencesDtoNotificationsHERO = {
+  show?: boolean;
+  highlight?: boolean;
+  ignoreOtherWorlds?: boolean;
+  /** @minimum 0 */
+  autoHideTimeout?: number;
+  guildIds?: string[];
+  sound?: boolean;
+};
+
+export type UpdateUserGameAccountPreferencesDtoNotificationsEVENTHERO = {
   show?: boolean;
   highlight?: boolean;
   ignoreOtherWorlds?: boolean;
@@ -561,6 +593,7 @@ export type UpdateUserGameAccountPreferencesDtoNotifications = {
   guildIds?: string[];
   ELITE2?: UpdateUserGameAccountPreferencesDtoNotificationsELITE2;
   HERO?: UpdateUserGameAccountPreferencesDtoNotificationsHERO;
+  EVENT_HERO?: UpdateUserGameAccountPreferencesDtoNotificationsEVENTHERO;
   COLOSSUS?: UpdateUserGameAccountPreferencesDtoNotificationsCOLOSSUS;
   TITAN?: UpdateUserGameAccountPreferencesDtoNotificationsTITAN;
   message?: UpdateUserGameAccountPreferencesDtoNotificationsMessage;
@@ -601,6 +634,14 @@ export type UpdateUserGameAccountPreferencesDtoDetectorHERO = {
   notifySound?: boolean;
 };
 
+export type UpdateUserGameAccountPreferencesDtoDetectorEVENTHERO = {
+  detect?: boolean;
+  autoSend?: boolean;
+  notifyWindow?: boolean;
+  highlight?: boolean;
+  notifySound?: boolean;
+};
+
 export type UpdateUserGameAccountPreferencesDtoDetectorCOLOSSUS = {
   detect?: boolean;
   autoSend?: boolean;
@@ -621,6 +662,7 @@ export type UpdateUserGameAccountPreferencesDtoDetector = {
   routingRules?: UpdateUserGameAccountPreferencesDtoDetectorRoutingRulesItem[];
   ELITE2?: UpdateUserGameAccountPreferencesDtoDetectorELITE2;
   HERO?: UpdateUserGameAccountPreferencesDtoDetectorHERO;
+  EVENT_HERO?: UpdateUserGameAccountPreferencesDtoDetectorEVENTHERO;
   COLOSSUS?: UpdateUserGameAccountPreferencesDtoDetectorCOLOSSUS;
   TITAN?: UpdateUserGameAccountPreferencesDtoDetectorTITAN;
 };
@@ -1663,6 +1705,8 @@ export type CreateTimerFromGameClientDtoNpc = {
   hpp?: number;
   icon: string;
   type: number;
+  /** Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it. */
+  isHeroFromEvent?: boolean;
   x?: number;
   y?: number;
 };
@@ -1736,6 +1780,7 @@ export const CreateManualTimerDtoType = {
   ELITE2: 'ELITE2',
   ELITE3: 'ELITE3',
   HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
   TITAN: 'TITAN',
 } as const;
 
@@ -2476,6 +2521,8 @@ export type CreateLootDtoNpcsItem = {
   /** @minLength 1 */
   icon: string;
   type: number;
+  /** Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it. */
+  isHeroFromEvent?: boolean;
   x?: number;
   y?: number;
 };
@@ -2699,6 +2746,8 @@ export type ChatMessageResponseDtoOutputNpc = {
   /** @minLength 1 */
   icon: string;
   type: number;
+  /** Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it. */
+  isHeroFromEvent?: boolean;
   x?: number;
   y?: number;
 };
@@ -2805,6 +2854,8 @@ export type SendMessageDtoNpc = {
   /** @minLength 1 */
   icon: string;
   type: number;
+  /** Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it. */
+  isHeroFromEvent?: boolean;
   x?: number;
   y?: number;
 };
@@ -5693,6 +5744,8 @@ export type CreateNotificationDtoNpc = {
   /** @minLength 1 */
   icon: string;
   type: number;
+  /** Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it. */
+  isHeroFromEvent?: boolean;
 };
 
 export type CreateNotificationDtoCharacterClan = {
@@ -6472,6 +6525,15 @@ export type UpdateSoundSettingsDtoNotificationsConfigHERO = {
   soundUrl?: '' | string;
 };
 
+export type UpdateSoundSettingsDtoNotificationsConfigEVENTHERO = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
 export type UpdateSoundSettingsDtoNotificationsConfigTITAN = {
   /**
      * @minimum 0
@@ -6502,6 +6564,7 @@ export type UpdateSoundSettingsDtoNotificationsConfigMessage = {
 export type UpdateSoundSettingsDtoNotificationsConfig = {
   ELITE2?: UpdateSoundSettingsDtoNotificationsConfigELITE2;
   HERO?: UpdateSoundSettingsDtoNotificationsConfigHERO;
+  EVENT_HERO?: UpdateSoundSettingsDtoNotificationsConfigEVENTHERO;
   TITAN?: UpdateSoundSettingsDtoNotificationsConfigTITAN;
   COLOSSUS?: UpdateSoundSettingsDtoNotificationsConfigCOLOSSUS;
   message?: UpdateSoundSettingsDtoNotificationsConfigMessage;
@@ -6517,6 +6580,15 @@ export type UpdateSoundSettingsDtoDetectorConfigELITE2 = {
 };
 
 export type UpdateSoundSettingsDtoDetectorConfigHERO = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoDetectorConfigEVENTHERO = {
   /**
      * @minimum 0
      * @maximum 1
@@ -6555,6 +6627,7 @@ export type UpdateSoundSettingsDtoDetectorConfigMessage = {
 export type UpdateSoundSettingsDtoDetectorConfig = {
   ELITE2?: UpdateSoundSettingsDtoDetectorConfigELITE2;
   HERO?: UpdateSoundSettingsDtoDetectorConfigHERO;
+  EVENT_HERO?: UpdateSoundSettingsDtoDetectorConfigEVENTHERO;
   TITAN?: UpdateSoundSettingsDtoDetectorConfigTITAN;
   COLOSSUS?: UpdateSoundSettingsDtoDetectorConfigCOLOSSUS;
   message?: UpdateSoundSettingsDtoDetectorConfigMessage;
@@ -6570,6 +6643,15 @@ export type UpdateSoundSettingsDtoTimersConfigELITE2 = {
 };
 
 export type UpdateSoundSettingsDtoTimersConfigHERO = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoTimersConfigEVENTHERO = {
   /**
      * @minimum 0
      * @maximum 1
@@ -6608,6 +6690,7 @@ export type UpdateSoundSettingsDtoTimersConfigMessage = {
 export type UpdateSoundSettingsDtoTimersConfig = {
   ELITE2?: UpdateSoundSettingsDtoTimersConfigELITE2;
   HERO?: UpdateSoundSettingsDtoTimersConfigHERO;
+  EVENT_HERO?: UpdateSoundSettingsDtoTimersConfigEVENTHERO;
   TITAN?: UpdateSoundSettingsDtoTimersConfigTITAN;
   COLOSSUS?: UpdateSoundSettingsDtoTimersConfigCOLOSSUS;
   message?: UpdateSoundSettingsDtoTimersConfigMessage;
@@ -8287,6 +8370,8 @@ export type CreateKillDtoNpc = {
   prof?: string;
   wt: number;
   icon?: string;
+  /** Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it. */
+  isHeroFromEvent?: boolean;
 };
 
 export type CreateKillDtoCharacter = {

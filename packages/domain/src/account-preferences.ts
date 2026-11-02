@@ -168,6 +168,12 @@ export const normalizeNotifications = flow(
       )(settings?.[type]);
     }
 
+    // Event heroes were notified as heroes; until a player sets them apart
+    // they keep the hero settings that player chose.
+    if (settings?.EVENT_HERO === undefined) {
+      normalized.EVENT_HERO = { ...normalized.HERO };
+    }
+
     return normalized;
   },
 );
@@ -275,6 +281,12 @@ export const normalizeDetector = flow(
       normalized[type] = normalizeDetectorType(defaultDetectorSettings[type])(
         settings?.[type],
       );
+    }
+
+    // Event heroes were detected as heroes; until a player sets them apart
+    // they keep the hero settings that player chose.
+    if (settings?.EVENT_HERO === undefined) {
+      normalized.EVENT_HERO = { ...normalized.HERO };
     }
 
     return normalized;

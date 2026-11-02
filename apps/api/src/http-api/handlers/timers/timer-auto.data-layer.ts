@@ -8,7 +8,7 @@ import { and, desc, eq, gte } from "drizzle-orm";
 import { Clock, Effect, Predicate, Result, Schema } from "effect";
 import { partition } from "es-toolkit";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcType } from "@lootlog/domain/npc-type";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -180,12 +180,13 @@ const makeNpc = (
   location: payload.npc.location,
   wt: String(payload.npc.wt),
   lvl: payload.npc.lvl,
-  type: getNpcTypeByWt(
-    NpcType,
-    payload.npc.wt,
-    payload.npc.prof ?? "",
-    payload.npc.type,
-  ),
+  type: getNpcType(NpcType, {
+    wt: payload.npc.wt,
+    prof: payload.npc.prof ?? "",
+    type: payload.npc.type,
+    icon: payload.npc.icon,
+    isHeroFromEvent: payload.npc.isHeroFromEvent,
+  }),
   icon: normalizeNpcIcon(payload.npc.icon),
   margonemType: String(payload.npc.type),
 });

@@ -26,6 +26,12 @@ export const SendNotificationRequest = Schema.Struct({
       y: Schema.optionalKey(FiniteNumber),
       icon: NonEmptyString,
       type: FiniteNumber,
+      isHeroFromEvent: Schema.optionalKey(
+        Schema.Boolean.annotate({
+          description:
+            "Margonem template flag (`isHeroFromEvent`) of a hero spawned by an event; omitted when the client did not observe it.",
+        }),
+      ),
     }),
   ),
   guildIds: Schema.Array(

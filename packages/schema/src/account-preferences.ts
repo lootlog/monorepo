@@ -1,6 +1,7 @@
 export const NOTIFICATION_TYPES = [
   "ELITE2",
   "HERO",
+  "EVENT_HERO",
   "COLOSSUS",
   "TITAN",
   "message",
@@ -9,11 +10,17 @@ export const NOTIFICATION_TYPES = [
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
-export type DetectorNpcType = "ELITE2" | "HERO" | "COLOSSUS" | "TITAN";
+export type DetectorNpcType =
+  | "ELITE2"
+  | "HERO"
+  | "EVENT_HERO"
+  | "COLOSSUS"
+  | "TITAN";
 
 export const DETECTOR_NPC_TYPES = [
   "ELITE2",
   "HERO",
+  "EVENT_HERO",
   "COLOSSUS",
   "TITAN",
 ] as const satisfies readonly DetectorNpcType[];
@@ -62,6 +69,7 @@ export type DetectorSettings = {
   routingRules: DetectorRoutingRule[];
   ELITE2: DetectorTypeSettings;
   HERO: DetectorTypeSettings;
+  EVENT_HERO: DetectorTypeSettings;
   COLOSSUS: DetectorTypeSettings;
   TITAN: DetectorTypeSettings;
 };
@@ -84,6 +92,7 @@ type DetectorSettingsPatch = {
   routingRules?: DetectorRoutingRule[];
   ELITE2?: DetectorTypeSettingsPatch;
   HERO?: DetectorTypeSettingsPatch;
+  EVENT_HERO?: DetectorTypeSettingsPatch;
   COLOSSUS?: DetectorTypeSettingsPatch;
   TITAN?: DetectorTypeSettingsPatch;
 };
@@ -142,6 +151,13 @@ export const defaultNotificationsSettings: NotificationsSettings = {
     autoHideTimeout: 0,
     sound: false,
   },
+  EVENT_HERO: {
+    show: true,
+    highlight: true,
+    ignoreOtherWorlds: true,
+    autoHideTimeout: 0,
+    sound: false,
+  },
   COLOSSUS: {
     show: true,
     highlight: true,
@@ -182,6 +198,13 @@ export const defaultDetectorSettings: DetectorSettings = {
     notifySound: false,
   },
   HERO: {
+    detect: true,
+    autoSend: false,
+    notifyWindow: true,
+    highlight: true,
+    notifySound: false,
+  },
+  EVENT_HERO: {
     detect: true,
     autoSend: false,
     notifyWindow: true,

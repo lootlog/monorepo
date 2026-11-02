@@ -19,11 +19,6 @@ import {
 
 const SEARCH_LIMIT = 72;
 
-// The catalog keeps no event heroes of their own, so the filter offers none.
-const TYPE_FILTER_OPTIONS = NPC_TYPE_OPTIONS.filter(
-  (type) => type !== "EVENT_HERO",
-);
-
 export const Route = createFileRoute("/npcs")({
   component: NpcsRoute,
   head: () => ({
@@ -90,7 +85,7 @@ function NpcsRoute() {
               {t("npcs.types")}
             </legend>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-1.5">
-              {TYPE_FILTER_OPTIONS.map((type) => (
+              {NPC_TYPE_OPTIONS.map((type) => (
                 <FilterTile
                   key={type}
                   label={t(`npcTypes.${type}`)}

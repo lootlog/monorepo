@@ -3,10 +3,7 @@ import { formatLevel } from "@lootlog/domain/profession";
 import { EmptyState } from "@/components/common/empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
-import type {
-  MemberKillsResponseDtoOutput,
-  NpcType,
-} from "@lootlog/client/main";
+import type { MemberKillsResponseDtoOutput } from "@lootlog/client/main";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
@@ -18,6 +15,7 @@ import {
 import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
 import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
 import { TRACKABLE_NPC_TYPES } from "./constants";
+import { NPC_TYPES_STRONGEST_FIRST } from "@/constants/npc";
 import { StatsCountCell } from "@/components/common/stats-count-cell";
 import { StatsDetailMeta } from "./components/stats-detail-meta";
 import { MemberAvatar } from "@/components/common/member-avatar";
@@ -34,17 +32,6 @@ import { ResultsSurface } from "@/components/common/results-surface";
 import type { useStatsSettings } from "./hooks/use-stats-settings";
 import { StatsDetailPageSkeleton } from "./stats-detail-page-skeleton";
 import { useMemberStatsPage } from "./use-member-stats-page";
-
-const NPC_TYPE_ORDER: NpcType[] = [
-  "TITAN",
-  "COLOSSUS",
-  "HERO",
-  "EVENT_HERO",
-  "ELITE3",
-  "ELITE2",
-  "ELITE",
-  "COMMON",
-];
 
 type StatsSettings = ReturnType<typeof useStatsSettings>["settings"];
 
@@ -174,7 +161,7 @@ export const MemberStatsPage = () => {
 
   const hasPrev = cursor > 0;
 
-  const typeMetrics = NPC_TYPE_ORDER.flatMap((type) => {
+  const typeMetrics = NPC_TYPES_STRONGEST_FIRST.flatMap((type) => {
     const value = overview?.participationsByType[type] ?? 0;
 
     return value > 0 ? [{ key: type, label: t(`npcType.${type}`), value }] : [];
