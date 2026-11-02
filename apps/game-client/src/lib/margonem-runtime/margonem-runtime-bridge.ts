@@ -132,7 +132,7 @@ export class MargonemRuntimeBridge {
     };
 
     const emitApplied = (envelope: RuntimeEventEnvelope) =>
-      this.emit(this.appliedHandlers, envelope, "applied");
+      this.emitApplied(envelope);
 
     const wrappedInbound: RuntimeFunction = function (...args) {
       initializeGame();
@@ -157,10 +157,6 @@ export class MargonemRuntimeBridge {
     return container[property] === wrappedInbound;
   }
 
-  setupProxies(): boolean {
-    return this.install();
-  }
-
   setGameInitCallback(callback: () => boolean): void {
     this.gameInitCallback = callback;
     this.gameInitCallbackExecuted = false;
@@ -171,7 +167,7 @@ export class MargonemRuntimeBridge {
     const envelope = this.createEnvelope(event, this.activeIntent);
 
     if (!envelope) return false;
-    this.emit(this.appliedHandlers, envelope, "applied");
+    this.emitApplied(envelope);
 
     return true;
   }
@@ -290,7 +286,6 @@ export class MargonemRuntimeBridge {
           phase: "intent",
           sequence: this.sequence,
         });
-        continue;
       }
     }
   }
@@ -457,21 +452,16 @@ export class MargonemRuntimeBridge {
     };
   }
 
-  private emit(
-    handlers: ReadonlySet<RuntimeEventHandler>,
-    envelope: RuntimeEventEnvelope,
-    phase: "applied",
-  ): void {
-    for (const handler of handlers) {
+  private emitApplied(envelope: RuntimeEventEnvelope): void {
+    for (const handler of this.appliedHandlers) {
       try {
         handler(envelope);
       } catch (error) {
         this.reportObserverFailure({
           error,
-          phase,
+          phase: "applied",
           sequence: envelope.sequence,
         });
-        continue;
       }
     }
   }

@@ -1,4 +1,5 @@
 import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
+import { strongestNpcFirst } from "#src/loots/strongest-npc-order";
 import { UserFeedItem } from "@lootlog/protocol/feed";
 import {
   ACTIVITY_FEED_LOOT_AFTER_KILL_MS,
@@ -221,11 +222,7 @@ export const buildUserFeedQuery = (
           query.select({ lootId: loots.lootId }).from(loots),
         ),
       )
-      .orderBy(
-        lootNpcTable.lootId,
-        sql`${npcSnapshotTable.lvl} desc nulls last`,
-        npcSnapshotTable.id,
-      ),
+      .orderBy(lootNpcTable.lootId, ...strongestNpcFirst),
   );
 
   // Kill and loot arrive as separate submissions, so a loot joins the
@@ -327,7 +324,7 @@ export const buildUserFeedQuery = (
       eq(npcSnapshotTable.id, lootNpcTable.npcSnapshotId),
     )
     .where(eq(lootNpcTable.lootId, loots.lootId))
-    .orderBy(sql`${npcSnapshotTable.lvl} desc nulls last`, npcSnapshotTable.id)
+    .orderBy(...strongestNpcFirst)
     .limit(1);
 
   const previewItems = query

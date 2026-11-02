@@ -67,6 +67,10 @@ beforeEach(() => {
     socketState: { connected: false, joined: false, joinedGuilds: [] },
   });
   setTestRuntimeGame();
+  seedDetectorPreferences();
+});
+
+const seedDetectorPreferences = () => {
   const detector = createDetectorSettings();
   detector.HERO.detect = true;
   detector.HERO.notifySound = false;
@@ -92,7 +96,7 @@ beforeEach(() => {
       id: "202",
     }),
   );
-});
+};
 
 afterEach(() => {
   queryClient.clear();
@@ -152,6 +156,19 @@ it("clears the previous map before processing NPCs from the same packet", () => 
   dispatcher.handleEvent({ town: town(2) });
   expect(useNpcDetectorStore.getState().npcs).toHaveLength(1);
   dispatcher.handleEvent({ town: town(3) });
+  expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+});
+
+it("does not replay NPCs queued on the previous map once detector settings arrive", () => {
+  queryClient.clear();
+  const dispatcher = new EventDispatcher();
+  dispatcher.handleEvent({ town: town(1) });
+  dispatcher.handleEvent(npcEvent);
+  dispatcher.handleEvent({ town: town(2) });
+
+  seedDetectorPreferences();
+  npcsDetectionProcessor.flushPending("202");
+
   expect(useNpcDetectorStore.getState().npcs).toEqual([]);
 });
 

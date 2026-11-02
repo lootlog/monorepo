@@ -194,6 +194,68 @@ it("updates world cache only while joined and subscribed, including listener cle
   }
 });
 
+it("stores a socket timer in the same shape as a loaded one, keeping who reset it", async () => {
+  const fixture = createTimerHttpFixture();
+  const gateway = createTimerRealtimeFixture();
+  const key = queryKeys.timers("luvia");
+
+  const actorCharacter = {
+    name: "Zorin",
+    prof: "BLADE_DANCER",
+    icon: "",
+    lvl: 300,
+    characterId: 100,
+    accountId: 200,
+  };
+
+  const view = render(
+    <QueryClientProvider client={fixture.queryClient}>
+      <SocketProvider>
+        <TimerListener />
+      </SocketProvider>
+    </QueryClientProvider>,
+  );
+
+  try {
+    act(() => gateway.wire.open());
+    await gateway.join(["guild-1"]);
+    await gateway.receive({
+      v: 1,
+      type: "timer.created",
+      data: {
+        organizationId: "guild-1",
+        payload: {
+          ...createTimerFixture(),
+          member: {
+            id: 7,
+            userId: "user-7",
+            guildId: "guild-1",
+            type: "USER",
+            name: "Salvatore",
+            active: true,
+            roles: [{ id: "role-1" }],
+            updatedAt: "2026-05-03T10:00:00.000Z",
+          },
+          actorCharacter,
+        },
+      },
+    });
+    expect(fixture.queryClient.getQueryData(key)).toEqual([
+      expect.objectContaining({
+        member: expect.objectContaining({
+          id: 7,
+          roles: [{ position: null, color: null }],
+        }),
+        actorCharactersByMemberId: { "7": actorCharacter },
+      }),
+    ]);
+  } finally {
+    view.unmount();
+    gateway.cleanup();
+    fixture.cleanup();
+  }
+});
+
 it("refreshes an active timer snapshot after a socket reconnect with unchanged permissions", async () => {
   setTestRuntimeGame();
   useGlobalStore.setState({ gameState: { gameInitialized: true } });

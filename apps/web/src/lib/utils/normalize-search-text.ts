@@ -5,7 +5,7 @@ const POLISH_CHARACTER_REPLACEMENTS = new Map([
   ["ł", "l"],
 ]);
 
-export const normalizeBattleSearchText = (value: string): string =>
+export const normalizeSearchText = (value: string): string =>
   value
     .replace(
       /[Łł]/g,

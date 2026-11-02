@@ -19,10 +19,34 @@ import {
   settingsPatchQueue,
 } from "@/features/settings/persistence/settings-patch-client";
 import { seedSettingsDocumentValues } from "@/test/settings-documents-fixtures";
+import {
+  createPingPressIdentity,
+  pingInteractionController,
+} from "@/features/pings/ping-interaction-controller";
+
+/** Ping handlers wired to the interaction controller, as usePings wires them. */
+const createOnPingStart = () =>
+  vi.fn<(event: KeyboardEvent | MouseEvent) => boolean>((event) =>
+    pingInteractionController.begin({
+      identity: createPingPressIdentity(event),
+      menu: { centre: null, quick: "attention", ring: [], title: null },
+      origin: { x: 0, y: 0 },
+      target: { kind: "battle", warriorId: 1 },
+    }),
+  );
+
+const createOnPingEnd = () =>
+  vi.fn<(event: KeyboardEvent | MouseEvent) => void>((event) => {
+    pingInteractionController.complete(createPingPressIdentity(event));
+  });
+
+const createOnPingCancel = () =>
+  vi.fn<() => void>(() => pingInteractionController.cancel());
 
 describe("useHotkeys", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    pingInteractionController.cancel();
     useHotkeysStore.getState().resetAll();
     useWindowsStore.setState((state) => ({
       ...state,
@@ -30,7 +54,6 @@ describe("useHotkeys", () => {
         ...state["quick-access"],
         open: true,
       },
-      currentWindowFocus: undefined,
       windowFocusHistory: [],
     }));
   });
@@ -157,7 +180,7 @@ describe("useHotkeys", () => {
     canvas.id = "GAME_CANVAS";
     document.body.append(input, canvas);
     input.focus();
-    const onPingStart = vi.fn<() => boolean>(() => true);
+    const onPingStart = createOnPingStart();
     renderHook(() => useHotkeys({ onPingStart }));
 
     const event = new MouseEvent("mousedown", {
@@ -181,8 +204,8 @@ describe("useHotkeys", () => {
     const canvas = document.createElement("canvas");
     canvas.id = "GAME_CANVAS";
     document.body.append(canvas);
-    const onPingStart = vi.fn<() => boolean>(() => true);
-    const onPingEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
+    const onPingStart = createOnPingStart();
+    const onPingEnd = createOnPingEnd();
     renderHook(() => useHotkeys({ onPingStart, onPingEnd }));
 
     act(() => {
@@ -215,8 +238,8 @@ describe("useHotkeys", () => {
       ctrl: false,
       alt: false,
     });
-    const onPingStart = vi.fn<() => boolean>(() => true);
-    const onPingEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
+    const onPingStart = createOnPingStart();
+    const onPingEnd = createOnPingEnd();
     renderHook(() => useHotkeys({ onPingStart, onPingEnd }));
 
     act(() => {
@@ -250,8 +273,8 @@ describe("useHotkeys", () => {
       ctrl: false,
       alt: false,
     });
-    const onPingStart = vi.fn<() => boolean>(() => true);
-    const onPingEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
+    const onPingStart = createOnPingStart();
+    const onPingEnd = createOnPingEnd();
     renderHook(() => useHotkeys({ onPingStart, onPingEnd }));
     const editor = document.createElement("div");
     editor.addEventListener("keyup", (event) => event.stopPropagation());
@@ -278,8 +301,8 @@ describe("useHotkeys", () => {
       ctrl: false,
       alt: false,
     });
-    const onPingStart = vi.fn<() => boolean>(() => true);
-    const onPingCancel = vi.fn<() => void>();
+    const onPingStart = createOnPingStart();
+    const onPingCancel = createOnPingCancel();
     renderHook(() => useHotkeys({ onPingStart, onPingCancel }));
 
     act(() => {
@@ -304,11 +327,45 @@ describe("useHotkeys", () => {
     expect(onPingCancel).toHaveBeenCalledOnce();
   });
 
+  it("lets Escape reach the game once the held ping was cancelled elsewhere", () => {
+    useHotkeysStore.getState().setBinding("map-ping", {
+      type: "keyboard",
+      key: "P",
+      shift: false,
+      ctrl: false,
+      alt: false,
+    });
+    const onPingCancel = createOnPingCancel();
+    renderHook(() =>
+      useHotkeys({ onPingStart: createOnPingStart(), onPingCancel }),
+    );
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyP", key: "P" }),
+      );
+    });
+    // usePings drops the press when the gateway connection goes away.
+    act(() => pingInteractionController.cancel());
+
+    const escape = new KeyboardEvent("keydown", {
+      key: "Escape",
+      cancelable: true,
+    });
+
+    act(() => {
+      window.dispatchEvent(escape);
+    });
+
+    expect(escape.defaultPrevented).toBe(false);
+    expect(onPingCancel).not.toHaveBeenCalled();
+  });
+
   it("keeps a held ping open when the caller re-renders with new callbacks", () => {
-    const onPingStart = vi.fn<() => boolean>(() => true);
-    const onPingCancel = vi.fn<() => void>();
-    const firstEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
-    const latestEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
+    const onPingStart = createOnPingStart();
+    const onPingCancel = createOnPingCancel();
+    const firstEnd = createOnPingEnd();
+    const latestEnd = createOnPingEnd();
 
     const view = renderHook(
       ({ onPingEnd }) => useHotkeys({ onPingStart, onPingCancel, onPingEnd }),

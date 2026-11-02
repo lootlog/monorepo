@@ -1,4 +1,4 @@
-import { normalizeBattleSearchText } from "./normalize-battle-search-text";
+import { normalizeSearchText } from "@/lib/utils/normalize-search-text";
 import { createBattleWarrior as buildBattleWarrior } from "@/lib/testing/battle";
 import type { RawBattleParsedEvent } from "@/lib/api/battlelog-types";
 import { describe, expect, it } from "vitest";
@@ -28,8 +28,8 @@ const defender = buildBattleWarrior({
 
 describe("battle log search", () => {
   it("normalizes case and Polish diacritics", () => {
-    expect(normalizeBattleSearchText("  Dotyk Anioła  ")).toBe("dotyk aniola");
-    expect(normalizeBattleSearchText("ŻÓŁĆ Łódź")).toBe("zolc lodz");
+    expect(normalizeSearchText("  Dotyk Anioła  ")).toBe("dotyk aniola");
+    expect(normalizeSearchText("ŻÓŁĆ Łódź")).toBe("zolc lodz");
   });
 
   it("matches visible log text", () => {

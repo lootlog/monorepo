@@ -7,6 +7,7 @@ import { memberTable, timerTable } from "#src/database/drizzle/schema";
 
 import { generateUniqueIntId } from "#src/shared/generate-unique-int-id";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
+import { respawnFromSpawnWindow } from "@lootlog/domain/timers";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { buildTimerKey } from "#src/timers/timer-key";
 import type { CreateManualTimerRequest } from "#src/contracts/timers/schemas";
@@ -21,39 +22,36 @@ import {
   type TimerUpdatePorts,
 } from "./timer-update-publication.js";
 
+// A reset repeats the window as entered, counted from the reset.
+const withRespawn = (minSpawnTime: Date, maxSpawnTime: Date, now: Date) => {
+  const respawn = respawnFromSpawnWindow(
+    (minSpawnTime.getTime() - now.getTime()) / 1000,
+    (maxSpawnTime.getTime() - now.getTime()) / 1000,
+  );
+
+  return {
+    minSpawnTime,
+    maxSpawnTime,
+    latestRespBaseSeconds: respawn.respBaseSeconds,
+    latestRespawnRandomness: respawn.respawnRandomness,
+  };
+};
+
 const spawnWindow = (payload: CreateManualTimerRequest, now: Date) => {
   if (payload.customMinSpawnTime && payload.customMaxSpawnTime) {
-    const minSpawnTime = new Date(payload.customMinSpawnTime);
-    const maxSpawnTime = new Date(payload.customMaxSpawnTime);
-
-    const midpointSeconds = Math.round(
-      (maxSpawnTime.getTime() - minSpawnTime.getTime()) / 2000,
+    return withRespawn(
+      new Date(payload.customMinSpawnTime),
+      new Date(payload.customMaxSpawnTime),
+      now,
     );
-
-    return {
-      minSpawnTime,
-      maxSpawnTime,
-      latestRespBaseSeconds: midpointSeconds,
-      latestRespawnRandomness: midpointSeconds > 0 ? 100 : 0,
-    };
   }
 
   if (payload.minSeconds && payload.maxSeconds) {
-    const averageSeconds = Math.round(
-      (payload.minSeconds + payload.maxSeconds) / 2,
+    return withRespawn(
+      new Date(now.getTime() + payload.minSeconds * 1000),
+      new Date(now.getTime() + payload.maxSeconds * 1000),
+      now,
     );
-
-    const varianceSeconds = payload.maxSeconds - averageSeconds;
-
-    return {
-      minSpawnTime: new Date(now.getTime() + payload.minSeconds * 1000),
-      maxSpawnTime: new Date(now.getTime() + payload.maxSeconds * 1000),
-      latestRespBaseSeconds: averageSeconds,
-      latestRespawnRandomness:
-        averageSeconds > 0
-          ? Math.round((varianceSeconds / averageSeconds) * 100)
-          : 0,
-    };
   }
 
   throw new InvalidRequestError({

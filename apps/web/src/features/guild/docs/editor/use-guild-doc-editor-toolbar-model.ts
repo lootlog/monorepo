@@ -33,6 +33,8 @@ import {
 import {
   $createParagraphNode,
   $createTextNode,
+  $getNodeByKey,
+  $getRoot,
   $getSelection,
   $isRangeSelection,
   $setSelection,
@@ -46,9 +48,11 @@ import {
   UNDO_COMMAND,
   type BaseSelection,
   type LexicalNode,
+  type NodeKey,
   type TextFormatType,
 } from "lexical";
 import {
+  AtSign,
   Bold,
   Code2,
   Columns3,
@@ -61,7 +65,9 @@ import {
   List,
   ListChecks,
   ListOrdered,
+  LayoutTemplate,
   Minus,
+  Package,
   Quote,
   Redo2,
   RemoveFormatting,
@@ -77,6 +83,16 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  $createGuildDocItemNode,
+  $isGuildDocItemNode,
+  EDIT_GUILD_DOC_ITEM_COMMAND,
+  type GuildDocItem,
+} from "./guild-doc-item-node";
+import {
+  $insertGuildDocTemplate,
+  GUILD_DOC_TEMPLATE_IDS,
+} from "./guild-doc-templates";
 
 type ActiveBlock =
   | "paragraph"
@@ -105,7 +121,13 @@ type ToolbarControl = {
   label: string;
 };
 
-type ToolbarItem = ToolbarControl | { separator: string };
+type ToolbarMenu = {
+  icon: LucideIcon;
+  label: string;
+  menu: { action: () => void; label: string; description: string }[];
+};
+
+type ToolbarItem = ToolbarControl | ToolbarMenu | { separator: string };
 
 const initialActiveState: ToolbarActiveState = {
   block: "paragraph",
@@ -200,6 +222,14 @@ export const useGuildDocEditorToolbarModel = () => {
   const { t } = useTranslation();
   const [tableDialogOpen, setTableDialogOpen] = useState(false);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [itemDialogOpen, setItemDialogOpen] = useState(false);
+
+  // The item a chip's edit button opened the dialog for; null inserts one.
+  const [editedItem, setEditedItem] = useState<{
+    item: GuildDocItem;
+    nodeKey: NodeKey;
+  } | null>(null);
+
   const savedSelection = useRef<BaseSelection | null>(null);
   const [selectedLinkText, setSelectedLinkText] = useState("");
 
@@ -259,9 +289,27 @@ export const useGuildDocEditorToolbarModel = () => {
       COMMAND_PRIORITY_LOW,
     );
 
+    const unregisterEditItemCommand = editor.registerCommand(
+      EDIT_GUILD_DOC_ITEM_COMMAND,
+      (nodeKey) => {
+        const node = $getNodeByKey(nodeKey);
+
+        if (!$isGuildDocItemNode(node)) {
+          return false;
+        }
+
+        setEditedItem({ item: node.getItem(), nodeKey });
+        setItemDialogOpen(true);
+
+        return true;
+      },
+      COMMAND_PRIORITY_LOW,
+    );
+
     return () => {
       unregisterUpdateListener();
       unregisterSelectionListener();
+      unregisterEditItemCommand();
     };
   }, [editor]);
 
@@ -295,6 +343,81 @@ export const useGuildDocEditorToolbarModel = () => {
     });
   };
 
+  // A dialog takes the focus; inserting from it goes back to this selection.
+  const $restoreSavedSelection = () => {
+    if (savedSelection.current) {
+      $setSelection(savedSelection.current.clone());
+    }
+  };
+
+  const openItemDialog = () => {
+    setEditedItem(null);
+    editor.getEditorState().read(() => {
+      savedSelection.current = $getSelection()?.clone() ?? null;
+    });
+    setItemDialogOpen(true);
+  };
+
+  const insertItem = (item: GuildDocItem) => {
+    editor.update(() => {
+      if (editedItem) {
+        const node = $getNodeByKey(editedItem.nodeKey);
+
+        if ($isGuildDocItemNode(node)) {
+          node.setItem(item);
+          node.selectNext();
+        }
+
+        return;
+      }
+
+      $restoreSavedSelection();
+
+      const selection = $getSelection();
+      const itemNode = $createGuildDocItemNode(item);
+
+      if ($isRangeSelection(selection)) {
+        selection.insertNodes([itemNode]);
+      } else {
+        $getRoot().append($createParagraphNode().append(itemNode));
+      }
+
+      itemNode.selectNext();
+    });
+
+    savedSelection.current = null;
+    window.requestAnimationFrame(() => editor.focus());
+  };
+
+  const handleItemDialogOpenChange = (open: boolean) => {
+    setItemDialogOpen(open);
+
+    if (!open) {
+      savedSelection.current = null;
+    }
+  };
+
+  // The mention menu opens on an `@` that starts a word.
+  const startMention = () => {
+    editor.update(() => {
+      const selection = $getSelection();
+
+      if (!$isRangeSelection(selection)) {
+        return;
+      }
+
+      const anchorNode = selection.anchor.getNode();
+
+      const previousCharacter = anchorNode
+        .getTextContent()
+        .slice(0, selection.anchor.offset)
+        .slice(-1);
+
+      selection.insertText(/\S/.test(previousCharacter) ? " @" : "@");
+    });
+    editor.focus();
+  };
+
   const openLinkDialog = () => {
     let nextSelection: BaseSelection | null = null;
     let nextSelectedText = "";
@@ -318,9 +441,7 @@ export const useGuildDocEditorToolbarModel = () => {
     const normalizedUrl = formatUrl(data.url);
 
     editor.update(() => {
-      if (savedSelection.current) {
-        $setSelection(savedSelection.current.clone());
-      }
+      $restoreSavedSelection();
 
       const selection = $getSelection();
 
@@ -509,7 +630,27 @@ export const useGuildDocEditorToolbarModel = () => {
       icon: Table2,
       action: () => setTableDialogOpen(true),
     },
+    {
+      label: t("docs.toolbar.item"),
+      icon: Package,
+      action: openItemDialog,
+    },
+    {
+      label: t("docs.toolbar.mention"),
+      icon: AtSign,
+      action: startMention,
+    },
   ];
+
+  const templateMenu: ToolbarMenu = {
+    label: t("docs.toolbar.templates"),
+    icon: LayoutTemplate,
+    menu: GUILD_DOC_TEMPLATE_IDS.map((id) => ({
+      label: t(`docs.templates.${id}.label`),
+      description: t(`docs.templates.${id}.description`),
+      action: () => editor.update(() => $insertGuildDocTemplate(id, t)),
+    })),
+  };
 
   const utilityControls: ToolbarControl[] = [
     {
@@ -546,6 +687,7 @@ export const useGuildDocEditorToolbarModel = () => {
     ...blockControls,
     { separator: "insert" },
     ...insertControls,
+    templateMenu,
     { separator: "utility" },
     ...utilityControls,
     ...(tableControls.length > 0
@@ -562,5 +704,9 @@ export const useGuildDocEditorToolbarModel = () => {
     selectedLinkText,
     handleLinkDialogOpenChange,
     submitLink,
+    itemDialogOpen,
+    editedItem: editedItem?.item ?? null,
+    insertItem,
+    handleItemDialogOpenChange,
   };
 };

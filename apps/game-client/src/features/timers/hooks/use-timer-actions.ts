@@ -36,8 +36,7 @@ export const useTimerActions = (
     pinTimer,
     unpinTimer,
     setTimerColor,
-    showExpiredTimerAlways,
-    hideExpiredTimerAlways,
+    setExpiredTimerAlwaysVisible,
     isPinned,
     isAlwaysVisibleExpiredTimer,
   } = useTimersStore(
@@ -47,8 +46,7 @@ export const useTimerActions = (
       pinTimer: state.pinTimer,
       unpinTimer: state.unpinTimer,
       setTimerColor: state.setTimerColor,
-      showExpiredTimerAlways: state.showExpiredTimerAlways,
-      hideExpiredTimerAlways: state.hideExpiredTimerAlways,
+      setExpiredTimerAlwaysVisible: state.setExpiredTimerAlwaysVisible,
       isPinned:
         state.pinnedTimers[settingsKey]?.includes(timer.npc.name) ?? false,
       isAlwaysVisibleExpiredTimer:
@@ -123,13 +121,11 @@ export const useTimerActions = (
   };
 
   const handleToggleAlwaysVisibleExpiredTimer = () => {
-    if (isAlwaysVisibleExpiredTimer) {
-      hideExpiredTimerAlways(timer.world, timer.timerKey);
-
-      return;
-    }
-
-    showExpiredTimerAlways(timer.world, timer.timerKey);
+    setExpiredTimerAlwaysVisible(
+      timer.world,
+      timer.timerKey,
+      !isAlwaysVisibleExpiredTimer,
+    );
   };
 
   const { mutateAsync: restartTimer, isPending: isRestartingTimer } =

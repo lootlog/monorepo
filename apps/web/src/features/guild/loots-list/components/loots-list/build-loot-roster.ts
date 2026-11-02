@@ -1,3 +1,4 @@
+import { compareNpcsStrongestFirst } from "@lootlog/domain/npc-type";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import {
   buildLootData,
@@ -33,12 +34,11 @@ export type LootRosterInput = LootPresentationData &
 const expectsSnapshot = (loot: LootRosterInput) => {
   if (loot.source !== "FIGHT") return false;
 
-  const primaryNpc = loot.npcs.reduce<
-    LootRosterInput["npcs"][number] | undefined
-  >(
-    (primary, npc) =>
-      !primary || (npc.wt ?? 0) > (primary.wt ?? 0) ? npc : primary,
-    undefined,
+  const [primaryNpc] = [...loot.npcs].sort((left, right) =>
+    compareNpcsStrongestFirst(
+      { ...left, npcId: left.id },
+      { ...right, npcId: right.id },
+    ),
   );
 
   return (

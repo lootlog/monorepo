@@ -13,7 +13,7 @@ import {
 } from "@/features/kills/components/kill-stats-filters";
 import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
 import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
-import { MemberNameWithColor } from "./components/member-name-with-color";
+import { MemberNameWithColor } from "@/components/common/member-name-with-color";
 import { StatsCountCell } from "@/components/common/stats-count-cell";
 import { StatsDetailMeta } from "./components/stats-detail-meta";
 import { MemberAvatar } from "@/components/common/member-avatar";

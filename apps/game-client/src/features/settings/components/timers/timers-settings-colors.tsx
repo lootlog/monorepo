@@ -12,6 +12,7 @@ import {
 import { TIMERS_COLORS } from "@lootlog/domain/timer-colors";
 import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
 import { useTimersStore } from "@/store/timers.store";
+import { useShallow } from "zustand/react/shallow";
 import { Plus } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -85,8 +86,7 @@ export const TimersSettingsColors: FC = () => {
   const {
     displayConfig: { legacyAppearance },
     customColors,
-    addCustomColor,
-    updateCustomColor,
+    setCustomColor,
     deleteCustomColor,
     defaultColorNames,
     setDefaultColorName,
@@ -97,7 +97,23 @@ export const TimersSettingsColors: FC = () => {
     deleteDefaultColor,
     hiddenDefaultColors,
     restoreDefaultColor,
-  } = useTimersStore();
+  } = useTimersStore(
+    useShallow((state) => ({
+      displayConfig: state.displayConfig,
+      customColors: state.customColors,
+      setCustomColor: state.setCustomColor,
+      deleteCustomColor: state.deleteCustomColor,
+      defaultColorNames: state.defaultColorNames,
+      setDefaultColorName: state.setDefaultColorName,
+      overriddenDefaultColors: state.overriddenDefaultColors,
+      updateDefaultColor: state.updateDefaultColor,
+      resetDefaultColor: state.resetDefaultColor,
+      resetAllDefaultColors: state.resetAllDefaultColors,
+      deleteDefaultColor: state.deleteDefaultColor,
+      hiddenDefaultColors: state.hiddenDefaultColors,
+      restoreDefaultColor: state.restoreDefaultColor,
+    })),
+  );
 
   const { t } = useTranslation();
   const [openPopover, setOpenPopover] = useState<string | null>(null);
@@ -155,7 +171,7 @@ export const TimersSettingsColors: FC = () => {
 
       if (!currentColor) return;
 
-      updateCustomColor(selection.id, {
+      setCustomColor({
         ...currentColor,
         name: data.name,
         borderColor: data.borderColor,
@@ -193,7 +209,7 @@ export const TimersSettingsColors: FC = () => {
 
   const handleAddColor = (data: Omit<CustomTimerColor, "id">) => {
     const id = `custom-${Date.now()}`;
-    addCustomColor({ id, ...data });
+    setCustomColor({ id, ...data });
     setEnteredKey(selectionKey({ id, kind: "custom" }));
     setOpenPopover(null);
   };

@@ -1,9 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  getGuildMembersSummaryQueryKey,
-  useGuildMembersSummary,
-} from "@/hooks/api/guild-members-summary-query";
+import { getMembersControllerGetGuildMembersSummaryQueryKey } from "@lootlog/client/main";
+import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
 
 export const useMemberInvalidation = (
@@ -54,7 +52,9 @@ export const useMemberInvalidation = (
 
     if (shouldInvalidate) {
       void queryClient.invalidateQueries({
-        queryKey: getGuildMembersSummaryQueryKey({ guildId }),
+        queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
+          guildId,
+        }),
       });
     }
   }, [data, guildId, guildMembers, memberIds, queryClient]);

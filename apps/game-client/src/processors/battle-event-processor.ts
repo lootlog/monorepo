@@ -57,11 +57,6 @@ type BattleEvents = BattleIntent["events"];
 
 type WeaponKillsIntent = Parameters<typeof recordWeaponKills>[0];
 
-type KillResolution = {
-  intent: KillIntent | null;
-  lastKillHash: string | undefined;
-};
-
 type DeadNpc = {
   id: number;
   name: string;
@@ -74,8 +69,6 @@ type DeadNpc = {
 };
 
 const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
-  const deadNpcs: DeadNpc[] = [];
-
   let hasNpcInBattle = false;
   let topNpc: DeadNpc | null = null;
 
@@ -102,15 +95,12 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
       isHeroFromEvent: warrior.mapNpc?.isHeroFromEvent,
     };
 
-    deadNpcs.push(deadNpc);
-
     if (!topNpc || deadNpc.wt > topNpc.wt) {
       topNpc = deadNpc;
     }
   }
 
   return {
-    deadNpcs,
     hasNpcInBattle,
     topNpc,
   };
@@ -137,7 +127,6 @@ export class BattleEventProcessor {
   // NPC battles are never submitted, so their packets are not worth capturing.
   private hasNpcWarrior = false;
   private hasWarnedCaptureOverflow = false;
-  private battleGeneration = 0;
 
   async handle(
     event: GameEvent,
@@ -146,20 +135,20 @@ export class BattleEventProcessor {
     if (!event.f) return;
 
     const battlePanelStore = useBattlePanelStore.getState();
+    // The state before this packet; its actions still write the live store.
     const battleStore = useBattleStore.getState();
-    const stateAtIngress = useBattleStore.getState();
     const startsBattle = event.f.init === "1";
 
     this.beginBattleIfNeeded(startsBattle, battleStore);
 
     const battleWarriors = this.resolveBattleWarriors({
       battleData: event.f,
-      currentWarriors: stateAtIngress.battleWarriors,
+      currentWarriors: battleStore.battleWarriors,
       ingress,
       startsBattle,
     });
 
-    const battleState = startsBattle ? "in-battle" : stateAtIngress.battleState;
+    const battleState = startsBattle ? "in-battle" : battleStore.battleState;
 
     const ending =
       battleState === "in-battle"
@@ -181,8 +170,6 @@ export class BattleEventProcessor {
       return;
     }
 
-    const endingGeneration = this.battleGeneration;
-
     const capture = battleStore.getCaptureSnapshot();
 
     const game = ingress?.game ?? useGameStore.getState().game;
@@ -191,8 +178,7 @@ export class BattleEventProcessor {
     battleStore.clearEvents();
     battleStore.applyBatch({ battleState: "idle", battleWarriors });
 
-    const { deadNpcs, hasNpcInBattle, topNpc } =
-      getNpcBattleSummary(battleWarriors);
+    const { hasNpcInBattle, topNpc } = getNpcBattleSummary(battleWarriors);
 
     const pvpEvents = this.getPvpBattleEvents({
       capture,
@@ -202,28 +188,21 @@ export class BattleEventProcessor {
 
     const weaponKillsIntent = this.resolveWeaponKillsIntent(pvpEvents, game);
 
-    const [killResult, battleIntent] = await Promise.all([
-      // The NPCs of a battle that goes on without the player may still die.
-      this.resolveKillIntent({
-        deadNpcs,
-        hasNpcInBattle,
-        game,
-        lastKillHash: stateAtIngress.lastKillHash,
-        topNpc: ending === "ended" ? topNpc : null,
-      }),
-      this.resolveBattleIntent({
-        events: battlePanelStore.isBattleCollectionEnabled ? pvpEvents : null,
-        turns: capture.turns,
-        game,
-      }),
-    ]);
+    // The API deduplicates kills reported by every player of the battle.
+    const killIntent = this.resolveKillIntent(
+      // A battle the player left goes on, so its NPCs may still survive.
+      ending === "ended" ? topNpc : null,
+      game,
+    );
 
-    if (endingGeneration === this.battleGeneration) {
-      battleStore.applyBatch({ lastKillHash: killResult.lastKillHash });
-    }
+    const battleIntent = await this.resolveBattleIntent({
+      events: battlePanelStore.isBattleCollectionEnabled ? pvpEvents : null,
+      turns: capture.turns,
+      game,
+    });
 
     this.submitIntents(
-      killResult.intent,
+      killIntent,
       battleIntent && claimBattleSubmission(battleIntent.submissionId)
         ? battleIntent
         : null,
@@ -236,7 +215,6 @@ export class BattleEventProcessor {
     battleStore: BattleStoreState,
   ): void {
     if (!startsBattle) return;
-    this.battleGeneration += 1;
     battleStore.clearEvents();
     this.observedTeams.clear();
     this.hasMultipleTeams = false;
@@ -294,69 +272,27 @@ export class BattleEventProcessor {
     }
   }
 
-  private resolveKillIntent(params: {
-    deadNpcs: DeadNpc[];
-    hasNpcInBattle: boolean;
-    game: RuntimeGameSnapshot | null;
-    lastKillHash: string | undefined;
-    topNpc: DeadNpc | null;
-  }): KillResolution | Promise<KillResolution> {
-    if (!params.hasNpcInBattle || !params.topNpc) {
-      return { intent: null, lastKillHash: params.lastKillHash };
-    }
+  private resolveKillIntent(
+    topNpc: DeadNpc | null,
+    game: RuntimeGameSnapshot | null,
+  ): KillIntent | null {
+    if (!topNpc || !game) return null;
 
-    const npcType = getNpcType(NpcType, params.topNpc);
+    if (!TRACKABLE_NPC_TYPES.has(getNpcType(NpcType, topNpc))) return null;
 
-    if (!TRACKABLE_NPC_TYPES.has(npcType)) {
-      return { intent: null, lastKillHash: params.lastKillHash };
-    }
-
-    return createSHA256Hash(
-      JSON.stringify({
-        ids: params.deadNpcs.map((npc) => npc.id).sort(),
-        ts: Date.now(),
-      }),
-    ).then((killHash) => this.resolveHashedKillIntent(params, killHash));
-  }
-
-  private resolveHashedKillIntent(
-    params: {
-      deadNpcs: DeadNpc[];
-      hasNpcInBattle: boolean;
-      game: RuntimeGameSnapshot | null;
-      lastKillHash: string | undefined;
-      topNpc: DeadNpc | null;
-    },
-    killHash: string,
-  ): KillResolution {
-    if (killHash === params.lastKillHash) {
-      return { intent: null, lastKillHash: params.lastKillHash };
-    }
-
-    const game = params.game;
-
-    if (!game) return { intent: null, lastKillHash: killHash };
-
-    if (!params.topNpc) {
-      return { intent: null, lastKillHash: killHash };
-    }
-
-    const { type: _, ...npcWithoutType } = params.topNpc;
+    const { type: _, ...npcWithoutType } = topNpc;
 
     return {
-      intent: {
-        world: game.world,
-        npc: npcWithoutType,
-        characterId: game.hero.characterId,
-        accountId: game.hero.accountId,
-        character: {
-          name: game.hero.name,
-          lvl: game.hero.level,
-          prof: game.hero.profession,
-          icon: game.hero.icon,
-        },
+      world: game.world,
+      npc: npcWithoutType,
+      characterId: game.hero.characterId,
+      accountId: game.hero.accountId,
+      character: {
+        name: game.hero.name,
+        lvl: game.hero.level,
+        prof: game.hero.profession,
+        icon: game.hero.icon,
       },
-      lastKillHash: killHash,
     };
   }
 

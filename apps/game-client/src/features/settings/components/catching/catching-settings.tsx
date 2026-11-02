@@ -7,12 +7,17 @@ import {
   type UserLootlogConfigAccountResponseDtoOutput,
 } from "@lootlog/client/main";
 import { SettingsCharacterPicker } from "@/features/settings/components/shared/settings-character-picker";
-import { useSaveMarks } from "@/features/settings/components/shared/use-save-marks";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-characters-config";
 
-import { CatchingSettingsForm } from "@/features/settings/components/catching/catching-settings-form";
-import { reportSettingsSave } from "@/features/settings/persistence/settings-save-status.store";
+import {
+  CatchingSettingsForm,
+  getCatchingSaveKey,
+} from "@/features/settings/components/catching/catching-settings-form";
+import {
+  reportSettingsSave,
+  useSettingsSaveStatusStore,
+} from "@/features/settings/persistence/settings-save-status.store";
 import { useGameStore } from "@/store/game.store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
@@ -39,10 +44,18 @@ export const CatchingSettings = () => {
   const [requestedCharacterId, setRequestedCharacterId] =
     useState(initialCharacterId);
 
-  const { marks: saveMarkByCharacterId, mark: markCharacters } = useSaveMarks();
+  const keyMarks = useSettingsSaveStatusStore((state) => state.keyMarks);
   const { t } = useTranslation();
 
   const characters = characterList ?? [];
+
+  const saveMarkByCharacterId = Object.fromEntries(
+    characters.flatMap(({ id }) => {
+      const mark = keyMarks[getCatchingSaveKey(String(id))];
+
+      return mark ? [[String(id), mark]] : [];
+    }),
+  );
 
   const requestedCharacterExists = characters.some(
     (character) => String(character.id) === requestedCharacterId,
@@ -88,8 +101,7 @@ export const CatchingSettings = () => {
       };
     },
     onMutate: async ({ catchingGuildIds, targetCharacterIds }) => {
-      reportSettingsSave.saving();
-      markCharacters(targetCharacterIds, "saving");
+      reportSettingsSave.saving(targetCharacterIds.map(getCatchingSaveKey));
       await queryClient.cancelQueries({ queryKey });
 
       const previousData =
@@ -134,13 +146,11 @@ export const CatchingSettings = () => {
     ) => {
       if (failureCount === 0) {
         reportSettingsSave.saved();
-        markCharacters(variables.targetCharacterIds, "saved");
 
         return;
       }
 
       reportSettingsSave.failed(() => applyToAllMutation.mutate(variables));
-      markCharacters(variables.targetCharacterIds, "error");
 
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
@@ -161,7 +171,6 @@ export const CatchingSettings = () => {
     },
     onError: (_error, variables, context) => {
       reportSettingsSave.failed(() => applyToAllMutation.mutate(variables));
-      markCharacters(variables.targetCharacterIds, "error");
 
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
@@ -212,9 +221,6 @@ export const CatchingSettings = () => {
           key={selectedCharacterId}
           characterId={selectedCharacterId}
           disabled={applyToAllMutation.isPending}
-          onSaveStateChange={(status) =>
-            markCharacters([selectedCharacterId], status)
-          }
           actions={
             characters.length > 1 ? (
               <Button

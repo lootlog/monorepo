@@ -18,14 +18,12 @@ export interface NpcDetectorState {
   npcs: GameNpcWithLocation[];
   activeDetectionAnimations: Record<number, number>;
   latestDetectionAnimationCycle: number;
-  setState: (game: NpcDetectorState) => void;
   removeNpc: (npcId: number | number[]) => void;
   addNpc: (
     npc: GameNpcWithLocation | GameNpcWithLocation[],
     options?: AddNpcOptions,
   ) => void;
   clearNpcs: () => void;
-  setNpcState: (npcId: number, npc: GameNpcWithLocation) => void;
   setNpcStates: (
     updates: readonly {
       npcId: number;
@@ -54,11 +52,6 @@ export const useNpcDetectorStore = create<NpcDetectorState>()((set) => ({
   npcs: [],
   activeDetectionAnimations: {},
   latestDetectionAnimationCycle: 0,
-  setState: ({ npcs }) =>
-    set({
-      npcs,
-      activeDetectionAnimations: {},
-    }),
   addNpc: (npc, options) =>
     set((state) => {
       const newNpcs = Array.isArray(npc) ? npc : [npc];
@@ -158,15 +151,6 @@ export const useNpcDetectorStore = create<NpcDetectorState>()((set) => ({
       };
     }),
   clearNpcs: () => set({ npcs: [], activeDetectionAnimations: {} }),
-  setNpcState: (npcId: number, npc: GameNpcWithLocation) => {
-    set((state) => {
-      const npcs = state.npcs.map((n) =>
-        n.id === npcId ? { ...n, ...npc } : n,
-      );
-
-      return { npcs };
-    });
-  },
   setNpcStates: (updates) =>
     set((state) => {
       if (updates.length === 0) return state;

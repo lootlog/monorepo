@@ -7,9 +7,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@lootlog/ui/components/collapsible";
-import { toast } from "sonner";
 import { cn } from "cn";
 import { formatItemHid } from "@/lib/utils/hid-detection";
+import { useCopyItemId } from "@/hooks/use-copy-item-id";
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import { useTranslation } from "react-i18next";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
@@ -23,24 +23,13 @@ export type LootItemIdsProps = {
  * roster above already shows who received what. */
 export const LootItemIds: FC<LootItemIdsProps> = ({ loot }) => {
   const [open, setOpen] = useState(false);
-  const [copyingId, setCopyingId] = useState<string | null>(null);
+  const { copyItemId, copyingId } = useCopyItemId();
   const { t } = useTranslation();
   const titleId = useId();
   const ownerMap = buildLootItemOwnerMap(loot.lootShare);
 
   const watchContext = {
     world: loot.world,
-  };
-
-  const handleCopyId = (id: string) => {
-    if (copyingId !== null) return;
-    setCopyingId(id);
-
-    return Promise.resolve()
-      .then(() => navigator.clipboard.writeText(id))
-      .then(() => toast.success(t("loots.details.copySuccess")))
-      .catch(() => toast.error(t("loots.details.copyError")))
-      .finally(() => setCopyingId(null));
   };
 
   const getOwnerName = (itemHid: string) => {
@@ -114,7 +103,7 @@ export const LootItemIds: FC<LootItemIdsProps> = ({ loot }) => {
                     size="icon-sm"
                     className="shrink-0"
                     variant="ghost"
-                    onClick={() => handleCopyId(formattedItemHid)}
+                    onClick={() => void copyItemId(formattedItemHid)}
                     loading={copyingId === formattedItemHid}
                     disabled={copyingId !== null}
                     aria-label={t("loots.details.copyId")}

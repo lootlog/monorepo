@@ -5,6 +5,7 @@ import {
 } from "#src/shared/http/http-errors";
 import {
   getTransientMemberSyncStatus,
+  isDiscordRefusalSyncStatus,
   isRetryableMemberRefreshStatus,
   isTransientMemberSyncStatus,
   MEMBER_DISCORD_SYNC_STATUS,
@@ -49,6 +50,25 @@ describe("member-discord-sync-status", () => {
     expect(getTransientMemberSyncStatus(new DependencyUnavailableError())).toBe(
       MEMBER_DISCORD_SYNC_STATUS.DISCORD_SERVICE_UNAVAILABLE,
     );
+  });
+
+  it("should not report a Discord refusal as a Discord outage", () => {
+    const refusal = new DependencyUnavailableError({
+      code: "DISCORD_HTTP_ERROR",
+      details: { status: 403 },
+    });
+
+    expect(getTransientMemberSyncStatus(refusal)).toBe("DISCORD_HTTP_403");
+    expect(isDiscordRefusalSyncStatus("DISCORD_HTTP_403")).toBe(true);
+    expect(
+      isDiscordRefusalSyncStatus(
+        getTransientMemberSyncStatus(
+          new DependencyUnavailableError({
+            code: "DISCORD_SERVICE_UNAVAILABLE",
+          }),
+        ),
+      ),
+    ).toBe(false);
   });
 
   it("should preserve unexpected HTTP status codes for diagnostics and retries", () => {

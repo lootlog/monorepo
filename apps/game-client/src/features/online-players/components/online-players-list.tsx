@@ -236,23 +236,6 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   useMemberInvalidation(guildId, missingMemberIds);
 
-  const filteredEmptyState = (
-    <EmptyState
-      action={{
-        label: t("emptyState.clearFilters"),
-        onClick: handleResetFilters,
-      }}
-      title={t("emptyState.notFoundTitle")}
-    />
-  );
-
-  const noPlayersEmptyState = (
-    <EmptyState
-      description={t("emptyState.noPlayersDescription")}
-      title={t("emptyState.noPlayersTitle")}
-    />
-  );
-
   let listContent: ReactNode;
 
   if (hasNoGuilds) {
@@ -264,19 +247,32 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
         title={t("emptyState.noAccessTitle")}
       />
     );
-  } else if (viewMode === "members") {
-    const onlinePlayersList = getFilteredMemberEntries(
-      onlinePlayers,
-      guildMembers,
-      searchQuery,
-      filters,
-    );
+  } else {
+    const memberEntries =
+      viewMode === "members"
+        ? getFilteredMemberEntries(
+            onlinePlayers,
+            guildMembers,
+            searchQuery,
+            filters,
+          )
+        : [];
 
-    listContent =
-      onlinePlayersList.length > 0 ? (
+    const accountEntries =
+      viewMode === "accounts"
+        ? getFilteredAccountEntries(
+            onlinePlayers,
+            guildMembers,
+            searchQuery,
+            filters,
+          )
+        : [];
+
+    if (memberEntries.length > 0) {
+      listContent = (
         <ScrollArea className="ll:h-full ll:w-full">
           <SharedCharacterTileTooltip>
-            {onlinePlayersList.map(([discordId, presences]) => (
+            {memberEntries.map(([discordId, presences]) => (
               <OnlinePlayersListEntry
                 key={discordId}
                 presences={presences}
@@ -285,25 +281,13 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
             ))}
           </SharedCharacterTileTooltip>
         </ScrollArea>
-      ) : areFiltersActive ? (
-        filteredEmptyState
-      ) : (
-        noPlayersEmptyState
       );
-  } else {
-    const onlineAccountsList = getFilteredAccountEntries(
-      onlinePlayers,
-      guildMembers,
-      searchQuery,
-      filters,
-    );
-
-    listContent =
-      onlineAccountsList.length > 0 ? (
+    } else if (accountEntries.length > 0) {
+      listContent = (
         <ScrollArea className="ll:h-full ll:w-full">
           <OnlinePlayersPopups>
             <div>
-              {onlineAccountsList.map(({ discordId, presence }) => (
+              {accountEntries.map(({ discordId, presence }) => (
                 <OnlinePlayersAccountListEntry
                   key={`${presence.player?.accountId}-${presence.player?.characterId}`}
                   presence={presence}
@@ -313,11 +297,25 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
             </div>
           </OnlinePlayersPopups>
         </ScrollArea>
-      ) : areFiltersActive ? (
-        filteredEmptyState
-      ) : (
-        noPlayersEmptyState
       );
+    } else if (areFiltersActive) {
+      listContent = (
+        <EmptyState
+          action={{
+            label: t("emptyState.clearFilters"),
+            onClick: handleResetFilters,
+          }}
+          title={t("emptyState.notFoundTitle")}
+        />
+      );
+    } else {
+      listContent = (
+        <EmptyState
+          description={t("emptyState.noPlayersDescription")}
+          title={t("emptyState.noPlayersTitle")}
+        />
+      );
+    }
   }
 
   return (

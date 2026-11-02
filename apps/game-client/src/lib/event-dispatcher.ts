@@ -49,13 +49,10 @@ export class EventDispatcher {
   private afk = new AfkProcessor();
   private other = new OtherEventProcessor();
   private releaseProcessor: (() => boolean) | null = null;
-  private readonly pipeline: Pick<RuntimeEventPipeline, "acquireProcessor">;
+  private readonly pipeline: Pick<RuntimeEventPipeline, "setProcessor">;
 
   constructor(
-    pipeline: Pick<
-      RuntimeEventPipeline,
-      "acquireProcessor"
-    > = runtimeEventPipeline,
+    pipeline: Pick<RuntimeEventPipeline, "setProcessor"> = runtimeEventPipeline,
   ) {
     this.pipeline = pipeline;
   }
@@ -122,7 +119,7 @@ export class EventDispatcher {
     }
 
     if (fact.kind === "afk") {
-      runSafe("afk", () => this.afk.handle(event, ingress));
+      runSafe("afk", () => this.afk.handle(event));
     }
   }
 
@@ -133,7 +130,7 @@ export class EventDispatcher {
 
   register(): void {
     this.releaseProcessor?.();
-    this.releaseProcessor = this.pipeline.acquireProcessor(this.handleEnvelope);
+    this.releaseProcessor = this.pipeline.setProcessor(this.handleEnvelope);
   }
 
   cleanup(): void {

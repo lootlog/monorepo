@@ -34,14 +34,12 @@ describe("useGameStore", () => {
   it("does not publish a semantically equal snapshot", () => {
     useGameStore.getState().replaceGame(createGame());
     const game = useGameStore.getState().game;
-    const revision = useGameStore.getState().revision;
     const publish = vi.fn<Parameters<typeof useGameStore.subscribe>[0]>();
     const unsubscribe = useGameStore.subscribe(publish);
 
     useGameStore.getState().replaceGame(createGame());
 
     expect(useGameStore.getState().game).toBe(game);
-    expect(useGameStore.getState().revision).toBe(revision);
     expect(publish).not.toHaveBeenCalled();
     unsubscribe();
   });

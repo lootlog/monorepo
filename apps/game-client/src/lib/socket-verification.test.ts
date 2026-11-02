@@ -598,7 +598,7 @@ describe("game realtime verification and presence selection", () => {
 
       const { clan: _clan, ...clanlessJoinData } = joinData;
       await socket.join(clanlessJoinData);
-      socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: false });
+      socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE);
 
       expect(scopesAtJoin).toEqual(publishedAtJoin);
       expect(

@@ -65,7 +65,7 @@ describe("RuntimeEventPipeline", () => {
       cancel: vi.fn<NonNullable<PipelineDependencies["cancel"]>>(),
     });
 
-    pipeline.acquireProcessor((envelope) => {
+    pipeline.setProcessor((envelope) => {
       order.push(`dispatch:${envelope.sequence}`);
     });
     pipeline.install();
@@ -119,7 +119,7 @@ describe("RuntimeEventPipeline", () => {
       cancel: vi.fn<NonNullable<PipelineDependencies["cancel"]>>(),
     });
 
-    pipeline.acquireProcessor(processor);
+    pipeline.setProcessor(processor);
     pipeline.install();
 
     applied?.(createEnvelope(1));
@@ -151,7 +151,7 @@ describe("RuntimeEventPipeline", () => {
       },
     });
 
-    pipeline.acquireProcessor(processor);
+    pipeline.setProcessor(processor);
     pipeline.install();
 
     for (let sequence = 1; sequence <= 1_001; sequence += 1) {
@@ -197,7 +197,7 @@ describe("RuntimeEventPipeline", () => {
       },
     });
 
-    pipeline.acquireProcessor(processor);
+    pipeline.setProcessor(processor);
     pipeline.subscribeProjected(projected);
     pipeline.install();
     pipeline.setReady(true);
@@ -243,7 +243,7 @@ describe("RuntimeEventPipeline", () => {
       cancel: vi.fn<NonNullable<PipelineDependencies["cancel"]>>(),
     });
 
-    pipeline.acquireProcessor(processor);
+    pipeline.setProcessor(processor);
     pipeline.install();
     pipeline.setReady(true);
     applied?.(createEnvelope(1));
@@ -258,7 +258,7 @@ describe("RuntimeEventPipeline", () => {
     expect(processor).toHaveBeenCalledTimes(2);
   });
 
-  it("shares one processor across overlapping registrations", () => {
+  it("hands events to the latest processor and ignores a stale release", () => {
     let applied: ((envelope: RuntimeEventEnvelope) => void) | undefined;
     const firstProcessor = vi.fn<RuntimeEventHandler>();
     const secondProcessor = vi.fn<RuntimeEventHandler>();
@@ -277,24 +277,24 @@ describe("RuntimeEventPipeline", () => {
       },
     });
 
-    const releaseFirst = pipeline.acquireProcessor(firstProcessor);
-    const releaseSecond = pipeline.acquireProcessor(secondProcessor);
+    const releaseFirst = pipeline.setProcessor(firstProcessor);
+    const releaseSecond = pipeline.setProcessor(secondProcessor);
     pipeline.install();
     pipeline.setReady(true);
 
     applied?.(createEnvelope(1));
     pipeline.flush();
-    expect(firstProcessor).toHaveBeenCalledOnce();
-    expect(secondProcessor).not.toHaveBeenCalled();
+    expect(secondProcessor).toHaveBeenCalledOnce();
+    expect(firstProcessor).not.toHaveBeenCalled();
 
     expect(releaseFirst()).toBe(false);
     applied?.(createEnvelope(2));
     pipeline.flush();
-    expect(firstProcessor).toHaveBeenCalledTimes(2);
+    expect(secondProcessor).toHaveBeenCalledTimes(2);
 
     expect(releaseSecond()).toBe(true);
     applied?.(createEnvelope(3));
     pipeline.flush();
-    expect(firstProcessor).toHaveBeenCalledTimes(2);
+    expect(secondProcessor).toHaveBeenCalledTimes(2);
   });
 });

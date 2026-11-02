@@ -7,6 +7,7 @@ import { parseItemStats, splitItemStat } from "@lootlog/database/item-stat";
 import { Clock, Effect, Schema } from "effect";
 import { once } from "es-toolkit";
 import {
+  compareNpcsStrongestFirst,
   DROP_SOURCE_BOSS_TYPES,
   getNpcType,
   MIN_LOOT_NPC_WT,
@@ -665,9 +666,24 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     return assigned.size === players.length ? share : null;
   }
 
+  /** The strongest NPC names the loot, as every view of it does. */
   private processNpcs(npcs: CreateLootRequest["npcs"]) {
-    const sorted = [...npcs].sort((left, right) => right.wt - left.wt);
-    const primary = sorted[0];
+    const [primary] = npcs.toSorted((left, right) =>
+      compareNpcsStrongestFirst(
+        {
+          type: getNpcType(NpcType, left),
+          wt: left.wt,
+          lvl: left.lvl,
+          npcId: lootNpcIdentity(left).npcId,
+        },
+        {
+          type: getNpcType(NpcType, right),
+          wt: right.wt,
+          lvl: right.lvl,
+          npcId: lootNpcIdentity(right).npcId,
+        },
+      ),
+    );
 
     if (!primary) {
       throw new InvalidRequestError({ code: ErrorKey.NPC_WT_TOO_LOW });
@@ -696,8 +712,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private mapNpcEvents(npcs: AcceptedNpcSnapshot[]): GuildLootEventNpc[] {
-    return [...npcs]
-      .sort((left, right) => (right.wt ?? 0) - (left.wt ?? 0))
+    return npcs
+      .toSorted(compareNpcsStrongestFirst)
       .map(({ lvl, prof, type, wt }) => ({ lvl, prof, type, wt }));
   }
 

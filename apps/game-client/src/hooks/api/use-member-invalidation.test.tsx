@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { expect, it } from "vitest";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { createChatMember } from "@/features/chat/chat-test-fixtures";
-import { getGuildMembersSummaryQueryKey } from "./guild-members-summary-query";
+import { getMembersControllerGetGuildMembersSummaryQueryKey } from "@lootlog/client/main";
 import { useMemberInvalidation } from "./use-member-invalidation";
 
 const setup = () => {
@@ -11,7 +11,7 @@ const setup = () => {
 
   for (const guildId of ["guild-1", "guild-2"])
     fixture.queryClient.setQueryData(
-      getGuildMembersSummaryQueryKey({ guildId }),
+      getMembersControllerGetGuildMembersSummaryQueryKey({ guildId }),
       [],
     );
 
@@ -31,7 +31,9 @@ it("refetches a missing member again after the member disappears", async () => {
   expect(fixture.request).toHaveBeenCalledTimes(1);
   await act(async () => {
     fixture.queryClient.setQueryData(
-      getGuildMembersSummaryQueryKey({ guildId: "guild-1" }),
+      getMembersControllerGetGuildMembersSummaryQueryKey({
+        guildId: "guild-1",
+      }),
       [createChatMember({ userId: "member-1" })],
     );
     await Promise.resolve();
@@ -39,7 +41,9 @@ it("refetches a missing member again after the member disappears", async () => {
   rerender({ memberIds: [] });
   act(() =>
     fixture.queryClient.setQueryData(
-      getGuildMembersSummaryQueryKey({ guildId: "guild-1" }),
+      getMembersControllerGetGuildMembersSummaryQueryKey({
+        guildId: "guild-1",
+      }),
       [],
     ),
   );

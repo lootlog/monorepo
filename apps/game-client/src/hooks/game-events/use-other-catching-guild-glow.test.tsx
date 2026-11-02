@@ -1,3 +1,4 @@
+import { isObjectRecord } from "@lootlog/schema/records";
 import { seedRuntimeOthers } from "@/test/runtime-other-fixtures";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -81,8 +82,8 @@ function setOnlineOwners(others: Record<string, Other>): void {
   });
 }
 
-function setRuntime(heroId: number | null | undefined = 101) {
-  const engine = {
+function createEngine(heroId: number | null | undefined) {
+  return {
     hero: {
       d: {
         id: heroId,
@@ -110,10 +111,37 @@ function setRuntime(heroId: number | null | undefined = 101) {
       getShift: () => [0, 0],
     },
     others: {
-      getDrawableList: vi.fn<() => Other[]>(() => []),
+      getDrawableList: vi.fn<() => unknown[]>(() => []),
     },
   };
+}
 
+let engine: ReturnType<typeof createEngine>;
+
+type DrawnGlow = { d: { id: string }; getColor: () => string };
+
+/** The Lootlog glow colours the game draws this frame, by character id. */
+function drawnGlows(): Map<string, string> {
+  const drawables: unknown[] = engine.others.getDrawableList();
+
+  return new Map(
+    drawables.flatMap((drawable) =>
+      isObjectRecord(drawable) && "getColor" in drawable && "d" in drawable
+        ? // SAFETY: the stubbed game list holds no drawable with both `d`
+          // and `getColor`, so these are the manager's character glows.
+          [glowEntry(drawable as DrawnGlow)]
+        : [],
+    ),
+  );
+}
+
+const glowEntry = (glow: DrawnGlow): [string, string] => [
+  glow.d.id,
+  glow.getColor(),
+];
+
+function setRuntime(heroId: number | null | undefined = 101) {
+  engine = createEngine(heroId);
   Object.defineProperty(window, "Engine", {
     configurable: true,
     value: engine,
@@ -222,9 +250,7 @@ describe("useOtherCatchingGuildGlow", () => {
 
     await waitFor(() => {
       expect(endpoint).toHaveBeenCalledOnce();
-      expect(lootlogOtherGlowManager.getGlowColor("1")).toBe(
-        LOOTLOG_OTHER_GLOW_BLUE,
-      );
+      expect(drawnGlows().get("1")).toBe(LOOTLOG_OTHER_GLOW_BLUE);
     });
   });
 
@@ -318,14 +344,10 @@ describe("useOtherCatchingGuildGlow", () => {
     );
 
     await waitFor(() => {
-      expect(lootlogOtherGlowManager.getGlowCount()).toBe(50);
+      expect(drawnGlows().size).toBe(50);
     });
-    expect(lootlogOtherGlowManager.getGlowColor("1")).toBe(
-      LOOTLOG_OTHER_GLOW_BLUE,
-    );
-    expect(lootlogOtherGlowManager.getGlowColor("2")).toBe(
-      LOOTLOG_OTHER_GLOW_RED_ORANGE,
-    );
+    expect(drawnGlows().get("1")).toBe(LOOTLOG_OTHER_GLOW_BLUE);
+    expect(drawnGlows().get("2")).toBe(LOOTLOG_OTHER_GLOW_RED_ORANGE);
   });
 
   it("fetches missing targets in multiple batches when more than 100 others are visible", async () => {
@@ -416,8 +438,7 @@ describe("useOtherCatchingGuildGlow", () => {
     });
 
     expect(endpoint).not.toHaveBeenCalled();
-    expect(lootlogOtherGlowManager.getGlowCount()).toBe(0);
-    expect(lootlogOtherGlowManager.getNativeGlowSuppressed()).toBe(false);
+    expect(drawnGlows().size).toBe(0);
   });
 
   it("installs the NI drawable wrapper only while glow mode is active", () => {
@@ -479,8 +500,7 @@ describe("useOtherCatchingGuildGlow", () => {
     });
 
     expect(endpoint).not.toHaveBeenCalled();
-    expect(lootlogOtherGlowManager.getGlowCount()).toBe(0);
-    expect(lootlogOtherGlowManager.getNativeGlowSuppressed()).toBe(false);
+    expect(drawnGlows().size).toBe(0);
   });
 
   it("does not request when visible characters have no online owner", () => {
@@ -500,9 +520,7 @@ describe("useOtherCatchingGuildGlow", () => {
     });
 
     expect(endpoint).not.toHaveBeenCalled();
-    expect(lootlogOtherGlowManager.getGlowColor("1")).toBe(
-      LOOTLOG_OTHER_GLOW_UNKNOWN,
-    );
+    expect(drawnGlows().get("1")).toBe(LOOTLOG_OTHER_GLOW_UNKNOWN);
   });
 
   it("ignores flat runtime handles when shift activates glows", () => {
@@ -529,7 +547,7 @@ describe("useOtherCatchingGuildGlow", () => {
         useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
       });
     }).not.toThrow();
-    expect(lootlogOtherGlowManager.getGlowCount()).toBe(0);
+    expect(drawnGlows().size).toBe(0);
   });
 
   it("requests visible characters when online owners become known after shift", async () => {
@@ -654,14 +672,10 @@ describe("useOtherCatchingGuildGlow", () => {
     });
 
     await waitFor(() => {
-      expect(lootlogOtherGlowManager.getGlowCount()).toBe(2);
+      expect(drawnGlows().size).toBe(2);
     });
-    expect(lootlogOtherGlowManager.getGlowColor("1")).toBe(
-      LOOTLOG_OTHER_GLOW_BLUE,
-    );
-    expect(lootlogOtherGlowManager.getGlowColor("2")).toBe(
-      LOOTLOG_OTHER_GLOW_RED_ORANGE,
-    );
+    expect(drawnGlows().get("1")).toBe(LOOTLOG_OTHER_GLOW_BLUE);
+    expect(drawnGlows().get("2")).toBe(LOOTLOG_OTHER_GLOW_RED_ORANGE);
   });
 
   it("clears glows when shift is released", async () => {
@@ -684,23 +698,29 @@ describe("useOtherCatchingGuildGlow", () => {
       ],
     });
 
+    const nativeGetDrawableList = engine.others.getDrawableList;
     renderGlowHook(() => useOtherCatchingGuildGlow());
 
     act(() => {
       useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     });
 
-    expect(lootlogOtherGlowManager.getNativeGlowSuppressed()).toBe(true);
+    const nativeMark = {
+      getColor: () => "green",
+      getTypeObject: () => "OTHER",
+    };
+
+    nativeGetDrawableList.mockReturnValue([nativeMark]);
+    expect(engine.others.getDrawableList()).not.toContain(nativeMark);
 
     await waitFor(() => {
-      expect(lootlogOtherGlowManager.getGlowCount()).toBe(1);
+      expect(drawnGlows().size).toBe(1);
     });
 
     act(() => {
       useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
     });
 
-    expect(lootlogOtherGlowManager.getGlowCount()).toBe(0);
-    expect(lootlogOtherGlowManager.getNativeGlowSuppressed()).toBe(false);
+    expect(drawnGlows().size).toBe(0);
   });
 });
