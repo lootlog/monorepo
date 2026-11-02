@@ -64,9 +64,10 @@ export const isEventHero = (npc: NpcClassification): boolean =>
 
 // Margonem gives Hero Tracker templates no weight, profession or type, and
 // its `detector` flag marks every special NPC, so only the name identifies
-// them: "Tropiciel Herosów", "Wtajemniczony Tropiciel Herosów", and so on.
+// them: "Tropiciel Herosów", "Wtajemniczony Tropiciel Herosów", and so on,
+// or "Hero Hunter", "Initiated Hero Hunter", and so on in the English game.
 // "Tropicielka Albiona" in Tuzmer must not match.
-const HERO_TRACKER_NAME = /(?:^|\s)Tropiciel Herosów$/u;
+const HERO_TRACKER_NAME = /(?:^|\s)(?:Tropiciel Herosów|Hero Hunter)$/u;
 
 export const isHeroTrackerName = (name: string): boolean =>
   HERO_TRACKER_NAME.test(name.trim());
