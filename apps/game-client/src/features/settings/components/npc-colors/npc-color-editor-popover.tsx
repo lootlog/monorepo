@@ -9,7 +9,7 @@ import {
 import { deriveNpcSurfaceColors } from "@lootlog/domain/npc-appearance";
 import {
   isHexAppearanceColor,
-  type CombatNpcType,
+  type AppearanceNpcType,
 } from "@lootlog/schema/npc-appearance";
 import { useRef, useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,7 +19,7 @@ type NpcColorEditorPopoverProps = {
   children: ReactNode;
   color: string;
   defaultColor: string;
-  npcType: CombatNpcType;
+  npcType: AppearanceNpcType;
   open: boolean;
   saving: boolean;
   onOpenChange: (open: boolean) => void;
