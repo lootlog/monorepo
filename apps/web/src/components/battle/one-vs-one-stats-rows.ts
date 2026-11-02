@@ -1,4 +1,4 @@
-import { normalizeBattleSearchText } from "./utils/normalize-battle-search-text";
+import { normalizeSearchText } from "@/lib/utils/normalize-search-text";
 import type { Battle } from "@/lib/api/battlelog-types";
 import type {
   BattleStatCategoryDefinition,
@@ -31,14 +31,14 @@ export const getMatchingStatSearchKey = (
   query: string,
   categories: VisibleStatCategory[],
 ) => {
-  const normalizedQuery = normalizeBattleSearchText(query);
+  const normalizedQuery = normalizeSearchText(query);
 
   if (!normalizedQuery) {
     return null;
   }
 
   for (const category of categories) {
-    const categoryIndex = normalizeBattleSearchText(
+    const categoryIndex = normalizeSearchText(
       `${category.label} ${category.id}`,
     );
 
@@ -47,7 +47,7 @@ export const getMatchingStatSearchKey = (
     }
 
     for (const stat of category.stats) {
-      const statIndex = normalizeBattleSearchText(
+      const statIndex = normalizeSearchText(
         `${stat.label} ${String(stat.key)}`,
       );
 

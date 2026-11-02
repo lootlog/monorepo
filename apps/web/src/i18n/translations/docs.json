@@ -61,7 +61,10 @@
     "insertTableRow": "Dodaj wiersz",
     "insertTableColumn": "Dodaj kolumnę",
     "deleteTableRow": "Usuń wiersz",
-    "deleteTableColumn": "Usuń kolumnę"
+    "deleteTableColumn": "Usuń kolumnę",
+    "item": "Przedmiot",
+    "mention": "Oznacz gracza",
+    "templates": "Szablony"
   },
   "linkDialog": {
     "title": "Wstaw link",
@@ -118,5 +121,61 @@
     "purgeConfirmLabel": "Wpisz „{{title}}”, aby potwierdzić trwałe usunięcie.",
     "purged": "Dokument usunięty trwale",
     "purgeError": "Nie udało się usunąć dokumentu trwale."
+  },
+  "item": {
+    "unknown": "Nieznany przedmiot",
+    "copyId": "Kopiuj ID przedmiotu: {{name}}",
+    "loading": "Szukam przedmiotu…",
+    "edit": "Zmień przedmiot: {{name}}"
+  },
+  "itemDialog": {
+    "title": "Wstaw przedmiot",
+    "editTitle": "Zmień przedmiot",
+    "description": "Wyszukaj przedmiot po nazwie. Po najechaniu na ikonę w dokumencie każdy zobaczy jego statystyki.",
+    "item": "Przedmiot",
+    "searchPlaceholder": "Np. Barbuta, albo wklej ITEM#…",
+    "empty": "Nie znaleziono przedmiotu.",
+    "current": "Obecny przedmiot",
+    "searchError": "Nie udało się wyszukać przedmiotów. Spróbuj ponownie.",
+    "fromLoots": "Z łupów tego Lootloga",
+    "fromCatalog": "Katalog przedmiotów",
+    "itemId": "ID przedmiotu z gry (opcjonalnie)",
+    "itemIdHint": "Wklej ITEM#…, żeby gracze mogli je skopiować. Przedmiot z łupów Lootloga podpowie się sam, a samo ID też możesz wstawić.",
+    "itemIdInvalid": "To nie wygląda na ID przedmiotu. Wklej je w postaci ITEM#….świat.",
+    "insert": "Wstaw przedmiot",
+    "save": "Zapisz"
+  },
+  "mention": {
+    "listLabel": "Gracze do oznaczenia"
+  },
+  "templates": {
+    "columns": {
+      "item": "Przedmiot",
+      "receivedBy": "Kto dostał",
+      "givenBy": "Kto oddał",
+      "returnedBy": "Kto zwraca",
+      "date": "Data",
+      "notes": "Uwagi"
+    },
+    "itemLog": {
+      "label": "Rejestr przedmiotów",
+      "description": "Tabela: przedmiot, kto go dostał, kiedy i uwagi.",
+      "heading": "Rejestr przedmiotów",
+      "hint": "Przedmiot dodasz przyciskiem Przedmiot w pasku, a gracza oznaczysz, wpisując @."
+    },
+    "itemDeposit": {
+      "label": "Depozyt przedmiotów",
+      "description": "Tabela: przedmiot, kto oddał, kto dostał i kto zwraca.",
+      "heading": "Depozyt przedmiotów",
+      "hint": "Przedmiot dodasz przyciskiem Przedmiot w pasku, a gracza oznaczysz, wpisując @."
+    },
+    "rules": {
+      "label": "Zasady",
+      "description": "Ponumerowane zasady i lista kar.",
+      "heading": "Zasady",
+      "firstRule": "Pierwsza zasada",
+      "penaltiesHeading": "Kary",
+      "firstPenalty": "Kara za złamanie zasad"
+    }
   }
 }

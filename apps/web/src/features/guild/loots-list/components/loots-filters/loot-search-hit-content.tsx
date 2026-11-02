@@ -1,11 +1,10 @@
 import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
+import { ItemSearchHitContent } from "@/components/tiles/item-search-hit-content";
 import { PlayerSearchTile } from "@/components/tiles/player-search-tile";
 import { formatLevel } from "@lootlog/domain/profession";
-import { LOOT_RARITY_TEXT_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { ItemRarity, resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
 
-import { cn } from "cn";
 import { upperFirst } from "es-toolkit";
 import { DatabaseZap } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -50,31 +49,7 @@ export const LootSearchHitContent = ({ hit }: { hit: LootSearchHit }) => {
         </>
       );
     case "item":
-      return (
-        <>
-          <ItemImage
-            icon={hit.item.icon}
-            rarity={resolveItemRarity(hit.item.rarity)}
-          />
-          <span className="min-w-0 truncate font-medium">{hit.item.name}</span>
-          {hit.item.rarity && (
-            <span
-              className={cn(
-                "shrink-0",
-                LOOT_RARITY_TEXT_CLASS[resolveItemRarity(hit.item.rarity)],
-              )}
-            >
-              {t(`itemRarity.${hit.item.rarity}`, {
-                defaultValue: hit.item.rarity,
-              })}
-            </span>
-          )}
-          <span className="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums max-sm:hidden">
-            {hit.item.lvl > 0 &&
-              t("loots.searchCommand.level", { level: hit.item.lvl })}
-          </span>
-        </>
-      );
+      return <ItemSearchHitContent item={hit.item} />;
     case "player":
       return (
         <>
