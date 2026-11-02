@@ -31,7 +31,10 @@ const role = (
 
 // These predicates use SQL shared by PostgreSQL and SQLite. Execute the actual
 // Drizzle predicate so a missing WHERE clause cannot masquerade as denied access.
-const visibleNpcIds = (roles: KillQueryRole[], administrative = false) => {
+const visibleNpcIds = (
+  roles: KillQueryRole[],
+  capabilities: Capability[] = [],
+) => {
   const database = new Database(":memory:");
 
   try {
@@ -50,9 +53,7 @@ const visibleNpcIds = (roles: KillQueryRole[], administrative = false) => {
         ('other-organization', 8, 250, 'ELITE2');
     `);
 
-    const policy = createAccessPolicy({
-      capabilities: administrative ? [Capability.ADMIN] : [],
-    });
+    const policy = createAccessPolicy({ capabilities });
 
     const condition = buildKillStatsCondition(
       {
@@ -131,7 +132,18 @@ describe("kill query visibility at the SQL boundary", () => {
     ).toEqual([2, 3, 5, 6, 7]);
   });
 
-  it("preserves administrative access while retaining organization isolation", () => {
-    expect(visibleNpcIds([], true)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  it("preserves owner access while retaining organization isolation", () => {
+    expect(visibleNpcIds([], [Capability.OWNER])).toEqual([
+      1, 2, 3, 4, 5, 6, 7,
+    ]);
+  });
+
+  it("limits administrators to the NPCs their roles let them see in loots", () => {
+    expect(
+      visibleNpcIds(
+        [role([Permission.LOOTLOG_LOOTS_READ])],
+        [Capability.ADMIN],
+      ),
+    ).toEqual([2, 3]);
   });
 });

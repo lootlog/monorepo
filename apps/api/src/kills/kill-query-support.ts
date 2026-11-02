@@ -49,7 +49,9 @@ export const visibilityFilter = (
   accessPolicy: AccessPolicy,
   roles: ReadonlyArray<KillQueryRole>,
 ): KillStatsFilter => {
-  if (accessPolicy.allows(Capability.ADMIN)) return {};
+  // Kills reveal the same NPCs as their loots, so only the recovery authority
+  // bypasses role coverage, as in `canViewLoot`.
+  if (accessPolicy.allows(Capability.OWNER)) return {};
 
   if (roles.length === 0) return { npcType: { in: [] } };
 
@@ -77,7 +79,7 @@ export const visibilityCacheScope = (
   accessPolicy: AccessPolicy,
   roles: ReadonlyArray<KillQueryRole>,
 ) =>
-  accessPolicy.allows(Capability.ADMIN)
+  accessPolicy.allows(Capability.OWNER)
     ? { administrativeUser: true }
     : {
         visibilityVersion: 2,

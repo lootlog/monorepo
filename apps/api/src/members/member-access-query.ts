@@ -1,6 +1,7 @@
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
 import { Effect } from "effect";
+import { capabilitiesGrantingAny } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import {
   type SQL,
@@ -60,7 +61,10 @@ export const accessibleGuildsQuery = (
       .where(
         and(
           activeMember(discordId),
-          arrayOverlaps(roleTable.permissions, [...permissions]),
+          arrayOverlaps(
+            roleTable.permissions,
+            capabilitiesGrantingAny(permissions),
+          ),
         ),
       );
 
@@ -126,7 +130,10 @@ export const selectGuildIdsGrantingPermissions = (
             memberTable.guildId,
             guilds.map(({ id }) => id),
           ),
-          arrayOverlaps(roleTable.permissions, [...permissions]),
+          arrayOverlaps(
+            roleTable.permissions,
+            capabilitiesGrantingAny(permissions),
+          ),
         ),
       );
 

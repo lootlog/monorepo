@@ -479,7 +479,7 @@ it("writes a kill within the dedup window of an event respawn window that has no
 });
 
 it.each([false, true])(
-  "retries a committed timer after a Redis failure without duplicating history, and accepts the next kill after the dedup window (restored window: %s)",
+  "retries a committed timer after a Redis failure without duplicating history, publishes it on retry, and accepts the next kill after the dedup window (restored window: %s)",
   async (restoredWindow) => {
     const boundary = await createDatabaseBoundary();
 
@@ -573,6 +573,15 @@ it.each([false, true])(
       expect(
         await boundary.run(database.select().from(timerHistoryEntryTable)),
       ).toHaveLength(1);
+      // The failed attempt did not record its result, so its retry publishes
+      // again: delivery is at least once instead of possibly never.
+      expect(publications).toEqual([
+        RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
+        RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+        RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
+        RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+      ]);
+      publications.length = 0;
 
       const previousKill = new Date(Date.now() - 31_000);
       await boundary.run(

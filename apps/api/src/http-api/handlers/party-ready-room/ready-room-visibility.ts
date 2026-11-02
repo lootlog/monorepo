@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import { and, eq, inArray, isNotNull } from "drizzle-orm";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { canManageOwnPartyGathering } from "@lootlog/domain/npc-permissions";
 import { canReadChatNpcSource } from "#src/chat/chat-npc-visibility";
@@ -46,7 +47,9 @@ export const readyRoomSourceVisibility = Effect.fn("readyRoomSourceVisibility")(
 
         if (
           matching.some(({ guild }) => guild.ownerId === discordId) ||
-          roles.some((role) => role.permissions.includes(Permission.ADMIN)) ||
+          createAccessPolicy({
+            capabilities: roles.flatMap(({ permissions }) => permissions),
+          }).allows(Permission.ADMIN) ||
           canManageOwnPartyGathering(roles, room.organizerDiscordId, discordId)
         )
           return true;

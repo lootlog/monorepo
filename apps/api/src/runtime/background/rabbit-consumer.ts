@@ -34,7 +34,9 @@ export const makeRabbitConsumer = Effect.fnUntraced(function* (
       payload: CanonicalRabbitEvent<Key>,
       delivery: RabbitDelivery,
     ) => Effect.Effect<unknown, unknown> | Promise<void> | void,
-    failurePolicy: FailurePolicy = { strategy: "nack" },
+    // No default: a rejected delivery without a retry or dead-letter route
+    // is lost, so every queue chooses where its failures go.
+    failurePolicy: FailurePolicy,
     inPlaceRetry?: Schedule.Schedule<unknown, unknown>,
   ) =>
     Effect.acquireRelease(
