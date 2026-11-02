@@ -23,17 +23,24 @@ const parsePositiveId = (value: string): number | null => {
 
 /**
  * The account and character a client reported, in the form snapshots store.
- * Older clients sent a character id with the account id appended. Returns null
- * when the character id is not a positive integer.
+ * A missing or zero account is unknown. Returns null when either id is
+ * malformed. Older loot senders appended the account id to the character id;
+ * only their callers pass `legacyCombinedId`.
  */
 export const parseCharacterIdentity = (
   characterId: string | number,
   accountId: string | number | null | undefined,
+  options: { readonly legacyCombinedId?: boolean } = {},
 ): { accountId: number; characterId: number } | null => {
-  const account = parsePositiveId(String(accountId ?? "").trim());
+  const rawAccount = String(accountId ?? "").trim();
+  const account = parsePositiveId(rawAccount);
+
+  if (account === null && rawAccount !== "" && rawAccount !== "0") return null;
+
   const character = String(characterId).trim();
 
   const ownCharacter =
+    options.legacyCombinedId === true &&
     account !== null &&
     character.length > String(account).length &&
     character.endsWith(String(account))
