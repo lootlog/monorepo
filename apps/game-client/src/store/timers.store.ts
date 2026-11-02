@@ -111,6 +111,7 @@ const DEFAULT_SELECTED_NPC_TYPES = [
   NpcType.HERO,
   NpcType.EVENT_HERO,
   NpcType.TITAN,
+  NpcType.HERO_TRACKER,
 ];
 
 type StoredTimersFilters = Record<string, TimersFilters>;
@@ -133,6 +134,29 @@ const withEventHeroType = (
         : filter,
     ]),
   );
+
+// Hero Tracker timers are new in version 9; no stored filter could hide them.
+const withHeroTrackerType = (
+  filters: StoredTimersFilters | undefined,
+): StoredTimersFilters | undefined =>
+  filters &&
+  Object.fromEntries(
+    Object.entries(filters).map(([key, filter]) => [
+      key,
+      filter.selectedNpcTypes.includes(NpcType.HERO_TRACKER)
+        ? filter
+        : {
+            ...filter,
+            selectedNpcTypes: [
+              ...filter.selectedNpcTypes,
+              NpcType.HERO_TRACKER,
+            ],
+          },
+    ]),
+  );
+
+const withNewNpcTypes = (filters: StoredTimersFilters | undefined) =>
+  withHeroTrackerType(withEventHeroType(filters));
 
 export const DEFAULT_TIMERS_FILTERS: TimersFilters = {
   minLvl: 0,
@@ -517,7 +541,7 @@ export const useTimersStore = create<TimersState>()(
             persisted.timersSortOrder ?? currentState.timersSortOrder,
         };
       },
-      version: 8,
+      version: 9,
       migrate: (persistedState, version) => {
         const persisted = decodeTimerSettings(persistedState);
 
@@ -525,15 +549,14 @@ export const useTimersStore = create<TimersState>()(
           return {
             ...persisted,
             timersFilters: {},
-            legacyTimersFilters:
-              withEventHeroType(persisted.timersFilters) ?? {},
+            legacyTimersFilters: withNewNpcTypes(persisted.timersFilters) ?? {},
           };
         }
 
         return {
           ...persisted,
-          timersFilters: withEventHeroType(persisted.timersFilters),
-          legacyTimersFilters: withEventHeroType(persisted.legacyTimersFilters),
+          timersFilters: withNewNpcTypes(persisted.timersFilters),
+          legacyTimersFilters: withNewNpcTypes(persisted.legacyTimersFilters),
         };
       },
     },

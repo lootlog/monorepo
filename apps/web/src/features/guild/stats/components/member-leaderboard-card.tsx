@@ -1,7 +1,5 @@
-import type {
-  GuildKillStatsResponseDtoOutputMemberRankingItem,
-  NpcType,
-} from "@lootlog/client/main";
+import type { KilledNpcType } from "@/constants/npc";
+import type { GuildKillStatsResponseDtoOutputMemberRankingItem } from "@lootlog/client/main";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -22,7 +20,7 @@ import { cn } from "cn";
 
 type MemberLeaderboardCardProps = {
   data?: GuildKillStatsResponseDtoOutputMemberRankingItem[];
-  npcType: NpcType;
+  npcType: KilledNpcType;
   isLoading?: boolean;
   guildId: string;
   hasActiveFilters?: boolean;

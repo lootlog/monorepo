@@ -1,3 +1,4 @@
+import type { KilledNpcType } from "@/constants/npc";
 import { omitBy } from "es-toolkit";
 import type {
   KillsControllerGetGuildKillStatsParams,
@@ -6,7 +7,6 @@ import type {
   KillsControllerGetNpcKillersParams,
   LootsControllerGetLootStatsParams,
   LootsControllerGetLootStatsPeriod,
-  NpcType,
 } from "@lootlog/client/main";
 
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
@@ -26,7 +26,7 @@ const withDefinedEntries = <T extends Record<string, unknown>>(params: T) => {
 };
 
 export const buildGuildKillStatsParams = (filters: {
-  npcTypes?: NpcType[];
+  npcTypes?: KilledNpcType[];
   minLvl?: number;
   maxLvl?: number;
   world?: string;
@@ -42,7 +42,7 @@ export const buildGuildKillStatsParams = (filters: {
 
 export const buildGuildTopNpcsParams = (filters: {
   limit: number;
-  npcType?: NpcType;
+  npcType?: KilledNpcType;
   world?: string;
   search?: string;
   minLvl?: number;
@@ -60,7 +60,7 @@ export const buildGuildTopNpcsParams = (filters: {
 
 export const buildMemberKillsParams = (filters: {
   world?: string;
-  npcTypes?: NpcType[];
+  npcTypes?: KilledNpcType[];
   search?: string;
   limit?: number;
   cursor?: number;
@@ -94,7 +94,7 @@ export const buildNpcKillersParams = (
 export const buildLootStatsParams = (filters: {
   period: LootsControllerGetLootStatsPeriod;
   world?: string;
-  npcTypes?: NpcType[];
+  npcTypes?: KilledNpcType[];
   excludeColossus?: boolean;
 }): LootsControllerGetLootStatsParams | undefined =>
   withDefinedEntries({

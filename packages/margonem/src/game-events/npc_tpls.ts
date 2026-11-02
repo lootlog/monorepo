@@ -2,8 +2,10 @@ export type NpcTpl = {
   id: number;
   level?: number;
   nick: string;
-  prof: string;
-  type: number;
+  /** Absent from Hero Tracker templates, which have no combat stats. */
+  prof?: string;
+  /** Absent from Hero Tracker templates. */
+  type?: number;
   warrior_type?: number;
   resp_rand: number;
   elasticLevelFactor?: number;

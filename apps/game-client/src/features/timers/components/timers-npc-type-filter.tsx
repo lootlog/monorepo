@@ -17,6 +17,7 @@ export const NPC_TYPE_FILTER_OPTIONS = [
   NpcType.HERO,
   NpcType.EVENT_HERO,
   NpcType.TITAN,
+  NpcType.HERO_TRACKER,
 ];
 
 type TimersNpcTypeFilterProps = {

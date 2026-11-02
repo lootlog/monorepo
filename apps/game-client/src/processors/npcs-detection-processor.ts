@@ -15,6 +15,7 @@ import {
   getNpcTplFromEvent,
 } from "@/utils/game/events/get-npc-tpl-from-event";
 import { getNpcType } from "@lootlog/domain/npc-type";
+import { getEntranceClosesAt } from "@/utils/game/hero-tracker-entrance";
 import {
   isDetectorNpcType,
   type DetectorNpcType,
@@ -220,8 +221,10 @@ export class NpcsDetectionProcessor {
     // Margonem sends `npcs` for both spawns and updates of a known NPC (position,
     // icon, template). Only NPCs the detector does not show yet are detections;
     // the rest update in place without a new alert, sound, auto-send or focus.
-    const detectedNpcIds = new Set(
-      useNpcDetectorStore.getState().npcs.map((npc) => npc.id),
+    // A Hero Tracker claimed while shown is the one update detected again: its
+    // entrance just opened.
+    const detectedNpcsById = new Map(
+      useNpcDetectorStore.getState().npcs.map((npc) => [npc.id, npc]),
     );
 
     const updatedNpcs: { npcId: number; npc: Partial<GameNpcWithLocation> }[] =
@@ -257,7 +260,7 @@ export class NpcsDetectionProcessor {
 
         if (!tpl) return acc;
 
-        const npcType = getNpcType(NpcType, tpl);
+        const npcType = getNpcType(NpcType, { ...tpl, name: tpl.nick });
 
         if (!isDetectorNpcType(npcType)) return acc;
 
@@ -271,18 +274,44 @@ export class NpcsDetectionProcessor {
 
         if (!processedSettings) return acc;
 
-        const composedNpc = composeNpcFromEvent(
-          npc,
-          tpl,
-          processedSettings,
-          useGameStore.getState().game?.map.name ?? "",
-        );
+        const detectedNpc = detectedNpcsById.get(npc.id);
 
-        if (detectedNpcIds.has(npc.id)) {
+        const entranceClosesAt =
+          npcType === NpcType.HERO_TRACKER
+            ? getEntranceClosesAt(
+                npc.killSeconds,
+                detectedNpc?.entranceClosesAt ?? runtimeNpc?.entranceClosesAt,
+              )
+            : undefined;
+
+        const composedNpc: GameNpcWithLocation = {
+          ...composeNpcFromEvent(
+            npc,
+            tpl,
+            processedSettings,
+            useGameStore.getState().game?.map.name ?? "",
+          ),
+          ...(entranceClosesAt !== undefined && { entranceClosesAt }),
+        };
+
+        if (detectedNpc) {
           const { notificationSentAt: _notificationSentAt, ...npcUpdate } =
             composedNpc;
 
           updatedNpcs.push({ npcId: npc.id, npc: npcUpdate });
+
+          if (
+            detectedNpc.entranceClosesAt === undefined &&
+            entranceClosesAt !== undefined
+          ) {
+            this.collectDetectionIntents(intents, {
+              composedNpc,
+              guildIds: processedSettings.guildIds,
+              autoSendNotification: processedSettings.autoSendNotification,
+              npcType,
+              detectorSettings: processedSettings.settings,
+            });
+          }
 
           return acc;
         }
@@ -309,8 +338,9 @@ export class NpcsDetectionProcessor {
         highlightOnExisting: true,
       });
       useWindowsStore.getState().setOpen("npc-detector", true);
-      this.dispatchDetectionIntents(intents);
     }
+
+    this.dispatchDetectionIntents(intents);
   }
 
   private processInitialDetectionFromStore(): boolean {
@@ -338,6 +368,7 @@ export class NpcsDetectionProcessor {
           type: npc.type,
           icon: npc.icon,
           isHeroFromEvent: npc.isHeroFromEvent,
+          name: npc.name,
         });
 
         if (!isDetectorNpcType(npcType)) return acc;
@@ -366,6 +397,9 @@ export class NpcsDetectionProcessor {
           wt: npc.weight,
           x: npc.x,
           y: npc.y,
+          ...(npc.entranceClosesAt !== undefined && {
+            entranceClosesAt: npc.entranceClosesAt,
+          }),
         };
 
         this.collectDetectionIntents(intents, {

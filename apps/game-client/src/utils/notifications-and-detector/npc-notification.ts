@@ -11,6 +11,7 @@ import { resolveDetectorGuildIds } from "@/lib/game-account-preferences";
 import type { GameNpcWithLocation } from "@/store/npc-detector.store";
 import { useGameStore } from "@/store/game.store";
 import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
+import { isHeroTrackerName } from "@lootlog/domain/npc-type";
 
 type ResolveNpcNotificationRoutingOptions = {
   routingRules: DetectorRoutingRule[];
@@ -46,6 +47,19 @@ const buildNotificationNpcPayload = (npc: GameNpcWithLocation) => ({
   type: npc.type,
   isHeroFromEvent: npc.isHeroFromEvent,
 });
+
+const buildHeroTrackerPayload = (
+  npc: GameNpcWithLocation,
+): CreateNotificationOptions["heroTracker"] => {
+  if (!isHeroTrackerName(npc.nick)) return undefined;
+
+  return npc.entranceClosesAt === undefined
+    ? { state: "unclaimed" }
+    : {
+        state: "open",
+        entranceClosesAt: new Date(npc.entranceClosesAt).toISOString(),
+      };
+};
 
 export const resolveNpcNotificationRouting = ({
   routingRules,
@@ -84,6 +98,10 @@ export function buildNpcNotificationPayload({
     guildIds,
   };
 
+  const heroTracker = buildHeroTrackerPayload(npc);
+
+  if (heroTracker) payload.heroTracker = heroTracker;
+
   if (isGatheringParty) {
     payload.isGatheringParty = isGatheringParty;
     payload.character = character;
@@ -101,7 +119,8 @@ export const buildNpcChatMessagePayload = ({
 }: BuildNpcChatMessagePayloadOptions): SendChatMessageOptions | null => {
   const characterData = buildChatCharacterData();
 
-  if (!characterData) return null;
+  // Chat NPC messages require a profession, which Hero Trackers lack.
+  if (!characterData || !npc.prof) return null;
 
   const payload: SendChatMessageOptions = {
     message,

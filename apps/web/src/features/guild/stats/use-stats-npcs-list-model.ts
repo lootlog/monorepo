@@ -1,5 +1,5 @@
 import { useWorldScopedCursor } from "./hooks/use-world-scoped-cursor";
-import { findNpcType } from "@/constants/npc";
+import { findKilledNpcType } from "@/constants/npc";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -90,7 +90,7 @@ export const useStatsNpcsListModel = () => {
 
   const handleNpcTypeChange = (value: string | null) => {
     if (value === null) return;
-    const npcType = findNpcType(value);
+    const npcType = findKilledNpcType(value);
 
     if (value !== "ALL" && !npcType) return;
     setNpcType(npcType ?? "ALL");

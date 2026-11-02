@@ -429,7 +429,14 @@ const MANIFEST = [
             id: "detector-types",
             labelKey: "settings.detector.typesTitle",
             descriptionKey: "settings.detector.description",
-            aliases: ["wykrywacz", "elita", "heros", "kolos", "tytan"],
+            aliases: [
+              "wykrywacz",
+              "elita",
+              "heros",
+              "kolos",
+              "tytan",
+              "tropiciel",
+            ],
             settingKeys: ["gameData.detector"],
           },
           {

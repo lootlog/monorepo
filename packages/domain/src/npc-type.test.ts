@@ -38,3 +38,21 @@ describe("event hero classification", () => {
     );
   });
 });
+
+describe("Hero Tracker classification", () => {
+  it.each([
+    "Tropiciel Herosów",
+    "Wtajemniczony Tropiciel Herosów",
+    "Doświadczony Tropiciel Herosów",
+  ])("classifies %s, whose template has no weight, as a tracker", (name) => {
+    expect(getNpcType(NpcTypeEnum, { wt: 0, name })).toBe(
+      NpcTypeEnum.HERO_TRACKER,
+    );
+  });
+
+  it("keeps the Tuzmer NPC Tropicielka Albiona an ordinary NPC", () => {
+    expect(
+      getNpcType(NpcTypeEnum, { wt: 0, type: 0, name: "Tropicielka Albiona" }),
+    ).toBe(NpcTypeEnum.NPC);
+  });
+});

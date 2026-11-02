@@ -8,7 +8,7 @@ import { and, desc, eq, gte } from "drizzle-orm";
 import { Clock, Effect, Predicate, Result, Schema } from "effect";
 import { partition } from "es-toolkit";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
-import { getNpcType } from "@lootlog/domain/npc-type";
+import { getNpcType, isHeroTrackerName } from "@lootlog/domain/npc-type";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -34,7 +34,7 @@ import { DEFAULT_RESPAWN_RANDOMNESS } from "#src/timers/respawn";
 import { TIMER_LIMITS } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
-import { buildTimerKey } from "#src/timers/timer-key";
+import { buildTimerKey, getTimerNpcId } from "#src/timers/timer-key";
 import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersIdentity } from "./timers.handlers.js";
 import {
@@ -126,7 +126,36 @@ export interface AutoTimerPorts {
   ) => Effect.Effect<A, E | unknown>;
 }
 
-const calculateSpawnWindow = (payload: CreateAutoTimerRequest, now: Date) => {
+// A Hero Tracker template has no weight; its name alone admits it.
+const hasTimerWeight = (payload: CreateAutoTimerRequest) =>
+  payload.npc.wt >= TIMER_LIMITS.MIN_NPC_WT_FOR_TIMERS ||
+  isHeroTrackerName(payload.npc.name);
+
+/** A tracker respawns after its entrance closes, not when it is reported. */
+const getRespawnStart = (payload: CreateAutoTimerRequest, now: Date) => {
+  if (!payload.entranceClosesAt) return now;
+
+  const entranceClosesAt = new Date(payload.entranceClosesAt);
+  const offsetSeconds = (entranceClosesAt.getTime() - now.getTime()) / 1000;
+
+  if (
+    !isHeroTrackerName(payload.npc.name) ||
+    offsetSeconds > TIMER_LIMITS.MAX_HERO_TRACKER_ENTRANCE_SECONDS ||
+    offsetSeconds < -TIMER_LIMITS.MAX_HERO_TRACKER_ENTRANCE_PAST_SECONDS
+  ) {
+    throw new InvalidRequestError({
+      message: ErrorKey.INVALID_ENTRANCE_CLOSE_TIME,
+    });
+  }
+
+  return entranceClosesAt;
+};
+
+const calculateSpawnWindow = (
+  payload: CreateAutoTimerRequest,
+  now: Date,
+  respBaseSeconds = payload.respBaseSeconds,
+) => {
   if (payload.customMinSpawnTime && payload.customMaxSpawnTime) {
     const minSpawnTime = new Date(payload.customMinSpawnTime);
     const maxSpawnTime = new Date(payload.customMaxSpawnTime);
@@ -153,17 +182,16 @@ const calculateSpawnWindow = (payload: CreateAutoTimerRequest, now: Date) => {
     return { minSpawnTime, maxSpawnTime };
   }
 
-  const milliseconds = payload.respBaseSeconds * 1000;
+  const milliseconds = respBaseSeconds * 1000;
   const randomness = payload.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
+  const start = getRespawnStart(payload, now).getTime();
 
   return {
     minSpawnTime: new Date(
-      now.getTime() +
-        Math.round(milliseconds - milliseconds * (randomness / 100)),
+      start + Math.round(milliseconds - milliseconds * (randomness / 100)),
     ),
     maxSpawnTime: new Date(
-      now.getTime() +
-        Math.round(milliseconds + milliseconds * (randomness / 100)),
+      start + Math.round(milliseconds + milliseconds * (randomness / 100)),
     ),
   };
 };
@@ -186,6 +214,7 @@ const makeNpc = (
     type: payload.npc.type,
     icon: payload.npc.icon,
     isHeroFromEvent: payload.npc.isHeroFromEvent,
+    name: payload.npc.name,
   }),
   icon: normalizeNpcIcon(payload.npc.icon),
   margonemType: String(payload.npc.type),
@@ -309,7 +338,8 @@ export const makeAutoTimer = (
     guildId: string,
     payload: CreateAutoTimerRequest,
   ) => {
-    const timerKey = buildTimerKey(payload.npc.id, payload.npc.name);
+    const timerNpcId = getTimerNpcId(payload.npc);
+    const timerKey = buildTimerKey(timerNpcId, payload.npc.name);
     const dedupKey = `timer:dedup:${guildId}:${payload.world}:${timerKey}`;
     const dedupLockKey = `${dedupKey}:lock`;
     const startedAt = new Date();
@@ -318,16 +348,6 @@ export const makeAutoTimer = (
       `timer:lock:${guildId}:${payload.world}:${timerKey}`,
       database.transaction((transaction) =>
         Effect.gen(function* () {
-          const window = yield* Effect.try({
-            try: () => calculateSpawnWindow(payload, startedAt),
-            catch: (cause) =>
-              cause instanceof InvalidRequestError
-                ? cause
-                : new InvalidRequestError({
-                    message: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
-                  }),
-          });
-
           const members = yield* transaction
             .select()
             .from(memberTable)
@@ -363,6 +383,27 @@ export const makeAutoTimer = (
 
           let previousTimer = existingRows[0] ?? null;
 
+          // An entrance report carries the default tracker respawn; a base
+          // observed when a tracker left this world (private worlds respawn
+          // faster) stays authoritative for the following entrances.
+          const respBaseSeconds =
+            payload.entranceClosesAt &&
+            previousTimer &&
+            previousTimer.latestRespBaseSeconds > 0
+              ? previousTimer.latestRespBaseSeconds
+              : payload.respBaseSeconds;
+
+          const window = yield* Effect.try({
+            try: () =>
+              calculateSpawnWindow(payload, startedAt, respBaseSeconds),
+            catch: (cause) =>
+              cause instanceof InvalidRequestError
+                ? cause
+                : new InvalidRequestError({
+                    message: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
+                  }),
+          });
+
           const completedTimer = yield* findRecentlyCreatedTimer(
             transaction,
             previousTimer,
@@ -386,7 +427,7 @@ export const makeAutoTimer = (
             const migrated = yield* migrateSyntheticTimer(transaction, {
               guildId,
               world: payload.world,
-              npcId: payload.npc.id,
+              npcId: timerNpcId,
               npcName: payload.npc.name,
             });
 
@@ -403,12 +444,15 @@ export const makeAutoTimer = (
           const timerUpdate = {
             createdById: member.id,
             ...window,
-            latestRespBaseSeconds: payload.respBaseSeconds,
+            latestRespBaseSeconds: respBaseSeconds,
             latestRespawnRandomness:
               payload.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
             wasReset: false,
             npc,
             windowOpenedAt: now,
+            entranceClosesAt: payload.entranceClosesAt
+              ? new Date(payload.entranceClosesAt)
+              : null,
             actorCharacterSnapshotId: actorCharacter?.id ?? null,
             actorCharacterLvl: payload.actorCharacter?.lvl ?? null,
             deletedAt: null,
@@ -421,7 +465,7 @@ export const makeAutoTimer = (
               ...timerUpdate,
               guildId,
               world: payload.world,
-              npcId: payload.npc.id,
+              npcId: timerNpcId,
               timerKey,
               createdAt: now,
             })
@@ -446,7 +490,7 @@ export const makeAutoTimer = (
             guildId,
             world: payload.world,
             timerKey,
-            npcId: payload.npc.id,
+            npcId: timerNpcId,
             npc,
             action: TimerHistoryAction.CREATE,
             actorMemberId: member.id,
@@ -475,7 +519,7 @@ export const makeAutoTimer = (
     );
 
     return Effect.gen(function* () {
-      if (payload.npc.wt < TIMER_LIMITS.MIN_NPC_WT_FOR_TIMERS) {
+      if (!hasTimerWeight(payload)) {
         return yield* Effect.fail(
           new InvalidRequestError({ message: ErrorKey.WT_TOO_LOW }),
         );
@@ -586,7 +630,7 @@ export const makeAutoTimer = (
     identity: TimersIdentity,
     payload: CreateAutoTimerRequest,
   ) {
-    if (payload.npc.wt < TIMER_LIMITS.MIN_NPC_WT_FOR_TIMERS) {
+    if (!hasTimerWeight(payload)) {
       return yield* Effect.fail(
         new InvalidRequestError({ message: ErrorKey.WT_TOO_LOW }),
       );

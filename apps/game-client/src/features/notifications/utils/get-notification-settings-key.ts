@@ -1,5 +1,5 @@
 import { NpcType } from "@/api/npcs.api";
-import { getNpcType } from "@lootlog/domain/npc-type";
+import { getNpcType, isHeroTrackerName } from "@lootlog/domain/npc-type";
 import type { NotificationType } from "@lootlog/schema/account-preferences";
 
 const notificationSettingsKeys = [
@@ -8,6 +8,7 @@ const notificationSettingsKeys = [
   NpcType.EVENT_HERO,
   NpcType.COLOSSUS,
   NpcType.TITAN,
+  NpcType.HERO_TRACKER,
   "message",
   "party-gathering",
 ] as const satisfies readonly NotificationType[];
@@ -20,6 +21,7 @@ type NotificationSettingsKeySource = {
     wt?: number | null;
     icon?: string;
     isHeroFromEvent?: boolean;
+    name?: string;
   } | null;
 };
 
@@ -34,6 +36,11 @@ export const getNotificationSettingsKey = (
 ) => {
   if (notification.type === "party-gathering") {
     return "party-gathering";
+  }
+
+  // A Hero Tracker has no weight, which would otherwise mark a plain message.
+  if (notification.npc?.name && isHeroTrackerName(notification.npc.name)) {
+    return NpcType.HERO_TRACKER;
   }
 
   if (!notification.npc?.wt) {

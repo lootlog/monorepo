@@ -15,6 +15,7 @@ export type NpcType =
   | "EVENT_HERO"
   | "TITAN"
   | "COLOSSUS"
+  | "HERO_TRACKER"
   | "NPC";
 
 export interface TimersFilters {

@@ -1,5 +1,6 @@
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
 import type { PartyGatheringCharacterBase } from "@/types/party-gathering";
+import { getHeroTrackerGroupKeySuffix } from "@/features/notifications/utils/hero-tracker-notification";
 import { create } from "zustand";
 
 export type NotificationWithServers = Notification & {
@@ -141,7 +142,32 @@ const getNpcGroupKey = (
     return undefined;
   }
 
-  return `${notification.npc.id}:${notification.world}`;
+  return `${notification.npc.id}:${notification.world}${getHeroTrackerGroupKeySuffix(notification)}`;
+};
+
+// Once a Hero Tracker's entrance opens, the row announcing it unclaimed is
+// stale: the open row replaces it.
+const getSupersededHeroTrackerNotifications = (
+  notifications: readonly StoredNotification[],
+): ReadonlySet<StoredNotification> => {
+  const openTrackerKeys = new Set<string>();
+  const unclaimedTrackers: Array<[string, StoredNotification]> = [];
+
+  for (const notification of notifications) {
+    if (!("heroTracker" in notification) || !notification.npc) continue;
+
+    const key = `${notification.npc.id}:${notification.world}`;
+
+    if (notification.heroTracker?.state === "open") openTrackerKeys.add(key);
+    else if (notification.heroTracker?.state === "unclaimed")
+      unclaimedTrackers.push([key, notification]);
+  }
+
+  return new Set(
+    unclaimedTrackers.flatMap(([key, notification]) =>
+      openTrackerKeys.has(key) ? [notification] : [],
+    ),
+  );
 };
 
 const upsertNotificationBatch = (
@@ -311,7 +337,20 @@ export const useNotificationsStore = create<NotificationsState>()(
         addedPresentations = batch.addedPresentations;
         let { notifications } = batch;
 
-        const evictedNotifications = notifications.slice(MAX_NOTIFICATIONS);
+        const supersededNotifications =
+          getSupersededHeroTrackerNotifications(notifications);
+
+        if (supersededNotifications.size > 0) {
+          notifications = notifications.filter(
+            (notification) => !supersededNotifications.has(notification),
+          );
+        }
+
+        const evictedNotifications = [
+          ...supersededNotifications,
+          ...notifications.slice(MAX_NOTIFICATIONS),
+        ];
+
         notifications = notifications.slice(0, MAX_NOTIFICATIONS);
 
         if (evictedNotifications.length > 0) {

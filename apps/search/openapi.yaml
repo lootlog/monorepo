@@ -720,6 +720,7 @@ components:
             - EVENT_HERO
             - COLOSSUS
             - TITAN
+            - HERO_TRACKER
             - NPC
         gameVersion:
           type: string
@@ -934,6 +935,7 @@ components:
                   - EVENT_HERO
                   - COLOSSUS
                   - TITAN
+                  - HERO_TRACKER
                   - NPC
               margonemType:
                 type: number
@@ -1068,6 +1070,7 @@ components:
             - EVENT_HERO
             - COLOSSUS
             - TITAN
+            - HERO_TRACKER
             - NPC
         margonemType:
           type: number

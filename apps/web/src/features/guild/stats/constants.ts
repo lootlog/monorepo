@@ -1,6 +1,6 @@
-import type { NpcType } from "@lootlog/client/main";
+import type { KilledNpcType } from "@/constants/npc";
 
-export const TRACKABLE_NPC_TYPES: NpcType[] = [
+export const TRACKABLE_NPC_TYPES: KilledNpcType[] = [
   "TITAN",
   "COLOSSUS",
   "HERO",

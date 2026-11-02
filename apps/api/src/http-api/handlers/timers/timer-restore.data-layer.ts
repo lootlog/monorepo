@@ -180,7 +180,7 @@ export const makeRestoreTimer = (
         const restoredRows = yield* rollbackReset
           ? transaction
               .update(timerTable)
-              .set({ ...snapshot, updatedAt: now })
+              .set({ ...snapshot, entranceClosesAt: null, updatedAt: now })
               .where(timerScope)
               .returning()
           : transaction

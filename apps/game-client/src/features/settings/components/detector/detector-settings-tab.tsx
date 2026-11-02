@@ -33,6 +33,7 @@ export const DetectorSettingsTab = () => {
     { label: t("common:npcTypes.event_hero"), key: NpcType.EVENT_HERO },
     { label: t("common:npcTypes.colossus"), key: NpcType.COLOSSUS },
     { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
+    { label: t("common:npcTypes.hero_tracker"), key: NpcType.HERO_TRACKER },
   ];
 
   const columns: SettingsMatrixColumn[] = COLUMNS.map((column) => {

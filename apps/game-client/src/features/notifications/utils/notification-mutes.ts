@@ -55,6 +55,7 @@ const getDetectorNpcType = (
     wt: notification.npc.wt,
     icon: notification.npc.icon,
     isHeroFromEvent: notification.npc.isHeroFromEvent,
+    name: notification.npc.name,
   });
 
   return isDetectorNpcType(npcType) ? npcType : null;

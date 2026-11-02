@@ -9,7 +9,7 @@ import {
   NonNegativeSafeInteger,
   FiniteNumber,
 } from "@lootlog/schema/http-scalars";
-import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { NpcTypeEnum, NpcTypeSchema } from "@lootlog/schema/npc-type";
 
 export const KillStatsPeriodSchema = Schema.Literals([
   "all",
@@ -171,6 +171,19 @@ export type NpcType = typeof NpcType.Type;
 
 export const NpcType = NpcTypeSchema.annotate({ identifier: "NpcType" });
 
+// Hero Trackers cannot be fought, so kill filters never offer them.
+const KilledNpcTypeSchema = Schema.Literals([
+  NpcTypeEnum.COMMON,
+  NpcTypeEnum.ELITE,
+  NpcTypeEnum.ELITE2,
+  NpcTypeEnum.ELITE3,
+  NpcTypeEnum.HERO,
+  NpcTypeEnum.EVENT_HERO,
+  NpcTypeEnum.COLOSSUS,
+  NpcTypeEnum.TITAN,
+  NpcTypeEnum.NPC,
+]);
+
 export type GuildTopNpcsQuery = typeof GuildTopNpcsQuery.Type;
 
 export const GuildTopNpcsQuery = Schema.Struct({
@@ -291,7 +304,7 @@ const validLevelRange = Schema.makeFilter<{
 export type GuildKillStatsQuery = typeof GuildKillStatsQuery.Type;
 
 export const GuildKillStatsQuery = Schema.Struct({
-  npcTypes: Schema.optionalKey(Schema.Array(NpcTypeSchema)),
+  npcTypes: Schema.optionalKey(Schema.Array(KilledNpcTypeSchema)),
   minLvl: Schema.optionalKey(LevelFilter),
   maxLvl: Schema.optionalKey(LevelFilter),
   world: Schema.optionalKey(Schema.String),
@@ -301,8 +314,8 @@ export const GuildKillStatsQuery = Schema.Struct({
 export type UserKillStatsQuery = typeof UserKillStatsQuery.Type;
 
 export const UserKillStatsQuery = Schema.Struct({
-  npcTypes: Schema.optionalKey(Schema.Array(NpcTypeSchema)),
-  npcType: Schema.optionalKey(NpcTypeSchema),
+  npcTypes: Schema.optionalKey(Schema.Array(KilledNpcTypeSchema)),
+  npcType: Schema.optionalKey(KilledNpcTypeSchema),
   world: Schema.optionalKey(Schema.String),
   topNpcsLimit: Schema.optionalKey(PositiveSafeInteger),
   period: Schema.optionalKey(KillStatsPeriodSchema),
@@ -311,7 +324,7 @@ export const UserKillStatsQuery = Schema.Struct({
 export type UserNpcKillsQuery = typeof UserNpcKillsQuery.Type;
 
 export const UserNpcKillsQuery = Schema.Struct({
-  npcTypes: Schema.optionalKey(Schema.Array(NpcTypeSchema)),
+  npcTypes: Schema.optionalKey(Schema.Array(KilledNpcTypeSchema)),
   world: Schema.optionalKey(Schema.String),
   search: Schema.optionalKey(Schema.String),
   cursor: Schema.optionalKey(NonNegativeSafeInteger),
@@ -358,7 +371,7 @@ export const MemberKillsQuery = Schema.Struct({
   minLvl: Schema.optionalKey(LevelFilter),
   maxLvl: Schema.optionalKey(LevelFilter),
   world: Schema.optionalKey(Schema.String),
-  npcTypes: Schema.optionalKey(Schema.Array(NpcTypeSchema)),
+  npcTypes: Schema.optionalKey(Schema.Array(KilledNpcTypeSchema)),
   search: Schema.optionalKey(Schema.String),
   limit: Schema.optionalKey(PageSize),
   cursor: Schema.optionalKey(NonNegativeSafeInteger),

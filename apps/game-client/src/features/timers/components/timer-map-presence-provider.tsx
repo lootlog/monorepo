@@ -47,9 +47,15 @@ export const timerGuildIds = (
   timer: Pick<TimerWithTimeLeft, "guildId" | "mergedGuildIds">,
 ) => timer.mergedGuildIds?.map((entry) => entry.guildId) ?? [timer.guildId];
 
+// Heroes and Hero Trackers move between maps, so the last one says nothing.
+const ROAMING_NPC_TYPES = new Set<string>([
+  NpcType.HERO,
+  NpcType.EVENT_HERO,
+  NpcType.HERO_TRACKER,
+]);
+
 function getTimerMapName(timer: PresenceTimer): string | undefined {
-  if (timer.npc.type === NpcType.HERO || timer.npc.type === NpcType.EVENT_HERO)
-    return undefined;
+  if (ROAMING_NPC_TYPES.has(timer.npc.type)) return undefined;
 
   return timer.npc.location;
 }
