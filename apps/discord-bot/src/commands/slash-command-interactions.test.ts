@@ -260,7 +260,17 @@ describe("slash commands", () => {
               totalLoots: 0,
             },
             leaders: {
-              topHunter: { winner: null },
+              topHunter: {
+                winner: {
+                  member: {
+                    id: 2,
+                    name: "Member 2",
+                    avatar: null,
+                    userId: "u",
+                  },
+                  primaryValue: 2,
+                },
+              },
               topScorer: { winner: null },
               longestDuty: { winner: null },
             },
@@ -276,6 +286,9 @@ describe("slash commands", () => {
 
     expect(own?.value).toBe(
       COMMAND_TEXT.events.summary.ownResult(1, 3, "12", 2),
+    );
+    expect(JSON.stringify(reply.embeds?.[0]?.toJSON().fields)).toContain(
+      `${COMMAND_TEXT.events.summary.topHunter}: **Member 2**`,
     );
   });
 
@@ -366,6 +379,36 @@ describe("slash commands", () => {
     expect(lines).toHaveLength(2);
     expect(lines[0]).toContain("Open");
     expect(lines[1]).toContain("Later");
+  });
+
+  it("lists the newest loots from the API's loots page", async () => {
+    answers = [
+      linkedMember,
+      {
+        path: `/guilds/${guildId}/loots`,
+        answer: () =>
+          Response.json({
+            items: [
+              {
+                createdAt: new Date().toISOString(),
+                world: "aldous",
+                items: [{ name: "Hełm Grozy", rarity: "HEROIC" }],
+                players: [{ name: "Gracz" }],
+                npcs: [
+                  { id: 7, name: "Kotołak", type: "HERO", wt: 80, lvl: 50 },
+                ],
+              },
+            ],
+            nextCursor: "next",
+          }),
+      },
+    ];
+
+    const lines = description(await invoke("lupy")).split("\n");
+
+    expect(lines[0]).toContain("Kotołak");
+    expect(lines[1]).toContain("Hełm Grozy");
+    expect(lines[1]).toContain("Gracz");
   });
 
   it("tells the player an NPC has no visible kills instead of reporting an outage", async () => {
