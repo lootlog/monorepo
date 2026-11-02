@@ -75,7 +75,10 @@ const EventTimers = Schema.Array(
 
 const Leader = Schema.Struct({
   winner: Schema.NullOr(
-    Schema.Struct({ name: Schema.String, primaryValue: Schema.Number }),
+    Schema.Struct({
+      member: Schema.Struct({ name: Schema.String }),
+      primaryValue: Schema.Number,
+    }),
   ),
 });
 
@@ -124,7 +127,7 @@ const leaderLine = (
   format: (value: number) => string,
 ) =>
   leader.winner
-    ? `${label}: **${escapeMarkdown(leader.winner.name)}** (${format(leader.winner.primaryValue)})`
+    ? `${label}: **${escapeMarkdown(leader.winner.member.name)}** (${format(leader.winner.primaryValue)})`
     : null;
 
 const readRanking = (session: MemberSession, event: LootlogEvent) =>
