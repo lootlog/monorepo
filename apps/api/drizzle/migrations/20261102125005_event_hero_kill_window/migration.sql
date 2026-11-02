@@ -1,0 +1,2 @@
+ALTER TABLE "EventHeroKill" ADD COLUMN "windowKey" text;--> statement-breakpoint
+CREATE UNIQUE INDEX "EventHeroKill_heroNpcId_windowKey_isManualClose_key" ON "EventHeroKill" ("heroNpcId","windowKey","isManualClose");

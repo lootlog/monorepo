@@ -1,16 +1,16 @@
+import { addRankingRows } from "#src/events/kills/event-points.repository";
 import { getTrackingDurationSecondsForRanking } from "#src/events/kills/event-ranking-policy";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { selectEventKillPoints } from "#src/events/kills/event-point-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lt } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroKillTable,
   eventHeroNpcTable,
   eventKillPointTable,
-  eventRankingTable,
   eventTable,
 } from "#src/database/drizzle/schema";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -312,63 +312,21 @@ export const makeEventParticipation = (
 
                   if (!confirmed[0]) return;
 
-                  const rankingRows = yield* transaction
-                    .select()
-                    .from(eventRankingTable)
-                    .where(
-                      and(
-                        eq(eventRankingTable.eventId, eventId),
-                        eq(eventRankingTable.memberId, point.memberId),
-                        eq(eventRankingTable.heroNpcName, heroName),
-                      ),
-                    )
-                    .limit(1);
-
-                  const ranking = rankingRows[0];
-
-                  const trackingSeconds =
-                    getTrackingDurationSecondsForRanking(point);
-
-                  if (ranking) {
-                    const totalKills = ranking.totalKills + 1;
-
-                    const averageAfk =
-                      Math.round(
-                        ((ranking.avgAfkPercentage * ranking.totalKills +
-                          point.afkPercentage) /
-                          totalKills) *
-                          100,
-                      ) / 100;
-
-                    yield* transaction
-                      .update(eventRankingTable)
-                      .set({
-                        totalPoints: sql`${eventRankingTable.totalPoints} + ${point.points}`,
-                        totalKills: sql`${eventRankingTable.totalKills} + 1`,
-                        totalTimeSeconds: sql`${eventRankingTable.totalTimeSeconds} + ${trackingSeconds}`,
-                        avgAfkPercentage: averageAfk,
-                        pointsModified:
-                          ranking.pointsModified ||
-                          point.manualAdjustmentPoints !== 0,
-                        updatedAt: now,
-                      })
-                      .where(eq(eventRankingTable.id, ranking.id));
-
-                    return;
-                  }
-
-                  yield* transaction.insert(eventRankingTable).values({
-                    id: randomUUID(),
-                    eventId,
-                    memberId: point.memberId,
-                    heroNpcName: heroName,
-                    totalPoints: point.points,
-                    totalKills: 1,
-                    totalTimeSeconds: trackingSeconds,
-                    avgAfkPercentage: point.afkPercentage,
-                    pointsModified: point.manualAdjustmentPoints !== 0,
-                    updatedAt: now,
-                  });
+                  yield* addRankingRows(transaction, [
+                    {
+                      id: randomUUID(),
+                      eventId,
+                      memberId: point.memberId,
+                      heroNpcName: heroName,
+                      totalPoints: point.points,
+                      totalKills: 1,
+                      totalTimeSeconds:
+                        getTrackingDurationSecondsForRanking(point),
+                      avgAfkPercentage: point.afkPercentage,
+                      pointsModified: point.manualAdjustmentPoints !== 0,
+                      updatedAt: now,
+                    },
+                  ]);
                 }),
               { concurrency: 1, discard: true },
             ),

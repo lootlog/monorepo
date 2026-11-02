@@ -74,3 +74,23 @@ export function resolveCapabilities(
 
   return [...explicitCapabilities];
 }
+
+/**
+ * Role permissions that grant at least one of `required`, for storage queries
+ * that match raw role permission arrays. Keeps them aligned with
+ * {@link resolveCapabilities}, where OWNER and ADMIN expand to other
+ * capabilities.
+ */
+export function capabilitiesGrantingAny(
+  required: readonly Capability[],
+): Capability[] {
+  const granting = new Set(required);
+
+  granting.add(Capability.OWNER);
+
+  if (required.some((capability) => capability !== Capability.OWNER)) {
+    granting.add(Capability.ADMIN);
+  }
+
+  return [...granting];
+}

@@ -120,29 +120,39 @@ export const RabbitConsumers = Layer.effectDiscard(
     );
 
     yield* consume(
-      "backend-discord-guild-channels-synced",
+      ApiQueue.DISCORD_GUILD_CHANNELS_SYNCED,
       RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNCED,
       (data) => guildSync.handleGuildChannelsSynced(data),
+      apiRabbitFailurePolicies.discordGuildChannelsSynced,
+      orderedHandlerRetry,
     );
     yield* consume(
-      "backend-discord-guild-channel-upserted",
+      ApiQueue.DISCORD_GUILD_CHANNEL_UPSERTED,
       RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED,
       (data) => guildSync.handleGuildChannelUpserted(data),
+      apiRabbitFailurePolicies.discordGuildChannelUpserted,
+      orderedHandlerRetry,
     );
     yield* consume(
-      "backend-discord-guild-channel-deleted",
+      ApiQueue.DISCORD_GUILD_CHANNEL_DELETED,
       RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
       (data) => guildSync.handleGuildChannelDeleted(data),
+      apiRabbitFailurePolicies.discordGuildChannelDeleted,
+      orderedHandlerRetry,
     );
     yield* consume(
-      "backend-discord-guild-channels-sync-failed",
+      ApiQueue.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
       RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
       (data) => guildSync.handleGuildChannelsSyncFailed(data),
+      apiRabbitFailurePolicies.discordGuildChannelsSyncFailed,
+      orderedHandlerRetry,
     );
     yield* consume(
-      "backend-discord-guild-sync-state-updated",
+      ApiQueue.DISCORD_GUILD_SYNC_STATE_UPDATED,
       RabbitRoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED,
       (data) => guildSync.handleGuildSyncStateUpdated(data),
+      apiRabbitFailurePolicies.discordGuildSyncStateUpdated,
+      orderedHandlerRetry,
     );
 
     yield* consume(
@@ -177,14 +187,18 @@ export const RabbitConsumers = Layer.effectDiscard(
     );
 
     yield* consume(
-      "backend-notifications-timer-updated",
+      ApiQueue.NOTIFICATIONS_TIMER_UPDATED,
       RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
       (data) => notificationEvents.handleTimerUpdated(data),
+      apiRabbitFailurePolicies.notificationsTimerUpdated,
+      orderedHandlerRetry,
     );
     yield* consume(
-      "backend-notifications-timer-deleted",
+      ApiQueue.NOTIFICATIONS_TIMER_DELETED,
       RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
       (data) => notificationEvents.handleTimerDeleted(data),
+      apiRabbitFailurePolicies.notificationsTimerDeleted,
+      orderedHandlerRetry,
     );
     yield* consume(
       ApiQueue.NOTIFICATIONS_LOOT_CREATED,
@@ -193,14 +207,18 @@ export const RabbitConsumers = Layer.effectDiscard(
       apiRabbitFailurePolicies.lootCreated,
     );
     yield* consume(
-      "backend-notifications-delivery-result",
+      ApiQueue.NOTIFICATIONS_DELIVERY_RESULT,
       RabbitRoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
       (data) => notificationEvents.handleDeliveryResult(data),
+      apiRabbitFailurePolicies.notificationsDeliveryResult,
+      orderedHandlerRetry,
     );
     yield* consume(
-      "backend-notifications-discord-guild-channel-deleted",
+      ApiQueue.NOTIFICATIONS_DISCORD_GUILD_CHANNEL_DELETED,
       RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
       (data) => notificationEvents.handleDiscordGuildChannelDeleted(data),
+      apiRabbitFailurePolicies.notificationsDiscordGuildChannelDeleted,
+      orderedHandlerRetry,
     );
   }),
 );
