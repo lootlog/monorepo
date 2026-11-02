@@ -7,9 +7,9 @@ import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-p
 import { useSettingsSaveStatus } from "@/features/settings/persistence/settings-save-status.store";
 import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
 import {
-  COMBAT_NPC_TYPES,
+  APPEARANCE_NPC_TYPES,
   DEFAULT_NPC_TYPE_COLORS,
-  type CombatNpcType,
+  type AppearanceNpcType,
   type NpcTypeColors,
 } from "@lootlog/schema/npc-appearance";
 import {
@@ -33,10 +33,10 @@ export const NpcColorsSettings = () => {
   }>({ source: data, value: npcTypeColors });
 
   const draft = draftState.source === data ? draftState.value : npcTypeColors;
-  const [openType, setOpenType] = useState<CombatNpcType | null>(null);
+  const [openType, setOpenType] = useState<AppearanceNpcType | null>(null);
   const saving = status === "saving";
 
-  const anyModified = COMBAT_NPC_TYPES.some(
+  const anyModified = APPEARANCE_NPC_TYPES.some(
     (npcType) => draft[npcType] !== DEFAULT_NPC_TYPE_COLORS[npcType],
   );
 
@@ -50,7 +50,7 @@ export const NpcColorsSettings = () => {
       unset,
     });
 
-  const updateDraft = (npcType: CombatNpcType, value: string) => {
+  const updateDraft = (npcType: AppearanceNpcType, value: string) => {
     const color = normalizeAppearanceColor(
       value,
       DEFAULT_NPC_TYPE_COLORS[npcType],
@@ -61,7 +61,7 @@ export const NpcColorsSettings = () => {
     return color;
   };
 
-  const resetType = (npcType: CombatNpcType) => {
+  const resetType = (npcType: AppearanceNpcType) => {
     const defaultColor = DEFAULT_NPC_TYPE_COLORS[npcType];
     setDraft({ [npcType]: defaultColor });
     commit({}, [`npcColors.${npcType}`]);
@@ -71,7 +71,7 @@ export const NpcColorsSettings = () => {
     setDraft(DEFAULT_NPC_TYPE_COLORS);
     commit(
       {},
-      COMBAT_NPC_TYPES.map((npcType) => `npcColors.${npcType}`),
+      APPEARANCE_NPC_TYPES.map((npcType) => `npcColors.${npcType}`),
     );
   };
 
@@ -94,7 +94,7 @@ export const NpcColorsSettings = () => {
           </Button>
         }
       >
-        {COMBAT_NPC_TYPES.map((npcType) => {
+        {APPEARANCE_NPC_TYPES.map((npcType) => {
           const color = draft[npcType];
           const surfaceColors = deriveNpcSurfaceColors(color);
           const isModified = color !== DEFAULT_NPC_TYPE_COLORS[npcType];

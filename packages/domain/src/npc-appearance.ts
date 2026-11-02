@@ -1,7 +1,7 @@
 import { Predicate } from "effect";
 import { contrastRatio, hexToRgb, rgbToHex, type RgbColor } from "./color.js";
 import {
-  COMBAT_NPC_TYPES,
+  APPEARANCE_NPC_TYPES,
   DEFAULT_NPC_TYPE_COLORS,
   isHexAppearanceColor,
   type NpcTypeColors,
@@ -22,7 +22,7 @@ export const normalizeNpcTypeColors = (value: unknown): NpcTypeColors => {
 
   const colors: NpcTypeColors = { ...DEFAULT_NPC_TYPE_COLORS };
 
-  for (const npcType of COMBAT_NPC_TYPES) {
+  for (const npcType of APPEARANCE_NPC_TYPES) {
     colors[npcType] = normalizeAppearanceColor(
       candidate?.[npcType],
       colors[npcType],

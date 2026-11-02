@@ -271,6 +271,11 @@ export const SETTINGS_CATALOG = {
         userScopes,
         isHexAppearanceColor,
       ),
+      "npcColors.HERO_TRACKER": field(
+        DEFAULT_NPC_TYPE_COLORS.HERO_TRACKER,
+        userScopes,
+        isHexAppearanceColor,
+      ),
       "timers.displayConfig": field(
         {
           legacyAppearance: false,

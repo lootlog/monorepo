@@ -1,7 +1,7 @@
 import { NpcType } from "@/api/npcs.api";
 import {
   DEFAULT_NPC_TYPE_COLORS,
-  isCombatNpcType,
+  isAppearanceNpcType,
   type NpcTypeColors,
 } from "@lootlog/schema/npc-appearance";
 import { deriveNpcSurfaceColors } from "@lootlog/domain/npc-appearance";
@@ -11,7 +11,6 @@ const TEXT_COLORS_BY_KEY = {
   [NpcType.HERO]: "rgba(249, 137, 72, 1)",
   [NpcType.ELITE2]: "rgba(219, 90, 186, 1)",
   [NpcType.TITAN]: "rgba(25, 72, 148, 1)",
-  [NpcType.HERO_TRACKER]: "rgba(16, 185, 129, 1)",
   message: "rgba(219, 39, 99, 1)",
   "party-gathering": "rgba(147, 51, 234, 1)",
 };
@@ -21,7 +20,6 @@ const BACKGROUND_COLORS_BY_KEY = {
   [NpcType.HERO]: "rgba(249, 137, 72, 0.4)",
   [NpcType.ELITE2]: "rgba(219, 90, 186, 0.4)",
   [NpcType.TITAN]: "rgba(25, 72, 148, 0.4)",
-  [NpcType.HERO_TRACKER]: "rgba(16, 185, 129, 0.4)",
   message: "rgba(219, 39, 99, 0.4)",
   "party-gathering": "rgba(147, 51, 234, 0.4)",
 };
@@ -35,7 +33,7 @@ const getNpcSurfaceColors = (
   key: string | undefined,
   npcTypeColors: NpcTypeColors,
 ) =>
-  key && isCombatNpcType(key)
+  key && isAppearanceNpcType(key)
     ? deriveNpcSurfaceColors(npcTypeColors[key])
     : undefined;
 
