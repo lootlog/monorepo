@@ -1,8 +1,7 @@
-import { ItemRarity } from "@/lib/loots/loot-types";
 import { Button } from "@lootlog/ui/components/button";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { Label } from "@lootlog/ui/components/label";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { ItemRarity, resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { cn } from "cn";
 import { X } from "lucide-react";
 import {

@@ -1,6 +1,7 @@
 import { ItemTile as SharedItemTile } from "@lootlog/ui/components/item-tile";
 import type { ItemDisplayValue } from "@lootlog/ui/components/item-stat-utils";
-import { ItemRarity, type Item } from "@/lib/loots/loot-types";
+import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
+import type { Item } from "@/lib/loots/loot-types";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { TranslatedItemStat } from "./translated-item-stat";

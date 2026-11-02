@@ -7,22 +7,20 @@ import { cn } from "cn";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { ItemRarity, resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import {
   getListTileLinkClassName,
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 import { MetaItem } from "@/components/common/meta-item";
-import { ItemTile } from "@/components/tiles";
+import { ItemTile } from "@/components/tiles/item-tile";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useNotificationsUserControllerDeleteWatchedItem,
   type WatchedItemResponseDto,
 } from "@lootlog/client/main";
-
-import { ItemRarity } from "@/lib/loots/loot-types";
 
 type WatchedItemTileProps = {
   watchedItem: WatchedItemResponseDto;

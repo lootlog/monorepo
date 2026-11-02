@@ -20,8 +20,7 @@ import { StatisticsTopNpcs } from "./statistics-top-npcs";
 import { StatisticsTopLegends } from "./statistics-top-legends";
 import { StatisticsWorldsSection } from "./statistics-worlds-section";
 import { StatsSectionColumns } from "@/components/common/stats-section-columns";
-
-const numberFormatter = new Intl.NumberFormat("pl-PL");
+import { formatNumber } from "@/lib/format-number";
 
 export function StatisticsOverview({ data, search }: StatisticsTabProps) {
   const { t } = useTranslation();
@@ -95,7 +94,7 @@ export function StatisticsOverview({ data, search }: StatisticsTabProps) {
             <StatsTile
               icon={Crown}
               label={t("kills.records.bestDay")}
-              value={numberFormatter.format(bestDay.kills)}
+              value={formatNumber(bestDay.kills)}
               detail={formatStatisticsWeekdayDate(bestDay.startDate)}
             />
             <StatsTile

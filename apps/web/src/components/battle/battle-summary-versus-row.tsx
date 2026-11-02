@@ -1,7 +1,7 @@
 import { cn } from "cn";
 import type { FC } from "react";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
-import { formatNumber } from "@/components/battle/utils/value-utils";
+import { formatNumber } from "@/lib/format-number";
 
 export type BattleSummaryVersusRowProps = {
   enemyValue: number;

@@ -4,10 +4,7 @@ import {
   WorldCombobox,
 } from "@/components/world-combobox";
 import { addRecentWorld } from "@/lib/recent-worlds";
-import {
-  getGuildsControllerGetWorldsByGuildIdQueryKey,
-  useGuildsControllerGetWorldsByGuildId,
-} from "@lootlog/client/main";
+import { useGuildsControllerGetWorldsByGuildId } from "@lootlog/client/main";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
 import { type FC, useEffect, useMemo } from "react";
@@ -69,9 +66,6 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     { guildId: guildId ?? "" },
     {
       query: {
-        queryKey: getGuildsControllerGetWorldsByGuildIdQueryKey({
-          guildId: guildId ?? "",
-        }),
         enabled: !!guildId,
       },
     },

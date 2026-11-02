@@ -1,14 +1,10 @@
 import { useGuildWorld } from "@/hooks/context/use-guild-world";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
-  getLootsControllerResolveLootItemByHidQueryKey,
   useLootsControllerResolveLootItemByHid,
   type LootsControllerResolveLootItemByHidParams,
 } from "@lootlog/client/main";
 import {
-  getItemsControllerGetItemsQueryKey,
-  getNpcsControllerGetNpcsQueryKey,
-  getPlayersControllerGetPlayersQueryKey,
   useItemsControllerGetItems,
   useNpcsControllerGetNpcs,
   usePlayersControllerGetPlayers,
@@ -206,21 +202,18 @@ export const useLootFiltersSidebar = () => {
 
   const playersQuery = usePlayersControllerGetPlayers(playersSearchParams, {
     query: {
-      queryKey: getPlayersControllerGetPlayersQueryKey(playersSearchParams),
       enabled: debouncedPlayersSearchValue.length > 0,
     },
   });
 
   const npcsQuery = useNpcsControllerGetNpcs(npcsSearchParams, {
     query: {
-      queryKey: getNpcsControllerGetNpcsQueryKey(npcsSearchParams),
       enabled: debouncedNpcsSearchValue.length > 0,
     },
   });
 
   const itemsQuery = useItemsControllerGetItems(itemsSearchParams, {
     query: {
-      queryKey: getItemsControllerGetItemsQueryKey(itemsSearchParams),
       enabled: debouncedItemsSearchValue.length >= 2,
     },
   });
@@ -235,10 +228,6 @@ export const useLootFiltersSidebar = () => {
     hidItemFallbackQueryParams,
     {
       query: {
-        queryKey: getLootsControllerResolveLootItemByHidQueryKey(
-          { guildId: guildId ?? "" },
-          hidItemFallbackQueryParams,
-        ),
         enabled: !!guildId && !!hidItemQueryParams,
       },
     },

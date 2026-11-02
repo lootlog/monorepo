@@ -1,5 +1,5 @@
 import { HERO_TRACKER_RESP_BASE_SECONDS } from "@/constants/margonem";
-import { createAutoTimer } from "@/api";
+import { createAutoTimer } from "@/api/timers.api";
 import { isSignedOut } from "@/lib/auth-client";
 import { getFreshCharacterCatchingGuildIds } from "@/hooks/api/use-lootlog-characters-config";
 import type {

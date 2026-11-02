@@ -10,7 +10,6 @@ import {
 export const useUserPreferences = () =>
   useUsersControllerGetUserPreferences({
     query: {
-      queryKey: getUsersControllerGetUserPreferencesQueryKey(),
       refetchOnWindowFocus: true,
       retry: false,
       staleTime: 60_000,

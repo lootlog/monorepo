@@ -28,13 +28,12 @@ import {
   type StatisticsSortColumn,
   type StatisticsSortValue,
 } from "./statistics-sort";
+import { formatNumber } from "@/lib/format-number";
 
 type Legend = UserLootStatsResponseDtoOutputLegendsItem;
 
 const legendKey = (legend: Legend) =>
   `${legend.itemId}:${legend.world}:${legend.npc.id}`;
-
-const numberFormatter = new Intl.NumberFormat("pl-PL");
 
 const SORT_COLUMNS: readonly StatisticsSortColumn[] = [
   ["legends", STATS_TABLE_COUNT_COLUMN_ID],
@@ -234,7 +233,7 @@ export function StatisticsLegendsTable({
             </span>
             <span className="flex shrink-0 flex-col items-end">
               <span className="text-sm font-semibold tabular-nums">
-                {numberFormatter.format(legend.count)}
+                {formatNumber(legend.count)}
               </span>
               <span className="text-xs text-muted-foreground">
                 {t("statistics.legend.caught", { count: legend.caught })}

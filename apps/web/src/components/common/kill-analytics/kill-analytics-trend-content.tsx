@@ -30,6 +30,7 @@ import {
   formatStatisticsHour,
 } from "./format-statistics-date";
 import { CHART_SERIES_ANIMATION } from "@/lib/motion";
+import { formatNumber } from "@/lib/format-number";
 
 type KillAnalyticsTrendPoint = {
   date: string;
@@ -94,7 +95,7 @@ export function KillAnalyticsTrend({
         </SortableColumnHeader>
       ),
       cell: ({ row: { original: day } }) =>
-        day.kills?.toLocaleString("pl-PL") ?? t("statistics.unknown"),
+        day.kills === null ? t("statistics.unknown") : formatNumber(day.kills),
     },
   ];
 

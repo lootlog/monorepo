@@ -108,8 +108,8 @@ export const timersData = Layer.unwrap(
             routingKey,
             content: new TextEncoder().encode(JSON.stringify(payload)),
           }),
-        releaseDedup: (script, key, token) =>
-          attempt(() => redis.eval(script, [key], [token])).pipe(Effect.ignore),
+        releaseDedup: (key, token) =>
+          attempt(() => redis.deleteIfValue(key, token)).pipe(Effect.ignore),
         set: (key, value, ttlSeconds) =>
           attempt(() => redis.set(key, value, ttlSeconds)),
         setNx: (key, value, ttlSeconds) =>

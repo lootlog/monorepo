@@ -4,10 +4,7 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { type FC, useLayoutEffect, useRef, useState } from "react";
 import { SingleTimer } from "./single-timer";
 import { getGuildIds, getGuildNamesById } from "@/lib/api/generated-helpers";
-import {
-  getGuildsControllerGetGuildPermissionsQueryKey,
-  getGuildsControllerGetGuildPermissionsQueryOptions,
-} from "@lootlog/client/main";
+import { getGuildsControllerGetGuildPermissionsQueryOptions } from "@lootlog/client/main";
 
 import { useQueries } from "@tanstack/react-query";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
@@ -86,9 +83,6 @@ export const TimersGrid: FC<TimersGridProps> = ({
         { guildId },
         {
           query: {
-            queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-              guildId,
-            }),
             refetchOnMount: false,
             staleTime: 5 * 60 * 1000,
           },

@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import { useThemeMeta } from "@/themes";
+import { useThemeMeta } from "@/themes/use-theme-meta";
 
 /**
  * Marks the open rail entry at the rail's edge and previews the mark on hover

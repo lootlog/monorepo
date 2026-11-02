@@ -9,7 +9,7 @@ import {
 import { cn } from "cn";
 import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-provider";
 
-import { ThemeEmptyStateIcon } from "@/themes";
+import { ThemeEmptyStateIcon } from "@/themes/adapters";
 import { Button } from "@lootlog/ui/components/button";
 import { EmptyMedia } from "@lootlog/ui/components/empty";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";

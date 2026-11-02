@@ -1,6 +1,6 @@
 import { formatLevel } from "@lootlog/domain/profession";
 import { Label } from "@lootlog/ui/components/label";
-import { NpcSearchTile } from "@/components/tiles";
+import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
 import {
   SearchCombobox,
   type SearchComboboxOption,

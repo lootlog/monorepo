@@ -10,8 +10,7 @@ import { getKillShift } from "@/components/common/kill-analytics/kill-shift";
 import { Crown, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { summarizeKillRecords } from "../utils/summarize-kill-records";
-
-const numberFormatter = new Intl.NumberFormat("pl-PL");
+import { formatNumber } from "@/lib/format-number";
 
 type KillStatsRecordsProps = {
   data: Pick<GuildKillStatsResponseDtoOutput, "timeline" | "hourlyWeekday">;
@@ -40,7 +39,7 @@ export const KillStatsRecords = ({ data }: KillStatsRecordsProps) => {
           label={
             hourly ? t("kills.records.bestHour") : t("kills.records.bestDay")
           }
-          value={numberFormatter.format(best.kills)}
+          value={formatNumber(best.kills)}
           detail={
             hourly
               ? formatStatisticsDateHour(best.date)

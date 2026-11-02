@@ -1,6 +1,5 @@
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import {
-  getGuildsControllerGetWorldsByGuildIdQueryKey,
   getTimersControllerGetTimersQueryOptions,
   timersControllerGetTimers,
   useGuildsControllerGetWorldsByGuildId,
@@ -27,9 +26,6 @@ export const useGuildTimers = (removeTimerAfterMs: number) => {
     {
       query: {
         enabled: Boolean(guildId) && readsAllWorlds,
-        queryKey: getGuildsControllerGetWorldsByGuildIdQueryKey({
-          guildId: queryGuildId,
-        }),
       },
     },
   );

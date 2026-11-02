@@ -4,10 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getOffsetPagination } from "./utils/offset-pagination";
 
-import {
-  getKillsControllerGetNpcKillersQueryKey,
-  useKillsControllerGetNpcKillers,
-} from "@lootlog/client/main";
+import { useKillsControllerGetNpcKillers } from "@lootlog/client/main";
 import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { buildNpcKillersParams } from "./utils/build-stats-query-params";
@@ -41,13 +38,6 @@ export function useNpcKillersPage() {
     {
       query: {
         enabled: Boolean(guildId && npcId),
-        queryKey: getKillsControllerGetNpcKillersQueryKey(
-          {
-            guildId,
-            npcId,
-          },
-          npcKillersParams,
-        ),
       },
     },
   );

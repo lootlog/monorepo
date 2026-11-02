@@ -10,6 +10,7 @@ import type { GuildLootCreatedEventV2 } from "@lootlog/schema/loot-events";
 import { GatewayEvent } from "@/config/gateway";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGateway } from "@/hooks/utils/use-gateway";
+import { findGuildByRouteId } from "@/lib/current-user-guilds";
 import { LootUnreadContext } from "./loot-unread-context";
 
 export const LootUnreadProvider = ({ children }: PropsWithChildren) => {
@@ -17,9 +18,7 @@ export const LootUnreadProvider = ({ children }: PropsWithChildren) => {
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const routeGuildId = useGuildId();
 
-  const currentGuildId = guilds?.find(
-    (guild) => guild.id === routeGuildId || guild.vanityUrl === routeGuildId,
-  )?.id;
+  const currentGuildId = findGuildByRouteId(guilds, routeGuildId)?.id;
 
   const [unreadLootIdsByGuild, setUnreadLootIdsByGuild] = useState<
     Record<string, number[]>

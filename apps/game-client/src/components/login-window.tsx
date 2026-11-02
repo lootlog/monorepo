@@ -8,6 +8,7 @@ import { WindowLauncher } from "@/components/window-launcher";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { detectCookieBrowser } from "@/hooks/auth/detect-cookie-browser";
+import { useWindowViewport } from "@/hooks/ui/window-viewport";
 import {
   markLoginWebsiteOpened,
   useLoginState,
@@ -15,6 +16,8 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { isExtensionClient } from "@/lib/game-client-platform";
 import { useWindowsStore } from "@/store/windows.store";
+
+const LOGIN_WINDOW_MAX_WIDTH = 360;
 
 /**
  * The single sign-in surface of both installations: the player signs in on
@@ -31,6 +34,7 @@ export function LoginWindow() {
   const size = useWindowsStore((windows) => windows["extension-login"].size);
   const setOpen = useWindowsStore((windows) => windows.setOpen);
   const openAndFocus = useWindowsStore((windows) => windows.openAndFocus);
+  const viewport = useWindowViewport();
   const signedIn = state === "signedIn";
   const busy = state === "checking";
 
@@ -58,8 +62,11 @@ export function LoginWindow() {
         title={t("auth.windowTitle")}
         resizable={false}
         minWidth={size.width}
-        maxWidth={360}
-        widthMode="fit-content"
+        // Opens at the viewport width when narrower and narrows with it.
+        maxWidth={Math.min(
+          LOGIN_WINDOW_MAX_WIDTH,
+          Math.max(1, Math.floor(viewport.width / viewport.scale)),
+        )}
         minHeight={size.height}
         dynamicHeight
         contentClassName="ll:min-h-0"

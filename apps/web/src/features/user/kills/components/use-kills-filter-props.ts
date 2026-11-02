@@ -3,10 +3,7 @@ import {
   TRACKABLE_NPC_TYPES,
   type NpcType,
 } from "@/features/user/kills/npc-types";
-import {
-  getKillsControllerGetUserKillStatsQueryKey,
-  useKillsControllerGetUserKillStats,
-} from "@lootlog/client/main";
+import { useKillsControllerGetUserKillStats } from "@lootlog/client/main";
 import type { KillStatsFiltersProps } from "@/features/kills/components/kill-stats-filters";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
@@ -44,7 +41,6 @@ export const useKillsFilterProps = ({
 }: UseKillsFilterPropsOptions): KillStatsFiltersProps => {
   const { data } = useKillsControllerGetUserKillStats(undefined, {
     query: {
-      queryKey: getKillsControllerGetUserKillStatsQueryKey(),
       staleTime: 30_000,
     },
   });

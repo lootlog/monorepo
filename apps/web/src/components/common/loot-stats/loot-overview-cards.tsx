@@ -3,8 +3,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import type { LootStatsResponseDtoOutputOverview } from "@lootlog/client/main";
 import { Crown, Layers, Package, Sword } from "lucide-react";
 import { useTranslation } from "react-i18next";
-
-const numberFormatter = new Intl.NumberFormat("pl-PL");
+import { formatNumber } from "@/lib/format-number";
 
 const percentFormatter = new Intl.NumberFormat("pl-PL", {
   style: "percent",
@@ -44,7 +43,7 @@ export const LootOverviewCards = ({
       icon: Layers,
       value: totalItems,
       detail: t("loots.stats.overview.itemsPerLoot", {
-        value: numberFormatter.format(
+        value: formatNumber(
           totalLoots > 0 ? Math.round((totalItems / totalLoots) * 10) / 10 : 0,
         ),
       }),
@@ -77,7 +76,7 @@ export const LootOverviewCards = ({
             isLoading ? (
               <Skeleton className="h-7 w-24" />
             ) : (
-              numberFormatter.format(kpi.value)
+              formatNumber(kpi.value)
             )
           }
           detail={isLoading ? <Skeleton className="h-4 w-16" /> : kpi.detail}

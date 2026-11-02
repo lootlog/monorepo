@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
 import { Skull } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { NpcTile } from "@/components/tiles";
+import { NpcTile } from "@/components/tiles/npc-tile";
 import type { KillHistoryEntryHeroNpc } from "@lootlog/client/main";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 

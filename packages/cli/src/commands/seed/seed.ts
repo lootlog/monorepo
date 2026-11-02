@@ -41,7 +41,7 @@ import { encodeBattleEvents } from "@lootlog/battlelog/battles/battle-timeline";
 import { GuildGenerator } from "./generators/guild-generator.js";
 import { LootGenerator } from "./generators/loot-generator.js";
 import { BattlesGenerator } from "./generators/battles-generator.js";
-import { BattleProcessor, type Warrior } from "@lootlog/battle-processor";
+import { BattleProcessor } from "@lootlog/battle-processor";
 import { SCRAPER_CONFIG, SEED_CONFIG } from "./config.js";
 import path from "node:path";
 import { and, eq } from "drizzle-orm";
@@ -656,124 +656,6 @@ async function seedTimers(guilds: SeedGuild[]) {
   console.log(`✅ Created ${totalTimers} timers`);
 }
 
-const getSeedWarriorCore = (warrior: Warrior) => ({
-  originalId: warrior.originalId.toString(),
-  name: warrior.name,
-  lvl: warrior.lvl,
-  prof: warrior.prof,
-  icon: warrior.icon,
-  team: warrior.team,
-  turns: warrior.turns,
-  turnsLost: warrior.turnsLost ?? 0,
-  steps: warrior.steps ?? 0,
-  normalAttacks: warrior.normalAttacks ?? 0,
-  spellsUsed: warrior.spellsUsed ?? 0,
-  spellsUsedMap: warrior.spellsUsedMap ?? {},
-  isDead: warrior.isDead,
-  surrendered: warrior.surrendered ?? false,
-  fled: warrior.fled ?? false,
-  maxHp: warrior.maxHp ?? 0,
-  damageDealt: warrior.damageDealt,
-});
-
-const getSeedWarriorDealtDamage = (warrior: Warrior) => ({
-  distanceDamage: warrior.distanceDamage ?? 0,
-  meleeDamage: warrior.meleeDamage ?? 0,
-  auxiliaryDamage: warrior.auxiliaryDamage ?? 0,
-  fireDamage: warrior.fireDamage ?? 0,
-  frostDamage: warrior.frostDamage ?? 0,
-  lightningDamage: warrior.lightningDamage ?? 0,
-  thirdAttDamage: warrior.thirdAttDamage ?? 0,
-  damageDealtAfterDefensive: warrior.damageDealtAfterDefensive ?? 0,
-  damageDealtAfterDefensivePercentage:
-    warrior.damageDealtAfterDefensivePercentage ?? 0,
-});
-
-const getSeedWarriorTakenDamage = (warrior: Warrior) => ({
-  damageTaken: warrior.damageTaken,
-  distanceDamageTaken: warrior.distanceDamageTaken ?? 0,
-  meleeDamageTaken: warrior.meleeDamageTaken ?? 0,
-  auxiliaryDamageTaken: warrior.auxiliaryDamageTaken ?? 0,
-  fireDamageTaken: warrior.fireDamageTaken ?? 0,
-  frostDamageTaken: warrior.frostDamageTaken ?? 0,
-  lightningDamageTaken: warrior.lightningDamageTaken ?? 0,
-  thirdAttDamageTaken: warrior.thirdAttDamageTaken ?? 0,
-  flatDamageTaken: warrior.flatDamageTaken ?? 0,
-});
-
-const getSeedWarriorCombatEffects = (warrior: Warrior) => ({
-  rageDamageDealt: warrior.rageDamageDealt ?? 0,
-  trueDamageDealt: warrior.trueDamageDealt ?? 0,
-  trueDamageTaken: warrior.trueDamageTaken ?? 0,
-  stigmaDamageDealt: warrior.stigmaDamageDealt ?? 0,
-  stigmaDamageTaken: warrior.stigmaDamageTaken ?? 0,
-  passiveHealing: warrior.passiveHealing ?? 0,
-  activeHealing: warrior.activeHealing ?? 0,
-  armorPierces: warrior.armorPierces ?? 0,
-  criticalHits: warrior.criticalHits ?? 0,
-  reducedArmor: warrior.reducedArmor ?? 0,
-  reducedPoisonResistance: warrior.reducedPoisonResistance ?? 0,
-  magicResistanceDestroyed: warrior.magicResistanceDestroyed ?? 0,
-});
-
-const getSeedWarriorDefense = (warrior: Warrior) => ({
-  evasions: warrior.evasions ?? 0,
-  attacksEvaded: warrior.attacksEvaded ?? 0,
-  counters: warrior.counters ?? 0,
-  fastArrows: warrior.fastArrows ?? 0,
-  blocks: warrior.blocks ?? 0,
-  attacksBlocked: warrior.attacksBlocked ?? 0,
-  blockedDamage: warrior.blockedDamage ?? 0,
-});
-
-const getSeedWarriorPersistentDamage = (warrior: Warrior) => ({
-  woundDamageTaken: warrior.woundDamageTaken ?? 0,
-  poisonDamageTaken: warrior.poisonDamageTaken ?? 0,
-  injureDamageTaken: warrior.injureDamageTaken ?? 0,
-  injures: warrior.injures ?? 0,
-  critWoundDamageTaken: warrior.critWoundDamageTaken ?? 0,
-  firePassiveDamageTaken: warrior.firePassiveDamageTaken ?? 0,
-  lightningPassiveDamageTaken: warrior.lightningPassiveDamageTaken ?? 0,
-});
-
-const getSeedWarriorResources = (warrior: Warrior) => ({
-  destroyedEnergy: warrior.destroyedEnergy ?? 0,
-  destroyedMana: warrior.destroyedMana ?? 0,
-  regeneratedEnergy: warrior.regeneratedEnergy ?? 0,
-  regeneratedMana: warrior.regeneratedMana ?? 0,
-  reflectedDamage: warrior.reflectedDamage ?? 0,
-  reflectedDamageTaken: warrior.reflectedDamageTaken ?? 0,
-});
-
-const getSeedWarriorLegendaryEffects = (warrior: Warrior) => ({
-  legbons: warrior.legbons ?? 0,
-  legbonCurse: warrior.legbonCurse ?? 0,
-  legbonCleanse: warrior.legbonCleanse ?? 0,
-  legbonLastheal: warrior.legbonLastheal ?? 0,
-  legbonLasthealValue: warrior.legbonLasthealValue ?? 0,
-  legbonGlare: warrior.legbonGlare ?? 0,
-  legbonHolytouch: warrior.legbonHolytouch ?? 0,
-  legbonHolytouchValue: warrior.legbonHolytouchValue ?? 0,
-  legbonCritredValue: warrior.legbonCritredValue ?? 0,
-  legbonFacadeValue: warrior.legbonFacadeValue ?? 0,
-  legbonVerycrit: warrior.legbonVerycrit ?? 0,
-  legbonAnguish: warrior.legbonAnguish ?? 0,
-  legbonPunctureValue: warrior.legbonPunctureValue ?? 0,
-  legbonAnguishDamageTaken: warrior.legbonAnguishDamageTaken ?? 0,
-  ph: warrior.ph ?? 0,
-});
-
-const toSeedBattleWarrior = (warrior: Warrior) => ({
-  ...getSeedWarriorCore(warrior),
-  ...getSeedWarriorDealtDamage(warrior),
-  ...getSeedWarriorTakenDamage(warrior),
-  ...getSeedWarriorCombatEffects(warrior),
-  ...getSeedWarriorDefense(warrior),
-  ...getSeedWarriorPersistentDamage(warrior),
-  ...getSeedWarriorResources(warrior),
-  ...getSeedWarriorLegendaryEffects(warrior),
-});
-
 async function seedBattles(count: number) {
   console.log(`⚔️  Seeding ${count} battles...`);
 
@@ -853,7 +735,7 @@ async function seedBattles(count: number) {
         await transaction.insert(battleWarriorsTable).values(
           analysis.warriors.map((warrior) => ({
             battleId: battle.id,
-            ...toSeedBattleWarrior(warrior),
+            ...warrior,
           })),
         );
         await transaction.insert(battleTimelinesTable).values({

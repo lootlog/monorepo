@@ -1,8 +1,11 @@
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { ITEM_RARITIES_BY_VALUE } from "@lootlog/ui/lib/item-rarity";
+import {
+  ITEM_RARITIES_BY_VALUE,
+  ItemRarity,
+} from "@lootlog/ui/lib/item-rarity";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
-import { ItemRarity, type Item, type Loot } from "@/lib/loots/loot-types";
+import type { Item, Loot } from "@/lib/loots/loot-types";
 import { cn } from "cn";
 import { AnimatePresence } from "framer-motion";
 import type { ReactNode, FC } from "react";

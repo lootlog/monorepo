@@ -16,8 +16,6 @@ import {
   type CreateNotificationRuleDtoTriggerType,
   type NotificationTargetResponseDto,
   type NotificationRuleResponseDto,
-  getNotificationsGuildControllerGetGuildRulesQueryKey,
-  getNotificationsGuildControllerGetGuildTargetsQueryKey,
   useNotificationsGuildControllerCreateGuildRule,
   useNotificationsGuildControllerGetGuildRules,
   useNotificationsGuildControllerGetGuildTargets,
@@ -26,7 +24,6 @@ import {
   useGuildsControllerGetWorldsByGuildId,
   type SearchTimersNpcResponseDtoOutput,
   type TimersControllerSearchNpcsWithTimerDataParams,
-  getTimersControllerSearchNpcsWithTimerDataQueryKey,
   useTimersControllerSearchNpcsWithTimerData,
 } from "@lootlog/client/main";
 
@@ -287,27 +284,13 @@ const useNotificationRuleData = (
 ) => {
   const queryGuildId = guildId ?? "";
 
-  const targetsQuery = useNotificationsGuildControllerGetGuildTargets(
-    { guildId: queryGuildId },
-    {
-      query: {
-        queryKey: getNotificationsGuildControllerGetGuildTargetsQueryKey({
-          guildId: queryGuildId,
-        }),
-      },
-    },
-  );
+  const targetsQuery = useNotificationsGuildControllerGetGuildTargets({
+    guildId: queryGuildId,
+  });
 
-  const rulesQuery = useNotificationsGuildControllerGetGuildRules(
-    { guildId: queryGuildId },
-    {
-      query: {
-        queryKey: getNotificationsGuildControllerGetGuildRulesQueryKey({
-          guildId: queryGuildId,
-        }),
-      },
-    },
-  );
+  const rulesQuery = useNotificationsGuildControllerGetGuildRules({
+    guildId: queryGuildId,
+  });
 
   const { data: worlds = [] } = useGuildsControllerGetWorldsByGuildId({
     guildId: queryGuildId,
@@ -364,10 +347,6 @@ const useTimerNpcSelection = (
     selectedNpcSearchParams,
     {
       query: {
-        queryKey: getTimersControllerSearchNpcsWithTimerDataQueryKey(
-          searchPathParams,
-          selectedNpcSearchParams,
-        ),
         enabled: !!guildId && !isManualNpcEntry && selectedNpcIds.length > 0,
       },
     },
@@ -385,10 +364,6 @@ const useTimerNpcSelection = (
     searchedNpcSearchParams,
     {
       query: {
-        queryKey: getTimersControllerSearchNpcsWithTimerDataQueryKey(
-          searchPathParams,
-          searchedNpcSearchParams,
-        ),
         enabled: !!guildId && !isManualNpcEntry && hasNpcSearch,
       },
     },

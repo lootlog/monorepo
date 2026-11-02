@@ -11,7 +11,7 @@ import {
 import { Permission } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { Schema } from "effect";
-import { Logger } from "#src/platform/logger";
+import { ContextLogger } from "@lootlog/instrumentation";
 import {
   consumePingRateLimit,
   type PingScriptStore,
@@ -213,7 +213,7 @@ const planOperations = (
  * an NPC gains its first reporter or loses its last one.
  */
 export class NpcPresenceService {
-  private readonly logger = new Logger(NpcPresenceService.name);
+  private readonly logger = new ContextLogger(NpcPresenceService.name);
   private readonly operations = new WeakMap<GatewaySocket, Promise<unknown>>();
 
   constructor(

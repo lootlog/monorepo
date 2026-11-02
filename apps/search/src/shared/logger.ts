@@ -1,5 +1,4 @@
-import { runLogEffect } from "@lootlog/instrumentation";
-import { Effect } from "effect";
+import { ContextLogger } from "@lootlog/instrumentation";
 
 import type { IndexNpcsCommand } from "#src/npcs/index-npcs-command";
 import type { IndexPlayersCommand } from "#src/players/index-players-command";
@@ -17,23 +16,4 @@ export interface AppLogger {
   readonly info: (message: string, context?: SearchLogContext) => void;
 }
 
-export const effectLogger: AppLogger = {
-  error: (message, context) =>
-    runLogEffect(
-      Effect.logError(message, context).pipe(
-        Effect.annotateLogs({ context: "Search" }),
-      ),
-    ),
-  warn: (message, context) =>
-    runLogEffect(
-      Effect.logWarning(message, context).pipe(
-        Effect.annotateLogs({ context: "Search" }),
-      ),
-    ),
-  info: (message, context) =>
-    runLogEffect(
-      Effect.logInfo(message, context).pipe(
-        Effect.annotateLogs({ context: "Search" }),
-      ),
-    ),
-};
+export const effectLogger: AppLogger = new ContextLogger("Search");

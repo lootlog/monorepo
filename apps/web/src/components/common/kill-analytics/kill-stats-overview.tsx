@@ -9,6 +9,7 @@ import { sum } from "es-toolkit";
 import { Swords } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { formatNumber } from "@/lib/format-number";
 
 // One hue, as on the activity heatmaps: the most common type is the brightest.
 const NPC_TYPE_FILLS: Partial<Record<KilledNpcType, string>> = {
@@ -19,8 +20,6 @@ const NPC_TYPE_FILLS: Partial<Record<KilledNpcType, string>> = {
   EVENT_HERO: "bg-primary/35",
   TITAN: "bg-primary/25",
 };
-
-const numberFormatter = new Intl.NumberFormat("pl-PL");
 
 const shareFormatter = new Intl.NumberFormat("pl-PL", {
   style: "percent",
@@ -83,7 +82,7 @@ export const KillStatsOverview = ({
         ) : (
           <>
             <div className="text-4xl leading-tight font-semibold tabular-nums">
-              {numberFormatter.format(total)}
+              {formatNumber(total)}
             </div>
             {totalDetail && (
               <div className="text-xs text-muted-foreground">{totalDetail}</div>
@@ -153,7 +152,7 @@ export const KillStatsOverview = ({
               <Skeleton className="h-7 w-16" />
             ) : (
               <span className="text-2xl leading-7 font-semibold tabular-nums">
-                {numberFormatter.format(kills)}
+                {formatNumber(kills)}
               </span>
             )}
             {isLoading ? (

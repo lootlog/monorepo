@@ -1,8 +1,5 @@
 import { PinnedEventsBanner } from "./pinned-events-banner";
-import {
-  getListPinnedEventsQueryKey,
-  useListPinnedEvents,
-} from "@lootlog/client/main";
+import { useListPinnedEvents } from "@lootlog/client/main";
 import { CollapsePresence } from "@/components/common/collapse-presence";
 
 export const GuildPinnedEventsSection = ({
@@ -20,7 +17,6 @@ export const GuildPinnedEventsSection = ({
     {
       query: {
         enabled: enabled && Boolean(guildId),
-        queryKey: getListPinnedEventsQueryKey({ guildId }),
       },
     },
   );

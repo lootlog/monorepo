@@ -14,29 +14,12 @@ import {
   APP_ERROR_WINDOW_WIDTH,
 } from "@/features/error-boundary/error-boundary.constants";
 import { create } from "zustand";
-import {
-  persist,
-  createJSONStorage,
-  type StateStorage,
-} from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
+import { createChangedOnlyStorage } from "./changed-only-storage";
 import { looseStruct, optionalOrUndefined } from "@lootlog/schema/stored-value";
 
 const STORAGE_KEY = storageKey("ll-windows-state");
-
-export const createDeduplicatingStateStorage = (
-  storage: Pick<Storage, "getItem" | "removeItem" | "setItem">,
-): StateStorage => ({
-  getItem: (key) => storage.getItem(key),
-  removeItem: (key) => storage.removeItem(key),
-  setItem: (key, value) => {
-    if (storage.getItem(key) === value) {
-      return;
-    }
-
-    storage.setItem(key, value);
-  },
-});
 
 type SettingsWindowState = {
   activeTab?: SettingsTabValue;
@@ -44,24 +27,6 @@ type SettingsWindowState = {
 };
 
 type WindowPayload = SettingsWindowState;
-
-export type WindowId =
-  | "extension-login"
-  | "app-error"
-  | "settings"
-  | "timers"
-  | "chat"
-  | "global-chat"
-  | "command"
-  | "online-players"
-  | "npc-detector"
-  | "notifications"
-  | "quick-access"
-  | "catching-whitelist-warning"
-  | "backend-preferences-warning"
-  | "party-finder"
-  | "create-party-gathering"
-  | "battle-pings";
 
 interface WindowPositionState {
   x: number;
@@ -105,23 +70,13 @@ const createFocusRequest = (windowId: WindowId): WindowFocusRequest => {
   };
 };
 
-interface WindowsState {
-  "extension-login": WindowData;
-  "app-error": WindowData;
-  settings: WindowData & { state: SettingsWindowState };
-  timers: WindowData;
-  chat: WindowData;
-  "global-chat": WindowData;
-  command: WindowData;
-  "online-players": WindowData;
-  "npc-detector": WindowData;
-  notifications: WindowData;
-  "quick-access": WindowData;
-  "catching-whitelist-warning": WindowData;
-  "backend-preferences-warning": WindowData;
-  "party-finder": WindowData;
-  "create-party-gathering": WindowData;
-  "battle-pings": WindowData;
+type SettingsWindowData = WindowData & { state: SettingsWindowState };
+
+type WindowEntries = Record<Exclude<WindowId, "settings">, WindowData> & {
+  settings: SettingsWindowData;
+};
+
+interface WindowsState extends WindowEntries {
   currentWindowFocus?: WindowId;
   windowFocusHistory: WindowId[];
   /**
@@ -174,6 +129,85 @@ const DEFAULT_QUICK_ACCESS_WIDTH = 250;
 
 const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
 
+/**
+ * Every window the store knows, in persisted key order, with the open state
+ * and size it starts with. All other window fields share one default.
+ */
+const WINDOW_DEFAULTS = {
+  "extension-login": { open: true, size: { width: 360, height: 180 } },
+  "app-error": {
+    open: false,
+    size: {
+      width: APP_ERROR_WINDOW_WIDTH,
+      height: APP_ERROR_WINDOW_DEFAULT_HEIGHT,
+    },
+  },
+  settings: { open: false, size: { width: 820, height: 560 } },
+  timers: { open: true, size: DEFAULT_SIZE },
+  chat: { open: true, size: DEFAULT_SIZE },
+  "global-chat": { open: false, size: DEFAULT_SIZE },
+  command: { open: false, size: DEFAULT_SIZE },
+  "online-players": { open: false, size: DEFAULT_SIZE },
+  "npc-detector": { open: false, size: { width: 300, height: 300 } },
+  notifications: { open: false, size: { width: 360, height: 300 } },
+  "quick-access": {
+    open: true,
+    size: { width: DEFAULT_QUICK_ACCESS_WIDTH, height: 56 },
+  },
+  "catching-whitelist-warning": {
+    open: false,
+    size: { width: 400, height: 240 },
+  },
+  "backend-preferences-warning": {
+    open: false,
+    size: { width: 400, height: 240 },
+  },
+  "party-finder": { open: false, size: DEFAULT_SIZE },
+  "create-party-gathering": { open: false, size: { width: 280, height: 230 } },
+  "battle-pings": { open: false, size: DEFAULT_SIZE },
+} as const satisfies Record<string, Pick<WindowData, "open" | "size">>;
+
+export type WindowId = keyof typeof WINDOW_DEFAULTS;
+
+// SAFETY: the keys of WINDOW_DEFAULTS are exactly WindowId.
+const WINDOW_IDS = Object.keys(WINDOW_DEFAULTS) as WindowId[];
+
+/**
+ * Windows owned by the current runtime: they are never persisted and the
+ * layout reset leaves them alone.
+ */
+const RUNTIME_WINDOW_IDS = new Set<WindowId>(["extension-login", "app-error"]);
+
+/**
+ * Store fields that live only in memory. Actions are dropped separately so the
+ * persisted state matches what hydration reads back from storage.
+ */
+const TRANSIENT_FIELDS = new Set<string>([
+  "currentWindowFocus",
+  "windowFocusHistory",
+  "focusRequest",
+  ...RUNTIME_WINDOW_IDS,
+]);
+
+const createDefaultWindows = (): WindowEntries => {
+  // SAFETY: built with one entry for every WindowId.
+  const windows = Object.fromEntries(
+    WINDOW_IDS.map((id) => [
+      id,
+      {
+        open: WINDOW_DEFAULTS[id].open,
+        position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
+        size: WINDOW_DEFAULTS[id].size,
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      } satisfies WindowData,
+    ]),
+  ) as Record<WindowId, WindowData>;
+
+  return { ...windows, settings: { ...windows.settings, state: {} } };
+};
+
 export const sanitizeMaxContentHeight = (height: number | undefined) => {
   if (height === undefined || !Number.isFinite(height)) {
     return undefined;
@@ -222,25 +256,6 @@ const migrateLegacyWindowEntries = (state: RawPersistedWindows): void => {
     state["online-players"] = windowState;
   }
 };
-
-const WINDOW_IDS: WindowId[] = [
-  "extension-login",
-  "app-error",
-  "settings",
-  "timers",
-  "chat",
-  "global-chat",
-  "command",
-  "online-players",
-  "npc-detector",
-  "notifications",
-  "quick-access",
-  "catching-whitelist-warning",
-  "backend-preferences-warning",
-  "party-finder",
-  "create-party-gathering",
-  "battle-pings",
-];
 
 const migrateLegacyCommand = (state: RawPersistedWindows): void => {
   if (state["chat-input"]) {
@@ -543,138 +558,7 @@ const mergePersistedWindows = (
 export const useWindowsStore = create<WindowsState>()(
   persist<WindowsState, [], [], RawPersistedWindows>(
     (set, get) => ({
-      "extension-login": {
-        open: true,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 360, height: 180 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "app-error": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: {
-          width: APP_ERROR_WINDOW_WIDTH,
-          height: APP_ERROR_WINDOW_DEFAULT_HEIGHT,
-        },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      settings: {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 820, height: 560 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-        state: {},
-      },
-      timers: {
-        open: true,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: DEFAULT_SIZE,
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      chat: {
-        open: true,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: DEFAULT_SIZE,
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "global-chat": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: DEFAULT_SIZE,
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      command: {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 242, height: 240 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "online-players": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 242, height: 240 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "npc-detector": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 300, height: 300 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      notifications: {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 360, height: 300 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "quick-access": {
-        open: true,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: DEFAULT_QUICK_ACCESS_WIDTH, height: 56 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "catching-whitelist-warning": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 400, height: 240 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "backend-preferences-warning": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 400, height: 240 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "party-finder": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: DEFAULT_SIZE,
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "create-party-gathering": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 280, height: 230 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "battle-pings": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 242, height: 240 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
+      ...createDefaultWindows(),
       currentWindowFocus: undefined,
       windowFocusHistory: [],
       focusRequest: undefined,
@@ -890,52 +774,12 @@ export const useWindowsStore = create<WindowsState>()(
             collapsed: fallback.collapsed,
           });
 
-          return {
-            settings: resetWindow(state.settings, defaults.settings),
-            timers: resetWindow(state.timers, defaults.timers),
-            chat: resetWindow(state.chat, defaults.chat),
-            "global-chat": resetWindow(
-              state["global-chat"],
-              defaults["global-chat"],
-            ),
-            command: resetWindow(state.command, defaults.command),
-            "online-players": resetWindow(
-              state["online-players"],
-              defaults["online-players"],
-            ),
-            "npc-detector": resetWindow(
-              state["npc-detector"],
-              defaults["npc-detector"],
-            ),
-            notifications: resetWindow(
-              state.notifications,
-              defaults.notifications,
-            ),
-            "quick-access": resetWindow(
-              state["quick-access"],
-              defaults["quick-access"],
-            ),
-            "catching-whitelist-warning": resetWindow(
-              state["catching-whitelist-warning"],
-              defaults["catching-whitelist-warning"],
-            ),
-            "backend-preferences-warning": resetWindow(
-              state["backend-preferences-warning"],
-              defaults["backend-preferences-warning"],
-            ),
-            "party-finder": resetWindow(
-              state["party-finder"],
-              defaults["party-finder"],
-            ),
-            "create-party-gathering": resetWindow(
-              state["create-party-gathering"],
-              defaults["create-party-gathering"],
-            ),
-            "battle-pings": resetWindow(
-              state["battle-pings"],
-              defaults["battle-pings"],
-            ),
-          };
+          return Object.fromEntries(
+            WINDOW_IDS.filter((id) => !RUNTIME_WINDOW_IDS.has(id)).map((id) => [
+              id,
+              resetWindow(state[id], defaults[id]),
+            ]),
+          );
         }),
       setSettingsPath: (activeTab, activeSubsection) =>
         set((state) => ({
@@ -974,35 +818,14 @@ export const useWindowsStore = create<WindowsState>()(
     }),
     {
       name: STORAGE_KEY,
-      partialize: (state) => {
-        const {
-          currentWindowFocus: _focus,
-          windowFocusHistory: _history,
-          focusRequest: _focusRequest,
-          "extension-login": _extensionLogin,
-          "app-error": _appError,
-          setCurrentWindowFocus: _setCurrentWindowFocus,
-          setOpen: _setOpen,
-          openAndFocus: _openAndFocus,
-          clearFocusRequest: _clearFocusRequest,
-          setPosition: _setPosition,
-          setSize: _setSize,
-          setMaxContentHeight: _setMaxContentHeight,
-          setOpacity: _setOpacity,
-          setLocked: _setLocked,
-          setCollapsed: _setCollapsed,
-          toggleOpen: _toggleOpen,
-          setSettingsActiveTab: _setSettingsActiveTab,
-          resetWindowLayout: _resetWindowLayout,
-          setSettingsPath: _setSettingsPath,
-          ...persisted
-        } = state;
-
-        return persisted;
-      },
-      storage: createJSONStorage(() =>
-        createDeduplicatingStateStorage(localStorage),
-      ),
+      partialize: (state) =>
+        Object.fromEntries(
+          Object.entries(state).filter(
+            ([key, value]) =>
+              !TRANSIENT_FIELDS.has(key) && !(value instanceof Function),
+          ),
+        ),
+      storage: createChangedOnlyStorage(createJSONStorage(() => localStorage)),
       version: 20,
       migrate: migrateWindowsState,
       merge: mergePersistedWindows,

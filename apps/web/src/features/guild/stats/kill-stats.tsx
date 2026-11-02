@@ -1,9 +1,6 @@
 import type { KilledNpcType } from "@/constants/npc";
 import { countActiveKillStatsFilters } from "@/features/kills/components/count-active-kill-stats-filters";
-import {
-  getKillsControllerGetGuildKillStatsQueryKey,
-  useKillsControllerGetGuildKillStats,
-} from "@lootlog/client/main";
+import { useKillsControllerGetGuildKillStats } from "@lootlog/client/main";
 import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
@@ -23,8 +20,7 @@ import { TopNpcsCard } from "./components/top-npcs-card";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { buildGuildKillStatsParams } from "./utils/build-stats-query-params";
-
-const numberFormatter = new Intl.NumberFormat("pl-PL");
+import { formatNumber } from "@/lib/format-number";
 
 const NPC_TYPE_STORAGE_KEY = "stats-top-npcs-type";
 
@@ -63,10 +59,6 @@ export const KillStats = () => {
     {
       query: {
         enabled: Boolean(guildId),
-        queryKey: getKillsControllerGetGuildKillStatsQueryKey(
-          { guildId },
-          killStatsParams,
-        ),
       },
     },
   );
@@ -100,17 +92,13 @@ export const KillStats = () => {
       <KillStatsOverview
         total={data?.overview.guildUniqueKills}
         totalDetail={t("kills.overview.participations", {
-          value: numberFormatter.format(
-            data?.overview.totalMemberParticipations ?? 0,
-          ),
+          value: formatNumber(data?.overview.totalMemberParticipations ?? 0),
         })}
         types={TRACKABLE_NPC_TYPES.map((type) => ({
           type,
           kills: data?.overview.killsByType[type] ?? 0,
           detail: t("kills.overview.participations", {
-            value: numberFormatter.format(
-              data?.overview.participationsByType[type] ?? 0,
-            ),
+            value: formatNumber(data?.overview.participationsByType[type] ?? 0),
           }),
         }))}
         isLoading={isLoading}

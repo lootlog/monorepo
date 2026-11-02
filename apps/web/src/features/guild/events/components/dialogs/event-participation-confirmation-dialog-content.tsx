@@ -1,5 +1,5 @@
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
-import { NpcTile } from "@/components/tiles";
+import { NpcTile } from "@/components/tiles/npc-tile";
 import { Button } from "@lootlog/ui/components/button";
 import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";

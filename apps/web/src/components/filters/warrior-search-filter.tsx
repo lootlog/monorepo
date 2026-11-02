@@ -19,10 +19,7 @@ import {
   InlineSearchSuggestions,
 } from "@/components/common/inline-search-suggestions";
 import { CharacterAvatar } from "@/components/filters/character-avatar";
-import {
-  getBattlesControllerSearchWarriorsQueryKey,
-  useBattlesControllerSearchWarriors,
-} from "@lootlog/client/battlelog";
+import { useBattlesControllerSearchWarriors } from "@lootlog/client/battlelog";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 
@@ -58,9 +55,6 @@ export const WarriorSearchFilter = ({
       {
         query: {
           enabled: debouncedQuery.length >= MINIMUM_SEARCH_LENGTH,
-          queryKey: getBattlesControllerSearchWarriorsQueryKey({
-            q: debouncedQuery,
-          }),
         },
       },
     );

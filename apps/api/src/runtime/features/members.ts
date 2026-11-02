@@ -261,6 +261,8 @@ export const memberServicesLive = Layer.effect(
               adapter(() => redis.setNX(key, owner, ttl)),
             evalLock: (script, keys, args) =>
               adapter(() => redis.eval(script, keys, args)),
+            releaseLock: (key, owner) =>
+              adapter(() => redis.deleteIfValue(key, owner)),
           },
         );
 

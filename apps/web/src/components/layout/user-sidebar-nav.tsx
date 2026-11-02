@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useSession } from "@/hooks/auth/use-session";
 import { SidebarNav } from "./sidebar-nav/sidebar-nav";
 import type { MenuItem } from "./sidebar-nav/types";
-import { useThemeMeta } from "@/themes";
+import { useThemeMeta } from "@/themes/use-theme-meta";
 import { useMatches } from "@tanstack/react-router";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
 import { APP_NAVIGATION_ICONS } from "@/navigation/app-navigation-icons";
