@@ -32,6 +32,54 @@ export const DROP_SOURCE_BOSS_TYPES = [
   "COLOSSUS",
 ] as const;
 
+/**
+ * Monster types, strongest first; an event hero ranks right after a hero.
+ * NPCs and Hero Trackers are not monsters and rank after every type here.
+ */
+export const NPC_TYPES_STRONGEST_FIRST = [
+  "TITAN",
+  "COLOSSUS",
+  "HERO",
+  "EVENT_HERO",
+  "ELITE3",
+  "ELITE2",
+  "ELITE",
+  "COMMON",
+] as const;
+
+export type RankedNpcType = (typeof NPC_TYPES_STRONGEST_FIRST)[number];
+
+/** Position in `NPC_TYPES_STRONGEST_FIRST`; any other type or none ranks last. */
+export const getNpcTypeStrengthRank = (type: string | null | undefined) => {
+  const rank = NPC_TYPES_STRONGEST_FIRST.findIndex(
+    (npcType) => npcType === type,
+  );
+
+  return rank === -1 ? NPC_TYPES_STRONGEST_FIRST.length : rank;
+};
+
+export type NpcStrength = Readonly<{
+  type: string | null | undefined;
+  wt: number | null | undefined;
+  lvl: number | null | undefined;
+  /** The Margonem NPC id; breaks a tie between identical monsters. */
+  npcId: number;
+}>;
+
+/**
+ * Orders the NPCs of one fight strongest first: by type, then weight, then
+ * level, then id. The first one names a loot, so a boss always wins over its
+ * escort, even an escort of a higher level. SQL orderings mirror this.
+ */
+export const compareNpcsStrongestFirst = (
+  left: NpcStrength,
+  right: NpcStrength,
+) =>
+  getNpcTypeStrengthRank(left.type) - getNpcTypeStrengthRank(right.type) ||
+  (right.wt ?? -1) - (left.wt ?? -1) ||
+  (right.lvl ?? -1) - (left.lvl ?? -1) ||
+  left.npcId - right.npcId;
+
 /** What Margonem tells about an NPC that decides its Lootlog type. */
 export type NpcClassification = Readonly<{
   wt: number;
