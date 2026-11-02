@@ -30,6 +30,7 @@ import {
   userSettingDocumentTable,
 } from "#src/database/drizzle/schema";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
+import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import type { TimersGuildAccess } from "./timers.handlers.js";
@@ -159,7 +160,6 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
       .as(
         yield* accessibleGuildsQuery(database, identity.discordId, [
           Permission.LOOTLOG_TIMERS_READ,
-          Permission.ADMIN,
         ]),
       );
 
@@ -197,7 +197,10 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
 
       if (
         ownerId === identity.discordId ||
-        role?.permissions.includes(Permission.ADMIN)
+        (role &&
+          createAccessPolicy({ capabilities: role.permissions }).allows(
+            Capability.ADMIN,
+          ))
       ) {
         administrativeGuilds.add(guildId);
       }

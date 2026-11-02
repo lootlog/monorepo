@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
   Capability,
+  capabilitiesGrantingAny,
   createAccessPolicy,
   getEffectiveCapabilities,
   resolveCapabilities,
@@ -74,5 +75,36 @@ describe("AccessPolicy", () => {
     };
 
     expect(() => getEffectiveCapabilities(foreignPolicy)).toThrow(TypeError);
+  });
+});
+
+describe("capabilitiesGrantingAny", () => {
+  it("matches a raw role permission exactly when the role's policy allows the requirement", () => {
+    const all = Object.values(Capability);
+
+    const requirements = [
+      [Capability.LOOTLOG_ACCESS],
+      [Capability.LOOTLOG_TIMERS_WRITE],
+      [Capability.OWNER],
+      [Capability.OWNER, Capability.ADMIN],
+    ];
+
+    for (const required of requirements) {
+      const granting = new Set(capabilitiesGrantingAny(required));
+
+      for (const rolePermission of all) {
+        expect({
+          required,
+          rolePermission,
+          granted: granting.has(rolePermission),
+        }).toEqual({
+          required,
+          rolePermission,
+          granted: createAccessPolicy({
+            capabilities: [rolePermission],
+          }).allowsAny(required),
+        });
+      }
+    }
   });
 });

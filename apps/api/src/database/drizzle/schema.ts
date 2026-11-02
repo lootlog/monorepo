@@ -1982,8 +1982,16 @@ export const eventHeroKillTable = pgTable(
     }).notNull(),
     timerCreatedById: integer("timerCreatedById"),
     isManualClose: boolean("isManualClose").default(false).notNull(),
+    // The respawn window a timer report recorded this kill for. Kills recorded
+    // before it existed, and kills not tied to a reported window, leave it null.
+    windowKey: text("windowKey"),
   },
   (table) => [
+    uniqueIndex("EventHeroKill_heroNpcId_windowKey_isManualClose_key").on(
+      table["heroNpcId"],
+      table["windowKey"],
+      table["isManualClose"],
+    ),
     // Match ORDER BY DESC's null ordering so PostgreSQL can seek without sorting.
     index("EventHeroKill_heroNpcId_killedAt_id_idx").on(
       table["heroNpcId"],

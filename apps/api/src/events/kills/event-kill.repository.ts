@@ -53,6 +53,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
       maxSpawnTimeAtKill: Date;
       timerCreatedById?: number | null;
       isManualClose: boolean;
+      windowKey: string;
       mapIds: string[];
       assignmentOverlapStart: Date;
     },
@@ -76,8 +77,20 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
               maxSpawnTimeAtKill: params.maxSpawnTimeAtKill,
               timerCreatedById: params.timerCreatedById ?? null,
               isManualClose: params.isManualClose,
+              windowKey: params.windowKey,
+            })
+            .onConflictDoNothing({
+              target: [
+                eventHeroKillTable.heroNpcId,
+                eventHeroKillTable.windowKey,
+                eventHeroKillTable.isManualClose,
+              ],
             })
             .returning();
+
+          // Another report already recorded this window, even if the Redis
+          // dedup entries were lost or expired.
+          if (killRows.length === 0) return null;
 
           const assignments =
             params.mapIds.length === 0
