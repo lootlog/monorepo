@@ -1,3 +1,62 @@
+/** The respawn variation Margonem applies when an NPC reports none. */
+export const DEFAULT_RESPAWN_RANDOMNESS = 10;
+
+/** Shortest respawn base Margonem reports for an NPC that gets a timer. */
+export const MIN_RESP_BASE_SECONDS = 2;
+
+/**
+ * How a timer stores its respawn, and what a reset counts from the moment of
+ * the reset: `respBaseSeconds` ± `respawnRandomness` percent of it. Margonem
+ * reports respawns in this form; a window entered by hand or opened by an
+ * event is converted with `respawnFromSpawnWindow`.
+ */
+export type TimerRespawn = {
+  readonly respBaseSeconds: number;
+  readonly respawnRandomness: number;
+};
+
+/** A spawn window as offsets from the moment it starts counting. */
+export type SpawnWindowOffsets = {
+  readonly minOffsetMs: number;
+  readonly maxOffsetMs: number;
+};
+
+export const spawnWindowFromRespawn = ({
+  respBaseSeconds,
+  respawnRandomness,
+}: TimerRespawn): SpawnWindowOffsets => {
+  const baseMs = respBaseSeconds * 1000;
+  const varianceMs = Math.round(baseMs * (respawnRandomness / 100));
+
+  return { minOffsetMs: baseMs - varianceMs, maxOffsetMs: baseMs + varianceMs };
+};
+
+/**
+ * The respawn whose reset repeats a window that opens `minSeconds` and closes
+ * `maxSeconds` from now; a window already open counts from now. Both values
+ * are stored as integers, so a reset can differ from the original window by
+ * a second plus half a percent of the base.
+ *
+ * Rows written before this encoding keep their values: their reset is still
+ * base ± randomness, as before, so no migration rewrites them.
+ */
+export const respawnFromSpawnWindow = (
+  minSeconds: number,
+  maxSeconds: number,
+): TimerRespawn => {
+  const min = Math.max(minSeconds, 0);
+  const max = Math.max(maxSeconds, min);
+  const respBaseSeconds = Math.round((min + max) / 2);
+
+  return {
+    respBaseSeconds,
+    respawnRandomness:
+      respBaseSeconds > 0
+        ? Math.round(((max - min) / 2 / respBaseSeconds) * 100)
+        : 0,
+  };
+};
+
 export type TimerIdentity = {
   readonly guildId: string;
   readonly world: string;
