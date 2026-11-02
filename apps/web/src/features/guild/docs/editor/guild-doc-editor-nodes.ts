@@ -4,6 +4,8 @@ import { ListItemNode, ListNode } from "@lexical/list";
 import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
+import { GuildDocItemNode } from "./guild-doc-item-node";
+import { GuildDocMemberNode } from "./guild-doc-member-node";
 
 export const guildDocEditorNodes = [
   HeadingNode,
@@ -18,4 +20,6 @@ export const guildDocEditorNodes = [
   TableNode,
   TableRowNode,
   TableCellNode,
+  GuildDocItemNode,
+  GuildDocMemberNode,
 ];

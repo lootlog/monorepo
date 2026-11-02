@@ -61,6 +61,31 @@ const addKillToCurrentRanking = {
   updatedAt: excluded(eventRankingTable.updatedAt),
 };
 
+/**
+ * Adds proposed one-kill ranking rows to the current rankings. Callers sort
+ * rows by member so concurrent kills lock them in the same order.
+ */
+export const addRankingRows = (
+  executor: Pick<Database, "insert">,
+  rows: ReadonlyArray<RankingInsert>,
+) =>
+  Effect.forEach(
+    chunk(rows, RANKING_UPSERT_BATCH_SIZE),
+    (batch) =>
+      executor
+        .insert(eventRankingTable)
+        .values(batch)
+        .onConflictDoUpdate({
+          target: [
+            eventRankingTable.eventId,
+            eventRankingTable.memberId,
+            eventRankingTable.heroNpcName,
+          ],
+          set: addKillToCurrentRanking,
+        }),
+    { discard: true },
+  );
+
 export const makeEventPointsStore = (database: ApiDatabaseValue) => {
   function run<A>(
     operation: (database: Database) => Effect.Effect<A, unknown>,
@@ -193,18 +218,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
               updatedAt: now,
             }));
 
-          for (const batch of chunk(rows, RANKING_UPSERT_BATCH_SIZE))
-            yield* transaction
-              .insert(eventRankingTable)
-              .values(batch)
-              .onConflictDoUpdate({
-                target: [
-                  eventRankingTable.eventId,
-                  eventRankingTable.memberId,
-                  eventRankingTable.heroNpcName,
-                ],
-                set: addKillToCurrentRanking,
-              });
+          yield* addRankingRows(transaction, rows);
 
           return true;
         }),

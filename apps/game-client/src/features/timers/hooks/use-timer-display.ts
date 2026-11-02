@@ -6,8 +6,7 @@ import {
   resolveTimerColorPaint,
 } from "@lootlog/domain/timer-colors";
 import { useShallow } from "zustand/react/shallow";
-
-const MANUAL_TIMER_MARGONEM_TYPE = 999;
+import { isManualTimer } from "../utils/timers-utils";
 
 const getTimerShortname = (timer: Timer, showType: boolean) => {
   if (!showType) {
@@ -16,8 +15,7 @@ const getTimerShortname = (timer: Timer, showType: boolean) => {
 
   const typeShortname = getNpcTypeNames(timer.npc.type)?.shortname;
 
-  const manualTimer =
-    Number(timer.npc.margonemType) === MANUAL_TIMER_MARGONEM_TYPE;
+  const manualTimer = isManualTimer(timer);
 
   if (manualTimer && typeShortname) {
     return `[M][${typeShortname}]`;

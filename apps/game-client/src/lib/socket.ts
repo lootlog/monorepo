@@ -39,6 +39,7 @@ import {
 } from "@lootlog/client/realtime/event-listeners";
 import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
+import { useGlobalStore } from "@/store/global.store";
 import {
   GLOBAL_CHAT_SHARED_CHANNEL,
   type GlobalChatChannel,
@@ -171,11 +172,6 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
 };
 
 type SocketCommandPayloads = {
-  [GatewayEvent.PLAYER_PRESENCE_UPDATE]: {
-    readonly isAfk?: boolean;
-    readonly mapId?: number;
-    readonly mapName?: string;
-  };
   [GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH]: {
     readonly guildId: string;
     readonly world?: string;
@@ -215,7 +211,6 @@ export class AppSocket {
   private readonly unsubscribeState: () => void;
   private disposed = false;
   private joinedOrganizationIds: string[] = [];
-  private lastIsAfk = false;
   /** The current character's Lootlogs; nothing is published until they are known. */
   private presenceOrganizationIds: readonly string[] | undefined;
   private currentAccessPolicy: AccessPolicySnapshot | undefined;
@@ -474,13 +469,6 @@ export class AppSocket {
     if (this.lastJoinData && this.lastJoinData.accountId !== data.accountId)
       this.currentAccessPolicy = undefined;
 
-    if (
-      this.lastJoinData &&
-      (this.lastJoinData.accountId !== data.accountId ||
-        this.lastJoinData.characterId !== data.characterId ||
-        this.lastJoinData.world !== data.world)
-    )
-      this.lastIsAfk = false;
     this.lastJoinData = data;
     this.joinAttempt?.cancel();
     const controller = new AbortController();
@@ -613,9 +601,8 @@ export class AppSocket {
     payload?: SocketPayload<Event>,
     acknowledgement?: (response: SocketResponse<Event>) => void,
   ): this {
+    // Presence carries the projected character, map and stasis as they are now.
     if (event === GatewayEvent.PLAYER_PRESENCE_UPDATE) {
-      if (payload && "isAfk" in payload && payload.isAfk !== undefined)
-        this.lastIsAfk = payload.isAfk;
       void this.publishPresence();
 
       return this;
@@ -706,7 +693,7 @@ export class AppSocket {
     try {
       await this.realtime.request("presence.publish", {
         organizationIds: [...organizationIds],
-        isAfk: this.lastIsAfk,
+        isAfk: game.hero.stasis,
         character: {
           world: game.world,
           name: game.hero.name,
@@ -978,4 +965,12 @@ export const disposeSocket = (): void => {
   if (!activeSocket) return;
   socket = null;
   activeSocket.dispose();
+};
+
+/** Publishes the projected presence once the gateway has joined a Lootlog. */
+export const publishPlayerPresence = (): void => {
+  const { connected, joinedGuilds } = useGlobalStore.getState().socketState;
+
+  if (connected && joinedGuilds.length > 0)
+    getSocket().emit(GatewayEvent.PLAYER_PRESENCE_UPDATE);
 };

@@ -381,6 +381,35 @@ describe("AirTagObservationController", () => {
     expect(publishedCount).toBe(100);
   });
 
+  it("reports a published target it evicts for a new one as out of sight", () => {
+    const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
+    const controller = new AirTagObservationController();
+    controller.configure({
+      enabled: true,
+      canPublish: true,
+      mapId: 42,
+      publisher,
+    });
+    const entries: Other = {};
+
+    for (let index = 0; index < 100; index += 1) {
+      entries[String(index)] = createOther({ nick: `Target ${index}` });
+    }
+
+    controller.handle(entries);
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS * 2);
+    publisher.mockClear();
+
+    controller.handle({ "100": createOther({ nick: "Newcomer" }) });
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+
+    expect(publisher).toHaveBeenCalledWith(
+      expect.objectContaining({
+        departures: [{ targetId: "0", reason: "out-of-sight" }],
+      }),
+    );
+  });
+
   it("does not observe while disabled or disconnected", () => {
     const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
     const controller = new AirTagObservationController();

@@ -479,7 +479,7 @@ it("writes a kill within the dedup window of an event respawn window that has no
 });
 
 it.each([false, true])(
-  "retries a committed timer after a Redis failure without duplicating history, and accepts the next kill after the dedup window (restored window: %s)",
+  "retries a committed timer after a Redis failure without duplicating history, publishes it on retry, and accepts the next kill after the dedup window (restored window: %s)",
   async (restoredWindow) => {
     const boundary = await createDatabaseBoundary();
 
@@ -573,6 +573,15 @@ it.each([false, true])(
       expect(
         await boundary.run(database.select().from(timerHistoryEntryTable)),
       ).toHaveLength(1);
+      // The failed attempt did not record its result, so its retry publishes
+      // again: delivery is at least once instead of possibly never.
+      expect(publications).toEqual([
+        RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
+        RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+        RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
+        RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+      ]);
+      publications.length = 0;
 
       const previousKill = new Date(Date.now() - 31_000);
       await boundary.run(
@@ -813,6 +822,50 @@ it("keeps the window of an open Hero Tracker entrance when another player report
     });
     expect(history).toHaveLength(0);
     expect(published).toHaveLength(0);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+it("rejects a timer for an elite I, which Margonem weighs up to 19", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    const create = makeAutoTimer(boundary.database, {
+      get: () => Effect.die("unused"),
+      set: () => Effect.die("unused"),
+      setNx: () => Effect.die("unused"),
+      releaseDedup: () => Effect.void,
+      invalidateList: () => Effect.die("unused"),
+      enqueueEventHeroCheck: () => Effect.die("unused"),
+      withLock: (_key, operation) => operation,
+      publish: () => Effect.die("unused"),
+    });
+
+    const error = await boundary.run(
+      Effect.flip(
+        create(
+          { discordId: "discord", userId: "user" },
+          {
+            respBaseSeconds: 600,
+            world: "world",
+            npc: {
+              id: 1,
+              name: "Elita",
+              location: "Mapa",
+              lvl: 50,
+              wt: 19,
+              icon: "npc/elita.gif",
+              type: 2,
+            },
+            accountId: "1",
+            characterId: "2",
+          },
+        ),
+      ),
+    );
+
+    expect(error).toMatchObject({ message: "WT_TOO_LOW" });
   } finally {
     await boundary.dispose();
   }

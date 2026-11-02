@@ -303,6 +303,29 @@ export const mergeSettingsDocuments = (
     ? { ...current, domains: { ...current.domains, ...incoming.domains } }
     : current;
 
+/**
+ * Caches a projection per documents object: the query cache replaces the
+ * object on every change, so an unchanged document keeps the projection's
+ * identity and its subscribers do not re-render.
+ */
+export const memoizeByDocuments = <TResult>(
+  project: (documents: SettingsDocuments) => TResult,
+) => {
+  const cache = new WeakMap<SettingsDocuments, TResult>();
+
+  return (documents: SettingsDocuments): TResult => {
+    if (cache.has(documents)) {
+      // SAFETY: `has` proves an entry for this key was stored.
+      return cache.get(documents) as TResult;
+    }
+
+    const result = project(documents);
+    cache.set(documents, result);
+
+    return result;
+  };
+};
+
 /** Structural equality for catalog-shaped values (plain JSON). */
 export const areSettingsValuesEqual = (
   left: SettingsCatalogValue<ServerSettingsCatalogKey> | undefined,

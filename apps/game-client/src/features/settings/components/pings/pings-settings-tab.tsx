@@ -33,9 +33,7 @@ export const PingsSettingsTab: FC = () => {
             >
               <Switch
                 checked={accountPreferences?.pings.enabled ?? false}
-                disabled={
-                  !accountPreferences || updateAccountPreferences.isPending
-                }
+                disabled={!accountPreferences}
                 onCheckedChange={(enabled) => {
                   updateAccountPreferences.mutate({ pings: { enabled } });
                 }}
@@ -50,7 +48,7 @@ export const PingsSettingsTab: FC = () => {
             >
               <Switch
                 checked={battlePings.data?.enabled ?? false}
-                disabled={!battlePings.data || battlePings.isPending}
+                disabled={!battlePings.data}
                 onCheckedChange={battlePings.setEnabled}
                 id="battle-pings"
               />

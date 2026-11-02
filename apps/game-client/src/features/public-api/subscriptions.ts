@@ -39,23 +39,47 @@ export function setupSubscriptions(
   let unsubscribeSocket: Unsubscribe | null = null;
   let unsubscribeReady: Unsubscribe | null = null;
 
-  const cacheTimerSnapshot = (query: Query) => {
+  /**
+   * Compares a world's timers per guild with the last published snapshot and
+   * stores the new one; `emit` publishes each guild whose timers changed.
+   */
+  const diffWorldTimers = (query: Query, emit: boolean) => {
     const world = getQueryWorld(query);
-    // SAFETY: this function only receives allTimers() cache matches; useTimers
-    // populates them through fetchTimers and useTimersCache writes the same Timer[].
+    // SAFETY: callers pass only timer query matches; useTimers populates them
+    // through fetchTimers and useTimersCache writes the same Timer[].
     const mapped = mapTimers(query.state.data as Timer[] | undefined);
 
     if (!mapped || !world) {
       return;
     }
 
-    const worldCache = new Map<string, string>();
+    let worldCache = lastTimersJson.get(world);
 
-    for (const [guildId, timers] of groupTimersByGuild(mapped)) {
-      worldCache.set(guildId, JSON.stringify(timers));
+    if (!worldCache) {
+      worldCache = new Map();
+      lastTimersJson.set(world, worldCache);
     }
 
-    lastTimersJson.set(world, worldCache);
+    const grouped = groupTimersByGuild(mapped);
+
+    for (const [guildId, timers] of grouped) {
+      const json = JSON.stringify(timers);
+
+      if (json !== worldCache.get(guildId)) {
+        worldCache.set(guildId, json);
+
+        if (emit) emitter.emit("timers:changed", { world, guildId, timers });
+      }
+    }
+
+    for (const guildId of worldCache.keys()) {
+      if (!grouped.has(guildId)) {
+        worldCache.delete(guildId);
+
+        if (emit)
+          emitter.emit("timers:changed", { world, guildId, timers: [] });
+      }
+    }
   };
 
   const initializeQuerySnapshot = (eventName: ApiEventName) => {
@@ -75,7 +99,7 @@ export function setupSubscriptions(
       for (const query of queryClient
         .getQueryCache()
         .findAll({ queryKey: queryKeys.allTimers() })) {
-        cacheTimerSnapshot(query);
+        diffWorldTimers(query, false);
       }
     }
   };
@@ -129,41 +153,7 @@ export function setupSubscriptions(
       activeEvents.has("timers:changed") &&
       key[0] === queryKeys.timers()[0]
     ) {
-      const world = getQueryWorld(event.query);
-      // SAFETY: the timer key check above selects fetchTimers/useTimersCache data.
-      // QueryCache erases this association while notifying subscribers.
-      const mapped = mapTimers(event.query.state.data as Timer[] | undefined);
-
-      if (!mapped || !world) {
-        return;
-      }
-
-      const grouped = groupTimersByGuild(mapped);
-      let worldCache = lastTimersJson.get(world);
-
-      if (!worldCache) {
-        worldCache = new Map();
-        lastTimersJson.set(world, worldCache);
-      }
-
-      const seenGuilds = new Set<string>();
-
-      for (const [guildId, timers] of grouped) {
-        seenGuilds.add(guildId);
-        const json = JSON.stringify(timers);
-
-        if (json !== worldCache.get(guildId)) {
-          worldCache.set(guildId, json);
-          emitter.emit("timers:changed", { world, guildId, timers });
-        }
-      }
-
-      for (const [guildId] of worldCache) {
-        if (!seenGuilds.has(guildId)) {
-          worldCache.delete(guildId);
-          emitter.emit("timers:changed", { world, guildId, timers: [] });
-        }
-      }
+      diffWorldTimers(event.query, true);
     }
   };
 

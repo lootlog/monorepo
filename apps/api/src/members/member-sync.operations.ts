@@ -10,6 +10,7 @@ import type { ApplicationLogger as Logger } from "#src/shared/application-logger
 import { DiscordOperationFailure } from "#src/discord/discord.operations";
 import {
   getTransientMemberSyncStatus,
+  isDiscordRefusalSyncStatus,
   MEMBER_DISCORD_SYNC_STATUS,
 } from "./member-discord-sync-status.js";
 import type { MemberDelivery } from "./member-delivery.operations.js";
@@ -194,7 +195,8 @@ export const makeMemberSync = (
       const status = getTransientMemberSyncStatus(error);
       logger.log({
         level:
-          status === MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE
+          status === MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE ||
+          isDiscordRefusalSyncStatus(status)
             ? "warn"
             : "error",
         message: "Failed to refresh member from Discord; cached state retained",

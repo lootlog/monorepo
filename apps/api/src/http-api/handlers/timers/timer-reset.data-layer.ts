@@ -22,6 +22,7 @@ import {
 } from "#src/shared/http/http-errors";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
+import { buildTimerLockKey } from "#src/timers/timer-key";
 
 import type { ResetTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersGuildAccess } from "./timers.handlers.js";
@@ -31,7 +32,10 @@ import {
   type TimerUpdatePorts,
 } from "./timer-update-publication.js";
 import { parseTimerNpc } from "#src/timers/timer-projection";
-import { canResetTimerNpc } from "@lootlog/domain/timers";
+import {
+  canResetTimerNpc,
+  spawnWindowFromRespawn,
+} from "@lootlog/domain/timers";
 
 export interface ResetTimerPorts extends TimerUpdatePorts {
   readonly withLock: <A, E>(
@@ -107,7 +111,7 @@ export const makeResetTimer = (
     }
 
     const projection = yield* ports.withLock(
-      `timer:lock:${access.guild.id}:${payload.world}:${resolved.timerKey}`,
+      buildTimerLockKey(access.guild.id, payload.world, resolved.timerKey),
       database.transaction((transaction) =>
         Effect.gen(function* () {
           const currentRows = yield* transaction
@@ -133,19 +137,13 @@ export const makeResetTimer = (
             );
           }
 
-          const respawnMilliseconds = current.latestRespBaseSeconds * 1000;
+          const { minOffsetMs, maxOffsetMs } = spawnWindowFromRespawn({
+            respBaseSeconds: current.latestRespBaseSeconds,
+            respawnRandomness: current.latestRespawnRandomness,
+          });
 
-          const variance = Math.round(
-            respawnMilliseconds * (current.latestRespawnRandomness / 100),
-          );
-
-          const minSpawnTime = new Date(
-            now.getTime() + respawnMilliseconds - variance,
-          );
-
-          const maxSpawnTime = new Date(
-            now.getTime() + respawnMilliseconds + variance,
-          );
+          const minSpawnTime = new Date(now.getTime() + minOffsetMs);
+          const maxSpawnTime = new Date(now.getTime() + maxOffsetMs);
 
           const members = yield* transaction
             .select()

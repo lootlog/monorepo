@@ -1,22 +1,20 @@
 import { SettingsSectionHeader } from "@/components/settings/settings-section-header";
+import { SettingsColorHexField } from "@/components/settings/settings-color-hex-field";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { deriveNpcSurfaceColors } from "@lootlog/domain/npc-appearance";
-import {
-  isHexAppearanceColor,
-  type AppearanceNpcType,
-} from "@lootlog/schema/npc-appearance";
-import { useRef, useState, type FC, type ReactNode } from "react";
+import type { AppearanceNpcType } from "@lootlog/schema/npc-appearance";
+import { useRef, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { NpcColorPreviewChip } from "./npc-color-preview-chip";
 
 type NpcColorEditorPopoverProps = {
   children: ReactNode;
+  /** The live draft colour; edits come back through `onDraftChange`. */
   color: string;
   defaultColor: string;
   npcType: AppearanceNpcType;
@@ -41,40 +39,23 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
   onReset,
 }) => {
   const { t } = useTranslation();
-  const [colorDraft, setColorDraft] = useState(color);
-  const [hexDraft, setHexDraft] = useState(color);
+  /** The stored colour that Escape restores. */
   const savedColor = useRef(color);
-  const surfaceColors = deriveNpcSurfaceColors(colorDraft);
+  const surfaceColors = deriveNpcSurfaceColors(color);
+  const npcTypeLabel = t(`common:npcTypes.${npcType.toLowerCase()}`);
 
   const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) {
-      savedColor.current = color;
-    }
-
-    setColorDraft(color);
-    setHexDraft(color);
+    if (nextOpen) savedColor.current = color;
     onOpenChange(nextOpen);
   };
 
   const commitColor = (nextColor: string) => {
-    if (!isHexAppearanceColor(nextColor)) {
-      setColorDraft(savedColor.current);
-      setHexDraft(savedColor.current);
-
-      return;
-    }
-
-    const normalizedColor = nextColor.toUpperCase();
-    savedColor.current = normalizedColor;
-    setColorDraft(normalizedColor);
-    setHexDraft(normalizedColor);
-    onDraftChange(normalizedColor);
-    onCommit(normalizedColor);
+    savedColor.current = nextColor;
+    onDraftChange(nextColor);
+    onCommit(nextColor);
   };
 
   const rollbackAndClose = () => {
-    setColorDraft(savedColor.current);
-    setHexDraft(savedColor.current);
     onDraftChange(savedColor.current);
     onOpenChange(false);
   };
@@ -98,49 +79,26 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
             <SettingsSectionHeader
               as="h4"
               className="ll:px-0"
-              title={t(`common:npcTypes.${npcType.toLowerCase()}`)}
+              title={npcTypeLabel}
             />
             <div className="ll:text-xs ll:text-muted-foreground">
               {saving
                 ? t("settings.npcColors.saving")
-                : colorDraft === defaultColor
+                : color === defaultColor
                   ? t("settings.npcColors.default")
                   : t("settings.npcColors.overridden")}
             </div>
           </div>
 
-          <div className="ll:flex ll:items-center ll:gap-2">
-            <Input
-              type="color"
-              value={colorDraft}
-              onChange={(event) => {
-                const nextColor = event.target.value.toUpperCase();
-                setColorDraft(nextColor);
-                setHexDraft(nextColor);
-                onDraftChange(nextColor);
-              }}
-              onBlur={() => commitColor(colorDraft)}
-              className="ll:h-9 ll:w-12 ll:border-border ll:p-1 ll:text-popover-foreground"
-              aria-label={t("settings.npcColors.picker")}
-            />
-            <Input
-              value={hexDraft}
-              onChange={(event) =>
-                setHexDraft(event.target.value.toUpperCase())
-              }
-              onBlur={(event) => commitColor(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.nativeEvent.isComposing) {
-                  commitColor(event.currentTarget.value);
-                  event.currentTarget.blur();
-                }
-
-                if (event.key === "Escape") rollbackAndClose();
-              }}
-              className="ll:w-28 ll:border-border ll:font-mono ll:uppercase ll:text-popover-foreground"
-              aria-label={t("settings.npcColors.hex")}
-            />
-          </div>
+          <SettingsColorHexField
+            label={t("settings.npcColors.picker")}
+            showLabel={false}
+            hexLabel={t("settings.npcColors.hex")}
+            value={color}
+            onChange={onDraftChange}
+            onCommit={commitColor}
+            className="ll:w-44"
+          />
 
           <div className="ll:grid ll:gap-1.5">
             <div className="ll:text-xs ll:text-muted-foreground">
@@ -149,14 +107,14 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
             <div className="ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-1.5 ll:text-[13px]">
               <span className="ll:text-muted-foreground">[21:37] </span>
               <strong style={{ color: surfaceColors.text }}>
-                {t(`common:npcTypes.${npcType.toLowerCase()}`)}
+                {npcTypeLabel}
               </strong>
             </div>
             <div className="ll:flex ll:flex-wrap ll:gap-1.5">
-              <NpcColorPreviewChip color={colorDraft} className="ll:max-w-full">
+              <NpcColorPreviewChip color={color} className="ll:max-w-full">
                 {t("settings.npcColors.notificationPreview")}
               </NpcColorPreviewChip>
-              <NpcColorPreviewChip color={colorDraft} className="ll:max-w-full">
+              <NpcColorPreviewChip color={color} className="ll:max-w-full">
                 {t("settings.npcColors.detectorPreview")}
               </NpcColorPreviewChip>
             </div>
@@ -167,11 +125,9 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
               type="button"
               variant="outline"
               size="sm"
-              disabled={colorDraft === defaultColor}
+              disabled={color === defaultColor}
               onClick={() => {
                 savedColor.current = defaultColor;
-                setColorDraft(defaultColor);
-                setHexDraft(defaultColor);
                 onReset();
               }}
             >

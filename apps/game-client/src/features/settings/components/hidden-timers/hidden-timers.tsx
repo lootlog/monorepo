@@ -2,6 +2,7 @@ import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { IconButton } from "@/components/ui/icon-button";
 import { SettingsList } from "@/components/settings/settings-list";
 import { SettingsListRow } from "@/components/settings/settings-list-row";
+import { GLOBAL_TIMER_SETTINGS_KEY } from "@/store/timer-settings-sync";
 import { useTimersStore } from "@/store/timers.store";
 import { RotateCcw } from "lucide-react";
 import type { FC } from "react";
@@ -12,10 +13,16 @@ type HiddenTimersProps = {
 };
 
 export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
-  const { hiddenTimers, revealTimer, generalConfig } = useTimersStore();
+  const hiddenTimers = useTimersStore((state) => state.hiddenTimers);
+  const revealTimer = useTimersStore((state) => state.revealTimer);
+
+  const timersGrouping = useTimersStore(
+    (state) => state.generalConfig.timersGrouping,
+  );
+
   const { t } = useTranslation();
 
-  const key = generalConfig.timersGrouping ? "global" : guildId;
+  const key = timersGrouping ? GLOBAL_TIMER_SETTINGS_KEY : guildId;
   const hiddenTimersForAccount = key ? hiddenTimers[key] : undefined;
 
   const uniqueHiddenTimers = Array.from(

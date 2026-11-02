@@ -49,16 +49,34 @@ type NativeGlow = {
 
 type NativeMark = { getColor: () => string; getTypeObject: () => string };
 
+type LootlogGlow = {
+  d: { id: string; x?: number; y?: number };
+  draw: (context: CanvasRenderingContext2D) => void;
+  getColor: () => string;
+  getOrder: () => number;
+};
+
 type Drawable =
   | "base"
   | TestOther
   | NativeGlow
   | NativeMark
+  | LootlogGlow
   | { draw: (context: CanvasRenderingContext2D) => void };
 
 let runtime: ReturnType<typeof setRuntime>;
 
 const getRuntimeDrawableList = () => runtime.others.getDrawableList();
+
+/** The Lootlog glows the game draws this frame, by character id. */
+const drawnGlows = () =>
+  new Map(
+    getRuntimeDrawableList().flatMap((drawable) =>
+      drawable !== "base" && "getColor" in drawable && "d" in drawable
+        ? [[String(drawable.d.id), drawable]]
+        : [],
+    ),
+  );
 
 function moveOther(
   other: TestOther,
@@ -68,13 +86,6 @@ function moveOther(
   other.ry = position.ry;
   other.d.x = position.x;
   other.d.y = position.y;
-}
-
-function setOtherUpdate(
-  other: TestOther,
-  update: (this: TestOther, dt: number) => void,
-): void {
-  other.update = update;
 }
 
 function setRuntime(drawables: Drawable[] = ["base"]) {
@@ -147,9 +158,7 @@ describe("lootlogOtherGlowManager", () => {
 
     expect(drawables[0]).toBe("base");
     expect(drawables).toHaveLength(2);
-    expect(lootlogOtherGlowManager.getGlowColor("617")).toBe(
-      LOOTLOG_OTHER_GLOW_BLUE,
-    );
+    expect(drawnGlows().get("617")?.getColor()).toBe(LOOTLOG_OTHER_GLOW_BLUE);
   });
 
   it("ignores flat other handles from the legacy interface", () => {
@@ -165,7 +174,8 @@ describe("lootlogOtherGlowManager", () => {
     expect(() =>
       lootlogOtherGlowManager.setGlow(flatOther, LOOTLOG_OTHER_GLOW_BLUE),
     ).not.toThrow();
-    expect(lootlogOtherGlowManager.getGlowCount()).toBe(0);
+    lootlogOtherGlowManager.install();
+    expect(drawnGlows().size).toBe(0);
   });
 
   it("updates colors and clears only managed glows", () => {
@@ -179,8 +189,8 @@ describe("lootlogOtherGlowManager", () => {
       LOOTLOG_OTHER_GLOW_RED_ORANGE,
     );
 
-    expect(lootlogOtherGlowManager.getGlowCount()).toBe(1);
-    expect(lootlogOtherGlowManager.getGlowColor("617")).toBe(
+    expect(drawnGlows().size).toBe(1);
+    expect(drawnGlows().get("617")?.getColor()).toBe(
       LOOTLOG_OTHER_GLOW_RED_ORANGE,
     );
 
@@ -196,52 +206,10 @@ describe("lootlogOtherGlowManager", () => {
     lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_BLUE);
 
     moveOther(other, { rx: 13, ry: 14, x: 13, y: 14 });
-    getRuntimeDrawableList();
+    const glow = drawnGlows().get("617");
 
-    expect(lootlogOtherGlowManager.getGlowPosition("617")).toEqual({
-      x: 13,
-      y: 14,
-    });
-    expect(lootlogOtherGlowManager.getGlowOrder("617")).toBe(14.1);
-  });
-
-  it("updates managed glow position after runtime Other.update movement", () => {
-    const other = createOther("617");
-
-    const originalUpdate = vi.fn<(this: TestOther, dt: number) => void>(
-      function (this: TestOther, dt: number) {
-        moveOther(this, { rx: 17 + dt, ry: 18 + dt, x: 17 + dt, y: 18 + dt });
-      },
-    );
-
-    setOtherUpdate(other, originalUpdate);
-
-    lootlogOtherGlowManager.install();
-    lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_BLUE);
-
-    other.update(2);
-
-    expect(originalUpdate).toHaveBeenCalledWith(2);
-    expect(lootlogOtherGlowManager.getGlowPosition("617")).toEqual({
-      x: 19,
-      y: 20,
-    });
-    expect(lootlogOtherGlowManager.getGlowOrder("617")).toBe(20.1);
-  });
-
-  it("restores runtime Other.update when managed glow is removed", () => {
-    const other = createOther("617");
-    const originalUpdate = vi.fn<(dt: number) => void>();
-    setOtherUpdate(other, originalUpdate);
-
-    lootlogOtherGlowManager.install();
-    lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_BLUE);
-
-    expect(other.update).not.toBe(originalUpdate);
-
-    lootlogOtherGlowManager.removeGlow("617");
-
-    expect(other.update).toBe(originalUpdate);
+    expect(glow?.d).toMatchObject({ x: 13, y: 14 });
+    expect(glow?.getOrder()).toBe(14.1);
   });
 
   it("draws managed glow using the latest runtime other position", () => {
@@ -349,6 +317,5 @@ describe("lootlogOtherGlowManager", () => {
     expect(drawables[0]).toBe(other);
     expect(drawables).not.toContain(nativeMaskGlow);
     expect(drawables).not.toContain(nativeColorMark);
-    expect(lootlogOtherGlowManager.getNativeGlowSuppressed()).toBe(true);
   });
 });

@@ -7,8 +7,13 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 export const BattlePanelSettingsTab: FC = () => {
-  const { isBattleCollectionEnabled, toggleBattleCollection } =
-    useBattlePanelStore();
+  const isBattleCollectionEnabled = useBattlePanelStore(
+    (state) => state.isBattleCollectionEnabled,
+  );
+
+  const toggleBattleCollection = useBattlePanelStore(
+    (state) => state.toggleBattleCollection,
+  );
 
   const { t } = useTranslation();
 

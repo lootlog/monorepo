@@ -24,14 +24,14 @@ const privateQueryKey = ["users", "@me", "private-data"];
 
 const privateState = () => ({
   query: queryClient.getQueryData(privateQueryKey),
-  reply: useChatStore.getState().replyDraft,
+  reply: useChatStore.getState().replyDraftsByGuild,
   notifications: useNotificationsStore.getState().notifications,
   owners: useOnlineCharacterOwnersStore.getState().ownersByCharacterKey,
 });
 
 const clearedState = {
   query: undefined,
-  reply: null,
+  reply: {},
   notifications: [],
   owners: {},
 };

@@ -206,7 +206,9 @@ describe("notifications.store", () => {
       latestNotificationAnimationCycle: 7,
     });
 
-    useNotificationsStore.getState().removeNotificationByNpcId(500, "luvia");
+    useNotificationsStore
+      .getState()
+      .removeNotificationsByNpcIds([500], "luvia");
 
     expect(useNotificationsStore.getState().notifications).toEqual([
       expect.objectContaining({
@@ -722,20 +724,6 @@ describe("notifications.store", () => {
     unsubscribe();
   });
 
-  it("does not publish when clearing missing auto-hide state", () => {
-    const listener = vi.fn<() => void>();
-    const unsubscribe = useNotificationsStore.subscribe(listener);
-    const stateBefore = useNotificationsStore.getState();
-
-    useNotificationsStore
-      .getState()
-      .clearNotificationAutoHide("notification-1");
-
-    expect(useNotificationsStore.getState()).toBe(stateBefore);
-    expect(listener).not.toHaveBeenCalled();
-    unsubscribe();
-  });
-
   it("does not publish invalid auto-hide transitions", () => {
     const listener = vi.fn<() => void>();
     const unsubscribe = useNotificationsStore.subscribe(listener);
@@ -743,7 +731,6 @@ describe("notifications.store", () => {
 
     useNotificationsStore.getState().pauseNotificationAutoHide("missing");
     useNotificationsStore.getState().resumeNotificationAutoHide("missing");
-    useNotificationsStore.getState().setNotificationAutoHide("missing", 0);
 
     expect(useNotificationsStore.getState()).toBe(stateBefore);
     expect(listener).not.toHaveBeenCalled();
@@ -784,19 +771,20 @@ describe("notifications.store", () => {
     });
   });
 
-  it("manages notification auto-hide lifecycle", () => {
+  it("pauses and resumes a notification auto-hide countdown", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-17T10:00:00.000Z"));
 
     const listKey = "notification-1";
 
-    useNotificationsStore.getState().setNotificationAutoHide(listKey, 5000);
-    expect(
-      useNotificationsStore.getState().notificationAutoHideByListKey[listKey],
-    ).toEqual({
-      deadlineMs: Date.now() + 5000,
-      pausedRemainingMs: null,
-      durationMs: 5000,
+    useNotificationsStore.setState({
+      notificationAutoHideByListKey: {
+        [listKey]: {
+          deadlineMs: Date.now() + 5000,
+          pausedRemainingMs: null,
+          durationMs: 5000,
+        },
+      },
     });
 
     vi.setSystemTime(new Date("2026-04-17T10:00:02.000Z"));
@@ -820,11 +808,5 @@ describe("notifications.store", () => {
       pausedRemainingMs: null,
       durationMs: 5000,
     });
-
-    useNotificationsStore.getState().clearNotificationAutoHide(listKey);
-
-    expect(
-      useNotificationsStore.getState().notificationAutoHideByListKey,
-    ).toEqual({});
   });
 });

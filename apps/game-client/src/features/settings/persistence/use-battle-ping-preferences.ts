@@ -1,7 +1,6 @@
 import { normalizeBattlePings } from "@lootlog/domain/account-preferences";
 import { selectSettingsValue } from "./settings-documents";
 import { enqueueSettingsPatch } from "./settings-patch-client";
-import { useSettingsSaveStatus } from "./settings-save-status.store";
 import { useSettingsDocuments } from "./use-settings-documents";
 
 /**
@@ -10,7 +9,6 @@ import { useSettingsDocuments } from "./use-settings-documents";
  */
 export const useBattlePingPreferences = () => {
   const { data: documents } = useSettingsDocuments();
-  const status = useSettingsSaveStatus();
 
   const setEnabled = (enabled: boolean) => {
     enqueueSettingsPatch({
@@ -26,7 +24,6 @@ export const useBattlePingPreferences = () => {
           selectSettingsValue(documents, "gameData.battlePings"),
         )
       : undefined,
-    isPending: status === "saving",
     setEnabled,
   };
 };

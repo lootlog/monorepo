@@ -22756,7 +22756,7 @@ export const getLootsControllerGetLootStatsUrl = ({ guildId }: LootsControllerGe
 }
 
 /**
- * Retrieve aggregated loot statistics for a guild with optional time period and filters
+ * Retrieve aggregated loot statistics for a guild with optional time period and filters. A period starts its length before now, rounded down to the whole UTC hour, as kill statistics do. Timeline hours are UTC instants; days and weeks are calendar ones in Europe/Warsaw, given as their local midnight written in UTC. The strongest NPC of a loot names it: by type, then weight, level and id. legendaryItems counts every item of legendary rarity; topItems lists legends, which leave out blessings, upgrades and consumables.
  * @summary Get guild loot statistics
  */
 export const lootsControllerGetLootStats = async ({ guildId }: LootsControllerGetLootStatsPathParameters,
@@ -22918,7 +22918,7 @@ export const getLootsControllerGetUserLootStatsUrl = (params?: LootsControllerGe
 }
 
 /**
- * Loots of fights that a character registered by the authenticated user took part in, limited to loots their Organizations let them read. Days are calendar days in Europe/Warsaw; the timeline is daily up to 30 days and weekly beyond.
+ * Loots of fights that a character registered by the authenticated user took part in, limited to loots their Organizations let them read. Days are calendar days in Europe/Warsaw; the timeline is daily up to 30 days and weekly beyond. legendaryItems and caughtLegendaryItems count every item of legendary rarity; legends and monsters list legends, which leave out blessings, upgrades and consumables.
  * @summary Get personal loot statistics
  */
 export const lootsControllerGetUserLootStats = async (params?: LootsControllerGetUserLootStatsParams, options?: Parameters<typeof mainFetch>[1]): Promise<UserLootStatsResponseDtoOutput> => {

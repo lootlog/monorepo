@@ -58,6 +58,14 @@ it("resolves historical quote names from Discord within the source organization 
   );
 
   expect(resolved[0]?.replyTo?.senderNick).toBe("DiscordName");
+  // A later derivation hands its memoized transcript row the same object.
+  expect(
+    resolveChatReplyNames(
+      [reply],
+      { "guild-1": [original, reply] },
+      { "guild-1": { "sender-1": { name: "DiscordName" } } },
+    )[0],
+  ).toBe(resolved[0]);
   expect(resolved[1]?.replyTo?.senderNick).toBe("GameHero");
   expect(reply.replyTo?.senderNick).toBe("GameHero");
   expect(

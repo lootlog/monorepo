@@ -1,3 +1,4 @@
+import { omit } from "es-toolkit";
 import { isObjectRecord } from "@lootlog/schema/records";
 import { Option, Schema } from "effect";
 import { useGameStore } from "@/store/game.store";
@@ -13,7 +14,7 @@ const decodeLegacySelectedGuild = Schema.decodeUnknownOption(
   Schema.fromJsonString(Schema.String),
 );
 
-export type ChatFilter = "all" | "normal" | "npc" | "party" | "reports";
+export type ChatFilter = "all" | "normal" | "reports";
 
 type ReplyableMessageType = Extract<MessageType, "NORMAL" | "NOTIFICATION">;
 
@@ -41,9 +42,8 @@ interface ChatState {
   focusRequest: { guildId: string; sequence: number } | null;
   selectedGuildByCharacter: Record<string, string>;
   setSelectedChatGuildId: (guildId: string) => void;
-  replyDraft: ChatReplyDraft | null;
   setReplyDraft: (replyDraft: ChatReplyDraft) => void;
-  clearReplyDraft: (guildId?: string) => void;
+  clearReplyDraft: (guildId: string) => void;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -83,10 +83,8 @@ export const useChatStore = create<ChatState>()(
             [getChatCharacterKey()]: guildId,
           },
         })),
-      replyDraft: null,
       setReplyDraft: (replyDraft) => {
         set((state) => ({
-          replyDraft,
           selectedGuildByCharacter: {
             ...state.selectedGuildByCharacter,
             [getChatCharacterKey()]: replyDraft.guildId,
@@ -103,14 +101,7 @@ export const useChatStore = create<ChatState>()(
       },
       clearReplyDraft: (guildId) => {
         set((state) => ({
-          replyDraft:
-            !guildId || state.replyDraft?.guildId === guildId
-              ? null
-              : state.replyDraft,
-          replyDraftsByGuild: {
-            ...state.replyDraftsByGuild,
-            [guildId ?? state.replyDraft?.guildId ?? ""]: undefined,
-          },
+          replyDraftsByGuild: omit(state.replyDraftsByGuild, [guildId]),
         }));
       },
     }),
@@ -129,6 +120,23 @@ export const useChatStore = create<ChatState>()(
         if (!isObjectRecord(persisted)) return { chatFilter: "all" as const };
 
         return { ...persisted, chatFilter: "all" as const };
+      },
+      merge: (persisted, current) => {
+        if (!isObjectRecord(persisted)) return current;
+
+        const { chatFilter } = persisted;
+
+        return {
+          ...current,
+          ...persisted,
+          // The reports tab replaced the stored npc and party filters.
+          chatFilter:
+            chatFilter === "normal" || chatFilter === "reports"
+              ? chatFilter
+              : chatFilter === "npc" || chatFilter === "party"
+                ? "reports"
+                : "all",
+        };
       },
     },
   ),

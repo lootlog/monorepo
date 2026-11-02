@@ -1,7 +1,11 @@
-import { MIN_NPC_WT, MIN_RESP_BASE_SECONDS } from "@/constants/margonem";
 import { SpecialE2 } from "@/constants/special-e2";
 import { NpcType } from "@/api/npcs.api";
-import { getNpcType, isHeroTrackerName } from "@lootlog/domain/npc-type";
+import {
+  getNpcType,
+  isHeroTrackerName,
+  MIN_TIMER_NPC_WT,
+} from "@lootlog/domain/npc-type";
+import { MIN_RESP_BASE_SECONDS } from "@lootlog/domain/timers";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
@@ -69,7 +73,8 @@ export class NpcsDeleteProcessor {
       if (!data || !deletion.respBaseSeconds) return;
 
       // A Hero Tracker has no weight; its departure reports its respawn.
-      if (data.weight < MIN_NPC_WT && !isHeroTrackerName(data.name)) return;
+      if (data.weight < MIN_TIMER_NPC_WT && !isHeroTrackerName(data.name))
+        return;
 
       if (deletion.respBaseSeconds < MIN_RESP_BASE_SECONDS) {
         return;

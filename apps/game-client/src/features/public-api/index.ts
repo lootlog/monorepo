@@ -33,8 +33,6 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
     onlinePlayersController,
   );
 
-  const listenerCounts = new Map<ApiEventName, number>();
-
   const api: LootlogGameClientApi = Object.freeze({
     apiVersion: 1 as const,
 
@@ -79,13 +77,9 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
       eventName: E,
       listener: (payload: ApiEventMap[E]) => void,
     ): () => void {
-      const listenerCount = listenerCounts.get(eventName) ?? 0;
-
-      if (listenerCount === 0) {
+      if (emitter.listenerCount(eventName) === 0) {
         subscriptions.activate(eventName);
       }
-
-      listenerCounts.set(eventName, listenerCount + 1);
 
       const unsubscribeEmitter = emitter.on(eventName, listener);
       let active = true;
@@ -97,16 +91,10 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
 
         active = false;
         unsubscribeEmitter();
-        const nextListenerCount = (listenerCounts.get(eventName) ?? 1) - 1;
 
-        if (nextListenerCount === 0) {
-          listenerCounts.delete(eventName);
+        if (emitter.listenerCount(eventName) === 0) {
           subscriptions.deactivate(eventName);
-
-          return;
         }
-
-        listenerCounts.set(eventName, nextListenerCount);
       };
     },
   });
@@ -121,7 +109,6 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
   return () => {
     subscriptions.teardown();
     onlinePlayersController.teardown();
-    listenerCounts.clear();
     emitter.clear();
     delete window.lootlogGameClientApi;
   };
