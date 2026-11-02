@@ -57,13 +57,13 @@ class RuntimeOtherHandleRegistry {
   }
 
   get(id: string): OtherHandle | undefined {
-    if (this.pendingIds.has(id)) this.resolvePending();
+    if (this.pendingIds.has(id)) this.resolvePending([id]);
 
     return this.handlesById[id];
   }
 
   getAll(): Readonly<Record<string, OtherHandle>> {
-    if (this.pendingIds.size > 0) this.resolvePending();
+    if (this.pendingIds.size > 0) this.resolvePending(this.pendingIds);
 
     return this.handlesById;
   }
@@ -86,13 +86,13 @@ class RuntimeOtherHandleRegistry {
     }
   }
 
-  private resolvePending(): void {
+  private resolvePending(ids: Iterable<string>): void {
     const resolve = this.resolveHandle;
 
     if (!resolve) return;
     const upserts: Record<string, OtherHandle> = {};
 
-    for (const id of this.pendingIds) {
+    for (const id of ids) {
       try {
         const handle = resolve(id);
 
