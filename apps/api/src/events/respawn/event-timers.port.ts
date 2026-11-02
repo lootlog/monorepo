@@ -1,5 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
+import { respawnFromSpawnWindow } from "@lootlog/domain/timers";
 import { Clock, Effect, Schema } from "effect";
 import { ExecutionError, type RedlockService } from "#src/redis/redlock";
 import {
@@ -15,11 +16,10 @@ import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import type { RedisService } from "#src/redis/redis.service";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger } from "#src/shared/application-logger";
-import { DEFAULT_RESPAWN_RANDOMNESS } from "#src/timers/respawn";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import type { Timer } from "#src/timers/timers.types";
-import { buildTimerKey } from "#src/timers/timer-key";
+import { buildTimerKey, buildTimerLockKey } from "#src/timers/timer-key";
 import type { EventTimerStore } from "#src/events/respawn/event-timer.store";
 
 export interface EventTimerLookupInput {
@@ -342,7 +342,7 @@ export const makeEventTimersPort = ({
 
   function openRespawnTimer(input: EventRespawnTimerInput, timerKey: string) {
     const operation = "eventTimers.openRespawn";
-    const lockKey = `timer:lock:${input.guildId}:${input.world}:${timerKey}`;
+    const lockKey = buildTimerLockKey(input.guildId, input.world, timerKey);
 
     const work = withLock(operation, lockKey, () =>
       Effect.gen(function* () {
@@ -371,6 +371,12 @@ export const makeEventTimersPort = ({
             : "0",
         };
 
+        // A reset after the event repeats the window it opened.
+        const respawn = respawnFromSpawnWindow(
+          (input.minSpawnTime.getTime() - windowOpenedAt.getTime()) / 1000,
+          (input.maxSpawnTime.getTime() - windowOpenedAt.getTime()) / 1000,
+        );
+
         const timer = yield* store.upsertTimer(
           {
             guildId: input.guildId,
@@ -380,11 +386,8 @@ export const makeEventTimersPort = ({
             timerKey,
             minSpawnTime: input.minSpawnTime,
             maxSpawnTime: input.maxSpawnTime,
-            latestRespBaseSeconds: Math.round(
-              (input.maxSpawnTime.getTime() - input.minSpawnTime.getTime()) /
-                2_000,
-            ),
-            latestRespawnRandomness: DEFAULT_RESPAWN_RANDOMNESS,
+            latestRespBaseSeconds: respawn.respBaseSeconds,
+            latestRespawnRandomness: respawn.respawnRandomness,
             wasReset: false,
             npc,
             windowOpenedAt,
@@ -455,7 +458,7 @@ export const makeEventTimersPort = ({
 
     return withLock(
       operation,
-      `timer:lock:${guildId}:${world}:${timerKey}`,
+      buildTimerLockKey(guildId, world, timerKey),
       () =>
         Effect.gen(function* () {
           const timer = yield* store.findTimer(guildId, world, timerKey);
