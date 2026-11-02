@@ -44,10 +44,6 @@ export const makeEventCreation =
           ...eventData
         } = data;
 
-        const normalizedWorld = world.trim().toLowerCase();
-
-        if (!normalizedWorld)
-          throw new InvalidRequestError("World is required");
         const startDate = startsAt ? new Date(startsAt) : new Date();
         const endDate = endsAt ? new Date(endsAt) : null;
 
@@ -63,7 +59,7 @@ export const makeEventCreation =
           startDate,
           endDate,
           heroNpcs: heroNpcs ?? [],
-          world: normalizedWorld,
+          world,
           scoringMode: normalizedScoringMode,
           scoringRules:
             normalizedScoringMode === "ADVANCED"

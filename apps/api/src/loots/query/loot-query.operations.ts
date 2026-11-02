@@ -2,7 +2,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Schema } from "effect";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
-import type { LootsQuery as FetchLootsParamsDto } from "#src/contracts/loots/schemas";
+import type { LootsQuery } from "#src/contracts/loots/schemas";
 import type { LootItemDto } from "#src/loots/query/loot-item";
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 import {
@@ -14,7 +14,7 @@ import {
   mapPlayer,
   mapNpc,
 } from "#src/loots/query/loot-snapshot-mappers";
-import { DEFAULT_PAGE_LIMIT } from "#src/loots/config/pagination";
+import { DEFAULT_PAGE_SIZE } from "#src/shared/keyset-page";
 import type { LootQueryPersistence } from "#src/loots/query/loot-query.persistence";
 import type { LootQueryFilters } from "#src/loots/query/loot-query-filter";
 
@@ -29,6 +29,14 @@ type LootQueryRecord = Effect.Success<
 export type LootNpcNameSummary = Effect.Success<
   ReturnType<LootQueryPersistence["summarizeByNpcName"]>
 >;
+
+/**
+ * List filters with the decoded keyset: `cursor` is the ID of the last loot
+ * already returned, and rows come newest first.
+ */
+export type LootListParams = Omit<LootsQuery, "cursor"> & {
+  readonly cursor?: number;
+};
 
 export class LootQueryError extends TaggedErrorClass<LootQueryError>()(
   "LootQueryError",
@@ -48,7 +56,7 @@ export interface LootQueryOperations {
     guild: Guild,
     permissions: Permission[],
     roles: Role[],
-    params: FetchLootsParamsDto,
+    params: LootListParams,
   ) => QueryEffect<LootQueryResult[]>;
   readonly fetchLootById: (
     guild: Guild,
@@ -172,7 +180,7 @@ export const makeLootQueryOperations = (
               createdAtMin: params.createdAtMin,
               createdAtMax: params.createdAtMax,
             },
-            limit: params.limit ?? DEFAULT_PAGE_LIMIT,
+            limit: params.limit ?? DEFAULT_PAGE_SIZE,
           }),
         );
 

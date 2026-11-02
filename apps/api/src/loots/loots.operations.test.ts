@@ -85,7 +85,7 @@ const makeOperations = (
     persistence: {
       archive: () => Effect.succeed(true),
       listComments: () => Effect.succeed([]),
-      createComment: () => Effect.succeed({}),
+      createComment: () => Effect.die("Unexpected comment write"),
     },
     stats: { invalidateCache: () => Effect.void },
     redis: {
@@ -463,5 +463,84 @@ describe("loot detail concurrent reads", () => {
       ),
     ).toEqual(loot);
     expect(reads).toBe(1_027);
+  });
+});
+
+describe("loot list pages", () => {
+  const ids = [5, 4, 3, 2, 1];
+
+  const operations = makeLootsOperations({
+    query: {
+      fetchLootById: () => Effect.die("Unexpected detail read"),
+      isLootVisible: () => Effect.die("Unexpected visibility read"),
+      fetchLootsByGuildId: (_guild, _permissions, _roles, params) =>
+        Effect.succeed(
+          ids
+            .filter((id) => params.cursor === undefined || id < params.cursor)
+            .slice(0, params.limit)
+            .map((id) => ({ ...loot, id })),
+        ),
+      resolveLootItemByHid: () => Effect.die("Unexpected item read"),
+      summarizeLootsByNpcName: () => Effect.die("Unexpected summary read"),
+      fetchOrganizationLoot: () => Effect.die("Unexpected snapshot read"),
+    },
+    persistence: {
+      archive: () => Effect.die("Unexpected archive"),
+      listComments: () => Effect.die("Unexpected comment read"),
+      createComment: () => Effect.die("Unexpected comment write"),
+    },
+    stats: { invalidateCache: () => Effect.void },
+    redis: {
+      invalidateScopes: async () => undefined,
+      getOrSetJsonEffect: (options) => options.factory,
+    },
+    logger: applicationLogger,
+  });
+
+  it("walks every loot once and ends with a null cursor", async () => {
+    const filters = { limit: 2, world: "world" };
+
+    let page = await Effect.runPromise(
+      operations.fetchLootsByGuildId(guild, policy, [role], filters),
+    );
+
+    const seen = page.items.map(({ id }) => id);
+
+    while (page.nextCursor !== null) {
+      page = await Effect.runPromise(
+        operations.fetchLootsByGuildId(guild, policy, [role], {
+          ...filters,
+          cursor: page.nextCursor,
+        }),
+      );
+
+      seen.push(...page.items.map(({ id }) => id));
+    }
+
+    expect(seen).toEqual(ids);
+  });
+
+  it("rejects a cursor replayed with other filters or that cannot be decoded", async () => {
+    const first = await Effect.runPromise(
+      operations.fetchLootsByGuildId(guild, policy, [role], {
+        limit: 2,
+        world: "world",
+      }),
+    );
+
+    expect(first.nextCursor).not.toBeNull();
+
+    for (const params of [
+      { limit: 2, world: "other", cursor: first.nextCursor ?? "" },
+      { limit: 2, world: "world", cursor: "not-a-cursor" },
+    ]) {
+      const error = await Effect.runPromise(
+        Effect.flip(
+          operations.fetchLootsByGuildId(guild, policy, [role], params),
+        ),
+      );
+
+      expect(error).toMatchObject({ body: { code: "INVALID_CURSOR" } });
+    }
   });
 });

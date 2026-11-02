@@ -1,5 +1,4 @@
 import {
-  emptyStatusResponse,
   reauthenticationRequiredResponse,
   statusCodeResponse,
 } from "#src/shared/http/handler-response";
@@ -391,7 +390,7 @@ const toHttpResponse = <A, R>(
   effect: Effect.Effect<A, UserThemesHttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
-    UserThemeNotFound: emptyStatusResponse,
+    UserThemeNotFound: statusCodeResponse,
     UserThemeLimitReached: statusCodeResponse,
     ReauthenticationRequired: reauthenticationRequiredResponse,
     UserThemesPersistenceError: (error) => Effect.die(error.cause),

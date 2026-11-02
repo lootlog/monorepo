@@ -1,4 +1,4 @@
-import { FiniteNumber } from "@lootlog/schema/http-scalars";
+import { FiniteNumber, WorldParam } from "@lootlog/schema/http-scalars";
 import { Schema } from "effect";
 import { NpcType } from "./schemas.js";
 
@@ -28,9 +28,7 @@ export const UserStatsDays = Schema.Literals([7, 30, 90, 365]);
 
 export const UserKillAnalyticsQuery = Schema.Struct({
   days: Schema.optionalKey(UserStatsDays),
-  world: Schema.optionalKey(
-    Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
-  ),
+  world: Schema.optionalKey(WorldParam),
   /** Narrows the NPC rankings, not the totals, to one NPC type. */
   npcType: Schema.optionalKey(NpcType),
   characterId: CharacterIdQuery,
@@ -39,9 +37,7 @@ export const UserKillAnalyticsQuery = Schema.Struct({
 export type UserKillAnalyticsQuery = typeof UserKillAnalyticsQuery.Type;
 
 export const UserKillActivityQuery = Schema.Struct({
-  world: Schema.optionalKey(
-    Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
-  ),
+  world: Schema.optionalKey(WorldParam),
   characterId: CharacterIdQuery,
 }).check(characterNeedsWorld);
 

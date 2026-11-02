@@ -1,6 +1,10 @@
 /** Shared input and output schemas for the lootlog-config feature. */
 import * as Schema from "effect/Schema";
-import { JsonValue, FiniteNumber } from "@lootlog/schema/http-scalars";
+import {
+  JsonValue,
+  FiniteNumber,
+  PositiveSafeInteger,
+} from "@lootlog/schema/http-scalars";
 
 const npcLootlogConfigFields = {
   id: FiniteNumber,
@@ -58,6 +62,6 @@ export const LootlogConfigOrganizationPath = Schema.Struct({
 export type NpcLootlogConfigPath = typeof NpcLootlogConfigPath.Type;
 
 export const NpcLootlogConfigPath = Schema.Struct({
-  npcId: Schema.String.annotate({ examples: ["1"] }),
+  npcId: PositiveSafeInteger.annotate({ examples: [1] }),
   guildId: JsonValue,
 });

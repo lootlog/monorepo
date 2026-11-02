@@ -782,9 +782,9 @@ describe("API HTTP boundary", () => {
     const firstPage = await first.json();
     expect(firstPage).toMatchObject({
       kind: "event",
-      data: [{ id: highKill, participantCount: 1 }],
+      items: [{ id: highKill, participantCount: 1 }],
     });
-    expect(firstPage.data[0]).not.toHaveProperty("points");
+    expect(firstPage.items[0]).not.toHaveProperty("points");
 
     const continuation = await request(
       `${base}/kill-history?limit=2&cursor=${encodeURIComponent(firstPage.nextCursor)}`,
@@ -792,7 +792,7 @@ describe("API HTTP boundary", () => {
 
     expect(continuation.status).toBe(200);
     expect(await continuation.json()).toMatchObject({
-      data: [{ id: newestLowKill }, { id: oldestLowKill }],
+      items: [{ id: newestLowKill }, { id: oldestLowKill }],
       nextCursor: null,
     });
 
@@ -804,7 +804,7 @@ describe("API HTTP boundary", () => {
     expect(await member.json()).toMatchObject({
       kind: "member",
       member: { id: memberId },
-      data: [
+      items: [
         { id: newestLowKill, memberPoint: { points: 4.25 } },
         { id: oldestLowKill },
       ],
@@ -833,7 +833,7 @@ describe("API HTTP boundary", () => {
     const { highKill, newestLowKill, oldestLowKill } = await seedKillHistory();
     const base = `/guilds/${authorizedGuildId}/events/history`;
     expect(await (await request(`${base}/kill-history`)).json()).toMatchObject({
-      data: [{ id: highKill }, { id: newestLowKill }, { id: oldestLowKill }],
+      items: [{ id: highKill }, { id: newestLowKill }, { id: oldestLowKill }],
     });
 
     const setAccess = async (permissions: Permission[], maximum: number) => {
@@ -848,7 +848,7 @@ describe("API HTTP boundary", () => {
 
     await setAccess([Permission.LOOTLOG_EVENTS_READ], 100);
     expect(await (await request(`${base}/kill-history`)).json()).toMatchObject({
-      data: [{ id: newestLowKill }, { id: oldestLowKill }],
+      items: [{ id: newestLowKill }, { id: oldestLowKill }],
     });
     expect(
       (await request(`${base}/kill-history?heroId=high-hero`)).status,
@@ -862,7 +862,7 @@ describe("API HTTP boundary", () => {
     ).toBe(404);
     await setAccess([Permission.LOOTLOG_EVENTS_READ], 20);
     expect(await (await request(`${base}/kill-history`)).json()).toMatchObject({
-      data: [],
+      items: [],
       nextCursor: null,
     });
     await setAccess([], 100);
@@ -903,7 +903,7 @@ describe("API HTTP boundary", () => {
 
     expect(allowed.status).toBe(200);
     expect(await allowed.json()).toMatchObject({
-      data: [{ id: newestLowKill }, { id: oldestLowKill }],
+      items: [{ id: newestLowKill }, { id: oldestLowKill }],
     });
     expect(
       (
@@ -1180,9 +1180,11 @@ describe("API HTTP boundary", () => {
       expect(await response.json()).toMatchObject({
         code: "VALIDATION_ERROR",
         message: expect.stringContaining(field),
-        issues: expect.arrayContaining([
-          expect.objectContaining({ path: [field] }),
-        ]),
+        details: {
+          issues: expect.arrayContaining([
+            expect.objectContaining({ path: [field] }),
+          ]),
+        },
       });
     },
   );

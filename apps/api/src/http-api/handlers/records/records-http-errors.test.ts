@@ -25,17 +25,24 @@ import {
 
 describe("business failures survive HTTP mapping", () => {
   it.each([
-    [new ResourceNotFoundError("CANT_DELETE_LOOT"), 404, "CANT_DELETE_LOOT"],
-    [new InvalidRequestError("MISSING_LOOT_SHARE"), 400, "MISSING_LOOT_SHARE"],
-    [new PermissionDeniedError("CANT_UPDATE_LOOT"), 403, "CANT_UPDATE_LOOT"],
     [
-      new ResourceConflictError("Conflicting loot share"),
-      409,
-      "Conflicting loot share",
+      new ResourceNotFoundError({ code: "CANT_DELETE_LOOT" }),
+      404,
+      "CANT_DELETE_LOOT",
+    ],
+    [
+      new InvalidRequestError({ code: "MISSING_LOOT_SHARE" }),
+      400,
+      "MISSING_LOOT_SHARE",
+    ],
+    [
+      new PermissionDeniedError({ code: "CANT_UPDATE_LOOT" }),
+      403,
+      "CANT_UPDATE_LOOT",
     ],
   ] as const)(
     "returns the declared loot failure %#",
-    async (cause, status, message) => {
+    async (cause, status, code) => {
       const response = HttpServerResponse.toWeb(
         await Effect.runPromise(
           toRecordsHttpResponse(Effect.fail(new RecordsDataError({ cause }))),
@@ -43,15 +50,39 @@ describe("business failures survive HTTP mapping", () => {
       );
 
       expect(response.status).toBe(status);
-      expect(await response.json()).toEqual({ message });
+      expect(await response.json()).toEqual({ code });
     },
   );
 
+  it("separates a human message from the default code", async () => {
+    const response = HttpServerResponse.toWeb(
+      await Effect.runPromise(
+        toRecordsHttpResponse(
+          Effect.fail(
+            new RecordsDataError({
+              cause: new ResourceConflictError("Conflicting loot share"),
+            }),
+          ),
+        ),
+      ),
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      code: "CONFLICT",
+      message: "Conflicting loot share",
+    });
+  });
+
   it("preserves rejected Organization details for the game client", async () => {
     const body = {
-      message: "NO_GUILDS_ON_THE_CHARACTER_WHITELIST",
-      submittedGuilds: [],
-      rejectedGuilds: [{ id: "guild-a", reason: "NOT_ON_CHARACTER_WHITELIST" }],
+      code: "NO_GUILDS_ON_THE_CHARACTER_WHITELIST",
+      details: {
+        submittedGuilds: [],
+        rejectedGuilds: [
+          { id: "guild-a", reason: "NOT_ON_CHARACTER_WHITELIST" },
+        ],
+      },
     };
 
     const response = HttpServerResponse.toWeb(
@@ -69,11 +100,11 @@ describe("business failures survive HTTP mapping", () => {
   });
 
   it.each([
-    [400, "Unknown settings domain"],
-    [403, "Guild settings are not accessible"],
+    [400, "INVALID_REQUEST", "Unknown settings domain"],
+    [403, "FORBIDDEN", "Guild settings are not accessible"],
   ] as const)(
     "returns settings status %s and its reason",
-    async (status, message) => {
+    async (status, code, message) => {
       const response = HttpServerResponse.toWeb(
         await Effect.runPromise(
           toSettingsHttpResponse(
@@ -87,7 +118,7 @@ describe("business failures survive HTTP mapping", () => {
       );
 
       expect(response.status).toBe(status);
-      expect(await response.json()).toEqual({ message });
+      expect(await response.json()).toEqual({ code, message });
     },
   );
 
@@ -98,7 +129,7 @@ describe("business failures survive HTTP mapping", () => {
           Effect.fail(
             new AccountOrganizationOperationError({
               cause: new InvalidRequestError({
-                message: "errors.guilds.reservations.durationRangeInvalid",
+                code: "GUILDS_RESERVATION_DURATION_RANGE_INVALID",
               }),
             }),
           ),
@@ -108,7 +139,7 @@ describe("business failures survive HTTP mapping", () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({
-      message: "errors.guilds.reservations.durationRangeInvalid",
+      code: "GUILDS_RESERVATION_DURATION_RANGE_INVALID",
     });
   });
 
@@ -136,7 +167,7 @@ describe("business failures survive HTTP mapping", () => {
 
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({
-      message: "errors.guilds.vanityUrlTaken",
+      code: "GUILDS_VANITY_URL_TAKEN",
     });
   });
 

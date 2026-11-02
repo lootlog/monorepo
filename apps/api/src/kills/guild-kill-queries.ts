@@ -4,13 +4,20 @@ import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { DateTime, Effect, Schema } from "effect";
 import { sum } from "es-toolkit";
 import type { ApplicationLogger } from "#src/shared/application-logger";
+import type { Period } from "@lootlog/schema/http-scalars";
 import {
+  GUILD_TOP_KILLERS_DEFAULT_LIMIT,
+  GUILD_TOP_NPCS_DEFAULT_LIMIT,
   GuildKillStatsResponse,
   GuildTopKillersByTypeResponse,
   GuildTopNpcsResponse,
+  NPC_KILLERS_DEFAULT_LIMIT,
   NpcKillersResponse,
   type GuildKillStatsQuery as GetGuildKillStatsDto,
+  type GuildTopKillersQuery,
+  type GuildTopNpcsQuery,
 } from "#src/contracts/kills/schemas";
+import type { MemberSummary } from "#src/contracts/shared";
 
 import type { KillStatsPersistence } from "./kill-stats-persistence.js";
 import {
@@ -27,7 +34,7 @@ import {
   fillKillTimeline,
   getKillStatsPeriodStart,
   getKillTimelineUnit,
-  type KillStatsPeriod,
+  resolveKillStatsPeriod,
 } from "./kill-stats-period.js";
 
 class GuildKillQueriesError extends TaggedErrorClass<GuildKillQueriesError>()(
@@ -69,13 +76,14 @@ export const makeGuildKillQueries = (
     query: GetGuildKillStatsDto,
   ) => {
     const visibility = context(accessPolicy, roles);
-    const periodStart = getKillStatsPeriodStart(query.period);
+    const period = resolveKillStatsPeriod(query.period);
+    const periodStart = getKillStatsPeriodStart(period);
 
     const filter = {
       guildId,
       ...(query.npcTypes && { npcType: { in: query.npcTypes } }),
       ...(query.world && { world: query.world }),
-      ...buildNpcLevelFilter(query.minLvl, query.maxLvl),
+      ...buildNpcLevelFilter(query.npcLevelMin, query.npcLevelMax),
       ...visibility.filter,
       ...(periodStart && { periodStart: { gte: periodStart } }),
     };
@@ -87,13 +95,13 @@ export const makeGuildKillQueries = (
         cache,
         logger,
         key: buildKillQueryCacheKey("guild-overview", guildId, {
-          query,
+          query: { ...query, period },
           visibility: visibility.cacheScope,
         }),
         label: "guild kill stats",
         schema: GuildKillStatsResponse,
         load: Effect.gen(function* () {
-          const timelineUnit = getKillTimelineUnit(query.period);
+          const timelineUnit = getKillTimelineUnit(period);
 
           const [memberStats, guildSummary, timeline, hourlyWeekday] =
             yield* Effect.all(
@@ -132,10 +140,7 @@ export const makeGuildKillQueries = (
           const ranking = new Map<
             number,
             {
-              memberId: number;
-              memberName: string;
-              memberAvatar: string | null;
-              memberUserId: string;
+              member: MemberSummary;
               totalParticipations: number;
               participationsByType: Record<string, number>;
             }
@@ -160,10 +165,7 @@ export const makeGuildKillQueries = (
 
             if (member) {
               ranking.set(stat.memberId, {
-                memberId: stat.memberId,
-                memberName: member.name,
-                memberAvatar: member.avatar,
-                memberUserId: member.userId,
+                member,
                 totalParticipations: memberKills,
                 participationsByType: { [stat.npcType]: memberKills },
               });
@@ -207,15 +209,11 @@ export const makeGuildKillQueries = (
     guildId: string,
     accessPolicy: AccessPolicy,
     roles: ReadonlyArray<KillQueryRole>,
-    limit = 10,
-    npcType?: NpcType,
-    world?: string,
-    search?: string,
-    minLvl?: number,
-    maxLvl?: number,
-    period?: KillStatsPeriod,
+    query: GuildTopNpcsQuery,
   ) => {
     const visibility = context(accessPolicy, roles);
+    const limit = query.limit ?? GUILD_TOP_NPCS_DEFAULT_LIMIT;
+    const period = resolveKillStatsPeriod(query.period);
     const periodStart = getKillStatsPeriodStart(period);
 
     return protect(
@@ -225,14 +223,8 @@ export const makeGuildKillQueries = (
         cache,
         logger,
         key: buildKillQueryCacheKey("guild-top-npcs", guildId, {
-          limit,
-          maxLvl,
-          minLvl,
-          npcType,
-          period,
-          search,
+          query: { ...query, limit, period },
           visibility: visibility.cacheScope,
-          world,
         }),
         label: "guild top npcs",
         schema: GuildTopNpcsResponse,
@@ -240,12 +232,15 @@ export const makeGuildKillQueries = (
           .topGuildNpcs(
             {
               guildId,
-              ...(npcType && { npcType }),
-              ...(world && { world }),
-              ...(search && {
-                npcName: { contains: search, mode: "insensitive" as const },
+              ...(query.npcType && { npcType: query.npcType }),
+              ...(query.world && { world: query.world }),
+              ...(query.search && {
+                npcName: {
+                  contains: query.search,
+                  mode: "insensitive" as const,
+                },
               }),
-              ...buildNpcLevelFilter(minLvl, maxLvl),
+              ...buildNpcLevelFilter(query.npcLevelMin, query.npcLevelMax),
               ...visibility.filter,
               ...(periodStart && { periodStart: { gte: periodStart } }),
             },
@@ -261,10 +256,11 @@ export const makeGuildKillQueries = (
     accessPolicy: AccessPolicy,
     roles: ReadonlyArray<KillQueryRole>,
     npcTypes: ReadonlyArray<NpcType>,
-    limit = 5,
-    period?: KillStatsPeriod,
+    query: GuildTopKillersQuery,
   ) => {
     const visibility = context(accessPolicy, roles);
+    const limit = query.limit ?? GUILD_TOP_KILLERS_DEFAULT_LIMIT;
+    const period = resolveKillStatsPeriod(query.period);
     const periodStart = getKillStatsPeriodStart(period);
 
     return protect(
@@ -298,10 +294,15 @@ export const makeGuildKillQueries = (
                   npcType,
                   stats
                     .filter((stat) => stat.npcType === npcType)
-                    .slice(0, limit)
-                    .map(
-                      ({ npcType: _type, rank: _rank, ...member }) => member,
-                    ),
+                    .map((stat) => ({
+                      member: {
+                        id: stat.memberId,
+                        name: stat.memberName,
+                        avatar: stat.memberAvatar,
+                        userId: stat.memberUserId,
+                      },
+                      totalParticipations: stat.totalParticipations,
+                    })),
                 ]),
               ),
             ),
@@ -315,11 +316,12 @@ export const makeGuildKillQueries = (
     accessPolicy: AccessPolicy,
     roles: ReadonlyArray<KillQueryRole>,
     npcId: number,
-    limit = 50,
+    limit = NPC_KILLERS_DEFAULT_LIMIT,
     world?: string,
-    period?: KillStatsPeriod,
+    requestedPeriod?: Period,
   ) => {
     const visibility = context(accessPolicy, roles);
+    const period = resolveKillStatsPeriod(requestedPeriod);
     const periodStart = getKillStatsPeriodStart(period);
 
     const filter = {

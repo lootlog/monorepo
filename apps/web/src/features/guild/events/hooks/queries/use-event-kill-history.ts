@@ -18,7 +18,7 @@ export const useEventKillHistory = ({
   limit = 20,
 }: UseEventKillHistoryOptions) => {
   const baseParams: NonNullable<Parameters<typeof listEventKillHistory>[1]> = {
-    limit: String(limit),
+    limit,
   };
 
   if (heroId) baseParams.heroId = heroId;

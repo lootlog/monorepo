@@ -17,7 +17,7 @@ describe("reservation error messages", () => {
       baseUrl: "https://api.example.test",
       fetch: async () =>
         Response.json(
-          { code: "ACTIVE_LIMIT_REACHED", limit: 3 },
+          { code: "ACTIVE_LIMIT_REACHED", details: { limit: 3 } },
           { status: 422 },
         ),
     });
@@ -46,19 +46,19 @@ describe("reservation error messages", () => {
       "Można pobrać rezerwacje z okresu nie dłuższego niż 31 dni.",
     ],
     [
-      { code: "RESERVATION_TOO_SHORT", minimumMinutes: 30 },
+      { code: "RESERVATION_TOO_SHORT", details: { minimumMinutes: 30 } },
       "Rezerwacja musi trwać co najmniej 30 minut.",
     ],
     [
-      { code: "RESERVATION_TOO_LONG", maximumMinutes: 180 },
+      { code: "RESERVATION_TOO_LONG", details: { maximumMinutes: 180 } },
       "Rezerwacja może trwać maksymalnie 180 minut.",
     ],
     [
-      { code: "RESERVATION_TOO_FAR_IN_ADVANCE", maximumDays: 7 },
+      { code: "RESERVATION_TOO_FAR_IN_ADVANCE", details: { maximumDays: 7 } },
       "Rezerwację można utworzyć maksymalnie 7 dni do przodu.",
     ],
     [
-      { code: "INVALID_TIME_GRID", granularityMinutes: 15 },
+      { code: "INVALID_TIME_GRID", details: { granularityMinutes: 15 } },
       "Początek i koniec muszą wypadać co 15 minut.",
     ],
     [
@@ -70,11 +70,11 @@ describe("reservation error messages", () => {
       "Ta rezerwacja już nie istnieje lub jest niedostępna.",
     ],
     [
-      { message: "RESERVATION_OVERLAP" },
+      { code: "RESERVATION_OVERLAP" },
       "Ten termin koliduje z rezerwacją w Twoim Lootlogu.",
     ],
     [
-      { code: "ACTIVE_LIMIT_REACHED", limit: "invalid" },
+      { code: "ACTIVE_LIMIT_REACHED", details: { limit: "invalid" } },
       "Osiągnięto limit aktywnych rezerwacji na tym expowisku.",
     ],
   ])("translates API reason %j", (data, expected) => {

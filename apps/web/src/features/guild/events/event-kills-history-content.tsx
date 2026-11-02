@@ -92,7 +92,7 @@ export const EventKillsHistoryContent = ({
   }
 
   const heroes = event.heroNpcs ?? [];
-  const allKills = killsData?.pages.flatMap((page) => page.data) ?? [];
+  const allKills = killsData?.pages.flatMap((page) => page.items) ?? [];
 
   return (
     <div className="flex h-full min-h-0 flex-col">

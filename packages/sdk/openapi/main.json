@@ -817,7 +817,14 @@
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -915,24 +922,38 @@
             }
           },
           "403": {
-            "description": "<No Content>",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -1032,24 +1053,38 @@
             }
           },
           "403": {
-            "description": "<No Content>",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -1149,24 +1184,38 @@
             }
           },
           "403": {
-            "description": "<No Content>",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -1258,24 +1307,38 @@
             }
           },
           "403": {
-            "description": "<No Content>",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -1364,24 +1427,38 @@
             }
           },
           "403": {
-            "description": "<No Content>",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -1478,24 +1555,38 @@
             }
           },
           "403": {
-            "description": "<No Content>",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -2567,18 +2658,25 @@
             }
           },
           "403": {
-            "description": "<No Content>",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -2679,24 +2777,38 @@
             }
           },
           "403": {
-            "description": "<No Content>",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -2741,7 +2853,9 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": false
           }
@@ -2857,14 +2971,21 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true
           },
           {
             "name": "limit",
             "in": "query",
-            "schema": {},
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 5
+            },
             "required": false
           }
         ],
@@ -2977,7 +3098,9 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": false
           }
@@ -3102,8 +3225,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "minLength": 1,
-              "description": "Case-insensitive substring of the NPC name."
+              "maxLength": 100
             },
             "required": false
           },
@@ -3113,7 +3235,7 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "description": "World to search. When omitted, every world of the Organization is searched."
+              "maxLength": 64
             },
             "required": false
           },
@@ -3149,9 +3271,9 @@
             "name": "limit",
             "in": "query",
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
-              "maximum": 50,
+              "maximum": 100,
               "default": 10
             },
             "required": false
@@ -3564,7 +3686,9 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": false
           }
@@ -3704,14 +3828,21 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true
           },
           {
             "name": "limit",
             "in": "query",
-            "schema": {},
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 5
+            },
             "required": false
           }
         ],
@@ -4204,7 +4335,14 @@
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -4467,7 +4605,8 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 100
+              "maximum": 100,
+              "default": 20
             },
             "required": false
           },
@@ -4475,9 +4614,9 @@
             "name": "cursor",
             "in": "query",
             "schema": {
-              "type": "integer",
-              "minimum": -9007199254740991,
-              "maximum": 9007199254740991
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
             },
             "required": false
           },
@@ -4509,7 +4648,8 @@
             "schema": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "string",
+                "enum": ["UNIQUE", "HEROIC", "LEGENDARY", "UPGRADED"]
               }
             },
             "required": false
@@ -4531,7 +4671,19 @@
             "schema": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "string",
+                "enum": [
+                  "COMMON",
+                  "ELITE",
+                  "ELITE2",
+                  "ELITE3",
+                  "HERO",
+                  "EVENT_HERO",
+                  "COLOSSUS",
+                  "TITAN",
+                  "HERO_TRACKER",
+                  "NPC"
+                ]
               }
             },
             "required": false
@@ -4540,7 +4692,9 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": false
           },
@@ -4608,7 +4762,8 @@
             "name": "search",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 100
             },
             "required": false
           },
@@ -4659,14 +4814,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "LootPageResponseDto",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LootResponseDto"
-                  }
+                  "$ref": "#/components/schemas/LootPageResponseDto"
                 }
               }
             }
@@ -4757,7 +4909,7 @@
             }
           }
         },
-        "description": "Retrieve paginated loots for a guild with optional filters",
+        "description": "Retrieve one page of a guild's loots, newest first, with optional filters. Pass the `nextCursor` of a page as `cursor` to read the next page with the same filters; `nextCursor` is null on the last page. A cursor replayed with different filters, or one that cannot be decoded, is rejected with 400 `INVALID_CURSOR`.",
         "summary": "Get guild loots",
         "x-lootlog-access": "read",
         "x-lootlog-data": "organization"
@@ -4788,7 +4940,9 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": false
           },
@@ -4796,7 +4950,22 @@
             "name": "npcTypes",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "COMMON",
+                  "ELITE",
+                  "ELITE2",
+                  "ELITE3",
+                  "HERO",
+                  "EVENT_HERO",
+                  "COLOSSUS",
+                  "TITAN",
+                  "HERO_TRACKER",
+                  "NPC"
+                ]
+              }
             },
             "required": false
           },
@@ -4941,7 +5110,9 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": false
           }
@@ -5989,8 +6160,7 @@
             "name": "npcId",
             "in": "path",
             "schema": {
-              "type": "string",
-              "example": "1"
+              "type": "number"
             },
             "required": true
           },
@@ -6188,24 +6358,38 @@
             }
           },
           "403": {
-            "description": "<No Content>",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -6292,24 +6476,38 @@
             }
           },
           "403": {
-            "description": "<No Content>",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -6406,24 +6604,38 @@
             }
           },
           "403": {
-            "description": "<No Content>",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -6521,24 +6733,38 @@
             }
           },
           "403": {
-            "description": "<No Content>",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -6605,13 +6831,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -6632,13 +6858,13 @@
             }
           },
           "403": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "type": "object",
@@ -6656,11 +6882,11 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -6747,13 +6973,13 @@
             }
           },
           "400": {
-            "description": "OrganizationWorkspaceErrorResponse | RequestValidationError",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/RequestValidationError"
@@ -6764,13 +6990,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -6791,13 +7017,13 @@
             }
           },
           "403": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "type": "object",
@@ -6815,11 +7041,11 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -6894,13 +7120,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -6921,13 +7147,13 @@
             }
           },
           "403": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "type": "object",
@@ -6945,31 +7171,31 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
           },
           "409": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
           },
           "422": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -7049,13 +7275,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -7076,13 +7302,13 @@
             }
           },
           "403": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "type": "object",
@@ -7100,11 +7326,11 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -7174,13 +7400,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -7201,13 +7427,13 @@
             }
           },
           "403": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "type": "object",
@@ -7225,11 +7451,11 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -7297,13 +7523,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -7324,13 +7550,13 @@
             }
           },
           "403": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "type": "object",
@@ -7348,11 +7574,11 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -7423,13 +7649,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -7523,13 +7749,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -7567,11 +7793,11 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -7638,13 +7864,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -7682,31 +7908,31 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
           },
           "409": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
           },
           "422": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -7785,13 +8011,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -7812,13 +8038,13 @@
             }
           },
           "403": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "type": "object",
@@ -7836,11 +8062,11 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -7909,13 +8135,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -7936,13 +8162,13 @@
             }
           },
           "403": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "type": "object",
@@ -7960,11 +8186,11 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -8034,13 +8260,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -8061,13 +8287,13 @@
             }
           },
           "403": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "type": "object",
@@ -8085,11 +8311,11 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -8159,13 +8385,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -8186,13 +8412,13 @@
             }
           },
           "403": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "type": "object",
@@ -8210,11 +8436,11 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -8283,13 +8509,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -8327,31 +8553,31 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
           },
           "409": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
           },
           "410": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -8418,13 +8644,13 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
@@ -8462,31 +8688,31 @@
             }
           },
           "404": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
           },
           "409": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
           },
           "410": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "$ref": "#/components/schemas/HttpErrorResponse"
                 }
               }
             }
@@ -11789,13 +12015,13 @@
             }
           },
           "429": {
-            "description": "NotificationRateLimitResponseDto",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/NotificationRateLimitResponseDto"
+                      "$ref": "#/components/schemas/HttpErrorResponse"
                     },
                     {
                       "type": "object",
@@ -13452,7 +13678,9 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": false
           },
@@ -13460,7 +13688,7 @@
             "name": "activeOnly",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "boolean"
             },
             "required": false
           }
@@ -14725,7 +14953,9 @@
             "name": "memberId",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
             },
             "required": false
           }
@@ -17137,7 +17367,9 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true
           }
@@ -17397,9 +17629,10 @@
             "name": "limit",
             "in": "query",
             "schema": {
-              "type": "string",
-              "pattern": "^(?:[1-9]\\d?|100)$",
-              "description": "Page size from 1 to 100. Defaults to 20."
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
             },
             "required": false
           },
@@ -17409,7 +17642,7 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 4096,
+              "maxLength": 512,
               "description": "Opaque continuation token returned by this endpoint. Keep the Organization, event and filters unchanged."
             },
             "required": false
@@ -17427,8 +17660,9 @@
             "name": "memberId",
             "in": "query",
             "schema": {
-              "type": "string",
-              "pattern": "^[1-9]\\d*$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
             },
             "required": false
           }
@@ -20030,6 +20264,7 @@
                   "EVENT_HERO",
                   "COLOSSUS",
                   "TITAN",
+                  "HERO_TRACKER",
                   "NPC"
                 ]
               }
@@ -20037,7 +20272,7 @@
             "required": false
           },
           {
-            "name": "minLvl",
+            "name": "npcLevelMin",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -20047,7 +20282,7 @@
             "required": false
           },
           {
-            "name": "maxLvl",
+            "name": "npcLevelMax",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -20060,7 +20295,9 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": false
           },
@@ -20069,7 +20306,8 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["all", "24h", "3d", "7d", "14d", "30d"]
+              "enum": ["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"],
+              "default": "7d"
             },
             "required": false
           }
@@ -20203,6 +20441,7 @@
                   "EVENT_HERO",
                   "COLOSSUS",
                   "TITAN",
+                  "HERO_TRACKER",
                   "NPC"
                 ]
               }
@@ -20213,18 +20452,7 @@
             "name": "npcType",
             "in": "query",
             "schema": {
-              "type": "string",
-              "enum": [
-                "COMMON",
-                "ELITE",
-                "ELITE2",
-                "ELITE3",
-                "HERO",
-                "EVENT_HERO",
-                "COLOSSUS",
-                "TITAN",
-                "NPC"
-              ]
+              "$ref": "#/components/schemas/NpcType"
             },
             "required": false
           },
@@ -20232,7 +20460,9 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": false
           },
@@ -20242,7 +20472,8 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 9007199254740991
+              "maximum": 100,
+              "default": 5
             },
             "required": false
           },
@@ -20251,7 +20482,8 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["all", "24h", "3d", "7d", "14d", "30d"]
+              "enum": ["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"],
+              "default": "7d"
             },
             "required": false
           }
@@ -20367,7 +20599,7 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 100
+              "maxLength": 64
             },
             "required": false
           },
@@ -20492,7 +20724,7 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 100
+              "maxLength": 64
             },
             "required": false
           },
@@ -20618,6 +20850,7 @@
                   "EVENT_HERO",
                   "COLOSSUS",
                   "TITAN",
+                  "HERO_TRACKER",
                   "NPC"
                 ]
               }
@@ -20628,7 +20861,9 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": false
           },
@@ -20636,7 +20871,8 @@
             "name": "search",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 100
             },
             "required": false
           },
@@ -20644,9 +20880,9 @@
             "name": "cursor",
             "in": "query",
             "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
             },
             "required": false
           },
@@ -20679,7 +20915,7 @@
             "required": false
           },
           {
-            "name": "minLvl",
+            "name": "npcLevelMin",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -20689,7 +20925,7 @@
             "required": false
           },
           {
-            "name": "maxLvl",
+            "name": "npcLevelMax",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -20703,7 +20939,8 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["all", "24h", "3d", "7d", "14d", "30d"]
+              "enum": ["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"],
+              "default": "7d"
             },
             "required": false
           }
@@ -20814,9 +21051,12 @@
             "name": "limit",
             "in": "query",
             "schema": {
-              "type": "number"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
             },
-            "required": true
+            "required": false
           },
           {
             "name": "npcType",
@@ -20830,41 +21070,50 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
-            "required": true
+            "required": false
           },
           {
             "name": "search",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 100
             },
-            "required": true
+            "required": false
           },
           {
-            "name": "minLvl",
+            "name": "npcLevelMin",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 500
             },
-            "required": true
+            "required": false
           },
           {
-            "name": "maxLvl",
+            "name": "npcLevelMax",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 500
             },
-            "required": true
+            "required": false
           },
           {
             "name": "period",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": ["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"],
+              "default": "7d"
             },
-            "required": true
+            "required": false
           }
         ],
         "security": [
@@ -20990,17 +21239,22 @@
             "name": "limit",
             "in": "query",
             "schema": {
-              "type": "number"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 5
             },
-            "required": true
+            "required": false
           },
           {
             "name": "period",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": ["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"],
+              "default": "7d"
             },
-            "required": true
+            "required": false
           }
         ],
         "security": [
@@ -21137,7 +21391,8 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 100
+              "maximum": 100,
+              "default": 50
             },
             "required": false
           },
@@ -21145,7 +21400,9 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": false
           },
@@ -21154,7 +21411,8 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["all", "24h", "3d", "7d", "14d", "30d"]
+              "enum": ["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"],
+              "default": "7d"
             },
             "required": false
           }
@@ -21288,7 +21546,7 @@
             "required": true
           },
           {
-            "name": "minLvl",
+            "name": "npcLevelMin",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -21298,7 +21556,7 @@
             "required": false
           },
           {
-            "name": "maxLvl",
+            "name": "npcLevelMax",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -21311,7 +21569,9 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": false
           },
@@ -21331,6 +21591,7 @@
                   "EVENT_HERO",
                   "COLOSSUS",
                   "TITAN",
+                  "HERO_TRACKER",
                   "NPC"
                 ]
               }
@@ -21341,7 +21602,8 @@
             "name": "search",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 100
             },
             "required": false
           },
@@ -21359,9 +21621,9 @@
             "name": "cursor",
             "in": "query",
             "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
             },
             "required": false
           },
@@ -21370,7 +21632,8 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["all", "24h", "3d", "7d", "14d", "30d"]
+              "enum": ["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"],
+              "default": "7d"
             },
             "required": false
           }
@@ -21547,7 +21810,14 @@
             }
           },
           "404": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -21638,18 +21908,25 @@
             }
           },
           "403": {
-            "description": "<No Content>",
+            "description": "HttpErrorResponse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -21758,7 +22035,14 @@
             }
           },
           "409": {
-            "description": "<No Content>"
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "description": "Error",
@@ -23194,36 +23478,43 @@
           "message": {
             "type": "string"
           },
-          "issues": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "path": {
-                  "type": "array",
-                  "items": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "integer",
-                        "minimum": -9007199254740991,
-                        "maximum": 9007199254740991
+          "details": {
+            "type": "object",
+            "properties": {
+              "issues": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          }
+                        ]
                       }
-                    ]
-                  }
-                },
-                "message": {
-                  "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["path", "message"],
+                  "additionalProperties": false
                 }
-              },
-              "required": ["path", "message"],
-              "additionalProperties": false
-            }
+              }
+            },
+            "required": ["issues"],
+            "additionalProperties": false
           }
         },
-        "required": ["code", "message", "issues"],
+        "required": ["code", "message", "details"],
         "additionalProperties": false
       },
       "ReauthenticationRequiredEncoded": {
@@ -23406,14 +23697,17 @@
           "code": {
             "type": "string"
           },
-          "message": {}
-        },
-        "allOf": [
-          {
-            "type": "object",
-            "additionalProperties": {}
+          "message": {
+            "nullable": true,
+            "type": "string"
+          },
+          "details": {
+            "nullable": true,
+            "type": "object"
           }
-        ]
+        },
+        "required": ["code"],
+        "additionalProperties": false
       },
       "UpdateUserPreferencesDto": {
         "type": "object",
@@ -26727,6 +27021,23 @@
         "required": ["players"],
         "additionalProperties": false
       },
+      "LootPageResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LootResponseDto"
+            }
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": ["items", "nextCursor"],
+        "additionalProperties": false
+      },
       "LootResponseDto": {
         "type": "object",
         "properties": {
@@ -27016,21 +27327,7 @@
                   "type": "number"
                 },
                 "member": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "avatar": {
-                      "nullable": true,
-                      "type": "string"
-                    },
-                    "userId": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["name", "userId"],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/MemberSummary"
                 }
               },
               "required": ["guildId", "memberId", "lootId", "member"],
@@ -27056,6 +27353,26 @@
           "updatedAt",
           "commentsCount"
         ],
+        "additionalProperties": false
+      },
+      "MemberSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "avatar": {
+            "nullable": true,
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "name", "avatar", "userId"],
         "additionalProperties": false
       },
       "LootStatsResponseDto_Output": {
@@ -27622,21 +27939,7 @@
                   "type": "number"
                 },
                 "member": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "avatar": {
-                      "nullable": true,
-                      "type": "string"
-                    },
-                    "userId": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["name", "userId"],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/MemberSummary"
                 }
               },
               "required": ["guildId", "memberId", "lootId", "member"],
@@ -27982,6 +28285,9 @@
           "member": {
             "type": "object",
             "properties": {
+              "id": {
+                "type": "number"
+              },
               "name": {
                 "type": "string"
               },
@@ -28002,11 +28308,12 @@
                       "type": "number"
                     }
                   },
+                  "required": ["color"],
                   "additionalProperties": false
                 }
               }
             },
-            "required": ["name", "userId"],
+            "required": ["id", "name", "avatar", "userId", "roles"],
             "additionalProperties": false
           },
           "createdAt": {
@@ -28035,8 +28342,7 @@
         "type": "object",
         "properties": {
           "content": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           }
         },
         "required": ["content"],
@@ -28882,21 +29188,6 @@
           ],
           "additionalProperties": false
         }
-      },
-      "OrganizationWorkspaceErrorResponse": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          }
-        },
-        "required": ["code"],
-        "allOf": [
-          {
-            "type": "object",
-            "additionalProperties": {}
-          }
-        ]
       },
       "ReservationWindowResponseDto": {
         "type": "object",
@@ -32747,23 +33038,6 @@
         "required": ["notificationId", "guildIds"],
         "additionalProperties": false
       },
-      "NotificationRateLimitResponseDto": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "enum": ["NOTIFICATION_RATE_LIMITED"]
-          },
-          "retryAfterMs": {
-            "type": "integer",
-            "maximum": 9007199254740991,
-            "exclusiveMinimum": true,
-            "minimum": 0
-          }
-        },
-        "required": ["message", "retryAfterMs"],
-        "additionalProperties": false
-      },
       "CreateNotificationDto": {
         "type": "object",
         "properties": {
@@ -35052,7 +35326,9 @@
             "type": "string"
           },
           "world": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
           },
           "startsAt": {
             "type": "string",
@@ -35980,15 +36256,8 @@
                     "nullable": true,
                     "type": "object",
                     "properties": {
-                      "memberId": {
-                        "type": "number"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "avatar": {
-                        "nullable": true,
-                        "type": "string"
+                      "member": {
+                        "$ref": "#/components/schemas/MemberSummary"
                       },
                       "primaryValue": {
                         "type": "number"
@@ -35998,13 +36267,8 @@
                         "type": "number"
                       }
                     },
-                    "required": ["memberId", "name", "avatar", "primaryValue"],
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "additionalProperties": {}
-                      }
-                    ]
+                    "required": ["member", "primaryValue"],
+                    "additionalProperties": false
                   },
                   "candidateCount": {
                     "type": "number"
@@ -36023,15 +36287,8 @@
                     "nullable": true,
                     "type": "object",
                     "properties": {
-                      "memberId": {
-                        "type": "number"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "avatar": {
-                        "nullable": true,
-                        "type": "string"
+                      "member": {
+                        "$ref": "#/components/schemas/MemberSummary"
                       },
                       "primaryValue": {
                         "type": "number"
@@ -36041,13 +36298,8 @@
                         "type": "number"
                       }
                     },
-                    "required": ["memberId", "name", "avatar", "primaryValue"],
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "additionalProperties": {}
-                      }
-                    ]
+                    "required": ["member", "primaryValue"],
+                    "additionalProperties": false
                   },
                   "candidateCount": {
                     "type": "number"
@@ -36066,15 +36318,8 @@
                     "nullable": true,
                     "type": "object",
                     "properties": {
-                      "memberId": {
-                        "type": "number"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "avatar": {
-                        "nullable": true,
-                        "type": "string"
+                      "member": {
+                        "$ref": "#/components/schemas/MemberSummary"
                       },
                       "primaryValue": {
                         "type": "number"
@@ -36084,13 +36329,8 @@
                         "type": "number"
                       }
                     },
-                    "required": ["memberId", "name", "avatar", "primaryValue"],
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "additionalProperties": {}
-                      }
-                    ]
+                    "required": ["member", "primaryValue"],
+                    "additionalProperties": false
                   },
                   "candidateCount": {
                     "type": "number"
@@ -36109,15 +36349,8 @@
                     "nullable": true,
                     "type": "object",
                     "properties": {
-                      "memberId": {
-                        "type": "number"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "avatar": {
-                        "nullable": true,
-                        "type": "string"
+                      "member": {
+                        "$ref": "#/components/schemas/MemberSummary"
                       },
                       "primaryValue": {
                         "type": "number"
@@ -36127,13 +36360,8 @@
                         "type": "number"
                       }
                     },
-                    "required": ["memberId", "name", "avatar", "primaryValue"],
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "additionalProperties": {}
-                      }
-                    ]
+                    "required": ["member", "primaryValue"],
+                    "additionalProperties": false
                   },
                   "candidateCount": {
                     "type": "number"
@@ -36152,15 +36380,8 @@
                     "nullable": true,
                     "type": "object",
                     "properties": {
-                      "memberId": {
-                        "type": "number"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "avatar": {
-                        "nullable": true,
-                        "type": "string"
+                      "member": {
+                        "$ref": "#/components/schemas/MemberSummary"
                       },
                       "primaryValue": {
                         "type": "number"
@@ -36170,13 +36391,8 @@
                         "type": "number"
                       }
                     },
-                    "required": ["memberId", "name", "avatar", "primaryValue"],
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "additionalProperties": {}
-                      }
-                    ]
+                    "required": ["member", "primaryValue"],
+                    "additionalProperties": false
                   },
                   "candidateCount": {
                     "type": "number"
@@ -36195,15 +36411,8 @@
                     "nullable": true,
                     "type": "object",
                     "properties": {
-                      "memberId": {
-                        "type": "number"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "avatar": {
-                        "nullable": true,
-                        "type": "string"
+                      "member": {
+                        "$ref": "#/components/schemas/MemberSummary"
                       },
                       "primaryValue": {
                         "type": "number"
@@ -36213,13 +36422,8 @@
                         "type": "number"
                       }
                     },
-                    "required": ["memberId", "name", "avatar", "primaryValue"],
-                    "allOf": [
-                      {
-                        "type": "object",
-                        "additionalProperties": {}
-                      }
-                    ]
+                    "required": ["member", "primaryValue"],
+                    "additionalProperties": false
                   },
                   "candidateCount": {
                     "type": "number"
@@ -36412,15 +36616,8 @@
                       "nullable": true,
                       "type": "object",
                       "properties": {
-                        "memberId": {
-                          "type": "number"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "avatar": {
-                          "nullable": true,
-                          "type": "string"
+                        "member": {
+                          "$ref": "#/components/schemas/MemberSummary"
                         },
                         "primaryValue": {
                           "type": "number"
@@ -36430,18 +36627,8 @@
                           "type": "number"
                         }
                       },
-                      "required": [
-                        "memberId",
-                        "name",
-                        "avatar",
-                        "primaryValue"
-                      ],
-                      "allOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": {}
-                        }
-                      ]
+                      "required": ["member", "primaryValue"],
+                      "additionalProperties": false
                     },
                     "candidateCount": {
                       "type": "number"
@@ -37142,6 +37329,13 @@
               "name": {
                 "type": "string"
               },
+              "avatar": {
+                "nullable": true,
+                "type": "string"
+              },
+              "userId": {
+                "type": "string"
+              },
               "roles": {
                 "type": "array",
                 "items": {
@@ -37160,7 +37354,7 @@
                 }
               }
             },
-            "required": ["id", "name", "roles"],
+            "required": ["id", "name", "avatar", "userId", "roles"],
             "additionalProperties": false
           },
           "editHistory": {
@@ -37339,7 +37533,7 @@
             "type": "string",
             "enum": ["event"]
           },
-          "data": {
+          "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/KillHistoryEntry"
@@ -37350,7 +37544,7 @@
             "type": "string"
           }
         },
-        "required": ["kind", "data", "nextCursor"],
+        "required": ["kind", "items", "nextCursor"],
         "additionalProperties": false
       },
       "KillHistoryEntry": {
@@ -37439,28 +37633,9 @@
             "enum": ["member"]
           },
           "member": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "name": {
-                "type": "string"
-              },
-              "avatar": {
-                "nullable": true,
-                "type": "string"
-              },
-              "userId": {
-                "type": "string"
-              }
-            },
-            "required": ["id", "name", "avatar", "userId"],
-            "additionalProperties": false
+            "$ref": "#/components/schemas/MemberSummary"
           },
-          "data": {
+          "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/KillHistoryMemberEntry"
@@ -37471,7 +37646,7 @@
             "type": "string"
           }
         },
-        "required": ["kind", "member", "data", "nextCursor"],
+        "required": ["kind", "member", "items", "nextCursor"],
         "additionalProperties": false
       },
       "KillHistoryMemberEntry": {
@@ -37713,29 +37888,7 @@
               },
               "timerCreatedBy": {
                 "nullable": true,
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "number"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "avatar": {
-                    "nullable": true,
-                    "type": "string"
-                  },
-                  "userId": {
-                    "type": "string"
-                  }
-                },
-                "required": ["id", "name", "avatar", "userId"],
-                "allOf": [
-                  {
-                    "type": "object",
-                    "additionalProperties": {}
-                  }
-                ]
+                "$ref": "#/components/schemas/MemberSummary"
               },
               "points": {
                 "type": "array",
@@ -37969,18 +38122,8 @@
             "items": {
               "type": "object",
               "properties": {
-                "memberId": {
-                  "type": "number"
-                },
-                "memberName": {
-                  "type": "string"
-                },
-                "memberAvatar": {
-                  "nullable": true,
-                  "type": "string"
-                },
-                "memberUserId": {
-                  "type": "string"
+                "member": {
+                  "$ref": "#/components/schemas/MemberSummary"
                 },
                 "assignedAt": {
                   "type": "string",
@@ -37994,14 +38137,7 @@
                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                 }
               },
-              "required": [
-                "memberId",
-                "memberName",
-                "memberAvatar",
-                "memberUserId",
-                "assignedAt",
-                "unassignedAt"
-              ],
+              "required": ["member", "assignedAt", "unassignedAt"],
               "additionalProperties": false
             }
           },
@@ -38213,15 +38349,8 @@
             "items": {
               "type": "object",
               "properties": {
-                "memberId": {
-                  "type": "number"
-                },
-                "memberName": {
-                  "type": "string"
-                },
-                "memberAvatar": {
-                  "nullable": true,
-                  "type": "string"
+                "member": {
+                  "$ref": "#/components/schemas/MemberSummary"
                 },
                 "totalTimeSeconds": {
                   "type": "number"
@@ -38234,9 +38363,7 @@
                 }
               },
               "required": [
-                "memberId",
-                "memberName",
-                "memberAvatar",
+                "member",
                 "totalTimeSeconds",
                 "afkTimeSeconds",
                 "afkPercentage"
@@ -38688,18 +38815,8 @@
             "items": {
               "type": "object",
               "properties": {
-                "memberId": {
-                  "type": "number"
-                },
-                "memberName": {
-                  "type": "string"
-                },
-                "memberAvatar": {
-                  "nullable": true,
-                  "type": "string"
-                },
-                "memberUserId": {
-                  "type": "string"
+                "member": {
+                  "$ref": "#/components/schemas/MemberSummary"
                 },
                 "totalParticipations": {
                   "type": "number"
@@ -38739,10 +38856,7 @@
                 }
               },
               "required": [
-                "memberId",
-                "memberName",
-                "memberAvatar",
-                "memberUserId",
+                "member",
                 "totalParticipations",
                 "participationsByType"
               ],
@@ -38801,6 +38915,21 @@
         },
         "required": ["overview", "memberRanking", "timeline", "hourlyWeekday"],
         "additionalProperties": false
+      },
+      "NpcType": {
+        "type": "string",
+        "enum": [
+          "COMMON",
+          "ELITE",
+          "ELITE2",
+          "ELITE3",
+          "HERO",
+          "EVENT_HERO",
+          "COLOSSUS",
+          "TITAN",
+          "HERO_TRACKER",
+          "NPC"
+        ]
       },
       "UserKillStatsResponseDto_Output": {
         "type": "object",
@@ -38897,21 +39026,6 @@
         },
         "required": ["overview", "topNpcs"],
         "additionalProperties": false
-      },
-      "NpcType": {
-        "type": "string",
-        "enum": [
-          "COMMON",
-          "ELITE",
-          "ELITE2",
-          "ELITE3",
-          "HERO",
-          "EVENT_HERO",
-          "COLOSSUS",
-          "TITAN",
-          "HERO_TRACKER",
-          "NPC"
-        ]
       },
       "UserKillAnalyticsResponseDto_Output": {
         "type": "object",
@@ -39519,7 +39633,7 @@
       "UserNpcKillsResponseDto_Output": {
         "type": "object",
         "properties": {
-          "npcs": {
+          "items": {
             "type": "array",
             "items": {
               "type": "object",
@@ -39560,27 +39674,15 @@
               "additionalProperties": false
             }
           },
-          "pagination": {
-            "type": "object",
-            "properties": {
-              "total": {
-                "type": "number"
-              },
-              "cursor": {
-                "type": "number"
-              },
-              "limit": {
-                "type": "number"
-              },
-              "hasNext": {
-                "type": "boolean"
-              }
-            },
-            "required": ["total", "cursor", "limit", "hasNext"],
-            "additionalProperties": false
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
           }
         },
-        "required": ["npcs", "pagination"],
+        "required": ["items", "nextCursor", "total"],
         "additionalProperties": false
       },
       "GuildTopNpcsResponseDto_Output": {
@@ -39634,30 +39736,14 @@
             "items": {
               "type": "object",
               "properties": {
-                "memberId": {
-                  "type": "number"
-                },
-                "memberName": {
-                  "type": "string"
-                },
-                "memberAvatar": {
-                  "nullable": true,
-                  "type": "string"
-                },
-                "memberUserId": {
-                  "type": "string"
+                "member": {
+                  "$ref": "#/components/schemas/MemberSummary"
                 },
                 "totalParticipations": {
                   "type": "number"
                 }
               },
-              "required": [
-                "memberId",
-                "memberName",
-                "memberAvatar",
-                "memberUserId",
-                "totalParticipations"
-              ],
+              "required": ["member", "totalParticipations"],
               "additionalProperties": false
             }
           },
@@ -39666,30 +39752,14 @@
             "items": {
               "type": "object",
               "properties": {
-                "memberId": {
-                  "type": "number"
-                },
-                "memberName": {
-                  "type": "string"
-                },
-                "memberAvatar": {
-                  "nullable": true,
-                  "type": "string"
-                },
-                "memberUserId": {
-                  "type": "string"
+                "member": {
+                  "$ref": "#/components/schemas/MemberSummary"
                 },
                 "totalParticipations": {
                   "type": "number"
                 }
               },
-              "required": [
-                "memberId",
-                "memberName",
-                "memberAvatar",
-                "memberUserId",
-                "totalParticipations"
-              ],
+              "required": ["member", "totalParticipations"],
               "additionalProperties": false
             }
           },
@@ -39698,30 +39768,14 @@
             "items": {
               "type": "object",
               "properties": {
-                "memberId": {
-                  "type": "number"
-                },
-                "memberName": {
-                  "type": "string"
-                },
-                "memberAvatar": {
-                  "nullable": true,
-                  "type": "string"
-                },
-                "memberUserId": {
-                  "type": "string"
+                "member": {
+                  "$ref": "#/components/schemas/MemberSummary"
                 },
                 "totalParticipations": {
                   "type": "number"
                 }
               },
-              "required": [
-                "memberId",
-                "memberName",
-                "memberAvatar",
-                "memberUserId",
-                "totalParticipations"
-              ],
+              "required": ["member", "totalParticipations"],
               "additionalProperties": false
             }
           }
@@ -39784,30 +39838,14 @@
             "items": {
               "type": "object",
               "properties": {
-                "memberId": {
-                  "type": "number"
-                },
-                "memberName": {
-                  "type": "string"
-                },
-                "memberAvatar": {
-                  "nullable": true,
-                  "type": "string"
-                },
-                "memberUserId": {
-                  "type": "string"
+                "member": {
+                  "$ref": "#/components/schemas/MemberSummary"
                 },
                 "participationCount": {
                   "type": "number"
                 }
               },
-              "required": [
-                "memberId",
-                "memberName",
-                "memberAvatar",
-                "memberUserId",
-                "participationCount"
-              ],
+              "required": ["member", "participationCount"],
               "additionalProperties": false
             }
           }
@@ -39820,34 +39858,7 @@
         "properties": {
           "member": {
             "nullable": true,
-            "type": "object",
-            "properties": {
-              "memberId": {
-                "type": "number"
-              },
-              "memberName": {
-                "type": "string"
-              },
-              "memberAvatar": {
-                "nullable": true,
-                "type": "string"
-              },
-              "memberUserId": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "memberId",
-              "memberName",
-              "memberAvatar",
-              "memberUserId"
-            ],
-            "allOf": [
-              {
-                "type": "object",
-                "additionalProperties": {}
-              }
-            ]
+            "$ref": "#/components/schemas/MemberSummary"
           },
           "overview": {
             "nullable": true,
@@ -39912,33 +39923,15 @@
               "additionalProperties": false
             }
           },
-          "pagination": {
+          "total": {
+            "type": "number"
+          },
+          "nextCursor": {
             "nullable": true,
-            "type": "object",
-            "properties": {
-              "total": {
-                "type": "number"
-              },
-              "cursor": {
-                "type": "number"
-              },
-              "limit": {
-                "type": "number"
-              },
-              "hasNext": {
-                "type": "boolean"
-              }
-            },
-            "required": ["total", "cursor", "limit", "hasNext"],
-            "allOf": [
-              {
-                "type": "object",
-                "additionalProperties": {}
-              }
-            ]
+            "type": "string"
           }
         },
-        "required": ["member", "overview", "npcs", "pagination"],
+        "required": ["member", "overview", "npcs", "total", "nextCursor"],
         "additionalProperties": false
       },
       "GuildDocumentListResponseDto": {

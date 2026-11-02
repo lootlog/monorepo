@@ -1,3 +1,4 @@
+import { Predicate } from "effect";
 import { isObjectRecord as isObject } from "@lootlog/schema/records";
 
 const API_SERVICES = [
@@ -638,12 +639,41 @@ export const isApiError = (error: unknown): error is ApiError<unknown> => {
 /** Read a raw API error field without normalizing display text or array messages. */
 export const getApiErrorStringField = (
   cause: unknown,
-  field: "message" | "code" | "notificationId",
+  field: "message" | "code",
 ): string | undefined => {
   if (!isApiError(cause) || !isObject(cause.data)) return undefined;
   const value = cause.data[field];
 
   return typeof value === "string" ? value : undefined;
+};
+
+const getApiErrorDetail = (cause: unknown, key: string) => {
+  if (!isApiError(cause) || !isObject(cause.data)) return undefined;
+  const details = cause.data.details;
+
+  return isObject(details) ? details[key] : undefined;
+};
+
+/** Read a string from an API error's `details`, the reason's parameters. */
+export const getApiErrorStringDetail = (
+  cause: unknown,
+  key: string,
+): string | undefined => {
+  const value = getApiErrorDetail(cause, key);
+
+  return Predicate.isString(value) ? value : undefined;
+};
+
+/** Read a finite number from an API error's `details`. */
+export const getApiErrorNumberDetail = (
+  cause: unknown,
+  key: string,
+): number | undefined => {
+  const value = getApiErrorDetail(cause, key);
+
+  return Predicate.isNumber(value) && Number.isFinite(value)
+    ? value
+    : undefined;
 };
 
 export const getApiErrorStatus = (error: unknown) => {

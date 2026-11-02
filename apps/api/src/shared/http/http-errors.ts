@@ -1,12 +1,9 @@
-import { Schema } from "effect";
+import { Predicate, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-
-const ApplicationErrorBody = Schema.Union([
-  Schema.String,
-  Schema.Record(Schema.String, Schema.Unknown),
-]);
-
-type ApplicationErrorBody = typeof ApplicationErrorBody.Type;
+import {
+  HttpErrorResponse,
+  type JsonValue,
+} from "#src/http-api/contracts/shared";
 
 export const HttpStatus = {
   BAD_REQUEST: 400,
@@ -39,121 +36,128 @@ export const ApplicationErrorKind = {
 export type ApplicationErrorKind =
   (typeof ApplicationErrorKind)[keyof typeof ApplicationErrorKind];
 
-const defaultBody = (status: number): ApplicationErrorBody => ({
-  statusCode: status,
-});
-
-const errorMessage = (
-  response: ApplicationErrorBody,
-  fallback: string,
-): string => {
-  if (typeof response === "string") return response;
-
-  if (typeof response.message === "string") return response.message;
-
-  return fallback;
-};
+/**
+ * What a handler may put in an HTTP error body. A plain string is a
+ * human-readable `message`; machine-readable reasons go in `code`.
+ */
+export type ApplicationErrorInput =
+  | string
+  | {
+      readonly code?: string;
+      readonly message?: string;
+      readonly details?: Readonly<Record<string, JsonValue>>;
+      /** Sent as the `Retry-After` header, rounded up to whole seconds. */
+      readonly retryAfterMs?: number;
+    };
 
 export class ApplicationError extends TaggedErrorClass<ApplicationError>()(
   "ApplicationError",
   {
     kind: Schema.Literals(Object.values(ApplicationErrorKind)),
     message: Schema.String,
-    response: ApplicationErrorBody,
+    body: HttpErrorResponse,
+    retryAfterMs: Schema.optional(Schema.Number),
   },
 ) {
   constructor(
     kind: ApplicationErrorKind,
-    response: ApplicationErrorBody,
+    input: ApplicationErrorInput,
+    defaultCode: string,
     fallbackMessage: string,
   ) {
+    const fields = Predicate.isString(input) ? { message: input } : input;
+
+    const hasDetails =
+      fields.details !== undefined && Object.keys(fields.details).length > 0;
+
     super({
       kind,
-      response,
-      message: errorMessage(response, fallbackMessage),
+      body: {
+        code: fields.code ?? defaultCode,
+        message: fields.message,
+        details: hasDetails ? fields.details : undefined,
+      },
+      message: fields.message ?? fields.code ?? fallbackMessage,
+      retryAfterMs: fields.retryAfterMs,
     });
-  }
-
-  getResponse(): ApplicationErrorBody {
-    return this.response;
   }
 }
 
 const makeApplicationError = (
   kind: ApplicationErrorKind,
+  defaultCode: string,
   fallbackMessage: string,
-  defaultStatus: number,
 ) =>
   class extends ApplicationError {
-    constructor(response: ApplicationErrorBody = defaultBody(defaultStatus)) {
-      super(kind, response, fallbackMessage);
+    constructor(input: ApplicationErrorInput = {}) {
+      super(kind, input, defaultCode, fallbackMessage);
     }
   };
 
 export class InvalidRequestError extends makeApplicationError(
   ApplicationErrorKind.INVALID_REQUEST,
+  "INVALID_REQUEST",
   "Invalid request",
-  HttpStatus.BAD_REQUEST,
 ) {}
 
 export class AuthenticationRequiredError extends makeApplicationError(
   ApplicationErrorKind.AUTHENTICATION_REQUIRED,
+  "AUTHENTICATION_REQUIRED",
   "Authentication required",
-  HttpStatus.UNAUTHORIZED,
 ) {}
 
 export class PermissionDeniedError extends makeApplicationError(
   ApplicationErrorKind.FORBIDDEN,
+  "FORBIDDEN",
   "Permission denied",
-  HttpStatus.FORBIDDEN,
 ) {}
 
 export class ResourceNotFoundError extends makeApplicationError(
   ApplicationErrorKind.NOT_FOUND,
+  "NOT_FOUND",
   "Resource not found",
-  HttpStatus.NOT_FOUND,
 ) {}
 
 export class ResourceConflictError extends makeApplicationError(
   ApplicationErrorKind.CONFLICT,
+  "CONFLICT",
   "Resource conflict",
-  HttpStatus.CONFLICT,
 ) {}
 
 export class ResourceGoneError extends makeApplicationError(
   ApplicationErrorKind.GONE,
+  "GONE",
   "Resource is gone",
-  HttpStatus.GONE,
 ) {}
 
 export class InvalidEntityError extends makeApplicationError(
   ApplicationErrorKind.INVALID_ENTITY,
+  "INVALID_ENTITY",
   "Invalid entity",
-  HttpStatus.UNPROCESSABLE_ENTITY,
 ) {}
 
 export class RequestTimeoutError extends makeApplicationError(
   ApplicationErrorKind.TIMEOUT,
+  "TIMEOUT",
   "Request timed out",
-  HttpStatus.REQUEST_TIMEOUT,
 ) {}
 
 export class RateLimitedError extends makeApplicationError(
   ApplicationErrorKind.RATE_LIMITED,
+  "RATE_LIMITED",
   "Request rate limited",
-  HttpStatus.TOO_MANY_REQUESTS,
 ) {}
 
 export class DependencyUnavailableError extends makeApplicationError(
   ApplicationErrorKind.DEPENDENCY_UNAVAILABLE,
+  "SERVICE_UNAVAILABLE",
   "Dependency unavailable",
-  HttpStatus.SERVICE_UNAVAILABLE,
 ) {}
 
 export class UnexpectedApplicationError extends makeApplicationError(
   ApplicationErrorKind.INTERNAL,
+  "INTERNAL",
   "Unexpected application error",
-  HttpStatus.INTERNAL_SERVER_ERROR,
 ) {}
 
 export const applicationErrorStatus = (error: ApplicationError): number => {

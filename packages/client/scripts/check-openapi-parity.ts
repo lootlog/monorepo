@@ -11,7 +11,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parse } from "yaml";
 
-const BASELINE_SHA = "633f8f0157cca04ef2b609ba0e2f1903b1c28949";
+export const BASELINE_SHA = "633f8f0157cca04ef2b609ba0e2f1903b1c28949";
 
 // Optional reader filters for the Web dashboard feed; omitted filters keep the
 // previous response, so API key callers are unaffected.
@@ -27,7 +27,7 @@ const USER_KILL_WORLD_PARAMETER = {
   name: "world",
   in: "query",
   required: false,
-  schema: { type: "string", minLength: 1, maxLength: 100 },
+  schema: { type: "string", minLength: 1, maxLength: 64 },
 } as const;
 
 const USER_KILL_CHARACTER_PARAMETER = {
@@ -63,6 +63,15 @@ const USER_FEED_PARAMETERS: JsonValue[] = [
     required: false,
   },
 ];
+
+// Every main API 4xx/5xx body is HttpErrorResponse; see the API's errors guide.
+const HTTP_ERROR_RESPONSE: JsonValue = {
+  content: {
+    "application/json": {
+      schema: { $ref: "#/components/schemas/HttpErrorResponse" },
+    },
+  },
+};
 
 const HTTP_METHODS = new Set([
   "delete",
@@ -652,7 +661,7 @@ const assertErrorResponse = (
   operation: JsonValue,
   operationKey: string,
   status: string,
-  schemaName = "OrganizationWorkspaceErrorResponse",
+  schemaName = "HttpErrorResponse",
   schema: JsonValue = { $ref: `#/components/schemas/${schemaName}` },
 ): void => {
   const responses = isJsonObject(operation)
@@ -1019,13 +1028,21 @@ const normalizeTimerNpcSearchQuery = (
     TIMER_NPC_SEARCH_ID_PARAMETERS.some((name) => parameter.name === name),
   );
 
+  // SearchText and WorldParam: verified by the timer search data-layer and
+  // HttpApi contract refinement tests.
   const expectedChangedParameters: JsonValue[] = [
-    ...["search", "world"].map((name) => ({
-      name,
+    {
+      name: "search",
       in: "query",
       required: false,
-      schema: { type: "string", minLength: 1 },
-    })),
+      schema: { type: "string", maxLength: 100 },
+    },
+    {
+      name: "world",
+      in: "query",
+      required: false,
+      schema: { type: "string", minLength: 1, maxLength: 64 },
+    },
     ...TIMER_NPC_SEARCH_ID_PARAMETERS.map((name) => ({
       name,
       in: "query",
@@ -1229,7 +1246,85 @@ export const normalizeAllowedChanges = (
     normalized = withoutEmptySecurity;
   }
 
-  return normalizeOpenApiRepresentation(normalized);
+  return normalizeHttpContractConsistency(
+    service,
+    operationKey,
+    normalizeOpenApiRepresentation(normalized),
+  );
+};
+
+type ConsistencyMigration = {
+  readonly parameters?: {
+    readonly current: JsonValue;
+    readonly baseline: JsonValue;
+  };
+  readonly responses?: Readonly<
+    Record<
+      string,
+      { readonly current: JsonValue; readonly baseline: JsonValue }
+    >
+  >;
+};
+
+// The one error body, filter scalars and page shape across the main API.
+// Each entry pins the exact current value and the baseline it replaced;
+// verified by schema-error-response.test.ts, http-contract-refinements.test.ts
+// and the domain tests named in the commit that introduced it.
+const HTTP_CONTRACT_CONSISTENCY_MIGRATIONS: Readonly<
+  Record<string, ConsistencyMigration>
+> = JSON.parse(
+  readFileSync(
+    new URL("./http-contract-consistency-migrations.json", import.meta.url),
+    "utf8",
+  ),
+);
+
+const normalizeHttpContractConsistency = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  const migration =
+    service === "api"
+      ? HTTP_CONTRACT_CONSISTENCY_MIGRATIONS[operationKey]
+      : undefined;
+
+  if (!migration || !isJsonObject(operation)) return operation;
+
+  const pinned = (
+    label: string,
+    actual: JsonValue | undefined,
+    expected: JsonValue,
+  ) => {
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+      throw new Error(`${operationKey} ${label} changed after migration`);
+    }
+  };
+
+  if (migration.parameters) {
+    pinned("parameters", operation["parameters"], migration.parameters.current);
+  }
+
+  const responses = operation["responses"];
+
+  const migratedResponses: JsonValue = isJsonObject(responses)
+    ? Object.fromEntries(
+        Object.entries(responses).map(([status, response]) => {
+          const responseMigration = migration.responses?.[status];
+
+          if (!responseMigration) return [status, response];
+          pinned(status, response, responseMigration.current);
+
+          return [status, responseMigration.baseline];
+        }),
+      )
+    : (responses ?? {});
+
+  const migrated = { ...operation, responses: migratedResponses };
+
+  return migration.parameters
+    ? { ...migrated, parameters: migration.parameters.baseline }
+    : migrated;
 };
 
 const differencePaths = (
@@ -1298,7 +1393,7 @@ const KILL_HISTORY_ADDITION: JsonValue = {
       name: "cursor",
       in: "query",
       required: false,
-      schema: { type: "string", minLength: 1, maxLength: 4096 },
+      schema: { type: "string", minLength: 1, maxLength: 512 },
     },
     {
       name: "heroId",
@@ -1310,13 +1405,13 @@ const KILL_HISTORY_ADDITION: JsonValue = {
       name: "limit",
       in: "query",
       required: false,
-      schema: { type: "string", pattern: "^(?:[1-9]\\d?|100)$" },
+      schema: { type: "integer", minimum: 1, maximum: 100, default: 20 },
     },
     {
       name: "memberId",
       in: "query",
       required: false,
-      schema: { type: "string", pattern: "^[1-9]\\d*$" },
+      schema: { type: "integer", minimum: 1, maximum: 2147483647 },
     },
   ],
   security: [{ bearer: [] }],
@@ -1881,9 +1976,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
               },
             },
           },
-          "404": {
-            description: "<No Content>",
-          },
+          "404": HTTP_ERROR_RESPONSE,
         },
         description: "Retrieve one of the user's own themes",
       },
@@ -1915,9 +2008,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
               },
             },
           },
-          "404": {
-            description: "<No Content>",
-          },
+          "404": HTTP_ERROR_RESPONSE,
         },
         description: "Rename or change one of the user's themes",
         requestBody: {
@@ -1959,9 +2050,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
               },
             },
           },
-          "404": {
-            description: "<No Content>",
-          },
+          "404": HTTP_ERROR_RESPONSE,
         },
         description:
           "Delete one of the user's themes; a user who had it selected falls back to its base theme",
@@ -1994,9 +2083,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
               },
             },
           },
-          "404": {
-            description: "<No Content>",
-          },
+          "404": HTTP_ERROR_RESPONSE,
         },
         description:
           "Create a share link token for the theme, or return the existing one",
@@ -2029,9 +2116,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
               },
             },
           },
-          "404": {
-            description: "<No Content>",
-          },
+          "404": HTTP_ERROR_RESPONSE,
         },
         description: "Revoke the theme's share link so it no longer resolves",
       },
@@ -2091,6 +2176,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           },
         ],
         responses: {
+          "403": HTTP_ERROR_RESPONSE,
           "200": {
             description: "OwnCharacterAuraResponseDto",
             content: {
@@ -2133,6 +2219,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           },
         ],
         responses: {
+          "403": HTTP_ERROR_RESPONSE,
           "200": {
             description: "OwnCharacterAuraResponseDto",
             content: {
@@ -2172,9 +2259,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
               },
             },
           },
-          "404": {
-            description: "<No Content>",
-          },
+          "404": HTTP_ERROR_RESPONSE,
         },
         description:
           "Read a theme shared by link; the response names no author",
@@ -2348,6 +2433,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           },
         ],
         responses: {
+          "403": HTTP_ERROR_RESPONSE,
           "200": {
             description: "GlobalChatWorldsResponse",
             content: {
@@ -2381,6 +2467,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           },
         ],
         responses: {
+          "403": HTTP_ERROR_RESPONSE,
           "200": {
             description: "GlobalChatMessagesResponse",
             content: {
@@ -2391,9 +2478,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
               },
             },
           },
-          "404": {
-            description: "<No Content>",
-          },
+          "404": HTTP_ERROR_RESPONSE,
         },
       },
       "POST /global-chat/messages": {
@@ -2417,6 +2502,8 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           required: true,
         },
         responses: {
+          "429": HTTP_ERROR_RESPONSE,
+          "403": HTTP_ERROR_RESPONSE,
           "201": {
             description: "GlobalChatMessageResponse",
             content: {
@@ -2427,9 +2514,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
               },
             },
           },
-          "404": {
-            description: "<No Content>",
-          },
+          "404": HTTP_ERROR_RESPONSE,
         },
       },
       "DELETE /global-chat/messages/{messageId}": {
@@ -2454,12 +2539,11 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           },
         ],
         responses: {
+          "403": HTTP_ERROR_RESPONSE,
           "204": {
             description: "<No Content>",
           },
-          "404": {
-            description: "<No Content>",
-          },
+          "404": HTTP_ERROR_RESPONSE,
         },
       },
       "PUT /global-chat/pinned-message": {
@@ -2483,6 +2567,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           required: true,
         },
         responses: {
+          "403": HTTP_ERROR_RESPONSE,
           "200": {
             description: "GlobalChatMessageResponse",
             content: {
@@ -2493,9 +2578,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
               },
             },
           },
-          "404": {
-            description: "<No Content>",
-          },
+          "404": HTTP_ERROR_RESPONSE,
         },
       },
       "DELETE /global-chat/pinned-message": {
@@ -2509,12 +2592,11 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           },
         ],
         responses: {
+          "403": HTTP_ERROR_RESPONSE,
           "204": {
             description: "<No Content>",
           },
-          "404": {
-            description: "<No Content>",
-          },
+          "404": HTTP_ERROR_RESPONSE,
         },
       },
       "GET /global-chat/mutes": {
@@ -2528,6 +2610,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           },
         ],
         responses: {
+          "403": HTTP_ERROR_RESPONSE,
           "200": {
             description: "GlobalChatMutesResponse",
             content: {
@@ -2561,6 +2644,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           required: true,
         },
         responses: {
+          "403": HTTP_ERROR_RESPONSE,
           "201": {
             description: "GlobalChatMuteResponse",
             content: {
@@ -2571,9 +2655,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
               },
             },
           },
-          "404": {
-            description: "<No Content>",
-          },
+          "404": HTTP_ERROR_RESPONSE,
         },
       },
       "DELETE /global-chat/mutes/{muteId}": {
@@ -2596,12 +2678,11 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           },
         ],
         responses: {
+          "403": HTTP_ERROR_RESPONSE,
           "204": {
             description: "<No Content>",
           },
-          "404": {
-            description: "<No Content>",
-          },
+          "404": HTTP_ERROR_RESPONSE,
         },
       },
       "DELETE /global-chat/messages/{messageId}/sender-mute": {
@@ -2619,8 +2700,9 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
         ],
         security: [{ bearer: [] }],
         responses: {
+          "403": HTTP_ERROR_RESPONSE,
           "204": { description: "<No Content>" },
-          "404": { description: "<No Content>" },
+          "404": HTTP_ERROR_RESPONSE,
         },
       },
       "GET /users/@me/stats/loots": {

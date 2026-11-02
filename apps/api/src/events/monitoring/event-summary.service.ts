@@ -1,4 +1,3 @@
-import { keysetNextCursor, takeKeysetPage } from "#src/shared/keyset-page";
 import { Logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import type { eventMapCoverageGapTable } from "#src/database/drizzle/schema";
@@ -252,31 +251,6 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
           deletedGaps: deleted.deletedGaps,
         });
       }).pipe(Effect.withSpan("events.summary.createWindow"));
-    },
-
-    getHeroWindowSummaries(
-      guildId: string,
-      eventId: string,
-      heroNpcId: string,
-      limit = 20,
-      cursor?: string,
-    ) {
-      return Effect.gen(function* () {
-        if (!(yield* repository.heroExists(guildId, eventId, heroNpcId))) {
-          return { data: [], nextCursor: null };
-        }
-
-        const summaries = yield* repository.findSummaries(
-          heroNpcId,
-          limit,
-          cursor,
-        );
-
-        const { rows: data, hasMore } = takeKeysetPage(summaries, limit);
-        const nextCursor = keysetNextCursor(data, hasMore);
-
-        return { data, nextCursor };
-      }).pipe(Effect.withSpan("events.summary.getHeroWindows"));
     },
   };
 };

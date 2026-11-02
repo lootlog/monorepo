@@ -107,14 +107,12 @@ describe("slash commands", () => {
             overview: { guildUniqueKills: 3 },
             memberRanking: [
               {
-                memberName: "Aria",
-                memberUserId: "discord-2",
+                member: { name: "Aria", userId: "discord-2" },
                 totalParticipations: 2,
                 participationsByType: { ELITE2: 2 },
               },
               {
-                memberName: "Borys",
-                memberUserId: "discord-3",
+                member: { name: "Borys", userId: "discord-3" },
                 totalParticipations: 1,
                 participationsByType: { ELITE2: 1 },
               },
@@ -145,8 +143,10 @@ describe("slash commands", () => {
 
   it("adds the invoker below the top of the ranking with their real position", async () => {
     const memberRanking = Array.from({ length: 20 }, (_, index) => ({
-      memberName: index === 17 ? "Invoker" : `Member ${index + 1}`,
-      memberUserId: index === 17 ? discordId : `discord-other-${index}`,
+      member: {
+        name: index === 17 ? "Invoker" : `Member ${index + 1}`,
+        userId: index === 17 ? discordId : `discord-other-${index}`,
+      },
       totalParticipations: 20 - index,
       participationsByType: {},
     }));
@@ -174,8 +174,10 @@ describe("slash commands", () => {
   it("does not claim the invoker never killed an NPC when the killers page is cut", async () => {
     const killers = (count: number) =>
       Array.from({ length: count }, (_, index) => ({
-        memberName: `Member ${index + 1}`,
-        memberUserId: `discord-other-${index}`,
+        member: {
+          name: `Member ${index + 1}`,
+          userId: `discord-other-${index}`,
+        },
         participationCount: 1,
       }));
 
@@ -287,8 +289,7 @@ describe("slash commands", () => {
             overview: { guildUniqueKills: 1 },
             memberRanking: [
               {
-                memberName: "Aria",
-                memberUserId: "discord-2",
+                member: { name: "Aria", userId: "discord-2" },
                 totalParticipations: 1,
                 participationsByType: { HERO: 1 },
               },

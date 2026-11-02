@@ -26,9 +26,15 @@ export const buildKillQueryCacheKey = <Params extends object>(
   params: Params,
 ) => `kill-stats:${scope}:${ownerId}:${stableJsonCacheKey(params)}`;
 
-export const buildNpcLevelFilter = (minLvl?: number, maxLvl?: number) => {
-  const normalizedMin = minLvl && minLvl > 0 ? minLvl : undefined;
-  const normalizedMax = maxLvl && maxLvl > 0 ? maxLvl : undefined;
+export const buildNpcLevelFilter = (
+  npcLevelMin?: number,
+  npcLevelMax?: number,
+) => {
+  const normalizedMin =
+    npcLevelMin && npcLevelMin > 0 ? npcLevelMin : undefined;
+
+  const normalizedMax =
+    npcLevelMax && npcLevelMax > 0 ? npcLevelMax : undefined;
 
   return normalizedMin === undefined && normalizedMax === undefined
     ? {}

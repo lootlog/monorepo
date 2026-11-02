@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   GlobalChatChannelQuery,
   GlobalChatMessageParams,
@@ -21,9 +21,9 @@ import {
   SendGlobalChatMessageRequest,
 } from "#src/contracts/global-chat/schemas";
 
-const forbidden = HttpApiSchema.Empty(403);
+const forbidden = HttpErrorResponse.pipe(HttpApiSchema.status(403));
 
-const notFound = HttpApiSchema.Empty(404);
+const notFound = HttpErrorResponse.pipe(HttpApiSchema.status(404));
 
 export class GlobalChatGroup extends HttpApiGroup.make("globalChat")
   .add(
@@ -61,7 +61,11 @@ export class GlobalChatGroup extends HttpApiGroup.make("globalChat")
       {
         payload: SendGlobalChatMessageRequest,
         success: GlobalChatMessageResponse.pipe(HttpApiSchema.status(201)),
-        error: [forbidden, notFound, HttpApiSchema.Empty(429)],
+        error: [
+          forbidden,
+          notFound,
+          HttpErrorResponse.pipe(HttpApiSchema.status(429)),
+        ],
       },
     )
       .middleware(BearerSecurityMiddleware)

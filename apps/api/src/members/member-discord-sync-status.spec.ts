@@ -41,16 +41,8 @@ describe("member-discord-sync-status", () => {
     expect(
       getTransientMemberSyncStatus(
         new DependencyUnavailableError({
-          message: MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE,
+          code: MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE,
         }),
-      ),
-    ).toBe(MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE);
-
-    expect(
-      getTransientMemberSyncStatus(
-        new DependencyUnavailableError(
-          MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE,
-        ),
       ),
     ).toBe(MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE);
 

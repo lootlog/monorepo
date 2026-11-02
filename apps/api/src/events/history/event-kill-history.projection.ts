@@ -302,10 +302,12 @@ export const makeEventKillHistoryProjection = (
         mapName: map.mapName,
         numericMapId: map.mapId,
         assignments: mapAssignments.map((assignment) => ({
-          memberId: assignment.memberId,
-          memberName: assignment.member.name,
-          memberAvatar: assignment.member.avatar,
-          memberUserId: assignment.member.userId,
+          member: {
+            id: assignment.memberId,
+            name: assignment.member.name,
+            avatar: assignment.member.avatar,
+            userId: assignment.member.userId,
+          },
           assignedAt: assignment.assignedAt.toISOString(),
           unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
         })),

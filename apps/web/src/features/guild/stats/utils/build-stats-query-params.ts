@@ -34,10 +34,10 @@ export const buildGuildKillStatsParams = (filters: {
 }): KillsControllerGetGuildKillStatsParams | undefined =>
   withDefinedEntries({
     npcTypes: filters.npcTypes,
-    minLvl: filters.minLvl,
-    maxLvl: filters.maxLvl,
+    npcLevelMin: filters.minLvl,
+    npcLevelMax: filters.maxLvl,
     world: filters.world,
-    period: filters.period === "all" ? undefined : filters.period,
+    period: filters.period ?? "all",
   });
 
 export const buildGuildTopNpcsParams = (filters: {
@@ -48,35 +48,37 @@ export const buildGuildTopNpcsParams = (filters: {
   minLvl?: number;
   maxLvl?: number;
   period?: KillStatsPeriod;
-}): KillsControllerGetGuildTopNpcsParams => ({
-  limit: filters.limit,
-  npcType: filters.npcType,
-  world: filters.world ?? "",
-  search: filters.search ?? "",
-  minLvl: filters.minLvl === undefined ? "" : String(filters.minLvl),
-  maxLvl: filters.maxLvl === undefined ? "" : String(filters.maxLvl),
-  period: filters.period ?? "all",
-});
+}): KillsControllerGetGuildTopNpcsParams =>
+  withDefinedEntries({
+    limit: filters.limit,
+    npcType: filters.npcType,
+    world: filters.world || undefined,
+    search: filters.search || undefined,
+    npcLevelMin: filters.minLvl,
+    npcLevelMax: filters.maxLvl,
+    period: filters.period ?? "all",
+  }) ?? {};
 
 export const buildMemberKillsParams = (filters: {
   world?: string;
   npcTypes?: KilledNpcType[];
   search?: string;
   limit?: number;
-  cursor?: number;
+  cursor?: string;
   minLvl?: number;
   maxLvl?: number;
   period?: KillStatsPeriod;
-}): KillsControllerGetMemberKillsParams => ({
-  world: filters.world,
-  npcTypes: filters.npcTypes,
-  search: filters.search,
-  limit: filters.limit,
-  cursor: filters.cursor ?? 0,
-  minLvl: filters.minLvl ?? 0,
-  maxLvl: filters.maxLvl ?? 0,
-  period: filters.period === "all" ? undefined : filters.period,
-});
+}): KillsControllerGetMemberKillsParams =>
+  withDefinedEntries({
+    world: filters.world,
+    npcTypes: filters.npcTypes,
+    search: filters.search,
+    limit: filters.limit,
+    cursor: filters.cursor,
+    npcLevelMin: filters.minLvl,
+    npcLevelMax: filters.maxLvl,
+    period: filters.period ?? "all",
+  }) ?? {};
 
 export const buildNpcKillersParams = (
   filters: {
@@ -88,7 +90,7 @@ export const buildNpcKillersParams = (
   withDefinedEntries({
     limit: filters.limit ?? DEFAULT_NPC_KILLERS_LIMIT,
     world: filters.world,
-    period: filters.period === "all" ? undefined : filters.period,
+    period: filters.period ?? "all",
   }) ?? {};
 
 export const buildLootStatsParams = (filters: {
@@ -100,6 +102,6 @@ export const buildLootStatsParams = (filters: {
   withDefinedEntries({
     period: filters.period,
     world: filters.world,
-    npcTypes: filters.npcTypes?.join(","),
+    npcTypes: filters.npcTypes?.length ? filters.npcTypes : undefined,
     excludeColossus: filters.excludeColossus || undefined,
   });

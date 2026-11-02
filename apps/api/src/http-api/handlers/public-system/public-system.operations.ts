@@ -1,5 +1,5 @@
 import {
-  emptyStatusResponse,
+  statusCodeResponse,
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -152,7 +152,7 @@ export const toPublicSystemHttpResponse = <A, R>(
   >,
 ) =>
   Effect.catchTags(effect, {
-    PublicSystemAccessDenied: emptyStatusResponse,
+    PublicSystemAccessDenied: statusCodeResponse,
     ReauthenticationRequired: reauthenticationRequiredResponse,
     PublicSystemOperationError: (error) => Effect.die(error.cause),
   });

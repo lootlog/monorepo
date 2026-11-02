@@ -69,9 +69,11 @@ export const LootSummary = Schema.Struct({
 
 export type LootSummary = typeof LootSummary.Type;
 
+/** Same shape as the HTTP `MemberSummary`. */
 const LootSubmissionMember = Schema.Struct({
+  id: Schema.Number,
   name: Schema.String,
-  avatar: Schema.optionalKey(Schema.NullOr(Schema.String)),
+  avatar: Schema.NullOr(Schema.String),
   userId: Schema.String,
 });
 

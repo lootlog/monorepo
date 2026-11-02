@@ -26,6 +26,7 @@ import type {
 } from "#src/events/wrapped/event-wrapped.model";
 import { selectEventWrappedLeader } from "#src/events/wrapped/select-event-wrapped-leader";
 import type { EventWrappedStore } from "#src/events/wrapped/event-wrapped.repository";
+import type { MemberSummary } from "#src/contracts/shared";
 
 type Guild = typeof guildTable.$inferSelect;
 
@@ -38,11 +39,7 @@ type RankingRow = {
   totalKills: number;
   totalTimeSeconds: number;
   avgAfkPercentage: number;
-  member: {
-    id: number;
-    name: string;
-    avatar: string | null;
-  };
+  member: MemberSummary;
 };
 
 type AssignmentRow = {
@@ -51,11 +48,7 @@ type AssignmentRow = {
   memberId: number;
   assignedAt: Date;
   unassignedAt: Date | null;
-  member: {
-    id: number;
-    name: string;
-    avatar: string | null;
-  };
+  member: MemberSummary;
 };
 
 type SummaryRow = {
@@ -68,9 +61,7 @@ type SummaryRow = {
 };
 
 type AggregatedMember = {
-  memberId: number;
-  name: string;
-  avatar: string | null;
+  member: MemberSummary;
   totalPoints: number;
   totalKills: number;
   totalTimeSeconds: number;
@@ -612,9 +603,7 @@ export const makeEventWrapped = (
 
     for (const ranking of rankings) {
       const existing = members.get(ranking.memberId) ?? {
-        memberId: ranking.member.id,
-        name: ranking.member.name,
-        avatar: ranking.member.avatar,
+        member: ranking.member,
         totalPoints: 0,
         totalKills: 0,
         totalTimeSeconds: 0,
@@ -636,9 +625,7 @@ export const makeEventWrapped = (
 
     for (const assignment of assignments) {
       const existing = members.get(assignment.memberId) ?? {
-        memberId: assignment.member.id,
-        name: assignment.member.name,
-        avatar: assignment.member.avatar,
+        member: assignment.member,
         totalPoints: 0,
         totalKills: 0,
         totalTimeSeconds: 0,

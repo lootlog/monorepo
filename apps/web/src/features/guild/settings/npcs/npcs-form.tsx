@@ -74,7 +74,7 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
 
     updateGuildLootlogNpc(
       {
-        pathParams: { guildId: guildId ?? "", npcId: npc.id.toString() },
+        pathParams: { guildId: guildId ?? "", npcId: npc.id },
         data: {
           allowedRarities: NPC_RARITY_CONFIG.flatMap(({ key }) =>
             values[key] ? [key] : [],

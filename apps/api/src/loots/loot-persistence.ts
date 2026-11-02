@@ -8,7 +8,10 @@ import {
   organizationLootRecordTable,
 } from "#src/database/drizzle/schema";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
-import type { CreateLootCommentRequest } from "#src/contracts/loots/schemas";
+import type {
+  CreateLootCommentRequest,
+  LootCommentResponse,
+} from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
 import { memberDisplayRolesQuery } from "#src/members/member-display-role";
 
@@ -31,13 +34,13 @@ export interface LootPersistence {
   readonly listComments: (
     guildId: string,
     lootId: number,
-  ) => PersistenceEffect<ReadonlyArray<unknown>>;
+  ) => PersistenceEffect<ReadonlyArray<LootCommentResponse>>;
   readonly createComment: (options: {
     readonly discordId: string;
     readonly guildId: string;
     readonly lootId: number;
     readonly body: CreateLootCommentRequest;
-  }) => PersistenceEffect<unknown>;
+  }) => PersistenceEffect<LootCommentResponse>;
 }
 
 type Database = typeof ApiDatabase.Service;
@@ -83,6 +86,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
       return rows.map(({ comment, member }) => ({
         ...comment,
         member: {
+          id: member.id,
           name: member.name,
           avatar: member.avatar,
           userId: member.userId,
@@ -168,8 +172,8 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
             guildId,
             content: comment.content,
             member: comment.member,
-            createdAt: comment.createdAt,
-            updatedAt: comment.updatedAt,
+            createdAt: comment.createdAt.toISOString(),
+            updatedAt: comment.updatedAt.toISOString(),
           }));
         }),
       ),
@@ -196,7 +200,9 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
 
               if (!record) {
                 return yield* Effect.fail(
-                  new PermissionDeniedError(ErrorKey.CANT_CREATE_COMMENT),
+                  new PermissionDeniedError({
+                    code: ErrorKey.CANT_CREATE_COMMENT,
+                  }),
                 );
               }
 
@@ -265,8 +271,8 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
             guildId: options.guildId,
             content: comment.content,
             member: comment.member,
-            createdAt: comment.createdAt,
-            updatedAt: comment.updatedAt,
+            createdAt: comment.createdAt.toISOString(),
+            updatedAt: comment.updatedAt.toISOString(),
           };
         }),
       ),

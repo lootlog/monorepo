@@ -86,7 +86,7 @@ export const useStatsRankingModel = () => {
 
   const filteredRanking = searchQuery
     ? memberRanking.filter((member) =>
-        member.memberName?.toLowerCase().includes(searchQuery.toLowerCase()),
+        member.member.name.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : memberRanking;
 

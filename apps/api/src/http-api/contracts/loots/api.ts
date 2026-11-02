@@ -46,7 +46,7 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     .annotate(OpenApi.Summary, "Get guild loots")
     .annotate(
       OpenApi.Description,
-      "Retrieve paginated loots for a guild with optional filters",
+      "Retrieve one page of a guild's loots, newest first, with optional filters. Pass the `nextCursor` of a page as `cursor` to read the next page with the same filters; `nextCursor` is null on the last page. A cursor replayed with different filters, or one that cannot be decoded, is rejected with 400 `INVALID_CURSOR`.",
     ),
   HttpApiEndpoint.get(
     "LootsControllerGetLootStats",

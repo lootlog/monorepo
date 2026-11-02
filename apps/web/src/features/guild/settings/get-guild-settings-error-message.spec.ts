@@ -13,18 +13,18 @@ await translations.init({
 
 it.each([
   [
-    "errors.guilds.vanityUrlTaken",
+    "GUILDS_VANITY_URL_TAKEN",
     "Ten skrócony link jest już zajęty. Wybierz inną nazwę.",
   ],
-  ["errors.guilds.vanityUrlRestricted", settings.general.vanityUrl.restricted],
-  ["errors.guilds.vanityUrlInvalid", settings.general.vanityUrl.invalid],
+  ["GUILDS_VANITY_URL_RESTRICTED", settings.general.vanityUrl.restricted],
+  ["GUILDS_VANITY_URL_INVALID", settings.general.vanityUrl.invalid],
   [
-    "errors.guilds.reservations.durationRangeInvalid",
+    "GUILDS_RESERVATION_DURATION_RANGE_INVALID",
     "Minimalny czas rezerwacji nie może przekraczać maksymalnego.",
   ],
-])("translates organization setting rejection %s", (message, expected) => {
+])("translates organization setting rejection %s", (code, expected) => {
   const error = new ApiError({
-    data: { message },
+    data: { code },
     message: "Conflict",
     status: 409,
     method: "PATCH",

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from "../shared.js";
 /** Endpoints owned by the public-guild-stats-card HTTP module. */
 import {
   HttpApiEndpoint,
@@ -16,7 +17,7 @@ export class PublicGuildStatsCardGroup extends HttpApiGroup.make(
     {
       params: PublicStatsCardOrganizationPath,
       success: HttpApiSchema.Empty(200),
-      error: HttpApiSchema.Empty(404),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .annotate(OpenApi.Identifier, "PublicGuildStatsCardController_getStatsCard")

@@ -19,7 +19,7 @@ export const useRecentHeroKills = ({
   heroId,
   limit = 5,
 }: UseRecentHeroKillsOptions) => {
-  const baseParams = { limit: String(limit), heroId };
+  const baseParams = { limit, heroId };
 
   return useQuery({
     queryKey: [
@@ -39,7 +39,7 @@ export const useRecentHeroKills = ({
 
       return response;
     },
-    select: (response) => response.data,
+    select: (response) => response.items,
     enabled: !!guildId && !!eventId,
     placeholderData: undefined,
     staleTime: EVENT_LIVE_QUERY_STALE_TIME_MS,

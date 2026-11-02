@@ -14,12 +14,11 @@ import {
   LootResponse,
   NullableLootResponse,
 } from "#src/loots/loot-response.schema";
-import { LootCommentResponse } from "#src/shared/schema/loot-comment";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
-import { normalizeKillStatsPeriod } from "#src/kills/kill-stats-period";
 import type { CreateKillResponse } from "#src/contracts/kills/schemas";
+import { DEFAULT_PERIOD } from "@lootlog/schema/http-scalars";
 import {
-  LootCommentResponse as LootCommentResponseSchema,
+  LootCommentResponse,
   LootDetailResponse,
   LootListResponse,
   LootCommentsResponse,
@@ -148,13 +147,7 @@ export const recordsDataLayer = (services: RecordsServices) =>
           caller.guild.id,
           caller.accessPolicy,
           [...caller.roles],
-          query.limit ?? 10,
-          query.npcType,
-          query.world,
-          query.search,
-          query.minLvl ? Number.parseInt(query.minLvl, 10) : undefined,
-          query.maxLvl ? Number.parseInt(query.maxLvl, 10) : undefined,
-          normalizeKillStatsPeriod(query.period),
+          query,
         ),
       ),
     getGuildTopKillersByType: (caller, query) =>
@@ -165,8 +158,7 @@ export const recordsDataLayer = (services: RecordsServices) =>
           caller.accessPolicy,
           [...caller.roles],
           [NpcType.TITAN, NpcType.HERO, NpcType.EVENT_HERO],
-          query.limit ?? 5,
-          normalizeKillStatsPeriod(query.period),
+          query,
         ),
       ),
     getNpcKillers: (caller, npcId, query) =>
@@ -177,7 +169,7 @@ export const recordsDataLayer = (services: RecordsServices) =>
           caller.accessPolicy,
           [...caller.roles],
           npcId,
-          query.limit ?? 50,
+          query.limit,
           query.world,
           query.period,
         ),
@@ -203,9 +195,12 @@ export const recordsDataLayer = (services: RecordsServices) =>
           mutableLootQuery(query),
         ),
       ).pipe(
-        Effect.map((result) =>
-          result.map((loot) => encodeUnknownResponse(LootResponse, loot)),
-        ),
+        Effect.map((page) => ({
+          items: page.items.map((loot) =>
+            encodeUnknownResponse(LootResponse, loot),
+          ),
+          nextCursor: page.nextCursor,
+        })),
         Effect.flatMap((result) =>
           decode(Schema.decodeUnknownSync(LootListResponse), result),
         ),
@@ -217,9 +212,9 @@ export const recordsDataLayer = (services: RecordsServices) =>
           caller.guild.id,
           caller.accessPolicy,
           [...caller.roles],
-          query.period ?? "7d",
+          query.period ?? DEFAULT_PERIOD,
           query.world,
-          query.npcTypes ? query.npcTypes.split(",") : undefined,
+          query.npcTypes,
           query.excludeColossus ?? false,
         ),
       ),
@@ -291,11 +286,6 @@ export const recordsDataLayer = (services: RecordsServices) =>
           roles: [...caller.roles],
         }),
       ).pipe(
-        Effect.map((result) =>
-          result.map((comment) =>
-            encodeUnknownResponse(LootCommentResponse, comment),
-          ),
-        ),
         Effect.flatMap((result) =>
           decode(Schema.decodeUnknownSync(LootCommentsResponse), result),
         ),
@@ -312,11 +302,8 @@ export const recordsDataLayer = (services: RecordsServices) =>
           roles: [...caller.roles],
         }),
       ).pipe(
-        Effect.map((result) =>
-          encodeUnknownResponse(LootCommentResponse, result),
-        ),
         Effect.flatMap((result) =>
-          decode(Schema.decodeUnknownSync(LootCommentResponseSchema), result),
+          decode(Schema.decodeUnknownSync(LootCommentResponse), result),
         ),
       ),
     updateLoot: (caller, lootId, payload) =>

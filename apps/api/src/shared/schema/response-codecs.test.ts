@@ -22,6 +22,15 @@ describe("response codecs", () => {
     expect(Schema.encodeSync(flexibleIsoDatetimeCodec)(wire)).toBe(wire);
   });
 
+  it("rejects strings that are not datetimes instead of passing them through", () => {
+    expect(() =>
+      Schema.encodeSync(flexibleIsoDatetimeCodec)("not a date"),
+    ).toThrow();
+    expect(() =>
+      Schema.encodeSync(flexibleIsoDatetimeCodec)(new Date(Number.NaN)),
+    ).toThrow();
+  });
+
   it("validates nested JSON values", () => {
     expect(
       Schema.decodeUnknownSync(jsonValueSchema)({ nested: [true, null, 1] }),

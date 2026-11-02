@@ -381,7 +381,7 @@ export const MemberRefreshJobDataLive = Layer.effect(
               ? withCooldown(job)
               : yield* Effect.fail(
                   new ResourceNotFoundError({
-                    message: ErrorKey.REFRESH_JOB_NOT_FOUND,
+                    code: ErrorKey.REFRESH_JOB_NOT_FOUND,
                   }),
                 );
           }),

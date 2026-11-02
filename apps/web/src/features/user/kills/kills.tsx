@@ -9,7 +9,6 @@ import { useTranslation } from "react-i18next";
 import {
   type inferParserType,
   parseAsArrayOf,
-  parseAsInteger,
   parseAsString,
   parseAsStringLiteral,
   useQueryStates,
@@ -44,6 +43,7 @@ import {
 
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { sortingTableFeatures } from "@/lib/tanstack-table-features";
+import { useCursorStack } from "@/hooks/use-cursor-stack";
 
 const KILL_STATS_PERIODS = [
   "all",
@@ -58,7 +58,6 @@ const killsSearchParsers = {
   world: parseAsString,
   npcType: parseAsArrayOf(parseAsStringLiteral(NPC_TYPES)),
   search: parseAsString.withDefault(""),
-  cursor: parseAsInteger.withDefault(0),
   minLvl: parseAsString.withDefault(""),
   maxLvl: parseAsString.withDefault(""),
   period: parseAsStringLiteral(KILL_STATS_PERIODS).withDefault("all"),
@@ -97,7 +96,7 @@ export const KillsPage: React.FC = () => {
   const [searchDraft, setSearchDraft] = useState(query.search);
 
   const publishSearch = useDebounceCallback(
-    (search: string) => setQuery({ search, cursor: null }),
+    (search: string) => setQuery({ search }),
     DRAFT_PUBLISH_DELAY_MS,
   );
 
@@ -107,21 +106,29 @@ export const KillsPage: React.FC = () => {
 
   const filters = getKillsFilters(query);
 
-  const { cursor } = query;
-
   const sortOrder: KillsControllerGetUserNpcKillsParams["sortOrder"] =
     sorting[0]?.desc === false ? "asc" : "desc";
 
   const sortBy: KillsControllerGetUserNpcKillsParams["sortBy"] =
     sorting[0]?.id === "npcLvl" ? "level" : "kills";
 
+  // A cursor is valid only for the filters and sort it was issued for.
+  const pages = useCursorStack(JSON.stringify({ filters, sortOrder, sortBy }));
+
+  const { cursor, pageIndex } = pages;
+  const firstRank = pageIndex * ITEMS_PER_PAGE;
+
   const npcKillsParams: KillsControllerGetUserNpcKillsParams = {
-    ...filters,
+    world: filters.world,
+    npcTypes: filters.npcTypes,
+    search: filters.search,
+    npcLevelMin: filters.minLvl,
+    npcLevelMax: filters.maxLvl,
+    period: filters.period,
     cursor,
     limit: ITEMS_PER_PAGE,
     sortOrder,
     sortBy,
-    period: filters.period === "all" ? undefined : filters.period,
   };
 
   const { data, isLoading, isError, isFetching, refetch } =
@@ -132,11 +139,11 @@ export const KillsPage: React.FC = () => {
     });
 
   const handleWorldChange = (world: string | undefined) => {
-    setQuery({ world: world ?? null, cursor: null });
+    setQuery({ world: world ?? null });
   };
 
   const handleNpcTypeChange = (npcTypes: NpcType[] | undefined) => {
-    setQuery({ npcType: npcTypes ?? null, cursor: null });
+    setQuery({ npcType: npcTypes ?? null });
   };
 
   const handleSearchChange = (search: string) => {
@@ -154,24 +161,15 @@ export const KillsPage: React.FC = () => {
       minLvl: null,
       maxLvl: null,
       period: null,
-      cursor: null,
     });
   };
 
   const handlePeriodChange = (period: KillStatsPeriod) => {
-    setQuery({ period, cursor: null });
+    setQuery({ period });
   };
 
   const handleNextPage = () => {
-    if (data?.pagination.hasNext) {
-      setQuery({ cursor: cursor + ITEMS_PER_PAGE });
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (cursor > 0) {
-      setQuery({ cursor: Math.max(0, cursor - ITEMS_PER_PAGE) });
-    }
+    if (data?.nextCursor) pages.goToNext(data.nextCursor);
   };
 
   const filterProps = useKillsFilterProps({
@@ -180,18 +178,16 @@ export const KillsPage: React.FC = () => {
     maxLvl: query.maxLvl,
     onWorldChange: handleWorldChange,
     onNpcTypeChange: handleNpcTypeChange,
-    onMinLvlChange: (minLvl) =>
-      setQuery({ minLvl: minLvl || null, cursor: null }),
-    onMaxLvlChange: (maxLvl) =>
-      setQuery({ maxLvl: maxLvl || null, cursor: null }),
+    onMinLvlChange: (minLvl) => setQuery({ minLvl: minLvl || null }),
+    onMaxLvlChange: (maxLvl) => setQuery({ maxLvl: maxLvl || null }),
     onPeriodChange: handlePeriodChange,
   });
 
-  const columns = createKillsColumns(cursor);
+  const columns = createKillsColumns(firstRank);
 
   const table = useTable({
     features: sortingTableFeatures,
-    data: data?.npcs || [],
+    data: data?.items || [],
     columns,
     state: {
       sorting,
@@ -200,7 +196,6 @@ export const KillsPage: React.FC = () => {
     manualSorting: true,
   });
 
-  const hasPrev = cursor > 0;
   const hasActiveFilters = hasKillsFilters(filters);
 
   const renderResults = () => {
@@ -236,7 +231,7 @@ export const KillsPage: React.FC = () => {
       );
     }
 
-    if (!data || data.npcs.length === 0) {
+    if (!data || data.items.length === 0) {
       return (
         <div className="p-3">
           <EmptyState
@@ -261,7 +256,7 @@ export const KillsPage: React.FC = () => {
     }
 
     if (!usesTable) {
-      return <KillsMobileList npcs={data.npcs} startRank={cursor} />;
+      return <KillsMobileList npcs={data.items} startRank={firstRank} />;
     }
 
     return (
@@ -281,7 +276,7 @@ export const KillsPage: React.FC = () => {
     );
   };
 
-  const totalKills = data?.pagination?.total ?? 0;
+  const totalKills = data?.total ?? 0;
 
   return (
     <ScrollArea data-under-top-bar className="h-full min-h-0">
@@ -298,13 +293,13 @@ export const KillsPage: React.FC = () => {
         stackedFilters={<KillStatsStackedFilters {...filterProps} />}
         activeFilterCount={countActiveKillStatsFilters(filterProps)}
         filtersLabel={t("kills.filters.title")}
-        scrollResetKey={cursor}
+        scrollResetKey={pageIndex}
         footer={
           <TablePaginationFooter
             totalLabel={t("kills.ranking.total", { count: totalKills })}
-            hasPrev={hasPrev}
-            hasNext={Boolean(data?.pagination?.hasNext)}
-            onPreviousPage={handlePreviousPage}
+            hasPrev={pages.hasPrev}
+            hasNext={Boolean(data?.nextCursor)}
+            onPreviousPage={pages.goToPrevious}
             onNextPage={handleNextPage}
           />
         }

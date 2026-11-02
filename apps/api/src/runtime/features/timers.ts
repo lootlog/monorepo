@@ -58,11 +58,8 @@ export const timersData = Layer.unwrap(
       Effect.acquireUseRelease(
         Effect.tryPromise({
           try: () => redlock.acquire([key], 30_000),
-          catch: (error) =>
-            new ResourceConflictError({
-              message: ErrorKey.TIMER_RACE_CONDITION,
-              cause: error,
-            }),
+          catch: () =>
+            new ResourceConflictError({ code: ErrorKey.TIMER_RACE_CONDITION }),
         }),
         () => effect,
         (lock: Awaited<ReturnType<typeof redlock.acquire>>) =>

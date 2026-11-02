@@ -173,10 +173,7 @@ describe("useTimerActions", () => {
 
   it("maps reset HTTP errors to the translated event restriction", async () => {
     const { result } = mountActions(false, () =>
-      Response.json(
-        { message: "EVENT_TIMER_CANNOT_BE_RESET" },
-        { status: 400 },
-      ),
+      Response.json({ code: "EVENT_TIMER_CANNOT_BE_RESET" }, { status: 400 }),
     );
 
     await act(() => result.current.handleRestartTimer());
@@ -325,7 +322,7 @@ describe("useTimerActions", () => {
     const { result, requests } = mountActions(false, () =>
       reject
         ? Response.json(
-            { message: "EVENT_TIMER_MUST_USE_EVENT_CLOSE" },
+            { code: "EVENT_TIMER_MUST_USE_EVENT_CLOSE" },
             { status: 400 },
           )
         : deletion.promise,

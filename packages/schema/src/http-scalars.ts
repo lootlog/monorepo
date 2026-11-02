@@ -1,4 +1,6 @@
 import * as Schema from "effect/Schema";
+import * as SchemaTransformation from "effect/SchemaTransformation";
+import { NpcTypeSchema } from "./npc-type.js";
 
 export const FiniteNumber = Schema.Number.check(
   Schema.isFinite().annotate({ expected: "a finite number" }),
@@ -53,3 +55,87 @@ export const NonNegativeSafeInteger = boundedInteger(0, 9007199254740991);
 export const LevelFilter = boundedInteger(0, 500);
 
 export const PageSize = boundedInteger(1, 100);
+
+/** Rejects a level filter whose lower bound exceeds its upper bound. */
+export const levelRangeCheck = <Min extends string, Max extends string>(
+  minKey: Min,
+  maxKey: Max,
+) =>
+  Schema.makeFilter<{ readonly [K in Min | Max]?: number }>((data) => {
+    const min = data[minKey];
+    const max = data[maxKey];
+
+    return min === undefined || max === undefined || min <= max
+      ? undefined
+      : { path: [minKey], issue: `${minKey} must be <= ${maxKey}` };
+  });
+
+/** Every filter by NPC level uses `npcLevelMin`/`npcLevelMax`. */
+export const NpcLevelRange = {
+  fields: {
+    npcLevelMin: Schema.optionalKey(LevelFilter),
+    npcLevelMax: Schema.optionalKey(LevelFilter),
+  },
+  check: levelRangeCheck("npcLevelMin", "npcLevelMax"),
+};
+
+/** Repeated `npcTypes` query values; an unknown type is a 400. */
+export const NpcTypes = Schema.Array(NpcTypeSchema);
+
+/** Time window of a statistics read, counted back from now. */
+export const Period = Schema.Literals([
+  "24h",
+  "3d",
+  "7d",
+  "14d",
+  "30d",
+  "90d",
+  "180d",
+  "all",
+]).annotate({ default: "7d" });
+
+export type Period = typeof Period.Type;
+
+export const DEFAULT_PERIOD: Period = "7d";
+
+/** `true`/`false` query flag. */
+export const BooleanQuery = Schema.Boolean;
+
+export const WORLD_MAX_LENGTH = 64;
+
+/**
+ * Margonem world in a path or filter, trimmed and lower-cased like stored
+ * worlds. Length limits sit on the encoded string so OpenAPI documents them.
+ */
+export const WorldParam = Schema.String.check(
+  Schema.isMinLength(1),
+  Schema.isMaxLength(WORLD_MAX_LENGTH),
+)
+  .pipe(
+    Schema.decode(SchemaTransformation.trim()),
+    Schema.decode(SchemaTransformation.toLowerCase()),
+  )
+  .check(Schema.isMinLength(1).annotate({ expected: "a non-empty world" }));
+
+export const SEARCH_TEXT_MAX_LENGTH = 100;
+
+/**
+ * Free-text search, trimmed. Match it with a LIKE pattern built by the API's
+ * `containsPattern`, which escapes `%`, `_` and `\`.
+ */
+export const SearchText = Schema.String.check(
+  Schema.isMaxLength(SEARCH_TEXT_MAX_LENGTH),
+).pipe(Schema.decode(SchemaTransformation.trim()));
+
+/** Opaque continuation token returned as `nextCursor` by a paginated list. */
+export const PageCursor = Schema.String.check(
+  Schema.isMinLength(1),
+  Schema.isMaxLength(512),
+);
+
+/** One page of a list: `nextCursor` is null on the last page. */
+export const Page = <Item extends Schema.Top>(item: Item) =>
+  Schema.Struct({
+    items: Schema.Array(item),
+    nextCursor: Schema.NullOr(Schema.String),
+  });

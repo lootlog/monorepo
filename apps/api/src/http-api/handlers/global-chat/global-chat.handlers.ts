@@ -1,4 +1,4 @@
-import { emptyStatusResponse } from "#src/shared/http/handler-response";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
@@ -37,7 +37,7 @@ export class GlobalChatNotFound extends TaggedErrorClass<GlobalChatNotFound>()(
 
 export class GlobalChatRateLimited extends TaggedErrorClass<GlobalChatRateLimited>()(
   "GlobalChatRateLimited",
-  { status: Schema.Literal(429) },
+  { status: Schema.Literal(429), retryAfterMs: Schema.Number },
 ) {}
 
 export class GlobalChatOperationError extends TaggedErrorClass<GlobalChatOperationError>()(
@@ -130,9 +130,9 @@ const declaredHttpFailure = <A, R>(
   effect: Effect.Effect<A, GlobalChatFailure | GlobalChatRateLimited, R>,
 ) =>
   Effect.catchTags(effect, {
-    GlobalChatAccessDenied: emptyStatusResponse,
-    GlobalChatNotFound: emptyStatusResponse,
-    GlobalChatRateLimited: emptyStatusResponse,
+    GlobalChatAccessDenied: statusCodeResponse,
+    GlobalChatNotFound: statusCodeResponse,
+    GlobalChatRateLimited: statusCodeResponse,
     GlobalChatOperationError: (error) => Effect.die(error.cause),
   });
 

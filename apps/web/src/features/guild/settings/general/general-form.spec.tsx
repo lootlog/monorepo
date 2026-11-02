@@ -266,10 +266,7 @@ it("shows the API error for an unavailable vanity URL and lets the user retry", 
   const save = vi
     .fn((_init?: RequestInit) => new Promise<Response>(() => undefined))
     .mockResolvedValueOnce(
-      Response.json(
-        { message: "errors.guilds.vanityUrlTaken" },
-        { status: 409 },
-      ),
+      Response.json({ code: "GUILDS_VANITY_URL_TAKEN" }, { status: 409 }),
     );
 
   const { textbox } = await renderForm(save);

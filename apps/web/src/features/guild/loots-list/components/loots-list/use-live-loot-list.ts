@@ -15,10 +15,14 @@ import { lootFromSnapshot, type Loot } from "@/lib/loots/loot-types";
 import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
   lootsControllerFetchLootsByGuildId,
+  LootsControllerFetchLootsByGuildIdNpcTypesItem,
+  LootsControllerFetchLootsByGuildIdRaritiesItem,
   useUsersControllerGetCurrentUserAccessibleGuilds,
+  type LootPageResponseDto,
   type LootsControllerFetchLootsByGuildIdParams,
 } from "@lootlog/client/main";
 import {
+  FIRST_PAGE_CURSOR,
   LOOTS_PAGE_LIMIT,
   LOOTS_QUERY_GC_TIME_MS,
   applyLootSnapshots,
@@ -61,9 +65,14 @@ const GRID_COLUMNS = 2;
 
 const EMPTY_LOOTS: Loot[] = [];
 
+const EMPTY_PAGE: LootPageResponseDto = {
+  items: EMPTY_LOOTS,
+  nextCursor: null,
+};
+
 const EMPTY_GRID_ROWS: Loot[][] = [];
 
-type LootsInfiniteData = InfiniteData<Loot[]>;
+type LootsInfiniteData = InfiniteData<LootPageResponseDto>;
 
 type LootFilters = ReturnType<typeof useLootsFilters>["filters"];
 
@@ -72,6 +81,18 @@ const parseOptionalNumber = (value: string) =>
 
 const optionalValues = <Value>(values: Value[]) =>
   values.length > 0 ? values : undefined;
+
+// The API rejects an unknown value, so one from a stale URL is dropped here.
+const knownValues = <Value extends string>(
+  allowed: Readonly<Record<string, Value>>,
+  values: string[],
+) => {
+  const known: ReadonlyArray<string> = Object.values(allowed);
+
+  return optionalValues(
+    values.filter((value): value is Value => known.includes(value)),
+  );
+};
 
 const optionalText = (value: string | null | undefined) =>
   value ? value : undefined;
@@ -82,8 +103,14 @@ const getLootQueryParams = (
 ): LootsControllerFetchLootsByGuildIdParams => ({
   limit: LOOTS_PAGE_LIMIT,
   npcs: optionalValues(filters.npcs),
-  npcTypes: optionalValues(filters.npcTypes),
-  rarities: optionalValues(filters.rarities),
+  npcTypes: knownValues(
+    LootsControllerFetchLootsByGuildIdNpcTypesItem,
+    filters.npcTypes,
+  ),
+  rarities: knownValues(
+    LootsControllerFetchLootsByGuildIdRaritiesItem,
+    filters.rarities,
+  ),
   professions: optionalValues(filters.professions),
   players: optionalValues(filters.players),
   npcLevelMin: parseOptionalNumber(filters.npcLevelMin),
@@ -106,15 +133,15 @@ const getCurrentGuildId = (
 const getLootPages = (loots: LootsInfiniteData | undefined) => loots?.pages;
 
 const hasInitialLoots = (loots: LootsInfiniteData | undefined) =>
-  (loots?.pages?.[0]?.length ?? 0) > 0;
+  (loots?.pages?.[0]?.items.length ?? 0) > 0;
 
 // A fetched empty result has one empty page; a policy clear leaves no pages,
 // and a list without pages is still waiting for data.
 const hasFetchedPage = (loots: LootsInfiniteData | undefined) =>
   (loots?.pages?.length ?? 0) > 0;
 
-const useStableLootCollections = (pages: Loot[][] | undefined) => {
-  const allLoots = pages?.flatMap((page) => page) ?? EMPTY_LOOTS;
+const useStableLootCollections = (pages: LootPageResponseDto[] | undefined) => {
+  const allLoots = pages?.flatMap((page) => page.items) ?? EMPTY_LOOTS;
 
   if (allLoots.length === 0) {
     return { allLoots, gridRows: EMPTY_GRID_ROWS };
@@ -179,24 +206,17 @@ export const useLiveLootList = () => {
     queryKey,
     queryFn: ({ pageParam, signal }) => {
       if (!guildId) {
-        return Promise.resolve(EMPTY_LOOTS);
+        return Promise.resolve(EMPTY_PAGE);
       }
 
       return lootsControllerFetchLootsByGuildId(
         { guildId },
-        {
-          ...lootQueryParams,
-          cursor: pageParam > 0 ? pageParam : undefined,
-        },
+        { ...lootQueryParams, cursor: pageParam || undefined },
         { signal },
       );
     },
-    // A live loot placed in the last page may grow it past the limit.
-    getNextPageParam: (lastPage) =>
-      lastPage.length >= LOOTS_PAGE_LIMIT
-        ? lastPage[lastPage.length - 1]?.id
-        : undefined,
-    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: FIRST_PAGE_CURSOR,
     enabled: !!guildId,
     staleTime: LOOTS_QUERY_STALE_TIME_MS,
     gcTime: LOOTS_QUERY_GC_TIME_MS,

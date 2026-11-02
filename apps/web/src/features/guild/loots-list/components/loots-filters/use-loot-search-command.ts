@@ -133,7 +133,7 @@ export const useLootSearchCommand = ({
         { signal },
       );
 
-      const firstLoot = response[0];
+      const firstLoot = response.items[0];
 
       return (
         firstLoot?.items.find((item) => item.hid === hidLootQueryParams.hid) ??

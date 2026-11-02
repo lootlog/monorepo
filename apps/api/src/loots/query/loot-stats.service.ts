@@ -6,7 +6,8 @@ import {
 import { Logger } from "#src/shared/application-logger";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
 import { LootStatsResponse as LootStatsResponseSchema } from "#src/contracts/loots/schemas";
-import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import { DEFAULT_PERIOD, type Period } from "@lootlog/schema/http-scalars";
 import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { Permission } from "@lootlog/schema/permissions";
 import { lootTable, type roleTable } from "#src/database/drizzle/schema";
@@ -19,7 +20,6 @@ import {
   toLootVisibilityRoles,
 } from "#src/loots/loot-visibility";
 import type {
-  Period,
   LootStatsResponse,
   LootStatsOverview,
   RarityStats,
@@ -75,9 +75,9 @@ export class LootStatsService {
     guildId: string,
     accessPolicy: AccessPolicy,
     roles: Role[],
-    period: Period = "7d",
+    period: Period = DEFAULT_PERIOD,
     world?: string,
-    npcTypes?: string[],
+    npcTypes?: ReadonlyArray<NpcType>,
     excludeColossus?: boolean,
   ) {
     const permissions = getEffectiveCapabilities(accessPolicy);
@@ -100,19 +100,13 @@ export class LootStatsService {
 
     const dateFrom = this.getDateFromPeriod(period);
 
-    const npcTypeFilter = npcTypes?.length
-      ? npcTypes.filter((type): type is NpcType =>
-          Object.values(NpcType).some((npcType) => npcType === type),
-        )
-      : undefined;
-
     const load = Effect.gen(
       function* (this: LootStatsService) {
         const queries = buildLootStatsQueries(this.database, {
           guildId,
           dateFrom,
           world,
-          npcTypes: npcTypeFilter,
+          npcTypes: npcTypes?.length ? [...npcTypes] : undefined,
           excludeColossus,
           visibility,
           truncUnit: this.getTimelineTruncUnit(period),
@@ -169,7 +163,7 @@ export class LootStatsService {
     roles: Role[],
     period: Period,
     world?: string,
-    npcTypes?: string[],
+    npcTypes?: ReadonlyArray<NpcType>,
     excludeColossus?: boolean,
   ): string {
     const accessFingerprint = createHash("sha256")
@@ -186,7 +180,7 @@ export class LootStatsService {
 
     if (world) parts.push(world);
 
-    if (npcTypes?.length) parts.push(npcTypes.sort().join(","));
+    if (npcTypes?.length) parts.push(npcTypes.toSorted().join(","));
 
     if (excludeColossus) parts.push("no-colossus");
 

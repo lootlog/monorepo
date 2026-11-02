@@ -20,6 +20,7 @@ import {
 } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import { containsPattern } from "#src/shared/sql-like";
 import {
   itemSnapshotTable,
   lootCommentTable,
@@ -128,7 +129,7 @@ export const makeLootQueryPersistence = (
     const value = search?.trim();
 
     if (!value) return undefined;
-    const pattern = `%${value}%`;
+    const pattern = containsPattern(value);
 
     const [itemSnapshotIds, npcSnapshotIds, playerSnapshotIds] =
       yield* Effect.all(
@@ -364,6 +365,7 @@ export const makeLootQueryPersistence = (
         lootId: organizationLootRecordTable.lootId,
         memberId: lootSubmissionTable.memberId,
         member: {
+          id: memberTable.id,
           name: memberTable.name,
           avatar: memberTable.avatar,
           userId: memberTable.userId,

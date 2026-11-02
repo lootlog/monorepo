@@ -7,6 +7,12 @@ import { rename, unlink } from "node:fs/promises";
 import { OpenApi } from "effect/http-api";
 import { stringify } from "yaml";
 import { LootlogApi } from "../http-api/lootlog-api.js";
+import {
+  GUILD_TOP_KILLERS_DEFAULT_LIMIT,
+  GUILD_TOP_NPCS_DEFAULT_LIMIT,
+  NPC_KILLERS_DEFAULT_LIMIT,
+  USER_TOP_NPCS_DEFAULT_LIMIT,
+} from "../contracts/kills/schemas.js";
 
 const NULLABLE_JSON_SCHEMA_NAMES = [
   "TimerSettingsResponseDto__schema0",
@@ -50,11 +56,23 @@ const integerSchema = (minimum: number, maximum: number) => ({
 const queryParameterSchemas = new Map<string, JsonObject>(
   Object.entries({
     "TimersController_searchNpcsWithTimerData:limit": {
-      type: "number",
-      minimum: 1,
-      maximum: 50,
+      ...integerSchema(1, 100),
       default: 10,
     },
+    "TimersController_getRecentTimerHistory:limit": {
+      ...integerSchema(1, 100),
+      default: 5,
+    },
+    "TimersController_getTimerHistory:limit": {
+      ...integerSchema(1, 100),
+      default: 5,
+    },
+    "listEventKillHistory:limit": { ...integerSchema(1, 100), default: 20 },
+    "listEventKillHistory:memberId": integerSchema(1, 2_147_483_647),
+    "EventsAssignmentController_unassignMember:memberId": integerSchema(
+      1,
+      2_147_483_647,
+    ),
     "TimersController_searchNpcsWithTimerData:npcIds": {
       type: "array",
       items: integerSchema(1, 2_147_483_647),
@@ -65,40 +83,42 @@ const queryParameterSchemas = new Map<string, JsonObject>(
       items: integerSchema(1, Number.MAX_SAFE_INTEGER),
       description: "Return timers observed with a template id in this list.",
     },
-    "LootsController_fetchLootsByGuildId:limit": integerSchema(1, 100),
-    "LootsController_fetchLootsByGuildId:cursor": integerSchema(
-      Number.MIN_SAFE_INTEGER,
-      Number.MAX_SAFE_INTEGER,
-    ),
+    "LootsController_fetchLootsByGuildId:limit": {
+      ...integerSchema(1, 100),
+      default: 20,
+    },
     "LootsController_fetchLootsByGuildId:npcLevelMin": integerSchema(0, 500),
     "LootsController_fetchLootsByGuildId:npcLevelMax": integerSchema(0, 500),
     "LootsController_fetchLootsByGuildId:itemLevelMin": integerSchema(0, 500),
     "LootsController_fetchLootsByGuildId:itemLevelMax": integerSchema(0, 500),
     "LootsController_fetchLootsByGuildId:playerLevelMin": integerSchema(0, 500),
     "LootsController_fetchLootsByGuildId:playerLevelMax": integerSchema(0, 500),
-    "KillsController_getGuildKillStats:minLvl": integerSchema(0, 500),
-    "KillsController_getGuildKillStats:maxLvl": integerSchema(0, 500),
-    "KillsController_getUserKillStats:topNpcsLimit": integerSchema(
-      1,
-      Number.MAX_SAFE_INTEGER,
-    ),
-    "KillsController_getUserNpcKills:cursor": integerSchema(
-      0,
-      Number.MAX_SAFE_INTEGER,
-    ),
+    "KillsController_getGuildKillStats:npcLevelMin": integerSchema(0, 500),
+    "KillsController_getGuildKillStats:npcLevelMax": integerSchema(0, 500),
+    "KillsController_getUserKillStats:topNpcsLimit": {
+      ...integerSchema(1, 100),
+      default: USER_TOP_NPCS_DEFAULT_LIMIT,
+    },
     "KillsController_getUserNpcKills:limit": integerSchema(1, 100),
-    "KillsController_getUserNpcKills:minLvl": integerSchema(0, 500),
-    "KillsController_getUserNpcKills:maxLvl": integerSchema(0, 500),
-    "KillsController_getGuildTopNpcs:limit": { type: "number" },
-    "KillsController_getGuildTopKillersByType:limit": { type: "number" },
-    "KillsController_getNpcKillers:limit": integerSchema(1, 100),
-    "KillsController_getMemberKills:minLvl": integerSchema(0, 500),
-    "KillsController_getMemberKills:maxLvl": integerSchema(0, 500),
+    "KillsController_getUserNpcKills:npcLevelMin": integerSchema(0, 500),
+    "KillsController_getUserNpcKills:npcLevelMax": integerSchema(0, 500),
+    "KillsController_getGuildTopNpcs:limit": {
+      ...integerSchema(1, 100),
+      default: GUILD_TOP_NPCS_DEFAULT_LIMIT,
+    },
+    "KillsController_getGuildTopNpcs:npcLevelMin": integerSchema(0, 500),
+    "KillsController_getGuildTopNpcs:npcLevelMax": integerSchema(0, 500),
+    "KillsController_getGuildTopKillersByType:limit": {
+      ...integerSchema(1, 100),
+      default: GUILD_TOP_KILLERS_DEFAULT_LIMIT,
+    },
+    "KillsController_getNpcKillers:limit": {
+      ...integerSchema(1, 100),
+      default: NPC_KILLERS_DEFAULT_LIMIT,
+    },
+    "KillsController_getMemberKills:npcLevelMin": integerSchema(0, 500),
+    "KillsController_getMemberKills:npcLevelMax": integerSchema(0, 500),
     "KillsController_getMemberKills:limit": integerSchema(1, 100),
-    "KillsController_getMemberKills:cursor": integerSchema(
-      0,
-      Number.MAX_SAFE_INTEGER,
-    ),
   }),
 );
 
@@ -248,7 +268,7 @@ const compatibilitySchemas = {
     $ref: "#/components/schemas/LootResponseDto/properties/submissions/items",
   },
   LootSubmissionMemberResponseDto: {
-    $ref: "#/components/schemas/LootResponseDto/properties/submissions/items/properties/member",
+    $ref: "#/components/schemas/MemberSummary",
   },
   LootItemResponseDto_Output: {
     $ref: "#/components/schemas/NullableLootItemResponseDto_Output",

@@ -297,15 +297,17 @@ export const makeGuildDiscordSyncData = (
   ) {
     const current = yield* loadState(database, guildId);
 
-    if (
-      current &&
-      (yield* Clock.currentTimeMillis) - current.updatedAt.getTime() <
-        REFRESH_COOLDOWN_MS
-    ) {
+    const elapsedMs = current
+      ? (yield* Clock.currentTimeMillis) - current.updatedAt.getTime()
+      : REFRESH_COOLDOWN_MS;
+
+    if (elapsedMs < REFRESH_COOLDOWN_MS) {
       return yield* Effect.fail(
-        new RateLimitedError(
-          "Discord sync can only be refreshed once every 5 minutes",
-        ),
+        new RateLimitedError({
+          code: "DISCORD_SYNC_REFRESH_COOLDOWN",
+          message: "Discord sync can only be refreshed once every 5 minutes",
+          retryAfterMs: REFRESH_COOLDOWN_MS - elapsedMs,
+        }),
       );
     }
 

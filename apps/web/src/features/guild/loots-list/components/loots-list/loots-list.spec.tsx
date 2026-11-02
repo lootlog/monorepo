@@ -67,7 +67,7 @@ async function mountList(viewMode: string) {
         baseUrl: "https://api.test",
         fetch: async (input) =>
           String(input).includes("/loots?")
-            ? Response.json(loots)
+            ? Response.json({ items: loots, nextCursor: null })
             : Response.json([{ id: "guild-1" }]),
       },
     }),

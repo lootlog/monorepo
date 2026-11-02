@@ -729,7 +729,7 @@ export const makeReservationMutationsDataLayer = (
             return yield* Effect.fail(
               new InvalidEntityError({
                 code: "ACTIVE_LIMIT_REACHED",
-                limit: settings.reservationActiveLimitPerSpot,
+                details: { limit: settings.reservationActiveLimitPerSpot },
               }),
             );
           }
