@@ -2,7 +2,7 @@ import type { LootStatsResponseDtoOutputTopContributorsItem } from "@lootlog/cli
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useTranslation } from "react-i18next";
 import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
-import { MemberNameWithColor } from "./member-name-with-color";
+import { MemberNameWithColor } from "@/components/common/member-name-with-color";
 import { MemberAvatar } from "@/components/common/member-avatar";
 import {
   LEADERBOARD_SIZE,

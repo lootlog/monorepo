@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { formatItemHid } from "@/lib/utils/hid-detection";
 import { useState } from "react";
+import { useCopyItemId } from "@/hooks/use-copy-item-id";
 
 const getWatchableItemState = ({
   currentGuildId,
@@ -70,7 +71,7 @@ export function useWatchableItemActions(
   watchContext: WatchedItemScope,
 ) {
   const { t } = useTranslation();
-  const [isCopyPending, setIsCopyPending] = useState(false);
+  const { copyItemId, copyingId } = useCopyItemId();
   const [isAddingThisItem, setIsAddingThisItem] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -124,20 +125,7 @@ export function useWatchableItemActions(
     void navigate({ to: ROUTES.user.notifications.base });
   };
 
-  const handleCopyItemId = async () => {
-    if (isCopyPending) return;
-    setIsCopyPending(true);
-    await (async () => {
-      try {
-        await navigator.clipboard.writeText(formattedItemHid);
-        toast.success(t("loots.details.copySuccess"));
-      } catch {
-        toast.error(t("loots.details.copyError"));
-      }
-    })().finally(() => {
-      setIsCopyPending(false);
-    });
-  };
+  const handleCopyItemId = () => copyItemId(formattedItemHid);
 
   const showLootsWithItem = () => {
     if (!effectiveGuildId) {
@@ -243,7 +231,7 @@ export function useWatchableItemActions(
 
   return {
     t,
-    isCopyPending,
+    isCopyPending: copyingId !== null,
     isAddingThisItem,
     state,
     isQuickAddPending,
