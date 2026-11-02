@@ -1,9 +1,9 @@
+import type { KilledNpcType } from "@/constants/npc";
 import { formatLevel } from "@lootlog/domain/profession";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import {
   getKillsControllerGetGuildTopNpcsQueryKey,
   useKillsControllerGetGuildTopNpcs,
-  type NpcType,
 } from "@lootlog/client/main";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Link } from "@tanstack/react-router";
@@ -19,7 +19,7 @@ import { StatsLeaderboardRow } from "@/components/common/stats-leaderboard-row";
 
 type TopNpcsCardProps = {
   guildId: string;
-  npcType: NpcType;
+  npcType: KilledNpcType;
   world?: string;
   minLvl?: number;
   maxLvl?: number;

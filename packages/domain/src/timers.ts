@@ -39,11 +39,15 @@ export type TimerSpawnTimes = {
   readonly minSpawnTime: string;
   readonly maxSpawnTime: string;
   readonly deletedAt?: string | null;
+  /** When a Hero Tracker's open entrance closes; its respawn window follows. */
+  readonly entranceClosesAt?: string | null;
 };
 
 export type TimerTimeLeft = {
   readonly minTimeLeft: number;
   readonly maxTimeLeft: number;
+  /** Present only for a timer with a Hero Tracker entrance. */
+  readonly entranceTimeLeft?: number;
 };
 
 /**
@@ -61,22 +65,42 @@ export const getTimerTimeLeft = (
     return { maxTimeLeft: deletedTimeLeft, minTimeLeft: deletedTimeLeft };
   }
 
-  return {
+  const timeLeft = {
     maxTimeLeft: toEpoch(timer.maxSpawnTime) - now,
     minTimeLeft: toEpoch(timer.minSpawnTime) - now,
   };
+
+  return timer.entranceClosesAt
+    ? {
+        ...timeLeft,
+        entranceTimeLeft: toEpoch(timer.entranceClosesAt) - now,
+      }
+    : timeLeft;
 };
 
+const isEntranceOpen = ({ entranceTimeLeft }: TimerTimeLeft) =>
+  entranceTimeLeft !== undefined && entranceTimeLeft > 0;
+
 /**
- * Where a timer stands: before its spawn window, inside it, past its maximum
- * spawn time, or kept past the removal delay because the player pinned it.
+ * Where a timer stands: a Hero Tracker's entrance still open, before its spawn
+ * window, inside it, past its maximum spawn time, or kept past the removal
+ * delay because the player pinned it.
  */
-export type TimerPhase = "waiting" | "window" | "overdue" | "expired";
+export type TimerPhase =
+  | "entrance"
+  | "waiting"
+  | "window"
+  | "overdue"
+  | "expired";
 
 export const getTimerPhase = (
-  { minTimeLeft, maxTimeLeft }: TimerTimeLeft,
+  timeLeft: TimerTimeLeft,
   removeTimerAfterMs: number,
 ): TimerPhase => {
+  const { minTimeLeft, maxTimeLeft } = timeLeft;
+
+  if (isEntranceOpen(timeLeft)) return "entrance";
+
   if (maxTimeLeft <= -removeTimerAfterMs) return "expired";
 
   if (maxTimeLeft < 0) return "overdue";
@@ -88,8 +112,19 @@ export const getTimerPhase = (
 
 export type TimerCountdownMode = "min" | "max";
 
-/** The one countdown a timer shows: to its maximum, or to its minimum until it passes. */
+/**
+ * The one countdown a timer shows: to an open entrance's close, otherwise to
+ * its maximum, or to its minimum until it passes.
+ */
 export const getTimerCountdownMs = (
-  { minTimeLeft, maxTimeLeft }: TimerTimeLeft,
+  timeLeft: TimerTimeLeft,
   countdownMode: TimerCountdownMode,
-) => (countdownMode === "max" || minTimeLeft < 0 ? maxTimeLeft : minTimeLeft);
+) => {
+  const { minTimeLeft, maxTimeLeft, entranceTimeLeft } = timeLeft;
+
+  if (entranceTimeLeft !== undefined && isEntranceOpen(timeLeft)) {
+    return entranceTimeLeft;
+  }
+
+  return countdownMode === "max" || minTimeLeft < 0 ? maxTimeLeft : minTimeLeft;
+};

@@ -172,6 +172,7 @@ export const makeResetTimer = (
               minSpawnTime,
               maxSpawnTime,
               wasReset: true,
+              entranceClosesAt: null,
               deletedAt: null,
               updatedAt: now,
               actorCharacterSnapshotId: actorCharacter?.id ?? null,

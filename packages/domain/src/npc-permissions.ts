@@ -57,6 +57,7 @@ const TIMER_PERMISSION_TIER_BY_NPC_TYPE = new Map(
     TITAN: "titans",
     HERO: "heroes",
     EVENT_HERO: "heroes",
+    HERO_TRACKER: "heroes",
   } satisfies Record<string, TimerPermissionTier>),
 );
 

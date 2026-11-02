@@ -4,6 +4,7 @@ export const NOTIFICATION_TYPES = [
   "EVENT_HERO",
   "COLOSSUS",
   "TITAN",
+  "HERO_TRACKER",
   "message",
   "party-gathering",
 ] as const;
@@ -15,7 +16,8 @@ export type DetectorNpcType =
   | "HERO"
   | "EVENT_HERO"
   | "COLOSSUS"
-  | "TITAN";
+  | "TITAN"
+  | "HERO_TRACKER";
 
 export const DETECTOR_NPC_TYPES = [
   "ELITE2",
@@ -23,6 +25,7 @@ export const DETECTOR_NPC_TYPES = [
   "EVENT_HERO",
   "COLOSSUS",
   "TITAN",
+  "HERO_TRACKER",
 ] as const satisfies readonly DetectorNpcType[];
 
 export const isDetectorNpcType = (value: string): value is DetectorNpcType =>
@@ -72,6 +75,7 @@ export type DetectorSettings = {
   EVENT_HERO: DetectorTypeSettings;
   COLOSSUS: DetectorTypeSettings;
   TITAN: DetectorTypeSettings;
+  HERO_TRACKER: DetectorTypeSettings;
 };
 
 export type MapPingPreferences = {
@@ -95,6 +99,7 @@ type DetectorSettingsPatch = {
   EVENT_HERO?: DetectorTypeSettingsPatch;
   COLOSSUS?: DetectorTypeSettingsPatch;
   TITAN?: DetectorTypeSettingsPatch;
+  HERO_TRACKER?: DetectorTypeSettingsPatch;
 };
 
 export interface UserGameAccountPreferences {
@@ -172,6 +177,13 @@ export const defaultNotificationsSettings: NotificationsSettings = {
     autoHideTimeout: 0,
     sound: false,
   },
+  HERO_TRACKER: {
+    show: true,
+    highlight: true,
+    ignoreOtherWorlds: true,
+    autoHideTimeout: 0,
+    sound: false,
+  },
   message: {
     show: true,
     highlight: true,
@@ -219,6 +231,13 @@ export const defaultDetectorSettings: DetectorSettings = {
     notifySound: false,
   },
   TITAN: {
+    detect: true,
+    autoSend: false,
+    notifyWindow: true,
+    highlight: true,
+    notifySound: false,
+  },
+  HERO_TRACKER: {
     detect: true,
     autoSend: false,
     notifyWindow: true,

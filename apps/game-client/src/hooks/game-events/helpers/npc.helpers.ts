@@ -3,7 +3,7 @@ import type { GameNpcWithLocation } from "@/store/npc-detector.store";
 import type { NpcTpl } from "@lootlog/margonem/npc-tpl-manager";
 
 export const composeNpcFromEvent = (
-  npc: EventNpc,
+  { killSeconds: _killSeconds, ...npc }: EventNpc,
   tpl: Omit<NpcTpl, "id">,
   processedSettings: ProcessedNpcSettings,
   location: string,

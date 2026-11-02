@@ -3,6 +3,7 @@ import {
   isNotificationSettingsKey,
 } from "@/features/notifications/utils/get-notification-settings-key";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
+import { getHeroTrackerEntranceRemainingMs } from "@/features/notifications/utils/hero-tracker-notification";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import {
   type NotificationPresentation,
@@ -35,7 +36,7 @@ export const useNotificationPresenter = () => {
 
     const audibleSettingsKeys = new Map<NotificationPresentation, string>();
 
-    const presentations = requests.map(
+    const presentations = requests.flatMap(
       ({ notification, playSound: audible }) => {
         const settingsKey = getNotificationSettingsKey(notification);
 
@@ -44,19 +45,41 @@ export const useNotificationPresenter = () => {
           : undefined;
 
         const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
+        const configuredAutoHideMs = Math.max(0, autoHideTimeout * 1_000);
+
+        // A Hero Tracker report goes stale when its entrance closes.
+        const entranceRemainingMs =
+          "heroTracker" in notification
+            ? getHeroTrackerEntranceRemainingMs(notification)
+            : undefined;
+
+        if (entranceRemainingMs !== undefined && entranceRemainingMs <= 0) {
+          return [];
+        }
+
+        const autoHideDurationMs =
+          entranceRemainingMs === undefined
+            ? configuredAutoHideMs
+            : configuredAutoHideMs === 0
+              ? entranceRemainingMs
+              : Math.min(configuredAutoHideMs, entranceRemainingMs);
 
         const presentation = {
           notification,
-          autoHideDurationMs: Math.max(0, autoHideTimeout * 1_000),
+          autoHideDurationMs,
         } satisfies NotificationPresentation;
 
         if (audible !== false && categorySettings?.sound) {
           audibleSettingsKeys.set(presentation, settingsKey);
         }
 
-        return presentation;
+        return [presentation];
       },
     );
+
+    if (presentations.length === 0) {
+      return;
+    }
 
     let addedPresentations: ReadonlySet<NotificationPresentation> = new Set();
 

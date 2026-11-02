@@ -34,6 +34,7 @@ const createProjectionInput = (
       NpcType.ELITE2,
       NpcType.ELITE3,
       NpcType.TITAN,
+      NpcType.HERO_TRACKER,
     ],
     showHiddenTimers: false,
   },

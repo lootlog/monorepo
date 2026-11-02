@@ -48,6 +48,7 @@ export const CatalogNpcDtoOutputType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -186,6 +187,7 @@ export const SearchAllResponseDtoOutputNpcsItemType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 
@@ -286,6 +288,7 @@ export const NpcHitDtoOutputType = {
   EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
+  HERO_TRACKER: 'HERO_TRACKER',
   NPC: 'NPC',
 } as const;
 

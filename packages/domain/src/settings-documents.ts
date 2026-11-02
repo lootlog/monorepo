@@ -108,6 +108,7 @@ const isDetectorSettingsRecord = Schema.is(
     EVENT_HERO: Schema.optionalKey(UnknownRecord),
     COLOSSUS: Schema.optionalKey(UnknownRecord),
     TITAN: Schema.optionalKey(UnknownRecord),
+    HERO_TRACKER: Schema.optionalKey(UnknownRecord),
   }),
 );
 

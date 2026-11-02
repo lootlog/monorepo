@@ -5,6 +5,7 @@ export const DEFAULT_SOUND_URLS = {
   EVENT_HERO: "https://cronus.margonem.com/sounds/heroes_here.mp3",
   COLOSSUS: "https://cronus.margonem.com/sounds/heroes_here.mp3",
   TITAN: "https://cronus.margonem.com/sounds/heroes_here.mp3",
+  HERO_TRACKER: "https://cronus.margonem.com/sounds/heroes_here.mp3",
   ELITE3: "https://cronus.margonem.com/sounds/elite2_here.mp3",
   timerReady: "https://gordion.margonem.pl/sounds/new_mail.mp3",
   mapPing: "https://gordion.margonem.pl/sounds/new_mail.mp3",

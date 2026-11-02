@@ -62,6 +62,23 @@ Herosi eventowi to herosi pojawiający się podczas wydarzeń w grze. Mają
 własny filtr typu w oknie timerów; jeśli Twój filtr pokazywał herosów, po
 aktualizacji pokazuje też herosów eventowych.
 
+### Tropiciele herosów
+
+Podczas wydarzenia **Tropiciele herosów** Lootlog śledzi też samych
+tropicieli. Gdy ktoś z Lootloga stoi przy tropicielu w chwili, gdy gracz go
+odkryje, powstaje timer **Tropiciel herosów** (skrót `TH`):
+
+1. Najpierw timer odlicza czas do zamknięcia wejścia do kolosa (20 minut od
+   odkrycia) i świeci na zielono. Po najechaniu zobaczysz godzinę zamknięcia
+   wejścia.
+2. Po zamknięciu wejścia timer odlicza odrodzenie tropiciela, około 90 minut
+   na światach ogólnodostępnych. Na światach prywatnych Lootlog przyjmuje
+   krótszy czas, gdy ktoś z Lootloga zobaczy odejście tropiciela.
+
+Tropiciele mają własny filtr typu w oknie timerów i są w nim widoczni od
+razu po aktualizacji. Ten sam timer zobaczysz w panelu Lootloga i w komendach
+`/timery` oraz `/timer` bota Discord.
+
 Jeżeli znasz czas odrodzenia z innego źródła, osoba z odpowiednim
 uprawnieniem może dodać timer ręcznie. Jeśli serwer odrzuci timer, formularz
 zostaje otwarty z wpisanymi danymi, a komunikat informuje o błędzie.
@@ -183,6 +200,13 @@ dostępnymi informacjami, na przykład nazwą, poziomem, typem i pozycją.
 Filtry pomagają ograniczyć listę do interesujących poziomów lub kategorii.
 Zamknięcie okna wykrywacza tylko je ukrywa; lista zostaje do czasu jej
 wyczyszczenia (zobacz [Okna Lootlog w grze](/docs/settings#okna-lootlog-w-grze)).
+
+Wykrywacz rozpoznaje też tropicieli herosów i pokazuje ich stan:
+**Nikt go jeszcze nie odkrył** albo **Wejście otwarte** z czasem do
+zamknięcia wejścia. Gdy tropiciel na Twojej mapie zostanie odkryty, wykrywacz
+zgłasza go ponownie: odtwarza dźwięk i, przy włączonej autowysyłce, wysyła
+powiadomienie o otwartym wejściu. Takie powiadomienie znika samo, gdy wejście
+się zamknie. Tropiciele nie trafiają na czat Lootloga.
 
 Autowysyłka wysyła wykryte potwory do Lootlogów bez pytania. Typy potworów
 wybierasz w **Ustawienia → Wykrywacz**, a przełącznikiem **Autowysyłka na tej

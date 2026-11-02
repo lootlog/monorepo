@@ -27,10 +27,12 @@ export type TimerTileViewProps = {
 const EXPIRED_VEIL = "black 40%";
 
 /**
- * The whole tile text follows the spawn window: orange once the minimum
- * spawn time passes, red after the maximum, and a dimmed red once expired.
+ * The whole tile text follows the spawn window: green while a Hero Tracker's
+ * entrance is open, orange once the minimum spawn time passes, red after the
+ * maximum, and a dimmed red once expired.
  */
 const TEXT_COLORS = {
+  entrance: "ll:text-emerald-300",
   waiting: "ll:text-white",
   window: "ll:text-orange-300",
   overdue: "ll:text-red-400",
@@ -38,6 +40,7 @@ const TEXT_COLORS = {
 } satisfies Record<TimerPhase, string>;
 
 const LEGACY_TEXT_COLORS = {
+  entrance: "ll:text-emerald-400",
   waiting: "ll:text-white",
   window: "ll:text-orange-400",
   overdue: "ll:text-red-500",

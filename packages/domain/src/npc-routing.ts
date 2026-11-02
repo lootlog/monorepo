@@ -14,6 +14,7 @@ const isNumericNpcType = Schema.is(Schema.Number);
 const HERO_ROUTING_NPC_TYPES = new Set<NpcTypeEnum>([
   NpcTypeEnum.HERO,
   NpcTypeEnum.EVENT_HERO,
+  NpcTypeEnum.HERO_TRACKER,
 ]);
 
 export function resolveNpcType(

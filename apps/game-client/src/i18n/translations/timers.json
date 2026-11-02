@@ -32,6 +32,7 @@
   "tooltip": {
     "addedBy": "Dodane przez:",
     "addedAt": "Dodano:",
+    "entrance": "Wejście do:",
     "min": "Min:",
     "max": "Max:",
     "reset": "Timer został zresetowany",

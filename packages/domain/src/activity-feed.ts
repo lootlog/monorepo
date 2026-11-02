@@ -26,6 +26,7 @@ const CATEGORY_BY_NPC_TYPE: Record<NpcTypeEnum, ActivityFeedNpcCategory> = {
   EVENT_HERO: "HERO",
   COLOSSUS: "COLOSSUS",
   TITAN: "TITAN",
+  HERO_TRACKER: "OTHER",
   NPC: "OTHER",
 };
 

@@ -4,7 +4,7 @@ import { useLocalStorage } from "usehooks-ts";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import { useGuildWorld } from "@/hooks/context/use-guild-world";
-import type { NpcType } from "@lootlog/client/main";
+import type { KilledNpcType } from "@/constants/npc";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
 type StatsSettingsPage =
@@ -17,7 +17,7 @@ type StatsSettingsPage =
 type StoredStatsSettings = {
   minLvl: string;
   maxLvl: string;
-  npcType?: NpcType | "ALL";
+  npcType?: KilledNpcType | "ALL";
   period?: KillStatsPeriod;
 };
 
@@ -54,7 +54,7 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
     setSettings((previous) => updateSettingsField(previous, "maxLvl", maxLvl));
   };
 
-  const setNpcType = (npcType: NpcType | "ALL") => {
+  const setNpcType = (npcType: KilledNpcType | "ALL") => {
     setSettings((previous) =>
       updateSettingsField(previous, "npcType", npcType),
     );

@@ -18,6 +18,7 @@
     "manual": "Dodane ręcznie"
   },
   "details": {
+    "entranceClosesAt": "Wejście do kolosa otwarte do",
     "minSpawnTime": "Min. czas respawnu",
     "maxSpawnTime": "Max. czas respawnu"
   }

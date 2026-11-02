@@ -215,6 +215,7 @@ const withLegacyTypeGuildIds = (value: UserGameAccountPreferences) => {
       EVENT_HERO: mirror("EVENT_HERO"),
       COLOSSUS: mirror("COLOSSUS"),
       TITAN: mirror("TITAN"),
+      HERO_TRACKER: mirror("HERO_TRACKER"),
       message: mirror("message"),
       "party-gathering": mirror("party-gathering"),
     },

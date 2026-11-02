@@ -19093,6 +19093,7 @@ components:
         - EVENT_HERO
         - COLOSSUS
         - TITAN
+        - HERO_TRACKER
         - NPC
     UserNpcKillsResponseDto_Output:
       type: object
@@ -23173,6 +23174,21 @@ components:
                     - type: string
                       format: uri
               additionalProperties: false
+            HERO_TRACKER:
+              type: object
+              properties:
+                volume:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                soundUrl:
+                  anyOf:
+                    - type: string
+                      enum:
+                        - ""
+                    - type: string
+                      format: uri
+              additionalProperties: false
             TITAN:
               type: object
               properties:
@@ -23267,6 +23283,21 @@ components:
                     - type: string
                       format: uri
               additionalProperties: false
+            HERO_TRACKER:
+              type: object
+              properties:
+                volume:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                soundUrl:
+                  anyOf:
+                    - type: string
+                      enum:
+                        - ""
+                    - type: string
+                      format: uri
+              additionalProperties: false
             TITAN:
               type: object
               properties:
@@ -23347,6 +23378,21 @@ components:
                       format: uri
               additionalProperties: false
             EVENT_HERO:
+              type: object
+              properties:
+                volume:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                soundUrl:
+                  anyOf:
+                    - type: string
+                      enum:
+                        - ""
+                    - type: string
+                      format: uri
+              additionalProperties: false
+            HERO_TRACKER:
               type: object
               properties:
                 volume:
@@ -24670,6 +24716,32 @@ components:
             - prof
             - icon
           additionalProperties: false
+        heroTracker:
+          anyOf:
+            - type: object
+              properties:
+                state:
+                  type: string
+                  enum:
+                    - unclaimed
+              required:
+                - state
+              additionalProperties: false
+            - type: object
+              properties:
+                state:
+                  type: string
+                  enum:
+                    - open
+                entranceClosesAt:
+                  type: string
+                  format: date-time
+                  pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              required:
+                - state
+                - entranceClosesAt
+              additionalProperties: false
+          description: "State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open until `entranceClosesAt`."
       required:
         - guildIds
         - world
@@ -29255,6 +29327,7 @@ components:
                   - EVENT_HERO
                   - COLOSSUS
                   - TITAN
+                  - HERO_TRACKER
                   - NPC
               margonemType:
                 nullable: true
@@ -29446,6 +29519,7 @@ components:
                   - EVENT_HERO
                   - COLOSSUS
                   - TITAN
+                  - HERO_TRACKER
                   - NPC
               lvl:
                 nullable: true
@@ -29661,6 +29735,7 @@ components:
                   - EVENT_HERO
                   - COLOSSUS
                   - TITAN
+                  - HERO_TRACKER
                   - NPC
               lvl:
                 nullable: true
@@ -29943,6 +30018,7 @@ components:
                   - EVENT_HERO
                   - COLOSSUS
                   - TITAN
+                  - HERO_TRACKER
                   - NPC
               margonemType:
                 nullable: true
@@ -30644,6 +30720,7 @@ components:
                 - EVENT_HERO
                 - COLOSSUS
                 - TITAN
+                - HERO_TRACKER
                 - NPC
             icon:
               nullable: true
@@ -30920,6 +30997,7 @@ components:
                 - EVENT_HERO
                 - COLOSSUS
                 - TITAN
+                - HERO_TRACKER
                 - NPC
             icon:
               nullable: true
@@ -31113,6 +31191,12 @@ components:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        entranceClosesAt:
+          description: When a Hero Tracker's open entrance closes; the respawn window follows it. Null for every other timer.
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
@@ -31218,6 +31302,11 @@ components:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        entranceClosesAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          description: When the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from it instead of from the request.
         world:
           type: string
           minLength: 1
@@ -31333,6 +31422,7 @@ components:
             - EVENT_HERO
             - COLOSSUS
             - TITAN
+            - HERO_TRACKER
             - NPC
         prof:
           type: string
@@ -32431,6 +32521,31 @@ components:
                 - guildIds
                 - sound
               additionalProperties: false
+            HERO_TRACKER:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+              additionalProperties: false
             message:
               type: object
               properties:
@@ -32488,6 +32603,7 @@ components:
             - EVENT_HERO
             - COLOSSUS
             - TITAN
+            - HERO_TRACKER
             - message
             - party-gathering
           additionalProperties: false
@@ -32624,6 +32740,26 @@ components:
                 - highlight
                 - notifySound
               additionalProperties: false
+            HERO_TRACKER:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+              required:
+                - detect
+                - autoSend
+                - notifyWindow
+                - highlight
+                - notifySound
+              additionalProperties: false
           required:
             - routingRules
             - ELITE2
@@ -32631,6 +32767,7 @@ components:
             - EVENT_HERO
             - COLOSSUS
             - TITAN
+            - HERO_TRACKER
           additionalProperties: false
         pings:
           type: object
@@ -32775,6 +32912,25 @@ components:
                 sound:
                   type: boolean
               additionalProperties: false
+            HERO_TRACKER:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              additionalProperties: false
             message:
               type: object
               properties:
@@ -32917,6 +33073,20 @@ components:
                 notifySound:
                   type: boolean
               additionalProperties: false
+            HERO_TRACKER:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+              additionalProperties: false
           additionalProperties: false
         pings:
           type: object
@@ -33032,6 +33202,7 @@ components:
                           - EVENT_HERO
                           - COLOSSUS
                           - TITAN
+                          - HERO_TRACKER
                       lvl:
                         type: integer
                         minimum: 1
@@ -33360,6 +33531,7 @@ components:
                       - EVENT_HERO
                       - COLOSSUS
                       - TITAN
+                      - HERO_TRACKER
                   lvl:
                     type: integer
                     minimum: 1
@@ -33494,6 +33666,7 @@ components:
                       - EVENT_HERO
                       - COLOSSUS
                       - TITAN
+                      - HERO_TRACKER
                   lvl:
                     type: integer
                     minimum: 1
@@ -33811,6 +33984,7 @@ components:
                                 - EVENT_HERO
                                 - COLOSSUS
                                 - TITAN
+                                - HERO_TRACKER
                                 - NPC
                             margonemType:
                               nullable: true

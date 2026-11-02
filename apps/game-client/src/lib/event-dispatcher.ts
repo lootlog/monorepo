@@ -9,6 +9,7 @@ import { ChatEventProcessor } from "@/processors/chat-event-processor";
 import { DialogProcessor } from "@/processors/dialog-processor";
 import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { NpcsDeleteProcessor } from "@/processors/npcs-delete-processor";
+import { HeroTrackerTimerProcessor } from "@/processors/hero-tracker-timer-processor";
 import { MapChangeProcessor } from "@/processors/map-change-processor";
 import { AfkProcessor } from "@/processors/afk-processor";
 import { OtherEventProcessor } from "@/processors/other-event-processor";
@@ -43,6 +44,7 @@ export class EventDispatcher {
   private dialog = new DialogProcessor();
   private npcsDetection = npcsDetectionProcessor;
   private npcsDelete = new NpcsDeleteProcessor();
+  private heroTrackerTimers = new HeroTrackerTimerProcessor();
   private mapChange = new MapChangeProcessor();
   private afk = new AfkProcessor();
   private other = new OtherEventProcessor();
@@ -94,6 +96,9 @@ export class EventDispatcher {
 
     if (fact.kind === "npc-upsert") {
       runSafe("npc-detection", () => this.npcsDetection.handle(event));
+      runSafe("hero-tracker-timers", () =>
+        this.heroTrackerTimers.handle(event, ingress),
+      );
     }
 
     if (fact.kind === "loot") {

@@ -14,7 +14,7 @@ import {
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
 import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
-import { buildTimerKey } from "#src/timers/timer-key";
+import { buildTimerKey, getTimerNpcId } from "#src/timers/timer-key";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -611,3 +611,100 @@ it.each([false, true])(
     }
   },
 );
+
+it("keeps one timer per Hero Tracker across hiding places, measuring its respawn from the entrance closing", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    const { database } = boundary;
+    const guild = createGuildFixture();
+
+    const member = createMemberFixture({
+      userId: guild.ownerId,
+      globalUserId: "user",
+    });
+
+    const now = new Date();
+    const trackerName = "Doświadczony Tropiciel Herosów";
+    await boundary.run(database.insert(guildTable).values(guild));
+    await boundary.run(database.insert(memberTable).values(member));
+    await boundary.run(
+      database.insert(userCharactersLootlogSettingsTable).values({
+        userId: member.userId,
+        accountId: "1",
+        characterId: "2",
+        catchingGuildIds: [guild.id],
+        updatedAt: now,
+      }),
+    );
+    const trackerTimerNpcId = getTimerNpcId({ id: 190436, name: trackerName });
+
+    // A private world: the tracker left its previous hiding place reporting
+    // a one-hour respawn.
+    await boundary.run(
+      database.insert(timerTable).values({
+        guildId: guild.id,
+        world: "world",
+        npcId: trackerTimerNpcId,
+        timerKey: buildTimerKey(trackerTimerNpcId, trackerName),
+        createdById: member.id,
+        npc: { id: 190436, name: trackerName, lvl: 282, type: "HERO_TRACKER" },
+        latestRespBaseSeconds: 3600,
+        minSpawnTime: new Date(now.getTime() - 60 * 60_000),
+        maxSpawnTime: new Date(now.getTime() - 30 * 60_000),
+        updatedAt: now,
+      }),
+    );
+
+    const create = makeAutoTimer(database, {
+      get: () => Effect.succeed(null),
+      set: () => Effect.void,
+      setNx: () => Effect.succeed(true),
+      releaseDedup: () => Effect.void,
+      invalidateList: () => Effect.void,
+      enqueueEventHeroCheck: () => Effect.void,
+      withLock: (_key, operation) => operation,
+      publish: () => Effect.void,
+    });
+
+    const entranceClosesAt = new Date(now.getTime() + 20 * 60_000);
+
+    await boundary.run(
+      create(
+        { discordId: member.userId, userId: "user" },
+        {
+          respBaseSeconds: 5400,
+          respawnRandomness: 50,
+          entranceClosesAt: entranceClosesAt.toISOString(),
+          world: "world",
+          npc: {
+            // The next hiding place may give the tracker another runtime id.
+            id: 190999,
+            name: trackerName,
+            location: "Jaskinia Piaskowej Burzy s.1",
+            lvl: 282,
+            // Tracker templates carry no weight or profession.
+            wt: 0,
+            icon: "npc/tropiciel.gif",
+            type: 0,
+          },
+          accountId: "1",
+          characterId: "2",
+        },
+      ),
+    );
+
+    const timers = await boundary.run(database.select().from(timerTable));
+
+    expect(timers).toHaveLength(1);
+    expect(timers[0]).toMatchObject({
+      entranceClosesAt,
+      latestRespBaseSeconds: 3600,
+      minSpawnTime: new Date(entranceClosesAt.getTime() + 30 * 60_000),
+      maxSpawnTime: new Date(entranceClosesAt.getTime() + 90 * 60_000),
+      npc: { id: 190999, type: "HERO_TRACKER" },
+    });
+  } finally {
+    await boundary.dispose();
+  }
+});
