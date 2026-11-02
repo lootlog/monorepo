@@ -17,8 +17,17 @@ const MAIN_WEAPON_CLASSES = new Set([1, 2, 3, 4, 6]);
 // A failed read is retried by the next weapon tip built after this delay.
 const FAILED_READ_RETRY_MS = 30_000;
 
-// The line sits in the game's own `t_item` tip, so it keeps its palette.
-const LINE_STYLE = "margin-top:3px;font-size:11px;color:#e6d6bf;";
+// The counter is a section of the game's own `t_item` tip, so the game's
+// `.item-tip-section` rule draws its separators in both interfaces. The count
+// takes the orange of the game's stat values.
+const SECTION_STYLE = "display:flex;align-items:baseline;gap:4px;";
+
+const COUNT_STYLE = "color:orange;";
+
+const SOURCE_STYLE = "margin-left:auto;padding-left:8px;color:#8a7f73;";
+
+// The requirements and value section closes the tip, ahead of a comparison.
+const REQUIREMENTS_SECTION = '<div class="item-tip-section s-9';
 
 // The hero's counters by item id. A character switch reloads the page.
 const counters = new Map<string, number>();
@@ -58,9 +67,20 @@ function loadCounters(world: string, characterId: string): void {
 }
 
 function renderWeaponKills(kills: number): string {
-  const text = getFixedT("common")("itemTooltip.weaponKills", { count: kills });
+  const t = getFixedT("common");
+  const label = escapeTooltipHtml(t("itemTooltip.weaponKills.label"));
+  const source = escapeTooltipHtml(t("itemTooltip.weaponKills.source"));
 
-  return `<div style="${LINE_STYLE}">${escapeTooltipHtml(text)}</div>`;
+  return `<div class="item-tip-section" style="${SECTION_STYLE}"><span>${label}</span><span style="${COUNT_STYLE}">${kills}</span><span style="${SOURCE_STYLE}">${source}</span></div>`;
+}
+
+/** Places the section above the item's requirements and value. */
+function insertSection(html: string, section: string): string {
+  const index = html.indexOf(REQUIREMENTS_SECTION);
+
+  if (index === -1) return html + section;
+
+  return html.slice(0, index) + section + html.slice(index);
 }
 
 function extendItemTip(item: RuntimeTipItem, html: string): string {
@@ -75,7 +95,7 @@ function extendItemTip(item: RuntimeTipItem, html: string): string {
   const itemId = getItemId(item);
   const kills = itemId ? counters.get(itemId) : undefined;
 
-  return kills ? html + renderWeaponKills(kills) : html;
+  return kills ? insertSection(html, renderWeaponKills(kills)) : html;
 }
 
 /** Applies a counter the server returned after recording the hero's kills. */

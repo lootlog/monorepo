@@ -100,7 +100,10 @@
     }
   },
   "itemTooltip": {
-    "weaponKills": "Zabici gracze: {{count}}"
+    "weaponKills": {
+      "label": "Zabici gracze:",
+      "source": "Lootlog"
+    }
   },
   "worldSelector": {
     "recent": "Ostatnio używane",
