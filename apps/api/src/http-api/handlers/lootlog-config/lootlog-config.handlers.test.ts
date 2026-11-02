@@ -1,6 +1,6 @@
+import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
 import { decodeDomainJson } from "../../domain-json.schema.js";
 import {
   LootlogConfigResponse,
@@ -65,7 +65,7 @@ describe("lootlog config HttpApi handlers", () => {
     );
 
     expect(authorizationCalls).toEqual([
-      { guildId: "guild-alias", capability: Permission.ADMIN },
+      { guildId: "guild-alias", anyOf: AccessRequirement.ADMINISTER },
     ]);
     expect(dataCalls).toEqual([["guild-a", 1]]);
     expect(Schema.is(NpcLootlogConfigResponse)(response)).toBe(true);

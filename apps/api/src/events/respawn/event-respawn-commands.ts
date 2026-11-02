@@ -26,7 +26,7 @@ import type {
   OpenRespawnWindowRequest,
 } from "#src/contracts/events/schemas";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
-import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
+import { getEventHeroNpcId } from "#src/shared/margonem/npc-identity";
 
 class EventRespawnCommandError extends TaggedErrorClass<EventRespawnCommandError>()(
   "EventRespawnCommandError",
@@ -175,7 +175,7 @@ export const makeEventRespawnCommands = (
         const timer = yield* timers.openEventRespawnTimer({
           guildId: guild.id,
           world: row.event.world,
-          npcId: row.hero.npcId ?? getSyntheticNpcId(heroId),
+          npcId: getEventHeroNpcId(row.hero),
           npcName: row.hero.npcName,
           npcIcon: row.hero.npcIcon ?? null,
           minSpawnTime,
@@ -313,7 +313,7 @@ export const makeEventRespawnCommands = (
         const timerLookup = {
           guildId: guild.id,
           world: row.event.world,
-          npcId: row.hero.npcId ?? getSyntheticNpcId(heroId),
+          npcId: getEventHeroNpcId(row.hero),
           npcName: row.hero.npcName,
         };
 

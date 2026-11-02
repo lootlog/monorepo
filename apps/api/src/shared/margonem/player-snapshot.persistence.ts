@@ -12,6 +12,63 @@ export type PlayerSnapshotInput = Pick<
   "world" | "accountId" | "characterId" | "name" | "prof" | "icon"
 >;
 
+/** Margonem does not report the account of every character it shows. */
+export const UNKNOWN_ACCOUNT_ID = 0;
+
+const parsePositiveId = (value: string): number | null => {
+  const id = Number(value);
+
+  return /^\d+$/.test(value) && Number.isSafeInteger(id) && id > 0 ? id : null;
+};
+
+/**
+ * The account and character a client reported, in the form snapshots store.
+ * A missing or zero account is unknown. Returns null when either id is
+ * malformed. Older loot senders appended the account id to the character id;
+ * only their callers pass `legacyCombinedId`.
+ */
+export const parseCharacterIdentity = (
+  characterId: string | number,
+  accountId: string | number | null | undefined,
+  options: { readonly legacyCombinedId?: boolean } = {},
+): { accountId: number; characterId: number } | null => {
+  const rawAccount = String(accountId ?? "").trim();
+  const account = parsePositiveId(rawAccount);
+
+  if (account === null && rawAccount !== "" && rawAccount !== "0") return null;
+
+  const character = String(characterId).trim();
+
+  const ownCharacter =
+    options.legacyCombinedId === true &&
+    account !== null &&
+    character.length > String(account).length &&
+    character.endsWith(String(account))
+      ? character.slice(0, -String(account).length)
+      : character;
+
+  const parsedCharacterId = parsePositiveId(ownCharacter);
+
+  return parsedCharacterId === null
+    ? null
+    : {
+        accountId: account ?? UNKNOWN_ACCOUNT_ID,
+        characterId: parsedCharacterId,
+      };
+};
+
+// Senders report a missing graphic as an empty string or null.
+const normalizeInput = (
+  snapshot: PlayerSnapshotInput,
+): PlayerSnapshotInput => ({
+  world: snapshot.world,
+  accountId: snapshot.accountId,
+  characterId: snapshot.characterId,
+  name: snapshot.name,
+  prof: snapshot.prof,
+  icon: snapshot.icon?.trim() || null,
+});
+
 const contentKey = (snapshot: PlayerSnapshotInput): string =>
   JSON.stringify([
     snapshot.world,
@@ -19,7 +76,7 @@ const contentKey = (snapshot: PlayerSnapshotInput): string =>
     snapshot.characterId,
     snapshot.name,
     snapshot.prof,
-    snapshot.icon,
+    snapshot.icon || null,
   ]);
 
 const identityKey = (
@@ -48,9 +105,11 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
 ) {
   if (snapshots.length === 0) return [];
 
+  const inputs = snapshots.map(normalizeInput);
+
   const unique = [
     ...new Map(
-      snapshots.map((snapshot) => [contentKey(snapshot), snapshot]),
+      inputs.map((snapshot) => [contentKey(snapshot), snapshot]),
     ).values(),
   ];
 
@@ -70,7 +129,10 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
               ? isNull(playerSnapshotTable.prof)
               : eq(playerSnapshotTable.prof, snapshot.prof),
             snapshot.icon === null
-              ? isNull(playerSnapshotTable.icon)
+              ? or(
+                  isNull(playerSnapshotTable.icon),
+                  eq(playerSnapshotTable.icon, ""),
+                )
               : eq(playerSnapshotTable.icon, snapshot.icon),
           ),
         ),
@@ -141,7 +203,7 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
 
   const resolved: PlayerSnapshot[] = [];
 
-  for (const input of snapshots) {
+  for (const input of inputs) {
     const snapshot = byContent.get(contentKey(input));
 
     if (

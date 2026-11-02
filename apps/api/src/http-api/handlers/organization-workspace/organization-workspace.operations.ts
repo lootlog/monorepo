@@ -21,7 +21,10 @@ import {
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { applicationErrorResponse } from "#src/http-api/application-error-response";
-import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
+import {
+  createAccessPolicy,
+  AccessRequirement,
+} from "@lootlog/domain/access-policy";
 import {
   Permission,
   type Permission as PermissionValue,
@@ -333,11 +336,11 @@ export class RolesData extends Context.Service<
 
                 const roleIsAdministrative = createAccessPolicy({
                   capabilities: role.permissions,
-                }).allows(Capability.ADMIN);
+                }).allowsAny(AccessRequirement.ADMINISTER);
 
                 const newPermissionsAreAdministrative = createAccessPolicy({
                   capabilities: payload.permissions,
-                }).allows(Capability.ADMIN);
+                }).allowsAny(AccessRequirement.ADMINISTER);
 
                 if (
                   roleIsAdministrative !== newPermissionsAreAdministrative &&
@@ -476,7 +479,6 @@ const toViewer = (
   guildId: access.guildId,
   userId: access.userId,
   discordId: access.discordId,
-  actorIsOwner: access.ownerId === access.discordId,
   permissions: [...access.permissions],
 });
 
@@ -649,10 +651,9 @@ export const updateGuildRole = Effect.fn("RolesControllerUpdateGuildRole")(
     roleId: string,
     payload: UpdateRolePermissionsRequest,
   ) {
-    const access = yield* requireGuild(guildId, [
-      Permission.LOOTLOG_ACCESS,
-      Permission.ADMIN,
-    ]);
+    const access = yield* requireGuild(guildId, {
+      anyOf: AccessRequirement.ADMINISTER,
+    });
 
     const value = yield* rolesData((service) =>
       service.updateRole(access.discordId, access.guildId, roleId, payload),
@@ -675,9 +676,7 @@ export const getGuildRoles = Effect.fn("RolesControllerGetGuildRoles")(
 );
 
 const requireSharingAdmin = (guildId: string) =>
-  requireGuild(guildId, {
-    anyOf: [Permission.OWNER, Permission.ADMIN],
-  });
+  requireGuild(guildId, { anyOf: AccessRequirement.ADMINISTER });
 
 export const listReservationShares = Effect.fn("listReservationShares")(
   function* (guildId: string) {

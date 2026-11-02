@@ -1049,3 +1049,12 @@ and every recomputed hash matched the TypeScript function.
 Organizations accept event hero loots by their `EVENT_HERO` loot setting from
 step 1 onwards. Most settings match the hero setting; those that differ change
 which event hero loots are accepted.
+
+## Document actor columns
+
+`20261102132718_guild_document_discord_actor` renames the `GuildDocument` and
+`GuildDocumentHistory` actor columns from `*MemberId` to `*DiscordId`; they
+always held the acting User's Discord id, never a `Member.id`. Apply it right
+before deploying the API that reads the new names. Between the two steps the
+running API fails document requests; no other feature reads these columns.
+The HTTP response fields keep their `*MemberId` names.

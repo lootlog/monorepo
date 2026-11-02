@@ -14,6 +14,7 @@ import {
   memberTable,
 } from "#src/database/drizzle/schema";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { findMemberNames } from "#src/members/member-names";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import { MemberSummary } from "#src/contracts/shared";
 
@@ -121,33 +122,9 @@ export const makeEventRankingRead = (
           .orderBy(desc(eventPointsEditHistoryTable.editedAt))
           .pipe(Effect.map((rows) => rows.map(({ history }) => history)));
 
-        const editorIds = [
-          ...new Set(histories.map((row) => row.editedByUserId)),
-        ];
-
-        const editors =
-          editorIds.length === 0
-            ? []
-            : yield* database
-                .select({
-                  globalUserId: memberTable.globalUserId,
-                  name: memberTable.name,
-                })
-                .from(memberTable)
-                .where(
-                  and(
-                    eq(memberTable.guildId, guildId),
-                    inArray(memberTable.globalUserId, editorIds),
-                  ),
-                );
-
-        const names = new Map(
-          editors.flatMap((editor) =>
-            editor.globalUserId
-              ? [[editor.globalUserId, editor.name] as const]
-              : [],
-          ),
-        );
+        const { byUserId: names } = yield* findMemberNames(database, guildId, {
+          userIds: histories.map((row) => row.editedByUserId),
+        });
 
         return Map.groupBy(
           histories.map((history) => ({

@@ -1,3 +1,4 @@
+import { AccessRequirement } from "@lootlog/domain/access-policy";
 import type { MemberWithRoles } from "#src/members/member.types";
 import {
   pathString,
@@ -218,10 +219,7 @@ export const refreshGuildMember = Effect.fn("refreshGuildMember")(function* (
   guildId: string,
   discordId: string,
 ) {
-  const access = yield* requireGuild(guildId, [
-    Permission.ADMIN,
-    Permission.OWNER,
-  ]);
+  const access = yield* requireGuild(guildId, AccessRequirement.ADMINISTER);
 
   const value = yield* data((service) =>
     service.refreshMember(access.guildId, discordId),
@@ -234,10 +232,7 @@ export const refreshGuildMember = Effect.fn("refreshGuildMember")(function* (
 
 export const deactivateGuildMember = Effect.fn("deactivateGuildMember")(
   function* (guildId: string, discordId: string) {
-    const access = yield* requireGuild(guildId, [
-      Permission.ADMIN,
-      Permission.OWNER,
-    ]);
+    const access = yield* requireGuild(guildId, AccessRequirement.ADMINISTER);
 
     const value = yield* data((service) =>
       service.deactivateMember(access.guildId, discordId),
@@ -279,10 +274,10 @@ export const MembersHandlers = HttpApiBuilder.group(
           Effect.gen(function* () {
             const guildId = yield* pathString(params.guildId, "guildId");
 
-            const access = yield* requireGuild(guildId, [
-              Permission.ADMIN,
-              Permission.OWNER,
-            ]);
+            const access = yield* requireGuild(
+              guildId,
+              AccessRequirement.ADMINISTER,
+            );
 
             const value = yield* readData((service) =>
               service.getLootlogConfigSummary(access.guildId, params.discordId),
@@ -303,10 +298,7 @@ export const MembersHandlers = HttpApiBuilder.group(
             ]);
 
             if (query.includeInactive === true) {
-              yield* requireGuild(guildId, [
-                Permission.ADMIN,
-                Permission.OWNER,
-              ]);
+              yield* requireGuild(guildId, AccessRequirement.ADMINISTER);
             }
 
             const value = yield* readData((service) =>
@@ -367,10 +359,10 @@ export const MembersHandlers = HttpApiBuilder.group(
           Effect.gen(function* () {
             const guildId = yield* pathString(params.guildId, "guildId");
 
-            const access = yield* requireGuild(guildId, [
-              Permission.ADMIN,
-              Permission.OWNER,
-            ]);
+            const access = yield* requireGuild(
+              guildId,
+              AccessRequirement.ADMINISTER,
+            );
 
             const value = yield* data((service) =>
               service.refreshAllMembers(access.guildId, access.discordId),
@@ -386,10 +378,10 @@ export const MembersHandlers = HttpApiBuilder.group(
           Effect.gen(function* () {
             const guildId = yield* pathString(params.guildId, "guildId");
 
-            const access = yield* requireGuild(guildId, [
-              Permission.ADMIN,
-              Permission.OWNER,
-            ]);
+            const access = yield* requireGuild(
+              guildId,
+              AccessRequirement.ADMINISTER,
+            );
 
             const value = yield* refreshJobData((service) =>
               service.getLatestRefreshJob(access.guildId),
@@ -410,10 +402,10 @@ export const MembersHandlers = HttpApiBuilder.group(
           Effect.gen(function* () {
             const guildId = yield* pathString(params.guildId, "guildId");
 
-            const access = yield* requireGuild(guildId, [
-              Permission.ADMIN,
-              Permission.OWNER,
-            ]);
+            const access = yield* requireGuild(
+              guildId,
+              AccessRequirement.ADMINISTER,
+            );
 
             const value = yield* refreshJobData((service) =>
               service.getRefreshJobStatus(access.guildId, params.jobId),
