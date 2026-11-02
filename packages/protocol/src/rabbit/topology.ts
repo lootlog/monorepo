@@ -131,6 +131,8 @@ export const RabbitRoutingKey = {
   NOTIFICATIONS_TIMER_UPDATED: "notifications.timer.updated",
   GAME_CHARACTER_OFFLINE: "game.character.offline",
   GAME_CHARACTER_OFFLINE_DLQ: "game.character.offline.dlq",
+  MARGONEM_ACCOUNT_VERIFIED_V1: "margonem.account.verified.v1",
+  MARGONEM_ACCOUNT_VERIFIED_V1_DLQ: "margonem.account.verified.v1.dlq",
   PRESENCE_CHECK_REQUEST: "presence.check.request",
   PRESENCE_COVERAGE_CHECK: "presence.coverage.check",
   PRESENCE_COVERAGE_CHECK_DLQ: "presence.coverage.check.dlq",

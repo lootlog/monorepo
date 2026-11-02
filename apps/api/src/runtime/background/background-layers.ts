@@ -1,5 +1,6 @@
 import { ReadyRoomData } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
 import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";
+import { recordMargonemAccountVerification } from "#src/margonem-accounts/margonem-accounts";
 import { Effect, FiberSet, Layer, Schedule } from "effect";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -149,6 +150,14 @@ export const RabbitConsumers = Layer.effectDiscard(
       RabbitRoutingKey.GAME_CHARACTER_OFFLINE,
       (event) => readyRooms.characterOffline(event),
       apiRabbitFailurePolicies.characterOffline,
+      orderedHandlerRetry,
+    );
+
+    yield* consume(
+      ApiQueue.MARGONEM_ACCOUNT_VERIFIED,
+      RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1,
+      (event) => recordMargonemAccountVerification(database, event),
+      apiRabbitFailurePolicies.margonemAccountVerified,
       orderedHandlerRetry,
     );
 

@@ -114,6 +114,15 @@ export const TimerNpcSearchResult = Schema.Struct({
 
 export type CreateAutoTimerRequest = typeof CreateAutoTimerRequest.Type;
 
+/**
+ * A Hero Tracker's in-game entrance countdown. Margonem opens it for minutes,
+ * so an hour bounds it while keeping every close time a valid date.
+ */
+export const HeroTrackerEntranceSecondsLeft = FiniteNumber.check(
+  Schema.isGreaterThan(0),
+  Schema.isLessThanOrEqualTo(3600),
+);
+
 export const CreateAutoTimerRequest = Schema.Struct({
   respBaseSeconds: FiniteNumber.check(
     Schema.isGreaterThanOrEqualTo(2).annotate({
@@ -124,7 +133,7 @@ export const CreateAutoTimerRequest = Schema.Struct({
   customMinSpawnTime: Schema.optionalKey(DateTimeString),
   customMaxSpawnTime: Schema.optionalKey(DateTimeString),
   entranceSecondsLeft: Schema.optionalKey(
-    FiniteNumber.check(Schema.isGreaterThan(0)).annotate({
+    HeroTrackerEntranceSecondsLeft.annotate({
       description:
         "Seconds left until the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from the close time on the server clock instead of from the request.",
     }),

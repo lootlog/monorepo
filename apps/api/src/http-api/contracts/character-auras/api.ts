@@ -68,6 +68,7 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
     .annotate(OpenApi.Summary, "Show own aura on a Margonem account")
     .annotate(
       OpenApi.Description,
-      "Show the authenticated user's aura on the characters of a Margonem account they play; fails with 403 while they wear no aura they may use",
-    ),
+      "Deprecated: an aura shows on the Margonem accounts its user proved to play when the Game client connected, so this changes nothing. Returns the own aura, or 403 while the user wears no aura they may use",
+    )
+    .annotate(OpenApi.Deprecated, true),
 ) {}

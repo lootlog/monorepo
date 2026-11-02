@@ -246,6 +246,7 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
           memberId,
           title,
           content,
+          baseVersion: data.baseVersion,
         });
 
         return yield* mapDocumentRecord(guildId, document);

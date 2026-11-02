@@ -16379,6 +16379,12 @@ paths:
                 required:
                   - message
                 additionalProperties: false
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -16391,7 +16397,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Save document title and Lexical state
+      description: Save document title and Lexical state; fails with 409 when `baseVersion` is older than the current version
       summary: Update guild document
       requestBody:
         content:
@@ -17406,8 +17412,9 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Show the authenticated user's aura on the characters of a Margonem account they play; fails with 403 while they wear no aura they may use
+      description: "Deprecated: an aura shows on the Margonem accounts its user proved to play when the Game client connected, so this changes nothing. Returns the own aura, or 403 while the user wears no aura they may use"
       summary: Show own aura on a Margonem account
+      deprecated: true
 components:
   schemas:
     RequestValidationError:
@@ -18429,6 +18436,9 @@ components:
           type: string
           minLength: 1
           maxLength: 120
+        baseVersion:
+          type: number
+          description: The document version the edit started from. When another save has advanced the document past it, the save fails with 409 instead of overwriting that save.
       required:
         - content
         - title
@@ -24733,6 +24743,21 @@ components:
                   type: string
                   enum:
                     - open
+                entranceSecondsLeft:
+                  type: number
+                  exclusiveMinimum: true
+                  maximum: 3600
+                  minimum: 0
+              required:
+                - state
+                - entranceSecondsLeft
+              additionalProperties: false
+            - type: object
+              properties:
+                state:
+                  type: string
+                  enum:
+                    - open
                 entranceClosesAt:
                   type: string
                   format: date-time
@@ -24741,7 +24766,7 @@ components:
                 - state
                 - entranceClosesAt
               additionalProperties: false
-          description: "State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open until `entranceClosesAt`."
+          description: "State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open for `entranceSecondsLeft` more seconds, from its in-game countdown. Recipients receive `entranceClosesAt` on the server clock. Deprecated: an open entrance sent as `entranceClosesAt`, on the reporter's clock."
       required:
         - guildIds
         - world
@@ -31305,6 +31330,7 @@ components:
         entranceSecondsLeft:
           type: number
           exclusiveMinimum: true
+          maximum: 3600
           description: Seconds left until the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from the close time on the server clock instead of from the request.
           minimum: 0
         entranceClosesAt:

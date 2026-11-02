@@ -80,6 +80,8 @@ export interface DocsRepositoryService {
     memberId: string;
     title: string;
     content: GuildDocumentContent;
+    /** Rejects the save when another one advanced the document past it. */
+    baseVersion?: number;
   }) => Effect.Effect<StoredDocument, DocsRepositoryFailure>;
   readonly listHistory: (
     guildId: string,
@@ -322,13 +324,23 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
                 isNull(guildDocumentTable.deletedAt),
               ),
             )
-            .limit(1);
+            .limit(1)
+            // Concurrent saves of one document check its version in turn.
+            .for("update");
 
           const document = rows[0];
 
           if (!document)
             return yield* Effect.fail(
               new ResourceNotFoundError("Document not found"),
+            );
+
+          if (
+            options.baseVersion !== undefined &&
+            options.baseVersion !== document.version
+          )
+            return yield* Effect.fail(
+              new ResourceConflictError("Document has a newer version"),
             );
 
           if (

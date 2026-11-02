@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
 import { makeUserAccountDeletion } from "../account-organization/user-account-deletion.data-layer.js";
+import { recordMargonemAccountVerification } from "#src/margonem-accounts/margonem-accounts";
 import { makeCharacterAurasData } from "./character-auras.data-layer.js";
 
 const boundaries: Array<Awaited<ReturnType<typeof createDatabaseBoundary>>> =
@@ -15,8 +16,22 @@ const setup = async (entitledUserIds: ReadonlyArray<string>) => {
   const boundary = await createDatabaseBoundary();
   boundaries.push(boundary);
 
+  // The gateway's fact that the User proved to play the account at `minute`.
+  const verify = (userId: string, accountId: string, minute = 0) =>
+    boundary.run(
+      recordMargonemAccountVerification(boundary.database, {
+        version: 1,
+        userId,
+        accountId,
+        characterId: `${accountId}-character`,
+        world: "tempest",
+        verifiedAt: new Date(Date.UTC(2026, 10, 2, 10, minute)).toISOString(),
+      }),
+    );
+
   return {
     boundary,
+    verify,
     run: <A, E>(
       operation: (
         data: Effect.Success<ReturnType<typeof makeCharacterAurasData>>,
@@ -50,13 +65,9 @@ describe("character auras", () => {
   it("shows an aura on every account its User plays, and only while they have access", async () => {
     const admin = await setup(["admin"]);
 
-    await admin.run((data) =>
-      Effect.gen(function* () {
-        yield* data.updateOwnAura("admin", "frost");
-        yield* data.linkGameAccount("admin", "101");
-        yield* data.linkGameAccount("admin", "202");
-      }),
-    );
+    await admin.run((data) => data.updateOwnAura("admin", "frost"));
+    await admin.verify("admin", "101");
+    await admin.verify("admin", "202");
 
     expect(await admin.run((data) => data.getAuras())).toEqual({
       auras: [
@@ -79,17 +90,19 @@ describe("character auras", () => {
     expect(revoked[1]._tag).toBe("CharacterAuraAccessDenied");
   });
 
-  it("moves an account to the User who played it last and drops it with the aura", async () => {
-    const { run } = await setup(["first", "second"]);
+  it("shows an account with the aura of the User who proved it last, whatever order the proofs arrive in", async () => {
+    const { run, verify } = await setup(["first", "second"]);
 
     await run((data) =>
       Effect.gen(function* () {
         yield* data.updateOwnAura("first", "hellfire");
-        yield* data.linkGameAccount("first", "101");
         yield* data.updateOwnAura("second", "sakura");
-        yield* data.linkGameAccount("second", "101");
       }),
     );
+    await verify("second", "101", 5);
+    // A late redelivery of an older proof does not take the account back.
+    await verify("first", "101", 1);
+    await verify("second", "101", 2);
 
     expect(await run((data) => data.getAuras())).toEqual({
       auras: [{ gameAccountId: "101", auraId: "sakura" }],
@@ -100,30 +113,36 @@ describe("character auras", () => {
 
     await run((data) => data.updateOwnAura("second", null));
 
+    // The account is played by a User without an aura now.
     expect(await run((data) => data.getAuras())).toEqual({ auras: [] });
   });
 
-  it("refuses to show an aura on an account while the User wears none", async () => {
-    const { run } = await setup(["admin"]);
+  it("never shows an aura on an account its User did not prove to play", async () => {
+    const { run, verify } = await setup(["admin"]);
 
-    const refused = await run((data) =>
-      Effect.flip(data.linkGameAccount("admin", "101")),
-    );
+    await run((data) => data.updateOwnAura("admin", "frost"));
+    await verify("victim", "101");
 
-    expect(refused._tag).toBe("CharacterAuraAccessDenied");
+    // Older Game clients still claim accounts; the claim changes nothing.
+    await run((data) => data.linkGameAccount("admin", "101"));
+
+    expect(await run((data) => data.getAuras())).toEqual({ auras: [] });
+    expect(
+      (await run((data) => data.getOwnAura("admin"))).gameAccountIds,
+    ).toEqual([]);
   });
 
   it("removes the aura and its accounts with the Lootlog account", async () => {
-    const { boundary, run } = await setup(["admin", "other"]);
+    const { boundary, run, verify } = await setup(["admin", "other"]);
 
     await run((data) =>
       Effect.gen(function* () {
         yield* data.updateOwnAura("admin", "void");
-        yield* data.linkGameAccount("admin", "101");
         yield* data.updateOwnAura("other", "tide");
-        yield* data.linkGameAccount("other", "202");
       }),
     );
+    await verify("admin", "101");
+    await verify("other", "202");
 
     await boundary.run(
       makeUserAccountDeletion(boundary.database, {
