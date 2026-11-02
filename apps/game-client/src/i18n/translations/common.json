@@ -136,10 +136,6 @@
     "minLevel": "Poziom od",
     "maxLevel": "Poziom do"
   },
-  "guildTargets": {
-    "label": "Wyślij do",
-    "triggerLabel": "Wyślij do: {{names}}"
-  },
   "diagnostics": {
     "copy": "Kopiuj informacje diagnostyczne",
     "copied": "Skopiowano informacje diagnostyczne",

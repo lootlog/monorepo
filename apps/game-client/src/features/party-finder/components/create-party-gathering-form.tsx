@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { formFieldLabelClassName } from "@/components/ui/form-field";
 import { FormFieldError } from "@/components/form-field-error";
 import { WindowFooter } from "@/components/draggable-window/window-footer";
-import { GuildTargetPicker } from "@/components/guild-target-picker";
+import { GuildTargetSelect } from "@/components/guild-target-select";
 import { useGuildTargets } from "@/hooks/use-guild-targets";
 import { getCreatePartyGatheringErrorMessage } from "@/features/party-finder/get-create-party-gathering-error-message";
 import { usePartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
@@ -61,8 +61,11 @@ type FormData = typeof FormSchema.Type;
 export const CreatePartyGatheringForm = () => {
   const formId = useId();
   const { t } = useTranslation("partyFinder");
-  const [selectedGuildIds, setSelectedGuildIds] = useState<string[]>([]);
-  const targetGuildIds = useGuildTargets(selectedGuildIds);
+  const [selectedGuildId, setSelectedGuildId] = useState<string>();
+
+  const [targetGuildId] = useGuildTargets(
+    selectedGuildId ? [selectedGuildId] : [],
+  );
 
   const { isCreatingPartyGathering, startPartyGathering } =
     usePartyGatheringOrchestration();
@@ -82,7 +85,7 @@ export const CreatePartyGatheringForm = () => {
   });
 
   const onSubmit = async (data: FormData) => {
-    if (targetGuildIds.length === 0) {
+    if (!targetGuildId) {
       showRuntimeMessage(t("form.selectGuild"));
 
       return;
@@ -92,7 +95,7 @@ export const CreatePartyGatheringForm = () => {
 
     try {
       await startPartyGathering({
-        guildIds: targetGuildIds,
+        guildId: targetGuildId,
         world,
         description: data.description || undefined,
         minLvl: data.minLvl ? Number(data.minLvl) : undefined,
@@ -112,11 +115,20 @@ export const CreatePartyGatheringForm = () => {
     >
       <ScrollArea className="ll:min-h-0 ll:w-full ll:flex-1">
         <div className="ll:flex ll:w-full ll:flex-col ll:gap-2 ll:px-3 ll:py-2">
-          <GuildTargetPicker
-            value={targetGuildIds}
-            onChange={setSelectedGuildIds}
-            className="ll:w-full"
-          />
+          <div className="ll:w-full">
+            <Label
+              htmlFor={`${formId}-guild`}
+              className={formFieldLabelClassName}
+            >
+              {t("form.guildLabel")}
+            </Label>
+            <GuildTargetSelect
+              id={`${formId}-guild`}
+              value={targetGuildId}
+              onValueChange={setSelectedGuildId}
+              className="ll:w-full"
+            />
+          </div>
 
           <div className="ll:w-full">
             <Label

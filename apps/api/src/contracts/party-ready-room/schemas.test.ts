@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { Schema } from "effect";
 import {
   ApplyToPartyReadyRoomRequest,
+  CreatePartyGatheringRequest,
   PartyParticipantActionRequest,
 } from "./schemas.js";
 
@@ -49,5 +50,33 @@ describe("party ready room contracts", () => {
       decode({ expectedRevision: 1.5, participantId: "participant" }),
     ).toThrow();
     expect(() => decode({ expectedRevision: 1, participantId: "" })).toThrow();
+  });
+
+  it("targets exactly one Lootlog when creating a gathering", () => {
+    const decode = Schema.decodeUnknownSync(CreatePartyGatheringRequest);
+
+    const request = {
+      world: "world",
+      character: {
+        lvl: 100,
+        nick: "Player",
+        accountId: "account",
+        characterId: "character",
+        prof: "w",
+        icon: "icon",
+      },
+    };
+
+    expect(decode({ ...request, guildId: "guild" }).guildId).toBe("guild");
+    expect(decode({ ...request, guildIds: ["guild"] }).guildIds).toEqual([
+      "guild",
+    ]);
+    expect(() =>
+      decode({ ...request, guildIds: ["guild", "other"] }),
+    ).toThrow();
+    expect(() =>
+      decode({ ...request, guildId: "guild", guildIds: ["other"] }),
+    ).toThrow();
+    expect(() => decode(request)).toThrow();
   });
 });

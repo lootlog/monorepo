@@ -21,7 +21,11 @@ import {
   getArrivalStrength,
   getNotificationColors,
 } from "@/utils/notifications-and-detector/background";
-import { resolveNpcNotificationRouting } from "@/utils/notifications-and-detector/npc-notification";
+import {
+  resolveNpcGatheringGuildId,
+  resolveNpcNotificationRouting,
+} from "@/utils/notifications-and-detector/npc-notification";
+import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import type { useWindowsStore } from "@/store/windows.store";
 import { selectOwnedReadyRoom } from "@/features/party-finder/ready-room-cache";
 import { readReadyRoomCache } from "@/features/party-finder/hooks/use-ready-rooms";
@@ -66,6 +70,7 @@ export const NpcListItem = ({
   npcTypeColors,
 }: NpcListItemProps) => {
   const { t } = useTranslation("npcDetector");
+  const selectedGuildId = useSelectedLootlogGuildId();
 
   const {
     isCreatingNpcPartyGathering,
@@ -81,6 +86,11 @@ export const NpcListItem = ({
     routingRules: detectorSettings.routingRules,
     npcLevel: npc.lvl,
   });
+
+  const gatheringGuildId = resolveNpcGatheringGuildId(
+    resolvedGuildIds,
+    selectedGuildId,
+  );
 
   const handleOpenDetectorSettings = () => {
     setOpen("settings", true, {
@@ -122,8 +132,10 @@ export const NpcListItem = ({
   };
 
   const handleGatherParty = async () => {
+    if (!gatheringGuildId) return;
+
     try {
-      await startNpcPartyGathering({ npc, guildIds: resolvedGuildIds, world });
+      await startNpcPartyGathering({ npc, guildId: gatheringGuildId, world });
       markNotificationSent();
     } catch (error) {
       console.warn("Failed to gather party:", error);

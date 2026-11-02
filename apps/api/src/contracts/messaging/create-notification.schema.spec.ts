@@ -71,4 +71,31 @@ describe("SendNotificationRequest", () => {
 
     expect(Result.isSuccess(result)).toBe(true);
   });
+
+  it("rejects a party gathering notification addressed to several Lootlogs", () => {
+    const result = Schema.decodeUnknownResult(SendNotificationRequest)({
+      npc: {
+        id: 911169,
+        location: "Glusza Swistu",
+        name: "Debug Tytan #228",
+        wt: 102,
+        lvl: 306,
+        icon: "tyt/maddok-tytan2.gif",
+        type: 2,
+      },
+      world: "gordion",
+      guildIds: ["guild-1", "guild-2"],
+      isGatheringParty: true,
+      character: {
+        lvl: 250,
+        nick: "Organizer",
+        accountId: "account-1",
+        characterId: "character-1",
+        prof: "w",
+        icon: "organizer.gif",
+      },
+    });
+
+    expect(Result.isFailure(result)).toBe(true);
+  });
 });
