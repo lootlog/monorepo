@@ -3,6 +3,7 @@ import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { visibleReservationGuildIds } from "#src/reservations/reservation-visibility-query";
 import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import { Permission } from "@lootlog/schema/permissions";
 import { randomUUID } from "node:crypto";
 import { and, count, desc, eq, gt, inArray, lt, ne, or } from "drizzle-orm";
 import { Clock, Effect, Layer } from "effect";
@@ -85,12 +86,44 @@ type ReminderContext = {
 
 const RESERVATION_SOURCE_ENTITY_TYPE = "reservation";
 
-const accessibleGuildIds = (
+const guildIdsGranting = (
+  database: typeof ApiDatabase.Service,
+  discordId: string,
+  permission: Permission,
+) =>
+  selectAccessibleGuilds(database, discordId, [permission]).pipe(
+    Effect.map((rows) => rows.map(({ guild }) => guild.id)),
+  );
+
+/**
+ * Organizations where the caller may change their own reservations: the same
+ * read and write requirement as the Organization reservation endpoints.
+ */
+const writableReservationGuildIds = (
   database: typeof ApiDatabase.Service,
   discordId: string,
 ) =>
-  selectAccessibleGuilds(database, discordId).pipe(
-    Effect.map((rows) => rows.map(({ guild }) => guild.id)),
+  Effect.map(
+    Effect.all(
+      [
+        guildIdsGranting(
+          database,
+          discordId,
+          Permission.LOOTLOG_RESERVATIONS_READ,
+        ),
+        guildIdsGranting(
+          database,
+          discordId,
+          Permission.LOOTLOG_RESERVATIONS_WRITE,
+        ),
+      ],
+      { concurrency: 2 },
+    ),
+    ([readable, writable]) => {
+      const writableIds = new Set(writable);
+
+      return readable.filter((guildId) => writableIds.has(guildId));
+    },
   );
 
 const findReservationWithGuild = (
@@ -776,7 +809,7 @@ export const makeReservationMutationsDataLayer = (
         readonly data: UpdateReservationRequest;
       }) =>
         Effect.gen(function* () {
-          const guildIds = yield* accessibleGuildIds(
+          const guildIds = yield* writableReservationGuildIds(
             database,
             options.discordId,
           );
@@ -1002,7 +1035,10 @@ export const makeReservationMutationsDataLayer = (
           operation(
             "deleteMyReservation",
             Effect.gen(function* () {
-              const guildIds = yield* accessibleGuildIds(database, discordId);
+              const guildIds = yield* writableReservationGuildIds(
+                database,
+                discordId,
+              );
 
               const reservation = yield* findOwned({
                 reservationId,

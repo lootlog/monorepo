@@ -6,6 +6,8 @@ import {
   memberKillBucketTable,
   memberTable,
   memberToRoleTable,
+  notificationRuleTable,
+  notificationTargetTable,
   userCharacterAuraGameAccountTable,
   userCharacterAuraTable,
   userCharacterKillBucketTable,
@@ -15,10 +17,13 @@ import {
   userKillBucketTable,
   userMargonemAccountTable,
   userPinnedEventTable,
+  userPinnedReservationSpotTable,
   userSettingDocumentTable,
   userSettingsTable,
   userThemeTable,
+  watchedItemTable,
 } from "#src/database/drizzle/schema";
+import { NotificationOwnerType } from "#src/notifications/notification-enums";
 import {
   getGuildMemberForbiddenCacheKey,
   getGuildMemberNotFoundCacheKey,
@@ -135,6 +140,30 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userPinnedEventTable)
         .where(eq(userPinnedEventTable.userId, identity.userId));
+      yield* transaction
+        .delete(userPinnedReservationSpotTable)
+        .where(eq(userPinnedReservationSpotTable.userId, identity.userId));
+      // Personal notifications are keyed by the Discord id. Deleting rules and
+      // targets cascades to their links and pending jobs.
+      yield* transaction
+        .delete(watchedItemTable)
+        .where(eq(watchedItemTable.userId, identity.discordId));
+      yield* transaction
+        .delete(notificationRuleTable)
+        .where(
+          and(
+            eq(notificationRuleTable.ownerType, NotificationOwnerType.USER),
+            eq(notificationRuleTable.ownerId, identity.discordId),
+          ),
+        );
+      yield* transaction
+        .delete(notificationTargetTable)
+        .where(
+          and(
+            eq(notificationTargetTable.ownerType, NotificationOwnerType.USER),
+            eq(notificationTargetTable.ownerId, identity.discordId),
+          ),
+        );
 
       const deactivatedAt = new Date(yield* Clock.currentTimeMillis);
 

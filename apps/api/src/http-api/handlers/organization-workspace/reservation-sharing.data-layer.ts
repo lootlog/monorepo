@@ -59,10 +59,7 @@ export const makeReservationSharingDataLayer = (
         );
 
       const administrativeGuilds = (discordId: string) =>
-        selectAccessibleGuilds(database, discordId, [
-          Permission.OWNER,
-          Permission.ADMIN,
-        ]).pipe(
+        selectAccessibleGuilds(database, discordId, [Permission.ADMIN]).pipe(
           Effect.map((rows) =>
             rows.map(({ guild }) => ({
               id: guild.id,

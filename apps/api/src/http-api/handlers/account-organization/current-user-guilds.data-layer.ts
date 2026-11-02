@@ -6,6 +6,7 @@ import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { RESTAPIPartialCurrentUserGuild } from "discord-api-types/v10";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -171,9 +172,11 @@ export const makeCurrentUserGuilds = (
 
         const hasAccess = Boolean(
           member?.active &&
-          member.roles.some((role) =>
-            role.permissions.includes(Permission.LOOTLOG_ACCESS),
-          ),
+          createAccessPolicy({
+            capabilities: member.roles.flatMap(
+              ({ permissions }) => permissions,
+            ),
+          }).allows(Permission.LOOTLOG_ACCESS),
         );
 
         const discordGuild = discordById.get(guild.id);
@@ -245,9 +248,11 @@ export const makeCurrentUserGuilds = (
         hasLootlogAccess: Boolean(
           owner ||
           (member?.active &&
-            member.roles.some((role) =>
-              role.permissions.includes(Permission.LOOTLOG_ACCESS),
-            )),
+            createAccessPolicy({
+              capabilities: member.roles.flatMap(
+                ({ permissions }) => permissions,
+              ),
+            }).allows(Permission.LOOTLOG_ACCESS)),
         ),
         // A list past its max age may still show a departed Organization
         // or miss a new one, so every entry from it is reported stale.
