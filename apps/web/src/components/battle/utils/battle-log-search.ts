@@ -1,4 +1,4 @@
-import { normalizeBattleSearchText } from "./normalize-battle-search-text";
+import { normalizeSearchText } from "@/lib/utils/normalize-search-text";
 import type {
   BattleWarrior as Warrior,
   RawBattleParsedEvent,
@@ -130,15 +130,15 @@ export const findBattleLogSearchMatches = ({
   query: string;
   entries: BattleLogSearchEntry[];
 }): number[] => {
-  const normalizedQuery = normalizeBattleSearchText(query);
+  const normalizedQuery = normalizeSearchText(query);
 
   if (normalizedQuery.length === 0) {
     return [];
   }
 
   return entries.flatMap((entry) =>
-    normalizeBattleSearchText(entry.rawText).includes(normalizedQuery) ||
-    normalizeBattleSearchText(entry.visibleText ?? "").includes(normalizedQuery)
+    normalizeSearchText(entry.rawText).includes(normalizedQuery) ||
+    normalizeSearchText(entry.visibleText ?? "").includes(normalizedQuery)
       ? [entry.turn]
       : [],
   );
