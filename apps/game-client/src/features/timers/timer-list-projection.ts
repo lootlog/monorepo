@@ -1,3 +1,4 @@
+import { getTimerSortTimeLeft } from "@lootlog/domain/timers";
 import type { UserTimerSettings } from "@lootlog/schema/timer-settings";
 import { NpcType } from "@/api/npcs.api";
 import type { Timer } from "@/api/timers.api";
@@ -236,16 +237,6 @@ const sortTimers = (
   preferences: TimerListPreferences,
 ): TimerWithTimeLeft[] => {
   const pinnedTimerNames = new Set(preferences.pinnedTimers);
-  const spawnTimeByTimer = new Map<TimerWithTimeLeft, number>();
-
-  for (const timer of timers) {
-    spawnTimeByTimer.set(
-      timer,
-      timer.deletedAt !== null && timer.deletedAt !== undefined
-        ? getTimerEpoch(timer.deletedAt)
-        : getTimerEpoch(timer.maxSpawnTime),
-    );
-  }
 
   const sortByPinnedAndTime =
     (order: "asc" | "desc") =>
@@ -257,10 +248,8 @@ const sortTimers = (
 
       if (!firstPinned && secondPinned) return 1;
 
-      const firstTime = spawnTimeByTimer.get(firstTimer);
-      const secondTime = spawnTimeByTimer.get(secondTimer);
-
-      if (firstTime === undefined || secondTime === undefined) return 0;
+      const firstTime = getTimerSortTimeLeft(firstTimer);
+      const secondTime = getTimerSortTimeLeft(secondTimer);
 
       return order === "asc" ? firstTime - secondTime : secondTime - firstTime;
     };

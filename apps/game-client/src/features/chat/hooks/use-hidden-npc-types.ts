@@ -8,7 +8,6 @@ export const CHAT_NPC_TYPES = [
   NpcTypeEnum.EVENT_HERO,
   NpcTypeEnum.COLOSSUS,
   NpcTypeEnum.TITAN,
-  NpcTypeEnum.HERO_TRACKER,
 ] as const;
 
 export type ChatNpcType = (typeof CHAT_NPC_TYPES)[number];

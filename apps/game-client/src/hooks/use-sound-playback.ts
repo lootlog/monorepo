@@ -5,7 +5,7 @@ import {
 } from "@/features/settings/persistence/use-sound-settings";
 import {
   DEFAULT_SOUND_URLS,
-  getDefaultSoundUrl,
+  resolveSoundUrl,
 } from "@/features/settings/config/default-sounds";
 import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
 
@@ -26,16 +26,11 @@ const getSoundUrl = (
   settings: UserSoundSettings,
   category: SoundCategory,
   key: string,
-) => {
-  const soundConfig =
-    category === "pings" ? undefined : settings[`${category}Config`]?.[key];
-
-  if (soundConfig?.soundUrl) {
-    return soundConfig.soundUrl;
-  }
-
-  return getDefaultSoundUrl(key);
-};
+) =>
+  resolveSoundUrl(
+    category === "pings" ? undefined : settings[`${category}Config`],
+    key,
+  );
 
 export const useSoundPlayback = () => {
   const { data: soundSettings } = useSoundSettings();

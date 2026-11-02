@@ -129,6 +129,7 @@
   },
   "messages": {
     "resetEventWindowForbidden": "Nie można zresetować okna eventowego z poziomu timerów.",
+    "resetHeroTrackerForbidden": "Timera tropiciela nie można zresetować. Jego czas wyznacza zamknięcie wejścia.",
     "resetFailed": "Nie udało się zresetować timera {{name}}.",
     "resetPartialFailure": "Timer {{name}} zresetowano w {{succeeded}} Lootlogach. Nie udało się zresetować go w {{failed}}.",
     "deleteEventWindowForbidden": "Nie można usunąć okna eventowego z poziomu timerów.",

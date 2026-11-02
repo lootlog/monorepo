@@ -123,10 +123,16 @@ export const CreateAutoTimerRequest = Schema.Struct({
   respawnRandomness: Schema.optionalKey(FiniteNumber),
   customMinSpawnTime: Schema.optionalKey(DateTimeString),
   customMaxSpawnTime: Schema.optionalKey(DateTimeString),
+  entranceSecondsLeft: Schema.optionalKey(
+    FiniteNumber.check(Schema.isGreaterThan(0)).annotate({
+      description:
+        "Seconds left until the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from the close time on the server clock instead of from the request.",
+    }),
+  ),
   entranceClosesAt: Schema.optionalKey(
     DateTimeString.annotate({
       description:
-        "When the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from it instead of from the request.",
+        "Deprecated: send `entranceSecondsLeft`. When the open entrance of a Hero Tracker closes, on the reporter's clock; ignored when `entranceSecondsLeft` is present.",
     }),
   ),
   world: NonEmptyString,

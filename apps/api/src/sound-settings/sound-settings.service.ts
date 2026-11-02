@@ -27,8 +27,10 @@ const getDefaultSettingsData = () => {
   const defaultNpcConfig = {
     ELITE2: { volume: 0.5, soundUrl: "" },
     HERO: { volume: 0.5, soundUrl: "" },
+    EVENT_HERO: { volume: 0.5, soundUrl: "" },
     COLOSSUS: { volume: 0.5, soundUrl: "" },
     TITAN: { volume: 0.5, soundUrl: "" },
+    HERO_TRACKER: { volume: 0.5, soundUrl: "" },
   };
 
   return {

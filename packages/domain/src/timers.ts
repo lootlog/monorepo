@@ -128,3 +128,19 @@ export const getTimerCountdownMs = (
 
   return countdownMode === "max" || minTimeLeft < 0 ? maxTimeLeft : minTimeLeft;
 };
+
+/**
+ * A Hero Tracker's window comes from the entrance countdown the game reports,
+ * so a reset from the moment someone clicks would only make it wrong.
+ */
+export const canResetTimerNpc = (npc: { readonly type?: string | null }) =>
+  npc.type !== "HERO_TRACKER";
+
+/**
+ * What every timer list orders a timer by: the time left to an open entrance's
+ * close, otherwise to its maximum spawn time (or its deletion).
+ */
+export const getTimerSortTimeLeft = (timeLeft: TimerTimeLeft): number =>
+  timeLeft.entranceTimeLeft !== undefined && isEntranceOpen(timeLeft)
+    ? timeLeft.entranceTimeLeft
+    : timeLeft.maxTimeLeft;
