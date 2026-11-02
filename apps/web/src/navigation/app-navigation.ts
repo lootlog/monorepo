@@ -413,8 +413,7 @@ type Breadcrumb = {
 
 type NavigationInfo = {
   breadcrumbs: Breadcrumb[];
-  showBack: boolean;
-  backPath?: string;
+  backPath: string | null;
 };
 
 type NavigationParams = {
@@ -431,30 +430,23 @@ type NavigationParams = {
 
 type GetNavigationInfoArgs = {
   path: string;
+  guildId: string;
   params: NavigationParams;
   guildName?: string;
   eventName?: string;
   eventHeroNpcs?: Array<{ id: string; npcName: string }>;
   eventRankings: Array<{ memberId: number; member?: { name?: string } }>;
-  settingsRoleName?: string;
+  /** The document title from the document route's loader. */
   docTitle?: string;
-  settingsMemberName?: string;
-  settingsNpcName?: string;
-  reservationSpotName?: string;
-  npcKillersData?: { npc?: { npcName?: string } | null };
-  memberKillsData?: { member?: { memberName?: string } | null };
-  t: (key: string, options?: TOptions) => string;
+  /** The name of the entity the page shows, looked up by the top bar. */
+  entityLabel?: string;
 };
 
 function navigationInfo(
   breadcrumbs: Breadcrumb[],
-  parentPath: string | null,
+  backPath: string | null,
 ): NavigationInfo {
-  const info: NavigationInfo = { breadcrumbs, showBack: parentPath !== null };
-
-  if (parentPath !== null) info.backPath = parentPath;
-
-  return info;
+  return { breadcrumbs, backPath };
 }
 
 const abyssSeasonSearch = z.object({
@@ -758,7 +750,7 @@ function resolveUserAppNavigation(
     breadcrumbs: userNavigation.breadcrumbs,
     heading: resolveHeading(
       userNavigation.breadcrumbs,
-      userNavigation.backPath ?? null,
+      userNavigation.backPath,
       "user",
       sidebarItems,
     ),
@@ -766,7 +758,7 @@ function resolveUserAppNavigation(
       userNavigation,
       userNavigation.breadcrumbs[0]?.label,
     ),
-    parentPath: userNavigation.backPath ?? null,
+    parentPath: userNavigation.backPath,
     sidebarItems,
   };
 }
@@ -802,29 +794,6 @@ function getOrganizationLoaderContext(matches: readonly AppNavigationMatch[]) {
   return { organization, event, document };
 }
 
-function resolveCurrentDocumentTitle(options: {
-  currentEntityLabel?: string;
-  loaderTitle?: string;
-  organizationId: string;
-  pathname: string;
-}) {
-  if (options.loaderTitle) return options.loaderTitle;
-  const documentsPath = `${ROUTES.guild.docs.base(options.organizationId)}/`;
-
-  if (options.pathname.startsWith(documentsPath)) {
-    return options.currentEntityLabel;
-  }
-}
-
-function createCurrentEntityData(currentEntityLabel?: string) {
-  if (!currentEntityLabel) return {};
-
-  return {
-    memberKillsData: { member: { memberName: currentEntityLabel } },
-    npcKillersData: { npc: { npcName: currentEntityLabel } },
-  };
-}
-
 function resolveOrganizationAppNavigation(
   options: ResolveAppNavigationOptions,
   lastMatch: AppNavigationMatch,
@@ -851,23 +820,14 @@ function resolveOrganizationAppNavigation(
 
   const organizationNavigation = getNavigationInfo({
     path: lastMatch.pathname,
+    guildId: organizationId,
     params,
     guildName: resolvedOrganizationName,
     eventName: loaderContext.event?.event?.name,
     eventHeroNpcs,
     eventRankings: loaderContext.event?.rankings ?? [],
-    docTitle: resolveCurrentDocumentTitle({
-      currentEntityLabel,
-      loaderTitle: loaderContext.document?.document?.title,
-      organizationId,
-      pathname: lastMatch.pathname,
-    }),
-    settingsMemberName: currentEntityLabel,
-    settingsNpcName: currentEntityLabel,
-    settingsRoleName: currentEntityLabel,
-    reservationSpotName: currentEntityLabel,
-    ...createCurrentEntityData(currentEntityLabel),
-    t,
+    docTitle: loaderContext.document?.document?.title,
+    entityLabel: currentEntityLabel,
   });
 
   const documentContext =
@@ -884,7 +844,7 @@ function resolveOrganizationAppNavigation(
     breadcrumbs: organizationNavigation.breadcrumbs,
     heading: resolveHeading(
       organizationNavigation.breadcrumbs,
-      organizationNavigation.backPath ?? null,
+      organizationNavigation.backPath,
       "organization",
       sidebarItems,
     ),
@@ -892,7 +852,7 @@ function resolveOrganizationAppNavigation(
       organizationNavigation,
       documentContext,
     ),
-    parentPath: organizationNavigation.backPath ?? null,
+    parentPath: organizationNavigation.backPath,
     sidebarItems,
   };
 }
@@ -940,19 +900,8 @@ export function resolveAppNavigation(
 }
 
 function getNavigationInfo(args: GetNavigationInfoArgs): NavigationInfo {
-  const { params, guildName, t } = args;
+  const { guildId, guildName } = args;
   const path = normalizePath(args.path);
-  const { guildId } = params;
-
-  if (!guildId) {
-    return {
-      breadcrumbs: [
-        { label: guildName ?? t("common.breadcrumbs.guild"), path: null },
-      ],
-      showBack: false,
-    };
-  }
-
   const routes = buildRoutes(guildId);
 
   const guildBreadcrumb: Breadcrumb = {
@@ -961,12 +910,12 @@ function getNavigationInfo(args: GetNavigationInfoArgs): NavigationInfo {
   };
 
   return (
-    resolveSimpleRoute(path, routes, guildBreadcrumb, t, args) ??
+    resolveSimpleRoute(path, routes, guildBreadcrumb, args) ??
     resolveStatsRoute(path, routes, guildBreadcrumb, args) ??
     resolveEventRoutes(path, routes, guildBreadcrumb, args) ??
-    resolveNotificationRoutes(path, routes, guildBreadcrumb, t) ??
+    resolveNotificationRoutes(path, routes, guildBreadcrumb) ??
     resolveSettingsRoutes(path, routes, guildBreadcrumb, args) ??
-    fallback(path, routes, guildBreadcrumb, t)
+    fallback(path, routes, guildBreadcrumb)
   );
 }
 
@@ -1007,17 +956,16 @@ function resolveSimpleRoute(
   path: string,
   routes: Routes,
   guildBreadcrumb: Breadcrumb,
-  t: GetNavigationInfoArgs["t"],
   args: GetNavigationInfoArgs,
 ): NavigationInfo | null {
   if (path === routes.base) {
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         { label: t("common.breadcrumbs.lootsList"), path: null },
       ],
-      showBack: false,
-    };
+      null,
+    );
   }
 
   /**
@@ -1084,8 +1032,8 @@ function resolveSimpleRoute(
   if (path.startsWith(routes.reservations) && path !== routes.reservations) {
     const { reservationId } = args.params;
 
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         {
           label: t("common.breadcrumbs.reservations"),
@@ -1093,21 +1041,20 @@ function resolveSimpleRoute(
         },
         {
           label:
-            args.reservationSpotName ??
+            args.entityLabel ??
             (reservationId ? upperFirst(reservationId) : ""),
           path: null,
         },
       ],
-      showBack: true,
-      backPath: routes.reservations,
-    };
+      routes.reservations,
+    );
   }
 
   if (path.startsWith(routes.docs) && path !== routes.docs) {
     const { docId } = args.params;
 
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         {
           label: t("common.breadcrumbs.docs"),
@@ -1115,16 +1062,27 @@ function resolveSimpleRoute(
         },
         {
           label:
-            args.docTitle ?? t("common.breadcrumbs.docFallback", { id: docId }),
+            resolveDocumentTitle(path, routes, args) ??
+            t("common.breadcrumbs.docFallback", { id: docId }),
           path: null,
         },
       ],
-      showBack: true,
-      backPath: routes.docs,
-    };
+      routes.docs,
+    );
   }
 
   return null;
+}
+
+/** The loader's title wins; on a document page the top bar's lookup fills in. */
+function resolveDocumentTitle(
+  path: string,
+  routes: Routes,
+  { docTitle, entityLabel }: GetNavigationInfoArgs,
+) {
+  if (docTitle) return docTitle;
+
+  return path.startsWith(`${routes.docs}/`) ? entityLabel : undefined;
 }
 
 function resolveStatsRoute(
@@ -1133,29 +1091,29 @@ function resolveStatsRoute(
   guildBreadcrumb: Breadcrumb,
   args: GetNavigationInfoArgs,
 ): NavigationInfo | null {
-  const { params, npcKillersData, memberKillsData, t } = args;
+  const { params, entityLabel } = args;
 
   if (path.startsWith(`${routes.stats}/npcs/`)) {
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         { label: t("common.breadcrumbs.stats"), path: routes.stats },
         { label: t("common.breadcrumbs.npcs"), path: routes.statsNpcs },
         {
           label:
-            npcKillersData?.npc?.npcName ??
+            // An empty label falls back like a missing one.
+            entityLabel ||
             t("common.breadcrumbs.npcFallback", { id: params.npcId }),
           path: null,
         },
       ],
-      showBack: true,
-      backPath: routes.statsNpcs,
-    };
+      routes.statsNpcs,
+    );
   }
 
   if (path.startsWith(`${routes.stats}/members/`)) {
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         { label: t("common.breadcrumbs.stats"), path: routes.stats },
         {
@@ -1164,14 +1122,13 @@ function resolveStatsRoute(
         },
         {
           label:
-            memberKillsData?.member?.memberName ??
+            entityLabel ||
             t("common.breadcrumbs.memberFallback", { id: params.memberId }),
           path: null,
         },
       ],
-      showBack: true,
-      backPath: routes.statsRanking,
-    };
+      routes.statsRanking,
+    );
   }
 
   return null;
@@ -1183,7 +1140,7 @@ function resolveEventRoutes(
   guildBreadcrumb: Breadcrumb,
   args: GetNavigationInfoArgs,
 ): NavigationInfo | null {
-  const { params, eventName, eventHeroNpcs, eventRankings, t } = args;
+  const { params, eventName, eventHeroNpcs, eventRankings } = args;
   const { eventId, heroId, killId } = params;
 
   if (!eventId || !path.startsWith(routes.events)) return null;
@@ -1201,16 +1158,15 @@ function resolveEventRoutes(
     t("common.breadcrumbs.hero");
 
   if (path === `${eventDetail}/kills`) {
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         { label: t("common.breadcrumbs.events"), path: routes.events },
         eventBreadcrumb,
         { label: t("common.breadcrumbs.killHistory"), path: null },
       ],
-      showBack: true,
-      backPath: eventDetail,
-    };
+      eventDetail,
+    );
   }
 
   if (params.memberId && path === `${eventDetail}/members/${params.memberId}`) {
@@ -1218,8 +1174,8 @@ function resolveEventRoutes(
       (ranking) => String(ranking.memberId) === params.memberId,
     );
 
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         { label: t("common.breadcrumbs.events"), path: routes.events },
         eventBreadcrumb,
@@ -1231,71 +1187,66 @@ function resolveEventRoutes(
           path: null,
         },
       ],
-      showBack: true,
-      backPath: eventRanking,
-    };
+      eventRanking,
+    );
   }
 
   if (heroId && path === `${eventDetail}/heroes/${heroId}/kills`) {
     const heroPath = `${eventDetail}/heroes/${heroId}`;
 
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         { label: t("common.breadcrumbs.events"), path: routes.events },
         eventBreadcrumb,
         { label: findHeroName(), path: heroPath },
         { label: t("common.breadcrumbs.killHistory"), path: null },
       ],
-      showBack: true,
-      backPath: heroPath,
-    };
+      heroPath,
+    );
   }
 
   if (killId && path.includes("/kills/")) {
     const heroPath = `${eventDetail}/heroes/${heroId}`;
 
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         { label: t("common.breadcrumbs.events"), path: routes.events },
         eventBreadcrumb,
         { label: findHeroName(), path: heroPath },
         { label: t("events.killDetail.title"), path: null },
       ],
-      showBack: true,
-      backPath: heroPath,
-    };
+      heroPath,
+    );
   }
 
   if (heroId && path.includes("/heroes/")) {
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         { label: t("common.breadcrumbs.events"), path: routes.events },
         eventBreadcrumb,
         { label: findHeroName(), path: null },
       ],
-      showBack: true,
-      backPath: eventDetail,
-    };
+      eventDetail,
+    );
   }
 
   if (path === eventRanking) {
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         { label: t("common.breadcrumbs.events"), path: routes.events },
         eventBreadcrumb,
         { label: t("common.breadcrumbs.ranking"), path: null },
       ],
-      showBack: true,
-      backPath: eventDetail,
-    };
+      eventDetail,
+    );
   }
 
-  return {
-    breadcrumbs: [
+  return navigationInfo(
+    [
       guildBreadcrumb,
       { label: t("common.breadcrumbs.events"), path: routes.events },
       {
@@ -1303,16 +1254,14 @@ function resolveEventRoutes(
         path: null,
       },
     ],
-    showBack: true,
-    backPath: routes.events,
-  };
+    routes.events,
+  );
 }
 
 function resolveNotificationRoutes(
   path: string,
   routes: Routes,
   guildBreadcrumb: Breadcrumb,
-  t: GetNavigationInfoArgs["t"],
 ): NavigationInfo | null {
   if (
     path !== routes.notifications &&
@@ -1322,13 +1271,13 @@ function resolveNotificationRoutes(
   }
 
   if (path === routes.notifications) {
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         { label: t("common.breadcrumbs.notifications"), path: null },
       ],
-      showBack: false,
-    };
+      null,
+    );
   }
 
   // Channels and history are tabs beside the rules, so they need no way back.
@@ -1340,8 +1289,8 @@ function resolveNotificationRoutes(
         : null;
 
   if (tabLabel) {
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         {
           label: t("common.breadcrumbs.notifications"),
@@ -1349,8 +1298,8 @@ function resolveNotificationRoutes(
         },
         { label: tabLabel, path: null },
       ],
-      showBack: false,
-    };
+      null,
+    );
   }
 
   const leafLabel =
@@ -1358,8 +1307,8 @@ function resolveNotificationRoutes(
       ? t("common.breadcrumbs.notificationCreate")
       : t("common.breadcrumbs.notificationEdit");
 
-  return {
-    breadcrumbs: [
+  return navigationInfo(
+    [
       guildBreadcrumb,
       {
         label: t("common.breadcrumbs.notifications"),
@@ -1367,9 +1316,8 @@ function resolveNotificationRoutes(
       },
       { label: leafLabel, path: null },
     ],
-    showBack: true,
-    backPath: routes.notifications,
-  };
+    routes.notifications,
+  );
 }
 
 function resolveSettingsRoutes(
@@ -1378,8 +1326,6 @@ function resolveSettingsRoutes(
   guildBreadcrumb: Breadcrumb,
   args: GetNavigationInfoArgs,
 ): NavigationInfo | null {
-  const { t } = args;
-
   if (!path.startsWith(routes.settings)) return null;
 
   const settingsBreadcrumb: Breadcrumb = {
@@ -1395,7 +1341,7 @@ function resolveSettingsRoutes(
       path: null,
     });
 
-    return { breadcrumbs, showBack: false };
+    return navigationInfo(breadcrumbs, null);
   }
 
   breadcrumbs.push(settingsBreadcrumb);
@@ -1418,8 +1364,7 @@ function appendSettingsRouteBreadcrumbs(
   breadcrumbs: Breadcrumb[],
   args: GetNavigationInfoArgs,
 ): void {
-  const { params, settingsMemberName, settingsNpcName, settingsRoleName, t } =
-    args;
+  const { params, entityLabel } = args;
 
   if (path === routes.settingsRoles) {
     breadcrumbs.push({ label: t("common.breadcrumbs.roles"), path: null });
@@ -1430,7 +1375,7 @@ function appendSettingsRouteBreadcrumbs(
     });
     breadcrumbs.push({
       label:
-        settingsRoleName ??
+        entityLabel ??
         t("common.breadcrumbs.roleFallback", { id: params.roleId }),
       path: null,
     });
@@ -1443,7 +1388,7 @@ function appendSettingsRouteBreadcrumbs(
     });
     breadcrumbs.push({
       label:
-        settingsMemberName ??
+        entityLabel ??
         t("common.breadcrumbs.memberFallback", { id: params.memberId }),
       path: null,
     });
@@ -1459,7 +1404,7 @@ function appendSettingsRouteBreadcrumbs(
     });
     breadcrumbs.push({
       label:
-        settingsNpcName ??
+        entityLabel ??
         t("common.breadcrumbs.npcFallback", { id: params.npcId }),
       path: null,
     });
@@ -1495,7 +1440,6 @@ function fallback(
   path: string,
   routes: Routes,
   guildBreadcrumb: Breadcrumb,
-  t: GetNavigationInfoArgs["t"],
 ): NavigationInfo {
   const nearestParent = maxBy(
     [
@@ -1512,23 +1456,18 @@ function fallback(
   );
 
   if (nearestParent) {
-    return {
-      breadcrumbs: [
+    return navigationInfo(
+      [
         guildBreadcrumb,
         nearestParent,
         { label: t("common.breadcrumbs.page"), path: null },
       ],
-      showBack: true,
-      backPath: nearestParent.path,
-    };
+      nearestParent.path,
+    );
   }
 
-  return {
-    breadcrumbs: [
-      guildBreadcrumb,
-      { label: t("common.breadcrumbs.page"), path: null },
-    ],
-    showBack: true,
-    backPath: routes.base,
-  };
+  return navigationInfo(
+    [guildBreadcrumb, { label: t("common.breadcrumbs.page"), path: null }],
+    routes.base,
+  );
 }
