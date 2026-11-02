@@ -20,10 +20,6 @@ export const getNpcTypeNames = (type: NpcTypeEnum) => {
   return NPC_NAMES[type];
 };
 
-export const MIN_RESP_BASE_SECONDS = 2;
-
-export const MIN_NPC_WT = 20;
-
 /**
  * Hero Trackers return about 90 minutes after their entrance closes on public
  * worlds. The API keeps a faster base observed on a private world instead.

@@ -1,7 +1,7 @@
-import type { SettingsSaveBadgeStatus } from "@/components/settings/settings-save-badge";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
-import { type FC, type ReactNode, useEffect, useRef } from "react";
+import { useSettingsSaveStatusStore } from "@/features/settings/persistence/settings-save-status.store";
+import type { FC, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useCharacterCatchingSelection } from "@/hooks/use-character-catching-selection";
 
@@ -10,16 +10,21 @@ type CatchingSettingsFormProps = {
   disabled?: boolean;
   /** Trailing actions of the servers section, e.g. "apply to all characters". */
   actions?: ReactNode;
-  /** Follows this character's own write: saving, then saved or error. */
-  onSaveStateChange?: (status: SettingsSaveBadgeStatus) => void;
 };
+
+/**
+ * Save mark key of one character's Lootlogi. The mark lives in the shared
+ * save status store, so it resolves with the write even after this form
+ * unmounts (e.g. the player switched to another character mid-save).
+ */
+export const getCatchingSaveKey = (characterId: string) =>
+  `lootlogCharacter:${characterId}`;
 
 /** Lootlogi one character plays for: its loot, timers and presence go there. */
 export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   characterId,
   disabled = false,
   actions,
-  onSaveStateChange,
 }) => {
   const { t } = useTranslation();
 
@@ -28,24 +33,15 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     selectedGuildIds,
     toggle: handleGuildToggle,
     isConfigLoading,
-    status: updateStatus,
   } = useCharacterCatchingSelection(characterId);
 
-  // The callback is read through a ref so the report follows the mutation
-  // status alone; a parent re-render (e.g. from the report itself) must not
-  // re-run it.
-  const onSaveStateChangeRef = useRef(onSaveStateChange);
-
-  useEffect(() => {
-    onSaveStateChangeRef.current = onSaveStateChange;
-  }, [onSaveStateChange]);
-
-  useEffect(() => {
-    if (updateStatus === "pending") onSaveStateChangeRef.current?.("saving");
-    else if (updateStatus === "success")
-      onSaveStateChangeRef.current?.("saved");
-    else if (updateStatus === "error") onSaveStateChangeRef.current?.("error");
-  }, [updateStatus]);
+  // The mutation reports its outcome to the store, which resolves this mark.
+  const toggleGuild = (guildId: string) => {
+    useSettingsSaveStatusStore
+      .getState()
+      .markKeys([getCatchingSaveKey(characterId)], "saving");
+    handleGuildToggle(guildId);
+  };
 
   // The write is optimistic and replaces the whole list, so the picker stays
   // usable while a save is in flight; only the initial load blocks it.
@@ -77,7 +73,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
           guilds={guilds}
           selectedGuildIds={selectedGuildIds}
           disabled={isInteractionDisabled}
-          onToggle={handleGuildToggle}
+          onToggle={toggleGuild}
         />
       </div>
     </SettingsSection>

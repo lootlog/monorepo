@@ -6,6 +6,7 @@ import {
 } from "#src/members/member-access-query";
 import { Effect, Layer, Schema } from "effect";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
+import { capabilitiesGrantingAny } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -43,11 +44,9 @@ export type MemberReadCache = Pick<RedisService, "getOrSetJsonEffect">;
 const snapshotKey = (accountId: number, characterId: number) =>
   `${accountId}:${characterId}`;
 
-const summaryPermissions = new Set<Permission>([
-  Permission.OWNER,
-  Permission.ADMIN,
-  Permission.LOOTLOG_ACCESS,
-]);
+const summaryPermissions = new Set(
+  capabilitiesGrantingAny([Permission.LOOTLOG_ACCESS]),
+);
 
 const parseCharacterRef = (accountId: string, characterId: string) => {
   const parsedAccountId = Number(accountId);

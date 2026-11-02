@@ -29,7 +29,6 @@ import {
   getNextSelectedGuildId,
   removeChatMessage,
 } from "./chat.helpers";
-import { isChatNpcType } from "./hooks/use-hidden-npc-types";
 import {
   canReplyToChatMessage,
   resolveChatReplyNames,
@@ -212,17 +211,14 @@ export const ChatView = ({
     if (next !== undefined) setSelectedGuildId(next);
   }, [selectedGuildId, setSelectedGuildId, visibleGuilds]);
   const { hiddenNpcTypes } = useHiddenNpcTypes();
-  const hiddenNpcTypeSet = new Set(hiddenNpcTypes);
-  const hiddenNpcTypesKey = [...hiddenNpcTypes].sort().join(",");
   // Server message/access subscriptions and rank filters invalidate persisted read entries.
   useEffect(() => {
     if (!visibleGuilds) return;
-    const hidden = new Set(hiddenNpcTypesKey.split(",").filter(isChatNpcType));
     setReadState((current) =>
       reconcileChatReadState(current, {
         allowedGuildIds: new Set(visibleGuilds.map((guild) => guild.id)),
         failedGuildIds: new Set(failedGuildIds),
-        hiddenNpcTypes: hidden,
+        hiddenNpcTypes,
         messagesByGuildId: hasMessagesResponse ? messagesByGuildId : {},
         hasAttention: (guildId, message) => {
           const context = mentionContextsByGuildId[guildId];
@@ -243,7 +239,7 @@ export const ChatView = ({
   }, [
     visibleGuilds,
     hasMessagesResponse,
-    hiddenNpcTypesKey,
+    hiddenNpcTypes,
     messagesByGuildId,
     mentionContextsByGuildId,
     failedGuildIds,
@@ -264,18 +260,14 @@ export const ChatView = ({
     ),
   );
 
-  const effectiveFilter = !filtersVisible
-    ? "all"
-    : chatFilter === "npc" || chatFilter === "party"
-      ? "reports"
-      : chatFilter;
+  const effectiveFilter = filtersVisible ? chatFilter : "all";
 
   const currentMessages = resolveChatReplyNames(
     getCurrentChatMessages(
       messagesByGuildId,
       effectiveSelectedGuildId,
       effectiveFilter,
-      hiddenNpcTypeSet,
+      hiddenNpcTypes,
     ),
     messagesByGuildId,
     membersByGuildId,

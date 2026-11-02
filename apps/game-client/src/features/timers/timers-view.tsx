@@ -12,6 +12,7 @@ import { useTimerListProjection } from "@/features/timers/hooks/use-timer-list-p
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
 import { useTimers } from "@/hooks/api/use-timers";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
+import { GLOBAL_TIMER_SETTINGS_KEY } from "@/store/timer-settings-sync";
 import { useWindowsStore } from "@/store/windows.store";
 
 const EMPTY_TIMERS: Timer[] = [];
@@ -20,39 +21,6 @@ interface TimersViewProps {
   isOpen: boolean;
   isUnderBag: boolean;
 }
-
-type TimersStoreState = ReturnType<typeof useTimersStore.getState>;
-
-const getTimersViewState = ({
-  settingsKey,
-  hiddenTimers,
-  pinnedTimers,
-  timerFiltersSearchText,
-  timerFiltersEnabled,
-  colorFiltersEnabled,
-  timersSortOrder,
-  allowWorldSelection,
-  timers,
-}: {
-  settingsKey: string;
-  hiddenTimers: TimersStoreState["hiddenTimers"];
-  pinnedTimers: TimersStoreState["pinnedTimers"];
-  timerFiltersSearchText: TimersStoreState["timerFiltersSearchText"];
-  timerFiltersEnabled: TimersStoreState["timerFiltersEnabled"];
-  colorFiltersEnabled: TimersStoreState["colorFiltersEnabled"];
-  timersSortOrder: TimersStoreState["timersSortOrder"];
-  allowWorldSelection: boolean | undefined;
-  timers: Timer[] | undefined;
-}) => ({
-  hiddenTimers: hiddenTimers[settingsKey] ?? [],
-  pinnedTimers: pinnedTimers[settingsKey] ?? [],
-  searchText: timerFiltersSearchText ?? "",
-  timerFiltersEnabled: timerFiltersEnabled ?? false,
-  colorFiltersEnabled: colorFiltersEnabled ?? false,
-  sortOrder: timersSortOrder ?? "asc",
-  allowWorldSelection: allowWorldSelection ?? false,
-  timers: timers ?? EMPTY_TIMERS,
-});
 
 export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const { t } = useTranslation("timers");
@@ -115,33 +83,17 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const timersRefreshError = Boolean(timersError) && hasTimersResponse;
   const timersRefreshing = timersFetching && hasTimersResponse;
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
-  const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
-  const { filters, setFilters } = useTimerFilters(settingsKey, desiredWorld);
 
-  const {
-    hiddenTimers: hiddenTimersForSettings,
-    pinnedTimers: pinnedTimersForSettings,
-    searchText,
-    timerFiltersEnabled: resolvedTimerFiltersEnabled,
-    colorFiltersEnabled: resolvedColorFiltersEnabled,
-    sortOrder,
-    allowWorldSelection: resolvedAllowWorldSelection,
-    timers: resolvedTimers,
-  } = getTimersViewState({
-    settingsKey,
-    hiddenTimers,
-    pinnedTimers,
-    timerFiltersSearchText,
-    timerFiltersEnabled,
-    colorFiltersEnabled,
-    timersSortOrder,
-    allowWorldSelection,
-    timers,
-  });
+  const settingsKey = generalConfig.timersGrouping
+    ? GLOBAL_TIMER_SETTINGS_KEY
+    : guildId;
+
+  const { filters, setFilters } = useTimerFilters(settingsKey, desiredWorld);
+  const hiddenTimersForSettings = hiddenTimers[settingsKey] ?? [];
 
   // Typing updates the search box at once; the grid re-filters in an
   // interruptible render that the next keystroke can abandon.
-  const deferredSearchText = useDeferredValue(searchText);
+  const deferredSearchText = useDeferredValue(timerFiltersSearchText);
 
   const { areFiltersActive, timers: sortedTimers } = useTimerListProjection({
     context: {
@@ -160,15 +112,15 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     },
     preferences: {
       alwaysVisibleExpiredTimers,
-      colorFiltersEnabled: resolvedColorFiltersEnabled,
+      colorFiltersEnabled,
       customLists,
       hiddenTimers: hiddenTimersForSettings,
-      pinnedTimers: pinnedTimersForSettings,
+      pinnedTimers: pinnedTimers[settingsKey] ?? [],
       removeTimerAfterMs: generalConfig.removeTimerAfterMs,
-      sortOrder,
+      sortOrder: timersSortOrder,
       timersColors,
     },
-    timers: resolvedTimers,
+    timers: timers ?? EMPTY_TIMERS,
   });
 
   const handleAddTimer = () => {
@@ -197,6 +149,51 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     setShowHiddenTimers(true);
   };
 
+  const actions = generalConfig.compactView ? undefined : (
+    <TimersActions
+      timerFiltersEnabled={timerFiltersEnabled}
+      toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
+      colorFiltersEnabled={colorFiltersEnabled}
+      toggleColorFiltersEnabled={toggleColorFiltersEnabled}
+      timersSortOrder={timersSortOrder}
+      setTimersSortOrder={setTimersSortOrder}
+      showHiddenTimers={showHiddenTimers}
+      setShowHiddenTimers={setShowHiddenTimers}
+      guildId={guildId}
+      world={desiredWorld}
+      isGrouping={generalConfig.timersGrouping}
+      addTimerOpen={addTimerOpen}
+      onAddTimer={handleAddTimer}
+    />
+  );
+
+  const content = (
+    <TimersContent
+      world={desiredWorld}
+      sortedTimers={sortedTimers}
+      settingsKey={settingsKey}
+      hiddenTimers={hiddenTimersForSettings}
+      areFiltersActive={areFiltersActive}
+      isGrouping={generalConfig.timersGrouping}
+      allowWorldSelection={allowWorldSelection ?? false}
+      timerFiltersEnabled={timerFiltersEnabled}
+      isUnderBag={isUnderBag}
+      minColumnWidth={displayConfig.minColumnWidth}
+      legacyAppearance={displayConfig.legacyAppearance}
+      onResetFilters={handleResetFilters}
+      compactView={generalConfig.compactView}
+      error={!hasTimersResponse ? timersError : null}
+      initialLoading={initialTimersLoading}
+      onRetry={() => {
+        void refetchTimers();
+      }}
+      refreshError={timersRefreshError}
+      refreshing={timersRefreshing}
+      hasData={hasTimersResponse}
+      overlay={addTimerOverlay}
+    />
+  );
+
   if (isUnderBag) {
     return (
       <UnderBagTimers>
@@ -204,24 +201,10 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
             middle column, and the empty trailing column keeps it centered.
             Same height as the title bar, with no gap before the content.
             Compact view hides it, as it hides the window's title bar. */}
-        {!generalConfig.compactView && (
+        {actions && (
           <div className="ll:grid ll:h-6 ll:shrink-0 ll:grid-cols-[1fr_auto_1fr] ll:items-center ll:gap-1 ll:px-0.5">
             <div className="ll:flex ll:items-center ll:justify-self-start">
-              <TimersActions
-                timerFiltersEnabled={resolvedTimerFiltersEnabled}
-                toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
-                colorFiltersEnabled={resolvedColorFiltersEnabled}
-                toggleColorFiltersEnabled={toggleColorFiltersEnabled}
-                timersSortOrder={sortOrder}
-                setTimersSortOrder={setTimersSortOrder}
-                showHiddenTimers={showHiddenTimers}
-                setShowHiddenTimers={setShowHiddenTimers}
-                guildId={guildId}
-                world={desiredWorld}
-                isGrouping={generalConfig.timersGrouping}
-                addTimerOpen={addTimerOpen}
-                onAddTimer={handleAddTimer}
-              />
+              {actions}
             </div>
             <p className="ll:min-w-0 ll:truncate ll:text-center ll:text-xs ll:font-semibold ll:leading-none ll:tracking-wide ll:text-gray-100">
               {t("underBag.title")}
@@ -229,30 +212,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
             <div aria-hidden="true" />
           </div>
         )}
-        <TimersContent
-          world={desiredWorld}
-          sortedTimers={sortedTimers}
-          settingsKey={settingsKey}
-          hiddenTimers={hiddenTimersForSettings}
-          areFiltersActive={areFiltersActive}
-          isGrouping={generalConfig.timersGrouping}
-          allowWorldSelection={resolvedAllowWorldSelection}
-          timerFiltersEnabled={resolvedTimerFiltersEnabled}
-          isUnderBag
-          minColumnWidth={displayConfig.minColumnWidth}
-          legacyAppearance={displayConfig.legacyAppearance}
-          onResetFilters={handleResetFilters}
-          compactView={generalConfig.compactView}
-          error={!hasTimersResponse ? timersError : null}
-          initialLoading={initialTimersLoading}
-          onRetry={() => {
-            void refetchTimers();
-          }}
-          refreshError={timersRefreshError}
-          refreshing={timersRefreshing}
-          hasData={hasTimersResponse}
-          overlay={addTimerOverlay}
-        />
+        {content}
       </UnderBagTimers>
     );
   }
@@ -269,52 +229,9 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       }
       disableTitle={generalConfig.compactView}
       draggableContent={generalConfig.compactView}
-      actions={
-        !generalConfig.compactView ? (
-          <TimersActions
-            timerFiltersEnabled={timerFiltersEnabled}
-            toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
-            colorFiltersEnabled={colorFiltersEnabled}
-            toggleColorFiltersEnabled={toggleColorFiltersEnabled}
-            timersSortOrder={sortOrder}
-            setTimersSortOrder={setTimersSortOrder}
-            showHiddenTimers={showHiddenTimers}
-            setShowHiddenTimers={setShowHiddenTimers}
-            guildId={guildId}
-            world={desiredWorld}
-            isGrouping={generalConfig.timersGrouping}
-            addTimerOpen={addTimerOpen}
-            onAddTimer={handleAddTimer}
-          />
-        ) : undefined
-      }
+      actions={actions}
     >
-      <div className="ll:flex ll:flex-col ll:h-full">
-        <TimersContent
-          world={desiredWorld}
-          sortedTimers={sortedTimers}
-          settingsKey={settingsKey}
-          hiddenTimers={hiddenTimersForSettings}
-          areFiltersActive={areFiltersActive}
-          isGrouping={generalConfig.timersGrouping}
-          allowWorldSelection={resolvedAllowWorldSelection}
-          timerFiltersEnabled={resolvedTimerFiltersEnabled}
-          isUnderBag={false}
-          minColumnWidth={displayConfig.minColumnWidth}
-          legacyAppearance={displayConfig.legacyAppearance}
-          onResetFilters={handleResetFilters}
-          compactView={generalConfig.compactView}
-          error={!hasTimersResponse ? timersError : null}
-          initialLoading={initialTimersLoading}
-          onRetry={() => {
-            void refetchTimers();
-          }}
-          refreshError={timersRefreshError}
-          refreshing={timersRefreshing}
-          hasData={hasTimersResponse}
-          overlay={addTimerOverlay}
-        />
-      </div>
+      <div className="ll:flex ll:flex-col ll:h-full">{content}</div>
     </DraggableWindow>
   );
 };

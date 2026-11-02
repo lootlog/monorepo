@@ -99,18 +99,15 @@ interface NotificationsState {
   clearNotifications: () => void;
   removeNotifications: (ids: readonly string[]) => void;
   removeNotification: (id: string) => void;
-  removeNotificationByNpcId: (npcId: number, world?: string) => void;
   removeNotificationsByNpcIds: (
     npcIds: readonly number[],
     world?: string,
   ) => void;
-  setNotificationAutoHide: (listKey: string, durationMs: number) => void;
   pauseNotificationAutoHide: (
     listKey: string,
     derivedCountdown?: NotificationAutoHideCountdown,
   ) => void;
   resumeNotificationAutoHide: (listKey: string) => void;
-  clearNotificationAutoHide: (listKey: string) => void;
 }
 
 const isPartyGatheringNotification = (
@@ -474,35 +471,6 @@ export const useNotificationsStore = create<NotificationsState>()(
           notificationAutoHideByListKey,
         };
       }),
-    removeNotificationByNpcId: (npcId, world) =>
-      get().removeNotificationsByNpcIds([npcId], world),
-    setNotificationAutoHide: (listKey, durationMs) =>
-      set((state) => {
-        if (durationMs <= 0) {
-          if (!(listKey in state.notificationAutoHideByListKey)) {
-            return state;
-          }
-
-          const notificationAutoHideByListKey = {
-            ...state.notificationAutoHideByListKey,
-          };
-
-          delete notificationAutoHideByListKey[listKey];
-
-          return { notificationAutoHideByListKey };
-        }
-
-        return {
-          notificationAutoHideByListKey: {
-            ...state.notificationAutoHideByListKey,
-            [listKey]: {
-              deadlineMs: Date.now() + durationMs,
-              pausedRemainingMs: null,
-              durationMs,
-            },
-          },
-        };
-      }),
     pauseNotificationAutoHide: (listKey, derivedCountdown) =>
       set((state) => {
         const currentState =
@@ -548,20 +516,6 @@ export const useNotificationsStore = create<NotificationsState>()(
             },
           },
         };
-      }),
-    clearNotificationAutoHide: (listKey) =>
-      set((state) => {
-        if (!(listKey in state.notificationAutoHideByListKey)) {
-          return state;
-        }
-
-        const notificationAutoHideByListKey = {
-          ...state.notificationAutoHideByListKey,
-        };
-
-        delete notificationAutoHideByListKey[listKey];
-
-        return { notificationAutoHideByListKey };
       }),
   }),
 );

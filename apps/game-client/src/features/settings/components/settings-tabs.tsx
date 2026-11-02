@@ -13,10 +13,7 @@ import {
   SETTINGS_DOMAIN_ICONS,
   SETTINGS_SUBSECTION_CONTENT,
 } from "@/features/settings/settings-content";
-import {
-  getVisibleSettingsManifest,
-  isSettingsControlId,
-} from "@/features/settings/settings-manifest";
+import { getVisibleSettingsManifest } from "@/features/settings/settings-manifest";
 import {
   buildSettingsSearchItems,
   searchSettings,
@@ -75,10 +72,10 @@ export const SettingsTabs = () => {
     ? path.subsection
     : activeDomain.subsections[0].id;
 
-  const results = searchSettings(
-    buildSettingsSearchItems(visibleDomains, t),
-    query,
-  );
+  // Items are built only while searching: each one translates its labels.
+  const results = query
+    ? searchSettings(buildSettingsSearchItems(visibleDomains, t), query)
+    : [];
 
   const isCompact = settingsWidth < SETTINGS_COMPACT_WIDTH;
 
@@ -102,16 +99,8 @@ export const SettingsTabs = () => {
     setOverlayOpen(false);
   };
 
-  const openSearchResult = (result: SettingsSearchItem) => {
-    if (isSettingsControlId(result.controlId)) {
-      openControl(result.controlId);
-
-      return;
-    }
-
-    navigate(result.categoryId, result.subsectionId);
-    clearQuery();
-  };
+  const openSearchResult = (result: SettingsSearchItem) =>
+    openControl(result.controlId);
 
   const focusSearch = () => {
     if (isCompact) setOverlayOpen(true);

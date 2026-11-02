@@ -70,8 +70,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   const membersByGuildId = useNotificationGuildMembers(visibleNotifications);
   const { isReady: isMutesReady, mutes } = useCurrentUserNotificationMutes();
 
-  const { isPending: isMutePending, mutate: updateMutes } =
-    useUpdateNotificationMutes();
+  const { mutate: updateMutes } = useUpdateNotificationMutes();
 
   const { isPending: isJoiningReadyRoom, mutate: applyToReadyRoom } =
     usePartyReadyRoomControllerApply();
@@ -318,7 +317,6 @@ export const NotificationsList: FC<NotificationsListProps> = ({
         animationEffectsEnabled={animationEffectsEnabled}
         isJoiningReadyRoom={isJoiningReadyRoom}
         isMutesReady={isMutesReady}
-        isMutePending={isMutePending}
         mutes={mutes}
         onJoinReadyRoom={handleJoinReadyRoom}
         onPauseAutoHide={pauseNotificationAutoHide}

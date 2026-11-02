@@ -43,7 +43,7 @@ const timelineGuildId = `kill-ranking-${randomUUID()}`;
 
 const memberIds = { first: 0, second: 0 };
 
-const policy = createAccessPolicy({ capabilities: [Permission.ADMIN] });
+const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });
 
 const cache: KillQueryCache = { getOrSet: (_key, _schema, load) => load };
 

@@ -256,8 +256,9 @@ export class PingInteractionController {
     this.reset();
   }
 
-  isActive(): boolean {
-    return this.state !== null;
+  /** The key or button holding the current press, or null between presses. */
+  getActiveIdentity(): PingPressIdentity | null {
+    return this.state?.identity ?? null;
   }
 
   readonly getSnapshot = (): PingWheelSnapshot | null => this.snapshot;

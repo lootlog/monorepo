@@ -26,8 +26,8 @@ export type SettingsIconName =
   | "activity"
   | "info";
 
-export interface SettingsControlManifestItem {
-  id: string;
+export interface SettingsControlManifestItem<TId extends string = string> {
+  id: TId;
   labelKey: string;
   descriptionKey?: string;
   aliases?: string[];
@@ -39,18 +39,22 @@ export interface SettingsControlManifestItem {
   };
 }
 
-export interface SettingsSubsectionManifestItem {
+export interface SettingsSubsectionManifestItem<
+  TControlId extends string = string,
+> {
   id: SettingsSubsectionValue;
   labelKey: string;
-  controls: readonly SettingsControlManifestItem[];
+  controls: readonly SettingsControlManifestItem<TControlId>[];
   visible?: () => boolean;
 }
 
-export interface SettingsDomainManifestItem {
+export interface SettingsDomainManifestItem<
+  TControlId extends string = string,
+> {
   id: SettingsDomainValue;
   labelKey: string;
   icon: SettingsIconName;
-  subsections: readonly SettingsSubsectionManifestItem[];
+  subsections: readonly SettingsSubsectionManifestItem<TControlId>[];
 }
 
 const MANIFEST = [
@@ -646,17 +650,17 @@ const MANIFEST = [
   },
 ] as const satisfies readonly SettingsDomainManifestItem[];
 
-export const SETTINGS_MANIFEST: readonly SettingsDomainManifestItem[] =
-  MANIFEST;
-
 /** Every control id declared in the manifest; rows and search share it. */
 export type SettingsControlId =
   (typeof MANIFEST)[number]["subsections"][number]["controls"][number]["id"];
 
+export const SETTINGS_MANIFEST: readonly SettingsDomainManifestItem<SettingsControlId>[] =
+  MANIFEST;
+
 export interface SettingsControlLocation {
   domain: SettingsDomainValue;
   subsection: SettingsSubsectionValue;
-  control: SettingsControlManifestItem;
+  control: SettingsControlManifestItem<SettingsControlId>;
 }
 
 const controlLocations = new Map<string, SettingsControlLocation>();
@@ -679,10 +683,6 @@ export const getControlLocation = (controlId: string) =>
 /** Catalog keys a control writes, for per-row save marks. */
 export const getControlSettingKeys = (controlId: string) =>
   controlLocations.get(controlId)?.control.settingKeys;
-
-export const isSettingsControlId = (
-  value: string,
-): value is SettingsControlId => controlLocations.has(value);
 
 export const getVisibleSettingsManifest = () =>
   SETTINGS_MANIFEST.map((domain) => ({

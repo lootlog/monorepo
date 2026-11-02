@@ -1,5 +1,5 @@
 import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
-import { getTextColor } from "@/utils/notifications-and-detector/background";
+import { getNotificationColors } from "@/utils/notifications-and-detector/background";
 import { cn } from "cn";
 import type { FC, ReactNode } from "react";
 
@@ -20,7 +20,7 @@ export const NpcTypeChip: FC<NpcTypeChipProps> = ({
   className,
 }) => {
   const { npcTypeColors } = useNpcTypeColors();
-  const color = getTextColor(npcType, true, npcTypeColors);
+  const color = getNotificationColors(npcType, true, npcTypeColors).text;
 
   return (
     <span

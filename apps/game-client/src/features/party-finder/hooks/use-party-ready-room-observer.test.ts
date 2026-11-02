@@ -145,11 +145,11 @@ describe("usePartyReadyRoomObserver", () => {
   });
 
   it("reports the initial empty snapshot and only changed normalized member sets", async () => {
-    usePartyStore.getState().setMembers([]);
+    usePartyStore.getState().replaceParty([]);
     renderObserver();
 
     await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(1));
-    usePartyStore.getState().setMembers([
+    usePartyStore.getState().replaceParty([
       {
         characterId: "20",
         name: "Second",
@@ -190,11 +190,11 @@ describe("usePartyReadyRoomObserver", () => {
     act(() =>
       usePartyStore
         .getState()
-        .setMembers([...members.toReversed(), ...members]),
+        .replaceParty([...members.toReversed(), ...members]),
     );
     expect(observeParty).toHaveBeenCalledTimes(2);
     act(() =>
-      usePartyStore.getState().setMembers(
+      usePartyStore.getState().replaceParty(
         members.map((member) => ({
           ...member,
           currentHp: member.currentHp - 10,
@@ -221,7 +221,7 @@ describe("usePartyReadyRoomObserver", () => {
       accountId: "1",
     };
 
-    usePartyStore.getState().setMembers([member]);
+    usePartyStore.getState().replaceParty([member]);
     renderObserver();
     await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(1));
 
@@ -231,7 +231,7 @@ describe("usePartyReadyRoomObserver", () => {
 
     const churn = window.setInterval(() => {
       currentHp -= 1;
-      usePartyStore.getState().setMembers([{ ...member, currentHp }]);
+      usePartyStore.getState().replaceParty([{ ...member, currentHp }]);
     }, 5_000);
 
     onTestFinished(() => window.clearInterval(churn));
@@ -263,11 +263,11 @@ describe("usePartyReadyRoomObserver", () => {
       .mockResolvedValueOnce(Response.json({ ...projection, revision: 2 }))
       .mockResolvedValueOnce(Response.json({ ...projection, revision: 3 }))
       .mockResolvedValueOnce(Response.json({ ...projection, revision: 4 }));
-    usePartyStore.getState().setMembers([]);
+    usePartyStore.getState().replaceParty([]);
     renderObserver();
     await advanceTime(30_000);
 
-    act(() => usePartyStore.getState().setMembers([member("10")]));
+    act(() => usePartyStore.getState().replaceParty([member("10")]));
     await advanceTime(PARTY_OBSERVATION_HEARTBEAT_MS - 1);
     expect(observeParty).toHaveBeenCalledTimes(2);
 
@@ -291,7 +291,7 @@ describe("usePartyReadyRoomObserver", () => {
       .mockResolvedValueOnce(Response.json({}, { status: 503 }))
       .mockResolvedValueOnce(Response.json({}, { status: 503 }))
       .mockResolvedValueOnce(Response.json({}, { status: 503 }));
-    usePartyStore.getState().setMembers([member("10")]);
+    usePartyStore.getState().replaceParty([member("10")]);
     renderObserver();
     await advanceTime(3_000);
     expect(observeParty).toHaveBeenCalledTimes(3);
@@ -307,13 +307,13 @@ describe("usePartyReadyRoomObserver", () => {
     renderObserver();
     expect(observeParty).not.toHaveBeenCalled();
 
-    act(() => usePartyStore.getState().setMembers([]));
+    act(() => usePartyStore.getState().replaceParty([]));
     await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(1));
 
     act(() => usePartyStore.getState().clearParty());
     expect(observeParty).toHaveBeenCalledTimes(1);
 
-    act(() => usePartyStore.getState().setMembers([]));
+    act(() => usePartyStore.getState().replaceParty([]));
     await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(2));
   });
 
@@ -347,12 +347,12 @@ describe("usePartyReadyRoomObserver", () => {
         accountId: "1",
       };
 
-      usePartyStore.getState().setMembers([member]);
+      usePartyStore.getState().replaceParty([member]);
       renderObserver();
 
       await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(1));
       act(() =>
-        usePartyStore.getState().setMembers([{ ...member, ...update }]),
+        usePartyStore.getState().replaceParty([{ ...member, ...update }]),
       );
 
       await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(2));
@@ -375,7 +375,7 @@ describe("usePartyReadyRoomObserver", () => {
   );
 
   it("does not report another character's party for the organizer", async () => {
-    usePartyStore.getState().setMembers([]);
+    usePartyStore.getState().replaceParty([]);
     mergeReadyRoomProjectionIntoCache(
       {
         ...projection,
@@ -446,12 +446,12 @@ describe("usePartyReadyRoomObserver", () => {
           },
         }),
       );
-    usePartyStore.getState().setMembers([member("10")]);
+    usePartyStore.getState().replaceParty([member("10")]);
     renderObserver();
     await advanceTime();
     expect(canEnqueueReadyRoomInvitations(["volunteer"])).toBe(false);
 
-    act(() => usePartyStore.getState().setMembers([]));
+    act(() => usePartyStore.getState().replaceParty([]));
     await advanceTime();
     expect(observeParty).toHaveBeenCalledTimes(2);
     expect(canEnqueueReadyRoomInvitations(["volunteer"])).toBe(false);
@@ -487,13 +487,13 @@ describe("usePartyReadyRoomObserver", () => {
     observeParty
       .mockImplementationOnce(() => initialResponse.promise)
       .mockImplementationOnce(() => latestResponse.promise);
-    usePartyStore.getState().setMembers([]);
+    usePartyStore.getState().replaceParty([]);
     renderObserver();
     await advanceTime();
 
-    act(() => usePartyStore.getState().setMembers([member("10")]));
+    act(() => usePartyStore.getState().replaceParty([member("10")]));
     await advanceTime();
-    act(() => usePartyStore.getState().setMembers([member("20")]));
+    act(() => usePartyStore.getState().replaceParty([member("20")]));
     await advanceTime();
     expect(observeParty).toHaveBeenCalledTimes(1);
 
@@ -525,10 +525,10 @@ describe("usePartyReadyRoomObserver", () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const initialResponse = Promise.withResolvers<Response>();
     observeParty.mockImplementationOnce(() => initialResponse.promise);
-    usePartyStore.getState().setMembers([member("10")]);
+    usePartyStore.getState().replaceParty([member("10")]);
     renderObserver();
     await advanceTime();
-    act(() => usePartyStore.getState().setMembers([member("20")]));
+    act(() => usePartyStore.getState().replaceParty([member("20")]));
     await advanceTime();
     expect(observeParty).toHaveBeenCalledTimes(1);
 
@@ -559,13 +559,15 @@ describe("usePartyReadyRoomObserver", () => {
     getProjection
       .mockResolvedValueOnce(Response.json({ ...projection, revision: 2 }))
       .mockResolvedValueOnce(Response.json({ ...projection, revision: 3 }));
-    usePartyStore.getState().setMembers([member("10")]);
+    usePartyStore.getState().replaceParty([member("10")]);
     renderObserver();
     await advanceTime();
     expect(observeParty).toHaveBeenCalledTimes(1);
 
     act(() =>
-      usePartyStore.getState().setMembers([{ ...member("10"), currentHp: 90 }]),
+      usePartyStore
+        .getState()
+        .replaceParty([{ ...member("10"), currentHp: 90 }]),
     );
     await advanceTime(999);
     expect(observeParty).toHaveBeenCalledTimes(1);
@@ -573,7 +575,9 @@ describe("usePartyReadyRoomObserver", () => {
     expect(observeParty).toHaveBeenCalledTimes(2);
 
     act(() =>
-      usePartyStore.getState().setMembers([{ ...member("10"), currentHp: 80 }]),
+      usePartyStore
+        .getState()
+        .replaceParty([{ ...member("10"), currentHp: 80 }]),
     );
     await advanceTime(1_999);
     expect(observeParty).toHaveBeenCalledTimes(2);
@@ -581,13 +585,15 @@ describe("usePartyReadyRoomObserver", () => {
     expect(observeParty).toHaveBeenCalledTimes(3);
 
     act(() =>
-      usePartyStore.getState().setMembers([{ ...member("10"), currentHp: 70 }]),
+      usePartyStore
+        .getState()
+        .replaceParty([{ ...member("10"), currentHp: 70 }]),
     );
     await advanceTime(10_000);
     expect(observeParty).toHaveBeenCalledTimes(3);
     expect(getProjection).toHaveBeenCalledTimes(2);
 
-    act(() => usePartyStore.getState().setMembers([member("20")]));
+    act(() => usePartyStore.getState().replaceParty([member("20")]));
     await advanceTime();
     expect(observeParty).toHaveBeenCalledTimes(4);
     await advanceTime(1_000);
@@ -608,7 +614,7 @@ describe("usePartyReadyRoomObserver", () => {
     vi.useFakeTimers();
     vi.spyOn(console, "warn").mockImplementation(() => {});
     observeParty.mockResolvedValueOnce(Response.json({ code }, { status }));
-    usePartyStore.getState().setMembers([]);
+    usePartyStore.getState().replaceParty([]);
     renderObserver();
     await advanceTime(10_000);
     expect(observeParty).toHaveBeenCalledTimes(1);
@@ -642,7 +648,7 @@ describe("usePartyReadyRoomObserver", () => {
           },
         }),
       );
-    usePartyStore.getState().setMembers([]);
+    usePartyStore.getState().replaceParty([]);
     renderObserver();
     await advanceTime();
     expect(canEnqueueReadyRoomInvitations(["volunteer"])).toBe(false);
@@ -670,10 +676,10 @@ describe("usePartyReadyRoomObserver", () => {
     observeParty
       .mockImplementationOnce(() => obsoleteResponse.promise)
       .mockResolvedValueOnce(Response.json({ ...projection, revision: 2 }));
-    usePartyStore.getState().setMembers([]);
+    usePartyStore.getState().replaceParty([]);
     renderObserver();
     await advanceTime();
-    act(() => usePartyStore.getState().setMembers([member("10")]));
+    act(() => usePartyStore.getState().replaceParty([member("10")]));
 
     try {
       await advanceTime(4_999);
@@ -713,7 +719,7 @@ describe("usePartyReadyRoomObserver", () => {
     getProjection.mockResolvedValueOnce(
       Response.json({ ...projection, revision: 2 }),
     );
-    usePartyStore.getState().setMembers([]);
+    usePartyStore.getState().replaceParty([]);
     renderObserver();
 
     try {
@@ -753,7 +759,7 @@ describe("usePartyReadyRoomObserver", () => {
     getProjection
       .mockImplementationOnce(() => firstRefresh.promise)
       .mockImplementationOnce(() => lastRefresh.promise);
-    usePartyStore.getState().setMembers([member("10")]);
+    usePartyStore.getState().replaceParty([member("10")]);
     renderObserver();
 
     try {
@@ -762,7 +768,7 @@ describe("usePartyReadyRoomObserver", () => {
       act(() =>
         usePartyStore
           .getState()
-          .setMembers([{ ...member("10"), currentHp: 90 }]),
+          .replaceParty([{ ...member("10"), currentHp: 90 }]),
       );
       await advanceTime(5_000);
       await advanceTime(2_000);
@@ -770,13 +776,13 @@ describe("usePartyReadyRoomObserver", () => {
       act(() =>
         usePartyStore
           .getState()
-          .setMembers([{ ...member("10"), currentHp: 80 }]),
+          .replaceParty([{ ...member("10"), currentHp: 80 }]),
       );
       await advanceTime(5_000);
       act(() =>
         usePartyStore
           .getState()
-          .setMembers([{ ...member("10"), currentHp: 70 }]),
+          .replaceParty([{ ...member("10"), currentHp: 70 }]),
       );
       await advanceTime(20_000);
       expect(getProjection).toHaveBeenCalledTimes(2);
@@ -820,7 +826,7 @@ describe("usePartyReadyRoomObserver", () => {
         )
         .mockResolvedValueOnce(Response.json(settledRoom));
       getProjection.mockImplementationOnce(() => pendingRefresh.promise);
-      usePartyStore.getState().setMembers([]);
+      usePartyStore.getState().replaceParty([]);
       renderObserver();
 
       try {
@@ -828,7 +834,7 @@ describe("usePartyReadyRoomObserver", () => {
         expect(getProjection).toHaveBeenCalledOnce();
         act(() => {
           seedReadyRoomCache(queryClient, [currentRoom]);
-          usePartyStore.getState().setMembers(latestMembers);
+          usePartyStore.getState().replaceParty(latestMembers);
         });
         await advanceTime();
 
@@ -867,7 +873,7 @@ describe("usePartyReadyRoomObserver", () => {
       observeParty
         .mockImplementationOnce(() => obsoleteResponse.promise)
         .mockImplementationOnce(() => currentResponse.promise);
-      usePartyStore.getState().setMembers([]);
+      usePartyStore.getState().replaceParty([]);
       renderObserver();
       await advanceTime();
 
@@ -903,12 +909,12 @@ describe("usePartyReadyRoomObserver", () => {
     observeParty
       .mockImplementationOnce(() => obsoleteResponse.promise)
       .mockImplementationOnce(() => currentResponse.promise);
-    usePartyStore.getState().setMembers([]);
+    usePartyStore.getState().replaceParty([]);
     const firstObserver = renderObserver();
     await advanceTime();
     firstObserver.unmount();
 
-    act(() => usePartyStore.getState().setMembers([member("10")]));
+    act(() => usePartyStore.getState().replaceParty([member("10")]));
     renderObserver();
     await advanceTime();
     expect(observeParty).toHaveBeenCalledTimes(1);
@@ -940,7 +946,7 @@ describe("usePartyReadyRoomObserver", () => {
       vi.useFakeTimers();
       const response = Promise.withResolvers<Response>();
       observeParty.mockImplementationOnce(() => response.promise);
-      usePartyStore.getState().setMembers([]);
+      usePartyStore.getState().replaceParty([]);
       const observer = renderObserver();
       await advanceTime();
 
@@ -975,7 +981,7 @@ describe("usePartyReadyRoomObserver", () => {
       vi.useFakeTimers();
       vi.spyOn(console, "warn").mockImplementation(() => {});
       observeParty.mockRejectedValueOnce(new TypeError("Failed to fetch"));
-      usePartyStore.getState().setMembers([]);
+      usePartyStore.getState().replaceParty([]);
       const observer = renderObserver();
       await advanceTime();
       expect(observeParty).toHaveBeenCalledTimes(1);

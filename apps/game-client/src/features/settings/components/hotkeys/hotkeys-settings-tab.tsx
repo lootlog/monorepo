@@ -10,23 +10,16 @@ import {
   isDefaultBinding,
   useHotkeysStore,
   type HotkeyAction,
-  type HotkeyActionConfig,
   type HotkeyBinding,
-  type HotkeyCategory,
 } from "@/store/hotkeys.store";
+import { groupByToMap } from "@/lib/group-by-to-map";
+import { useShallow } from "zustand/react/shallow";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-const groupedActions = new Map<HotkeyCategory, HotkeyActionConfig[]>();
-
-for (const config of HOTKEY_ACTIONS) {
-  const actions = groupedActions.get(config.category);
-
-  if (actions) actions.push(config);
-  else groupedActions.set(config.category, [config]);
-}
-
-const categories = Array.from(groupedActions);
+const categories = [
+  ...groupByToMap(HOTKEY_ACTIONS, (config) => config.category),
+];
 
 export const HotkeysSettingsTab = () => {
   const gameInterface = useGameStore((state) => state.game?.interface);
@@ -38,7 +31,16 @@ export const HotkeysSettingsTab = () => {
     resetAll,
     recordingAction: capturingAction,
     setRecordingAction: setCapturingAction,
-  } = useHotkeysStore();
+  } = useHotkeysStore(
+    useShallow((state) => ({
+      bindings: state.bindings,
+      setBinding: state.setBinding,
+      resetBinding: state.resetBinding,
+      resetAll: state.resetAll,
+      recordingAction: state.recordingAction,
+      setRecordingAction: state.setRecordingAction,
+    })),
+  );
 
   // Leaving the tab mid-recording must not leave every hotkey disabled.
   useEffect(() => () => setCapturingAction(null), [setCapturingAction]);

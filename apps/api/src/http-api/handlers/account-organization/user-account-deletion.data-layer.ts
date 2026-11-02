@@ -6,6 +6,8 @@ import {
   memberKillBucketTable,
   memberTable,
   memberToRoleTable,
+  notificationRuleTable,
+  notificationTargetTable,
   userCharacterAuraGameAccountTable,
   userCharacterAuraTable,
   userCharacterKillBucketTable,
@@ -15,11 +17,17 @@ import {
   userKillBucketTable,
   userMargonemAccountTable,
   userPinnedEventTable,
+  userPinnedReservationSpotTable,
   userSettingDocumentTable,
   userSettingsTable,
   userThemeTable,
+  watchedItemTable,
 } from "#src/database/drizzle/schema";
-import { getGuildMemberNotFoundCacheKey } from "#src/discord/discord-cache.util";
+import { NotificationOwnerType } from "#src/notifications/notification-enums";
+import {
+  getGuildMemberForbiddenCacheKey,
+  getGuildMemberNotFoundCacheKey,
+} from "#src/discord/discord-cache.util";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import {
   getAuthTokenCachePattern,
@@ -132,6 +140,30 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userPinnedEventTable)
         .where(eq(userPinnedEventTable.userId, identity.userId));
+      yield* transaction
+        .delete(userPinnedReservationSpotTable)
+        .where(eq(userPinnedReservationSpotTable.userId, identity.userId));
+      // Personal notifications are keyed by the Discord id. Deleting rules and
+      // targets cascades to their links and pending jobs.
+      yield* transaction
+        .delete(watchedItemTable)
+        .where(eq(watchedItemTable.userId, identity.discordId));
+      yield* transaction
+        .delete(notificationRuleTable)
+        .where(
+          and(
+            eq(notificationRuleTable.ownerType, NotificationOwnerType.USER),
+            eq(notificationRuleTable.ownerId, identity.discordId),
+          ),
+        );
+      yield* transaction
+        .delete(notificationTargetTable)
+        .where(
+          and(
+            eq(notificationTargetTable.ownerType, NotificationOwnerType.USER),
+            eq(notificationTargetTable.ownerId, identity.discordId),
+          ),
+        );
 
       const deactivatedAt = new Date(yield* Clock.currentTimeMillis);
 
@@ -179,6 +211,13 @@ const invalidateRemovedMember = (
     effects.push(
       ports.deleteCacheKey(
         getGuildMemberNotFoundCacheKey({
+          discordId: member.discordId,
+          guildId: member.guildId,
+          userId: member.globalUserId,
+        }),
+      ),
+      ports.deleteCacheKey(
+        getGuildMemberForbiddenCacheKey({
           discordId: member.discordId,
           guildId: member.guildId,
           userId: member.globalUserId,

@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "620372ff-adc6-47ea-9292-ab43c24eae54",
-  "prevIds": ["1bd84bac-1a14-4924-af8a-b5280a043cfa"],
+  "id": "764cffe3-8462-4b3a-b00d-b24c09360e63",
+  "prevIds": ["db9b389c-b9f0-421f-bdcd-0f874a23d10b"],
   "ddl": [
     {
       "values": ["UNASSIGNED", "UNCOVERED"],
@@ -1136,6 +1136,19 @@
       "generated": null,
       "identity": null,
       "name": "isManualClose",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EventHeroKill"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "windowKey",
       "entityType": "columns",
       "schema": "public",
       "table": "EventHeroKill"
@@ -8798,6 +8811,41 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "DiscordGuildChannelSnapshot"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "heroNpcId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "windowKey",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "isManualClose",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "EventHeroKill_heroNpcId_windowKey_isManualClose_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "EventHeroKill"
     },
     {
       "nameExplicit": true,

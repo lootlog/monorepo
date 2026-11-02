@@ -64,7 +64,6 @@ const renderNotification = (
       guildNamesById={{ "guild-1": "Guild" }}
       isJoiningReadyRoom={false}
       isMutesReady
-      isMutePending={false}
       mutes={mutes}
       notification={notification}
       onJoinReadyRoom={noop}

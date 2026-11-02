@@ -43,7 +43,6 @@ describe("BackendPreferencesWarning", () => {
         open: false,
         position: { x: 0, y: 0 },
       },
-      currentWindowFocus: undefined,
       windowFocusHistory: [],
     }));
   });

@@ -5,13 +5,19 @@ import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTimersStore } from "@/store/timers.store";
+import { useShallow } from "zustand/react/shallow";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 const MAX_REMOVE_TIMER_AFTER_SECONDS = 120;
 
 export const TimersSettingsGeneral: FC = () => {
-  const { generalConfig, setGeneralConfig } = useTimersStore();
+  const { generalConfig, setGeneralConfig } = useTimersStore(
+    useShallow(({ generalConfig, setGeneralConfig }) => ({
+      generalConfig,
+      setGeneralConfig,
+    })),
+  );
 
   const { t } = useTranslation();
 

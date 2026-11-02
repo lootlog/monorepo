@@ -43,6 +43,10 @@ pod tą samą nazwą zawiera poziom 210, powstają dwa odrębne zapisy. Rola z l
 190 może mieć dostęp do pierwszego łupu, ale nie do drugiego. Nadal musi
 spełniać pozostałe warunki dostępu, w tym uprawnienie do danego typu potwora.
 
+Statystyki zabić i wpisy o zabiciach w aktywności pokazują tylko potwory,
+których łupy rola może zobaczyć. `ADMIN` nie omija tych ograniczeń; omija je
+tylko `OWNER`.
+
 Zmiana przydziału łupu wymaga aktualnego uprawnienia do zapisu i dostępu do
 tego łupu. Po odebraniu dostępu oczekujące powiadomienie o łupie nie zostanie
 wysłane, a jego wpis może zniknąć z historii powiadomień użytkownika.

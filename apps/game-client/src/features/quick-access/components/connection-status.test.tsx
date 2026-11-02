@@ -74,7 +74,7 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
     vi.useFakeTimers();
     let now = 1_000;
     vi.spyOn(performance, "now").mockImplementation(() => now);
-    getSocket().emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: false });
+    getSocket().emit(GatewayEvent.PLAYER_PRESENCE_UPDATE);
     const publication = gateway.wire.frames.at(-1);
 
     if (

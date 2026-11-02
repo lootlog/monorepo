@@ -41,7 +41,6 @@ export class RuntimeEventPipeline {
   private readonly projection: Dependencies["projection"];
   private readonly schedule: Dependencies["schedule"];
   private readonly queue: Array<RuntimeEventEnvelope | undefined> = [];
-  private readonly processorRegistrations = new Set<symbol>();
   private readonly projectedHandlers = new Set<RuntimeEventHandler>();
   private activeProcessor: RuntimeEventHandler | null = null;
   private overflowed = false;
@@ -72,20 +71,15 @@ export class RuntimeEventPipeline {
     if (ready) this.scheduleDrain();
   }
 
-  acquireProcessor(processor: RuntimeEventHandler): () => boolean {
-    this.activeProcessor ??= processor;
-    const registration = Symbol("runtime-pipeline-processor");
-    this.processorRegistrations.add(registration);
-    let released = false;
+  /**
+   * Makes `processor` the one that handles projected events, replacing any
+   * earlier one. The release returns whether it was still the active one.
+   */
+  setProcessor(processor: RuntimeEventHandler): () => boolean {
+    this.activeProcessor = processor;
 
     return () => {
-      if (released) return false;
-      released = true;
-
-      if (!this.processorRegistrations.delete(registration)) return false;
-
-      if (this.processorRegistrations.size > 0) return false;
-
+      if (this.activeProcessor !== processor) return false;
       this.activeProcessor = null;
 
       return true;
@@ -119,7 +113,6 @@ export class RuntimeEventPipeline {
     this.overflowed = false;
     this.ready = false;
     this.activeProcessor = null;
-    this.processorRegistrations.clear();
     this.projectedHandlers.clear();
   }
 

@@ -1,3 +1,4 @@
+import { compareNpcsStrongestFirst } from "@lootlog/domain/npc-type";
 import { formatLevel } from "@lootlog/domain/profession";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import type { LootNpc } from "@/lib/loots/loot-types";
@@ -13,28 +14,13 @@ export type LootNpcsProps = {
   size?: "sm" | "lg";
 };
 
-// NPC type priority for sorting (higher = more important)
-const NPC_TYPE_PRIORITY = {
-  TITAN: 8,
-  COLOSSUS: 7,
-  HERO: 6,
-  EVENT_HERO: 5,
-  ELITE3: 4,
-  ELITE2: 3,
-  ELITE: 2,
-  NPC: 1,
-  COMMON: 0,
-};
-
 // NPC types that get special badges
 const SPECIAL_NPC_TYPES = ["TITAN", "COLOSSUS", "HERO", "EVENT_HERO"] as const;
 
-const DEFAULT_NPC_TYPE = "COMMON";
-
-type LootNpcType = keyof typeof NPC_TYPE_PRIORITY;
+type SpecialNpcType = (typeof SPECIAL_NPC_TYPES)[number];
 
 // Get badge styling based on NPC type
-const getNpcBadgeStyle = (type: LootNpcType) => {
+const getNpcBadgeStyle = (type: SpecialNpcType) => {
   switch (type) {
     case "TITAN":
       return "bg-primary/10 text-primary border-primary/20";
@@ -44,20 +30,10 @@ const getNpcBadgeStyle = (type: LootNpcType) => {
       return "bg-destructive/10 text-destructive border-destructive/20";
     case "EVENT_HERO":
       return "bg-orange-500/10 text-orange-500 border-orange-500/20";
-    default:
-      return "";
   }
 };
 
-const isLootNpcType = (type: LootNpc["type"]): type is LootNpcType =>
-  type !== null && type !== undefined && type in NPC_TYPE_PRIORITY;
-
-const normalizeNpcType = (type: LootNpc["type"]): LootNpcType =>
-  isLootNpcType(type) ? type : DEFAULT_NPC_TYPE;
-
-const isSpecialNpcType = (
-  type: LootNpcType,
-): type is (typeof SPECIAL_NPC_TYPES)[number] =>
+const isSpecialNpcType = (type: LootNpc["type"]): type is SpecialNpcType =>
   SPECIAL_NPC_TYPES.some((specialType) => specialType === type);
 
 export const LootNpcs: FC<LootNpcsProps> = ({
@@ -68,17 +44,18 @@ export const LootNpcs: FC<LootNpcsProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const sortedNpcs = [...npcs].sort(
-    (a, b) =>
-      NPC_TYPE_PRIORITY[normalizeNpcType(b.type)] -
-      NPC_TYPE_PRIORITY[normalizeNpcType(a.type)],
+  // The strongest NPC names the loot, as in statistics and the activity feed.
+  const sortedNpcs = [...npcs].sort((left, right) =>
+    compareNpcsStrongestFirst(
+      { ...left, npcId: left.id },
+      { ...right, npcId: right.id },
+    ),
   );
 
   const firstNpc = sortedNpcs[0];
-  const firstNpcType = firstNpc ? normalizeNpcType(firstNpc.type) : undefined;
 
   const specialNpcType =
-    firstNpcType && isSpecialNpcType(firstNpcType) ? firstNpcType : undefined;
+    firstNpc && isSpecialNpcType(firstNpc.type) ? firstNpc.type : undefined;
 
   return (
     <span

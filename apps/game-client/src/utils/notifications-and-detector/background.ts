@@ -6,85 +6,54 @@ import {
 } from "@lootlog/schema/npc-appearance";
 import { deriveNpcSurfaceColors } from "@lootlog/domain/npc-appearance";
 
-const TEXT_COLORS_BY_KEY = {
-  [NpcType.COLOSSUS]: "rgba(33, 131, 128, 1)",
-  [NpcType.HERO]: "rgba(249, 137, 72, 1)",
-  [NpcType.ELITE2]: "rgba(219, 90, 186, 1)",
-  [NpcType.TITAN]: "rgba(25, 72, 148, 1)",
-  message: "rgba(219, 39, 99, 1)",
-  "party-gathering": "rgba(147, 51, 234, 1)",
+/** Notification kinds without an NPC type, as red, green and blue. */
+const MESSAGE_COLORS_BY_KEY = {
+  message: "219, 39, 99",
+  "party-gathering": "147, 51, 234",
 };
 
-const BACKGROUND_COLORS_BY_KEY = {
-  [NpcType.COLOSSUS]: "rgba(33, 131, 128, 0.4)",
-  [NpcType.HERO]: "rgba(249, 137, 72, 0.4)",
-  [NpcType.ELITE2]: "rgba(219, 90, 186, 0.4)",
-  [NpcType.TITAN]: "rgba(25, 72, 148, 0.4)",
-  message: "rgba(219, 39, 99, 0.4)",
-  "party-gathering": "rgba(147, 51, 234, 0.4)",
-};
-
-const isNotificationColorKey = (
+const isMessageColorKey = (
   key: string,
-): key is keyof typeof TEXT_COLORS_BY_KEY =>
-  Object.hasOwn(TEXT_COLORS_BY_KEY, key);
+): key is keyof typeof MESSAGE_COLORS_BY_KEY =>
+  Object.hasOwn(MESSAGE_COLORS_BY_KEY, key);
 
-const getNpcSurfaceColors = (
+const PLAIN_COLORS = {
+  background: "transparent",
+  text: "white",
+  border: "rgba(156, 163, 175, 1)",
+};
+
+/**
+ * How a notification or detector row is painted: in the colour of its NPC type
+ * or message kind when highlighted, plain otherwise.
+ */
+export const getNotificationColors = (
   key: string | undefined,
-  npcTypeColors: NpcTypeColors,
-) =>
-  key && isAppearanceNpcType(key)
-    ? deriveNpcSurfaceColors(npcTypeColors[key])
-    : undefined;
-
-export const getBackgroundColor = (
-  key?: string,
-  highlight?: boolean,
+  highlight: boolean | undefined,
   npcTypeColors: NpcTypeColors = DEFAULT_NPC_TYPE_COLORS,
 ) => {
-  const npcColors = getNpcSurfaceColors(key, npcTypeColors);
+  if (!highlight || !key) return PLAIN_COLORS;
 
-  if (highlight && npcColors) return npcColors.background;
+  if (isAppearanceNpcType(key)) {
+    return deriveNpcSurfaceColors(npcTypeColors[key]);
+  }
 
-  if (!highlight || !key || !isNotificationColorKey(key)) return "transparent";
+  if (!isMessageColorKey(key)) return PLAIN_COLORS;
 
-  return BACKGROUND_COLORS_BY_KEY[key];
-};
+  const rgb = MESSAGE_COLORS_BY_KEY[key];
 
-export const getTextColor = (
-  key?: string,
-  highlight?: boolean,
-  npcTypeColors: NpcTypeColors = DEFAULT_NPC_TYPE_COLORS,
-) => {
-  const npcColors = getNpcSurfaceColors(key, npcTypeColors);
-
-  if (highlight && npcColors) return npcColors.text;
-
-  if (!highlight || !key || !isNotificationColorKey(key)) return "white";
-
-  return TEXT_COLORS_BY_KEY[key];
-};
-
-export const getBorderColor = (
-  key?: string,
-  highlight?: boolean,
-  npcTypeColors: NpcTypeColors = DEFAULT_NPC_TYPE_COLORS,
-) => {
-  const npcColors = getNpcSurfaceColors(key, npcTypeColors);
-
-  if (highlight && npcColors) return npcColors.border;
-
-  if (!highlight || !key || !isNotificationColorKey(key))
-    return "rgba(156, 163, 175, 1)";
-
-  return TEXT_COLORS_BY_KEY[key];
+  return {
+    background: `rgba(${rgb}, 0.4)`,
+    text: `rgba(${rgb}, 1)`,
+    border: `rgba(${rgb}, 1)`,
+  };
 };
 
 export const getSubtleBackgroundColor = (
   key: string | undefined,
   npcTypeColors?: NpcTypeColors,
 ) =>
-  `color-mix(in srgb, ${getBackgroundColor(key, true, npcTypeColors)} 37.5%, transparent)`;
+  `color-mix(in srgb, ${getNotificationColors(key, true, npcTypeColors).background} 37.5%, transparent)`;
 
 /** How brightly a row plays its arrival: rarer NPCs flash harder. */
 export const getArrivalStrength = (key?: string) => {

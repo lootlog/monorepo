@@ -42,6 +42,20 @@ describe("useTimerRemovalBoundary", () => {
     );
   });
 
+  it("re-projects when a Hero Tracker's entrance closes, so the list stops sorting it by the entrance", () => {
+    const heroTracker = createTimer({
+      entranceClosesAt: new Date(NOW + 2_000).toISOString(),
+      maxSpawnTime: new Date(NOW + 3_600_000).toISOString(),
+    });
+
+    expect(getNextTimerRemovalBoundary([heroTracker], 30_000, NOW)).toBe(
+      NOW + 2_000,
+    );
+    expect(
+      getNextTimerRemovalBoundary([heroTracker], 30_000, NOW + 2_000),
+    ).toBe(NOW + 3_630_000);
+  });
+
   it("refreshes once at the nearest boundary without a polling interval", () => {
     const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
     let renderCount = 0;
