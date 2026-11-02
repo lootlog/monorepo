@@ -1,10 +1,5 @@
 import {
   type EventOverviewResponseDto,
-  getEventsRankingControllerGetEventHeroStatsQueryKey,
-  getListEventHeroTimersQueryKey,
-  getListEventMapsQueryKey,
-  getListEventRankingQueryKey,
-  getShowEventOverviewQueryKey,
   useEventsAssignmentControllerDeleteHero,
   useEventsRankingControllerGetEventHeroStats,
   useListEventHeroTimers,
@@ -91,10 +86,6 @@ export const useEventDetail = () => {
     {
       query: {
         enabled: hasEventRouteParams,
-        queryKey: getShowEventOverviewQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
       },
     },
   );
@@ -113,10 +104,6 @@ export const useEventDetail = () => {
     {
       query: {
         enabled: hasEventRouteParams,
-        queryKey: getListEventMapsQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
       },
     },
   );
@@ -132,13 +119,6 @@ export const useEventDetail = () => {
     {
       query: {
         enabled: hasEventRouteParams && Boolean(event?.world),
-        queryKey: getListEventHeroTimersQueryKey(
-          {
-            guildId: queryGuildId,
-            eventId: queryEventId,
-          },
-          getEventHeroTimerQuery(event?.world),
-        ),
       },
     },
   );
@@ -151,10 +131,6 @@ export const useEventDetail = () => {
     {
       query: {
         enabled: hasEventRouteParams,
-        queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
       },
     },
   );
@@ -172,10 +148,6 @@ export const useEventDetail = () => {
     {
       query: {
         enabled: hasEventRouteParams,
-        queryKey: getListEventRankingQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
       },
     },
   );

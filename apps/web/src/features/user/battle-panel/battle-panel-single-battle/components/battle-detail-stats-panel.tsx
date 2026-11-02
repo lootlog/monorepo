@@ -1,4 +1,4 @@
-import { BattleStatsTable } from "@/components/battle";
+import { BattleStatsTable } from "@/components/battle/battle-stats-table";
 import { BattleStatsCustomizationActions } from "@/components/battle/battle-stats-customization-actions";
 import type { useStatsCustomization } from "@/hooks/use-stats-customization";
 import type { Battle } from "@/lib/api/battlelog-types";

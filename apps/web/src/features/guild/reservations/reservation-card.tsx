@@ -9,7 +9,7 @@ import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { cn } from "cn";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import { MetaItem } from "@/components/common/meta-item";
-import { NpcSearchTile } from "@/components/tiles";
+import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
 import type { ViewMode } from "@/hooks/use-view-mode";
 import {
   getReservationCellClassName,

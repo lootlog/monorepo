@@ -2,7 +2,6 @@ import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import {
   type EventOverviewResponseDto,
   getListEventsQueryKey,
-  getShowEventOverviewQueryKey,
   useDeleteEvent,
   useShowEventOverview,
   useUpdateEvent,
@@ -111,10 +110,6 @@ export const useEventHeader = () => {
     {
       query: {
         enabled: Boolean(guildId && eventId),
-        queryKey: getShowEventOverviewQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
       },
     },
   );

@@ -12,7 +12,6 @@ import { useState } from "react";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 
 import {
-  getAllControllerSearchAllQueryKey,
   useAllControllerSearchAll,
   type NpcHitDtoOutput,
 } from "@lootlog/client/search";
@@ -90,7 +89,6 @@ export const useLootSearchCommand = ({
 
   const searchResultsQuery = useAllControllerSearchAll(searchParams, {
     query: {
-      queryKey: getAllControllerSearchAllQueryKey(searchParams),
       enabled: debouncedLootSearch.length >= 2 && !isHidInput,
     },
   });

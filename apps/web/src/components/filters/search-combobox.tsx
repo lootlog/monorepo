@@ -14,7 +14,7 @@ import {
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { cn } from "cn";
 import { FilterChipButton } from "@lootlog/ui/components/filter-chip-button";
-import { ThemeInteractiveFrame } from "@/themes";
+import { ThemeInteractiveFrame } from "@/themes/adapters";
 
 export type SearchComboboxOption = {
   value: string;

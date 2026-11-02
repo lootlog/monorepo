@@ -1,6 +1,5 @@
 import { cn } from "cn";
-
-const numberFormatter = new Intl.NumberFormat("pl-PL");
+import { formatNumber } from "@/lib/format-number";
 
 type StatsCountCellProps = {
   value: number;
@@ -19,6 +18,6 @@ export const StatsCountCell = ({
       value === 0 && "text-muted-foreground/50",
     )}
   >
-    {numberFormatter.format(value)}
+    {formatNumber(value)}
   </span>
 );

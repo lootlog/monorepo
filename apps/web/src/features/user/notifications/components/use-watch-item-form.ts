@@ -16,10 +16,7 @@ import {
   type WatchedItemResponseDto,
 } from "@lootlog/client/main";
 
-import {
-  getItemsControllerGetItemsQueryKey,
-  useItemsControllerGetItems,
-} from "@lootlog/client/search";
+import { useItemsControllerGetItems } from "@lootlog/client/search";
 
 const watchFormSchema = z
   .object({
@@ -127,7 +124,6 @@ export function useWatchItemForm({
 
   const itemSearchQuery = useItemsControllerGetItems(itemSearchParams, {
     query: {
-      queryKey: getItemsControllerGetItemsQueryKey(itemSearchParams),
       enabled: itemSearchValue.length >= 2,
     },
   });

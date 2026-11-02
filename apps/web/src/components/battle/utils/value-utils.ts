@@ -56,9 +56,6 @@ export const processDamageValue = (
   return ` ${prefix}${rounded}`;
 };
 
-export const formatNumber = (value: number): string =>
-  value.toLocaleString("pl-PL");
-
 const battleMetricFormatter = new Intl.NumberFormat("pl-PL", {
   maximumFractionDigits: 1,
 });

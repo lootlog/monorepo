@@ -33,7 +33,7 @@ import {
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useGuildTimers } from "./use-guild-timers";
 import { useTimerDisplaySettings } from "./use-timer-display-settings";
-import { ThemeEmptyStateIcon } from "@/themes";
+import { ThemeEmptyStateIcon } from "@/themes/adapters";
 
 const getTimerListState = <Timer extends { npc?: { name: string } | null }>(
   timers: Timer[] | undefined,

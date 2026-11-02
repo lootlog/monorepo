@@ -1,8 +1,5 @@
 import { useParams } from "@tanstack/react-router";
-import {
-  getShowEventOverviewQueryKey,
-  useShowEventOverview,
-} from "@lootlog/client/main";
+import { useShowEventOverview } from "@lootlog/client/main";
 
 export type EventRouteParams = {
   guildId: string;
@@ -27,7 +24,6 @@ export const useEventEditRoute = () => {
   } = useShowEventOverview(routeParams, {
     query: {
       enabled: hasEventRouteParams,
-      queryKey: getShowEventOverviewQueryKey(routeParams),
     },
   });
 

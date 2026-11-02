@@ -1,4 +1,5 @@
 import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/client/main";
+import { findGuildByRouteId } from "@/lib/current-user-guilds";
 
 /**
  * The server-rail entry for an Organization route, matched by id or vanity
@@ -7,7 +8,5 @@ import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/client/main";
 export const useCurrentUserGuild = (guildId: string | undefined) => {
   const { data: guilds } = useUsersControllerGetCurrentUserGuilds();
 
-  return guilds?.find(
-    (guild) => guild.id === guildId || guild.vanityUrl === guildId,
-  );
+  return findGuildByRouteId(guilds, guildId);
 };

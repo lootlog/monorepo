@@ -11,7 +11,7 @@ import {
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { Link, useLocation } from "@tanstack/react-router";
-import { ThemeCircularFrame } from "@/themes";
+import { ThemeCircularFrame } from "@/themes/adapters";
 import { RailItemIndicator } from "./rail-item-indicator";
 import type { MouseEvent } from "react";
 import { useTranslation } from "react-i18next";

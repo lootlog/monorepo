@@ -5,8 +5,6 @@ import {
 } from "./guild-watched-items-context";
 import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
 import {
-  getNotificationsUserControllerGetUserTargetsQueryKey,
-  getNotificationsUserControllerGetWatchedItemsQueryKey,
   useNotificationsUserControllerGetUserTargets,
   useNotificationsUserControllerGetWatchedItems,
   useNotificationsUserControllerQuickAddWatchedItem,
@@ -25,15 +23,9 @@ const getWatchedItemGuildIds = (
 export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
   const queryClient = useQueryClient();
 
-  const targetsQuery = useNotificationsUserControllerGetUserTargets({
-    query: { queryKey: getNotificationsUserControllerGetUserTargetsQueryKey() },
-  });
+  const targetsQuery = useNotificationsUserControllerGetUserTargets();
 
-  const watchedItemsQuery = useNotificationsUserControllerGetWatchedItems({
-    query: {
-      queryKey: getNotificationsUserControllerGetWatchedItemsQueryKey(),
-    },
-  });
+  const watchedItemsQuery = useNotificationsUserControllerGetWatchedItems();
 
   const quickAddWatchedItemMutation =
     useNotificationsUserControllerQuickAddWatchedItem({

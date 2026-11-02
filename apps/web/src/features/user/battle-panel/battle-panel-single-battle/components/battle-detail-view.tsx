@@ -1,4 +1,4 @@
-import { BattleLog } from "@/components/battle";
+import { BattleLog } from "@/components/battle/battle-log";
 import { BattleMetadata } from "@/components/battle/battle-metadata";
 import { BattleTeamsOverview } from "@/components/battle/battle-teams-overview";
 import { DetailBar } from "@/components/common/detail-bar";

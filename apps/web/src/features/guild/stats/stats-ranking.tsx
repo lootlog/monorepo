@@ -30,6 +30,7 @@ import {
 import { useStatsRankingModel } from "./use-stats-ranking-model";
 import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
 import { useIsViewer } from "@/hooks/auth/use-is-viewer";
+import { formatNumber } from "@/lib/format-number";
 
 export const StatsRanking = () => {
   const {
@@ -203,7 +204,7 @@ export const StatsRanking = () => {
                       />
                     </span>
                     <span className="shrink-0 text-sm font-semibold tabular-nums">
-                      {member.totalParticipations.toLocaleString("pl-PL")}
+                      {formatNumber(member.totalParticipations)}
                     </span>
                   </span>
                   {activeNpcTypes.length > 0 && (
@@ -212,9 +213,9 @@ export const StatsRanking = () => {
                         <span key={type}>
                           {t(`npcType.${type}`)}{" "}
                           <span className="font-medium tabular-nums text-foreground">
-                            {(
-                              member.participationsByType[type] ?? 0
-                            ).toLocaleString("pl-PL")}
+                            {formatNumber(
+                              member.participationsByType[type] ?? 0,
+                            )}
                           </span>
                         </span>
                       ))}

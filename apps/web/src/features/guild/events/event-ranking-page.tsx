@@ -15,8 +15,6 @@ import { EventParticipationConfirmationDialog } from "./components/dialogs/event
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useCurrentMember } from "./hooks/queries/use-current-member";
 import {
-  getListEventRankingQueryKey,
-  getShowEventOverviewQueryKey,
   useListEventRanking,
   useShowEventOverview,
 } from "@lootlog/client/main";
@@ -50,10 +48,6 @@ export const EventRankingPage = () => {
     {
       query: {
         enabled: hasEventRouteParams,
-        queryKey: getShowEventOverviewQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
       },
     },
   );
@@ -72,10 +66,6 @@ export const EventRankingPage = () => {
     {
       query: {
         enabled: hasEventRouteParams,
-        queryKey: getListEventRankingQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
       },
     },
   );

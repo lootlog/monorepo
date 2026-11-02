@@ -1,4 +1,4 @@
-import { NpcTile } from "@/components/tiles";
+import { NpcTile } from "@/components/tiles/npc-tile";
 import { cn } from "cn";
 import { Swords } from "lucide-react";
 

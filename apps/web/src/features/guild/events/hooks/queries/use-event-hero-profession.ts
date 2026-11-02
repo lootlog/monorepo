@@ -1,7 +1,4 @@
-import {
-  getEventsRankingControllerGetEventHeroStatsQueryKey,
-  useEventsRankingControllerGetEventHeroStats,
-} from "@lootlog/client/main";
+import { useEventsRankingControllerGetEventHeroStats } from "@lootlog/client/main";
 
 type UseEventHeroProfessionOptions = {
   guildId: string;
@@ -23,10 +20,6 @@ export const useEventHeroProfession = ({
     {
       query: {
         enabled: Boolean(guildId && eventId),
-        queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({
-          guildId,
-          eventId,
-        }),
       },
     },
   );

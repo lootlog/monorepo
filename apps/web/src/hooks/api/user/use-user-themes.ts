@@ -16,7 +16,6 @@ import {
 export const useUserThemes = ({ enabled = true } = {}) =>
   useUserThemesControllerGetThemes({
     query: {
-      queryKey: getUserThemesControllerGetThemesQueryKey(),
       enabled,
       staleTime: 60_000,
     },

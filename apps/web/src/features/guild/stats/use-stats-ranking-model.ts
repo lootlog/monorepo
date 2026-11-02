@@ -4,10 +4,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getOffsetPagination } from "./utils/offset-pagination";
 
-import {
-  getKillsControllerGetGuildKillStatsQueryKey,
-  useKillsControllerGetGuildKillStats,
-} from "@lootlog/client/main";
+import { useKillsControllerGetGuildKillStats } from "@lootlog/client/main";
 
 import { NPC_TYPES_STRONGEST_FIRST } from "@/constants/npc";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
@@ -53,10 +50,6 @@ export const useStatsRankingModel = () => {
     {
       query: {
         enabled: Boolean(guildId),
-        queryKey: getKillsControllerGetGuildKillStatsQueryKey(
-          { guildId },
-          killStatsParams,
-        ),
       },
     },
   );

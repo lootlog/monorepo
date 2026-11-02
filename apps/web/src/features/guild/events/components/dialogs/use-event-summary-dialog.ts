@@ -1,7 +1,4 @@
-import {
-  getShowEventWrappedQueryKey,
-  useShowEventWrapped,
-} from "@lootlog/client/main";
+import { useShowEventWrapped } from "@lootlog/client/main";
 import { useEffect, useRef, useState } from "react";
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { useTranslation } from "react-i18next";
@@ -34,7 +31,6 @@ export function useEventSummaryDialog({
     {
       query: {
         enabled: open,
-        queryKey: getShowEventWrappedQueryKey({ guildId, eventId }),
       },
     },
   );

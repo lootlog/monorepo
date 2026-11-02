@@ -39,7 +39,6 @@ import { KillsMobileCardSkeleton } from "./components/kills-mobile-card-skeleton
 import { NPC_TYPES, type NpcType } from "@/features/user/kills/npc-types";
 import {
   type KillsControllerGetUserNpcKillsParams,
-  getKillsControllerGetUserNpcKillsQueryKey,
   useKillsControllerGetUserNpcKills,
 } from "@lootlog/client/main";
 
@@ -128,7 +127,6 @@ export const KillsPage: React.FC = () => {
   const { data, isLoading, isError, isFetching, refetch } =
     useKillsControllerGetUserNpcKills(npcKillsParams, {
       query: {
-        queryKey: getKillsControllerGetUserNpcKillsQueryKey(npcKillsParams),
         staleTime: 30_000,
       },
     });

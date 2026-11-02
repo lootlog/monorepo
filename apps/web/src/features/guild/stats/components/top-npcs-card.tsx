@@ -1,10 +1,7 @@
 import type { KilledNpcType } from "@/constants/npc";
 import { formatLevel } from "@lootlog/domain/profession";
 import { NpcTile } from "@/components/tiles/npc-tile";
-import {
-  getKillsControllerGetGuildTopNpcsQueryKey,
-  useKillsControllerGetGuildTopNpcs,
-} from "@lootlog/client/main";
+import { useKillsControllerGetGuildTopNpcs } from "@lootlog/client/main";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -51,10 +48,6 @@ export const TopNpcsCard = ({
     {
       query: {
         enabled: Boolean(guildId),
-        queryKey: getKillsControllerGetGuildTopNpcsQueryKey(
-          { guildId },
-          topNpcsParams,
-        ),
       },
     },
   );

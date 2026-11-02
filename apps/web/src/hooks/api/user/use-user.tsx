@@ -1,5 +1,4 @@
 import {
-  getUsersControllerGetUserPreferencesQueryKey,
   useUsersControllerGetUserPreferences,
   type UsersControllerGetUserPreferencesQueryResult,
 } from "@lootlog/client/main";
@@ -20,7 +19,6 @@ export const useUser = () => {
     useUsersControllerGetUserPreferences({
       query: {
         enabled: !!session?.user,
-        queryKey: getUsersControllerGetUserPreferencesQueryKey(),
         retry: 1,
       },
     });

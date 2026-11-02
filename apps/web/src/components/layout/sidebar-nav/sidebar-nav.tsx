@@ -11,8 +11,8 @@ import { useWarmRouteChunks } from "@/lib/router/use-warm-route-chunks";
 import {
   ThemeSidebarBackground,
   ThemeSidebarFooterDecoration,
-  useThemeMeta,
-} from "@/themes";
+} from "@/themes/adapters";
+import { useThemeMeta } from "@/themes/use-theme-meta";
 
 // A group that appears after the first render (once the access policy allows
 // it) draws its rule and then lets its items follow one by one. Groups present
