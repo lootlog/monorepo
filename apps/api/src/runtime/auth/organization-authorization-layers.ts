@@ -222,7 +222,7 @@ const capabilityRequirements = (
   mode === "all" ? { allOf: capabilities } : { anyOf: capabilities };
 
 const chatAccess = guildAccess(
-  toGuildScopedCaller,
+  (access) => ({ ...toGuildScopedCaller(access), roles: access.context.roles }),
   ChatNotFound,
   ChatAccessDenied,
 );
@@ -295,8 +295,8 @@ const lootlogConfigAuthorization = Effect.map(
   OrganizationContextLookup,
   (lookup) =>
     LootlogConfigAuthorization.of({
-      requireCapability: ({ guildId, capability }) =>
-        lootlogConfigAccess(lookup, guildId, { allOf: [capability] }),
+      requireCapability: ({ guildId, anyOf }) =>
+        lootlogConfigAccess(lookup, guildId, { anyOf }),
     }),
 );
 

@@ -21,17 +21,70 @@ import {
   roleTable,
 } from "#src/database/drizzle/schema";
 
+/**
+ * A Member grants role access only while it is active and linked to a User.
+ * The Organization context and the cross-Organization queries below share
+ * this rule.
+ */
+export const isActiveMember = (
+  member: Pick<typeof memberTable.$inferSelect, "active" | "globalUserId">,
+) => member.active && member.globalUserId !== null;
+
 const activeMemberWhere = (user: SQL) =>
   and(user, eq(memberTable.active, true), isNotNull(memberTable.globalUserId));
 
 const activeMember = (discordId: string) =>
   activeMemberWhere(eq(memberTable.userId, discordId));
 
+export const activeMembersWhere = (discordIds: ReadonlyArray<string>) =>
+  activeMemberWhere(inArray(memberTable.userId, [...discordIds]));
+
 export const activeGuildMemberJoin = (
   discordId: string,
   guildId: AnyPgColumn | string = guildTable.id,
 ) => and(eq(memberTable.guildId, guildId), activeMember(discordId));
 
+type MemberQueryDatabase = Pick<typeof ApiDatabase.Service, "select">;
+
+/** The caller's active Member rows in `guildIds`, for writes that record the acting Member. */
+export const selectActiveGuildMembers = (
+  database: MemberQueryDatabase,
+  discordId: string,
+  guildIds: ReadonlyArray<string>,
+) =>
+  guildIds.length === 0
+    ? Effect.succeed([])
+    : database
+        .select()
+        .from(memberTable)
+        .where(
+          and(
+            inArray(memberTable.guildId, [...guildIds]),
+            activeMember(discordId),
+          ),
+        );
+
+/** The caller's active Member row in one Organization, if any. */
+export const findActiveGuildMember = (
+  database: MemberQueryDatabase,
+  discordId: string,
+  guildId: string,
+) =>
+  database
+    .select()
+    .from(memberTable)
+    .where(activeGuildMemberJoin(discordId, guildId))
+    .limit(1)
+    .pipe(Effect.map((rows) => rows[0]));
+
+/**
+ * Cross-Organization reads for `/me`, the game client, and write fan-out.
+ * They are eventually consistent: they trust `Guild.ownerId` from the bot's
+ * guild events and the stored active Members and roles, and never wait for
+ * Discord. An Organization endpoint instead refreshes the caller's Member from
+ * Discord past the soft TTL, and also requires that row for the owner, which
+ * the refresh creates on first use.
+ */
 export const selectAccessibleGuilds = (
   database: typeof ApiDatabase.Service,
   discordId: string,
@@ -125,7 +178,7 @@ export const selectGuildIdsGrantingPermissions = (
       .innerJoin(roleTable, eq(roleTable.id, memberToRoleTable.B))
       .where(
         and(
-          activeMemberWhere(inArray(memberTable.userId, [...requested])),
+          activeMembersWhere([...requested]),
           inArray(
             memberTable.guildId,
             guilds.map(({ id }) => id),

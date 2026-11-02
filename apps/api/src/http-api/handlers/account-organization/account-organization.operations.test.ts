@@ -1,3 +1,4 @@
+import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { describe, expect, it } from "bun:test";
@@ -354,7 +355,7 @@ describe("Users and Guilds HttpApi handlers", () => {
     expect(authorizationCalls).toEqual([
       {
         guildId: "guild-alias",
-        anyOf: [Permission.OWNER, Permission.ADMIN],
+        anyOf: AccessRequirement.ADMINISTER,
       },
     ]);
     expect(updateCalls).toEqual(["guild-a"]);

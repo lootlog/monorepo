@@ -42,7 +42,7 @@ const create = () =>
     Effect.flatMap(DocsRepository, (repository) =>
       repository.createDocument({
         guildId,
-        memberId: "editor-1",
+        discordId: "editor-1",
         title: "Plan",
         content,
         defaultLimit: 50,
@@ -125,7 +125,7 @@ describe("DocsRepository against migrated PostgreSQL", () => {
         title: "Plan",
         content,
         action: "SAVE",
-        actorMemberId: "editor-1",
+        actorDiscordId: "editor-1",
       },
     ]);
     await expect(create()).rejects.toBeInstanceOf(ResourceConflictError);
@@ -174,7 +174,7 @@ describe("DocsRepository against migrated PostgreSQL", () => {
       }),
     );
     expect(await documents()).toMatchObject([
-      { version: 1, updatedByMemberId: "editor-1" },
+      { version: 1, updatedByDiscordId: "editor-1" },
     ]);
     expect(await history()).toHaveLength(1);
 
@@ -193,7 +193,7 @@ describe("DocsRepository against migrated PostgreSQL", () => {
         version: 2,
         title: "Plan v2",
         content: nextContent,
-        updatedByMemberId: "editor-2",
+        updatedByDiscordId: "editor-2",
       },
     ]);
     expect(await history()).toMatchObject([
@@ -203,7 +203,7 @@ describe("DocsRepository against migrated PostgreSQL", () => {
         title: "Plan v2",
         content: nextContent,
         action: "SAVE",
-        actorMemberId: "editor-2",
+        actorDiscordId: "editor-2",
       },
     ]);
 
@@ -254,14 +254,14 @@ describe("DocsRepository against migrated PostgreSQL", () => {
         repository.updateDocument({
           guildId: otherGuildId,
           documentId: id,
-          memberId: "editor-2",
+          discordId: "editor-2",
           title: "Changed",
           content,
         }),
         repository.changeTrashState({
           guildId: otherGuildId,
           documentId: id,
-          memberId: "editor-2",
+          discordId: "editor-2",
           action: "DELETE",
         }),
         repository.purge(otherGuildId, id),
@@ -293,7 +293,7 @@ describe("DocsRepository against migrated PostgreSQL", () => {
       service.moveDocumentToTrash(guildId, id, "editor-2"),
     );
     expect(await documents()).toMatchObject([
-      { deletedAt: expect.any(Date), deletedByMemberId: "editor-2" },
+      { deletedAt: expect.any(Date), deletedByDiscordId: "editor-2" },
     ]);
     expect(
       await runtime.runPromise(repository.findActive(guildId, id)),
@@ -306,15 +306,15 @@ describe("DocsRepository against migrated PostgreSQL", () => {
     expect(await documents()).toMatchObject([
       {
         deletedAt: null,
-        deletedByMemberId: null,
-        updatedByMemberId: "editor-3",
+        deletedByDiscordId: null,
+        updatedByDiscordId: "editor-3",
       },
     ]);
     expect(await runtime.runPromise(repository.listTrash(guildId))).toEqual([]);
     expect(await history()).toMatchObject([
       { action: "SAVE" },
-      { action: "DELETE", actorMemberId: "editor-2" },
-      { action: "RESTORE", actorMemberId: "editor-3" },
+      { action: "DELETE", actorDiscordId: "editor-2" },
+      { action: "RESTORE", actorDiscordId: "editor-3" },
     ]);
     await runtime.runPromise(
       service.moveDocumentToTrash(guildId, id, "editor-2"),

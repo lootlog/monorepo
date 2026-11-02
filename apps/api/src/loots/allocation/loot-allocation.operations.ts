@@ -27,6 +27,7 @@ import {
   ResourceConflictError,
   PermissionDeniedError,
   DependencyUnavailableError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import type { LootShare } from "#src/loots/loot-response.schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
@@ -160,8 +161,25 @@ export const makeLootAllocationOperations = (options: {
     );
   };
 
+  // A loot the actor cannot read is missing to them, as on every other loot path.
+  const deniedOrHidden = (input: {
+    readonly actorDiscordId: string;
+    readonly lootId: number;
+  }) =>
+    options.persistence
+      .isLootVisible(input)
+      .pipe(
+        Effect.flatMap((visible) =>
+          Effect.fail(
+            visible
+              ? new PermissionDeniedError({ code: ErrorKey.CANT_UPDATE_LOOT })
+              : new ResourceNotFoundError(),
+          ),
+        ),
+      );
+
   const confirmFromChat = (input: {
-    readonly actorUserId: string;
+    readonly actorDiscordId: string;
     readonly lootId: number;
     readonly message: string;
   }) =>
@@ -173,16 +191,12 @@ export const makeLootAllocationOperations = (options: {
         );
 
         const authorized = yield* options.persistence.findAuthorizedLoot({
-          actorUserId: input.actorUserId,
+          actorDiscordId: input.actorDiscordId,
           lootId: input.lootId,
           submissionCutoff,
         });
 
-        if (!authorized) {
-          return yield* Effect.fail(
-            new PermissionDeniedError({ code: ErrorKey.CANT_UPDATE_LOOT }),
-          );
-        }
+        if (!authorized) return yield* deniedOrHidden(input);
 
         const parsed = parseChatAllocation(input.message);
 
@@ -255,7 +269,7 @@ export const makeLootAllocationOperations = (options: {
         }
 
         const updated = yield* options.persistence.compareAndSetChatAllocation({
-          actorUserId: input.actorUserId,
+          actorDiscordId: input.actorDiscordId,
           lootId: input.lootId,
           submissionCutoff,
           lootShare: allocation,
@@ -264,16 +278,12 @@ export const makeLootAllocationOperations = (options: {
         if (!updated) {
           const state =
             yield* options.persistence.findAuthorizedAllocationState({
-              actorUserId: input.actorUserId,
+              actorDiscordId: input.actorDiscordId,
               lootId: input.lootId,
               submissionCutoff,
             });
 
-          if (!state) {
-            return yield* Effect.fail(
-              new PermissionDeniedError({ code: ErrorKey.CANT_UPDATE_LOOT }),
-            );
-          }
+          if (!state) return yield* deniedOrHidden(input);
 
           if (state.lootShareSource !== LootShareSource.CHAT_MESSAGE) {
             return yield* Effect.fail(

@@ -120,8 +120,10 @@ describe("internal guild HttpApi handlers", () => {
       findMembersWithRoles: () =>
         Effect.succeed([
           {
-            ...createMemberFixture({ guildId: "guild-member" }),
-            active: true,
+            ...createMemberFixture({
+              guildId: "guild-member",
+              globalUserId: "user-a",
+            }),
             roles: [
               {
                 id: "role-a",

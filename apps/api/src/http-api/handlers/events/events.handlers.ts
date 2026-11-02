@@ -4,7 +4,10 @@ import {
   statusCodeResponse,
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
-import type { AccessPolicy } from "@lootlog/domain/access-policy";
+import {
+  AccessRequirement,
+  type AccessPolicy,
+} from "@lootlog/domain/access-policy";
 import {
   Permission,
   type Permission as PermissionValue,
@@ -125,8 +128,8 @@ const manage = {
   mode: "all",
 } as const;
 
-const owner = {
-  capabilities: [Permission.OWNER, Permission.ADMIN],
+const administer = {
+  capabilities: AccessRequirement.ADMINISTER,
   mode: "any",
 } as const;
 
@@ -284,7 +287,7 @@ export const EventsHandlers = HttpApiBuilder.group(
             ),
         ),
       deleteEvent: ({ params }) =>
-        event("deleteEvent", owner, params, (caller, eventId) =>
+        event("deleteEvent", administer, params, (caller, eventId) =>
           operations.catalog.deleteEvent(
             caller.guild,
             eventId,
@@ -666,7 +669,7 @@ export const EventsHandlers = HttpApiBuilder.group(
             ),
         ),
       updateRankingPoints: ({ params, payload }) =>
-        event("updateRankingPoints", owner, params, (caller, eventId) =>
+        event("updateRankingPoints", administer, params, (caller, eventId) =>
           Effect.flatMap(
             stringParameter(params.rankingId, "rankingId"),
             (rankingId) =>
@@ -749,7 +752,7 @@ export const EventsHandlers = HttpApiBuilder.group(
       EventsRankingControllerUpdateKillPoint: ({ params, payload }) =>
         event(
           "EventsRankingControllerUpdateKillPoint",
-          owner,
+          administer,
           params,
           (caller, eventId) =>
             Effect.flatMap(stringParameter(params.killId, "killId"), (killId) =>

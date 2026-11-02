@@ -82,6 +82,7 @@ it.each(["restore", "new spawn"] as const)(
         .values({
           guildId: guild.id,
           userId: crypto.randomUUID(),
+          globalUserId: crypto.randomUUID(),
           name: "Restorer",
           updatedAt: now,
         })
@@ -228,6 +229,7 @@ it.each(["rollback", "new spawn", "identical reset", "delete"] as const)(
         .values({
           guildId: guild.id,
           userId: crypto.randomUUID(),
+          globalUserId: crypto.randomUUID(),
           name: "Restorer",
           updatedAt: now,
         })

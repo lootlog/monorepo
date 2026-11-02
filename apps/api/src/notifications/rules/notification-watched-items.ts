@@ -1,6 +1,6 @@
+import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
 import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
 import {
-  notificationApiKeyOrganizations,
   notificationRulesInApiKeyScope,
   requireNotificationRuleApiKeyScope,
 } from "../notification-api-key-scope.js";
@@ -123,7 +123,7 @@ export const makeNotificationWatchedItems = (
         Effect.mapError(databaseFailure("notifications.watchedItems.list")),
       );
 
-    const organizations = yield* notificationApiKeyOrganizations(database);
+    const organizations = yield* apiKeyAccessibleGuilds(database);
     const ids = organizations?.map((guild) => guild.id);
 
     const allowed = yield* notificationRulesInApiKeyScope(
@@ -241,8 +241,7 @@ export const makeNotificationWatchedItems = (
         );
       }
 
-      const scopedOrganizations =
-        yield* notificationApiKeyOrganizations(database);
+      const scopedOrganizations = yield* apiKeyAccessibleGuilds(database);
 
       const available =
         scopedOrganizations ?? (yield* guilds.list(discordId, userId));

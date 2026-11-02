@@ -1,6 +1,6 @@
+import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Predicate, Schema } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
 import { RefreshStatsCardResponse } from "#src/contracts/guild-stats-card/schemas";
 import { GameMapsResponse } from "#src/contracts/maps/schemas";
 
@@ -93,7 +93,7 @@ describe("public system HttpApi handlers", () => {
     expect(authorizationCalls).toEqual([
       {
         guildId: "guild-a",
-        anyOf: [Permission.OWNER, Permission.ADMIN],
+        anyOf: AccessRequirement.ADMINISTER,
       },
     ]);
     expect(refreshedGuilds).toEqual(["guild-a"]);

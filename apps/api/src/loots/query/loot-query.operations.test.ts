@@ -230,7 +230,7 @@ describe("filtered loot reads", () => {
       const allocation = makeLootAllocationPersistence(database);
 
       const options = {
-        actorUserId: "reader-user",
+        actorDiscordId: "reader-discord",
         lootId: 2,
         submissionCutoff: new Date(now.getTime() - 60_000),
       };

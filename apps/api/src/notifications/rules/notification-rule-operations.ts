@@ -1,6 +1,6 @@
+import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
 import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
 import {
-  notificationApiKeyOrganizations,
   notificationRulesInApiKeyScope,
   requireNotificationRuleApiKeyScope,
 } from "../notification-api-key-scope.js";
@@ -92,7 +92,7 @@ export const makeNotificationRuleOperations = (
 ) => {
   const loadRules = (ownerType: NotificationOwnerTypeValue, ownerId: string) =>
     Effect.gen(function* () {
-      const organizations = yield* notificationApiKeyOrganizations(database);
+      const organizations = yield* apiKeyAccessibleGuilds(database);
       const organizationIds = organizations?.map((guild) => guild.id);
 
       const loadedRows = yield* database
@@ -393,7 +393,7 @@ export const makeNotificationRuleOperations = (
       catch: (cause) => cause,
     });
 
-    const organizations = yield* notificationApiKeyOrganizations(database);
+    const organizations = yield* apiKeyAccessibleGuilds(database);
 
     if (
       organizations &&
@@ -458,7 +458,7 @@ export const makeNotificationRuleOperations = (
       catch: (cause) => cause,
     });
 
-    const organizations = yield* notificationApiKeyOrganizations(database);
+    const organizations = yield* apiKeyAccessibleGuilds(database);
 
     if (
       organizations &&

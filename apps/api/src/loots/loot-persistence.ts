@@ -14,6 +14,7 @@ import type {
 } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
 import { memberDisplayRolesQuery } from "#src/members/member-display-role";
+import { findActiveGuildMember } from "#src/members/member-access-query";
 
 export class LootPersistenceError extends TaggedErrorClass<LootPersistenceError>()(
   "LootPersistenceError",
@@ -101,18 +102,11 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
         "loots.archive.transaction",
         database.transaction((transaction) =>
           Effect.gen(function* () {
-            const actors = yield* transaction
-              .select({ id: memberTable.id })
-              .from(memberTable)
-              .where(
-                and(
-                  eq(memberTable.userId, options.discordId),
-                  eq(memberTable.guildId, options.guildId),
-                ),
-              )
-              .limit(1);
-
-            const actor = actors[0];
+            const actor = yield* findActiveGuildMember(
+              transaction,
+              options.discordId,
+              options.guildId,
+            );
 
             if (!actor) return false;
 
@@ -206,18 +200,11 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                 );
               }
 
-              const members = yield* transaction
-                .select()
-                .from(memberTable)
-                .where(
-                  and(
-                    eq(memberTable.userId, options.discordId),
-                    eq(memberTable.guildId, options.guildId),
-                  ),
-                )
-                .limit(1);
-
-              const member = members[0];
+              const member = yield* findActiveGuildMember(
+                transaction,
+                options.discordId,
+                options.guildId,
+              );
 
               if (!member) {
                 return yield* Effect.fail(

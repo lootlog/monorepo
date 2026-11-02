@@ -4,7 +4,7 @@ import type { roleTable } from "#src/database/drizzle/schema";
 type Role = typeof roleTable.$inferSelect;
 
 export type ChatMessageViewer = {
-  discordId: string;
-  permissions: Permission[];
-  roles: Role[];
+  readonly discordId: string;
+  readonly permissions: ReadonlyArray<Permission>;
+  readonly roles: ReadonlyArray<Role>;
 };

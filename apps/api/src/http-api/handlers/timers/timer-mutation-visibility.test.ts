@@ -31,7 +31,7 @@ const createResetRollbackFixture = async () => {
   const database = boundary.database;
   const now = new Date();
   const guild = createGuildFixture();
-  const member = createMemberFixture();
+  const member = createMemberFixture({ globalUserId: "user" });
   const previousMember = createMemberFixture({ id: 2, userId: "previous" });
   await boundary.run(database.insert(guildTable).values(guild));
   await boundary.run(
@@ -959,7 +959,7 @@ it("only offers recovery for a complete deletion in its organization and world, 
     const now = new Date();
     const guild = createGuildFixture();
     const otherGuild = createGuildFixture({ id: "guild-2" });
-    const member = createMemberFixture();
+    const member = createMemberFixture({ globalUserId: "user" });
     const otherMember = createMemberFixture({ id: 2, guildId: otherGuild.id });
     await boundary.run(database.insert(guildTable).values([guild, otherGuild]));
     await boundary.run(
@@ -1196,7 +1196,7 @@ it("refuses to reset a Hero Tracker timer and leaves it unchanged", async () => 
     const { database } = boundary;
     const now = new Date();
     const guild = createGuildFixture();
-    const member = createMemberFixture();
+    const member = createMemberFixture({ globalUserId: "user" });
     await boundary.run(database.insert(guildTable).values(guild));
     await boundary.run(database.insert(memberTable).values(member));
 
