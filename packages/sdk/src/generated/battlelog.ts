@@ -1250,6 +1250,277 @@ export interface BattleRawResponseDtoOutput {
   rawData: BattleRawResponseDtoOutputRawData;
 }
 
+/**
+ * @nullable
+ */
+export type PublicBattleResponseDtoOutputStatisticsTopDamageDealer = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type PublicBattleResponseDtoOutputStatisticsTopTank = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type PublicBattleResponseDtoOutputStatisticsBestEfficiency = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type PublicBattleResponseDtoOutputStatisticsCriticalMaster = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type PublicBattleResponseDtoOutputStatisticsEvasionExpert = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type PublicBattleResponseDtoOutputStatisticsShieldWall = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type PublicBattleResponseDtoOutputStatisticsDamagePerTurn = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type PublicBattleResponseDtoOutputStatisticsMostActive = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type PublicBattleResponseDtoOutputStatisticsLegendaryWarrior = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type PublicBattleResponseDtoOutputStatisticsUntouchable = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+export type PublicBattleResponseDtoOutputStatistics = {
+  /** @nullable */
+  topDamageDealer: PublicBattleResponseDtoOutputStatisticsTopDamageDealer;
+  /** @nullable */
+  topTank: PublicBattleResponseDtoOutputStatisticsTopTank;
+  /** @nullable */
+  bestEfficiency: PublicBattleResponseDtoOutputStatisticsBestEfficiency;
+  /** @nullable */
+  criticalMaster: PublicBattleResponseDtoOutputStatisticsCriticalMaster;
+  /** @nullable */
+  evasionExpert: PublicBattleResponseDtoOutputStatisticsEvasionExpert;
+  /** @nullable */
+  shieldWall: PublicBattleResponseDtoOutputStatisticsShieldWall;
+  /** @nullable */
+  damagePerTurn: PublicBattleResponseDtoOutputStatisticsDamagePerTurn;
+  /** @nullable */
+  mostActive: PublicBattleResponseDtoOutputStatisticsMostActive;
+  /** @nullable */
+  legendaryWarrior: PublicBattleResponseDtoOutputStatisticsLegendaryWarrior;
+  /** @nullable */
+  untouchable: PublicBattleResponseDtoOutputStatisticsUntouchable;
+};
+
+export type PublicBattleResponseDtoOutputWarriorsItemSpellsUsedMap = {[key: string]: number};
+
+export type PublicBattleResponseDtoOutputWarriorsItem = {
+  battleId: string;
+  originalId: string;
+  name: string;
+  lvl: number;
+  prof: string;
+  icon: string;
+  team: number;
+  turns: number;
+  turnsLost: number;
+  steps: number;
+  normalAttacks: number;
+  spellsUsed: number;
+  spellsUsedMap: PublicBattleResponseDtoOutputWarriorsItemSpellsUsedMap;
+  isDead: boolean;
+  surrendered: boolean;
+  fled: boolean;
+  maxHp: number;
+  damageDealt: number;
+  distanceDamage: number;
+  meleeDamage: number;
+  auxiliaryDamage: number;
+  fireDamage: number;
+  frostDamage: number;
+  lightningDamage: number;
+  thirdAttDamage: number;
+  damageDealtAfterDefensive: number;
+  damageDealtAfterDefensivePercentage: number;
+  damageTaken: number;
+  distanceDamageTaken: number;
+  meleeDamageTaken: number;
+  auxiliaryDamageTaken: number;
+  fireDamageTaken: number;
+  frostDamageTaken: number;
+  lightningDamageTaken: number;
+  thirdAttDamageTaken: number;
+  flatDamageTaken: number;
+  rageDamageDealt: number;
+  trueDamageDealt: number;
+  trueDamageTaken: number;
+  stigmaDamageDealt: number;
+  stigmaDamageTaken: number;
+  passiveHealing: number;
+  activeHealing: number;
+  armorPierces: number;
+  criticalHits: number;
+  reducedArmor: number;
+  reducedPoisonResistance: number;
+  magicResistanceDestroyed: number;
+  evasions: number;
+  attacksEvaded: number;
+  counters: number;
+  fastArrows: number;
+  blocks: number;
+  attacksBlocked: number;
+  blockedDamage: number;
+  woundDamageTaken: number;
+  poisonDamageTaken: number;
+  injureDamageTaken: number;
+  injures: number;
+  critWoundDamageTaken: number;
+  firePassiveDamageTaken: number;
+  lightningPassiveDamageTaken: number;
+  destroyedEnergy: number;
+  destroyedMana: number;
+  regeneratedEnergy: number;
+  regeneratedMana: number;
+  reflectedDamage: number;
+  reflectedDamageTaken: number;
+  legbons: number;
+  legbonCurse: number;
+  legbonCleanse: number;
+  legbonLastheal: number;
+  legbonLasthealValue: number;
+  legbonGlare: number;
+  legbonHolytouch: number;
+  legbonHolytouchValue: number;
+  legbonCritredValue: number;
+  legbonFacadeValue: number;
+  legbonPunctureValue: number;
+  legbonVerycrit: number;
+  legbonAnguish: number;
+  legbonAnguishDamageTaken: number;
+  ph: number;
+};
+
+export interface PublicBattleResponseDtoOutput {
+  id: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  createdAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  updatedAt: string;
+  public: boolean;
+  accountId: string;
+  characterId: string;
+  world: string;
+  duration: number;
+  type: string;
+  winner: string;
+  loser: string;
+  winningTeam: number;
+  losingTeam: number;
+  honorPoints: number;
+  hasFlee: boolean;
+  unfinished: boolean;
+  matchmaking: boolean;
+  statistics: PublicBattleResponseDtoOutputStatistics;
+  /** @nullable */
+  difficultyRank: number | null;
+  /** @nullable */
+  result: number | null;
+  /** @nullable */
+  ratingDelta: number | null;
+  /** @nullable */
+  opponentLvl: number | null;
+  /** @nullable */
+  opponentOplvl: number | null;
+  /** @nullable */
+  opponentRating: number | null;
+  /** @nullable */
+  rating: number | null;
+  /** @nullable */
+  status: number | null;
+  /** @nullable */
+  pointsGained: number | null;
+  /** @nullable */
+  placementCur: number | null;
+  /** @nullable */
+  placementMax: number | null;
+  /** @nullable */
+  dailyStageId: number | null;
+  /** @nullable */
+  dailyPointsCur: number | null;
+  /** @nullable */
+  dailyPointsMax: number | null;
+  /** @nullable */
+  dailyPointsStep: number | null;
+  /** @nullable */
+  dailyRewardsLast: number | null;
+  /** @nullable */
+  dailyRewardsCur: number | null;
+  /** @nullable */
+  dailyRewardsMax: number | null;
+  warriors: PublicBattleResponseDtoOutputWarriorsItem[];
+}
+
 export type BattlesControllerCreateBattle400Message = string | ({
   path: (string | number | 'Infinity' | '-Infinity' | 'NaN')[];
   message: string;
@@ -3056,9 +3327,9 @@ export const getPublicBattlesControllerGetPublicBattleUrl = ({ battleId }: Publi
 /**
  * @summary Get a public battle
  */
-export const publicBattlesControllerGetPublicBattle = async ({ battleId }: PublicBattlesControllerGetPublicBattlePathParameters, options?: Parameters<typeof battlelogFetch>[1]): Promise<BattleResponseDtoOutput> => {
+export const publicBattlesControllerGetPublicBattle = async ({ battleId }: PublicBattlesControllerGetPublicBattlePathParameters, options?: Parameters<typeof battlelogFetch>[1]): Promise<PublicBattleResponseDtoOutput> => {
 
-  return battlelogFetch<BattleResponseDtoOutput>(getPublicBattlesControllerGetPublicBattleUrl({ battleId }),
+  return battlelogFetch<PublicBattleResponseDtoOutput>(getPublicBattlesControllerGetPublicBattleUrl({ battleId }),
   {
     ...options,
     method: 'GET'

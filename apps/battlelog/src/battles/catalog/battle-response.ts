@@ -3,7 +3,7 @@ import {
   DateTimeString,
   type DeepMutable,
 } from "#src/battles/battle-response-types";
-import { Schema } from "effect";
+import { Schema, Struct } from "effect";
 
 const BattleStatisticEntrySchema = Schema.Struct({
   warriorId: Schema.String,
@@ -290,6 +290,11 @@ const BattleTimelineTurnResponseSchema = Schema.Struct({
   reason: Schema.String,
 });
 
+// Public links are read without signing in, so they carry no uploader identity.
+const PublicBattleResponseSchema = BattleResponseSchema.mapFields(
+  Struct.omit(["userId"]),
+);
+
 const BattleTimelineResponseSchema = Schema.Struct({
   battleId: Schema.String,
   generatedAt: DateTimeString,
@@ -312,6 +317,7 @@ export const BattleResponseSchemas = {
   characters: BattleCharactersResponseSchema,
   created: BattleCreatedResponseSchema,
   deleted: BattleDeletedResponseSchema,
+  publicBattle: PublicBattleResponseSchema,
   raw: BattleRawResponseSchema,
   timeline: BattleTimelineResponseSchema,
   userWorlds: BattleUserWorldsResponseSchema,

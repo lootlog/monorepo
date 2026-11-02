@@ -13,44 +13,48 @@ import type {
   PublicGuild,
   PublicMember,
   PublicNpc,
-  PublicOnlinePlayerPresence,
+  PublicOnlinePlayer,
   PublicOnlinePlayers,
   PublicTimer,
   PublicUser,
 } from "@lootlog/game-client-api";
 
-const mapOnlinePlayerPresence = (
+// Add-ons only display who is online, so presence leaves without account,
+// session or user identifiers, and in name order rather than grouped by user.
+const toPublicOnlinePlayer = (
   presence: PlayerPresence,
-): PublicOnlinePlayerPresence => ({
-  discordId: presence.discordId,
-  sessionId: presence.sessionId,
-  platform: presence.platform,
-  status: presence.status,
-  guildId: presence.guildId,
-  mapName: presence.mapName,
-  isAfk: presence.isAfk,
-  margonemAccountVerified: presence.margonemAccountVerified,
-  updatedAt: presence.updatedAt,
-  player: presence.player
-    ? {
-        ...presence.player,
-        clan: presence.player.clan ? { ...presence.player.clan } : undefined,
-        location: presence.player.location
-          ? { ...presence.player.location }
-          : undefined,
-      }
-    : undefined,
-});
+): PublicOnlinePlayer | undefined => {
+  const { player } = presence;
+
+  if (!player) return undefined;
+
+  return {
+    world: player.world,
+    name: player.name,
+    lvl: player.lvl,
+    icon: player.icon,
+    prof: player.prof,
+    clan: player.clan ? { ...player.clan } : undefined,
+    location: player.location ? { ...player.location } : undefined,
+    mapName: presence.mapName,
+    isAfk: presence.isAfk,
+    margonemAccountVerified: presence.margonemAccountVerified,
+    updatedAt: presence.updatedAt,
+  };
+};
+
+const polishCollator = new Intl.Collator("pl");
 
 export const mapOnlinePlayers = (
   players: PlayerPresenceResponse,
 ): PublicOnlinePlayers =>
-  Object.fromEntries(
-    Object.entries(players).map(([discordId, presences]) => [
-      discordId,
-      presences.map(mapOnlinePlayerPresence),
-    ]),
-  );
+  Object.values(players)
+    .flat()
+    .flatMap((presence) => toPublicOnlinePlayer(presence) ?? [])
+    .toSorted(
+      (left, right) =>
+        polishCollator.compare(left.name, right.name) || left.lvl - right.lvl,
+    );
 
 const mapUser = (user: User): PublicUser => ({
   avatar: user.avatar,

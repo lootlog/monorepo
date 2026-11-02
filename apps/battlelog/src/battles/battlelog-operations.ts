@@ -25,19 +25,28 @@ import type {
   WeaponKillsQuery,
 } from "#src/battles/weapon-kills/weapon-kills";
 
-const normalizeBattleResponse = (battle: BattleWithRelations) =>
-  Schema.decodeUnknownSync(BattleResponseSchemas.battle)({
-    ...battle,
-    createdAt: battle.createdAt.toISOString(),
-    updatedAt: battle.updatedAt.toISOString(),
-    // Awards break ties by the order the battle introduced its warriors: the
-    // game lists them in an object keyed by numeric ID, so ascending ID order.
-    statistics: calculateBattleStatistics(
-      [...battle.warriors].sort(
-        (left, right) => Number(left.originalId) - Number(right.originalId),
-      ),
+const toBattleResponseInput = (battle: BattleWithRelations) => ({
+  ...battle,
+  createdAt: battle.createdAt.toISOString(),
+  updatedAt: battle.updatedAt.toISOString(),
+  // Awards break ties by the order the battle introduced its warriors: the
+  // game lists them in an object keyed by numeric ID, so ascending ID order.
+  statistics: calculateBattleStatistics(
+    [...battle.warriors].sort(
+      (left, right) => Number(left.originalId) - Number(right.originalId),
     ),
-  });
+  ),
+});
+
+const normalizeBattleResponse = (battle: BattleWithRelations) =>
+  Schema.decodeUnknownSync(BattleResponseSchemas.battle)(
+    toBattleResponseInput(battle),
+  );
+
+const normalizePublicBattleResponse = (battle: BattleWithRelations) =>
+  Schema.decodeUnknownSync(BattleResponseSchemas.publicBattle)(
+    toBattleResponseInput(battle),
+  );
 
 const normalizeBattlesListResponse = (response: GetAllBattlesResult) => ({
   ...response,
@@ -201,7 +210,7 @@ export const makeBattlelogOperations = (
           withBattleId(battleId, (id) =>
             battles
               .getPublicBattle(id)
-              .pipe(Effect.map(normalizeBattleResponse)),
+              .pipe(Effect.map(normalizePublicBattleResponse)),
           ),
       ),
       getPublicBattleRaw: battlelogOperation(
