@@ -7,7 +7,7 @@ import {
   useResetScrollTop,
   useVirtualInfiniteScroll,
 } from "@/hooks/utils/use-virtual-infinite-scroll";
-import { useThemedKey } from "@/themes";
+import { useThemedKey } from "@/themes/adapters";
 import { useMembersControllerGetGuildMemberReferences } from "@lootlog/client/main";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {

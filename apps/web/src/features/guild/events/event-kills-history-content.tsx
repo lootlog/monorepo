@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import {
-  getShowEventOverviewQueryKey,
-  useShowEventOverview,
-} from "@lootlog/client/main";
+import { useShowEventOverview } from "@lootlog/client/main";
 
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventLoadError } from "./components/event-load-error";
@@ -57,10 +54,6 @@ export const EventKillsHistoryContent = ({
     {
       query: {
         enabled: hasEventRouteParams,
-        queryKey: getShowEventOverviewQueryKey({
-          guildId: routeIds.guildId,
-          eventId: routeIds.eventId,
-        }),
       },
     },
   );

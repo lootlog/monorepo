@@ -4,9 +4,6 @@ import { useState } from "react";
 import { DetailPage } from "@/components/common/detail-page";
 import { MemberAvatar } from "@/components/common/member-avatar";
 import {
-  getEventsRankingControllerGetEventHeroStatsQueryKey,
-  getListEventRankingQueryKey,
-  getShowEventOverviewQueryKey,
   useEventsRankingControllerGetEventHeroStats,
   useListEventRanking,
   useShowEventOverview,
@@ -180,10 +177,6 @@ export const EventMemberKillsPageContent = ({
     {
       query: {
         enabled: hasEventRouteParams,
-        queryKey: getShowEventOverviewQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
       },
     },
   );
@@ -214,10 +207,6 @@ export const EventMemberKillsPageContent = ({
     {
       query: {
         enabled: hasEventRouteParams,
-        queryKey: getListEventRankingQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
       },
     },
   );
@@ -230,10 +219,6 @@ export const EventMemberKillsPageContent = ({
     {
       query: {
         enabled: hasEventRouteParams,
-        queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
       },
     },
   );

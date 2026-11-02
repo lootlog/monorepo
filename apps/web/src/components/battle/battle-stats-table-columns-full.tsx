@@ -8,7 +8,7 @@ import type { TFunction } from "i18next";
 import type { sortedTableFeatures } from "@/lib/tanstack-table-features";
 import { BattleStatsExpandButton } from "./battle-stats-expand-button";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
-import { formatNumber } from "@/components/battle/utils/value-utils";
+import { formatNumber } from "@/lib/format-number";
 
 export type BattleStatsExpansionType =
   | "damage"

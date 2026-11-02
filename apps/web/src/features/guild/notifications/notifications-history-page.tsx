@@ -1,8 +1,5 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getNotificationsGuildControllerGetGuildJobsQueryKey,
-  useNotificationsGuildControllerGetGuildJobs,
-} from "@lootlog/client/main";
+import { useNotificationsGuildControllerGetGuildJobs } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
 import { NotificationHistoryList } from "./components/notification-history-list";
 
@@ -15,9 +12,6 @@ export const NotificationsHistoryPage = () => {
     {
       query: {
         enabled: Boolean(guildId),
-        queryKey: getNotificationsGuildControllerGetGuildJobsQueryKey({
-          guildId,
-        }),
       },
     },
   );

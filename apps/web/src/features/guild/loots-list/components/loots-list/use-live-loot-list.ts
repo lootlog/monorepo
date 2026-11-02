@@ -38,7 +38,8 @@ import {
   usePageScrollsDocument,
   usePageVirtualizer,
 } from "@/hooks/utils/use-page-scroll";
-import { useThemedKey } from "@/themes";
+import { useThemedKey } from "@/themes/adapters";
+import { findGuildByRouteId } from "@/lib/current-user-guilds";
 import type {
   GuildLootCreatedEventV2,
   GuildLootShareUpdatedEventV2,
@@ -100,9 +101,7 @@ const getLootQueryParams = (
 const getCurrentGuildId = (
   guilds: Array<{ id: string; vanityUrl?: string | null }> | undefined,
   guildId: string | undefined,
-) =>
-  guilds?.find((guild) => guild.id === guildId || guild.vanityUrl === guildId)
-    ?.id ?? guildId;
+) => findGuildByRouteId(guilds, guildId)?.id ?? guildId;
 
 const getLootPages = (loots: LootsInfiniteData | undefined) => loots?.pages;
 

@@ -1,4 +1,5 @@
-import { ItemRarity, type Loot } from "@/lib/loots/loot-types";
+import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
+import type { Loot } from "@/lib/loots/loot-types";
 import { cn } from "cn";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";

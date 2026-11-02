@@ -12,7 +12,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import type { FC, MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { ThemeCircularFrame } from "@/themes";
+import { ThemeCircularFrame } from "@/themes/adapters";
 import { RailItemIndicator } from "./rail-item-indicator";
 import { useTranslation } from "react-i18next";
 import {

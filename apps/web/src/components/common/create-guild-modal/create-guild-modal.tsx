@@ -23,10 +23,7 @@ import { Info, SearchX, ServerOff, TriangleAlert } from "lucide-react";
 import { useGlobalContext } from "@/hooks/context/use-global-context";
 import { useAnimatedInitialOpen } from "@/hooks/utils/use-animated-initial-open";
 import { useTranslation } from "react-i18next";
-import {
-  getGuildsControllerGetManageableUserGuildsQueryKey,
-  useGuildsControllerGetManageableUserGuilds,
-} from "@lootlog/client/main";
+import { useGuildsControllerGetManageableUserGuilds } from "@lootlog/client/main";
 
 const handleAddToGuild = (guildId: string) => {
   window.location.assign(buildDiscordBotInstallUrl(guildId));
@@ -41,7 +38,6 @@ export const CreateGuildModal: FC = () => {
 
   const manageableGuildsQuery = useGuildsControllerGetManageableUserGuilds({
     query: {
-      queryKey: getGuildsControllerGetManageableUserGuildsQueryKey(),
       enabled: createGuildModal.state.isOpen,
       staleTime: 0,
     },

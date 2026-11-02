@@ -8,8 +8,6 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import {
-  getDocsControllerGetHistoryQueryKey,
-  getDocsControllerGetHistorySnapshotQueryKey,
   useDocsControllerGetHistory,
   useDocsControllerGetHistorySnapshot,
   type GuildDocumentHistoryResponseDtoItemsItem,
@@ -46,7 +44,6 @@ export const GuildDocHistoryDialog = ({
     {
       query: {
         enabled: open,
-        queryKey: getDocsControllerGetHistoryQueryKey({ guildId, docId }),
       },
     },
   );
@@ -70,11 +67,6 @@ export const GuildDocHistoryDialog = ({
     {
       query: {
         enabled: open && Boolean(selectedHistoryId),
-        queryKey: getDocsControllerGetHistorySnapshotQueryKey({
-          guildId,
-          docId,
-          historyId: selectedHistoryId ?? "",
-        }),
       },
     },
   );

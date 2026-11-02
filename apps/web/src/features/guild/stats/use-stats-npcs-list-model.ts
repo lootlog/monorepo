@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import { getOffsetPagination } from "./utils/offset-pagination";
 
 import {
-  getKillsControllerGetGuildTopNpcsQueryKey,
   useKillsControllerGetGuildTopNpcs,
   type GuildTopNpcsResponseDtoOutputTopNpcsItem,
 } from "@lootlog/client/main";
@@ -58,10 +57,6 @@ export const useStatsNpcsListModel = () => {
     {
       query: {
         enabled: Boolean(guildId),
-        queryKey: getKillsControllerGetGuildTopNpcsQueryKey(
-          { guildId },
-          topNpcsParams,
-        ),
       },
     },
   );

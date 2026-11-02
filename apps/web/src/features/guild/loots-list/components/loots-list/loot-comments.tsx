@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
-  getLootsControllerGetCommentsQueryKey,
   invalidateLootsControllerGetComments,
   useLootsControllerCreateComment,
   useLootsControllerGetComments,
@@ -39,10 +38,6 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
     {
       query: {
         enabled: !!guildId && !!lootId,
-        queryKey: getLootsControllerGetCommentsQueryKey({
-          guildId: guildId ?? "",
-          lootId,
-        }),
       },
     },
   );

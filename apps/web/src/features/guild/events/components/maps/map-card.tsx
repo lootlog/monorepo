@@ -9,7 +9,7 @@ import {
 import { UserPlus, X, AlertTriangle, Users, ChevronDown } from "lucide-react";
 import { cn } from "cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import { PlayerTile } from "@/components/tiles";
+import { PlayerTile } from "@/components/tiles/player-tile";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
 import type { EventMap } from "../../types/api";
 import type { PlayerPresence } from "@/lib/gateway-client";

@@ -21,8 +21,7 @@ import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { StatisticsDelta } from "@/features/user/statistics/statistics-delta";
-
-const numberFormatter = new Intl.NumberFormat("pl-PL");
+import { formatNumber } from "@/lib/format-number";
 
 // The game client reports presence about once a minute.
 const ONLINE_NOW_MS = 5 * 60_000;
@@ -147,7 +146,7 @@ export function DashboardToday() {
           value={loading(
             summary?.todayKills === null || summary === null
               ? undefined
-              : numberFormatter.format(summary.todayKills),
+              : formatNumber(summary.todayKills),
           )}
           detail={
             summary &&

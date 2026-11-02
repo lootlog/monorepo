@@ -14,7 +14,7 @@ import { DocumentTitleUpdater } from "@/components/router/document-title-updater
 import { RootRouteError } from "@/components/router/root-route-error";
 import { RootRouteNotFound } from "@/components/router/root-route-not-found";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
-import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes";
+import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes/adapters";
 import { Toaster } from "@lootlog/ui/components/sonner";
 
 import "@lootlog/ui/globals.css";

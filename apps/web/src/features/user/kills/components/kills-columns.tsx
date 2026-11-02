@@ -6,6 +6,7 @@ import { NpcTile } from "@/components/tiles/npc-tile";
 import i18n from "@/i18n/config";
 import type { UserNpcKillsResponseDtoOutputNpcsItem } from "@lootlog/client/main";
 import type { sortingTableFeatures } from "@/lib/tanstack-table-features";
+import { formatNumber } from "@/lib/format-number";
 
 type NpcKill = UserNpcKillsResponseDtoOutputNpcsItem;
 
@@ -86,7 +87,7 @@ export const createKillsColumns = (
     ),
     cell: ({ row }) => (
       <div className="text-center font-semibold tabular-nums">
-        {row.original.totalKills.toLocaleString("pl-PL")}
+        {formatNumber(row.original.totalKills)}
       </div>
     ),
   },

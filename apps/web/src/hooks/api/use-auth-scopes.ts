@@ -26,7 +26,6 @@ export const authScopesQueryOptions = () =>
 export const useAuthScopes = () => {
   const query = useAuthControllerGetScopes({
     query: {
-      queryKey: getAuthControllerGetScopesQueryKey(),
       select: normalizeAuthScopes,
     },
   });

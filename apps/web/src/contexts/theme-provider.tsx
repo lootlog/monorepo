@@ -12,10 +12,7 @@ import { useUpdateUserPreferences } from "@/hooks/api/user/use-user-preferences"
 import { useUserThemes } from "@/hooks/api/user/use-user-themes";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import {
-  getUsersControllerGetUserPreferencesQueryKey,
-  useUsersControllerGetUserPreferences,
-} from "@lootlog/client/main";
+import { useUsersControllerGetUserPreferences } from "@lootlog/client/main";
 import type { CustomThemeDefinition } from "@lootlog/schema/custom-theme";
 import {
   applyThemeToDocument,
@@ -49,7 +46,6 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
     {
       query: {
         enabled: !!session?.user,
-        queryKey: getUsersControllerGetUserPreferencesQueryKey(),
         retry: 1,
       },
     },

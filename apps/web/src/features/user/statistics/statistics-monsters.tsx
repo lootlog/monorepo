@@ -32,6 +32,7 @@ import {
   type StatisticsSortColumn,
   type StatisticsSortValue,
 } from "./statistics-sort";
+import { formatNumber } from "@/lib/format-number";
 
 type Npc = UserKillAnalyticsResponseDtoOutput["npcs"][number];
 
@@ -217,7 +218,7 @@ export function StatisticsMonsters({ data, search }: StatisticsTabProps) {
             </span>
             <span className="flex shrink-0 flex-col items-end">
               <span className="text-sm font-semibold tabular-nums">
-                {npc.totalKills.toLocaleString("pl-PL")}
+                {formatNumber(npc.totalKills)}
               </span>
               <StatisticsDelta
                 className="text-xs"

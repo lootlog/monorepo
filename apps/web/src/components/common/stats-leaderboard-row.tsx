@@ -7,6 +7,7 @@ import {
 } from "@/components/common/list-tile";
 import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
 import { cn } from "cn";
+import { formatNumber } from "@/lib/format-number";
 
 type StatsLeaderboardRowProps = {
   rank: number;
@@ -18,8 +19,6 @@ type StatsLeaderboardRowProps = {
   /** Marks the viewer's own place. */
   isViewer?: boolean;
 };
-
-const numberFormatter = new Intl.NumberFormat("pl-PL");
 
 export const StatsLeaderboardRow = ({
   rank,
@@ -45,7 +44,7 @@ export const StatsLeaderboardRow = ({
         )}
       </span>
       <span className="shrink-0 text-sm font-semibold tabular-nums">
-        {numberFormatter.format(value)}
+        {formatNumber(value)}
       </span>
     </span>
   );

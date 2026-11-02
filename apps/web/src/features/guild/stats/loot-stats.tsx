@@ -1,8 +1,5 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getLootsControllerGetLootStatsQueryKey,
-  useLootsControllerGetLootStats,
-} from "@lootlog/client/main";
+import { useLootsControllerGetLootStats } from "@lootlog/client/main";
 import { lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -49,10 +46,6 @@ export const LootStats = () => {
     {
       query: {
         enabled: Boolean(guildId),
-        queryKey: getLootsControllerGetLootStatsQueryKey(
-          { guildId: guildId ?? "" },
-          lootStatsParams,
-        ),
       },
     },
   );

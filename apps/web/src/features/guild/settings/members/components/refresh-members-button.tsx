@@ -26,9 +26,6 @@ export const RefreshMembersButton = () => {
     { guildId: resolvedGuildId },
     {
       query: {
-        queryKey: getMembersControllerGetLatestRefreshJobQueryKey({
-          guildId: resolvedGuildId,
-        }),
         staleTime: 60_000,
       },
     },
