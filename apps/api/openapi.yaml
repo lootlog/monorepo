@@ -16379,6 +16379,12 @@ paths:
                 required:
                   - message
                 additionalProperties: false
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -16391,7 +16397,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Save document title and Lexical state
+      description: Save document title and Lexical state; fails with 409 when `baseVersion` is older than the current version
       summary: Update guild document
       requestBody:
         content:
@@ -18430,6 +18436,9 @@ components:
           type: string
           minLength: 1
           maxLength: 120
+        baseVersion:
+          type: number
+          description: The document version the edit started from. When another save has advanced the document past it, the save fails with 409 instead of overwriting that save.
       required:
         - content
         - title
@@ -24737,6 +24746,7 @@ components:
                 entranceSecondsLeft:
                   type: number
                   exclusiveMinimum: true
+                  maximum: 3600
                   minimum: 0
               required:
                 - state
@@ -31320,6 +31330,7 @@ components:
         entranceSecondsLeft:
           type: number
           exclusiveMinimum: true
+          maximum: 3600
           description: Seconds left until the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from the close time on the server clock instead of from the request.
           minimum: 0
         entranceClosesAt:

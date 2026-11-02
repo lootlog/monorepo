@@ -1052,6 +1052,8 @@ export class CommandHandler {
             world: data.character.world,
             verifiedAt: new Date(yield* Clock.currentTimeMillis).toISOString(),
           }).pipe(
+            // A stalled broker must not hold the join.
+            Effect.timeout("5 seconds"),
             Effect.catchCause((cause) =>
               Effect.logError(
                 "Gateway account verification publish failed",

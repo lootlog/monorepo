@@ -853,6 +853,8 @@ export interface UpdateGuildDocumentDto {
      * @maxLength 120
      */
   title: string;
+  /** The document version the edit started from. When another save has advanced the document past it, the save fails with 409 instead of overwriting that save. */
+  baseVersion?: number;
 }
 
 export type GuildDocumentHistorySnapshotResponseDtoAction = typeof GuildDocumentHistorySnapshotResponseDtoAction[keyof typeof GuildDocumentHistorySnapshotResponseDtoAction];
@@ -4503,7 +4505,10 @@ export type CreateNotificationDtoHeroTracker = {
   state: 'unclaimed';
 } | {
   state: 'open';
-  /** @exclusiveMinimum 0 */
+  /**
+     * @maximum 3600
+     * @exclusiveMinimum 0
+     */
   entranceSecondsLeft: number;
 } | {
   state: 'open';
@@ -9484,6 +9489,7 @@ export interface CreateTimerFromGameClientDto {
   customMaxSpawnTime?: string;
   /**
      * Seconds left until the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from the close time on the server clock instead of from the request.
+     * @maximum 3600
      * @exclusiveMinimum 0
      */
   entranceSecondsLeft?: number;
@@ -39649,7 +39655,7 @@ export const getDocsControllerUpdateDocumentUrl = ({ guildId, docId }: DocsContr
 }
 
 /**
- * Save document title and Lexical state
+ * Save document title and Lexical state; fails with 409 when `baseVersion` is older than the current version
  * @summary Update guild document
  */
 export const docsControllerUpdateDocument = async ({ guildId, docId }: DocsControllerUpdateDocumentPathParameters,
@@ -39684,7 +39690,7 @@ return mainFetch<GuildDocumentResponseDto>(getDocsControllerUpdateDocumentUrl({ 
 
 export const getDocsControllerUpdateDocumentMutationKey = () => ['docsControllerUpdateDocument'] as const;
 
-export const getDocsControllerUpdateDocumentMutationOptions = <TError = ErrorType<RequestValidationError | DocsControllerUpdateDocument401 | DocsControllerUpdateDocument403 | DocsControllerUpdateDocument429>,
+export const getDocsControllerUpdateDocumentMutationOptions = <TError = ErrorType<RequestValidationError | DocsControllerUpdateDocument401 | DocsControllerUpdateDocument403 | HttpErrorResponse | DocsControllerUpdateDocument429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof docsControllerUpdateDocument>>, TError,DocsControllerUpdateDocumentMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof docsControllerUpdateDocument>>, TError,DocsControllerUpdateDocumentMutationVariables, TContext> => {
 
@@ -39713,13 +39719,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DocsControllerUpdateDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof docsControllerUpdateDocument>>>
     export type DocsControllerUpdateDocumentMutationBody = BodyType<UpdateGuildDocumentDto>
-    export type DocsControllerUpdateDocumentMutationError = ErrorType<RequestValidationError | DocsControllerUpdateDocument401 | DocsControllerUpdateDocument403 | DocsControllerUpdateDocument429>
+    export type DocsControllerUpdateDocumentMutationError = ErrorType<RequestValidationError | DocsControllerUpdateDocument401 | DocsControllerUpdateDocument403 | HttpErrorResponse | DocsControllerUpdateDocument429>
     export type DocsControllerUpdateDocumentMutationVariables = {pathParams: DocsControllerUpdateDocumentPathParameters;data: BodyType<UpdateGuildDocumentDto>}
 
     /**
  * @summary Update guild document
  */
-export const useDocsControllerUpdateDocument = <TError = ErrorType<RequestValidationError | DocsControllerUpdateDocument401 | DocsControllerUpdateDocument403 | DocsControllerUpdateDocument429>,
+export const useDocsControllerUpdateDocument = <TError = ErrorType<RequestValidationError | DocsControllerUpdateDocument401 | DocsControllerUpdateDocument403 | HttpErrorResponse | DocsControllerUpdateDocument429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof docsControllerUpdateDocument>>, TError,DocsControllerUpdateDocumentMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof docsControllerUpdateDocument>>,

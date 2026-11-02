@@ -206,6 +206,29 @@ describe("DocsRepository against migrated PostgreSQL", () => {
         actorMemberId: "editor-2",
       },
     ]);
+
+    // An edit started from version 1 must not overwrite version 2.
+    const stale = await runtime.runPromise(
+      Effect.flip(
+        service.updateDocument(guildId, id, "editor-1", {
+          title: "Plan from version 1",
+          content,
+          baseVersion: 1,
+        }),
+      ),
+    );
+
+    expect(stale).toBeInstanceOf(ResourceConflictError);
+    expect(await documents()).toMatchObject([{ version: 2, title: "Plan v2" }]);
+
+    await runtime.runPromise(
+      service.updateDocument(guildId, id, "editor-1", {
+        title: "Plan v3",
+        content,
+        baseVersion: 2,
+      }),
+    );
+    expect(await documents()).toMatchObject([{ version: 3, title: "Plan v3" }]);
   });
 
   it("isolates reads, history, edits, trash and purge by Organization", async () => {
