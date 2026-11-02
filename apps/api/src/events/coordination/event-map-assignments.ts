@@ -24,7 +24,7 @@ import {
 } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
-import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
+import { getEventHeroNpcId } from "#src/shared/margonem/npc-identity";
 
 class EventMapAssignmentError extends TaggedErrorClass<EventMapAssignmentError>()(
   "EventMapAssignmentError",
@@ -246,8 +246,7 @@ export const makeEventMapAssignments = (
             new ResourceNotFoundError("Member not found"),
           );
 
-        const effectiveNpcId =
-          scoped.hero.npcId ?? getSyntheticNpcId(scoped.hero.id);
+        const effectiveNpcId = getEventHeroNpcId(scoped.hero);
 
         const timer = yield* timers.getEventRespawnTimer({
           guildId: guild.id,

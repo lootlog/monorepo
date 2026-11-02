@@ -5,9 +5,9 @@ import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { memberTable, timerTable } from "#src/database/drizzle/schema";
 
-import { generateUniqueIntId } from "#src/shared/generate-unique-int-id";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { respawnFromSpawnWindow } from "@lootlog/domain/timers";
+import { newManualTimerNpcId } from "#src/shared/margonem/npc-identity";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { buildTimerKey } from "#src/timers/timer-key";
 import type { CreateManualTimerRequest } from "#src/contracts/timers/schemas";
@@ -36,6 +36,8 @@ const withRespawn = (minSpawnTime: Date, maxSpawnTime: Date, now: Date) => {
     latestRespawnRandomness: respawn.respawnRandomness,
   };
 };
+
+const MANUAL_TIMER_INSERT_ATTEMPTS = 3;
 
 const spawnWindow = (payload: CreateManualTimerRequest, now: Date) => {
   if (payload.customMinSpawnTime && payload.customMaxSpawnTime) {
@@ -78,9 +80,6 @@ export const makeManualTimer = (
           : new InvalidRequestError({ message: "Invalid timer window" }),
     });
 
-    const npcId = generateUniqueIntId();
-    const timerKey = buildTimerKey(npcId, payload.name);
-
     const projection = yield* database.transaction((transaction) =>
       Effect.gen(function* () {
         const members = yield* transaction
@@ -110,37 +109,47 @@ export const makeManualTimer = (
           payload.actorCharacter,
         );
 
-        const insertedTimers = yield* transaction
-          .insert(timerTable)
-          .values({
-            createdById: member.id,
-            guildId: access.guild.id,
-            npcId,
-            timerKey,
-            world: payload.world,
-            ...window,
-            wasReset: false,
-            npc: {
-              id: npcId,
-              templateId: null,
-              name: payload.name,
-              prof: payload.prof ?? "",
-              location: "",
-              wt: "",
-              lvl: payload.lvl ?? 0,
-              type: payload.type ?? "",
-              icon: "",
-              margonemType: TIMER_TYPES.CUSTOM_MANUAL,
-            },
-            actorCharacterSnapshotId: actorCharacter?.id ?? null,
-            actorCharacterLvl: payload.actorCharacter?.lvl ?? null,
-            deletedAt: null,
-            createdAt: now,
-            updatedAt: now,
-          })
-          .returning();
+        let timer: typeof timerTable.$inferSelect | undefined;
 
-        const timer = insertedTimers[0];
+        // A fresh id only collides with a manual timer of the same name.
+        for (
+          let attempt = 0;
+          !timer && attempt < MANUAL_TIMER_INSERT_ATTEMPTS;
+          attempt++
+        ) {
+          const npcId = newManualTimerNpcId();
+
+          [timer] = yield* transaction
+            .insert(timerTable)
+            .values({
+              createdById: member.id,
+              guildId: access.guild.id,
+              npcId,
+              timerKey: buildTimerKey(npcId, payload.name),
+              world: payload.world,
+              ...window,
+              wasReset: false,
+              npc: {
+                id: npcId,
+                templateId: null,
+                name: payload.name,
+                prof: payload.prof ?? "",
+                location: "",
+                wt: "",
+                lvl: payload.lvl ?? 0,
+                type: payload.type ?? "",
+                icon: "",
+                margonemType: TIMER_TYPES.CUSTOM_MANUAL,
+              },
+              actorCharacterSnapshotId: actorCharacter?.id ?? null,
+              actorCharacterLvl: payload.actorCharacter?.lvl ?? null,
+              deletedAt: null,
+              createdAt: now,
+              updatedAt: now,
+            })
+            .onConflictDoNothing()
+            .returning();
+        }
 
         if (!timer)
           return yield* Effect.die(

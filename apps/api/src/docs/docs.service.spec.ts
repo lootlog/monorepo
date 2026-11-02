@@ -11,14 +11,14 @@ const content = { root: { children: [], type: "root", version: 1 } };
 
 const document = {
   deletedAt: null,
-  deletedByMemberId: null,
+  deletedByDiscordId: null,
   id: "doc-1",
   guildId: "guild-1",
   title: "Plan",
   content,
   version: 1,
-  createdByMemberId: "discord-1",
-  updatedByMemberId: "discord-1",
+  createdByDiscordId: "discord-1",
+  updatedByDiscordId: "discord-1",
   createdAt: new Date("2026-06-22T10:00:00.000Z"),
   updatedAt: new Date("2026-06-22T10:00:00.000Z"),
 };
@@ -52,8 +52,8 @@ const makeRepository = () => ({
     () => Effect.void,
   ),
   purge: mock<DocsRepositoryService["purge"]>(() => Effect.void),
-  findEditors: mock<DocsRepositoryService["findEditors"]>(() =>
-    Effect.succeed([{ userId: "discord-1", name: "Kamil" }]),
+  findEditorNames: mock<DocsRepositoryService["findEditorNames"]>(() =>
+    Effect.succeed(new Map([["discord-1", "Kamil"]])),
   ),
 });
 
@@ -90,7 +90,7 @@ describe("docs service", () => {
     );
     expect(repository.createDocument).toHaveBeenCalledWith({
       guildId: "guild-1",
-      memberId: "discord-1",
+      discordId: "discord-1",
       title: "Plan",
       defaultLimit: 50,
       content: {
@@ -162,7 +162,7 @@ describe("docs service", () => {
       title: "Plan",
       content,
       action: "SAVE" as const,
-      actorMemberId: "discord-1",
+      actorDiscordId: "discord-1",
       editedAt: document.updatedAt,
     };
 
@@ -207,7 +207,7 @@ describe("docs service", () => {
         {
           ...document,
           deletedAt: document.updatedAt,
-          deletedByMemberId: "discord-1",
+          deletedByDiscordId: "discord-1",
         },
       ]),
     );
