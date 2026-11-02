@@ -153,6 +153,33 @@ describe("useVisibleNotifications", () => {
     expect(useNotificationsStore.getState().notifications).toEqual([]);
   });
 
+  it("removes notifications that expired while the tab was hidden on return", () => {
+    useNotificationsStore.setState({
+      notifications: [createStoredNotification()],
+      notificationAutoHideByListKey: {
+        "notification-1": {
+          deadlineMs: Date.now() + 1_000,
+          pausedRemainingMs: null,
+          durationMs: 1_000,
+        },
+      },
+    });
+
+    renderHook(() => useVisibleNotifications({ autoCleanup: true }), {
+      wrapper: test.wrapper,
+    });
+
+    // A background tab throttles the timeout well past the deadline, while
+    // the row's fade-out has already finished on wall-clock time.
+    vi.setSystemTime(Date.now() + 60_000);
+
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(useNotificationsStore.getState().notifications).toEqual([]);
+  });
+
   it("does not auto-remove paused notifications", () => {
     useNotificationsStore.setState({
       notifications: [
