@@ -18,7 +18,7 @@ import type { EventEmitter } from "#src/events/event-emitter";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import { isEventActiveAt } from "#src/events/monitoring/event-activity";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
-import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
+import { getEventHeroNpcId } from "#src/shared/margonem/npc-identity";
 import { findActiveGuildMember } from "#src/members/member-access-query";
 
 type GapType = typeof eventMapCoverageGapTable.$inferSelect.gapType;
@@ -294,7 +294,7 @@ export const makeEventPresenceTracking = (
         mapRows.map(({ hero, event }) => ({
           guildId,
           world: event.world,
-          npcId: hero.npcId ?? getSyntheticNpcId(hero.id),
+          npcId: getEventHeroNpcId(hero),
           npcName: hero.npcName,
         })),
       );

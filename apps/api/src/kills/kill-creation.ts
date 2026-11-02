@@ -26,7 +26,7 @@ import {
   userKillTotalTable,
 } from "#src/database/drizzle/schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
-import { getStableNpcId } from "#src/shared/margonem/stable-npc-id";
+import { getKillNpcId } from "#src/shared/margonem/npc-identity";
 import type { CreateKillRequest } from "#src/contracts/kills/schemas";
 import {
   buildGuildKillDedupKey,
@@ -401,7 +401,7 @@ export const makeKillCreation = (
       isHeroFromEvent: data.npc.isHeroFromEvent,
     });
 
-    const npcId = getStableNpcId(data.npc.id, data.npc.name, npcType);
+    const npcId = getKillNpcId(data.npc, npcType);
     const killedAt = new Date(yield* Clock.currentTimeMillis);
     const periodStart = getKillStatsBucketStart(killedAt);
 

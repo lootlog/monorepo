@@ -2243,10 +2243,10 @@ export const guildDocumentTable = pgTable(
     title: text("title").notNull(),
     content: jsonb("content").notNull(),
     version: integer("version").default(1).notNull(),
-    createdByMemberId: text("createdByMemberId").notNull(),
-    updatedByMemberId: text("updatedByMemberId").notNull(),
+    createdByDiscordId: text("createdByDiscordId").notNull(),
+    updatedByDiscordId: text("updatedByDiscordId").notNull(),
     deletedAt: timestamp("deletedAt", { mode: "date", precision: 3 }),
-    deletedByMemberId: text("deletedByMemberId"),
+    deletedByDiscordId: text("deletedByDiscordId"),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
       .defaultNow()
       .notNull(),
@@ -2277,7 +2277,7 @@ export const guildDocumentHistoryTable = pgTable(
     title: text("title").notNull(),
     content: jsonb("content").notNull(),
     action: guildDocumentHistoryActionEnum("action").default("SAVE").notNull(),
-    actorMemberId: text("actorMemberId").notNull(),
+    actorDiscordId: text("actorDiscordId").notNull(),
     editedAt: timestamp("editedAt", { mode: "date", precision: 3 })
       .defaultNow()
       .notNull(),
