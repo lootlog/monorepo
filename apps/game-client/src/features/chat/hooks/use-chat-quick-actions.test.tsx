@@ -197,7 +197,7 @@ it("creates a gathering in the current chat organization instead of the command 
   await user.click(screen.getByRole("button", { name: "Utwórz zbiórkę" }));
   await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
   const body = JSON.parse(String(request.mock.calls[0]?.[1]?.body));
-  expect(body.guildIds).toEqual(["a"]);
+  expect(body.guildId).toBe("a");
   expect(body).not.toHaveProperty("description");
   expect(body).not.toHaveProperty("npc");
   expect(body).not.toHaveProperty("minLvl");

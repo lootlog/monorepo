@@ -96,7 +96,7 @@ sequence above.
   Run `bun run client:check` on the committed result; its generated-file check
   rejects any uncommitted generated outputs, even when regeneration is stable.
 
-Generic gathering creation publishes `guilds.party-gathering` for each authorized Organization after persistence, in addition to the private organizer update. This lets viewers refresh discovery without a chat message or a page reload.
+Generic gathering creation publishes `guilds.party-gathering` to its Lootlog after persistence, in addition to the private organizer update. This lets viewers refresh discovery without a chat message or a page reload.
 
 Cancellation publishes `guilds.party-gathering.cancel` to every source Organization after successful termination, independently of chat messages and participant-only updates. Discovery viewers can therefore remove the gathering without reloading. Participant updates are published before the chat messages are ended; a chat cleanup failure is logged and does not fail the committed cancellation, because a retry cannot cancel the room again.
 
@@ -110,6 +110,19 @@ new gathering or application. Duplicate facts do not advance terminal state.
 Deploy the API consumer before the gateway publisher; no HTTP contract changes
 are required. The timer starts when the gateway detects disconnection, so network
 failures can take longer to detect than an ordinary browser close.
+
+## One Lootlog per gathering
+
+A gathering belongs to exactly one Lootlog and is visible only to its members.
+`POST /messaging/party-gathering` takes `guildId` (or the deprecated one-element
+`guildIds`), and `POST /messaging` with `isGatheringParty` takes one
+`guildIds` element; both reject several targets with `400` and an inaccessible
+one with `403`. Aggregates, projections and realtime envelopes keep their
+`guildIds` array, which new rooms fill with one element, so neither persisted
+rooms nor the gateway need a migration. Multi-Lootlog rooms accepted
+before this change expire within the 30-minute lifetime and keep their existing
+fan-out until then. Deploy the API before the game client; an old client that
+selects several Lootlogs gets a validation error instead of a broadcast.
 
 ## Live volunteer and party state
 

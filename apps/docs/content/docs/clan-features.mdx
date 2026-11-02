@@ -210,7 +210,7 @@ Kliknięcie cytatu przewija czat do oryginalnej wiadomości i podświetla ją na
 
 Przycisk **+** w prawym dolnym rogu czatu otwiera menu **Pozycja**, **Pomoc**,
 **Utwórz zbiórkę**, która od razu tworzy pustą zbiórkę, tak jak `/grp` bez opisu.
-Korzysta z organizacji wybranej u góry czatu; bez wybranej organizacji jest nieaktywna.
+Korzysta z Lootloga wybranego u góry czatu; bez wybranego Lootloga jest nieaktywna.
 Obok akcji **Pozycja** i **Pomoc** widoczny jest aktualny skrót, który możesz przypisać w ustawieniach
 skrótów klawiszowych. Domyślnie **Alt+P** wysyła pozycję, a **Alt+H** wzywa pomoc.
 Skrót **Utwórz zbiórkę** jest domyślnie nieprzypisany. Po przypisaniu
@@ -308,8 +308,16 @@ Zgłoszenia NPC zajmują pełną szerokość wiersza i mają subtelne tło zgodn
 z ustawieniami **Wygląd → Kolory NPC**, tak jak pasek zbiórki.
 Nie mają przycisków tworzenia zbiórki ani przygotowania komunikatu.
 
-Opcja **Utwórz zbiórkę** w menu **+** tworzy zbiórkę w organizacji wybranej
+Opcja **Utwórz zbiórkę** w menu **+** tworzy zbiórkę w Lootlogu wybranym
 w czacie, tak jak **Pozycja** i **Pomoc**.
+
+Każda zbiórka należy do jednego Lootloga i widzą ją tylko jego członkowie.
+Nie da się utworzyć jednej zbiórki w kilku Lootlogach naraz. W oknie
+**Nowa zbiórka** wybierasz Lootlog z listy; domyślnie jest to Lootlog wybrany
+dla postaci. `/grp`, menu **+** i Szybki czat tworzą zbiórkę w Lootlogu, do
+którego wysyłają wpis. Zbiórka z detektora NPC trafia do Lootloga wybranego
+dla postaci, jeśli reguły detektora kierują tam tego NPC, a w przeciwnym razie
+do pierwszego Lootloga z pasującej reguły.
 
 Utworzenie zbiórki z NPC lub bez NPC nie dodaje wiadomości do historii czatu.
 Aktywne zbiórki są widoczne na liście nad polem pisania, gdzie możesz zgłosić

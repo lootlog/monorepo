@@ -5,6 +5,7 @@ import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import {
   buildNpcChatMessagePayload,
   buildNpcNotificationPayload,
+  resolveNpcGatheringGuildId,
   resolveNpcNotificationRouting,
 } from "./npc-notification";
 
@@ -50,6 +51,14 @@ describe("npc notification helpers", () => {
       guildIds: ["guild-1", "guild-2"],
       world: "luvia",
     });
+  });
+
+  it("gathers in the selected Lootlog only when the NPC is routed there", () => {
+    const routed = ["guild-1", "guild-2"];
+
+    expect(resolveNpcGatheringGuildId(routed, "guild-2")).toBe("guild-2");
+    expect(resolveNpcGatheringGuildId(routed, "guild-3")).toBe("guild-1");
+    expect(resolveNpcGatheringGuildId([], "guild-3")).toBeUndefined();
   });
 
   it("builds notification payloads with the resolved world", () => {

@@ -132,10 +132,13 @@ describe("usePartyGatheringOrchestration", () => {
     await act(() =>
       result.current.startPartyGathering({
         openPartyFinder: false,
-        guildIds: ["guild-1"],
+        guildId: "guild-1",
         world: "tempest",
       }),
     );
+    expect(await createRoom.mock.calls[0]?.[0].json()).toMatchObject({
+      guildId: "guild-1",
+    });
     expect(useWindowsStore.getState()["party-finder"].open).toBe(false);
     expect(readSeededReadyRoomCache(queryClient).projections["room-1"]).toEqual(
       projection,
@@ -149,7 +152,7 @@ describe("usePartyGatheringOrchestration", () => {
 
     await act(() =>
       result.current.startPartyGathering({
-        guildIds: ["guild-1"],
+        guildId: "guild-1",
         world: "tempest",
         closeCreateWindow: true,
       }),
@@ -172,7 +175,7 @@ describe("usePartyGatheringOrchestration", () => {
     await act(async () => {
       await expect(
         result.current.startPartyGathering({
-          guildIds: ["guild-1"],
+          guildId: "guild-1",
           world: "tempest",
           closeCreateWindow: true,
         }),
@@ -205,7 +208,7 @@ describe("usePartyGatheringOrchestration", () => {
     await act(async () => {
       await expect(
         result.current.startPartyGathering({
-          guildIds: ["guild-1"],
+          guildId: "guild-1",
           world: "tempest",
         }),
       ).rejects.toMatchObject({ status: 409 });
@@ -228,7 +231,7 @@ describe("usePartyGatheringOrchestration", () => {
       result.current.startNpcPartyGathering({
         openPartyFinder: false,
         npc,
-        guildIds: ["guild-1"],
+        guildId: "guild-1",
         world: "tempest",
       }),
     );

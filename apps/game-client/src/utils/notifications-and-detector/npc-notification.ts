@@ -78,6 +78,15 @@ export const resolveNpcNotificationRouting = ({
   };
 };
 
+/**
+ * A gathering belongs to one Lootlog: the selected one when the routing rules
+ * send this NPC there, otherwise the first routed one.
+ */
+export const resolveNpcGatheringGuildId = (
+  routedGuildIds: readonly string[],
+  selectedGuildId: string | undefined,
+) => routedGuildIds.find((id) => id === selectedGuildId) ?? routedGuildIds[0];
+
 export function buildNpcNotificationPayload(
   options: BuildNpcNotificationPayloadOptions & { isGatheringParty: true },
 ): CreateNotificationOptions | null;
