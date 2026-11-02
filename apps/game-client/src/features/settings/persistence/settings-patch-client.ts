@@ -187,12 +187,12 @@ const applyServerDocuments = (
 };
 
 export const settingsPatchQueue = createSettingsPatchQueue({
-  send: async (operations) =>
+  send: async (operations, { keepalive }) =>
     decodeSettingsDocuments(
-      await settingsDocumentsControllerPatchPreferences({
-        operations,
-        context: getPatchContext(operations),
-      }),
+      await settingsDocumentsControllerPatchPreferences(
+        { operations, context: getPatchContext(operations) },
+        { keepalive },
+      ),
     ),
   applyOptimistic: ({ operation, queryKeys }) => {
     for (const queryKey of queryKeys) {
@@ -213,6 +213,21 @@ export const settingsPatchQueue = createSettingsPatchQueue({
     showRuntimeMessage(getFixedT("settings")("saveStatus.error"));
   },
 });
+
+/**
+ * Sends the writes still waiting in the debounce window when the page goes
+ * away (a character or account switch reloads it). `keepalive` lets the
+ * request outlive the page when the client fetches directly (userscript);
+ * the extension hands the request to its background worker, which is not
+ * tied to the page. A write already in flight keeps the rest waiting, so
+ * they are lost in that case rather than sent out of order.
+ */
+export const flushSettingsOnPageHide = () => {
+  const flush = () => void settingsPatchQueue.flush({ keepalive: true });
+  window.addEventListener("pagehide", flush);
+
+  return () => window.removeEventListener("pagehide", flush);
+};
 
 export type EnqueueSettingsPatchInput = {
   domain: SettingsDomain;

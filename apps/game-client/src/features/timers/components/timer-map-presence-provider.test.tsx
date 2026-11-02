@@ -62,8 +62,6 @@ function timer(guildId = "guild-1", world = "alpha"): TimerWithTimeLeft {
 
   return {
     ...base,
-    minTimeLeft: 0,
-    maxTimeLeft: 0,
     npc: { ...base.npc, type: NpcType.ELITE2, location: "Karka-han" },
   };
 }

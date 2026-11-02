@@ -5,8 +5,11 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { CreateManualTimerOptions } from "@/api/timers.api";
 import { useCreateManualTimer } from "@/hooks/api/use-create-manual-timer";
 import { parseDurationToSeconds } from "@/features/timers/helpers/add-timer-form-helpers";
-import { DEFAULT_RESPAWN_RANDOMNESS } from "@/features/timers/constants/default-respawn-randomness";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
+import {
+  DEFAULT_RESPAWN_RANDOMNESS,
+  spawnWindowFromRespawn,
+} from "@lootlog/domain/timers";
 import {
   CreateManualTimerDtoType,
   type CreateManualTimerDto,
@@ -363,14 +366,14 @@ export function useAddTimerForm({
   });
 
   const handleNpcSelect = (npc: SearchTimersNpcResponseDtoOutput) => {
-    const baseSeconds = npc.latestRespBaseSeconds ?? 0;
+    const { minOffsetMs, maxOffsetMs } = spawnWindowFromRespawn({
+      respBaseSeconds: npc.latestRespBaseSeconds ?? 0,
+      respawnRandomness:
+        npc.latestRespawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
+    });
 
-    const respawnRandomness =
-      npc.latestRespawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
-
-    const variance = Math.round((baseSeconds * respawnRandomness) / 100);
-    const minSeconds = Math.max(baseSeconds - variance, 0);
-    const maxSeconds = baseSeconds + variance;
+    const minSeconds = Math.max(Math.round(minOffsetMs / 1000), 0);
+    const maxSeconds = Math.round(maxOffsetMs / 1000);
 
     setValue("name", npc.name);
     setValue("minDuration", formatSecondsToHHMMSS(minSeconds));
@@ -458,15 +461,15 @@ export function useAddTimerForm({
       timerData.maxSeconds = parseDurationToSeconds(data.maxDuration);
     }
 
-    // The form stays open on failure so the player can retry. Each
-    // organization's request settles on its own: a rejected one is counted in
-    // the result instead of failing the mutation.
+    // The form stays open on failure so the player can retry. The request
+    // settles per Lootlog: a rejected one is listed in the result instead of
+    // failing the mutation.
     const reportFailure = () =>
       showRuntimeMessage(t("messages.createFailed", { name: data.name }));
 
     createManualTimer(timerData, {
-      onSuccess: ({ failureCount }) => {
-        if (failureCount > 0) {
+      onSuccess: ({ failed }) => {
+        if (failed.length > 0) {
           reportFailure();
 
           return;

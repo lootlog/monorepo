@@ -14,6 +14,7 @@ import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
 import { markSettingsImportDone } from "./settings-import";
 import {
+  enqueueSettingsPatch,
   settingsPatchQueue,
   getCurrentSettingsDocumentsQueryKey,
 } from "./settings-patch-client";
@@ -26,6 +27,8 @@ import {
 type Harness = ReturnType<typeof createGuildPreferencesTest>;
 
 const patchBodies: string[] = [];
+
+const patchKeepalive: Array<boolean | undefined> = [];
 
 const respond = (harness: Harness) =>
   harness.request.mockImplementation((input, init) => {
@@ -61,6 +64,7 @@ const respond = (harness: Harness) =>
 
     if (init?.method === "PATCH") {
       patchBodies.push(String(init.body));
+      patchKeepalive.push(init.keepalive);
 
       return Promise.resolve(
         Response.json(readSeededSettingsDocuments(harness.queryClient)),
@@ -78,6 +82,7 @@ describe("useSettingsHydration", () => {
   beforeEach(() => {
     harness = createGuildPreferencesTest();
     patchBodies.length = 0;
+    patchKeepalive.length = 0;
     settingsPatchQueue.reset();
     setTestRuntimeGame();
     useGlobalStore.setState({ gameState: { gameInitialized: true } });
@@ -248,5 +253,34 @@ describe("useSettingsHydration", () => {
     expect(patchBodies).toHaveLength(1);
     expect(flushPending).toHaveBeenCalledWith("202");
     flushPending.mockRestore();
+  });
+  it("sends a write still in the debounce window when the page unloads", async () => {
+    seedSettingsDocuments(
+      harness.queryClient,
+      createSettingsDocuments({
+        "notifications.presentation": {},
+        "gameData.detector": {},
+      }),
+    );
+    renderHook(() => useSettingsHydration(), { wrapper: harness.wrapper });
+
+    expect(
+      enqueueSettingsPatch({
+        domain: "general",
+        set: { allowWorldSelection: true },
+      }),
+    ).toBe(true);
+
+    // A character switch reloads the page before the debounce elapses.
+    window.dispatchEvent(new PageTransitionEvent("pagehide"));
+
+    await waitFor(() => expect(patchBodies).toHaveLength(1));
+    expect(patchKeepalive).toEqual([true]);
+    expect(JSON.parse(patchBodies[0] ?? "{}").operations).toEqual([
+      expect.objectContaining({
+        domain: "general",
+        set: { allowWorldSelection: true },
+      }),
+    ]);
   });
 });

@@ -33,7 +33,7 @@ import {
   type KillQueryCache,
 } from "./kill-query-support.js";
 import {
-  getKillStatsPeriodStart,
+  currentStatsPeriodStart,
   resolveKillStatsPeriod,
 } from "./kill-stats-period.js";
 import { userKillSource, type UserKillSource } from "./kill-source.js";
@@ -132,96 +132,98 @@ export const makeUserKillQueries = (
       ]),
     );
 
-  const getUserKillStats = (userId: string, query: GetUserKillStatsDto) => {
-    const npcTypes = query.npcType
-      ? [query.npcType, ...(query.npcTypes ?? [])]
-      : query.npcTypes;
+  const getUserKillStats = (userId: string, query: GetUserKillStatsDto) =>
+    Effect.gen(function* () {
+      const npcTypes = query.npcType
+        ? [query.npcType, ...(query.npcTypes ?? [])]
+        : query.npcTypes;
 
-    const period = resolveKillStatsPeriod(query.period);
-    const periodStart = getKillStatsPeriodStart(period);
+      const period = resolveKillStatsPeriod(query.period);
+      const periodStart = yield* currentStatsPeriodStart(period);
 
-    return cached(
-      userId,
-      buildKillQueryCacheKey("user-overview", userId, {
-        query: { ...query, npcTypes, period },
-      }),
-      "user kill stats",
-      UserKillStatsResponse,
-      protect(
-        "kills.user-overview.query",
-        Effect.suspend(() =>
-          readStats(userId, { world: query.world, npcTypes, periodStart }),
-        ).pipe(
-          Effect.map((stats) => {
-            const killsByType: Record<string, number> = {};
-            const killsByWorld: Record<string, number> = {};
-            let totalKills = 0;
+      return yield* cached(
+        userId,
+        buildKillQueryCacheKey("user-overview", userId, {
+          query: { ...query, npcTypes, period },
+        }),
+        "user kill stats",
+        UserKillStatsResponse,
+        protect(
+          "kills.user-overview.query",
+          Effect.suspend(() =>
+            readStats(userId, { world: query.world, npcTypes, periodStart }),
+          ).pipe(
+            Effect.map((stats) => {
+              const killsByType: Record<string, number> = {};
+              const killsByWorld: Record<string, number> = {};
+              let totalKills = 0;
 
-            for (const stat of stats) {
-              killsByType[stat.npcType] =
-                (killsByType[stat.npcType] ?? 0) + stat.totalKills;
-              killsByWorld[stat.world] =
-                (killsByWorld[stat.world] ?? 0) + stat.totalKills;
-              totalKills += stat.totalKills;
-            }
+              for (const stat of stats) {
+                killsByType[stat.npcType] =
+                  (killsByType[stat.npcType] ?? 0) + stat.totalKills;
+                killsByWorld[stat.world] =
+                  (killsByWorld[stat.world] ?? 0) + stat.totalKills;
+                totalKills += stat.totalKills;
+              }
 
-            return {
-              overview: { totalKills, killsByType, killsByWorld },
-              topNpcs: stats
-                .map(({ world: _world, ...npc }) => npc)
-                .sort((left, right) => right.totalKills - left.totalKills)
-                .slice(0, query.topNpcsLimit ?? USER_TOP_NPCS_DEFAULT_LIMIT),
-            };
-          }),
+              return {
+                overview: { totalKills, killsByType, killsByWorld },
+                topNpcs: stats
+                  .map(({ world: _world, ...npc }) => npc)
+                  .sort((left, right) => right.totalKills - left.totalKills)
+                  .slice(0, query.topNpcsLimit ?? USER_TOP_NPCS_DEFAULT_LIMIT),
+              };
+            }),
+          ),
         ),
-      ),
-    );
-  };
+      );
+    });
 
-  const getUserNpcKills = (userId: string, query: GetUserNpcKillsDto) => {
-    const limit = query.limit ?? DEFAULT_PAGE_SIZE;
-    const period = resolveKillStatsPeriod(query.period);
-    const periodStart = getKillStatsPeriodStart(period);
-    const { cursor, limit: _limit, ...filters } = { ...query, period };
+  const getUserNpcKills = (userId: string, query: GetUserNpcKillsDto) =>
+    Effect.gen(function* () {
+      const limit = query.limit ?? DEFAULT_PAGE_SIZE;
+      const period = resolveKillStatsPeriod(query.period);
+      const periodStart = yield* currentStatsPeriodStart(period);
+      const { cursor, limit: _limit, ...filters } = { ...query, period };
 
-    return decodeNpcKillPageCursor(cursor, filters).pipe(
-      Effect.flatMap((after) =>
-        cached(
-          userId,
-          buildKillQueryCacheKey("user-npcs", userId, {
-            filters,
-            after,
-            limit,
-          }),
-          "user npc kills",
-          UserNpcKillsResponse,
-          protect(
-            "kills.user-npcs.query",
-            Effect.suspend(() => {
-              const source = userKillSource(periodStart);
+      return yield* decodeNpcKillPageCursor(cursor, filters).pipe(
+        Effect.flatMap((after) =>
+          cached(
+            userId,
+            buildKillQueryCacheKey("user-npcs", userId, {
+              filters,
+              after,
+              limit,
+            }),
+            "user npc kills",
+            UserNpcKillsResponse,
+            protect(
+              "kills.user-npcs.query",
+              Effect.suspend(() => {
+                const source = userKillSource(periodStart);
 
-              return readNpcKillPage(
-                database,
-                source,
-                statsCondition(source, userId, query),
-                {
-                  limit: limit + 1,
-                  after,
-                  sortBy: query.sortBy,
-                  sortOrder: query.sortOrder,
-                },
-              );
-            }).pipe(
-              Effect.map(({ npcs, total }) => ({
-                ...toNpcKillPage(npcs, limit, filters, query.sortBy),
-                total,
-              })),
+                return readNpcKillPage(
+                  database,
+                  source,
+                  statsCondition(source, userId, query),
+                  {
+                    limit: limit + 1,
+                    after,
+                    sortBy: query.sortBy,
+                    sortOrder: query.sortOrder,
+                  },
+                );
+              }).pipe(
+                Effect.map(({ npcs, total }) => ({
+                  ...toNpcKillPage(npcs, limit, filters, query.sortBy),
+                  total,
+                })),
+              ),
             ),
           ),
         ),
-      ),
-    );
-  };
+      );
+    });
 
   const getUserKillCharacters = (userId: string) =>
     cached(

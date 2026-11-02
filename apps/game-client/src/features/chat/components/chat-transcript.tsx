@@ -1,7 +1,4 @@
-import { ScrollArea as BaseScrollArea } from "@base-ui/react/scroll-area";
-import { ScrollBar } from "@/components/ui/scroll-bar";
 import {
-  MessageScroller,
   useMessageScroller,
   useMessageScrollerScrollable,
   useMessageScrollerVisibility,
@@ -24,18 +21,16 @@ import type {
   MemberSummaryResponseDtoOutput as GuildMember,
 } from "@lootlog/client/main";
 import { EmptyState } from "@/components/empty-state";
-import { ScrollToLatestButton } from "@/components/common/scroll-to-latest-button";
 import type { useChatGuildData } from "../hooks/use-chat-guild-data";
 import {
   getMessageRows,
   getViewportPosition,
-  useTranscriptFollow,
 } from "../hooks/use-transcript-follow";
 import type { ChatRenderableMessage } from "../chat.helpers";
-import { getChatDensityStyle } from "../chat-density";
 import { subscribeToChatScrollToMessage } from "../chat-scroll-to-message";
 import { ChatTranscriptPopups } from "./chat-transcript-popups";
 import { ChatTranscriptRow } from "./chat-transcript-row";
+import { ChatTranscriptViewport } from "./chat-transcript-viewport";
 
 export type ChatScrollPosition = {
   atEnd: boolean;
@@ -96,9 +91,6 @@ export const ChatTranscript = ({
   const { end } = useMessageScrollerScrollable();
   const { visibleMessageIds } = useMessageScrollerVisibility();
   const viewport = useRef<HTMLDivElement>(null);
-
-  const { holdPosition, resumeAtEnd, resumeOnWheel } =
-    useTranscriptFollow(viewport);
 
   const [highlightedMessageId, setHighlightedMessageId] = useState<
     string | null
@@ -224,84 +216,55 @@ export const ChatTranscript = ({
   );
 
   return (
-    <BaseScrollArea.Root
-      render=<MessageScroller.Root />
-      className="ll:relative ll:flex ll:size-full ll:min-h-0 ll:flex-col ll:overflow-hidden"
+    <ChatTranscriptViewport
+      viewport={viewport}
+      ariaLabel={ariaLabel}
+      latestLabel={t("navigation.latest")}
+      fontScalePercent={appearance.fontScalePercent}
+      empty={
+        isEmpty ? (
+          <EmptyState
+            description={emptyStateDescription}
+            title={emptyStateTitle}
+          />
+        ) : null
+      }
+      selectableText
+      onScroll={savePosition}
+      popups={ChatTranscriptPopups}
     >
-      {isEmpty ? (
-        <EmptyState
-          description={emptyStateDescription}
-          title={emptyStateTitle}
-        />
-      ) : null}
-      <BaseScrollArea.Viewport
-        render=<MessageScroller.Viewport />
-        ref={viewport}
-        aria-label={ariaLabel}
-        hidden={isEmpty}
-        data-chat-viewport
-        data-scroll-fade-viewport
-        data-ll-draggable="false"
-        className="ll:scroll-fade-y ll:scroll-fade-4 ll:size-full ll:min-h-0 ll:overflow-y-auto ll:overscroll-contain ll:rounded ll:outline-none ll:focus-visible:ring-1 ll:focus-visible:ring-inset ll:focus-visible:ring-ring"
-        style={{ overflowAnchor: "auto", overflowX: "hidden" }}
-        onPointerDown={holdPosition}
-        onScroll={() => {
-          resumeAtEnd();
-          savePosition();
-        }}
-        onWheel={resumeOnWheel}
-      >
-        <ChatTranscriptPopups>
-          <BaseScrollArea.Content
-            render=<MessageScroller.Content />
-            role="list"
-            aria-live="off"
-            className="ll-chat-message-list ll:flex ll:h-max ll:min-h-full ll:w-full ll:min-w-0 ll:flex-col"
-            style={getChatDensityStyle(appearance.fontScalePercent)}
-          >
-            {renderables.map((row) => {
-              const message = row.kind === "date-divider" ? null : row.message;
+      {renderables.map((row) => {
+        const message = row.kind === "date-divider" ? null : row.message;
 
-              return (
-                <ChatTranscriptRow
-                  key={row.key}
-                  row={row}
-                  highlighted={
-                    isActive &&
-                    message !== null &&
-                    message.id === highlightedMessageId
-                  }
-                  appearance={appearance}
-                  npcTypeColors={npcTypeColors}
-                  all={selectedGuildId === "all"}
-                  guildName={
-                    message ? guildNamesById[message.guildId] : undefined
-                  }
-                  member={
-                    message
-                      ? membersByGuildId[message.guildId]?.[message.senderId]
-                      : undefined
-                  }
-                  mentionContext={
-                    message
-                      ? mentionContextsByGuildId[message.guildId]
-                      : undefined
-                  }
-                  isDeleting={
-                    message
-                      ? (deletingMessageIds?.has(message.id) ?? false)
-                      : false
-                  }
-                  onReplyToMessage={onReplyToMessage}
-                  onDeleteMessage={onDeleteMessage}
-                />
-              );
-            })}
-          </BaseScrollArea.Content>
-        </ChatTranscriptPopups>
-      </BaseScrollArea.Viewport>
-      <ScrollBar />
-      <ScrollToLatestButton label={t("navigation.latest")} />
-    </BaseScrollArea.Root>
+        return (
+          <ChatTranscriptRow
+            key={row.key}
+            row={row}
+            highlighted={
+              isActive &&
+              message !== null &&
+              message.id === highlightedMessageId
+            }
+            appearance={appearance}
+            npcTypeColors={npcTypeColors}
+            all={selectedGuildId === "all"}
+            guildName={message ? guildNamesById[message.guildId] : undefined}
+            member={
+              message
+                ? membersByGuildId[message.guildId]?.[message.senderId]
+                : undefined
+            }
+            mentionContext={
+              message ? mentionContextsByGuildId[message.guildId] : undefined
+            }
+            isDeleting={
+              message ? (deletingMessageIds?.has(message.id) ?? false) : false
+            }
+            onReplyToMessage={onReplyToMessage}
+            onDeleteMessage={onDeleteMessage}
+          />
+        );
+      })}
+    </ChatTranscriptViewport>
   );
 };

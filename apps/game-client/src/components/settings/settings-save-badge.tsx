@@ -1,15 +1,14 @@
 import { cn } from "cn";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import type { CSSProperties, FC } from "react";
-
-export type SettingsSaveBadgeStatus = "saving" | "saved" | "error";
+import type { SettingsSaveMarkStatus } from "@/features/settings/persistence/settings-save-status.store";
 
 /** Contextual icon entrance: scale 0.25, blur 4px, opacity 0 -> rest. */
 export const SETTINGS_SAVE_ICON_ENTER_CLASS_NAME =
   "ll:flex ll:items-center ll:animate-in ll:fade-in-0 ll:zoom-in-[0.25] ll:blur-in-[4px] ll:duration-long ll:ease-enter";
 
 type SettingsSaveBadgeProps = {
-  status: SettingsSaveBadgeStatus;
+  status: SettingsSaveMarkStatus;
   className?: string;
   /** e.g. an `animationDelay` to stagger badges that appear together. */
   style?: CSSProperties;

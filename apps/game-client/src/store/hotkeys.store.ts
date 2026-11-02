@@ -86,98 +86,43 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
       alt: key !== "",
     },
   })),
-  {
-    action: "toggle-command",
-    labelKey: "settings.hotkeys.actions.toggle-command.label",
-    category: "communication",
+  // Shift+key shortcuts labelled from `settings.hotkeys.actions.<action>`.
+  ...(
+    [
+      { action: "toggle-command", category: "communication", key: "S" },
+      { action: "toggle-chat", category: "communication", key: "C" },
+      { action: "toggle-settings", category: "windows", key: "O" },
+      { action: "toggle-timers", category: "windows", key: "T" },
+      { action: "toggle-online-players", category: "windows", key: "P" },
+      { action: "toggle-quick-access", category: "windows", key: "Q" },
+      {
+        action: "invite-all",
+        category: "party",
+        key: "I",
+        hasDescription: true,
+      },
+    ] satisfies {
+      action: HotkeyAction;
+      category: HotkeyCategory;
+      key: string;
+      hasDescription?: boolean;
+    }[]
+  ).map(({ action, category, key, hasDescription }): HotkeyActionConfig => ({
+    action,
+    labelKey: `settings.hotkeys.actions.${action}.label`,
+    ...(hasDescription && {
+      descriptionKey: `settings.hotkeys.actions.${action}.description`,
+    }),
+    category,
     scope: "global",
     defaultBinding: {
       type: "keyboard",
-      key: "S",
+      key,
       shift: true,
       ctrl: false,
       alt: false,
     },
-  },
-  {
-    action: "toggle-chat",
-    labelKey: "settings.hotkeys.actions.toggle-chat.label",
-    category: "communication",
-    scope: "global",
-    defaultBinding: {
-      type: "keyboard",
-      key: "C",
-      shift: true,
-      ctrl: false,
-      alt: false,
-    },
-  },
-  {
-    action: "toggle-settings",
-    labelKey: "settings.hotkeys.actions.toggle-settings.label",
-    category: "windows",
-    scope: "global",
-    defaultBinding: {
-      type: "keyboard",
-      key: "O",
-      shift: true,
-      ctrl: false,
-      alt: false,
-    },
-  },
-  {
-    action: "toggle-timers",
-    labelKey: "settings.hotkeys.actions.toggle-timers.label",
-    category: "windows",
-    scope: "global",
-    defaultBinding: {
-      type: "keyboard",
-      key: "T",
-      shift: true,
-      ctrl: false,
-      alt: false,
-    },
-  },
-  {
-    action: "toggle-online-players",
-    labelKey: "settings.hotkeys.actions.toggle-online-players.label",
-    category: "windows",
-    scope: "global",
-    defaultBinding: {
-      type: "keyboard",
-      key: "P",
-      shift: true,
-      ctrl: false,
-      alt: false,
-    },
-  },
-  {
-    action: "toggle-quick-access",
-    labelKey: "settings.hotkeys.actions.toggle-quick-access.label",
-    category: "windows",
-    scope: "global",
-    defaultBinding: {
-      type: "keyboard",
-      key: "Q",
-      shift: true,
-      ctrl: false,
-      alt: false,
-    },
-  },
-  {
-    action: "invite-all",
-    labelKey: "settings.hotkeys.actions.invite-all.label",
-    descriptionKey: "settings.hotkeys.actions.invite-all.description",
-    category: "party",
-    scope: "global",
-    defaultBinding: {
-      type: "keyboard",
-      key: "I",
-      shift: true,
-      ctrl: false,
-      alt: false,
-    },
-  },
+  })),
   {
     action: "toggle-detector-auto-send",
     labelKey: "settings.hotkeys.actions.toggle-detector-auto-send.label",
@@ -410,27 +355,7 @@ export const isDefaultBinding = (
 ): boolean => {
   const config = HOTKEY_ACTIONS.find((c) => c.action === action);
 
-  if (!config) return false;
-  const defaultBinding = config.defaultBinding;
-
-  if (
-    binding.type !== defaultBinding.type ||
-    binding.shift !== defaultBinding.shift ||
-    binding.ctrl !== defaultBinding.ctrl ||
-    binding.alt !== defaultBinding.alt
-  ) {
-    return false;
-  }
-
-  if (binding.type === "keyboard" && defaultBinding.type === "keyboard") {
-    return binding.key === defaultBinding.key;
-  }
-
-  return (
-    binding.type === "mouse" &&
-    defaultBinding.type === "mouse" &&
-    binding.button === defaultBinding.button
-  );
+  return config !== undefined && isEqual(binding, config.defaultBinding);
 };
 
 /** Binding as key caps: modifiers first, then the key or mouse button. */

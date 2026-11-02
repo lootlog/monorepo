@@ -42,6 +42,20 @@ const ExtensionRequestSchema = Schema.Union([
 
 export type ExtensionRequest = typeof ExtensionRequestSchema.Type;
 
+const ExtensionHttpResponseSchema = Schema.Struct({
+  status: Schema.Int.check(Schema.isBetween({ minimum: 200, maximum: 599 })),
+  statusText: Schema.String,
+  headers: Schema.Record(Schema.String, Schema.String),
+  body: Schema.String,
+});
+
+/** What the background returns for an `http` request. */
+export type ExtensionHttpResponse = typeof ExtensionHttpResponseSchema.Type;
+
+export const decodeExtensionHttpResponse = Schema.decodeUnknownSync(
+  ExtensionHttpResponseSchema,
+);
+
 /**
  * Requests cross from the page into the extension, so unknown keys (and
  * header names over the key limit) are rejected rather than stripped.

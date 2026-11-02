@@ -18,7 +18,7 @@ const passthrough: KillQueryCache = {
   getOrSet: (_key, _schema, load) => load,
 };
 
-const policy = createAccessPolicy({ capabilities: [Permission.ADMIN] });
+const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });
 
 describe("guild kill rankings", () => {
   it("return their documented default size when the query omits a limit", async () => {

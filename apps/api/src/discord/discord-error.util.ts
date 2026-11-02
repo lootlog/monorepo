@@ -128,7 +128,10 @@ export function toDiscordRequestError(error: unknown): Error {
   }
 
   if (status !== null) {
-    return new DependencyUnavailableError({ code: "DISCORD_HTTP_ERROR" });
+    return new DependencyUnavailableError({
+      code: "DISCORD_HTTP_ERROR",
+      details: { status },
+    });
   }
 
   return new DependencyUnavailableError({ code: "DISCORD_REQUEST_FAILED" });

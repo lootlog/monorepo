@@ -20,7 +20,6 @@ type NotificationMuteMenuProps = {
   notification: StoredNotification;
   senderName: string;
   isReady: boolean;
-  isPending: boolean;
   mutes: NotificationMutes;
   onUpdateMutes: (mutes: NotificationMutesPatch) => void;
   onOpenChange?: (open: boolean) => void;
@@ -31,7 +30,6 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
   notification,
   senderName,
   isReady,
-  isPending,
   mutes,
   onUpdateMutes,
   onOpenChange,
@@ -42,7 +40,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
   const muteButtonRef = useRef<HTMLButtonElement>(null);
   const mutedNpc = createMutedNpcPreference(notification);
   const mutedPlayer = createMutedPlayerPreference(notification, senderName);
-  const isDisabled = !isReady || isPending;
+  const isDisabled = !isReady;
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);

@@ -383,3 +383,53 @@ it("keeps an accepted alert sent when chat publishing fails", async () => {
   ]);
   expect(notify).toHaveBeenCalledTimes(1);
 });
+
+it("starts the cooldown without undoing detection changes made while the alert was sending", async () => {
+  const response = Promise.withResolvers<Response>();
+
+  vi.stubGlobal(
+    "fetch",
+    (input: string | URL | Request, init?: RequestInit) => {
+      const request = new Request(input, init);
+
+      return new URL(request.url).pathname === "/messaging"
+        ? response.promise
+        : Promise.resolve(Response.json({}, { status: 503 }));
+    },
+  );
+  onTestFinished(() => {
+    vi.unstubAllGlobals();
+  });
+  onTestFinished(
+    configureApiClients({ main: { baseUrl: "https://api.test" } }),
+  );
+  setTestRuntimeGame();
+  vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  captureRuntimeMessages();
+
+  mountNpcs([createNpc(1)], false, undefined, {
+    ...defaultDetectorSettings,
+    routingRules: [
+      { id: "rule-1", minLevel: 1, maxLevel: 500, guildIds: ["guild-1"] },
+    ],
+  });
+
+  fireEvent.click(screen.getByRole("button", { name: "Komunikat" }));
+  act(() =>
+    useNpcDetectorStore
+      .getState()
+      .setNpcStates([{ npcId: 1, npc: { x: 33, y: 44 } }]),
+  );
+  response.resolve(
+    Response.json({ notificationId: "alert-1", guildIds: ["guild-1"] }),
+  );
+
+  expect(await screen.findByRole("button", { name: "Wysłano" })).toBeDisabled();
+  expect(useNpcDetectorStore.getState().npcs).toEqual([
+    expect.objectContaining({
+      x: 33,
+      y: 44,
+      notificationSentAt: expect.any(Number),
+    }),
+  ]);
+});

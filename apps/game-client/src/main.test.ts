@@ -70,7 +70,7 @@ describe("game client startup", () => {
     second.dispose();
     expect(unmount).toHaveBeenCalledOnce();
     expect(queryClient.getQueryData(["private-test"])).toBeUndefined();
-    expect(useChatStore.getState().replyDraft).toBeNull();
+    expect(useChatStore.getState().replyDraftsByGuild).toEqual({});
     expect(window.lootlogGameClientApi).toBeUndefined();
     expect(document.getElementById("lootlog-root")).toBeNull();
     const restarted = bootstrapGameClient();

@@ -1,6 +1,8 @@
 // The "Gracze na mapie" window exists once per game session; its native list
 // is rebuilt by the game, so Lootlog content lives in a sibling after it.
-const PLAYER_LIST_SELECTOR = ".whoishere-window .player-list";
+const WINDOW_SELECTOR = ".whoishere-window";
+
+const PLAYER_LIST_SELECTOR = `${WINDOW_SELECTOR} .player-list`;
 
 const AIR_TAG_HOST_CLASS = "ll-who-is-here-air-tags";
 
@@ -64,6 +66,30 @@ export function isWhoIsHereOpen(): boolean {
   } catch {
     return true;
   }
+}
+
+/**
+ * Calls back when the window opens or closes: Window.js `show` and `hide`
+ * set its inline `display`. Dragging it moves it through the same attribute,
+ * so only a change of the open state is reported.
+ */
+export function subscribeWhoIsHereVisibility(onChange: () => void): () => void {
+  const element = document.querySelector(WINDOW_SELECTOR);
+
+  if (!element) return () => {};
+
+  let open = isWhoIsHereOpen();
+
+  const observer = new MutationObserver(() => {
+    if (isWhoIsHereOpen() === open) return;
+
+    open = !open;
+    onChange();
+  });
+
+  observer.observe(element, { attributes: true, attributeFilter: ["style"] });
+
+  return () => observer.disconnect();
 }
 
 /** The custom scrollbar only measures its content when told to. */

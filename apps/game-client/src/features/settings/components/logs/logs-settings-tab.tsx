@@ -64,8 +64,7 @@ export const LogsSettingsTab: FC = () => {
 
   const logStatusOptions = LOG_STATUS_VALUES.map((value) => ({
     value,
-    label:
-      value === "all" ? t("settings.logs.statuses.all") : getStatusLabel(value),
+    label: getStatusLabel(value),
   }));
 
   const actionTypeOptions = [

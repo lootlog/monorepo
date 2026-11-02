@@ -1,11 +1,10 @@
-import { getSocket } from "@/lib/socket";
-import { useGlobalStore } from "@/store/global.store";
-import { GatewayEvent } from "@/config/gateway";
+import { publishPlayerPresence } from "@/lib/socket";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { mapPingController } from "@/features/pings/map-ping-controller";
 import { pingInteractionController } from "@/features/pings/ping-interaction-controller";
 import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
+import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { useGameStore } from "@/store/game.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
 
@@ -39,22 +38,15 @@ export class MapChangeProcessor {
 
     if (previousMapId !== null) {
       useNpcDetectorStore.getState().clearNpcs();
+      npcsDetectionProcessor.handleMapChange();
     }
 
     useDialogStore.getState().clearNpcContext();
     pingInteractionController.cancel();
     mapPingController.clear();
 
-    const { connected, joinedGuilds } = useGlobalStore.getState().socketState;
+    publishPlayerPresence();
 
-    if (connected && joinedGuilds.length > 0) {
-      const socket = getSocket();
-      socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
-        mapId,
-        mapName,
-      });
-    }
-
-    airTagRuntime.handleMapChange(mapId, mapName);
+    airTagRuntime.handleMapChange(mapId);
   }
 }

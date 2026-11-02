@@ -2,8 +2,8 @@ import { Input } from "@/components/ui/input";
 import { SettingsSliderField } from "@/components/settings/settings-slider-field";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { SettingsColorHexField } from "@/components/settings/settings-color-hex-field";
 import { alphaToHex, type ColorEditData } from "./color-utils";
-import { TimerColorHexField } from "./timer-color-hex-field";
 import { TimerColorPreviewChip } from "./timer-color-preview-chip";
 
 type TimerColorEditorFieldsProps = {
@@ -69,7 +69,7 @@ export const TimerColorEditorFields: FC<TimerColorEditorFieldsProps> = ({
       </div>
 
       <div className="ll:grid ll:grid-cols-2 ll:gap-2">
-        <TimerColorHexField
+        <SettingsColorHexField
           id={`${idPrefix}-border`}
           label={t("settings.timers.colors.borderLabel")}
           hexLabel={t("settings.timers.colors.borderHexAria")}
@@ -77,7 +77,7 @@ export const TimerColorEditorFields: FC<TimerColorEditorFieldsProps> = ({
           onChange={(borderColor) => onDraftChange({ ...draft, borderColor })}
           onCommit={(borderColor) => onCommit({ ...draft, borderColor })}
         />
-        <TimerColorHexField
+        <SettingsColorHexField
           id={`${idPrefix}-background`}
           label={t("settings.timers.colors.backgroundLabel")}
           hexLabel={t("settings.timers.colors.backgroundHexAria")}

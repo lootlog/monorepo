@@ -115,24 +115,59 @@ export const apiRabbitQueues = [
     exchange: RabbitExchange.DEAD_LETTER,
   }),
   queue(
-    "backend-discord-guild-channels-synced",
+    Queue.DISCORD_GUILD_CHANNELS_SYNCED,
     RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNCED,
   ),
   queue(
-    "backend-discord-guild-channel-upserted",
+    Queue.DISCORD_GUILD_CHANNELS_SYNCED_DLQ,
+    RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNCED_DLQ,
+    {
+      exchange: RabbitExchange.DEAD_LETTER,
+    },
+  ),
+  queue(
+    Queue.DISCORD_GUILD_CHANNEL_UPSERTED,
     RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED,
   ),
   queue(
-    "backend-discord-guild-channel-deleted",
+    Queue.DISCORD_GUILD_CHANNEL_UPSERTED_DLQ,
+    RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED_DLQ,
+    {
+      exchange: RabbitExchange.DEAD_LETTER,
+    },
+  ),
+  queue(
+    Queue.DISCORD_GUILD_CHANNEL_DELETED,
     RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
   ),
   queue(
-    "backend-discord-guild-channels-sync-failed",
+    Queue.DISCORD_GUILD_CHANNEL_DELETED_DLQ,
+    RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED_DLQ,
+    {
+      exchange: RabbitExchange.DEAD_LETTER,
+    },
+  ),
+  queue(
+    Queue.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
     RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
   ),
   queue(
-    "backend-discord-guild-sync-state-updated",
+    Queue.DISCORD_GUILD_CHANNELS_SYNC_FAILED_DLQ,
+    RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED_DLQ,
+    {
+      exchange: RabbitExchange.DEAD_LETTER,
+    },
+  ),
+  queue(
+    Queue.DISCORD_GUILD_SYNC_STATE_UPDATED,
     RabbitRoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED,
+  ),
+  queue(
+    Queue.DISCORD_GUILD_SYNC_STATE_UPDATED_DLQ,
+    RabbitRoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED_DLQ,
+    {
+      exchange: RabbitExchange.DEAD_LETTER,
+    },
   ),
   queue(
     Queue.PRESENCE_COVERAGE_CHECK,
@@ -144,12 +179,26 @@ export const apiRabbitQueues = [
     { exchange: RabbitExchange.DEAD_LETTER },
   ),
   queue(
-    "backend-notifications-timer-updated",
+    Queue.NOTIFICATIONS_TIMER_UPDATED,
     RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
   ),
   queue(
-    "backend-notifications-timer-deleted",
+    Queue.NOTIFICATIONS_TIMER_UPDATED_DLQ,
+    RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED_DLQ,
+    {
+      exchange: RabbitExchange.DEAD_LETTER,
+    },
+  ),
+  queue(
+    Queue.NOTIFICATIONS_TIMER_DELETED,
     RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
+  ),
+  queue(
+    Queue.NOTIFICATIONS_TIMER_DELETED_DLQ,
+    RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED_DLQ,
+    {
+      exchange: RabbitExchange.DEAD_LETTER,
+    },
   ),
   queue(
     Queue.NOTIFICATIONS_LOOT_CREATED,
@@ -166,12 +215,26 @@ export const apiRabbitQueues = [
     { exchange: RabbitExchange.DEAD_LETTER },
   ),
   queue(
-    "backend-notifications-delivery-result",
+    Queue.NOTIFICATIONS_DELIVERY_RESULT,
     RabbitRoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
   ),
   queue(
-    "backend-notifications-discord-guild-channel-deleted",
+    Queue.NOTIFICATIONS_DELIVERY_RESULT_DLQ,
+    RabbitRoutingKey.NOTIFICATIONS_DELIVERY_RESULT_DLQ,
+    {
+      exchange: RabbitExchange.DEAD_LETTER,
+    },
+  ),
+  queue(
+    Queue.NOTIFICATIONS_DISCORD_GUILD_CHANNEL_DELETED,
     RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
+  ),
+  queue(
+    Queue.NOTIFICATIONS_DISCORD_GUILD_CHANNEL_DELETED_DLQ,
+    RabbitRoutingKey.NOTIFICATIONS_DISCORD_GUILD_CHANNEL_DELETED_DLQ,
+    {
+      exchange: RabbitExchange.DEAD_LETTER,
+    },
   ),
 ] as const satisfies ReadonlyArray<RabbitQueueDefinition>;
 
@@ -182,6 +245,13 @@ const rabbitRetryPolicy = (
   strategy: "retry",
   maxRetries: 3,
   retryRoutingKey,
+  deadLetterRoutingKey,
+});
+
+const deadLetter = (
+  deadLetterRoutingKey: RabbitRoutingKeyName,
+): Extract<FailurePolicy, { strategy: "dead-letter" }> => ({
+  strategy: "dead-letter",
   deadLetterRoutingKey,
 });
 
@@ -228,6 +298,36 @@ export const apiRabbitFailurePolicies = {
     strategy: "dead-letter",
     deadLetterRoutingKey: RabbitRoutingKey.PRESENCE_COVERAGE_CHECK_DLQ,
   },
+  // Discord channel and sync facts describe the latest state, and timer
+  // notification facts rebuild or cancel jobs from it, so a delayed retry could
+  // apply an older fact over a newer one. They retry in place, then dead-letter.
+  discordGuildChannelsSynced: deadLetter(
+    RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNCED_DLQ,
+  ),
+  discordGuildChannelUpserted: deadLetter(
+    RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED_DLQ,
+  ),
+  discordGuildChannelDeleted: deadLetter(
+    RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED_DLQ,
+  ),
+  discordGuildChannelsSyncFailed: deadLetter(
+    RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED_DLQ,
+  ),
+  discordGuildSyncStateUpdated: deadLetter(
+    RabbitRoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED_DLQ,
+  ),
+  notificationsTimerUpdated: deadLetter(
+    RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED_DLQ,
+  ),
+  notificationsTimerDeleted: deadLetter(
+    RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED_DLQ,
+  ),
+  notificationsDeliveryResult: deadLetter(
+    RabbitRoutingKey.NOTIFICATIONS_DELIVERY_RESULT_DLQ,
+  ),
+  notificationsDiscordGuildChannelDeleted: deadLetter(
+    RabbitRoutingKey.NOTIFICATIONS_DISCORD_GUILD_CHANNEL_DELETED_DLQ,
+  ),
   lootCreated: rabbitRetryPolicy(
     RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED_RETRY,
     RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED_DLQ,

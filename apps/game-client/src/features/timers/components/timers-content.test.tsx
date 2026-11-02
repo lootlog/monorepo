@@ -116,8 +116,6 @@ it("lets users retry an initial request failure", async () => {
 it("renders real controls and timer tiles while retaining scroll and window drag behavior", async () => {
   const timer = {
     ...createTimerFixture(),
-    minTimeLeft: 60_000,
-    maxTimeLeft: 120_000,
   };
 
   const { onPointerDown } = mountContent({ sortedTimers: [timer] });

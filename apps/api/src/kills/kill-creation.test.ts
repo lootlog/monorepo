@@ -14,7 +14,10 @@ import {
   guildKillActivityTable,
   guildKillBucketTable,
   guildKillTotalTable,
+  memberToRoleTable,
+  roleTable,
 } from "#src/database/drizzle/schema";
+import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import { applicationLogger as logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
@@ -470,6 +473,112 @@ it("does not release a replacement claim when a failed write outlives its claim"
     expect(
       await boundary.run(database.select().from(userKillTotalTable)),
     ).toEqual([]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+it("lets another member count a guild kill whose first guild write failed", async () => {
+  const boundary = await createDatabaseBoundary();
+  const claims = new Map<string, string>();
+
+  const cache: KillCreationCache = {
+    invalidateScopes: () => Effect.succeed(0),
+    setNx: (key, token) =>
+      Effect.sync(() => {
+        if (claims.has(key)) return false;
+        claims.set(key, token);
+
+        return true;
+      }),
+    deleteIfValue: (key, token) =>
+      Effect.sync(() => {
+        if (claims.get(key) === token) claims.delete(key);
+      }),
+  };
+
+  try {
+    const database = boundary.database;
+    await boundary.run(
+      database
+        .insert(guildTable)
+        .values(createGuildFixture({ id: "123", ownerId: "discord-1" })),
+    );
+
+    for (const [id, discordId] of [
+      [1, "discord-1"],
+      [2, "discord-2"],
+    ] as const) {
+      await boundary.run(
+        database.insert(memberTable).values(
+          createMemberFixture({
+            id,
+            guildId: "123",
+            userId: discordId,
+            globalUserId: `user-${id}`,
+          }),
+        ),
+      );
+      await boundary.run(
+        database.insert(userCharactersLootlogSettingsTable).values({
+          userId: discordId,
+          accountId: `account-${id}`,
+          characterId: `character-${id}`,
+          catchingGuildIds: ["123"],
+          updatedAt: new Date(),
+        }),
+      );
+    }
+
+    await boundary.run(
+      database.insert(roleTable).values({
+        id: "writers",
+        guildId: "123",
+        name: "Writers",
+        permissions: [Permission.LOOTLOG_LOOTS_WRITE],
+        updatedAt: new Date(0),
+      }),
+    );
+    await boundary.run(
+      database.insert(memberToRoleTable).values({ A: 2, B: "writers" }),
+    );
+
+    const report = (id: 1 | 2) =>
+      boundary.run(
+        makeKillCreation(
+          database,
+          cache,
+          logger,
+        )(`discord-${id}`, {
+          ...payload,
+          accountId: `account-${id}`,
+          characterId: `character-${id}`,
+        }),
+      );
+
+    await boundary.run(
+      database.execute(
+        sql`ALTER TABLE ${guildKillBucketTable} ADD CONSTRAINT fail_write CHECK (false)`,
+      ),
+    );
+    await report(1);
+    await boundary.run(
+      database.execute(
+        sql`ALTER TABLE ${guildKillBucketTable} DROP CONSTRAINT fail_write`,
+      ),
+    );
+    await report(2);
+
+    expect(
+      (await boundary.run(database.select().from(guildKillTotalTable))).map(
+        ({ kills }) => kills,
+      ),
+    ).toEqual([1]);
+    expect(
+      (await boundary.run(database.select().from(memberKillTotalTable))).map(
+        ({ kills }) => kills,
+      ),
+    ).toEqual([1, 1]);
   } finally {
     await boundary.dispose();
   }

@@ -361,21 +361,16 @@ export class MapPingController {
     character?: RuntimeCharacterRef,
   ) {
     const id = `local-${crypto.randomUUID()}`;
-    this.retainCapacityFor(id);
-    this.activePings.set(id, {
+    this.add({
       id,
       mapId,
       character,
-      ...getPingStyle(type, character),
       x: tile.x,
       y: tile.y,
       senderName,
-      startedAt: this.now(),
       type,
       typeLabel,
     });
-    this.ensureDrawRegistration();
-    this.scheduleExpiry();
 
     return id;
   }
@@ -385,22 +380,16 @@ export class MapPingController {
       return false;
     }
 
-    this.retainCapacityFor(event.pingId);
-    const character = getMapPingCharacter(event);
-    this.activePings.set(event.pingId, {
+    this.add({
       id: event.pingId,
       mapId: event.mapId,
-      character,
-      ...getPingStyle(event.type, character),
+      character: getMapPingCharacter(event),
       x: event.x,
       y: event.y,
       senderName: event.sender.name,
-      startedAt: this.now(),
       type: event.type,
       typeLabel,
     });
-    this.ensureDrawRegistration();
-    this.scheduleExpiry();
 
     return true;
   }
@@ -864,6 +853,29 @@ export class MapPingController {
     if (document.fonts.status === "loaded") ping.plateWidths = widths;
 
     return widths;
+  }
+
+  private add(
+    ping: Pick<
+      ActiveMapPing,
+      | "id"
+      | "mapId"
+      | "character"
+      | "x"
+      | "y"
+      | "senderName"
+      | "type"
+      | "typeLabel"
+    >,
+  ) {
+    this.retainCapacityFor(ping.id);
+    this.activePings.set(ping.id, {
+      ...ping,
+      ...getPingStyle(ping.type, ping.character),
+      startedAt: this.now(),
+    });
+    this.ensureDrawRegistration();
+    this.scheduleExpiry();
   }
 
   private pruneExpired(now = this.now()) {

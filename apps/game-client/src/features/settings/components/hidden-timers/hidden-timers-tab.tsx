@@ -10,7 +10,9 @@ import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { SettingsNoLootlogEmptyState } from "@/features/settings/components/shared/settings-no-lootlog-empty-state";
 
 export const HiddenTimersTab = () => {
-  const { generalConfig } = useTimersStore();
+  const timersGrouping = useTimersStore(
+    (state) => state.generalConfig.timersGrouping,
+  );
 
   const {
     guildsQuery: { isFetched },
@@ -26,7 +28,7 @@ export const HiddenTimersTab = () => {
 
   let selectedGuildId = "";
 
-  if (!generalConfig.timersGrouping && isFetched) {
+  if (!timersGrouping && isFetched) {
     selectedGuildId = requestedGuildExists
       ? requestedGuildId
       : (guilds[0]?.id ?? "");
@@ -34,7 +36,7 @@ export const HiddenTimersTab = () => {
 
   return (
     <SettingsTabLayout>
-      {!generalConfig.timersGrouping ? (
+      {!timersGrouping ? (
         <SettingsSection title={t("settings.hiddenTimers.scopeTitle")}>
           {guilds.length > 0 ? (
             <SettingsRow

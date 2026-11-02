@@ -32,7 +32,7 @@ import {
 } from "./kill-query-support.js";
 import {
   fillKillTimeline,
-  getKillStatsPeriodStart,
+  currentStatsPeriodStart,
   getKillTimelineUnit,
   resolveKillStatsPeriod,
 } from "./kill-stats-period.js";
@@ -74,182 +74,185 @@ export const makeGuildKillQueries = (
     accessPolicy: AccessPolicy,
     roles: ReadonlyArray<KillQueryRole>,
     query: GetGuildKillStatsDto,
-  ) => {
-    const visibility = context(accessPolicy, roles);
-    const period = resolveKillStatsPeriod(query.period);
-    const periodStart = getKillStatsPeriodStart(period);
+  ) =>
+    Effect.gen(function* () {
+      const visibility = context(accessPolicy, roles);
+      const period = resolveKillStatsPeriod(query.period);
+      const periodStart = yield* currentStatsPeriodStart(period);
 
-    const filter = {
-      guildId,
-      ...(query.npcTypes && { npcType: { in: query.npcTypes } }),
-      ...(query.world && { world: query.world }),
-      ...buildNpcLevelFilter(query.npcLevelMin, query.npcLevelMax),
-      ...visibility.filter,
-      ...(periodStart && { periodStart: { gte: periodStart } }),
-    };
+      const filter = {
+        guildId,
+        ...(query.npcTypes && { npcType: { in: query.npcTypes } }),
+        ...(query.world && { world: query.world }),
+        ...buildNpcLevelFilter(query.npcLevelMin, query.npcLevelMax),
+        ...visibility.filter,
+        ...(periodStart && { periodStart: { gte: periodStart } }),
+      };
 
-    return protect(
-      "kills.guild-overview",
-      cachedKillQuery({
-        scopes: [`kill-stats:guild:${guildId}`],
-        cache,
-        logger,
-        key: buildKillQueryCacheKey("guild-overview", guildId, {
-          query: { ...query, period },
-          visibility: visibility.cacheScope,
-        }),
-        label: "guild kill stats",
-        schema: GuildKillStatsResponse,
-        load: Effect.gen(function* () {
-          const timelineUnit = getKillTimelineUnit(period);
+      return yield* protect(
+        "kills.guild-overview",
+        cachedKillQuery({
+          scopes: [`kill-stats:guild:${guildId}`],
+          cache,
+          logger,
+          key: buildKillQueryCacheKey("guild-overview", guildId, {
+            query: { ...query, period },
+            visibility: visibility.cacheScope,
+          }),
+          label: "guild kill stats",
+          schema: GuildKillStatsResponse,
+          load: Effect.gen(function* () {
+            const timelineUnit = getKillTimelineUnit(period);
 
-          const [memberStats, guildSummary, timeline, hourlyWeekday] =
-            yield* Effect.all(
-              [
-                persistence.groupMemberStats(filter),
-                persistence.groupGuildSummaries(filter),
-                persistence.guildKillTimeline(filter, timelineUnit),
-                persistence.guildKillHourlyWeekday(filter),
-              ],
-              { concurrency: "unbounded" },
+            const [memberStats, guildSummary, timeline, hourlyWeekday] =
+              yield* Effect.all(
+                [
+                  persistence.groupMemberStats(filter),
+                  persistence.groupGuildSummaries(filter),
+                  persistence.guildKillTimeline(filter, timelineUnit),
+                  persistence.guildKillHourlyWeekday(filter),
+                ],
+                { concurrency: "unbounded" },
+              );
+
+            const now = yield* DateTime.nowAsDate;
+
+            const members = yield* persistence.findMembers([
+              ...new Set(memberStats.map((stat) => stat.memberId)),
+            ]);
+
+            const membersById = new Map(
+              members.map((member) => [member.id, member] as const),
             );
 
-          const now = yield* DateTime.nowAsDate;
+            const killsByType: Record<string, number> = {};
+            let guildUniqueKills = 0;
 
-          const members = yield* persistence.findMembers([
-            ...new Set(memberStats.map((stat) => stat.memberId)),
-          ]);
-
-          const membersById = new Map(
-            members.map((member) => [member.id, member] as const),
-          );
-
-          const killsByType: Record<string, number> = {};
-          let guildUniqueKills = 0;
-
-          for (const summary of guildSummary) {
-            const uniqueKills = summary._sum.uniqueKills ?? 0;
-            killsByType[summary.npcType] =
-              (killsByType[summary.npcType] ?? 0) + uniqueKills;
-            guildUniqueKills += uniqueKills;
-          }
-
-          const participationsByType: Record<string, number> = {};
-          let totalMemberParticipations = 0;
-
-          const ranking = new Map<
-            number,
-            {
-              member: MemberSummary;
-              totalParticipations: number;
-              participationsByType: Record<string, number>;
-            }
-          >();
-
-          for (const stat of memberStats) {
-            const memberKills = stat._sum.memberKills ?? 0;
-            participationsByType[stat.npcType] =
-              (participationsByType[stat.npcType] ?? 0) + memberKills;
-            totalMemberParticipations += memberKills;
-            const existing = ranking.get(stat.memberId);
-
-            if (existing) {
-              existing.totalParticipations += memberKills;
-              existing.participationsByType[stat.npcType] =
-                (existing.participationsByType[stat.npcType] ?? 0) +
-                memberKills;
-              continue;
+            for (const summary of guildSummary) {
+              const uniqueKills = summary._sum.uniqueKills ?? 0;
+              killsByType[summary.npcType] =
+                (killsByType[summary.npcType] ?? 0) + uniqueKills;
+              guildUniqueKills += uniqueKills;
             }
 
-            const member = membersById.get(stat.memberId);
+            const participationsByType: Record<string, number> = {};
+            let totalMemberParticipations = 0;
 
-            if (member) {
-              ranking.set(stat.memberId, {
-                member,
-                totalParticipations: memberKills,
-                participationsByType: { [stat.npcType]: memberKills },
-              });
+            const ranking = new Map<
+              number,
+              {
+                member: MemberSummary;
+                totalParticipations: number;
+                participationsByType: Record<string, number>;
+              }
+            >();
+
+            for (const stat of memberStats) {
+              const memberKills = stat._sum.memberKills ?? 0;
+              participationsByType[stat.npcType] =
+                (participationsByType[stat.npcType] ?? 0) + memberKills;
+              totalMemberParticipations += memberKills;
+              const existing = ranking.get(stat.memberId);
+
+              if (existing) {
+                existing.totalParticipations += memberKills;
+                existing.participationsByType[stat.npcType] =
+                  (existing.participationsByType[stat.npcType] ?? 0) +
+                  memberKills;
+                continue;
+              }
+
+              const member = membersById.get(stat.memberId);
+
+              if (member) {
+                ranking.set(stat.memberId, {
+                  member,
+                  totalParticipations: memberKills,
+                  participationsByType: { [stat.npcType]: memberKills },
+                });
+              }
             }
-          }
 
-          return {
-            overview: {
-              guildUniqueKills,
-              totalMemberParticipations,
-              killsByType,
-              participationsByType,
-            },
-            memberRanking: Array.from(ranking.values()).sort(
-              (left, right) =>
-                right.totalParticipations - left.totalParticipations,
-            ),
-            timeline: {
-              unit: timelineUnit,
-              untimedKills: periodStart
-                ? 0
-                : Math.max(
-                    0,
-                    guildUniqueKills - sum(timeline.map(({ kills }) => kills)),
-                  ),
-              points: fillKillTimeline(
-                timeline,
-                timelineUnit,
-                periodStart,
-                now,
+            return {
+              overview: {
+                guildUniqueKills,
+                totalMemberParticipations,
+                killsByType,
+                participationsByType,
+              },
+              memberRanking: Array.from(ranking.values()).sort(
+                (left, right) =>
+                  right.totalParticipations - left.totalParticipations,
               ),
-            },
-            hourlyWeekday,
-          };
+              timeline: {
+                unit: timelineUnit,
+                untimedKills: periodStart
+                  ? 0
+                  : Math.max(
+                      0,
+                      guildUniqueKills -
+                        sum(timeline.map(({ kills }) => kills)),
+                    ),
+                points: fillKillTimeline(
+                  timeline,
+                  timelineUnit,
+                  periodStart,
+                  now,
+                ),
+              },
+              hourlyWeekday,
+            };
+          }),
         }),
-      }),
-    );
-  };
+      );
+    });
 
   const getGuildTopNpcs = (
     guildId: string,
     accessPolicy: AccessPolicy,
     roles: ReadonlyArray<KillQueryRole>,
     query: GuildTopNpcsQuery,
-  ) => {
-    const visibility = context(accessPolicy, roles);
-    const limit = query.limit ?? GUILD_TOP_NPCS_DEFAULT_LIMIT;
-    const period = resolveKillStatsPeriod(query.period);
-    const periodStart = getKillStatsPeriodStart(period);
+  ) =>
+    Effect.gen(function* () {
+      const visibility = context(accessPolicy, roles);
+      const limit = query.limit ?? GUILD_TOP_NPCS_DEFAULT_LIMIT;
+      const period = resolveKillStatsPeriod(query.period);
+      const periodStart = yield* currentStatsPeriodStart(period);
 
-    return protect(
-      "kills.guild-top-npcs",
-      cachedKillQuery({
-        scopes: [`kill-stats:guild:${guildId}`],
-        cache,
-        logger,
-        key: buildKillQueryCacheKey("guild-top-npcs", guildId, {
-          query: { ...query, limit, period },
-          visibility: visibility.cacheScope,
+      return yield* protect(
+        "kills.guild-top-npcs",
+        cachedKillQuery({
+          scopes: [`kill-stats:guild:${guildId}`],
+          cache,
+          logger,
+          key: buildKillQueryCacheKey("guild-top-npcs", guildId, {
+            query: { ...query, limit, period },
+            visibility: visibility.cacheScope,
+          }),
+          label: "guild top npcs",
+          schema: GuildTopNpcsResponse,
+          load: persistence
+            .topGuildNpcs(
+              {
+                guildId,
+                ...(query.npcType && { npcType: query.npcType }),
+                ...(query.world && { world: query.world }),
+                ...(query.search && {
+                  npcName: {
+                    contains: query.search,
+                    mode: "insensitive" as const,
+                  },
+                }),
+                ...buildNpcLevelFilter(query.npcLevelMin, query.npcLevelMax),
+                ...visibility.filter,
+                ...(periodStart && { periodStart: { gte: periodStart } }),
+              },
+              limit,
+            )
+            .pipe(Effect.map((topNpcs) => ({ topNpcs }))),
         }),
-        label: "guild top npcs",
-        schema: GuildTopNpcsResponse,
-        load: persistence
-          .topGuildNpcs(
-            {
-              guildId,
-              ...(query.npcType && { npcType: query.npcType }),
-              ...(query.world && { world: query.world }),
-              ...(query.search && {
-                npcName: {
-                  contains: query.search,
-                  mode: "insensitive" as const,
-                },
-              }),
-              ...buildNpcLevelFilter(query.npcLevelMin, query.npcLevelMax),
-              ...visibility.filter,
-              ...(periodStart && { periodStart: { gte: periodStart } }),
-            },
-            limit,
-          )
-          .pipe(Effect.map((topNpcs) => ({ topNpcs }))),
-      }),
-    );
-  };
+      );
+    });
 
   const getGuildTopKillersByType = (
     guildId: string,
@@ -257,59 +260,60 @@ export const makeGuildKillQueries = (
     roles: ReadonlyArray<KillQueryRole>,
     npcTypes: ReadonlyArray<NpcType>,
     query: GuildTopKillersQuery,
-  ) => {
-    const visibility = context(accessPolicy, roles);
-    const limit = query.limit ?? GUILD_TOP_KILLERS_DEFAULT_LIMIT;
-    const period = resolveKillStatsPeriod(query.period);
-    const periodStart = getKillStatsPeriodStart(period);
+  ) =>
+    Effect.gen(function* () {
+      const visibility = context(accessPolicy, roles);
+      const limit = query.limit ?? GUILD_TOP_KILLERS_DEFAULT_LIMIT;
+      const period = resolveKillStatsPeriod(query.period);
+      const periodStart = yield* currentStatsPeriodStart(period);
 
-    return protect(
-      "kills.guild-top-killers",
-      cachedKillQuery({
-        scopes: [`kill-stats:guild:${guildId}`],
-        cache,
-        logger,
-        key: buildKillQueryCacheKey("guild-top-killers", guildId, {
-          limit,
-          npcTypes,
-          period,
-          visibility: visibility.cacheScope,
-        }),
-        label: "guild top killers",
-        schema: GuildTopKillersByTypeResponse,
-        load: persistence
-          .topMembersByType(
-            {
-              guildId,
-              npcType: { in: npcTypes },
-              ...visibility.filter,
-              ...(periodStart && { periodStart: { gte: periodStart } }),
-            },
+      return yield* protect(
+        "kills.guild-top-killers",
+        cachedKillQuery({
+          scopes: [`kill-stats:guild:${guildId}`],
+          cache,
+          logger,
+          key: buildKillQueryCacheKey("guild-top-killers", guildId, {
             limit,
-          )
-          .pipe(
-            Effect.map((stats) =>
-              Object.fromEntries(
-                npcTypes.map((npcType) => [
-                  npcType,
-                  stats
-                    .filter((stat) => stat.npcType === npcType)
-                    .map((stat) => ({
-                      member: {
-                        id: stat.memberId,
-                        name: stat.memberName,
-                        avatar: stat.memberAvatar,
-                        userId: stat.memberUserId,
-                      },
-                      totalParticipations: stat.totalParticipations,
-                    })),
-                ]),
+            npcTypes,
+            period,
+            visibility: visibility.cacheScope,
+          }),
+          label: "guild top killers",
+          schema: GuildTopKillersByTypeResponse,
+          load: persistence
+            .topMembersByType(
+              {
+                guildId,
+                npcType: { in: npcTypes },
+                ...visibility.filter,
+                ...(periodStart && { periodStart: { gte: periodStart } }),
+              },
+              limit,
+            )
+            .pipe(
+              Effect.map((stats) =>
+                Object.fromEntries(
+                  npcTypes.map((npcType) => [
+                    npcType,
+                    stats
+                      .filter((stat) => stat.npcType === npcType)
+                      .map((stat) => ({
+                        member: {
+                          id: stat.memberId,
+                          name: stat.memberName,
+                          avatar: stat.memberAvatar,
+                          userId: stat.memberUserId,
+                        },
+                        totalParticipations: stat.totalParticipations,
+                      })),
+                  ]),
+                ),
               ),
             ),
-          ),
-      }),
-    );
-  };
+        }),
+      );
+    });
 
   const getNpcKillers = (
     guildId: string,
@@ -319,84 +323,85 @@ export const makeGuildKillQueries = (
     limit = NPC_KILLERS_DEFAULT_LIMIT,
     world?: string,
     requestedPeriod?: Period,
-  ) => {
-    const visibility = context(accessPolicy, roles);
-    const period = resolveKillStatsPeriod(requestedPeriod);
-    const periodStart = getKillStatsPeriodStart(period);
+  ) =>
+    Effect.gen(function* () {
+      const visibility = context(accessPolicy, roles);
+      const period = resolveKillStatsPeriod(requestedPeriod);
+      const periodStart = yield* currentStatsPeriodStart(period);
 
-    const filter = {
-      guildId,
-      npcId,
-      ...(world && { world }),
-      ...visibility.filter,
-      ...(periodStart && { periodStart: { gte: periodStart } }),
-    };
+      const filter = {
+        guildId,
+        npcId,
+        ...(world && { world }),
+        ...visibility.filter,
+        ...(periodStart && { periodStart: { gte: periodStart } }),
+      };
 
-    return protect(
-      "kills.guild-npc-killers",
-      cachedKillQuery({
-        scopes: [`kill-stats:guild:${guildId}`],
-        cache,
-        logger,
-        key: buildKillQueryCacheKey("guild-npc-killers", guildId, {
-          limit,
-          npcId,
-          period,
-          visibility: visibility.cacheScope,
-          world,
+      return yield* protect(
+        "kills.guild-npc-killers",
+        cachedKillQuery({
+          scopes: [`kill-stats:guild:${guildId}`],
+          cache,
+          logger,
+          key: buildKillQueryCacheKey("guild-npc-killers", guildId, {
+            limit,
+            npcId,
+            period,
+            visibility: visibility.cacheScope,
+            world,
+          }),
+          label: "npc killers",
+          schema: NpcKillersResponse,
+          load: Effect.gen(function* () {
+            const [killers, summaries, memberNpc] = yield* Effect.all(
+              [
+                persistence.topNpcKillers(filter, limit),
+                persistence.topGuildNpcs(filter, 1),
+                persistence.findMemberNpcMetadata(filter),
+              ],
+              { concurrency: "unbounded" },
+            );
+
+            const fallback =
+              !memberNpc && summaries.length === 0
+                ? yield* persistence.topGuildNpcs(
+                    { guildId, npcId, ...visibility.filter },
+                    1,
+                  )
+                : [];
+
+            const summary = summaries[0] ?? fallback[0];
+
+            const npc =
+              memberNpc ??
+              (summary
+                ? {
+                    npcId: summary.npcId,
+                    npcName: summary.npcName,
+                    npcType: summary.npcType,
+                    npcLvl: summary.npcLvl,
+                    npcProf: summary.npcProf,
+                    npcIcon: summary.npcIcon,
+                  }
+                : null);
+
+            if (!npc) return null;
+
+            return {
+              npc: {
+                ...npc,
+                uniqueGuildKills: summaries[0]?.uniqueKills ?? 0,
+                totalMemberParticipations:
+                  killers[0]?.totalMemberParticipations ?? 0,
+              },
+              killers: killers.map(
+                ({ totalMemberParticipations: _total, ...member }) => member,
+              ),
+            };
+          }),
         }),
-        label: "npc killers",
-        schema: NpcKillersResponse,
-        load: Effect.gen(function* () {
-          const [killers, summaries, memberNpc] = yield* Effect.all(
-            [
-              persistence.topNpcKillers(filter, limit),
-              persistence.topGuildNpcs(filter, 1),
-              persistence.findMemberNpcMetadata(filter),
-            ],
-            { concurrency: "unbounded" },
-          );
-
-          const fallback =
-            !memberNpc && summaries.length === 0
-              ? yield* persistence.topGuildNpcs(
-                  { guildId, npcId, ...visibility.filter },
-                  1,
-                )
-              : [];
-
-          const summary = summaries[0] ?? fallback[0];
-
-          const npc =
-            memberNpc ??
-            (summary
-              ? {
-                  npcId: summary.npcId,
-                  npcName: summary.npcName,
-                  npcType: summary.npcType,
-                  npcLvl: summary.npcLvl,
-                  npcProf: summary.npcProf,
-                  npcIcon: summary.npcIcon,
-                }
-              : null);
-
-          if (!npc) return null;
-
-          return {
-            npc: {
-              ...npc,
-              uniqueGuildKills: summaries[0]?.uniqueKills ?? 0,
-              totalMemberParticipations:
-                killers[0]?.totalMemberParticipations ?? 0,
-            },
-            killers: killers.map(
-              ({ totalMemberParticipations: _total, ...member }) => member,
-            ),
-          };
-        }),
-      }),
-    );
-  };
+      );
+    });
 
   return {
     getGuildKillStats,

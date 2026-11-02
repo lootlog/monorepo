@@ -57,7 +57,8 @@ type CharacterTooltipCatchingGuildsState = {
     guilds: UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem[],
     fetchedAt: number,
   ) => void;
-  setUnavailable: (key: string) => void;
+  /** Marks characters without a Lootlog owner, in one store update. */
+  setUnavailable: (keys: readonly string[]) => void;
 };
 
 export function getOtherCatchingGuildsTarget(
@@ -202,23 +203,27 @@ export const useCharacterTooltipCatchingGuildsStore =
       }
 
       set((state) => {
-        const touchedEntriesByKey = { ...state.entriesByKey };
+        let touchedEntriesByKey = state.entriesByKey;
 
         for (const key of visibleEntryKeys) {
-          const entry = touchedEntriesByKey[key];
+          const entry = state.entriesByKey[key];
 
-          if (entry) {
-            touchedEntriesByKey[key] = { ...entry, lastAccessedAt: now };
+          if (!entry || entry.lastAccessedAt === now) continue;
+
+          if (touchedEntriesByKey === state.entriesByKey) {
+            touchedEntriesByKey = { ...state.entriesByKey };
           }
+
+          touchedEntriesByKey[key] = { ...entry, lastAccessedAt: now };
         }
 
-        return {
-          entriesByKey: withEntryRetention(
-            touchedEntriesByKey,
-            now,
-            state.activeTarget?.key,
-          ),
-        };
+        const entriesByKey = withEntryRetention(
+          touchedEntriesByKey,
+          now,
+          state.activeTarget?.key,
+        );
+
+        return entriesByKey === state.entriesByKey ? state : { entriesByKey };
       });
     },
     setActiveOther: (other) =>
@@ -263,23 +268,29 @@ export const useCharacterTooltipCatchingGuildsStore =
           status: "success",
         }),
       ),
-    setUnavailable: (key) =>
+    setUnavailable: (keys) =>
       set((state) => {
-        if (state.entriesByKey[key]?.status === "unavailable") {
-          return state;
+        const now = Date.now();
+
+        const unavailableKeys = keys.filter(
+          (key) => state.entriesByKey[key]?.status !== "unavailable",
+        );
+
+        if (unavailableKeys.length === 0) return state;
+        const entriesByKey = { ...state.entriesByKey };
+
+        for (const key of unavailableKeys) {
+          entriesByKey[key] = {
+            guilds: [],
+            lastAccessedAt: now,
+            status: "unavailable",
+          };
         }
 
         return {
           entriesByKey: withEntryRetention(
-            {
-              ...state.entriesByKey,
-              [key]: {
-                guilds: [],
-                lastAccessedAt: Date.now(),
-                status: "unavailable",
-              },
-            },
-            Date.now(),
+            entriesByKey,
+            now,
             state.activeTarget?.key,
           ),
         };

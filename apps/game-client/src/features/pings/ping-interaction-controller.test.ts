@@ -55,7 +55,7 @@ describe("PingInteractionController", () => {
 
     start(controller, ALLY_MENU);
     expect(controller.complete(mouseIdentity())).toBeNull();
-    expect(controller.isActive()).toBe(false);
+    expect(controller.getActiveIdentity()).toBeNull();
   });
 
   it("opens on a flick before the hold delay and selects the flicked option", () => {
@@ -128,7 +128,7 @@ describe("PingInteractionController", () => {
     start(controller);
 
     expect(controller.complete(mouseIdentity(3))).toBeNull();
-    expect(controller.isActive()).toBe(true);
+    expect(controller.getActiveIdentity()).not.toBeNull();
     expect(start(controller, MAP_MENU, undefined, mouseIdentity(3))).toBe(
       false,
     );

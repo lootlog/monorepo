@@ -4,11 +4,7 @@ import {
   getPlayersPresenceSource,
 } from "@/lib/players-presence-source";
 import type { PlayerPresenceResponse } from "@/lib/online-players-presence";
-import {
-  useSyncExternalStore,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { useSyncExternalStore } from "react";
 import type { AsyncResourceState } from "@/types/async-resource-state";
 
 export type OnlinePlayersAccessState = "allowed" | "forbidden";
@@ -19,7 +15,6 @@ export type PlayersPresenceState = AsyncResourceState & {
   hasLoaded: boolean;
   isCurrent: boolean;
   onlinePlayers: PlayerPresenceResponse;
-  setOnlinePlayers: Dispatch<SetStateAction<PlayerPresenceResponse>>;
 };
 
 const emptySnapshot = () => emptyPlayersPresenceSnapshot;
@@ -57,6 +52,5 @@ export const usePlayersPresence = (
     retry: () => {
       void source?.refresh();
     },
-    setOnlinePlayers: (update) => source?.setPlayers(update),
   };
 };
