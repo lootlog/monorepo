@@ -84,7 +84,6 @@ beforeEach(() => {
 
 it("reports a claimed Hero Tracker's entrance once, measuring its respawn from the close", async () => {
   const fixture = createFixture();
-  const claimedAt = Date.now();
 
   fixture.handle(claimedTracker(1200));
   // Other players' packets repeat the same countdown a few seconds later.
@@ -106,9 +105,8 @@ it("reports a claimed Hero Tracker's entrance once, measuring its respawn from t
       location: "Jaskinia Piaskowej Burzy s.1",
     },
   });
-  expect(Date.parse(body.entranceClosesAt) - claimedAt).toBeGreaterThanOrEqual(
-    1_200_000,
-  );
+  expect(body.entranceSecondsLeft).toBe(1200);
+  expect(body).not.toHaveProperty("entranceClosesAt");
 });
 
 it("does not start a timer for a tracker nobody has claimed", async () => {

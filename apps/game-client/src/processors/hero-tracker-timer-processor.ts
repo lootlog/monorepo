@@ -17,6 +17,7 @@ type EventNpc = NonNullable<GameEvent["npcs"]>[number];
 
 type ClaimedTracker = {
   readonly entranceClosesAt: number;
+  readonly entranceSecondsLeft: number;
   readonly icon: string;
   readonly level: number;
   readonly name: string;
@@ -32,7 +33,8 @@ const findClaimedTracker = (
 ): ClaimedTracker | null => {
   const entranceClosesAt = getEntranceClosesAt(npc.killSeconds, undefined);
 
-  if (entranceClosesAt === undefined) return null;
+  if (entranceClosesAt === undefined || npc.killSeconds === undefined)
+    return null;
 
   const template = event.npc_tpls?.find(({ id }) => id === npc.tpl);
 
@@ -46,6 +48,7 @@ const findClaimedTracker = (
 
   return {
     entranceClosesAt,
+    entranceSecondsLeft: npc.killSeconds,
     icon: known?.icon ?? "",
     level,
     name,
@@ -100,7 +103,7 @@ export class HeroTrackerTimerProcessor {
     createAutoTimer({
       respawnRandomness: tracker.respawnRandomness,
       respBaseSeconds: HERO_TRACKER_RESP_BASE_SECONDS,
-      entranceClosesAt: new Date(tracker.entranceClosesAt),
+      entranceSecondsLeft: tracker.entranceSecondsLeft,
       characterId,
       accountId,
       world: game.world,

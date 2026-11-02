@@ -4,7 +4,7 @@ import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { SettingsVolumeControl } from "@/components/settings/settings-volume-row";
-import { getDefaultSoundUrl } from "@/features/settings/config/default-sounds";
+import { getFallbackSoundUrl } from "@/features/settings/config/default-sounds";
 import { Play } from "lucide-react";
 import { SoundCategorySection } from "./sound-category-section";
 import { SoundFieldInput } from "./sound-field-input";
@@ -137,7 +137,7 @@ export function SoundsSettingsTab() {
                   fieldKey={field.key}
                   label={field.label}
                   soundUrl={soundUrl}
-                  placeholder={getDefaultSoundUrl(field.key)}
+                  placeholder={getFallbackSoundUrl(categoryConfig, field.key)}
                   error={categoryErrors[field.key]}
                   onSoundUrlChange={(value) => setSoundUrl(field.key, value)}
                   onPlaySound={() =>

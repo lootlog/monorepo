@@ -1,4 +1,5 @@
-import { NpcTypeEnum } from "@lootlog/schema/npc-type";
+import { getNpcTypeRoutingTier } from "@lootlog/schema/npc-routing";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { Permission, PermissionSchema } from "@lootlog/schema/permissions";
 import { Schema } from "effect";
 
@@ -91,7 +92,7 @@ const LOOT_RANGE_PERMISSIONS = new Set<Permission>(NPC_PERMISSIONS.loots);
 
 const ALL_PERMISSIONS = Object.values(Permission).sort();
 
-const NPC_TYPES = new Set<string>(Object.values(NpcTypeEnum));
+const isNpcType = Schema.is(NpcTypeSchema);
 
 const mergeRanges = (ranges: Range[]): Range[] => {
   const merged: Array<{ from: number; to: number }> = [];
@@ -258,10 +259,7 @@ export const canReadPolicyNpc = (
 ): boolean => {
   if (area === "timers" && npc === null) return false;
 
-  if (
-    npc &&
-    (!Number.isFinite(npc.lvl) || npc.lvl < 0 || !NPC_TYPES.has(npc.type))
-  )
+  if (npc && (!Number.isFinite(npc.lvl) || npc.lvl < 0 || !isNpcType(npc.type)))
     return false;
 
   if (organization.owner || organization.permissions.includes(Permission.ADMIN))
@@ -271,11 +269,9 @@ export const canReadPolicyNpc = (
   if (!organization.permissions.includes(base)) return false;
 
   if (npc === null) return true;
-  let permission: Permission = base;
 
-  if (npc.type === "TITAN") permission = titans;
-
-  if (npc.type === "HERO" || npc.type === "EVENT_HERO") permission = heroes;
+  if (!isNpcType(npc.type)) return false;
+  const permission = { base, heroes, titans }[getNpcTypeRoutingTier(npc.type)];
 
   return (
     organization.grants

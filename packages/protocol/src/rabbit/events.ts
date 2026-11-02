@@ -3,6 +3,7 @@ import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import {
   DateTimeWithOffsetString,
   PositiveSafeInteger,
+  SafeInteger,
 } from "@lootlog/schema/http-scalars";
 import {
   discordPermissionFields,
@@ -225,7 +226,7 @@ const ActivityLogCreated = Schema.Struct({
 const NotificationTimerUpdated = Schema.Struct({
   guildId: Schema.NonEmptyString,
   world: Schema.NonEmptyString,
-  npcId: NonNegativeInt,
+  npcId: SafeInteger,
   timerKey: Schema.NonEmptyString,
   minSpawnTime: Schema.NonEmptyString,
   maxSpawnTime: Schema.NonEmptyString,
@@ -243,7 +244,7 @@ const NotificationTimerDeleted = Schema.Struct({
   guildId: Schema.NonEmptyString,
   world: Schema.NonEmptyString,
   timerKey: Schema.NonEmptyString,
-  npcId: Schema.optional(NonNegativeInt),
+  npcId: Schema.optional(SafeInteger),
 });
 
 export const LootCreatedNotificationEventV2 = Schema.Struct({

@@ -52,6 +52,8 @@ export type PublicTimer = {
   guildId: string;
   minSpawnTime: string;
   maxSpawnTime: string;
+  /** When a Hero Tracker's open entrance closes; null for every other timer. */
+  entranceClosesAt: string | null;
   updatedAt: string | null;
   isCustomTime?: boolean;
   isPending?: boolean;

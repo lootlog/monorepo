@@ -39,23 +39,54 @@ const guild = {
 };
 
 describe("organization context lookup", () => {
-  it("queues one background refresh for an aging cached context, retries a failed enqueue, and keeps its permissions", async () => {
+  it("queues one background refresh for an aging cached member, retries a failed enqueue, and reads the current guild configuration", async () => {
+    const roles = [
+      {
+        id: "role-1",
+        guildId,
+        name: "Member",
+        color: null,
+        position: 1,
+        permissions: [Permission.LOOTLOG_ACCESS],
+        lvlRangeFrom: 0,
+        lvlRangeTo: 500,
+        createdAt: guild.createdAt,
+        updatedAt: guild.updatedAt,
+      },
+    ];
+
+    // An entry written before the guild configuration changed.
     const cachedContext = {
       guildId,
       ownerId: guild.ownerId,
       permissions: [Permission.LOOTLOG_ACCESS],
       guild,
       member: {
+        id: 1,
+        userId: identity.discordId,
+        guildId,
+        type: "USER",
+        name: "Member",
+        discordDisplayName: null,
+        avatar: null,
+        banner: null,
         active: true,
+        globalUserId: identity.userId,
+        createdAt: guild.createdAt,
+        updatedAt: guild.updatedAt,
         // Fresh for another four minutes, past the refresh-ahead point.
         lastDiscordSyncAt: new Date(Date.now() - 11 * 60_000).toISOString(),
-        roles: [],
+        lastDiscordAttemptAt: null,
+        lastDiscordStatus: null,
+        roles,
       },
-      roles: [],
+      roles,
     };
 
+    const updatedGuild = { ...guild, reservationActiveLimitPerSpot: 5 };
+
     const store = new Map([
-      [getGuildCacheKey(guildId), JSON.stringify(guild)],
+      [getGuildCacheKey(guildId), JSON.stringify(updatedGuild)],
       [
         getPermissionsCacheKey(identity.userId, guildId),
         JSON.stringify(cachedContext),
@@ -148,6 +179,11 @@ describe("organization context lookup", () => {
       cachedContext.permissions,
       cachedContext.permissions,
     ]);
+    expect(
+      result.contexts.map(
+        (context) => context?.guild.reservationActiveLimitPerSpot,
+      ),
+    ).toEqual([5, 5, 5]);
     expect(getMe).not.toHaveBeenCalled();
 
     const refresh = {

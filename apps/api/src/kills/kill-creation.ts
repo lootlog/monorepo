@@ -4,6 +4,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
+import { activityFeedNpcCategory } from "@lootlog/domain/activity-feed";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { getNpcType } from "@lootlog/domain/npc-type";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
@@ -33,15 +34,6 @@ import {
 import { getKillStatsBucketStart } from "./kill-stats-period.js";
 
 const DEDUP_TTL_SECONDS = 30;
-
-/** Kills that also land in the Organization activity journal. */
-const JOURNALED_NPC_TYPES: ReadonlySet<NpcType> = new Set([
-  NpcType.ELITE2,
-  NpcType.HERO,
-  NpcType.EVENT_HERO,
-  NpcType.COLOSSUS,
-  NpcType.TITAN,
-]);
 
 export class KillCreationError extends TaggedErrorClass<KillCreationError>()(
   "KillCreationError",
@@ -373,7 +365,7 @@ export const makeKillCreation = (
                     ...descriptive(input),
                   },
                 }),
-              ...(JOURNALED_NPC_TYPES.has(input.npcType)
+              ...(activityFeedNpcCategory(input.npcType) !== "OTHER"
                 ? [
                     transaction.insert(guildKillActivityTable).values({
                       id: randomUUID(),

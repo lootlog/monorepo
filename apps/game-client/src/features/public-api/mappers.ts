@@ -111,6 +111,7 @@ const mapTimer = (timer: Timer): PublicTimer => {
     guildId: timer.guildId,
     minSpawnTime: new Date(timer.minSpawnTime).toISOString(),
     maxSpawnTime: new Date(timer.maxSpawnTime).toISOString(),
+    entranceClosesAt: toIso(timer.entranceClosesAt),
     updatedAt: toIso(timer.updatedAt),
     isCustomTime: timer.isCustomTime,
     isPending: timer.isPending,
