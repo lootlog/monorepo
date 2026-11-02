@@ -1,6 +1,7 @@
-import type { CreateNotificationDtoHeroTracker } from "@lootlog/client/main";
-
-export type HeroTrackerNotificationState = CreateNotificationDtoHeroTracker;
+/** As delivered: the API stamps an open entrance's close time on its clock. */
+export type HeroTrackerNotificationState =
+  | { state: "unclaimed" }
+  | { state: "open"; entranceClosesAt: string };
 
 type HeroTrackerNotificationSource = {
   heroTracker?: HeroTrackerNotificationState;

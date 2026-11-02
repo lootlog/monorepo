@@ -57,7 +57,11 @@ const buildHeroTrackerPayload = (
     ? { state: "unclaimed" }
     : {
         state: "open",
-        entranceClosesAt: new Date(npc.entranceClosesAt).toISOString(),
+        // The server stamps the close time on its clock for recipients.
+        entranceSecondsLeft: Math.max(
+          1,
+          Math.round((npc.entranceClosesAt - Date.now()) / 1000),
+        ),
       };
 };
 

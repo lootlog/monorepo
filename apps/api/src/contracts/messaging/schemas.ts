@@ -67,11 +67,15 @@ export const SendNotificationRequest = Schema.Struct({
       Schema.Struct({ state: Schema.Literal("unclaimed") }),
       Schema.Struct({
         state: Schema.Literal("open"),
+        entranceSecondsLeft: FiniteNumber.check(Schema.isGreaterThan(0)),
+      }),
+      Schema.Struct({
+        state: Schema.Literal("open"),
         entranceClosesAt: DateTimeString,
       }),
     ]).annotate({
       description:
-        "State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open until `entranceClosesAt`.",
+        "State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open for `entranceSecondsLeft` more seconds, from its in-game countdown. Recipients receive `entranceClosesAt` on the server clock. Deprecated: an open entrance sent as `entranceClosesAt`, on the reporter's clock.",
     }),
   ),
 })

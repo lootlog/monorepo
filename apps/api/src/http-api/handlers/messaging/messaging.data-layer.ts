@@ -222,9 +222,8 @@ export const makeMessagingDataLayer = (
 
               const notificationId = uuid();
 
-              const createdAt = new Date(
-                yield* Clock.currentTimeMillis,
-              ).toISOString();
+              const now = yield* Clock.currentTimeMillis;
+              const createdAt = new Date(now).toISOString();
 
               if (data.isGatheringParty) {
                 if (!data.character) {
@@ -255,8 +254,28 @@ export const makeMessagingDataLayer = (
                 JSON.stringify({ discordId, guildIds, createdAt }),
                 NOTIFICATION_TTL_SECONDS,
               );
-              const { guildIds: _guildIds, ...rest } = data;
-              const base = { ...rest, discordId, notificationId, createdAt };
+              const { guildIds: _guildIds, heroTracker, ...rest } = data;
+
+              // Recipients count an open entrance down on the server clock,
+              // not the reporter's.
+              const base = {
+                ...rest,
+                ...(heroTracker && {
+                  heroTracker:
+                    "entranceSecondsLeft" in heroTracker
+                      ? {
+                          state: heroTracker.state,
+                          entranceClosesAt: new Date(
+                            now + heroTracker.entranceSecondsLeft * 1000,
+                          ).toISOString(),
+                        }
+                      : heroTracker,
+                }),
+                discordId,
+                notificationId,
+                createdAt,
+              };
+
               const npc = data.npc;
 
               const payload =
