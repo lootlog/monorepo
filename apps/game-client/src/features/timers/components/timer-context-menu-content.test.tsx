@@ -19,7 +19,7 @@ type MenuProps = ComponentProps<typeof TimerContextMenuContent>;
 const action = () => vi.fn<() => void>();
 
 const createProps = (overrides: Partial<MenuProps> = {}): MenuProps => ({
-  timer: { ...createTimerFixture(), minTimeLeft: 0, maxTimeLeft: 0 },
+  timer: createTimerFixture(),
   isPending: false,
   isPinned: false,
   isHidden: false,
@@ -163,8 +163,6 @@ describe("TimerContextMenuContent", () => {
 
     const timer = {
       ...createTimerFixture(),
-      minTimeLeft: 0,
-      maxTimeLeft: 0,
       mergedGuildIds: [
         { guildId: "guild-1", npcId: 10, timerKey: "timer-1" },
         { guildId: "guild-2", npcId: 10, timerKey: "timer-2" },
@@ -201,8 +199,6 @@ describe("TimerContextMenuContent", () => {
       createProps({
         timer: {
           ...timer,
-          minTimeLeft: 0,
-          maxTimeLeft: 0,
           npc: { ...timer.npc, margonemType: 999 },
         },
       }),

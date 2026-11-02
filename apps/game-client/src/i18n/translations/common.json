@@ -45,6 +45,7 @@
   },
   "errors": {
     "missingLocation": "Nie wysłano danych: nie udało się odczytać nazwy mapy z gry.",
+    "noLootlogSelected": "Nie wybrano żadnego Lootloga.",
     "requestFailed": "Błąd żądania",
     "unknown": "Nieznany błąd"
   },

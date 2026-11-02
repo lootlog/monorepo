@@ -403,13 +403,12 @@ const deferNextDigest = () => {
   return { release: async () => pending.resolve() };
 };
 
-it("publishes final warriors before digest completion", async () => {
+it("publishes final warriors before submitting the kill", async () => {
   const fixture = createBattleTest();
   const processor = new BattleEventProcessor();
   await processor.handle({
     f: { init: "1", w: { "-100": createBattleWarrior(-100, { hpp: 100 }) } },
   });
-  const digest = deferNextDigest();
 
   const finalization = processor.handle({
     f: { endBattle: 1, w: { "-100": createBattleWarrior(-100, { hpp: 0 }) } },
@@ -418,8 +417,6 @@ it("publishes final warriors before digest completion", async () => {
   expect(useBattleStore.getState().battleWarriors["-100"]?.hpp).toBe(0);
   expect(useBattleStore.getState().battleState).toBe("idle");
   expect(useBattleStore.getState().events).toEqual([]);
-  expect(fixture.kills()).toHaveLength(0);
-  await digest.release();
   await finalization;
   expect(fixture.kills()).toHaveLength(1);
 });
@@ -447,10 +444,8 @@ it("submits a completed kill without overwriting the next battle", async () => {
   await processor.handle({
     f: { init: "1", w: { "-100": createBattleWarrior(-100) } },
   });
-  const digest = deferNextDigest();
   const finalization = processor.handle(end);
   await processor.handle(pvpStart(["new"]));
-  await digest.release();
   await finalization;
   expect(useBattleStore.getState().battleState).toBe("in-battle");
   expect(useBattleStore.getState().events).toMatchObject([

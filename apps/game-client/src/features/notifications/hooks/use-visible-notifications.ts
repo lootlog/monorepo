@@ -11,6 +11,7 @@ import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-g
 import { useGameStore } from "@/store/game.store";
 import {
   getNotificationSettingsKey,
+  isAllowedByNotificationSettings,
   isNotificationSettingsKey,
 } from "@/features/notifications/utils/get-notification-settings-key";
 import { getNotificationAutoHideDeadlineMs } from "@/features/notifications/notification-auto-hide";
@@ -101,29 +102,12 @@ const isNotificationVisible = ({
 
   const key = getNotificationSettingsKey(notification);
 
-  if (!isNotificationSettingsKey(key)) {
-    return false;
-  }
-
-  const notificationSettings = settings[key];
-
-  if (!notificationSettings) {
-    return false;
-  }
-
-  if (!notificationSettings.show) {
-    return false;
-  }
-
-  if (notificationSettings.ignoreOtherWorlds && notification.world !== world) {
-    return false;
-  }
-
-  if (settings.guildIds?.includes(notification.guildId) === false) {
-    return false;
-  }
-
-  return true;
+  // Unlike delivery, the list hides categories it has no settings for.
+  return (
+    isNotificationSettingsKey(key) &&
+    settings[key] !== undefined &&
+    isAllowedByNotificationSettings(notification, key, settings, world)
+  );
 };
 
 const haveSameMembers = (
@@ -224,7 +208,6 @@ export const useVisibleNotifications = ({
   const { settings } = useCurrentGameAccountNotificationSettings();
   const world = useGameStore((state) => state.game?.world ?? "unknown");
   const [cacheOwner] = useState<VisibleNotificationsCacheOwner>(() => ({}));
-  const removeRef = useRef(removeNotifications);
 
   const { visible, scheduledExpirations, nearestExpirationTimeMs } =
     selectVisibleNotifications(cacheOwner, {
@@ -237,9 +220,8 @@ export const useVisibleNotifications = ({
   const scheduledExpirationsRef = useRef(scheduledExpirations);
 
   useEffect(() => {
-    removeRef.current = removeNotifications;
     scheduledExpirationsRef.current = scheduledExpirations;
-  }, [removeNotifications, scheduledExpirations]);
+  }, [scheduledExpirations]);
 
   // The timer is armed for the nearest deadline only; when it fires it reads
   // the latest schedule from the ref, so notifications arriving with later
@@ -287,7 +269,7 @@ export const useVisibleNotifications = ({
       }
 
       if (expiredNotificationIds.length > 0) {
-        removeRef.current(expiredNotificationIds);
+        removeNotifications(expiredNotificationIds);
       }
 
       if (nextExpirationTimeMs !== null) {
@@ -295,12 +277,25 @@ export const useVisibleNotifications = ({
       }
     }
 
+    // Browsers throttle or freeze timeouts in a background tab, while the
+    // row's fade-out runs on wall-clock time: the player came back to an
+    // already faded, empty window that the late timeout closed only much
+    // later. Returning to the tab sweeps at once.
+    function sweepWhenVisible() {
+      if (document.hidden) return;
+
+      window.clearTimeout(timeoutId);
+      sweep();
+    }
+
     arm(nearestExpirationTimeMs);
+    document.addEventListener("visibilitychange", sweepWhenVisible);
 
     return () => {
       window.clearTimeout(timeoutId);
+      document.removeEventListener("visibilitychange", sweepWhenVisible);
     };
-  }, [autoCleanup, nearestExpirationTimeMs]);
+  }, [autoCleanup, nearestExpirationTimeMs, removeNotifications]);
 
   return { notifications: visible, all: notifications, settings };
 };

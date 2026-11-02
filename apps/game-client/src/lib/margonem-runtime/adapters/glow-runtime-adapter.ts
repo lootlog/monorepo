@@ -33,14 +33,7 @@ type GlowMaster = {
   waterTopModify?: number;
 };
 
-type RuntimeOther = Other &
-  GlowMaster & {
-    imgLoaded?: boolean;
-    update?: RuntimeOtherUpdate;
-  };
-
-// Other.update may be wrapped by another addon; preserve its return value.
-type RuntimeOtherUpdate = (this: RuntimeOther, ...args: unknown[]) => unknown;
+type RuntimeOther = Other & GlowMaster;
 
 type RuntimeWindow = Window &
   typeof globalThis & {
@@ -396,10 +389,6 @@ class LootlogOtherGlowManager {
   >();
   private nativeGlowSuppressed = false;
   private originalGetDrawableList: OriginalGetDrawableList | null = null;
-  private readonly originalOtherUpdates = new WeakMap<
-    RuntimeOther,
-    RuntimeOtherUpdate
-  >();
 
   install(): void {
     if (this.cleanupDrawableListPatch) return;
@@ -411,7 +400,9 @@ class LootlogOtherGlowManager {
     tintedGlowMasks.retryIfMissing();
 
     this.originalGetDrawableList = others.getDrawableList;
-    // Engine calls this every rendered frame; build at most one array per call.
+    // Engine calls this every rendered frame, after `others.update` moved the
+    // players (Engine.js `update`), so each glow follows its player here.
+    // Build at most one array per call.
     others.getDrawableList = () => {
       const drawables = this.originalGetDrawableList?.call(others) ?? [];
 
@@ -450,8 +441,6 @@ class LootlogOtherGlowManager {
   }
 
   setNativeGlowSuppressed(nativeGlowSuppressed: boolean): void {
-    if (this.nativeGlowSuppressed === nativeGlowSuppressed) return;
-
     this.nativeGlowSuppressed = nativeGlowSuppressed;
   }
 
@@ -470,19 +459,13 @@ class LootlogOtherGlowManager {
     const existingGlow = this.glowsByCharacterId.get(characterId);
 
     if (existingGlow) {
-      if (existingGlow.master !== runtimeOther) {
-        this.restoreOtherUpdate(existingGlow.master);
-      }
-
       existingGlow.master = runtimeOther;
       existingGlow.updateColor(color);
-      this.patchOtherUpdate(runtimeOther);
       existingGlow.update();
 
       return;
     }
 
-    this.patchOtherUpdate(runtimeOther);
     tintedGlowMasks.request();
     this.glowsByCharacterId.set(
       characterId,
@@ -491,19 +474,10 @@ class LootlogOtherGlowManager {
   }
 
   removeGlow(characterId: string): void {
-    const glow = this.glowsByCharacterId.get(characterId);
-
-    if (!glow) return;
-
-    this.restoreOtherUpdate(glow.master);
     this.glowsByCharacterId.delete(characterId);
   }
 
   clear(): void {
-    for (const glow of this.glowsByCharacterId.values()) {
-      this.restoreOtherUpdate(glow.master);
-    }
-
     this.glowsByCharacterId.clear();
   }
 
@@ -517,69 +491,6 @@ class LootlogOtherGlowManager {
   cleanup(): void {
     this.uninstall();
     tintedGlowMasks.release();
-  }
-
-  getGlowColor(characterId: string): string | undefined {
-    return this.glowsByCharacterId.get(characterId)?.getColor();
-  }
-
-  getGlowPosition(characterId: string): { x?: number; y?: number } | undefined {
-    const glow = this.glowsByCharacterId.get(characterId);
-
-    if (!glow) return undefined;
-
-    return {
-      x: glow.d.x,
-      y: glow.d.y,
-    };
-  }
-
-  getGlowOrder(characterId: string): number | undefined {
-    return this.glowsByCharacterId.get(characterId)?.getOrder();
-  }
-
-  getGlowCount(): number {
-    return this.glowsByCharacterId.size;
-  }
-
-  getNativeGlowSuppressed(): boolean {
-    return this.nativeGlowSuppressed;
-  }
-
-  private patchOtherUpdate(other: RuntimeOther): void {
-    if (this.originalOtherUpdates.has(other) || !other.update) return;
-
-    const originalUpdate = other.update;
-
-    const updateGlowForOther = (updatedOther: RuntimeOther) => {
-      this.updateGlowForOther(updatedOther);
-    };
-
-    this.originalOtherUpdates.set(other, originalUpdate);
-    other.update = function lootlogOtherUpdatePatch(...args) {
-      const result = originalUpdate.apply(this, args);
-      updateGlowForOther(this);
-
-      return result;
-    };
-  }
-
-  private restoreOtherUpdate(other: RuntimeOther): void {
-    const originalUpdate = this.originalOtherUpdates.get(other);
-
-    if (!originalUpdate) return;
-
-    other.update = originalUpdate;
-    this.originalOtherUpdates.delete(other);
-  }
-
-  private updateGlowForOther(other: RuntimeOther): void {
-    const glow = this.glowsByCharacterId.get(String(other.d.id));
-
-    if (!glow) return;
-
-    glow.master = other;
-    glow.update();
   }
 }
 

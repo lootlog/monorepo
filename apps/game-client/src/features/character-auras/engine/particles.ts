@@ -231,15 +231,6 @@ export class ParticleField {
     this.particles.length = 0;
   }
 
-  /** Moves every particle by `dx`, `dy`, used when particle space jumps (map change). */
-  shift(dx: number, dy: number): void {
-    for (const p of this.particles) {
-      p.x += dx;
-      p.y += dy;
-      p.floor += dy;
-    }
-  }
-
   private spawn(spec: EmitterSpec, frame: SpawnFrame): Particle {
     const rng = this.rng;
     const { x, y, vx, vy } = launch(spec, frame, rng);

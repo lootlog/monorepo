@@ -119,6 +119,14 @@ export const createChatCacheBatcher = (queryClient: QueryClient) => {
     }
   };
 
+  const discardWhere = (discarded: (guildId: string) => boolean) => {
+    queuedOperations = queuedOperations.filter(
+      ({ operation }) => !discarded(getOperationGuildId(operation)),
+    );
+
+    if (queuedOperations.length === 0) cancelScheduledFlush();
+  };
+
   return {
     discardAll() {
       queuedOperations = [];
@@ -126,22 +134,11 @@ export const createChatCacheBatcher = (queryClient: QueryClient) => {
     },
     discardGuilds(guildIds: readonly string[]) {
       const discardedGuildIds = new Set(guildIds);
-      queuedOperations = queuedOperations.filter(
-        ({ operation }) =>
-          !discardedGuildIds.has(getOperationGuildId(operation)),
-      );
-
-      if (queuedOperations.length === 0) cancelScheduledFlush();
+      discardWhere((guildId) => discardedGuildIds.has(guildId));
     },
     discardOutsideGuilds(guildIds: readonly string[]) {
       const accessibleGuildIds = new Set(guildIds);
-      queuedOperations = queuedOperations.filter(({ operation }) =>
-        accessibleGuildIds.has(getOperationGuildId(operation)),
-      );
-
-      if (queuedOperations.length === 0) {
-        cancelScheduledFlush();
-      }
+      discardWhere((guildId) => !accessibleGuildIds.has(guildId));
     },
     enqueue(operation: ChatCacheOperation, afterFlush?: () => void) {
       queuedOperations.push({ afterFlush, operation });

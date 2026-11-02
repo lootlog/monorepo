@@ -67,6 +67,25 @@ describe("useCharacterTooltipCatchingGuildsStore retention", () => {
     expect(entries[recentTarget.key]).toBeDefined();
   });
 
+  it("does not publish a sync that neither touches nor prunes an entry", () => {
+    const visibleTarget = createTarget(1);
+    const store = useCharacterTooltipCatchingGuildsStore.getState();
+    store.setSuccess(visibleTarget, [], Date.now());
+    store.pruneEntries([visibleTarget.key], Date.now());
+
+    let publications = 0;
+
+    const unsubscribe = useCharacterTooltipCatchingGuildsStore.subscribe(() => {
+      publications += 1;
+    });
+
+    store.pruneEntries([visibleTarget.key], Date.now());
+    store.setUnavailable([]);
+    unsubscribe();
+
+    expect(publications).toBe(0);
+  });
+
   it("retains the current map in addition to the inactive LRU budget", () => {
     const visibleTarget = createTarget(0);
     const store = useCharacterTooltipCatchingGuildsStore.getState();

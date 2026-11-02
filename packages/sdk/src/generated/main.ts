@@ -13787,7 +13787,7 @@ export const getLootsControllerGetLootStatsUrl = ({ guildId }: LootsControllerGe
 }
 
 /**
- * Retrieve aggregated loot statistics for a guild with optional time period and filters
+ * Retrieve aggregated loot statistics for a guild with optional time period and filters. A period starts its length before now, rounded down to the whole UTC hour, as kill statistics do. Timeline hours are UTC instants; days and weeks are calendar ones in Europe/Warsaw, given as their local midnight written in UTC. The strongest NPC of a loot names it: by type, then weight, level and id. legendaryItems counts every item of legendary rarity; topItems lists legends, which leave out blessings, upgrades and consumables.
  * @summary Get guild loot statistics
  */
 export const lootsControllerGetLootStats = async ({ guildId }: LootsControllerGetLootStatsPathParameters,

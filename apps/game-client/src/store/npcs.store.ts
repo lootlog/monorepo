@@ -16,7 +16,6 @@ type NpcBatch = {
 type NpcsState = {
   mapEpoch: number;
   npcsById: NpcsById;
-  revision: number;
   status: RuntimeStatus;
   applyNpcBatch: (batch: NpcBatch) => void;
   clearNpcs: (mapChanged?: boolean) => void;
@@ -80,7 +79,6 @@ export const useNpcsStore = create<NpcsState>()((set, get) => {
   return {
     mapEpoch: 0,
     npcsById: {},
-    revision: 0,
     status: "uninitialized",
     applyNpcBatch: ({ removeIds = [], upserts = [] }) => {
       const { npcsById } = get();
@@ -124,7 +122,6 @@ export const useNpcsStore = create<NpcsState>()((set, get) => {
 
         return {
           npcsById: Object.freeze(nextNpcsById ?? { ...state.npcsById }),
-          revision: state.revision + 1,
           status: "ready",
         };
       });
@@ -134,7 +131,6 @@ export const useNpcsStore = create<NpcsState>()((set, get) => {
       set((state) => ({
         mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
         npcsById: Object.freeze({}),
-        revision: state.revision + 1,
         status: "uninitialized",
       }));
     },
@@ -145,7 +141,6 @@ export const useNpcsStore = create<NpcsState>()((set, get) => {
       set((state) => ({
         mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
         npcsById: indexNpcs(npcs),
-        revision: state.revision + 1,
         status: "ready",
       }));
     },

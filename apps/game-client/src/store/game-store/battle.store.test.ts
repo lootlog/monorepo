@@ -100,14 +100,12 @@ describe("battle capture accumulator", () => {
       battleWarriors: {
         "1": createBattleWarrior(1, { name: "warrior" }),
       },
-      lastKillHash: "kill",
     });
 
     unsubscribe();
     expect(publications).toBe(1);
     expect(useBattleStore.getState()).toMatchObject({
       battleState: "in-battle",
-      lastKillHash: "kill",
     });
   });
 });

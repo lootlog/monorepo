@@ -4,7 +4,7 @@ import {
   MessageType,
 } from "@/api/chat.api";
 import type { ChatMessageResponseDtoOutputNpc as ChatNpc } from "@lootlog/client/main";
-import { getTextColor } from "@/utils/notifications-and-detector/background";
+import { getNotificationColors } from "@/utils/notifications-and-detector/background";
 import { isYesterday } from "@/utils/local-date";
 import { getNpcType } from "@lootlog/domain/npc-type";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
@@ -57,7 +57,7 @@ export const getChatNpcTextColor = (
 ) => {
   const npcType = getNpcType(NpcType, npc);
 
-  return getTextColor(npcType, true, npcTypeColors);
+  return getNotificationColors(npcType, true, npcTypeColors).text;
 };
 
 export const getChatMessageBody = (
@@ -65,7 +65,7 @@ export const getChatMessageBody = (
 ): ChatMessageBody | null => {
   if (message.type === MessageType.NOTIFICATION) {
     return {
-      color: getTextColor("message", true),
+      color: getNotificationColors("message", true).text,
       text: `[P] ${message.message}`,
     };
   }

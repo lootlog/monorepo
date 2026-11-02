@@ -37,6 +37,9 @@ import {
   organizationLootRecordTable as record,
 } from "#src/database/drizzle/schema";
 import type { NpcTypeEnum } from "@lootlog/schema/npc-type";
+import { NON_LEGEND_ITEM_TYPES } from "@lootlog/domain/item-type";
+import { strongestNpcFirst } from "#src/loots/strongest-npc-order";
+import { statsLocalTimeOfUtc } from "#src/kills/kill-stats-period";
 
 export class LootStatsQueryError extends TaggedErrorClass<LootStatsQueryError>()(
   "LootStatsQueryError",
@@ -54,6 +57,7 @@ export const runLootStatsQuery = <A, E>(
     }),
   );
 
+/** Items of legendary rarity, whatever their type. */
 const legendary =
   sql<number>`count(${lootItem.id}) filter (where ${item.rarity} = 'LEGENDARY')`.mapWith(
     Number,
@@ -64,14 +68,28 @@ const heroic =
     Number,
   );
 
-/** Orders a loot's NPCs strongest first; the strongest one names the loot. */
-const strongestNpcFirst = sql`case ${npc.type} when 'TITAN' then 1 when 'COLOSSUS' then 2 when 'HERO' then 3 when 'EVENT_HERO' then 4 when 'ELITE3' then 5 when 'ELITE2' then 6 when 'ELITE' then 7 else 8 end`;
+/** The strongest of a loot's NPCs ranks first and names the loot. */
+const strongestNpcRank = (lootId: SQLWrapper) =>
+  sql<number>`row_number() over (partition by ${lootId} order by ${sql.join(strongestNpcFirst, sql`, `)})`.as(
+    "rn",
+  );
 
-/** Legendary items that count as a find; blessings, upgrades and consumables do not. */
-const rankedLegendary = and(
+/** Legends, as `NON_LEGEND_ITEM_TYPES` defines them; counters of legendary rarity use `legendary`. */
+const legend = and(
   eq(item.rarity, "LEGENDARY"),
-  notInArray(item.itemType, ["BLESS", "UPGRADE", "CONSUME"]),
+  notInArray(item.itemType, [...NON_LEGEND_ITEM_TYPES]),
 );
+
+/**
+ * The timeline point of a loot. An hour is its UTC instant; a day or a week
+ * is the calendar one in `STATS_TIME_ZONE`, as kill statistics count them,
+ * given as that local midnight written in UTC. Both PostgreSQL drivers decode
+ * the native timestamp; a column codec adds a costly text cast.
+ */
+const lootTimelineDate = (unit: "hour" | "day" | "week") =>
+  unit === "hour"
+    ? sql<Date>`date_trunc('hour', ${loot.createdAt})`
+    : sql<Date>`date_trunc(${sql.raw(`'${unit}'`)}, ${statsLocalTimeOfUtc(loot.createdAt)})`;
 
 type LootStatsDatabase = Pick<
   typeof ApiDatabase.Service,
@@ -153,14 +171,7 @@ export const buildLootStatsQueries = (
     ? overviewBase.innerJoin(validLoots, eq(validLoots.lootId, loot.id))
     : overviewBase.innerJoin(record, eq(record.lootId, loot.id)).where(scope);
 
-  const truncUnit = {
-    hour: sql`'hour'`,
-    day: sql`'day'`,
-    week: sql`'week'`,
-  }[options.truncUnit];
-
-  // Both PostgreSQL drivers decode the native timestamp; a column codec adds a costly text cast.
-  const timelineDate = sql<Date>`date_trunc(${truncUnit}, ${loot.createdAt})`;
+  const timelineDate = lootTimelineDate(options.truncUnit);
 
   const timelineBase = itemSource
     .select({
@@ -191,9 +202,7 @@ export const buildLootStatsQueries = (
         type: npc.type,
         lvl: npc.lvl,
         icon: npc.icon,
-        rank: sql<number>`row_number() over (partition by ${loot.id} order by ${strongestNpcFirst})`.as(
-          "rn",
-        ),
+        rank: strongestNpcRank(loot.id),
       })
       .from(loot)
       .innerJoin(record, eq(record.lootId, loot.id))
@@ -295,7 +304,7 @@ export const buildLootStatsQueries = (
     .where(
       and(
         scope,
-        rankedLegendary,
+        legend,
         exists(
           new QueryBuilder()
             .select({ id: lootNpc.id })
@@ -499,6 +508,11 @@ export const buildUserLootStatsQueries = (
       total_loots: countDistinct(lootItem.lootId),
       total_items: count(lootItem.id),
       legendary_items: legendary,
+      // The same items as legendary_items, so the tile counts what it shows.
+      caught_legendary_items:
+        sql<number>`count(${lootItem.id}) filter (where ${item.rarity} = 'LEGENDARY' and ${caught})`.mapWith(
+          Number,
+        ),
       heroic_items: heroic,
       avg_item_level: avg(item.lvl),
     })
@@ -507,10 +521,7 @@ export const buildUserLootStatsQueries = (
     .innerJoin(item, eq(item.id, lootItem.itemSnapshotId))
     .where(selected(lootItem.lootId));
 
-  const truncUnit = { day: sql`'day'`, week: sql`'week'` }[options.truncUnit];
-
-  // Days and weeks follow the Europe/Warsaw calendar, as the kill statistics do.
-  const timelineDate = sql<Date>`date_trunc(${truncUnit}, ${loot.createdAt} at time zone 'UTC' at time zone 'Europe/Warsaw')`;
+  const timelineDate = lootTimelineDate(options.truncUnit);
 
   const timeline = database
     .select({
@@ -537,9 +548,7 @@ export const buildUserLootStatsQueries = (
         type: npc.type,
         lvl: npc.lvl,
         icon: npc.icon,
-        rank: sql<number>`row_number() over (partition by ${lootNpc.lootId} order by ${strongestNpcFirst})`.as(
-          "rn",
-        ),
+        rank: strongestNpcRank(lootNpc.lootId),
       })
       .from(lootNpc)
       .innerJoin(npc, eq(npc.id, lootNpc.npcSnapshotId))
@@ -604,7 +613,7 @@ export const buildUserLootStatsQueries = (
     .innerJoin(lootItem, eq(lootItem.lootId, rankedNpcs.lootId))
     .innerJoin(loot, eq(loot.id, lootItem.lootId))
     .innerJoin(item, eq(item.id, lootItem.itemSnapshotId))
-    .where(and(eq(rankedNpcs.rank, 1), rankedLegendary))
+    .where(and(eq(rankedNpcs.rank, 1), legend))
     .groupBy(
       item.itemId,
       item.name,
