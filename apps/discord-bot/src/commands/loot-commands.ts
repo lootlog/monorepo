@@ -30,30 +30,30 @@ const SHOWN_PLAYERS_PER_LOOT = 5;
 
 const RARITIES = ["LEGENDARY", "HEROIC", "UPGRADED", "UNIQUE"] as const;
 
-const Loots = Schema.Array(
-  Schema.Struct({
-    createdAt: Schema.String,
-    world: Schema.String,
-    items: Schema.Array(
-      Schema.Struct({
-        name: Schema.String,
-        rarity: Schema.NullOr(Schema.String),
-      }),
-    ),
-    players: Schema.Array(Schema.Struct({ name: Schema.String })),
-    npcs: Schema.Array(
-      Schema.Struct({
-        id: Schema.Number,
-        name: Schema.String,
-        type: Schema.NullOr(Schema.String),
-        wt: Schema.NullOr(Schema.Number),
-        lvl: Schema.NullOr(Schema.Number),
-      }),
-    ),
-  }),
-);
+const Loot = Schema.Struct({
+  createdAt: Schema.String,
+  world: Schema.String,
+  items: Schema.Array(
+    Schema.Struct({
+      name: Schema.String,
+      rarity: Schema.NullOr(Schema.String),
+    }),
+  ),
+  players: Schema.Array(Schema.Struct({ name: Schema.String })),
+  npcs: Schema.Array(
+    Schema.Struct({
+      id: Schema.Number,
+      name: Schema.String,
+      type: Schema.NullOr(Schema.String),
+      wt: Schema.NullOr(Schema.Number),
+      lvl: Schema.NullOr(Schema.Number),
+    }),
+  ),
+});
 
-type Loot = (typeof Loots.Type)[number];
+type Loot = typeof Loot.Type;
+
+const LootPage = Schema.Struct({ items: Schema.Array(Loot) });
 
 const SearchItems = Schema.Struct({
   hits: Schema.Array(
@@ -128,10 +128,10 @@ const lootsReply = (
     .api(
       `/guilds/${encodeURIComponent(session.guildId)}/loots`,
       { limit: SHOWN_LOOTS, ...filters },
-      Loots,
+      LootPage,
     )
     .pipe(
-      Effect.map((loots) => ({
+      Effect.map(({ items: loots }) => ({
         embeds: [
           lootlogEmbed(title).setDescription(
             loots.length === 0 ? emptyText : loots.map(lootLine).join("\n"),
