@@ -79,7 +79,7 @@ Skill rows usually look like this:
 
 | Key        | Processor behavior                                                                                                                    |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `tspell`   | Skill/spell display name. This can be Polish text and is stored in `spellsUsedMap` and `warriorMechanics.spells[].name`.              |
+| `tspell`   | Skill/spell display name. This can be Polish text and is stored in `spellsUsedMap`.                                                   |
 | `skillId`  | Numeric skill identity. The processor uses this for follow-up logic.                                                                  |
 | `+oth_dmg` | With an active spell row, treated as spell true/auxiliary follow-up damage. Without an active spell row, treated as reflected damage. |
 
@@ -190,16 +190,16 @@ block/evade:
 
 ## Healing Keys
 
-| Key                     | Processor aggregate                                                                  |
-| ----------------------- | ------------------------------------------------------------------------------------ |
-| `heal`                  | actor `passiveHealing`                                                               |
-| `bandage`               | actor `activeHealing`                                                                |
-| `heal_target`           | target `activeHealing`; actor `warriorMechanics.targetHealing` in timeline analytics |
-| `healall_per`           | recognized as healing coverage metadata                                              |
-| `lowheal_per-enemies`   | recognized as healing coverage metadata                                              |
-| `achpp_per`             | recognized as healing coverage metadata                                              |
-| `legbon_lastheal`       | legendary last-heal count and value                                                  |
-| `legbon_holytouch_heal` | holy-touch heal value                                                                |
+| Key                     | Processor aggregate                                               |
+| ----------------------- | ----------------------------------------------------------------- |
+| `heal`                  | actor `passiveHealing`                                            |
+| `bandage`               | actor `activeHealing`                                             |
+| `heal_target`           | target `activeHealing`; actor `healingDone` in timeline analytics |
+| `healall_per`           | recognized as healing coverage metadata                           |
+| `lowheal_per-enemies`   | recognized as healing coverage metadata                           |
+| `achpp_per`             | recognized as healing coverage metadata                           |
+| `legbon_lastheal`       | legendary last-heal count and value                               |
+| `legbon_holytouch_heal` | holy-touch heal value                                             |
 
 Example:
 
@@ -214,16 +214,16 @@ This is a self/passive healing tick for warrior `617`, not a targeted attack.
 The official mechanics article treats absorption as part of damage resolution.
 The combat log exposes both physical and magical absorption events.
 
-| Key                     | Timeline / mechanics behavior                                             |
-| ----------------------- | ------------------------------------------------------------------------- |
-| `+absorb`               | actor physical absorption gained                                          |
-| `+abdest`               | actor physical absorption gained/destroyed metadata in `warriorMechanics` |
-| `+abdest_per`           | actor physical absorption percentage metadata in `warriorMechanics`       |
-| `active_absorbdest_per` | active absorption destruction metadata in `warriorMechanics`              |
-| `+absorbm`              | actor magic absorption gained                                             |
-| `+abmdest_per`          | actor magic absorption percentage metadata in `warriorMechanics`          |
-| `-absorb`               | target physical absorption spent; timeline mitigation                     |
-| `-absorbm`              | target magic absorption spent; timeline mitigation                        |
+| Key                     | Timeline behavior                                     |
+| ----------------------- | ----------------------------------------------------- |
+| `+absorb`               | actor physical absorption gained                      |
+| `+abdest`               | actor physical absorption gained                      |
+| `+abdest_per`           | actor physical absorption gained                      |
+| `active_absorbdest_per` | actor physical absorption gained                      |
+| `+absorbm`              | actor magic absorption gained                         |
+| `+abmdest_per`          | actor magic absorption gained                         |
+| `-absorb`               | target physical absorption spent; timeline mitigation |
+| `-absorbm`              | target magic absorption spent; timeline mitigation    |
 
 Absorption contributes to the timeline mitigation family, but it is tracked
 separately from block/evade counters.
@@ -327,7 +327,7 @@ kept in their value fields.
 | Key         | Processor behavior                                                      |
 | ----------- | ----------------------------------------------------------------------- |
 | `combo`     | recognized as combo metadata                                            |
-| `combo-max` | updates `warriorMechanics.maxCombo`                                     |
+| `combo-max` | recognized as combo metadata                                            |
 | `step`      | actor movement step, increments `steps`                                 |
 | `+swing`    | movement/tempo metadata                                                 |
 | `winner`    | sets battle outcome winner name                                         |
@@ -509,7 +509,7 @@ When adding support for a new action key:
 1. Add it to the appropriate category set or damage map in
    `packages/battle-processor/src/index.ts`.
 2. Decide whether it should affect warrior aggregates, timeline deltas,
-   `warriorMechanics`, or only `actionCoverage`.
+   or only `actionCoverage`.
 3. Add or update processor tests with one minimal row for that key.
 4. Update this document with the key, target/actor semantics, and aggregation
    behavior.

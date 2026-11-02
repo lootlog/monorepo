@@ -18,7 +18,6 @@ const processBattleWithStatisticsParity = (battleData: BattlePayload) => {
   expect(statisticsOnly).toEqual({
     ...detailed,
     battleTimeline: [],
-    warriorMechanics: [],
     actionCoverage: {
       totalActions: 0,
       handledActions: 0,
@@ -904,19 +903,10 @@ describe("BattleProcessor", () => {
       const result = processBattleWithStatisticsParity(battleData);
       const mage = result.warriors.find((w) => w.name === "Mage");
 
-      const mechanics = result.warriorMechanics.find(
-        (w) => w.warriorId === "1",
-      );
-
       expect(mage?.spellsUsed).toBe(1);
       expect(mage?.normalAttacks).toBe(0);
       expect(mage?.turns).toBe(1);
       expect(mage?.spellsUsedMap["Podwojny strzal"]).toBe(1);
-      expect(mechanics?.spells[0]).toMatchObject({
-        name: "Podwojny strzal",
-        skillId: 97,
-        casts: 1,
-      });
     });
 
     it("should track steps", () => {
@@ -1062,24 +1052,10 @@ describe("BattleProcessor", () => {
       const attacker = result.warriors.find((w) => w.name === "Attacker");
       const defender = result.warriors.find((w) => w.name === "Defender");
 
-      const attackerMechanics = result.warriorMechanics.find(
-        (w) => w.warriorId === "1",
-      );
-
-      const defenderMechanics = result.warriorMechanics.find(
-        (w) => w.warriorId === "2",
-      );
-
       expect(attacker?.auxiliaryDamage).toBe(40);
       expect(attacker?.damageDealtAfterDefensive).toBe(35);
       expect(defender?.auxiliaryDamageTaken).toBe(35);
       expect(defender?.activeHealing).toBe(30);
-      expect(attackerMechanics?.absorptionGained).toBe(20);
-      expect(attackerMechanics?.magicAbsorptionGained).toBe(15);
-      expect(attackerMechanics?.targetHealing).toBe(30);
-      expect(defenderMechanics?.auxiliaryDamageTaken).toBe(35);
-      expect(defenderMechanics?.absorptionSpent).toBe(10);
-      expect(defenderMechanics?.magicAbsorptionSpent).toBe(5);
       expect(result.battleTimeline[0]?.flags).toContain("absorb");
     });
 
@@ -1121,17 +1097,11 @@ describe("BattleProcessor", () => {
       const result = processBattleWithStatisticsParity(battleData);
       const defender = result.warriors.find((w) => w.name === "Defender");
 
-      const defenderMechanics = result.warriorMechanics.find(
-        (w) => w.warriorId === "2",
-      );
-
       const flags = result.battleTimeline[0]?.flags ?? [];
 
       expect(defender?.evasions).toBe(1);
       expect(defender?.blocks).toBe(3);
       expect(defender?.blockedDamage).toBe(36);
-      expect(defenderMechanics?.mitigationEvents).toBe(4);
-      expect(defenderMechanics?.controlTaken).toBe(2);
       expect(flags).toEqual(
         expect.arrayContaining([
           "evade",
@@ -1181,10 +1151,6 @@ describe("BattleProcessor", () => {
       const turn = result.battleTimeline[0];
       const defender = result.warriors.find((w) => w.name === "Defender");
 
-      const defenderMechanics = result.warriorMechanics.find(
-        (w) => w.warriorId === "2",
-      );
-
       const counterAction = turn?.actions.find(
         (action) => action.actionType === "-contra",
       );
@@ -1194,7 +1160,6 @@ describe("BattleProcessor", () => {
       expect(turn?.deltas.damage).toBe(100);
       expect(turn?.deltas.mitigation).toBe(0);
       expect(turn?.deltas.byWarrior["2"]?.mitigation).toBe(0);
-      expect(defenderMechanics?.mitigationEvents).toBe(0);
       expect(turn?.flags).toContain("counter");
       expect(counterAction?.category).toBe("counter");
     });
@@ -1237,10 +1202,6 @@ describe("BattleProcessor", () => {
       const attackerDelta = turn?.deltas.byWarrior["1"];
       const defenderDelta = turn?.deltas.byWarrior["2"];
 
-      const attackerMechanics = result.warriorMechanics.find(
-        (warrior) => warrior.warriorId === "1",
-      );
-
       const energyDestroyAction = turn?.actions.find(
         (action) => action.actionType === "-endest",
       );
@@ -1254,9 +1215,6 @@ describe("BattleProcessor", () => {
       expect(defenderDelta?.resourceDelta).toBe(-24);
       expect(turn?.cumulative["1"]?.energyPressure).toBe(12);
       expect(turn?.cumulative["1"]?.manaPressure).toBe(12);
-      expect(attackerMechanics?.resourcePressure).toBe(24);
-      expect(attackerMechanics?.energyPressure).toBe(12);
-      expect(attackerMechanics?.manaPressure).toBe(12);
       expect(energyDestroyAction?.value).toBe(12);
       expect(energyDestroyAction?.param).toBe("12,3");
     });
