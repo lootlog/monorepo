@@ -34,6 +34,31 @@ export const runLogEffect = (effect: Effect.Effect<void>) => {
   return logRunner(span ? Effect.withParentSpan(effect, span) : effect);
 };
 
+/** Logs outside an Effect, annotating every entry with the given context. */
+export class ContextLogger {
+  constructor(private readonly context: string) {}
+
+  debug(message: string, ...details: unknown[]): void {
+    this.run(Effect.logDebug(message, ...details));
+  }
+
+  info(message: string, ...details: unknown[]): void {
+    this.run(Effect.logInfo(message, ...details));
+  }
+
+  warn(message: string, ...details: unknown[]): void {
+    this.run(Effect.logWarning(message, ...details));
+  }
+
+  error(message: string, ...details: unknown[]): void {
+    this.run(Effect.logError(message, ...details));
+  }
+
+  private run(effect: Effect.Effect<void>): void {
+    runLogEffect(effect.pipe(Effect.annotateLogs({ context: this.context })));
+  }
+}
+
 export const installScopedLogRunner = Effect.gen(function* () {
   const previous = logRunner;
   logRunner = yield* FiberSet.makeRuntime<never, void, never>();

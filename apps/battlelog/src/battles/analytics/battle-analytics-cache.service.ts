@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Logger } from "#src/infrastructure/logger";
+import { ContextLogger } from "@lootlog/instrumentation";
 import type { RedisStore } from "#src/infrastructure/redis-store";
 import type { BattleAnalyticsCriteria } from "#src/battles/analytics/query-battle-analytics";
 import type {
@@ -24,7 +24,7 @@ return generation
 `;
 
 export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
-  const logger = new Logger("BattleAnalyticsCache");
+  const logger = new ContextLogger("BattleAnalyticsCache");
 
   const formatCacheSegment = (
     value: string | number | undefined,

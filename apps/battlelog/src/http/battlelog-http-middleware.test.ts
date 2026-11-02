@@ -1,12 +1,12 @@
 import { expect, it, spyOn } from "bun:test";
 import {
+  ContextLogger,
   httpServerDuration,
   httpServerRouteMetrics,
   httpServerRequestCount,
 } from "@lootlog/instrumentation";
 import { Effect, Layer, Metric } from "effect";
 import { HttpRouter, HttpServer, HttpServerResponse } from "effect/http";
-import { Logger } from "../infrastructure/logger.js";
 import { battlelogHttpMiddleware } from "./battlelog-http.js";
 
 for (const { status, effect } of [
@@ -18,7 +18,7 @@ for (const { status, effect } of [
   { status: 500, effect: Effect.die(new Error("database unavailable")) },
 ]) {
   it(`preserves HTTP ${status} and only reports genuine application failures`, async () => {
-    const errorLog = spyOn(Logger.prototype, "error").mockImplementation(
+    const errorLog = spyOn(ContextLogger.prototype, "error").mockImplementation(
       () => {},
     );
 
@@ -45,7 +45,7 @@ for (const { status, effect } of [
 }
 
 it("does not report an aborted client request as an HTTP failure", async () => {
-  const errorLog = spyOn(Logger.prototype, "error").mockImplementation(
+  const errorLog = spyOn(ContextLogger.prototype, "error").mockImplementation(
     () => {},
   );
 

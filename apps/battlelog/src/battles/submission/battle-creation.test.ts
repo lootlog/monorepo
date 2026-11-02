@@ -33,7 +33,7 @@ import {
   battleWarriors,
 } from "#src/database/schema";
 import { decodeBattleEvents } from "#src/battles/battle-timeline";
-import { Logger } from "#src/infrastructure/logger";
+import { ContextLogger } from "@lootlog/instrumentation";
 import type { JsonCodec } from "#src/infrastructure/redis-store";
 import { makeBattlelogOperations } from "#src/battles/battlelog-operations";
 import { makeBattles, type Battles } from "#src/battles/battles.service";
@@ -1157,7 +1157,7 @@ describe("battle creation deduplication", () => {
   });
 
   it("waits for an in-flight creation to finish after losing the lock", async () => {
-    spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    spyOn(ContextLogger.prototype, "error").mockImplementation(() => undefined);
 
     let releaseTransaction!: () => void;
 
@@ -1322,7 +1322,7 @@ describe("battle creation deduplication", () => {
   });
 
   it("returns 503 without storing a battle when Redis is unavailable", async () => {
-    spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    spyOn(ContextLogger.prototype, "error").mockImplementation(() => undefined);
     const redis = createRedisBoundary();
     redis.readCachedJson.mockRejectedValue(new Error("Redis unavailable"));
     const testApplication = createTestApplication({ redis });
@@ -1338,7 +1338,7 @@ describe("battle creation deduplication", () => {
   });
 
   it("returns 503 without storing a battle when the deduplication lock times out", async () => {
-    spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    spyOn(ContextLogger.prototype, "error").mockImplementation(() => undefined);
     const redis = createRedisBoundary();
     redis.readCachedJson.mockResolvedValue(null);
     redis.setNX.mockResolvedValue(false);

@@ -5,7 +5,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { gunzipSync } from "node:zlib";
 import type { R2Config } from "#src/config/r2.config";
-import { Logger } from "#src/infrastructure/logger";
+import { ContextLogger } from "@lootlog/instrumentation";
 import type { RedisStore } from "#src/infrastructure/redis-store";
 import { chunk } from "es-toolkit";
 import { Redacted } from "effect";
@@ -36,7 +36,7 @@ export const makeBattleObjectStorage = (
   >,
   config: R2Config,
 ) => {
-  const logger = new Logger("BattleObjectStorage");
+  const logger = new ContextLogger("BattleObjectStorage");
 
   const client = new S3Client({
     region: config.region,
@@ -47,7 +47,7 @@ export const makeBattleObjectStorage = (
     },
   });
 
-  logger.log(`R2 client initialized for bucket: ${config.bucketName}`);
+  logger.info(`R2 client initialized for bucket: ${config.bucketName}`);
 
   const objectStorage = {
     async getBattleData<TData>(
@@ -115,7 +115,7 @@ export const makeBattleObjectStorage = (
         const parsedData = decodeJson(decompressedData);
 
         await objectStorage.cacheData(battleId, decompressedData);
-        logger.log(`Battle data retrieved from R2 for battle ${battleId}`);
+        logger.info(`Battle data retrieved from R2 for battle ${battleId}`);
 
         return parsedData;
       } catch (error) {
@@ -230,7 +230,7 @@ export const makeBattleObjectStorage = (
               redisStore.zrem(LRU_KEY, ...oldestBattles),
             ]);
 
-            logger.log(
+            logger.info(
               `Evicted ${oldestBattles.length} battles from cache (LRU limit: ${MAX_CACHE_SIZE})`,
             );
           }

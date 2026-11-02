@@ -29,7 +29,7 @@ import {
   type BackgroundTaskRunner,
   unmanagedBackgroundTaskRunner,
 } from "#src/platform/background-tasks";
-import { Logger } from "#src/platform/logger";
+import { ContextLogger } from "@lootlog/instrumentation";
 import type {
   FederatedRealtimeMessage,
   RedisGatewayStore,
@@ -237,7 +237,7 @@ const isPingEvent = (
   event.type === "map-ping.received" || event.type === "battle-ping.received";
 
 export class RealtimeHub {
-  private readonly logger = new Logger(RealtimeHub.name);
+  private readonly logger = new ContextLogger(RealtimeHub.name);
   private readonly sockets = new Map<string, GatewaySocket>();
   private readonly audiences = new Map<string, Set<GatewaySocket>>();
   private readonly locationKeys = new WeakMap<GatewaySocket, string>();
