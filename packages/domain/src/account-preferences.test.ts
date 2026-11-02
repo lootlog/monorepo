@@ -108,9 +108,19 @@ test("event heroes keep the hero settings a player chose until set apart", () =>
   expect(detector.EVENT_HERO).toEqual(detector.HERO);
 
   const separated = normalizeDetector({
-    HERO: { detect: false },
+    HERO: { detect: false, autoSend: true },
     EVENT_HERO: { detect: true },
   });
 
-  expect(separated.EVENT_HERO.detect).toBe(true);
+  expect(separated.EVENT_HERO).toEqual({ ...separated.HERO, detect: true });
+
+  const separatedNotifications = normalizeNotifications({
+    HERO: { ignoreOtherWorlds: true },
+    EVENT_HERO: { sound: false },
+  });
+
+  expect(separatedNotifications.EVENT_HERO).toEqual({
+    ...separatedNotifications.HERO,
+    sound: false,
+  });
 });

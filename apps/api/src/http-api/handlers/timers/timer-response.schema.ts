@@ -18,6 +18,7 @@ const TimerBoundary = Schema.Struct({
   maxSpawnTime: DomainDateTime,
   member: Schema.optionalKey(MemberBoundary),
   deletedAt: optionalNullableDateTime,
+  entranceClosesAt: optionalNullableDateTime,
   updatedAt: DomainDateTime,
 });
 

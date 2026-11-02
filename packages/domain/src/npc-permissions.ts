@@ -1,4 +1,7 @@
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { getNpcTypeRoutingTier } from "@lootlog/schema/npc-routing";
 import { Permission } from "@lootlog/schema/permissions";
+import { Schema } from "effect";
 
 export type NpcPermissionData = {
   lvl: number;
@@ -50,16 +53,7 @@ export const NPC_FEATURE_PERMISSIONS = {
 
 const TIMER_PERMISSION = NPC_FEATURE_PERMISSIONS.timers;
 
-type TimerPermissionTier = keyof typeof TIMER_PERMISSION;
-
-const TIMER_PERMISSION_TIER_BY_NPC_TYPE = new Map(
-  Object.entries({
-    TITAN: "titans",
-    HERO: "heroes",
-    EVENT_HERO: "heroes",
-    HERO_TRACKER: "heroes",
-  } satisfies Record<string, TimerPermissionTier>),
-);
+const isNpcType = Schema.is(NpcTypeSchema);
 
 const isNpcLevelWithinRoleRange = (
   role: RolePermissionData,
@@ -78,7 +72,9 @@ export const hasRolePermissionInLevelRange = (
   );
 
 const getRequiredTimerPermission = (npcType: string): string =>
-  TIMER_PERMISSION[TIMER_PERMISSION_TIER_BY_NPC_TYPE.get(npcType) ?? "base"];
+  TIMER_PERMISSION[
+    isNpcType(npcType) ? getNpcTypeRoutingTier(npcType) : "base"
+  ];
 
 export const canViewNpcTimer = (
   npc: NpcPermissionData | null,

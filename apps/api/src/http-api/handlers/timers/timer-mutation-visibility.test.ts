@@ -1188,3 +1188,77 @@ it("keeps the five newest timer history entries without pruning other organizati
     await boundary.dispose();
   }
 });
+
+it("refuses to reset a Hero Tracker timer and leaves it unchanged", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    const { database } = boundary;
+    const now = new Date();
+    const guild = createGuildFixture();
+    const member = createMemberFixture();
+    await boundary.run(database.insert(guildTable).values(guild));
+    await boundary.run(database.insert(memberTable).values(member));
+
+    const tracker = {
+      guildId: guild.id,
+      world: "world",
+      timerKey: "-1:doświadczony tropiciel herosów",
+      npcId: -1,
+      npc: {
+        id: 190436,
+        name: "Doświadczony Tropiciel Herosów",
+        lvl: 282,
+        type: "HERO_TRACKER",
+      },
+      createdById: member.id,
+      entranceClosesAt: new Date(now.getTime() + 10 * 60_000),
+      minSpawnTime: new Date(now.getTime() + 55 * 60_000),
+      maxSpawnTime: new Date(now.getTime() + 145 * 60_000),
+      latestRespBaseSeconds: 5400,
+      updatedAt: now,
+    };
+
+    await boundary.run(database.insert(timerTable).values(tracker));
+    const before = await boundary.run(database.select().from(timerTable));
+    const publications: string[] = [];
+
+    const reset = makeResetTimer(database, {
+      invalidateList: () => Effect.void,
+      publish: (key: string) =>
+        Effect.sync(() => {
+          publications.push(key);
+        }),
+      withLock: (_key, operation) => operation,
+    });
+
+    const result = await boundary.run(
+      reset(
+        {
+          guild,
+          userId: member.userId,
+          discordId: member.userId,
+          roles: [],
+          accessPolicy: createAccessPolicy({
+            capabilities: [Permission.ADMIN],
+          }),
+        },
+        tracker.timerKey,
+        { world: tracker.world },
+      ).pipe(Effect.result),
+    );
+
+    expect(result).toMatchObject({
+      failure: {
+        kind: "invalid-request",
+        response: { message: "HERO_TRACKER_TIMER_CANNOT_BE_RESET" },
+      },
+    });
+    expect(await boundary.run(database.select().from(timerTable))).toEqual(
+      before,
+    );
+    expect(publications).toEqual([]);
+  } finally {
+    await boundary.dispose();
+  }
+});
