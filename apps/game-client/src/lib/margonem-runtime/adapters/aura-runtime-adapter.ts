@@ -237,12 +237,12 @@ export const auraRuntimeAdapter = {
     return getRuntimeWindow().Engine?.interface?.get$tipLayer?.()?.[0] ?? null;
   },
 
-  /** Rebuilds the cached tips of the hero and the given others. */
-  refreshTips(otherIds: Iterable<string>): void {
+  /** Rebuilds the cached tips of the given others, and of the hero when asked. */
+  refreshTips(otherIds: Iterable<string>, hero: boolean): void {
     const engine = getRuntimeWindow().Engine;
 
     try {
-      engine?.hero?.updateTip?.();
+      if (hero) engine?.hero?.updateTip?.();
 
       for (const id of otherIds) engine?.others?.getById?.(id)?.tipUpdate?.();
     } catch (error) {

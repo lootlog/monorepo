@@ -4,15 +4,14 @@ import { useGameStore } from "@/store/game.store";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
 import { getPlayersPresenceSource } from "@/lib/players-presence-source";
 import type { AppSocket } from "@/lib/socket";
-import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
-import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
-import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import {
   type GuildMembersByUserId,
   useOnlineCharacterOwnersStore,
 } from "@/store/online-character-owners.store";
 import { useSettingsStore } from "@/store/settings.store";
+import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import { useEffect, useRef } from "react";
+import { useShiftCatchingGuildsGuildId } from "./use-shift-catching-guilds-guild-id";
 
 function getCurrentWorld(): string | undefined {
   return useGameStore.getState().game?.world;
@@ -106,15 +105,13 @@ function hydrateOnlineCharacterOwners({
 }
 
 export function useOnlineCharacterOwners(): void {
-  const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
-    (state) => state.isShiftPressed,
-  );
-
+  // A changed selection drops cached owners even while Shift is released.
   const selectedGuildId = useSelectedLootlogGuildId();
-  const active = isShiftPressed && isConcreteLootlogGuildId(selectedGuildId);
+  const shiftGuildId = useShiftCatchingGuildsGuildId();
+  const active = shiftGuildId !== null;
 
   const selectedWorldSetting = useSettingsStore((state) =>
-    active ? state.worldByGuildId[selectedGuildId] : undefined,
+    shiftGuildId === null ? undefined : state.worldByGuildId[shiftGuildId],
   );
 
   const selectedWorld = active
@@ -165,15 +162,7 @@ export function useOnlineCharacterOwners(): void {
       useOnlineCharacterOwnersStore.getState().clearOwners();
     }
 
-    if (
-      !joined ||
-      !connected ||
-      !active ||
-      !socket ||
-      !selectedGuildId ||
-      selectedGuildId === "all" ||
-      !selectedWorld
-    ) {
+    if (!joined || !connected || !shiftGuildId || !socket || !selectedWorld) {
       return;
     }
 
@@ -182,7 +171,7 @@ export function useOnlineCharacterOwners(): void {
     if (!needsOwnersRequest(current)) return;
 
     const hydration: OwnersHydration = current ?? {
-      guildId: selectedGuildId,
+      guildId: shiftGuildId,
       loadedAt: null,
       pending: false,
       socket,
@@ -192,7 +181,7 @@ export function useOnlineCharacterOwners(): void {
     hydration.pending = true;
     hydrationRef.current = hydration;
     hydrateOnlineCharacterOwners({
-      guildId: selectedGuildId,
+      guildId: shiftGuildId,
       guildMembersByUserIdRef,
       onSettled: (loaded) => {
         hydration.pending = false;
@@ -202,7 +191,15 @@ export function useOnlineCharacterOwners(): void {
       socket,
       world: selectedWorld,
     });
-  }, [connected, active, joined, selectedGuildId, selectedWorld, socket]);
+  }, [
+    connected,
+    active,
+    joined,
+    selectedGuildId,
+    shiftGuildId,
+    selectedWorld,
+    socket,
+  ]);
 
   useEffect(
     () => () => {
@@ -213,19 +210,12 @@ export function useOnlineCharacterOwners(): void {
   );
 
   useEffect(() => {
-    if (
-      !active ||
-      !socket ||
-      !connected ||
-      !joined ||
-      !selectedGuildId ||
-      !selectedWorld
-    )
+    if (!shiftGuildId || !socket || !connected || !joined || !selectedWorld)
       return;
 
     const source = getPlayersPresenceSource(
       socket,
-      selectedGuildId,
+      shiftGuildId,
       selectedWorld,
     );
 
@@ -253,5 +243,5 @@ export function useOnlineCharacterOwners(): void {
       if (presence.status === "offline") store.removePresence(presence);
       else store.upsertPresence(presence, guildMembersByUserIdRef.current);
     }, false);
-  }, [active, connected, joined, socket, selectedGuildId, selectedWorld]);
+  }, [shiftGuildId, connected, joined, socket, selectedWorld]);
 }

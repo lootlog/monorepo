@@ -6,10 +6,7 @@ import { useSocket } from "@/contexts/socket-context";
 import { GatewayEvent } from "@/config/gateway";
 import { queryKeys } from "@/features/public-api/query-keys";
 import {
-  EMPTY_READY_ROOM_CACHE,
-  resetReadyRoomObservationSequence,
-} from "@/features/party-finder/ready-room-cache";
-import {
+  clearReadyRoomCache,
   invalidateReadyRoomSync,
   useReadyRoomsSynchronized,
 } from "@/features/party-finder/hooks/use-ready-rooms";
@@ -59,9 +56,7 @@ export function usePartyReadyRoomSync(): void {
     if (!socket) return;
 
     const permissionsChanged = () => {
-      resetReadyRoomObservationSequence();
-      queryClient.setQueryData(queryKeys.readyRooms(), EMPTY_READY_ROOM_CACHE);
-      invalidateReadyRoomSync(queryClient);
+      clearReadyRoomCache(queryClient);
       void queryClient.invalidateQueries({
         queryKey: queryKeys.readyRooms(),
         exact: true,

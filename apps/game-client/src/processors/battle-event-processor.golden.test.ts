@@ -45,7 +45,6 @@ describe("BattleEventProcessor golden payload", () => {
       battleState: "idle",
       battleWarriors: {},
       events: [],
-      lastKillHash: "",
     });
     useGameStore.getState().replaceGame({
       hero: {

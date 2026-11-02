@@ -100,6 +100,20 @@ it("migrates the saved filter once while retaining preferences, then persists la
   localStorage.removeItem(name);
 });
 
+it.each(["npc", "party"])(
+  "maps a stored %s filter to the reports tab that replaced it",
+  async (stored) => {
+    const name = storageKey("ll:chat:state");
+    localStorage.setItem(
+      name,
+      JSON.stringify({ version: 2, state: { chatFilter: stored } }),
+    );
+    await useChatStore.persist.rehydrate();
+    expect(useChatStore.getState().chatFilter).toBe("reports");
+    localStorage.removeItem(name);
+  },
+);
+
 it("shows filters by default and persists toggling them off and on", async () => {
   expect(useChatStore.getState().filtersVisible).toBe(true);
   useChatStore.getState().setChatFilter("reports");

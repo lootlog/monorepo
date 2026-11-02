@@ -12,8 +12,41 @@ const CHAT_NPC_GROUP_WINDOW_MS = 60_000;
 
 export const CHAT_VISIBLE_MESSAGE_LIMIT = 500;
 
-export const getChatMessageDayKey = (timestamp: string) =>
-  timestamp.slice(0, 10);
+const padDatePart = (value: number) => String(value).padStart(2, "0");
+
+/** The player's local calendar day, which the date dividers label. */
+export const getChatMessageDayKey = (timestamp: string) => {
+  const date = new Date(timestamp);
+
+  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
+};
+
+/** Inserts a divider before the first item of each local day. */
+export const withChatDateDividers = <Item>(
+  items: Iterable<Item>,
+  getTimestamp: (item: Item) => string,
+) => {
+  const rows: (Item | ChatDateDividerRow)[] = [];
+  let previousDayKey: string | null = null;
+
+  for (const item of items) {
+    const timestamp = getTimestamp(item);
+    const dayKey = getChatMessageDayKey(timestamp);
+
+    if (dayKey !== previousDayKey) {
+      rows.push({
+        kind: "date-divider",
+        key: `date-divider:${dayKey}`,
+        timestamp,
+      });
+      previousDayKey = dayKey;
+    }
+
+    rows.push(item);
+  }
+
+  return rows;
+};
 
 const getChatMessageTimestamp = (timestamp: string) =>
   new Date(timestamp).getTime();
@@ -22,12 +55,14 @@ const getChatMessageDedupeKey = (message: ChatMessageType) => {
   return `${message.message?.trim() ?? ""}_${message.senderId}_${message.npc?.id ?? ""}`;
 };
 
+export type ChatDateDividerRow = {
+  kind: "date-divider";
+  key: string;
+  timestamp: string;
+};
+
 export type ChatRenderableMessage =
-  | {
-      kind: "date-divider";
-      key: string;
-      timestamp: string;
-    }
+  | ChatDateDividerRow
   | {
       kind: "message";
       key: string;
@@ -92,29 +127,11 @@ export const getNextSelectedGuildId = (
 export const getMessagesForSelectedGuild = (
   messageCache: Record<string, ChatMessageType[]>,
   selectedGuildId?: string,
-) => {
-  const messages: ChatMessageType[] = [];
-
-  if (selectedGuildId === "all") {
-    for (const guildMessages of Object.values(messageCache)) {
-      for (const message of guildMessages) {
-        if (message.timestamp) {
-          messages.push(message);
-        }
-      }
-    }
-
-    return messages;
-  }
-
-  for (const message of messageCache[selectedGuildId ?? ""] ?? []) {
-    if (message.timestamp) {
-      messages.push(message);
-    }
-  }
-
-  return messages;
-};
+) =>
+  (selectedGuildId === "all"
+    ? Object.values(messageCache).flat()
+    : (messageCache[selectedGuildId ?? ""] ?? [])
+  ).filter((message) => message.timestamp);
 
 export type ChatMessageGroup = {
   message: ChatMessageType;
@@ -214,33 +231,24 @@ export const filterChatMessages = (
   messages: ChatMessageType[],
   chatFilter: ChatFilter,
   hiddenNpcTypes: ReadonlySet<NpcTypeEnum> = EMPTY_HIDDEN_NPC_TYPES,
-) => {
-  const supportedMessages = messages.filter(
-    (message) =>
-      message.type !== MessageType.PARTY_GATHERING &&
-      !isHiddenNpcChatMessage(message, hiddenNpcTypes),
-  );
+) =>
+  messages.filter((message) => {
+    if (
+      message.type === MessageType.PARTY_GATHERING ||
+      isHiddenNpcChatMessage(message, hiddenNpcTypes)
+    )
+      return false;
 
-  if (chatFilter === "all") return supportedMessages;
+    if (chatFilter === "all") return true;
 
-  return supportedMessages.filter((message) => {
-    switch (chatFilter) {
-      case "normal":
-        return (
-          message.type === MessageType.NORMAL ||
-          message.type === MessageType.NOTIFICATION
-        );
-      case "npc":
-        return message.type === MessageType.NPC;
-      case "party":
-        return message.type === MessageType.NPC;
-      case "reports":
-        return message.type === MessageType.NPC;
-      default:
-        return true;
-    }
+    if (chatFilter === "normal")
+      return (
+        message.type === MessageType.NORMAL ||
+        message.type === MessageType.NOTIFICATION
+      );
+
+    return message.type === MessageType.NPC;
   });
-};
 
 const getChatNpcGroupKey = (message: ChatMessageType) => {
   const npc = message.npc;
@@ -266,117 +274,52 @@ const getChatNpcGroupKey = (message: ChatMessageType) => {
   ].join(":");
 };
 
-type InternalRenderableMessage =
-  | (Extract<ChatRenderableMessage, { kind: "message" }> & {
-      order: number;
-      sortTimestamp: number;
-    })
-  | (Extract<ChatRenderableMessage, { kind: "npc-group" }> & {
-      firstTimestamp: number;
-      order: number;
-      sortTimestamp: number;
-    });
+type ChatNpcGroupRow = Extract<ChatRenderableMessage, { kind: "npc-group" }>;
 
+/**
+ * Rows for messages already in chronological order: identical NPC reports
+ * within a minute fold into their first report, and each day opens with a
+ * divider.
+ */
 export const getChatRenderableMessages = (
   messages: ChatMessageType[],
 ): ChatRenderableMessage[] => {
-  const renderables: InternalRenderableMessage[] = [];
+  const rows: Exclude<ChatRenderableMessage, ChatDateDividerRow>[] = [];
 
   const activeNpcGroups = new Map<
     string,
-    Extract<InternalRenderableMessage, { kind: "npc-group" }>
+    { firstTimestamp: number; row: ChatNpcGroupRow }
   >();
 
   for (const message of messages) {
-    const timestamp = getChatMessageTimestamp(message.timestamp);
-
     if (message.type !== MessageType.NPC || !message.npc) {
-      renderables.push({
-        kind: "message",
-        key: message.id,
-        message,
-        order: renderables.length,
-        sortTimestamp: timestamp,
-      });
+      rows.push({ kind: "message", key: message.id, message });
       continue;
     }
 
+    const timestamp = getChatMessageTimestamp(message.timestamp);
     const groupKey = getChatNpcGroupKey(message);
-    const existingGroup = activeNpcGroups.get(groupKey);
+    const group = activeNpcGroups.get(groupKey);
 
-    if (
-      !existingGroup ||
-      timestamp - existingGroup.firstTimestamp > CHAT_NPC_GROUP_WINDOW_MS
-    ) {
-      const nextGroup: Extract<
-        InternalRenderableMessage,
-        { kind: "npc-group" }
-      > = {
-        kind: "npc-group",
-        key: `npc-group:${message.id}`,
-        count: 1,
-        messageIds: [message.id],
-        message,
-        firstTimestamp: timestamp,
-        order: renderables.length,
-        sortTimestamp: timestamp,
-      };
-
-      activeNpcGroups.set(groupKey, nextGroup);
-      renderables.push(nextGroup);
+    if (group && timestamp - group.firstTimestamp <= CHAT_NPC_GROUP_WINDOW_MS) {
+      group.row.count += 1;
+      group.row.messageIds.push(message.id);
       continue;
     }
 
-    existingGroup.count += 1;
-    existingGroup.messageIds.push(message.id);
+    const row: ChatNpcGroupRow = {
+      kind: "npc-group",
+      key: `npc-group:${message.id}`,
+      count: 1,
+      messageIds: [message.id],
+      message,
+    };
+
+    activeNpcGroups.set(groupKey, { firstTimestamp: timestamp, row });
+    rows.push(row);
   }
 
-  renderables.sort((firstRenderable, secondRenderable) => {
-    if (firstRenderable.sortTimestamp !== secondRenderable.sortTimestamp) {
-      return firstRenderable.sortTimestamp - secondRenderable.sortTimestamp;
-    }
-
-    return firstRenderable.order - secondRenderable.order;
-  });
-
-  const normalizedRenderables: ChatRenderableMessage[] = [];
-  let previousDayKey: string | null = null;
-
-  for (const renderable of renderables) {
-    const publicRenderable: Exclude<
-      ChatRenderableMessage,
-      { kind: "date-divider" }
-    > =
-      renderable.kind === "message"
-        ? {
-            kind: "message",
-            key: renderable.key,
-            message: renderable.message,
-          }
-        : {
-            kind: "npc-group",
-            key: renderable.key,
-            count: renderable.count,
-            messageIds: renderable.messageIds,
-            message: renderable.message,
-          };
-
-    const currentTimestamp = publicRenderable.message.timestamp;
-    const currentDayKey = getChatMessageDayKey(currentTimestamp);
-
-    if (previousDayKey !== currentDayKey) {
-      normalizedRenderables.push({
-        kind: "date-divider",
-        key: `date-divider:${currentDayKey}`,
-        timestamp: currentTimestamp,
-      });
-      previousDayKey = currentDayKey;
-    }
-
-    normalizedRenderables.push(publicRenderable);
-  }
-
-  return normalizedRenderables;
+  return withChatDateDividers(rows, (row) => row.message.timestamp);
 };
 
 export const getCurrentChatMessages = (

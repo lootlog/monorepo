@@ -52,9 +52,6 @@ const resolvePresenceDetails = (
 
   return {
     accountId: player?.accountId ? Number.parseInt(player.accountId, 10) : 0,
-    characterId: player?.characterId
-      ? Number.parseInt(player.characterId, 10)
-      : 0,
     locationName: player?.location?.map ?? presence.mapName ?? unknownLocation,
     player,
     relatedPlayer: {
@@ -101,8 +98,9 @@ export const OnlinePlayersAccountListEntry: FC<
 > = ({ presence, guildMember }) => {
   const { t } = useTranslation("onlinePlayers");
   const character = getPresenceCharacter(presence);
+  const characterId = character.id;
 
-  const { accountId, characterId, locationName, player, relatedPlayer } =
+  const { accountId, locationName, player, relatedPlayer } =
     resolvePresenceDetails(presence, t("location.unknown"));
 
   const playerTooltip = useOnlinePlayerTooltipHandle();
@@ -151,11 +149,7 @@ export const OnlinePlayersAccountListEntry: FC<
   };
 
   const handleShowEquipment = () => {
-    showCharacterEquipment({
-      ...character,
-      id: characterId,
-      account: accountId,
-    });
+    showCharacterEquipment({ ...character, account: accountId });
   };
 
   const handleShowProfile = () => {

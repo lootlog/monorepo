@@ -5,10 +5,8 @@ import {
 import type { Timer } from "@/api/timers.api";
 import type { GuildMember } from "@/types/guild-member";
 
+/** A timer as the list shows it; grouping merges several guilds' reports into one. */
 export type TimerWithTimeLeft = Timer & {
-  maxTimeLeft: number;
-  minTimeLeft: number;
-  entranceTimeLeft?: number;
   members?: GuildMember[];
   mergedGuildIds?: Array<{
     guildId: string;

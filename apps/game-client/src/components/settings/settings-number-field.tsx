@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { cn } from "cn";
-import { useRef, useState, type FC, type KeyboardEvent } from "react";
+import { useRef, type FC, type KeyboardEvent } from "react";
+import { useSourceDraft } from "./use-source-draft";
 
 type SettingsNumberFieldProps = {
   id?: string;
@@ -51,13 +52,9 @@ export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
   className,
   onCommit,
 }) => {
-  const [draft, setDraft] = useState<{ source: number; text: string } | null>(
-    null,
-  );
-
+  const [text, setText, clearDraft] = useSourceDraft(value, String(value));
   const cancelled = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const text = draft && draft.source === value ? draft.text : String(value);
 
   const commit = () => {
     if (cancelled.current) {
@@ -67,7 +64,7 @@ export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
     }
 
     const next = clampSettingsNumber(Number.parseFloat(text), min, max, step);
-    setDraft(null);
+    clearDraft();
 
     if (next !== value) onCommit(next);
   };
@@ -82,7 +79,7 @@ export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
     if (event.key === "Escape") {
       event.preventDefault();
       cancelled.current = true;
-      setDraft(null);
+      clearDraft();
       event.currentTarget.blur();
     }
   };
@@ -112,9 +109,7 @@ export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
         disabled={disabled}
         aria-label={ariaLabel}
         variant={variant === "cell" ? "borderless" : "default"}
-        onChange={(event) =>
-          setDraft({ source: value, text: event.target.value })
-        }
+        onChange={(event) => setText(event.target.value)}
         onBlur={commit}
         onKeyDown={handleKeyDown}
         className={cn(

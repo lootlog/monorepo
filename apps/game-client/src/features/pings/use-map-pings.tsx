@@ -77,7 +77,7 @@ const getCharacterMenu = (character: RuntimeCharacterRef): PingMenu => {
       };
 };
 
-export const areMapPingsEnabled = () =>
+const areMapPingsEnabled = () =>
   Boolean(useGameStore.getState().game?.hero.accountId) &&
   normalizePings(readSettingsValue("gameData.pings")).enabled;
 

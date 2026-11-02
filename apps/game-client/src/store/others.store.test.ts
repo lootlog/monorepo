@@ -102,7 +102,6 @@ describe("useOthersStore", () => {
     const first = createOther("other");
     useOthersStore.getState().replaceOthers({ 1: first });
     const othersById = useOthersStore.getState().othersById;
-    const revision = useOthersStore.getState().revision;
     const publish = vi.fn<Parameters<typeof useOthersStore.subscribe>[0]>();
     const unsubscribe = useOthersStore.subscribe(publish);
 
@@ -110,7 +109,6 @@ describe("useOthersStore", () => {
 
     expect(useOthersStore.getState().othersById).toBe(othersById);
     expect(useOthersStore.getState().getOther("1")).toBe(first);
-    expect(useOthersStore.getState().revision).toBe(revision);
     expect(publish).not.toHaveBeenCalled();
     unsubscribe();
   });

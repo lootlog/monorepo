@@ -103,7 +103,7 @@ it("lists enemies seen through AirTags under the native players list and starts 
 it("does not re-render the section while AirTag updates only move players", async () => {
   document.body.innerHTML =
     '<div class="whoishere-window"><div class="player-list"></div></div>';
-  testRuntimeWindow.Engine = { whoIsHere: { isShow: () => false } };
+  testRuntimeWindow.Engine = { whoIsHere: { isShow: () => true } };
   const commits = vi.fn();
   const enemy = target({ targetId: "hidden", nickname: "Hidden" });
 
@@ -149,6 +149,47 @@ it("does not re-render the section while AirTag updates only move players", asyn
   await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
 
   expect(commits).not.toHaveBeenCalled();
+});
+
+it("lists enemies only once the closed window opens", async () => {
+  document.body.innerHTML =
+    '<div class="whoishere-window" style="display: none"><div class="player-list"></div></div>';
+
+  const whoIsHereWindow =
+    document.querySelector<HTMLElement>(".whoishere-window")!;
+
+  testRuntimeWindow.Engine = {
+    whoIsHere: { isShow: () => whoIsHereWindow.style.display !== "none" },
+  };
+  render(<WhoIsHereAirTags />);
+
+  act(() => {
+    airTagReceiveController.beginSubscription("request", "aether", 7);
+    airTagReceiveController.applySubscriptionAck({
+      status: "accepted",
+      requestId: "request",
+      scopes: [
+        {
+          guildId: "guild-1",
+          world: "aether",
+          mapId: 7,
+          epochId: "epoch",
+          epochStartedAt: 1,
+          revision: 1,
+          targets: [target({ targetId: "hidden", nickname: "Hidden" })],
+        },
+      ],
+    });
+  });
+  await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+  expect(screen.queryByRole("button", { name: /Hidden/ })).toBeNull();
+
+  // Window.js `show` sets the inline display.
+  act(() => {
+    whoIsHereWindow.style.display = "block";
+  });
+
+  expect(await screen.findByRole("button", { name: /Hidden/ })).toBeVisible();
 });
 
 it("hides an online member of the Organization whom another clan's member reports as an enemy", async () => {

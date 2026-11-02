@@ -36,16 +36,8 @@ export const useNpcListLifecycle = ({
     new Map<number, DetectionAnimationDeadline>(),
   );
 
-  useEffect(() => {
-    const activeNpcIds = new Set(npcs.map((npc) => npc.id));
-
-    for (const npcId of detectionDeadlineByNpcIdRef.current.keys()) {
-      if (!activeNpcIds.has(npcId)) {
-        detectionDeadlineByNpcIdRef.current.delete(npcId);
-      }
-    }
-  }, [npcs]);
-
+  // Removing a detection also ends its animation in the store, so pruning by
+  // the store's animations below covers removed NPCs.
   useEffect(() => {
     const now = Date.now();
     const activeNpcIds = new Set<number>();

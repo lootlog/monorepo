@@ -8,9 +8,22 @@ import { getFallbackSoundUrl } from "@/features/settings/config/default-sounds";
 import { Play } from "lucide-react";
 import { SoundCategorySection } from "./sound-category-section";
 import { SoundFieldInput } from "./sound-field-input";
-import { useSoundSettingsForm } from "./use-sound-settings-form";
+import type { ConfigurableSoundCategory, VisibleSoundCategory } from "./types";
+import { NpcType } from "@/api/npcs.api";
+import {
+  useSoundSettings,
+  useUpdateSoundSettings,
+} from "@/features/settings/persistence/use-sound-settings";
+import { useSoundPlayback } from "@/hooks/use-sound-playback";
+import { useGameStore } from "@/store/game.store";
+import { useSettingsStore } from "@/store/settings.store";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const DEFAULT_NPC_CONFIG = { volume: 0.5, soundUrl: "" };
+
+/** Volume a muted category comes back to when unmuted. */
+const UNMUTED_VOLUME = 0.5;
 
 const isValidUrl = (url: string): boolean => {
   if (url.trim() === "") return true;
@@ -25,25 +38,69 @@ const isValidUrl = (url: string): boolean => {
 };
 
 export function SoundsSettingsTab() {
-  const {
-    isLoading,
-    gameInterface,
-    updateSettings,
-    masterVolume,
-    setMasterVolume,
-    soundsMuted,
-    toggleSoundsMuted,
-    playSoundTest,
-    t,
-    settings,
-    volumes,
-    setVolume,
-    commitVolume,
-    toggleMuted,
-    urlErrors,
-    setUrlErrors,
-    categories,
-  } = useSoundSettingsForm();
+  const gameInterface = useGameStore((state) => state.game?.interface);
+  const { data: settings, isLoading } = useSoundSettings();
+  const { mutate: updateSettings } = useUpdateSoundSettings();
+  const masterVolume = useSettingsStore((state) => state.masterVolume);
+  const setMasterVolume = useSettingsStore((state) => state.setMasterVolume);
+  const soundsMuted = useSettingsStore((state) => state.soundsMuted);
+
+  const toggleSoundsMuted = useSettingsStore(
+    (state) => state.toggleSoundsMuted,
+  );
+
+  const { playSoundTest } = useSoundPlayback();
+  const { t } = useTranslation();
+
+  const [urlErrors, setUrlErrors] = useState<
+    Record<string, Record<string, string>>
+  >({});
+
+  // The slider keeps its own drag preview; the stored volume is the value.
+  const volumes: Record<VisibleSoundCategory, number> = {
+    notifications: settings?.notificationsVolume ?? UNMUTED_VOLUME,
+    detector: settings?.detectorVolume ?? UNMUTED_VOLUME,
+    pings: settings?.pingsVolume ?? 0,
+  };
+
+  const commitVolume = (category: VisibleSoundCategory, value: number) =>
+    updateSettings({ [`${category}Volume`]: value });
+
+  // A muted category is persisted as volume 0, so muting needs no extra flag.
+  const toggleMuted = (category: VisibleSoundCategory) =>
+    commitVolume(category, volumes[category] === 0 ? UNMUTED_VOLUME : 0);
+
+  const notificationFields = [
+    { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
+    { label: t("common:npcTypes.hero"), key: NpcType.HERO },
+    { label: t("common:npcTypes.event_hero"), key: NpcType.EVENT_HERO },
+    { label: t("common:npcTypes.colossus"), key: NpcType.COLOSSUS },
+    { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
+    { label: t("common:npcTypes.hero_tracker"), key: NpcType.HERO_TRACKER },
+    { label: t("common:npcTypes.message"), key: "message" },
+  ];
+
+  // The "timers" category stays out of the UI while timer sounds are
+  // unsupported; its persisted config and volume are preserved untouched.
+  const categories: {
+    id: ConfigurableSoundCategory;
+    label: string;
+    description: string;
+    fields: readonly { label: string; key: string }[];
+  }[] = [
+    {
+      id: "notifications",
+      label: t("settings.sounds.categories.notifications.label"),
+      description: t("settings.sounds.categories.notifications.description"),
+      fields: notificationFields,
+    },
+    {
+      id: "detector",
+      label: t("settings.sounds.categories.detector.label"),
+      description: t("settings.sounds.categories.detector.description"),
+      fields: notificationFields.filter((field) => field.key !== "message"),
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -123,7 +180,6 @@ export function SoundsSettingsTab() {
             title={category.label}
             description={category.description}
             volume={volumes[category.id]}
-            onVolumeChange={(value) => setVolume(category.id, value)}
             onVolumeCommit={(value) => commitVolume(category.id, value)}
             onMuteToggle={() => toggleMuted(category.id)}
           >
@@ -156,7 +212,6 @@ export function SoundsSettingsTab() {
           title={t("settings.sounds.categories.pings.label")}
           description={t("settings.sounds.categories.pings.description")}
           volume={volumes.pings}
-          onVolumeChange={(value) => setVolume("pings", value)}
           onVolumeCommit={(value) => commitVolume("pings", value)}
           onMuteToggle={() => toggleMuted("pings")}
           actions={

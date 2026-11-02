@@ -37,6 +37,42 @@ const isSameClan = (
   second: AirTagObservation["clan"],
 ) => first?.id === second?.id && first?.name === second?.name;
 
+/**
+ * The observation the gateway accepts, without the fields Margonem left out;
+ * null when a field is malformed.
+ */
+const toObservation = ({
+  targetId,
+  nickname,
+  relation,
+  x,
+  y,
+  stasis,
+  clan,
+  lvl,
+  prof,
+}: {
+  targetId: string;
+  nickname: unknown;
+  relation: unknown;
+  x: unknown;
+  y: unknown;
+  stasis?: boolean;
+  clan?: unknown;
+  lvl?: unknown;
+  prof?: unknown;
+}): AirTagObservation | null => {
+  const observation = { targetId, nickname, relation, x, y, stasis };
+
+  if (clan) Object.assign(observation, { clan });
+
+  if (lvl !== undefined) Object.assign(observation, { lvl });
+
+  if (prof) Object.assign(observation, { prof });
+
+  return isAirTagObservation(observation) ? observation : null;
+};
+
 type ObservationPublisher = (batch: AirTagObservationBatch) => void;
 
 type LocalAirTagTarget = AirTagObservation & {
@@ -71,8 +107,8 @@ export class AirTagObservationController {
   private readonly cancelInterval: typeof window.clearInterval;
   private batchTimer: number | null = null;
   private heartbeatTimer: number | null = null;
-  private enabled = false;
-  private canPublish = false;
+  /** Enabled on the new interface and allowed to publish. */
+  private active = false;
   private mapId: number | null = null;
   private publisher: ObservationPublisher | null = null;
   private onLeftMap: ((targetId: string) => void) | null = null;
@@ -102,35 +138,23 @@ export class AirTagObservationController {
     /** A player the hero saw leave the map. */
     onLeftMap?: (targetId: string) => void;
   }): void {
-    const shouldDetectCurrentOthers =
-      enabled &&
-      canPublish &&
-      (!this.enabled || !this.canPublish || this.mapId !== mapId);
+    const active = enabled && canPublish;
+    const mapChanged = this.mapId !== mapId;
+    const wasActive = this.active;
 
-    const shouldClear =
-      !enabled ||
-      !canPublish ||
-      this.mapId !== mapId ||
-      (this.enabled && !this.canPublish);
-
-    this.enabled = enabled;
-    this.canPublish = canPublish;
+    this.active = active;
     this.publisher = publisher;
     this.onLeftMap = onLeftMap ?? null;
 
-    if (shouldClear) {
-      this.clearState();
-    }
+    if (!active || mapChanged) this.clearState();
 
     this.mapId = mapId;
 
-    if (shouldDetectCurrentOthers) {
-      this.detectCurrentOthers();
-    }
+    if (active && (!wasActive || mapChanged)) this.detectCurrentOthers();
   }
 
   handle(entries: Other): void {
-    if (!this.isActive()) return;
+    if (!this.active) return;
 
     for (const [targetId, entry] of Object.entries(entries)) {
       if (!entry || typeof entry !== "object") continue;
@@ -161,8 +185,7 @@ export class AirTagObservationController {
   }
 
   detectCurrentOthers(): void {
-    if (!this.isActive() || useGameStore.getState().game?.interface !== "ni")
-      return;
+    if (!this.active) return;
 
     const runtimeOthers = runtimeOtherHandles.getAll();
 
@@ -177,7 +200,17 @@ export class AirTagObservationController {
   private handleCreate(targetId: string, create: RuntimeOtherData): void {
     if (targetId === useGameStore.getState().game?.hero.characterId) return;
 
-    const observation = this.toObservation(targetId, create);
+    const observation = toObservation({
+      targetId,
+      nickname: create.nick,
+      relation: create.relation,
+      x: create.x,
+      y: create.y,
+      stasis: create.stasis === 1,
+      clan: create.clan,
+      lvl: create.lvl,
+      prof: create.prof,
+    });
 
     if (
       !observation ||
@@ -323,58 +356,22 @@ export class AirTagObservationController {
       : "out-of-sight";
   }
 
-  private toObservation(
-    targetId: string,
-    create: RuntimeOtherData,
-  ): AirTagObservation | null {
-    const observation = {
-      targetId,
-      nickname: create.nick,
-      relation: create.relation,
-      x: create.x,
-      y: create.y,
-      stasis: create.stasis === 1,
-    };
-
-    if (create.clan) Object.assign(observation, { clan: create.clan });
-
-    if (create.lvl !== undefined)
-      Object.assign(observation, { lvl: create.lvl });
-
-    if (create.prof) Object.assign(observation, { prof: create.prof });
-
-    return isAirTagObservation(observation) ? observation : null;
-  }
-
   private queue(target: LocalAirTagTarget, publishedAt: number): void {
     target.lastPublishedAt = publishedAt;
     target.lastPublishedX = target.x;
     target.lastPublishedY = target.y;
 
-    const observation: AirTagObservation = {
-      targetId: target.targetId,
-      nickname: target.nickname,
-      relation: target.relation,
-      x: target.x,
-      y: target.y,
-      stasis: target.stasis,
-    };
-
-    if (target.clan) observation.clan = target.clan;
-
-    if (target.lvl !== undefined) observation.lvl = target.lvl;
-
-    if (target.prof) observation.prof = target.prof;
-
     // One malformed partial update must not get the whole batch rejected.
-    if (!isAirTagObservation(observation)) return;
+    const observation = toObservation(target);
+
+    if (!observation) return;
     this.pending.set(target.targetId, observation);
     this.scheduleBatch();
   }
 
   /** Sends a rate-limited batch again, unless a newer observation of a target is already queued. */
   retry(batch: AirTagObservationBatch, delayMs: number): void {
-    if (!this.isActive() || batch.expectedMapId !== this.mapId) return;
+    if (!this.active || batch.expectedMapId !== this.mapId) return;
 
     for (const observation of batch.observations) {
       if (
@@ -407,7 +404,7 @@ export class AirTagObservationController {
   }
 
   private flushBatch(): void {
-    if (!this.isActive() || this.mapId === null || !this.publisher) {
+    if (!this.active || this.mapId === null || !this.publisher) {
       this.pending.clear();
       this.departures.clear();
 
@@ -452,7 +449,7 @@ export class AirTagObservationController {
     if (this.heartbeatTimer !== null) return;
 
     this.heartbeatTimer = this.scheduleInterval(() => {
-      if (!this.isActive()) return;
+      if (!this.active) return;
 
       const now = this.now();
       const targets = [...this.targets.values()];
@@ -505,20 +502,21 @@ export class AirTagObservationController {
       return;
     }
 
-    const oldestTargetId = this.targets.keys().next().value;
+    const [oldestTargetId, oldest] = this.targets.entries().next().value ?? [];
 
-    if (oldestTargetId !== undefined) {
-      this.targets.delete(oldestTargetId);
-      this.pending.delete(oldestTargetId);
+    if (oldestTargetId === undefined) return;
+    this.targets.delete(oldestTargetId);
+    this.pending.delete(oldestTargetId);
+
+    // The gateway would otherwise count this character among the evicted
+    // target's observers until it expires.
+    if (oldest?.sent) {
+      this.departures.set(oldestTargetId, {
+        targetId: oldestTargetId,
+        reason: "out-of-sight",
+      });
+      this.scheduleBatch();
     }
-  }
-
-  private isActive(): boolean {
-    return (
-      this.enabled &&
-      this.canPublish &&
-      useGameStore.getState().game?.interface === "ni"
-    );
   }
 }
 

@@ -7,6 +7,16 @@ import { useGlobalStore } from "@/store/global.store";
 import { useGameStore } from "@/store/game.store";
 import { AfkProcessor } from "./afk-processor";
 
+// The projection applies a packet's hero patch before processors run.
+const enterStasis = () => {
+  const game = useGameStore.getState().game;
+
+  if (!game) throw new Error("Expected current character");
+  useGameStore
+    .getState()
+    .replaceGame({ ...game, hero: { ...game.hero, stasis: true } });
+};
+
 describe("AfkProcessor", () => {
   let processor: AfkProcessor;
   let wire: RealtimeWire;
@@ -84,6 +94,7 @@ describe("AfkProcessor", () => {
       },
     });
 
+    enterStasis();
     processor.handle({ h: { stasis: 1 } });
 
     expect(wire.frames).toMatchObject([
@@ -126,5 +137,22 @@ describe("AfkProcessor", () => {
     processor.handle({ h: { stasis: 0 } });
 
     expect(wire.frames).toEqual([]);
+  });
+
+  it("publishes stasis entered while presence was not sent with the next publication", async () => {
+    enterStasis();
+    processor.handle({ h: { stasis: 1 } });
+    expect(wire.frames).toEqual([]);
+
+    wire.receive({
+      v: 1,
+      type: "permissions.updated",
+      data: { organizationIds: ["guild-1"], subscriptionScopes: [] },
+    });
+
+    await vi.waitUntil(() => wire.frames.length === 1);
+    expect(wire.frames).toMatchObject([
+      { type: "presence.publish", data: { isAfk: true } },
+    ]);
   });
 });

@@ -262,7 +262,6 @@ function resetPipelineState(): void {
     battleState: "idle",
     battleWarriors: {},
     events: [],
-    lastKillHash: "",
   });
   useBattlePanelStore.setState({ isBattleCollectionEnabled: true });
   useDialogStore.getState().clearNpcContext();
@@ -326,7 +325,7 @@ function replayAndSnapshot(payload: unknown) {
   resetPipelineState();
   const dispatcher = new EventDispatcher();
   pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
-  margonemRuntimeBridge.setupProxies();
+  margonemRuntimeBridge.install();
   dispatcher.register();
 
   const result = dispatchRuntimeEvent(payload);
@@ -389,7 +388,7 @@ describe("game event pipeline golden replay", () => {
       },
       dialogNpcContext: null,
       effects: {
-        airTagMapChanges: [[13, "Nithal"]],
+        airTagMapChanges: [[13]],
         mapPingCancels: 1,
         mapPingClears: 1,
         otherObservations: [[{}]],
@@ -419,7 +418,7 @@ describe("game event pipeline golden replay", () => {
     useBattleStore.setState({ battleState: "in-battle" });
     const dispatcher = new EventDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
-    margonemRuntimeBridge.setupProxies();
+    margonemRuntimeBridge.install();
     dispatcher.register();
 
     const finalFightLootEvent = {
@@ -448,7 +447,7 @@ describe("game event pipeline golden replay", () => {
     useBattleStore.setState({ battleState: "in-battle" });
     const dispatcher = new EventDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
-    margonemRuntimeBridge.setupProxies();
+    margonemRuntimeBridge.install();
     dispatcher.register();
 
     dispatchRuntimeEvents([finalFightEvent, fightLootEvent]);
@@ -469,7 +468,7 @@ describe("game event pipeline golden replay", () => {
     useBattleStore.setState({ battleState: "in-battle" });
     const dispatcher = new EventDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
-    margonemRuntimeBridge.setupProxies();
+    margonemRuntimeBridge.install();
     dispatcher.register();
 
     dispatchRuntimeEvents([
@@ -519,7 +518,7 @@ describe("game event pipeline golden replay", () => {
       const firstDispatcher = new EventDispatcher();
       const secondDispatcher = new EventDispatcher();
       pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
-      margonemRuntimeBridge.setupProxies();
+      margonemRuntimeBridge.install();
       firstDispatcher.register();
       secondDispatcher.register();
 
@@ -649,7 +648,7 @@ describe("game event pipeline golden replay", () => {
     resetPipelineState();
     const dispatcher = new EventDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
-    margonemRuntimeBridge.setupProxies();
+    margonemRuntimeBridge.install();
     dispatcher.register();
 
     useNpcsStore.getState().replaceNpcs([
@@ -698,7 +697,7 @@ describe("game event pipeline golden replay", () => {
     resetPipelineState();
     const dispatcher = new EventDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
-    margonemRuntimeBridge.setupProxies();
+    margonemRuntimeBridge.install();
     dispatcher.register();
 
     useNpcsStore.getState().replaceNpcs([
@@ -751,7 +750,7 @@ describe("game event pipeline golden replay", () => {
     resetPipelineState();
     const dispatcher = new EventDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
-    margonemRuntimeBridge.setupProxies();
+    margonemRuntimeBridge.install();
     dispatcher.register();
 
     const talkedNpc = Object.freeze({
@@ -804,7 +803,7 @@ describe("game event pipeline golden replay", () => {
     const firstDispatcher = new EventDispatcher();
     const secondDispatcher = new EventDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
-    margonemRuntimeBridge.setupProxies();
+    margonemRuntimeBridge.install();
     firstDispatcher.register();
     secondDispatcher.register();
 
@@ -858,7 +857,7 @@ describe("game event pipeline golden replay", () => {
     resetPipelineState();
     const dispatcher = new EventDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
-    margonemRuntimeBridge.setupProxies();
+    margonemRuntimeBridge.install();
     dispatcher.register();
 
     for (const event of keuktaIncrementalEvents) {
@@ -885,7 +884,7 @@ describe("game event pipeline golden replay", () => {
     useBattlePanelStore.setState({ isBattleCollectionEnabled: false });
     const dispatcher = new EventDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
-    margonemRuntimeBridge.setupProxies();
+    margonemRuntimeBridge.install();
     dispatcher.register();
     testRuntimeWindow.Engine = {
       heroEquipment: {

@@ -45,16 +45,13 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const createTimer = () => ({
-  ...createTimerFixture({
+const createTimer = () =>
+  createTimerFixture({
     minSpawnTime: new Date(NOW + 5000).toISOString(),
     maxSpawnTime: new Date(NOW + 10000).toISOString(),
     wasReset: true,
     members: [createTimerMemberFixture()],
-  }),
-  minTimeLeft: 5000,
-  maxTimeLeft: 10000,
-});
+  });
 
 describe("SingleTimer", () => {
   it.each([

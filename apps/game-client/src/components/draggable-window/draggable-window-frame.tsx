@@ -2,6 +2,7 @@ import { cn } from "cn";
 import { WindowTitleBar } from "./window-title-bar";
 import { WindowResizeHandle } from "./window-resize-handle";
 import {
+  resolveDraggableWindowFrameProps,
   useDraggableWindowFrame,
   type DraggableWindowFrameProps,
   MAX_HEIGHT_PREVIEW_LINE_HEIGHT,
@@ -26,6 +27,8 @@ const getWindowCursor = ({
 };
 
 export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
+  const frameProps = resolveDraggableWindowFrameProps(props);
+
   const {
     children,
     id,
@@ -44,6 +47,9 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
     contentClassName,
     animationPhase,
     onWindowAnimationEnd,
+  } = frameProps;
+
+  const {
     opacity,
     isLocked,
     contentRef,
@@ -70,7 +76,7 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
     handleKeyDown,
     titleId,
     zIndex,
-  } = useDraggableWindowFrame(props);
+  } = useDraggableWindowFrame(frameProps);
 
   return (
     // Non-modal: the game stays usable while a window is open. The container

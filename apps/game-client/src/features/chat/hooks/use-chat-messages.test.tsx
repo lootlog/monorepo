@@ -10,6 +10,7 @@ import { Permission } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
 import type { ChatMessage } from "@/api/chat.api";
+import { GatewayEvent } from "@/config/gateway";
 import { authClient } from "@/lib/auth-client";
 import { getSocket } from "@/lib/socket";
 import { useGameStore } from "@/store/game.store";
@@ -109,6 +110,29 @@ describe("useChatMessagesListener", () => {
         hero: { ...game.hero, accountId: "other-account" },
       });
     });
+
+  it("ingests chat events that another feature already listens to", async () => {
+    // The party gathering bar listens to the same events and, as a child of
+    // the chat, subscribes first.
+    const gatheringListener = vi.fn();
+    getSocket().on(GatewayEvent.CHAT_MESSAGE, gatheringListener);
+    getSocket().on(GatewayEvent.CHAT_MESSAGE_DELETE, gatheringListener);
+    harness.queryClient.setQueryData(key(), [message("deleted")]);
+    mount();
+    await harness.receive(created(message("live")), {
+      v: 1,
+      type: "chat.deleted",
+      data: {
+        organizationId: "guild-1",
+        payload: { guildId: "guild-1", messageId: "deleted" },
+      },
+    });
+    flushFrame();
+    expect(cached()).toEqual([message("live")]);
+    expect(gatheringListener).toHaveBeenCalledTimes(2);
+    getSocket().off(GatewayEvent.CHAT_MESSAGE, gatheringListener);
+    getSocket().off(GatewayEvent.CHAT_MESSAGE_DELETE, gatheringListener);
+  });
 
   it("discards queued chat messages after permission changes", async () => {
     mount();
