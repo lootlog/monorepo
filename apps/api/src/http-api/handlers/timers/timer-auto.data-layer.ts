@@ -131,11 +131,45 @@ const hasTimerWeight = (payload: CreateAutoTimerRequest) =>
   payload.npc.wt >= TIMER_LIMITS.MIN_NPC_WT_FOR_TIMERS ||
   isHeroTrackerName(payload.npc.name);
 
+/**
+ * When a reported Hero Tracker entrance closes. The countdown is placed on the
+ * server clock, so a reporter's clock cannot shift the window; deployed Game
+ * clients still send their own close time.
+ */
+const getReportedEntranceClosesAt = (
+  payload: CreateAutoTimerRequest,
+  now: Date,
+): Date | null => {
+  if (payload.entranceSecondsLeft !== undefined)
+    return new Date(now.getTime() + payload.entranceSecondsLeft * 1000);
+
+  return payload.entranceClosesAt ? new Date(payload.entranceClosesAt) : null;
+};
+
+// Every player near a tracker sees the same countdown; reports this close to
+// the stored entrance describe that entrance and keep its window.
+const SAME_ENTRANCE_TOLERANCE_MS = 60_000;
+
+/** The stored timer when a report repeats the entrance it already counts. */
+const findSameEntranceTimer = (
+  timer: typeof timerTable.$inferSelect | null,
+  entranceClosesAt: Date | null,
+) =>
+  timer &&
+  entranceClosesAt &&
+  timer.deletedAt === null &&
+  timer.entranceClosesAt !== null &&
+  Math.abs(timer.entranceClosesAt.getTime() - entranceClosesAt.getTime()) <
+    SAME_ENTRANCE_TOLERANCE_MS
+    ? timer
+    : null;
+
 /** A tracker respawns after its entrance closes, not when it is reported. */
 const getRespawnStart = (payload: CreateAutoTimerRequest, now: Date) => {
-  if (!payload.entranceClosesAt) return now;
+  const entranceClosesAt = getReportedEntranceClosesAt(payload, now);
 
-  const entranceClosesAt = new Date(payload.entranceClosesAt);
+  if (!entranceClosesAt) return now;
+
   const offsetSeconds = (entranceClosesAt.getTime() - now.getTime()) / 1000;
 
   if (
@@ -386,8 +420,13 @@ export const makeAutoTimer = (
           // An entrance report carries the default tracker respawn; a base
           // observed when a tracker left this world (private worlds respawn
           // faster) stays authoritative for the following entrances.
+          const entranceClosesAt = getReportedEntranceClosesAt(
+            payload,
+            startedAt,
+          );
+
           const respBaseSeconds =
-            payload.entranceClosesAt &&
+            entranceClosesAt &&
             previousTimer &&
             previousTimer.latestRespBaseSeconds > 0
               ? previousTimer.latestRespBaseSeconds
@@ -410,8 +449,12 @@ export const makeAutoTimer = (
             startedAt,
           );
 
-          if (completedTimer) {
-            return { _tag: "Duplicate" as const, projection: completedTimer };
+          const duplicate =
+            completedTimer ??
+            findSameEntranceTimer(previousTimer, entranceClosesAt);
+
+          if (duplicate) {
+            return { _tag: "Duplicate" as const, projection: duplicate };
           }
 
           const actorCharacter = yield* upsertActorCharacter(
@@ -450,9 +493,7 @@ export const makeAutoTimer = (
             wasReset: false,
             npc,
             windowOpenedAt: now,
-            entranceClosesAt: payload.entranceClosesAt
-              ? new Date(payload.entranceClosesAt)
-              : null,
+            entranceClosesAt,
             actorCharacterSnapshotId: actorCharacter?.id ?? null,
             actorCharacterLvl: payload.actorCharacter?.lvl ?? null,
             deletedAt: null,

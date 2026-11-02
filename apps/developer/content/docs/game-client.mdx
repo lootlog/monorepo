@@ -219,12 +219,12 @@ Callbacks run synchronously. Keep them short so they do not block gameplay, and 
 
 ### Organizations and timers
 
-| Type           | Fields                                                                                                                                                                       |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PublicGuild`  | `id: string`, `name: string`, `icon: string \| null`, optional `vanityUrl: string`.                                                                                          |
-| `PublicTimer`  | `timerKey`, `npcId`, `npc`, `member`, optional `members`, `world`, `guildId`, `minSpawnTime`, `maxSpawnTime`, `updatedAt`, optional `isCustomTime`, `isPending`, `wasReset`. |
-| `PublicNpc`    | `id`, `name`, `lvl`, `prof`, `icon`, `wt`, `type`, `margonemType`, optional `location`.                                                                                      |
-| `PublicMember` | `id: number`, `userId: string`, `guildId: string`, `type`, `name`, optional nullable `avatar`, optional `user` and `roles`.                                                  |
+| Type           | Fields                                                                                                                                                                                                                                                          |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PublicGuild`  | `id: string`, `name: string`, `icon: string \| null`, optional `vanityUrl: string`.                                                                                                                                                                             |
+| `PublicTimer`  | `timerKey`, `npcId`, `npc`, `member`, optional `members`, `world`, `guildId`, `minSpawnTime`, `maxSpawnTime`, `entranceClosesAt` (when a Hero Tracker's open entrance closes, otherwise `null`), `updatedAt`, optional `isCustomTime`, `isPending`, `wasReset`. |
+| `PublicNpc`    | `id`, `name`, `lvl`, `prof`, `icon`, `wt`, `type`, `margonemType`, optional `location`.                                                                                                                                                                         |
+| `PublicMember` | `id: number`, `userId: string`, `guildId: string`, `type`, `name`, optional nullable `avatar`, optional `user` and `roles`.                                                                                                                                     |
 
 Timer timestamps are date strings; `updatedAt` may be `null`. Parse spawn times with `Date.parse()` or `new Date()` before comparing them. Retain `world` and `guildId` when grouping records; `npcId` alone does not identify an Organization's timer.
 

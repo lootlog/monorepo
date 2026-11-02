@@ -132,6 +132,26 @@ describe("realtime effective access policy", () => {
     expect(canReadPolicyNpc(policy, "chat", null)).toBe(true);
   });
 
+  test("hero trackers need the heroes tier, as on the server", () => {
+    const policy = snapshot([
+      guild([
+        role([Permission.LOOTLOG_NOTIFICATIONS_READ], 0, 100),
+        role([Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ], 0, 300),
+      ]),
+    ]).organizations[0];
+
+    if (!policy) throw new Error("Missing fixture policy");
+    expect(
+      canReadPolicyNpc(policy, "notifications", {
+        type: "HERO_TRACKER",
+        lvl: 282,
+      }),
+    ).toBe(true);
+    expect(
+      canReadPolicyNpc(policy, "notifications", { type: "ELITE2", lvl: 282 }),
+    ).toBe(false);
+  });
+
   test("expansion never marks a restriction and range shifts report both directions", () => {
     const previous = snapshot([
       guild([role([Permission.LOOTLOG_TIMERS_READ], 100, 200)]),

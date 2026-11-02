@@ -31,7 +31,8 @@ import {
   publishTimerUpdate,
   type TimerUpdatePorts,
 } from "./timer-update-publication.js";
-import { timerNpcField } from "#src/timers/timer-projection";
+import { parseTimerNpc, timerNpcField } from "#src/timers/timer-projection";
+import { canResetTimerNpc } from "@lootlog/domain/timers";
 
 export interface ResetTimerPorts extends TimerUpdatePorts {
   readonly withLock: <A, E>(
@@ -75,6 +76,16 @@ export const makeResetTimer = (
     if (!resolved) {
       return yield* Effect.fail(
         new ResourceNotFoundError({ message: ErrorKey.TIMER_NOT_FOUND }),
+      );
+    }
+
+    const resolvedNpc = parseTimerNpc(resolved.npc);
+
+    if (resolvedNpc && !canResetTimerNpc(resolvedNpc)) {
+      return yield* Effect.fail(
+        new InvalidRequestError({
+          message: ErrorKey.HERO_TRACKER_TIMER_CANNOT_BE_RESET,
+        }),
       );
     }
 
