@@ -21,9 +21,10 @@ OpenAPI description and can be removed once no deployed client calls them:
 | `GET/PATCH /timer-settings*`, `POST /timer-settings/migrate`   | `timers`, `appearance.timers.*`                                            |
 
 `guildsOrder`, `hiddenGuildIds`, and `theme` stay on `UserSettings`: they are
-account settings owned by the Web app with direct database readers. The catalog
-field `general.guildsOrder` is declared but never written; do not add a second
-writer for it. `timers.syncEnabled` is kept only for old clients; the current
+account settings owned by the Web app with direct database readers, written
+only through `PATCH /users/@me/preferences` (and theme activation). The catalog
+does not declare them, so `PATCH /preferences` rejects them instead of storing
+a second copy nobody reads. `timers.syncEnabled` is kept only for old clients; the current
 Game client always synchronizes timer settings and never writes the field.
 
 ## Document schema versions

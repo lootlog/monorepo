@@ -55,7 +55,7 @@ export class PreferencesGroup extends HttpApiGroup.make("preferences").add(
     {
       payload: PatchSettingsDocumentsSchema,
       success: SettingsDocumentsResponseSchema,
-      error: [400, 403].map((status) =>
+      error: [400, 403, 409].map((status) =>
         HttpErrorResponse.pipe(HttpApiSchema.status(status)),
       ),
     },

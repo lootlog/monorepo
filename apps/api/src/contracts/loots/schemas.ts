@@ -307,7 +307,7 @@ export const CreateLootRequest = Schema.Struct({
       expected: "a value with a length of at least 1",
     }),
   ),
-  world: NonEmptyString,
+  world: WorldParam,
   gameVersion: GameVersionSchema.annotate({
     description:
       "Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API.",

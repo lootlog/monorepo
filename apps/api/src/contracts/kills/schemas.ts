@@ -49,7 +49,7 @@ const RankedKiller = Schema.Struct({
 export type CreateKillRequest = typeof CreateKillRequest.Type;
 
 export const CreateKillRequest = Schema.Struct({
-  world: NonEmptyString,
+  world: WorldParam,
   npc: Schema.Struct({
     id: FiniteNumber,
     name: NonEmptyString,

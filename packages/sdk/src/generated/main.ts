@@ -1812,7 +1812,10 @@ export interface CreateTimerFromGameClientDto {
      * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
      */
   entranceClosesAt?: string;
-  /** @minLength 1 */
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
   world: string;
   npc: CreateTimerFromGameClientDtoNpc;
   /** @minLength 1 */
@@ -1842,7 +1845,10 @@ export type ResetTimerDtoActorCharacter = {
 };
 
 export interface ResetTimerDto {
-  /** @minLength 1 */
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
   world: string;
   actorCharacter?: ResetTimerDtoActorCharacter;
 }
@@ -1894,7 +1900,10 @@ export interface CreateManualTimerDto {
   customMinSpawnTime?: string;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   customMaxSpawnTime?: string;
-  /** @minLength 1 */
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
   world: string;
   actorCharacter?: CreateManualTimerDtoActorCharacter;
 }
@@ -2649,7 +2658,10 @@ export interface CreateLootDto {
   npcs: CreateLootDtoNpcsItem[];
   /** @minItems 1 */
   players: CreateLootDtoPlayersItem[];
-  /** @minLength 1 */
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
   world: string;
   /** Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API. */
   gameVersion: CreateLootDtoGameVersion;
@@ -8445,7 +8457,10 @@ export type CreateKillDtoCharacter = {
 };
 
 export interface CreateKillDto {
-  /** @minLength 1 */
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
   world: string;
   npc: CreateKillDtoNpc;
   /** @minLength 1 */
