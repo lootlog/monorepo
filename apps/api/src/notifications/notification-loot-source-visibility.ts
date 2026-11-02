@@ -1,6 +1,6 @@
 import { and, eq, exists, isNull, not, or, sql } from "drizzle-orm";
 import { Effect } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { memberCapabilities } from "@lootlog/domain/access-policy";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   type guildTable,
@@ -46,10 +46,11 @@ export const notificationLootSourceCondition = Effect.fnUntraced(function* (
   const visibleSources = guilds.map((guild) => {
     const roles = memberByGuild.get(guild.id)?.roles ?? [];
 
-    const permissions =
-      guild.ownerId === discordId
-        ? [Permission.OWNER]
-        : roles.flatMap((role) => role.permissions);
+    const permissions = memberCapabilities({
+      ownerId: guild.ownerId,
+      viewerId: discordId,
+      roles,
+    });
 
     return or(
       not(sql`${sourceGuildIds} ? ${guild.id}`),

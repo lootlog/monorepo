@@ -1,10 +1,8 @@
 import type { GameCharacterOffline } from "@lootlog/protocol/rabbit/events";
 import { readyRoomSourceVisibility } from "./ready-room-visibility.js";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
-import {
-  requestApiKeyAccess,
-  requestScopedIdentity,
-} from "#src/runtime/auth/forward-auth-identity";
+import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
+import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
 import { randomUUID } from "node:crypto";
 
 import { Effect, Layer } from "effect";
@@ -297,16 +295,15 @@ export const makeReadyRoomDataLayer = (
                 );
               }
 
-              if (yield* requestApiKeyAccess) {
-                const identity = yield* requestScopedIdentity;
+              const keyScope = yield* apiKeyAccessibleGuilds(
+                database,
+                NOTIFICATION_SEND_PERMISSIONS,
+              );
 
-                const accessible = yield* accessibleGuildIds(
-                  identity.discordId,
-                );
+              if (keyScope) {
+                const accessible = new Set(keyScope.map(({ id }) => id));
 
-                if (
-                  !aggregate.guildIds.every((id) => accessible.includes(id))
-                ) {
+                if (!aggregate.guildIds.every((id) => accessible.has(id))) {
                   return yield* Effect.fail(
                     new PermissionDeniedError({ code: "FORBIDDEN" }),
                   );

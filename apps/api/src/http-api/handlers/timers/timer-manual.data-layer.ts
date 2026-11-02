@@ -1,9 +1,9 @@
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 
-import { and, eq } from "drizzle-orm";
+import { findActiveGuildMember } from "#src/members/member-access-query";
 import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { memberTable, timerTable } from "#src/database/drizzle/schema";
+import { timerTable } from "#src/database/drizzle/schema";
 
 import { generateUniqueIntId } from "#src/shared/generate-unique-int-id";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
@@ -85,18 +85,11 @@ export const makeManualTimer = (
 
     const projection = yield* database.transaction((transaction) =>
       Effect.gen(function* () {
-        const members = yield* transaction
-          .select()
-          .from(memberTable)
-          .where(
-            and(
-              eq(memberTable.userId, access.discordId),
-              eq(memberTable.guildId, access.guild.id),
-            ),
-          )
-          .limit(1);
-
-        const member = members[0];
+        const member = yield* findActiveGuildMember(
+          transaction,
+          access.discordId,
+          access.guild.id,
+        );
 
         if (!member)
           return yield* Effect.die(

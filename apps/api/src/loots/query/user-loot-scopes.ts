@@ -1,15 +1,20 @@
-import { createAccessPolicy, Capability } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
-import { and, eq, inArray, or, sql, type SQLWrapper } from "drizzle-orm";
+import {
+  createAccessPolicy,
+  Capability,
+  memberCapabilities,
+} from "@lootlog/domain/access-policy";
+import { and, eq, or, sql, type SQLWrapper } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
-  memberTable,
   organizationLootRecordTable,
   type guildTable,
   type roleTable,
 } from "#src/database/drizzle/schema";
-import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import {
+  selectAccessibleGuilds,
+  selectActiveGuildMembers,
+} from "#src/members/member-access-query";
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 
@@ -27,19 +32,11 @@ export const loadUserLootScopes = Effect.fnUntraced(function* (
 
   if (!guilds.length) return [];
 
-  const members = yield* database
-    .select()
-    .from(memberTable)
-    .where(
-      and(
-        eq(memberTable.userId, discordId),
-        eq(memberTable.active, true),
-        inArray(
-          memberTable.guildId,
-          guilds.map(({ guild }) => guild.id),
-        ),
-      ),
-    );
+  const members = yield* selectActiveGuildMembers(
+    database,
+    discordId,
+    guilds.map(({ guild }) => guild.id),
+  );
 
   const hydrated = yield* hydrateMemberRoles(database, members);
 
@@ -54,10 +51,11 @@ export const userLootScopeAccess = (
   { guild, roles }: UserLootScope,
   discordId: string,
 ) => {
-  const permissions =
-    guild.ownerId === discordId
-      ? [Permission.OWNER]
-      : roles.flatMap((role) => role.permissions);
+  const permissions = memberCapabilities({
+    ownerId: guild.ownerId,
+    viewerId: discordId,
+    roles,
+  });
 
   const policy = createAccessPolicy({ capabilities: permissions });
 

@@ -1,6 +1,8 @@
 import { isJsonObject, type JsonValue } from "#src/database/json";
 import { toLootVisibilityRoles } from "#src/loots/loot-visibility";
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
+import { activeMembersWhere } from "#src/members/member-access-query";
+import { memberCapabilities } from "@lootlog/domain/access-policy";
 import { and, eq, inArray } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import {
@@ -26,7 +28,7 @@ type LootCreatedEvent = {
 
 export type NotificationMemberRoleInfo = {
   readonly guildId: string;
-  readonly isGuildOwner: boolean;
+  readonly permissions: ReadonlyArray<Permission>;
   readonly roles: Array<{
     readonly id: string;
     readonly permissions: Permission[];
@@ -124,16 +126,13 @@ export const notificationMatchingPolicy = {
       ? guildIds.filter((guildId) => filters.guildIds.includes(guildId))
       : [];
   },
-  canRolesViewLoot: (
-    roles: NotificationMemberRoleInfo["roles"],
+  canMemberViewLoot: (
+    member: Pick<NotificationMemberRoleInfo, "permissions" | "roles">,
     npcs: readonly LootVisibilityNpc[],
-    isGuildOwner?: boolean,
   ) =>
     canViewLoot({
-      permissions: isGuildOwner
-        ? [Permission.OWNER]
-        : roles.flatMap((role) => role.permissions),
-      roles: toLootVisibilityRoles(roles),
+      permissions: member.permissions,
+      roles: toLootVisibilityRoles(member.roles),
       npcs,
     }),
 };
@@ -157,9 +156,8 @@ export const selectNotificationMemberships = Effect.fn(
     .innerJoin(guildTable, eq(memberTable.guildId, guildTable.id))
     .where(
       and(
-        inArray(memberTable.userId, uniqueOwnerIds),
+        activeMembersWhere(uniqueOwnerIds),
         inArray(memberTable.guildId, uniqueGuildIds),
-        eq(memberTable.active, true),
       ),
     );
 
@@ -175,7 +173,11 @@ export const selectNotificationMemberships = Effect.fn(
     const values = result.get(userId) ?? [];
     values.push({
       guildId,
-      isGuildOwner: guildOwnerId === userId,
+      permissions: memberCapabilities({
+        ownerId: guildOwnerId,
+        viewerId: userId,
+        roles,
+      }),
       roles: roles.map((role) => ({
         id: role.id,
         permissions: role.permissions,

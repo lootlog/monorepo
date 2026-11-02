@@ -1,5 +1,8 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
+import {
+  createAccessPolicy,
+  AccessRequirement,
+} from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
@@ -437,8 +440,8 @@ export const makeGuildLifecycle = (
     const permissions = adminPermissions(data.admin);
 
     const existingAdmin = existing
-      ? createAccessPolicy({ capabilities: existing.permissions }).allows(
-          Capability.ADMIN,
+      ? createAccessPolicy({ capabilities: existing.permissions }).allowsAny(
+          AccessRequirement.ADMINISTER,
         )
       : false;
 

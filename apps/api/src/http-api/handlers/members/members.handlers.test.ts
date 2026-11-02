@@ -1,3 +1,4 @@
+import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { createMemberFixture } from "../../../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
@@ -225,11 +226,11 @@ describe("Members HttpApi handlers", () => {
     expect(authorizationCalls).toEqual([
       {
         guildId: "guild-alias",
-        anyOf: [Permission.ADMIN, Permission.OWNER],
+        anyOf: AccessRequirement.ADMINISTER,
       },
       {
         guildId: "guild-alias",
-        anyOf: [Permission.ADMIN, Permission.OWNER],
+        anyOf: AccessRequirement.ADMINISTER,
       },
     ]);
     expect(mutationCalls).toEqual([
