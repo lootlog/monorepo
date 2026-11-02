@@ -4,6 +4,7 @@ import type {
   NotificationMutesPatch,
 } from "@lootlog/schema/user-preferences";
 import {
+  memoizeByDocuments,
   selectSettingsValue,
   type SettingsDocuments,
 } from "./settings-documents";
@@ -11,29 +12,19 @@ import {
   enqueueSettingsPatch,
   readCurrentSettingsDocuments,
 } from "./settings-patch-client";
-import { useSettingsSaveStatus } from "./settings-save-status.store";
 import { useSettingsDocuments } from "./use-settings-documents";
-
-const mutesCache = new WeakMap<SettingsDocuments, NotificationMutes>();
 
 const emptyMutes = normalizeNotificationMutes(undefined);
 
-export const getNotificationMutesFromDocuments = (
-  documents: SettingsDocuments | undefined,
-): NotificationMutes => {
-  if (!documents) return emptyMutes;
-  const cached = mutesCache.get(documents);
-
-  if (cached) return cached;
-
-  const mutes = normalizeNotificationMutes(
+const projectMutes = memoizeByDocuments((documents) =>
+  normalizeNotificationMutes(
     selectSettingsValue(documents, "notifications.mutes"),
-  );
+  ),
+);
 
-  mutesCache.set(documents, mutes);
-
-  return mutes;
-};
+const getNotificationMutesFromDocuments = (
+  documents: SettingsDocuments | undefined,
+): NotificationMutes => (documents ? projectMutes(documents) : emptyMutes);
 
 export const useCurrentUserNotificationMutes = () => {
   const query = useSettingsDocuments();
@@ -46,8 +37,6 @@ export const useCurrentUserNotificationMutes = () => {
 
 /** Replaces the muted player or NPC list on the user document. */
 export const useUpdateNotificationMutes = () => {
-  const status = useSettingsSaveStatus();
-
   const mutate = (patch: NotificationMutesPatch) => {
     const mutes: NotificationMutesPatch = {};
 
@@ -72,5 +61,5 @@ export const useUpdateNotificationMutes = () => {
       ),
     );
 
-  return { mutate, mutateFromCurrent, isPending: status === "saving" };
+  return { mutate, mutateFromCurrent };
 };

@@ -4,33 +4,13 @@ import type {
 } from "@lootlog/schema/npc-presence";
 import { GatewayEvent } from "@/config/gateway";
 import type { AppSocket } from "./socket";
+import {
+  createScopedSourceRegistry,
+  KeyedListeners,
+  SourceReferences,
+} from "./scoped-source";
 
 type Listener = () => void;
-
-const sources = new WeakMap<AppSocket, Map<string, NpcPresenceSource>>();
-
-export function getNpcPresenceSource(
-  socket: AppSocket,
-  guildId: string,
-  world: string,
-): NpcPresenceSource {
-  let scopes = sources.get(socket);
-
-  if (!scopes) {
-    scopes = new Map();
-    sources.set(socket, scopes);
-  }
-
-  const key = JSON.stringify([guildId, world]);
-  let source = scopes.get(key);
-
-  if (!source) {
-    source = new NpcPresenceSource(socket, guildId, world);
-    scopes.set(key, source);
-  }
-
-  return source;
-}
 
 /** Timer NPCs that members of one Organization see standing in one world. */
 export class NpcPresenceSource {
@@ -38,9 +18,9 @@ export class NpcPresenceSource {
   private readonly standing = new Map<number, number>();
   /** Revisions of updates newer than the snapshot, by runtime NPC id. */
   private readonly revisions = new Map<number, number>();
-  private readonly npcListeners = new Map<number, Set<Listener>>();
+  private readonly npcListeners = new KeyedListeners<number>();
+  private readonly references = new SourceReferences(() => this.stop());
   private snapshotRevision = 0;
-  private references = 0;
   private active = false;
   private fetchId = 0;
 
@@ -55,38 +35,15 @@ export class NpcPresenceSource {
     this.standing.get(npcId);
 
   retain = (): (() => void) => {
-    this.references += 1;
+    const release = this.references.retain();
 
     if (!this.active) this.start();
-    let retained = true;
 
-    return () => {
-      if (!retained) return;
-      retained = false;
-      this.references -= 1;
-      // React may replace a subscription during the same commit.
-      queueMicrotask(() => {
-        if (this.references === 0) this.stop();
-      });
-    };
+    return release;
   };
 
-  subscribeNpc = (npcId: number, listener: Listener): (() => void) => {
-    let listeners = this.npcListeners.get(npcId);
-
-    if (!listeners) {
-      listeners = new Set();
-      this.npcListeners.set(npcId, listeners);
-    }
-
-    listeners.add(listener);
-
-    return () => {
-      listeners.delete(listener);
-
-      if (listeners.size === 0) this.npcListeners.delete(npcId);
-    };
-  };
+  subscribeNpc = (npcId: number, listener: Listener): (() => void) =>
+    this.npcListeners.add(npcId, listener);
 
   private start(): void {
     this.active = true;
@@ -187,7 +144,11 @@ export class NpcPresenceSource {
 
   private notify(npcIds: Iterable<number>): void {
     for (const npcId of npcIds) {
-      for (const listener of this.npcListeners.get(npcId) ?? []) listener();
+      this.npcListeners.notify(npcId);
     }
   }
 }
+
+export const getNpcPresenceSource = createScopedSourceRegistry(
+  (socket, guildId, world) => new NpcPresenceSource(socket, guildId, world),
+);

@@ -4,6 +4,7 @@ import { useSocket } from "@/contexts/socket-context";
 import { useNotificationPresenter } from "@/features/notifications/hooks/use-notification-presenter";
 import { isNotificationMuted } from "@/features/notifications/utils/notification-mutes";
 import { isOwnNotification } from "@/features/notifications/utils/is-own-notification";
+import { isAllowedByNotificationSettings } from "@/features/notifications/utils/get-notification-settings-key";
 import { useSession } from "@/hooks/auth/use-session";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useCurrentUserNotificationMutes } from "@/features/settings/persistence/use-notification-mutes";
@@ -13,7 +14,6 @@ import {
   useNotificationsStore,
   type PartyGatheringNotification,
 } from "@/store/notifications.store";
-import { useEffect, useRef } from "react";
 import type { PartyGatheringSession } from "@/types/party-gathering";
 
 type PartyGatheringPayload = PartyGatheringSession & { guildId: string };
@@ -29,75 +29,48 @@ export const usePartyGatheringSocket = () => {
 
   const { isReady: areMutesReady, mutes } = useCurrentUserNotificationMutes();
   const world = useGameStore((state) => state.game?.world);
-  const settingsRef = useRef(settings);
-  const mutesRef = useRef(mutes);
-  const sessionDataRef = useRef(sessionData);
-  const worldRef = useRef(world);
 
-  const processNotificationsRef = useRef<
-    (notifications: readonly PartyGatheringPayload[]) => void
-  >(() => undefined);
+  // The ingress keeps the latest callback, so it reads current settings.
+  const processNotifications = (
+    notifications: readonly PartyGatheringPayload[],
+  ) => {
+    const requests = notifications.flatMap((data) => {
+      if (
+        isOwnNotification(
+          data.discordId,
+          sessionData?.user?.discordId,
+          data.character,
+        ) ||
+        isNotificationMuted(data, mutes) ||
+        !isAllowedByNotificationSettings(
+          data,
+          "party-gathering",
+          settings,
+          world,
+        )
+      ) {
+        return [];
+      }
 
-  useEffect(() => {
-    settingsRef.current = settings;
-    mutesRef.current = mutes;
-    sessionDataRef.current = sessionData;
-    worldRef.current = world;
-    processNotificationsRef.current = (notifications) => {
-      const requests = notifications.flatMap((data) => {
-        if (
-          isOwnNotification(
-            data.discordId,
-            sessionDataRef.current?.user?.discordId,
-            data.character,
-          )
-        ) {
-          return [];
-        }
+      const notification: PartyGatheringNotification = {
+        notificationId: data.notificationId,
+        guildId: data.guildId,
+        discordId: data.discordId,
+        world: data.world,
+        createdAt: data.createdAt,
+        character: data.character,
+        description: data.description,
+        minLvl: data.minLvl,
+        maxLvl: data.maxLvl,
+        servers: [data.guildId],
+        type: "party-gathering",
+      };
 
-        if (isNotificationMuted(data, mutesRef.current)) return [];
+      return [{ notification }];
+    });
 
-        const currentSettings = settingsRef.current;
-        const typeSettings = currentSettings?.["party-gathering"];
-
-        if (typeSettings) {
-          if (!typeSettings.show) return [];
-
-          if (
-            typeSettings.ignoreOtherWorlds &&
-            data.world !== worldRef.current
-          ) {
-            return [];
-          }
-        }
-
-        if (
-          currentSettings &&
-          !currentSettings.guildIds.includes(data.guildId)
-        ) {
-          return [];
-        }
-
-        const notification: PartyGatheringNotification = {
-          notificationId: data.notificationId,
-          guildId: data.guildId,
-          discordId: data.discordId,
-          world: data.world,
-          createdAt: data.createdAt,
-          character: data.character,
-          description: data.description,
-          minLvl: data.minLvl,
-          maxLvl: data.maxLvl,
-          servers: [data.guildId],
-          type: "party-gathering",
-        };
-
-        return [{ notification }];
-      });
-
-      presentNotifications(requests);
-    };
-  }, [mutes, presentNotifications, sessionData, settings, world]);
+    presentNotifications(requests);
+  };
 
   useBufferedSocketIngress({
     socket,
@@ -108,8 +81,7 @@ export const usePartyGatheringSocket = () => {
     isReady: isReady && areMutesReady,
     event: GatewayEvent.PARTY_GATHERING_SEND,
     cancelEvent: GatewayEvent.PARTY_GATHERING_CANCEL,
-    onProcessBatch: (notifications: readonly PartyGatheringPayload[]) =>
-      processNotificationsRef.current(notifications),
+    onProcessBatch: processNotifications,
     onCancel: (data: { notificationId: string }) => {
       removeNotification(data.notificationId);
     },

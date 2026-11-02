@@ -5,7 +5,10 @@ import type {
 } from "@lootlog/client/main";
 import type { GlobalChatMessage } from "@lootlog/schema/chat";
 import { hashString } from "@lootlog/ui/lib/seeded-random";
-import { getChatMessageDayKey } from "@/features/chat/chat.helpers";
+import {
+  withChatDateDividers,
+  type ChatDateDividerRow,
+} from "@/features/chat/chat.helpers";
 import {
   GLOBAL_CHAT_SHARED_CHANNEL,
   type GlobalChatChannel,
@@ -14,7 +17,7 @@ import {
 export type GlobalChatPages = InfiniteData<GlobalChatMessagesResponse>;
 
 export type GlobalChatRow =
-  | { kind: "date-divider"; key: string; timestamp: string }
+  | ChatDateDividerRow
   | { kind: "message"; key: string; message: GlobalChatMessageResponse };
 
 /**
@@ -137,29 +140,17 @@ export const getGlobalChatSenderColor = ({
 export const getGlobalChatRows = (
   data: GlobalChatPages | undefined,
 ): GlobalChatRow[] => {
-  const rows: GlobalChatRow[] = [];
+  const rows: Extract<GlobalChatRow, { kind: "message" }>[] = [];
   const seen = new Set<string>();
-  let previousDayKey: string | null = null;
 
   // Pages run newest first; a refetch can repeat a message across pages.
-  for (const page of [...(data?.pages ?? [])].reverse()) {
+  for (const page of (data?.pages ?? []).toReversed()) {
     for (const message of page.messages) {
       if (seen.has(message.id)) continue;
       seen.add(message.id);
-      const dayKey = getChatMessageDayKey(message.timestamp);
-
-      if (dayKey !== previousDayKey) {
-        rows.push({
-          kind: "date-divider",
-          key: `date-divider:${dayKey}`,
-          timestamp: message.timestamp,
-        });
-        previousDayKey = dayKey;
-      }
-
       rows.push({ kind: "message", key: message.id, message });
     }
   }
 
-  return rows;
+  return withChatDateDividers(rows, (row) => row.message.timestamp);
 };

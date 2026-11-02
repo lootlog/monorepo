@@ -17,11 +17,7 @@ import {
   type MargonemRuntimeAdapter,
 } from "./runtime-adapter";
 import { runtimeOtherHandles } from "./runtime-other-handles";
-import {
-  applySocialLists,
-  observeOtherEntries,
-  observeOtherHandles,
-} from "./social-relations-projection";
+import { applySocialLists, observeOthers } from "./social-relations-projection";
 import type {
   RuntimeEventEnvelope,
   RuntimeGameSnapshot,
@@ -84,6 +80,22 @@ const getProjectedEntranceClosesAt = (
       )
     : undefined;
 
+/** Packet fields first, then the cached template's. */
+function resolvePacketNpcFields(
+  entry: AppliedNpcEntry,
+  template: NpcTemplate | undefined,
+) {
+  const name = entry.nick ?? template?.nick;
+  const npcTemplate = withHeroTrackerDefaults(template, name);
+
+  return {
+    name,
+    profession: entry.prof ?? npcTemplate?.prof,
+    type: entry.type ?? npcTemplate?.type,
+    weight: entry.wt ?? entry.warrior_type ?? npcTemplate?.warrior_type,
+  };
+}
+
 type Dependencies = {
   adapter: MargonemRuntimeAdapter;
 };
@@ -94,20 +106,6 @@ const EMPTY_OTHERS: Readonly<Record<string, RuntimeOther>> = Object.freeze({});
 
 function deletesOther(entry: OtherEntry): boolean {
   return "del" in entry && entry.del === 1;
-}
-
-function getOptionalProperty<ObjectType, Key extends keyof ObjectType>(
-  value: ObjectType | undefined,
-  key: Key,
-): ObjectType[Key] | undefined {
-  return value?.[key];
-}
-
-function valueOrCurrent<Value, Candidate>(
-  value: Candidate | null | undefined,
-  current: Value,
-): Value | Candidate {
-  return value ?? current;
 }
 
 function resolveClan(
@@ -121,62 +119,47 @@ function resolveClan(
   return currentClan;
 }
 
+function patchHero(
+  hero: RuntimeGameSnapshot["hero"],
+  patch: GameEvent["h"],
+): RuntimeGameSnapshot["hero"] {
+  return Object.freeze({
+    accountId: String(patch?.account ?? hero.accountId),
+    characterId: String(patch?.id ?? hero.characterId),
+    clan: resolveClan(hero.clan, patch),
+    icon: patch?.img ?? hero.icon,
+    level: patch?.lvl ?? hero.level,
+    name: patch?.nick ?? hero.name,
+    profession: patch?.prof ?? hero.profession,
+    ...patchHeroState(hero, patch),
+  });
+}
+
+function patchHeroState(
+  hero: RuntimeGameSnapshot["hero"],
+  patch: GameEvent["h"],
+): Pick<
+  RuntimeGameSnapshot["hero"],
+  "currentHp" | "maxHp" | "stasis" | "x" | "y"
+> {
+  const stats = patch?.warrior_stats;
+
+  return {
+    currentHp: stats?.hp ?? patch?.hp ?? hero.currentHp,
+    maxHp: stats?.maxhp ?? patch?.maxhp ?? hero.maxHp,
+    stasis: patch?.stasis === undefined ? hero.stasis : patch.stasis === 1,
+    x: patch?.x ?? hero.x,
+    y: patch?.y ?? hero.y,
+  };
+}
+
 function patchGame(
   current: RuntimeGameSnapshot,
   event: GameEvent,
   map: RuntimeGameSnapshot["map"],
 ): RuntimeGameSnapshot {
-  const heroPatch = event.h;
-  const warriorStats = getOptionalProperty(heroPatch, "warrior_stats");
-  const heroHp = getOptionalProperty(heroPatch, "hp");
-  const heroMaxHp = getOptionalProperty(heroPatch, "maxhp");
-
   return Object.freeze({
-    hero: Object.freeze({
-      accountId: String(
-        valueOrCurrent(
-          getOptionalProperty(heroPatch, "account"),
-          current.hero.accountId,
-        ),
-      ),
-      characterId: String(
-        valueOrCurrent(
-          getOptionalProperty(heroPatch, "id"),
-          current.hero.characterId,
-        ),
-      ),
-      clan: resolveClan(current.hero.clan, heroPatch),
-      currentHp: valueOrCurrent(
-        getOptionalProperty(warriorStats, "hp"),
-        valueOrCurrent(heroHp, current.hero.currentHp),
-      ),
-      icon: valueOrCurrent(
-        getOptionalProperty(heroPatch, "img"),
-        current.hero.icon,
-      ),
-      level: valueOrCurrent(
-        getOptionalProperty(heroPatch, "lvl"),
-        current.hero.level,
-      ),
-      maxHp: valueOrCurrent(
-        getOptionalProperty(warriorStats, "maxhp"),
-        valueOrCurrent(heroMaxHp, current.hero.maxHp),
-      ),
-      name: valueOrCurrent(
-        getOptionalProperty(heroPatch, "nick"),
-        current.hero.name,
-      ),
-      profession: valueOrCurrent(
-        getOptionalProperty(heroPatch, "prof"),
-        current.hero.profession,
-      ),
-      stasis:
-        heroPatch?.stasis === undefined
-          ? current.hero.stasis
-          : heroPatch.stasis === 1,
-      x: valueOrCurrent(getOptionalProperty(heroPatch, "x"), current.hero.x),
-      y: valueOrCurrent(getOptionalProperty(heroPatch, "y"), current.hero.y),
-    }),
+    hero: patchHero(current.hero, event.h),
     gameVersion: current.gameVersion,
     interface: current.interface,
     map,
@@ -259,7 +242,7 @@ export class RuntimeStateProjection {
       runtimeOtherHandles.replace(otherHandles);
       useOthersStore.getState().replaceOthers(snapshot.others);
       usePartyStore.getState().replaceParty(snapshot.party);
-      observeOtherHandles(otherHandles);
+      observeOthers(otherHandles);
 
       return true;
     } catch {
@@ -278,7 +261,6 @@ export class RuntimeStateProjection {
 
     const needsGame = envelope.facts.some(
       (fact) =>
-        fact.kind === "afk" ||
         fact.kind === "loot" ||
         fact.kind === "npc-delete" ||
         (fact.kind === "battle" && event.f?.endBattle === 1),
@@ -360,7 +342,7 @@ export class RuntimeStateProjection {
       this.applyOthers(event.other ?? {}, mapChanged);
     }
 
-    if (event.other) observeOtherEntries(event.other);
+    if (event.other) observeOthers(event.other);
 
     if (event.npcs || event.npcs_del || mapChanged) {
       this.applyNpcs(event, mapChanged);
@@ -540,19 +522,14 @@ export class RuntimeStateProjection {
       templateId === null ? undefined : this.npcTemplates.get(templateId);
 
     const icon = this.resolveNpcIcon(entry.icon);
-    const name = valueOrCurrent(entry.nick, template?.nick);
-    const npcTemplate = withHeroTrackerDefaults(template, name);
-    const profession = valueOrCurrent(entry.prof, npcTemplate?.prof);
-    const type = valueOrCurrent(entry.type, npcTemplate?.type);
-    const level = resolveNpcLevel(entry, template, heroLevel);
 
-    const weight = valueOrCurrent(
-      entry.wt,
-      valueOrCurrent(entry.warrior_type, npcTemplate?.warrior_type),
+    const { name, profession, type, weight } = resolvePacketNpcFields(
+      entry,
+      template,
     );
 
+    const level = resolveNpcLevel(entry, template, heroLevel);
     const entranceClosesAt = getProjectedEntranceClosesAt(entry, name);
-
     const { x, y } = entry;
 
     if (
@@ -567,7 +544,7 @@ export class RuntimeStateProjection {
     ) {
       return Object.freeze({
         actions: entry.actions,
-        groupId: valueOrCurrent(entry.grp, entry.group),
+        groupId: entry.grp ?? entry.group,
         icon,
         id: entry.id,
         isHeroFromEvent: template?.isHeroFromEvent,
@@ -575,7 +552,7 @@ export class RuntimeStateProjection {
         level,
         name,
         profession,
-        respawnRandomness: valueOrCurrent(entry.resp_rand, template?.resp_rand),
+        respawnRandomness: entry.resp_rand ?? template?.resp_rand,
         templateId,
         type,
         weight,
@@ -584,6 +561,11 @@ export class RuntimeStateProjection {
       });
     }
 
+    return this.readNativeNpc(entry);
+  }
+
+  /** The game's own NPC when the packet and cached templates leave a gap. */
+  private readNativeNpc(entry: AppliedNpcEntry): RuntimeNpc | undefined {
     let native: RuntimeNpc | undefined;
 
     try {
@@ -610,7 +592,7 @@ export class RuntimeStateProjection {
   private resolveNpcIcon(icon: AppliedNpcEntry["icon"]): string | undefined {
     if (typeof icon === "string") return normalizeNpcIcon(icon);
 
-    return this.icons.get(getOptionalProperty(icon, "id") ?? -1);
+    return this.icons.get(icon?.id ?? -1);
   }
 
   private clearStores(): void {

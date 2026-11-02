@@ -4,7 +4,7 @@ import {
   setPath,
   unsetPath,
 } from "@lootlog/domain/settings-paths";
-import { groupBy, isEqual } from "es-toolkit";
+import { groupBy, isEqual, uniqWith } from "es-toolkit";
 import type { QueryKey } from "@tanstack/react-query";
 import type { SettingsOperation } from "./settings-documents";
 import type { SettingsSaveStatus } from "./settings-save-status.store";
@@ -17,8 +17,16 @@ export type QueuedSettingsPatch = {
   afterSave?: () => void;
 };
 
+export type SettingsSendOptions = {
+  /** Lets the request outlive the page (sent while the page unloads). */
+  keepalive?: boolean;
+};
+
 export type SettingsPatchQueueConfig<TResponse = unknown> = {
-  send: (operations: SettingsOperation[]) => Promise<TResponse>;
+  send: (
+    operations: SettingsOperation[],
+    options: SettingsSendOptions,
+  ) => Promise<TResponse>;
   applyOptimistic: (patch: QueuedSettingsPatch) => void;
   /**
    * Puts the documents a save returned into the cache. Returning false means
@@ -37,11 +45,14 @@ export type SettingsPatchQueueConfig<TResponse = unknown> = {
 
 export type SettingsPatchQueue = {
   enqueue: (patch: QueuedSettingsPatch) => void;
-  /** Send pending patches now instead of waiting for the debounce window. */
-  flush: () => Promise<void>;
+  /**
+   * Send pending patches now instead of waiting for the debounce window.
+   * While a request is in flight the pending patches wait for it, so they
+   * can never overtake an older write to the same document.
+   */
+  flush: (options?: SettingsSendOptions) => Promise<void>;
   /** Re-send the patches retained after a failed request. */
   retry: () => Promise<void>;
-  hasPending: () => boolean;
   reset: () => void;
 };
 
@@ -98,8 +109,6 @@ const mergeOperations = (
     unset: [...unset],
   };
 };
-
-const sameQueryKey = (left: QueryKey, right: QueryKey) => isEqual(left, right);
 
 /**
  * The API accepts one operation per document and one id per scope type.
@@ -162,19 +171,11 @@ export const createSettingsPatchQueue = <TResponse>(
     return patches;
   };
 
-  const collectQueryKeys = (patches: QueuedSettingsPatch[]) => {
-    const keys: QueryKey[] = [];
-
-    for (const patch of patches) {
-      for (const key of patch.queryKeys) {
-        if (!keys.some((existing) => sameQueryKey(existing, key))) {
-          keys.push(key);
-        }
-      }
-    }
-
-    return keys;
-  };
+  const collectQueryKeys = (patches: QueuedSettingsPatch[]) =>
+    uniqWith(
+      patches.flatMap((patch) => patch.queryKeys),
+      isEqual,
+    );
 
   const mergePatches = (
     current: QueuedSettingsPatch[] = [],
@@ -192,7 +193,12 @@ export const createSettingsPatchQueue = <TResponse>(
       {
         operation,
         queryKeys: collectQueryKeys([latest, incoming]),
-        afterSave: incoming.afterSave ?? latest.afterSave,
+        // Each write keeps its own follow-up work (save marks, list
+        // invalidation, import bookkeeping) when it merges into another.
+        afterSave: () => {
+          latest.afterSave?.();
+          incoming.afterSave?.();
+        },
       },
     ];
   };
@@ -214,7 +220,10 @@ export const createSettingsPatchQueue = <TResponse>(
     reapplyPending();
   };
 
-  const sendPatches = async (patches: QueuedSettingsPatch[]) => {
+  const sendPatches = async (
+    patches: QueuedSettingsPatch[],
+    options: SettingsSendOptions,
+  ) => {
     if (patches.length === 0) return;
     config.onStatus("saving");
 
@@ -228,7 +237,7 @@ export const createSettingsPatchQueue = <TResponse>(
         // Batches must reach the server in order: each one carries a merged
         // state for its scopes and later batches may depend on earlier ones.
         // eslint-disable-next-line no-await-in-loop
-        const response = await config.send(operations);
+        const response = await config.send(operations, options);
 
         if (config.applyServerDocuments?.(response, operations)) {
           for (const patch of batches.slice(index + 1).flat()) {
@@ -263,14 +272,14 @@ export const createSettingsPatchQueue = <TResponse>(
     }
   };
 
-  const run = () => {
+  const run = (options: SettingsSendOptions = {}) => {
     if (inFlight) return inFlight;
 
     inFlight = (async () => {
       while (pending.size > 0) {
         // Only one request is in flight at a time by design.
         // eslint-disable-next-line no-await-in-loop
-        await sendPatches(takePending());
+        await sendPatches(takePending(), options);
       }
     })().finally(() => {
       inFlight = null;
@@ -298,13 +307,13 @@ export const createSettingsPatchQueue = <TResponse>(
       config.onStatus("saving");
       schedule();
     },
-    flush: () => {
+    flush: (options) => {
       if (timeoutId) {
         clearTimeout(timeoutId);
         timeoutId = null;
       }
 
-      return run();
+      return run(options);
     },
     retry: () => {
       for (const [key, patch] of retained) {
@@ -320,7 +329,6 @@ export const createSettingsPatchQueue = <TResponse>(
 
       return run();
     },
-    hasPending: () => pending.size > 0 || retained.size > 0,
     reset: () => {
       if (timeoutId) clearTimeout(timeoutId);
       timeoutId = null;

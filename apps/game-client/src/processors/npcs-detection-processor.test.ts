@@ -220,7 +220,7 @@ describe("NpcsDetectionProcessor", () => {
     useGameStore.getState().clearGame();
 
     processor.handle(createNpcEvent());
-    processor.handleInitialDetection();
+    processor.bootstrapProjection();
 
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
   });
@@ -383,7 +383,7 @@ describe("NpcsDetectionProcessor", () => {
     try {
       processor.handle(createNpcEvent());
       readyPreferences();
-      processor.handleInitialDetection();
+      processor.bootstrapProjection();
 
       processor.cleanup();
       processor.flushPending("202");
@@ -405,8 +405,8 @@ describe("NpcsDetectionProcessor", () => {
   it("queues only one initial detection before preferences are ready", () => {
     setInitialNpcs([createGameNpc()]);
 
-    processor.handleInitialDetection();
-    processor.handleInitialDetection();
+    processor.bootstrapProjection();
+    processor.bootstrapProjection();
 
     readyPreferences({
       notifySound: true,
@@ -420,10 +420,10 @@ describe("NpcsDetectionProcessor", () => {
   it("keeps a queued initial detection until the NPC domain is ready", () => {
     useNpcsStore.getState().clearNpcs();
 
-    processor.handleInitialDetection();
+    processor.bootstrapProjection();
     readyPreferences({ notifySound: true });
     processor.flushPending("202");
-    processor.handleInitialDetection();
+    processor.bootstrapProjection();
 
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
 
@@ -444,7 +444,7 @@ describe("NpcsDetectionProcessor", () => {
     });
     setInitialNpcs([createGameNpc()]);
 
-    processor.handleInitialDetection();
+    processor.bootstrapProjection();
 
     expect(useNpcDetectorStore.getState().npcs).toEqual([
       expect.objectContaining({
@@ -465,13 +465,13 @@ describe("NpcsDetectionProcessor", () => {
       });
       vi.clearAllTimers();
 
-      processor.handleInitialDetection();
-      processor.handleInitialDetection();
+      processor.bootstrapProjection();
+      processor.bootstrapProjection();
 
       expect(useNpcDetectorStore.getState().npcs).toEqual([]);
 
       setInitialNpcs([createGameNpc()]);
-      processor.handleInitialDetection();
+      processor.bootstrapProjection();
 
       expect(useNpcDetectorStore.getState().npcs).toEqual([
         expect.objectContaining({
@@ -496,7 +496,7 @@ describe("NpcsDetectionProcessor", () => {
       useNpcsStore.getState().clearNpcs();
       vi.clearAllTimers();
 
-      processor.handleInitialDetection();
+      processor.bootstrapProjection();
 
       expect(useNpcDetectorStore.getState().npcs).toEqual([]);
 
@@ -514,7 +514,7 @@ describe("NpcsDetectionProcessor", () => {
       readyPreferences();
       vi.clearAllTimers();
 
-      processor.handleInitialDetection();
+      processor.bootstrapProjection();
 
       expect(useNpcDetectorStore.getState().npcs).toEqual([]);
       expect(vi.getTimerCount()).toBe(0);
@@ -575,7 +575,7 @@ describe("NpcsDetectionProcessor", () => {
     ]);
     expect(nextState.latestDetectionAnimationCycle).toBe(firstCycle);
     expect(play).toHaveBeenCalledOnce();
-    expect(useWindowsStore.getState().currentWindowFocus).toBe("chat");
+    expect(useWindowsStore.getState().windowFocusHistory[0]).toBe("chat");
   });
 
   it("detects an unclaimed Hero Tracker and announces its entrance once a player claims it", async () => {
@@ -695,7 +695,7 @@ describe("NpcsDetectionProcessor", () => {
     });
     setInitialNpcs([createGameNpc()]);
 
-    processor.handleInitialDetection();
+    processor.bootstrapProjection();
 
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
   });

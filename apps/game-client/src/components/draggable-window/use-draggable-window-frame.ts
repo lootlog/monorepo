@@ -100,43 +100,9 @@ const getScrollAreaViewports = (contentElement: HTMLDivElement) =>
     contentElement.querySelectorAll<HTMLElement>(SCROLL_AREA_VIEWPORT_SELECTOR),
   );
 
-const getContentMeasurementElements = (
-  contentElement: HTMLDivElement,
-  scrollAreaViewports = getScrollAreaViewports(contentElement),
-) => {
-  const measurementElements = new Set<HTMLElement>();
+const getMeasuredContentHeight = (contentElement: HTMLDivElement) => {
+  const scrollAreaViewports = getScrollAreaViewports(contentElement);
 
-  if (scrollAreaViewports.length > 0) {
-    scrollAreaViewports.forEach((viewportElement) => {
-      measurementElements.add(viewportElement);
-
-      const viewportContent = viewportElement.firstElementChild;
-
-      if (viewportContent instanceof HTMLElement) {
-        measurementElements.add(viewportContent);
-      }
-    });
-
-    return Array.from(measurementElements);
-  }
-
-  const contentRoot = contentElement.firstElementChild;
-
-  if (contentRoot instanceof HTMLElement) {
-    measurementElements.add(getDeepestSingleChildElement(contentRoot));
-  }
-
-  if (measurementElements.size === 0) {
-    measurementElements.add(contentElement);
-  }
-
-  return Array.from(measurementElements);
-};
-
-const getMeasuredContentHeight = (
-  contentElement: HTMLDivElement,
-  scrollAreaViewports = getScrollAreaViewports(contentElement),
-) => {
   if (scrollAreaViewports.length > 0) {
     return scrollAreaViewports.reduce((maxScrollHeight, viewportElement) => {
       const viewportContent = viewportElement.firstElementChild;
@@ -180,18 +146,13 @@ const getMeasuredContentHeight = (
     }, 0);
   }
 
-  const measurementElements = getContentMeasurementElements(
-    contentElement,
-    scrollAreaViewports,
-  );
+  const contentRoot = contentElement.firstElementChild;
 
-  let maxScrollHeight = 0;
-
-  for (const element of measurementElements) {
-    maxScrollHeight = Math.max(maxScrollHeight, element.scrollHeight);
-  }
-
-  return maxScrollHeight;
+  return (
+    contentRoot instanceof HTMLElement
+      ? getDeepestSingleChildElement(contentRoot)
+      : contentElement
+  ).scrollHeight;
 };
 
 const getNumericStyleValue = (
@@ -260,7 +221,7 @@ const measureWindowContent = ({
   };
 };
 
-const resolveDraggableWindowFrameProps = (
+export const resolveDraggableWindowFrameProps = (
   props: DraggableWindowFrameProps,
 ) => ({
   ...props,
@@ -393,33 +354,23 @@ const resolveWindowFrameMeasurements = ({
   };
 };
 
-export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
-  const {
-    children,
-    id,
-    actions,
-    title,
-    onClose,
-    heightMode,
-    resizable,
-    minWidth,
-    minHeight,
-    maxWidth,
-    maxHeight,
-    maxContentHeight,
-    isMaxHeightAdjustmentArmed,
-    onMaxHeightAdjustmentArmedChange,
-    onMaxContentHeightChange,
-    dynamicHeight,
-    closable,
-    disableTitle,
-    draggableContent,
-    collapsed,
-    contentClassName,
-    animationPhase,
-    onWindowAnimationEnd,
-  } = resolveDraggableWindowFrameProps(props);
-
+export function useDraggableWindowFrame({
+  id,
+  onClose,
+  heightMode,
+  resizable,
+  minWidth,
+  minHeight,
+  maxContentHeight,
+  isMaxHeightAdjustmentArmed,
+  onMaxHeightAdjustmentArmedChange,
+  onMaxContentHeightChange,
+  dynamicHeight,
+  closable,
+  collapsed,
+  animationPhase,
+  onWindowAnimationEnd,
+}: ReturnType<typeof resolveDraggableWindowFrameProps>) {
   const { opacity, defaultSize, isLocked } = useWindowsStore(
     useShallow((state) => ({
       opacity: state[id].opacity,
@@ -771,23 +722,6 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
   };
 
   return {
-    children,
-    id,
-    actions,
-    title,
-    onClose,
-    minWidth,
-    minHeight,
-    maxWidth,
-    maxHeight,
-    isMaxHeightAdjustmentArmed,
-    closable,
-    disableTitle,
-    draggableContent,
-    collapsed,
-    contentClassName,
-    animationPhase,
-    onWindowAnimationEnd,
     opacity,
     isLocked,
     contentRef,

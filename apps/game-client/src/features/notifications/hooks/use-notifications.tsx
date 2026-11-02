@@ -11,14 +11,13 @@ import { useBufferedSocketIngress } from "@/hooks/use-buffered-socket-ingress";
 import { useGameStore } from "@/store/game.store";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { PartyGatheringCharacterBase } from "@/types/party-gathering";
-import { useEffect, useRef } from "react";
 import {
   toLocalEntranceDeadline,
   type HeroTrackerNotificationState,
 } from "@/features/notifications/utils/hero-tracker-notification";
 import {
   getNotificationSettingsKey,
-  isNotificationSettingsKey,
+  isAllowedByNotificationSettings,
 } from "@/features/notifications/utils/get-notification-settings-key";
 
 export type Notification = {
@@ -45,67 +44,35 @@ export const useNotifications = () => {
 
   const { isReady: areMutesReady, mutes } = useCurrentUserNotificationMutes();
   const world = useGameStore((state) => state.game?.world ?? "unknown");
-  const settingsRef = useRef(settings);
-  const mutesRef = useRef(mutes);
-  const sessionDataRef = useRef(sessionData);
-  const worldRef = useRef(world);
 
-  const processNotificationsRef = useRef<
-    (notifications: readonly Notification[]) => void
-  >(() => undefined);
-
-  useEffect(() => {
-    sessionDataRef.current = sessionData;
-    mutesRef.current = mutes;
-    settingsRef.current = settings;
-    worldRef.current = world;
-    processNotificationsRef.current = (notifications) => {
-      const requests = notifications.flatMap((data) => {
-        if (
-          isOwnNotification(
-            data.discordId,
-            sessionDataRef.current?.user?.discordId,
-            data.isGatheringParty ? data.character : undefined,
-          )
-        ) {
-          return [];
-        }
-
-        if (isNotificationMuted(data, mutesRef.current)) {
-          return [];
-        }
-
-        const currentSettings = settingsRef.current;
-        const notificationSettingsKey = getNotificationSettingsKey(data);
-
-        if (isNotificationSettingsKey(notificationSettingsKey)) {
-          const typeSettings = currentSettings[notificationSettingsKey];
-
-          if (!typeSettings.show) return [];
-
-          if (
-            typeSettings.ignoreOtherWorlds &&
-            data.world !== worldRef.current
-          ) {
-            return [];
-          }
-        }
-
-        if (!currentSettings.guildIds.includes(data.guildId)) return [];
-
-        return [
-          {
-            notification: {
-              ...toLocalEntranceDeadline(data),
-              servers: [data.guildId],
+  // The ingress keeps the latest callback, so it reads current settings.
+  const processNotifications = (notifications: readonly Notification[]) => {
+    const requests = notifications.flatMap((data) =>
+      isOwnNotification(
+        data.discordId,
+        sessionData?.user?.discordId,
+        data.isGatheringParty ? data.character : undefined,
+      ) ||
+      isNotificationMuted(data, mutes) ||
+      !isAllowedByNotificationSettings(
+        data,
+        getNotificationSettingsKey(data),
+        settings,
+        world,
+      )
+        ? []
+        : [
+            {
+              notification: {
+                ...toLocalEntranceDeadline(data),
+                servers: [data.guildId],
+              },
             },
-          },
-        ];
-      });
+          ],
+    );
 
-      presentNotifications(requests);
-    };
-  }, [mutes, presentNotifications, sessionData, settings, world]);
+    presentNotifications(requests);
+  };
 
   useBufferedSocketIngress({
     socket,
@@ -115,7 +82,6 @@ export const useNotifications = () => {
       canReadNotification(socket?.getAccessPolicy?.(), notification),
     isReady: isReady && areMutesReady,
     event: GatewayEvent.NOTIFICATION,
-    onProcessBatch: (notifications: readonly Notification[]) =>
-      processNotificationsRef.current(notifications),
+    onProcessBatch: processNotifications,
   });
 };

@@ -2,9 +2,21 @@ import { createTimerFixture, createTimerMemberFixture } from "./timer-fixtures";
 import type { Timer } from "@/api/timers.api";
 import { NpcType } from "@/api/npcs.api";
 import { describe, expect, it } from "vitest";
-import { projectTimerList } from "./timer-list-projection";
+import {
+  getListedTimers,
+  projectTimerList as projectListedTimers,
+} from "./timer-list-projection";
 
-type ProjectionInput = Parameters<typeof projectTimerList>[0];
+type ProjectionInput = Omit<
+  Parameters<typeof projectListedTimers>[0],
+  "timers"
+> & { timers: Timer[] };
+
+const projectTimerList = (input: ProjectionInput) =>
+  projectListedTimers({
+    ...input,
+    timers: getListedTimers(input.timers, input.context.isGrouping),
+  });
 
 const createTimer = (overrides: Partial<Timer> = {}) =>
   createTimerFixture({
@@ -95,6 +107,7 @@ describe("projectTimerList", () => {
           createTimer(),
           createTimer({
             actorCharacter: actorCharacter,
+            actorCharactersByMemberId: { "77": actorCharacter },
             member: member,
             updatedAt: "2099-04-22T09:59:01.000Z",
           }),

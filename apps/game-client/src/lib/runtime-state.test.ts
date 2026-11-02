@@ -130,7 +130,7 @@ describe("resetTransientRuntimeState", () => {
     expect(useOthersStore.getState().othersById).toEqual({});
     expect(useNpcsStore.getState().npcsById).toEqual({});
     expect(useNotificationsStore.getState().notifications).toEqual([]);
-    expect(useChatStore.getState().replyDraft).toBeNull();
+    expect(useChatStore.getState().replyDraftsByGuild).toEqual({});
     expect(readSeededReadyRoomCache(queryClient).roomVersions).toEqual({});
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().entriesByKey,

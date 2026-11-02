@@ -4,6 +4,7 @@ import type {
 } from "@lootlog/schema/sound-settings";
 import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
 import {
+  memoizeByDocuments,
   selectSettingsValue,
   type SettingsDocuments,
   type SettingsOperation,
@@ -12,44 +13,36 @@ import {
   enqueueSettingsPatch,
   readCurrentSettingsDocuments,
 } from "./settings-patch-client";
-import { useSettingsSaveStatus } from "./settings-save-status.store";
 import { useSettingsDocuments } from "./use-settings-documents";
 
-const soundSettingsCache = new WeakMap<SettingsDocuments, UserSoundSettings>();
+const projectSoundSettings = memoizeByDocuments(
+  (documents): UserSoundSettings =>
+    normalizeSoundSettings({
+      userId: "",
+      masterVolume: 0.5,
+      notificationsVolume: selectSettingsValue(
+        documents,
+        "sounds.notificationsVolume",
+      ),
+      detectorVolume: selectSettingsValue(documents, "sounds.detectorVolume"),
+      timersVolume: selectSettingsValue(documents, "sounds.timersVolume"),
+      pingsVolume: selectSettingsValue(documents, "sounds.pingsVolume"),
+      notificationsConfig: selectSettingsValue(
+        documents,
+        "sounds.notificationsConfig",
+      ),
+      detectorConfig: selectSettingsValue(documents, "sounds.detectorConfig"),
+      timersConfig: selectSettingsValue(documents, "sounds.timersConfig"),
+      createdAt: documents.domains.sounds?.updatedAt ?? "",
+      updatedAt: documents.domains.sounds?.updatedAt ?? "",
+    }),
+);
 
 /** Sound settings as the playback and settings features consume them. */
-export const getSoundSettingsFromDocuments = (
+const getSoundSettingsFromDocuments = (
   documents: SettingsDocuments | undefined,
-): UserSoundSettings | undefined => {
-  if (!documents?.domains.sounds) return undefined;
-  const cached = soundSettingsCache.get(documents);
-
-  if (cached) return cached;
-
-  const settings = normalizeSoundSettings({
-    userId: "",
-    masterVolume: 0.5,
-    notificationsVolume: selectSettingsValue(
-      documents,
-      "sounds.notificationsVolume",
-    ),
-    detectorVolume: selectSettingsValue(documents, "sounds.detectorVolume"),
-    timersVolume: selectSettingsValue(documents, "sounds.timersVolume"),
-    pingsVolume: selectSettingsValue(documents, "sounds.pingsVolume"),
-    notificationsConfig: selectSettingsValue(
-      documents,
-      "sounds.notificationsConfig",
-    ),
-    detectorConfig: selectSettingsValue(documents, "sounds.detectorConfig"),
-    timersConfig: selectSettingsValue(documents, "sounds.timersConfig"),
-    createdAt: documents.domains.sounds.updatedAt ?? "",
-    updatedAt: documents.domains.sounds.updatedAt ?? "",
-  });
-
-  soundSettingsCache.set(documents, settings);
-
-  return settings;
-};
+): UserSoundSettings | undefined =>
+  documents?.domains.sounds ? projectSoundSettings(documents) : undefined;
 
 export const readSoundSettings = () =>
   getSoundSettingsFromDocuments(readCurrentSettingsDocuments());
@@ -65,8 +58,6 @@ export const useSoundSettings = () => {
 
 /** Master volume and mute stay on the device; every other field is server-side. */
 export const useUpdateSoundSettings = () => {
-  const status = useSettingsSaveStatus();
-
   const mutate = ({
     masterVolume: _deviceLocalMasterVolume,
     ...payload
@@ -80,5 +71,5 @@ export const useUpdateSoundSettings = () => {
     enqueueSettingsPatch({ domain: "sounds", set });
   };
 
-  return { mutate, isPending: status === "saving" };
+  return { mutate };
 };

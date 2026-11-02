@@ -42,7 +42,6 @@ describe("useNotificationPresenter React batching", () => {
     });
     useWindowsStore.setState((state) => ({
       notifications: { ...state.notifications, open: false },
-      currentWindowFocus: undefined,
       windowFocusHistory: [],
     }));
   });

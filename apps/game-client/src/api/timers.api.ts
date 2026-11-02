@@ -13,6 +13,7 @@ import {
   normalizeTimerNpc,
 } from "@/lib/api/generated-helpers";
 import type { GuildMember } from "@/types/guild-member";
+import { getFixedT } from "@/i18n/get-fixed-t";
 import { requireLocation } from "./require-location";
 import {
   AUTO_TIMER_REQUEST_TIMEOUT_MS,
@@ -105,9 +106,6 @@ export type CreateManualTimerOptions = {
 export type CreateManualTimerResult = {
   successful: Array<{ guildId: string }>;
   failed: Array<{ guildId: string; error: string }>;
-  totalGuilds: number;
-  successCount: number;
-  failureCount: number;
 };
 
 export async function createManualTimer({
@@ -131,7 +129,7 @@ export async function createManualTimer({
       },
     });
 
-    throw new Error("Brak wybranych gildii");
+    throw new Error(getFixedT("common")("errors.noLootlogSelected"));
   }
 
   const results = await Promise.allSettled(
@@ -204,13 +202,7 @@ export async function createManualTimer({
     },
   });
 
-  return {
-    successful,
-    failed,
-    totalGuilds: guildIds.length,
-    successCount: successful.length,
-    failureCount: failed.length,
-  };
+  return { successful, failed };
 }
 
 export type Timer = Omit<TimerResponseDto, "npc" | "member"> & {

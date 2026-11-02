@@ -45,44 +45,28 @@ const getStableNpcId = (
   return Math.abs(npcId);
 };
 
-const getDetectorNpcType = (
-  notification: MuteableNotification,
-): DetectorNpcType | null => {
-  if (!("npc" in notification) || !notification.npc) {
-    return null;
-  }
+/** The NPC a notification reports, with the key its mute is stored under. */
+const getNpcMuteTarget = (notification: MuteableNotification) => {
+  if (!("npc" in notification) || !notification.npc) return null;
+
+  const { npc } = notification;
 
   const npcType = getNpcType(NpcType, {
-    wt: notification.npc.wt,
-    icon: notification.npc.icon,
-    isHeroFromEvent: notification.npc.isHeroFromEvent,
-    name: notification.npc.name,
+    wt: npc.wt,
+    icon: npc.icon,
+    isHeroFromEvent: npc.isHeroFromEvent,
+    name: npc.name,
   });
 
-  return isDetectorNpcType(npcType) ? npcType : null;
+  if (!isDetectorNpcType(npcType)) return null;
+
+  const npcId = getStableNpcId(npc.id, npc.name, npcType);
+
+  return { npc, npcType, npcId, npcKey: `npc:${npcId}` };
 };
 
-export const getNotificationNpcMuteKey = (
-  notification: MuteableNotification,
-) => {
-  if (!("npc" in notification) || !notification.npc) {
-    return null;
-  }
-
-  const npcType = getDetectorNpcType(notification);
-
-  if (!npcType) {
-    return null;
-  }
-
-  const stableNpcId = getStableNpcId(
-    notification.npc.id,
-    notification.npc.name,
-    npcType,
-  );
-
-  return `npc:${stableNpcId}`;
-};
+export const getNotificationNpcMuteKey = (notification: MuteableNotification) =>
+  getNpcMuteTarget(notification)?.npcKey ?? null;
 
 export const createMutedPlayerPreference = (
   notification: MuteableNotification,
@@ -97,25 +81,20 @@ export const createMutedPlayerPreference = (
 export const createMutedNpcPreference = (
   notification: MuteableNotification,
 ): MutedNpcPreference | null => {
-  if (!("npc" in notification) || !notification.npc) {
-    return null;
-  }
+  const target = getNpcMuteTarget(notification);
 
-  const npcType = getDetectorNpcType(notification);
-  const npcKey = getNotificationNpcMuteKey(notification);
+  if (!target) return null;
 
-  if (!npcKey || !npcType) {
-    return null;
-  }
+  const { npc, npcType, npcId, npcKey } = target;
 
   return {
     npcKey,
-    npcId: getStableNpcId(notification.npc.id, notification.npc.name, npcType),
-    name: notification.npc.name,
+    npcId,
+    name: npc.name,
     npcType,
-    lvl: Math.max(1, notification.npc.lvl),
-    prof: notification.npc.prof ?? null,
-    icon: notification.npc.icon ?? null,
+    lvl: Math.max(1, npc.lvl),
+    prof: npc.prof ?? null,
+    icon: npc.icon ?? null,
   };
 };
 

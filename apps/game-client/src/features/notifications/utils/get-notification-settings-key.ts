@@ -1,6 +1,9 @@
 import { NpcType } from "@/api/npcs.api";
 import { getNpcType, isHeroTrackerName } from "@lootlog/domain/npc-type";
-import type { NotificationType } from "@lootlog/schema/account-preferences";
+import type {
+  NotificationType,
+  NotificationsSettings,
+} from "@lootlog/schema/account-preferences";
 
 const notificationSettingsKeys = [
   NpcType.ELITE2,
@@ -52,4 +55,30 @@ export const getNotificationSettingsKey = (
     icon: notification.npc.icon,
     isHeroFromEvent: notification.npc.isHeroFromEvent,
   });
+};
+
+/**
+ * Whether the game account's settings let a notification through: its
+ * category is shown, it comes from this world when the category is limited to
+ * it, and its Lootlog is one the account receives from.
+ */
+export const isAllowedByNotificationSettings = (
+  notification: { guildId: string; world: string },
+  settingsKey: string,
+  settings: Partial<NotificationsSettings>,
+  world: string | undefined,
+) => {
+  const categorySettings = isNotificationSettingsKey(settingsKey)
+    ? settings[settingsKey]
+    : undefined;
+
+  if (categorySettings) {
+    if (!categorySettings.show) return false;
+
+    if (categorySettings.ignoreOtherWorlds && notification.world !== world) {
+      return false;
+    }
+  }
+
+  return settings.guildIds?.includes(notification.guildId) !== false;
 };

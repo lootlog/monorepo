@@ -19,7 +19,7 @@ export const useCharacterCatchingSelection = (characterId: string) => {
   const { data: charactersConfig, isPending: isConfigLoading } =
     useLootlogCharactersConfig();
 
-  const { mutateFromCurrent, status } = useUpdateLootlogCharactersConfig();
+  const { mutateFromCurrent } = useUpdateLootlogCharactersConfig();
 
   const selectedGuildIds =
     charactersConfig?.[characterId]?.catchingGuildIds ?? NO_GUILD_IDS;
@@ -41,5 +41,5 @@ export const useCharacterCatchingSelection = (characterId: string) => {
     });
   };
 
-  return { guilds, selectedGuildIds, toggle, isConfigLoading, status };
+  return { guilds, selectedGuildIds, toggle, isConfigLoading };
 };

@@ -15,6 +15,11 @@ import {
 } from "./players-presence-source";
 import { groupByToMap } from "./group-by-to-map";
 import type { AppSocket } from "./socket";
+import {
+  createScopedSourceRegistry,
+  KeyedListeners,
+  SourceReferences,
+} from "./scoped-source";
 
 type Listener = () => void;
 
@@ -36,38 +41,39 @@ type MapSightings = {
   enemies: readonly MapThreatEnemy[];
 };
 
-const sources = new WeakMap<AppSocket, Map<string, MapThreatSource>>();
-
-export function getMapThreatSource(
-  socket: AppSocket,
-  guildId: string,
-  world: string,
-): MapThreatSource {
-  let scopes = sources.get(socket);
-
-  if (!scopes) {
-    scopes = new Map();
-    sources.set(socket, scopes);
-  }
-
-  const key = JSON.stringify([guildId, world]);
-  let source = scopes.get(key);
-
-  if (!source) {
-    source = new MapThreatSource(
-      socket,
-      guildId,
-      world,
-      getPlayersPresenceSource(socket, guildId, world),
-    );
-    scopes.set(key, source);
-  }
-
-  return source;
-}
-
 export const isMapThreatEnemyFresh = (enemy: MapThreatEnemy, now: number) =>
   now - enemy.seenAt < AIR_TAG_MAP_THREAT_FRESH_MS;
+
+/**
+ * One threat from sightings of several maps or Lootlogs: a target seen more
+ * than once keeps its latest sighting.
+ */
+export function projectMapThreat(
+  sightings: Iterable<MapThreatEnemy>,
+  now: number,
+): MapThreat {
+  const latest = new Map<string, MapThreatEnemy>();
+
+  for (const enemy of sightings) {
+    const known = latest.get(enemy.targetId);
+
+    if (!known || known.seenAt < enemy.seenAt)
+      latest.set(enemy.targetId, enemy);
+  }
+
+  const enemies = [...latest.values()].sort(
+    (first, second) =>
+      Number(isMapThreatEnemyFresh(second, now)) -
+        Number(isMapThreatEnemyFresh(first, now)) ||
+      first.nickname.localeCompare(second.nickname),
+  );
+
+  return {
+    enemies,
+    freshCount: enemies.filter((enemy) => isMapThreatEnemyFresh(enemy, now))
+      .length,
+  };
+}
 
 const sameThreat = (first: MapThreat, second: MapThreat) =>
   first.freshCount === second.freshCount &&
@@ -78,9 +84,9 @@ const sameThreat = (first: MapThreat, second: MapThreat) =>
 export class MapThreatSource {
   private readonly sightings = new Map<number, MapSightings>();
   private readonly threats = new Map<string, MapThreat>();
-  private readonly mapListeners = new Map<string, Set<Listener>>();
+  private readonly mapListeners = new KeyedListeners<string>();
+  private readonly references = new SourceReferences(() => this.stop());
   private timer: ReturnType<typeof setTimeout> | null = null;
-  private references = 0;
   private active = false;
   private fetchId = 0;
   private readable = false;
@@ -103,39 +109,16 @@ export class MapThreatSource {
     this.threats.get(mapName);
 
   retain = (): (() => void) => {
-    this.references += 1;
+    const release = this.references.retain();
 
     // A subscription replaced in the same commit keeps the running source and its snapshot.
     if (!this.active) this.start();
-    let retained = true;
 
-    return () => {
-      if (!retained) return;
-      retained = false;
-      this.references -= 1;
-      // React may replace a subscription during the same commit.
-      queueMicrotask(() => {
-        if (this.references === 0) this.stop();
-      });
-    };
+    return release;
   };
 
-  subscribeMap = (mapName: string, listener: Listener): (() => void) => {
-    let listeners = this.mapListeners.get(mapName);
-
-    if (!listeners) {
-      listeners = new Set();
-      this.mapListeners.set(mapName, listeners);
-    }
-
-    listeners.add(listener);
-
-    return () => {
-      listeners.delete(listener);
-
-      if (listeners.size === 0) this.mapListeners.delete(mapName);
-    };
-  };
+  subscribeMap = (mapName: string, listener: Listener): (() => void) =>
+    this.mapListeners.add(mapName, listener);
 
   private canRead(): boolean {
     return (
@@ -314,42 +297,19 @@ export class MapThreatSource {
 
     this.schedule(now);
 
-    for (const mapName of changed) {
-      for (const listener of this.mapListeners.get(mapName) ?? []) listener();
-    }
+    for (const mapName of changed) this.mapListeners.notify(mapName);
   }
 
-  /** Several map ids may share a name; a target seen on more than one keeps its latest sighting. */
+  /** Several map ids may share a name; members are never a threat. */
   private project(
     mapSightings: readonly MapSightings[],
     now: number,
   ): MapThreat | undefined {
-    const latest = new Map<string, MapThreatEnemy>();
+    const enemies = mapSightings
+      .flatMap((sightings) => sightings.enemies)
+      .filter((enemy) => !this.members.isOnlineMember(enemy.targetId));
 
-    for (const sightings of mapSightings) {
-      for (const enemy of sightings.enemies) {
-        if (this.members.isOnlineMember(enemy.targetId)) continue;
-        const known = latest.get(enemy.targetId);
-
-        if (!known || known.seenAt < enemy.seenAt)
-          latest.set(enemy.targetId, enemy);
-      }
-    }
-
-    if (latest.size === 0) return undefined;
-
-    const enemies = [...latest.values()].sort(
-      (first, second) =>
-        Number(isMapThreatEnemyFresh(second, now)) -
-          Number(isMapThreatEnemyFresh(first, now)) ||
-        first.nickname.localeCompare(second.nickname),
-    );
-
-    return {
-      enemies,
-      freshCount: enemies.filter((enemy) => isMapThreatEnemyFresh(enemy, now))
-        .length,
-    };
+    return enemies.length > 0 ? projectMapThreat(enemies, now) : undefined;
   }
 
   /** Wakes once at the next point where a sighting turns stale or expires. */
@@ -378,3 +338,13 @@ export class MapThreatSource {
     );
   }
 }
+
+export const getMapThreatSource = createScopedSourceRegistry(
+  (socket, guildId, world) =>
+    new MapThreatSource(
+      socket,
+      guildId,
+      world,
+      getPlayersPresenceSource(socket, guildId, world),
+    ),
+);

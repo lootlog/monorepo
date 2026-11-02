@@ -48,12 +48,7 @@ type StartNpcNotificationOptions = {
   world: string;
 };
 
-type FinalizePartyGatheringOptions = {
-  notificationId: string;
-  guildIds: string[];
-  closeCreateWindow?: boolean;
-  openPartyFinder?: boolean;
-};
+type PublishedNotification = { notificationId: string; guildIds: string[] };
 
 const getActivePartyGatheringNotificationId = (cause: unknown) => {
   if (!isApiError(cause) || cause.status !== 409) return undefined;
@@ -108,18 +103,22 @@ export const usePartyGatheringOrchestration = () => {
     return notificationId;
   };
 
-  const finalizePartyGathering = ({
-    notificationId,
-    guildIds,
-    closeCreateWindow,
-    openPartyFinder: shouldOpen = true,
-  }: FinalizePartyGatheringOptions) => {
+  /** One gathering per Discord user: an existing one is shown instead. */
+  const rejectIfOwnedReadyRoom = (
+    shouldOpen: boolean,
+    closeCreateWindow = false,
+  ) => {
+    const ownedReadyRoom = selectOwnedReadyRoom(
+      readReadyRoomCache(queryClient),
+    );
+
+    if (!ownedReadyRoom) return undefined;
+
     if (shouldOpen) openPartyFinder(closeCreateWindow);
 
-    return {
-      notificationId,
-      guildIds,
-    };
+    return Promise.reject(
+      new ActivePartyGatheringError(ownedReadyRoom.notificationId),
+    );
   };
 
   const startPartyGathering = ({
@@ -131,23 +130,18 @@ export const usePartyGatheringOrchestration = () => {
     closeCreateWindow = false,
     openPartyFinder: shouldOpen = true,
   }: StartPartyGatheringOptions): Promise<
-    ReturnType<typeof finalizePartyGathering> | undefined
+    PublishedNotification | undefined
   > => {
     const character = buildCurrentCharacterPayload();
 
     if (!character) return Promise.resolve(undefined);
 
-    const ownedReadyRoom = selectOwnedReadyRoom(
-      readReadyRoomCache(queryClient),
+    const ownedReadyRoomRejection = rejectIfOwnedReadyRoom(
+      shouldOpen,
+      closeCreateWindow,
     );
 
-    if (ownedReadyRoom) {
-      if (shouldOpen) openPartyFinder(closeCreateWindow);
-
-      return Promise.reject(
-        new ActivePartyGatheringError(ownedReadyRoom.notificationId),
-      );
-    }
+    if (ownedReadyRoomRejection) return ownedReadyRoomRejection;
 
     setIsCreatingPartyGathering(true);
 
@@ -172,14 +166,13 @@ export const usePartyGatheringOrchestration = () => {
 
       const projection = decodePartyReadyRoomProjection(response);
       mergeProjection(projection);
-      const resolvedGuildIds = projection.guildIds;
 
-      return finalizePartyGathering({
+      if (shouldOpen) openPartyFinder(closeCreateWindow);
+
+      return {
         notificationId: projection.notificationId,
-        guildIds: resolvedGuildIds,
-        closeCreateWindow,
-        openPartyFinder: shouldOpen,
-      });
+        guildIds: projection.guildIds,
+      };
     };
 
     return createPartyGathering().finally(() =>
@@ -193,19 +186,11 @@ export const usePartyGatheringOrchestration = () => {
     world,
     openPartyFinder: shouldOpen = true,
   }: StartNpcPartyGatheringOptions): Promise<
-    ReturnType<typeof finalizePartyGathering> | undefined
+    PublishedNotification | undefined
   > => {
-    const ownedReadyRoom = selectOwnedReadyRoom(
-      readReadyRoomCache(queryClient),
-    );
+    const ownedReadyRoomRejection = rejectIfOwnedReadyRoom(shouldOpen);
 
-    if (ownedReadyRoom) {
-      if (shouldOpen) openPartyFinder();
-
-      return Promise.reject(
-        new ActivePartyGatheringError(ownedReadyRoom.notificationId),
-      );
-    }
+    if (ownedReadyRoomRejection) return ownedReadyRoomRejection;
 
     const notificationPayload = buildNpcNotificationPayload({
       npc,
@@ -230,15 +215,14 @@ export const usePartyGatheringOrchestration = () => {
         throw error;
       }
 
-      const resolvedGuildIds = response.guildIds ?? guildIds;
-
       await refreshReadyRoom(response.notificationId);
 
-      return finalizePartyGathering({
+      if (shouldOpen) openPartyFinder();
+
+      return {
         notificationId: response.notificationId,
-        guildIds: resolvedGuildIds,
-        openPartyFinder: shouldOpen,
-      });
+        guildIds: response.guildIds ?? guildIds,
+      };
     };
 
     return createNpcPartyGathering().finally(() =>
@@ -251,7 +235,7 @@ export const usePartyGatheringOrchestration = () => {
     guildIds,
     world,
   }: StartNpcNotificationOptions): Promise<
-    { notificationId: string; guildIds: string[] } | undefined
+    PublishedNotification | undefined
   > => {
     setIsSendingNpcNotification(true);
 

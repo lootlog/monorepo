@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useRef } from "react";
-import type { Timer } from "@/api/timers.api";
+import { normalizeTimerResponse, type Timer } from "@/api/timers.api";
+import type { TimerResponseDto } from "@lootlog/client/main";
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useTimersCache } from "@/hooks/api/use-timers-cache";
@@ -13,8 +14,9 @@ export const useTimersSocket = () => {
   const queryClient = useQueryClient();
   const needsCatchUp = useRef(false);
 
-  const handleTimerCreate = useEffectEvent((data: Timer) => {
-    upsertTimer(data);
+  // The gateway forwards the API's timer response as is.
+  const handleTimerCreate = useEffectEvent((data: TimerResponseDto) => {
+    upsertTimer(normalizeTimerResponse(data));
   });
 
   const handleTimerDelete = useEffectEvent((data: Timer) => {
@@ -48,7 +50,7 @@ export const useTimersSocket = () => {
       return;
     }
 
-    const onTimerCreate = (data: Timer) => {
+    const onTimerCreate = (data: TimerResponseDto) => {
       handleTimerCreate(data);
     };
 

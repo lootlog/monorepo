@@ -45,7 +45,7 @@ class CharacterAuraRenderer {
   private unsubscribe: (() => void) | null = null;
   private mapId: number | undefined;
   private last = 0;
-  /** Consecutive failures by `FRAME_KEY` or aura key. */
+  /** Consecutive failures by `FRAME_KEY`, aura key or one of its two draws. */
   private readonly failures = new Map<string, number>();
   /** Auras that kept failing and are no longer drawn. */
   private readonly disabled = new Set<string>();
@@ -83,25 +83,26 @@ class CharacterAuraRenderer {
   // map change, a sprite still loading) skips the step. A long unbroken run
   // turns off only what keeps failing: one aura (a character the adapter
   // cannot read), or every aura when the shared frame work fails (a game
-  // build the adapter no longer matches).
-  private guard<T>(key: string, step: () => T): T | undefined {
+  // build the adapter no longer matches). Each step counts on its own, so
+  // one that succeeds every frame cannot reset another that always fails.
+  private guard<T>(key: string, step: () => T, counter = key): T | undefined {
     if (this.broken || this.disabled.has(key)) return undefined;
 
     try {
       const result = step();
-      this.failures.delete(key);
+      this.failures.delete(counter);
 
       return result;
     } catch (error) {
-      const failures = (this.failures.get(key) ?? 0) + 1;
+      const failures = (this.failures.get(counter) ?? 0) + 1;
 
       if (failures < MAX_FAILURES) {
-        this.failures.set(key, failures);
+        this.failures.set(counter, failures);
 
         return undefined;
       }
 
-      this.failures.delete(key);
+      this.failures.delete(counter);
       console.warn("[CharacterAuras] Drawing disabled after errors:", error);
 
       if (key === FRAME_KEY) {
@@ -188,19 +189,27 @@ class CharacterAuraRenderer {
         getAlwaysDraw: () => true,
         getOrder: () => drawn.order - ORDER_EPSILON,
         draw: (context) =>
-          this.guard(key, () => {
-            if (drawn.place && isInCanvas(drawn.place, context))
-              drawn.aura.drawBack(context, drawn.place, 1);
-          }),
+          this.guard(
+            key,
+            () => {
+              if (drawn.place && isInCanvas(drawn.place, context))
+                drawn.aura.drawBack(context, drawn.place, 1);
+            },
+            `${key}:back`,
+          ),
       },
       front: {
         getAlwaysDraw: () => true,
         getOrder: () => drawn.order + ORDER_EPSILON,
         draw: (context) =>
-          this.guard(key, () => {
-            if (drawn.place && isInCanvas(drawn.place, context))
-              drawn.aura.drawFront(context, drawn.place, 1);
-          }),
+          this.guard(
+            key,
+            () => {
+              if (drawn.place && isInCanvas(drawn.place, context))
+                drawn.aura.drawFront(context, drawn.place, 1);
+            },
+            `${key}:front`,
+          ),
       },
     };
 

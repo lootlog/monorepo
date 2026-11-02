@@ -1,4 +1,3 @@
-import { isFunction } from "es-toolkit";
 import { GatewayEvent } from "@/config/gateway";
 import {
   applyPresenceUpdates,
@@ -15,6 +14,11 @@ import {
 } from "./online-players-presence";
 import { PresenceMapIndex, type MapOccupancy } from "./presence-map-index";
 import type { AppSocket, PermissionsUpdatedPayload } from "./socket";
+import {
+  createScopedSourceRegistry,
+  KeyedListeners,
+  SourceReferences,
+} from "./scoped-source";
 
 type Listener = () => void;
 
@@ -35,31 +39,6 @@ export const emptyPlayersPresenceSnapshot: PlayersPresenceSnapshot = {
   isCurrent: false,
   onlinePlayers: {},
 };
-
-const sources = new WeakMap<AppSocket, Map<string, PlayersPresenceSource>>();
-
-export function getPlayersPresenceSource(
-  socket: AppSocket,
-  guildId: string,
-  world: string,
-): PlayersPresenceSource {
-  let scopes = sources.get(socket);
-
-  if (!scopes) {
-    scopes = new Map();
-    sources.set(socket, scopes);
-  }
-
-  const key = JSON.stringify([guildId, world]);
-  let source = scopes.get(key);
-
-  if (!source) {
-    source = new PlayersPresenceSource(socket, guildId, world);
-    scopes.set(key, source);
-  }
-
-  return source;
-}
 
 function queueUpdate(
   updates: Map<string, PlayerPresence>,
@@ -83,13 +62,13 @@ export class PlayersPresenceSource {
   private readonly changeListeners = new Set<
     (presence?: PlayerPresence) => void
   >();
-  private readonly mapListeners = new Map<string, Set<Listener>>();
+  private readonly mapListeners = new KeyedListeners<string>();
+  private readonly references = new SourceReferences(() => this.stop());
   private readonly pendingRows = new Map<string, PlayerPresence>();
   private readonly pendingMaps = new Set<string>();
   private snapshotUpdates: Map<string, PlayerPresence> | null = null;
   private frame: number | null = null;
   private policyTimer: ReturnType<typeof setTimeout> | null = null;
-  private references = 0;
   private active = false;
   private requestId = 0;
   private inFlight: Promise<PlayersPresenceSnapshot> | null = null;
@@ -148,21 +127,12 @@ export class PlayersPresenceSource {
     this.getMapOccupancy(mapName) !== undefined;
 
   retain = (hydrate = true): (() => void) => {
-    this.references += 1;
+    const release = this.references.retain();
 
     if (!this.active) this.start(hydrate);
     else if (hydrate && !this.snapshot.hasLoaded) void this.refresh();
-    let retained = true;
 
-    return () => {
-      if (!retained) return;
-      retained = false;
-      this.references -= 1;
-      // React may replace a subscription during the same commit.
-      queueMicrotask(() => {
-        if (this.references === 0) this.stop();
-      });
-    };
+    return release;
   };
 
   subscribe = (listener: Listener): (() => void) => {
@@ -189,45 +159,17 @@ export class PlayersPresenceSource {
   };
 
   subscribeMap = (mapName: string, listener: Listener): (() => void) => {
-    let listeners = this.mapListeners.get(mapName);
-
-    if (!listeners) {
-      listeners = new Set();
-      this.mapListeners.set(mapName, listeners);
-    }
-
     // Only what a timer shows about the map; position deltas must never wake a timer tile.
     let previous = this.getMapOccupancy(mapName);
 
-    const onChange = () => {
+    return this.mapListeners.add(mapName, () => {
       const next = this.getMapOccupancy(mapName);
 
       if (next === previous) return;
       previous = next;
       listener();
-    };
-
-    listeners.add(onChange);
-
-    return () => {
-      listeners.delete(onChange);
-
-      if (listeners.size === 0) this.mapListeners.delete(mapName);
-    };
+    });
   };
-
-  setPlayers(
-    update:
-      | PlayerPresenceResponse
-      | ((players: PlayerPresenceResponse) => PlayerPresenceResponse),
-  ): void {
-    const current = this.getSnapshot().onlinePlayers;
-    const players = isFunction(update) ? update(current) : update;
-    this.index.replace(players);
-    this.snapshot = { ...this.snapshot, onlinePlayers: players };
-    this.rowsDirty = false;
-    this.notify(true);
-  }
 
   refresh = (): Promise<PlayersPresenceSnapshot> => {
     if (this.policyTimer !== null) clearTimeout(this.policyTimer);
@@ -258,7 +200,7 @@ export class PlayersPresenceSource {
       refreshing: true,
       isCurrent,
     };
-    this.notify(true);
+    this.notify();
 
     const request = requestServerPresence(this.socket, this.guildId, this.world)
       .then((response) => {
@@ -301,7 +243,7 @@ export class PlayersPresenceSource {
           isCurrent: true,
           onlinePlayers: players,
         };
-        this.notify(true);
+        this.notify();
 
         return this.getSnapshot();
       })
@@ -313,7 +255,7 @@ export class PlayersPresenceSource {
             error,
             refreshing: false,
           };
-          this.notify(true);
+          this.notify();
         }
 
         return this.getSnapshot();
@@ -395,7 +337,7 @@ export class PlayersPresenceSource {
   private handleDisconnect = (): void => {
     this.invalidate();
     this.snapshot = { ...this.snapshot, refreshing: false, isCurrent: false };
-    this.notify(true);
+    this.notify();
   };
 
   private handlePresence = (payload: PlayerPresenceUpdatePayload): void => {
@@ -455,9 +397,7 @@ export class PlayersPresenceSource {
       for (const listener of this.listeners) listener();
     }
 
-    for (const mapName of this.pendingMaps) {
-      for (const listener of this.mapListeners.get(mapName) ?? []) listener();
-    }
+    for (const mapName of this.pendingMaps) this.mapListeners.notify(mapName);
 
     this.pendingMaps.clear();
   };
@@ -489,7 +429,7 @@ export class PlayersPresenceSource {
       isCurrent,
       onlinePlayers: players,
     };
-    this.notify(true);
+    this.notify();
   }
 
   private handlePermissions = (payload: PermissionsUpdatedPayload): void => {
@@ -498,7 +438,7 @@ export class PlayersPresenceSource {
       this.index.replace({});
       this.rowsDirty = false;
       this.snapshot = emptyPlayersPresenceSnapshot;
-      this.notify(true);
+      this.notify();
       this.scheduleRefresh();
 
       return;
@@ -533,14 +473,15 @@ export class PlayersPresenceSource {
     }, 5_000);
   }
 
-  private notify(maps: boolean): void {
+  private notify(): void {
     for (const listener of this.changeListeners) listener();
 
     for (const listener of this.listeners) listener();
 
-    if (maps)
-      for (const listeners of this.mapListeners.values()) {
-        for (const listener of listeners) listener();
-      }
+    this.mapListeners.notifyAll();
   }
 }
+
+export const getPlayersPresenceSource = createScopedSourceRegistry(
+  (socket, guildId, world) => new PlayersPresenceSource(socket, guildId, world),
+);
