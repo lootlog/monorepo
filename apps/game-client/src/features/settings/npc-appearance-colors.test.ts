@@ -1,5 +1,5 @@
 import {
-  COMBAT_NPC_TYPES,
+  APPEARANCE_NPC_TYPES,
   DEFAULT_NPC_TYPE_COLORS,
 } from "@lootlog/schema/npc-appearance";
 import {
@@ -10,8 +10,8 @@ import { SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
 import { describe, expect, it } from "vitest";
 
 describe("NPC appearance colors", () => {
-  it("provides a valid USER-scoped default for every combat NPC type", () => {
-    expect(COMBAT_NPC_TYPES).toEqual([
+  it("provides a valid USER-scoped default for every colored NPC type", () => {
+    expect(APPEARANCE_NPC_TYPES).toEqual([
       "ELITE",
       "ELITE2",
       "ELITE3",
@@ -19,9 +19,10 @@ describe("NPC appearance colors", () => {
       "EVENT_HERO",
       "COLOSSUS",
       "TITAN",
+      "HERO_TRACKER",
     ]);
 
-    for (const npcType of COMBAT_NPC_TYPES) {
+    for (const npcType of APPEARANCE_NPC_TYPES) {
       expect(DEFAULT_NPC_TYPE_COLORS[npcType]).toMatch(/^#[0-9A-F]{6}$/);
       expect(
         SETTINGS_CATALOG.appearance.fields[`npcColors.${npcType}`],
