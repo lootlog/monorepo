@@ -101,45 +101,29 @@ export class DiscordRestClientFactory {
       return { accessToken: token.accessToken, rest };
     } catch (error) {
       if (error instanceof TokenExpiredError) {
-        throw new AuthenticationRequiredError({
-          message: "TOKEN_EXPIRED",
-          requiresReauth: true,
-        });
+        throw new AuthenticationRequiredError({ code: "TOKEN_EXPIRED" });
       }
 
       if (error instanceof DiscordTokenRejectedError) {
-        throw new AuthenticationRequiredError({
-          message: "DISCORD_UNAUTHORIZED",
-          requiresReauth: true,
-        });
+        throw new AuthenticationRequiredError({ code: "DISCORD_UNAUTHORIZED" });
       }
 
       if (error instanceof AccountNotFoundError) {
-        throw new AuthenticationRequiredError({
-          message: "ACCOUNT_NOT_FOUND",
-          requiresReauth: true,
-        });
+        throw new AuthenticationRequiredError({ code: "ACCOUNT_NOT_FOUND" });
       }
 
       if (error instanceof InvalidScopesError) {
-        throw new AuthenticationRequiredError({
-          message: "INVALID_SCOPES",
-          requiresReauth: true,
-          required: error.required,
-          actual: error.actual,
-        });
+        throw new AuthenticationRequiredError({ code: "INVALID_SCOPES" });
       }
 
       if (error instanceof AuthBadRequestError) {
-        throw new InvalidRequestError({
-          message: "AUTH_BAD_REQUEST",
-        });
+        throw new InvalidRequestError({ code: "AUTH_BAD_REQUEST" });
       }
 
       if (error instanceof AuthServiceUnavailableError) {
         throw new DependencyUnavailableError({
-          message: "AUTH_SERVICE_UNAVAILABLE",
-          retryAfter: 60,
+          code: "AUTH_SERVICE_UNAVAILABLE",
+          retryAfterMs: 60_000,
         });
       }
 

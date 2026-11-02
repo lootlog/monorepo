@@ -542,9 +542,12 @@ describe("Reservations and Roles HttpApi handlers", () => {
 describe("reservation HTTP error responses", () => {
   it.each([
     {
-      cause: new InvalidEntityError({ code: "ACTIVE_LIMIT_REACHED", limit: 1 }),
+      cause: new InvalidEntityError({
+        code: "ACTIVE_LIMIT_REACHED",
+        details: { limit: 1 },
+      }),
       status: 422,
-      body: { code: "ACTIVE_LIMIT_REACHED", limit: 1 },
+      body: { code: "ACTIVE_LIMIT_REACHED", details: { limit: 1 } },
     },
     {
       cause: new ResourceConflictError({ code: "RESERVATION_OVERLAP" }),

@@ -21,6 +21,7 @@ import { makeMemberKillQuery } from "../src/kills/member-kill-query.js";
 import { makeUserKillQueries } from "../src/kills/user-kill-queries.js";
 import type { KillQueryCache } from "../src/kills/kill-query-support.js";
 import { applicationLogger } from "../src/shared/application-logger.js";
+import { InvalidRequestError } from "../src/shared/http/http-errors.js";
 
 const periodBoundary = new Date();
 
@@ -277,17 +278,43 @@ for (const period of ["all", "24h"] as const) {
     await runtime.runPromise(
       Effect.gen(function* () {
         const service = yield* services;
-        const query = { period, cursor: 1, limit: 1 };
+        const firstQuery = { period, limit: 1 };
+
+        const memberFirst = yield* service.member(
+          guildId,
+          service.memberId,
+          policy,
+          [],
+          firstQuery,
+        );
+
+        const personalFirst = yield* service.personal.getUserNpcKills(
+          userId,
+          firstQuery,
+        );
+
+        expect(memberFirst?.npcs.map((npc) => npc.npcId)).toEqual([9]);
+        expect(personalFirst.items.map((npc) => npc.npcId)).toEqual([9]);
+
+        const memberCursor = memberFirst?.nextCursor;
+        const personalCursor = personalFirst.nextCursor;
+
+        if (!memberCursor || !personalCursor) {
+          throw new Error("Expected a second page");
+        }
 
         const member = yield* service.member(
           guildId,
           service.memberId,
           policy,
           [],
-          query,
+          { ...firstQuery, cursor: memberCursor },
         );
 
-        const personal = yield* service.personal.getUserNpcKills(userId, query);
+        const personal = yield* service.personal.getUserNpcKills(userId, {
+          ...firstQuery,
+          cursor: personalCursor,
+        });
 
         const expected = [
           {
@@ -302,26 +329,25 @@ for (const period of ["all", "24h"] as const) {
         ];
 
         expect(member?.npcs).toEqual(expected);
-        expect(personal.npcs).toEqual(expected);
+        expect(personal.items).toEqual(expected);
         expect(member?.overview).toEqual({
           totalParticipations: 52,
           participationsByType: { ELITE2: 19, HERO: 3, TITAN: 30 },
         });
-        expect(member?.pagination).toEqual({
-          total: 3,
-          cursor: 1,
-          limit: 1,
-          hasNext: true,
-        });
-        expect(personal.pagination).toEqual(member?.pagination);
+        expect(member?.total).toBe(3);
+        expect(personal.total).toBe(3);
 
+        const personalNext = personal.nextCursor;
+
+        if (!personalNext) throw new Error("Expected a third page");
+
+        // NPCs 7 and 8 tie on kills; the NPC ID tiebreaker keeps 8 next.
         const last = yield* service.personal.getUserNpcKills(userId, {
-          period,
-          cursor: 2,
-          limit: 1,
+          ...firstQuery,
+          cursor: personalNext,
         });
 
-        expect(last.npcs).toEqual([
+        expect(last.items).toEqual([
           expect.objectContaining({
             npcId: 8,
             npcName: "Higher",
@@ -330,7 +356,17 @@ for (const period of ["all", "24h"] as const) {
             totalKills: 11,
           }),
         ]);
-        expect(last.pagination.hasNext).toBe(false);
+        expect(last.nextCursor).toBeNull();
+
+        const replayed = yield* Effect.flip(
+          service.personal.getUserNpcKills(userId, {
+            ...firstQuery,
+            world: "b",
+            cursor: personalNext,
+          }),
+        );
+
+        expect(replayed).toBeInstanceOf(InvalidRequestError);
       }),
     );
   });
@@ -346,10 +382,10 @@ for (const period of ["all", "24h"] as const) {
             world: "b",
             search: "hIgHeR",
             npcTypes: [NpcType.HERO],
-            minLvl: 105,
-            maxLvl: 115,
+            npcLevelMin: 105,
+            npcLevelMax: 115,
           },
-          { period, search: "hIgHeR", minLvl: 105, maxLvl: 115 },
+          { period, search: "hIgHeR", npcLevelMin: 105, npcLevelMax: 115 },
         ]) {
           const member = yield* service.member(
             guildId,
@@ -372,46 +408,21 @@ for (const period of ["all", "24h"] as const) {
               totalKills: 3,
             }),
           ]);
-          expect(personal.npcs).toEqual(member?.npcs);
+          expect(personal.items).toEqual(member?.npcs);
           expect(member?.overview).toEqual({
             totalParticipations: 3,
             participationsByType: { HERO: 3 },
           });
-          expect(personal.pagination.total).toBe(1);
+          expect(personal.total).toBe(1);
         }
       }),
     );
   });
 
-  test(`empty and out-of-range pages retain the member and filtered summary (${period})`, async () => {
+  test(`empty pages retain the member and filtered summary (${period})`, async () => {
     await runtime.runPromise(
       Effect.gen(function* () {
         const service = yield* services;
-
-        const pastEnd = yield* service.member(
-          guildId,
-          service.memberId,
-          policy,
-          [],
-          { period, cursor: 50, limit: 2 },
-        );
-
-        expect(pastEnd?.npcs).toEqual([]);
-        expect(pastEnd?.overview?.totalParticipations).toBe(52);
-        expect(pastEnd?.pagination).toEqual({
-          total: 3,
-          cursor: 50,
-          limit: 2,
-          hasNext: false,
-        });
-
-        const personalPastEnd = yield* service.personal.getUserNpcKills(
-          userId,
-          { period, cursor: 50, limit: 2 },
-        );
-
-        expect(personalPastEnd.npcs).toEqual([]);
-        expect(personalPastEnd.pagination).toEqual(pastEnd?.pagination);
 
         const empty = yield* service.member(
           guildId,
@@ -421,21 +432,22 @@ for (const period of ["all", "24h"] as const) {
           { period, world: "missing" },
         );
 
-        expect(empty?.member?.memberId).toBe(service.memberId);
+        expect(empty?.member?.id).toBe(service.memberId);
         expect(empty?.overview).toEqual({
           totalParticipations: 0,
           participationsByType: {},
         });
         expect(empty?.npcs).toEqual([]);
-        expect(empty?.pagination?.total).toBe(0);
+        expect(empty?.total).toBe(0);
+        expect(empty?.nextCursor).toBeNull();
 
         const personalEmpty = yield* service.personal.getUserNpcKills(userId, {
           period,
           world: "missing",
         });
 
-        expect(personalEmpty.npcs).toEqual([]);
-        expect(personalEmpty.pagination.total).toBe(0);
+        expect(personalEmpty.items).toEqual([]);
+        expect(personalEmpty.total).toBe(0);
         expect(
           yield* service.member(otherGuildId, service.memberId, policy, [], {
             period,
@@ -486,7 +498,7 @@ for (const period of ["all", "24h"] as const) {
             totalKills: 3,
           }),
         ]);
-        expect(result?.pagination?.total).toBe(2);
+        expect(result?.total).toBe(2);
 
         const denied = yield* service.member(
           guildId,
@@ -531,8 +543,8 @@ for (const period of ["all", "24h"] as const) {
           period,
         });
 
-        expect(page.npcs).toHaveLength(3);
-        expect(page.npcs.find((npc) => npc.npcId === 7)?.totalKills).toBe(11);
+        expect(page.items).toHaveLength(3);
+        expect(page.items.find((npc) => npc.npcId === 7)?.totalKills).toBe(11);
       }),
     );
   });
@@ -554,7 +566,28 @@ for (const period of ["all", "24h"] as const) {
             sortOrder,
           });
 
-          expect(result.npcs.map((npc) => npc.npcId)).toEqual([...expectedIds]);
+          expect(result.items.map((npc) => npc.npcId)).toEqual([
+            ...expectedIds,
+          ]);
+
+          // One NPC per page continues the same order, ties included.
+          const paged: number[] = [];
+          let cursor: string | undefined;
+
+          do {
+            const page = yield* service.personal.getUserNpcKills(userId, {
+              period,
+              sortBy,
+              sortOrder,
+              limit: 1,
+              ...(cursor && { cursor }),
+            });
+
+            paged.push(...page.items.map((npc) => npc.npcId));
+            cursor = page.nextCursor ?? undefined;
+          } while (cursor);
+
+          expect(paged).toEqual([...expectedIds]);
         }
       }),
     );
@@ -573,7 +606,7 @@ test("member bucket pages include the exact period boundary and exclude earlier 
         periodStart: { gte: periodBoundary },
       };
 
-      const atBoundary = yield* persistence.findMemberNpcPage(filter, 20, 0);
+      const atBoundary = yield* persistence.findMemberNpcPage(filter, 20);
 
       expect(atBoundary.totalParticipations).toBe(52);
       expect(atBoundary.total).toBe(3);
@@ -584,7 +617,6 @@ test("member bucket pages include the exact period boundary and exclude earlier 
           periodStart: { gte: new Date(periodBoundary.getTime() + 1) },
         },
         20,
-        0,
       );
 
       expect(afterBoundary.totalParticipations).toBe(0);

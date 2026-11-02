@@ -244,10 +244,7 @@ describe("KillMapsTimelineTable", () => {
   it("uses participant role colors for assigned members with a neutral fallback", () => {
     const map = createMapWithRepeatedAssignment();
     map.assignments.push({
-      memberId: 8,
-      memberName: "Bez roli",
-      memberAvatar: null,
-      memberUserId: "user-8",
+      member: { id: 8, name: "Bez roli", avatar: null, userId: "user-8" },
       assignedAt: "2026-08-12T08:00:00.000Z",
       unassignedAt: "2026-08-12T08:15:00.000Z",
     });
@@ -336,18 +333,12 @@ function createMapWithRepeatedAssignment(): MapTimelineData {
     numericMapId: 123,
     assignments: [
       {
-        memberId: 7,
-        memberName: "Tester",
-        memberAvatar: null,
-        memberUserId: "user-7",
+        member: { id: 7, name: "Tester", avatar: null, userId: "user-7" },
         assignedAt: "2026-08-12T08:00:00.000Z",
         unassignedAt: "2026-08-12T08:30:00.000Z",
       },
       {
-        memberId: 7,
-        memberName: "Tester",
-        memberAvatar: null,
-        memberUserId: "user-7",
+        member: { id: 7, name: "Tester", avatar: null, userId: "user-7" },
         assignedAt: "2026-08-12T09:00:00.000Z",
         unassignedAt: "2026-08-12T09:30:00.000Z",
       },

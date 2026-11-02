@@ -4,16 +4,6 @@ import type { LootStatsQuery as LootStatsQueryDto } from "#src/contracts/loots/s
 
 export type { LootStatsQueryDto };
 
-export type Period =
-  | "24h"
-  | "3d"
-  | "7d"
-  | "14d"
-  | "30d"
-  | "90d"
-  | "180d"
-  | "all";
-
 export interface LootStatsOverview {
   totalLoots: number;
   totalItems: number;

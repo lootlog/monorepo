@@ -46,7 +46,7 @@ describe("reservation policy", () => {
       }),
     ).toThrowError(
       expect.objectContaining({
-        response: { code: "RESERVATION_START_IN_PAST" },
+        body: { code: "RESERVATION_START_IN_PAST" },
         kind: "invalid-entity",
       }),
     );
@@ -62,9 +62,9 @@ describe("reservation policy", () => {
       }),
     ).toThrowError(
       expect.objectContaining({
-        response: {
+        body: {
           code: "RESERVATION_TOO_SHORT",
-          minimumMinutes: 15,
+          details: { minimumMinutes: 15 },
         },
         kind: "invalid-entity",
       }),

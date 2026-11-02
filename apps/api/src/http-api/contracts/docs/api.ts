@@ -24,7 +24,7 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
   HttpApiEndpoint.get("DocsControllerGetDocuments", "/guilds/:guildId/docs", {
     params: DocumentOrganizationPath,
     success: DocumentListResponse,
-    error: HttpApiSchema.Empty(403),
+    error: HttpErrorResponse.pipe(HttpApiSchema.status(403)),
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "DocsController_getDocuments")
@@ -37,7 +37,7 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
       params: DocumentOrganizationPath,
       payload: CreateDocumentRequest,
       success: DocumentResponse.pipe(HttpApiSchema.status(201)),
-      error: HttpApiSchema.Empty(409),
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(409)),
     },
   )
     .middleware(BearerSecurityMiddleware)

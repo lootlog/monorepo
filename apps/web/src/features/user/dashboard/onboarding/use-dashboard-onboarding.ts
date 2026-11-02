@@ -1,3 +1,4 @@
+import { LIFETIME_KILL_STATS_PARAMS } from "@/features/kills/lifetime-kill-stats-params";
 import { useBattlesControllerGetDashboardBattles } from "@lootlog/client/battlelog";
 import {
   useKillsControllerGetUserKillStats,
@@ -10,9 +11,12 @@ import { getOnboardingSteps } from "./onboarding-steps";
 export const useDashboardOnboarding = () => {
   const guilds = useUsersControllerGetCurrentUserGuilds();
 
-  const killStats = useKillsControllerGetUserKillStats(undefined, {
-    query: { staleTime: 60_000 },
-  });
+  const killStats = useKillsControllerGetUserKillStats(
+    LIFETIME_KILL_STATS_PARAMS,
+    {
+      query: { staleTime: 60_000 },
+    },
+  );
 
   const battles = useBattlesControllerGetDashboardBattles(
     DASHBOARD_RECENT_BATTLES_PARAMS,

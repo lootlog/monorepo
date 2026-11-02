@@ -7,36 +7,42 @@ import {
 } from "@lootlog/protocol/loot-summary";
 /** Shared input and output schemas for the loots feature. */
 import * as Schema from "effect/Schema";
+import * as SchemaTransformation from "effect/SchemaTransformation";
 import {
   PageSize,
-  LevelFilter,
+  PageCursor,
+  Page,
   JsonValue,
   NonEmptyString,
-  SafeInteger,
   DateTimeWithOffsetString,
   DateTimeString,
   FiniteNumber,
   PositiveSafeInteger,
+  NpcLevelRange,
+  LevelFilter,
+  levelRangeCheck,
+  NpcTypes,
+  Period,
+  BooleanQuery,
+  WorldParam,
+  SearchText,
 } from "@lootlog/schema/http-scalars";
 import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { LootSourceSchema } from "@lootlog/schema/loot";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { MemberSummary } from "#src/contracts/shared";
 import {
   CharacterIdQuery,
   characterNeedsWorld,
   UserStatsDays,
 } from "#src/contracts/kills/analytics-schemas";
 
-const LootSubmission = Schema.Struct({
+export const LootSubmission = Schema.Struct({
   guildId: Schema.String,
   memberId: FiniteNumber,
   lootId: FiniteNumber,
-  member: Schema.Struct({
-    name: Schema.String,
-    avatar: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-    userId: Schema.String,
-  }),
+  member: MemberSummary,
 });
 
 const LootRecord = Schema.Struct({
@@ -132,9 +138,7 @@ export type UserLootStatsQuery = typeof UserLootStatsQuery.Type;
 
 export const UserLootStatsQuery = Schema.Struct({
   days: Schema.optionalKey(UserStatsDays),
-  world: Schema.optionalKey(
-    Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
-  ),
+  world: Schema.optionalKey(WorldParam),
   characterId: CharacterIdQuery,
 }).check(characterNeedsWorld);
 
@@ -303,7 +307,7 @@ export const CreateLootRequest = Schema.Struct({
       expected: "a value with a length of at least 1",
     }),
   ),
-  world: NonEmptyString,
+  world: WorldParam,
   gameVersion: GameVersionSchema.annotate({
     description:
       "Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API.",
@@ -343,16 +347,9 @@ export const LootCommentResponse = Schema.Struct({
   guildId: Schema.String,
   content: Schema.String,
   member: Schema.Struct({
-    name: Schema.String,
-    avatar: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-    userId: Schema.String,
-    roles: Schema.optionalKey(
-      Schema.Array(
-        Schema.Struct({
-          color: Schema.optionalKey(Schema.Union([FiniteNumber, Schema.Null])),
-        }),
-      ),
-    ),
+    ...MemberSummary.fields,
+    /** The Member's display roles, for the name colour. */
+    roles: Schema.Array(Schema.Struct({ color: Schema.NullOr(FiniteNumber) })),
   }),
   createdAt: DateTimeString,
   updatedAt: DateTimeString,
@@ -360,8 +357,15 @@ export const LootCommentResponse = Schema.Struct({
 
 export type CreateLootCommentRequest = typeof CreateLootCommentRequest.Type;
 
+export const LOOT_COMMENT_MAX_LENGTH = 256;
+
 export const CreateLootCommentRequest = Schema.Struct({
-  content: NonEmptyString,
+  content: Schema.String.pipe(Schema.decode(SchemaTransformation.trim())).check(
+    Schema.isMinLength(1).annotate({ expected: "a non-empty comment" }),
+    Schema.isMaxLength(LOOT_COMMENT_MAX_LENGTH).annotate({
+      expected: `a comment with at most ${LOOT_COMMENT_MAX_LENGTH} characters`,
+    }),
+  ),
 }).annotate({ identifier: "CreateCommentDto" });
 
 export type UpdateLootShareRequest = typeof UpdateLootShareRequest.Type;
@@ -388,55 +392,49 @@ export type LootsQuery = typeof LootsQuery.Type;
 
 export const LootsQuery = Schema.Struct({
   limit: Schema.optionalKey(PageSize),
-  cursor: Schema.optionalKey(SafeInteger),
+  cursor: Schema.optionalKey(PageCursor),
   npcs: Schema.optionalKey(Schema.Array(Schema.String)),
   players: Schema.optionalKey(Schema.Array(Schema.String)),
-  rarities: Schema.optionalKey(Schema.Array(Schema.String)),
+  rarities: Schema.optionalKey(Schema.Array(ItemRaritySchema)),
   professions: Schema.optionalKey(Schema.Array(Schema.String)),
-  npcTypes: Schema.optionalKey(Schema.Array(Schema.String)),
-  world: Schema.optionalKey(Schema.String),
-  npcLevelMin: Schema.optionalKey(LevelFilter),
-  npcLevelMax: Schema.optionalKey(LevelFilter),
+  npcTypes: Schema.optionalKey(NpcTypes),
+  world: Schema.optionalKey(WorldParam),
+  ...NpcLevelRange.fields,
   itemLevelMin: Schema.optionalKey(LevelFilter),
   itemLevelMax: Schema.optionalKey(LevelFilter),
   playerLevelMin: Schema.optionalKey(LevelFilter),
   playerLevelMax: Schema.optionalKey(LevelFilter),
-  search: Schema.optionalKey(Schema.String),
+  search: Schema.optionalKey(SearchText),
   hid: Schema.optionalKey(Schema.String),
   itemNames: Schema.optionalKey(Schema.Array(Schema.String)),
   createdAtMin: Schema.optionalKey(DateTimeWithOffsetString),
   createdAtMax: Schema.optionalKey(DateTimeWithOffsetString),
-});
+}).check(
+  NpcLevelRange.check,
+  levelRangeCheck("itemLevelMin", "itemLevelMax"),
+  levelRangeCheck("playerLevelMin", "playerLevelMax"),
+);
 
 export type LootListResponse = typeof LootListResponse.Type;
 
-export const LootListResponse = Schema.Array(LootResponse);
+export const LootListResponse = Page(LootResponse).annotate({
+  identifier: "LootPageResponseDto",
+});
 
 export type LootStatsQuery = typeof LootStatsQuery.Type;
 
 export const LootStatsQuery = Schema.Struct({
-  period: Schema.optionalKey(
-    Schema.Literals([
-      "24h",
-      "3d",
-      "7d",
-      "14d",
-      "30d",
-      "90d",
-      "180d",
-      "all",
-    ]).annotate({ default: "7d" }),
-  ),
-  world: Schema.optionalKey(Schema.String),
-  npcTypes: Schema.optionalKey(Schema.String),
-  excludeColossus: Schema.optionalKey(Schema.Boolean),
+  period: Schema.optionalKey(Period),
+  world: Schema.optionalKey(WorldParam),
+  npcTypes: Schema.optionalKey(NpcTypes),
+  excludeColossus: Schema.optionalKey(BooleanQuery),
 });
 
 export type ResolveLootItemQuery = typeof ResolveLootItemQuery.Type;
 
 export const ResolveLootItemQuery = Schema.Struct({
   hid: NonEmptyString,
-  world: Schema.optionalKey(Schema.String),
+  world: Schema.optionalKey(WorldParam),
 });
 
 export type LootPath = typeof LootPath.Type;

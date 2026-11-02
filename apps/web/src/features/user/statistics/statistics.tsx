@@ -1,3 +1,4 @@
+import { LIFETIME_KILL_STATS_PARAMS } from "@/features/kills/lifetime-kill-stats-params";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
@@ -48,9 +49,12 @@ export function Statistics() {
     { query: { staleTime: 30_000, enabled: !isLoots } },
   );
 
-  const lifetime = useKillsControllerGetUserKillStats(undefined, {
-    query: { staleTime: 60_000 },
-  });
+  const lifetime = useKillsControllerGetUserKillStats(
+    LIFETIME_KILL_STATS_PARAMS,
+    {
+      query: { staleTime: 60_000 },
+    },
+  );
 
   const worlds = Object.keys(lifetime.data?.overview.killsByWorld ?? {});
 

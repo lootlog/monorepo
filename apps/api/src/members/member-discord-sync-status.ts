@@ -21,10 +21,6 @@ const DISCORD_HTTP_SYNC_STATUS_PREFIX = "DISCORD_HTTP_";
 type MemberDiscordSyncStatusValue =
   (typeof MEMBER_DISCORD_SYNC_STATUS)[keyof typeof MEMBER_DISCORD_SYNC_STATUS];
 
-type ExceptionResponseWithMessage = {
-  message: string;
-};
-
 export type DiscordHttpSyncStatus =
   `${typeof DISCORD_HTTP_SYNC_STATUS_PREFIX}${number}`;
 
@@ -64,8 +60,7 @@ export function isRetryableMemberRefreshStatus(
 export function getTransientMemberSyncStatus(error: unknown): MemberSyncStatus {
   if (error instanceof DependencyUnavailableError) {
     if (
-      getApplicationErrorMessage(error) ===
-      MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE
+      error.body.code === MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE
     ) {
       return MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE;
     }
@@ -94,44 +89,20 @@ export function isDiscordRefusalSyncStatus(status: MemberSyncStatus): boolean {
   return /^DISCORD_HTTP_4\d\d$/.test(status);
 }
 
-// toDiscordRequestError keeps a Discord 4xx it has no dedicated error for as
-// DISCORD_HTTP_ERROR with Discord's status.
+// toDiscordRequestError keeps a Discord status it has no dedicated error for
+// as DISCORD_HTTP_ERROR with Discord's status in `details`.
 const decodeDiscordHttpError = Schema.decodeUnknownOption(
   Schema.Struct({
-    message: Schema.Literal("DISCORD_HTTP_ERROR"),
-    status: Schema.Number,
+    code: Schema.Literal("DISCORD_HTTP_ERROR"),
+    details: Schema.Struct({ status: Schema.Number }),
   }),
 );
 
 function getDiscordHttpErrorStatus(
   error: DependencyUnavailableError,
 ): number | null {
-  return Option.match(decodeDiscordHttpError(error.getResponse()), {
+  return Option.match(decodeDiscordHttpError(error.body), {
     onNone: () => null,
-    onSome: ({ status }) => status,
+    onSome: ({ details }) => details.status,
   });
-}
-
-function getApplicationErrorMessage(error: ApplicationError): string | null {
-  const response = error.getResponse();
-
-  if (typeof response === "string") {
-    return response;
-  }
-
-  if (!hasMessage(response)) {
-    return null;
-  }
-
-  return response.message;
-}
-
-function hasMessage(
-  response: unknown,
-): response is ExceptionResponseWithMessage {
-  if (typeof response !== "object" || response === null) {
-    return false;
-  }
-
-  return "message" in response && typeof response.message === "string";
 }

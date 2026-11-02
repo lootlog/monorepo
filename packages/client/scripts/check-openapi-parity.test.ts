@@ -227,7 +227,7 @@ test("reservation exceptions retain only the verified statuses and error schema"
     content: {
       "application/json": {
         schema: {
-          $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse",
+          $ref: "#/components/schemas/HttpErrorResponse",
         },
       },
     },
@@ -256,12 +256,12 @@ test("reservation exceptions retain only the verified statuses and error schema"
       normalizeAllowedChanges("api", operation, {
         responses: { "200": {}, "401": response },
       }),
-    ).toThrow("must declare a 401 OrganizationWorkspaceErrorResponse");
+    ).toThrow("must declare a 401 HttpErrorResponse");
   }
 
   expect(() =>
     normalizeAllowedChanges("api", operation, { responses: { "200": {} } }),
-  ).toThrow("must declare a 401 OrganizationWorkspaceErrorResponse");
+  ).toThrow("must declare a 401 HttpErrorResponse");
   expect(
     normalizeAllowedChanges("api", operation, {
       responses: { "200": {}, "401": errorResponse, "422": errorResponse },

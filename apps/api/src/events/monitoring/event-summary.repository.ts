@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 
 import {
   and,
-  desc,
   eq,
   gt,
   gte,
@@ -17,12 +16,10 @@ import {
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
-  eventHeroNpcTable,
   eventMapCoverageGapTable,
   eventMapTable,
   eventPresenceLogTable,
   eventRespawnWindowSummaryTable,
-  eventTable,
   memberTable,
 } from "#src/database/drizzle/schema";
 
@@ -167,36 +164,6 @@ export const makeEventSummaryStore = (database: ApiDatabaseValue) => ({
         };
       }),
     );
-  },
-
-  heroExists(guildId: string, eventId: string, heroNpcId: string) {
-    return database
-      .select({ id: eventHeroNpcTable.id })
-      .from(eventHeroNpcTable)
-      .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
-      .where(
-        and(
-          eq(eventHeroNpcTable.id, heroNpcId),
-          eq(eventHeroNpcTable.eventId, eventId),
-          eq(eventTable.guildId, guildId),
-        ),
-      )
-      .limit(1)
-      .pipe(Effect.map((rows) => rows.length > 0));
-  },
-
-  findSummaries(heroNpcId: string, limit: number, cursor?: string) {
-    return database
-      .select()
-      .from(eventRespawnWindowSummaryTable)
-      .where(
-        and(
-          eq(eventRespawnWindowSummaryTable.heroNpcId, heroNpcId),
-          cursor ? lt(eventRespawnWindowSummaryTable.id, cursor) : undefined,
-        ),
-      )
-      .orderBy(desc(eventRespawnWindowSummaryTable.windowClosedAt))
-      .limit(limit + 1);
   },
 });
 

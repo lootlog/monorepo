@@ -12,8 +12,6 @@ const makeStore = (
   findPresenceLogs: () => Effect.succeed([]),
   findGaps: () => Effect.succeed([]),
   saveSummary: () => Effect.succeed({ deletedLogs: 0, deletedGaps: 0 }),
-  heroExists: () => Effect.succeed(true),
-  findSummaries: () => Effect.succeed([]),
   ...overrides,
 });
 
@@ -118,24 +116,6 @@ describe("EventSummary", () => {
     );
 
     expect(saveSummary).not.toHaveBeenCalled();
-  });
-
-  it("keeps a hidden hero indistinguishable from an empty history", async () => {
-    const findSummaries = mock(() => Effect.succeed([]));
-
-    const summary = makeEventSummary(
-      makeStore({
-        heroExists: () => Effect.succeed(false),
-        findSummaries,
-      }),
-    );
-
-    await expect(
-      Effect.runPromise(
-        summary.getHeroWindowSummaries("guild-1", "event-1", "hero-1"),
-      ),
-    ).resolves.toEqual({ data: [], nextCursor: null });
-    expect(findSummaries).not.toHaveBeenCalled();
   });
 
   it("propagates a typed store failure without persisting partial state", async () => {

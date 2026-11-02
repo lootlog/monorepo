@@ -11,6 +11,7 @@ import {
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { HeroPresenceStatsResponse } from "#src/events/monitoring/event-monitoring-response.schema";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
+import type { MemberSummary } from "#src/contracts/shared";
 
 export const makeEventPresenceStats = (
   database: typeof ApiDatabase.Service,
@@ -80,20 +81,24 @@ export const makeEventPresenceStats = (
 
       const memberStats = new Map<
         number,
-        {
-          memberId: number;
-          memberName: string;
-          memberAvatar: string | null;
-          totalTimeMs: number;
-          afkTimeMs: number;
-        }
+        { member: MemberSummary; totalTimeMs: number; afkTimeMs: number }
       >();
+
+      const toMemberSummary = ({
+        id,
+        name,
+        avatar,
+        userId,
+      }: typeof memberTable.$inferSelect): MemberSummary => ({
+        id,
+        name,
+        avatar,
+        userId,
+      });
 
       for (const { member } of assignments) {
         memberStats.set(member.id, {
-          memberId: member.id,
-          memberName: member.name,
-          memberAvatar: member.avatar,
+          member: toMemberSummary(member),
           totalTimeMs: 0,
           afkTimeMs: 0,
         });
@@ -111,9 +116,7 @@ export const makeEventPresenceStats = (
         if (!log.isAfk) totalCoverageMs += duration;
 
         const stats = memberStats.get(log.memberId) ?? {
-          memberId: member.id,
-          memberName: member.name,
-          memberAvatar: member.avatar,
+          member: toMemberSummary(member),
           totalTimeMs: 0,
           afkTimeMs: 0,
         };
@@ -136,9 +139,7 @@ export const makeEventPresenceStats = (
             : 0,
         memberStats: [...memberStats.values()]
           .map((stats) => ({
-            memberId: stats.memberId,
-            memberName: stats.memberName,
-            memberAvatar: stats.memberAvatar,
+            member: stats.member,
             totalTimeSeconds: Math.round(stats.totalTimeMs / 1000),
             afkTimeSeconds: Math.round(stats.afkTimeMs / 1000),
             afkPercentage:
@@ -159,7 +160,7 @@ export const makeEventPresenceStats = (
 
   return {
     get(guildId: string, eventId: string, heroNpcId: string) {
-      const key = cache.getEventEntry(guildId, eventId, "hero-presence", {
+      const key = cache.getEventEntry(guildId, eventId, "hero-presence:v2", {
         heroNpcId,
       });
 

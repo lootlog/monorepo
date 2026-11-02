@@ -188,7 +188,7 @@ export const makeMessagingDataLayer = (
               if (rateLimit.accepted === false) {
                 return yield* Effect.fail(
                   new RateLimitedError({
-                    message: "NOTIFICATION_RATE_LIMITED",
+                    code: "NOTIFICATION_RATE_LIMITED",
                     retryAfterMs: rateLimit.retryAfterMs,
                   }),
                 );
@@ -196,13 +196,13 @@ export const makeMessagingDataLayer = (
 
               if (!data.message && !data.npc) {
                 return yield* Effect.fail(
-                  new InvalidRequestError("MISSING_MESSAGE_OR_NPC"),
+                  new InvalidRequestError({ code: "MISSING_MESSAGE_OR_NPC" }),
                 );
               }
 
               if (data.message && data.npc) {
                 return yield* Effect.fail(
-                  new InvalidRequestError("EITHER_MESSAGE_OR_NPC"),
+                  new InvalidRequestError({ code: "EITHER_MESSAGE_OR_NPC" }),
                 );
               }
 

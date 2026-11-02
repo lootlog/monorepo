@@ -46,17 +46,16 @@ type TimerHistoryAssociations = {
   actorCharacter?: NonNullable<ReturnType<typeof mapTimerCharacter>>;
 };
 
+const DEFAULT_HISTORY_LIMIT = 5;
+
 export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
   const read = (
     access: TimersGuildAccess,
     world: string,
     timerIdentifier: string | null,
-    requestedLimit?: number,
+    limit = DEFAULT_HISTORY_LIMIT,
   ) =>
     Effect.gen(function* () {
-      const limit =
-        requestedLimit && requestedLimit > 0 ? Math.min(requestedLimit, 20) : 5;
-
       let timerKey = timerIdentifier;
 
       if (timerIdentifier && isLegacyNpcIdIdentifier(timerIdentifier)) {
@@ -74,7 +73,7 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
         if (matches.length > 1) {
           return yield* Effect.fail(
             new InvalidRequestError({
-              message: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
+              code: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
             }),
           );
         }

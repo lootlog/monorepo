@@ -180,9 +180,6 @@ const toHttpResponse = <A, R>(effect: Effect.Effect<A, TimersHttpFailure, R>) =>
     TimersNotFound: statusCodeResponse,
   });
 
-const parsedLimit = (value: unknown): number | undefined =>
-  value ? Number.parseInt(String(value), 10) : undefined;
-
 export const getAllTimers = Effect.fn("getAllTimers")(function* (
   world?: string,
 ) {
@@ -311,11 +308,7 @@ export const TimersHandlers = HttpApiBuilder.group(
       )
       .handle("TimersControllerGetRecentTimerHistory", ({ query }) =>
         toHttpResponse(
-          getRecentTimerHistory(
-            query.guildId,
-            query.world,
-            parsedLimit(query.limit),
-          ),
+          getRecentTimerHistory(query.guildId, query.world, query.limit),
         ),
       )
       .handle("TimersControllerGetTimers", ({ params, query }) =>
@@ -347,7 +340,7 @@ export const TimersHandlers = HttpApiBuilder.group(
             params.guildId,
             query.world,
             params.timerIdentifier,
-            parsedLimit(query.limit),
+            query.limit,
           ),
         ),
       )

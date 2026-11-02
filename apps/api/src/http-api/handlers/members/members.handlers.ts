@@ -2,13 +2,13 @@ import { AccessRequirement } from "@lootlog/domain/access-policy";
 import type { MemberWithRoles } from "#src/members/member.types";
 import {
   pathString,
-  emptyStatusResponse,
+  statusCodeResponse,
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
-import { HttpServerResponse } from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
+import { applicationErrorResponse } from "#src/http-api/application-error-response";
 import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
 import {
   MemberBoundary,
@@ -164,15 +164,15 @@ type MembersFailure =
 
 const orDieHttpFailure = <A, R>(effect: Effect.Effect<A, MembersFailure, R>) =>
   Effect.catchTags(effect, {
-    MembersAccessDenied: emptyStatusResponse,
-    MembersNotFound: emptyStatusResponse,
+    MembersAccessDenied: statusCodeResponse,
+    MembersNotFound: statusCodeResponse,
     ReauthenticationRequired: reauthenticationRequiredResponse,
     MembersOperationError: (error) => {
       const status = applicationErrorStatusOrUndefined(error.cause);
 
       return status === undefined
         ? Effect.die(error.cause)
-        : Effect.succeed(HttpServerResponse.empty({ status }));
+        : applicationErrorResponse(error.cause);
     },
   });
 
@@ -183,18 +183,18 @@ const declaredEmptyError = <A, R>(
   Effect.catchTags(effect, {
     MembersAccessDenied: (error) =>
       statuses.includes(error.status)
-        ? emptyStatusResponse(error)
+        ? statusCodeResponse(error)
         : Effect.die(error),
     MembersNotFound: (error) =>
       statuses.includes(error.status)
-        ? emptyStatusResponse(error)
+        ? statusCodeResponse(error)
         : Effect.die(error),
     ReauthenticationRequired: reauthenticationRequiredResponse,
     MembersOperationError: (error) => {
       const status = applicationErrorStatusOrUndefined(error.cause);
 
       return status !== undefined && statuses.includes(status)
-        ? Effect.succeed(HttpServerResponse.empty({ status }))
+        ? applicationErrorResponse(error.cause)
         : Effect.die(error.cause);
     },
   });

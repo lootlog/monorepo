@@ -239,8 +239,9 @@ describe("public guild stats card Effect module", () => {
       Effect.runPromise(service.refreshStatsCard("guild-1")),
     ).rejects.toMatchObject({
       kind: "rate-limited",
-      response: {
-        nextRefreshAt: "2026-05-03T23:05:00.000Z",
+      body: {
+        code: "STATS_CARD_REFRESH_COOLDOWN",
+        details: { nextRefreshAt: "2026-05-03T23:05:00.000Z" },
       },
     });
 

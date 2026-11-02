@@ -5,6 +5,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import { timerTable } from "#src/database/drizzle/schema";
 import type { TimerNpcSearchQuery } from "#src/contracts/timers/schemas";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
+import { containsPattern } from "#src/shared/sql-like";
 import {
   parseTimerNpc,
   timerNpcTemplateId,
@@ -53,7 +54,7 @@ export const makeTimerSearch = (database: typeof ApiDatabase.Service) => {
             query.world ? eq(timerTable.world, query.world) : undefined,
             isNull(timerTable.deletedAt),
             query.search
-              ? sql`${timerTable.npc}->>'name' ILIKE ${`%${query.search}%`}`
+              ? sql`${timerTable.npc}->>'name' ILIKE ${containsPattern(query.search)}`
               : undefined,
             identityCondition(query),
             sql`COALESCE(${timerTable.npc}->>'margonemType', '0') != ${String(TIMER_TYPES.CUSTOM_MANUAL)}`,

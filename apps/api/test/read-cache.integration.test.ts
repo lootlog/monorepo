@@ -841,12 +841,12 @@ describe("Read cache Dragonfly integration", () => {
           const request = () =>
             operations.fetchLootsByGuildId(guild, policy, [], {});
 
-          expect((yield* request()).map((entry) => entry.id)).toEqual([
+          expect((yield* request()).items.map((entry) => entry.id)).toEqual([
             loot.id,
           ]);
           const hit = yield* request();
-          expect(hit[0]?.createdAt).toBeInstanceOf(Date);
-          expect(hit[0]?.updatedAt).toBeInstanceOf(Date);
+          expect(hit.items[0]?.createdAt).toBeInstanceOf(Date);
+          expect(hit.items[0]?.updatedAt).toBeInstanceOf(Date);
           expect(
             yield* Effect.promise(() => cache.scan(`loots:list:${guild.id}:*`)),
           ).toEqual([]);
@@ -862,7 +862,7 @@ describe("Read cache Dragonfly integration", () => {
             discordId: "owner",
             lootId: loot.id,
           });
-          expect(yield* request()).toEqual([]);
+          expect(yield* request()).toEqual({ items: [], nextCursor: null });
         }),
       );
     } finally {

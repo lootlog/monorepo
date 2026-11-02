@@ -14,7 +14,7 @@ import {
   useEventsAssignmentControllerUpdateHero,
 } from "@lootlog/client/main";
 import { invalidateEventDetailQueries } from "../../hooks/mutations/invalidate-event-queries";
-import { getApiErrorMessage } from "@lootlog/client/transport";
+import { getApiErrorStringField } from "@lootlog/client/transport";
 
 interface HeroManageDialogProps {
   open: boolean;
@@ -108,7 +108,7 @@ export const HeroManageDialog = ({
       onOpenChange(false);
     } catch (error) {
       toast.error(
-        getApiErrorMessage(error) === "EVENT_HERO_NAME_TAKEN"
+        getApiErrorStringField(error, "code") === "EVENT_HERO_NAME_TAKEN"
           ? t("events.heroes.nameTakenError")
           : t("events.heroes.saveError"),
       );

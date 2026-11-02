@@ -81,7 +81,7 @@ describe("EventReadCache", () => {
 
     const value = {
       kind: "event" as const,
-      data: [
+      items: [
         {
           id: "kill-1",
           heroNpcId: "hero-1",
@@ -121,10 +121,10 @@ describe("EventReadCache", () => {
 
     const encoded = Schema.encodeSync(KillHistoryResponse)(result);
 
-    expect(encoded.data[0]?.minSpawnTimeAtKill).toBe(
+    expect(encoded.items[0]?.minSpawnTimeAtKill).toBe(
       "2026-06-19T09:00:00.000Z",
     );
-    expect(encoded.data[0]?.maxSpawnTimeAtKill).toBe(
+    expect(encoded.items[0]?.maxSpawnTimeAtKill).toBe(
       "2026-06-19T12:00:00.000Z",
     );
   });

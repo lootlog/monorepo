@@ -216,18 +216,11 @@ for (const period of ["all", "24h"] as const) {
       Effect.gen(function* () {
         const service = yield* queries;
 
-        const top = yield* service.getGuildTopNpcs(
-          guildId,
-          policy,
-          [],
-          1,
-          NpcType.ELITE2,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
+        const top = yield* service.getGuildTopNpcs(guildId, policy, [], {
+          limit: 1,
+          npcType: NpcType.ELITE2,
           period,
-        );
+        });
 
         expect(top.topNpcs).toEqual([
           expect.objectContaining({
@@ -243,21 +236,20 @@ for (const period of ["all", "24h"] as const) {
           policy,
           [],
           [NpcType.ELITE2, NpcType.HERO, NpcType.TITAN],
-          1,
-          period,
+          { limit: 1, period },
         );
 
         expect(members[NpcType.ELITE2]).toEqual([
-          expect.objectContaining({
-            memberName: "first",
+          {
+            member: expect.objectContaining({ name: "first" }),
             totalParticipations: 12,
-          }),
+          },
         ]);
         expect(members[NpcType.HERO]).toEqual([
-          expect.objectContaining({
-            memberName: "second",
+          {
+            member: expect.objectContaining({ name: "second" }),
             totalParticipations: 50,
-          }),
+          },
         ]);
         expect(members[NpcType.TITAN]).toEqual([]);
 
@@ -280,10 +272,15 @@ for (const period of ["all", "24h"] as const) {
           }),
         );
         expect(npc?.killers).toEqual([
-          expect.objectContaining({
-            memberName: "first",
+          {
+            member: {
+              id: memberIds.first,
+              name: "first",
+              avatar: null,
+              userId: "first",
+            },
             participationCount: 12,
-          }),
+          },
         ]);
       }),
     );
@@ -295,17 +292,15 @@ test("filters before ranking and keeps all-time metadata with zero counts for an
     Effect.gen(function* () {
       const service = yield* queries;
 
-      const filtered = yield* service.getGuildTopNpcs(
-        guildId,
-        policy,
-        [],
-        5,
-        NpcType.ELITE2,
-        "a",
-        "low",
-        1,
-        150,
-      );
+      const filtered = yield* service.getGuildTopNpcs(guildId, policy, [], {
+        limit: 5,
+        npcType: NpcType.ELITE2,
+        world: "a",
+        search: "low",
+        npcLevelMin: 1,
+        npcLevelMax: 150,
+        period: "all",
+      });
 
       expect(filtered.topNpcs).toEqual([
         expect.objectContaining({ npcName: "Low", uniqueKills: 7 }),
@@ -372,7 +367,11 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
         },
       ];
 
-      const top = yield* service.getGuildTopNpcs(guildId, restricted, roles, 5);
+      const top = yield* service.getGuildTopNpcs(guildId, restricted, roles, {
+        limit: 5,
+        period: "all",
+      });
+
       expect(top.topNpcs).toEqual([
         expect.objectContaining({ npcId: 1, npcLvl: 100, uniqueKills: 7 }),
       ]);
@@ -382,16 +381,27 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
         restricted,
         roles,
         [NpcType.ELITE2, NpcType.HERO],
+        { period: "all" },
       );
 
       expect(members[NpcType.HERO]).toEqual([]);
       expect(members[NpcType.ELITE2]).toEqual([
-        expect.objectContaining({
-          memberName: "first",
+        {
+          member: expect.objectContaining({ name: "first" }),
           totalParticipations: 12,
-        }),
+        },
       ]);
-      const npc = yield* service.getNpcKillers(guildId, restricted, roles, 1);
+
+      const npc = yield* service.getNpcKillers(
+        guildId,
+        restricted,
+        roles,
+        1,
+        undefined,
+        undefined,
+        "all",
+      );
+
       expect(npc?.npc).toEqual(
         expect.objectContaining({
           npcLvl: 100,
@@ -400,7 +410,15 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
         }),
       );
       expect(
-        yield* service.getNpcKillers(guildId, restricted, roles, 2),
+        yield* service.getNpcKillers(
+          guildId,
+          restricted,
+          roles,
+          2,
+          undefined,
+          undefined,
+          "all",
+        ),
       ).toBeNull();
     }),
   );
@@ -550,42 +568,6 @@ test("the kill timeline and weekly hours follow Warsaw days, fill quiet days, co
           (cell) => cell.weekday === 4 && cell.hour === 0,
         ),
       ).toBeUndefined();
-    }),
-  );
-});
-
-test("finite ranking limits retain slice semantics for negative, fractional and huge inputs", async () => {
-  await runtime.runPromise(
-    Effect.gen(function* () {
-      const service = yield* queries;
-
-      for (const [limit, expectedNpcIds, expectedMembers] of [
-        [-1, [2], ["first"]],
-        [-1.9, [2], ["first"]],
-        [-0.5, [], []],
-        [0, [], []],
-        [1.9, [2], ["first"]],
-        [Number.MAX_SAFE_INTEGER + 1, [2, 1], ["first", "second"]],
-        [Number.MAX_VALUE, [2, 1], ["first", "second"]],
-        [-Number.MAX_VALUE, [], []],
-      ] as const) {
-        const npcs = yield* service.getGuildTopNpcs(guildId, policy, [], limit);
-        expect(npcs.topNpcs.map((npc) => npc.npcId)).toEqual([
-          ...expectedNpcIds,
-        ]);
-
-        const members = yield* service.getGuildTopKillersByType(
-          guildId,
-          policy,
-          [],
-          [NpcType.ELITE2],
-          limit,
-        );
-
-        expect(
-          members[NpcType.ELITE2]?.map((member) => member.memberName),
-        ).toEqual([...expectedMembers]);
-      }
     }),
   );
 });

@@ -105,9 +105,9 @@ export const makeNotificationUserTargets = (
           rows[0]
             ? Effect.succeed(rows[0])
             : Effect.fail(
-                new ResourceNotFoundError(
-                  NotificationError.NOTIFICATION_TARGET_NOT_FOUND,
-                ),
+                new ResourceNotFoundError({
+                  code: NotificationError.NOTIFICATION_TARGET_NOT_FOUND,
+                }),
               ),
         ),
       );
@@ -181,17 +181,17 @@ export const makeNotificationUserTargets = (
   ) {
     if (data.targetType !== NotificationTargetType.DM) {
       return yield* Effect.fail(
-        new InvalidRequestError(
-          NotificationError.USER_TARGETS_MUST_BE_DISCORD_DMS,
-        ),
+        new InvalidRequestError({
+          code: NotificationError.USER_TARGETS_MUST_BE_DISCORD_DMS,
+        }),
       );
     }
 
     if (data.externalId && data.externalId !== discordId) {
       return yield* Effect.fail(
-        new InvalidRequestError(
-          NotificationError.USER_DM_TARGET_MUST_USE_AUTHENTICATED_DISCORD_ACCOUNT,
-        ),
+        new InvalidRequestError({
+          code: NotificationError.USER_DM_TARGET_MUST_USE_AUTHENTICATED_DISCORD_ACCOUNT,
+        }),
       );
     }
 
@@ -421,17 +421,17 @@ export const makeNotificationUserTargets = (
 
       if (target.targetType !== NotificationTargetType.DM) {
         return yield* Effect.fail(
-          new InvalidRequestError(
-            NotificationError.USER_TEST_TARGET_MUST_BE_DISCORD_DM,
-          ),
+          new InvalidRequestError({
+            code: NotificationError.USER_TEST_TARGET_MUST_BE_DISCORD_DM,
+          }),
         );
       }
 
       if (!target.active || !target.canSend) {
         return yield* Effect.fail(
-          new ResourceConflictError(
-            NotificationError.USER_DISCORD_DM_TARGET_MUST_BE_ACTIVE_AND_CAN_SEND,
-          ),
+          new ResourceConflictError({
+            code: NotificationError.USER_DISCORD_DM_TARGET_MUST_BE_ACTIVE_AND_CAN_SEND,
+          }),
         );
       }
 
@@ -443,10 +443,12 @@ export const makeNotificationUserTargets = (
       if (usage.remaining <= 0) {
         return yield* Effect.fail(
           new ResourceConflictError({
-            message: NotificationError.USER_DM_TEST_TRIGGER_LIMIT_REACHED,
-            limit: usage.limit,
-            windowSeconds: usage.windowSeconds,
-            nextAvailableAt: usage.nextAvailableAt,
+            code: NotificationError.USER_DM_TEST_TRIGGER_LIMIT_REACHED,
+            details: {
+              limit: usage.limit,
+              windowSeconds: usage.windowSeconds,
+              nextAvailableAt: usage.nextAvailableAt,
+            },
           }),
         );
       }
@@ -472,9 +474,9 @@ export const makeNotificationUserTargets = (
 
       if (!job) {
         return yield* Effect.fail(
-          new ResourceConflictError(
-            NotificationError.NO_TEST_JOB_CREATED_FOR_TARGET,
-          ),
+          new ResourceConflictError({
+            code: NotificationError.NO_TEST_JOB_CREATED_FOR_TARGET,
+          }),
         );
       }
 

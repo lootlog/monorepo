@@ -53,7 +53,7 @@ export function useNpcKillersPage() {
 
   const filteredKillers = search
     ? killers.filter((k) =>
-        k.memberName.toLowerCase().includes(search.toLowerCase()),
+        k.member.name.toLowerCase().includes(search.toLowerCase()),
       )
     : killers;
 

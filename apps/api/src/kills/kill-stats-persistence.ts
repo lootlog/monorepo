@@ -1,4 +1,4 @@
-import { readNpcKillPage } from "./npc-kill-page.js";
+import { readNpcKillPage, type NpcKillPageAfter } from "./npc-kill-page.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   and,
@@ -30,6 +30,7 @@ import {
   type MemberKillSource,
 } from "./kill-source.js";
 import { statsLocalTime, type KillTimelineUnit } from "./kill-stats-period.js";
+import { containsPattern } from "#src/shared/sql-like";
 
 type NpcType = (typeof memberKillBucketTable.npcType.enumValues)[number];
 
@@ -115,7 +116,7 @@ const rangeConditions = (
     ? lte(columns.npcLvl, filter.npcLvl.lte)
     : undefined,
   filter.npcName?.contains
-    ? ilike(columns.npcName, `%${filter.npcName.contains}%`)
+    ? ilike(columns.npcName, containsPattern(filter.npcName.contains))
     : undefined,
 ];
 
@@ -237,10 +238,11 @@ export const makeKillStatsPersistence = (
         .pipe(Effect.map((rows) => rows[0] ?? null)),
     );
 
+  /** One page of `limit + 1` NPCs, so the caller can tell whether more follow. */
   const findMemberNpcPage = (
     filter: KillStatsFilter,
     limit: number,
-    cursor: number,
+    after?: NpcKillPageAfter,
   ) => {
     const source = memberSource(filter);
 
@@ -250,7 +252,7 @@ export const makeKillStatsPersistence = (
         database,
         source,
         buildKillStatsCondition(memberColumns(source), filter),
-        { limit, cursor, includeOverview: true },
+        { limit: limit + 1, after, includeOverview: true },
       ),
     );
   };
@@ -276,18 +278,13 @@ export const makeKillStatsPersistence = (
       .orderBy(source.npcId, desc(source.npcLvl), desc(source.lastKilledAt))
       .as("ranked");
 
-    const query = database
-      .select()
-      .from(ranked)
-      .orderBy(desc(ranked.uniqueKills), ranked.npcId);
-
-    const sqlLimit = Math.trunc(limit);
-
     return protect(
       "kills.stats.top-npcs",
-      Number.isSafeInteger(sqlLimit) && sqlLimit >= 0
-        ? query.limit(sqlLimit)
-        : query.pipe(Effect.map((rows) => rows.slice(0, limit))),
+      database
+        .select()
+        .from(ranked)
+        .orderBy(desc(ranked.uniqueKills), ranked.npcId)
+        .limit(limit),
     );
   };
 
@@ -314,18 +311,12 @@ export const makeKillStatsPersistence = (
       .groupBy(source.npcType, source.memberId, memberTable.id)
       .as("ranked");
 
-    const sqlLimit = Math.trunc(limit);
-
     return protect(
       "kills.stats.top-members",
       database
         .select()
         .from(grouped)
-        .where(
-          Number.isSafeInteger(sqlLimit) && sqlLimit >= 0
-            ? lte(grouped.rank, sqlLimit)
-            : undefined,
-        )
+        .where(lte(grouped.rank, limit))
         .orderBy(grouped.npcType, grouped.rank),
     );
   };
@@ -338,10 +329,12 @@ export const makeKillStatsPersistence = (
       "kills.stats.npc-killers",
       database
         .select({
-          memberId: source.memberId,
-          memberName: memberTable.name,
-          memberAvatar: memberTable.avatar,
-          memberUserId: memberTable.userId,
+          member: {
+            id: memberTable.id,
+            name: memberTable.name,
+            avatar: memberTable.avatar,
+            userId: memberTable.userId,
+          },
           participationCount,
           totalMemberParticipations:
             sql<number>`sum(sum(${source.kills})) over ()`.mapWith(Number),

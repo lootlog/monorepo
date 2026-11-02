@@ -1,6 +1,7 @@
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import { EVENT_SCORING_MODES } from "@lootlog/domain/scoring";
 import { Schema } from "effect";
+import { MemberSummary } from "#src/contracts/shared";
 import {
   flexibleIsoDatetimeCodec,
   jsonValueSchema,
@@ -13,13 +14,6 @@ const EventKillHeroNpcResponse = Schema.Struct({
   npcName: Schema.String,
   npcIcon: Schema.NullOr(Schema.String),
   npcLvl: Schema.NullOr(Schema.Number),
-});
-
-const EventKillParticipantMemberResponse = Schema.Struct({
-  id: Schema.Number,
-  name: Schema.String,
-  avatar: Schema.NullOr(Schema.String),
-  userId: Schema.String,
 });
 
 const EventKillParticipantRoleResponse = Schema.Struct({
@@ -49,14 +43,14 @@ const EventKillParticipantResponse = Schema.Struct({
   afkPercentage: Schema.Number,
   wasPresent: Schema.Boolean,
   bonusBreakdown: Schema.optionalKey(Schema.NullOr(jsonValueSchema)),
-  member: EventKillParticipantMemberResponse,
+  member: MemberSummary,
   mapData: Schema.optionalKey(
     Schema.Array(EventKillParticipantMapDataResponse),
   ),
 });
 
 const KillDetailParticipantMemberResponse = Schema.Struct({
-  ...EventKillParticipantMemberResponse.fields,
+  ...MemberSummary.fields,
   roles: Schema.Array(EventKillParticipantRoleResponse),
 });
 
@@ -87,7 +81,7 @@ export const KillDetailResponse = Schema.Struct({
     windowDurationSeconds: Schema.NullOr(Schema.Number),
     resolvedAfterMaxSpawnTimeMs: Schema.NullOr(Schema.Number),
     heroNpc: KillDetailHeroNpcResponse,
-    timerCreatedBy: Schema.NullOr(EventKillParticipantMemberResponse),
+    timerCreatedBy: Schema.NullOr(MemberSummary),
     points: Schema.Array(KillDetailParticipantResponse),
   }),
   eventConfig: Schema.Struct({

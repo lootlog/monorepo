@@ -14,6 +14,7 @@ import {
   userKillBucketTable,
   userKillTotalTable,
 } from "#src/database/drizzle/schema";
+import { InvalidRequestError } from "#src/shared/http/http-errors";
 
 describe("user kill queries Effect module", () => {
   it("returns a cached overview without touching Drizzle", async () => {
@@ -196,5 +197,132 @@ describe("per-character personal kills", () => {
     } finally {
       await boundary.dispose();
     }
+  });
+});
+
+describe("personal NPC kill pages", () => {
+  const passthrough: KillQueryCache = {
+    getOrSet: (_key, _schema, load) => load,
+  };
+
+  const npc = (
+    npcId: number,
+    npcName: string,
+    kills: number,
+    npcLvl: number,
+  ) => ({
+    discordUserId: "discord-1",
+    world: "tempest",
+    npcId,
+    npcName,
+    npcType: "ELITE2" as const,
+    npcLvl,
+    kills,
+    lastKilledAt: new Date("2026-10-01T12:00:00Z"),
+  });
+
+  const withNpcs = async (
+    test: (
+      run: Awaited<ReturnType<typeof createDatabaseBoundary>>["run"],
+      queries: ReturnType<typeof makeUserKillQueries>,
+    ) => Promise<void>,
+  ) => {
+    const boundary = await createDatabaseBoundary();
+
+    try {
+      await boundary.run(
+        boundary.database
+          .insert(userKillTotalTable)
+          .values([
+            npc(1, "Alfa", 5, 50),
+            npc(2, "Beta", 5, 70),
+            npc(3, "Gamma_x", 9, 60),
+            npc(4, "GammaXx", 1, 40),
+          ]),
+      );
+
+      await test(
+        boundary.run,
+        makeUserKillQueries(boundary.database, passthrough, logger),
+      );
+    } finally {
+      await boundary.dispose();
+    }
+  };
+
+  it("continues every sort across pages without skipping or repeating tied NPCs", async () => {
+    await withNpcs(async (run, queries) => {
+      for (const [sortBy, sortOrder, expected] of [
+        ["kills", "desc", [3, 1, 2, 4]],
+        ["kills", "asc", [4, 1, 2, 3]],
+        ["level", "asc", [4, 1, 3, 2]],
+        ["level", "desc", [2, 3, 1, 4]],
+      ] as const) {
+        const seen: number[] = [];
+        let cursor: string | undefined;
+
+        do {
+          const page = await run(
+            queries.getUserNpcKills("discord-1", {
+              period: "all",
+              sortBy,
+              sortOrder,
+              limit: 1,
+              ...(cursor && { cursor }),
+            }),
+          );
+
+          expect(page.total).toBe(4);
+          seen.push(...page.items.map((item) => item.npcId));
+          cursor = page.nextCursor ?? undefined;
+        } while (cursor);
+
+        expect(seen).toEqual([...expected]);
+      }
+    });
+  });
+
+  it("rejects a malformed cursor or one replayed with other filters or sort", async () => {
+    await withNpcs(async (run, queries) => {
+      const first = await run(
+        queries.getUserNpcKills("discord-1", { period: "all", limit: 1 }),
+      );
+
+      const cursor = first.nextCursor;
+
+      if (!cursor) throw new Error("Expected a second page");
+
+      for (const query of [
+        { period: "all" as const, limit: 1, sortBy: "level" as const, cursor },
+        { period: "all" as const, limit: 1, search: "a", cursor },
+        { period: "7d" as const, limit: 1, cursor },
+        { period: "all" as const, limit: 1, cursor: "not a cursor" },
+      ]) {
+        await expect(
+          run(queries.getUserNpcKills("discord-1", query)),
+        ).rejects.toBeInstanceOf(InvalidRequestError);
+      }
+
+      // Another page size keeps the same position.
+      const resized = await run(
+        queries.getUserNpcKills("discord-1", {
+          period: "all",
+          limit: 2,
+          cursor,
+        }),
+      );
+
+      expect(resized.items.map((item) => item.npcId)).toEqual([1, 2]);
+    });
+  });
+
+  it("matches LIKE wildcards in the search text literally", async () => {
+    await withNpcs(async (run, queries) => {
+      const page = await run(
+        queries.getUserNpcKills("discord-1", { period: "all", search: "a_x" }),
+      );
+
+      expect(page.items.map((item) => item.npcId)).toEqual([3]);
+    });
   });
 });

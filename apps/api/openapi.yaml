@@ -744,7 +744,11 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -872,19 +876,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -945,19 +955,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -1018,19 +1034,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -1092,19 +1114,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -1166,19 +1194,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -1235,19 +1269,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -1302,19 +1342,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -1369,19 +1415,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -1441,19 +1493,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -2487,17 +2545,19 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "429":
           description: Error
           content:
@@ -2558,19 +2618,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -2601,6 +2667,8 @@ paths:
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: false
       security:
         - bearer: []
@@ -2674,10 +2742,16 @@ paths:
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: true
         - name: limit
           in: query
-          schema: {}
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 5
           required: false
       security:
         - bearer: []
@@ -2750,6 +2824,8 @@ paths:
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: false
       security:
         - bearer: []
@@ -2826,15 +2902,14 @@ paths:
           in: query
           schema:
             type: string
-            minLength: 1
-            description: Case-insensitive substring of the NPC name.
+            maxLength: 100
           required: false
         - name: world
           in: query
           schema:
             type: string
             minLength: 1
-            description: World to search. When omitted, every world of the Organization is searched.
+            maxLength: 64
           required: false
         - name: npcIds
           in: query
@@ -2859,9 +2934,9 @@ paths:
         - name: limit
           in: query
           schema:
-            type: number
+            type: integer
             minimum: 1
-            maximum: 50
+            maximum: 100
             default: 10
           required: false
       security:
@@ -3111,6 +3186,8 @@ paths:
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: false
       security:
         - bearer: []
@@ -3195,10 +3272,16 @@ paths:
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: true
         - name: limit
           in: query
-          schema: {}
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 5
           required: false
       security:
         - bearer: []
@@ -3492,7 +3575,11 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -4244,13 +4331,14 @@ paths:
             type: integer
             minimum: 1
             maximum: 100
+            default: 20
           required: false
         - name: cursor
           in: query
           schema:
-            type: integer
-            minimum: -9007199254740991
-            maximum: 9007199254740991
+            type: string
+            minLength: 1
+            maxLength: 512
           required: false
         - name: npcs
           in: query
@@ -4272,6 +4360,11 @@ paths:
             type: array
             items:
               type: string
+              enum:
+                - UNIQUE
+                - HEROIC
+                - LEGENDARY
+                - UPGRADED
           required: false
         - name: professions
           in: query
@@ -4286,11 +4379,24 @@ paths:
             type: array
             items:
               type: string
+              enum:
+                - COMMON
+                - ELITE
+                - ELITE2
+                - ELITE3
+                - HERO
+                - EVENT_HERO
+                - COLOSSUS
+                - TITAN
+                - HERO_TRACKER
+                - NPC
           required: false
         - name: world
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: false
         - name: npcLevelMin
           in: query
@@ -4338,6 +4444,7 @@ paths:
           in: query
           schema:
             type: string
+            maxLength: 100
           required: false
         - name: hid
           in: query
@@ -4369,13 +4476,11 @@ paths:
         - bearer: []
       responses:
         "200":
-          description: Success
+          description: LootPageResponseDto
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/LootResponseDto"
+                $ref: "#/components/schemas/LootPageResponseDto"
         "400":
           description: RequestValidationError
           content:
@@ -4428,7 +4533,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Retrieve paginated loots for a guild with optional filters
+      description: Retrieve one page of a guild's loots, newest first, with optional filters. Pass the `nextCursor` of a page as `cursor` to read the next page with the same filters; `nextCursor` is null on the last page. A cursor replayed with different filters, or one that cannot be decoded, is rejected with 400 `INVALID_CURSOR`.
       summary: Get guild loots
   /guilds/{guildId}/loots/stats:
     get:
@@ -4459,11 +4564,26 @@ paths:
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: false
         - name: npcTypes
           in: query
           schema:
-            type: string
+            type: array
+            items:
+              type: string
+              enum:
+                - COMMON
+                - ELITE
+                - ELITE2
+                - ELITE3
+                - HERO
+                - EVENT_HERO
+                - COLOSSUS
+                - TITAN
+                - HERO_TRACKER
+                - NPC
           required: false
         - name: excludeColossus
           in: query
@@ -4554,7 +4674,7 @@ paths:
           schema:
             type: string
             minLength: 1
-            maxLength: 100
+            maxLength: 64
           required: false
         - name: characterId
           in: query
@@ -4638,6 +4758,8 @@ paths:
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: false
       security:
         - bearer: []
@@ -5270,8 +5392,7 @@ paths:
         - name: npcId
           in: path
           schema:
-            type: string
-            example: "1"
+            type: number
           required: true
         - name: guildId
           in: path
@@ -5443,19 +5564,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -5509,19 +5636,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -5581,19 +5714,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -5654,19 +5793,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -5717,17 +5862,19 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "429":
           description: Error
           content:
@@ -5790,19 +5937,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -5852,31 +6005,39 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
-        "429":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
       description: Send a plain-text message to a global chat channel; muted senders are refused, and only global chat admins may send it to every channel at once
       summary: Send global chat message
       requestBody:
@@ -5930,19 +6091,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -5993,19 +6160,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -6064,19 +6237,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -6127,17 +6306,19 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "429":
           description: Error
           content:
@@ -6187,19 +6368,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -6258,19 +6445,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -6330,19 +6523,25 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -6384,12 +6583,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -6399,12 +6598,12 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - type: object
                     properties:
                       message:
@@ -6413,11 +6612,11 @@ paths:
                       - message
                     additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -6471,20 +6670,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReservationWindowResponseDto"
         "400":
-          description: OrganizationWorkspaceErrorResponse | RequestValidationError
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -6494,12 +6693,12 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - type: object
                     properties:
                       message:
@@ -6508,11 +6707,11 @@ paths:
                       - message
                     additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -6557,12 +6756,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -6572,12 +6771,12 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - type: object
                     properties:
                       message:
@@ -6586,23 +6785,23 @@ paths:
                       - message
                     additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "409":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "422":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -6650,12 +6849,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -6665,12 +6864,12 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - type: object
                     properties:
                       message:
@@ -6679,11 +6878,11 @@ paths:
                       - message
                     additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -6725,12 +6924,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -6740,12 +6939,12 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - type: object
                     properties:
                       message:
@@ -6754,11 +6953,11 @@ paths:
                       - message
                     additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -6799,12 +6998,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -6814,12 +7013,12 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - type: object
                     properties:
                       message:
@@ -6828,11 +7027,11 @@ paths:
                       - message
                     additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -6877,12 +7076,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -6939,12 +7138,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -6966,11 +7165,11 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -7010,12 +7209,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -7037,23 +7236,23 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "409":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "422":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -7100,12 +7299,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -7115,12 +7314,12 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - type: object
                     properties:
                       message:
@@ -7129,11 +7328,11 @@ paths:
                       - message
                     additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -7174,12 +7373,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -7189,12 +7388,12 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - type: object
                     properties:
                       message:
@@ -7203,11 +7402,11 @@ paths:
                       - message
                     additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -7249,12 +7448,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -7264,12 +7463,12 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - type: object
                     properties:
                       message:
@@ -7278,11 +7477,11 @@ paths:
                       - message
                     additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -7324,12 +7523,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -7339,12 +7538,12 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - type: object
                     properties:
                       message:
@@ -7353,11 +7552,11 @@ paths:
                       - message
                     additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -7398,12 +7597,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -7425,23 +7624,23 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "409":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "410":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -7481,12 +7680,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
@@ -7508,23 +7707,23 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "409":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "410":
-          description: OrganizationWorkspaceErrorResponse
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -9569,12 +9768,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
         "429":
-          description: NotificationRateLimitResponseDto
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
                 anyOf:
-                  - $ref: "#/components/schemas/NotificationRateLimitResponseDto"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
                   - type: object
                     properties:
                       message:
@@ -10637,11 +10836,13 @@ paths:
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: false
         - name: activeOnly
           in: query
           schema:
-            type: string
+            type: boolean
           required: false
       security:
         - bearer: []
@@ -11427,7 +11628,9 @@ paths:
         - name: memberId
           in: query
           schema:
-            type: string
+            type: integer
+            minimum: 1
+            maximum: 2147483647
           required: false
       security:
         - bearer: []
@@ -12941,6 +13144,8 @@ paths:
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: true
       security:
         - bearer: []
@@ -13103,16 +13308,17 @@ paths:
         - name: limit
           in: query
           schema:
-            type: string
-            pattern: ^(?:[1-9]\d?|100)$
-            description: Page size from 1 to 100. Defaults to 20.
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
           required: false
         - name: cursor
           in: query
           schema:
             type: string
             minLength: 1
-            maxLength: 4096
+            maxLength: 512
             description: Opaque continuation token returned by this endpoint. Keep the Organization, event and filters unchanged.
           required: false
         - name: heroId
@@ -13124,8 +13330,9 @@ paths:
         - name: memberId
           in: query
           schema:
-            type: string
-            pattern: ^[1-9]\d*$
+            type: integer
+            minimum: 1
+            maximum: 2147483647
           required: false
       security:
         - bearer: []
@@ -14755,16 +14962,17 @@ paths:
                 - EVENT_HERO
                 - COLOSSUS
                 - TITAN
+                - HERO_TRACKER
                 - NPC
           required: false
-        - name: minLvl
+        - name: npcLevelMin
           in: query
           schema:
             type: integer
             minimum: 0
             maximum: 500
           required: false
-        - name: maxLvl
+        - name: npcLevelMax
           in: query
           schema:
             type: integer
@@ -14775,18 +14983,23 @@ paths:
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: false
         - name: period
           in: query
           schema:
             type: string
             enum:
-              - all
               - 24h
               - 3d
               - 7d
               - 14d
               - 30d
+              - 90d
+              - 180d
+              - all
+            default: 7d
           required: false
       security:
         - bearer: []
@@ -14872,46 +15085,43 @@ paths:
                 - EVENT_HERO
                 - COLOSSUS
                 - TITAN
+                - HERO_TRACKER
                 - NPC
           required: false
         - name: npcType
           in: query
           schema:
-            type: string
-            enum:
-              - COMMON
-              - ELITE
-              - ELITE2
-              - ELITE3
-              - HERO
-              - EVENT_HERO
-              - COLOSSUS
-              - TITAN
-              - NPC
+            $ref: "#/components/schemas/NpcType"
           required: false
         - name: world
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: false
         - name: topNpcsLimit
           in: query
           schema:
             type: integer
             minimum: 1
-            maximum: 9007199254740991
+            maximum: 100
+            default: 5
           required: false
         - name: period
           in: query
           schema:
             type: string
             enum:
-              - all
               - 24h
               - 3d
               - 7d
               - 14d
               - 30d
+              - 90d
+              - 180d
+              - all
+            default: 7d
           required: false
       security:
         - bearer: []
@@ -14989,7 +15199,7 @@ paths:
           schema:
             type: string
             minLength: 1
-            maxLength: 100
+            maxLength: 64
           required: false
         - name: npcType
           in: query
@@ -15069,7 +15279,7 @@ paths:
           schema:
             type: string
             minLength: 1
-            maxLength: 100
+            maxLength: 64
           required: false
         - name: characterId
           in: query
@@ -15214,24 +15424,28 @@ paths:
                 - EVENT_HERO
                 - COLOSSUS
                 - TITAN
+                - HERO_TRACKER
                 - NPC
           required: false
         - name: world
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: false
         - name: search
           in: query
           schema:
             type: string
+            maxLength: 100
           required: false
         - name: cursor
           in: query
           schema:
-            type: integer
-            minimum: 0
-            maximum: 9007199254740991
+            type: string
+            minLength: 1
+            maxLength: 512
           required: false
         - name: limit
           in: query
@@ -15256,14 +15470,14 @@ paths:
               - kills
               - level
           required: false
-        - name: minLvl
+        - name: npcLevelMin
           in: query
           schema:
             type: integer
             minimum: 0
             maximum: 500
           required: false
-        - name: maxLvl
+        - name: npcLevelMax
           in: query
           schema:
             type: integer
@@ -15275,12 +15489,15 @@ paths:
           schema:
             type: string
             enum:
-              - all
               - 24h
               - 3d
               - 7d
               - 14d
               - 30d
+              - 90d
+              - 180d
+              - all
+            default: 7d
           required: false
       security:
         - bearer: []
@@ -15350,8 +15567,11 @@ paths:
         - name: limit
           in: query
           schema:
-            type: number
-          required: true
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          required: false
         - name: npcType
           in: query
           schema:
@@ -15361,27 +15581,44 @@ paths:
           in: query
           schema:
             type: string
-          required: true
+            minLength: 1
+            maxLength: 64
+          required: false
         - name: search
           in: query
           schema:
             type: string
-          required: true
-        - name: minLvl
+            maxLength: 100
+          required: false
+        - name: npcLevelMin
           in: query
           schema:
-            type: string
-          required: true
-        - name: maxLvl
+            type: integer
+            minimum: 0
+            maximum: 500
+          required: false
+        - name: npcLevelMax
           in: query
           schema:
-            type: string
-          required: true
+            type: integer
+            minimum: 0
+            maximum: 500
+          required: false
         - name: period
           in: query
           schema:
             type: string
-          required: true
+            enum:
+              - 24h
+              - 3d
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+              - 180d
+              - all
+            default: 7d
+          required: false
       security:
         - bearer: []
       responses:
@@ -15458,13 +15695,26 @@ paths:
         - name: limit
           in: query
           schema:
-            type: number
-          required: true
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 5
+          required: false
         - name: period
           in: query
           schema:
             type: string
-          required: true
+            enum:
+              - 24h
+              - 3d
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+              - 180d
+              - all
+            default: 7d
+          required: false
       security:
         - bearer: []
       responses:
@@ -15550,23 +15800,29 @@ paths:
             type: integer
             minimum: 1
             maximum: 100
+            default: 50
           required: false
         - name: world
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: false
         - name: period
           in: query
           schema:
             type: string
             enum:
-              - all
               - 24h
               - 3d
               - 7d
               - 14d
               - 30d
+              - 90d
+              - 180d
+              - all
+            default: 7d
           required: false
       security:
         - bearer: []
@@ -15647,14 +15903,14 @@ paths:
           in: path
           schema: {}
           required: true
-        - name: minLvl
+        - name: npcLevelMin
           in: query
           schema:
             type: integer
             minimum: 0
             maximum: 500
           required: false
-        - name: maxLvl
+        - name: npcLevelMax
           in: query
           schema:
             type: integer
@@ -15665,6 +15921,8 @@ paths:
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 64
           required: false
         - name: npcTypes
           in: query
@@ -15681,12 +15939,14 @@ paths:
                 - EVENT_HERO
                 - COLOSSUS
                 - TITAN
+                - HERO_TRACKER
                 - NPC
           required: false
         - name: search
           in: query
           schema:
             type: string
+            maxLength: 100
           required: false
         - name: limit
           in: query
@@ -15698,21 +15958,24 @@ paths:
         - name: cursor
           in: query
           schema:
-            type: integer
-            minimum: 0
-            maximum: 9007199254740991
+            type: string
+            minLength: 1
+            maxLength: 512
           required: false
         - name: period
           in: query
           schema:
             type: string
             enum:
-              - all
               - 24h
               - 3d
               - 7d
               - 14d
               - 30d
+              - 90d
+              - 180d
+              - all
+            default: 7d
           required: false
       security:
         - bearer: []
@@ -15830,19 +16093,25 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: <No Content>
-        "429":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
       description: Regenerate the public guild stats card and update the cached PNG.
       summary: Refresh public guild stats card
   /public/guilds/{guildId}/stats-card.png:
@@ -15891,7 +16160,11 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -15947,17 +16220,19 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "429":
           description: Error
           content:
@@ -16024,7 +16299,11 @@ paths:
                   - message
                 additionalProperties: false
         "409":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -16811,7 +17090,11 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -16878,7 +17161,11 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -16951,7 +17238,11 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -17019,7 +17310,11 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -17086,7 +17381,11 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -17151,7 +17450,11 @@ paths:
                   - message
                 additionalProperties: false
         "404":
-          description: <No Content>
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -17323,17 +17626,19 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "429":
           description: Error
           content:
@@ -17395,17 +17700,19 @@ paths:
                       - message
                     additionalProperties: false
         "403":
-          description: <No Content>
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "429":
           description: Error
           content:
@@ -17432,29 +17739,35 @@ components:
             - VALIDATION_ERROR
         message:
           type: string
-        issues:
-          type: array
-          items:
-            type: object
-            properties:
-              path:
-                type: array
-                items:
-                  anyOf:
-                    - type: string
-                    - type: integer
-                      minimum: -9007199254740991
-                      maximum: 9007199254740991
-              message:
-                type: string
-            required:
-              - path
-              - message
-            additionalProperties: false
+        details:
+          type: object
+          properties:
+            issues:
+              type: array
+              items:
+                type: object
+                properties:
+                  path:
+                    type: array
+                    items:
+                      anyOf:
+                        - type: string
+                        - type: integer
+                          minimum: -9007199254740991
+                          maximum: 9007199254740991
+                  message:
+                    type: string
+                required:
+                  - path
+                  - message
+                additionalProperties: false
+          required:
+            - issues
+          additionalProperties: false
       required:
         - code
         - message
-        - issues
+        - details
       additionalProperties: false
     ReauthenticationRequiredEncoded:
       type: object
@@ -18838,25 +19151,7 @@ components:
       properties:
         member:
           nullable: true
-          type: object
-          properties:
-            memberId:
-              type: number
-            memberName:
-              type: string
-            memberAvatar:
-              nullable: true
-              type: string
-            memberUserId:
-              type: string
-          required:
-            - memberId
-            - memberName
-            - memberAvatar
-            - memberUserId
-          allOf:
-            - type: object
-              additionalProperties: {}
+          $ref: "#/components/schemas/MemberSummary"
         overview:
           nullable: true
           type: object
@@ -18903,31 +19198,35 @@ components:
               - npcIcon
               - totalKills
             additionalProperties: false
-        pagination:
+        total:
+          type: number
+        nextCursor:
           nullable: true
-          type: object
-          properties:
-            total:
-              type: number
-            cursor:
-              type: number
-            limit:
-              type: number
-            hasNext:
-              type: boolean
-          required:
-            - total
-            - cursor
-            - limit
-            - hasNext
-          allOf:
-            - type: object
-              additionalProperties: {}
+          type: string
       required:
         - member
         - overview
         - npcs
-        - pagination
+        - total
+        - nextCursor
+      additionalProperties: false
+    MemberSummary:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        avatar:
+          nullable: true
+          type: string
+        userId:
+          type: string
+      required:
+        - id
+        - name
+        - avatar
+        - userId
       additionalProperties: false
     NpcKillersResponseDto_Output:
       type: object
@@ -18971,22 +19270,12 @@ components:
           items:
             type: object
             properties:
-              memberId:
-                type: number
-              memberName:
-                type: string
-              memberAvatar:
-                nullable: true
-                type: string
-              memberUserId:
-                type: string
+              member:
+                $ref: "#/components/schemas/MemberSummary"
               participationCount:
                 type: number
             required:
-              - memberId
-              - memberName
-              - memberAvatar
-              - memberUserId
+              - member
               - participationCount
             additionalProperties: false
       required:
@@ -19001,22 +19290,12 @@ components:
           items:
             type: object
             properties:
-              memberId:
-                type: number
-              memberName:
-                type: string
-              memberAvatar:
-                nullable: true
-                type: string
-              memberUserId:
-                type: string
+              member:
+                $ref: "#/components/schemas/MemberSummary"
               totalParticipations:
                 type: number
             required:
-              - memberId
-              - memberName
-              - memberAvatar
-              - memberUserId
+              - member
               - totalParticipations
             additionalProperties: false
         HERO:
@@ -19024,22 +19303,12 @@ components:
           items:
             type: object
             properties:
-              memberId:
-                type: number
-              memberName:
-                type: string
-              memberAvatar:
-                nullable: true
-                type: string
-              memberUserId:
-                type: string
+              member:
+                $ref: "#/components/schemas/MemberSummary"
               totalParticipations:
                 type: number
             required:
-              - memberId
-              - memberName
-              - memberAvatar
-              - memberUserId
+              - member
               - totalParticipations
             additionalProperties: false
         EVENT_HERO:
@@ -19047,22 +19316,12 @@ components:
           items:
             type: object
             properties:
-              memberId:
-                type: number
-              memberName:
-                type: string
-              memberAvatar:
-                nullable: true
-                type: string
-              memberUserId:
-                type: string
+              member:
+                $ref: "#/components/schemas/MemberSummary"
               totalParticipations:
                 type: number
             required:
-              - memberId
-              - memberName
-              - memberAvatar
-              - memberUserId
+              - member
               - totalParticipations
             additionalProperties: false
       additionalProperties: false
@@ -19114,7 +19373,7 @@ components:
     UserNpcKillsResponseDto_Output:
       type: object
       properties:
-        npcs:
+        items:
           type: array
           items:
             type: object
@@ -19144,26 +19403,15 @@ components:
               - npcIcon
               - totalKills
             additionalProperties: false
-        pagination:
-          type: object
-          properties:
-            total:
-              type: number
-            cursor:
-              type: number
-            limit:
-              type: number
-            hasNext:
-              type: boolean
-          required:
-            - total
-            - cursor
-            - limit
-            - hasNext
-          additionalProperties: false
+        nextCursor:
+          nullable: true
+          type: string
+        total:
+          type: number
       required:
-        - npcs
-        - pagination
+        - items
+        - nextCursor
+        - total
       additionalProperties: false
     UserKillCharactersResponseDto_Output:
       type: object
@@ -19852,15 +20100,8 @@ components:
           items:
             type: object
             properties:
-              memberId:
-                type: number
-              memberName:
-                type: string
-              memberAvatar:
-                nullable: true
-                type: string
-              memberUserId:
-                type: string
+              member:
+                $ref: "#/components/schemas/MemberSummary"
               totalParticipations:
                 type: number
               participationsByType:
@@ -19886,10 +20127,7 @@ components:
                     type: number
                 additionalProperties: false
             required:
-              - memberId
-              - memberName
-              - memberAvatar
-              - memberUserId
+              - member
               - totalParticipations
               - participationsByType
             additionalProperties: false
@@ -19959,6 +20197,7 @@ components:
         world:
           type: string
           minLength: 1
+          maxLength: 64
         npc:
           type: object
           properties:
@@ -20249,13 +20488,8 @@ components:
           items:
             type: object
             properties:
-              memberId:
-                type: number
-              memberName:
-                type: string
-              memberAvatar:
-                nullable: true
-                type: string
+              member:
+                $ref: "#/components/schemas/MemberSummary"
               totalTimeSeconds:
                 type: number
               afkTimeSeconds:
@@ -20263,9 +20497,7 @@ components:
               afkPercentage:
                 type: number
             required:
-              - memberId
-              - memberName
-              - memberAvatar
+              - member
               - totalTimeSeconds
               - afkTimeSeconds
               - afkPercentage
@@ -20410,15 +20642,8 @@ components:
           items:
             type: object
             properties:
-              memberId:
-                type: number
-              memberName:
-                type: string
-              memberAvatar:
-                nullable: true
-                type: string
-              memberUserId:
-                type: string
+              member:
+                $ref: "#/components/schemas/MemberSummary"
               assignedAt:
                 type: string
                 format: date-time
@@ -20429,10 +20654,7 @@ components:
                 format: date-time
                 pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
             required:
-              - memberId
-              - memberName
-              - memberAvatar
-              - memberUserId
+              - member
               - assignedAt
               - unassignedAt
             additionalProperties: false
@@ -20561,25 +20783,7 @@ components:
               additionalProperties: false
             timerCreatedBy:
               nullable: true
-              type: object
-              properties:
-                id:
-                  type: number
-                name:
-                  type: string
-                avatar:
-                  nullable: true
-                  type: string
-                userId:
-                  type: string
-              required:
-                - id
-                - name
-                - avatar
-                - userId
-              allOf:
-                - type: object
-                  additionalProperties: {}
+              $ref: "#/components/schemas/MemberSummary"
             points:
               type: array
               items:
@@ -20746,26 +20950,8 @@ components:
           enum:
             - member
         member:
-          type: object
-          properties:
-            id:
-              type: integer
-              minimum: 1
-              maximum: 9007199254740991
-            name:
-              type: string
-            avatar:
-              nullable: true
-              type: string
-            userId:
-              type: string
-          required:
-            - id
-            - name
-            - avatar
-            - userId
-          additionalProperties: false
-        data:
+          $ref: "#/components/schemas/MemberSummary"
+        items:
           type: array
           items:
             $ref: "#/components/schemas/KillHistoryMemberEntry"
@@ -20775,7 +20961,7 @@ components:
       required:
         - kind
         - member
-        - data
+        - items
         - nextCursor
       additionalProperties: false
     KillHistoryMemberEntry:
@@ -20891,7 +21077,7 @@ components:
           type: string
           enum:
             - event
-        data:
+        items:
           type: array
           items:
             $ref: "#/components/schemas/KillHistoryEntry"
@@ -20900,7 +21086,7 @@ components:
           type: string
       required:
         - kind
-        - data
+        - items
         - nextCursor
       additionalProperties: false
     KillHistoryEntry:
@@ -21071,6 +21257,11 @@ components:
               type: number
             name:
               type: string
+            avatar:
+              nullable: true
+              type: string
+            userId:
+              type: string
             roles:
               type: array
               items:
@@ -21088,6 +21279,8 @@ components:
           required:
             - id
             - name
+            - avatar
+            - userId
             - roles
           additionalProperties: false
         editHistory:
@@ -21692,26 +21885,17 @@ components:
                   nullable: true
                   type: object
                   properties:
-                    memberId:
-                      type: number
-                    name:
-                      type: string
-                    avatar:
-                      nullable: true
-                      type: string
+                    member:
+                      $ref: "#/components/schemas/MemberSummary"
                     primaryValue:
                       type: number
                     secondaryValue:
                       nullable: true
                       type: number
                   required:
-                    - memberId
-                    - name
-                    - avatar
+                    - member
                     - primaryValue
-                  allOf:
-                    - type: object
-                      additionalProperties: {}
+                  additionalProperties: false
                 candidateCount:
                   type: number
                 tiedWinnerCount:
@@ -21728,26 +21912,17 @@ components:
                   nullable: true
                   type: object
                   properties:
-                    memberId:
-                      type: number
-                    name:
-                      type: string
-                    avatar:
-                      nullable: true
-                      type: string
+                    member:
+                      $ref: "#/components/schemas/MemberSummary"
                     primaryValue:
                       type: number
                     secondaryValue:
                       nullable: true
                       type: number
                   required:
-                    - memberId
-                    - name
-                    - avatar
+                    - member
                     - primaryValue
-                  allOf:
-                    - type: object
-                      additionalProperties: {}
+                  additionalProperties: false
                 candidateCount:
                   type: number
                 tiedWinnerCount:
@@ -21764,26 +21939,17 @@ components:
                   nullable: true
                   type: object
                   properties:
-                    memberId:
-                      type: number
-                    name:
-                      type: string
-                    avatar:
-                      nullable: true
-                      type: string
+                    member:
+                      $ref: "#/components/schemas/MemberSummary"
                     primaryValue:
                       type: number
                     secondaryValue:
                       nullable: true
                       type: number
                   required:
-                    - memberId
-                    - name
-                    - avatar
+                    - member
                     - primaryValue
-                  allOf:
-                    - type: object
-                      additionalProperties: {}
+                  additionalProperties: false
                 candidateCount:
                   type: number
                 tiedWinnerCount:
@@ -21800,26 +21966,17 @@ components:
                   nullable: true
                   type: object
                   properties:
-                    memberId:
-                      type: number
-                    name:
-                      type: string
-                    avatar:
-                      nullable: true
-                      type: string
+                    member:
+                      $ref: "#/components/schemas/MemberSummary"
                     primaryValue:
                       type: number
                     secondaryValue:
                       nullable: true
                       type: number
                   required:
-                    - memberId
-                    - name
-                    - avatar
+                    - member
                     - primaryValue
-                  allOf:
-                    - type: object
-                      additionalProperties: {}
+                  additionalProperties: false
                 candidateCount:
                   type: number
                 tiedWinnerCount:
@@ -21836,26 +21993,17 @@ components:
                   nullable: true
                   type: object
                   properties:
-                    memberId:
-                      type: number
-                    name:
-                      type: string
-                    avatar:
-                      nullable: true
-                      type: string
+                    member:
+                      $ref: "#/components/schemas/MemberSummary"
                     primaryValue:
                       type: number
                     secondaryValue:
                       nullable: true
                       type: number
                   required:
-                    - memberId
-                    - name
-                    - avatar
+                    - member
                     - primaryValue
-                  allOf:
-                    - type: object
-                      additionalProperties: {}
+                  additionalProperties: false
                 candidateCount:
                   type: number
                 tiedWinnerCount:
@@ -21872,26 +22020,17 @@ components:
                   nullable: true
                   type: object
                   properties:
-                    memberId:
-                      type: number
-                    name:
-                      type: string
-                    avatar:
-                      nullable: true
-                      type: string
+                    member:
+                      $ref: "#/components/schemas/MemberSummary"
                     primaryValue:
                       type: number
                     secondaryValue:
                       nullable: true
                       type: number
                   required:
-                    - memberId
-                    - name
-                    - avatar
+                    - member
                     - primaryValue
-                  allOf:
-                    - type: object
-                      additionalProperties: {}
+                  additionalProperties: false
                 candidateCount:
                   type: number
                 tiedWinnerCount:
@@ -22035,26 +22174,17 @@ components:
                     nullable: true
                     type: object
                     properties:
-                      memberId:
-                        type: number
-                      name:
-                        type: string
-                      avatar:
-                        nullable: true
-                        type: string
+                      member:
+                        $ref: "#/components/schemas/MemberSummary"
                       primaryValue:
                         type: number
                       secondaryValue:
                         nullable: true
                         type: number
                     required:
-                      - memberId
-                      - name
-                      - avatar
+                      - member
                       - primaryValue
-                    allOf:
-                      - type: object
-                        additionalProperties: {}
+                    additionalProperties: false
                   candidateCount:
                     type: number
                   tiedWinnerCount:
@@ -22708,6 +22838,8 @@ components:
           type: string
         world:
           type: string
+          minLength: 1
+          maxLength: 64
         startsAt:
           type: string
           format: date-time
@@ -24599,22 +24731,6 @@ components:
         - world
         - targetDiscordId
         - character
-      additionalProperties: false
-    NotificationRateLimitResponseDto:
-      type: object
-      properties:
-        message:
-          type: string
-          enum:
-            - NOTIFICATION_RATE_LIMITED
-        retryAfterMs:
-          type: integer
-          maximum: 9007199254740991
-          exclusiveMinimum: true
-          minimum: 0
-      required:
-        - message
-        - retryAfterMs
       additionalProperties: false
     NotificationResponseDto_Output:
       type: object
@@ -27923,16 +28039,6 @@ components:
         - items
         - window
       additionalProperties: false
-    OrganizationWorkspaceErrorResponse:
-      type: object
-      properties:
-        code:
-          type: string
-      required:
-        - code
-      allOf:
-        - type: object
-          additionalProperties: {}
     ReservationSpotsResponseDto:
       type: array
       items:
@@ -28866,7 +28972,6 @@ components:
       properties:
         content:
           type: string
-          minLength: 1
       required:
         - content
       additionalProperties: false
@@ -28884,6 +28989,8 @@ components:
         member:
           type: object
           properties:
+            id:
+              type: number
             name:
               type: string
             avatar:
@@ -28899,10 +29006,15 @@ components:
                   color:
                     nullable: true
                     type: number
+                required:
+                  - color
                 additionalProperties: false
           required:
+            - id
             - name
+            - avatar
             - userId
+            - roles
           additionalProperties: false
         createdAt:
           type: string
@@ -29134,6 +29246,7 @@ components:
         world:
           type: string
           minLength: 1
+          maxLength: 64
         gameVersion:
           type: string
           enum:
@@ -29399,19 +29512,7 @@ components:
               lootId:
                 type: number
               member:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  avatar:
-                    nullable: true
-                    type: string
-                  userId:
-                    type: string
-                required:
-                  - name
-                  - userId
-                additionalProperties: false
+                $ref: "#/components/schemas/MemberSummary"
             required:
               - guildId
               - memberId
@@ -29858,6 +29959,20 @@ components:
         - topContributors
         - topItems
       additionalProperties: false
+    LootPageResponseDto:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootResponseDto"
+        nextCursor:
+          nullable: true
+          type: string
+      required:
+        - items
+        - nextCursor
+      additionalProperties: false
     LootResponseDto:
       type: object
       properties:
@@ -30090,19 +30205,7 @@ components:
               lootId:
                 type: number
               member:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  avatar:
-                    nullable: true
-                    type: string
-                  userId:
-                    type: string
-                required:
-                  - name
-                  - userId
-                additionalProperties: false
+                $ref: "#/components/schemas/MemberSummary"
             required:
               - guildId
               - memberId
@@ -30679,6 +30782,7 @@ components:
         world:
           type: string
           minLength: 1
+          maxLength: 64
         actorCharacter:
           type: object
           properties:
@@ -31254,6 +31358,7 @@ components:
         world:
           type: string
           minLength: 1
+          maxLength: 64
         actorCharacter:
           type: object
           properties:
@@ -31352,6 +31457,7 @@ components:
         world:
           type: string
           minLength: 1
+          maxLength: 64
         npc:
           type: object
           properties:
@@ -33735,10 +33841,15 @@ components:
       properties:
         code:
           type: string
-        message: {}
-      allOf:
-        - type: object
-          additionalProperties: {}
+        message:
+          nullable: true
+          type: string
+        details:
+          nullable: true
+          type: object
+      required:
+        - code
+      additionalProperties: false
     UserFeedResponseDto_Output:
       type: object
       properties:
@@ -34118,7 +34229,7 @@ components:
     LootSubmissionResponseDto:
       $ref: "#/components/schemas/LootResponseDto/properties/submissions/items"
     LootSubmissionMemberResponseDto:
-      $ref: "#/components/schemas/LootResponseDto/properties/submissions/items/properties/member"
+      $ref: "#/components/schemas/MemberSummary"
     LootItemResponseDto_Output:
       $ref: "#/components/schemas/NullableLootItemResponseDto_Output"
     LootShareResponseDto:

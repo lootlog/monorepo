@@ -239,10 +239,10 @@ export const notificationsServicesLive = Layer.effect(
                   ? Effect.succeed(syncState)
                   : Effect.fail(
                       new ResourceConflictError({
-                        message:
-                          NotificationError.DISCORD_BOT_MISSING_REQUIRED_PERMISSIONS,
-                        missingPermissions: syncState.missingPermissions,
-                        syncState,
+                        code: NotificationError.DISCORD_BOT_MISSING_REQUIRED_PERMISSIONS,
+                        details: {
+                          missingPermissions: syncState.missingPermissions,
+                        },
                       }),
                     ),
               ),

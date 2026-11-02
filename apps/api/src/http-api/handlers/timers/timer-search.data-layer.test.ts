@@ -240,6 +240,10 @@ describe("timer NPC search", () => {
 
     expect(byName.map(({ npcId }) => npcId)).toEqual([100, 200, 250, 300]);
 
+    // LIKE wildcards in the search text match literally, not every name.
+    expect(await search(admin, { search: "k%c" })).toEqual([]);
+    expect(await search(admin, { search: "k_c" })).toEqual([]);
+
     const byRuntimeId = await search(admin, {
       world: "world-b",
       npcIds: [200, 300],

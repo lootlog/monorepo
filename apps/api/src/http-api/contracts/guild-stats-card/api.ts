@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/http-api";
-import { BearerSecurityMiddleware } from "../shared.js";
+import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   RefreshStatsCardResponse,
   StatsCardOrganizationPath,
@@ -20,7 +20,10 @@ export class GuildStatsCardGroup extends HttpApiGroup.make(
     {
       params: StatsCardOrganizationPath,
       success: RefreshStatsCardResponse,
-      error: [HttpApiSchema.Empty(404), HttpApiSchema.Empty(429)],
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(429)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)

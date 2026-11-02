@@ -57,7 +57,7 @@ export class LootlogConfigData extends Context.Service<
     ) => Effect.Effect<unknown, LootlogConfigOperationError>;
     readonly updateNpc: (
       guildId: string,
-      npcId: string,
+      npcId: number,
       payload: UpdateNpcLootlogConfigRequest,
     ) => Effect.Effect<unknown, LootlogConfigOperationError>;
   }
@@ -88,18 +88,8 @@ export class LootlogConfigData extends Context.Service<
 
             return { ...config, npcs };
           }).pipe(Effect.mapError(operationError)),
-        updateNpc: (guildId, npcId, payload) => {
-          const parsedNpcId = Number(npcId);
-
-          if (!Number.isInteger(parsedNpcId)) {
-            return Effect.fail(
-              operationError(
-                new ResourceNotFoundError("NPC configuration not found"),
-              ),
-            );
-          }
-
-          return database
+        updateNpc: (guildId, npcId, payload) =>
+          database
             .update(lootlogConfigNpcTable)
             .set({
               allowedRarities: [...payload.allowedRarities],
@@ -108,7 +98,7 @@ export class LootlogConfigData extends Context.Service<
             .where(
               and(
                 eq(lootlogConfigNpcTable.lootlogConfigId, guildId),
-                eq(lootlogConfigNpcTable.id, parsedNpcId),
+                eq(lootlogConfigNpcTable.id, npcId),
               ),
             )
             .returning()
@@ -125,8 +115,7 @@ export class LootlogConfigData extends Context.Service<
                       ),
                     ),
               ),
-            );
-        },
+            ),
       });
     }),
   );
@@ -168,7 +157,7 @@ export const getLootlogConfig = Effect.fn("getLootlogConfig")(function* (
 export const updateLootlogConfigNpc = Effect.fn("updateLootlogConfigNpc")(
   function* (
     requestedGuildId: string | undefined,
-    npcId: string,
+    npcId: number,
     payload: UpdateNpcLootlogConfigRequest,
   ) {
     const { guildId } = yield* authorize(requestedGuildId);

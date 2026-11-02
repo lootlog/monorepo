@@ -1,4 +1,5 @@
 import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
+import type { MemberSummary } from "#src/contracts/shared";
 import type { lootTable } from "#src/database/drizzle/schema";
 import type { LootItemDto } from "#src/loots/query/loot-item";
 import type { LootNpcDto } from "#src/loots/query/loot-npc";
@@ -9,11 +10,7 @@ export type SubmissionWithMember = {
   guildId: string;
   lootId: number;
   memberId: number;
-  member: {
-    name: string;
-    avatar: string | null;
-    userId: string;
-  };
+  member: MemberSummary;
 };
 
 export type LootSelection = Pick<

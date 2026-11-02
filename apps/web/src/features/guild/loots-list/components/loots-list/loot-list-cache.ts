@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getShortnameByProf } from "@lootlog/domain/profession";
 import {
   getLootsControllerFetchLootByIdQueryKey,
-  type LootsControllerFetchLootsByGuildIdParams,
+  type LootPageResponseDto,
 } from "@lootlog/client/main";
 import type { Loot } from "@/lib/loots/loot-types";
 
@@ -11,7 +11,10 @@ export const LOOTS_QUERY_GC_TIME_MS = 5 * 60_000;
 
 export const LOOTS_PAGE_LIMIT = 20;
 
-type LootsInfiniteData = InfiniteData<Loot[]>;
+/** Page parameter of a list's first page, which is read without a cursor. */
+export const FIRST_PAGE_CURSOR = "";
+
+type LootsInfiniteData = InfiniteData<LootPageResponseDto>;
 
 const LootListParams = z.object({
   world: z.string().optional(),
@@ -32,7 +35,7 @@ const LootListParams = z.object({
 });
 
 const someIn = (
-  allowed: readonly string[] | undefined,
+  allowed: ReadonlyArray<string> | undefined,
   values: ReadonlyArray<string | null>,
 ) =>
   !allowed?.length || values.some((value) => value && allowed.includes(value));
@@ -56,7 +59,7 @@ const someInRange = (
  */
 export function lootMatchesListParams(
   loot: Loot,
-  params: LootsControllerFetchLootsByGuildIdParams,
+  params: z.infer<typeof LootListParams>,
 ): boolean | undefined {
   if (params.search?.trim()) return undefined;
 
@@ -114,6 +117,11 @@ export function lootMatchesListParams(
   );
 }
 
+const withItems = (
+  page: LootPageResponseDto,
+  items: LootPageResponseDto["items"],
+): LootPageResponseDto => ({ ...page, items });
+
 // Lists are ordered by descending id. A loot older than every loaded one
 // belongs to a page that has not been read yet, unless the list is complete.
 const placeLoot = (
@@ -124,40 +132,54 @@ const placeLoot = (
 
   if (!data || lastIndex < 0) return data;
 
-  if (data.pages.some((page) => page.some((entry) => entry.id === loot.id)))
+  if (
+    data.pages.some((page) => page.items.some((entry) => entry.id === loot.id))
+  )
     return {
       ...data,
       pages: data.pages.map((page) =>
-        page.map((entry) => (entry.id === loot.id ? loot : entry)),
+        withItems(
+          page,
+          page.items.map((entry) => (entry.id === loot.id ? loot : entry)),
+        ),
       ),
     };
 
   const pageIndex = data.pages.findIndex((page) =>
-    page.some((entry) => entry.id < loot.id),
+    page.items.some((entry) => entry.id < loot.id),
   );
 
-  if (
-    pageIndex === -1 &&
-    (data.pages[lastIndex]?.length ?? 0) >= LOOTS_PAGE_LIMIT
-  )
+  if (pageIndex === -1 && data.pages[lastIndex]?.nextCursor !== null)
     return data;
 
   return {
     ...data,
     pages: data.pages.map((page, index) => {
-      if (pageIndex === -1) return index === lastIndex ? [...page, loot] : page;
+      if (pageIndex === -1)
+        return index === lastIndex
+          ? withItems(page, [...page.items, loot])
+          : page;
 
       if (index !== pageIndex) return page;
-      const position = page.findIndex((entry) => entry.id < loot.id);
+      const position = page.items.findIndex((entry) => entry.id < loot.id);
 
-      return [...page.slice(0, position), loot, ...page.slice(position)];
+      return withItems(page, [
+        ...page.items.slice(0, position),
+        loot,
+        ...page.items.slice(position),
+      ]);
     }),
   };
 };
 
 // Event pages and the HID lookup cache plain results under the same path as
 // the paged lists, so lists are told apart by their data.
-const LootPages = z.object({ pages: z.array(z.array(z.unknown())) });
+const LootPage = z.object({
+  items: z.array(z.unknown()),
+  nextCursor: z.string().nullable(),
+});
+
+const LootPages = z.object({ pages: z.array(LootPage) });
 
 const isLootPages = (data: unknown): data is LootsInfiniteData =>
   LootPages.safeParse(data).success;
@@ -222,12 +244,15 @@ export function patchLootShare(
 ) {
   for (const [key] of cachedLootLists(queryClient, guildId)) {
     queryClient.setQueryData<LootsInfiniteData>(key, (old) =>
-      old?.pages.some((page) => page.some((loot) => loot.id === lootId))
+      old?.pages.some((page) => page.items.some((loot) => loot.id === lootId))
         ? {
             ...old,
             pages: old.pages.map((page) =>
-              page.map((loot) =>
-                loot.id === lootId ? { ...loot, lootShare } : loot,
+              withItems(
+                page,
+                page.items.map((loot) =>
+                  loot.id === lootId ? { ...loot, lootShare } : loot,
+                ),
               ),
             ),
           }
@@ -256,7 +281,7 @@ export async function reconcileActiveLootLists(
 
     queryClient.setQueryData<LootsInfiniteData>(key, {
       pages: data.pages.slice(0, 1),
-      pageParams: [0],
+      pageParams: [FIRST_PAGE_CURSOR],
     });
   }
 
@@ -299,8 +324,8 @@ export async function clearLootPolicyData(
       key,
       isLootPages(data)
         ? { pages: [], pageParams: [] }
-        : Array.isArray(data)
-          ? []
+        : LootPage.safeParse(data).success
+          ? { items: [], nextCursor: null }
           : null,
     );
   }

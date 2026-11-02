@@ -80,7 +80,7 @@ const callerFailure = (cause: unknown) =>
   Schema.is(ApplicationError)(cause) &&
   cause.kind === ApplicationErrorKind.AUTHENTICATION_REQUIRED
     ? new ReauthenticationRequired({
-        code: cause.message,
+        code: cause.body.code,
         requiresReauth: true,
       })
     : failure(cause);
@@ -166,7 +166,7 @@ export const makeMembersDataLayer = (
           if (!desiredGuildId) {
             return yield* Effect.fail(
               new ResourceNotFoundError({
-                message: GuildErrorKey.GUILD_NOT_FOUND,
+                code: GuildErrorKey.GUILD_NOT_FOUND,
               }),
             );
           }
@@ -187,7 +187,7 @@ export const makeMembersDataLayer = (
 
           if (stored && options.refresh && fresh) {
             return yield* Effect.fail(
-              new InvalidRequestError(ErrorKey.MEMBER_TTL_ACTIVE),
+              new InvalidRequestError({ code: ErrorKey.MEMBER_TTL_ACTIVE }),
             );
           }
 
@@ -255,7 +255,9 @@ export const makeMembersDataLayer = (
 
               if (!stored.active) {
                 return yield* Effect.fail(
-                  new InvalidRequestError(ErrorKey.MEMBER_ALREADY_DEACTIVATED),
+                  new InvalidRequestError({
+                    code: ErrorKey.MEMBER_ALREADY_DEACTIVATED,
+                  }),
                 );
               }
 
@@ -330,10 +332,12 @@ export const makeMembersDataLayer = (
                 if (recent[0]) {
                   return yield* Effect.fail(
                     new InvalidRequestError({
-                      message: ErrorKey.BULK_REFRESH_RATE_LIMIT_ACTIVE,
-                      nextAvailableAt: new Date(
-                        recent[0].createdAt.getTime() + rateLimit,
-                      ),
+                      code: ErrorKey.BULK_REFRESH_RATE_LIMIT_ACTIVE,
+                      details: {
+                        nextAvailableAt: new Date(
+                          recent[0].createdAt.getTime() + rateLimit,
+                        ).toISOString(),
+                      },
                     }),
                   );
                 }

@@ -1,7 +1,6 @@
 import { sql, type SQLWrapper } from "drizzle-orm";
-import { DateTime, Effect, Schema } from "effect";
-
-import { KillStatsPeriodSchema } from "#src/contracts/kills/schemas";
+import { DateTime, Effect } from "effect";
+import { DEFAULT_PERIOD, type Period } from "@lootlog/schema/http-scalars";
 
 /**
  * Statistics of loots and kills count calendar days and weeks in this zone,
@@ -9,9 +8,7 @@ import { KillStatsPeriodSchema } from "#src/contracts/kills/schemas";
  */
 export const STATS_TIME_ZONE = "Europe/Warsaw";
 
-export type KillStatsPeriod = typeof KillStatsPeriodSchema.Type;
-
-const PERIOD_HOURS = {
+const PERIOD_HOURS: Record<Exclude<Period, "all">, number> = {
   "24h": 24,
   "3d": 72,
   "7d": 168,
@@ -19,10 +16,10 @@ const PERIOD_HOURS = {
   "30d": 720,
   "90d": 2160,
   "180d": 4320,
-} as const;
+};
 
 /** A rolling statistics period of loots or kills. */
-export type StatsPeriod = keyof typeof PERIOD_HOURS | "all";
+export type StatsPeriod = Period;
 
 /** The UTC hour of an instant, the smallest unit kill statistics store. */
 export const getKillStatsBucketStart = (date: Date): Date => {
@@ -32,15 +29,9 @@ export const getKillStatsBucketStart = (date: Date): Date => {
   return bucketStart;
 };
 
-export const normalizeKillStatsPeriod = (
-  period: string | undefined,
-): KillStatsPeriod | undefined => {
-  if (!period) {
-    return undefined;
-  }
-
-  return Schema.is(KillStatsPeriodSchema)(period) ? period : undefined;
-};
+/** The requested period, or the shared default when the query omits it. */
+export const resolveKillStatsPeriod = (period: Period | undefined): Period =>
+  period ?? DEFAULT_PERIOD;
 
 /**
  * Where a period of loot or kill statistics starts: its length back from
@@ -94,9 +85,8 @@ export const statsLocalTimeOfUtc = (timestamp: SQLWrapper) =>
 export type KillTimelineUnit = "hour" | "day";
 
 /** Hours for the shortest periods, Warsaw calendar days otherwise. */
-export const getKillTimelineUnit = (
-  period: KillStatsPeriod | undefined,
-): KillTimelineUnit => (period === "24h" || period === "3d" ? "hour" : "day");
+export const getKillTimelineUnit = (period: Period): KillTimelineUnit =>
+  period === "24h" || period === "3d" ? "hour" : "day";
 
 const HOUR_MS = 3_600_000;
 

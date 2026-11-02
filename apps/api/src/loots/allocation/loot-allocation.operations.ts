@@ -172,7 +172,7 @@ export const makeLootAllocationOperations = (options: {
         Effect.flatMap((visible) =>
           Effect.fail(
             visible
-              ? new PermissionDeniedError(ErrorKey.CANT_UPDATE_LOOT)
+              ? new PermissionDeniedError({ code: ErrorKey.CANT_UPDATE_LOOT })
               : new ResourceNotFoundError(),
           ),
         ),
@@ -202,7 +202,7 @@ export const makeLootAllocationOperations = (options: {
 
         if (Object.keys(parsed).length === 0) {
           return yield* Effect.fail(
-            new InvalidRequestError(ErrorKey.MISSING_LOOT_SHARE),
+            new InvalidRequestError({ code: ErrorKey.MISSING_LOOT_SHARE }),
           );
         }
 

@@ -3,6 +3,77 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased (breaking): One error body, filter and page shape across the main API
+
+Every main API operation now fails, filters and pages the same way, as
+described in [errors and limits](/docs/errors). Release the SDK as a breaking
+version.
+
+- Error bodies are `{ code, message?, details? }`. Bodies that were empty,
+  `{ statusCode }`, `{ message }` with a machine reason, or carried extra
+  top-level fields now put the reason in `code` and the extra values in
+  `details`. Validation failures move `issues` to `details.issues`.
+- A `429` sends `Retry-After` instead of `retryAfterMs` in the body.
+- `npcId` in `PUT /guilds/{guildId}/lootlog-config/{npcId}` is an integer; a
+  non-integer is a `400` instead of a `404`.
+- Lists that paged by offset or returned a bare array return
+  `{ items, nextCursor }` and take an opaque `cursor`.
+- `GET /guilds/{guildId}/events/{eventId}/kill-history` returns its page in
+  `items` instead of `data`, next to the unchanged `kind`, `member` and
+  `nextCursor`. A malformed or differently scoped `cursor` fails with code
+  `INVALID_CURSOR`, and a `limit` outside 1 to 100 or a `memberId` that is
+  not a positive integer is a `400`. Cursors issued before this release are
+  rejected; restart pagination without a cursor.
+- `GET /guilds/{guildId}/loots` returns `{ items, nextCursor }` instead of a
+  bare array, newest first. `cursor` is the opaque `nextCursor` of the
+  previous page instead of a loot id, and is valid only with the filters and
+  `limit` it was issued for; any other cursor fails with code
+  `INVALID_CURSOR`. `nextCursor` is `null` on the last page.
+- Loot filters: an unknown `npcTypes` or `rarities` value is a `400` instead
+  of a `500`, a level range whose minimum exceeds its maximum is a `400`,
+  `search` is trimmed and limited to 100 characters, and `%` and `_` in it
+  match literally.
+- `npcTypes` on `GET /guilds/{guildId}/loots/stats` is a repeated parameter
+  instead of a comma-separated string; an unknown type is a `400` instead of
+  being ignored. `world` on loot endpoints, including
+  `GET /users/@me/stats/loots`, is trimmed and lower-cased.
+- A loot comment's `content` is trimmed and must be 1 to 256 characters. Its
+  `member` adds `id`, always carries `avatar` and `roles`, and a role's
+  `color` is always present (`null` when unset).
+- The `loot.snapshot` realtime event carries each submission's `member` with
+  `id` and a non-optional `avatar`, as `GET /guilds/{guildId}/loots` does.
+- `activeOnly` on `GET /guilds/{guildId}/events` accepts only `true` or
+  `false`; any other value is a `400`. Omitting it still lists active events.
+- `world` on event and timer endpoints, including the `world` of a new event,
+  is trimmed and lower-cased, and an empty `world` is a `400`. The same applies
+  to the `world` written by `POST /loots`, `POST /kills` and the timer create
+  and reset requests, so a record is always found by the filter that names its
+  world.
+- NPC level filters are named `npcLevelMin` and `npcLevelMax` everywhere.
+- A Member inside another resource is always `member: { id, name, avatar, userId }`,
+  with `avatar` set to `null` when there is none.
+- Kill statistics (`/guilds/{guildId}/stats/kills` and its `top-npcs`,
+  `top-killers`, `npcs/{npcId}/killers` and `members/{memberId}` reads, and
+  `/users/@me/stats/kills`, `/users/@me/kills/npcs`): `minLvl` and `maxLvl`
+  become `npcLevelMin` and `npcLevelMax`, and a minimum above the maximum is a
+  `400`. `period` also accepts `90d` and `180d`, and an omitted `period` now
+  means the last `7d` instead of all time; send `period=all` for all-time
+  statistics. An unknown `npcTypes` or `npcType` is a `400`, `search` is
+  trimmed, limited to 100 characters and matches `%` and `_` literally, and
+  `world` is trimmed and lower-cased.
+- `limit` on `top-npcs` and `top-killers` is optional, defaults to 10 and 5,
+  and must be 1 to 100. `topNpcsLimit` on `/users/@me/stats/kills` must be 1
+  to 100.
+- `GET /users/@me/kills/npcs` returns `{ items, nextCursor, total }` instead
+  of `{ npcs, pagination }`. `GET /guilds/{guildId}/stats/kills/members/{memberId}`
+  replaces `pagination` with top-level `total` and `nextCursor`. On both,
+  `cursor` is the opaque `nextCursor` of the previous page instead of an
+  offset, and is valid only with the filters, sort and period it was issued
+  for; any other cursor fails with code `INVALID_CURSOR`.
+- Kill rankings (`memberRanking`, `top-killers` entries, NPC `killers`) and the
+  member of `members/{memberId}` carry `member: { id, name, avatar, userId }`
+  instead of `memberId`, `memberName`, `memberAvatar` and `memberUserId`.
+
 ## Unreleased: Public item and NPC catalog
 
 The Search API adds two read-only endpoints that work without an API key or a

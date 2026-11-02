@@ -16,6 +16,7 @@ import {
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { findMemberNames } from "#src/members/member-names";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
+import { MemberSummary } from "#src/contracts/shared";
 
 const CachedEventRankingResponse = Schema.Array(
   Schema.Struct({
@@ -31,8 +32,7 @@ const CachedEventRankingResponse = Schema.Array(
     pointsModified: Schema.Boolean,
     updatedAt: IsoDateTime,
     member: Schema.Struct({
-      id: Schema.Number,
-      name: Schema.String,
+      ...MemberSummary.fields,
       roles: Schema.Array(
         Schema.Struct({
           position: Schema.Number,
@@ -78,6 +78,8 @@ export const makeEventRankingRead = (
         member: {
           id: member.id,
           name: member.name,
+          avatar: member.avatar,
+          userId: member.userId,
           roles: topMemberDisplayRoles(roles, member.id),
         },
       }));
@@ -89,7 +91,7 @@ export const makeEventRankingRead = (
 
   return {
     getRanking(guildId: string, eventId: string) {
-      const key = cache.getEventEntry(guildId, eventId, "ranking");
+      const key = cache.getEventEntry(guildId, eventId, "ranking:v2");
 
       return cache
         .getOrSet(key, CachedEventRankingResponse, () =>

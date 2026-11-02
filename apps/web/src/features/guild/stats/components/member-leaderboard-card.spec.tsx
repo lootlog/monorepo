@@ -20,10 +20,12 @@ const createMember = (
   place: number,
   memberUserId = `discord-${place}`,
 ): GuildKillStatsResponseDtoOutputMemberRankingItem => ({
-  memberId: place,
-  memberName: `Member ${place}`,
-  memberAvatar: null,
-  memberUserId,
+  member: {
+    id: place,
+    name: `Member ${place}`,
+    avatar: null,
+    userId: memberUserId,
+  },
   totalParticipations: 100 - place,
   participationsByType: { TITAN: 100 - place },
 });

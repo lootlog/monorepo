@@ -9,7 +9,11 @@ import {
 
 import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
-import { getApiErrorStringField, isApiError } from "@lootlog/client/transport";
+import {
+  getApiErrorStringDetail,
+  getApiErrorStringField,
+  isApiError,
+} from "@lootlog/client/transport";
 import { selectOwnedReadyRoom } from "@/features/party-finder/ready-room-cache";
 import { readReadyRoomCache } from "@/features/party-finder/hooks/use-ready-rooms";
 import {
@@ -53,7 +57,7 @@ type PublishedNotification = { notificationId: string; guildIds: string[] };
 const getActivePartyGatheringNotificationId = (cause: unknown) => {
   if (!isApiError(cause) || cause.status !== 409) return undefined;
   const code = getApiErrorStringField(cause, "code");
-  const notificationId = getApiErrorStringField(cause, "notificationId");
+  const notificationId = getApiErrorStringDetail(cause, "notificationId");
 
   return code === "ACTIVE_GATHERING_EXISTS" ? notificationId : undefined;
 };

@@ -60,7 +60,8 @@ const authorizedGuildId = "guild-authorized";
 
 const forbiddenGuildId = "guild-forbidden";
 
-const world = "Aldous";
+// Stored worlds are lower-case; `world` filters compare in lower case.
+const world = "aldous";
 
 const publishedMessages: Parameters<RabbitMessagingService["publish"]>[0][] =
   [];
@@ -641,7 +642,7 @@ describe("API HTTP boundary", () => {
         .insert(timerTable)
         .values([
           timer(authorizedGuildId, world, 1),
-          timer(authorizedGuildId, "Other world", 2),
+          timer(authorizedGuildId, "other world", 2),
           timer(forbiddenGuildId, world, 3),
         ]),
     );
@@ -653,7 +654,7 @@ describe("API HTTP boundary", () => {
     expect(byTemplate.status).toBe(200);
     expect(await byTemplate.json()).toEqual([
       expect.objectContaining({ world, npcId: 1, templateId: 77 }),
-      expect.objectContaining({ world: "Other world", npcId: 2 }),
+      expect.objectContaining({ world: "other world", npcId: 2 }),
     ]);
 
     const byRuntimeIds = await search(`npcIds=1&npcIds=2&world=${world}`);
@@ -795,9 +796,9 @@ describe("API HTTP boundary", () => {
     const firstPage = await first.json();
     expect(firstPage).toMatchObject({
       kind: "event",
-      data: [{ id: highKill, participantCount: 1 }],
+      items: [{ id: highKill, participantCount: 1 }],
     });
-    expect(firstPage.data[0]).not.toHaveProperty("points");
+    expect(firstPage.items[0]).not.toHaveProperty("points");
 
     const continuation = await request(
       `${base}/kill-history?limit=2&cursor=${encodeURIComponent(firstPage.nextCursor)}`,
@@ -805,7 +806,7 @@ describe("API HTTP boundary", () => {
 
     expect(continuation.status).toBe(200);
     expect(await continuation.json()).toMatchObject({
-      data: [{ id: newestLowKill }, { id: oldestLowKill }],
+      items: [{ id: newestLowKill }, { id: oldestLowKill }],
       nextCursor: null,
     });
 
@@ -817,7 +818,7 @@ describe("API HTTP boundary", () => {
     expect(await member.json()).toMatchObject({
       kind: "member",
       member: { id: memberId },
-      data: [
+      items: [
         { id: newestLowKill, memberPoint: { points: 4.25 } },
         { id: oldestLowKill },
       ],
@@ -846,7 +847,7 @@ describe("API HTTP boundary", () => {
     const { highKill, newestLowKill, oldestLowKill } = await seedKillHistory();
     const base = `/guilds/${authorizedGuildId}/events/history`;
     expect(await (await request(`${base}/kill-history`)).json()).toMatchObject({
-      data: [{ id: highKill }, { id: newestLowKill }, { id: oldestLowKill }],
+      items: [{ id: highKill }, { id: newestLowKill }, { id: oldestLowKill }],
     });
 
     const setAccess = async (permissions: Permission[], maximum: number) => {
@@ -861,7 +862,7 @@ describe("API HTTP boundary", () => {
 
     await setAccess([Permission.LOOTLOG_EVENTS_READ], 100);
     expect(await (await request(`${base}/kill-history`)).json()).toMatchObject({
-      data: [{ id: newestLowKill }, { id: oldestLowKill }],
+      items: [{ id: newestLowKill }, { id: oldestLowKill }],
     });
     expect(
       (await request(`${base}/kill-history?heroId=high-hero`)).status,
@@ -875,7 +876,7 @@ describe("API HTTP boundary", () => {
     ).toBe(404);
     await setAccess([Permission.LOOTLOG_EVENTS_READ], 20);
     expect(await (await request(`${base}/kill-history`)).json()).toMatchObject({
-      data: [],
+      items: [],
       nextCursor: null,
     });
     await setAccess([], 100);
@@ -916,7 +917,7 @@ describe("API HTTP boundary", () => {
 
     expect(allowed.status).toBe(200);
     expect(await allowed.json()).toMatchObject({
-      data: [{ id: newestLowKill }, { id: oldestLowKill }],
+      items: [{ id: newestLowKill }, { id: oldestLowKill }],
     });
     expect(
       (
@@ -964,7 +965,7 @@ describe("API HTTP boundary", () => {
     for (const guildId of [authorizedGuildId, "current-loot-alias"]) {
       const list = await request(`/guilds/${guildId}/loots`);
       expect(list.status).toBe(200);
-      expect(await list.json()).toEqual([]);
+      expect(await list.json()).toEqual({ items: [], nextCursor: null });
 
       const missingLoot = await request(`/guilds/${guildId}/loots/42`);
       expect(missingLoot.status).toBe(404);
@@ -1017,19 +1018,19 @@ describe("API HTTP boundary", () => {
   });
 
   it.each([
-    ["123456789012345678", "errors.guilds.vanityUrlInvalid"],
-    ["---", "errors.guilds.vanityUrlInvalid"],
-    ["Battles!", "errors.guilds.vanityUrlRestricted"],
+    ["123456789012345678", "GUILDS_VANITY_URL_INVALID"],
+    ["---", "GUILDS_VANITY_URL_INVALID"],
+    ["Battles!", "GUILDS_VANITY_URL_RESTRICTED"],
   ])(
     "rejects the vanity URL %p with %p without storing it",
-    async (vanityUrl, message) => {
+    async (vanityUrl, code) => {
       const response = await request(`/guilds/${authorizedGuildId}/config`, {
         method: "PATCH",
         body: JSON.stringify({ vanityUrl }),
       });
 
       expect(response.status).toBe(400);
-      expect(await response.json()).toMatchObject({ message });
+      expect(await response.json()).toEqual({ code });
 
       const [guild] = await databaseRuntime.runPromise(
         database
@@ -1193,9 +1194,11 @@ describe("API HTTP boundary", () => {
       expect(await response.json()).toMatchObject({
         code: "VALIDATION_ERROR",
         message: expect.stringContaining(field),
-        issues: expect.arrayContaining([
-          expect.objectContaining({ path: [field] }),
-        ]),
+        details: {
+          issues: expect.arrayContaining([
+            expect.objectContaining({ path: [field] }),
+          ]),
+        },
       });
     },
   );
@@ -1248,9 +1251,9 @@ describe("API HTTP boundary", () => {
       );
 
       expect(missing.status).toBe(404);
-      expect(await missing.text()).toBe("");
+      expect(await missing.json()).toEqual({ code: "GUILD_NOT_FOUND" });
       expect(forbidden.status).toBe(403);
-      expect(await forbidden.text()).toBe("");
+      expect(await forbidden.json()).toEqual({ code: "FORBIDDEN" });
     },
   );
 });

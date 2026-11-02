@@ -1,4 +1,7 @@
-import { statusCodeResponse } from "#src/shared/http/handler-response";
+import {
+  httpErrorResponse,
+  statusCodeResponse,
+} from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   GuildSettingsDocumentsResponseSchema,
@@ -10,7 +13,6 @@ import {
   type SettingsDocumentsQuery,
 } from "@lootlog/schema/settings-documents";
 import { Context, Effect, Layer, Schema } from "effect";
-import { HttpServerResponse } from "effect/http";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import {
@@ -282,10 +284,11 @@ export const toSettingsHttpResponse = <A, R>(
     SettingsOperationError: (error) =>
       error.cause instanceof SettingsRequestError
         ? Effect.succeed(
-            HttpServerResponse.jsonUnsafe(
-              { message: error.cause.message },
-              { status: error.cause.status },
-            ),
+            httpErrorResponse(error.cause.status, {
+              code:
+                error.cause.status === 403 ? "FORBIDDEN" : "INVALID_REQUEST",
+              message: error.cause.message,
+            }),
           )
         : applicationErrorResponse(error.cause),
   });

@@ -212,12 +212,14 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       if (filteredGuildIds.length === 0) {
         return yield* Effect.fail(
           new InvalidRequestError({
-            message: ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
-            submittedGuilds: [],
-            rejectedGuilds: this.mapRejectedGuilds(
-              guildById,
-              whitelisted.rejected,
-            ),
+            code: ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
+            details: {
+              submittedGuilds: [],
+              rejectedGuilds: this.mapRejectedGuilds(
+                guildById,
+                whitelisted.rejected,
+              ),
+            },
           }),
         );
       }
@@ -247,12 +249,12 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         catch: (error) =>
           error instanceof InvalidRequestError
             ? error
-            : new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW),
+            : new InvalidRequestError({ code: ErrorKey.NPC_WT_TOO_LOW }),
       });
 
       if (npcData.primary.wt < MIN_LOOT_NPC_WT) {
         return yield* Effect.fail(
-          new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW),
+          new InvalidRequestError({ code: ErrorKey.NPC_WT_TOO_LOW }),
         );
       }
 
@@ -271,9 +273,11 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       if (outcome.submissionData.length === 0) {
         return yield* Effect.fail(
           new InvalidRequestError({
-            message: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
-            submittedGuilds: [],
-            rejectedGuilds: outcome.rejectedGuilds,
+            code: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
+            details: {
+              submittedGuilds: [],
+              rejectedGuilds: outcome.rejectedGuilds,
+            },
           }),
         );
       }
@@ -696,7 +700,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     );
 
     if (!primary) {
-      throw new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW);
+      throw new InvalidRequestError({ code: ErrorKey.NPC_WT_TOO_LOW });
     }
 
     return { primary };

@@ -254,8 +254,8 @@ export const makeUserAccountDeletion = (
       Effect.catch(() =>
         Effect.fail(
           new DependencyUnavailableError({
-            message: "BATTLELOG_SERVICE_UNAVAILABLE",
-            retryAfter: 60,
+            code: "BATTLELOG_SERVICE_UNAVAILABLE",
+            retryAfterMs: 60_000,
           }),
         ),
       ),

@@ -701,6 +701,8 @@ function createRanking({
     member: {
       id: memberId,
       name: `Member ${memberId}`,
+      avatar: null,
+      userId: `user-${memberId}`,
       roles:
         roleColor === undefined
           ? []

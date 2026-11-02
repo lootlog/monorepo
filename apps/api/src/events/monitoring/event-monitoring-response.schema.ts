@@ -1,5 +1,6 @@
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
+import { MemberSummary } from "#src/contracts/shared";
 import {
   flexibleIsoDatetimeCodec,
   nullableFlexibleIsoDatetimeCodec,
@@ -24,10 +25,7 @@ export const HeroCoverageGapResponse = Schema.Struct({
 });
 
 const KillTimelineAssignmentResponse = Schema.Struct({
-  memberId: Schema.Number,
-  memberName: Schema.String,
-  memberAvatar: Schema.NullOr(Schema.String),
-  memberUserId: Schema.String,
+  member: MemberSummary,
   assignedAt: flexibleIsoDatetimeCodec,
   unassignedAt: nullableFlexibleIsoDatetimeCodec,
 });
@@ -54,9 +52,7 @@ export const HeroPresenceStatsResponse = Schema.Struct({
   presencePercentage: Schema.Number,
   memberStats: Schema.Array(
     Schema.Struct({
-      memberId: Schema.Number,
-      memberName: Schema.String,
-      memberAvatar: Schema.NullOr(Schema.String),
+      member: MemberSummary,
       totalTimeSeconds: Schema.Number,
       afkTimeSeconds: Schema.Number,
       afkPercentage: Schema.Number,

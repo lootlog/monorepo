@@ -827,6 +827,10 @@ describe("free-text loot search", () => {
       ).toEqual([3]);
       // A blank term is not a filter.
       expect(await search({ search: "  " })).toEqual([5, 4, 3, 2, 1]);
+      // LIKE wildcards in the term are literal, not "match anything".
+      expect(await search({ search: "%" })).toEqual([]);
+      expect(await search({ search: "_" })).toEqual([]);
+      expect(await search({ search: "Cien_sty" })).toEqual([]);
     } finally {
       await boundary.dispose();
     }

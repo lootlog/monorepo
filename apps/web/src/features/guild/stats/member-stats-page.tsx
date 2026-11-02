@@ -49,8 +49,8 @@ const getMemberStatsResponseView = (
   data: MemberKillsResponseDtoOutput | undefined,
 ) => ({
   npcs: data?.npcs ?? [],
-  total: data?.pagination?.total ?? 0,
-  hasNext: data?.pagination?.hasNext ?? false,
+  total: data?.total ?? 0,
+  hasNext: Boolean(data?.nextCursor),
   totalParticipations: data?.overview?.totalParticipations ?? 0,
 });
 
@@ -62,7 +62,8 @@ export const MemberStatsPage = () => {
     data,
     settings,
     debouncedSearch,
-    cursor,
+    firstRank,
+    hasPrev,
     memberColor,
     search,
     handleSearchChange,
@@ -83,7 +84,7 @@ export const MemberStatsPage = () => {
       {
         id: STATS_TABLE_POSITION_COLUMN_ID,
         header: () => t("kills.memberRanking.position"),
-        cell: ({ row }) => <RankBadge rank={cursor + row.index + 1} />,
+        cell: ({ row }) => <RankBadge rank={firstRank + row.index + 1} />,
       },
       {
         id: "npc",
@@ -159,8 +160,6 @@ export const MemberStatsPage = () => {
   const overview = data?.overview;
   const hasActiveFilters = hasMemberStatsFilters(settings, debouncedSearch);
 
-  const hasPrev = cursor > 0;
-
   const typeMetrics = NPC_TYPES_STRONGEST_FIRST.flatMap((type) => {
     const value = overview?.participationsByType[type] ?? 0;
 
@@ -169,13 +168,13 @@ export const MemberStatsPage = () => {
 
   return (
     <DetailPage
-      name={member.memberName}
+      name={member.name}
       nameStyle={{ color: memberColor }}
       media={
         <MemberAvatar
-          userId={member.memberUserId}
-          avatar={member.memberAvatar}
-          name={member.memberName}
+          userId={member.userId}
+          avatar={member.avatar}
+          name={member.name}
           className="size-5"
         />
       }
@@ -205,7 +204,7 @@ export const MemberStatsPage = () => {
         stackedFilters={<KillStatsStackedFilters {...filterProps} />}
         activeFilterCount={countActiveKillStatsFilters(filterProps)}
         filtersLabel={t("kills.filters.title")}
-        scrollResetKey={cursor}
+        scrollResetKey={firstRank}
         footer={
           (hasPrev || npcs.length > 0) && (
             <TablePaginationFooter

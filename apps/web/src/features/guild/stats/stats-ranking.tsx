@@ -74,9 +74,9 @@ export const StatsRanking = () => {
       cell: ({ row: { original: member } }) => (
         <div className="flex items-center gap-2.5">
           <MemberAvatar
-            userId={member.memberUserId}
-            avatar={member.memberAvatar}
-            name={member.memberName}
+            userId={member.member.userId}
+            avatar={member.member.avatar}
+            name={member.member.name}
             className="size-7"
           />
           <TextLink
@@ -86,13 +86,13 @@ export const StatsRanking = () => {
               to="/$guildId/stats/members/$memberId"
               params={{
                 guildId,
-                memberId: String(member.memberId),
+                memberId: String(member.member.id),
               }}
             />
           >
             <MemberNameWithColor
-              name={member.memberName}
-              member={membersMap.get(member.memberUserId)}
+              name={member.member.name}
+              member={membersMap.get(member.member.userId)}
             />
           </TextLink>
         </div>
@@ -129,7 +129,7 @@ export const StatsRanking = () => {
     features: coreTableFeatures,
     data: paginatedData,
     columns,
-    getRowId: (member) => String(member.memberId),
+    getRowId: (member) => String(member.member.id),
   });
 
   return (
@@ -176,31 +176,31 @@ export const StatsRanking = () => {
           <ul className="xl:hidden">
             {paginatedData.map((member, index) => (
               <li
-                key={member.memberId}
+                key={member.member.id}
                 data-list-tile
-                aria-current={isViewer(member.memberUserId) || undefined}
+                aria-current={isViewer(member.member.userId) || undefined}
                 className={LIST_TILE_RULE_CLASS}
               >
                 <Link
                   to="/$guildId/stats/members/$memberId"
-                  params={{ guildId, memberId: String(member.memberId) }}
+                  params={{ guildId, memberId: String(member.member.id) }}
                   className={cn(
                     "block py-3 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                     LIST_TILE_INSET_CLASS,
-                    isViewer(member.memberUserId) && VIEWER_ROW_CLASS,
+                    isViewer(member.member.userId) && VIEWER_ROW_CLASS,
                   )}
                 >
                   <span className="flex min-w-0 items-center gap-3">
                     <RankBadge rank={cursor + index + 1} />
                     <MemberAvatar
-                      userId={member.memberUserId}
-                      avatar={member.memberAvatar}
-                      name={member.memberName}
+                      userId={member.member.userId}
+                      avatar={member.member.avatar}
+                      name={member.member.name}
                     />
                     <span className="min-w-0 flex-1 truncate text-sm">
                       <MemberNameWithColor
-                        name={member.memberName}
-                        member={membersMap.get(member.memberUserId)}
+                        name={member.member.name}
+                        member={membersMap.get(member.member.userId)}
                       />
                     </span>
                     <span className="shrink-0 text-sm font-semibold tabular-nums">
@@ -228,8 +228,8 @@ export const StatsRanking = () => {
           <StatsTable
             table={table}
             className="hidden border-b xl:table"
-            onRowClick={(member) => handleRowClick(member.memberId)}
-            isViewerRow={(member) => isViewer(member.memberUserId)}
+            onRowClick={(member) => handleRowClick(member.member.id)}
+            isViewerRow={(member) => isViewer(member.member.userId)}
           />
         </StatsTableResults>
       </ResultsSurface>

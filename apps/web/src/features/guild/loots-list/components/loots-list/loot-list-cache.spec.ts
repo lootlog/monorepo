@@ -4,8 +4,10 @@ import {
   type InfiniteData,
 } from "@tanstack/react-query";
 import { afterEach, expect, it, vi } from "vitest";
+import type { LootPageResponseDto } from "@lootlog/client/main";
 import type { Loot } from "@/lib/loots/loot-types";
 import {
+  FIRST_PAGE_CURSOR,
   LOOTS_PAGE_LIMIT,
   LOOTS_QUERY_GC_TIME_MS,
   applyLootSnapshots,
@@ -37,23 +39,29 @@ it("reconciles one server page for active filters, preserves other organizations
 
   const otherKey = ["/guilds/two/loots", { world: "tempest" }];
 
-  const history: InfiniteData<Loot[]> = {
-    pages: [[], [], []],
-    pageParams: [0, 20, 40],
+  const page = (nextCursor: string | null): LootPageResponseDto => ({
+    items: [],
+    nextCursor,
+  });
+
+  const history: InfiniteData<LootPageResponseDto> = {
+    pages: [page("a"), page("b"), page(null)],
+    pageParams: [FIRST_PAGE_CURSOR, "a", "b"],
   };
 
   for (const key of [activeKey, inactiveKey, otherKey])
     client.setQueryData(key, history);
 
-  const fetchPage = vi.fn(async ({ pageParam }: { pageParam: number }) => [
-    pageParam,
-  ]);
+  const fetchPage = vi.fn(async ({ pageParam }: { pageParam: string }) =>
+    page(pageParam || "first"),
+  );
 
   const observer = new InfiniteQueryObserver(client, {
     queryKey: activeKey,
     queryFn: fetchPage,
-    initialPageParam: 0,
-    getNextPageParam: () => 20,
+    initialPageParam: FIRST_PAGE_CURSOR,
+    getNextPageParam: (last: LootPageResponseDto) =>
+      last.nextCursor ?? undefined,
     staleTime: Infinity,
   });
 
@@ -61,16 +69,16 @@ it("reconciles one server page for active filters, preserves other organizations
   await reconcileActiveLootLists(client, "one");
   expect(fetchPage).toHaveBeenCalledTimes(1);
   expect(client.getQueryData(activeKey)).toEqual({
-    pages: [[0]],
-    pageParams: [0],
+    pages: [page("first")],
+    pageParams: [FIRST_PAGE_CURSOR],
   });
   expect(client.getQueryData(inactiveKey)).toEqual(history);
   expect(client.getQueryState(inactiveKey)?.isInvalidated).toBe(true);
   expect(client.getQueryState(otherKey)?.isInvalidated).toBe(false);
   await observer.fetchNextPage();
   expect(client.getQueryData(activeKey)).toEqual({
-    pages: [[0], [20]],
-    pageParams: [0, 20],
+    pages: [page("first"), page("first")],
+    pageParams: [FIRST_PAGE_CURSOR, "first"],
   });
   await vi.advanceTimersByTimeAsync(LOOTS_QUERY_GC_TIME_MS);
   expect(client.getQueryData(inactiveKey)).toBeUndefined();
@@ -85,11 +93,14 @@ it("reports server reconciliation failures rather than marking retained rows cur
 
   const observer = new InfiniteQueryObserver(client, {
     queryKey: ["/guilds/one/loots"],
-    initialData: { pages: [[]], pageParams: [0] },
-    queryFn: async () => {
+    initialData: {
+      pages: [{ items: [], nextCursor: null }],
+      pageParams: [FIRST_PAGE_CURSOR],
+    },
+    queryFn: async (): Promise<LootPageResponseDto> => {
       throw new Error("unavailable");
     },
-    initialPageParam: 0,
+    initialPageParam: FIRST_PAGE_CURSOR,
     getNextPageParam: () => undefined,
     staleTime: Infinity,
   });
@@ -175,15 +186,15 @@ it("places snapshots by id among loaded pages and leaves unread pages to paginat
     lootWith(100 - index),
   );
 
-  client.setQueryData<InfiniteData<Loot[]>>(key, {
-    pages: [fullPage],
-    pageParams: [0],
+  client.setQueryData<InfiniteData<LootPageResponseDto>>(key, {
+    pages: [{ items: fullPage, nextCursor: "next" }],
+    pageParams: [FIRST_PAGE_CURSOR],
   });
 
   const ids = () =>
     client
-      .getQueryData<InfiniteData<Loot[]>>(key)
-      ?.pages.flat()
+      .getQueryData<InfiniteData<LootPageResponseDto>>(key)
+      ?.pages.flatMap((page) => page.items)
       .map((loot) => loot.id);
 
   expect(applyLootSnapshots(client, "one", [lootWith(101), lootWith(90)])).toBe(
@@ -193,7 +204,7 @@ it("places snapshots by id among loaded pages and leaves unread pages to paginat
   // A redelivered loot replaces its entry.
   expect(ids()?.filter((id) => id === 90)).toEqual([90]);
 
-  // Older than the full last page: its page has not been read yet.
+  // Older than a last page with a next cursor: its page has not been read yet.
   applyLootSnapshots(client, "one", [lootWith(50)]);
   expect(ids()).not.toContain(50);
 });
@@ -203,10 +214,11 @@ it("patches loot lists while event pages cache plain loots under the same path",
   const listKey = ["/guilds/one/loots", { world: "tempest" }];
   const eventKey = ["/guilds/one/loots", { world: "tempest", npcs: ["Hero"] }];
 
-  client.setQueryData(eventKey, [lootWith(1)]);
-  client.setQueryData<InfiniteData<Loot[]>>(listKey, {
-    pages: [[lootWith(1)]],
-    pageParams: [0],
+  const eventPage = { items: [lootWith(1)], nextCursor: null };
+  client.setQueryData(eventKey, eventPage);
+  client.setQueryData<InfiniteData<LootPageResponseDto>>(listKey, {
+    pages: [{ items: [lootWith(1)], nextCursor: null }],
+    pageParams: [FIRST_PAGE_CURSOR],
   });
 
   const lootShare: Loot["lootShare"] = { "1": [] };
@@ -215,12 +227,12 @@ it("patches loot lists while event pages cache plain loots under the same path",
 
   expect(
     client
-      .getQueryData<InfiniteData<Loot[]>>(listKey)
-      ?.pages.flat()
+      .getQueryData<InfiniteData<LootPageResponseDto>>(listKey)
+      ?.pages.flatMap((page) => page.items)
       .map((loot) => [loot.id, loot.lootShare]),
   ).toEqual([
     [2, {}],
     [1, lootShare],
   ]);
-  expect(client.getQueryData(eventKey)).toEqual([lootWith(1)]);
+  expect(client.getQueryData(eventKey)).toEqual(eventPage);
 });

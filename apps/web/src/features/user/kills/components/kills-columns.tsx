@@ -4,11 +4,11 @@ import { SortableColumnHeader } from "@/components/ui/sortable-column-header";
 import { RankBadge } from "@/components/common/rank-badge";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import i18n from "@/i18n/config";
-import type { UserNpcKillsResponseDtoOutputNpcsItem } from "@lootlog/client/main";
+import type { UserNpcKillsResponseDtoOutputItemsItem } from "@lootlog/client/main";
 import type { sortingTableFeatures } from "@/lib/tanstack-table-features";
 import { formatNumber } from "@/lib/format-number";
 
-type NpcKill = UserNpcKillsResponseDtoOutputNpcsItem;
+type NpcKill = UserNpcKillsResponseDtoOutputItemsItem;
 
 export const createKillsColumns = (
   startRank: number,

@@ -42,16 +42,8 @@ describe("member-discord-sync-status", () => {
     expect(
       getTransientMemberSyncStatus(
         new DependencyUnavailableError({
-          message: MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE,
+          code: MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE,
         }),
-      ),
-    ).toBe(MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE);
-
-    expect(
-      getTransientMemberSyncStatus(
-        new DependencyUnavailableError(
-          MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE,
-        ),
       ),
     ).toBe(MEMBER_DISCORD_SYNC_STATUS.AUTH_SERVICE_UNAVAILABLE);
 
@@ -62,8 +54,8 @@ describe("member-discord-sync-status", () => {
 
   it("should not report a Discord refusal as a Discord outage", () => {
     const refusal = new DependencyUnavailableError({
-      message: "DISCORD_HTTP_ERROR",
-      status: 403,
+      code: "DISCORD_HTTP_ERROR",
+      details: { status: 403 },
     });
 
     expect(getTransientMemberSyncStatus(refusal)).toBe("DISCORD_HTTP_403");
@@ -72,8 +64,7 @@ describe("member-discord-sync-status", () => {
       isDiscordRefusalSyncStatus(
         getTransientMemberSyncStatus(
           new DependencyUnavailableError({
-            message: "DISCORD_SERVICE_UNAVAILABLE",
-            status: 502,
+            code: "DISCORD_SERVICE_UNAVAILABLE",
           }),
         ),
       ),

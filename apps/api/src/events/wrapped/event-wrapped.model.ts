@@ -1,3 +1,5 @@
+import type { MemberSummary } from "#src/contracts/shared";
+
 export interface EventWrappedRarityTotalsDto {
   unique: number;
   heroic: number;
@@ -5,9 +7,7 @@ export interface EventWrappedRarityTotalsDto {
 }
 
 export interface EventWrappedLeaderDto {
-  memberId: number;
-  name: string;
-  avatar: string | null;
+  member: MemberSummary;
   primaryValue: number;
   secondaryValue?: number | null;
 }

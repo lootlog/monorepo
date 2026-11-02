@@ -177,17 +177,11 @@ export const makeEventsCatalogRead = (
       guild: { id: string },
       accessPolicy: AccessPolicy,
       world?: string,
-      activeOnly?: string,
+      activeOnly = true,
       roles: Role[] = [],
-    ) => {
-      const normalizedWorld = world?.trim().toLowerCase();
-      const onlyActive = activeOnly !== "false";
-
-      return cached(
-        eventReadCacheEntry(guild.id, "guild", "list", {
-          activeOnly: onlyActive,
-          world: normalizedWorld,
-        }),
+    ) =>
+      cached(
+        eventReadCacheEntry(guild.id, "guild", "list", { activeOnly, world }),
         EventsListResponse,
         Effect.gen(function* () {
           const referenceTime = new Date(yield* Clock.currentTimeMillis);
@@ -200,10 +194,8 @@ export const makeEventsCatalogRead = (
               .where(
                 and(
                   eq(eventTable.guildId, guild.id),
-                  normalizedWorld
-                    ? eq(eventTable.world, normalizedWorld)
-                    : undefined,
-                  onlyActive ? activeEventCondition(referenceTime) : undefined,
+                  world ? eq(eventTable.world, world) : undefined,
+                  activeOnly ? activeEventCondition(referenceTime) : undefined,
                 ),
               )
               .orderBy(desc(eventTable.createdAt)),
@@ -230,8 +222,7 @@ export const makeEventsCatalogRead = (
         Effect.map((events) =>
           events.map((event) => filterEvent(event, roles, accessPolicy)),
         ),
-      );
-    },
+      ),
 
     getEvent: (
       guild: { id: string },

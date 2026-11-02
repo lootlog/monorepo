@@ -3,6 +3,7 @@ import { and, asc, desc, eq, gt, isNull, or, type SQL } from "drizzle-orm";
 import { Effect, Exit, Layer, Option, Schema } from "effect";
 import {
   GLOBAL_CHAT_PAGE_SIZE,
+  GLOBAL_CHAT_SEND_COOLDOWN_SECONDS,
   GlobalChatMessageSchema,
   type GlobalChatChannelUpdate,
   type GlobalChatMessage,
@@ -326,7 +327,10 @@ export const makeGlobalChatOperations = (
 
           if (!acquired)
             return yield* Effect.fail(
-              new GlobalChatRateLimited({ status: 429 }),
+              new GlobalChatRateLimited({
+                status: 429,
+                retryAfterMs: GLOBAL_CHAT_SEND_COOLDOWN_SECONDS * 1000,
+              }),
             );
 
           const worlds = yield* knownWorlds;

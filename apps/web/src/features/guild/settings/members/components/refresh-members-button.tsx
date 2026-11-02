@@ -3,7 +3,7 @@ import { useCountdown } from "@/hooks/utils/use-countdown";
 import { useRefreshJob } from "@/hooks/utils/use-refresh-job";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { getApiErrorMessage } from "@lootlog/client/transport";
+import { getApiErrorStringField } from "@lootlog/client/transport";
 import {
   getMembersControllerGetGuildMembersQueryKey,
   getMembersControllerGetLatestRefreshJobQueryKey,
@@ -56,9 +56,10 @@ export const RefreshMembersButton = () => {
         });
       },
       onError: (error, variables) => {
-        const message = getApiErrorMessage(error);
-
-        if (message === "BULK_REFRESH_RATE_LIMIT_ACTIVE") {
+        if (
+          getApiErrorStringField(error, "code") ===
+          "BULK_REFRESH_RATE_LIMIT_ACTIVE"
+        ) {
           const currentGuildId = variables?.pathParams.guildId;
 
           if (currentGuildId) {

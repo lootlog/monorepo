@@ -60,7 +60,7 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
       guildId: activeEventsGuildId,
     },
     {
-      activeOnly: "true",
+      activeOnly: true,
     },
     {
       query: {
