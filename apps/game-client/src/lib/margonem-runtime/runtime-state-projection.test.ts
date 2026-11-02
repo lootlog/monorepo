@@ -519,6 +519,38 @@ describe("RuntimeStateProjection", () => {
     expect(adapter.getOtherHandle).toHaveBeenCalledOnce();
   });
 
+  it("finds players the legacy interface creates on a later game tick", () => {
+    const adapter = createAdapter();
+    const projection = new RuntimeStateProjection({ adapter });
+    projection.bootstrap();
+
+    const create = (nick: string) => ({
+      account: 22,
+      action: "CREATE" as const,
+      icon: "other.gif",
+      lvl: 300,
+      nick,
+      prof: "w",
+      relation: 3,
+      x: 1,
+      y: 2,
+    });
+
+    // SI queues the packet in its load queue; the player does not exist yet.
+    adapter.getOtherHandle.mockReturnValue(undefined);
+    projection.apply(
+      createEnvelope({ other: { 11: create("Enemy"), 12: create("Gone") } }),
+    );
+    projection.apply(createEnvelope({ other: { 12: { del: 1 } } }));
+
+    const handle = { ...create("Enemy"), id: "11" };
+    adapter.getOtherHandle.mockImplementation((id) =>
+      id === "11" ? handle : undefined,
+    );
+
+    expect(runtimeOtherHandles.getAll()).toEqual({ 11: handle });
+  });
+
   it("replaces membership on map changes, applies deletions and rebuilds after cleanup", () => {
     const adapter = createAdapter();
     const projection = new RuntimeStateProjection({ adapter });
