@@ -55,7 +55,7 @@ export class ReadyRoomData extends Context.Service<
     ) => DataEffect;
     readonly create: (
       identity: ReadyRoomIdentity,
-      guildIds: ReadonlyArray<string>,
+      guildId: string,
       payload: CreatePartyGatheringRequest,
     ) => DataEffect;
     readonly active: (
@@ -204,11 +204,10 @@ export const createReadyRoom = Effect.fn("createReadyRoom")(function* (
   const current = yield* identity;
   const accessible = yield* accessibleGuildIds(current.discordId);
 
-  const guildIds = payload.guildIds.filter((guildId) =>
-    accessible.includes(guildId),
-  );
+  // The request schema guarantees exactly one of the two fields.
+  const guildId = payload.guildId ?? payload.guildIds?.[0];
 
-  if (guildIds.length === 0) {
+  if (guildId === undefined || !accessible.includes(guildId)) {
     return yield* new ReadyRoomAccessDenied({
       status: 403,
       code: "FORBIDDEN",
@@ -216,7 +215,7 @@ export const createReadyRoom = Effect.fn("createReadyRoom")(function* (
   }
 
   const value = yield* data((service) =>
-    service.create(current, guildIds, payload),
+    service.create(current, guildId, payload),
   );
 
   return yield* decode(PartyReadyRoomDomainResponse, value);

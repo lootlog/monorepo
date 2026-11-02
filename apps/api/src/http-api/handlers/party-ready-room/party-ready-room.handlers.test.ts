@@ -87,7 +87,7 @@ const provideServices = (
   );
 
 describe("Party Ready Room HttpApi handlers", () => {
-  it("creates a room only for visible Organizations and preserves projection TTL fields", async () => {
+  it("creates a room in the one requested Lootlog and preserves projection TTL fields", async () => {
     const calls: unknown[] = [];
 
     const layer = provideServices(
@@ -95,35 +95,66 @@ describe("Party Ready Room HttpApi handlers", () => {
       makeData({
         accessibleGuildIds: () =>
           Effect.succeed(["guild-visible", "guild-second"]),
-        create: (current, guildIds, payload) => {
-          calls.push({ current, guildIds, payload });
+        create: (current, guildId, payload) => {
+          calls.push({ current, guildId, payload });
 
           return Effect.succeed(projection);
         },
       }),
     );
 
-    const response = await Effect.runPromise(
-      createReadyRoom({
-        guildIds: ["guild-hidden", "guild-visible"],
-        world: "Fobos",
-        character,
-      }).pipe(Effect.provide(layer)),
-    );
+    for (const target of [
+      { guildId: "guild-visible" },
+      { guildIds: ["guild-visible"] },
+    ]) {
+      const response = await Effect.runPromise(
+        createReadyRoom({ ...target, world: "Fobos", character }).pipe(
+          Effect.provide(layer),
+        ),
+      );
+
+      expect(response.expiresAt).toBe("2026-09-02T12:30:00.000Z");
+      expect(Schema.is(PartyReadyRoomResponse)(response)).toBe(true);
+    }
 
     expect(calls).toEqual([
       {
         current: identity,
-        guildIds: ["guild-visible"],
-        payload: {
-          guildIds: ["guild-hidden", "guild-visible"],
-          world: "Fobos",
-          character,
-        },
+        guildId: "guild-visible",
+        payload: { guildId: "guild-visible", world: "Fobos", character },
+      },
+      {
+        current: identity,
+        guildId: "guild-visible",
+        payload: { guildIds: ["guild-visible"], world: "Fobos", character },
       },
     ]);
-    expect(response.expiresAt).toBe("2026-09-02T12:30:00.000Z");
-    expect(Schema.is(PartyReadyRoomResponse)(response)).toBe(true);
+  });
+
+  it("rejects a Lootlog the organizer cannot create gatherings in", async () => {
+    let dataCalled = false;
+
+    const layer = provideServices(
+      makeAuthorization(),
+      makeData({
+        create: () => {
+          dataCalled = true;
+
+          return Effect.succeed(projection);
+        },
+      }),
+    );
+
+    const error = await Effect.runPromise(
+      createReadyRoom({
+        guildId: "guild-hidden",
+        world: "Fobos",
+        character,
+      }).pipe(Effect.flip, Effect.provide(layer)),
+    );
+
+    expect(error).toMatchObject({ status: 403, code: "FORBIDDEN" });
+    expect(dataCalled).toBe(false);
   });
 
   it("fails closed before data access when identity authentication fails", async () => {

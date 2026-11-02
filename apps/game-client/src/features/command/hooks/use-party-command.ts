@@ -9,13 +9,13 @@ export const usePartyCommand = () => {
 
   const handlePartyCommand = async (
     description: string | undefined,
-    guildIds: string[],
+    guildId: string | undefined,
   ) => {
-    if (guildIds.length === 0 || !world) return;
+    if (!guildId || !world) return;
 
     try {
       await startPartyGathering({
-        guildIds,
+        guildId,
         world,
         description,
       });

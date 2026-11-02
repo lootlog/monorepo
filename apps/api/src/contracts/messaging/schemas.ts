@@ -55,7 +55,11 @@ export const SendNotificationRequest = Schema.Struct({
       Schema.isMaxLength(10).annotate({
         expected: "a value with a length of at most 10",
       }),
-    ),
+    )
+    .annotate({
+      description:
+        "Lootlogs (Discord guilds) that receive the notification. A party gathering (`isGatheringParty`) belongs to exactly one.",
+    }),
   world: NonEmptyString.check(
     Schema.isMaxLength(50).annotate({
       expected: "a value with a length of at most 50",
@@ -85,6 +89,13 @@ export const SendNotificationRequest = Schema.Struct({
       if (!notification.isGatheringParty) return undefined;
 
       const issues: Array<Schema.FilterIssue> = [];
+
+      if (notification.guildIds.length !== 1) {
+        issues.push({
+          path: ["guildIds"],
+          issue: "A party gathering belongs to exactly one Lootlog",
+        });
+      }
 
       if (notification.npc === undefined) {
         issues.push({

@@ -904,23 +904,78 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       rooms.find((room) => room.notificationId === "own-filtered")?.status,
     ).toBe("CANCELLED");
 
-    const created = await boundary.handler(
-      new Request("http://api.test/messaging/party-gathering", {
-        method: "POST",
-        headers: {
-          authorization: "Bearer test",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          guildIds: ["visible"],
-          world: base.world,
-          character: base.organizerCharacter,
+    // The organizer can now create gatherings in both Lootlogs.
+    await databaseBoundary.run(
+      databaseBoundary.database.insert(memberTable).values(
+        createMemberFixture({
+          id: 2,
+          guildId: "hidden",
+          userId: "owner",
+          globalUserId: "user",
         }),
+      ),
+    );
+    await databaseBoundary.run(
+      databaseBoundary.database.insert(roleTable).values({
+        id: "hidden-sender",
+        guildId: "hidden",
+        name: "Sender",
+        updatedAt: new Date(),
+        permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND],
       }),
     );
+    await databaseBoundary.run(
+      databaseBoundary.database
+        .insert(memberToRoleTable)
+        .values({ A: 2, B: "hidden-sender" }),
+    );
+
+    const createGathering = (
+      target: { guildId: string } | { guildIds: string[] },
+    ) =>
+      boundary.handler(
+        new Request("http://api.test/messaging/party-gathering", {
+          method: "POST",
+          headers: {
+            authorization: "Bearer test",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            ...target,
+            world: base.world,
+            character: base.organizerCharacter,
+          }),
+        }),
+      );
+
+    const roomCount = rooms.length;
+
+    const broadcast = await createGathering({
+      guildIds: ["visible", "hidden"],
+    });
+
+    expect(broadcast.status).toBe(400);
+    expect(rooms).toHaveLength(roomCount);
+    expect(gatheringEvents).toEqual([]);
+
+    const created = await createGathering({ guildId: "visible" });
 
     expect(created.status).toBe(201);
     const createdRoom = await created.json();
+    expect(createdRoom.guildIds).toEqual(["visible"]);
+    expect(
+      rooms.find((room) => room.notificationId === createdRoom.notificationId)
+        ?.guildIds,
+    ).toEqual(["visible"]);
+    expect(stateEvents.at(-1)).toMatchObject({
+      notificationId: createdRoom.notificationId,
+      guildId: "visible",
+    });
+    expect(
+      stateEvents.filter(
+        (event) => event.notificationId === createdRoom.notificationId,
+      ),
+    ).toHaveLength(1);
     expect(gatheringEvents).toEqual([
       {
         notificationId: createdRoom.notificationId,
