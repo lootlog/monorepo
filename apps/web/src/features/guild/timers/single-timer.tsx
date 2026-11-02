@@ -6,7 +6,7 @@ import {
 import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
 import { cn } from "cn";
 import { upperFirst } from "es-toolkit";
-import { Globe, User } from "lucide-react";
+import { DoorOpen, Globe, User } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import type { TimerResponseDto } from "@lootlog/client/main";
@@ -134,17 +134,24 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             </span>
             <span
               className={cn(
-                "shrink-0 text-[15px] leading-5 font-semibold tabular-nums",
+                "flex shrink-0 items-center gap-1 text-[15px] leading-5 font-semibold tabular-nums",
                 PHASE_TEXT_CLASS[phase],
               )}
             >
+              {phase === "entrance" && (
+                <DoorOpen
+                  aria-label={t("timers.entranceOpen")}
+                  role="img"
+                  className="size-4"
+                />
+              )}
               {parseMsToTime(getTimerCountdownMs(timeLeft, countdownMode))}
             </span>
           </button>
         }
       />
       <TooltipContent className="grid gap-2">
-        {timer.entranceClosesAt && (
+        {phase === "entrance" && timer.entranceClosesAt && (
           <div>
             <span className="block text-xs text-muted-foreground">
               {t("timers.details.entranceClosesAt")}

@@ -155,8 +155,12 @@ const withHeroTrackerType = (
     ]),
   );
 
-const withNewNpcTypes = (filters: StoredTimersFilters | undefined) =>
-  withHeroTrackerType(withEventHeroType(filters));
+// Each type joins stored filters once, in the version that introduced it; a
+// later choice to hide it stays.
+const withNewNpcTypes = (
+  filters: StoredTimersFilters | undefined,
+  version: number,
+) => withHeroTrackerType(version < 8 ? withEventHeroType(filters) : filters);
 
 export const DEFAULT_TIMERS_FILTERS: TimersFilters = {
   minLvl: 0,
@@ -549,14 +553,18 @@ export const useTimersStore = create<TimersState>()(
           return {
             ...persisted,
             timersFilters: {},
-            legacyTimersFilters: withNewNpcTypes(persisted.timersFilters) ?? {},
+            legacyTimersFilters:
+              withNewNpcTypes(persisted.timersFilters, version) ?? {},
           };
         }
 
         return {
           ...persisted,
-          timersFilters: withNewNpcTypes(persisted.timersFilters),
-          legacyTimersFilters: withNewNpcTypes(persisted.legacyTimersFilters),
+          timersFilters: withNewNpcTypes(persisted.timersFilters, version),
+          legacyTimersFilters: withNewNpcTypes(
+            persisted.legacyTimersFilters,
+            version,
+          ),
         };
       },
     },

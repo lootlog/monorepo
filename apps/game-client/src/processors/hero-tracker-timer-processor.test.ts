@@ -6,7 +6,6 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { queryClient } from "@/lib/query-client";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { useGameStore } from "@/store/game.store";
 import { HeroTrackerTimerProcessor } from "./hero-tracker-timer-processor";
 
 const configKey =
@@ -44,8 +43,9 @@ const createFixture = () => {
     map: { id: 3331, name: "Jaskinia Piaskowej Burzy s.1", visibility: 30 },
   });
 
+  // Margonem's NPC updates carry no pre-event game state in ingress.
   const ingress = {
-    game: useGameStore.getState().game,
+    game: null,
     intent: null,
     npcsById: {},
     othersById: {},

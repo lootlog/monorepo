@@ -17,6 +17,7 @@
   "npcType": {
     "manual": "Dodane ręcznie"
   },
+  "entranceOpen": "Wejście do kolosa otwarte, odliczanie do zamknięcia",
   "details": {
     "entranceClosesAt": "Wejście do kolosa otwarte do",
     "minSpawnTime": "Min. czas respawnu",

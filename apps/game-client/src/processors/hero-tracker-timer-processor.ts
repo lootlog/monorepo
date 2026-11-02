@@ -6,6 +6,7 @@ import type {
   RuntimeGameSnapshot,
   RuntimeIngressSnapshot,
 } from "@/lib/margonem-runtime/runtime.types";
+import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { getEntranceClosesAt } from "@/utils/game/hero-tracker-entrance";
 import { isHeroTrackerName } from "@lootlog/domain/npc-type";
@@ -30,7 +31,7 @@ type ClaimedTracker = {
 const findClaimedTracker = (
   npc: EventNpc,
   event: GameEvent,
-  ingress: RuntimeIngressSnapshot,
+  ingress: RuntimeIngressSnapshot | undefined,
 ): ClaimedTracker | null => {
   const entranceClosesAt = getEntranceClosesAt(npc.killSeconds, undefined);
 
@@ -39,7 +40,7 @@ const findClaimedTracker = (
   const template = event.npc_tpls?.find(({ id }) => id === npc.tpl);
 
   const known =
-    ingress.npcsById[npc.id] ?? useNpcsStore.getState().getNpc(npc.id);
+    ingress?.npcsById[npc.id] ?? useNpcsStore.getState().getNpc(npc.id);
 
   const name = template?.nick ?? known?.name;
   const level = template?.level ?? known?.level;
@@ -64,7 +65,9 @@ export class HeroTrackerTimerProcessor {
   private readonly reportedEntrances = new Map<number, number>();
 
   handle(event: GameEvent, ingress?: RuntimeIngressSnapshot): void {
-    const game = ingress?.game;
+    // Ingress captures the game only for packets that need its pre-event
+    // state; an NPC update reads the current one.
+    const game = ingress?.game ?? useGameStore.getState().game;
 
     if (!game || isSignedOut()) return;
 

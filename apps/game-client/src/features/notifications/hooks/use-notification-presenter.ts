@@ -3,7 +3,7 @@ import {
   isNotificationSettingsKey,
 } from "@/features/notifications/utils/get-notification-settings-key";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
-import { getHeroTrackerEntranceRemainingMs } from "@/features/notifications/utils/hero-tracker-notification";
+import { getHeroTrackerEntranceClosesAtMs } from "@/features/notifications/utils/hero-tracker-notification";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import {
   type NotificationPresentation,
@@ -45,28 +45,24 @@ export const useNotificationPresenter = () => {
           : undefined;
 
         const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
-        const configuredAutoHideMs = Math.max(0, autoHideTimeout * 1_000);
 
-        // A Hero Tracker report goes stale when its entrance closes.
-        const entranceRemainingMs =
+        // A report of an entrance that already closed is stale on arrival;
+        // the cleanup sweep removes an open one when it closes.
+        const entranceClosesAtMs =
           "heroTracker" in notification
-            ? getHeroTrackerEntranceRemainingMs(notification)
+            ? getHeroTrackerEntranceClosesAtMs(notification)
             : undefined;
 
-        if (entranceRemainingMs !== undefined && entranceRemainingMs <= 0) {
+        if (
+          entranceClosesAtMs !== undefined &&
+          entranceClosesAtMs <= Date.now()
+        ) {
           return [];
         }
 
-        const autoHideDurationMs =
-          entranceRemainingMs === undefined
-            ? configuredAutoHideMs
-            : configuredAutoHideMs === 0
-              ? entranceRemainingMs
-              : Math.min(configuredAutoHideMs, entranceRemainingMs);
-
         const presentation = {
           notification,
-          autoHideDurationMs,
+          autoHideDurationMs: Math.max(0, autoHideTimeout * 1_000),
         } satisfies NotificationPresentation;
 
         if (audible !== false && categorySettings?.sound) {
