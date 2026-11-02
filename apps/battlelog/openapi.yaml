@@ -2663,7 +2663,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BattleResponseDto_Output"
+                $ref: "#/components/schemas/PublicBattleResponseDto_Output"
         "401":
           description: ""
           content:
@@ -3491,6 +3491,739 @@ components:
         - battleId
         - timestamp
         - rawData
+    PublicBattleResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        public:
+          type: boolean
+        accountId:
+          type: string
+        characterId:
+          type: string
+        world:
+          type: string
+        duration:
+          type: number
+        type:
+          type: string
+        winner:
+          type: string
+        loser:
+          type: string
+        winningTeam:
+          type: number
+        losingTeam:
+          type: number
+        honorPoints:
+          type: number
+        hasFlee:
+          type: boolean
+        unfinished:
+          type: boolean
+        matchmaking:
+          type: boolean
+        statistics:
+          type: object
+          properties:
+            topDamageDealer:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            topTank:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            bestEfficiency:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            criticalMaster:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            evasionExpert:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            shieldWall:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            damagePerTurn:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            mostActive:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            legendaryWarrior:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+            untouchable:
+              nullable: true
+              type: object
+              properties:
+                warriorId:
+                  type: string
+                name:
+                  type: string
+                value:
+                  type: number
+                formattedValue:
+                  type: string
+              required:
+                - warriorId
+                - name
+                - value
+          required:
+            - topDamageDealer
+            - topTank
+            - bestEfficiency
+            - criticalMaster
+            - evasionExpert
+            - shieldWall
+            - damagePerTurn
+            - mostActive
+            - legendaryWarrior
+            - untouchable
+        difficultyRank:
+          nullable: true
+          type: number
+        result:
+          nullable: true
+          type: number
+        ratingDelta:
+          nullable: true
+          type: number
+        opponentLvl:
+          nullable: true
+          type: number
+        opponentOplvl:
+          nullable: true
+          type: number
+        opponentRating:
+          nullable: true
+          type: number
+        rating:
+          nullable: true
+          type: number
+        status:
+          nullable: true
+          type: number
+        pointsGained:
+          nullable: true
+          type: number
+        placementCur:
+          nullable: true
+          type: number
+        placementMax:
+          nullable: true
+          type: number
+        dailyStageId:
+          nullable: true
+          type: number
+        dailyPointsCur:
+          nullable: true
+          type: number
+        dailyPointsMax:
+          nullable: true
+          type: number
+        dailyPointsStep:
+          nullable: true
+          type: number
+        dailyRewardsLast:
+          nullable: true
+          type: number
+        dailyRewardsCur:
+          nullable: true
+          type: number
+        dailyRewardsMax:
+          nullable: true
+          type: number
+        warriors:
+          type: array
+          items:
+            type: object
+            properties:
+              battleId:
+                type: string
+              originalId:
+                type: string
+              name:
+                type: string
+              lvl:
+                type: number
+              prof:
+                type: string
+              icon:
+                type: string
+              team:
+                type: number
+              turns:
+                type: number
+              turnsLost:
+                type: number
+              steps:
+                type: number
+              normalAttacks:
+                type: number
+              spellsUsed:
+                type: number
+              spellsUsedMap:
+                type: object
+                additionalProperties:
+                  type: number
+              isDead:
+                type: boolean
+              surrendered:
+                type: boolean
+              fled:
+                type: boolean
+              maxHp:
+                type: number
+              damageDealt:
+                type: number
+              distanceDamage:
+                type: number
+              meleeDamage:
+                type: number
+              auxiliaryDamage:
+                type: number
+              fireDamage:
+                type: number
+              frostDamage:
+                type: number
+              lightningDamage:
+                type: number
+              thirdAttDamage:
+                type: number
+              damageDealtAfterDefensive:
+                type: number
+              damageDealtAfterDefensivePercentage:
+                type: number
+              damageTaken:
+                type: number
+              distanceDamageTaken:
+                type: number
+              meleeDamageTaken:
+                type: number
+              auxiliaryDamageTaken:
+                type: number
+              fireDamageTaken:
+                type: number
+              frostDamageTaken:
+                type: number
+              lightningDamageTaken:
+                type: number
+              thirdAttDamageTaken:
+                type: number
+              flatDamageTaken:
+                type: number
+              rageDamageDealt:
+                type: number
+              trueDamageDealt:
+                type: number
+              trueDamageTaken:
+                type: number
+              stigmaDamageDealt:
+                type: number
+              stigmaDamageTaken:
+                type: number
+              passiveHealing:
+                type: number
+              activeHealing:
+                type: number
+              armorPierces:
+                type: number
+              criticalHits:
+                type: number
+              reducedArmor:
+                type: number
+              reducedPoisonResistance:
+                type: number
+              magicResistanceDestroyed:
+                type: number
+              evasions:
+                type: number
+              attacksEvaded:
+                type: number
+              counters:
+                type: number
+              fastArrows:
+                type: number
+              blocks:
+                type: number
+              attacksBlocked:
+                type: number
+              blockedDamage:
+                type: number
+              woundDamageTaken:
+                type: number
+              poisonDamageTaken:
+                type: number
+              injureDamageTaken:
+                type: number
+              injures:
+                type: number
+              critWoundDamageTaken:
+                type: number
+              firePassiveDamageTaken:
+                type: number
+              lightningPassiveDamageTaken:
+                type: number
+              destroyedEnergy:
+                type: number
+              destroyedMana:
+                type: number
+              regeneratedEnergy:
+                type: number
+              regeneratedMana:
+                type: number
+              reflectedDamage:
+                type: number
+              reflectedDamageTaken:
+                type: number
+              legbons:
+                type: number
+              legbonCurse:
+                type: number
+              legbonCleanse:
+                type: number
+              legbonLastheal:
+                type: number
+              legbonLasthealValue:
+                type: number
+              legbonGlare:
+                type: number
+              legbonHolytouch:
+                type: number
+              legbonHolytouchValue:
+                type: number
+              legbonCritredValue:
+                type: number
+              legbonFacadeValue:
+                type: number
+              legbonPunctureValue:
+                type: number
+              legbonVerycrit:
+                type: number
+              legbonAnguish:
+                type: number
+              legbonAnguishDamageTaken:
+                type: number
+              ph:
+                type: number
+            required:
+              - battleId
+              - originalId
+              - name
+              - lvl
+              - prof
+              - icon
+              - team
+              - turns
+              - turnsLost
+              - steps
+              - normalAttacks
+              - spellsUsed
+              - spellsUsedMap
+              - isDead
+              - surrendered
+              - fled
+              - maxHp
+              - damageDealt
+              - distanceDamage
+              - meleeDamage
+              - auxiliaryDamage
+              - fireDamage
+              - frostDamage
+              - lightningDamage
+              - thirdAttDamage
+              - damageDealtAfterDefensive
+              - damageDealtAfterDefensivePercentage
+              - damageTaken
+              - distanceDamageTaken
+              - meleeDamageTaken
+              - auxiliaryDamageTaken
+              - fireDamageTaken
+              - frostDamageTaken
+              - lightningDamageTaken
+              - thirdAttDamageTaken
+              - flatDamageTaken
+              - rageDamageDealt
+              - trueDamageDealt
+              - trueDamageTaken
+              - stigmaDamageDealt
+              - stigmaDamageTaken
+              - passiveHealing
+              - activeHealing
+              - armorPierces
+              - criticalHits
+              - reducedArmor
+              - reducedPoisonResistance
+              - magicResistanceDestroyed
+              - evasions
+              - attacksEvaded
+              - counters
+              - fastArrows
+              - blocks
+              - attacksBlocked
+              - blockedDamage
+              - woundDamageTaken
+              - poisonDamageTaken
+              - injureDamageTaken
+              - injures
+              - critWoundDamageTaken
+              - firePassiveDamageTaken
+              - lightningPassiveDamageTaken
+              - destroyedEnergy
+              - destroyedMana
+              - regeneratedEnergy
+              - regeneratedMana
+              - reflectedDamage
+              - reflectedDamageTaken
+              - legbons
+              - legbonCurse
+              - legbonCleanse
+              - legbonLastheal
+              - legbonLasthealValue
+              - legbonGlare
+              - legbonHolytouch
+              - legbonHolytouchValue
+              - legbonCritredValue
+              - legbonFacadeValue
+              - legbonPunctureValue
+              - legbonVerycrit
+              - legbonAnguish
+              - legbonAnguishDamageTaken
+              - ph
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - public
+        - accountId
+        - characterId
+        - world
+        - duration
+        - type
+        - winner
+        - loser
+        - winningTeam
+        - losingTeam
+        - honorPoints
+        - hasFlee
+        - unfinished
+        - matchmaking
+        - statistics
+        - difficultyRank
+        - result
+        - ratingDelta
+        - opponentLvl
+        - opponentOplvl
+        - opponentRating
+        - rating
+        - status
+        - pointsGained
+        - placementCur
+        - placementMax
+        - dailyStageId
+        - dailyPointsCur
+        - dailyPointsMax
+        - dailyPointsStep
+        - dailyRewardsLast
+        - dailyRewardsCur
+        - dailyRewardsMax
+        - warriors
+    CharacterWeaponKillsResponseDto_Output:
+      type: object
+      properties:
+        weapons:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeaponKillsDto_Output"
+      required:
+        - weapons
+    WeaponKillsDto_Output:
+      type: object
+      properties:
+        itemId:
+          type: string
+        kills:
+          type: number
+      required:
+        - itemId
+        - kills
+    RecordWeaponKillsDto:
+      type: object
+      properties:
+        accountId:
+          type: string
+        characterId:
+          type: string
+        world:
+          type: string
+        weaponItemId:
+          type: string
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              party:
+                type: object
+                properties:
+                  members:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        account:
+                          type: number
+                        nick:
+                          type: string
+                        icon:
+                          type: string
+                        commander:
+                          type: number
+                      required:
+                        - id
+                        - account
+                        - nick
+                        - icon
+                required:
+                  - members
+              f:
+                type: object
+                properties:
+                  m:
+                    type: array
+                    items:
+                      type: string
+                  endBattle:
+                    type: number
+                  init:
+                    type: string
+                  auto:
+                    type: string
+                  w:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        originalId:
+                          type: number
+                        name:
+                          type: string
+                        lvl:
+                          type: number
+                        prof:
+                          type: string
+                        icon:
+                          type: string
+                        team:
+                          type: number
+                      required:
+                        - originalId
+                        - name
+                        - lvl
+                        - prof
+                        - icon
+                        - team
+              ev:
+                type: number
+              match_summary:
+                type: object
+                properties:
+                  difficulty_rank:
+                    type: number
+                  result:
+                    type: number
+                  rating_delta:
+                    type: number
+                  opponent_lvl:
+                    type: number
+                  opponent_oplvl:
+                    type: number
+                  opponent_rating:
+                    type: number
+                  rating:
+                    type: number
+                  status:
+                    type: number
+                  placement_cur:
+                    type: number
+                  placement_max:
+                    type: number
+                  points_gained:
+                    type: number
+                  daily_stage:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                      points_cur:
+                        type: number
+                      points_max:
+                        type: number
+                      points_step:
+                        type: number
+                      rewards_last:
+                        type: number
+                      rewards_cur:
+                        type: number
+                      rewards_max:
+                        type: number
+                    required:
+                      - id
+                      - points_cur
+                      - points_max
+                      - points_step
+                      - rewards_last
+                      - rewards_cur
+                      - rewards_max
+                required:
+                  - difficulty_rank
+                  - result
+                  - rating_delta
+                  - opponent_lvl
+                  - opponent_oplvl
+                  - opponent_rating
+                  - rating
+                  - status
+              matchmaking_state:
+                type: number
+            required:
+              - f
+          minItems: 1
+      required:
+        - accountId
+        - characterId
+        - world
+        - weaponItemId
+        - events
     BattleResponseDto_Output:
       type: object
       properties:
@@ -4058,175 +4791,6 @@ components:
         - dailyRewardsCur
         - dailyRewardsMax
         - warriors
-    CharacterWeaponKillsResponseDto_Output:
-      type: object
-      properties:
-        weapons:
-          type: array
-          items:
-            $ref: "#/components/schemas/WeaponKillsDto_Output"
-      required:
-        - weapons
-    WeaponKillsDto_Output:
-      type: object
-      properties:
-        itemId:
-          type: string
-        kills:
-          type: number
-      required:
-        - itemId
-        - kills
-    RecordWeaponKillsDto:
-      type: object
-      properties:
-        accountId:
-          type: string
-        characterId:
-          type: string
-        world:
-          type: string
-        weaponItemId:
-          type: string
-        events:
-          type: array
-          items:
-            type: object
-            properties:
-              party:
-                type: object
-                properties:
-                  members:
-                    type: object
-                    additionalProperties:
-                      type: object
-                      properties:
-                        id:
-                          type: number
-                        account:
-                          type: number
-                        nick:
-                          type: string
-                        icon:
-                          type: string
-                        commander:
-                          type: number
-                      required:
-                        - id
-                        - account
-                        - nick
-                        - icon
-                required:
-                  - members
-              f:
-                type: object
-                properties:
-                  m:
-                    type: array
-                    items:
-                      type: string
-                  endBattle:
-                    type: number
-                  init:
-                    type: string
-                  auto:
-                    type: string
-                  w:
-                    type: object
-                    additionalProperties:
-                      type: object
-                      properties:
-                        originalId:
-                          type: number
-                        name:
-                          type: string
-                        lvl:
-                          type: number
-                        prof:
-                          type: string
-                        icon:
-                          type: string
-                        team:
-                          type: number
-                      required:
-                        - originalId
-                        - name
-                        - lvl
-                        - prof
-                        - icon
-                        - team
-              ev:
-                type: number
-              match_summary:
-                type: object
-                properties:
-                  difficulty_rank:
-                    type: number
-                  result:
-                    type: number
-                  rating_delta:
-                    type: number
-                  opponent_lvl:
-                    type: number
-                  opponent_oplvl:
-                    type: number
-                  opponent_rating:
-                    type: number
-                  rating:
-                    type: number
-                  status:
-                    type: number
-                  placement_cur:
-                    type: number
-                  placement_max:
-                    type: number
-                  points_gained:
-                    type: number
-                  daily_stage:
-                    type: object
-                    properties:
-                      id:
-                        type: number
-                      points_cur:
-                        type: number
-                      points_max:
-                        type: number
-                      points_step:
-                        type: number
-                      rewards_last:
-                        type: number
-                      rewards_cur:
-                        type: number
-                      rewards_max:
-                        type: number
-                    required:
-                      - id
-                      - points_cur
-                      - points_max
-                      - points_step
-                      - rewards_last
-                      - rewards_cur
-                      - rewards_max
-                required:
-                  - difficulty_rank
-                  - result
-                  - rating_delta
-                  - opponent_lvl
-                  - opponent_oplvl
-                  - opponent_rating
-                  - rating
-                  - status
-              matchmaking_state:
-                type: number
-            required:
-              - f
-          minItems: 1
-      required:
-        - accountId
-        - characterId
-        - world
-        - weaponItemId
-        - events
     UpdateBattleDto:
       type: object
       properties:

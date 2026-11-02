@@ -1,4 +1,5 @@
-import type { Battle, BattleWarrior } from "@/lib/api/battlelog-types";
+import type { BattleResponseDtoOutput } from "@lootlog/client/battlelog";
+import type { BattleWarrior } from "@/lib/api/battlelog-types";
 
 export const createBattleWarrior = (
   overrides: Partial<BattleWarrior> = {},
@@ -89,7 +90,9 @@ export const createBattleWarrior = (
   ...overrides,
 });
 
-export const createBattle = (overrides: Partial<Battle> = {}): Battle => ({
+export const createBattle = (
+  overrides: Partial<BattleResponseDtoOutput> = {},
+): BattleResponseDtoOutput => ({
   id: "battle-1",
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",

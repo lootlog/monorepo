@@ -837,11 +837,12 @@ describe("battle creation deduplication", () => {
     expect(serialized).not.toContain("statsVersion");
     expect(serialized).not.toContain('"stats":');
 
-    const battle = Schema.decodeUnknownSync(BattleResponseSchemas.battle)(
+    const battle = Schema.decodeUnknownSync(BattleResponseSchemas.publicBattle)(
       JSON.parse(serialized),
     );
 
     expect(battle.id).toBe(body.battleId);
+    expect(JSON.parse(serialized)).not.toHaveProperty("userId");
     expect(battle.warriors).toHaveLength(2);
 
     const rawResponse = await app.handler(

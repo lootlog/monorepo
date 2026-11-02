@@ -13,12 +13,14 @@ import type {
   AbyssSeasonResponseDtoOutput,
   HeadToHeadPaginatedResponseDtoOutputRecordsItem,
   PlayerVsPlayerPaginatedResponseDtoOutputBattlesItem,
+  PublicBattleResponseDtoOutput,
   StreakResponseDtoOutput,
 } from "@lootlog/client/battlelog";
 
 export type Battle =
   | BattleResponseDtoOutput
-  | BattlesListResponseDtoOutputBattlesItem;
+  | BattlesListResponseDtoOutputBattlesItem
+  | PublicBattleResponseDtoOutput;
 
 export type BattleWarrior =
   | BattleResponseDtoOutputWarriorsItem

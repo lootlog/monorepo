@@ -1,5 +1,6 @@
 /** Shared transport definitions for the battlelog HTTP contract. */
 import * as Schema from "effect/Schema";
+import * as Struct from "effect/Struct";
 import { DateTimeString, FiniteNumber } from "@lootlog/schema/http-scalars";
 
 const BattleWarriorResponse = Schema.Struct({
@@ -227,6 +228,14 @@ export type BattleResponseDto_Output = typeof BattleResponseDto_Output.Type;
 export const BattleResponseDto_Output = Schema.Struct(
   BattleResponseFields,
 ).annotate({ identifier: "BattleResponseDto_Output" });
+
+export type PublicBattleResponseDto_Output =
+  typeof PublicBattleResponseDto_Output.Type;
+
+export const PublicBattleResponseDto_Output =
+  BattleResponseDto_Output.mapFields(Struct.omit(["userId"])).annotate({
+    identifier: "PublicBattleResponseDto_Output",
+  });
 
 export type BattleRawResponseDto_Output =
   typeof BattleRawResponseDto_Output.Type;

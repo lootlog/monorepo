@@ -1156,6 +1156,52 @@ const normalizeForeignThemeSelection = (
     ? removeResponseStatus(operation, "404")
     : operation;
 
+// Public battle links stopped returning the uploader's userId, which no
+// public consumer reads. Verified by the
+// public battle case in apps/battlelog/src/battles/submission/battle-creation.test.ts.
+const normalizePublicBattleWithoutUploader = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+  schemas?: Record<string, JsonValue>,
+): JsonValue => {
+  if (
+    service !== "battlelog" ||
+    operationKey !== "GET /battles/public/{battleId}"
+  )
+    return operation;
+
+  const battle = schemas?.["BattleResponseDto_Output"];
+  const publicBattle = schemas?.["PublicBattleResponseDto_Output"];
+
+  if (!isJsonObject(battle) || !isJsonObject(publicBattle))
+    throw new Error("Public battle response schemas are missing");
+
+  const properties = battle["properties"];
+  const required = battle["required"];
+
+  if (!isJsonObject(properties) || !Array.isArray(required))
+    throw new Error("BattleResponseDto_Output contract changed");
+
+  const { userId: _userId, ...publicProperties } = properties;
+
+  if (
+    !sameOpenApiContract(publicBattle, {
+      ...battle,
+      properties: publicProperties,
+      required: required.filter((field) => field !== "userId"),
+    })
+  )
+    throw new Error("PublicBattleResponseDto_Output contract changed");
+
+  return JSON.parse(
+    JSON.stringify(operation).replace(
+      '"#/components/schemas/PublicBattleResponseDto_Output"',
+      '"#/components/schemas/BattleResponseDto_Output"',
+    ),
+  );
+};
+
 export const normalizeAllowedChanges = (
   service: string,
   operationKey: string,
@@ -1202,6 +1248,13 @@ export const normalizeAllowedChanges = (
   if (service === "api" && operationKey === "GET /guilds/@me/manageable") {
     normalized = normalizeManageableOrganizationResponse(normalized, schemas);
   }
+
+  normalized = normalizePublicBattleWithoutUploader(
+    service,
+    operationKey,
+    normalized,
+    schemas,
+  );
 
   if (service === "api") normalized = removePresencePermission(normalized);
   normalized = normalizeErrorResponseMigrations(

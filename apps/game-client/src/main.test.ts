@@ -54,7 +54,7 @@ describe("game client startup", () => {
     const second = bootstrapGameClient();
     expect(first).toBe(second);
     expect(window.lootlogGameClientApi).toBe(publicApi);
-    expect(publicApi?.apiVersion).toBe(1);
+    expect(publicApi?.apiVersion).toBe(2);
     expect(createRoot).toHaveBeenCalledOnce();
     expect(document.querySelectorAll("#lootlog-root")).toHaveLength(1);
     queryClient.setQueryData(["private-test"], { secret: "old session" });
@@ -76,7 +76,7 @@ describe("game client startup", () => {
     const restarted = bootstrapGameClient();
     expect(restarted).not.toBe(first);
     expect(createRoot).toHaveBeenCalledTimes(2);
-    expect(window.lootlogGameClientApi?.apiVersion).toBe(1);
+    expect(window.lootlogGameClientApi?.apiVersion).toBe(2);
   });
 
   it("disposes an older version before starting the current one", () => {
