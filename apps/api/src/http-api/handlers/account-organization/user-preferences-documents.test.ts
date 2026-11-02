@@ -88,3 +88,38 @@ test("legacy preference routes write settings documents", async () => {
     await boundary.dispose();
   }
 });
+
+test("a legacy hero change keeps event heroes following the hero settings", async () => {
+  const { boundary, data, run } = await setup();
+
+  try {
+    await run(
+      data.updateUserGameAccountPreferences(identity.userId, "account-1", {
+        detector: { HERO: { autoSend: true } },
+        notifications: { HERO: { sound: true } },
+      }),
+    );
+
+    await run(
+      data.updateUserGameAccountPreferences(identity.userId, "account-1", {
+        detector: { HERO: { detect: false } },
+        notifications: { HERO: { show: false } },
+      }),
+    );
+
+    const game = await run(
+      data.getUserGameAccountPreferences(identity.userId, "account-1"),
+    );
+
+    expect(game.detector.EVENT_HERO).toMatchObject({
+      detect: false,
+      autoSend: true,
+    });
+    expect(game.notifications.EVENT_HERO).toMatchObject({
+      show: false,
+      sound: true,
+    });
+  } finally {
+    await boundary.dispose();
+  }
+});

@@ -8,6 +8,7 @@ import type { GuildMember } from "@/types/guild-member";
 export type TimerWithTimeLeft = Timer & {
   maxTimeLeft: number;
   minTimeLeft: number;
+  entranceTimeLeft?: number;
   members?: GuildMember[];
   mergedGuildIds?: Array<{
     guildId: string;

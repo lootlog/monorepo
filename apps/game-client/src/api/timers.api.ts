@@ -36,7 +36,7 @@ type CreateTimerOptions = {
   world: string;
   customMinSpawnTime?: Date;
   customMaxSpawnTime?: Date;
-  entranceClosesAt?: Date;
+  entranceSecondsLeft?: number;
   npc: CreateTimerNpc;
   actorCharacter?: ReturnType<typeof buildCurrentTimerActorCharacterPayload>;
 };
@@ -64,8 +64,8 @@ export function createAutoTimer(
     ...(timer.customMaxSpawnTime && {
       customMaxSpawnTime: timer.customMaxSpawnTime.toISOString(),
     }),
-    ...(timer.entranceClosesAt && {
-      entranceClosesAt: timer.entranceClosesAt.toISOString(),
+    ...(timer.entranceSecondsLeft !== undefined && {
+      entranceSecondsLeft: timer.entranceSecondsLeft,
     }),
   } satisfies CreateTimerFromGameClientDto;
 

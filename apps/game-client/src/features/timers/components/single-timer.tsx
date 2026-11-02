@@ -1,4 +1,5 @@
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
+import { canResetTimerNpc } from "@lootlog/domain/timers";
 import { openContextMenuOnKeyDown } from "@/components/ui/context-menu";
 import { TooltipTrigger } from "@/components/ui/tooltip";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
@@ -66,7 +67,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const canDelete =
     accessPolicy?.allowsAny(REQUIRED_DELETE_PERMISSIONS) ?? false;
 
-  const canReset = accessPolicy?.allowsAny(REQUIRED_RESET_PERMISSIONS) ?? false;
+  const canReset =
+    canResetTimerNpc(timer.npc) &&
+    (accessPolicy?.allowsAny(REQUIRED_RESET_PERMISSIONS) ?? false);
 
   const {
     isPinned,

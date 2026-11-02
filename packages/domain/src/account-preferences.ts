@@ -168,11 +168,11 @@ export const normalizeNotifications = flow(
       )(settings?.[type]);
     }
 
-    // Event heroes were notified as heroes; until a player sets them apart
-    // they keep the hero settings that player chose.
-    if (settings?.EVENT_HERO === undefined) {
-      normalized.EVENT_HERO = { ...normalized.HERO };
-    }
+    // Event heroes were notified as heroes; every field a player has not set
+    // apart keeps the hero setting that player chose.
+    normalized.EVENT_HERO = normalizeNotification(normalized.HERO)(
+      settings?.EVENT_HERO,
+    );
 
     return normalized;
   },
@@ -283,11 +283,11 @@ export const normalizeDetector = flow(
       );
     }
 
-    // Event heroes were detected as heroes; until a player sets them apart
-    // they keep the hero settings that player chose.
-    if (settings?.EVENT_HERO === undefined) {
-      normalized.EVENT_HERO = { ...normalized.HERO };
-    }
+    // Event heroes were detected as heroes; every field a player has not set
+    // apart keeps the hero setting that player chose.
+    normalized.EVENT_HERO = normalizeDetectorType(normalized.HERO)(
+      settings?.EVENT_HERO,
+    );
 
     return normalized;
   },

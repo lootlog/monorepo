@@ -25,7 +25,11 @@ import { useViewMode } from "@/hooks/use-view-mode";
 import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { getTimersControllerGetTimersQueryKey } from "@lootlog/client/main";
-import { getTimerPhase, getTimerTimeLeft } from "@lootlog/domain/timers";
+import {
+  getTimerPhase,
+  getTimerSortTimeLeft,
+  getTimerTimeLeft,
+} from "@lootlog/domain/timers";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useGuildTimers } from "./use-guild-timers";
 import { useTimerDisplaySettings } from "./use-timer-display-settings";
@@ -91,14 +95,14 @@ export const Timers = () => {
 
       return {
         timer,
-        maxTimeLeft: timeLeft.maxTimeLeft,
+        sortTimeLeft: getTimerSortTimeLeft(timeLeft),
         isKept: getTimerPhase(timeLeft, removeTimerAfterMs) === "expired",
       };
     }),
     [
       ({ timer }) => getNpcTypeSortIndex(timer.npc?.type),
       ({ isKept }) => (isKept ? 1 : 0),
-      ({ isKept, maxTimeLeft }) => (isKept ? -maxTimeLeft : maxTimeLeft),
+      ({ isKept, sortTimeLeft }) => (isKept ? -sortTimeLeft : sortTimeLeft),
     ],
   ).map(({ timer }) => timer);
 

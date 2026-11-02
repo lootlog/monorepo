@@ -4,6 +4,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
+import { activityFeedNpcCategory } from "@lootlog/domain/activity-feed";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { getNpcType } from "@lootlog/domain/npc-type";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
@@ -364,12 +365,7 @@ export const makeKillCreation = (
                     ...descriptive(input),
                   },
                 }),
-              ...(new Set<NpcType>([
-                NpcType.ELITE2,
-                NpcType.HERO,
-                NpcType.COLOSSUS,
-                NpcType.TITAN,
-              ]).has(input.npcType)
+              ...(activityFeedNpcCategory(input.npcType) !== "OTHER"
                 ? [
                     transaction.insert(guildKillActivityTable).values({
                       id: randomUUID(),

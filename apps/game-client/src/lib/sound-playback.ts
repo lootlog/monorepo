@@ -1,4 +1,4 @@
-import { getDefaultSoundUrl } from "@/features/settings/config/default-sounds";
+import { resolveSoundUrl } from "@/features/settings/config/default-sounds";
 import { readSoundSettings } from "@/features/settings/persistence/use-sound-settings";
 import {
   disposeSoundPlayback,
@@ -30,13 +30,10 @@ export function playSound(
 
   if (soundsMuted || masterVolume === 0 || categoryVolume === 0) return;
 
-  const soundConfig =
-    category === "pings" ? undefined : settings[`${category}Config`]?.[key];
-
-  const soundUrl =
-    soundConfig?.soundUrl === "" || !soundConfig?.soundUrl
-      ? getDefaultSoundUrl(key)
-      : soundConfig.soundUrl;
+  const soundUrl = resolveSoundUrl(
+    category === "pings" ? undefined : settings[`${category}Config`],
+    key,
+  );
 
   if (!soundUrl) return;
 

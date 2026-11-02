@@ -133,6 +133,31 @@ type StoredGamePreferences = {
   airTags?: unknown;
 };
 
+/**
+ * Normalized preferences carry event hero settings copied from the hero ones.
+ * Storing that copy would stop event heroes from following later hero changes,
+ * so it is written only once event heroes were set apart before or now.
+ */
+const withoutInheritedEventHero = <TSettings extends { EVENT_HERO: unknown }>(
+  settings: TSettings,
+  stored: StoredGamePreferences,
+  domain: "detector" | "notifications",
+  patch: { readonly EVENT_HERO?: unknown } | undefined,
+) => {
+  const storedSettings = stored[domain];
+
+  if (
+    (isObjectRecord(storedSettings) &&
+      storedSettings.EVENT_HERO !== undefined) ||
+    patch?.EVENT_HERO !== undefined
+  )
+    return settings;
+
+  const { EVENT_HERO: _inherited, ...rest } = settings;
+
+  return rest;
+};
+
 const hasStoredSource = (
   resolution: SettingsDomainResolution | undefined,
   path: string,
@@ -530,9 +555,21 @@ export const makeUserPreferencesData = (
     const stored = yield* readGamePreferences(userId, accountId);
     const current = gamePreferencesResponse(accountId, stored);
 
-    const { notifications, detector, pings, airTags } = patchGamePreferences(
-      current,
-      payload,
+    const patched = patchGamePreferences(current, payload);
+    const { pings, airTags } = patched;
+
+    const storedDetector = withoutInheritedEventHero(
+      patched.detector,
+      stored,
+      "detector",
+      payload.detector,
+    );
+
+    const storedNotifications = withoutInheritedEventHero(
+      patched.notifications,
+      stored,
+      "notifications",
+      payload.notifications,
     );
 
     const hasStoredNotifications =
@@ -550,7 +587,8 @@ export const makeUserPreferencesData = (
     const accountScope = { type: "GAME_ACCOUNT", id: accountId } as const;
     const gameDataSet: Record<string, JsonValue> = {};
 
-    if (payload.detector !== undefined) gameDataSet.detector = toJson(detector);
+    if (payload.detector !== undefined)
+      gameDataSet.detector = toJson(storedDetector);
 
     if (payload.pings !== undefined) gameDataSet.pings = toJson(pings);
 
@@ -570,7 +608,7 @@ export const makeUserPreferencesData = (
       operations.push({
         domain: "notifications",
         scope: accountScope,
-        set: { presentation: toJson(notifications) },
+        set: { presentation: toJson(storedNotifications) },
         unset: [],
       });
     }
@@ -581,8 +619,8 @@ export const makeUserPreferencesData = (
 
     return {
       accountId,
-      notifications,
-      detector,
+      notifications: normalizeNotifications(storedNotifications),
+      detector: normalizeDetector(storedDetector),
       pings,
       airTags,
       hasStoredNotifications,

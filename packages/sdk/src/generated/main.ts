@@ -1790,7 +1790,12 @@ export interface CreateTimerFromGameClientDto {
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   customMaxSpawnTime?: string;
   /**
-     * When the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from it instead of from the request.
+     * Seconds left until the open entrance of a Hero Tracker closes, from its in-game countdown. The respawn window is measured from the close time on the server clock instead of from the request.
+     * @exclusiveMinimum 0
+     */
+  entranceSecondsLeft?: number;
+  /**
+     * Deprecated: send `entranceSecondsLeft`. When the open entrance of a Hero Tracker closes, on the reporter's clock; ignored when `entranceSecondsLeft` is present.
      * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
      */
   entranceClosesAt?: string;

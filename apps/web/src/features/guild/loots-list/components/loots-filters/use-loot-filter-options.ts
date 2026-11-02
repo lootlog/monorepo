@@ -72,7 +72,7 @@ export function useLootFilterOptions() {
       label: t("loots.filtersPanel.quickFilters.heroLabel"),
       category: t("loots.filtersPanel.quickFilters.npcCategory"),
       filters: {
-        npcTypes: [NpcType.HERO],
+        npcTypes: [NpcType.HERO, NpcType.EVENT_HERO],
       },
       isDefault: true,
     },
