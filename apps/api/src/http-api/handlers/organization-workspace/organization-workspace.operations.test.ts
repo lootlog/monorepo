@@ -1,3 +1,4 @@
+import { AccessRequirement } from "@lootlog/domain/access-policy";
 import {
   ReservationBoundary,
   MyReservationsBoundary,
@@ -251,7 +252,6 @@ describe("Reservations and Roles HttpApi handlers", () => {
         guildId: "guild-a",
         userId: identity.userId,
         discordId: identity.discordId,
-        actorIsOwner: true,
         permissions: guildAccess.permissions,
       },
     ]);
@@ -333,7 +333,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
     const layer = provideServices(
       makeAuthorization({
         requireGuild: (options) => {
-          authorizationCalls.push(options.allOf);
+          authorizationCalls.push(options.anyOf);
 
           return Effect.succeed(guildAccess);
         },
@@ -356,9 +356,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
       }).pipe(Effect.provide(layer)),
     );
 
-    expect(authorizationCalls).toEqual([
-      [Permission.LOOTLOG_ACCESS, Permission.ADMIN],
-    ]);
+    expect(authorizationCalls).toEqual([AccessRequirement.ADMINISTER]);
     expect(updateCalls).toEqual([
       {
         discordId: identity.discordId,
@@ -432,7 +430,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
     expect(authorizationCalls).toEqual([
       {
         guildId: "guild-alias",
-        anyOf: [Permission.OWNER, Permission.ADMIN],
+        anyOf: AccessRequirement.ADMINISTER,
       },
     ]);
     expect(guildIds).toEqual(["guild-a"]);

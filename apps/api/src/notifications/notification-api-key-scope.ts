@@ -6,11 +6,8 @@ import {
   notificationJobTable,
   notificationRuleTable,
 } from "#src/database/drizzle/schema";
-import { selectAccessibleGuilds } from "#src/members/member-access-query";
-import {
-  requestApiKeyAccess,
-  requestScopedIdentity,
-} from "#src/runtime/auth/forward-auth-identity";
+import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
+import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import { parseNotificationFilters } from "./rules/notification-matching.service.js";
 import { notificationLootSourceCondition } from "./notification-loot-source-visibility.js";
@@ -19,15 +16,6 @@ type RuleScope = Pick<
   typeof notificationRuleTable.$inferSelect,
   "id" | "guildId" | "triggerType" | "filters" | "name"
 >;
-
-export const notificationApiKeyOrganizations = (database: ApiDatabaseValue) =>
-  Effect.gen(function* () {
-    if (!(yield* requestApiKeyAccess)) return undefined;
-    const identity = yield* requestScopedIdentity;
-    const guilds = yield* selectAccessibleGuilds(database, identity.discordId);
-
-    return guilds.map(({ guild }) => guild);
-  });
 
 function notificationRuleInApiKeyScope(
   rule: RuleScope,
@@ -87,7 +75,7 @@ export const requireNotificationRuleApiKeyScope = (
   rule: RuleScope,
 ) =>
   Effect.gen(function* () {
-    const guilds = yield* notificationApiKeyOrganizations(database);
+    const guilds = yield* apiKeyAccessibleGuilds(database);
 
     const allowed = yield* notificationRulesInApiKeyScope(
       database,
@@ -108,7 +96,7 @@ export const notificationJobVisibilityFilter = (
   ownerDiscordId?: string,
 ) =>
   Effect.gen(function* () {
-    const guilds = yield* notificationApiKeyOrganizations(database);
+    const guilds = yield* apiKeyAccessibleGuilds(database);
 
     if (!guilds) {
       if (ownerDiscordId === undefined) return undefined;

@@ -4,11 +4,11 @@ import {
   statusCodeResponse,
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
-import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
-  Permission,
-  type Permission as PermissionValue,
-} from "@lootlog/schema/permissions";
+  AccessRequirement,
+  type AccessPolicy,
+} from "@lootlog/domain/access-policy";
+import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 import { Context, Effect, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 
@@ -177,7 +177,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
         guildId !== undefined
           ? authorization.requireGuild({
               guildId,
-              capabilities: [Permission.OWNER, Permission.ADMIN],
+              capabilities: AccessRequirement.ADMINISTER,
               mode: "any",
             })
           : Effect.fail(

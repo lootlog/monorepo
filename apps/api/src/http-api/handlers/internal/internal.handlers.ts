@@ -10,14 +10,14 @@ import {
 } from "#src/members/user-guild-permissions";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
-import { and, eq, isNotNull } from "drizzle-orm";
 
 import { HttpApiBuilder } from "effect/http-api";
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
-import { memberTable, type guildTable } from "#src/database/drizzle/schema";
+import type { guildTable } from "#src/database/drizzle/schema";
+import { findActiveGuildMember } from "#src/members/member-access-query";
 
 import { OrganizationSummary } from "#src/contracts/shared";
 import {
@@ -126,28 +126,13 @@ export class InternalGuildsData extends Context.Service<
           findActiveGuild: (idOrVanityUrl) =>
             findActiveGuild(database, idOrVanityUrl),
           findActiveMemberIdentity: (guildId, discordId) =>
-            database
-              .select({
-                userId: memberTable.globalUserId,
-                memberId: memberTable.id,
-              })
-              .from(memberTable)
-              .where(
-                and(
-                  eq(memberTable.guildId, guildId),
-                  eq(memberTable.userId, discordId),
-                  eq(memberTable.active, true),
-                  isNotNull(memberTable.globalUserId),
-                ),
-              )
-              .limit(1)
-              .pipe(
-                Effect.map(([row]) =>
-                  row?.userId
-                    ? { userId: row.userId, memberId: row.memberId }
-                    : null,
-                ),
+            findActiveGuildMember(database, discordId, guildId).pipe(
+              Effect.map((member) =>
+                member?.globalUserId
+                  ? { userId: member.globalUserId, memberId: member.id }
+                  : null,
               ),
+            ),
           ...makeUserGuildPermissionsPersistence(database),
         };
 

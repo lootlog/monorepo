@@ -22,16 +22,17 @@ import { DomainDateTime } from "#src/shared/schema/response-codecs";
 
 import { LootlogApi } from "../../lootlog-api.js";
 import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
+import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
 
 export type ChatIdentity = {
   readonly userId: string;
   readonly discordId: string;
 };
 
-export type ChatGuildAccess = ChatIdentity & {
-  readonly guildId: string;
-  readonly permissions: ReadonlyArray<PermissionValue>;
-};
+export type ChatGuildAccess = ChatIdentity &
+  ChatMessageViewer & {
+    readonly guildId: string;
+  };
 
 export class ChatAccessDenied extends TaggedErrorClass<ChatAccessDenied>()(
   "ChatAccessDenied",
@@ -65,15 +66,21 @@ type DataEffect = Effect.Effect<unknown, ChatOperationError>;
 export class ChatData extends Context.Service<
   ChatData,
   {
-    readonly getMessages: (discordId: string, guildId: string) => DataEffect;
+    readonly getMessages: (
+      viewer: ChatMessageViewer,
+      guildId: string,
+    ) => DataEffect;
     readonly sendMessage: (
       discordId: string,
       guildId: string,
       payload: SendChatMessageRequest,
     ) => DataEffect;
-    readonly clearMessages: (discordId: string, guildId: string) => DataEffect;
+    readonly clearMessages: (
+      viewer: ChatMessageViewer,
+      guildId: string,
+    ) => DataEffect;
     readonly deleteMessage: (
-      discordId: string,
+      viewer: ChatMessageViewer,
       guildId: string,
       messageId: string,
     ) => DataEffect;
@@ -137,7 +144,7 @@ export const getChatMessages = Effect.fn("getChatMessages")(function* (
   const access = yield* requireGuild(guildId, readCapabilities);
 
   const value = yield* data((service) =>
-    service.getMessages(access.discordId, access.guildId),
+    service.getMessages(access, access.guildId),
   );
 
   return yield* decode(ChatMessagesDomainResponse, value);
@@ -162,7 +169,7 @@ export const clearChatMessages = Effect.fn("clearChatMessages")(function* (
   const access = yield* requireGuild(guildId, writeCapabilities);
 
   const value = yield* data((service) =>
-    service.clearMessages(access.discordId, access.guildId),
+    service.clearMessages(access, access.guildId),
   );
 
   return yield* decode(ChatMessageActionResponse, value);
@@ -175,7 +182,7 @@ export const deleteChatMessage = Effect.fn("deleteChatMessage")(function* (
   const access = yield* requireGuild(guildId, writeCapabilities);
 
   const value = yield* data((service) =>
-    service.deleteMessage(access.discordId, access.guildId, messageId),
+    service.deleteMessage(access, access.guildId, messageId),
   );
 
   return yield* decode(ChatMessageActionResponse, value);

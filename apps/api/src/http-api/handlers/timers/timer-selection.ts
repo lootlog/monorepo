@@ -1,6 +1,6 @@
 import { activeEventCondition } from "#src/events/event-scope-query";
 import { and, eq, or } from "drizzle-orm";
-import { Capability } from "@lootlog/domain/access-policy";
+import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { canViewNpcTimer } from "@lootlog/domain/npc-permissions";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import { timerNpcField, parseTimerNpc } from "#src/timers/timer-projection";
@@ -16,7 +16,7 @@ export const canViewTimer = (
   access: Pick<TimersGuildAccess, "accessPolicy" | "roles">,
   timer: Pick<typeof timerTable.$inferSelect, "npc">,
 ) =>
-  access.accessPolicy.allows(Capability.ADMIN) ||
+  access.accessPolicy.allowsAny(AccessRequirement.ADMINISTER) ||
   canViewNpcTimer(parseTimerNpc(timer.npc), access.roles);
 
 type TimerDatabase = Pick<typeof ApiDatabase.Service, "select">;

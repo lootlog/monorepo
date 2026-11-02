@@ -1,6 +1,8 @@
-import type { AccessPolicy } from "@lootlog/domain/access-policy";
+import {
+  AccessRequirement,
+  type AccessPolicy,
+} from "@lootlog/domain/access-policy";
 
-import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/schema";
 
 type Role = typeof roleTable.$inferSelect;
@@ -87,9 +89,9 @@ export const makeEventsRanking = (
         return [];
       }
 
-      const canViewEditHistory =
-        accessPolicy.allows(Permission.OWNER) ||
-        accessPolicy.allows(Permission.ADMIN);
+      const canViewEditHistory = accessPolicy.allowsAny(
+        AccessRequirement.ADMINISTER,
+      );
 
       if (!canViewEditHistory) {
         return visibleRankings.map((ranking) => ({

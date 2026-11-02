@@ -8,7 +8,10 @@ import {
 } from "./loot-snapshot.persistence.js";
 import { resolvePlayerSnapshots } from "#src/shared/margonem/player-snapshot.persistence";
 import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
-import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import {
+  selectAccessibleGuilds,
+  selectActiveGuildMembers,
+} from "#src/members/member-access-query";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import { and, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
@@ -25,7 +28,6 @@ import {
   lootPlayerTable,
   lootSubmissionTable,
   lootTable,
-  memberTable,
   npcSnapshotTable,
   organizationLootRecordTable,
   userCharactersLootlogSettingsTable,
@@ -269,17 +271,7 @@ export const makeLootSubmissionAcceptancePersistence = (
       .pipe(Effect.map((rows) => rows[0]?.id ?? null)),
 
   findMembers: (discordId, guildIds) =>
-    guildIds.length === 0
-      ? Effect.succeed([])
-      : database
-          .select({ id: memberTable.id, guildId: memberTable.guildId })
-          .from(memberTable)
-          .where(
-            and(
-              inArray(memberTable.guildId, guildIds),
-              eq(memberTable.userId, discordId),
-            ),
-          ),
+    selectActiveGuildMembers(database, discordId, guildIds),
 
   findExistingRecords: (lootId, guildIds) => {
     if (guildIds.length === 0) return Effect.succeed([]);
