@@ -817,3 +817,47 @@ it("keeps the window of an open Hero Tracker entrance when another player report
     await boundary.dispose();
   }
 });
+
+it("rejects a timer for an elite I, which Margonem weighs up to 19", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    const create = makeAutoTimer(boundary.database, {
+      get: () => Effect.die("unused"),
+      set: () => Effect.die("unused"),
+      setNx: () => Effect.die("unused"),
+      releaseDedup: () => Effect.void,
+      invalidateList: () => Effect.die("unused"),
+      enqueueEventHeroCheck: () => Effect.die("unused"),
+      withLock: (_key, operation) => operation,
+      publish: () => Effect.die("unused"),
+    });
+
+    const error = await boundary.run(
+      Effect.flip(
+        create(
+          { discordId: "discord", userId: "user" },
+          {
+            respBaseSeconds: 600,
+            world: "world",
+            npc: {
+              id: 1,
+              name: "Elita",
+              location: "Mapa",
+              lvl: 50,
+              wt: 19,
+              icon: "npc/elita.gif",
+              type: 2,
+            },
+            accountId: "1",
+            characterId: "2",
+          },
+        ),
+      ),
+    );
+
+    expect(error).toMatchObject({ message: "WT_TOO_LOW" });
+  } finally {
+    await boundary.dispose();
+  }
+});

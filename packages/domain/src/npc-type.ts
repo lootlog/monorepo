@@ -20,6 +20,13 @@ type NpcTypeValues<TNpcType extends string> = {
 export const MIN_LOOT_NPC_WT = 10;
 
 /**
+ * Weight from which an NPC gets an automatic timer: Margonem's elite II
+ * (`wt > 19`) and every stronger type. A Hero Tracker has no weight and is
+ * admitted by its name instead.
+ */
+export const MIN_TIMER_NPC_WT = 20;
+
+/**
  * NPC types that lead a group fight. A fight's drops come from its only NPC
  * or from the only one of these among a group, never from the escort.
  */
@@ -148,7 +155,7 @@ export const getNpcType = <TNpcType extends string>(
 
   if (wt > 29) return npcTypes.ELITE3;
 
-  if (wt > 19) return npcTypes.ELITE2;
+  if (wt >= MIN_TIMER_NPC_WT) return npcTypes.ELITE2;
 
   if (wt > 9) return npcTypes.ELITE;
 

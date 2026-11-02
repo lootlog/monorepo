@@ -8,8 +8,16 @@ import { and, desc, eq, gte } from "drizzle-orm";
 import { Clock, Effect, Predicate, Result, Schema } from "effect";
 import { partition } from "es-toolkit";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
-import { getNpcType, isHeroTrackerName } from "@lootlog/domain/npc-type";
-import { isSameHeroTrackerEntrance } from "@lootlog/domain/timers";
+import {
+  getNpcType,
+  isHeroTrackerName,
+  MIN_TIMER_NPC_WT,
+} from "@lootlog/domain/npc-type";
+import {
+  DEFAULT_RESPAWN_RANDOMNESS,
+  isSameHeroTrackerEntrance,
+  spawnWindowFromRespawn,
+} from "@lootlog/domain/timers";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -31,11 +39,14 @@ import {
   ResourceConflictError,
   PermissionDeniedError,
 } from "#src/shared/http/http-errors";
-import { DEFAULT_RESPAWN_RANDOMNESS } from "#src/timers/respawn";
 import { TIMER_LIMITS } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
-import { buildTimerKey, getTimerNpcId } from "#src/timers/timer-key";
+import {
+  buildTimerKey,
+  buildTimerLockKey,
+  getTimerNpcId,
+} from "#src/timers/timer-key";
 import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersIdentity } from "./timers.handlers.js";
 import {
@@ -121,8 +132,7 @@ export interface AutoTimerPorts {
 
 // A Hero Tracker template has no weight; its name alone admits it.
 const hasTimerWeight = (payload: CreateAutoTimerRequest) =>
-  payload.npc.wt >= TIMER_LIMITS.MIN_NPC_WT_FOR_TIMERS ||
-  isHeroTrackerName(payload.npc.name);
+  payload.npc.wt >= MIN_TIMER_NPC_WT || isHeroTrackerName(payload.npc.name);
 
 /**
  * When a reported Hero Tracker entrance closes. The countdown is placed on the
@@ -210,17 +220,16 @@ const calculateSpawnWindow = (
     return { minSpawnTime, maxSpawnTime };
   }
 
-  const milliseconds = respBaseSeconds * 1000;
-  const randomness = payload.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
   const start = getRespawnStart(payload, now).getTime();
 
+  const { minOffsetMs, maxOffsetMs } = spawnWindowFromRespawn({
+    respBaseSeconds,
+    respawnRandomness: payload.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
+  });
+
   return {
-    minSpawnTime: new Date(
-      start + Math.round(milliseconds - milliseconds * (randomness / 100)),
-    ),
-    maxSpawnTime: new Date(
-      start + Math.round(milliseconds + milliseconds * (randomness / 100)),
-    ),
+    minSpawnTime: new Date(start + minOffsetMs),
+    maxSpawnTime: new Date(start + maxOffsetMs),
   };
 };
 
@@ -373,7 +382,7 @@ export const makeAutoTimer = (
     const startedAt = new Date();
 
     const persist = ports.withLock(
-      `timer:lock:${guildId}:${payload.world}:${timerKey}`,
+      buildTimerLockKey(guildId, payload.world, timerKey),
       database.transaction((transaction) =>
         Effect.gen(function* () {
           const members = yield* transaction
