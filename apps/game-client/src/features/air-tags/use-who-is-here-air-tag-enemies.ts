@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   getWhoIsHereAirTagHost,
   isWhoIsHereOpen,
+  subscribeWhoIsHereVisibility,
 } from "@/lib/margonem-runtime/adapters/who-is-here-runtime-adapter";
 import { getPlayersPresenceSource } from "@/lib/players-presence-source";
 import { getSocket } from "@/lib/socket";
@@ -38,7 +39,7 @@ type WhoIsHereAirTagView = {
   host: HTMLElement | null;
   /** Unseen enemies are reported, before members of the Organizations are removed. */
   hasCandidates: boolean;
-  /** Any player is reported on this red map, so a step can change the rows. */
+  /** Any player is reported on this red map while the window is open, so a step can change the rows. */
   hasTargets: boolean;
   now: number;
   /** What the rows show, apart from their age; positions change far more often. */
@@ -63,7 +64,8 @@ const getRowsSignature = (enemies: readonly WhoIsHereAirTagEnemy[]) =>
     .join(",");
 
 function readView(now: number): WhoIsHereAirTagView {
-  if (!showsAirTagsOnMap()) return { ...EMPTY_VIEW, now };
+  // A closed window shows no rows, so it costs no reads or presence requests.
+  if (!showsAirTagsOnMap() || !isWhoIsHereOpen()) return { ...EMPTY_VIEW, now };
 
   const targets = airTagReceiveController.getRenderableTargets(
     now,
@@ -104,12 +106,12 @@ const showsSameRows = (
 
 /**
  * Unseen AirTag enemies on the current map. Reads happen at most once a frame
- * after AirTag, presence or game updates, and re-render only when a row
- * changes; ages tick each second while the window is open.
+ * after AirTag, presence, game or window updates, and re-render only when a
+ * row changes; ages tick each second while rows show.
  */
 export function useWhoIsHereAirTagEnemies() {
   const [view, setView] = useState(EMPTY_VIEW);
-  // Compared outside setView, so a read that changes nothing does not render.
+  // Compared outside setView: a no-op updater can still render the hook.
   const shown = useRef(EMPTY_VIEW);
 
   const show = (next: WhoIsHereAirTagView) => {
@@ -160,6 +162,7 @@ export function useWhoIsHereAirTagEnemies() {
       : undefined;
 
     const releaseAirTags = airTagReceiveController.subscribe(schedule);
+    const releaseWindow = subscribeWhoIsHereVisibility(schedule);
 
     // Only while enemies are reported: loading presence costs a request per Organization.
     const releaseMembers = hasCandidates
@@ -172,6 +175,7 @@ export function useWhoIsHereAirTagEnemies() {
       releaseGame();
       releaseOthers?.();
       releaseAirTags();
+      releaseWindow();
 
       for (const release of releaseMembers) release();
 
@@ -184,9 +188,10 @@ export function useWhoIsHereAirTagEnemies() {
   useEffect(() => {
     if (!hasEnemies) return;
 
-    const interval = window.setInterval(() => {
-      if (isWhoIsHereOpen()) show(readView(Date.now()));
-    }, AGE_TICK_MS);
+    const interval = window.setInterval(
+      () => show(readView(Date.now())),
+      AGE_TICK_MS,
+    );
 
     return () => window.clearInterval(interval);
   }, [hasEnemies]);

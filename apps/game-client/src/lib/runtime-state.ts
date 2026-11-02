@@ -37,7 +37,6 @@ export function resetTransientRuntimeState(): void {
   useBattleStore.setState({
     battleState: "idle",
     battleWarriors: {},
-    lastKillHash: "",
   });
   useDialogStore.getState().clearNpcContext();
   useLootStore.getState().setLastLootId(null);
@@ -45,7 +44,6 @@ export function resetTransientRuntimeState(): void {
   useChatStore.setState({
     draftsByGuild: {},
     replyDraftsByGuild: {},
-    replyDraft: null,
     focusRequest: null,
   });
 

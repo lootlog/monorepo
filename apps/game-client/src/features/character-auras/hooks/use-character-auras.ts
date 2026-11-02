@@ -60,6 +60,9 @@ export const useCharacterAuras = () => {
 
   const accountAuras = useRef(targets.byAccount);
   const drawn = useRef<ReadonlyMap<string, CharacterAuraId>>(new Map());
+  // The hero's tip mark follows its own aura once its account is known;
+  // before that the listed auras may mark it, so it is rebuilt every time.
+  const heroMark = useRef<string | null>(null);
 
   const hasAuras = targets.byCharacter.size > 0;
 
@@ -87,9 +90,8 @@ export const useCharacterAuras = () => {
     accountAuras.current = targets.byAccount;
     characterAuraRenderer.setTargets(targets.byCharacter);
 
-    // Cached tips keep the old mark until they are rebuilt, so every other
-    // whose aura appeared, changed or went away gets its tip rebuilt; the
-    // hero's tip is rebuilt every time.
+    // Cached tips keep the old mark until they are rebuilt, so every
+    // character whose aura appeared, changed or went away gets its tip rebuilt.
     const changed = new Set<string>();
 
     for (const key of new Set([
@@ -104,9 +106,16 @@ export const useCharacterAuras = () => {
       }
     }
 
+    const nextHeroMark = `${heroAccountId}:${heroAura}`;
+
+    const heroChanged =
+      heroAccountId === undefined || heroMark.current !== nextHeroMark;
+
+    heroMark.current = nextHeroMark;
     drawn.current = targets.byCharacter;
-    auraRuntimeAdapter.refreshTips(changed);
-  }, [available, targets]);
+
+    auraRuntimeAdapter.refreshTips(changed, heroChanged);
+  }, [available, targets, heroAccountId, heroAura]);
 
   useEffect(() => () => characterAuraRenderer.setTargets(new Map()), []);
 };

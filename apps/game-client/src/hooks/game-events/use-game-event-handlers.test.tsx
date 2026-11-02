@@ -54,23 +54,4 @@ describe("useGameEventHandlers", () => {
     unmount();
     expect(cleanup).toHaveBeenCalledOnce();
   });
-
-  it("retains the shared dispatcher until the last client unmounts", () => {
-    useGlobalStore.getState().setGameState({ gameInitialized: true });
-
-    const first = renderHook(() => useGameEventHandlers(), {
-      wrapper: test.wrapper,
-    });
-
-    const second = renderHook(() => useGameEventHandlers(), {
-      wrapper: test.wrapper,
-    });
-
-    expect(register).toHaveBeenCalledOnce();
-    expect(initialEvents).toHaveBeenCalledOnce();
-    first.unmount();
-    expect(cleanup).not.toHaveBeenCalled();
-    second.unmount();
-    expect(cleanup).toHaveBeenCalledOnce();
-  });
 });

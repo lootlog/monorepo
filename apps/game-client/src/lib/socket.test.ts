@@ -165,7 +165,7 @@ it.each(["success", "legacy", "policy", "player"])(
 
       if (mode === "player") {
         const { GatewayEvent } = await import("@/config/gateway");
-        activeFacade.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: true });
+        activeFacade.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE);
       }
 
       await vi.waitFor(() =>

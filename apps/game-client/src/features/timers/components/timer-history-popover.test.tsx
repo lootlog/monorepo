@@ -37,8 +37,6 @@ it.each([
 
     const timer = {
       ...createTimerFixture({ timerKey: fixture.history.timerKey }),
-      minTimeLeft: 0,
-      maxTimeLeft: 0,
     };
 
     const view = render(

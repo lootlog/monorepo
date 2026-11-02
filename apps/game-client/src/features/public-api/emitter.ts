@@ -36,6 +36,10 @@ export class Emitter<EventMap extends Record<string, unknown>> {
     }
   }
 
+  listenerCount(event: keyof EventMap): number {
+    return this.listeners.get(event)?.size ?? 0;
+  }
+
   clear(): void {
     this.listeners.clear();
   }

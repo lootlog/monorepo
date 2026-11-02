@@ -246,7 +246,7 @@ describe("chat helpers", () => {
       getCurrentChatMessages(
         { "guild-1": [makeChatMessage(), duplicate, npcMessage] },
         "guild-1",
-        "npc",
+        "reports",
       ).map((message) => message.id),
     ).toEqual(["message-3"]);
   });
@@ -622,12 +622,12 @@ describe("chat helpers", () => {
     expect(
       getChatRenderableMessages([
         makeChatMessage({
-          id: "message-1",
-          timestamp: "2026-01-02T10:00:00.000Z",
-        }),
-        makeChatMessage({
           id: "message-2",
           timestamp: "2026-01-01T10:00:00.000Z",
+        }),
+        makeChatMessage({
+          id: "message-1",
+          timestamp: "2026-01-02T10:00:00.000Z",
         }),
       ]),
     ).toEqual([
@@ -652,6 +652,38 @@ describe("chat helpers", () => {
         message: expect.objectContaining({ id: "message-1" }),
       },
     ]);
+  });
+
+  it("starts a new day at the player's local midnight, not at UTC midnight", () => {
+    const timeZone = process.env.TZ;
+    process.env.TZ = "Europe/Warsaw";
+
+    try {
+      // 23:30 and 00:30 in Warsaw (UTC+1) both fall on 1 January in UTC.
+      const lateEvening = makeChatMessage({
+        id: "late-evening",
+        timestamp: "2026-01-01T22:30:00.000Z",
+      });
+
+      const afterMidnight = makeChatMessage({
+        id: "after-midnight",
+        timestamp: "2026-01-01T23:30:00.000Z",
+      });
+
+      expect(
+        getChatRenderableMessages([lateEvening, afterMidnight]).map(
+          (row) => row.key,
+        ),
+      ).toEqual([
+        "date-divider:2026-01-01",
+        "late-evening",
+        "date-divider:2026-01-02",
+        "after-midnight",
+      ]);
+    } finally {
+      if (timeZone === undefined) delete process.env.TZ;
+      else process.env.TZ = timeZone;
+    }
   });
 
   it("reconciles create, update and delete operations against a single message list", () => {
@@ -732,7 +764,7 @@ it("treats rebuilt rows as equal only while their message content is unchanged",
 it("excludes legacy party cards from every chat filter", () => {
   const legacy = makeChatMessage({ type: MessageType.PARTY_GATHERING });
 
-  for (const filter of ["all", "normal", "npc", "party", "reports"] as const) {
+  for (const filter of ["all", "normal", "reports"] as const) {
     expect(filterChatMessages([legacy], filter)).toEqual([]);
   }
 });

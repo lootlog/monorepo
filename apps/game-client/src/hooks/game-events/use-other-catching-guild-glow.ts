@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import type { RuntimeOther } from "@/lib/margonem-runtime/runtime.types";
 import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { characterTooltipCatchingGuildsCoordinator } from "@/lib/character-tooltip-catching-guilds-coordinator";
 import {
@@ -8,30 +7,17 @@ import {
   lootlogOtherGlowManager,
 } from "@/lib/margonem-runtime/adapters/glow-runtime-adapter";
 import { getCharacterIdentityKey } from "@/lib/character-identity-key";
-import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
-import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import {
   getOtherCatchingGuildsTarget,
-  type CharacterTooltipCatchingGuildsEntry,
   type CharacterTooltipCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
 } from "@/store/character-tooltip-catching-guilds.store";
-import {
-  type OnlineCharacterOwner,
-  useOnlineCharacterOwnersStore,
-} from "@/store/online-character-owners.store";
+import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
-
-const EMPTY_ENTRIES_BY_KEY: Readonly<
-  Record<string, CharacterTooltipCatchingGuildsEntry | undefined>
-> = Object.freeze({});
-
-const EMPTY_OTHERS_BY_ID: Readonly<Record<string, RuntimeOther>> =
-  Object.freeze({});
-
-const EMPTY_OWNERS_BY_CHARACTER_KEY: Readonly<
-  Record<string, OnlineCharacterOwner | undefined>
-> = Object.freeze({});
+import {
+  EMPTY_SHIFT_VIEW_RECORD,
+  useShiftCatchingGuildsGuildId,
+} from "./use-shift-catching-guilds-guild-id";
 
 function getEntryCharacterId(targetKey: string): string {
   const separatorIndex = targetKey.lastIndexOf(":");
@@ -41,41 +27,20 @@ function getEntryCharacterId(targetKey: string): string {
     : targetKey.slice(separatorIndex + 1);
 }
 
-function getVisibleCatchingGuildTargets(
-  othersById: Readonly<Record<string, RuntimeOther>>,
-): CharacterTooltipCatchingGuildsTarget[] {
-  const targetsByKey = new Map<string, CharacterTooltipCatchingGuildsTarget>();
-
-  for (const characterId in othersById) {
-    const other = othersById[characterId];
-    const target = getOtherCatchingGuildsTarget(other);
-
-    if (target && !targetsByKey.has(target.key)) {
-      targetsByKey.set(target.key, target);
-    }
-  }
-
-  return [...targetsByKey.values()];
-}
-
 export function useOtherCatchingGuildGlow(): void {
-  const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
-    (state) => state.isShiftPressed,
-  );
-
-  const selectedGuildId = useSelectedLootlogGuildId();
-  const active = isShiftPressed && isConcreteLootlogGuildId(selectedGuildId);
+  const selectedGuildId = useShiftCatchingGuildsGuildId();
+  const active = selectedGuildId !== null;
 
   const entriesByKey = useCharacterTooltipCatchingGuildsStore((state) =>
-    active ? state.entriesByKey : EMPTY_ENTRIES_BY_KEY,
+    active ? state.entriesByKey : EMPTY_SHIFT_VIEW_RECORD,
   );
 
   const othersById = useOthersStore((state) =>
-    active ? state.othersById : EMPTY_OTHERS_BY_ID,
+    active ? state.othersById : EMPTY_SHIFT_VIEW_RECORD,
   );
 
   const ownersByCharacterKey = useOnlineCharacterOwnersStore((state) =>
-    active ? state.ownersByCharacterKey : EMPTY_OWNERS_BY_CHARACTER_KEY,
+    active ? state.ownersByCharacterKey : EMPTY_SHIFT_VIEW_RECORD,
   );
 
   useEffect(() => {
@@ -98,7 +63,7 @@ export function useOtherCatchingGuildGlow(): void {
   useEffect(() => {
     lootlogOtherGlowManager.setNativeGlowSuppressed(active);
 
-    if (!active) {
+    if (selectedGuildId === null) {
       lootlogOtherGlowManager.clear();
 
       return;
@@ -145,21 +110,30 @@ export function useOtherCatchingGuildGlow(): void {
       return;
     }
 
+    const targetsByKey = new Map<
+      string,
+      CharacterTooltipCatchingGuildsTarget
+    >();
+
+    const unavailableKeys: string[] = [];
+
     for (const other of Object.values(othersById)) {
-      if (getOtherCatchingGuildsTarget(other)) continue;
+      const target = getOtherCatchingGuildsTarget(other);
 
-      const accountId = other.accountId;
-      const characterId = other.characterId;
-
-      if (!accountId || !characterId) continue;
-
-      useCharacterTooltipCatchingGuildsStore
-        .getState()
-        .setUnavailable(getCharacterIdentityKey(accountId, characterId));
+      if (target) {
+        if (!targetsByKey.has(target.key)) targetsByKey.set(target.key, target);
+      } else if (other.accountId && other.characterId) {
+        unavailableKeys.push(
+          getCharacterIdentityKey(other.accountId, other.characterId),
+        );
+      }
     }
 
+    useCharacterTooltipCatchingGuildsStore
+      .getState()
+      .setUnavailable(unavailableKeys);
     characterTooltipCatchingGuildsCoordinator.sync(
-      getVisibleCatchingGuildTargets(othersById),
+      [...targetsByKey.values()],
       active,
     );
   }, [active, othersById, ownersByCharacterKey]);

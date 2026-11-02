@@ -206,7 +206,6 @@ describe("windows store", () => {
         ...state.notifications,
         open: true,
       },
-      currentWindowFocus: "notifications",
       windowFocusHistory: ["notifications", "chat"],
     }));
     const listener = vi.fn<Parameters<typeof useWindowsStore.subscribe>[0]>();
@@ -226,7 +225,6 @@ describe("windows store", () => {
         ...state.notifications,
         open: true,
       },
-      currentWindowFocus: "notifications",
       windowFocusHistory: ["notifications", "chat"],
     }));
     const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
@@ -272,7 +270,7 @@ describe("windows store", () => {
     unsubscribe();
   });
 
-  it("does not persist current focus or focus history", () => {
+  it("does not persist focus history", () => {
     useWindowsStore.getState().setOpen("notifications", true);
 
     const serializedState = localStorage.getItem(
@@ -282,7 +280,6 @@ describe("windows store", () => {
     const persisted: unknown = JSON.parse(serializedState ?? "{}");
 
     expect(persisted).toHaveProperty("state");
-    expect(persisted).not.toHaveProperty("state.currentWindowFocus");
     expect(persisted).not.toHaveProperty("state.windowFocusHistory");
   });
 
@@ -332,15 +329,6 @@ describe("windows store", () => {
     expect(useWindowsStore.getState().settings.state.activeTab).toBe(
       "notifications",
     );
-  });
-
-  it("opens a legacy destination at its mapped domain and subsection", () => {
-    useWindowsStore.getState().setSettingsActiveTab("npc-detector");
-
-    expect(useWindowsStore.getState().settings.state).toEqual({
-      activeTab: "detector",
-      activeSubsection: "detector",
-    });
   });
 
   it("resets window geometry while keeping open state and the settings page", () => {

@@ -11,17 +11,16 @@ import type {
 import { useGameStore } from "@/store/game.store";
 import {
   hasStoredSettingsValue,
+  memoizeByDocuments,
   selectSettingsValue,
   type SettingsDocuments,
 } from "./settings-documents";
 import { enqueueSettingsPatch } from "./settings-patch-client";
-import { useSettingsSaveStatus } from "./settings-save-status.store";
 import { useSettingsDocuments } from "./use-settings-documents";
 
-const preferencesCache = new WeakMap<
-  SettingsDocuments,
-  Map<string, UserGameAccountPreferences>
->();
+const getPreferencesByAccount = memoizeByDocuments(
+  () => new Map<string, UserGameAccountPreferences>(),
+);
 
 /**
  * Projects the account-scoped preference documents into the shape the
@@ -32,8 +31,7 @@ export const getGameAccountPreferences = (
   accountId: string,
 ): UserGameAccountPreferences | undefined => {
   if (!documents) return undefined;
-  const cachedByAccount = preferencesCache.get(documents) ?? new Map();
-  preferencesCache.set(documents, cachedByAccount);
+  const cachedByAccount = getPreferencesByAccount(documents);
   const cached = cachedByAccount.get(accountId);
 
   if (cached) return cached;
@@ -101,8 +99,6 @@ export const useCurrentGameAccountPreferences = () => {
  * on the server, so a payload only carries the fields that changed.
  */
 export const useUpdateGameAccountPreferences = () => {
-  const status = useSettingsSaveStatus();
-
   const mutate = (payload: UpdateUserGameAccountPreferencesPayload) => {
     const gameDataSet: Pick<
       UpdateUserGameAccountPreferencesPayload,
@@ -132,5 +128,5 @@ export const useUpdateGameAccountPreferences = () => {
     }
   };
 
-  return { mutate, isPending: status === "saving" };
+  return { mutate };
 };

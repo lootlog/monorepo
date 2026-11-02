@@ -1,5 +1,4 @@
 import { composeNpcFromEvent } from "@/hooks/game-events/helpers/npc.helpers";
-import type { EventNpc, ProcessedNpcSettings } from "@/hooks/game-events/types";
 import {
   type GameNpcWithLocation,
   useNpcDetectorStore,
@@ -36,26 +35,24 @@ import { areSettingsDocumentsSettled } from "@/features/settings/persistence/set
 import { selectSettingsValue } from "@/features/settings/persistence/settings-documents";
 import { getEffectiveDetectorSettings } from "@/lib/game-account-preferences";
 
+// A rescan reads every NPC the projection holds when it runs, so it covers
+// the packets that would otherwise wait behind it.
 type PendingDetection =
-  | {
-      accountId: string;
-      type: "event";
-      event: GameEvent;
-    }
-  | {
-      accountId: string;
-      type: "initial";
-    }
-  | {
-      accountId: string;
-      type: "rescan";
-    };
+  | { accountId: string; type: "event"; event: GameEvent }
+  | { accountId: string; type: "rescan" };
 
 type DetectionProcessingContext = {
   detectorSettings: DetectorSettings;
   /** The current character's master switch over every type's auto-send. */
   characterAutoSendEnabled: boolean;
   routedGuildIdsByLevel: Map<number, string[]>;
+};
+
+/** What the detector settings decide for one detected NPC type and level. */
+type Detection = {
+  settings: DetectorTypeSettings;
+  guildIds: string[];
+  autoSendNotification: boolean;
 };
 
 type NpcNotificationIntent = {
@@ -71,9 +68,22 @@ type DetectionIntents = {
 const MAX_PENDING_DETECTIONS_PER_ACCOUNT = 200;
 
 export class NpcsDetectionProcessor {
-  private static pendingDetections: PendingDetection[] = [];
+  private pendingDetections: PendingDetection[] = [];
+
   cleanup(): void {
-    NpcsDetectionProcessor.pendingDetections = [];
+    this.pendingDetections = [];
+  }
+
+  /**
+   * Queued packets describe the map being left; the new map is rescanned
+   * from the projection once the detector is ready.
+   */
+  handleMapChange(): void {
+    const [pending] = this.pendingDetections;
+
+    this.pendingDetections = pending
+      ? [{ accountId: pending.accountId, type: "rescan" }]
+      : [];
   }
 
   handle(event: GameEvent): void {
@@ -97,19 +107,9 @@ export class NpcsDetectionProcessor {
 
     const detectorReady = this.isDetectorReady(accountId);
 
-    if (!detectorReady) {
-      this.queueInitialDetection(accountId);
-
-      return;
+    if (!detectorReady || !this.processInitialDetectionFromStore()) {
+      this.queueRescan(accountId);
     }
-
-    if (!this.processInitialDetectionFromStore()) {
-      this.queueInitialDetection(accountId);
-    }
-  }
-
-  handleInitialDetection(): void {
-    this.bootstrapProjection();
   }
 
   flushPending(accountId: string): void {
@@ -122,7 +122,7 @@ export class NpcsDetectionProcessor {
     const pendingDetections: PendingDetection[] = [];
     const remainingDetections: PendingDetection[] = [];
 
-    for (const pendingDetection of NpcsDetectionProcessor.pendingDetections) {
+    for (const pendingDetection of this.pendingDetections) {
       if (pendingDetection.accountId === accountId) {
         pendingDetections.push(pendingDetection);
         continue;
@@ -149,62 +149,34 @@ export class NpcsDetectionProcessor {
       this.processEvent(pendingDetection.event);
     });
 
-    NpcsDetectionProcessor.pendingDetections = [
-      ...remainingDetections,
-      ...deferredDetections,
-    ];
+    this.pendingDetections = [...remainingDetections, ...deferredDetections];
   }
 
   private queuePendingEvent(accountId: string, event: GameEvent): void {
     this.keepPendingDetectionsForAccount(accountId);
 
-    if (
-      NpcsDetectionProcessor.pendingDetections.some(
-        (pendingDetection) => pendingDetection.type === "rescan",
-      )
-    ) {
-      return;
-    }
+    if (this.pendingDetections.some(({ type }) => type === "rescan")) return;
 
-    if (
-      NpcsDetectionProcessor.pendingDetections.length >=
-      MAX_PENDING_DETECTIONS_PER_ACCOUNT
-    ) {
-      NpcsDetectionProcessor.pendingDetections = [
-        { accountId, type: "rescan" },
-      ];
+    if (this.pendingDetections.length >= MAX_PENDING_DETECTIONS_PER_ACCOUNT) {
+      this.pendingDetections = [{ accountId, type: "rescan" }];
 
       return;
     }
 
-    NpcsDetectionProcessor.pendingDetections.push({
-      accountId,
-      type: "event",
-      event,
-    });
+    this.pendingDetections.push({ accountId, type: "event", event });
   }
 
-  private queueInitialDetection(accountId: string): void {
+  private queueRescan(accountId: string): void {
     this.keepPendingDetectionsForAccount(accountId);
 
-    const hasQueuedInitialDetection =
-      NpcsDetectionProcessor.pendingDetections.some(
-        (pendingDetection) => pendingDetection.type !== "event",
-      );
-
-    if (!hasQueuedInitialDetection) {
-      NpcsDetectionProcessor.pendingDetections.push({
-        accountId,
-        type: "initial",
-      });
-    }
+    if (this.pendingDetections.some(({ type }) => type === "rescan")) return;
+    this.pendingDetections.push({ accountId, type: "rescan" });
   }
 
   private keepPendingDetectionsForAccount(accountId: string): void {
-    NpcsDetectionProcessor.pendingDetections =
-      NpcsDetectionProcessor.pendingDetections.filter(
-        (pendingDetection) => pendingDetection.accountId === accountId,
-      );
+    this.pendingDetections = this.pendingDetections.filter(
+      (pendingDetection) => pendingDetection.accountId === accountId,
+    );
   }
 
   private processEvent(event: GameEvent): void {
@@ -241,94 +213,38 @@ export class NpcsDetectionProcessor {
       event.icons?.map((icon) => [icon.id, icon.icon]),
     );
 
-    const npcs =
-      event.npcs?.reduce<GameNpcWithLocation[]>((acc, npc) => {
-        const runtimeNpc = useNpcsStore.getState().getNpc(npc.id);
+    const packet = { context, iconsById, templatesById };
+    const npcs: GameNpcWithLocation[] = [];
 
-        const tpl =
-          getNpcTplFromEvent(templatesById, npc.tpl) ??
-          (runtimeNpc
-            ? {
-                icon: runtimeNpc.icon,
-                lvl: runtimeNpc.level,
-                nick: runtimeNpc.name,
-                prof: runtimeNpc.profession,
-                type: runtimeNpc.type,
-                wt: runtimeNpc.weight,
-                isHeroFromEvent: runtimeNpc.isHeroFromEvent,
-              }
-            : undefined);
+    for (const npc of event.npcs) {
+      const detectedNpc = detectedNpcsById.get(npc.id);
+      const candidate = this.composeEventNpc(npc, detectedNpc, packet);
 
-        if (!tpl) return acc;
+      if (!candidate) continue;
+      const { composedNpc } = candidate;
 
-        const npcType = getNpcType(NpcType, { ...tpl, name: tpl.nick });
+      if (detectedNpc) {
+        const { notificationSentAt: _notificationSentAt, ...npcUpdate } =
+          composedNpc;
 
-        if (!isDetectorNpcType(npcType)) return acc;
+        updatedNpcs.push({ npcId: npc.id, npc: npcUpdate });
 
-        const processedSettings = this.processNpcSettings(
-          npc,
-          npcType,
-          tpl.lvl,
-          context,
-          iconsById,
-        );
+        const entranceOpened =
+          detectedNpc.entranceClosesAt === undefined &&
+          composedNpc.entranceClosesAt !== undefined;
 
-        if (!processedSettings) return acc;
+        if (!entranceOpened) continue;
+      } else {
+        npcs.push(composedNpc);
+      }
 
-        const detectedNpc = detectedNpcsById.get(npc.id);
-
-        const entranceClosesAt =
-          npcType === NpcType.HERO_TRACKER
-            ? getEntranceClosesAt(
-                npc.killSeconds,
-                detectedNpc?.entranceClosesAt ?? runtimeNpc?.entranceClosesAt,
-              )
-            : undefined;
-
-        const composedNpc: GameNpcWithLocation = {
-          ...composeNpcFromEvent(
-            npc,
-            tpl,
-            processedSettings,
-            useGameStore.getState().game?.map.name ?? "",
-          ),
-          ...(entranceClosesAt !== undefined && { entranceClosesAt }),
-        };
-
-        if (detectedNpc) {
-          const { notificationSentAt: _notificationSentAt, ...npcUpdate } =
-            composedNpc;
-
-          updatedNpcs.push({ npcId: npc.id, npc: npcUpdate });
-
-          if (
-            detectedNpc.entranceClosesAt === undefined &&
-            entranceClosesAt !== undefined
-          ) {
-            this.collectDetectionIntents(intents, {
-              composedNpc,
-              guildIds: processedSettings.guildIds,
-              autoSendNotification: processedSettings.autoSendNotification,
-              npcType,
-              detectorSettings: processedSettings.settings,
-            });
-          }
-
-          return acc;
-        }
-
-        this.collectDetectionIntents(intents, {
-          composedNpc,
-          guildIds: processedSettings.guildIds,
-          autoSendNotification: processedSettings.autoSendNotification,
-          npcType,
-          detectorSettings: processedSettings.settings,
-        });
-
-        acc.push(composedNpc);
-
-        return acc;
-      }, []) ?? [];
+      this.collectDetectionIntents(
+        intents,
+        composedNpc,
+        candidate.npcType,
+        candidate.detection,
+      );
+    }
 
     if (updatedNpcs.length > 0) {
       useNpcDetectorStore.getState().setNpcStates(updatedNpcs);
@@ -342,6 +258,75 @@ export class NpcsDetectionProcessor {
     }
 
     this.dispatchDetectionIntents(intents);
+  }
+
+  /** The packet NPC as the detector shows it, or null when it is not detected. */
+  private composeEventNpc(
+    npc: NonNullable<GameEvent["npcs"]>[number],
+    detectedNpc: GameNpcWithLocation | undefined,
+    {
+      context,
+      iconsById,
+      templatesById,
+    }: {
+      context: DetectionProcessingContext;
+      iconsById: ReadonlyMap<number, string>;
+      templatesById: EventNpcTemplatesById;
+    },
+  ): {
+    composedNpc: GameNpcWithLocation;
+    detection: Detection;
+    npcType: DetectorNpcType;
+  } | null {
+    const runtimeNpc = useNpcsStore.getState().getNpc(npc.id);
+
+    const tpl =
+      getNpcTplFromEvent(templatesById, npc.tpl) ??
+      (runtimeNpc
+        ? {
+            icon: runtimeNpc.icon,
+            lvl: runtimeNpc.level,
+            nick: runtimeNpc.name,
+            prof: runtimeNpc.profession,
+            type: runtimeNpc.type,
+            wt: runtimeNpc.weight,
+            isHeroFromEvent: runtimeNpc.isHeroFromEvent,
+          }
+        : undefined);
+
+    if (!tpl) return null;
+
+    const npcType = getNpcType(NpcType, { ...tpl, name: tpl.nick });
+
+    if (!isDetectorNpcType(npcType)) return null;
+
+    const detection = this.resolveDetection(npcType, tpl.lvl, context);
+
+    if (!detection) return null;
+
+    const entranceClosesAt =
+      npcType === NpcType.HERO_TRACKER
+        ? getEntranceClosesAt(
+            npc.killSeconds,
+            detectedNpc?.entranceClosesAt ?? runtimeNpc?.entranceClosesAt,
+          )
+        : undefined;
+
+    const icon = iconsById.get(npc.icon.id) ?? runtimeNpc?.icon ?? "";
+
+    return {
+      composedNpc: {
+        ...composeNpcFromEvent(
+          npc,
+          tpl,
+          icon,
+          useGameStore.getState().game?.map.name ?? "",
+        ),
+        ...(entranceClosesAt !== undefined && { entranceClosesAt }),
+      },
+      detection,
+      npcType,
+    };
   }
 
   private processInitialDetectionFromStore(): boolean {
@@ -359,62 +344,48 @@ export class NpcsDetectionProcessor {
     const context = this.createDetectionContext();
     const intents = this.createDetectionIntents();
 
-    const calculatedNpcs =
-      npcs.reduce<GameNpcWithLocation[]>((acc, npc) => {
-        if (!npc) return acc;
+    const calculatedNpcs: GameNpcWithLocation[] = [];
 
-        const npcType = getNpcType(NpcType, {
-          wt: npc.weight,
-          prof: npc.profession,
-          type: npc.type,
-          icon: npc.icon,
-          isHeroFromEvent: npc.isHeroFromEvent,
-          name: npc.name,
-        });
+    for (const npc of npcs) {
+      const npcType = getNpcType(NpcType, {
+        wt: npc.weight,
+        prof: npc.profession,
+        type: npc.type,
+        icon: npc.icon,
+        isHeroFromEvent: npc.isHeroFromEvent,
+        name: npc.name,
+      });
 
-        if (!isDetectorNpcType(npcType)) return acc;
+      if (!isDetectorNpcType(npcType)) continue;
 
-        const processedSettings = this.processGameNpcSettings(
-          npc,
-          npcType,
-          context,
-        );
+      const detection = this.resolveDetection(npcType, npc.level, context);
 
-        if (!processedSettings) return acc;
+      if (!detection) continue;
 
-        const composedNpc: GameNpcWithLocation = {
-          actions: npc.actions,
-          grp: npc.groupId,
-          icon: processedSettings.icon,
-          id: npc.id,
-          location: useGameStore.getState().game?.map.name ?? "",
-          lvl: npc.level,
-          nick: npc.name,
-          notificationSentAt: null,
-          prof: npc.profession,
-          resp_rand: npc.respawnRandomness,
-          type: npc.type,
-          isHeroFromEvent: npc.isHeroFromEvent,
-          wt: npc.weight,
-          x: npc.x,
-          y: npc.y,
-          ...(npc.entranceClosesAt !== undefined && {
-            entranceClosesAt: npc.entranceClosesAt,
-          }),
-        };
+      const composedNpc: GameNpcWithLocation = {
+        actions: npc.actions,
+        grp: npc.groupId,
+        icon: npc.icon,
+        id: npc.id,
+        location: useGameStore.getState().game?.map.name ?? "",
+        lvl: npc.level,
+        nick: npc.name,
+        notificationSentAt: null,
+        prof: npc.profession,
+        resp_rand: npc.respawnRandomness,
+        type: npc.type,
+        isHeroFromEvent: npc.isHeroFromEvent,
+        wt: npc.weight,
+        x: npc.x,
+        y: npc.y,
+        ...(npc.entranceClosesAt !== undefined && {
+          entranceClosesAt: npc.entranceClosesAt,
+        }),
+      };
 
-        this.collectDetectionIntents(intents, {
-          composedNpc,
-          guildIds: processedSettings.guildIds,
-          autoSendNotification: processedSettings.autoSendNotification,
-          npcType,
-          detectorSettings: processedSettings.settings,
-        });
-
-        acc.push(composedNpc);
-
-        return acc;
-      }, []) ?? [];
+      this.collectDetectionIntents(intents, composedNpc, npcType, detection);
+      calculatedNpcs.push(composedNpc);
+    }
 
     if (calculatedNpcs.length > 0) {
       useNpcDetectorStore.getState().addNpc(calculatedNpcs);
@@ -423,57 +394,24 @@ export class NpcsDetectionProcessor {
     }
   }
 
-  private processNpcSettings(
-    npc: EventNpc,
+  private resolveDetection(
     npcType: DetectorNpcType,
     npcLevel: number,
     context: DetectionProcessingContext,
-    iconsById: ReadonlyMap<number, string>,
-  ): ProcessedNpcSettings | null {
-    const { detectorSettings, characterAutoSendEnabled } = context;
-    const settings = detectorSettings[npcType];
+  ): Detection | null {
+    const settings = context.detectorSettings[npcType];
 
     if (!settings?.detect) return null;
-
-    const icon =
-      iconsById.get(npc.icon.id) ??
-      useNpcsStore.getState().getNpc(npc.id)?.icon ??
-      "";
 
     const guildIds = this.resolveRoutingGuildIds(context, npcLevel);
 
-    const autoSendNotification =
-      characterAutoSendEnabled && settings.autoSend && guildIds.length > 0;
-
     return {
       settings,
-      icon,
-      autoSendNotification,
       guildIds,
-    };
-  }
-
-  private processGameNpcSettings(
-    npc: RuntimeNpc,
-    npcType: DetectorNpcType,
-    context: DetectionProcessingContext,
-  ): ProcessedNpcSettings | null {
-    const { detectorSettings, characterAutoSendEnabled } = context;
-    const settings = detectorSettings[npcType];
-
-    if (!settings?.detect) return null;
-
-    const icon = npc.icon;
-    const guildIds = this.resolveRoutingGuildIds(context, npc.level);
-
-    const autoSendNotification =
-      characterAutoSendEnabled && settings.autoSend && guildIds.length > 0;
-
-    return {
-      settings,
-      icon,
-      autoSendNotification,
-      guildIds,
+      autoSendNotification:
+        context.characterAutoSendEnabled &&
+        settings.autoSend &&
+        guildIds.length > 0,
     };
   }
 
@@ -486,19 +424,9 @@ export class NpcsDetectionProcessor {
 
   private collectDetectionIntents(
     intents: DetectionIntents,
-    {
-      composedNpc,
-      guildIds,
-      autoSendNotification,
-      npcType,
-      detectorSettings,
-    }: {
-      composedNpc: GameNpcWithLocation;
-      guildIds: string[];
-      autoSendNotification: boolean;
-      npcType: DetectorNpcType;
-      detectorSettings: DetectorTypeSettings;
-    },
+    composedNpc: GameNpcWithLocation,
+    npcType: DetectorNpcType,
+    { settings, guildIds, autoSendNotification }: Detection,
   ): void {
     if (autoSendNotification) {
       const existingIntent = intents.notificationsByNpcId.get(composedNpc.id);
@@ -510,7 +438,7 @@ export class NpcsDetectionProcessor {
       });
     }
 
-    if (detectorSettings.notifySound) {
+    if (settings.notifySound) {
       intents.soundNpcTypes.add(npcType);
     }
   }

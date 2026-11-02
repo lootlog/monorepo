@@ -1,4 +1,7 @@
-import { getTimerSortTimeLeft } from "@lootlog/domain/timers";
+import {
+  getTimerSortTimeLeft,
+  type TimerTimeLeft,
+} from "@lootlog/domain/timers";
 import type { UserTimerSettings } from "@lootlog/schema/timer-settings";
 import { NpcType } from "@/api/npcs.api";
 import type { Timer } from "@/api/timers.api";
@@ -9,7 +12,6 @@ import {
   type TimerWithTimeLeft,
 } from "@/features/timers/utils/timers-utils";
 import { DEFAULT_TIMERS_FILTERS } from "@/store/timers.store";
-import type { GuildMember } from "@/types/guild-member";
 
 type TimerListFilters = {
   maxLvl: number;
@@ -40,24 +42,9 @@ type ProjectTimerListInput = {
   epoch: number;
   filters: TimerListFilters;
   preferences: TimerListPreferences;
-  timers: Timer[];
+  /** From `getListedTimers`. */
+  timers: TimerWithTimeLeft[];
 };
-
-const getTimerMembers = (timer: Timer): GuildMember[] => {
-  return timer.member ? [timer.member] : [];
-};
-
-const getTimerActorCharactersByMemberId = (
-  timer: Timer,
-): NonNullable<Timer["actorCharactersByMemberId"]> => {
-  return timer.actorCharactersByMemberId ?? {};
-};
-
-const getMergedGuildEntry = (timer: Timer) => ({
-  guildId: timer.guildId,
-  npcId: timer.npcId,
-  timerKey: timer.timerKey,
-});
 
 export const getTimerGroupingKey = (timer: Timer): string => {
   if (isManualTimer(timer)) {
@@ -67,82 +54,76 @@ export const getTimerGroupingKey = (timer: Timer): string => {
   return `timer_${timer.timerKey}`;
 };
 
-const createMergedTimer = (timer: Timer): TimerWithTimeLeft => ({
-  ...timer,
-  actorCharactersByMemberId: getTimerActorCharactersByMemberId(timer),
-  maxTimeLeft: 0,
-  members: getTimerMembers(timer),
-  mergedGuildIds: [getMergedGuildEntry(timer)],
-  minTimeLeft: 0,
-});
-
+/** One timer per grouping key: the latest maximum spawn time, with every report's members. */
 const mergeTimers = (timers: Timer[]): TimerWithTimeLeft[] => {
   const timerGroups = new Map<
     string,
-    {
-      actorCharactersByMemberId: NonNullable<
-        Timer["actorCharactersByMemberId"]
-      >;
-      baseTimer: Timer;
-      maxSpawnTimeMs: number;
-      members: GuildMember[];
-      mergedGuildIds: NonNullable<TimerWithTimeLeft["mergedGuildIds"]>;
-    }
+    Required<
+      Pick<
+        TimerWithTimeLeft,
+        "actorCharactersByMemberId" | "members" | "mergedGuildIds"
+      >
+    > & { baseTimer: Timer; maxSpawnTimeMs: number }
   >();
 
   for (const timer of timers) {
     const key = getTimerGroupingKey(timer);
-    const existingGroup = timerGroups.get(key);
     const maxSpawnTimeMs = getTimerEpoch(timer.maxSpawnTime);
 
-    if (!existingGroup) {
-      timerGroups.set(key, {
-        actorCharactersByMemberId: {
-          ...getTimerActorCharactersByMemberId(timer),
-        },
-        baseTimer: timer,
-        maxSpawnTimeMs,
-        members: getTimerMembers(timer),
-        mergedGuildIds: [getMergedGuildEntry(timer)],
-      });
-      continue;
-    }
+    const group = timerGroups.get(key) ?? {
+      actorCharactersByMemberId: {},
+      baseTimer: timer,
+      maxSpawnTimeMs,
+      members: [],
+      mergedGuildIds: [],
+    };
 
-    existingGroup.members.push(...getTimerMembers(timer));
+    timerGroups.set(key, group);
+
+    if (timer.member) group.members.push(timer.member);
     Object.assign(
-      existingGroup.actorCharactersByMemberId,
-      getTimerActorCharactersByMemberId(timer),
+      group.actorCharactersByMemberId,
+      timer.actorCharactersByMemberId,
     );
-    existingGroup.mergedGuildIds.push(getMergedGuildEntry(timer));
+    group.mergedGuildIds.push({
+      guildId: timer.guildId,
+      npcId: timer.npcId,
+      timerKey: timer.timerKey,
+    });
 
-    if (maxSpawnTimeMs > existingGroup.maxSpawnTimeMs) {
-      existingGroup.baseTimer = timer;
-      existingGroup.maxSpawnTimeMs = maxSpawnTimeMs;
+    if (maxSpawnTimeMs > group.maxSpawnTimeMs) {
+      group.baseTimer = timer;
+      group.maxSpawnTimeMs = maxSpawnTimeMs;
     }
   }
 
-  return Array.from(timerGroups.values(), (group) => ({
-    ...createMergedTimer(group.baseTimer),
-    actorCharactersByMemberId: group.actorCharactersByMemberId,
-    members: group.members,
-    mergedGuildIds: group.mergedGuildIds,
-  }));
+  return Array.from(
+    timerGroups.values(),
+    ({ baseTimer, actorCharactersByMemberId, members, mergedGuildIds }) => ({
+      ...baseTimer,
+      actorCharactersByMemberId,
+      members,
+      mergedGuildIds,
+    }),
+  );
 };
+
+type TimedTimer = TimerWithTimeLeft & TimerTimeLeft;
 
 const calculateTimerTimes = (
   timers: TimerWithTimeLeft[],
   epoch: number,
-): TimerWithTimeLeft[] =>
+): TimedTimer[] =>
   timers.map((timer) => ({
     ...timer,
     ...getTimerTimeLeft(timer, epoch),
   }));
 
 const filterExpiredTimers = (
-  timers: TimerWithTimeLeft[],
+  timers: TimedTimer[],
   removeTimerAfterMs: number,
   alwaysVisibleExpiredTimers: Record<string, string[]>,
-): TimerWithTimeLeft[] => {
+): TimedTimer[] => {
   const alwaysVisibleTimerKeysByWorld = new Map(
     Object.entries(alwaysVisibleExpiredTimers).map(([world, timerKeys]) => [
       world,
@@ -180,12 +161,12 @@ const getSelectedListNpcNames = (
 };
 
 const filterTimers = (
-  timers: TimerWithTimeLeft[],
+  timers: TimedTimer[],
   context: ProjectTimerListInput["context"],
   filters: TimerListFilters,
   preferences: TimerListPreferences,
   listNpcNames: Set<string> | null,
-): TimerWithTimeLeft[] => {
+): TimedTimer[] => {
   const hiddenTimerNames = new Set(preferences.hiddenTimers);
   const selectedNpcTypes = new Set<string>(filters.selectedNpcTypes);
   const selectedColors = new Set(filters.selectedColors);
@@ -233,14 +214,14 @@ const filterTimers = (
 };
 
 const sortTimers = (
-  timers: TimerWithTimeLeft[],
+  timers: TimedTimer[],
   preferences: TimerListPreferences,
-): TimerWithTimeLeft[] => {
+): TimedTimer[] => {
   const pinnedTimerNames = new Set(preferences.pinnedTimers);
 
   const sortByPinnedAndTime =
     (order: "asc" | "desc") =>
-    (firstTimer: TimerWithTimeLeft, secondTimer: TimerWithTimeLeft) => {
+    (firstTimer: TimedTimer, secondTimer: TimedTimer) => {
       const firstPinned = pinnedTimerNames.has(firstTimer.npc.name);
       const secondPinned = pinnedTimerNames.has(secondTimer.npc.name);
 
@@ -254,8 +235,8 @@ const sortTimers = (
       return order === "asc" ? firstTime - secondTime : secondTime - firstTime;
     };
 
-  const activeTimers: TimerWithTimeLeft[] = [];
-  const expiredTimers: TimerWithTimeLeft[] = [];
+  const activeTimers: TimedTimer[] = [];
+  const expiredTimers: TimedTimer[] = [];
   const expiredAtBottomThreshold = -preferences.removeTimerAfterMs;
 
   for (const timer of timers) {
@@ -304,9 +285,7 @@ const areTimerFiltersActive = (
   return filters.selectedColors.length > 0;
 };
 
-const getDeduplicatedTimers = (timers: Timer[], isGrouping: boolean) => {
-  if (isGrouping) return timers;
-
+const getDeduplicatedTimers = (timers: Timer[]) => {
   const timersByCompositeKey = new Map<string, Timer>();
 
   for (const timer of timers) {
@@ -319,28 +298,17 @@ const getDeduplicatedTimers = (timers: Timer[], isGrouping: boolean) => {
   return Array.from(timersByCompositeKey.values());
 };
 
-const normalizeUngroupedTimers = (timers: Timer[]): TimerWithTimeLeft[] =>
-  timers.map((timer) => ({
-    ...timer,
-    members: timer.member ? [timer.member] : [],
-    actorCharactersByMemberId:
-      timer.member && timer.actorCharacter
-        ? { [String(timer.member.id)]: timer.actorCharacter }
-        : timer.actorCharactersByMemberId,
-    minTimeLeft: 0,
-    maxTimeLeft: 0,
-  }));
-
-export const getTimerListRemovalTimers = (
+/** The timers the list shows, one per tile: merged across guilds when grouping. */
+export const getListedTimers = (
   timers: Timer[],
   isGrouping: boolean,
-): TimerWithTimeLeft[] => {
-  const deduplicatedTimers = getDeduplicatedTimers(timers, isGrouping);
-
-  return isGrouping
-    ? mergeTimers(deduplicatedTimers)
-    : normalizeUngroupedTimers(deduplicatedTimers);
-};
+): TimerWithTimeLeft[] =>
+  isGrouping
+    ? mergeTimers(timers)
+    : getDeduplicatedTimers(timers).map((timer) => ({
+        ...timer,
+        members: timer.member ? [timer.member] : [],
+      }));
 
 export const projectTimerList = ({
   context,
@@ -349,13 +317,8 @@ export const projectTimerList = ({
   preferences,
   timers,
 }: ProjectTimerListInput) => {
-  const normalizedTimers = getTimerListRemovalTimers(
-    timers,
-    context.isGrouping,
-  );
-
   const activeTimers = filterExpiredTimers(
-    calculateTimerTimes(normalizedTimers, epoch),
+    calculateTimerTimes(timers, epoch),
     preferences.removeTimerAfterMs,
     preferences.alwaysVisibleExpiredTimers,
   );

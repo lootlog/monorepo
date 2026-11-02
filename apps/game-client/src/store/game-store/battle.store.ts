@@ -24,7 +24,6 @@ export type BattleWarriorsWithAccountId = Record<
 interface BattleState {
   events: GameEvent[];
   battleState: "idle" | "in-battle";
-  lastKillHash: string;
   battleWarriors: BattleWarriorsWithAccountId;
 }
 
@@ -32,7 +31,6 @@ interface BattleActions {
   applyBatch: (batch: {
     battleState?: BattleState["battleState"];
     battleWarriors?: BattleWarriorsWithAccountId | null;
-    lastKillHash?: string;
   }) => void;
   addEvent: (event: GameEvent) => boolean;
   clearEvents: () => void;
@@ -61,7 +59,6 @@ export const useBattleStore = create<BattleState & BattleActions>(
     return {
       events: [],
       battleState: "idle",
-      lastKillHash: "",
       battleWarriors: {},
 
       applyBatch: (batch) =>
@@ -73,13 +70,6 @@ export const useBattleStore = create<BattleState & BattleActions>(
             batch.battleState !== state.battleState
           ) {
             nextState.battleState = batch.battleState;
-          }
-
-          if (
-            batch.lastKillHash !== undefined &&
-            batch.lastKillHash !== state.lastKillHash
-          ) {
-            nextState.lastKillHash = batch.lastKillHash;
           }
 
           if (batch.battleWarriors !== undefined) {

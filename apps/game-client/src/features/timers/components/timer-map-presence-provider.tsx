@@ -6,13 +6,13 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { groupBy, maxBy, uniqBy } from "es-toolkit";
+import { uniqBy } from "es-toolkit";
 import { useSocket } from "@/contexts/socket-context";
 import { NpcType } from "@/api/npcs.api";
 import { getPlayersPresenceSource } from "@/lib/players-presence-source";
 import {
   getMapThreatSource,
-  isMapThreatEnemyFresh,
+  projectMapThreat,
   type MapThreat,
 } from "@/lib/map-threat-source";
 import type { MapOccupancy } from "@/lib/presence-map-index";
@@ -202,33 +202,11 @@ const mergeOccupancy = (values: readonly MapOccupancy[]): MapOccupancy => {
   return { players, allAfk: players.every((player) => player.isAfk) };
 };
 
-const mergeThreats = (values: readonly MapThreat[]): MapThreat => {
-  const now = Date.now();
-
-  const byTarget = groupBy(
+const mergeThreats = (values: readonly MapThreat[]): MapThreat =>
+  projectMapThreat(
     values.flatMap((value) => value.enemies),
-    (enemy) => enemy.targetId,
+    Date.now(),
   );
-
-  const enemies = Object.values(byTarget)
-    .flatMap((sightings) => {
-      const latest = maxBy(sightings, (enemy) => enemy.seenAt);
-
-      return latest ? [latest] : [];
-    })
-    .sort(
-      (first, second) =>
-        Number(isMapThreatEnemyFresh(second, now)) -
-          Number(isMapThreatEnemyFresh(first, now)) ||
-        first.nickname.localeCompare(second.nickname),
-    );
-
-  return {
-    enemies,
-    freshCount: enemies.filter((enemy) => isMapThreatEnemyFresh(enemy, now))
-      .length,
-  };
-};
 
 /** Organization members on the timer's map, or undefined when none are or presence is unavailable. */
 export function useTimerMapPresence(
