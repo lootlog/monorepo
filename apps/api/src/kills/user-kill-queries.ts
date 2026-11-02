@@ -25,7 +25,7 @@ import {
   buildKillQueryCacheKey,
   type KillQueryCache,
 } from "./kill-query-support.js";
-import { getKillStatsPeriodStart } from "./kill-stats-period.js";
+import { currentStatsPeriodStart } from "./kill-stats-period.js";
 import { userKillSource, type UserKillSource } from "./kill-source.js";
 
 const CACHE_TTL_SECONDS = 30;
@@ -120,92 +120,99 @@ export const makeUserKillQueries = (
       ]),
     );
 
-  const getUserKillStats = (userId: string, query: GetUserKillStatsDto) => {
-    const npcTypes = query.npcType
-      ? [query.npcType, ...(query.npcTypes ?? [])]
-      : query.npcTypes;
+  const getUserKillStats = (userId: string, query: GetUserKillStatsDto) =>
+    Effect.gen(function* () {
+      const npcTypes = query.npcType
+        ? [query.npcType, ...(query.npcTypes ?? [])]
+        : query.npcTypes;
 
-    const periodStart = getKillStatsPeriodStart(query.period);
+      const periodStart = yield* currentStatsPeriodStart(query.period);
 
-    return cached(
-      userId,
-      buildKillQueryCacheKey("user-overview", userId, {
-        query: { ...query, npcTypes },
-      }),
-      "user kill stats",
-      UserKillStatsResponse,
-      protect(
-        "kills.user-overview.query",
-        Effect.suspend(() =>
-          readStats(userId, { world: query.world, npcTypes, periodStart }),
-        ).pipe(
-          Effect.map((stats) => {
-            const killsByType: Record<string, number> = {};
-            const killsByWorld: Record<string, number> = {};
-            let totalKills = 0;
+      return yield* cached(
+        userId,
+        buildKillQueryCacheKey("user-overview", userId, {
+          query: { ...query, npcTypes },
+        }),
+        "user kill stats",
+        UserKillStatsResponse,
+        protect(
+          "kills.user-overview.query",
+          Effect.suspend(() =>
+            readStats(userId, { world: query.world, npcTypes, periodStart }),
+          ).pipe(
+            Effect.map((stats) => {
+              const killsByType: Record<string, number> = {};
+              const killsByWorld: Record<string, number> = {};
+              let totalKills = 0;
 
-            for (const stat of stats) {
-              killsByType[stat.npcType] =
-                (killsByType[stat.npcType] ?? 0) + stat.totalKills;
-              killsByWorld[stat.world] =
-                (killsByWorld[stat.world] ?? 0) + stat.totalKills;
-              totalKills += stat.totalKills;
-            }
+              for (const stat of stats) {
+                killsByType[stat.npcType] =
+                  (killsByType[stat.npcType] ?? 0) + stat.totalKills;
+                killsByWorld[stat.world] =
+                  (killsByWorld[stat.world] ?? 0) + stat.totalKills;
+                totalKills += stat.totalKills;
+              }
 
-            return {
-              overview: { totalKills, killsByType, killsByWorld },
-              topNpcs: stats
-                .map(({ world: _world, ...npc }) => npc)
-                .sort((left, right) => right.totalKills - left.totalKills)
-                .slice(0, query.topNpcsLimit ?? 5),
-            };
-          }),
-        ),
-      ),
-    );
-  };
-
-  const getUserNpcKills = (userId: string, query: GetUserNpcKillsDto) => {
-    const limit = query.limit ?? 20;
-    const cursor = query.cursor ?? 0;
-    const periodStart = getKillStatsPeriodStart(query.period);
-
-    return cached(
-      userId,
-      buildKillQueryCacheKey("user-npcs", userId, { query }),
-      "user npc kills",
-      UserNpcKillsResponse,
-      protect(
-        "kills.user-npcs.query",
-        Effect.suspend(() => {
-          const source = userKillSource(periodStart);
-
-          return readNpcKillPage(
-            database,
-            source,
-            statsCondition(source, userId, {
-              world: query.world,
-              npcTypes: query.npcTypes,
-              search: query.search,
-              minLvl: query.minLvl,
-              maxLvl: query.maxLvl,
+              return {
+                overview: { totalKills, killsByType, killsByWorld },
+                topNpcs: stats
+                  .map(({ world: _world, ...npc }) => npc)
+                  .sort((left, right) => right.totalKills - left.totalKills)
+                  .slice(0, query.topNpcsLimit ?? 5),
+              };
             }),
-            { limit, cursor, sortBy: query.sortBy, sortOrder: query.sortOrder },
-          );
-        }).pipe(
-          Effect.map(({ npcs, total }) => ({
-            npcs,
-            pagination: {
-              total,
-              cursor,
-              limit,
-              hasNext: cursor + limit < total,
-            },
-          })),
+          ),
         ),
-      ),
-    );
-  };
+      );
+    });
+
+  const getUserNpcKills = (userId: string, query: GetUserNpcKillsDto) =>
+    Effect.gen(function* () {
+      const limit = query.limit ?? 20;
+      const cursor = query.cursor ?? 0;
+      const periodStart = yield* currentStatsPeriodStart(query.period);
+
+      return yield* cached(
+        userId,
+        buildKillQueryCacheKey("user-npcs", userId, { query }),
+        "user npc kills",
+        UserNpcKillsResponse,
+        protect(
+          "kills.user-npcs.query",
+          Effect.suspend(() => {
+            const source = userKillSource(periodStart);
+
+            return readNpcKillPage(
+              database,
+              source,
+              statsCondition(source, userId, {
+                world: query.world,
+                npcTypes: query.npcTypes,
+                search: query.search,
+                minLvl: query.minLvl,
+                maxLvl: query.maxLvl,
+              }),
+              {
+                limit,
+                cursor,
+                sortBy: query.sortBy,
+                sortOrder: query.sortOrder,
+              },
+            );
+          }).pipe(
+            Effect.map(({ npcs, total }) => ({
+              npcs,
+              pagination: {
+                total,
+                cursor,
+                limit,
+                hasNext: cursor + limit < total,
+              },
+            })),
+          ),
+        ),
+      );
+    });
 
   const getUserKillCharacters = (userId: string) =>
     cached(

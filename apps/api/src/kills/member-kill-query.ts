@@ -18,7 +18,7 @@ import {
   visibilityCacheScope,
   visibilityFilter,
 } from "./kill-query-support.js";
-import { getKillStatsPeriodStart } from "./kill-stats-period.js";
+import { currentStatsPeriodStart } from "./kill-stats-period.js";
 
 class MemberKillQueryError extends TaggedErrorClass<MemberKillQueryError>()(
   "MemberKillQueryError",
@@ -37,77 +37,78 @@ export const makeMemberKillQuery =
     accessPolicy: AccessPolicy,
     roles: ReadonlyArray<KillQueryRole>,
     query: GetMemberKillsDto,
-  ) => {
-    const visibleRoles = readableRoles(roles);
-    const visibility = visibilityFilter(accessPolicy, visibleRoles);
-    const limit = query.limit ?? 20;
-    const cursor = query.cursor ?? 0;
-    const periodStart = getKillStatsPeriodStart(query.period);
+  ) =>
+    Effect.gen(function* () {
+      const visibleRoles = readableRoles(roles);
+      const visibility = visibilityFilter(accessPolicy, visibleRoles);
+      const limit = query.limit ?? 20;
+      const cursor = query.cursor ?? 0;
+      const periodStart = yield* currentStatsPeriodStart(query.period);
 
-    const filter = {
-      guildId,
-      memberId,
-      ...(query.npcTypes &&
-        query.npcTypes.length > 0 && {
-          npcType: { in: query.npcTypes },
-        }),
-      ...(query.world && { world: query.world }),
-      ...(query.search && {
-        npcName: { contains: query.search, mode: "insensitive" as const },
-      }),
-      ...buildNpcLevelFilter(query.minLvl, query.maxLvl),
-      ...visibility,
-      ...(periodStart && { periodStart: { gte: periodStart } }),
-    };
-
-    return cachedKillQuery({
-      scopes: [`kill-stats:guild:${guildId}`],
-      cache,
-      logger,
-      key: buildKillQueryCacheKey("member-kills", guildId, {
+      const filter = {
+        guildId,
         memberId,
-        query,
-        visibility: visibilityCacheScope(accessPolicy, visibleRoles),
-      }),
-      label: "member kills",
-      schema: MemberKillsResponse,
-      load: Effect.gen(function* () {
-        const member = yield* persistence.findMember(guildId, memberId);
-
-        if (!member) return null;
-
-        const { npcs, total, totalParticipations, participationsByType } =
-          yield* persistence.findMemberNpcPage(filter, limit, cursor);
-
-        return {
-          member: {
-            memberId: member.id,
-            memberName: member.name,
-            memberAvatar: member.avatar,
-            memberUserId: member.userId,
-          },
-          overview: { totalParticipations, participationsByType },
-          npcs,
-          pagination: {
-            total,
-            cursor,
-            limit,
-            hasNext: cursor + limit < total,
-          },
-        };
-      }),
-    }).pipe(
-      Effect.mapError(
-        (cause) =>
-          new MemberKillQueryError({
-            operation: "kills.member-query",
-            cause,
+        ...(query.npcTypes &&
+          query.npcTypes.length > 0 && {
+            npcType: { in: query.npcTypes },
           }),
-      ),
-      Effect.withSpan("kills.member-query", {
-        attributes: { adapter: "kills", retryCount: 0 },
-      }),
-    );
-  };
+        ...(query.world && { world: query.world }),
+        ...(query.search && {
+          npcName: { contains: query.search, mode: "insensitive" as const },
+        }),
+        ...buildNpcLevelFilter(query.minLvl, query.maxLvl),
+        ...visibility,
+        ...(periodStart && { periodStart: { gte: periodStart } }),
+      };
+
+      return yield* cachedKillQuery({
+        scopes: [`kill-stats:guild:${guildId}`],
+        cache,
+        logger,
+        key: buildKillQueryCacheKey("member-kills", guildId, {
+          memberId,
+          query,
+          visibility: visibilityCacheScope(accessPolicy, visibleRoles),
+        }),
+        label: "member kills",
+        schema: MemberKillsResponse,
+        load: Effect.gen(function* () {
+          const member = yield* persistence.findMember(guildId, memberId);
+
+          if (!member) return null;
+
+          const { npcs, total, totalParticipations, participationsByType } =
+            yield* persistence.findMemberNpcPage(filter, limit, cursor);
+
+          return {
+            member: {
+              memberId: member.id,
+              memberName: member.name,
+              memberAvatar: member.avatar,
+              memberUserId: member.userId,
+            },
+            overview: { totalParticipations, participationsByType },
+            npcs,
+            pagination: {
+              total,
+              cursor,
+              limit,
+              hasNext: cursor + limit < total,
+            },
+          };
+        }),
+      }).pipe(
+        Effect.mapError(
+          (cause) =>
+            new MemberKillQueryError({
+              operation: "kills.member-query",
+              cause,
+            }),
+        ),
+        Effect.withSpan("kills.member-query", {
+          attributes: { adapter: "kills", retryCount: 0 },
+        }),
+      );
+    });
 
 export type MemberKillQuery = ReturnType<typeof makeMemberKillQuery>;

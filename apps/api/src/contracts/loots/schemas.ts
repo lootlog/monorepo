@@ -148,11 +148,15 @@ export type UserLootStatsResponse = typeof UserLootStatsResponse.Type;
 export const UserLootStatsResponse = Schema.Struct({
   overview: Schema.Struct({
     ...LootStatsOverview.fields,
+    /** The items of `legendaryItems` that the user's characters caught. */
     caughtLegendaryItems: FiniteNumber,
   }),
   timeline: LootStatsTimeline,
   topNpcs: LootStatsTopNpcs,
-  /** Every legendary item, per world and the monster it dropped from. */
+  /**
+   * Every legend, per world and the monster it dropped from; legends leave
+   * out legendary blessings, upgrades and consumables.
+   */
   legends: Schema.Array(
     Schema.Struct({
       itemId: FiniteNumber,

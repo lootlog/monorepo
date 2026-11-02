@@ -1,5 +1,6 @@
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
-import { findNpcType, getNpcTypeSortIndex } from "@/constants/npc";
+import { getNpcTypeStrengthRank } from "@lootlog/domain/npc-type";
+import { findNpcType } from "@/constants/npc";
 import { EmptyState } from "@/components/common/empty-state";
 import { useTimerExpiry } from "./use-timer-expiry";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -100,7 +101,7 @@ export const Timers = () => {
       };
     }),
     [
-      ({ timer }) => getNpcTypeSortIndex(timer.npc?.type),
+      ({ timer }) => getNpcTypeStrengthRank(timer.npc?.type),
       ({ isKept }) => (isKept ? 1 : 0),
       ({ isKept, sortTimeLeft }) => (isKept ? -sortTimeLeft : sortTimeLeft),
     ],
