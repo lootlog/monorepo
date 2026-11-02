@@ -28,7 +28,7 @@ import { makeLootAllocationPersistence } from "./loot-allocation-persistence.js"
 import { makeLootAllocationOperations } from "./loot-allocation.operations.js";
 import { applicationLogger } from "#src/shared/application-logger";
 
-test("an API key cannot update a shared allocation when one Organization hides its NPC revision", async () => {
+test("neither a session nor an API key updates a shared allocation when one Organization hides its NPC revision", async () => {
   const boundary = await createDatabaseBoundary();
 
   try {
@@ -108,7 +108,7 @@ test("an API key cannot update a shared allocation when one Organization hides i
     const persistence = makeLootAllocationPersistence(database);
 
     const options = {
-      actorUserId: "user",
+      actorDiscordId: "reader",
       lootId: 1,
       submissionCutoff: new Date(now.getTime() - 60_000),
     };
@@ -130,9 +130,7 @@ test("an API key cannot update a shared allocation when one Organization hides i
         ),
       );
 
-    expect(await run(persistence.findAuthorizedLoot(options))).toMatchObject({
-      id: 1,
-    });
+    expect(await run(persistence.findAuthorizedLoot(options))).toBeNull();
     expect(await keyed(persistence.findAuthorizedLoot(options))).toBeNull();
     expect(
       await keyed(persistence.findAuthorizedAllocationState(options)),
@@ -158,35 +156,32 @@ test("an API key cannot update a shared allocation when one Organization hides i
         .set({ archivedAt: now })
         .where(eq(organizationLootRecordTable.id, 2)),
     );
-    expect(await keyed(persistence.findAuthorizedLoot(options))).toBeNull();
-    expect(
-      await keyed(
-        persistence.compareAndSetChatAllocation({ ...options, lootShare: {} }),
-      ),
-    ).toBe(false);
-    await run(
-      database
-        .update(organizationLootRecordTable)
-        .set({ archivedAt: null })
-        .where(eq(organizationLootRecordTable.id, 2)),
-    );
+    // An archived record no longer shows the loot in its Organization.
     await run(
       database
         .update(roleTable)
         .set({ lvlRangeTo: 190 })
         .where(eq(roleTable.id, "2")),
     );
+    expect(await keyed(persistence.findAuthorizedLoot(options))).toMatchObject({
+      id: 1,
+    });
+    await run(
+      database
+        .update(organizationLootRecordTable)
+        .set({ archivedAt: null })
+        .where(eq(organizationLootRecordTable.id, 2)),
+    );
     expect(
       await keyed(
         persistence.compareAndSetChatAllocation({ ...options, lootShare: {} }),
       ),
     ).toBe(false);
-    // The trusted game session still confirms the same global fact from its visible submission.
     expect(
       await run(
         persistence.compareAndSetChatAllocation({ ...options, lootShare: {} }),
       ),
-    ).toBe(true);
+    ).toBe(false);
   } finally {
     await boundary.dispose();
   }
@@ -241,7 +236,7 @@ test("allocation requires a recent actor submission and access to every organiza
     const persistence = makeLootAllocationPersistence(database);
 
     const options = {
-      actorUserId: "user-1",
+      actorDiscordId: "discord-1",
       lootId: 1,
       submissionCutoff: new Date(Date.now() - 60_000),
     };
@@ -268,14 +263,14 @@ test("allocation requires a recent actor submission and access to every organiza
     );
     expect(
       await scoped(
-        persistence.findAuthorizedLoot({ ...options, actorUserId: "other" }),
+        persistence.findAuthorizedLoot({ ...options, actorDiscordId: "other" }),
       ),
     ).toBeNull();
     expect(
       await scoped(
         persistence.compareAndSetChatAllocation({
           ...options,
-          actorUserId: "other",
+          actorDiscordId: "other",
           lootShare: {},
         }),
       ),
@@ -376,7 +371,7 @@ test("allocation requires a recent actor submission and access to every organiza
     const update = () =>
       scoped(
         operations.confirmFromChat({
-          actorUserId: "user-1",
+          actorDiscordId: "discord-1",
           lootId: 1,
           message: 'Player otrzymał ITEM#abc:"Reward"',
         }),

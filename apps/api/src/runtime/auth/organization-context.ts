@@ -2,8 +2,11 @@ import { IsoDateTime } from "@lootlog/schema/primitives";
 import { createSelectSchema } from "drizzle-orm/effect-schema";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Option, Schema } from "effect";
-import { resolveCapabilities } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import {
+  memberCapabilities,
+  resolveCapabilities,
+} from "@lootlog/domain/access-policy";
+import type { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -16,6 +19,7 @@ import {
   readCachedGuild,
   writeGuildConfigurationCache,
 } from "#src/guilds/guild-configuration-cache";
+import { isActiveMember } from "#src/members/member-access-query";
 import { getMemberCacheSoftTtl } from "#src/members/member-cache";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
 import type { MemberWithRoles, Role } from "#src/members/member.types";
@@ -118,7 +122,9 @@ const readFreshCachedMember = (
   const member = Option.getOrNull(decodeCachedMemberEntry(value))?.member;
   const syncedAt = member?.lastDiscordSyncAt?.getTime() ?? 0;
 
-  return member?.active && syncedAt >= now - getMemberCacheSoftTtl(environment)
+  return member &&
+    isActiveMember(member) &&
+    syncedAt >= now - getMemberCacheSoftTtl(environment)
     ? member
     : null;
 };
@@ -131,10 +137,11 @@ const toOrganizationContext = (
   guildId: guild.id,
   ownerId: guild.ownerId,
   permissions: resolveCapabilities({
-    capabilities:
-      guild.ownerId === discordId
-        ? Object.values(Permission)
-        : member.roles.flatMap((role) => role.permissions),
+    capabilities: memberCapabilities({
+      ownerId: guild.ownerId,
+      viewerId: discordId,
+      roles: member.roles,
+    }),
   }),
   guild,
   member,
@@ -294,7 +301,7 @@ export class OrganizationContextLookup extends Context.Service<
                 )
                 .pipe(Effect.catchTag("MembersOperationError", Effect.die));
 
-              if (!member?.active) return null;
+              if (!member || !isActiveMember(member)) return null;
 
               if (!member.isStale && !member.refreshQueued) {
                 yield* refreshAhead(

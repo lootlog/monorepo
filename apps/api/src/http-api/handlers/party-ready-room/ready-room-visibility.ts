@@ -1,9 +1,13 @@
 import { Effect } from "effect";
-import { and, eq, inArray, isNotNull } from "drizzle-orm";
-import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { and, eq, inArray } from "drizzle-orm";
+import {
+  createAccessPolicy,
+  AccessRequirement,
+  memberCapabilities,
+} from "@lootlog/domain/access-policy";
 import { canManageOwnPartyGathering } from "@lootlog/domain/npc-permissions";
 import { canReadChatNpcSource } from "#src/chat/chat-npc-visibility";
+import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -25,15 +29,7 @@ export const readyRoomSourceVisibility = Effect.fn("readyRoomSourceVisibility")(
     const rows = yield* database
       .select({ guild: guildTable, role: roleTable })
       .from(guildTable)
-      .leftJoin(
-        memberTable,
-        and(
-          eq(memberTable.guildId, guildTable.id),
-          eq(memberTable.userId, discordId),
-          eq(memberTable.active, true),
-          isNotNull(memberTable.globalUserId),
-        ),
-      )
+      .leftJoin(memberTable, activeGuildMemberJoin(discordId))
       .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
       .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
       .where(
@@ -44,12 +40,17 @@ export const readyRoomSourceVisibility = Effect.fn("readyRoomSourceVisibility")(
       room.guildIds.filter((guildId) => {
         const matching = rows.filter((row) => row.guild.id === guildId);
         const roles = matching.flatMap(({ role }) => (role ? [role] : []));
+        const guild = matching[0]?.guild;
 
         if (
-          matching.some(({ guild }) => guild.ownerId === discordId) ||
-          createAccessPolicy({
-            capabilities: roles.flatMap(({ permissions }) => permissions),
-          }).allows(Permission.ADMIN) ||
+          (guild &&
+            createAccessPolicy({
+              capabilities: memberCapabilities({
+                ownerId: guild.ownerId,
+                viewerId: discordId,
+                roles,
+              }),
+            }).allowsAny(AccessRequirement.ADMINISTER)) ||
           canManageOwnPartyGathering(roles, room.organizerDiscordId, discordId)
         )
           return true;
