@@ -23,6 +23,15 @@ const retried = (
 export const apiRabbitQueues = [
   queue(Queue.GAME_CHARACTER_OFFLINE, RabbitRoutingKey.GAME_CHARACTER_OFFLINE),
   queue(
+    Queue.MARGONEM_ACCOUNT_VERIFIED,
+    RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1,
+  ),
+  queue(
+    Queue.MARGONEM_ACCOUNT_VERIFIED_DLQ,
+    RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1_DLQ,
+    { exchange: RabbitExchange.DEAD_LETTER },
+  ),
+  queue(
     Queue.GAME_CHARACTER_OFFLINE_DLQ,
     RabbitRoutingKey.GAME_CHARACTER_OFFLINE_DLQ,
     { exchange: RabbitExchange.DEAD_LETTER },
@@ -208,6 +217,12 @@ export const apiRabbitFailurePolicies = {
   characterOffline: {
     strategy: "dead-letter",
     deadLetterRoutingKey: RabbitRoutingKey.GAME_CHARACTER_OFFLINE_DLQ,
+  },
+  // A verification only moves its time forward, so a redelivery is harmless;
+  // the next join announces the account again.
+  margonemAccountVerified: {
+    strategy: "dead-letter",
+    deadLetterRoutingKey: RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1_DLQ,
   },
   presenceCoverage: {
     strategy: "dead-letter",

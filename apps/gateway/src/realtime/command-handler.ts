@@ -22,8 +22,10 @@ import {
   type ServerEvent,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
+import type { MargonemAccountVerifiedV1 } from "@lootlog/protocol/rabbit/events";
 import {
   Cause,
+  Clock,
   Effect,
   Exit,
   Function,
@@ -207,6 +209,9 @@ export class CommandHandler {
   constructor(
     private readonly guilds: GuildStore,
     private readonly proofVerifier: MargonemProofVerifier,
+    private readonly publishAccountVerified: (
+      event: MargonemAccountVerifiedV1,
+    ) => Effect.Effect<void, unknown>,
     private readonly presence: Pick<
       PresenceStore,
       "heartbeat" | "publish" | "snapshot" | "reconcileAccess"
@@ -998,7 +1003,14 @@ export class CommandHandler {
     socket: GatewaySocket,
     data: Extract<Command, { type: "session.join" }>["data"],
   ): Effect.Effect<unknown, CommandFailure> {
-    const { activity, guilds, hub, presence, proofVerifier } = this;
+    const {
+      activity,
+      guilds,
+      hub,
+      presence,
+      proofVerifier,
+      publishAccountVerified,
+    } = this;
 
     const withdrawNpcPresence =
       this.withdrawNpcPresenceOnCharacterChange.bind(this);
@@ -1028,7 +1040,26 @@ export class CommandHandler {
           clanId: data.character.clan?.id,
         });
 
-        if (verification.valid) socket.data.confidence = "verified";
+        if (verification.valid) {
+          socket.data.confidence = "verified";
+
+          // Other services trust account ownership only from this fact.
+          yield* publishAccountVerified({
+            version: 1,
+            userId: socket.data.userId,
+            accountId: data.character.accountId,
+            characterId: data.character.characterId,
+            world: data.character.world,
+            verifiedAt: new Date(yield* Clock.currentTimeMillis).toISOString(),
+          }).pipe(
+            Effect.catchCause((cause) =>
+              Effect.logError(
+                "Gateway account verification publish failed",
+                cause,
+              ),
+            ),
+          );
+        }
       }
 
       const userGuilds = yield* guilds.getUserGuilds(socket.data);

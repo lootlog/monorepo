@@ -41177,7 +41177,8 @@ export const getCharacterAurasControllerLinkGameAccountUrl = ({ gameAccountId }:
 }
 
 /**
- * Show the authenticated user's aura on the characters of a Margonem account they play; fails with 403 while they wear no aura they may use
+ * Deprecated: an aura shows on the Margonem accounts its user proved to play when the Game client connected, so this changes nothing. Returns the own aura, or 403 while the user wears no aura they may use
+ * @deprecated
  * @summary Show own aura on a Margonem account
  */
 export const characterAurasControllerLinkGameAccount = async ({ gameAccountId }: CharacterAurasControllerLinkGameAccountPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<OwnCharacterAuraResponseDto> => {
@@ -41230,6 +41231,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CharacterAurasControllerLinkGameAccountMutationVariables = {pathParams: CharacterAurasControllerLinkGameAccountPathParameters}
 
     /**
+ * @deprecated
  * @summary Show own aura on a Margonem account
  */
 export const useCharacterAurasControllerLinkGameAccount = <TError = ErrorType<RequestValidationError | CharacterAurasControllerLinkGameAccount401 | CharacterAurasControllerLinkGameAccount403 | CharacterAurasControllerLinkGameAccount429>,

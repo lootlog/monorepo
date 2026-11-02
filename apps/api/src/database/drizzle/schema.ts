@@ -1205,9 +1205,36 @@ export const userCharacterAuraTable = pgTable("UserCharacterAura", {
 });
 
 /**
- * Margonem accounts the Game client played with while its User wore an aura,
- * so other players' clients can find the aura by the account they see. An
- * account belongs to the User who played it last.
+ * Margonem accounts a User proved to play: the gateway verified Margonem's
+ * signed proof and announced it. An account shared by several Users belongs
+ * to each of them; the latest `verifiedAt` names who plays it now.
+ */
+export const userMargonemAccountTable = pgTable(
+  "UserMargonemAccount",
+  {
+    userId: text("userId").notNull(),
+    accountId: text("accountId").notNull(),
+    verifiedAt: timestamp("verifiedAt", {
+      mode: "date",
+      precision: 3,
+    }).notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.userId, table.accountId],
+      name: "UserMargonemAccount_pkey",
+    }),
+    index("UserMargonemAccount_accountId_verifiedAt_idx").on(
+      table.accountId,
+      table.verifiedAt.desc(),
+    ),
+  ],
+);
+
+/**
+ * Deprecated: accounts claimed by the Game client without proof. Nothing
+ * reads it since auras follow `UserMargonemAccount`; a later migration drops
+ * it once no deployed API writes it.
  */
 export const userCharacterAuraGameAccountTable = pgTable(
   "UserCharacterAuraGameAccount",

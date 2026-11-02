@@ -2138,7 +2138,8 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           },
         },
         description:
-          "Show the authenticated user's aura on the characters of a Margonem account they play; fails with 403 while they wear no aura they may use",
+          "Deprecated: an aura shows on the Margonem accounts its user proved to play when the Game client connected, so this changes nothing. Returns the own aura, or 403 while the user wears no aura they may use",
+        deprecated: true,
       },
       "GET /public/themes/{shareToken}": {
         operationId: "UserThemesController_getSharedTheme",
