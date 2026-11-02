@@ -295,10 +295,23 @@ export const useVisibleNotifications = ({
       }
     }
 
+    // Browsers throttle or freeze timeouts in a background tab, while the
+    // row's fade-out runs on wall-clock time: the player came back to an
+    // already faded, empty window that the late timeout closed only much
+    // later. Returning to the tab sweeps at once.
+    function sweepWhenVisible() {
+      if (document.hidden) return;
+
+      window.clearTimeout(timeoutId);
+      sweep();
+    }
+
     arm(nearestExpirationTimeMs);
+    document.addEventListener("visibilitychange", sweepWhenVisible);
 
     return () => {
       window.clearTimeout(timeoutId);
+      document.removeEventListener("visibilitychange", sweepWhenVisible);
     };
   }, [autoCleanup, nearestExpirationTimeMs]);
 
