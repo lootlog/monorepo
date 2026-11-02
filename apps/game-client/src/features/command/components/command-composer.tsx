@@ -1,15 +1,13 @@
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { GuildsLoadStatus } from "@/components/guilds-load-status";
-import { GuildSelect } from "@/components/guild-select";
+import { GuildTargetSelect } from "@/components/guild-target-select";
 import { Kbd } from "@/components/ui/kbd";
 import { ChatComposeField } from "@/features/chat/components/chat-compose-field";
 import { ChatComposeModeMenu } from "@/features/chat/components/chat-compose-mode-menu";
 import { ChatMentionSuggestions } from "@/features/chat/components/chat-mention-suggestions";
 import { useChatInputController } from "@/features/chat/components/use-chat-input-controller";
 import { useGuildTargets } from "@/hooks/use-guild-targets";
-import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { useChatStore } from "@/store/chat.store";
 import { clearCommandDraft, COMMAND_DRAFT_KEY } from "../command-draft";
 import { getCommandMode, toggleCommandMode } from "../command-mode.helpers";
@@ -28,7 +26,6 @@ type CommandComposerProps = {
 export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
   const { t } = useTranslation("command");
   const { t: tChat } = useTranslation("chat");
-  const { t: tCommon } = useTranslation("common");
 
   const { commandGuildId, setCommandGuildId } = useChatStore(
     useShallow((state) => ({
@@ -36,12 +33,6 @@ export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
       setCommandGuildId: state.setCommandGuildId,
     })),
   );
-
-  const {
-    areVisibleGuildsResolved,
-    guildsQuery: { data: guilds },
-    visibleGuilds,
-  } = useLootlogGuilds();
 
   const [targetGuildId] = useGuildTargets(
     commandGuildId ? [commandGuildId] : [],
@@ -78,30 +69,6 @@ export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
   const mode = getCommandMode(messageValue);
   const hasTarget = targetGuildId !== undefined;
 
-  let guildField = (
-    <GuildSelect
-      aria-label={t("target.label")}
-      guilds={visibleGuilds}
-      value={targetGuildId}
-      disabled={isPending}
-      className="ll:w-auto ll:max-w-56"
-      onValueChange={(guildId) => {
-        setCommandGuildId(guildId);
-        focusEditorCaret(caretIndex);
-      }}
-    />
-  );
-
-  if (!areVisibleGuildsResolved || !guilds) {
-    guildField = <GuildsLoadStatus />;
-  } else if (!hasTarget) {
-    guildField = (
-      <span className="ll:px-1.5 ll:text-xs ll:text-muted-foreground">
-        {tCommon("guildSwitcher.allHidden")}
-      </span>
-    );
-  }
-
   return (
     <div className="ll:relative">
       <div className="ll:relative ll:flex ll:h-11 ll:items-center ll:gap-2 ll:px-3">
@@ -137,7 +104,16 @@ export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
         />
       </div>
       <div className="ll:flex ll:items-center ll:gap-1 ll:rounded-b-lg ll:border-0 ll:border-t ll:border-solid ll:border-gray-400/40 ll:bg-white/[0.03] ll:px-1.5 ll:py-1.5">
-        {guildField}
+        <GuildTargetSelect
+          aria-label={t("target.label")}
+          value={targetGuildId}
+          disabled={isPending}
+          className="ll:w-auto ll:max-w-56"
+          onValueChange={(guildId) => {
+            setCommandGuildId(guildId);
+            focusEditorCaret(caretIndex);
+          }}
+        />
         <div className="ll:ml-auto ll:flex ll:shrink-0 ll:items-center ll:gap-0.5">
           <CommandModeToggle
             prefix="!"

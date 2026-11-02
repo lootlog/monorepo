@@ -109,7 +109,7 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     .annotate(OpenApi.Summary, "Get member lootlog config summary")
     .annotate(
       OpenApi.Description,
-      "Retrieve guild-scoped lootlog configuration summary for a specific member (admin only)",
+      "Retrieve a member's character configuration summary for this Lootlog (admin only). Lists only characters set up to submit loot to this Lootlog; characters set up only for other Lootlogs are never included.",
     ),
   HttpApiEndpoint.get(
     "MembersControllerGetGuildMembers",

@@ -1,5 +1,5 @@
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
-import { and, asc, desc, eq, isNotNull, or } from "drizzle-orm";
+import { and, arrayContains, asc, desc, eq, isNotNull, or } from "drizzle-orm";
 import {
   activeGuildMemberJoin,
   selectGuildIdsGrantingPermissions,
@@ -213,7 +213,14 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                   .select()
                   .from(userCharactersLootlogSettingsTable)
                   .where(
-                    eq(userCharactersLootlogSettingsTable.userId, discordId),
+                    and(
+                      eq(userCharactersLootlogSettingsTable.userId, discordId),
+                      // The summary is scoped to this Lootlog's characters.
+                      arrayContains(
+                        userCharactersLootlogSettingsTable.catchingGuildIds,
+                        [guildId],
+                      ),
+                    ),
                   )
                   .orderBy(
                     asc(userCharactersLootlogSettingsTable.accountId),
@@ -297,9 +304,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                   return {
                     accountId: config.accountId,
                     characterId: config.characterId,
-                    enabledForGuild:
-                      catchesForGuild &&
-                      config.catchingGuildIds.includes(guildId),
+                    enabledForGuild: catchesForGuild,
                     characterName: snapshot?.name ?? null,
                     world: snapshot?.world ?? null,
                     icon: snapshot?.icon ?? null,

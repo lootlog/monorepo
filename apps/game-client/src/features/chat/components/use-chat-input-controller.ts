@@ -647,7 +647,7 @@ export function useChatInputController({
     }
 
     if (submitAction.kind === "party") {
-      handlePartyCommand(submitAction.description, [selectedGuildId]);
+      handlePartyCommand(submitAction.description, selectedGuildId);
       completeSubmission();
 
       return;
