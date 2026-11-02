@@ -19,7 +19,10 @@ import {
   userSettingsTable,
   userThemeTable,
 } from "#src/database/drizzle/schema";
-import { getGuildMemberNotFoundCacheKey } from "#src/discord/discord-cache.util";
+import {
+  getGuildMemberForbiddenCacheKey,
+  getGuildMemberNotFoundCacheKey,
+} from "#src/discord/discord-cache.util";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import {
   getAuthTokenCachePattern,
@@ -179,6 +182,13 @@ const invalidateRemovedMember = (
     effects.push(
       ports.deleteCacheKey(
         getGuildMemberNotFoundCacheKey({
+          discordId: member.discordId,
+          guildId: member.guildId,
+          userId: member.globalUserId,
+        }),
+      ),
+      ports.deleteCacheKey(
+        getGuildMemberForbiddenCacheKey({
           discordId: member.discordId,
           guildId: member.guildId,
           userId: member.globalUserId,
