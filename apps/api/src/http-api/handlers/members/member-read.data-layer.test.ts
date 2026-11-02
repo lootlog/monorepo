@@ -16,7 +16,7 @@ import {
 import { makeMemberReadDataLayer } from "./member-read.data-layer.js";
 import { MemberReadData } from "./members.handlers.js";
 
-test("config summaries hide members who left and Organizations they can no longer submit loot to", async () => {
+test("config summaries hide members who left, Lootlogs they can no longer submit loot to, and characters set up only for other Lootlogs", async () => {
   const boundary = await createDatabaseBoundary();
 
   try {
@@ -70,16 +70,24 @@ test("config summaries hide members who left and Organizations they can no longe
       ]),
     );
     await boundary.run(
-      boundary.database.insert(userCharactersLootlogSettingsTable).values(
-        ["writer", "reader", "left"].map((userId) => ({
+      boundary.database.insert(userCharactersLootlogSettingsTable).values([
+        ...["writer", "reader", "left"].map((userId) => ({
           userId,
           accountId: "1",
           characterId: "1",
-          catchingGuildIds: ["guild-1"],
+          catchingGuildIds: ["guild-1", "guild-2"],
           createdAt: new Date(0),
           updatedAt: new Date(0),
         })),
-      ),
+        {
+          userId: "writer",
+          accountId: "2",
+          characterId: "2",
+          catchingGuildIds: ["guild-2"],
+          createdAt: new Date(0),
+          updatedAt: new Date(0),
+        },
+      ]),
     );
 
     const summaries = await boundary.run(
@@ -103,8 +111,9 @@ test("config summaries hide members who left and Organizations they can no longe
     );
 
     expect(summaries.writer).toMatchObject({
+      configuredCharacterCount: 1,
       enabledCharacterCount: 1,
-      characters: [{ enabledForGuild: true }],
+      characters: [{ accountId: "1", characterId: "1", enabledForGuild: true }],
     });
     expect(summaries.reader).toMatchObject({
       enabledCharacterCount: 0,

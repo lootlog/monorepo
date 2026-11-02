@@ -92,7 +92,7 @@ export interface MessagingReadyRoom {
     readonly organizerCharacter: NonNullable<
       SendNotificationRequest["character"]
     >;
-    readonly guildIds: ReadonlyArray<string>;
+    readonly guildId: string;
     readonly world: string;
   }) => Effect.Effect<unknown, unknown>;
 }
@@ -234,11 +234,21 @@ export const makeMessagingDataLayer = (
                   );
                 }
 
+                // The request schema limits a gathering to one Lootlog; it
+                // must never reach a second one.
+                const [guildId] = guildIds;
+
+                if (guildIds.length !== 1 || guildId === undefined) {
+                  return yield* Effect.fail(
+                    new InvalidRequestError({ code: "SINGLE_GUILD_REQUIRED" }),
+                  );
+                }
+
                 yield* readyRoom.create({
                   notificationId,
                   organizerDiscordId: discordId,
                   organizerCharacter: data.character,
-                  guildIds,
+                  guildId,
                   world: data.world,
                   npc: data.npc
                     ? {

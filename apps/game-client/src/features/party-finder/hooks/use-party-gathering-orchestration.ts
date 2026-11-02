@@ -29,8 +29,9 @@ import type { GameNpcWithLocation } from "@/store/npc-detector.store";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
+/** A gathering belongs to one Lootlog, never several at once. */
 type StartPartyGatheringOptions = {
-  guildIds: string[];
+  guildId: string;
   world: string;
   description?: string;
   minLvl?: number;
@@ -42,7 +43,7 @@ type StartPartyGatheringOptions = {
 type StartNpcPartyGatheringOptions = {
   openPartyFinder?: boolean;
   npc: GameNpcWithLocation;
-  guildIds: string[];
+  guildId: string;
   world: string;
 };
 
@@ -126,7 +127,7 @@ export const usePartyGatheringOrchestration = () => {
   };
 
   const startPartyGathering = ({
-    guildIds,
+    guildId,
     world,
     description,
     minLvl,
@@ -155,7 +156,7 @@ export const usePartyGatheringOrchestration = () => {
       try {
         response = await createPartyGatheringAsync({
           data: {
-            guildIds,
+            guildId,
             world,
             character,
             description,
@@ -186,7 +187,7 @@ export const usePartyGatheringOrchestration = () => {
 
   const startNpcPartyGathering = ({
     npc,
-    guildIds,
+    guildId,
     world,
     openPartyFinder: shouldOpen = true,
   }: StartNpcPartyGatheringOptions): Promise<
@@ -198,7 +199,7 @@ export const usePartyGatheringOrchestration = () => {
 
     const notificationPayload = buildNpcNotificationPayload({
       npc,
-      guildIds,
+      guildIds: [guildId],
       world,
       isGatheringParty: true,
     });
@@ -225,7 +226,7 @@ export const usePartyGatheringOrchestration = () => {
 
       return {
         notificationId: response.notificationId,
-        guildIds: response.guildIds ?? guildIds,
+        guildIds: response.guildIds ?? [guildId],
       };
     };
 

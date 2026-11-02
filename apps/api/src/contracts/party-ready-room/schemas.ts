@@ -57,24 +57,35 @@ export const PartyReadyRoomResponse = Schema.Struct(readyRoomFields).annotate({
 
 export type PartyReadyRoomResponse = typeof PartyReadyRoomResponse.Type;
 
+const PartyGatheringGuildId = Schema.String.check(
+  Schema.isMaxLength(50).annotate({
+    expected: "a value with a length of at most 50",
+  }),
+);
+
 export const CreatePartyGatheringRequest = Schema.Struct({
-  guildIds: Schema.Array(
-    Schema.String.check(
-      Schema.isMaxLength(50).annotate({
-        expected: "a value with a length of at most 50",
+  guildId: Schema.optionalKey(
+    PartyGatheringGuildId.annotate({
+      description: "The one Lootlog (Discord guild) the gathering belongs to.",
+    }),
+  ),
+  guildIds: Schema.optionalKey(
+    Schema.Array(PartyGatheringGuildId)
+      .check(
+        Schema.isMinLength(1).annotate({
+          expected: "a value with a length of at least 1",
+        }),
+      )
+      .check(
+        Schema.isMaxLength(1).annotate({
+          expected: "a value with a length of at most 1",
+        }),
+      )
+      .annotate({
+        description:
+          "Deprecated: send `guildId`. Accepted only with exactly one Lootlog.",
       }),
-    ),
-  )
-    .check(
-      Schema.isMinLength(1).annotate({
-        expected: "a value with a length of at least 1",
-      }),
-    )
-    .check(
-      Schema.isMaxLength(10).annotate({
-        expected: "a value with a length of at most 10",
-      }),
-    ),
+  ),
   world: NonEmptyString.check(
     Schema.isMaxLength(50).annotate({
       expected: "a value with a length of at most 50",
@@ -82,7 +93,18 @@ export const CreatePartyGatheringRequest = Schema.Struct({
   ),
   character: GameCharacter,
   ...partyGatheringDetailsFields,
-}).annotate({ identifier: "CreatePartyGatheringDto" });
+})
+  .check(
+    Schema.makeFilter(({ guildId, guildIds }) =>
+      (guildId === undefined) === (guildIds === undefined)
+        ? {
+            path: ["guildId"],
+            issue: "Send exactly one of guildId or the deprecated guildIds",
+          }
+        : undefined,
+    ),
+  )
+  .annotate({ identifier: "CreatePartyGatheringDto" });
 
 export type CreatePartyGatheringRequest =
   typeof CreatePartyGatheringRequest.Type;

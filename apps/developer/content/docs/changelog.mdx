@@ -22,6 +22,27 @@ and read `result.players` as an array. Timers and Organizations are unchanged.
 Public battle links no longer return the uploader's `userId` from
 `GET /battles/public/{battleId}`.
 
+## Unreleased (breaking): Party gatherings belong to one Lootlog
+
+A party gathering is created in exactly one Lootlog (Discord guild) and is
+visible only to its members.
+
+- `POST /messaging/party-gathering` accepts `guildId`. The deprecated
+  `guildIds` is still accepted with exactly one element; send one of the two
+  fields, not both. Two or more Lootlogs, or neither field, is a `400`.
+- `POST /messaging` with `isGatheringParty: true` requires exactly one
+  `guildIds` element; more is a `400`. Ordinary NPC notifications still
+  accept up to ten Lootlogs.
+- A Lootlog the caller cannot create gatherings in is a `403`, instead of
+  being dropped from a list of targets.
+- Responses and realtime events keep `guildIds`; a new gathering carries one
+  element. Gatherings created before this release can carry several until
+  they expire, at most 30 minutes later.
+
+Deploy the API before the game client. Older game clients that send one
+Lootlog keep working; when they target several, creation fails instead of
+broadcasting the gathering. No persistence migration is required.
+
 ## Unreleased (breaking): One error body, filter and page shape across the main API
 
 Every main API operation now fails, filters and pages the same way, as

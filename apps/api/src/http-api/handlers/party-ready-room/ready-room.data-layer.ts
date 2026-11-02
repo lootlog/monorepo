@@ -85,7 +85,7 @@ export const createReadyRoomForNotification = (
     readonly notificationId: string;
     readonly organizerDiscordId: string;
     readonly organizerCharacter: PartyReadyRoomCharacter;
-    readonly guildIds: ReadonlyArray<string>;
+    readonly guildId: string;
     readonly world: string;
   },
   clock: () => number = Date.now,
@@ -104,7 +104,7 @@ export const createReadyRoomForNotification = (
     notificationId: input.notificationId,
     organizerDiscordId: input.organizerDiscordId,
     organizerCharacter: structuredClone(input.organizerCharacter),
-    guildIds: [...input.guildIds],
+    guildIds: [input.guildId],
     world: input.world,
     status: "ACTIVE",
     revision: 1,
@@ -864,7 +864,7 @@ export const makeReadyRoomDataLayer = (
           ),
         accessibleGuildIds: (discordId, includeReadable) =>
           operation(accessibleGuildIds(discordId, includeReadable)),
-        create: (identity, guildIds, payload) =>
+        create: (identity, guildId, payload) =>
           operation(
             Effect.gen(function* () {
               const now = clock();
@@ -875,7 +875,7 @@ export const makeReadyRoomDataLayer = (
                 notificationId: idGenerator(),
                 organizerDiscordId: identity.discordId,
                 organizerCharacter: structuredClone(payload.character),
-                guildIds: [...guildIds],
+                guildIds: [guildId],
                 world: payload.world,
                 status: "ACTIVE",
                 revision: 1,
@@ -925,30 +925,25 @@ export const makeReadyRoomDataLayer = (
               }
 
               yield* publish(result.aggregate, recipients);
-              yield* Effect.forEach(
-                guildIds,
-                (guildId) =>
-                  effects
-                    .publishGathering({
-                      notificationId: result.aggregate.notificationId,
-                      guildId,
-                      discordId: identity.discordId,
-                      character: result.aggregate.organizerCharacter,
-                      world: result.aggregate.world,
-                      createdAt: result.aggregate.createdAt,
-                      ...(result.aggregate.description !== undefined && {
-                        description: result.aggregate.description,
-                      }),
-                      ...(result.aggregate.minLvl !== undefined && {
-                        minLvl: result.aggregate.minLvl,
-                      }),
-                      ...(result.aggregate.maxLvl !== undefined && {
-                        maxLvl: result.aggregate.maxLvl,
-                      }),
-                    })
-                    .pipe(Effect.ignore),
-                { discard: true },
-              );
+              yield* effects
+                .publishGathering({
+                  notificationId: result.aggregate.notificationId,
+                  guildId,
+                  discordId: identity.discordId,
+                  character: result.aggregate.organizerCharacter,
+                  world: result.aggregate.world,
+                  createdAt: result.aggregate.createdAt,
+                  ...(result.aggregate.description !== undefined && {
+                    description: result.aggregate.description,
+                  }),
+                  ...(result.aggregate.minLvl !== undefined && {
+                    minLvl: result.aggregate.minLvl,
+                  }),
+                  ...(result.aggregate.maxLvl !== undefined && {
+                    maxLvl: result.aggregate.maxLvl,
+                  }),
+                })
+                .pipe(Effect.ignore);
 
               return createReadyRoomProjection(
                 result.aggregate,

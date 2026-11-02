@@ -648,8 +648,9 @@ describe("Read cache Dragonfly integration", () => {
             expect(
               yield* members.getLootlogConfigSummary(guildId, discordId),
             ).toMatchObject({
+              configuredCharacterCount: 0,
               enabledCharacterCount: 0,
-              characters: [{ enabledForGuild: false }],
+              characters: [],
             });
           }).pipe(
             Effect.provide(makeMemberReadDataLayer(cache)),

@@ -1065,7 +1065,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Retrieve guild-scoped lootlog configuration summary for a specific member (admin only)
+      description: Retrieve a member's character configuration summary for this Lootlog (admin only). Lists only characters set up to submit loot to this Lootlog; characters set up only for other Lootlogs are never included.
       summary: Get member lootlog config summary
   /guilds/{guildId}/members:
     get:
@@ -24421,13 +24421,18 @@ components:
     CreatePartyGatheringDto:
       type: object
       properties:
+        guildId:
+          type: string
+          maxLength: 50
+          description: The one Lootlog (Discord guild) the gathering belongs to.
         guildIds:
           type: array
           items:
             type: string
             maxLength: 50
           minItems: 1
-          maxItems: 10
+          maxItems: 1
+          description: "Deprecated: send `guildId`. Accepted only with exactly one Lootlog."
         world:
           type: string
           minLength: 1
@@ -24486,7 +24491,6 @@ components:
           minimum: 1
           maximum: 500
       required:
-        - guildIds
         - world
         - character
       additionalProperties: false
@@ -24800,6 +24804,7 @@ components:
             maxLength: 50
           minItems: 1
           maxItems: 10
+          description: Lootlogs (Discord guilds) that receive the notification. A party gathering (`isGatheringParty`) belongs to exactly one.
         world:
           type: string
           minLength: 1

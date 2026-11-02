@@ -48,7 +48,7 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
         setCreatingParty(true);
 
         try {
-          await handlePartyCommand(undefined, [guildId]);
+          await handlePartyCommand(undefined, guildId);
         } finally {
           setCreatingParty(false);
         }

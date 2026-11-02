@@ -25,7 +25,8 @@
     "validation": {
       "minGreaterThanMax": "Minimalny poziom nie może być większy niż maksymalny"
     },
-    "selectGuild": "Wybierz przynajmniej jeden Lootlog",
+    "selectGuild": "Wybierz Lootlog",
+    "guildLabel": "Lootlog",
     "descriptionLabel": "Opis (opcjonalny)",
     "descriptionPlaceholder": "Np. szukam heala na tytana",
     "minLvlLabel": "Minimalny poziom",
