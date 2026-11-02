@@ -16,6 +16,7 @@ import {
   type KillAnalyticsRange,
   type UserKillAnalyticsScope,
 } from "./user-kill-analytics-query.js";
+import { STATS_TIME_ZONE, toStatsDate } from "./kill-stats-period.js";
 
 const RawDaily = Schema.Struct({
   date: Schema.String,
@@ -78,7 +79,7 @@ type DailyPoint = UserKillActivityResponse["daily"][number];
 
 const localDate = (date: string) =>
   DateTime.makeZonedUnsafe(date, {
-    timeZone: "Europe/Warsaw",
+    timeZone: STATS_TIME_ZONE,
     adjustForTimeZone: true,
   });
 
@@ -87,11 +88,6 @@ const dateAfter = (date: string, days: number) =>
 
 const percentChange = (current: number, previous: number) =>
   previous === 0 ? null : ((current - previous) / previous) * 100;
-
-const toLocalDate = (instant: string) =>
-  DateTime.formatIsoDate(
-    DateTime.setZoneNamedUnsafe(DateTime.makeUnsafe(instant), "Europe/Warsaw"),
-  );
 
 export const buildKillActivity = (
   raw: typeof RawBase.Type,
@@ -111,7 +107,7 @@ export const buildKillActivity = (
   const firstDate =
     historyStart === undefined || historyStart === null
       ? historyStart
-      : toLocalDate(historyStart);
+      : toStatsDate(historyStart);
 
   const byDate = new Map<string, number>();
   const worldsByDate = new Map<string, Set<string>>();
@@ -154,7 +150,7 @@ export const buildKillActivity = (
 
   return {
     meta: {
-      timezone: "Europe/Warsaw",
+      timezone: STATS_TIME_ZONE,
       generatedAt: range.generatedAt,
       days: range.days,
       world: scope.world ?? null,

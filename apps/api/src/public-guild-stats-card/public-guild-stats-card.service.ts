@@ -5,6 +5,7 @@ import {
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { Clock, Effect, Schema } from "effect";
+import { getStatsPeriodStart } from "#src/kills/kill-stats-period";
 import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import sharp from "sharp";
@@ -121,7 +122,7 @@ export const makePublicGuildStatsCard = (options: {
     Effect.gen(function* () {
       const stats = yield* options.repository.getLootStats(
         guildId,
-        new Date((yield* Clock.currentTimeMillis) - 30 * 24 * 60 * 60 * 1000),
+        getStatsPeriodStart("30d", new Date(yield* Clock.currentTimeMillis)),
       );
 
       return yield* options.image

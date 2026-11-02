@@ -29,7 +29,7 @@ import {
   type GuildKillSource,
   type MemberKillSource,
 } from "./kill-source.js";
-import type { KillTimelineUnit } from "./kill-stats-period.js";
+import { statsLocalTime, type KillTimelineUnit } from "./kill-stats-period.js";
 
 type NpcType = (typeof memberKillBucketTable.npcType.enumValues)[number];
 
@@ -176,7 +176,7 @@ const guildBucketCondition = (filter: KillStatsFilter) =>
       : undefined,
   );
 
-const warsawTime = sql`(${guildKillBucketTable.periodStart} at time zone 'Europe/Warsaw')`;
+const warsawTime = statsLocalTime(guildKillBucketTable.periodStart);
 
 const memberSource = (filter: KillStatsFilter) =>
   memberKillSource(filter.periodStart?.gte);
