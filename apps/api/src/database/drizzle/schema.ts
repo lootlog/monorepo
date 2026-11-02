@@ -1112,7 +1112,7 @@ export const reservationShareInvitationTable = pgTable(
       foreignColumns: [guildTable["id"]],
       name: "ReservationShareInvitation_targetGuildId_fkey",
     })
-      .onDelete("set null")
+      .onDelete("restrict")
       .onUpdate("cascade"),
   ],
 );
@@ -1394,7 +1394,7 @@ export const notificationRuleTable = pgTable(
       foreignColumns: [guildTable["id"]],
       name: "NotificationRule_guildId_fkey",
     })
-      .onDelete("set null")
+      .onDelete("restrict")
       .onUpdate("cascade"),
   ],
 );
@@ -2254,7 +2254,7 @@ export const guildDocumentTable = pgTable(
       foreignColumns: [guildTable["id"]],
       name: "GuildDocument_guildId_fkey",
     })
-      .onDelete("cascade")
+      .onDelete("restrict")
       .onUpdate("cascade"),
   ],
 );
@@ -2295,7 +2295,7 @@ export const guildDocumentHistoryTable = pgTable(
       foreignColumns: [guildTable["id"]],
       name: "GuildDocumentHistory_guildId_fkey",
     })
-      .onDelete("cascade")
+      .onDelete("restrict")
       .onUpdate("cascade"),
   ],
 );
@@ -2641,7 +2641,7 @@ export const guildKillActivityTable = pgTable(
     id: text("id").primaryKey(),
     guildId: text("guildId")
       .notNull()
-      .references(() => guildTable.id, { onDelete: "cascade" }),
+      .references(() => guildTable.id, { onDelete: "restrict" }),
     world: text("world").notNull(),
     npcId: integer("npcId").notNull(),
     npcName: text("npcName").notNull(),

@@ -99,7 +99,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
 }) => {
   const { t } = useTranslation("timers");
   const showAlwaysVisibleOption = !isManualTimer(timer);
-  const showHistory = !timersGrouping && !isManualTimer(timer);
+  const showHistory = !timersGrouping;
 
   if (isPending) {
     return (

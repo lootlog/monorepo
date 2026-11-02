@@ -195,7 +195,7 @@ describe("TimerContextMenuContent", () => {
     expect(props.onDelete).toHaveBeenCalledWith("guild-2", "timer-2");
   });
 
-  it("omits history and persistent expiry visibility for manual timers", async () => {
+  it("offers history but not persistent expiry visibility for manual timers", async () => {
     const timer = createTimerFixture();
     await renderMenu(
       createProps({
@@ -208,8 +208,8 @@ describe("TimerContextMenuContent", () => {
       }),
     );
     expect(
-      screen.queryByRole("menuitem", { name: "Historia" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("menuitem", { name: "Historia" }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("menuitem", { name: "Zostaw po wyzerowaniu" }),
     ).not.toBeInTheDocument();

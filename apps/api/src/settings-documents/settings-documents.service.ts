@@ -18,10 +18,18 @@ import { Effect, Schema, Predicate } from "effect";
 import {
   getSettingsOperationKey,
   InvalidSettingsPatchError,
+  SettingsConflictError,
   type SettingsDocumentsRepositoryService,
   SettingsPersistenceError,
 } from "./settings-documents.repository.js";
 import { resolveSettingsDomain } from "./settings-resolver.js";
+
+/**
+ * The timestamp the compatibility routes report for settings that were never
+ * stored. A fixed value keeps repeated reads of defaults identical instead of
+ * reporting a fresh write on every request.
+ */
+export const NEVER_STORED_AT = new Date(0);
 
 export interface SettingsContext {
   domains: SettingsDomain[];
@@ -65,6 +73,15 @@ export interface SettingsDocuments {
     userId: string,
     payload: PatchSettingsDocuments,
   ) => Effect.Effect<SettingsDocumentsResponse, SettingsDocumentsFailure>;
+  /**
+   * Writes a batch that may span several guilds in one transaction, without
+   * resolving a response; every scope is authorized before anything is
+   * written.
+   */
+  readonly applyOperations: (
+    userId: string,
+    operations: PatchSettingsDocuments["operations"],
+  ) => Effect.Effect<void, SettingsDocumentsFailure>;
   readonly parseDomains: (
     domainsValue: string,
   ) => Effect.Effect<SettingsDomain[], SettingsRequestError>;
@@ -73,7 +90,7 @@ export interface SettingsDocuments {
   ) => Effect.Effect<string[], SettingsRequestError>;
 }
 
-const requestError = (status: 400 | 403, message: string) =>
+const requestError = (status: 400 | 403 | 409, message: string) =>
   new SettingsRequestError({ status, message });
 
 const getContextScopes = (
@@ -133,12 +150,11 @@ const getContextFromOperations = (
 
 const getScopeKey = (scope: SettingsScope) => `${scope.type}:${scope.id}`;
 
-const validateOperationUniqueness = (
+const validateDocumentUniqueness = (
   operations: PatchSettingsDocuments["operations"],
 ): Effect.Effect<void, SettingsRequestError> =>
   Effect.gen(function* () {
     const operationKeys = new Set<string>();
-    const scopeIds = new Map<SettingsScopeType, string>();
 
     for (const operation of operations) {
       const operationKey = getSettingsOperationKey(operation);
@@ -151,7 +167,18 @@ const validateOperationUniqueness = (
       }
 
       operationKeys.add(operationKey);
+    }
+  });
 
+const validateOperationUniqueness = (
+  operations: PatchSettingsDocuments["operations"],
+): Effect.Effect<void, SettingsRequestError> =>
+  Effect.gen(function* () {
+    yield* validateDocumentUniqueness(operations);
+
+    const scopeIds = new Map<SettingsScopeType, string>();
+
+    for (const operation of operations) {
       const existingScopeId = scopeIds.get(operation.scope.type);
 
       if (existingScopeId && existingScopeId !== operation.scope.id) {
@@ -321,6 +348,46 @@ export const makeSettingsDocuments = (
       return { guilds };
     });
 
+  const writeOperations = (
+    userId: string,
+    operations: PatchSettingsDocuments["operations"],
+  ) =>
+    repository
+      .applyOperations(
+        userId,
+        operations.toSorted((left, right) =>
+          getSettingsOperationKey(left).localeCompare(
+            getSettingsOperationKey(right),
+          ),
+        ),
+      )
+      .pipe(
+        Effect.mapError((error) =>
+          error instanceof InvalidSettingsPatchError
+            ? requestError(400, error.message)
+            : error instanceof SettingsConflictError
+              ? requestError(409, error.message)
+              : error,
+        ),
+      );
+
+  const applyOperations: SettingsDocuments["applyOperations"] = (
+    userId,
+    operations,
+  ) =>
+    Effect.gen(function* () {
+      yield* validateDocumentUniqueness(operations);
+      yield* validateScopes(
+        repository,
+        userId,
+        uniqBy(
+          operations.map((operation) => operation.scope),
+          getScopeKey,
+        ),
+      );
+      yield* writeOperations(userId, operations);
+    });
+
   const patchPreferences: SettingsDocuments["patchPreferences"] = (
     userId,
     payload,
@@ -359,21 +426,7 @@ export const makeSettingsDocuments = (
         differenceBy(responseScopes, operationScopes, getScopeKey),
       );
 
-      const sortedOperations = [...payload.operations].sort((left, right) =>
-        getSettingsOperationKey(left).localeCompare(
-          getSettingsOperationKey(right),
-        ),
-      );
-
-      yield* repository
-        .applyOperations(userId, sortedOperations)
-        .pipe(
-          Effect.mapError((error) =>
-            error instanceof InvalidSettingsPatchError
-              ? requestError(400, error.message)
-              : error,
-          ),
-        );
+      yield* writeOperations(userId, payload.operations);
 
       return yield* readResolved(
         userId,
@@ -386,6 +439,7 @@ export const makeSettingsDocuments = (
     getPreferences,
     getGuildPreferences,
     patchPreferences,
+    applyOperations,
     parseGuildIds: (guildIdsValue) => {
       const guildIds = [
         ...new Set(
@@ -422,7 +476,7 @@ export const makeSettingsDocuments = (
 export class SettingsRequestError extends TaggedErrorClass<SettingsRequestError>()(
   "SettingsRequestError",
   {
-    status: Schema.Literals([400, 403]),
+    status: Schema.Literals([400, 403, 409]),
     message: Schema.String,
   },
 ) {

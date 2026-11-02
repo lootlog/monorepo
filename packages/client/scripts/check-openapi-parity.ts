@@ -210,8 +210,13 @@ const API_ERROR_RESPONSE_MIGRATIONS = [
       "PATCH /timer-settings/guilds/{guildId}",
       "POST /timer-settings/migrate",
       "GET /preferences",
-      "PATCH /preferences",
     ],
+  },
+  // 409 rejects an operation whose `expectedUpdatedAt` is stale.
+  {
+    restore: [],
+    add: ["400", "403", "409"],
+    operations: ["PATCH /preferences"],
   },
   {
     restore: ["403"],

@@ -85,6 +85,7 @@ describe("settings HttpApi handlers", () => {
       parseDomains: () => Effect.succeed([]),
       parseGuildIds: () => Effect.succeed([]),
       getGuildPreferences: () => Effect.succeed({ guilds: {} }),
+      applyOperations: () => Effect.void,
     };
 
     const timerService = makeTimerSettings(settingsDocuments);

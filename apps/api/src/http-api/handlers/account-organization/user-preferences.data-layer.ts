@@ -111,21 +111,6 @@ const response = (
   mutes: cloneMutes(mutes),
 });
 
-const mergeStoredPreferences = (
-  current: Parameters<typeof response>[1],
-  settingsUpdate: Partial<NonNullable<Parameters<typeof response>[1]>>,
-) =>
-  settingsUpdate.guildsOrder ||
-  settingsUpdate.hiddenGuildIds ||
-  settingsUpdate.theme
-    ? {
-        guildsOrder: settingsUpdate.guildsOrder ?? current?.guildsOrder ?? [],
-        hiddenGuildIds:
-          settingsUpdate.hiddenGuildIds ?? current?.hiddenGuildIds ?? [],
-        theme: settingsUpdate.theme ?? current?.theme ?? "default",
-      }
-    : current;
-
 type StoredGamePreferences = {
   notifications?: unknown;
   detector?: unknown;
@@ -432,26 +417,6 @@ export const makeUserPreferencesData = (
       );
     }
 
-    const current = yield* readPreferences(database, settingsDocuments, userId);
-
-    const nextAppearance = payload.chatAppearance
-      ? mergeChatAppearanceSettings(
-          chatAppearance(current.appearance),
-          payload.chatAppearance,
-        )
-      : undefined;
-
-    const nextMutes = payload.mutes
-      ? {
-          players: payload.mutes.players
-            ? normalizeMutedPlayers(payload.mutes.players)
-            : current.mutes.players,
-          npcs: payload.mutes.npcs
-            ? normalizeMutedNpcs(payload.mutes.npcs)
-            : current.mutes.npcs,
-        }
-      : current.mutes;
-
     const now = new Date(yield* Clock.currentTimeMillis);
 
     const settingsUpdate: Partial<
@@ -490,25 +455,50 @@ export const makeUserPreferencesData = (
       );
     }
 
+    // Only the sent leaves are written, by path inside the document
+    // transaction, so a concurrent change of another mute list or chat field
+    // is kept instead of being overwritten with this request's stale copy.
     const userScope = { type: "USER", id: userId } as const;
     const operations: SettingsOperation[] = [];
+    const mutesSet: Record<string, JsonValue> = {};
 
-    if (payload.mutes) {
+    if (payload.mutes?.players) {
+      mutesSet.players = toJson(normalizeMutedPlayers(payload.mutes.players));
+    }
+
+    if (payload.mutes?.npcs) {
+      mutesSet.npcs = toJson(normalizeMutedNpcs(payload.mutes.npcs));
+    }
+
+    if (Object.keys(mutesSet).length > 0) {
       operations.push({
         domain: "notifications",
         scope: userScope,
-        set: { mutes: toJson(nextMutes) },
+        set: { mutes: mutesSet },
         unset: [],
       });
     }
 
-    if (nextAppearance) {
-      operations.push({
-        domain: "appearance",
-        scope: userScope,
-        set: { chat: toJson(nextAppearance) },
-        unset: [],
-      });
+    if (payload.chatAppearance) {
+      const normalized = mergeChatAppearanceSettings(
+        CHAT_APPEARANCE_READABLE_PRESET,
+        payload.chatAppearance,
+      );
+
+      const patchedKeys = new Set(Object.keys(payload.chatAppearance));
+
+      const chatSet = Object.fromEntries(
+        Object.entries(normalized).filter(([key]) => patchedKeys.has(key)),
+      );
+
+      if (Object.keys(chatSet).length > 0) {
+        operations.push({
+          domain: "appearance",
+          scope: userScope,
+          set: { chat: chatSet },
+          unset: [],
+        });
+      }
     }
 
     if (operations.length > 0) {
@@ -517,12 +507,7 @@ export const makeUserPreferencesData = (
 
     yield* Effect.all(writes, { concurrency: "unbounded", discard: true });
 
-    return response(
-      userId,
-      mergeStoredPreferences(current.settings, settingsUpdate),
-      nextMutes,
-      nextAppearance ?? chatAppearance(current.appearance),
-    );
+    return yield* getUserPreferences(userId);
   });
 
   const getUserGameAccountPreferences = Effect.fn(
