@@ -32,7 +32,6 @@ describe("NotificationMuteMenu", () => {
         notification={notification}
         senderName="Tester"
         isReady={false}
-        isPending={false}
         mutes={{
           players: [],
           npcs: [],
@@ -56,7 +55,6 @@ describe("NotificationMuteMenu", () => {
         notification={notification}
         senderName="Tester"
         isReady
-        isPending={false}
         mutes={{
           players: [
             {

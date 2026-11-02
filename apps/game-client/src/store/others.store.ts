@@ -14,7 +14,6 @@ type OthersBatch = {
 interface OthersState {
   mapEpoch: number;
   othersById: OthersById;
-  revision: number;
   status: RuntimeStatus;
   applyBatch: (batch: OthersBatch) => void;
   clearOthers: (mapChanged?: boolean) => void;
@@ -63,7 +62,6 @@ function reconcileOthersById(
 export const useOthersStore = create<OthersState>()((set, get) => ({
   mapEpoch: 0,
   othersById: Object.freeze({}),
-  revision: 0,
   status: "uninitialized",
   applyBatch: ({ removeIds = [], upserts = {} }) =>
     set((state) => {
@@ -95,19 +93,12 @@ export const useOthersStore = create<OthersState>()((set, get) => ({
 
       if (!writableOthersById) return state;
 
-      return {
-        othersById: Object.freeze(
-          writableOthersById ?? { ...state.othersById },
-        ),
-        revision: state.revision + 1,
-        status: state.status,
-      };
+      return { othersById: Object.freeze(writableOthersById) };
     }),
   clearOthers: (mapChanged = false) =>
     set((state) => ({
       mapEpoch: state.mapEpoch + (mapChanged ? 1 : 0),
       othersById: Object.freeze({}),
-      revision: state.revision + 1,
       status: "uninitialized",
     })),
   getOther: (id) => get().othersById[id],
@@ -130,7 +121,6 @@ export const useOthersStore = create<OthersState>()((set, get) => ({
       return {
         mapEpoch: state.mapEpoch + (mapChanged ? 1 : 0),
         othersById: reconciledOthersById,
-        revision: state.revision + 1,
         status: "ready",
       };
     }),

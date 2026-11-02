@@ -24,7 +24,6 @@ export const canReadNotification = (
   );
 
   if (!organization) return false;
-  const area = notification.type === "chat-mention" ? "chat" : "notifications";
 
   if (notification.type === "chat-mention") {
     // Null identifies a verified plain message; an absent source is an old or unknown entry.
@@ -33,12 +32,16 @@ export const canReadNotification = (
     return canReadPolicyNpc(organization, "chat", notification.sourceNpc);
   }
 
-  if (!notification.npc) return canReadPolicyNpc(organization, area, null);
+  if (!notification.npc)
+    return canReadPolicyNpc(organization, "notifications", null);
   const type = resolveNpcType(notification.npc);
 
   return (
     type !== null &&
-    canReadPolicyNpc(organization, area, { type, lvl: notification.npc.lvl })
+    canReadPolicyNpc(organization, "notifications", {
+      type,
+      lvl: notification.npc.lvl,
+    })
   );
 };
 

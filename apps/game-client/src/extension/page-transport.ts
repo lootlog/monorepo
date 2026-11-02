@@ -1,4 +1,3 @@
-import { Schema } from "effect";
 import {
   RealtimeRequestError,
   type RealtimeConnectionState,
@@ -11,6 +10,7 @@ import type {
 } from "@/lib/game-client-platform";
 import {
   EXTENSION_CHANNEL,
+  decodeExtensionHttpResponse,
   decodeExtensionMessage,
   encodeMessage,
   decodeMessage,
@@ -19,15 +19,6 @@ import {
   type ExtensionClosedReason,
   type ExtensionRequest,
 } from "./protocol";
-
-const decodeHttpResponse = Schema.decodeUnknownSync(
-  Schema.Struct({
-    status: Schema.Int.check(Schema.isBetween({ minimum: 200, maximum: 599 })),
-    statusText: Schema.String,
-    headers: Schema.Record(Schema.String, Schema.String),
-    body: Schema.String,
-  }),
-);
 
 type Pending = {
   resolve: (data: unknown) => void;
@@ -349,7 +340,7 @@ export function createPageTransport(
         nativeRequest.signal,
       );
 
-      const response = decodeHttpResponse(data);
+      const response = decodeExtensionHttpResponse(data);
 
       return new Response(
         [204, 205, 304].includes(response.status) ||

@@ -17,6 +17,7 @@ import {
   normalizeAppearanceColor,
 } from "@lootlog/domain/npc-appearance";
 import { RotateCcw } from "lucide-react";
+import { useSourceDraft } from "@/components/settings/use-source-draft";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NpcColorEditorPopover } from "./npc-color-editor-popover";
@@ -27,12 +28,7 @@ export const NpcColorsSettings = () => {
   const { npcTypeColors, data } = useNpcTypeColors();
   const status = useSettingsSaveStatus();
 
-  const [draftState, setDraftState] = useState<{
-    source: typeof data;
-    value: NpcTypeColors;
-  }>({ source: data, value: npcTypeColors });
-
-  const draft = draftState.source === data ? draftState.value : npcTypeColors;
+  const [draft, setDraftValue] = useSourceDraft(data, npcTypeColors);
   const [openType, setOpenType] = useState<AppearanceNpcType | null>(null);
   const saving = status === "saving";
 
@@ -41,7 +37,7 @@ export const NpcColorsSettings = () => {
   );
 
   const setDraft = (patch: Partial<NpcTypeColors>) =>
-    setDraftState({ source: data, value: { ...draft, ...patch } });
+    setDraftValue({ ...draft, ...patch });
 
   const commit = (patch: Partial<NpcTypeColors>, unset: string[] = []) =>
     enqueueSettingsPatch({

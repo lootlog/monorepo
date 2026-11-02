@@ -187,7 +187,7 @@ describe("MapChangeProcessor", () => {
         pipeline.flush();
       };
 
-      margonemRuntimeBridge.setupProxies();
+      margonemRuntimeBridge.install();
       pipeline.install();
       pipeline.setReady();
       dispatcher.register();

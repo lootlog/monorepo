@@ -1,13 +1,21 @@
-import { RateLimitError, RequestMethod, parseResponse } from "@discordjs/rest";
+import {
+  DiscordAPIError,
+  RateLimitError,
+  RequestMethod,
+  parseResponse,
+} from "@discordjs/rest";
 import {
   ApplicationError,
   ResourceNotFoundError,
   AuthenticationRequiredError,
+  DependencyUnavailableError,
+  HttpStatus,
 } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import { Routes, type APIGuildMember } from "discord-api-types/v10";
 import {
+  getGuildMemberForbiddenCacheKey,
   getGuildMemberNotFoundCacheKey,
   isApiGuildMember,
 } from "./discord-cache.util.js";
@@ -26,10 +34,12 @@ import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.servic
  * Reads the caller's own guild membership from Discord. Member sync stores
  * the result with its sync time and runs under the per-user refresh lock, so
  * every call asks Discord: a cached answer would be stored as a fresh sync.
+ * Only refusals are cached: Discord counts each 404 and 403 against its
+ * invalid-request limit, and neither is stored as a sync.
  */
 export class DiscordGuildMemberClient {
-  private readonly notFoundCacheTtlLocal = 30;
-  private readonly notFoundCacheTtlProd = 300;
+  private readonly refusalCacheTtlLocal = 30;
+  private readonly refusalCacheTtlProd = 300;
   private readonly isLocal: boolean;
 
   constructor(
@@ -50,10 +60,19 @@ export class DiscordGuildMemberClient {
   }): Promise<APIGuildMember> {
     const { guildId, userId } = options;
     const notFoundKey = getGuildMemberNotFoundCacheKey(options);
+    const forbiddenKey = getGuildMemberForbiddenCacheKey(options);
+
+    const refusalCacheTtl = this.isLocal
+      ? this.refusalCacheTtlLocal
+      : this.refusalCacheTtlProd;
 
     try {
       if (await this.redisService.get(notFoundKey)) {
         throw new ResourceNotFoundError();
+      }
+
+      if (await this.redisService.get(forbiddenKey)) {
+        throw discordForbiddenError();
       }
 
       await throwIfDiscordRateLimited(this.rateLimiter, userId, "guild-member");
@@ -69,12 +88,23 @@ export class DiscordGuildMemberClient {
           level: "debug",
           message: `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
         });
-        await this.redisService.set(
-          notFoundKey,
-          "1",
-          this.isLocal ? this.notFoundCacheTtlLocal : this.notFoundCacheTtlProd,
-        );
+        await this.redisService.set(notFoundKey, "1", refusalCacheTtl);
         throw new ResourceNotFoundError();
+      }
+
+      if (
+        error instanceof DiscordAPIError &&
+        error.status === HttpStatus.FORBIDDEN
+      ) {
+        this.logger.log({
+          level: "warn",
+          message: "Discord refused the guild member request",
+          guildId,
+          userId,
+          discordCode: error.code,
+        });
+        await this.redisService.set(forbiddenKey, "1", refusalCacheTtl);
+        throw discordForbiddenError();
       }
 
       if (error instanceof AuthenticationRequiredError) {
@@ -105,7 +135,10 @@ export class DiscordGuildMemberClient {
     userId: string;
     discordId: string;
   }): Promise<void> {
-    await this.redisService.del(getGuildMemberNotFoundCacheKey(options));
+    await Promise.all([
+      this.redisService.del(getGuildMemberNotFoundCacheKey(options)),
+      this.redisService.del(getGuildMemberForbiddenCacheKey(options)),
+    ]);
   }
 
   private fetchGuildMemberFromDiscord(options: {
@@ -150,7 +183,11 @@ export class DiscordGuildMemberClient {
             error,
           );
 
-          if (isDiscordNotFoundError(error)) {
+          if (
+            isDiscordNotFoundError(error) ||
+            (error instanceof DiscordAPIError &&
+              error.status === HttpStatus.FORBIDDEN)
+          ) {
             throw error;
           }
 
@@ -167,4 +204,12 @@ export class DiscordGuildMemberClient {
       },
     );
   }
+}
+
+// The shape toDiscordRequestError gives any Discord 4xx without its own error.
+function discordForbiddenError(): DependencyUnavailableError {
+  return new DependencyUnavailableError({
+    message: "DISCORD_HTTP_ERROR",
+    status: HttpStatus.FORBIDDEN,
+  });
 }

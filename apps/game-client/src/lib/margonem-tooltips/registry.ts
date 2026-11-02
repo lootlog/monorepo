@@ -3,42 +3,31 @@ import type {
   CharacterTooltipTransformContext,
 } from "./types";
 
-export class CharacterTooltipTransformRegistry {
-  private transforms = new Set<CharacterTooltipTransform>();
+let currentTransform: CharacterTooltipTransform | null = null;
 
+/** The one transform that extends character tooltips, while it is mounted. */
+export const characterTooltipTransforms = {
   register(transform: CharacterTooltipTransform): () => void {
-    this.transforms.add(transform);
+    currentTransform = transform;
 
     return () => {
-      this.transforms.delete(transform);
+      if (currentTransform === transform) currentTransform = null;
     };
-  }
+  },
 
   clear(): void {
-    this.transforms.clear();
-  }
+    currentTransform = null;
+  },
 
   apply(context: CharacterTooltipTransformContext): string {
-    let currentHtml = context.currentHtml;
+    if (!currentTransform) return context.currentHtml;
 
-    for (const transform of this.transforms) {
-      try {
-        const result = transform({
-          ...context,
-          currentHtml,
-        });
+    try {
+      return currentTransform(context) ?? context.currentHtml;
+    } catch (error) {
+      console.warn("[MargonemTooltips] Failed to transform tooltip:", error);
 
-        if (result !== undefined && result !== null) {
-          currentHtml = result;
-        }
-      } catch (error) {
-        console.warn("[MargonemTooltips] Failed to transform tooltip:", error);
-      }
+      return context.currentHtml;
     }
-
-    return currentHtml;
-  }
-}
-
-export const characterTooltipTransforms =
-  new CharacterTooltipTransformRegistry();
+  },
+};

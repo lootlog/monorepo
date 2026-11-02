@@ -23,6 +23,7 @@ import {
 } from "./settings-documents";
 import {
   enqueueSettingsPatch,
+  flushSettingsOnPageHide,
   readCurrentSettingsDocuments,
 } from "./settings-patch-client";
 import {
@@ -271,6 +272,8 @@ export const useSettingsHydration = () => {
   const importedRef = useRef(false);
   const seededAccountsRef = useRef<Set<string>>(new Set());
 
+  useEffect(() => flushSettingsOnPageHide(), []);
+
   useEffect(() => {
     if (!documents.data || !areGuildsFetched || areGuildsFetching) return;
 
@@ -288,15 +291,10 @@ export const useSettingsHydration = () => {
         hasCharacterScope: Boolean(accountId && characterId),
       });
 
-      const pendingDomains = new Set(plan.domains);
-
       for (const patch of plan.patches) {
         enqueueSettingsPatch({
           ...patch,
-          afterSave: () => {
-            markSettingsImportDone(patch.domain);
-            pendingDomains.delete(patch.domain);
-          },
+          afterSave: () => markSettingsImportDone(patch.domain),
         });
       }
 

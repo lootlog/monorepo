@@ -8,6 +8,7 @@ import { guildTable, lootTable } from "#src/database/drizzle/schema";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   buildLootStatsQueries,
+  buildUserLootStatsQueries,
   LootStatsQueryError,
   runLootStatsQuery,
 } from "#src/loots/query/loot-stats-query";
@@ -184,6 +185,72 @@ describe("loot statistics at the PostgreSQL boundary", () => {
           },
         ]);
       }
+    } finally {
+      await boundary.dispose();
+    }
+  });
+
+  it("names a loot after its boss over a higher-level escort and counts days on the Warsaw calendar", async () => {
+    const boundary = await createDatabaseBoundary();
+
+    try {
+      await boundary.run(
+        Effect.gen(function* () {
+          const db = boundary.database;
+          yield* db.execute(
+            sql`insert into "Guild" (id, name, "ownerId", "updatedAt") values ('stats-day', 'Day', 'owner', now())`,
+          );
+          // 23:30 UTC on 1 January is already 00:30 on 2 January in Warsaw.
+          yield* db.execute(
+            sql`insert into "Loot" (id, "uniqueId", world, source, location, "createdAt", "updatedAt", "gameVersion") values (1, 'day-1', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 23:30:00', now(), 'pl')`,
+          );
+          yield* db.execute(
+            sql`insert into "OrganizationLootRecord" (id, "lootId", "guildId", "updatedAt") values (1, 1, 'stats-day', now())`,
+          );
+          yield* db.execute(
+            sql`insert into "NpcSnapshot" (id, "npcId", name, type, lvl, wt, "gameVersion") values (1, 400, 'Escort', 'ELITE', 70, 15, 'pl'), (2, 300, 'Boss', 'ELITE2', 50, 25, 'pl')`,
+          );
+          yield* db.execute(
+            sql`insert into "LootNpc" ("lootId", "npcSnapshotId") values (1,1), (1,2)`,
+          );
+          yield* db.execute(
+            sql`insert into "ItemSnapshot" (id, "itemId", "statsHash", name, icon, lvl, rarity, "itemType", "statRaw", "statsSnapshot", "gameVersion") values (1, 101, 'legendary', 'Legendary', 'l.gif', 50, 'LEGENDARY', 'WEAPON', '', '{}', 'pl')`,
+          );
+          yield* db.execute(
+            sql`insert into "LootItem" ("lootId", "itemSnapshotId", hid) values (1,1,'legendary')`,
+          );
+        }),
+      );
+
+      const guild = await boundary.run(
+        Effect.all(
+          buildLootStatsQueries(boundary.database, {
+            guildId: "stats-day",
+            dateFrom: null,
+            truncUnit: "day",
+          }),
+        ),
+      );
+
+      const user = await boundary.run(
+        Effect.all(
+          buildUserLootStatsQueries(boundary.database, {
+            lootIds: [1],
+            soloLootIds: [1],
+            sharedItems: [],
+            truncUnit: "day",
+          }),
+        ),
+      );
+
+      for (const stats of [guild, user]) {
+        expect(stats.topNpcs.map((npc) => npc.name)).toEqual(["Boss"]);
+        expect(stats.timeline.map((point) => point.date.toISOString())).toEqual(
+          ["2026-01-02T00:00:00.000Z"],
+        );
+      }
+
+      expect(user.legends.map((legend) => legend.npc_name)).toEqual(["Boss"]);
     } finally {
       await boundary.dispose();
     }

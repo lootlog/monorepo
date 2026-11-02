@@ -10,7 +10,6 @@ import { useWindowsStore } from "@/store/windows.store";
 import { getLootlogHostPortalThemeClassName } from "@/components/ui/theme-boundary";
 import { ChatView } from "./chat-view";
 import { useIntegratedChatHost } from "./hooks/use-integrated-chat-host";
-import { hasCurrentUserMention } from "./chat-mentions.helpers";
 import { receiveChatMessage, type ChatReadState } from "./chat-read-state";
 import { isHiddenNpcChatMessage } from "./chat.helpers";
 import { useHiddenNpcTypes } from "@/features/chat/hooks/use-hidden-npc-types";
@@ -20,7 +19,6 @@ export const Chat = () => {
   const { t } = useTranslation("chat");
   const isIntegratedMode = useChatStore((state) => state.isIntegratedMode);
   const open = useWindowsStore((state) => state.chat.open);
-  useGameStore((state) => state.game?.hero.characterId ?? "");
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
   const gameInterface = useGameStore((state) => state.game?.interface);
   const selectedGuildId = useChatStore(getSelectedChatGuildId);
@@ -52,23 +50,13 @@ export const Chat = () => {
   const isVisible = integrated.target ? integrated.visible : open;
   const { shouldRender } = useWindowPresence(open);
   const { hiddenNpcTypes } = useHiddenNpcTypes();
-  const hiddenNpcTypeSet = new Set(hiddenNpcTypes);
 
   useChatMessagesListener({
     prefetchMembers: isVisible,
-    hiddenNpcTypes: hiddenNpcTypeSet,
+    hiddenNpcTypes,
     onRemoteMessage: (message) => {
-      if (isHiddenNpcChatMessage(message, hiddenNpcTypeSet)) return;
-      const heroName = useGameStore.getState().game?.hero.name ?? "";
-
-      const attention =
-        hasCurrentUserMention(message.message, {
-          currentUserNames: [heroName],
-        }) || Boolean(heroName && message.replyTo?.senderNick === heroName);
-
-      setReadState((current) =>
-        receiveChatMessage(current, message, attention),
-      );
+      if (isHiddenNpcChatMessage(message, hiddenNpcTypes)) return;
+      setReadState((current) => receiveChatMessage(current, message));
     },
   });
 

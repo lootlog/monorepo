@@ -24,7 +24,7 @@ describe("AirTagRuntime", () => {
     test.runtime.configure({ connected: true, joined: true });
     await test.acknowledge();
     test.wire.frames.length = 0;
-    test.runtime.handleMapChange(13, "Nithal");
+    test.runtime.handleMapChange(13);
     expect(test.wire.frames).toEqual([
       expect.objectContaining({
         type: "air-tag.subscription",

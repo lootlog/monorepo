@@ -251,10 +251,6 @@ export class Aura {
   /** The preset's burst animation: progress 0..1, or -1 while resting. */
   private burst = -1;
   private nextBurst = 2.5;
-  /** Whether the periodic burst plays; one already running finishes. */
-  bursts = true;
-  /** Whether the ground piece under the feet (circle, runes, ripples…) is drawn. */
-  showGround = true;
   /** Props follow the head through this spring, so they trail a walk. */
   private spring: Spring | null = null;
   private lastCenter: { x: number; y: number } | null = null;
@@ -280,10 +276,6 @@ export class Aura {
     this.rgb = colorsOf(this.preset);
   }
 
-  get id(): CharacterAuraId {
-    return this.preset.id;
-  }
-
   setPreset(id: CharacterAuraId): void {
     if (id === this.preset.id) return;
     this.preset = AURAS[id];
@@ -295,11 +287,6 @@ export class Aura {
     this.front.key = "";
     this.outline.key = "";
     this.inner.key = "";
-  }
-
-  /** Moves particles along when particle space jumps, e.g. the camera snapping on a teleport. */
-  shift(dx: number, dy: number): void {
-    this.field.shift(dx, dy);
   }
 
   update(dt: number, place: AuraPlacement | null, intensity: number): void {
@@ -340,8 +327,7 @@ export class Aura {
 
     if (fx.includes("lightning")) this.updateBolts(place, frame, intensity);
 
-    if (fx.includes("heartbeat") && place.ground && this.showGround)
-      this.updateHeartbeat(frame);
+    if (fx.includes("heartbeat") && place.ground) this.updateHeartbeat(frame);
     this.updateBurst(place, frame, intensity);
   }
 
@@ -444,8 +430,7 @@ export class Aura {
     const glow = this.glow(intensity);
 
     this.snapshot(this.back, place, false, () => {
-      if (place.ground && p.ground && this.showGround)
-        this.drawGround(place, p.ground, intensity);
+      if (place.ground && p.ground) this.drawGround(place, p.ground, intensity);
 
       if (p.fx.includes("rays")) this.drawRays(place, intensity);
 
@@ -455,7 +440,7 @@ export class Aura {
 
       if (p.fx.includes("orbits")) this.drawOrbits(place, intensity, false);
 
-      if (p.fx.includes("frost-shards") && place.ground && this.showGround)
+      if (p.fx.includes("frost-shards") && place.ground)
         this.drawShards(place, intensity, false);
       this.drawDecor(place, intensity, false);
       this.drawBurst(place, intensity, false);
@@ -482,7 +467,7 @@ export class Aura {
     const glow = this.glow(intensity);
 
     this.snapshot(this.front, place, true, () => {
-      if (p.fx.includes("frost-shards") && place.ground && this.showGround)
+      if (p.fx.includes("frost-shards") && place.ground)
         this.drawShards(place, intensity, true);
 
       if (p.fx.includes("orbits")) this.drawOrbits(place, intensity, true);
@@ -925,7 +910,6 @@ export class Aura {
       return;
     }
 
-    if (!this.bursts) return;
     this.nextBurst -= TICK;
 
     if (this.nextBurst > 0) return;
@@ -1028,7 +1012,7 @@ export class Aura {
     size: number,
     color: number,
   ): void {
-    if (!place.ground || !this.showGround) return;
+    if (!place.ground) return;
     this.field.emit(
       {
         kind: "ring",

@@ -7,11 +7,10 @@ import {
   userKillCharacterTable,
   userKillTotalTable,
 } from "#src/database/drizzle/schema";
-
-const KILL_ANALYTICS_TIMEZONE = "Europe/Warsaw";
+import { STATS_TIME_ZONE, statsLocalTime } from "./kill-stats-period.js";
 
 export const getKillAnalyticsRange = (now: DateTime.Utc, days: number) => {
-  const zoned = DateTime.setZoneNamedUnsafe(now, KILL_ANALYTICS_TIMEZONE);
+  const zoned = DateTime.setZoneNamedUnsafe(now, STATS_TIME_ZONE);
   const today = DateTime.startOf(zoned, "day");
   const start = DateTime.subtract(today, { days: days - 1 });
   const previousStart = DateTime.subtract(start, { days });
@@ -19,7 +18,7 @@ export const getKillAnalyticsRange = (now: DateTime.Utc, days: number) => {
   const through = DateTime.startOf(now, "hour");
 
   const previousThrough = DateTime.subtract(
-    DateTime.setZoneNamedUnsafe(through, KILL_ANALYTICS_TIMEZONE),
+    DateTime.setZoneNamedUnsafe(through, STATS_TIME_ZONE),
     { days },
   );
 
@@ -102,7 +101,7 @@ export const userKillAnalyticsSql = (
       select ${bucket.world} as world, ${bucket.npcId} as "npcId", ${bucket.npcName} as "npcName",
         ${bucket.npcType} as "npcType", ${bucket.npcLvl} as "npcLvl", ${bucket.npcProf} as "npcProf",
         ${bucket.npcIcon} as "npcIcon", ${bucket.kills} as kills, ${bucket.periodStart} as "periodStart",
-        (${bucket.periodStart} at time zone 'Europe/Warsaw') as local_time
+        ${statsLocalTime(bucket.periodStart)} as local_time
       from ${bucket} where ${scope(bucket)}
         and ${bucket.periodStart} >= ${activityOnly ? range.start : range.previousStart}::timestamptz
         and ${bucket.periodStart} <= ${through}

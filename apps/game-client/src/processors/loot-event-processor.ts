@@ -145,7 +145,13 @@ export class LootEventProcessor {
       return;
     }
 
-    this.createLootFromDialog(event, debugContext, npc, resolutionSource, game);
+    this.createLootFromDialog(event, {
+      debugContext,
+      eventNpcDelIds,
+      game,
+      npcData: npc,
+      resolutionSource,
+    });
   }
 
   private createLootFromBattle(
@@ -215,6 +221,14 @@ export class LootEventProcessor {
       payload,
     });
 
+    this.submit(payload, debugContext, "loot");
+  }
+
+  private submit(
+    payload: Parameters<typeof createLoot>[0],
+    debugContext: LootCreateDebugContext,
+    label: "loot" | "dialog loot",
+  ): void {
     createLoot(payload, debugContext)
       .then((response) => {
         useLootStore.getState().setLastLootId(response.id);
@@ -229,7 +243,7 @@ export class LootEventProcessor {
           ...debugContext,
           error,
         });
-        console.warn("[LootEventProcessor] Failed to create loot:", error);
+        console.warn(`[LootEventProcessor] Failed to create ${label}:`, error);
       });
   }
 
@@ -328,10 +342,19 @@ export class LootEventProcessor {
 
   private createLootFromDialog(
     event: GameEvent,
-    debugContext: LootCreateDebugContext,
-    npcData: RuntimeNpc,
-    resolutionSource: DialogNpcContextSource,
-    game: RuntimeGameSnapshot,
+    {
+      debugContext,
+      eventNpcDelIds,
+      game,
+      npcData,
+      resolutionSource,
+    }: {
+      debugContext: LootCreateDebugContext;
+      eventNpcDelIds: number[];
+      game: RuntimeGameSnapshot;
+      npcData: RuntimeNpc;
+      resolutionSource: DialogNpcContextSource;
+    },
   ): void {
     const loot = event.loot;
 
@@ -340,10 +363,9 @@ export class LootEventProcessor {
     const loots = getLoot(event.item, loot);
 
     if (!loots.length) {
-      const requestedNpcIds = (event.npcs_del ?? []).map((npc) => npc.id);
       logLootCreateDebug("skipped", {
         ...debugContext,
-        eventNpcDelIds: requestedNpcIds,
+        eventNpcDelIds,
         npcId: npcData.id,
         reason: "empty-parsed-loots",
         resolutionSource,
@@ -420,30 +442,12 @@ export class LootEventProcessor {
 
     logLootCreateDebug("request-prepared", {
       ...debugContext,
-      eventNpcDelIds: (event.npcs_del ?? []).map((npc) => npc.id),
+      eventNpcDelIds,
       payload,
       resolutionSource,
     });
 
     useDialogStore.getState().clearNpcContext();
-    createLoot(payload, debugContext)
-      .then((response) => {
-        useLootStore.getState().setLastLootId(response.id);
-        logLootCreateDebug("completed", {
-          ...debugContext,
-          lastLootId: response.id,
-          response,
-        });
-      })
-      .catch((error) => {
-        logLootCreateDebug("failed", {
-          ...debugContext,
-          error,
-        });
-        console.warn(
-          "[LootEventProcessor] Failed to create dialog loot:",
-          error,
-        );
-      });
+    this.submit(payload, debugContext, "dialog loot");
   }
 }

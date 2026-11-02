@@ -19,6 +19,8 @@ import { cn } from "cn";
 import type { ReactNode } from "react";
 import { GuildDocEditorEditablePlugin } from "./guild-doc-editor-editable-plugin";
 import { GuildDocCodeHighlightPlugin } from "./guild-doc-code-highlight-plugin";
+import { GuildDocItemIdPlugin } from "./guild-doc-item-id-plugin";
+import { GuildDocMemberMentionPlugin } from "./guild-doc-member-mention-plugin";
 import {
   type GuildDocEditorContent,
   normalizeGuildDocEditorContent,
@@ -41,8 +43,10 @@ type GuildDocEditorProps = {
   onChange?: (content: GuildDocEditorContent) => void;
 };
 
+// A host never holds `#`, and an item identifier (`ITEM#….luvia`) is not a
+// link, however much its ending looks like a domain.
 const URL_MATCHER =
-  /((https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,12}\b[-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
+  /(?<!ITEM#[\w-]*)((https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._+~=]{1,256}\.[a-zA-Z0-9()]{1,12}\b[-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
 
 const EMAIL_MATCHER = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 
@@ -78,7 +82,7 @@ export const GuildDocEditor = ({
         theme: guildDocEditorTheme,
       }}
     >
-      <div className={cn("flex flex-col", className)}>
+      <div className={cn("@container flex flex-col", className)}>
         {editable && <GuildDocEditorToolbar actions={toolbarActions} />}
         {header}
         <RichTextPlugin
@@ -98,11 +102,13 @@ export const GuildDocEditor = ({
         <LinkPlugin />
         <AutoLinkPlugin matchers={AUTO_LINK_MATCHERS} />
         <ClickableLinkPlugin newTab disabled={editable} />
-        <TablePlugin />
+        <TablePlugin hasHorizontalScroll />
         <HorizontalRulePlugin />
         <GuildDocCodeHighlightPlugin />
         <TabIndentationPlugin />
         <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+        {editable && <GuildDocMemberMentionPlugin />}
+        {editable && <GuildDocItemIdPlugin />}
         <GuildDocEditorEditablePlugin editable={editable} />
         {onChange && (
           <OnChangePlugin

@@ -414,6 +414,39 @@ describe("personal Organization activity feed", () => {
     expect(pairs.items).toHaveLength(40);
     expect(new Set(pairs.items.map((item) => item.npc?.id))).not.toContain(100);
   });
+  it("names a loot after its boss, not an escort of a higher level", async () => {
+    const { guild, owner } = await seed();
+    await run(kill(guild.id, { npcId: 21, npcType: "ELITE2", npcLvl: 50 }));
+
+    const [loot] = Schema.decodeUnknownSync(
+      Schema.Array(Schema.Struct({ id: Schema.Number })),
+    )(
+      (
+        await client.query(
+          `WITH loot AS (INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") VALUES ($1,'tempest','pl','FIGHT','map',now()) RETURNING id),
+          npc AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,wt,prof,"gameVersion") VALUES (21,$1 || 'boss','ELITE2',50,25,'WARRIOR','pl'), (22,$1 || 'escort','ELITE',70,15,'WARRIOR','pl') RETURNING id),
+          linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId") SELECT loot.id, npc.id FROM loot, npc)
+          INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt") SELECT id,$2,$3,now() FROM loot RETURNING "lootId" AS id`,
+          [randomUUID(), guild.id, new Date(recent.getTime() + 5000)],
+        )
+      ).rows,
+    );
+
+    if (!loot) throw new Error("Missing loot");
+
+    const feed = (query: UserFeedQuery = {}) =>
+      run(makeUserFeed(database)(owner, query)).then(({ items }) =>
+        items.map((item) =>
+          item.type === "kill" ? `kill:${item.npc.id}` : `loot:${item.lootId}`,
+        ),
+      );
+
+    // Linked to the boss's kill, the loot shares its group and its filter.
+    expect(await feed({ withLootOnly: true })).toEqual(
+      expect.arrayContaining(["kill:21", `loot:${loot.id}`]),
+    );
+    expect(await feed({ excludedNpcCategories: ["ELITE2"] })).toEqual([]);
+  });
   it("publishes the same versioned group as HTTP with all source visibility metadata", async () => {
     const { guild, owner } = await seed();
     await run(kill(guild.id));

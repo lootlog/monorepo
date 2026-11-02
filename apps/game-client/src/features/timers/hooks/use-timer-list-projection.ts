@@ -1,6 +1,6 @@
 import type { Timer } from "@/api/timers.api";
 import {
-  getTimerListRemovalTimers,
+  getListedTimers,
   projectTimerList,
 } from "@/features/timers/timer-list-projection";
 import { useTimerRemovalBoundary } from "@/features/timers/hooks/use-timer-removal-boundary";
@@ -20,10 +20,10 @@ export const useTimerListProjection = ({
   preferences,
   timers,
 }: UseTimerListProjectionInput) => {
-  const removalTimers = getTimerListRemovalTimers(timers, context.isGrouping);
+  const listedTimers = getListedTimers(timers, context.isGrouping);
 
   const epoch = useTimerRemovalBoundary(
-    removalTimers,
+    listedTimers,
     preferences.removeTimerAfterMs,
     enabled,
   );
@@ -33,6 +33,6 @@ export const useTimerListProjection = ({
     epoch,
     filters,
     preferences,
-    timers,
+    timers: listedTimers,
   });
 };
