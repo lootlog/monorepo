@@ -20,6 +20,10 @@ export const PgClientLive = Layer.unwrap(
       makePostgresLayer({
         url,
         applicationName: "lootlog-api",
+        // Most columns are `timestamp` without a zone and hold UTC; `now()`
+        // defaults and comparisons with `timestamptz` columns follow the
+        // session zone.
+        startupParameters: { timezone: "UTC" },
       }),
     ),
   ),

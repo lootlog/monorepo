@@ -18,7 +18,8 @@ import type { EventEmitter } from "#src/events/event-emitter";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import { isEventActiveAt } from "#src/events/monitoring/event-activity";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
-import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
+import { getEventHeroNpcId } from "#src/shared/margonem/npc-identity";
+import { findActiveGuildMember } from "#src/members/member-access-query";
 
 type GapType = typeof eventMapCoverageGapTable.$inferSelect.gapType;
 
@@ -215,21 +216,11 @@ export const makeEventPresenceTracking = (
     Effect.gen(function* () {
       const referenceTime = new Date(yield* Clock.currentTimeMillis);
 
-      const [memberRows, mapRows] = yield* Effect.all(
+      const [activeMember, mapRows] = yield* Effect.all(
         [
           query(
             "events.presence.member",
-            database
-              .select()
-              .from(memberTable)
-              .where(
-                and(
-                  eq(memberTable.userId, discordId),
-                  eq(memberTable.guildId, guildId),
-                  eq(memberTable.active, true),
-                ),
-              )
-              .limit(1),
+            findActiveGuildMember(database, discordId, guildId),
           ),
           query(
             "events.presence.maps",
@@ -303,12 +294,12 @@ export const makeEventPresenceTracking = (
         mapRows.map(({ hero, event }) => ({
           guildId,
           world: event.world,
-          npcId: hero.npcId ?? getSyntheticNpcId(hero.id),
+          npcId: getEventHeroNpcId(hero),
           npcName: hero.npcName,
         })),
       );
 
-      const member = memberRows[0] ?? null;
+      const member = activeMember ?? null;
       yield* Effect.forEach(
         mapRows.filter((_, index) => hasTimer[index]),
         ({ map, hero, event }) =>

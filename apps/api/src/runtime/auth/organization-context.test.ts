@@ -197,4 +197,83 @@ describe("organization context lookup", () => {
     // The failed enqueue released its claim; the retry then holds it.
     expect(result.queueRefresh.mock.calls).toEqual([[refresh], [refresh]]);
   });
+
+  it("grants the Discord guild owner nothing until Discord confirms an active, User-linked member row", async () => {
+    const owner = { userId: "owner-user", discordId: guild.ownerId, guildId };
+
+    const member = {
+      id: 2,
+      userId: owner.discordId,
+      guildId,
+      type: "USER" as const,
+      name: "Owner",
+      discordDisplayName: null,
+      avatar: null,
+      banner: null,
+      active: true,
+      globalUserId: owner.userId,
+      createdAt: new Date(guild.createdAt),
+      updatedAt: new Date(guild.updatedAt),
+      lastDiscordSyncAt: new Date(),
+      lastDiscordAttemptAt: null,
+      lastDiscordStatus: null,
+      roles: [],
+      isStale: false,
+      refreshQueued: true,
+    };
+
+    const lookupWith = (stored: typeof member | null) =>
+      Effect.gen(function* () {
+        const lookup = yield* OrganizationContextLookup;
+
+        return yield* lookup.lookup(owner);
+      }).pipe(
+        Effect.provide(
+          OrganizationContextLookup.layerDatabase(
+            {
+              get: (key) =>
+                Effect.succeed(
+                  key === getGuildCacheKey(guildId)
+                    ? JSON.stringify(guild)
+                    : null,
+                ),
+              set: () => Effect.void,
+              del: () => Effect.void,
+              setIfAbsent: () => Effect.succeed(false),
+            },
+            () => Effect.void,
+          ).pipe(
+            Layer.provide(
+              Layer.mergeAll(
+                Layer.succeed(
+                  ApiRuntimeConfig,
+                  // SAFETY: the lookup reads only `environment` from config.
+                  ApiRuntimeConfig.of({
+                    environment: RuntimeEnvironment.PROD,
+                  } as ApiRuntimeConfig["Service"]),
+                ),
+                // SAFETY: the guild comes from the cache and the member from
+                // `getMe`, so the lookup never queries the database.
+                Layer.succeed(ApiDatabase, {} as ApiDatabase["Service"]),
+                Layer.succeed(
+                  MembersData,
+                  MembersData.of({
+                    getMe: () => Effect.succeed(stored),
+                    refreshMember: () => Effect.die("unused"),
+                    deactivateMember: () => Effect.die("unused"),
+                    refreshAllMembers: () => Effect.die("unused"),
+                  }),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Effect.runPromise,
+      );
+
+    expect(await lookupWith(null)).toBeNull();
+    expect(await lookupWith({ ...member, active: false })).toBeNull();
+    expect(await lookupWith({ ...member, globalUserId: null })).toBeNull();
+    expect((await lookupWith(member))?.permissions).toContain(Permission.OWNER);
+  });
 });

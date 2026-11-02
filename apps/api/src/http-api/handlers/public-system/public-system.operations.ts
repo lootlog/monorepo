@@ -1,3 +1,4 @@
+import { AccessRequirement } from "@lootlog/domain/access-policy";
 import {
   emptyStatusResponse,
   reauthenticationRequiredResponse,
@@ -5,10 +6,7 @@ import {
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
-import {
-  Permission,
-  type Permission as PermissionValue,
-} from "@lootlog/schema/permissions";
+import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 import type { PublicGuildStatsCard } from "#src/public-guild-stats-card/public-guild-stats-card.service";
 import { RefreshStatsCardResponse } from "#src/contracts/guild-stats-card/schemas";
 import { GameMapsResponse } from "#src/contracts/maps/schemas";
@@ -118,7 +116,7 @@ export const refreshStatsCard = Effect.fn(
 
   const access = yield* authorization.requireCapability({
     guildId,
-    anyOf: [Permission.OWNER, Permission.ADMIN],
+    anyOf: AccessRequirement.ADMINISTER,
   });
 
   const data = yield* PublicSystemData;

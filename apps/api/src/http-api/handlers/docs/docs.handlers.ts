@@ -4,7 +4,10 @@ import {
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import type { AccessPolicy } from "@lootlog/domain/access-policy";
+import {
+  AccessRequirement,
+  type AccessPolicy,
+} from "@lootlog/domain/access-policy";
 import {
   Permission,
   type Permission as PermissionValue,
@@ -285,8 +288,8 @@ const writeRequirement = {
   mode: "all",
 } as const;
 
-const ownerRequirement = {
-  capabilities: [Permission.OWNER, Permission.ADMIN],
+const administerRequirement = {
+  capabilities: AccessRequirement.ADMINISTER,
   mode: "any",
 } as const;
 
@@ -295,7 +298,7 @@ const requirementFor = (endpoint: DocsEndpointIdentifier) => {
     endpoint === "DocsControllerRestoreDocument" ||
     endpoint === "DocsControllerPurgeDocument"
   ) {
-    return ownerRequirement;
+    return administerRequirement;
   }
 
   if (

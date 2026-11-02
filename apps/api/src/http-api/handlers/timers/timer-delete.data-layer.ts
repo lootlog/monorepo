@@ -10,13 +10,12 @@ import {
   findActiveTimerEventHeroes,
   timerIdentifierCondition,
 } from "./timer-selection.js";
-import { and, eq } from "drizzle-orm";
+import { findActiveGuildMember } from "#src/members/member-access-query";
 import { Clock, Effect, Schema } from "effect";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
-  memberTable,
   timerHistoryEntryTable,
   timerTable,
 } from "#src/database/drizzle/schema";
@@ -112,18 +111,13 @@ export const makeDeleteTimer = (
           );
         }
 
-        const actors = yield* transaction
-          .select({ id: memberTable.id })
-          .from(memberTable)
-          .where(
-            and(
-              eq(memberTable.userId, access.discordId),
-              eq(memberTable.guildId, access.guild.id),
-            ),
-          )
-          .limit(1);
+        const actor = yield* findActiveGuildMember(
+          transaction,
+          access.discordId,
+          access.guild.id,
+        );
 
-        const actorMemberId = actors[0]?.id;
+        const actorMemberId = actor?.id;
 
         if (actorMemberId === undefined) {
           return yield* Effect.die(

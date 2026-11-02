@@ -1,4 +1,8 @@
-import { Capability, createAccessPolicy } from "./access-policy.js";
+import {
+  AccessRequirement,
+  Capability,
+  createAccessPolicy,
+} from "./access-policy.js";
 
 type ChatMessageViewer = {
   readonly discordId: string;
@@ -14,6 +18,6 @@ export const canDeleteChatMessage = (
   return (
     (viewer.discordId === message.senderId &&
       accessPolicy.allows(Capability.LOOTLOG_CHAT_WRITE)) ||
-    accessPolicy.allows(Capability.ADMIN)
+    accessPolicy.allowsAny(AccessRequirement.MODERATE)
   );
 };

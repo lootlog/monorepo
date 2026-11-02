@@ -32,11 +32,8 @@ import type {
   NotificationMutes,
   UserPreferences,
 } from "@lootlog/schema/user-preferences";
-import {
-  requestApiKeyAccess,
-  requestScopedIdentity,
-} from "#src/runtime/auth/forward-auth-identity";
-import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
+import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -333,17 +330,10 @@ export const makeUserPreferencesData = (
   database: typeof ApiDatabase.Service,
   settingsDocuments: SettingsDocuments,
 ) => {
-  const visibleOrganizationIds = Effect.gen(function* () {
-    if (!(yield* requestApiKeyAccess)) return undefined;
-    const identity = yield* requestScopedIdentity;
-
-    const memberships = yield* selectAccessibleGuilds(
-      database,
-      identity.discordId,
-    );
-
-    return new Set(memberships.map(({ guild }) => guild.id));
-  });
+  const visibleOrganizationIds = Effect.map(
+    apiKeyAccessibleGuilds(database),
+    (guilds) => guilds && new Set(guilds.map(({ id }) => id)),
+  );
 
   const scopePreferences = (value: UserPreferences) =>
     Effect.gen(function* () {

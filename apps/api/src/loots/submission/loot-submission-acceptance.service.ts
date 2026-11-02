@@ -46,6 +46,8 @@ import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import type { GameVersion } from "@lootlog/schema/game-version";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { parseRequiredProfessions } from "#src/loots/required-professions";
+import { parseCharacterIdentity } from "#src/shared/margonem/player-snapshot.persistence";
+
 import {
   LootPublicationPayload,
   type LootPublication,
@@ -55,6 +57,9 @@ import type {
   AcceptedNpcSnapshot,
   LootSubmissionAcceptancePersistence,
 } from "#src/loots/submission/loot-submission-acceptance.repository";
+
+// Older game clients appended the account id to participant character ids.
+const LEGACY_ID = { legacyCombinedId: true } as const;
 
 type CreateLootSubmittedGuild = CreateLootResponse["submittedGuilds"][number];
 
@@ -227,6 +232,15 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         },
         { concurrency: "unbounded" },
       );
+
+      if (
+        options.submission.players.some(
+          (player) =>
+            !parseCharacterIdentity(player.id, player.accountId, LEGACY_ID),
+        )
+      ) {
+        return yield* Effect.fail(new InvalidRequestError("Invalid player id"));
+      }
 
       const npcData = yield* Effect.try({
         try: () => this.processNpcs(options.submission.npcs),
@@ -812,22 +826,12 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     id: string | number,
     accountId: string | number,
   ) {
-    const account = String(accountId ?? "");
-    const character = String(id ?? "");
+    const identity = parseCharacterIdentity(id, accountId, LEGACY_ID);
 
-    if (account && character.endsWith(account)) {
-      const characterPart = character.slice(
-        0,
-        character.length - account.length,
-      );
+    // acceptWithLock rejects a loot with an invalid participant first.
+    if (!identity) throw new InvalidRequestError("Invalid player id");
 
-      return {
-        characterId: Number(characterPart || character),
-        accountId: Number(account),
-      };
-    }
-
-    return { characterId: Number(character), accountId: Number(account) };
+    return identity;
   }
 
   private mapLootNpcsToPersistence(npcs: CreateLootRequest["npcs"]) {

@@ -1,7 +1,10 @@
 import { activeEventCondition } from "#src/events/event-scope-query";
 import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
 import { pruneTimerHistory } from "./timer-history-retention.js";
-import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import {
+  findActiveGuildMember,
+  selectAccessibleGuilds,
+} from "#src/members/member-access-query";
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, gte } from "drizzle-orm";
@@ -27,12 +30,10 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
   eventTable,
-  memberTable,
   timerHistoryEntryTable,
   timerTable,
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
-import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import {
   InvalidRequestError,
@@ -42,11 +43,11 @@ import {
 import { TIMER_LIMITS } from "#src/timers/timer-limits";
 import { ErrorKey } from "#src/timers/error-key";
 import { TimerHistoryAction } from "#src/timers/timers.types";
+import { buildTimerKey, buildTimerLockKey } from "#src/timers/timer-key";
 import {
-  buildTimerKey,
-  buildTimerLockKey,
+  getEventHeroSyntheticNpcId,
   getTimerNpcId,
-} from "#src/timers/timer-key";
+} from "#src/shared/margonem/npc-identity";
 import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersIdentity } from "./timers.handlers.js";
 import {
@@ -286,7 +287,7 @@ const migrateSyntheticTimer = (
     const hero = heroes[0]?.hero;
 
     if (hero?.npcId !== null) return null;
-    const syntheticNpcId = getSyntheticNpcId(hero.id);
+    const syntheticNpcId = getEventHeroSyntheticNpcId(hero.id);
 
     if (syntheticNpcId === options.npcId) return null;
     const syntheticTimerKey = buildTimerKey(syntheticNpcId, options.npcName);
@@ -379,24 +380,18 @@ export const makeAutoTimer = (
     const timerKey = buildTimerKey(timerNpcId, payload.npc.name);
     const dedupKey = `timer:dedup:${guildId}:${payload.world}:${timerKey}`;
     const dedupLockKey = `${dedupKey}:lock`;
-    const startedAt = new Date();
 
     const persist = ports.withLock(
       buildTimerLockKey(guildId, payload.world, timerKey),
       database.transaction((transaction) =>
         Effect.gen(function* () {
-          const members = yield* transaction
-            .select()
-            .from(memberTable)
-            .where(
-              and(
-                eq(memberTable.userId, identity.discordId),
-                eq(memberTable.guildId, guildId),
-              ),
-            )
-            .limit(1);
+          const startedAt = new Date(yield* Clock.currentTimeMillis);
 
-          const member = members[0];
+          const member = yield* findActiveGuildMember(
+            transaction,
+            identity.discordId,
+            guildId,
+          );
 
           if (!member)
             return yield* Effect.die(
@@ -695,8 +690,10 @@ export const makeAutoTimer = (
       );
     }
 
+    const now = new Date(yield* Clock.currentTimeMillis);
+
     yield* Effect.try({
-      try: () => calculateSpawnWindow(payload, new Date()),
+      try: () => calculateSpawnWindow(payload, now),
       catch: (cause) =>
         cause instanceof InvalidRequestError
           ? cause

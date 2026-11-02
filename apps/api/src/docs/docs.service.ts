@@ -72,21 +72,21 @@ const normalizeContent = (content: JsonValue) => {
 
 const mapDocumentRecordWithEditors = (
   document: DocumentSummary,
-  editorNameByMemberId: ReadonlyMap<string, string>,
+  editorNames: ReadonlyMap<string, string>,
 ) => ({
   id: document.id,
   guildId: document.guildId,
   title: document.title,
   version: document.version,
-  createdByMemberId: document.createdByMemberId,
+  createdByMemberId: document.createdByDiscordId,
   createdBy: {
-    memberId: document.createdByMemberId,
-    name: editorNameByMemberId.get(document.createdByMemberId) ?? null,
+    memberId: document.createdByDiscordId,
+    name: editorNames.get(document.createdByDiscordId) ?? null,
   },
-  updatedByMemberId: document.updatedByMemberId,
+  updatedByMemberId: document.updatedByDiscordId,
   updatedBy: {
-    memberId: document.updatedByMemberId,
-    name: editorNameByMemberId.get(document.updatedByMemberId) ?? null,
+    memberId: document.updatedByDiscordId,
+    name: editorNames.get(document.updatedByDiscordId) ?? null,
   },
   createdAt: document.createdAt,
   updatedAt: document.updatedAt,
@@ -94,7 +94,7 @@ const mapDocumentRecordWithEditors = (
 
 const mapHistoryRecordWithEditors = (
   history: DocumentHistorySummary,
-  editorNameByMemberId: ReadonlyMap<string, string>,
+  editorNames: ReadonlyMap<string, string>,
 ) => ({
   id: history.id,
   documentId: history.documentId,
@@ -102,45 +102,34 @@ const mapHistoryRecordWithEditors = (
   version: history.version,
   title: history.title,
   action: history.action,
-  actorMemberId: history.actorMemberId,
+  actorMemberId: history.actorDiscordId,
   actor: {
-    memberId: history.actorMemberId,
-    name: editorNameByMemberId.get(history.actorMemberId) ?? null,
+    memberId: history.actorDiscordId,
+    name: editorNames.get(history.actorDiscordId) ?? null,
   },
   editedAt: history.editedAt,
 });
 
 export const makeDocsService = (repository: DocsRepositoryService) => {
-  const getEditorNameByMemberId = (guildId: string, memberIds: string[]) => {
-    const uniqueMemberIds = [...new Set(memberIds)];
-
-    return repository
-      .findEditors(guildId, uniqueMemberIds)
-      .pipe(
-        Effect.map(
-          (editors) =>
-            new Map(editors.map((editor) => [editor.userId, editor.name])),
-        ),
-      );
-  };
-
   const mapDocumentRecords = (
     guildId: string,
     documents: ReadonlyArray<DocumentSummary>,
   ) =>
-    getEditorNameByMemberId(
-      guildId,
-      documents.flatMap((document) => [
-        document.createdByMemberId,
-        document.updatedByMemberId,
-      ]),
-    ).pipe(
-      Effect.map((editors) =>
-        documents.map((document) =>
-          mapDocumentRecordWithEditors(document, editors),
+    repository
+      .findEditorNames(
+        guildId,
+        documents.flatMap((document) => [
+          document.createdByDiscordId,
+          document.updatedByDiscordId,
+        ]),
+      )
+      .pipe(
+        Effect.map((editors) =>
+          documents.map((document) =>
+            mapDocumentRecordWithEditors(document, editors),
+          ),
         ),
-      ),
-    );
+      );
 
   const mapDocumentRecord = (guildId: string, document: StoredDocument) =>
     mapDocumentRecords(guildId, [document]).pipe(
@@ -154,14 +143,16 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
     guildId: string,
     history: ReadonlyArray<DocumentHistorySummary>,
   ) =>
-    getEditorNameByMemberId(
-      guildId,
-      history.map((entry) => entry.actorMemberId),
-    ).pipe(
-      Effect.map((editors) =>
-        history.map((entry) => mapHistoryRecordWithEditors(entry, editors)),
-      ),
-    );
+    repository
+      .findEditorNames(
+        guildId,
+        history.map((entry) => entry.actorDiscordId),
+      )
+      .pipe(
+        Effect.map((editors) =>
+          history.map((entry) => mapHistoryRecordWithEditors(entry, editors)),
+        ),
+      );
 
   const mapHistoryRecord = (guildId: string, history: StoredDocumentHistory) =>
     mapHistoryRecords(guildId, [history]).pipe(
@@ -210,7 +201,7 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
       }),
     createDocument: (
       guildId: string,
-      memberId: string,
+      discordId: string,
       data: CreateDocumentRequest,
     ) =>
       Effect.gen(function* () {
@@ -218,7 +209,7 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
 
         const document = yield* repository.createDocument({
           guildId,
-          memberId,
+          discordId,
           title,
           content: EMPTY_DOCUMENT_CONTENT,
           defaultLimit: GUILD_DOCUMENT_DEFAULT_LIMIT,
@@ -233,7 +224,7 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
     updateDocument: (
       guildId: string,
       documentId: string,
-      memberId: string,
+      discordId: string,
       data: UpdateDocumentRequest,
     ) =>
       Effect.gen(function* () {
@@ -243,7 +234,7 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
         const document = yield* repository.updateDocument({
           guildId,
           documentId,
-          memberId,
+          discordId,
           title,
           content,
           baseVersion: data.baseVersion,
@@ -286,19 +277,19 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
       Effect.gen(function* () {
         const documents = yield* repository.listTrash(guildId);
 
-        const editors = yield* getEditorNameByMemberId(
+        const editors = yield* repository.findEditorNames(
           guildId,
           documents.flatMap((document) => [
-            document.createdByMemberId,
-            document.updatedByMemberId,
-            document.deletedByMemberId ?? document.updatedByMemberId,
+            document.createdByDiscordId,
+            document.updatedByDiscordId,
+            document.deletedByDiscordId ?? document.updatedByDiscordId,
           ]),
         );
 
         return {
           items: documents.map((document) => {
             const deletedByMemberId =
-              document.deletedByMemberId ?? document.updatedByMemberId;
+              document.deletedByDiscordId ?? document.updatedByDiscordId;
 
             return {
               ...mapDocumentRecordWithEditors(document, editors),
@@ -315,22 +306,22 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
     moveDocumentToTrash: (
       guildId: string,
       documentId: string,
-      memberId: string,
+      discordId: string,
     ) =>
       repository
         .changeTrashState({
           guildId,
           documentId,
-          memberId,
+          discordId,
           action: "DELETE",
         })
         .pipe(Effect.as({ success: true })),
-    restoreDocument: (guildId: string, documentId: string, memberId: string) =>
+    restoreDocument: (guildId: string, documentId: string, discordId: string) =>
       repository
         .changeTrashState({
           guildId,
           documentId,
-          memberId,
+          discordId,
           action: "RESTORE",
         })
         .pipe(Effect.as({ success: true })),

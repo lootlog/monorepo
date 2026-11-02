@@ -1,3 +1,4 @@
+import { AccessRequirement } from "@lootlog/domain/access-policy";
 import type { makeUserGuildList } from "./user-guild-list.data-layer.js";
 import type { makeCurrentUserGuilds } from "./current-user-guilds.data-layer.js";
 import {
@@ -590,10 +591,10 @@ export const guildRead = Effect.fn("guildRead")(function* (guildId: string) {
 export const updateGuildConfiguration = Effect.fn(
   "GuildsControllerUpdateGuildConfig",
 )(function* (guildId: string, payload: UpdateOrganizationConfigRequest) {
-  const authorized = yield* authorizeGuild(guildId, [
-    Permission.OWNER,
-    Permission.ADMIN,
-  ]);
+  const authorized = yield* authorizeGuild(
+    guildId,
+    AccessRequirement.ADMINISTER,
+  );
 
   const value = yield* guildConfigurationData((service) =>
     service.updateGuildConfig(authorized.guildId, payload),
@@ -633,10 +634,10 @@ export const guildDiscordSync = Effect.fn("guildDiscordSync")(function* (
   guildId: string,
   refresh: boolean,
 ) {
-  const authorized = yield* authorizeGuild(guildId, [
-    Permission.OWNER,
-    Permission.ADMIN,
-  ]);
+  const authorized = yield* authorizeGuild(
+    guildId,
+    AccessRequirement.ADMINISTER,
+  );
 
   const value = yield* data((service) =>
     refresh

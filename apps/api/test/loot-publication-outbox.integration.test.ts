@@ -76,9 +76,13 @@ describe("durable loot publications", () => {
         yield* database
           .insert(guildTable)
           .values({ id, name: "Outbox test", ownerId: id, updatedAt: now });
-        yield* database
-          .insert(memberTable)
-          .values({ userId: id, guildId: id, name: "Player", updatedAt: now });
+        yield* database.insert(memberTable).values({
+          userId: id,
+          guildId: id,
+          globalUserId: id,
+          name: "Player",
+          updatedAt: now,
+        });
         yield* database
           .insert(lootlogConfigTable)
           .values({ id, updatedAt: now });
