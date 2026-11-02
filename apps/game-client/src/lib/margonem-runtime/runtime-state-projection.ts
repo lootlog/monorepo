@@ -443,6 +443,8 @@ export class RuntimeStateProjection {
       NonNullable<ReturnType<MargonemRuntimeAdapter["getOtherHandle"]>>
     > = {};
 
+    const pendingHandleIds: string[] = [];
+
     for (const [characterId, entry] of Object.entries(others)) {
       if (deletesOther(entry)) {
         removeIds.push(characterId);
@@ -457,19 +459,29 @@ export class RuntimeStateProjection {
         const handle = this.adapter.getOtherHandle(characterId);
 
         if (handle) handleUpserts[characterId] = handle;
+        else pendingHandleIds.push(characterId);
       } catch {
         // The normalized event remains authoritative; handles are UI integration only.
       }
     }
 
+    const pending = {
+      ids: pendingHandleIds,
+      resolve: (id: string) => this.adapter.getOtherHandle(id),
+    };
+
     if (mapChanged) {
-      runtimeOtherHandles.replace(handleUpserts);
+      runtimeOtherHandles.replace(handleUpserts, pending);
       useOthersStore.getState().replaceOthers(upserts, true);
 
       return;
     }
 
-    runtimeOtherHandles.applyBatch({ removeIds, upserts: handleUpserts });
+    runtimeOtherHandles.applyBatch({
+      removeIds,
+      upserts: handleUpserts,
+      pending,
+    });
     useOthersStore.getState().applyBatch({ removeIds, upserts });
   }
 
