@@ -89,7 +89,7 @@ export const GuildDocMemberMentionPlugin = () => {
       ) =>
         anchorElementRef.current && options.length > 0
           ? createPortal(
-              <div className="mt-1 w-64overflow-hidden rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md">
+              <div className="mt-1 w-64 overflow-hidden rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md">
                 <ul
                   role="listbox"
                   aria-label={t("docs.mention.listLabel")}
