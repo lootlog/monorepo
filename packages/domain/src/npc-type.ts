@@ -1,3 +1,5 @@
+import { normalizeNpcIcon } from "./npc-icon.js";
+
 type NpcTypeValues<TNpcType extends string> = {
   COMMON: TNpcType;
   ELITE: TNpcType;
@@ -29,12 +31,40 @@ export const DROP_SOURCE_BOSS_TYPES = [
   "COLOSSUS",
 ] as const;
 
-export const getNpcTypeByWt = <TNpcType extends string>(
+/** What Margonem tells about an NPC that decides its Lootlog type. */
+export type NpcClassification = Readonly<{
+  wt: number;
+  prof?: string;
+  type?: number;
+  /** The NPC graphic, relative or as the rendered URL. */
+  icon?: string;
+  /** Set by Margonem on the NPC template of a hero spawned by an event. */
+  isHeroFromEvent?: boolean;
+}>;
+
+// Margonem keeps the graphics of every event NPC in this directory, including
+// event monsters, elites and colossi; only regular heroes are never there.
+const EVENT_NPC_ICON_DIRECTORY = "hev/";
+
+const isHeroWeight = (wt: number) => wt > 79 && wt < 90;
+
+/**
+ * A hero spawned by a game event. Margonem flags its template, but a battle
+ * only reports the weight and the graphic, so an event graphic identifies it
+ * where the flag is unknown. Event colossi stay colossi.
+ */
+export const isEventHero = (npc: NpcClassification): boolean =>
+  isHeroWeight(npc.wt) &&
+  (npc.isHeroFromEvent === true ||
+    (npc.icon !== undefined &&
+      normalizeNpcIcon(npc.icon).startsWith(EVENT_NPC_ICON_DIRECTORY)));
+
+export const getNpcType = <TNpcType extends string>(
   npcTypes: NpcTypeValues<TNpcType>,
-  wt: number,
-  prof?: string,
-  type?: number,
+  npc: NpcClassification,
 ): TNpcType => {
+  const { wt, prof, type } = npc;
+
   if (type === 0 && wt > 29 && wt < 80) {
     return npcTypes.ELITE3;
   }
@@ -47,7 +77,9 @@ export const getNpcTypeByWt = <TNpcType extends string>(
 
   if (wt > 89) return npcTypes.COLOSSUS;
 
-  if (wt > 79) return npcTypes.HERO;
+  if (isHeroWeight(wt)) {
+    return isEventHero(npc) ? npcTypes.EVENT_HERO : npcTypes.HERO;
+  }
 
   if (wt > 29) return npcTypes.ELITE3;
 

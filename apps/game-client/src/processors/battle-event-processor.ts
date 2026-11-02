@@ -1,7 +1,7 @@
 import { createSHA256Hash } from "@/helpers/create-sha-256-hash";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcType } from "@lootlog/domain/npc-type";
 import { NpcType } from "@/api/npcs.api";
 import {
   isWarriorDead,
@@ -38,6 +38,7 @@ const TRACKABLE_NPC_TYPES: ReadonlySet<NpcType> = new Set([
   NpcType.ELITE2,
   NpcType.ELITE3,
   NpcType.HERO,
+  NpcType.EVENT_HERO,
   NpcType.COLOSSUS,
   NpcType.TITAN,
 ]);
@@ -69,18 +70,11 @@ type DeadNpc = {
   icon: string;
   wt: number;
   type: number;
+  isHeroFromEvent?: boolean;
 };
 
 const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
-  const deadNpcs: Array<{
-    id: number;
-    name: string;
-    lvl: number;
-    prof: string;
-    icon: string;
-    wt: number;
-    type: number;
-  }> = [];
+  const deadNpcs: DeadNpc[] = [];
 
   let hasNpcInBattle = false;
   let topNpc: DeadNpc | null = null;
@@ -104,6 +98,8 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
       icon: warrior.mapNpc?.icon ?? normalizeNpcIcon(warrior.icon),
       wt: warrior.wt,
       type: warrior.type,
+      // A battle reports no template flags; the map observation keeps it.
+      isHeroFromEvent: warrior.mapNpc?.isHeroFromEvent,
     };
 
     deadNpcs.push(deadNpc);
@@ -309,12 +305,7 @@ export class BattleEventProcessor {
       return { intent: null, lastKillHash: params.lastKillHash };
     }
 
-    const npcType = getNpcTypeByWt(
-      NpcType,
-      params.topNpc.wt,
-      params.topNpc.prof,
-      params.topNpc.type,
-    );
+    const npcType = getNpcType(NpcType, params.topNpc);
 
     if (!TRACKABLE_NPC_TYPES.has(npcType)) {
       return { intent: null, lastKillHash: params.lastKillHash };

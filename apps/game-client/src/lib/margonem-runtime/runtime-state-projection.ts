@@ -51,6 +51,7 @@ type AppliedNpcEntry = Readonly<{
 type NpcTemplate = Readonly<{
   elasticLevelFactor?: number;
   id: number;
+  isHeroFromEvent?: boolean;
   level?: number;
   nick: string;
   prof: string;
@@ -530,6 +531,7 @@ export class RuntimeStateProjection {
         groupId: valueOrCurrent(entry.grp, entry.group),
         icon,
         id: entry.id,
+        isHeroFromEvent: template?.isHeroFromEvent,
         level,
         name,
         profession,

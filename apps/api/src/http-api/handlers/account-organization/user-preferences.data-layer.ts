@@ -212,6 +212,7 @@ const withLegacyTypeGuildIds = (value: UserGameAccountPreferences) => {
       guildIds: [...notifications.guildIds],
       ELITE2: mirror("ELITE2"),
       HERO: mirror("HERO"),
+      EVENT_HERO: mirror("EVENT_HERO"),
       COLOSSUS: mirror("COLOSSUS"),
       TITAN: mirror("TITAN"),
       message: mirror("message"),

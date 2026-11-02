@@ -10,6 +10,7 @@ import { createBattleTest, createBattleWarrior } from "./battle-test-fixtures";
 import { BattleEventProcessor } from "./battle-event-processor";
 import { EventDispatcher } from "@/lib/event-dispatcher";
 import { testRuntimeWindow } from "@/test/test-runtime-window";
+import { useNpcsStore } from "@/store/npcs.store";
 
 const pvpStart = (moves = ["start"]): GameEvent => ({
   f: {
@@ -275,6 +276,49 @@ it("records only the highest-weight defeated NPC", async () => {
     accountId: "67890",
     character: { name: "TestPlayer", lvl: 500, icon: "player.gif" },
     npc: { id: -200, name: "Titan", wt: 101 },
+  });
+});
+
+it("records an event hero with the template flag the map observed", async () => {
+  const fixture = createBattleTest();
+  // Margonem flags the template only; the battle reports the weight alone.
+  useNpcsStore.getState().replaceNpcs([
+    {
+      icon: "hev/h26-h4-nosferatu.gif",
+      id: 415784,
+      isHeroFromEvent: true,
+      level: 243,
+      name: "Nosferatu",
+      profession: "h",
+      templateId: 310779,
+      type: 2,
+      weight: 82,
+      x: 17,
+      y: 32,
+    },
+  ]);
+  onTestFinished(() => useNpcsStore.getState().clearNpcs());
+
+  const processor = new BattleEventProcessor();
+  await processor.handle({
+    f: {
+      init: "1",
+      w: {
+        "111": createBattleWarrior(111),
+        "-415784": createBattleWarrior(-415784, {
+          originalId: 415784,
+          name: "Nosferatu",
+          wt: 82,
+          icon: "hev/h26-h4-nosferatu.gif",
+        }),
+      },
+    },
+  });
+  await processor.handle(end);
+
+  expect(fixture.kills()).toHaveLength(1);
+  expect(await fixture.kills()[0]?.json()).toMatchObject({
+    npc: { name: "Nosferatu", wt: 82, isHeroFromEvent: true },
   });
 });
 

@@ -98,6 +98,7 @@ export function normalizeNpc(npc: GameNpc): RuntimeNpc {
     groupId: npc.grp,
     icon: normalizeNpcIcon(npc.icon),
     id: npc.id,
+    isHeroFromEvent: npc.isHeroFromEvent,
     level: npc.lvl,
     name: npc.nick,
     profession: npc.prof,

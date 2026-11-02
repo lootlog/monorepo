@@ -48,7 +48,14 @@ const empty: UserLootStatsResponse = {
 };
 
 /** The bosses the monster list counts kills of, as the kill statistics track them. */
-const BOSS_TYPES = ["TITAN", "COLOSSUS", "HERO", "ELITE3", "ELITE2"] as const;
+const BOSS_TYPES = [
+  "TITAN",
+  "COLOSSUS",
+  "HERO",
+  "EVENT_HERO",
+  "ELITE3",
+  "ELITE2",
+] as const;
 
 type CaughtItem = { lootId: number; hid: string };
 

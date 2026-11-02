@@ -1,4 +1,4 @@
-import { getNpcTypeByWt, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
+import { getNpcType, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { resolveLootAcceptance } from "@lootlog/domain/loot-acceptance";
 import { getFreshCharacterCatchingGuildIds } from "@/hooks/api/use-lootlog-characters-config";
@@ -283,12 +283,7 @@ export class LootEventProcessor {
       undefined,
     );
 
-    if (
-      !primary ||
-      getNpcTypeByWt(NpcType, primary.wt, primary.prof, primary.type) !==
-        NpcType.ELITE2
-    )
-      return {};
+    if (!primary || getNpcType(NpcType, primary) !== NpcType.ELITE2) return {};
 
     const others = useOthersStore.getState();
     const currentGame = useGameStore.getState();
@@ -369,6 +364,7 @@ export class LootEventProcessor {
         prof: npcData.profession,
         hpp: 0,
         type: npcData.type,
+        isHeroFromEvent: npcData.isHeroFromEvent,
         wt: npcData.weight,
         lvl: resolveDialogLootNpcLevel({
           npcName: npcData.name,

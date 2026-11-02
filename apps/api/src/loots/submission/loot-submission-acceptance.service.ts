@@ -8,7 +8,7 @@ import { Clock, Effect, Schema } from "effect";
 import { once } from "es-toolkit";
 import {
   DROP_SOURCE_BOSS_TYPES,
-  getNpcTypeByWt,
+  getNpcType,
   MIN_LOOT_NPC_WT,
 } from "@lootlog/domain/npc-type";
 import {
@@ -241,12 +241,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         );
       }
 
-      const primaryNpcType = getNpcTypeByWt(
-        NpcType,
-        npcData.primary.wt,
-        npcData.primary.prof,
-        npcData.primary.type,
-      );
+      const primaryNpcType = getNpcType(NpcType, npcData.primary);
 
       const outcome = this.resolveAcceptanceOutcome({
         catchingGuildIds,
@@ -824,7 +819,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       ...lootNpcIdentity(npc),
       runtimeNpcId: npc.runtimeId ?? null,
       name: npc.name,
-      type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
+      type: getNpcType(NpcType, npc),
       lvl: npc.lvl,
       // Senders may report the rendered CDN URL of the graphic; a revision
       // must not depend on which form a sender chose.

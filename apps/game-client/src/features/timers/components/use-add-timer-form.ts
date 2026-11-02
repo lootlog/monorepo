@@ -33,6 +33,7 @@ export const MANUAL_TIMER_NPC_TYPES = [
   CreateManualTimerDtoType.ELITE2,
   CreateManualTimerDtoType.ELITE3,
   CreateManualTimerDtoType.HERO,
+  CreateManualTimerDtoType.EVENT_HERO,
   CreateManualTimerDtoType.TITAN,
 ] as const satisfies readonly NonNullable<CreateManualTimerDto["type"]>[];
 

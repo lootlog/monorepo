@@ -109,8 +109,30 @@ const DEFAULT_SELECTED_NPC_TYPES = [
   NpcType.ELITE3,
   NpcType.ELITE2,
   NpcType.HERO,
+  NpcType.EVENT_HERO,
   NpcType.TITAN,
 ];
+
+type StoredTimersFilters = Record<string, TimersFilters>;
+
+// Event hero timers were hero timers before version 8; a filter that showed
+// heroes keeps showing them.
+const withEventHeroType = (
+  filters: StoredTimersFilters | undefined,
+): StoredTimersFilters | undefined =>
+  filters &&
+  Object.fromEntries(
+    Object.entries(filters).map(([key, filter]) => [
+      key,
+      filter.selectedNpcTypes.includes(NpcType.HERO) &&
+      !filter.selectedNpcTypes.includes(NpcType.EVENT_HERO)
+        ? {
+            ...filter,
+            selectedNpcTypes: [...filter.selectedNpcTypes, NpcType.EVENT_HERO],
+          }
+        : filter,
+    ]),
+  );
 
 export const DEFAULT_TIMERS_FILTERS: TimersFilters = {
   minLvl: 0,
@@ -495,14 +517,23 @@ export const useTimersStore = create<TimersState>()(
             persisted.timersSortOrder ?? currentState.timersSortOrder,
         };
       },
-      version: 7,
-      migrate: (persistedState) => {
+      version: 8,
+      migrate: (persistedState, version) => {
         const persisted = decodeTimerSettings(persistedState);
+
+        if (version < 7) {
+          return {
+            ...persisted,
+            timersFilters: {},
+            legacyTimersFilters:
+              withEventHeroType(persisted.timersFilters) ?? {},
+          };
+        }
 
         return {
           ...persisted,
-          timersFilters: {},
-          legacyTimersFilters: persisted.timersFilters ?? {},
+          timersFilters: withEventHeroType(persisted.timersFilters),
+          legacyTimersFilters: withEventHeroType(persisted.legacyTimersFilters),
         };
       },
     },

@@ -5,7 +5,7 @@ import type {
   NpcRoutingData,
   NpcRoutingTier,
 } from "@lootlog/schema/npc-routing";
-import { getNpcTypeByWt } from "./npc-type.js";
+import { getNpcType } from "./npc-type.js";
 
 const isNpcTypeEnum = Schema.is(NpcTypeSchema);
 
@@ -33,12 +33,13 @@ export function resolveNpcType(
     return null;
   }
 
-  return getNpcTypeByWt(
-    NpcTypeEnum,
-    weight,
-    npc.prof ?? undefined,
-    isNumericNpcType(npc.type) ? npc.type : undefined,
-  );
+  return getNpcType(NpcTypeEnum, {
+    wt: weight,
+    prof: npc.prof ?? undefined,
+    type: isNumericNpcType(npc.type) ? npc.type : undefined,
+    icon: npc.icon ?? undefined,
+    isHeroFromEvent: npc.isHeroFromEvent,
+  });
 }
 
 export function getNpcRoutingTier(npc?: NpcRoutingData | null): NpcRoutingTier {
