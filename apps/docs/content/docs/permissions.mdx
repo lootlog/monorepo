@@ -16,6 +16,11 @@ uprawnień.
 | `LOOTLOG_MANAGE` | Zarządzanie danymi Lootlog                        |
 | `LOOTLOG_ACCESS` | Podstawowy dostęp do strefy klanu                 |
 
+`OWNER` i `ADMIN` administrują organizacją: konfiguracją, rolami, członkami i
+czyszczeniem całego czatu. `LOOTLOG_MANAGE` daje moderację treści innych
+członków: może zmieniać i usuwać ich rezerwacje oraz usuwać pojedyncze
+wiadomości czatu, które widzi.
+
 <Callout type="warning" title="Zasada najmniejszego dostępu">
   Nie nadawaj `ADMIN` lub `LOOTLOG_MANAGE` tylko po to, aby odblokować jeden
   widok. Wybierz najwęższy zestaw uprawnień potrzebny danej roli.
@@ -48,7 +53,8 @@ których łupy rola może zobaczyć. `ADMIN` nie omija tych ograniczeń; omija j
 tylko `OWNER`.
 
 Zmiana przydziału łupu wymaga aktualnego uprawnienia do zapisu i dostępu do
-tego łupu. Po odebraniu dostępu oczekujące powiadomienie o łupie nie zostanie
+tego łupu w każdym Lootlogu, który go zapisał, bo przydział jest wspólny dla
+nich wszystkich. Łup, którego nie widzisz, jest traktowany jak nieistniejący. Po odebraniu dostępu oczekujące powiadomienie o łupie nie zostanie
 wysłane, a jego wpis może zniknąć z historii powiadomień użytkownika.
 
 ### Timery

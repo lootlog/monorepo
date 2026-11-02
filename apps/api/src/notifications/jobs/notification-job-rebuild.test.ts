@@ -79,7 +79,9 @@ const seedTimerNotifications = async (options: {
 
   await boundary.run(database.insert(guildTable).values(createGuildFixture()));
   await boundary.run(
-    database.insert(memberTable).values(createMemberFixture()),
+    database
+      .insert(memberTable)
+      .values(createMemberFixture({ globalUserId: "user-1" })),
   );
   await boundary.run(
     database

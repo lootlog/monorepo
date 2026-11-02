@@ -1,23 +1,16 @@
 import { v6 } from "uuid";
-import { and, eq, isNotNull } from "drizzle-orm";
 import { Effect, Layer, Schema } from "effect";
-import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
+import {
+  AccessRequirement,
+  createAccessPolicy,
+} from "@lootlog/domain/access-policy";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
-import { Permission } from "@lootlog/schema/permissions";
-import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  guildTable,
-  memberTable,
-  memberToRoleTable,
-  roleTable,
-} from "#src/database/drizzle/schema";
 import { canDeleteChatMessage } from "@lootlog/domain/chat-message-permissions";
 import { MessageType } from "#src/chat/chat-message";
 import type { ChatStoredMessage } from "#src/chat/chat-stored-message";
 import { SendChatMessageRequest } from "#src/contracts/chat/schemas";
-import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
 import { canViewerReadChatMessage } from "#src/chat/chat-message-visibility";
 import {
   PermissionDeniedError,
@@ -100,245 +93,176 @@ const routingFor = (message: Pick<ChatStoredMessage, "type" | "npc">) => {
     : { tier: getNpcRoutingTier(message.npc), npcLevel: message.npc.lvl };
 };
 
-export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
-  Effect.map(ApiDatabase, (database) => {
-    const viewer = (discordId: string, guildId: string) =>
-      Effect.gen(function* () {
-        const guilds = yield* database
-          .select()
-          .from(guildTable)
-          .where(and(eq(guildTable.id, guildId), eq(guildTable.active, true)))
-          .limit(1);
+export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
+  const rawMessages = (guildId: string) =>
+    redis.lrange(messageKey(guildId), 0, -1).pipe(
+      Effect.catch((error) => {
+        if (error instanceof Error && error.message.includes("WRONGTYPE")) {
+          return redis.del(messageKey(guildId)).pipe(Effect.as([]));
+        }
 
-        const guild = guilds[0];
+        return Effect.fail(error);
+      }),
+      Effect.map((elements) =>
+        elements.flatMap((element) => {
+          try {
+            return [parseStored(element)];
+          } catch {
+            return [];
+          }
+        }),
+      ),
+    );
 
-        if (!guild) return null;
+  const endPartyGatheringMessages = (
+    notificationId: string,
+    guildIds: ReadonlyArray<string>,
+  ) =>
+    Effect.forEach(
+      guildIds,
+      (guildId) =>
+        rawMessages(guildId).pipe(
+          Effect.flatMap((messages) =>
+            Effect.forEach(
+              messages.entries(),
+              ([messageIndex, message]) => {
+                if (message.partyGathering?.notificationId !== notificationId) {
+                  return Effect.void;
+                }
 
-        const roles = yield* database
-          .select({ role: roleTable })
-          .from(memberTable)
-          .innerJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
-          .innerJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-          .where(
-            and(
-              eq(memberTable.guildId, guildId),
-              eq(memberTable.userId, discordId),
-              eq(memberTable.active, true),
-              isNotNull(memberTable.globalUserId),
+                const updated = {
+                  ...message,
+                  message: `${message.characterData.nick} zakończył zbieranie grupy`,
+                  partyGathering: undefined,
+                };
+
+                return redis
+                  .lset(
+                    messageKey(guildId),
+                    messageIndex,
+                    JSON.stringify(updated),
+                  )
+                  .pipe(
+                    Effect.flatMap(() =>
+                      events
+                        .publish(RabbitRoutingKey.GUILDS_UPDATE_MESSAGE, {
+                          guildId,
+                          messageId: message.id,
+                          message: updated.message,
+                          routing: routingFor(message),
+                        })
+                        .pipe(Effect.ignore),
+                    ),
+                  );
+              },
+              { discard: true },
             ),
-          )
-          .pipe(Effect.map((rows) => rows.map(({ role }) => role)));
+          ),
+        ),
+      { discard: true },
+    );
 
-        const permissions =
-          guild.ownerId === discordId
-            ? Object.values(Permission)
-            : roles.flatMap(({ permissions }) => permissions);
+  return {
+    endPartyGatheringMessages,
+    service: ChatData.of({
+      sendMessage: (discordId, guildId, payload) => {
+        const data = payload;
 
-        const mayRead =
-          createAccessPolicy({ capabilities: permissions }).allows(
-            Capability.ADMIN,
-          ) ||
-          roles.some(({ permissions }) =>
-            permissions.includes(Permission.LOOTLOG_CHAT_READ),
+        const message: ChatStoredMessage = {
+          ...data,
+          id: v6(),
+          senderId: discordId,
+          timestamp: new Date().toISOString(),
+          guildId,
+        };
+
+        return redis.rpush(messageKey(guildId), JSON.stringify(message)).pipe(
+          Effect.flatMap(() =>
+            redis.ltrim(messageKey(guildId), -CHAT_MESSAGE_LIMIT, -1),
+          ),
+          Effect.flatMap(() =>
+            events
+              .publish(RabbitRoutingKey.GUILDS_SEND_MESSAGE, message)
+              .pipe(Effect.ignore),
+          ),
+          Effect.as({
+            ...message,
+            canDelete: true,
+          }),
+          Effect.mapError((cause) => new ChatOperationError({ cause })),
+        );
+      },
+      getMessages: (viewer, guildId) =>
+        Effect.gen(function* () {
+          const messages = yield* rawMessages(guildId);
+
+          const visible = messages.filter((message) =>
+            canViewerReadChatMessage(viewer, message),
           );
 
-        return mayRead
-          ? ({ discordId, permissions, roles } satisfies ChatMessageViewer)
-          : null;
-      });
-
-    const rawMessages = (guildId: string) =>
-      redis.lrange(messageKey(guildId), 0, -1).pipe(
-        Effect.catch((error) => {
-          if (error instanceof Error && error.message.includes("WRONGTYPE")) {
-            return redis.del(messageKey(guildId)).pipe(Effect.as([]));
+          return visible.map((message) => ({
+            ...message,
+            canDelete: canDeleteChatMessage(viewer, message),
+          }));
+        }).pipe(Effect.mapError((cause) => new ChatOperationError({ cause }))),
+      clearMessages: (viewer, guildId) =>
+        Effect.gen(function* () {
+          if (
+            !createAccessPolicy({
+              capabilities: viewer.permissions,
+            }).allowsAny(AccessRequirement.ADMINISTER)
+          ) {
+            return yield* Effect.fail(
+              new PermissionDeniedError("Only OWNER or ADMIN can clear chat"),
+            );
           }
 
-          return Effect.fail(error);
-        }),
-        Effect.map((elements) =>
-          elements.flatMap((element) => {
-            try {
-              return [parseStored(element)];
-            } catch {
-              return [];
-            }
-          }),
-        ),
-      );
+          yield* redis.del(messageKey(guildId));
+          yield* events
+            .publish(RabbitRoutingKey.GUILDS_CLEAR_MESSAGES, { guildId })
+            .pipe(Effect.ignore);
 
-    const endPartyGatheringMessages = (
-      notificationId: string,
-      guildIds: ReadonlyArray<string>,
-    ) =>
-      Effect.forEach(
-        guildIds,
-        (guildId) =>
-          rawMessages(guildId).pipe(
-            Effect.flatMap((messages) =>
-              Effect.forEach(
-                messages.entries(),
-                ([messageIndex, message]) => {
-                  if (
-                    message.partyGathering?.notificationId !== notificationId
-                  ) {
-                    return Effect.void;
-                  }
+          return { success: true };
+        }).pipe(Effect.mapError((cause) => new ChatOperationError({ cause }))),
+      deleteMessage: (viewer, guildId, messageId) =>
+        Effect.gen(function* () {
+          const elements = yield* redis.lrange(messageKey(guildId), 0, -1);
 
-                  const updated = {
-                    ...message,
-                    message: `${message.characterData.nick} zakończył zbieranie grupy`,
-                    partyGathering: undefined,
-                  };
-
-                  return redis
-                    .lset(
-                      messageKey(guildId),
-                      messageIndex,
-                      JSON.stringify(updated),
-                    )
-                    .pipe(
-                      Effect.flatMap(() =>
-                        events
-                          .publish(RabbitRoutingKey.GUILDS_UPDATE_MESSAGE, {
-                            guildId,
-                            messageId: message.id,
-                            message: updated.message,
-                            routing: routingFor(message),
-                          })
-                          .pipe(Effect.ignore),
-                      ),
-                    );
-                },
-                { discard: true },
-              ),
-            ),
-          ),
-        { discard: true },
-      );
-
-    return {
-      endPartyGatheringMessages,
-      service: ChatData.of({
-        sendMessage: (discordId, guildId, payload) => {
-          const data = payload;
-
-          const message: ChatStoredMessage = {
-            ...data,
-            id: v6(),
-            senderId: discordId,
-            timestamp: new Date().toISOString(),
-            guildId,
-          };
-
-          return redis.rpush(messageKey(guildId), JSON.stringify(message)).pipe(
-            Effect.flatMap(() =>
-              redis.ltrim(messageKey(guildId), -CHAT_MESSAGE_LIMIT, -1),
-            ),
-            Effect.flatMap(() =>
-              events
-                .publish(RabbitRoutingKey.GUILDS_SEND_MESSAGE, message)
-                .pipe(Effect.ignore),
-            ),
-            Effect.as({
-              ...message,
-              canDelete: true,
-            }),
-            Effect.mapError((cause) => new ChatOperationError({ cause })),
+          const target = elements.find(
+            (element) => parseStored(element).id === messageId,
           );
-        },
-        getMessages: (discordId, guildId) =>
-          Effect.gen(function* () {
-            const messages = yield* rawMessages(guildId);
 
-            if (messages.length === 0) return [];
-            const currentViewer = yield* viewer(discordId, guildId);
-
-            if (!currentViewer) return [];
-
-            const visible = messages.filter((message) =>
-              canViewerReadChatMessage(currentViewer, message),
+          if (!target) {
+            return yield* Effect.fail(
+              new ResourceNotFoundError("Message not found"),
             );
+          }
 
-            return visible.map((message) => ({
-              ...message,
-              canDelete: canDeleteChatMessage(currentViewer, message),
-            }));
-          }).pipe(
-            Effect.mapError((cause) => new ChatOperationError({ cause })),
-          ),
-        clearMessages: (discordId, guildId) =>
-          Effect.gen(function* () {
-            const currentViewer = yield* viewer(discordId, guildId);
+          const message = parseStored(target);
 
-            if (
-              !currentViewer ||
-              !createAccessPolicy({
-                capabilities: currentViewer.permissions,
-              }).allows(Capability.ADMIN)
-            ) {
-              return yield* Effect.fail(
-                new PermissionDeniedError("Only OWNER or ADMIN can clear chat"),
-              );
-            }
-
-            yield* redis.del(messageKey(guildId));
-            yield* events
-              .publish(RabbitRoutingKey.GUILDS_CLEAR_MESSAGES, { guildId })
-              .pipe(Effect.ignore);
-
-            return { success: true };
-          }).pipe(
-            Effect.mapError((cause) => new ChatOperationError({ cause })),
-          ),
-        deleteMessage: (discordId, guildId, messageId) =>
-          Effect.gen(function* () {
-            const elements = yield* redis.lrange(messageKey(guildId), 0, -1);
-
-            const target = elements.find(
-              (element) => parseStored(element).id === messageId,
+          if (
+            !canViewerReadChatMessage(viewer, message) ||
+            !canDeleteChatMessage(viewer, message)
+          ) {
+            return yield* Effect.fail(
+              new PermissionDeniedError("Not allowed to manage this message"),
             );
+          }
 
-            if (!target) {
-              return yield* Effect.fail(
-                new ResourceNotFoundError("Message not found"),
-              );
-            }
+          yield* redis.lrem(messageKey(guildId), 1, target);
+          yield* events
+            .publish(RabbitRoutingKey.GUILDS_DELETE_MESSAGE, {
+              guildId,
+              messageId,
+              routing: routingFor(message),
+            })
+            .pipe(Effect.ignore);
 
-            const message = parseStored(target);
-            const currentViewer = yield* viewer(discordId, guildId);
-
-            if (
-              !currentViewer ||
-              !canViewerReadChatMessage(currentViewer, message) ||
-              !canDeleteChatMessage(currentViewer, message)
-            ) {
-              return yield* Effect.fail(
-                new PermissionDeniedError("Not allowed to manage this message"),
-              );
-            }
-
-            yield* redis.lrem(messageKey(guildId), 1, target);
-            yield* events
-              .publish(RabbitRoutingKey.GUILDS_DELETE_MESSAGE, {
-                guildId,
-                messageId,
-                routing: routingFor(message),
-              })
-              .pipe(Effect.ignore);
-
-            return { success: true };
-          }).pipe(
-            Effect.mapError((cause) => new ChatOperationError({ cause })),
-          ),
-      }),
-    };
-  });
+          return { success: true };
+        }).pipe(Effect.mapError((cause) => new ChatOperationError({ cause }))),
+    }),
+  };
+};
 
 export const makeChatDataLayer = (redis: ChatRedis, events: ChatEvents) =>
-  Layer.effect(
-    ChatData,
-    makeChatOperations(redis, events).pipe(
-      Effect.map(({ service }) => service),
-    ),
-  );
+  Layer.succeed(ChatData, makeChatOperations(redis, events).service);

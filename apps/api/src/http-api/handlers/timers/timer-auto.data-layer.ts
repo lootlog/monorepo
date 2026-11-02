@@ -1,7 +1,10 @@
 import { activeEventCondition } from "#src/events/event-scope-query";
 import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
 import { pruneTimerHistory } from "./timer-history-retention.js";
-import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import {
+  findActiveGuildMember,
+  selectAccessibleGuilds,
+} from "#src/members/member-access-query";
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, gte } from "drizzle-orm";
@@ -27,7 +30,6 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
   eventTable,
-  memberTable,
   timerHistoryEntryTable,
   timerTable,
   userCharactersLootlogSettingsTable,
@@ -385,18 +387,11 @@ export const makeAutoTimer = (
       buildTimerLockKey(guildId, payload.world, timerKey),
       database.transaction((transaction) =>
         Effect.gen(function* () {
-          const members = yield* transaction
-            .select()
-            .from(memberTable)
-            .where(
-              and(
-                eq(memberTable.userId, identity.discordId),
-                eq(memberTable.guildId, guildId),
-              ),
-            )
-            .limit(1);
-
-          const member = members[0];
+          const member = yield* findActiveGuildMember(
+            transaction,
+            identity.discordId,
+            guildId,
+          );
 
           if (!member)
             return yield* Effect.die(

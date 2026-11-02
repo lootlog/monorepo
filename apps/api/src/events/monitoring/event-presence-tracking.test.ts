@@ -49,7 +49,9 @@ describe("event presence tracking", () => {
         ]),
     );
     await boundary.run(
-      database.insert(memberTable).values(createMemberFixture()),
+      database
+        .insert(memberTable)
+        .values(createMemberFixture({ globalUserId: "user" })),
     );
     await boundary.run(
       database.insert(eventTable).values([
@@ -239,9 +241,13 @@ describe("event presence tracking", () => {
         .where(eq(memberTable.id, 1)),
     );
     await boundary.run(
-      database
-        .insert(memberTable)
-        .values(createMemberFixture({ id: 2, userId: "user-2" })),
+      database.insert(memberTable).values(
+        createMemberFixture({
+          id: 2,
+          userId: "user-2",
+          globalUserId: "user-2",
+        }),
+      ),
     );
     await boundary.run(
       database.insert(eventMapCoverageGapTable).values({

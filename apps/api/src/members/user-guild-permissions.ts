@@ -1,6 +1,10 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
-import { createAccessPolicy } from "@lootlog/domain/access-policy";
+import {
+  createAccessPolicy,
+  memberCapabilities,
+  resolveCapabilities,
+} from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -12,7 +16,10 @@ import { UserOrganizationPermissionsResponse } from "#src/contracts/guilds/schem
 import { apiKeyCacheSuffix } from "#src/runtime/auth/organization-scope";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { getUserGuildPermissionsCacheScope } from "#src/shared/cache";
-import { selectAccessibleGuilds } from "./member-access-query.js";
+import {
+  isActiveMember,
+  selectAccessibleGuilds,
+} from "./member-access-query.js";
 import { hydrateMemberRoles } from "./member-role-hydration.js";
 
 export type UserGuildPermissionsCache = Pick<
@@ -81,45 +88,47 @@ export const makeUserGuildPermissionsProjection = (
     );
 
     return guilds.flatMap((guild) => {
-      if (guild.ownerId === discordId) {
-        return [
-          {
-            guild: { id: guild.id, ownerId: guild.ownerId },
-            roles: [
-              {
-                id: "owner",
-                lvlRangeFrom: 0,
-                lvlRangeTo: 999,
-                permissions: Object.values(Permission),
-              },
-            ],
-          },
-        ];
-      }
-
       const member = membersByGuild.get(guild.id);
+      const activeMember = member && isActiveMember(member) ? member : null;
+
+      // The owner keeps access without a member row, as in the access query.
+      if (!activeMember && guild.ownerId !== discordId) return [];
+
+      const permissions = memberCapabilities({
+        ownerId: guild.ownerId,
+        viewerId: discordId,
+        roles: activeMember?.roles ?? [],
+      });
 
       if (
-        !member?.active ||
-        !createAccessPolicy({
-          capabilities: member.roles.flatMap(({ permissions }) => permissions),
-        }).allows(Permission.LOOTLOG_ACCESS)
+        !createAccessPolicy({ capabilities: permissions }).allows(
+          Permission.LOOTLOG_ACCESS,
+        )
       )
         return [];
 
-      return [
-        {
-          guild: { id: guild.id, ownerId: guild.ownerId },
-          roles: member.roles
-            .filter(({ permissions }) => permissions.length > 0)
-            .map(({ id, lvlRangeFrom, lvlRangeTo, permissions }) => ({
-              id,
-              lvlRangeFrom,
-              lvlRangeTo,
-              permissions,
-            })),
-        },
-      ];
+      // Clients read the owner's access from roles, so the owner gets one
+      // role that holds every capability over the default level range.
+      const roles =
+        guild.ownerId === discordId
+          ? [
+              {
+                id: "owner",
+                lvlRangeFrom: 0,
+                lvlRangeTo: 500,
+                permissions: resolveCapabilities({ capabilities: permissions }),
+              },
+            ]
+          : (activeMember?.roles ?? [])
+              .filter(({ permissions }) => permissions.length > 0)
+              .map(({ id, lvlRangeFrom, lvlRangeTo, permissions }) => ({
+                id,
+                lvlRangeFrom,
+                lvlRangeTo,
+                permissions,
+              }));
+
+      return [{ guild: { id: guild.id, ownerId: guild.ownerId }, roles }];
     });
   });
 

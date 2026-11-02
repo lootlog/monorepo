@@ -1,4 +1,7 @@
-import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
+import {
+  AccessRequirement,
+  createAccessPolicy,
+} from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { MessageType } from "#src/chat/chat-message";
 import { canReadChatNpcSource } from "#src/chat/chat-npc-visibility";
@@ -20,7 +23,7 @@ const isNpcScopedMessage = (data: ChatStoredMessage) => {
 
 export const canViewChatMessage = (
   data: ChatStoredMessage | null | undefined,
-  roles: Role[],
+  roles: ReadonlyArray<Role>,
 ) => {
   if (!data) return false;
 
@@ -36,6 +39,6 @@ export const canViewerReadChatMessage = (
   viewer: ChatMessageViewer,
   message: ChatStoredMessage,
 ) =>
-  createAccessPolicy({ capabilities: viewer.permissions }).allows(
-    Capability.ADMIN,
+  createAccessPolicy({ capabilities: viewer.permissions }).allowsAny(
+    AccessRequirement.ADMINISTER,
   ) || canViewChatMessage(message, viewer.roles);

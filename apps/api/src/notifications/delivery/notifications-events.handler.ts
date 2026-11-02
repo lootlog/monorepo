@@ -166,11 +166,7 @@ export const makeNotificationsEvents = (options: {
 
               return Boolean(
                 membership &&
-                options.matching.canRolesViewLoot(
-                  membership.roles,
-                  visibilityNpcs,
-                  membership.isGuildOwner,
-                ),
+                options.matching.canMemberViewLoot(membership, visibilityNpcs),
               );
             });
 

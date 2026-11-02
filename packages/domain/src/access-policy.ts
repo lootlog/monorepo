@@ -94,3 +94,30 @@ export function capabilitiesGrantingAny(
 
   return [...granting];
 }
+
+/**
+ * Named requirements, so every surface checks "administer" and "moderate" the
+ * same way. Each lists alternatives for {@link AccessPolicy.allowsAny}; OWNER
+ * satisfies both through {@link resolveCapabilities}.
+ */
+export const AccessRequirement = {
+  /** Organization configuration, roles, members, and Organization-wide resets. */
+  ADMINISTER: [Capability.ADMIN],
+  /** Other members' content: reservations and individual chat messages. */
+  MODERATE: [Capability.ADMIN, Capability.LOOTLOG_MANAGE],
+} as const satisfies Record<string, readonly Capability[]>;
+
+/**
+ * The capabilities a member holds in one Organization before expansion: the
+ * Discord guild owner holds OWNER, every other member the union of their role
+ * permissions. Callers still decide whether the member row is active.
+ */
+export function memberCapabilities(member: {
+  readonly ownerId: string;
+  readonly viewerId: string;
+  readonly roles: readonly { readonly permissions: readonly Capability[] }[];
+}): Capability[] {
+  return member.ownerId === member.viewerId
+    ? [Capability.OWNER]
+    : member.roles.flatMap((role) => role.permissions);
+}
