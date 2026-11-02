@@ -80,12 +80,15 @@ export const useGuildDocDraft = () => {
   const [previousDocument, setPreviousDocument] =
     useState<typeof document>(undefined);
 
+  // A newer version replaces the draft only when it has no unsaved edits, so
+  // a save's refetch or another member's change never discards typing.
   if (
     previousDocument?.id !== document?.id ||
     previousDocument?.version !== document?.version
   ) {
     setPreviousDocument(document);
-    resetDraft();
+
+    if (previousDocument?.id !== document?.id || !isDirty) resetDraft();
   }
 
   useEffect(() => {
@@ -133,6 +136,8 @@ export const useGuildDocDraft = () => {
       return;
     }
 
+    const submittedSignature = draftSignature;
+
     updateDocument.mutate(
       {
         pathParams: { guildId, docId },
@@ -145,17 +150,9 @@ export const useGuildDocDraft = () => {
         onError: () => {
           toast.error(t("docs.editor.saveError"));
         },
-        onSuccess: async (updatedDocument) => {
-          const normalizedContent = normalizeGuildDocEditorContent(
-            updatedDocument.content,
-          );
-
-          setTitle(updatedDocument.title);
-          setContent(normalizedContent);
-          setSavedSignature(
-            createDraftSignature(updatedDocument.title, normalizedContent),
-          );
-          setEditorSeed((seed) => seed + 1);
+        onSuccess: async () => {
+          // Edits made while the request ran stay in the editor, unsaved.
+          setSavedSignature(submittedSignature);
           await invalidateGuildDocsQueries(queryClient, guildId, docId);
           toast.success(t("docs.editor.saved"));
         },
