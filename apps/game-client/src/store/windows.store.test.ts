@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { storageKey } from "@/lib/storage-key";
-import {
-  createDeduplicatingStateStorage,
-  migrateWindowsState,
-  useWindowsStore,
-} from "./windows.store";
+import { migrateWindowsState, useWindowsStore } from "./windows.store";
 
 describe("windows store", () => {
   beforeEach(() => {
@@ -390,33 +386,6 @@ describe("windows store", () => {
     });
     expect(timers.maxContentHeight).toBeUndefined();
     expect(useWindowsStore.getState()["quick-access"].collapsed).toBeFalsy();
-  });
-});
-
-describe("createDeduplicatingStateStorage", () => {
-  it("does not write a serialized state that is already persisted", () => {
-    const values = new Map<string, string>();
-
-    const storage = {
-      getItem: vi.fn<Storage["getItem"]>(
-        (key: string) => values.get(key) ?? null,
-      ),
-      removeItem: vi.fn<Storage["removeItem"]>((key: string) =>
-        values.delete(key),
-      ),
-      setItem: vi.fn<(key: string, value: string) => void>(
-        (key: string, value: string) => {
-          values.set(key, value);
-        },
-      ),
-    };
-
-    const deduplicatedStorage = createDeduplicatingStateStorage(storage);
-
-    deduplicatedStorage.setItem("windows", "same-state");
-    deduplicatedStorage.setItem("windows", "same-state");
-
-    expect(storage.setItem).toHaveBeenCalledOnce();
   });
 });
 

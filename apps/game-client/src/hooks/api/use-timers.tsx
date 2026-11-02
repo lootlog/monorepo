@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/features/public-api/query-keys";
-import { fetchTimers } from "@/api";
+import { fetchTimers } from "@/api/timers.api";
 import { applyGameTimerAccess } from "@/lib/game-access-cache";
 import { useRealtimeSnapshotReady } from "@/contexts/socket-context";
 

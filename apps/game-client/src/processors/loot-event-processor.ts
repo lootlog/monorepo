@@ -21,7 +21,7 @@ import {
   type PartyMember,
 } from "@/utils/game/get-battle-participants";
 import type { GameEvent, LootEvent } from "@lootlog/margonem/game-events";
-import { createLoot } from "@/api";
+import { createLoot } from "@/api/loot.api";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { useLootStore } from "@/store/game-store/loot.store";
 import {

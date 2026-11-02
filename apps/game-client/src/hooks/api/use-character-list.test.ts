@@ -3,7 +3,7 @@ import {
   CHARACTER_LIST_CACHE_STALE_TTL_MS,
   fetchCharacterList,
   normalizeCharacterList,
-} from "@/api";
+} from "@/api/characters.api";
 import { GameVersion } from "@lootlog/schema/game-version";
 
 const createCharacter = (overrides?: {

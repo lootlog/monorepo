@@ -1,6 +1,6 @@
 import { Option, Schema } from "effect";
 import type { Query, QueryClient } from "@tanstack/react-query";
-import type { Timer } from "@/api";
+import type { Timer } from "@/api/timers.api";
 import type { GuildResponseDtoOutput } from "@lootlog/client/main";
 import { useGlobalStore } from "@/store/global.store";
 import type { Emitter } from "./emitter";

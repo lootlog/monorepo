@@ -7,7 +7,7 @@ import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { isSignedOut } from "@/lib/auth-client";
-import { createAutoTimer } from "@/api";
+import { createAutoTimer } from "@/api/timers.api";
 import { getFreshCharacterCatchingGuildIds } from "@/hooks/api/use-lootlog-characters-config";
 
 export class NpcsDeleteProcessor {

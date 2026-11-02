@@ -6,10 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  getTimersControllerGetTimerHistoryQueryKey,
-  useTimersControllerGetTimerHistory,
-} from "@lootlog/client/main";
+import { useTimersControllerGetTimerHistory } from "@lootlog/client/main";
 
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { History } from "lucide-react";
@@ -47,16 +44,6 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
     },
     {
       query: {
-        queryKey: getTimersControllerGetTimerHistoryQueryKey(
-          {
-            guildId: timer.guildId,
-            timerIdentifier: timer.timerKey,
-          },
-          {
-            world: timer.world,
-            limit: 5,
-          },
-        ),
         enabled: open,
       },
     },
