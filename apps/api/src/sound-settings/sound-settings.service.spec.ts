@@ -47,6 +47,7 @@ const createSettingsDocumentsMock = (
     parseGuildIds: () => {
       throw new Error("Unexpected guild id parser");
     },
+    applyOperations: () => Effect.die("Unexpected batch write"),
     getGuildPreferences: () => Effect.die("Unexpected guild preferences read"),
     getPreferences,
     patchPreferences,
@@ -102,7 +103,7 @@ describe("sound settings Effect module", () => {
   });
 
   it.each(["notificationsConfig", "detectorConfig", "timersConfig"] as const)(
-    "merges partial %s entries without replacing stored volume",
+    "writes only the changed %s leaves so the stored volume is merged by path",
     async (configKey) => {
       const settingsDocuments = createSettingsDocumentsMock({
         [configKey]: {
@@ -118,7 +119,7 @@ describe("sound settings Effect module", () => {
       await Effect.runPromise(
         service.updateSettings("user-1", {
           [configKey]: {
-            HERO: { soundUrl: "https://example.com/new-hero.mp3" },
+            HERO: { soundUrl: "" },
           },
         }),
       );
@@ -128,55 +129,14 @@ describe("sound settings Effect module", () => {
         expect.objectContaining({
           operations: [
             expect.objectContaining({
-              set: {
-                [configKey]: expect.objectContaining({
-                  HERO: {
-                    volume: 0.35,
-                    soundUrl: "https://example.com/new-hero.mp3",
-                  },
-                  ELITE2: { volume: 0.5, soundUrl: "" },
-                }),
-              },
+              set: { [configKey]: { HERO: { soundUrl: "" } } },
             }),
           ],
         }),
       );
+      expect(settingsDocuments.getPreferences).not.toHaveBeenCalled();
     },
   );
-
-  it("treats an empty sound URL as an explicit reset", async () => {
-    const settingsDocuments = createSettingsDocumentsMock({
-      detectorConfig: {
-        TITAN: {
-          volume: 0.4,
-          soundUrl: "https://example.com/titan.mp3",
-        },
-      },
-    });
-
-    const service = makeSoundSettings(settingsDocuments);
-
-    await Effect.runPromise(
-      service.updateSettings("user-1", {
-        detectorConfig: { TITAN: { soundUrl: "" } },
-      }),
-    );
-
-    expect(settingsDocuments.patchPreferences).toHaveBeenCalledWith(
-      "user-1",
-      expect.objectContaining({
-        operations: [
-          expect.objectContaining({
-            set: expect.objectContaining({
-              detectorConfig: expect.objectContaining({
-                TITAN: { volume: 0.4, soundUrl: "" },
-              }),
-            }),
-          }),
-        ],
-      }),
-    );
-  });
 
   it("does not persist device-local master volume", async () => {
     const settingsDocuments = createSettingsDocumentsMock();

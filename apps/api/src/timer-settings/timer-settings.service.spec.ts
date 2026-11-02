@@ -32,6 +32,7 @@ describe("timer settings Effect module", () => {
       parseGuildIds: () => {
         throw new Error("Unexpected guild id parser");
       },
+      applyOperations: () => Effect.die("Unexpected batch write"),
       getGuildPreferences: () =>
         Effect.die("Unexpected guild preferences read"),
       patchPreferences: () => Effect.die("Unexpected preferences patch"),
@@ -85,6 +86,7 @@ describe("timer settings Effect module", () => {
         parseGuildIds: () => {
           throw new Error("Unexpected guild id parser");
         },
+        applyOperations: () => Effect.die("Unexpected batch write"),
         getGuildPreferences: () =>
           Effect.die("Unexpected guild preferences read"),
         getPreferences: () => Effect.die("Unexpected preferences read"),
@@ -136,6 +138,7 @@ describe("timer settings Effect module", () => {
       parseGuildIds: () => {
         throw new Error("Unexpected guild id parser");
       },
+      applyOperations: () => Effect.die("Unexpected batch write"),
       getGuildPreferences: () =>
         Effect.die("Unexpected guild preferences read"),
       getPreferences: () => Effect.die("Unexpected preferences read"),

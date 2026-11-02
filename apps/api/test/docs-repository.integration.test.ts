@@ -6,7 +6,7 @@ import {
   expect,
   it,
 } from "bun:test";
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, eq, inArray, sql } from "drizzle-orm";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import {
   ApiDatabase,
@@ -18,6 +18,7 @@ import {
   guildTable,
 } from "../src/database/drizzle/schema.js";
 import {
+  DOCUMENT_HISTORY_RETAINED_ENTRIES,
   DocsPersistenceError,
   DocsRepository,
 } from "../src/docs/docs.repository.js";
@@ -87,8 +88,15 @@ describe("DocsRepository against migrated PostgreSQL", () => {
     await runtime.runPromise(
       Effect.gen(function* () {
         const db = yield* ApiDatabase;
-        yield* db.delete(guildTable).where(eq(guildTable.id, guildId));
-        yield* db.delete(guildTable).where(eq(guildTable.id, otherGuildId));
+        const guildIds = [guildId, otherGuildId];
+        // Organization data restricts Guild deletion, so it goes first.
+        yield* db
+          .delete(guildDocumentHistoryTable)
+          .where(inArray(guildDocumentHistoryTable.guildId, guildIds));
+        yield* db
+          .delete(guildDocumentTable)
+          .where(inArray(guildDocumentTable.guildId, guildIds));
+        yield* db.delete(guildTable).where(inArray(guildTable.id, guildIds));
         yield* db.insert(guildTable).values([
           {
             id: guildId,
@@ -229,6 +237,49 @@ describe("DocsRepository against migrated PostgreSQL", () => {
       }),
     );
     expect(await documents()).toMatchObject([{ version: 3, title: "Plan v3" }]);
+  });
+
+  it("keeps only the newest history entries of a document", async () => {
+    await create();
+    const id = await documentId();
+    const service = makeDocsService(await runtime.runPromise(DocsRepository));
+
+    for (
+      let version = 2;
+      version <= DOCUMENT_HISTORY_RETAINED_ENTRIES + 1;
+      version += 1
+    ) {
+      await runtime.runPromise(
+        service.updateDocument(guildId, id, "editor-1", {
+          title: `Plan v${version}`,
+          content,
+        }),
+      );
+    }
+
+    const retained = (await history()).toSorted(
+      (left, right) => left.version - right.version,
+    );
+
+    expect(retained).toHaveLength(DOCUMENT_HISTORY_RETAINED_ENTRIES);
+    expect(retained[0]).toMatchObject({ version: 2, title: "Plan v2" });
+    expect(retained.at(-1)).toMatchObject({
+      version: DOCUMENT_HISTORY_RETAINED_ENTRIES + 1,
+    });
+  });
+
+  it("refuses to delete an Organization that still has documents", async () => {
+    await create();
+
+    await expect(
+      runtime.runPromise(
+        Effect.flatMap(ApiDatabase, (db) =>
+          db.delete(guildTable).where(eq(guildTable.id, guildId)),
+        ),
+      ),
+    ).rejects.toThrow();
+    expect(await documents()).toHaveLength(1);
+    expect(await history()).toHaveLength(1);
   });
 
   it("isolates reads, history, edits, trash and purge by Organization", async () => {

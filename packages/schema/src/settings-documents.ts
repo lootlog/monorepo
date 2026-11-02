@@ -84,6 +84,12 @@ const SettingsPatchOperationSchema = Schema.Struct({
   unset: Schema.Array(Schema.NonEmptyString)
     .annotate({ default: [] })
     .pipe(Schema.withDecodingDefaultTypeKey(Effect.succeed([]))),
+  /**
+   * The `updatedAt` of this document's layer as the client last read it, or
+   * `null` when the client read no stored document. The patch fails with 409
+   * when the stored document has changed since; omit it to merge by path.
+   */
+  expectedUpdatedAt: Schema.optionalKey(Schema.NullOr(IsoDateTime)),
 });
 
 /**

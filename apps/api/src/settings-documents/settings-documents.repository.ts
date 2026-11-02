@@ -65,7 +65,25 @@ export class SettingsPersistenceError extends TaggedErrorClass<SettingsPersisten
   { cause: Schema.Defect() },
 ) {}
 
-type RepositoryFailure = InvalidSettingsPatchError | SettingsPersistenceError;
+/** A document changed after the client read the `updatedAt` it expects. */
+export class SettingsConflictError extends TaggedErrorClass<SettingsConflictError>()(
+  "SettingsConflictError",
+  { message: Schema.String },
+) {}
+
+type RepositoryFailure =
+  | InvalidSettingsPatchError
+  | SettingsConflictError
+  | SettingsPersistenceError;
+
+const matchesExpectedUpdatedAt = (
+  operation: SettingsOperation,
+  stored: StoredSettingsDocument | undefined,
+) =>
+  operation.expectedUpdatedAt === undefined ||
+  (operation.expectedUpdatedAt === null
+    ? stored === undefined
+    : stored?.updatedAt.getTime() === operation.expectedUpdatedAt.getTime());
 
 export interface SettingsDocumentsRepositoryService {
   readonly findDocuments: (
@@ -176,6 +194,12 @@ export class SettingsDocumentsRepository extends Context.Service<
                 const key = getSettingsOperationKey(operation);
                 const stored = storedDocuments.get(key);
 
+                if (!matchesExpectedUpdatedAt(operation, stored)) {
+                  return yield* new SettingsConflictError({
+                    message: `Settings document ${key} changed since it was read`,
+                  });
+                }
+
                 try {
                   // Bring the stored document to the catalog version before
                   // patching, so the row written below matches the version
@@ -212,7 +236,7 @@ export class SettingsDocumentsRepository extends Context.Service<
                 }
               }
 
-              const updatedAt = new Date(yield* Clock.currentTimeMillis);
+              const now = yield* Clock.currentTimeMillis;
 
               for (const {
                 domain,
@@ -230,10 +254,15 @@ export class SettingsDocumentsRepository extends Context.Service<
                   continue;
                 }
 
+                // `updatedAt` is the document's version for
+                // `expectedUpdatedAt`, so every write moves it forward even
+                // within the millisecond of the previous one.
                 const data = {
                   overrides,
                   schemaVersion: SETTINGS_CATALOG[domain].schemaVersion,
-                  updatedAt,
+                  updatedAt: new Date(
+                    Math.max(now, (stored?.updatedAt.getTime() ?? 0) + 1),
+                  ),
                 };
 
                 if (stored) {
@@ -270,7 +299,10 @@ export class SettingsDocumentsRepository extends Context.Service<
               attributes: { retryCount: attempt },
             }),
             Effect.catch((error) => {
-              if (error instanceof InvalidSettingsPatchError) {
+              if (
+                error instanceof InvalidSettingsPatchError ||
+                error instanceof SettingsConflictError
+              ) {
                 return Effect.fail(error);
               }
 

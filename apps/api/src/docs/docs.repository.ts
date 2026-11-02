@@ -6,7 +6,16 @@ import {
   ApplicationError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { and, count, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  sql,
+} from "drizzle-orm";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -128,6 +137,42 @@ const documentHistoryValues = (
   action,
   actorDiscordId: document.updatedByDiscordId,
   editedAt: document.updatedAt,
+});
+
+/**
+ * Every save stores the full content, so each document keeps only its newest
+ * entries; the `record_lifecycle` migration pruned older rows once.
+ */
+export const DOCUMENT_HISTORY_RETAINED_ENTRIES = 100;
+
+const insertDocumentHistory = Effect.fnUntraced(function* (
+  transaction: Pick<DocsDatabase, "insert" | "select" | "delete">,
+  document: StoredDocument,
+  action: StoredDocumentHistory["action"],
+) {
+  yield* transaction
+    .insert(guildDocumentHistoryTable)
+    .values(documentHistoryValues(document, action));
+
+  const staleHistory = yield* transaction
+    .select({ id: guildDocumentHistoryTable.id })
+    .from(guildDocumentHistoryTable)
+    .where(eq(guildDocumentHistoryTable.documentId, document.id))
+    .orderBy(
+      desc(guildDocumentHistoryTable.version),
+      desc(guildDocumentHistoryTable.editedAt),
+      desc(guildDocumentHistoryTable.id),
+    )
+    .offset(DOCUMENT_HISTORY_RETAINED_ENTRIES);
+
+  if (staleHistory.length > 0) {
+    yield* transaction.delete(guildDocumentHistoryTable).where(
+      inArray(
+        guildDocumentHistoryTable.id,
+        staleHistory.map(({ id }) => id),
+      ),
+    );
+  }
 });
 
 function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
@@ -268,9 +313,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             );
           }
 
-          yield* transaction
-            .insert(guildDocumentHistoryTable)
-            .values(documentHistoryValues(document, "SAVE"));
+          yield* insertDocumentHistory(transaction, document, "SAVE");
 
           return document;
         }),
@@ -351,9 +394,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             );
           }
 
-          yield* transaction
-            .insert(guildDocumentHistoryTable)
-            .values(documentHistoryValues(updated, "SAVE"));
+          yield* insertDocumentHistory(transaction, updated, "SAVE");
 
           return updated;
         }),
@@ -463,9 +504,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             );
           }
 
-          yield* transaction
-            .insert(guildDocumentHistoryTable)
-            .values(documentHistoryValues(updated, options.action));
+          yield* insertDocumentHistory(transaction, updated, options.action);
         }),
       ),
     purge: (guildId, documentId) =>
