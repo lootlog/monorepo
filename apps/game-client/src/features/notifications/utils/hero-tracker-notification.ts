@@ -6,13 +6,12 @@ type HeroTrackerNotificationSource = {
   heroTracker?: HeroTrackerNotificationState;
 };
 
-/** Milliseconds until an open Hero Tracker entrance closes, if it is open. */
-export const getHeroTrackerEntranceRemainingMs = (
+/** Epoch ms when an open Hero Tracker entrance closes, if it is open. */
+export const getHeroTrackerEntranceClosesAtMs = (
   notification: HeroTrackerNotificationSource,
-  now = Date.now(),
 ): number | undefined =>
   notification.heroTracker?.state === "open"
-    ? Date.parse(notification.heroTracker.entranceClosesAt) - now
+    ? Date.parse(notification.heroTracker.entranceClosesAt)
     : undefined;
 
 /**

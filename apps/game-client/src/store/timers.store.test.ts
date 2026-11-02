@@ -138,6 +138,31 @@ describe("timers.store", () => {
     ]);
   });
 
+  it("adds Hero Trackers to a version 8 filter without restoring hidden event heroes", async () => {
+    localStorage.setItem(
+      TIMERS_STORAGE_KEY,
+      JSON.stringify({
+        version: 8,
+        state: {
+          timersFilters: {
+            heroes: {
+              minLvl: 0,
+              maxLvl: 300,
+              selectedNpcTypes: ["HERO", "TITAN"],
+              selectedColors: [],
+              selectedLists: [],
+            },
+          },
+        },
+      }),
+    );
+    await useTimersStore.persist.rehydrate();
+
+    expect(
+      useTimersStore.getState().timersFilters.heroes?.selectedNpcTypes,
+    ).toEqual(["HERO", "TITAN", "HERO_TRACKER"]);
+  });
+
   it.each([true, false])(
     "persists and syncs legacy appearance %s without changing colors",
     async (legacyAppearance) => {

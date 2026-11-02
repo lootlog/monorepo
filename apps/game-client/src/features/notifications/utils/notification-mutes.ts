@@ -27,7 +27,8 @@ const getStableNpcId = (
   npcName: string,
   npcType: DetectorNpcType,
 ) => {
-  if (npcType === NpcType.COLOSSUS) {
+  // Colossi and Hero Trackers change their runtime id between spawn places.
+  if (npcType === NpcType.COLOSSUS || npcType === NpcType.HERO_TRACKER) {
     const safeName = String(npcName ?? "");
     const length = Math.min(safeName.length, MAX_NPC_NAME_LENGTH);
     let hash = 0;
