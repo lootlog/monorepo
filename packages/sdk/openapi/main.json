@@ -32899,6 +32899,22 @@
                     "type": "string",
                     "enum": ["open"]
                   },
+                  "entranceSecondsLeft": {
+                    "type": "number",
+                    "exclusiveMinimum": true,
+                    "minimum": 0
+                  }
+                },
+                "required": ["state", "entranceSecondsLeft"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "type": "string",
+                    "enum": ["open"]
+                  },
                   "entranceClosesAt": {
                     "type": "string",
                     "format": "date-time",
@@ -32909,7 +32925,7 @@
                 "additionalProperties": false
               }
             ],
-            "description": "State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open until `entranceClosesAt`."
+            "description": "State of a Hero Tracker NPC: nobody has claimed it yet, or its colossus entrance is open for `entranceSecondsLeft` more seconds, from its in-game countdown. Recipients receive `entranceClosesAt` on the server clock. Deprecated: an open entrance sent as `entranceClosesAt`, on the reporter's clock."
           }
         },
         "required": ["guildIds", "world"],
