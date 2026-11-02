@@ -1,4 +1,3 @@
-import type { PublicOnlinePlayerPresence } from "@lootlog/game-client-api";
 import type { OrganizationAccessPolicy } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { delay, randomInt } from "es-toolkit";
@@ -31,7 +30,36 @@ export type RawPlayerPresencePayload = {
   };
 };
 
-export type PlayerPresence = PublicOnlinePlayerPresence;
+export type PlayerPresence = {
+  discordId: string;
+  sessionId?: string;
+  platform?: "game" | "web-app";
+  status?: "online" | "offline";
+  guildId?: string;
+  mapName?: string;
+  isAfk: boolean;
+  margonemAccountVerified?: boolean;
+  updatedAt?: number;
+  player?: {
+    world: string;
+    name: string;
+    lvl: number;
+    icon: string;
+    characterId: string;
+    accountId: string;
+    prof: string;
+    clan?: {
+      id?: number;
+      name?: string;
+      rank?: number;
+    };
+    location?: {
+      x?: number;
+      y?: number;
+      map: string;
+    };
+  };
+};
 
 export type PlayerPresenceUpdatePayload = {
   discordId: string;

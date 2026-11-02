@@ -113,14 +113,19 @@ describe("Public API presence over the realtime transport", () => {
     return { received, unsubscribe };
   };
 
-  it("fetches grouped characters and retains location, AFK and session fields", async () => {
+  it("lists online characters by name without user, session or account identifiers", async () => {
     const first = createOnlinePresence();
 
     if (!first.character) throw new Error("Expected game character");
 
     const second = createOnlinePresence({
       sessionId: "session-2",
-      character: { ...first.character, characterId: "11" },
+      character: {
+        ...first.character,
+        name: "Alt",
+        characterId: "11",
+        accountId: "21",
+      },
     });
 
     harness.fetchPresence.mockResolvedValue(
@@ -129,14 +134,15 @@ describe("Public API presence over the realtime transport", () => {
     const result = await getApi().getOnlinePlayers(scope);
 
     if (result.status !== "success") throw new Error("Expected success");
-    expect(result.players["discord-1"]).toHaveLength(2);
-    expect(result.players["discord-1"]?.[0]).toMatchObject({
-      discordId: "discord-1",
+    expect(result.players.map(({ name }) => name)).toEqual(["Alt", "Hero"]);
+    expect(result.players[1]).toMatchObject({
       isAfk: false,
       mapName: "Karka-han",
-      sessionId: "session-1",
-      player: { lvl: 123 },
+      lvl: 123,
     });
+    expect(JSON.stringify(result)).not.toMatch(
+      /discord-1|user-1|session-|"(characterId|accountId)"/,
+    );
     expect(harness.fetchPresence).toHaveBeenCalledWith("guild-1", "alpha");
   });
   it("waits for the complete first snapshot before publishing buffered live changes", async () => {
@@ -160,14 +166,14 @@ describe("Public API presence over the realtime transport", () => {
     expect(received).toHaveBeenCalledWith({
       ...scope,
       status: "success",
-      players: { "discord-1": [expect.objectContaining({ mapName: "Ithan" })] },
+      players: [expect.objectContaining({ mapName: "Ithan" })],
     });
   });
   it("returns an empty successful snapshot", async () => {
     harness.fetchPresence.mockResolvedValue(createPresenceSnapshot([]));
     await expect(getApi().getOnlinePlayers(scope)).resolves.toEqual({
       status: "success",
-      players: {},
+      players: [],
     });
   });
   it("returns transport access denial as a domain result", async () => {
@@ -184,10 +190,8 @@ describe("Public API presence over the realtime transport", () => {
     if (first.status !== "success" || second.status !== "success")
       throw new Error("Expected success");
     expect(first.players).not.toBe(second.players);
-    expect(first.players["discord-1"]).not.toBe(second.players["discord-1"]);
-    expect(first.players["discord-1"]?.[0]?.player).not.toBe(
-      second.players["discord-1"]?.[0]?.player,
-    );
+    expect(first.players[0]).not.toBe(second.players[0]);
+    expect(first.players[0]?.location).not.toBe(second.players[0]?.location);
   });
   it("rejects invalid scopes before sending a request", async () => {
     await expect(
@@ -221,9 +225,7 @@ describe("Public API presence over the realtime transport", () => {
       outcome: "success",
       expected: {
         status: "success",
-        players: {
-          "discord-1": [expect.objectContaining({ mapName: "Ithan" })],
-        },
+        players: [expect.objectContaining({ mapName: "Ithan" })],
       },
     },
     {
@@ -283,7 +285,7 @@ describe("Public API presence over the realtime transport", () => {
     expect(received).toHaveBeenCalledWith({
       ...scope,
       status: "success",
-      players: { "discord-1": [expect.objectContaining({ isAfk: true })] },
+      players: [expect.objectContaining({ isAfk: true })],
     });
   });
   it("ignores unrelated scopes and removes an offline character", async () => {
@@ -295,7 +297,7 @@ describe("Public API presence over the realtime transport", () => {
     expect(received).toHaveBeenCalledWith({
       ...scope,
       status: "success",
-      players: {},
+      players: [],
     });
   });
   it("removes only the matching organization session when an offline frame omits world", async () => {
@@ -307,7 +309,7 @@ describe("Public API presence over the realtime transport", () => {
         first,
         createOnlinePresence({
           sessionId: "session-2",
-          character: { ...first.character, characterId: "11" },
+          character: { ...first.character, name: "Alt", characterId: "11" },
         }),
       ]),
     );
@@ -319,13 +321,7 @@ describe("Public API presence over the realtime transport", () => {
     expect(received).toHaveBeenCalledWith({
       ...scope,
       status: "success",
-      players: {
-        "discord-1": [
-          expect.objectContaining({
-            player: expect.objectContaining({ characterId: "11" }),
-          }),
-        ],
-      },
+      players: [expect.objectContaining({ name: "Alt" })],
     });
   });
   it("deduplicates unchanged live snapshots", async () => {
@@ -404,8 +400,8 @@ describe("Public API presence over the realtime transport", () => {
 
     if (basic?.status !== "success")
       throw new Error("Expected restricted success");
-    expect(basic.players["discord-1"]?.[0]?.mapName).toBeUndefined();
-    expect(basic.players["discord-1"]?.[0]?.player?.location).toBeUndefined();
+    expect(basic.players[0]?.mapName).toBeUndefined();
+    expect(basic.players[0]?.location).toBeUndefined();
     await harness.receive(
       permissionEvent(policy([])),
       delta([createOnlinePresence()]),
@@ -419,8 +415,7 @@ describe("Public API presence over the realtime transport", () => {
     await vi.waitFor(() => {
       const restored = received.mock.calls.at(-1)?.[0];
       expect(
-        restored?.status === "success" &&
-          restored.players["discord-1"]?.[0]?.mapName,
+        restored?.status === "success" && restored.players[0]?.mapName,
       ).toBe("Karka-han");
     });
   });

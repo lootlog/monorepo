@@ -110,7 +110,7 @@ describe("Public API", () => {
     });
 
     it("has correct apiVersion", () => {
-      expect(getPublicApi().apiVersion).toBe(1);
+      expect(getPublicApi().apiVersion).toBe(2);
     });
 
     it("is frozen", () => {

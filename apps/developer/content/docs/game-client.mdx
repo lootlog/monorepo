@@ -5,7 +5,7 @@ description: Build a Margonem add-on that reads Lootlog timers, Organizations, a
 
 The game client exposes `window.lootlogGameClientApi` inside the Margonem page. Your add-on uses the player's running Lootlog client and its existing session. You do not need an API key, the HTTP SDK, or a second WebSocket connection.
 
-This is a **read-only API**: you can read Organizations, timers, connection state, and online players, and subscribe to changes. API v1 does not expose timer creation, chat sending, or arbitrary HTTP requests. For server-side integrations, use the [HTTP API](/docs/http).
+This is a **read-only API**: you can read Organizations, timers, connection state, and online players, and subscribe to changes. API v2 does not expose timer creation, chat sending, or arbitrary HTTP requests. For server-side integrations, use the [HTTP API](/docs/http).
 
 ## Read timers
 
@@ -95,7 +95,7 @@ The API is available with both the Lootlog userscript and browser extension. It 
 
 | Check                                                         | What it tells you                                                                                                 |
 | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| The global object exists and `apiVersion === 1`               | Lootlog has exposed this API version. The object can appear after your script starts.                             |
+| The global object exists and `apiVersion === 2`               | Lootlog has exposed this API version. The object can appear after your script starts.                             |
 | `api.ready === true`                                          | Margonem has initialized. This does **not** guarantee that Lootlog data has loaded or that realtime is connected. |
 | `getSocketState()` has `connected` and `joined` set to `true` | The gateway connection is ready for online-player requests.                                                       |
 
@@ -117,7 +117,7 @@ const wait = setInterval(() => {
   const api = unsafeWindow.lootlogGameClientApi;
   if (api) {
     clearInterval(wait);
-    if (api.apiVersion !== 1) return;
+    if (api.apiVersion !== 2) return;
 
     // Read timers or register your subscriptions here.
     console.log(api.getTimers({ world: "fobos" }));
@@ -165,9 +165,7 @@ async function watchPlayers(api, guildId, world, showPlayers, showError) {
       showError(result.code);
       return;
     }
-    // One user can have several sessions; player details can be absent.
-    const sessions = Object.values(result.players).flat();
-    showPlayers(sessions.filter((session) => session.player !== undefined));
+    showPlayers(result.players); // Online characters, sorted by name.
   }
 
   const unsubscribe = api.subscribe("online-players:changed", (event) => {
@@ -188,13 +186,13 @@ Call `getOnlinePlayers()` at least once for each `{ guildId, world }` you want t
 
 While an `online-players:changed` subscription is active, Lootlog applies presence and permission updates to tracked scopes and refreshes them after reconnecting. Events carry complete results for their Organization/world pair. Replace your displayed result; do not append every event as a new player. Subscribe to `socket:state-changed` as well to mark the display stale during a disconnection. Background refresh failures are not exposed as a separate public error event.
 
-Keep the returned unsubscribe function and call it when disabling the view or leaving the page. There is no per-scope `unwatch` method in v1; avoid requesting every possible Organization/world pair. Removing the last presence listener stops public presence update handling.
+Keep the returned unsubscribe function and call it when disabling the view or leaving the page. There is no per-scope `unwatch` method in v2; avoid requesting every possible Organization/world pair. Removing the last presence listener stops public presence update handling.
 
 ### Results and failures
 
 | Outcome                                                         | Meaning and handling                                                                                                                          |
 | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `{ status: "success", players }`                                | Display the permitted presence records. An empty object is a successful empty result.                                                         |
+| `{ status: "success", players }`                                | Display the permitted characters. An empty array is a successful empty result.                                                                |
 | `{ status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" }` | Access is denied. Clear previously displayed records; this is a resolved result, not a rejected Promise.                                      |
 | Rejected `TypeError`                                            | `guildId` or `world` is missing, empty, or not a string. Fix the arguments.                                                                   |
 | Rejected `Error`                                                | The gateway is not ready, the response is missing, or the request failed. Show a failure state and allow retry after the connection is ready. |
@@ -230,21 +228,17 @@ Timer timestamps are date strings; `updatedAt` may be `null`. Parse spawn times 
 
 ### Player presence
 
-`PublicOnlinePlayers` is a `Record<string, PublicOnlinePlayerPresence[]>`: a map of user identifiers to arrays of sessions, not a flat character list. Do not infer the number of characters from the number of map keys.
+`PublicOnlinePlayers` is a `PublicOnlinePlayer[]`: one entry per online character, sorted by name. Entries carry no user, session, or account identifier.
 
-| Presence field            | Type and meaning                                                                                                                       |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `discordId`               | Required string in the current presence contract.                                                                                      |
-| `isAfk`                   | Required boolean.                                                                                                                      |
-| `sessionId`               | Optional string identifying a session.                                                                                                 |
-| `platform`                | Optional `"game" \| "web-app"`.                                                                                                        |
-| `status`                  | Optional `"online" \| "offline"`.                                                                                                      |
-| `guildId`, `mapName`      | Optional strings.                                                                                                                      |
-| `margonemAccountVerified` | Optional boolean; account verification is not write authorization.                                                                     |
-| `updatedAt`               | Optional number, unlike timer date strings.                                                                                            |
-| `player`                  | Optional character object with `world`, `name`, `lvl`, `icon`, `characterId`, `accountId`, `prof`, and optional `clan` and `location`. |
-
-A session is not necessarily a character: always check `player` before reading character fields. A player's `clan` describes their Margonem clan and is separate from the Lootlog Organization.
+| Field                           | Type and meaning                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------- |
+| `world`, `name`, `icon`, `prof` | Required strings describing the character.                                                    |
+| `lvl`                           | Required number.                                                                              |
+| `isAfk`                         | Required boolean.                                                                             |
+| `clan`                          | Optional Margonem clan with `id`, `name`, and `rank`; separate from the Lootlog Organization. |
+| `location`, `mapName`           | Optional; present only when the player's access policy allows location reads.                 |
+| `margonemAccountVerified`       | Optional boolean; account verification is not write authorization.                            |
+| `updatedAt`                     | Optional number, unlike timer date strings.                                                   |
 
 ## Troubleshooting
 

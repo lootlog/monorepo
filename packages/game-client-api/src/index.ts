@@ -66,38 +66,31 @@ export type PublicSocketState = {
   joinedGuilds: string[];
 };
 
-export type PublicOnlinePlayerPresence = {
-  discordId: string;
-  sessionId?: string;
-  platform?: "game" | "web-app";
-  status?: "online" | "offline";
-  guildId?: string;
+/** One online character, without user, session or account identifiers. */
+export type PublicOnlinePlayer = {
+  world: string;
+  name: string;
+  lvl: number;
+  icon: string;
+  prof: string;
+  clan?: {
+    id?: number;
+    name?: string;
+    rank?: number;
+  };
+  location?: {
+    x?: number;
+    y?: number;
+    map: string;
+  };
   mapName?: string;
   isAfk: boolean;
   margonemAccountVerified?: boolean;
   updatedAt?: number;
-  player?: {
-    world: string;
-    name: string;
-    lvl: number;
-    icon: string;
-    characterId: string;
-    accountId: string;
-    prof: string;
-    clan?: {
-      id?: number;
-      name?: string;
-      rank?: number;
-    };
-    location?: {
-      x?: number;
-      y?: number;
-      map: string;
-    };
-  };
 };
 
-export type PublicOnlinePlayers = Record<string, PublicOnlinePlayerPresence[]>;
+/** Online characters sorted by name. */
+export type PublicOnlinePlayers = PublicOnlinePlayer[];
 
 export type PublicOnlinePlayersResult =
   | {
@@ -129,7 +122,7 @@ export type ApiEventMap = {
 export type ApiEventName = keyof ApiEventMap;
 
 export interface LootlogGameClientApi {
-  readonly apiVersion: 1;
+  readonly apiVersion: 2;
   readonly ready: boolean;
   getGuilds(): PublicGuild[] | undefined;
   getTimers(options?: { world?: string }): PublicTimer[] | undefined;

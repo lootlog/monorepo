@@ -1,6 +1,6 @@
 # @lootlog/game-client-api
 
-Type-only contracts for the existing `window.lootlogGameClientApi` version 1.
+Type-only contracts for the existing `window.lootlogGameClientApi` version 2.
 This package does not install Lootlog or provide a runtime adapter.
 
 ```ts
