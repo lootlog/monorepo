@@ -1,9 +1,6 @@
 import { useGuildDiscordSync } from "@/hooks/api/use-guild-discord-sync";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
-  getNotificationsGuildControllerGetGuildJobsQueryKey,
-  getNotificationsGuildControllerGetGuildRulesQueryKey,
-  getNotificationsGuildControllerGetGuildTargetsQueryKey,
   useNotificationsGuildControllerGetGuildJobs,
   useNotificationsGuildControllerGetGuildRules,
   useNotificationsGuildControllerGetGuildTargets,
@@ -27,9 +24,6 @@ export const useNotificationsOverview = () => {
     {
       query: {
         enabled: hasGuildId,
-        queryKey: getNotificationsGuildControllerGetGuildTargetsQueryKey({
-          guildId,
-        }),
       },
     },
   );
@@ -39,9 +33,6 @@ export const useNotificationsOverview = () => {
     {
       query: {
         enabled: hasGuildId,
-        queryKey: getNotificationsGuildControllerGetGuildRulesQueryKey({
-          guildId,
-        }),
       },
     },
   );
@@ -51,9 +42,6 @@ export const useNotificationsOverview = () => {
     {
       query: {
         enabled: hasGuildId,
-        queryKey: getNotificationsGuildControllerGetGuildJobsQueryKey({
-          guildId,
-        }),
         refetchInterval: (query) =>
           query.state.data && query.state.data.pending.length > 0
             ? 5000

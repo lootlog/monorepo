@@ -4,10 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  getTimersControllerGetRecentTimerHistoryQueryKey,
-  useTimersControllerGetRecentTimerHistory,
-} from "@lootlog/client/main";
+import { useTimersControllerGetRecentTimerHistory } from "@lootlog/client/main";
 
 import { History } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
@@ -48,11 +45,6 @@ export const GlobalTimerHistoryPopover: FC<GlobalTimerHistoryPopoverProps> = ({
     },
     {
       query: {
-        queryKey: getTimersControllerGetRecentTimerHistoryQueryKey({
-          guildId,
-          world,
-          limit: GLOBAL_TIMER_HISTORY_LIMIT,
-        }),
         enabled: open && !!guildId && !!world,
       },
     },

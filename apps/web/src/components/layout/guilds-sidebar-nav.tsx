@@ -10,12 +10,7 @@ import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
 import { GuildSidebarNavPlaceholder } from "./guild-sidebar-nav-placeholder";
 import { CollapsePresence } from "@/components/common/collapse-presence";
-import {
-  getListEventsQueryKey,
-  getListPinnedEventsQueryKey,
-  useListEvents,
-  useListPinnedEvents,
-} from "@lootlog/client/main";
+import { useListEvents, useListPinnedEvents } from "@lootlog/client/main";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMatches } from "@tanstack/react-router";
 import {
@@ -70,14 +65,6 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
     {
       query: {
         enabled: Boolean(activeEventsGuildId),
-        queryKey: getListEventsQueryKey(
-          {
-            guildId: activeEventsGuildId,
-          },
-          {
-            activeOnly: "true",
-          },
-        ),
       },
     },
   );
@@ -89,7 +76,6 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
     {
       query: {
         enabled: Boolean(activeEventsGuildId),
-        queryKey: getListPinnedEventsQueryKey({ guildId: activeEventsGuildId }),
       },
     },
   );

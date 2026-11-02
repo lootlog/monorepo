@@ -3,8 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ChartSection } from "@/components/common/chart-section";
 import { KillAnalyticsTrend } from "@/components/common/kill-analytics/kill-analytics-trend";
 import { formatStatisticsDate } from "@/components/common/kill-analytics/format-statistics-date";
-
-const numberFormatter = new Intl.NumberFormat("pl-PL");
+import { formatNumber } from "@/lib/format-number";
 
 type KillStatsTimelineProps = {
   data?: GuildKillStatsResponseDtoOutputTimeline;
@@ -45,7 +44,7 @@ export const KillStatsTimeline = ({
     data.untimedKills > 0 && firstDate
       ? t("kills.timeline.untimed", {
           date: formatStatisticsDate(firstDate),
-          kills: numberFormatter.format(data.untimedKills),
+          kills: formatNumber(data.untimedKills),
         })
       : undefined;
 

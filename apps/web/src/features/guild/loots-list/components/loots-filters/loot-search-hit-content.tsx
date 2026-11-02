@@ -1,9 +1,10 @@
-import { NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
+import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
+import { PlayerSearchTile } from "@/components/tiles/player-search-tile";
 import { formatLevel } from "@lootlog/domain/profession";
 import { LOOT_RARITY_TEXT_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
-import { ItemRarity } from "@/lib/loots/loot-types";
+import { ItemRarity, resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+
 import { cn } from "cn";
 import { upperFirst } from "es-toolkit";
 import { DatabaseZap } from "lucide-react";

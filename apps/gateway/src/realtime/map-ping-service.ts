@@ -5,7 +5,7 @@ import {
   type MapPingSendPayload,
 } from "@lootlog/schema/map-ping";
 import { Schema } from "effect";
-import { Logger } from "#src/platform/logger";
+import { ContextLogger } from "@lootlog/instrumentation";
 import {
   consumePingRateLimit,
   getPingScopes,
@@ -24,7 +24,7 @@ const MAX_COORDINATE = 65_535;
 const isMapPingSendPayload = Schema.is(MapPingSendPayloadSchema);
 
 export class MapPingService {
-  private readonly logger = new Logger(MapPingService.name);
+  private readonly logger = new ContextLogger(MapPingService.name);
 
   constructor(
     private readonly redis: PingScriptStore,

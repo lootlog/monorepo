@@ -51,6 +51,10 @@ export interface MemberRefreshSchedulerPorts {
     keys: string[],
     args: Array<string | number>,
   ) => Effect.Effect<unknown, unknown>;
+  readonly releaseLock: (
+    key: string,
+    owner: string,
+  ) => Effect.Effect<unknown, unknown>;
 }
 
 const USER_LOCK_TTL_SECONDS = 30;
@@ -58,13 +62,6 @@ const USER_LOCK_TTL_SECONDS = 30;
 const EXTEND_LOCK_SCRIPT = `
 if redis.call("GET", KEYS[1]) == ARGV[1] then
   return redis.call("EXPIRE", KEYS[1], ARGV[2])
-end
-return 0
-`;
-
-const RELEASE_LOCK_SCRIPT = `
-if redis.call("GET", KEYS[1]) == ARGV[1] then
-  return redis.call("DEL", KEYS[1])
 end
 return 0
 `;
@@ -218,9 +215,7 @@ export const makeMemberRefreshScheduler = (
         .evalLock(EXTEND_LOCK_SCRIPT, [lockKey(userId)], [owner, ttlSeconds])
         .pipe(Effect.asVoid),
     releaseUserRefreshLock: (userId: string, owner: string) =>
-      ports
-        .evalLock(RELEASE_LOCK_SCRIPT, [lockKey(userId)], [owner])
-        .pipe(Effect.asVoid),
+      ports.releaseLock(lockKey(userId), owner).pipe(Effect.asVoid),
     getNextRefreshAt: ports.nextRefreshAt,
   };
 };

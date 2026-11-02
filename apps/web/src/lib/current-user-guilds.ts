@@ -18,3 +18,14 @@ export const refreshCurrentUserGuilds = async (queryClient: QueryClient) => {
 
   return guilds;
 };
+
+/** Finds the Organization a route segment names by its id or vanity URL. */
+export const findGuildByRouteId = <
+  TGuild extends { id: string; vanityUrl?: string | null },
+>(
+  guilds: readonly TGuild[] | undefined,
+  routeGuildId: string | undefined,
+) =>
+  guilds?.find(
+    (guild) => guild.id === routeGuildId || guild.vanityUrl === routeGuildId,
+  );

@@ -7,7 +7,7 @@ import {
   DependencyUnavailableError,
   InvalidRequestError,
 } from "#src/infrastructure/http-error";
-import { Logger } from "#src/infrastructure/logger";
+import { ContextLogger } from "@lootlog/instrumentation";
 import {
   makeJsonCodec,
   type RedisStore,
@@ -163,7 +163,7 @@ export const makeBattles = (
   battleMetadataService: BattleMetadata,
   deduplicationTiming: BattleDeduplicationTiming = defaultBattleDeduplicationTiming,
 ) => {
-  const logger = new Logger("Battles");
+  const logger = new ContextLogger("Battles");
 
   const deletion = makeBattleDeletion(
     drizzle,

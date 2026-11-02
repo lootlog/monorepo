@@ -1,5 +1,5 @@
 import { LootItemResponseDtoProfItem, NpcType } from "@lootlog/client/main";
-import { ItemRarity } from "@/lib/loots/loot-types";
+import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { useTranslation } from "react-i18next";
 
 import { getShortnameByProf } from "@lootlog/domain/profession";

@@ -1,4 +1,4 @@
-import { Logger } from "#src/infrastructure/logger";
+import { ContextLogger } from "@lootlog/instrumentation";
 import type { RedisStore } from "#src/infrastructure/redis-store";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -36,7 +36,7 @@ export const makeBattleMetadata = (
   redisService: RedisStore,
   read: BattleReadBudget,
 ) => {
-  const logger = new Logger("BattleMetadata");
+  const logger = new ContextLogger("BattleMetadata");
   const cache = makeBattleAnalyticsCache(redisService);
 
   const getUserCharactersCacheKey = (userId: string) =>

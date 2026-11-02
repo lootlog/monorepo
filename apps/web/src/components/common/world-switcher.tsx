@@ -5,11 +5,8 @@ import { useLocalStorage } from "usehooks-ts";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { cn } from "cn";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getGuildsControllerGetWorldsByGuildIdQueryKey,
-  useGuildsControllerGetWorldsByGuildId,
-} from "@lootlog/client/main";
-import { ThemeSurfaceOverlay } from "@/themes";
+import { useGuildsControllerGetWorldsByGuildId } from "@lootlog/client/main";
+import { ThemeSurfaceOverlay } from "@/themes/adapters";
 
 const ALL_WORLDS_SENTINEL = "__ALL__";
 
@@ -53,9 +50,6 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
     {
       query: {
         enabled: Boolean(guildId) && externalWorlds === undefined,
-        queryKey: getGuildsControllerGetWorldsByGuildIdQueryKey({
-          guildId: guildId ?? "",
-        }),
       },
     },
   );

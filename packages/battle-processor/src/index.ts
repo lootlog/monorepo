@@ -238,32 +238,6 @@ export type BattleTimelineTurn = {
   reason: string;
 };
 
-export type WarriorMechanicsAggregate = {
-  warriorId: string;
-  name: string;
-  team: number;
-  absorptionGained: number;
-  absorptionSpent: number;
-  magicAbsorptionGained: number;
-  magicAbsorptionSpent: number;
-  auxiliaryDamageTaken: number;
-  targetHealing: number;
-  spells: Array<{
-    key: string;
-    name: string;
-    skillId: number | null;
-    casts: number;
-  }>;
-  maxCombo: number;
-  controlApplied: number;
-  controlTaken: number;
-  mitigationEvents: number;
-  effectDamageTaken: number;
-  resourcePressure: number;
-  energyPressure: number;
-  manaPressure: number;
-};
-
 export type BattleActionCoverageEntry = {
   actionType: string;
   count: number;
@@ -336,7 +310,6 @@ export type BattleAnalysis = {
   };
   type: string;
   battleTimeline: BattleTimelineTurn[];
-  warriorMechanics: WarriorMechanicsAggregate[];
   actionCoverage: BattleActionCoverage;
   matchmaking?: MatchmakingInfo;
 };
@@ -967,10 +940,6 @@ export class BattleProcessor {
     string,
     BattleTimelineWarriorCumulative
   >();
-  private readonly warriorMechanics = new Map<
-    string,
-    WarriorMechanicsAggregate
-  >();
   private readonly actionCoverage = new Map<
     string,
     { count: number; handled: boolean; category: BattleActionCategory }
@@ -1023,7 +992,6 @@ export class BattleProcessor {
       outcome: this.battleOutcome,
       type: this.battleType,
       battleTimeline: this.battleTimeline,
-      warriorMechanics: this.getWarriorMechanics(),
       actionCoverage: this.getActionCoverage(),
       matchmaking: matchmakingInfo,
     };
@@ -1047,7 +1015,6 @@ export class BattleProcessor {
       outcome: this.battleOutcome,
       type: this.battleType,
       battleTimeline: this.battleTimeline,
-      warriorMechanics: this.getWarriorMechanics(),
       actionCoverage: this.getActionCoverage(),
       matchmaking: battleData.matchmaking,
     };
@@ -1120,10 +1087,6 @@ export class BattleProcessor {
 
       const skillIdParam = skillIdAction?.param ?? tspellAction.param;
       const skillId = skillIdParam ? Number.parseInt(skillIdParam, 10) : 0;
-
-      if (this.mode === "full") {
-        this.trackSpellMechanics(move, tspellAction.param, skillId);
-      }
 
       this.remainingFollowUpAttacks = skillId === 97 || skillId === 239 ? 2 : 1;
       this.lastAttackerId = move.attackerId;
@@ -1390,14 +1353,6 @@ export class BattleProcessor {
         "damageTaken",
         context.value,
       );
-
-      if (context.actionType === "-dmga" || context.actionType === "-dmgo") {
-        this.addMechanic(
-          context.targetId,
-          "auxiliaryDamageTaken",
-          context.value,
-        );
-      }
     }
 
     accumulator.damage += context.value;
@@ -1451,7 +1406,6 @@ export class BattleProcessor {
         "damageTaken",
         context.value,
       );
-      this.addMechanic(context.actorId, "effectDamageTaken", context.value);
     }
 
     accumulator.damage += context.value;
@@ -1481,10 +1435,6 @@ export class BattleProcessor {
         "healingDone",
         context.value,
       );
-
-      if (context.actionType === "heal_target") {
-        this.addMechanic(context.actorId, "targetHealing", context.value);
-      }
     }
 
     if (healedWarriorId) {
@@ -1516,7 +1466,6 @@ export class BattleProcessor {
         "mitigation",
         context.value,
       );
-      this.addMechanic(defenderId, "mitigationEvents", 1);
     }
 
     accumulator.mitigation += context.value;
@@ -1544,7 +1493,6 @@ export class BattleProcessor {
         context.actorId ?? context.targetId,
         context.value,
         "absorbGained",
-        "absorptionGained",
         accumulator,
       );
 
@@ -1556,7 +1504,6 @@ export class BattleProcessor {
         context.actorId ?? context.targetId,
         context.value,
         "magicAbsorbGained",
-        "magicAbsorptionGained",
         accumulator,
       );
 
@@ -1568,7 +1515,6 @@ export class BattleProcessor {
         context.targetId ?? context.actorId,
         context.value,
         "absorbSpent",
-        "absorptionSpent",
         accumulator,
       );
       accumulator.mitigation += context.value;
@@ -1581,7 +1527,6 @@ export class BattleProcessor {
         context.targetId ?? context.actorId,
         context.value,
         "magicAbsorbSpent",
-        "magicAbsorptionSpent",
         accumulator,
       );
       accumulator.mitigation += context.value;
@@ -1600,17 +1545,6 @@ export class BattleProcessor {
       | "magicAbsorbGained"
       | "absorbSpent"
       | "magicAbsorbSpent",
-    mechanicsField:
-      | "absorptionGained"
-      | "magicAbsorptionGained"
-      | "absorptionSpent"
-      | "magicAbsorptionSpent"
-      | "targetHealing"
-      | "auxiliaryDamageTaken"
-      | "effectDamageTaken"
-      | "mitigationEvents"
-      | "controlApplied"
-      | "controlTaken",
     accumulator: TimelineActionAccumulator,
   ): void {
     if (warriorId) {
@@ -1620,7 +1554,6 @@ export class BattleProcessor {
         deltaField,
         value,
       );
-      this.addMechanic(warriorId, mechanicsField, value);
     }
 
     accumulator.flags.add("absorb");
@@ -1639,7 +1572,6 @@ export class BattleProcessor {
         "controlApplied",
         1,
       );
-      this.addMechanic(context.actorId, "controlApplied", 1);
     }
 
     if (context.targetId) {
@@ -1649,7 +1581,6 @@ export class BattleProcessor {
         "controlTaken",
         1,
       );
-      this.addMechanic(context.targetId, "controlTaken", 1);
     }
 
     accumulator.flags.add(
@@ -1717,7 +1648,6 @@ export class BattleProcessor {
       );
     }
 
-    this.trackResourcePressure(actorId, actionType, value);
     accumulator.resourcePressure += value;
 
     if (pressureField === "energyPressure") {
@@ -1778,10 +1708,6 @@ export class BattleProcessor {
     accumulator: TimelineActionAccumulator,
   ): boolean {
     if (!COMBO_ACTIONS.has(context.actionType)) return false;
-
-    if (context.actionType === "combo-max" && context.actorId) {
-      this.trackComboMax(context.actorId, context.value);
-    }
 
     accumulator.flags.add("combo");
 
@@ -2124,10 +2050,6 @@ export class BattleProcessor {
     }
 
     if (context.actionType === "combo-max") {
-      if (this.mode === "full" && context.attackerId) {
-        this.trackComboMax(context.attackerId, context.value);
-      }
-
       return true;
     }
 
@@ -2209,33 +2131,13 @@ export class BattleProcessor {
   }
 
   private initializeTrackingState(): void {
-    for (const [id, warrior] of this.warriors.entries()) {
+    for (const id of this.warriors.keys()) {
       this.lastHp.set(id, 100);
 
       if (this.mode !== "full") continue;
 
       this.timelineHp.set(id, 100);
       this.timelineCumulative.set(id, createEmptyTimelineStats());
-      this.warriorMechanics.set(id, {
-        warriorId: warrior.originalId,
-        name: warrior.name,
-        team: warrior.team,
-        absorptionGained: 0,
-        absorptionSpent: 0,
-        magicAbsorptionGained: 0,
-        magicAbsorptionSpent: 0,
-        auxiliaryDamageTaken: 0,
-        targetHealing: 0,
-        spells: [],
-        maxCombo: 0,
-        controlApplied: 0,
-        controlTaken: 0,
-        mitigationEvents: 0,
-        effectDamageTaken: 0,
-        resourcePressure: 0,
-        energyPressure: 0,
-        manaPressure: 0,
-      });
     }
   }
 
@@ -2299,74 +2201,6 @@ export class BattleProcessor {
     return found?.[0] ?? null;
   }
 
-  private trackSpellMechanics(
-    move: ParsedMove,
-    spellName: string,
-    skillId: number,
-  ): void {
-    if (!move.attackerId) {
-      return;
-    }
-
-    const mechanics = this.warriorMechanics.get(move.attackerId);
-
-    if (!mechanics) {
-      return;
-    }
-
-    const normalizedSkillId = Number.isNaN(skillId) ? null : skillId;
-    const normalizedName = spellName || "unknown";
-    const key = `${normalizedSkillId ?? "unknown"}:${normalizedName}`;
-    const currentSpell = mechanics.spells.find((spell) => spell.key === key);
-
-    if (currentSpell) {
-      currentSpell.casts++;
-
-      return;
-    }
-
-    mechanics.spells.push({
-      key,
-      name: normalizedName,
-      skillId: normalizedSkillId,
-      casts: 1,
-    });
-  }
-
-  private trackComboMax(warriorId: string, value: number): void {
-    const mechanics = this.warriorMechanics.get(warriorId);
-
-    if (!mechanics) {
-      return;
-    }
-
-    mechanics.maxCombo = Math.max(mechanics.maxCombo, value);
-  }
-
-  private addMechanic(
-    warriorId: string,
-    field:
-      | "absorptionGained"
-      | "absorptionSpent"
-      | "magicAbsorptionGained"
-      | "magicAbsorptionSpent"
-      | "targetHealing"
-      | "auxiliaryDamageTaken"
-      | "effectDamageTaken"
-      | "mitigationEvents"
-      | "controlApplied"
-      | "controlTaken",
-    value: number,
-  ): void {
-    const mechanics = this.warriorMechanics.get(warriorId);
-
-    if (!mechanics) {
-      return;
-    }
-
-    mechanics[field] += value;
-  }
-
   private getResourcePressureField(
     actionType: string,
   ): "energyPressure" | "manaPressure" | null {
@@ -2379,32 +2213,6 @@ export class BattleProcessor {
     }
 
     return null;
-  }
-
-  private trackResourcePressure(
-    warriorId: string,
-    actionType: string,
-    value: number,
-  ): void {
-    const mechanics = this.warriorMechanics.get(warriorId);
-
-    if (!mechanics) {
-      return;
-    }
-
-    mechanics.resourcePressure += value;
-    const pressureField = this.getResourcePressureField(actionType);
-
-    if (pressureField) {
-      mechanics[pressureField] += value;
-    }
-  }
-
-  private getWarriorMechanics(): WarriorMechanicsAggregate[] {
-    return Array.from(this.warriorMechanics.values()).map((mechanics) => ({
-      ...mechanics,
-      spells: [...mechanics.spells].sort((a, b) => b.casts - a.casts),
-    }));
   }
 
   private getActionCoverage(): BattleActionCoverage {

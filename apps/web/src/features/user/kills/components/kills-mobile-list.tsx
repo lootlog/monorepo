@@ -8,6 +8,7 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import type { UserNpcKillsResponseDtoOutputNpcsItem } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
+import { formatNumber } from "@/lib/format-number";
 
 type KillsMobileListProps = {
   npcs: UserNpcKillsResponseDtoOutputNpcsItem[];
@@ -59,7 +60,7 @@ export const KillsMobileList = ({ npcs, startRank }: KillsMobileListProps) => {
             </div>
             <div className="shrink-0 text-right">
               <div className="text-base font-semibold tabular-nums">
-                {npc.totalKills.toLocaleString("pl-PL")}
+                {formatNumber(npc.totalKills)}
               </div>
               <div className="text-xs text-muted-foreground">
                 {t("kills.columns.kills")}

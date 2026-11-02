@@ -21,7 +21,7 @@ import {
 import type { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { chunk } from "es-toolkit";
 import { Effect, Metric, Schedule, Schema } from "effect";
-import { Logger } from "#src/platform/logger";
+import { ContextLogger } from "@lootlog/instrumentation";
 import type {
   RedisGatewayStore,
   RedisScriptReply,
@@ -467,7 +467,7 @@ type ScriptStore = {
 };
 
 export class AirTagService {
-  private readonly logger = new Logger(AirTagService.name);
+  private readonly logger = new ContextLogger(AirTagService.name);
   private readonly subscriptionOperations = new WeakMap<
     GatewaySocket,
     Promise<unknown>

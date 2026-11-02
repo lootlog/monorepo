@@ -11,15 +11,10 @@ import { AppNavigationTopBar } from "./app-navigation-top-bar";
 import { GuildSearchButton } from "./guild-search-button";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
 import {
-  getMembersControllerGetGuildMembersQueryKey,
   useMembersControllerGetGuildMembers,
-  getRolesControllerGetGuildRolesQueryKey,
   useRolesControllerGetGuildRoles,
-  getLootlogConfigControllerGetLootlogConfigQueryKey,
   useLootlogConfigControllerGetLootlogConfig,
-  getDocsControllerGetDocumentQueryKey,
   useDocsControllerGetDocument,
-  getListReservationSpotsQueryKey,
   useListReservationSpots,
 } from "@lootlog/client/main";
 
@@ -27,7 +22,6 @@ const guildRouteApi = getRouteApi("/_authenticated/$guildId");
 
 const getBreadcrumbRouteFlags = ({
   guildId,
-  eventId,
   memberId,
   roleId,
   npcId,
@@ -36,7 +30,6 @@ const getBreadcrumbRouteFlags = ({
   path,
 }: {
   guildId?: string;
-  eventId?: string;
   memberId?: string;
   roleId?: string;
   npcId?: string;
@@ -44,10 +37,7 @@ const getBreadcrumbRouteFlags = ({
   reservationId?: string;
   path: string;
 }) => {
-  const isEventRoute = Boolean(eventId && guildId && path.includes("/events"));
-
   return {
-    isEventRoute,
     isSettingsRoleRoute: Boolean(
       guildId && roleId && path.startsWith(`/${guildId}/settings/roles/`),
     ),
@@ -62,9 +52,6 @@ const getBreadcrumbRouteFlags = ({
     ),
     isReservationSpotRoute: Boolean(
       guildId && reservationId && path.startsWith(`/${guildId}/reservations/`),
-    ),
-    isEventMemberRoute: Boolean(
-      memberId && path.includes("/members/") && isEventRoute,
     ),
   };
 };
@@ -92,64 +79,28 @@ const useBreadcrumbLookupData = ({
   const { data: settingsMembers } = useMembersControllerGetGuildMembers(
     { guildId: queryGuildId },
     { includeInactive: true },
-    {
-      query: {
-        enabled: isSettingsMemberRoute,
-        queryKey: getMembersControllerGetGuildMembersQueryKey(
-          { guildId: queryGuildId },
-          { includeInactive: true },
-        ),
-      },
-    },
+    { query: { enabled: isSettingsMemberRoute } },
   );
 
   const { data: settingsRoles } = useRolesControllerGetGuildRoles(
     { guildId: queryGuildId },
-    {
-      query: {
-        enabled: isSettingsRoleRoute,
-        queryKey: getRolesControllerGetGuildRolesQueryKey({
-          guildId: queryGuildId,
-        }),
-      },
-    },
+    { query: { enabled: isSettingsRoleRoute } },
   );
 
   const { data: settingsLootlogConfig } =
     useLootlogConfigControllerGetLootlogConfig(
       { guildId: queryGuildId },
-      {
-        query: {
-          enabled: isSettingsNpcRoute,
-          queryKey: getLootlogConfigControllerGetLootlogConfigQueryKey({
-            guildId: queryGuildId,
-          }),
-        },
-      },
+      { query: { enabled: isSettingsNpcRoute } },
     );
 
   const { data: currentDocument } = useDocsControllerGetDocument(
     { guildId: queryGuildId, docId: queryDocId },
-    {
-      query: {
-        enabled: isDocsDetailRoute,
-        queryKey: getDocsControllerGetDocumentQueryKey({
-          guildId: queryGuildId,
-          docId: queryDocId,
-        }),
-      },
-    },
+    { query: { enabled: isDocsDetailRoute } },
   );
 
   const { data: reservationSpots } = useListReservationSpots(
     { guildId: queryGuildId },
-    {
-      query: {
-        enabled: isReservationSpotRoute,
-        queryKey: getListReservationSpotsQueryKey({ guildId: queryGuildId }),
-        staleTime: 30_000,
-      },
-    },
+    { query: { enabled: isReservationSpotRoute, staleTime: 30_000 } },
   );
 
   return {
@@ -180,14 +131,12 @@ export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
   const matches = useMatches();
   const guild = guildRouteData?.guild;
 
-  const { guildId, eventId, memberId, npcId, roleId, docId, reservationId } =
-    params;
+  const { guildId, memberId, npcId, roleId, docId, reservationId } = params;
 
   const path = location.pathname;
 
   const routeFlags = getBreadcrumbRouteFlags({
     guildId,
-    eventId,
     memberId,
     roleId,
     npcId,

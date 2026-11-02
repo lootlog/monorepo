@@ -13,13 +13,11 @@ import {
 import { cn } from "cn";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 import { RefreshCw } from "lucide-react";
-import { useThemeMeta } from "@/themes";
+import { useThemeMeta } from "@/themes/use-theme-meta";
 import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
-  getGuildsControllerGetGuildByIdQueryKey,
   useGuildsControllerGetGuildById,
   invalidateGuildsControllerGetGuildPermissions,
-  getMembersControllerGetMeQueryKey,
   invalidateMembersControllerGetMe,
   useMembersControllerGetMe,
   useMembersControllerRefreshMe,
@@ -45,9 +43,6 @@ export const GuildSidebarHeader = ({
     {
       query: {
         enabled: hasAccess,
-        queryKey: getGuildsControllerGetGuildByIdQueryKey({
-          guildId: guildId ?? "",
-        }),
         retry: false,
       },
     },
@@ -63,9 +58,6 @@ export const GuildSidebarHeader = ({
     {
       query: {
         enabled: hasAccess,
-        queryKey: getMembersControllerGetMeQueryKey({
-          guildId: guildId ?? "",
-        }),
         staleTime: 30_000,
       },
     },

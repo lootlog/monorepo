@@ -34,7 +34,7 @@ import {
   type GuildMember,
   type Role,
 } from "discord.js";
-import { AppLogger } from "#src/logger";
+import { ContextLogger } from "@lootlog/instrumentation";
 import { REQUIRED_NOTIFICATION_PERMISSIONS } from "./required-notification-permissions.js";
 import { DiscordSdkReadFailure, discordSdkRead } from "./discord-sdk-read.js";
 import type { RabbitPublisher } from "./rabbit-publisher.js";
@@ -258,7 +258,7 @@ const roleSnapshot = (role: Role): GuildCreated["roles"][number] => ({
 });
 
 export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
-  const logger = new AppLogger("DiscordSync");
+  const logger = new ContextLogger("DiscordSync");
   const guildLocks = new Map<string, Semaphore.Semaphore>();
 
   const inFlightRefreshes = new Map<
@@ -500,7 +500,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
         (guild) => guild.available,
       );
 
-      logger.log(
+      logger.info(
         `Bot is ready and logged in as ${readyClient.user?.username ?? "unknown"}; publishing ${guilds.size} guild snapshots`,
       );
 
@@ -522,7 +522,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
 
   const handleGuildCreate = (guild: Guild) =>
     Effect.gen(function* () {
-      logger.log(
+      logger.info(
         `handleGuildCreate called for guild ${guild.id} (${guild.name}), owner: ${guild.ownerId}`,
       );
 
@@ -544,7 +544,9 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
 
   const handleGuildUpdate = (oldGuild: Guild, newGuild: Guild) =>
     Effect.sync(() =>
-      logger.log(`Guild ${oldGuild.name} has been updated to ${newGuild.name}`),
+      logger.info(
+        `Guild ${oldGuild.name} has been updated to ${newGuild.name}`,
+      ),
     ).pipe(
       Effect.andThen(
         publish(RoutingKey.GUILDS_UPDATE, guildSnapshot(newGuild)),
@@ -553,7 +555,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
 
   const handleGuildDelete = (guild: Guild) =>
     Effect.gen(function* () {
-      logger.log(`Bot has been removed from guild ${guild.name}`);
+      logger.info(`Bot has been removed from guild ${guild.name}`);
       guildLocks.delete(guild.id);
       yield* publish(RoutingKey.GUILDS_DELETE, {
         guildId: guild.id,
@@ -595,21 +597,21 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
 
   const handleGuildRoleCreate = (role: Role) =>
     Effect.gen(function* () {
-      logger.log(`Role ${role.name} has been created.`);
+      logger.info(`Role ${role.name} has been created.`);
       yield* publish(RoutingKey.GUILDS_CREATE_ROLE, rolePayload(role));
       yield* publishStaleGuildSyncState(role.guild);
     });
 
   const handleGuildRoleUpdate = (oldRole: Role, newRole: Role) =>
     Effect.gen(function* () {
-      logger.log(`Role ${oldRole.name} has been updated to ${newRole.name}`);
+      logger.info(`Role ${oldRole.name} has been updated to ${newRole.name}`);
       yield* publish(RoutingKey.GUILDS_UPDATE_ROLE, rolePayload(newRole));
       yield* publishStaleGuildSyncState(newRole.guild);
     });
 
   const handleGuildRoleDelete = (role: Role) =>
     Effect.gen(function* () {
-      logger.log(`Role ${role.name} has been deleted.`);
+      logger.info(`Role ${role.name} has been deleted.`);
       yield* publish(RoutingKey.GUILDS_DELETE_ROLE, {
         guildId: role.guild.id,
         id: role.id,

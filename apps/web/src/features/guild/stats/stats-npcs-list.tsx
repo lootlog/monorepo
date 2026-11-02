@@ -30,6 +30,7 @@ import {
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 import { useStatsNpcsListModel } from "./use-stats-npcs-list-model";
+import { formatNumber } from "@/lib/format-number";
 
 export const StatsNpcsList = () => {
   const {
@@ -194,7 +195,7 @@ export const StatsNpcsList = () => {
                     />
                   </span>
                   <span className="shrink-0 text-sm font-semibold tabular-nums">
-                    {npc.uniqueKills.toLocaleString("pl-PL")}
+                    {formatNumber(npc.uniqueKills)}
                   </span>
                 </Link>
               </li>

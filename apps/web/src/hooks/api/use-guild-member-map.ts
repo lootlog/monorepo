@@ -1,7 +1,4 @@
-import {
-  getMembersControllerGetGuildMemberReferencesQueryKey,
-  useMembersControllerGetGuildMemberReferences,
-} from "@lootlog/client/main";
+import { useMembersControllerGetGuildMemberReferences } from "@lootlog/client/main";
 
 const MEMBER_REFERENCES_PARAMS = { includeInactive: true };
 
@@ -13,10 +10,6 @@ export const useGuildMemberMap = (guildId: string | undefined) => {
     {
       query: {
         enabled: Boolean(guildId),
-        queryKey: getMembersControllerGetGuildMemberReferencesQueryKey(
-          { guildId: guildId ?? "" },
-          MEMBER_REFERENCES_PARAMS,
-        ),
       },
     },
   );

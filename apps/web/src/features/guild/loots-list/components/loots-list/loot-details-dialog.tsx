@@ -29,10 +29,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { Loot } from "@/lib/loots/loot-types";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import {
-  getLootsControllerFetchLootByIdQueryKey,
-  useLootsControllerFetchLootById,
-} from "@lootlog/client/main";
+import { useLootsControllerFetchLootById } from "@lootlog/client/main";
 import { cn } from "cn";
 import { EmptyState } from "@/components/common/empty-state";
 import { LoadingSlot } from "@/components/common/loading-slot";
@@ -163,10 +160,6 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
     {
       query: {
         enabled: isOpen && !cachedLoot && !!guildId && !!selectedLootId,
-        queryKey: getLootsControllerFetchLootByIdQueryKey({
-          guildId: guildId ?? "",
-          lootId: selectedLootId ?? 0,
-        }),
         staleTime: 60_000,
       },
     },

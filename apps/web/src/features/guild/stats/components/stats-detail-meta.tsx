@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
+import { formatNumber } from "@/lib/format-number";
 
 type StatsDetailMetaProps = {
   subtitle?: ReactNode;
   metrics: { key: string; label: string; value: number }[];
 };
-
-const numberFormatter = new Intl.NumberFormat("pl-PL");
 
 /** What a member's or monster's stats page is about, with its totals, for its `DetailBar`. */
 export const StatsDetailMeta = ({
@@ -24,7 +23,7 @@ export const StatsDetailMeta = ({
           <div key={metric.key} className="flex items-center gap-1.5">
             <dt className="text-muted-foreground">{metric.label}</dt>
             <dd className="font-semibold tabular-nums">
-              {numberFormatter.format(metric.value)}
+              {formatNumber(metric.value)}
             </dd>
           </div>
         ))}

@@ -1,5 +1,5 @@
 import { Label } from "@lootlog/ui/components/label";
-import { PlayerSearchTile } from "@/components/tiles";
+import { PlayerSearchTile } from "@/components/tiles/player-search-tile";
 import {
   SearchCombobox,
   type SearchComboboxOption,

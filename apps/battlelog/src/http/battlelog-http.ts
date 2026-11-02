@@ -2,6 +2,7 @@ import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import { BunHttpServer } from "@effect/platform-bun";
 import {
+  ContextLogger,
   httpServerMetrics,
   httpServerRouteMetrics,
 } from "@lootlog/instrumentation";
@@ -62,11 +63,10 @@ import {
   AuthenticationRequiredError,
   applicationErrorStatus,
 } from "#src/infrastructure/http-error";
-import { Logger } from "#src/infrastructure/logger";
 
 export type { BattlelogOperations };
 
-const logger = new Logger("BattlelogHttpApi");
+const logger = new ContextLogger("BattlelogHttpApi");
 
 const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
   const request = yield* HttpServerRequest.HttpServerRequest;

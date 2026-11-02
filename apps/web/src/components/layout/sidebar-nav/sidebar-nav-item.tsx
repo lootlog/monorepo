@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import * as m from "framer-motion/m";
 import type { Variants } from "framer-motion";
 import type { MenuItem } from "./types";
-import { ThemeInteractiveFrame } from "@/themes";
+import { ThemeInteractiveFrame } from "@/themes/adapters";
 
 // Follows the variants of an appearing sidebar group; static otherwise.
 const itemVariants: Variants = {

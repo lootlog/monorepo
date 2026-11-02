@@ -2,12 +2,6 @@ import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useCurrentMember } from "./hooks/queries/use-current-member";
 import {
   type EventOverviewResponseDto as EventOverview,
-  getEventsMonitoringControllerGetActiveGapsForHeroQueryKey,
-  getGuildsControllerGetGuildByIdQueryKey,
-  getListEventHeroTimersQueryKey,
-  getListEventMapsQueryKey,
-  getListEventRankingQueryKey,
-  getShowEventOverviewQueryKey,
   useEventsAssignmentControllerAssignMember,
   useEventsAssignmentControllerSelfAssignMember,
   useEventsAssignmentControllerSelfUnassignMember,
@@ -189,9 +183,6 @@ export const useHeroDetail = () => {
     {
       query: {
         enabled: hasGuildId,
-        queryKey: getGuildsControllerGetGuildByIdQueryKey({
-          guildId: queryGuildId,
-        }),
       },
     },
   );
@@ -305,10 +296,6 @@ export const useHeroDetail = () => {
     {
       query: {
         enabled: hasEventRouteParams,
-        queryKey: getShowEventOverviewQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
       },
     },
   );
@@ -328,11 +315,6 @@ export const useHeroDetail = () => {
       {
         query: {
           enabled: hasHeroRouteParams,
-          queryKey: getEventsMonitoringControllerGetActiveGapsForHeroQueryKey({
-            guildId: queryGuildId,
-            eventId: queryEventId,
-            heroId: queryHeroId,
-          }),
         },
       },
     );
@@ -345,10 +327,6 @@ export const useHeroDetail = () => {
     {
       query: {
         enabled: hasEventRouteParams,
-        queryKey: getListEventRankingQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
       },
     },
   );
@@ -361,10 +339,6 @@ export const useHeroDetail = () => {
     {
       query: {
         enabled: hasEventRouteParams,
-        queryKey: getListEventMapsQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
       },
     },
   );
@@ -378,13 +352,6 @@ export const useHeroDetail = () => {
     {
       query: {
         enabled: canLoadHeroTimers(hasEventRouteParams, event?.world),
-        queryKey: getListEventHeroTimersQueryKey(
-          {
-            guildId: queryGuildId,
-            eventId: queryEventId,
-          },
-          getHeroTimerQuery(event?.world),
-        ),
       },
     },
   );
