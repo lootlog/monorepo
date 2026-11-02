@@ -43,6 +43,8 @@ const toPublicOnlinePlayer = (
   };
 };
 
+const polishCollator = new Intl.Collator("pl");
+
 export const mapOnlinePlayers = (
   players: PlayerPresenceResponse,
 ): PublicOnlinePlayers =>
@@ -51,7 +53,7 @@ export const mapOnlinePlayers = (
     .flatMap((presence) => toPublicOnlinePlayer(presence) ?? [])
     .toSorted(
       (left, right) =>
-        left.name.localeCompare(right.name, "pl") || left.lvl - right.lvl,
+        polishCollator.compare(left.name, right.name) || left.lvl - right.lvl,
     );
 
 const mapUser = (user: User): PublicUser => ({
