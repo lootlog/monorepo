@@ -1,5 +1,6 @@
 import { AttachmentBuilder, escapeMarkdown } from "discord.js";
 import { Effect, Schema } from "effect";
+import { compareNpcsStrongestFirst } from "@lootlog/domain/npc-type";
 import { BotConfig } from "#src/config/bot-config";
 import { guildCommand, visibilityOption } from "./command-builders.js";
 import { COMMAND_TEXT, rarityLabel, rarityMark } from "./command-messages.js";
@@ -40,7 +41,15 @@ const Loots = Schema.Array(
       }),
     ),
     players: Schema.Array(Schema.Struct({ name: Schema.String })),
-    npcs: Schema.Array(Schema.Struct({ name: Schema.String })),
+    npcs: Schema.Array(
+      Schema.Struct({
+        id: Schema.Number,
+        name: Schema.String,
+        type: Schema.NullOr(Schema.String),
+        wt: Schema.NullOr(Schema.Number),
+        lvl: Schema.NullOr(Schema.Number),
+      }),
+    ),
   }),
 );
 
@@ -74,7 +83,13 @@ const lootLine = (loot: Loot) => {
   if (loot.items.length > items.length)
     items.push(`+${loot.items.length - items.length}`);
 
-  const npc = loot.npcs[0];
+  // The strongest NPC names the loot, as everywhere in Lootlog.
+  const [npc] = [...loot.npcs].sort((left, right) =>
+    compareNpcsStrongestFirst(
+      { ...left, npcId: left.id },
+      { ...right, npcId: right.id },
+    ),
+  );
 
   const players = loot.players
     .slice(0, SHOWN_PLAYERS_PER_LOOT)

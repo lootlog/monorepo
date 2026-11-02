@@ -22,7 +22,7 @@ import {
   runLootStatsQuery,
 } from "#src/loots/query/loot-stats-query";
 import {
-  readLootStatsOverview,
+  toLootStatsOverview,
   readLootStatsRarityTimeline,
   readLootStatsTopNpcs,
 } from "#src/loots/query/loot-stats.service";
@@ -244,15 +244,16 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
         truncUnit: days > 30 ? "week" : "day",
       });
 
-      const [overview, { timeline }, topNpcs, legendRows] = yield* Effect.all(
-        [
-          readLootStatsOverview(queries.overview),
-          readLootStatsRarityTimeline(queries.timeline),
-          readLootStatsTopNpcs(queries.topNpcs),
-          runLootStatsQuery("loot-stats.user-legends", queries.legends),
-        ] as const,
-        { concurrency: "unbounded" },
-      );
+      const [[overviewRow], { timeline }, topNpcs, legendRows] =
+        yield* Effect.all(
+          [
+            runLootStatsQuery("loot-stats.overview", queries.overview),
+            readLootStatsRarityTimeline(queries.timeline),
+            readLootStatsTopNpcs(queries.topNpcs),
+            runLootStatsQuery("loot-stats.user-legends", queries.legends),
+          ] as const,
+          { concurrency: "unbounded" },
+        );
 
       // The character that caught each item, as the caught filter chose it.
       const soloCharacters = new Map(
@@ -273,6 +274,11 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
       const caughtCharacter = (caughtItem: CaughtItem) =>
         sharedCharacters.get(`${caughtItem.lootId}:${caughtItem.hid}`) ??
         soloCharacters.get(caughtItem.lootId);
+
+      const overview = {
+        ...toLootStatsOverview(overviewRow),
+        caughtLegendaryItems: Number(overviewRow?.caught_legendary_items ?? 0),
+      };
 
       return { overview, timeline, topNpcs, legendRows, caughtCharacter };
     });
@@ -471,13 +477,7 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
       );
 
     return {
-      overview: {
-        ...(lootStats?.overview ?? empty.overview),
-        caughtLegendaryItems: legends.reduce(
-          (total, legend) => total + legend.caught,
-          0,
-        ),
-      },
+      overview: lootStats?.overview ?? empty.overview,
       timeline: lootStats?.timeline ?? [],
       topNpcs: lootStats?.topNpcs ?? [],
       legends,

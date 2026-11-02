@@ -6,7 +6,7 @@ import { getOffsetPagination } from "./utils/offset-pagination";
 
 import { useKillsControllerGetGuildKillStats } from "@lootlog/client/main";
 
-import { NPC_TYPES_STRONGEST_FIRST } from "@/constants/npc";
+import { NPC_TYPES_STRONGEST_FIRST } from "@lootlog/domain/npc-type";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";

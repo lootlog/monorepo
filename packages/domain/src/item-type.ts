@@ -41,3 +41,16 @@ const ITEM_TYPES = new Map<number, ItemTypeValue>([
 export const getItemTypeByCl = (cl: number): ItemTypeValue | undefined => {
   return ITEM_TYPES.get(cl);
 };
+
+/**
+ * Lootlog counts an item of legendary rarity in two ways. Counters of
+ * legendary items (statistics tiles, rarity charts, a loot's rarity summary,
+ * the public stats card) count every one. A legend is a legendary find worth
+ * listing: the legend lists and rankings leave out these types, which drop as
+ * legendary blessings, upgrades and consumables rather than equipment.
+ */
+export const NON_LEGEND_ITEM_TYPES = [
+  ItemType.BLESS,
+  ItemType.UPGRADE,
+  ItemType.CONSUME,
+] as const satisfies readonly ItemTypeValue[];

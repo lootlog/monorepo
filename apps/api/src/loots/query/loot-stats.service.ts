@@ -31,6 +31,7 @@ import {
   buildLootStatsQueries,
   runLootStatsQuery,
 } from "#src/loots/query/loot-stats-query";
+import { currentStatsPeriodStart } from "#src/kills/kill-stats-period";
 
 type Role = typeof roleTable.$inferSelect;
 
@@ -98,8 +99,6 @@ export class LootStatsService {
       roles,
     );
 
-    const dateFrom = this.getDateFromPeriod(period);
-
     const npcTypeFilter = npcTypes?.length
       ? npcTypes.filter((type): type is NpcType =>
           Object.values(NpcType).some((npcType) => npcType === type),
@@ -110,7 +109,7 @@ export class LootStatsService {
       function* (this: LootStatsService) {
         const queries = buildLootStatsQueries(this.database, {
           guildId,
-          dateFrom,
+          dateFrom: (yield* currentStatsPeriodStart(period)) ?? null,
           world,
           npcTypes: npcTypeFilter,
           excludeColossus,
@@ -193,26 +192,6 @@ export class LootStatsService {
     return parts.join(":");
   }
 
-  private getDateFromPeriod(period: Period): Date | null {
-    if (period === "all") return null;
-
-    const now = new Date();
-
-    const periodMap: Record<Exclude<Period, "all">, number> = {
-      "24h": 1,
-      "3d": 3,
-      "7d": 7,
-      "14d": 14,
-      "30d": 30,
-      "90d": 90,
-      "180d": 180,
-    };
-
-    const days = periodMap[period];
-
-    return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-  }
-
   private getTimelineTruncUnit(period: Period): "hour" | "day" | "week" {
     switch (period) {
       case "24h":
@@ -262,23 +241,23 @@ type OverviewRow = {
   avg_item_level: string | null;
 };
 
+export const toLootStatsOverview = (
+  row: OverviewRow | undefined,
+): LootStatsOverview => ({
+  totalLoots: Number(row?.total_loots ?? 0),
+  totalItems: Number(row?.total_items ?? 0),
+  legendaryItems: Number(row?.legendary_items ?? 0),
+  heroicItems: Number(row?.heroic_items ?? 0),
+  avgItemLevel: row?.avg_item_level
+    ? Math.round(Number(row.avg_item_level))
+    : 0,
+});
+
 export const readLootStatsOverview = <E>(
   query: Effect.Effect<ReadonlyArray<OverviewRow>, E>,
 ) =>
   runLootStatsQuery("loot-stats.overview", query).pipe(
-    Effect.map((result): LootStatsOverview => {
-      const row = result[0];
-
-      return {
-        totalLoots: Number(row?.total_loots ?? 0),
-        totalItems: Number(row?.total_items ?? 0),
-        legendaryItems: Number(row?.legendary_items ?? 0),
-        heroicItems: Number(row?.heroic_items ?? 0),
-        avgItemLevel: row?.avg_item_level
-          ? Math.round(Number(row.avg_item_level))
-          : 0,
-      };
-    }),
+    Effect.map((result) => toLootStatsOverview(result[0])),
   );
 
 type TimelineRow = {
