@@ -10,6 +10,8 @@ import type {
 } from "@lootlog/client/main";
 
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
+import { parseKillStatsLevel } from "@/features/kills/parse-kill-stats-level";
+import type { StatsSettings } from "../hooks/use-stats-settings";
 
 export const DEFAULT_MEMBER_KILLS_LIMIT = 40;
 
@@ -25,19 +27,14 @@ const withDefinedEntries = <T extends Record<string, unknown>>(params: T) => {
   return definedParams;
 };
 
-export const buildGuildKillStatsParams = (filters: {
-  npcTypes?: KilledNpcType[];
-  minLvl?: number;
-  maxLvl?: number;
-  world?: string;
-  period?: KillStatsPeriod;
-}): KillsControllerGetGuildKillStatsParams | undefined =>
+export const buildGuildKillStatsParams = (
+  settings: StatsSettings,
+): KillsControllerGetGuildKillStatsParams | undefined =>
   withDefinedEntries({
-    npcTypes: filters.npcTypes,
-    npcLevelMin: filters.minLvl,
-    npcLevelMax: filters.maxLvl,
-    world: filters.world,
-    period: filters.period ?? "all",
+    npcLevelMin: parseKillStatsLevel(settings.minLvl),
+    npcLevelMax: parseKillStatsLevel(settings.maxLvl),
+    world: settings.world ?? undefined,
+    period: settings.period,
   });
 
 export const buildGuildTopNpcsParams = (filters: {
@@ -59,49 +56,39 @@ export const buildGuildTopNpcsParams = (filters: {
     period: filters.period ?? "all",
   }) ?? {};
 
-export const buildMemberKillsParams = (filters: {
-  world?: string;
-  npcTypes?: KilledNpcType[];
-  search?: string;
-  limit?: number;
-  cursor?: string;
-  minLvl?: number;
-  maxLvl?: number;
-  period?: KillStatsPeriod;
-}): KillsControllerGetMemberKillsParams =>
+/** The member page's kills request, for its loader and its hook alike. */
+export const buildMemberKillsParams = (
+  settings: StatsSettings,
+  cursor?: string,
+): KillsControllerGetMemberKillsParams =>
   withDefinedEntries({
-    world: filters.world,
-    npcTypes: filters.npcTypes,
-    search: filters.search,
-    limit: filters.limit,
-    cursor: filters.cursor,
-    npcLevelMin: filters.minLvl,
-    npcLevelMax: filters.maxLvl,
-    period: filters.period ?? "all",
+    world: settings.world ?? undefined,
+    npcTypes: settings.npcType === "ALL" ? undefined : [settings.npcType],
+    search: settings.search || undefined,
+    limit: DEFAULT_MEMBER_KILLS_LIMIT,
+    cursor,
+    npcLevelMin: parseKillStatsLevel(settings.minLvl),
+    npcLevelMax: parseKillStatsLevel(settings.maxLvl),
+    period: settings.period,
   }) ?? {};
 
+/** The NPC page's killers request, for its loader and its hook alike. */
 export const buildNpcKillersParams = (
-  filters: {
-    limit?: number;
-    world?: string;
-    period?: KillStatsPeriod;
-  } = {},
+  settings: StatsSettings,
 ): KillsControllerGetNpcKillersParams =>
   withDefinedEntries({
-    limit: filters.limit ?? DEFAULT_NPC_KILLERS_LIMIT,
-    world: filters.world,
-    period: filters.period ?? "all",
+    limit: DEFAULT_NPC_KILLERS_LIMIT,
+    world: settings.world ?? undefined,
+    period: settings.period,
   }) ?? {};
 
 export const buildLootStatsParams = (filters: {
   period: LootsControllerGetLootStatsPeriod;
-  world?: string;
-  npcTypes?: KilledNpcType[];
-  excludeColossus?: boolean;
+  world: string | null;
+  excludeColossus: boolean;
 }): LootsControllerGetLootStatsParams | undefined =>
   withDefinedEntries({
     period: filters.period,
-    world: filters.world,
-    npcTypes: filters.npcTypes?.length ? filters.npcTypes : undefined,
+    world: filters.world ?? undefined,
     excludeColossus: filters.excludeColossus || undefined,
   });

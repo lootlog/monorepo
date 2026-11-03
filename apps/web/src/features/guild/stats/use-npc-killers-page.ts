@@ -1,6 +1,4 @@
-import { useWorldScopedCursor } from "./hooks/use-world-scoped-cursor";
 import { useParams } from "@tanstack/react-router";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getOffsetPagination } from "./utils/offset-pagination";
 
@@ -8,8 +6,6 @@ import { useKillsControllerGetNpcKillers } from "@lootlog/client/main";
 import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { buildNpcKillersParams } from "./utils/build-stats-query-params";
-
-import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -20,14 +16,18 @@ export function useNpcKillersPage() {
     from: "/_authenticated/$guildId/stats/npcs/$npcId",
   });
 
-  const [search, setSearch] = useState("");
-  const { settings, setPeriod, resetFilters } = useStatsSettings("npc-killers");
-  const [cursor, setCursor] = useWorldScopedCursor(settings.world);
+  const {
+    settings,
+    searchDraft,
+    hasActiveFilters,
+    pageIndex,
+    setPageIndex,
+    setPeriod,
+    setSearch,
+    resetFilters,
+  } = useStatsSettings();
 
-  const npcKillersParams = buildNpcKillersParams({
-    world: settings.world ?? undefined,
-    period: settings.period,
-  });
+  const npcKillersParams = buildNpcKillersParams(settings);
 
   const { data, isLoading } = useKillsControllerGetNpcKillers(
     {
@@ -44,53 +44,35 @@ export function useNpcKillersPage() {
 
   const membersMap = useGuildMemberMap(guildId);
 
-  const handlePeriodChange = (value: KillStatsPeriod) => {
-    setPeriod(value);
-    setCursor(0);
-  };
-
   const killers = data?.killers ?? [];
 
+  const search = settings.search.toLowerCase();
+
   const filteredKillers = search
-    ? killers.filter((k) =>
-        k.member.name.toLowerCase().includes(search.toLowerCase()),
-      )
+    ? killers.filter((k) => k.member.name.toLowerCase().includes(search))
     : killers;
 
-  const hasActiveFilters = settings.period !== "all" || Boolean(search);
-
   const total = filteredKillers.length;
+
+  const { cursor, hasNext, hasPrev, handleNextPage, handlePreviousPage } =
+    getOffsetPagination(pageIndex, total, ITEMS_PER_PAGE, setPageIndex);
 
   const paginatedKillers = filteredKillers.slice(
     cursor,
     cursor + ITEMS_PER_PAGE,
   );
 
-  const { hasNext, hasPrev, handleNextPage, handlePreviousPage } =
-    getOffsetPagination(cursor, total, ITEMS_PER_PAGE, setCursor);
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setCursor(0);
-  };
-
-  const handleClearFilters = () => {
-    resetFilters();
-    setSearch("");
-    setCursor(0);
-  };
-
   return {
-    handleClearFilters,
+    handleClearFilters: resetFilters,
     isLoading,
     data,
     t,
     npcId,
     killers,
-    search,
-    handleSearchChange,
+    search: searchDraft,
+    handleSearchChange: setSearch,
     settings,
-    handlePeriodChange,
+    handlePeriodChange: setPeriod,
     hasActiveFilters,
     paginatedKillers,
     cursor,

@@ -1,7 +1,5 @@
-import { useWorldScopedCursor } from "./hooks/use-world-scoped-cursor";
 import { findKilledNpcType } from "@/constants/npc";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getOffsetPagination } from "./utils/offset-pagination";
 
@@ -9,11 +7,10 @@ import {
   useKillsControllerGetGuildTopNpcs,
   type GuildTopNpcsResponseDtoOutputTopNpcsItem,
 } from "@lootlog/client/main";
-import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 
-import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { buildGuildTopNpcsParams } from "./utils/build-stats-query-params";
+import { parseKillStatsLevel } from "@/features/kills/parse-kill-stats-level";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -28,27 +25,25 @@ export const useStatsNpcsListModel = () => {
 
   const {
     settings,
-    debouncedMinLvl,
-    debouncedMaxLvl,
+    searchDraft,
+    hasActiveFilters,
+    pageIndex,
+    setPageIndex,
     setMinLvl,
     setMaxLvl,
     setNpcType,
     setPeriod,
+    setSearch,
     resetFilters,
-  } = useStatsSettings("npcs-list");
-
-  const [cursor, setCursor] = useWorldScopedCursor(settings.world);
-
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 500);
+  } = useStatsSettings();
 
   const topNpcsParams = buildGuildTopNpcsParams({
     limit: 100,
     npcType: settings.npcType === "ALL" ? undefined : settings.npcType,
     world: settings.world ?? undefined,
-    search: debouncedSearch || undefined,
-    minLvl: debouncedMinLvl,
-    maxLvl: debouncedMaxLvl,
+    search: settings.search || undefined,
+    minLvl: parseKillStatsLevel(settings.minLvl),
+    maxLvl: parseKillStatsLevel(settings.maxLvl),
     period: settings.period,
   });
 
@@ -64,18 +59,12 @@ export const useStatsNpcsListModel = () => {
 
   const topNpcs = data?.topNpcs ?? [];
 
-  const hasActiveFilters =
-    Boolean(settings.minLvl) ||
-    Boolean(settings.maxLvl) ||
-    settings.period !== "all" ||
-    settings.npcType !== "ALL" ||
-    Boolean(debouncedSearch);
-
   const total = topNpcs.length;
-  const paginatedData = topNpcs.slice(cursor, cursor + ITEMS_PER_PAGE);
 
-  const { hasNext, hasPrev, handleNextPage, handlePreviousPage } =
-    getOffsetPagination(cursor, total, ITEMS_PER_PAGE, setCursor);
+  const { cursor, hasNext, hasPrev, handleNextPage, handlePreviousPage } =
+    getOffsetPagination(pageIndex, total, ITEMS_PER_PAGE, setPageIndex);
+
+  const paginatedData = topNpcs.slice(cursor, cursor + ITEMS_PER_PAGE);
 
   const handleRowClick = (npc: GuildTopNpcsResponseDtoOutputTopNpcsItem) => {
     navigate({
@@ -90,45 +79,18 @@ export const useStatsNpcsListModel = () => {
 
     if (value !== "ALL" && !npcType) return;
     setNpcType(npcType ?? "ALL");
-    setCursor(0);
-  };
-
-  const handleMinLvlChange = (value: string) => {
-    setMinLvl(value);
-    setCursor(0);
-  };
-
-  const handleMaxLvlChange = (value: string) => {
-    setMaxLvl(value);
-    setCursor(0);
-  };
-
-  const handlePeriodChange = (value: KillStatsPeriod) => {
-    setPeriod(value);
-    setCursor(0);
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setCursor(0);
-  };
-
-  const handleClearFilters = () => {
-    resetFilters();
-    setSearch("");
-    setCursor(0);
   };
 
   return {
     t,
-    handleClearFilters,
-    search,
-    handleSearchChange,
+    handleClearFilters: resetFilters,
+    search: searchDraft,
+    handleSearchChange: setSearch,
     settings,
     handleNpcTypeChange,
-    handleMinLvlChange,
-    handleMaxLvlChange,
-    handlePeriodChange,
+    handleMinLvlChange: setMinLvl,
+    handleMaxLvlChange: setMaxLvl,
+    handlePeriodChange: setPeriod,
     isLoading,
     paginatedData,
     hasActiveFilters,
