@@ -509,6 +509,16 @@ body {
   letter-spacing: var(--tracking-normal);
 }
 
+/* iOS zooms the page into a focused field set below 16px. Unlayered, so it
+ * wins over every size utility on touch screens. */
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: max(1rem, 1em);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
