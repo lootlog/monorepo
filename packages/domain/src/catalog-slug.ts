@@ -12,3 +12,7 @@ export const catalogSlug = (name: string) =>
     .replace(/[łßæøœ]/g, (letter) => UNDECOMPOSED_LETTERS.get(letter) ?? letter)
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+/** A catalog page's URL segment: the id, then the name, `257037-barbatos`. */
+export const catalogPageSegment = (entry: { id: number; name: string }) =>
+  [entry.id, catalogSlug(entry.name)].filter(Boolean).join("-");
