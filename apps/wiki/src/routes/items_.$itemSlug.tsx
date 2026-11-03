@@ -10,6 +10,10 @@ import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { cn } from "cn";
 import { CompareButton } from "@/components/comparison/compare-button";
 import { EquipButton } from "@/components/equipment/equip-button";
+import {
+  ItemDropSources,
+  MAX_HEADER_DROP_SOURCES,
+} from "@/components/items/item-drop-sources";
 import { ItemHero } from "@/components/items/item-hero";
 import { ItemUpgradeSection } from "@/components/items/item-upgrade-section";
 import { renderStatChanges } from "@/components/render-stat-changes";
@@ -19,6 +23,7 @@ import {
   readPageSegment,
   WIKI_GAME_VERSION,
 } from "@/lib/catalog-links";
+import { findEquipmentSlot } from "@/lib/equipment-slots";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import {
   isUpgradable,
@@ -126,6 +131,15 @@ function ItemRoute() {
   const stat = upgradeItemStat(item, upgrade);
   const rarity = resolveItemRarity(item.rarity);
 
+  // A few sources sit beside the name; more, or an item with no upgrade
+  // section, give them a section of their own.
+  const sourcesInHero =
+    canUpgrade && item.droppedBy.length <= MAX_HEADER_DROP_SOURCES;
+
+  const dropSources = sourcesInHero ? null : (
+    <ItemDropSources sources={item.droppedBy} variant="section" />
+  );
+
   return (
     <div
       className={cn(
@@ -136,6 +150,7 @@ function ItemRoute() {
       <ItemHero
         item={item}
         upgrade={upgrade.level}
+        withDropSources={sourcesInHero}
         actions={
           <>
             <EquipButton item={item} upgrade={upgrade} />
@@ -144,10 +159,19 @@ function ItemRoute() {
         }
       />
 
-      <div className="grid items-start gap-6 lg:grid-cols-[20rem_minmax(0,1fr)] xl:gap-8">
+      {canUpgrade ? dropSources : null}
+
+      <div
+        className={cn(
+          "grid items-start gap-6 lg:grid-cols-[20rem_minmax(0,1fr)] xl:gap-8",
+          // Monster cards fit beside the tooltip sooner than the upgrade does.
+          !canUpgrade && "sm:grid-cols-[18rem_minmax(0,1fr)]",
+        )}
+      >
         <aside
           aria-label={t("item.inGame")}
-          className="flex flex-col gap-2 lg:sticky lg:top-20"
+          // The in-game tooltip stays as narrow as in the game.
+          className="flex flex-col gap-2 sm:max-w-80 lg:sticky lg:top-20"
         >
           <p className="text-xs text-muted-foreground">{t("item.inGame")}</p>
           <Card className="gap-0 overflow-hidden border-[color-mix(in_oklab,var(--item-rarity)_40%,var(--border))] p-0">
@@ -162,6 +186,11 @@ function ItemRoute() {
               type={item.type ?? ""}
             />
           </Card>
+          {!canUpgrade && findEquipmentSlot(item.type) ? (
+            <p className="text-xs text-muted-foreground">
+              {t("upgrade.notUpgradable")}
+            </p>
+          ) : null}
         </aside>
 
         {canUpgrade ? (
@@ -178,9 +207,7 @@ function ItemRoute() {
             }
           />
         ) : (
-          <p className="rounded-lg border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
-            {t("upgrade.notUpgradable")}
-          </p>
+          dropSources
         )}
       </div>
     </div>
