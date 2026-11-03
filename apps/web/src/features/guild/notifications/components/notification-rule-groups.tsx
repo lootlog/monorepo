@@ -1,12 +1,8 @@
 import { ListGroupHeading } from "@/components/common/list-group-heading";
-import {
-  LIST_BAND_HEADING_CLASS,
-  LIST_TILE_INSET_CLASS,
-  LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+import { LIST_BAND_HEADING_CLASS } from "@/components/common/list-tile";
 import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
-import { cn } from "cn";
 import { groupBy } from "es-toolkit";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { NotificationsOverview } from "../use-notifications-overview";
 import { NotificationRuleRow } from "./notification-rule-row";
@@ -21,33 +17,21 @@ const GROUP_ORDER = [
 type NotificationRuleGroupsProps = {
   overview: NotificationsOverview;
   rules: NotificationsOverview["rules"];
-  emptyLabel: string;
+  /** Shown in place of the groups when no rule is left. */
+  empty: ReactNode;
 };
 
 /** Rules grouped by what triggers them: spawn reminders, hero sightings, then scheduled messages. */
 export const NotificationRuleGroups = ({
   overview,
   rules,
-  emptyLabel,
+  empty,
 }: NotificationRuleGroupsProps) => {
   const { t } = useTranslation();
   const { cancelJob } = useCancelNotificationJob();
   const groups = groupBy(rules, (rule) => rule.triggerType);
 
-  if (rules.length === 0) {
-    return (
-      <p
-        data-list-tile
-        className={cn(
-          LIST_TILE_RULE_CLASS,
-          LIST_TILE_INSET_CLASS,
-          "py-6 text-sm text-muted-foreground",
-        )}
-      >
-        {emptyLabel}
-      </p>
-    );
-  }
+  if (rules.length === 0) return empty;
 
   return GROUP_ORDER.flatMap((type) => {
     const groupRules = groups[type] ?? [];

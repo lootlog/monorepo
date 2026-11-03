@@ -53,6 +53,7 @@ export const StatsNpcsList = () => {
     hasNext,
     handlePreviousPage,
     handleNextPage,
+    handleClearFilters,
   } = useStatsNpcsListModel();
 
   const columns: ColumnDef<
@@ -115,7 +116,8 @@ export const StatsNpcsList = () => {
     },
     npcType: {
       types: TRACKABLE_NPC_TYPES,
-      value: settings.npcType,
+      // "ALL" is the stored default, not a narrowing filter.
+      value: settings.npcType === "ALL" ? undefined : settings.npcType,
       onValueChange: handleNpcTypeChange,
     },
   };
@@ -141,6 +143,8 @@ export const StatsNpcsList = () => {
         filters={<KillStatsFilters {...filterProps} />}
         stackedFilters={<KillStatsStackedFilters {...filterProps} />}
         activeFilterCount={countActiveKillStatsFilters(filterProps)}
+        clearFiltersLabel={t("kills.filters.clear")}
+        onClearFilters={handleClearFilters}
         filtersLabel={t("kills.filters.title")}
         scrollResetKey={cursor}
         footer={

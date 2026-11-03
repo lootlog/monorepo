@@ -161,7 +161,10 @@ export function Reservations() {
             }
             onPinChange={(isPinned) => handlePinChange(spot.id, isPinned)}
             onOpen={() =>
-              navigate({ to: `/${guildId}/reservations/${spot.id}` })
+              navigate({
+                to: "/$guildId/reservations/$reservationId",
+                params: { guildId, reservationId: spot.id },
+              })
             }
           />
         ))}

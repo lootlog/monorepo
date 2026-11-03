@@ -154,7 +154,10 @@ export function useEventCreateDialog({ onOpenChange }: EventCreateDialogProps) {
 
           toast.success(t("events.createDialog.success"));
           handleClose(false);
-          navigate({ to: `/${guildId}/events/${eventData.id}` });
+          void navigate({
+            to: "/$guildId/events/$eventId",
+            params: { guildId: guildId ?? "", eventId: eventData.id },
+          });
         },
         onError: (error) => {
           toast.error(

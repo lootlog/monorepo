@@ -36,7 +36,7 @@ export const BattleOpponentRow = ({
       <Link
         {...link}
         className={cn(
-          "flex min-h-14 min-w-0 items-center gap-3 py-2 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+          "flex min-h-12 min-w-0 items-center gap-3 py-1.5 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
           LIST_TILE_INSET_CLASS,
         )}
       >

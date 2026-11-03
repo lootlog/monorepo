@@ -1,6 +1,8 @@
 import { MetaItem } from "@/components/common/meta-item";
 import { ROUTES } from "@/config/routes";
 import { SettingsDetailNotFound } from "@/components/common/settings-detail-not-found";
+import { SettingsListError } from "@/components/common/settings-list-error";
+import { RoleSettingsDetailSkeleton } from "./role-settings-detail-skeleton";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 import { RolesForm } from "@/features/guild/settings/roles/components/roles-form";
 import { getColorFromRoleColor } from "@/utils/get-color-from-role";
@@ -19,7 +21,13 @@ export const RoleSettingsDetailPage = () => {
     from: "/_authenticated/$guildId/settings/roles_/$roleId",
   });
 
-  const { data: roles } = useRolesControllerGetGuildRoles({ guildId });
+  const {
+    data: roles,
+    isError,
+    isFetching,
+    refetch,
+  } = useRolesControllerGetGuildRoles({ guildId });
+
   const role = roles?.find((item) => item.id === roleId) ?? null;
 
   if (roles && !role) {
@@ -34,8 +42,17 @@ export const RoleSettingsDetailPage = () => {
     );
   }
 
+  // The route has no loader, so this page shows its own loading and failure.
   if (!role) {
-    return null;
+    return isError ? (
+      <SettingsListError
+        title={t("settings.roles.empty.loadError")}
+        isRetrying={isFetching}
+        onRetry={() => void refetch()}
+      />
+    ) : (
+      <RoleSettingsDetailSkeleton />
+    );
   }
 
   const color = getColorFromRoleColor(role.color);

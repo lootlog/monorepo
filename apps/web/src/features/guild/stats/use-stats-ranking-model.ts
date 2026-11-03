@@ -1,7 +1,8 @@
 import { useWorldScopedCursor } from "./hooks/use-world-scoped-cursor";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import { getOffsetPagination } from "./utils/offset-pagination";
 
 import { useKillsControllerGetGuildKillStats } from "@lootlog/client/main";
@@ -30,11 +31,13 @@ export const useStatsRankingModel = () => {
     setMinLvl,
     setMaxLvl,
     setPeriod,
+    resetFilters,
   } = useStatsSettings("ranking");
 
   const [cursor, setCursor] = useWorldScopedCursor(settings.world);
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const searchQuery = useDebounce(search, 500).trim();
   const membersMap = useGuildMemberMap(guildId);
 
   const killStatsParams = buildGuildKillStatsParams({
@@ -54,8 +57,6 @@ export const useStatsRankingModel = () => {
     },
   );
 
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const handleMinLvlChange = (value: string) => {
     setMinLvl(value);
     setCursor(0);
@@ -72,14 +73,8 @@ export const useStatsRankingModel = () => {
   };
 
   const handleSearchChange = (value: string) => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      setSearchQuery(value);
-      setCursor(0);
-    }, 500);
+    setSearch(value);
+    setCursor(0);
   };
 
   const memberRanking = data?.memberRanking ?? [];
@@ -118,8 +113,16 @@ export const useStatsRankingModel = () => {
     });
   };
 
+  const handleClearFilters = () => {
+    resetFilters();
+    setSearch("");
+    setCursor(0);
+  };
+
   return {
     t,
+    search,
+    handleClearFilters,
     handleSearchChange,
     settings,
     handleMinLvlChange,

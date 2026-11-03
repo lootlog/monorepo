@@ -35,8 +35,11 @@ export function AbyssSeasonBattles() {
   const {
     data: battlesResponse,
     error,
+    isError,
+    isFetching,
     isLoading,
     isPlaceholderData: isRefreshing,
+    refetch,
   } = useBattlesControllerGetDashboardBattles(params, {
     query: { enabled: Boolean(characterId && season) },
   });
@@ -67,6 +70,9 @@ export function AbyssSeasonBattles() {
       showPagination
       isLoading={isLoading}
       isRefreshing={isRefreshing}
+      hasError={isError}
+      isRetrying={isFetching}
+      onRetry={() => void refetch()}
       enableScrollToTop
     />
   );

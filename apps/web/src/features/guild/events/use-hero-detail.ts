@@ -288,6 +288,7 @@ export const useHeroDetail = () => {
     data: event,
     isLoading,
     error,
+    refetch: refetchEvent,
   } = useShowEventOverview(
     {
       guildId: queryGuildId,
@@ -331,7 +332,13 @@ export const useHeroDetail = () => {
     },
   );
 
-  const { data: eventMaps, isLoading: isMapsLoading } = useListEventMaps(
+  const {
+    data: eventMaps,
+    isLoading: isMapsLoading,
+    error: mapsError,
+    isFetching: isMapsFetching,
+    refetch: refetchMaps,
+  } = useListEventMaps(
     {
       guildId: queryGuildId,
       eventId: queryEventId,
@@ -393,6 +400,8 @@ export const useHeroDetail = () => {
       status: "missing" as const,
       t,
       error,
+      // A failed maps request would otherwise leave the retried page without maps.
+      retry: () => Promise.all([refetchEvent(), refetchMaps()]),
       queryGuildId,
       queryEventId,
     };
@@ -629,6 +638,9 @@ export const useHeroDetail = () => {
 
   return {
     status: "ready" as const,
+    mapsError,
+    isMapsFetching,
+    refetchMaps,
     hero,
     heroProf,
     event,

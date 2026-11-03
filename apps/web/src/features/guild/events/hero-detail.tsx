@@ -1,3 +1,5 @@
+import { QueryErrorNotice } from "@/components/common/query-error-notice";
+import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
 import { OrganizationPresenceStatus } from "@/components/common/organization-presence-status";
 import { BandSection } from "@/components/common/band-section";
 import { Button } from "@lootlog/ui/components/button";
@@ -44,7 +46,7 @@ export const HeroDetail = () => {
   }
 
   if (model.status === "missing") {
-    const { t, error, queryGuildId, queryEventId } = model;
+    const { t, error, retry, queryGuildId, queryEventId } = model;
 
     return (
       <EventLoadError
@@ -52,6 +54,7 @@ export const HeroDetail = () => {
         guildId={queryGuildId}
         eventId={queryEventId}
         error={error}
+        onRetry={retry}
         status={error ? undefined : 404}
         titles={{ 404: t("events.heroes.notFound") }}
       />
@@ -59,6 +62,9 @@ export const HeroDetail = () => {
   }
 
   const {
+    mapsError,
+    isMapsFetching,
+    refetchMaps,
     hero,
     heroProf,
     event,
@@ -126,6 +132,15 @@ export const HeroDetail = () => {
           handleRespawnActionClick={handleRespawnActionClick}
           RespawnActionIcon={RespawnActionIcon}
         />
+
+        {mapsError && (
+          <QueryErrorNotice
+            message={t("events.maps.error")}
+            onRetry={() => void refetchMaps()}
+            isRetrying={isMapsFetching}
+            className={LIST_TILE_RULE_CLASS}
+          />
+        )}
 
         <HeroDetailResponsiveLayout
           maps={

@@ -53,8 +53,11 @@ export const BattlePanelBattlesList = () => {
   const {
     data: battlesResponse,
     error: battlesError,
+    isError: isBattlesError,
+    isFetching: isBattlesFetching,
     isLoading: isBattlesLoading,
     isPlaceholderData: isBattlesRefreshing,
+    refetch: refetchBattles,
   } = useBattlesControllerGetDashboardBattles({
     cursor: optionalQueryValue(queryState.cursor),
     size: pageSize,
@@ -64,6 +67,7 @@ export const BattlePanelBattlesList = () => {
     search: optionalQueryValue(queryState.search),
     result: optionalQueryValue(queryState.result),
     ph: optionalQueryValue(queryState.ph),
+    matchmaking: optionalQueryValue(queryState.matchmaking),
     characterId: optionalQueryValue(queryState.characterId),
     startDate: optionalQueryValue(queryState.startDate),
     endDate: optionalQueryValue(queryState.endDate),
@@ -86,6 +90,7 @@ export const BattlePanelBattlesList = () => {
     search: optionalQueryValue(queryState.search),
     result: optionalQueryValue(queryState.result),
     ph: optionalQueryValue(queryState.ph),
+    matchmaking: optionalQueryValue(queryState.matchmaking),
     characterId: optionalQueryValue(queryState.characterId),
     minLevel: queryState.minLevel,
     maxLevel: queryState.maxLevel,
@@ -110,6 +115,7 @@ export const BattlePanelBattlesList = () => {
       search: newFilters.search ?? null,
       result: newFilters.result ?? null,
       ph: newFilters.ph ?? null,
+      matchmaking: newFilters.matchmaking ?? null,
       characterId: newFilters.characterId ?? null,
       minLevel: newFilters.minLevel ?? 1,
       maxLevel: newFilters.maxLevel ?? 500,
@@ -180,6 +186,7 @@ export const BattlePanelBattlesList = () => {
         search: filters.search,
         result: filters.result,
         ph: filters.ph,
+        matchmaking: filters.matchmaking,
         characterId: filters.characterId,
         startDate: optionalQueryValue(queryState.startDate),
         endDate: optionalQueryValue(queryState.endDate),
@@ -194,6 +201,9 @@ export const BattlePanelBattlesList = () => {
       showPagination
       isLoading={isBattlesLoading}
       isRefreshing={isBattlesRefreshing}
+      hasError={isBattlesError}
+      isRetrying={isBattlesFetching}
+      onRetry={() => void refetchBattles()}
       enableScrollToTop
       search={
         // As on the kill statistics: the search, then the character.

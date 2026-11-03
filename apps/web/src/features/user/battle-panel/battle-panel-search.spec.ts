@@ -28,6 +28,7 @@ describe("battle panel search params", () => {
       search: "foo",
       result: ["won", "flee"],
       ph: true,
+      matchmaking: true,
       startDate: "2025-01-01",
       endDate: "2025-01-02",
       characterId: ["char-1", "char-2"],
@@ -49,6 +50,7 @@ describe("battle panel search params", () => {
       search: null,
       result: [],
       ph: null,
+      matchmaking: null,
       startDate: null,
       endDate: null,
       characterId: null,
@@ -158,6 +160,18 @@ describe("battle panel battle list route search schema", () => {
         type: ["solo", "group"],
         result: ["lost", "flee", "won"],
         characterId: ["char-1", "char-2"],
+      },
+    });
+  });
+
+  it("keeps the Abyss filter through route validation", () => {
+    const result = battlePanelBattlesSearchSchema["~standard"].validate({
+      matchmaking: "true",
+    });
+
+    expect(result).toEqual({
+      value: {
+        matchmaking: true,
       },
     });
   });

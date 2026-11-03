@@ -27,6 +27,11 @@ export const guildNotificationTargetsCacheQueryKey = (guildId: string) =>
 export const guildNotificationJobsCacheQueryKey = (guildId: string) =>
   getNotificationsGuildControllerGetGuildJobsQueryKey({ guildId });
 
+/** Polls the jobs while a delivery is queued, so it shows up once sent. */
+export const refetchGuildJobsWhilePending = (query: {
+  state: { data?: NotificationJobsResponseDto };
+}) => (query.state.data && query.state.data.pending.length > 0 ? 5000 : false);
+
 export const invalidateGuildNotificationQueries = async (
   queryClient: QueryClient,
   guildId: string,

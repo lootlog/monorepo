@@ -581,6 +581,10 @@
       "filteredTargets": "Żaden kanał nie pasuje do filtra",
       "rules": "Brak skonfigurowanych reguł",
       "filteredRules": "Żadna reguła nie pasuje do filtra",
+      "rulesDescription": "Dodaj regułę, aby Lootlog wysyłał powiadomienia na kanały Discorda.",
+      "targetsDescription": "Dodaj kanał Discorda, na który reguły będą wysyłać powiadomienia.",
+      "filteredDescription": "Sprawdź pisownię nazwy albo wyczyść filtr.",
+      "loadError": "Nie udało się pobrać powiadomień",
       "historyJobs": "Brak historii powiadomień",
       "filteredHistory": "Żadna wysyłka nie pasuje do filtrów",
       "availableChannels": "Wszystkie dostępne kanały są już dodane.",
@@ -771,6 +775,7 @@
     }
   },
   "userNotifications": {
+    "loadError": "Nie udało się pobrać Twoich powiadomień",
     "title": "Powiadomienia",
     "description": "Obserwuj przedmioty na wybranym świecie w swoich Lootlogach, a informację o dropie dostaniesz w prywatnej wiadomości na Discordzie.",
     "dm": {

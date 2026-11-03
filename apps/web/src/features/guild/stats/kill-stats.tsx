@@ -44,6 +44,7 @@ export const KillStats = () => {
     setMinLvl,
     setMaxLvl,
     setPeriod,
+    resetFilters,
   } = useStatsSettings("overview");
 
   const killStatsParams = buildGuildKillStatsParams({
@@ -86,6 +87,8 @@ export const KillStats = () => {
         ariaLabel={t("kills.filters.title")}
         stackedFilters={<KillStatsStackedFilters {...filterProps} />}
         activeFilterCount={countActiveKillStatsFilters(filterProps)}
+        clearFiltersLabel={t("kills.filters.clear")}
+        onClearFilters={resetFilters}
       >
         <KillStatsFilters {...filterProps} />
       </FilterBar>

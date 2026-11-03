@@ -34,6 +34,7 @@ export const useStatsNpcsListModel = () => {
     setMaxLvl,
     setNpcType,
     setPeriod,
+    resetFilters,
   } = useStatsSettings("npcs-list");
 
   const [cursor, setCursor] = useWorldScopedCursor(settings.world);
@@ -112,8 +113,15 @@ export const useStatsNpcsListModel = () => {
     setCursor(0);
   };
 
+  const handleClearFilters = () => {
+    resetFilters();
+    setSearch("");
+    setCursor(0);
+  };
+
   return {
     t,
+    handleClearFilters,
     search,
     handleSearchChange,
     settings,
