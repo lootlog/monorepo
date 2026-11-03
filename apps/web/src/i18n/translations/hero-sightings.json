@@ -29,6 +29,7 @@
   "detectedBy": "Wykrył",
   "claims": "Obstawiają",
   "noClaims": "Nikt nie obstawia",
+  "detectorClaim": "(wykrył herosa)",
   "claim": {
     "claim": "Obstawiam",
     "unclaim": "Wycofaj",

@@ -129,29 +129,37 @@ export const loadHeroSightings = Effect.fnUntraced(function* (
   });
 });
 
+/** One hero in one Organization world: the unit sightings are kept per. */
+export type HeroSightingScope = {
+  readonly guildId: string;
+  readonly world: string;
+  readonly heroKey: string;
+};
+
+/** Every sighting, current or past, of the scope's hero. */
+export const heroSightingScopeCondition = (scope: HeroSightingScope) =>
+  and(
+    eq(heroSightingTable.guildId, scope.guildId),
+    eq(heroSightingTable.world, scope.world),
+    eq(heroSightingTable.heroKey, scope.heroKey),
+  );
+
 /** The current sighting of a hero in one Organization world. */
 export const findOpenHeroSighting = (
   database: QueryDatabase,
-  guildId: string,
-  world: string,
-  heroKey: string,
+  scope: HeroSightingScope,
 ) =>
   database
     .select()
     .from(heroSightingTable)
     .where(
       and(
-        eq(heroSightingTable.guildId, guildId),
-        eq(heroSightingTable.world, world),
-        eq(heroSightingTable.heroKey, heroKey),
+        heroSightingScopeCondition(scope),
         isNull(heroSightingTable.closedAt),
       ),
     )
     .limit(1)
     .pipe(Effect.map((rows) => rows[0] ?? null));
 
-export const buildHeroSightingLockKey = (
-  guildId: string,
-  world: string,
-  heroKey: string,
-) => `hero-sighting:lock:${guildId}:${world}:${heroKey}`;
+export const buildHeroSightingLockKey = (scope: HeroSightingScope) =>
+  `hero-sighting:lock:${scope.guildId}:${scope.world}:${scope.heroKey}`;

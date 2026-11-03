@@ -1,5 +1,5 @@
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
-import { isHeroSightingStale } from "@lootlog/domain/hero-sightings";
+import { isCurrentHeroSighting } from "@lootlog/domain/hero-sightings";
 import { sortBy } from "es-toolkit";
 
 /**
@@ -20,7 +20,8 @@ export const getHeroSightingStatus = (
 ): HeroSightingStatus => {
   if (sighting.closedAt !== null) return sighting.closeReason ?? "CLOSED";
 
-  if (isHeroSightingStale(sighting, now)) return "STALE";
+  // Open but no longer current: a roaming hero unconfirmed for too long.
+  if (!isCurrentHeroSighting(sighting, now)) return "STALE";
 
   return sighting.state;
 };

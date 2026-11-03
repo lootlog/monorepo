@@ -4,7 +4,11 @@ import type {
 } from "@lootlog/client/main";
 import { formatLevel } from "@lootlog/domain/profession";
 import { cn } from "cn";
-import { HeroSightingAvatar } from "./hero-sighting-avatar";
+import { MemberAvatar } from "@/components/common/member-avatar";
+import {
+  DETECTOR_AVATAR_CLASS,
+  DETECTOR_NAME_CLASS,
+} from "./hero-sighting-detector-highlight";
 
 type HeroSightingMemberProps = {
   member: HeroSightingMemberDto;
@@ -25,21 +29,15 @@ export const HeroSightingMember = ({
   className,
 }: HeroSightingMemberProps) => (
   <span className={cn("flex min-w-0 items-center gap-2", className)}>
-    <HeroSightingAvatar
-      member={member}
-      className={cn(
-        highlighted &&
-          "ring-2 ring-primary ring-offset-1 ring-offset-background",
-      )}
+    <MemberAvatar
+      avatarUrl={member.avatarUrl}
+      name={member.displayName}
+      className={cn("size-6", highlighted && DETECTOR_AVATAR_CLASS)}
     />
     <span className="flex min-w-0 flex-col leading-tight">
       <span className="truncate text-sm">
         {label && <span className="text-muted-foreground">{`${label}: `}</span>}
-        <span
-          className={cn(
-            highlighted ? "font-semibold text-primary" : "font-medium",
-          )}
-        >
+        <span className={highlighted ? DETECTOR_NAME_CLASS : "font-medium"}>
           {member.displayName}
         </span>
       </span>

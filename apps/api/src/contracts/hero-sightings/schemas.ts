@@ -113,8 +113,9 @@ export const CreateHeroSightingResponse = Schema.Struct({
       guildId: Schema.String,
       guildName: Schema.String,
       // The hero's current sighting after this detection; an older
-      // contradicting detection leaves the newer one current.
-      sighting: HeroSightingResponse,
+      // contradicting detection leaves the newer one current. Omitted when
+      // the caller's roles cannot see this hero in the Organization.
+      sighting: Schema.optionalKey(HeroSightingResponse),
     }),
   ),
   rejectedGuilds: Schema.Array(

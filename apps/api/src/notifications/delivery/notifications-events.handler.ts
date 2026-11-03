@@ -16,7 +16,10 @@ import {
   type NotificationJobRebuild,
   type TimerUpdatedEvent,
 } from "#src/notifications/jobs/notification-job-rebuild";
-import type { NotificationMatching } from "#src/notifications/rules/notification-matching.service";
+import {
+  parseNotificationFilters,
+  type NotificationMatching,
+} from "#src/notifications/rules/notification-matching.service";
 import { timerNpcIdentity } from "#src/timers/timer-projection";
 import type { NotificationEventStore } from "#src/notifications/delivery/notification-event-store";
 import {
@@ -64,6 +67,19 @@ export const heroSightingNotificationTransition = (
   return sighting.state === "ROAMING" && sighting.spawnedAt !== null
     ? "SPAWNED"
     : sighting.state;
+};
+
+/** A hero sighting rule's level range; a missing bound is open. */
+const matchesHeroLevel = (
+  filters: Parameters<typeof parseNotificationFilters>[0],
+  heroLvl: number,
+) => {
+  const { npcLevelMin, npcLevelMax } = parseNotificationFilters(filters);
+
+  return (
+    (npcLevelMin === undefined || heroLvl >= npcLevelMin) &&
+    (npcLevelMax === undefined || heroLvl <= npcLevelMax)
+  );
 };
 
 const causeMessage = (cause: unknown) =>
@@ -276,11 +292,13 @@ export const makeNotificationsEvents = (options: {
     );
 
     yield* Effect.forEach(
-      rules.flatMap((rule) =>
-        rule.targets
-          .filter(({ target }) => target.active && target.canSend)
-          .map(({ target }) => ({ rule, target })),
-      ),
+      rules
+        .filter((rule) => matchesHeroLevel(rule.filters, sighting.hero.lvl))
+        .flatMap((rule) =>
+          rule.targets
+            .filter(({ target }) => target.active && target.canSend)
+            .map(({ target }) => ({ rule, target })),
+        ),
       ({ rule, target }) =>
         options.scheduler
           .create({

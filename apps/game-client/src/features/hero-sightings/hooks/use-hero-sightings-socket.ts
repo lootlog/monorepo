@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { HeroSighting } from "@/api/hero-sightings.api";
+import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { queryKeys } from "@/features/public-api/query-keys";
@@ -13,7 +13,7 @@ export const useHeroSightingsSocket = () => {
   const needsCatchUp = useRef(false);
 
   // The gateway forwards the API's sighting response as is.
-  const handleUpdate = useEffectEvent((sighting: HeroSighting) => {
+  const handleUpdate = useEffectEvent((sighting: HeroSightingResponseDto) => {
     upsertHeroSightings(queryClient, [sighting]);
   });
 
@@ -28,7 +28,8 @@ export const useHeroSightingsSocket = () => {
 
     if (!connected || !joined || !socket) return;
 
-    const onUpdate = (sighting: HeroSighting) => handleUpdate(sighting);
+    const onUpdate = (sighting: HeroSightingResponseDto) =>
+      handleUpdate(sighting);
 
     socket.on(GatewayEvent.HERO_SIGHTING_UPDATE, onUpdate);
 

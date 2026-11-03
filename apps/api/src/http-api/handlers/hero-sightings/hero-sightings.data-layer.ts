@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lte, or } from "drizzle-orm";
 import { Clock, Effect, Result } from "effect";
 import { partition } from "es-toolkit";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
@@ -15,7 +15,10 @@ import {
   type RolePermissionData,
 } from "@lootlog/domain/npc-permissions";
 import { getProfByShortname } from "@lootlog/domain/profession";
-import { HeroSightingCloseReason } from "@lootlog/schema/hero-sightings";
+import {
+  HeroSightingCloseReason,
+  HeroSightingState,
+} from "@lootlog/schema/hero-sightings";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   heroSightingClaimTable,
@@ -30,6 +33,8 @@ import {
 import {
   buildHeroSightingLockKey,
   findOpenHeroSighting,
+  heroSightingScopeCondition,
+  type HeroSightingScope,
   loadHeroSightings,
 } from "#src/hero-sightings/hero-sighting-query";
 import { upsertActorCharacter } from "#src/http-api/handlers/timers/timer-actor-snapshot";
@@ -56,6 +61,9 @@ import {
 
 /** A detector answer reaches the API within seconds; older ones are replays. */
 const MAX_OBSERVATION_AGE_MS = 15 * 60 * 1000;
+
+/** How late a kill can reach the API after the game client saw it. */
+const KILL_REPORT_DELAY_MS = 2 * 60 * 1000;
 
 /** How long a hero's last sighting stays on the board after it closed. */
 const BOARD_CLOSED_RETENTION_MS = 24 * 60 * 60 * 1000;
@@ -98,20 +106,12 @@ const publishAll = (
  */
 const pruneHeroSightings = Effect.fnUntraced(function* (
   transaction: Pick<Database, "select" | "delete">,
-  guildId: string,
-  world: string,
-  heroKey: string,
+  scope: HeroSightingScope,
 ) {
   const stale = yield* transaction
     .select({ id: heroSightingTable.id })
     .from(heroSightingTable)
-    .where(
-      and(
-        eq(heroSightingTable.guildId, guildId),
-        eq(heroSightingTable.world, world),
-        eq(heroSightingTable.heroKey, heroKey),
-      ),
-    )
+    .where(heroSightingScopeCondition(scope))
     .orderBy(desc(heroSightingTable.id))
     .offset(HERO_SIGHTING_HISTORY_LIMIT);
 
@@ -128,10 +128,12 @@ const getObservedAt = (observedAt: string, now: number) => {
   const time = Date.parse(observedAt);
 
   if (now - time > MAX_OBSERVATION_AGE_MS)
-    throw new InvalidRequestError({ code: "HERO_SIGHTING_TOO_OLD" });
+    return Effect.fail(
+      new InvalidRequestError({ code: "HERO_SIGHTING_TOO_OLD" }),
+    );
 
   // A reporter's clock may run ahead; nothing is detected in the future.
-  return new Date(Math.min(time, now));
+  return Effect.succeed(new Date(Math.min(time, now)));
 };
 
 /**
@@ -141,18 +143,18 @@ const getObservedAt = (observedAt: string, now: number) => {
 const recordDetection = Effect.fnUntraced(function* (
   transaction: Transaction,
   options: {
-    readonly guildId: string;
-    readonly discordId: string;
+    readonly identity: HeroSightingsIdentity;
+    readonly scope: HeroSightingScope;
     readonly payload: CreateHeroSightingRequest;
     readonly observedAt: Date;
   },
 ) {
-  const { guildId, payload, observedAt } = options;
-  const heroKey = getHeroSightingKey(payload.hero.name);
+  const { scope, payload, observedAt } = options;
+  const { guildId } = scope;
 
   const member = yield* findActiveGuildMember(
     transaction,
-    options.discordId,
+    options.identity.discordId,
     guildId,
   );
 
@@ -160,16 +162,11 @@ const recordDetection = Effect.fnUntraced(function* (
     return yield* Effect.die(
       new HeroSightingsMemberNotFound({
         guildId,
-        discordId: options.discordId,
+        userId: options.identity.userId,
       }),
     );
 
-  const current = yield* findOpenHeroSighting(
-    transaction,
-    guildId,
-    payload.world,
-    heroKey,
-  );
+  const current = yield* findOpenHeroSighting(transaction, scope);
 
   const transition = resolveHeroSightingTransition(
     current && {
@@ -238,9 +235,7 @@ const recordDetection = Effect.fnUntraced(function* (
     .insert(heroSightingTable)
     .values({
       ...hero,
-      guildId,
-      world: payload.world,
-      heroKey,
+      ...scope,
       state: payload.state,
       mapName: payload.mapName,
       firstSeenAt: observedAt,
@@ -258,7 +253,7 @@ const recordDetection = Effect.fnUntraced(function* (
   if (currentId === undefined)
     return yield* Effect.die(new Error("Hero sighting insert returned no row"));
 
-  yield* pruneHeroSightings(transaction, guildId, payload.world, heroKey);
+  yield* pruneHeroSightings(transaction, scope);
 
   return { currentId, changedIds: [...changedIds, currentId] };
 });
@@ -274,16 +269,18 @@ export const makeCreateHeroSighting = (
     observedAt: Date,
   ) =>
     Effect.gen(function* () {
+      const scope = {
+        guildId,
+        world: payload.world,
+        heroKey: getHeroSightingKey(payload.hero.name),
+      };
+
       const result = yield* ports.withLock(
-        buildHeroSightingLockKey(
-          guildId,
-          payload.world,
-          getHeroSightingKey(payload.hero.name),
-        ),
+        buildHeroSightingLockKey(scope),
         database.transaction((transaction) =>
           recordDetection(transaction, {
-            guildId,
-            discordId: identity.discordId,
+            identity,
+            scope,
             payload,
             observedAt,
           }),
@@ -310,10 +307,7 @@ export const makeCreateHeroSighting = (
   ) {
     const now = yield* Clock.currentTimeMillis;
 
-    const observedAt = yield* Effect.try({
-      try: () => getObservedAt(payload.observedAt, now),
-      catch: (cause) => cause,
-    });
+    const observedAt = yield* getObservedAt(payload.observedAt, now);
 
     const guildRows = yield* selectAccessibleGuilds(
       database,
@@ -364,6 +358,14 @@ export const makeCreateHeroSighting = (
         }),
       );
 
+    // The response follows read visibility: writing to an Organization does
+    // not let a role outside the hero's level range read its sighting there.
+    const readers = yield* selectAccessibleGuildRoles(
+      database,
+      identity.discordId,
+      [NPC_FEATURE_PERMISSIONS[HERO_SIGHTING_READ_FEATURE].base],
+    );
+
     const outcomes = yield* Effect.forEach(
       targets,
       ({ guild }) =>
@@ -380,10 +382,13 @@ export const makeCreateHeroSighting = (
 
     for (const { guild, result } of outcomes) {
       if (Result.isSuccess(result)) {
+        const reader = readers.get(guild.id);
+
         submittedGuilds.push({
           guildId: guild.id,
           guildName: guild.name,
-          sighting: result.success,
+          ...(reader &&
+            canRead(reader, result.success) && { sighting: result.success }),
         });
       } else {
         yield* Effect.logWarning("Hero sighting submission failed").pipe(
@@ -503,11 +508,11 @@ export const makeHeroSightingReads = (database: Database) => {
       .select({ id: heroSightingTable.id })
       .from(heroSightingTable)
       .where(
-        and(
-          eq(heroSightingTable.guildId, access.guild.id),
-          eq(heroSightingTable.world, world),
-          eq(heroSightingTable.heroKey, getHeroSightingKey(hero)),
-        ),
+        heroSightingScopeCondition({
+          guildId: access.guild.id,
+          world,
+          heroKey: getHeroSightingKey(hero),
+        }),
       )
       .orderBy(desc(heroSightingTable.id))
       .limit(HERO_SIGHTING_HISTORY_LIMIT);
@@ -565,6 +570,16 @@ export const makeHeroSightingClaims = (
   database: Database,
   ports: Pick<HeroSightingPorts, "publish">,
 ) => {
+  /** Reloads a sighting whose claims changed and tells its clients. */
+  const publishCurrent = Effect.fnUntraced(function* (sightingId: number) {
+    const [updated] = yield* loadHeroSightings(database, [sightingId]);
+
+    if (!updated) return yield* Effect.fail(notFound());
+    yield* ports.publish(updated);
+
+    return updated;
+  });
+
   const claim = Effect.fn("claimHeroSightingData")(function* (
     access: HeroSightingsGuildAccess,
     sightingId: number,
@@ -598,12 +613,7 @@ export const makeHeroSightingClaims = (
       }),
     );
 
-    const [updated] = yield* loadHeroSightings(database, [sightingId]);
-
-    if (!updated) return yield* Effect.fail(notFound());
-    yield* ports.publish(updated);
-
-    return updated;
+    return yield* publishCurrent(sightingId);
   });
 
   const unclaim = Effect.fn("unclaimHeroSightingData")(function* (
@@ -621,12 +631,7 @@ export const makeHeroSightingClaims = (
         ),
       );
 
-    const [updated] = yield* loadHeroSightings(database, [sightingId]);
-
-    if (!updated) return yield* Effect.fail(notFound());
-    yield* ports.publish(updated);
-
-    return updated;
+    return yield* publishCurrent(sightingId);
   });
 
   return {
@@ -667,10 +672,21 @@ export const closeKilledHeroSighting = Effect.fnUntraced(function* (
     })
     .where(
       and(
-        eq(heroSightingTable.guildId, options.guildId),
-        eq(heroSightingTable.world, options.world),
-        eq(heroSightingTable.heroKey, getHeroSightingKey(options.heroName)),
+        heroSightingScopeCondition({
+          guildId: options.guildId,
+          world: options.world,
+          heroKey: getHeroSightingKey(options.heroName),
+        }),
         isNull(heroSightingTable.closedAt),
+        // A detected spawn may have appeared and been killed unseen, but one
+        // detected just before the kill report is the hero's next spawn.
+        or(
+          eq(heroSightingTable.state, HeroSightingState.ROAMING),
+          lte(
+            heroSightingTable.firstSeenAt,
+            new Date(options.killedAt.getTime() - KILL_REPORT_DELAY_MS),
+          ),
+        ),
       ),
     )
     .returning({ id: heroSightingTable.id });

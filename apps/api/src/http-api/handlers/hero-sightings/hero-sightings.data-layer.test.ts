@@ -271,7 +271,10 @@ it("closes the current sighting of a hero Lootlog saw killed and refuses claims 
   const { boundary, create, claims, database } = await setup();
 
   try {
-    const result = await boundary.run(create(identity, detection()));
+    const result = await boundary.run(
+      create(identity, detection({ state: "ROAMING" })),
+    );
+
     const sighting = result.submittedGuilds[0]?.sighting;
 
     if (!sighting) throw new Error("Missing sighting");
@@ -292,6 +295,69 @@ it("closes the current sighting of a hero Lootlog saw killed and refuses claims 
     );
 
     expect(error).toMatchObject({ body: { code: "HERO_SIGHTING_CLOSED" } });
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+it("keeps a spawn detected just before a kill report as the hero's next spawn", async () => {
+  const { boundary, create, database } = await setup();
+
+  try {
+    await boundary.run(create(identity, detection({ state: "SPAWNING" })));
+
+    const closedId = await boundary.run(
+      closeKilledHeroSighting(database, {
+        guildId: "a",
+        world: "jaruna",
+        heroName: "Tepeyollotl",
+        killedAt: new Date(),
+      }),
+    );
+
+    expect(closedId).toBeNull();
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+it("does not return a sighting to a writer whose roles cannot see the hero", async () => {
+  const { boundary, create, database } = await setup();
+
+  try {
+    await boundary.run(
+      database.insert(roleTable).values({
+        id: "low-writers",
+        guildId: "a",
+        name: "Low writers",
+        permissions: [
+          Permission.LOOTLOG_TIMERS_READ,
+          Permission.LOOTLOG_TIMERS_WRITE,
+          Permission.LOOTLOG_TIMERS_HEROES_READ,
+        ],
+        lvlRangeFrom: 0,
+        lvlRangeTo: 200,
+        updatedAt: new Date(),
+      }),
+    );
+    await boundary.run(
+      database.insert(memberToRoleTable).values({ A: 3, B: "low-writers" }),
+    );
+    await boundary.run(
+      database.insert(userCharactersLootlogSettingsTable).values({
+        userId: "reader",
+        accountId: "1",
+        characterId: "2",
+        catchingGuildIds: ["a"],
+        updatedAt: new Date(),
+      }),
+    );
+
+    const result = await boundary.run(
+      create({ userId: "reader-user", discordId: "reader" }, detection()),
+    );
+
+    expect(result.submittedGuilds).toEqual([{ guildId: "a", guildName: "A" }]);
   } finally {
     await boundary.dispose();
   }

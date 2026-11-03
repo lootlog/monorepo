@@ -9,7 +9,7 @@ export class HeroSightingsNotFound extends TaggedErrorClass<HeroSightingsNotFoun
 
 export class HeroSightingsMemberNotFound extends TaggedErrorClass<HeroSightingsMemberNotFound>()(
   "HeroSightingsMemberNotFound",
-  { guildId: Schema.String, discordId: Schema.String },
+  { guildId: Schema.String, userId: Schema.String },
 ) {}
 
 export class HeroSightingsInfrastructureError extends TaggedErrorClass<HeroSightingsInfrastructureError>()(

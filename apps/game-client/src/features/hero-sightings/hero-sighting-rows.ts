@@ -1,7 +1,21 @@
-import type { HeroSighting } from "@/api/hero-sightings.api";
+import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { groupByToMap } from "@/lib/group-by-to-map";
 
-type HeroSightingClaim = HeroSighting["claims"][number];
+type HeroSightingClaim = HeroSightingResponseDto["claims"][number];
+
+/** A claim, marked when the claimer also detected the hero. */
+export type HeroSightingClaimer = HeroSightingClaim & {
+  readonly isDetector: boolean;
+};
+
+/**
+ * Member ids belong to one Organization, so a claimer is the detector only
+ * when both are the same member of the sighting's own Organization.
+ */
+export const isHeroSightingDetectorClaim = (
+  sighting: HeroSightingResponseDto,
+  claim: HeroSightingClaim,
+): boolean => claim.member.memberId === sighting.detectedBy.memberId;
 
 /**
  * One hero in the list. With timer grouping on, the same hero detected on the
@@ -10,17 +24,18 @@ type HeroSightingClaim = HeroSighting["claims"][number];
  */
 export type HeroSightingRow = {
   readonly key: string;
-  readonly hero: HeroSighting["hero"];
-  readonly state: HeroSighting["state"];
+  readonly world: string;
+  readonly hero: HeroSightingResponseDto["hero"];
+  readonly state: HeroSightingResponseDto["state"];
   readonly mapName: string;
   readonly lastSeenAt: string;
-  readonly closeReason: HeroSighting["closeReason"];
+  readonly closeReason: HeroSightingResponseDto["closeReason"];
   readonly isCurrent: boolean;
   /** Who detected the hero first among the merged sightings. */
-  readonly detectedBy: HeroSighting["detectedBy"];
+  readonly detectedBy: HeroSightingResponseDto["detectedBy"];
   /** Each claimer once, even when they claimed in several Organizations. */
-  readonly claims: readonly HeroSightingClaim[];
-  readonly sightings: readonly HeroSighting[];
+  readonly claims: readonly HeroSightingClaimer[];
+  readonly sightings: readonly HeroSightingResponseDto[];
 };
 
 type HeroSightingRowContext = {
@@ -29,7 +44,7 @@ type HeroSightingRowContext = {
   readonly isGrouping: boolean;
 };
 
-const getRowKey = (sighting: HeroSighting, isGrouping: boolean) =>
+const getRowKey = (sighting: HeroSightingResponseDto, isGrouping: boolean) =>
   JSON.stringify([
     isGrouping ? null : sighting.guildId,
     sighting.hero.key,
@@ -39,13 +54,18 @@ const getRowKey = (sighting: HeroSighting, isGrouping: boolean) =>
   ]);
 
 /** The same person may claim through two Organizations; a User counts once. */
-const getClaimerKey = (sighting: HeroSighting, claim: HeroSightingClaim) =>
-  claim.member.userId ?? `${sighting.guildId}:${claim.member.memberId}`;
+const getClaimerKey = (
+  sighting: HeroSightingResponseDto,
+  claim: HeroSightingClaim,
+) => claim.member.userId ?? `${sighting.guildId}:${claim.member.memberId}`;
 
 /** API timestamps may differ in precision, so they are compared as instants. */
 const compareInstants = (a: string, b: string) => Date.parse(a) - Date.parse(b);
 
-const toRow = (key: string, sightings: HeroSighting[]): HeroSightingRow => {
+const toRow = (
+  key: string,
+  sightings: HeroSightingResponseDto[],
+): HeroSightingRow => {
   const [first] = sightings.toSorted((a, b) =>
     compareInstants(a.firstSeenAt, b.firstSeenAt),
   );
@@ -60,17 +80,22 @@ const toRow = (key: string, sightings: HeroSighting[]): HeroSightingRow => {
     first.lastSeenAt,
   );
 
-  const claims = new Map<string, HeroSightingClaim>();
+  const claims = new Map<string, HeroSightingClaimer>();
 
   for (const sighting of sightings)
     for (const claim of sighting.claims) {
       const claimerKey = getClaimerKey(sighting, claim);
+      const isDetector = isHeroSightingDetectorClaim(sighting, claim);
+      const known = claims.get(claimerKey);
 
-      if (!claims.has(claimerKey)) claims.set(claimerKey, claim);
+      if (!known) claims.set(claimerKey, { ...claim, isDetector });
+      else if (isDetector && !known.isDetector)
+        claims.set(claimerKey, { ...known, isDetector });
     }
 
   return {
     key,
+    world: first.world,
     hero: first.hero,
     state: first.state,
     mapName: first.mapName,
@@ -87,7 +112,7 @@ const toRow = (key: string, sightings: HeroSighting[]): HeroSightingRow => {
 
 /** Current heroes first, the latest confirmed on top; ended sightings last. */
 export const projectHeroSightingRows = (
-  sightings: readonly HeroSighting[],
+  sightings: readonly HeroSightingResponseDto[],
   { guildId, isGrouping }: HeroSightingRowContext,
 ): HeroSightingRow[] => {
   const visible = isGrouping
@@ -106,10 +131,3 @@ export const projectHeroSightingRows = (
         compareInstants(b.lastSeenAt, a.lastSeenAt),
     );
 };
-
-export const isClaimedBy = (
-  sighting: HeroSighting,
-  userId: string | undefined,
-): boolean =>
-  userId !== undefined &&
-  sighting.claims.some((claim) => claim.member.userId === userId);

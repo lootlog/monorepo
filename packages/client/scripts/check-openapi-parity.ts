@@ -1885,6 +1885,287 @@ const CATALOG_NPCS_ADDITION: JsonValue = {
   },
 };
 
+// Verified by apps/api/src/http-api/handlers/hero-sightings/hero-sightings.data-layer.test.ts.
+const CREATE_HERO_SIGHTING_ADDITION: JsonValue = {
+  operationId: "HeroSightingsController_createHeroSighting",
+  parameters: [],
+  security: [
+    {
+      bearer: [],
+    },
+  ],
+  responses: {
+    "201": {
+      description: "CreateHeroSightingResponseDto",
+      content: {
+        "application/json": {
+          schema: {
+            $ref: "#/components/schemas/CreateHeroSightingResponseDto",
+          },
+        },
+      },
+    },
+    "400": HTTP_ERROR_RESPONSE,
+    "403": HTTP_ERROR_RESPONSE,
+  },
+  description:
+    "Record a hero detector answer for every Organization the character submits data to. A repeated detection confirms the current sighting; a contradicting one closes it as probably killed.",
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          $ref: "#/components/schemas/CreateHeroSightingDto",
+        },
+      },
+    },
+    required: true,
+  },
+};
+
+const ALL_HERO_SIGHTINGS_ADDITION: JsonValue = {
+  operationId: "HeroSightingsController_getAllHeroSightings",
+  parameters: [
+    {
+      name: "world",
+      in: "query",
+      schema: {
+        type: "string",
+        minLength: 1,
+        maxLength: 64,
+      },
+      required: true,
+    },
+  ],
+  security: [
+    {
+      bearer: [],
+    },
+  ],
+  responses: {
+    "200": {
+      description: "Success",
+      content: {
+        "application/json": {
+          schema: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/HeroSightingResponseDto",
+            },
+          },
+        },
+      },
+    },
+  },
+  description:
+    "The latest sighting of each hero from the last day, across every Organization of the authenticated user whose roles can see that hero.",
+};
+
+const GUILD_HERO_SIGHTINGS_ADDITION: JsonValue = {
+  operationId: "HeroSightingsController_getHeroSightings",
+  parameters: [
+    {
+      name: "guildId",
+      in: "path",
+      schema: {
+        type: "string",
+        example: "guild_123",
+      },
+      required: true,
+    },
+    {
+      name: "world",
+      in: "query",
+      schema: {
+        type: "string",
+        minLength: 1,
+        maxLength: 64,
+      },
+      required: true,
+    },
+  ],
+  security: [
+    {
+      bearer: [],
+    },
+  ],
+  responses: {
+    "200": {
+      description: "Success",
+      content: {
+        "application/json": {
+          schema: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/HeroSightingResponseDto",
+            },
+          },
+        },
+      },
+    },
+    "403": HTTP_ERROR_RESPONSE,
+    "404": HTTP_ERROR_RESPONSE,
+  },
+  description:
+    "The latest sighting of each hero in a world from the last day, limited to heroes the caller's roles can see.",
+};
+
+const HERO_SIGHTING_HISTORY_ADDITION: JsonValue = {
+  operationId: "HeroSightingsController_getHeroSightingHistory",
+  parameters: [
+    {
+      name: "guildId",
+      in: "path",
+      schema: {
+        type: "string",
+        example: "guild_123",
+      },
+      required: true,
+    },
+    {
+      name: "world",
+      in: "query",
+      schema: {
+        type: "string",
+        minLength: 1,
+        maxLength: 64,
+      },
+      required: true,
+    },
+    {
+      name: "hero",
+      in: "query",
+      schema: {
+        type: "string",
+        minLength: 1,
+        description: "Hero key (`hero.key`) or hero name.",
+      },
+      required: true,
+    },
+  ],
+  security: [
+    {
+      bearer: [],
+    },
+  ],
+  responses: {
+    "200": {
+      description: "Success",
+      content: {
+        "application/json": {
+          schema: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/HeroSightingResponseDto",
+            },
+          },
+        },
+      },
+    },
+    "403": HTTP_ERROR_RESPONSE,
+    "404": HTTP_ERROR_RESPONSE,
+  },
+  description: "The retained sightings of one hero in a world, newest first.",
+};
+
+const CLAIM_HERO_SIGHTING_ADDITION: JsonValue = {
+  operationId: "HeroSightingsController_claimHeroSighting",
+  parameters: [
+    {
+      name: "guildId",
+      in: "path",
+      schema: {
+        type: "string",
+        example: "guild_123",
+      },
+      required: true,
+    },
+    {
+      name: "sightingId",
+      in: "path",
+      schema: {
+        type: "string",
+      },
+      required: true,
+    },
+  ],
+  security: [
+    {
+      bearer: [],
+    },
+  ],
+  responses: {
+    "200": {
+      description: "HeroSightingResponseDto",
+      content: {
+        "application/json": {
+          schema: {
+            $ref: "#/components/schemas/HeroSightingResponseDto",
+          },
+        },
+      },
+    },
+    "403": HTTP_ERROR_RESPONSE,
+    "404": HTTP_ERROR_RESPONSE,
+    "409": HTTP_ERROR_RESPONSE,
+  },
+  description:
+    "Declare that the caller camps the hero of a current sighting. Several Members can camp one hero; repeating a declaration keeps the first.",
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          $ref: "#/components/schemas/ClaimHeroSightingDto",
+        },
+      },
+    },
+    required: true,
+  },
+};
+
+const UNCLAIM_HERO_SIGHTING_ADDITION: JsonValue = {
+  operationId: "HeroSightingsController_unclaimHeroSighting",
+  parameters: [
+    {
+      name: "guildId",
+      in: "path",
+      schema: {
+        type: "string",
+        example: "guild_123",
+      },
+      required: true,
+    },
+    {
+      name: "sightingId",
+      in: "path",
+      schema: {
+        type: "string",
+      },
+      required: true,
+    },
+  ],
+  security: [
+    {
+      bearer: [],
+    },
+  ],
+  responses: {
+    "200": {
+      description: "HeroSightingResponseDto",
+      content: {
+        "application/json": {
+          schema: {
+            $ref: "#/components/schemas/HeroSightingResponseDto",
+          },
+        },
+      },
+    },
+    "403": HTTP_ERROR_RESPONSE,
+    "404": HTTP_ERROR_RESPONSE,
+  },
+  description:
+    "Withdraw the caller's declaration that they camp a sighted hero.",
+};
+
 const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
   Object.entries({
     auth: authApiAdditions,
@@ -2178,282 +2459,15 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
         },
         description: "Revoke the theme's share link so it no longer resolves",
       },
-      // Verified by apps/api/src/http-api/handlers/hero-sightings/hero-sightings.data-layer.test.ts.
-      "POST /hero-sightings": {
-        operationId: "HeroSightingsController_createHeroSighting",
-        parameters: [],
-        security: [
-          {
-            bearer: [],
-          },
-        ],
-        responses: {
-          "201": {
-            description: "CreateHeroSightingResponseDto",
-            content: {
-              "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/CreateHeroSightingResponseDto",
-                },
-              },
-            },
-          },
-          "400": HTTP_ERROR_RESPONSE,
-          "403": HTTP_ERROR_RESPONSE,
-        },
-        description:
-          "Record a hero detector answer for every Organization the character submits data to. A repeated detection confirms the current sighting; a contradicting one closes it as probably killed.",
-        requestBody: {
-          content: {
-            "application/json": {
-              schema: {
-                $ref: "#/components/schemas/CreateHeroSightingDto",
-              },
-            },
-          },
-          required: true,
-        },
-      },
-      "GET /hero-sightings": {
-        operationId: "HeroSightingsController_getAllHeroSightings",
-        parameters: [
-          {
-            name: "world",
-            in: "query",
-            schema: {
-              type: "string",
-              minLength: 1,
-              maxLength: 64,
-            },
-            required: true,
-          },
-        ],
-        security: [
-          {
-            bearer: [],
-          },
-        ],
-        responses: {
-          "200": {
-            description: "Success",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "array",
-                  items: {
-                    $ref: "#/components/schemas/HeroSightingResponseDto",
-                  },
-                },
-              },
-            },
-          },
-        },
-        description:
-          "The latest sighting of each hero from the last day, across every Organization of the authenticated user whose roles can see that hero.",
-      },
-      "GET /guilds/{guildId}/hero-sightings": {
-        operationId: "HeroSightingsController_getHeroSightings",
-        parameters: [
-          {
-            name: "guildId",
-            in: "path",
-            schema: {
-              type: "string",
-              example: "guild_123",
-            },
-            required: true,
-          },
-          {
-            name: "world",
-            in: "query",
-            schema: {
-              type: "string",
-              minLength: 1,
-              maxLength: 64,
-            },
-            required: true,
-          },
-        ],
-        security: [
-          {
-            bearer: [],
-          },
-        ],
-        responses: {
-          "200": {
-            description: "Success",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "array",
-                  items: {
-                    $ref: "#/components/schemas/HeroSightingResponseDto",
-                  },
-                },
-              },
-            },
-          },
-          "403": HTTP_ERROR_RESPONSE,
-          "404": HTTP_ERROR_RESPONSE,
-        },
-        description:
-          "The latest sighting of each hero in a world from the last day, limited to heroes the caller's roles can see.",
-      },
-      "GET /guilds/{guildId}/hero-sightings/history": {
-        operationId: "HeroSightingsController_getHeroSightingHistory",
-        parameters: [
-          {
-            name: "guildId",
-            in: "path",
-            schema: {
-              type: "string",
-              example: "guild_123",
-            },
-            required: true,
-          },
-          {
-            name: "world",
-            in: "query",
-            schema: {
-              type: "string",
-              minLength: 1,
-              maxLength: 64,
-            },
-            required: true,
-          },
-          {
-            name: "hero",
-            in: "query",
-            schema: {
-              type: "string",
-              minLength: 1,
-              description: "Hero key (`hero.key`) or hero name.",
-            },
-            required: true,
-          },
-        ],
-        security: [
-          {
-            bearer: [],
-          },
-        ],
-        responses: {
-          "200": {
-            description: "Success",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "array",
-                  items: {
-                    $ref: "#/components/schemas/HeroSightingResponseDto",
-                  },
-                },
-              },
-            },
-          },
-          "403": HTTP_ERROR_RESPONSE,
-          "404": HTTP_ERROR_RESPONSE,
-        },
-        description:
-          "The retained sightings of one hero in a world, newest first.",
-      },
-      "POST /guilds/{guildId}/hero-sightings/{sightingId}/claim": {
-        operationId: "HeroSightingsController_claimHeroSighting",
-        parameters: [
-          {
-            name: "guildId",
-            in: "path",
-            schema: {
-              type: "string",
-              example: "guild_123",
-            },
-            required: true,
-          },
-          {
-            name: "sightingId",
-            in: "path",
-            schema: {
-              type: "string",
-            },
-            required: true,
-          },
-        ],
-        security: [
-          {
-            bearer: [],
-          },
-        ],
-        responses: {
-          "200": {
-            description: "HeroSightingResponseDto",
-            content: {
-              "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/HeroSightingResponseDto",
-                },
-              },
-            },
-          },
-          "403": HTTP_ERROR_RESPONSE,
-          "404": HTTP_ERROR_RESPONSE,
-          "409": HTTP_ERROR_RESPONSE,
-        },
-        description:
-          "Declare that the caller camps the hero of a current sighting. Several Members can camp one hero; repeating a declaration keeps the first.",
-        requestBody: {
-          content: {
-            "application/json": {
-              schema: {
-                $ref: "#/components/schemas/ClaimHeroSightingDto",
-              },
-            },
-          },
-          required: true,
-        },
-      },
-      "DELETE /guilds/{guildId}/hero-sightings/{sightingId}/claim": {
-        operationId: "HeroSightingsController_unclaimHeroSighting",
-        parameters: [
-          {
-            name: "guildId",
-            in: "path",
-            schema: {
-              type: "string",
-              example: "guild_123",
-            },
-            required: true,
-          },
-          {
-            name: "sightingId",
-            in: "path",
-            schema: {
-              type: "string",
-            },
-            required: true,
-          },
-        ],
-        security: [
-          {
-            bearer: [],
-          },
-        ],
-        responses: {
-          "200": {
-            description: "HeroSightingResponseDto",
-            content: {
-              "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/HeroSightingResponseDto",
-                },
-              },
-            },
-          },
-          "403": HTTP_ERROR_RESPONSE,
-          "404": HTTP_ERROR_RESPONSE,
-        },
-        description:
-          "Withdraw the caller's declaration that they camp a sighted hero.",
-      },
+      "POST /hero-sightings": CREATE_HERO_SIGHTING_ADDITION,
+      "GET /hero-sightings": ALL_HERO_SIGHTINGS_ADDITION,
+      "GET /guilds/{guildId}/hero-sightings": GUILD_HERO_SIGHTINGS_ADDITION,
+      "GET /guilds/{guildId}/hero-sightings/history":
+        HERO_SIGHTING_HISTORY_ADDITION,
+      "POST /guilds/{guildId}/hero-sightings/{sightingId}/claim":
+        CLAIM_HERO_SIGHTING_ADDITION,
+      "DELETE /guilds/{guildId}/hero-sightings/{sightingId}/claim":
+        UNCLAIM_HERO_SIGHTING_ADDITION,
       // Verified by apps/api/src/http-api/handlers/character-auras/character-auras.data-layer.test.ts.
       "GET /character-auras": {
         operationId: "CharacterAurasController_getAuras",

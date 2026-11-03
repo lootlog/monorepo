@@ -61,6 +61,9 @@ export const NotificationFiltersSchema = Schema.Struct({
   ),
   itemId: Schema.optionalKey(Schema.NullOr(Schema.Number)),
   itemIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Number))),
+  /** Level range of a hero sighting rule; omitted bounds are open. */
+  npcLevelMin: Schema.optionalKey(Schema.Number),
+  npcLevelMax: Schema.optionalKey(Schema.Number),
 });
 
 export type NotificationFilters = typeof NotificationFiltersSchema.Type;

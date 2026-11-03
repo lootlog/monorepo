@@ -4,6 +4,7 @@ import {
   useHeroSightingsControllerUnclaimHeroSighting,
   type HeroSightingResponseDto,
 } from "@lootlog/client/main";
+import { isHeroSightingClaimedBy } from "@lootlog/domain/hero-sightings";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -15,27 +16,31 @@ import {
 
 /**
  * Declares or withdraws the signed-in member's camping of a sighted hero. A
- * claim names the member by their internal Lootlog User id.
+ * claim names the member by their internal Lootlog User id. Outside an
+ * Organization route there is nothing to claim for, so `canToggle` is false.
  */
 export const useHeroSightingClaim = (sighting: HeroSightingResponseDto) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const guildId = useGuildId() ?? "";
+  const guildId = useGuildId();
   const { data: session } = useSession();
-  const userId = session?.user.id;
+  const isClaimed = isHeroSightingClaimedBy(sighting, session?.user.id);
 
-  const isClaimed = sighting.claims.some(
-    (claim) => userId !== undefined && claim.member.userId === userId,
-  );
+  const onSuccess = (
+    updated: HeroSightingResponseDto,
+    { pathParams }: { pathParams: { guildId: string } },
+  ) => writeHeroSightingToCache(queryClient, [pathParams.guildId], updated);
 
-  const onSuccess = (updated: HeroSightingResponseDto) =>
-    writeHeroSightingToCache(queryClient, [guildId], updated);
-
-  const onError = (error: { status?: number }) => {
+  const onError = (
+    error: { status?: number },
+    { pathParams }: { pathParams: { guildId: string } },
+  ) => {
     // The hero was killed or moved meanwhile; the board shows what replaced it.
     if (error.status === 409) {
       toast.error(t("heroSightings.claim.closed"));
-      void queryClient.invalidateQueries(heroSightingQueries([guildId]));
+      void queryClient.invalidateQueries(
+        heroSightingQueries([pathParams.guildId]),
+      );
 
       return;
     }
@@ -51,12 +56,14 @@ export const useHeroSightingClaim = (sighting: HeroSightingResponseDto) => {
     mutation: { onSuccess, onError },
   });
 
-  const pathParams = { guildId, sightingId: String(sighting.id) };
-
   return {
+    canToggle: guildId !== undefined,
     isClaimed,
     isPending: claim.isPending || unclaim.isPending,
     toggle: () => {
+      if (guildId === undefined) return;
+      const pathParams = { guildId, sightingId: String(sighting.id) };
+
       if (isClaimed) unclaim.mutate({ pathParams });
       else claim.mutate({ pathParams, data: {} });
     },

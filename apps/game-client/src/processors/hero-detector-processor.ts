@@ -108,7 +108,11 @@ export class HeroDetectorProcessor {
       observedAt: new Date(message.ts * 1000).toISOString(),
     })
       .then(({ submittedGuilds }) => {
-        const sightings = submittedGuilds.map(({ sighting }) => sighting);
+        // An Organization whose access hides this hero from the player still
+        // accepts the detection, but returns no sighting to show or claim.
+        const sightings = submittedGuilds.flatMap(({ sighting }) =>
+          sighting ? [sighting] : [],
+        );
 
         if (sightings.length === 0) return;
 

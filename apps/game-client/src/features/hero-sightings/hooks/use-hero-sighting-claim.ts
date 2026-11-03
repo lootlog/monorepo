@@ -1,16 +1,16 @@
+import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
   claimHeroSighting,
   unclaimHeroSighting,
-  type HeroSighting,
 } from "@/api/hero-sightings.api";
 import { upsertHeroSightings } from "@/features/hero-sightings/hero-sightings-cache";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 type ClaimChange = {
   readonly claim: boolean;
-  readonly sightings: readonly HeroSighting[];
+  readonly sightings: readonly HeroSightingResponseDto[];
 };
 
 /**
@@ -55,9 +55,9 @@ export const useHeroSightingClaim = () => {
 
   return {
     isPending,
-    claim: (sightings: readonly HeroSighting[]) =>
+    claim: (sightings: readonly HeroSightingResponseDto[]) =>
       mutate({ claim: true, sightings }),
-    unclaim: (sightings: readonly HeroSighting[]) =>
+    unclaim: (sightings: readonly HeroSightingResponseDto[]) =>
       mutate({ claim: false, sightings }),
   };
 };

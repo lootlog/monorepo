@@ -4,31 +4,11 @@ import {
   getHeroSightingsControllerGetHeroSightingsQueryKey,
   type HeroSightingResponseDto,
 } from "@lootlog/client/main";
-import { getHeroSightingKey } from "@lootlog/domain/hero-sightings";
+import {
+  getHeroSightingKey,
+  upsertNewestHeroSighting,
+} from "@lootlog/domain/hero-sightings";
 import { z } from "zod";
-
-/**
- * The board keeps the latest sighting of each hero. Sighting ids grow with
- * time, so an update for an older sighting, such as the closed one that a
- * probable kill replaced, never displaces the newer one, whatever order the
- * updates arrive in.
- */
-export const upsertHeroSighting = (
-  sightings: HeroSightingResponseDto[] | undefined,
-  sighting: HeroSightingResponseDto,
-): HeroSightingResponseDto[] | undefined => {
-  if (!sightings) return undefined;
-
-  const current = sightings.find(
-    (entry) => entry.hero.key === sighting.hero.key,
-  );
-
-  if (!current) return [...sightings, sighting];
-
-  if (current.id > sighting.id) return sightings;
-
-  return sightings.map((entry) => (entry === current ? sighting : entry));
-};
 
 const boardParameters = z.object({ world: z.string() });
 
@@ -75,8 +55,11 @@ export const writeHeroSightingToCache = (
 
     if (isFetching) void queryClient.cancelQueries(query);
 
-    queryClient.setQueryData<HeroSightingResponseDto[]>(queryKey, (old) =>
-      upsertHeroSighting(old, sighting),
+    // The board keeps the newest sighting of each hero; a board not loaded
+    // stays unloaded.
+    queryClient.setQueryData<readonly HeroSightingResponseDto[]>(
+      queryKey,
+      (old) => old && upsertNewestHeroSighting(old, sighting),
     );
 
     if (isFetching) void queryClient.invalidateQueries(query);

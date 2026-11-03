@@ -810,10 +810,20 @@ describe("notification job rebuild", () => {
           triggerType: "HERO_SIGHTED",
           filters: {},
         }),
+        createNotificationRuleFixture({
+          id: 8,
+          ownerType: "GUILD",
+          ownerId: "guild-1",
+          guildId: "guild-1",
+          world: "fobos",
+          triggerType: "HERO_SIGHTED",
+          filters: { npcLevelMin: 300 },
+        }),
       ],
       links: [
         { ruleId: 7, targetId: 1 },
         { ruleId: 7, targetId: 3 },
+        { ruleId: 8, targetId: 2 },
       ],
       now,
     });
@@ -888,7 +898,7 @@ describe("notification job rebuild", () => {
           .orderBy(asc(notificationJobTable.sourceEventId)),
       );
 
-      // Target 3 is inactive.
+      // Target 3 is inactive, and rule 8 watches heroes from level 300.
       expect(jobs).toEqual([
         { targetId: 1, sourceEventId: "hero-sighting:41:SPAWNED" },
         { targetId: 1, sourceEventId: "hero-sighting:41:SPAWNING" },

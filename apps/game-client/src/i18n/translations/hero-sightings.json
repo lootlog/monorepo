@@ -19,7 +19,8 @@
   "detectedBy": "Wykrycie: {{name}}",
   "claims": {
     "label": "Obstawiają:",
-    "none": "Nikt nie obstawia"
+    "none": "Nikt nie obstawia",
+    "detector": "(autor wykrycia)"
   },
   "actions": {
     "claim": "Obstawiam",
@@ -40,5 +41,12 @@
   "messages": {
     "claimFailed": "Nie udało się obstawić herosa",
     "unclaimFailed": "Nie udało się wycofać obstawienia"
+  },
+  "history": {
+    "open": "Historia wykryć: {{name}}",
+    "title": "Historia wykryć: {{name}}",
+    "loading": "Ładowanie historii wykryć",
+    "loadError": "Nie udało się pobrać historii wykryć",
+    "empty": "Brak wykryć tego herosa"
   }
 }

@@ -1,3 +1,4 @@
+import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import {
   skipToken,
   useQueries,
@@ -6,10 +7,7 @@ import {
   type UseQueryOptions,
   type UseQueryResult,
 } from "@tanstack/react-query";
-import {
-  fetchHeroSightings,
-  type HeroSighting,
-} from "@/api/hero-sightings.api";
+import { fetchHeroSightings } from "@/api/hero-sightings.api";
 import { queryKeys } from "@/features/public-api/query-keys";
 import { useRealtimeSnapshotReady } from "@/contexts/socket-context";
 import { applyGameTimerAccess } from "@/lib/game-access-cache";
@@ -32,12 +30,12 @@ export const useHeroSightings = (world: string | undefined) => {
   });
 };
 
-const EMPTY_SIGHTINGS: HeroSighting[] = [];
+const EMPTY_SIGHTINGS: HeroSightingResponseDto[] = [];
 
 // Module-level, so the combined list keeps its identity until a world's list changes.
 const combineLoadedSightings = (
-  results: readonly UseQueryResult<HeroSighting[]>[],
-): HeroSighting[] => {
+  results: readonly UseQueryResult<HeroSightingResponseDto[]>[],
+): HeroSightingResponseDto[] => {
   if (results.length === 1) return results[0]?.data ?? EMPTY_SIGHTINGS;
   const loaded = results.flatMap((result) => result.data ?? []);
 
@@ -50,11 +48,13 @@ const combineLoadedSightings = (
  */
 export const useLoadedHeroSightings = (
   worlds: readonly string[],
-): HeroSighting[] =>
+): HeroSightingResponseDto[] =>
   useQueries({
-    queries: worlds.map((world): UseQueryOptions<HeroSighting[]> => ({
-      queryKey: queryKeys.heroSightings(world),
-      queryFn: skipToken,
-    })),
+    queries: worlds.map(
+      (world): UseQueryOptions<HeroSightingResponseDto[]> => ({
+        queryKey: queryKeys.heroSightings(world),
+        queryFn: skipToken,
+      }),
+    ),
     combine: combineLoadedSightings,
   });
