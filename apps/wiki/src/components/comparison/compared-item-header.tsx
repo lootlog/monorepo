@@ -10,7 +10,7 @@ import { UpgradeSelect } from "@/components/common/upgrade-select";
 import { EquipButton } from "@/components/equipment/equip-button";
 import { useItemComparison } from "@/contexts/item-comparison-context";
 import { t } from "@/i18n/messages";
-import { itemPageParams } from "@/lib/catalog-links";
+import { itemPageParams, itemPageSearch } from "@/lib/catalog-links";
 import { isUpgradable, type ItemUpgrade } from "@lootlog/domain/item-upgrade";
 
 type ComparedItemHeaderProps = {
@@ -30,7 +30,7 @@ export function ComparedItemHeader({ item, upgrade }: ComparedItemHeaderProps) {
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <CatalogItemTile item={item} />
+        <CatalogItemTile item={item} upgrade={upgrade} />
         <div className="flex gap-1">
           <EquipButton item={item} upgrade={upgrade} compact />
           <Button
@@ -49,6 +49,7 @@ export function ComparedItemHeader({ item, upgrade }: ComparedItemHeaderProps) {
         <Link
           to="/items/$itemSlug"
           params={itemPageParams(item)}
+          search={itemPageSearch(upgrade)}
           title={item.name}
           className={cn(
             "line-clamp-2 text-sm font-semibold [overflow-wrap:anywhere] outline-none hover:underline focus-visible:underline",

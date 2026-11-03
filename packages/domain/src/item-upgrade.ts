@@ -839,38 +839,31 @@ export const itemStatAttackSpeed = (stat: string) =>
     ),
   );
 
-/** The attack speed an item adds at +5 and the +5 bonus it takes for it. */
-export type UpgradedAttackSpeed = {
-  attackSpeed: number;
-  bonus?: UpgradeBonusKey;
-};
-
 /**
- * The most attack speed the item adds at +5 (`itemAttackSpeed`), with the +5
- * bonus that gives it: weapons can draw attack speed, every piece agility and
- * all attributes. An item the game does not upgrade adds what it dropped with.
+ * The upgrade at which the item adds the most attack speed
+ * (`itemAttackSpeed`): +5 with the bonus that gives it, as weapons can draw
+ * attack speed and every piece agility and all attributes. An item the game
+ * does not upgrade stays as dropped.
  */
-export const upgradedAttackSpeed = (
-  item: UpgradableItem,
-): UpgradedAttackSpeed => {
-  if (!isUpgradable(item))
-    return { attackSpeed: itemStatAttackSpeed(item.stat) };
+export const attackSpeedUpgrade = (item: UpgradableItem): ItemUpgrade => {
+  if (!isUpgradable(item)) return NO_UPGRADE;
 
   const pool = bonusPool(item) ?? [];
 
-  const candidates = [
-    undefined,
-    ...ATTACK_SPEED_BONUSES.filter((key) => pool.includes(key)),
-  ].map((bonus) => ({
-    bonus,
-    attackSpeed: itemStatAttackSpeed(
-      upgradeItemStat(item, { level: MAX_UPGRADE_LEVEL, bonus }),
+  const upgrades: ItemUpgrade[] = [
+    { level: MAX_UPGRADE_LEVEL },
+    ...ATTACK_SPEED_BONUSES.flatMap((bonus): ItemUpgrade[] =>
+      pool.includes(bonus) ? [{ level: MAX_UPGRADE_LEVEL, bonus }] : [],
     ),
-  }));
+  ];
 
-  const best = maxBy(candidates, ({ attackSpeed }) => attackSpeed);
-
-  return best?.bonus
-    ? { attackSpeed: best.attackSpeed, bonus: best.bonus }
-    : { attackSpeed: best?.attackSpeed ?? 0 };
+  return (
+    maxBy(upgrades, (upgrade) =>
+      itemStatAttackSpeed(upgradeItemStat(item, upgrade)),
+    ) ?? NO_UPGRADE
+  );
 };
+
+/** The most attack speed the item adds, at its `attackSpeedUpgrade`. */
+export const upgradedAttackSpeed = (item: UpgradableItem) =>
+  itemStatAttackSpeed(upgradeItemStat(item, attackSpeedUpgrade(item)));

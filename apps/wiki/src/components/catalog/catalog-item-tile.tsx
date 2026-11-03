@@ -6,15 +6,33 @@ import { useWornItem } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
+import {
+  type ItemUpgrade,
+  NO_UPGRADE,
+  upgradeItemStat,
+} from "@lootlog/domain/item-upgrade";
+
+type CatalogItemTileProps = {
+  item: CatalogItemDtoOutput;
+  /** The upgrade the tooltip shows the item at. */
+  upgrade?: ItemUpgrade;
+};
 
 /**
- * A catalog item's tile. Its tooltip sets the item beside the one the set
- * wears in its slot, unless that is this very item as dropped.
+ * A catalog item's tile. Its tooltip sets the item at its upgrade beside the
+ * one the set wears in its slot, unless that is this very item at the same
+ * upgrade.
  */
-export function CatalogItemTile({ item }: { item: CatalogItemDtoOutput }) {
+export function CatalogItemTile({
+  item,
+  upgrade = NO_UPGRADE,
+}: CatalogItemTileProps) {
   const worn = useWornItem(findEquipmentSlot(item.type)?.id);
 
-  const isSameItem = worn?.item.id === item.id && worn.upgrade.level === 0;
+  const isSameItem =
+    worn?.item.id === item.id &&
+    worn.upgrade.level === upgrade.level &&
+    worn.upgrade.bonus === upgrade.bonus;
 
   return (
     <ItemTile
@@ -22,7 +40,7 @@ export function CatalogItemTile({ item }: { item: CatalogItemDtoOutput }) {
         icon: item.icon,
         name: item.name,
         rarity: resolveItemRarity(item.rarity),
-        stat: item.stat,
+        stat: upgradeItemStat(item, upgrade),
         type: item.type,
       }}
       comparison={
