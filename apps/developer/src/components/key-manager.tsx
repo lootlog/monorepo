@@ -190,9 +190,12 @@ export function KeyManager() {
   }
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-8">
       {secret && (
-        <Card aria-labelledby="new-key-secret">
+        <Card
+          aria-labelledby="new-key-secret"
+          className="border-signal-ready/40"
+        >
           <CardHeader>
             <CardTitle>
               <h2
@@ -207,7 +210,7 @@ export function KeyManager() {
             <CardDescription>{t.secret}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <code className="block break-all rounded-lg border bg-background p-4 text-sm text-primary">
+            <code className="block break-all rounded-lg border border-border bg-sidebar p-4 font-mono text-sm text-signal-ready">
               {secret}
             </code>
             <div className="flex flex-wrap gap-2">
@@ -231,8 +234,8 @@ export function KeyManager() {
       {loadState === "loading" && (
         <div role="status" className="flex flex-col gap-4">
           <span className="sr-only">{t.loading}</span>
-          <Skeleton className="h-64 w-full rounded-lg" />
-          <Skeleton className="h-32 w-full rounded-lg" />
+          <Skeleton className="h-10 w-full rounded-lg" />
+          <Skeleton className="h-48 w-full rounded-xl" />
         </div>
       )}
       {loadState === "error" && (
@@ -251,7 +254,7 @@ export function KeyManager() {
         </Alert>
       )}
       {loadState === "ready" && (
-        <div className="flex min-w-0 flex-col gap-8">
+        <div className="flex min-w-0 flex-col gap-6">
           <Sheet
             open={createOpen}
             onOpenChange={(open) => {

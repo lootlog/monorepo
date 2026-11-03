@@ -1,0 +1,72 @@
+/* Loaded only by the API reference route, so other pages skip Scalar's CSS. */
+@import "@scalar/api-reference-react/style.css";
+
+.reference-page {
+  --scalar-custom-header-height: var(--portal-header-height);
+  min-width: 0;
+}
+
+.reference-page .scalar-app,
+.reference-page .dark-mode {
+  --scalar-font: var(--font-sans);
+  --scalar-font-code: var(--font-mono);
+  --scalar-radius: var(--radius-md);
+  --scalar-radius-lg: var(--radius-lg);
+  --scalar-radius-xl: var(--radius-xl);
+  --scalar-background-1: var(--background);
+  --scalar-background-2: var(--card);
+  --scalar-background-3: var(--secondary);
+  --scalar-background-accent: color-mix(
+    in oklab,
+    var(--primary) 14%,
+    transparent
+  );
+  --scalar-color-1: var(--foreground);
+  --scalar-color-2: var(--text-supporting);
+  --scalar-color-3: var(--muted-foreground);
+  --scalar-color-accent: var(--portal-link);
+  --scalar-color-red: var(--signal-alert);
+  --scalar-color-green: var(--signal-ready);
+  --scalar-color-blue: #7d9bff;
+  --scalar-color-orange: var(--signal-timer);
+  --scalar-color-yellow: #e6ce80;
+  --scalar-color-purple: #b79bff;
+  --scalar-link-color: var(--portal-link);
+  --scalar-link-color-hover: var(--foreground);
+  --scalar-border-color: var(--separator);
+  --scalar-button-1: var(--primary);
+  --scalar-button-1-hover: color-mix(in oklab, var(--primary) 90%, white);
+  --scalar-button-1-color: var(--primary-foreground);
+  --scalar-sidebar-background-1: var(--sidebar);
+  --scalar-sidebar-border-color: var(--sidebar-border);
+  --scalar-sidebar-color-1: var(--foreground);
+  --scalar-sidebar-color-2: var(--muted-foreground);
+  --scalar-sidebar-color-active: var(--foreground);
+  --scalar-sidebar-item-hover-background: color-mix(
+    in oklab,
+    var(--primary) 10%,
+    transparent
+  );
+  --scalar-sidebar-item-hover-color: var(--foreground);
+  --scalar-sidebar-item-active-background: color-mix(
+    in oklab,
+    var(--primary) 14%,
+    transparent
+  );
+  --scalar-sidebar-item-active-color: var(--foreground);
+  --scalar-sidebar-search-background: var(--background);
+  --scalar-sidebar-search-border-color: var(--border);
+  --scalar-sidebar-search-color: var(--muted-foreground);
+}
+
+/* Heading anchor buttons sit after the title without overlapping it. */
+.reference-page [class~="group/heading"] {
+  display: inline-block;
+  max-inline-size: 100%;
+  padding-inline-end: 2rem;
+}
+
+.reference-page .references-rendered :is(h1, h2) {
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}

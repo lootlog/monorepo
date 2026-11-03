@@ -1,17 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
 import { getPortalEnvironment } from "~/lib/environment";
+import {
+  referenceDocumentSchema,
+  presentReferenceDocument,
+} from "~/lib/reference-document";
 import main from "@lootlog/sdk/openapi/main.json";
 import activity from "@lootlog/sdk/openapi/activity.json";
 import battlelog from "@lootlog/sdk/openapi/battlelog.json";
 import search from "@lootlog/sdk/openapi/search.json";
 
-const specs = { main, activity, battlelog, search };
-
-const schema = z.looseObject({
-  openapi: z.string(),
-  paths: z.record(z.string(), z.unknown()),
-});
+const specs = {
+  main: referenceDocumentSchema.parse(main),
+  activity: referenceDocumentSchema.parse(activity),
+  battlelog: referenceDocumentSchema.parse(battlelog),
+  search: referenceDocumentSchema.parse(search),
+};
 
 export const Route = createFileRoute("/openapi/$service")({
   server: {
@@ -34,10 +37,11 @@ export const Route = createFileRoute("/openapi/$service")({
         const environment = getPortalEnvironment(host);
 
         return Response.json(
-          {
-            ...schema.parse(specs[service]),
-            servers: [{ url: environment[service] }],
-          },
+          presentReferenceDocument(
+            specs[service],
+            service,
+            environment[service],
+          ),
           { headers: { "Cache-Control": "no-store" } },
         );
       },

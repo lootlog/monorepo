@@ -1,23 +1,31 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { createAuthClient } from "better-auth/react";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Button } from "@lootlog/ui/components/button";
-import {
-  Card,
-  CardHeader,
-  CardDescription,
-  CardContent,
-} from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { KeyManager } from "~/components/key-manager";
-import { KeysSidebar } from "~/components/keys-sidebar";
+import { PortalFooter } from "~/components/portal-footer";
 import { getPortalEnvironment } from "~/lib/environment";
+import { pageHead } from "~/lib/seo";
 import { portalText as t } from "~/lib/translations";
+
+const guides = [
+  { slug: "keys", label: t.keyGuide },
+  { slug: "http", label: t.httpGuide },
+  { slug: "errors", label: t.errorsGuide },
+  { slug: "sdk", label: t.sdk },
+] as const;
 
 export const Route = createFileRoute("/keys")({
   ssr: false,
-  head: () => ({ meta: [{ name: "robots", content: "noindex, follow" }] }),
+  head: () =>
+    pageHead({
+      path: "/keys",
+      title: t.keys,
+      description: t.keysDescriptionMeta,
+      noindex: true,
+    }),
   component: KeysPage,
 });
 
@@ -66,48 +74,42 @@ function KeysPage() {
   }
 
   return (
-    <div className="keys-layout">
-      <KeysSidebar signedIn={Boolean(session.data)} />
-      <main className="mx-auto w-full max-w-6xl flex flex-col gap-10 px-5 py-10 md:px-10 md:py-14">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex max-w-2xl flex-col gap-3">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              {t.developerTools}
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              {t.keys}
-            </h1>
-            <p className="text-base leading-relaxed text-muted-foreground">
-              {t.keysDescription}
-            </p>
-          </div>
-          {session.data && (
-            <Button
-              variant="ghost"
-              disabled={pending}
-              onClick={() => void logout()}
-            >
-              {t.logout}
-            </Button>
+    <>
+      <div className="portal-page grid gap-10 lg:grid-cols-[minmax(0,1fr)_14rem] lg:gap-14">
+        <main className="flex min-w-0 flex-col gap-8">
+          <header className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex max-w-2xl flex-col gap-2">
+              <h1 className="text-3xl font-semibold tracking-[-0.03em]">
+                {t.keys}
+              </h1>
+              <p className="text-base text-pretty text-muted-foreground">
+                {t.keysDescription}
+              </p>
+            </div>
+            {session.data && (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={pending}
+                onClick={() => void logout()}
+              >
+                {t.logout}
+              </Button>
+            )}
+          </header>
+          {session.isPending && (
+            <div role="status" className="flex flex-col gap-4">
+              <span className="sr-only">{t.loading}</span>
+              <Skeleton className="h-10 w-full rounded-lg" />
+              <Skeleton className="h-48 w-full rounded-xl" />
+            </div>
           )}
-        </div>
-        {session.isPending && (
-          <div role="status">
-            <span className="sr-only">{t.loading}</span>
-            <Skeleton className="h-64 w-full rounded-lg" />
-          </div>
-        )}
-        {session.error && (
-          <Alert variant="destructive">
-            <AlertDescription>{t.error}</AlertDescription>
-          </Alert>
-        )}
-        {!session.isPending && !session.data && (
-          <Card className="max-w-xl">
-            <CardHeader>
-              <CardDescription>{t.signedOut}</CardDescription>
-            </CardHeader>
-            <CardContent>
+          {!session.isPending && !session.data && (
+            <section className="flex max-w-xl flex-col items-start gap-4 rounded-xl border border-border bg-card p-6">
+              <div className="flex flex-col gap-1.5">
+                <h2 className="text-base font-semibold">{t.signInTitle}</h2>
+                <p className="text-sm text-muted-foreground">{t.signedOut}</p>
+              </div>
               <Button
                 loading={pending}
                 disabled={pending}
@@ -115,16 +117,38 @@ function KeysPage() {
               >
                 {t.login}
               </Button>
-            </CardContent>
-          </Card>
-        )}
-        {session.data && <KeyManager key={session.data.user.id} />}
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{t.error}</AlertDescription>
-          </Alert>
-        )}
-      </main>
-    </div>
+            </section>
+          )}
+          {session.data && <KeyManager key={session.data.user.id} />}
+          {(error || (session.error && !session.data)) && (
+            <Alert variant="destructive">
+              <AlertDescription>{t.error}</AlertDescription>
+            </Alert>
+          )}
+        </main>
+        <aside aria-labelledby="key-guides" className="lg:pt-2">
+          <h2
+            id="key-guides"
+            className="mb-3 text-xs font-semibold text-muted-foreground"
+          >
+            {t.guides}
+          </h2>
+          <ul className="flex flex-col">
+            {guides.map((guide) => (
+              <li key={guide.slug}>
+                <Link
+                  to="/docs/$"
+                  params={{ _splat: guide.slug }}
+                  className="block rounded-md py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
+                >
+                  {guide.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      </div>
+      <PortalFooter />
+    </>
   );
 }
