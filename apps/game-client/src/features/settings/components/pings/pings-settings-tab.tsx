@@ -3,7 +3,7 @@ import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
-import { useBattlePingPreferences } from "@/features/settings/persistence/use-battle-ping-preferences";
+import { useAccountEnabledFlag } from "@/features/settings/persistence/use-account-enabled-flag";
 import {
   useCurrentGameAccountPreferences,
   useUpdateGameAccountPreferences,
@@ -18,7 +18,7 @@ export const PingsSettingsTab: FC = () => {
   const { t } = useTranslation();
   const { data: accountPreferences } = useCurrentGameAccountPreferences();
   const updateAccountPreferences = useUpdateGameAccountPreferences();
-  const battlePings = useBattlePingPreferences();
+  const battlePings = useAccountEnabledFlag("battlePings");
 
   return (
     <SettingsTabLayout>

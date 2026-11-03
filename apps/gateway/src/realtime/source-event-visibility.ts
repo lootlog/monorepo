@@ -104,6 +104,32 @@ const canReadLootEvent = (
   return canReadLootSource(session, guild, npcs, false);
 };
 
+/**
+ * Whether the session decodes an event that only game clients offering its
+ * capability understand; older game clients close the socket on an event
+ * type they cannot decode. `undefined` for every other event.
+ */
+const decodesGameClientEvent = (
+  session: SessionData,
+  event: Event,
+  isTeamBattlePing: boolean,
+): boolean | undefined => {
+  switch (event.type) {
+    case "notification.volunteer":
+      return session.supportsNotificationVolunteer === true;
+    case "battle-ping.received":
+      return isTeamBattlePing
+        ? session.supportsTeamBattlePings === true
+        : session.supportsBattlePings === true;
+    case "loot-split.received":
+      return session.supportsLootSplit === true;
+    case "air-tag.map-threat-updated":
+      return session.supportsAirTagMapThreats === true;
+    default:
+      return undefined;
+  }
+};
+
 export const prepareSourceEventVisibility = (
   event: Event,
   sourceNpcs: readonly LootVisibilityNpc[] = [],
@@ -127,23 +153,15 @@ export const prepareSourceEventVisibility = (
   return (session: SessionData, guild: UserGuildData | undefined): boolean => {
     if (!canReadApiKey(session)) return false;
 
-    if (event.type === "notification.volunteer")
-      return session.supportsNotificationVolunteer === true;
-
     if (
       event.type === "party-gathering.state-updated" &&
       !session.supportsPartyGatheringState
     )
       return false;
 
-    // Older game clients close the socket on an event type they cannot decode.
-    if (event.type === "battle-ping.received")
-      return isTeamBattlePing
-        ? session.supportsTeamBattlePings === true
-        : session.supportsBattlePings === true;
+    const decodes = decodesGameClientEvent(session, event, isTeamBattlePing);
 
-    if (event.type === "air-tag.map-threat-updated")
-      return session.supportsAirTagMapThreats === true;
+    if (decodes !== undefined) return decodes;
 
     if (
       event.type === "npc-presence.updated" &&

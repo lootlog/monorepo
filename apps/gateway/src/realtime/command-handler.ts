@@ -13,6 +13,7 @@ import {
   REALTIME_GLOBAL_CHAT_CAPABILITY,
   REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_LOOT_SPLIT_CAPABILITY,
   REALTIME_PING_CAPABILITY,
   REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_SERVER_CLOSE_CODES,
@@ -38,6 +39,7 @@ import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import type { AirTagService } from "#src/realtime/air-tag-service";
 import type { BattlePingService } from "#src/realtime/battle-ping-service";
+import type { LootSplitService } from "#src/realtime/loot-split-service";
 import type { NpcPresenceService } from "#src/realtime/npc-presence-service";
 import type {
   NpcPresenceReportAck,
@@ -57,6 +59,7 @@ import {
   getScopeKey,
   GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION,
   GLOBAL_CHAT_FEDERATION_VERSION,
+  LOOT_SPLIT_FEDERATION_VERSION,
   PARTY_GATHERING_STATE_FEDERATION_VERSION,
   type RealtimeHub,
 } from "#src/realtime/realtime-hub";
@@ -168,6 +171,7 @@ const invalidLegacyPayloadResponse = Function.compose(
       type: Schema.Literals([
         "map-ping.send",
         "battle-ping.send",
+        "loot-split.send",
         "air-tag.observation",
       ]),
     }),
@@ -182,6 +186,18 @@ const invalidLegacyPayloadResponse = Function.compose(
     }),
   }),
 );
+
+/** The only commands an API key integration may send. */
+const API_KEY_COMMANDS: ReadonlySet<Command["type"]> = new Set([
+  "session.join",
+  "connection.ping",
+  "presence.fetch",
+  "subscription.subscribe",
+  "subscription.unsubscribe",
+]);
+
+const canApiKeySend = (session: SessionData, type: Command["type"]) =>
+  !session.apiKeyAccess || API_KEY_COMMANDS.has(type);
 
 /** Global chat capabilities the client decodes and every replica supports. */
 const globalChatCapabilities = (
@@ -234,6 +250,7 @@ export class CommandHandler {
     private readonly activity: Pick<ActivityPublisher, "publish">,
     private readonly mapPings: Pick<MapPingService, "send">,
     private readonly battlePings: Pick<BattlePingService, "send">,
+    private readonly lootSplits: Pick<LootSplitService, "send">,
     private readonly airTags: Pick<
       AirTagService,
       | "updateSubscription"
@@ -745,16 +762,7 @@ export class CommandHandler {
         }),
       );
 
-    if (
-      socket.data.apiKeyAccess &&
-      ![
-        "session.join",
-        "connection.ping",
-        "presence.fetch",
-        "subscription.subscribe",
-        "subscription.unsubscribe",
-      ].includes(command.type)
-    )
+    if (!canApiKeySend(socket.data, command.type))
       return Effect.fail(new OrganizationAccessDenied());
 
     const fromPromise = <A>(evaluate: () => Promise<A>) =>
@@ -904,6 +912,12 @@ export class CommandHandler {
         return requireJoined.pipe(
           Effect.andThen(
             fromPromise(() => this.battlePings.send(socket, command.data)),
+          ),
+        );
+      case "loot-split.send":
+        return requireJoined.pipe(
+          Effect.andThen(
+            fromPromise(() => this.lootSplits.send(socket, command.data)),
           ),
         );
       case "air-tag.subscription":
@@ -1145,6 +1159,12 @@ export class CommandHandler {
             hub.clusterFederationVersion >=
               PARTY_GATHERING_STATE_FEDERATION_VERSION
               ? [REALTIME_PARTY_GATHERING_STATE_CAPABILITY]
+              : []),
+            // An older replica drops the federated event, so a split's
+            // participants on it would miss the choices.
+            ...(!socket.data.apiKeyAccess &&
+            hub.clusterFederationVersion >= LOOT_SPLIT_FEDERATION_VERSION
+              ? [REALTIME_LOOT_SPLIT_CAPABILITY]
               : []),
             ...globalChatCapabilities(
               socket.data,

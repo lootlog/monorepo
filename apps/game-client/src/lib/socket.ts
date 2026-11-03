@@ -2,6 +2,7 @@ import { isString } from "es-toolkit";
 import {
   hasRealtimeCapabilities,
   isMapPingAcknowledgement,
+  isLootSplitAcknowledgement,
   isAirTagSubscriptionAcknowledgement,
   isAirTagObservationAcknowledgement,
   isAirTagMapThreatsFetchResponse,
@@ -10,6 +11,7 @@ import {
   isPresenceFetchResult,
 } from "@lootlog/protocol/realtime/codec";
 import type { AirTagMapThreatEvent } from "@lootlog/schema/air-tag";
+import type { LootSplitAck } from "@lootlog/schema/loot-split";
 import type {
   NpcPresenceReport,
   NpcPresenceReportAck,
@@ -24,11 +26,13 @@ import {
   REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+  REALTIME_LOOT_SPLIT_CAPABILITY,
   type AirTagSubscriptionCommand,
   type AirTagObservationCommand,
   type AirTagSubscriptionAck,
   type AirTagObservationAck,
   type BattlePingCommand,
+  type LootSplitCommand,
   type MapPingCommand,
   type MapPingAckSchema,
 } from "@lootlog/protocol/realtime";
@@ -159,6 +163,7 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "party-ready-room.updated": GatewayEvent.PARTY_READY_ROOM_UPDATE,
   "map-ping.received": GatewayEvent.MAP_PING_RECEIVE,
   "battle-ping.received": GatewayEvent.BATTLE_PING_RECEIVE,
+  "loot-split.received": GatewayEvent.LOOT_SPLIT_RECEIVE,
   "air-tag.updated": GatewayEvent.AIR_TAG_UPDATE,
   "air-tag.scope-updated": GatewayEvent.AIR_TAG_SCOPE_UPDATE,
   "air-tag.map-threat-updated": GatewayEvent.AIR_TAG_MAP_THREAT_UPDATE,
@@ -179,6 +184,7 @@ type SocketCommandPayloads = {
   };
   [GatewayEvent.MAP_PING_SEND]: typeof MapPingCommand.fields.data.Type;
   [GatewayEvent.BATTLE_PING_SEND]: typeof BattlePingCommand.fields.data.Type;
+  [GatewayEvent.LOOT_SPLIT_SEND]: typeof LootSplitCommand.fields.data.Type;
   [GatewayEvent.AIR_TAG_SUBSCRIPTION]: typeof AirTagSubscriptionCommand.fields.data.Type;
   [GatewayEvent.AIR_TAG_OBSERVATION]: typeof AirTagObservationCommand.fields.data.Type;
 };
@@ -187,6 +193,7 @@ type SocketCommandResponses = {
   [GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH]: PlayerPresenceAckPayload;
   [GatewayEvent.MAP_PING_SEND]: typeof MapPingAckSchema.Type;
   [GatewayEvent.BATTLE_PING_SEND]: typeof MapPingAckSchema.Type;
+  [GatewayEvent.LOOT_SPLIT_SEND]: LootSplitAck;
   [GatewayEvent.AIR_TAG_SUBSCRIPTION]: typeof AirTagSubscriptionAck.Type;
   [GatewayEvent.AIR_TAG_OBSERVATION]: typeof AirTagObservationAck.Type;
 };
@@ -302,6 +309,11 @@ export class AppSocket {
   /** Whether the joined gateway accepts `battle-ping.send`; older gateways close the socket on it. */
   supportsBattlePings(): boolean {
     return this.capabilities.has(REALTIME_BATTLE_PING_CAPABILITY);
+  }
+
+  /** Whether the joined gateway accepts `loot-split.send`; older gateways close the socket on it. */
+  supportsLootSplit(): boolean {
+    return this.capabilities.has(REALTIME_LOOT_SPLIT_CAPABILITY);
   }
 
   /** Whether the joined gateway accepts team battle pings such as `quick-fight`. */
@@ -794,6 +806,16 @@ export class AppSocket {
       return response;
     }
 
+    if (event === GatewayEvent.LOOT_SPLIT_SEND) {
+      if (!payload) throw new Error("Missing loot-split.send payload");
+      const response = await this.realtime.request("loot-split.send", payload);
+
+      if (!isLootSplitAcknowledgement(response))
+        throw new Error("Invalid loot-split.send response");
+
+      return response;
+    }
+
     if (event === GatewayEvent.AIR_TAG_SUBSCRIPTION) {
       if (!payload) throw new Error("Missing air-tag.subscription payload");
       const data = payload;
@@ -904,6 +926,7 @@ export class AppSocket {
       const payload =
         event.type === "map-ping.received" ||
         event.type === "battle-ping.received" ||
+        event.type === "loot-split.received" ||
         event.type === "air-tag.updated" ||
         event.type === "air-tag.map-threat-updated" ||
         event.type === "npc-presence.updated" ||

@@ -57,18 +57,27 @@ export const getPingSender = (
   };
 };
 
-/** Every Organization in which the sender may share pings for its current map. */
+/**
+ * Every Organization in which the sender may share pings with players of its
+ * world, on one map or, without `mapId`, on any. Loot split choices ride the
+ * same scope: a new topic would reach older clients in `session.joined`, which
+ * they cannot decode.
+ */
 export const getPingScopes = (
   socket: GatewaySocket,
-  sender: PingSender,
+  location: { readonly world: string; readonly mapId?: number },
 ): SubscriptionScope[] =>
   socket.data.guilds.flatMap(({ guild }) => {
-    const scope = {
-      topic: "map.pings" as const,
+    const worldScope: SubscriptionScope = {
+      topic: "map.pings",
       organizationId: guild.id,
-      world: sender.world,
-      mapId: sender.mapId,
+      world: location.world,
     };
+
+    const scope =
+      location.mapId === undefined
+        ? worldScope
+        : { ...worldScope, mapId: location.mapId };
 
     return canSubscribe(socket.data, scope) ? [scope] : [];
   });

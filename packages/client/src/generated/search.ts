@@ -67,6 +67,13 @@ export type CatalogNpcDtoOutputLocationsItem = {
   share: number;
 };
 
+export type CatalogNpcDtoOutputFormerLevelsItem = {
+  /** The level it had. */
+  lvl: number;
+  /** The UTC day, as `YYYY-MM-DD`, its next level was first recorded. */
+  until: string;
+};
+
 /**
  * A Margonem NPC in the public catalog
  */
@@ -81,6 +88,8 @@ export interface CatalogNpcDtoOutput {
   gameVersion: CatalogNpcDtoOutputGameVersion;
   /** Maps the NPC is fought on, most fought first, from its latest 1000 recorded fights; maps under 1% of them are left out. Lootlog recomputes them daily, so an NPC first seen today may have none yet. */
   locations: CatalogNpcDtoOutputLocationsItem[];
+  /** Levels the NPC had before the game changed it, oldest first. Lootlog recomputes them daily from recorded fights and leaves out NPCs whose level follows the player's. */
+  formerLevels: CatalogNpcDtoOutputFormerLevelsItem[];
 }
 
 /**

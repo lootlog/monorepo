@@ -5,6 +5,7 @@ import { NpcTile } from "@lootlog/ui/components/npc-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { NpcDrops } from "@/components/npcs/npc-drops";
+import { NpcFormerLevels } from "@/components/npcs/npc-former-levels";
 import { NpcLocations } from "@/components/npcs/npc-locations";
 import { t } from "@/i18n/messages";
 import { npcSummary } from "@/lib/npc-summary";
@@ -83,6 +84,7 @@ function NpcRoute() {
                   <p className="text-sm text-muted-foreground">
                     {npcSummary(npc)}
                   </p>
+                  <NpcFormerLevels formerLevels={npc.formerLevels} />
                 </>
               ) : (
                 <>
