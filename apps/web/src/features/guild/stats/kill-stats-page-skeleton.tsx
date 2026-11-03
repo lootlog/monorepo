@@ -21,7 +21,11 @@ export const KillStatsPageSkeleton = () => {
       </FilterBar>
       <KillStatsOverview
         isLoading
-        types={TRACKABLE_NPC_TYPES.map((type) => ({ type, kills: 0 }))}
+        types={TRACKABLE_NPC_TYPES.map((type) => ({
+          type,
+          kills: 0,
+          detail: null,
+        }))}
       />
       <StatsSectionColumns className="xl:grid-cols-2">
         <StatsLeaderboardSection
