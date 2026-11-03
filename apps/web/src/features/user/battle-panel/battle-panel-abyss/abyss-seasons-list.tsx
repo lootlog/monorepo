@@ -214,6 +214,7 @@ export function AbyssSeasonsList({
         }
         renderCellContent={(cell, content) => (
           <TableRowLinkCell
+            fill
             link={getSeasonLink(cell.row.original)}
             primary={cell.column.id === "range"}
             label={getAbyssSeasonRangeLabel(cell.row.original)}

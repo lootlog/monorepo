@@ -153,6 +153,7 @@ export function PlayerVsPlayerFullPage() {
           cellClassName="relative whitespace-nowrap align-middle"
           renderCellContent={(cell, content) => (
             <TableRowLinkCell
+              fill
               link={getBattleLink(cell.row.original.battleId)}
               primary={cell.column.id === "userWarrior"}
               label={t("battlePanel.list.openBattle")}

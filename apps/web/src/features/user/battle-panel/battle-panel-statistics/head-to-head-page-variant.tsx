@@ -191,6 +191,7 @@ export function HeadToHeadPageVariant({
 
             return link ? (
               <TableRowLinkCell
+                fill
                 link={link}
                 primary={cell.column.id === "opponentName"}
               >
