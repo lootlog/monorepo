@@ -2886,6 +2886,84 @@ paths:
                 additionalProperties: false
       description: Retrieve timers for a specific guild
       summary: Get guild timers
+  /guilds/{guildId}/timers/heroes:
+    get:
+      tags:
+        - timers
+      operationId: TimersController_getHeroTimers
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            example: guild_123
+          required: true
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimerResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Retrieve the latest timer of every hero and event hero on one Organization world, including timers whose spawn window has ended or that were deleted. Results omit timers the caller's roles cannot view.
+      summary: Get the latest hero timers
   /guilds/{guildId}/timers/npcs/search:
     get:
       tags:
