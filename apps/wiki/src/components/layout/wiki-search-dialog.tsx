@@ -1,11 +1,6 @@
-import { keepPreviousData } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowRight, CircleAlert, Search, SearchX } from "lucide-react";
 import { useState } from "react";
-import {
-  useCatalogControllerGetItems,
-  useCatalogControllerGetNpcs,
-} from "@lootlog/client/search";
 import { npcIconUrl } from "@lootlog/domain/npc-icon";
 import {
   CommandDialog,
@@ -18,26 +13,21 @@ import { ItemImage } from "@lootlog/ui/components/item-image";
 import { ITEM_RARITY_STYLES } from "@lootlog/ui/components/item-tile-details";
 import { Kbd } from "@lootlog/ui/components/kbd";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { cn } from "cn";
 import { HighlightedText } from "@/components/highlighted-text";
 import { t } from "@/i18n/messages";
 import {
-  itemPageParams,
-  npcPageParams,
-  WIKI_GAME_VERSION,
-} from "@/lib/catalog-links";
+  MIN_SEARCH_QUERY_LENGTH,
+  useWikiSearchHits,
+} from "@/hooks/use-wiki-search-hits";
+import { itemPageParams, npcPageParams } from "@/lib/catalog-links";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import {
   EMPTY_ITEMS_SEARCH,
   WIKI_NAVIGATION,
 } from "@/navigation/wiki-navigation";
-
-const MIN_QUERY_LENGTH = 2;
-
-const HITS_PER_GROUP = 5;
 
 const ROW_CLASS_NAME = "min-h-12 gap-3 rounded-lg px-2.5 py-1.5";
 
@@ -59,42 +49,28 @@ export function WikiSearchDialog({
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [query, setQuery] = useState("");
+  const [wasOpen, setWasOpen] = useState(open);
+
+  // Every way of closing, the Ctrl+K toggle included, starts the next search
+  // from an empty field.
+  if (open !== wasOpen) {
+    setWasOpen(open);
+
+    if (!open) setQuery("");
+  }
+
   const trimmedQuery = query.trim();
-  const debouncedQuery = useDebounce(trimmedQuery, 150);
-  const isSearching = debouncedQuery.length >= MIN_QUERY_LENGTH;
-  const showsHits = trimmedQuery.length >= MIN_QUERY_LENGTH;
+  const showsHits = trimmedQuery.length >= MIN_SEARCH_QUERY_LENGTH;
 
-  const queryOptions = {
-    enabled: open && isSearching,
-    placeholderData: keepPreviousData,
-  };
-
-  const items = useCatalogControllerGetItems(
-    {
-      search: debouncedQuery,
-      gameVersion: WIKI_GAME_VERSION,
-      limit: HITS_PER_GROUP,
-    },
-    { query: queryOptions },
-  );
-
-  const npcs = useCatalogControllerGetNpcs(
-    {
-      search: debouncedQuery,
-      gameVersion: WIKI_GAME_VERSION,
-      limit: HITS_PER_GROUP,
-    },
-    { query: queryOptions },
-  );
-
-  const itemHits = items.data?.hits ?? [];
-  const npcHits = npcs.data?.hits ?? [];
-  const isPending = items.isPending || npcs.isPending;
-
-  const isFetching =
-    items.isFetching || npcs.isFetching || debouncedQuery !== trimmedQuery;
-
-  const hasError = items.isError && npcs.isError;
+  const {
+    debouncedQuery,
+    itemHits,
+    npcHits,
+    isPending,
+    isFetching,
+    hasError,
+    isStale,
+  } = useWikiSearchHits(trimmedQuery, open);
 
   // The rows in list order; the highlight falls back to the first one when
   // new hits replace the row it was on, so Enter always opens a visible row.
@@ -113,14 +89,8 @@ export function WikiSearchDialog({
     ? selectedValue
     : (rowValues[0] ?? "");
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) setQuery("");
-
-    onOpenChange(nextOpen);
-  };
-
   const go = (navigation: () => Promise<void>) => {
-    handleOpenChange(false);
+    onOpenChange(false);
     void navigation();
   };
 
@@ -201,6 +171,10 @@ export function WikiSearchDialog({
                 <CommandItem
                   key={item.id}
                   value={`item-${item.id}`}
+                  // Hits kept from an earlier query stay visible but cannot
+                  // be opened, so Enter never leads to a row the field no
+                  // longer asks for.
+                  disabled={isStale}
                   onSelect={() =>
                     go(() =>
                       navigate({
@@ -244,6 +218,7 @@ export function WikiSearchDialog({
             })}
             <CommandItem
               value="items-all"
+              disabled={isStale}
               onSelect={() =>
                 go(() =>
                   navigate({
@@ -269,6 +244,7 @@ export function WikiSearchDialog({
               <CommandItem
                 key={npc.key}
                 value={`npc-${npc.key}`}
+                disabled={isStale}
                 onSelect={() =>
                   go(() =>
                     navigate({
@@ -300,6 +276,7 @@ export function WikiSearchDialog({
             ))}
             <CommandItem
               value="npcs-all"
+              disabled={isStale}
               onSelect={() =>
                 go(() =>
                   navigate({
@@ -326,7 +303,7 @@ export function WikiSearchDialog({
     <CommandDialog
       shouldFilter={false}
       open={open}
-      onOpenChange={handleOpenChange}
+      onOpenChange={onOpenChange}
       value={highlightedValue}
       onValueChange={setSelectedValue}
       title={t("quickSearch.title")}
