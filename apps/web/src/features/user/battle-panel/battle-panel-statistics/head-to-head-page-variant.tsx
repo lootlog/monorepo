@@ -17,7 +17,7 @@ import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/compon
 import { ResultsSurface } from "@/components/common/results-surface";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Table } from "@lootlog/ui/components/table";
-import { AlertCircle, SearchX } from "lucide-react";
+import { AlertCircle, SearchX, Swords } from "lucide-react";
 import { StatisticsFilterToolbar } from "./components/statistics-filter-toolbar";
 import { StatisticsStackedFilters } from "./components/statistics-stacked-filters";
 import {
@@ -26,6 +26,7 @@ import {
 } from "./use-head-to-head-page";
 import { RetryButton } from "@/components/common/retry-button";
 import { TableRowLinkCell } from "@/components/common/table-row-link-cell";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
 export function HeadToHeadPageVariant({
   columns,
@@ -67,6 +68,8 @@ export function HeadToHeadPageVariant({
     activeFilterChips,
     applyFilterState,
   } = useHeadToHeadPage({ columns, matchmaking, showPhFilter, season });
+
+  const clearFilters = () => applyFilterState(getResetHeadToHeadFilters());
 
   const filterProps = {
     period,
@@ -136,12 +139,22 @@ export function HeadToHeadPageVariant({
     if (!data || data.records.length === 0) {
       return (
         <div className="p-3">
-          <EmptyState
-            fill
-            icon={SearchX}
-            title={t(emptyTitleKey)}
-            description={t(emptyDescriptionKey)}
-          />
+          {activeFilterChips.length > 0 ? (
+            <EmptyState
+              fill
+              icon={SearchX}
+              title={t("battlePanel.statistics.noResults")}
+              description={t("battlePanel.statistics.noResultsDescription")}
+              action={<ClearFiltersButton onClear={clearFilters} />}
+            />
+          ) : (
+            <EmptyState
+              fill
+              icon={Swords}
+              title={t(emptyTitleKey)}
+              description={t(emptyDescriptionKey)}
+            />
+          )}
         </div>
       );
     }
@@ -222,7 +235,7 @@ export function HeadToHeadPageVariant({
         filtersLabel={t("battlePanel.filters.title")}
         chips={activeFilterChips}
         clearFiltersLabel={t("battlePanel.filters.clear")}
-        onClearFilters={() => applyFilterState(getResetHeadToHeadFilters())}
+        onClearFilters={clearFilters}
         scrollResetKey={pageIndex}
         footer={paginationFooter}
       >

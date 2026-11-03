@@ -2,10 +2,11 @@ import { EmptyState } from "@/components/common/empty-state";
 import { InfiniteListStatusRow } from "@/components/common/infinite-list-status-row";
 import { useInfiniteScrollSentinel } from "@/hooks/utils/use-infinite-scroll-sentinel";
 import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
-import { CircleAlert, Skull } from "lucide-react";
+import { CircleAlert, SearchX, Skull } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { RetryButton } from "@/components/common/retry-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
 type EventHistoryResultsProps = {
   /** The page's scroll viewport, which the next page loads against. */
@@ -20,6 +21,8 @@ type EventHistoryResultsProps = {
   fetchNextPage: () => void;
   onRetry: () => void;
   isRetrying?: boolean;
+  /** Set while a hero tab narrows the kills, to go back to all of them. */
+  onShowAllHeroes?: () => void;
   /** Stands in for the kills while the first page loads. */
   skeleton: ReactNode;
   /** The loaded kills, as a table or as tiles on phones. */
@@ -43,6 +46,7 @@ export const EventHistoryResults = ({
   fetchNextPage,
   onRetry,
   isRetrying = false,
+  onShowAllHeroes,
   skeleton,
   children,
 }: EventHistoryResultsProps) => {
@@ -85,7 +89,22 @@ export const EventHistoryResults = ({
   if (isEmpty && !hasNextPage) {
     return (
       <div className="p-3">
-        <EmptyState fill icon={Skull} title={t("events.kills.noKills")} />
+        {onShowAllHeroes ? (
+          <EmptyState
+            fill
+            icon={SearchX}
+            title={t("events.kills.noHeroKills")}
+            description={t("events.kills.noHeroKillsDescription")}
+            action={
+              <ClearFiltersButton
+                onClear={onShowAllHeroes}
+                label={t("events.kills.showAllHeroes")}
+              />
+            }
+          />
+        ) : (
+          <EmptyState fill icon={Skull} title={t("events.kills.noKills")} />
+        )}
       </div>
     );
   }

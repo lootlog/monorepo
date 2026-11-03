@@ -32,6 +32,7 @@ type MemberKillsListProps = {
   fetchNextPage: () => void;
   onRetry: () => void;
   isRetrying?: boolean;
+  onShowAllHeroes?: () => void;
 };
 
 const HEAD_CLASS_NAMES = new Map([
@@ -81,6 +82,7 @@ export const MemberKillsList = ({
   fetchNextPage,
   onRetry,
   isRetrying,
+  onShowAllHeroes,
 }: MemberKillsListProps) => {
   const { t } = useTranslation();
   const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
@@ -129,6 +131,7 @@ export const MemberKillsList = ({
       fetchNextPage={fetchNextPage}
       onRetry={onRetry}
       isRetrying={isRetrying}
+      onShowAllHeroes={onShowAllHeroes}
       skeleton={<MemberKillRowsSkeleton />}
     >
       {!usesTable ? (

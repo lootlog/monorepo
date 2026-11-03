@@ -89,7 +89,9 @@
   },
   "list": {
     "empty": "Brak walk",
-    "emptyDescription": "Nie znaleziono żadnych walk spełniających kryteria wyszukiwania",
+    "emptyDescription": "Nowe walki pojawią się tutaj automatycznie.",
+    "noResults": "Brak pasujących walk",
+    "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej walk.",
     "loadError": "Nie udało się pobrać walk",
     "showingBattles": "Pokazano {{from}}-{{to}} z {{total}}",
     "openBattle": "Otwórz walkę",
@@ -322,11 +324,11 @@
     "directMatchups": {
       "title": "Bilans z przeciwnikami",
       "emptyTitle": "Brak bilansów",
-      "emptyDescription": "Nie znaleziono przeciwników dla wybranych filtrów."
+      "emptyDescription": "W wybranym okresie ta postać nie walczyła z innymi graczami."
     },
     "matchmaking": {
       "emptyTitle": "Brak bilansów Otchłani",
-      "emptyDescription": "Nie znaleziono rankingowych starć dla wybranych filtrów."
+      "emptyDescription": "W tym sezonie ta postać nie stoczyła rankingowych starć."
     },
     "playerVsPlayer": {
       "characterFallback": "Twoja postać",
@@ -370,6 +372,8 @@
     "opponents": {
       "title": "Najczęstsi przeciwnicy",
       "all": "Wszyscy przeciwnicy"
-    }
+    },
+    "noResults": "Brak pasujących przeciwników",
+    "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej przeciwników."
   }
 }

@@ -20,11 +20,10 @@ import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
-import { Button } from "@lootlog/ui/components/button";
 import { EmptyState } from "@/components/common/empty-state";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { CardListSkeleton } from "@/components/common/card-list-skeleton";
-import { CircleAlert, FilterX, SearchX } from "lucide-react";
+import { CircleAlert, SearchX } from "lucide-react";
 import {
   useKillsFilterProps,
   type KillsFiltersState,
@@ -48,6 +47,7 @@ import {
 import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 import { useCursorStack } from "@/hooks/use-cursor-stack";
 import { RetryButton } from "@/components/common/retry-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
 const killsSearchParsers = {
   world: parseAsString,
@@ -234,10 +234,7 @@ export const KillsPage: React.FC = () => {
             )}
             action={
               hasActiveFilters && (
-                <Button variant="outline" onClick={handleResetFilters}>
-                  <FilterX data-icon="inline-start" aria-hidden />
-                  {t("statistics.clearFilters")}
-                </Button>
+                <ClearFiltersButton onClear={handleResetFilters} />
               )
             }
           />
