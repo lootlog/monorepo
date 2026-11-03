@@ -3,6 +3,8 @@ import { groupByToMap } from "@/lib/group-by-to-map";
 
 type HeroSightingClaim = HeroSightingResponseDto["claims"][number];
 
+type HeroSightingMember = HeroSightingResponseDto["detectedBy"];
+
 /** A claim, marked when the claimer also detected the hero. */
 export type HeroSightingClaimer = HeroSightingClaim & {
   readonly isDetector: boolean;
@@ -32,7 +34,9 @@ export type HeroSightingRow = {
   readonly closeReason: HeroSightingResponseDto["closeReason"];
   readonly isCurrent: boolean;
   /** Who detected the hero first among the merged sightings. */
-  readonly detectedBy: HeroSightingResponseDto["detectedBy"];
+  readonly detectedBy: HeroSightingMember;
+  /** Who confirmed the hero last, when that is not its detector. */
+  readonly refreshedBy: HeroSightingMember | null;
   /** Each claimer once, even when they claimed in several Organizations. */
   readonly claims: readonly HeroSightingClaimer[];
   readonly sightings: readonly HeroSightingResponseDto[];
@@ -53,11 +57,20 @@ const getRowKey = (sighting: HeroSightingResponseDto, isGrouping: boolean) =>
     sighting.closedAt === null,
   ]);
 
-/** The same person may claim through two Organizations; a User counts once. */
-const getClaimerKey = (
+/** The same person may act through two Organizations; a User counts once. */
+const getMemberKey = (guildId: string, member: HeroSightingMember) =>
+  member.userId ?? `${guildId}:${member.memberId}`;
+
+/**
+ * Who confirmed the sighting last, when that is not its detector. A
+ * confirmation keeps the detector and moves only the last sighter.
+ */
+export const getHeroSightingRefresher = (
   sighting: HeroSightingResponseDto,
-  claim: HeroSightingClaim,
-) => claim.member.userId ?? `${sighting.guildId}:${claim.member.memberId}`;
+): HeroSightingMember | null =>
+  sighting.lastSeenBy.memberId === sighting.detectedBy.memberId
+    ? null
+    : sighting.lastSeenBy;
 
 /** API timestamps may differ in precision, so they are compared as instants. */
 const compareInstants = (a: string, b: string) => Date.parse(a) - Date.parse(b);
@@ -72,19 +85,21 @@ const toRow = (
 
   if (!first) throw new Error("A hero sighting row needs a sighting");
 
-  const lastSeenAt = sightings.reduce(
-    (latest, sighting) =>
-      compareInstants(sighting.lastSeenAt, latest) > 0
-        ? sighting.lastSeenAt
-        : latest,
-    first.lastSeenAt,
+  const latest = sightings.reduce((newest, sighting) =>
+    compareInstants(sighting.lastSeenAt, newest.lastSeenAt) > 0
+      ? sighting
+      : newest,
   );
+
+  const isRefreshedByDetector =
+    getMemberKey(latest.guildId, latest.lastSeenBy) ===
+    getMemberKey(first.guildId, first.detectedBy);
 
   const claims = new Map<string, HeroSightingClaimer>();
 
   for (const sighting of sightings)
     for (const claim of sighting.claims) {
-      const claimerKey = getClaimerKey(sighting, claim);
+      const claimerKey = getMemberKey(sighting.guildId, claim.member);
       const isDetector = isHeroSightingDetectorClaim(sighting, claim);
       const known = claims.get(claimerKey);
 
@@ -99,10 +114,11 @@ const toRow = (
     hero: first.hero,
     state: first.state,
     mapName: first.mapName,
-    lastSeenAt,
+    lastSeenAt: latest.lastSeenAt,
     closeReason: first.closeReason,
     isCurrent: first.closedAt === null,
     detectedBy: first.detectedBy,
+    refreshedBy: isRefreshedByDetector ? null : latest.lastSeenBy,
     claims: [...claims.values()].toSorted((a, b) =>
       compareInstants(a.createdAt, b.createdAt),
     ),

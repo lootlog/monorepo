@@ -9,6 +9,7 @@ import { HeroSightingClaimers } from "@/features/hero-sightings/components/hero-
 import { HeroSightingDetector } from "@/features/hero-sightings/components/hero-sighting-detector";
 import { HeroSightingHistoryPopover } from "@/features/hero-sightings/components/hero-sighting-history-popover";
 import { HeroSightingPlace } from "@/features/hero-sightings/components/hero-sighting-place";
+import { HeroSightingRefresher } from "@/features/hero-sightings/components/hero-sighting-refresher";
 import { formatSightingAge } from "@/features/hero-sightings/format-sighting-age";
 import type { HeroSightingRow } from "@/features/hero-sightings/hero-sighting-rows";
 import { useHeroSightingClaim } from "@/features/hero-sightings/hooks/use-hero-sighting-claim";
@@ -61,8 +62,13 @@ export function HeroSightingItem({
             ({formatLevel(row.hero.lvl, row.hero.prof)})
           </span>
         </TruncatedText>
-        <span className="ll:shrink-0 ll:font-normal ll:tabular-nums ll:text-muted-foreground">
-          {formatSightingAge(t, row.lastSeenAt, now)}
+        <span className="ll:flex ll:min-w-0 ll:shrink-0 ll:items-center ll:gap-1 ll:font-normal ll:tabular-nums ll:text-muted-foreground">
+          {row.refreshedBy ? (
+            <HeroSightingRefresher member={row.refreshedBy} />
+          ) : null}
+          <span className="ll:shrink-0">
+            {formatSightingAge(t, row.lastSeenAt, now)}
+          </span>
         </span>
       </span>
       <HeroSightingPlace sighting={row} isCurrent={row.isCurrent} now={now} />
