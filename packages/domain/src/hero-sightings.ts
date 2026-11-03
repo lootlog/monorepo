@@ -27,17 +27,27 @@ export type HeroDetection = {
   readonly mapName: string;
 };
 
+/** How the Polish and the English game phrase each detector answer. */
+const HERO_DETECTOR_STATES = new Map<string, HeroSightingStateValue>([
+  ["grasuje w", HeroSightingState.ROAMING],
+  ["pojawi się w", HeroSightingState.SPAWNING],
+  ["roves in", HeroSightingState.ROAMING],
+  ["will appear in", HeroSightingState.SPAWNING],
+]);
+
+// The bold markers are optional: answers are matched with or without them.
 // The hero name cannot contain brackets, so the pattern cannot backtrack
 // across the "[/b]" marker on crafted input.
 const HERO_DETECTOR_MESSAGE =
-  /^\[b\]([^[\]]+) \((\d+)([a-z]?)\)\[\/b\] (grasuje|pojawi się) w: (.+)$/u;
+  /^(?:\[b\])?([^[\]]+?) \((\d+)([a-z]?)\)(?:\[\/b\])? (grasuje w|pojawi się w|roves in|will appear in): (.+)$/u;
 
 /** Detector answers are short; longer system messages are something else. */
 const MAX_HERO_DETECTOR_MESSAGE_LENGTH = 300;
 
 /**
  * Reads a detector answer such as
- * `[b]Tepeyollotl (258b)[/b] grasuje w: Oztotl Tzacua p.2 - sala 2`.
+ * `[b]Tepeyollotl (258b)[/b] grasuje w: Oztotl Tzacua p.2 - sala 2`, or its
+ * English counterpart `Insane Orc Hunter (165w) roves in: Red Orc Village`.
  * Margonem names the hero and the map but sends no NPC or map id.
  */
 export const parseHeroDetectorMessage = (
@@ -47,16 +57,17 @@ export const parseHeroDetectorMessage = (
   const match = HERO_DETECTOR_MESSAGE.exec(message.trim());
 
   if (!match) return null;
-  const [, heroName = "", lvl = "", prof = "", verb, mapName = ""] = match;
+
+  const [, heroName = "", lvl = "", prof = "", verb = "", mapName = ""] = match;
+  const state = HERO_DETECTOR_STATES.get(verb);
+
+  if (!state) return null;
 
   return {
     heroName: heroName.trim(),
     heroLvl: Number(lvl),
     heroProf: getProfByShortname(prof) ?? null,
-    state:
-      verb === "grasuje"
-        ? HeroSightingState.ROAMING
-        : HeroSightingState.SPAWNING,
+    state,
     mapName: mapName.trim(),
   };
 };
