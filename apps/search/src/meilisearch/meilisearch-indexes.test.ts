@@ -51,6 +51,7 @@ test("startup skips unchanged settings and preserves searchable attribute order"
       "uid",
       "monsterKey",
       "gameVersion",
+      "current",
     ],
     sortableAttributes: ["firstSeenAt", "lvl", "name"],
   });

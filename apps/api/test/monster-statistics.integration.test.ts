@@ -29,16 +29,24 @@ afterAll(async () => {
 const mapOfFight = (fight: number) =>
   fight <= 200 ? "Stara grota" : fight <= 1095 ? "Nowa grota" : "Wyjście";
 
-it("publishes a monster's maps from its latest fights and the drops it no longer gives", async () => {
+/** The titan was rebalanced from 110 to 100 ten days after its 300th fight. */
+const REBALANCED_AFTER = 300;
+
+const REBALANCE_DELAY = 10 * 24 * 60 * 60_000;
+
+it("publishes a monster's maps from its latest fights, the drops it no longer gives and the level it had before", async () => {
   // Other suites share the database; a unique name keeps this monster apart.
   const name = `Tytan ${randomUUID()}`;
   const startedAt = Date.UTC(2026, 0, 1);
 
   await runtime.runPromise(
     Effect.gen(function* () {
-      const [npc] = yield* database
+      const [former, npc] = yield* database
         .insert(npcSnapshotTable)
-        .values({ npcId: 1, gameVersion: "pl", name, type: "TITAN", lvl: 100 })
+        .values([
+          { npcId: 1, gameVersion: "pl", name, type: "TITAN", lvl: 110 },
+          { npcId: 1, gameVersion: "pl", name, type: "TITAN", lvl: 100 },
+        ])
         .returning({ id: npcSnapshotTable.id });
 
       const [item] = yield* database
@@ -57,23 +65,32 @@ it("publishes a monster's maps from its latest fights and the drops it no longer
       const loots = yield* database
         .insert(lootTable)
         .values(
-          Array.from({ length: 1100 }, (_, index) => ({
-            uniqueId: randomUUID(),
-            world: "test",
-            gameVersion: "pl" as const,
-            source: "FIGHT" as const,
-            location: mapOfFight(index + 1),
-            createdAt: new Date(startedAt + index * 60_000),
-            updatedAt: new Date(startedAt + index * 60_000),
-          })),
+          Array.from({ length: 1100 }, (_, index) => {
+            const foughtAt = new Date(
+              startedAt +
+                index * 60_000 +
+                (index < REBALANCED_AFTER ? 0 : REBALANCE_DELAY),
+            );
+
+            return {
+              uniqueId: randomUUID(),
+              world: "test",
+              gameVersion: "pl" as const,
+              source: "FIGHT" as const,
+              location: mapOfFight(index + 1),
+              createdAt: foughtAt,
+              updatedAt: foughtAt,
+            };
+          }),
         )
         .returning({ id: lootTable.id });
 
-      yield* database
-        .insert(lootNpcTable)
-        .values(
-          loots.map(({ id }) => ({ lootId: id, npcSnapshotId: npc!.id })),
-        );
+      yield* database.insert(lootNpcTable).values(
+        loots.map(({ id }, index) => ({
+          lootId: id,
+          npcSnapshotId: index < REBALANCED_AFTER ? former!.id : npc!.id,
+        })),
+      );
       // The item dropped in the first 100 fights only.
       yield* database.insert(lootItemTable).values(
         loots.slice(0, 100).map(({ id }) => ({
@@ -99,6 +116,7 @@ it("publishes a monster's maps from its latest fights and the drops it no longer
     name: string;
     type: string | null;
     locations?: Array<{ map: string; share: number }>;
+    formerLevels?: Array<{ lvl: number; until: string }>;
     retiredItemIds?: number[];
   };
 
@@ -119,6 +137,8 @@ it("publishes a monster's maps from its latest fights and the drops it no longer
       { map: "Nowa grota", share: 0.9 },
       { map: "Stara grota", share: 0.1 },
     ],
+    // The day the titan was first fought at its new level.
+    formerLevels: [{ lvl: 110, until: "2026-01-11" }],
   });
   expect(monster(RabbitRoutingKey.SEARCH_ITEMS_RETIRED_DROPS)).toEqual({
     gameVersion: "pl",

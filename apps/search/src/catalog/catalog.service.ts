@@ -49,6 +49,9 @@ type CatalogNpcDocument = {
   type: CatalogNpcsResponseDto_Output["hits"][number]["type"];
   gameVersion: CatalogNpcsResponseDto_Output["hits"][number]["gameVersion"];
   locations?: CatalogNpcsResponseDto_Output["hits"][number]["locations"];
+  formerLevels?: CatalogNpcsResponseDto_Output["hits"][number]["formerLevels"];
+  current?: boolean;
+  monsterKey: string;
 };
 
 const page = (query: { limit?: number; offset?: number }) => ({
@@ -204,10 +207,16 @@ export const makeCatalogModule = (
       return { hits: [], estimatedTotalHits: 0 };
     }
 
+    const lookup = Boolean(query.ids?.length || keys?.length);
+
     const filters = [
       gameVersionFilter(query.gameVersion),
       query.ids?.length ? buildMeilisearchInFilter("id", query.ids) : undefined,
       keys?.length ? buildMeilisearchInFilter("uid", keys) : undefined,
+      // A listing shows each monster as it is now; a lookup also finds the
+      // identities of its earlier versions. Entries indexed before the flag
+      // existed have none and count as current.
+      lookup ? undefined : "current != false",
       query.types?.length
         ? buildMeilisearchInFilter("type", query.types)
         : undefined,
@@ -225,33 +234,73 @@ export const makeCatalogModule = (
         "type",
         "gameVersion",
         "locations",
+        "formerLevels",
+        "current",
+        "monsterKey",
       ],
       filter: filters.length > 0 ? filters.join(" AND ") : undefined,
       // Pages and counts are over monsters, not over their catalog identities.
-      distinct: "monsterKey",
+      // A lookup reads every identity it names, so the current one is chosen
+      // below rather than the highest level.
+      distinct: lookup ? undefined : "monsterKey",
       // Without a query Meilisearch returns documents in storage order; a
       // query still ranks by relevance before this. Strongest first keeps
       // level-less objects at the end.
       sort: ["lvl:desc", "name:asc"],
     };
 
-    const response = yield* attemptMeilisearch("catalog.npcs", () =>
-      meilisearch
-        .index<CatalogNpcDocument>(NPCS_INDEX)
-        .search(query.search ?? "", params),
-    ).pipe(
-      Effect.tapError((error) =>
-        Effect.sync(() => logger.error("Catalog NPCs error", { error })),
+    const search = (searchParams: SearchParams) =>
+      attemptMeilisearch("catalog.npcs", () =>
+        meilisearch
+          .index<CatalogNpcDocument>(NPCS_INDEX)
+          .search(query.search ?? "", searchParams),
+      ).pipe(
+        Effect.tapError((error) =>
+          Effect.sync(() => logger.error("Catalog NPCs error", { error })),
+        ),
+      );
+
+    const response = yield* search(params);
+
+    // An old link can name only a monster's former identity; its current
+    // identity, under another id, shows the monster as it is now.
+    const superseded = [
+      ...new Set(
+        response.hits.flatMap(({ current, monsterKey }) =>
+          current === false ? [monsterKey] : [],
+        ),
       ),
-    );
+    ];
+
+    const currentIdentities =
+      lookup && superseded.length > 0
+        ? (yield* search({
+            ...params,
+            offset: 0,
+            limit: MAX_LIMIT,
+            filter: [
+              buildMeilisearchInFilter("monsterKey", superseded),
+              "current != false",
+            ].join(" AND "),
+          })).hits
+        : [];
 
     return {
       estimatedTotalHits: response.estimatedTotalHits ?? response.hits.length,
-      hits: collapseByNameAndType(response.hits).map(
-        ({ uid, identityNamespace: _namespace, locations, ...npc }) => ({
+      hits: collapseByNameAndType([...response.hits, ...currentIdentities]).map(
+        ({
+          uid,
+          identityNamespace: _namespace,
+          current: _current,
+          monsterKey: _monsterKey,
+          locations,
+          formerLevels,
+          ...npc
+        }) => ({
           ...npc,
           key: uid,
           locations: locations ?? [],
+          formerLevels: formerLevels ?? [],
         }),
       ),
     } satisfies CatalogNpcsResponseDto_Output;

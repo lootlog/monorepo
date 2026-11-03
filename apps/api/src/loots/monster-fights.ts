@@ -46,9 +46,11 @@ export const buildMonsterFights = (database: ApiDatabaseValue) => {
       .select({
         lootId: fightSources.lootId,
         location: lootTable.location,
+        foughtAt: lootTable.createdAt,
         gameVersion: npcSnapshotTable.gameVersion,
         name: npcSnapshotTable.name,
         type: npcSnapshotTable.type,
+        lvl: npcSnapshotTable.lvl,
         fight: sql<number>`row_number() over (
           partition by ${npcSnapshotTable.gameVersion}, ${npcSnapshotTable.name}, ${npcSnapshotTable.type}
           order by ${lootTable.createdAt}, ${lootTable.id}

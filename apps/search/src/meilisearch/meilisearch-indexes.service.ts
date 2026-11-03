@@ -34,6 +34,7 @@ export const searchIndexSettings: IndexSettings = {
       "uid",
       "monsterKey",
       "gameVersion",
+      "current",
     ],
     sortableAttributes: ["firstSeenAt", "lvl", "name"],
   },

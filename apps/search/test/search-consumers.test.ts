@@ -90,6 +90,11 @@ const setup = async () => {
         return task.promise;
       }
 
+      if (path.endsWith("/documents/fetch"))
+        return Promise.resolve({
+          results: [...(stored.get(index)?.values() ?? [])],
+        });
+
       if ((init?.method ?? "GET").toUpperCase() === "GET") {
         const ids = (url.searchParams.get("ids") ?? "").split(",");
 
