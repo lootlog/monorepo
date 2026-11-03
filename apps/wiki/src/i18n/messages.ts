@@ -240,6 +240,8 @@ const messages = {
     retiredDropsTitle: "Dawniej wypadało",
     retiredDropsDescription:
       "Lootlog od dawna nie widział tych przedmiotów, choć wielokrotnie zapisywał inny łup z tego potwora. Najpewniej po zmianie łupu już z niego nie wypadają.",
+    formerLevels: "Wcześniej: {{levels}}",
+    formerLevel: "{{level}} lvl (do {{date}})",
     locationsTitle: "Lokacje",
     locationsDescription:
       "Udział map w ostatnich walkach z tym potworem zapisanych przez Lootlog.",

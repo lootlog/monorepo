@@ -7,12 +7,22 @@ export const MonsterLocation = Schema.Struct({
   share: Schema.Number,
 });
 
-/** The maps a monster is fought on; the list is all of them. */
+/** A level a monster had before, until the day its next version appeared. */
+export const MonsterFormerLevel = Schema.Struct({
+  lvl: Schema.Number,
+  until: Schema.String,
+});
+
+/**
+ * The maps a monster is fought on and the levels it had before; each list is
+ * all of them. Former levels are absent from older publishers.
+ */
 export const MonsterLocations = Schema.Struct({
   gameVersion: GameVersionSchema,
   name: Schema.String,
   type: Schema.NullOr(Schema.String),
   locations: Schema.Array(MonsterLocation),
+  formerLevels: Schema.optionalKey(Schema.Array(MonsterFormerLevel)),
 });
 
 export const MonsterLocationsPayload = Schema.Array(MonsterLocations);
