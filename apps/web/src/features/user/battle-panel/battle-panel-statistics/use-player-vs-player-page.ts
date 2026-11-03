@@ -178,7 +178,7 @@ export function usePlayerVsPlayerPage() {
     event: KeyboardEvent<HTMLTableRowElement>,
     battleId: string,
   ) => {
-    if (event.key !== "Enter" && event.key !== "") {
+    if (event.key !== "Enter" && event.key !== " ") {
       return;
     }
 

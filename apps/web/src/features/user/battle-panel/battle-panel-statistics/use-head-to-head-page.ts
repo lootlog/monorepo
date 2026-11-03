@@ -137,7 +137,7 @@ export function useHeadToHeadPage({
     event: KeyboardEvent<HTMLTableRowElement>,
     opponentId: string,
   ) => {
-    if (event.key !== "Enter" && event.key !== "") {
+    if (event.key !== "Enter" && event.key !== " ") {
       return;
     }
 
