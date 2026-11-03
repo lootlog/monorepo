@@ -1,6 +1,5 @@
 import { Gem } from "lucide-react";
 import { LevelRangeInputs } from "@lootlog/ui/components/level-range-inputs";
-import { NpcTypeIcon } from "@lootlog/ui/components/npc-type-icon";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import {
   LOOT_RARITY_PILL_CLASS,
@@ -24,7 +23,6 @@ import {
   STAT_OPTIONS,
 } from "@/lib/items-search";
 import { SEARCHABLE_LEGENDARY_BONUSES } from "@/lib/legendary-bonuses";
-import { NPC_TYPE_ICONS } from "@/lib/npc-types";
 import { FilterSection } from "./filter-section";
 import { FilterTile } from "@/components/filter-tile";
 
@@ -281,13 +279,6 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
             <FilterTile
               key={value}
               label={t(`npcTypes.${value}`)}
-              icon={
-                <NpcTypeIcon
-                  type={NPC_TYPE_ICONS[value]}
-                  aria-hidden="true"
-                  className="size-4"
-                />
-              }
               pressed={bosses.isPressed(value)}
               onPressedChange={bosses.toggle(value)}
             />

@@ -229,6 +229,10 @@ export const makeCatalogModule = (
       filter: filters.length > 0 ? filters.join(" AND ") : undefined,
       // Pages and counts are over monsters, not over their catalog identities.
       distinct: "monsterKey",
+      // Without a query Meilisearch returns documents in storage order; a
+      // query still ranks by relevance before this. Strongest first keeps
+      // level-less objects at the end.
+      sort: ["lvl:desc", "name:asc"],
     };
 
     const response = yield* attemptMeilisearch("catalog.npcs", () =>
