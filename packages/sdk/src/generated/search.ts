@@ -439,7 +439,7 @@ event?: string;
  */
 droppedBy?: string;
 /**
- * `id:desc` lists the items Margonem added most recently first.
+ * `id:desc` lists the items Margonem added most recently first. `attackSpeed:desc` lists first the items that add the most attack speed to a character with at least 100 agility: their own attack speed plus 0.002 for each point of agility or all attributes.
  */
 sort?: CatalogControllerGetItemsSort;
 limit?: number;
@@ -464,6 +464,7 @@ export const CatalogControllerGetItemsSort = {
   'lvl:desc': 'lvl:desc',
   'name:asc': 'name:asc',
   'name:desc': 'name:desc',
+  'attackSpeed:desc': 'attackSpeed:desc',
 } as const;
 
 export type CatalogControllerGetItems401 = {

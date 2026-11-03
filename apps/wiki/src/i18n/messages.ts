@@ -190,6 +190,9 @@ const messages = {
       colossusLegendaries: "Legendy z kolosów",
       heroHeroics: "Heroiki z herosów",
       highLevelLegendaries: "Legendy 250+ lvl",
+      fastestTrackerNecklaces: "Najszybsze naszyjniki tropiciela",
+      fastestTrackerHelmets: "Najszybsze hełmy tropiciela",
+      fastestHunterNecklaces: "Najszybsze naszyjniki łowcy",
     },
     bonusesTitle: "Szukaj po bonusie legendarnym",
     bonusUpcoming: "Wkrótce w grze",
@@ -207,6 +210,9 @@ const messages = {
   },
   catalog: {
     droppedBy: "Z:",
+    attackSpeed: "{{value}} SA",
+    attackSpeedHint:
+      "Szybkość ataku z przedmiotu razem ze zręcznością i wszystkimi cechami (0,002 SA za punkt), dla postaci z co najmniej 100 zręczności.",
     droppedByTitle: "Wypada z",
     professionsShort: {
       w: "W",
@@ -313,6 +319,7 @@ const messages = {
       "lvl:desc": "Poziom malejąco",
       "name:asc": "Nazwa A-Z",
       "name:desc": "Nazwa Z-A",
+      "attackSpeed:desc": "Najszybsze",
     },
     rarity: "Rzadkość",
     profession: "Profesja",

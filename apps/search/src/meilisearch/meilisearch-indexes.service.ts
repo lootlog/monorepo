@@ -60,7 +60,15 @@ export const searchIndexSettings: IndexSettings = {
       "firstSeenAt",
     ],
     searchableAttributes: ["name", "stat"],
-    sortableAttributes: ["id", "name", "lvl", "rarity", "type", "firstSeenAt"],
+    sortableAttributes: [
+      "id",
+      "name",
+      "lvl",
+      "rarity",
+      "type",
+      "firstSeenAt",
+      "attackSpeed",
+    ],
     distinctAttribute: "id",
   },
 };
