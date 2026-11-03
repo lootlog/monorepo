@@ -5,8 +5,14 @@ import { makeCatalogModule } from "./catalog.service.js";
 
 const logger = { info() {}, warn() {}, error() {} };
 
-/** A Meilisearch that answers item searches with `hits` and NPC searches with `npcs`. */
-const catalogWith = (hits: unknown[], npcs: unknown[] = []) => {
+/**
+ * A Meilisearch that answers item searches with `hits` and NPC searches with
+ * what `npcs` returns for the search's filter.
+ */
+const catalogWith = (
+  hits: unknown[],
+  npcs: (filter: string | undefined) => unknown[] = () => [],
+) => {
   const searches: Array<{ filter?: string; attributesToRetrieve?: string[] }> =
     [];
 
@@ -20,11 +26,11 @@ const catalogWith = (hits: unknown[], npcs: unknown[] = []) => {
     host: "http://search.invalid",
     httpClient: (input, init) => {
       const isNpcSearch = String(input).includes("/indexes/npcs/");
-      const results = isNpcSearch ? npcs : hits;
+      const body = JSON.parse(String(init?.body));
 
-      (isNpcSearch ? npcSearches : searches).push(
-        JSON.parse(String(init?.body)),
-      );
+      const results = isNpcSearch ? npcs(body.filter) : hits;
+
+      (isNpcSearch ? npcSearches : searches).push(body);
 
       return Promise.resolve({
         hits: results,
@@ -84,7 +90,7 @@ test("lists a monster's drops from any of its identities, marking the monsters t
         retiredDropMonsterKeys: [nosferatu.monsterKey],
       },
     ],
-    [{ monsterKey: nosferatu.monsterKey }],
+    () => [{ monsterKey: nosferatu.monsterKey }],
   );
 
   const response = await Effect.runPromise(
@@ -145,55 +151,63 @@ test("a malformed NPC key or event slug matches nothing instead of reaching the 
   expect(searches).toEqual([]);
 });
 
-test("finds one edition's NPCs by id, earlier versions included, and lists each monster as it is now", async () => {
+test("an old link to a rebalanced monster's former identity shows the monster as it is now, and listings show only current identities", async () => {
   const reuzen = {
-    id: 173652,
     gameVersion: "pl",
+    monsterKey: "pl_Reuzen_COLOSSUS",
     name: "Reuzen",
     icon: "reuzen.gif",
     type: "COLOSSUS",
   };
 
-  // An old link's id names the entry from before the rebalance and the
-  // current one; the page shows the colossus as it is now.
-  const { catalog, npcSearches } = catalogWith(
-    [],
-    [
-      {
-        ...reuzen,
-        uid: "pl_173652_2",
-        identityNamespace: "legacy",
-        lvl: 252,
-        current: false,
-      },
-      {
-        ...reuzen,
-        uid: "pl_runtime_173652_2",
-        identityNamespace: "runtime",
-        lvl: 244,
-        current: true,
-      },
-    ],
+  // The old link's id names only the entry from before the rebalance; the
+  // current one has another id.
+  const { catalog, npcSearches } = catalogWith([], (filter) =>
+    filter?.includes("monsterKey IN")
+      ? [
+          {
+            ...reuzen,
+            id: 306076,
+            uid: "pl_template_306076_2",
+            identityNamespace: "template",
+            lvl: 244,
+            current: true,
+          },
+        ]
+      : [
+          {
+            ...reuzen,
+            id: 173652,
+            uid: "pl_173652_2",
+            identityNamespace: "legacy",
+            lvl: 252,
+            current: false,
+          },
+        ],
   );
 
   const found = await Effect.runPromise(
-    catalog.getNpcs({ gameVersion: "pl", ids: [257036, 257037] }),
+    catalog.getNpcs({ gameVersion: "pl", ids: [173652] }),
   );
 
   expect(found.hits).toEqual([
-    expect.objectContaining({ key: "pl_runtime_173652_2", lvl: 244 }),
+    expect.objectContaining({ key: "pl_template_306076_2", lvl: 244 }),
   ]);
+  expect(npcSearches[0]).toMatchObject({
+    filter: 'gameVersion = "pl" AND id IN [173652]',
+  });
   expect(npcSearches[0]?.distinct).toBeUndefined();
+  expect(npcSearches[0]?.attributesToRetrieve).not.toContain("firstSeenAt");
+  expect(npcSearches[1]?.filter).toBe(
+    'monsterKey IN ["pl_Reuzen_COLOSSUS"] AND current != false',
+  );
+
   await Effect.runPromise(
     catalog.getNpcs({ gameVersion: "pl", types: ["COLOSSUS"] }),
   );
 
-  expect(npcSearches[0]).toMatchObject({
-    filter: 'gameVersion = "pl" AND id IN [257036, 257037]',
-  });
-  expect(npcSearches[0]?.attributesToRetrieve).not.toContain("firstSeenAt");
   // A rebalanced colossus is listed at its level now, not its former one.
-  expect(npcSearches[1]?.filter).toBe(
+  expect(npcSearches[2]?.filter).toBe(
     'gameVersion = "pl" AND current != false AND type IN ["COLOSSUS"]',
   );
 });

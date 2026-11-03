@@ -275,13 +275,16 @@ const loadNpcStatistics = async () => {
       offset,
     });
 
+    // Identities of one monster may hold different fields while a
+    // publication is half applied; each field is kept from any of them.
     for (const { monsterKey, locations, formerLevels } of page.results) {
-      if (locations || formerLevels) {
-        statistics.set(monsterKey, {
-          ...(locations && { locations }),
-          ...(formerLevels && { formerLevels }),
-        });
-      }
+      const stored = statistics.get(monsterKey);
+
+      statistics.set(monsterKey, {
+        ...stored,
+        ...(locations && { locations }),
+        ...(formerLevels && { formerLevels }),
+      });
     }
 
     if (page.results.length < NPC_LOCATIONS_PAGE) return statistics;
