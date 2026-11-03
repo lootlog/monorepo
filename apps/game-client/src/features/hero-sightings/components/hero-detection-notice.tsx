@@ -1,4 +1,3 @@
-import { cn } from "cn";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { isHeroSightingClaimedBy } from "@lootlog/domain/hero-sightings";
@@ -6,11 +5,9 @@ import { formatLevel } from "@lootlog/domain/profession";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
-import {
-  toolbarStripClassName,
-  toolbarStripRowClassName,
-} from "@/components/ui/toolbar-strip";
+import { HeroSightingPlace } from "@/features/hero-sightings/components/hero-sighting-place";
 import { useHeroSightingClaim } from "@/features/hero-sightings/hooks/use-hero-sighting-claim";
+import { useNow } from "@/hooks/ui/use-now";
 import type { OwnHeroDetection } from "@/store/hero-sightings.store";
 
 type HeroDetectionNoticeProps = {
@@ -35,6 +32,7 @@ export function HeroDetectionNotice({
 }: HeroDetectionNoticeProps) {
   const { t } = useTranslation("heroSightings");
   const { claim, isPending } = useHeroSightingClaim();
+  const now = useNow(60_000);
 
   const latest = detection.sightings.map(
     (own) => sightings.find((sighting) => sighting.id === own.id) ?? own,
@@ -54,36 +52,38 @@ export function HeroDetectionNotice({
   return (
     <div
       role="status"
-      className={cn(
-        toolbarStripClassName,
-        toolbarStripRowClassName,
-        "ll:-mt-px ll:shrink-0 ll:items-center ll:gap-1 ll:px-1.5 ll:text-[11px]",
-      )}
+      className="ll:-mt-px ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-x-0 ll:border-y ll:border-solid ll:border-amber-400/40 ll:bg-amber-400/10 ll:px-2 ll:py-1.5 ll:text-[11px] ll:font-semibold"
     >
-      <span className="ll:min-w-0 ll:flex-1 ll:truncate">
-        <span className="ll:text-muted-foreground">{t("notice.title")}: </span>
-        <span className="ll:font-semibold ll:text-white">
-          {first.hero.name} ({formatLevel(first.hero.lvl, first.hero.prof)})
-        </span>{" "}
-        <span className="ll:text-muted-foreground">
-          {t(`state.${first.state}`)}
-        </span>{" "}
-        <span className="ll:font-semibold ll:text-green-300">
-          {first.mapName}
+      <span className="ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:gap-0.5">
+        <span className="ll:text-amber-200">{t("notice.title")}</span>
+        <span className="ll:min-w-0 ll:truncate ll:text-white">
+          {first.hero.name}
+          <span className="ll:ml-1 ll:font-normal ll:text-muted-foreground">
+            ({formatLevel(first.hero.lvl, first.hero.prof)})
+          </span>
         </span>
+        <HeroSightingPlace
+          sighting={first}
+          isCurrent={first.closedAt === null}
+          now={now}
+        />
       </span>
       {claimable.length > 0 ? (
         <Button
           type="button"
           size="xs"
-          className="ll:shrink-0"
+          variant="secondary"
           disabled={isPending}
           onClick={() => claim(claimable)}
         >
           {t("actions.claim")}
         </Button>
       ) : null}
-      <IconButton label={t("actions.dismiss")} onClick={onDismiss}>
+      <IconButton
+        label={t("actions.dismiss")}
+        className="ll:-mr-0.5"
+        onClick={onDismiss}
+      >
         <X aria-hidden="true" />
       </IconButton>
     </div>
