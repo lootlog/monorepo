@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { isHeroSightingClaimedBy } from "@lootlog/domain/hero-sightings";
 import { formatLevel } from "@lootlog/domain/profession";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
+import { TruncatedText } from "@/components/truncated-text";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import { HeroSightingPlace } from "@/features/hero-sightings/components/hero-sighting-place";
@@ -56,12 +57,12 @@ export function HeroDetectionNotice({
     >
       <span className="ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:gap-0.5">
         <span className="ll:text-amber-200">{t("notice.title")}</span>
-        <span className="ll:min-w-0 ll:truncate ll:text-white">
+        <TruncatedText className="ll:text-white">
           {first.hero.name}
           <span className="ll:ml-1 ll:font-normal ll:text-muted-foreground">
             ({formatLevel(first.hero.lvl, first.hero.prof)})
           </span>
-        </span>
+        </TruncatedText>
         <HeroSightingPlace
           sighting={first}
           isCurrent={first.closedAt === null}

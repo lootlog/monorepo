@@ -2,6 +2,7 @@ import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { isHeroSightingStale } from "@lootlog/domain/hero-sightings";
+import { TruncatedText } from "@/components/truncated-text";
 
 type HeroSightingPlaceProps = {
   sighting: Pick<
@@ -35,14 +36,13 @@ export function HeroSightingPlace({
       <span className="ll:shrink-0 ll:font-normal ll:text-muted-foreground">
         {t(`state.${sighting.state}`)}
       </span>
-      <span
-        className={cn(
-          "ll:min-w-0 ll:truncate",
-          isCurrent && !isStale ? "ll:text-green-300" : "ll:text-white",
-        )}
+      <TruncatedText
+        className={
+          isCurrent && !isStale ? "ll:text-green-300" : "ll:text-white"
+        }
       >
         {sighting.mapName}
-      </span>
+      </TruncatedText>
       {status ? (
         <span
           className={cn(
