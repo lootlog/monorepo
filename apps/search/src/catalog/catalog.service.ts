@@ -51,6 +51,7 @@ type CatalogNpcDocument = {
   locations?: CatalogNpcsResponseDto_Output["hits"][number]["locations"];
   formerLevels?: CatalogNpcsResponseDto_Output["hits"][number]["formerLevels"];
   current?: boolean;
+  monsterKey: string;
 };
 
 const page = (query: { limit?: number; offset?: number }) => ({
@@ -235,6 +236,7 @@ export const makeCatalogModule = (
         "locations",
         "formerLevels",
         "current",
+        "monsterKey",
       ],
       filter: filters.length > 0 ? filters.join(" AND ") : undefined,
       // Pages and counts are over monsters, not over their catalog identities.
@@ -247,23 +249,50 @@ export const makeCatalogModule = (
       sort: ["lvl:desc", "name:asc"],
     };
 
-    const response = yield* attemptMeilisearch("catalog.npcs", () =>
-      meilisearch
-        .index<CatalogNpcDocument>(NPCS_INDEX)
-        .search(query.search ?? "", params),
-    ).pipe(
-      Effect.tapError((error) =>
-        Effect.sync(() => logger.error("Catalog NPCs error", { error })),
+    const search = (searchParams: SearchParams) =>
+      attemptMeilisearch("catalog.npcs", () =>
+        meilisearch
+          .index<CatalogNpcDocument>(NPCS_INDEX)
+          .search(query.search ?? "", searchParams),
+      ).pipe(
+        Effect.tapError((error) =>
+          Effect.sync(() => logger.error("Catalog NPCs error", { error })),
+        ),
+      );
+
+    const response = yield* search(params);
+
+    // An old link can name only a monster's former identity; its current
+    // identity, under another id, shows the monster as it is now.
+    const superseded = [
+      ...new Set(
+        response.hits.flatMap(({ current, monsterKey }) =>
+          current === false ? [monsterKey] : [],
+        ),
       ),
-    );
+    ];
+
+    const currentIdentities =
+      lookup && superseded.length > 0
+        ? (yield* search({
+            ...params,
+            offset: 0,
+            limit: MAX_LIMIT,
+            filter: [
+              buildMeilisearchInFilter("monsterKey", superseded),
+              "current != false",
+            ].join(" AND "),
+          })).hits
+        : [];
 
     return {
       estimatedTotalHits: response.estimatedTotalHits ?? response.hits.length,
-      hits: collapseByNameAndType(response.hits).map(
+      hits: collapseByNameAndType([...response.hits, ...currentIdentities]).map(
         ({
           uid,
           identityNamespace: _namespace,
           current: _current,
+          monsterKey: _monsterKey,
           locations,
           formerLevels,
           ...npc

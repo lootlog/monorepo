@@ -296,11 +296,12 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
     return yield* attemptMeilisearch("search.npcs", () =>
       index.search(searchTerm, query),
     ).pipe(
-      Effect.map((response) => {
-        const hits = response.hits.map(toNpcHit);
-
-        return ids && ids.length > 0 ? hits : collapseByNameAndType(hits);
-      }),
+      Effect.map((response) =>
+        (ids && ids.length > 0
+          ? response.hits
+          : collapseByNameAndType(response.hits)
+        ).map(toNpcHit),
+      ),
       Effect.tapError((error) =>
         Effect.sync(() => logger.error("NPC search error", { error })),
       ),
