@@ -1,5 +1,4 @@
 import { cn } from "cn";
-import { Radar } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { HeroSightingMemberDto } from "@lootlog/client/main";
 import { MemberAvatar } from "@/components/member-avatar";
@@ -20,7 +19,6 @@ export function HeroSightingDetector({
         "ll:flex ll:min-w-0 ll:shrink-0 ll:items-center ll:gap-1",
       )}
     >
-      <Radar aria-hidden="true" className="ll:size-3 ll:shrink-0" />
       <MemberAvatar name={member.displayName} avatarUrl={member.avatarUrl} />
       <span className="ll:sr-only">
         {t("detectedBy", { name: member.displayName })}
