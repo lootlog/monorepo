@@ -38,7 +38,7 @@ export function CatalogItemGrid({
     return (
       <div className={CATALOG_GRID} aria-busy="true">
         {Array.from({ length: placeholders }, (_, index) => (
-          <Skeleton key={index} className="h-[6.5rem] rounded-lg" />
+          <Skeleton key={index} className="h-[7.25rem] rounded-lg" />
         ))}
       </div>
     );

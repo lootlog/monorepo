@@ -13,7 +13,7 @@ export function ItemDamageTypes({ stat }: { stat: string }) {
   if (damageTypes.length === 0) return null;
 
   return (
-    <ul className="flex max-w-12 flex-wrap justify-center gap-1">
+    <ul className="flex shrink-0 items-center gap-1">
       {damageTypes.map(({ key, icon: Icon, className }) => (
         <li key={key} className="flex">
           <Tooltip>
