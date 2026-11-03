@@ -74,6 +74,7 @@ export const MemberStatsPage = () => {
     guildId,
     handlePreviousPage,
     handleNextPage,
+    handleClearFilters,
   } = useMemberStatsPage();
 
   const { npcs, total, hasNext, totalParticipations } =
@@ -204,6 +205,8 @@ export const MemberStatsPage = () => {
         filters={<KillStatsFilters {...filterProps} />}
         stackedFilters={<KillStatsStackedFilters {...filterProps} />}
         activeFilterCount={countActiveKillStatsFilters(filterProps)}
+        clearFiltersLabel={t("kills.filters.clear")}
+        onClearFilters={handleClearFilters}
         filtersLabel={t("kills.filters.title")}
         scrollResetKey={firstRank}
         footer={

@@ -21,7 +21,7 @@ export function useNpcKillersPage() {
   });
 
   const [search, setSearch] = useState("");
-  const { settings, setPeriod } = useStatsSettings("npc-killers");
+  const { settings, setPeriod, resetFilters } = useStatsSettings("npc-killers");
   const [cursor, setCursor] = useWorldScopedCursor(settings.world);
 
   const npcKillersParams = buildNpcKillersParams({
@@ -74,7 +74,14 @@ export function useNpcKillersPage() {
     setCursor(0);
   };
 
+  const handleClearFilters = () => {
+    resetFilters();
+    setSearch("");
+    setCursor(0);
+  };
+
   return {
+    handleClearFilters,
     isLoading,
     data,
     t,

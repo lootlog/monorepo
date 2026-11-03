@@ -293,6 +293,8 @@ export const KillsPage: React.FC = () => {
         filters={<KillStatsFilters {...filterProps} />}
         stackedFilters={<KillStatsStackedFilters {...filterProps} />}
         activeFilterCount={countActiveKillStatsFilters(filterProps)}
+        clearFiltersLabel={t("statistics.clearFilters")}
+        onClearFilters={handleResetFilters}
         filtersLabel={t("kills.filters.title")}
         scrollResetKey={pageIndex}
         footer={
