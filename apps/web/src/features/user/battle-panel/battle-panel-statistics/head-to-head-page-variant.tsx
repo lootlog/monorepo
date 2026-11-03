@@ -25,6 +25,7 @@ import {
   type HeadToHeadPageVariantProps,
 } from "./use-head-to-head-page";
 import { RetryButton } from "@/components/common/retry-button";
+import { TableRowLinkCell } from "@/components/common/table-row-link-cell";
 
 export function HeadToHeadPageVariant({
   columns,
@@ -61,9 +62,8 @@ export function HeadToHeadPageVariant({
     error,
     isFetching,
     refetch,
-    handleRowClick,
+    getOpponentLink,
     table,
-    handleRowKeyDown,
     activeFilterChips,
     applyFilterState,
   } = useHeadToHeadPage({ columns, matchmaking, showPhFilter, season });
@@ -154,7 +154,7 @@ export function HeadToHeadPageVariant({
               key={record.opponentId}
               record={record}
               showRatingDelta={showRatingDelta}
-              onOpen={handleRowClick}
+              link={getOpponentLink(record.opponentId)}
             />
           ))}
         </div>
@@ -171,16 +171,22 @@ export function HeadToHeadPageVariant({
         />
         <TanStackTableBody
           table={table}
-          cellClassName="whitespace-nowrap"
-          getRowProps={(row) => ({
-            className:
-              "h-14 cursor-pointer border-b border-border hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            onClick: () => handleRowClick(row.original.opponentId),
-            onKeyDown: (event) =>
-              handleRowKeyDown(event, row.original.opponentId),
-            role: "link",
-            tabIndex: 0,
-          })}
+          rowClassName="h-14 border-b border-border hover:bg-muted/40"
+          cellClassName="relative whitespace-nowrap"
+          renderCellContent={(cell, content) => {
+            const link = getOpponentLink(cell.row.original.opponentId);
+
+            return link ? (
+              <TableRowLinkCell
+                link={link}
+                primary={cell.column.id === "opponentName"}
+              >
+                {content}
+              </TableRowLinkCell>
+            ) : (
+              content
+            );
+          }}
         />
       </Table>
     );

@@ -14,10 +14,9 @@ import {
   useBattlesControllerGetPlayerVsPlayerBattles,
   type PlayerVsPlayerPaginatedResponseDtoOutput,
 } from "@lootlog/client/battlelog";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import { useTable } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
-import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { createBattlePanelCursorActions } from "../components/battle-panel-cursor-actions";
 import { useResetRejectedBattlePanelCursor } from "../components/use-reset-rejected-battle-panel-cursor";
@@ -51,7 +50,6 @@ const getPlayerVsPlayerTableView = (
 
 export function usePlayerVsPlayerPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const params = useParams({ strict: false });
 
   const opponentId = params.opponentId ?? params.myId;
@@ -165,24 +163,11 @@ export function usePlayerVsPlayerPage() {
     setQueryState,
   );
 
-  const handleBattleOpen = (battleId: string) => {
-    void navigate({
+  const getBattleLink = (battleId: string) =>
+    ({
       to: "/@me/battle-panel/battles/$battleId",
       params: { battleId },
-    });
-  };
-
-  const handleBattleRowKeyDown = (
-    event: KeyboardEvent<HTMLTableRowElement>,
-    battleId: string,
-  ) => {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-
-    event.preventDefault();
-    handleBattleOpen(battleId);
-  };
+    }) as const;
 
   const opponentNameCandidate = data?.battles[0]?.opponentWarrior.name;
 
@@ -247,9 +232,8 @@ export function usePlayerVsPlayerPage() {
     isFetching,
     refetch,
     battles,
-    handleBattleOpen,
+    getBattleLink,
     table,
-    handleBattleRowKeyDown,
     myCharacter,
     opponentName,
     activeFilterChips,
