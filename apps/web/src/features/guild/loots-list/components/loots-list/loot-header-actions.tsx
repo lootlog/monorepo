@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 const renderLootDetailsLink = (lootId: number) => (
   <Link
     to="."
+    resetScroll={false}
     search={(previous: Record<string, string | string[]>) => ({
       ...previous,
       lootId: String(lootId),

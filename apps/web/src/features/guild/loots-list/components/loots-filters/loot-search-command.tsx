@@ -25,6 +25,7 @@ import {
   SearchX,
 } from "lucide-react";
 import { useLootSearchCommand } from "./use-loot-search-command";
+import { useVisualViewportHeight } from "@/hooks/use-visual-viewport-height";
 
 import {
   allTrue,
@@ -79,6 +80,8 @@ export const LootSearchCommand = (
 
   const isMobile = useIsMobile();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useVisualViewportHeight(open && isMobile);
 
   const {
     activeScope,
@@ -430,7 +433,8 @@ export const LootSearchCommand = (
       description={t("loots.searchCommand.dialogDescription")}
       // Esc closes it on a keyboard; phones get the close button instead.
       showCloseButton={isMobile}
-      className="top-[12vh] w-[calc(100%-1rem)] max-w-[600px] translate-y-0 rounded-xl border-border bg-card shadow-[0_24px_64px_rgba(0,0,0,0.55)] max-md:top-2 sm:max-w-[600px] [&_[data-slot=command]]:rounded-xl [&_[data-slot=command]]:bg-card"
+      // On a phone the palette ends above the on-screen keyboard.
+      className="top-[12vh] w-[calc(100%-1rem)] max-w-[600px] translate-y-0 rounded-xl border-border bg-card shadow-[0_24px_64px_rgba(0,0,0,0.55)] max-md:top-2 max-md:flex max-md:max-h-[calc(var(--visual-viewport-height,100dvh)-1rem)] max-md:flex-col sm:max-w-[600px] [&_[data-slot=command]]:rounded-xl [&_[data-slot=command]]:bg-card"
     >
       {dialogContent}
     </CommandDialog>
