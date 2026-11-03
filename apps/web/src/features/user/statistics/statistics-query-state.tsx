@@ -1,10 +1,10 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
-import { CircleAlert, RotateCcw } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { RetryButton } from "@/components/common/retry-button";
 
 type StatisticsQueryStateProps = {
   query: {
@@ -58,17 +58,10 @@ export function StatisticsQueryState({
           fill={!compact}
           className="flex-1"
           action={
-            <Button
-              type="button"
-              variant="outline"
-              loading={query.isFetching}
-              icon=<RotateCcw className="size-3.5" />
-              onClick={() => {
-                void query.refetch();
-              }}
-            >
-              {t("common.actions.retry")}
-            </Button>
+            <RetryButton
+              onRetry={() => query.refetch()}
+              isRetrying={query.isFetching}
+            />
           }
         />
       </div>

@@ -1,6 +1,6 @@
-import { Button } from "@lootlog/ui/components/button";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { CircleAlert } from "lucide-react";
+import { RetryButton } from "@/components/common/retry-button";
 
 type Props = {
   hasNextPage: boolean;
@@ -9,7 +9,6 @@ type Props = {
   loadingLabel: string;
   endLabel: string;
   errorLabel: string;
-  retryLabel: string;
 };
 
 /**
@@ -23,7 +22,6 @@ export const InfiniteListStatusRow = ({
   loadingLabel,
   endLabel,
   errorLabel,
-  retryLabel,
 }: Props) => (
   <div
     role={hasError ? "alert" : "status"}
@@ -33,9 +31,7 @@ export const InfiniteListStatusRow = ({
       <>
         <CircleAlert className="size-4 text-destructive" aria-hidden="true" />
         <span>{errorLabel}</span>
-        <Button type="button" variant="outline" onClick={onRetry}>
-          {retryLabel}
-        </Button>
+        <RetryButton onRetry={onRetry} />
       </>
     ) : hasNextPage ? (
       <>

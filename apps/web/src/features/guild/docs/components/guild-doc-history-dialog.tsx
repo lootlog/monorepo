@@ -1,8 +1,7 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useState } from "react";
-import { CircleAlert, FileClock, RotateCcw } from "lucide-react";
+import { CircleAlert, FileClock } from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";
-import { Button } from "@lootlog/ui/components/button";
 import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
@@ -19,6 +18,7 @@ import { GuildDocEditor } from "../editor/guild-doc-editor";
 import { normalizeGuildDocEditorContent } from "../editor/guild-doc-editor-content";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { useTranslation } from "react-i18next";
+import { RetryButton } from "@/components/common/retry-button";
 
 type GuildDocHistoryDialogProps = {
   docId: string;
@@ -145,15 +145,10 @@ export const GuildDocHistoryDialog = ({
                     icon={CircleAlert}
                     title={t("docs.history.loadError")}
                     action={
-                      <Button
-                        type="button"
-                        variant="outline"
-                        loading={historyQuery.isFetching}
-                        icon=<RotateCcw className="size-3.5" />
-                        onClick={() => void historyQuery.refetch()}
-                      >
-                        {t("common.actions.retry")}
-                      </Button>
+                      <RetryButton
+                        onRetry={() => historyQuery.refetch()}
+                        isRetrying={historyQuery.isFetching}
+                      />
                     }
                   />
                 ) : historyItems.length === 0 ? (

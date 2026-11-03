@@ -2,10 +2,10 @@ import { EmptyState } from "@/components/common/empty-state";
 import { InfiniteListStatusRow } from "@/components/common/infinite-list-status-row";
 import { useInfiniteScrollSentinel } from "@/hooks/utils/use-infinite-scroll-sentinel";
 import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
-import { Button } from "@lootlog/ui/components/button";
-import { CircleAlert, RotateCcw, Skull } from "lucide-react";
+import { CircleAlert, Skull } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { RetryButton } from "@/components/common/retry-button";
 
 type EventHistoryResultsProps = {
   /** The page's scroll viewport, which the next page loads against. */
@@ -76,17 +76,7 @@ export const EventHistoryResults = ({
           fill
           icon={CircleAlert}
           title={t("events.error")}
-          action={
-            <Button
-              type="button"
-              variant="outline"
-              loading={isRetrying}
-              icon=<RotateCcw className="size-3.5" />
-              onClick={onRetry}
-            >
-              {t("common.actions.retry")}
-            </Button>
-          }
+          action={<RetryButton onRetry={onRetry} isRetrying={isRetrying} />}
         />
       </div>
     );
@@ -111,7 +101,6 @@ export const EventHistoryResults = ({
           loadingLabel={t("events.kills.loading")}
           endLabel={t("events.kills.endOfList")}
           errorLabel={t("events.error")}
-          retryLabel={t("common.actions.retry")}
         />
       </div>
     </>

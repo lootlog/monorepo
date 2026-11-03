@@ -2,10 +2,10 @@ import { BandSection } from "@/components/common/band-section";
 import { EmptyState } from "@/components/common/empty-state";
 import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
-import { CircleAlert, RotateCcw } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@lootlog/ui/components/button";
+import { RetryButton } from "@/components/common/retry-button";
 
 type StatisticsQueryPanelProps = {
   query: {
@@ -44,17 +44,7 @@ export function StatisticsQueryPanel({
           icon={CircleAlert}
           title={t("battlePanel.statistics.empty.errorTitle")}
           className="min-h-40"
-          action={
-            <Button
-              type="button"
-              variant="outline"
-              loading={query.isFetching}
-              icon=<RotateCcw className="size-3.5" />
-              onClick={retry}
-            >
-              {t("common.actions.retry")}
-            </Button>
-          }
+          action={<RetryButton onRetry={retry} isRetrying={query.isFetching} />}
         />
       </div>
     );

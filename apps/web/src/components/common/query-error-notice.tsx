@@ -1,8 +1,7 @@
-import { Button } from "@lootlog/ui/components/button";
 import { EmptyMedia } from "@lootlog/ui/components/empty";
 import { cn } from "cn";
-import { CircleAlert, RotateCcw } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { CircleAlert } from "lucide-react";
+import { RetryButton } from "@/components/common/retry-button";
 
 type QueryErrorNoticeProps = {
   message: string;
@@ -25,8 +24,6 @@ export const QueryErrorNotice = ({
   isRetrying = false,
   className,
 }: QueryErrorNoticeProps) => {
-  const { t } = useTranslation();
-
   return (
     <div
       role="alert"
@@ -44,17 +41,7 @@ export const QueryErrorNotice = ({
           <p className="text-xs text-muted-foreground">{detail}</p>
         ) : null}
       </div>
-      {onRetry && (
-        <Button
-          type="button"
-          variant="outline"
-          loading={isRetrying}
-          icon=<RotateCcw className="size-3.5" />
-          onClick={onRetry}
-        >
-          {t("common.actions.retry")}
-        </Button>
-      )}
+      {onRetry && <RetryButton onRetry={onRetry} isRetrying={isRetrying} />}
     </div>
   );
 };

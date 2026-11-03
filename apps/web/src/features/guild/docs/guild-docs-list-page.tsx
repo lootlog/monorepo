@@ -11,14 +11,7 @@ import {
   AlertDialogTitle,
 } from "@lootlog/ui/components/alert-dialog";
 import { Button } from "@lootlog/ui/components/button";
-import {
-  Archive,
-  FileText,
-  FileX2,
-  Plus,
-  RotateCcw,
-  SearchX,
-} from "lucide-react";
+import { Archive, FileText, FileX2, Plus, SearchX } from "lucide-react";
 
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 
@@ -28,6 +21,7 @@ import { GuildDocTile } from "./guild-doc-tile";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 
 import { useGuildDocsList } from "./use-guild-docs-list";
+import { RetryButton } from "@/components/common/retry-button";
 
 export const GuildDocsListPage = () => {
   const {
@@ -181,15 +175,10 @@ export const GuildDocsListPage = () => {
             title={t("docs.list.loadError")}
             description={t("docs.list.loadErrorDescription")}
             action={
-              <Button
-                type="button"
-                variant="outline"
-                loading={documentsQuery.isFetching}
-                icon=<RotateCcw className="size-3.5" />
-                onClick={() => void documentsQuery.refetch()}
-              >
-                {t("common.actions.retry")}
-              </Button>
+              <RetryButton
+                onRetry={() => documentsQuery.refetch()}
+                isRetrying={documentsQuery.isFetching}
+              />
             }
           />
         </div>

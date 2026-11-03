@@ -44,6 +44,7 @@ import {
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 import { useCursorStack } from "@/hooks/use-cursor-stack";
+import { RetryButton } from "@/components/common/retry-button";
 
 const KILL_STATS_PERIODS = [
   "all",
@@ -219,13 +220,7 @@ export const KillsPage: React.FC = () => {
             icon={CircleAlert}
             title={t("statistics.killsLoadError")}
             action={
-              <Button
-                variant="outline"
-                loading={isFetching}
-                onClick={() => void refetch()}
-              >
-                {t("common.actions.retry")}
-              </Button>
+              <RetryButton onRetry={() => refetch()} isRetrying={isFetching} />
             }
           />
         </div>

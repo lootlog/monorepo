@@ -30,6 +30,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { getReservationErrorMessage } from "@/features/guild/reservations/get-reservation-error-message";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { ReservationShareGroup } from "./reservation-share-group";
+import { RetryButton } from "@/components/common/retry-button";
 
 type CreatedInvitation = { id: string; inviteUrl: string };
 
@@ -157,15 +158,11 @@ export function ReservationSharingSettings() {
               {t("settings.reservations.sharing.loadErrorDescription")}
             </AlertDescription>
             <AlertAction>
-              <Button
-                type="button"
-                variant="outline"
+              <RetryButton
+                onRetry={() => sharesQuery.refetch()}
+                isRetrying={sharesQuery.isFetching}
                 size="sm"
-                loading={sharesQuery.isFetching}
-                onClick={() => sharesQuery.refetch()}
-              >
-                {t("common.actions.retry")}
-              </Button>
+              />
             </AlertAction>
           </Alert>
         </div>

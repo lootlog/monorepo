@@ -1,10 +1,10 @@
 import { LoadingSlot } from "@/components/common/loading-slot";
 import { SettingsListEmpty } from "@/components/common/settings-list-empty";
-import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { CalendarX2, RotateCcw } from "lucide-react";
+import { CalendarX2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { RetryButton } from "@/components/common/retry-button";
 
 type ScheduleStatusProps = {
   /** The schedule bar, so the dates stay reachable while the hours load. */
@@ -31,17 +31,7 @@ export const ScheduleStatus = ({
           icon={CalendarX2}
           title={t("reservations.schedule.error.title")}
           description={t("reservations.schedule.error.description")}
-          action={
-            <Button
-              type="button"
-              variant="outline"
-              loading={isRetrying}
-              icon=<RotateCcw className="size-3.5" />
-              onClick={onRetry}
-            >
-              {t("common.actions.retry")}
-            </Button>
-          }
+          action={<RetryButton onRetry={onRetry} isRetrying={isRetrying} />}
         />
       ) : (
         <div className="flex justify-center py-16" role="status">
