@@ -56,12 +56,15 @@ export const HeroSightingTimer = ({
 
   useEffect(() => subscribeToSecondClock(() => setNow(Date.now())), []);
 
-  const liveTimeLeft = timer && getTimerTimeLeft(timer, now);
+  // Until the live list loads, or while it fails, a latest timer that was not
+  // deleted still counts down; the phase sends an ended one below.
+  const liveTimer = timer ?? (lastTimer?.deletedAt ? undefined : lastTimer);
+  const liveTimeLeft = liveTimer && getTimerTimeLeft(liveTimer, now);
 
   const livePhase =
     liveTimeLeft && getTimerPhase(liveTimeLeft, removeTimerAfterMs);
 
-  if (timer && liveTimeLeft && livePhase && livePhase !== "expired") {
+  if (liveTimer && liveTimeLeft && livePhase && livePhase !== "expired") {
     return (
       <span className={cn("flex flex-col gap-0.5", className)}>
         <span className="sr-only">{t("heroSightings.respawn")}</span>
@@ -72,7 +75,11 @@ export const HeroSightingTimer = ({
         />
         <span className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
           {t("heroSightings.spawnWindow", {
-            window: formatWindow(timer.minSpawnTime, timer.maxSpawnTime, now),
+            window: formatWindow(
+              liveTimer.minSpawnTime,
+              liveTimer.maxSpawnTime,
+              now,
+            ),
           })}
         </span>
       </span>
@@ -112,6 +119,9 @@ export const HeroSightingTimer = ({
         {t("heroSightings.lastSpawnWindow", {
           window: formatWindow(ended.minSpawnTime, ended.maxSpawnTime, now),
         })}
+      </span>
+      <span className="sr-only">
+        {t("heroSightings.lostTrackingDescription")}
       </span>
     </span>
   );
