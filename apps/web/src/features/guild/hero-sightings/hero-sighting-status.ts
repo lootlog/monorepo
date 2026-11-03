@@ -1,5 +1,8 @@
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
-import { isCurrentHeroSighting } from "@lootlog/domain/hero-sightings";
+import {
+  HERO_SIGHTING_STALE_AFTER_MS,
+  isCurrentHeroSighting,
+} from "@lootlog/domain/hero-sightings";
 import { sortBy } from "es-toolkit";
 
 /**
@@ -26,15 +29,20 @@ export const getHeroSightingStatus = (
   return sighting.state;
 };
 
-// Current sightings lead, the ones to act on first; closed ones follow.
-const STATUS_ORDER: Record<HeroSightingStatus, number> = {
-  ROAMING: 0,
-  SPAWNING: 1,
-  STALE: 2,
-  PROBABLY_KILLED: 3,
-  KILLED: 3,
-  CLOSED: 3,
-};
+/** The board's sections, in the order to act on them; closed ones share one. */
+export const HERO_SIGHTING_GROUPS = [
+  "ROAMING",
+  "SPAWNING",
+  "STALE",
+  "CLOSED",
+] as const;
+
+export type HeroSightingGroup = (typeof HERO_SIGHTING_GROUPS)[number];
+
+export const getHeroSightingGroup = (
+  status: HeroSightingStatus,
+): HeroSightingGroup =>
+  status === "KILLED" || status === "PROBABLY_KILLED" ? "CLOSED" : status;
 
 /** Orders a board by status, then by the latest news within each status. */
 export const sortHeroSightings = (
@@ -42,6 +50,25 @@ export const sortHeroSightings = (
   now: number,
 ) =>
   sortBy(sightings, [
-    (sighting) => STATUS_ORDER[getHeroSightingStatus(sighting, now)],
+    (sighting) =>
+      HERO_SIGHTING_GROUPS.indexOf(
+        getHeroSightingGroup(getHeroSightingStatus(sighting, now)),
+      ),
     (sighting) => -Date.parse(sighting.closedAt ?? sighting.lastSeenAt),
   ]);
+
+/**
+ * Whole minutes until a roaming hero's last confirmation goes stale, at least
+ * one while the sighting is still current.
+ */
+export const getHeroSightingMinutesUntilStale = (
+  sighting: HeroSightingResponseDto,
+  now: number,
+) =>
+  Math.max(
+    1,
+    Math.ceil(
+      (Date.parse(sighting.lastSeenAt) + HERO_SIGHTING_STALE_AFTER_MS - now) /
+        60_000,
+    ),
+  );
