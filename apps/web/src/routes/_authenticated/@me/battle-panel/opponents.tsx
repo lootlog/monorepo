@@ -13,6 +13,7 @@ import {
 } from "@/features/user/battle-panel/battle-panel-search";
 import { getBattlesControllerGetHeadToHeadQueryOptions } from "@lootlog/client/battlelog";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
+import { buildHeadToHeadParams } from "@/features/user/battle-panel/battle-panel-request-params";
 
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/opponents",
@@ -42,22 +43,13 @@ export const Route = createFileRoute(
       }
 
       await context.queryClient.prefetchQuery(
-        getBattlesControllerGetHeadToHeadQueryOptions({
-          cursor: search.cursor ?? undefined,
-          characterId,
-          period: search.period,
-          startDate: search.startDate ?? undefined,
-          endDate: search.endDate ?? undefined,
-          search: search.search ?? undefined,
-          minLevel: search.minLevel,
-          maxLevel: search.maxLevel,
-          ph: search.ph ?? undefined,
-          matchmaking: false,
-          sortBy: search.sortBy,
-          sortOrder: search.sortOrder,
-          size: 20,
-          includeTotal: true,
-        }),
+        getBattlesControllerGetHeadToHeadQueryOptions(
+          buildHeadToHeadParams(search, {
+            characterId,
+            matchmaking: false,
+            showPhFilter: true,
+          }),
+        ),
       );
 
       return null;

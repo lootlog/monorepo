@@ -29,6 +29,10 @@ import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { createBattlePanelCursorActions } from "../components/battle-panel-cursor-actions";
 import { useResetRejectedBattlePanelCursor } from "../components/use-reset-rejected-battle-panel-cursor";
+import {
+  BATTLE_PANEL_PAGE_SIZE,
+  buildHeadToHeadParams,
+} from "@/features/user/battle-panel/battle-panel-request-params";
 
 /** The battles of one Abyss season, which fix the character and dates. */
 export type HeadToHeadSeasonScope = {
@@ -86,7 +90,6 @@ export function useHeadToHeadPage({
     startDate: season?.startDate ?? queryState.startDate ?? undefined,
     endDate: season?.endDate ?? queryState.endDate ?? undefined,
     ph: showPhFilter ? (queryState.ph ?? undefined) : undefined,
-    cursor: queryState.cursor ?? undefined,
     search: queryState.search ?? undefined,
     sortBy: queryState.sortBy ?? "totalBattles",
     sortOrder: queryState.sortOrder ?? "desc",
@@ -101,7 +104,6 @@ export function useHeadToHeadPage({
     startDate,
     endDate,
     ph,
-    cursor,
     search,
     sortBy,
     sortOrder,
@@ -109,7 +111,7 @@ export function useHeadToHeadPage({
 
   const selectedWarriors = getSelectedWarriorsFromSearch(search);
   const sorting: SortingState = [{ id: sortBy, desc: sortOrder === "desc" }];
-  const pageSize = 20;
+  const pageSize = BATTLE_PANEL_PAGE_SIZE;
 
   const handleRowClick = (opponentId: string) => {
     if (!currentCharacterId) return;
@@ -147,22 +149,14 @@ export function useHeadToHeadPage({
   };
 
   const { data, isLoading, isError, error, isFetching, refetch } =
-    useBattlesControllerGetHeadToHead({
-      cursor,
-      size: pageSize,
-      sortBy,
-      sortOrder,
-      characterId: currentCharacterId,
-      period,
-      startDate,
-      endDate,
-      search,
-      minLevel,
-      maxLevel,
-      ph,
-      matchmaking,
-      includeTotal: true,
-    });
+    useBattlesControllerGetHeadToHead(
+      buildHeadToHeadParams(queryState, {
+        characterId: currentCharacterId,
+        matchmaking,
+        showPhFilter,
+        season,
+      }),
+    );
 
   const applyFilterState = ({
     characterId,
