@@ -20,6 +20,19 @@
         "dev:sandbox"
       ],
       "port": 3010
+    },
+    {
+      "name": "wiki-worktree",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "apps/wiki/node_modules/.bin/vite",
+        "dev",
+        "apps/wiki",
+        "--config",
+        "apps/wiki/vite.worktree.mts"
+      ],
+      "port": 3106,
+      "autoPort": false
     }
   ]
 }
