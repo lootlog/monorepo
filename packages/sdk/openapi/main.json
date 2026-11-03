@@ -30269,7 +30269,8 @@
                     "TIMER_BEFORE_SPAWN",
                     "NPC_SPAWNED",
                     "WATCHED_ITEM_DROPPED",
-                    "SCHEDULED_MESSAGE"
+                    "SCHEDULED_MESSAGE",
+                    "HERO_SIGHTED"
                   ]
                 },
                 "guildId": {
@@ -30690,7 +30691,8 @@
               "TIMER_BEFORE_SPAWN",
               "NPC_SPAWNED",
               "WATCHED_ITEM_DROPPED",
-              "SCHEDULED_MESSAGE"
+              "SCHEDULED_MESSAGE",
+              "HERO_SIGHTED"
             ]
           },
           "guildId": {
@@ -31117,7 +31119,8 @@
               "TIMER_BEFORE_SPAWN",
               "NPC_SPAWNED",
               "WATCHED_ITEM_DROPPED",
-              "SCHEDULED_MESSAGE"
+              "SCHEDULED_MESSAGE",
+              "HERO_SIGHTED"
             ]
           },
           "targetIds": {
@@ -31243,7 +31246,8 @@
               "TIMER_BEFORE_SPAWN",
               "NPC_SPAWNED",
               "WATCHED_ITEM_DROPPED",
-              "SCHEDULED_MESSAGE"
+              "SCHEDULED_MESSAGE",
+              "HERO_SIGHTED"
             ]
           },
           "targetIds": {
@@ -31382,7 +31386,8 @@
                         "TIMER_BEFORE_SPAWN",
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
-                        "SCHEDULED_MESSAGE"
+                        "SCHEDULED_MESSAGE",
+                        "HERO_SIGHTED"
                       ]
                     },
                     "world": {
@@ -31509,7 +31514,8 @@
                         "TIMER_BEFORE_SPAWN",
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
-                        "SCHEDULED_MESSAGE"
+                        "SCHEDULED_MESSAGE",
+                        "HERO_SIGHTED"
                       ]
                     },
                     "guildId": {
@@ -31923,7 +31929,8 @@
                         "TIMER_BEFORE_SPAWN",
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
-                        "SCHEDULED_MESSAGE"
+                        "SCHEDULED_MESSAGE",
+                        "HERO_SIGHTED"
                       ]
                     },
                     "world": {
@@ -32050,7 +32057,8 @@
                         "TIMER_BEFORE_SPAWN",
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
-                        "SCHEDULED_MESSAGE"
+                        "SCHEDULED_MESSAGE",
+                        "HERO_SIGHTED"
                       ]
                     },
                     "guildId": {
@@ -32628,7 +32636,8 @@
                   "TIMER_BEFORE_SPAWN",
                   "NPC_SPAWNED",
                   "WATCHED_ITEM_DROPPED",
-                  "SCHEDULED_MESSAGE"
+                  "SCHEDULED_MESSAGE",
+                  "HERO_SIGHTED"
                 ]
               },
               "guildId": {

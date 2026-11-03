@@ -22,6 +22,10 @@ import {
   spawnWindowFromRespawn,
 } from "@lootlog/domain/timers";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
+import { getNpcTypeRoutingTier } from "@lootlog/schema/npc-routing";
+import { closeKilledHeroSighting } from "#src/http-api/handlers/hero-sightings/hero-sightings.data-layer";
+import { loadHeroSightings } from "#src/hero-sightings/hero-sighting-query";
+import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
@@ -102,6 +106,9 @@ export interface AutoTimerPorts {
   ) => Effect.Effect<unknown, unknown>;
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
   readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
+  readonly publishHeroSighting: (
+    sighting: HeroSightingResponse,
+  ) => Effect.Effect<unknown, unknown>;
   readonly publish: <
     Key extends
       | typeof RabbitRoutingKey.GUILDS_TIMERS_DELETE
@@ -553,12 +560,24 @@ export const makeAutoTimer = (
             timerKey,
           );
 
+          // A hero Lootlog saw killed is no longer where it was detected.
+          const closedHeroSightingId =
+            getNpcTypeRoutingTier(npc.type) === "heroes"
+              ? yield* closeKilledHeroSighting(transaction, {
+                  guildId,
+                  world: payload.world,
+                  heroName: payload.npc.name,
+                  killedAt: now,
+                })
+              : null;
+
           return {
             _tag: "Created" as const,
             projection: { ...timer, member, actorCharacter },
             previousTimer,
             migratedSyntheticNpcId,
             migratedSyntheticTimerKey,
+            closedHeroSightingId,
           };
         }),
       ),
@@ -651,6 +670,16 @@ export const makeAutoTimer = (
           );
 
           if (Predicate.isTagged(result, "Unpublished")) return response;
+
+          if (result.closedHeroSightingId !== null) {
+            const closed = yield* loadHeroSightings(database, [
+              result.closedHeroSightingId,
+            ]);
+
+            yield* Effect.forEach(closed, ports.publishHeroSighting).pipe(
+              Effect.ignore,
+            );
+          }
 
           yield* ports
             .enqueueEventHeroCheck({

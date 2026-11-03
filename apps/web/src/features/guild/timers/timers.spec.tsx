@@ -86,6 +86,8 @@ async function mount(
 
           if (url.pathname.endsWith("/timers")) return fetchTimers(url);
 
+          if (url.pathname.endsWith("/permissions")) return Response.json([]);
+
           if (url.pathname.endsWith("/preferences")) {
             return Response.json({
               domains: { timers: { effective: timerSettings } },

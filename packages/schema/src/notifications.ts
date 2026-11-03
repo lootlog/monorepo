@@ -19,6 +19,7 @@ export enum NotificationTriggerType {
   NPC_SPAWNED = "NPC_SPAWNED",
   WATCHED_ITEM_DROPPED = "WATCHED_ITEM_DROPPED",
   SCHEDULED_MESSAGE = "SCHEDULED_MESSAGE",
+  HERO_SIGHTED = "HERO_SIGHTED",
 }
 
 export enum NotificationScheduleAnchor {
@@ -207,6 +208,7 @@ export const NotificationTriggerTypeSchema = Schema.Literals([
   `${NotificationTriggerType.NPC_SPAWNED}`,
   `${NotificationTriggerType.WATCHED_ITEM_DROPPED}`,
   `${NotificationTriggerType.SCHEDULED_MESSAGE}`,
+  `${NotificationTriggerType.HERO_SIGHTED}`,
 ]);
 
 export const NotificationJobStatusSchema = Schema.Literals([

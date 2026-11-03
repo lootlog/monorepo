@@ -223,6 +223,46 @@ naraz, tylko na postaci, którą grasz.
 Jeżeli widok jest zbyt obciążający podczas gry, wyłącz niepotrzebne filtry lub
 sam moduł i sprawdź, czy wydajność się poprawiła.
 
+## Wykryci herosi
+
+Gdy użyjesz zwoju wykrywającego herosa, gra odpowiada na czacie systemowym,
+gdzie heros **grasuje** (żyje na tej mapie) albo gdzie **pojawi się** (tam
+wylosowano jego następne odrodzenie). Lootlog zapisuje tę odpowiedź w
+Lootlogach, do których postać wysyła dane (tak jak timery), i otwiera okno
+**Wykryci herosi**. Okno otworzysz też z szybkiego dostępu.
+
+Gra podaje tylko nazwę mapy, bez współrzędnych. Heros może mieć na jednej
+mapie kilka miejsc odrodzenia, więc wykrycie wskazuje mapę, a nie dokładne
+miejsce.
+
+W oknie przy każdym herosie widać:
+
+- stan i mapę oraz to, ile czasu minęło od ostatniego potwierdzenia;
+- osobę, która wykryła herosa jako pierwsza (wyróżnioną), i jej postać;
+- osoby, które obstawiają herosa.
+
+Obstawianie zawsze deklarujesz sam przyciskiem **Obstawiam**; wykrycie
+herosa nikogo nie zapisuje automatycznie. Herosa może obstawiać kilka osób.
+Deklarację wycofasz przyciskiem **Wycofaj**. Po Twoim wykryciu okno pokazuje
+u góry skrót z przyciskiem **Obstawiam**.
+
+Kolejne wykrycia tego samego herosa w tym samym miejscu tylko potwierdzają
+zapis. Gdy heros, który miał się pojawić, zostanie wykryty jako grasujący na
+tej samej mapie, wpis i deklaracje zostają. Jeśli nowe wykrycie przeczy
+poprzedniemu (np. grasujący heros ma się znowu pojawić albo jest na innej
+mapie), poprzedni wpis zostaje oznaczony jako **prawdopodobnie zbity**. To
+tylko wniosek, nie pewność. Gdy herosa zabije ktoś z Lootloga, wpis dostaje
+oznaczenie **zbity**. Heros grasujący bez potwierdzenia przez 30 minut jest
+oznaczony jako **niepotwierdzony**, bo mógł już zginąć.
+
+Timer herosa z aktualnym wykryciem dostaje mapę z wykrycia. Wtedy, tak jak
+przy elitach II i tytanach, widać na nim liczbę graczy z Lootloga i wrogów na
+tej mapie, a podpowiedź timera pokazuje sekcję **Wykrywacz herosów**.
+
+Lootlog przechowuje 20 ostatnich wykryć każdego herosa. Wykrycia widzą osoby
+z uprawnieniami do odczytu timerów herosów w zakresie poziomu herosa.
+Obstawianie wymaga uprawnienia do dodawania timerów.
+
 ## Pingi
 
 Pingi działają w nowym interfejsie gry i są domyślnie włączone. Wyłączysz je

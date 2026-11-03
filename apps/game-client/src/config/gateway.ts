@@ -37,6 +37,9 @@ export enum GatewayEvent {
   TIMERS_CREATE = "timers-create",
   TIMERS_DELETE = "timers-delete",
 
+  // hero sightings
+  HERO_SIGHTING_UPDATE = "hero-sighting:update",
+
   // notifications
   NOTIFICATION = "notifications-send",
   NOTIFICATIONS_VOLUNTEER = "notifications-volunteer",

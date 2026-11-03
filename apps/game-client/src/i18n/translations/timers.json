@@ -46,6 +46,9 @@
     "enemiesHeading": "Wrogowie na mapie",
     "enemiesStaleHeading": "Wrogowie widziani niedawno",
     "seenAgo": "{{seconds}} s temu",
+    "heroSighting": "Wykrywacz herosów",
+    "heroSightingMap": "Wykrywacz herosów: {{state}} {{map}}",
+    "heroSightingClaims": "Obstawiających: {{count}}",
     "more": "i {{count}} więcej"
   },
   "emptyState": {

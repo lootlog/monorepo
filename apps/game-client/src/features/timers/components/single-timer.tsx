@@ -22,6 +22,7 @@ import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required
 import { useShallow } from "zustand/react/shallow";
 import { TimerMapPlayersAdornment } from "./timer-map-players-adornment";
 import {
+  useTimerHeroSighting,
   useTimerMapPresence,
   useTimerMapThreat,
 } from "./timer-map-presence-provider";
@@ -104,6 +105,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const tooltipHandle = useTimerTooltipHandle();
   const occupancy = useTimerMapPresence(timer);
   const threat = useTimerMapThreat(timer);
+  const heroSighting = useTimerHeroSighting(timer);
   const isStanding = useTimerNpcPresence(timer);
 
   const menuProps: TimerContextMenuContentProps = {
@@ -176,6 +178,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             timeAdornment=<TimerMapPlayersAdornment
               occupancy={occupancy}
               threat={threat}
+              heroSighting={heroSighting}
             />
           />
         </div>

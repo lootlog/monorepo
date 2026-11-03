@@ -482,3 +482,29 @@ it("saves an all-world rule after removing its unmatched selection", async () =>
   expect(payload).toMatchObject({ npcIds: [], npcTemplateIds: [900] });
   expect(payload).not.toHaveProperty("world");
 });
+
+it("saves a hero sighting rule with its world and no spawn reminder fields", async () => {
+  const { result, requests } = await renderEditedRule({
+    triggerType: "HERO_SIGHTED",
+    world: "jaruna",
+    scheduledAt: null,
+    filters: {},
+  });
+
+  act(() => {
+    result.current.form.setValue("targetIds", ["9"]);
+  });
+  await act(() =>
+    result.current.form.handleSubmit(result.current.handleSubmit)(),
+  );
+
+  expect(requests).toHaveLength(1);
+  expect(await requests[0]?.json()).toEqual({
+    name: "Original rule",
+    contentTemplate: "Original message",
+    triggerType: "HERO_SIGHTED",
+    targetIds: [9],
+    enabled: true,
+    world: "jaruna",
+  });
+});

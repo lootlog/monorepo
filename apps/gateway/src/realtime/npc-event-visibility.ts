@@ -1,6 +1,7 @@
 import {
   canManageOwnPartyGathering,
   canReadNpcFeatureSource,
+  HERO_SIGHTING_READ_FEATURE,
   type NpcFeature,
 } from "@lootlog/domain/npc-permissions";
 import {
@@ -40,6 +41,7 @@ type NpcEvent = Extract<
     type:
       | "timer.created"
       | "timer.deleted"
+      | "hero-sighting.updated"
       | "chat.created"
       | "chat.updated"
       | "chat.deleted"
@@ -158,6 +160,11 @@ const eventRouting = (event: NpcEvent): Routing | null => {
       return readyRoomRouting(event);
     case "timer.created":
       return npcRouting(payload.npc);
+    case "hero-sighting.updated":
+      // A detector answer names only the hero; every sighting is a hero's.
+      return Predicate.isObject(payload.hero)
+        ? npcRouting({ type: "HERO", lvl: payload.hero.lvl })
+        : null;
     case "notification.sent":
       return payload.npc === undefined
         ? { tier: "base" }
@@ -201,6 +208,9 @@ const canReadFeatureEvent = (
     case "timer.created":
     case "timer.deleted":
       feature = "timers";
+      break;
+    case "hero-sighting.updated":
+      feature = HERO_SIGHTING_READ_FEATURE;
       break;
     case "notification.sent":
       feature = "notifications";
@@ -337,6 +347,7 @@ export const prepareNpcSourceEvent = (
     case "party-ready-room.updated":
     case "timer.created":
     case "timer.deleted":
+    case "hero-sighting.updated":
     case "chat.created":
     case "chat.updated":
     case "chat.deleted":

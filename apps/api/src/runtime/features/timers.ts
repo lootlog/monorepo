@@ -28,6 +28,7 @@ import { CachedTimerProjectionSchema } from "#src/timers/timer-projection";
 import { TimersData } from "#src/http-api/handlers/timers/timers.handlers";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
+import { makeHeroSightingPublisher } from "#src/runtime/features/hero-sightings";
 
 export const timersData = Layer.unwrap(
   Effect.gen(function* () {
@@ -99,6 +100,7 @@ export const timersData = Layer.unwrap(
         },
         get: (key) => attempt(() => redis.get(key)),
         invalidateList,
+        publishHeroSighting: makeHeroSightingPublisher(rabbit),
         publish: (routingKey, payload) =>
           rabbit.publish({
             exchange: "default",

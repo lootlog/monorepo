@@ -6,6 +6,11 @@ import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-po
 import { REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY } from "@lootlog/protocol/realtime";
 import { Permission } from "@lootlog/schema/permissions";
 import { NpcType } from "@/api/npcs.api";
+import type { HeroSighting } from "@/api/hero-sightings.api";
+import { queryKeys } from "@/features/public-api/query-keys";
+import { upsertHeroSightings } from "@/features/hero-sightings/hero-sightings-cache";
+import { queryClient } from "@/lib/query-client";
+import { createHeroSighting } from "@/features/hero-sightings/hero-sighting-fixtures";
 import {
   createOnlinePlayersTest,
   createOnlinePresence,
@@ -297,5 +302,105 @@ it("fetches stored map threats once per connection while timer updates re-render
     REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   ]);
   expect(fetches()).toBe(2);
+  view.unmount();
+});
+
+function heroSighting(
+  guildId: string,
+  name: string,
+  overrides: Partial<HeroSighting> = {},
+): HeroSighting {
+  return createHeroSighting({
+    guildId,
+    world: "alpha",
+    hero: { key: name.toLowerCase(), name, lvl: 100, prof: null },
+    mapName: "Karka-han",
+    ...overrides,
+  });
+}
+
+/** Sightings follow the timer visibility, so the policy also grants it. */
+const heroSightingPolicy = (organizations: string[]) =>
+  createAccessPolicySnapshot(
+    organizations.map((id) => ({
+      guild: { id, ownerId: "owner" },
+      roles: [
+        {
+          permissions: [
+            Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+            Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+            Permission.LOOTLOG_TIMERS_READ,
+            Permission.LOOTLOG_TIMERS_HEROES_READ,
+          ],
+          lvlRangeFrom: 1,
+          lvlRangeTo: 300,
+        },
+      ],
+    })),
+    "user",
+  );
+
+function npcTimer(
+  type: TimerWithTimeLeft["npc"]["type"],
+  name: string,
+): TimerWithTimeLeft {
+  const base = timer();
+
+  // A hero's timer keeps the map it was killed on, which says nothing now.
+  return { ...base, npc: { ...base.npc, type, name, location: "Ithan" } };
+}
+
+it("places a hero timer on the map its current sighting names, in the timer's organizations only, and drops it when the sighting closes", async () => {
+  const harness = createOnlinePlayersTest();
+
+  const entries = [
+    npcTimer(NpcType.HERO, "Tepeyollotl"),
+    npcTimer(NpcType.EVENT_HERO, "Mietek"),
+    npcTimer(NpcType.HERO, "Viviana"),
+    npcTimer(NpcType.HERO_TRACKER, "Tropiciel"),
+  ];
+
+  queryClient.setQueryData(queryKeys.heroSightings("alpha"), [
+    heroSighting("guild-1", "Tepeyollotl"),
+    // Another Organization's sighting does not place this Organization's timer.
+    heroSighting("guild-2", "Mietek"),
+    heroSighting("guild-1", "Viviana", {
+      closedAt: "2026-11-03T12:01:00.000Z",
+      closeReason: "PROBABLY_KILLED",
+    }),
+    heroSighting("guild-1", "Tropiciel"),
+  ]);
+
+  const view = render(
+    <harness.wrapper>
+      <TimerMapPresenceProvider timers={entries}>
+        {entries.map((entry, index) => (
+          <section key={index} aria-label={`Timer ${index}`}>
+            <Presence timer={entry} />
+          </section>
+        ))}
+      </TimerMapPresenceProvider>
+    </harness.wrapper>,
+  );
+
+  harness.open();
+  await harness.join(
+    ["guild-1", "guild-2"],
+    heroSightingPolicy(["guild-1", "guild-2"]),
+  );
+  const detected = within(screen.getByRole("region", { name: "Timer 0" }));
+  expect(
+    await detected.findByRole("img", { name: occupiedLabel() }),
+  ).toBeVisible();
+  expect(screen.getAllByRole("img")).toHaveLength(1);
+
+  // A later detection elsewhere closes the sighting the timer was placed by.
+  upsertHeroSightings(queryClient, [
+    heroSighting("guild-1", "Tepeyollotl", {
+      closedAt: "2026-11-03T12:05:00.000Z",
+      closeReason: "PROBABLY_KILLED",
+    }),
+  ]);
+  await waitFor(() => expect(screen.queryAllByRole("img")).toHaveLength(0));
   view.unmount();
 });

@@ -2,6 +2,7 @@ import type { FC } from "react";
 import { useTimerNpcPresence } from "../hooks/use-timer-npc-presence";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import {
+  useTimerHeroSighting,
   useTimerMapPresence,
   useTimerMapThreat,
 } from "./timer-map-presence-provider";
@@ -19,6 +20,7 @@ export const TimerSharedTooltip: FC<TimerSharedTooltipProps> = ({
 }) => {
   const occupancy = useTimerMapPresence(timer);
   const threat = useTimerMapThreat(timer);
+  const heroSighting = useTimerHeroSighting(timer);
   const isStanding = useTimerNpcPresence(timer);
 
   return (
@@ -27,6 +29,7 @@ export const TimerSharedTooltip: FC<TimerSharedTooltipProps> = ({
       guildNamesById={guildNamesById}
       occupancy={occupancy}
       threat={threat}
+      heroSighting={heroSighting}
       isStanding={isStanding}
     />
   );
