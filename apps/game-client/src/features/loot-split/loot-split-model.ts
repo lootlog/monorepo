@@ -338,7 +338,12 @@ const resolveByDistribution = (
     splits: state.splits.map((split) =>
       split.phase === "open" &&
       split.items.some(({ hid }) => message.includes(`ITEM#${hid}`))
-        ? { ...split, phase: "resolved", closedAt: at }
+        ? {
+            ...split,
+            // Past the deadline, the game drew with whatever was chosen.
+            phase: at >= split.deadline ? "expired" : "resolved",
+            closedAt: at,
+          }
         : split,
     ),
   };
