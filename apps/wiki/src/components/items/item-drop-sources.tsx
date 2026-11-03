@@ -3,11 +3,10 @@ import { sortBy } from "es-toolkit";
 import { ChevronRight } from "lucide-react";
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import { npcIconUrl } from "@lootlog/domain/npc-icon";
-import { NpcTypeIcon } from "@lootlog/ui/components/npc-type-icon";
 import { cn } from "cn";
 import { t } from "@/i18n/messages";
 import { npcPageParams } from "@/lib/catalog-links";
-import { NPC_TYPE_ICONS, NPC_TYPE_OPTIONS } from "@/lib/npc-types";
+import { NPC_TYPE_OPTIONS } from "@/lib/npc-types";
 
 type ItemDropSourcesProps = {
   sources: CatalogItemDtoOutput["droppedBy"];
@@ -62,12 +61,7 @@ export function ItemDropSources({ sources }: ItemDropSourcesProps) {
                     </span>
                     <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                       {type ? (
-                        <span className="flex items-center gap-1.5 text-foreground/80">
-                          <NpcTypeIcon
-                            type={NPC_TYPE_ICONS[type]}
-                            aria-hidden="true"
-                            className="size-4"
-                          />
+                        <span className="text-foreground/80">
                           {t(`npcTypes.${type}`)}
                         </span>
                       ) : null}
