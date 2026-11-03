@@ -1,66 +1,55 @@
-import { useNavigate } from "@tanstack/react-router";
 import { Search } from "lucide-react";
-import { type FormEvent, useEffect, useRef, useState } from "react";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@lootlog/ui/components/input-group";
+import { useEffect, useState } from "react";
+import { Button } from "@lootlog/ui/components/button";
 import { Kbd } from "@lootlog/ui/components/kbd";
-import { cn } from "cn";
 import { t } from "@/i18n/messages";
-import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
+import { WikiSearchDialog } from "./wiki-search-dialog";
 
-/** The site-wide item search; Ctrl+K or Cmd+K focuses it from any page. */
-export function WikiHeaderSearch({ className }: { className?: string }) {
-  const navigate = useNavigate();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState("");
+/**
+ * The site-wide search: a field-like button in a wide bar, an icon in a narrow
+ * one. Ctrl+K or Cmd+K opens it from any page.
+ */
+export function WikiHeaderSearch() {
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const focusSearch = (event: KeyboardEvent) => {
+    const toggleSearch = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() === "k" && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
-        inputRef.current?.focus();
+        setOpen((current) => !current);
       }
     };
 
-    window.addEventListener("keydown", focusSearch);
+    window.addEventListener("keydown", toggleSearch);
 
-    return () => window.removeEventListener("keydown", focusSearch);
+    return () => window.removeEventListener("keydown", toggleSearch);
   }, []);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    void navigate({
-      to: "/items",
-      search: { ...EMPTY_ITEMS_SEARCH, query: query.trim() },
-    });
-  };
-
   return (
-    <form
-      role="search"
-      onSubmit={handleSubmit}
-      className={cn("min-w-0", className)}
-    >
-      <InputGroup className="bg-background/60">
-        <InputGroupAddon>
-          <Search aria-hidden="true" />
-        </InputGroupAddon>
-        <InputGroupInput
-          ref={inputRef}
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          aria-label={t("header.searchLabel")}
-          placeholder={t("header.searchPlaceholder")}
-        />
-        <InputGroupAddon align="inline-end" className="max-sm:hidden">
-          <Kbd>Ctrl K</Kbd>
-        </InputGroupAddon>
-      </InputGroup>
-    </form>
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen(true)}
+        aria-keyshortcuts="Control+K Meta+K"
+        className="w-full max-w-80 justify-start bg-background/60 font-normal text-muted-foreground hover:text-foreground max-lg:hidden"
+      >
+        <Search aria-hidden="true" />
+        <span className="min-w-0 flex-1 truncate text-left">
+          {t("header.searchPlaceholder")}
+        </span>
+        <Kbd>Ctrl K</Kbd>
+      </Button>
+      <Button
+        variant="outline"
+        size="icon-sm"
+        onClick={() => setOpen(true)}
+        aria-label={t("header.searchLabel")}
+        className="bg-background/60 lg:hidden"
+      >
+        <Search aria-hidden="true" />
+      </Button>
+      <WikiSearchDialog open={open} onOpenChange={setOpen} />
+    </>
   );
 }
