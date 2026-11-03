@@ -23,6 +23,16 @@ const CharacterIdSchema = Schema.String.check(
   Schema.isPattern(/^[1-9]\d{0,9}$/u),
 );
 
+const RecipientCharacterIdsSchema = Schema.Array(CharacterIdSchema).check(
+  Schema.isMinLength(1),
+  Schema.isMaxLength(MAX_LOOT_SPLIT_RECIPIENTS),
+);
+
+const SenderSchema = Schema.Struct({
+  characterId: Schema.NonEmptyString,
+  name: Schema.NonEmptyString,
+});
+
 const LootSplitChoicesSchema = Schema.Record(
   Schema.String,
   Schema.Literals(LOOT_SPLIT_CHOICES),
@@ -59,6 +69,25 @@ export interface LootSplitEvent {
   sentAt: number;
 }
 
+/**
+ * Sent by a participant whose Margonem loot filter accepted the split for
+ * them: the game then opens no loot window and tells that client neither the
+ * items nor the choices, so the split has no id it could name.
+ */
+export interface LootSplitAutoAcceptPayload {
+  /** Character ids of the fight's other players. */
+  recipientCharacterIds: readonly string[];
+}
+
+export interface LootSplitAutoAcceptedEvent {
+  world: string;
+  sender: {
+    characterId: string;
+    name: string;
+  };
+  sentAt: number;
+}
+
 export type LootSplitAck =
   | { status: "accepted" }
   | {
@@ -76,21 +105,25 @@ export const LootSplitSendPayloadSchema = Schema.Struct({
   splitId: ItemIdSchema,
   choices: LootSplitChoicesSchema,
   accepted: Schema.Boolean,
-  recipientCharacterIds: Schema.Array(CharacterIdSchema).check(
-    Schema.isMinLength(1),
-    Schema.isMaxLength(MAX_LOOT_SPLIT_RECIPIENTS),
-  ),
+  recipientCharacterIds: RecipientCharacterIdsSchema,
 });
 
 export const LootSplitEventSchema = Schema.Struct({
   splitId: ItemIdSchema,
   world: Schema.NonEmptyString,
-  sender: Schema.Struct({
-    characterId: Schema.NonEmptyString,
-    name: Schema.NonEmptyString,
-  }),
+  sender: SenderSchema,
   choices: LootSplitChoicesSchema,
   accepted: Schema.Boolean,
+  sentAt: NonNegativeInt,
+});
+
+export const LootSplitAutoAcceptPayloadSchema = Schema.Struct({
+  recipientCharacterIds: RecipientCharacterIdsSchema,
+});
+
+export const LootSplitAutoAcceptedEventSchema = Schema.Struct({
+  world: Schema.NonEmptyString,
+  sender: SenderSchema,
   sentAt: NonNegativeInt,
 });
 

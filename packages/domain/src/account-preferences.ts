@@ -1,5 +1,6 @@
 import { flow, Option, Predicate, Schema } from "effect";
 import { clamp } from "es-toolkit";
+import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { isObjectRecord } from "@lootlog/schema/records";
 import {
   DETECTOR_NPC_TYPES,
@@ -13,6 +14,7 @@ import {
   type DetectorRoutingRule,
   type DetectorSettings,
   type DetectorTypeSettings,
+  type LootSplitPreferences,
   type NotificationSettings,
   type NotificationsSettings,
 } from "@lootlog/schema/account-preferences";
@@ -309,8 +311,16 @@ export const normalizeBattlePings = normalizeEnabledFlag(
 
 export const normalizeAirTags = normalizeEnabledFlag(defaultAirTagPreferences);
 
-export const normalizeLootSplit = normalizeEnabledFlag(
-  defaultLootSplitPreferences,
+const isItemRarity = Schema.is(ItemRaritySchema);
+
+export const normalizeLootSplit = flow(
+  readPreferenceRecord,
+  (settings): LootSplitPreferences => ({
+    ...normalizeEnabledFlag(defaultLootSplitPreferences)(settings),
+    rarities: [
+      ...new Set(readPreferenceList(settings?.rarities)?.filter(isItemRarity)),
+    ],
+  }),
 );
 
 export const normalizeNotificationMutes = flow(
