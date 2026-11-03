@@ -37,9 +37,13 @@ export function CatalogItemCard({
 
   const bonus = findLegendaryBonus(item.stat);
 
-  // Letters fit beside the level, in the alphabetical order players write
-  // them, `b,h,t`; the full names are read out and hovered.
+  // Letters fit beside the level, in the alphabetical order players say
+  // them, `BHT`; the full names are read out and hovered.
   const professions = findRequiredProfessions(item.stat);
+
+  const professionLetters = professions
+    .map((profession) => t(`catalog.professionsShort.${profession}`))
+    .sort();
 
   const professionNames = professions
     .map((profession) => t(`filters.professions.${profession}`))
@@ -58,7 +62,10 @@ export function CatalogItemCard({
         }
       }}
     >
-      <CatalogItemTile item={item} />
+      <div className="flex shrink-0 flex-col items-center gap-2">
+        <CatalogItemTile item={item} />
+        <ItemDamageTypes stat={item.stat} />
+      </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <Link
           to="/items/$itemSlug"
@@ -70,30 +77,25 @@ export function CatalogItemCard({
         >
           <HighlightedText text={item.name} query={highlight} />
         </Link>
-        <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-          <p className="flex min-w-0 items-center gap-1">
-            <span className="shrink-0 tabular-nums">
-              {t("common.levelShort", { level: item.lvl })}
-            </span>
-            {professions.length > 0 ? (
-              <>
-                <span aria-hidden="true">·</span>
-                <span className="truncate" title={professionNames}>
-                  <span aria-hidden="true">
-                    {professions
-                      .map((profession) =>
-                        t(`catalog.professionsShort.${profession}`),
-                      )
-                      .sort()
-                      .join(",")}
-                  </span>
-                  <span className="sr-only">{professionNames}</span>
+        <p className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+          <span className="shrink-0 tabular-nums">
+            {t("common.levelShort", { level: item.lvl })}
+          </span>
+          {professions.length > 0 ? (
+            <span className="flex gap-0.5" title={professionNames}>
+              {professionLetters.map((letter) => (
+                <span
+                  key={letter}
+                  aria-hidden="true"
+                  className="grid size-4 place-items-center rounded-sm bg-muted text-[0.625rem]/none font-semibold text-foreground/80"
+                >
+                  {letter}
                 </span>
-              </>
-            ) : null}
-          </p>
-          <ItemDamageTypes stat={item.stat} />
-        </div>
+              ))}
+              <span className="sr-only">{professionNames}</span>
+            </span>
+          ) : null}
+        </p>
         {bonus ? (
           <p className="flex min-w-0 items-start gap-1 text-xs text-emerald-400">
             <bonus.icon aria-hidden="true" className="mt-px size-3 shrink-0" />
