@@ -181,16 +181,14 @@ export const ActivityLogs = () => {
             virtualizer.options.scrollMargin,
           )}
         />
-        <div className="p-3">
-          <InfiniteListStatusRow
-            hasNextPage={hasNextPage}
-            hasError={isFetchNextPageError}
-            onRetry={() => void fetchNextPage()}
-            loadingLabel={t(themedKey("common.activityLogs.loadingMore"))}
-            endLabel={t(themedKey("common.activityLogs.end"))}
-            errorLabel={t("common.activityLogs.loadError")}
-          />
-        </div>
+        <InfiniteListStatusRow
+          hasNextPage={hasNextPage}
+          hasError={isFetchNextPageError}
+          onRetry={() => void fetchNextPage()}
+          loadingLabel={t(themedKey("common.activityLogs.loadingMore"))}
+          endLabel={t(themedKey("common.activityLogs.end"))}
+          errorLabel={t("common.activityLogs.loadError")}
+        />
       </>
     );
   };
