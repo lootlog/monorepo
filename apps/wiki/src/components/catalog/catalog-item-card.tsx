@@ -52,7 +52,7 @@ export function CatalogItemCard({
   // Pointing at an item compares it with the set; leaving it ends the preview.
   return (
     <article
-      className="flex h-full min-w-0 items-start gap-3 rounded-lg border border-border/50 bg-card p-3 transition-colors duration-150 hover:border-border hover:bg-accent/30 motion-reduce:transition-none"
+      className="flex h-full min-w-0 flex-col gap-3 rounded-lg border border-border/50 bg-card p-3 transition-colors duration-150 hover:border-border hover:bg-accent/30 motion-reduce:transition-none"
       onPointerEnter={() => setPreview(item)}
       onPointerLeave={() => setPreview(null)}
       onFocus={() => setPreview(item)}
@@ -62,48 +62,55 @@ export function CatalogItemCard({
         }
       }}
     >
-      <div className="flex shrink-0 flex-col items-center gap-2">
+      <div className="flex min-w-0 items-start gap-3">
         <CatalogItemTile item={item} />
-        <ItemDamageTypes stat={item.stat} />
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <Link
-          to="/items/$itemSlug"
-          params={itemPageParams(item)}
-          className={cn(
-            "line-clamp-3 text-sm/tight font-semibold [overflow-wrap:anywhere] outline-none hover:underline focus-visible:underline",
-            LOOT_RARITY_TEXT_CLASS[rarity],
-          )}
-        >
-          <HighlightedText text={item.name} query={highlight} />
-        </Link>
-        <p className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-          <span className="shrink-0 tabular-nums">
-            {t("common.levelShort", { level: item.lvl })}
-          </span>
-          {professions.length > 0 ? (
-            <span className="flex gap-0.5" title={professionNames}>
-              {professionLetters.map((letter) => (
-                <span
-                  key={letter}
-                  aria-hidden="true"
-                  className="grid size-4 place-items-center rounded-sm bg-muted text-[0.625rem]/none font-semibold text-foreground/80"
-                >
-                  {letter}
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <Link
+            to="/items/$itemSlug"
+            params={itemPageParams(item)}
+            className={cn(
+              "line-clamp-3 text-sm/tight font-semibold [overflow-wrap:anywhere] outline-none hover:underline focus-visible:underline",
+              LOOT_RARITY_TEXT_CLASS[rarity],
+            )}
+          >
+            <HighlightedText text={item.name} query={highlight} />
+          </Link>
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <p className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+              <span className="shrink-0 tabular-nums">
+                {t("common.levelShort", { level: item.lvl })}
+              </span>
+              {professions.length > 0 ? (
+                <span className="flex gap-0.5" title={professionNames}>
+                  {professionLetters.map((letter) => (
+                    <span
+                      key={letter}
+                      aria-hidden="true"
+                      className="grid size-4 place-items-center rounded-sm bg-muted text-[0.625rem]/none font-semibold text-foreground/80"
+                    >
+                      {letter}
+                    </span>
+                  ))}
+                  <span className="sr-only">{professionNames}</span>
                 </span>
-              ))}
-              <span className="sr-only">{professionNames}</span>
-            </span>
+              ) : null}
+            </p>
+            <ItemDamageTypes stat={item.stat} />
+          </div>
+          {bonus ? (
+            <p className="flex min-w-0 items-start gap-1 text-xs text-emerald-400">
+              <bonus.icon
+                aria-hidden="true"
+                className="mt-px size-3 shrink-0"
+              />
+              <span>{t(`legendaryBonus.${bonus.name}`)}</span>
+            </p>
           ) : null}
-        </p>
-        {bonus ? (
-          <p className="flex min-w-0 items-start gap-1 text-xs text-emerald-400">
-            <bonus.icon aria-hidden="true" className="mt-px size-3 shrink-0" />
-            <span>{t(`legendaryBonus.${bonus.name}`)}</span>
-          </p>
-        ) : null}
+        </div>
+      </div>
+      <div className="mt-auto flex min-w-0 items-center gap-2 border-t border-border/50 pt-2">
         {showSource && source ? (
-          <p className="truncate text-xs text-muted-foreground">
+          <p className="min-w-0 truncate text-xs text-muted-foreground">
             {t("catalog.droppedBy")}{" "}
             <Link
               to="/npcs/$npcSlug"
@@ -114,10 +121,10 @@ export function CatalogItemCard({
             </Link>
           </p>
         ) : null}
-      </div>
-      <div className="flex flex-col gap-1">
-        <EquipButton item={item} compact />
-        <CompareButton item={item} compact />
+        <div className="ml-auto flex shrink-0 gap-1">
+          <EquipButton item={item} compact />
+          <CompareButton item={item} compact />
+        </div>
       </div>
     </article>
   );
