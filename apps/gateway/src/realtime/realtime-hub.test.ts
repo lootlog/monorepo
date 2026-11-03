@@ -680,6 +680,125 @@ describe("RealtimeHub federation", () => {
     },
   );
 
+  test("delivers loot split choices to listed participants that decode them on any map of the world and every instance", async () => {
+    const bus = new FederationBus();
+    const local = new RealtimeHub(config, new FakeRedisStore(bus));
+    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+
+    const scope = {
+      topic: "map.pings",
+      organizationId: "organization-1",
+      world: "tempest",
+    } as const;
+
+    const scenarios = [
+      // A participant who walked to another map still sees the split.
+      {
+        id: "listed",
+        characterId: "100",
+        mapId: 2,
+        organization: "organization-1",
+        lootSplit: true,
+        delivered: true,
+      },
+      {
+        id: "bystander",
+        characterId: "200",
+        mapId: 1,
+        organization: "organization-1",
+        lootSplit: true,
+        delivered: false,
+      },
+      // An older game client closes the socket on an event it cannot decode.
+      {
+        id: "legacy",
+        characterId: "100",
+        mapId: 1,
+        organization: "organization-1",
+        lootSplit: false,
+        delivered: false,
+      },
+      // A participant from another Lootlog must not learn the choices.
+      {
+        id: "foreign",
+        characterId: "100",
+        mapId: 1,
+        organization: "organization-2",
+        lootSplit: true,
+        delivered: false,
+      },
+    ];
+
+    const targets = [local, remote].flatMap((hub, index) =>
+      scenarios.map((scenario) => {
+        const base = makeSession(`loot-split-${index}-${scenario.id}`);
+
+        const session: SessionData = {
+          ...base,
+          platform: "game",
+          supportsLootSplit: scenario.lootSplit,
+          presence: {
+            userId: base.userId,
+            sessionId: `presence-${base.connectionId}`,
+            organizationIds: [scenario.organization],
+            platform: "game",
+            status: "online",
+            confidence: "verified",
+            isAfk: false,
+            lastSeen: 1,
+            character: {
+              world: scope.world,
+              name: `Hero-${scenario.characterId}`,
+              lvl: 100,
+              icon: "icon",
+              characterId: scenario.characterId,
+              accountId: `account-${scenario.characterId}`,
+              prof: "w",
+            },
+            location: { mapId: scenario.mapId, map: "Map", x: 1, y: 1 },
+          },
+        };
+
+        const target = makeSocket(session);
+        hub.register(target.socket);
+        hub.subscribe(target.socket, {
+          topic: "map.pings",
+          organizationId: scenario.organization,
+        });
+
+        return { ...target, delivered: scenario.delivered };
+      }),
+    );
+
+    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+
+    const choices = {
+      v: 1,
+      type: "loot-split.received",
+      data: {
+        splitId: "1200653658",
+        world: scope.world,
+        sender: { characterId: "300", name: "Sender" },
+        choices: { "1200653658": 2 },
+        accepted: false,
+        sentAt: 1,
+      },
+    } as const;
+
+    await local.publishToScopes([scope], choices, {
+      recipientPlatform: "game",
+      recipientWorld: scope.world,
+      recipientCharacterIds: ["100"],
+    });
+
+    for (const target of targets) {
+      // Without a routing scope the choices have no Organization to authorize them.
+      await local.publishToUser(target.socket.data.userId, choices);
+      expect(local.sendEvent(target.socket, choices)).toBe(false);
+      expect(target.sent).toHaveLength(target.delivered ? 1 : 0);
+    }
+  });
+
   test("filters hero events from RabbitMQ on local and federated connections after role changes", async () => {
     const bus = new FederationBus();
     const local = new RealtimeHub(config, new FakeRedisStore(bus));

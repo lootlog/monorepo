@@ -6,6 +6,7 @@ import {
   NOTIFICATION_TYPES,
   defaultAirTagPreferences,
   defaultBattlePingPreferences,
+  defaultLootSplitPreferences,
   defaultDetectorSettings,
   defaultMapPingPreferences,
   defaultNotificationsSettings,
@@ -307,6 +308,10 @@ export const normalizeBattlePings = normalizeEnabledFlag(
 );
 
 export const normalizeAirTags = normalizeEnabledFlag(defaultAirTagPreferences);
+
+export const normalizeLootSplit = normalizeEnabledFlag(
+  defaultLootSplitPreferences,
+);
 
 export const normalizeNotificationMutes = flow(
   readPreferenceRecord,

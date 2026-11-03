@@ -15,6 +15,7 @@ import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
   REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_LOOT_SPLIT_CAPABILITY,
   REALTIME_SESSION_HELLO_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
@@ -76,6 +77,7 @@ import {
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { BattlePingService } from "#src/realtime/battle-ping-service";
+import { LootSplitService } from "#src/realtime/loot-split-service";
 import { NpcPresenceService } from "#src/realtime/npc-presence-service";
 import { PresenceStore } from "#src/realtime/presence-store";
 import { closeGradually, RealtimeHub } from "#src/realtime/realtime-hub";
@@ -189,6 +191,7 @@ class GatewayApplication extends Context.Service<
       const activity = new ActivityPublisher(messaging, config);
       const mapPings = new MapPingService(redis, hub);
       const battlePings = new BattlePingService(redis, hub);
+      const lootSplits = new LootSplitService(redis, hub);
       const airTags = new AirTagService(redis, hub);
       const npcPresence = new NpcPresenceService(redis, hub);
       yield* airTags.runInterestRefresh().pipe(Effect.forkScoped);
@@ -214,6 +217,7 @@ class GatewayApplication extends Context.Service<
         activity,
         mapPings,
         battlePings,
+        lootSplits,
         airTags,
         npcPresence,
         joinAdmission,
@@ -395,6 +399,7 @@ const negotiateCapabilities = (
     supportsTeamBattlePings: offersGameCapability(
       REALTIME_TEAM_BATTLE_PING_CAPABILITY,
     ),
+    supportsLootSplit: offersGameCapability(REALTIME_LOOT_SPLIT_CAPABILITY),
     supportsAirTagScopeUpdates: offersGameCapability(
       REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
     ),

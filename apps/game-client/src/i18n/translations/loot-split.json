@@ -1,0 +1,35 @@
+{
+  "windowTitle": "Podział łupów",
+  "ownSplit": "Twój podział",
+  "otherSplit": "Wcześniejszy podział",
+  "participant": "Uczestnik",
+  "resolved": "Podzielony",
+  "expired": "Czas minął",
+  "choosingCount": "Wybiera: {{count}}",
+  "unknownCount": "Bez danych: {{count}}",
+  "secondsLeft": "{{seconds}} s",
+  "status": {
+    "accepted": "Zaakceptował",
+    "acceptedByNewFight": "Zaakceptowane przez nową walkę",
+    "choosing": "Wybiera",
+    "unknown": "Bez danych: nie ma Lootloga albo nie dzieli z Tobą Lootloga"
+  },
+  "choices": {
+    "0": "Nie chcę",
+    "1": "Chcę",
+    "2": "Bardzo chcę",
+    "unknown": "Brak danych"
+  },
+  "choiceShort": {
+    "0": "N",
+    "1": "C",
+    "2": "B",
+    "unknown": "?"
+  },
+  "cellLabel": "{{player}} · {{item}}: {{choice}}",
+  "canPickMust": "może wybrać „Bardzo chcę”",
+  "settings": {
+    "windowLabel": "Okno podziału łupów",
+    "windowDescription": "Po walce w grupie pokazuje, co wybrali inni gracze z Lootlogiem i kto jeszcze nie zaakceptował łupu."
+  }
+}

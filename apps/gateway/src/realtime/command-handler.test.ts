@@ -221,6 +221,7 @@ const setup = (
     activity,
     { send: () => Promise.reject(new Error("Unexpected map ping")) },
     { send: () => Promise.reject(new Error("Unexpected battle ping")) },
+    { send: () => Promise.reject(new Error("Unexpected loot split")) },
     {
       updateSubscription,
       publishObservations,
@@ -944,6 +945,7 @@ describe("CommandHandler session lifecycle", () => {
         activity,
         { send: () => Promise.reject(new Error("Unexpected map ping")) },
         { send: () => Promise.reject(new Error("Unexpected battle ping")) },
+        { send: () => Promise.reject(new Error("Unexpected loot split")) },
         {
           updateSubscription: () =>
             Promise.reject(new Error("Unexpected air tag subscription")),
@@ -1433,12 +1435,51 @@ describe("CommandHandler session lifecycle", () => {
   });
 
   test.each([
-    { federationVersion: 2, apiKey: false, available: false },
-    { federationVersion: 3, apiKey: false, available: true },
-    { federationVersion: 3, apiKey: true, available: false },
+    {
+      capability: "lootlog.party-gathering-state.v1",
+      federationVersion: 2,
+      apiKey: false,
+      available: false,
+    },
+    {
+      capability: "lootlog.party-gathering-state.v1",
+      federationVersion: 3,
+      apiKey: false,
+      available: true,
+    },
+    {
+      capability: "lootlog.party-gathering-state.v1",
+      federationVersion: 3,
+      apiKey: true,
+      available: false,
+    },
+    // An older replica drops `loot-split.received`, so its participants would miss choices.
+    {
+      capability: "lootlog.loot-split.v1",
+      federationVersion: 8,
+      apiKey: false,
+      available: false,
+    },
+    {
+      capability: "lootlog.loot-split.v1",
+      federationVersion: 9,
+      apiKey: false,
+      available: true,
+    },
+    {
+      capability: "lootlog.loot-split.v1",
+      federationVersion: 9,
+      apiKey: true,
+      available: false,
+    },
   ])(
-    "advertises live gathering state only after the federation rollout for game sessions: %j",
-    async ({ federationVersion, apiKey, available }) => {
+    "advertises a federated game capability only after its federation rollout for game sessions: %j",
+    async ({
+      capability: advertised,
+      federationVersion,
+      apiKey,
+      available,
+    }) => {
       const { handler, hub } = setup();
       hub.clusterFederationVersion = federationVersion;
       const socket = makeSocket().socket;
@@ -1467,7 +1508,7 @@ describe("CommandHandler session lifecycle", () => {
           ),
         ),
       );
-      const capability = ["lootlog.party-gathering-state.v1"];
+      const capability = [advertised];
       expect(hub.responses[0]).toMatchObject({
         data: {
           capabilities: available
@@ -1897,6 +1938,7 @@ describe("CommandHandler session lifecycle", () => {
             await gate.promise;
           }).pipe(Effect.andThen(Effect.die("Rabbit unavailable"))),
       },
+      { send: () => Promise.reject(new Error("unused")) },
       { send: () => Promise.reject(new Error("unused")) },
       { send: () => Promise.reject(new Error("unused")) },
       {
