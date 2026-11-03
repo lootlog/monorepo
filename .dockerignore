@@ -11,11 +11,11 @@ perf
 playground
 repos
 
-# Git
+# Git. Keep .gitignore: Tailwind's source detection reads it, and without it
+# the SSR build scans the client's dist output and links a stylesheet hash the
+# client build never emitted.
 **/.git
 .git
-**/.gitignore
-.gitignore
 
 # Documentation
 *.md
