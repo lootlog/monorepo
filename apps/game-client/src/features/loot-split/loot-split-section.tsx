@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { LootSplitChoiceChip } from "./loot-split-choice-chip";
 import { LootSplitItemTile } from "./loot-split-item-tile";
 import {
-  canPickMust,
   getLootSplitStatus,
   type LootSplit,
   type LootSplitStatus,
@@ -147,7 +146,6 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
               </th>
               {split.items.map((item) => {
                 const choice = view?.choices[item.id];
-                const mustAllowed = canPickMust(participant.profession, item);
 
                 const label = t("cellLabel", {
                   player: participant.name,
@@ -162,13 +160,7 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
 
                 return (
                   <td key={item.id} className="ll:text-center">
-                    <LootSplitChoiceChip
-                      choice={choice}
-                      canPickMust={mustAllowed}
-                      label={
-                        mustAllowed ? `${label} (${t("canPickMust")})` : label
-                      }
-                    />
+                    <LootSplitChoiceChip choice={choice} label={label} />
                   </td>
                 );
               })}

@@ -1,5 +1,5 @@
 import { Profiler } from "react";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import i18n from "i18next";
 import { expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
@@ -499,4 +499,54 @@ it("stops placing a roaming hero's timer once nobody has confirmed it lately, ke
     timerRegion(2).getByRole("img", { name: occupiedLabel() }),
   ).toBeVisible();
   view.unmount();
+});
+
+it("marks a roaming hero unconfirmed even when its stale timer fires a millisecond early", async () => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+
+  try {
+    const harness = createOnlinePlayersTest();
+    const entry = npcTimer(NpcType.HERO, "Tepeyollotl");
+
+    queryClient.setQueryData(queryKeys.heroSightings("alpha"), [
+      heroSighting("guild-1", "Tepeyollotl", {
+        lastSeenAt: new Date(
+          Date.now() - HERO_SIGHTING_STALE_AFTER_MS + 1_000,
+        ).toISOString(),
+      }),
+    ]);
+
+    const view = render(
+      <harness.wrapper>
+        <TimerMapPresenceProvider timers={[entry]}>
+          <HeroSightingMark timer={entry} />
+        </TimerMapPresenceProvider>
+      </harness.wrapper>,
+    );
+
+    const mark = (status?: "unconfirmed") =>
+      screen.queryByRole("img", {
+        name: i18n.t(
+          status
+            ? "timers:tooltip.heroSightingMapUnconfirmed"
+            : "timers:tooltip.heroSightingMap",
+          {
+            state: i18n.t("heroSightings:state.ROAMING"),
+            map: "Karka-han",
+            status: i18n.t("heroSightings:status.unconfirmed"),
+          },
+        ),
+      });
+
+    expect(mark()).not.toBeNull();
+
+    // Node timers can run before `Date.now()` reaches their delay.
+    vi.setSystemTime(Date.now() - 1);
+    await act(() => vi.advanceTimersByTimeAsync(60_000));
+
+    expect(mark("unconfirmed")).not.toBeNull();
+    view.unmount();
+  } finally {
+    vi.useRealTimers();
+  }
 });
