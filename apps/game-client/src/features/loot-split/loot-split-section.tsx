@@ -57,7 +57,7 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
     <section
       aria-label={title}
       className={cn(
-        "ll:flex ll:flex-col ll:gap-1 ll:border-b ll:border-white/10 ll:px-1 ll:py-1.5 ll:last:border-b-0",
+        "ll:flex ll:flex-col ll:gap-1 ll:border-b ll:border-white/10 ll:px-2 ll:py-1.5 ll:last:border-b-0",
         split.phase !== "open" && "ll:opacity-60",
       )}
     >
