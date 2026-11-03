@@ -1,6 +1,7 @@
 import React from "react";
 import { LazyMotion, MotionConfig } from "framer-motion";
 import ReactDOM from "react-dom/client";
+import { preventIosFocusZoom } from "@lootlog/ui/lib/ios-focus-zoom";
 import { configureWebApiClients } from "@/lib/configure-api-clients";
 import { startContentEntrance } from "@/lib/content-entrance";
 import App from "./App.tsx";
@@ -9,6 +10,8 @@ const loadMotionFeatures = () =>
   import("framer-motion").then(({ domMax }) => domMax);
 
 configureWebApiClients();
+
+preventIosFocusZoom();
 
 startContentEntrance(document.body);
 
