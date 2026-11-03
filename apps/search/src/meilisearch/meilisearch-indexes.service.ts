@@ -35,7 +35,7 @@ export const searchIndexSettings: IndexSettings = {
       "monsterKey",
       "gameVersion",
     ],
-    sortableAttributes: ["firstSeenAt"],
+    sortableAttributes: ["firstSeenAt", "lvl", "name"],
   },
   [PLAYERS_INDEX]: { filterableAttributes: ["name", "world"] },
   [ITEMS_INDEX]: {

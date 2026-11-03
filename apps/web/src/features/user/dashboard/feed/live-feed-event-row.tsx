@@ -1,5 +1,5 @@
 import { activityFeedNpcCategory } from "@lootlog/domain/activity-feed";
-import { NpcTypeIcon } from "@lootlog/ui/components/npc-type-icon";
+import { Skull } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { NpcTile } from "@/components/tiles/npc-tile";
@@ -50,7 +50,7 @@ export function LiveFeedEventRow({ group, now }: Props) {
               appearance.color,
             )}
           >
-            <NpcTypeIcon type={category} className="size-7" />
+            <Skull aria-hidden="true" className="size-5" />
           </span>
         )}
       </span>
