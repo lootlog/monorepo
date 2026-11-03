@@ -12,7 +12,9 @@ export const EventKillsHistory = () => {
 
   return (
     <EventKillsHistoryContent
-      key={initialHeroId ?? "all"}
+      // Only leaving a hero's page remounts; moving between heroes keeps the
+      // focused tab.
+      key={initialHeroId ? "hero" : "all"}
       guildId={guildId}
       eventId={eventId}
       initialHeroId={initialHeroId}

@@ -51,6 +51,7 @@ type BattlePanelBattlesRouteSearch = Partial<{
   search: string;
   result: BattlePanelBattleResult[];
   ph: boolean;
+  matchmaking: boolean;
   startDate: string;
   endDate: string;
   characterId: string[];
@@ -196,6 +197,7 @@ const battlePanelBattlesRouteSearch = z
     search: routeSearchString,
     result: routeSearchLiterals(BATTLE_RESULT_VALUES),
     ph: routeSearchBoolean,
+    matchmaking: routeSearchBoolean,
     startDate: routeSearchString,
     endDate: routeSearchString,
     characterId: routeSearchStrings,
@@ -220,6 +222,8 @@ const battlePanelBattlesRouteSearch = z
     if (input.result !== undefined) search.result = input.result;
 
     if (input.ph !== undefined) search.ph = input.ph;
+
+    if (input.matchmaking !== undefined) search.matchmaking = input.matchmaking;
 
     if (input.startDate !== undefined) search.startDate = input.startDate;
 

@@ -31,9 +31,8 @@ export const EventKillsHistoryContent = ({
 }: EventKillsHistoryContentProps) => {
   const { t } = useTranslation();
 
-  const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
-    initialHeroId,
-  );
+  const [eventHeroId, setEventHeroId] = useState<string | undefined>();
+  const selectedHeroId = initialHeroId ?? eventHeroId;
 
   const navigate = useNavigate();
 
@@ -41,7 +40,7 @@ export const EventKillsHistoryContent = ({
   // those pages; the event's kills page keeps the choice on the page.
   const handleHeroChange = (heroId: string | undefined) => {
     if (!initialHeroId || !guildId || !eventId) {
-      setSelectedHeroId(heroId);
+      setEventHeroId(heroId);
 
       return;
     }
