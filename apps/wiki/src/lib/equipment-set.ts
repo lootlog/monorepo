@@ -5,7 +5,7 @@ import {
   encodeItemUpgrade,
   type ItemUpgrade,
   ITEM_UPGRADE_PATTERN,
-} from "@/lib/item-upgrade";
+} from "@lootlog/domain/item-upgrade";
 
 export type Profession = (typeof PROFESSION_OPTIONS)[number];
 

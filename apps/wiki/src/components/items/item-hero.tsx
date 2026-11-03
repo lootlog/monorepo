@@ -6,7 +6,7 @@ import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { cn } from "cn";
 import { t } from "@/i18n/messages";
 import { findRequiredProfessions, ITEM_TILE_LABELS } from "@/lib/item-options";
-import type { UpgradeLevel } from "@/lib/item-upgrade";
+import type { UpgradeLevel } from "@lootlog/domain/item-upgrade";
 import { ItemDropSources } from "./item-drop-sources";
 
 type ItemHeroProps = {

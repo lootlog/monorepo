@@ -4,7 +4,7 @@ import {
   UPGRADE_BONUS_GROUP_POWER,
   type UpgradeBonusKey,
   type UpgradeBonusOption,
-} from "@/lib/item-upgrade";
+} from "@lootlog/domain/item-upgrade";
 import {
   formatOfferChance,
   formatUpgradeBonusValue,

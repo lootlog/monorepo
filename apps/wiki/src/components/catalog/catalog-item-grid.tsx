@@ -4,6 +4,7 @@ import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
 import { t } from "@/i18n/messages";
 import { CatalogItemCard } from "./catalog-item-card";
+import type { AttackSpeedRanking } from "./item-attack-speed";
 
 type CatalogItemGridProps = {
   items: readonly CatalogItemDtoOutput[] | undefined;
@@ -17,7 +18,7 @@ type CatalogItemGridProps = {
   /** The highest level the items are filtered to. */
   maxLevel?: number;
   /** Shows the attack speed each item adds, for a list ranked by it. */
-  showAttackSpeed?: boolean;
+  attackSpeed?: AttackSpeedRanking;
 };
 
 /** The catalog's grid of tiles, as many columns as fit. */
@@ -36,7 +37,7 @@ export function CatalogItemGrid({
   showSource,
   highlight,
   maxLevel,
-  showAttackSpeed,
+  attackSpeed,
 }: CatalogItemGridProps) {
   if (isError) {
     return (
@@ -77,7 +78,7 @@ export function CatalogItemGrid({
               showSource={showSource}
               highlight={highlight}
               maxLevel={maxLevel}
-              showAttackSpeed={showAttackSpeed}
+              attackSpeed={attackSpeed}
             />
           </li>
         ))}

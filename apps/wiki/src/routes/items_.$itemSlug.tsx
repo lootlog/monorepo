@@ -25,7 +25,7 @@ import {
   readPageSegment,
   WIKI_GAME_VERSION,
 } from "@/lib/catalog-links";
-import { itemForCharacter } from "@/lib/elastic-level";
+import { itemForCharacter } from "@lootlog/domain/elastic-level";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import {
@@ -37,7 +37,7 @@ import {
   type UpgradeBonusKey,
   type UpgradeLevel,
   upgradeItemStat,
-} from "@/lib/item-upgrade";
+} from "@lootlog/domain/item-upgrade";
 import { findStatChanges } from "@/lib/stat-changes";
 
 /** The upgrade the page shows the item at, so a link keeps it. */

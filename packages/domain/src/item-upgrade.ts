@@ -1,6 +1,5 @@
-import { minBy, range } from "es-toolkit";
-import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
-import { findEquipmentSlot } from "@/lib/equipment-slots";
+import { maxBy, minBy, range } from "es-toolkit";
+import { itemAttackSpeed } from "./attack-speed.js";
 
 /**
  * Margonem's item upgrade (ulepszanie), from the game's rules at
@@ -198,6 +197,13 @@ const statRules = (rarity: string | null, type: string | null) => {
   );
 };
 
+/** A stat's value in the game's stat format; none for a flag or a stat it lacks. */
+export const itemStatValue = (stat: string, key: string) =>
+  stat
+    .split(";")
+    .find((entry) => entry.startsWith(`${key}=`))
+    ?.slice(key.length + 1);
+
 const decimalsOf = (value: string) => value.split(".")[1]?.length ?? 0;
 
 const roundTo = (value: number, decimals: number) =>
@@ -247,13 +253,24 @@ type UpgradableItem = {
   type: string | null;
 };
 
+// Item types worn in an equipment slot; arrows, quivers and blessings are not.
+const EQUIPMENT_TYPES = new Set([
+  ...WEAPON_TYPES,
+  "ARMOR",
+  "HELMET",
+  "GLOVES",
+  "BOOTS",
+  "SHIELD",
+  "RING",
+  "NECKLACE",
+]);
+
 /**
  * Whether the game lets the item be upgraded: worn equipment of level 20 and
- * up that neither runs out (cursed) nor expires. Arrows and blessings have no
- * equipment slot.
+ * up that neither runs out (cursed) nor expires.
  */
 export const isUpgradable = (item: UpgradableItem) =>
-  findEquipmentSlot(item.type) !== undefined &&
+  EQUIPMENT_TYPES.has(item.type ?? "") &&
   item.lvl >= MIN_UPGRADE_ITEM_LEVEL &&
   !item.stat
     .split(";")
@@ -332,12 +349,7 @@ const defenseScale = (item: UpgradableItem, key: string, shown: number) => {
 
   if (!defense) return undefined;
 
-  const professions = [
-    ...String(
-      parseItemStats(item.stat).find((stat) => stat.key === "reqp")?.value ??
-        "bhmptw",
-    ),
-  ]
+  const professions = [...(itemStatValue(item.stat, "reqp") ?? "bhmptw")]
     .sort()
     .join("");
 
@@ -463,9 +475,7 @@ const addUpgradeBonus = (
 
   const scale = statRules(item.rarity, item.type).get(key)?.[0];
 
-  const baseValue = parseItemStats(item.stat).find(
-    (stat) => stat.key === key,
-  )?.value;
+  const baseValue = itemStatValue(item.stat, key);
 
   const defense = defenseScale(item, key, Number(baseValue));
 
@@ -813,4 +823,54 @@ export const upgradeBonusOptions = (
     value: addUpgradeBonus(entries, key, item, level).added,
     offerChance: chances[index] ?? 0,
   }));
+};
+
+// The +5 bonuses that add attack speed: its own, agility and all attributes.
+const ATTACK_SPEED_BONUSES: ReadonlyArray<UpgradeBonusKey> = ["sa", "dz", "da"];
+
+/** The attack speed (`itemAttackSpeed`) of an item in the game's stat format. */
+export const itemStatAttackSpeed = (stat: string) =>
+  itemAttackSpeed(
+    Object.fromEntries(
+      ATTACK_SPEED_BONUSES.map((key) => [
+        key,
+        Number(itemStatValue(stat, key) ?? 0),
+      ]),
+    ),
+  );
+
+/** The attack speed an item adds at +5 and the +5 bonus it takes for it. */
+export type UpgradedAttackSpeed = {
+  attackSpeed: number;
+  bonus?: UpgradeBonusKey;
+};
+
+/**
+ * The most attack speed the item adds at +5 (`itemAttackSpeed`), with the +5
+ * bonus that gives it: weapons can draw attack speed, every piece agility and
+ * all attributes. An item the game does not upgrade adds what it dropped with.
+ */
+export const upgradedAttackSpeed = (
+  item: UpgradableItem,
+): UpgradedAttackSpeed => {
+  if (!isUpgradable(item))
+    return { attackSpeed: itemStatAttackSpeed(item.stat) };
+
+  const pool = bonusPool(item) ?? [];
+
+  const candidates = [
+    undefined,
+    ...ATTACK_SPEED_BONUSES.filter((key) => pool.includes(key)),
+  ].map((bonus) => ({
+    bonus,
+    attackSpeed: itemStatAttackSpeed(
+      upgradeItemStat(item, { level: MAX_UPGRADE_LEVEL, bonus }),
+    ),
+  }));
+
+  const best = maxBy(candidates, ({ attackSpeed }) => attackSpeed);
+
+  return best?.bonus
+    ? { attackSpeed: best.attackSpeed, bonus: best.bonus }
+    : { attackSpeed: best?.attackSpeed ?? 0 };
 };

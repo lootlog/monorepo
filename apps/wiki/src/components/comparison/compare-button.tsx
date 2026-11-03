@@ -4,7 +4,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { useItemComparison } from "@/contexts/item-comparison-context";
 import { t } from "@/i18n/messages";
 import { MAX_COMPARED_ITEMS } from "@/lib/item-comparison";
-import { type ItemUpgrade, NO_UPGRADE } from "@/lib/item-upgrade";
+import { type ItemUpgrade, NO_UPGRADE } from "@lootlog/domain/item-upgrade";
 
 type CompareButtonProps = {
   item: Pick<CatalogItemDtoOutput, "id" | "name">;

@@ -4,9 +4,18 @@ import { attemptMeilisearch } from "#src/meilisearch/search-operation-failure";
 import { buildMeilisearchInFilter } from "#src/meilisearch/query-builder";
 import { ITEMS_INDEX } from "#src/items/search-index";
 import type { DropSource } from "#src/items/item-drops";
-import { ELASTIC_LEVELS, isElasticLevel } from "#src/items/item-levels";
+import { isElasticLevel } from "#src/items/item-levels";
 import { collapseByNameAndType } from "#src/npcs/npcs.service";
 import { NPCS_INDEX } from "#src/npcs/search-index";
+import {
+  ELASTIC_LEVELS,
+  elasticItemLevel,
+} from "@lootlog/domain/elastic-level";
+import {
+  itemAtLevel,
+  itemStatAttackSpeed,
+  upgradedAttackSpeed,
+} from "@lootlog/domain/item-upgrade";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import type { AppLogger } from "#src/shared/logger";
 import type {
@@ -63,6 +72,18 @@ const page = (query: { limit?: number; offset?: number }) => ({
 
 const sortBy = (sort: CatalogControllerGetItemsQuery["sort"]) =>
   sort === undefined || sort === "relevance" ? undefined : [sort];
+
+/** The sorts that rank by the attack speed an item adds, and how they count it. */
+const ATTACK_SPEED_SORTS = new Map<
+  CatalogControllerGetItemsQuery["sort"],
+  (item: CatalogItemDocument) => number
+>([
+  ["attackSpeed:desc", (item) => itemStatAttackSpeed(item.stat)],
+  ["upgradedAttackSpeed:desc", (item) => upgradedAttackSpeed(item).attackSpeed],
+]);
+
+// The most hits one Meilisearch search returns, its `maxTotalHits`.
+const MAX_HITS = 1000;
 
 const gameVersionFilter = (gameVersion: string | undefined) =>
   gameVersion === undefined
@@ -167,7 +188,6 @@ export const makeCatalogModule = (
     const filters = itemFilters(query, monsterKey);
 
     const params: SearchParams = {
-      ...page(query),
       attributesToSearchOn: ["name"],
       attributesToRetrieve: [
         "id",
@@ -181,22 +201,89 @@ export const makeCatalogModule = (
         "retiredDropMonsterKeys",
         "observedLevels",
       ],
-      filter: filters.length > 0 ? filters.join(" AND ") : undefined,
-      sort: sortBy(query.sort),
     };
 
-    const response = yield* attemptMeilisearch("catalog.items", () =>
-      meilisearch
-        .index<CatalogItemDocument>(ITEMS_INDEX)
-        .search(query.search ?? "", params),
-    ).pipe(
-      Effect.tapError((error) =>
-        Effect.sync(() => logger.error("Catalog items error", { error })),
-      ),
-    );
+    const search = (extra: SearchParams, extraFilters: string[] = []) => {
+      const all = [...filters, ...extraFilters];
+
+      return attemptMeilisearch("catalog.items", () =>
+        meilisearch
+          .index<CatalogItemDocument>(ITEMS_INDEX)
+          .search(query.search ?? "", {
+            ...params,
+            ...extra,
+            filter: all.length > 0 ? all.join(" AND ") : undefined,
+          }),
+      ).pipe(
+        Effect.map((response) => ({
+          hits: response.hits,
+          total: response.estimatedTotalHits ?? response.hits.length,
+        })),
+        Effect.tapError((error) =>
+          Effect.sync(() => logger.error("Catalog items error", { error })),
+        ),
+      );
+    };
+
+    const { limit, offset } = page(query);
+    const attackSpeed = ATTACK_SPEED_SORTS.get(query.sort);
+
+    // An elastic item's stats follow its looter's level, and the index holds
+    // the version it saw last, so its attack speed is counted at the level
+    // the search is capped to, as the wiki shows it, and merged into the
+    // fixed items in Meilisearch's order, which puts a query's relevance
+    // before speed.
+    const response = attackSpeed
+      ? yield* Effect.all(
+          [
+            search(
+              { offset: 0, limit: offset + limit, sort: sortBy(query.sort) },
+              ["elasticLevel != true"],
+            ),
+            search({ offset: 0, limit: MAX_HITS }, ["elasticLevel = true"]),
+          ],
+          { concurrency: "unbounded" },
+        ).pipe(
+          Effect.map(([fixed, elastic]) => {
+            const level = query.maxLevel ?? ELASTIC_LEVELS.max;
+
+            const elasticRanked = elastic.hits
+              .map((hit) => ({
+                hit,
+                value: attackSpeed(
+                  itemAtLevel(hit, elasticItemLevel(hit.type, level)),
+                ),
+              }))
+              .sort((a, b) => b.value - a.value);
+
+            const merged: CatalogItemDocument[] = [];
+            let next = 0;
+
+            for (const hit of fixed.hits) {
+              const value = attackSpeed(hit);
+              let faster = elasticRanked[next];
+
+              while (faster && faster.value > value) {
+                merged.push(faster.hit);
+                next += 1;
+                faster = elasticRanked[next];
+              }
+
+              merged.push(hit);
+            }
+
+            merged.push(...elasticRanked.slice(next).map(({ hit }) => hit));
+
+            return {
+              total: fixed.total + elastic.total,
+              hits: merged.slice(offset, offset + limit),
+            };
+          }),
+        )
+      : yield* search({ offset, limit, sort: sortBy(query.sort) });
 
     return {
-      estimatedTotalHits: response.estimatedTotalHits ?? response.hits.length,
+      estimatedTotalHits: response.total,
       hits: response.hits.map(
         ({ droppedBy, retiredDropMonsterKeys, observedLevels, ...item }) => ({
           ...item,

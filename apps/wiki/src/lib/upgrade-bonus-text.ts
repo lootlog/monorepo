@@ -1,6 +1,6 @@
 import { formatNumericText } from "@lootlog/ui/components/item-stat-utils";
 import { t } from "@/i18n/messages";
-import type { UpgradeBonusOption } from "@/lib/item-upgrade";
+import type { UpgradeBonusOption } from "@lootlog/domain/item-upgrade";
 
 // Stats the game shows as percentages, or as percentage points.
 const PERCENT_BONUSES = new Set([

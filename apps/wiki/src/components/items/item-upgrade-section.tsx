@@ -4,7 +4,7 @@ import {
   type ItemUpgrade,
   upgradeBonusOptions,
   upgradedItemLevel,
-} from "@/lib/item-upgrade";
+} from "@lootlog/domain/item-upgrade";
 import type { StatChange } from "@/lib/stat-changes";
 import { ItemUpgradeBonusPicker } from "./item-upgrade-bonus-picker";
 import { ItemUpgradeChanges } from "./item-upgrade-changes";

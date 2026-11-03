@@ -2,7 +2,7 @@ import { createContext, useContext } from "react";
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import type { EquipmentSet } from "@/lib/equipment-set";
 import type { EquipmentSlotId } from "@/lib/equipment-slots";
-import type { ItemUpgrade } from "@/lib/item-upgrade";
+import type { ItemUpgrade } from "@lootlog/domain/item-upgrade";
 
 type EquipmentSetContextValue = {
   set: EquipmentSet;

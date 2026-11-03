@@ -225,6 +225,9 @@ const messages = {
     attackSpeed: "{{value}} SA",
     attackSpeedHint:
       "Szybkość ataku z przedmiotu razem ze zręcznością i wszystkimi cechami (0,002 SA za punkt), dla postaci z co najmniej 100 zręczności.",
+    upgradedAttackSpeed: "{{value}} SA na +5",
+    upgradedAttackSpeedHint:
+      "Szybkość ataku z przedmiotu ulepszonego do +5 z bonusem „{{bonus}}”, razem ze zręcznością i wszystkimi cechami (0,002 SA za punkt), dla postaci z co najmniej 100 zręczności.",
     droppedByTitle: "Wypada z",
     professionsShort: {
       w: "W",
@@ -332,6 +335,7 @@ const messages = {
       "name:asc": "Nazwa A-Z",
       "name:desc": "Nazwa Z-A",
       "attackSpeed:desc": "Najszybsze",
+      "upgradedAttackSpeed:desc": "Najszybsze na +5",
     },
     rarity: "Rzadkość",
     profession: "Profesja",
