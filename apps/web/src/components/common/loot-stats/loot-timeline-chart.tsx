@@ -55,7 +55,7 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
     >
       <ChartContainer
         config={getLootRarityChartConfig(t)}
-        className="h-[250px] w-full"
+        className="h-64 w-full"
       >
         <AreaChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />

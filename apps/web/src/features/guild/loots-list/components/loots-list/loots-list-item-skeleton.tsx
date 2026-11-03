@@ -6,6 +6,7 @@ import {
 } from "@/components/common/list-tile";
 import { ItemSilhouetteSkeleton } from "./item-silhouette-skeleton";
 import { PlayerSilhouetteSkeleton } from "./player-silhouette-skeleton";
+import { LOOT_PLAYERS_ROW_CLASS } from "./loot-players-row";
 
 type Props = {
   index?: number;
@@ -50,11 +51,11 @@ export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
 
       <div
         className={cn(
-          "flex flex-1 flex-wrap gap-x-4 gap-y-2.5 py-2.5",
+          "@container flex flex-1 flex-wrap gap-x-4 gap-y-2.5 py-2.5",
           LIST_TILE_INSET_CLASS,
         )}
       >
-        <div className="flex min-w-0 flex-1 basis-48 flex-wrap content-start gap-x-0.75 gap-y-2.5 sm:gap-x-2">
+        <div className={LOOT_PLAYERS_ROW_CLASS}>
           {Array.from({ length: playersCount }, (_, playerIndex) => (
             <div
               key={playerIndex}

@@ -25,7 +25,9 @@ export const StatsTableResults = ({
   if (isLoading) {
     return (
       <div aria-busy="true">
+        {/* Enough rows to fill the screen, so the footer docks at its bottom. */}
         <TableRowsSkeleton
+          rows={20}
           withHeader
           rowContent={rowContent}
           mobileList={mobileSkeleton}

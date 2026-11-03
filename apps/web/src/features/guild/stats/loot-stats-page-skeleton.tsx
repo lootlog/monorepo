@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { LootOverviewCards } from "@/components/common/loot-stats/loot-overview-cards";
 import { LootTopContributors } from "./components/loot-top-contributors";
 import { LootTopItems } from "./components/loot-top-items";
-import { ChartSection } from "@/components/common/chart-section";
+import { LootTimelineChartSkeleton } from "@/components/common/loot-stats/loot-timeline-chart-skeleton";
+import { LootTopNpcsChartSkeleton } from "@/components/common/loot-stats/loot-top-npcs-chart-skeleton";
 import { StatsSectionColumns } from "@/components/common/stats-section-columns";
 import { FilterBar } from "@/components/common/filter-bar";
 import { StatsFiltersSkeleton } from "./components/stats-filters-skeleton";
@@ -21,12 +22,8 @@ export const LootStatsPageSkeleton = () => {
       </FilterBar>
       <LootOverviewCards isLoading />
       <StatsSectionColumns className="xl:grid-cols-3 xl:*:first:col-span-2">
-        <ChartSection title={t("loots.stats.timeline.title")} isLoading>
-          {null}
-        </ChartSection>
-        <ChartSection title={t("loots.stats.topNpcs.title")} isLoading>
-          {null}
-        </ChartSection>
+        <LootTimelineChartSkeleton />
+        <LootTopNpcsChartSkeleton />
       </StatsSectionColumns>
       <StatsSectionColumns className="xl:grid-cols-2">
         <LootTopContributors isLoading />

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { ChartSection } from "@/components/common/chart-section";
+import { LootTimelineChartSkeleton } from "@/components/common/loot-stats/loot-timeline-chart-skeleton";
+import { LootTopNpcsChartSkeleton } from "@/components/common/loot-stats/loot-top-npcs-chart-skeleton";
 import { StatsSectionColumns } from "@/components/common/stats-section-columns";
 import { LootOverviewCards } from "@/components/common/loot-stats/loot-overview-cards";
 import { StatisticsLegends } from "./statistics-legends";
@@ -40,22 +41,10 @@ export function StatisticsLoots({ search }: { search: StatisticsSearch }) {
         isLoading={isLoading}
       />
       <StatsSectionColumns className="xl:grid-cols-3 xl:*:first:col-span-2">
-        <Suspense
-          fallback={
-            <ChartSection title={t("loots.stats.timeline.title")} isLoading>
-              {null}
-            </ChartSection>
-          }
-        >
+        <Suspense fallback={<LootTimelineChartSkeleton />}>
           <LootTimelineChart data={data?.timeline} isLoading={isLoading} />
         </Suspense>
-        <Suspense
-          fallback={
-            <ChartSection title={t("loots.stats.topNpcs.title")} isLoading>
-              {null}
-            </ChartSection>
-          }
-        >
+        <Suspense fallback={<LootTopNpcsChartSkeleton />}>
           <LootTopNpcsChart data={data?.topNpcs} isLoading={isLoading} />
         </Suspense>
       </StatsSectionColumns>

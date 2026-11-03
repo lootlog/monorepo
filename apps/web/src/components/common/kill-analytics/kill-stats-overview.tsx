@@ -3,6 +3,7 @@ import {
   StatsTileGrid,
 } from "@/components/common/stats-tile";
 import type { KilledNpcType } from "@/constants/npc";
+import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import { sum } from "es-toolkit";
@@ -30,7 +31,12 @@ type KillStatsOverviewProps = {
   total?: number;
   /** A line under the total, such as its change or the participations. */
   totalDetail?: ReactNode;
-  /** One tile per NPC type, in this order. */
+  /** Stands in for `totalDetail` while loading, where it may wrap. */
+  loadingTotalDetail?: ReactNode;
+  /**
+   * One tile per NPC type, in this order. While loading, a `detail` of `null`
+   * reserves the line the loaded detail takes.
+   */
   types: { type: KilledNpcType; kills: number; detail?: ReactNode }[];
   isLoading?: boolean;
   /** The type the page narrows to; omit where a tile only opens the type. */
@@ -45,6 +51,7 @@ type KillStatsOverviewProps = {
 export const KillStatsOverview = ({
   total = 0,
   totalDetail,
+  loadingTotalDetail,
   types,
   isLoading = false,
   selectedType,
@@ -74,20 +81,21 @@ export const KillStatsOverview = ({
           <Swords className="size-4 text-primary" aria-hidden="true" />
           {t("kills.overview.totalKills")}
         </div>
+        <div className="text-4xl leading-tight font-semibold tabular-nums">
+          {isLoading ? (
+            <SkeletonLine className="h-9 w-32" />
+          ) : (
+            formatNumber(total)
+          )}
+        </div>
         {isLoading ? (
-          <>
-            <Skeleton className="h-9 w-32" />
-            <Skeleton className="h-4 w-24" />
-          </>
+          <div className="text-xs">
+            {loadingTotalDetail ?? <SkeletonLine className="h-3 w-24" />}
+          </div>
         ) : (
-          <>
-            <div className="text-4xl leading-tight font-semibold tabular-nums">
-              {formatNumber(total)}
-            </div>
-            {totalDetail && (
-              <div className="text-xs text-muted-foreground">{totalDetail}</div>
-            )}
-          </>
+          totalDetail && (
+            <div className="text-xs text-muted-foreground">{totalDetail}</div>
+          )
         )}
         {isLoading ? (
           <Skeleton className="mt-2 h-1.5 w-full rounded-full" />
@@ -155,15 +163,13 @@ export const KillStatsOverview = ({
                 {formatNumber(kills)}
               </span>
             )}
-            {isLoading ? (
-              <Skeleton className="h-4 w-20" />
-            ) : (
-              detail && (
-                <span className="truncate text-xs text-muted-foreground">
-                  {detail}
-                </span>
-              )
-            )}
+            {isLoading
+              ? detail !== undefined && <Skeleton className="h-4 w-20" />
+              : detail && (
+                  <span className="truncate text-xs text-muted-foreground">
+                    {detail}
+                  </span>
+                )}
           </button>
         );
       })}

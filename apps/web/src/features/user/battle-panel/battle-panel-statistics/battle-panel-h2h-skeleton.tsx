@@ -51,7 +51,9 @@ export const BattlePanelH2hSkeleton = (props: BattlePanelH2hSkeletonProps) => {
       filtersLabel={t("battlePanel.filters.title")}
       footer={<TablePaginationFooterSkeleton labelClassName="w-36" />}
     >
+      {/* A page of rows fills the screen, so the footer docks at its bottom. */}
       <TableRowsSkeleton
+        rows={20}
         withHeader
         rowContent="text"
         mobileList={<CardListSkeleton card={props.mobileCard} />}

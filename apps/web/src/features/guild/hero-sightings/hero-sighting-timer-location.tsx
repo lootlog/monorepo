@@ -23,7 +23,7 @@ export const HeroSightingTimerLocation = ({
   const isStale = !isCurrentHeroSighting(sighting, now);
 
   return (
-    <MetaItem icon={MapPin} className="min-w-0">
+    <MetaItem icon={MapPin} className="min-w-0 overflow-hidden">
       <span className="shrink-0">
         {t(`heroSightings.timer.${sighting.state}`)}
       </span>
