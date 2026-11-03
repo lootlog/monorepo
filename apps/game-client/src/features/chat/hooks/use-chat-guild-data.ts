@@ -1,4 +1,5 @@
 import {
+  replaceEqualDeep,
   useQueries,
   useQueryClient,
   type UseQueryResult,
@@ -33,6 +34,7 @@ import {
 } from "@/features/chat/chat-mentions.helpers";
 import type { AsyncResourceState } from "@/types/async-resource-state";
 import { applyCurrentChatAccess } from "../chat-access-policy";
+import { shareChatMessages } from "../chat-query-cache.helpers";
 import { useRealtimeSnapshotReady } from "@/contexts/socket-context";
 
 type UseChatGuildDataOptions = {
@@ -144,7 +146,13 @@ const reconcileChatMessageRefetch = ({
 const combineData = <Data>(results: UseQueryResult<Data>[]) =>
   results.map((result) => result.data);
 
-const combineMessageQueries = (
+/**
+ * Read straight from the queries rather than through `combine`: a combined
+ * result is shared by index, so a full history that drops its oldest message
+ * would rebuild every message and re-render every transcript row. Each
+ * history is already shared by message id (`shareChatMessages`).
+ */
+const summarizeMessageQueries = (
   results: UseQueryResult<ChatMessageType[]>[],
 ) => ({
   data: results.map((result) => result.data),
@@ -164,42 +172,47 @@ export const useChatGuildData = ({
   const guildIds = getGuildIds(guilds);
   const guildIdsToLoad = getGuildIdsToLoad(guildIds, selectedGuildId);
 
-  const messageQueries = useQueries({
-    queries: guildIdsToLoad.map((guildId) => {
-      const queryKey = getChatControllerGetChatMessagesQueryKey({ guildId });
+  const messageQueries = summarizeMessageQueries(
+    useQueries({
+      queries: guildIdsToLoad.map((guildId) => {
+        const queryKey = getChatControllerGetChatMessagesQueryKey({ guildId });
 
-      return {
-        queryKey,
-        queryFn: async ({ signal }) => {
-          const cachedMessagesBeforeRequest =
-            queryClient.getQueryData<ChatMessageType[]>(queryKey);
+        return {
+          queryKey,
+          queryFn: async ({ signal }) => {
+            const cachedMessagesBeforeRequest =
+              queryClient.getQueryData<ChatMessageType[]>(queryKey);
 
-          const serverMessages = await chatControllerGetChatMessages(
-            {
-              guildId,
-            },
-            { signal },
-          );
+            const serverMessages = await chatControllerGetChatMessages(
+              {
+                guildId,
+              },
+              { signal },
+            );
 
-          const cachedMessagesAfterRequest =
-            queryClient.getQueryData<ChatMessageType[]>(queryKey);
+            const cachedMessagesAfterRequest =
+              queryClient.getQueryData<ChatMessageType[]>(queryKey);
 
-          return applyCurrentChatAccess(
-            queryClient,
-            reconcileChatMessageRefetch({
-              cachedMessagesAfterRequest,
-              cachedMessagesBeforeRequest,
-              serverMessages,
-            }),
-          );
-        },
-        enabled: Boolean(guildId) && snapshotReady,
-        gcTime: CHAT_QUERY_GC_TIME_MS,
-        staleTime: 5 * 60 * 1000,
-      };
+            return applyCurrentChatAccess(
+              queryClient,
+              reconcileChatMessageRefetch({
+                cachedMessagesAfterRequest,
+                cachedMessagesBeforeRequest,
+                serverMessages,
+              }),
+            );
+          },
+          enabled: Boolean(guildId) && snapshotReady,
+          gcTime: CHAT_QUERY_GC_TIME_MS,
+          staleTime: 5 * 60 * 1000,
+          structuralSharing: (previous, next) =>
+            Array.isArray(previous) && Array.isArray(next)
+              ? shareChatMessages(previous, next)
+              : replaceEqualDeep(previous, next),
+        };
+      }),
     }),
-    combine: combineMessageQueries,
-  });
+  );
 
   const members = useQueries({
     queries: guildIdsToLoad.map((guildId) =>

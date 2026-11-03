@@ -11,6 +11,7 @@ import {
 } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
+import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
 import { Permission } from "@lootlog/schema/permissions";
 import { applyChatAccessPolicy } from "../chat-access-policy";
 
@@ -263,6 +264,74 @@ describe("useChatGuildData", () => {
         result.current.mentionContextsByGuildId["guild-1"]?.memberNames,
       ).toContain("Newcomer");
     });
+  });
+
+  it("keeps the remaining messages when a full history drops its oldest one", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    queryClients.push(queryClient);
+    historyRequests.mockResolvedValue(
+      Response.json(
+        Array.from({ length: CHAT_MESSAGE_LIMIT }, (_, index) =>
+          createMessage(
+            `message-${index}`,
+            new Date(Date.UTC(2026, 0, 1, 10, index)).toISOString(),
+          ),
+        ),
+      ),
+    );
+
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(
+      () =>
+        useChatGuildData({
+          currentCharacterNick: "Hero",
+          guilds: [{ id: "guild-1", name: "Guild" }],
+          selectedGuildId: "guild-1",
+        }),
+      { wrapper },
+    );
+
+    await waitFor(() => {
+      expect(result.current.messagesByGuildId["guild-1"]).toHaveLength(
+        CHAT_MESSAGE_LIMIT,
+      );
+    });
+
+    const messagesBefore = result.current.messagesByGuildId["guild-1"] ?? [];
+
+    act(() => {
+      updateChatMessagesCache({
+        guildId: "guild-1",
+        queryClient,
+        updater: (messages) =>
+          upsertChatMessage(
+            messages,
+            createMessage("message-new", "2026-01-02T10:00:00.000Z"),
+          ),
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.messagesByGuildId["guild-1"]?.at(-1)?.id).toBe(
+        "message-new",
+      );
+    });
+
+    // Rows are memoized on message identity; a copy re-renders every row.
+    expect(result.current.messagesByGuildId["guild-1"]?.slice(0, -1)).toEqual(
+      messagesBefore.slice(1),
+    );
+    expect(
+      result.current.messagesByGuildId["guild-1"]
+        ?.slice(0, -1)
+        .every((message, index) => message === messagesBefore[index + 1]),
+    ).toBe(true);
   });
 
   it("merges a reconnect response with a socket message received during refetch", async () => {
