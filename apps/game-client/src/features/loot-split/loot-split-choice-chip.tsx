@@ -17,14 +17,11 @@ const CHOICE_CLASS_NAMES: Record<LootSplitChoice, string> = {
 
 type LootSplitChoiceChipProps = {
   choice: LootSplitChoice | undefined;
-  /** Rings the chip when this player may pick "bardzo chcę" for the item. */
-  canPickMust: boolean;
   label: string;
 };
 
 export const LootSplitChoiceChip: FC<LootSplitChoiceChipProps> = ({
   choice,
-  canPickMust,
   label,
 }) => {
   const { t } = useTranslation("lootSplit");
@@ -39,8 +36,6 @@ export const LootSplitChoiceChip: FC<LootSplitChoiceChipProps> = ({
         choice === undefined
           ? "ll:border-dashed ll:border-white/25 ll:text-white/40"
           : CHOICE_CLASS_NAMES[choice],
-        canPickMust &&
-          "ll:ring-1 ll:ring-violet-400 ll:ring-offset-1 ll:ring-offset-transparent",
       )}
     >
       {t(`choiceShort.${choice ?? "unknown"}`)}

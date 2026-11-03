@@ -29,8 +29,6 @@ export type LootSplitItem = Readonly<{
   hid: string;
   name: string;
   icon: string;
-  /** Professions allowed to pick "bardzo chcę" (`reqp`); empty = everyone. */
-  mustProfessions: readonly string[];
   /** Null for common items and rarities Lootlog does not track. */
   rarity: ItemRarityEnum | null;
 }>;
@@ -96,10 +94,6 @@ export const EMPTY_LOOT_SPLIT_STATE: LootSplitState = {
   pendingFilterAccepts: [],
 };
 
-export const canPickMust = (profession: string, item: LootSplitItem) =>
-  item.mustProfessions.length === 0 ||
-  item.mustProfessions.includes(profession);
-
 export const getLootSplitStatus = (
   split: LootSplit,
   characterId: string,
@@ -137,9 +131,6 @@ const sameChoices = (
     ids.every((id) => left[id] === right[id])
   );
 };
-
-const parseMustProfessions = (stat: string) =>
-  getItemStat(stat, "reqp")?.split("") ?? [];
 
 // The game names rarities in lowercase; common items carry `common`.
 const RARITY_BY_STAT = new Map<string, ItemRarityEnum>([
@@ -306,7 +297,6 @@ const openSplit = (
       hid: item.hid,
       name: item.name,
       icon: item.icon,
-      mustProfessions: parseMustProfessions(item.stat),
       rarity: parseRarity(item.stat),
     }))
     .toSorted((left, right) => Number(left.id) - Number(right.id));
