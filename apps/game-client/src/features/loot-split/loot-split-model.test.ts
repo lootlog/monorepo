@@ -83,6 +83,14 @@ const states = (values: Record<string, number>): GameEvent => ({
   loot: { source: "fight", states: values },
 });
 
+const distribution = (message: string): GameEvent => ({
+  chat: {
+    channels: {
+      system: { archivedIds: [], msg: [{ id: 1, ts: 1, msg: message }] },
+    },
+  },
+});
+
 const remote = (
   sender: string,
   fields: Partial<LootSplitEvent> = {},
@@ -259,22 +267,7 @@ describe("loot split model", () => {
 
     const resolved = applyGameEvent(
       both,
-      {
-        chat: {
-          channels: {
-            system: {
-              archivedIds: [],
-              msg: [
-                {
-                  id: 1,
-                  ts: 1,
-                  msg: '[b]Podział łupów[/b]: Knoper S otrzymał ITEM#b0b1:"Hełm"',
-                },
-              ],
-            },
-          },
-        },
-      },
+      distribution('[b]Podział łupów[/b]: Knoper S otrzymał ITEM#b0b1:"Hełm"'),
       context(4_000),
     );
 
@@ -319,5 +312,20 @@ describe("loot split model", () => {
     expect(split && getLootSplitStatus(split, "365", HERO)).toBe("timedOut");
     expect(split && getLootSplitStatus(split, HERO, HERO)).toBe("timedOut");
     expect(split && getLootSplitStatus(split, "1466", HERO)).toBe("unknown");
+  });
+
+  it("keeps a split distributed after its deadline timed out, not choosing", () => {
+    const opened = applyRemoteChoices(open(), remote("365"));
+
+    // The game distributes at the deadline, which can beat the expiry tick.
+    const [split] = applyGameEvent(
+      opened,
+      distribution(
+        '[b]Podział łupów[/b]: Knoper S otrzymał ITEM#d835:"Szelki"',
+      ),
+      context(opened.splits[0]?.deadline ?? 0),
+    ).splits;
+
+    expect(split && getLootSplitStatus(split, "365", HERO)).toBe("timedOut");
   });
 });
