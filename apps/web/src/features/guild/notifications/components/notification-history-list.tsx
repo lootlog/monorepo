@@ -1,6 +1,7 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import { ListToolbar } from "@/components/common/list-toolbar";
+import { SettingsListError } from "@/components/common/settings-list-error";
 import type { NotificationJobsResponseDto } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -24,12 +25,18 @@ type Job = NotificationJobsResponseDto["history"][number];
 type NotificationHistoryListProps = {
   historyJobs: Job[];
   isLoading: boolean;
+  isError: boolean;
+  isRetrying: boolean;
+  onRetry: () => void;
 };
 
 /** Finished deliveries under a rule name filter and status pills. */
 export const NotificationHistoryList = ({
   historyJobs,
   isLoading,
+  isError,
+  isRetrying,
+  onRetry,
 }: NotificationHistoryListProps) => {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
@@ -49,9 +56,14 @@ export const NotificationHistoryList = ({
     groupBy(nameMatches, (job) => job.status),
   );
 
+  // A status the name filter or new deliveries left without jobs loses its
+  // pill, so it stops filtering too instead of hiding every row.
+  const activeStatuses = selectedStatuses.filter((status) =>
+    statusGroups.some(([groupStatus]) => groupStatus === status),
+  );
+
   const visibleJobs = nameMatches.filter(
-    (job) =>
-      selectedStatuses.length === 0 || selectedStatuses.includes(job.status),
+    (job) => activeStatuses.length === 0 || activeStatuses.includes(job.status),
   );
 
   const clearFilters = () => {
@@ -60,6 +72,16 @@ export const NotificationHistoryList = ({
   };
 
   const renderContent = () => {
+    if (isError) {
+      return (
+        <SettingsListError
+          title={t("settings.notifications.empty.loadError")}
+          isRetrying={isRetrying}
+          onRetry={onRetry}
+        />
+      );
+    }
+
     if (isLoading) {
       return (
         <div aria-hidden="true">
@@ -124,7 +146,7 @@ export const NotificationHistoryList = ({
             variant="outline"
             size="sm"
             spacing={1.5}
-            value={selectedStatuses}
+            value={activeStatuses}
             onValueChange={setSelectedStatuses}
             aria-label={t("settings.notifications.historyStatusesLabel")}
             className="flex-wrap"

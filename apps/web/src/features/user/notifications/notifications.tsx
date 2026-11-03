@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { BandSection } from "@/components/common/band-section";
 import { InfoButton } from "@/components/common/info-button";
+import { SettingsListError } from "@/components/common/settings-list-error";
 import { DmTargetTile } from "@/features/user/notifications/components/dm-target-tile";
 import { UserNotificationsInfoDialog } from "@/features/user/notifications/components/user-notifications-info-dialog";
 import { WatchFormDialog } from "@/features/user/notifications/components/watch-item-form-dialog";
@@ -43,6 +44,26 @@ export const UserNotifications = () => {
 
   if (isLoading) {
     return <UserNotificationsPageSkeleton />;
+  }
+
+  // Without them the page would offer to create a DM that may already exist;
+  // a retry paused while offline has no data and no error either.
+  if (!targetsQuery.data || !watchedItemsQuery.data) {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+          <h1 className="sr-only">{t("settings.userNotifications.title")}</h1>
+          <SettingsListError
+            title={t("settings.userNotifications.loadError")}
+            isRetrying={targetsQuery.isFetching || watchedItemsQuery.isFetching}
+            onRetry={() => {
+              void targetsQuery.refetch();
+              void watchedItemsQuery.refetch();
+            }}
+          />
+        </ScrollArea>
+      </div>
+    );
   }
 
   return (

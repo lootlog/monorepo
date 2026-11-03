@@ -7,6 +7,7 @@ import {
   type NotificationJobsResponseDto,
 } from "@lootlog/client/main";
 import { groupBy, minBy } from "es-toolkit";
+import { refetchGuildJobsWhilePending } from "./notifications-api";
 import { isSupportedGuildNotificationTrigger } from "./utils/notification-settings.utils";
 
 type PendingJob = NotificationJobsResponseDto["pending"][number];
@@ -42,10 +43,7 @@ export const useNotificationsOverview = () => {
     {
       query: {
         enabled: hasGuildId,
-        refetchInterval: (query) =>
-          query.state.data && query.state.data.pending.length > 0
-            ? 5000
-            : false,
+        refetchInterval: refetchGuildJobsWhilePending,
       },
     },
   );
@@ -62,6 +60,17 @@ export const useNotificationsOverview = () => {
     sync,
     hasRequiredPermissions: sync.permissionStatus === "ok",
     isLoading: targetsQuery.isLoading || rulesQuery.isLoading,
+    // Each tab blocks only on the list it shows.
+    rulesLoad: {
+      isError: rulesQuery.isError && !rulesQuery.data,
+      isRetrying: rulesQuery.isFetching,
+      retry: () => void rulesQuery.refetch(),
+    },
+    targetsLoad: {
+      isError: targetsQuery.isError && !targetsQuery.data,
+      isRetrying: targetsQuery.isFetching,
+      retry: () => void targetsQuery.refetch(),
+    },
     targets: targetsQuery.data ?? [],
     rules:
       rulesQuery.data?.items.filter((rule) =>

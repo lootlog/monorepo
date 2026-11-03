@@ -1,6 +1,8 @@
 import { MetaItem } from "@/components/common/meta-item";
 import { ROUTES } from "@/config/routes";
 import { SettingsDetailNotFound } from "@/components/common/settings-detail-not-found";
+import { SettingsListError } from "@/components/common/settings-list-error";
+import { NpcSettingsDetailSkeleton } from "./npc-settings-detail-skeleton";
 import { NPC_RARITY_CONFIG } from "@/features/guild/settings/npcs/npc-rarity-config";
 import { NpcsForm } from "@/features/guild/settings/npcs/npcs-form";
 import { useLootlogConfigControllerGetLootlogConfig } from "@lootlog/client/main";
@@ -17,7 +19,12 @@ export const NpcSettingsDetailPage = () => {
     from: "/_authenticated/$guildId/settings/npcs_/$npcId",
   });
 
-  const { data: config } = useLootlogConfigControllerGetLootlogConfig({
+  const {
+    data: config,
+    isError,
+    isFetching,
+    refetch,
+  } = useLootlogConfigControllerGetLootlogConfig({
     guildId,
   });
 
@@ -35,8 +42,17 @@ export const NpcSettingsDetailPage = () => {
     );
   }
 
+  // The route has no loader, so this page shows its own loading and failure.
   if (!npc) {
-    return null;
+    return isError ? (
+      <SettingsListError
+        title={t("settings.npcs.empty.loadError")}
+        isRetrying={isFetching}
+        onRetry={() => void refetch()}
+      />
+    ) : (
+      <NpcSettingsDetailSkeleton />
+    );
   }
 
   const enabledRarities = NPC_RARITY_CONFIG.filter((rarity) =>

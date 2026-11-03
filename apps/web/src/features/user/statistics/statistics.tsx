@@ -107,6 +107,17 @@ export function Statistics() {
           }
           stackedFilters={<StatisticsStackedFilters {...filterProps} />}
           activeFilterCount={countActiveStatisticsFilters(filterProps)}
+          clearFiltersLabel={t("statistics.clearFilters")}
+          onClearFilters={() =>
+            update({
+              days: 30,
+              world: undefined,
+              characterId: undefined,
+              npcType: undefined,
+              sort: undefined,
+              asc: undefined,
+            })
+          }
         >
           <StatisticsFilters {...filterProps} />
         </FilterBar>

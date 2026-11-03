@@ -53,6 +53,8 @@ export const StatsRanking = () => {
     hasNext,
     handlePreviousPage,
     handleNextPage,
+    handleClearFilters,
+    search,
   } = useStatsRankingModel();
 
   const isViewer = useIsViewer();
@@ -138,6 +140,7 @@ export const StatsRanking = () => {
       <ResultsSurface
         search={
           <KillStatsSearch
+            value={search}
             placeholder={t("kills.fullRanking.searchPlaceholder")}
             onChange={handleSearchChange}
           />
@@ -145,6 +148,8 @@ export const StatsRanking = () => {
         filters={<KillStatsFilters {...filterProps} />}
         stackedFilters={<KillStatsStackedFilters {...filterProps} />}
         activeFilterCount={countActiveKillStatsFilters(filterProps)}
+        clearFiltersLabel={t("kills.filters.clear")}
+        onClearFilters={handleClearFilters}
         filtersLabel={t("kills.filters.title")}
         scrollResetKey={cursor}
         footer={

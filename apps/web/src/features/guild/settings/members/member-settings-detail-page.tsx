@@ -3,6 +3,8 @@ import { useMemberActivity } from "@/features/guild/settings/members/use-member-
 import { MetaItem } from "@/components/common/meta-item";
 import { ROUTES } from "@/config/routes";
 import { SettingsDetailNotFound } from "@/components/common/settings-detail-not-found";
+import { SettingsListError } from "@/components/common/settings-list-error";
+import { MemberSettingsDetailSkeleton } from "./member-settings-detail-skeleton";
 import {
   Avatar,
   AvatarFallback,
@@ -41,7 +43,12 @@ const MemberSettingsDetailPageContent = () => {
     from: "/_authenticated/$guildId/settings/members_/$memberId",
   });
 
-  const { data: members } = useMembersControllerGetGuildMembers(
+  const {
+    data: members,
+    isError,
+    isFetching,
+    refetch,
+  } = useMembersControllerGetGuildMembers(
     { guildId },
     {
       includeInactive: true,
@@ -105,8 +112,17 @@ const MemberSettingsDetailPageContent = () => {
     );
   }
 
+  // The route has no loader, so this page shows its own loading and failure.
   if (!member) {
-    return null;
+    return isError ? (
+      <SettingsListError
+        title={t("settings.members.empty.loadError")}
+        isRetrying={isFetching}
+        onRetry={() => void refetch()}
+      />
+    ) : (
+      <MemberSettingsDetailSkeleton />
+    );
   }
 
   const memberColor = getColorFromRole(member.roles);

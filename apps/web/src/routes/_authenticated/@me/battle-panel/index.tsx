@@ -39,6 +39,7 @@ export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
             search: search.search ?? undefined,
             result: search.result ?? undefined,
             ph: search.ph ?? undefined,
+            matchmaking: search.matchmaking ?? undefined,
             characterId: search.characterId ?? undefined,
             startDate: search.startDate ?? undefined,
             endDate: search.endDate ?? undefined,

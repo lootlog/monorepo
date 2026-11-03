@@ -4,8 +4,6 @@ import { useBattleCharacters } from "@/components/filters/use-battle-characters"
 type BattleCharacterSelectProps = {
   characterId: string | undefined;
   onCharacterChange: (characterId: string | undefined) => void;
-  /** Offers all characters at once, for pages that can sum them up. */
-  allowAllCharacters?: boolean;
 };
 
 /**
@@ -15,7 +13,6 @@ type BattleCharacterSelectProps = {
 export function BattleCharacterSelect({
   characterId,
   onCharacterChange,
-  allowAllCharacters = false,
 }: BattleCharacterSelectProps) {
   const characters = useBattleCharacters();
 
@@ -24,7 +21,6 @@ export function BattleCharacterSelect({
       characters={characters}
       characterId={characterId}
       onCharacterChange={onCharacterChange}
-      allowAllCharacters={allowAllCharacters}
     />
   );
 }
