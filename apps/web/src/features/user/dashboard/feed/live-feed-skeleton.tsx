@@ -23,21 +23,25 @@ export function LiveFeedSkeleton() {
           const hasLoot = index % 3 === 1;
 
           return (
+            // The same grid as LiveFeedEventRow: below @lg the loot wraps
+            // under the title, so a skeleton row is as tall as a loaded one.
             <div
               key={index}
               className={cn(
-                "flex items-center gap-3 py-3",
+                "grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 py-3 @lg:grid-cols-[2.5rem_minmax(0,1fr)_auto_auto]",
                 LIST_TILE_INSET_CLASS,
                 LIST_TILE_RULE_CLASS,
               )}
             >
-              <Skeleton className="size-10 shrink-0" />
-              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <Skeleton className="size-10" />
+              <div className="flex min-w-0 flex-col gap-1.5">
                 <Skeleton className={cn("h-4", hasLoot ? "w-40" : "w-32")} />
                 <Skeleton className="h-3 w-52 max-w-full" />
               </div>
-              {hasLoot && <Skeleton className="size-9 shrink-0" />}
-              <Skeleton className="size-6 shrink-0 rounded-md" />
+              {hasLoot && (
+                <Skeleton className="col-span-2 col-start-2 row-start-2 size-9 @lg:col-span-1 @lg:col-start-3 @lg:row-start-1 @lg:justify-self-end" />
+              )}
+              <Skeleton className="col-start-3 row-start-1 size-6 rounded-md @lg:col-start-4" />
             </div>
           );
         })}
