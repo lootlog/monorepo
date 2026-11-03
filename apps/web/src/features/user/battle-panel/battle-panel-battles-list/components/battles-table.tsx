@@ -16,6 +16,7 @@ import type { Battle } from "@/lib/api/battlelog-types";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { Table } from "@lootlog/ui/components/table";
 import { Link } from "@tanstack/react-router";
+import { TableRowLinkCell } from "@/components/common/table-row-link-cell";
 import { type Cell, useTable } from "@tanstack/react-table";
 import { cn } from "cn";
 import type { ReactNode } from "react";
@@ -181,14 +182,13 @@ export const BattlesTable = ({
     }
 
     return (
-      <Link
-        {...linkProps}
-        aria-label={isPrimary ? t("battlePanel.list.openBattle") : undefined}
-        tabIndex={isPrimary ? 0 : -1}
-        className="flex min-h-10 w-full items-center rounded-sm text-inherit outline-none after:absolute after:inset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
+      <TableRowLinkCell
+        link={linkProps}
+        primary={isPrimary}
+        label={t("battlePanel.list.openBattle")}
       >
         {content}
-      </Link>
+      </TableRowLinkCell>
     );
   };
 

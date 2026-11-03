@@ -13,6 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import { Link, type LinkOptions } from "@tanstack/react-router";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
@@ -20,29 +21,27 @@ import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 type BattlePanelH2hCardProps = {
   record: HeadToHeadRecord;
   showRatingDelta?: boolean;
-  onOpen: (opponentId: string) => void;
+  /** Absent until a character is picked, which the record belongs to. */
+  link: LinkOptions | undefined;
 };
 
 export const BattlePanelH2hCard = ({
   record,
   showRatingDelta = false,
-  onOpen,
+  link,
 }: BattlePanelH2hCardProps) => {
   const { t } = useTranslation();
   const exactTime = timestampToDate(record.lastBattleDate);
   const totalRatingDelta = record.totalRatingDelta ?? 0;
 
-  return (
-    <button
-      type="button"
-      data-list-tile
-      className={cn(
-        "w-full py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-        LIST_TILE_RULE_CLASS,
-        LIST_TILE_INSET_CLASS,
-      )}
-      onClick={() => onOpen(record.opponentId)}
-    >
+  const className = cn(
+    "block w-full py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+    LIST_TILE_RULE_CLASS,
+    LIST_TILE_INSET_CLASS,
+  );
+
+  const content = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <BattleResultStatus result={record.lastBattleResult} showLabel />
         <Tooltip>
@@ -121,6 +120,16 @@ export const BattlePanelH2hCard = ({
           </span>
         </div>
       )}
-    </button>
+    </>
+  );
+
+  return link ? (
+    <Link {...link} data-list-tile className={className}>
+      {content}
+    </Link>
+  ) : (
+    <div data-list-tile className={className}>
+      {content}
+    </div>
   );
 };
