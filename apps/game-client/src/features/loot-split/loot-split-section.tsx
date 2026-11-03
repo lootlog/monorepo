@@ -61,9 +61,11 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
         split.phase !== "open" && "ll:opacity-60",
       )}
     >
-      <header className="ll:flex ll:items-start ll:justify-between ll:gap-3 ll:text-[11px]">
-        <div className="ll:flex ll:flex-col ll:gap-0.5">
-          <h3 className="ll:m-0 ll:text-[11px] ll:font-semibold">{title}</h3>
+      <header className="ll:flex ll:items-center ll:justify-between ll:gap-3 ll:text-[11px]">
+        <div className="ll:flex ll:items-center ll:gap-2">
+          {isOwn ? null : (
+            <h3 className="ll:m-0 ll:text-[11px] ll:font-semibold">{title}</h3>
+          )}
           {choosing > 0 || unknown > 0 || timedOut > 0 ? (
             <span className="ll:flex ll:gap-2">
               {choosing > 0 ? (
