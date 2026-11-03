@@ -1,19 +1,34 @@
 import type { LootSplitChoice } from "@lootlog/schema/loot-split";
 import { cn } from "cn";
+import { Check, CheckCheck, X } from "lucide-react";
 import type { FC } from "react";
-import { useTranslation } from "react-i18next";
 
 /**
- * Dark opaque fills with a light letter in the same hue, so each chip keeps
- * its contrast over whatever the translucent window shows through. "Bardzo
- * chcę" is violet rather than the game's orange, apart from the amber of a
- * player still choosing.
+ * The game's loot buttons at cell size: a red "Nie chcę" ✕, a green "Chcę"
+ * ✓ and a green "Bardzo chcę" ✓✓ with the yellow rim the game gives a
+ * chosen button. Opaque gradients keep each chip readable over whatever the
+ * translucent window shows through.
  */
-const CHOICE_CLASS_NAMES: Record<LootSplitChoice, string> = {
-  0: "ll:border-red-400/40 ll:bg-red-950 ll:text-red-300",
-  1: "ll:border-emerald-400/40 ll:bg-emerald-950 ll:text-emerald-300",
-  2: "ll:border-violet-400/50 ll:bg-violet-950 ll:text-violet-300",
-};
+const CHOICES = {
+  0: {
+    icon: X,
+    className:
+      "ll:from-[#300b0b] ll:to-[#831f1f] ll:shadow-[inset_0_0_0_1px_rgb(218_97_97/0.45)]",
+  },
+  1: {
+    icon: Check,
+    className:
+      "ll:from-[#12210d] ll:to-[#396b29] ll:shadow-[inset_0_0_0_1px_rgb(126_197_104/0.5)]",
+  },
+  2: {
+    icon: CheckCheck,
+    className:
+      "ll:from-[#12210d] ll:to-[#396b29] ll:shadow-[inset_0_0_0_1px_rgb(255_240_0/0.75)]",
+  },
+} satisfies Record<
+  LootSplitChoice,
+  { icon: FC<{ className?: string }>; className: string }
+>;
 
 type LootSplitChoiceChipProps = {
   choice: LootSplitChoice | undefined;
@@ -24,7 +39,19 @@ export const LootSplitChoiceChip: FC<LootSplitChoiceChipProps> = ({
   choice,
   label,
 }) => {
-  const { t } = useTranslation("lootSplit");
+  if (choice === undefined)
+    return (
+      <span
+        role="img"
+        aria-label={label}
+        title={label}
+        className="ll:inline-flex ll:h-5 ll:w-6 ll:items-center ll:justify-center ll:text-white/30"
+      >
+        –
+      </span>
+    );
+
+  const { icon: Icon, className } = CHOICES[choice];
 
   return (
     <span
@@ -32,13 +59,15 @@ export const LootSplitChoiceChip: FC<LootSplitChoiceChipProps> = ({
       aria-label={label}
       title={label}
       className={cn(
-        "ll:inline-flex ll:size-5 ll:items-center ll:justify-center ll:rounded-[4px] ll:border ll:text-[10px] ll:font-bold ll:leading-none",
-        choice === undefined
-          ? "ll:border-dashed ll:border-white/25 ll:text-white/40"
-          : CHOICE_CLASS_NAMES[choice],
+        "ll:inline-flex ll:h-5 ll:w-6 ll:items-center ll:justify-center ll:rounded-[5px] ll:border ll:border-[#0c0d0d] ll:bg-linear-to-t ll:text-[#e6d6bf]",
+        className,
       )}
     >
-      {t(`choiceShort.${choice ?? "unknown"}`)}
+      <Icon
+        aria-hidden
+        strokeWidth={3}
+        className="ll:size-3.5 ll:drop-shadow-[0_1px_0_rgb(0_0_0/0.8)]"
+      />
     </span>
   );
 };

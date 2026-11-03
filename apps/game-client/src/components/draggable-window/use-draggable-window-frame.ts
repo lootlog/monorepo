@@ -20,6 +20,8 @@ export type DraggableWindowFrameProps = {
   onClose?: () => void;
   variant?: "default" | "small";
   heightMode?: "fixed" | "auto-up-to-max";
+  /** "content" sizes the width to the content, from `minWidth` up. */
+  widthMode?: "fixed" | "content";
   resizable?: boolean;
   minWidth?: number;
   minHeight?: number;
@@ -231,6 +233,7 @@ export const resolveDraggableWindowFrameProps = (
   collapsed: props.collapsed ?? false,
   dynamicHeight: props.dynamicHeight ?? false,
   heightMode: props.heightMode ?? "fixed",
+  widthMode: props.widthMode ?? "fixed",
   isMaxHeightAdjustmentArmed: props.isMaxHeightAdjustmentArmed ?? false,
   minHeight: props.minHeight ?? 240,
   minWidth: props.minWidth ?? 242,
@@ -245,9 +248,11 @@ const resolveWindowResizeState = ({
   minHeight,
   previewMaxContentHeight,
   resizable,
+  widthMode,
 }: {
   chromeHeight: number;
   heightMode: NonNullable<DraggableWindowFrameProps["heightMode"]>;
+  widthMode: NonNullable<DraggableWindowFrameProps["widthMode"]>;
   isMaxHeightAdjustmentArmed: boolean;
   isResizing: boolean;
   minHeight: number;
@@ -263,7 +268,7 @@ const resolveWindowResizeState = ({
     previewMaxContentHeight !== null;
 
   return {
-    allowsHorizontalResize: resizable,
+    allowsHorizontalResize: resizable && widthMode === "fixed",
     allowsVerticalResize:
       resizable && (!isAutoHeightMode || isMaxHeightAdjustmentArmed),
     isAdjustingMaxHeight,
@@ -358,6 +363,7 @@ export function useDraggableWindowFrame({
   id,
   onClose,
   heightMode,
+  widthMode,
   resizable,
   minWidth,
   minHeight,
@@ -445,6 +451,7 @@ export function useDraggableWindowFrame({
     minHeight,
     previewMaxContentHeight: activePreviewMaxContentHeight,
     resizable: resizable && !collapsed,
+    widthMode,
   });
 
   const {
@@ -735,7 +742,9 @@ export function useDraggableWindowFrame({
     previewShadeOffset,
     style: collapsed
       ? { width: "max-content" as const, height: "auto" as const }
-      : style,
+      : widthMode === "content"
+        ? { ...style, width: "max-content" as const, minWidth }
+        : style,
     draggableRef,
     position,
     isDragging,
