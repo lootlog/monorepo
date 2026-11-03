@@ -207,11 +207,11 @@ export function HeadToHeadPageVariant({
               onWarriorToggle={handleWarriorToggle}
               placeholder={t("battlePanel.filters.searchOpponent")}
             />
+            {/* Rows open one character's head-to-head, so one is always picked. */}
             {!season && (
               <BattleCharacterSelect
                 characterId={currentCharacterId}
                 onCharacterChange={handleCharacterChange}
-                allowAllCharacters
               />
             )}
           </>
