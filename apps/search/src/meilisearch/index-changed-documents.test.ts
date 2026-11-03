@@ -30,6 +30,10 @@ test("NPC observations are one catalog entry per edition and identity, with ever
         });
       }
 
+      // The fake answers a monster's identities with every stored entry.
+      if (url.pathname.endsWith("/documents/fetch"))
+        return Promise.resolve({ results: [...stored.values()] });
+
       if ((init?.method ?? "GET").toUpperCase() === "GET") {
         const ids = (url.searchParams.get("ids") ?? "").split(",");
 
@@ -174,6 +178,9 @@ for (const catalog of ["players", "npcs", "items"] as const) {
             ),
           });
         }
+
+        if (url.pathname.endsWith("/documents/fetch"))
+          return Promise.resolve({ results: [...stored.values()] });
 
         const documents: { uid: string }[] = JSON.parse(String(init?.body));
         writes.push(documents);

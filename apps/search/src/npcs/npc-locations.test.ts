@@ -12,6 +12,8 @@ const completed = {
 type StoredNpc = {
   uid: string;
   monsterKey?: string;
+  lvl?: number;
+  current?: boolean;
   worlds?: string[];
   observedLootId?: number;
   locations?: ReadonlyArray<{ map: string; share: number }>;
@@ -131,5 +133,72 @@ test("keeps an NPC's maps when a new loot indexes it again", async () => {
 
   expect(added).toEqual([
     expect.objectContaining({ uid: npcCatalogKey(npc), locations: moved }),
+  ]);
+});
+
+test("a rebalanced monster is current only at its newest level, and an older loot retried later does not bring the former level back", async () => {
+  const reuzen = {
+    id: 306076,
+    identityNamespace: "template" as const,
+    name: "Reuzen",
+    icon: "reuzen.gif",
+    lvl: 244,
+    wt: 90,
+    type: "COLOSSUS",
+    margonemType: 2,
+    prof: null,
+    world: "berufs",
+    gameVersion: "pl" as const,
+    lootId: 20,
+  };
+
+  // An older client's entry from before the monster lost eight levels.
+  const former = {
+    uid: "pl_173652_2",
+    monsterKey: "pl_Reuzen_COLOSSUS",
+    lvl: 252,
+    worlds: ["berufs"],
+    observedLootId: 10,
+    current: true,
+  };
+
+  const { npcs, added, updated } = npcsWith([former]);
+
+  await Effect.runPromise(npcs.indexNpcs({ npcs: [reuzen] }));
+
+  expect(added).toEqual([
+    expect.objectContaining({ uid: npcCatalogKey(reuzen), current: true }),
+  ]);
+  expect(updated).toEqual([{ uid: former.uid, current: false }]);
+
+  const retried = npcsWith([
+    { ...former, current: false },
+    {
+      uid: npcCatalogKey(reuzen),
+      monsterKey: former.monsterKey,
+      lvl: 244,
+      worlds: ["berufs"],
+      observedLootId: 20,
+      current: true,
+    },
+  ]);
+
+  await Effect.runPromise(
+    retried.npcs.indexNpcs({
+      npcs: [
+        {
+          ...reuzen,
+          id: 173652,
+          identityNamespace: "legacy",
+          lvl: 252,
+          lootId: 5,
+        },
+      ],
+    }),
+  );
+
+  expect(retried.updated).toEqual([]);
+  expect(retried.added).toEqual([
+    expect.objectContaining({ uid: former.uid, current: false }),
   ]);
 });

@@ -13,6 +13,7 @@ const catalogWith = (hits: unknown[], npcs: unknown[] = []) => {
   const npcSearches: Array<{
     filter?: string;
     attributesToRetrieve?: string[];
+    distinct?: string;
   }> = [];
 
   const client = new Meilisearch({
@@ -144,17 +145,57 @@ test("a malformed NPC key or event slug matches nothing instead of reaching the 
   expect(searches).toEqual([]);
 });
 
-test("finds one edition's NPCs by id", async () => {
-  const { catalog, npcSearches } = catalogWith([]);
+test("finds one edition's NPCs by id, earlier versions included, and lists each monster as it is now", async () => {
+  const reuzen = {
+    id: 173652,
+    gameVersion: "pl",
+    name: "Reuzen",
+    icon: "reuzen.gif",
+    type: "COLOSSUS",
+  };
 
-  await Effect.runPromise(
+  // An old link's id names the entry from before the rebalance and the
+  // current one; the page shows the colossus as it is now.
+  const { catalog, npcSearches } = catalogWith(
+    [],
+    [
+      {
+        ...reuzen,
+        uid: "pl_173652_2",
+        identityNamespace: "legacy",
+        lvl: 252,
+        current: false,
+      },
+      {
+        ...reuzen,
+        uid: "pl_runtime_173652_2",
+        identityNamespace: "runtime",
+        lvl: 244,
+        current: true,
+      },
+    ],
+  );
+
+  const found = await Effect.runPromise(
     catalog.getNpcs({ gameVersion: "pl", ids: [257036, 257037] }),
+  );
+
+  expect(found.hits).toEqual([
+    expect.objectContaining({ key: "pl_runtime_173652_2", lvl: 244 }),
+  ]);
+  expect(npcSearches[0]?.distinct).toBeUndefined();
+  await Effect.runPromise(
+    catalog.getNpcs({ gameVersion: "pl", types: ["COLOSSUS"] }),
   );
 
   expect(npcSearches[0]).toMatchObject({
     filter: 'gameVersion = "pl" AND id IN [257036, 257037]',
   });
   expect(npcSearches[0]?.attributesToRetrieve).not.toContain("firstSeenAt");
+  // A rebalanced colossus is listed at its level now, not its former one.
+  expect(npcSearches[1]?.filter).toBe(
+    'gameVersion = "pl" AND current != false AND type IN ["COLOSSUS"]',
+  );
 });
 
 test("narrows items to one edition's event drops of a kind of boss that carry the required stats and bonuses and lack the excluded ones", async () => {

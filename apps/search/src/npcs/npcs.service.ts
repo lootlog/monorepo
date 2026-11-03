@@ -5,8 +5,8 @@ import { NpcTypeEnum, NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import type { GameVersion } from "@lootlog/schema/game-version";
 import { Effect, Schema } from "effect";
-import { chunk, partition, pick } from "es-toolkit";
-import type { Meilisearch } from "meilisearch";
+import { chunk, groupBy, maxBy, partition, pick } from "es-toolkit";
+import type { Index, Meilisearch } from "meilisearch";
 import {
   buildMeilisearchInFilter,
   buildMeilisearchNameQuery,
@@ -68,12 +68,21 @@ export const npcMonsterKey = (npc: {
   type: string | null;
 }) => `${npc.gameVersion}_${npc.name}_${npc.type}`;
 
+/** Lower ranks first: the monster as it is now, then the preferred namespace. */
+const identityRank = (hit: {
+  identityNamespace: NpcIdentityNamespace;
+  current?: boolean;
+}) =>
+  (hit.current === false ? Object.keys(NAMESPACE_PREFERENCE).length : 0) +
+  NAMESPACE_PREFERENCE[hit.identityNamespace];
+
 export const collapseByNameAndType = <
   Hit extends {
     gameVersion: GameVersion;
     name: string;
     type: string | null;
     identityNamespace: NpcIdentityNamespace;
+    current?: boolean;
   },
 >(
   hits: readonly Hit[],
@@ -82,13 +91,9 @@ export const collapseByNameAndType = <
 
   for (const hit of hits) {
     const key = npcMonsterKey(hit);
-    const current = preferred.get(key);
+    const chosen = preferred.get(key);
 
-    if (
-      !current ||
-      NAMESPACE_PREFERENCE[hit.identityNamespace] <
-        NAMESPACE_PREFERENCE[current.identityNamespace]
-    ) {
+    if (!chosen || identityRank(hit) < identityRank(chosen)) {
       preferred.set(key, hit);
     }
   }
@@ -142,11 +147,38 @@ export const toNpcDocument = (npc: IndexNpc) => {
  */
 type NpcDocument = ReturnType<typeof toNpcDocument> & {
   locations?: ReadonlyArray<typeof MonsterLocation.Type>;
+  current?: boolean;
 };
 
-const LOCATIONS_MONSTERS_PER_READ = 100;
+/**
+ * Whether each catalog identity of a monster shows it as the game has it
+ * now. The identity with the latest loot holds the current level; an identity
+ * still at another one, such as an older client's entry from before the
+ * monster was rebalanced, is its history. The catalog lists only current
+ * identities, so a monster is found at its level now and not its highest one.
+ */
+export const currentRevisions = (
+  documents: ReadonlyArray<
+    Pick<NpcDocument, "uid" | "monsterKey" | "lvl" | "observedLootId">
+  >,
+) =>
+  Object.values(groupBy(documents, ({ monsterKey }) => monsterKey)).flatMap(
+    (identities) => {
+      const latest = maxBy(
+        identities,
+        ({ observedLootId }) => observedLootId ?? 0,
+      );
 
-const LOCATIONS_PAGE = 1000;
+      return identities.map(({ uid, lvl }) => ({
+        uid,
+        current: lvl === latest?.lvl,
+      }));
+    },
+  );
+
+const MONSTERS_PER_READ = 100;
+
+const MONSTER_DOCUMENTS_PAGE = 1000;
 
 const toNpcHit = (document: NpcDocument): NpcHit =>
   pick(document, [
@@ -163,6 +195,15 @@ const toNpcHit = (document: NpcDocument): NpcHit =>
     "gameVersion",
   ]);
 
+/** Whether `stored` comes from a later loot than `incoming`. */
+const isNewerObservation = (
+  stored: Pick<NpcDocument, "observedLootId">,
+  incoming: Pick<NpcDocument, "observedLootId">,
+) =>
+  incoming.observedLootId !== null &&
+  stored.observedLootId !== null &&
+  stored.observedLootId > incoming.observedLootId;
+
 /**
  * One catalog entry from two observations: the later loot's attributes,
  * every world of both, the earlier first sighting and the stored locations. Delivery order is not chronology: a retried or
@@ -173,15 +214,10 @@ export const mergeNpcDocument = (
   incoming: NpcDocument,
   stored: NpcDocument,
 ): NpcDocument => {
-  const storedIsNewer =
-    incoming.observedLootId !== null &&
-    stored.observedLootId !== null &&
-    stored.observedLootId > incoming.observedLootId;
-
   const locations = stored.locations ?? incoming.locations;
 
   return {
-    ...(storedIsNewer ? stored : incoming),
+    ...(isNewerObservation(stored, incoming) ? stored : incoming),
     worlds: uniqueWorlds([...incoming.worlds, ...stored.worlds]),
     // Entries indexed before first sightings were recorded have none.
     firstSeenAt: earliestSeenAt(incoming.firstSeenAt, stored.firstSeenAt),
@@ -206,6 +242,38 @@ export const mergeNpcDocuments = (
 
   return [...byUid.values()];
 };
+
+/** Every catalog identity of the given monsters, with only `fields` read. */
+const readMonsterDocuments = Effect.fn("SearchNpcs.readMonsterDocuments")(
+  function* <Field extends keyof NpcDocument>(
+    index: Index<NpcDocument>,
+    monsterKeys: ReadonlyArray<string>,
+    fields: Array<Extract<keyof Pick<NpcDocument, Field>, string>>,
+  ) {
+    const documents: Array<Pick<NpcDocument, Field>> = [];
+
+    for (const keys of chunk([...monsterKeys], MONSTERS_PER_READ)) {
+      for (let offset = 0; ; offset += MONSTER_DOCUMENTS_PAGE) {
+        const page = yield* attemptMeilisearch(
+          "search.npcs.monsters.existing",
+          () =>
+            index.getDocuments<Pick<NpcDocument, Field>>({
+              filter: buildMeilisearchInFilter("monsterKey", keys),
+              fields,
+              limit: MONSTER_DOCUMENTS_PAGE,
+              offset,
+            }),
+        );
+
+        documents.push(...page.results);
+
+        if (page.results.length < MONSTER_DOCUMENTS_PAGE) break;
+      }
+    }
+
+    return documents;
+  },
+);
 
 export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
   const getNpcs = Effect.fn("SearchNpcs.get")(function* ({
@@ -257,11 +325,52 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       );
     }
 
-    yield* indexChangedDocuments(
-      meilisearch.index<NpcDocument>(NPCS_INDEX),
-      mergeNpcDocuments(validNpcs.map(toNpcDocument)),
-      (npc, stored) => (stored ? mergeNpcDocument(npc, stored) : npc),
+    const index = meilisearch.index<NpcDocument>(NPCS_INDEX);
+    const documents = mergeNpcDocuments(validNpcs.map(toNpcDocument));
+
+    const identities = yield* readMonsterDocuments(
+      index,
+      [...new Set(documents.map(({ monsterKey }) => monsterKey))],
+      ["uid", "monsterKey", "lvl", "observedLootId", "current"],
     );
+
+    const storedByUid = new Map(
+      identities.map((identity) => [identity.uid, identity]),
+    );
+
+    const incomingUids = new Set(documents.map(({ uid }) => uid));
+
+    // Every identity of these monsters as it is once the batch merges in.
+    const current = new Map(
+      currentRevisions([
+        ...identities.filter(({ uid }) => !incomingUids.has(uid)),
+        ...documents.map((document) => {
+          const stored = storedByUid.get(document.uid);
+
+          return stored && isNewerObservation(stored, document)
+            ? { ...document, ...stored }
+            : document;
+        }),
+      ]).map((revision) => [revision.uid, revision.current]),
+    );
+
+    yield* indexChangedDocuments(index, documents, (npc, stored) => ({
+      ...(stored ? mergeNpcDocument(npc, stored) : npc),
+      current: current.get(npc.uid) ?? true,
+    }));
+
+    // The monster's other identities, when this batch changed which is current.
+    const superseded = identities.flatMap(({ uid, current: stored }) =>
+      !incomingUids.has(uid) && current.get(uid) !== stored
+        ? [{ uid, current: current.get(uid) ?? true }]
+        : [],
+    );
+
+    for (const batch of chunk(superseded, 500)) {
+      yield* completeMeilisearchTask("search.npcs.current.index", () =>
+        index.updateDocuments(batch),
+      );
+    }
   });
 
   /**
@@ -280,37 +389,19 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       ]),
     );
 
-    const changed: Array<Pick<NpcDocument, "uid" | "locations">> = [];
-
-    for (const monsterKeys of chunk(
+    const documents = yield* readMonsterDocuments(
+      index,
       [...locationsByMonster.keys()],
-      LOCATIONS_MONSTERS_PER_READ,
-    )) {
-      for (let offset = 0; ; offset += LOCATIONS_PAGE) {
-        const page = yield* attemptMeilisearch(
-          "search.npcs.locations.existing",
-          () =>
-            index.getDocuments<
-              Pick<NpcDocument, "uid" | "monsterKey" | "locations">
-            >({
-              filter: buildMeilisearchInFilter("monsterKey", monsterKeys),
-              fields: ["uid", "monsterKey", "locations"],
-              limit: LOCATIONS_PAGE,
-              offset,
-            }),
-        );
+      ["uid", "monsterKey", "locations"],
+    );
 
-        for (const document of page.results) {
-          const locations = locationsByMonster.get(document.monsterKey);
+    const changed = documents.flatMap((document) => {
+      const locations = locationsByMonster.get(document.monsterKey);
 
-          if (locations && !Bun.deepEquals(locations, document.locations)) {
-            changed.push({ uid: document.uid, locations });
-          }
-        }
-
-        if (page.results.length < LOCATIONS_PAGE) break;
-      }
-    }
+      return locations && !Bun.deepEquals(locations, document.locations)
+        ? [{ uid: document.uid, locations }]
+        : [];
+    });
 
     for (const batch of chunk(changed, 500)) {
       yield* completeMeilisearchTask("search.npcs.locations.index", () =>
