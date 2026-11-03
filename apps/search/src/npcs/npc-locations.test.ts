@@ -17,6 +17,7 @@ type StoredNpc = {
   worlds?: string[];
   observedLootId?: number;
   locations?: ReadonlyArray<{ map: string; share: number }>;
+  formerLevels?: ReadonlyArray<{ lvl: number; until: string }>;
 };
 
 /** A Meilisearch whose NPC index holds `stored` and records every write. */
@@ -201,4 +202,49 @@ test("a rebalanced monster is current only at its newest level, and an older loo
   expect(retried.added).toEqual([
     expect.objectContaining({ uid: former.uid, current: false }),
   ]);
+});
+
+test("writes a monster's former levels to each of its identities, and an older publisher's message without them keeps them", async () => {
+  const formerLevels = [{ lvl: 252, until: "2026-01-15" }];
+
+  const reuzen = {
+    gameVersion: "pl" as const,
+    name: "Reuzen",
+    type: "COLOSSUS",
+  };
+
+  const locations = [{ map: "Grota Martwodrzewów - sala", share: 1 }];
+
+  const { npcs, updated } = npcsWith([
+    {
+      uid: "pl_template_306076_2",
+      monsterKey: "pl_Reuzen_COLOSSUS",
+      locations,
+    },
+    { uid: "pl_173652_2", monsterKey: "pl_Reuzen_COLOSSUS", locations },
+  ]);
+
+  await Effect.runPromise(
+    npcs.setLocations({ monsters: [{ ...reuzen, locations, formerLevels }] }),
+  );
+
+  expect(updated).toEqual([
+    { uid: "pl_template_306076_2", locations, formerLevels },
+    { uid: "pl_173652_2", locations, formerLevels },
+  ]);
+
+  const older = npcsWith([
+    {
+      uid: "pl_template_306076_2",
+      monsterKey: "pl_Reuzen_COLOSSUS",
+      locations,
+      formerLevels,
+    },
+  ]);
+
+  await Effect.runPromise(
+    older.npcs.setLocations({ monsters: [{ ...reuzen, locations }] }),
+  );
+
+  expect(older.updated).toEqual([]);
 });

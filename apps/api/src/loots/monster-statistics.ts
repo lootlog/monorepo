@@ -6,6 +6,10 @@ import { chunk } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { lootTable } from "#src/database/drizzle/schema";
 import {
+  buildMonsterLevelsQuery,
+  toMonsterFormerLevels,
+} from "./monster-levels.js";
+import {
   buildMonsterLocationsQuery,
   toMonsterLocations,
 } from "./monster-locations.js";
@@ -18,7 +22,7 @@ const MONSTER_STATISTICS_LOCK = 7_316_204;
 
 /**
  * Publishes, for every monster with recorded fights, the items it no longer
- * drops and the maps it is fought on. Each monster's lists are complete, so
+ * drops, the maps it is fought on and the levels it had before. Each monster's lists are complete, so
  * search replaces what it held and a redelivery changes nothing.
  */
 export const makeMonsterStatisticsPublisher = (
@@ -41,6 +45,7 @@ export const makeMonsterStatisticsPublisher = (
         return {
           drops: yield* buildDropStatisticsQuery(transaction),
           locations: yield* buildMonsterLocationsQuery(transaction),
+          levels: yield* buildMonsterLevelsQuery(transaction),
         };
       }),
     );
@@ -48,7 +53,24 @@ export const makeMonsterStatisticsPublisher = (
     if (statistics === null) return;
 
     const retiredDrops = toRetiredDrops(statistics.drops);
-    const locations = toMonsterLocations(statistics.locations);
+
+    const formerLevels = new Map(
+      toMonsterFormerLevels(statistics.levels).map((monster) => [
+        JSON.stringify([monster.gameVersion, monster.name, monster.type]),
+        monster.formerLevels,
+      ]),
+    );
+
+    // The locations message carries each monster's former levels too.
+    const locations = toMonsterLocations(statistics.locations).map(
+      (monster) => ({
+        ...monster,
+        formerLevels:
+          formerLevels.get(
+            JSON.stringify([monster.gameVersion, monster.name, monster.type]),
+          ) ?? [],
+      }),
+    );
 
     const publish = (
       routingKey:
@@ -78,6 +100,9 @@ export const makeMonsterStatisticsPublisher = (
           0,
         ),
         located: locations.length,
+        rebalanced: locations.filter(
+          (monster) => monster.formerLevels.length > 0,
+        ).length,
       }),
     );
   }).pipe(

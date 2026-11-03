@@ -7,7 +7,7 @@
  * pushed in large batches. Items and NPCs keep the first time any loot
  * observed them, and items the NPCs they dropped from, by the rule the API
  * applies to live loots; items keep the retired drops and NPCs the locations
- * the live index holds.
+ * and former levels the live index holds.
  * Batches are enqueued without waiting, so Meilisearch merges them into a
  * few indexing runs; the script waits once,
  * then swaps the shadow indexes into place in a single atomic task, so
@@ -35,7 +35,10 @@ import {
   searchIndexSettings,
 } from "#src/meilisearch/meilisearch-indexes.service";
 import { getMeilisearchErrorCode } from "#src/meilisearch/query-builder";
-import type { MonsterLocation } from "#src/npcs/monster-locations-command";
+import type {
+  MonsterFormerLevel,
+  MonsterLocation,
+} from "#src/npcs/monster-locations-command";
 import { NPCS_INDEX } from "#src/npcs/search-index";
 import { PLAYERS_INDEX } from "#src/players/search-index";
 import { toPlayerDocument } from "#src/players/players.service";
@@ -246,50 +249,51 @@ const indexDocuments = async <Document extends { uid: string }>(
 const NPC_LOCATIONS_PAGE = 10_000;
 
 /**
- * The live index's NPC locations by monster. The API publishes them on a
- * schedule, not from loots, so the rebuild carries them over to every
- * identity of the monster.
+ * The live index's NPC locations and former levels by monster. The API
+ * publishes them on a schedule, not from loots, so the rebuild carries them
+ * over to every identity of the monster.
  */
-const loadNpcLocations = async () => {
+const loadNpcStatistics = async () => {
   const index = meilisearch.index<{
     monsterKey: string;
     locations?: ReadonlyArray<typeof MonsterLocation.Type>;
+    formerLevels?: ReadonlyArray<typeof MonsterFormerLevel.Type>;
   }>(NPCS_INDEX);
 
-  const locations = new Map<
+  const statistics = new Map<
     string,
-    ReadonlyArray<typeof MonsterLocation.Type>
+    {
+      locations?: ReadonlyArray<typeof MonsterLocation.Type>;
+      formerLevels?: ReadonlyArray<typeof MonsterFormerLevel.Type>;
+    }
   >();
 
   for (let offset = 0; ; offset += NPC_LOCATIONS_PAGE) {
     const page = await index.getDocuments({
-      fields: ["monsterKey", "locations"],
+      fields: ["monsterKey", "locations", "formerLevels"],
       limit: NPC_LOCATIONS_PAGE,
       offset,
     });
 
-    for (const document of page.results) {
-      if (document.locations) {
-        locations.set(document.monsterKey, document.locations);
+    for (const { monsterKey, locations, formerLevels } of page.results) {
+      if (locations || formerLevels) {
+        statistics.set(monsterKey, {
+          ...(locations && { locations }),
+          ...(formerLevels && { formerLevels }),
+        });
       }
     }
 
-    if (page.results.length < NPC_LOCATIONS_PAGE) return locations;
+    if (page.results.length < NPC_LOCATIONS_PAGE) return statistics;
   }
 };
 
 const seedNpcs = async () => {
   const startedAt = performance.now();
-  const locations = await loadNpcLocations();
+  const statistics = await loadNpcStatistics();
 
   const documents = toNpcSeedDocuments(await buildNpcSeedQuery(database)).map(
-    (document) => {
-      const monsterLocations = locations.get(document.monsterKey);
-
-      return monsterLocations
-        ? { ...document, locations: monsterLocations }
-        : document;
-    },
+    (document) => ({ ...document, ...statistics.get(document.monsterKey) }),
   );
 
   await indexDocuments(NPCS_INDEX, documents, formatDuration(startedAt));

@@ -22,6 +22,7 @@ import type { NpcSearchQuery } from "./npc-search-query.js";
 import { NPCS_INDEX } from "./search-index.js";
 import type { IndexNpcsCommand } from "./index-npcs-command.js";
 import type {
+  MonsterFormerLevel,
   MonsterLocation,
   MonsterLocationsCommand,
 } from "./monster-locations-command.js";
@@ -147,6 +148,7 @@ export const toNpcDocument = (npc: IndexNpc) => {
  */
 type NpcDocument = ReturnType<typeof toNpcDocument> & {
   locations?: ReadonlyArray<typeof MonsterLocation.Type>;
+  formerLevels?: ReadonlyArray<typeof MonsterFormerLevel.Type>;
   current?: boolean;
 };
 
@@ -215,6 +217,7 @@ export const mergeNpcDocument = (
   stored: NpcDocument,
 ): NpcDocument => {
   const locations = stored.locations ?? incoming.locations;
+  const formerLevels = stored.formerLevels ?? incoming.formerLevels;
 
   return {
     ...(isNewerObservation(stored, incoming) ? stored : incoming),
@@ -222,6 +225,7 @@ export const mergeNpcDocument = (
     // Entries indexed before first sightings were recorded have none.
     firstSeenAt: earliestSeenAt(incoming.firstSeenAt, stored.firstSeenAt),
     ...(locations && { locations }),
+    ...(formerLevels && { formerLevels }),
   };
 };
 
@@ -374,33 +378,42 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
   });
 
   /**
-   * Replaces each monster's locations on every catalog identity of it. Only
-   * the locations are written, so observations indexed meanwhile are kept.
+   * Replaces each monster's locations, and its former levels when the
+   * publisher sends them, on every catalog identity of it. Only those fields
+   * are written, so observations indexed meanwhile are kept.
    */
   const setLocations = Effect.fn("SearchNpcs.setLocations")(function* (
     data: MonsterLocationsCommand,
   ) {
     const index = meilisearch.index<NpcDocument>(NPCS_INDEX);
 
-    const locationsByMonster = new Map(
-      data.monsters.map((monster) => [
-        npcMonsterKey(monster),
-        monster.locations,
-      ]),
+    const monsters = new Map(
+      data.monsters.map((monster) => [npcMonsterKey(monster), monster]),
     );
 
     const documents = yield* readMonsterDocuments(
       index,
-      [...locationsByMonster.keys()],
-      ["uid", "monsterKey", "locations"],
+      [...monsters.keys()],
+      ["uid", "monsterKey", "locations", "formerLevels"],
     );
 
     const changed = documents.flatMap((document) => {
-      const locations = locationsByMonster.get(document.monsterKey);
+      const monster = monsters.get(document.monsterKey);
 
-      return locations && !Bun.deepEquals(locations, document.locations)
-        ? [{ uid: document.uid, locations }]
-        : [];
+      if (!monster) return [];
+
+      const formerLevels = monster.formerLevels ?? document.formerLevels;
+
+      return Bun.deepEquals(monster.locations, document.locations) &&
+        Bun.deepEquals(formerLevels, document.formerLevels)
+        ? []
+        : [
+            {
+              uid: document.uid,
+              locations: monster.locations,
+              ...(formerLevels && { formerLevels }),
+            },
+          ];
     });
 
     for (const batch of chunk(changed, 500)) {
