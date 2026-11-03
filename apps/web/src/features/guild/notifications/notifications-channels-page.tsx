@@ -35,12 +35,12 @@ export const NotificationsChannelsPage = () => {
   );
 
   const renderChannels = () => {
-    if (overview.isError) {
+    if (overview.targetsLoad.isError) {
       return (
         <SettingsListError
           title={t("settings.notifications.empty.loadError")}
-          isRetrying={overview.isRetrying}
-          onRetry={overview.retry}
+          isRetrying={overview.targetsLoad.isRetrying}
+          onRetry={overview.targetsLoad.retry}
         />
       );
     }
@@ -96,7 +96,7 @@ export const NotificationsChannelsPage = () => {
             <Button
               type="button"
               size="sm"
-              disabled={!hasRequiredPermissions || overview.isError}
+              disabled={!hasRequiredPermissions || overview.targetsLoad.isError}
               icon=<Plus className="size-4" />
               onClick={() => setIsCreateOpen(true)}
             >

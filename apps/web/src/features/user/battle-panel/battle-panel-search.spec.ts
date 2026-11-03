@@ -164,6 +164,18 @@ describe("battle panel battle list route search schema", () => {
     });
   });
 
+  it("keeps the Abyss filter through route validation", () => {
+    const result = battlePanelBattlesSearchSchema["~standard"].validate({
+      matchmaking: "true",
+    });
+
+    expect(result).toEqual({
+      value: {
+        matchmaking: true,
+      },
+    });
+  });
+
   it("omits invalid battle list values during route validation", () => {
     const result = battlePanelBattlesSearchSchema["~standard"].validate({
       type: "raid",

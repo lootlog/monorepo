@@ -46,11 +46,9 @@ export const UserNotifications = () => {
     return <UserNotificationsPageSkeleton />;
   }
 
-  // Without them the page would offer to create a DM that may already exist.
-  if (
-    (targetsQuery.isError && !targetsQuery.data) ||
-    (watchedItemsQuery.isError && !watchedItemsQuery.data)
-  ) {
+  // Without them the page would offer to create a DM that may already exist;
+  // a retry paused while offline has no data and no error either.
+  if (!targetsQuery.data || !watchedItemsQuery.data) {
     return (
       <div className="flex h-full min-h-0 flex-col">
         <ScrollArea data-under-top-bar className="min-h-0 flex-1">

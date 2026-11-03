@@ -58,7 +58,7 @@ export const NotificationsSettings = () => {
               </span>
             )}
             {hasRequiredPermissions &&
-            !overview.isError &&
+            !overview.rulesLoad.isError &&
             !overview.isRuleLimitReached ? (
               <Button
                 size="sm"
@@ -78,11 +78,11 @@ export const NotificationsSettings = () => {
             <NotificationsInfoButton />
           </div>
         </ListToolbar>
-        {overview.isError ? (
+        {overview.rulesLoad.isError ? (
           <SettingsListError
             title={t("settings.notifications.empty.loadError")}
-            isRetrying={overview.isRetrying}
-            onRetry={overview.retry}
+            isRetrying={overview.rulesLoad.isRetrying}
+            onRetry={overview.rulesLoad.retry}
           />
         ) : overview.isLoading ? (
           <NotificationRuleGroupsSkeleton />

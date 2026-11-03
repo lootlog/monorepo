@@ -60,14 +60,16 @@ export const useNotificationsOverview = () => {
     sync,
     hasRequiredPermissions: sync.permissionStatus === "ok",
     isLoading: targetsQuery.isLoading || rulesQuery.isLoading,
-    /** The rules or channels could not be loaded, so neither list is known. */
-    isError:
-      (targetsQuery.isError && !targetsQuery.data) ||
-      (rulesQuery.isError && !rulesQuery.data),
-    isRetrying: targetsQuery.isFetching || rulesQuery.isFetching,
-    retry: () => {
-      void targetsQuery.refetch();
-      void rulesQuery.refetch();
+    // Each tab blocks only on the list it shows.
+    rulesLoad: {
+      isError: rulesQuery.isError && !rulesQuery.data,
+      isRetrying: rulesQuery.isFetching,
+      retry: () => void rulesQuery.refetch(),
+    },
+    targetsLoad: {
+      isError: targetsQuery.isError && !targetsQuery.data,
+      isRetrying: targetsQuery.isFetching,
+      retry: () => void targetsQuery.refetch(),
     },
     targets: targetsQuery.data ?? [],
     rules:
