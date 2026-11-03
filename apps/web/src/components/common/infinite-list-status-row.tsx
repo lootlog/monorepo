@@ -14,6 +14,7 @@ type Props = {
 /**
  * The last row of an infinite list: a loader while pages remain, a retry row
  * when the next page failed, otherwise the end note. Loaded items stay above.
+ * It sits edge to edge under the list, so it carries no surface of its own.
  */
 export const InfiniteListStatusRow = ({
   hasNextPage,
@@ -25,7 +26,7 @@ export const InfiniteListStatusRow = ({
 }: Props) => (
   <div
     role={hasError ? "alert" : "status"}
-    className="flex h-16 items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30 text-sm text-muted-foreground"
+    className="flex h-16 items-center justify-center gap-3 px-4 text-sm text-muted-foreground"
   >
     {hasError ? (
       <>
@@ -39,7 +40,17 @@ export const InfiniteListStatusRow = ({
         <span className="font-medium">{loadingLabel}</span>
       </>
     ) : (
-      <span className="text-xs">{endLabel}</span>
+      <>
+        <span
+          aria-hidden="true"
+          className="h-px max-w-24 flex-1 bg-sidebar-border"
+        />
+        <span className="text-xs">{endLabel}</span>
+        <span
+          aria-hidden="true"
+          className="h-px max-w-24 flex-1 bg-sidebar-border"
+        />
+      </>
     )}
   </div>
 );
