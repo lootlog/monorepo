@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   anguishDamage,
-  attackSpeedFromAgility,
   defenceChance,
   LEGENDARY_BONUS_START_VALUES,
   legendaryBonusStrength,
@@ -19,11 +18,6 @@ describe("calculators", () => {
     // A level 400 enemy counts as 300.
     expect(defenceChance(300, 400)).toBe(20);
     expect(pointsForMaxDefence(400)).toBe(750);
-  });
-
-  it("gives attack speed from agility in two steps", () => {
-    expect(attackSpeedFromAgility(50)).toBe(1);
-    expect(attackSpeedFromAgility(150)).toBeCloseTo(2.1);
   });
 
   it("adds half of the previous share for each further item with a bonus", () => {

@@ -9,6 +9,7 @@
     "./activity-feed": "./src/activity-feed.ts",
     "./account-preferences": "./src/account-preferences.ts",
     "./air-tag": "./src/air-tag.ts",
+    "./attack-speed": "./src/attack-speed.ts",
     "./chat-message-permissions": "./src/chat-message-permissions.ts",
     "./chat-appearance": "./src/chat-appearance.ts",
     "./event-hero-visibility": "./src/event-hero-visibility.ts",

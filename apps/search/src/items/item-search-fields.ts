@@ -1,4 +1,5 @@
 import { Predicate } from "effect";
+import { itemAttackSpeed } from "@lootlog/domain/attack-speed";
 import { itemEventLabels, itemEventSlug } from "@lootlog/domain/item-events";
 
 const DEFAULT_REQUIRED_PROFESSIONS = ["w", "p", "h", "m", "b", "t"] as const;
@@ -16,6 +17,8 @@ export type ItemSearchFields = {
   legendaryBonus: string | null;
   /** The slugs of the events the item belongs to, such as `wakacje-2026`. */
   eventSlugs: string[];
+  /** The attack speed the item adds to a character with 100 agility or more. */
+  attackSpeed: number;
 };
 
 const normalizeStatValue = (value: string): string | number | boolean => {
@@ -85,5 +88,6 @@ export const createItemSearchFields = (statRaw: string): ItemSearchFields => {
     requiredProfessions,
     legendaryBonus,
     eventSlugs,
+    attackSpeed: itemAttackSpeed(numericStats),
   };
 };

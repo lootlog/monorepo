@@ -1,7 +1,7 @@
 import { useState } from "react";
+import { attackSpeedFromAgility } from "@lootlog/domain/attack-speed";
 import { t } from "@/i18n/messages";
 import {
-  attackSpeedFromAgility,
   evadeFromAgility,
   MECHANICS_DOCUMENTATION_URL,
 } from "@/lib/calculators";
