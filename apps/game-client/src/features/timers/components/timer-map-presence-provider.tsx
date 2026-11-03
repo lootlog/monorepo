@@ -227,8 +227,11 @@ function useHeroSightingsStaleClock(
   useEffect(() => {
     if (nextStaleAt === undefined) return;
 
+    // A timer may fire a millisecond before `Date.now()` reaches its delay;
+    // judged that early, the sighting is still current, `nextStaleAt` stays
+    // the same and the clock would never move again.
     const timeout = window.setTimeout(
-      () => setNow(Date.now()),
+      () => setNow(Math.max(Date.now(), nextStaleAt)),
       Math.max(0, nextStaleAt - Date.now()),
     );
 
