@@ -81,6 +81,18 @@ const messages = {
     professions: "Profesje",
     inGame: "Tak wygląda w grze",
   },
+  elastic: {
+    title: "Poziom zależny od postaci",
+    description:
+      "Gra daje ten przedmiot na poziomie postaci, która go zdobyła: najwyższym z poziomów co 5, który nie przekracza jej poziomu, od 40 do 300.",
+    defaultLevel:
+      "Pokazujemy przedmiot na {{level}} poziomie. Wpisz poziom postaci, żeby zobaczyć go takim, jaki by zdobyła.",
+    itemLevel: "Twoja postać zdobyłaby go na {{level}} poziomie.",
+    dropsHint:
+      "Część przedmiotów dostaje poziom postaci, która je zdobyła. Bez poziomu postaci pokazujemy je na 300 poziomie; wpisz swój, żeby zobaczyć je takie, jakie byś zdobył.",
+    computed:
+      "Statystyki na innym poziomie Lootlog wylicza ze wzorów gry, więc obrażenia broni mogą różnić się od gry o 1.",
+  },
   upgrade: {
     label: "Ulepszenie",
     level: "+{{level}}",

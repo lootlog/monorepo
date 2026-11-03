@@ -136,6 +136,56 @@ test("lists a monster's drops from any of its identities, marking the monsters t
   expect(searches[0]?.attributesToRetrieve).not.toContain("firstSeenAt");
 });
 
+test("marks an item seen at its looters' levels as elastic, but not one rebalanced a few times", async () => {
+  const hit = (id: number) => ({
+    id,
+    name: `Item ${id}`,
+    icon: "item.gif",
+    stat: "",
+    lvl: 40,
+    rarity: "LEGENDARY",
+    type: "GLOVES",
+    droppedBy: [],
+  });
+
+  const { catalog } = catalogWith([
+    { ...hit(1), observedLevels: [40, 42, 47, 52, 57] },
+    { ...hit(2), observedLevels: [40, 45, 50, 60] },
+    // Indexed before levels were collected.
+    hit(3),
+  ]);
+
+  const response = await Effect.runPromise(catalog.getItems({}));
+
+  expect(
+    response.hits.map(({ id, elasticLevel }) => ({ id, elasticLevel })),
+  ).toEqual([
+    { id: 1, elasticLevel: true },
+    { id: 2, elasticLevel: false },
+    { id: 3, elasticLevel: false },
+  ]);
+  expect(response.hits[0]).not.toHaveProperty("observedLevels");
+});
+
+test("a level range also finds elastic items, which come at any level from 40 to 300", async () => {
+  const { catalog, searches } = catalogWith([]);
+
+  for (const query of [
+    { minLevel: 50, maxLevel: 60 },
+    { maxLevel: 30 },
+    { minLevel: 301 },
+  ]) {
+    await Effect.runPromise(catalog.getItems(query));
+  }
+
+  expect(searches.map(({ filter }) => filter)).toEqual([
+    "((lvl >= 50 AND lvl <= 60) OR elasticLevel = true)",
+    // No elastic item is below 40 or above 300.
+    "lvl <= 30",
+    "lvl >= 301",
+  ]);
+});
+
 test("a malformed NPC key or event slug matches nothing instead of reaching the filter", async () => {
   const { catalog, searches } = catalogWith([]);
 

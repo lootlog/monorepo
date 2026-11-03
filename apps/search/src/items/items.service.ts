@@ -25,6 +25,11 @@ import {
   toItemDropFields,
   type ItemDropFields,
 } from "./item-drops.js";
+import {
+  mergeItemLevels,
+  toItemLevelFields,
+  type ItemLevelFields,
+} from "./item-levels.js";
 
 type SearchItemsResponse = {
   estimatedTotalHits: number;
@@ -36,7 +41,8 @@ type SearchItemsResponse = {
 type IndexItem = IndexItemsCommand["items"][number];
 
 type IndexedItem = Omit<IndexItem, "droppedBy" | "observedAt"> &
-  ItemDropFields & {
+  ItemDropFields &
+  ItemLevelFields & {
     uid: string;
     worlds: string[];
     /** The monsters of `droppedBy` that no longer drop the item. */
@@ -124,6 +130,7 @@ const mergeItemsByCatalogKey = (
       ...existingItem,
       ...item,
       ...mergeItemDropFields(toItemDropFields(incoming), existingItem),
+      ...mergeItemLevels(toItemLevelFields(incoming), existingItem),
       uid,
       worlds: uniqueWorlds([...(existingItem?.worlds ?? []), ...worlds]),
     });
@@ -254,6 +261,7 @@ export const makeItemsModule = (
       (item, stored) => ({
         ...item,
         ...mergeItemDropFields(item, stored),
+        ...mergeItemLevels(item, stored),
         ...remainingRetiredDrops(item, stored),
         worlds: uniqueWorlds([...item.worlds, ...(stored?.worlds ?? [])]),
       }),

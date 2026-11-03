@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
 import {
+  itemAtLevel,
   upgradeBonusOptions,
   upgradedItemLevel,
   upgradeItemStat,
@@ -48,6 +49,20 @@ describe("item upgrade", () => {
     // 8 * 0.3984 * (rarity_power + level_power) at 262, with a 10% spread.
     expect(statOf(upgradeItemStat(sword, { level: 5 }), "dmg")).toBe(
       "6050,7394",
+    );
+  });
+
+  it("counts the base of life once, however many life bonuses an item has", () => {
+    // A heroic helmet with six life bonuses, dropped at 297 and at 42.
+    const helmet = {
+      stat: "ac=771;artisanbon=150;da=82;hp=8607;lvl=297;permbound;rarity=heroic;sa=82",
+      lvl: 297,
+      rarity: "HEROIC",
+      type: "HELMET",
+    };
+
+    expect(itemAtLevel(helmet, 42).stat).toBe(
+      "ac=50;artisanbon=150;da=19;hp=977;lvl=42;permbound;rarity=heroic;sa=19",
     );
   });
 

@@ -24,6 +24,7 @@ const item = (
   rarity: "HEROIC",
   type: null,
   droppedBy,
+  elasticLevel: false,
 });
 
 const names = (groups: ReturnType<typeof groupItemsByMonster>) =>
