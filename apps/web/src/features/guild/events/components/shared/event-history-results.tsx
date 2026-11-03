@@ -112,7 +112,7 @@ export const EventHistoryResults = ({
   return (
     <>
       {children}
-      <div ref={sentinelRef} className="p-3">
+      <div ref={sentinelRef}>
         <InfiniteListStatusRow
           hasNextPage={hasNextPage}
           hasError={hasError}

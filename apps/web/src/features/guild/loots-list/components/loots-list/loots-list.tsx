@@ -156,16 +156,14 @@ export const LootsList = () => {
                     }}
                   >
                     {isLoaderRow ? (
-                      <div className="p-3">
-                        <InfiniteListStatusRow
-                          hasNextPage={hasNextPage}
-                          hasError={isError}
-                          onRetry={retry}
-                          loadingLabel={t(themedKey("loots.list.loadingMore"))}
-                          endLabel={t(themedKey("loots.list.end"))}
-                          errorLabel={t("loots.list.loadError")}
-                        />
-                      </div>
+                      <InfiniteListStatusRow
+                        hasNextPage={hasNextPage}
+                        hasError={isError}
+                        onRetry={retry}
+                        loadingLabel={t(themedKey("loots.list.loadingMore"))}
+                        endLabel={t(themedKey("loots.list.end"))}
+                        errorLabel={t("loots.list.loadError")}
+                      />
                     ) : rowLoots ? (
                       <div className={cn(LOOTS_GRID_CLASS, "items-stretch")}>
                         {rowLoots.map((loot) => (
@@ -211,16 +209,14 @@ export const LootsList = () => {
                     }}
                   >
                     {isLoaderRow ? (
-                      <div className="p-3">
-                        <InfiniteListStatusRow
-                          hasNextPage={hasNextPage}
-                          hasError={isError}
-                          onRetry={retry}
-                          loadingLabel={t(themedKey("loots.list.loadingMore"))}
-                          endLabel={t(themedKey("loots.list.end"))}
-                          errorLabel={t("loots.list.loadError")}
-                        />
-                      </div>
+                      <InfiniteListStatusRow
+                        hasNextPage={hasNextPage}
+                        hasError={isError}
+                        onRetry={retry}
+                        loadingLabel={t(themedKey("loots.list.loadingMore"))}
+                        endLabel={t(themedKey("loots.list.end"))}
+                        errorLabel={t("loots.list.loadError")}
+                      />
                     ) : loot ? (
                       <LootsListItem loot={loot} showWorld={world === null} />
                     ) : null}
