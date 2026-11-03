@@ -1,13 +1,13 @@
 ---
 title: Contract changelog
-description: A reference for HTTP, realtime, and game client integrations.
+description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
 ## 2026-11-03 — SDK 0.2.0 (breaking)
 
 [`@lootlog/sdk@0.2.0`](https://www.npmjs.com/package/@lootlog/sdk/v/0.2.0)
 regenerates every client from the deployed main, activity, battlelog and search
-APIs and includes every change in the `SDK 0.2.0` entries below. The services
+APIs and includes every change below, deployed from 2026-09-26 to 2026-11-03. The services
 already serve these contracts, so SDK 0.1.1 and older clients fail on the
 removed and reshaped operations. Update before relying on them.
 
@@ -45,7 +45,7 @@ also cover messages of Lootlog's own clients. The gateway still accepts only
 from an API key. The SDK now depends on the stable `effect@4.0.4` instead of a
 release candidate.
 
-## SDK 0.2.0 (breaking): Game client API v2 lists online characters
+## 2026-11-03 — Game client API v2 lists online characters (breaking)
 
 `window.lootlogGameClientApi` now reports `apiVersion: 2`. Only the
 online-players contract changed:
@@ -64,7 +64,7 @@ and read `result.players` as an array. Timers and Organizations are unchanged.
 Public battle links no longer return the uploader's `userId` from
 `GET /battles/public/{battleId}`.
 
-## SDK 0.2.0 (breaking): Party gatherings belong to one Lootlog
+## 2026-11-03 — Party gatherings belong to one Lootlog (breaking)
 
 A party gathering is created in exactly one Lootlog (Discord guild) and is
 visible only to its members.
@@ -81,11 +81,10 @@ visible only to its members.
   element. Gatherings created before this release can carry several until
   they expire, at most 30 minutes later.
 
-Deploy the API before the game client. Older game clients that send one
-Lootlog keep working; when they target several, creation fails instead of
-broadcasting the gathering. No persistence migration is required.
+Older game clients that send one Lootlog keep working; when they target
+several, creation fails instead of broadcasting the gathering.
 
-## SDK 0.2.0 (breaking): One error body, filter and page shape across the main API
+## 2026-11-03 — One error body, filter and page shape across the main API (breaking)
 
 Every main API operation now fails, filters and pages the same way, as
 described in [errors and limits](/docs/errors).
@@ -155,7 +154,7 @@ described in [errors and limits](/docs/errors).
   member of `members/{memberId}` carry `member: { id, name, avatar, userId }`
   instead of `memberId`, `memberName`, `memberAvatar` and `memberUserId`.
 
-## SDK 0.2.0: Public item and NPC catalog
+## 2026-10-29 — Public item and NPC catalog
 
 The Search API adds two read-only endpoints that work without an API key or a
 session: `GET /public/catalog/items` and `GET /public/catalog/npcs`. They serve
@@ -194,7 +193,7 @@ neither does when Lootlog first saw an item or NPC, which would date boss kills.
   `gameVersion` (`pl` or `en`) to list one edition. `limit` is capped at 96.
 - Requests share the public rate limit of the main API's `/public` routes.
 
-## SDK 0.2.0 (breaking): Gains and best days removed from personal kill analytics
+## 2026-10-16 — Gains and best days removed from personal kill analytics (breaking)
 
 `GET /users/@me/stats/kills/analytics` no longer returns `npcGains` or the
 `bestDay` of each entry in `npcs`.
@@ -207,7 +206,7 @@ neither does when Lootlog first saw an item or NPC, which would date boss kills.
 - The SDK's `UserKillAnalyticsResponseDtoOutput` loses `npcGains`, and its
   `npcs` items lose `bestDay`.
 
-## SDK 0.2.0: Kill numbers in event kill history
+## 2026-10-13 — Kill numbers in event kill history
 
 `GET /guilds/{guildId}/events/{eventId}/kill-history` returns `killNumber` on
 every event and member summary. It is the one-based position of the kill among
@@ -218,13 +217,12 @@ all recorded kills of its hero in the event, ordered by `killedAt` and then
 - The `heroId` and `memberId` filters do not renumber kills: a member's list
   shows the hero's kill numbers, with gaps for kills the member missed.
 
-## SDK 0.2.0 (breaking): Deprecated event kill lists removed
+## 2026-10-13 — Deprecated event kill lists removed (breaking)
 
 The event, member and hero kill lists deprecated in favour of
 `GET /guilds/{guildId}/events/{eventId}/kill-history` are removed. There is no
-compatibility window: once this API version is deployed, the removed routes
-return `404`, including for SDK 0.1.1 and earlier and any other client still
-calling them. Migrate to `/kill-history` before the deployment.
+compatibility window: the removed routes return `404`, including for SDK 0.1.1
+and earlier and any other client still calling them. Use `/kill-history`.
 
 | Removed GET route                                             | Replacement query on `/kill-history` |
 | ------------------------------------------------------------- | ------------------------------------ |
@@ -244,7 +242,7 @@ calling them. Migrate to `/kill-history` before the deployment.
   parameter and error types, `EventKillHistoryResponseDto` or
   `EventMemberKillHistoryResponseDto`. Use `listEventKillHistory`.
 
-## SDK 0.2.0 (breaking): Time-ordered battle IDs and opaque list cursors
+## 2026-10-09 — Time-ordered battle IDs and opaque list cursors (breaking)
 
 Battle IDs are now UUIDv7 values whose first 48 bits are the battle's
 `createdAt`, so newer battles have greater IDs.
@@ -268,7 +266,7 @@ Battle IDs are now UUIDv7 values whose first 48 bits are the battle's
   shape. For battles saved after this change, `timestamp` is the battle's
   `createdAt`.
 
-## SDK 0.2.0 (breaking): Battle participants no longer return `id`
+## 2026-10-06 — Battle participants no longer return `id` (breaking)
 
 Battlelog identifies a participant by its battle and Margonem character, so the
 separate participant ID is removed.
@@ -282,7 +280,7 @@ separate participant ID is removed.
   warrior's `originalId` with `400`. Margonem keys player warriors by their ID,
   so payloads captured from the game are unaffected.
 
-## SDK 0.2.0: Relative NPC icons on loots, kills and timers
+## 2026-10-01 — Relative NPC icons on loots, kills and timers
 
 Margonem stores an NPC icon relative to its NPC image directory and adds the
 CDN address only to render it. Some clients report the rendered URL instead, so
@@ -303,7 +301,7 @@ one observation of an NPC produced two revisions.
   documents written earlier can still hold a full URL; use an absolute `icon`
   as is.
 
-## SDK 0.2.0 (breaking): Game version required, deprecated search fields removed
+## 2026-10-01 — Game version required, deprecated search fields removed (breaking)
 
 The one-time repair of per-edition revisions is complete: every loot and NPC
 search hit has a game version. The compatibility paths kept for the rollout
@@ -322,7 +320,7 @@ are removed.
   return `unresolvedSelections`. The selections it would have reported were
   never recorded, so the array was always empty.
 
-## SDK 0.2.0: NPC and item revisions per game edition
+## 2026-10-01 — NPC and item revisions per game edition
 
 Every world of a Margonem edition uses the same NPC and item ids. NPC
 revisions and search results are now one per edition instead of one per world,
@@ -347,7 +345,7 @@ and every loot has a game version.
   that edition's name and icon, or keeps its stored name when the edition has
   none. Loot, item and NPC ids are unchanged.
 
-## SDK 0.2.0: Unresolved notification selections and repaired loot links
+## 2026-10-01 — Unresolved notification selections and repaired loot links
 
 Some saved notification selections do not identify what their rule matches:
 timer rules saved with an NPC id from the legacy search catalog, and watched
@@ -371,7 +369,7 @@ items whose saved name came from the other game edition.
   level can therefore change, and with it which roles can read the loot. Loot
   and item ids are unchanged.
 
-## SDK 0.2.0: Item names, icons and instance stats per loot
+## 2026-09-30 — Item names, icons and instance stats per loot
 
 A loot item now shows the name and icon it was reported with. Earlier, a later
 loot of an item with equal stats reused the first stored name and icon, so a
@@ -387,7 +385,7 @@ Polish loot could show an English name, and an icon change was lost.
 - `POST /loots` is unchanged. Send `name`, `icon` and `stat` exactly as the game
   shows them; do not translate them.
 
-## SDK 0.2.0: Margonem game version on loots and NPC search
+## 2026-09-30 — Margonem game version on loots and NPC search
 
 Margonem runs a Polish edition on `*.margonem.pl` and an international edition
 on `*.margonem.com`. The same template or item id can mean different things in
@@ -405,10 +403,9 @@ each edition, and a world name does not identify the edition.
   versions are different NPCs. See "NPC and item revisions per game edition"
   for how the API now fills a missing game version.
 
-Deploy the database migration, the search service, the API and the game client
-in that order. Older clients keep working and their loots stay unknown.
+Older clients keep working and their loots stay unknown.
 
-## SDK 0.2.0: Timer NPC search follows timer visibility
+## 2026-09-30 — Timer NPC search follows timer visibility
 
 `GET /guilds/{guildId}/timers/npcs/search` now applies the same visibility as
 the timer list. Timers whose NPC type or level is outside the caller's roles
@@ -427,7 +424,7 @@ Existing callers that send `search` and `world` keep their behavior, except
 that hidden timers no longer appear. SDK 0.2.0 includes the new
 parameters and field.
 
-## SDK 0.2.0: Explicit NPC runtime and template identities
+## 2026-09-30 — Explicit NPC runtime and template identities
 
 Margonem gives every NPC spawn a runtime id (`npc.id`, the battle
 `originalId`) and every monster template a template id (`npc.tpl`). Several
@@ -450,11 +447,9 @@ spawns share one template.
   observed without a template) or `legacy` (an overloaded id from an older
   client). Equal ids in different namespaces are different NPCs.
 
-Deploy the database migration, the search service, the API, the web app and
-the game client in that order. Older clients keep working and write `legacy`
-identities. Existing saved filters and legacy records are not remapped.
+Older clients keep working and write `legacy` identities. Existing saved filters and legacy records are not remapped.
 
-## SDK 0.2.0: Conditional party observations
+## 2026-09-29 — Conditional party observations
 
 `POST /messaging/party-gathering/{notificationId}/party-observation` accepts
 an optional positive integer `expectedRevision`. Use the latest room projection's
@@ -467,11 +462,10 @@ room without a new revision for an unchanged roster observed within 45 seconds.
 
 After a conflict or an uncertain HTTP result, read the room again and retry the
 latest roster with its current revision. Bound both the requests and retry count;
-aborting HTTP does not cancel a server write. Deploy the API to every writer
-before relying on the precondition. No persistence migration is required.
-SDK 0.2.0 includes the optional field.
+aborting HTTP does not cancel a server write. SDK 0.2.0 includes the optional
+field.
 
-## SDK 0.2.0: Event hero lists keep history
+## 2026-09-28 — Event hero lists keep history
 
 `PATCH /guilds/{guildId}/events/{eventId}` no longer rebuilds the event's heroes
 and maps when the request includes `heroNpcs`. Heroes are matched by `npcName`
@@ -493,7 +487,7 @@ Deleting a hero removes its maps, kills, kill points and tracking history, and
 now also its ranking entries, so event ranking totals match the remaining kill
 points. No migration is required.
 
-## SDK 0.2.0: Event kill history
+## 2026-09-27 — Event kill history
 
 `GET /guilds/{guildId}/events/{eventId}/kill-history` adds a paginated summary
 of kills visible to the caller. It requires `LOOTLOG_EVENTS_READ` and supports
@@ -521,11 +515,9 @@ response shapes and UUID cursors remain supported with corrected chronological
 pagination. A missing, hidden or out-of-scope UUID cursor returns the same
 `400 Invalid cursor` response. Inaccessible resources return `404`.
 
-Apply the database index migration and deploy the API before migrating clients
-to the new endpoint. The migration changes indexes only. SDK 0.2.0
-includes the endpoint.
+SDK 0.2.0 includes the endpoint.
 
-## SDK 0.2.0: Realtime latency probe
+## 2026-09-26 — Realtime latency probe
 
 The realtime v1 `session.joined` event and `session.join` response add an
 optional `capabilities` list. Gateways that list `connection.ping` accept the
@@ -533,11 +525,9 @@ optional `capabilities` list. Gateways that list `connection.ping` accept the
 integration connections. The SDK realtime client adds `probeLatency()`, which
 reports through `subscribeHeartbeatLatency`.
 
-Deploy the gateway before relying on the probe. Clients send the command only
-when the capability is listed, so clients connected to older gateways keep the
-heartbeat measurement. No migration is required.
+Clients send the command only when the gateway lists the capability.
 
-## SDK 0.2.0: Notification schedules and role level ranges
+## 2026-09-26 — Notification schedules and role level ranges
 
 Notification rule create and update requests accept `scheduledUntil: null`.
 For a recurring rule, `null` removes the end date; omitting the field preserves
@@ -551,9 +541,7 @@ integers from 0 to 500, and ranges where `lvlRangeTo` is lower than
 `lvlRangeFrom`, with `400 Bad Request`. A role saved earlier with a reversed range
 must receive a corrected range on its next update.
 
-Deploy the API before clients begin sending `null`. Existing valid requests remain
-compatible, and no database migration is required. SDK 0.2.0 includes
-these changes.
+Existing valid requests remain compatible. SDK 0.2.0 includes these changes.
 
 ## 2026-09-17 — SDK 0.1.1
 
