@@ -20,6 +20,7 @@ import {
   lootItemToGuildDocSnapshot,
   type GuildDocItem,
 } from "./guild-doc-item-node";
+import { GuildDocItemFindableId } from "./guild-doc-item-findable-id";
 
 type GuildDocItemChipProps = {
   item: GuildDocItem;
@@ -103,7 +104,12 @@ export const GuildDocItemChip = ({ item, nodeKey }: GuildDocItemChipProps) => {
           title={itemId}
         >
           <PackageSearch aria-hidden="true" className="size-4 shrink-0" />
-          <code className="max-w-48 truncate font-mono text-xs">{itemId}</code>
+          {/* Drawn from an attribute so find-in-page matches the full
+              identifier below instead of this clipped one. */}
+          <code
+            className="max-w-48 truncate font-mono text-xs before:content-[attr(data-item-id)]"
+            data-item-id={itemId}
+          />
         </span>
       );
     }
@@ -117,7 +123,7 @@ export const GuildDocItemChip = ({ item, nodeKey }: GuildDocItemChipProps) => {
   };
 
   return (
-    <span className="inline-flex items-center gap-2 align-middle">
+    <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 align-middle">
       {renderBody()}
       {itemId && (
         <Button
@@ -149,6 +155,7 @@ export const GuildDocItemChip = ({ item, nodeKey }: GuildDocItemChipProps) => {
           <Pencil className="size-3.5" />
         </Button>
       )}
+      {itemId && <GuildDocItemFindableId itemId={itemId} />}
     </span>
   );
 };
