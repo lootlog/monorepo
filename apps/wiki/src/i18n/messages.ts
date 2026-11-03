@@ -191,12 +191,12 @@ const messages = {
     droppedBy: "Z:",
     droppedByTitle: "Wypada z",
     professionsShort: {
-      w: "W",
-      p: "P",
-      h: "H",
-      m: "M",
-      b: "B",
-      t: "T",
+      w: "w",
+      p: "p",
+      h: "h",
+      m: "m",
+      b: "b",
+      t: "t",
     },
     damageTypes: {
       fire: "Obrażenia od ognia",
