@@ -126,6 +126,10 @@ export function BattlePanelStatistics() {
             ph === true,
           ].filter(Boolean).length
         }
+        clearFiltersLabel={t("battlePanel.filters.clear")}
+        onClearFilters={() =>
+          setFilters({ period: "30d", minLevel: 1, maxLevel: 500, ph: null })
+        }
       >
         <StatisticsFilterToolbar {...filterProps} />
       </FilterBar>
