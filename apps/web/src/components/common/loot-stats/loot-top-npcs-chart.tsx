@@ -53,7 +53,7 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
     >
       <ChartContainer
         config={getLootRarityChartConfig(t)}
-        className="h-[250px] w-full"
+        className="h-64 w-full"
       >
         <BarChart
           data={chartData}

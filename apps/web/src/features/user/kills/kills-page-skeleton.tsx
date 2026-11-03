@@ -24,7 +24,9 @@ export const KillsPageSkeleton = () => {
         ))}
         footer={<TablePaginationFooterSkeleton />}
       >
+        {/* A page of kills fills the screen, so the footer docks at its bottom. */}
         <TableRowsSkeleton
+          rows={20}
           trailingColumns={2}
           withHeader
           withNpcTile
