@@ -26,11 +26,16 @@ afterEach(() => {
 
 const HERO = "101";
 
-const item = (hid: string, name: string, reqp: string): Item => ({
+const item = (
+  hid: string,
+  name: string,
+  reqp: string,
+  rarity = "common",
+): Item => ({
   hid,
   name,
   icon: "zbr/zbroja1591.gif",
-  stat: `rarity=common;reqp=${reqp}`,
+  stat: `rarity=${rarity};reqp=${reqp}`,
   loc: "l",
   pr: 1,
   prc: "zl",
@@ -67,7 +72,7 @@ const groupLoot = (
   },
 });
 
-const setup = async () => {
+const setup = async (lootSplit?: { enabled: boolean; rarities: string[] }) => {
   const test = createRealtimeTest();
   const native = createNativeRuntime();
   const request = vi.fn<(command: string) => void>();
@@ -89,7 +94,10 @@ const setup = async () => {
 
   seedSettingsDocuments(
     test.queryClient,
-    createSettingsDocuments(accountPreferenceValues(preferences)),
+    createSettingsDocuments({
+      ...accountPreferenceValues(preferences),
+      "gameData.lootSplit": lootSplit,
+    }),
     { gameAccountId: "202", characterId: HERO },
   );
   const view = render(<AppContent />, { wrapper: test.wrapper });
@@ -245,5 +253,42 @@ it("keeps a solo loot to itself", async () => {
       .getSnapshot()
       .state.splits.some(({ id }) => id === "1200700001"),
   ).toBe(false);
+  act(() => view.unmount());
+});
+
+it("opens the window only for a split that drops a chosen rarity, and shares choices for every split", async () => {
+  const { view, receivePacket, sentChoices } = await setup({
+    enabled: true,
+    rarities: ["LEGENDARY", "HEROIC"],
+  });
+
+  const party = {
+    [HERO]: { nick: "Tester", prof: "w" },
+    "365": { nick: "Knoper S", prof: "h" },
+  };
+
+  await receivePacket(
+    groupLoot(party, { "1200800001": item("61a0", "Hełm", "w", "unique") }),
+  );
+  await waitFor(() =>
+    expect(sentChoices().map(({ splitId }) => splitId)).toContain("1200800001"),
+  );
+  expect(
+    screen.queryByRole("region", { name: "Podział łupów" }),
+  ).not.toBeInTheDocument();
+
+  await receivePacket(
+    groupLoot(party, {
+      "1200800002": item("61a1", "Pierścień", "w", "heroic"),
+    }),
+  );
+
+  expect(
+    await screen.findByRole("region", { name: "Podział łupów" }),
+  ).toHaveTextContent("Knoper S");
+  // The earlier split dropped nothing chosen, so it stays out of the window.
+  expect(
+    screen.queryByRole("region", { name: "Wcześniejszy podział" }),
+  ).toBeNull();
   act(() => view.unmount());
 });
