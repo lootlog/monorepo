@@ -121,7 +121,7 @@ export const LootSearchCommand = (
           placeholder={t("loots.searchCommand.placeholder")}
           value={searchQuery}
           onValueChange={setSearchQuery}
-          className="pr-14 text-base"
+          className="pr-14 md:text-base"
         />
         <Kbd className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 max-md:hidden">
           Esc
