@@ -8,6 +8,7 @@ import {
   type LootSplit,
   type LootSplitStatus,
 } from "./loot-split-model";
+import { LootSplitStatusCount } from "./loot-split-status-count";
 import { LootSplitStatusIcon } from "./loot-split-status-icon";
 
 /** Players still choosing come first: they hold the party up. */
@@ -60,38 +61,47 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
         split.phase !== "open" && "ll:opacity-60",
       )}
     >
-      <header className="ll:flex ll:items-center ll:justify-between ll:gap-3 ll:text-[11px] ll:font-semibold">
-        <h3 className="ll:m-0 ll:text-[11px] ll:font-semibold">{title}</h3>
-        {split.phase === "open" ? (
-          <span className="ll:flex ll:gap-2 ll:font-normal">
-            {choosing > 0 ? (
-              <span className="ll:text-amber-300">
-                {t("choosingCount", { count: choosing })}
-              </span>
-            ) : null}
-            {unknown > 0 ? (
-              <span className="ll:text-white/55">
-                {t("unknownCount", { count: unknown })}
-              </span>
-            ) : null}
-            <span className="ll:tabular-nums ll:text-white/70">
-              {t("secondsLeft", {
+      <header className="ll:flex ll:items-start ll:justify-between ll:gap-3 ll:text-[11px]">
+        <div className="ll:flex ll:flex-col ll:gap-0.5">
+          <h3 className="ll:m-0 ll:text-[11px] ll:font-semibold">{title}</h3>
+          {choosing > 0 || unknown > 0 || timedOut > 0 ? (
+            <span className="ll:flex ll:gap-2">
+              {choosing > 0 ? (
+                <LootSplitStatusCount
+                  status="choosing"
+                  count={choosing}
+                  label={t("choosingCount", { count: choosing })}
+                  className="ll:text-amber-300"
+                />
+              ) : null}
+              {timedOut > 0 ? (
+                <LootSplitStatusCount
+                  status="timedOut"
+                  count={timedOut}
+                  label={t("timedOutCount", { count: timedOut })}
+                  className="ll:text-rose-300"
+                />
+              ) : null}
+              {unknown > 0 ? (
+                <LootSplitStatusCount
+                  status="unknown"
+                  count={unknown}
+                  label={t("unknownCount", { count: unknown })}
+                  className="ll:text-white/55"
+                />
+              ) : null}
+            </span>
+          ) : null}
+        </div>
+        <span className="ll:tabular-nums ll:text-white/70">
+          {split.phase === "open"
+            ? t("secondsLeft", {
                 seconds: Math.max(0, Math.ceil((split.deadline - now) / 1_000)),
-              })}
-            </span>
-          </span>
-        ) : (
-          <span className="ll:flex ll:gap-2 ll:font-normal">
-            {timedOut > 0 ? (
-              <span className="ll:text-rose-300">
-                {t("timedOutCount", { count: timedOut })}
-              </span>
-            ) : null}
-            <span className="ll:text-white/70">
-              {split.phase === "resolved" ? t("resolved") : t("expired")}
-            </span>
-          </span>
-        )}
+              })
+            : split.phase === "resolved"
+              ? t("resolved")
+              : t("expired")}
+        </span>
       </header>
       <table className="ll:-mx-1 ll:self-start ll:border-separate ll:border-spacing-x-1 ll:border-spacing-y-0.5 ll:text-xs">
         <thead>
