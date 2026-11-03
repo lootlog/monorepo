@@ -68,6 +68,15 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
     });
   };
 
+  // The overview's NPC type is the picked KPI tile, not a filter to clear.
+  const resetFilters = () => {
+    setSettings((previous) => ({
+      ...DEFAULT_SETTINGS,
+      npcType:
+        page === "overview" ? previous.npcType : DEFAULT_SETTINGS.npcType,
+    }));
+  };
+
   return {
     settings: {
       ...settings,
@@ -80,5 +89,6 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
     setMaxLvl,
     setNpcType,
     setPeriod,
+    resetFilters,
   };
 };

@@ -63,6 +63,7 @@ export function useMemberStatsPage() {
     setMaxLvl,
     setNpcType,
     setPeriod,
+    resetFilters,
   } = useStatsSettings("member");
 
   const filterParams = getMemberKillsQueryParams({
@@ -128,6 +129,10 @@ export function useMemberStatsPage() {
   const member = data?.member;
 
   return {
+    handleClearFilters: () => {
+      resetFilters();
+      setSearch("");
+    },
     member,
     isLoading,
     t,

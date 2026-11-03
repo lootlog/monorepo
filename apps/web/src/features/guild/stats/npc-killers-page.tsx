@@ -50,6 +50,7 @@ export const NpcKillersPage = () => {
     hasNext,
     handlePreviousPage,
     handleNextPage,
+    handleClearFilters,
   } = useNpcKillersPage();
 
   const isViewer = useIsViewer();
@@ -161,6 +162,8 @@ export const NpcKillersPage = () => {
         filters={<KillStatsFilters {...filterProps} />}
         stackedFilters={<KillStatsStackedFilters {...filterProps} />}
         activeFilterCount={countActiveKillStatsFilters(filterProps)}
+        clearFiltersLabel={t("kills.filters.clear")}
+        onClearFilters={handleClearFilters}
         filtersLabel={t("kills.filters.title")}
         scrollResetKey={cursor}
         footer={
