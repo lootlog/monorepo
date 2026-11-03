@@ -16,11 +16,13 @@ import {
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
-/** In the order the game ranks them, as the game's loot filter lists them. */
+/**
+ * Rarities monsters drop, in the order the game ranks them; upgraded items
+ * come only from upgrading.
+ */
 const LOOT_SPLIT_RARITIES = [
   ItemRarityEnum.UNIQUE,
   ItemRarityEnum.HEROIC,
-  ItemRarityEnum.UPGRADED,
   ItemRarityEnum.LEGENDARY,
 ] as const satisfies readonly ItemRarity[];
 

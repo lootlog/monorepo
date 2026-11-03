@@ -39,7 +39,6 @@
     "rarity": {
       "UNIQUE": "Unikatowy",
       "HEROIC": "Heroiczny",
-      "UPGRADED": "Ulepszony",
       "LEGENDARY": "Legendarny"
     }
   }
