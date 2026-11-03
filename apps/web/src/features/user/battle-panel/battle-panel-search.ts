@@ -83,6 +83,7 @@ export const battlePanelBattlesSearchParsers = {
   search: parseAsString,
   result: parseAsArrayOf(parseAsStringLiteral(BATTLE_RESULT_VALUES)),
   ph: parseAsBoolean,
+  matchmaking: parseAsBoolean,
   startDate: parseAsString,
   endDate: parseAsString,
   characterId: parseAsArrayOf(parseAsString),
