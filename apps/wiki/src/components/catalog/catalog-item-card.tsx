@@ -37,7 +37,8 @@ export function CatalogItemCard({
 
   const bonus = findLegendaryBonus(item.stat);
 
-  // Letters fit beside the level; the full names are read out and hovered.
+  // Letters fit beside the level, in the alphabetical order players write
+  // them, `b,h,t`; the full names are read out and hovered.
   const professions = findRequiredProfessions(item.stat);
 
   const professionNames = professions
@@ -83,7 +84,8 @@ export function CatalogItemCard({
                       .map((profession) =>
                         t(`catalog.professionsShort.${profession}`),
                       )
-                      .join(" ")}
+                      .sort()
+                      .join(",")}
                   </span>
                   <span className="sr-only">{professionNames}</span>
                 </span>
