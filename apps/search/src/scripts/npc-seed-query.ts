@@ -6,7 +6,11 @@ import {
 import { asc, eq, sql } from "drizzle-orm";
 import { Schema } from "effect";
 import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
-import { mergeNpcDocuments, toNpcDocument } from "#src/npcs/npcs.service";
+import {
+  currentRevisions,
+  mergeNpcDocuments,
+  toNpcDocument,
+} from "#src/npcs/npcs.service";
 import type { drizzle } from "drizzle-orm/bun-sql";
 
 type SeedDatabase = Pick<
@@ -72,9 +76,12 @@ const decodeIdentityNamespace = Schema.decodeUnknownSync(
   NpcIdentityNamespaceSchema,
 );
 
-/** One document per catalog entry, from rows in `buildNpcSeedQuery` order. */
-export const toNpcSeedDocuments = (rows: readonly NpcSeedRow[]) =>
-  mergeNpcDocuments(
+/**
+ * One document per catalog entry, from rows in `buildNpcSeedQuery` order,
+ * each marked whether it shows its monster as the game has it now.
+ */
+export const toNpcSeedDocuments = (rows: readonly NpcSeedRow[]) => {
+  const documents = mergeNpcDocuments(
     rows.map((npc) =>
       toNpcDocument({
         id: npc.id,
@@ -93,3 +100,16 @@ export const toNpcSeedDocuments = (rows: readonly NpcSeedRow[]) =>
       }),
     ),
   );
+
+  const current = new Map(
+    currentRevisions(documents).map((revision) => [
+      revision.uid,
+      revision.current,
+    ]),
+  );
+
+  return documents.map((document) => ({
+    ...document,
+    current: current.get(document.uid) ?? true,
+  }));
+};

@@ -43,6 +43,7 @@ export interface SessionData extends AuthenticatedIdentity {
   readonly supportsPartyGatheringState?: boolean;
   readonly supportsBattlePings?: boolean;
   readonly supportsTeamBattlePings?: boolean;
+  readonly supportsLootSplit?: boolean;
   readonly supportsAirTagMapThreats?: boolean;
   readonly supportsAirTagScopeUpdates?: boolean;
   readonly supportsNpcPresence?: boolean;

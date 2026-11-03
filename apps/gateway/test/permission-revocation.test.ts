@@ -35,6 +35,7 @@ import { CommandHandler } from "../src/realtime/command-handler.js";
 import { PresenceStore } from "../src/realtime/presence-store.js";
 import { MapPingService } from "../src/realtime/map-ping-service.js";
 import { BattlePingService } from "../src/realtime/battle-ping-service.js";
+import { LootSplitService } from "../src/realtime/loot-split-service.js";
 import { NpcPresenceService } from "../src/realtime/npc-presence-service.js";
 import { AirTagService } from "../src/realtime/air-tag-service.js";
 import { RealtimeHub } from "../src/realtime/realtime-hub.js";
@@ -209,6 +210,7 @@ const setup = async () => {
       activity,
       new MapPingService(presenceRedis, hub),
       new BattlePingService(presenceRedis, hub),
+      new LootSplitService(presenceRedis, hub),
       new AirTagService(presenceRedis, hub),
       new NpcPresenceService(presenceRedis, hub),
     );

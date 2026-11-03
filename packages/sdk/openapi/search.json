@@ -1545,6 +1545,24 @@
               "required": ["map", "share"]
             },
             "description": "Maps the NPC is fought on, most fought first, from its latest 1000 recorded fights; maps under 1% of them are left out. Lootlog recomputes them daily, so an NPC first seen today may have none yet."
+          },
+          "formerLevels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "lvl": {
+                  "type": "number",
+                  "description": "The level it had."
+                },
+                "until": {
+                  "type": "string",
+                  "description": "The UTC day, as `YYYY-MM-DD`, its next level was first recorded."
+                }
+              },
+              "required": ["lvl", "until"]
+            },
+            "description": "Levels the NPC had before the game changed it, oldest first. Lootlog recomputes them daily from recorded fights and leaves out NPCs whose level follows the player's."
           }
         },
         "required": [
@@ -1555,7 +1573,8 @@
           "lvl",
           "type",
           "gameVersion",
-          "locations"
+          "locations",
+          "formerLevels"
         ],
         "description": "A Margonem NPC in the public catalog"
       }

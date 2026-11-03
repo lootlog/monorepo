@@ -57,6 +57,8 @@ export enum GatewayEvent {
   MAP_PING_RECEIVE = "map-ping:receive",
   BATTLE_PING_SEND = "battle-ping:send",
   BATTLE_PING_RECEIVE = "battle-ping:receive",
+  LOOT_SPLIT_SEND = "loot-split:send",
+  LOOT_SPLIT_RECEIVE = "loot-split:receive",
   AIR_TAG_SUBSCRIPTION = "air-tag:subscription",
   AIR_TAG_OBSERVATION = "air-tag:observation",
   AIR_TAG_UPDATE = "air-tag:update",

@@ -384,6 +384,38 @@ describe("MargonemRuntimeBridge", () => {
     bridge.cleanup();
   });
 
+  it("reports a loot accept command to command observers without touching the request, even when one throws", () => {
+    runtimeWindow.successData = vi.fn<RuntimeFunction>();
+    // NI `Loot.finalize` passes a callback that closes the loot window.
+    const callback = vi.fn<() => void>();
+    const receiver = { request: true };
+    const command = "loot&want=1200653658&not=&must=1200653660&final=1";
+
+    const original = vi.fn<RuntimeFunction>(function (...args) {
+      expect(this).toBe(receiver);
+      expect(args).toEqual([command, callback]);
+
+      return "sent";
+    });
+
+    testRuntimeWindow._g = original;
+    const bridge = new MargonemRuntimeBridge({ interface: "ni" });
+    const laterObserver = vi.fn<(command: string) => void>();
+    bridge.subscribeCommand(() => {
+      throw new Error("command observer failed");
+    });
+    bridge.subscribeCommand(laterObserver);
+
+    bridge.install();
+
+    const result = testRuntimeWindow._g.call(receiver, command, callback);
+
+    expect(result).toBe("sent");
+    expect(original).toHaveBeenCalledOnce();
+    expect(laterObserver).toHaveBeenCalledWith(command);
+    bridge.cleanup();
+  });
+
   it("consumes a talk intent after applied observers finish with failures", () => {
     runtimeWindow.successData = vi.fn<RuntimeFunction>();
     testRuntimeWindow._g = vi.fn<RuntimeFunction>();

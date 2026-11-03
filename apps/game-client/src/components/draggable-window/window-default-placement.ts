@@ -51,6 +51,7 @@ const WINDOW_SLOTS: Record<WindowId, WindowSlot> = {
   "npc-detector": { zone: "alerts" },
   notifications: { zone: "alerts" },
   "battle-pings": { zone: "alerts" },
+  "loot-split": { zone: "alerts" },
   "online-players": { zone: "tools" },
   "global-chat": { zone: "tools" },
   "party-finder": { zone: "tools" },
