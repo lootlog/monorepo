@@ -349,7 +349,7 @@ const defenseScale = (item: UpgradableItem, key: string, shown: number) => {
 
   if (!defense) return undefined;
 
-  const professions = [itemStatValue(item.stat, "reqp") ?? "bhmptw"]
+  const professions = [...(itemStatValue(item.stat, "reqp") ?? "bhmptw")]
     .sort()
     .join("");
 

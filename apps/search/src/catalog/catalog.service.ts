@@ -230,7 +230,9 @@ export const makeCatalogModule = (
 
     // An elastic item's stats follow its looter's level, and the index holds
     // the version it saw last, so its attack speed is counted at the level
-    // the search is capped to, as the wiki shows it, and merged in.
+    // the search is capped to, as the wiki shows it, and merged into the
+    // fixed items in Meilisearch's order, which puts a query's relevance
+    // before speed.
     const response = attackSpeed
       ? yield* Effect.all(
           [
@@ -245,19 +247,36 @@ export const makeCatalogModule = (
           Effect.map(([fixed, elastic]) => {
             const level = query.maxLevel ?? ELASTIC_LEVELS.max;
 
-            const ranked = [
-              ...fixed.hits.map((hit) => ({ hit, value: attackSpeed(hit) })),
-              ...elastic.hits.map((hit) => ({
+            const elasticRanked = elastic.hits
+              .map((hit) => ({
                 hit,
                 value: attackSpeed(
                   itemAtLevel(hit, elasticItemLevel(hit.type, level)),
                 ),
-              })),
-            ].sort((a, b) => b.value - a.value);
+              }))
+              .sort((a, b) => b.value - a.value);
+
+            const merged: CatalogItemDocument[] = [];
+            let next = 0;
+
+            for (const hit of fixed.hits) {
+              const value = attackSpeed(hit);
+              let faster = elasticRanked[next];
+
+              while (faster && faster.value > value) {
+                merged.push(faster.hit);
+                next += 1;
+                faster = elasticRanked[next];
+              }
+
+              merged.push(hit);
+            }
+
+            merged.push(...elasticRanked.slice(next).map(({ hit }) => hit));
 
             return {
               total: fixed.total + elastic.total,
-              hits: ranked.slice(offset, offset + limit).map(({ hit }) => hit),
+              hits: merged.slice(offset, offset + limit),
             };
           }),
         )

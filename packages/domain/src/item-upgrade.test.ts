@@ -193,3 +193,23 @@ describe("attack speed at +5", () => {
     ).toEqual({ attackSpeed: 0.4 });
   });
 });
+
+describe("armor of several professions", () => {
+  it("reads the professions in any order the item lists them", () => {
+    // A warrior and blade dancer armor at 100: 8 * 0.12375 * (46 + 460)
+    // native and one armor bonus, 0.15 * 460.
+    const armor = (reqp: string) => ({
+      stat: `ac=570;lvl=100;rarity=legendary;reqp=${reqp}`,
+      lvl: 100,
+      rarity: "LEGENDARY",
+      type: "ARMOR",
+    });
+
+    const acAt200 = (reqp: string) =>
+      itemStatValue(itemAtLevel(armor(reqp), 200).stat, "ac");
+
+    expect(acAt200("wb")).toBe(acAt200("bw"));
+    // 8 * 0.12375 * (66 + 1320) + 0.15 * 1320 at 200.
+    expect(acAt200("bw")).toBe("1570");
+  });
+});
