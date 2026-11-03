@@ -68,6 +68,7 @@ export function ItemResults({ params, query }: ItemResultsProps) {
         placeholders={12}
         emptyLabel={t("search.noResults")}
         highlight={query}
+        maxLevel={params.maxLevel}
       />
       {items && hasNextPage ? (
         <div className="flex flex-col items-center gap-2 pt-2">

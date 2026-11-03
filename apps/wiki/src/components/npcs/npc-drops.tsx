@@ -5,6 +5,7 @@ import {
 import { partition } from "es-toolkit";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { ItemsByRarity } from "@/components/catalog/items-by-rarity";
+import { NpcElasticDropsLevel } from "@/components/npcs/npc-elastic-drops-level";
 import { NpcRetiredDrops } from "@/components/npcs/npc-retired-drops";
 import { t } from "@/i18n/messages";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
@@ -14,7 +15,8 @@ const DROPS_LIMIT = 96;
 
 /**
  * A monster's drops, the most valuable rarity first, highest level within
- * each; the items it no longer drops follow, folded away.
+ * each; the items it no longer drops follow, folded away. Drops that take
+ * their looter's level come with the character level they show at.
  */
 export function NpcDrops({
   npc,
@@ -49,6 +51,9 @@ export function NpcDrops({
 
   return (
     <div className="flex flex-col gap-8">
+      {data.hits.some(({ elasticLevel }) => elasticLevel) ? (
+        <NpcElasticDropsLevel />
+      ) : null}
       {current.length > 0 ? (
         <ItemsByRarity items={current} idPrefix="npc-drops" />
       ) : (

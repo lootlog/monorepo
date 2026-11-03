@@ -14,6 +14,8 @@ type CatalogItemGridProps = {
   showSource?: boolean;
   /** The searched phrase, marked in item names. */
   highlight?: string;
+  /** The highest level the items are filtered to. */
+  maxLevel?: number;
 };
 
 /** The catalog's grid of tiles, as many columns as fit. */
@@ -31,6 +33,7 @@ export function CatalogItemGrid({
   emptyLabel,
   showSource,
   highlight,
+  maxLevel,
 }: CatalogItemGridProps) {
   if (isError) {
     return (
@@ -70,6 +73,7 @@ export function CatalogItemGrid({
               item={item}
               showSource={showSource}
               highlight={highlight}
+              maxLevel={maxLevel}
             />
           </li>
         ))}

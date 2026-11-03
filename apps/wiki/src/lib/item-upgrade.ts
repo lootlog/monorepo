@@ -1,4 +1,4 @@
-import { range } from "es-toolkit";
+import { minBy, range } from "es-toolkit";
 import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
 
@@ -48,6 +48,11 @@ const rarityPower = (level: number, factor: number) =>
   0.02 * level * Math.ceil((10 * factor) / 3) +
   Math.sign(factor) * (7.8 * factor + 2.6);
 
+const HP_BASE = 3.08 * 8;
+
+const hpPerBonus = (level: number, classPower: number) =>
+  3.08 * (level + 0.2 * levelPower(level) * classPower);
+
 const WEAPON_TYPES = new Set([
   "ONE_HAND_WEAPON",
   "TWO_HAND_WEAPON",
@@ -65,8 +70,40 @@ const CLASS_POWER = new Map(
 /**
  * How a stat value grows: `base + amount * growth(level)`, where `amount` is
  * the item's own, such as the number of bonuses of that kind it was given.
+ * `amounts` are those designers hand out besides whole and half ones, and
+ * `decimals` the precision the game shows when it is not the value's own.
  */
-type Scale = { base: number; growth: (level: number) => number };
+type Scale = {
+  base: number;
+  growth: (level: number) => number;
+  amounts?: ReadonlyArray<number>;
+  decimals?: number;
+};
+
+/**
+ * Weapon damage is `8 * weapon_factor * (rarity_power + level_power)`, from
+ * the game's table of factors by weapon class and damage type, and spread
+ * around that mean by 10% for physical damage and 20% for fire and lightning.
+ */
+const WEAPON_FACTORS = [
+  0.3378, 0.2646, 0.0876, 0.0797, 0.2869, 0.1594, 0.1435, 0.5578, 0.4606, 0.153,
+  0.4876, 0.239, 0.2152, 0.2391, 0.3984, 0.3267, 0.1084, 0.4016, 0.2072, 0.1865,
+  0.4303, 0.2901, 0.1036, 0.1116, 0.2231, 0.2263, 0.204, 0.2258, 0.2406, 0.1897,
+  0.0367, 0.0335, 0.3188, 0.2709, 0.3652, 0.1514, 0.1355, 0.1528, 0.0303,
+  0.0271, 0.0478, 0.043,
+];
+
+const DAMAGE_SPREADS = [0.8, 0.9, 1, 1.1, 1.2];
+
+// Absorption destruction's share of a weapon's power, by weapon class.
+const ABSORB_DESTRUCTION_SHARES = [0.33, 0.36, 0.24, 0.21, 0.12, 0.3];
+
+const POWER_AMOUNTS = [
+  ...WEAPON_FACTORS.flatMap((factor) =>
+    DAMAGE_SPREADS.map((spread) => 8 * factor * spread),
+  ),
+  ...ABSORB_DESTRUCTION_SHARES,
+];
 
 /**
  * Per stat, how each of its comma-separated values grows, the last rule
@@ -81,6 +118,7 @@ const statRules = (rarity: string | null, type: string | null) => {
   const power: Scale = {
     base: 0,
     growth: (level) => rarityPower(level, factor) + levelPower(level),
+    amounts: POWER_AMOUNTS,
   };
 
   // `base + amount * perLevel * level`
@@ -94,6 +132,7 @@ const statRules = (rarity: string | null, type: string | null) => {
   return new Map<string, ReadonlyArray<Scale | null>>(
     Object.entries({
       dmg: [power],
+      pdmg: [power],
       fire: [power],
       light: [power],
       // The slowing that comes with frost and poison, then their damage.
@@ -106,10 +145,15 @@ const statRules = (rarity: string | null, type: string | null) => {
       absorbm: [power],
       abdest: [power],
       acdmg: [
-        {
-          base: 1,
-          growth: (level) => ((isWeapon ? 1 : 0.75) * levelPower(level)) / 50,
-        },
+        // A quiver's armor destruction is its own, `0.04 * level_power`; on
+        // other items it is bonuses.
+        type === "QUIVER"
+          ? { base: 0, growth: (level) => 0.04 * levelPower(level) }
+          : {
+              base: 1,
+              growth: (level) =>
+                ((isWeapon ? 1 : 0.75) * levelPower(level)) / 50,
+            },
       ],
       da: [linear(8, 0.25)],
       ds: [linear(4, 5 / 9)],
@@ -118,11 +162,12 @@ const statRules = (rarity: string | null, type: string | null) => {
       // Attack speed and slowing are kept in hundredths.
       sa: [linear(8, 0.25)],
       slow: [linear(8, 2 / 7)],
+      // The game's table reads `amt * 3.08 * round(8 + lvl + ...)`, but
+      // items of every level give the 8 once and round only the total.
       hp: [
         {
-          base: 0,
-          growth: (level) =>
-            3.08 * Math.round(8 + level + 0.2 * levelPower(level) * classPower),
+          base: HP_BASE,
+          growth: (level) => hpPerBonus(level, classPower),
         },
       ],
       heal: [
@@ -140,7 +185,9 @@ const statRules = (rarity: string | null, type: string | null) => {
       blok: [linear(0, 3 / 20)],
       evade: [linear(0, 1 / 10)],
       lowevade: [linear(0, 1 / 10)],
-      hpbon: [linear(0, 1 / 100)],
+      // Shown to a tenth, so a whole value at one level is a fraction at
+      // another.
+      hpbon: [{ ...linear(0, 1 / 100), decimals: 1 }],
       manabon: [linear(5, 1 / 4)],
       energybon: [{ base: 0, growth: (level) => 10 + level / 15 }],
       enfatig: [null, { base: 0, growth: (level) => 2 + 0.04 * level }],
@@ -173,14 +220,17 @@ const scaleValue = (
 
   if (!Number.isFinite(shown) || from === 0) return value;
 
-  const decimals = decimalsOf(value);
+  const decimals = scale.decimals ?? decimalsOf(value);
   const amount = (shown - scale.base) / from;
-  const roundAmount = Math.round(amount * 2) / 2;
 
   const exact =
-    roundTo(scale.base + roundAmount * from, decimals) === shown
-      ? roundAmount
-      : amount;
+    minBy(
+      [Math.round(amount * 2) / 2, ...(scale.amounts ?? [])].filter(
+        (candidate) =>
+          roundTo(scale.base + candidate * from, decimals) === shown,
+      ),
+      (candidate) => Math.abs(candidate - amount),
+    ) ?? amount;
 
   return String(
     roundTo(
@@ -365,6 +415,25 @@ const scaleStats = (item: UpgradableItem, toLevel: number) => {
       return `${key}=${scaled.join(",")}`;
     });
 };
+
+/**
+ * The item as the game makes it at another level, its required level and
+ * stats both at `level`: an elastic item looted by a character of another
+ * level.
+ */
+export const itemAtLevel = <Item extends UpgradableItem>(
+  item: Item,
+  level: number,
+): Item =>
+  level === item.lvl
+    ? item
+    : {
+        ...item,
+        lvl: level,
+        stat: scaleStats(item, level)
+          .map((entry) => (entry.startsWith("lvl=") ? `lvl=${level}` : entry))
+          .join(";"),
+      };
 
 /**
  * The item's own stat names the +5 bonus raises: one more bonus of that
@@ -610,9 +679,8 @@ const BONUS_VALUES: Record<
   reslight: { base: 0, perBonus: () => 3 },
   act: { base: 0, perBonus: () => 5 },
   hp: {
-    base: 0,
-    perBonus: ({ level, levelPower, classPower }) =>
-      3.08 * Math.round(8 + level + 0.2 * levelPower * classPower),
+    base: HP_BASE,
+    perBonus: ({ level, classPower }) => hpPerBonus(level, classPower),
   },
   blok: { base: 0, perBonus: ({ level }) => (3 * level) / 20 },
   absorb: {

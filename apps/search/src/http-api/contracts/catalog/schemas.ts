@@ -90,6 +90,10 @@ export const CatalogItemDto_Output = Schema.Struct({
   rarity: Schema.Union([Schema.String, Schema.Null]),
   type: Schema.Union([Schema.String, Schema.Null]),
   droppedBy: Schema.Array(CatalogDropSourceDto_Output),
+  elasticLevel: Schema.Boolean.annotate({
+    description:
+      "Whether the item takes the level of the character who loots it, so `lvl` and `stat` describe one of its levels.",
+  }),
 }).annotate({
   description: "A Margonem item in the public catalog",
   identifier: "CatalogItemDto_Output",
@@ -128,8 +132,18 @@ export const CatalogControllerGetItemsQuery = Schema.Struct({
       description: "Items any of these professions can use.",
     }),
   ),
-  minLevel: Schema.optionalKey(FiniteNumber),
-  maxLevel: Schema.optionalKey(FiniteNumber),
+  minLevel: Schema.optionalKey(
+    FiniteNumber.annotate({
+      description:
+        "Items of at least this level; elastic items match any range reaching into levels 40 to 300.",
+    }),
+  ),
+  maxLevel: Schema.optionalKey(
+    FiniteNumber.annotate({
+      description:
+        "Items of at most this level; elastic items match any range reaching into levels 40 to 300.",
+    }),
+  ),
   statKeys: Schema.optionalKey(
     Schema.Array(CatalogStatKey).annotate({
       description: "Items that have every one of these stats.",

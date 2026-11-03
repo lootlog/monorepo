@@ -15,14 +15,17 @@ import {
   MAX_HEADER_DROP_SOURCES,
 } from "@/components/items/item-drop-sources";
 import { ItemHero } from "@/components/items/item-hero";
+import { ItemElasticLevelSection } from "@/components/items/item-elastic-level-section";
 import { ItemUpgradeSection } from "@/components/items/item-upgrade-section";
 import { renderStatChanges } from "@/components/render-stat-changes";
+import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
 import {
   itemPageParams,
   readPageSegment,
   WIKI_GAME_VERSION,
 } from "@/lib/catalog-links";
+import { itemForCharacter } from "@/lib/elastic-level";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import {
@@ -68,6 +71,7 @@ function ItemRoute() {
   const { itemSlug } = Route.useParams();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  const { set } = useEquipmentSet();
   const id = readPageSegment(itemSlug)?.id;
 
   const { data, isError } = useCatalogControllerGetItems(
@@ -121,14 +125,17 @@ function ItemRoute() {
     );
   }
 
-  const canUpgrade = isUpgradable(item);
+  // An elastic item shows as the set's character would loot it, and is
+  // upgraded from there.
+  const looted = itemForCharacter(item, set.level);
+  const canUpgrade = isUpgradable(looted);
 
   const upgrade: ItemUpgrade =
     canUpgrade && search.upgrade
       ? { level: search.upgrade, bonus: search.bonus }
       : NO_UPGRADE;
 
-  const stat = upgradeItemStat(item, upgrade);
+  const stat = upgradeItemStat(looted, upgrade);
   const rarity = resolveItemRarity(item.rarity);
 
   // A few sources sit beside the name; more, or an item with no upgrade
@@ -148,7 +155,7 @@ function ItemRoute() {
       )}
     >
       <ItemHero
-        item={item}
+        item={looted}
         upgrade={upgrade.level}
         withDropSources={sourcesInHero}
         actions={
@@ -181,7 +188,7 @@ function ItemRoute() {
               labels={ITEM_TILE_LABELS}
               name={item.name}
               rarity={rarity}
-              renderStat={renderStatChanges(item.stat, stat)}
+              renderStat={renderStatChanges(looted.stat, stat)}
               stat={stat}
               type={item.type ?? ""}
             />
@@ -193,22 +200,25 @@ function ItemRoute() {
           ) : null}
         </aside>
 
-        {canUpgrade ? (
-          <ItemUpgradeSection
-            item={item}
-            upgrade={upgrade}
-            changes={findStatChanges(item.stat, stat)}
-            onChange={(next) =>
-              void navigate({
-                replace: true,
-                resetScroll: false,
-                search: toSearch(next),
-              })
-            }
-          />
-        ) : (
-          dropSources
-        )}
+        <div className="flex flex-col gap-8">
+          <ItemElasticLevelSection item={item} level={looted.lvl} />
+          {canUpgrade ? (
+            <ItemUpgradeSection
+              item={looted}
+              upgrade={upgrade}
+              changes={findStatChanges(looted.stat, stat)}
+              onChange={(next) =>
+                void navigate({
+                  replace: true,
+                  resetScroll: false,
+                  search: toSearch(next),
+                })
+              }
+            />
+          ) : (
+            dropSources
+          )}
+        </div>
       </div>
     </div>
   );

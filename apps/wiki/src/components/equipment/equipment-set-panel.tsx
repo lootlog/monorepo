@@ -1,6 +1,5 @@
 import { Trash2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { Input } from "@lootlog/ui/components/input";
 import {
   Select,
   SelectContent,
@@ -21,6 +20,7 @@ import {
 import { findEquipmentSlot } from "@/lib/equipment-slots";
 import { PROFESSION_OPTIONS } from "@/lib/item-options";
 import { sumItemStats } from "@/lib/item-stat-totals";
+import { CharacterLevelInput } from "./character-level-input";
 import { EquipmentGrid } from "./equipment-grid";
 import { EquipmentSetSlot } from "./equipment-set-slot";
 import { EquipmentSetTotals } from "./equipment-set-totals";
@@ -93,26 +93,7 @@ export function EquipmentSetPanel() {
             ))}
           </SelectContent>
         </Select>
-        <Input
-          type="number"
-          min={1}
-          max={500}
-          size="sm"
-          aria-label={t("equipment.level")}
-          placeholder={t("equipment.levelPlaceholder")}
-          value={set.level ?? ""}
-          onChange={(event) => {
-            const level = Number.parseInt(event.target.value, 10);
-
-            setCharacter({
-              profession: set.profession,
-              level:
-                Number.isInteger(level) && level > 0 && level <= 500
-                  ? level
-                  : null,
-            });
-          }}
-        />
+        <CharacterLevelInput size="sm" aria-label={t("equipment.level")} />
       </div>
 
       <EquipmentGrid

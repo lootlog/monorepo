@@ -4,6 +4,7 @@ import {
 } from "@lootlog/client/search";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
+import { itemForCharacter } from "@/lib/elastic-level";
 import type { EquipmentSet } from "@/lib/equipment-set";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-slots";
 import {
@@ -13,7 +14,7 @@ import {
 } from "@/lib/item-upgrade";
 
 export type WornItem = {
-  /** The item with the stats its upgrade gives it. */
+  /** The item at the set's level, with the stats its upgrade gives it. */
   item: CatalogItemDtoOutput;
   upgrade: ItemUpgrade;
 };
@@ -47,9 +48,14 @@ const wornIn = (
   const item = itemId === undefined ? undefined : itemsById.get(itemId);
   const upgrade = set.upgrades[slotId] ?? NO_UPGRADE;
 
-  return item
-    ? { item: { ...item, stat: upgradeItemStat(item, upgrade) }, upgrade }
-    : undefined;
+  if (!item) return undefined;
+
+  const looted = itemForCharacter(item, set.level);
+
+  return {
+    item: { ...looted, stat: upgradeItemStat(looted, upgrade) },
+    upgrade,
+  };
 };
 
 /** The set's items as they are worn, upgrades included, by slot. */
