@@ -1,5 +1,8 @@
 import { beforeEach, expect, it } from "vitest";
-import type { HeroSightingResponseDto } from "@lootlog/client/main";
+import {
+  getHeroSightingsControllerGetHeroSightingHistoryQueryKey,
+  type HeroSightingResponseDto,
+} from "@lootlog/client/main";
 import { queryKeys } from "@/features/public-api/query-keys";
 import { queryClient } from "@/lib/query-client";
 import { createHeroSighting } from "./hero-sighting-fixtures";
@@ -43,4 +46,24 @@ it("does not start a partial list for a world that was never loaded", () => {
   expect(
     queryClient.getQueryData(queryKeys.heroSightings("aldous")),
   ).toBeUndefined();
+});
+
+it("refreshes the hero's history only in the Lootlog whose sighting changed", () => {
+  const historyKey = (guildId: string) =>
+    getHeroSightingsControllerGetHeroSightingHistoryQueryKey(
+      { guildId },
+      { world: "luvia", hero: "tepeyollotl" },
+    );
+
+  queryClient.setQueryData(historyKey("guild-1"), []);
+  queryClient.setQueryData(historyKey("guild-2"), []);
+
+  upsertHeroSightings(queryClient, [createHeroSighting()]);
+
+  expect(queryClient.getQueryState(historyKey("guild-1"))?.isInvalidated).toBe(
+    true,
+  );
+  expect(queryClient.getQueryState(historyKey("guild-2"))?.isInvalidated).toBe(
+    false,
+  );
 });
