@@ -1,9 +1,12 @@
 import { GuildDiscordSyncNotice } from "@/components/common/guild-discord-sync-notice";
 import { ListToolbar } from "@/components/common/list-toolbar";
+import { SettingsClearFilterButton } from "@/components/common/settings-clear-filter-button";
+import { SettingsListEmpty } from "@/components/common/settings-list-empty";
+import { SettingsListError } from "@/components/common/settings-list-error";
 import { ROUTES } from "@/config/routes";
 import { Button } from "@lootlog/ui/components/button";
 import { Link } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { BellRing, Plus, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NotificationRuleGroups } from "./components/notification-rule-groups";
@@ -54,7 +57,9 @@ export const NotificationsSettings = () => {
                 })}
               </span>
             )}
-            {hasRequiredPermissions && !overview.isRuleLimitReached ? (
+            {hasRequiredPermissions &&
+            !overview.isError &&
+            !overview.isRuleLimitReached ? (
               <Button
                 size="sm"
                 icon=<Plus className="size-4" />
@@ -73,16 +78,39 @@ export const NotificationsSettings = () => {
             <NotificationsInfoButton />
           </div>
         </ListToolbar>
-        {overview.isLoading ? (
+        {overview.isError ? (
+          <SettingsListError
+            title={t("settings.notifications.empty.loadError")}
+            isRetrying={overview.isRetrying}
+            onRetry={overview.retry}
+          />
+        ) : overview.isLoading ? (
           <NotificationRuleGroupsSkeleton />
         ) : (
           <NotificationRuleGroups
             overview={overview}
             rules={rules}
-            emptyLabel={
-              normalizedSearch
-                ? t("settings.notifications.empty.filteredRules")
-                : t("settings.notifications.empty.rules")
+            empty={
+              normalizedSearch ? (
+                <SettingsListEmpty
+                  icon={SearchX}
+                  title={t("settings.notifications.empty.filteredRules")}
+                  description={t(
+                    "settings.notifications.empty.filteredDescription",
+                  )}
+                  action={
+                    <SettingsClearFilterButton onClear={() => setSearch("")} />
+                  }
+                />
+              ) : (
+                <SettingsListEmpty
+                  icon={BellRing}
+                  title={t("settings.notifications.empty.rules")}
+                  description={t(
+                    "settings.notifications.empty.rulesDescription",
+                  )}
+                />
+              )
             }
           />
         )}

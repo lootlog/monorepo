@@ -1,13 +1,11 @@
 import { GuildDiscordSyncNotice } from "@/components/common/guild-discord-sync-notice";
-import {
-  LIST_TILE_INSET_CLASS,
-  LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
 import { ListToolbar } from "@/components/common/list-toolbar";
+import { SettingsClearFilterButton } from "@/components/common/settings-clear-filter-button";
+import { SettingsListEmpty } from "@/components/common/settings-list-empty";
+import { SettingsListError } from "@/components/common/settings-list-error";
 import type { NotificationTargetResponseDto } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
-import { cn } from "cn";
-import { Plus } from "lucide-react";
+import { Hash, Plus, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NotificationChannelRow } from "./components/notification-channel-row";
@@ -37,22 +35,32 @@ export const NotificationsChannelsPage = () => {
   );
 
   const renderChannels = () => {
+    if (overview.isError) {
+      return (
+        <SettingsListError
+          title={t("settings.notifications.empty.loadError")}
+          isRetrying={overview.isRetrying}
+          onRetry={overview.retry}
+        />
+      );
+    }
+
     if (overview.isLoading) return <NotificationChannelRowsSkeleton />;
 
     if (channels.length === 0) {
-      return (
-        <p
-          data-list-tile
-          className={cn(
-            LIST_TILE_RULE_CLASS,
-            LIST_TILE_INSET_CLASS,
-            "py-6 text-sm text-muted-foreground",
-          )}
-        >
-          {normalizedSearch
-            ? t("settings.notifications.empty.filteredTargets")
-            : t("settings.notifications.empty.targets")}
-        </p>
+      return normalizedSearch ? (
+        <SettingsListEmpty
+          icon={SearchX}
+          title={t("settings.notifications.empty.filteredTargets")}
+          description={t("settings.notifications.empty.filteredDescription")}
+          action={<SettingsClearFilterButton onClear={() => setSearch("")} />}
+        />
+      ) : (
+        <SettingsListEmpty
+          icon={Hash}
+          title={t("settings.notifications.empty.targets")}
+          description={t("settings.notifications.empty.targetsDescription")}
+        />
       );
     }
 
@@ -88,7 +96,7 @@ export const NotificationsChannelsPage = () => {
             <Button
               type="button"
               size="sm"
-              disabled={!hasRequiredPermissions}
+              disabled={!hasRequiredPermissions || overview.isError}
               icon=<Plus className="size-4" />
               onClick={() => setIsCreateOpen(true)}
             >
