@@ -54,7 +54,7 @@ export function HeroSightingItem({
       )}
     >
       <span className="ll:flex ll:min-w-0 ll:items-baseline ll:justify-between ll:gap-2">
-        <span className="ll:min-w-0 ll:truncate ll:text-white">
+        <span className="ll:min-w-0 ll:wrap-break-word ll:text-white">
           {row.hero.name}
           <span className="ll:ml-1 ll:font-normal ll:text-muted-foreground">
             ({formatLevel(row.hero.lvl, row.hero.prof)})

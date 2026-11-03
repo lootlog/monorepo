@@ -56,7 +56,7 @@ export function HeroDetectionNotice({
     >
       <span className="ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:gap-0.5">
         <span className="ll:text-amber-200">{t("notice.title")}</span>
-        <span className="ll:min-w-0 ll:truncate ll:text-white">
+        <span className="ll:min-w-0 ll:wrap-break-word ll:text-white">
           {first.hero.name}
           <span className="ll:ml-1 ll:font-normal ll:text-muted-foreground">
             ({formatLevel(first.hero.lvl, first.hero.prof)})
