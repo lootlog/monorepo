@@ -775,6 +775,7 @@
     }
   },
   "userNotifications": {
+    "loadError": "Nie udało się pobrać Twoich powiadomień",
     "title": "Powiadomienia",
     "description": "Obserwuj przedmioty na wybranym świecie w swoich Lootlogach, a informację o dropie dostaniesz w prywatnej wiadomości na Discordzie.",
     "dm": {
