@@ -144,6 +144,6 @@ export type RuntimeCommandHandler = (command: string) => void;
 
 export type RuntimeObserverFailure = Readonly<{
   error: unknown;
-  phase: "applied" | "initialization" | "intent";
+  phase: "applied" | "command" | "initialization" | "intent";
   sequence: number;
 }>;

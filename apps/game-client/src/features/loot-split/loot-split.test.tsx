@@ -20,7 +20,6 @@ vi.stubGlobal("Engine", createNativeRuntime());
 const { AppContent } = await import("@/app-content");
 
 afterEach(() => {
-  lootSplitStore.reset();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -41,8 +40,14 @@ const item = (hid: string, name: string, reqp: string): Item => ({
   tpl: 0,
 });
 
+const SPLIT_ITEMS = {
+  "1200653658": item("274d", "Skromny pancerz piłowca", "b"),
+  "1200653660": item("d835", "Szelki mutanta", "h"),
+};
+
 const groupLoot = (
   members: Record<string, { nick: string; prof: string }>,
+  items: Record<string, Item> = SPLIT_ITEMS,
 ): GameEvent => ({
   ev: Date.now() / 1_000,
   party: {
@@ -53,15 +58,12 @@ const groupLoot = (
       ]),
     ),
   },
-  item: {
-    "1200653658": item("274d", "Skromny pancerz piłowca", "b"),
-    "1200653660": item("d835", "Szelki mutanta", "h"),
-  },
+  item: items,
   loot: {
     init: Object.keys(members).length,
     endTs: Date.now() / 1_000 + 20,
     source: "fight",
-    states: { "1200653658": 1, "1200653660": 1 },
+    states: Object.fromEntries(Object.keys(items).map((id) => [id, 1])),
   },
 });
 
@@ -185,6 +187,12 @@ it("shares the hero's choices with the split's other participants and shows thei
   });
 
   await sendCommand("loot&want=&not=1200653658,1200653660&must=&final=1");
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  // The party sees the accept only once the server takes it.
+  expect(sentChoices()).toHaveLength(2);
+  await receivePacket({
+    loot: { source: "fight", states: { "1200653658": 0, "1200653660": 0 } },
+  });
   await waitFor(() => expect(sentChoices()).toHaveLength(3));
   expect(sentChoices()[2]?.accepted).toBe(true);
   // Observing the requests never changes what the game sends.
@@ -221,10 +229,21 @@ it("shares the hero's choices with the split's other participants and shows thei
 it("keeps a solo loot to itself", async () => {
   const { view, receivePacket, sentChoices } = await setup();
 
-  await receivePacket(groupLoot({ [HERO]: { nick: "Tester", prof: "w" } }));
+  await receivePacket(
+    groupLoot(
+      { [HERO]: { nick: "Tester", prof: "w" } },
+      { "1200700001": item("50f0", "Hełm", "w") },
+    ),
+  );
   await new Promise((resolve) => setTimeout(resolve, 200));
 
-  expect(sentChoices()).toEqual([]);
-  expect(screen.queryByRole("region", { name: "Twój podział" })).toBeNull();
+  expect(
+    sentChoices().filter(({ splitId }) => splitId === "1200700001"),
+  ).toEqual([]);
+  expect(
+    lootSplitStore
+      .getSnapshot()
+      .state.splits.some(({ id }) => id === "1200700001"),
+  ).toBe(false);
   act(() => view.unmount());
 });

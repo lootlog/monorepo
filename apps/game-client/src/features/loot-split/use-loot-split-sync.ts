@@ -2,10 +2,10 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { LootSplitEvent } from "@lootlog/schema/loot-split";
 import { useEffect, useRef } from "react";
 import { GatewayEvent } from "@/config/gateway";
-import { useSocket } from "@/contexts/socket-context";
 import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
 import { runtimeEventPipeline } from "@/lib/margonem-runtime/runtime-event-pipeline";
 import type { AppSocket } from "@/lib/socket";
+import { useBattleStore } from "@/store/game-store/battle.store";
 import { useGameStore } from "@/store/game.store";
 import { usePartyStore } from "@/store/party.store";
 import {
@@ -14,10 +14,13 @@ import {
   applyRemoteChoices,
   changedOwnSplits,
   EMPTY_LOOT_SPLIT_STATE,
+  openOwnSplits,
   type LootSplit,
+  type LootSplitContext,
   type LootSplitState,
 } from "./loot-split-model";
 import { lootSplitStore } from "./loot-split-store";
+import { useLootSplitSocket } from "./use-loot-split-socket";
 
 /**
  * Choice changes within this window leave as one frame; an accept leaves at
@@ -25,10 +28,13 @@ import { lootSplitStore } from "./loot-split-store";
  */
 const CHOICES_COALESCE_MS = 150;
 
+// Loot, the chat that closes a split, and a fight start that closes the window.
 const isLootSplitPacket = (event: GameEvent | undefined) =>
-  event?.loot !== undefined || event?.chat?.channels?.system !== undefined;
+  event?.loot !== undefined ||
+  event?.chat?.channels?.system !== undefined ||
+  event?.f?.init !== undefined;
 
-const readContext = () => {
+const readContext = (): LootSplitContext | null => {
   const hero = useGameStore.getState().game?.hero;
 
   if (!hero) return null;
@@ -41,6 +47,12 @@ const readContext = () => {
       name: member.name,
       profession: member.profession ?? "",
     })),
+    // Players are the battle's positive warrior ids.
+    fighters: new Set(
+      Object.keys(useBattleStore.getState().battleWarriors).filter(
+        (id) => !id.startsWith("-"),
+      ),
+    ),
   };
 };
 
@@ -50,6 +62,28 @@ const forHero = (state: LootSplitState, heroId: string) =>
     ? state
     : EMPTY_LOOT_SPLIT_STATE;
 
+const sendOwnView = (socket: AppSocket, splitId: string) => {
+  const { state } = lootSplitStore.getSnapshot();
+  const split = state.splits.find(({ id }) => id === splitId);
+  const view = state.heroId ? split?.views[state.heroId] : undefined;
+
+  if (!split || !view) return;
+
+  const recipientCharacterIds = split.participants
+    .map(({ characterId }) => characterId)
+    .filter((characterId) => characterId !== state.heroId);
+
+  // Nobody else takes part, so nobody needs the frame.
+  if (recipientCharacterIds.length === 0) return;
+
+  socket.emit(GatewayEvent.LOOT_SPLIT_SEND, {
+    splitId: split.id,
+    choices: view.choices,
+    accepted: view.accepted,
+    recipientCharacterIds,
+  });
+};
+
 /**
  * Follows the hero's group loot splits from game packets and outgoing
  * commands, shares the hero's choices with the other participants, and
@@ -57,46 +91,21 @@ const forHero = (state: LootSplitState, heroId: string) =>
  * reach the gateway.
  */
 export const useLootSplitSync = () => {
-  const { socket, connected, joined } = useSocket();
-  const online = Boolean(socket && connected && joined);
+  const socket = useLootSplitSocket();
   const socketRef = useRef<AppSocket | null>(null);
   const pendingSends = useRef(new Map<string, ReturnType<typeof setTimeout>>());
-
-  useEffect(() => {
-    socketRef.current = online ? socket : null;
-  }, [online, socket]);
 
   useEffect(() => {
     const pending = pendingSends.current;
 
     const sendNow = (splitId: string) => {
       pending.delete(splitId);
-      const current = socketRef.current;
-      const { state } = lootSplitStore.getSnapshot();
-      const split = state.splits.find(({ id }) => id === splitId);
-      const view = state.heroId ? split?.views[state.heroId] : undefined;
 
-      if (!current?.supportsLootSplit() || !split || !view) return;
-
-      const recipientCharacterIds = split.participants
-        .map(({ characterId }) => characterId)
-        .filter((characterId) => characterId !== state.heroId);
-
-      if (recipientCharacterIds.length === 0) return;
-
-      current.emit(GatewayEvent.LOOT_SPLIT_SEND, {
-        splitId: split.id,
-        choices: view.choices,
-        accepted: view.accepted,
-        recipientCharacterIds,
-      });
+      if (socketRef.current) sendOwnView(socketRef.current, splitId);
     };
 
     const share = (splits: readonly LootSplit[], heroId: string | null) => {
       for (const split of splits) {
-        // Nobody else takes part, so nobody needs the frame.
-        if (split.participants.length <= 1) continue;
-
         const scheduled = pending.get(split.id);
 
         if (scheduled !== undefined) clearTimeout(scheduled);
@@ -112,12 +121,13 @@ export const useLootSplitSync = () => {
 
     const unsubscribeProjected = runtimeEventPipeline.subscribeProjected(
       (envelope) => {
-        if (!isLootSplitPacket(envelope.raw) || !envelope.raw) return;
+        const event = envelope.raw;
+
+        if (!event || !isLootSplitPacket(event)) return;
 
         const context = readContext();
 
         if (!context) return;
-        const event = envelope.raw;
 
         const { previous, next } = lootSplitStore.update((state) =>
           applyGameEvent(forHero(state, context.heroId), event, context),
@@ -150,12 +160,17 @@ export const useLootSplitSync = () => {
   }, []);
 
   useEffect(() => {
-    if (!online || !socket) return;
+    socketRef.current = socket;
+
+    if (!socket) return;
+
+    // Frames dropped while offline are not queued; the latest state is
+    // shared again as soon as the gateway can relay it.
+    for (const split of openOwnSplits(lootSplitStore.getSnapshot().state))
+      sendOwnView(socket, split.id);
 
     const handleChoices = (event: LootSplitEvent) => {
-      const world = useGameStore.getState().game?.world;
-
-      if (event.world !== world) return;
+      if (event.world !== useGameStore.getState().game?.world) return;
 
       lootSplitStore.update((state) => applyRemoteChoices(state, event));
     };
@@ -165,5 +180,5 @@ export const useLootSplitSync = () => {
     return () => {
       socket.off(GatewayEvent.LOOT_SPLIT_RECEIVE, handleChoices);
     };
-  }, [online, socket]);
+  }, [socket]);
 };

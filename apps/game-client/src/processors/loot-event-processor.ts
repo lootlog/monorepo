@@ -7,7 +7,7 @@ import {
   CreateLootDtoSource,
   type CreateLootDtoMapPlayersSnapshotItem,
 } from "@lootlog/client/main";
-import { getItemRarity } from "@/utils/game/get-item-rarity";
+import { getItemStat } from "@/utils/game/get-item-stat";
 import { useOthersStore } from "@/store/others.store";
 import {
   createLootDebugContext,
@@ -289,7 +289,11 @@ export class LootEventProcessor {
     loots: ReturnType<typeof getLoot>,
     game: RuntimeGameSnapshot,
   ) {
-    if (!loots.some((item) => getItemRarity(item.stat ?? "") === "legendary"))
+    if (
+      !loots.some(
+        (item) => getItemStat(item.stat ?? "", "rarity") === "legendary",
+      )
+    )
       return {};
 
     const primary = npcs.reduce<Npc | undefined>(

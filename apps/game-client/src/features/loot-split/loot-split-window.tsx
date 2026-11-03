@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
+import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useSocket } from "@/contexts/socket-context";
 import { useAccountEnabledFlag } from "@/features/settings/persistence/use-account-enabled-flag";
 import { useWindowsStore } from "@/store/windows.store";
 import { LootSplitSection } from "./loot-split-section";
 import { lootSplitStore } from "./loot-split-store";
+import { useLootSplitSocket } from "./use-loot-split-socket";
 
 /**
  * "Podział łupów": every open or just closed group split the hero takes part
@@ -16,7 +17,6 @@ import { lootSplitStore } from "./loot-split-store";
  */
 export const LootSplitWindow = () => {
   const { t } = useTranslation("lootSplit");
-  const { socket, connected, joined } = useSocket();
 
   const { state, now } = useSyncExternalStore(
     lootSplitStore.subscribe,
@@ -43,9 +43,7 @@ export const LootSplitWindow = () => {
     useState(false);
 
   // Without the gateway relaying choices, the window would show only the hero.
-  const shared = Boolean(
-    socket && connected && joined && socket.supportsLootSplit(),
-  );
+  const shared = useLootSplitSocket() !== null;
 
   const seenSplitIds = useRef(new Set<string>());
   const newestSplitId = state.splits.at(-1)?.id;
@@ -84,22 +82,32 @@ export const LootSplitWindow = () => {
       minHeight={64}
       maxHeight={640}
     >
-      <ScrollArea
-        orientation="both"
-        className="ll:h-full ll:max-h-[inherit] ll:w-full"
-      >
-        <div className="ll:flex ll:w-max ll:min-w-full ll:flex-col ll:pb-1">
-          {splits.map((split) => (
-            <LootSplitSection
-              key={split.id}
-              split={split}
-              heroId={state.heroId}
-              isOwn={split.id === state.ownSplitId}
-              now={now}
-            />
-          ))}
-        </div>
-      </ScrollArea>
+      <div className="ll:flex ll:h-full ll:max-h-[inherit] ll:flex-col">
+        {/* Other players' choices stop updating while the gateway is away. */}
+        <ConnectionStatusStrip
+          error={false}
+          errorLabel={t("connectionLost")}
+          hasData={splits.length > 0}
+          refreshing={false}
+          refreshingLabel={t("connectionLost")}
+        />
+        <ScrollArea
+          orientation="both"
+          className="ll:min-h-0 ll:w-full ll:flex-1"
+        >
+          <div className="ll:flex ll:w-max ll:min-w-full ll:flex-col ll:pb-1">
+            {splits.map((split) => (
+              <LootSplitSection
+                key={split.id}
+                split={split}
+                heroId={state.heroId}
+                isOwn={split.id === state.ownSplitId}
+                now={now}
+              />
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
     </DraggableWindow>
   );
 };
