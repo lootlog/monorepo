@@ -198,14 +198,17 @@ export const makeGuildHeroTimerList = (
     access: TimersGuildAccess,
     world: string,
   ) {
-    const rows = yield* selectTimersWithActors(database).where(
-      and(
-        eq(timerTable.guildId, access.guild.id),
-        eq(timerTable.world, world),
-        // Timer NPCs are JSON; `mapTimerNpc` reads their type case-insensitively.
-        inArray(sql`upper(${timerTable.npc}->>'type')`, HERO_TIMER_TYPES),
-      ),
-    );
+    const rows = yield* selectTimersWithActors(database)
+      .where(
+        and(
+          eq(timerTable.guildId, access.guild.id),
+          eq(timerTable.world, world),
+          // Timer NPCs are JSON; `mapTimerNpc` reads their type case-insensitively.
+          inArray(sql`upper(${timerTable.npc}->>'type')`, HERO_TIMER_TYPES),
+        ),
+      )
+      // Several timer keys can name one hero; its latest window comes first.
+      .orderBy(desc(timerTable.maxSpawnTime));
 
     return rows
       .map(({ timer, member, actorCharacter }) => ({

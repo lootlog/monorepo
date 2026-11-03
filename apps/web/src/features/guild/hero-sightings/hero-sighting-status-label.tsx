@@ -28,6 +28,9 @@ export const HeroSightingStatusLabel = ({
       )}
     >
       {t(`heroSightings.status.${status}`)}
+      {status === "STALE" && (
+        <span className="sr-only">{` ${t("heroSightings.staleDescription")}`}</span>
+      )}
     </span>
   );
 };
