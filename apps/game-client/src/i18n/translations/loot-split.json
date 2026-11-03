@@ -25,12 +25,8 @@
     "unknown": "Brak danych",
     "lootFilter": "wybrał filtr łupów"
   },
-  "choiceShort": {
-    "0": "N",
-    "1": "C",
-    "2": "B",
-    "unknown": "?"
-  },
+  "wantedRow": "Chętni",
+  "wantedCount": "Chce: {{count}}",
   "cellLabel": "{{player}} · {{item}}: {{choice}}",
   "settings": {
     "windowLabel": "Okno podziału łupów",

@@ -53,15 +53,30 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
   const unknown = rows.filter(({ status }) => status === "unknown").length;
   const title = isOwn ? t("ownSplit") : t("otherSplit");
 
+  // Only choices this client knows count; a loot filter keeps its player's.
+  const wanted = split.items.map(
+    (item) =>
+      rows.filter(({ view }) => (view?.choices[item.id] ?? 0) > 0).length,
+  );
+
+  const remaining =
+    split.phase === "open"
+      ? Math.min(
+          1,
+          Math.max(0, split.deadline - now) /
+            Math.max(1, split.deadline - split.openedAt),
+        )
+      : 0;
+
   return (
     <section
       aria-label={title}
       className={cn(
-        "ll:flex ll:flex-col ll:gap-1 ll:border-b ll:border-white/10 ll:px-2 ll:py-1.5 ll:last:border-b-0",
+        "ll:flex ll:flex-col ll:border-b ll:border-white/10 ll:px-2 ll:pt-1.5 ll:pb-2 ll:last:border-b-0",
         split.phase !== "open" && "ll:opacity-60",
       )}
     >
-      <header className="ll:flex ll:items-center ll:justify-between ll:gap-3 ll:text-[11px]">
+      <header className="ll:flex ll:h-4 ll:items-center ll:justify-between ll:gap-3 ll:text-[11px]">
         <div className="ll:flex ll:items-center ll:gap-2">
           {isOwn ? null : (
             <h3 className="ll:m-0 ll:text-[11px] ll:font-semibold">{title}</h3>
@@ -105,7 +120,21 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
               : t("expired")}
         </span>
       </header>
-      <table className="ll:-mx-1 ll:self-start ll:border-separate ll:border-spacing-x-1 ll:border-spacing-y-0.5 ll:text-xs">
+      {split.phase === "open" ? (
+        <div
+          aria-hidden
+          className="ll:mt-1.5 ll:mb-2 ll:h-0.5 ll:overflow-hidden ll:rounded-full ll:bg-white/12"
+        >
+          {/* The store ticks every 500 ms; the transition fills the gap. */}
+          <div
+            className="ll:h-full ll:origin-left ll:rounded-full ll:bg-white/55 ll:transition-transform ll:duration-500 ll:ease-linear ll:motion-reduce:transition-none"
+            style={{ transform: `scaleX(${remaining})` }}
+          />
+        </div>
+      ) : (
+        <div className="ll:h-2" />
+      )}
+      <table className="ll:-mx-1 ll:w-[calc(100%+0.5rem)] ll:border-separate ll:border-spacing-x-1 ll:border-spacing-y-0 ll:text-xs">
         <thead>
           <tr>
             <th scope="col">
@@ -116,7 +145,7 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
                 key={item.id}
                 scope="col"
                 title={item.name}
-                className="ll:p-0 ll:pb-0.5"
+                className="ll:w-6 ll:p-0 ll:pb-1"
               >
                 <LootSplitItemTile item={item} />
               </th>
@@ -125,7 +154,7 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
         </thead>
         <tbody>
           {rows.map(({ participant, status, view }) => (
-            <tr key={participant.characterId}>
+            <tr key={participant.characterId} className="ll:h-6">
               <th
                 scope="row"
                 title={
@@ -135,24 +164,21 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
                       ? t("status.acceptedByLootFilter")
                       : t(`status.${status}`)
                 }
-                className="ll:pr-2 ll:text-left ll:font-semibold"
+                className="ll:p-0 ll:pr-1.5 ll:text-left ll:font-normal"
               >
-                <span className="ll:flex ll:items-center ll:gap-1 ll:whitespace-nowrap">
+                <span className="ll:flex ll:items-center ll:gap-1.5 ll:whitespace-nowrap">
                   <LootSplitStatusIcon
                     status={status}
                     byLootFilter={view?.autoAccept === "lootFilter"}
                   />
                   <span
                     className={cn(
-                      "ll:max-w-28 ll:truncate",
+                      "ll:max-w-26 ll:truncate",
                       participant.characterId === heroId && "ll:text-sky-300",
                       status === "unknown" && "ll:text-white/50",
                     )}
                   >
                     {participant.name}
-                  </span>
-                  <span className="ll:font-normal ll:text-white/45">
-                    {participant.profession}
                   </span>
                 </span>
               </th>
@@ -171,7 +197,7 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
                 });
 
                 return (
-                  <td key={item.id} className="ll:text-center">
+                  <td key={item.id} className="ll:p-0 ll:text-center">
                     <LootSplitChoiceChip choice={choice} label={label} />
                   </td>
                 );
@@ -179,6 +205,27 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
             </tr>
           ))}
         </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row" className="ll:p-0">
+              <span className="ll:sr-only">{t("wantedRow")}</span>
+            </th>
+            {split.items.map((item, index) => (
+              <td
+                key={item.id}
+                title={t("wantedCount", { count: wanted[index] })}
+                className={cn(
+                  "ll:p-0 ll:pt-1 ll:text-center ll:text-[10px] ll:leading-3 ll:tabular-nums",
+                  wanted[index]
+                    ? "ll:font-semibold ll:text-emerald-300"
+                    : "ll:text-white/45",
+                )}
+              >
+                {wanted[index]}
+              </td>
+            ))}
+          </tr>
+        </tfoot>
       </table>
     </section>
   );
