@@ -18,6 +18,7 @@ import { sortHeroSightings } from "./hero-sighting-status";
 import { HeroSightingsBoard } from "./hero-sightings-board";
 import { HeroSightingsResultsSkeleton } from "./hero-sightings-results-skeleton";
 import { useGuildHeroSightings } from "./use-guild-hero-sightings";
+import { useGuildHeroTimers } from "./use-guild-hero-timers";
 import { useGuildTimers } from "@/features/guild/timers/use-guild-timers";
 import { useTimerDisplaySettings } from "@/features/guild/timers/use-timer-display-settings";
 
@@ -39,6 +40,7 @@ export const HeroSightings = () => {
   // Each hero reads against its respawn timer, counted as on the timers page.
   const { removeTimerAfterMs, countdownMode } = useTimerDisplaySettings();
   const { timers } = useGuildTimers(removeTimerAfterMs);
+  const heroTimers = useGuildHeroTimers();
 
   const normalizedSearch = search.trim().toLowerCase();
 
@@ -114,6 +116,7 @@ export const HeroSightings = () => {
       <HeroSightingsBoard
         sightings={visible}
         timers={timers}
+        heroTimers={heroTimers}
         now={now}
         countdownMode={countdownMode}
         removeTimerAfterMs={removeTimerAfterMs}
