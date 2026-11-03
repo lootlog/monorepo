@@ -28,6 +28,7 @@ import { useQueryStates } from "nuqs";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { createBattlePanelCursorActions } from "../components/battle-panel-cursor-actions";
+import { useResetRejectedBattlePanelCursor } from "../components/use-reset-rejected-battle-panel-cursor";
 
 /** The battles of one Abyss season, which fix the character and dates. */
 export type HeadToHeadSeasonScope = {
@@ -145,8 +146,8 @@ export function useHeadToHeadPage({
     handleRowClick(opponentId);
   };
 
-  const { data, isLoading, isError, error } = useBattlesControllerGetHeadToHead(
-    {
+  const { data, isLoading, isError, error, isFetching, refetch } =
+    useBattlesControllerGetHeadToHead({
       cursor,
       size: pageSize,
       sortBy,
@@ -161,8 +162,7 @@ export function useHeadToHeadPage({
       ph,
       matchmaking,
       includeTotal: true,
-    },
-  );
+    });
 
   const applyFilterState = ({
     characterId,
@@ -218,6 +218,12 @@ export function useHeadToHeadPage({
           : undefined,
     });
   };
+
+  useResetRejectedBattlePanelCursor({
+    cursor: queryState.cursor,
+    error,
+    reset: () => void setQueryState(resetBattlePanelCursorPagination()),
+  });
 
   const { handleNextPage, handlePreviousPage } = createBattlePanelCursorActions(
     data?.pagination,
@@ -351,6 +357,8 @@ export function useHeadToHeadPage({
     isLoading,
     isError,
     error,
+    isFetching,
+    refetch,
     handleRowClick,
     table,
     handleRowKeyDown,

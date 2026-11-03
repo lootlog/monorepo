@@ -90,6 +90,7 @@
   "list": {
     "empty": "Brak walk",
     "emptyDescription": "Nie znaleziono żadnych walk spełniających kryteria wyszukiwania",
+    "loadError": "Nie udało się pobrać walk",
     "showingBattles": "Pokazano {{from}}-{{to}} z {{total}}",
     "openBattle": "Otwórz walkę",
     "columns": {

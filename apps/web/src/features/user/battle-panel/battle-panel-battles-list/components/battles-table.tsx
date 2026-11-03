@@ -11,7 +11,6 @@ import { BattlePanelBattleCard } from "@/features/user/battle-panel/components/b
 import { BattlePanelBattleCardSkeleton } from "@/features/user/battle-panel/components/battle-panel-battle-card-skeleton";
 import type { FilterChip } from "@/components/common/filter-chip-list";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
-import { EmptyState } from "@/components/common/empty-state";
 import { ResultsSurface } from "@/components/common/results-surface";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
@@ -19,7 +18,6 @@ import { Table } from "@lootlog/ui/components/table";
 import { Link } from "@tanstack/react-router";
 import { type Cell, useTable } from "@tanstack/react-table";
 import { cn } from "cn";
-import { Shield } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -27,6 +25,7 @@ import { BattleTableActionsMenu } from "./battle-table-actions-menu";
 import { getBattleTableColumnClassName } from "./battle-table-column-class-name";
 import { BattleTableDeleteDialogs } from "./battle-table-delete-dialogs";
 import { BattlesBulkActionsBar } from "./battles-bulk-actions-bar";
+import { BattlesTableEmpty } from "./battles-table-empty";
 import { BattlesTableSkeletonBody } from "./battles-table-skeleton-body";
 import { useBattleTableColumns } from "./use-battle-table-columns";
 
@@ -34,6 +33,10 @@ type BattlesTableProps = {
   activeFilterChips?: FilterChip[];
   battles: Battle[];
   clearFiltersLabel?: string;
+  /** The battles could not be loaded; a retry replaces the empty state. */
+  hasError?: boolean;
+  isRetrying?: boolean;
+  onRetry?: () => void;
   isLoading?: boolean;
   /** Previous results stay visible while the next page or filter set loads. */
   isRefreshing?: boolean;
@@ -83,6 +86,9 @@ export const BattlesTable = ({
   activeFilterChips,
   battles,
   clearFiltersLabel,
+  hasError = false,
+  isRetrying = false,
+  onRetry,
   isLoading = false,
   isRefreshing = false,
   onClearFilters,
@@ -267,15 +273,12 @@ export const BattlesTable = ({
         scrollResetKey={scrollResetKey}
       >
         {!isLoading && battles.length === 0 ? (
-          <div className="p-3">
-            <EmptyState
-              icon={Shield}
-              title={t("battlePanel.list.empty")}
-              description={t("battlePanel.list.emptyDescription")}
-              compact={!pagination}
-              className={pagination ? "min-h-[360px]" : "min-h-48"}
-            />
-          </div>
+          <BattlesTableEmpty
+            hasError={hasError}
+            isRetrying={isRetrying}
+            onRetry={onRetry}
+            paginated={Boolean(pagination)}
+          />
         ) : !usesTable ? (
           <div
             aria-busy={isLoading || isRefreshing}

@@ -20,6 +20,7 @@ import { useQueryStates } from "nuqs";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { createBattlePanelCursorActions } from "../components/battle-panel-cursor-actions";
+import { useResetRejectedBattlePanelCursor } from "../components/use-reset-rejected-battle-panel-cursor";
 
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { playerVsPlayerColumns } from "./components/player-vs-player-columns";
@@ -145,7 +146,7 @@ export function usePlayerVsPlayerPage() {
     });
   };
 
-  const { data, isLoading, isError, error } =
+  const { data, isLoading, isError, error, isFetching, refetch } =
     useBattlesControllerGetPlayerVsPlayerBattles({
       cursor,
       size: pageSize,
@@ -160,6 +161,12 @@ export function usePlayerVsPlayerPage() {
       matchmaking,
       includeTotal: true,
     });
+
+  useResetRejectedBattlePanelCursor({
+    cursor: queryState.cursor,
+    error,
+    reset: () => void setQueryState(resetBattlePanelCursorPagination()),
+  });
 
   const { handleNextPage, handlePreviousPage } = createBattlePanelCursorActions(
     data?.pagination,
@@ -246,6 +253,8 @@ export function usePlayerVsPlayerPage() {
     isLoading,
     isError,
     error,
+    isFetching,
+    refetch,
     battles,
     handleBattleOpen,
     table,
