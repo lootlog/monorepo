@@ -3,15 +3,21 @@ import { createServerFn } from "@tanstack/react-start";
 import { useFumadocsLoader } from "fumadocs-core/source/client";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import defaultMdxComponents from "fumadocs-ui/mdx";
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 import {
   DocsBody,
   DocsDescription,
   DocsPage,
   DocsTitle,
+  EditOnGitHub,
 } from "fumadocs-ui/page";
 import { use } from "react";
+import { pageHead } from "~/lib/seo";
 import { docs, source } from "~/lib/source";
 import { portalText } from "~/lib/translations";
+
+const mdxComponents = { ...defaultMdxComponents, Step, Steps, Tab, Tabs };
 
 const loadPage = createServerFn({ method: "GET" })
   .validator((slugs: string[]) => slugs)
@@ -39,23 +45,15 @@ export const Route = createFileRoute("/docs/$")({
 
     return data;
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData?.title ?? portalText.title} | Lootlog` },
-      {
-        name: "description",
-        content: loaderData?.description ?? portalText.description,
-      },
-    ],
-    links: loaderData
-      ? [
-          {
-            rel: "canonical",
-            href: `https://developer.lootlog.pl${loaderData.url}`,
-          },
-        ]
-      : [],
-  }),
+  head: ({ loaderData }) =>
+    loaderData
+      ? pageHead({
+          path: loaderData.url,
+          title: loaderData.title,
+          description: loaderData.description ?? portalText.docsDescription,
+          type: loaderData.path === "index.mdx" ? "website" : "article",
+        })
+      : {},
   component: Documentation,
 });
 
@@ -72,19 +70,21 @@ function Documentation() {
       tree={pageTree}
       nav={{ title: portalText.docs, url: "/docs" }}
       themeSwitch={{ enabled: false }}
-      searchToggle={{ full: { className: "md:hidden" } }}
+      searchToggle={{ enabled: false }}
       containerProps={{ className: "documentation-layout" }}
     >
-      <DocsPage
-        toc={toc}
-        full={path === "index.mdx"}
-        tableOfContentPopover={{ enabled: path !== "index.mdx" }}
-      >
+      <DocsPage toc={toc} tableOfContent={{ style: "clerk" }}>
         <DocsTitle>{page.title}</DocsTitle>
         <DocsDescription>{page.description}</DocsDescription>
         <DocsBody>
-          <MDX components={defaultMdxComponents} />
+          <MDX components={mdxComponents} />
         </DocsBody>
+        <EditOnGitHub
+          href={`https://github.com/lootlog/monorepo/blob/main/apps/developer/content/docs/${path}`}
+          className="self-start"
+        >
+          {portalText.editOnGitHub}
+        </EditOnGitHub>
       </DocsPage>
     </DocsLayout>
   );

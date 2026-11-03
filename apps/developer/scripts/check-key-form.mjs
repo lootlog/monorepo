@@ -301,15 +301,16 @@ try {
   );
   await page.keyboard.press("Escape");
   await page.getByRole("dialog").waitFor({ state: "hidden" });
+  await page.getByRole("button", { name: /^Rename:/ }).click();
   await page.locator("#key-name-key-1").fill("Renamed integration");
   failListRead = true;
   await page.getByRole("button", { name: "Save name", exact: true }).click();
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
   await retryListOnly();
   assert.equal(renameAttempts, 1);
-  assert.equal(
-    await page.locator("#key-name-key-1").inputValue(),
-    "Renamed integration",
-  );
+  await page
+    .getByRole("heading", { name: "Renamed integration", exact: true })
+    .waitFor();
   await page
     .getByRole("button", { name: "Delete key: Renamed integration" })
     .click();

@@ -1,6 +1,7 @@
 import { Empty, EmptyDescription } from "@lootlog/ui/components/empty";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Button } from "@lootlog/ui/components/button";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { KeyRow } from "~/components/key-row";
 import type { ApiKey } from "~/lib/key-client";
 import { portalText as t } from "~/lib/translations";
@@ -20,10 +21,10 @@ export function KeyList({
 }) {
   return (
     <section
-      className="min-w-0 flex flex-col gap-5"
+      className="flex min-w-0 flex-col gap-4"
       aria-labelledby="key-list-title"
     >
-      <h2 id="key-list-title" className="text-lg font-semibold">
+      <h2 id="key-list-title" className="text-base font-semibold">
         {t.yourKeys}
       </h2>
       {refreshState === "error" && (
@@ -38,25 +39,30 @@ export function KeyList({
           </Button>
         </Alert>
       )}
-      {refreshState === "loading" && <p role="status">{t.loading}</p>}
-      {refreshState === "ready" && (
-        <>
-          {!keys.length && (
-            <Empty>
-              <EmptyDescription>{t.empty}</EmptyDescription>
-            </Empty>
-          )}
-          {keys.map((key) => (
-            <KeyRow
-              key={key.id}
-              apiKey={key}
-              organizations={organizations}
-              observedAt={observedAt}
-              onChange={onRefresh}
-            />
-          ))}
-        </>
+      {refreshState === "loading" && (
+        <div role="status">
+          <span className="sr-only">{t.loading}</span>
+          <Skeleton className="h-40 w-full rounded-xl" />
+        </div>
       )}
+      {refreshState === "ready" &&
+        (keys.length ? (
+          <ul className="overflow-hidden rounded-xl border border-border bg-card">
+            {keys.map((key) => (
+              <KeyRow
+                key={key.id}
+                apiKey={key}
+                organizations={organizations}
+                observedAt={observedAt}
+                onChange={onRefresh}
+              />
+            ))}
+          </ul>
+        ) : (
+          <Empty className="rounded-xl border border-dashed border-border">
+            <EmptyDescription>{t.empty}</EmptyDescription>
+          </Empty>
+        ))}
     </section>
   );
 }
