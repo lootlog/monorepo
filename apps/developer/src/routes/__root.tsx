@@ -5,6 +5,8 @@ import {
   createRootRoute,
 } from "@tanstack/react-router";
 import { RootProvider } from "fumadocs-ui/provider/tanstack";
+import { useEffect } from "react";
+import { preventIosFocusZoom } from "@lootlog/ui/lib/ios-focus-zoom";
 import { portalText } from "~/lib/translations";
 import { PortalNav } from "~/components/portal-nav";
 import appCss from "~/styles/app.css?url";
@@ -26,6 +28,8 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+  useEffect(preventIosFocusZoom, []);
+
   return (
     <html lang="en" className="dark">
       <head>
