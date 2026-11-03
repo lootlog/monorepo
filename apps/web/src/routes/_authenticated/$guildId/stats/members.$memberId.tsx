@@ -1,15 +1,14 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { MemberStatsPage } from "@/features/guild/stats/member-stats-page";
 import { StatsDetailPageSkeleton } from "@/features/guild/stats/stats-detail-page-skeleton";
-import {
-  buildMemberKillsParams,
-  DEFAULT_MEMBER_KILLS_LIMIT,
-} from "@/features/guild/stats/utils/build-stats-query-params";
+import { buildMemberKillsParams } from "@/features/guild/stats/utils/build-stats-query-params";
 import {
   getKillsControllerGetMemberKillsQueryOptions,
   getMembersControllerGetGuildMemberReferencesQueryOptions,
 } from "@lootlog/client/main";
 
+import { readStatsSettings } from "@/features/guild/stats/hooks/use-stats-settings";
+import { readGuildWorld } from "@/hooks/context/use-guild-world";
 import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,
@@ -18,7 +17,7 @@ import {
 export const Route = createFileRoute(
   "/_authenticated/$guildId/stats/members/$memberId",
 )({
-  loader: ({ abortController, context, params }) =>
+  loader: ({ abortController, context, location, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       const memberId = Number.parseInt(params.memberId, 10);
 
@@ -34,9 +33,12 @@ export const Route = createFileRoute(
                 guildId: params.guildId,
                 memberId: params.memberId,
               },
-              buildMemberKillsParams({
-                limit: DEFAULT_MEMBER_KILLS_LIMIT,
-              }),
+              buildMemberKillsParams(
+                readStatsSettings(
+                  location.searchStr,
+                  readGuildWorld(params.guildId, location.searchStr),
+                ),
+              ),
             ),
           ),
           context.queryClient.ensureQueryData(

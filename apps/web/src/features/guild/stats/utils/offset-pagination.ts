@@ -1,20 +1,23 @@
+/** Pages through a list the client already holds in full. */
 export const getOffsetPagination = (
-  cursor: number,
+  pageIndex: number,
   total: number,
   pageSize: number,
-  setCursor: (cursor: number) => void,
+  setPageIndex: (pageIndex: number) => void,
 ) => {
+  const cursor = pageIndex * pageSize;
   const hasNext = cursor + pageSize < total;
-  const hasPrev = cursor > 0;
+  const hasPrev = pageIndex > 0;
 
   return {
+    cursor,
     hasNext,
     hasPrev,
     handleNextPage: () => {
-      if (hasNext) setCursor(cursor + pageSize);
+      if (hasNext) setPageIndex(pageIndex + 1);
     },
     handlePreviousPage: () => {
-      if (hasPrev) setCursor(Math.max(0, cursor - pageSize));
+      if (hasPrev) setPageIndex(pageIndex - 1);
     },
   };
 };

@@ -21,6 +21,7 @@ import { TRACKABLE_NPC_TYPES } from "./constants";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { buildGuildKillStatsParams } from "./utils/build-stats-query-params";
 import { formatNumber } from "@/lib/format-number";
+import { parseKillStatsLevel } from "@/features/kills/parse-kill-stats-level";
 
 const NPC_TYPE_STORAGE_KEY = "stats-top-npcs-type";
 
@@ -39,20 +40,14 @@ export const KillStats = () => {
 
   const {
     settings,
-    debouncedMinLvl,
-    debouncedMaxLvl,
+    hasActiveFilters,
     setMinLvl,
     setMaxLvl,
     setPeriod,
     resetFilters,
-  } = useStatsSettings("overview");
+  } = useStatsSettings();
 
-  const killStatsParams = buildGuildKillStatsParams({
-    world: settings.world ?? undefined,
-    minLvl: debouncedMinLvl,
-    maxLvl: debouncedMaxLvl,
-    period: settings.period,
-  });
+  const killStatsParams = buildGuildKillStatsParams(settings);
 
   const { data, isLoading } = useKillsControllerGetGuildKillStats(
     { guildId },
@@ -63,11 +58,6 @@ export const KillStats = () => {
       },
     },
   );
-
-  const hasActiveFilters =
-    Boolean(settings.minLvl) ||
-    Boolean(settings.maxLvl) ||
-    settings.period !== "all";
 
   const filterProps: KillStatsFiltersProps = {
     period: settings.period,
@@ -121,8 +111,8 @@ export const KillStats = () => {
           guildId={guildId}
           npcType={npcType}
           world={settings.world ?? undefined}
-          minLvl={debouncedMinLvl}
-          maxLvl={debouncedMaxLvl}
+          minLvl={parseKillStatsLevel(settings.minLvl)}
+          maxLvl={parseKillStatsLevel(settings.maxLvl)}
           period={settings.period}
         />
       </StatsSectionColumns>

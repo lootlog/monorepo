@@ -9,8 +9,9 @@ export const findNpcType = (value: string | null) =>
 const isKilledNpcType = (type: NpcType): type is KilledNpcType =>
   type !== NpcType.HERO_TRACKER;
 
+/** The NPC types kill statistics filter by; Hero Trackers have no kills. */
+export const KILLED_NPC_TYPES = Object.values(NpcType).filter(isKilledNpcType);
+
 /** A kill statistics filter value; Hero Trackers have no kills to filter. */
 export const findKilledNpcType = (value: string | null) =>
-  Object.values(NpcType)
-    .filter(isKilledNpcType)
-    .find((type) => type === value);
+  KILLED_NPC_TYPES.find((type) => type === value);

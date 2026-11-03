@@ -1,14 +1,10 @@
-import { useWorldScopedCursor } from "./hooks/use-world-scoped-cursor";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import { getOffsetPagination } from "./utils/offset-pagination";
 
 import { useKillsControllerGetGuildKillStats } from "@lootlog/client/main";
 
 import { NPC_TYPES_STRONGEST_FIRST } from "@lootlog/domain/npc-type";
-import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { buildGuildKillStatsParams } from "./utils/build-stats-query-params";
@@ -26,26 +22,21 @@ export const useStatsRankingModel = () => {
 
   const {
     settings,
-    debouncedMinLvl,
-    debouncedMaxLvl,
+    searchDraft,
+    hasActiveFilters,
+    pageIndex,
+    setPageIndex,
     setMinLvl,
     setMaxLvl,
     setPeriod,
+    setSearch,
     resetFilters,
-  } = useStatsSettings("ranking");
+  } = useStatsSettings();
 
-  const [cursor, setCursor] = useWorldScopedCursor(settings.world);
-
-  const [search, setSearch] = useState("");
-  const searchQuery = useDebounce(search, 500).trim();
+  const searchQuery = settings.search;
   const membersMap = useGuildMemberMap(guildId);
 
-  const killStatsParams = buildGuildKillStatsParams({
-    world: settings.world ?? undefined,
-    minLvl: debouncedMinLvl,
-    maxLvl: debouncedMaxLvl,
-    period: settings.period,
-  });
+  const killStatsParams = buildGuildKillStatsParams(settings);
 
   const { data, isLoading } = useKillsControllerGetGuildKillStats(
     { guildId },
@@ -57,26 +48,6 @@ export const useStatsRankingModel = () => {
     },
   );
 
-  const handleMinLvlChange = (value: string) => {
-    setMinLvl(value);
-    setCursor(0);
-  };
-
-  const handleMaxLvlChange = (value: string) => {
-    setMaxLvl(value);
-    setCursor(0);
-  };
-
-  const handlePeriodChange = (value: KillStatsPeriod) => {
-    setPeriod(value);
-    setCursor(0);
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setCursor(0);
-  };
-
   const memberRanking = data?.memberRanking ?? [];
 
   const filteredRanking = searchQuery
@@ -85,17 +56,12 @@ export const useStatsRankingModel = () => {
       )
     : memberRanking;
 
-  const hasActiveFilters =
-    Boolean(settings.minLvl) ||
-    Boolean(settings.maxLvl) ||
-    settings.period !== "all" ||
-    Boolean(searchQuery);
-
   const total = filteredRanking.length;
-  const paginatedData = filteredRanking.slice(cursor, cursor + ITEMS_PER_PAGE);
 
-  const { hasNext, hasPrev, handleNextPage, handlePreviousPage } =
-    getOffsetPagination(cursor, total, ITEMS_PER_PAGE, setCursor);
+  const { cursor, hasNext, hasPrev, handleNextPage, handlePreviousPage } =
+    getOffsetPagination(pageIndex, total, ITEMS_PER_PAGE, setPageIndex);
+
+  const paginatedData = filteredRanking.slice(cursor, cursor + ITEMS_PER_PAGE);
 
   const activeNpcTypes = NPC_TYPES_STRONGEST_FIRST.filter((type) =>
     memberRanking.some(
@@ -113,21 +79,15 @@ export const useStatsRankingModel = () => {
     });
   };
 
-  const handleClearFilters = () => {
-    resetFilters();
-    setSearch("");
-    setCursor(0);
-  };
-
   return {
     t,
-    search,
-    handleClearFilters,
-    handleSearchChange,
+    search: searchDraft,
+    handleClearFilters: resetFilters,
+    handleSearchChange: setSearch,
     settings,
-    handleMinLvlChange,
-    handleMaxLvlChange,
-    handlePeriodChange,
+    handleMinLvlChange: setMinLvl,
+    handleMaxLvlChange: setMaxLvl,
+    handlePeriodChange: setPeriod,
     isLoading,
     paginatedData,
     hasActiveFilters,

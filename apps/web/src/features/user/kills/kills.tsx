@@ -41,19 +41,13 @@ import {
   useKillsControllerGetUserNpcKills,
 } from "@lootlog/client/main";
 
-import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
+import {
+  KILL_STATS_PERIODS,
+  type KillStatsPeriod,
+} from "@/features/kills/components/kill-stats-period-select";
 import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 import { useCursorStack } from "@/hooks/use-cursor-stack";
 import { RetryButton } from "@/components/common/retry-button";
-
-const KILL_STATS_PERIODS = [
-  "all",
-  "24h",
-  "3d",
-  "7d",
-  "14d",
-  "30d",
-] as const satisfies KillStatsPeriod[];
 
 const killsSearchParsers = {
   world: parseAsString,
