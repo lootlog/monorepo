@@ -23,11 +23,16 @@ let nextOtherId = 710_000;
 
 let nextLootItemId = 1_200_653_658;
 
-const lootItem = (name: string, icon: string, reqp: string): Item => ({
+const lootItem = (
+  name: string,
+  icon: string,
+  reqp: string,
+  rarity = "common",
+): Item => ({
   hid: `sandbox${nextLootItemId}`,
   name,
   icon,
-  stat: `rarity=common;reqp=${reqp}`,
+  stat: `rarity=${rarity};reqp=${reqp}`,
   loc: "l",
   pr: 179_264,
   prc: "zl",
@@ -43,13 +48,17 @@ const lootItem = (name: string, icon: string, reqp: string): Item => ({
  * arrive only from their Lootlog clients through the gateway.
  */
 const createGroupLootEvent = (world: SandboxWorld): GameEvent => {
-  const ids = [nextLootItemId, nextLootItemId + 1].map(String);
-  const [first = "", second = ""] = ids;
+  const ids = [nextLootItemId, nextLootItemId + 1, nextLootItemId + 2].map(
+    String,
+  );
+
+  const [first = "", second = "", third = ""] = ids;
   const now = Date.now() / 1_000;
 
   const items = {
     [first]: lootItem("Skromny pancerz piłowca", "zbr/zbroja1594.gif", "b"),
-    [second]: lootItem("Szelki mutanta", "zbr/zbroja1591.gif", "h"),
+    [second]: lootItem("Szelki mutanta", "zbr/zbroja1591.gif", "h", "heroic"),
+    [third]: lootItem("Hełm", "hel/helm1001.gif", "w", "legendary"),
   };
 
   nextLootItemId += ids.length;
