@@ -1,49 +1,84 @@
 ---
-title: Documentation
-description: Start a server integration or build a Margonem add-on with Lootlog.
+title: Introduction
+description: What you can build on Lootlog, the concepts every integration uses, and where to start.
 ---
 
-## Start with your integration
-
-A server application uses a personal API key. A Margonem add-on uses the installed Lootlog game client. Choose the guide for where your code runs.
+Lootlog connects a Margonem game client, a web app and Discord. Players record
+timers, loot, kills and battles as they play, and their group shares them in
+one place. As a developer you read and react to the same data: a Discord bot
+that posts respawns, a dashboard of your clan's loot, or an add-on that shows
+timers inside the game.
 
 <Cards>
   <Card
     title="Server application"
     href="/docs/http"
-    description="Create a key, configure your environment, and send your first HTTP request."
+    description="Create an API key and send your first HTTP request in a few minutes."
   />
   <Card
     title="Margonem add-on"
     href="/docs/game-client"
-    description="Use the player's existing Lootlog client from a userscript, without a server API key."
+    description="Read timers and online players from a userscript, through the Lootlog client the player already runs."
   />
 </Cards>
 
-## Connect a server application
+## Concepts
 
-1. [Create an API key](/keys). Sign in with Discord and select the Organizations your integration needs.
-2. [Send your first request](/docs/http). Configure your environment and read Organization data.
-3. [Explore the API reference](/reference). Find operations, request parameters, and response schemas for each service.
+**Organization.** The group your data belongs to. Each Organization is anchored
+to one Discord server and usually represents one faction, which can include
+several Margonem clans and players without a clan. Players see an Organization
+as a _Lootlog_. API paths and fields call its Discord server a `guild`, so
+`guildId` is the Organization's Discord server ID.
 
-A key is limited by its selected scope and your current permissions. Read [keys and permissions](/docs/keys) before adding write operations or rotating a key.
+**User and Member.** A User is a person with a Lootlog account, signed in with
+Discord. A Member is a User whose Discord membership places them in an
+Organization. Discord roles decide what a Member can read and change.
 
-## Continue building
+**Player and world.** A Player is a Margonem character. Timers, loot and kills
+belong to one world, such as `fobos`, so most lists take a `world` filter.
 
-- [TypeScript SDK](/docs/sdk): typed HTTP clients and realtime tools for server applications.
-- [Realtime](/docs/realtime): WebSocket authentication, subscriptions, and reconnect behavior.
-- [Errors and limits](/docs/errors): handle rejected requests and service limits.
-- [Changelog](/docs/changelog): changes to the developer platform.
+**Access follows the user.** An API key acts as the User who created it. It
+reaches only the Organizations selected for the key, and inside them only what
+that User can access in Lootlog right now. See
+[keys and permissions](/docs/keys).
 
-Keep server API keys in a secret store. Never put them in userscripts, frontend code, or public repositories.
+## Services
 
-## Choose your environment
+Lootlog is split into four HTTP services. One API key works for all of them.
 
-Create separate keys for each environment. Test your integration in development before using production data.
+| Service   | Base URL                       | What it serves                                         |
+| --------- | ------------------------------ | ------------------------------------------------------ |
+| Main API  | `https://api.lootlog.pl`       | Organizations, Members, timers, loot, kills and events |
+| Activity  | `https://activity.lootlog.pl`  | The activity log, Member activity and your online time |
+| Battlelog | `https://battlelog.lootlog.pl` | Recorded battles and their analytics                   |
+| Search    | `https://search.lootlog.pl`    | Players, NPCs and items, including the public catalog  |
 
-| Environment | Developer portal           | Main API             |
-| ----------- | -------------------------- | -------------------- |
-| Development | `dev-developer.lootlog.pl` | `dev-api.lootlog.pl` |
-| Production  | `developer.lootlog.pl`     | `api.lootlog.pl`     |
+Changes are also delivered over WebSocket by the
+[realtime gateway](/docs/realtime), so you do not need to poll.
 
-The [HTTP guide](/docs/http#2-choose-an-environment) lists the service hosts. Use the [realtime guide](/docs/realtime#authentication) for gateway addresses.
+## Environments
+
+Every service also runs in development. Keys are separate per environment:
+create one in the development portal to test, and another in production for
+real data.
+
+| Environment | Developer portal                   | Main API                     |
+| ----------- | ---------------------------------- | ---------------------------- |
+| Development | `https://dev-developer.lootlog.pl` | `https://dev-api.lootlog.pl` |
+| Production  | `https://developer.lootlog.pl`     | `https://api.lootlog.pl`     |
+
+Other development hosts add the same `dev-` prefix, for example
+`https://dev-search.lootlog.pl`.
+
+## Next steps
+
+- [Send your first request](/docs/http) with curl, TypeScript or Python.
+- [Install the TypeScript SDK](/docs/sdk) for typed clients.
+- [Handle errors, pages and rate limits](/docs/errors) before you go to
+  production.
+- [Follow the changelog](/docs/changelog) for contract changes.
+
+<Callout type="warn">
+  Keep API keys on your server. Never put them in a userscript, frontend code or
+  a public repository.
+</Callout>

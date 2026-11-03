@@ -1,24 +1,81 @@
 ---
 title: Keys and permissions
-description: Personal keys with explicit Organization scopes and the user's current permissions.
+description: What a personal API key can reach, how to rotate it, and what stays limited to a signed-in session.
 ---
 
-## Scope
+## How access works
 
-A key belongs to a User. Select Organizations and either read-only or read/write access. Access to your own data is a separate option, disabled by default. Creating keys does not require a separate ACL permission.
+A key belongs to the User who created it and acts as that User. When you create
+it, you choose:
 
-Access is the intersection of the key's scope and the user's current permissions. Removing a Member from an Organization also removes the integration's access to its data. A key covering several Organizations may continue to work in the others. Joining a new Organization does not automatically add it to the key's scope.
+- **Organizations.** The key reaches only the Organizations you select. Joining
+  another Organization later does not add it to the key.
+- **Permissions.** _Read only_, or _Read and write_ for operations that change
+  data.
+- **Access to my data.** Personal data, such as your preferences and your own
+  statistics. It is off by default and does not widen the Organization scope.
 
-## Creation and rotation
+Every request is then limited by the intersection of the key's scope and what
+you can do in Lootlog at that moment. If you lose a Discord role or leave an
+Organization, the key loses that access too, while it keeps working in the
+other Organizations it covers.
 
-The [key management page](/keys) lets you create up to 10 active keys. Choose an expiration of 30, 90, or 365 days, or no expiration. The default is 90 days.
+## Create and rotate keys
 
-The secret is displayed only when you create the key. You can rename a key. Changing its scope requires a new key: create it, replace the secret in your integration, verify that it works, and delete the old key.
+On the [API Keys](/keys) page you can hold up to 10 active keys. A key is valid
+for 30, 90 or 365 days, or without expiration; the default is 90 days.
 
-If a change succeeds but the key list cannot be refreshed, select **Refresh list** to retry loading it. This does not repeat the change. Save any newly created secret before leaving the page; it remains visible while you retry.
+The secret is shown only once, right after you create the key. You can rename a
+key later, but not change its scope. To change the scope or rotate a secret:
 
-## Deletion
+1. Create a new key with the scope you need.
+2. Replace the secret in your integration and check that it works.
+3. Delete the old key.
 
-A deleted or expired key stops authenticating new HTTP requests. An open realtime connection loses authorization within 60 seconds unless renewal succeeds. Never write secrets to logs or error messages.
+If a change succeeds but the key list fails to reload, select **Refresh list**.
+This reloads the list without repeating the change. A new secret stays visible
+while you retry, so save it before you leave the page.
 
-System reservation-reminder rules are managed through reservations and require a user session for direct notification-rule changes. API keys cannot modify these shared rules or change or delete a Discord target linked to them, even with access to personal data. Ordinary personal scheduled messages remain available.
+## Revoke a key
+
+A deleted or expired key stops authenticating new HTTP requests. An open
+[realtime](/docs/realtime) connection loses its authorization within 60 seconds.
+
+## Writes
+
+A write needs a _Read and write_ key and your current permission for that
+operation in the Organization. A key never manages your account, other keys or
+Lootlog's internal operations.
+
+Do not retry a write automatically after you lose its response: the request may
+have succeeded. Read the resource first, then decide whether to repeat it.
+
+## Personal data
+
+With access to your data, a key reads and changes supported personal settings
+such as your theme, appearance and toggles. Some settings decide which
+Organizations receive your data, so they stay limited to a signed-in session:
+
+- In `GET /users/@me/preferences`, `guildsOrder` and `hiddenGuildIds` list only
+  Organizations of the key that you can still access. Changing them returns
+  `403`.
+- In `GET /users/@me/game-preferences/accounts/{id}`, detector rules for other
+  Organizations are hidden and notification `guildIds` list only the key's
+  Organizations. Changing `detector.routingRules` or notification `guildIds`
+  returns `403`.
+- Generic settings documents under `/preferences` and the `/timer-settings`
+  operations need a session. Reading and writing timers themselves does not.
+- System reservation-reminder rules are managed through reservations. A key
+  cannot change them or the Discord target linked to them. Your own scheduled
+  messages stay available.
+
+Organization feeds and Ready Rooms under `/users/@me` follow the Organization
+scope, not access to your data. A resource that spans several Organizations is
+available only when the key covers all of them.
+
+## Keep keys secret
+
+Store keys in a secret manager or your server's environment. Never write them
+to logs, error messages, URLs, userscripts or frontend code. Send a key only in
+the `X-Api-Key` header: a request with an invalid key is rejected even when the
+browser also has a Lootlog session.
