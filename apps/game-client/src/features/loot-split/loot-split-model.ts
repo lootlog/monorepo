@@ -20,7 +20,6 @@ import { getItemStat } from "@/utils/game/get-item-stat";
 export type LootSplitParticipant = Readonly<{
   characterId: string;
   name: string;
-  profession: string;
 }>;
 
 export type LootSplitItem = Readonly<{
@@ -48,6 +47,7 @@ export type LootSplit = Readonly<{
   /** The smallest item id: item ids are unique server-wide. */
   id: string;
   phase: "open" | "resolved" | "expired";
+  openedAt: number;
   deadline: number;
   closedAt: number | null;
   items: readonly LootSplitItem[];
@@ -256,7 +256,6 @@ const partyFromEvent = (
     ? Object.entries(event.party.members).map(([characterId, member]) => ({
         characterId,
         name: member.nick,
-        profession: member.prof ?? "",
       }))
     : null;
 
@@ -313,6 +312,7 @@ const openSplit = (
   const split: LootSplit = {
     id: first.id,
     phase: "open",
+    openedAt: context.at,
     deadline: context.at + seconds * 1_000,
     closedAt: null,
     items,

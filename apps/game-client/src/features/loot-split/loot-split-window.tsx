@@ -85,7 +85,9 @@ export const LootSplitWindow = () => {
       }
       contentClassName="ll:-mx-1 ll:-mb-1"
       resizable
-      minWidth={180}
+      // Up to six items: the grid decides the width, the title bar its floor.
+      widthMode="content"
+      minWidth={220}
       minHeight={64}
       maxHeight={640}
     >

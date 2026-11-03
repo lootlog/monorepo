@@ -55,7 +55,6 @@ const readContext = (): LootSplitContext | null => {
     party: usePartyStore.getState().members.map((member) => ({
       characterId: member.characterId,
       name: member.name,
-      profession: member.profession ?? "",
     })),
     // Players are the battle's positive warrior ids.
     fighters: new Set(
