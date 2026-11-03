@@ -1,7 +1,14 @@
 import { compareNpcsStrongestFirst } from "@lootlog/domain/npc-type";
 import { formatLevel } from "@lootlog/domain/profession";
 import { NpcTile } from "@/components/tiles/npc-tile";
+import { WikiContextMenuItem } from "@/components/common/wiki-context-menu-item";
+import { wikiNpcUrl } from "@/config/wiki";
 import type { LootNpc } from "@/lib/loots/loot-types";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuTrigger,
+} from "@lootlog/ui/components/context-menu";
 import { cn } from "cn";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -74,19 +81,30 @@ export const LootNpcs: FC<LootNpcsProps> = ({
         />
       )}
       {firstNpc && (
-        <span
-          className={cn(
-            "min-w-0 break-words font-semibold leading-tight text-foreground",
-            size === "lg" ? "text-base" : "text-sm",
-          )}
-        >
-          {firstNpc.name}
-          {firstNpc.lvl ? (
-            <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-              {formatLevel(firstNpc.lvl, firstNpc.prof)}
-            </span>
-          ) : null}
-        </span>
+        <ContextMenu>
+          <ContextMenuTrigger
+            render={
+              <span
+                className={cn(
+                  "min-w-0 cursor-context-menu break-words font-semibold leading-tight text-foreground",
+                  size === "lg" ? "text-base" : "text-sm",
+                )}
+              />
+            }
+          >
+            {firstNpc.name}
+            {firstNpc.lvl ? (
+              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                {formatLevel(firstNpc.lvl, firstNpc.prof)}
+              </span>
+            ) : null}
+          </ContextMenuTrigger>
+          <ContextMenuContent className="min-w-[15rem]">
+            <WikiContextMenuItem href={wikiNpcUrl(firstNpc)}>
+              {t("loots.list.npcActions.showOnWiki")}
+            </WikiContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
       )}
       {specialNpcType && (
         <span

@@ -177,7 +177,11 @@
     },
     "itemActions": {
       "copyId": "Kopiuj ID przedmiotu",
-      "showLoots": "Pokaż łupy z tym przedmiotem"
+      "showLoots": "Pokaż łupy z tym przedmiotem",
+      "showOnWiki": "Pokaż przedmiot na wiki"
+    },
+    "npcActions": {
+      "showOnWiki": "Pokaż potwora na wiki"
     }
   },
   "details": {

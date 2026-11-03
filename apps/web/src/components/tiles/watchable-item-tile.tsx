@@ -3,6 +3,8 @@ import { type ItemTileProps, ItemTile } from "@/components/tiles/item-tile";
 import type { Item } from "@/lib/loots/loot-types";
 import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
+import { wikiItemUrl } from "@/config/wiki";
+import { WikiContextMenuItem } from "@/components/common/wiki-context-menu-item";
 
 import {
   ContextMenu,
@@ -116,6 +118,9 @@ export const WatchableItemTile = ({
           <ListFilter className="size-4 text-primary" />
           {t("loots.list.itemActions.showLoots")}
         </ContextMenuItem>
+        <WikiContextMenuItem href={wikiItemUrl(item)}>
+          {t("loots.list.itemActions.showOnWiki")}
+        </WikiContextMenuItem>
         <ContextMenuSeparator />
         {showPending ? (
           <ContextMenuItem disabled className="gap-2">
