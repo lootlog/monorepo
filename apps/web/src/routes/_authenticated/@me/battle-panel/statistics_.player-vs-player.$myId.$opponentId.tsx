@@ -10,6 +10,7 @@ import {
 } from "@/features/user/battle-panel/battle-panel-search";
 import { getBattlesControllerGetPlayerVsPlayerBattlesQueryOptions } from "@lootlog/client/battlelog";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
+import { buildPlayerVsPlayerParams } from "@/features/user/battle-panel/battle-panel-request-params";
 
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId",
@@ -31,20 +32,12 @@ export const Route = createFileRoute(
         })) ?? params.myId;
 
       await context.queryClient.ensureQueryData(
-        getBattlesControllerGetPlayerVsPlayerBattlesQueryOptions({
-          cursor: search.cursor ?? undefined,
-          characterId,
-          opponentId: params.opponentId,
-          period: search.period,
-          startDate: search.startDate ?? undefined,
-          endDate: search.endDate ?? undefined,
-          minLevel: search.minLevel,
-          maxLevel: search.maxLevel,
-          ph: search.ph ?? undefined,
-          matchmaking: search.matchmaking ?? undefined,
-          size: 20,
-          includeTotal: true,
-        }),
+        getBattlesControllerGetPlayerVsPlayerBattlesQueryOptions(
+          buildPlayerVsPlayerParams(search, {
+            characterId,
+            opponentId: params.opponentId,
+          }),
+        ),
       );
 
       return null;

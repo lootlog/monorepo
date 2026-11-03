@@ -12,6 +12,7 @@ import {
 } from "@/features/user/battle-panel/battle-panel-search";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
+import { buildDashboardBattlesParams } from "@/features/user/battle-panel/battle-panel-request-params";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
   validateSearch: battlePanelBattlesSearchSchema,
@@ -30,22 +31,9 @@ export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
         ),
         ensureRouteQueryData(
           context.queryClient,
-          getBattlesControllerGetDashboardBattlesQueryOptions({
-            cursor: search.cursor ?? undefined,
-            size: 20,
-            includeTotal: true,
-            world: search.world ?? undefined,
-            type: search.type ?? undefined,
-            search: search.search ?? undefined,
-            result: search.result ?? undefined,
-            ph: search.ph ?? undefined,
-            matchmaking: search.matchmaking ?? undefined,
-            characterId: search.characterId ?? undefined,
-            startDate: search.startDate ?? undefined,
-            endDate: search.endDate ?? undefined,
-            minLevel: search.minLevel,
-            maxLevel: search.maxLevel,
-          }),
+          getBattlesControllerGetDashboardBattlesQueryOptions(
+            buildDashboardBattlesParams(search),
+          ),
         ),
       ]).catch(() => undefined);
 

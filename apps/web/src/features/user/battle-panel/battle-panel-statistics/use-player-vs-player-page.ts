@@ -24,6 +24,10 @@ import { useResetRejectedBattlePanelCursor } from "../components/use-reset-rejec
 
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { playerVsPlayerColumns } from "./components/player-vs-player-columns";
+import {
+  BATTLE_PANEL_PAGE_SIZE,
+  buildPlayerVsPlayerParams,
+} from "@/features/user/battle-panel/battle-panel-request-params";
 
 const getPlayerVsPlayerRequestIds = (
   currentCharacterId: string | undefined,
@@ -67,7 +71,6 @@ export function usePlayerVsPlayerPage() {
     endDate: queryState.endDate ?? undefined,
     ph: queryState.ph ?? undefined,
     matchmaking: queryState.matchmaking ?? undefined,
-    cursor: queryState.cursor ?? undefined,
   });
 
   const {
@@ -80,10 +83,9 @@ export function usePlayerVsPlayerPage() {
     endDate,
     ph,
     matchmaking,
-    cursor,
   } = resolvePageState();
 
-  const pageSize = 20;
+  const pageSize = BATTLE_PANEL_PAGE_SIZE;
 
   const requestIds = getPlayerVsPlayerRequestIds(
     currentCharacterId,
@@ -147,20 +149,9 @@ export function usePlayerVsPlayerPage() {
   };
 
   const { data, isLoading, isError, error, isFetching, refetch } =
-    useBattlesControllerGetPlayerVsPlayerBattles({
-      cursor,
-      size: pageSize,
-      characterId: requestIds.characterId,
-      period,
-      startDate,
-      endDate,
-      opponentId: requestIds.opponentId,
-      minLevel,
-      maxLevel,
-      ph,
-      matchmaking,
-      includeTotal: true,
-    });
+    useBattlesControllerGetPlayerVsPlayerBattles(
+      buildPlayerVsPlayerParams(queryState, requestIds),
+    );
 
   useResetRejectedBattlePanelCursor({
     cursor: queryState.cursor,
