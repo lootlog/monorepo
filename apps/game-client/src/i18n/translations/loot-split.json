@@ -13,6 +13,7 @@
   "status": {
     "accepted": "Zaakceptował",
     "acceptedByNewFight": "Zaakceptowane przez nową walkę",
+    "acceptedByLootFilter": "Zaakceptowane przez filtr łupów",
     "choosing": "Wybiera",
     "timedOut": "Czas minął: gra przyjęła aktualne wybory",
     "unknown": "Bez danych: nie ma Lootloga albo nie dzieli z Tobą Lootloga"
@@ -21,7 +22,8 @@
     "0": "Nie chcę",
     "1": "Chcę",
     "2": "Bardzo chcę",
-    "unknown": "Brak danych"
+    "unknown": "Brak danych",
+    "lootFilter": "wybrał filtr łupów"
   },
   "choiceShort": {
     "0": "N",

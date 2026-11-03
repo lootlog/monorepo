@@ -146,6 +146,7 @@ function executeGameCommand(realtime: RealtimeClient, command: unknown) {
     case "map-ping.send":
     case "battle-ping.send":
     case "loot-split.send":
+    case "loot-split.auto-accept":
     case "air-tag.subscription":
     case "air-tag.observation":
     case "air-tag.map-threats.fetch":

@@ -1,5 +1,6 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { ItemRarityEnum } from "@lootlog/schema/item-rarity";
+import { partition } from "es-toolkit";
 import type {
   LootSplitChoice,
   LootSplitEvent,
@@ -37,8 +38,12 @@ export type LootSplitItem = Readonly<{
 export type LootSplitView = Readonly<{
   choices: Readonly<Record<string, LootSplitChoice>>;
   accepted: boolean;
-  /** Accepted by the game itself, when a new fight or loot closed the window. */
-  inferred: boolean;
+  /**
+   * What accepted for the player instead of their click: a new fight or
+   * loot that closed the window, or their Margonem loot filter, which also
+   * keeps their choices from them.
+   */
+  autoAccept: "newFight" | "lootFilter" | null;
 }>;
 
 export type LootSplit = Readonly<{
@@ -63,6 +68,13 @@ export type LootSplitState = Readonly<{
    * the server answers without refusing it.
    */
   acceptRequested: boolean;
+  /**
+   * Loot filter accepts that arrived before their split opened here: the
+   * sender's client learns of the fight a poll earlier than this one may.
+   */
+  pendingFilterAccepts: ReadonlyArray<
+    Readonly<{ characterId: string; at: number }>
+  >;
 }>;
 
 export type LootSplitStatus = "accepted" | "choosing" | "timedOut" | "unknown";
@@ -73,11 +85,15 @@ export const CLOSED_SPLIT_LINGER_MS = 2_000;
 /** Used when the opening packet carries no server time. */
 const DEFAULT_SPLIT_SECONDS = 20;
 
+/** A filter accept waits this long for its split to open here. */
+const PENDING_FILTER_ACCEPT_MS = 5_000;
+
 export const EMPTY_LOOT_SPLIT_STATE: LootSplitState = {
   heroId: null,
   splits: [],
   ownSplitId: null,
   acceptRequested: false,
+  pendingFilterAccepts: [],
 };
 
 export const canPickMust = (profession: string, item: LootSplitItem) =>
@@ -224,7 +240,7 @@ const updateOwnView = (
  */
 const closeOwnWindow = (state: LootSplitState): LootSplitState => {
   const closed = updateOwnView(state, (view) =>
-    view.accepted ? view : { ...view, accepted: true, inferred: true },
+    view.accepted ? view : { ...view, accepted: true, autoAccept: "newFight" },
   );
 
   return { ...closed, ownSplitId: null, acceptRequested: false };
@@ -252,6 +268,12 @@ const partyFromEvent = (
         profession: member.prof ?? "",
       }))
     : null;
+
+/** The fight's players: the battle's positive warrior ids. */
+const getFighters = (event: GameEvent, context: LootSplitContext) =>
+  event.f?.w
+    ? new Set(Object.keys(event.f.w).filter((id) => !id.startsWith("-")))
+    : context.fighters;
 
 const getParticipants = (
   event: GameEvent,
@@ -309,15 +331,34 @@ const openSplit = (
       [context.heroId]: {
         choices: toChoices(loot.states),
         accepted: false,
-        inferred: false,
+        autoAccept: null,
       },
     },
   };
 
+  const isParticipant = (characterId: string) =>
+    split.participants.some(
+      (participant) => participant.characterId === characterId,
+    );
+
+  const [early, pending] = partition(
+    closed.pendingFilterAccepts,
+    ({ characterId, at }) =>
+      isParticipant(characterId) && context.at - at < PENDING_FILTER_ACCEPT_MS,
+  );
+
   return {
     ...closed,
-    splits: [...closed.splits.filter(({ id }) => id !== split.id), split],
+    splits: [
+      ...closed.splits.filter(({ id }) => id !== split.id),
+      early.reduce(
+        (opened, { characterId }) =>
+          setView(opened, characterId, FILTER_ACCEPTED_VIEW),
+        split,
+      ),
+    ],
     ownSplitId: split.id,
+    pendingFilterAccepts: pending,
   };
 };
 
@@ -351,6 +392,69 @@ const settleAccept = (
     ...updateOwnView(state, (view) => ({ ...view, accepted: true })),
     acceptRequested: false,
   };
+};
+
+const FILTER_ACCEPTED_VIEW: LootSplitView = {
+  choices: {},
+  accepted: true,
+  autoAccept: "lootFilter",
+};
+
+// The battle log line of a drop, such as `Nymphemonia: zdobyto Plecionka`.
+const DROP_LOG_PATTERN = /^0;0;txt=.+: zdobyto /u;
+
+/**
+ * The fight's other players when the hero's loot filter accepted its drop.
+ * The game then sends that client no loot window, no items and no
+ * distribution message; the battle log still names the drop.
+ */
+export const ownLootFilterAcceptRecipients = (
+  event: GameEvent,
+  context: LootSplitContext,
+): string[] | null => {
+  if (event.loot?.init !== undefined) return null;
+
+  if (!event.f?.m?.some((line) => DROP_LOG_PATTERN.test(line))) return null;
+
+  const others = [...getFighters(event, context)].filter(
+    (characterId) => characterId !== context.heroId,
+  );
+
+  return others.length > 0 ? others : null;
+};
+
+/**
+ * Marks the sender as accepted by their loot filter in the newest open split
+ * they take part in, or keeps the accept until that split opens.
+ */
+export const applyRemoteFilterAccept = (
+  state: LootSplitState,
+  characterId: string,
+  at: number,
+): LootSplitState => {
+  if (characterId === state.heroId) return state;
+
+  const split = state.splits.findLast(
+    (candidate) =>
+      candidate.phase === "open" &&
+      !candidate.views[characterId]?.accepted &&
+      candidate.participants.some(
+        (participant) => participant.characterId === characterId,
+      ),
+  );
+
+  if (!split)
+    return {
+      ...state,
+      pendingFilterAccepts: [
+        ...state.pendingFilterAccepts.filter(
+          (pending) => pending.characterId !== characterId,
+        ),
+        { characterId, at },
+      ],
+    };
+
+  return replaceSplit(state, setView(split, characterId, FILTER_ACCEPTED_VIEW));
 };
 
 /** Matches a "Podział łupów" message to its split by the quoted item hashes. */
@@ -445,7 +549,7 @@ export const applyRemoteChoices = (
     setView(split, sender, {
       choices: event.choices,
       accepted: event.accepted,
-      inferred: false,
+      autoAccept: null,
     }),
   );
 };
@@ -465,11 +569,16 @@ export const expireSplits = (
         closedAt === null || at - closedAt < CLOSED_SPLIT_LINGER_MS,
     );
 
+  const pendingFilterAccepts = state.pendingFilterAccepts.filter(
+    (pending) => at - pending.at < PENDING_FILTER_ACCEPT_MS,
+  );
+
   const changed =
     splits.length !== state.splits.length ||
-    splits.some((split, index) => split !== state.splits[index]);
+    splits.some((split, index) => split !== state.splits[index]) ||
+    pendingFilterAccepts.length !== state.pendingFilterAccepts.length;
 
-  return changed ? { ...state, splits } : state;
+  return changed ? { ...state, splits, pendingFilterAccepts } : state;
 };
 
 /** Splits whose hero view changed, so the hero's choices must be shared. */

@@ -59,6 +59,8 @@ export enum GatewayEvent {
   BATTLE_PING_RECEIVE = "battle-ping:receive",
   LOOT_SPLIT_SEND = "loot-split:send",
   LOOT_SPLIT_RECEIVE = "loot-split:receive",
+  LOOT_SPLIT_AUTO_ACCEPT_SEND = "loot-split:auto-accept:send",
+  LOOT_SPLIT_AUTO_ACCEPT_RECEIVE = "loot-split:auto-accept:receive",
   AIR_TAG_SUBSCRIPTION = "air-tag:subscription",
   AIR_TAG_OBSERVATION = "air-tag:observation",
   AIR_TAG_UPDATE = "air-tag:update",
