@@ -15,13 +15,20 @@ type ItemHeroProps = {
   upgrade: UpgradeLevel;
   /** What the User can do with the item, such as wearing it. */
   actions: ReactNode;
+  /** Whether the monsters it drops from sit beside its name. */
+  withDropSources: boolean;
 };
 
 /**
  * The item's showcase: its sprite large in a rarity frame, what it is, who
- * wears it from which level, and the monster it drops from.
+ * wears it from which level, and the few monsters it drops from.
  */
-export function ItemHero({ item, upgrade, actions }: ItemHeroProps) {
+export function ItemHero({
+  item,
+  upgrade,
+  actions,
+  withDropSources,
+}: ItemHeroProps) {
   const rarity = resolveItemRarity(item.rarity);
   const styles = ITEM_RARITY_STYLES[rarity];
   const typeLabel = item.type ? ITEM_TILE_LABELS.type[item.type] : undefined;
@@ -34,6 +41,10 @@ export function ItemHero({ item, upgrade, actions }: ItemHeroProps) {
     requiredProfessions.includes(profession),
   );
 
+  // Level 0 means no level requirement, as on most consumables.
+  const hasLevel = item.lvl > 0;
+  const hasRequirements = hasLevel || professions.length > 0;
+
   return (
     <header
       className={cn(
@@ -45,7 +56,13 @@ export function ItemHero({ item, upgrade, actions }: ItemHeroProps) {
         aria-hidden="true"
         className="absolute inset-0 -z-10 bg-[radial-gradient(60rem_20rem_at_0%_0%,color-mix(in_oklab,var(--item-rarity)_18%,transparent),transparent_70%)]"
       />
-      <div className="grid gap-6 p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:p-7 lg:grid-cols-[auto_minmax(0,1fr)_minmax(16rem,20rem)]">
+      <div
+        className={cn(
+          "grid gap-6 p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:p-7",
+          withDropSources &&
+            "lg:grid-cols-[auto_minmax(0,1fr)_minmax(16rem,20rem)]",
+        )}
+      >
         <div className="relative size-24 shrink-0 sm:size-28">
           <div
             aria-hidden="true"
@@ -79,30 +96,38 @@ export function ItemHero({ item, upgrade, actions }: ItemHeroProps) {
               {item.name}
             </h1>
           </div>
-          <dl className="flex flex-wrap items-center gap-2 text-sm">
-            <div className="flex items-center gap-1.5 rounded-md border border-border/70 bg-background/50 px-2.5 py-1">
-              <dt className="text-muted-foreground">{t("item.level")}</dt>
-              <dd className="font-semibold text-foreground tabular-nums">
-                {item.lvl}
-              </dd>
-            </div>
-            {professions.length > 0 ? (
-              <div className="flex items-center gap-1.5 rounded-md border border-border/70 bg-background/50 px-2.5 py-1">
-                <dt className="sr-only">{t("item.professions")}</dt>
-                <dd className="text-foreground">
-                  {professions
-                    .map((profession) => t(`filters.professions.${profession}`))
-                    .join(", ")}
-                </dd>
-              </div>
-            ) : null}
-          </dl>
+          {hasRequirements ? (
+            <dl className="flex flex-wrap items-center gap-2 text-sm">
+              {hasLevel ? (
+                <div className="flex items-center gap-1.5 rounded-md border border-border/70 bg-background/50 px-2.5 py-1">
+                  <dt className="text-muted-foreground">{t("item.level")}</dt>
+                  <dd className="font-semibold text-foreground tabular-nums">
+                    {item.lvl}
+                  </dd>
+                </div>
+              ) : null}
+              {professions.length > 0 ? (
+                <div className="flex items-center gap-1.5 rounded-md border border-border/70 bg-background/50 px-2.5 py-1">
+                  <dt className="sr-only">{t("item.professions")}</dt>
+                  <dd className="text-foreground">
+                    {professions
+                      .map((profession) =>
+                        t(`filters.professions.${profession}`),
+                      )
+                      .join(", ")}
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          ) : null}
           <div className="flex flex-wrap gap-2">{actions}</div>
         </div>
 
-        <div className="sm:col-span-2 lg:col-span-1 lg:border-l lg:border-border/60 lg:pl-6">
-          <ItemDropSources sources={item.droppedBy} />
-        </div>
+        {withDropSources ? (
+          <div className="sm:col-span-2 lg:col-span-1 lg:border-l lg:border-border/60 lg:pl-6">
+            <ItemDropSources sources={item.droppedBy} variant="header" />
+          </div>
+        ) : null}
       </div>
     </header>
   );
