@@ -18,6 +18,7 @@ import { makeDeleteTimer } from "#src/http-api/handlers/timers/timer-delete.data
 import { makeTimerHistory } from "#src/http-api/handlers/timers/timer-history.data-layer";
 import {
   makeAllTimerList,
+  makeGuildHeroTimerList,
   makeGuildTimerList,
 } from "#src/http-api/handlers/timers/timer-list.data-layer";
 import { makeManualTimer } from "#src/http-api/handlers/timers/timer-manual.data-layer";
@@ -163,6 +164,7 @@ export const timersData = Layer.unwrap(
             codec: makeJsonCodec(Schema.Array(CachedTimerProjectionSchema)),
           }),
       }),
+      getGuildHeroTimers: makeGuildHeroTimerList(database),
       searchNpcs: makeTimerSearch(database),
     });
 

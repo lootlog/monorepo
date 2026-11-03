@@ -249,6 +249,12 @@ export type TimersResponse = typeof TimersResponse.Type;
 
 export const TimersResponse = Schema.Array(TimerResponse);
 
+export type HeroTimersQuery = typeof HeroTimersQuery.Type;
+
+export const HeroTimersQuery = Schema.Struct({
+  world: WorldParam,
+});
+
 export type RecentTimerHistoryQuery = typeof RecentTimerHistoryQuery.Type;
 
 const TimerHistoryLimit = Schema.optionalKey(

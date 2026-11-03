@@ -13,8 +13,6 @@ import {
 type HeroSightingMemberProps = {
   member: HeroSightingMemberDto;
   character?: HeroSightingResponseDtoDetectorCharacter;
-  /** Leads the name, such as "Wykrył", so a reader knows the member's part. */
-  label?: string;
   /** The detector: their name stands out from the members around it. */
   highlighted?: boolean;
   className?: string;
@@ -24,7 +22,6 @@ type HeroSightingMemberProps = {
 export const HeroSightingMember = ({
   member,
   character,
-  label,
   highlighted = false,
   className,
 }: HeroSightingMemberProps) => (
@@ -32,14 +29,16 @@ export const HeroSightingMember = ({
     <MemberAvatar
       avatarUrl={member.avatarUrl}
       name={member.displayName}
-      className={cn("size-6", highlighted && DETECTOR_AVATAR_CLASS)}
+      className={cn("size-7", highlighted && DETECTOR_AVATAR_CLASS)}
     />
     <span className="flex min-w-0 flex-col leading-tight">
-      <span className="truncate text-sm">
-        {label && <span className="text-muted-foreground">{`${label}: `}</span>}
-        <span className={highlighted ? DETECTOR_NAME_CLASS : "font-medium"}>
-          {member.displayName}
-        </span>
+      <span
+        className={cn(
+          "truncate text-sm",
+          highlighted ? DETECTOR_NAME_CLASS : "font-medium",
+        )}
+      >
+        {member.displayName}
       </span>
       {character && (
         <span className="truncate text-xs text-muted-foreground">
