@@ -20,6 +20,9 @@ type BattlesListProps = {
   showPagination?: boolean;
   isLoading?: boolean;
   isRefreshing?: boolean;
+  hasError?: boolean;
+  isRetrying?: boolean;
+  onRetry?: () => void;
   enableScrollToTop?: boolean;
   search?: ReactNode;
   toolbar?: ReactNode;
@@ -70,6 +73,9 @@ export const BattlesList = ({
   showPagination = false,
   isLoading = false,
   isRefreshing = false,
+  hasError,
+  isRetrying,
+  onRetry,
   enableScrollToTop = false,
   search,
   toolbar,
@@ -115,6 +121,9 @@ export const BattlesList = ({
       clearFiltersLabel={clearFiltersLabel}
       isLoading={isLoading}
       isRefreshing={isRefreshing}
+      hasError={hasError}
+      isRetrying={isRetrying}
+      onRetry={onRetry}
       onClearFilters={onClearFilters}
       onMatchmakingClick={filterBy && (() => filterBy({ matchmaking: true }))}
       onPhClick={filterBy && (() => filterBy({ ph: true }))}

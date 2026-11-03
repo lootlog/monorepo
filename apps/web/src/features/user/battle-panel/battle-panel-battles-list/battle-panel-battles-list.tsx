@@ -53,8 +53,11 @@ export const BattlePanelBattlesList = () => {
   const {
     data: battlesResponse,
     error: battlesError,
+    isError: isBattlesError,
+    isFetching: isBattlesFetching,
     isLoading: isBattlesLoading,
     isPlaceholderData: isBattlesRefreshing,
+    refetch: refetchBattles,
   } = useBattlesControllerGetDashboardBattles({
     cursor: optionalQueryValue(queryState.cursor),
     size: pageSize,
@@ -198,6 +201,9 @@ export const BattlePanelBattlesList = () => {
       showPagination
       isLoading={isBattlesLoading}
       isRefreshing={isBattlesRefreshing}
+      hasError={isBattlesError}
+      isRetrying={isBattlesFetching}
+      onRetry={() => void refetchBattles()}
       enableScrollToTop
       search={
         // As on the kill statistics: the search, then the character.
