@@ -18,6 +18,9 @@ import { useTranslation } from "react-i18next";
 
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import {
+  HERO_SIGHTING_PRESET_DETAILED,
+  HERO_SIGHTING_PRESET_MINIMAL,
+  HERO_SIGHTING_PRESET_SIMPLE,
   SCHEDULED_PRESET_MINIMAL,
   SCHEDULED_PRESET_SIMPLE,
   TIMER_PRESET_DETAILED,
@@ -28,8 +31,8 @@ import {
   createPreviewTemplateValues,
   createTemplateEditorNodes,
   getBackspaceTemplateTokenNode,
+  getTemplateVariableKeys,
   removeTemplateTokenNode,
-  SCHEDULED_MESSAGE_VARIABLE_KEYS,
 } from "./notification-template-editor.utils";
 import { $createNotificationTemplateRoleNode } from "./notification-template-role-node";
 import { $createNotificationTemplateVariableNode } from "./notification-template-variable-node";
@@ -110,63 +113,15 @@ export const useNotificationTemplateEditor = ({
 
   const previewTemplateValues = createPreviewTemplateValues(t);
 
-  const allVariableSuggestions: VariableSuggestion[] = [
-    {
-      key: "ruleName",
-      label: t("settings.notifications.templateEditor.variables.ruleName"),
-      snippet: "{{ruleName}}",
-      templateKey: "ruleName",
-      type: "variable",
-    },
-    {
-      key: "npcName",
-      label: t("settings.notifications.templateEditor.variables.npcName"),
-      snippet: "{{npcName}}",
-      templateKey: "npcName",
-      type: "variable",
-    },
-    {
-      key: "npcId",
-      label: t("settings.notifications.templateEditor.variables.npcId"),
-      snippet: "{{npcId}}",
-      templateKey: "npcId",
-      type: "variable",
-    },
-    {
-      key: "world",
-      label: t("settings.notifications.templateEditor.variables.world"),
-      snippet: "{{world}}",
-      templateKey: "world",
-      type: "variable",
-    },
-    {
-      key: "minSpawnTime",
-      label: t("settings.notifications.templateEditor.variables.minSpawnTime"),
-      snippet: "{{minSpawnTime}}",
-      templateKey: "minSpawnTime",
-      type: "variable",
-    },
-    {
-      key: "maxSpawnTime",
-      label: t("settings.notifications.templateEditor.variables.maxSpawnTime"),
-      snippet: "{{maxSpawnTime}}",
-      templateKey: "maxSpawnTime",
-      type: "variable",
-    },
-    {
-      key: "scheduledFor",
-      label: t("settings.notifications.templateEditor.variables.scheduledFor"),
-      snippet: "{{scheduledFor}}",
-      templateKey: "scheduledFor",
-      type: "variable",
-    },
-  ];
-
-  const variableSuggestions = isScheduledMessage
-    ? allVariableSuggestions.filter((suggestion) =>
-        SCHEDULED_MESSAGE_VARIABLE_KEYS.has(suggestion.key),
-      )
-    : allVariableSuggestions;
+  const variableSuggestions: VariableSuggestion[] = getTemplateVariableKeys(
+    triggerType,
+  ).map((key) => ({
+    key,
+    label: t(`settings.notifications.templateEditor.variables.${key}`),
+    snippet: `{{${key}}}`,
+    templateKey: key,
+    type: "variable",
+  }));
 
   const mentionSuggestions: MentionSuggestion[] = [
     {
@@ -331,9 +286,29 @@ export const useNotificationTemplateEditor = ({
     },
   ];
 
+  const heroSightingPresets = [
+    {
+      key: "simple",
+      label: t("settings.notifications.templateEditor.presets.simple"),
+      value: HERO_SIGHTING_PRESET_SIMPLE,
+    },
+    {
+      key: "detailed",
+      label: t("settings.notifications.templateEditor.presets.detailed"),
+      value: HERO_SIGHTING_PRESET_DETAILED,
+    },
+    {
+      key: "minimal",
+      label: t("settings.notifications.templateEditor.presets.minimal"),
+      value: HERO_SIGHTING_PRESET_MINIMAL,
+    },
+  ];
+
   const templatePresets = isScheduledMessage
     ? scheduledMessagePresets
-    : timerPresets;
+    : triggerType === NotificationTriggerType.HERO_SIGHTED
+      ? heroSightingPresets
+      : timerPresets;
 
   const handleEditorKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!activeSuggestion || filteredSuggestions.length === 0) {

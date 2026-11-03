@@ -2,11 +2,9 @@ import { useQueries, useQueryClient } from "@tanstack/react-query";
 import {
   getTimersControllerGetTimersQueryOptions,
   timersControllerGetTimers,
-  useGuildsControllerGetWorldsByGuildId,
   type TimerResponseDto,
 } from "@lootlog/client/main";
-import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGuildWorld } from "@/hooks/context/use-guild-world";
+import { useGuildWorldScope } from "@/hooks/context/use-guild-world-scope";
 import { keepOverdueTimers } from "./keep-overdue-timers";
 
 /**
@@ -15,23 +13,17 @@ import { keepOverdueTimers } from "./keep-overdue-timers";
  * all worlds reads every world the Organization plays on.
  */
 export const useGuildTimers = (removeTimerAfterMs: number) => {
-  const guildId = useGuildId();
-  const { world } = useGuildWorld();
+  const {
+    guildId,
+    world,
+    worlds,
+    hasWorldsError,
+    isFetchingWorlds,
+    refetchWorlds,
+  } = useGuildWorldScope();
+
   const queryClient = useQueryClient();
   const queryGuildId = guildId ?? "";
-  const readsAllWorlds = world === null;
-
-  const worldsQuery = useGuildsControllerGetWorldsByGuildId(
-    { guildId: queryGuildId },
-    {
-      query: {
-        enabled: Boolean(guildId) && readsAllWorlds,
-      },
-    },
-  );
-
-  const worlds = world ? [world] : worldsQuery.data;
-  const hasWorldsError = readsAllWorlds && worldsQuery.isError;
 
   return useQueries({
     queries: (worlds ?? []).map((timersWorld) => {
@@ -71,12 +63,11 @@ export const useGuildTimers = (removeTimerAfterMs: number) => {
           results.some((result) => result.isPending),
         isError: hasWorldsError || results.some((result) => result.isError),
         isFetching:
-          (readsAllWorlds && worldsQuery.isFetching) ||
-          results.some((result) => result.isFetching),
+          isFetchingWorlds || results.some((result) => result.isFetching),
         fetchedAt: Math.min(...loaded.map((result) => result.dataUpdatedAt)),
         refetch: () =>
           Promise.all([
-            ...(hasWorldsError ? [worldsQuery.refetch()] : []),
+            ...(hasWorldsError ? [refetchWorlds()] : []),
             ...results.map((result) => result.refetch()),
           ]),
       };

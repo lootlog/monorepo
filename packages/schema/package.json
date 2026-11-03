@@ -13,6 +13,7 @@
     "./chat-appearance": "./src/chat-appearance.ts",
     "./discord": "./src/discord.ts",
     "./game-version": "./src/game-version.ts",
+    "./hero-sightings": "./src/hero-sightings.ts",
     "./item-rarity": "./src/item-rarity.ts",
     "./loot": "./src/loot.ts",
     "./loot-events": "./src/loot-events.ts",

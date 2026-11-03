@@ -10,6 +10,7 @@ import { DialogProcessor } from "@/processors/dialog-processor";
 import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { NpcsDeleteProcessor } from "@/processors/npcs-delete-processor";
 import { HeroTrackerTimerProcessor } from "@/processors/hero-tracker-timer-processor";
+import { HeroDetectorProcessor } from "@/processors/hero-detector-processor";
 import { MapChangeProcessor } from "@/processors/map-change-processor";
 import { AfkProcessor } from "@/processors/afk-processor";
 import { OtherEventProcessor } from "@/processors/other-event-processor";
@@ -45,6 +46,7 @@ export class EventDispatcher {
   private npcsDetection = npcsDetectionProcessor;
   private npcsDelete = new NpcsDeleteProcessor();
   private heroTrackerTimers = new HeroTrackerTimerProcessor();
+  private heroDetector = new HeroDetectorProcessor();
   private mapChange = new MapChangeProcessor();
   private afk = new AfkProcessor();
   private other = new OtherEventProcessor();
@@ -77,6 +79,7 @@ export class EventDispatcher {
 
     if (fact.kind === "chat") {
       runSafe("chat", () => this.chat.handle(event));
+      runSafe("hero-detector", () => this.heroDetector.handle(event));
     }
 
     if (fact.kind === "dialog") {

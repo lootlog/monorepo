@@ -178,6 +178,16 @@ const OrganizationScopedEvent = Schema.Union([
   Schema.Struct({ organizationId: Schema.NonEmptyString }),
 ]);
 
+/**
+ * A changed hero sighting, as the API's sighting response. The gateway reads
+ * only the Organization, world and hero level it routes and authorizes by.
+ */
+const GuildHeroSightingUpdated = Schema.Struct({
+  guildId: Schema.NonEmptyString,
+  world: Schema.NonEmptyString,
+  hero: Schema.Struct({ lvl: NonNegativeInt }),
+});
+
 const PartyReadyRoomUpdated = Schema.Struct({
   recipientDiscordId: Schema.NonEmptyString,
   eligibleGuildIds: Schema.Array(Schema.NonEmptyString),
@@ -366,6 +376,7 @@ const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.GUILDS_MEMBERS_REMOVE]: GuildMemberChanged,
   [RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE]: GuildMemberChanged,
   [RabbitRoutingKey.GUILDS_MEMBERS_UPDATE]: GuildMemberChanged,
+  [RabbitRoutingKey.GUILDS_HERO_SIGHTINGS_UPDATE]: GuildHeroSightingUpdated,
   [RabbitRoutingKey.GUILDS_TIMERS_UPDATE]: OrganizationScopedEvent,
   [RabbitRoutingKey.GUILDS_TIMERS_DELETE]: OrganizationScopedEvent,
   [RabbitRoutingKey.GUILDS_RESERVATIONS_CREATE]: OrganizationScopedEvent,
@@ -384,6 +395,8 @@ const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2]: ReservationChangedEventV2,
   [RabbitRoutingKey.NOTIFICATIONS_DELIVERY_RESULT]:
     DiscordNotificationDeliveryResult,
+  [RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED]:
+    GuildHeroSightingUpdated,
   [RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED]: LootCreatedNotificationEventV2,
   [RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED]: NotificationTimerDeleted,
   [RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED]: NotificationTimerUpdated,

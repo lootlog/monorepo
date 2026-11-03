@@ -1,4 +1,4 @@
-import { normalizeNpcName } from "#src/shared/margonem/npc-identity";
+import { normalizeNpcName } from "@lootlog/schema/npc-identity";
 
 export function buildTimerKey(npcId: number, npcName: string): string {
   return `${npcId}:${normalizeNpcName(npcName)}`;

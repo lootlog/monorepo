@@ -40,7 +40,7 @@ const TimerActorCharacter = Schema.Struct({
   accountId: FiniteNumber,
 });
 
-const TimerActorCharacterInput = Schema.Struct({
+export const TimerActorCharacterInput = Schema.Struct({
   accountId: NonEmptyString,
   characterId: NonEmptyString,
   name: NonEmptyString.check(

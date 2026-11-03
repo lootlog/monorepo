@@ -51,6 +51,16 @@ export const NPC_FEATURE_PERMISSIONS = {
   },
 } as const;
 
+/**
+ * Borrowed capabilities. Hero sightings are not timers, but they reuse the
+ * timer permissions until the capability model gets entries of its own. Every
+ * hero sighting surface checks access through these names, so moving to
+ * dedicated capabilities changes only this mapping and the role migration.
+ */
+export const HERO_SIGHTING_READ_FEATURE: NpcFeature = "timers";
+
+export const HERO_SIGHTING_WRITE_PERMISSION = Permission.LOOTLOG_TIMERS_WRITE;
+
 const TIMER_PERMISSION = NPC_FEATURE_PERMISSIONS.timers;
 
 const isNpcType = Schema.is(NpcTypeSchema);
@@ -133,3 +143,13 @@ export const canReadNpcFeatureSource = (
 
   return hasRolePermissionInLevelRange(roles, permission, source.npcLevel);
 };
+
+/** A sighting shows where a hero is, so it follows the hero's own visibility. */
+export const canReadHeroSighting = (
+  roles: readonly RolePermissionData[],
+  heroLvl: number,
+): boolean =>
+  canReadNpcFeatureSource(roles, HERO_SIGHTING_READ_FEATURE, {
+    tier: "heroes",
+    npcLevel: heroLvl,
+  });

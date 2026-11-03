@@ -103,6 +103,7 @@ it("limits independent Organization writes to three, settles delivery pairs, and
           setNx: () => Effect.succeed(true),
           releaseDedup: () => Effect.void,
           invalidateList: () => Effect.void,
+          publishHeroSighting: () => Effect.void,
           enqueueEventHeroCheck: () => Effect.void,
           withLock: (key, operation) =>
             Effect.gen(function* () {
@@ -303,6 +304,7 @@ it.each([false, true])(
                 dedupReleased = true;
               }),
             invalidateList: () => Effect.void,
+            publishHeroSighting: () => Effect.void,
             enqueueEventHeroCheck: () => Effect.void,
             publish: (routingKey) =>
               Effect.gen(function* () {
@@ -426,6 +428,7 @@ it("writes a kill within the dedup window of an event respawn window that has no
       setNx: () => Effect.succeed(true),
       releaseDedup: () => Effect.void,
       invalidateList: () => Effect.void,
+      publishHeroSighting: () => Effect.void,
       enqueueEventHeroCheck: (check) =>
         Effect.sync(() => {
           eventHeroIcons.push(check.npcIcon);
@@ -517,6 +520,7 @@ it.each([false, true])(
         setNx: () => Effect.succeed(true),
         releaseDedup: () => Effect.void,
         invalidateList: () => Effect.void,
+        publishHeroSighting: () => Effect.void,
         enqueueEventHeroCheck: () => Effect.void,
         withLock: (_key, operation) => operation,
         publish: (routingKey) =>
@@ -674,6 +678,7 @@ it("keeps one timer per Hero Tracker across hiding places, measuring its respawn
       setNx: () => Effect.succeed(true),
       releaseDedup: () => Effect.void,
       invalidateList: () => Effect.void,
+      publishHeroSighting: () => Effect.void,
       enqueueEventHeroCheck: () => Effect.void,
       withLock: (_key, operation) => operation,
       publish: () => Effect.void,
@@ -777,6 +782,7 @@ it("keeps the window of an open Hero Tracker entrance when another player report
       setNx: () => Effect.succeed(true),
       releaseDedup: () => Effect.void,
       invalidateList: () => Effect.void,
+      publishHeroSighting: () => Effect.void,
       enqueueEventHeroCheck: () => Effect.void,
       withLock: (_key, operation) => operation,
       publish: (routingKey) =>
@@ -840,6 +846,7 @@ it("rejects a timer for an elite I, which Margonem weighs up to 19", async () =>
       setNx: () => Effect.die("unused"),
       releaseDedup: () => Effect.void,
       invalidateList: () => Effect.die("unused"),
+      publishHeroSighting: () => Effect.void,
       enqueueEventHeroCheck: () => Effect.die("unused"),
       withLock: (_key, operation) => operation,
       publish: () => Effect.die("unused"),

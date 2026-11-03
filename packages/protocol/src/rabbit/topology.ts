@@ -57,6 +57,9 @@ export const RabbitRoutingKey = {
   GUILDS_DELETE_ROLE: "guilds.delete.role",
   GUILDS_DELETE_ROLE_DLQ: "guilds.delete.role.dlq",
   GUILDS_DELETE_ROLE_RETRY: "guilds.delete.role.retry",
+  GUILDS_HERO_SIGHTINGS_UPDATE: "guilds.hero-sightings.update",
+  GUILDS_HERO_SIGHTINGS_UPDATE_DLQ: "guilds.hero-sightings.update.dlq",
+  GUILDS_HERO_SIGHTINGS_UPDATE_RETRY: "guilds.hero-sightings.update.retry",
   GUILDS_INITIALIZE: "guilds.initialize",
   GUILDS_INITIALIZE_BOT: "guilds.initialize-bot",
   GUILDS_INITIALIZE_DLQ: "guilds.initialize.dlq",
@@ -133,6 +136,11 @@ export const RabbitRoutingKey = {
   NOTIFICATIONS_DISCORD_GUILD_CHANNEL_DELETED_DLQ:
     "notifications.discord.guild.channel.deleted.dlq",
   NOTIFICATIONS_DISCORD_SEND: "notifications.discord.send",
+  NOTIFICATIONS_HERO_SIGHTING_UPDATED: "notifications.hero-sighting.updated",
+  NOTIFICATIONS_HERO_SIGHTING_UPDATED_DLQ:
+    "notifications.hero-sighting.updated.dlq",
+  NOTIFICATIONS_HERO_SIGHTING_UPDATED_RETRY:
+    "notifications.hero-sighting.updated.retry",
   NOTIFICATIONS_LOOT_CREATED: "notifications.loot.created",
   NOTIFICATIONS_LOOT_CREATED_DLQ: "notifications.loot.created.dlq",
   NOTIFICATIONS_LOOT_CREATED_RETRY: "notifications.loot.created.retry",

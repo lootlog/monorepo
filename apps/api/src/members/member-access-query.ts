@@ -1,7 +1,12 @@
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
 import { Effect } from "effect";
-import { capabilitiesGrantingAny } from "@lootlog/domain/access-policy";
+import {
+  AccessRequirement,
+  capabilitiesGrantingAny,
+  createAccessPolicy,
+  memberCapabilities,
+} from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import {
   type SQL,
@@ -194,3 +199,69 @@ export const selectGuildIdsGrantingPermissions = (
 
     return granted;
   });
+
+type GuildRole = Pick<
+  typeof roleTable.$inferSelect,
+  "permissions" | "lvlRangeFrom" | "lvlRangeTo"
+>;
+
+/**
+ * The caller's roles in every Organization granting one of `permissions`, and
+ * whether the caller administers it, for cross-Organization reads that filter
+ * each record by its own visibility rule.
+ */
+export const selectAccessibleGuildRoles = Effect.fnUntraced(function* (
+  database: typeof ApiDatabase.Service,
+  discordId: string,
+  permissions: ReadonlyArray<Permission>,
+) {
+  const accessible = database
+    .$with("accessible_guilds")
+    .as(yield* accessibleGuildsQuery(database, discordId, permissions));
+
+  const accessRows = yield* database
+    .with(accessible)
+    .select({
+      guildId: accessible.guild.id,
+      ownerId: accessible.guild.ownerId,
+      role: {
+        permissions: roleTable.permissions,
+        lvlRangeFrom: roleTable.lvlRangeFrom,
+        lvlRangeTo: roleTable.lvlRangeTo,
+      },
+    })
+    .from(accessible)
+    .leftJoin(
+      memberTable,
+      activeGuildMemberJoin(discordId, accessible.guild.id),
+    )
+    .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
+    .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id));
+
+  const rolesByGuild = new Map<string, GuildRole[]>();
+  const ownerByGuild = new Map<string, string>();
+
+  for (const { guildId, ownerId, role } of accessRows) {
+    const roles = rolesByGuild.get(guildId) ?? [];
+
+    if (role) roles.push(role);
+    rolesByGuild.set(guildId, roles);
+    ownerByGuild.set(guildId, ownerId);
+  }
+
+  return new Map(
+    Array.from(rolesByGuild, ([guildId, roles]) => [
+      guildId,
+      {
+        roles,
+        administers: createAccessPolicy({
+          capabilities: memberCapabilities({
+            ownerId: ownerByGuild.get(guildId) ?? "",
+            viewerId: discordId,
+            roles,
+          }),
+        }).allowsAny(AccessRequirement.ADMINISTER),
+      },
+    ]),
+  );
+});

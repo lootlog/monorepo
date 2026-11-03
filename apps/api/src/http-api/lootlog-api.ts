@@ -8,6 +8,7 @@ import { GuildsGroup } from "./contracts/guilds/api.js";
 import { InternalGroup } from "./contracts/internal/api.js";
 import { RolesGroup } from "./contracts/roles/api.js";
 import { TimersGroup } from "./contracts/timers/api.js";
+import { HeroSightingsGroup } from "./contracts/hero-sightings/api.js";
 import { UserLootlogConfigGroup } from "./contracts/user-lootlog-config/api.js";
 import { TimerSettingsGroup } from "./contracts/timer-settings/api.js";
 import { PreferencesGroup } from "./contracts/preferences/api.js";
@@ -44,6 +45,7 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     InternalGroup,
     RolesGroup,
     TimersGroup,
+    HeroSightingsGroup,
     UserLootlogConfigGroup,
     TimerSettingsGroup,
     PreferencesGroup,

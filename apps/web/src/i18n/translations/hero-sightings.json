@@ -1,0 +1,62 @@
+{
+  "title": "Wykryte herosy",
+  "searchPlaceholder": "Szukaj herosa…",
+  "filtersLabel": "Filtry wykrytych herosów",
+  "clearSearch": "Wyczyść wyszukiwanie",
+  "loadError": "Nie udało się pobrać wykrytych herosów",
+  "refreshError": "Nie udało się odświeżyć wykrytych herosów. Widoczne dane mogą być nieaktualne. Spróbuj ponownie.",
+  "empty": "Brak wykrytych herosów",
+  "emptyDescription": "Gdy ktoś z Lootloga użyje w grze wykrywacza herosów, wynik pojawi się tutaj.",
+  "noResults": "Brak pasujących herosów",
+  "columns": {
+    "hero": "Heros",
+    "status": "Stan",
+    "map": "Mapa",
+    "actions": "Akcje"
+  },
+  "status": {
+    "ROAMING": "Grasuje",
+    "SPAWNING": "Pojawi się",
+    "STALE": "Niepotwierdzony",
+    "PROBABLY_KILLED": "Prawdopodobnie zbity",
+    "KILLED": "Zbity",
+    "CLOSED": "Nieaktualny"
+  },
+  "staleDescription": "Nikt nie potwierdził herosa od ponad 30 minut. Mógł już zostać zbity.",
+  "lastSeenAt": "Ostatnio potwierdzony",
+  "lastSeenBy": "Ostatnio potwierdził",
+  "firstSeenAt": "wykryty",
+  "detectedBy": "Wykrył",
+  "claims": "Obstawiają",
+  "noClaims": "Nikt nie obstawia",
+  "detectorClaim": "(wykrył herosa)",
+  "claim": {
+    "claim": "Obstawiam",
+    "unclaim": "Wycofaj",
+    "claimLabel": "Obstawiam: {{hero}}",
+    "unclaimLabel": "Wycofaj obstawienie: {{hero}}",
+    "closed": "Ten heros nie jest już aktualny. Lista została odświeżona.",
+    "error": "Nie udało się zapisać obstawienia. Spróbuj ponownie."
+  },
+  "history": {
+    "open": "Historia herosa {{hero}}",
+    "title": "Historia: {{hero}} ({{level}})",
+    "description": "Ostatnie wykrycia na świecie {{world}}, najwyżej {{count}}.",
+    "listLabel": "Wykrycia herosa, od najnowszego",
+    "empty": "Brak historii wykryć",
+    "loadError": "Nie udało się pobrać historii",
+    "detectedAt": "Wykryty",
+    "lastSeenAt": "Ostatnio potwierdzony",
+    "spawnedAt": "Pojawił się",
+    "closedAt": "Zamknięty"
+  },
+  "timer": {
+    "ROAMING": "grasuje w:",
+    "SPAWNING": "pojawi się w:",
+    "stale": "· niepotwierdzony",
+    "claims_one": "· {{count}} obstawia",
+    "claims_few": "· {{count}} obstawiają",
+    "claims_many": "· {{count}} obstawia",
+    "claims_other": "· {{count}} obstawia"
+  }
+}

@@ -153,6 +153,7 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "chat.cleared": GatewayEvent.CHAT_MESSAGES_CLEAR,
   "timer.created": GatewayEvent.TIMERS_CREATE,
   "timer.deleted": GatewayEvent.TIMERS_DELETE,
+  "hero-sighting.updated": GatewayEvent.HERO_SIGHTING_UPDATE,
   "notification.sent": GatewayEvent.NOTIFICATION,
   "notification.volunteer": GatewayEvent.NOTIFICATIONS_VOLUNTEER,
   "member-refresh.updated": GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,

@@ -39,6 +39,9 @@ export enum Queue {
   MARGONEM_ACCOUNT_VERIFIED = "backend-margonem-account-verified-v1",
   MARGONEM_ACCOUNT_VERIFIED_DLQ = "backend-margonem-account-verified-v1.dlq",
   // notifications
+  NOTIFICATIONS_HERO_SIGHTING_UPDATED = "backend-notifications-hero-sighting-updated",
+  NOTIFICATIONS_HERO_SIGHTING_UPDATED_DLQ = "backend-notifications-hero-sighting-updated.dlq",
+  NOTIFICATIONS_HERO_SIGHTING_UPDATED_RETRY = "backend-notifications-hero-sighting-updated.retry",
   NOTIFICATIONS_LOOT_CREATED = "backend-notifications-loot-created",
   NOTIFICATIONS_LOOT_CREATED_DLQ = "backend-notifications-loot-created.dlq",
   NOTIFICATIONS_LOOT_CREATED_RETRY = "backend-notifications-loot-created.retry",
