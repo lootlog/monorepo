@@ -68,7 +68,7 @@ export type LootSplitState = Readonly<{
 export type LootSplitStatus = "accepted" | "choosing" | "timedOut" | "unknown";
 
 /** Closed splits stay listed this long, so their outcome can be read. */
-export const CLOSED_SPLIT_LINGER_MS = 6_000;
+export const CLOSED_SPLIT_LINGER_MS = 2_000;
 
 /** Used when the opening packet carries no server time. */
 const DEFAULT_SPLIT_SECONDS = 20;
