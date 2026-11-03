@@ -16,6 +16,7 @@ import { RabbitMessaging } from "@lootlog/messaging";
 import {
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_LOOT_SPLIT_CAPABILITY,
+  REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
   REALTIME_SESSION_HELLO_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
@@ -400,6 +401,9 @@ const negotiateCapabilities = (
       REALTIME_TEAM_BATTLE_PING_CAPABILITY,
     ),
     supportsLootSplit: offersGameCapability(REALTIME_LOOT_SPLIT_CAPABILITY),
+    supportsLootSplitAutoAccept: offersGameCapability(
+      REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
+    ),
     supportsAirTagScopeUpdates: offersGameCapability(
       REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
     ),

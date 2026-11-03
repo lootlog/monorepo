@@ -5,11 +5,13 @@ import {
   applyGameCommand,
   applyGameEvent,
   applyRemoteChoices,
+  applyRemoteFilterAccept,
   changedOwnSplits,
   CLOSED_SPLIT_LINGER_MS,
   EMPTY_LOOT_SPLIT_STATE,
   expireSplits,
   getLootSplitStatus,
+  ownLootFilterAcceptRecipients,
   type LootSplitState,
 } from "./loot-split-model";
 
@@ -216,7 +218,7 @@ describe("loot split model", () => {
     expect(fought.ownSplitId).toBeNull();
     expect(fought.splits[0]?.views[HERO]).toMatchObject({
       accepted: true,
-      inferred: true,
+      autoAccept: "newFight",
     });
   });
 
@@ -254,7 +256,7 @@ describe("loot split model", () => {
 
     expect(first?.views[HERO]).toMatchObject({
       accepted: true,
-      inferred: true,
+      autoAccept: "newFight",
     });
     expect(changedOwnSplits(open(), second).map(({ id }) => id)).toEqual([
       "1200653658",
@@ -327,5 +329,97 @@ describe("loot split model", () => {
     ).splits;
 
     expect(split && getLootSplitStatus(split, "365", HERO)).toBe("timedOut");
+  });
+});
+
+// A group fight recorded on luvia with the hero's loot filter accepting group
+// loot from fights: the drop reaches this client only through the battle log.
+const warrior = (id: number, name: string) => ({
+  id,
+  originalId: id,
+  name,
+  lvl: 303,
+  prof: "p",
+  hpp: 100,
+  icon: "/clan/luvia_131m.gif",
+  team: id > 0 ? 1 : 2,
+  wt: 0,
+  type: 0,
+});
+
+const filteredFight = (lastLine: string): GameEvent => ({
+  f: {
+    init: "1",
+    auto: "1",
+    endBattle: 1,
+    w: {
+      [HERO]: warrior(220, "cashtelan"),
+      "16051": warrior(16051, "definitely not safe"),
+      "-115101": warrior(-115101, "Sługa piasków"),
+    },
+    m: [
+      "0;0;winner=cashtelan, definitely not safe",
+      "0;0;loser=Sługa piasków, Smokoszczęki, Czciciel Charkhaam",
+      "0;0;+exp=3682",
+      lastLine,
+    ],
+  },
+});
+
+describe("loot filter accepts", () => {
+  it("tells the fight's other players when the hero's loot filter took the drop", () => {
+    expect(
+      ownLootFilterAcceptRecipients(
+        filteredFight(
+          "0;0;txt=Sługa piasków: zdobyto Przepaska zaklinacza sępów",
+        ),
+        context(),
+      ),
+    ).toEqual(["16051"]);
+  });
+
+  it("stays quiet after a fight without a drop or with a loot window", () => {
+    expect(
+      ownLootFilterAcceptRecipients(filteredFight("0;0;+exp=3682"), context()),
+    ).toBeNull();
+    expect(
+      ownLootFilterAcceptRecipients(
+        {
+          ...filteredFight(
+            "0;0;txt=Nymphemonia: zdobyto Plecionka z leśnych kwiatów",
+          ),
+          ...groupLoot(FIRST_ITEMS),
+        },
+        context(),
+      ),
+    ).toBeNull();
+  });
+
+  it("marks a participant accepted by their loot filter, even before their split opens here", () => {
+    const opened = applyRemoteFilterAccept(open(), "365", 1_000);
+
+    expect(opened.splits[0]?.views["365"]).toMatchObject({
+      accepted: true,
+      autoAccept: "lootFilter",
+    });
+
+    // The sender's client heard of the fight a poll earlier than this one.
+    const early = open(
+      applyRemoteFilterAccept(EMPTY_LOOT_SPLIT_STATE, "365", 0),
+      undefined,
+      200,
+    );
+
+    expect(early.splits[0]?.views["365"]?.autoAccept).toBe("lootFilter");
+    expect(early.pendingFilterAccepts).toEqual([]);
+
+    // A stale accept belongs to an earlier fight.
+    const stale = open(
+      applyRemoteFilterAccept(EMPTY_LOOT_SPLIT_STATE, "365", 0),
+      undefined,
+      6_000,
+    );
+
+    expect(stale.splits[0]?.views["365"]).toBeUndefined();
   });
 });

@@ -4,7 +4,10 @@ import {
   createSettingsDocuments,
   seedSettingsDocuments,
 } from "@/test/settings-documents-fixtures";
-import { REALTIME_LOOT_SPLIT_CAPABILITY } from "@lootlog/protocol/realtime";
+import {
+  REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
+  REALTIME_LOOT_SPLIT_CAPABILITY,
+} from "@lootlog/protocol/realtime";
 import type { GameEvent, Item } from "@lootlog/margonem/game-events";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
@@ -126,7 +129,10 @@ const setup = async (lootSplit?: { enabled: boolean; rarities: string[] }) => {
       data: {
         connectionId: "test",
         organizationIds: ["guild-1"],
-        capabilities: [REALTIME_LOOT_SPLIT_CAPABILITY],
+        capabilities: [
+          REALTIME_LOOT_SPLIT_CAPABILITY,
+          REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
+        ],
       },
     }),
   );
@@ -153,7 +159,22 @@ const setup = async (lootSplit?: { enabled: boolean; rarities: string[] }) => {
       "type" in frame && frame.type === "loot-split.send" ? [frame.data] : [],
     );
 
-  return { test, view, request, receivePacket, sendCommand, sentChoices };
+  const sentFilterAccepts = () =>
+    test.wire.frames.flatMap((frame) =>
+      "type" in frame && frame.type === "loot-split.auto-accept"
+        ? [frame.data]
+        : [],
+    );
+
+  return {
+    test,
+    view,
+    request,
+    receivePacket,
+    sendCommand,
+    sentChoices,
+    sentFilterAccepts,
+  };
 };
 
 it("shares the hero's choices with the split's other participants and shows theirs", async () => {
@@ -290,5 +311,68 @@ it("opens the window only for a split that drops a chosen rarity, and shares cho
   expect(
     screen.queryByRole("region", { name: "Wcześniejszy podział" }),
   ).toBeNull();
+  act(() => view.unmount());
+});
+
+it("tells the fight's players when the hero's loot filter took the drop, and shows theirs", async () => {
+  const { test, view, receivePacket, sentFilterAccepts } = await setup();
+
+  const warrior = (id: number, name: string) => ({
+    id,
+    originalId: id,
+    name,
+    lvl: 300,
+    prof: "w",
+    hpp: 100,
+    icon: "/hero.gif",
+    team: id > 0 ? 1 : 2,
+    wt: 0,
+    type: 0,
+  });
+
+  // The game sends a filtered player no loot window, only the battle log.
+  await receivePacket({
+    f: {
+      init: "1",
+      auto: "1",
+      endBattle: 1,
+      w: {
+        [HERO]: warrior(Number(HERO), "Tester"),
+        "16051": warrior(16051, "definitely not safe"),
+        "-115101": warrior(-115101, "Sługa piasków"),
+      },
+      m: ["0;0;txt=Sługa piasków: zdobyto Przepaska zaklinacza sępów"],
+    },
+  });
+  await waitFor(() =>
+    expect(sentFilterAccepts()).toEqual([{ recipientCharacterIds: ["16051"] }]),
+  );
+
+  await receivePacket(
+    groupLoot({
+      [HERO]: { nick: "Tester", prof: "w" },
+      "365": { nick: "Knoper S", prof: "h" },
+    }),
+  );
+  await act(() =>
+    test.wire.receive({
+      v: 1,
+      type: "loot-split.auto-accepted",
+      data: {
+        world: "luvia",
+        sender: { characterId: "365", name: "Knoper S" },
+        sentAt: 1,
+      },
+    }),
+  );
+
+  const split = await screen.findByRole("region", { name: "Podział łupów" });
+
+  await waitFor(() =>
+    expect(
+      screen.getByTitle("Zaakceptowane przez filtr łupów"),
+    ).toHaveTextContent("Knoper S"),
+  );
+  expect(split).not.toHaveTextContent("Bez danych");
   act(() => view.unmount());
 });

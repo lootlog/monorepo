@@ -1,9 +1,13 @@
 import {
+  LootSplitAutoAcceptPayloadSchema,
   LootSplitSendPayloadSchema,
   type LootSplitAck,
+  type LootSplitAutoAcceptedEvent,
+  type LootSplitAutoAcceptPayload,
   type LootSplitEvent,
   type LootSplitSendPayload,
 } from "@lootlog/schema/loot-split";
+import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { Schema } from "effect";
 import { ContextLogger } from "@lootlog/instrumentation";
 import {
@@ -24,9 +28,18 @@ const RATE_LIMIT_WINDOW_MS = 10_000;
 
 const isLootSplitSendPayload = Schema.is(LootSplitSendPayloadSchema);
 
+const isLootSplitAutoAcceptPayload = Schema.is(
+  LootSplitAutoAcceptPayloadSchema,
+);
+
+type LootSplitRelayedEvent = Extract<
+  typeof ServerEvent.Type,
+  { type: "loot-split.received" | "loot-split.auto-accepted" }
+>;
+
 /**
- * Relays one participant's choices in a group loot split to the split's
- * other participants. Nothing is stored: the split lasts seconds, and a
+ * Relays one participant's choices in a group loot split, or the accept their
+ * loot filter made, to the split's other participants. Nothing is stored: the split lasts seconds, and a
  * client that missed a frame keeps the last state it has.
  */
 export class LootSplitService {
@@ -37,13 +50,59 @@ export class LootSplitService {
     private readonly hub: Pick<RealtimeHub, "publishToScopes">,
   ) {}
 
-  async send(
+  send(
     socket: GatewaySocket,
     payload: LootSplitSendPayload,
   ): Promise<LootSplitAck> {
     if (!isLootSplitSendPayload(payload))
-      return { status: "rejected", code: "invalid-payload" };
+      return Promise.resolve({ status: "rejected", code: "invalid-payload" });
 
+    return this.relay(
+      socket,
+      payload.recipientCharacterIds,
+      (sender, world, sentAt) => ({
+        v: 1,
+        type: "loot-split.received",
+        data: {
+          splitId: payload.splitId,
+          world,
+          sender,
+          choices: payload.choices,
+          accepted: payload.accepted,
+          sentAt,
+        } satisfies LootSplitEvent,
+      }),
+    );
+  }
+
+  /** Tells the fight's other players that the sender's loot filter accepted. */
+  autoAccept(
+    socket: GatewaySocket,
+    payload: LootSplitAutoAcceptPayload,
+  ): Promise<LootSplitAck> {
+    if (!isLootSplitAutoAcceptPayload(payload))
+      return Promise.resolve({ status: "rejected", code: "invalid-payload" });
+
+    return this.relay(
+      socket,
+      payload.recipientCharacterIds,
+      (sender, world, sentAt) => ({
+        v: 1,
+        type: "loot-split.auto-accepted",
+        data: { world, sender, sentAt } satisfies LootSplitAutoAcceptedEvent,
+      }),
+    );
+  }
+
+  private async relay(
+    socket: GatewaySocket,
+    requestedRecipientCharacterIds: readonly string[],
+    buildEvent: (
+      sender: LootSplitEvent["sender"],
+      world: string,
+      sentAt: number,
+    ) => LootSplitRelayedEvent,
+  ): Promise<LootSplitAck> {
     const character = socket.data.presence?.character;
 
     if (
@@ -54,7 +113,7 @@ export class LootSplitService {
     )
       return { status: "rejected", code: "invalid-context" };
 
-    const recipientCharacterIds = payload.recipientCharacterIds.filter(
+    const recipientCharacterIds = requestedRecipientCharacterIds.filter(
       (characterId) => characterId !== character.characterId,
     );
 
@@ -80,26 +139,19 @@ export class LootSplitService {
     if (accepted !== 1)
       return { status: "rejected", code: "rate-limited", retryAfterMs };
 
-    const event: LootSplitEvent = {
-      splitId: payload.splitId,
-      world: character.world,
-      sender: { characterId: character.characterId, name: character.name },
-      choices: payload.choices,
-      accepted: payload.accepted,
+    const event = buildEvent(
+      { characterId: character.characterId, name: character.name },
+      character.world,
       sentAt,
-    };
+    );
 
     try {
-      await this.hub.publishToScopes(
-        scopes,
-        { v: 1, type: "loot-split.received", data: event },
-        {
-          excludeConnectionId: socket.data.connectionId,
-          recipientPlatform: "game",
-          recipientWorld: character.world,
-          recipientCharacterIds,
-        },
-      );
+      await this.hub.publishToScopes(scopes, event, {
+        excludeConnectionId: socket.data.connectionId,
+        recipientPlatform: "game",
+        recipientWorld: character.world,
+        recipientCharacterIds,
+      });
     } catch (error) {
       this.logger.warn("Failed to route loot split choices", error);
 

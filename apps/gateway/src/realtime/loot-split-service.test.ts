@@ -65,6 +65,48 @@ describe("LootSplitService", () => {
     ]);
   });
 
+  test("routes a loot filter accept to the fight's other players without naming a split", async () => {
+    const publications: unknown[] = [];
+
+    const service = new LootSplitService(acceptingRateLimit(), {
+      publishToScopes: async (...arguments_: unknown[]) => {
+        publications.push(arguments_);
+      },
+    });
+
+    const response = await service.autoAccept(makeSocket(), {
+      recipientCharacterIds: ["123", "16051"],
+    });
+
+    expect(response).toEqual({ status: "accepted" });
+    expect(publications).toEqual([
+      [
+        [
+          {
+            topic: "map.pings",
+            organizationId: "organization-1",
+            world: "classic",
+          },
+        ],
+        {
+          v: 1,
+          type: "loot-split.auto-accepted",
+          data: {
+            world: "classic",
+            sender: { characterId: "123", name: "Hero" },
+            sentAt: 1234,
+          },
+        },
+        {
+          excludeConnectionId: "connection-1",
+          recipientPlatform: "game",
+          recipientWorld: "classic",
+          recipientCharacterIds: ["16051"],
+        },
+      ],
+    ]);
+  });
+
   test("rejects a sender that shows itself in no Lootlog without consuming the rate limit", async () => {
     let evaluations = 0;
     const socket = makeSocket();

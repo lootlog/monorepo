@@ -19,6 +19,8 @@ import {
   BattlePingSendPayloadSchema,
 } from "@lootlog/schema/battle-ping";
 import {
+  LootSplitAutoAcceptedEventSchema,
+  LootSplitAutoAcceptPayloadSchema,
   LootSplitEventSchema,
   LootSplitSendPayloadSchema,
 } from "@lootlog/schema/loot-split";
@@ -81,6 +83,12 @@ export const REALTIME_TEAM_BATTLE_PING_CAPABILITY =
 // `loot-split.send`. Older clients close the socket on an unknown event, and
 // older gateways close it on an unknown command.
 export const REALTIME_LOOT_SPLIT_CAPABILITY = "lootlog.loot-split.v1";
+
+// Negotiated like `lootlog.loot-split.v1`, for `loot-split.auto-accept` and
+// `loot-split.auto-accepted`: a participant whose loot filter accepted the
+// split for them.
+export const REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY =
+  "lootlog.loot-split.auto-accept.v1";
 
 // Offered as a subprotocol by clients that decode `air-tag.map-threat-updated`,
 // and listed in `session.joined` capabilities by gateways that accept
@@ -339,6 +347,12 @@ export const LootSplitCommand = command(
   LootSplitSendPayloadSchema,
 );
 
+// Acknowledged with `LootSplitAckSchema`.
+export const LootSplitAutoAcceptCommand = command(
+  "loot-split.auto-accept",
+  LootSplitAutoAcceptPayloadSchema,
+);
+
 export const AirTagSubscriptionCommand = command(
   "air-tag.subscription",
   Schema.Struct({
@@ -425,6 +439,7 @@ export const ClientCommand = Schema.Union([
   MapPingCommand,
   BattlePingCommand,
   LootSplitCommand,
+  LootSplitAutoAcceptCommand,
   AirTagSubscriptionCommand,
   AirTagObservationCommand,
   AirTagMapThreatsFetchCommand,
@@ -555,6 +570,7 @@ export const ServerEvent = Schema.Union([
   serverEvent("map-ping.received", MapPingEventSchema),
   serverEvent("battle-ping.received", BattlePingEventSchema),
   serverEvent("loot-split.received", LootSplitEventSchema),
+  serverEvent("loot-split.auto-accepted", LootSplitAutoAcceptedEventSchema),
   serverEvent("air-tag.updated", AirTagUpdateEventSchema),
   serverEvent("air-tag.scope-updated", AirTagScopeUpdateEventSchema),
   serverEvent("air-tag.map-threat-updated", AirTagMapThreatEventSchema),

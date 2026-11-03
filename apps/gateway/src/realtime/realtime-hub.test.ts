@@ -680,7 +680,7 @@ describe("RealtimeHub federation", () => {
     },
   );
 
-  test("delivers loot split choices to listed participants that decode them on any map of the world and every instance", async () => {
+  test("delivers loot split choices and filter accepts to listed participants that decode them on any map of the world and every instance", async () => {
     const bus = new FederationBus();
     const local = new RealtimeHub(config, new FakeRedisStore(bus));
     const remote = new RealtimeHub(config, new FakeRedisStore(bus));
@@ -708,6 +708,16 @@ describe("RealtimeHub federation", () => {
         organization: "organization-1",
         lootSplit: true,
         delivered: false,
+      },
+      // A client from before filter accepts gets choices only.
+      {
+        id: "choices-only",
+        characterId: "100",
+        mapId: 1,
+        organization: "organization-1",
+        lootSplit: true,
+        autoAccept: false,
+        delivered: true,
       },
       // An older game client closes the socket on an event it cannot decode.
       {
@@ -737,6 +747,8 @@ describe("RealtimeHub federation", () => {
           ...base,
           platform: "game",
           supportsLootSplit: scenario.lootSplit,
+          supportsLootSplitAutoAccept:
+            scenario.lootSplit && scenario.autoAccept !== false,
           presence: {
             userId: base.userId,
             sessionId: `presence-${base.connectionId}`,
@@ -766,7 +778,11 @@ describe("RealtimeHub federation", () => {
           organizationId: scenario.organization,
         });
 
-        return { ...target, delivered: scenario.delivered };
+        return {
+          ...target,
+          delivered: scenario.delivered,
+          decodesAutoAccept: scenario.autoAccept !== false,
+        };
       }),
     );
 
@@ -797,6 +813,27 @@ describe("RealtimeHub federation", () => {
       expect(local.sendEvent(target.socket, choices)).toBe(false);
       expect(target.sent).toHaveLength(target.delivered ? 1 : 0);
     }
+
+    const autoAccepted = {
+      v: 1,
+      type: "loot-split.auto-accepted",
+      data: {
+        world: scope.world,
+        sender: { characterId: "300", name: "Sender" },
+        sentAt: 1,
+      },
+    } as const;
+
+    await local.publishToScopes([scope], autoAccepted, {
+      recipientPlatform: "game",
+      recipientWorld: scope.world,
+      recipientCharacterIds: ["100"],
+    });
+
+    for (const target of targets)
+      expect(target.sent).toHaveLength(
+        target.delivered ? (target.decodesAutoAccept ? 2 : 1) : 0,
+      );
   });
 
   test("filters hero events from RabbitMQ on local and federated connections after role changes", async () => {

@@ -14,6 +14,7 @@ import {
   REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_LOOT_SPLIT_CAPABILITY,
+  REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
   REALTIME_PING_CAPABILITY,
   REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_SERVER_CLOSE_CODES,
@@ -59,6 +60,7 @@ import {
   getScopeKey,
   GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION,
   GLOBAL_CHAT_FEDERATION_VERSION,
+  LOOT_SPLIT_AUTO_ACCEPT_FEDERATION_VERSION,
   LOOT_SPLIT_FEDERATION_VERSION,
   PARTY_GATHERING_STATE_FEDERATION_VERSION,
   type RealtimeHub,
@@ -172,6 +174,7 @@ const invalidLegacyPayloadResponse = Function.compose(
         "map-ping.send",
         "battle-ping.send",
         "loot-split.send",
+        "loot-split.auto-accept",
         "air-tag.observation",
       ]),
     }),
@@ -187,6 +190,18 @@ const invalidLegacyPayloadResponse = Function.compose(
   }),
 );
 
+const RELAY_COMMANDS = [
+  "map-ping.send",
+  "battle-ping.send",
+  "loot-split.send",
+  "loot-split.auto-accept",
+] as const satisfies ReadonlyArray<Command["type"]>;
+
+type RelayCommand = Extract<Command, { type: (typeof RELAY_COMMANDS)[number] }>;
+
+const isRelayCommand = (command: Command): command is RelayCommand =>
+  RELAY_COMMANDS.some((type) => type === command.type);
+
 /** The only commands an API key integration may send. */
 const API_KEY_COMMANDS: ReadonlySet<Command["type"]> = new Set([
   "session.join",
@@ -198,6 +213,33 @@ const API_KEY_COMMANDS: ReadonlySet<Command["type"]> = new Set([
 
 const canApiKeySend = (session: SessionData, type: Command["type"]) =>
   !session.apiKeyAccess || API_KEY_COMMANDS.has(type);
+
+/**
+ * Game client capabilities whose events federate between replicas, from the
+ * federation version every replica needs: an older replica drops the event,
+ * so its sockets would miss what the capability promises.
+ */
+const FEDERATED_GAME_CAPABILITIES = [
+  [
+    REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
+    PARTY_GATHERING_STATE_FEDERATION_VERSION,
+  ],
+  [REALTIME_LOOT_SPLIT_CAPABILITY, LOOT_SPLIT_FEDERATION_VERSION],
+  [
+    REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
+    LOOT_SPLIT_AUTO_ACCEPT_FEDERATION_VERSION,
+  ],
+] as const;
+
+const federatedGameCapabilities = (
+  session: SessionData,
+  clusterFederationVersion: number,
+): string[] =>
+  session.apiKeyAccess
+    ? []
+    : FEDERATED_GAME_CAPABILITIES.flatMap(([capability, version]) =>
+        clusterFederationVersion >= version ? [capability] : [],
+      );
 
 /** Global chat capabilities the client decodes and every replica supports. */
 const globalChatCapabilities = (
@@ -250,7 +292,7 @@ export class CommandHandler {
     private readonly activity: Pick<ActivityPublisher, "publish">,
     private readonly mapPings: Pick<MapPingService, "send">,
     private readonly battlePings: Pick<BattlePingService, "send">,
-    private readonly lootSplits: Pick<LootSplitService, "send">,
+    private readonly lootSplits: Pick<LootSplitService, "send" | "autoAccept">,
     private readonly airTags: Pick<
       AirTagService,
       | "updateSubscription"
@@ -746,6 +788,20 @@ export class CommandHandler {
     );
   }
 
+  /** Pings and loot split frames, relayed to other players and never stored. */
+  private relay(socket: GatewaySocket, command: RelayCommand) {
+    switch (command.type) {
+      case "map-ping.send":
+        return this.mapPings.send(socket, command.data);
+      case "battle-ping.send":
+        return this.battlePings.send(socket, command.data);
+      case "loot-split.send":
+        return this.lootSplits.send(socket, command.data);
+      case "loot-split.auto-accept":
+        return this.lootSplits.autoAccept(socket, command.data);
+    }
+  }
+
   private dispatch(
     socket: GatewaySocket,
     command: Command,
@@ -773,6 +829,11 @@ export class CommandHandler {
       });
 
     const requireJoined = this.requireJoined(socket);
+
+    if (isRelayCommand(command))
+      return requireJoined.pipe(
+        Effect.andThen(fromPromise(() => this.relay(socket, command))),
+      );
 
     switch (command.type) {
       case "session.join": {
@@ -900,24 +961,6 @@ export class CommandHandler {
 
               return { scope: command.data };
             }),
-          ),
-        );
-      case "map-ping.send":
-        return requireJoined.pipe(
-          Effect.andThen(
-            fromPromise(() => this.mapPings.send(socket, command.data)),
-          ),
-        );
-      case "battle-ping.send":
-        return requireJoined.pipe(
-          Effect.andThen(
-            fromPromise(() => this.battlePings.send(socket, command.data)),
-          ),
-        );
-      case "loot-split.send":
-        return requireJoined.pipe(
-          Effect.andThen(
-            fromPromise(() => this.lootSplits.send(socket, command.data)),
           ),
         );
       case "air-tag.subscription":
@@ -1155,17 +1198,10 @@ export class CommandHandler {
             ...(socket.data.apiKeyAccess
               ? []
               : [REALTIME_NPC_PRESENCE_CAPABILITY]),
-            ...(!socket.data.apiKeyAccess &&
-            hub.clusterFederationVersion >=
-              PARTY_GATHERING_STATE_FEDERATION_VERSION
-              ? [REALTIME_PARTY_GATHERING_STATE_CAPABILITY]
-              : []),
-            // An older replica drops the federated event, so a split's
-            // participants on it would miss the choices.
-            ...(!socket.data.apiKeyAccess &&
-            hub.clusterFederationVersion >= LOOT_SPLIT_FEDERATION_VERSION
-              ? [REALTIME_LOOT_SPLIT_CAPABILITY]
-              : []),
+            ...federatedGameCapabilities(
+              socket.data,
+              hub.clusterFederationVersion,
+            ),
             ...globalChatCapabilities(
               socket.data,
               hub.clusterFederationVersion,

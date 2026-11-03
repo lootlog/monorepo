@@ -123,6 +123,8 @@ const decodesGameClientEvent = (
         : session.supportsBattlePings === true;
     case "loot-split.received":
       return session.supportsLootSplit === true;
+    case "loot-split.auto-accepted":
+      return session.supportsLootSplitAutoAccept === true;
     case "air-tag.map-threat-updated":
       return session.supportsAirTagMapThreats === true;
     default:
