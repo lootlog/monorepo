@@ -2,8 +2,9 @@ import { Schema } from "effect";
 
 /**
  * What a hero detector reported. Margonem answers a detector scroll with
- * "grasuje w" for a hero alive on the map (`ROAMING`) and "pojawi się w" for
- * the map its next spawn is placed on (`SPAWNING`).
+ * "grasuje w" ("roves in" in the English game) for a hero alive on the map
+ * (`ROAMING`) and "pojawi się w" ("will appear in") for the map its next spawn
+ * is placed on (`SPAWNING`).
  */
 export const HeroSightingState = {
   ROAMING: "ROAMING",
