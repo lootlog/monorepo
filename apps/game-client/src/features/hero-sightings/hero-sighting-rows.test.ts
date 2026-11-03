@@ -70,3 +70,27 @@ it("marks a claimer as the detector only where they are the same member of that 
     ["user-5", true],
   ]);
 });
+
+it("names who confirmed the hero last unless the detector did, across Organizations", () => {
+  const detector = createHeroSightingMember({ userId: "user-1", memberId: 1 });
+  const friend = createHeroSightingMember({ userId: "user-2", memberId: 2 });
+
+  const project = (lastSeenBy: typeof detector) =>
+    projectHeroSightingRows(
+      [
+        createHeroSighting({ detectedBy: detector, lastSeenBy: detector }),
+        // The detector's later confirmation through a second Organization.
+        createHeroSighting({
+          id: 9,
+          guildId: "guild-2",
+          lastSeenAt: "2026-11-03T12:30:00.000Z",
+          detectedBy: friend,
+          lastSeenBy: { ...lastSeenBy, memberId: 7 },
+        }),
+      ],
+      { guildId: "guild-1", isGrouping: true },
+    )[0];
+
+  expect(project(friend)?.refreshedBy?.userId).toBe("user-2");
+  expect(project(detector)?.refreshedBy).toBeNull();
+});

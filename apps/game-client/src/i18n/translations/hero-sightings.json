@@ -17,6 +17,7 @@
     "hours": "{{count}} godz. temu"
   },
   "detectedBy": "Wykrycie: {{name}}",
+  "refreshedBy": "Odświeżenie: {{name}}",
   "claims": {
     "label": "Obstawiają:",
     "none": "Nikt nie obstawia",
