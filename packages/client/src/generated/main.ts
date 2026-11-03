@@ -12427,6 +12427,29 @@ export type TimersControllerGetTimers429 = {
   message: string;
 };
 
+export type TimersControllerGetHeroTimersPathParameters = {
+ guildId: string,
+ }
+export type TimersControllerGetHeroTimersParams = {
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
+world: string;
+};
+
+export type TimersControllerGetHeroTimers401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type TimersControllerGetHeroTimers403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type TimersControllerGetHeroTimers429 = {
+  message: string;
+};
+
 export type TimersControllerSearchNpcsWithTimerDataPathParameters = {
  guildId: string,
  }
@@ -21087,6 +21110,169 @@ export const useGetTimersControllerGetTimersQueryData = () => {
   return ({ guildId }: TimersControllerGetTimersPathParameters,
     params?: TimersControllerGetTimersParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof timersControllerGetTimers>>>(getTimersControllerGetTimersQueryKey({ guildId },params));
+}
+
+
+
+export const getTimersControllerGetHeroTimersUrl = ({ guildId }: TimersControllerGetHeroTimersPathParameters,
+    params: TimersControllerGetHeroTimersParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/guilds/${guildId}/timers/heroes?${stringifiedParams}` : `/guilds/${guildId}/timers/heroes`
+}
+
+/**
+ * Retrieve the latest timer of every hero and event hero on one Organization world, including timers whose spawn window has ended or that were deleted. Results omit timers the caller's roles cannot view.
+ * @summary Get the latest hero timers
+ */
+export const timersControllerGetHeroTimers = async ({ guildId }: TimersControllerGetHeroTimersPathParameters,
+    params: TimersControllerGetHeroTimersParams, options?: Parameters<typeof mainFetch>[1]): Promise<TimerResponseDto[]> => {
+
+  return mainFetch<TimerResponseDto[]>(getTimersControllerGetHeroTimersUrl({ guildId },params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getTimersControllerGetHeroTimersQueryKey = ({ guildId }: TimersControllerGetHeroTimersPathParameters,
+    params?: TimersControllerGetHeroTimersParams,) => {
+    return [
+    `/guilds/${guildId}/timers/heroes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getTimersControllerGetHeroTimersQueryOptions = <TData = Awaited<ReturnType<typeof timersControllerGetHeroTimers>>, TError = ErrorType<RequestValidationError | TimersControllerGetHeroTimers401 | TimersControllerGetHeroTimers403 | TimersControllerGetHeroTimers429>>({ guildId }: TimersControllerGetHeroTimersPathParameters,
+    params: TimersControllerGetHeroTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetHeroTimers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getTimersControllerGetHeroTimersQueryKey({ guildId },params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof timersControllerGetHeroTimers>>> = ({ signal }) => timersControllerGetHeroTimers({ guildId },params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetHeroTimers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type TimersControllerGetHeroTimersQueryResult = NonNullable<Awaited<ReturnType<typeof timersControllerGetHeroTimers>>>
+export type TimersControllerGetHeroTimersQueryError = ErrorType<RequestValidationError | TimersControllerGetHeroTimers401 | TimersControllerGetHeroTimers403 | TimersControllerGetHeroTimers429>
+
+
+export function useTimersControllerGetHeroTimers<TData = Awaited<ReturnType<typeof timersControllerGetHeroTimers>>, TError = ErrorType<RequestValidationError | TimersControllerGetHeroTimers401 | TimersControllerGetHeroTimers403 | TimersControllerGetHeroTimers429>>(
+ pathParams: TimersControllerGetHeroTimersPathParameters,
+    params: TimersControllerGetHeroTimersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetHeroTimers>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof timersControllerGetHeroTimers>>,
+          TError,
+          Awaited<ReturnType<typeof timersControllerGetHeroTimers>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTimersControllerGetHeroTimers<TData = Awaited<ReturnType<typeof timersControllerGetHeroTimers>>, TError = ErrorType<RequestValidationError | TimersControllerGetHeroTimers401 | TimersControllerGetHeroTimers403 | TimersControllerGetHeroTimers429>>(
+ pathParams: TimersControllerGetHeroTimersPathParameters,
+    params: TimersControllerGetHeroTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetHeroTimers>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof timersControllerGetHeroTimers>>,
+          TError,
+          Awaited<ReturnType<typeof timersControllerGetHeroTimers>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTimersControllerGetHeroTimers<TData = Awaited<ReturnType<typeof timersControllerGetHeroTimers>>, TError = ErrorType<RequestValidationError | TimersControllerGetHeroTimers401 | TimersControllerGetHeroTimers403 | TimersControllerGetHeroTimers429>>(
+ pathParams: TimersControllerGetHeroTimersPathParameters,
+    params: TimersControllerGetHeroTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetHeroTimers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get the latest hero timers
+ */
+
+export function useTimersControllerGetHeroTimers<TData = Awaited<ReturnType<typeof timersControllerGetHeroTimers>>, TError = ErrorType<RequestValidationError | TimersControllerGetHeroTimers401 | TimersControllerGetHeroTimers403 | TimersControllerGetHeroTimers429>>(
+ { guildId }: TimersControllerGetHeroTimersPathParameters,
+    params: TimersControllerGetHeroTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetHeroTimers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getTimersControllerGetHeroTimersQueryOptions({ guildId },params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get the latest hero timers
+ */
+export const prefetchTimersControllerGetHeroTimersQuery = async <TData = Awaited<ReturnType<typeof timersControllerGetHeroTimers>>, TError = ErrorType<RequestValidationError | TimersControllerGetHeroTimers401 | TimersControllerGetHeroTimers403 | TimersControllerGetHeroTimers429>>(
+ queryClient: QueryClient, { guildId }: TimersControllerGetHeroTimersPathParameters,
+    params: TimersControllerGetHeroTimersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetHeroTimers>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getTimersControllerGetHeroTimersQueryOptions({ guildId },params,options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useTimersControllerGetHeroTimers} query
+ */
+export const invalidateTimersControllerGetHeroTimers = async (
+ queryClient: QueryClient, { guildId }: TimersControllerGetHeroTimersPathParameters,
+    params: TimersControllerGetHeroTimersParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getTimersControllerGetHeroTimersQueryKey({ guildId },params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get the latest hero timers
+ */
+export const useSetTimersControllerGetHeroTimersQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: TimersControllerGetHeroTimersPathParameters,
+    params: TimersControllerGetHeroTimersParams | undefined,updater: Awaited<ReturnType<typeof timersControllerGetHeroTimers>> | undefined | ((old: Awaited<ReturnType<typeof timersControllerGetHeroTimers>> | undefined) => Awaited<ReturnType<typeof timersControllerGetHeroTimers>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof timersControllerGetHeroTimers>>>({ exact: $exactMatch, queryKey: getTimersControllerGetHeroTimersQueryKey({ guildId },params) }, updater);
+  };
+}
+
+/**
+ * @summary Get the latest hero timers
+ */
+export const useGetTimersControllerGetHeroTimersQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: TimersControllerGetHeroTimersPathParameters,
+    params: TimersControllerGetHeroTimersParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof timersControllerGetHeroTimers>>>(getTimersControllerGetHeroTimersQueryKey({ guildId },params));
 }
 
 

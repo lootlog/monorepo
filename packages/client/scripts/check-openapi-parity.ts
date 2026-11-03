@@ -2069,6 +2069,55 @@ const HERO_SIGHTING_HISTORY_ADDITION: JsonValue = {
   description: "The retained sightings of one hero in a world, newest first.",
 };
 
+// Verified by apps/api/src/http-api/handlers/timers/timer-list-visibility.test.ts.
+const HERO_TIMERS_ADDITION: JsonValue = {
+  operationId: "TimersController_getHeroTimers",
+  parameters: [
+    {
+      name: "guildId",
+      in: "path",
+      schema: {
+        type: "string",
+        example: "guild_123",
+      },
+      required: true,
+    },
+    {
+      name: "world",
+      in: "query",
+      schema: {
+        type: "string",
+        minLength: 1,
+        maxLength: 64,
+      },
+      required: true,
+    },
+  ],
+  security: [
+    {
+      bearer: [],
+    },
+  ],
+  responses: {
+    "200": {
+      description: "Success",
+      content: {
+        "application/json": {
+          schema: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/TimerResponseDto",
+            },
+          },
+        },
+      },
+    },
+    "403": HTTP_ERROR_RESPONSE,
+  },
+  description:
+    "Retrieve the latest timer of every hero and event hero on one Organization world, including timers whose spawn window has ended or that were deleted. Results omit timers the caller's roles cannot view.",
+};
+
 const CLAIM_HERO_SIGHTING_ADDITION: JsonValue = {
   operationId: "HeroSightingsController_claimHeroSighting",
   parameters: [
@@ -2461,6 +2510,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
         },
         description: "Revoke the theme's share link so it no longer resolves",
       },
+      "GET /guilds/{guildId}/timers/heroes": HERO_TIMERS_ADDITION,
       "POST /hero-sightings": CREATE_HERO_SIGHTING_ADDITION,
       "GET /hero-sightings": ALL_HERO_SIGHTINGS_ADDITION,
       "GET /guilds/{guildId}/hero-sightings": GUILD_HERO_SIGHTINGS_ADDITION,

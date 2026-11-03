@@ -22,7 +22,11 @@ import {
   timerTable,
   userSettingDocumentTable,
 } from "#src/database/drizzle/schema";
-import { makeAllTimerList } from "./timer-list.data-layer.js";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
+import {
+  makeAllTimerList,
+  makeGuildHeroTimerList,
+} from "./timer-list.data-layer.js";
 
 it.each([Permission.ADMIN, Permission.LOOTLOG_TIMERS_READ])(
   "applies all-organization timer visibility for %s",
@@ -466,6 +470,110 @@ it("applies role and membership revocation on the next timer read without retain
       kind: "forbidden",
       body: { code: "FORBIDDEN" },
     });
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+it("lists the latest hero timers of one world, ended ones included, within the reader's roles", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    const { database } = boundary;
+    const now = new Date();
+    const guild = createGuildFixture({ id: "organization", ownerId: "other" });
+    await boundary.run(
+      database
+        .insert(guildTable)
+        .values([guild, createGuildFixture({ id: "other", ownerId: "other" })]),
+    );
+
+    const [member] = await boundary.run(
+      database
+        .insert(memberTable)
+        .values(createMemberFixture({ guildId: "organization" }))
+        .returning(),
+    );
+
+    const roles = await boundary.run(
+      database
+        .insert(roleTable)
+        .values({
+          id: "reader",
+          guildId: "organization",
+          name: "Reader",
+          lvlRangeFrom: 1,
+          lvlRangeTo: 300,
+          permissions: [
+            Permission.LOOTLOG_TIMERS_READ,
+            Permission.LOOTLOG_TIMERS_HEROES_READ,
+          ],
+          updatedAt: now,
+        })
+        .returning(),
+    );
+
+    await boundary.run(
+      database.insert(timerTable).values(
+        [
+          { key: "expired", type: "HERO", ended: "expired" },
+          { key: "deleted", type: "HERO", ended: "deleted" },
+          { key: "active", type: "EVENT_HERO" },
+          { key: "lowercase", type: "hero", ended: "expired" },
+          { key: "elite", type: "ELITE2", ended: "expired" },
+          { key: "above-range", type: "HERO", lvl: 400 },
+          { key: "other-world", type: "HERO", world: "other-world" },
+          { key: "other-organization", type: "HERO", guildId: "other" },
+        ].map(
+          (
+            {
+              key,
+              type,
+              ended,
+              lvl = 200,
+              world = "world",
+              guildId = "organization",
+            },
+            index,
+          ) => ({
+            guildId,
+            world,
+            timerKey: key,
+            npcId: index + 1,
+            createdById: member?.id ?? 1,
+            npc: { id: index + 1, lvl, type, name: key },
+            minSpawnTime: new Date(now.getTime() - 120_000),
+            maxSpawnTime: new Date(
+              now.getTime() + (ended === "expired" ? -60_000 : 60_000),
+            ),
+            deletedAt: ended === "deleted" ? now : null,
+            updatedAt: now,
+          }),
+        ),
+      ),
+    );
+
+    const timers = await boundary.run(
+      makeGuildHeroTimerList(database)(
+        {
+          guild,
+          userId: "user",
+          discordId: member?.userId ?? "",
+          roles,
+          accessPolicy: createAccessPolicy({
+            capabilities: roles.flatMap((role) => role.permissions),
+          }),
+        },
+        "world",
+      ),
+    );
+
+    expect(timers.map((timer) => timer.timerKey).sort()).toEqual([
+      "active",
+      "deleted",
+      "expired",
+      "lowercase",
+    ]);
   } finally {
     await boundary.dispose();
   }

@@ -156,6 +156,7 @@ const unusedTimers = {
   getAll: unexpected,
   getRecentHistory: unexpected,
   getGuildTimers: unexpected,
+  getGuildHeroTimers: unexpected,
   searchNpcs: unexpected,
   createAuto: unexpected,
   reset: unexpected,
