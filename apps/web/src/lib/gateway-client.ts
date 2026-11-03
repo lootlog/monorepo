@@ -104,6 +104,7 @@ const serverEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "loot.snapshot": GatewayEvent.LOOTS_SNAPSHOT,
   "timer.created": GatewayEvent.TIMERS_CREATE,
   "timer.deleted": GatewayEvent.TIMERS_DELETE,
+  "hero-sighting.updated": GatewayEvent.HERO_SIGHTING_UPDATED,
   "reservation.created": GatewayEvent.RESERVATIONS_CREATE,
   "reservation.deleted": GatewayEvent.RESERVATIONS_DELETE,
   "reservation.changed": GatewayEvent.RESERVATIONS_CHANGED,

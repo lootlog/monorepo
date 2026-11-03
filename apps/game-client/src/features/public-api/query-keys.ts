@@ -1,4 +1,5 @@
 import {
+  getHeroSightingsControllerGetAllHeroSightingsQueryKey,
   getPartyReadyRoomControllerListQueryKey,
   getTimersControllerGetAllTimersQueryKey,
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
@@ -9,5 +10,9 @@ export const queryKeys = {
   timers: (world?: string) =>
     getTimersControllerGetAllTimersQueryKey({ world }),
   allTimers: () => getTimersControllerGetAllTimersQueryKey(),
+  heroSightings: (world: string) =>
+    getHeroSightingsControllerGetAllHeroSightingsQueryKey({ world }),
+  allHeroSightings: () =>
+    getHeroSightingsControllerGetAllHeroSightingsQueryKey(),
   readyRooms: () => getPartyReadyRoomControllerListQueryKey(),
 };

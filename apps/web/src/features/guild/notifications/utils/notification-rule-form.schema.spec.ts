@@ -98,4 +98,28 @@ describe("ruleFormSchema", () => {
 
     expect(result.success).toBe(true);
   });
+
+  it("rejects a hero sighting rule whose level range is reversed", () => {
+    const heroRule = {
+      ...createBaseTimerFormValues(),
+      triggerType: NotificationTriggerType.HERO_SIGHTED,
+      npcIds: [],
+    };
+
+    const reversed = ruleFormSchema(t, 5).safeParse({
+      ...heroRule,
+      npcLevelMin: 300,
+      npcLevelMax: 250,
+    });
+
+    expect(reversed.error?.issues).toEqual([
+      expect.objectContaining({
+        path: ["npcLevelMax"],
+        message: "settings.notifications.validation.npcLevelOrder",
+      }),
+    ]);
+    expect(
+      ruleFormSchema(t, 5).safeParse({ ...heroRule, npcLevelMin: 300 }).success,
+    ).toBe(true);
+  });
 });

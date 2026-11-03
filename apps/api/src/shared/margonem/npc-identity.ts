@@ -1,5 +1,6 @@
 import { randomInt } from "node:crypto";
 import { isHeroTrackerName } from "@lootlog/domain/npc-type";
+import { normalizeNpcName } from "@lootlog/schema/npc-identity";
 import { NpcTypeEnum as NpcTypeValues } from "@lootlog/schema/npc-type";
 
 type NpcType = (typeof NpcTypeValues)[keyof typeof NpcTypeValues];
@@ -23,9 +24,6 @@ const hashNpcKey = (key: string): number => {
 
   return -Math.abs(hash || 1);
 };
-
-export const normalizeNpcName = (name: string): string =>
-  name.trim().toLowerCase().replace(/\s+/g, " ");
 
 /**
  * A Hero Tracker moves to another hiding place each round and may get another

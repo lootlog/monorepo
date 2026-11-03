@@ -1,7 +1,9 @@
 import { ReadyRoomData } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
+import { makeNotificationContent } from "#src/notifications/content/notification-content.service";
+import { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
 import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";
 import { recordMargonemAccountVerification } from "#src/margonem-accounts/margonem-accounts";
-import { Effect, FiberSet, Layer, Schedule } from "effect";
+import { Effect, FiberSet, Layer, Schedule, Schema } from "effect";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 
@@ -40,6 +42,8 @@ import { NotificationsServices } from "#src/runtime/features/notifications";
 import { GuildDiscordSync } from "#src/runtime/features/organizations";
 import { MemberServices } from "#src/runtime/features/members";
 
+const decodeHeroSighting = Schema.decodeUnknownEffect(HeroSightingResponse);
+
 export const RabbitConsumers = Layer.effectDiscard(
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
@@ -77,6 +81,7 @@ export const RabbitConsumers = Layer.effectDiscard(
       findGuilds: makeNotificationGuildLookup(database),
       delivery,
       rebuild,
+      content: makeNotificationContent(),
       logger: applicationLogger,
     });
 
@@ -199,6 +204,16 @@ export const RabbitConsumers = Layer.effectDiscard(
       (data) => notificationEvents.handleTimerDeleted(data),
       apiRabbitFailurePolicies.notificationsTimerDeleted,
       orderedHandlerRetry,
+    );
+    yield* consume(
+      ApiQueue.NOTIFICATIONS_HERO_SIGHTING_UPDATED,
+      RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED,
+      // The routed fact is the API's own sighting response; decode all of it.
+      (data) =>
+        decodeHeroSighting(data).pipe(
+          Effect.flatMap(notificationEvents.handleHeroSightingUpdated),
+        ),
+      apiRabbitFailurePolicies.heroSightingUpdated,
     );
     yield* consume(
       ApiQueue.NOTIFICATIONS_LOOT_CREATED,

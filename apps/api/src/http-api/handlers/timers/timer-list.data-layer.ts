@@ -1,8 +1,5 @@
 import { selectTimersWithActors } from "#src/timers/timer-query";
-import {
-  accessibleGuildsQuery,
-  activeGuildMemberJoin,
-} from "#src/members/member-access-query";
+import { selectAccessibleGuildRoles } from "#src/members/member-access-query";
 import {
   and,
   desc,
@@ -20,18 +17,10 @@ import { canViewTimer } from "./timer-selection.js";
 import { canViewNpcTimer } from "@lootlog/domain/npc-permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
-  memberTable,
-  memberToRoleTable,
-  roleTable,
   timerTable,
   userSettingDocumentTable,
 } from "#src/database/drizzle/schema";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
-import {
-  createAccessPolicy,
-  AccessRequirement,
-  memberCapabilities,
-} from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import type { TimersGuildAccess } from "./timers.handlers.js";
@@ -156,82 +145,33 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
     identity: { readonly userId: string; readonly discordId: string },
     world?: string,
   ) {
-    const accessible = database
-      .$with("accessible_timer_guilds")
-      .as(
-        yield* accessibleGuildsQuery(database, identity.discordId, [
-          Permission.LOOTLOG_TIMERS_READ,
-        ]),
-      );
+    const guildAccess = yield* selectAccessibleGuildRoles(
+      database,
+      identity.discordId,
+      [Permission.LOOTLOG_TIMERS_READ],
+    );
 
-    const accessRows = yield* database
-      .with(accessible)
-      .select({
-        guildId: accessible.guild.id,
-        ownerId: accessible.guild.ownerId,
-        role: {
-          permissions: roleTable.permissions,
-          lvlRangeFrom: roleTable.lvlRangeFrom,
-          lvlRangeTo: roleTable.lvlRangeTo,
-        },
-      })
-      .from(accessible)
-      .leftJoin(
-        memberTable,
-        activeGuildMemberJoin(identity.discordId, accessible.guild.id),
-      )
-      .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
-      .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id));
-
-    if (accessRows.length === 0) {
+    if (guildAccess.size === 0) {
       return yield* Effect.fail(new PermissionDeniedError());
     }
 
-    const rolesByGuild = new Map<
-      string,
-      NonNullable<(typeof accessRows)[number]["role"]>[]
-    >();
-
-    const ownerByGuild = new Map<string, string>();
-
-    for (const { guildId, ownerId, role } of accessRows) {
-      const roles = rolesByGuild.get(guildId) ?? [];
-
-      if (role) roles.push(role);
-      rolesByGuild.set(guildId, roles);
-      ownerByGuild.set(guildId, ownerId);
-    }
-
-    const administrativeGuilds = new Set(
-      [...rolesByGuild].flatMap(([guildId, roles]) =>
-        createAccessPolicy({
-          capabilities: memberCapabilities({
-            ownerId: ownerByGuild.get(guildId) ?? "",
-            viewerId: identity.discordId,
-            roles,
-          }),
-        }).allowsAny(AccessRequirement.ADMINISTER)
-          ? [guildId]
-          : [],
-      ),
-    );
-
     const timers = yield* readVisibleTimers(
       database,
-      [...rolesByGuild.keys()],
+      [...guildAccess.keys()],
       world,
       identity.userId,
     );
 
     return timers
-      .filter(
-        (timer) =>
-          administrativeGuilds.has(timer.guildId) ||
-          canViewNpcTimer(
-            parseTimerNpc(timer.npc),
-            rolesByGuild.get(timer.guildId) ?? [],
-          ),
-      )
+      .filter((timer) => {
+        const access = guildAccess.get(timer.guildId);
+
+        return (
+          access !== undefined &&
+          (access.administers ||
+            canViewNpcTimer(parseTimerNpc(timer.npc), access.roles))
+        );
+      })
       .map(mapTimerResponse);
   });
 

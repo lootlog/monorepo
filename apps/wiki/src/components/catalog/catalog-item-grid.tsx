@@ -16,6 +16,8 @@ type CatalogItemGridProps = {
   highlight?: string;
   /** The highest level the items are filtered to. */
   maxLevel?: number;
+  /** Shows the attack speed each item adds, for a list ranked by it. */
+  showAttackSpeed?: boolean;
 };
 
 /** The catalog's grid of tiles, as many columns as fit. */
@@ -34,6 +36,7 @@ export function CatalogItemGrid({
   showSource,
   highlight,
   maxLevel,
+  showAttackSpeed,
 }: CatalogItemGridProps) {
   if (isError) {
     return (
@@ -74,6 +77,7 @@ export function CatalogItemGrid({
               showSource={showSource}
               highlight={highlight}
               maxLevel={maxLevel}
+              showAttackSpeed={showAttackSpeed}
             />
           </li>
         ))}

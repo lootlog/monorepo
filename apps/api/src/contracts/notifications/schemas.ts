@@ -16,6 +16,7 @@ import {
   FiniteNumber,
   SafeInteger,
   JsonValue,
+  LevelFilter,
   NonEmptyString,
   PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
@@ -156,6 +157,8 @@ const notificationRuleFields = {
         npcTemplateIds: Schema.optionalKey(Schema.Array(SafeInteger)),
         itemId: Schema.optionalKey(Schema.Union([SafeInteger, Schema.Null])),
         itemIds: Schema.optionalKey(Schema.Array(SafeInteger)),
+        npcLevelMin: Schema.optionalKey(SafeInteger),
+        npcLevelMax: Schema.optionalKey(SafeInteger),
       }),
       [Schema.Record(Schema.String, JsonValue)],
     ),
@@ -268,6 +271,9 @@ const notificationRuleInputFields = {
           "Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id.",
       }),
   ),
+  // A hero sighting rule's level range; null clears a saved bound.
+  npcLevelMin: Schema.optionalKey(Schema.NullOr(LevelFilter)),
+  npcLevelMax: Schema.optionalKey(Schema.NullOr(LevelFilter)),
   itemId: Schema.optionalKey(SafeInteger),
   itemIds: Schema.optionalKey(
     Schema.Array(SafeInteger).check(
@@ -368,6 +374,14 @@ const targetsAtLeastOneNpc = (data: {
       };
 };
 
+const levelRangeInOrder = (data: {
+  readonly npcLevelMin?: number | null;
+  readonly npcLevelMax?: number | null;
+}) =>
+  (data.npcLevelMin ?? 0) <= (data.npcLevelMax ?? Number.POSITIVE_INFINITY)
+    ? undefined
+    : { path: ["npcLevelMin"], issue: "npcLevelMin must be <= npcLevelMax" };
+
 export const CreateNotificationRuleRequest = Schema.Struct({
   ...notificationRuleInputFields,
   triggerType: NotificationTriggerTypeSchema,
@@ -389,6 +403,7 @@ export const CreateNotificationRuleRequest = Schema.Struct({
     ),
   )
   .check(Schema.makeFilter(targetsAtLeastOneNpc))
+  .check(Schema.makeFilter(levelRangeInOrder))
   .annotate({ identifier: "CreateNotificationRuleDto" });
 
 export type CreateNotificationRuleRequest =
@@ -422,6 +437,7 @@ export const UpdateNotificationRuleRequest = Schema.Struct({
     ),
   )
   .check(Schema.makeFilter(targetsAtLeastOneNpc))
+  .check(Schema.makeFilter(levelRangeInOrder))
   .annotate({ identifier: "UpdateNotificationRuleDto" });
 
 export type UpdateNotificationRuleRequest =

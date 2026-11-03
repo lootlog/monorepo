@@ -16,6 +16,7 @@ import {
   Globe,
   MessageSquareText,
   MessagesSquare,
+  Radar,
   Settings,
   Swords,
   Timer,
@@ -54,6 +55,11 @@ export const QuickAccess = () => {
       label: t("buttons.timers"),
       icon: <Timer aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "toggle-timers",
+    },
+    {
+      windowId: "hero-sightings",
+      label: t("buttons.heroSightings"),
+      icon: <Radar aria-hidden="true" className={ICON_CLASS_NAME} />,
     },
     {
       windowId: "online-players",

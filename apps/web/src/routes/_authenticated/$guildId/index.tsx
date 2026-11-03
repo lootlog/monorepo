@@ -16,6 +16,7 @@ import {
 // Sections a member can land on when the loot list is not theirs to read.
 const LANDING_ROUTES = {
   "organization-timers": "/$guildId/timers",
+  "organization-hero-sightings": "/$guildId/hero-sightings",
   "organization-reservations": "/$guildId/reservations",
   "organization-docs": "/$guildId/docs",
   "organization-events": "/$guildId/events",

@@ -237,6 +237,30 @@ describe("source visibility at delivery", () => {
       false,
     );
   });
+  test("shows a hero sighting only to roles that see that hero's timers", () => {
+    const sighting = (
+      hero: { readonly lvl: number } | undefined,
+      guildId = "organization",
+    ): Event => ({
+      v: 1,
+      type: "hero-sighting.updated",
+      data: {
+        organizationId: "organization",
+        payload: { guildId, world: "jaruna", hero },
+      },
+    });
+
+    const heroReader = reader([role(timerRead, 200, 300)]);
+    expect(canReadSourceEvent(heroReader, sighting({ lvl: 258 }))).toBe(true);
+    expect(canReadSourceEvent(heroReader, sighting({ lvl: 350 }))).toBe(false);
+    expect(canReadSourceEvent(heroReader, sighting(undefined))).toBe(false);
+    expect(
+      canReadSourceEvent(heroReader, sighting({ lvl: 258 }, "other")),
+    ).toBe(false);
+
+    const baseReader = reader([role([Permission.LOOTLOG_TIMERS_READ])]);
+    expect(canReadSourceEvent(baseReader, sighting({ lvl: 258 }))).toBe(false);
+  });
   test("keeps ordinary chat and text notifications independent of NPC level", () => {
     const session = reader([
       role(

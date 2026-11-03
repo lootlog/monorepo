@@ -55,6 +55,7 @@ import {
 import { MemberRefreshJobDataLive } from "#src/http-api/handlers/members/member-read.data-layer";
 import { MyReservationsData } from "#src/http-api/handlers/organization-workspace/organization-workspace.operations";
 import { timersData } from "#src/runtime/features/timers";
+import { heroSightingsData } from "#src/runtime/features/hero-sightings";
 
 const coreDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
@@ -82,6 +83,7 @@ const coreDataLayers = Layer.mergeAll(
   reservationMutationsData,
   accountOrganizationData,
   timersData,
+  heroSightingsData,
   recordsData,
   eventsData,
   notificationsData,

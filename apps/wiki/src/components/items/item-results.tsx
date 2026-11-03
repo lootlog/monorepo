@@ -69,6 +69,7 @@ export function ItemResults({ params, query }: ItemResultsProps) {
         emptyLabel={t("search.noResults")}
         highlight={query}
         maxLevel={params.maxLevel}
+        showAttackSpeed={params.sort === "attackSpeed:desc"}
       />
       {items && hasNextPage ? (
         <div className="flex flex-col items-center gap-2 pt-2">

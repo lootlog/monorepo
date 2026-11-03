@@ -6,6 +6,12 @@ import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-po
 import { REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY } from "@lootlog/protocol/realtime";
 import { Permission } from "@lootlog/schema/permissions";
 import { NpcType } from "@/api/npcs.api";
+import type { HeroSightingResponseDto } from "@lootlog/client/main";
+import { queryKeys } from "@/features/public-api/query-keys";
+import { upsertHeroSightings } from "@/features/hero-sightings/hero-sightings-cache";
+import { queryClient } from "@/lib/query-client";
+import { createHeroSighting } from "@/features/hero-sightings/hero-sighting-fixtures";
+import { HERO_SIGHTING_STALE_AFTER_MS } from "@lootlog/domain/hero-sightings";
 import {
   createOnlinePlayersTest,
   createOnlinePresence,
@@ -16,9 +22,11 @@ import { createTimerFixture } from "../timer-fixtures";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import {
   TimerMapPresenceProvider,
+  useTimerHeroSighting,
   useTimerMapPresence,
   useTimerMapThreat,
 } from "./timer-map-presence-provider";
+import { TimerHeroSightingIndicator } from "./timer-hero-sighting-indicator";
 import { TimerMapPresenceIndicator } from "./timer-map-presence-indicator";
 import { TimerMapThreatIndicator } from "./timer-map-threat-indicator";
 
@@ -297,5 +305,198 @@ it("fetches stored map threats once per connection while timer updates re-render
     REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   ]);
   expect(fetches()).toBe(2);
+  view.unmount();
+});
+
+function heroSighting(
+  guildId: string,
+  name: string,
+  overrides: Partial<HeroSightingResponseDto> = {},
+): HeroSightingResponseDto {
+  return createHeroSighting({
+    guildId,
+    world: "alpha",
+    hero: { key: name.toLowerCase(), name, lvl: 100, prof: null },
+    mapName: "Karka-han",
+    // Confirmed just now, so the sighting still places the hero.
+    lastSeenAt: new Date().toISOString(),
+    ...overrides,
+  });
+}
+
+/** Sightings follow the timer visibility, so the policy also grants it. */
+const heroSightingPolicy = (organizations: string[]) =>
+  createAccessPolicySnapshot(
+    organizations.map((id) => ({
+      guild: { id, ownerId: "owner" },
+      roles: [
+        {
+          permissions: [
+            Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+            Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+            Permission.LOOTLOG_TIMERS_READ,
+            Permission.LOOTLOG_TIMERS_HEROES_READ,
+          ],
+          lvlRangeFrom: 1,
+          lvlRangeTo: 300,
+        },
+      ],
+    })),
+    "user",
+  );
+
+function npcTimer(
+  type: TimerWithTimeLeft["npc"]["type"],
+  name: string,
+): TimerWithTimeLeft {
+  const base = timer();
+
+  // A hero's timer keeps the map it was killed on, which says nothing now.
+  return { ...base, npc: { ...base.npc, type, name, location: "Ithan" } };
+}
+
+it("places a hero timer on the map its current sighting names, in the timer's organizations only, and drops it when the sighting closes", async () => {
+  const harness = createOnlinePlayersTest();
+
+  const entries = [
+    npcTimer(NpcType.HERO, "Tepeyollotl"),
+    npcTimer(NpcType.EVENT_HERO, "Mietek"),
+    npcTimer(NpcType.HERO, "Viviana"),
+    npcTimer(NpcType.HERO_TRACKER, "Tropiciel"),
+  ];
+
+  queryClient.setQueryData(queryKeys.heroSightings("alpha"), [
+    heroSighting("guild-1", "Tepeyollotl"),
+    // Another Organization's sighting does not place this Organization's timer.
+    heroSighting("guild-2", "Mietek"),
+    heroSighting("guild-1", "Viviana", {
+      closedAt: "2026-11-03T12:01:00.000Z",
+      closeReason: "PROBABLY_KILLED",
+    }),
+    heroSighting("guild-1", "Tropiciel"),
+  ]);
+
+  const view = render(
+    <harness.wrapper>
+      <TimerMapPresenceProvider timers={entries}>
+        {entries.map((entry, index) => (
+          <section key={index} aria-label={`Timer ${index}`}>
+            <Presence timer={entry} />
+          </section>
+        ))}
+      </TimerMapPresenceProvider>
+    </harness.wrapper>,
+  );
+
+  harness.open();
+  await harness.join(
+    ["guild-1", "guild-2"],
+    heroSightingPolicy(["guild-1", "guild-2"]),
+  );
+  const detected = within(screen.getByRole("region", { name: "Timer 0" }));
+  expect(
+    await detected.findByRole("img", { name: occupiedLabel() }),
+  ).toBeVisible();
+  expect(screen.getAllByRole("img")).toHaveLength(1);
+
+  // A later detection elsewhere closes the sighting the timer was placed by.
+  upsertHeroSightings(queryClient, [
+    heroSighting("guild-1", "Tepeyollotl", {
+      closedAt: "2026-11-03T12:05:00.000Z",
+      closeReason: "PROBABLY_KILLED",
+    }),
+  ]);
+  await waitFor(() => expect(screen.queryAllByRole("img")).toHaveLength(0));
+  view.unmount();
+});
+
+function HeroSightingMark({ timer }: { timer: TimerWithTimeLeft }) {
+  const heroSighting = useTimerHeroSighting(timer);
+
+  return heroSighting ? (
+    <TimerHeroSightingIndicator
+      sighting={heroSighting.sighting}
+      unconfirmed={heroSighting.unconfirmed}
+    />
+  ) : null;
+}
+
+it("stops placing a roaming hero's timer once nobody has confirmed it lately, keeping an unconfirmed mark, while an awaited spawn stays placed", async () => {
+  const harness = createOnlinePlayersTest();
+
+  const entries = [
+    npcTimer(NpcType.HERO, "Tepeyollotl"),
+    npcTimer(NpcType.HERO, "Viviana"),
+    npcTimer(NpcType.HERO, "Mietek"),
+  ];
+
+  const seenAgo = (ms: number) => new Date(Date.now() - ms).toISOString();
+
+  queryClient.setQueryData(queryKeys.heroSightings("alpha"), [
+    // Turns unconfirmed while the timers are shown.
+    heroSighting("guild-1", "Tepeyollotl", {
+      lastSeenAt: seenAgo(HERO_SIGHTING_STALE_AFTER_MS - 1_500),
+    }),
+    heroSighting("guild-1", "Viviana", {
+      lastSeenAt: seenAgo(HERO_SIGHTING_STALE_AFTER_MS + 60_000),
+    }),
+    // A spawn the detector announced waits on its map however long it takes.
+    heroSighting("guild-1", "Mietek", {
+      state: "SPAWNING",
+      lastSeenAt: seenAgo(HERO_SIGHTING_STALE_AFTER_MS + 60_000),
+    }),
+  ]);
+
+  const view = render(
+    <harness.wrapper>
+      <TimerMapPresenceProvider timers={entries}>
+        {entries.map((entry, index) => (
+          <section key={index} aria-label={`Timer ${index}`}>
+            <HeroSightingMark timer={entry} />
+            <Presence timer={entry} />
+          </section>
+        ))}
+      </TimerMapPresenceProvider>
+    </harness.wrapper>,
+  );
+
+  const timerRegion = (index: number) =>
+    within(screen.getByRole("region", { name: `Timer ${index}` }));
+
+  const unconfirmedMark = (name: string) =>
+    i18n.t("timers:tooltip.heroSightingMapUnconfirmed", {
+      state: i18n.t(`heroSightings:state.${name}`),
+      map: "Karka-han",
+      status: i18n.t("heroSightings:status.unconfirmed"),
+    });
+
+  harness.open();
+  await harness.join(["guild-1"], heroSightingPolicy(["guild-1"]));
+  expect(
+    await timerRegion(0).findByRole("img", { name: occupiedLabel() }),
+  ).toBeVisible();
+  expect(
+    timerRegion(2).getByRole("img", { name: occupiedLabel() }),
+  ).toBeVisible();
+  expect(
+    timerRegion(1).getByRole("img", { name: unconfirmedMark("ROAMING") }),
+  ).toBeVisible();
+  expect(
+    timerRegion(1).queryByRole("img", { name: occupiedLabel() }),
+  ).toBeNull();
+
+  await waitFor(
+    () =>
+      expect(
+        timerRegion(0).getByRole("img", { name: unconfirmedMark("ROAMING") }),
+      ).toBeVisible(),
+    { timeout: 3_000 },
+  );
+  expect(
+    timerRegion(0).queryByRole("img", { name: occupiedLabel() }),
+  ).toBeNull();
+  expect(
+    timerRegion(2).getByRole("img", { name: occupiedLabel() }),
+  ).toBeVisible();
   view.unmount();
 });
