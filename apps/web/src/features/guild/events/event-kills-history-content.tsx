@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useShowEventOverview } from "@lootlog/client/main";
@@ -33,6 +34,30 @@ export const EventKillsHistoryContent = ({
   const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
     initialHeroId,
   );
+
+  const navigate = useNavigate();
+
+  // A hero's kills page names its hero in the URL, so its tabs move between
+  // those pages; the event's kills page keeps the choice on the page.
+  const handleHeroChange = (heroId: string | undefined) => {
+    if (!initialHeroId || !guildId || !eventId) {
+      setSelectedHeroId(heroId);
+
+      return;
+    }
+
+    void navigate(
+      heroId
+        ? {
+            to: "/$guildId/events/$eventId/heroes/$heroId/kills",
+            params: { guildId, eventId, heroId },
+          }
+        : {
+            to: "/$guildId/events/$eventId/kills",
+            params: { guildId, eventId },
+          },
+    );
+  };
 
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
     null,
@@ -117,7 +142,7 @@ export const EventKillsHistoryContent = ({
           heroes={heroes}
           includeAll
           value={selectedHeroId}
-          onValueChange={setSelectedHeroId}
+          onValueChange={handleHeroChange}
         />
         <EventKillsTable
           kills={allKills}
