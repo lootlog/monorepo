@@ -37,7 +37,7 @@ export const QuickAccessWindowButton: FC<QuickAccessWindowButtonProps> = ({
             {icon}
             <span
               aria-hidden
-              className="ll:absolute ll:-top-1.5 ll:-right-2 ll:min-w-3.5 ll:rounded-full ll:bg-primary ll:px-0.5 ll:text-center ll:text-[9px] ll:font-bold ll:leading-3.5 ll:text-primary-foreground ll:tabular-nums"
+              className="ll:absolute ll:-top-1 ll:-right-2 ll:min-w-3.5 ll:rounded-full ll:bg-amber-400 ll:px-0.5 ll:text-center ll:text-[9px] ll:font-bold ll:leading-3.5 ll:text-amber-950 ll:tabular-nums ll:ring-1 ll:ring-black/80"
             >
               {badge.count > 99 ? "99+" : badge.count}
             </span>
