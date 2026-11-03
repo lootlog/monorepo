@@ -1,18 +1,14 @@
-import { Link } from "@tanstack/react-router";
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
-import { LOOT_RARITY_TEXT_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
-import { cn } from "cn";
 import { CompareButton } from "@/components/comparison/compare-button";
 import { EquipButton } from "@/components/equipment/equip-button";
-import { HighlightedText } from "@/components/highlighted-text";
+import { useItemPreviewHandlers } from "@/hooks/use-item-preview-handlers";
+import { t } from "@/i18n/messages";
 import { CatalogItemTile } from "./catalog-item-tile";
 import { ItemDamageTypes } from "./item-damage-types";
-import { useSetEquipmentPreview } from "@/contexts/equipment-preview-context";
-import { t } from "@/i18n/messages";
-import { itemPageParams, npcPageParams } from "@/lib/catalog-links";
-import { findRequiredProfessions } from "@/lib/item-options";
-import { findLegendaryBonus } from "@/lib/legendary-bonuses";
+import { ItemLegendaryBonus } from "./item-legendary-bonus";
+import { ItemNameLink } from "./item-name-link";
+import { ItemProfessions } from "./item-professions";
+import { ItemSource } from "./item-source";
 
 type CatalogItemCardProps = {
   item: CatalogItemDtoOutput;
@@ -22,109 +18,45 @@ type CatalogItemCardProps = {
   highlight?: string;
 };
 
-/** One item in a list: its tile, a link to its page and where it drops. */
+/**
+ * One item in a list as a dense two-line row: its name and where it drops,
+ * over its level, professions, damage types and legendary bonus.
+ */
 export function CatalogItemCard({
   item,
   showSource = true,
   highlight = "",
 }: CatalogItemCardProps) {
-  const setPreview = useSetEquipmentPreview();
-  const rarity = resolveItemRarity(item.rarity);
+  const previewHandlers = useItemPreviewHandlers(item);
 
-  // Name a monster that still drops the item.
-  const source =
-    item.droppedBy.find(({ retired }) => !retired) ?? item.droppedBy[0];
-
-  const bonus = findLegendaryBonus(item.stat);
-
-  // Letters fit beside the level, in the alphabetical order players say
-  // them, `BHT`; the full names are read out and hovered.
-  const professions = findRequiredProfessions(item.stat);
-
-  const professionLetters = professions
-    .map((profession) => t(`catalog.professionsShort.${profession}`))
-    .sort();
-
-  const professionNames = professions
-    .map((profession) => t(`filters.professions.${profession}`))
-    .join(", ");
-
-  // Pointing at an item compares it with the set; leaving it ends the preview.
   return (
     <article
-      className="flex h-full min-w-0 flex-col gap-3 rounded-lg border border-border/50 bg-card p-3 transition-colors duration-150 hover:border-border hover:bg-accent/30 motion-reduce:transition-none"
-      onPointerEnter={() => setPreview(item)}
-      onPointerLeave={() => setPreview(null)}
-      onFocus={() => setPreview(item)}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setPreview(null);
-        }
-      }}
+      className="@container flex h-full min-w-0 items-center gap-2.5 rounded-md border border-border/50 bg-card px-2.5 py-2 transition-colors duration-150 hover:border-border hover:bg-accent/30 motion-reduce:transition-none"
+      {...previewHandlers}
     >
-      <div className="flex min-w-0 items-start gap-3">
-        <CatalogItemTile item={item} />
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <Link
-            to="/items/$itemSlug"
-            params={itemPageParams(item)}
-            className={cn(
-              "line-clamp-3 text-sm/tight font-semibold [overflow-wrap:anywhere] outline-none hover:underline focus-visible:underline",
-              LOOT_RARITY_TEXT_CLASS[rarity],
-            )}
-          >
-            <HighlightedText text={item.name} query={highlight} />
-          </Link>
-          <div className="flex min-w-0 items-center justify-between gap-2">
-            <p className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-              <span className="shrink-0 tabular-nums">
-                {t("common.levelShort", { level: item.lvl })}
-              </span>
-              {professions.length > 0 ? (
-                <span className="flex gap-0.5" title={professionNames}>
-                  {professionLetters.map((letter) => (
-                    <span
-                      key={letter}
-                      aria-hidden="true"
-                      className="grid size-4 place-items-center rounded-sm bg-muted text-[0.625rem]/none font-semibold text-foreground/80"
-                    >
-                      {letter}
-                    </span>
-                  ))}
-                  <span className="sr-only">{professionNames}</span>
-                </span>
-              ) : null}
-            </p>
-            <ItemDamageTypes stat={item.stat} />
-          </div>
-          {bonus ? (
-            <p className="flex min-w-0 items-start gap-1 text-xs text-emerald-400">
-              <bonus.icon
-                aria-hidden="true"
-                className="mt-px size-3 shrink-0"
-              />
-              <span>{t(`legendaryBonus.${bonus.name}`)}</span>
-            </p>
+      <CatalogItemTile item={item} />
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        {/* A narrow card gives the name its own line and the source the last. */}
+        <div className="contents @sm:flex @sm:min-w-0 @sm:items-baseline @sm:gap-2">
+          <ItemNameLink item={item} highlight={highlight} />
+          {showSource ? (
+            <span className="order-last flex min-w-0 @sm:order-none @sm:ml-auto @sm:shrink @sm:justify-end">
+              <ItemSource item={item} />
+            </span>
           ) : null}
         </div>
-      </div>
-      <div className="mt-auto flex min-w-0 items-center gap-2 border-t border-border/50 pt-2">
-        {showSource && source ? (
-          <p className="min-w-0 truncate text-xs text-muted-foreground">
-            {t("catalog.droppedBy")}{" "}
-            <Link
-              to="/npcs/$npcSlug"
-              params={npcPageParams(source)}
-              className="font-medium text-foreground outline-none hover:underline focus-visible:underline"
-            >
-              {source.name}
-            </Link>
-          </p>
-        ) : null}
-        <div className="ml-auto flex shrink-0 gap-1">
-          <EquipButton item={item} compact />
-          <CompareButton item={item} compact />
+        <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+          <span className="shrink-0 tabular-nums">
+            {t("common.levelShort", { level: item.lvl })}
+          </span>
+          <ItemProfessions stat={item.stat} />
+          <ItemDamageTypes stat={item.stat} />
+          <ItemLegendaryBonus stat={item.stat} />
         </div>
+      </div>
+      <div className="flex shrink-0 gap-1">
+        <EquipButton item={item} compact />
+        <CompareButton item={item} compact />
       </div>
     </article>
   );

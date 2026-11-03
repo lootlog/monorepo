@@ -3,6 +3,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import { cn } from "cn";
 import { t } from "@/i18n/messages";
 import { findDamageTypes } from "@/lib/damage-types";
 
@@ -20,7 +21,7 @@ export function ItemDamageTypes({ stat }: { stat: string }) {
             <TooltipTrigger
               render={<span role="img" />}
               aria-label={t(`catalog.damageTypes.${key}`)}
-              className={className}
+              className={cn("cursor-pointer", className)}
             >
               <Icon aria-hidden="true" className="size-3.5" />
             </TooltipTrigger>
