@@ -90,32 +90,10 @@ export const BattlesList = ({
     }
   };
 
-  const handleWorldClick = (world: string) => {
-    if (onFiltersChange) {
-      onFiltersChange({
-        ...currentFilters,
-        world,
-      });
-    }
-  };
-
-  const handlePhClick = () => {
-    if (onFiltersChange) {
-      onFiltersChange({
-        ...currentFilters,
-        ph: true,
-      });
-    }
-  };
-
-  const handleMatchmakingClick = () => {
-    if (onFiltersChange) {
-      onFiltersChange({
-        ...currentFilters,
-        matchmaking: true,
-      });
-    }
-  };
+  // Without onFiltersChange the badges are plain tags, not dead buttons.
+  const filterBy = onFiltersChange
+    ? (patch: BattleFilters) => onFiltersChange({ ...currentFilters, ...patch })
+    : undefined;
 
   return (
     <BattlesTable
@@ -138,9 +116,9 @@ export const BattlesList = ({
       isLoading={isLoading}
       isRefreshing={isRefreshing}
       onClearFilters={onClearFilters}
-      onMatchmakingClick={handleMatchmakingClick}
-      onPhClick={handlePhClick}
-      onWorldClick={handleWorldClick}
+      onMatchmakingClick={filterBy && (() => filterBy({ matchmaking: true }))}
+      onPhClick={filterBy && (() => filterBy({ ph: true }))}
+      onWorldClick={filterBy && ((world) => filterBy({ world }))}
       selectionLimit={tableState.selectionLimit}
       search={search}
       toolbar={toolbar}

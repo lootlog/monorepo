@@ -31,7 +31,7 @@ const handleFilterBadgeKeyDown = (
   event: KeyboardEvent<HTMLElement>,
   action: () => void,
 ) => {
-  if (event.key !== "Enter" && event.key !== "") {
+  if (event.key !== "Enter" && event.key !== " ") {
     return;
   }
 
@@ -79,18 +79,24 @@ export const BattleTableInfoBadges = ({
       // Only the filter badges take pointer events; the rest of the cell falls through to the battle link underneath.
       className="pointer-events-none relative flex max-w-[168px] flex-wrap items-center gap-1"
     >
-      <button
-        type="button"
-        data-battle-table-action
-        onClick={(event) => handleWorldBadgeClick(event, battle.world)}
-        onKeyDown={stopBattleTableKeyboardAction}
-        className={cn(
-          BATTLE_INFO_TAG_CLASS_NAME,
-          BATTLE_INFO_TAG_ACTION_CLASS_NAME,
-        )}
-      >
-        {upperFirst(battle.world)}
-      </button>
+      {onWorldClick ? (
+        <button
+          type="button"
+          data-battle-table-action
+          onClick={(event) => handleWorldBadgeClick(event, battle.world)}
+          onKeyDown={stopBattleTableKeyboardAction}
+          className={cn(
+            BATTLE_INFO_TAG_CLASS_NAME,
+            BATTLE_INFO_TAG_ACTION_CLASS_NAME,
+          )}
+        >
+          {upperFirst(battle.world)}
+        </button>
+      ) : (
+        <span className={BATTLE_INFO_TAG_CLASS_NAME}>
+          {upperFirst(battle.world)}
+        </span>
+      )}
       {battle.public && (
         // Private is the default, so only shared battles are called out.
         <span
@@ -107,16 +113,17 @@ export const BattleTableInfoBadges = ({
           <TooltipTrigger
             render={
               <Badge
-                onClick={handlePhBadgeClick}
-                onKeyDown={(event) =>
-                  handleFilterBadgeKeyDown(event, () => onPhClick?.())
-                }
-                role="button"
-                tabIndex={0}
+                {...(onPhClick && {
+                  onClick: handlePhBadgeClick,
+                  onKeyDown: (event: KeyboardEvent<HTMLElement>) =>
+                    handleFilterBadgeKeyDown(event, onPhClick),
+                  role: "button",
+                  tabIndex: 0,
+                })}
                 variant="outline"
                 className={cn(
                   BATTLE_INFO_TAG_CLASS_NAME,
-                  BATTLE_INFO_TAG_ACTION_CLASS_NAME,
+                  onPhClick && BATTLE_INFO_TAG_ACTION_CLASS_NAME,
                 )}
               >
                 {t("battlePanel.bulk.honorPointsShort")}
@@ -133,17 +140,19 @@ export const BattleTableInfoBadges = ({
           <TooltipTrigger
             render={
               <Badge
-                onClick={handleMatchmakingBadgeClick}
-                onKeyDown={(event) =>
-                  handleFilterBadgeKeyDown(event, () => onMatchmakingClick?.())
-                }
-                role="button"
-                tabIndex={0}
+                {...(onMatchmakingClick && {
+                  onClick: handleMatchmakingBadgeClick,
+                  onKeyDown: (event: KeyboardEvent<HTMLElement>) =>
+                    handleFilterBadgeKeyDown(event, onMatchmakingClick),
+                  role: "button",
+                  tabIndex: 0,
+                })}
                 variant="outline"
                 className={cn(
                   BATTLE_INFO_TAG_CLASS_NAME,
-                  BATTLE_INFO_TAG_ACTION_CLASS_NAME,
-                  "border-purple-500/50 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20",
+                  onMatchmakingClick && BATTLE_INFO_TAG_ACTION_CLASS_NAME,
+                  "border-purple-500/50 bg-purple-500/10 text-purple-400",
+                  onMatchmakingClick && "hover:bg-purple-500/20",
                 )}
               >
                 {t("battlePanel.filters.matchmaking")}
