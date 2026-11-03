@@ -23,19 +23,26 @@ export const AppNavigationTopBar = ({
   return (
     <AppTopBar>
       <div className="flex w-full min-w-0 items-center gap-2">
-        <div className="flex min-w-0 flex-1 items-center gap-1">
+        {/* Ghost controls at the bar's edges pull out by their own padding, so
+            their glyphs, not their hit areas, line up with the page content. */}
+        <div className="-ml-2 flex min-w-0 flex-1 items-center gap-1">
           <SidebarTrigger className="md:hidden" />
           <TopBarHeading heading={heading} titleRef={titleRef} />
         </div>
 
-        <div className="flex shrink-0 items-center justify-end gap-2">
+        {/* Phone bars drop control borders: an icon button's glyph sits 10px in,
+            the world switcher's text-sized padding 2px more. */}
+        <div className="flex shrink-0 items-center justify-end gap-2 max-md:-mr-2.5">
           <div
             ref={actionsRef}
             className="flex items-center gap-2 empty:hidden"
           />
           {search}
           {/* The context the page shows, such as the selected world. */}
-          <div ref={contextRef} className="flex items-center" />
+          <div
+            ref={contextRef}
+            className="flex items-center empty:hidden max-md:-mr-0.5"
+          />
         </div>
       </div>
     </AppTopBar>
