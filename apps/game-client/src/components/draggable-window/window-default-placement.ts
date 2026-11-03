@@ -55,6 +55,7 @@ const WINDOW_SLOTS: Record<WindowId, WindowSlot> = {
   "global-chat": { zone: "tools" },
   "party-finder": { zone: "tools" },
   "create-party-gathering": { zone: "tools" },
+  "hero-sightings": { zone: "tools" },
   // The login and error screens replace the game UI, so nothing opens beside them.
   "extension-login": { zone: "prompts", cascadeStep: 0 },
   "app-error": { zone: "prompts", cascadeStep: 0 },

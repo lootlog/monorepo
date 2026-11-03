@@ -1,6 +1,6 @@
 import { upperFirst } from "es-toolkit";
 import { cn } from "cn";
-import { LiveFeedTime } from "./live-feed-time";
+import { RelativeTime } from "@/components/common/relative-time";
 
 type Props = {
   /** The NPC's type, coloured like its group. */
@@ -37,7 +37,7 @@ export function LiveFeedEventMeta({
         {place}
       </span>
       <span aria-hidden>·</span>
-      <LiveFeedTime occurredAt={occurredAt} now={now} />
+      <RelativeTime at={occurredAt} now={now} />
     </p>
   );
 }

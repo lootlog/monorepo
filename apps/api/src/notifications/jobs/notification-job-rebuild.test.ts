@@ -36,6 +36,7 @@ import { makeNotificationGuildTargets } from "#src/notifications/targets/notific
 import { applicationLogger } from "#src/shared/application-logger";
 import { makeAutoTimer } from "#src/http-api/handlers/timers/timer-auto.data-layer";
 import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
+import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
 import { decodeRabbitEventJson } from "@lootlog/protocol/rabbit/events";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 
@@ -452,6 +453,7 @@ describe("notification job rebuild", () => {
         findGuilds: () => Effect.succeed([]),
         delivery: () => Effect.void,
         rebuild: fixture.makeRebuild(false),
+        content: makeNotificationContent(),
         logger: applicationLogger,
       });
 
@@ -580,6 +582,7 @@ describe("notification job rebuild", () => {
         findGuilds: () => Effect.succeed([]),
         delivery: () => Effect.void,
         rebuild: fixture.makeRebuild(true),
+        content: makeNotificationContent(),
         logger: applicationLogger,
       });
 
@@ -591,6 +594,7 @@ describe("notification job rebuild", () => {
         setNx: () => Effect.succeed(true),
         releaseDedup: () => Effect.void,
         invalidateList: () => Effect.void,
+        publishHeroSighting: () => Effect.void,
         enqueueEventHeroCheck: () => Effect.void,
         withLock: (_key, operation) => operation,
         publish: (routingKey, payload) =>
@@ -725,6 +729,7 @@ describe("notification job rebuild", () => {
               ? Effect.fail(new Error("database unavailable"))
               : rebuild.rebuildTimer(ruleIds, event),
         },
+        content: makeNotificationContent(),
         logger: applicationLogger,
       });
 
@@ -786,6 +791,108 @@ describe("notification job rebuild", () => {
       expect(failures).toEqual([]);
       expect(await fixture.jobs()).toEqual([]);
       expect(fixture.enqueued).toEqual([]);
+    } finally {
+      await fixture.boundary.dispose();
+    }
+  });
+
+  it("announces a hero sighting once per change, including when the detected spawn appears", async () => {
+    const now = Date.now();
+
+    const fixture = await seedTimerNotifications({
+      rules: [
+        createNotificationRuleFixture({
+          id: 7,
+          ownerType: "GUILD",
+          ownerId: "guild-1",
+          guildId: "guild-1",
+          world: "fobos",
+          triggerType: "HERO_SIGHTED",
+          filters: {},
+        }),
+      ],
+      links: [
+        { ruleId: 7, targetId: 1 },
+        { ruleId: 7, targetId: 3 },
+      ],
+      now,
+    });
+
+    try {
+      const events = makeNotificationsEvents({
+        store: makeNotificationEventStore(fixture.database),
+        scheduler: fixture.scheduler,
+        matching: fixture.matching,
+        guildTargets: makeNotificationGuildTargets(
+          fixture.database,
+          { selectable: () => Effect.die("channels must not be listed") },
+          fixture.scheduler,
+        ),
+        findGuilds: () => Effect.succeed([]),
+        delivery: () => Effect.void,
+        rebuild: fixture.makeRebuild(false),
+        content: makeNotificationContent(),
+        logger: applicationLogger,
+      });
+
+      const member = {
+        memberId: 1,
+        userId: "user-1",
+        displayName: "Detector",
+        avatarUrl: null,
+      };
+
+      const sighting: HeroSightingResponse = {
+        id: 41,
+        guildId: "guild-1",
+        world: "fobos",
+        hero: { key: "tepeyollotl", name: "Tepeyollotl", lvl: 258, prof: null },
+        state: "SPAWNING",
+        mapName: "Skały Umarłych",
+        firstSeenAt: new Date(now).toISOString(),
+        lastSeenAt: new Date(now).toISOString(),
+        spawnedAt: null,
+        closedAt: null,
+        closeReason: null,
+        detectedBy: member,
+        detectorCharacter: null,
+        lastSeenBy: member,
+        claims: [],
+      };
+
+      // A confirmation and a redelivery repeat the same news.
+      await fixture.boundary.run(events.handleHeroSightingUpdated(sighting));
+      await fixture.boundary.run(events.handleHeroSightingUpdated(sighting));
+      await fixture.boundary.run(
+        events.handleHeroSightingUpdated({
+          ...sighting,
+          state: "ROAMING",
+          spawnedAt: new Date(now).toISOString(),
+        }),
+      );
+      await fixture.boundary.run(
+        events.handleHeroSightingUpdated({
+          ...sighting,
+          closedAt: new Date(now).toISOString(),
+          closeReason: "PROBABLY_KILLED",
+        }),
+      );
+
+      const jobs = await fixture.boundary.run(
+        fixture.database
+          .select({
+            targetId: notificationJobTable.targetId,
+            sourceEventId: notificationJobTable.sourceEventId,
+          })
+          .from(notificationJobTable)
+          .orderBy(asc(notificationJobTable.sourceEventId)),
+      );
+
+      // Target 3 is inactive.
+      expect(jobs).toEqual([
+        { targetId: 1, sourceEventId: "hero-sighting:41:SPAWNED" },
+        { targetId: 1, sourceEventId: "hero-sighting:41:SPAWNING" },
+      ]);
     } finally {
       await fixture.boundary.dispose();
     }

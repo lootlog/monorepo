@@ -519,6 +519,7 @@ export const ServerEvent = Schema.Union([
   serverEvent("loot.snapshot", LootSnapshotEvent),
   serverEvent("timer.created", OrganizationEvent),
   serverEvent("timer.deleted", OrganizationEvent),
+  serverEvent("hero-sighting.updated", OrganizationEvent),
   serverEvent("reservation.created", OrganizationEvent),
   serverEvent("reservation.deleted", OrganizationEvent),
   serverEvent("reservation.changed", ReservationChangedEventV2),

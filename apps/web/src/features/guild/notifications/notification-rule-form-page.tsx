@@ -38,6 +38,8 @@ export const NotificationRuleFormPage = () => {
     isError,
     isSubmitting,
     isScheduledMessage,
+    isHeroSighting,
+    isTimerRule,
     maxNpcCount,
     npcSearch,
     setNpcSearch,
@@ -162,11 +164,14 @@ export const NotificationRuleFormPage = () => {
               description={
                 isScheduledMessage
                   ? t("settings.notifications.ruleDialog.whenScheduledMessage")
-                  : t("settings.notifications.ruleDialog.whenTimer")
+                  : isHeroSighting
+                    ? t("settings.notifications.ruleDialog.whenHeroSighting")
+                    : t("settings.notifications.ruleDialog.whenTimer")
               }
             >
               <NotificationNpcFields
                 isScheduledMessage={isScheduledMessage}
+                isTimerRule={isTimerRule}
                 form={form}
                 t={t}
                 worldOptions={worldOptions}
@@ -182,7 +187,7 @@ export const NotificationRuleFormPage = () => {
                 hasAllWorldTimerNpcSelection={hasAllWorldTimerNpcSelection}
               />
               <NotificationTimerFields
-                isScheduledMessage={isScheduledMessage}
+                isTimerRule={isTimerRule}
                 form={form}
                 t={t}
               />

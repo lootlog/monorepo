@@ -56,6 +56,11 @@ import {
 } from "#src/http-api/handlers/timers/timers.handlers";
 import { TimersNotFound } from "#src/http-api/handlers/timers/timer-errors";
 import {
+  HeroSightingsAccessDenied,
+  HeroSightingsAuthorization,
+} from "#src/http-api/handlers/hero-sightings/hero-sightings.handlers";
+import { HeroSightingsNotFound } from "#src/http-api/handlers/hero-sightings/hero-sighting-errors";
+import {
   AccountOrganizationAccessDenied,
   AccountOrganizationAuthorization,
   AccountOrganizationNotFound,
@@ -405,6 +410,25 @@ const timersAuthorization = Effect.map(OrganizationContextLookup, (lookup) =>
   }),
 );
 
+const heroSightingsAccess = guildAccess(
+  (access) => ({
+    ...toRoleScopedCaller(access),
+    member: access.context.member,
+  }),
+  HeroSightingsNotFound,
+  HeroSightingsAccessDenied,
+);
+
+const heroSightingsAuthorization = Effect.map(
+  OrganizationContextLookup,
+  (lookup) =>
+    HeroSightingsAuthorization.of({
+      identity: requestScopedIdentity,
+      requireGuild: ({ guildId, capability }) =>
+        heroSightingsAccess(lookup, guildId, { allOf: [capability] }),
+    }),
+);
+
 /** Organization-aware handler ports backed by the legacy context boundary. */
 export const OrganizationAuthorizationLayers = Layer.mergeAll(
   Layer.effect(ChatAuthorization, chatAuthorization),
@@ -425,4 +449,5 @@ export const OrganizationAuthorizationLayers = Layer.mergeAll(
   Layer.effect(MapTemplatesAuthorization, mapTemplatesAuthorization),
   Layer.effect(PublicSystemAuthorization, publicSystemAuthorization),
   Layer.effect(TimersAuthorization, timersAuthorization),
+  Layer.effect(HeroSightingsAuthorization, heroSightingsAuthorization),
 );

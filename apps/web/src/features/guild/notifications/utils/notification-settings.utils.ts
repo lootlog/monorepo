@@ -32,6 +32,7 @@ export const getJobStatusBadgeProps = (
 const SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES = [
   NotificationTriggerType.TIMER_BEFORE_SPAWN,
   NotificationTriggerType.SCHEDULED_MESSAGE,
+  NotificationTriggerType.HERO_SIGHTED,
 ] as const;
 
 export const getNotificationTriggerTranslationKey = (
@@ -46,6 +47,8 @@ export const getNotificationTriggerTranslationKey = (
       return "settings.notifications.triggers.watchedItemDropped";
     case NotificationTriggerType.SCHEDULED_MESSAGE:
       return "settings.notifications.triggers.scheduledMessage";
+    case NotificationTriggerType.HERO_SIGHTED:
+      return "settings.notifications.triggers.heroSighted";
   }
 };
 
@@ -160,6 +163,17 @@ export const TIMER_PRESET_MINIMAL = "{{npcName}} - {{minSpawnTime}}";
 export const SCHEDULED_PRESET_SIMPLE = "## {{ruleName}}\n\n{{scheduledFor}}";
 
 export const SCHEDULED_PRESET_MINIMAL = "{{ruleName}}";
+
+export const HERO_SIGHTING_PRESET_SIMPLE =
+  "**{{heroName}}** ({{heroLevel}}) — {{state}}: **{{mapName}}**";
+
+export const HERO_SIGHTING_PRESET_DETAILED =
+  "## {{heroName}} ({{heroLevel}})\n\n{{state}}: **{{mapName}}**\n🌍 {{world}}\n🔎 Wykrył: {{detectedBy}}";
+
+export const HERO_SIGHTING_PRESET_MINIMAL = "{{heroName}} - {{mapName}}";
+
+export const getDefaultHeroSightingContentTemplate = () =>
+  HERO_SIGHTING_PRESET_SIMPLE;
 
 export const getDefaultGuildNotificationRuleContentTemplate = () =>
   TIMER_PRESET_SIMPLE;

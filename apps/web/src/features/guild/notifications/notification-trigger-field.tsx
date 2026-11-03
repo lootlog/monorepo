@@ -11,7 +11,7 @@ type Props = Pick<
   "form" | "t" | "getDefaultContentTemplate"
 >;
 
-/** What triggers the rule: a monster's spawn window, or a time of day. */
+/** What triggers the rule: a monster's spawn window, a hero sighting, or a time of day. */
 export const NotificationTriggerField = ({
   form,
   t,
@@ -31,6 +31,11 @@ export const NotificationTriggerField = ({
       form.setValue("npcIds", []);
     } else {
       form.setValue("scheduledAt", "");
+    }
+
+    if (nextType === NotificationTriggerType.HERO_SIGHTED) {
+      form.setValue("npcIds", []);
+      form.setValue("manualNpcIds", "");
     }
   };
 
@@ -53,6 +58,17 @@ export const NotificationTriggerField = ({
             ),
             description: t(
               "settings.notifications.ruleDialog.triggerOptions.timerBeforeSpawn",
+            ),
+          },
+          {
+            value: NotificationTriggerType.HERO_SIGHTED,
+            title: t(
+              getNotificationTriggerTranslationKey(
+                NotificationTriggerType.HERO_SIGHTED,
+              ),
+            ),
+            description: t(
+              "settings.notifications.ruleDialog.triggerOptions.heroSighted",
             ),
           },
           {

@@ -201,6 +201,20 @@ export const apiRabbitQueues = [
     },
   ),
   queue(
+    Queue.NOTIFICATIONS_HERO_SIGHTING_UPDATED,
+    RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED,
+  ),
+  makeRetryQueue({
+    name: Queue.NOTIFICATIONS_HERO_SIGHTING_UPDATED_RETRY,
+    retryRoutingKey: RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED_RETRY,
+    destinationRoutingKey: RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED,
+  }),
+  queue(
+    Queue.NOTIFICATIONS_HERO_SIGHTING_UPDATED_DLQ,
+    RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED_DLQ,
+    { exchange: RabbitExchange.DEAD_LETTER },
+  ),
+  queue(
     Queue.NOTIFICATIONS_LOOT_CREATED,
     RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED,
   ),
@@ -327,6 +341,12 @@ export const apiRabbitFailurePolicies = {
   ),
   notificationsDiscordGuildChannelDeleted: deadLetter(
     RabbitRoutingKey.NOTIFICATIONS_DISCORD_GUILD_CHANNEL_DELETED_DLQ,
+  ),
+  // Hero sighting notifications are instant jobs keyed by the sighting
+  // transition, so a delayed redelivery cannot send one twice.
+  heroSightingUpdated: rabbitRetryPolicy(
+    RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED_RETRY,
+    RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED_DLQ,
   ),
   lootCreated: rabbitRetryPolicy(
     RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED_RETRY,

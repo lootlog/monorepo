@@ -5,6 +5,11 @@ import {
   type JsonValue,
 } from "#src/database/json";
 import {
+  DEFAULT_HERO_SIGHTING_TEMPLATE,
+  HERO_SIGHTED_TITLE,
+  HERO_SIGHTING_STATE_LABEL,
+  HERO_SPAWNED_TITLE,
+  heroSightingMessage,
   DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
   DEFAULT_SCHEDULED_MESSAGE_TEMPLATE,
   TIMER_NOTIFICATION_TITLE,
@@ -173,6 +178,75 @@ class NotificationContent {
     } satisfies JsonObject;
   }
 
+  buildHeroSightingPayload(params: {
+    notificationRule: {
+      id: number;
+      name: string | null;
+      triggerType: NotificationTriggerType;
+      contentTemplate?: string | null;
+    };
+    target: {
+      targetType: NotificationTargetType;
+    };
+    sighting: {
+      readonly id: number;
+      readonly world: string;
+      readonly hero: { readonly name: string; readonly lvl: number };
+      readonly heroLevel: string;
+      readonly mapName: string;
+      readonly detectedBy: string;
+    };
+    transition: keyof typeof HERO_SIGHTING_STATE_LABEL;
+  }) {
+    const { sighting } = params;
+    const state = HERO_SIGHTING_STATE_LABEL[params.transition];
+
+    const template =
+      params.notificationRule.contentTemplate ?? DEFAULT_HERO_SIGHTING_TEMPLATE;
+
+    const placeholderValues = {
+      ruleName: params.notificationRule.name?.trim() || HERO_SIGHTED_TITLE,
+      heroName: sighting.hero.name,
+      heroLevel: sighting.heroLevel,
+      mapName: sighting.mapName,
+      state,
+      detectedBy: sighting.detectedBy,
+      world: sighting.world,
+    } satisfies Record<string, string>;
+
+    const content = template.replaceAll(
+      /\{\{(ruleName|heroName|heroLevel|mapName|state|detectedBy|world)\}\}/g,
+      (_match, placeholder: keyof typeof placeholderValues) =>
+        placeholderValues[placeholder] ?? "",
+    );
+
+    return {
+      title:
+        params.transition === "SPAWNED"
+          ? HERO_SPAWNED_TITLE
+          : HERO_SIGHTED_TITLE,
+      message: heroSightingMessage(
+        sighting.hero.name,
+        state,
+        sighting.mapName,
+        sighting.world,
+      ),
+      content,
+      allowedMentions: this.buildAllowedMentionsForTarget(
+        content,
+        params.target.targetType,
+      ),
+      ruleId: params.notificationRule.id,
+      ruleName: params.notificationRule.name,
+      triggerType: params.notificationRule.triggerType,
+      world: sighting.world,
+      heroSightingId: sighting.id,
+      heroName: sighting.hero.name,
+      mapName: sighting.mapName,
+      contentTemplate: template,
+    } satisfies JsonObject;
+  }
+
   buildGenericTestNotificationPayload(params: {
     notificationRule: {
       id: number;
@@ -327,7 +401,9 @@ class NotificationContent {
         ? TIMER_BEFORE_SPAWN_LABEL
         : params.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
           ? SCHEDULED_MESSAGE_DEFAULT_NAME
-          : GENERIC_NOTIFICATION_TITLE;
+          : params.triggerType === NotificationTriggerType.HERO_SIGHTED
+            ? HERO_SIGHTED_TITLE
+            : GENERIC_NOTIFICATION_TITLE;
 
     if (params.world) {
       return ruleTestWithWorld(ruleLabel, params.world);

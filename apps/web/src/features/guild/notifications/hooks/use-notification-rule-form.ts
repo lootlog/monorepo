@@ -31,6 +31,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   getDefaultGuildNotificationRuleContentTemplate,
   getDefaultScheduledMessageContentTemplate,
+  getDefaultHeroSightingContentTemplate,
   getGuildNotificationRuleNpcIds,
   getGuildNotificationRuleTargetIds,
   getGuildNotificationTargetLabel,
@@ -63,10 +64,16 @@ import { invalidateGuildNotificationQueries } from "../notifications-api";
 
 const getDefaultContentTemplate = (
   triggerType: CreateNotificationRuleDtoTriggerType,
-) =>
-  triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
-    ? getDefaultScheduledMessageContentTemplate()
-    : getDefaultGuildNotificationRuleContentTemplate();
+) => {
+  switch (triggerType) {
+    case NotificationTriggerType.SCHEDULED_MESSAGE:
+      return getDefaultScheduledMessageContentTemplate();
+    case NotificationTriggerType.HERO_SIGHTED:
+      return getDefaultHeroSightingContentTemplate();
+    default:
+      return getDefaultGuildNotificationRuleContentTemplate();
+  }
+};
 
 const getEmptyRuleFormValues = (): RuleFormValues => ({
   name: "",
@@ -502,6 +509,8 @@ export const useNotificationRuleForm = () => {
 
   const {
     isScheduledMessage,
+    isHeroSighting,
+    isTimerRule,
     isRecurring,
     showScheduledAtField,
     showTimeOfDayField,
@@ -604,31 +613,35 @@ export const useNotificationRuleForm = () => {
       enabled: values.enabled,
     };
 
+    const world =
+      values.world !== ALL_WORLDS_VALUE
+        ? (values.world ?? undefined)
+        : undefined;
+
     const payload =
       values.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
         ? {
             ...basePayload,
             ...getScheduledMessagePayload(values, rule?.scheduledUntil),
           }
-        : (() => {
-            const npcFilterPayload = buildNotificationRuleNpcFilterPayload(
-              getNotificationRuleNpcIdsForSubmit(values),
-            );
+        : values.triggerType === NotificationTriggerType.HERO_SIGHTED
+          ? { ...basePayload, world }
+          : (() => {
+              const npcFilterPayload = buildNotificationRuleNpcFilterPayload(
+                getNotificationRuleNpcIdsForSubmit(values),
+              );
 
-            return {
-              ...basePayload,
-              world:
-                values.world !== ALL_WORLDS_VALUE
-                  ? (values.world ?? undefined)
-                  : undefined,
-              scheduleStrategy:
-                NotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE,
-              scheduleAnchor:
-                values.scheduleAnchor ?? NotificationScheduleAnchor.MIN_SPAWN,
-              scheduleOffsetMinutes: Number(values.scheduleOffsetMinutes),
-              ...npcFilterPayload,
-            };
-          })();
+              return {
+                ...basePayload,
+                world,
+                scheduleStrategy:
+                  NotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE,
+                scheduleAnchor:
+                  values.scheduleAnchor ?? NotificationScheduleAnchor.MIN_SPAWN,
+                scheduleOffsetMinutes: Number(values.scheduleOffsetMinutes),
+                ...npcFilterPayload,
+              };
+            })();
 
     try {
       if (isCreateMode) {
@@ -675,6 +688,8 @@ export const useNotificationRuleForm = () => {
     isError,
     isSubmitting,
     isScheduledMessage,
+    isHeroSighting,
+    isTimerRule,
     isRecurring,
     showScheduledAtField,
     showTimeOfDayField,

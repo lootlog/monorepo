@@ -22,6 +22,7 @@ export enum GatewayEvent {
   MEMBER_WEB_PRESENCE_UPDATE = "member-web-presence:update",
   TIMERS_CREATE = "timers-create",
   TIMERS_DELETE = "timers-delete",
+  HERO_SIGHTING_UPDATED = "hero-sighting-updated",
   RESERVATIONS_CREATE = "reservations-create",
   RESERVATIONS_DELETE = "reservations-delete",
   RESERVATIONS_CHANGED = "reservations-changed",

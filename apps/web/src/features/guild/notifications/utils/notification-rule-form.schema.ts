@@ -254,6 +254,18 @@ export const ruleFormSchema = (t: Translator, maxNpcCount: number) =>
     if (data.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE) {
       validateScheduledRule(data, ctx, t);
     }
+
+    // A detector answer belongs to one world, so a hero rule watches one.
+    if (
+      data.triggerType === NotificationTriggerType.HERO_SIGHTED &&
+      (!data.world || data.world === ALL_WORLDS_VALUE)
+    ) {
+      addIssue(
+        ctx,
+        t("settings.notifications.validation.worldRequired"),
+        "world",
+      );
+    }
   });
 
 export type RuleFormValues = z.infer<ReturnType<typeof ruleFormSchema>>;

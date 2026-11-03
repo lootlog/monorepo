@@ -12,6 +12,31 @@ export const DEFAULT_SCHEDULED_MESSAGE_TEMPLATE = [
   "Zaplanowana wysylka: **{{scheduledFor}}**",
 ].join("\n");
 
+export const DEFAULT_HERO_SIGHTING_TEMPLATE = [
+  "## {{heroName}} ({{heroLevel}})",
+  "",
+  "{{state}}: **{{mapName}}**",
+  "Świat: **{{world}}**",
+  "Wykrył: **{{detectedBy}}**",
+].join("\n");
+
+export const HERO_SIGHTED_TITLE = "Wykryto herosa";
+
+export const HERO_SPAWNED_TITLE = "Heros się pojawił";
+
+export const HERO_SIGHTING_STATE_LABEL = {
+  ROAMING: "Grasuje w",
+  SPAWNING: "Pojawi się w",
+  SPAWNED: "Pojawił się w",
+} as const;
+
+export const heroSightingMessage = (
+  heroName: string,
+  state: string,
+  mapName: string,
+  world: string,
+) => `${heroName} — ${state.toLowerCase()}: ${mapName} (świat ${world}).`;
+
 export const TIMER_NOTIFICATION_TITLE = "Nadchodzacy spawn";
 
 export const SCHEDULED_MESSAGE_TITLE = "Zaplanowana wiadomosc";

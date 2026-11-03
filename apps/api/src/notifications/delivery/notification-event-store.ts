@@ -27,6 +27,36 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
         ),
       );
 
+  const heroSightingRules = (guildId: string, world: string) =>
+    Effect.gen(function* () {
+      const rules = yield* database
+        .select()
+        .from(notificationRuleTable)
+        .where(
+          and(
+            eq(notificationRuleTable.ownerType, "GUILD"),
+            eq(notificationRuleTable.ownerId, guildId),
+            eq(notificationRuleTable.guildId, guildId),
+            eq(notificationRuleTable.enabled, true),
+            eq(notificationRuleTable.triggerType, "HERO_SIGHTED"),
+            or(
+              isNull(notificationRuleTable.world),
+              eq(notificationRuleTable.world, world),
+            ),
+          ),
+        );
+
+      const targets = yield* readNotificationRuleTargets(
+        database,
+        rules.map(({ id }) => id),
+      );
+
+      return rules.map((rule) => ({
+        ...rule,
+        targets: targets.get(rule.id) ?? [],
+      }));
+    });
+
   const watchedItemsForLoot = (itemIds: ReadonlyArray<number>, world: string) =>
     Effect.gen(function* () {
       if (itemIds.length === 0) return [];
@@ -86,7 +116,7 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
       .orderBy(asc(timerTable.minSpawnTime))
       .limit(50);
 
-  return { timerRules, timersForRule, watchedItemsForLoot };
+  return { heroSightingRules, timerRules, timersForRule, watchedItemsForLoot };
 };
 
 export type NotificationEventStore = ReturnType<

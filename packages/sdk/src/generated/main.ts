@@ -3781,6 +3781,7 @@ export const GuildNotificationRulesResponseDtoItemsItemTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -4078,6 +4079,7 @@ export const NotificationRuleResponseDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -4331,6 +4333,7 @@ export const CreateNotificationRuleDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 export interface CreateNotificationRuleDto {
@@ -4448,6 +4451,7 @@ export const UpdateNotificationRuleDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 export interface UpdateNotificationRuleDto {
@@ -4587,6 +4591,7 @@ export const NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType = 
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -4694,6 +4699,7 @@ export const NotificationJobsResponseDtoPendingItemRuleTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -5003,6 +5009,7 @@ export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType = 
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -5110,6 +5117,7 @@ export const NotificationJobsResponseDtoHistoryItemRuleTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -5491,6 +5499,7 @@ export const WatchedItemResponseDtoNotificationRuleTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
