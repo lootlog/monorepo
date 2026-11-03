@@ -307,4 +307,17 @@ describe("loot split model", () => {
       expireSplits(expired, deadline + CLOSED_SPLIT_LINGER_MS).splits,
     ).toEqual([]);
   });
+
+  it("reports a participant who had not accepted when the time ran out as timed out, not choosing", () => {
+    const opened = applyRemoteChoices(open(), remote("365"));
+
+    const [split] = expireSplits(
+      opened,
+      opened.splits[0]?.deadline ?? 0,
+    ).splits;
+
+    expect(split && getLootSplitStatus(split, "365", HERO)).toBe("timedOut");
+    expect(split && getLootSplitStatus(split, HERO, HERO)).toBe("timedOut");
+    expect(split && getLootSplitStatus(split, "1466", HERO)).toBe("unknown");
+  });
 });

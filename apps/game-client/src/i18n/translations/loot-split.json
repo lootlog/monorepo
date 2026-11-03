@@ -1,18 +1,20 @@
 {
   "windowTitle": "Podział łupów",
-  "ownSplit": "Twój podział",
+  "ownSplit": "Podział łupów",
   "otherSplit": "Wcześniejszy podział",
   "participant": "Uczestnik",
   "resolved": "Podzielony",
   "expired": "Czas minął",
   "choosingCount": "Wybiera: {{count}}",
   "unknownCount": "Bez danych: {{count}}",
+  "timedOutCount": "Po czasie: {{count}}",
   "secondsLeft": "{{seconds}} s",
   "connectionLost": "Wybory innych graczy mogą być nieaktualne.",
   "status": {
     "accepted": "Zaakceptował",
     "acceptedByNewFight": "Zaakceptowane przez nową walkę",
     "choosing": "Wybiera",
+    "timedOut": "Czas minął: gra przyjęła aktualne wybory",
     "unknown": "Bez danych: nie ma Lootloga albo nie dzieli z Tobą Lootloga"
   },
   "choices": {

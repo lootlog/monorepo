@@ -213,7 +213,7 @@ it("shares the hero's choices with the split's other participants and shows thei
     }),
   );
 
-  const split = await screen.findByRole("region", { name: "Twój podział" });
+  const split = await screen.findByRole("region", { name: "Podział łupów" });
 
   expect(
     await screen.findByRole("img", {
