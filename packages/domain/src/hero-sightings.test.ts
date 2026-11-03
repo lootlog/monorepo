@@ -34,6 +34,32 @@ describe("detector answers from Margonem", () => {
   });
 
   it.each([
+    [
+      "Insane Orc Hunter (165w) roves in: Red Orc Village",
+      {
+        heroName: "Insane Orc Hunter",
+        heroLvl: 165,
+        state: "ROAMING",
+        mapName: "Red Orc Village",
+      },
+    ],
+    [
+      "[b]Hellish Skeletor (85w)[/b] will appear in: Treacherous Passage - 2nd Level",
+      {
+        heroName: "Hellish Skeletor",
+        heroLvl: 85,
+        state: "SPAWNING",
+        mapName: "Treacherous Passage - 2nd Level",
+      },
+    ],
+  ])("reads an answer from the English game: %s", (message, detection) => {
+    expect(parseHeroDetectorMessage(message)).toMatchObject({
+      ...detection,
+      heroProf: "WARRIOR",
+    });
+  });
+
+  it.each([
     "Podział łupów: Tepeyollotl (258b)",
     "[b]Tepeyollotl (258b)[/b] zginął w: Skały Umarłych",
   ])("ignores other system messages: %s", (message) => {
