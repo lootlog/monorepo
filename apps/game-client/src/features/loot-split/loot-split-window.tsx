@@ -98,9 +98,12 @@ export const LootSplitWindow = () => {
           refreshing={false}
           refreshingLabel={t("connectionLost")}
         />
+        {/* The window grows with its content, so the scroll area has no
+            definite height; as a flex column it hands its shrunk height to
+            the viewport, which then scrolls instead of being clipped. */}
         <ScrollArea
           orientation="both"
-          className="ll:min-h-0 ll:w-full ll:flex-1"
+          className="ll:flex ll:min-h-0 ll:w-full ll:flex-1 ll:flex-col"
         >
           <div className="ll:flex ll:w-max ll:min-w-full ll:flex-col ll:pb-1">
             {splits.map((split) => (
