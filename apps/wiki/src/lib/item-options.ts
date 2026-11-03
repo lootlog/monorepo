@@ -1,3 +1,4 @@
+import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
 import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { t } from "@/i18n/messages";
 
@@ -10,6 +11,17 @@ export const RARITY_OPTIONS = [
 ] as const;
 
 export const PROFESSION_OPTIONS = ["w", "p", "h", "m", "b", "t"] as const;
+
+/** The professions the item requires, in the filters' order; none when anyone wears it. */
+export const findRequiredProfessions = (stat: string) => {
+  const required = String(
+    parseItemStats(stat).find(({ key }) => key === "reqp")?.value ?? "",
+  );
+
+  return PROFESSION_OPTIONS.filter((profession) =>
+    required.includes(profession),
+  );
+};
 
 export const ITEM_TYPE_OPTIONS = [
   "ONE_HAND_WEAPON",

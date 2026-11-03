@@ -208,6 +208,22 @@ const messages = {
   catalog: {
     droppedBy: "Z:",
     droppedByTitle: "Wypada z",
+    professionsShort: {
+      w: "W",
+      p: "P",
+      h: "H",
+      m: "M",
+      b: "B",
+      t: "T",
+    },
+    damageTypes: {
+      fire: "Obrażenia od ognia",
+      light: "Obrażenia od błyskawic",
+      frost: "Obrażenia od zimna",
+      poison: "Obrażenia od trucizny",
+      wound: "Głęboka rana",
+      pierce: "Przebicie pancerza",
+    },
     dropsTitle: "Dropy",
     dropRarities: {
       LEGENDARY: "Legendarne",

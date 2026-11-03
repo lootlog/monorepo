@@ -2,11 +2,10 @@ import type { ReactNode } from "react";
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import { itemIconUrl } from "@lootlog/ui/components/item-image";
 import { ITEM_RARITY_STYLES } from "@lootlog/ui/components/item-tile-details";
-import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { cn } from "cn";
 import { t } from "@/i18n/messages";
-import { ITEM_TILE_LABELS, PROFESSION_OPTIONS } from "@/lib/item-options";
+import { findRequiredProfessions, ITEM_TILE_LABELS } from "@/lib/item-options";
 import type { UpgradeLevel } from "@/lib/item-upgrade";
 import { ItemDropSources } from "./item-drop-sources";
 
@@ -33,13 +32,7 @@ export function ItemHero({
   const styles = ITEM_RARITY_STYLES[rarity];
   const typeLabel = item.type ? ITEM_TILE_LABELS.type[item.type] : undefined;
 
-  const requiredProfessions = String(
-    parseItemStats(item.stat).find(({ key }) => key === "reqp")?.value ?? "",
-  );
-
-  const professions = PROFESSION_OPTIONS.filter((profession) =>
-    requiredProfessions.includes(profession),
-  );
+  const professions = findRequiredProfessions(item.stat);
 
   // Level 0 means no level requirement, as on most consumables.
   const hasLevel = item.lvl > 0;
