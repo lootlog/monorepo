@@ -47,6 +47,7 @@ export const searchIndexSettings: IndexSettings = {
       "type",
       "rarity",
       "lvl",
+      "elasticLevel",
       "stats",
       "numericStats",
       "requiredProfessions",

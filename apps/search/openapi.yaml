@@ -805,6 +805,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CatalogDropSourceDto_Output"
+        elasticLevel:
+          type: boolean
+          description: Whether the item takes the level of the character who loots it, so `lvl` and `stat` describe one of its levels.
       required:
         - id
         - name
@@ -814,6 +817,7 @@ components:
         - rarity
         - type
         - droppedBy
+        - elasticLevel
       description: A Margonem item in the public catalog
     CatalogDropSourceDto_Output:
       type: object

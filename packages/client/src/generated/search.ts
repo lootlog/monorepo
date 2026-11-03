@@ -132,6 +132,8 @@ export interface CatalogItemDtoOutput {
   /** @nullable */
   type: string | null;
   droppedBy: CatalogDropSourceDtoOutput[];
+  /** Whether the item takes the level of the character who loots it, so `lvl` and `stat` describe one of its levels. */
+  elasticLevel: boolean;
 }
 
 /**

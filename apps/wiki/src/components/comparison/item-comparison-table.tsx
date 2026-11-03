@@ -10,7 +10,9 @@ import {
 } from "@lootlog/ui/components/table";
 import { cn } from "cn";
 import { renderItemStat } from "@/components/render-item-stat";
+import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
+import { itemForCharacter } from "@/lib/elastic-level";
 import { compareItemStats } from "@/lib/item-comparison";
 import { type ItemUpgrade, upgradeItemStat } from "@/lib/item-upgrade";
 import { ComparedItemHeader } from "./compared-item-header";
@@ -21,11 +23,18 @@ type ItemComparisonTableProps = {
 
 /**
  * The compared items in columns and their stats in rows, each item at its
- * upgrade. Columns share the width, so the table never scrolls sideways.
+ * upgrade and, when elastic, at the set's level. Columns share the width, so the table never scrolls sideways.
  */
 export function ItemComparisonTable({ items }: ItemComparisonTableProps) {
+  const { set } = useEquipmentSet();
+
+  const looted = items.map(({ item, upgrade }) => ({
+    item: itemForCharacter(item, set.level),
+    upgrade,
+  }));
+
   const rows = compareItemStats(
-    items.map(({ item, upgrade }) => upgradeItemStat(item, upgrade)),
+    looted.map(({ item, upgrade }) => upgradeItemStat(item, upgrade)),
   );
 
   return (
@@ -34,7 +43,7 @@ export function ItemComparisonTable({ items }: ItemComparisonTableProps) {
         <caption className="sr-only">{t("comparison.statsTitle")}</caption>
         <TableHeader className="bg-sidebar">
           <TableRow className="hover:bg-transparent">
-            {items.map(({ item, upgrade }) => (
+            {looted.map(({ item, upgrade }) => (
               <TableHead
                 key={item.id}
                 scope="col"

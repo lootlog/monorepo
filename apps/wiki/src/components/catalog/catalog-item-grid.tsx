@@ -14,6 +14,8 @@ type CatalogItemGridProps = {
   showSource?: boolean;
   /** The searched phrase, marked in item names. */
   highlight?: string;
+  /** The highest level the items are filtered to. */
+  maxLevel?: number;
   /** Shows the attack speed each item adds, for a list ranked by it. */
   showAttackSpeed?: boolean;
 };
@@ -33,6 +35,7 @@ export function CatalogItemGrid({
   emptyLabel,
   showSource,
   highlight,
+  maxLevel,
   showAttackSpeed,
 }: CatalogItemGridProps) {
   if (isError) {
@@ -73,6 +76,7 @@ export function CatalogItemGrid({
               item={item}
               showSource={showSource}
               highlight={highlight}
+              maxLevel={maxLevel}
               showAttackSpeed={showAttackSpeed}
             />
           </li>
