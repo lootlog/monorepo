@@ -32,7 +32,6 @@
     "unknown": "?"
   },
   "cellLabel": "{{player}} · {{item}}: {{choice}}",
-  "canPickMust": "może wybrać „Bardzo chcę”",
   "settings": {
     "windowLabel": "Okno podziału łupów",
     "windowDescription": "Po walce w grupie pokazuje, co wybrali inni gracze z Lootlogiem i kto jeszcze nie zaakceptował łupu.",
