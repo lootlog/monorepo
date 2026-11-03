@@ -44,7 +44,7 @@ export const HeroDetail = () => {
   }
 
   if (model.status === "missing") {
-    const { t, error, queryGuildId, queryEventId } = model;
+    const { t, error, refetchEvent, queryGuildId, queryEventId } = model;
 
     return (
       <EventLoadError
@@ -52,6 +52,7 @@ export const HeroDetail = () => {
         guildId={queryGuildId}
         eventId={queryEventId}
         error={error}
+        onRetry={() => refetchEvent()}
         status={error ? undefined : 404}
         titles={{ 404: t("events.heroes.notFound") }}
       />
