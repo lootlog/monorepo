@@ -4,7 +4,11 @@ import { ListRow } from "@/components/list-row";
 import { HeroSightingClaimers } from "@/features/hero-sightings/components/hero-sighting-claimers";
 import { HeroSightingDetector } from "@/features/hero-sightings/components/hero-sighting-detector";
 import { HeroSightingPlace } from "@/features/hero-sightings/components/hero-sighting-place";
-import { isHeroSightingDetectorClaim } from "@/features/hero-sightings/hero-sighting-rows";
+import { HeroSightingRefresher } from "@/features/hero-sightings/components/hero-sighting-refresher";
+import {
+  getHeroSightingRefresher,
+  isHeroSightingDetectorClaim,
+} from "@/features/hero-sightings/hero-sighting-rows";
 import { format, isSameLocalDay } from "@/utils/local-date";
 
 type HeroSightingHistoryEntryProps = {
@@ -20,6 +24,7 @@ export function HeroSightingHistoryEntry({
   const isCurrent = sighting.closedAt === null;
   const firstSeenAt = new Date(sighting.firstSeenAt);
   const lastSeenAt = new Date(sighting.lastSeenAt);
+  const refreshedBy = getHeroSightingRefresher(sighting);
 
   const claims = sighting.claims.map((claim) => ({
     ...claim,
@@ -39,14 +44,19 @@ export function HeroSightingHistoryEntry({
         <span className="ll:flex ll:min-w-0 ll:flex-1 ll:items-center ll:gap-1 ll:font-normal">
           <HeroSightingClaimers claims={claims} />
         </span>
-        <span className="ll:shrink-0 ll:font-normal ll:tabular-nums ll:text-muted-foreground">
+        <span className="ll:flex ll:min-w-0 ll:shrink-0 ll:items-center ll:font-normal ll:tabular-nums ll:text-muted-foreground">
           <time dateTime={sighting.firstSeenAt}>
             {format(firstSeenAt, "dd.MM HH:mm:ss")}
           </time>
           {/* Later detections on the same map confirm the sighting. */}
           {lastSeenAt > firstSeenAt ? (
             <>
-              {" – "}
+              <span className="ll:shrink-0 ll:whitespace-pre">{" – "}</span>
+              {refreshedBy ? (
+                <span className="ll:mr-1 ll:flex ll:min-w-0">
+                  <HeroSightingRefresher member={refreshedBy} />
+                </span>
+              ) : null}
               <time dateTime={sighting.lastSeenAt}>
                 {format(
                   lastSeenAt,
