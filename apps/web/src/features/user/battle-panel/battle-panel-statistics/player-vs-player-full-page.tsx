@@ -16,11 +16,12 @@ import { BattlePanelPvpBattleCardSkeleton } from "@/features/user/battle-panel/c
 import { ResultsSurface } from "@/components/common/results-surface";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Table } from "@lootlog/ui/components/table";
-import { Button } from "@lootlog/ui/components/button";
-import { AlertCircle, RotateCcw, SearchX } from "lucide-react";
+import { AlertCircle, SearchX } from "lucide-react";
 import { usePlayerVsPlayerPage } from "./use-player-vs-player-page";
 import { StatisticsFilterToolbar } from "./components/statistics-filter-toolbar";
 import { StatisticsStackedFilters } from "./components/statistics-stacked-filters";
+import { RetryButton } from "@/components/common/retry-button";
+import { TableRowLinkCell } from "@/components/common/table-row-link-cell";
 
 export function PlayerVsPlayerFullPage() {
   const {
@@ -43,9 +44,8 @@ export function PlayerVsPlayerFullPage() {
     error,
     isFetching,
     refetch,
-    handleBattleOpen,
+    getBattleLink,
     table,
-    handleBattleRowKeyDown,
     myCharacter,
     opponentName,
     activeFilterChips,
@@ -103,15 +103,7 @@ export function PlayerVsPlayerFullPage() {
               t("common.routeErrors.status.500.description")
             }
             action={
-              <Button
-                type="button"
-                variant="outline"
-                loading={isFetching}
-                icon=<RotateCcw className="size-3.5" />
-                onClick={() => void refetch()}
-              >
-                {t("common.actions.retry")}
-              </Button>
+              <RetryButton onRetry={() => refetch()} isRetrying={isFetching} />
             }
           />
         </div>
@@ -140,7 +132,7 @@ export function PlayerVsPlayerFullPage() {
             <BattlePanelPvpBattleCard
               key={battle.battleId}
               battle={battle}
-              onBattleClick={handleBattleOpen}
+              link={getBattleLink(battle.battleId)}
             />
           ))}
         </div>
@@ -157,16 +149,18 @@ export function PlayerVsPlayerFullPage() {
         />
         <TanStackTableBody
           table={table}
-          cellClassName="whitespace-nowrap align-middle"
-          getRowProps={(row) => ({
-            className:
-              "h-14 cursor-pointer border-b border-border hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
-            onClick: () => handleBattleOpen(row.original.battleId),
-            onKeyDown: (event) =>
-              handleBattleRowKeyDown(event, row.original.battleId),
-            role: "link",
-            tabIndex: 0,
-          })}
+          rowClassName="h-14 border-b border-border hover:bg-muted/40"
+          cellClassName="relative whitespace-nowrap align-middle"
+          renderCellContent={(cell, content) => (
+            <TableRowLinkCell
+              fill
+              link={getBattleLink(cell.row.original.battleId)}
+              primary={cell.column.id === "userWarrior"}
+              label={t("battlePanel.list.openBattle")}
+            >
+              {content}
+            </TableRowLinkCell>
+          )}
         />
       </Table>
     );

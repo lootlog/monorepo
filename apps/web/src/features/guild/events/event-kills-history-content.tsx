@@ -158,6 +158,9 @@ export const EventKillsHistoryContent = ({
             void (isFetchNextPageError ? fetchNextPage() : refetch())
           }
           isRetrying={isFetching}
+          onShowAllHeroes={
+            selectedHeroId ? () => handleHeroChange(undefined) : undefined
+          }
         />
       </ScrollArea>
     </div>

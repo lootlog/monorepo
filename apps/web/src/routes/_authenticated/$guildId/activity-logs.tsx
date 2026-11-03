@@ -8,10 +8,7 @@ import {
 } from "@/features/guild/activity-logs/activity-logs.queries";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteInfiniteQuery } from "@/lib/router/route-prefetch";
-import {
-  GUILD_WORLD_SEARCH_PARAM,
-  readStoredGuildWorld,
-} from "@/hooks/context/use-guild-world";
+import { readGuildWorld } from "@/hooks/context/use-guild-world";
 
 const getSearchParamValues = (searchParams: URLSearchParams, key: string) => {
   const values = searchParams.getAll(key).filter(Boolean);
@@ -30,9 +27,7 @@ export const Route = createFileRoute("/_authenticated/$guildId/activity-logs")({
 
       // The page shows the Organization's world, which a link may carry.
       const world =
-        searchParams.get(GUILD_WORLD_SEARCH_PARAM) ||
-        readStoredGuildWorld(params.guildId) ||
-        undefined;
+        readGuildWorld(params.guildId, location.searchStr) ?? undefined;
 
       void prefetchRouteInfiniteQuery(
         context.queryClient,

@@ -7,7 +7,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Button } from "@lootlog/ui/components/button";
 import { EmptyMedia } from "@lootlog/ui/components/empty";
 import { groupBy, sortBy } from "es-toolkit";
-import { CircleAlert, Clock3, RotateCcw, SearchX } from "lucide-react";
+import { CircleAlert, Clock3, SearchX } from "lucide-react";
 import { useState } from "react";
 import { SingleTimer } from "./single-timer";
 import { TimersListSkeleton } from "./timers-list-skeleton";
@@ -39,6 +39,7 @@ import { canViewHeroSightings } from "@/features/guild/hero-sightings/hero-sight
 import { findTimerHeroSighting } from "@/features/guild/hero-sightings/find-timer-hero-sighting";
 import { useTimerDisplaySettings } from "./use-timer-display-settings";
 import { ThemeEmptyStateIcon } from "@/themes/adapters";
+import { RetryButton } from "@/components/common/retry-button";
 
 const getTimerListState = <Timer extends { npc?: { name: string } | null }>(
   timers: Timer[] | undefined,
@@ -152,15 +153,7 @@ export const Timers = () => {
   );
 
   const retryButton = (
-    <Button
-      type="button"
-      variant="outline"
-      loading={isFetching}
-      icon=<RotateCcw className="size-3.5" />
-      onClick={() => void refetch()}
-    >
-      {t("common.actions.retry")}
-    </Button>
+    <RetryButton onRetry={() => refetch()} isRetrying={isFetching} />
   );
 
   const renderContent = () => {

@@ -20,11 +20,10 @@ import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
-import { Button } from "@lootlog/ui/components/button";
 import { EmptyState } from "@/components/common/empty-state";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { CardListSkeleton } from "@/components/common/card-list-skeleton";
-import { CircleAlert, FilterX, SearchX } from "lucide-react";
+import { CircleAlert, SearchX } from "lucide-react";
 import {
   useKillsFilterProps,
   type KillsFiltersState,
@@ -41,18 +40,14 @@ import {
   useKillsControllerGetUserNpcKills,
 } from "@lootlog/client/main";
 
-import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
+import {
+  KILL_STATS_PERIODS,
+  type KillStatsPeriod,
+} from "@/features/kills/components/kill-stats-period-select";
 import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 import { useCursorStack } from "@/hooks/use-cursor-stack";
-
-const KILL_STATS_PERIODS = [
-  "all",
-  "24h",
-  "3d",
-  "7d",
-  "14d",
-  "30d",
-] as const satisfies KillStatsPeriod[];
+import { RetryButton } from "@/components/common/retry-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
 const killsSearchParsers = {
   world: parseAsString,
@@ -219,13 +214,7 @@ export const KillsPage: React.FC = () => {
             icon={CircleAlert}
             title={t("statistics.killsLoadError")}
             action={
-              <Button
-                variant="outline"
-                loading={isFetching}
-                onClick={() => void refetch()}
-              >
-                {t("common.actions.retry")}
-              </Button>
+              <RetryButton onRetry={() => refetch()} isRetrying={isFetching} />
             }
           />
         </div>
@@ -245,10 +234,7 @@ export const KillsPage: React.FC = () => {
             )}
             action={
               hasActiveFilters && (
-                <Button variant="outline" onClick={handleResetFilters}>
-                  <FilterX data-icon="inline-start" aria-hidden />
-                  {t("statistics.clearFilters")}
-                </Button>
+                <ClearFiltersButton onClear={handleResetFilters} />
               )
             }
           />

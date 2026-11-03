@@ -49,6 +49,7 @@ export const StatsNpcsList = () => {
     cursor,
     guildId,
     total,
+    isCapped,
     hasPrev,
     hasNext,
     handlePreviousPage,
@@ -149,7 +150,11 @@ export const StatsNpcsList = () => {
         scrollResetKey={cursor}
         footer={
           <TablePaginationFooter
-            totalLabel={t("kills.npcsList.total", { count: total })}
+            totalLabel={
+              isCapped
+                ? t("kills.npcsList.totalTop", { limit: total })
+                : t("kills.npcsList.total", { count: total })
+            }
             hasPrev={hasPrev}
             hasNext={hasNext}
             onPreviousPage={handlePreviousPage}

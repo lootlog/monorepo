@@ -9,7 +9,6 @@ import {
 } from "@/hooks/utils/use-virtual-infinite-scroll";
 import { useThemedKey } from "@/themes/adapters";
 import { useMembersControllerGetGuildMemberReferences } from "@lootlog/client/main";
-import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   getVirtualListPadding,
@@ -19,7 +18,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { useGuildWorld } from "@/hooks/context/use-guild-world";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
-import { AlertCircle, RotateCcw, SearchX } from "lucide-react";
+import { AlertCircle, Logs, SearchX } from "lucide-react";
 import { useRef, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { useTranslation } from "react-i18next";
@@ -29,6 +28,8 @@ import { ActivityLogsMobileListSkeleton } from "./components/activity-logs-mobil
 import { ActivityLogsTable } from "./components/activity-logs-table";
 import { ActorNameSelector } from "./components/actor-name-selector";
 import { useActivityLogsFilterModel } from "./components/use-activity-logs-filter-model";
+import { RetryButton } from "@/components/common/retry-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
 const ACTIVITY_LOGS_PAGE_LIMIT = 20;
 
@@ -126,15 +127,7 @@ export const ActivityLogs = () => {
             icon={AlertCircle}
             title={t("common.activityLogs.loadError")}
             action={
-              <Button
-                type="button"
-                variant="outline"
-                loading={isFetching}
-                icon=<RotateCcw className="size-3.5" />
-                onClick={() => void refetch()}
-              >
-                {t("common.actions.retry")}
-              </Button>
+              <RetryButton onRetry={() => refetch()} isRetrying={isFetching} />
             }
           />
         </div>
@@ -156,11 +149,21 @@ export const ActivityLogs = () => {
     if (activities.length === 0) {
       return (
         <div className="p-3">
-          <EmptyState
-            fill
-            icon={SearchX}
-            title={t(themedKey("common.activityLogs.empty"))}
-          />
+          {filterModel.hasActiveFilters ? (
+            <EmptyState
+              fill
+              icon={SearchX}
+              title={t("common.activityLogs.noResults")}
+              description={t("common.activityLogs.noResultsDescription")}
+              action={<ClearFiltersButton onClear={filterModel.clearFilters} />}
+            />
+          ) : (
+            <EmptyState
+              fill
+              icon={Logs}
+              title={t(themedKey("common.activityLogs.empty"))}
+            />
+          )}
         </div>
       );
     }
@@ -186,7 +189,6 @@ export const ActivityLogs = () => {
             loadingLabel={t(themedKey("common.activityLogs.loadingMore"))}
             endLabel={t(themedKey("common.activityLogs.end"))}
             errorLabel={t("common.activityLogs.loadError")}
-            retryLabel={t("common.actions.retry")}
           />
         </div>
       </>

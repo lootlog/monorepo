@@ -27,7 +27,8 @@
   "actions": {
     "backTo": "Wróć: {{page}}",
     "retry": "Spróbuj ponownie",
-    "undo": "Cofnij"
+    "undo": "Cofnij",
+    "clearFilters": "Wyczyść filtry"
   },
   "permissionRefresh": {
     "upToDate": "Uprawnienia są aktualne",
@@ -167,6 +168,8 @@
   "activityLogs": {
     "loadError": "Nie udało się załadować aktywności.",
     "empty": "Nie znaleziono żadnych aktywności.",
+    "noResults": "Brak pasujących aktywności",
+    "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej aktywności.",
     "emptyCat": "Kot śpi... brak aktywności 😴",
     "emptyRukia": "Lodowa cisza... brak aktywności.",
     "emptyRias": "Krąg magiczny milczy... brak aktywności.",

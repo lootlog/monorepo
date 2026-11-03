@@ -3,7 +3,7 @@ import { ListToolbar } from "@/components/common/list-toolbar";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { CircleAlert, RotateCcw, SearchX } from "lucide-react";
+import { CalendarClock, CircleAlert, SearchX } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -14,7 +14,6 @@ import {
   useUnpinReservationSpot,
 } from "@lootlog/client/main";
 
-import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -34,6 +33,8 @@ import {
   getVisibleReservationSpots,
   setReservationSpotPinned,
 } from "./reservation-spots";
+import { RetryButton } from "@/components/common/retry-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
 type PinMutationContext = { previous?: ReservationSpotsResponseDto };
 
@@ -119,30 +120,29 @@ export function Reservations() {
     </div>
   ) : sortedSpots.length === 0 ? (
     <div className="p-3">
-      <EmptyState
-        fill
-        icon={SearchX}
-        title={t("reservations.empty.title")}
-        description={
-          normalizedSearch
-            ? t("reservations.empty.searchDescription")
-            : t("reservations.empty.description")
-        }
-        action={
-          normalizedSearch || filter !== "all" ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
+      {normalizedSearch || filter !== "all" ? (
+        <EmptyState
+          fill
+          icon={SearchX}
+          title={t("reservations.empty.noResults")}
+          description={t("reservations.empty.noResultsDescription")}
+          action={
+            <ClearFiltersButton
+              onClear={() => {
                 setSearchValue("");
                 setFilter("all");
               }}
-            >
-              {t("reservations.empty.clearFilters")}
-            </Button>
-          ) : undefined
-        }
-      />
+            />
+          }
+        />
+      ) : (
+        <EmptyState
+          fill
+          icon={CalendarClock}
+          title={t("reservations.empty.title")}
+          description={t("reservations.empty.description")}
+        />
+      )}
     </div>
   ) : (
     <div className="overflow-hidden">
@@ -183,15 +183,10 @@ export function Reservations() {
             title={t("reservations.error.title")}
             description={t("reservations.error.description")}
             action={
-              <Button
-                type="button"
-                variant="outline"
-                loading={spotsQuery.isFetching}
-                icon=<RotateCcw className="size-3.5" />
-                onClick={() => void spotsQuery.refetch()}
-              >
-                {t("common.actions.retry")}
-              </Button>
+              <RetryButton
+                onRetry={() => spotsQuery.refetch()}
+                isRetrying={spotsQuery.isFetching}
+              />
             }
           />
         </div>

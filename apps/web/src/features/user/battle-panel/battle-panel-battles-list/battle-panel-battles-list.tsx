@@ -31,6 +31,10 @@ import {
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 import { upperFirst } from "es-toolkit";
+import {
+  BATTLE_PANEL_PAGE_SIZE,
+  buildDashboardBattlesParams,
+} from "@/features/user/battle-panel/battle-panel-request-params";
 
 const optionalQueryValue = <Value,>(value: Value | null | undefined) =>
   value ?? undefined;
@@ -43,7 +47,7 @@ export const BattlePanelBattlesList = () => {
     battlePanelBattlesSearchParsers,
   );
 
-  const pageSize = 20;
+  const pageSize = BATTLE_PANEL_PAGE_SIZE;
   const pageIndex = getBattlePanelPageIndex(queryState.page);
 
   const selectedWarriors = getSelectedWarriorsFromSearch(
@@ -58,22 +62,9 @@ export const BattlePanelBattlesList = () => {
     isLoading: isBattlesLoading,
     isPlaceholderData: isBattlesRefreshing,
     refetch: refetchBattles,
-  } = useBattlesControllerGetDashboardBattles({
-    cursor: optionalQueryValue(queryState.cursor),
-    size: pageSize,
-    includeTotal: true,
-    world: optionalQueryValue(queryState.world),
-    type: optionalQueryValue(queryState.type),
-    search: optionalQueryValue(queryState.search),
-    result: optionalQueryValue(queryState.result),
-    ph: optionalQueryValue(queryState.ph),
-    matchmaking: optionalQueryValue(queryState.matchmaking),
-    characterId: optionalQueryValue(queryState.characterId),
-    startDate: optionalQueryValue(queryState.startDate),
-    endDate: optionalQueryValue(queryState.endDate),
-    minLevel: queryState.minLevel,
-    maxLevel: queryState.maxLevel,
-  });
+  } = useBattlesControllerGetDashboardBattles(
+    buildDashboardBattlesParams(queryState),
+  );
 
   useResetRejectedBattlePanelCursor({
     cursor: queryState.cursor,

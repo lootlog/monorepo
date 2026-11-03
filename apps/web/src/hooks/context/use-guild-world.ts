@@ -39,6 +39,14 @@ export const readStoredGuildWorld = (
   }
 };
 
+/** The world a route loader scopes to, as `useGuildWorld` will read it. */
+export const readGuildWorld = (
+  guildId: string | undefined,
+  searchStr: string,
+): string | null =>
+  toGuildWorld(new URLSearchParams(searchStr).get(GUILD_WORLD_SEARCH_PARAM)) ??
+  readStoredGuildWorld(guildId);
+
 /** Remembers an Organization's world and tells every mounted reader. */
 export const storeGuildWorld = (
   guildId: string | undefined,

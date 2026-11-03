@@ -34,10 +34,11 @@
     "unpin": "Odepnij expowisko {{name}}"
   },
   "empty": {
-    "title": "Nie znaleziono expowisk",
+    "title": "Brak expowisk",
     "description": "Brak dostępnych expowisk do wyświetlenia.",
     "searchDescription": "Spróbuj zmienić wyszukiwaną frazę.",
-    "clearFilters": "Wyczyść filtry"
+    "noResults": "Brak pasujących expowisk",
+    "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej expowisk."
   },
   "datePicker": {
     "clear": "Wyczyść datę",

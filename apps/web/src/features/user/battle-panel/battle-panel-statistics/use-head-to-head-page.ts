@@ -17,7 +17,6 @@ import type {
 } from "@/lib/api/battlelog-types";
 import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 import { useBattlesControllerGetHeadToHead } from "@lootlog/client/battlelog";
-import { useNavigate } from "@tanstack/react-router";
 import {
   functionalUpdate,
   useTable,
@@ -25,10 +24,13 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
-import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { createBattlePanelCursorActions } from "../components/battle-panel-cursor-actions";
 import { useResetRejectedBattlePanelCursor } from "../components/use-reset-rejected-battle-panel-cursor";
+import {
+  BATTLE_PANEL_PAGE_SIZE,
+  buildHeadToHeadParams,
+} from "@/features/user/battle-panel/battle-panel-request-params";
 
 /** The battles of one Abyss season, which fix the character and dates. */
 export type HeadToHeadSeasonScope = {
@@ -69,7 +71,6 @@ export function useHeadToHeadPage({
   "columns" | "matchmaking" | "showPhFilter" | "season"
 >) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   const [queryState, setQueryState] = useQueryStates(
     battlePanelHeadToHeadSearchParsers,
@@ -86,7 +87,6 @@ export function useHeadToHeadPage({
     startDate: season?.startDate ?? queryState.startDate ?? undefined,
     endDate: season?.endDate ?? queryState.endDate ?? undefined,
     ph: showPhFilter ? (queryState.ph ?? undefined) : undefined,
-    cursor: queryState.cursor ?? undefined,
     search: queryState.search ?? undefined,
     sortBy: queryState.sortBy ?? "totalBattles",
     sortOrder: queryState.sortOrder ?? "desc",
@@ -101,7 +101,6 @@ export function useHeadToHeadPage({
     startDate,
     endDate,
     ph,
-    cursor,
     search,
     sortBy,
     sortOrder,
@@ -109,60 +108,40 @@ export function useHeadToHeadPage({
 
   const selectedWarriors = getSelectedWarriorsFromSearch(search);
   const sorting: SortingState = [{ id: sortBy, desc: sortOrder === "desc" }];
-  const pageSize = 20;
+  const pageSize = BATTLE_PANEL_PAGE_SIZE;
 
-  const handleRowClick = (opponentId: string) => {
-    if (!currentCharacterId) return;
-
-    void navigate({
-      to: "/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId",
-      params: {
-        myId: currentCharacterId,
-        opponentId,
-      },
-      search: {
-        characterId: currentCharacterId,
-        period,
-        minLevel,
-        maxLevel,
-        startDate,
-        endDate,
-        ph,
-        matchmaking,
-        seasonId: season?.id,
-      },
-    });
-  };
-
-  const handleRowKeyDown = (
-    event: KeyboardEvent<HTMLTableRowElement>,
-    opponentId: string,
-  ) => {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-
-    event.preventDefault();
-    handleRowClick(opponentId);
-  };
+  // Rows open one character's record against the opponent.
+  const getOpponentLink = (opponentId: string) =>
+    currentCharacterId
+      ? ({
+          to: "/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId",
+          params: {
+            myId: currentCharacterId,
+            opponentId,
+          },
+          search: {
+            characterId: currentCharacterId,
+            period,
+            minLevel,
+            maxLevel,
+            startDate,
+            endDate,
+            ph,
+            matchmaking,
+            seasonId: season?.id,
+          },
+        } as const)
+      : undefined;
 
   const { data, isLoading, isError, error, isFetching, refetch } =
-    useBattlesControllerGetHeadToHead({
-      cursor,
-      size: pageSize,
-      sortBy,
-      sortOrder,
-      characterId: currentCharacterId,
-      period,
-      startDate,
-      endDate,
-      search,
-      minLevel,
-      maxLevel,
-      ph,
-      matchmaking,
-      includeTotal: true,
-    });
+    useBattlesControllerGetHeadToHead(
+      buildHeadToHeadParams(queryState, {
+        characterId: currentCharacterId,
+        matchmaking,
+        showPhFilter,
+        season,
+      }),
+    );
 
   const applyFilterState = ({
     characterId,
@@ -359,9 +338,8 @@ export function useHeadToHeadPage({
     error,
     isFetching,
     refetch,
-    handleRowClick,
+    getOpponentLink,
     table,
-    handleRowKeyDown,
     activeFilterChips,
     applyFilterState,
   };

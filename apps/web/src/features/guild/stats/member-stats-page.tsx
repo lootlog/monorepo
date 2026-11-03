@@ -29,21 +29,8 @@ import {
 import { StatsTableResults } from "./components/stats-table-results";
 import { DetailPage } from "@/components/common/detail-page";
 import { ResultsSurface } from "@/components/common/results-surface";
-import type { useStatsSettings } from "./hooks/use-stats-settings";
 import { StatsDetailPageSkeleton } from "./stats-detail-page-skeleton";
 import { useMemberStatsPage } from "./use-member-stats-page";
-
-type StatsSettings = ReturnType<typeof useStatsSettings>["settings"];
-
-const hasMemberStatsFilters = (
-  settings: StatsSettings,
-  debouncedSearch: string,
-) =>
-  Boolean(settings.minLvl) ||
-  Boolean(settings.maxLvl) ||
-  settings.period !== "all" ||
-  settings.npcType !== "ALL" ||
-  Boolean(debouncedSearch);
 
 const getMemberStatsResponseView = (
   data: MemberKillsResponseDtoOutput | undefined,
@@ -61,7 +48,7 @@ export const MemberStatsPage = () => {
     t,
     data,
     settings,
-    debouncedSearch,
+    hasActiveFilters,
     firstRank,
     hasPrev,
     memberColor,
@@ -160,7 +147,6 @@ export const MemberStatsPage = () => {
   }
 
   const overview = data?.overview;
-  const hasActiveFilters = hasMemberStatsFilters(settings, debouncedSearch);
 
   const typeMetrics = NPC_TYPES_STRONGEST_FIRST.flatMap((type) => {
     const value = overview?.participationsByType[type] ?? 0;

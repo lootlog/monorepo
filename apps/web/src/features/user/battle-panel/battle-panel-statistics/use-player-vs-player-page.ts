@@ -14,16 +14,19 @@ import {
   useBattlesControllerGetPlayerVsPlayerBattles,
   type PlayerVsPlayerPaginatedResponseDtoOutput,
 } from "@lootlog/client/battlelog";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import { useTable } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
-import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { createBattlePanelCursorActions } from "../components/battle-panel-cursor-actions";
 import { useResetRejectedBattlePanelCursor } from "../components/use-reset-rejected-battle-panel-cursor";
 
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { playerVsPlayerColumns } from "./components/player-vs-player-columns";
+import {
+  BATTLE_PANEL_PAGE_SIZE,
+  buildPlayerVsPlayerParams,
+} from "@/features/user/battle-panel/battle-panel-request-params";
 
 const getPlayerVsPlayerRequestIds = (
   currentCharacterId: string | undefined,
@@ -47,7 +50,6 @@ const getPlayerVsPlayerTableView = (
 
 export function usePlayerVsPlayerPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const params = useParams({ strict: false });
 
   const opponentId = params.opponentId ?? params.myId;
@@ -67,7 +69,6 @@ export function usePlayerVsPlayerPage() {
     endDate: queryState.endDate ?? undefined,
     ph: queryState.ph ?? undefined,
     matchmaking: queryState.matchmaking ?? undefined,
-    cursor: queryState.cursor ?? undefined,
   });
 
   const {
@@ -80,10 +81,9 @@ export function usePlayerVsPlayerPage() {
     endDate,
     ph,
     matchmaking,
-    cursor,
   } = resolvePageState();
 
-  const pageSize = 20;
+  const pageSize = BATTLE_PANEL_PAGE_SIZE;
 
   const requestIds = getPlayerVsPlayerRequestIds(
     currentCharacterId,
@@ -147,20 +147,9 @@ export function usePlayerVsPlayerPage() {
   };
 
   const { data, isLoading, isError, error, isFetching, refetch } =
-    useBattlesControllerGetPlayerVsPlayerBattles({
-      cursor,
-      size: pageSize,
-      characterId: requestIds.characterId,
-      period,
-      startDate,
-      endDate,
-      opponentId: requestIds.opponentId,
-      minLevel,
-      maxLevel,
-      ph,
-      matchmaking,
-      includeTotal: true,
-    });
+    useBattlesControllerGetPlayerVsPlayerBattles(
+      buildPlayerVsPlayerParams(queryState, requestIds),
+    );
 
   useResetRejectedBattlePanelCursor({
     cursor: queryState.cursor,
@@ -174,24 +163,11 @@ export function usePlayerVsPlayerPage() {
     setQueryState,
   );
 
-  const handleBattleOpen = (battleId: string) => {
-    void navigate({
+  const getBattleLink = (battleId: string) =>
+    ({
       to: "/@me/battle-panel/battles/$battleId",
       params: { battleId },
-    });
-  };
-
-  const handleBattleRowKeyDown = (
-    event: KeyboardEvent<HTMLTableRowElement>,
-    battleId: string,
-  ) => {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-
-    event.preventDefault();
-    handleBattleOpen(battleId);
-  };
+    }) as const;
 
   const opponentNameCandidate = data?.battles[0]?.opponentWarrior.name;
 
@@ -256,9 +232,8 @@ export function usePlayerVsPlayerPage() {
     isFetching,
     refetch,
     battles,
-    handleBattleOpen,
+    getBattleLink,
     table,
-    handleBattleRowKeyDown,
     myCharacter,
     opponentName,
     activeFilterChips,

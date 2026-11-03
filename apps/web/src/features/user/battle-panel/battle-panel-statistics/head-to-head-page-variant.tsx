@@ -17,14 +17,16 @@ import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/compon
 import { ResultsSurface } from "@/components/common/results-surface";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Table } from "@lootlog/ui/components/table";
-import { Button } from "@lootlog/ui/components/button";
-import { AlertCircle, RotateCcw, SearchX } from "lucide-react";
+import { AlertCircle, SearchX, Swords } from "lucide-react";
 import { StatisticsFilterToolbar } from "./components/statistics-filter-toolbar";
 import { StatisticsStackedFilters } from "./components/statistics-stacked-filters";
 import {
   useHeadToHeadPage,
   type HeadToHeadPageVariantProps,
 } from "./use-head-to-head-page";
+import { RetryButton } from "@/components/common/retry-button";
+import { TableRowLinkCell } from "@/components/common/table-row-link-cell";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
 export function HeadToHeadPageVariant({
   columns,
@@ -61,12 +63,13 @@ export function HeadToHeadPageVariant({
     error,
     isFetching,
     refetch,
-    handleRowClick,
+    getOpponentLink,
     table,
-    handleRowKeyDown,
     activeFilterChips,
     applyFilterState,
   } = useHeadToHeadPage({ columns, matchmaking, showPhFilter, season });
+
+  const clearFilters = () => applyFilterState(getResetHeadToHeadFilters());
 
   const filterProps = {
     period,
@@ -126,15 +129,7 @@ export function HeadToHeadPageVariant({
               t("common.routeErrors.status.500.description")
             }
             action={
-              <Button
-                type="button"
-                variant="outline"
-                loading={isFetching}
-                icon=<RotateCcw className="size-3.5" />
-                onClick={() => void refetch()}
-              >
-                {t("common.actions.retry")}
-              </Button>
+              <RetryButton onRetry={() => refetch()} isRetrying={isFetching} />
             }
           />
         </div>
@@ -144,12 +139,22 @@ export function HeadToHeadPageVariant({
     if (!data || data.records.length === 0) {
       return (
         <div className="p-3">
-          <EmptyState
-            fill
-            icon={SearchX}
-            title={t(emptyTitleKey)}
-            description={t(emptyDescriptionKey)}
-          />
+          {activeFilterChips.length > 0 ? (
+            <EmptyState
+              fill
+              icon={SearchX}
+              title={t("battlePanel.statistics.noResults")}
+              description={t("battlePanel.statistics.noResultsDescription")}
+              action={<ClearFiltersButton onClear={clearFilters} />}
+            />
+          ) : (
+            <EmptyState
+              fill
+              icon={Swords}
+              title={t(emptyTitleKey)}
+              description={t(emptyDescriptionKey)}
+            />
+          )}
         </div>
       );
     }
@@ -162,7 +167,7 @@ export function HeadToHeadPageVariant({
               key={record.opponentId}
               record={record}
               showRatingDelta={showRatingDelta}
-              onOpen={handleRowClick}
+              link={getOpponentLink(record.opponentId)}
             />
           ))}
         </div>
@@ -179,16 +184,23 @@ export function HeadToHeadPageVariant({
         />
         <TanStackTableBody
           table={table}
-          cellClassName="whitespace-nowrap"
-          getRowProps={(row) => ({
-            className:
-              "h-14 cursor-pointer border-b border-border hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            onClick: () => handleRowClick(row.original.opponentId),
-            onKeyDown: (event) =>
-              handleRowKeyDown(event, row.original.opponentId),
-            role: "link",
-            tabIndex: 0,
-          })}
+          rowClassName="h-14 border-b border-border hover:bg-muted/40"
+          cellClassName="relative whitespace-nowrap"
+          renderCellContent={(cell, content) => {
+            const link = getOpponentLink(cell.row.original.opponentId);
+
+            return link ? (
+              <TableRowLinkCell
+                fill
+                link={link}
+                primary={cell.column.id === "opponentName"}
+              >
+                {content}
+              </TableRowLinkCell>
+            ) : (
+              content
+            );
+          }}
         />
       </Table>
     );
@@ -224,7 +236,7 @@ export function HeadToHeadPageVariant({
         filtersLabel={t("battlePanel.filters.title")}
         chips={activeFilterChips}
         clearFiltersLabel={t("battlePanel.filters.clear")}
-        onClearFilters={() => applyFilterState(getResetHeadToHeadFilters())}
+        onClearFilters={clearFilters}
         scrollResetKey={pageIndex}
         footer={paginationFooter}
       >

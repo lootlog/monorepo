@@ -49,7 +49,8 @@
     "searchPlaceholder": "Szukaj potwora",
     "npc": "Potwór",
     "type": "Typ",
-    "total": "Potworów: {{count}}"
+    "total": "Potworów: {{count}}",
+    "totalTop": "Top {{limit}} potworów"
   },
   "columns": {
     "name": "Nazwa",
@@ -70,7 +71,8 @@
     "notFound": "Nie ma takiego potwora w statystykach",
     "noKillers": "Nikt jeszcze nie ubił tego potwora",
     "filteredNoData": "Żaden członek nie pasuje do filtrów",
-    "searchPlaceholder": "Szukaj członka"
+    "searchPlaceholder": "Szukaj członka",
+    "totalTop": "Top {{limit}} członków"
   },
   "memberStats": {
     "subtitle": "Udziały w biciach",
