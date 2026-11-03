@@ -49,6 +49,7 @@ type CatalogNpcDocument = {
   type: CatalogNpcsResponseDto_Output["hits"][number]["type"];
   gameVersion: CatalogNpcsResponseDto_Output["hits"][number]["gameVersion"];
   locations?: CatalogNpcsResponseDto_Output["hits"][number]["locations"];
+  formerLevels?: CatalogNpcsResponseDto_Output["hits"][number]["formerLevels"];
   current?: boolean;
 };
 
@@ -232,6 +233,7 @@ export const makeCatalogModule = (
         "type",
         "gameVersion",
         "locations",
+        "formerLevels",
         "current",
       ],
       filter: filters.length > 0 ? filters.join(" AND ") : undefined,
@@ -263,11 +265,13 @@ export const makeCatalogModule = (
           identityNamespace: _namespace,
           current: _current,
           locations,
+          formerLevels,
           ...npc
         }) => ({
           ...npc,
           key: uid,
           locations: locations ?? [],
+          formerLevels: formerLevels ?? [],
         }),
       ),
     } satisfies CatalogNpcsResponseDto_Output;

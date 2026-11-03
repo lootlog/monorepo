@@ -189,6 +189,18 @@ export const CatalogNpcDto_Output = Schema.Struct({
     description:
       "Maps the NPC is fought on, most fought first, from its latest 1000 recorded fights; maps under 1% of them are left out. Lootlog recomputes them daily, so an NPC first seen today may have none yet.",
   }),
+  formerLevels: Schema.Array(
+    Schema.Struct({
+      lvl: FiniteNumber.annotate({ description: "The level it had." }),
+      until: Schema.String.annotate({
+        description:
+          "The UTC day, as `YYYY-MM-DD`, its next level was first recorded.",
+      }),
+    }),
+  ).annotate({
+    description:
+      "Levels the NPC had before the game changed it, oldest first. Lootlog recomputes them daily from recorded fights and leaves out NPCs whose level follows the player's.",
+  }),
 }).annotate({
   description: "A Margonem NPC in the public catalog",
   identifier: "CatalogNpcDto_Output",
