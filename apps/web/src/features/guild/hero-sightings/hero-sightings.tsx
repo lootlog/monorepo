@@ -5,9 +5,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AlertCircle, Radar, RotateCcw, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMediaQuery } from "usehooks-ts";
 import { EmptyState } from "@/components/common/empty-state";
-import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
@@ -17,9 +15,8 @@ import {
   type HeroSightingHistoryTarget,
 } from "./hero-sighting-history-dialog";
 import { sortHeroSightings } from "./hero-sighting-status";
-import { HeroSightingsList } from "./hero-sightings-list";
+import { HeroSightingsBoard } from "./hero-sightings-board";
 import { HeroSightingsResultsSkeleton } from "./hero-sightings-results-skeleton";
-import { HeroSightingsTable } from "./hero-sightings-table";
 import { useGuildHeroSightings } from "./use-guild-hero-sightings";
 
 /**
@@ -28,7 +25,6 @@ import { useGuildHeroSightings } from "./use-guild-hero-sightings";
  */
 export const HeroSightings = () => {
   const { t } = useTranslation();
-  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const now = useMinuteTimestamp();
   const [search, setSearch] = useState("");
 
@@ -108,17 +104,13 @@ export const HeroSightings = () => {
       );
     }
 
-    const resultsProps = {
-      sightings: visible,
-      now,
-      showWorld: world === null,
-      onOpenHistory: openHistory,
-    };
-
-    return usesTable ? (
-      <HeroSightingsTable {...resultsProps} />
-    ) : (
-      <HeroSightingsList {...resultsProps} />
+    return (
+      <HeroSightingsBoard
+        sightings={visible}
+        now={now}
+        showWorld={world === null}
+        onOpenHistory={openHistory}
+      />
     );
   };
 

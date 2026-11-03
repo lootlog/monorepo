@@ -1,4 +1,3 @@
-import type { ComponentType, ReactNode } from "react";
 import {
   useHeroSightingsControllerGetHeroSightingHistory,
   type HeroSightingResponseDtoHero,
@@ -6,26 +5,23 @@ import {
 import { HERO_SIGHTING_HISTORY_LIMIT } from "@lootlog/domain/hero-sightings";
 import { formatLevel } from "@lootlog/domain/profession";
 import { Button } from "@lootlog/ui/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@lootlog/ui/components/dialog";
+import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import {
   Drawer,
   DrawerClose,
   DrawerContent,
   DrawerDescription,
+  DrawerHeader,
   DrawerTitle,
 } from "@lootlog/ui/components/drawer";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { upperFirst } from "es-toolkit";
-import { cn } from "cn";
 import { AlertCircle, History, X } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "@/components/common/empty-state";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { LoadingSlot } from "@/components/common/loading-slot";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
@@ -36,11 +32,6 @@ export type HeroSightingHistoryTarget = {
   world: string;
   hero: HeroSightingResponseDtoHero;
 };
-
-type TextComponent = ComponentType<{
-  className?: string;
-  children?: ReactNode;
-}>;
 
 type HeroSightingHistoryDialogProps = {
   target: HeroSightingHistoryTarget | null;
@@ -57,6 +48,10 @@ export const HeroSightingHistoryDialog = ({
   const isMobile = useIsMobile();
   const now = useMinuteTimestamp();
   const isOpen = target !== null;
+  // Keeps the closing dialog's content while it animates out.
+  const [shown, setShown] = useState(target);
+
+  if (target !== null && target !== shown) setShown(target);
 
   const {
     data: history,
@@ -64,7 +59,7 @@ export const HeroSightingHistoryDialog = ({
     isError,
   } = useHeroSightingsControllerGetHeroSightingHistory(
     { guildId },
-    { world: target?.world ?? "", hero: target?.hero.key ?? "" },
+    { world: shown?.world ?? "", hero: shown?.hero.key ?? "" },
     { query: { enabled: isOpen && Boolean(guildId), staleTime: 15_000 } },
   );
 
@@ -98,9 +93,9 @@ export const HeroSightingHistoryDialog = ({
     }
 
     return (
-      <ol aria-label={t("heroSightings.history.listLabel")}>
+      <ol aria-label={t("heroSightings.history.listLabel")} className="py-1">
         {history.map((sighting) => (
-          <li key={sighting.id}>
+          <li key={sighting.id} className="group">
             <HeroSightingHistoryEntry sighting={sighting} now={now} />
           </li>
         ))}
@@ -108,49 +103,37 @@ export const HeroSightingHistoryDialog = ({
     );
   };
 
-  const renderContent = (
-    Title: TextComponent,
-    Description: TextComponent,
-    closeButton?: ReactNode,
-  ) => (
-    <>
-      <header
-        className={cn(
-          "flex shrink-0 items-start gap-3 border-b border-border px-3 py-3 text-left sm:px-4",
-          closeButton ? "pr-3" : "pr-12 sm:pr-14",
-        )}
-      >
-        <div className="min-w-0 flex-1">
-          <Title className="text-base leading-tight">
-            {target &&
-              t("heroSightings.history.title", {
-                hero: target.hero.name,
-                level: formatLevel(target.hero.lvl, target.hero.prof),
-              })}
-          </Title>
-          <Description className="mt-1 text-xs text-muted-foreground">
-            {target &&
-              t("heroSightings.history.description", {
-                world: upperFirst(target.world),
-                count: HERO_SIGHTING_HISTORY_LIMIT,
-              })}
-          </Description>
-        </div>
-        {closeButton}
-      </header>
-      <ScrollArea className="min-h-0 flex-1" orientation="vertical">
-        {renderBody()}
-      </ScrollArea>
-    </>
+  const title =
+    shown && t("heroSightings.history.title", { hero: shown.hero.name });
+
+  const description =
+    shown &&
+    t("heroSightings.history.description", {
+      level: formatLevel(shown.hero.lvl, shown.hero.prof),
+      world: upperFirst(shown.world),
+      count: HERO_SIGHTING_HISTORY_LIMIT,
+    });
+
+  const body = (
+    <ScrollArea className="min-h-0 flex-1" orientation="vertical">
+      {renderBody()}
+    </ScrollArea>
   );
 
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DrawerContent className="flex h-[92dvh] max-h-[92dvh] flex-col overflow-hidden border-border bg-background p-0">
-          {renderContent(
-            DrawerTitle,
-            DrawerDescription,
+        <DrawerContent className="flex h-[92dvh] max-h-[92dvh] flex-col overflow-hidden p-0">
+          <DrawerHeader className="flex-row items-center gap-3 border-b group-data-[swipe-axis=y]/drawer-popup:text-left">
+            <span className="shrink-0 rounded-lg bg-primary/10 p-2">
+              <History aria-hidden="true" className="size-4 text-primary" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <DrawerTitle className="text-base">{title}</DrawerTitle>
+              <DrawerDescription className="mt-0.5 text-xs">
+                {description}
+              </DrawerDescription>
+            </div>
             <DrawerClose
               render={
                 <Button
@@ -160,9 +143,10 @@ export const HeroSightingHistoryDialog = ({
                 />
               }
             >
-              <X className="size-4" />
-            </DrawerClose>,
-          )}
+              <X />
+            </DrawerClose>
+          </DrawerHeader>
+          {body}
         </DrawerContent>
       </Drawer>
     );
@@ -170,8 +154,13 @@ export const HeroSightingHistoryDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="flex h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border-border bg-background p-0 sm:max-w-2xl">
-        {renderContent(DialogTitle, DialogDescription)}
+      <DialogContent className="flex h-[min(85dvh,48rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <IconDialogHeader
+          icon={History}
+          title={title}
+          description={description}
+        />
+        {body}
       </DialogContent>
     </Dialog>
   );

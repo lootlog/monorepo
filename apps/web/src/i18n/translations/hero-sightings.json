@@ -8,12 +8,7 @@
   "empty": "Brak wykrytych herosów",
   "emptyDescription": "Gdy ktoś z Lootloga użyje w grze wykrywacza herosów, wynik pojawi się tutaj.",
   "noResults": "Brak pasujących herosów",
-  "columns": {
-    "hero": "Heros",
-    "status": "Stan",
-    "map": "Mapa",
-    "actions": "Akcje"
-  },
+  "map": "Mapa",
   "status": {
     "ROAMING": "Grasuje",
     "SPAWNING": "Pojawi się",
@@ -22,10 +17,17 @@
     "KILLED": "Zbity",
     "CLOSED": "Nieaktualny"
   },
+  "groups": {
+    "ROAMING": "Grasują",
+    "SPAWNING": "Pojawią się",
+    "STALE": "Niepotwierdzone",
+    "CLOSED": "Nieaktualne"
+  },
   "staleDescription": "Nikt nie potwierdził herosa od ponad 30 minut. Mógł już zostać zbity.",
-  "lastSeenAt": "Ostatnio potwierdzony",
-  "lastSeenBy": "Ostatnio potwierdził",
-  "firstSeenAt": "wykryty",
+  "staleIn": "Niepotwierdzony za {{minutes}} min",
+  "confirmed": "potwierdzony",
+  "confirmedBy": "potwierdził {{name}}",
+  "detectedAgo": "wykryty",
   "detectedBy": "Wykrył",
   "claims": "Obstawiają",
   "noClaims": "Nikt nie obstawia",
@@ -40,15 +42,16 @@
   },
   "history": {
     "open": "Historia herosa {{hero}}",
-    "title": "Historia: {{hero}} ({{level}})",
-    "description": "Ostatnie wykrycia na świecie {{world}}, najwyżej {{count}}.",
+    "title": "Historia: {{hero}}",
+    "description": "{{level}} · świat {{world}} · najwyżej {{count}} ostatnich wykryć",
     "listLabel": "Wykrycia herosa, od najnowszego",
     "empty": "Brak historii wykryć",
     "loadError": "Nie udało się pobrać historii",
     "detectedAt": "Wykryty",
     "lastSeenAt": "Ostatnio potwierdzony",
     "spawnedAt": "Pojawił się",
-    "closedAt": "Zamknięty"
+    "closedAt": "Zamknięty",
+    "lastSeenBy": "Ostatnio potwierdził"
   },
   "timer": {
     "ROAMING": "grasuje w:",

@@ -24,7 +24,12 @@ export const HeroSightingClaims = ({
 
   if (sighting.claims.length === 0) {
     return (
-      <span className={cn("text-xs text-muted-foreground", className)}>
+      <span
+        className={cn(
+          "flex h-7 items-center text-xs text-muted-foreground",
+          className,
+        )}
+      >
         {t("heroSightings.noClaims")}
       </span>
     );
@@ -33,7 +38,7 @@ export const HeroSightingClaims = ({
   return (
     <ul
       aria-label={t("heroSightings.claims")}
-      className={cn("flex min-w-0 flex-wrap gap-x-3 gap-y-1", className)}
+      className={cn("flex min-w-0 flex-wrap gap-1.5", className)}
     >
       {sighting.claims.map((claim) => {
         const isDetector =
@@ -42,13 +47,13 @@ export const HeroSightingClaims = ({
         return (
           <li
             key={claim.member.memberId}
-            className="flex min-w-0 items-center gap-1.5 text-xs"
+            className="flex h-7 min-w-0 items-center gap-1.5 rounded-full bg-muted/70 pr-2.5 pl-0.5 text-xs"
             title={claim.character?.name}
           >
             <MemberAvatar
               avatarUrl={claim.member.avatarUrl}
               name={claim.member.displayName}
-              className={cn("size-5", isDetector && DETECTOR_AVATAR_CLASS)}
+              className={cn("size-6", isDetector && DETECTOR_AVATAR_CLASS)}
             />
             <span
               className={cn(
