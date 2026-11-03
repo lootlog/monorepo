@@ -115,7 +115,8 @@ export const HeroSightingTimer = ({
           className="text-sm"
         />
       </span>
-      <span className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+      {/* A window across days is longer than the board's timer column. */}
+      <span className="text-xs text-muted-foreground tabular-nums">
         {t("heroSightings.lastSpawnWindow", {
           window: formatWindow(ended.minSpawnTime, ended.maxSpawnTime, now),
         })}

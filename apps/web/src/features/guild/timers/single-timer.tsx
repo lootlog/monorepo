@@ -107,7 +107,14 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                   </span>
                 )}
               </span>
-              <span className="flex min-w-0 items-center gap-x-3">
+              <span
+                className={cn(
+                  "flex min-w-0 items-center gap-x-3",
+                  // The sighting's map needs the line's width on phones, so
+                  // the member moves under it instead of overlapping it.
+                  heroSighting && "flex-wrap gap-y-1",
+                )}
+              >
                 {showWorld && (
                   <MetaItem
                     icon={Globe}

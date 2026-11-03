@@ -32,7 +32,8 @@ type HeroSightingRowProps = {
 
 /**
  * One hero on the board. Phones stack the hero over its map, timer and
- * claims; from `xl` every row shares the same columns.
+ * claims, with the actions beside the claims; from `xl` every row shares the
+ * same columns.
  */
 export const HeroSightingRow = ({
   sighting,
@@ -56,7 +57,7 @@ export const HeroSightingRow = ({
       aria-labelledby={titleId}
       className={cn(
         "grid grid-cols-[2.25rem_minmax(0,1fr)_auto] gap-x-3 gap-y-2.5 py-3",
-        "xl:grid-cols-[2.25rem_minmax(0,16rem)_minmax(0,1fr)_15rem_minmax(0,1fr)_10rem] xl:items-center xl:gap-x-5",
+        "xl:grid-cols-[2.25rem_minmax(0,1.3fr)_minmax(0,1fr)_9rem_minmax(0,0.6fr)_9rem] xl:items-center xl:gap-x-4",
         LIST_TILE_INSET_CLASS,
       )}
     >
@@ -65,7 +66,7 @@ export const HeroSightingRow = ({
         className="size-9 rounded-lg xl:row-start-1"
       />
 
-      <div className="col-start-2 row-start-1 flex min-w-0 flex-col gap-0.5 self-center">
+      <div className="col-span-2 col-start-2 row-start-1 flex min-w-0 flex-col gap-0.5 self-center xl:col-span-1">
         <HeroSightingHero
           id={titleId}
           sighting={sighting}
@@ -131,10 +132,10 @@ export const HeroSightingRow = ({
 
       <HeroSightingClaims
         sighting={sighting}
-        className="col-span-2 col-start-2 row-start-4 xl:col-span-1 xl:col-start-5 xl:row-start-1"
+        className="col-start-2 row-start-4 self-center xl:col-start-5 xl:row-start-1"
       />
 
-      <div className="col-start-3 row-start-1 flex items-center justify-end gap-1 self-start xl:col-start-6 xl:self-center">
+      <div className="col-start-3 row-start-4 flex items-center justify-end gap-1 self-center xl:col-start-6 xl:row-start-1">
         <HeroSightingClaimButton sighting={sighting} />
         <HeroSightingHistoryButton sighting={sighting} onOpen={onOpenHistory} />
       </div>
