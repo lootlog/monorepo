@@ -1,5 +1,8 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import type { LootSplitEvent } from "@lootlog/schema/loot-split";
+import type {
+  LootSplitAutoAcceptedEvent,
+  LootSplitEvent,
+} from "@lootlog/schema/loot-split";
 import { useEffect, useRef } from "react";
 import { GatewayEvent } from "@/config/gateway";
 import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
@@ -12,9 +15,11 @@ import {
   applyGameCommand,
   applyGameEvent,
   applyRemoteChoices,
+  applyRemoteFilterAccept,
   changedOwnSplits,
   EMPTY_LOOT_SPLIT_STATE,
   openOwnSplits,
+  ownLootFilterAcceptRecipients,
   type LootSplit,
   type LootSplitContext,
   type LootSplitState,
@@ -28,11 +33,16 @@ import { useLootSplitSocket } from "./use-loot-split-socket";
  */
 const CHOICES_COALESCE_MS = 150;
 
-// Loot, the chat that closes a split, and a fight start that closes the window.
+/** A Margonem party holds at most ten characters. */
+const MAX_RECIPIENTS = 9;
+
+// Loot, the chat that closes a split, a fight start that closes the window,
+// and the battle log that names a drop the loot filter took.
 const isLootSplitPacket = (event: GameEvent | undefined) =>
   event?.loot !== undefined ||
   event?.chat?.channels?.system !== undefined ||
-  event?.f?.init !== undefined;
+  event?.f?.init !== undefined ||
+  event?.f?.m !== undefined;
 
 const readContext = (): LootSplitContext | null => {
   const hero = useGameStore.getState().game?.hero;
@@ -87,8 +97,9 @@ const sendOwnView = (socket: AppSocket, splitId: string) => {
 /**
  * Follows the hero's group loot splits from game packets and outgoing
  * commands, shares the hero's choices with the other participants, and
- * merges theirs. Solo loots and splits without other participants never
- * reach the gateway.
+ * merges theirs. When the hero's loot filter accepts a split, which the game
+ * keeps from this client, the fight's other players learn of it. Solo loots
+ * and splits without other participants never reach the gateway.
  */
 export const useLootSplitSync = () => {
   const socket = useLootSplitSocket();
@@ -134,6 +145,23 @@ export const useLootSplitSync = () => {
         );
 
         share(changedOwnSplits(previous, next), next.heroId);
+
+        const recipientCharacterIds = ownLootFilterAcceptRecipients(
+          event,
+          context,
+        );
+
+        // Not queued while offline: the split is over within seconds.
+        if (
+          recipientCharacterIds &&
+          socketRef.current?.supportsLootSplitAutoAccept()
+        )
+          socketRef.current.emit(GatewayEvent.LOOT_SPLIT_AUTO_ACCEPT_SEND, {
+            recipientCharacterIds: recipientCharacterIds.slice(
+              0,
+              MAX_RECIPIENTS,
+            ),
+          });
       },
     );
 
@@ -175,10 +203,23 @@ export const useLootSplitSync = () => {
       lootSplitStore.update((state) => applyRemoteChoices(state, event));
     };
 
+    const handleFilterAccept = (event: LootSplitAutoAcceptedEvent) => {
+      if (event.world !== useGameStore.getState().game?.world) return;
+
+      lootSplitStore.update((state) =>
+        applyRemoteFilterAccept(state, event.sender.characterId, Date.now()),
+      );
+    };
+
     socket.on(GatewayEvent.LOOT_SPLIT_RECEIVE, handleChoices);
+    socket.on(GatewayEvent.LOOT_SPLIT_AUTO_ACCEPT_RECEIVE, handleFilterAccept);
 
     return () => {
       socket.off(GatewayEvent.LOOT_SPLIT_RECEIVE, handleChoices);
+      socket.off(
+        GatewayEvent.LOOT_SPLIT_AUTO_ACCEPT_RECEIVE,
+        handleFilterAccept,
+      );
     };
   }, [socket]);
 };

@@ -85,7 +85,7 @@ const MAX_SCOPE_BYTES = 1_024;
  * once `clusterFederationVersion` reaches it: a replica drops a frame its
  * schema does not know.
  */
-export const FEDERATION_VERSION = 9;
+export const FEDERATION_VERSION = 10;
 
 export const PARTY_GATHERING_STATE_FEDERATION_VERSION = 3;
 
@@ -106,6 +106,9 @@ export const PRESENCE_PAIR_FEDERATION_VERSION = 8;
 
 /** Replicas from this version decode `loot-split.received`. */
 export const LOOT_SPLIT_FEDERATION_VERSION = 9;
+
+/** Replicas from this version decode `loot-split.auto-accepted`. */
+export const LOOT_SPLIT_AUTO_ACCEPT_FEDERATION_VERSION = 10;
 
 /**
  * Identifies the frame schema of this build. A replica with the same schema
@@ -237,12 +240,17 @@ const isPingEvent = (
 ): event is Extract<
   Event,
   {
-    type: "map-ping.received" | "battle-ping.received" | "loot-split.received";
+    type:
+      | "map-ping.received"
+      | "battle-ping.received"
+      | "loot-split.received"
+      | "loot-split.auto-accepted";
   }
 > =>
   event.type === "map-ping.received" ||
   event.type === "battle-ping.received" ||
-  event.type === "loot-split.received";
+  event.type === "loot-split.received" ||
+  event.type === "loot-split.auto-accepted";
 
 export class RealtimeHub {
   private readonly logger = new ContextLogger(RealtimeHub.name);

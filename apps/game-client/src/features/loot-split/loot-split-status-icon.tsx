@@ -1,10 +1,20 @@
-import { Check, CircleHelp, Clock, Hourglass } from "lucide-react";
+import { Check, CircleHelp, Clock, Funnel, Hourglass } from "lucide-react";
 import type { FC } from "react";
 import type { LootSplitStatus } from "./loot-split-model";
 
-export const LootSplitStatusIcon: FC<{ status: LootSplitStatus }> = ({
-  status,
-}) => {
+export const LootSplitStatusIcon: FC<{
+  status: LootSplitStatus;
+  /** Accepted by the player's Margonem loot filter, not by a click. */
+  byLootFilter?: boolean;
+}> = ({ status, byLootFilter = false }) => {
+  if (status === "accepted" && byLootFilter)
+    return (
+      <Funnel
+        aria-hidden
+        className="ll:size-3.5 ll:shrink-0 ll:text-emerald-400"
+      />
+    );
+
   if (status === "accepted")
     return (
       <Check

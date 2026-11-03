@@ -1,8 +1,8 @@
-import { itemIconUrl } from "@lootlog/ui/components/item-image";
 import { cn } from "cn";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { LootSplitChoiceChip } from "./loot-split-choice-chip";
+import { LootSplitItemTile } from "./loot-split-item-tile";
 import {
   canPickMust,
   getLootSplitStatus,
@@ -94,19 +94,20 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
           </span>
         )}
       </header>
-      <table className="ll:-mx-1 ll:border-separate ll:border-spacing-x-1 ll:border-spacing-y-0.5 ll:text-xs">
+      <table className="ll:-mx-1 ll:self-start ll:border-separate ll:border-spacing-x-1 ll:border-spacing-y-0.5 ll:text-xs">
         <thead>
           <tr>
             <th scope="col">
               <span className="ll:sr-only">{t("participant")}</span>
             </th>
             {split.items.map((item) => (
-              <th key={item.id} scope="col" title={item.name}>
-                <img
-                  alt={item.name}
-                  src={itemIconUrl(item.icon)}
-                  className="ll:mx-auto ll:block ll:size-8 ll:rounded ll:bg-white/10"
-                />
+              <th
+                key={item.id}
+                scope="col"
+                title={item.name}
+                className="ll:p-0 ll:pb-0.5"
+              >
+                <LootSplitItemTile item={item} />
               </th>
             ))}
           </tr>
@@ -117,14 +118,19 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
               <th
                 scope="row"
                 title={
-                  view?.inferred
+                  view?.autoAccept === "newFight"
                     ? t("status.acceptedByNewFight")
-                    : t(`status.${status}`)
+                    : view?.autoAccept === "lootFilter"
+                      ? t("status.acceptedByLootFilter")
+                      : t(`status.${status}`)
                 }
                 className="ll:pr-2 ll:text-left ll:font-semibold"
               >
                 <span className="ll:flex ll:items-center ll:gap-1 ll:whitespace-nowrap">
-                  <LootSplitStatusIcon status={status} />
+                  <LootSplitStatusIcon
+                    status={status}
+                    byLootFilter={view?.autoAccept === "lootFilter"}
+                  />
                   <span
                     className={cn(
                       "ll:max-w-28 ll:truncate",
@@ -146,7 +152,12 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
                 const label = t("cellLabel", {
                   player: participant.name,
                   item: item.name,
-                  choice: t(`choices.${choice ?? "unknown"}`),
+                  // The game keeps a loot filter's choices from its player.
+                  choice: t(
+                    view?.autoAccept === "lootFilter"
+                      ? "choices.lootFilter"
+                      : `choices.${choice ?? "unknown"}`,
+                  ),
                 });
 
                 return (

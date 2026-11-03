@@ -51,6 +51,7 @@ export function prepareApiKeyEventVisibility(event: ServerEvent) {
       case "map-ping.received":
       case "battle-ping.received":
       case "loot-split.received":
+      case "loot-split.auto-accepted":
         // Its payload has no Organization: the hub checks the authoritative routing scope.
         return true;
       default:

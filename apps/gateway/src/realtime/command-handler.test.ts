@@ -221,7 +221,10 @@ const setup = (
     activity,
     { send: () => Promise.reject(new Error("Unexpected map ping")) },
     { send: () => Promise.reject(new Error("Unexpected battle ping")) },
-    { send: () => Promise.reject(new Error("Unexpected loot split")) },
+    {
+      send: () => Promise.reject(new Error("Unexpected loot split")),
+      autoAccept: () => Promise.reject(new Error("Unexpected loot split")),
+    },
     {
       updateSubscription,
       publishObservations,
@@ -945,7 +948,10 @@ describe("CommandHandler session lifecycle", () => {
         activity,
         { send: () => Promise.reject(new Error("Unexpected map ping")) },
         { send: () => Promise.reject(new Error("Unexpected battle ping")) },
-        { send: () => Promise.reject(new Error("Unexpected loot split")) },
+        {
+          send: () => Promise.reject(new Error("Unexpected loot split")),
+          autoAccept: () => Promise.reject(new Error("Unexpected loot split")),
+        },
         {
           updateSubscription: () =>
             Promise.reject(new Error("Unexpected air tag subscription")),
@@ -1472,6 +1478,19 @@ describe("CommandHandler session lifecycle", () => {
       apiKey: true,
       available: false,
     },
+    // An older replica drops `loot-split.auto-accepted`, so a filter accept would go unseen.
+    {
+      capability: "lootlog.loot-split.auto-accept.v1",
+      federationVersion: 9,
+      apiKey: false,
+      available: false,
+    },
+    {
+      capability: "lootlog.loot-split.auto-accept.v1",
+      federationVersion: 10,
+      apiKey: false,
+      available: true,
+    },
   ])(
     "advertises a federated game capability only after its federation rollout for game sessions: %j",
     async ({
@@ -1940,7 +1959,10 @@ describe("CommandHandler session lifecycle", () => {
       },
       { send: () => Promise.reject(new Error("unused")) },
       { send: () => Promise.reject(new Error("unused")) },
-      { send: () => Promise.reject(new Error("unused")) },
+      {
+        send: () => Promise.reject(new Error("unused")),
+        autoAccept: () => Promise.reject(new Error("unused")),
+      },
       {
         updateSubscription: () => Promise.reject(new Error("unused")),
         publishObservations: () => Promise.reject(new Error("unused")),

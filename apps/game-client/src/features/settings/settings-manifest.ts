@@ -103,6 +103,20 @@ const MANIFEST = [
             settingKeys: ["gameData.lootSplit"],
           },
           {
+            id: "loot-split-rarities",
+            labelKey: "lootSplit.settings.raritiesLabel",
+            descriptionKey: "lootSplit.settings.raritiesDescription",
+            aliases: [
+              "podział",
+              "łupy",
+              "rzadkość",
+              "legendarny",
+              "heroiczny",
+              "unikatowy",
+            ],
+            settingKeys: ["gameData.lootSplit"],
+          },
+          {
             id: "reset-window-layout",
             labelKey: "settings.general.resetWindowLayoutLabel",
             descriptionKey: "settings.general.resetWindowLayoutDescription",

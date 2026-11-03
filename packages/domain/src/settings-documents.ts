@@ -22,6 +22,7 @@ import {
   DEFAULT_NPC_TYPE_COLORS,
   isHexAppearanceColor,
 } from "@lootlog/schema/npc-appearance";
+import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { NpcTypeSchema, type NpcTypeEnum } from "@lootlog/schema/npc-type";
 import type {
   AirTagPreferences,
@@ -99,6 +100,13 @@ const UnknownRecord = Schema.Record(Schema.String, Schema.Unknown);
 
 const isEnabledFlagRecord = Schema.is(
   Schema.Struct({ enabled: Schema.optionalKey(Schema.Boolean) }),
+);
+
+const isLootSplitRecord = Schema.is(
+  Schema.Struct({
+    enabled: Schema.optionalKey(Schema.Boolean),
+    rarities: Schema.optionalKey(Schema.Array(ItemRaritySchema)),
+  }),
 );
 
 const isDetectorSettingsRecord = Schema.is(
@@ -367,7 +375,7 @@ export const SETTINGS_CATALOG = {
       lootSplit: field<Partial<LootSplitPreferences>>(
         {},
         accountScopes,
-        isEnabledFlagRecord,
+        isLootSplitRecord,
       ),
       detector: field<Partial<DetectorSettings>>(
         {},
