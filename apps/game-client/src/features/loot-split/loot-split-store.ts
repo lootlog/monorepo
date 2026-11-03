@@ -66,7 +66,4 @@ export const lootSplitStore = {
 
     return { previous, next };
   },
-  reset() {
-    setSnapshot(EMPTY_LOOT_SPLIT_STATE, Date.now());
-  },
 };

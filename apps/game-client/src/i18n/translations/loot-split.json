@@ -8,6 +8,7 @@
   "choosingCount": "Wybiera: {{count}}",
   "unknownCount": "Bez danych: {{count}}",
   "secondsLeft": "{{seconds}} s",
+  "connectionLost": "Wybory innych graczy mogą być nieaktualne.",
   "status": {
     "accepted": "Zaakceptował",
     "acceptedByNewFight": "Zaakceptowane przez nową walkę",

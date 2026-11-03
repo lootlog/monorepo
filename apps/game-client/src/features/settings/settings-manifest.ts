@@ -99,7 +99,7 @@ const MANIFEST = [
             id: "loot-split-window",
             labelKey: "lootSplit.settings.windowLabel",
             descriptionKey: "lootSplit.settings.windowDescription",
-            aliases: ["podział", "łupy", "loot", "zamula", "bardzo chcę"],
+            aliases: ["podział", "łupy", "loot", "okno"],
             settingKeys: ["gameData.lootSplit"],
           },
           {

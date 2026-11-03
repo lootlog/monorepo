@@ -3,6 +3,7 @@ import type {
   LootSplitChoice,
   LootSplitEvent,
 } from "@lootlog/schema/loot-split";
+import { getItemStat } from "@/utils/game/get-item-stat";
 
 /**
  * Group loot splits the hero takes part in, and every participant's choices
@@ -33,7 +34,7 @@ export type LootSplitItem = Readonly<{
 export type LootSplitView = Readonly<{
   choices: Readonly<Record<string, LootSplitChoice>>;
   accepted: boolean;
-  /** Accepted by the game itself, when a new fight closed the window. */
+  /** Accepted by the game itself, when a new fight or loot closed the window. */
   inferred: boolean;
 }>;
 
@@ -54,6 +55,11 @@ export type LootSplitState = Readonly<{
   splits: readonly LootSplit[];
   /** The split whose window the hero has; the game shows one at a time. */
   ownSplitId: string | null;
+  /**
+   * The hero sent `final=1` for its split; it counts as accepted only once
+   * the server answers without refusing it.
+   */
+  acceptRequested: boolean;
 }>;
 
 export type LootSplitStatus = "accepted" | "choosing" | "unknown";
@@ -68,6 +74,7 @@ export const EMPTY_LOOT_SPLIT_STATE: LootSplitState = {
   heroId: null,
   splits: [],
   ownSplitId: null,
+  acceptRequested: false,
 };
 
 export const canPickMust = (profession: string, item: LootSplitItem) =>
@@ -110,11 +117,33 @@ const sameChoices = (
 };
 
 const parseMustProfessions = (stat: string) =>
-  stat
-    .split(";")
-    .find((part) => part.startsWith("reqp="))
-    ?.slice("reqp=".length)
-    .split("") ?? [];
+  getItemStat(stat, "reqp")?.split("") ?? [];
+
+/** The command's parameter for each choice: `want`, `not` and `must`. */
+const COMMAND_CHOICES: ReadonlyArray<readonly [string, LootSplitChoice]> = [
+  ["not", 0],
+  ["want", 1],
+  ["must", 2],
+];
+
+/**
+ * The choices a `loot&want=…&not=…&must=…` command names. SI "nie chcę
+ * wszystkiego" accepts with every item under `not` in one request, so the
+ * accept carries choices the server may never echo.
+ */
+const parseCommandChoices = (command: string, split: LootSplit) => {
+  const params = new URLSearchParams(command.slice(command.indexOf("&") + 1));
+  const itemIds = new Set(split.items.map(({ id }) => id));
+  const choices: Record<string, LootSplitChoice> = {};
+
+  for (const [param, choice] of COMMAND_CHOICES) {
+    for (const id of params.get(param)?.split(",") ?? []) {
+      if (itemIds.has(id)) choices[id] = choice;
+    }
+  }
+
+  return choices;
+};
 
 const replaceSplit = (
   state: LootSplitState,
@@ -141,6 +170,48 @@ const getOwnOpenSplit = (state: LootSplitState) => {
   return split?.phase === "open" ? split : undefined;
 };
 
+const updateOwnView = (
+  state: LootSplitState,
+  update: (view: LootSplitView, split: LootSplit) => LootSplitView,
+): LootSplitState => {
+  const split = getOwnOpenSplit(state);
+  const view = state.heroId ? split?.views[state.heroId] : undefined;
+
+  if (!split || !state.heroId || !view) return state;
+
+  const next = update(view, split);
+
+  return next === view
+    ? state
+    : replaceSplit(state, setView(split, state.heroId, next));
+};
+
+/**
+ * Starting a fight or receiving another loot closes the hero's loot window
+ * without a request (NI `Battle.js` and `on_loot` call
+ * `Loot.deleteItemsAndCloseLootWindow`, SI `lootWindow` and `closeLootWindow`);
+ * the server then finalizes the hero's choices.
+ */
+const closeOwnWindow = (state: LootSplitState): LootSplitState => {
+  const closed = updateOwnView(state, (view) =>
+    view.accepted ? view : { ...view, accepted: true, inferred: true },
+  );
+
+  return { ...closed, ownSplitId: null, acceptRequested: false };
+};
+
+export type LootSplitContext = Readonly<{
+  at: number;
+  heroId: string;
+  /** The party as the runtime knows it, for a packet that carries none. */
+  party: readonly LootSplitParticipant[];
+  /**
+   * Character ids of the players in the fight that dropped the loot; party
+   * members who stayed out of it take no part in the split.
+   */
+  fighters: ReadonlySet<string>;
+}>;
+
 const partyFromEvent = (
   event: GameEvent,
 ): readonly LootSplitParticipant[] | null =>
@@ -152,39 +223,29 @@ const partyFromEvent = (
       }))
     : null;
 
-/**
- * A new fight closes the hero's loot window without a request (NI
- * `Loot.deleteItemsAndCloseLootWindow`, SI `closeLootWindow`); the server
- * then finalizes the hero's choices, so the hero no longer holds it up.
- */
-const acceptPreviousOwnSplit = (state: LootSplitState): LootSplitState => {
-  const split = getOwnOpenSplit(state);
-  const view = state.heroId ? split?.views[state.heroId] : undefined;
+const getParticipants = (
+  event: GameEvent,
+  { heroId, party, fighters }: LootSplitContext,
+) => {
+  const members = partyFromEvent(event) ?? party;
 
-  if (!split || !state.heroId || !view || view.accepted) return state;
+  if (event.loot?.source !== "fight" || fighters.size === 0) return members;
 
-  return replaceSplit(
-    state,
-    setView(split, state.heroId, { ...view, accepted: true, inferred: true }),
+  return members.filter(
+    ({ characterId }) => characterId === heroId || fighters.has(characterId),
   );
 };
-
-export type LootSplitContext = Readonly<{
-  at: number;
-  heroId: string;
-  /** The party as the runtime knows it, for a packet that carries none. */
-  party: readonly LootSplitParticipant[];
-}>;
 
 const openSplit = (
   state: LootSplitState,
   event: GameEvent,
-  { at, heroId, party }: LootSplitContext,
+  context: LootSplitContext,
 ): LootSplitState => {
   const loot = event.loot;
+  const closed = closeOwnWindow({ ...state, heroId: context.heroId });
 
   // `init` counts the split's participants; one is a solo loot.
-  if (!loot?.init || loot.init <= 1) return state;
+  if (!loot?.init || loot.init <= 1) return closed;
 
   const items = Object.entries(event.item ?? {})
     .filter(([, item]) => item.loc === "l")
@@ -199,7 +260,7 @@ const openSplit = (
 
   const [first] = items;
 
-  if (!first) return state;
+  if (!first) return closed;
 
   const seconds =
     loot.endTs !== undefined && event.ev !== undefined
@@ -209,12 +270,12 @@ const openSplit = (
   const split: LootSplit = {
     id: first.id,
     phase: "open",
-    deadline: at + seconds * 1_000,
+    deadline: context.at + seconds * 1_000,
     closedAt: null,
     items,
-    participants: partyFromEvent(event) ?? party,
+    participants: getParticipants(event, context),
     views: {
-      [heroId]: {
+      [context.heroId]: {
         choices: toChoices(loot.states),
         accepted: false,
         inferred: false,
@@ -222,11 +283,9 @@ const openSplit = (
     },
   };
 
-  const previous = acceptPreviousOwnSplit({ ...state, heroId });
-
   return {
-    ...previous,
-    splits: [...previous.splits.filter(({ id }) => id !== split.id), split],
+    ...closed,
+    splits: [...closed.splits.filter(({ id }) => id !== split.id), split],
     ownSplitId: split.id,
   };
 };
@@ -234,21 +293,33 @@ const openSplit = (
 const updateOwnChoices = (
   state: LootSplitState,
   states: Readonly<Record<string, number>>,
+) =>
+  updateOwnView(state, (view) => {
+    const choices = toChoices(states);
+
+    // The answer to `final=1` repeats the states; nothing changed.
+    return sameChoices(choices, view.choices) ? view : { ...view, choices };
+  });
+
+/**
+ * Settles a requested accept with the server's next answer. NI keeps the
+ * loot window open when that answer carries `w` (`Loot.finalize`), so the
+ * hero has not accepted after all.
+ */
+const settleAccept = (
+  state: LootSplitState,
+  event: GameEvent,
 ): LootSplitState => {
-  const split = getOwnOpenSplit(state);
-  const view = state.heroId ? split?.views[state.heroId] : undefined;
+  if (!state.acceptRequested) return state;
 
-  if (!split || !state.heroId || !view) return state;
+  if (Object.hasOwn(event, "w")) return { ...state, acceptRequested: false };
 
-  const choices = toChoices(states);
+  if (!event.loot) return state;
 
-  // The answer to `final=1` repeats the states; nothing changed.
-  if (sameChoices(choices, view.choices)) return state;
-
-  return replaceSplit(
-    state,
-    setView(split, state.heroId, { ...view, choices }),
-  );
+  return {
+    ...updateOwnView(state, (view) => ({ ...view, accepted: true })),
+    acceptRequested: false,
+  };
 };
 
 /** Matches a "Podział łupów" message to its split by the quoted item hashes. */
@@ -278,7 +349,12 @@ export const applyGameEvent = (
   let next = state;
 
   if (event.loot?.init !== undefined) next = openSplit(next, event, context);
+  // A reload delivers the fight and its loot in one packet; only a fight
+  // without loot closes the window.
+  else if (event.f?.init) next = closeOwnWindow(next);
   else if (event.loot?.states) next = updateOwnChoices(next, event.loot.states);
+
+  next = settleAccept(next, event);
 
   for (const { msg } of event.chat?.channels?.system?.msg ?? []) {
     if (msg) next = resolveByDistribution(next, msg, context.at);
@@ -287,7 +363,10 @@ export const applyGameEvent = (
   return next;
 };
 
-/** NI and SI both accept with a `loot&…&final=1` request. */
+/**
+ * Follows the hero's `loot&…` requests, the same on NI and SI. An accept
+ * (`final=1`) takes the choices it names and waits for the server's answer.
+ */
 export const applyGameCommand = (
   state: LootSplitState,
   command: string,
@@ -296,14 +375,18 @@ export const applyGameCommand = (
     return state;
 
   const split = getOwnOpenSplit(state);
-  const view = state.heroId ? split?.views[state.heroId] : undefined;
 
-  if (!split || !state.heroId || !view || view.accepted) return state;
+  if (!split) return state;
 
-  return replaceSplit(
-    state,
-    setView(split, state.heroId, { ...view, accepted: true }),
-  );
+  const named = updateOwnView(state, (view) => {
+    if (view.accepted) return view;
+
+    const choices = { ...view.choices, ...parseCommandChoices(command, split) };
+
+    return sameChoices(choices, view.choices) ? view : { ...view, choices };
+  });
+
+  return { ...named, acceptRequested: true };
 };
 
 export const applyRemoteChoices = (
@@ -371,3 +454,12 @@ export const changedOwnSplits = (
     );
   });
 };
+
+/** Open splits in which the hero has a view, to share again after reconnecting. */
+export const openOwnSplits = (state: LootSplitState): LootSplit[] =>
+  state.splits.filter(
+    (split) =>
+      split.phase === "open" &&
+      state.heroId !== null &&
+      split.views[state.heroId] !== undefined,
+  );

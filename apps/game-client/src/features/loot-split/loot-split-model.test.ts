@@ -66,7 +66,12 @@ const FIRST_ITEMS = {
 
 const SECOND_ITEMS = { "1200660001": item("b0b1", "Hełm", "w") };
 
-const context = (at = 0) => ({ at, heroId: HERO, party: [] });
+const context = (at = 0, fighters: readonly string[] = []) => ({
+  at,
+  heroId: HERO,
+  party: [],
+  fighters: new Set(fighters),
+});
 
 const open = (
   state: LootSplitState = EMPTY_LOOT_SPLIT_STATE,
@@ -95,7 +100,7 @@ describe("loot split model", () => {
   it("ignores a solo loot, which has nobody to wait for", () => {
     const solo = groupLoot(FIRST_ITEMS, { [HERO]: member("cashtelan", "p") });
 
-    expect(open(EMPTY_LOOT_SPLIT_STATE, solo)).toBe(EMPTY_LOOT_SPLIT_STATE);
+    expect(open(EMPTY_LOOT_SPLIT_STATE, solo).splits).toEqual([]);
   });
 
   it("opens a group split keyed by its smallest item id, with the party it fought with", () => {
@@ -121,42 +126,47 @@ describe("loot split model", () => {
     });
   });
 
-  it("shares a changed choice but not the states the game repeats with the accept answer", () => {
+  it("shares a changed choice but not the states the game repeats", () => {
     const opened = open();
-
-    const changed = applyGameEvent(
-      opened,
-      states({ "1200653658": 0, "1200653660": 1 }),
-      context(),
-    );
+    const choice = states({ "1200653658": 0, "1200653660": 1 });
+    const changed = applyGameEvent(opened, choice, context());
 
     expect(changedOwnSplits(opened, changed)).toHaveLength(1);
-
-    const accepted = applyGameCommand(
-      changed,
-      "loot&want=1200653660&not=1200653658&must=&final=1",
-    );
-
-    const repeated = applyGameEvent(
-      accepted,
-      states({ "1200653658": 0, "1200653660": 1 }),
-      context(),
-    );
-
-    expect(changedOwnSplits(changed, accepted)).toHaveLength(1);
-    expect(repeated).toBe(accepted);
+    expect(applyGameEvent(changed, choice, context())).toBe(changed);
   });
 
-  it("accepts only on the final loot command", () => {
+  it("counts an accept only once the server answers it without refusing", () => {
     const opened = open();
+    const command = "loot&want=1200653658,1200653660&not=&must=&final=1";
+    const requested = applyGameCommand(opened, command);
+    const answer = states({ "1200653658": 1, "1200653660": 1 });
 
+    // Changing a choice is not an accept.
     expect(
       applyGameCommand(opened, "loot&want=1200653658&not=&must=&final=0"),
     ).toBe(opened);
+    expect(requested.splits[0]?.views[HERO]?.accepted).toBe(false);
     expect(
-      applyGameCommand(opened, "loot&want=1200653658&not=&must=&final=1")
-        .splits[0]?.views[HERO]?.accepted,
+      applyGameEvent(requested, answer, context()).splits[0]?.views[HERO]
+        ?.accepted,
     ).toBe(true);
+    // NI keeps the loot window open when the answer carries `w`.
+    expect(
+      applyGameEvent(requested, Object.assign({ w: 1 }, answer), context())
+        .splits[0]?.views[HERO]?.accepted,
+    ).toBe(false);
+  });
+
+  it("takes the choices of an SI refuse-all accept from the request itself", () => {
+    const requested = applyGameCommand(
+      open(),
+      "loot&not=1200653658,1200653660&final=1",
+    );
+
+    expect(requested.splits[0]?.views[HERO]?.choices).toEqual({
+      "1200653658": 0,
+      "1200653660": 0,
+    });
   });
 
   it("keeps the first split open for a participant who was left out when the leader regrouped", () => {
@@ -190,6 +200,44 @@ describe("loot split model", () => {
         remote("100", { splitId: "1200660001" }),
       ),
     ).toBe(withSlowpoke);
+  });
+
+  it("counts the hero's window closed by a fight without loot as accepted", () => {
+    const fought = applyGameEvent(open(), { f: { init: "1" } }, context(3_000));
+
+    expect(fought.ownSplitId).toBeNull();
+    expect(fought.splits[0]?.views[HERO]).toMatchObject({
+      accepted: true,
+      inferred: true,
+    });
+  });
+
+  it("keeps a solo loot's choices out of the group split it closed", () => {
+    const solo = groupLoot(SECOND_ITEMS, { [HERO]: member("cashtelan", "p") });
+    const afterSolo = open(open(), solo, 3_000);
+
+    const soloChoice = applyGameEvent(
+      afterSolo,
+      states({ "1200660001": 0 }),
+      context(3_500),
+    );
+
+    expect(soloChoice).toBe(afterSolo);
+    expect(afterSolo.splits[0]?.views[HERO]?.accepted).toBe(true);
+  });
+
+  it("leaves party members who stayed out of the fight out of the split", () => {
+    const state = applyGameEvent(
+      EMPTY_LOOT_SPLIT_STATE,
+      groupLoot(FIRST_ITEMS),
+      context(0, ["100", "365"]),
+    );
+
+    expect(state.splits[0]?.participants.map(({ name }) => name)).toEqual([
+      "nekoza",
+      "cashtelan",
+      "Knoper S",
+    ]);
   });
 
   it("counts the hero's window closed by a new fight as accepted", () => {

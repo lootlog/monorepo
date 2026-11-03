@@ -290,7 +290,7 @@ export class MargonemRuntimeBridge {
         } catch (error) {
           this.reportObserverFailure({
             error,
-            phase: "intent",
+            phase: "command",
             sequence: this.sequence,
           });
         }
