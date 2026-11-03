@@ -24,6 +24,7 @@ import { RolesHandlers } from "./roles/roles.handlers.js";
 import { SoundSettingsHandlers } from "./sound-settings/sound-settings.handlers.js";
 import { TimerSettingsHandlers } from "./timer-settings/timer-settings.handlers.js";
 import { TimersHandlers } from "./timers/timers.handlers.js";
+import { HeroSightingsHandlers } from "./hero-sightings/hero-sightings.handlers.js";
 import { UserLootlogConfigHandlers } from "./user-lootlog-config/user-lootlog-config.handlers.js";
 import { UsersHandlers } from "./users/users.handlers.js";
 import { UserThemesHandlers } from "./user-themes/user-themes.handlers.js";
@@ -36,6 +37,7 @@ export const LootlogApiHandlers = Layer.mergeAll(
   InternalGuildsHandlers,
   RolesHandlers,
   TimersHandlers,
+  HeroSightingsHandlers,
   UserLootlogConfigHandlers,
   TimerSettingsHandlers,
   PreferencesHandlers,

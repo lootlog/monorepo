@@ -30269,7 +30269,8 @@
                     "TIMER_BEFORE_SPAWN",
                     "NPC_SPAWNED",
                     "WATCHED_ITEM_DROPPED",
-                    "SCHEDULED_MESSAGE"
+                    "SCHEDULED_MESSAGE",
+                    "HERO_SIGHTED"
                   ]
                 },
                 "guildId": {
@@ -30332,6 +30333,16 @@
                         "minimum": -9007199254740991,
                         "maximum": 9007199254740991
                       }
+                    },
+                    "npcLevelMin": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "npcLevelMax": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "allOf": [
@@ -30690,7 +30701,8 @@
               "TIMER_BEFORE_SPAWN",
               "NPC_SPAWNED",
               "WATCHED_ITEM_DROPPED",
-              "SCHEDULED_MESSAGE"
+              "SCHEDULED_MESSAGE",
+              "HERO_SIGHTED"
             ]
           },
           "guildId": {
@@ -30753,6 +30765,16 @@
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
                 }
+              },
+              "npcLevelMin": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "npcLevelMax": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               }
             },
             "allOf": [
@@ -31048,6 +31070,18 @@
             "maxItems": 5,
             "description": "Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id."
           },
+          "npcLevelMin": {
+            "nullable": true,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500
+          },
+          "npcLevelMax": {
+            "nullable": true,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500
+          },
           "itemId": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -31117,7 +31151,8 @@
               "TIMER_BEFORE_SPAWN",
               "NPC_SPAWNED",
               "WATCHED_ITEM_DROPPED",
-              "SCHEDULED_MESSAGE"
+              "SCHEDULED_MESSAGE",
+              "HERO_SIGHTED"
             ]
           },
           "targetIds": {
@@ -31174,6 +31209,18 @@
             "maxItems": 5,
             "description": "Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id."
           },
+          "npcLevelMin": {
+            "nullable": true,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500
+          },
+          "npcLevelMax": {
+            "nullable": true,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500
+          },
           "itemId": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -31243,7 +31290,8 @@
               "TIMER_BEFORE_SPAWN",
               "NPC_SPAWNED",
               "WATCHED_ITEM_DROPPED",
-              "SCHEDULED_MESSAGE"
+              "SCHEDULED_MESSAGE",
+              "HERO_SIGHTED"
             ]
           },
           "targetIds": {
@@ -31382,7 +31430,8 @@
                         "TIMER_BEFORE_SPAWN",
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
-                        "SCHEDULED_MESSAGE"
+                        "SCHEDULED_MESSAGE",
+                        "HERO_SIGHTED"
                       ]
                     },
                     "world": {
@@ -31509,7 +31558,8 @@
                         "TIMER_BEFORE_SPAWN",
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
-                        "SCHEDULED_MESSAGE"
+                        "SCHEDULED_MESSAGE",
+                        "HERO_SIGHTED"
                       ]
                     },
                     "guildId": {
@@ -31572,6 +31622,16 @@
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991
                           }
+                        },
+                        "npcLevelMin": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "npcLevelMax": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
                         }
                       },
                       "allOf": [
@@ -31923,7 +31983,8 @@
                         "TIMER_BEFORE_SPAWN",
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
-                        "SCHEDULED_MESSAGE"
+                        "SCHEDULED_MESSAGE",
+                        "HERO_SIGHTED"
                       ]
                     },
                     "world": {
@@ -32050,7 +32111,8 @@
                         "TIMER_BEFORE_SPAWN",
                         "NPC_SPAWNED",
                         "WATCHED_ITEM_DROPPED",
-                        "SCHEDULED_MESSAGE"
+                        "SCHEDULED_MESSAGE",
+                        "HERO_SIGHTED"
                       ]
                     },
                     "guildId": {
@@ -32113,6 +32175,16 @@
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991
                           }
+                        },
+                        "npcLevelMin": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "npcLevelMax": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
                         }
                       },
                       "allOf": [
@@ -32628,7 +32700,8 @@
                   "TIMER_BEFORE_SPAWN",
                   "NPC_SPAWNED",
                   "WATCHED_ITEM_DROPPED",
-                  "SCHEDULED_MESSAGE"
+                  "SCHEDULED_MESSAGE",
+                  "HERO_SIGHTED"
                 ]
               },
               "guildId": {
@@ -32691,6 +32764,16 @@
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
                     }
+                  },
+                  "npcLevelMin": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "npcLevelMax": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
                   }
                 },
                 "allOf": [

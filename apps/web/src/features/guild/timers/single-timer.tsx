@@ -9,7 +9,10 @@ import { upperFirst } from "es-toolkit";
 import { DoorOpen, Globe, User } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import type { TimerResponseDto } from "@lootlog/client/main";
+import type {
+  HeroSightingResponseDto,
+  TimerResponseDto,
+} from "@lootlog/client/main";
 import { parseMsToTime } from "@lootlog/datetime";
 import type { TimerColorPaint } from "@lootlog/domain/timer-colors";
 import {
@@ -27,6 +30,7 @@ import {
 } from "@/utils/date/parse-timestamp-to-date";
 import { MetaItem } from "@/components/common/meta-item";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { HeroSightingTimerLocation } from "@/features/guild/hero-sightings/hero-sighting-timer-location";
 
 // The game client's colours: green while a Hero Tracker's entrance is open,
 // white until the spawn window opens, orange inside it, red past the maximum,
@@ -52,6 +56,8 @@ type SingleTimerProps = {
   isPinned: boolean;
   /** Names the timer's world, for lists that span every world. */
   showWorld?: boolean;
+  /** The current sighting of a hero timer's hero, from the hero detector. */
+  heroSighting?: HeroSightingResponseDto;
 };
 
 export const SingleTimer: FC<SingleTimerProps> = ({
@@ -61,6 +67,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   removeTimerAfterMs,
   isPinned,
   showWorld = false,
+  heroSighting,
 }) => {
   const { t } = useTranslation();
   const [now, setNow] = useState(Date.now);
@@ -122,6 +129,12 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                   >
                     {upperFirst(timer.world)}
                   </MetaItem>
+                )}
+                {heroSighting && (
+                  <HeroSightingTimerLocation
+                    sighting={heroSighting}
+                    now={now}
+                  />
                 )}
                 {timer.member?.name && (
                   <MetaItem icon={User} className="min-w-0">

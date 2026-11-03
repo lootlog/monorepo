@@ -2,6 +2,7 @@ import { BandSection } from "@/components/common/band-section";
 import { PageHeader } from "@/components/common/page-header";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { NotificationCreateSkeleton } from "./notification-create-skeleton";
+import { NotificationHeroLevelFields } from "./notification-hero-level-fields";
 import { NotificationNpcFields } from "./notification-npc-fields";
 import { NotificationScheduleFields } from "./notification-schedule-fields";
 import { NotificationTimerFields } from "./notification-timer-fields";
@@ -38,6 +39,8 @@ export const NotificationRuleFormPage = () => {
     isError,
     isSubmitting,
     isScheduledMessage,
+    isHeroSighting,
+    isTimerRule,
     maxNpcCount,
     npcSearch,
     setNpcSearch,
@@ -162,11 +165,14 @@ export const NotificationRuleFormPage = () => {
               description={
                 isScheduledMessage
                   ? t("settings.notifications.ruleDialog.whenScheduledMessage")
-                  : t("settings.notifications.ruleDialog.whenTimer")
+                  : isHeroSighting
+                    ? t("settings.notifications.ruleDialog.whenHeroSighting")
+                    : t("settings.notifications.ruleDialog.whenTimer")
               }
             >
               <NotificationNpcFields
                 isScheduledMessage={isScheduledMessage}
+                isTimerRule={isTimerRule}
                 form={form}
                 t={t}
                 worldOptions={worldOptions}
@@ -181,8 +187,13 @@ export const NotificationRuleFormPage = () => {
                 isAllWorlds={isAllWorlds}
                 hasAllWorldTimerNpcSelection={hasAllWorldTimerNpcSelection}
               />
+              <NotificationHeroLevelFields
+                isHeroSighting={isHeroSighting}
+                form={form}
+                t={t}
+              />
               <NotificationTimerFields
-                isScheduledMessage={isScheduledMessage}
+                isTimerRule={isTimerRule}
                 form={form}
                 t={t}
               />

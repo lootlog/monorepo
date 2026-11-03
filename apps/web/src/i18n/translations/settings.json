@@ -485,7 +485,8 @@
       "timerBeforeSpawn": "Przypomnienie przed spawnem",
       "npcSpawned": "Spawn potwora",
       "watchedItemDropped": "Drop obserwowanego przedmiotu",
-      "scheduledMessage": "Zaplanowana wiadomość"
+      "scheduledMessage": "Zaplanowana wiadomość",
+      "heroSighted": "Wykrycie herosa"
     },
     "jobStatuses": {
       "pending": "Oczekuje",
@@ -607,7 +608,9 @@
       "scheduledAtFuture": "Data wysyłki musi być w przyszłości",
       "intervalValueRange": "Wartość musi być od 1 do 24",
       "timeOfDayRequired": "Podaj godzinę wysyłki",
-      "weekdayRequired": "Wybierz dzień tygodnia"
+      "weekdayRequired": "Wybierz dzień tygodnia",
+      "worldRequired": "Wybierz świat",
+      "npcLevelOrder": "Poziom „do” nie może być niższy od poziomu „od”"
     },
     "fields": {
       "channel": "Kanał Discorda",
@@ -625,6 +628,10 @@
       "scheduledUntil": "Data zakończenia",
       "world": "Świat",
       "npcs": "Filtr NPC",
+      "npcLevel": "Poziom herosa",
+      "npcLevelMin": "Poziom herosa od",
+      "npcLevelMax": "Poziom herosa do",
+      "npcLevelDescription": "Puste pole nie ogranicza poziomu.",
       "manualNpcIds": "ID NPC",
       "contentTemplate": "Szablon wiadomości",
       "scheduleAnchor": "Punkt odniesienia",
@@ -659,7 +666,12 @@
       "previewValues": {
         "ruleName": "Timer herosów",
         "npcName": "Tanroth",
-        "world": "Berufs"
+        "world": "Berufs",
+        "heroName": "Tepeyollotl",
+        "heroLevel": "258b",
+        "state": "Grasuje w",
+        "mapName": "Oztotl Tzacua p.2 - sala 2",
+        "detectedBy": "Kamil"
       },
       "variables": {
         "ruleName": "Nazwa reguły",
@@ -668,7 +680,12 @@
         "world": "Świat",
         "minSpawnTime": "Najwcześniejszy spawn",
         "maxSpawnTime": "Najpóźniejszy spawn",
-        "scheduledFor": "Czas wysyłki"
+        "scheduledFor": "Czas wysyłki",
+        "heroName": "Nazwa herosa",
+        "heroLevel": "Poziom herosa",
+        "state": "Stan (grasuje / pojawi się / pojawił się)",
+        "mapName": "Mapa",
+        "detectedBy": "Kto wykrył"
       },
       "presets": {
         "simple": "Prosty",
@@ -693,9 +710,11 @@
       },
       "triggerOptions": {
         "timerBeforeSpawn": "Gdy zbliża się respawn potwora z ustawionym timerem.",
-        "scheduledMessage": "O wybranej porze, jednorazowo lub cyklicznie."
+        "scheduledMessage": "O wybranej porze, jednorazowo lub cyklicznie.",
+        "heroSighted": "Gdy ktoś z Lootloga wykryje herosa albo heros pojawi się w wykrytym miejscu."
       },
       "whenTimer": "Lootlog wyśle przypomnienie, gdy ktoś z Lootloga ustawi timer wybranego potwora.",
+      "whenHeroSighting": "Lootlog wyśle wiadomość, gdy wykrywacz pokaże nowe miejsce herosa na wybranym świecie, a potem gdy heros pojawi się w wykrytym miejscu.",
       "whenScheduledMessage": "Lootlog wyśle wiadomość w wybranym terminie, a przy harmonogramie w każdym kolejnym.",
       "unsavedNewRule": "Nowa reguła nie jest jeszcze zapisana",
       "targetsDescription": "Wybierz jeden lub więcej kanałów docelowych. Możesz też dodać nowy bez opuszczania formularza."

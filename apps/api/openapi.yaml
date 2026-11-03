@@ -3521,6 +3521,492 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateManualTimerDto"
         required: true
+  /hero-sightings:
+    post:
+      tags:
+        - hero-sightings
+      operationId: HeroSightingsController_createHeroSighting
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "201":
+          description: CreateHeroSightingResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateHeroSightingResponseDto"
+        "400":
+          description: HttpErrorResponse | RequestValidationError
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Record a hero detector answer for every Organization the character submits data to. A repeated detection confirms the current sighting; a contradicting one closes it as probably killed.
+      summary: Report a hero detection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHeroSightingDto"
+        required: true
+    get:
+      tags:
+        - hero-sightings
+      operationId: HeroSightingsController_getAllHeroSightings
+      parameters:
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HeroSightingResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: The latest sighting of each hero from the last day, across every Organization of the authenticated user whose roles can see that hero.
+      summary: Get hero sightings of every Organization
+  /guilds/{guildId}/hero-sightings:
+    get:
+      tags:
+        - hero-sightings
+      operationId: HeroSightingsController_getHeroSightings
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            example: guild_123
+          required: true
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HeroSightingResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: The latest sighting of each hero in a world from the last day, limited to heroes the caller's roles can see.
+      summary: Get Organization hero sightings
+  /guilds/{guildId}/hero-sightings/history:
+    get:
+      tags:
+        - hero-sightings
+      operationId: HeroSightingsController_getHeroSightingHistory
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            example: guild_123
+          required: true
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+          required: true
+        - name: hero
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            description: Hero key (`hero.key`) or hero name.
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HeroSightingResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: The retained sightings of one hero in a world, newest first.
+      summary: Get hero sighting history
+  /guilds/{guildId}/hero-sightings/{sightingId}/claim:
+    post:
+      tags:
+        - hero-sightings
+      operationId: HeroSightingsController_claimHeroSighting
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            example: guild_123
+          required: true
+        - name: sightingId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: HeroSightingResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeroSightingResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Declare that the caller camps the hero of a current sighting. Several Members can camp one hero; repeating a declaration keeps the first.
+      summary: Declare camping a sighted hero
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimHeroSightingDto"
+        required: true
+    delete:
+      tags:
+        - hero-sightings
+      operationId: HeroSightingsController_unclaimHeroSighting
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            example: guild_123
+          required: true
+        - name: sightingId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: HeroSightingResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeroSightingResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Withdraw the caller's declaration that they camp a sighted hero.
+      summary: Withdraw a camping declaration
   /users/@me/lootlog-config/accounts/{accountId}:
     get:
       tags:
@@ -25048,6 +25534,7 @@ components:
                 - NPC_SPAWNED
                 - WATCHED_ITEM_DROPPED
                 - SCHEDULED_MESSAGE
+                - HERO_SIGHTED
             guildId:
               nullable: true
               type: string
@@ -25095,6 +25582,14 @@ components:
                     type: integer
                     minimum: -9007199254740991
                     maximum: 9007199254740991
+                npcLevelMin:
+                  type: integer
+                  minimum: -9007199254740991
+                  maximum: 9007199254740991
+                npcLevelMax:
+                  type: integer
+                  minimum: -9007199254740991
+                  maximum: 9007199254740991
               allOf:
                 - type: object
                   additionalProperties: {}
@@ -25412,6 +25907,7 @@ components:
                       - NPC_SPAWNED
                       - WATCHED_ITEM_DROPPED
                       - SCHEDULED_MESSAGE
+                      - HERO_SIGHTED
                   world:
                     nullable: true
                     type: string
@@ -25516,6 +26012,7 @@ components:
                       - NPC_SPAWNED
                       - WATCHED_ITEM_DROPPED
                       - SCHEDULED_MESSAGE
+                      - HERO_SIGHTED
                   guildId:
                     nullable: true
                     type: string
@@ -25563,6 +26060,14 @@ components:
                           type: integer
                           minimum: -9007199254740991
                           maximum: 9007199254740991
+                      npcLevelMin:
+                        type: integer
+                        minimum: -9007199254740991
+                        maximum: 9007199254740991
+                      npcLevelMax:
+                        type: integer
+                        minimum: -9007199254740991
+                        maximum: 9007199254740991
                     allOf:
                       - type: object
                         additionalProperties: {}
@@ -25862,6 +26367,7 @@ components:
                       - NPC_SPAWNED
                       - WATCHED_ITEM_DROPPED
                       - SCHEDULED_MESSAGE
+                      - HERO_SIGHTED
                   world:
                     nullable: true
                     type: string
@@ -25966,6 +26472,7 @@ components:
                       - NPC_SPAWNED
                       - WATCHED_ITEM_DROPPED
                       - SCHEDULED_MESSAGE
+                      - HERO_SIGHTED
                   guildId:
                     nullable: true
                     type: string
@@ -26013,6 +26520,14 @@ components:
                           type: integer
                           minimum: -9007199254740991
                           maximum: 9007199254740991
+                      npcLevelMin:
+                        type: integer
+                        minimum: -9007199254740991
+                        maximum: 9007199254740991
+                      npcLevelMax:
+                        type: integer
+                        minimum: -9007199254740991
+                        maximum: 9007199254740991
                     allOf:
                       - type: object
                         additionalProperties: {}
@@ -26270,6 +26785,16 @@ components:
             maximum: 9007199254740991
           maxItems: 5
           description: Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id.
+        npcLevelMin:
+          nullable: true
+          type: integer
+          minimum: 0
+          maximum: 500
+        npcLevelMax:
+          nullable: true
+          type: integer
+          minimum: 0
+          maximum: 500
         itemId:
           type: integer
           minimum: -9007199254740991
@@ -26334,6 +26859,7 @@ components:
             - NPC_SPAWNED
             - WATCHED_ITEM_DROPPED
             - SCHEDULED_MESSAGE
+            - HERO_SIGHTED
         targetIds:
           type: array
           items:
@@ -26375,6 +26901,16 @@ components:
             maximum: 9007199254740991
           maxItems: 5
           description: Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id.
+        npcLevelMin:
+          nullable: true
+          type: integer
+          minimum: 0
+          maximum: 500
+        npcLevelMax:
+          nullable: true
+          type: integer
+          minimum: 0
+          maximum: 500
         itemId:
           type: integer
           minimum: -9007199254740991
@@ -26439,6 +26975,7 @@ components:
             - NPC_SPAWNED
             - WATCHED_ITEM_DROPPED
             - SCHEDULED_MESSAGE
+            - HERO_SIGHTED
         targetIds:
           type: array
           items:
@@ -26706,6 +27243,7 @@ components:
             - NPC_SPAWNED
             - WATCHED_ITEM_DROPPED
             - SCHEDULED_MESSAGE
+            - HERO_SIGHTED
         guildId:
           nullable: true
           type: string
@@ -26753,6 +27291,14 @@ components:
                 type: integer
                 minimum: -9007199254740991
                 maximum: 9007199254740991
+            npcLevelMin:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            npcLevelMax:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
           allOf:
             - type: object
               additionalProperties: {}
@@ -26975,6 +27521,7 @@ components:
                   - NPC_SPAWNED
                   - WATCHED_ITEM_DROPPED
                   - SCHEDULED_MESSAGE
+                  - HERO_SIGHTED
               guildId:
                 nullable: true
                 type: string
@@ -27022,6 +27569,14 @@ components:
                       type: integer
                       minimum: -9007199254740991
                       maximum: 9007199254740991
+                  npcLevelMin:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  npcLevelMax:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
                 allOf:
                   - type: object
                     additionalProperties: {}
@@ -30751,6 +31306,338 @@ components:
           - characterId
           - catchingGuildIds
         additionalProperties: false
+    HeroSightingResponseDto:
+      type: object
+      properties:
+        id:
+          type: number
+        guildId:
+          type: string
+        world:
+          type: string
+        hero:
+          type: object
+          properties:
+            key:
+              type: string
+            name:
+              type: string
+            lvl:
+              type: number
+            prof:
+              nullable: true
+              type: string
+              enum:
+                - WARRIOR
+                - PALADIN
+                - HUNTER
+                - MAGE
+                - BLADE_DANCER
+                - TRACKER
+          required:
+            - key
+            - name
+            - lvl
+            - prof
+          additionalProperties: false
+        state:
+          type: string
+          enum:
+            - ROAMING
+            - SPAWNING
+        mapName:
+          type: string
+          description: Map name from the detector answer. Margonem sends no map id, and several maps can share a name.
+        firstSeenAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        lastSeenAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        spawnedAt:
+          description: When a detected spawn was first reported roaming.
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        closedAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        closeReason:
+          description: PROBABLY_KILLED when a later detection contradicted the sighting; KILLED when Lootlog recorded the kill.
+          nullable: true
+          type: string
+          enum:
+            - KILLED
+            - PROBABLY_KILLED
+        detectedBy:
+          $ref: "#/components/schemas/HeroSightingMemberDto"
+        detectorCharacter:
+          nullable: true
+          type: object
+          properties:
+            name:
+              type: string
+            lvl:
+              nullable: true
+              type: number
+            prof:
+              nullable: true
+              type: string
+              enum:
+                - WARRIOR
+                - PALADIN
+                - HUNTER
+                - MAGE
+                - BLADE_DANCER
+                - TRACKER
+            icon:
+              nullable: true
+              type: string
+          required:
+            - name
+            - lvl
+            - prof
+            - icon
+          additionalProperties: false
+        lastSeenBy:
+          $ref: "#/components/schemas/HeroSightingMemberDto"
+        claims:
+          type: array
+          items:
+            type: object
+            properties:
+              member:
+                $ref: "#/components/schemas/HeroSightingMemberDto"
+              character:
+                nullable: true
+                type: object
+                properties:
+                  name:
+                    type: string
+                  lvl:
+                    nullable: true
+                    type: number
+                  prof:
+                    nullable: true
+                    type: string
+                    enum:
+                      - WARRIOR
+                      - PALADIN
+                      - HUNTER
+                      - MAGE
+                      - BLADE_DANCER
+                      - TRACKER
+                  icon:
+                    nullable: true
+                    type: string
+                required:
+                  - name
+                  - lvl
+                  - prof
+                  - icon
+                additionalProperties: false
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            required:
+              - member
+              - character
+              - createdAt
+            additionalProperties: false
+      required:
+        - id
+        - guildId
+        - world
+        - hero
+        - state
+        - mapName
+        - firstSeenAt
+        - lastSeenAt
+        - spawnedAt
+        - closedAt
+        - closeReason
+        - detectedBy
+        - detectorCharacter
+        - lastSeenBy
+        - claims
+      additionalProperties: false
+    HeroSightingMemberDto:
+      type: object
+      properties:
+        memberId:
+          type: number
+        userId:
+          description: Internal Lootlog User id of the Member, or null for a Member that never signed in.
+          nullable: true
+          type: string
+        displayName:
+          type: string
+        avatarUrl:
+          nullable: true
+          type: string
+      required:
+        - memberId
+        - userId
+        - displayName
+        - avatarUrl
+      additionalProperties: false
+    ClaimHeroSightingDto:
+      type: object
+      properties:
+        actorCharacter:
+          type: object
+          properties:
+            accountId:
+              type: string
+              minLength: 1
+            characterId:
+              type: string
+              minLength: 1
+            name:
+              type: string
+              minLength: 1
+              maxLength: 50
+            prof:
+              type: string
+            icon:
+              type: string
+            lvl:
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
+          required:
+            - accountId
+            - characterId
+            - name
+          additionalProperties: false
+      additionalProperties: false
+    CreateHeroSightingResponseDto:
+      type: object
+      properties:
+        submittedGuilds:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              guildName:
+                type: string
+              sighting:
+                $ref: "#/components/schemas/HeroSightingResponseDto"
+            required:
+              - guildId
+              - guildName
+            additionalProperties: false
+        rejectedGuilds:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              guildName:
+                type: string
+              reason:
+                type: string
+                enum:
+                  - NOT_ON_CATCHING_WHITELIST
+                  - SIGHTING_SUBMIT_FAILED
+            required:
+              - guildId
+              - guildName
+              - reason
+            additionalProperties: false
+      required:
+        - submittedGuilds
+        - rejectedGuilds
+      additionalProperties: false
+    CreateHeroSightingDto:
+      type: object
+      properties:
+        world:
+          type: string
+          minLength: 1
+          maxLength: 64
+        accountId:
+          type: string
+          minLength: 1
+        characterId:
+          type: string
+          minLength: 1
+        actorCharacter:
+          type: object
+          properties:
+            accountId:
+              type: string
+              minLength: 1
+            characterId:
+              type: string
+              minLength: 1
+            name:
+              type: string
+              minLength: 1
+              maxLength: 50
+            prof:
+              type: string
+            icon:
+              type: string
+            lvl:
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
+          required:
+            - accountId
+            - characterId
+            - name
+          additionalProperties: false
+        hero:
+          type: object
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+            lvl:
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
+            prof:
+              type: string
+              description: Margonem profession shortname from the detector answer.
+          required:
+            - name
+            - lvl
+          additionalProperties: false
+        state:
+          type: string
+          enum:
+            - ROAMING
+            - SPAWNING
+        mapName:
+          type: string
+          minLength: 1
+          maxLength: 200
+        observedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          description: When Margonem answered the detector, from the system chat message time.
+      required:
+        - world
+        - accountId
+        - characterId
+        - hero
+        - state
+        - mapName
+        - observedAt
+      additionalProperties: false
     CreateManualTimerDto:
       type: object
       properties:
@@ -34260,6 +35147,7 @@ tags:
   - name: internal
   - name: roles
   - name: timers
+  - name: hero-sightings
   - name: user-lootlog-config
   - name: timer-settings
   - name: preferences

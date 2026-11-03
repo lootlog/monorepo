@@ -12,13 +12,31 @@ import {
   type AccessPolicyChange,
 } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
+import { HERO_SIGHTING_READ_FEATURE } from "@lootlog/domain/npc-permissions";
 import type { PermissionsUpdatedPayload } from "@/lib/socket";
 
 const isQueryPath = Schema.is(Schema.String);
 
 const isGuildQueryParams = Schema.is(Schema.Struct({ guildId: Schema.String }));
 
-type TimerRecord = { guildId: string; npc: { type: string; lvl: number } };
+/**
+ * A row whose visibility follows its NPC: a timer, or a hero sighting, which
+ * names only the hero's level.
+ */
+type TimerRecord =
+  | { guildId: string; npc: { type: string; lvl: number } }
+  | { guildId: string; hero: { lvl: number } };
+
+const canReadRecord = (
+  organization: AccessPolicySnapshot["organizations"][number],
+  row: TimerRecord,
+) =>
+  "npc" in row
+    ? canReadPolicyNpc(organization, "timers", row.npc)
+    : canReadPolicyNpc(organization, HERO_SIGHTING_READ_FEATURE, {
+        type: "HERO",
+        lvl: row.hero.lvl,
+      });
 
 const policies = new WeakMap<QueryClient, AccessPolicySnapshot>();
 
@@ -39,10 +57,7 @@ const filterTimers = <T extends TimerRecord>(
   const filtered = rows.filter((row) => {
     const organization = organizations.get(row.guildId);
 
-    return (
-      organization !== undefined &&
-      canReadPolicyNpc(organization, "timers", row.npc)
-    );
+    return organization !== undefined && canReadRecord(organization, row);
   });
 
   return filtered.length === rows.length ? rows : filtered;
@@ -111,7 +126,8 @@ export const getTimerQueryGuildId = (
 ): string | null | undefined => {
   const [path, params] = query.queryKey;
 
-  if (path === "/timers") return null;
+  // Hero sightings borrow the timer visibility, so they follow its policy.
+  if (path === "/timers" || path === "/hero-sightings") return null;
 
   if (path === "/timers/history") {
     if (isGuildQueryParams(params)) return params.guildId;

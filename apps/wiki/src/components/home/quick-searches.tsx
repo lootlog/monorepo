@@ -26,6 +26,19 @@ const QUICK_SEARCHES: ReadonlyArray<{
     key: "highLevelLegendaries",
     search: { rarities: ItemRarity.LEGENDARY, minLevel: "250" },
   },
+  // Group fights go to whoever moves first, so players gear for speed.
+  {
+    key: "fastestTrackerNecklaces",
+    search: { slot: "necklace", professions: "t", sort: "attackSpeed:desc" },
+  },
+  {
+    key: "fastestTrackerHelmets",
+    search: { slot: "helmet", professions: "t", sort: "attackSpeed:desc" },
+  },
+  {
+    key: "fastestHunterNecklaces",
+    search: { slot: "necklace", professions: "h", sort: "attackSpeed:desc" },
+  },
 ];
 
 export function QuickSearches() {

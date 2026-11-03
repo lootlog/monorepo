@@ -8,7 +8,11 @@ import {
   $isTextNode,
   type LexicalNode,
 } from "lexical";
-import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
+import {
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+  type CreateNotificationRuleDtoTriggerType,
+  type RoleResponseDtoOutput as GuildRole,
+} from "@lootlog/client/main";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import {
   $createNotificationTemplateRoleNode,
@@ -19,6 +23,49 @@ import {
   $isNotificationTemplateVariableNode,
 } from "./notification-template-variable-node";
 
+/** The `{{variable}}` placeholders the API renders, by the rule triggers that fill them. */
+const TIMER_VARIABLE_KEYS = [
+  "ruleName",
+  "npcName",
+  "npcId",
+  "world",
+  "minSpawnTime",
+  "maxSpawnTime",
+  "scheduledFor",
+] as const;
+
+export const SCHEDULED_MESSAGE_VARIABLE_KEYS = new Set([
+  "ruleName",
+  "scheduledFor",
+]);
+
+const HERO_SIGHTING_VARIABLE_KEYS = [
+  "ruleName",
+  "heroName",
+  "heroLevel",
+  "state",
+  "mapName",
+  "detectedBy",
+  "world",
+] as const;
+
+const TEMPLATE_VARIABLE_PATTERN = [
+  ...new Set([...TIMER_VARIABLE_KEYS, ...HERO_SIGHTING_VARIABLE_KEYS]),
+].join("|");
+
+export const getTemplateVariableKeys = (
+  triggerType: CreateNotificationRuleDtoTriggerType | undefined,
+): readonly string[] => {
+  switch (triggerType) {
+    case NotificationTriggerType.SCHEDULED_MESSAGE:
+      return [...SCHEDULED_MESSAGE_VARIABLE_KEYS];
+    case NotificationTriggerType.HERO_SIGHTED:
+      return HERO_SIGHTING_VARIABLE_KEYS;
+    default:
+      return TIMER_VARIABLE_KEYS;
+  }
+};
+
 export const createPreviewTemplateValues = (t: (key: string) => string) => ({
   ruleName: t("settings.notifications.templateEditor.previewValues.ruleName"),
   npcName: t("settings.notifications.templateEditor.previewValues.npcName"),
@@ -27,6 +74,13 @@ export const createPreviewTemplateValues = (t: (key: string) => string) => ({
   minSpawnTime: "31.03.2026 20:15",
   maxSpawnTime: "31.03.2026 20:35",
   scheduledFor: "31.03.2026 20:10",
+  heroName: t("settings.notifications.templateEditor.previewValues.heroName"),
+  heroLevel: t("settings.notifications.templateEditor.previewValues.heroLevel"),
+  state: t("settings.notifications.templateEditor.previewValues.state"),
+  mapName: t("settings.notifications.templateEditor.previewValues.mapName"),
+  detectedBy: t(
+    "settings.notifications.templateEditor.previewValues.detectedBy",
+  ),
 });
 
 export const renderTemplatePreview = (
@@ -34,18 +88,8 @@ export const renderTemplatePreview = (
   values: Record<string, string>,
 ) =>
   template.replace(
-    /\{\{(ruleName|npcName|npcId|world|minSpawnTime|maxSpawnTime|scheduledFor)\}\}/g,
-    (
-      _match: string,
-      placeholder:
-        | "ruleName"
-        | "npcName"
-        | "npcId"
-        | "world"
-        | "minSpawnTime"
-        | "maxSpawnTime"
-        | "scheduledFor",
-    ) => values[placeholder] ?? "",
+    new RegExp(`\\{\\{(${TEMPLATE_VARIABLE_PATTERN})\\}\\}`, "g"),
+    (_match: string, placeholder: string) => values[placeholder] ?? "",
   );
 
 export const createTemplateEditorNodes = (
@@ -56,8 +100,10 @@ export const createTemplateEditorNodes = (
   const lines = value.split("\n");
   const nodes: Array<LexicalNode> = [];
 
-  const tokenPattern =
-    /(<@&(\d+)>|@(everyone|here)|\{\{(ruleName|npcName|npcId|world|minSpawnTime|maxSpawnTime|scheduledFor)\}\})/g;
+  const tokenPattern = new RegExp(
+    `(<@&(\\d+)>|@(everyone|here)|\\{\\{(${TEMPLATE_VARIABLE_PATTERN})\\}\\})`,
+    "g",
+  );
 
   for (const line of lines) {
     const paragraphNode = $createParagraphNode();
@@ -207,8 +253,3 @@ export const getBackspaceTemplateTokenNode = () => {
 
   return null;
 };
-
-export const SCHEDULED_MESSAGE_VARIABLE_KEYS = new Set([
-  "ruleName",
-  "scheduledFor",
-]);

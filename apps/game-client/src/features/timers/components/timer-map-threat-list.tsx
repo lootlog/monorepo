@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { PlayerName } from "@/components/player-name";
+import { useNow } from "@/hooks/ui/use-now";
 import { isMapThreatEnemyFresh, type MapThreat } from "@/lib/map-threat-source";
 import { TIMER_TOOLTIP_MAX_ROWS } from "../constants/timer-tooltip";
 import { TimerMapThreatIndicator } from "./timer-map-threat-indicator";
@@ -10,13 +10,7 @@ import { TimerTooltipSection } from "./timer-tooltip-section";
 /** Tooltip section; ticks every second only while the tooltip is open. */
 export function TimerMapThreatList({ threat }: { threat: MapThreat }) {
   const { t } = useTranslation("timers");
-  const [now, setNow] = useState(Date.now);
-
-  useEffect(() => {
-    const interval = window.setInterval(() => setNow(Date.now()), 1_000);
-
-    return () => window.clearInterval(interval);
-  }, []);
+  const now = useNow(1_000);
 
   return (
     <TimerTooltipSection

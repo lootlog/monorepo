@@ -98,6 +98,12 @@ export const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
     RabbitRoutingKey.GUILDS_TIMERS_DELETE_DLQ,
   ),
   retryable(
+    "gateway-guilds-hero-sightings-update",
+    RabbitRoutingKey.GUILDS_HERO_SIGHTINGS_UPDATE,
+    RabbitRoutingKey.GUILDS_HERO_SIGHTINGS_UPDATE_RETRY,
+    RabbitRoutingKey.GUILDS_HERO_SIGHTINGS_UPDATE_DLQ,
+  ),
+  retryable(
     "gateway-guilds-loots-create",
     RabbitRoutingKey.GUILDS_LOOTS_CREATE,
     RabbitRoutingKey.GUILDS_LOOTS_CREATE_RETRY,
@@ -862,6 +868,10 @@ export class RabbitBridge {
       [RabbitRoutingKey.GUILDS_TIMERS_DELETE]: {
         topic: "organization.timers",
         type: "timer.deleted",
+      },
+      [RabbitRoutingKey.GUILDS_HERO_SIGHTINGS_UPDATE]: {
+        topic: "organization.timers",
+        type: "hero-sighting.updated",
       },
       [RabbitRoutingKey.GUILDS_RESERVATIONS_CREATE]: {
         topic: "organization.reservations",

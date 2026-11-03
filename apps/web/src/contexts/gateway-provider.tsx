@@ -7,6 +7,7 @@ import React, {
   useSyncExternalStore,
 } from "react";
 import { useTimersSocket } from "@/features/guild/timers/use-timers-socket";
+import { useHeroSightingsSocket } from "@/features/guild/hero-sightings/use-hero-sightings-socket";
 import { useKillStatsUpdates } from "@/hooks/utils/use-kill-stats-updates";
 import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
@@ -51,6 +52,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   const { user } = useUser();
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   useTimersSocket({ socket, guilds });
+  useHeroSightingsSocket({ socket, guilds });
   const connected = useSyncExternalStore(subscribeConnection, isConnected);
   const [joined, setJoined] = useState(false);
 

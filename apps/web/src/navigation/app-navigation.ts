@@ -7,6 +7,7 @@ import { ROUTES } from "@/config/routes";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { getBattleRouteLabel } from "@/lib/battle/battle-route-label";
 import { canReadGuildDocs } from "@/features/guild/docs/docs-permissions";
+import { canViewHeroSightings } from "@/features/guild/hero-sightings/hero-sightings-permissions";
 
 const ROOT_ROUTE_ID = "__root__";
 
@@ -32,6 +33,7 @@ export type AppNavigationItemId =
   | "user-settings"
   | "organization-loots"
   | "organization-timers"
+  | "organization-hero-sightings"
   | "organization-reservations"
   | "organization-docs"
   | "organization-events"
@@ -335,6 +337,12 @@ function buildOrganizationSidebarRegistry(
       path: ROUTES.guild.timers(organizationId),
       visible: (accessPolicy) =>
         accessPolicy?.allows(Capability.LOOTLOG_TIMERS_READ) ?? false,
+    },
+    {
+      id: "organization-hero-sightings",
+      labelKey: "heroSightings.title",
+      path: ROUTES.guild.heroSightings(organizationId),
+      visible: canViewHeroSightings,
     },
     {
       id: "organization-reservations",
@@ -923,6 +931,7 @@ function buildRoutes(guildId: string) {
   return {
     base: ROUTES.guild.base(guildId),
     timers: ROUTES.guild.timers(guildId),
+    heroSightings: ROUTES.guild.heroSightings(guildId),
     reservations: ROUTES.guild.reservations.base(guildId),
     docs: ROUTES.guild.docs.base(guildId),
     stats: ROUTES.guild.stats(guildId),
@@ -979,6 +988,7 @@ function resolveSimpleRoute(
     backPath?: string;
   }> = [
     { path: routes.timers, label: t("common.breadcrumbs.timers") },
+    { path: routes.heroSightings, label: t("heroSightings.title") },
     { path: routes.reservations, label: t("common.breadcrumbs.reservations") },
     { path: routes.docs, label: t("common.breadcrumbs.docs") },
     { path: routes.activityLogs, label: t("common.breadcrumbs.activityLogs") },

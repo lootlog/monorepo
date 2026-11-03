@@ -33,6 +33,10 @@ import {
 } from "@lootlog/domain/timers";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useGuildTimers } from "./use-guild-timers";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import { useGuildHeroSightings } from "@/features/guild/hero-sightings/use-guild-hero-sightings";
+import { canViewHeroSightings } from "@/features/guild/hero-sightings/hero-sightings-permissions";
+import { findTimerHeroSighting } from "@/features/guild/hero-sightings/find-timer-hero-sighting";
 import { useTimerDisplaySettings } from "./use-timer-display-settings";
 import { ThemeEmptyStateIcon } from "@/themes/adapters";
 
@@ -74,6 +78,13 @@ export const Timers = () => {
     removeTimerAfterMs,
   );
   const now = useMinuteTimestamp();
+  const { data: accessPolicy } = useGuildPermissions();
+
+  // A hero timer says where its hero was last detected.
+  const { sightings } = useGuildHeroSightings({
+    enabled: canViewHeroSightings(accessPolicy),
+  });
+
   const [search, setSearch] = useState("");
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
 
@@ -247,6 +258,7 @@ export const Timers = () => {
                         removeTimerAfterMs={removeTimerAfterMs}
                         isPinned={isPinned(timer)}
                         showWorld={world === null}
+                        heroSighting={findTimerHeroSighting(sightings, timer)}
                       />
                     </div>
                   ))}
