@@ -1,5 +1,5 @@
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
-import { isHeroSightingStale } from "@lootlog/domain/hero-sightings";
+import { isCurrentHeroSighting } from "@lootlog/domain/hero-sightings";
 import { MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { MetaItem } from "@/components/common/meta-item";
@@ -19,7 +19,8 @@ export const HeroSightingTimerLocation = ({
   now,
 }: HeroSightingTimerLocationProps) => {
   const { t } = useTranslation();
-  const isStale = isHeroSightingStale(sighting, now);
+  // The timer finds an open sighting; one no longer current is unconfirmed.
+  const isStale = !isCurrentHeroSighting(sighting, now);
 
   return (
     <MetaItem icon={MapPin} className="min-w-0">

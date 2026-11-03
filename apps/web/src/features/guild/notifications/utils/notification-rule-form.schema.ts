@@ -34,6 +34,8 @@ const createRuleFormSchema = (t: (key: string, options?: TOptions) => string) =>
     scheduleTimeOfDay: z.string().optional(),
     scheduleWeekday: z.string().optional(),
     scheduledUntil: z.string().optional(),
+    npcLevelMin: z.number().int().min(0).max(500).optional(),
+    npcLevelMax: z.number().int().min(0).max(500).optional(),
     targetIds: z
       .array(z.string())
       .min(1, t("settings.notifications.validation.targetRequired")),
@@ -245,6 +247,33 @@ const validateScheduledRule = (
   }
 };
 
+const validateHeroSightingRule = (
+  data: RuleFormData,
+  ctx: z.RefinementCtx,
+  t: Translator,
+) => {
+  // A detector answer belongs to one world, so a hero rule watches one.
+  if (!data.world || data.world === ALL_WORLDS_VALUE) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.worldRequired"),
+      "world",
+    );
+  }
+
+  if (
+    data.npcLevelMin !== undefined &&
+    data.npcLevelMax !== undefined &&
+    data.npcLevelMin > data.npcLevelMax
+  ) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.npcLevelOrder"),
+      "npcLevelMax",
+    );
+  }
+};
+
 export const ruleFormSchema = (t: Translator, maxNpcCount: number) =>
   createRuleFormSchema(t).superRefine((data, ctx) => {
     if (data.triggerType === NotificationTriggerType.TIMER_BEFORE_SPAWN) {
@@ -255,16 +284,8 @@ export const ruleFormSchema = (t: Translator, maxNpcCount: number) =>
       validateScheduledRule(data, ctx, t);
     }
 
-    // A detector answer belongs to one world, so a hero rule watches one.
-    if (
-      data.triggerType === NotificationTriggerType.HERO_SIGHTED &&
-      (!data.world || data.world === ALL_WORLDS_VALUE)
-    ) {
-      addIssue(
-        ctx,
-        t("settings.notifications.validation.worldRequired"),
-        "world",
-      );
+    if (data.triggerType === NotificationTriggerType.HERO_SIGHTED) {
+      validateHeroSightingRule(data, ctx, t);
     }
   });
 

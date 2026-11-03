@@ -1,12 +1,14 @@
 import { beforeEach, expect, it } from "vitest";
-import type { HeroSighting } from "@/api/hero-sightings.api";
+import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { queryKeys } from "@/features/public-api/query-keys";
 import { queryClient } from "@/lib/query-client";
 import { createHeroSighting } from "./hero-sighting-fixtures";
 import { upsertHeroSightings } from "./hero-sightings-cache";
 
 const listed = () =>
-  queryClient.getQueryData<HeroSighting[]>(queryKeys.heroSightings("luvia"));
+  queryClient.getQueryData<HeroSightingResponseDto[]>(
+    queryKeys.heroSightings("luvia"),
+  );
 
 beforeEach(() => {
   queryClient.clear();

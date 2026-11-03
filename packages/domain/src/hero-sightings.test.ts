@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   parseHeroDetectorMessage,
   resolveHeroSightingTransition,
+  upsertNewestHeroSighting,
 } from "./hero-sightings.js";
 
 describe("detector answers from Margonem", () => {
@@ -101,5 +102,28 @@ describe("how a detection changes the current sighting", () => {
         observedAt: 100,
       }),
     ).toBe("CONFIRM");
+  });
+});
+
+describe("keeping the newest sighting of each hero", () => {
+  const sighting = (id: number, world: string) => ({
+    id,
+    guildId: "organization",
+    world,
+    hero: { key: "tepeyollotl" },
+  });
+
+  it("keeps the same hero apart on different worlds", () => {
+    expect(
+      upsertNewestHeroSighting([sighting(1, "jaruna")], sighting(2, "fobos")),
+    ).toEqual([sighting(1, "jaruna"), sighting(2, "fobos")]);
+  });
+
+  it("ignores a late update of the sighting a newer one replaced", () => {
+    const current = [sighting(2, "jaruna")];
+
+    expect(upsertNewestHeroSighting(current, sighting(1, "jaruna"))).toBe(
+      current,
+    );
   });
 });

@@ -30333,6 +30333,16 @@
                         "minimum": -9007199254740991,
                         "maximum": 9007199254740991
                       }
+                    },
+                    "npcLevelMin": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "npcLevelMax": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "allOf": [
@@ -30755,6 +30765,16 @@
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
                 }
+              },
+              "npcLevelMin": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "npcLevelMax": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               }
             },
             "allOf": [
@@ -31050,6 +31070,18 @@
             "maxItems": 5,
             "description": "Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id."
           },
+          "npcLevelMin": {
+            "nullable": true,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500
+          },
+          "npcLevelMax": {
+            "nullable": true,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500
+          },
           "itemId": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -31176,6 +31208,18 @@
             },
             "maxItems": 5,
             "description": "Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id."
+          },
+          "npcLevelMin": {
+            "nullable": true,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500
+          },
+          "npcLevelMax": {
+            "nullable": true,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500
           },
           "itemId": {
             "type": "integer",
@@ -31578,6 +31622,16 @@
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991
                           }
+                        },
+                        "npcLevelMin": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "npcLevelMax": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
                         }
                       },
                       "allOf": [
@@ -32121,6 +32175,16 @@
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991
                           }
+                        },
+                        "npcLevelMin": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "npcLevelMax": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
                         }
                       },
                       "allOf": [
@@ -32700,6 +32764,16 @@
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
                     }
+                  },
+                  "npcLevelMin": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "npcLevelMax": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
                   }
                 },
                 "allOf": [

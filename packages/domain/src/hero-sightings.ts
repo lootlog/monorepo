@@ -128,3 +128,65 @@ export const isHeroSightingStale = (
 ): boolean =>
   sighting.state === HeroSightingState.ROAMING &&
   now - Date.parse(sighting.lastSeenAt) > HERO_SIGHTING_STALE_AFTER_MS;
+
+type SightingIdentity = {
+  readonly id: number;
+  readonly guildId: string;
+  readonly world: string;
+  readonly hero: { readonly key: string };
+};
+
+/**
+ * Keeps one sighting per hero in each Organization world: the newest by id.
+ * Sighting ids grow with time, so the closed sighting a probable kill
+ * replaced never displaces its successor, whatever order updates arrive in.
+ * Returns the same array when nothing changes.
+ */
+export const upsertNewestHeroSighting = <Sighting extends SightingIdentity>(
+  sightings: readonly Sighting[],
+  next: Sighting,
+): readonly Sighting[] => {
+  const index = sightings.findIndex(
+    (sighting) =>
+      sighting.guildId === next.guildId &&
+      sighting.world === next.world &&
+      sighting.hero.key === next.hero.key,
+  );
+
+  if (index === -1) return [...sightings, next];
+
+  const current = sightings[index];
+
+  if (current && current.id > next.id) return sightings;
+
+  return sightings.map((sighting, position) =>
+    position === index ? next : sighting,
+  );
+};
+
+type ClaimedSighting = {
+  readonly claims: ReadonlyArray<{
+    readonly member: { readonly userId: string | null };
+  }>;
+};
+
+/** Whether the signed-in User, by internal Lootlog User id, camps the hero. */
+export const isHeroSightingClaimedBy = (
+  sighting: ClaimedSighting,
+  userId: string | undefined,
+): boolean =>
+  userId !== undefined &&
+  sighting.claims.some((claim) => claim.member.userId === userId);
+
+/**
+ * A sighting that places the hero now: open and, for a roaming hero,
+ * confirmed recently enough to still be believed.
+ */
+export const isCurrentHeroSighting = (
+  sighting: {
+    readonly closedAt: string | null;
+    readonly state: string;
+    readonly lastSeenAt: string;
+  },
+  now: number,
+): boolean => sighting.closedAt === null && !isHeroSightingStale(sighting, now);

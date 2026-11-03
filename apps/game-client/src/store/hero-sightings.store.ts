@@ -1,10 +1,10 @@
 import { create } from "zustand";
-import type { HeroSighting } from "@/api/hero-sightings.api";
+import type { HeroSightingResponseDto } from "@lootlog/client/main";
 
 /** The player's own latest detection, offered for claiming until dismissed. */
 export type OwnHeroDetection = {
   /** The sighting each Organization accepted the detection into. */
-  readonly sightings: readonly HeroSighting[];
+  readonly sightings: readonly HeroSightingResponseDto[];
 };
 
 type HeroSightingsState = {

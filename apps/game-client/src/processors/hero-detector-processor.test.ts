@@ -39,7 +39,18 @@ const sighting = createHeroSighting({
   lastSeenAt: "2026-11-03T11:59:59.000Z",
 });
 
-const createFixture = (catchingGuildIds = ["guild-1"]) => {
+type SubmittedGuild = {
+  guildId: string;
+  guildName: string;
+  sighting?: typeof sighting;
+};
+
+const createFixture = (
+  catchingGuildIds = ["guild-1"],
+  submittedGuilds: SubmittedGuild[] = [
+    { guildId: "guild-1", guildName: "Guild", sighting },
+  ],
+) => {
   setTestRuntimeGame({
     world: "luvia",
     hero: { accountId: "202", characterId: "101" },
@@ -55,12 +66,7 @@ const createFixture = (catchingGuildIds = ["guild-1"]) => {
           requests.push(new Request(input, init));
 
           return Promise.resolve(
-            Response.json({
-              submittedGuilds: [
-                { guildId: "guild-1", guildName: "Guild", sighting },
-              ],
-              rejectedGuilds: [],
-            }),
+            Response.json({ submittedGuilds, rejectedGuilds: [] }),
           );
         },
       },
@@ -144,4 +150,24 @@ it("sends nothing for a character whose catching list is known to be empty", asy
   await settle();
 
   expect(fixture.requests).toHaveLength(0);
+});
+
+it("offers the visible sightings when another Organization accepts the detection but hides the hero", async () => {
+  // guild-2 accepted the detection, but the player's roles there cannot see this hero.
+  const fixture = createFixture(
+    ["guild-1", "guild-2"],
+    [
+      { guildId: "guild-1", guildName: "Guild", sighting },
+      { guildId: "guild-2", guildName: "Hidden" },
+    ],
+  );
+
+  fixture.handle(systemChat(answer(506)));
+  await waitFor(() =>
+    expect(useHeroSightingsStore.getState().ownDetection?.sightings).toEqual([
+      sighting,
+    ]),
+  );
+
+  expect(useWindowsStore.getState()["hero-sightings"].open).toBe(true);
 });

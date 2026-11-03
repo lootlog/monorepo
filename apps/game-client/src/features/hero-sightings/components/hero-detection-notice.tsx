@@ -1,22 +1,22 @@
 import { cn } from "cn";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { isHeroSightingClaimedBy } from "@lootlog/domain/hero-sightings";
 import { formatLevel } from "@lootlog/domain/profession";
-import type { HeroSighting } from "@/api/hero-sightings.api";
+import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import {
   toolbarStripClassName,
   toolbarStripRowClassName,
 } from "@/components/ui/toolbar-strip";
-import { isClaimedBy } from "@/features/hero-sightings/hero-sighting-rows";
 import { useHeroSightingClaim } from "@/features/hero-sightings/hooks/use-hero-sighting-claim";
 import type { OwnHeroDetection } from "@/store/hero-sightings.store";
 
 type HeroDetectionNoticeProps = {
   detection: OwnHeroDetection;
   /** The latest copy of every listed sighting, so claims made since show. */
-  sightings: readonly HeroSighting[];
+  sightings: readonly HeroSightingResponseDto[];
   userId: string | undefined;
   writableGuildIds: ReadonlySet<string>;
   onDismiss: () => void;
@@ -47,7 +47,7 @@ export function HeroDetectionNotice({
   const claimable = latest.filter(
     (sighting) =>
       sighting.closedAt === null &&
-      !isClaimedBy(sighting, userId) &&
+      !isHeroSightingClaimedBy(sighting, userId) &&
       writableGuildIds.has(sighting.guildId),
   );
 

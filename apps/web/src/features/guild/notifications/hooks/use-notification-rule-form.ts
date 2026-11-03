@@ -191,6 +191,8 @@ const getRuleFormDefaultValues = (
     scheduleTimeOfDay: rule.scheduleTimeOfDay ?? "",
     scheduleWeekday: stringifyNullable(rule.scheduleWeekday),
     scheduledUntil: formatRuleDate(rule.scheduledUntil, rule.scheduleTimezone),
+    npcLevelMin: rule.filters?.npcLevelMin,
+    npcLevelMax: rule.filters?.npcLevelMax,
     targetIds: getGuildNotificationRuleTargetIds(rule),
     enabled: rule.enabled ?? true,
   };
@@ -625,7 +627,13 @@ export const useNotificationRuleForm = () => {
             ...getScheduledMessagePayload(values, rule?.scheduledUntil),
           }
         : values.triggerType === NotificationTriggerType.HERO_SIGHTED
-          ? { ...basePayload, world }
+          ? {
+              ...basePayload,
+              world,
+              // Null clears a bound the rule saved before.
+              npcLevelMin: values.npcLevelMin ?? null,
+              npcLevelMax: values.npcLevelMax ?? null,
+            }
           : (() => {
               const npcFilterPayload = buildNotificationRuleNpcFilterPayload(
                 getNotificationRuleNpcIdsForSubmit(values),

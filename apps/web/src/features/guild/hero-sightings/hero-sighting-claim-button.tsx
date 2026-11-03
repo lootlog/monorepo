@@ -16,9 +16,15 @@ export const HeroSightingClaimButton = ({
 }: HeroSightingClaimButtonProps) => {
   const { t } = useTranslation();
   const { data: accessPolicy } = useGuildPermissions();
-  const { isClaimed, isPending, toggle } = useHeroSightingClaim(sighting);
 
-  if (sighting.closedAt !== null || !canClaimHeroSightings(accessPolicy))
+  const { canToggle, isClaimed, isPending, toggle } =
+    useHeroSightingClaim(sighting);
+
+  if (
+    !canToggle ||
+    sighting.closedAt !== null ||
+    !canClaimHeroSightings(accessPolicy)
+  )
     return null;
 
   const hero = sighting.hero.name;

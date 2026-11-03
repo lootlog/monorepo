@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { EmptyState } from "@/components/empty-state";
 import type { HeroSightingRow } from "@/features/hero-sightings/hero-sighting-rows";
 import { HeroSightingItem } from "@/features/hero-sightings/components/hero-sighting-item";
-import { useMinuteClock } from "@/features/hero-sightings/hooks/use-minute-clock";
+import { useNow } from "@/hooks/ui/use-now";
 
 type HeroSightingsListProps = {
   rows: readonly HeroSightingRow[];
@@ -16,7 +16,7 @@ export function HeroSightingsList({
   writableGuildIds,
 }: HeroSightingsListProps) {
   const { t } = useTranslation("heroSightings");
-  const now = useMinuteClock();
+  const now = useNow(60_000);
 
   if (rows.length === 0) {
     return (

@@ -3817,6 +3817,16 @@ export type GuildNotificationRulesResponseDtoItemsItemFilters = {[key: string]: 
      * @items.maximum 9007199254740991
      */
   itemIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMin?: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMax?: number;
 } | null) | null;
 
 /**
@@ -4115,6 +4125,16 @@ export type NotificationRuleResponseDtoFilters = {[key: string]: unknown} & ({
      * @items.maximum 9007199254740991
      */
   itemIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMin?: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMax?: number;
 } | null) | null;
 
 /**
@@ -4368,6 +4388,18 @@ export interface CreateNotificationRuleDto {
      */
   npcTemplateIds?: number[];
   /**
+     * @minimum 0
+     * @maximum 500
+     * @nullable
+     */
+  npcLevelMin?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 500
+     * @nullable
+     */
+  npcLevelMax?: number | null;
+  /**
      * @minimum -9007199254740991
      * @maximum 9007199254740991
      */
@@ -4485,6 +4517,18 @@ export interface UpdateNotificationRuleDto {
      * @items.maximum 9007199254740991
      */
   npcTemplateIds?: number[];
+  /**
+     * @minimum 0
+     * @maximum 500
+     * @nullable
+     */
+  npcLevelMin?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 500
+     * @nullable
+     */
+  npcLevelMax?: number | null;
   /**
      * @minimum -9007199254740991
      * @maximum 9007199254740991
@@ -4735,6 +4779,16 @@ export type NotificationJobsResponseDtoPendingItemRuleFilters = {[key: string]: 
      * @items.maximum 9007199254740991
      */
   itemIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMin?: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMax?: number;
 } | null) | null;
 
 /**
@@ -5153,6 +5207,16 @@ export type NotificationJobsResponseDtoHistoryItemRuleFilters = {[key: string]: 
      * @items.maximum 9007199254740991
      */
   itemIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMin?: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMax?: number;
 } | null) | null;
 
 /**
@@ -5535,6 +5599,16 @@ export type WatchedItemResponseDtoNotificationRuleFilters = {[key: string]: unkn
      * @items.maximum 9007199254740991
      */
   itemIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMin?: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMax?: number;
 } | null) | null;
 
 /**

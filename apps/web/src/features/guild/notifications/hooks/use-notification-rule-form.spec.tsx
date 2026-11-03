@@ -483,15 +483,17 @@ it("saves an all-world rule after removing its unmatched selection", async () =>
   expect(payload).not.toHaveProperty("world");
 });
 
-it("saves a hero sighting rule with its world and no spawn reminder fields", async () => {
+it("saves a hero sighting rule with its world, level bounds and no spawn reminder fields", async () => {
   const { result, requests } = await renderEditedRule({
     triggerType: "HERO_SIGHTED",
     world: "jaruna",
     scheduledAt: null,
-    filters: {},
+    filters: { npcLevelMin: 250, npcLevelMax: 300 },
   });
 
+  // Clearing a saved bound must reach the API, or the rule keeps filtering.
   act(() => {
+    result.current.form.setValue("npcLevelMax", undefined);
     result.current.form.setValue("targetIds", ["9"]);
   });
   await act(() =>
@@ -506,5 +508,7 @@ it("saves a hero sighting rule with its world and no spawn reminder fields", asy
     targetIds: [9],
     enabled: true,
     world: "jaruna",
+    npcLevelMin: 250,
+    npcLevelMax: null,
   });
 });

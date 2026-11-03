@@ -609,7 +609,8 @@
       "intervalValueRange": "Wartość musi być od 1 do 24",
       "timeOfDayRequired": "Podaj godzinę wysyłki",
       "weekdayRequired": "Wybierz dzień tygodnia",
-      "worldRequired": "Wybierz świat"
+      "worldRequired": "Wybierz świat",
+      "npcLevelOrder": "Poziom „do” nie może być niższy od poziomu „od”"
     },
     "fields": {
       "channel": "Kanał Discorda",
@@ -627,6 +628,10 @@
       "scheduledUntil": "Data zakończenia",
       "world": "Świat",
       "npcs": "Filtr NPC",
+      "npcLevel": "Poziom herosa",
+      "npcLevelMin": "Poziom herosa od",
+      "npcLevelMax": "Poziom herosa do",
+      "npcLevelDescription": "Puste pole nie ogranicza poziomu.",
       "manualNpcIds": "ID NPC",
       "contentTemplate": "Szablon wiadomości",
       "scheduleAnchor": "Punkt odniesienia",

@@ -2,6 +2,7 @@ import { BandSection } from "@/components/common/band-section";
 import { PageHeader } from "@/components/common/page-header";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { NotificationCreateSkeleton } from "./notification-create-skeleton";
+import { NotificationHeroLevelFields } from "./notification-hero-level-fields";
 import { NotificationNpcFields } from "./notification-npc-fields";
 import { NotificationScheduleFields } from "./notification-schedule-fields";
 import { NotificationTimerFields } from "./notification-timer-fields";
@@ -185,6 +186,11 @@ export const NotificationRuleFormPage = () => {
                 npcSearchError={npcSearchError}
                 isAllWorlds={isAllWorlds}
                 hasAllWorldTimerNpcSelection={hasAllWorldTimerNpcSelection}
+              />
+              <NotificationHeroLevelFields
+                isHeroSighting={isHeroSighting}
+                form={form}
+                t={t}
               />
               <NotificationTimerFields
                 isTimerRule={isTimerRule}

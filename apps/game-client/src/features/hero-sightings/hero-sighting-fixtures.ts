@@ -1,8 +1,8 @@
-import type { HeroSighting } from "@/api/hero-sightings.api";
+import type { HeroSightingResponseDto } from "@lootlog/client/main";
 
 export const createHeroSightingMember = (
-  overrides: Partial<HeroSighting["detectedBy"]> = {},
-): HeroSighting["detectedBy"] => ({
+  overrides: Partial<HeroSightingResponseDto["detectedBy"]> = {},
+): HeroSightingResponseDto["detectedBy"] => ({
   memberId: 1,
   userId: "user-1",
   displayName: "Detector",
@@ -12,8 +12,8 @@ export const createHeroSightingMember = (
 
 /** A current roaming sighting, as `GET /hero-sightings` returns it. */
 export const createHeroSighting = (
-  overrides: Partial<HeroSighting> = {},
-): HeroSighting => ({
+  overrides: Partial<HeroSightingResponseDto> = {},
+): HeroSightingResponseDto => ({
   id: 1,
   guildId: "guild-1",
   world: "luvia",

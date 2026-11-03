@@ -7,10 +7,16 @@ import {
   type ReactNode,
 } from "react";
 import { uniqBy } from "es-toolkit";
-import { getHeroSightingKey } from "@lootlog/domain/hero-sightings";
+import {
+  getHeroSightingKey,
+  HERO_SIGHTING_STALE_AFTER_MS,
+  isCurrentHeroSighting,
+  isHeroSightingStale,
+} from "@lootlog/domain/hero-sightings";
+import { HeroSightingState } from "@lootlog/schema/hero-sightings";
 import { useSocket } from "@/contexts/socket-context";
 import { NpcType } from "@/api/npcs.api";
-import type { HeroSighting } from "@/api/hero-sightings.api";
+import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { useLoadedHeroSightings } from "@/hooks/api/use-hero-sightings";
 import { getPlayersPresenceSource } from "@/lib/players-presence-source";
 import {
@@ -40,15 +46,17 @@ type TimerMapSources = {
 
 const emptySources = new Map<string, TimerMapSources>();
 
-/** Current hero sightings by Organization, world and hero. */
-type HeroSightingIndex = ReadonlyMap<string, HeroSighting>;
+/** Open hero sightings by Organization, world and hero. */
+type HeroSightingIndex = ReadonlyMap<string, HeroSightingResponseDto>;
 
 const emptyHeroSightings: HeroSightingIndex = new Map();
 
 const TimerMapPresenceContext = createContext<{
   sources: ReadonlyMap<string, TimerMapSources>;
   heroSightings: HeroSightingIndex;
-}>({ sources: emptySources, heroSightings: emptyHeroSightings });
+  /** The time staleness is judged at; it moves when a sighting turns stale. */
+  now: number;
+}>({ sources: emptySources, heroSightings: emptyHeroSightings, now: 0 });
 
 const scopeKey = (guildId: string, world: string) =>
   JSON.stringify([guildId, world]);
@@ -56,11 +64,11 @@ const scopeKey = (guildId: string, world: string) =>
 const heroSightingKey = (guildId: string, world: string, heroKey: string) =>
   JSON.stringify([guildId, world, heroKey]);
 
-function indexCurrentHeroSightings(
-  sightings: readonly HeroSighting[],
+function indexOpenHeroSightings(
+  sightings: readonly HeroSightingResponseDto[],
 ): HeroSightingIndex {
   if (sightings.length === 0) return emptyHeroSightings;
-  const index = new Map<string, HeroSighting>();
+  const index = new Map<string, HeroSightingResponseDto>();
 
   for (const sighting of sightings) {
     if (sighting.closedAt !== null) continue;
@@ -84,16 +92,20 @@ const DETECTABLE_HERO_TYPES = new Set<string>([
   NpcType.EVENT_HERO,
 ]);
 
-/** The newest current sighting of the timer's hero in its Organizations. */
+/**
+ * The newest open sighting of the timer's hero in its Organizations; with
+ * `currentAt`, only one that still places the hero at that time.
+ */
 function findTimerHeroSighting(
   timer: PresenceTimer,
   heroSightings: HeroSightingIndex,
-): HeroSighting | undefined {
+  currentAt?: number,
+): HeroSightingResponseDto | undefined {
   if (!DETECTABLE_HERO_TYPES.has(timer.npc.type) || heroSightings.size === 0)
     return undefined;
 
   const heroKey = getHeroSightingKey(timer.npc.name);
-  let newest: HeroSighting | undefined;
+  let newest: HeroSightingResponseDto | undefined;
 
   for (const guildId of timerGuildIds(timer)) {
     const sighting = heroSightings.get(
@@ -102,6 +114,7 @@ function findTimerHeroSighting(
 
     if (
       sighting &&
+      (currentAt === undefined || isCurrentHeroSighting(sighting, currentAt)) &&
       (!newest ||
         Date.parse(sighting.lastSeenAt) > Date.parse(newest.lastSeenAt))
     )
@@ -114,12 +127,15 @@ function findTimerHeroSighting(
 function getTimerMapName(
   timer: PresenceTimer,
   heroSightings: HeroSightingIndex,
+  now: number,
 ): string | undefined {
   // Hero Trackers move between maps and no detector answers for them.
   if (timer.npc.type === NpcType.HERO_TRACKER) return undefined;
 
+  // A roaming hero nobody confirmed lately has likely moved on, so its old
+  // map's players and enemies say nothing about it.
   if (DETECTABLE_HERO_TYPES.has(timer.npc.type))
-    return findTimerHeroSighting(timer, heroSightings)?.mapName;
+    return findTimerHeroSighting(timer, heroSightings, now)?.mapName;
 
   return timer.npc.location;
 }
@@ -154,12 +170,13 @@ function resolveTimerSources(
   socket: AppSocket | null,
   timers: readonly PresenceTimer[],
   heroSightings: HeroSightingIndex,
+  now: number,
 ) {
   if (!socket) return emptySources;
   const sources = new Map<string, TimerMapSources>();
 
   for (const timer of timers) {
-    if (!getTimerMapName(timer, heroSightings)) continue;
+    if (!getTimerMapName(timer, heroSightings, now)) continue;
 
     for (const guildId of timerGuildIds(timer)) {
       const key = scopeKey(guildId, timer.world);
@@ -172,6 +189,55 @@ function resolveTimerSources(
   return sources;
 }
 
+/** When the next open roaming sighting turns stale, after `now`. */
+function getNextStaleAt(
+  sightings: readonly HeroSightingResponseDto[],
+  now: number,
+): number | undefined {
+  let next: number | undefined;
+
+  for (const sighting of sightings) {
+    if (
+      sighting.state !== HeroSightingState.ROAMING ||
+      !isCurrentHeroSighting(sighting, now)
+    )
+      continue;
+
+    // Staleness is strict, so it starts just after the window ends.
+    const staleAt =
+      Date.parse(sighting.lastSeenAt) + HERO_SIGHTING_STALE_AFTER_MS + 1;
+
+    if (next === undefined || staleAt < next) next = staleAt;
+  }
+
+  return next;
+}
+
+/**
+ * The time sightings are judged at. Rather than ticking, it moves only when
+ * a roaming sighting crosses into staleness, so the timers re-render once
+ * per sighting that turns unconfirmed.
+ */
+function useHeroSightingsStaleClock(
+  sightings: readonly HeroSightingResponseDto[],
+): number {
+  const [now, setNow] = useState(Date.now);
+  const nextStaleAt = getNextStaleAt(sightings, now);
+
+  useEffect(() => {
+    if (nextStaleAt === undefined) return;
+
+    const timeout = window.setTimeout(
+      () => setNow(Date.now()),
+      Math.max(0, nextStaleAt - Date.now()),
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [nextStaleAt]);
+
+  return now;
+}
+
 export function TimerMapPresenceProvider({
   timers,
   children,
@@ -182,24 +248,26 @@ export function TimerMapPresenceProvider({
   const { socket } = useSocket();
   const worlds = [...new Set(timers.map((timer) => timer.world))];
   const loadedHeroSightings = useLoadedHeroSightings(worlds);
-  const heroSightings = indexCurrentHeroSightings(loadedHeroSightings);
-  const sources = resolveTimerSources(socket, timers, heroSightings);
+  const now = useHeroSightingsStaleClock(loadedHeroSightings);
+  const heroSightings = indexOpenHeroSightings(loadedHeroSightings);
+  const sources = resolveTimerSources(socket, timers, heroSightings, now);
   useEffect(() => {
     const releases = [
       ...resolveTimerSources(
         socket,
         timers,
-        indexCurrentHeroSightings(loadedHeroSightings),
+        indexOpenHeroSightings(loadedHeroSightings),
+        now,
       ).values(),
     ].map((source) => source.retain());
 
     return () => {
       for (const release of releases) release();
     };
-  }, [socket, timers, loadedHeroSightings]);
+  }, [socket, timers, loadedHeroSightings, now]);
 
   return (
-    <TimerMapPresenceContext.Provider value={{ sources, heroSightings }}>
+    <TimerMapPresenceContext.Provider value={{ sources, heroSightings, now }}>
       {children}
     </TimerMapPresenceContext.Provider>
   );
@@ -229,9 +297,9 @@ function useTimerMapProjection<Value>(
   select: (sources: TimerMapSources) => MapProjection<Value>,
   merge: (values: readonly Value[]) => Value,
 ): Value | undefined {
-  const { sources, heroSightings } = useContext(TimerMapPresenceContext);
+  const { sources, heroSightings, now } = useContext(TimerMapPresenceContext);
   const [readMerged] = useState(() => createMergedReader(merge));
-  const mapName = getTimerMapName(timer, heroSightings);
+  const mapName = getTimerMapName(timer, heroSightings, now);
 
   const matching = mapName
     ? timerGuildIds(timer).flatMap((guildId) => {
@@ -300,11 +368,21 @@ export function useTimerMapThreat(timer: PresenceTimer): MapThreat | undefined {
   );
 }
 
-/** Where a detector last placed the timer's hero, while that sighting is current. */
+/** The open sighting a detector last placed the timer's hero by. */
+export type TimerHeroSighting = {
+  readonly sighting: HeroSightingResponseDto;
+  /** A roaming hero nobody confirmed lately; it no longer places the timer. */
+  readonly unconfirmed: boolean;
+};
+
+/** Where a detector last placed the timer's hero, while that sighting is open. */
 export function useTimerHeroSighting(
   timer: PresenceTimer,
-): HeroSighting | undefined {
-  const { heroSightings } = useContext(TimerMapPresenceContext);
+): TimerHeroSighting | undefined {
+  const { heroSightings, now } = useContext(TimerMapPresenceContext);
+  const sighting = findTimerHeroSighting(timer, heroSightings);
 
-  return findTimerHeroSighting(timer, heroSightings);
+  return sighting
+    ? { sighting, unconfirmed: isHeroSightingStale(sighting, now) }
+    : undefined;
 }

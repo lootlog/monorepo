@@ -10,9 +10,11 @@ type SightedTimer = {
 };
 
 /**
- * The current sighting of a hero timer's hero, so the timer can say where the
- * hero was last detected. A detector answer names the hero only, so a timer
- * matches by the normalized hero name on its world.
+ * The open sighting of a hero timer's hero, so the timer can say where the
+ * hero was last detected. It may no longer be current: the timer marks a
+ * roaming hero gone unconfirmed instead of hiding where it was. A detector
+ * answer names the hero only, so a timer matches by the normalized hero name
+ * on its world.
  */
 export const findTimerHeroSighting = (
   sightings: readonly HeroSightingResponseDto[] | undefined,

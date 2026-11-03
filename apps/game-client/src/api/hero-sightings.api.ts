@@ -11,8 +11,6 @@ import { buildCurrentTimerActorCharacterPayload } from "@/lib/api/generated-help
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 import { GAME_EVENT_RETRY_OPTIONS } from "./retry-policy";
 
-export type HeroSighting = HeroSightingResponseDto;
-
 export type HeroSightingRef = {
   readonly guildId: string;
   readonly sightingId: string;
@@ -38,13 +36,13 @@ export function createHeroSighting(
 export const fetchHeroSightings = (
   world: string,
   signal?: AbortSignal,
-): Promise<HeroSighting[]> =>
+): Promise<HeroSightingResponseDto[]> =>
   heroSightingsControllerGetAllHeroSightings({ world }, { signal });
 
 export function claimHeroSighting(
   { guildId, sightingId }: HeroSightingRef,
   world: string,
-): Promise<HeroSighting> {
+): Promise<HeroSightingResponseDto> {
   const payload = {
     actorCharacter: buildCurrentTimerActorCharacterPayload(world),
   };
@@ -68,7 +66,7 @@ export function claimHeroSighting(
 export function unclaimHeroSighting({
   guildId,
   sightingId,
-}: HeroSightingRef): Promise<HeroSighting> {
+}: HeroSightingRef): Promise<HeroSightingResponseDto> {
   return runSingleLoggedAction({
     actionType: "unclaim_hero_sighting",
     actionPayload: { guildId, sightingId },

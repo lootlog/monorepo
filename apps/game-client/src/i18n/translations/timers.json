@@ -48,6 +48,7 @@
     "seenAgo": "{{seconds}} s temu",
     "heroSighting": "Wykrywacz herosów",
     "heroSightingMap": "Wykrywacz herosów: {{state}} {{map}}",
+    "heroSightingMapUnconfirmed": "Wykrywacz herosów: {{state}} {{map}}, {{status}}",
     "heroSightingClaims": "Obstawiających: {{count}}",
     "more": "i {{count}} więcej"
   },
