@@ -288,6 +288,7 @@ export const useHeroDetail = () => {
     data: event,
     isLoading,
     error,
+    refetch: refetchEvent,
   } = useShowEventOverview(
     {
       guildId: queryGuildId,
@@ -393,6 +394,7 @@ export const useHeroDetail = () => {
       status: "missing" as const,
       t,
       error,
+      refetchEvent,
       queryGuildId,
       queryEventId,
     };
