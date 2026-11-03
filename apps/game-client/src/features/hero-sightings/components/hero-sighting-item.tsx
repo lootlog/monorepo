@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { formatLevel } from "@lootlog/domain/profession";
 import { isHeroSightingClaimedBy } from "@lootlog/domain/hero-sightings";
 import { ListRow } from "@/components/list-row";
+import { TruncatedText } from "@/components/truncated-text";
 import { Button } from "@/components/ui/button";
 import { HeroSightingClaimers } from "@/features/hero-sightings/components/hero-sighting-claimers";
 import { HeroSightingDetector } from "@/features/hero-sightings/components/hero-sighting-detector";
@@ -54,12 +55,12 @@ export function HeroSightingItem({
       )}
     >
       <span className="ll:flex ll:min-w-0 ll:items-baseline ll:justify-between ll:gap-2">
-        <span className="ll:min-w-0 ll:wrap-break-word ll:text-white">
+        <TruncatedText className="ll:text-white">
           {row.hero.name}
           <span className="ll:ml-1 ll:font-normal ll:text-muted-foreground">
             ({formatLevel(row.hero.lvl, row.hero.prof)})
           </span>
-        </span>
+        </TruncatedText>
         <span className="ll:shrink-0 ll:font-normal ll:tabular-nums ll:text-muted-foreground">
           {formatSightingAge(t, row.lastSeenAt, now)}
         </span>
