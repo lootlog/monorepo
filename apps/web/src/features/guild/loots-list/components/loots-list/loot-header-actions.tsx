@@ -4,6 +4,8 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
 import { MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { LootLikeButton } from "@/features/guild/loots-list/components/loots-list/loot-like-button";
+import type { Loot } from "@/lib/loots/loot-types";
 
 /**
  * Keeps the current page and its filters and opens the loot details dialog
@@ -19,19 +21,15 @@ const renderLootDetailsLink = (lootId: number) => (
   />
 );
 
-export const LootHeaderActions = ({
-  commentsCount,
-  lootId,
-}: {
-  commentsCount: number;
-  lootId: number;
-}) => {
+export const LootHeaderActions = ({ loot }: { loot: Loot }) => {
   const { t } = useTranslation();
+  const { commentsCount, id: lootId } = loot;
 
   const commentsLabel = t("loots.list.commentsCount", { count: commentsCount });
 
   return (
     <div className="flex shrink-0 items-center gap-3">
+      <LootLikeButton loot={loot} />
       <TextLink
         render={renderLootDetailsLink(lootId)}
         aria-label={commentsLabel}

@@ -12,7 +12,7 @@ import {
   LOOTS_QUERY_GC_TIME_MS,
   applyLootSnapshots,
   lootMatchesListParams,
-  patchLootShare,
+  patchLoot,
   reconcileActiveLootLists,
 } from "./loot-list-cache";
 
@@ -127,6 +127,7 @@ const lootWith = (id: number, overrides: Partial<Loot> = {}): Loot => ({
   createdAt: "2026-10-09T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   commentsCount: 0,
+  likes: [],
   ...overrides,
 });
 
@@ -222,7 +223,7 @@ it("patches loot lists while event pages cache plain loots under the same path",
   });
 
   const lootShare: Loot["lootShare"] = { "1": [] };
-  patchLootShare(client, "one", 1, lootShare);
+  patchLoot(client, "one", 1, { lootShare });
   applyLootSnapshots(client, "one", [lootWith(2)]);
 
   expect(

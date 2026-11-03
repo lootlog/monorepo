@@ -236,11 +236,12 @@ export function applyLootSnapshots(
   return needsServer;
 }
 
-export function patchLootShare(
+/** Updates fields of one loot in every cached list and detail of the Organization. */
+export function patchLoot(
   queryClient: QueryClient,
   guildId: string,
   lootId: number,
-  lootShare: Loot["lootShare"],
+  patch: Partial<Pick<Loot, "lootShare" | "likes">>,
 ) {
   for (const [key] of cachedLootLists(queryClient, guildId)) {
     queryClient.setQueryData<LootsInfiniteData>(key, (old) =>
@@ -251,7 +252,7 @@ export function patchLootShare(
               withItems(
                 page,
                 page.items.map((loot) =>
-                  loot.id === lootId ? { ...loot, lootShare } : loot,
+                  loot.id === lootId ? { ...loot, ...patch } : loot,
                 ),
               ),
             ),
@@ -262,7 +263,7 @@ export function patchLootShare(
 
   queryClient.setQueryData<Loot | null>(
     getLootsControllerFetchLootByIdQueryKey({ guildId, lootId }),
-    (old) => (old ? { ...old, lootShare } : old),
+    (old) => (old ? { ...old, ...patch } : old),
   );
 }
 

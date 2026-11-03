@@ -10,6 +10,7 @@ import {
 } from "#src/loots/query/loot-query.operations";
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 import { applicationLogger } from "#src/shared/application-logger";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 
 type Guild = Parameters<LootQueryOperations["fetchLootById"]>[0];
 
@@ -65,6 +66,7 @@ const loot: LootQueryResult = {
   npcs: [],
   submissions: [],
   commentsCount: 0,
+  likes: [],
   createdAt: new Date(0),
   updatedAt: new Date(0),
 };
@@ -86,6 +88,7 @@ const makeOperations = (
       archive: () => Effect.succeed(true),
       listComments: () => Effect.succeed([]),
       createComment: () => Effect.die("Unexpected comment write"),
+      setLike: () => Effect.die("Unexpected like write"),
     },
     stats: { invalidateCache: () => Effect.void },
     redis: {
@@ -397,7 +400,22 @@ describe("loot detail concurrent reads", () => {
         }),
       ),
     ).rejects.toThrow();
-    expect(reads).toBe(2);
+    // A hidden loot must not accept a like, so persistence is never reached.
+    expect(
+      await Effect.runPromise(
+        Effect.flip(
+          operations.setLike({
+            guild,
+            accessPolicy: policy,
+            roles: [role],
+            discordId: "owner",
+            lootId: 42,
+            liked: true,
+          }),
+        ),
+      ),
+    ).toBeInstanceOf(ResourceNotFoundError);
+    expect(reads).toBe(3);
     finish.resolve();
     await pending;
   });
@@ -488,6 +506,7 @@ describe("loot list pages", () => {
       archive: () => Effect.die("Unexpected archive"),
       listComments: () => Effect.die("Unexpected comment read"),
       createComment: () => Effect.die("Unexpected comment write"),
+      setLike: () => Effect.die("Unexpected like write"),
     },
     stats: { invalidateCache: () => Effect.void },
     redis: {

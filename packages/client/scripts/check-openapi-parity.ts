@@ -2173,6 +2173,31 @@ const CLAIM_HERO_SIGHTING_ADDITION: JsonValue = {
   },
 };
 
+const lootLikeAddition = (
+  operationId: string,
+  description: string,
+): JsonValue => ({
+  operationId,
+  parameters: [
+    { name: "lootId", in: "path", schema: { type: "number" }, required: true },
+    { name: "guildId", in: "path", schema: {}, required: true },
+  ],
+  security: [{ bearer: [] }],
+  responses: {
+    "200": {
+      description: "LootLikesResponseDto",
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/LootLikesResponseDto" },
+        },
+      },
+    },
+    "403": HTTP_ERROR_RESPONSE,
+    "404": HTTP_ERROR_RESPONSE,
+  },
+  description,
+});
+
 const UNCLAIM_HERO_SIGHTING_ADDITION: JsonValue = {
   operationId: "HeroSightingsController_unclaimHeroSighting",
   parameters: [
@@ -2520,6 +2545,15 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
         CLAIM_HERO_SIGHTING_ADDITION,
       "DELETE /guilds/{guildId}/hero-sightings/{sightingId}/claim":
         UNCLAIM_HERO_SIGHTING_ADDITION,
+      // Verified by apps/api/src/loots/loot-persistence.test.ts.
+      "PUT /guilds/{guildId}/loots/{lootId}/likes": lootLikeAddition(
+        "LootsController_likeLoot",
+        "Like a loot as the caller; repeating the request keeps one like",
+      ),
+      "DELETE /guilds/{guildId}/loots/{lootId}/likes": lootLikeAddition(
+        "LootsController_unlikeLoot",
+        "Remove the caller's like from a loot; succeeds when there is none",
+      ),
       // Verified by apps/api/src/http-api/handlers/character-auras/character-auras.data-layer.test.ts.
       "GET /character-auras": {
         operationId: "CharacterAurasController_getAuras",

@@ -50,6 +50,7 @@ import type {
   LootDetailResponse,
   LootListResponse,
   LootCommentsResponse,
+  LootLikesResponse,
   LootStatsResponse,
   LootStatsQuery,
   UserLootStatsQuery,
@@ -213,6 +214,11 @@ export class RecordsData extends Context.Service<
       lootId: number,
       payload: CreateLootCommentRequest,
     ) => DataEffect<LootCommentResponse | null>;
+    readonly setLike: (
+      caller: AuthorizedGuildCaller,
+      lootId: number,
+      liked: boolean,
+    ) => DataEffect<LootLikesResponse | null>;
     readonly updateLoot: (
       caller: AuthenticatedCaller,
       lootId: number,
@@ -486,6 +492,27 @@ export const createComment = Effect.fn("loots.createComment")(function* (
   }
 
   return comment;
+});
+
+export const setLootLike = Effect.fn("loots.setLike")(function* (
+  guildId: string | undefined,
+  lootId: number,
+  liked: boolean,
+) {
+  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+
+  const likes = yield* data((service) =>
+    service.setLike(caller, lootId, liked),
+  );
+
+  if (likes === null) {
+    return yield* new RecordsNotFound({
+      status: 404,
+      code: "LOOT_NOT_FOUND",
+    });
+  }
+
+  return likes;
 });
 
 export const updateLoot = Effect.fn("loots.updateLoot")(function* (

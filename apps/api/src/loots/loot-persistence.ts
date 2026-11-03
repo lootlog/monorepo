@@ -1,9 +1,10 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   lootCommentTable,
+  lootLikeTable,
   memberTable,
   organizationLootRecordTable,
 } from "#src/database/drizzle/schema";
@@ -12,6 +13,7 @@ import type {
   CreateLootCommentRequest,
   LootCommentResponse,
 } from "#src/contracts/loots/schemas";
+import type { MemberSummary } from "#src/contracts/shared";
 import { ErrorKey } from "#src/loots/error-key";
 import { memberDisplayRolesQuery } from "#src/members/member-display-role";
 import { findActiveGuildMember } from "#src/members/member-access-query";
@@ -42,6 +44,13 @@ export interface LootPersistence {
     readonly lootId: number;
     readonly body: CreateLootCommentRequest;
   }) => PersistenceEffect<LootCommentResponse>;
+  /** Likes or unlikes the loot as the caller; null when the record is gone. */
+  readonly setLike: (options: {
+    readonly discordId: string;
+    readonly guildId: string;
+    readonly lootId: number;
+    readonly liked: boolean;
+  }) => PersistenceEffect<ReadonlyArray<MemberSummary> | null>;
 }
 
 type Database = typeof ApiDatabase.Service;
@@ -262,6 +271,83 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
             updatedAt: comment.updatedAt.toISOString(),
           };
         }),
+      ),
+
+    setLike: (options) =>
+      protect(
+        "loots.likes.set.transaction",
+        database.transaction((transaction) =>
+          Effect.gen(function* () {
+            const records = yield* transaction
+              .select({ id: organizationLootRecordTable.id })
+              .from(organizationLootRecordTable)
+              .where(
+                and(
+                  eq(organizationLootRecordTable.guildId, options.guildId),
+                  eq(organizationLootRecordTable.lootId, options.lootId),
+                  isNull(organizationLootRecordTable.archivedAt),
+                ),
+              )
+              .limit(1);
+
+            const record = records[0];
+
+            if (!record) return null;
+
+            const member = yield* findActiveGuildMember(
+              transaction,
+              options.discordId,
+              options.guildId,
+            );
+
+            if (!member) {
+              return yield* Effect.fail(
+                new LootPersistenceError({
+                  operation: "loots.likes.set.member",
+                  cause: "member-missing",
+                }),
+              );
+            }
+
+            // Repeating a like or an unlike leaves the same state.
+            if (options.liked) {
+              yield* transaction
+                .insert(lootLikeTable)
+                .values({
+                  organizationLootRecordId: record.id,
+                  memberId: member.id,
+                })
+                .onConflictDoNothing();
+            } else {
+              yield* transaction
+                .delete(lootLikeTable)
+                .where(
+                  and(
+                    eq(lootLikeTable.organizationLootRecordId, record.id),
+                    eq(lootLikeTable.memberId, member.id),
+                  ),
+                );
+            }
+
+            return yield* transaction
+              .select({
+                id: memberTable.id,
+                name: memberTable.name,
+                avatar: memberTable.avatar,
+                userId: memberTable.userId,
+              })
+              .from(lootLikeTable)
+              .innerJoin(
+                memberTable,
+                eq(memberTable.id, lootLikeTable.memberId),
+              )
+              .where(eq(lootLikeTable.organizationLootRecordId, record.id))
+              .orderBy(
+                asc(lootLikeTable.createdAt),
+                asc(lootLikeTable.memberId),
+              );
+          }),
+        ),
       ),
   };
 };

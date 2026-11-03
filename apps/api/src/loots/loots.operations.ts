@@ -59,6 +59,10 @@ type LootComments = Effect.Success<ReturnType<LootPersistence["listComments"]>>;
 
 type LootComment = Effect.Success<ReturnType<LootPersistence["createComment"]>>;
 
+type LootLikes = NonNullable<
+  Effect.Success<ReturnType<LootPersistence["setLike"]>>
+>;
+
 class LootsOperationError extends TaggedErrorClass<LootsOperationError>()(
   "LootsOperationError",
   { operation: Schema.String, cause: Schema.Defect() },
@@ -101,6 +105,14 @@ export interface LootsOperations {
     readonly accessPolicy: AccessPolicy;
     readonly roles: Role[];
   }) => LootsEffect<LootComment>;
+  readonly setLike: (options: {
+    readonly discordId: string;
+    readonly guild: Guild;
+    readonly lootId: number;
+    readonly liked: boolean;
+    readonly accessPolicy: AccessPolicy;
+    readonly roles: Role[];
+  }) => LootsEffect<LootLikes>;
   readonly fetchLootsByGuildId: (
     guild: Guild,
     accessPolicy: AccessPolicy,
@@ -196,6 +208,7 @@ const normalizeCachedPage = (page: typeof LootListResponse.Type): LootPage => ({
       ...submission,
       member: { ...submission.member },
     })),
+    likes: [...loot.likes],
   })),
 });
 
@@ -329,6 +342,31 @@ export const makeLootsOperations = ({
         yield* invalidateList([options.guild.id]);
 
         return comment;
+      }),
+
+    setLike: (options) =>
+      Effect.gen(function* () {
+        const loot = yield* visibleLoot(
+          options.guild,
+          options.accessPolicy,
+          options.roles,
+          options.lootId,
+        );
+
+        if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
+
+        const likes = yield* persistence.setLike({
+          discordId: options.discordId,
+          guildId: options.guild.id,
+          lootId: options.lootId,
+          liked: options.liked,
+        });
+
+        if (!likes) return yield* Effect.fail(new ResourceNotFoundError());
+
+        yield* invalidateList([options.guild.id]);
+
+        return likes;
       }),
 
     fetchLootsByGuildId: (guild, accessPolicy, roles, params) =>

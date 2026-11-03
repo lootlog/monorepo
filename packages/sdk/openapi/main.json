@@ -27339,6 +27339,12 @@
           },
           "commentsCount": {
             "type": "number"
+          },
+          "likes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberSummary"
+            }
           }
         },
         "required": [
@@ -27354,7 +27360,8 @@
           "lootShare",
           "createdAt",
           "updatedAt",
-          "commentsCount"
+          "commentsCount",
+          "likes"
         ],
         "additionalProperties": false
       },
@@ -27951,6 +27958,12 @@
           },
           "commentsCount": {
             "type": "number"
+          },
+          "likes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberSummary"
+            }
           }
         },
         "required": [
@@ -27966,7 +27979,8 @@
           "lootShare",
           "createdAt",
           "updatedAt",
-          "commentsCount"
+          "commentsCount",
+          "likes"
         ],
         "allOf": [
           {
