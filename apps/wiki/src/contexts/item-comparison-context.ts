@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 import type { ComparedItem } from "@/lib/item-comparison";
-import type { ItemUpgrade } from "@/lib/item-upgrade";
+import type { ItemUpgrade } from "@lootlog/domain/item-upgrade";
 
 type ItemComparisonContextValue = {
   items: ReadonlyArray<ComparedItem>;

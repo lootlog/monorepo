@@ -1,5 +1,5 @@
 import { clamp } from "es-toolkit";
-import { itemAtLevel } from "@/lib/item-upgrade";
+import { itemAtLevel } from "./item-upgrade.js";
 
 /**
  * Margonem's elastic items (`lvladjust`), from the game's rules at
@@ -9,9 +9,8 @@ import { itemAtLevel } from "@/lib/item-upgrade";
  * in its own digits: weapons in 0 and 5, armor in 2 and 7, jewelry in 1 and 6.
  */
 
-const MIN_LEVEL = 40;
-
-const MAX_LEVEL = 300;
+/** The levels Margonem gives an elastic item, whoever loots it. */
+export const ELASTIC_LEVELS = { min: 40, max: 300 } as const;
 
 const LADDER_STEP = 5;
 
@@ -37,12 +36,12 @@ export const elasticItemLevel = (
   type: string | null,
   characterLevel: number,
 ) => {
-  if (characterLevel >= MAX_LEVEL) return MAX_LEVEL;
+  if (characterLevel >= ELASTIC_LEVELS.max) return ELASTIC_LEVELS.max;
 
   const offset = ladderOffset(type);
   const below = (characterLevel - offset) % LADDER_STEP;
 
-  return clamp(characterLevel - below, MIN_LEVEL, MAX_LEVEL);
+  return clamp(characterLevel - below, ELASTIC_LEVELS.min, ELASTIC_LEVELS.max);
 };
 
 type ElasticItem = Parameters<typeof itemAtLevel>[0] & {
@@ -63,6 +62,6 @@ export const itemForCharacter = <Item extends ElasticItem>(
   item.elasticLevel
     ? itemAtLevel(
         item,
-        elasticItemLevel(item.type, characterLevel ?? MAX_LEVEL),
+        elasticItemLevel(item.type, characterLevel ?? ELASTIC_LEVELS.max),
       )
     : item;

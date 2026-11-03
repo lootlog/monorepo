@@ -5,7 +5,7 @@ import { useItemForCharacter } from "@/hooks/use-item-for-character";
 import { useItemPreviewHandlers } from "@/hooks/use-item-preview-handlers";
 import { t } from "@/i18n/messages";
 import { CatalogItemTile } from "./catalog-item-tile";
-import { ItemAttackSpeed } from "./item-attack-speed";
+import { type AttackSpeedRanking, ItemAttackSpeed } from "./item-attack-speed";
 import { ItemDamageTypes } from "./item-damage-types";
 import { ItemLegendaryBonus } from "./item-legendary-bonus";
 import { ItemNameLink } from "./item-name-link";
@@ -21,7 +21,7 @@ type CatalogItemCardProps = {
   /** The highest level the list is filtered to, which an elastic item fits. */
   maxLevel?: number;
   /** Shows the attack speed the item adds, for a list ranked by it. */
-  showAttackSpeed?: boolean;
+  attackSpeed?: AttackSpeedRanking;
 };
 
 /**
@@ -34,7 +34,7 @@ export function CatalogItemCard({
   showSource = true,
   highlight = "",
   maxLevel,
-  showAttackSpeed = false,
+  attackSpeed,
 }: CatalogItemCardProps) {
   const shown = useItemForCharacter(item, maxLevel);
   const previewHandlers = useItemPreviewHandlers(shown);
@@ -51,7 +51,9 @@ export function CatalogItemCard({
           <span className="shrink-0 tabular-nums">
             {t("common.levelShort", { level: shown.lvl })}
           </span>
-          {showAttackSpeed ? <ItemAttackSpeed stat={shown.stat} /> : null}
+          {attackSpeed ? (
+            <ItemAttackSpeed item={shown} ranking={attackSpeed} />
+          ) : null}
           <ItemProfessions stat={shown.stat} />
           <ItemDamageTypes stat={shown.stat} />
           <ItemLegendaryBonus stat={shown.stat} />

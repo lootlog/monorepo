@@ -10,7 +10,7 @@ import {
   ITEM_UPGRADE_PATTERN,
   type ItemUpgrade,
   NO_UPGRADE,
-} from "@/lib/item-upgrade";
+} from "@lootlog/domain/item-upgrade";
 
 /** A comparison fits this many items side by side, even on a phone. */
 export const MAX_COMPARED_ITEMS = 4;

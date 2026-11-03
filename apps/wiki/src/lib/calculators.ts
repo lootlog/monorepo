@@ -1,4 +1,7 @@
-import { upgradedItemLevel, type UpgradeLevel } from "@/lib/item-upgrade";
+import {
+  upgradedItemLevel,
+  type UpgradeLevel,
+} from "@lootlog/domain/item-upgrade";
 
 /**
  * Margonem's formulas behind the wiki's calculators. Unless a formula says

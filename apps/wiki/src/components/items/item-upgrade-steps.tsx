@@ -4,7 +4,7 @@ import {
   UPGRADE_LEVELS,
   type UpgradeLevel,
   upgradedItemLevel,
-} from "@/lib/item-upgrade";
+} from "@lootlog/domain/item-upgrade";
 
 type ItemUpgradeStepsProps = {
   /** The item's own level, which the upgrade raises its stats from. */
