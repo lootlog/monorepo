@@ -14,6 +14,7 @@ import { LootSplitStatusIcon } from "./loot-split-status-icon";
 /** Players still choosing come first: they hold the party up. */
 const STATUS_ORDER: Record<LootSplitStatus, number> = {
   choosing: 0,
+  timedOut: 0,
   unknown: 1,
   accepted: 2,
 };
@@ -48,6 +49,7 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
     );
 
   const choosing = rows.filter(({ status }) => status === "choosing").length;
+  const timedOut = rows.filter(({ status }) => status === "timedOut").length;
   const unknown = rows.filter(({ status }) => status === "unknown").length;
   const title = isOwn ? t("ownSplit") : t("otherSplit");
 
@@ -55,7 +57,7 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
     <section
       aria-label={title}
       className={cn(
-        "ll:flex ll:flex-col ll:gap-1 ll:border-b ll:border-white/10 ll:px-1 ll:py-1.5 ll:last:border-b-0",
+        "ll:flex ll:flex-col ll:gap-1 ll:border-b ll:border-white/10 ll:px-2 ll:py-1.5 ll:last:border-b-0",
         split.phase !== "open" && "ll:opacity-60",
       )}
     >
@@ -80,12 +82,19 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
             </span>
           </span>
         ) : (
-          <span className="ll:font-normal ll:text-white/70">
-            {split.phase === "resolved" ? t("resolved") : t("expired")}
+          <span className="ll:flex ll:gap-2 ll:font-normal">
+            {timedOut > 0 ? (
+              <span className="ll:text-rose-300">
+                {t("timedOutCount", { count: timedOut })}
+              </span>
+            ) : null}
+            <span className="ll:text-white/70">
+              {split.phase === "resolved" ? t("resolved") : t("expired")}
+            </span>
           </span>
         )}
       </header>
-      <table className="ll:border-separate ll:border-spacing-x-1 ll:border-spacing-y-0.5 ll:text-xs">
+      <table className="ll:-mx-1 ll:border-separate ll:border-spacing-x-1 ll:border-spacing-y-0.5 ll:text-xs">
         <thead>
           <tr>
             <th scope="col">

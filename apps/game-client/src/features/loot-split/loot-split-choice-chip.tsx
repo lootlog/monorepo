@@ -3,11 +3,16 @@ import { cn } from "cn";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
-/** The game's loot window colours: "nie chcę" red, "chcę" green, "bardzo chcę" orange. */
+/**
+ * Dark opaque fills with a light letter in the same hue, so each chip keeps
+ * its contrast over whatever the translucent window shows through. "Bardzo
+ * chcę" is violet rather than the game's orange, apart from the amber of a
+ * player still choosing.
+ */
 const CHOICE_CLASS_NAMES: Record<LootSplitChoice, string> = {
-  0: "ll:bg-red-700/70 ll:text-white/85",
-  1: "ll:bg-emerald-600/85 ll:text-white",
-  2: "ll:bg-orange-500 ll:text-black",
+  0: "ll:border-red-400/40 ll:bg-red-950 ll:text-red-300",
+  1: "ll:border-emerald-400/40 ll:bg-emerald-950 ll:text-emerald-300",
+  2: "ll:border-violet-400/50 ll:bg-violet-950 ll:text-violet-300",
 };
 
 type LootSplitChoiceChipProps = {
@@ -30,11 +35,12 @@ export const LootSplitChoiceChip: FC<LootSplitChoiceChipProps> = ({
       aria-label={label}
       title={label}
       className={cn(
-        "ll:inline-flex ll:size-5 ll:items-center ll:justify-center ll:rounded-[4px] ll:text-[10px] ll:font-bold ll:leading-none",
+        "ll:inline-flex ll:size-5 ll:items-center ll:justify-center ll:rounded-[4px] ll:border ll:text-[10px] ll:font-bold ll:leading-none",
         choice === undefined
-          ? "ll:border ll:border-dashed ll:border-white/25 ll:text-white/40"
+          ? "ll:border-dashed ll:border-white/25 ll:text-white/40"
           : CHOICE_CLASS_NAMES[choice],
-        canPickMust && "ll:ring-1 ll:ring-orange-400/70",
+        canPickMust &&
+          "ll:ring-1 ll:ring-violet-400 ll:ring-offset-1 ll:ring-offset-transparent",
       )}
     >
       {t(`choiceShort.${choice ?? "unknown"}`)}
