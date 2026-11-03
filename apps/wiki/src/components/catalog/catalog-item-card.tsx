@@ -4,6 +4,7 @@ import { EquipButton } from "@/components/equipment/equip-button";
 import { useItemPreviewHandlers } from "@/hooks/use-item-preview-handlers";
 import { t } from "@/i18n/messages";
 import { CatalogItemTile } from "./catalog-item-tile";
+import { ItemAttackSpeed } from "./item-attack-speed";
 import { ItemDamageTypes } from "./item-damage-types";
 import { ItemLegendaryBonus } from "./item-legendary-bonus";
 import { ItemNameLink } from "./item-name-link";
@@ -16,6 +17,8 @@ type CatalogItemCardProps = {
   showSource?: boolean;
   /** The searched phrase, marked in the name. */
   highlight?: string;
+  /** Shows the attack speed the item adds, for a list ranked by it. */
+  showAttackSpeed?: boolean;
 };
 
 /**
@@ -26,6 +29,7 @@ export function CatalogItemCard({
   item,
   showSource = true,
   highlight = "",
+  showAttackSpeed = false,
 }: CatalogItemCardProps) {
   const previewHandlers = useItemPreviewHandlers(item);
 
@@ -41,6 +45,7 @@ export function CatalogItemCard({
           <span className="shrink-0 tabular-nums">
             {t("common.levelShort", { level: item.lvl })}
           </span>
+          {showAttackSpeed ? <ItemAttackSpeed stat={item.stat} /> : null}
           <ItemProfessions stat={item.stat} />
           <ItemDamageTypes stat={item.stat} />
           <ItemLegendaryBonus stat={item.stat} />

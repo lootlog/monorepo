@@ -34,13 +34,6 @@ export const defenceChance = (points: number, enemyLevel: number) =>
 export const pointsForMaxDefence = (enemyLevel: number) =>
   Math.ceil((MAX_DEFENCE_CHANCE * Math.min(enemyLevel, LEVEL_CAP)) / 20);
 
-/**
- * The attack speed agility gives:
- * `min(2, 0.02 * agility) + max(0, 0.002 * (agility - 100))`.
- */
-export const attackSpeedFromAgility = (agility: number) =>
-  Math.min(2, 0.02 * agility) + Math.max(0, 0.002 * (agility - 100));
-
 /** The evade points agility gives: `round(agility / 30)`. */
 export const evadeFromAgility = (agility: number) => Math.round(agility / 30);
 
