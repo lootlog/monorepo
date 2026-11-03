@@ -96,6 +96,7 @@ export function HeadToHeadPageVariant({
     if (isLoading) {
       return (
         <TableRowsSkeleton
+          rows={pageSize}
           withHeader
           trailingColumns={trailingSkeletonColumns}
           rowContent="text"
