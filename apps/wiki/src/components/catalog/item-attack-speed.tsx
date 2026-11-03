@@ -1,7 +1,6 @@
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import {
   itemStatAttackSpeed,
-  upgradedAttackSpeed,
+  type UpgradeBonusKey,
 } from "@lootlog/domain/item-upgrade";
 import { t } from "@/i18n/messages";
 import { upgradeBonusName } from "@/lib/upgrade-bonus-text";
@@ -10,8 +9,10 @@ import { upgradeBonusName } from "@/lib/upgrade-bonus-text";
 export type AttackSpeedRanking = "dropped" | "upgraded";
 
 type ItemAttackSpeedProps = {
-  item: Pick<CatalogItemDtoOutput, "stat" | "lvl" | "rarity" | "type">;
-  ranking: AttackSpeedRanking;
+  /** The item's stats as the list ranks it, upgraded or as dropped. */
+  stat: string;
+  /** The +5 bonus the ranking gave the item. */
+  bonus?: UpgradeBonusKey;
 };
 
 /**
@@ -19,11 +20,8 @@ type ItemAttackSpeedProps = {
  * counted in, as the list's attack speed sort ranks it: as dropped, or at +5
  * with the bonus that adds the most; nothing without any.
  */
-export function ItemAttackSpeed({ item, ranking }: ItemAttackSpeedProps) {
-  const { attackSpeed, bonus } =
-    ranking === "upgraded"
-      ? upgradedAttackSpeed(item)
-      : { attackSpeed: itemStatAttackSpeed(item.stat) };
+export function ItemAttackSpeed({ stat, bonus }: ItemAttackSpeedProps) {
+  const attackSpeed = itemStatAttackSpeed(stat);
 
   if (attackSpeed === 0) return null;
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
+  attackSpeedUpgrade,
   itemAtLevel,
   itemStatValue,
   upgradeBonusOptions,
@@ -171,15 +172,11 @@ describe("attack speed at +5", () => {
   it("takes the +5 bonus that adds the most attack speed for the item's class", () => {
     // 2,05 SA and 139 to all attributes at +5, then 150 agility: 2,05 +
     // 0,002 * (139 + 150). Necklaces cannot draw attack speed itself.
-    expect(upgradedAttackSpeed(necklace)).toEqual({
-      attackSpeed: 2.628,
-      bonus: "dz",
-    });
+    expect(attackSpeedUpgrade(necklace)).toEqual({ level: 5, bonus: "dz" });
+    expect(upgradedAttackSpeed(necklace)).toBe(2.628);
     // A third attack speed bonus outruns 150 agility on a weapon.
-    expect(upgradedAttackSpeed(sword)).toEqual({
-      attackSpeed: 2.05,
-      bonus: "sa",
-    });
+    expect(attackSpeedUpgrade(sword)).toEqual({ level: 5, bonus: "sa" });
+    expect(upgradedAttackSpeed(sword)).toBe(2.05);
   });
 
   it("keeps the dropped attack speed of an item the game does not upgrade", () => {
@@ -190,7 +187,7 @@ describe("attack speed at +5", () => {
         rarity: "UNIQUE",
         type: "NECKLACE",
       }),
-    ).toEqual({ attackSpeed: 0.4 });
+    ).toBe(0.4);
   });
 });
 
