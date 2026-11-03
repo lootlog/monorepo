@@ -320,3 +320,39 @@ test("ranks an elastic item by its attack speed at the searched level, not the o
   expect(response.hits.map(({ id }) => id)).toEqual([2, 1]);
   expect(response.estimatedTotalHits).toBe(3);
 });
+
+test("keeps a query's relevance order among fixed items when it merges in elastic ones", async () => {
+  const armor = (id: number, lvl: number, sa: number) => ({
+    id,
+    name: `Zbroja ${id}`,
+    icon: "zbroja.gif",
+    stat: `lvl=${lvl};sa=${sa}`,
+    lvl,
+    rarity: "LEGENDARY",
+    type: "ARMOR",
+  });
+
+  // 0,55 SA at 62.
+  const elastic = {
+    ...armor(1, 297, 231),
+    observedLevels: [42, 47, 52, 57, 62],
+  };
+
+  // Meilisearch ranks the better name match first, then speed.
+  const { catalog } = catalogWith(
+    [armor(3, 50, 40), armor(2, 60, 82)],
+    undefined,
+    [elastic],
+  );
+
+  const response = await Effect.runPromise(
+    catalog.getItems({
+      search: "zbroja",
+      types: ["ARMOR"],
+      maxLevel: 64,
+      sort: "attackSpeed:desc",
+    }),
+  );
+
+  expect(response.hits.map(({ id }) => id)).toEqual([1, 3, 2]);
+});
