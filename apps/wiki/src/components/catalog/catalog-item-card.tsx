@@ -1,6 +1,7 @@
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import { CompareButton } from "@/components/comparison/compare-button";
 import { EquipButton } from "@/components/equipment/equip-button";
+import { useItemForCharacter } from "@/hooks/use-item-for-character";
 import { useItemPreviewHandlers } from "@/hooks/use-item-preview-handlers";
 import { t } from "@/i18n/messages";
 import { CatalogItemTile } from "./catalog-item-tile";
@@ -17,38 +18,43 @@ type CatalogItemCardProps = {
   showSource?: boolean;
   /** The searched phrase, marked in the name. */
   highlight?: string;
+  /** The highest level the list is filtered to, which an elastic item fits. */
+  maxLevel?: number;
   /** Shows the attack speed the item adds, for a list ranked by it. */
   showAttackSpeed?: boolean;
 };
 
 /**
  * One item in a list as a dense row: its name over its level, professions,
- * damage types and legendary bonus, and where it drops last.
+ * damage types and legendary bonus, and where it drops last. An elastic item
+ * shows as the set's character would loot it.
  */
 export function CatalogItemCard({
   item,
   showSource = true,
   highlight = "",
+  maxLevel,
   showAttackSpeed = false,
 }: CatalogItemCardProps) {
-  const previewHandlers = useItemPreviewHandlers(item);
+  const shown = useItemForCharacter(item, maxLevel);
+  const previewHandlers = useItemPreviewHandlers(shown);
 
   return (
     <article
       className="flex h-full min-w-0 items-center gap-2.5 rounded-md border border-border/50 bg-card px-2.5 py-2 transition-colors duration-150 hover:border-border hover:bg-accent/30 motion-reduce:transition-none"
       {...previewHandlers}
     >
-      <CatalogItemTile item={item} />
+      <CatalogItemTile item={shown} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <ItemNameLink item={item} highlight={highlight} />
         <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           <span className="shrink-0 tabular-nums">
-            {t("common.levelShort", { level: item.lvl })}
+            {t("common.levelShort", { level: shown.lvl })}
           </span>
-          {showAttackSpeed ? <ItemAttackSpeed stat={item.stat} /> : null}
-          <ItemProfessions stat={item.stat} />
-          <ItemDamageTypes stat={item.stat} />
-          <ItemLegendaryBonus stat={item.stat} />
+          {showAttackSpeed ? <ItemAttackSpeed stat={shown.stat} /> : null}
+          <ItemProfessions stat={shown.stat} />
+          <ItemDamageTypes stat={shown.stat} />
+          <ItemLegendaryBonus stat={shown.stat} />
         </div>
         {showSource ? <ItemSource item={item} /> : null}
       </div>

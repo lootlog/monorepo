@@ -137,6 +137,11 @@ neither does when Lootlog first saw an item or NPC, which would date boss kills.
   maps players only carry loot to stay off the list, while a hero keeps every
   map it spawns on. Lootlog recomputes them daily, so an NPC first seen today
   may have none yet.
+- Each item carries `elasticLevel`: `true` when Margonem gives it the level of
+  the character who loots it, as Lootlog saw it dropped at more than four
+  levels. Its `lvl` and `stat` then describe one of those levels, the one
+  most recently seen. `minLevel` and `maxLevel` find an elastic item whenever
+  the range reaches into the levels it comes at, 40 to 300.
 - Items sort by `lvl`, `name` or `id:desc`, which lists the items Margonem
   added most recently first. They filter by `ids`, `rarities`, `types`,
   `professions`, `minLevel`, `maxLevel`, `droppedBy` (an NPC `key`),

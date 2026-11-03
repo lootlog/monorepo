@@ -68,6 +68,7 @@ export function ItemResults({ params, query }: ItemResultsProps) {
         placeholders={12}
         emptyLabel={t("search.noResults")}
         highlight={query}
+        maxLevel={params.maxLevel}
         showAttackSpeed={params.sort === "attackSpeed:desc"}
       />
       {items && hasNextPage ? (

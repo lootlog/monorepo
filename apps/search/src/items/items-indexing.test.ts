@@ -317,3 +317,64 @@ function npcDrop(id: number, name: string) {
     },
   };
 }
+
+test("collects the levels an item was seen at across redelivered and reordered observations", async () => {
+  const written: Array<{
+    uid: string;
+    observedLevels: number[];
+    elasticLevel: boolean;
+  }> = [];
+
+  const elastic = itemCatalogKey(item(1));
+
+  const client = new Meilisearch({
+    host: "http://search.invalid",
+    httpClient: (input, init) => {
+      const url = new URL(String(input));
+
+      if ((init?.method ?? "GET").toUpperCase() === "GET") {
+        return Promise.resolve(
+          url.pathname.startsWith("/tasks/")
+            ? { uid: 1, status: "succeeded" }
+            : {
+                results: [
+                  { uid: elastic, worlds: ["new"], observedLevels: [42, 47] },
+                ],
+              },
+        );
+      }
+
+      written.push(...JSON.parse(String(init?.body)));
+
+      return Promise.resolve({ taskUid: 1, status: "enqueued" });
+    },
+  });
+
+  await Effect.runPromise(
+    makeItemsModule(client, logger).indexItems({
+      items: [
+        { ...item(1), lvl: 57 },
+        { ...item(1), lvl: 42 },
+        { ...item(1), lvl: 40 },
+        { ...item(1), lvl: 300 },
+        { ...item(1), lvl: 52 },
+        // No level requirement is no level.
+        { ...item(2), lvl: 0 },
+      ],
+    }),
+  );
+
+  expect(written).toEqual([
+    // The lowest levels are enough to tell an elastic item.
+    expect.objectContaining({
+      uid: elastic,
+      observedLevels: [40, 42, 47, 52, 57],
+      elasticLevel: true,
+    }),
+    expect.objectContaining({
+      uid: itemCatalogKey(item(2)),
+      observedLevels: [],
+      elasticLevel: false,
+    }),
+  ]);
+});

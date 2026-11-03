@@ -4,6 +4,7 @@ import { attemptMeilisearch } from "#src/meilisearch/search-operation-failure";
 import { buildMeilisearchInFilter } from "#src/meilisearch/query-builder";
 import { ITEMS_INDEX } from "#src/items/search-index";
 import type { DropSource } from "#src/items/item-drops";
+import { ELASTIC_LEVELS, isElasticLevel } from "#src/items/item-levels";
 import { collapseByNameAndType } from "#src/npcs/npcs.service";
 import { NPCS_INDEX } from "#src/npcs/search-index";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
@@ -37,6 +38,7 @@ type CatalogItemDocument = {
   type: string | null;
   droppedBy?: DropSource[];
   retiredDropMonsterKeys?: string[];
+  observedLevels?: number[];
 };
 
 type CatalogNpcDocument = {
@@ -67,8 +69,26 @@ const gameVersionFilter = (gameVersion: string | undefined) =>
     ? undefined
     : `gameVersion = ${JSON.stringify(gameVersion)}`;
 
-const levelFilter = (operator: ">=" | "<=", level: number | undefined) =>
-  level === undefined ? undefined : `lvl ${operator} ${Math.floor(level)}`;
+/**
+ * Items of a level range. An elastic item comes at any level Margonem gives
+ * it, so it matches every range reaching into those levels.
+ */
+const levelFilter = (min: number | undefined, max: number | undefined) => {
+  const bounds = [
+    min === undefined ? undefined : `lvl >= ${Math.floor(min)}`,
+    max === undefined ? undefined : `lvl <= ${Math.floor(max)}`,
+  ].filter((bound) => bound !== undefined);
+
+  if (bounds.length === 0) return undefined;
+
+  const reachesElastic =
+    (max ?? ELASTIC_LEVELS.max) >= ELASTIC_LEVELS.min &&
+    (min ?? ELASTIC_LEVELS.min) <= ELASTIC_LEVELS.max;
+
+  return reachesElastic
+    ? `((${bounds.join(" AND ")}) OR elasticLevel = true)`
+    : bounds.join(" AND ");
+};
 
 /** The item filters of a query; `monsterKey` is the drop source's monster. */
 const itemFilters = (
@@ -87,8 +107,7 @@ const itemFilters = (
     query.professions?.length
       ? buildMeilisearchInFilter("requiredProfessions", query.professions)
       : undefined,
-    levelFilter(">=", query.minLevel),
-    levelFilter("<=", query.maxLevel),
+    levelFilter(query.minLevel, query.maxLevel),
     ...(query.statKeys ?? []).map(
       (key) => `statsKeys = ${JSON.stringify(key)}`,
     ),
@@ -160,6 +179,7 @@ export const makeCatalogModule = (
         "type",
         "droppedBy",
         "retiredDropMonsterKeys",
+        "observedLevels",
       ],
       filter: filters.length > 0 ? filters.join(" AND ") : undefined,
       sort: sortBy(query.sort),
@@ -178,8 +198,9 @@ export const makeCatalogModule = (
     return {
       estimatedTotalHits: response.estimatedTotalHits ?? response.hits.length,
       hits: response.hits.map(
-        ({ droppedBy, retiredDropMonsterKeys, ...item }) => ({
+        ({ droppedBy, retiredDropMonsterKeys, observedLevels, ...item }) => ({
           ...item,
+          elasticLevel: isElasticLevel({ observedLevels }),
           // A boss seen by older clients keeps a runtime or legacy entry beside
           // its template one; each monster is listed once.
           droppedBy: collapseByNameAndType(droppedBy ?? []).map(
