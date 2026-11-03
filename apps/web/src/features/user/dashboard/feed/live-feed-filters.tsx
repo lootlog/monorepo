@@ -1,7 +1,6 @@
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Server, Skull } from "lucide-react";
-import { cn } from "cn";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 import {
   ACTIVITY_FEED_NPC_CATEGORIES,
@@ -14,11 +13,9 @@ import {
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
-import { NpcTypeIcon } from "@lootlog/ui/components/npc-type-icon";
 import { Label } from "@lootlog/ui/components/label";
 import { Switch } from "@lootlog/ui/components/switch";
 import { FilterPanelField } from "@/components/filters/filter-panel-field";
-import { NPC_CATEGORY_APPEARANCE } from "../npc-category-appearance";
 
 type Props = {
   settings: ActivityFeedSettings;
@@ -103,23 +100,10 @@ export function LiveFeedFilters({ settings, disabled, onChange }: Props) {
           icon={Skull}
           multiSelect
           showSearch={false}
-          options={ACTIVITY_FEED_NPC_CATEGORIES.map((category) => {
-            const { color } = NPC_CATEGORY_APPEARANCE[category];
-
-            return {
-              value: category,
-              label: categoryLabel(category),
-              render: () => (
-                <span className="flex items-center gap-2">
-                  <NpcTypeIcon
-                    type={category}
-                    className={cn("size-4", color)}
-                  />
-                  {categoryLabel(category)}
-                </span>
-              ),
-            };
-          })}
+          options={ACTIVITY_FEED_NPC_CATEGORIES.map((category) => ({
+            value: category,
+            label: categoryLabel(category),
+          }))}
           value={includedCategories}
           onValueChange={(category) =>
             onChange({

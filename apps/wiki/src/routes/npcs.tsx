@@ -2,7 +2,6 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { useCatalogControllerGetNpcs } from "@lootlog/client/search";
 import { Card, CardContent, CardHeader } from "@lootlog/ui/components/card";
 import { NpcTile } from "@lootlog/ui/components/npc-tile";
-import { NpcTypeIcon } from "@lootlog/ui/components/npc-type-icon";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { BasicSearchForm } from "@/components/basic-search-form";
 import { CATALOG_GRID } from "@/components/catalog/catalog-item-grid";
@@ -10,7 +9,7 @@ import { FilterTile } from "@/components/filter-tile";
 import { t } from "@/i18n/messages";
 import { npcPageParams, WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { joinList, splitList } from "@/lib/items-search";
-import { NPC_TYPE_ICONS, NPC_TYPE_OPTIONS } from "@/lib/npc-types";
+import { NPC_TYPE_OPTIONS } from "@/lib/npc-types";
 import { useBasicSearchForm } from "./-use-basic-search-form";
 import {
   getNpcsRouteSearchParams,
@@ -89,13 +88,6 @@ function NpcsRoute() {
                 <FilterTile
                   key={type}
                   label={t(`npcTypes.${type}`)}
-                  icon={
-                    <NpcTypeIcon
-                      type={NPC_TYPE_ICONS[type]}
-                      aria-hidden="true"
-                      className="size-4"
-                    />
-                  }
                   pressed={selectedTypes.includes(type)}
                   onPressedChange={toggleType(type)}
                 />

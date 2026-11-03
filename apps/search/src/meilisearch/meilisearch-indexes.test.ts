@@ -52,7 +52,7 @@ test("startup skips unchanged settings and preserves searchable attribute order"
       "monsterKey",
       "gameVersion",
     ],
-    sortableAttributes: ["firstSeenAt"],
+    sortableAttributes: ["firstSeenAt", "lvl", "name"],
   });
 
   for (const value of settings.values()) {
