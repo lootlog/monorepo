@@ -1,4 +1,4 @@
-import { catalogSlug } from "@lootlog/domain/catalog-slug";
+import { catalogPageSegment } from "@lootlog/domain/catalog-slug";
 import type {
   ItemUpgrade,
   UpgradeBonusKey,
@@ -7,10 +7,6 @@ import type {
 
 /** The wiki covers the Polish edition of Margonem for now. */
 export const WIKI_GAME_VERSION = "pl";
-
-/** A catalog page's URL segment: the id, then the name, `257037-barbatos`. */
-const pageSegment = (entry: { id: number; name: string }) =>
-  [entry.id, catalogSlug(entry.name)].filter(Boolean).join("-");
 
 /**
  * The id and the name slug of a page's URL segment. Old item links carry the
@@ -24,7 +20,7 @@ export const readPageSegment = (segment: string) => {
 };
 
 export const itemPageParams = (item: { id: number; name: string }) => ({
-  itemSlug: pageSegment(item),
+  itemSlug: catalogPageSegment(item),
 });
 
 /** The upgrade an item page shows the item at, so a link keeps it. */
@@ -40,7 +36,7 @@ export const itemPageSearch = ({
   level === 0 ? {} : { upgrade: level, bonus };
 
 export const npcPageParams = (npc: { id: number; name: string }) => ({
-  npcSlug: pageSegment(npc),
+  npcSlug: catalogPageSegment(npc),
 });
 
 // Catalog keys, such as `pl_template_257636_2`, address the old NPC links.
