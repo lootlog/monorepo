@@ -43,6 +43,7 @@ import {
   TITLE_MAX_LENGTH,
   useGuildDocDraft,
 } from "./use-guild-doc-draft";
+import { RetryButton } from "@/components/common/retry-button";
 
 export const GuildDocEditorPage = () => {
   const {
@@ -85,14 +86,10 @@ export const GuildDocEditorPage = () => {
               description={t("docs.editor.loadErrorDescription")}
               action={
                 documentQuery.isError ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    loading={documentQuery.isFetching}
-                    onClick={() => void documentQuery.refetch()}
-                  >
-                    {t("common.actions.retry")}
-                  </Button>
+                  <RetryButton
+                    onRetry={() => documentQuery.refetch()}
+                    isRetrying={documentQuery.isFetching}
+                  />
                 ) : undefined
               }
             />

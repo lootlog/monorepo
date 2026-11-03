@@ -4,7 +4,7 @@ import { UserNotificationsPageSkeleton } from "@/features/user/notifications/not
 import {
   getNotificationsUserControllerGetUserTargetsQueryOptions,
   getNotificationsUserControllerGetWatchedItemsQueryOptions,
-  getGuildsControllerGetUserGuildsQueryOptions,
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryOptions,
 } from "@lootlog/client/main";
 
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/@me/notifications")({
       void Promise.all([
         prefetchRouteQuery(
           context.queryClient,
-          getGuildsControllerGetUserGuildsQueryOptions(),
+          getUsersControllerGetCurrentUserAccessibleGuildsQueryOptions(),
         ),
         prefetchRouteQuery(
           context.queryClient,

@@ -1,94 +1,124 @@
-import { parseKillStatsLevel } from "@/features/kills/parse-kill-stats-level";
-import { updateSettingsField } from "./update-settings-field";
-import { useLocalStorage } from "usehooks-ts";
-import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
+import {
+  createLoader,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryState,
+  type inferParserType,
+} from "nuqs";
+import { useEffect, useRef, useState } from "react";
+import { useDebounceCallback } from "usehooks-ts";
+import { createQueryFilters } from "@/hooks/create-query-filters";
 import { useGuildWorld } from "@/hooks/context/use-guild-world";
-import type { KilledNpcType } from "@/constants/npc";
-import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
+import { KILLED_NPC_TYPES, type KilledNpcType } from "@/constants/npc";
+import {
+  KILL_STATS_PERIODS,
+  type KillStatsPeriod,
+} from "@/features/kills/components/kill-stats-period-select";
 
-type StatsSettingsPage =
-  | "overview"
-  | "ranking"
-  | "member"
-  | "npcs-list"
-  | "npc-killers";
+// An absent key is the default, so a default never reads as an active filter.
+const statsSearchParsers = {
+  minLvl: parseAsString.withDefault(""),
+  maxLvl: parseAsString.withDefault(""),
+  npcType: parseAsStringLiteral(KILLED_NPC_TYPES),
+  period: parseAsStringLiteral(KILL_STATS_PERIODS),
+  search: parseAsString.withDefault(""),
+};
 
-type StoredStatsSettings = {
+const useStatsFilters = createQueryFilters(statsSearchParsers);
+
+const loadStatsSearch = createLoader(statsSearchParsers);
+
+const SEARCH_PUBLISH_DELAY_MS = 500;
+
+/** A stats page's filters, with the Organization's world they apply to. */
+export type StatsSettings = {
   minLvl: string;
   maxLvl: string;
-  npcType?: KilledNpcType | "ALL";
-  period?: KillStatsPeriod;
+  npcType: KilledNpcType | "ALL";
+  period: KillStatsPeriod;
+  search: string;
+  world: string | null;
 };
 
-/** The page's own filters, with the Organization's world they apply to. */
-export type StatsSettings = StoredStatsSettings & { world: string | null };
+const toStatsSettings = (
+  search: inferParserType<typeof statsSearchParsers>,
+  world: string | null,
+): StatsSettings => ({
+  minLvl: search.minLvl,
+  maxLvl: search.maxLvl,
+  npcType: search.npcType ?? "ALL",
+  period: search.period ?? "all",
+  search: search.search,
+  world,
+});
 
-const DEFAULT_SETTINGS: StoredStatsSettings = {
-  minLvl: "",
-  maxLvl: "",
-  npcType: "ALL",
-  period: "all",
-};
+/** The settings a stats route's loader prefetches for, read from its URL. */
+export const readStatsSettings = (searchStr: string, world: string | null) =>
+  toStatsSettings(loadStatsSearch(searchStr), world);
 
-export const useStatsSettings = (page: StatsSettingsPage) => {
-  const guildId = useGuildId();
-  const storageKey = `stats-settings-${guildId}-${page}`;
-
+/**
+ * A stats page's filters and list page in its URL. The search input keeps a
+ * draft; the URL follows once typing pauses.
+ */
+export const useStatsSettings = () => {
   const { world } = useGuildWorld();
 
-  const [settings, setSettings] = useLocalStorage<StoredStatsSettings>(
-    storageKey,
-    DEFAULT_SETTINGS,
+  const { filters, setFilters, hasActiveFilters, clearFilters } =
+    useStatsFilters();
+
+  const [page, setPage] = useQueryState(
+    "page",
+    parseAsInteger.withOptions({ history: "push" }),
   );
 
-  // Debounced values for API calls
-  const debouncedMinLvl = useDebounce(settings.minLvl, 500);
-  const debouncedMaxLvl = useDebounce(settings.maxLvl, 500);
+  const [searchDraft, setSearchDraft] = useState(filters.search);
 
-  const setMinLvl = (minLvl: string) => {
-    setSettings((previous) => updateSettingsField(previous, "minLvl", minLvl));
-  };
+  const publishSearch = useDebounceCallback((search: string) => {
+    void setFilters({ search: search.trim() || null }, { history: "replace" });
+    void setPage(null);
+  }, SEARCH_PUBLISH_DELAY_MS);
 
-  const setMaxLvl = (maxLvl: string) => {
-    setSettings((previous) => updateSettingsField(previous, "maxLvl", maxLvl));
-  };
+  // The page belongs to the world it was picked on.
+  const pageWorld = useRef(world);
 
-  const setNpcType = (npcType: KilledNpcType | "ALL") => {
-    setSettings((previous) =>
-      updateSettingsField(previous, "npcType", npcType),
-    );
-  };
+  useEffect(() => {
+    if (pageWorld.current === world) return;
 
-  const setPeriod = (period: KillStatsPeriod) => {
-    setSettings((prev) => {
-      if ((prev.period ?? "all") === period) return prev;
+    pageWorld.current = world;
+    void setPage(null);
+  }, [world, setPage]);
 
-      return { ...prev, period };
-    });
-  };
-
-  // The overview's NPC type is the picked KPI tile, not a filter to clear.
-  const resetFilters = () => {
-    setSettings((previous) => ({
-      ...DEFAULT_SETTINGS,
-      npcType:
-        page === "overview" ? previous.npcType : DEFAULT_SETTINGS.npcType,
-    }));
+  // Every filter change starts the list over.
+  const updateFilters = (next: Parameters<typeof setFilters>[0]) => {
+    void setFilters(next);
+    void setPage(null);
   };
 
   return {
-    settings: {
-      ...settings,
-      world,
-      period: settings.period ?? "all",
+    settings: toStatsSettings(filters, world),
+    searchDraft,
+    hasActiveFilters,
+    /** Zero-based list page; the URL counts from 1. */
+    pageIndex: Math.max((page ?? 1) - 1, 0),
+    setPageIndex: (pageIndex: number) => {
+      void setPage(pageIndex > 0 ? pageIndex + 1 : null);
     },
-    debouncedMinLvl: parseKillStatsLevel(debouncedMinLvl),
-    debouncedMaxLvl: parseKillStatsLevel(debouncedMaxLvl),
-    setMinLvl,
-    setMaxLvl,
-    setNpcType,
-    setPeriod,
-    resetFilters,
+    setMinLvl: (minLvl: string) => updateFilters({ minLvl: minLvl || null }),
+    setMaxLvl: (maxLvl: string) => updateFilters({ maxLvl: maxLvl || null }),
+    setNpcType: (npcType: KilledNpcType | "ALL") =>
+      updateFilters({ npcType: npcType === "ALL" ? null : npcType }),
+    setPeriod: (period: KillStatsPeriod) =>
+      updateFilters({ period: period === "all" ? null : period }),
+    setSearch: (search: string) => {
+      setSearchDraft(search);
+      publishSearch(search);
+    },
+    resetFilters: () => {
+      publishSearch.cancel();
+      setSearchDraft("");
+      clearFilters();
+      void setPage(null);
+    },
   };
 };

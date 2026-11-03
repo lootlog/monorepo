@@ -2,7 +2,7 @@ import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { AlertCircle, Radar, RotateCcw, SearchX } from "lucide-react";
+import { AlertCircle, Radar, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "@/components/common/empty-state";
@@ -21,6 +21,7 @@ import { useGuildHeroSightings } from "./use-guild-hero-sightings";
 import { useGuildHeroTimers } from "./use-guild-hero-timers";
 import { useGuildTimers } from "@/features/guild/timers/use-guild-timers";
 import { useTimerDisplaySettings } from "@/features/guild/timers/use-timer-display-settings";
+import { RetryButton } from "@/components/common/retry-button";
 
 /**
  * The latest sighting of each hero that members found with the in-game hero
@@ -55,15 +56,7 @@ export const HeroSightings = () => {
     setHistoryTarget({ world: sighting.world, hero: sighting.hero });
 
   const retryButton = (
-    <Button
-      type="button"
-      variant="outline"
-      loading={isFetching}
-      icon=<RotateCcw className="size-3.5" />
-      onClick={() => void refetch()}
-    >
-      {t("common.actions.retry")}
-    </Button>
+    <RetryButton onRetry={() => refetch()} isRetrying={isFetching} />
   );
 
   const renderResults = () => {

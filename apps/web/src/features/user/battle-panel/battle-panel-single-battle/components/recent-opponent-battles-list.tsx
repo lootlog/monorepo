@@ -4,7 +4,6 @@ import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/comp
 import { BattlePanelPvpWarriorSummary } from "@/features/user/battle-panel/components/battle-panel-pvp-warrior-summary";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
-import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Spinner } from "@lootlog/ui/components/spinner";
@@ -15,11 +14,12 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
 import { Link } from "@tanstack/react-router";
-import { CircleAlert, History, RotateCcw } from "lucide-react";
+import { CircleAlert, History } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useBattleSwitch } from "../hooks/use-battle-switch";
 import { useRecentOpponentBattles } from "../hooks/use-recent-opponent-battles";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
+import { RetryButton } from "@/components/common/retry-button";
 
 type RecentOpponentBattlesListProps = {
   battle: Battle | undefined;
@@ -76,15 +76,7 @@ export function RecentOpponentBattlesList({
             icon={CircleAlert}
             title={t("battlePanel.single.recentOpponent.error")}
             action={
-              <Button
-                type="button"
-                variant="outline"
-                loading={isFetching}
-                icon=<RotateCcw className="size-3.5" />
-                onClick={() => void refetch()}
-              >
-                {t("common.actions.retry")}
-              </Button>
+              <RetryButton onRetry={() => refetch()} isRetrying={isFetching} />
             }
           />
         ) : battles.length === 0 ? (

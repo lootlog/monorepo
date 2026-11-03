@@ -1,4 +1,4 @@
-import { DEFAULT_LOOT_STATS_SETTINGS } from "../hooks/use-loot-stats-settings";
+import { DEFAULT_LOOT_STATS_PERIOD } from "../hooks/use-loot-stats-settings";
 import { FilterBar } from "@/components/common/filter-bar";
 import { PeriodSelector } from "@/components/filters/period-selector";
 import type { ComponentProps } from "react";
@@ -7,9 +7,16 @@ import { Button } from "@lootlog/ui/components/button";
 import { Ban, Check } from "lucide-react";
 import { LootStatsStackedFilters } from "./loot-stats-stacked-filters";
 
-type LootStatsFilterBarProps = ComponentProps<typeof LootStatsStackedFilters>;
+type LootStatsFilterBarProps = ComponentProps<
+  typeof LootStatsStackedFilters
+> & {
+  onClearFilters: () => void;
+};
 
-export const LootStatsFilterBar = (props: LootStatsFilterBarProps) => {
+export const LootStatsFilterBar = ({
+  onClearFilters,
+  ...props
+}: LootStatsFilterBarProps) => {
   const { t } = useTranslation();
 
   return (
@@ -18,15 +25,17 @@ export const LootStatsFilterBar = (props: LootStatsFilterBarProps) => {
       stackedFilters={<LootStatsStackedFilters {...props} />}
       activeFilterCount={
         [
-          props.period !== DEFAULT_LOOT_STATS_SETTINGS.period,
+          props.period !== DEFAULT_LOOT_STATS_PERIOD,
           props.excludeColossus,
         ].filter(Boolean).length
       }
+      clearFiltersLabel={t("kills.filters.clear")}
+      onClearFilters={onClearFilters}
     >
       <PeriodSelector
         value={props.period}
         onValueChange={props.onPeriodChange}
-        active={props.period !== "7d"}
+        active={props.period !== DEFAULT_LOOT_STATS_PERIOD}
       />
       <Button
         type="button"

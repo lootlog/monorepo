@@ -13,17 +13,13 @@ import { ThemeEmptyStateIcon } from "@/themes/adapters";
 import { Button } from "@lootlog/ui/components/button";
 import { EmptyMedia } from "@lootlog/ui/components/empty";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import {
-  ArrowUp,
-  CircleAlert,
-  PackageOpen,
-  RotateCcw,
-  SearchX,
-} from "lucide-react";
+import { ArrowUp, CircleAlert, PackageOpen, SearchX } from "lucide-react";
 
 import { useLiveLootList } from "./use-live-loot-list";
 import { LootsListToolbar } from "./loots-list-toolbar";
 import { LootListItemStacksProvider } from "./loot-list-item-stacks-provider";
+import { RetryButton } from "@/components/common/retry-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
 // Dimming the current page signals a reload without moving anything.
 const REFRESHABLE_LIST_CLASS =
@@ -69,16 +65,7 @@ export const LootsList = () => {
           icon={CircleAlert}
           title={t("loots.list.loadError")}
           description={t("loots.list.loadErrorDescription")}
-          action={
-            <Button
-              type="button"
-              variant="outline"
-              icon=<RotateCcw className="size-3.5" />
-              onClick={retry}
-            >
-              {t("common.actions.retry")}
-            </Button>
-          }
+          action={<RetryButton onRetry={retry} />}
         />
       </div>
     );
@@ -98,11 +85,7 @@ export const LootsList = () => {
             icon={SearchX}
             title={t("loots.list.noResults")}
             description={t("loots.list.noResultsDescription")}
-            action={
-              <Button type="button" variant="outline" onClick={clearFilters}>
-                {t("loots.list.clearFilters")}
-              </Button>
-            }
+            action={<ClearFiltersButton onClear={clearFilters} />}
           />
         ) : (
           <EmptyState
@@ -181,7 +164,6 @@ export const LootsList = () => {
                           loadingLabel={t(themedKey("loots.list.loadingMore"))}
                           endLabel={t(themedKey("loots.list.end"))}
                           errorLabel={t("loots.list.loadError")}
-                          retryLabel={t("common.actions.retry")}
                         />
                       </div>
                     ) : rowLoots ? (
@@ -237,7 +219,6 @@ export const LootsList = () => {
                           loadingLabel={t(themedKey("loots.list.loadingMore"))}
                           endLabel={t(themedKey("loots.list.end"))}
                           errorLabel={t("loots.list.loadError")}
-                          retryLabel={t("common.actions.retry")}
                         />
                       </div>
                     ) : loot ? (

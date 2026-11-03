@@ -17,14 +17,15 @@ import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Table } from "@lootlog/ui/components/table";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { cn } from "cn";
 import { ChevronRight } from "lucide-react";
-import type { KeyboardEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMediaQuery } from "usehooks-ts";
 import { getAbyssSeasonRangeLabel } from "./abyss-formatters";
+import { TableRowLinkCell } from "@/components/common/table-row-link-cell";
 
 type AbyssSeasonsListProps = {
   characterId: string;
@@ -63,7 +64,6 @@ export function AbyssSeasonsList({
   seasons,
 }: AbyssSeasonsListProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const latestSeasonId = seasons[0]?.id;
 
@@ -153,19 +153,6 @@ export function AbyssSeasonsList({
     getRowId: (season) => season.id,
   });
 
-  const openSeason = (season: AbyssSeason) =>
-    void navigate(getSeasonLink(season));
-
-  const handleRowKeyDown = (
-    event: KeyboardEvent<HTMLTableRowElement>,
-    season: AbyssSeason,
-  ) => {
-    if (event.key !== "Enter" && event.key !== " ") return;
-
-    event.preventDefault();
-    openSeason(season);
-  };
-
   if (!usesTable) {
     return (
       <ul>
@@ -217,22 +204,24 @@ export function AbyssSeasonsList({
       <TanStackTableBody
         table={table}
         rowHeaderColumnId="range"
+        rowClassName="h-14 border-b border-border hover:bg-muted/40"
         getCellClassName={(cell) =>
           cn(
-            "tabular-nums",
+            "relative tabular-nums",
             getColumnClassName(cell.column.id),
             cell.column.id === "record" && "font-medium",
           )
         }
-        getRowProps={(row) => ({
-          className:
-            "h-14 cursor-pointer border-b border-border hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-          onClick: () => openSeason(row.original),
-          onKeyDown: (event) => handleRowKeyDown(event, row.original),
-          role: "link",
-          tabIndex: 0,
-          "aria-label": getAbyssSeasonRangeLabel(row.original),
-        })}
+        renderCellContent={(cell, content) => (
+          <TableRowLinkCell
+            fill
+            link={getSeasonLink(cell.row.original)}
+            primary={cell.column.id === "range"}
+            label={getAbyssSeasonRangeLabel(cell.row.original)}
+          >
+            {content}
+          </TableRowLinkCell>
+        )}
       />
     </Table>
   );

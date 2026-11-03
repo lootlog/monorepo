@@ -20,6 +20,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { useTranslation } from "react-i18next";
+import { RetryButton } from "@/components/common/retry-button";
 
 type GuildDocTrashDialogProps = {
   canManage: boolean;
@@ -112,15 +113,10 @@ export const GuildDocTrashDialog = ({
                 icon={CircleAlert}
                 title={t("docs.trash.loadError")}
                 action={
-                  <Button
-                    type="button"
-                    variant="outline"
-                    loading={trashQuery.isFetching}
-                    icon=<RotateCcw className="size-3.5" />
-                    onClick={() => void trashQuery.refetch()}
-                  >
-                    {t("common.actions.retry")}
-                  </Button>
+                  <RetryButton
+                    onRetry={() => trashQuery.refetch()}
+                    isRetrying={trashQuery.isFetching}
+                  />
                 }
               />
             ) : trashItems.length === 0 ? (

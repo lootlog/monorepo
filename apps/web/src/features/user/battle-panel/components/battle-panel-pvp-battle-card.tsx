@@ -6,6 +6,7 @@ import {
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import type { PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
+import { Link, type LinkOptions } from "@tanstack/react-router";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { getPlayerVsPlayerBattleResult } from "./battle-panel-battle-presentation";
@@ -15,12 +16,12 @@ import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type BattlePanelPvpBattleCardProps = {
   battle: PlayerVsPlayerBattle;
-  onBattleClick: (battleId: string) => void;
+  link: LinkOptions;
 };
 
 export const BattlePanelPvpBattleCard = ({
   battle,
-  onBattleClick,
+  link,
 }: BattlePanelPvpBattleCardProps) => {
   const { t } = useTranslation();
   const result = getPlayerVsPlayerBattleResult(battle);
@@ -33,15 +34,14 @@ export const BattlePanelPvpBattleCard = ({
   }
 
   return (
-    <button
-      type="button"
+    <Link
+      {...link}
       data-list-tile
       className={cn(
-        "w-full py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+        "block w-full py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
         LIST_TILE_RULE_CLASS,
         LIST_TILE_INSET_CLASS,
       )}
-      onClick={() => onBattleClick(battle.battleId)}
     >
       <div className="flex items-start justify-between gap-3">
         <BattleResultStatus result={result} showLabel />
@@ -90,6 +90,6 @@ export const BattlePanelPvpBattleCard = ({
           </p>
         </div>
       </div>
-    </button>
+    </Link>
   );
 };

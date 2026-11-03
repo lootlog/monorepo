@@ -8,6 +8,7 @@ import {
 import { getBattlesControllerGetHeadToHeadQueryOptions } from "@lootlog/client/battlelog";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
+import { buildHeadToHeadParams } from "@/features/user/battle-panel/battle-panel-request-params";
 
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/abyss_/$seasonId/opponents",
@@ -27,25 +28,17 @@ export const Route = createFileRoute(
 
       const search = loadBattlePanelHeadToHeadSearch(location.searchStr);
 
-      // The same params `useHeadToHeadPage` builds for a season.
       if (characterId && season) {
         void prefetchRouteQuery(
           context.queryClient,
-          getBattlesControllerGetHeadToHeadQueryOptions({
-            cursor: search.cursor ?? undefined,
-            size: 20,
-            sortBy: search.sortBy,
-            sortOrder: search.sortOrder,
-            characterId,
-            period: "all",
-            startDate: season.startedAt,
-            endDate: season.endedAt,
-            search: search.search ?? undefined,
-            minLevel: search.minLevel,
-            maxLevel: search.maxLevel,
-            matchmaking: true,
-            includeTotal: true,
-          }),
+          getBattlesControllerGetHeadToHeadQueryOptions(
+            buildHeadToHeadParams(search, {
+              characterId,
+              matchmaking: true,
+              showPhFilter: false,
+              season: { startDate: season.startedAt, endDate: season.endedAt },
+            }),
+          ),
         ).catch(() => undefined);
       }
 

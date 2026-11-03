@@ -10,8 +10,10 @@ import { useBattlesControllerGetDashboardBattles } from "@lootlog/client/battlel
 import { useQueryStates } from "nuqs";
 import { useTranslation } from "react-i18next";
 import { useAbyssSeason } from "./use-abyss-season";
-
-export const ABYSS_SEASON_PAGE_SIZE = 20;
+import {
+  BATTLE_PANEL_PAGE_SIZE,
+  buildAbyssSeasonBattlesParams,
+} from "@/features/user/battle-panel/battle-panel-request-params";
 
 /** The season's battles, newest first, a page at a time. */
 export function AbyssSeasonBattles() {
@@ -22,15 +24,7 @@ export function AbyssSeasonBattles() {
     battlePanelAbyssSeasonSearchParsers,
   );
 
-  const params = {
-    cursor: queryState.cursor ?? undefined,
-    size: ABYSS_SEASON_PAGE_SIZE,
-    includeTotal: true,
-    matchmaking: true,
-    characterId: characterId ? [characterId] : undefined,
-    startDate: season?.startedAt,
-    endDate: season?.endedAt,
-  };
+  const params = buildAbyssSeasonBattlesParams(queryState, characterId, season);
 
   const {
     data: battlesResponse,
@@ -66,7 +60,7 @@ export function AbyssSeasonBattles() {
         )
       }
       pageIndex={getBattlePanelPageIndex(queryState.page)}
-      pageSize={ABYSS_SEASON_PAGE_SIZE}
+      pageSize={BATTLE_PANEL_PAGE_SIZE}
       showPagination
       isLoading={isLoading}
       isRefreshing={isRefreshing}

@@ -8,8 +8,7 @@ import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
-import { CircleAlert, RotateCcw, Skull } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
+import { CircleAlert, Skull } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -26,6 +25,7 @@ import { EventHistoryResults } from "../shared/event-history-results";
 import { EventKillRowsSkeleton } from "./event-kill-rows-skeleton";
 import { EventKillTiles } from "./event-kill-tiles";
 import { KillCellLink } from "./kill-cell-link";
+import { RetryButton } from "@/components/common/retry-button";
 
 const RIGHT_ALIGNED_COLUMN_IDS = new Set(["respawnTime", "participants"]);
 
@@ -45,6 +45,7 @@ type EventKillsTableHistoryProps = EventKillsTableBaseProps & {
   isFetchingNextPage: boolean;
   resetKey: string;
   scrollElement: HTMLDivElement | null;
+  onShowAllHeroes?: () => void;
   variant?: "history";
 };
 
@@ -194,6 +195,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
         fetchNextPage={props.fetchNextPage}
         onRetry={onRetry}
         isRetrying={isRetrying}
+        onShowAllHeroes={props.onShowAllHeroes}
         skeleton={<EventKillRowsSkeleton />}
       >
         {!usesTable ? (
@@ -225,15 +227,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
           icon={CircleAlert}
           title={t("events.error")}
           action={
-            <Button
-              type="button"
-              variant="outline"
-              loading={isRetrying ?? false}
-              icon=<RotateCcw className="size-3.5" />
-              onClick={onRetry}
-            >
-              {t("common.actions.retry")}
-            </Button>
+            <RetryButton onRetry={onRetry} isRetrying={isRetrying ?? false} />
           }
         />
       );

@@ -33,13 +33,10 @@ export const LootStats = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
 
-  const { settings, setPeriod, setExcludeColossus } = useLootStatsSettings();
+  const { settings, setPeriod, setExcludeColossus, resetFilters } =
+    useLootStatsSettings();
 
-  const lootStatsParams = buildLootStatsParams({
-    period: settings.period,
-    world: settings.world ?? undefined,
-    excludeColossus: settings.excludeColossus,
-  });
+  const lootStatsParams = buildLootStatsParams(settings);
 
   const { data, isLoading } = useLootsControllerGetLootStats(
     { guildId: guildId ?? "" },
@@ -59,6 +56,7 @@ export const LootStats = () => {
         excludeColossus={settings.excludeColossus}
         onPeriodChange={setPeriod}
         onExcludeColossusChange={setExcludeColossus}
+        onClearFilters={resetFilters}
       />
 
       <LootOverviewCards data={data?.overview} isLoading={isLoading} />

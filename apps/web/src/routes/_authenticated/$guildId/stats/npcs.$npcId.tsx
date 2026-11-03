@@ -7,6 +7,8 @@ import {
   getMembersControllerGetGuildMemberReferencesQueryOptions,
 } from "@lootlog/client/main";
 
+import { readStatsSettings } from "@/features/guild/stats/hooks/use-stats-settings";
+import { readGuildWorld } from "@/hooks/context/use-guild-world";
 import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,
@@ -15,7 +17,7 @@ import {
 export const Route = createFileRoute(
   "/_authenticated/$guildId/stats/npcs/$npcId",
 )({
-  loader: ({ abortController, context, params }) =>
+  loader: ({ abortController, context, location, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       const npcId = Number.parseInt(params.npcId, 10);
 
@@ -31,7 +33,12 @@ export const Route = createFileRoute(
                 guildId: params.guildId,
                 npcId: params.npcId,
               },
-              buildNpcKillersParams(),
+              buildNpcKillersParams(
+                readStatsSettings(
+                  location.searchStr,
+                  readGuildWorld(params.guildId, location.searchStr),
+                ),
+              ),
             ),
           ),
           context.queryClient.ensureQueryData(

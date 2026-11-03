@@ -1,47 +1,40 @@
-import { updateSettingsField } from "./update-settings-field";
-import { useLocalStorage } from "usehooks-ts";
-import { useGuildId } from "@/hooks/context/use-guild-id";
+import { parseAsBoolean, parseAsStringLiteral } from "nuqs";
+import { createQueryFilters } from "@/hooks/create-query-filters";
 import { useGuildWorld } from "@/hooks/context/use-guild-world";
-import type { LootsControllerGetLootStatsPeriod } from "@lootlog/client/main";
+import {
+  LootsControllerGetLootStatsPeriod,
+  type LootsControllerGetLootStatsPeriod as LootStatsPeriod,
+} from "@lootlog/client/main";
 
-type LootStatsSettings = {
-  period: LootsControllerGetLootStatsPeriod;
-  excludeColossus: boolean;
-};
+export const DEFAULT_LOOT_STATS_PERIOD: LootStatsPeriod = "7d";
 
-export const DEFAULT_LOOT_STATS_SETTINGS: LootStatsSettings = {
-  period: "7d",
-  excludeColossus: false,
-};
+// An absent key is the default, so a default never reads as an active filter.
+const useLootStatsFilters = createQueryFilters({
+  period: parseAsStringLiteral(
+    Object.values(LootsControllerGetLootStatsPeriod),
+  ),
+  excludeColossus: parseAsBoolean,
+});
 
 export const useLootStatsSettings = () => {
-  const guildId = useGuildId();
-  const storageKey = `loot-stats-settings-${guildId}`;
   const { world } = useGuildWorld();
-
-  const [settings, setSettings] = useLocalStorage<LootStatsSettings>(
-    storageKey,
-    DEFAULT_LOOT_STATS_SETTINGS,
-  );
-
-  const setPeriod = (period: LootsControllerGetLootStatsPeriod) => {
-    setSettings((previous) => updateSettingsField(previous, "period", period));
-  };
-
-  const setExcludeColossus = (excludeColossus: boolean) => {
-    setSettings((previous) =>
-      updateSettingsField(previous, "excludeColossus", excludeColossus),
-    );
-  };
+  const { filters, setFilters, clearFilters } = useLootStatsFilters();
 
   return {
     // The page's own filters, with the Organization's world they apply to.
     settings: {
-      period: settings.period,
-      excludeColossus: settings.excludeColossus,
+      period: filters.period ?? DEFAULT_LOOT_STATS_PERIOD,
+      excludeColossus: filters.excludeColossus ?? false,
       world,
     },
-    setPeriod,
-    setExcludeColossus,
+    setPeriod: (period: LootStatsPeriod) => {
+      void setFilters({
+        period: period === DEFAULT_LOOT_STATS_PERIOD ? null : period,
+      });
+    },
+    setExcludeColossus: (excludeColossus: boolean) => {
+      void setFilters({ excludeColossus: excludeColossus || null });
+    },
+    resetFilters: clearFilters,
   };
 };
