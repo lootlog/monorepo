@@ -2,14 +2,27 @@ import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { AddonStatusSection } from "@/features/settings/components/general/addon-status-section";
 import { LocalDataSection } from "@/features/settings/components/general/local-data-section";
 import { WindowLayoutSection } from "@/features/settings/components/general/window-layout-section";
 import { useAccountEnabledFlag } from "@/features/settings/persistence/use-account-enabled-flag";
 import { SettingsHelpPopover } from "@/features/settings/components/shared/settings-help-popover";
 import { useSettingsStore } from "@/store/settings.store";
+import {
+  ItemRarityEnum,
+  type ItemRarityEnum as ItemRarity,
+} from "@lootlog/schema/item-rarity";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+
+/** In the order the game ranks them, as the game's loot filter lists them. */
+const LOOT_SPLIT_RARITIES = [
+  ItemRarityEnum.UNIQUE,
+  ItemRarityEnum.HEROIC,
+  ItemRarityEnum.UPGRADED,
+  ItemRarityEnum.LEGENDARY,
+] as const satisfies readonly ItemRarity[];
 
 export const GeneralSettingsTab: FC = () => {
   const allowWorldSelection = useSettingsStore(
@@ -82,6 +95,32 @@ export const GeneralSettingsTab: FC = () => {
             onCheckedChange={lootSplit.setEnabled}
             id="loot-split-window"
           />
+        </SettingsRow>
+        <SettingsRow
+          controlId="loot-split-rarities"
+          label={t("lootSplit.settings.raritiesLabel")}
+          description={t("lootSplit.settings.raritiesDescription")}
+          disabled={!lootSplit.data?.enabled}
+          layout="stacked"
+        >
+          <ToggleGroup
+            multiple
+            variant="outline"
+            size="sm"
+            spacing={0}
+            aria-label={t("lootSplit.settings.raritiesLabel")}
+            disabled={!lootSplit.data?.enabled}
+            value={lootSplit.data?.rarities ?? []}
+            onValueChange={(rarities: ItemRarity[]) =>
+              lootSplit.update({ rarities })
+            }
+          >
+            {LOOT_SPLIT_RARITIES.map((rarity) => (
+              <ToggleGroupItem key={rarity} value={rarity}>
+                {t(`lootSplit.settings.rarity.${rarity}`)}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
         </SettingsRow>
       </SettingsSection>
       <WindowLayoutSection />

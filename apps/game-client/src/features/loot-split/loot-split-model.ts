@@ -1,4 +1,5 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import { ItemRarityEnum } from "@lootlog/schema/item-rarity";
 import type {
   LootSplitChoice,
   LootSplitEvent,
@@ -29,6 +30,8 @@ export type LootSplitItem = Readonly<{
   icon: string;
   /** Professions allowed to pick "bardzo chcę" (`reqp`); empty = everyone. */
   mustProfessions: readonly string[];
+  /** Null for common items and rarities Lootlog does not track. */
+  rarity: ItemRarityEnum | null;
 }>;
 
 export type LootSplitView = Readonly<{
@@ -121,6 +124,30 @@ const sameChoices = (
 
 const parseMustProfessions = (stat: string) =>
   getItemStat(stat, "reqp")?.split("") ?? [];
+
+// The game names rarities in lowercase; common items carry `common`.
+const RARITY_BY_STAT = new Map<string, ItemRarityEnum>([
+  ["unique", ItemRarityEnum.UNIQUE],
+  ["heroic", ItemRarityEnum.HEROIC],
+  ["upgraded", ItemRarityEnum.UPGRADED],
+  ["legendary", ItemRarityEnum.LEGENDARY],
+]);
+
+const parseRarity = (stat: string) =>
+  RARITY_BY_STAT.get(getItemStat(stat, "rarity") ?? "") ?? null;
+
+/**
+ * Whether a split drops an item of one of `rarities`; an empty list matches
+ * every split.
+ */
+export const splitDropsRarity = (
+  split: LootSplit,
+  rarities: readonly ItemRarityEnum[],
+) =>
+  rarities.length === 0 ||
+  split.items.some(
+    ({ rarity }) => rarity !== null && rarities.includes(rarity),
+  );
 
 /** The command's parameter for each choice: `want`, `not` and `must`. */
 const COMMAND_CHOICES: ReadonlyArray<readonly [string, LootSplitChoice]> = [
@@ -258,6 +285,7 @@ const openSplit = (
       name: item.name,
       icon: item.icon,
       mustProfessions: parseMustProfessions(item.stat),
+      rarity: parseRarity(item.stat),
     }))
     .toSorted((left, right) => Number(left.id) - Number(right.id));
 

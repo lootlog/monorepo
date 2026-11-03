@@ -1,3 +1,5 @@
+import type { ItemRarityEnum } from "./item-rarity.js";
+
 export const NOTIFICATION_TYPES = [
   "ELITE2",
   "HERO",
@@ -93,6 +95,8 @@ export type BattlePingPreferences = {
 /** `enabled` shows the loot split window; choices are shared either way. */
 export type LootSplitPreferences = {
   enabled: boolean;
+  /** Rarities whose drop opens the window; empty opens it for every split. */
+  rarities: ItemRarityEnum[];
 };
 
 export type DetectorTypeSettingsPatch = Partial<DetectorTypeSettings>;
@@ -143,6 +147,7 @@ export const defaultBattlePingPreferences: BattlePingPreferences = {
 
 export const defaultLootSplitPreferences: LootSplitPreferences = {
   enabled: true,
+  rarities: [],
 };
 
 export const defaultAirTagPreferences: AirTagPreferences = {

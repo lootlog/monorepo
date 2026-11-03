@@ -6,6 +6,7 @@ import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAccountEnabledFlag } from "@/features/settings/persistence/use-account-enabled-flag";
 import { useWindowsStore } from "@/store/windows.store";
+import { splitDropsRarity } from "./loot-split-model";
 import { LootSplitSection } from "./loot-split-section";
 import { lootSplitStore } from "./loot-split-store";
 import { useLootSplitSocket } from "./use-loot-split-socket";
@@ -13,7 +14,9 @@ import { useLootSplitSocket } from "./use-loot-split-socket";
 /**
  * "Podział łupów": every open or just closed group split the hero takes part
  * in, newest first. It opens on its own when a split starts, unless the
- * setting turns it off; closing it keeps it closed until the next split.
+ * setting turns it off or the split drops none of the chosen rarities;
+ * closing it keeps it closed until the next split. The hero's choices are
+ * shared with the party either way.
  */
 export const LootSplitWindow = () => {
   const { t } = useTranslation("lootSplit");
@@ -23,7 +26,8 @@ export const LootSplitWindow = () => {
     lootSplitStore.getSnapshot,
   );
 
-  const enabled = useAccountEnabledFlag("lootSplit").data?.enabled ?? false;
+  const preferences = useAccountEnabledFlag("lootSplit").data;
+  const enabled = preferences?.enabled ?? false;
   const open = useWindowsStore((store) => store["loot-split"].open);
   const setOpen = useWindowsStore((store) => store.setOpen);
 
@@ -46,7 +50,12 @@ export const LootSplitWindow = () => {
   const shared = useLootSplitSocket() !== null;
 
   const seenSplitIds = useRef(new Set<string>());
-  const newestSplitId = state.splits.at(-1)?.id;
+
+  const splits = state.splits
+    .filter((split) => splitDropsRarity(split, preferences?.rarities ?? []))
+    .toReversed();
+
+  const newestSplitId = splits[0]?.id;
 
   useEffect(() => {
     if (!newestSplitId || seenSplitIds.current.has(newestSplitId)) return;
@@ -55,8 +64,6 @@ export const LootSplitWindow = () => {
 
     if (enabled && shared) setOpen("loot-split", true);
   }, [newestSplitId, enabled, shared, setOpen]);
-
-  const splits = state.splits.toReversed();
 
   return (
     <DraggableWindow
