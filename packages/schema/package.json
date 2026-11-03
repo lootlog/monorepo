@@ -16,6 +16,7 @@
     "./item-rarity": "./src/item-rarity.ts",
     "./loot": "./src/loot.ts",
     "./loot-events": "./src/loot-events.ts",
+    "./loot-split": "./src/loot-split.ts",
     "./map-ping": "./src/map-ping.ts",
     "./notifications": "./src/notifications.ts",
     "./npc-appearance": "./src/npc-appearance.ts",

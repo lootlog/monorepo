@@ -1,4 +1,5 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { LootSplitAckSchema } from "@lootlog/schema/loot-split";
 import { decode, encode } from "@msgpack/msgpack";
 import { Predicate, Result, Schema } from "effect";
 import {
@@ -126,6 +127,8 @@ export const decodePresenceSnapshot =
   Schema.decodeUnknownSync(PresenceSnapshot);
 
 export const isMapPingAcknowledgement = Schema.is(MapPingAckSchema);
+
+export const isLootSplitAcknowledgement = Schema.is(LootSplitAckSchema);
 
 export const isAirTagSubscriptionAcknowledgement = Schema.is(
   AirTagSubscriptionAck,

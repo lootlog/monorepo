@@ -1,7 +1,7 @@
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { readSettingsValue } from "@/features/settings/persistence/settings-snapshot";
-import { useBattlePingPreferences } from "@/features/settings/persistence/use-battle-ping-preferences";
+import { useAccountEnabledFlag } from "@/features/settings/persistence/use-account-enabled-flag";
 import { isWarriorDead } from "@/hooks/game-events/helpers/battle.helpers";
 import { playSound } from "@/lib/sound-playback";
 import { useBattleStore } from "@/store/game-store/battle.store";
@@ -123,7 +123,7 @@ export const useBattlePings = () => {
     (state) => state.game?.interface === "ni",
   );
 
-  const enabled = useBattlePingPreferences().data?.enabled ?? false;
+  const enabled = useAccountEnabledFlag("battlePings").data?.enabled ?? false;
   const online = enabled && isNewInterface && connected && joined;
   const showHint = useRejectedPingHint();
   const { t } = useTranslation("pings");
