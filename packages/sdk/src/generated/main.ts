@@ -2159,6 +2159,7 @@ export interface LootResponseDto {
   updatedAt: string;
   submissions?: LootResponseDtoSubmissionsItem[];
   commentsCount: number;
+  likes: MemberSummary[];
 }
 
 export interface LootPageResponseDto {
@@ -2500,6 +2501,7 @@ export type NullableLootResponseDto = {[key: string]: unknown} & ({
   updatedAt: string;
   submissions?: NullableLootResponseDtoSubmissionsItem[];
   commentsCount: number;
+  likes: MemberSummary[];
 } | null) | null;
 
 export type CreateLootResponseDtoOutputSubmittedGuildsItem = {

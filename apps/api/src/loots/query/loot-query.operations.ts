@@ -109,6 +109,7 @@ const mapLoot = (guildId: string, loot: LootQueryRecord): LootQueryResult => ({
     member: submission.member,
   })),
   commentsCount: loot.commentsCount,
+  likes: loot.likes,
 });
 
 export const makeLootQueryOperations = (

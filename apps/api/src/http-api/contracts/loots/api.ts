@@ -17,6 +17,7 @@ import {
   LootDetailResponse,
   LootListResponse,
   LootCommentsResponse,
+  LootLikesResponse,
   LootStatsResponse,
   LootStatsQuery,
   UserLootStatsQuery,
@@ -174,6 +175,44 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     .annotate(OpenApi.Identifier, "LootsController_createComment")
     .annotate(OpenApi.Summary, "Create loot comment")
     .annotate(OpenApi.Description, "Add a comment to a loot"),
+  HttpApiEndpoint.put(
+    "LootsControllerLikeLoot",
+    "/guilds/:guildId/loots/:lootId/likes",
+    {
+      params: LootPath,
+      success: LootLikesResponse,
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "LootsController_likeLoot")
+    .annotate(OpenApi.Summary, "Like loot")
+    .annotate(
+      OpenApi.Description,
+      "Like a loot as the caller; repeating the request keeps one like",
+    ),
+  HttpApiEndpoint.delete(
+    "LootsControllerUnlikeLoot",
+    "/guilds/:guildId/loots/:lootId/likes",
+    {
+      params: LootPath,
+      success: LootLikesResponse,
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "LootsController_unlikeLoot")
+    .annotate(OpenApi.Summary, "Unlike loot")
+    .annotate(
+      OpenApi.Description,
+      "Remove the caller's like from a loot; succeeds when there is none",
+    ),
   HttpApiEndpoint.patch("LootsControllerUpdateLoot", "/loots/:id", {
     params: LootSharePath,
     payload: UpdateLootShareRequest,

@@ -24,6 +24,7 @@ import { containsPattern } from "#src/shared/sql-like";
 import {
   itemSnapshotTable,
   lootCommentTable,
+  lootLikeTable,
   lootItemTable,
   lootMapPlayerTable,
   lootNpcTable,
@@ -446,6 +447,33 @@ export const makeLootQueryPersistence = (
       )
       .groupBy(organizationLootRecordTable.lootId);
 
+  const selectLikes = (guildId: string, ids: ReadonlyArray<number>) =>
+    database
+      .select({
+        lootId: organizationLootRecordTable.lootId,
+        id: memberTable.id,
+        name: memberTable.name,
+        avatar: memberTable.avatar,
+        userId: memberTable.userId,
+      })
+      .from(lootLikeTable)
+      .innerJoin(
+        organizationLootRecordTable,
+        eq(
+          organizationLootRecordTable.id,
+          lootLikeTable.organizationLootRecordId,
+        ),
+      )
+      .innerJoin(memberTable, eq(memberTable.id, lootLikeTable.memberId))
+      .where(
+        and(
+          eq(organizationLootRecordTable.guildId, guildId),
+          isNull(organizationLootRecordTable.archivedAt),
+          inArray(organizationLootRecordTable.lootId, [...ids]),
+        ),
+      )
+      .orderBy(asc(lootLikeTable.createdAt), asc(lootLikeTable.memberId));
+
   const hydrate = (guildId: string, lootIds: ReadonlyArray<number>) => {
     if (lootIds.length === 0) return Effect.succeed([]);
 
@@ -460,6 +488,7 @@ export const makeLootQueryPersistence = (
           selectSubmissions(guildId, lootIds),
           selectCommentCounts(guildId, lootIds),
           selectMapPlayers(guildId, lootIds),
+          selectLikes(guildId, lootIds),
         ] as const,
         { concurrency: "unbounded" },
       ).pipe(
@@ -472,6 +501,7 @@ export const makeLootQueryPersistence = (
             submissions,
             commentCounts,
             mapPlayers,
+            likes,
           ]) => {
             const itemsByLoot = Map.groupBy(items, ({ lootId }) => lootId);
             const playersByLoot = Map.groupBy(players, ({ lootId }) => lootId);
@@ -487,6 +517,8 @@ export const makeLootQueryPersistence = (
               submissions,
               ({ lootId }) => lootId,
             );
+
+            const likesByLoot = Map.groupBy(likes, ({ lootId }) => lootId);
 
             const commentsByLoot = new Map(
               commentCounts.map(
@@ -511,6 +543,9 @@ export const makeLootQueryPersistence = (
               ),
               submissions: submissionsByLoot.get(loot.id) ?? [],
               commentsCount: commentsByLoot.get(loot.id) ?? 0,
+              likes: (likesByLoot.get(loot.id) ?? []).map(
+                ({ lootId: _lootId, ...member }) => member,
+              ),
             }));
           },
         ),
