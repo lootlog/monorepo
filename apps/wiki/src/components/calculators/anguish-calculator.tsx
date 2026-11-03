@@ -5,7 +5,7 @@ import {
   anguishDamage,
   MECHANICS_DOCUMENTATION_URL,
 } from "@/lib/calculators";
-import type { UpgradeLevel } from "@/lib/item-upgrade";
+import type { UpgradeLevel } from "@lootlog/domain/item-upgrade";
 import { readNumberInput } from "@/lib/number-input";
 import { UpgradeSelect } from "@/components/common/upgrade-select";
 import { CalculatorCard } from "./calculator-card";

@@ -11,7 +11,7 @@ import { EquipButton } from "@/components/equipment/equip-button";
 import { useItemComparison } from "@/contexts/item-comparison-context";
 import { t } from "@/i18n/messages";
 import { itemPageParams } from "@/lib/catalog-links";
-import { isUpgradable, type ItemUpgrade } from "@/lib/item-upgrade";
+import { isUpgradable, type ItemUpgrade } from "@lootlog/domain/item-upgrade";
 
 type ComparedItemHeaderProps = {
   /** The item as dropped; its column shows it at `upgrade`. */

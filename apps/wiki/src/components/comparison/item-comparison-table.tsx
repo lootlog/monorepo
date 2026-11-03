@@ -12,9 +12,12 @@ import { cn } from "cn";
 import { renderItemStat } from "@/components/render-item-stat";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
-import { itemForCharacter } from "@/lib/elastic-level";
+import { itemForCharacter } from "@lootlog/domain/elastic-level";
 import { compareItemStats } from "@/lib/item-comparison";
-import { type ItemUpgrade, upgradeItemStat } from "@/lib/item-upgrade";
+import {
+  type ItemUpgrade,
+  upgradeItemStat,
+} from "@lootlog/domain/item-upgrade";
 import { ComparedItemHeader } from "./compared-item-header";
 
 type ItemComparisonTableProps = {

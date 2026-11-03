@@ -6,12 +6,14 @@ import { makeCatalogModule } from "./catalog.service.js";
 const logger = { info() {}, warn() {}, error() {} };
 
 /**
- * A Meilisearch that answers item searches with `hits` and NPC searches with
- * what `npcs` returns for the search's filter.
+ * A Meilisearch that answers item searches with `hits`, a search for elastic
+ * items alone with `elasticHits`, and NPC searches with what `npcs` returns
+ * for the search's filter.
  */
 const catalogWith = (
   hits: unknown[],
   npcs: (filter: string | undefined) => unknown[] = () => [],
+  elasticHits: unknown[] = [],
 ) => {
   const searches: Array<{ filter?: string; attributesToRetrieve?: string[] }> =
     [];
@@ -28,7 +30,11 @@ const catalogWith = (
       const isNpcSearch = String(input).includes("/indexes/npcs/");
       const body = JSON.parse(String(init?.body));
 
-      const results = isNpcSearch ? npcs(body.filter) : hits;
+      const results = isNpcSearch
+        ? npcs(body.filter)
+        : String(body.filter).endsWith("AND elasticLevel = true")
+          ? elasticHits
+          : hits;
 
       (isNpcSearch ? npcSearches : searches).push(body);
 
@@ -279,4 +285,74 @@ test("narrows items to one edition's event drops of a kind of boss that carry th
   expect(searches[0]?.filter).toBe(
     `gameVersion = "pl" AND statsKeys = "legbon" AND statsKeys = "crit" AND NOT statsKeys = "etiquette" AND legendaryBonus IN ["verycrit", "curse"] AND droppedByTypes IN ["TITAN"] AND eventSlugs = "wakacje-2026"`,
   );
+});
+
+test("ranks an elastic item by its attack speed at the searched level, not the one the index last saw", async () => {
+  const armor = (id: number, lvl: number, sa: number) => ({
+    id,
+    name: `Zbroja ${id}`,
+    icon: "zbroja.gif",
+    stat: `lvl=${lvl};sa=${sa}`,
+    lvl,
+    rarity: "LEGENDARY",
+    type: "ARMOR",
+  });
+
+  // Three attack speed bonuses: 2,31 SA at 297, 0,55 at 62.
+  const elastic = {
+    ...armor(1, 297, 231),
+    observedLevels: [42, 47, 52, 57, 62],
+  };
+
+  const fixed = [armor(2, 60, 82), armor(3, 50, 40)];
+
+  const { catalog } = catalogWith(fixed, undefined, [elastic]);
+
+  const response = await Effect.runPromise(
+    catalog.getItems({
+      types: ["ARMOR"],
+      maxLevel: 64,
+      sort: "attackSpeed:desc",
+      limit: 2,
+    }),
+  );
+
+  expect(response.hits.map(({ id }) => id)).toEqual([2, 1]);
+  expect(response.estimatedTotalHits).toBe(3);
+});
+
+test("keeps a query's relevance order among fixed items when it merges in elastic ones", async () => {
+  const armor = (id: number, lvl: number, sa: number) => ({
+    id,
+    name: `Zbroja ${id}`,
+    icon: "zbroja.gif",
+    stat: `lvl=${lvl};sa=${sa}`,
+    lvl,
+    rarity: "LEGENDARY",
+    type: "ARMOR",
+  });
+
+  // 0,55 SA at 62.
+  const elastic = {
+    ...armor(1, 297, 231),
+    observedLevels: [42, 47, 52, 57, 62],
+  };
+
+  // Meilisearch ranks the better name match first, then speed.
+  const { catalog } = catalogWith(
+    [armor(3, 50, 40), armor(2, 60, 82)],
+    undefined,
+    [elastic],
+  );
+
+  const response = await Effect.runPromise(
+    catalog.getItems({
+      search: "zbroja",
+      types: ["ARMOR"],
+      maxLevel: 64,
+      sort: "attackSpeed:desc",
+    }),
+  );
+
+  expect(response.hits.map(({ id }) => id)).toEqual([1, 3, 2]);
 });

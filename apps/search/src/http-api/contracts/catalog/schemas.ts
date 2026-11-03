@@ -17,9 +17,10 @@ const CatalogItemSort = Schema.Literals([
   "name:asc",
   "name:desc",
   "attackSpeed:desc",
+  "upgradedAttackSpeed:desc",
 ]).annotate({
   description:
-    "`id:desc` lists the items Margonem added most recently first. `attackSpeed:desc` lists first the items that add the most attack speed to a character with at least 100 agility: their own attack speed plus 0.002 for each point of agility or all attributes.",
+    "`id:desc` lists the items Margonem added most recently first. `attackSpeed:desc` lists first the items that add the most attack speed to a character with at least 100 agility: their own attack speed plus 0.002 for each point of agility or all attributes. `upgradedAttackSpeed:desc` ranks the same attack speed with each item upgraded to +5 and given the +5 bonus that adds the most of it: attack speed on weapons, agility or all attributes on other pieces.",
 });
 
 const Profession = Schema.Literals(["w", "p", "h", "m", "b", "t"]);

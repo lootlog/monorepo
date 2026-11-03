@@ -4,9 +4,6 @@
  */
 export const MAX_FIXED_LEVELS = 4;
 
-/** The levels Margonem gives an elastic item, whoever loots it. */
-export const ELASTIC_LEVELS = { min: 40, max: 300 } as const;
-
 /**
  * The distinct levels the catalog saw an item at, the lowest kept up to one
  * past `MAX_FIXED_LEVELS`: enough to tell an elastic item apart, which

@@ -1,5 +1,5 @@
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
-import { itemForCharacter } from "@/lib/elastic-level";
+import { itemForCharacter } from "@lootlog/domain/elastic-level";
 
 /**
  * The item as the set's character would loot it. `maxLevel` caps the

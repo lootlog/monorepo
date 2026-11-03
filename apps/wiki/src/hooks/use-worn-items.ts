@@ -4,14 +4,14 @@ import {
 } from "@lootlog/client/search";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
-import { itemForCharacter } from "@/lib/elastic-level";
+import { itemForCharacter } from "@lootlog/domain/elastic-level";
 import type { EquipmentSet } from "@/lib/equipment-set";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-slots";
 import {
   type ItemUpgrade,
   NO_UPGRADE,
   upgradeItemStat,
-} from "@/lib/item-upgrade";
+} from "@lootlog/domain/item-upgrade";
 
 export type WornItem = {
   /** The item at the set's level, with the stats its upgrade gives it. */
