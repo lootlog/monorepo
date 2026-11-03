@@ -46,6 +46,7 @@ export const NpcKillersPage = () => {
     guildId,
     membersMap,
     total,
+    isCapped,
     hasPrev,
     hasNext,
     handlePreviousPage,
@@ -146,6 +147,7 @@ export const NpcKillersPage = () => {
               key: "members",
               label: t("kills.npcKillers.totalMembers"),
               value: killers.length,
+              capped: isCapped,
             },
           ]}
         />
@@ -168,7 +170,12 @@ export const NpcKillersPage = () => {
         scrollResetKey={cursor}
         footer={
           <TablePaginationFooter
-            totalLabel={t("kills.fullRanking.total", { count: total })}
+            totalLabel={
+              // A search narrows the top killers, so its count stays exact.
+              isCapped && !settings.search
+                ? t("kills.npcKillers.totalTop", { limit: total })
+                : t("kills.fullRanking.total", { count: total })
+            }
             hasPrev={hasPrev}
             hasNext={hasNext}
             onPreviousPage={handlePreviousPage}

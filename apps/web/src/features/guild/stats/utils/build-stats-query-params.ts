@@ -15,7 +15,13 @@ import type { StatsSettings } from "../hooks/use-stats-settings";
 
 export const DEFAULT_MEMBER_KILLS_LIMIT = 40;
 
-const DEFAULT_NPC_KILLERS_LIMIT = 50;
+/**
+ * The monster ranking and an NPC's killers are top-N lists: the API returns
+ * neither a total nor a cursor, so a full list means "at least this many".
+ */
+export const GUILD_TOP_NPCS_LIST_LIMIT = 100;
+
+export const NPC_KILLERS_LIMIT = 50;
 
 const withDefinedEntries = <T extends Record<string, unknown>>(params: T) => {
   const definedParams = omitBy(params, (value) => value === undefined);
@@ -77,7 +83,7 @@ export const buildNpcKillersParams = (
   settings: StatsSettings,
 ): KillsControllerGetNpcKillersParams =>
   withDefinedEntries({
-    limit: DEFAULT_NPC_KILLERS_LIMIT,
+    limit: NPC_KILLERS_LIMIT,
     world: settings.world ?? undefined,
     period: settings.period,
   }) ?? {};
