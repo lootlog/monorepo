@@ -1,8 +1,5 @@
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
-import {
-  HERO_SIGHTING_STALE_AFTER_MS,
-  isCurrentHeroSighting,
-} from "@lootlog/domain/hero-sightings";
+import { isCurrentHeroSighting } from "@lootlog/domain/hero-sightings";
 import { sortBy } from "es-toolkit";
 
 /**
@@ -56,19 +53,3 @@ export const sortHeroSightings = (
       ),
     (sighting) => -Date.parse(sighting.closedAt ?? sighting.lastSeenAt),
   ]);
-
-/**
- * Whole minutes until a roaming hero's last confirmation goes stale, at least
- * one while the sighting is still current.
- */
-export const getHeroSightingMinutesUntilStale = (
-  sighting: HeroSightingResponseDto,
-  now: number,
-) =>
-  Math.max(
-    1,
-    Math.ceil(
-      (Date.parse(sighting.lastSeenAt) + HERO_SIGHTING_STALE_AFTER_MS - now) /
-        60_000,
-    ),
-  );
