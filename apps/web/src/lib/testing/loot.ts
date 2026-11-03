@@ -49,5 +49,6 @@ export function createLoot(id = 1): Loot {
     createdAt: "2026-08-12T10:54:00.000Z",
     updatedAt: "2026-08-12T10:54:00.000Z",
     commentsCount: 0,
+    likes: [],
   };
 }

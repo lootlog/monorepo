@@ -7774,6 +7774,10 @@ export interface UpdateLootDto {
   msg: string;
 }
 
+export interface LootLikesResponseDto {
+  likes: MemberSummary[];
+}
+
 export interface CreateCommentDto {
   content: string;
 }
@@ -8174,6 +8178,7 @@ export type NullableLootResponseDto = {[key: string]: unknown} & ({
   updatedAt: string;
   submissions?: NullableLootResponseDtoSubmissionsItem[];
   commentsCount: number;
+  likes: MemberSummary[];
 } | null) | null;
 
 /**
@@ -8612,6 +8617,7 @@ export interface LootResponseDto {
   updatedAt: string;
   submissions?: LootResponseDtoSubmissionsItem[];
   commentsCount: number;
+  likes: MemberSummary[];
 }
 
 export interface LootPageResponseDto {
@@ -13195,6 +13201,38 @@ export type LootsControllerCreateComment403 = HttpErrorResponse | {
 };
 
 export type LootsControllerCreateComment429 = {
+  message: string;
+};
+
+export type LootsControllerLikeLootPathParameters = {
+ guildId: string,
+    lootId: number,
+ }
+export type LootsControllerLikeLoot401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type LootsControllerLikeLoot403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type LootsControllerLikeLoot429 = {
+  message: string;
+};
+
+export type LootsControllerUnlikeLootPathParameters = {
+ guildId: string,
+    lootId: number,
+ }
+export type LootsControllerUnlikeLoot401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type LootsControllerUnlikeLoot403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type LootsControllerUnlikeLoot429 = {
   message: string;
 };
 
@@ -25233,6 +25271,156 @@ export const useLootsControllerCreateComment = <TError = ErrorType<RequestValida
         TContext
       > => {
       return useMutation(getLootsControllerCreateCommentMutationOptions(options), queryClient);
+    }
+
+export const getLootsControllerLikeLootUrl = ({ guildId, lootId }: LootsControllerLikeLootPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/loots/${lootId}/likes`
+}
+
+/**
+ * Like a loot as the caller; repeating the request keeps one like
+ * @summary Like loot
+ */
+export const lootsControllerLikeLoot = async ({ guildId, lootId }: LootsControllerLikeLootPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<LootLikesResponseDto> => {
+
+  return mainFetch<LootLikesResponseDto>(getLootsControllerLikeLootUrl({ guildId, lootId }),
+  {
+    ...options,
+    method: 'PUT'
+
+
+  }
+);}
+
+
+
+
+
+export const getLootsControllerLikeLootMutationKey = () => ['lootsControllerLikeLoot'] as const;
+
+export const getLootsControllerLikeLootMutationOptions = <TError = ErrorType<RequestValidationError | LootsControllerLikeLoot401 | LootsControllerLikeLoot403 | HttpErrorResponse | LootsControllerLikeLoot429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerLikeLoot>>, TError,LootsControllerLikeLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof lootsControllerLikeLoot>>, TError,LootsControllerLikeLootMutationVariables, TContext> => {
+
+const mutationKey = getLootsControllerLikeLootMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof lootsControllerLikeLoot>>, LootsControllerLikeLootMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  lootsControllerLikeLoot(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LootsControllerLikeLootMutationResult = NonNullable<Awaited<ReturnType<typeof lootsControllerLikeLoot>>>
+
+    export type LootsControllerLikeLootMutationError = ErrorType<RequestValidationError | LootsControllerLikeLoot401 | LootsControllerLikeLoot403 | HttpErrorResponse | LootsControllerLikeLoot429>
+    export type LootsControllerLikeLootMutationVariables = {pathParams: LootsControllerLikeLootPathParameters}
+
+    /**
+ * @summary Like loot
+ */
+export const useLootsControllerLikeLoot = <TError = ErrorType<RequestValidationError | LootsControllerLikeLoot401 | LootsControllerLikeLoot403 | HttpErrorResponse | LootsControllerLikeLoot429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerLikeLoot>>, TError,LootsControllerLikeLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof lootsControllerLikeLoot>>,
+        TError,
+        LootsControllerLikeLootMutationVariables,
+        TContext
+      > => {
+      return useMutation(getLootsControllerLikeLootMutationOptions(options), queryClient);
+    }
+
+export const getLootsControllerUnlikeLootUrl = ({ guildId, lootId }: LootsControllerUnlikeLootPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/loots/${lootId}/likes`
+}
+
+/**
+ * Remove the caller's like from a loot; succeeds when there is none
+ * @summary Unlike loot
+ */
+export const lootsControllerUnlikeLoot = async ({ guildId, lootId }: LootsControllerUnlikeLootPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<LootLikesResponseDto> => {
+
+  return mainFetch<LootLikesResponseDto>(getLootsControllerUnlikeLootUrl({ guildId, lootId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getLootsControllerUnlikeLootMutationKey = () => ['lootsControllerUnlikeLoot'] as const;
+
+export const getLootsControllerUnlikeLootMutationOptions = <TError = ErrorType<RequestValidationError | LootsControllerUnlikeLoot401 | LootsControllerUnlikeLoot403 | HttpErrorResponse | LootsControllerUnlikeLoot429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerUnlikeLoot>>, TError,LootsControllerUnlikeLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof lootsControllerUnlikeLoot>>, TError,LootsControllerUnlikeLootMutationVariables, TContext> => {
+
+const mutationKey = getLootsControllerUnlikeLootMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof lootsControllerUnlikeLoot>>, LootsControllerUnlikeLootMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  lootsControllerUnlikeLoot(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LootsControllerUnlikeLootMutationResult = NonNullable<Awaited<ReturnType<typeof lootsControllerUnlikeLoot>>>
+
+    export type LootsControllerUnlikeLootMutationError = ErrorType<RequestValidationError | LootsControllerUnlikeLoot401 | LootsControllerUnlikeLoot403 | HttpErrorResponse | LootsControllerUnlikeLoot429>
+    export type LootsControllerUnlikeLootMutationVariables = {pathParams: LootsControllerUnlikeLootPathParameters}
+
+    /**
+ * @summary Unlike loot
+ */
+export const useLootsControllerUnlikeLoot = <TError = ErrorType<RequestValidationError | LootsControllerUnlikeLoot401 | LootsControllerUnlikeLoot403 | HttpErrorResponse | LootsControllerUnlikeLoot429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerUnlikeLoot>>, TError,LootsControllerUnlikeLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof lootsControllerUnlikeLoot>>,
+        TError,
+        LootsControllerUnlikeLootMutationVariables,
+        TContext
+      > => {
+      return useMutation(getLootsControllerUnlikeLootMutationOptions(options), queryClient);
     }
 
 export const getLootsControllerUpdateLootUrl = ({ id }: LootsControllerUpdateLootPathParameters,) => {

@@ -75,6 +75,7 @@ const makeData = (overrides: Partial<RecordsData["Service"]> = {}) =>
     createLoot: unimplemented,
     getComments: unimplemented,
     createComment: unimplemented,
+    setLike: unimplemented,
     updateLoot: unimplemented,
     ...overrides,
   });

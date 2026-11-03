@@ -60,6 +60,8 @@ const LootRecord = Schema.Struct({
   updatedAt: DateTimeString,
   submissions: Schema.optionalKey(Schema.Array(LootSubmission)),
   commentsCount: FiniteNumber,
+  /** Members who liked the loot, oldest like first. */
+  likes: Schema.Array(MemberSummary),
 });
 
 export type LootResponse = typeof LootResponse.Type;
@@ -367,6 +369,13 @@ export const CreateLootCommentRequest = Schema.Struct({
     }),
   ),
 }).annotate({ identifier: "CreateCommentDto" });
+
+export type LootLikesResponse = typeof LootLikesResponse.Type;
+
+/** The loot's likes after a like or unlike, oldest like first. */
+export const LootLikesResponse = Schema.Struct({
+  likes: Schema.Array(MemberSummary),
+}).annotate({ identifier: "LootLikesResponseDto" });
 
 export type UpdateLootShareRequest = typeof UpdateLootShareRequest.Type;
 

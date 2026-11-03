@@ -11,6 +11,7 @@ import {
   getLootStats,
   getUserLootStats,
   resolveLootItem,
+  setLootLike,
   toRecordsHttpResponse,
   updateLoot,
 } from "../records/records.operations.js";
@@ -63,6 +64,16 @@ export const LootsHandlers = HttpApiBuilder.group(
             params.lootId,
             payload,
           ),
+        ),
+      )
+      .handle("LootsControllerLikeLoot", ({ params }) =>
+        toRecordsHttpResponse(
+          setLootLike(optionalPathString(params.guildId), params.lootId, true),
+        ),
+      )
+      .handle("LootsControllerUnlikeLoot", ({ params }) =>
+        toRecordsHttpResponse(
+          setLootLike(optionalPathString(params.guildId), params.lootId, false),
         ),
       )
       .handle("LootsControllerUpdateLoot", ({ params, payload }) =>

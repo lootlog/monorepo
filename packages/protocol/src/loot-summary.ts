@@ -70,7 +70,7 @@ export const LootSummary = Schema.Struct({
 export type LootSummary = typeof LootSummary.Type;
 
 /** Same shape as the HTTP `MemberSummary`. */
-const LootSubmissionMember = Schema.Struct({
+const LootMember = Schema.Struct({
   id: Schema.Number,
   name: Schema.String,
   avatar: Schema.NullOr(Schema.String),
@@ -81,7 +81,7 @@ const LootSubmission = Schema.Struct({
   guildId: Schema.String,
   memberId: Schema.Number,
   lootId: Schema.Number,
-  member: LootSubmissionMember,
+  member: LootMember,
 });
 
 /** One Organization's view of a loot, as its HTTP list and detail responses encode it. */
@@ -100,6 +100,8 @@ export const LootSnapshot = Schema.Struct({
   updatedAt: Schema.String,
   submissions: Schema.optionalKey(Schema.Array(LootSubmission)),
   commentsCount: Schema.Number,
+  // Publishers before likes omit them.
+  likes: Schema.optionalKey(Schema.Array(LootMember)),
 });
 
 export type LootSnapshot = typeof LootSnapshot.Type;
