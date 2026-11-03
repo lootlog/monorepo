@@ -34,6 +34,7 @@ import { cn } from "cn";
 import { Eye, EyeOff, SearchX, Server } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { RetryButton } from "@/components/common/retry-button";
 
 const VISIBILITY_FILTERS = ["all", "visible", "hidden"] as const;
 
@@ -304,19 +305,16 @@ export const ServerVisibilitySettings = () => {
             {t("settings.servers.saveError")}
           </p>
           {updatePreferences.variables ? (
-            <Button
-              size="sm"
-              variant="outline"
-              loading={isRetrying}
-              onClick={() => {
+            <RetryButton
+              onRetry={() => {
                 setIsRetrying(true);
                 updatePreferences.mutate(updatePreferences.variables, {
                   onSettled: () => setIsRetrying(false),
                 });
               }}
-            >
-              {t("common.actions.retry")}
-            </Button>
+              isRetrying={isRetrying}
+              size="sm"
+            />
           ) : null}
         </div>
       )}

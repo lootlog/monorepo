@@ -17,7 +17,7 @@ import {
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { upperFirst } from "es-toolkit";
-import { AlertCircle, History, RotateCcw, X } from "lucide-react";
+import { AlertCircle, History, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "@/components/common/empty-state";
@@ -26,6 +26,7 @@ import { LoadingSlot } from "@/components/common/loading-slot";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { HeroSightingHistoryEntry } from "./hero-sighting-history-entry";
+import { RetryButton } from "@/components/common/retry-button";
 
 /** The hero whose history is open, on the world it was sighted in. */
 export type HeroSightingHistoryTarget = {
@@ -73,15 +74,7 @@ export const HeroSightingHistoryDialog = ({
           icon={AlertCircle}
           title={t("heroSightings.history.loadError")}
           action={
-            <Button
-              type="button"
-              variant="outline"
-              loading={isFetching}
-              icon=<RotateCcw className="size-3.5" />
-              onClick={() => void refetch()}
-            >
-              {t("common.actions.retry")}
-            </Button>
+            <RetryButton onRetry={() => refetch()} isRetrying={isFetching} />
           }
         />
       );

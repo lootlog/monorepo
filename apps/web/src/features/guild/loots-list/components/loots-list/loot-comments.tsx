@@ -13,7 +13,8 @@ import {
 } from "@lootlog/client/main";
 import { EmptyState } from "@/components/common/empty-state";
 import { LoadingSlot } from "@/components/common/loading-slot";
-import { CircleAlert, MessageSquare, RotateCcw } from "lucide-react";
+import { CircleAlert, MessageSquare } from "lucide-react";
+import { RetryButton } from "@/components/common/retry-button";
 
 const MAX_LENGTH = 256;
 
@@ -122,15 +123,7 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
           icon={CircleAlert}
           title={t("loots.details.comments.error")}
           action={
-            <Button
-              type="button"
-              variant="outline"
-              loading={isFetching}
-              icon=<RotateCcw className="size-3.5" />
-              onClick={() => void refetch()}
-            >
-              {t("common.actions.retry")}
-            </Button>
+            <RetryButton onRetry={() => refetch()} isRetrying={isFetching} />
           }
         />
       )}

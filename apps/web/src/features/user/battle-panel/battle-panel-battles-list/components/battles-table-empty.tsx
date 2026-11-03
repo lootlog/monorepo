@@ -1,7 +1,7 @@
 import { EmptyState } from "@/components/common/empty-state";
-import { Button } from "@lootlog/ui/components/button";
-import { AlertCircle, RotateCcw, Shield } from "lucide-react";
+import { AlertCircle, Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { RetryButton } from "@/components/common/retry-button";
 
 type BattlesTableEmptyProps = {
   hasError: boolean;
@@ -29,17 +29,7 @@ export const BattlesTableEmpty = ({
           compact={!paginated}
           className={paginated ? "min-h-[360px]" : "min-h-48"}
           action={
-            onRetry && (
-              <Button
-                type="button"
-                variant="outline"
-                loading={isRetrying}
-                icon=<RotateCcw className="size-3.5" />
-                onClick={onRetry}
-              >
-                {t("common.actions.retry")}
-              </Button>
-            )
+            onRetry && <RetryButton onRetry={onRetry} isRetrying={isRetrying} />
           }
         />
       ) : (

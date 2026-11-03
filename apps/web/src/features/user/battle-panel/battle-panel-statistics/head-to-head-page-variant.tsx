@@ -17,14 +17,14 @@ import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/compon
 import { ResultsSurface } from "@/components/common/results-surface";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Table } from "@lootlog/ui/components/table";
-import { Button } from "@lootlog/ui/components/button";
-import { AlertCircle, RotateCcw, SearchX } from "lucide-react";
+import { AlertCircle, SearchX } from "lucide-react";
 import { StatisticsFilterToolbar } from "./components/statistics-filter-toolbar";
 import { StatisticsStackedFilters } from "./components/statistics-stacked-filters";
 import {
   useHeadToHeadPage,
   type HeadToHeadPageVariantProps,
 } from "./use-head-to-head-page";
+import { RetryButton } from "@/components/common/retry-button";
 
 export function HeadToHeadPageVariant({
   columns,
@@ -126,15 +126,7 @@ export function HeadToHeadPageVariant({
               t("common.routeErrors.status.500.description")
             }
             action={
-              <Button
-                type="button"
-                variant="outline"
-                loading={isFetching}
-                icon=<RotateCcw className="size-3.5" />
-                onClick={() => void refetch()}
-              >
-                {t("common.actions.retry")}
-              </Button>
+              <RetryButton onRetry={() => refetch()} isRetrying={isFetching} />
             }
           />
         </div>

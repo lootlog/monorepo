@@ -21,6 +21,7 @@ import {
   groupFeedItems,
   isGroupVisible,
 } from "./live-feed-state";
+import { RetryButton } from "@/components/common/retry-button";
 
 /** Events listed before the rest folds behind "show older". */
 const VISIBLE_GROUPS = 8;
@@ -184,15 +185,12 @@ export function DashboardLiveFeed() {
           className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm"
         >
           <p>{t("statistics.feedError")}</p>
-          <Button
-            variant="outline"
-            size="sm"
+          <RetryButton
+            onRetry={refresh}
+            isRetrying={state.isFetching}
             disabled={state.isFetching || paused}
-            loading={state.isFetching}
-            onClick={refresh}
-          >
-            {t("common.actions.retry")}
-          </Button>
+            size="sm"
+          />
         </div>
       )}
       <div aria-busy={state.isFetching} className="@container">
