@@ -1010,6 +1010,67 @@ const TIMER_NPC_SEARCH_CHANGED_PARAMETERS = [
   ...TIMER_NPC_SEARCH_ID_PARAMETERS,
 ];
 
+// These operations documented their `guildId` path segment with an empty
+// schema, so the API reference filled the path with `null`. A path segment is
+// always a string, and the handlers already received one.
+const STRING_ORGANIZATION_PATH_OPERATIONS = new Set([
+  "GET /guilds/{guildId}/loots/{lootId}",
+  "DELETE /guilds/{guildId}/loots/{lootId}",
+  "GET /guilds/{guildId}/loots/{lootId}/comments",
+  "POST /guilds/{guildId}/loots/{lootId}/comments",
+  "GET /guilds/{guildId}/lootlog-config",
+  "GET /guilds/{guildId}/chat-messages",
+  "POST /guilds/{guildId}/chat-messages",
+  "DELETE /guilds/{guildId}/chat-messages",
+  "DELETE /guilds/{guildId}/chat-messages/{messageId}",
+  "GET /guilds/{guildId}/notifications/targets",
+  "POST /guilds/{guildId}/notifications/targets",
+  "GET /guilds/{guildId}/notifications/targets/available",
+  "PATCH /guilds/{guildId}/notifications/targets/{targetId}",
+  "DELETE /guilds/{guildId}/notifications/targets/{targetId}",
+  "GET /guilds/{guildId}/notifications/rules",
+  "POST /guilds/{guildId}/notifications/rules",
+  "PATCH /guilds/{guildId}/notifications/rules/{ruleId}",
+  "DELETE /guilds/{guildId}/notifications/rules/{ruleId}",
+  "POST /guilds/{guildId}/notifications/rules/{ruleId}/rebuild-jobs",
+  "POST /guilds/{guildId}/notifications/rules/{ruleId}/test",
+  "GET /guilds/{guildId}/notifications/jobs",
+  "DELETE /guilds/{guildId}/notifications/jobs/{jobId}",
+]);
+
+const normalizeStringOrganizationPath = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  if (
+    service !== "api" ||
+    !STRING_ORGANIZATION_PATH_OPERATIONS.has(operationKey) ||
+    !isJsonObject(operation) ||
+    !isJsonArray(operation.parameters)
+  )
+    return operation;
+
+  return {
+    ...operation,
+    parameters: operation.parameters.map((parameter) => {
+      if (
+        !isJsonObject(parameter) ||
+        parameter.name !== "guildId" ||
+        parameter.in !== "path"
+      )
+        return parameter;
+
+      if (
+        JSON.stringify(parameter.schema) !== JSON.stringify({ type: "string" })
+      )
+        throw new Error(`${operationKey} guildId is not a string`);
+
+      return { ...parameter, schema: {} };
+    }),
+  };
+};
+
 const normalizeTimerNpcSearchQuery = (
   service: string,
   operationKey: string,
@@ -1239,6 +1300,11 @@ export const normalizeAllowedChanges = (
   );
   normalized = normalizeActivityLiveness(service, operationKey, normalized);
   normalized = normalizeTimerNpcSearchQuery(service, operationKey, normalized);
+  normalized = normalizeStringOrganizationPath(
+    service,
+    operationKey,
+    normalized,
+  );
   normalized = normalizeForeignThemeSelection(
     service,
     operationKey,
@@ -2180,7 +2246,7 @@ const lootLikeAddition = (
   operationId,
   parameters: [
     { name: "lootId", in: "path", schema: { type: "number" }, required: true },
-    { name: "guildId", in: "path", schema: {}, required: true },
+    { name: "guildId", in: "path", schema: { type: "string" }, required: true },
   ],
   security: [{ bearer: [] }],
   responses: {
