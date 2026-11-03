@@ -6,6 +6,7 @@ import type { WatchedItemScope } from "@/features/user/notifications/types/watch
 import type { ReactNode } from "react";
 import { cn } from "cn";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LOOT_PLAYERS_ROW_CLASS } from "./loot-players-row";
 
 export const LootContent = ({
   sortedPlayers,
@@ -37,7 +38,7 @@ export const LootContent = ({
         LIST_TILE_INSET_CLASS,
       )}
     >
-      <div className="flex min-w-0 flex-1 basis-48 flex-wrap content-start gap-x-0.75 gap-y-2.5 sm:gap-x-2">
+      <div className={LOOT_PLAYERS_ROW_CLASS}>
         {sortedPlayers.map((player) => (
           <LootPlayerWithItems
             key={player.id}
