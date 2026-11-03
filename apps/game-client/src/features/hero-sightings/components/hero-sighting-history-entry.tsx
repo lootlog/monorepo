@@ -5,7 +5,7 @@ import { HeroSightingClaimers } from "@/features/hero-sightings/components/hero-
 import { HeroSightingDetector } from "@/features/hero-sightings/components/hero-sighting-detector";
 import { HeroSightingPlace } from "@/features/hero-sightings/components/hero-sighting-place";
 import { isHeroSightingDetectorClaim } from "@/features/hero-sightings/hero-sighting-rows";
-import { format } from "@/utils/local-date";
+import { format, isSameLocalDay } from "@/utils/local-date";
 
 type HeroSightingHistoryEntryProps = {
   sighting: HeroSightingResponseDto;
@@ -18,6 +18,8 @@ export function HeroSightingHistoryEntry({
   now,
 }: HeroSightingHistoryEntryProps) {
   const isCurrent = sighting.closedAt === null;
+  const firstSeenAt = new Date(sighting.firstSeenAt);
+  const lastSeenAt = new Date(sighting.lastSeenAt);
 
   const claims = sighting.claims.map((claim) => ({
     ...claim,
@@ -37,12 +39,25 @@ export function HeroSightingHistoryEntry({
         <span className="ll:flex ll:min-w-0 ll:flex-1 ll:items-center ll:gap-1 ll:font-normal">
           <HeroSightingClaimers claims={claims} />
         </span>
-        <time
-          dateTime={sighting.firstSeenAt}
-          className="ll:shrink-0 ll:font-normal ll:tabular-nums ll:text-muted-foreground"
-        >
-          {format(new Date(sighting.firstSeenAt), "dd.MM HH:mm:ss")}
-        </time>
+        <span className="ll:shrink-0 ll:font-normal ll:tabular-nums ll:text-muted-foreground">
+          <time dateTime={sighting.firstSeenAt}>
+            {format(firstSeenAt, "dd.MM HH:mm:ss")}
+          </time>
+          {/* Later detections on the same map confirm the sighting. */}
+          {lastSeenAt > firstSeenAt ? (
+            <>
+              {" – "}
+              <time dateTime={sighting.lastSeenAt}>
+                {format(
+                  lastSeenAt,
+                  isSameLocalDay(firstSeenAt, lastSeenAt)
+                    ? "HH:mm:ss"
+                    : "dd.MM HH:mm:ss",
+                )}
+              </time>
+            </>
+          ) : null}
+        </span>
       </span>
     </ListRow>
   );
