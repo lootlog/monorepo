@@ -5,6 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { AddonStatusSection } from "@/features/settings/components/general/addon-status-section";
 import { LocalDataSection } from "@/features/settings/components/general/local-data-section";
 import { WindowLayoutSection } from "@/features/settings/components/general/window-layout-section";
+import { useAccountEnabledFlag } from "@/features/settings/persistence/use-account-enabled-flag";
 import { SettingsHelpPopover } from "@/features/settings/components/shared/settings-help-popover";
 import { useSettingsStore } from "@/store/settings.store";
 import type { FC } from "react";
@@ -27,6 +28,7 @@ export const GeneralSettingsTab: FC = () => {
     (state) => state.toggleAnimationEffects,
   );
 
+  const lootSplit = useAccountEnabledFlag("lootSplit");
   const { t } = useTranslation();
 
   return (
@@ -66,6 +68,19 @@ export const GeneralSettingsTab: FC = () => {
               toggleAnimationEffects();
             }}
             id="animation-effects"
+          />
+        </SettingsRow>
+        <SettingsRow
+          controlId="loot-split-window"
+          htmlFor="loot-split-window"
+          label={t("lootSplit.settings.windowLabel")}
+          description={t("lootSplit.settings.windowDescription")}
+        >
+          <Switch
+            checked={lootSplit.data?.enabled ?? false}
+            disabled={!lootSplit.data}
+            onCheckedChange={lootSplit.setEnabled}
+            id="loot-split-window"
           />
         </SettingsRow>
       </SettingsSection>

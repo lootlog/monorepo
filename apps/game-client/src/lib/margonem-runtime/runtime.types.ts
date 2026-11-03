@@ -139,6 +139,9 @@ export type RuntimeEventHandler = (envelope: RuntimeEventEnvelope) => void;
 
 export type RuntimeIntentHandler = (intent: RuntimeIntent) => void;
 
+/** Receives every outgoing game command string, e.g. `loot&want=…&final=1`. */
+export type RuntimeCommandHandler = (command: string) => void;
+
 export type RuntimeObserverFailure = Readonly<{
   error: unknown;
   phase: "applied" | "initialization" | "intent";

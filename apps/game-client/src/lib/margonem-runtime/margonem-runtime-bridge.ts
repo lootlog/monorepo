@@ -1,4 +1,5 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import { isString } from "es-toolkit";
 import { createDiagnosticsReport } from "@/lib/diagnostics-report";
 import { showRuntimeFailureNotice } from "@/lib/runtime-failure-notice";
 import { parseRuntimeFacts } from "./runtime-event-parser";
@@ -8,6 +9,7 @@ import {
 } from "./runtime-adapter";
 import type {
   RuntimeEventEnvelope,
+  RuntimeCommandHandler,
   RuntimeEventHandler,
   RuntimeIntent,
   RuntimeIntentHandler,
@@ -67,6 +69,7 @@ const EMPTY_INGRESS = Object.freeze({
 export class MargonemRuntimeBridge {
   private readonly appliedHandlers = new Set<RuntimeEventHandler>();
   private readonly intentHandlers = new Set<RuntimeIntentHandler>();
+  private readonly commandHandlers = new Set<RuntimeCommandHandler>();
   private readonly adapter?: MargonemRuntimeAdapter;
   private resolvedAdapter: MargonemRuntimeAdapter | null = null;
   private readonly onFatalPipelineError?: () => void;
@@ -178,6 +181,17 @@ export class MargonemRuntimeBridge {
     return () => this.appliedHandlers.delete(handler);
   }
 
+  /**
+   * Observes outgoing game commands on both interfaces. Handlers run inside
+   * the game's own request call, so they must stay cheap; a throwing handler
+   * is reported and never reaches the game.
+   */
+  subscribeCommand(handler: RuntimeCommandHandler): () => void {
+    this.commandHandlers.add(handler);
+
+    return () => this.commandHandlers.delete(handler);
+  }
+
   subscribeIntent(handler: RuntimeIntentHandler): () => void {
     this.intentHandlers.add(handler);
 
@@ -205,6 +219,7 @@ export class MargonemRuntimeBridge {
     this.detachOutgoing();
     this.appliedHandlers.clear();
     this.intentHandlers.clear();
+    this.commandHandlers.clear();
     this.sequence = 0;
     this.clearInstallRetry();
     this.activeIntent = null;
@@ -268,6 +283,19 @@ export class MargonemRuntimeBridge {
   }
 
   private observeIntent(command: unknown): void {
+    if (isString(command))
+      for (const handler of this.commandHandlers) {
+        try {
+          handler(command);
+        } catch (error) {
+          this.reportObserverFailure({
+            error,
+            phase: "intent",
+            sequence: this.sequence,
+          });
+        }
+      }
+
     const intent = this.parseIntent(command);
 
     if (!intent) return;

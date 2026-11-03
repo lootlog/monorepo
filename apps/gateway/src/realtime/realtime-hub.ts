@@ -85,7 +85,7 @@ const MAX_SCOPE_BYTES = 1_024;
  * once `clusterFederationVersion` reaches it: a replica drops a frame its
  * schema does not know.
  */
-export const FEDERATION_VERSION = 8;
+export const FEDERATION_VERSION = 9;
 
 export const PARTY_GATHERING_STATE_FEDERATION_VERSION = 3;
 
@@ -103,6 +103,9 @@ export const GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION = 7;
 
 /** Replicas from this version deliver `preciseFrame` of a presence publication. */
 export const PRESENCE_PAIR_FEDERATION_VERSION = 8;
+
+/** Replicas from this version decode `loot-split.received`. */
+export const LOOT_SPLIT_FEDERATION_VERSION = 9;
 
 /**
  * Identifies the frame schema of this build. A replica with the same schema
@@ -227,14 +230,19 @@ const matchingScopeAudienceKeys = (scope: Scope): string[] => {
 
 type RealtimeFederationStore = Pick<RedisGatewayStore, "publish" | "subscribe">;
 
-// Pings carry no Organization, so they reach sockets only through authorized routing scopes.
+// Pings and loot split choices carry no Organization, so they reach sockets
+// only through authorized routing scopes.
 const isPingEvent = (
   event: Event,
 ): event is Extract<
   Event,
-  { type: "map-ping.received" | "battle-ping.received" }
+  {
+    type: "map-ping.received" | "battle-ping.received" | "loot-split.received";
+  }
 > =>
-  event.type === "map-ping.received" || event.type === "battle-ping.received";
+  event.type === "map-ping.received" ||
+  event.type === "battle-ping.received" ||
+  event.type === "loot-split.received";
 
 export class RealtimeHub {
   private readonly logger = new ContextLogger(RealtimeHub.name);

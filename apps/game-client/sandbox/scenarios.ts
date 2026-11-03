@@ -1,4 +1,4 @@
-import type { GameEvent } from "@lootlog/margonem/game-events";
+import type { GameEvent, Item } from "@lootlog/margonem/game-events";
 import { createDebugLegendaryLootEvent } from "@/features/settings/components/debug/debug-legendary-loot-event";
 import {
   createBaseEvent,
@@ -20,6 +20,74 @@ export type SandboxScenario = {
 };
 
 let nextOtherId = 710_000;
+
+let nextLootItemId = 1_200_653_658;
+
+const lootItem = (name: string, icon: string, reqp: string): Item => ({
+  hid: `sandbox${nextLootItemId}`,
+  name,
+  icon,
+  stat: `rarity=common;reqp=${reqp}`,
+  loc: "l",
+  pr: 179_264,
+  prc: "zl",
+  st: 0,
+  own: 0,
+  cl: 8,
+  tpl: 0,
+});
+
+/**
+ * A group loot as Margonem sends it after a party fight: the party, the items
+ * in `loc: "l"` and the hero's own default states. Other participants' choices
+ * arrive only from their Lootlog clients through the gateway.
+ */
+const createGroupLootEvent = (world: SandboxWorld): GameEvent => {
+  const ids = [nextLootItemId, nextLootItemId + 1].map(String);
+  const [first = "", second = ""] = ids;
+  const now = Date.now() / 1_000;
+
+  const items = {
+    [first]: lootItem("Skromny pancerz piłowca", "zbr/zbroja1594.gif", "b"),
+    [second]: lootItem("Szelki mutanta", "zbr/zbroja1591.gif", "h"),
+  };
+
+  nextLootItemId += ids.length;
+
+  return {
+    ev: now,
+    party: {
+      members: {
+        [String(world.hero.id)]: {
+          account: world.hero.account,
+          nick: world.hero.nick,
+          icon: world.hero.img,
+          prof: world.hero.prof,
+          commander: 1,
+        },
+        "365": {
+          account: 365,
+          nick: "Knoper S",
+          icon: "/kuf/her_xxxv_selder_m2.gif",
+          prof: "h",
+        },
+        "1466": {
+          account: 1466,
+          nick: "Garberere",
+          icon: "/clan/luvia_131m.gif",
+          prof: "b",
+        },
+      },
+    },
+    item: items,
+    loot: {
+      init: 3,
+      endTs: now + 20,
+      source: "fight",
+      states: Object.fromEntries(ids.map((id) => [id, 1])),
+    },
+  };
+};
 
 export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
   ...Object.entries(DETECTOR_NPC_PRESETS).map(
@@ -57,6 +125,12 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
 
       return game ? createDebugLegendaryLootEvent(game) : null;
     },
+  },
+  {
+    id: "group-loot",
+    label: "Group loot split",
+    group: "Battle",
+    build: (world) => createGroupLootEvent(world),
   },
   {
     id: "town-change",

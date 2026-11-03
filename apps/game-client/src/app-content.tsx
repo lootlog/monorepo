@@ -7,6 +7,8 @@ import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/
 import { Chat } from "@/features/chat/chat";
 import { CommandWindow } from "@/features/command/command";
 import { GlobalChat } from "@/features/global-chat/global-chat";
+import { LootSplitWindow } from "@/features/loot-split/loot-split-window";
+import { useLootSplitSync } from "@/features/loot-split/use-loot-split-sync";
 import { useGlobalChatSync } from "@/features/global-chat/hooks/use-global-chat-sync";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
 import { BattlePingMarkers } from "@/features/pings/battle-ping-markers";
@@ -46,6 +48,7 @@ export const AppContent = () => {
   const pingHotkeyHandlers = usePings();
   useAirTags();
   useNpcPresenceReporter();
+  useLootSplitSync();
   usePresencePublicationScope();
   const { sendHelp, sendPosition } = useChatQuickActions();
   useHotkeys({
@@ -89,6 +92,7 @@ export const AppContent = () => {
       <PingWheel />
       <BattlePingMarkers />
       <BattlePingWindow />
+      <LootSplitWindow />
       <WhoIsHereAirTags />
     </>
   ) : null;
