@@ -5,9 +5,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AlertCircle, Radar, RotateCcw, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMediaQuery } from "usehooks-ts";
 import { EmptyState } from "@/components/common/empty-state";
-import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
@@ -17,10 +15,12 @@ import {
   type HeroSightingHistoryTarget,
 } from "./hero-sighting-history-dialog";
 import { sortHeroSightings } from "./hero-sighting-status";
-import { HeroSightingsList } from "./hero-sightings-list";
+import { HeroSightingsBoard } from "./hero-sightings-board";
 import { HeroSightingsResultsSkeleton } from "./hero-sightings-results-skeleton";
-import { HeroSightingsTable } from "./hero-sightings-table";
 import { useGuildHeroSightings } from "./use-guild-hero-sightings";
+import { useGuildHeroTimers } from "./use-guild-hero-timers";
+import { useGuildTimers } from "@/features/guild/timers/use-guild-timers";
+import { useTimerDisplaySettings } from "@/features/guild/timers/use-timer-display-settings";
 
 /**
  * The latest sighting of each hero that members found with the in-game hero
@@ -28,7 +28,6 @@ import { useGuildHeroSightings } from "./use-guild-hero-sightings";
  */
 export const HeroSightings = () => {
   const { t } = useTranslation();
-  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const now = useMinuteTimestamp();
   const [search, setSearch] = useState("");
 
@@ -37,6 +36,11 @@ export const HeroSightings = () => {
 
   const { world, sightings, isPending, isError, isFetching, refetch } =
     useGuildHeroSightings();
+
+  // Each hero reads against its respawn timer, counted as on the timers page.
+  const { removeTimerAfterMs, countdownMode } = useTimerDisplaySettings();
+  const { timers } = useGuildTimers(removeTimerAfterMs);
+  const heroTimers = useGuildHeroTimers();
 
   const normalizedSearch = search.trim().toLowerCase();
 
@@ -108,17 +112,17 @@ export const HeroSightings = () => {
       );
     }
 
-    const resultsProps = {
-      sightings: visible,
-      now,
-      showWorld: world === null,
-      onOpenHistory: openHistory,
-    };
-
-    return usesTable ? (
-      <HeroSightingsTable {...resultsProps} />
-    ) : (
-      <HeroSightingsList {...resultsProps} />
+    return (
+      <HeroSightingsBoard
+        sightings={visible}
+        timers={timers}
+        heroTimers={heroTimers}
+        now={now}
+        countdownMode={countdownMode}
+        removeTimerAfterMs={removeTimerAfterMs}
+        showWorld={world === null}
+        onOpenHistory={openHistory}
+      />
     );
   };
 

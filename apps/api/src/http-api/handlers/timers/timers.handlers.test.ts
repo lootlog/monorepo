@@ -109,6 +109,7 @@ const makeData = (overrides: Partial<TimersData["Service"]> = {}) =>
     getAll: () => Effect.succeed([]),
     getRecentHistory: () => Effect.succeed([]),
     getGuildTimers: () => Effect.succeed([]),
+    getGuildHeroTimers: () => Effect.succeed([]),
     searchNpcs: () => Effect.succeed([]),
     createAuto: () =>
       Effect.succeed({ submittedGuilds: [], rejectedGuilds: [] }),

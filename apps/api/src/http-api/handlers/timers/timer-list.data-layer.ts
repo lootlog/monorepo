@@ -22,6 +22,7 @@ import {
 } from "#src/database/drizzle/schema";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { Permission } from "@lootlog/schema/permissions";
+import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import { toTimersDataFailure } from "./timer-errors.js";
@@ -179,4 +180,46 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
     identity: { readonly userId: string; readonly discordId: string },
     world?: string,
   ) => operation(identity, world).pipe(Effect.mapError(toTimersDataFailure));
+};
+
+// The NPC types a hero detector names; their timers outlive their window.
+const HERO_TIMER_TYPES = [NpcTypeEnum.HERO, NpcTypeEnum.EVENT_HERO];
+
+/**
+ * The latest timer of every hero and event hero on one world, expired and
+ * deleted ones included, so a hero sighting can say when its hero's window
+ * ended. One row per timer key holds the latest window, so the list stays as
+ * small as the heroes the Organization timed.
+ */
+export const makeGuildHeroTimerList = (
+  database: typeof ApiDatabase.Service,
+) => {
+  const operation = Effect.fn("getGuildHeroTimersData")(function* (
+    access: TimersGuildAccess,
+    world: string,
+  ) {
+    const rows = yield* selectTimersWithActors(database)
+      .where(
+        and(
+          eq(timerTable.guildId, access.guild.id),
+          eq(timerTable.world, world),
+          // Timer NPCs are JSON; `mapTimerNpc` reads their type case-insensitively.
+          inArray(sql`upper(${timerTable.npc}->>'type')`, HERO_TIMER_TYPES),
+        ),
+      )
+      // Several timer keys can name one hero; its latest window comes first.
+      .orderBy(desc(timerTable.maxSpawnTime));
+
+    return rows
+      .map(({ timer, member, actorCharacter }) => ({
+        ...timer,
+        member,
+        actorCharacter,
+      }))
+      .filter((timer) => canViewTimer(access, timer))
+      .map(mapTimerResponse);
+  });
+
+  return (access: TimersGuildAccess, world: string) =>
+    operation(access, world).pipe(Effect.mapError(toTimersDataFailure));
 };

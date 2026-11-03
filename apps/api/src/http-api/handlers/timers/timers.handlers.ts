@@ -81,6 +81,10 @@ export class TimersData extends Context.Service<
       access: TimersGuildAccess,
       world?: string,
     ) => DataEffect;
+    readonly getGuildHeroTimers: (
+      access: TimersGuildAccess,
+      world: string,
+    ) => DataEffect;
     readonly searchNpcs: (
       access: TimersGuildAccess,
       query: TimerNpcSearchQuery,
@@ -122,6 +126,7 @@ export class TimersData extends Context.Service<
       | "getAll"
       | "delete"
       | "getGuildTimers"
+      | "getGuildHeroTimers"
       | "getHistory"
       | "getRecentHistory"
       | "createManual"
@@ -134,6 +139,7 @@ export class TimersData extends Context.Service<
       getAll: operations.getAll,
       getRecentHistory: operations.getRecentHistory,
       getGuildTimers: operations.getGuildTimers,
+      getGuildHeroTimers: operations.getGuildHeroTimers,
       searchNpcs: operations.searchNpcs,
       createAuto: operations.createAuto,
       reset: operations.reset,
@@ -207,6 +213,19 @@ export const getGuildTimers = Effect.fn("getGuildTimers")(function* (
 ) {
   const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
   const value = yield* data((service) => service.getGuildTimers(access, world));
+
+  return yield* mapResponseError(decodeTimersResponse(value));
+});
+
+export const getGuildHeroTimers = Effect.fn("getGuildHeroTimers")(function* (
+  guildId: string,
+  world: string,
+) {
+  const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
+
+  const value = yield* data((service) =>
+    service.getGuildHeroTimers(access, world),
+  );
 
   return yield* mapResponseError(decodeTimersResponse(value));
 });
@@ -317,6 +336,9 @@ export const TimersHandlers = HttpApiBuilder.group(
             getGuildTimers(guildId, query.world),
           ),
         ),
+      )
+      .handle("TimersControllerGetHeroTimers", ({ params, query }) =>
+        toHttpResponse(getGuildHeroTimers(params.guildId, query.world)),
       )
       .handle("TimersControllerSearchNpcsWithTimerData", ({ params, query }) =>
         toHttpResponse(searchTimerNpcs(params.guildId, query)),

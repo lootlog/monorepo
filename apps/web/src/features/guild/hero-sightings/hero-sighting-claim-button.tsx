@@ -44,9 +44,14 @@ export const HeroSightingClaimButton = ({
       )}
       onClick={toggle}
     >
-      {t(
-        isClaimed ? "heroSightings.claim.unclaim" : "heroSightings.claim.claim",
-      )}
+      {/* Phones keep the icon, so the hero's name keeps the row. */}
+      <span className="max-sm:sr-only">
+        {t(
+          isClaimed
+            ? "heroSightings.claim.unclaim"
+            : "heroSightings.claim.claim",
+        )}
+      </span>
     </Button>
   );
 };

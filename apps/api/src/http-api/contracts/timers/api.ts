@@ -14,6 +14,7 @@ import {
   CreateManualTimerRequest,
   TimerPath,
   TimersQuery,
+  HeroTimersQuery,
   TimersResponse,
   TimerHistoryListResponse,
   RecentTimerHistoryQuery,
@@ -62,6 +63,23 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
     .annotate(OpenApi.Identifier, "TimersController_getTimers")
     .annotate(OpenApi.Summary, "Get guild timers")
     .annotate(OpenApi.Description, "Retrieve timers for a specific guild"),
+  HttpApiEndpoint.get(
+    "TimersControllerGetHeroTimers",
+    "/guilds/:guildId/timers/heroes",
+    {
+      params: TimerOrganizationPath,
+      query: HeroTimersQuery,
+      success: TimersResponse,
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "TimersController_getHeroTimers")
+    .annotate(OpenApi.Summary, "Get the latest hero timers")
+    .annotate(
+      OpenApi.Description,
+      "Retrieve the latest timer of every hero and event hero on one Organization world, including timers whose spawn window has ended or that were deleted. Results omit timers the caller's roles cannot view.",
+    ),
   HttpApiEndpoint.get(
     "TimersControllerSearchNpcsWithTimerData",
     "/guilds/:guildId/timers/npcs/search",
