@@ -39,6 +39,7 @@ const ROUTES = {
     base: (guildId: string) => `/${guildId}`,
     lootlog: (guildId: string) => `/${guildId}`,
     timers: (guildId: string) => `/${guildId}/timers`,
+    heroSightings: (guildId: string) => `/${guildId}/hero-sightings`,
     stats: (guildId: string) => `/${guildId}/stats`,
     statsKills: (guildId: string) => `/${guildId}/stats/kills`,
     statsLoots: (guildId: string) => `/${guildId}/stats/loots`,

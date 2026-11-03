@@ -13,6 +13,7 @@
     "./chat-message-permissions": "./src/chat-message-permissions.ts",
     "./chat-appearance": "./src/chat-appearance.ts",
     "./event-hero-visibility": "./src/event-hero-visibility.ts",
+    "./hero-sightings": "./src/hero-sightings.ts",
     "./catalog-slug": "./src/catalog-slug.ts",
     "./item-events": "./src/item-events.ts",
     "./item-type": "./src/item-type.ts",

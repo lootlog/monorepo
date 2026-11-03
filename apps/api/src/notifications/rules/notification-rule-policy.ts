@@ -89,6 +89,14 @@ const buildFilters = (data: RuleInput): JsonObject => {
 
   if (data.itemIds !== undefined) filters.itemIds = [...data.itemIds];
 
+  // A null bound clears it.
+  const npcLevelMin = data.npcLevelMin ?? undefined;
+  const npcLevelMax = data.npcLevelMax ?? undefined;
+
+  if (npcLevelMin !== undefined) filters.npcLevelMin = npcLevelMin;
+
+  if (npcLevelMax !== undefined) filters.npcLevelMax = npcLevelMax;
+
   return filters;
 };
 
@@ -358,7 +366,9 @@ export const updateNotificationRuleValues = (
     data.npcIds !== undefined ||
     data.npcTemplateIds !== undefined ||
     data.itemId !== undefined ||
-    data.itemIds !== undefined;
+    data.itemIds !== undefined ||
+    data.npcLevelMin !== undefined ||
+    data.npcLevelMax !== undefined;
 
   let world = existing.world;
   let filters = existing.filters;

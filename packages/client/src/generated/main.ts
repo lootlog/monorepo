@@ -4536,6 +4536,7 @@ export const WatchedItemResponseDtoNotificationRuleTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -4571,6 +4572,16 @@ export type WatchedItemResponseDtoNotificationRuleFilters = {[key: string]: unkn
      * @items.maximum 9007199254740991
      */
   itemIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMin?: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMax?: number;
 } | null) | null;
 
 /**
@@ -4843,6 +4854,7 @@ export const NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType = 
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -4950,6 +4962,7 @@ export const NotificationJobsResponseDtoPendingItemRuleTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -4985,6 +4998,16 @@ export type NotificationJobsResponseDtoPendingItemRuleFilters = {[key: string]: 
      * @items.maximum 9007199254740991
      */
   itemIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMin?: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMax?: number;
 } | null) | null;
 
 /**
@@ -5259,6 +5282,7 @@ export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType = 
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -5366,6 +5390,7 @@ export const NotificationJobsResponseDtoHistoryItemRuleTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -5401,6 +5426,16 @@ export type NotificationJobsResponseDtoHistoryItemRuleFilters = {[key: string]: 
      * @items.maximum 9007199254740991
      */
   itemIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMin?: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMax?: number;
 } | null) | null;
 
 /**
@@ -5658,6 +5693,7 @@ export const UpdateNotificationRuleDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 export interface UpdateNotificationRuleDto {
@@ -5691,6 +5727,18 @@ export interface UpdateNotificationRuleDto {
      * @items.maximum 9007199254740991
      */
   npcTemplateIds?: number[];
+  /**
+     * @minimum 0
+     * @maximum 500
+     * @nullable
+     */
+  npcLevelMin?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 500
+     * @nullable
+     */
+  npcLevelMax?: number | null;
   /**
      * @minimum -9007199254740991
      * @maximum 9007199254740991
@@ -5775,6 +5823,7 @@ export const CreateNotificationRuleDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 export interface CreateNotificationRuleDto {
@@ -5808,6 +5857,18 @@ export interface CreateNotificationRuleDto {
      * @items.maximum 9007199254740991
      */
   npcTemplateIds?: number[];
+  /**
+     * @minimum 0
+     * @maximum 500
+     * @nullable
+     */
+  npcLevelMin?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 500
+     * @nullable
+     */
+  npcLevelMax?: number | null;
   /**
      * @minimum -9007199254740991
      * @maximum 9007199254740991
@@ -6050,6 +6111,7 @@ export const NotificationRuleResponseDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -6085,6 +6147,16 @@ export type NotificationRuleResponseDtoFilters = {[key: string]: unknown} & ({
      * @items.maximum 9007199254740991
      */
   itemIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMin?: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMax?: number;
 } | null) | null;
 
 /**
@@ -6283,6 +6355,7 @@ export const GuildNotificationRulesResponseDtoItemsItemTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -6318,6 +6391,16 @@ export type GuildNotificationRulesResponseDtoItemsItemFilters = {[key: string]: 
      * @items.maximum 9007199254740991
      */
   itemIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMin?: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcLevelMax?: number;
 } | null) | null;
 
 /**
@@ -8851,6 +8934,275 @@ export interface UserLootlogConfigAccountResponseDtoOutput {[key: string]: {
   catchingGuildIds: string[];
 }}
 
+/**
+ * @nullable
+ */
+export type HeroSightingResponseDtoHeroProf = typeof HeroSightingResponseDtoHeroProf[keyof typeof HeroSightingResponseDtoHeroProf] | null;
+
+
+export const HeroSightingResponseDtoHeroProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type HeroSightingResponseDtoHero = {
+  key: string;
+  name: string;
+  lvl: number;
+  /** @nullable */
+  prof: HeroSightingResponseDtoHeroProf;
+};
+
+export type HeroSightingResponseDtoState = typeof HeroSightingResponseDtoState[keyof typeof HeroSightingResponseDtoState];
+
+
+export const HeroSightingResponseDtoState = {
+  ROAMING: 'ROAMING',
+  SPAWNING: 'SPAWNING',
+} as const;
+
+/**
+ * PROBABLY_KILLED when a later detection contradicted the sighting; KILLED when Lootlog recorded the kill.
+ * @nullable
+ */
+export type HeroSightingResponseDtoCloseReason = typeof HeroSightingResponseDtoCloseReason[keyof typeof HeroSightingResponseDtoCloseReason] | null;
+
+
+export const HeroSightingResponseDtoCloseReason = {
+  KILLED: 'KILLED',
+  PROBABLY_KILLED: 'PROBABLY_KILLED',
+} as const;
+
+/**
+ * @nullable
+ */
+export type HeroSightingResponseDtoDetectorCharacterProf = typeof HeroSightingResponseDtoDetectorCharacterProf[keyof typeof HeroSightingResponseDtoDetectorCharacterProf] | null;
+
+
+export const HeroSightingResponseDtoDetectorCharacterProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+/**
+ * @nullable
+ */
+export type HeroSightingResponseDtoDetectorCharacter = {
+  name: string;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  prof: HeroSightingResponseDtoDetectorCharacterProf;
+  /** @nullable */
+  icon: string | null;
+} | null;
+
+/**
+ * @nullable
+ */
+export type HeroSightingResponseDtoClaimsItemCharacterProf = typeof HeroSightingResponseDtoClaimsItemCharacterProf[keyof typeof HeroSightingResponseDtoClaimsItemCharacterProf] | null;
+
+
+export const HeroSightingResponseDtoClaimsItemCharacterProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+/**
+ * @nullable
+ */
+export type HeroSightingResponseDtoClaimsItemCharacter = {
+  name: string;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  prof: HeroSightingResponseDtoClaimsItemCharacterProf;
+  /** @nullable */
+  icon: string | null;
+} | null;
+
+export interface HeroSightingMemberDto {
+  memberId: number;
+  /**
+     * Internal Lootlog User id of the Member, or null for a Member that never signed in.
+     * @nullable
+     */
+  userId: string | null;
+  displayName: string;
+  /** @nullable */
+  avatarUrl: string | null;
+}
+
+export type HeroSightingResponseDtoClaimsItem = {
+  member: HeroSightingMemberDto;
+  /** @nullable */
+  character: HeroSightingResponseDtoClaimsItemCharacter;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  createdAt: string;
+};
+
+export interface HeroSightingResponseDto {
+  id: number;
+  guildId: string;
+  world: string;
+  hero: HeroSightingResponseDtoHero;
+  state: HeroSightingResponseDtoState;
+  /** Map name from the detector answer. Margonem sends no map id, and several maps can share a name. */
+  mapName: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  firstSeenAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  lastSeenAt: string;
+  /**
+     * When a detected spawn was first reported roaming.
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  spawnedAt: string | null;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  closedAt: string | null;
+  /**
+     * PROBABLY_KILLED when a later detection contradicted the sighting; KILLED when Lootlog recorded the kill.
+     * @nullable
+     */
+  closeReason: HeroSightingResponseDtoCloseReason;
+  detectedBy: HeroSightingMemberDto;
+  /** @nullable */
+  detectorCharacter: HeroSightingResponseDtoDetectorCharacter;
+  lastSeenBy: HeroSightingMemberDto;
+  claims: HeroSightingResponseDtoClaimsItem[];
+}
+
+export type ClaimHeroSightingDtoActorCharacter = {
+  /** @minLength 1 */
+  accountId: string;
+  /** @minLength 1 */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  name: string;
+  prof?: string;
+  icon?: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  lvl?: number;
+};
+
+export interface ClaimHeroSightingDto {
+  actorCharacter?: ClaimHeroSightingDtoActorCharacter;
+}
+
+export type CreateHeroSightingResponseDtoSubmittedGuildsItem = {
+  guildId: string;
+  guildName: string;
+  sighting?: HeroSightingResponseDto;
+};
+
+export type CreateHeroSightingResponseDtoRejectedGuildsItemReason = typeof CreateHeroSightingResponseDtoRejectedGuildsItemReason[keyof typeof CreateHeroSightingResponseDtoRejectedGuildsItemReason];
+
+
+export const CreateHeroSightingResponseDtoRejectedGuildsItemReason = {
+  NOT_ON_CATCHING_WHITELIST: 'NOT_ON_CATCHING_WHITELIST',
+  SIGHTING_SUBMIT_FAILED: 'SIGHTING_SUBMIT_FAILED',
+} as const;
+
+export type CreateHeroSightingResponseDtoRejectedGuildsItem = {
+  guildId: string;
+  guildName: string;
+  reason: CreateHeroSightingResponseDtoRejectedGuildsItemReason;
+};
+
+export interface CreateHeroSightingResponseDto {
+  submittedGuilds: CreateHeroSightingResponseDtoSubmittedGuildsItem[];
+  rejectedGuilds: CreateHeroSightingResponseDtoRejectedGuildsItem[];
+}
+
+export type CreateHeroSightingDtoActorCharacter = {
+  /** @minLength 1 */
+  accountId: string;
+  /** @minLength 1 */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  name: string;
+  prof?: string;
+  icon?: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  lvl?: number;
+};
+
+export type CreateHeroSightingDtoHero = {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  name: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  lvl: number;
+  /** Margonem profession shortname from the detector answer. */
+  prof?: string;
+};
+
+export type CreateHeroSightingDtoState = typeof CreateHeroSightingDtoState[keyof typeof CreateHeroSightingDtoState];
+
+
+export const CreateHeroSightingDtoState = {
+  ROAMING: 'ROAMING',
+  SPAWNING: 'SPAWNING',
+} as const;
+
+export interface CreateHeroSightingDto {
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
+  world: string;
+  /** @minLength 1 */
+  accountId: string;
+  /** @minLength 1 */
+  characterId: string;
+  actorCharacter?: CreateHeroSightingDtoActorCharacter;
+  hero: CreateHeroSightingDtoHero;
+  state: CreateHeroSightingDtoState;
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  mapName: string;
+  /**
+     * When Margonem answered the detector, from the system chat message time.
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  observedAt: string;
+}
+
 export type CreateManualTimerDtoType = typeof CreateManualTimerDtoType[keyof typeof CreateManualTimerDtoType];
 
 
@@ -11315,6 +11667,7 @@ export const NotificationJobPayloadSnapshotResponseDtoTriggerType = {
   NPC_SPAWNED: 'NPC_SPAWNED',
   WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+  HERO_SIGHTED: 'HERO_SIGHTED',
 } as const;
 
 /**
@@ -12227,6 +12580,121 @@ export type TimersControllerCreateManualTimer403 = HttpErrorResponse | {
 };
 
 export type TimersControllerCreateManualTimer429 = {
+  message: string;
+};
+
+export type HeroSightingsControllerCreateHeroSighting401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type HeroSightingsControllerCreateHeroSighting403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type HeroSightingsControllerCreateHeroSighting429 = {
+  message: string;
+};
+
+export type HeroSightingsControllerGetAllHeroSightingsParams = {
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
+world: string;
+};
+
+export type HeroSightingsControllerGetAllHeroSightings401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type HeroSightingsControllerGetAllHeroSightings403 = {
+  message: string;
+};
+
+export type HeroSightingsControllerGetAllHeroSightings429 = {
+  message: string;
+};
+
+export type HeroSightingsControllerGetHeroSightingsPathParameters = {
+ guildId: string,
+ }
+export type HeroSightingsControllerGetHeroSightingsParams = {
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
+world: string;
+};
+
+export type HeroSightingsControllerGetHeroSightings401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type HeroSightingsControllerGetHeroSightings403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type HeroSightingsControllerGetHeroSightings429 = {
+  message: string;
+};
+
+export type HeroSightingsControllerGetHeroSightingHistoryPathParameters = {
+ guildId: string,
+ }
+export type HeroSightingsControllerGetHeroSightingHistoryParams = {
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
+world: string;
+/**
+ * Hero key (`hero.key`) or hero name.
+ * @minLength 1
+ */
+hero: string;
+};
+
+export type HeroSightingsControllerGetHeroSightingHistory401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type HeroSightingsControllerGetHeroSightingHistory403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type HeroSightingsControllerGetHeroSightingHistory429 = {
+  message: string;
+};
+
+export type HeroSightingsControllerClaimHeroSightingPathParameters = {
+ guildId: string,
+    sightingId: string,
+ }
+export type HeroSightingsControllerClaimHeroSighting401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type HeroSightingsControllerClaimHeroSighting403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type HeroSightingsControllerClaimHeroSighting429 = {
+  message: string;
+};
+
+export type HeroSightingsControllerUnclaimHeroSightingPathParameters = {
+ guildId: string,
+    sightingId: string,
+ }
+export type HeroSightingsControllerUnclaimHeroSighting401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type HeroSightingsControllerUnclaimHeroSighting403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type HeroSightingsControllerUnclaimHeroSighting429 = {
   message: string;
 };
 
@@ -21383,6 +21851,737 @@ export const useTimersControllerCreateManualTimer = <TError = ErrorType<HttpErro
         TContext
       > => {
       return useMutation(getTimersControllerCreateManualTimerMutationOptions(options), queryClient);
+    }
+
+export const getHeroSightingsControllerCreateHeroSightingUrl = () => {
+
+
+
+
+  return `/hero-sightings`
+}
+
+/**
+ * Record a hero detector answer for every Organization the character submits data to. A repeated detection confirms the current sighting; a contradicting one closes it as probably killed.
+ * @summary Report a hero detection
+ */
+export const heroSightingsControllerCreateHeroSighting = async (createHeroSightingDto: CreateHeroSightingDto, options?: Parameters<typeof mainFetch>[1]): Promise<CreateHeroSightingResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<CreateHeroSightingResponseDto>(getHeroSightingsControllerCreateHeroSightingUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createHeroSightingDto)
+  }
+);}
+
+
+
+
+
+export const getHeroSightingsControllerCreateHeroSightingMutationKey = () => ['heroSightingsControllerCreateHeroSighting'] as const;
+
+export const getHeroSightingsControllerCreateHeroSightingMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | HeroSightingsControllerCreateHeroSighting401 | HeroSightingsControllerCreateHeroSighting403 | HeroSightingsControllerCreateHeroSighting429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerCreateHeroSighting>>, TError,HeroSightingsControllerCreateHeroSightingMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerCreateHeroSighting>>, TError,HeroSightingsControllerCreateHeroSightingMutationVariables, TContext> => {
+
+const mutationKey = getHeroSightingsControllerCreateHeroSightingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof heroSightingsControllerCreateHeroSighting>>, HeroSightingsControllerCreateHeroSightingMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  heroSightingsControllerCreateHeroSighting(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type HeroSightingsControllerCreateHeroSightingMutationResult = NonNullable<Awaited<ReturnType<typeof heroSightingsControllerCreateHeroSighting>>>
+    export type HeroSightingsControllerCreateHeroSightingMutationBody = BodyType<CreateHeroSightingDto>
+    export type HeroSightingsControllerCreateHeroSightingMutationError = ErrorType<HttpErrorResponse | RequestValidationError | HeroSightingsControllerCreateHeroSighting401 | HeroSightingsControllerCreateHeroSighting403 | HeroSightingsControllerCreateHeroSighting429>
+    export type HeroSightingsControllerCreateHeroSightingMutationVariables = {data: BodyType<CreateHeroSightingDto>}
+
+    /**
+ * @summary Report a hero detection
+ */
+export const useHeroSightingsControllerCreateHeroSighting = <TError = ErrorType<HttpErrorResponse | RequestValidationError | HeroSightingsControllerCreateHeroSighting401 | HeroSightingsControllerCreateHeroSighting403 | HeroSightingsControllerCreateHeroSighting429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerCreateHeroSighting>>, TError,HeroSightingsControllerCreateHeroSightingMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof heroSightingsControllerCreateHeroSighting>>,
+        TError,
+        HeroSightingsControllerCreateHeroSightingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getHeroSightingsControllerCreateHeroSightingMutationOptions(options), queryClient);
+    }
+
+export const getHeroSightingsControllerGetAllHeroSightingsUrl = (params: HeroSightingsControllerGetAllHeroSightingsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/hero-sightings?${stringifiedParams}` : `/hero-sightings`
+}
+
+/**
+ * The latest sighting of each hero from the last day, across every Organization of the authenticated user whose roles can see that hero.
+ * @summary Get hero sightings of every Organization
+ */
+export const heroSightingsControllerGetAllHeroSightings = async (params: HeroSightingsControllerGetAllHeroSightingsParams, options?: Parameters<typeof mainFetch>[1]): Promise<HeroSightingResponseDto[]> => {
+
+  return mainFetch<HeroSightingResponseDto[]>(getHeroSightingsControllerGetAllHeroSightingsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getHeroSightingsControllerGetAllHeroSightingsQueryKey = (params?: HeroSightingsControllerGetAllHeroSightingsParams,) => {
+    return [
+    `/hero-sightings`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getHeroSightingsControllerGetAllHeroSightingsQueryOptions = <TData = Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetAllHeroSightings401 | HeroSightingsControllerGetAllHeroSightings403 | HeroSightingsControllerGetAllHeroSightings429>>(params: HeroSightingsControllerGetAllHeroSightingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getHeroSightingsControllerGetAllHeroSightingsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>> = ({ signal }) => heroSightingsControllerGetAllHeroSightings(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type HeroSightingsControllerGetAllHeroSightingsQueryResult = NonNullable<Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>>
+export type HeroSightingsControllerGetAllHeroSightingsQueryError = ErrorType<RequestValidationError | HeroSightingsControllerGetAllHeroSightings401 | HeroSightingsControllerGetAllHeroSightings403 | HeroSightingsControllerGetAllHeroSightings429>
+
+
+export function useHeroSightingsControllerGetAllHeroSightings<TData = Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetAllHeroSightings401 | HeroSightingsControllerGetAllHeroSightings403 | HeroSightingsControllerGetAllHeroSightings429>>(
+ params: HeroSightingsControllerGetAllHeroSightingsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>,
+          TError,
+          Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useHeroSightingsControllerGetAllHeroSightings<TData = Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetAllHeroSightings401 | HeroSightingsControllerGetAllHeroSightings403 | HeroSightingsControllerGetAllHeroSightings429>>(
+ params: HeroSightingsControllerGetAllHeroSightingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>,
+          TError,
+          Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useHeroSightingsControllerGetAllHeroSightings<TData = Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetAllHeroSightings401 | HeroSightingsControllerGetAllHeroSightings403 | HeroSightingsControllerGetAllHeroSightings429>>(
+ params: HeroSightingsControllerGetAllHeroSightingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get hero sightings of every Organization
+ */
+
+export function useHeroSightingsControllerGetAllHeroSightings<TData = Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetAllHeroSightings401 | HeroSightingsControllerGetAllHeroSightings403 | HeroSightingsControllerGetAllHeroSightings429>>(
+ params: HeroSightingsControllerGetAllHeroSightingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getHeroSightingsControllerGetAllHeroSightingsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get hero sightings of every Organization
+ */
+export const prefetchHeroSightingsControllerGetAllHeroSightingsQuery = async <TData = Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetAllHeroSightings401 | HeroSightingsControllerGetAllHeroSightings403 | HeroSightingsControllerGetAllHeroSightings429>>(
+ queryClient: QueryClient, params: HeroSightingsControllerGetAllHeroSightingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getHeroSightingsControllerGetAllHeroSightingsQueryOptions(params,options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useHeroSightingsControllerGetAllHeroSightings} query
+ */
+export const invalidateHeroSightingsControllerGetAllHeroSightings = async (
+ queryClient: QueryClient, params: HeroSightingsControllerGetAllHeroSightingsParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getHeroSightingsControllerGetAllHeroSightingsQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get hero sightings of every Organization
+ */
+export const useSetHeroSightingsControllerGetAllHeroSightingsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: HeroSightingsControllerGetAllHeroSightingsParams | undefined,updater: Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>> | undefined | ((old: Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>> | undefined) => Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>>({ exact: $exactMatch, queryKey: getHeroSightingsControllerGetAllHeroSightingsQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary Get hero sightings of every Organization
+ */
+export const useGetHeroSightingsControllerGetAllHeroSightingsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: HeroSightingsControllerGetAllHeroSightingsParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof heroSightingsControllerGetAllHeroSightings>>>(getHeroSightingsControllerGetAllHeroSightingsQueryKey(params));
+}
+
+
+
+export const getHeroSightingsControllerGetHeroSightingsUrl = ({ guildId }: HeroSightingsControllerGetHeroSightingsPathParameters,
+    params: HeroSightingsControllerGetHeroSightingsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/guilds/${guildId}/hero-sightings?${stringifiedParams}` : `/guilds/${guildId}/hero-sightings`
+}
+
+/**
+ * The latest sighting of each hero in a world from the last day, limited to heroes the caller's roles can see.
+ * @summary Get Organization hero sightings
+ */
+export const heroSightingsControllerGetHeroSightings = async ({ guildId }: HeroSightingsControllerGetHeroSightingsPathParameters,
+    params: HeroSightingsControllerGetHeroSightingsParams, options?: Parameters<typeof mainFetch>[1]): Promise<HeroSightingResponseDto[]> => {
+
+  return mainFetch<HeroSightingResponseDto[]>(getHeroSightingsControllerGetHeroSightingsUrl({ guildId },params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getHeroSightingsControllerGetHeroSightingsQueryKey = ({ guildId }: HeroSightingsControllerGetHeroSightingsPathParameters,
+    params?: HeroSightingsControllerGetHeroSightingsParams,) => {
+    return [
+    `/guilds/${guildId}/hero-sightings`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getHeroSightingsControllerGetHeroSightingsQueryOptions = <TData = Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightings401 | HeroSightingsControllerGetHeroSightings403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightings429>>({ guildId }: HeroSightingsControllerGetHeroSightingsPathParameters,
+    params: HeroSightingsControllerGetHeroSightingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getHeroSightingsControllerGetHeroSightingsQueryKey({ guildId },params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>> = ({ signal }) => heroSightingsControllerGetHeroSightings({ guildId },params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type HeroSightingsControllerGetHeroSightingsQueryResult = NonNullable<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>>
+export type HeroSightingsControllerGetHeroSightingsQueryError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightings401 | HeroSightingsControllerGetHeroSightings403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightings429>
+
+
+export function useHeroSightingsControllerGetHeroSightings<TData = Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightings401 | HeroSightingsControllerGetHeroSightings403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightings429>>(
+ pathParams: HeroSightingsControllerGetHeroSightingsPathParameters,
+    params: HeroSightingsControllerGetHeroSightingsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>,
+          TError,
+          Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useHeroSightingsControllerGetHeroSightings<TData = Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightings401 | HeroSightingsControllerGetHeroSightings403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightings429>>(
+ pathParams: HeroSightingsControllerGetHeroSightingsPathParameters,
+    params: HeroSightingsControllerGetHeroSightingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>,
+          TError,
+          Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useHeroSightingsControllerGetHeroSightings<TData = Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightings401 | HeroSightingsControllerGetHeroSightings403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightings429>>(
+ pathParams: HeroSightingsControllerGetHeroSightingsPathParameters,
+    params: HeroSightingsControllerGetHeroSightingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Organization hero sightings
+ */
+
+export function useHeroSightingsControllerGetHeroSightings<TData = Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightings401 | HeroSightingsControllerGetHeroSightings403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightings429>>(
+ { guildId }: HeroSightingsControllerGetHeroSightingsPathParameters,
+    params: HeroSightingsControllerGetHeroSightingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getHeroSightingsControllerGetHeroSightingsQueryOptions({ guildId },params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get Organization hero sightings
+ */
+export const prefetchHeroSightingsControllerGetHeroSightingsQuery = async <TData = Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightings401 | HeroSightingsControllerGetHeroSightings403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightings429>>(
+ queryClient: QueryClient, { guildId }: HeroSightingsControllerGetHeroSightingsPathParameters,
+    params: HeroSightingsControllerGetHeroSightingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getHeroSightingsControllerGetHeroSightingsQueryOptions({ guildId },params,options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useHeroSightingsControllerGetHeroSightings} query
+ */
+export const invalidateHeroSightingsControllerGetHeroSightings = async (
+ queryClient: QueryClient, { guildId }: HeroSightingsControllerGetHeroSightingsPathParameters,
+    params: HeroSightingsControllerGetHeroSightingsParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getHeroSightingsControllerGetHeroSightingsQueryKey({ guildId },params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get Organization hero sightings
+ */
+export const useSetHeroSightingsControllerGetHeroSightingsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: HeroSightingsControllerGetHeroSightingsPathParameters,
+    params: HeroSightingsControllerGetHeroSightingsParams | undefined,updater: Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>> | undefined | ((old: Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>> | undefined) => Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>>({ exact: $exactMatch, queryKey: getHeroSightingsControllerGetHeroSightingsQueryKey({ guildId },params) }, updater);
+  };
+}
+
+/**
+ * @summary Get Organization hero sightings
+ */
+export const useGetHeroSightingsControllerGetHeroSightingsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: HeroSightingsControllerGetHeroSightingsPathParameters,
+    params: HeroSightingsControllerGetHeroSightingsParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightings>>>(getHeroSightingsControllerGetHeroSightingsQueryKey({ guildId },params));
+}
+
+
+
+export const getHeroSightingsControllerGetHeroSightingHistoryUrl = ({ guildId }: HeroSightingsControllerGetHeroSightingHistoryPathParameters,
+    params: HeroSightingsControllerGetHeroSightingHistoryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/guilds/${guildId}/hero-sightings/history?${stringifiedParams}` : `/guilds/${guildId}/hero-sightings/history`
+}
+
+/**
+ * The retained sightings of one hero in a world, newest first.
+ * @summary Get hero sighting history
+ */
+export const heroSightingsControllerGetHeroSightingHistory = async ({ guildId }: HeroSightingsControllerGetHeroSightingHistoryPathParameters,
+    params: HeroSightingsControllerGetHeroSightingHistoryParams, options?: Parameters<typeof mainFetch>[1]): Promise<HeroSightingResponseDto[]> => {
+
+  return mainFetch<HeroSightingResponseDto[]>(getHeroSightingsControllerGetHeroSightingHistoryUrl({ guildId },params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getHeroSightingsControllerGetHeroSightingHistoryQueryKey = ({ guildId }: HeroSightingsControllerGetHeroSightingHistoryPathParameters,
+    params?: HeroSightingsControllerGetHeroSightingHistoryParams,) => {
+    return [
+    `/guilds/${guildId}/hero-sightings/history`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getHeroSightingsControllerGetHeroSightingHistoryQueryOptions = <TData = Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightingHistory401 | HeroSightingsControllerGetHeroSightingHistory403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightingHistory429>>({ guildId }: HeroSightingsControllerGetHeroSightingHistoryPathParameters,
+    params: HeroSightingsControllerGetHeroSightingHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getHeroSightingsControllerGetHeroSightingHistoryQueryKey({ guildId },params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>> = ({ signal }) => heroSightingsControllerGetHeroSightingHistory({ guildId },params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type HeroSightingsControllerGetHeroSightingHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>>
+export type HeroSightingsControllerGetHeroSightingHistoryQueryError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightingHistory401 | HeroSightingsControllerGetHeroSightingHistory403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightingHistory429>
+
+
+export function useHeroSightingsControllerGetHeroSightingHistory<TData = Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightingHistory401 | HeroSightingsControllerGetHeroSightingHistory403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightingHistory429>>(
+ pathParams: HeroSightingsControllerGetHeroSightingHistoryPathParameters,
+    params: HeroSightingsControllerGetHeroSightingHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>,
+          TError,
+          Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useHeroSightingsControllerGetHeroSightingHistory<TData = Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightingHistory401 | HeroSightingsControllerGetHeroSightingHistory403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightingHistory429>>(
+ pathParams: HeroSightingsControllerGetHeroSightingHistoryPathParameters,
+    params: HeroSightingsControllerGetHeroSightingHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>,
+          TError,
+          Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useHeroSightingsControllerGetHeroSightingHistory<TData = Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightingHistory401 | HeroSightingsControllerGetHeroSightingHistory403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightingHistory429>>(
+ pathParams: HeroSightingsControllerGetHeroSightingHistoryPathParameters,
+    params: HeroSightingsControllerGetHeroSightingHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get hero sighting history
+ */
+
+export function useHeroSightingsControllerGetHeroSightingHistory<TData = Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightingHistory401 | HeroSightingsControllerGetHeroSightingHistory403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightingHistory429>>(
+ { guildId }: HeroSightingsControllerGetHeroSightingHistoryPathParameters,
+    params: HeroSightingsControllerGetHeroSightingHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getHeroSightingsControllerGetHeroSightingHistoryQueryOptions({ guildId },params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get hero sighting history
+ */
+export const prefetchHeroSightingsControllerGetHeroSightingHistoryQuery = async <TData = Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>, TError = ErrorType<RequestValidationError | HeroSightingsControllerGetHeroSightingHistory401 | HeroSightingsControllerGetHeroSightingHistory403 | HttpErrorResponse | HeroSightingsControllerGetHeroSightingHistory429>>(
+ queryClient: QueryClient, { guildId }: HeroSightingsControllerGetHeroSightingHistoryPathParameters,
+    params: HeroSightingsControllerGetHeroSightingHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getHeroSightingsControllerGetHeroSightingHistoryQueryOptions({ guildId },params,options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useHeroSightingsControllerGetHeroSightingHistory} query
+ */
+export const invalidateHeroSightingsControllerGetHeroSightingHistory = async (
+ queryClient: QueryClient, { guildId }: HeroSightingsControllerGetHeroSightingHistoryPathParameters,
+    params: HeroSightingsControllerGetHeroSightingHistoryParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getHeroSightingsControllerGetHeroSightingHistoryQueryKey({ guildId },params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get hero sighting history
+ */
+export const useSetHeroSightingsControllerGetHeroSightingHistoryQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: HeroSightingsControllerGetHeroSightingHistoryPathParameters,
+    params: HeroSightingsControllerGetHeroSightingHistoryParams | undefined,updater: Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>> | undefined | ((old: Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>> | undefined) => Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>>({ exact: $exactMatch, queryKey: getHeroSightingsControllerGetHeroSightingHistoryQueryKey({ guildId },params) }, updater);
+  };
+}
+
+/**
+ * @summary Get hero sighting history
+ */
+export const useGetHeroSightingsControllerGetHeroSightingHistoryQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: HeroSightingsControllerGetHeroSightingHistoryPathParameters,
+    params: HeroSightingsControllerGetHeroSightingHistoryParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof heroSightingsControllerGetHeroSightingHistory>>>(getHeroSightingsControllerGetHeroSightingHistoryQueryKey({ guildId },params));
+}
+
+
+
+export const getHeroSightingsControllerClaimHeroSightingUrl = ({ guildId, sightingId }: HeroSightingsControllerClaimHeroSightingPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/hero-sightings/${sightingId}/claim`
+}
+
+/**
+ * Declare that the caller camps the hero of a current sighting. Several Members can camp one hero; repeating a declaration keeps the first.
+ * @summary Declare camping a sighted hero
+ */
+export const heroSightingsControllerClaimHeroSighting = async ({ guildId, sightingId }: HeroSightingsControllerClaimHeroSightingPathParameters,
+    claimHeroSightingDto: ClaimHeroSightingDto, options?: Parameters<typeof mainFetch>[1]): Promise<HeroSightingResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<HeroSightingResponseDto>(getHeroSightingsControllerClaimHeroSightingUrl({ guildId, sightingId }),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(claimHeroSightingDto)
+  }
+);}
+
+
+
+
+
+export const getHeroSightingsControllerClaimHeroSightingMutationKey = () => ['heroSightingsControllerClaimHeroSighting'] as const;
+
+export const getHeroSightingsControllerClaimHeroSightingMutationOptions = <TError = ErrorType<RequestValidationError | HeroSightingsControllerClaimHeroSighting401 | HeroSightingsControllerClaimHeroSighting403 | HttpErrorResponse | HeroSightingsControllerClaimHeroSighting429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerClaimHeroSighting>>, TError,HeroSightingsControllerClaimHeroSightingMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerClaimHeroSighting>>, TError,HeroSightingsControllerClaimHeroSightingMutationVariables, TContext> => {
+
+const mutationKey = getHeroSightingsControllerClaimHeroSightingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof heroSightingsControllerClaimHeroSighting>>, HeroSightingsControllerClaimHeroSightingMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  heroSightingsControllerClaimHeroSighting(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type HeroSightingsControllerClaimHeroSightingMutationResult = NonNullable<Awaited<ReturnType<typeof heroSightingsControllerClaimHeroSighting>>>
+    export type HeroSightingsControllerClaimHeroSightingMutationBody = BodyType<ClaimHeroSightingDto>
+    export type HeroSightingsControllerClaimHeroSightingMutationError = ErrorType<RequestValidationError | HeroSightingsControllerClaimHeroSighting401 | HeroSightingsControllerClaimHeroSighting403 | HttpErrorResponse | HeroSightingsControllerClaimHeroSighting429>
+    export type HeroSightingsControllerClaimHeroSightingMutationVariables = {pathParams: HeroSightingsControllerClaimHeroSightingPathParameters;data: BodyType<ClaimHeroSightingDto>}
+
+    /**
+ * @summary Declare camping a sighted hero
+ */
+export const useHeroSightingsControllerClaimHeroSighting = <TError = ErrorType<RequestValidationError | HeroSightingsControllerClaimHeroSighting401 | HeroSightingsControllerClaimHeroSighting403 | HttpErrorResponse | HeroSightingsControllerClaimHeroSighting429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerClaimHeroSighting>>, TError,HeroSightingsControllerClaimHeroSightingMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof heroSightingsControllerClaimHeroSighting>>,
+        TError,
+        HeroSightingsControllerClaimHeroSightingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getHeroSightingsControllerClaimHeroSightingMutationOptions(options), queryClient);
+    }
+
+export const getHeroSightingsControllerUnclaimHeroSightingUrl = ({ guildId, sightingId }: HeroSightingsControllerUnclaimHeroSightingPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/hero-sightings/${sightingId}/claim`
+}
+
+/**
+ * Withdraw the caller's declaration that they camp a sighted hero.
+ * @summary Withdraw a camping declaration
+ */
+export const heroSightingsControllerUnclaimHeroSighting = async ({ guildId, sightingId }: HeroSightingsControllerUnclaimHeroSightingPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<HeroSightingResponseDto> => {
+
+  return mainFetch<HeroSightingResponseDto>(getHeroSightingsControllerUnclaimHeroSightingUrl({ guildId, sightingId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getHeroSightingsControllerUnclaimHeroSightingMutationKey = () => ['heroSightingsControllerUnclaimHeroSighting'] as const;
+
+export const getHeroSightingsControllerUnclaimHeroSightingMutationOptions = <TError = ErrorType<RequestValidationError | HeroSightingsControllerUnclaimHeroSighting401 | HeroSightingsControllerUnclaimHeroSighting403 | HttpErrorResponse | HeroSightingsControllerUnclaimHeroSighting429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerUnclaimHeroSighting>>, TError,HeroSightingsControllerUnclaimHeroSightingMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerUnclaimHeroSighting>>, TError,HeroSightingsControllerUnclaimHeroSightingMutationVariables, TContext> => {
+
+const mutationKey = getHeroSightingsControllerUnclaimHeroSightingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof heroSightingsControllerUnclaimHeroSighting>>, HeroSightingsControllerUnclaimHeroSightingMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  heroSightingsControllerUnclaimHeroSighting(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type HeroSightingsControllerUnclaimHeroSightingMutationResult = NonNullable<Awaited<ReturnType<typeof heroSightingsControllerUnclaimHeroSighting>>>
+
+    export type HeroSightingsControllerUnclaimHeroSightingMutationError = ErrorType<RequestValidationError | HeroSightingsControllerUnclaimHeroSighting401 | HeroSightingsControllerUnclaimHeroSighting403 | HttpErrorResponse | HeroSightingsControllerUnclaimHeroSighting429>
+    export type HeroSightingsControllerUnclaimHeroSightingMutationVariables = {pathParams: HeroSightingsControllerUnclaimHeroSightingPathParameters}
+
+    /**
+ * @summary Withdraw a camping declaration
+ */
+export const useHeroSightingsControllerUnclaimHeroSighting = <TError = ErrorType<RequestValidationError | HeroSightingsControllerUnclaimHeroSighting401 | HeroSightingsControllerUnclaimHeroSighting403 | HttpErrorResponse | HeroSightingsControllerUnclaimHeroSighting429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof heroSightingsControllerUnclaimHeroSighting>>, TError,HeroSightingsControllerUnclaimHeroSightingMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof heroSightingsControllerUnclaimHeroSighting>>,
+        TError,
+        HeroSightingsControllerUnclaimHeroSightingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getHeroSightingsControllerUnclaimHeroSightingMutationOptions(options), queryClient);
     }
 
 export const getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdUrl = ({ accountId }: UserLootlogConfigControllerGetUserLootlogConfigByAccountIdPathParameters,) => {

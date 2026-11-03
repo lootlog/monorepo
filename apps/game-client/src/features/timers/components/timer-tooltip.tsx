@@ -18,6 +18,8 @@ import {
 } from "../utils/timer-helpers";
 import { TimerMapOccupancyList } from "./timer-map-occupancy-list";
 import { TimerMapThreatList } from "./timer-map-threat-list";
+import { TimerHeroSightingSection } from "./timer-hero-sighting-section";
+import type { TimerHeroSighting } from "./timer-map-presence-provider";
 import { TimerTooltipSection } from "./timer-tooltip-section";
 
 type TimerTooltipProps = {
@@ -25,6 +27,7 @@ type TimerTooltipProps = {
   timer: Timer;
   occupancy?: MapOccupancy;
   threat?: MapThreat;
+  heroSighting?: TimerHeroSighting;
   isStanding?: boolean;
 };
 
@@ -35,6 +38,7 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   timer,
   occupancy,
   threat,
+  heroSighting,
   isStanding = false,
 }) => {
   const { t } = useTranslation("timers");
@@ -113,6 +117,8 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
           </span>
         </div>
       </TimerTooltipSection>
+
+      {heroSighting && <TimerHeroSightingSection heroSighting={heroSighting} />}
 
       {occupancy && <TimerMapOccupancyList occupancy={occupancy} />}
 

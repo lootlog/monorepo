@@ -1,4 +1,7 @@
-import { Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
+import { formatLevel } from "@lootlog/domain/profession";
+import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
+import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type {
   DiscordGuildChannelDeletedEvent,
@@ -13,7 +16,10 @@ import {
   type NotificationJobRebuild,
   type TimerUpdatedEvent,
 } from "#src/notifications/jobs/notification-job-rebuild";
-import type { NotificationMatching } from "#src/notifications/rules/notification-matching.service";
+import {
+  parseNotificationFilters,
+  type NotificationMatching,
+} from "#src/notifications/rules/notification-matching.service";
 import { timerNpcIdentity } from "#src/timers/timer-projection";
 import type { NotificationEventStore } from "#src/notifications/delivery/notification-event-store";
 import {
@@ -34,6 +40,48 @@ export class NotificationTimerRebuildError extends TaggedErrorClass<Notification
   { ruleIds: Schema.Array(Schema.Number) },
 ) {}
 
+/** A detection older than this is a redelivery, not news worth a message. */
+const HERO_SIGHTING_NOTIFICATION_MAX_AGE_MS = 15 * 60 * 1000;
+
+/**
+ * The news a sighting update carries, or null when it carries none: a new
+ * sighting announces where the hero is or will spawn, and a detected spawn
+ * that is later seen roaming announces that the hero appeared. Repeated
+ * confirmations map to the same transition, so they notify once.
+ */
+export const heroSightingNotificationTransition = (
+  sighting: Pick<
+    HeroSightingResponse,
+    "closedAt" | "lastSeenAt" | "spawnedAt" | "state"
+  >,
+  now: number,
+): "ROAMING" | "SPAWNING" | "SPAWNED" | null => {
+  if (sighting.closedAt !== null) return null;
+
+  if (
+    now - Date.parse(sighting.lastSeenAt) >
+    HERO_SIGHTING_NOTIFICATION_MAX_AGE_MS
+  )
+    return null;
+
+  return sighting.state === "ROAMING" && sighting.spawnedAt !== null
+    ? "SPAWNED"
+    : sighting.state;
+};
+
+/** A hero sighting rule's level range; a missing bound is open. */
+const matchesHeroLevel = (
+  filters: Parameters<typeof parseNotificationFilters>[0],
+  heroLvl: number,
+) => {
+  const { npcLevelMin, npcLevelMax } = parseNotificationFilters(filters);
+
+  return (
+    (npcLevelMin === undefined || heroLvl >= npcLevelMin) &&
+    (npcLevelMax === undefined || heroLvl <= npcLevelMax)
+  );
+};
+
 const causeMessage = (cause: unknown) =>
   cause instanceof Error ? cause.message : String(cause);
 
@@ -52,6 +100,7 @@ export const makeNotificationsEvents = (options: {
     event: DiscordNotificationDeliveryResultEvent,
   ) => Effect.Effect<void, unknown, never>;
   readonly rebuild: NotificationJobRebuild;
+  readonly content: NotificationContentModule;
   readonly logger: Logger;
 }) => {
   const handleTimerUpdated = Effect.fn("notifications.events.timerUpdated")(
@@ -229,6 +278,60 @@ export const makeNotificationsEvents = (options: {
     },
   );
 
+  const handleHeroSightingUpdated = Effect.fn(
+    "notifications.events.heroSightingUpdated",
+  )(function* (sighting: HeroSightingResponse) {
+    const now = yield* Clock.currentTimeMillis;
+    const transition = heroSightingNotificationTransition(sighting, now);
+
+    if (!transition) return;
+
+    const rules = yield* options.store.heroSightingRules(
+      sighting.guildId,
+      sighting.world,
+    );
+
+    yield* Effect.forEach(
+      rules
+        .filter((rule) => matchesHeroLevel(rule.filters, sighting.hero.lvl))
+        .flatMap((rule) =>
+          rule.targets
+            .filter(({ target }) => target.active && target.canSend)
+            .map(({ target }) => ({ rule, target })),
+        ),
+      ({ rule, target }) =>
+        options.scheduler
+          .create({
+            notificationRule: rule,
+            target,
+            jobKind: NotificationJobKind.INSTANT,
+            scheduledFor: new Date(now),
+            sourceEntityType: "hero-sighting",
+            sourceEntityId: String(sighting.id),
+            sourceEventId: `hero-sighting:${sighting.id}:${transition}`,
+            payloadSnapshot: options.content.buildHeroSightingPayload({
+              notificationRule: rule,
+              target,
+              sighting: {
+                id: sighting.id,
+                world: sighting.world,
+                hero: sighting.hero,
+                heroLevel: formatLevel(sighting.hero.lvl, sighting.hero.prof),
+                mapName: sighting.mapName,
+                detectedBy: sighting.detectedBy.displayName,
+              },
+              transition,
+            }),
+          })
+          .pipe(
+            Effect.flatMap((job) =>
+              job ? options.scheduler.enqueue(job.id, 0) : Effect.void,
+            ),
+          ),
+      { concurrency: "unbounded", discard: true },
+    );
+  });
+
   const handleDeliveryResult = Effect.fn("notifications.events.deliveryResult")(
     (event: DiscordNotificationDeliveryResultEvent) => options.delivery(event),
   );
@@ -243,6 +346,7 @@ export const makeNotificationsEvents = (options: {
     handleTimerUpdated,
     handleTimerDeleted,
     handleLootCreated,
+    handleHeroSightingUpdated,
     handleDeliveryResult,
     handleDiscordGuildChannelDeleted,
   };

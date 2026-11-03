@@ -25,3 +25,7 @@ export const NpcIdentityNamespaceSchema = Schema.Literals([
   NpcIdentityNamespace.RUNTIME,
   NpcIdentityNamespace.TEMPLATE,
 ]);
+
+/** One spelling of an NPC name, so names typed or rendered differently match. */
+export const normalizeNpcName = (name: string): string =>
+  name.trim().toLowerCase().replace(/\s+/g, " ");

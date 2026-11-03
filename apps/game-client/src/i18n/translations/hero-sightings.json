@@ -1,0 +1,52 @@
+{
+  "window": {
+    "title": "Wykryci herosi"
+  },
+  "state": {
+    "ROAMING": "grasuje w:",
+    "SPAWNING": "pojawi się w:"
+  },
+  "status": {
+    "unconfirmed": "niepotwierdzony",
+    "PROBABLY_KILLED": "prawdopodobnie zbity",
+    "KILLED": "zbity"
+  },
+  "age": {
+    "now": "przed chwilą",
+    "minutes": "{{count}} min temu",
+    "hours": "{{count}} godz. temu"
+  },
+  "detectedBy": "Wykrycie: {{name}}",
+  "claims": {
+    "label": "Obstawiają:",
+    "none": "Nikt nie obstawia",
+    "detector": "(autor wykrycia)"
+  },
+  "actions": {
+    "claim": "Obstawiam",
+    "unclaim": "Wycofaj",
+    "dismiss": "Zamknij"
+  },
+  "notice": {
+    "title": "Twoje wykrycie"
+  },
+  "emptyState": {
+    "title": "Brak wykrytych herosów",
+    "description": "Herosi pojawią się tu, gdy ktoś z Twojego Lootloga użyje wykrywacza."
+  },
+  "states": {
+    "loading": "Ładowanie wykrytych herosów",
+    "loadError": "Nie udało się załadować wykrytych herosów"
+  },
+  "messages": {
+    "claimFailed": "Nie udało się obstawić herosa",
+    "unclaimFailed": "Nie udało się wycofać obstawienia"
+  },
+  "history": {
+    "open": "Historia wykryć: {{name}}",
+    "title": "Historia wykryć: {{name}}",
+    "loading": "Ładowanie historii wykryć",
+    "loadError": "Nie udało się pobrać historii wykryć",
+    "empty": "Brak wykryć tego herosa"
+  }
+}

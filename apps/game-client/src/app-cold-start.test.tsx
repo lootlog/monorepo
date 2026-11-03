@@ -126,6 +126,7 @@ it("starts an initialized character with one bootstrap request, without repeatin
 
     if (
       path === "/timers" ||
+      path === "/hero-sightings" ||
       path === "/messaging/party-gathering" ||
       path === "/messaging/party-gathering/active" ||
       path.endsWith("/chat-messages") ||
@@ -261,7 +262,7 @@ it("starts an initialized character with one bootstrap request, without repeatin
     expect(proofRequests).toHaveLength(1);
     // The startup reads of guilds, preferences, the Lootlog configuration and
     // the settings documents arrive in one bootstrap response.
-    expect(requests).toHaveLength(7);
+    expect(requests).toHaveLength(8);
     expect(
       requests.filter(
         (path) => path === "GET /users/@me/game-client/bootstrap",
@@ -281,6 +282,10 @@ it("starts an initialized character with one bootstrap request, without repeatin
     ).toHaveLength(1);
     expect(commands.filter((type) => type === "session.join")).toHaveLength(1);
     expect(requests.filter((path) => path === "GET /timers")).toHaveLength(1);
+    // Hero timers show where a detector last placed their hero.
+    expect(
+      requests.filter((path) => path === "GET /hero-sightings"),
+    ).toHaveLength(1);
     expect(
       requests.filter((path) => path === "GET /messaging/party-gathering"),
     ).toHaveLength(1);
