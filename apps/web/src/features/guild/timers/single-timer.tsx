@@ -6,21 +6,18 @@ import {
 import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
 import { cn } from "cn";
 import { upperFirst } from "es-toolkit";
-import { DoorOpen, Globe, User } from "lucide-react";
+import { Globe, User } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   HeroSightingResponseDto,
   TimerResponseDto,
 } from "@lootlog/client/main";
-import { parseMsToTime } from "@lootlog/datetime";
 import type { TimerColorPaint } from "@lootlog/domain/timer-colors";
 import {
-  getTimerCountdownMs,
   getTimerPhase,
   getTimerTimeLeft,
   type TimerCountdownMode,
-  type TimerPhase,
 } from "@lootlog/domain/timers";
 import { formatLevel } from "@lootlog/domain/profession";
 import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
@@ -30,18 +27,8 @@ import {
 } from "@/utils/date/parse-timestamp-to-date";
 import { MetaItem } from "@/components/common/meta-item";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { TimerCountdown } from "./timer-countdown";
 import { HeroSightingTimerLocation } from "@/features/guild/hero-sightings/hero-sighting-timer-location";
-
-// The game client's colours: green while a Hero Tracker's entrance is open,
-// white until the spawn window opens, orange inside it, red past the maximum,
-// and a dimmed red for a kept timer.
-const PHASE_TEXT_CLASS = {
-  entrance: "text-emerald-300",
-  waiting: "text-foreground",
-  window: "text-orange-300",
-  overdue: "text-red-400",
-  expired: "text-red-400/70",
-} satisfies Record<TimerPhase, string>;
 
 /** An expired timer keeps its colour, darkened, as in the game client. */
 const veil = (color: string, isExpired: boolean) =>
@@ -145,21 +132,11 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 )}
               </span>
             </span>
-            <span
-              className={cn(
-                "flex shrink-0 items-center gap-1 text-[15px] leading-5 font-semibold tabular-nums",
-                PHASE_TEXT_CLASS[phase],
-              )}
-            >
-              {phase === "entrance" && (
-                <DoorOpen
-                  aria-label={t("timers.entranceOpen")}
-                  role="img"
-                  className="size-4"
-                />
-              )}
-              {parseMsToTime(getTimerCountdownMs(timeLeft, countdownMode))}
-            </span>
+            <TimerCountdown
+              timeLeft={timeLeft}
+              phase={phase}
+              countdownMode={countdownMode}
+            />
           </button>
         }
       />

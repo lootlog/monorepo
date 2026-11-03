@@ -24,10 +24,12 @@
     "CLOSED": "Nieaktualne"
   },
   "staleDescription": "Nikt nie potwierdził herosa od ponad 30 minut. Mógł już zostać zbity.",
-  "staleIn": "Niepotwierdzony za {{minutes}} min",
-  "confirmed": "potwierdzony",
-  "confirmedBy": "potwierdził {{name}}",
-  "detectedAgo": "wykryty",
+  "lastDetected": "ostatnio wykryty",
+  "detectedByShort": "wykrył",
+  "lastSeenByShort": "ostatnio {{name}}",
+  "respawn": "Respawn herosa",
+  "noTimer": "Brak timera",
+  "spawnWindow": "okno {{from}}–{{to}}",
   "detectedBy": "Wykrył",
   "claims": "Obstawiają",
   "noClaims": "Nikt nie obstawia",
@@ -48,10 +50,10 @@
     "empty": "Brak historii wykryć",
     "loadError": "Nie udało się pobrać historii",
     "detectedAt": "Wykryty",
-    "lastSeenAt": "Ostatnio potwierdzony",
+    "lastSeenAt": "Ostatnie wykrycie",
     "spawnedAt": "Pojawił się",
     "closedAt": "Zamknięty",
-    "lastSeenBy": "Ostatnio potwierdził"
+    "lastSeenBy": "Ostatnio wykrył"
   },
   "timer": {
     "ROAMING": "grasuje w:",
