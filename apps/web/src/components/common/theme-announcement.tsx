@@ -31,7 +31,7 @@ export const ThemeAnnouncement = () => {
       aria-labelledby={titleId}
       className="shrink-0 border-b border-border bg-card text-card-foreground"
     >
-      <div className="flex w-full items-center justify-between gap-4 px-4 py-2.5">
+      <div className="flex w-full items-center justify-between gap-4 px-3 py-2.5 sm:px-4">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <div
             aria-hidden="true"
@@ -61,7 +61,8 @@ export const ThemeAnnouncement = () => {
             variant="ghost"
             size="icon-sm"
             aria-label={t("settings.appearance.announcement.dismiss")}
-            className="text-muted-foreground hover:text-foreground"
+            // Its glyph, not its hit area, meets the bar's inset.
+            className="-mr-2 text-muted-foreground hover:text-foreground"
             onClick={handleDismiss}
           >
             <X aria-hidden="true" className="size-4" />
