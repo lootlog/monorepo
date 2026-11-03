@@ -78,6 +78,7 @@ export function PlayerVsPlayerFullPage() {
     if (isLoading) {
       return (
         <TableRowsSkeleton
+          rows={pageSize}
           withHeader
           rowContent="text"
           mobileList={

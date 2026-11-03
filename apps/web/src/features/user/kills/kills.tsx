@@ -202,6 +202,7 @@ export const KillsPage: React.FC = () => {
     if (isLoading) {
       return (
         <TableRowsSkeleton
+          rows={ITEMS_PER_PAGE}
           withHeader
           withNpcTile
           trailingColumns={2}
