@@ -57,6 +57,7 @@ it("deletes only after confirmation and reports completion once the request fini
     createdAt: "2026-09-06T10:00:00.000Z",
     updatedAt: "2026-09-06T10:00:00.000Z",
     commentsCount: 0,
+    likes: [],
   };
 
   const root = createRootRoute();

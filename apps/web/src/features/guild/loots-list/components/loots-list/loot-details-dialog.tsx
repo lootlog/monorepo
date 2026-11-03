@@ -13,6 +13,7 @@ import {
 import { Button } from "@lootlog/ui/components/button";
 import { LootNpcs } from "@/features/guild/loots-list/components/loots-list/loot-npcs";
 import { LootComments } from "@/features/guild/loots-list/components/loots-list/loot-comments";
+import { LootLikeButton } from "@/features/guild/loots-list/components/loots-list/loot-like-button";
 import { LootItemIds } from "@/features/guild/loots-list/components/loots-list/loot-item-ids";
 import { LootPlayersSection } from "@/features/guild/loots-list/components/loots-list/loot-players-section";
 import { MetaItem } from "@/components/common/meta-item";
@@ -118,6 +119,7 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <LootLikeButton loot={loot} />
             {canManageLoots && (
               <LootDetailsActions loot={loot} onDeleted={onDeleted} />
             )}

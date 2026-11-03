@@ -28,7 +28,7 @@ import {
   applyLootSnapshots,
   clearLootPolicyData,
   lootMatchesListParams,
-  patchLootShare,
+  patchLoot,
   reconcileActiveLootLists,
 } from "./loot-list-cache";
 
@@ -264,7 +264,7 @@ export const useLiveLootList = () => {
     (payload: GuildLootShareUpdatedEventV2) => {
       if (!guildId || payload.guildId !== currentGuildId) return;
       const { lootId, lootShare } = payload;
-      patchLootShare(queryClient, guildId, lootId, lootShare);
+      patchLoot(queryClient, guildId, lootId, { lootShare });
       setPending((current) => ({
         ...current,
         loots: current.loots.map((loot) =>

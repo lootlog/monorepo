@@ -30,4 +30,5 @@ export const lootFromSnapshot = (snapshot: LootSnapshot): Loot => ({
     ]),
   ),
   submissions: snapshot.submissions && [...snapshot.submissions],
+  likes: snapshot.likes ? [...snapshot.likes] : [],
 });

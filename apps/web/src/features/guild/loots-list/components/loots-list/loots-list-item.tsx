@@ -45,10 +45,7 @@ export const LootsListItem = ({
       <LootItemStackLootIdContext value={loot.id}>
         <LootPresentation
           loot={loot}
-          headerActions=<LootHeaderActions
-            commentsCount={loot.commentsCount}
-            lootId={loot.id}
-          />
+          headerActions=<LootHeaderActions loot={loot} />
           onShowPlayerLoots={(playerName) =>
             setFilters({ players: [playerName] })
           }

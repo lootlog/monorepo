@@ -950,6 +950,38 @@ export const lootCommentTable = pgTable(
   ],
 );
 
+export const lootLikeTable = pgTable(
+  "LootLike",
+  {
+    organizationLootRecordId: integer("organizationLootRecordId").notNull(),
+    memberId: integer("memberId").notNull(),
+    createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table["organizationLootRecordId"], table["memberId"]],
+      name: "LootLike_pkey",
+    }),
+    index("LootLike_memberId_idx").on(table["memberId"]),
+    foreignKey({
+      columns: [table["organizationLootRecordId"]],
+      foreignColumns: [organizationLootRecordTable["id"]],
+      name: "LootLike_organizationLootRecordId_fkey",
+    })
+      .onDelete("cascade")
+      .onUpdate("cascade"),
+    foreignKey({
+      columns: [table["memberId"]],
+      foreignColumns: [memberTable["id"]],
+      name: "LootLike_memberId_fkey",
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+  ],
+);
+
 export const lootlogConfigNpcTable = pgTable(
   "LootlogConfigNpc",
   {

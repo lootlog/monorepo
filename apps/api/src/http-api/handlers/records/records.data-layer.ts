@@ -22,6 +22,7 @@ import {
   LootDetailResponse,
   LootListResponse,
   LootCommentsResponse,
+  LootLikesResponse,
 } from "#src/contracts/loots/schemas";
 
 import { RecordsData, RecordsDataError } from "./records.operations.js";
@@ -304,6 +305,24 @@ export const recordsDataLayer = (services: RecordsServices) =>
       ).pipe(
         Effect.flatMap((result) =>
           decode(Schema.decodeUnknownSync(LootCommentResponse), result),
+        ),
+      ),
+    setLike: (caller, lootId, liked) =>
+      lootOperation(
+        liked ? "LootsController_likeLoot" : "LootsController_unlikeLoot",
+        services.loots
+          .setLike({
+            discordId: caller.discordId,
+            lootId,
+            liked,
+            guild: caller.guild,
+            accessPolicy: caller.accessPolicy,
+            roles: [...caller.roles],
+          })
+          .pipe(Effect.map((likes) => ({ likes }))),
+      ).pipe(
+        Effect.flatMap((result) =>
+          decode(Schema.decodeUnknownSync(LootLikesResponse), result),
         ),
       ),
     updateLoot: (caller, lootId, payload) =>

@@ -5779,6 +5779,161 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateCommentDto"
         required: true
+  /guilds/{guildId}/loots/{lootId}/likes:
+    put:
+      tags:
+        - loots
+      operationId: LootsController_likeLoot
+      parameters:
+        - name: lootId
+          in: path
+          schema:
+            type: number
+          required: true
+        - name: guildId
+          in: path
+          schema: {}
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: LootLikesResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LootLikesResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Like a loot as the caller; repeating the request keeps one like
+      summary: Like loot
+    delete:
+      tags:
+        - loots
+      operationId: LootsController_unlikeLoot
+      parameters:
+        - name: lootId
+          in: path
+          schema:
+            type: number
+          required: true
+        - name: guildId
+          in: path
+          schema: {}
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: LootLikesResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LootLikesResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Remove the caller's like from a loot; succeeds when there is none
+      summary: Unlike loot
   /loots/{id}:
     patch:
       tags:
@@ -29605,6 +29760,16 @@ components:
       required:
         - msg
       additionalProperties: false
+    LootLikesResponseDto:
+      type: object
+      properties:
+        likes:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemberSummary"
+      required:
+        - likes
+      additionalProperties: false
     CreateCommentDto:
       type: object
       properties:
@@ -30159,6 +30324,10 @@ components:
             additionalProperties: false
         commentsCount:
           type: number
+        likes:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemberSummary"
       required:
         - id
         - uniqueId
@@ -30173,6 +30342,7 @@ components:
         - createdAt
         - updatedAt
         - commentsCount
+        - likes
       allOf:
         - type: object
           additionalProperties: {}
@@ -30852,6 +31022,10 @@ components:
             additionalProperties: false
         commentsCount:
           type: number
+        likes:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemberSummary"
       required:
         - id
         - uniqueId
@@ -30866,6 +31040,7 @@ components:
         - createdAt
         - updatedAt
         - commentsCount
+        - likes
       additionalProperties: false
     SettingsDocumentsResponseDto_Output:
       type: object

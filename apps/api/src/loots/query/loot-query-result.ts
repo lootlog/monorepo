@@ -35,4 +35,5 @@ export type LootQueryResult = LootQueryBase & {
   npcs: LootNpcDto[];
   submissions: SubmissionWithMember[];
   commentsCount: number;
+  likes: MemberSummary[];
 };
