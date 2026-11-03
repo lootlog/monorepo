@@ -1,46 +1,136 @@
 ---
 title: TypeScript SDK
-description: An HTTP client and realtime tools for server applications.
+description: Typed HTTP clients for every service and a realtime client for server applications.
 ---
+
+`@lootlog/sdk` is generated from the same OpenAPI documents as the
+[API Reference](/reference), so every operation, parameter and response is
+typed. It has no React dependency and runs on a server, for example in Node.js
+or Bun.
 
 ## Install
 
-Install the published [npm package](https://www.npmjs.com/package/@lootlog/sdk):
+<Tabs items={["npm", "Bun", "pnpm"]}>
+<Tab value="npm">
 
-```sh
+```bash
 npm install @lootlog/sdk
-# or
+```
+
+</Tab>
+<Tab value="Bun">
+
+```bash
 bun add @lootlog/sdk
 ```
 
-Version `0.1.0` is the first public release. Use the SDK in a server application
-with an API key from the matching development or production environment.
+</Tab>
+<Tab value="pnpm">
 
-## HTTP
+```bash
+pnpm add @lootlog/sdk
+```
 
-The `@lootlog/sdk` package contains JavaScript and TypeScript declarations with no React dependency. Operation names and types are generated from the same OpenAPI specifications shown in Scalar.
+</Tab>
+</Tabs>
+
+Read the [changelog](/docs/changelog) before you upgrade: it lists every
+breaking contract change and how to migrate.
+
+## Configure
+
+Call `configureLootlogApi` once with your key and environment. It returns a
+cleanup function that removes the configuration.
 
 ```ts
 import { configureLootlogApi } from "@lootlog/sdk";
-import { usersControllerGetCurrentUserGuilds } from "@lootlog/sdk/main";
 
 const apiKey = process.env.LOOTLOG_API_KEY;
 if (!apiKey) throw new Error("Missing LOOTLOG_API_KEY");
+
 const cleanup = configureLootlogApi({ apiKey, environment: "development" });
+```
+
+Omit `environment` for production. Pass `fetch` to use your own HTTP client, or
+`baseUrls` to point a service at another host.
+
+## Read data
+
+Each service has its own entry point: `@lootlog/sdk/main`,
+`@lootlog/sdk/activity`, `@lootlog/sdk/battlelog` and `@lootlog/sdk/search`.
+Function names follow the operation IDs in the reference.
+
+```ts
+import {
+  timersControllerGetTimers,
+  usersControllerGetCurrentUserGuilds,
+} from "@lootlog/sdk/main";
+
+const [organization] = await usersControllerGetCurrentUserGuilds();
+
+const timers = await timersControllerGetTimers(
+  { guildId: organization.id },
+  { world: "fobos" },
+);
+
+for (const timer of timers)
+  console.log(timer.npc.name, timer.minSpawnTime, timer.maxSpawnTime);
+```
+
+Pass `{ signal }` as the last argument to cancel a read with an
+`AbortController`.
+
+## Read every page
+
+Lists return `{ items, nextCursor }`. Pass the cursor back with the same
+filters until it is `null`:
+
+```ts
+import { lootsControllerFetchLootsByGuildId } from "@lootlog/sdk/main";
+
+let cursor: string | undefined;
+
+do {
+  const page = await lootsControllerFetchLootsByGuildId(
+    { guildId: organization.id },
+    { world: "fobos", limit: 100, cursor },
+  );
+
+  for (const loot of page.items) console.log(loot);
+  cursor = page.nextCursor ?? undefined;
+} while (cursor);
+```
+
+## Handle errors
+
+A failed request throws an `Error` with the response `status` and the parsed
+[error body](/docs/errors#error-body) in `data`:
+
+```ts
 try {
-  const organizations = await usersControllerGetCurrentUserGuilds();
-  console.log(organizations);
-} finally {
-  cleanup();
+  await timersControllerGetTimers({ guildId }, { world: "fobos" });
+} catch (error) {
+  const status = (error as { status?: number }).status;
+  const body = (error as { data?: { code?: string } }).data;
+
+  if (status === 403) console.warn("The key cannot read these timers");
+  else if (body?.code === "RATE_LIMITED") console.warn("Slow down");
+  else throw error;
 }
 ```
 
-Service imports are `@lootlog/sdk/main`, `@lootlog/sdk/activity`, `@lootlog/sdk/battlelog`, and `@lootlog/sdk/search`. Pass an `AbortSignal` in request options to cancel a read. The SDK does not automatically retry writes.
+The SDK never retries a write on its own. See
+[errors, pages and limits](/docs/errors) for when a retry is safe.
 
 ## Realtime
 
-`@lootlog/sdk/realtime` provides `RealtimeClient`. Use a server-side `webSocketFactory` that adds the `X-Api-Key` header and the gateway URL for the correct environment. Do not put the key in the URL. The [complete Bun example](/docs/realtime#bun-example) shows how to configure the header, session, and subscription.
+`@lootlog/sdk/realtime` provides `RealtimeClient`. Give it a server-side
+`webSocketFactory` that adds the `X-Api-Key` header, and the gateway of your
+environment. Never put the key in the URL. The
+[realtime guide](/docs/realtime#bun-example) has a complete Bun example.
 
 ## Userscripts
 
-A userscript does not need this SDK. It calls `window.lootlogGameClientApi` directly. The optional `@lootlog/game-client-api` package provides editor types only.
+A userscript does not need the SDK. It calls `window.lootlogGameClientApi`
+directly; the optional `@lootlog/game-client-api` package adds editor types.
+See the [game client API](/docs/game-client).
