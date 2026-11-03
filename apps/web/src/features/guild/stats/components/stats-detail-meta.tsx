@@ -3,7 +3,8 @@ import { formatNumber } from "@/lib/format-number";
 
 type StatsDetailMetaProps = {
   subtitle?: ReactNode;
-  metrics: { key: string; label: string; value: number }[];
+  /** `capped` marks a value that stops at a list's size: at least this many. */
+  metrics: { key: string; label: string; value: number; capped?: boolean }[];
 };
 
 /** What a member's or monster's stats page is about, with its totals, for its `DetailBar`. */
@@ -24,6 +25,7 @@ export const StatsDetailMeta = ({
             <dt className="text-muted-foreground">{metric.label}</dt>
             <dd className="font-semibold tabular-nums">
               {formatNumber(metric.value)}
+              {metric.capped && "+"}
             </dd>
           </div>
         ))}

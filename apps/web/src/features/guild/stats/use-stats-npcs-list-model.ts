@@ -9,7 +9,10 @@ import {
 } from "@lootlog/client/main";
 
 import { useStatsSettings } from "./hooks/use-stats-settings";
-import { buildGuildTopNpcsParams } from "./utils/build-stats-query-params";
+import {
+  buildGuildTopNpcsParams,
+  GUILD_TOP_NPCS_LIST_LIMIT,
+} from "./utils/build-stats-query-params";
 import { parseKillStatsLevel } from "@/features/kills/parse-kill-stats-level";
 
 const ITEMS_PER_PAGE = 20;
@@ -38,7 +41,7 @@ export const useStatsNpcsListModel = () => {
   } = useStatsSettings();
 
   const topNpcsParams = buildGuildTopNpcsParams({
-    limit: 100,
+    limit: GUILD_TOP_NPCS_LIST_LIMIT,
     npcType: settings.npcType === "ALL" ? undefined : settings.npcType,
     world: settings.world ?? undefined,
     search: settings.search || undefined,
@@ -60,6 +63,7 @@ export const useStatsNpcsListModel = () => {
   const topNpcs = data?.topNpcs ?? [];
 
   const total = topNpcs.length;
+  const isCapped = total >= GUILD_TOP_NPCS_LIST_LIMIT;
 
   const { cursor, hasNext, hasPrev, handleNextPage, handlePreviousPage } =
     getOffsetPagination(pageIndex, total, ITEMS_PER_PAGE, setPageIndex);
@@ -98,6 +102,7 @@ export const useStatsNpcsListModel = () => {
     cursor,
     guildId,
     total,
+    isCapped,
     hasPrev,
     hasNext,
     handlePreviousPage,

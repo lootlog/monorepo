@@ -5,7 +5,10 @@ import { getOffsetPagination } from "./utils/offset-pagination";
 import { useKillsControllerGetNpcKillers } from "@lootlog/client/main";
 import { useGuildMemberMap } from "@/hooks/api/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";
-import { buildNpcKillersParams } from "./utils/build-stats-query-params";
+import {
+  buildNpcKillersParams,
+  NPC_KILLERS_LIMIT,
+} from "./utils/build-stats-query-params";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -45,6 +48,7 @@ export function useNpcKillersPage() {
   const membersMap = useGuildMemberMap(guildId);
 
   const killers = data?.killers ?? [];
+  const isCapped = killers.length >= NPC_KILLERS_LIMIT;
 
   const search = settings.search.toLowerCase();
 
@@ -79,6 +83,7 @@ export function useNpcKillersPage() {
     guildId,
     membersMap,
     total,
+    isCapped,
     hasPrev,
     hasNext,
     handlePreviousPage,
