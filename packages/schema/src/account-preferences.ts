@@ -90,6 +90,11 @@ export type BattlePingPreferences = {
   enabled: boolean;
 };
 
+/** `enabled` shows the loot split window; choices are shared either way. */
+export type LootSplitPreferences = {
+  enabled: boolean;
+};
+
 export type DetectorTypeSettingsPatch = Partial<DetectorTypeSettings>;
 
 type DetectorSettingsPatch = {
@@ -133,6 +138,10 @@ export const defaultMapPingPreferences: MapPingPreferences = {
 };
 
 export const defaultBattlePingPreferences: BattlePingPreferences = {
+  enabled: true,
+};
+
+export const defaultLootSplitPreferences: LootSplitPreferences = {
   enabled: true,
 };
 
