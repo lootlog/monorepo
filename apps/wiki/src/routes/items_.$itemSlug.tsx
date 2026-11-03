@@ -21,7 +21,9 @@ import { renderStatChanges } from "@/components/render-stat-changes";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
 import {
+  type ItemPageSearch,
   itemPageParams,
+  itemPageSearch,
   readPageSegment,
   WIKI_GAME_VERSION,
 } from "@/lib/catalog-links";
@@ -34,17 +36,9 @@ import {
   isUpgradeLevel,
   type ItemUpgrade,
   NO_UPGRADE,
-  type UpgradeBonusKey,
-  type UpgradeLevel,
   upgradeItemStat,
 } from "@lootlog/domain/item-upgrade";
 import { findStatChanges } from "@/lib/stat-changes";
-
-/** The upgrade the page shows the item at, so a link keeps it. */
-type ItemRouteSearch = { upgrade?: UpgradeLevel; bonus?: UpgradeBonusKey };
-
-const toSearch = ({ level, bonus }: ItemUpgrade): ItemRouteSearch =>
-  level === 0 ? {} : { upgrade: level, bonus };
 
 export const Route = createFileRoute("/items_/$itemSlug")({
   component: ItemRoute,
@@ -54,7 +48,7 @@ export const Route = createFileRoute("/items_/$itemSlug")({
   validateSearch: (search: {
     upgrade?: unknown;
     bonus?: unknown;
-  }): ItemRouteSearch => {
+  }): ItemPageSearch => {
     const level = Number(search.upgrade);
     const bonus = String(search.bonus ?? "");
 
@@ -211,7 +205,7 @@ function ItemRoute() {
                 void navigate({
                   replace: true,
                   resetScroll: false,
-                  search: toSearch(next),
+                  search: itemPageSearch(next),
                 })
               }
             />

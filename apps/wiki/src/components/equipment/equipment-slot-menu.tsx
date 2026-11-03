@@ -17,7 +17,7 @@ import {
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import type { WornItem } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
-import { itemPageParams } from "@/lib/catalog-links";
+import { itemPageParams, itemPageSearch } from "@/lib/catalog-links";
 import type { EquipmentSlotId } from "@/lib/equipment-slots";
 import {
   isUpgradable,
@@ -169,14 +169,7 @@ export function EquipmentSlotMenu({
             <Link
               to="/items/$itemSlug"
               params={itemPageParams(item)}
-              search={
-                worn.upgrade.level > 0
-                  ? {
-                      upgrade: worn.upgrade.level,
-                      bonus: worn.upgrade.bonus,
-                    }
-                  : {}
-              }
+              search={itemPageSearch(worn.upgrade)}
             />
           }
         >

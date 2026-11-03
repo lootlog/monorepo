@@ -149,7 +149,7 @@ export const toItemDocuments = (items: ReadonlyArray<IndexItem>) =>
   mergeItemsByCatalogKey(items).map(({ world: _world, ...item }) => ({
     ...item,
     ...createItemSearchFields(item.stat),
-    upgradedAttackSpeed: upgradedAttackSpeed(item).attackSpeed,
+    upgradedAttackSpeed: upgradedAttackSpeed(item),
   }));
 
 export const makeItemsModule = (

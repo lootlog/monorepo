@@ -79,7 +79,7 @@ const ATTACK_SPEED_SORTS = new Map<
   (item: CatalogItemDocument) => number
 >([
   ["attackSpeed:desc", (item) => itemStatAttackSpeed(item.stat)],
-  ["upgradedAttackSpeed:desc", (item) => upgradedAttackSpeed(item).attackSpeed],
+  ["upgradedAttackSpeed:desc", (item) => upgradedAttackSpeed(item)],
 ]);
 
 // The most hits one Meilisearch search returns, its `maxTotalHits`.
