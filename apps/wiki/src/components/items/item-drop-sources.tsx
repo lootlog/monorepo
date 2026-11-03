@@ -10,30 +10,60 @@ import { NPC_TYPE_OPTIONS } from "@/lib/npc-types";
 
 type ItemDropSourcesProps = {
   sources: CatalogItemDtoOutput["droppedBy"];
+  /**
+   * `header` stacks a few sources beside the item's name; `section` lays any
+   * number of them out as a grid in the page body.
+   */
+  variant: "header" | "section";
 };
+
+/** How many sources still fit stacked beside the item's name. */
+export const MAX_HEADER_DROP_SOURCES = 2;
 
 /**
  * The monsters the item drops from, each a link with its sprite, kind and
- * level. Nearly always one, so they sit in the item's header.
+ * level.
  */
-export function ItemDropSources({ sources }: ItemDropSourcesProps) {
+export function ItemDropSources({ sources, variant }: ItemDropSourcesProps) {
+  const isSection = variant === "section";
+
   return (
     <section
       aria-labelledby="item-drop-sources"
-      className="flex flex-col gap-2"
+      className={cn("flex flex-col", isSection ? "@container gap-4" : "gap-2")}
     >
       <h2
         id="item-drop-sources"
-        className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+        className={cn(
+          "flex items-baseline gap-2",
+          isSection
+            ? "text-lg font-semibold tracking-tight text-foreground"
+            : "text-xs font-medium tracking-wide text-muted-foreground uppercase",
+        )}
       >
         {t("catalog.droppedByTitle")}
+        {sources.length > 1 ? (
+          <span
+            className={cn(
+              "font-normal text-muted-foreground tabular-nums",
+              isSection && "text-sm",
+            )}
+          >
+            {sources.length}
+          </span>
+        ) : null}
       </h2>
       {sources.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
           {t("catalog.noSourcesYet")}
         </p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul
+          className={cn(
+            "grid gap-2",
+            isSection && "@xl:grid-cols-2 @5xl:grid-cols-3",
+          )}
+        >
           {/* Monsters that still drop the item come first. */}
           {sortBy(sources, [({ retired }) => retired]).map((npc) => {
             const type = NPC_TYPE_OPTIONS.find((option) => option === npc.type);
@@ -44,11 +74,19 @@ export function ItemDropSources({ sources }: ItemDropSourcesProps) {
                   to="/npcs/$npcSlug"
                   params={npcPageParams(npc)}
                   className={cn(
-                    "group/source flex items-center gap-3 rounded-xl border border-border/70 bg-background/60 p-2 pr-3 outline-none transition-[border-color,background-color] duration-200 hover:border-[color-mix(in_oklab,var(--item-rarity)_55%,var(--border))] hover:bg-background/80 focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none",
+                    "group/source flex items-center gap-3 rounded-xl border border-border/70 p-2 pr-3 outline-none transition-[border-color,background-color] duration-200 hover:border-[color-mix(in_oklab,var(--item-rarity)_55%,var(--border))] focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none",
+                    isSection
+                      ? "bg-card hover:bg-accent/40"
+                      : "bg-background/60 hover:bg-background/80",
                     npc.retired && "opacity-70",
                   )}
                 >
-                  <span className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-card">
+                  <span
+                    className={cn(
+                      "flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/60",
+                      isSection ? "bg-background/60" : "bg-card",
+                    )}
+                  >
                     <img
                       src={npcIconUrl(npc.icon ?? "")}
                       alt=""
