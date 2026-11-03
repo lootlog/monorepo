@@ -29,7 +29,7 @@ export const HeroSightingsResultsSkeleton = () => (
           LIST_TILE_RULE_CLASS,
           LIST_TILE_INSET_CLASS,
           "grid grid-cols-[2.25rem_minmax(0,1fr)_auto] gap-x-3 gap-y-2.5 py-3",
-          "xl:grid-cols-[2.25rem_minmax(0,16rem)_minmax(0,1fr)_8.5rem_minmax(0,1fr)_10rem] xl:items-center xl:gap-x-5",
+          "xl:grid-cols-[2.25rem_minmax(0,16rem)_minmax(0,1fr)_12rem_minmax(0,1fr)_10rem] xl:items-center xl:gap-x-5",
         )}
       >
         <Skeleton className="size-9 rounded-lg" />
@@ -38,11 +38,11 @@ export const HeroSightingsResultsSkeleton = () => (
           <Skeleton className="h-3 w-1/2" />
         </div>
         <Skeleton className="h-8 w-28 rounded-lg xl:col-start-6" />
-        <div className="col-start-2 flex flex-col gap-1.5 xl:col-start-3 xl:row-start-1">
+        <div className="col-span-2 col-start-2 flex flex-col gap-1.5 xl:col-span-1 xl:col-start-3 xl:row-start-1">
           <Skeleton className="h-3.5 w-2/3" />
           <Skeleton className="h-3 w-1/3" />
         </div>
-        <div className="flex flex-col items-end gap-1.5 xl:col-start-4 xl:row-start-1 xl:items-start">
+        <div className="col-span-2 col-start-2 flex gap-2 xl:col-span-1 xl:col-start-4 xl:row-start-1 xl:flex-col xl:gap-1.5">
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-3 w-20" />
         </div>

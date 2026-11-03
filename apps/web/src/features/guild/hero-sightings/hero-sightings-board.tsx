@@ -18,7 +18,10 @@ import {
 type HeroSightingsBoardProps = {
   /** Sorted, so each group keeps the order of the board. */
   sightings: HeroSightingResponseDto[];
+  /** Live timers, counting down as on the timers page. */
   timers: TimerResponseDto[] | undefined;
+  /** Every hero's latest timer, for heroes whose window already ended. */
+  heroTimers: TimerResponseDto[];
   now: number;
   showWorld: boolean;
   countdownMode: TimerCountdownMode;
@@ -30,6 +33,7 @@ type HeroSightingsBoardProps = {
 export const HeroSightingsBoard = ({
   sightings,
   timers,
+  heroTimers,
   now,
   showWorld,
   countdownMode,
@@ -65,6 +69,7 @@ export const HeroSightingsBoard = ({
               <HeroSightingRow
                 sighting={sighting}
                 timer={findHeroSightingTimer(timers, sighting)}
+                lastTimer={findHeroSightingTimer(heroTimers, sighting)}
                 now={now}
                 showWorld={showWorld}
                 countdownMode={countdownMode}

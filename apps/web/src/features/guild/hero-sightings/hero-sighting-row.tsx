@@ -22,6 +22,7 @@ import { HeroSightingTimer } from "./hero-sighting-timer";
 type HeroSightingRowProps = {
   sighting: HeroSightingResponseDto;
   timer: TimerResponseDto | undefined;
+  lastTimer: TimerResponseDto | undefined;
   now: number;
   showWorld: boolean;
   countdownMode: TimerCountdownMode;
@@ -30,12 +31,13 @@ type HeroSightingRowProps = {
 };
 
 /**
- * One hero on the board. Phones stack the hero over its map and claims, with
- * the timer at the right; from `xl` every row shares the same columns.
+ * One hero on the board. Phones stack the hero over its map, timer and
+ * claims; from `xl` every row shares the same columns.
  */
 export const HeroSightingRow = ({
   sighting,
   timer,
+  lastTimer,
   now,
   showWorld,
   countdownMode,
@@ -54,7 +56,7 @@ export const HeroSightingRow = ({
       aria-labelledby={titleId}
       className={cn(
         "grid grid-cols-[2.25rem_minmax(0,1fr)_auto] gap-x-3 gap-y-2.5 py-3",
-        "xl:grid-cols-[2.25rem_minmax(0,16rem)_minmax(0,1fr)_8.5rem_minmax(0,1fr)_10rem] xl:items-center xl:gap-x-5",
+        "xl:grid-cols-[2.25rem_minmax(0,16rem)_minmax(0,1fr)_12rem_minmax(0,1fr)_10rem] xl:items-center xl:gap-x-5",
         LIST_TILE_INSET_CLASS,
       )}
     >
@@ -83,7 +85,7 @@ export const HeroSightingRow = ({
         </span>
       </div>
 
-      <div className="col-start-2 row-start-2 flex min-w-0 flex-col gap-1 xl:col-start-3 xl:row-start-1">
+      <div className="col-span-2 col-start-2 row-start-2 flex min-w-0 flex-col gap-1 xl:col-span-1 xl:col-start-3 xl:row-start-1">
         <p className="flex min-w-0 items-start gap-1.5 text-sm leading-5 font-medium">
           <MapPin
             aria-hidden="true"
@@ -121,12 +123,13 @@ export const HeroSightingRow = ({
 
       <HeroSightingTimer
         timer={timer}
+        lastTimer={lastTimer}
         countdownMode={countdownMode}
         removeTimerAfterMs={removeTimerAfterMs}
-        className="col-start-3 row-start-2 items-end text-right xl:col-start-4 xl:row-start-1 xl:items-start xl:text-left"
+        className="col-span-2 col-start-2 row-start-3 flex-row flex-wrap items-baseline gap-x-2 xl:col-span-1 xl:col-start-4 xl:row-start-1 xl:flex-col xl:gap-0.5"
       />
 
-      <div className="col-span-2 col-start-2 row-start-3 flex min-w-0 items-start gap-1.5 xl:col-span-1 xl:col-start-5 xl:row-start-1 xl:items-center">
+      <div className="col-span-2 col-start-2 row-start-4 flex min-w-0 items-start gap-1.5 xl:col-span-1 xl:col-start-5 xl:row-start-1 xl:items-center">
         <Flag
           aria-hidden="true"
           className="mt-1.5 size-4 shrink-0 text-muted-foreground xl:mt-0"
