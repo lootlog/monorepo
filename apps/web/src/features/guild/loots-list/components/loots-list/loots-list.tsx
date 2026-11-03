@@ -19,6 +19,7 @@ import { useLiveLootList } from "./use-live-loot-list";
 import { LootsListToolbar } from "./loots-list-toolbar";
 import { LootListItemStacksProvider } from "./loot-list-item-stacks-provider";
 import { RetryButton } from "@/components/common/retry-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
 // Dimming the current page signals a reload without moving anything.
 const REFRESHABLE_LIST_CLASS =
@@ -84,11 +85,7 @@ export const LootsList = () => {
             icon={SearchX}
             title={t("loots.list.noResults")}
             description={t("loots.list.noResultsDescription")}
-            action={
-              <Button type="button" variant="outline" onClick={clearFilters}>
-                {t("loots.list.clearFilters")}
-              </Button>
-            }
+            action={<ClearFiltersButton onClear={clearFilters} />}
           />
         ) : (
           <EmptyState

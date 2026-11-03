@@ -277,6 +277,8 @@ export const BattlesTable = ({
             hasError={hasError}
             isRetrying={isRetrying}
             onRetry={onRetry}
+            activeFilterChips={activeFilterChips}
+            onClearFilters={onClearFilters}
             paginated={Boolean(pagination)}
           />
         ) : !usesTable ? (

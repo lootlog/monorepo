@@ -45,6 +45,7 @@ type EventKillsTableHistoryProps = EventKillsTableBaseProps & {
   isFetchingNextPage: boolean;
   resetKey: string;
   scrollElement: HTMLDivElement | null;
+  onShowAllHeroes?: () => void;
   variant?: "history";
 };
 
@@ -194,6 +195,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
         fetchNextPage={props.fetchNextPage}
         onRetry={onRetry}
         isRetrying={isRetrying}
+        onShowAllHeroes={props.onShowAllHeroes}
         skeleton={<EventKillRowsSkeleton />}
       >
         {!usesTable ? (

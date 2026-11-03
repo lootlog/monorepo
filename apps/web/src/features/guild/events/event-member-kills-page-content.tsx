@@ -315,6 +315,9 @@ export const EventMemberKillsPageContent = ({
           void (isFetchNextPageError ? fetchNextPage() : refetch())
         }
         isRetrying={isFetching}
+        onShowAllHeroes={
+          selectedHeroId ? () => setSelectedHeroId(undefined) : undefined
+        }
       />
     </DetailPage>
   );

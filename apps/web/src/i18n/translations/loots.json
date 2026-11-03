@@ -148,7 +148,6 @@
     "emptyDescription": "Nowe łupy pojawią się tutaj automatycznie.",
     "noResults": "Brak pasujących łupów",
     "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej łupów.",
-    "clearFilters": "Wyczyść filtry",
     "newLoots_one": "{{count}} nowy łup",
     "newLoots_few": "{{count}} nowe łupy",
     "newLoots_many": "{{count}} nowych łupów",
