@@ -27,8 +27,14 @@
     "unclaim": "Wycofaj",
     "dismiss": "Zamknij"
   },
+  "quickAccess": {
+    "count_one": "{{count}} heros",
+    "count_few": "{{count}} herosi",
+    "count_many": "{{count}} herosów",
+    "count_other": "{{count}} herosa"
+  },
   "notice": {
-    "title": "Twoje wykrycie"
+    "title": "Wykryłeś"
   },
   "emptyState": {
     "title": "Brak wykrytych herosów",

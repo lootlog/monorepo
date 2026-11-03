@@ -5,6 +5,7 @@ import { ConnectionStatus } from "@/features/quick-access/components/connection-
 import { QuickAccessCollapseButton } from "@/features/quick-access/components/quick-access-collapse-button";
 import { QuickAccessCollapsedBar } from "@/features/quick-access/components/quick-access-collapsed-bar";
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
+import { useHeroSightingRows } from "@/features/hero-sightings/hooks/use-hero-sighting-rows";
 import { SetupChecklistButton } from "@/features/setup-checklist/components/setup-checklist-button";
 import {
   QuickAccessWindowButton,
@@ -43,6 +44,10 @@ export const QuickAccess = () => {
   const setOpen = useWindowsStore((state) => state.setOpen);
   const globalChatUnread = useGlobalChatStore((state) => state.unread);
 
+  const heroSightingCount = useHeroSightingRows().rows.filter(
+    (row) => row.isCurrent,
+  ).length;
+
   const buttons: QuickAccessWindowButtonProps[] = [
     {
       windowId: "create-party-gathering",
@@ -60,6 +65,16 @@ export const QuickAccess = () => {
       windowId: "hero-sightings",
       label: t("buttons.heroSightings"),
       icon: <Radar aria-hidden="true" className={ICON_CLASS_NAME} />,
+      badge:
+        heroSightingCount > 0
+          ? {
+              count: heroSightingCount,
+              label: t("quickAccess.count", {
+                ns: "heroSightings",
+                count: heroSightingCount,
+              }),
+            }
+          : undefined,
     },
     {
       windowId: "online-players",

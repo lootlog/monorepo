@@ -49,7 +49,7 @@ export function HeroSightingItem({
   return (
     <ListRow
       className={cn(
-        "ll:flex-col ll:items-stretch ll:gap-0.5 ll:py-1 ll:text-[11px]",
+        "ll:flex-col ll:items-stretch ll:gap-0.5 ll:px-2 ll:py-1.5 ll:text-[11px]",
         !row.isCurrent && "ll:opacity-60",
       )}
     >
