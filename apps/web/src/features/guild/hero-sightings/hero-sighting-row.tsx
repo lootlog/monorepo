@@ -3,7 +3,7 @@ import type {
   TimerResponseDto,
 } from "@lootlog/client/main";
 import type { TimerCountdownMode } from "@lootlog/domain/timers";
-import { Flag, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
@@ -56,7 +56,7 @@ export const HeroSightingRow = ({
       aria-labelledby={titleId}
       className={cn(
         "grid grid-cols-[2.25rem_minmax(0,1fr)_auto] gap-x-3 gap-y-2.5 py-3",
-        "xl:grid-cols-[2.25rem_minmax(0,16rem)_minmax(0,1fr)_12rem_minmax(0,1fr)_10rem] xl:items-center xl:gap-x-5",
+        "xl:grid-cols-[2.25rem_minmax(0,16rem)_minmax(0,1fr)_15rem_minmax(0,1fr)_10rem] xl:items-center xl:gap-x-5",
         LIST_TILE_INSET_CLASS,
       )}
     >
@@ -129,13 +129,10 @@ export const HeroSightingRow = ({
         className="col-span-2 col-start-2 row-start-3 flex-row flex-wrap items-baseline gap-x-2 xl:col-span-1 xl:col-start-4 xl:row-start-1 xl:flex-col xl:gap-0.5"
       />
 
-      <div className="col-span-2 col-start-2 row-start-4 flex min-w-0 items-start gap-1.5 xl:col-span-1 xl:col-start-5 xl:row-start-1 xl:items-center">
-        <Flag
-          aria-hidden="true"
-          className="mt-1.5 size-4 shrink-0 text-muted-foreground xl:mt-0"
-        />
-        <HeroSightingClaims sighting={sighting} />
-      </div>
+      <HeroSightingClaims
+        sighting={sighting}
+        className="col-span-2 col-start-2 row-start-4 xl:col-span-1 xl:col-start-5 xl:row-start-1"
+      />
 
       <div className="col-start-3 row-start-1 flex items-center justify-end gap-1 self-start xl:col-start-6 xl:self-center">
         <HeroSightingClaimButton sighting={sighting} />
