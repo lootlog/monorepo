@@ -1,7 +1,8 @@
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-provider";
 import { UiLabelsProvider } from "@lootlog/ui/components/ui-labels";
+import { preventIosFocusZoom } from "@lootlog/ui/lib/ios-focus-zoom";
 import { EquipmentPreviewProvider } from "@/components/equipment/equipment-preview-provider";
 import { ItemComparisonProvider } from "@/components/comparison/item-comparison-provider";
 import { EquipmentSetProvider } from "@/components/equipment/equipment-set-provider";
@@ -79,6 +80,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
     return { config, authClient: createWikiAuthClient(config.authServiceUrl) };
   });
+
+  useEffect(preventIosFocusZoom, []);
 
   return (
     // The browser applies the User's theme to the root after hydration.
