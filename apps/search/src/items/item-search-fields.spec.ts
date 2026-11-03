@@ -23,6 +23,7 @@ describe("createItemSearchFields", () => {
       requiredProfessions: ["w", "p", "h", "m", "b", "t"],
       legendaryBonus: null,
       eventSlugs: [],
+      attackSpeed: 0,
     });
   });
 
@@ -39,6 +40,7 @@ describe("createItemSearchFields", () => {
       requiredProfessions: ["w", "m"],
       legendaryBonus: null,
       eventSlugs: [],
+      attackSpeed: 0,
     });
   });
 
@@ -54,5 +56,11 @@ describe("createItemSearchFields", () => {
         "etiquette=Wielkanoc 2025 r.|Wielkanoc 2026 r.\n|Wielkanoc 2026 r.;lvl=75",
       ).eventSlugs,
     ).toEqual(["wielkanoc-2025", "wielkanoc-2026"]);
+  });
+
+  it("ranks an item by its attack speed and the agility it adds", () => {
+    expect(
+      createItemSearchFields("sa=308;dz=337;reqp=t;lvl=300").attackSpeed,
+    ).toBe(3.754);
   });
 });

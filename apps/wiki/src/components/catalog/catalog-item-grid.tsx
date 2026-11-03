@@ -14,6 +14,8 @@ type CatalogItemGridProps = {
   showSource?: boolean;
   /** The searched phrase, marked in item names. */
   highlight?: string;
+  /** Shows the attack speed each item adds, for a list ranked by it. */
+  showAttackSpeed?: boolean;
 };
 
 /** The catalog's grid of tiles, as many columns as fit. */
@@ -31,6 +33,7 @@ export function CatalogItemGrid({
   emptyLabel,
   showSource,
   highlight,
+  showAttackSpeed,
 }: CatalogItemGridProps) {
   if (isError) {
     return (
@@ -70,6 +73,7 @@ export function CatalogItemGrid({
               item={item}
               showSource={showSource}
               highlight={highlight}
+              showAttackSpeed={showAttackSpeed}
             />
           </li>
         ))}
