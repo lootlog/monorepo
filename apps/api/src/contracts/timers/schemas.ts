@@ -6,7 +6,6 @@ import { ProfessionSchema } from "@lootlog/schema/loot";
 import {
   NonEmptyString,
   PositiveSafeInteger,
-  JsonValue,
   DateTimeString,
   FiniteNumber,
   PageSize,
@@ -277,7 +276,7 @@ export const TimerHistoryListResponse = Schema.Array(TimerHistoryResponse);
 export type TimerListOrganizationPath = typeof TimerListOrganizationPath.Type;
 
 export const TimerListOrganizationPath = Schema.Struct({
-  guildId: JsonValue,
+  guildId: Schema.String,
 });
 
 export type TimerOrganizationPath = typeof TimerOrganizationPath.Type;

@@ -249,7 +249,7 @@ export const MemberKillsResponse = Schema.Struct({
 export type KillOrganizationPath = typeof KillOrganizationPath.Type;
 
 export const KillOrganizationPath = Schema.Struct({
-  guildId: JsonValue,
+  guildId: Schema.String,
 });
 
 export type GuildKillStatsQuery = typeof GuildKillStatsQuery.Type;
@@ -303,7 +303,7 @@ export type NpcKillersPath = typeof NpcKillersPath.Type;
 
 export const NpcKillersPath = Schema.Struct({
   npcId: Schema.String.annotate({ examples: ["999"] }),
-  guildId: JsonValue,
+  guildId: Schema.String,
 });
 
 export type NpcKillersQuery = typeof NpcKillersQuery.Type;
@@ -323,7 +323,7 @@ export type MemberKillsPath = typeof MemberKillsPath.Type;
 
 export const MemberKillsPath = Schema.Struct({
   memberId: Schema.String.annotate({ examples: ["123"] }),
-  guildId: JsonValue,
+  guildId: Schema.String,
 });
 
 export type MemberKillsQuery = typeof MemberKillsQuery.Type;

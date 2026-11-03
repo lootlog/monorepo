@@ -3,7 +3,6 @@ import { partyGatheringDetailsFields } from "../party-gathering.schema.js";
 import * as Schema from "effect/Schema";
 import {
   NonEmptyString,
-  JsonValue,
   DateTimeString,
   FiniteNumber,
 } from "@lootlog/schema/http-scalars";
@@ -98,7 +97,7 @@ export const ChatMessageActionResponse = Schema.Struct({
 export type ChatOrganizationPath = typeof ChatOrganizationPath.Type;
 
 export const ChatOrganizationPath = Schema.Struct({
-  guildId: JsonValue,
+  guildId: Schema.String,
 });
 
 export type ChatMessagesResponse = typeof ChatMessagesResponse.Type;
@@ -109,5 +108,5 @@ export type ChatMessagePath = typeof ChatMessagePath.Type;
 
 export const ChatMessagePath = Schema.Struct({
   messageId: Schema.String.annotate({ examples: ["msg_123"] }),
-  guildId: JsonValue,
+  guildId: Schema.String,
 });
