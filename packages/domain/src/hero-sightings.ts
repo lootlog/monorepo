@@ -27,8 +27,13 @@ export type HeroDetection = {
   readonly mapName: string;
 };
 
+// The hero name cannot contain brackets, so the pattern cannot backtrack
+// across the "[/b]" marker on crafted input.
 const HERO_DETECTOR_MESSAGE =
-  /^\[b\](.+?) \((\d+)([a-z]?)\)\[\/b\] (grasuje|pojawi się) w: (.+)$/u;
+  /^\[b\]([^[\]]+) \((\d+)([a-z]?)\)\[\/b\] (grasuje|pojawi się) w: (.+)$/u;
+
+/** Detector answers are short; longer system messages are something else. */
+const MAX_HERO_DETECTOR_MESSAGE_LENGTH = 300;
 
 /**
  * Reads a detector answer such as
@@ -38,6 +43,7 @@ const HERO_DETECTOR_MESSAGE =
 export const parseHeroDetectorMessage = (
   message: string,
 ): HeroDetection | null => {
+  if (message.length > MAX_HERO_DETECTOR_MESSAGE_LENGTH) return null;
   const match = HERO_DETECTOR_MESSAGE.exec(message.trim());
 
   if (!match) return null;
