@@ -35,7 +35,7 @@ export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
               />
             ) : (
               <AppTopBar>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 max-md:-ml-2">
                   <SidebarTrigger className="md:hidden" />
                   {variant === "fallback" ? (
                     <span className="text-sm font-bold text-primary">
