@@ -25,7 +25,7 @@ import {
   UPGRADE_BONUS_GROUP_POWER,
   UPGRADE_LEVELS,
   upgradeBonusOptions,
-} from "@/lib/item-upgrade";
+} from "@lootlog/domain/item-upgrade";
 import {
   formatUpgradeBonusValue,
   upgradeBonusName,

@@ -22,7 +22,10 @@ import {
   MECHANICS_DOCUMENTATION_URL,
 } from "@/lib/calculators";
 import { formatPercent } from "@/lib/calculator-format";
-import { upgradedItemLevel, type UpgradeLevel } from "@/lib/item-upgrade";
+import {
+  upgradedItemLevel,
+  type UpgradeLevel,
+} from "@lootlog/domain/item-upgrade";
 import { readNumberInput } from "@/lib/number-input";
 import { UpgradeSelect } from "@/components/common/upgrade-select";
 import { CalculatorCard } from "./calculator-card";

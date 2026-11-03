@@ -7,6 +7,7 @@ import {
 } from "@lootlog/client/search";
 import { Button } from "@lootlog/ui/components/button";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
+import type { AttackSpeedRanking } from "@/components/catalog/item-attack-speed";
 import { t } from "@/i18n/messages";
 
 const PAGE_SIZE = 48;
@@ -14,6 +15,12 @@ const PAGE_SIZE = 48;
 // Meilisearch counts hits exactly up to its `maxTotalHits`; a count that
 // reaches it means "at least this many".
 const COUNTED_HITS = 1000;
+
+// The sorts that rank by attack speed, and which one each shows.
+const ATTACK_SPEED_RANKINGS = new Map<string | undefined, AttackSpeedRanking>([
+  ["attackSpeed:desc", "dropped"],
+  ["upgradedAttackSpeed:desc", "upgraded"],
+]);
 
 type ItemResultsProps = {
   params: Omit<CatalogControllerGetItemsParams, "limit" | "offset">;
@@ -69,7 +76,7 @@ export function ItemResults({ params, query }: ItemResultsProps) {
         emptyLabel={t("search.noResults")}
         highlight={query}
         maxLevel={params.maxLevel}
-        showAttackSpeed={params.sort === "attackSpeed:desc"}
+        attackSpeed={ATTACK_SPEED_RANKINGS.get(params.sort)}
       />
       {items && hasNextPage ? (
         <div className="flex flex-col items-center gap-2 pt-2">

@@ -13,7 +13,7 @@ import {
   isUpgradeLevel,
   UPGRADE_LEVELS,
   type UpgradeLevel,
-} from "@/lib/item-upgrade";
+} from "@lootlog/domain/item-upgrade";
 
 const UPGRADE_OPTIONS = UPGRADE_LEVELS.map((level) => ({
   value: String(level),

@@ -69,6 +69,7 @@ export const searchIndexSettings: IndexSettings = {
       "type",
       "firstSeenAt",
       "attackSpeed",
+      "upgradedAttackSpeed",
     ],
     distinctAttribute: "id",
   },

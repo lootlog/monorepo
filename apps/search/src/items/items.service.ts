@@ -1,5 +1,6 @@
 import { uniqueWorlds } from "#src/shared/unique-worlds";
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
+import { upgradedAttackSpeed } from "@lootlog/domain/item-upgrade";
 import { Effect } from "effect";
 import { chunk } from "es-toolkit";
 import type { Meilisearch, SearchParams } from "meilisearch";
@@ -141,13 +142,14 @@ const mergeItemsByCatalogKey = (
 
 /**
  * The stored shape of items: one document per catalog key with its worlds
- * merged and the searchable stat fields expanded. The seed script and the
- * consumer share it.
+ * merged, the searchable stat fields expanded and the attack speed the item
+ * adds at +5. The seed script and the consumer share it.
  */
 export const toItemDocuments = (items: ReadonlyArray<IndexItem>) =>
   mergeItemsByCatalogKey(items).map(({ world: _world, ...item }) => ({
     ...item,
     ...createItemSearchFields(item.stat),
+    upgradedAttackSpeed: upgradedAttackSpeed(item).attackSpeed,
   }));
 
 export const makeItemsModule = (

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { elasticItemLevel, itemForCharacter } from "./elastic-level";
+import { describe, expect, it } from "bun:test";
+import { elasticItemLevel, itemForCharacter } from "./elastic-level.js";
 
 // Kapitan Mikodyń's legendary gloves as Lootlog saw them dropped.
 const gloves = (lvl: number, stat: string) => ({

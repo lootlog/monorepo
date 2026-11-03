@@ -1,14 +1,14 @@
-import { describe, expect, it } from "vitest";
-import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
+import { describe, expect, it } from "bun:test";
 import {
   itemAtLevel,
+  itemStatValue,
   upgradeBonusOptions,
+  upgradedAttackSpeed,
   upgradedItemLevel,
   upgradeItemStat,
-} from "./item-upgrade";
+} from "./item-upgrade.js";
 
-const statOf = (stat: string, key: string) =>
-  parseItemStats(stat).find((entry) => entry.key === key)?.value;
+const statOf = (stat: string, key: string) => itemStatValue(stat, key);
 
 // Real catalog items at level 227, whose +5 virtual level is 262.
 const necklace = {
@@ -164,5 +164,32 @@ describe("item upgrade", () => {
     ).toBeCloseTo(3);
     expect(chanceOf("ds")).toBeGreaterThan(chanceOf("critval"));
     expect(chanceOf("critval")).toBeGreaterThan(chanceOf("heal"));
+  });
+});
+
+describe("attack speed at +5", () => {
+  it("takes the +5 bonus that adds the most attack speed for the item's class", () => {
+    // 2,05 SA and 139 to all attributes at +5, then 150 agility: 2,05 +
+    // 0,002 * (139 + 150). Necklaces cannot draw attack speed itself.
+    expect(upgradedAttackSpeed(necklace)).toEqual({
+      attackSpeed: 2.628,
+      bonus: "dz",
+    });
+    // A third attack speed bonus outruns 150 agility on a weapon.
+    expect(upgradedAttackSpeed(sword)).toEqual({
+      attackSpeed: 2.05,
+      bonus: "sa",
+    });
+  });
+
+  it("keeps the dropped attack speed of an item the game does not upgrade", () => {
+    expect(
+      upgradedAttackSpeed({
+        stat: "lvl=15;sa=40",
+        lvl: 15,
+        rarity: "UNIQUE",
+        type: "NECKLACE",
+      }),
+    ).toEqual({ attackSpeed: 0.4 });
   });
 });
