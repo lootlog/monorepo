@@ -62,7 +62,7 @@ export type LootSplitState = Readonly<{
   acceptRequested: boolean;
 }>;
 
-export type LootSplitStatus = "accepted" | "choosing" | "unknown";
+export type LootSplitStatus = "accepted" | "choosing" | "timedOut" | "unknown";
 
 /** Closed splits stay listed this long, so their outcome can be read. */
 export const CLOSED_SPLIT_LINGER_MS = 6_000;
@@ -90,7 +90,10 @@ export const getLootSplitStatus = (
 
   if (view?.accepted) return "accepted";
 
-  return view || characterId === heroId ? "choosing" : "unknown";
+  if (!view && characterId !== heroId) return "unknown";
+
+  // The game draws with the choices a player had when the time ran out.
+  return split.phase === "expired" ? "timedOut" : "choosing";
 };
 
 // Game `states` values outside the known choices are ignored, not guessed.
