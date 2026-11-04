@@ -15,6 +15,10 @@ import {
 import { type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket } from "#src/realtime/session";
 import { GatewayRedis } from "#src/platform/redis-store";
+import {
+  fromDependency,
+  type CommandRoutes,
+} from "#src/realtime/command-routes";
 
 const RATE_LIMIT = 5;
 
@@ -120,3 +124,13 @@ export class MapPings extends Context.Service<MapPings, MapPingService>()(
     }),
   );
 }
+
+/** Map pings are relayed, never stored. */
+export const mapPingRoutes = (pings: Pick<MapPingService, "send">) =>
+  ({
+    "map-ping.send": {
+      joined: true,
+      run: (socket, data) =>
+        fromDependency("map-ping.send", () => pings.send(socket, data)),
+    },
+  }) satisfies Pick<CommandRoutes, "map-ping.send">;

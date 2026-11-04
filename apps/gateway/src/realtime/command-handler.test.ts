@@ -10,9 +10,12 @@ import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Exit, Fiber, Metric, Predicate, Tracer } from "effect";
 import { TestClock } from "effect/testing";
 import { createGatewayWebSocket } from "#src/app";
-import { CommandHandler } from "./command-handler.js";
+import { CommandHandler, gatewayFeatureRoutes } from "./command-handler.js";
 import { CommandIngress } from "./command-ingress.js";
-import { CommandAdmission } from "./command-admission.js";
+import {
+  AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
+  CommandAdmission,
+} from "./command-admission.js";
 import { canReadSourceEvent } from "./source-event-visibility.js";
 import {
   decodeServerEvent,
@@ -208,6 +211,21 @@ const setup = (
   const activity = new FakeActivity();
   const presence = new FakePresence();
 
+  const airTags = {
+    updateSubscription,
+    publishObservations,
+    fetchMapThreats: () =>
+      Promise.reject(new Error("Unexpected map threat fetch")),
+    registerInterest,
+  };
+
+  const npcPresence = {
+    report: () => Promise.reject(new Error("Unexpected NPC presence report")),
+    refresh: () => Promise.resolve(),
+    withdraw: () => Promise.resolve(),
+    fetch: () => Promise.reject(new Error("Unexpected NPC presence fetch")),
+  };
+
   const handler = new CommandHandler(
     guildStore ?? guilds,
     accounts.verifier ?? {
@@ -217,27 +235,25 @@ const setup = (
     presence,
     realtimeHub ?? hub,
     activity,
-    { send: () => Promise.reject(new Error("Unexpected map ping")) },
-    { send: () => Promise.reject(new Error("Unexpected battle ping")) },
-    {
-      send: () => Promise.reject(new Error("Unexpected loot split")),
-      autoAccept: () => Promise.reject(new Error("Unexpected loot split")),
-    },
-    {
-      updateSubscription,
-      publishObservations,
-      fetchMapThreats: () =>
-        Promise.reject(new Error("Unexpected map threat fetch")),
-      registerInterest,
-    },
-    {
-      report: () => Promise.reject(new Error("Unexpected NPC presence report")),
-      refresh: () => Promise.resolve(),
-      withdraw: () => Promise.resolve(),
-      fetch: () => Promise.reject(new Error("Unexpected NPC presence fetch")),
-    },
+    { npcPresence, airTags },
+    gatewayFeatureRoutes({
+      mapPings: {
+        send: () => Promise.reject(new Error("Unexpected map ping")),
+      },
+      battlePings: {
+        send: () => Promise.reject(new Error("Unexpected battle ping")),
+      },
+      lootSplits: {
+        send: () => Promise.reject(new Error("Unexpected loot split")),
+        autoAccept: () => Promise.reject(new Error("Unexpected loot split")),
+      },
+      airTags,
+      airTagObservationAdmission:
+        airTagObservationAdmission ??
+        new CommandAdmission(AIR_TAG_OBSERVATION_ADMISSION_LIMITS),
+      npcPresence,
+    }),
     joinAdmission,
-    airTagObservationAdmission,
   );
 
   return { handler, guilds, hub, activity, presence };
@@ -879,29 +895,45 @@ describe("CommandHandler session lifecycle", () => {
       presence,
       hub,
       activity,
-      { send: () => Promise.reject(new Error("Unexpected map ping")) },
-      { send: () => Promise.reject(new Error("Unexpected battle ping")) },
       {
-        send: () => Promise.reject(new Error("Unexpected loot split")),
-        autoAccept: () => Promise.reject(new Error("Unexpected loot split")),
+        npcPresence: {
+          refresh: () => Promise.resolve(),
+          withdraw: () => Promise.resolve(),
+        },
+        airTags: {
+          registerInterest: () =>
+            Promise.reject(new Error("Unexpected air tag interest")),
+        },
       },
-      {
-        updateSubscription: () =>
-          Promise.reject(new Error("Unexpected air tag subscription")),
-        publishObservations: () =>
-          Promise.reject(new Error("Unexpected air tag observation")),
-        fetchMapThreats: () =>
-          Promise.reject(new Error("Unexpected map threat fetch")),
-        registerInterest: () =>
-          Promise.reject(new Error("Unexpected air tag interest")),
-      },
-      {
-        report: () =>
-          Promise.reject(new Error("Unexpected NPC presence report")),
-        refresh: () => Promise.resolve(),
-        withdraw: () => Promise.resolve(),
-        fetch: () => Promise.reject(new Error("Unexpected NPC presence fetch")),
-      },
+      gatewayFeatureRoutes({
+        mapPings: {
+          send: () => Promise.reject(new Error("Unexpected map ping")),
+        },
+        battlePings: {
+          send: () => Promise.reject(new Error("Unexpected battle ping")),
+        },
+        lootSplits: {
+          send: () => Promise.reject(new Error("Unexpected loot split")),
+          autoAccept: () => Promise.reject(new Error("Unexpected loot split")),
+        },
+        airTags: {
+          updateSubscription: () =>
+            Promise.reject(new Error("Unexpected air tag subscription")),
+          publishObservations: () =>
+            Promise.reject(new Error("Unexpected air tag observation")),
+          fetchMapThreats: () =>
+            Promise.reject(new Error("Unexpected map threat fetch")),
+        },
+        airTagObservationAdmission: new CommandAdmission(
+          AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
+        ),
+        npcPresence: {
+          report: () =>
+            Promise.reject(new Error("Unexpected NPC presence report")),
+          fetch: () =>
+            Promise.reject(new Error("Unexpected NPC presence fetch")),
+        },
+      }),
     );
 
     const responses: unknown[] = [];
@@ -1712,25 +1744,37 @@ describe("CommandHandler session lifecycle", () => {
             await gate.promise;
           }).pipe(Effect.andThen(Effect.die("Rabbit unavailable"))),
       },
-      { send: () => Promise.reject(new Error("unused")) },
-      { send: () => Promise.reject(new Error("unused")) },
       {
-        send: () => Promise.reject(new Error("unused")),
-        autoAccept: () => Promise.reject(new Error("unused")),
+        npcPresence: {
+          refresh: () => Promise.resolve(),
+          withdraw: () => Promise.resolve(),
+        },
+        airTags: {
+          registerInterest: () => Promise.reject(new Error("unused")),
+        },
       },
-      {
-        updateSubscription: () => Promise.reject(new Error("unused")),
-        publishObservations: () => Promise.reject(new Error("unused")),
-        fetchMapThreats: () => Promise.reject(new Error("unused")),
-        registerInterest: () => Promise.reject(new Error("unused")),
-      },
-      {
-        report: () =>
-          Promise.reject(new Error("Unexpected NPC presence report")),
-        refresh: () => Promise.resolve(),
-        withdraw: () => Promise.resolve(),
-        fetch: () => Promise.reject(new Error("Unexpected NPC presence fetch")),
-      },
+      gatewayFeatureRoutes({
+        mapPings: { send: () => Promise.reject(new Error("unused")) },
+        battlePings: { send: () => Promise.reject(new Error("unused")) },
+        lootSplits: {
+          send: () => Promise.reject(new Error("unused")),
+          autoAccept: () => Promise.reject(new Error("unused")),
+        },
+        airTags: {
+          updateSubscription: () => Promise.reject(new Error("unused")),
+          publishObservations: () => Promise.reject(new Error("unused")),
+          fetchMapThreats: () => Promise.reject(new Error("unused")),
+        },
+        airTagObservationAdmission: new CommandAdmission(
+          AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
+        ),
+        npcPresence: {
+          report: () =>
+            Promise.reject(new Error("Unexpected NPC presence report")),
+          fetch: () =>
+            Promise.reject(new Error("Unexpected NPC presence fetch")),
+        },
+      }),
     );
 
     const publish = (organizationId: string) =>

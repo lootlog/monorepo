@@ -18,6 +18,10 @@ import {
 import { type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket } from "#src/realtime/session";
 import { GatewayRedis } from "#src/platform/redis-store";
+import {
+  fromDependency,
+  type CommandRoutes,
+} from "#src/realtime/command-routes";
 
 /**
  * A choice change, an accept, and the frame a new fight sends for the split
@@ -174,3 +178,25 @@ export class LootSplits extends Context.Service<LootSplits, LootSplitService>()(
     }),
   );
 }
+
+/** Loot split choices and filter accepts are relayed, never stored. */
+export const lootSplitRoutes = (
+  lootSplits: Pick<LootSplitService, "send" | "autoAccept">,
+) =>
+  ({
+    "loot-split.send": {
+      joined: true,
+      run: (socket, data) =>
+        fromDependency("loot-split.send", () => lootSplits.send(socket, data)),
+    },
+    "loot-split.auto-accept": {
+      joined: true,
+      run: (socket, data) =>
+        fromDependency("loot-split.auto-accept", () =>
+          lootSplits.autoAccept(socket, data),
+        ),
+    },
+  }) satisfies Pick<
+    CommandRoutes,
+    "loot-split.send" | "loot-split.auto-accept"
+  >;
