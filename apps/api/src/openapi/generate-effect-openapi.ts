@@ -43,7 +43,10 @@ const HTTP_METHODS = [
   "trace",
 ] as const;
 
-const ENCODED_NUMBER_PATTERN = "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$";
+// Effect documents number-from-string path parameters by this encoded pattern
+// (SchemaAST.FINITE_PATTERN, internal to effect).
+const ENCODED_NUMBER_PATTERN =
+  "^[+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:[Ee][+-]?\\d+)?$";
 
 type JsonObject = Record<string, unknown>;
 

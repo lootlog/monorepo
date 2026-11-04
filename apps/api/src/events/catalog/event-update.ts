@@ -11,7 +11,6 @@ import {
   normalizeEventScoringRules,
   type EventScoringMode,
 } from "@lootlog/domain/scoring";
-import { randomUUID } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -321,7 +320,7 @@ export const makeEventUpdate =
 
               const newHeroes = changes.newHeroes.map((hero) => ({
                 ...hero,
-                id: randomUUID(),
+                id: Bun.randomUUIDv7(),
               }));
 
               if (newHeroes.length > 0) {
@@ -339,7 +338,7 @@ export const makeEventUpdate =
               // starts unassigned; maps of a new hero start without a gap.
               const addedMaps = changes.newMaps.map((map) => ({
                 ...map,
-                id: randomUUID(),
+                id: Bun.randomUUIDv7(),
               }));
 
               const newMaps = [
@@ -347,7 +346,7 @@ export const makeEventUpdate =
                 ...newHeroes.flatMap((hero) =>
                   hero.maps.map((map) => ({
                     ...map,
-                    id: randomUUID(),
+                    id: Bun.randomUUIDv7(),
                     heroNpcId: hero.id,
                   })),
                 ),
@@ -368,7 +367,7 @@ export const makeEventUpdate =
               if (addedMaps.length > 0) {
                 yield* transaction.insert(eventMapCoverageGapTable).values(
                   addedMaps.map((map) => ({
-                    id: randomUUID(),
+                    id: Bun.randomUUIDv7(),
                     mapId: map.id,
                     heroNpcId: map.heroNpcId,
                     gapType: "UNASSIGNED" as const,

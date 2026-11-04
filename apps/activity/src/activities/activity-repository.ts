@@ -186,7 +186,7 @@ export class ActivityRepository extends Context.Service<
         const rows = yield* db
           .insert(activityActorSnapshots)
           .values({
-            id: crypto.randomUUID(),
+            id: Bun.randomUUIDv7(),
             ...snapshotFields,
             fingerprint,
           })
@@ -238,7 +238,7 @@ export class ActivityRepository extends Context.Service<
             const createdRows = yield* tx
               .insert(activities)
               .values({
-                id: crypto.randomUUID(),
+                id: Bun.randomUUIDv7(),
                 userId: dto.userId,
                 guildId: dto.guildId,
                 discordId: dto.discordId,

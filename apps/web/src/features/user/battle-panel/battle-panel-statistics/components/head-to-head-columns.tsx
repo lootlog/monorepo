@@ -12,11 +12,11 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
 import i18n from "@/i18n/config";
-import type { sortingTableFeatures } from "@/lib/tanstack-table-features";
+import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 export const headToHeadBaseColumns: ColumnDef<
-  typeof sortingTableFeatures,
+  typeof coreTableFeatures,
   HeadToHeadRecord
 >[] = [
   {
@@ -110,7 +110,7 @@ export const headToHeadBaseColumns: ColumnDef<
 ];
 
 export const headToHeadLastBattleColumn: ColumnDef<
-  typeof sortingTableFeatures,
+  typeof coreTableFeatures,
   HeadToHeadRecord
 > = {
   accessorKey: "lastBattleDate",
@@ -140,6 +140,6 @@ export const headToHeadLastBattleColumn: ColumnDef<
 };
 
 export const headToHeadColumns: ColumnDef<
-  typeof sortingTableFeatures,
+  typeof coreTableFeatures,
   HeadToHeadRecord
 >[] = [...headToHeadBaseColumns, headToHeadLastBattleColumn];

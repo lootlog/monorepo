@@ -1,4 +1,3 @@
-import { v6 } from "uuid";
 import { Effect, Layer, Schema } from "effect";
 import {
   AccessRequirement,
@@ -170,7 +169,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
 
         const message: ChatStoredMessage = {
           ...data,
-          id: v6(),
+          id: Bun.randomUUIDv7(),
           senderId: discordId,
           timestamp: new Date().toISOString(),
           guildId,

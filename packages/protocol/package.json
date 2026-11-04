@@ -19,7 +19,7 @@
   },
   "scripts": {
     "lint": "oxlint src test",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "test": "bun test"
   },
   "dependencies": {

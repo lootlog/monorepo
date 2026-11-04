@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { question, chalk } from "zx";
+import { styleText } from "node:util";
+import * as p from "@clack/prompts";
 import type { CliOptions, EnvFile, EnvVariable } from "../../types.js";
 import {
   discoverEnvFiles,
@@ -51,7 +52,9 @@ const processEnvFile = async (
   const exists = existsSync(envFile.path);
 
   if (exists && options.skipExisting) {
-    console.log(chalk.yellow(`⏭️  Skipping ${envFile.name} (already exists)`));
+    console.log(
+      styleText("yellow", `⏭️  Skipping ${envFile.name} (already exists)`),
+    );
 
     return {
       created: false,
@@ -60,14 +63,16 @@ const processEnvFile = async (
   }
 
   if (exists && !options.force) {
-    const overwrite = await question(
-      chalk.yellow(
-        `⚠️  ${envFile.name}/.env already exists. Overwrite? (y/n): `,
+    const overwrite = await p.confirm({
+      message: styleText(
+        "yellow",
+        `⚠️  ${envFile.name}/.env already exists. Overwrite?`,
       ),
-    );
+      initialValue: false,
+    });
 
-    if (overwrite.toLowerCase() !== "y") {
-      console.log(chalk.gray(`   Skipped ${envFile.name}`));
+    if (p.isCancel(overwrite) || !overwrite) {
+      console.log(styleText("gray", `   Skipped ${envFile.name}`));
 
       return {
         created: false,
@@ -99,7 +104,7 @@ const processEnvFile = async (
   const envContent = buildEnvContent(variables);
   writeEnvFile(envFile.path, envContent);
 
-  console.log(chalk.green(`✅ Created ${envFile.name}/.env`));
+  console.log(styleText("green", `✅ Created ${envFile.name}/.env`));
 
   return {
     created: true,
@@ -118,13 +123,19 @@ const promptForValues = async (
       continue;
     }
 
-    const input = await question(
-      chalk.cyan(
-        `Enter value for ${variable.key} (default: ${variable.value}): `,
+    const input = await p.text({
+      message: styleText(
+        "cyan",
+        `Enter value for ${variable.key} (default: ${variable.value})`,
       ),
-    );
+    });
 
-    const inputValue = input.trim();
+    if (p.isCancel(input)) {
+      p.cancel("Cancelled");
+      process.exit(1);
+    }
+
+    const inputValue = (input ?? "").trim();
     const value = inputValue === "" ? variable.value : inputValue;
 
     updatedVariables.push({
@@ -142,25 +153,25 @@ export const generate = async (
 ): Promise<void> => {
   if (args.includes("--help") || args.includes("-h")) {
     console.log(`
-${chalk.bold("env generate - Generate environment files")}
+${styleText("bold", "env generate - Generate environment files")}
 
-${chalk.bold("Usage:")}
+${styleText("bold", "Usage:")}
   bun run env:generate [options]
 
-${chalk.bold("Options:")}
+${styleText("bold", "Options:")}
   -a, --auto              Automatically generate with smart defaults (default)
   -i, --interactive       Prompt for each environment variable value
   -s, --skip-existing     Skip files that already exist
   -f, --force             Overwrite existing files without asking
   -h, --help              Show this help message
 
-${chalk.bold("Examples:")}
+${styleText("bold", "Examples:")}
   bun run env:generate                      # Auto-generate with smart defaults
   bun run env:generate --interactive        # Interactive mode
   bun run env:generate --skip-existing      # Only create missing files
   bun run env:generate --force              # Overwrite all files
 
-${chalk.bold("Note:")}
+${styleText("bold", "Note:")}
   The CLI automatically discovers all .env.example files in the monorepo.
   Shared values (database credentials, RabbitMQ, Redis, activity signing) are generated once
   and reused across all services.
@@ -171,17 +182,21 @@ ${chalk.bold("Note:")}
 
   const options = parseArguments(args);
 
-  console.log(chalk.bold.blue("\n🚀 Lootlog Environment Configuration\n"));
+  console.log(
+    styleText(["bold", "blue"], "\n🚀 Lootlog Environment Configuration\n"),
+  );
 
   const mode = options.interactive ? "Interactive" : "Auto-generate";
-  console.log(chalk.gray(`Mode: ${mode}`));
-  console.log(chalk.gray(`Skip existing: ${options.skipExisting}`));
-  console.log(chalk.gray(`Force overwrite: ${options.force}\n`));
+  console.log(styleText("gray", `Mode: ${mode}`));
+  console.log(styleText("gray", `Skip existing: ${options.skipExisting}`));
+  console.log(styleText("gray", `Force overwrite: ${options.force}\n`));
 
-  console.log(chalk.gray("Discovering .env.example files...\n"));
+  console.log(styleText("gray", "Discovering .env.example files...\n"));
   const envFiles = await discoverEnvFiles(rootPath);
 
-  console.log(chalk.gray(`Found ${envFiles.length} environment files:\n`));
+  console.log(
+    styleText("gray", `Found ${envFiles.length} environment files:\n`),
+  );
 
   let sharedValues = new Map<string, string>();
 
@@ -214,7 +229,7 @@ ${chalk.bold("Note:")}
   const appEnvFiles = envFiles.filter((envFile) => envFile.name !== "root");
 
   if (rootEnvFile) {
-    console.log(chalk.bold(`\n📦 Processing root configuration...\n`));
+    console.log(styleText("bold", `\n📦 Processing root configuration...\n`));
 
     const rootResult = await processEnvFile(
       rootEnvFile,
@@ -237,7 +252,8 @@ ${chalk.bold("Note:")}
     ]);
 
     console.log(
-      chalk.gray(
+      styleText(
+        "gray",
         `\n✨ Extracted ${sharedValues.size} shared values for apps\n`,
       ),
     );
@@ -253,25 +269,28 @@ ${chalk.bold("Note:")}
     }
   }
 
-  console.log(chalk.bold.green(`\n✨ Configuration complete!\n`));
-  console.log(chalk.gray(`Created: ${createdCount}`));
-  console.log(chalk.gray(`Skipped: ${skippedCount}`));
+  console.log(styleText(["bold", "green"], `\n✨ Configuration complete!\n`));
+  console.log(styleText("gray", `Created: ${createdCount}`));
+  console.log(styleText("gray", `Skipped: ${skippedCount}`));
 
   if (options.auto) {
     console.log(
-      chalk.yellow(
+      styleText(
+        "yellow",
         `\n⚠️  Note: Some values (Discord tokens, external API keys) are set to placeholders.`,
       ),
     );
     console.log(
-      chalk.yellow(
+      styleText(
+        "yellow",
         `   Please update them manually in the respective .env files.\n`,
       ),
     );
   }
 
   console.log(
-    chalk.green(
+    styleText(
+      "green",
       `\n🎉 You can now run local dependencies: docker compose up -d\n`,
     ),
   );
@@ -280,7 +299,7 @@ ${chalk.bold("Note:")}
 // Only run main when this file is executed directly, not when imported
 if (import.meta.url === `file://${process.argv[1]}`) {
   generate(process.argv.slice(2)).catch((error) => {
-    console.error(chalk.red(`\n❌ Error: ${error.message}\n`));
+    console.error(styleText("red", `\n❌ Error: ${error.message}\n`));
     process.exit(1);
   });
 }

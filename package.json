@@ -31,8 +31,8 @@
       "packages/*"
     ],
     "catalog": {
-      "@effect/platform-bun": "4.0.4",
-      "@effect/sql-pg": "4.0.4",
+      "@effect/platform-bun": "4.1.2",
+      "@effect/sql-pg": "4.1.2",
       "@lexical/code": "0.52.0",
       "@lexical/code-prism": "0.52.0",
       "@lexical/link": "0.52.0",
@@ -57,7 +57,7 @@
       "cn": "^0.4.0",
       "drizzle-kit": "1.0.0-rc.4",
       "drizzle-orm": "1.0.0-rc.4",
-      "effect": "4.0.4",
+      "effect": "4.1.2",
       "es-toolkit": "^1.52.0",
       "lexical": "0.52.0",
       "nanostores": "1.5.5",
@@ -89,7 +89,7 @@
     "deps:check": "POSTGRESQL_CONNECTION_URI=postgresql://knip:knip@127.0.0.1:1/knip knip --dependencies --no-config-hints",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
-    "test:permissions": "tsc --noEmit -p apps/gateway/tsconfig.permissions.json && bun --conditions=development test apps/gateway/test/permission-revocation.test.ts",
+    "test:permissions": "bun check -p apps/gateway/tsconfig.permissions.json && bun --conditions=development test apps/gateway/test/permission-revocation.test.ts",
     "perf:gateway": "bun tools/k6/gateway.mjs",
     "perf:k6": "bun tools/k6/run-k6.mjs",
     "perf:k6:smoke": "bun tools/k6/run-k6.mjs --profile smoke",
@@ -181,7 +181,7 @@
   "packageManager": "bun@1.4.4",
   "patchedDependencies": {
     "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch",
-    "@effect/platform-bun@4.0.4": "patches/@effect%2Fplatform-bun@4.0.4.patch",
+    "@effect/platform-bun@4.1.2": "patches/@effect%2Fplatform-bun@4.1.2.patch",
     "happy-dom@21.0.4": "patches/happy-dom@21.0.4.patch"
   },
   "trustedDependencies": [

@@ -6,7 +6,6 @@ import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidati
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { selectEventKillPoints } from "#src/events/kills/event-point-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { randomUUID } from "node:crypto";
 import { and, eq, ne } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -159,7 +158,7 @@ export const makeEventPointEdits = (
           database.transaction((transaction) =>
             Effect.gen(function* () {
               yield* transaction.insert(eventPointsEditHistoryTable).values({
-                id: randomUUID(),
+                id: Bun.randomUUIDv7(),
                 rankingId,
                 previousPoints: ranking.totalPoints,
                 newPoints: totalPoints,
@@ -271,7 +270,7 @@ export const makeEventPointEdits = (
                   })
                   .where(eq(eventRankingTable.id, ranking.id));
                 yield* transaction.insert(eventPointsEditHistoryTable).values({
-                  id: randomUUID(),
+                  id: Bun.randomUUIDv7(),
                   rankingId: ranking.id,
                   previousPoints: ranking.totalPoints,
                   newPoints: rankingPoints,

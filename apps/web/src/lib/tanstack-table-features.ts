@@ -12,8 +12,6 @@ export const coreTableFeatures = tableFeatures({
   rowSortingFeature,
 });
 
-export const sortingTableFeatures = coreTableFeatures;
-
 export const sortedTableFeatures = tableFeatures({
   columnVisibilityFeature,
   rowSortingFeature,
