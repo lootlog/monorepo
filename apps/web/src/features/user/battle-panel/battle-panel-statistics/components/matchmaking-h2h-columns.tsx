@@ -9,10 +9,10 @@ import {
   headToHeadBaseColumns,
   headToHeadLastBattleColumn,
 } from "./head-to-head-columns";
-import type { sortingTableFeatures } from "@/lib/tanstack-table-features";
+import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 const matchmakingRatingColumns: ColumnDef<
-  typeof sortingTableFeatures,
+  typeof coreTableFeatures,
   HeadToHeadRecord
 >[] = [
   {
@@ -71,7 +71,7 @@ const matchmakingRatingColumns: ColumnDef<
 ];
 
 export const matchmakingH2HColumns: ColumnDef<
-  typeof sortingTableFeatures,
+  typeof coreTableFeatures,
   HeadToHeadRecord
 >[] = [
   ...headToHeadBaseColumns,

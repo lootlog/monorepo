@@ -19,12 +19,3 @@ export function seedRuntimeOthers(
       ),
     );
 }
-
-export function upsertRuntimeOther(id: string, handle: OtherHandle): void {
-  runtimeOtherHandles.applyBatch({ upserts: { [id]: handle } });
-  useOthersStore.getState().applyBatch({
-    upserts: {
-      [id]: normalizeRuntimeOtherData("d" in handle ? handle.d : handle),
-    },
-  });
-}
