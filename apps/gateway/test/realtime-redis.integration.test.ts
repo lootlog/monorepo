@@ -29,10 +29,7 @@ import {
   decodeFederatedRealtimeMessage,
   RedisGatewayStore,
 } from "#src/platform/redis-store";
-import {
-  GatewayMetrics,
-  readClusterFederationVersion,
-} from "#src/realtime/gateway-metrics";
+import { GatewayMetrics } from "#src/realtime/gateway-metrics";
 import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
 import { PresenceStore } from "#src/realtime/presence-store";
 import { OnlineHistory } from "#src/realtime/online-history";
@@ -44,7 +41,7 @@ import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { BattlePingService } from "#src/realtime/battle-ping-service";
 import { NpcPresenceService } from "#src/realtime/npc-presence-service";
-import { FEDERATION_VERSION, RealtimeHub } from "#src/realtime/realtime-hub";
+import { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import { makeGuildStore } from "#src/guilds/guild-store";
 import { getUserGuildsCacheKey } from "#src/guilds/cache-keys";
@@ -774,21 +771,6 @@ describe("realtime Dragonfly integration", () => {
         gameSessions: 0,
         uniquePlayers: 0,
       });
-      expect(secondHub.clusterFederationVersion).toBe(FEDERATION_VERSION);
-
-      // A replica that predates the field cannot decode newer frame types.
-      await store.command.eval(
-        `
-        local time = redis.call('TIME')
-        local at = tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000)
-        redis.call('HSET', KEYS[1], 'older-replica', cjson.encode({at=at,connections=0,sessions=0,players={}}))
-        return 1
-      `,
-        1,
-        "realtime:metrics:instances:v2",
-      );
-      await Effect.runPromise(replicaB.sample());
-      expect(secondHub.clusterFederationVersion).toBe(1);
 
       const observed = Metric.gauge(
         "lootlog_gateway_cluster_observed_at_seconds",
@@ -2624,14 +2606,11 @@ describe("realtime Dragonfly integration", () => {
   });
 
   test.each([
-    { cluster: "unsequenced", lostFrame: false, closed: true },
-    { cluster: "sequenced", lostFrame: false, closed: false },
-    { cluster: "sequenced", lostFrame: true, closed: true },
-    // The periodic sample still reports version 4 when an old replica starts.
-    { cluster: "rolling-back", lostFrame: false, closed: true },
+    { lostFrame: false, closed: false },
+    { lostFrame: true, closed: true },
   ] as const)(
-    "a dropped federation subscription in an $cluster cluster closes sessions only when frames may be lost (lost frame: $lostFrame)",
-    async ({ cluster, lostFrame, closed }) => {
+    "a dropped federation subscription closes sessions only when frames may be lost (lost frame: $lostFrame)",
+    async ({ lostFrame, closed }) => {
       const configuration = makeConfiguration();
       const url = `redis://127.0.0.1:${redisPort}`;
       const control = ManagedRuntime.make(BunRedis.layer({ url }));
@@ -2672,17 +2651,9 @@ describe("realtime Dragonfly integration", () => {
           },
         );
 
-        const hub = new RealtimeHub(configuration, store, undefined, {
-          readClusterFederationVersion: () =>
-            readClusterFederationVersion(store.command),
-        });
+        const hub = new RealtimeHub(configuration, store);
 
         await runtime.runPromise(hub.start());
-
-        if (cluster !== "unsequenced")
-          await runtime.runPromise(
-            new GatewayMetrics(store.command, hub).sample(),
-          );
 
         return hub;
       };
@@ -2747,24 +2718,6 @@ describe("realtime Dragonfly integration", () => {
         const stale = connect(affected, "stale");
         await publishKill(healthy);
         await waitFor(() => stale.frames.length === 1);
-
-        if (cluster === "rolling-back") {
-          expect(affected.clusterFederationVersion).toBe(FEDERATION_VERSION);
-          await control.runPromise(
-            controlRedis.send(
-              "HSET",
-              snapshots,
-              "version-3-replica",
-              JSON.stringify({
-                at: Date.now(),
-                federationVersion: 3,
-                connections: 0,
-                sessions: 0,
-                players: [],
-              }),
-            ),
-          );
-        }
 
         // A frame numbered but never delivered stands for one published while
         // the subscriber was away.
@@ -3384,7 +3337,6 @@ describe("realtime Dragonfly integration", () => {
       ).toHaveLength(0);
 
       // A target leaves once no observer still sees it and one saw it leave the map.
-      firstHub.clusterFederationVersion = FEDERATION_VERSION;
       const scopeRecipient = makeSocket("scope-recipient");
       const firstObserver = makeSocket("first-observer");
       const secondObserver = makeSocket("second-observer");

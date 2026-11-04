@@ -110,7 +110,6 @@ describe("AirTagService", () => {
     const publications: unknown[][] = [];
 
     const hub = {
-      clusterFederationVersion: 2,
       instanceId: crypto.randomUUID(),
       getLocalScopes: () => [],
       subscribe: (
@@ -221,7 +220,6 @@ describe("AirTagService", () => {
         },
       },
       {
-        clusterFederationVersion: 2,
         instanceId: crypto.randomUUID(),
         getLocalScopes: () => [],
         subscribe: () => {
@@ -286,7 +284,6 @@ describe("AirTagService map threats", () => {
         },
       },
       {
-        clusterFederationVersion: 2,
         instanceId: crypto.randomUUID(),
         getLocalScopes: () => [],
         subscribe: () => {},

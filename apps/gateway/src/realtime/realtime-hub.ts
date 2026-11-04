@@ -73,37 +73,6 @@ const MAX_SUBSCRIPTIONS = 4_096;
 const MAX_SCOPE_BYTES = 1_024;
 
 /**
- * Federated frame types this replica decodes and federation guarantees it
- * provides. Bump it with a new federated event type and publish that type only
- * once `clusterFederationVersion` reaches it: a replica drops a frame its
- * schema does not know.
- */
-export const FEDERATION_VERSION = 10;
-
-export const PARTY_GATHERING_STATE_FEDERATION_VERSION = 3;
-
-/** Every replica numbers its publications, so a subscriber can prove it lost none. */
-export const SEQUENCED_FEDERATION_VERSION = 4;
-
-/** Replicas from this version register the air-tag scopes their sockets follow. */
-export const AIR_TAG_INTEREST_FEDERATION_VERSION = 5;
-
-/** Replicas from this version decode `global-chat.created`. */
-export const GLOBAL_CHAT_FEDERATION_VERSION = 6;
-
-/** Replicas from this version decode `global-chat.deleted` and `global-chat.pinned`. */
-export const GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION = 7;
-
-/** Replicas from this version deliver `preciseEvent` of a presence publication. */
-export const PRESENCE_PAIR_FEDERATION_VERSION = 8;
-
-/** Replicas from this version decode `loot-split.received`. */
-export const LOOT_SPLIT_FEDERATION_VERSION = 9;
-
-/** Replicas from this version decode `loot-split.auto-accepted`. */
-export const LOOT_SPLIT_AUTO_ACCEPT_FEDERATION_VERSION = 10;
-
-/**
  * Identifies the frame schema of this build. A replica with the same schema
  * produced its frame bytes through that schema, so they carry no field this
  * replica would strip, and it forwards them without decoding and re-encoding.
@@ -141,12 +110,6 @@ interface FederationRecovery {
   readonly graceMs?: number;
   /** Spreads the closes when sessions did miss frames. */
   readonly closeSpreadMs?: number;
-  /**
-   * Reads the lowest `FEDERATION_VERSION` of the live replicas when a
-   * resubscription vouches for sessions. The periodic sample can predate a
-   * replica that started, or rolled back, during the gap.
-   */
-  readonly readClusterFederationVersion?: () => Effect.Effect<number, unknown>;
 }
 
 // Covers a 5 s Dragonfly stall plus the resubscribe backoff and reorder window.
@@ -257,8 +220,6 @@ export class RealtimeHub {
   private federationEpoch = 0;
   private draining = false;
   readonly instanceId = crypto.randomUUID();
-  /** Lowest `FEDERATION_VERSION` among live replicas, kept by `GatewayMetrics`; 1 until known. */
-  clusterFederationVersion = 1;
   /** Cluster-wide global chat counts, kept by `GatewayMetrics`; undefined until sampled. */
   globalChatCounts?: GlobalChatCounts;
 
@@ -536,47 +497,17 @@ export class RealtimeHub {
 
     const scopeKey = getScopeKey(scope);
 
-    // `event` stays the basic variant: a replica that predates the pair
-    // ignores `preciseEvent` and degrades its readers to basic presence.
-    if (this.clusterFederationVersion >= PRESENCE_PAIR_FEDERATION_VERSION) {
-      const { message, prepared, preparedPrecise, frames } =
-        this.createFederatedMessage({
-          scopeKey,
-          scope,
-          organizationId,
-          frame: basicEvent,
-          preciseFrame: preciseEvent,
-        });
-
-      this.deliver(message, prepared, preparedPrecise);
-      await this.redis.publish(message, frames);
-
-      return;
-    }
-
-    const messages = [
+    const { message, prepared, preparedPrecise, frames } =
       this.createFederatedMessage({
         scopeKey,
         scope,
         organizationId,
-        presenceAudience: "basic",
         frame: basicEvent,
-      }),
-      this.createFederatedMessage({
-        scopeKey,
-        scope,
-        organizationId,
-        presenceAudience: "precise",
-        frame: preciseEvent,
-      }),
-    ];
+        preciseFrame: preciseEvent,
+      });
 
-    await Promise.all(
-      messages.map(async ({ message, prepared, frames }) => {
-        this.deliver(message, prepared);
-        await this.redis.publish(message, frames);
-      }),
-    );
+    this.deliver(message, prepared, preparedPrecise);
+    await this.redis.publish(message, frames);
   }
 
   /** Distinct scopes of `topic` that a local socket subscribes to. */
@@ -636,30 +567,10 @@ export class RealtimeHub {
       return;
     }
 
-    // Sequence continuity covers only sequenced frames. Trust it only when
-    // every live replica numbers its frames, read now rather than sampled.
-    const epoch = this.federationEpoch;
-
-    const read =
-      this.federationRecovery.readClusterFederationVersion?.() ??
-      Effect.succeed(this.clusterFederationVersion);
-
-    this.runBackground(
-      "realtime.federation.verify",
-      read.pipe(
-        Effect.orElseSucceed(() => 1),
-        Effect.map((version) => {
-          if (epoch !== this.federationEpoch) return;
-          this.clusterFederationVersion = version;
-
-          if (version < SEQUENCED_FEDERATION_VERSION)
-            this.closeAfterFederationGap();
-          clearTimeout(this.federationGrace);
-          this.federationGrace = undefined;
-          this.markFederated();
-        }),
-      ),
-    );
+    // Every frame is sequenced, so the resubscription proved none was lost.
+    clearTimeout(this.federationGrace);
+    this.federationGrace = undefined;
+    this.markFederated();
   }
 
   private markFederated(): void {
@@ -677,13 +588,6 @@ export class RealtimeHub {
 
     if (!this.federated) return;
     this.federated = false;
-
-    // A replica that does not number its frames can lose them unnoticed.
-    if (this.clusterFederationVersion < SEQUENCED_FEDERATION_VERSION) {
-      this.closeAfterFederationGap();
-
-      return;
-    }
 
     this.logger.warn("Realtime federation subscription interrupted", {
       instanceId: this.instanceId,
@@ -748,7 +652,7 @@ export class RealtimeHub {
     readonly recipientMapId?: number;
     readonly recipientCharacterIds?: readonly string[];
     readonly organizationId?: string;
-    readonly presenceAudience?: "basic" | "precise";
+    readonly presenceAudience?: "precise";
     readonly frame: Event;
     readonly preciseFrame?: Event;
   }) {
@@ -1174,9 +1078,8 @@ export class RealtimeHub {
     message: FederatedRealtimeMessage,
   ): boolean {
     if (!message.presenceAudience || !message.organizationId) return true;
-    const precise = canReadPreciseLocation(socket.data, message.organizationId);
 
-    return message.presenceAudience === "precise" ? precise : !precise;
+    return canReadPreciseLocation(socket.data, message.organizationId);
   }
 
   private remember(id: string): boolean {

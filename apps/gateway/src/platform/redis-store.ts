@@ -21,7 +21,7 @@ type RedisGatewayConfig = Omit<GatewayConfiguration["redis"], "password"> & {
 
 export interface FederatedRealtimeMessage {
   readonly id: string;
-  /** Position in the federation stream; replicas before version 4 omit it. */
+  /** Position in the federation stream; Redis adds it when it publishes. */
   readonly sequence?: number;
   readonly sourceInstanceId: string;
   readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
@@ -36,9 +36,10 @@ export interface FederatedRealtimeMessage {
   readonly recipientWorld?: string;
   readonly recipientMapId?: number;
   readonly recipientCharacterIds?: ReadonlyArray<string>;
-  readonly presenceAudience?: "basic" | "precise";
+  /** Only readers of precise location receive it. */
+  readonly presenceAudience?: "precise";
   readonly organizationId?: string;
-  /** `FRAME_SCHEMA` of the publishing replica; absent before version 8. */
+  /** `FRAME_SCHEMA` of the publishing replica. */
   readonly frameSchema?: string;
   /** The frame, as its encoded JSON value. */
   readonly event?: Schema.Json;
@@ -80,7 +81,7 @@ const FederatedRealtimeMessageSchema = Schema.Struct({
   recipientWorld: Schema.optional(Schema.String),
   recipientMapId: Schema.optional(Schema.Number),
   recipientCharacterIds: Schema.optional(Schema.Array(Schema.String)),
-  presenceAudience: Schema.optional(Schema.Literals(["basic", "precise"])),
+  presenceAudience: Schema.optional(Schema.Literal("precise")),
   organizationId: Schema.optional(Schema.String),
   frameSchema: Schema.optional(Schema.String),
   event: Schema.optional(Schema.Unknown),
@@ -129,7 +130,7 @@ export const encodeFederatedRealtimeMessage = (
 const FEDERATION_SEQUENCE_KEY = "realtime:federation:v1:sequence";
 
 // Numbering and publication are one step, so a number exists only for a frame
-// Redis published. Older replicas ignore the added field.
+// Redis published.
 const publishSequencedScript = `
 local sequence = redis.call("INCR", KEYS[1])
 redis.call("PUBLISH", ARGV[1], '{"sequence":' .. sequence .. ',' .. string.sub(ARGV[2], 2))
