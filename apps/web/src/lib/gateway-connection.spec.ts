@@ -1,6 +1,9 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
-import { decodeRealtimeFrame } from "@lootlog/protocol/realtime";
+import {
+  decodeRealtimeFrame,
+  encodeRealtimeFrame,
+} from "@lootlog/protocol/realtime/codec";
 import { GatewayEvent } from "@/config/gateway";
 import { GatewayClient } from "./gateway-client";
 
@@ -17,7 +20,7 @@ class GatewayWebSocket extends EventTarget {
   }
 
   send(data: string) {
-    const request = decodeRealtimeFrame(JSON.parse(data));
+    const request = decodeRealtimeFrame(data);
 
     if (!("requestId" in request) || !request.requestId) {
       throw new Error("Expected a realtime request");
@@ -43,7 +46,7 @@ class GatewayWebSocket extends EventTarget {
     for (const frame of [reply, event]) {
       this.dispatchEvent(
         new MessageEvent("message", {
-          data: JSON.stringify(frame),
+          data: encodeRealtimeFrame(frame),
         }),
       );
     }

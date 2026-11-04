@@ -13,9 +13,9 @@ import {
   encodeRealtimeFrame,
   prepareRealtimeFrame,
   tryDecodeRealtimeFrame,
+  tryParseEncodedRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
 import {
-  decodeRealtimeFrame,
   type Response as RealtimeResponse,
   RealtimeFrame,
   type ServerEvent,
@@ -23,8 +23,7 @@ import {
   REALTIME_SERVER_CLOSE_CODES,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { decode as decodeMessagePack } from "@msgpack/msgpack";
-import { Effect, Predicate, Result, Schema } from "effect";
+import { Effect, Result, Schema } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
   type BackgroundTaskRunner,
@@ -60,18 +59,12 @@ type Response = typeof RealtimeResponse.Type;
 
 interface PublishedFrame {
   readonly event: Event;
-  /** Canonical MessagePack bytes, encoded on first use when absent. */
-  binary?: Uint8Array;
-  json?: string;
+  /** Canonical JSON text, encoded on first use when absent. */
+  text?: string;
 }
 
-const encodePublishedFrame = (
-  frame: PublishedFrame,
-  session: SessionData,
-): string | Uint8Array =>
-  session.frameEncoding === "json"
-    ? (frame.json ??= JSON.stringify(frame.event))
-    : (frame.binary ??= encodeRealtimeFrame(frame.event));
+const encodePublishedFrame = (frame: PublishedFrame): string =>
+  (frame.text ??= JSON.stringify(frame.event));
 
 // ponytail: replay deduplication covers 10,000 events per live instance; use a durable inbox if retries must survive eviction or restarts.
 const MAX_DEDUPLICATION_ENTRIES = 10_000;
@@ -161,23 +154,6 @@ interface FederationRecovery {
 const FEDERATION_GRACE_MS = 15_000;
 
 const FEDERATION_CLOSE_SPREAD_MS = 10_000;
-
-const toBase64 = (bytes: Uint8Array): string =>
-  Buffer.from(bytes).toString("base64");
-
-const fromBase64 = (value: string): Uint8Array => Buffer.from(value, "base64");
-
-/**
- * The JSON text a JSON recipient of this replica receives, for replicas that
- * stop publishing MessagePack bytes. Absent when local delivery rejects the
- * frame as well.
- */
-const federatedJson = (prepared: ReturnType<typeof prepareRealtimeFrame>) =>
-  Result.getOrUndefined(
-    Result.try(() =>
-      JSON.stringify(prepared.frame ?? decodeMessagePack(prepared.bytes)),
-    ),
-  );
 
 /** The global chat channel of `world`, or the one every world shares. */
 export const globalChatScope = (world: string | undefined): Scope =>
@@ -803,10 +779,8 @@ export class RealtimeHub {
         organizationId: options.organizationId,
         presenceAudience: options.presenceAudience,
         frameSchema: FRAME_SCHEMA,
-        frame: toBase64(prepared.bytes),
-        preciseFrame: preparedPrecise && toBase64(preparedPrecise.bytes),
-        frameJson: federatedJson(prepared),
-        preciseFrameJson: preparedPrecise && federatedJson(preparedPrecise),
+        frameJson: prepared.text,
+        preciseFrameJson: preparedPrecise?.text,
       },
     };
   }
@@ -830,40 +804,24 @@ export class RealtimeHub {
     this.deliver(message);
   }
 
-  /** The event of a frame and, when they are canonical, its encoded forms. */
+  /** The event of a frame and, when it is canonical, its JSON text. */
   private publicationFrame(
-    frame: string | undefined,
     frameJson: string | undefined,
     frameSchema: string | undefined,
     local?: ReturnType<typeof prepareRealtimeFrame>,
   ): PublishedFrame | undefined {
-    if (frame === undefined && local === undefined) {
-      return frameJson === undefined
-        ? undefined
-        : this.jsonPublicationFrame(frameJson, frameSchema);
-    }
+    const text = local?.text ?? frameJson;
 
-    const bytes = local?.bytes ?? fromBase64(frame ?? "");
-    // Bytes from another schema must be re-encoded after validation strips
+    if (text === undefined) return;
+    // Text from another schema must be re-encoded after validation strips
     // the fields this replica does not know.
     const canonical = local !== undefined || frameSchema === FRAME_SCHEMA;
 
     const decoded = local?.frame
       ? Result.succeed(local.frame)
       : canonical
-        ? Result.try({
-            try: () => {
-              const value = decodeMessagePack(bytes);
-
-              if (!Predicate.isObject(value))
-                throw new Error("Federation frame is not an object");
-
-              // SAFETY: a replica with this schema encoded these bytes through it.
-              return value as RealtimeFrame;
-            },
-            catch: (cause) => cause,
-          })
-        : tryDecodeRealtimeFrame(bytes);
+        ? tryParseEncodedRealtimeFrame(text)
+        : tryDecodeRealtimeFrame(text);
 
     if (Result.isFailure(decoded)) {
       this.logger.warn(
@@ -876,43 +834,7 @@ export class RealtimeHub {
 
     if (!isServerEventFrame(decoded.success)) return;
 
-    return { event: decoded.success, binary: canonical ? bytes : undefined };
-  }
-
-  /** A frame from a replica that publishes only JSON text. */
-  private jsonPublicationFrame(
-    frameJson: string,
-    frameSchema: string | undefined,
-  ): PublishedFrame | undefined {
-    const canonical = frameSchema === FRAME_SCHEMA;
-
-    const decoded = Result.try({
-      try: () => {
-        const value: unknown = JSON.parse(frameJson);
-
-        if (!canonical) return decodeRealtimeFrame(value);
-
-        if (!Predicate.isObject(value))
-          throw new Error("Federation frame is not an object");
-
-        // SAFETY: a replica with this schema encoded this text through it.
-        return value as RealtimeFrame;
-      },
-      catch: (cause) => cause,
-    });
-
-    if (Result.isFailure(decoded)) {
-      this.logger.warn(
-        "Rejected malformed Redis federation frame",
-        decoded.failure,
-      );
-
-      return;
-    }
-
-    if (!isServerEventFrame(decoded.success)) return;
-
-    return { event: decoded.success, json: canonical ? frameJson : undefined };
+    return { event: decoded.success, text: canonical ? text : undefined };
   }
 
   private deliver(
@@ -926,7 +848,6 @@ export class RealtimeHub {
     if (candidates.size === 0) return;
 
     const published = this.publicationFrame(
-      message.frame,
       message.frameJson,
       message.frameSchema,
       local,
@@ -938,12 +859,9 @@ export class RealtimeHub {
     const precise = this.preciseFrame(message, localPrecise);
 
     if (precise === null) return;
-    const chatFrames = new Map<string, string | Uint8Array>();
+    const chatFrames = new Map<boolean, string>();
 
-    const legacyAirTagFrames = new Map<
-      string,
-      ReadonlyArray<string | Uint8Array>
-    >();
+    let legacyAirTagFrames: ReadonlyArray<string> | undefined;
 
     const canReadSource = prepareSourceEventVisibility(
       frame,
@@ -977,7 +895,6 @@ export class RealtimeHub {
         this.send(
           socket,
           this.encodeChatEvent(
-            socket.data,
             frame,
             chatFrames,
             chatPermissions(socket.data, guild),
@@ -990,14 +907,10 @@ export class RealtimeHub {
         frame.type === "air-tag.scope-updated" &&
         !socket.data.supportsAirTagScopeUpdates
       ) {
-        this.sendEach(
-          socket,
-          this.encodeLegacyAirTagUpdates(
-            socket.data,
-            frame,
-            legacyAirTagFrames,
-          ),
+        legacyAirTagFrames ??= toLegacyAirTagUpdates(frame).map((legacy) =>
+          JSON.stringify(legacy),
         );
+        this.sendEach(socket, legacyAirTagFrames);
         continue;
       }
 
@@ -1006,7 +919,7 @@ export class RealtimeHub {
           ? precise.published
           : published;
 
-      this.send(socket, encodePublishedFrame(variant, socket.data));
+      this.send(socket, encodePublishedFrame(variant));
     }
   }
 
@@ -1018,15 +931,10 @@ export class RealtimeHub {
     message: FederatedRealtimeMessage,
     local?: ReturnType<typeof prepareRealtimeFrame>,
   ) {
-    if (
-      (message.preciseFrame === undefined &&
-        message.preciseFrameJson === undefined) ||
-      !message.organizationId
-    )
+    if (message.preciseFrameJson === undefined || !message.organizationId)
       return;
 
     const published = this.publicationFrame(
-      message.preciseFrame,
       message.preciseFrameJson,
       message.frameSchema,
       local,
@@ -1109,50 +1017,21 @@ export class RealtimeHub {
   }
 
   private encodeChatEvent(
-    session: SessionData,
     event: Extract<Event, { type: "chat.created" }>,
-    frames: Map<string, string | Uint8Array>,
+    frames: Map<boolean, string>,
     permissions: { canDelete: boolean },
-  ): string | Uint8Array {
-    const key = `${session.frameEncoding}:${permissions.canDelete}`;
-    let encoded = frames.get(key);
+  ): string {
+    let encoded = frames.get(permissions.canDelete);
 
     if (encoded === undefined) {
-      const recipientFrame = withChatMessagePermissions(event, permissions);
-      encoded =
-        session.frameEncoding === "json"
-          ? JSON.stringify(recipientFrame)
-          : encodeRealtimeFrame(recipientFrame);
-      frames.set(key, encoded);
+      encoded = JSON.stringify(withChatMessagePermissions(event, permissions));
+      frames.set(permissions.canDelete, encoded);
     }
 
     return encoded;
   }
 
-  private encodeLegacyAirTagUpdates(
-    session: SessionData,
-    event: Extract<Event, { type: "air-tag.scope-updated" }>,
-    frames: Map<string, ReadonlyArray<string | Uint8Array>>,
-  ): ReadonlyArray<string | Uint8Array> {
-    const key = session.frameEncoding ?? "messagepack";
-    let encoded = frames.get(key);
-
-    if (encoded === undefined) {
-      encoded = toLegacyAirTagUpdates(event).map((legacy) =>
-        session.frameEncoding === "json"
-          ? JSON.stringify(legacy)
-          : encodeRealtimeFrame(legacy),
-      );
-      frames.set(key, encoded);
-    }
-
-    return encoded;
-  }
-
-  private sendEach(
-    socket: GatewaySocket,
-    frames: ReadonlyArray<string | Uint8Array>,
-  ): void {
+  private sendEach(socket: GatewaySocket, frames: ReadonlyArray<string>): void {
     for (const frame of frames) {
       if (!this.send(socket, frame)) return;
     }
@@ -1328,15 +1207,10 @@ export class RealtimeHub {
   }
 
   private sendFrame(socket: GatewaySocket, frame: Response | Event): boolean {
-    return this.send(
-      socket,
-      socket.data.frameEncoding === "json"
-        ? JSON.stringify(frame)
-        : encodeRealtimeFrame(frame),
-    );
+    return this.send(socket, encodeRealtimeFrame(frame));
   }
 
-  private send(socket: GatewaySocket, data: string | Uint8Array): boolean {
+  private send(socket: GatewaySocket, data: string): boolean {
     if (this.backpressuredSockets.has(socket)) return false;
 
     if (!hasValidApiKeyLease(socket.data)) {

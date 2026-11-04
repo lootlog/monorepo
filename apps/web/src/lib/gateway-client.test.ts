@@ -1,3 +1,4 @@
+import { encodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { REALTIME_JSON_SUBPROTOCOL } from "@lootlog/client/realtime";
 import {
@@ -93,7 +94,7 @@ it("dispatches private volunteer frames to the legacy volunteer listener", async
     const frame = { v: 1, type: "notification.volunteer", data } as const;
     dispatch?.(
       new MessageEvent("message", {
-        data: JSON.stringify(frame),
+        data: encodeRealtimeFrame(frame),
       }),
     );
     await vi.waitFor(() => expect(received).toHaveBeenCalledWith(data));

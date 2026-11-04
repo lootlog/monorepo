@@ -246,8 +246,8 @@ automatic Organization subscriptions. A scope's JSON representation is limited
 to 1,024 UTF-8 bytes. Extra subscriptions are rejected with the existing
 `COMMAND_REJECTED` response and `retryable: false` before either routing index
 changes. Replacing an existing scope remains allowed at capacity; unsubscribing
-releases capacity. These limits apply to JSON and MessagePack clients and to
-air-tag subscriptions through the same hub.
+releases capacity. These limits apply to every client and to air-tag
+subscriptions through the same hub.
 
 If server-side subscription reconciliation exceeds a limit, the gateway clears
 the connection's subscriptions and closes it with code 1008. It never retains

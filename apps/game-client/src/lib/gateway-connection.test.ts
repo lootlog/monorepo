@@ -1,5 +1,8 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { decodeFrame, encodeFrame } from "@/test/realtime-wire";
+import {
+  decodeRealtimeFrame,
+  encodeRealtimeFrame,
+} from "@lootlog/protocol/realtime/codec";
 import { createGameRealtimeClient } from "./game-client-platform";
 
 class GatewayWebSocket extends EventTarget {
@@ -15,7 +18,7 @@ class GatewayWebSocket extends EventTarget {
   }
 
   send(data: string) {
-    const request = decodeFrame(data);
+    const request = decodeRealtimeFrame(data);
 
     if (!("requestId" in request) || !request.requestId) {
       throw new Error("Expected a realtime request");
@@ -41,7 +44,7 @@ class GatewayWebSocket extends EventTarget {
     for (const frame of [reply, event]) {
       this.dispatchEvent(
         new MessageEvent("message", {
-          data: encodeFrame(frame),
+          data: encodeRealtimeFrame(frame),
         }),
       );
     }

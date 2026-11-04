@@ -60,8 +60,6 @@ export const REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY =
 export const REALTIME_PARTY_GATHERING_STATE_CAPABILITY =
   "lootlog.party-gathering-state.v1";
 
-export const REALTIME_SUBPROTOCOL = "lootlog.realtime.v1";
-
 // Listed in `session.joined` capabilities. Older gateways close the socket on an
 // unknown command, so clients send `connection.ping` only when it is listed.
 export const REALTIME_PING_CAPABILITY = "connection.ping";

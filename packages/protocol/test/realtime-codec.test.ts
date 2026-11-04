@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import { decode, encode } from "@msgpack/msgpack";
 import { Result } from "effect";
 import {
   decodePresenceSnapshot,
@@ -13,6 +12,7 @@ import {
   tryEncodeRealtimeFrame,
   RealtimeCodecError,
   tryDecodeRealtimeFrame,
+  tryParseEncodedRealtimeFrame,
 } from "../src/realtime/codec.ts";
 import {
   PRESENCE_EXPIRY_MS,
@@ -21,7 +21,7 @@ import {
   type RealtimeFrame,
 } from "../src/realtime/protocol.ts";
 
-describe("realtime MessagePack codec", () => {
+describe("realtime JSON codec", () => {
   test.each([false, true])(
     "preserves presence locations when included: %s",
     (includeLocation) => {
@@ -65,7 +65,7 @@ describe("realtime MessagePack codec", () => {
       ] satisfies RealtimeFrame[];
 
       for (const frame of frames) {
-        expect(decodeRealtimeFrame(encode(frame))).toEqual(frame);
+        expect(decodeRealtimeFrame(JSON.stringify(frame))).toEqual(frame);
         expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
       }
     },
@@ -119,8 +119,8 @@ describe("realtime MessagePack codec", () => {
     const prepared = prepareRealtimeFrame(input);
 
     expect(prepared.frame).toStrictEqual(canonical);
-    expect(decode(prepared.bytes)).toStrictEqual(canonical);
-    expect(prepared.bytes).toEqual(encodeRealtimeFrame(input));
+    expect(JSON.parse(prepared.text)).toStrictEqual(canonical);
+    expect(prepared.text).toBe(encodeRealtimeFrame(input));
     expect(input.data.presences[0]?.character.secret).toBe("strip");
   });
 
@@ -234,14 +234,13 @@ describe("realtime MessagePack codec", () => {
       },
     };
 
-    expect(() => decodeRealtimeFrame(encode(invalid))).toThrow(
+    expect(() => decodeRealtimeFrame(JSON.stringify(invalid))).toThrow(
       RealtimeCodecError,
     );
   });
 
   test("rejects malformed and unknown frames", () => {
-    const malformed = new Uint8Array([0xc1]);
-    expect(() => decodeRealtimeFrame(malformed)).toThrow(RealtimeCodecError);
+    expect(() => decodeRealtimeFrame("{")).toThrow(RealtimeCodecError);
 
     const unknownType = {
       v: 1,
@@ -250,13 +249,27 @@ describe("realtime MessagePack codec", () => {
       data: { room: "private-room-name" },
     };
 
-    expect(() => decodeRealtimeFrame(encode(unknownType))).toThrow(
+    expect(() => decodeRealtimeFrame(JSON.stringify(unknownType))).toThrow(
       RealtimeCodecError,
     );
   });
 
+  test("rejects a __proto__ key that a receiver could assign as a prototype", () => {
+    const frame = encodeRealtimeFrame({
+      v: 1,
+      type: "chat.cleared",
+      data: {
+        organizationId: "organization-1",
+        payload: JSON.parse('{"__proto__":{"hidden":true}}'),
+      },
+    });
+
+    expect(() => decodeRealtimeFrame(frame)).toThrow(RealtimeCodecError);
+    expect(Result.isFailure(tryParseEncodedRealtimeFrame(frame))).toBe(true);
+  });
+
   test("returns typed failures for untrusted frames", () => {
-    const result = tryDecodeRealtimeFrame(new Uint8Array([0xc1]));
+    const result = tryDecodeRealtimeFrame("{");
     expect(result._tag).toBe("Failure");
 
     if (Result.isFailure(result)) {

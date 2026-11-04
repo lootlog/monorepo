@@ -18,8 +18,7 @@ import type {
   GlobalChatChannelUpdate,
   GlobalChatMessage,
 } from "@lootlog/schema/chat";
-import { Effect, Predicate } from "effect";
-import { decode, encode } from "@msgpack/msgpack";
+import { Effect } from "effect";
 import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import { getScopeKey, RealtimeHub } from "./realtime-hub.js";
 import { RabbitBridge, gatewayConsumerSpecs } from "#src/rabbit/rabbit-bridge";
@@ -100,16 +99,16 @@ const makeGamePresence = (
 });
 
 const makeSocket = (data: SessionData, bufferedAmount = 0) => {
-  const sent: Uint8Array[] = [];
+  const sent: string[] = [];
   const closes: number[] = [];
 
   const socket = {
     data,
     getBufferedAmount: () => bufferedAmount,
-    send: (bytes: Uint8Array) => {
-      sent.push(bytes);
+    send: (text: string) => {
+      sent.push(text);
 
-      return bytes.byteLength;
+      return text.length;
     },
     close: (code: number) => {
       closes.push(code);
@@ -1259,30 +1258,15 @@ describe("RealtimeHub federation", () => {
           discordId: "canonical-discord",
         };
 
-        const binary = makeSocket({
-          ...makeSession(`canonical-binary-${index}`),
+        const target = makeSocket({
+          ...makeSession(`canonical-${index}`),
           ...identity,
         });
 
-        const json: string[] = [];
+        hub.register(target.socket);
+        hub.subscribe(target.socket, scope);
 
-        const jsonSocket = {
-          data: {
-            ...makeSession(`canonical-json-${index}`),
-            ...identity,
-            frameEncoding: "json" as const,
-          },
-          getBufferedAmount: () => 0,
-          send: (frame: string) => json.push(frame),
-          close: () => {},
-        };
-
-        for (const socket of [binary.socket, jsonSocket]) {
-          hub.register(socket);
-          hub.subscribe(socket, scope);
-        }
-
-        return { binary: binary.sent, json };
+        return target.sent;
       });
 
       await Effect.runPromise(local.start());
@@ -1329,50 +1313,43 @@ describe("RealtimeHub federation", () => {
         id: "raw-federation",
         sourceInstanceId: "external-instance",
         scope,
-        frame: Buffer.from(encode(withUnknownFields)).toString("base64"),
+        frameJson: JSON.stringify(withUnknownFields),
       });
 
-      for (const target of targets) {
-        // Decode the wire bytes without the protocol schema, which would hide leaked fields.
-        expect(target.binary.map((bytes) => decode(bytes))).toEqual([
-          canonical,
-          canonical,
-        ]);
-        expect(target.json.map((frame) => JSON.parse(frame))).toEqual([
+      for (const sent of targets) {
+        // Parse the wire text without the protocol schema, which would hide leaked fields.
+        expect(sent.map((text) => JSON.parse(text))).toEqual([
           canonical,
           canonical,
         ]);
       }
 
-      for (const [index, bytes] of [
-        new Uint8Array([0xc1]),
-        encode({ ...canonical, v: 2 }),
-        encode({ ...canonical, type: "unsupported.event" }),
-        encode({ ...canonical, data: { payload: {} } }),
-        encode({
+      for (const [index, frameJson] of [
+        "{",
+        JSON.stringify({ ...canonical, v: 2 }),
+        JSON.stringify({ ...canonical, type: "unsupported.event" }),
+        JSON.stringify({ ...canonical, data: { payload: {} } }),
+        JSON.stringify({
           v: 1,
           type: "session.join",
           requestId: "valid-command",
           data: { platform: "web-app" },
         }),
-        encode({ v: 1, type: "session.join", data: {} }),
+        JSON.stringify({ v: 1, type: "session.join", data: {} }),
       ].entries()) {
         await store.publish({
           id: `malformed-federation-${index}`,
           sourceInstanceId: "external-instance",
           scope,
-          frame: Buffer.from(bytes).toString("base64"),
+          frameJson,
         });
       }
 
-      for (const target of targets) {
-        expect(target.binary).toHaveLength(2);
-        expect(target.json).toHaveLength(2);
-      }
+      for (const sent of targets) expect(sent).toHaveLength(2);
     },
   );
 
-  test("delivers frames from replicas that publish only JSON text", async () => {
+  test("strips fields of another schema and forwards canonical text from other replicas unchanged", async () => {
     const bus = new FederationBus();
     const local = new RealtimeHub(config, new FakeRedisStore(bus));
     const remote = new RealtimeHub(config, new FakeRedisStore(bus));
@@ -1382,23 +1359,9 @@ describe("RealtimeHub federation", () => {
       organizationId: "organization-1",
     } as const;
 
-    const binary = makeSocket(makeSession("json-only-binary"));
-    const json: string[] = [];
-
-    const jsonSocket = {
-      data: {
-        ...makeSession("json-only-json"),
-        frameEncoding: "json" as const,
-      },
-      getBufferedAmount: () => 0,
-      send: (frame: string) => json.push(frame),
-      close: () => {},
-    };
-
-    for (const socket of [binary.socket, jsonSocket]) {
-      remote.register(socket);
-      remote.subscribe(socket, scope);
-    }
+    const target = makeSocket(makeSession("federated"));
+    remote.register(target.socket);
+    remote.subscribe(target.socket, scope);
 
     const published: FederatedRealtimeMessage[] = [];
     bus.listeners.push((message) => published.push(message));
@@ -1414,39 +1377,41 @@ describe("RealtimeHub federation", () => {
     await local.publishToScope(scope, event);
     const message = published[0];
 
-    expect(message?.frameJson).toBe(JSON.stringify(event));
+    if (!message) throw new Error("Missing federation message");
+    expect(message.frameJson).toBe(JSON.stringify(event));
+
+    // A replica with this schema already encoded the text, in its own key order.
+    const canonicalText = JSON.stringify({
+      data: event.data,
+      type: event.type,
+      v: event.v,
+    });
 
     // A replica with another schema may send fields this one strips.
-    for (const [id, frameSchema, frame] of [
-      ["json-only-canonical", message?.frameSchema, event],
+    for (const [id, frameSchema, frameJson] of [
+      ["canonical-schema", message.frameSchema, canonicalText],
       [
-        "json-only-other-schema",
+        "other-schema",
         "other",
-        { ...event, data: { ...event.data, unknown: "strip" } },
+        JSON.stringify({ ...event, data: { ...event.data, unknown: "strip" } }),
       ],
     ] as const) {
       for (const listener of bus.listeners)
         listener({
-          ...message!,
+          ...message,
           id,
-          sourceInstanceId: "json-only-replica",
+          sourceInstanceId: "other-replica",
           frameSchema,
-          frame: undefined,
-          frameJson: JSON.stringify(frame),
+          frameJson,
         });
     }
 
-    expect(binary.sent.slice(-2).map((bytes) => decode(bytes))).toEqual([
-      event,
-      event,
-    ]);
-    expect(json.slice(-2).map((text) => JSON.parse(text))).toEqual([
-      event,
-      event,
-    ]);
+    const [canonical, other] = target.sent.slice(-2);
+    expect(canonical).toBe(canonicalText);
+    expect(JSON.parse(other ?? "")).toEqual(event);
   });
 
-  test("keeps MessagePack normalization and rejected payload keys aligned locally and remotely", async () => {
+  test("keeps JSON normalization and rejected payload keys aligned locally and remotely", async () => {
     const bus = new FederationBus();
     const local = new RealtimeHub(config, new FakeRedisStore(bus));
     const remote = new RealtimeHub(config, new FakeRedisStore(bus));
@@ -1457,32 +1422,18 @@ describe("RealtimeHub federation", () => {
     } as const;
 
     const targets = [local, remote].map((hub, index) => {
-      const binary = makeSocket(makeSession(`normalized-binary-${index}`));
-      const json: string[] = [];
+      const target = makeSocket(makeSession(`normalized-${index}`));
+      hub.register(target.socket);
+      hub.subscribe(target.socket, scope);
 
-      const jsonSocket = {
-        data: {
-          ...makeSession(`normalized-json-${index}`),
-          frameEncoding: "json" as const,
-        },
-        getBufferedAmount: () => 0,
-        send: (frame: string) => json.push(frame),
-        close: () => {},
-      };
-
-      for (const socket of [binary.socket, jsonSocket]) {
-        hub.register(socket);
-        hub.subscribe(socket, scope);
-      }
-
-      return { binary: binary.sent, json };
+      return target.sent;
     });
 
     await Effect.runPromise(local.start());
     await Effect.runPromise(remote.start());
 
     const customPayload = Object.defineProperty({ id: "message" }, "toJSON", {
-      value: () => ({ id: "must-not-leak" }),
+      value: () => ({ id: "custom" }),
     });
 
     const sparse: unknown[] = ["value"];
@@ -1518,18 +1469,11 @@ describe("RealtimeHub federation", () => {
         data: { organizationId: scope.organizationId, payload },
       } as const;
 
-      const bytes = encode(event, { ignoreUndefined: true });
       await local.publishToScope(scope, event);
 
-      for (const [index, target] of targets.entries()) {
-        // Preserve each existing transport's handling of binary payload views:
-        // remote decoding starts with a Buffer from the base64 envelope.
-        const canonical = decode(index === 0 ? bytes : Buffer.from(bytes));
-        expect(decode(target.binary.at(-1) ?? new Uint8Array())).toStrictEqual(
-          canonical,
-        );
-        expect(target.json.at(-1)).toBe(JSON.stringify(canonical));
-      }
+      const [localText, remoteText] = targets.map((sent) => sent.at(-1));
+      expect(localText).toBe(realtimeCodec.encodeRealtimeFrame(event));
+      expect(remoteText).toBe(localText);
     }
 
     // The decoder rejects this key even inside otherwise valid JSON payloads.
@@ -1543,10 +1487,7 @@ describe("RealtimeHub federation", () => {
       data: { organizationId: scope.organizationId, payload: rejectedPayload },
     });
 
-    for (const target of targets) {
-      expect(target.binary).toHaveLength(7);
-      expect(target.json).toHaveLength(7);
-    }
+    for (const sent of targets) expect(sent).toHaveLength(7);
   });
 
   test("targets every user or Discord connection across gateways without subscriptions", async () => {
@@ -2065,25 +2006,6 @@ describe("RealtimeHub federation", () => {
       hub.register(target.socket);
     }
 
-    const jsonFrames: string[] = [];
-
-    const jsonSocket = {
-      data: {
-        ...makeSession("json-broadcast"),
-        frameEncoding: "json" as const,
-      },
-      getBufferedAmount: () => 0,
-      send: (frame: string) => {
-        jsonFrames.push(frame);
-
-        return frame.length;
-      },
-      close: () => {},
-    };
-
-    jsonSocket.data.subscriptions.set(getScopeKey(scope), scope);
-    hub.register(jsonSocket);
-
     const event = {
       v: 1,
       type: "chat.cleared",
@@ -2091,24 +2013,20 @@ describe("RealtimeHub federation", () => {
     } as const;
 
     await hub.publishToScope(scope, event);
-    expect(jsonFrames).toEqual([JSON.stringify(event)]);
-    expect(targets[0]?.sent).toHaveLength(1);
-    expect(targets[0]?.sent[0]).toBe(targets[1]?.sent[0]);
-    expect(
-      decodeRealtimeFrame(targets[0]?.sent[0] ?? new Uint8Array()),
-    ).toEqual(event);
+    expect(targets[0]?.sent).toEqual([JSON.stringify(event)]);
+    expect(targets[1]?.sent).toEqual([JSON.stringify(event)]);
     expect(targets[2]?.sent).toEqual([]);
     expect(targets[2]?.closes).toEqual([1013]);
     expect(targets[3]?.sent).toEqual([]);
   });
 
-  test("sends readable JSON to local diagnostic sockets", () => {
+  test("sends direct events as JSON text", () => {
     const hub = new RealtimeHub(
       config,
       new FakeRedisStore(new FederationBus()),
     );
 
-    const data = { ...makeSession("json"), frameEncoding: "json" } as const;
+    const data = makeSession("direct");
     const sent: string[] = [];
 
     const socket = {
@@ -2313,8 +2231,8 @@ describe("RealtimeHub federation", () => {
       ),
     );
 
-    const received = (frames: Uint8Array[]) =>
-      frames.map((bytes) => decodeRealtimeFrame(bytes));
+    const received = (frames: string[]) =>
+      frames.map((text) => decodeRealtimeFrame(text));
 
     expect(received(gordion.sent)).toEqual([
       {
@@ -2485,9 +2403,10 @@ describe("RealtimeHub federation", () => {
     });
 
     expect(target.sent).toHaveLength(1);
-    expect(
-      decodeRealtimeFrame(target.sent[0] ?? new Uint8Array()),
-    ).toHaveProperty("type", "chat.cleared");
+    expect(decodeRealtimeFrame(target.sent[0] ?? "")).toHaveProperty(
+      "type",
+      "chat.cleared",
+    );
   });
 
   test("closes on the first dropped event and never resumes a session with a delivery gap", async () => {
@@ -2549,7 +2468,7 @@ describe("RealtimeHub federation", () => {
       id: "no-audience",
       sourceInstanceId: "remote",
       scope,
-      frame: Buffer.from(encode(event)).toString("base64"),
+      frameJson: JSON.stringify(event),
     };
 
     const decodeFrame = spyOn(realtimeCodec, "tryDecodeRealtimeFrame");
@@ -2565,7 +2484,7 @@ describe("RealtimeHub federation", () => {
       await redis.publish({ ...message, id: "subscribed" });
       expect(decodeFrame).toHaveBeenCalledTimes(1);
       expect(target.sent.map(decodeRealtimeFrame)).toEqual([event]);
-      await redis.publish({ ...message, id: "malformed", frame: "AA==" });
+      await redis.publish({ ...message, id: "malformed", frameJson: "{" });
       expect(target.sent).toHaveLength(1);
     } finally {
       decodeFrame.mockRestore();
@@ -2890,9 +2809,7 @@ test("gathering rosters reach authorized observers across gateways without expos
 
         for (const target of sharedTargets) {
           expect(target.sent).toHaveLength(2);
-          expect(
-            decodeRealtimeFrame(target.sent[1] ?? new Uint8Array()),
-          ).toMatchObject({
+          expect(decodeRealtimeFrame(target.sent[1] ?? "")).toMatchObject({
             data: {
               organizationId: sharedGuild,
               payload: { gathering: { guildIds: [sharedGuild] } },
@@ -3250,128 +3167,113 @@ for (const scenario of [
   }
 }
 
-test.each(["msgpack", "json"] as const)(
-  "chat capabilities and shared %s frames stay recipient-specific locally and remotely",
-  async (frameEncoding) => {
-    const bus = new FederationBus();
-    const local = new RealtimeHub(config, new FakeRedisStore(bus));
-    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+test("chat capabilities and shared frames stay recipient-specific locally and remotely", async () => {
+  const bus = new FederationBus();
+  const local = new RealtimeHub(config, new FakeRedisStore(bus));
+  const remote = new RealtimeHub(config, new FakeRedisStore(bus));
 
-    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+  for (const hub of [local, remote]) await Effect.runPromise(hub.start());
 
-    const scope = {
-      topic: "organization.chat",
-      organizationId: "organization-1",
-    } as const;
+  const scope = {
+    topic: "organization.chat",
+    organizationId: "organization-1",
+  } as const;
 
-    const viewers = [
-      {
-        id: "author",
-        permissions: [
-          Permission.LOOTLOG_CHAT_READ,
-          Permission.LOOTLOG_CHAT_WRITE,
-        ],
-        canDelete: true,
-      },
-      {
-        id: "reader",
-        permissions: [Permission.LOOTLOG_CHAT_READ],
-        canDelete: false,
-      },
-      {
-        id: "reader-2",
-        permissions: [Permission.LOOTLOG_CHAT_READ],
-        canDelete: false,
-      },
-      {
-        id: "admin",
-        permissions: [Permission.ADMIN],
-        canDelete: true,
-      },
-      { id: "owner", permissions: [], canDelete: true },
-    ];
+  const viewers = [
+    {
+      id: "author",
+      permissions: [
+        Permission.LOOTLOG_CHAT_READ,
+        Permission.LOOTLOG_CHAT_WRITE,
+      ],
+      canDelete: true,
+    },
+    {
+      id: "reader",
+      permissions: [Permission.LOOTLOG_CHAT_READ],
+      canDelete: false,
+    },
+    {
+      id: "reader-2",
+      permissions: [Permission.LOOTLOG_CHAT_READ],
+      canDelete: false,
+    },
+    {
+      id: "admin",
+      permissions: [Permission.ADMIN],
+      canDelete: true,
+    },
+    { id: "owner", permissions: [], canDelete: true },
+  ];
 
-    const targets = [local, remote].map((hub) =>
-      viewers.map((viewer) => {
-        const session = { ...makeSession(viewer.id), discordId: viewer.id };
-        session.guilds = [
-          {
-            guild: { id: "organization-1", ownerId: "owner" },
-            roles: [
-              {
-                id: "role",
-                permissions: viewer.permissions,
-                lvlRangeFrom: 0,
-                lvlRangeTo: 500,
-              },
-            ],
-          },
-        ];
-        session.frameEncoding = frameEncoding === "json" ? "json" : undefined;
-        const sent: Array<string | Uint8Array> = [];
-
-        const socket = {
-          data: session,
-          getBufferedAmount: () => 0,
-          close: () => {},
-          send: (frame: string | Uint8Array) => sent.push(frame),
-        };
-
-        hub.register(socket);
-        hub.subscribe(socket, scope);
-
-        return { sent };
-      }),
-    );
-
-    await local.publishToScope(scope, {
-      v: 1,
-      type: "chat.created",
-      data: {
-        organizationId: "organization-1",
-        payload: {
-          id: "message",
-          guildId: "organization-1",
-          senderId: "author",
-          type: "NORMAL",
-          message: "Hello",
-          canDelete: true,
-        },
-      },
-    });
-
-    for (const group of targets) {
-      for (const [index, viewer] of viewers.entries()) {
-        expect(group[index]?.sent).toHaveLength(1);
-        const frame = group[index]?.sent[0];
-        expect(frame).toBeDefined();
-        expect(
-          Predicate.isString(frame)
-            ? JSON.parse(frame)
-            : decodeRealtimeFrame(frame ?? new Uint8Array()),
-        ).toMatchObject({
-          data: {
-            payload: {
-              id: "message",
-              canDelete: viewer.canDelete,
+  const targets = [local, remote].map((hub) =>
+    viewers.map((viewer) => {
+      const session = { ...makeSession(viewer.id), discordId: viewer.id };
+      session.guilds = [
+        {
+          guild: { id: "organization-1", ownerId: "owner" },
+          roles: [
+            {
+              id: "role",
+              permissions: viewer.permissions,
+              lvlRangeFrom: 0,
+              lvlRangeTo: 500,
             },
+          ],
+        },
+      ];
+      const sent: string[] = [];
+
+      const socket = {
+        data: session,
+        getBufferedAmount: () => 0,
+        close: () => {},
+        send: (frame: string) => sent.push(frame),
+      };
+
+      hub.register(socket);
+      hub.subscribe(socket, scope);
+
+      return { sent };
+    }),
+  );
+
+  await local.publishToScope(scope, {
+    v: 1,
+    type: "chat.created",
+    data: {
+      organizationId: "organization-1",
+      payload: {
+        id: "message",
+        guildId: "organization-1",
+        senderId: "author",
+        type: "NORMAL",
+        message: "Hello",
+        canDelete: true,
+      },
+    },
+  });
+
+  for (const group of targets) {
+    for (const [index, viewer] of viewers.entries()) {
+      expect(group[index]?.sent).toHaveLength(1);
+      expect(decodeRealtimeFrame(group[index]?.sent[0] ?? "")).toMatchObject({
+        data: {
+          payload: {
+            id: "message",
+            canDelete: viewer.canDelete,
           },
-        });
-      }
-
-      expect(group[1]?.sent[0]).toBe(group[2]?.sent[0]);
+        },
+      });
     }
-  },
-);
 
-test.each([
-  ["msgpack", 7],
-  ["json", 7],
-  ["msgpack", 8],
-  ["json", 8],
-] as const)(
-  "keeps basic and precise %s presence private for local and remote recipients at federation version %d",
-  async (frameEncoding, clusterFederationVersion) => {
+    expect(group[1]?.sent[0]).toBe(group[2]?.sent[0]);
+  }
+});
+
+test.each([7, 8] as const)(
+  "keeps basic and precise presence private for local and remote recipients at federation version %d",
+  async (clusterFederationVersion) => {
     const bus = new FederationBus();
     const local = new RealtimeHub(config, new FakeRedisStore(bus));
     const remote = new RealtimeHub(config, new FakeRedisStore(bus));
@@ -3388,10 +3290,7 @@ test.each([
 
     const targets = [local, remote].flatMap((hub, index) =>
       [false, true].map((precise) => {
-        const session: SessionData = {
-          ...makeSession(`presence-${index}-${precise}`),
-          frameEncoding: frameEncoding === "json" ? "json" : undefined,
-        };
+        const session = makeSession(`presence-${index}-${precise}`);
 
         const permissions: Permission[] = [
           Permission.LOOTLOG_ONLINE_PLAYERS_READ,
@@ -3412,13 +3311,13 @@ test.each([
             roles: [role],
           },
         ];
-        const sent: Array<string | Uint8Array> = [];
+        const sent: string[] = [];
 
         const socket = {
           data: session,
           getBufferedAmount: () => 0,
           close: () => {},
-          send: (frame: string | Uint8Array) => sent.push(frame),
+          send: (frame: string) => sent.push(frame),
         };
 
         hub.register(socket);
@@ -3490,9 +3389,7 @@ test.each([
     await local.publishPresence(scope, basic, precise);
 
     for (const target of targets) {
-      const frames = target.sent.map((frame) =>
-        Predicate.isString(frame) ? JSON.parse(frame) : decode(frame),
-      );
+      const frames = target.sent.map((frame) => JSON.parse(frame));
 
       expect(frames).toEqual(
         target.precise ? [precise, basic] : [basic, precise],

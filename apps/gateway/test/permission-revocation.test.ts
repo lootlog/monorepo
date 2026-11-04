@@ -1,5 +1,4 @@
 import { expect, test } from "bun:test";
-import { encode } from "@msgpack/msgpack";
 import { Effect, Redacted, Schema } from "effect";
 import { HttpClient, HttpClientResponse } from "effect/http";
 import type {
@@ -265,7 +264,7 @@ const setup = async () => {
 
     const socket: GatewaySocket = {
       data,
-      send: (frame: Uint8Array) => {
+      send: (frame: string) => {
         frames.push(decodeRealtimeFrame(frame));
 
         return 1;
@@ -280,14 +279,12 @@ const setup = async () => {
     await Effect.runPromise(
       replica.commands.handle(
         socket,
-        Buffer.from(
-          encode({
-            v: 1,
-            type: "session.join",
-            requestId: "join",
-            data: {},
-          }),
-        ),
+        JSON.stringify({
+          v: 1,
+          type: "session.join",
+          requestId: "join",
+          data: {},
+        }),
       ),
     );
 
