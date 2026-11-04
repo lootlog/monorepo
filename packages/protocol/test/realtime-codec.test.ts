@@ -290,7 +290,7 @@ describe("realtime JSON codec", () => {
   });
 });
 
-test("realtime policy snapshots and legacy permission events share the v1 codec", () => {
+test("realtime policy snapshots round-trip through the v1 codec", () => {
   const accessPolicy = {
     version: "canonical-policy-version",
     organizations: [
@@ -308,46 +308,39 @@ test("realtime policy snapshots and legacy permission events share the v1 codec"
     ],
   } as const;
 
-  for (const includePolicy of [false, true]) {
-    const baseData = {
-      organizationIds: ["organization-1"],
-      subscriptionScopes: [
-        { topic: "organization.timers", organizationId: "organization-1" },
-      ],
-    } as const;
+  const data = {
+    organizationIds: ["organization-1"],
+    subscriptionScopes: [
+      { topic: "organization.timers", organizationId: "organization-1" },
+    ],
+    accessPolicy,
+  } as const;
 
-    const data = includePolicy ? { ...baseData, accessPolicy } : baseData;
-
-    const permissionData = includePolicy
-      ? ({
-          ...data,
-          changes: [
-            {
-              organizationId: "organization-1",
-              areas: ["timers"],
-              restricted: true,
-              expanded: false,
-            },
-          ],
-        } as const)
-      : data;
-
-    const frames = [
-      {
-        v: 1,
-        type: "session.joined",
-        data: { ...data, connectionId: "connection-1" },
+  const frames = [
+    {
+      v: 1,
+      type: "session.joined",
+      data: { ...data, connectionId: "connection-1" },
+    },
+    {
+      v: 1,
+      type: "permissions.updated",
+      data: {
+        ...data,
+        changes: [
+          {
+            organizationId: "organization-1",
+            areas: ["timers"],
+            restricted: true,
+            expanded: false,
+          },
+        ],
       },
-      {
-        v: 1,
-        type: "permissions.updated",
-        data: permissionData,
-      },
-    ] satisfies RealtimeFrame[];
+    },
+  ] satisfies RealtimeFrame[];
 
-    for (const frame of frames)
-      expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
-  }
+  for (const frame of frames)
+    expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
 });
 
 describe("command success decoding", () => {

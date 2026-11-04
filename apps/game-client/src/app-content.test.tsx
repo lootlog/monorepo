@@ -1,3 +1,4 @@
+import { ownerAccessPolicy } from "@/test/realtime-wire";
 import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import {
   accountPreferenceValues,
@@ -95,6 +96,7 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
         connectionId: "test",
         organizationIds: ["guild-1"],
         subscriptionScopes: [],
+        accessPolicy: ownerAccessPolicy(["guild-1"]),
       },
     }),
   );

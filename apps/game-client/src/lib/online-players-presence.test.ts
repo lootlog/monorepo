@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   applyPresenceUpdates,
-  normalizePresence,
   requestServerPresence,
+  toPlayerPresence,
   type PlayerPresence,
 } from "./online-players-presence";
 
@@ -74,26 +74,32 @@ describe("online players presence", () => {
     expect(next).toBe(previous);
   });
 
-  it("preserves Margonem verification from player presence payloads", () => {
+  it("marks a verified Margonem account on the character's presence", () => {
     expect(
-      normalizePresence({
+      toPlayerPresence("guild-1", {
+        userId: "user-1",
         discordId: "discord-1",
-        guildId: "guild-1",
-        playerPresence: {
+        sessionId: "session-1",
+        organizationIds: ["guild-1"],
+        platform: "game",
+        status: "online",
+        confidence: "verified",
+        isAfk: false,
+        lastSeen: 1,
+        character: {
           world: "alpha",
           name: "Hero",
-          lvl: "100",
+          lvl: 100,
           icon: "icon",
           characterId: "10",
           accountId: "20",
           prof: "w",
-          sessionId: "session-1",
-          margonemAccountVerified: true,
         },
       }),
     ).toEqual(
       expect.objectContaining({
         discordId: "discord-1",
+        guildId: "guild-1",
         margonemAccountVerified: true,
         player: expect.objectContaining({
           characterId: "10",
@@ -107,28 +113,33 @@ describe("online players presence", () => {
     vi.useFakeTimers();
     const response = { status: "success" as const, players: {} };
 
-    const emitWithAck = vi
-      .fn<
-        ReturnType<
-          Parameters<typeof requestServerPresence>[0]["timeout"]
-        >["emitWithAck"]
-      >()
+    const fetchPresence = vi
+      .fn<Parameters<typeof requestServerPresence>[0]["fetchPresence"]>()
       .mockRejectedValueOnce(new Error("ack timeout"))
       .mockResolvedValueOnce(response);
 
-    const timeout = vi.fn<
-      Parameters<typeof requestServerPresence>[0]["timeout"]
-    >(() => ({ emitWithAck }));
-
-    const request = requestServerPresence({ timeout }, "guild-1", "tempest");
+    const request = requestServerPresence(
+      { fetchPresence },
+      "guild-1",
+      "tempest",
+    );
 
     await vi.advanceTimersByTimeAsync(999);
-    expect(emitWithAck).toHaveBeenCalledTimes(1);
+    expect(fetchPresence).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(2_001);
     await expect(request).resolves.toEqual(response);
-    expect(timeout).toHaveBeenCalledTimes(2);
-    expect(timeout).toHaveBeenNthCalledWith(1, 5_000);
-    expect(timeout).toHaveBeenNthCalledWith(2, 5_000);
-    expect(emitWithAck).toHaveBeenCalledTimes(2);
+    expect(fetchPresence).toHaveBeenCalledTimes(2);
+    expect(fetchPresence).toHaveBeenNthCalledWith(
+      1,
+      "guild-1",
+      "tempest",
+      5_000,
+    );
+    expect(fetchPresence).toHaveBeenNthCalledWith(
+      2,
+      "guild-1",
+      "tempest",
+      5_000,
+    );
   });
 });

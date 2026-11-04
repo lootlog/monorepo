@@ -1,6 +1,5 @@
 import { useEffect } from "react";
-import { GatewayEvent } from "@/config/gateway";
-import { getSocket, type PermissionsUpdatedPayload } from "@/lib/socket";
+import { getSocket, type AccessUpdate } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import type { AirTagScopeUpdateEvent } from "@lootlog/schema/air-tag";
 import { airTagRuntime } from "./air-tag-runtime";
@@ -24,7 +23,7 @@ export const useAirTags = (): void => {
       airTagRuntime.handleScopeUpdate(event);
     };
 
-    const handlePermissionsUpdated = (payload: PermissionsUpdatedPayload) => {
+    const handlePermissionsUpdated = (payload: AccessUpdate) => {
       airTagRuntime.handlePermissionsUpdated(payload);
     };
 
@@ -34,14 +33,14 @@ export const useAirTags = (): void => {
       airTagRuntime.handlePresencePublished(payload.organizationIds);
     };
 
-    socket.on(GatewayEvent.AIR_TAG_SCOPE_UPDATE, handleScopeUpdate);
-    socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
-    socket.on(GatewayEvent.PRESENCE_PUBLISHED, handlePresencePublished);
+    socket.on("air-tag.scope-updated", handleScopeUpdate);
+    socket.on("access.updated", handlePermissionsUpdated);
+    socket.on("presence.published", handlePresencePublished);
 
     return () => {
-      socket.off(GatewayEvent.AIR_TAG_SCOPE_UPDATE, handleScopeUpdate);
-      socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
-      socket.off(GatewayEvent.PRESENCE_PUBLISHED, handlePresencePublished);
+      socket.off("air-tag.scope-updated", handleScopeUpdate);
+      socket.off("access.updated", handlePermissionsUpdated);
+      socket.off("presence.published", handlePresencePublished);
     };
   }, [connected, joined]);
 

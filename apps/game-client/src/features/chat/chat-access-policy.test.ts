@@ -6,7 +6,6 @@ import type { ChatMessage } from "@/api/chat.api";
 import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
 import {
   applyChatAccessPolicy,
-  applyLegacyChatAccessChange,
   refreshChatAfterReconnect,
   retainChatAccessPolicy,
 } from "./chat-access-policy";
@@ -371,36 +370,6 @@ describe("chat policy reconciliation", () => {
     await vi.advanceTimersByTimeAsync(5000);
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(client.getQueryData(key("removed"))).toEqual([]);
-    off();
-    release();
-    client.clear();
-  });
-
-  it("purges cache on a legacy gateway burst and performs one delayed active refresh", async () => {
-    vi.useFakeTimers();
-    const client = new QueryClient();
-    const release = retainChatAccessPolicy(client);
-    applyChatAccessPolicy(client, policy());
-    client.setQueryData(key("one"), [message("one", "revoked")]);
-    client.setQueryData(key("two"), [message("two", "inactive")]);
-    const fetch = vi.fn<() => Promise<ChatMessage[]>>().mockResolvedValue([]);
-
-    const observer = new QueryObserver(client, {
-      queryKey: key("one"),
-      queryFn: fetch,
-      staleTime: Infinity,
-    });
-
-    const off = observer.subscribe(() => {});
-
-    for (let i = 0; i < 10; i++) applyLegacyChatAccessChange(client);
-    expect(client.getQueryData(key("one"))).toEqual([]);
-    expect(client.getQueryData(key("two"))).toEqual([]);
-    await vi.advanceTimersByTimeAsync(4999);
-    expect(fetch).not.toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(1);
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(client.getQueryState(key("two"))?.isInvalidated).toBe(true);
     off();
     release();
     client.clear();

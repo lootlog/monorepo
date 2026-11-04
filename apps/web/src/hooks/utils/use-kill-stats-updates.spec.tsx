@@ -6,7 +6,10 @@ import {
   QueryObserver,
 } from "@tanstack/react-query";
 import { afterEach, expect, it, vi } from "vitest";
-import { createTestGateway } from "@/lib/testing/gateway";
+import {
+  createTestAccessPolicy,
+  createTestGateway,
+} from "@/lib/testing/gateway";
 import { useKillStatsUpdates } from "./use-kill-stats-updates";
 
 const clients: QueryClient[] = [];
@@ -80,6 +83,7 @@ it("coalesces kill hints, refreshes active statistics without attributing kills,
         connectionId: "connection-1",
         organizationIds: [],
         subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy([]),
       },
     }),
   );

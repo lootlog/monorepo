@@ -5,7 +5,10 @@ import {
   RealtimeRequestError,
   type BasicPresence,
 } from "@lootlog/client/realtime";
-import { createTestGateway } from "@/lib/testing/gateway";
+import {
+  createTestAccessPolicy,
+  createTestGateway,
+} from "@/lib/testing/gateway";
 import { OrganizationPresence } from "./organization-presence";
 
 const presence: BasicPresence = {
@@ -147,7 +150,12 @@ it("discards a pending old response after a presence restriction and ignores del
   gateway.deliver({
     v: 1,
     type: "permissions.updated",
-    data: { organizationIds: [], subscriptionScopes: [] },
+    data: {
+      changes: [],
+      organizationIds: [],
+      subscriptionScopes: [],
+      accessPolicy: createTestAccessPolicy([]),
+    },
   });
   expect(store.getSnapshot().web).toBeUndefined();
   resolveOld(response);
@@ -201,6 +209,7 @@ it("marks disconnects stale and replays in-flight deltas after a successful rejo
       connectionId: "connection",
       organizationIds: [],
       subscriptionScopes: [],
+      accessPolicy: createTestAccessPolicy([]),
     },
   });
   gateway.deliver({
@@ -277,6 +286,7 @@ it("removes cached locations immediately when a known policy loses location acce
     v: 1,
     type: "permissions.updated",
     data: {
+      changes: [],
       organizationIds: [],
       subscriptionScopes: [],
       accessPolicy: policy([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),

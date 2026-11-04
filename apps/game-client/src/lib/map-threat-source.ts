@@ -4,7 +4,6 @@ import {
   type AirTagMapThreatEnemy,
   type AirTagMapThreatEvent,
 } from "@lootlog/schema/air-tag";
-import { GatewayEvent } from "@/config/gateway";
 import {
   canReadPresenceLocation,
   type PlayerPresence,
@@ -135,10 +134,10 @@ export class MapThreatSource {
 
   private start(): void {
     this.active = true;
-    this.socket.on(GatewayEvent.AIR_TAG_MAP_THREAT_UPDATE, this.apply);
-    this.socket.on(GatewayEvent.PERMISSIONS_UPDATED, this.handleAccessChange);
-    this.socket.on(GatewayEvent.JOIN, this.handleJoin);
-    this.socket.on(GatewayEvent.DISCONNECT, this.clear);
+    this.socket.on("air-tag.map-threat-updated", this.apply);
+    this.socket.on("access.updated", this.handleAccessChange);
+    this.socket.on("join", this.handleJoin);
+    this.socket.on("disconnect", this.clear);
     this.releaseMembers = this.members.subscribeChanges(
       this.handleMembersChange,
       false,
@@ -150,10 +149,10 @@ export class MapThreatSource {
   private stop(): void {
     if (!this.active) return;
     this.active = false;
-    this.socket.off(GatewayEvent.AIR_TAG_MAP_THREAT_UPDATE, this.apply);
-    this.socket.off(GatewayEvent.PERMISSIONS_UPDATED, this.handleAccessChange);
-    this.socket.off(GatewayEvent.JOIN, this.handleJoin);
-    this.socket.off(GatewayEvent.DISCONNECT, this.clear);
+    this.socket.off("air-tag.map-threat-updated", this.apply);
+    this.socket.off("access.updated", this.handleAccessChange);
+    this.socket.off("join", this.handleJoin);
+    this.socket.off("disconnect", this.clear);
     this.releaseMembers?.();
     this.releaseMembers = null;
     this.fetchId += 1;
@@ -206,8 +205,7 @@ export class MapThreatSource {
     );
   };
 
-  private readonly handleJoin = (payload: { status: string }): void => {
-    if (payload.status !== "success") return;
+  private readonly handleJoin = (): void => {
     this.readable = this.canRead();
     void this.hydrate();
   };

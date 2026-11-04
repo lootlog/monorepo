@@ -21,7 +21,7 @@ async function setup() {
   });
 
   test.open();
-  await test.join();
+  await test.join(["guild-1", "guild-2"]);
 
   const requests = () =>
     test.wire.frames.flatMap((frame) =>

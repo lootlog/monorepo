@@ -190,13 +190,14 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
         reconcile();
     };
 
-    const onJoin = (
-      payload: PolicyUpdate & { guildIds: string[]; recover: boolean },
-    ) => {
+    const onJoin = (payload: {
+      accessPolicyChanges: readonly AccessPolicyChange[];
+      guildIds: string[];
+      recover: boolean;
+    }) => {
       const joinedGuilds = new Set(payload.guildIds);
 
       if (
-        !payload.accessPolicyChanges ||
         payload.accessPolicyChanges.some(
           (change) =>
             change.restricted &&

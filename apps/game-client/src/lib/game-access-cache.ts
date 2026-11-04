@@ -13,7 +13,6 @@ import {
 } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { HERO_SIGHTING_READ_FEATURE } from "@lootlog/domain/npc-permissions";
-import type { PermissionsUpdatedPayload } from "@/lib/socket";
 
 const isQueryPath = Schema.is(Schema.String);
 
@@ -142,12 +141,13 @@ export const getTimerQueryGuildId = (
 const reconcileTimers = (
   queryClient: QueryClient,
   policy: AccessPolicySnapshot,
-  changes: readonly AccessPolicyChange[] | undefined,
+  changes: readonly AccessPolicyChange[],
   initial: boolean,
   pendingQueries: Set<Query>,
 ) => {
-  const timerChanges =
-    changes?.filter((change) => change.areas.includes("timers")) ?? [];
+  const timerChanges = changes.filter((change) =>
+    change.areas.includes("timers"),
+  );
 
   const restricted = new Set(
     timerChanges.flatMap((change) =>
@@ -215,7 +215,7 @@ const reconcileTimers = (
 const reconcilePermissions = (
   queryClient: QueryClient,
   policy: AccessPolicySnapshot,
-  changes: readonly AccessPolicyChange[] | undefined,
+  changes: readonly AccessPolicyChange[],
   initial: boolean,
 ) => {
   const organizations = new Map(
@@ -225,7 +225,7 @@ const reconcilePermissions = (
     ]),
   );
 
-  const changedIds = new Set(changes?.map((change) => change.organizationId));
+  const changedIds = new Set(changes.map((change) => change.organizationId));
 
   if (initial) {
     for (const organization of policy.organizations)
@@ -258,7 +258,7 @@ const reconcilePermissions = (
 const reconcileOrganizations = (
   queryClient: QueryClient,
   policy: AccessPolicySnapshot,
-  changes: readonly AccessPolicyChange[] | undefined,
+  changes: readonly AccessPolicyChange[],
   initial: boolean,
   pendingQueries: Set<Query>,
 ) => {
@@ -329,28 +329,7 @@ export const createGameAccessCache = (queryClient: QueryClient) => {
   };
 
   return {
-    apply(data: PermissionsUpdatedPayload) {
-      const policy = data.accessPolicy;
-
-      if (!policy) {
-        currentPolicy = undefined;
-        policies.delete(queryClient);
-
-        for (const query of queryClient.getQueryCache().getAll()) {
-          if (getTimerQueryGuildId(query) === undefined) continue;
-          void queryClient.cancelQueries({
-            queryKey: query.queryKey,
-            exact: true,
-          });
-          queryClient.setQueryData(query.queryKey, []);
-          pendingQueries.add(query);
-        }
-
-        scheduleRefresh();
-
-        return;
-      }
-
+    apply(policy: AccessPolicySnapshot) {
       if (currentPolicy?.version === policy.version) return;
       const initial = currentPolicy === undefined;
 

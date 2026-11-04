@@ -1,7 +1,6 @@
-import { GatewayEvent } from "@/config/gateway";
 import { resolveNpcType } from "@lootlog/domain/npc-routing";
 import type { NpcTypeEnum } from "@lootlog/schema/npc-type";
-import type { PermissionsUpdatedPayload } from "@/lib/socket";
+import type { AccessUpdate } from "@/lib/socket";
 import type { ChatMessage } from "@/api/chat.api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
@@ -141,14 +140,8 @@ export const useChatMessagesListener = ({
       chatCacheBatcher.discardAll();
     };
 
-    const handlePermissionsUpdated = (data: PermissionsUpdatedPayload) => {
-      if (!data.accessPolicy) {
-        discardAllPending();
-
-        return;
-      }
-
-      const guildIds = (data.changes ?? []).flatMap((change) =>
+    const handlePermissionsUpdated = (data: AccessUpdate) => {
+      const guildIds = data.changes.flatMap((change) =>
         change.restricted && change.areas.includes("chat")
           ? [change.organizationId]
           : [],
@@ -164,12 +157,12 @@ export const useChatMessagesListener = ({
       chatCacheBatcher.discardGuilds(guildIds);
     };
 
-    socket?.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
-    socket?.on(GatewayEvent.DISCONNECT, discardAllPending);
+    socket?.on("access.updated", handlePermissionsUpdated);
+    socket?.on("disconnect", discardAllPending);
 
     return () => {
-      socket?.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
-      socket?.off(GatewayEvent.DISCONNECT, discardAllPending);
+      socket?.off("access.updated", handlePermissionsUpdated);
+      socket?.off("disconnect", discardAllPending);
     };
   }, [chatCacheBatcher, socket]);
 
@@ -296,16 +289,16 @@ export const useChatMessagesListener = ({
     const onCleared = ({ guildId }: { guildId: string }) =>
       chatCacheBatcher.enqueue({ kind: "clear", guildId });
 
-    socket.on(GatewayEvent.CHAT_MESSAGE, onCreated);
-    socket.on(GatewayEvent.CHAT_MESSAGE_DELETE, onDeleted);
-    socket.on(GatewayEvent.CHAT_MESSAGE_UPDATE, onUpdated);
-    socket.on(GatewayEvent.CHAT_MESSAGES_CLEAR, onCleared);
+    socket.on("chat.created", onCreated);
+    socket.on("chat.deleted", onDeleted);
+    socket.on("chat.updated", onUpdated);
+    socket.on("chat.cleared", onCleared);
 
     return () => {
-      socket.off(GatewayEvent.CHAT_MESSAGE, onCreated);
-      socket.off(GatewayEvent.CHAT_MESSAGE_DELETE, onDeleted);
-      socket.off(GatewayEvent.CHAT_MESSAGE_UPDATE, onUpdated);
-      socket.off(GatewayEvent.CHAT_MESSAGES_CLEAR, onCleared);
+      socket.off("chat.created", onCreated);
+      socket.off("chat.deleted", onDeleted);
+      socket.off("chat.updated", onUpdated);
+      socket.off("chat.cleared", onCleared);
     };
   }, [chatCacheBatcher, connected, socket]);
 };

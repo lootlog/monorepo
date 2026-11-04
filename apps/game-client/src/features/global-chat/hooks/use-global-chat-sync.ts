@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { GlobalChatMessage, GlobalChatStats } from "@lootlog/schema/chat";
-import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useAccessibleGuilds } from "@/hooks/api/use-accessible-guilds";
 import {
@@ -91,20 +90,20 @@ export const useGlobalChatSync = () => {
       });
     };
 
-    socket.on(GatewayEvent.GLOBAL_CHAT_MESSAGE, onMessage);
-    socket.on(GatewayEvent.GLOBAL_CHAT_DELETED, onDeleted);
-    socket.on(GatewayEvent.GLOBAL_CHAT_PINNED, onPinned);
-    socket.on(GatewayEvent.GLOBAL_CHAT_STATS, onStats);
-    socket.on(GatewayEvent.GLOBAL_CHAT_SUBSCRIBED, onSubscribed);
+    socket.on("global-chat.created", onMessage);
+    socket.on("global-chat.deleted", onDeleted);
+    socket.on("global-chat.pinned", onPinned);
+    socket.on("global-chat.stats", onStats);
+    socket.on("global-chat.subscribed", onSubscribed);
     socket.followGlobalChat(channel);
 
     return () => {
       socket.followGlobalChat(undefined);
-      socket.off(GatewayEvent.GLOBAL_CHAT_MESSAGE, onMessage);
-      socket.off(GatewayEvent.GLOBAL_CHAT_DELETED, onDeleted);
-      socket.off(GatewayEvent.GLOBAL_CHAT_PINNED, onPinned);
-      socket.off(GatewayEvent.GLOBAL_CHAT_STATS, onStats);
-      socket.off(GatewayEvent.GLOBAL_CHAT_SUBSCRIBED, onSubscribed);
+      socket.off("global-chat.created", onMessage);
+      socket.off("global-chat.deleted", onDeleted);
+      socket.off("global-chat.pinned", onPinned);
+      socket.off("global-chat.stats", onStats);
+      socket.off("global-chat.subscribed", onSubscribed);
     };
   }, [socket, queryClient, channel, isMember]);
 };

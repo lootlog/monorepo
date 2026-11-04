@@ -4,6 +4,22 @@ import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
+import {
+  createAccessPolicySnapshot,
+  type AccessPolicySnapshot,
+} from "@lootlog/protocol/realtime/access-policy";
+
+/** A policy owning every listed Lootlog, so no permission restricts the test. */
+export const ownerAccessPolicy = (
+  organizationIds: readonly string[],
+): AccessPolicySnapshot =>
+  createAccessPolicySnapshot(
+    organizationIds.map((id) => ({
+      guild: { id, ownerId: "owner" },
+      roles: [],
+    })),
+    "owner",
+  );
 
 /** The presence the gateway answers a `presence.publish` with. */
 export const publishedPresence = (sessionId: string): BasicPresence => ({

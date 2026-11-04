@@ -1,3 +1,4 @@
+import { ownerAccessPolicy } from "@/test/realtime-wire";
 import type { ServerEvent } from "@lootlog/client/realtime";
 import type { PartyGatheringSummary } from "@lootlog/schema/party-ready-room";
 import { getSocket } from "@/lib/socket";
@@ -282,6 +283,7 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
         v: 1,
         type: "permissions.updated",
         data: {
+          changes: [],
           organizationIds: ["guild-1"],
           subscriptionScopes: [],
           accessPolicy: policy([
@@ -394,7 +396,12 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
     await harness.receive({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: [], subscriptionScopes: [] },
+      data: {
+        accessPolicy: ownerAccessPolicy([]),
+        changes: [],
+        organizationIds: [],
+        subscriptionScopes: [],
+      },
     });
     await waitFor(() => expect(result.current.data).toEqual([]));
     await act(async () => {

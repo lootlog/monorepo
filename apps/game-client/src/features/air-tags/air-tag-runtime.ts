@@ -1,9 +1,8 @@
 import type { AirTagSubscriptionAck } from "@lootlog/protocol/realtime";
 import type { AccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
 import { canReadPresence } from "@/lib/online-players-presence";
-import { getSocket, type PermissionsUpdatedPayload } from "@/lib/socket";
+import { getSocket, type AccessUpdate } from "@/lib/socket";
 import type {
   AirTagObservationBatch,
   AirTagScopeUpdateEvent,
@@ -98,17 +97,7 @@ export class AirTagRuntime {
     }
   }
 
-  handlePermissionsUpdated(payload?: PermissionsUpdatedPayload): void {
-    if (!payload?.accessPolicy) {
-      this.allowedOrganizations = undefined;
-      airTagReceiveController.retainOrganizations();
-      airTagReceiveController.clear();
-
-      if (this.isPublishing(this.state)) this.schedulePolicySubscription();
-
-      return;
-    }
-
+  handlePermissionsUpdated(payload: AccessUpdate): void {
     const allowed = readableOrganizations(payload.accessPolicy);
 
     const previous = this.allowedOrganizations;
@@ -125,7 +114,7 @@ export class AirTagRuntime {
     for (const organizationId of allowed) {
       const expanded = previous
         ? !previous.has(organizationId)
-        : payload.changes?.some(
+        : payload.changes.some(
             (change) =>
               change.organizationId === organizationId &&
               change.areas.includes("presence") &&
@@ -234,11 +223,10 @@ export class AirTagRuntime {
       response: typeof AirTagSubscriptionAck.Type,
     ) => void = () => {},
   ): void {
-    getSocket().emit(
-      GatewayEvent.AIR_TAG_SUBSCRIPTION,
-      payload,
-      acknowledgement,
-    );
+    // A lost acknowledgement is resent by the next subscription change.
+    void getSocket()
+      .request("air-tag.subscription", payload)
+      .then(acknowledgement, () => undefined);
   }
 
   private readonly publishObservations = (
@@ -251,16 +239,19 @@ export class AirTagRuntime {
 
     if (batch.observations.length === 0 && !batch.departures?.length) return;
 
-    socket.emit(GatewayEvent.AIR_TAG_OBSERVATION, batch, (acknowledgement) => {
-      if (
-        acknowledgement.status === "rejected" &&
-        acknowledgement.code === "rate-limited"
-      )
-        airTagObservationController.retry(
-          batch,
-          acknowledgement.retryAfterMs ?? AIR_TAG_BATCH_INTERVAL_MS,
-        );
-    });
+    void socket.request("air-tag.observation", batch).then(
+      (acknowledgement) => {
+        if (
+          acknowledgement.status === "rejected" &&
+          acknowledgement.code === "rate-limited"
+        )
+          airTagObservationController.retry(
+            batch,
+            acknowledgement.retryAfterMs ?? AIR_TAG_BATCH_INTERVAL_MS,
+          );
+      },
+      () => undefined,
+    );
   };
 
   private getCurrentMapId(): number | null {

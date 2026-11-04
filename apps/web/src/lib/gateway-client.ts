@@ -207,21 +207,13 @@ export class GatewayClient {
     }
   }
 
-  private updateAccessPolicy(
-    next: AccessPolicySnapshot | undefined,
-    isFirstJoin = false,
-  ) {
+  private updateAccessPolicy(next: AccessPolicySnapshot) {
     const previous = this.accessPolicy;
     this.accessPolicy = next;
 
-    if (!next) return undefined;
-
-    if (previous) return diffAccessPolicies(previous, next);
-
-    // The first join's snapshot describes the access the page's HTTP data was
-    // loaded under. Any other event without a baseline, such as the empty
-    // update sent before a join is rejected, may revoke cached data.
-    return isFirstJoin ? [] : undefined;
+    // Without a baseline, such as the empty update sent before a join is
+    // rejected, the changes are unknown and may revoke cached data.
+    return previous && diffAccessPolicies(previous, next);
   }
 
   private handleServerEvent(event: ServerEvent): void {
@@ -233,10 +225,10 @@ export class GatewayClient {
         this.firstConnectAt === undefined ||
         Date.now() - this.firstConnectAt > FRESH_JOIN_WINDOW_MS;
 
-      const accessPolicyChanges = this.updateAccessPolicy(
-        event.data.accessPolicy,
-        !this.hasJoined,
-      );
+      // The first join's snapshot describes the access the page's HTTP data
+      // was loaded under.
+      const accessPolicyChanges =
+        this.updateAccessPolicy(event.data.accessPolicy) ?? [];
 
       this.hasJoined = true;
 

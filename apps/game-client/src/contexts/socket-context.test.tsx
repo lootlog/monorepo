@@ -1,7 +1,6 @@
-import { publishedPresence } from "@/test/realtime-wire";
+import { ownerAccessPolicy, publishedPresence } from "@/test/realtime-wire";
 import { act, render, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
 import { getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
@@ -89,6 +88,7 @@ describe("SocketProvider", () => {
           connectionId: "connection-1",
           organizationIds: ["guild-1"],
           subscriptionScopes: [],
+          accessPolicy: ownerAccessPolicy(["guild-1"]),
         },
       }),
     );
@@ -133,6 +133,7 @@ describe("SocketProvider", () => {
                   connectionId: connection,
                   organizationIds: ["guild-1"],
                   subscriptionScopes: [],
+                  accessPolicy: ownerAccessPolicy(["guild-1"]),
                 }
               : publishedPresence(connection),
         }),
@@ -152,7 +153,7 @@ describe("SocketProvider", () => {
       useGameStore
         .getState()
         .replaceGame({ ...game, hero: { ...game.hero, stasis: true } });
-      getSocket().emit(GatewayEvent.PLAYER_PRESENCE_UPDATE);
+      void getSocket().publishPresence();
     });
     const firstCount = test.wire.frames.length;
     act(() => test.wire.close());
@@ -238,7 +239,12 @@ describe("SocketProvider", () => {
     await test.receive({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: ["guild-1", "guild-2"], subscriptionScopes: [] },
+      data: {
+        accessPolicy: ownerAccessPolicy(["guild-1", "guild-2"]),
+        changes: [],
+        organizationIds: ["guild-1", "guild-2"],
+        subscriptionScopes: [],
+      },
     });
     expect(useGlobalStore.getState().socketState.joinedGuilds).toEqual([
       "guild-1",
@@ -255,7 +261,12 @@ describe("SocketProvider", () => {
     await test.receive({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: [], subscriptionScopes: [] },
+      data: {
+        accessPolicy: ownerAccessPolicy([]),
+        changes: [],
+        organizationIds: [],
+        subscriptionScopes: [],
+      },
     });
     expect(useGlobalStore.getState().socketState.joinedGuilds).toEqual([]);
   });
@@ -321,6 +332,7 @@ describe("SocketProvider", () => {
                           connectionId: "connection-1",
                           organizationIds: [],
                           subscriptionScopes: [],
+                          accessPolicy: ownerAccessPolicy([]),
                         }
                       : {},
                 },

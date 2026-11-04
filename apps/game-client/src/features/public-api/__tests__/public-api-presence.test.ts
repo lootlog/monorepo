@@ -39,7 +39,12 @@ const permissionEvent = (
 ): ServerEvent => ({
   v: 1,
   type: "permissions.updated",
-  data: { organizationIds: ["guild-1"], subscriptionScopes: [], accessPolicy },
+  data: {
+    changes: [],
+    organizationIds: ["guild-1"],
+    subscriptionScopes: [],
+    accessPolicy,
+  },
 });
 
 const delta = (
@@ -333,27 +338,6 @@ describe("Public API presence over the realtime transport", () => {
     const { received } = await prime();
     await harness.receive(delta([createOnlinePresence()]));
     expect(received).not.toHaveBeenCalled();
-  });
-  it("coalesces legacy permission invalidations before revalidating tracked scopes", async () => {
-    const { received } = await prime();
-    harness.fetchPresence.mockRejectedValue(new Error("Access denied"));
-    vi.useFakeTimers();
-
-    const event: ServerEvent = {
-      v: 1,
-      type: "permissions.updated",
-      data: { organizationIds: ["guild-1"], subscriptionScopes: [] },
-    };
-
-    await harness.receive(event, event);
-    expect(harness.fetchPresence).toHaveBeenCalledTimes(2);
-    await vi.advanceTimersByTimeAsync(5000);
-    expect(harness.fetchPresence).toHaveBeenCalledTimes(3);
-    expect(received).toHaveBeenCalledWith({
-      ...scope,
-      status: "forbidden",
-      code: "ONLINE_PLAYERS_ACCESS_DENIED",
-    });
   });
   it("ignores timer-only policy changes and immediately denies revoked presence", async () => {
     await harness.receive(permissionEvent(policy(fullPermissions)));

@@ -1,7 +1,6 @@
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
-import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { queryKeys } from "@/features/public-api/query-keys";
 import { upsertHeroSightings } from "@/features/hero-sightings/hero-sightings-cache";
@@ -31,13 +30,13 @@ export const useHeroSightingsSocket = () => {
     const onUpdate = (sighting: HeroSightingResponseDto) =>
       handleUpdate(sighting);
 
-    socket.on(GatewayEvent.HERO_SIGHTING_UPDATE, onUpdate);
+    socket.on("hero-sighting.updated", onUpdate);
 
     if (needsCatchUp.current) refreshAfterReconnect();
     needsCatchUp.current = true;
 
     return () => {
-      socket.off(GatewayEvent.HERO_SIGHTING_UPDATE, onUpdate);
+      socket.off("hero-sighting.updated", onUpdate);
     };
   }, [connected, joined, socket, status]);
 };

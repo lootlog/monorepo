@@ -38,10 +38,21 @@ import { GatewayProvider } from "./gateway-provider";
 
 type Listener = Parameters<RealtimeWebSocket["addEventListener"]>[1];
 
+const eventPolicy = (permissions: Permission[]) =>
+  createAccessPolicySnapshot(
+    [
+      {
+        guild: { id: "guild-1", ownerId: "owner-1" },
+        roles: [{ permissions, lvlRangeFrom: 0, lvlRangeTo: 500 }],
+      },
+    ],
+    "discord-1",
+  );
+
 class Wire implements RealtimeWebSocket {
   readyState = 0;
   static instances: Wire[] = [];
-  static accessPolicy: AccessPolicySnapshot | undefined;
+  static accessPolicy: AccessPolicySnapshot = eventPolicy([]);
   readonly frames: ReturnType<typeof decodeRealtimeFrame>[] = [];
   private readonly listeners = new Map<string, Listener>();
   constructor() {
@@ -178,7 +189,7 @@ afterEach(() => {
   socket.disconnect();
   vi.unstubAllGlobals();
   Wire.instances = [];
-  Wire.accessPolicy = undefined;
+  Wire.accessPolicy = eventPolicy([]);
 });
 
 it("restores the real provider session and presence exactly once after reconnect", async () => {
@@ -286,7 +297,12 @@ it("refreshes accessible Organizations and disconnects when permissions remove t
     wireAt(0).deliver({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: [], subscriptionScopes: [] },
+      data: {
+        changes: [],
+        organizationIds: [],
+        subscriptionScopes: [],
+        accessPolicy: createAccessPolicySnapshot([], "discord-1"),
+      },
     }),
   );
 
@@ -328,7 +344,12 @@ it("refreshes full Organization DTOs after permissions change while keeping an a
     wireAt(0).deliver({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: ["guild-1"], subscriptionScopes: [] },
+      data: {
+        changes: [],
+        organizationIds: ["guild-1"],
+        subscriptionScopes: [],
+        accessPolicy: Wire.accessPolicy,
+      },
     }),
   );
 
@@ -344,18 +365,7 @@ it("refreshes full Organization DTOs after permissions change while keeping an a
   expect(Wire.instances).toHaveLength(1);
 });
 
-const eventPolicy = (permissions: Permission[]) =>
-  createAccessPolicySnapshot(
-    [
-      {
-        guild: { id: "guild-1", ownerId: "owner-1" },
-        roles: [{ permissions, lvlRangeFrom: 0, lvlRangeTo: 500 }],
-      },
-    ],
-    "discord-1",
-  );
-
-it.each(["permissions", "unknown reconnect", "restricted reconnect"] as const)(
+it.each(["permissions", "restricted reconnect"] as const)(
   "clears protected event caches outside event routes after %s and rejects late responses",
   async (change) => {
     onTestFinished(
@@ -442,8 +452,7 @@ it.each(["permissions", "unknown reconnect", "restricted reconnect"] as const)(
     void client.invalidateQueries({ queryKey: historyKey });
     await waitFor(() => expect(requests).toHaveLength(1));
 
-    Wire.accessPolicy =
-      change === "unknown reconnect" ? undefined : eventPolicy([]);
+    Wire.accessPolicy = eventPolicy([]);
 
     act(() => {
       if (change === "permissions") {
@@ -451,6 +460,14 @@ it.each(["permissions", "unknown reconnect", "restricted reconnect"] as const)(
           v: 1,
           type: "permissions.updated",
           data: {
+            changes: [
+              {
+                organizationId: "guild-1",
+                areas: ["events"],
+                restricted: true,
+                expanded: false,
+              },
+            ],
             organizationIds: ["guild-1"],
             subscriptionScopes: [],
             accessPolicy: Wire.accessPolicy,

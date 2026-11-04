@@ -1,11 +1,10 @@
 import { stubMargonemAccountFetch } from "@/test/margonem-account-fetch";
 import { act } from "@testing-library/react";
-import { GatewayEvent } from "@/config/gateway";
 import { RealtimeClient } from "@lootlog/client/realtime";
 import { vi } from "vitest";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { disposeSocket, getSocket } from "@/lib/socket";
-import { RealtimeWire } from "@/test/realtime-wire";
+import { ownerAccessPolicy, RealtimeWire } from "@/test/realtime-wire";
 import type { AccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useGameStore } from "@/store/game.store";
@@ -73,7 +72,7 @@ export const createTimerRealtimeFixture = () => {
     await vi.waitFor(() => expectJoinRequest());
     const joined = Promise.withResolvers<void>();
     const handleJoin = () => joined.resolve();
-    getSocket().on(GatewayEvent.JOIN, handleJoin);
+    getSocket().on("join", handleJoin);
     await act(async () => {
       for (const frame of wire.frames) {
         if (
@@ -92,15 +91,14 @@ export const createTimerRealtimeFixture = () => {
             connectionId: "connection-1",
             organizationIds,
             subscriptionScopes: [],
-            accessPolicy,
-            capabilities: ["connection.ping"],
+            accessPolicy: accessPolicy ?? ownerAccessPolicy(organizationIds),
           },
         });
       }
 
       await joined.promise;
     });
-    getSocket().off(GatewayEvent.JOIN, handleJoin);
+    getSocket().off("join", handleJoin);
   };
 
   const expectJoinRequest = () => {

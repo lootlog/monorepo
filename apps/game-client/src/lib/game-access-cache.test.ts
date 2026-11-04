@@ -1,9 +1,5 @@
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
-import {
-  createAccessPolicySnapshot,
-  diffAccessPolicies,
-  type AccessPolicySnapshot,
-} from "@lootlog/protocol/realtime/access-policy";
+import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { createGameAccessCache } from "./game-access-cache";
 
@@ -32,16 +28,6 @@ const timer = (guildId: string, type: string, lvl = 100) => ({
   guildId,
   npc: { type, lvl },
 });
-
-const notify = (
-  manager: ReturnType<typeof createGameAccessCache>,
-  previous: AccessPolicySnapshot,
-  next: AccessPolicySnapshot,
-) =>
-  manager.apply({
-    accessPolicy: next,
-    changes: diffAccessPolicies(previous, next),
-  });
 
 afterEach(() => vi.useRealTimers());
 
@@ -75,7 +61,7 @@ it.each([
 
     try {
       expect(fetch).toHaveBeenCalledTimes(1);
-      manager.apply({ accessPolicy: policy(false) });
+      manager.apply(policy(false));
       await Promise.resolve();
       await Promise.resolve();
       expect(fetch).toHaveBeenCalledTimes(2);
@@ -108,7 +94,7 @@ it("does not restart initial timer requests when the first policy denies their s
   const off = observer.subscribe(() => {});
 
   try {
-    manager.apply({ accessPolicy: createAccessPolicySnapshot([], "reader") });
+    manager.apply(createAccessPolicySnapshot([], "reader"));
     expect(client.getQueryData(key)).toEqual([]);
     expect(fetch).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(5000);
@@ -124,7 +110,7 @@ it("removes only revoked timer tiers from every world and both history caches", 
   const client = new QueryClient();
   const manager = createGameAccessCache(client);
   const before = policy();
-  manager.apply({ accessPolicy: before, changes: [] });
+  manager.apply(before);
   const allowed = timer("a", "ELITE2");
   const other = timer("b", "TITAN");
   const revoked = timer("a", "TITAN");
@@ -146,7 +132,7 @@ it("removes only revoked timer tiers from every world and both history caches", 
     "/guilds/b/timers/titan/history",
   ]);
 
-  notify(manager, before, policy(false));
+  manager.apply(policy(false));
 
   for (const world of ["alpha", "beta"])
     expect(client.getQueryData(["/timers", { world }])).toEqual([
@@ -170,7 +156,7 @@ it("prunes level restrictions and cannot restore a cancelled old-policy response
   const client = new QueryClient();
   const manager = createGameAccessCache(client);
   const before = policy();
-  manager.apply({ accessPolicy: before, changes: [] });
+  manager.apply(before);
   const key = ["/timers", { world: "alpha" }];
   const low = timer("a", "ELITE2", 50);
   const high = timer("a", "ELITE2", 200);
@@ -188,7 +174,7 @@ it("prunes level restrictions and cannot restore a cancelled old-policy response
     })
     .catch(() => undefined);
 
-  notify(manager, before, policy(true, 100));
+  manager.apply(policy(true, 100));
   expect(client.getQueryData(key)).toEqual([low, other]);
   finish([low, high, other]);
   await request;
@@ -201,7 +187,7 @@ it("does no work for repeated policy snapshots and coalesces expansions without 
   const client = new QueryClient();
   const manager = createGameAccessCache(client);
   const before = policy(false, 100);
-  manager.apply({ accessPolicy: before, changes: [] });
+  manager.apply(before);
   const key = ["/timers", { world: "alpha" }];
   const row = timer("a", "ELITE2", 50);
   client.setQueryData(key, [row]);
@@ -219,14 +205,13 @@ it("does no work for repeated policy snapshots and coalesces expansions without 
   const off = observer.subscribe(() => {});
   const original = client.getQueryData(key);
 
-  for (let index = 0; index < 10; index += 1)
-    manager.apply({ accessPolicy: before, changes: [] });
+  for (let index = 0; index < 10; index += 1) manager.apply(before);
   await vi.advanceTimersByTimeAsync(5000);
   expect(fetch).not.toHaveBeenCalled();
   const expanded = policy(true, 200);
-  notify(manager, before, expanded);
+  manager.apply(expanded);
   await vi.advanceTimersByTimeAsync(1000);
-  notify(manager, expanded, policy(true, 300));
+  manager.apply(policy(true, 300));
   expect(client.getQueryData(key)).toBe(original);
   await vi.advanceTimersByTimeAsync(4999);
   expect(fetch).not.toHaveBeenCalled();
@@ -244,42 +229,10 @@ it("checks cached data against the first snapshot even when its delta contains o
     ["/timers", { world: "alpha" }],
     [timer("a", "TITAN"), allowed, timer("removed", "ELITE2")],
   );
-  notify(manager, createAccessPolicySnapshot([], "reader"), policy(false));
+  manager.apply(policy(false));
   expect(client.getQueryData(["/timers", { world: "alpha" }])).toEqual([
     allowed,
   ]);
-  manager.dispose();
-});
-
-it("conservatively clears legacy snapshots and coalesces old gateway refreshes", async () => {
-  vi.useFakeTimers();
-  const client = new QueryClient();
-  const manager = createGameAccessCache(client);
-  manager.apply({ accessPolicy: policy(), changes: [] });
-  const key = ["/timers", { world: "alpha" }];
-  const row = timer("a", "TITAN");
-  client.setQueryData(key, [row]);
-
-  const fetch = vi
-    .fn<() => Promise<ReturnType<typeof timer>[]>>()
-    .mockResolvedValue([]);
-
-  const observer = new QueryObserver(client, {
-    queryKey: key,
-    queryFn: fetch,
-    staleTime: Infinity,
-  });
-
-  const off = observer.subscribe(() => {});
-  manager.apply({ guilds: [] });
-  expect(client.getQueryData(key)).toEqual([]);
-  await vi.advanceTimersByTimeAsync(1000);
-  manager.apply({ guilds: [] });
-  await vi.advanceTimersByTimeAsync(4999);
-  expect(fetch).not.toHaveBeenCalled();
-  await vi.advanceTimersByTimeAsync(1);
-  expect(fetch).toHaveBeenCalledTimes(1);
-  off();
   manager.dispose();
 });
 
@@ -288,7 +241,7 @@ it("does not retry a cancelled history request for a removed organization", asyn
   const client = new QueryClient();
   const manager = createGameAccessCache(client);
   const before = policy();
-  manager.apply({ accessPolicy: before });
+  manager.apply(before);
   const key = ["/guilds/a/timers/titan/history"];
 
   const fetch = vi.fn<() => Promise<ReturnType<typeof timer>[]>>(
@@ -298,7 +251,7 @@ it("does not retry a cancelled history request for a removed organization", asyn
   const observer = new QueryObserver(client, { queryKey: key, queryFn: fetch });
   const off = observer.subscribe(() => {});
   expect(fetch).toHaveBeenCalledTimes(1);
-  manager.apply({ accessPolicy: createAccessPolicySnapshot([], "reader") });
+  manager.apply(createAccessPolicySnapshot([], "reader"));
   expect(client.getQueryData(key)).toEqual([]);
   await vi.advanceTimersByTimeAsync(5000);
   expect(fetch).toHaveBeenCalledTimes(1);
