@@ -88,25 +88,9 @@ export const createRabbitMQClient = async (): Promise<RabbitMQClient> => {
   const uri = process.env.RABBITMQ_URI;
 
   if (!uri) {
-    console.error(
-      styleText(
-        "red",
-        "\n❌ Error: RABBITMQ_URI environment variable is not set\n",
-      ),
+    throw new Error(
+      "RABBITMQ_URI environment variable is not set. Set it in your .env file or export it, e.g. export RABBITMQ_URI=amqp://user:pass@localhost:5672",
     );
-    console.log(
-      styleText(
-        "gray",
-        "Please set RABBITMQ_URI in your .env file or export it:\n",
-      ),
-    );
-    console.log(
-      styleText(
-        "cyan",
-        "  export RABBITMQ_URI=amqp://user:pass@localhost:5672\n",
-      ),
-    );
-    process.exit(1);
   }
 
   const client = new RabbitMQClient();

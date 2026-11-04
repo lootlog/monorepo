@@ -1,7 +1,8 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { styleText } from "node:util";
-import * as p from "@clack/prompts";
+import { Effect } from "effect";
+import { Command, Flag, Prompt } from "effect/cli";
 import type { CliOptions, EnvFile, EnvVariable } from "../../types.js";
 import {
   discoverEnvFiles,
@@ -28,27 +29,12 @@ interface ProcessEnvFileResult {
   variables: EnvVariable[];
 }
 
-const parseArguments = (args: string[]): CliOptions => {
-  const options: CliOptions = {
-    auto: args.includes("--auto") || args.includes("-a"),
-    interactive: args.includes("--interactive") || args.includes("-i"),
-    skipExisting: args.includes("--skip-existing") || args.includes("-s"),
-    force: args.includes("--force") || args.includes("-f"),
-  };
-
-  if (!options.auto && !options.interactive) {
-    options.auto = true;
-  }
-
-  return options;
-};
-
-const processEnvFile = async (
+const processEnvFile = Effect.fn("processEnvFile")(function* (
   envFile: EnvFile,
   sharedValues: Map<string, string>,
   options: CliOptions,
   processOptions: ProcessEnvFileOptions = {},
-): Promise<ProcessEnvFileResult> => {
+) {
   const exists = existsSync(envFile.path);
 
   if (exists && options.skipExisting) {
@@ -63,15 +49,16 @@ const processEnvFile = async (
   }
 
   if (exists && !options.force) {
-    const overwrite = await p.confirm({
-      message: styleText(
-        "yellow",
-        `⚠️  ${envFile.name}/.env already exists. Overwrite?`,
-      ),
-      initialValue: false,
-    });
+    const overwrite = yield* Prompt.run(
+      Prompt.Confirm({
+        message: styleText(
+          "yellow",
+          `⚠️  ${envFile.name}/.env already exists. Overwrite?`,
+        ),
+      }),
+    );
 
-    if (p.isCancel(overwrite) || !overwrite) {
+    if (!overwrite) {
       console.log(styleText("gray", `   Skipped ${envFile.name}`));
 
       return {
@@ -98,7 +85,7 @@ const processEnvFile = async (
       envFile.name,
     );
   } else if (options.interactive) {
-    variables = await promptForValues(variables);
+    variables = yield* promptForValues(variables);
   }
 
   const envContent = buildEnvContent(variables);
@@ -109,12 +96,12 @@ const processEnvFile = async (
   return {
     created: true,
     variables,
-  };
-};
+  } satisfies ProcessEnvFileResult;
+});
 
-const promptForValues = async (
+const promptForValues = Effect.fn("promptForValues")(function* (
   variables: EnvVariable[],
-): Promise<EnvVariable[]> => {
+) {
   const updatedVariables: EnvVariable[] = [];
 
   for (const variable of variables) {
@@ -123,19 +110,16 @@ const promptForValues = async (
       continue;
     }
 
-    const input = await p.text({
-      message: styleText(
-        "cyan",
-        `Enter value for ${variable.key} (default: ${variable.value})`,
-      ),
-    });
+    const input = yield* Prompt.run(
+      Prompt.String({
+        message: styleText(
+          "cyan",
+          `Enter value for ${variable.key} (default: ${variable.value})`,
+        ),
+      }),
+    );
 
-    if (p.isCancel(input)) {
-      p.cancel("Cancelled");
-      process.exit(1);
-    }
-
-    const inputValue = (input ?? "").trim();
+    const inputValue = input.trim();
     const value = inputValue === "" ? variable.value : inputValue;
 
     updatedVariables.push({
@@ -145,43 +129,12 @@ const promptForValues = async (
   }
 
   return updatedVariables;
-};
+});
 
-export const generate = async (
-  args: string[],
+export const generate = Effect.fn("generate")(function* (
+  options: CliOptions,
   rootPath: string = ROOT_PATH,
-): Promise<void> => {
-  if (args.includes("--help") || args.includes("-h")) {
-    console.log(`
-${styleText("bold", "env generate - Generate environment files")}
-
-${styleText("bold", "Usage:")}
-  bun run env:generate [options]
-
-${styleText("bold", "Options:")}
-  -a, --auto              Automatically generate with smart defaults (default)
-  -i, --interactive       Prompt for each environment variable value
-  -s, --skip-existing     Skip files that already exist
-  -f, --force             Overwrite existing files without asking
-  -h, --help              Show this help message
-
-${styleText("bold", "Examples:")}
-  bun run env:generate                      # Auto-generate with smart defaults
-  bun run env:generate --interactive        # Interactive mode
-  bun run env:generate --skip-existing      # Only create missing files
-  bun run env:generate --force              # Overwrite all files
-
-${styleText("bold", "Note:")}
-  The CLI automatically discovers all .env.example files in the monorepo.
-  Shared values (database credentials, RabbitMQ, Redis, activity signing) are generated once
-  and reused across all services.
-    `);
-
-    return;
-  }
-
-  const options = parseArguments(args);
-
+) {
   console.log(
     styleText(["bold", "blue"], "\n🚀 Lootlog Environment Configuration\n"),
   );
@@ -192,7 +145,7 @@ ${styleText("bold", "Note:")}
   console.log(styleText("gray", `Force overwrite: ${options.force}\n`));
 
   console.log(styleText("gray", "Discovering .env.example files...\n"));
-  const envFiles = await discoverEnvFiles(rootPath);
+  const envFiles = yield* Effect.promise(() => discoverEnvFiles(rootPath));
 
   console.log(
     styleText("gray", `Found ${envFiles.length} environment files:\n`),
@@ -231,7 +184,7 @@ ${styleText("bold", "Note:")}
   if (rootEnvFile) {
     console.log(styleText("bold", `\n📦 Processing root configuration...\n`));
 
-    const rootResult = await processEnvFile(
+    const rootResult = yield* processEnvFile(
       rootEnvFile,
       sharedValues,
       options,
@@ -260,7 +213,7 @@ ${styleText("bold", "Note:")}
   }
 
   for (const envFile of appEnvFiles) {
-    const result = await processEnvFile(envFile, sharedValues, options);
+    const result = yield* processEnvFile(envFile, sharedValues, options);
 
     if (result.created) {
       createdCount++;
@@ -294,12 +247,51 @@ ${styleText("bold", "Note:")}
       `\n🎉 You can now run local dependencies: docker compose up -d\n`,
     ),
   );
-};
+});
 
-// Only run main when this file is executed directly, not when imported
-if (import.meta.url === `file://${process.argv[1]}`) {
-  generate(process.argv.slice(2)).catch((error) => {
-    console.error(styleText("red", `\n❌ Error: ${error.message}\n`));
-    process.exit(1);
-  });
-}
+export const generateCommand = Command.make(
+  "generate",
+  {
+    interactive: Flag.Boolean("interactive").pipe(
+      Flag.withAlias("i"),
+      Flag.withDescription(
+        "Prompt for each environment variable value instead of generating smart defaults",
+      ),
+      Flag.withDefault(false),
+    ),
+    skipExisting: Flag.Boolean("skip-existing").pipe(
+      Flag.withAlias("s"),
+      Flag.withDescription("Skip files that already exist"),
+      Flag.withDefault(false),
+    ),
+    force: Flag.Boolean("force").pipe(
+      Flag.withAlias("f"),
+      Flag.withDescription("Overwrite existing files without asking"),
+      Flag.withDefault(false),
+    ),
+  },
+  ({ interactive, skipExisting, force }) =>
+    generate({ auto: !interactive, interactive, skipExisting, force }),
+).pipe(
+  Command.withDescription(
+    "Generate .env files from every .env.example in the monorepo. Shared values (database credentials, RabbitMQ, Redis, activity signing) are generated once and reused across all services.",
+  ),
+  Command.withExamples([
+    {
+      command: "bun run env:generate",
+      description: "Auto-generate with smart defaults",
+    },
+    {
+      command: "bun run env:generate --interactive",
+      description: "Interactive mode",
+    },
+    {
+      command: "bun run env:generate --skip-existing",
+      description: "Only create missing files",
+    },
+    {
+      command: "bun run env:generate --force",
+      description: "Overwrite all files",
+    },
+  ]),
+);
