@@ -600,7 +600,7 @@ describe("RealtimeHub federation", () => {
     { type: "attack", team: false },
     { type: "quick-fight", team: true },
   ] as const)(
-    "delivers $type battle pings only to listed characters that decode them on every instance",
+    "delivers $type battle pings only to listed characters on every instance",
     async ({ type, team }) => {
       const bus = new FederationBus();
       const local = new RealtimeHub(config, new FakeRedisStore(bus));
@@ -614,17 +614,11 @@ describe("RealtimeHub federation", () => {
       } as const;
 
       const scenarios = [
-        { id: "listed", characterId: "100", battle: true, teamPings: true },
-        { id: "bystander", characterId: "200", battle: true, teamPings: true },
-        // An older game client closes the socket on an event it cannot decode.
-        { id: "legacy", characterId: "100", battle: false, teamPings: false },
-        { id: "no-team", characterId: "100", battle: true, teamPings: false },
+        { id: "listed", characterId: "100" },
+        { id: "bystander", characterId: "200" },
       ].map((scenario) => ({
         ...scenario,
-        delivered:
-          scenario.characterId === "100" &&
-          scenario.battle &&
-          (!team || scenario.teamPings),
+        delivered: scenario.characterId === "100",
       }));
 
       const targets = [local, remote].flatMap((hub, index) =>
@@ -634,8 +628,6 @@ describe("RealtimeHub federation", () => {
           const session: SessionData = {
             ...base,
             platform: "game",
-            supportsBattlePings: scenario.battle,
-            supportsTeamBattlePings: scenario.teamPings,
             presence: {
               userId: base.userId,
               sessionId: `presence-${base.connectionId}`,
@@ -698,7 +690,7 @@ describe("RealtimeHub federation", () => {
     },
   );
 
-  test("delivers loot split choices and filter accepts to listed participants that decode them on any map of the world and every instance", async () => {
+  test("delivers loot split choices and filter accepts to listed participants on any map of the world and every instance", async () => {
     const bus = new FederationBus();
     const local = new RealtimeHub(config, new FakeRedisStore(bus));
     const remote = new RealtimeHub(config, new FakeRedisStore(bus));
@@ -716,7 +708,6 @@ describe("RealtimeHub federation", () => {
         characterId: "100",
         mapId: 2,
         organization: "organization-1",
-        lootSplit: true,
         delivered: true,
       },
       {
@@ -724,26 +715,6 @@ describe("RealtimeHub federation", () => {
         characterId: "200",
         mapId: 1,
         organization: "organization-1",
-        lootSplit: true,
-        delivered: false,
-      },
-      // A client from before filter accepts gets choices only.
-      {
-        id: "choices-only",
-        characterId: "100",
-        mapId: 1,
-        organization: "organization-1",
-        lootSplit: true,
-        autoAccept: false,
-        delivered: true,
-      },
-      // An older game client closes the socket on an event it cannot decode.
-      {
-        id: "legacy",
-        characterId: "100",
-        mapId: 1,
-        organization: "organization-1",
-        lootSplit: false,
         delivered: false,
       },
       // A participant from another Lootlog must not learn the choices.
@@ -752,7 +723,6 @@ describe("RealtimeHub federation", () => {
         characterId: "100",
         mapId: 1,
         organization: "organization-2",
-        lootSplit: true,
         delivered: false,
       },
     ];
@@ -764,9 +734,6 @@ describe("RealtimeHub federation", () => {
         const session: SessionData = {
           ...base,
           platform: "game",
-          supportsLootSplit: scenario.lootSplit,
-          supportsLootSplitAutoAccept:
-            scenario.lootSplit && scenario.autoAccept !== false,
           presence: {
             userId: base.userId,
             sessionId: `presence-${base.connectionId}`,
@@ -796,11 +763,7 @@ describe("RealtimeHub federation", () => {
           organizationId: scenario.organization,
         });
 
-        return {
-          ...target,
-          delivered: scenario.delivered,
-          decodesAutoAccept: scenario.autoAccept !== false,
-        };
+        return { ...target, delivered: scenario.delivered };
       }),
     );
 
@@ -849,9 +812,7 @@ describe("RealtimeHub federation", () => {
     });
 
     for (const target of targets)
-      expect(target.sent).toHaveLength(
-        target.delivered ? (target.decodesAutoAccept ? 2 : 1) : 0,
-      );
+      expect(target.sent).toHaveLength(target.delivered ? 2 : 0);
   });
 
   test("filters hero events from RabbitMQ on local and federated connections after role changes", async () => {
@@ -1599,18 +1560,11 @@ describe("RealtimeHub federation", () => {
       { name: "owner", roles: [] },
       { name: "game", roles: [role(read)] },
       { name: "other-guild", roles: [role(read)] },
-      { name: "legacy", roles: [role(read)] },
-      { name: "snapshot", roles: [role(read)] },
-      { name: "snapshot-low-level", roles: [role(read, 0, 99)] },
     ];
 
     const targets = hubs.map((hub, index) =>
       variants.map((variant) => {
         const session = makeSession(`${index}-${variant.name}`);
-        Object.assign(session, {
-          supportsFeed: variant.name !== "legacy",
-          supportsLootSnapshot: variant.name.startsWith("snapshot"),
-        });
 
         if (variant.name === "game")
           Object.assign(session, { platform: "game" });
@@ -1717,7 +1671,7 @@ describe("RealtimeHub federation", () => {
 
           for (const group of targets)
             expect(group.map((target) => target.sent.length)).toEqual([
-              2, 0, 0, 0, 2, 2, 0, 0, 0, 2, 0,
+              2, 0, 0, 0, 2, 2, 0, 0,
             ]);
 
           for (const group of targets)
@@ -1790,10 +1744,10 @@ describe("RealtimeHub federation", () => {
 
           for (const group of targets) {
             expect(group.map((target) => target.sent.length)).toEqual([
-              4, 0, 0, 0, 2, 4, 1, 0, 1, 4, 0,
+              4, 0, 0, 0, 2, 4, 1, 0,
             ]);
-            // Only snapshot sessions receive the loot, and only through `loot.snapshot`.
-            expect(decodeRealtimeFrame(group[9]!.sent[2]!)).toEqual({
+            // The Web app receives the loot only through `loot.snapshot`.
+            expect(decodeRealtimeFrame(group[0]!.sent[2]!)).toEqual({
               v: 1,
               type: "loot.snapshot",
               data: {
@@ -1804,7 +1758,7 @@ describe("RealtimeHub federation", () => {
                 loot,
               },
             });
-            expect(decodeRealtimeFrame(group[0]!.sent[2]!)).toEqual({
+            expect(decodeRealtimeFrame(group[6]!.sent[0]!)).toEqual({
               v: 1,
               type: "loot.created",
               data: {
@@ -1875,7 +1829,11 @@ describe("RealtimeHub federation", () => {
     const second = new RealtimeHub(config, new FakeRedisStore(bus));
 
     const targets = [first, second].map((hub, index) => {
-      const target = makeSocket(makeSession(`loot-${index}`));
+      // The Game client reads new loots as `loot.created`.
+      const target = makeSocket({
+        ...makeSession(`loot-${index}`),
+        platform: "game",
+      });
 
       for (const organizationId of ["organization-1", "organization-2"]) {
         const scope = { topic: "organization.loots", organizationId } as const;
@@ -2136,15 +2094,14 @@ describe("RealtimeHub federation", () => {
     const local = new RealtimeHub(config, new FakeRedisStore(bus));
     const remote = new RealtimeHub(config, new FakeRedisStore(bus));
 
-    const session = (id: string, channels: boolean): SessionData => ({
+    const session = (id: string): SessionData => ({
       ...makeSession(id),
-      supportsGlobalChat: true,
-      supportsGlobalChatChannels: channels,
+      platform: "game",
     });
 
-    const gordion = makeSocket(session("remote-gordion", true));
-    const shared = makeSocket(session("remote-shared", true));
-    const legacyShared = makeSocket(session("local-legacy-shared", false));
+    const gordion = makeSocket(session("remote-gordion"));
+    const shared = makeSocket(session("remote-shared"));
+    const localShared = makeSocket(session("local-shared"));
     remote.register(gordion.socket);
     remote.subscribe(gordion.socket, {
       topic: "global.chat.world",
@@ -2152,8 +2109,8 @@ describe("RealtimeHub federation", () => {
     });
     remote.register(shared.socket);
     remote.subscribe(shared.socket, { topic: "global.chat" });
-    local.register(legacyShared.socket);
-    local.subscribe(legacyShared.socket, { topic: "global.chat" });
+    local.register(localShared.socket);
+    local.subscribe(localShared.socket, { topic: "global.chat" });
 
     const handlers = new Map<
       string,
@@ -2276,13 +2233,10 @@ describe("RealtimeHub federation", () => {
         data: { message: sharedMessage },
       },
     ]);
-    // A client without channels would close the socket on moderation events.
-    expect(received(legacyShared.sent)).toEqual([
-      { v: 1, type: "global-chat.created", data: sharedMessage },
-    ]);
+    expect(received(localShared.sent)).toEqual(received(shared.sent));
   });
 
-  test("delivers global chat from RabbitMQ only to subscribed Members whose client decodes it", async () => {
+  test("delivers global chat from RabbitMQ only to subscribed Members in the Game client", async () => {
     const bus = new FederationBus();
     const local = new RealtimeHub(config, new FakeRedisStore(bus));
     const remote = new RealtimeHub(config, new FakeRedisStore(bus));
@@ -2291,15 +2245,15 @@ describe("RealtimeHub federation", () => {
     const audience = (hub: RealtimeHub, name: string) => {
       const capable = (id: string): SessionData => ({
         ...makeSession(`${name}-${id}`),
-        supportsGlobalChat: true,
+        platform: "game",
       });
 
       const recipients = {
         subscribed: makeSocket(capable("subscribed")),
         unsubscribed: makeSocket(capable("unsubscribed")),
-        legacyClient: makeSocket(makeSession(`${name}-legacy`)),
+        webApp: makeSocket(makeSession(`${name}-web-app`)),
         apiKey: makeSocket({
-          ...capable("api-key"),
+          ...makeSession(`${name}-api-key`),
           apiKeyAccess: {
             keyId: "key",
             organizationIds: ["organization-1"],
@@ -2561,7 +2515,6 @@ test("gathering rosters reach authorized observers across gateways without expos
     permissions?: Permission[];
     minimumLevel?: number;
     organizations?: string[];
-    supports?: boolean;
     organizer?: boolean;
     owner?: boolean;
     apiKey?: boolean;
@@ -2595,13 +2548,6 @@ test("gathering rosters reach authorized observers across gateways without expos
       permissions: [],
     },
     {
-      name: "legacy-organizer",
-      allowed: false,
-      organizer: true,
-      supports: false,
-      permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND],
-    },
-    {
       name: "api-key-organizer",
       allowed: false,
       organizer: true,
@@ -2610,7 +2556,6 @@ test("gathering rosters reach authorized observers across gateways without expos
     },
     { name: "owner", allowed: true, owner: true, permissions: [] },
     { name: "administrator", allowed: true, permissions: [Permission.ADMIN] },
-    { name: "legacy", allowed: false, supports: false },
     {
       name: "hidden-tier",
       allowed: false,
@@ -2636,7 +2581,6 @@ test("gathering rosters reach authorized observers across gateways without expos
         ...base,
         platform: "game",
         discordId,
-        supportsPartyGatheringState: scenario.supports ?? true,
         guilds: organizations.map((id) => ({
           guild: {
             id,

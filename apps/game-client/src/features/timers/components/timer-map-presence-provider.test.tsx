@@ -3,7 +3,6 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import i18n from "i18next";
 import { expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY } from "@lootlog/protocol/realtime";
 import { Permission } from "@lootlog/schema/permissions";
 import { NpcType } from "@/api/npcs.api";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
@@ -277,9 +276,7 @@ it("fetches stored map threats once per connection while timer updates re-render
     ).length;
 
   harness.open();
-  await harness.join(["guild-1"], policy(["guild-1"]), [
-    REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
-  ]);
+  await harness.join(["guild-1"], policy(["guild-1"]));
 
   const list = (timers: TimerWithTimeLeft[]) => (
     <harness.wrapper>
@@ -301,9 +298,7 @@ it("fetches stored map threats once per connection while timer updates re-render
   await Promise.resolve();
   expect(fetches()).toBe(1);
 
-  await harness.join(["guild-1"], policy(["guild-1"]), [
-    REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
-  ]);
+  await harness.join(["guild-1"], policy(["guild-1"]));
   expect(fetches()).toBe(2);
   view.unmount();
 });

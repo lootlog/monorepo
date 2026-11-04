@@ -110,16 +110,16 @@ export const canSubscribe = (session: SessionData, scope: Scope): boolean => {
   if (!organizationId) {
     if (session.apiKeyAccess) return false;
 
-    // Any Member of any Organization reads the global chat; only clients
-    // that know channels follow one world's channel, and never all at once.
+    // Any Member of any Organization reads the global chat in the Game client;
+    // a world's channel is followed one world at a time.
     if (scope.topic === "global.chat")
-      return session.supportsGlobalChat === true && session.guilds.length > 0;
+      return session.platform === "game" && session.guilds.length > 0;
 
     if (scope.topic === "global.chat.world")
       return (
+        session.platform === "game" &&
         session.guilds.length > 0 &&
-        scope.world !== undefined &&
-        session.supportsGlobalChatChannels === true
+        scope.world !== undefined
       );
 
     return scope.topic === "party.ready-room";

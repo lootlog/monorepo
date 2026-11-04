@@ -1,11 +1,6 @@
 import { encodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { REALTIME_JSON_SUBPROTOCOL } from "@lootlog/client/realtime";
-import {
-  REALTIME_FEED_CAPABILITY,
-  REALTIME_LOOT_SNAPSHOT_CAPABILITY,
-  REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-} from "@lootlog/protocol/realtime";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -40,12 +35,7 @@ describe("web realtime handshake", () => {
       expect(handshakes).toEqual([
         {
           url: "wss://gateway.example.test/ws",
-          protocols: [
-            REALTIME_JSON_SUBPROTOCOL,
-            REALTIME_FEED_CAPABILITY,
-            REALTIME_LOOT_SNAPSHOT_CAPABILITY,
-            REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-          ],
+          protocols: [REALTIME_JSON_SUBPROTOCOL],
         },
       ]);
       expect(fetcher).not.toHaveBeenCalled();

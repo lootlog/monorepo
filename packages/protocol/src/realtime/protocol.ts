@@ -12,7 +12,6 @@ import {
   AirTagObservationBatchSchema,
   AirTagScopeSnapshotSchema,
   AirTagScopeUpdateEventSchema,
-  AirTagUpdateEventSchema,
 } from "@lootlog/schema/air-tag";
 import {
   BattlePingEventSchema,
@@ -53,83 +52,6 @@ const { feedEntry: _feedEntry, ...lootCreatedFields } =
 export const LootSnapshotEvent = Schema.Struct(lootCreatedFields);
 
 export type LootSnapshotEvent = typeof LootSnapshotEvent.Type;
-
-// Offered alongside v1 by clients that understand feed events; never selected as the wire protocol.
-export const REALTIME_FEED_CAPABILITY = "lootlog.feed.v1";
-
-export const REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY =
-  "lootlog.notification-volunteer.v1";
-
-export const REALTIME_PARTY_GATHERING_STATE_CAPABILITY =
-  "lootlog.party-gathering-state.v1";
-
-// Listed in `session.joined` capabilities. Older gateways close the socket on an
-// unknown command, so clients send `connection.ping` only when it is listed.
-export const REALTIME_PING_CAPABILITY = "connection.ping";
-
-// Offered as a subprotocol by clients that decode `battle-ping.received`, and
-// listed in `session.joined` capabilities by gateways that accept
-// `battle-ping.send`. Older clients close the socket on an unknown event, and
-// older gateways close it on an unknown command.
-export const REALTIME_BATTLE_PING_CAPABILITY = "lootlog.battle-ping.v1";
-
-// Negotiated like `lootlog.battle-ping.v1`, for the battle ping types that
-// address the whole team (`quick-fight`), which v1 clients and gateways cannot
-// decode.
-export const REALTIME_TEAM_BATTLE_PING_CAPABILITY =
-  "lootlog.battle-ping.team.v1";
-
-// Offered as a subprotocol by clients that decode `loot-split.received`, and
-// listed in `session.joined` capabilities by gateways that accept
-// `loot-split.send`. Older clients close the socket on an unknown event, and
-// older gateways close it on an unknown command.
-export const REALTIME_LOOT_SPLIT_CAPABILITY = "lootlog.loot-split.v1";
-
-// Negotiated like `lootlog.loot-split.v1`, for `loot-split.auto-accept` and
-// `loot-split.auto-accepted`: a participant whose loot filter accepted the
-// split for them.
-export const REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY =
-  "lootlog.loot-split.auto-accept.v1";
-
-// Offered as a subprotocol by clients that decode `air-tag.map-threat-updated`,
-// and listed in `session.joined` capabilities by gateways that accept
-// `air-tag.map-threats.fetch`. Older clients close the socket on an unknown
-// event, and older gateways close it on an unknown command.
-export const REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY =
-  "lootlog.air-tag-map-threat.v1";
-
-// Offered as a subprotocol by clients that decode `air-tag.scope-updated`, and
-// listed in `session.joined` capabilities by gateways that accept `departures`
-// in `air-tag.observation`. Clients without it receive one `air-tag.updated`
-// per target and no removals.
-export const REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY =
-  "lootlog.air-tag-scope-update.v1";
-
-// Offered as a subprotocol by clients that decode `npc-presence.updated`, and
-// listed in `session.joined` capabilities by gateways that accept
-// `npc-presence.report` and `npc-presence.fetch`. Older clients close the socket
-// on an unknown event, and older gateways close it on an unknown command.
-export const REALTIME_NPC_PRESENCE_CAPABILITY = "lootlog.npc-presence.v1";
-
-// Offered as a subprotocol by clients that decode `global-chat.created`, and
-// listed in `session.joined` capabilities by gateways that accept a
-// `subscription.subscribe` to `global.chat`. Older clients close the socket on
-// an unknown event, and older gateways close it on an unknown topic.
-export const REALTIME_GLOBAL_CHAT_CAPABILITY = "lootlog.global-chat.v1";
-
-// Offered as a subprotocol by clients that decode `global-chat.deleted`,
-// `global-chat.pinned` and `global-chat.stats`, and listed in `session.joined`
-// capabilities by gateways that route per-world `global.chat` scopes and send
-// those events. Clients without it follow only the channel every world shares.
-export const REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY =
-  "lootlog.global-chat.v2";
-
-// Offered as a subprotocol by web clients that decode `loot.snapshot`. Such a
-// session receives `loot.snapshot` instead of `loot.created`, so a new loot
-// reaches its lists without an HTTP read.
-export const REALTIME_LOOT_SNAPSHOT_CAPABILITY = "lootlog.loot-snapshot.v1";
-
-export const REALTIME_SESSION_HELLO_CAPABILITY = "lootlog.session-hello.v1";
 
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 
@@ -452,7 +374,6 @@ export const SessionJoined = Schema.Struct({
   organizationIds: Schema.Array(Schema.NonEmptyString),
   subscriptionScopes: Schema.Array(SubscriptionScope),
   accessPolicy: Schema.optional(AccessPolicySnapshot),
-  capabilities: Schema.optional(Schema.Array(Schema.NonEmptyString)),
 });
 
 export type SessionJoined = typeof SessionJoined.Type;
@@ -601,7 +522,6 @@ export const ServerEvent = Schema.Union([
   serverEvent("battle-ping.received", BattlePingEventSchema),
   serverEvent("loot-split.received", LootSplitEventSchema),
   serverEvent("loot-split.auto-accepted", LootSplitAutoAcceptedEventSchema),
-  serverEvent("air-tag.updated", AirTagUpdateEventSchema),
   serverEvent("air-tag.scope-updated", AirTagScopeUpdateEventSchema),
   serverEvent("air-tag.map-threat-updated", AirTagMapThreatEventSchema),
   serverEvent("npc-presence.updated", NpcPresenceEventSchema),

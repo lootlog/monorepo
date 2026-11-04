@@ -2,10 +2,7 @@ import { useEffect } from "react";
 import { GatewayEvent } from "@/config/gateway";
 import { getSocket, type PermissionsUpdatedPayload } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
-import type {
-  AirTagScopeUpdateEvent,
-  AirTagUpdateEvent,
-} from "@lootlog/schema/air-tag";
+import type { AirTagScopeUpdateEvent } from "@lootlog/schema/air-tag";
 import { airTagRuntime } from "./air-tag-runtime";
 
 export const useAirTags = (): void => {
@@ -23,10 +20,6 @@ export const useAirTags = (): void => {
 
     const socket = getSocket();
 
-    const handleUpdate = (event: AirTagUpdateEvent) => {
-      airTagRuntime.handleUpdate(event);
-    };
-
     const handleScopeUpdate = (event: AirTagScopeUpdateEvent) => {
       airTagRuntime.handleScopeUpdate(event);
     };
@@ -41,13 +34,11 @@ export const useAirTags = (): void => {
       airTagRuntime.handlePresencePublished(payload.organizationIds);
     };
 
-    socket.on(GatewayEvent.AIR_TAG_UPDATE, handleUpdate);
     socket.on(GatewayEvent.AIR_TAG_SCOPE_UPDATE, handleScopeUpdate);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
     socket.on(GatewayEvent.PRESENCE_PUBLISHED, handlePresencePublished);
 
     return () => {
-      socket.off(GatewayEvent.AIR_TAG_UPDATE, handleUpdate);
       socket.off(GatewayEvent.AIR_TAG_SCOPE_UPDATE, handleScopeUpdate);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
       socket.off(GatewayEvent.PRESENCE_PUBLISHED, handlePresencePublished);

@@ -48,7 +48,6 @@ import {
   isReadyRoomRemoval,
   type PartyGatheringEventSource,
 } from "#src/realtime/npc-event-visibility";
-import { toLegacyAirTagUpdates } from "#src/realtime/air-tag-legacy-updates";
 import type { GlobalChatCounts } from "#src/realtime/gateway-metrics";
 
 type Scope = typeof SubscriptionScope.Type;
@@ -864,8 +863,6 @@ export class RealtimeHub {
     if (precise === null) return;
     const chatFrames = new Map<boolean, string>();
 
-    let legacyAirTagFrames: ReadonlyArray<string> | undefined;
-
     const canReadSource = prepareSourceEventVisibility(
       frame,
       message.sourceNpcs,
@@ -903,17 +900,6 @@ export class RealtimeHub {
             chatPermissions(socket.data, guild),
           ),
         );
-        continue;
-      }
-
-      if (
-        frame.type === "air-tag.scope-updated" &&
-        !socket.data.supportsAirTagScopeUpdates
-      ) {
-        legacyAirTagFrames ??= toLegacyAirTagUpdates(frame).map((legacy) =>
-          JSON.stringify(legacy),
-        );
-        this.sendEach(socket, legacyAirTagFrames);
         continue;
       }
 
@@ -1035,12 +1021,6 @@ export class RealtimeHub {
     }
 
     return encoded;
-  }
-
-  private sendEach(socket: GatewaySocket, frames: ReadonlyArray<string>): void {
-    for (const frame of frames) {
-      if (!this.send(socket, frame)) return;
-    }
   }
 
   private audienceKeys(session: SessionData): string[] {

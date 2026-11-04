@@ -1,10 +1,6 @@
 import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import { encodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import {
-  REALTIME_BATTLE_PING_CAPABILITY,
-  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
-} from "@lootlog/protocol/realtime";
-import {
   accountPreferenceValues,
   createSettingsDocuments,
   seedSettingsDocuments,
@@ -82,7 +78,6 @@ const setup = async ({
   oldInterface = false,
   npcUnderCursor = false,
   playerUnderCursor = false,
-  teamBattlePings = true,
 } = {}) => {
   const test = createRealtimeTest();
 
@@ -165,12 +160,6 @@ const setup = async ({
             connectionId: "test",
             organizationIds: ["guild-1"],
             subscriptionScopes: [],
-            capabilities: [
-              REALTIME_BATTLE_PING_CAPABILITY,
-              ...(teamBattlePings
-                ? [REALTIME_TEAM_BATTLE_PING_CAPABILITY]
-                : []),
-            ],
           },
         });
       });
@@ -605,22 +594,6 @@ describe("usePings in battle", () => {
         },
       }),
     ]);
-  });
-
-  it("keeps a quick-fight call local when the gateway cannot route team pings", async () => {
-    const test = await setup({ teamBattlePings: false });
-    startBattle();
-    pressQuickFightButton(test);
-
-    // A v1 gateway would close the socket on the unknown ping type.
-    expect(battlePingStore.getSnapshot().marks.get(1)?.type).toBe(
-      "quick-fight",
-    );
-    expect(
-      test.wire.frames.some(
-        (frame) => "type" in frame && frame.type === "battle-ping.send",
-      ),
-    ).toBe(false);
   });
 
   it("shows a teammate's quick-fight call to the hero and ignores one sent for someone else", async () => {

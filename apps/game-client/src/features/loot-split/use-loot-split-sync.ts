@@ -152,10 +152,7 @@ export const useLootSplitSync = () => {
         );
 
         // Not queued while offline: the split is over within seconds.
-        if (
-          recipientCharacterIds &&
-          socketRef.current?.supportsLootSplitAutoAccept()
-        )
+        if (recipientCharacterIds && socketRef.current)
           socketRef.current.emit(GatewayEvent.LOOT_SPLIT_AUTO_ACCEPT_SEND, {
             recipientCharacterIds: recipientCharacterIds.slice(
               0,

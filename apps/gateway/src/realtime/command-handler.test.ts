@@ -1364,103 +1364,7 @@ describe("CommandHandler session lifecycle", () => {
     expect(activity.calls.map(({ type }) => type)).toEqual(["CONNECT_EVENT"]);
   });
 
-  test.each([
-    {
-      capability: "lootlog.party-gathering-state.v1",
-      federationVersion: 2,
-      apiKey: false,
-      available: false,
-    },
-    {
-      capability: "lootlog.party-gathering-state.v1",
-      federationVersion: 3,
-      apiKey: false,
-      available: true,
-    },
-    {
-      capability: "lootlog.party-gathering-state.v1",
-      federationVersion: 3,
-      apiKey: true,
-      available: false,
-    },
-    // An older replica drops `loot-split.received`, so its participants would miss choices.
-    {
-      capability: "lootlog.loot-split.v1",
-      federationVersion: 8,
-      apiKey: false,
-      available: false,
-    },
-    {
-      capability: "lootlog.loot-split.v1",
-      federationVersion: 9,
-      apiKey: false,
-      available: true,
-    },
-    {
-      capability: "lootlog.loot-split.v1",
-      federationVersion: 9,
-      apiKey: true,
-      available: false,
-    },
-    // An older replica drops `loot-split.auto-accepted`, so a filter accept would go unseen.
-    {
-      capability: "lootlog.loot-split.auto-accept.v1",
-      federationVersion: 9,
-      apiKey: false,
-      available: false,
-    },
-    {
-      capability: "lootlog.loot-split.auto-accept.v1",
-      federationVersion: 10,
-      apiKey: false,
-      available: true,
-    },
-  ])(
-    "advertises a federated game capability only after its federation rollout for game sessions: %j",
-    async ({
-      capability: advertised,
-      federationVersion,
-      apiKey,
-      available,
-    }) => {
-      const { handler, hub } = setup();
-      hub.clusterFederationVersion = federationVersion;
-      const socket = makeSocket().socket;
-
-      if (apiKey) {
-        socket.data.apiKeyAccess = {
-          keyId: "key",
-          organizationIds: ["organization-1"],
-          mode: "read",
-          personalData: true,
-          expiresAt: null,
-        };
-        socket.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
-      }
-
-      await Effect.runPromise(
-        handler.handle(
-          socket,
-          JSON.stringify({
-            v: 1,
-            type: "session.join",
-            requestId: "join",
-            data: {},
-          }),
-        ),
-      );
-      const capability = [advertised];
-      expect(hub.responses[0]).toMatchObject({
-        data: {
-          capabilities: available
-            ? expect.arrayContaining(capability)
-            : expect.not.arrayContaining(capability),
-        },
-      });
-    },
-  );
-
-  test("advertises connection.ping and battle pings on join and answers pings for game and API key sockets", async () => {
+  test("answers connection.ping for game and API key sockets without presence I/O", async () => {
     const { handler, hub, presence } = setup();
     const game = makeSocket().socket;
     const integration = makeSocket().socket;
@@ -1484,18 +1388,6 @@ describe("CommandHandler session lifecycle", () => {
         }),
       ),
     );
-    expect(hub.responses[0]).toMatchObject({
-      data: {
-        capabilities: [
-          "connection.ping",
-          "lootlog.battle-ping.v1",
-          "lootlog.battle-ping.team.v1",
-          "lootlog.air-tag-map-threat.v1",
-          "lootlog.air-tag-scope-update.v1",
-          "lootlog.npc-presence.v1",
-        ],
-      },
-    });
 
     for (const [socket, requestId] of [
       [game, "game-ping"],
@@ -2526,16 +2418,10 @@ describe("CommandHandler session lifecycle", () => {
     const { handler } = setup(undefined, undefined, hub);
 
     const subscribe = async (
-      supportsGlobalChatChannels: boolean,
       data: { topic: "global.chat" } | { topic: string; world: string },
     ) => {
-      const target = makeSocket();
-      Object.assign(target.socket.data, {
-        joined: true,
-        guilds: [guild()],
-        supportsGlobalChat: true,
-        supportsGlobalChatChannels,
-      });
+      const target = makeSocket("game");
+      Object.assign(target.socket.data, { joined: true, guilds: [guild()] });
 
       await Effect.runPromise(
         handler.handle(
@@ -2550,10 +2436,8 @@ describe("CommandHandler session lifecycle", () => {
       );
     };
 
-    await subscribe(true, { topic: "global.chat.world", world: "gordion" });
-    await subscribe(true, { topic: "global.chat" });
-    // A client without channels would close the socket on the stats event.
-    await subscribe(false, { topic: "global.chat" });
+    await subscribe({ topic: "global.chat.world", world: "gordion" });
+    await subscribe({ topic: "global.chat" });
 
     expect(hub.events).toEqual([
       {
@@ -2564,7 +2448,6 @@ describe("CommandHandler session lifecycle", () => {
       { v: 1, type: "global-chat.stats", data: { online: 9, listeners: 5 } },
     ]);
     expect(hub.responses).toMatchObject([
-      { status: "success" },
       { status: "success" },
       { status: "success" },
     ]);

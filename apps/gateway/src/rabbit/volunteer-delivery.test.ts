@@ -38,40 +38,36 @@ describe("volunteer delivery", () => {
       () => {},
     );
 
-    const targets = ["organizer", "other-member", "legacy-organizer"].map(
-      (connectionId) => {
-        const discordId =
-          connectionId === "legacy-organizer" ? "organizer" : connectionId;
+    const targets = ["organizer", "other-member"].map((connectionId) => {
+      const discordId = connectionId;
 
-        const frames: string[] = [];
+      const frames: string[] = [];
 
-        const session: SessionData = {
-          discordId,
-          userId: discordId,
-          connectionId,
-          supportsNotificationVolunteer: connectionId !== "legacy-organizer",
-          platform: "game",
-          joined: true,
-          guilds: [],
-          subscriptions: new Map(),
-          airTagScopes: [],
-          confidence: "reported",
-        };
+      const session: SessionData = {
+        discordId,
+        userId: discordId,
+        connectionId,
+        platform: "game",
+        joined: true,
+        guilds: [],
+        subscriptions: new Map(),
+        airTagScopes: [],
+        confidence: "reported",
+      };
 
-        hub.register({
-          data: session,
-          getBufferedAmount: () => 0,
-          send: (frame: string) => {
-            frames.push(frame);
+      hub.register({
+        data: session,
+        getBufferedAmount: () => 0,
+        send: (frame: string) => {
+          frames.push(frame);
 
-            return frame.length;
-          },
-          close: () => {},
-        });
+          return frame.length;
+        },
+        close: () => {},
+      });
 
-        return frames;
-      },
-    );
+      return frames;
+    });
 
     const unexpected = () => {
       throw new Error("Unexpected control call");
@@ -131,6 +127,5 @@ describe("volunteer delivery", () => {
       },
     ]);
     expect(targets[1]).toEqual([]);
-    expect(targets[2]).toEqual([]);
   });
 });
