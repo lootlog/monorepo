@@ -136,6 +136,15 @@ const makeSocket = (connectionId: string) => {
 };
 
 // Publishes to every Lootlog of the session, as a client whose character catches for all of them.
+const OFFLINE_DUE_INDEX = "presence:offline:due";
+
+const dueDepartures = (store: RedisGatewayStore) =>
+  store.command.eval<string[]>(
+    "return redis.call('ZRANGE', KEYS[1], 0, -1)",
+    1,
+    OFFLINE_DUE_INDEX,
+  );
+
 const joinedOrganizations = (target: GatewaySocket) =>
   target.data.guilds.map(({ guild }) => guild.id);
 
@@ -989,6 +998,12 @@ describe("realtime Dragonfly integration", () => {
 
       await Effect.runPromise(presence.sweepOffline());
       expect(events).toEqual([]);
+      // The reconnect leaves no cancelled departure in the character index.
+      expect(
+        await store.command.smembers(
+          `presence:offline:character:${JSON.stringify([game.data.userId, game.data.character?.world, game.data.character?.characterId])}`,
+        ),
+      ).toEqual([]);
 
       // Redis TTL can elapse while the gateway is down; metadata must retain identity.
       for (const { guild } of game.data.guilds)
@@ -1104,7 +1119,7 @@ describe("realtime Dragonfly integration", () => {
       }
 
       now += 10_000;
-      const pending = await store.command.smembers("presence:offline:pending");
+      const pending = await dueDepartures(store);
 
       const firstKey = pending.find((key) =>
         key.includes('"user-group-first"'),
@@ -1116,16 +1131,9 @@ describe("realtime Dragonfly integration", () => {
 
       if (!firstKey || !secondKey)
         throw new Error("Missing pending departures");
-      // Both groups overlap organization-1. Its first snapshot must not be reused
-      // after another group's claim waits on network I/O.
-      await runtime.runPromise(
-        redis.send(
-          "RPUSH",
-          `${prefix}:presence:offline:pending:overflow`,
-          firstKey,
-          secondKey,
-        ),
-      );
+      // Equal due scores sort by member, so the first user's group is claimed
+      // first. Both groups overlap organization-1. Its first snapshot must not
+      // be reused after another group's claim waits on network I/O.
       afterFirstClaim = async () => {
         pauseReconnect = true;
         reconnecting = Effect.runPromise(
@@ -1144,9 +1152,7 @@ describe("realtime Dragonfly integration", () => {
 
       await Effect.runPromise(presence.sweepOffline());
       expect(events.map((event) => event.userId)).toEqual([first.data.userId]);
-      expect(await store.command.smembers("presence:offline:pending")).toEqual(
-        [],
-      );
+      expect(await dueDepartures(store)).toEqual([]);
       expect(await store.command.smembers("presence:offline:outbox")).toEqual(
         [],
       );
@@ -1193,7 +1199,7 @@ describe("realtime Dragonfly integration", () => {
         ): Promise<A> => {
           if (!script.includes("-- presence:offline-claim"))
             return store.command.eval<A>(script, keyCount, ...args);
-          claimSizes.push((keyCount - 4) / 3);
+          claimSizes.push((keyCount - 3) / 3);
           const before = beforeClaim;
           const after = afterClaim;
           beforeClaim = undefined;
@@ -1238,7 +1244,7 @@ describe("realtime Dragonfly integration", () => {
       }
 
       now += 10_000;
-      const pending = await store.command.smembers("presence:offline:pending");
+      const pending = await dueDepartures(store);
 
       const replacementKey = pending.find((key) =>
         key.includes('"user-replacement"'),
@@ -1246,22 +1252,19 @@ describe("realtime Dragonfly integration", () => {
 
       if (!replacementKey) throw new Error("Missing replacement departure");
 
-      const newerDeparture = JSON.stringify({
-        userId: replacement.data.userId,
-        discordId: replacement.data.discordId,
-        characterId: replacement.data.character?.characterId,
-        world: "classic",
-        organizationIds: ["organization-2", "organization-1"],
-        disconnectedAt: now,
-      });
-
       beforeClaim = async () => {
         await Effect.runPromise(
           presence.publish(reconnected, {
             organizationIds: joinedOrganizations(reconnected),
           }),
         );
-        await store.command.set(replacementKey, newerDeparture);
+        // A brief reconnect replaces the captured departure with a newer one.
+        await Effect.runPromise(
+          presence.publish(replacement, {
+            organizationIds: joinedOrganizations(replacement),
+          }),
+        );
+        await Effect.runPromise(presence.disconnect(replacement.data));
       };
 
       afterClaim = async () => {
@@ -1279,9 +1282,9 @@ describe("realtime Dragonfly integration", () => {
       expect(events.map((event) => event.userId)).toEqual([
         departed.data.userId,
       ]);
-      expect(await store.command.get(replacementKey)).toBe(newerDeparture);
-      expect(await store.command.smembers("presence:offline:pending")).toEqual([
-        replacementKey,
+      expect(await store.command.get(replacementKey)).toBeNull();
+      expect(await dueDepartures(store)).toEqual([
+        expect.stringContaining('"user-replacement"'),
       ]);
 
       now += 10_000;
@@ -1303,7 +1306,7 @@ describe("realtime Dragonfly integration", () => {
     }
   });
 
-  test("heartbeats repair independently lost indexes and preserve the final observed expiry time", async () => {
+  test("heartbeats repair a lost Organization index and preserve the final observed expiry time", async () => {
     const runtime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
     );
@@ -1352,29 +1355,19 @@ describe("realtime Dragonfly integration", () => {
         presence.publish(game, { organizationIds: joinedOrganizations(game) }),
       );
 
-      for (const lostKey of [
-        "presence:index:organization-1",
-        "presence:organizations",
-      ]) {
-        await store.command.del(lostKey);
-        now += 25_000;
-        await Effect.runPromise(
-          presence.heartbeat(game, game.data.connectionId),
-        );
-        expect(
-          await store.command.smembers("presence:index:organization-1"),
-        ).toContain("presence:organization-1:heartbeat");
-        expect(
-          await store.command.smembers("presence:organizations"),
-        ).toContain("organization-1");
-        expect(
-          (
-            await Effect.runPromise(
-              presence.snapshot(game.data, "organization-1"),
-            )
-          ).presences[0]?.lastSeen,
-        ).toBe(now);
-      }
+      await store.command.del("presence:index:organization-1");
+      now += 25_000;
+      await Effect.runPromise(presence.heartbeat(game, game.data.connectionId));
+      expect(
+        await store.command.smembers("presence:index:organization-1"),
+      ).toContain("presence:organization-1:heartbeat");
+      expect(
+        (
+          await Effect.runPromise(
+            presence.snapshot(game.data, "organization-1"),
+          )
+        ).presences[0]?.lastSeen,
+      ).toBe(now);
 
       // A full Redis loss must be recoverable without another presence.publish.
       await store.command.flushdb();
@@ -1393,9 +1386,9 @@ describe("realtime Dragonfly integration", () => {
         await store.command.del(`presence:${guild.id}:heartbeat`);
       now += PRESENCE_EXPIRY_MS + 10_000;
       await Effect.runPromise(presence.sweepExpired());
-      expect(await store.command.smembers("presence:organizations")).toEqual(
-        [],
-      );
+      expect(
+        await store.command.smembers("presence:index:organization-1"),
+      ).toEqual([]);
       await Effect.runPromise(presence.sweepOffline());
       expect(events).toEqual([
         expect.objectContaining({
@@ -1407,339 +1400,168 @@ describe("realtime Dragonfly integration", () => {
     }
   });
 
-  test.each(["before", "after"] as const)(
-    "keeps concurrent publication indexed when it runs %s empty Organization pruning",
-    async (publicationOrder) => {
-      const runtime = ManagedRuntime.make(
-        BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+  test("two expiry replicas retain a session refreshed after candidate capture", async () => {
+    const url = `redis://${dragonfly.getHost()}:${redisPort}`;
+
+    const runtimes = [
+      ManagedRuntime.make(BunRedis.layer({ url })),
+      ManagedRuntime.make(BunRedis.layer({ url })),
+    ];
+
+    const keyPrefix = `expiry-race:${crypto.randomUUID()}`;
+
+    try {
+      const stores = await Promise.all(
+        runtimes.map(
+          async (runtime) =>
+            new RedisGatewayStore(
+              await runtime.runPromise(Redis.Redis),
+              {
+                ...makeConfiguration().redis,
+                password: "",
+                keyPrefix,
+              },
+              (effect) => runtime.runPromise(effect),
+              () => {},
+            ),
+        ),
       );
 
-      try {
-        const redis = await runtime.runPromise(Redis.Redis);
+      const [firstStore, secondStore] = stores;
 
-        const store = new RedisGatewayStore(
-          redis,
-          {
-            host: dragonfly.getHost(),
-            port: redisPort,
-            username: "",
-            password: "",
-            keyPrefix: `presence-prune:${crypto.randomUUID()}`,
-          },
-          (effect) => runtime.runPromise(effect),
-          () => {},
+      if (!firstStore || !secondStore) throw new Error("Missing replica");
+
+      let now = Date.now();
+      const events: GameCharacterOffline[] = [];
+      const removed: string[] = [];
+      const game = makeSocket("expiry-race").socket;
+      game.data.guilds = guilds.slice(0, 1);
+      game.data.character = game.data.presence?.character;
+      setSocketPresence(game, undefined);
+      const organizationId = "organization-1";
+      const key = `presence:${organizationId}:${game.data.connectionId}`;
+      const metadataKey = `presence:metadata:${organizationId}:${game.data.connectionId}`;
+
+      const dueMember = JSON.stringify([
+        organizationId,
+        game.data.connectionId,
+      ]);
+
+      let refreshBeforeRemoval: (() => Promise<void>) | undefined;
+
+      const makeHub = () => ({
+        instanceId: crypto.randomUUID(),
+        setPresence: setSocketPresence,
+        publishPresence: async (
+          ...[, event]: Parameters<RealtimeHub["publishPresence"]>
+        ) => {
+          if (
+            event.type === "presence.delta" &&
+            event.data.changes.some(({ action }) => action === "remove")
+          )
+            removed.push(game.data.connectionId);
+        },
+      });
+
+      const flushBoth = () =>
+        Effect.runPromise(
+          Effect.all([first.flushDeltas(), second.flushDeltas()]),
         );
 
-        let now = Date.now();
-        const events: GameCharacterOffline[] = [];
+      const publishOffline = (event: GameCharacterOffline) =>
+        Effect.sync(() => void events.push(event));
 
-        const hub = {
-          instanceId: crypto.randomUUID(),
-          setPresence: setSocketPresence,
-          publishPresence: async () => {},
-          publishToScope: async () => {},
-        };
+      const first = new PresenceStore(
+        {
+          command: {
+            ...firstStore.command,
+            eval: async <A>(
+              script: string,
+              keyCount: number,
+              ...parameters: ReadonlyArray<string | number>
+            ): Promise<A> => {
+              if (script.includes("-- presence:expiry-remove")) {
+                const refresh = refreshBeforeRemoval;
+                refreshBeforeRemoval = undefined;
+                await refresh?.();
+              }
 
-        const publisher = new PresenceStore(
-          store,
-          hub,
-          () => now,
-          undefined,
-          undefined,
-          (event) => Effect.sync(() => void events.push(event)),
-        );
-
-        const departed = makeSocket("departed").socket;
-        departed.data.character = departed.data.presence?.character;
-        await Effect.runPromise(
-          publisher.publish(departed, {
-            organizationIds: joinedOrganizations(departed),
-          }),
-        );
-        await Effect.runPromise(publisher.disconnect(departed.data));
-        const returning = makeSocket("returning").socket;
-        returning.data = {
-          ...returning.data,
-          userId: departed.data.userId,
-          character: departed.data.character,
-        };
-        let published = false;
-
-        const sweepingStore = new PresenceStore(
-          {
-            command: {
-              ...store.command,
-              eval: async <A>(
-                script: string,
-                numberOfKeys: number,
-                ...parameters: ReadonlyArray<string | number>
-              ): Promise<A> => {
-                const publish = async () => {
-                  published = true;
-                  await Effect.runPromise(
-                    publisher.publish(returning, {
-                      organizationIds: joinedOrganizations(returning),
-                    }),
-                  );
-                };
-
-                const pruning =
-                  !published &&
-                  parameters[0] === "presence:index:organization-1" &&
-                  script.includes("-- presence:prune-organization");
-
-                if (pruning && publicationOrder === "before") await publish();
-
-                const result = await store.command.eval<A>(
-                  script,
-                  numberOfKeys,
-                  ...parameters,
-                );
-
-                if (pruning && publicationOrder === "after") await publish();
-
-                return result;
-              },
+              return firstStore.command.eval<A>(
+                script,
+                keyCount,
+                ...parameters,
+              );
             },
           },
-          hub,
-          () => now,
-        );
+        },
+        makeHub(),
+        () => now,
+        undefined,
+        undefined,
+        publishOffline,
+      );
 
-        await store.command.sadd("presence:organizations", "empty");
+      const second = new PresenceStore(
+        secondStore,
+        makeHub(),
+        () => now,
+        undefined,
+        undefined,
+        publishOffline,
+      );
 
-        for (let attempt = 0; attempt < 6; attempt++)
-          await Effect.runPromise(sweepingStore.sweepExpired());
-        expect(published).toBe(true);
-        expect(
-          (await store.command.smembers("presence:organizations")).sort(),
-        ).toEqual(["organization-1", "organization-2"]);
+      await Effect.runPromise(
+        first.publish(game, { organizationIds: joinedOrganizations(game) }),
+      );
+      await flushBoth();
+      now += PRESENCE_EXPIRY_MS;
+      let refreshed = false;
+      refreshBeforeRemoval = async () => {
+        refreshed = true;
 
-        for (const { guild } of guilds) {
-          expect(
-            await store.command.smembers(`presence:index:${guild.id}`),
-          ).toEqual([`presence:${guild.id}:returning`]);
-          expect(
-            (
-              await Effect.runPromise(
-                publisher.snapshot(returning.data, guild.id),
-              )
-            ).presences.map(({ sessionId }) => sessionId),
-          ).toEqual(["returning"]);
-        }
-
-        now += 10_000;
-        await Effect.runPromise(publisher.sweepOffline());
-        expect(events).toEqual([]);
-        await Effect.runPromise(publisher.disconnect(returning.data));
-
-        for (let attempt = 0; attempt < 6; attempt++)
-          await Effect.runPromise(sweepingStore.sweepExpired());
-        expect(await store.command.smembers("presence:organizations")).toEqual(
-          [],
-        );
-        now += 9_999;
-        await Effect.runPromise(publisher.sweepOffline());
-        expect(events).toEqual([]);
-        now += 1;
-        await Effect.runPromise(publisher.sweepOffline());
-        expect(events).toHaveLength(1);
-      } finally {
-        await runtime.dispose();
-      }
-    },
-  );
-
-  test.each(["current", "legacy"] as const)(
-    "two expiry replicas retain a session refreshed by a %s writer after candidate capture",
-    async (writer) => {
-      const url = `redis://${dragonfly.getHost()}:${redisPort}`;
-
-      const runtimes = [
-        ManagedRuntime.make(BunRedis.layer({ url })),
-        ManagedRuntime.make(BunRedis.layer({ url })),
-      ];
-
-      const keyPrefix = `expiry-race:${crypto.randomUUID()}`;
-
-      try {
-        const stores = await Promise.all(
-          runtimes.map(
-            async (runtime) =>
-              new RedisGatewayStore(
-                await runtime.runPromise(Redis.Redis),
-                {
-                  ...makeConfiguration().redis,
-                  password: "",
-                  keyPrefix,
-                },
-                (effect) => runtime.runPromise(effect),
-                () => {},
-              ),
-          ),
-        );
-
-        const [firstStore, secondStore] = stores;
-
-        if (!firstStore || !secondStore) throw new Error("Missing replica");
-
-        let now = Date.now();
-        const events: GameCharacterOffline[] = [];
-        const removed: string[] = [];
-        const game = makeSocket("expiry-race").socket;
-        game.data.guilds = guilds.slice(0, 1);
-        game.data.character = game.data.presence?.character;
-        setSocketPresence(game, undefined);
-        const organizationId = "organization-1";
-        const key = `presence:${organizationId}:${game.data.connectionId}`;
-        const metadataKey = `presence:metadata:${organizationId}:${game.data.connectionId}`;
-
-        const dueMember = JSON.stringify([
-          organizationId,
-          game.data.connectionId,
-        ]);
-
-        let refreshBeforeRemoval: (() => Promise<void>) | undefined;
-
-        const makeHub = () => ({
-          instanceId: crypto.randomUUID(),
-          setPresence: setSocketPresence,
-          publishPresence: async (
-            ...[, event]: Parameters<RealtimeHub["publishPresence"]>
-          ) => {
-            if (
-              event.type === "presence.delta" &&
-              event.data.changes.some(({ action }) => action === "remove")
-            )
-              removed.push(game.data.connectionId);
-          },
-        });
-
-        const flushBoth = () =>
-          Effect.runPromise(
-            Effect.all([first.flushDeltas(), second.flushDeltas()]),
-          );
-
-        const publishOffline = (event: GameCharacterOffline) =>
-          Effect.sync(() => void events.push(event));
-
-        const first = new PresenceStore(
-          {
-            command: {
-              ...firstStore.command,
-              eval: async <A>(
-                script: string,
-                keyCount: number,
-                ...parameters: ReadonlyArray<string | number>
-              ): Promise<A> => {
-                if (script.includes("-- presence:expiry-remove")) {
-                  const refresh = refreshBeforeRemoval;
-                  refreshBeforeRemoval = undefined;
-                  await refresh?.();
-                }
-
-                return firstStore.command.eval<A>(
-                  script,
-                  keyCount,
-                  ...parameters,
-                );
-              },
-            },
-          },
-          makeHub(),
-          () => now,
-          undefined,
-          undefined,
-          publishOffline,
-        );
-
-        const second = new PresenceStore(
-          secondStore,
-          makeHub(),
-          () => now,
-          undefined,
-          undefined,
-          publishOffline,
-        );
-
-        await Effect.runPromise(
-          first.publish(game, { organizationIds: joinedOrganizations(game) }),
-        );
-        await flushBoth();
-        now += PRESENCE_EXPIRY_MS;
-        let refreshed = false;
-        refreshBeforeRemoval = async () => {
-          refreshed = true;
-
-          // Another replica cannot claim the batch while the first holds its lease.
-          await Effect.runPromise(second.sweepExpired());
-
-          if (writer === "current") {
-            await Effect.runPromise(
-              second.heartbeat(game, game.data.connectionId),
-            );
-          } else {
-            const presence = game.data.presence;
-
-            if (!presence) throw new Error("Missing published presence");
-            const refreshedPresence = { ...presence, lastSeen: now };
-            setSocketPresence(game, refreshedPresence);
-            // Older replicas refresh existing records without the additive due index.
-            await secondStore.command.set(
-              key,
-              JSON.stringify(refreshedPresence),
-              "EX",
-              PRESENCE_EXPIRY_MS / 1_000,
-            );
-            await secondStore.command.set(
-              metadataKey,
-              JSON.stringify({
-                userId: game.data.userId,
-                discordId: game.data.discordId,
-                presence: refreshedPresence,
-              }),
-            );
-          }
-        };
-
-        await Effect.runPromise(first.sweepExpired());
+        // Another replica cannot claim the batch while the first holds its lease.
         await Effect.runPromise(second.sweepExpired());
-        now += 10_000;
-        await Effect.runPromise(second.sweepOffline());
-        await flushBoth();
-        expect(refreshed).toBe(true);
-        expect(removed).toEqual([]);
-        expect(events).toEqual([]);
-        expect(
-          (await Effect.runPromise(second.snapshot(game.data, organizationId)))
-            .presences,
-        ).toEqual([expect.objectContaining({ sessionId: "expiry-race" })]);
-        expect(
-          Number(
-            await secondStore.command.eval(
-              "return redis.call('ZSCORE', KEYS[1], ARGV[1])",
-              1,
-              "presence:expiry:due",
-              dueMember,
-            ),
-          ),
-        ).toBe(now - 10_000 + PRESENCE_EXPIRY_MS);
 
-        now += PRESENCE_EXPIRY_MS;
-        await Effect.runPromise(second.sweepExpired());
-        await Effect.runPromise(first.sweepExpired());
-        await Effect.runPromise(first.sweepOffline());
-        await flushBoth();
-        expect(await firstStore.command.get(key)).toBeNull();
-        expect(await firstStore.command.get(metadataKey)).toBeNull();
-        expect(removed).toHaveLength(1);
-        expect(events).toHaveLength(1);
-        expect(events[0]?.disconnectedAt).toBe(now - 10_000);
-      } finally {
-        await Promise.all(runtimes.map((runtime) => runtime.dispose()));
-      }
-    },
-  );
+        await Effect.runPromise(second.heartbeat(game, game.data.connectionId));
+      };
+
+      await Effect.runPromise(first.sweepExpired());
+      await Effect.runPromise(second.sweepExpired());
+      now += 10_000;
+      await Effect.runPromise(second.sweepOffline());
+      await flushBoth();
+      expect(refreshed).toBe(true);
+      expect(removed).toEqual([]);
+      expect(events).toEqual([]);
+      expect(
+        (await Effect.runPromise(second.snapshot(game.data, organizationId)))
+          .presences,
+      ).toEqual([expect.objectContaining({ sessionId: "expiry-race" })]);
+      expect(
+        Number(
+          await secondStore.command.eval(
+            "return redis.call('ZSCORE', KEYS[1], ARGV[1])",
+            1,
+            "presence:expiry:due",
+            dueMember,
+          ),
+        ),
+      ).toBe(now - 10_000 + PRESENCE_EXPIRY_MS);
+
+      now += PRESENCE_EXPIRY_MS;
+      await Effect.runPromise(second.sweepExpired());
+      await Effect.runPromise(first.sweepExpired());
+      await Effect.runPromise(first.sweepOffline());
+      await flushBoth();
+      expect(await firstStore.command.get(key)).toBeNull();
+      expect(await firstStore.command.get(metadataKey)).toBeNull();
+      expect(removed).toHaveLength(1);
+      expect(events).toHaveLength(1);
+      expect(events[0]?.disconnectedAt).toBe(now - 10_000);
+    } finally {
+      await Promise.all(runtimes.map((runtime) => runtime.dispose()));
+    }
+  });
 
   test("an expired sweeper lease cannot recreate a departure already delivered by its successor", async () => {
     const runtime = ManagedRuntime.make(
@@ -1802,10 +1624,7 @@ describe("realtime Dragonfly integration", () => {
                 keys.includes("presence:organization-1:lost-expiry-lease")
               ) {
                 transferred = true;
-                await store.command.del(
-                  "presence:expiry:sweep-lock",
-                  "presence:sweep-lock:organization-1",
-                );
+                await store.command.del("presence:expiry:sweep-lock");
                 await Effect.runPromise(successor.sweepExpired());
                 await Effect.runPromise(successor.sweepOffline());
                 expect(events).toHaveLength(1);
@@ -1826,121 +1645,13 @@ describe("realtime Dragonfly integration", () => {
       await Effect.runPromise(successor.sweepOffline());
       expect(transferred).toBe(true);
       expect(events).toHaveLength(1);
-      expect(await store.command.smembers("presence:offline:pending")).toEqual(
-        [],
-      );
+      expect(await dueDepartures(store)).toEqual([]);
     } finally {
       await runtime.dispose();
     }
   });
 
-  test("expiry rebuilds an evicted due index and drains legacy sessions after Organization registry loss", async () => {
-    const runtime = ManagedRuntime.make(
-      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
-    );
-
-    try {
-      const store = new RedisGatewayStore(
-        await runtime.runPromise(Redis.Redis),
-        {
-          ...makeConfiguration().redis,
-          password: "",
-          keyPrefix: `expiry-recovery:${crypto.randomUUID()}`,
-        },
-        (effect) => runtime.runPromise(effect),
-        () => {},
-      );
-
-      let now = Date.now();
-      const events: GameCharacterOffline[] = [];
-
-      const makePresence = () =>
-        new PresenceStore(
-          store,
-          {
-            instanceId: crypto.randomUUID(),
-            setPresence: setSocketPresence,
-            publishPresence: async () => {},
-          },
-          () => now,
-          undefined,
-          undefined,
-          (event) => Effect.sync(() => void events.push(event)),
-        );
-
-      const publisher = makePresence();
-      const sessionCount = 205;
-      const keys: string[] = [];
-
-      for (let index = 0; index < sessionCount; index++) {
-        const game = makeSocket(`legacy-${index}`).socket;
-        game.data.guilds = guilds.slice(0, 1);
-        game.data.character = game.data.presence?.character;
-        await Effect.runPromise(
-          publisher.publish(game, {
-            organizationIds: joinedOrganizations(game),
-          }),
-        );
-        keys.push(`presence:organization-1:${game.data.connectionId}`);
-      }
-
-      await store.command.del("presence:expiry:due");
-
-      const countDue = () =>
-        store.command.eval<number>(
-          "return redis.call('ZCARD', KEYS[1])",
-          1,
-          "presence:expiry:due",
-        );
-
-      // Recreated sweepers must resume shared scan cursors, including overflow.
-      for (let attempts = 0; attempts < 20; attempts++) {
-        await Effect.runPromise(makePresence().sweepExpired());
-
-        if ((await countDue()) === sessionCount) break;
-      }
-
-      expect(await countDue()).toBe(sessionCount);
-      expect((await store.command.mget(keys)).every(Boolean)).toBe(true);
-      const disconnectedAt = now + PRESENCE_EXPIRY_MS;
-      now = disconnectedAt + 10_000;
-      await store.command.del("presence:organizations", ...keys);
-      await store.command.set(
-        "presence:sweep-lock:organization-1",
-        "legacy-replica",
-        "EX",
-        10,
-      );
-      await Effect.runPromise(makePresence().sweepExpired());
-      await Effect.runPromise(makePresence().sweepOffline());
-      expect(await countDue()).toBe(sessionCount);
-      expect(events).toEqual([]);
-      await store.command.del("presence:sweep-lock:organization-1");
-
-      for (let attempts = 0; attempts < 20; attempts++) {
-        await Effect.runPromise(makePresence().sweepExpired());
-        await Effect.runPromise(makePresence().sweepOffline());
-
-        if (events.length === sessionCount) break;
-      }
-
-      expect(await countDue()).toBe(0);
-      expect(
-        await store.command.smembers("presence:index:organization-1"),
-      ).toEqual([]);
-      expect(events).toHaveLength(sessionCount);
-      expect(new Set(events.map(({ characterId }) => characterId)).size).toBe(
-        sessionCount,
-      );
-      expect(
-        events.every((event) => event.disconnectedAt === disconnectedAt),
-      ).toBe(true);
-    } finally {
-      await runtime.dispose();
-    }
-  }, 15_000);
-
-  test("offline sweeps share bounded Organization work, drain scan overflow, and reject a lease lost during a read", async () => {
+  test("offline sweeps share bounded Organization work, drain a backlog in bounded batches, and reject a lease lost during a read", async () => {
     const runtime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
     );
@@ -2021,7 +1732,7 @@ describe("realtime Dragonfly integration", () => {
       const keys: string[] = [];
 
       for (let index = 0; index < 250; index++) {
-        const key = `presence:offline:pending-fixture:${index}`;
+        const key = `presence:offline:fixture:${index}`;
         keys.push(key);
         await store.command.set(
           key,
@@ -2036,15 +1747,11 @@ describe("realtime Dragonfly integration", () => {
         );
       }
 
-      // Legacy replicas only write this set. The new sweep must backfill the due queue.
-      await store.command.sadd("presence:offline:pending", ...keys);
-      // Force the valid persisted overflow path, independently of Dragonfly's page sizes.
-      await runtime.runPromise(
-        redis.send(
-          "RPUSH",
-          `${store.channel.slice(0, -":realtime:federation:v1".length)}:presence:offline:pending:overflow`,
-          ...keys.slice(0, 125),
-        ),
+      await store.command.eval(
+        "for _, member in ipairs(ARGV) do redis.call('ZADD', KEYS[1], 0, member) end return 1",
+        1,
+        OFFLINE_DUE_INDEX,
+        ...keys,
       );
       const reusedSweep = presence.sweepOffline();
       const first = Effect.runPromise(reusedSweep);
@@ -2087,24 +1794,21 @@ describe("realtime Dragonfly integration", () => {
       expect(await store.command.smembers("presence:offline:outbox")).toEqual(
         [],
       );
-      expect(
-        await store.command.smembers("presence:offline:pending"),
-      ).toHaveLength(250);
+      expect(await dueDepartures(store)).toHaveLength(250);
       expect(await store.command.get("presence:offline:sweep-lock")).toBe(
         "successor",
       );
       await store.command.del("presence:offline:sweep-lock");
 
-      for (const index of ["pending", "outbox"]) {
-        await store.command.set(
-          `malformed-${index}`,
-          '{"userId":"old-schema"}',
-        );
-        await store.command.sadd(
-          `presence:offline:${index}`,
-          `malformed-${index}`,
-        );
-      }
+      await store.command.set("malformed-due", '{"userId":"old-schema"}');
+      await store.command.eval(
+        "return redis.call('ZADD', KEYS[1], 0, ARGV[1])",
+        1,
+        OFFLINE_DUE_INDEX,
+        "malformed-due",
+      );
+      await store.command.set("malformed-outbox", '{"userId":"old-schema"}');
+      await store.command.sadd("presence:offline:outbox", "malformed-outbox");
 
       for (let batch = 0; batch < 20 && events.length < 249; batch++) {
         await Effect.runPromise(reusedSweep);
@@ -2115,26 +1819,14 @@ describe("realtime Dragonfly integration", () => {
       expect(Math.max(...pendingBatchSizes)).toBeLessThanOrEqual(100);
       expect(organizationReads).toBeLessThan(10);
       expect(new Set(events.map((event) => event.userId)).size).toBe(249);
-      expect(await store.command.smembers("presence:offline:pending")).toEqual(
-        [],
-      );
       expect(await store.command.smembers("presence:offline:outbox")).toEqual(
         [],
       );
       expect(await store.command.mget(keys)).toEqual(keys.map(() => null));
 
-      const due = await runtime.runPromise(
-        redis.send(
-          "ZRANGE",
-          `${store.channel.slice(0, -":realtime:federation:v1".length)}:presence:offline:due`,
-          "0",
-          "-1",
-        ),
-      );
-
-      expect(due).toEqual([]);
+      expect(await dueDepartures(store)).toEqual([]);
       expect(
-        await store.command.mget(["malformed-pending", "malformed-outbox"]),
+        await store.command.mget(["malformed-due", "malformed-outbox"]),
       ).toEqual([null, null]);
     } finally {
       await runtime.dispose();

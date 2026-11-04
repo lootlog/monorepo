@@ -162,45 +162,22 @@ each candidate, locally and after federation. `RealtimeHub.setPresence` owns pre
 maintenance; callers must use it when publishing, clearing or reconciling presence.
 The index is local to a replica and rebuilds as connections register.
 
-Presence refreshes atomically maintain the existing payload, durable metadata,
-Organization indexes and the additive `presence:expiry:due` sorted set. A member
-is the JSON pair `[organizationId, sessionId]`, scored at `lastSeen + 60 seconds`.
+Presence refreshes atomically maintain the payload, durable metadata, the
+Organization index and the `presence:expiry:due` sorted set. A member is the
+JSON pair `[organizationId, sessionId]`, scored at `lastSeen + 60 seconds`.
 Idle expiry sweeps inspect scores instead of fetching every active payload.
 Due entries are read in batches of at most 100. A drain yields between batches
 and stops starting more batches after one second. An individual batch can take
 longer when Redis or publication is slow; the bound limits batch size, not request
 latency.
 
-A 30-second token lease coordinates upgraded replicas. Due Organizations also
-use the existing `presence:sweep-lock:<organizationId>` locks to coordinate with
-older sweepers. Removal checks ownership and the captured payload and metadata
-atomically. It schedules the durable departure in the same operation, so a stale
-worker cannot recreate an offline event already handled by its successor. A
-concurrent heartbeat defeats removal. The ten-second offline grace period and
-publication retry queue remain unchanged.
-
-### Expiry rollout and recovery
-
-No client, WebSocket, federation or database migration is required. Deploy Gateway
-normally without clearing Redis. New refreshes write both old and new indexes;
-older replicas continue using the original records and Organization indexes.
-Existing records and legacy-only writes are backfilled by a shared cursor scan,
-at most one Organization page of 100 session candidates per five-second sweep.
-Scan overflow is retained across replicas and restarts. Healthy indexed sessions
-need no payload read during this reconciliation.
-
-Heartbeats repair independently evicted indexes. If the due index is lost, the
-bounded legacy scan rebuilds it even for sessions that no longer heartbeat;
-recovery can therefore take multiple sweep intervals for a large backlog.
-If only the Organization registry is lost, existing due entries can still expire.
-Durable metadata retains identity and the final observed expiry time after the
-payload TTL elapses. Fresh payloads from older writers correct stale due scores.
-
-Rollback needs no data rewrite. Older Gateway versions continue reading the
-retained records and indexes. They ignore the additive expiry keys, which the
-new version reconciles when it returns. Old workers retain their existing
-concurrency behavior until replaced; the stronger captured-value removal guard
-applies to upgraded workers.
+A 30-second token lease coordinates the replicas' sweepers. Removal checks
+lease ownership and the captured payload and metadata atomically. It schedules
+the durable departure in the same operation, so a stale worker cannot recreate
+an offline event already handled by its successor. A concurrent heartbeat
+defeats removal. Durable metadata retains identity and the final observed
+expiry time after the payload TTL elapses, and a heartbeat restores a lost
+Organization index or due entry.
 
 ### Performance verification
 
@@ -216,23 +193,22 @@ Exact-map routing already had 50 candidates; its wall time changed from 226 to
 232–245 ms due to the additional intersection. Delivery assertions passed in
 both cases.
 
-The expiry baseline was revision `ef1e509fe4`. All sessions were active, with no
-expired entries. The same Dragonfly 1.34.1 fixture measured:
+All sessions were active, with no expired entries. The same Dragonfly 1.34.1
+fixture measured one idle sweep:
 
-| Organizations | Sessions per Organization | Replicas | Gateway Redis calls, before / after | Server commands, before / after | Active payload entries read, before / after | JSON reply bytes, before / after | Sweep ms, before / after |
-| ------------- | ------------------------- | -------- | ----------------------------------- | ------------------------------- | ------------------------------------------- | -------------------------------- | ------------------------ |
-| 1             | 100                       | 1        | 4 / 6                               | 4 / 134                         | 100 / 0                                     | 24,273 / 48                      | 3.96 / 4.07              |
-| 10            | 100                       | 1        | 31 / 5                              | 31 / 138                        | 1,000 / 0                                   | 242,721 / 48                     | 14.87 / 5.24             |
-| 100           | 10                        | 2        | 402 / 7                             | 402 / 144                       | 1,000 / 0                                   | 246,782 / 53                     | 33.92 / 2.21             |
-| 100           | 50                        | 4        | 604 / 9                             | 604 / 186                       | 5,000 / 0                                   | 1,242,564 / 61                   | 40.47 / 3.74             |
+| Organizations | Sessions per Organization | Replicas | Gateway Redis calls | Server commands | Active payload entries read | JSON reply bytes | Sweep ms |
+| ------------- | ------------------------- | -------- | ------------------- | --------------- | --------------------------- | ---------------- | -------- |
+| 1             | 100                       | 1        | 3                   | 10              | 0                           | 9                | 2.35     |
+| 10            | 100                       | 1        | 3                   | 10              | 0                           | 9                | 0.79     |
+| 100           | 10                        | 2        | 4                   | 11              | 0                           | 13               | 0.90     |
+| 100           | 50                        | 4        | 6                   | 13              | 0                           | 21               | 1.11     |
 
 Gateway call counts treat one script evaluation as one call. Server commands use
 Dragonfly's command counter and include Lua operations and script loading; they
-exclude the measurement's own INFO command. Reconciliation adds score checks,
-so small installations can execute more server commands even while transferring
-less data. Reply bytes are JSON-encoded command results, not Redis wire bytes.
-Small wall-time differences are noisy; the stable result is bounded idle work
-with zero active-payload reads as session and Organization counts grow.
+exclude the measurement's own INFO command. Reply bytes are JSON-encoded command
+results, not Redis wire bytes. Small wall-time differences are noisy; the stable
+result is bounded idle work with zero active-payload reads as session and
+Organization counts grow.
 
 ## Realtime access policy updates
 
@@ -339,24 +315,19 @@ older pending response completes.
 
 ## Character departure queue
 
-Character departures keep the existing ten-second reconnect grace period. New
-Gateway replicas atomically store each departure in the existing
-`presence:offline:pending` set, its character index, and the additive
-`presence:offline:due` sorted set. The sorted-set score is the departure time plus
-ten seconds, so a sweep reads only due departures in batches of at most 100.
+Character departures keep a ten-second reconnect grace period. Gateway
+atomically stores each departure under its own key, in its character index and
+in the `presence:offline:due` sorted set. The score is the departure time plus
+ten seconds, so a sweep reads only due departures in batches of at most 100. A
+reconnect cancels the character's departures; a newer departure supersedes
+older ones.
 
-During a rolling upgrade, a bounded scan backfills departures written by older
-replicas that only maintain the pending set. Both indexes remain in use; no Redis
-flush or coordinated client rollout is required. Cancellation and successful
-claims remove the due entry as well as the original pending entry. A stale due
-score from an older writer is checked against the captured departure before a
-claim. Rolling back leaves an unused due index that is reconciled when the new
-Gateway returns; the original records and pending set remain usable.
-
-A 30-second lease coordinates upgraded sweepers. Acquisition is interruptible,
-and shutdown attempts lease release for at most one second; an orphaned lease
-expires. Confirmed publication acknowledges the captured outbox value and renews
-the lease. Lease loss stops the current drain, while a failed publication leaves
+A 30-second lease coordinates the sweepers. Acquisition is interruptible, and
+shutdown attempts lease release for at most one second; an orphaned lease
+expires. Each claim decides a group of departures against one fresh read of
+their Organizations and moves the departures that stay offline to the outbox.
+Confirmed publication acknowledges the captured outbox value and renews the
+lease. Lease loss stops the current drain, while a failed publication leaves
 the durable outbox record for retry. Malformed stored departure records are
 removed without terminating the sweep or discarding valid records in the batch.
 

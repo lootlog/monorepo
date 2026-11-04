@@ -12,7 +12,6 @@ class MemoryRedis {
   readonly values = new Map<string, string>();
   readonly sets = new Map<string, Set<string>>();
   readonly sortedSets = new Map<string, Map<string, number>>();
-  readonly lists = new Map<string, string[]>();
 
   async set(
     key: string,
@@ -47,15 +46,6 @@ class MemoryRedis {
     if (_script.includes("-- presence:refresh"))
       return this.refresh(args, _numberOfKeys);
 
-    if (_script.includes("-- presence:expiry-organization"))
-      return this.expiryOrganization(args);
-
-    if (_script.includes("-- presence:expiry-legacy-batch"))
-      return this.expiryLegacyBatch(args);
-
-    if (_script.includes("-- presence:expiry-index"))
-      return this.indexExpiry(args, _numberOfKeys);
-
     if (_script.includes("-- presence:expiry-ready"))
       return this.expiryReady(args);
 
@@ -65,20 +55,8 @@ class MemoryRedis {
     if (_script.includes("-- presence:remove"))
       return this.removePresence(args, _numberOfKeys);
 
-    if (_script.includes("-- presence:prune-organization")) {
-      if (this.sets.get(args[0]!)?.size) return 0;
-
-      return this.srem(args[1]!, args[2]!);
-    }
-
-    if (_script.includes("-- presence:offline-batch"))
-      return this.readBatch(args);
-
     if (_script.includes("-- presence:offline-schedule"))
       return this.scheduleOffline(args, _numberOfKeys);
-
-    if (_script.includes("-- presence:offline-index-due"))
-      return this.indexOfflineDue(args, _numberOfKeys);
 
     if (_script.includes("-- presence:offline-ready"))
       return this.readOfflineReady(args);
@@ -87,7 +65,12 @@ class MemoryRedis {
       return this.dropOffline(args);
 
     if (_script.includes("-- presence:offline-cancel")) {
-      await this.cancelDepartures(args.slice(0, 3), args.slice(3));
+      const departures = _numberOfKeys - 2;
+      await this.cancelDepartures(
+        args.slice(0, 2),
+        args.slice(2, _numberOfKeys),
+        args.slice(_numberOfKeys, _numberOfKeys + departures),
+      );
 
       return 1;
     }
@@ -95,85 +78,13 @@ class MemoryRedis {
     if (_script.includes("-- presence:offline-renew"))
       return Number(this.values.get(args[0]!) === args[1]);
 
-    if (_script.includes("-- presence:offline-release"))
-      return this.releaseOffline(args);
+    if (_script.includes("-- presence:lease-release"))
+      return this.releaseLease(args);
 
     if (_script.includes("-- presence:offline-ack"))
       return this.ackOffline(args);
 
     return this.claimOffline(args, _numberOfKeys);
-  }
-
-  private expiryOrganization(args: string[]): string {
-    if (this.values.get(args[0]!) !== args[5]) return "";
-    const current = this.values.get(args[4]!);
-
-    if (current) return current;
-    let pending = this.lists.get(args[3]!) ?? [];
-
-    if (pending.length === 0) {
-      const organizations = [...(this.sets.get(args[1]!) ?? [])];
-      const cursor = Number(this.values.get(args[2]!) ?? 0);
-      const size = Number(args[6]);
-      pending = organizations.slice(cursor, cursor + size);
-      this.values.set(
-        args[2]!,
-        String(cursor + size >= organizations.length ? 0 : cursor + size),
-      );
-    }
-
-    const organization = pending.shift() ?? "";
-    this.lists.set(args[3]!, pending);
-
-    if (organization) this.values.set(args[4]!, organization);
-
-    return organization;
-  }
-
-  private expiryLegacyBatch(args: string[]): string {
-    if (this.values.get(args[0]!) !== args[6])
-      return JSON.stringify({ keys: [], complete: false });
-    const members = [...(this.sets.get(args[1]!) ?? [])];
-    const cursor = Number(this.values.get(args[2]!) ?? 0);
-    const size = Number(args[7]);
-    const complete = cursor + size >= members.length;
-    this.values.set(args[2]!, String(complete ? 0 : cursor + size));
-    const due = this.sortedSets.get(args[4]!);
-
-    const keys = members
-      .slice(cursor, cursor + size)
-      .filter(
-        (key) =>
-          !due?.has(
-            JSON.stringify([args[8], key.slice(key.lastIndexOf(":") + 1)]),
-          ),
-      );
-
-    if (complete) this.values.delete(args[5]!);
-
-    return JSON.stringify({ keys, complete });
-  }
-
-  private indexExpiry(args: string[], numberOfKeys: number): number {
-    const values = args.slice(numberOfKeys);
-
-    if (this.values.get(args[0]!) !== values[0]) return 0;
-    const due = this.sortedSets.get(args[1]!) ?? new Map<string, number>();
-
-    for (let index = 2; index < numberOfKeys; index += 2) {
-      const offset = 1 + ((index - 2) / 2) * 4;
-
-      if (
-        (this.values.get(args[index]!) ?? "") !== values[offset] ||
-        (this.values.get(args[index + 1]!) ?? "") !== values[offset + 1]
-      )
-        continue;
-      due.set(values[offset + 2]!, Number(values[offset + 3]));
-    }
-
-    this.sortedSets.set(args[1]!, due);
-
-    return 1;
   }
 
   private expiryReady(args: string[]): string {
@@ -191,11 +102,7 @@ class MemoryRedis {
   private removeExpired(args: string[], numberOfKeys: number): number {
     const values = args.slice(numberOfKeys);
 
-    if (
-      this.values.get(args[0]!) !== values[0] ||
-      this.values.get(args[5]!) !== values[0]
-    )
-      return 0;
+    if (this.values.get(args[0]!) !== values[0]) return 0;
     const score = this.sortedSets.get(args[4]!)?.get(values[3]!);
 
     if (score === undefined || score > Number(values[4])) return 0;
@@ -207,7 +114,7 @@ class MemoryRedis {
       return 0;
 
     if (
-      numberOfKeys > 6 &&
+      numberOfKeys > 5 &&
       !this.replaceExpiredDeparture(args, values, numberOfKeys)
     )
       return 0;
@@ -224,39 +131,38 @@ class MemoryRedis {
     args: string[],
     values: string[],
     numberOfKeys: number,
-  ): number {
-    const count = numberOfKeys - 10;
+  ): boolean {
+    const [key, characterIndex, dueIndex] = args.slice(5, 8);
+    const superseded = args.slice(8, numberOfKeys);
+    const captured = values.slice(10, 10 + superseded.length);
+    const members = values.slice(10 + superseded.length);
 
-    if ((this.sets.get(args[8]!)?.size ?? 0) !== count) return 0;
+    if ((this.sets.get(characterIndex!)?.size ?? 0) !== superseded.length)
+      return false;
 
-    for (let index = 10; index < numberOfKeys; index++) {
+    for (const [index, departure] of superseded.entries()) {
       if (
-        (this.values.get(args[index]!) ?? "") !== values[index] ||
-        !this.sets.get(args[8]!)?.has(values[index + count]!)
+        (this.values.get(departure) ?? "") !== captured[index] ||
+        !this.sets.get(characterIndex!)?.has(members[index]!)
       )
-        return 0;
+        return false;
     }
 
-    for (let index = 10; index < numberOfKeys; index++) {
-      this.values.delete(args[index]!);
-      this.sets.get(args[7]!)?.delete(values[index + count]!);
-      this.sets.get(args[8]!)?.delete(values[index + count]!);
-      this.sortedSets.get(args[9]!)?.delete(values[index + count]!);
+    for (const [index, departure] of superseded.entries()) {
+      this.values.delete(departure);
+      this.sets.get(characterIndex!)?.delete(members[index]!);
+      this.sortedSets.get(dueIndex!)?.delete(members[index]!);
     }
 
-    this.values.set(args[6]!, values[7]!);
-
-    for (const key of [args[7]!, args[8]!]) {
-      const set = this.sets.get(key) ?? new Set<string>();
-      set.add(values[8]!);
-      this.sets.set(key, set);
-    }
-
-    const due = this.sortedSets.get(args[9]!) ?? new Map<string, number>();
+    this.values.set(key!, values[7]!);
+    const set = this.sets.get(characterIndex!) ?? new Set<string>();
+    set.add(values[8]!);
+    this.sets.set(characterIndex!, set);
+    const due = this.sortedSets.get(dueIndex!) ?? new Map<string, number>();
     due.set(values[8]!, Number(values[9]));
-    this.sortedSets.set(args[9]!, due);
+    this.sortedSets.set(dueIndex!, due);
 
-    return 1;
+    return true;
   }
 
   private async removePresence(
@@ -283,14 +189,14 @@ class MemoryRedis {
   }
 
   private async cancelDepartures(
-    [pending, index, due]: string[],
+    [index, due]: string[],
     departures: string[],
+    members: string[],
   ): Promise<void> {
-    for (const key of departures) {
+    for (const [position, key] of departures.entries()) {
       await this.del(key);
-      await this.srem(pending!, key);
-      await this.srem(index!, key);
-      this.sortedSets.get(due!)?.delete(key);
+      await this.srem(index!, members[position]!);
+      this.sortedSets.get(due!)?.delete(members[position]!);
     }
   }
 
@@ -298,25 +204,19 @@ class MemoryRedis {
     args: string[],
     numberOfKeys: number,
   ): Promise<string | number> {
-    const [organizations, dueIndex] = args;
+    const [dueIndex] = args;
     const values = args.slice(numberOfKeys);
 
-    for (let key = 2; key < numberOfKeys; key += 3) {
+    for (let key = 1; key < numberOfKeys; key += 3) {
       const [presence, metadata, index] = args.slice(key, key + 3);
-
-      const [member, organizationId, dueMember] = values.slice(
-        4 + key - 2,
-        4 + key + 1,
-      );
+      const offset = 4 + ((key - 1) / 3) * 2;
+      const [member, dueMember] = values.slice(offset, offset + 2);
 
       await this.set(presence!, values[0]!);
       await this.set(metadata!, values[2]!);
 
       if (!this.sets.get(index!)?.has(member!))
         await this.sadd(index!, member!);
-
-      if (!this.sets.get(organizations!)?.has(organizationId!))
-        await this.sadd(organizations!, organizationId!);
 
       const due = this.sortedSets.get(dueIndex!) ?? new Map<string, number>();
       due.set(dueMember!, Number(values[3]));
@@ -330,39 +230,19 @@ class MemoryRedis {
     args: string[],
     numberOfKeys: number,
   ): Promise<string | number> {
-    const key = args[0]!;
-    const [event, member, dueAt] = args.slice(numberOfKeys);
+    const [key, index, dueIndex] = args;
+    const [event, member, dueAt, ...superseded] = args.slice(numberOfKeys);
 
-    await this.cancelDepartures(args.slice(1, 4), args.slice(4, numberOfKeys));
-    await this.set(key, event!);
-    await this.sadd(args[1]!, member!);
-    await this.sadd(args[2]!, member!);
-    const due = this.sortedSets.get(args[3]!) ?? new Map<string, number>();
+    await this.cancelDepartures(
+      [index!, dueIndex!],
+      args.slice(3, numberOfKeys),
+      superseded,
+    );
+    await this.set(key!, event!);
+    await this.sadd(index!, member!);
+    const due = this.sortedSets.get(dueIndex!) ?? new Map<string, number>();
     due.set(member!, Number(dueAt));
-    this.sortedSets.set(args[3]!, due);
-
-    return 1;
-  }
-
-  private async indexOfflineDue(
-    args: string[],
-    numberOfKeys: number,
-  ): Promise<string | number> {
-    const key = args[0]!;
-
-    const values = args.slice(numberOfKeys);
-
-    if (this.values.get(key) !== values[0]) return -1;
-    const due = this.sortedSets.get(args[1]!) ?? new Map<string, number>();
-
-    for (let index = 2; index < numberOfKeys; index++) {
-      const offset = 1 + (index - 2) * 3;
-
-      if (this.values.get(args[index]!) === values[offset])
-        due.set(values[offset + 1]!, Number(values[offset + 2]));
-    }
-
-    this.sortedSets.set(args[1]!, due);
+    this.sortedSets.set(dueIndex!, due);
 
     return 1;
   }
@@ -373,7 +253,7 @@ class MemoryRedis {
     if (this.values.get(key) !== args[2]) return "[]";
 
     const entries =
-      args[4] === "pending"
+      args[4] === "due"
         ? [...(this.sortedSets.get(args[1]!) ?? [])]
             .filter(([, due]) => due <= Number(args[5]))
             .sort((left, right) => left[1] - right[1])
@@ -384,19 +264,19 @@ class MemoryRedis {
   }
 
   private async dropOffline(args: string[]): Promise<string | number> {
-    const key = args[0]!;
+    const [lock, key, due, outbox, token, value, member] = args;
 
-    if (this.values.get(key) !== args[4]) return -1;
+    if (this.values.get(lock!) !== token) return -1;
 
-    if ((this.values.get(args[1]!) ?? "") !== args[5]) return 0;
-    await this.del(args[1]!);
-    await this.srem(args[2]!, args[6]!);
-    this.sortedSets.get(args[3]!)?.delete(args[6]!);
+    if ((this.values.get(key!) ?? "") !== value) return 0;
+    await this.del(key!);
+    this.sortedSets.get(due!)?.delete(member!);
+    await this.srem(outbox!, member!);
 
     return 1;
   }
 
-  private async releaseOffline(args: string[]): Promise<string | number> {
+  private async releaseLease(args: string[]): Promise<string | number> {
     const key = args[0]!;
 
     if (this.values.get(key) !== args[1]) return 0;
@@ -420,15 +300,15 @@ class MemoryRedis {
     args: string[],
     _numberOfKeys: number,
   ): Promise<number> {
-    const [lock, pendingIndex, outboxIndex, dueIndex] = args;
+    const [lock, outboxIndex, dueIndex] = args;
     const values = args.slice(_numberOfKeys);
 
     if (this.values.get(lock!) !== values[0]) return -1;
     let completed = 0;
 
-    for (let index = 4; index < _numberOfKeys; index += 3) {
+    for (let index = 3; index < _numberOfKeys; index += 3) {
       const [pending, outbox, characterIndex] = args.slice(index, index + 3);
-      const offset = 2 + ((index - 4) / 3) * 4;
+      const offset = 2 + ((index - 3) / 3) * 4;
 
       const [value, pendingMember, outboxMember, publish] = values.slice(
         offset,
@@ -437,7 +317,6 @@ class MemoryRedis {
 
       if (this.values.get(pending!) !== value) continue;
       this.values.delete(pending!);
-      this.sets.get(pendingIndex!)?.delete(pendingMember!);
       this.sortedSets.get(dueIndex!)?.delete(pendingMember!);
       this.sets.get(characterIndex!)?.delete(pendingMember!);
 
@@ -452,23 +331,6 @@ class MemoryRedis {
     }
 
     return completed;
-  }
-
-  private readBatch(args: string[]): string {
-    if (this.values.get(args[0]!) !== args[4])
-      return JSON.stringify({ keys: [], complete: true });
-    const members = [...(this.sets.get(args[1]!) ?? [])];
-    const cursor = Number(this.values.get(args[2]!) ?? 0);
-    const size = Number(args[5]);
-    this.values.set(
-      args[2]!,
-      String(cursor + size >= members.length ? 0 : cursor + size),
-    );
-
-    return JSON.stringify({
-      keys: members.slice(cursor, cursor + size),
-      complete: cursor + size >= members.length,
-    });
   }
 
   async get(key: string): Promise<string | null> {
@@ -935,27 +797,21 @@ describe("PresenceStore", () => {
         store.publish(publisher, { organizationIds: ["organization-1"] }),
       );
       await flush(store);
-      redis.values.set(
-        "presence:organization-1:session-1",
-        JSON.stringify({ ...viewer.presence, discordId: undefined }),
-      );
-      const metadataStarted = Promise.withResolvers<void>();
-      const metadataGate = Promise.withResolvers<void>();
+      const firstStarted = Promise.withResolvers<void>();
+      const firstGate = Promise.withResolvers<void>();
       const replacementStarted = Promise.withResolvers<void>();
       const replacementGate = Promise.withResolvers<void>();
       const originalMget = redis.mget.bind(redis);
       let reads = 0;
       spyOn(redis, "mget").mockImplementation(async (keys) => {
-        if (keys[0]?.startsWith("presence:metadata:")) {
-          metadataStarted.resolve();
-          await metadataGate.promise;
+        const read = ++reads;
 
-          return originalMget(keys);
+        if (read === 1) {
+          firstStarted.resolve();
+          await firstGate.promise;
         }
 
-        reads++;
-
-        if (reads === 2) {
+        if (read === 2) {
           replacementStarted.resolve();
           await replacementGate.promise;
         }
@@ -968,7 +824,7 @@ describe("PresenceStore", () => {
       );
 
       try {
-        await metadataStarted.promise;
+        await firstStarted.promise;
         await Effect.runPromise(
           store.publish(publisher, {
             organizationIds: ["organization-1"],
@@ -983,8 +839,8 @@ describe("PresenceStore", () => {
 
         await replacementStarted.promise;
 
-        if (outcome === "success") metadataGate.resolve();
-        else metadataGate.reject(new Error("Legacy metadata read failed"));
+        if (outcome === "success") firstGate.resolve();
+        else firstGate.reject(new Error("Snapshot read failed"));
         await first;
 
         const follower = Effect.runPromise(
@@ -1000,14 +856,14 @@ describe("PresenceStore", () => {
           expect(snapshot.revision).toBe(2);
         }
       } finally {
-        metadataGate.resolve();
+        firstGate.resolve();
         replacementGate.resolve();
         await first;
       }
     },
   );
 
-  test.each(["smembers", "mget", "metadata"])(
+  test.each(["smembers", "mget"])(
     "bounds a stalled %s read and allows a fresh snapshot without waiting for it to settle",
     async (stage) => {
       const redis = new MemoryRedis();
@@ -1023,10 +879,6 @@ describe("PresenceStore", () => {
         store.publish(socket(viewer), { organizationIds: ["organization-1"] }),
       );
       await flush(store);
-      redis.values.set(
-        "presence:organization-1:session-1",
-        JSON.stringify({ ...viewer.presence, discordId: undefined }),
-      );
       const stalled = Promise.withResolvers<void>();
       const started = Promise.withResolvers<void>();
       let shouldStall = true;
@@ -1046,9 +898,7 @@ describe("PresenceStore", () => {
         return originalSmembers(key);
       });
       spyOn(redis, "mget").mockImplementation(async (keys) => {
-        await pause(
-          keys[0]?.startsWith("presence:metadata:") ? "metadata" : "mget",
-        );
+        await pause("mget");
 
         return originalMget(keys);
       });
@@ -1346,7 +1196,7 @@ describe("PresenceStore", () => {
     ).toEqual([]);
   });
 
-  test("batches map metadata while ignoring missing, malformed and other-map sessions", async () => {
+  test("lists a map's sessions from one Organization read, skipping other maps", async () => {
     const redis = new MemoryRedis();
 
     const store = new PresenceStore(
@@ -1376,8 +1226,6 @@ describe("PresenceStore", () => {
       );
     }
 
-    redis.values.delete("presence:metadata:organization-1:session-2");
-    redis.values.set("presence:metadata:organization-1:session-3", "invalid");
     const get = spyOn(redis, "get");
     const mget = spyOn(redis, "mget");
     expect(
@@ -1385,10 +1233,11 @@ describe("PresenceStore", () => {
     ).toEqual([
       { discordId: "discord-0", isAfk: false },
       { discordId: "discord-1", isAfk: true },
+      { discordId: "discord-2", isAfk: false },
+      { discordId: "discord-3", isAfk: false },
     ]);
     expect(get).not.toHaveBeenCalled();
-    expect(mget).toHaveBeenCalledTimes(2);
-    expect(mget.mock.calls[1]?.[0]).toHaveLength(4);
+    expect(mget).toHaveBeenCalledTimes(1);
     mget.mockClear();
     expect(
       await Effect.runPromise(store.coverageForMap("organization-1", "Empty")),
@@ -1409,13 +1258,6 @@ describe("PresenceStore", () => {
         location: { mapId: 42, map: "Kwieciste Przejście", x: 4, y: 7 },
       }),
     );
-
-    // Simulate an unexpired presence written by the previous gateway version.
-    const presenceKey = "presence:organization-1:session-1";
-    const stored = JSON.parse(redis.values.get(presenceKey) ?? "{}");
-    expect(stored).toMatchObject({ userId: "user-1", discordId: "discord-1" });
-    delete stored.discordId;
-    redis.values.set(presenceKey, JSON.stringify(stored));
 
     const basic = await Effect.runPromise(
       store.snapshot(
@@ -1557,37 +1399,6 @@ describe("PresenceStore", () => {
     ).toMatchObject([{ lastSeen: now }]);
   });
 
-  test("an older writer's fresh metadata repairs an early deadline after payload eviction", async () => {
-    let now = 1_000;
-    const redis = new MemoryRedis();
-    const hub = new RecordingHub();
-    const store = new PresenceStore({ command: redis }, hub, () => now);
-    const game = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
-    await Effect.runPromise(
-      store.publish(game, { organizationIds: joinedOrganizations(game) }),
-    );
-    await flush(store);
-    const oldDue = new Map(redis.sortedSets.get("presence:expiry:due"));
-    now += PRESENCE_EXPIRY_MS - 1_000;
-    await Effect.runPromise(store.heartbeat(game, game.data.connectionId));
-    redis.sortedSets.set("presence:expiry:due", oldDue);
-    redis.values.delete("presence:organization-1:session-1");
-    now += 1_000;
-    await Effect.runPromise(store.sweepExpired());
-    await flush(store);
-    expect(deltaChanges(hub, "remove")).toEqual([]);
-    expect(
-      await redis.get("presence:metadata:organization-1:session-1"),
-    ).not.toBeNull();
-    now += PRESENCE_EXPIRY_MS;
-    await Effect.runPromise(store.sweepExpired());
-    await flush(store);
-    expect(deltaChanges(hub, "remove")).toHaveLength(1);
-    expect(
-      await redis.get("presence:metadata:organization-1:session-1"),
-    ).toBeNull();
-  });
-
   test("clears published presence and coverage when all organization access is revoked", async () => {
     const redis = new MemoryRedis();
     const hub = new RecordingHub();
@@ -1693,7 +1504,7 @@ describe("PresenceStore", () => {
     },
   );
 
-  test("scopes snapshots, legacy records and deltas to the receiving organization", async () => {
+  test("scopes snapshots and deltas to the receiving organization", async () => {
     const redis = new MemoryRedis();
     const hub = new RecordingHub();
     const store = new PresenceStore({ command: redis }, hub, () => 10_000);
@@ -1724,12 +1535,6 @@ describe("PresenceStore", () => {
           [organizationId],
         );
       }
-
-      // A rolling deployment can leave records from the previous gateway in Redis.
-      await redis.set(
-        `presence:${organizationId}:session-1`,
-        JSON.stringify(publisher.data.presence),
-      );
 
       for (const permissions of [
         [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
@@ -1967,7 +1772,7 @@ test("expiry cleanup resumes after a transient Redis failure", async () => {
   await Effect.runPromise(
     Effect.gen(function* () {
       yield* store.runExpirySweep().pipe(Effect.forkScoped);
-      yield* TestClock.adjust(store.sweepSchedule);
+      yield* TestClock.adjust("5 seconds");
       expect(attempts).toBe(2);
     }).pipe(Effect.scoped, Effect.provide(TestClock.layer())),
   );
@@ -2079,7 +1884,7 @@ describe("game character offline grace", () => {
     expect(new Set(events.map(({ userId }) => userId)).size).toBe(350);
   });
 
-  test("drops malformed pending and outbox records while valid departures continue", async () => {
+  test("drops malformed due and outbox records while valid departures continue", async () => {
     const redis = new MemoryRedis();
     let now = 0;
     const events: unknown[] = [];
@@ -2102,19 +1907,20 @@ describe("game character offline grace", () => {
     );
     await Effect.runPromise(store.disconnect(game.data));
 
-    for (const index of ["pending", "outbox"]) {
-      await redis.set(`invalid-${index}`, '{"userId":"old-schema"}');
-      await redis.sadd(`presence:offline:${index}`, `invalid-${index}`);
-    }
+    await redis.set("invalid-due", '{"userId":"old-schema"}');
+    redis.sortedSets.get("presence:offline:due")?.set("invalid-due", 0);
+    await redis.set("invalid-outbox", '{"userId":"old-schema"}');
+    await redis.sadd("presence:offline:outbox", "invalid-outbox");
 
     now = 10_000;
     await Effect.runPromise(store.sweepOffline());
     expect(events).toHaveLength(1);
-
-    for (const index of ["pending", "outbox"]) {
-      expect(await redis.get(`invalid-${index}`)).toBeNull();
-      expect(await redis.smembers(`presence:offline:${index}`)).toEqual([]);
-    }
+    expect(await redis.get("invalid-due")).toBeNull();
+    expect(await redis.get("invalid-outbox")).toBeNull();
+    expect([...(redis.sortedSets.get("presence:offline:due") ?? [])]).toEqual(
+      [],
+    );
+    expect(await redis.smembers("presence:offline:outbox")).toEqual([]);
 
     // A later sweep remains usable after malformed persisted values.
     await Effect.runPromise(
@@ -2181,7 +1987,7 @@ describe("game character offline grace", () => {
         numberOfKeys: number,
         ...parameters: Array<string | number>
       ): Promise<A> {
-        if (script.includes("-- presence:offline-release")) {
+        if (script.includes("-- presence:lease-release")) {
           started.resolve();
           await stalled.promise;
         }
