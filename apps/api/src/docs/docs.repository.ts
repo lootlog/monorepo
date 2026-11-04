@@ -1,6 +1,5 @@
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { randomUUID } from "node:crypto";
 import {
   ResourceConflictError,
   ApplicationError,
@@ -128,7 +127,7 @@ const documentHistoryValues = (
   document: StoredDocument,
   action: StoredDocumentHistory["action"],
 ): typeof guildDocumentHistoryTable.$inferInsert => ({
-  id: randomUUID(),
+  id: Bun.randomUUIDv7(),
   documentId: document.id,
   guildId: document.guildId,
   version: document.version,
@@ -293,7 +292,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           const rows = yield* transaction
             .insert(guildDocumentTable)
             .values({
-              id: randomUUID(),
+              id: Bun.randomUUIDv7(),
               guildId: options.guildId,
               title: options.title,
               content: options.content,

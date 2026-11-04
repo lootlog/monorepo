@@ -1134,7 +1134,6 @@
             "name": "world",
             "in": "query",
             "schema": {
-              "nullable": true,
               "type": "string",
               "minLength": 1
             },

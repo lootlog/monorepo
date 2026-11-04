@@ -84,6 +84,7 @@ it("filters hero timers by NPC level before exposing their public projection", a
         send: unexpected,
         eval: () => unexpected,
         subscribe: () => Queue.unbounded(),
+        reserve: Effect.die("unused"),
       },
       {},
       Effect.runPromise,

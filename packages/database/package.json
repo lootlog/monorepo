@@ -15,7 +15,7 @@
   },
   "scripts": {
     "lint": "oxlint src test",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "test": "bun test --path-ignore-patterns='**/*.integration.*'",
     "test:integration": "bun test test/postgres.integration.test.ts"
   },

@@ -2,7 +2,6 @@ import { queryEventHero } from "#src/events/event-scope-query";
 import { eventReadCacheScope } from "#src/events/catalog/event-read-cache.service";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { randomUUID } from "node:crypto";
 import { and, eq, isNull } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -250,7 +249,7 @@ export const makeEventRespawnCommands = (
                   : query(
                       "events.respawn.open.gap.insert",
                       database.insert(eventMapCoverageGapTable).values({
-                        id: randomUUID(),
+                        id: Bun.randomUUIDv7(),
                         mapId: map.id,
                         heroNpcId: heroId,
                         gapType,

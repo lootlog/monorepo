@@ -1,3 +1,4 @@
+import { itemStatUpgradeLevel } from "@lootlog/domain/item-upgrade";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
 import {
@@ -7,6 +8,7 @@ import {
   type ItemDisplayValue,
 } from "@lootlog/ui/components/item-stat-utils";
 import { cn } from "cn";
+import { Star } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import type { ItemTileLabels } from "./item-tile";
 
@@ -116,6 +118,8 @@ export const ItemTileDetails: FC<ItemTileDetailsProps> = ({
 
   const typeLabel = type ? (labels.type[type] ?? type) : null;
 
+  const upgradeLevel = itemStatUpgradeLevel(stat);
+
   return (
     <>
       <div className="flex items-center gap-3 px-3 pt-3 pb-2.5">
@@ -124,6 +128,7 @@ export const ItemTileDetails: FC<ItemTileDetailsProps> = ({
           color={color}
           icon={icon}
           rarity={rarity}
+          upgradeLevel={upgradeLevel}
         />
         <div className="min-w-0 flex-1">
           <p className="font-heading text-sm leading-snug font-semibold text-balance text-foreground">
@@ -138,6 +143,22 @@ export const ItemTileDetails: FC<ItemTileDetailsProps> = ({
             {typeLabel ? <> · {typeLabel}</> : null}
           </p>
         </div>
+        {upgradeLevel > 0 ? (
+          <span
+            role="img"
+            aria-label={`${labels.upgradeLevel} +${upgradeLevel}`}
+            className="relative grid size-7 shrink-0 place-items-center self-start"
+          >
+            <Star
+              aria-hidden="true"
+              className="absolute inset-0 size-7 fill-amber-300 text-amber-600"
+              strokeWidth={1.5}
+            />
+            <span className="relative pt-px text-[11px] leading-none font-bold text-amber-950 tabular-nums">
+              {upgradeLevel}
+            </span>
+          </span>
+        ) : null}
       </div>
       <div aria-hidden="true" className="flex items-center gap-1.5 px-3">
         <span className="h-px flex-1 bg-[color-mix(in_oklab,var(--item-rarity)_45%,transparent)]" />

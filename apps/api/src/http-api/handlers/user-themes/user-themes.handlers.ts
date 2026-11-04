@@ -3,7 +3,7 @@ import {
   statusCodeResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 import { and, asc, count, eq, isNull, sql } from "drizzle-orm";
@@ -148,7 +148,7 @@ export class UserThemesData extends Context.Service<
                 const [theme] = yield* transaction
                   .insert(userThemeTable)
                   .values({
-                    id: randomUUID(),
+                    id: Bun.randomUUIDv7(),
                     userId,
                     name: payload.name,
                     definition: payload.definition,

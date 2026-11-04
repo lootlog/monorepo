@@ -85,13 +85,12 @@ paths:
                               items:
                                 anyOf:
                                   - type: string
-                                  - anyOf:
-                                      - type: number
-                                      - type: string
-                                        enum:
-                                          - Infinity
-                                          - -Infinity
-                                          - NaN
+                                  - type: number
+                                  - type: string
+                                    enum:
+                                      - Infinity
+                                      - -Infinity
+                                      - NaN
                             message:
                               type: string
                           required:
@@ -291,13 +290,12 @@ paths:
                               items:
                                 anyOf:
                                   - type: string
-                                  - anyOf:
-                                      - type: number
-                                      - type: string
-                                        enum:
-                                          - Infinity
-                                          - -Infinity
-                                          - NaN
+                                  - type: number
+                                  - type: string
+                                    enum:
+                                      - Infinity
+                                      - -Infinity
+                                      - NaN
                             message:
                               type: string
                           required:
@@ -2276,13 +2274,12 @@ paths:
                               items:
                                 anyOf:
                                   - type: string
-                                  - anyOf:
-                                      - type: number
-                                      - type: string
-                                        enum:
-                                          - Infinity
-                                          - -Infinity
-                                          - NaN
+                                  - type: number
+                                  - type: string
+                                    enum:
+                                      - Infinity
+                                      - -Infinity
+                                      - NaN
                             message:
                               type: string
                           required:
@@ -2485,13 +2482,12 @@ paths:
                               items:
                                 anyOf:
                                   - type: string
-                                  - anyOf:
-                                      - type: number
-                                      - type: string
-                                        enum:
-                                          - Infinity
-                                          - -Infinity
-                                          - NaN
+                                  - type: number
+                                  - type: string
+                                    enum:
+                                      - Infinity
+                                      - -Infinity
+                                      - NaN
                             message:
                               type: string
                           required:
@@ -2592,13 +2588,12 @@ paths:
                               items:
                                 anyOf:
                                   - type: string
-                                  - anyOf:
-                                      - type: number
-                                      - type: string
-                                        enum:
-                                          - Infinity
-                                          - -Infinity
-                                          - NaN
+                                  - type: number
+                                  - type: string
+                                    enum:
+                                      - Infinity
+                                      - -Infinity
+                                      - NaN
                             message:
                               type: string
                           required:
@@ -2817,7 +2812,6 @@ paths:
         - name: authorization
           in: header
           schema:
-            nullable: true
             type: string
           required: false
       responses:
@@ -2848,13 +2842,12 @@ paths:
                               items:
                                 anyOf:
                                   - type: string
-                                  - anyOf:
-                                      - type: number
-                                      - type: string
-                                        enum:
-                                          - Infinity
-                                          - -Infinity
-                                          - NaN
+                                  - type: number
+                                  - type: string
+                                    enum:
+                                      - Infinity
+                                      - -Infinity
+                                      - NaN
                             message:
                               type: string
                           required:

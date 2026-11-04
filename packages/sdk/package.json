@@ -53,7 +53,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "lint": "oxlint src/*.ts scripts *.ts --deny-warnings",
     "test": "bun test",
     "prepack": "bun run build",
@@ -62,7 +62,7 @@
     "test:package": "bun scripts/check-package.ts"
   },
   "dependencies": {
-    "effect": "4.0.4"
+    "effect": "4.1.2"
   },
   "devDependencies": {
     "@lootlog/client": "workspace:*",

@@ -3,7 +3,6 @@ import {
   reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { randomUUID } from "node:crypto";
 import { Context, Effect, Layer, Schema } from "effect";
 
 import { HttpApiBuilder } from "effect/http-api";
@@ -108,7 +107,7 @@ export class MapTemplatesData extends Context.Service<
           database
             .insert(mapTemplateTable)
             .values({
-              id: randomUUID(),
+              id: Bun.randomUUIDv7(),
               guildId,
               name: payload.name,
               maps: [...payload.maps],
