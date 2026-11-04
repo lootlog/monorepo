@@ -12,7 +12,7 @@ export type BackgroundTaskRunner = (
   task: Effect.Effect<void, unknown>,
 ) => void;
 
-export const makeBackgroundTaskRunner =
+const makeBackgroundTaskRunner =
   (run: (effect: Effect.Effect<void>) => void): BackgroundTaskRunner =>
   (label, task) =>
     run(

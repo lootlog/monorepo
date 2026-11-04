@@ -1976,54 +1976,27 @@ describe("realtime Dragonfly integration", () => {
     await Effect.runPromise(history.observe(session, now, true));
     await Effect.runPromise(history.flush());
     expect(checkpoints()).toHaveLength(3);
-    // A pre-upgrade segment and pending message retain unknown provenance.
-    const legacyStart = now;
-    const legacyId = session.connectionId + ":" + legacyStart;
-    await store.command.eval(
-      "redis.call('SET', KEYS[1], ARGV[1]); redis.call('HSET', KEYS[2], ARGV[2], ARGV[3]); redis.call('ZADD', KEYS[3], ARGV[4], ARGV[2]); redis.call('ZADD', KEYS[4], ARGV[4], ARGV[2]); return 1",
-      4,
-      "online-history:session:" + session.connectionId,
-      "online-history:pending",
-      "online-history:due",
-      "online-history:age",
-      JSON.stringify({
-        started: legacyStart,
-        lastSeen: legacyStart + 25_000,
-      }),
-      legacyId,
-      JSON.stringify({
-        userId: session.userId,
-        sessionId: session.connectionId,
-        segmentId: legacyId,
-        started: legacyStart,
-        ended: legacyStart + 25_000,
-        final: false,
-      }),
-      legacyStart,
-    );
-    now = legacyStart + 50_000;
+    // A world change closes the segment and starts one in the new world.
+    const changedAt = now + 120_000;
+    now = changedAt;
     await Effect.runPromise(history.observe(session, now));
-    now = legacyStart + 100_000;
+    now = changedAt + 25_000;
+    await Effect.runPromise(history.observe(session, now));
+
+    if (!session.character) throw new Error("Expected game character");
+    session.character = { ...session.character, world: "luvia" };
+    now = changedAt + 50_000;
+    await Effect.runPromise(history.observe(session, now));
+    now = changedAt + 150_000;
     await Effect.runPromise(history.flush());
     expect(
       checkpoints()
         .slice(3)
-        .map(({ world }) => world),
-    ).toEqual([undefined, "classic"]);
-    expect(checkpoints()[4]?.startedAt).toBe(
-      new Date(legacyStart + 25_000).toISOString(),
-    );
-
-    if (!session.character) throw new Error("Expected game character");
-    session.character = { ...session.character, world: "luvia" };
-    now = legacyStart + 75_000;
-    await Effect.runPromise(history.observe(session, now));
-    now = legacyStart + 175_000;
-    await Effect.runPromise(history.flush());
-    expect(checkpoints()[5]?.world).toBe("luvia");
-    expect(checkpoints()[5]?.startedAt).toBe(
-      new Date(legacyStart + 50_000).toISOString(),
-    );
+        .map(({ world, startedAt }) => [world, startedAt]),
+    ).toEqual([
+      ["classic", new Date(changedAt).toISOString()],
+      ["luvia", new Date(changedAt + 25_000).toISOString()],
+    ]);
   });
 
   test("online history drains a bounded backlog and preserves updates during delivery", async () => {

@@ -66,13 +66,13 @@ interface ConsumerSpec {
 // need no order and run side by side.
 const MEMBER_ACCESS_PREFETCH = 8;
 
-const retryable = (
+const retryable = <Key extends CanonicalRabbitEventRoutingKey>(
   queue: string,
-  routingKey: CanonicalRabbitEventRoutingKey,
+  routingKey: Key,
   retryRoutingKey: RabbitRoutingKeyName,
   deadLetterRoutingKey: RabbitRoutingKeyName,
   installRetryQueue = true,
-): ConsumerSpec => ({
+): ConsumerSpec & { readonly routingKey: Key } => ({
   queue,
   routingKey,
   retryRoutingKey,
@@ -80,7 +80,7 @@ const retryable = (
   installRetryQueue,
 });
 
-const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
+const consumerSpecs = [
   retryable(
     "gateway-guilds-kills-accepted-v1",
     RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1,
@@ -271,7 +271,33 @@ const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
     queue: "gateway-presence-check-request",
     routingKey: RabbitRoutingKey.PRESENCE_CHECK_REQUEST,
   },
-];
+] as const;
+
+type ConsumedRoutingKey = (typeof consumerSpecs)[number]["routingKey"];
+
+const gatewayConsumerSpecs: ReadonlyArray<
+  ConsumerSpec & { readonly routingKey: ConsumedRoutingKey }
+> = consumerSpecs;
+
+type BridgeRoute<Key extends ConsumedRoutingKey> = (
+  payload: CanonicalRabbitEvent<Key>,
+  messageId: string | undefined,
+) => Effect.Effect<void, unknown>;
+
+/** One route per consumed routing key; a queue without a route does not compile. */
+type BridgeRoutes = { readonly [Key in ConsumedRoutingKey]: BridgeRoute<Key> };
+
+/** Decodes and runs the route of `routingKey`, generic so the two stay correlated. */
+const runBridgeRoute = <Key extends ConsumedRoutingKey>(
+  routes: BridgeRoutes,
+  routingKey: Key,
+  serializedPayload: string,
+  messageId: string | undefined,
+) =>
+  routes[routingKey](
+    decodeRabbitEventJson(routingKey, serializedPayload),
+    messageId,
+  );
 
 export const gatewayQueueDefinitions: ReadonlyArray<RabbitQueueDefinition> =
   gatewayConsumerSpecs.flatMap((spec) => {
@@ -512,20 +538,80 @@ export class RabbitBridge {
   }
 
   private handle(
-    routingKey: CanonicalRabbitEventRoutingKey,
+    routingKey: ConsumedRoutingKey,
     serializedPayload: string,
     messageId?: string,
   ): Effect.Effect<void, unknown> {
-    const fromPromise = <A>(evaluate: () => Promise<A>) =>
-      Effect.tryPromise({ try: evaluate, catch: (cause) => cause });
+    return runBridgeRoute(
+      this.routes,
+      routingKey,
+      serializedPayload,
+      messageId,
+    );
+  }
 
-    if (routingKey === RabbitRoutingKey.PRESENCE_CHECK_REQUEST) {
-      const { guildId, mapName } = decodeRabbitEventJson(
-        routingKey,
-        serializedPayload,
+  private publish(
+    ...args: Parameters<RealtimeHub["publishToScope"]>
+  ): Effect.Effect<void, unknown> {
+    return Effect.tryPromise({
+      try: () => this.hub.publishToScope(...args),
+      catch: (cause) => cause,
+    });
+  }
+
+  private publishTo(
+    discordId: string,
+    event: Event,
+  ): Effect.Effect<void, unknown> {
+    return Effect.tryPromise({
+      try: () => this.hub.publishToDiscord(discordId, event),
+      catch: (cause) => cause,
+    });
+  }
+
+  private rebalance(
+    payload: { readonly discordId: string; readonly userId: string },
+    removedOrganizationId?: string,
+  ): Effect.Effect<void, unknown> {
+    return this.commands.rebalanceAcrossInstances(
+      payload.discordId,
+      payload.userId,
+      removedOrganizationId,
+    );
+  }
+
+  /** Forwards an Organization's event to the subscribers of one topic. */
+  private organizationEvent<Key extends ConsumedRoutingKey>(
+    topic: Scope["topic"],
+    type: OrganizationEvent["type"],
+  ): BridgeRoute<Key> {
+    return (payload) => {
+      const data = record(payload);
+
+      const organizationId =
+        Option.getOrUndefined(decodeString(data.guildId)) ??
+        Option.getOrUndefined(decodeString(data.organizationId));
+
+      if (!organizationId) return Effect.void;
+
+      const scope: Types.Mutable<Scope> = { topic, organizationId };
+      const eventId = Option.getOrUndefined(decodeString(data.eventId));
+      const world = Option.getOrUndefined(decodeString(data.world));
+
+      if (eventId !== undefined) scope.eventId = eventId;
+
+      if (world !== undefined) scope.world = world;
+
+      return this.publish(
+        scope,
+        organizationEvent(type, organizationId, payload),
       );
+    };
+  }
 
-      return this.presence.coverageForMap(guildId, mapName).pipe(
+  private readonly routes: BridgeRoutes = {
+    [RabbitRoutingKey.PRESENCE_CHECK_REQUEST]: ({ guildId, mapName }) =>
+      this.presence.coverageForMap(guildId, mapName).pipe(
         Effect.flatMap((presences) =>
           Effect.forEach(
             presences,
@@ -540,105 +626,89 @@ export class RabbitBridge {
             { concurrency: "unbounded", discard: true },
           ),
         ),
-      );
-    }
-
-    if (
-      routingKey === RabbitRoutingKey.GUILDS_MEMBERS_UPDATE ||
-      routingKey === RabbitRoutingKey.GUILDS_MEMBERS_REMOVE ||
-      routingKey === RabbitRoutingKey.GUILDS_MEMBERS_ADD_ROLE ||
-      routingKey === RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE
-    ) {
-      const payload = decodeRabbitEventJson(routingKey, serializedPayload);
-
-      return this.commands.rebalanceAcrossInstances(
-        payload.discordId,
-        payload.userId,
-        routingKey === RabbitRoutingKey.GUILDS_MEMBERS_REMOVE
-          ? payload.guildId
-          : undefined,
-      );
-    }
-
-    if (routingKey === RabbitRoutingKey.GUILDS_MEMBERS_ADD) {
-      decodeRabbitEventJson(routingKey, serializedPayload);
-
-      return Effect.void;
-    }
-
-    if (routingKey === RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER) {
-      const data = decodeRabbitEventJson(routingKey, serializedPayload);
-
-      return fromPromise(() =>
-        this.hub.publishToDiscord(data.targetDiscordId, {
-          v: 1,
-          type: "notification.volunteer",
-          data: {
-            notificationId: data.notificationId,
-            volunteer: {
-              ...record(data.character),
-              discordId: data.volunteerDiscordId,
-              world: data.world,
-            },
+      ),
+    [RabbitRoutingKey.GUILDS_MEMBERS_UPDATE]: (payload) =>
+      this.rebalance(payload),
+    [RabbitRoutingKey.GUILDS_MEMBERS_ADD_ROLE]: (payload) =>
+      this.rebalance(payload),
+    [RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE]: (payload) =>
+      this.rebalance(payload),
+    [RabbitRoutingKey.GUILDS_MEMBERS_REMOVE]: (payload) =>
+      this.rebalance(payload, payload.guildId),
+    // Access comes with a role, which its own event rebalances.
+    [RabbitRoutingKey.GUILDS_MEMBERS_ADD]: () => Effect.void,
+    [RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER]: (data) =>
+      this.publishTo(data.targetDiscordId, {
+        v: 1,
+        type: "notification.volunteer",
+        data: {
+          notificationId: data.notificationId,
+          volunteer: {
+            ...record(data.character),
+            discordId: data.volunteerDiscordId,
+            world: data.world,
           },
-        }),
+        },
+      }),
+    [RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1]: (data, messageId) => {
+      const scope = {
+        topic: "organization.loots" as const,
+        organizationId: data.guildId,
+      };
+
+      const audience = {
+        recipientPlatform: "web-app" as const,
+        sourceNpcs: data.sourceNpcs ?? [
+          { level: data.npc.lvl, type: data.npc.type },
+        ],
+      };
+
+      const feedEntry =
+        data.feedEntry &&
+        data.feedEntry.guild.id === data.guildId &&
+        data.feedEntry.type === "kill"
+          ? data.feedEntry
+          : undefined;
+
+      return this.publish(
+        scope,
+        { v: 1, type: "kills.changed", data: { guildId: data.guildId } },
+        messageId,
+        audience,
+      ).pipe(
+        Effect.andThen(
+          feedEntry
+            ? this.publish(
+                scope,
+                { v: 1, type: "feed.entry", data: feedEntry },
+                messageId ? `${messageId}:feed` : undefined,
+                audience,
+              )
+            : Effect.void,
+        ),
       );
-    }
+    },
+    [RabbitRoutingKey.GUILDS_LOOTS_CREATE]: (
+      { feedEntry, loot, ...data },
+      messageId,
+    ) => {
+      const scope = {
+        topic: "organization.loots" as const,
+        organizationId: data.guildId,
+      };
 
-    if (routingKey === RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1) {
-      const data = decodeRabbitEventJson(routingKey, serializedPayload);
+      const lootFeedEntry =
+        feedEntry &&
+        feedEntry.guild.id === data.guildId &&
+        feedEntry.type === "loot"
+          ? feedEntry
+          : undefined;
 
-      return fromPromise(async () => {
-        const scope = {
-          topic: "organization.loots" as const,
-          organizationId: data.guildId,
-        };
-
-        const audience = {
-          recipientPlatform: "web-app" as const,
-          sourceNpcs: data.sourceNpcs ?? [
-            { level: data.npc.lvl, type: data.npc.type },
-          ],
-        };
-
-        await this.hub.publishToScope(
-          scope,
-          { v: 1, type: "kills.changed", data: { guildId: data.guildId } },
-          messageId,
-          audience,
-        );
-
-        if (
-          data.feedEntry &&
-          data.feedEntry.guild.id === data.guildId &&
-          data.feedEntry.type === "kill"
-        ) {
-          await this.hub.publishToScope(
-            scope,
-            { v: 1, type: "feed.entry", data: data.feedEntry },
-            messageId ? `${messageId}:feed` : undefined,
-            audience,
-          );
-        }
-      });
-    }
-
-    if (routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
-      const { feedEntry, loot, ...data } = decodeRabbitEventJson(
-        routingKey,
-        serializedPayload,
-      );
-
-      return fromPromise(async () => {
-        const scope = {
-          topic: "organization.loots" as const,
-          organizationId: data.guildId,
-        };
-
-        // Each session receives exactly one of these, by its snapshot
-        // capability; both deliver locally before either awaits federation.
-        await Promise.all([
-          this.hub.publishToScope(
+      // Web sessions read the snapshot and game sessions the summary; both
+      // deliver locally before either awaits federation.
+      return Effect.all(
+        [
+          this.publish(
             scope,
             {
               v: 1,
@@ -648,139 +718,135 @@ export class RabbitBridge {
             messageId,
             { recipientPlatform: "web-app" },
           ),
-          this.hub.publishToScope(
-            scope,
-            { v: 1, type: "loot.created", data },
-            messageId,
-          ),
-        ]);
-
-        if (
-          feedEntry &&
-          feedEntry.guild.id === data.guildId &&
-          feedEntry.type === "loot"
-        ) {
-          await this.hub.publishToScope(
-            scope,
-            { v: 1, type: "feed.entry", data: feedEntry },
-            messageId ? `${messageId}:feed` : undefined,
-            {
-              recipientPlatform: "web-app",
-              sourceNpcs: lootEventVisibilityNpcs(data.npcs),
-            },
-          );
-        }
-      });
-    }
-
-    if (routingKey === RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE) {
-      const data = decodeRabbitEventJson(routingKey, serializedPayload);
-
-      return fromPromise(() =>
-        this.hub.publishToScope(
-          { topic: "organization.loots", organizationId: data.guildId },
-          { v: 1, type: "loot.share-updated", data },
+          this.publish(scope, { v: 1, type: "loot.created", data }, messageId),
+        ],
+        { concurrency: "unbounded", discard: true },
+      ).pipe(
+        Effect.andThen(
+          lootFeedEntry
+            ? this.publish(
+                scope,
+                { v: 1, type: "feed.entry", data: lootFeedEntry },
+                messageId ? `${messageId}:feed` : undefined,
+                {
+                  recipientPlatform: "web-app",
+                  sourceNpcs: lootEventVisibilityNpcs(data.npcs),
+                },
+              )
+            : Effect.void,
         ),
       );
-    }
-
-    if (routingKey === RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2) {
-      const data = decodeRabbitEventJson(routingKey, serializedPayload);
-
-      return Effect.forEach(
+    },
+    [RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE]: (data) =>
+      this.publish(
+        { topic: "organization.loots", organizationId: data.guildId },
+        { v: 1, type: "loot.share-updated", data },
+      ),
+    [RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2]: (data) =>
+      Effect.forEach(
         new Set(data.audienceGuildIds),
         (organizationId) =>
-          fromPromise(() =>
-            this.hub.publishToScope(
-              { topic: "organization.reservations", organizationId },
-              { v: 1, type: "reservation.changed", data },
-            ),
+          this.publish(
+            { topic: "organization.reservations", organizationId },
+            { v: 1, type: "reservation.changed", data },
           ),
         { discard: true },
-      );
-    }
-
-    if (routingKey === RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED) {
-      const data = decodeRabbitEventJson(routingKey, serializedPayload);
-
-      return Effect.forEach(
+      ),
+    [RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED]: (data) =>
+      Effect.forEach(
         data.eligibleGuildIds,
         (id) =>
-          fromPromise(() =>
-            this.hub.publishToDiscord(
-              data.recipientDiscordId,
-              organizationEvent("party-ready-room.updated", id, data.update),
-            ),
+          this.publishTo(
+            data.recipientDiscordId,
+            organizationEvent("party-ready-room.updated", id, data.update),
           ),
         { discard: true },
-      );
-    }
-
-    if (
-      routingKey === RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE ||
-      routingKey === RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE
-    )
-      return this.publishGlobalChat(routingKey, serializedPayload, messageId);
-
-    if (routingKey === RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED)
-      return this.publishGatheringUpdate(
-        decodeRabbitEventJson(routingKey, serializedPayload),
-        messageId,
-      );
-
-    const payload = decodeRabbitEventJson(routingKey, serializedPayload);
-    const data = record(payload);
-
-    const organizationId =
-      Option.getOrUndefined(
-        Schema.decodeUnknownOption(Schema.String)(data.guildId),
-      ) ??
-      Option.getOrUndefined(
-        Schema.decodeUnknownOption(Schema.String)(data.organizationId),
-      );
-
-    if (!organizationId) return Effect.void;
-
-    const routed = this.routeOrganizationEvent(
-      routingKey,
-      organizationId,
-      payload,
-    );
-
-    if (!routed) return Effect.void;
-
-    return fromPromise(() =>
-      this.hub.publishToScope(routed.scope, routed.event),
-    );
-  }
-
-  private publishGlobalChat(
-    routingKey:
-      | typeof RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE
-      | typeof RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE,
-    serializedPayload: string,
-    messageId: string | undefined,
-  ): Effect.Effect<void, unknown> {
-    const publish = (world: string | undefined, event: Event, id?: string) =>
-      Effect.tryPromise({
-        try: () => this.hub.publishToScope(globalChatScope(world), event, id),
-        catch: (cause) => cause,
-      });
-
-    if (routingKey === RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE) {
-      const data = decodeRabbitEventJson(routingKey, serializedPayload);
-
-      return publish(
-        data.world,
+      ),
+    [RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE]: (data) =>
+      this.publish(
+        globalChatScope(data.world),
         { v: 1, type: "global-chat.created", data },
         data.id,
-      );
-    }
-
-    const data = decodeRabbitEventJson(routingKey, serializedPayload);
-
-    return publish(data.world, globalChatChannelEvent(data), messageId);
-  }
+      ),
+    [RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE]: (data, messageId) =>
+      this.publish(
+        globalChatScope(data.world),
+        globalChatChannelEvent(data),
+        messageId,
+      ),
+    [RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED]: (data, messageId) =>
+      this.publishGatheringUpdate(data, messageId),
+    [RabbitRoutingKey.GUILDS_TIMERS_UPDATE]: this.organizationEvent(
+      "organization.timers",
+      "timer.created",
+    ),
+    [RabbitRoutingKey.GUILDS_TIMERS_DELETE]: this.organizationEvent(
+      "organization.timers",
+      "timer.deleted",
+    ),
+    [RabbitRoutingKey.GUILDS_HERO_SIGHTINGS_UPDATE]: this.organizationEvent(
+      "organization.timers",
+      "hero-sighting.updated",
+    ),
+    [RabbitRoutingKey.GUILDS_RESERVATIONS_CREATE]: this.organizationEvent(
+      "organization.reservations",
+      "reservation.created",
+    ),
+    [RabbitRoutingKey.GUILDS_RESERVATIONS_DELETE]: this.organizationEvent(
+      "organization.reservations",
+      "reservation.deleted",
+    ),
+    [RabbitRoutingKey.GUILDS_SEND_MESSAGE]: this.organizationEvent(
+      "organization.chat",
+      "chat.created",
+    ),
+    [RabbitRoutingKey.GUILDS_UPDATE_MESSAGE]: this.organizationEvent(
+      "organization.chat",
+      "chat.updated",
+    ),
+    [RabbitRoutingKey.GUILDS_DELETE_MESSAGE]: this.organizationEvent(
+      "organization.chat",
+      "chat.deleted",
+    ),
+    [RabbitRoutingKey.GUILDS_CLEAR_MESSAGES]: this.organizationEvent(
+      "organization.chat",
+      "chat.cleared",
+    ),
+    [RabbitRoutingKey.GUILDS_NOTIFICATIONS_SEND]: this.organizationEvent(
+      "organization.notifications",
+      "notification.sent",
+    ),
+    [RabbitRoutingKey.GUILDS_PARTY_GATHERING]: this.organizationEvent(
+      "organization.notifications",
+      "party-gathering.updated",
+    ),
+    [RabbitRoutingKey.GUILDS_PARTY_GATHERING_CANCEL]: this.organizationEvent(
+      "organization.notifications",
+      "party-gathering.cancelled",
+    ),
+    [RabbitRoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE]:
+      this.organizationEvent("organization.members", "member-refresh.updated"),
+    [RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE]: this.organizationEvent(
+      "event.coordination",
+      "event.map-status-updated",
+    ),
+    [RabbitRoutingKey.EVENT_HERO_KILLED]: this.organizationEvent(
+      "event.coordination",
+      "event.hero-killed",
+    ),
+    [RabbitRoutingKey.EVENT_RANKING_UPDATE]: this.organizationEvent(
+      "event.coordination",
+      "event.ranking-updated",
+    ),
+    [RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED]: this.organizationEvent(
+      "event.coordination",
+      "event.respawn-window-opened",
+    ),
+    [RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED]: this.organizationEvent(
+      "event.coordination",
+      "event.respawn-window-closed",
+    ),
+  };
 
   private publishGatheringUpdate(
     data: GatheringUpdateEnvelope,
@@ -837,121 +903,5 @@ export class RabbitBridge {
         ),
       catch: (cause) => cause,
     });
-  }
-
-  private routeOrganizationEvent(
-    routingKey: CanonicalRabbitEventRoutingKey,
-    organizationId: string,
-    payload: CanonicalRabbitEvent<CanonicalRabbitEventRoutingKey>,
-  ): { readonly scope: Scope; readonly event: Event } | null {
-    const definitions: Partial<
-      Record<
-        RabbitRoutingKeyName,
-        {
-          readonly topic: Scope["topic"];
-          readonly type: OrganizationEvent["type"];
-        }
-      >
-    > = {
-      [RabbitRoutingKey.GUILDS_TIMERS_UPDATE]: {
-        topic: "organization.timers",
-        type: "timer.created",
-      },
-      [RabbitRoutingKey.GUILDS_TIMERS_DELETE]: {
-        topic: "organization.timers",
-        type: "timer.deleted",
-      },
-      [RabbitRoutingKey.GUILDS_HERO_SIGHTINGS_UPDATE]: {
-        topic: "organization.timers",
-        type: "hero-sighting.updated",
-      },
-      [RabbitRoutingKey.GUILDS_RESERVATIONS_CREATE]: {
-        topic: "organization.reservations",
-        type: "reservation.created",
-      },
-      [RabbitRoutingKey.GUILDS_RESERVATIONS_DELETE]: {
-        topic: "organization.reservations",
-        type: "reservation.deleted",
-      },
-      [RabbitRoutingKey.GUILDS_SEND_MESSAGE]: {
-        topic: "organization.chat",
-        type: "chat.created",
-      },
-      [RabbitRoutingKey.GUILDS_UPDATE_MESSAGE]: {
-        topic: "organization.chat",
-        type: "chat.updated",
-      },
-      [RabbitRoutingKey.GUILDS_DELETE_MESSAGE]: {
-        topic: "organization.chat",
-        type: "chat.deleted",
-      },
-      [RabbitRoutingKey.GUILDS_CLEAR_MESSAGES]: {
-        topic: "organization.chat",
-        type: "chat.cleared",
-      },
-      [RabbitRoutingKey.GUILDS_NOTIFICATIONS_SEND]: {
-        topic: "organization.notifications",
-        type: "notification.sent",
-      },
-      [RabbitRoutingKey.GUILDS_PARTY_GATHERING]: {
-        topic: "organization.notifications",
-        type: "party-gathering.updated",
-      },
-      [RabbitRoutingKey.GUILDS_PARTY_GATHERING_CANCEL]: {
-        topic: "organization.notifications",
-        type: "party-gathering.cancelled",
-      },
-      [RabbitRoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE]: {
-        topic: "organization.members",
-        type: "member-refresh.updated",
-      },
-      [RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE]: {
-        topic: "event.coordination",
-        type: "event.map-status-updated",
-      },
-      [RabbitRoutingKey.EVENT_HERO_KILLED]: {
-        topic: "event.coordination",
-        type: "event.hero-killed",
-      },
-      [RabbitRoutingKey.EVENT_RANKING_UPDATE]: {
-        topic: "event.coordination",
-        type: "event.ranking-updated",
-      },
-      [RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED]: {
-        topic: "event.coordination",
-        type: "event.respawn-window-opened",
-      },
-      [RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED]: {
-        topic: "event.coordination",
-        type: "event.respawn-window-closed",
-      },
-    };
-
-    const definition = definitions[routingKey];
-
-    if (!definition) return null;
-    const payloadRecord = record(payload);
-
-    const eventId = Option.getOrUndefined(
-      Schema.decodeUnknownOption(Schema.String)(payloadRecord.eventId),
-    );
-
-    const world = Option.getOrUndefined(
-      Schema.decodeUnknownOption(Schema.String)(payloadRecord.world),
-    );
-
-    const scope: Types.Mutable<Scope> = {
-      topic: definition.topic,
-      organizationId,
-    };
-
-    if (eventId !== undefined) scope.eventId = eventId;
-
-    if (world !== undefined) scope.world = world;
-
-    return {
-      scope,
-      event: organizationEvent(definition.type, organizationId, payload),
-    };
   }
 }

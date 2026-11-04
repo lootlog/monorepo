@@ -22,7 +22,7 @@ type FeatureServices = Parameters<typeof gatewayFeatureRoutes>[0];
 type SessionFeatures = ConstructorParameters<typeof CommandHandler>[6];
 
 /** Admits every command, so a test exercises the command, not its rejection. */
-export const admitAll: Pick<CommandAdmission, "tryAcquire"> = {
+const admitAll: Pick<CommandAdmission, "tryAcquire"> = {
   tryAcquire: () => ({ admitted: true, release: () => {} }),
 };
 
@@ -59,7 +59,7 @@ export const guild = (
   organizationId = "organization-1",
 ): UserGuildData => membership(organizationId, permissions);
 
-export class FakeGuildStore {
+class FakeGuildStore {
   guilds: UserGuildData[] = [guild()];
 
   getUserGuilds: GuildStore["getUserGuilds"] = () =>
@@ -69,7 +69,7 @@ export class FakeGuildStore {
 }
 
 /** Records what the handler sends; local sockets are those a test pushes. */
-export class FakeHub {
+class FakeHub {
   readonly deliveryOrder: string[] = [];
   readonly responses: unknown[] = [];
   readonly events: unknown[] = [];
@@ -136,7 +136,7 @@ export class FakeHub {
   }
 }
 
-export class FakeActivity {
+class FakeActivity {
   readonly calls: Array<{ type: string; ids?: ReadonlyArray<string> }> = [];
 
   publish: ActivityPublisher["publish"] = (type, _session, ids) =>

@@ -33,7 +33,7 @@ export const JOIN_ADMISSION_LIMITS = {
  * theirs; 300 batches per second is about half of what one replica served
  * before heartbeats started to time out.
  */
-export const AIR_TAG_OBSERVATION_ADMISSION_LIMITS = {
+const AIR_TAG_OBSERVATION_ADMISSION_LIMITS = {
   ratePerSecond: 300,
   burst: 600,
   concurrent: 8,

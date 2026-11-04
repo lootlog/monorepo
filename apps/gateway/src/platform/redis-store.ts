@@ -247,10 +247,6 @@ export class RedisGatewayStore {
     await this.runEffect(this.redis.send("PING"));
   }
 
-  close(): Promise<void> {
-    return Promise.resolve();
-  }
-
   async publish(
     message: FederatedRealtimeMessage,
     frames?: FederatedFrameTexts,
@@ -441,28 +437,26 @@ export class GatewayRedis extends Context.Service<
       const background = yield* Background;
       const client = yield* Redis.Redis;
 
-      return yield* Effect.acquireRelease(
-        Effect.tryPromise({
-          try: async () => {
-            const store = new RedisGatewayStore(
-              client,
-              {
-                ...config.redis,
-                password: Redacted.value(config.redis.password),
-              },
-              background.runPromise,
-              background.run,
-            );
+      // The Redis layer owns and closes the client.
+      return yield* Effect.tryPromise({
+        try: async () => {
+          const store = new RedisGatewayStore(
+            client,
+            {
+              ...config.redis,
+              password: Redacted.value(config.redis.password),
+            },
+            background.runPromise,
+            background.run,
+          );
 
-            await store.connect();
+          await store.connect();
 
-            return store;
-          },
-          catch: (cause) =>
-            new Error("Failed to connect Gateway Redis", { cause }),
-        }),
-        (store) => Effect.tryPromise(() => store.close()).pipe(Effect.orDie),
-      );
+          return store;
+        },
+        catch: (cause) =>
+          new Error("Failed to connect Gateway Redis", { cause }),
+      });
     }),
   );
 }

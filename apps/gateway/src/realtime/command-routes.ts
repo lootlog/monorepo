@@ -16,7 +16,7 @@ type CommandData = {
 };
 
 /** How the gateway admits and runs one command type. */
-export interface CommandRoute<Type extends CommandType> {
+interface CommandRoute<Type extends CommandType> {
   /** Runs only once the session joined. */
   readonly joined: boolean;
   /** API key integrations may send it; they send nothing else. */
