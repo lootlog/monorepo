@@ -630,7 +630,7 @@ export const QuickAddWatchedItemRequest = Schema.Struct({
 export type QuickAddWatchedItemRequest = typeof QuickAddWatchedItemRequest.Type;
 
 export const OrganizationNotificationParams = Schema.Struct({
-  guildId: JsonValue,
+  guildId: Schema.String,
 });
 
 export type OrganizationNotificationParams =
@@ -645,7 +645,7 @@ export type OrganizationNotificationTargetsResponse =
 
 export const OrganizationNotificationTargetParams = Schema.Struct({
   targetId: FiniteNumber,
-  guildId: JsonValue,
+  guildId: Schema.String,
 });
 
 export type OrganizationNotificationTargetParams =
@@ -653,7 +653,7 @@ export type OrganizationNotificationTargetParams =
 
 export const OrganizationNotificationRuleParams = Schema.Struct({
   ruleId: FiniteNumber,
-  guildId: JsonValue,
+  guildId: Schema.String,
 });
 
 export type OrganizationNotificationRuleParams =
@@ -661,7 +661,7 @@ export type OrganizationNotificationRuleParams =
 
 export const OrganizationNotificationJobParams = Schema.Struct({
   jobId: Schema.String.annotate({ examples: ["job_123"] }),
-  guildId: JsonValue,
+  guildId: Schema.String,
 });
 
 export type OrganizationNotificationJobParams =

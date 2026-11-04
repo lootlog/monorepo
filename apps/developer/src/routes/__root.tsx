@@ -9,20 +9,42 @@ import { useEffect } from "react";
 import { preventIosFocusZoom } from "@lootlog/ui/lib/ios-focus-zoom";
 import { portalText } from "~/lib/translations";
 import { PortalNav } from "~/components/portal-nav";
+import { PORTAL_ORIGIN } from "~/lib/seo";
 import appCss from "~/styles/app.css?url";
+import favicon from "~/assets/favicon.svg?no-inline";
+import appleTouchIcon from "~/assets/lootlog-apple-touch.png?no-inline";
+
+const structuredData = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: portalText.title,
+  url: `${PORTAL_ORIGIN}/`,
+  description: portalText.description,
+  inLanguage: "en",
+  publisher: {
+    "@type": "Organization",
+    name: "Lootlog",
+    url: "https://lootlog.pl",
+    sameAs: ["https://github.com/lootlog/monorepo"],
+  },
+});
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "theme-color", content: "#081421" },
+      { name: "color-scheme", content: "dark" },
       { title: portalText.title },
-      {
-        name: "description",
-        content: portalText.description,
-      },
+      { name: "description", content: portalText.description },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: favicon, type: "image/svg+xml" },
+      { rel: "apple-touch-icon", href: appleTouchIcon },
+    ],
+    scripts: [{ type: "application/ld+json", children: structuredData }],
   }),
   component: RootComponent,
 });

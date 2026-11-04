@@ -394,7 +394,7 @@ export const LootShareResponse = LootShare.annotate({
 export type LootOrganizationPath = typeof LootOrganizationPath.Type;
 
 export const LootOrganizationPath = Schema.Struct({
-  guildId: JsonValue,
+  guildId: Schema.String,
 });
 
 export type LootsQuery = typeof LootsQuery.Type;
@@ -450,7 +450,7 @@ export type LootPath = typeof LootPath.Type;
 
 export const LootPath = Schema.Struct({
   lootId: FiniteNumber,
-  guildId: JsonValue,
+  guildId: Schema.String,
 });
 
 export type LootCommentsResponse = typeof LootCommentsResponse.Type;

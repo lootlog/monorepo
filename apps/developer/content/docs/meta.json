@@ -3,14 +3,15 @@
   "pages": [
     "---Getting started---",
     "index",
-    "keys",
     "http",
-    "---Integrations---",
+    "keys",
+    "---Build---",
     "sdk",
     "realtime",
     "game-client",
-    "---Resources---",
+    "---Reference---",
     "errors",
+    "[API Reference](/reference)",
     "changelog"
   ]
 }

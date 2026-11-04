@@ -1,13 +1,26 @@
 ---
-title: Realtime for server integrations
-description: Receive changes over WebSocket and perform writes over HTTP.
+title: Realtime
+description: Subscribe to Organization events over WebSocket and keep HTTP for reads and writes.
 ---
 
-## Authentication
+The realtime gateway pushes changes, such as a new timer or loot, to your
+server as they happen. Read the initial state and perform writes over HTTP; use
+realtime to keep it current.
 
-Server integrations send `X-Api-Key` in the WebSocket connection header. The browser's native WebSocket does not allow this header to be set. Userscripts use the [game client API](/docs/game-client), without a separate connection using a key.
+## Connect
 
-Choose a gateway in the same environment as the key: `dev-gateway.lootlog.pl` or `gateway.lootlog.pl`. The SDK provides a client for the existing realtime protocol and supports a server-side WebSocket implementation.
+Server integrations send `X-Api-Key` in the WebSocket handshake. Browsers do not
+let a page set this header, so realtime with a key works only from a server.
+Userscripts use the [game client API](/docs/game-client) and need no connection
+of their own.
+
+| Environment | Gateway                        |
+| ----------- | ------------------------------ |
+| Development | `wss://dev-gateway.lootlog.pl` |
+| Production  | `wss://gateway.lootlog.pl`     |
+
+The [TypeScript SDK](/docs/sdk) provides `RealtimeClient`, which speaks the
+protocol and accepts a server-side WebSocket implementation.
 
 ## Bun example
 
@@ -55,7 +68,28 @@ process.once("SIGINT", () => {
 });
 ```
 
-The `ready` state means the client has joined the session. The SDK restores the stored session and subscriptions after reconnecting. This example logs only `timer.created` events; fetch the initial timer list separately over HTTP. In a running integration, limit retry duration or attempts after a persistent authentication error and notify the operator.
+The `ready` state means the client has joined the session. The SDK restores the
+stored session and subscriptions after reconnecting. Events carry changes, not
+the current state: fetch the initial timer list [over HTTP](/docs/http) first.
+After a persistent authentication error, stop retrying and alert whoever runs
+the integration.
+
+## Topics and events
+
+Subscribe to a topic for one Organization with `subscribeScope`. Each topic
+needs the matching read permission in that Organization.
+
+| Topic                        | Needs permission to read | Events                                                                                     |
+| ---------------------------- | ------------------------ | ------------------------------------------------------------------------------------------ |
+| `organization.timers`        | Timers                   | `timer.created` (also sent when a timer changes), `timer.deleted`, `hero-sighting.updated` |
+| `organization.loots`         | Loot                     | `loot.created`, `loot.share-updated`                                                       |
+| `organization.chat`          | Chat                     | `chat.created`, `chat.updated`, `chat.deleted`, `chat.cleared`                             |
+| `organization.reservations`  | Reservations             | `reservation.created`, `reservation.changed`, `reservation.deleted`                        |
+| `organization.notifications` | Notifications            | `notification.sent`, `party-gathering.updated`, `party-gathering.cancelled`                |
+| `organization.presence`      | Online players           | `presence.snapshot`, `presence.delta`                                                      |
+| `organization.members`       | Administration           | `member-refresh.updated`                                                                   |
+
+`ServerEvent` in `@lootlog/sdk/realtime` types every event and its payload.
 
 ## Allowed actions
 
@@ -65,26 +99,23 @@ An integration connection does not represent a character's presence in the game.
 
 ## Presence snapshots
 
-`presence.fetch` accepts an Organization ID, an optional world, and optional
-`delivery: "response"`. With a `requestId`, this option returns the snapshot only
-in the correlated response. Without the option, the gateway also emits
-`presence.snapshot` for compatibility with existing integrations. Commands
-without a `requestId` always receive the snapshot event.
+`presence.fetch` takes an Organization ID, an optional world and an optional
+`delivery: "response"`. With a `requestId` and that option, the snapshot arrives
+only in the correlated response. Without the option, the gateway also emits a
+`presence.snapshot` event, and a command without a `requestId` always receives
+that event.
 
-Clients using response delivery must hydrate from the response and apply
-`presence.delta` events for subsequent changes. Older gateways ignore the option
-and still send both frames; ignore their snapshot events to avoid applying the
-same collection twice. Deploying the gateway first enables the bandwidth saving
-as soon as clients opt in. The existing permission and location filters apply to
-both delivery modes.
+With response delivery, start from the response and apply `presence.delta`
+events for later changes. Permission and location filters apply to both
+delivery modes.
 
 ## Connection latency
 
-`session.joined` and the `session.join` response may list `capabilities`. When
-the list contains `connection.ping`, the gateway answers a `connection.ping`
-command with an empty `data` object immediately, without touching presence or
-other state. Send it only when the capability is listed: older gateways close
-the connection on an unknown command.
+`session.joined` and the `session.join` response list the gateway's
+`capabilities`. When the list contains `connection.ping`, the gateway answers a
+`connection.ping` command at once with an empty `data` object, without touching
+presence or other state. Send it only when the capability is listed: a gateway
+closes the connection on a command it does not know.
 
 The SDK's `probeLatency()` sends one ping when the gateway supports it and the
 client is `ready`, and reports the round trip through
@@ -92,7 +123,7 @@ client is `ready`, and reports the round trip through
 reporting the presence heartbeat, which runs every 25 seconds. Probe only while
 the latency is on screen instead of on a fixed fast interval.
 
-## Disconnection
+## Reconnect
 
 Mark data as stale when the connection is lost. The SDK restores subscriptions after reconnecting; fetch the current state over HTTP at that point. Do not assume you will receive every event from the outage.
 

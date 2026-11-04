@@ -17,17 +17,16 @@ const page = await browser.newPage();
 try {
   await page.goto(base + "/");
   await page
-    .getByRole("heading", { name: "Build your next integration." })
+    .getByRole("heading", { name: "Build on live Lootlog data" })
     .waitFor();
   await page
-    .getByRole("link", { name: "Start building", exact: false })
+    .getByRole("link", { name: "Read the quick start", exact: true })
     .click();
   await page.waitForURL(base + "/docs/http");
   await page.locator("pre").first().waitFor();
   assert.ok(
     (await page.locator("pre").first().innerText()).includes("X-Api-Key"),
   );
-  await page.screenshot({ path: "/tmp/developer-http.png", fullPage: true });
   await page.goto(base + "/");
   await page
     .getByRole("link", { name: "Create a scoped key", exact: false })

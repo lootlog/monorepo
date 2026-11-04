@@ -3091,7 +3091,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           },
           {
@@ -4596,7 +4598,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           },
           {
@@ -4923,7 +4927,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           },
           {
@@ -5094,7 +5100,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           },
           {
@@ -5241,7 +5249,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -5367,7 +5377,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -5618,7 +5630,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -5747,7 +5761,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -6036,7 +6052,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -6167,7 +6185,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -6300,7 +6320,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -6421,7 +6443,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -6549,7 +6573,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -6678,7 +6704,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -8758,7 +8786,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -8862,7 +8892,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -8982,7 +9014,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -9093,7 +9127,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -9212,7 +9248,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -9335,7 +9373,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -9436,7 +9476,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -9584,7 +9626,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -9703,7 +9747,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -9841,7 +9887,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -9962,7 +10010,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -10092,7 +10142,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -10204,7 +10256,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           }
         ],
@@ -20245,7 +20299,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           },
           {
@@ -21044,7 +21100,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           },
           {
@@ -21232,7 +21290,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           },
           {
@@ -21382,7 +21442,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           },
           {
@@ -21542,7 +21604,9 @@
           {
             "name": "guildId",
             "in": "path",
-            "schema": {},
+            "schema": {
+              "type": "string"
+            },
             "required": true
           },
           {
