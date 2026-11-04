@@ -47,6 +47,10 @@ export const formatStatisticsDay = (date: string) =>
 export const formatStatisticsHour = (instant: string) =>
   getHourFormatter("Europe/Warsaw").format(new Date(instant));
 
+/** "2026-09-07T23:30:00.000Z" → "8.09", for chart axes. */
+export const formatStatisticsInstantDay = (instant: string) =>
+  getDayMonthFormatter("Europe/Warsaw").format(new Date(instant));
+
 /** "2026-09-14T08:00:00.000Z" → "14.09.2026, 10:00" */
 export const formatStatisticsDateHour = (instant: string) =>
   getDateHourFormatter("Europe/Warsaw").format(new Date(instant));
