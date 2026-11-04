@@ -1,9 +1,9 @@
 import { Schema, SchemaTransformation } from "effect";
 import {
-  CoercedFinite,
-  optionalWithFallback,
-  withFallback,
-} from "@/lib/lenient-schema";
+  optionalOrUndefined,
+  requiredWithFallback,
+} from "@lootlog/schema/stored-value";
+import { CoercedFinite } from "@/lib/lenient-schema";
 import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
 
 export const STATISTICS_TABS = [
@@ -71,7 +71,7 @@ const optionalSearchValue = <To extends Schema.Codec<string>>(
   to: To,
   normalize: (value: string) => To["Type"] | undefined,
 ) =>
-  optionalWithFallback(
+  optionalOrUndefined(
     Schema.String.pipe(
       Schema.decodeTo(
         Schema.UndefinedOr(to),
@@ -90,8 +90,8 @@ const searchText = (prepare: (value: string) => string) =>
   );
 
 const StatisticsSearchSchema = Schema.Struct({
-  tab: withFallback(Schema.Literals(STATISTICS_TABS), "overview"),
-  days: withFallback(
+  tab: requiredWithFallback(Schema.Literals(STATISTICS_TABS), "overview"),
+  days: requiredWithFallback(
     CoercedFinite.pipe(
       Schema.decodeTo(
         Schema.Literals(STATISTICS_DAYS),
@@ -109,9 +109,9 @@ const StatisticsSearchSchema = Schema.Struct({
   npcType: optionalSearchValue(Schema.Literals(TRACKABLE_NPC_TYPES), (type) =>
     TRACKABLE_NPC_TYPES.find((value) => value === type),
   ),
-  sort: optionalWithFallback(Schema.Literals(STATISTICS_SORTS)),
+  sort: optionalOrUndefined(Schema.Literals(STATISTICS_SORTS)),
   q: searchText((q) => q),
-  asc: optionalWithFallback(
+  asc: optionalOrUndefined(
     Schema.Literals([true, "true"]).pipe(
       Schema.decodeTo(
         Schema.Literal(true),

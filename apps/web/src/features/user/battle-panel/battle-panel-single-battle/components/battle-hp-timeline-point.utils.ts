@@ -1,8 +1,9 @@
 import { Schema, SchemaTransformation } from "effect";
-import { CoercedFinite, withFallback } from "@/lib/lenient-schema";
+import { requiredWithFallback } from "@lootlog/schema/stored-value";
+import { CoercedFinite } from "@/lib/lenient-schema";
 
 export const getBattleTimelinePayloadTurn = Schema.decodeUnknownSync(
-  withFallback(
+  requiredWithFallback(
     Schema.NullOr(
       Schema.Struct({ turn: CoercedFinite }).pipe(
         Schema.decodeTo(

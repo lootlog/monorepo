@@ -151,9 +151,11 @@ const scrapeAllCommand = Command.make(
   {
     force,
     itemsOutput: Flag.String("items-output").pipe(
+      Flag.withDescription("Output file for scraped items"),
       Flag.withDefault(DEFAULT_ITEMS_OUTPUT),
     ),
     npcsOutput: Flag.String("npcs-output").pipe(
+      Flag.withDescription("Output file for scraped NPCs"),
       Flag.withDefault(DEFAULT_NPCS_OUTPUT),
     ),
   },
@@ -178,7 +180,11 @@ const generatePlayersCommand = Command.make(
   {
     force,
     output: output(DEFAULT_PLAYERS_OUTPUT),
-    count: Flag.Int("count").pipe(Flag.withAlias("c"), Flag.optional),
+    count: Flag.Int("count").pipe(
+      Flag.withAlias("c"),
+      Flag.withDescription("Number of players to generate (same as --players)"),
+      Flag.optional,
+    ),
     players,
   },
   (options) =>

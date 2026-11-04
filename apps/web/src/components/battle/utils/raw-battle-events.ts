@@ -1,5 +1,5 @@
 import { Option, Schema } from "effect";
-import { withFallback } from "@/lib/lenient-schema";
+import { requiredWithFallback } from "@lootlog/schema/stored-value";
 import type {
   RawBattle,
   RawBattleParsedEvent,
@@ -78,11 +78,13 @@ const parseMove = (move: string): RawBattleParsedEvent => {
 
 const decodeSourceBattleEvents = Schema.decodeUnknownOption(
   Schema.Array(
-    withFallback(
+    requiredWithFallback(
       Schema.NullOr(
         Schema.Struct({
           f: Schema.Struct({
-            m: Schema.Array(withFallback(Schema.NullOr(Schema.String), null)),
+            m: Schema.Array(
+              requiredWithFallback(Schema.NullOr(Schema.String), null),
+            ),
           }),
         }),
       ),

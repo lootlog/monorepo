@@ -1,3 +1,4 @@
+import { looseStruct } from "@lootlog/schema/stored-value";
 import { Option, Schema } from "effect";
 import {
   referenceMetadata,
@@ -5,10 +6,6 @@ import {
 } from "~/lib/reference-metadata";
 
 const UnknownRecord = Schema.Record(Schema.String, Schema.Unknown);
-
-/** Keeps the keys a struct does not name, as a loose object does. */
-const looseStruct = <Fields extends Schema.Struct.Fields>(fields: Fields) =>
-  Schema.StructWithRest(Schema.Struct(fields), [UnknownRecord]);
 
 const ReferenceDocumentSchema = looseStruct({
   openapi: Schema.String,

@@ -1,9 +1,10 @@
 import { Schema, SchemaGetter } from "effect";
-import { readableEntries, withFallback } from "@/lib/lenient-schema";
+import { requiredWithFallback } from "@lootlog/schema/stored-value";
+import { readableEntries } from "@/lib/lenient-schema";
 
 const BonusBreakdownItem = Schema.Struct({
-  ruleId: withFallback(Schema.NonEmptyString, "rule"),
-  ruleName: withFallback(
+  ruleId: requiredWithFallback(Schema.NonEmptyString, "rule"),
+  ruleName: requiredWithFallback(
     Schema.NullOr(Schema.Trim.check(Schema.isNonEmpty())),
     null,
   ),

@@ -1,5 +1,5 @@
 import { Schema, SchemaTransformation } from "effect";
-import { withFallback } from "@/lib/lenient-schema";
+import { requiredWithFallback } from "@lootlog/schema/stored-value";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import {
   createLoader,
@@ -131,7 +131,7 @@ export const battlePanelSingleBattleSearchParsers = {
 const isString = Schema.is(Schema.String);
 
 /** A search value, or the first string of a repeated one. */
-const RouteSearchString = withFallback(
+const RouteSearchString = requiredWithFallback(
   Schema.Union([
     Schema.String,
     Schema.Array(Schema.Unknown).pipe(
@@ -151,7 +151,7 @@ const RouteSearchString = withFallback(
 );
 
 /** Comma-separated or repeated values, trimmed; none reads as missing. */
-const RouteSearchStrings = withFallback(
+const RouteSearchStrings = requiredWithFallback(
   Schema.Union([
     Schema.String.pipe(
       Schema.decodeTo(
@@ -209,7 +209,7 @@ const routeSearchLiterals = <Value extends string>(allowed: readonly Value[]) =>
     ),
   );
 
-const RouteSearchInteger = withFallback(
+const RouteSearchInteger = requiredWithFallback(
   Schema.Union([
     Schema.Finite,
     RouteSearchString.pipe(
@@ -229,7 +229,7 @@ const RouteSearchInteger = withFallback(
   undefined,
 );
 
-const RouteSearchBoolean = withFallback(
+const RouteSearchBoolean = requiredWithFallback(
   Schema.Union([
     Schema.Boolean,
     RouteSearchString.pipe(
@@ -254,7 +254,7 @@ const RouteSearchBoolean = withFallback(
 );
 
 const decodeBattlePanelBattlesRouteSearch = Schema.decodeUnknownSync(
-  withFallback(
+  requiredWithFallback(
     Schema.Struct({
       cursor: Schema.optional(RouteSearchString),
       page: Schema.optional(RouteSearchInteger),

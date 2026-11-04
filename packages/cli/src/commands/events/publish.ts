@@ -71,26 +71,44 @@ const publishInteractive = Effect.fn("publishInteractive")(function* (
       return yield* Effect.die(new Error("No event fixtures found"));
     }
 
-    const fixture = yield* Prompt.run(
-      Prompt.Select({
-        message:
-          continuous && iteration > 0
-            ? "Select an event to publish (fixtures reloaded):"
-            : "Select an event to publish:",
-        choices: Array.from(fixtures, ([name, fixture]) => ({
-          title: formatEventName(name),
-          value: fixture,
-        })),
-      }),
+    // Ctrl+C cancels the picker without failing the command.
+    const selected = yield* Effect.option(
+      Prompt.run(
+        Prompt.Select({
+          message:
+            continuous && iteration > 0
+              ? "Select an event to publish (fixtures reloaded):"
+              : "Select an event to publish:",
+          choices: Array.from(fixtures, ([name, fixture]) => ({
+            title: formatEventName(name),
+            value: fixture,
+          })),
+        }),
+      ),
     );
+
+    if (Option.isNone(selected)) {
+      yield* Console.log(styleText("gray", "Operation cancelled"));
+      break;
+    }
+
+    const fixture = selected.value;
 
     yield* Effect.promise(() => client.publish(fixture));
 
     const another =
       continuous &&
-      (yield* Prompt.run(
-        Prompt.Confirm({ message: "Publish another event?", initial: true }),
-      ));
+      Option.getOrElse(
+        yield* Effect.option(
+          Prompt.run(
+            Prompt.Confirm({
+              message: "Publish another event?",
+              initial: true,
+            }),
+          ),
+        ),
+        () => false,
+      );
 
     if (!another) break;
   }
