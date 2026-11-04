@@ -286,6 +286,7 @@ describe("RealtimeClient", () => {
       encodeRealtimeFrame({
         v: 1,
         type: "presence.fetch",
+        requestId: "server-command",
         data: { organizationId: "org-1" },
       }),
     );

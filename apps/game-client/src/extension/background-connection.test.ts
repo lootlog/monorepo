@@ -112,6 +112,7 @@ describe("background connection", () => {
       id: "publish",
       command: {
         v: 1,
+        requestId: "page-command",
         type: "presence.publish",
         data: { organizationIds: ["organization"] },
       },
@@ -150,6 +151,7 @@ describe("background connection", () => {
       id: "join",
       command: {
         v: 1,
+        requestId: "page-command",
         type: "session.join",
         data: {
           world: "jaruna",
@@ -170,6 +172,7 @@ describe("background connection", () => {
       id: "presence",
       command: {
         v: 1,
+        requestId: "page-command",
         type: "presence.fetch",
         data: {
           organizationId: "organization",
@@ -195,6 +198,7 @@ describe("background connection", () => {
       id: "follow",
       command: {
         v: 1,
+        requestId: "page-command",
         type: "subscription.subscribe",
         data: { topic: "global.chat.world", world: "jaruna" },
       },

@@ -338,20 +338,6 @@ export class RealtimeClient {
     });
   }
 
-  send<Type extends CommandType>(type: Type, data: CommandData<Type>): void {
-    const activeSocket = this.socket;
-
-    if (!activeSocket || activeSocket.readyState !== WEBSOCKET_OPEN) return;
-    // SAFETY: the command discriminator and payload are coupled by CommandData<Type>.
-    activeSocket.send(
-      encodeRealtimeFrame({
-        v: REALTIME_PROTOCOL_VERSION,
-        type,
-        data,
-      } as ClientCommand),
-    );
-  }
-
   private open(state: "connecting" | "reconnecting"): void {
     this.setState(state);
 

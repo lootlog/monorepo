@@ -147,7 +147,9 @@ const errorResponse = (
   };
 };
 
-const invalidLegacyPayloadResponse = Function.compose(
+// Ping, loot split and AirTag acks have a rejection for an invalid payload, so
+// a malformed one of those is answered instead of closing the socket.
+const invalidPayloadRejection = Function.compose(
   Schema.decodeUnknownOption(
     Schema.Struct({
       v: Schema.Literal(1),
@@ -284,7 +286,7 @@ export class CommandHandler {
     try {
       command = decodeClientCommand(decoded);
     } catch {
-      const rejection = invalidLegacyPayloadResponse(decoded);
+      const rejection = invalidPayloadRejection(decoded);
 
       if (rejection) {
         return Effect.sync(() => {
@@ -297,36 +299,27 @@ export class CommandHandler {
 
     if (overloaded) {
       return Effect.sync(() => {
-        if (command.requestId) {
-          this.hub.sendResponse(
-            socket,
-            errorResponse(
-              command.requestId,
-              "COMMAND_REJECTED",
-              "command temporarily unavailable",
-              true,
-            ),
-          );
-        } else {
-          // Legacy fire-and-forget commands cannot receive a correlated error.
-          socket.close(
-            REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
-            "command capacity exceeded",
-          );
-        }
+        this.hub.sendResponse(
+          socket,
+          errorResponse(
+            command.requestId,
+            "COMMAND_REJECTED",
+            "command temporarily unavailable",
+            true,
+          ),
+        );
       });
     }
 
     const dispatch = Effect.suspend(() => this.dispatch(socket, command)).pipe(
       Effect.tap((data) =>
         Effect.sync(() => {
-          if (command.requestId)
-            this.hub.sendResponse(socket, {
-              v: 1,
-              requestId: command.requestId,
-              status: "success",
-              data,
-            });
+          this.hub.sendResponse(socket, {
+            v: 1,
+            requestId: command.requestId,
+            status: "success",
+            data,
+          });
         }),
       ),
       Effect.onExit((exit) => {
@@ -367,23 +360,16 @@ export class CommandHandler {
           : { message: "command temporarily unavailable", retryable: true };
 
         return Effect.sync(() => {
-          if (command.requestId)
-            this.hub.sendResponse(
-              socket,
-              errorResponse(
-                command.requestId,
-                "COMMAND_REJECTED",
-                failure.message,
-                failure.retryable,
-                failure.retryAfterMs,
-              ),
-            );
-          // A join without a request ID would wait for session.joined forever.
-          else if (error instanceof JoinCapacityExceeded)
-            socket.close(
-              REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
-              "gateway is busy",
-            );
+          this.hub.sendResponse(
+            socket,
+            errorResponse(
+              command.requestId,
+              "COMMAND_REJECTED",
+              failure.message,
+              failure.retryable,
+              failure.retryAfterMs,
+            ),
+          );
         });
       }),
       Effect.asVoid,
@@ -800,8 +786,7 @@ export class CommandHandler {
           ),
           Effect.tap((snapshot) =>
             Effect.sync(() => {
-              if (command.requestId && command.data.delivery === "response")
-                return;
+              if (command.data.delivery === "response") return;
 
               this.hub.sendEvent(socket, {
                 v: 1,
