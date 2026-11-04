@@ -153,6 +153,7 @@ describe("event presence tracking", () => {
         send: unexpected,
         eval: () => unexpected,
         subscribe: () => Queue.unbounded(),
+        reserve: Effect.die("unused"),
       },
       {},
       Effect.runPromise,
