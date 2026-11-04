@@ -10,6 +10,7 @@ import {
   CLOSED_SPLIT_LINGER_MS,
   EMPTY_LOOT_SPLIT_STATE,
   expireSplits,
+  fillParticipants,
   getLootSplitStatus,
   ownLootFilterAcceptRecipients,
   type LootSplitState,
@@ -210,6 +211,49 @@ describe("loot split model", () => {
         remote("100", { splitId: "1200660001" }),
       ),
     ).toBe(withSlowpoke);
+  });
+
+  it("goes on with a split the game hands over again after a map change", () => {
+    const chosen = applyRemoteChoices(open(), remote("100"));
+    const resent = groupLoot(FIRST_ITEMS);
+
+    const resumed = applyGameEvent(
+      chosen,
+      { ...resent, party: undefined },
+      context(8_000),
+    );
+
+    expect(resumed.ownSplitId).toBe("1200653658");
+    expect(resumed.splits).toHaveLength(1);
+    expect(resumed.splits[0]?.participants).toHaveLength(4);
+    // Neither the hero's pending choices nor anyone else's are lost.
+    expect(resumed.splits[0]?.views[HERO]?.accepted).toBe(false);
+    expect(resumed.splits[0]?.views["100"]).toEqual(
+      chosen.splits[0]?.views["100"],
+    );
+  });
+
+  it("fills in the party of a split that opened before the party was known", () => {
+    const opened = applyGameEvent(
+      EMPTY_LOOT_SPLIT_STATE,
+      { ...groupLoot(FIRST_ITEMS), party: undefined },
+      context(),
+    );
+
+    const party = Object.entries(FIRST_PARTY).map(
+      ([characterId, { nick }]) => ({
+        characterId,
+        name: nick,
+      }),
+    );
+
+    expect(opened.splits[0]?.participants).toEqual([]);
+    expect(
+      fillParticipants(opened, {
+        ...context(1_000, ["100"]),
+        party,
+      }).splits[0]?.participants.map(({ name }) => name),
+    ).toEqual(["nekoza", "cashtelan"]);
   });
 
   it("counts the hero's window closed by a fight without loot as accepted", () => {
