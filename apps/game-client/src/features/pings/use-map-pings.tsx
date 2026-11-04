@@ -299,15 +299,15 @@ export const useMapPings = () => {
 
     if (character?.kind === "player") payload.playerId = character.id;
 
-    socket.request("map-ping.send", payload, ACK_TIMEOUT_MS).then(
-      (acknowledgement) => {
+    socket
+      .request("map-ping.send", payload, ACK_TIMEOUT_MS)
+      .then((acknowledgement) => {
         if (acknowledgement.status === "rejected") {
           mapPingController.remove(localPingId);
           showHint(acknowledgement);
         }
-      },
-      () => undefined,
-    );
+      })
+      .catch(() => undefined);
   };
 
   return { active, resolveStart, send };

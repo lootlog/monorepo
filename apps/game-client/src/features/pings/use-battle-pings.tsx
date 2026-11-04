@@ -352,7 +352,8 @@ export const useBattlePings = () => {
           if (acknowledgement.status !== "accepted") retract(acknowledgement);
         },
         () => retract(),
-      );
+      )
+      .catch(() => undefined);
   };
 
   return { active: online, resolveStart, send };
