@@ -3,7 +3,7 @@ export const portalText = {
   developers: "Developers",
   overviewTitle: "Build on live Lootlog data",
   overviewDescription:
-    "Read timers, loot, kills and battles of the Organizations you belong to, and react to them in real time. Your integration sees exactly what you can see in Lootlog, and nothing more.",
+    "Read timers, loot, kills and battles of the Organizations you belong to, and react to changes in real time. An integration sees only what you can see in Lootlog.",
   createKey: "Create an API key",
   readGuide: "Read the quick start",
   sampleRequest: "Request",
@@ -25,7 +25,7 @@ export const portalText = {
   httpApiDescription:
     "REST endpoints for timers, loot, kills, events, battles and search.",
   sdkDescription:
-    "Typed clients for every service and a realtime client, generated from the same OpenAPI documents.",
+    "Typed clients for every service and a realtime client, generated from the services’ OpenAPI documents.",
   realtimeDescription:
     "Subscribe to Organization events over WebSocket instead of polling.",
   gameClientDescription:
@@ -33,7 +33,7 @@ export const portalText = {
   servicesHeading: "Services",
   servicesDescription:
     "Each service has its own base URL and OpenAPI document. One API key works for all of them.",
-  mainDescription: "Organizations, members, timers, loot, kills and events.",
+  mainDescription: "Organizations, Members, timers, loot, kills and events.",
   activityDescription:
     "The Organization activity log, Member activity stats and your online time.",
   battlelogDescription: "Recorded Margonem battles and their analytics.",
@@ -81,7 +81,7 @@ export const portalText = {
     "Create and manage personal Lootlog API keys scoped to your Organizations.",
   reference: "API Reference",
   referenceDescription:
-    "Explore Lootlog HTTP endpoints, authentication, request parameters, and response schemas for server integrations.",
+    "Every Lootlog HTTP endpoint with its authentication, parameters and response schema.",
   keys: "API Keys",
   docs: "Docs",
   editOnGitHub: "Edit this page on GitHub",
@@ -94,7 +94,7 @@ export const portalText = {
   rename: "Rename",
   renameTitle: "Rename key",
   renameDescription:
-    "The name only helps you recognise the key. Its secret and scope stay the same.",
+    "The name only helps you recognize the key. Its secret and scope stay the same.",
   remove: "Delete key",
   removeShort: "Delete",
   scope: "Scope",
@@ -104,7 +104,7 @@ export const portalText = {
   mode: "Permissions",
   read: "Read only",
   readWrite: "Read and write",
-  expiration: "Validity",
+  expiration: "Expiration",
   days30: "30 days",
   days90: "90 days",
   days365: "365 days",
@@ -114,11 +114,11 @@ export const portalText = {
     "Each key is limited to the selected Organizations and your current permissions. You can have up to 10 active keys.",
   secret:
     "Save this key now. You will not be able to view it again after closing this panel.",
-  dismiss: "Key saved — close",
+  dismiss: "I saved the key",
   copy: "Copy",
   copied: "Copied",
   copyFailed: "Could not copy the key. Select and copy it manually.",
-  error: "The operation failed. Please try again.",
+  error: "The request failed. Try again.",
   keyListRefreshFailed:
     "Your change was saved, but the key list could not be refreshed. Refresh the list to continue.",
   refreshList: "Refresh list",
