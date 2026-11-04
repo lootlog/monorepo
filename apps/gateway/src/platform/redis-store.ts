@@ -6,10 +6,24 @@ import {
 } from "#src/realtime/npc-event-visibility";
 import { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { parseRealtimeJson } from "@lootlog/protocol/realtime/codec";
-import { Cause, Effect, Predicate, Queue, Schedule, Schema } from "effect";
-import * as Redis from "effect/persistence/Redis";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
+  Cause,
+  Context,
+  Effect,
+  Layer,
+  Predicate,
+  Queue,
+  Redacted,
+  Schedule,
+  Schema,
+} from "effect";
+import * as Redis from "effect/persistence/Redis";
+import {
+  GatewayConfig,
+  type GatewayConfiguration,
+} from "#src/config/gateway-config";
+import {
+  Background,
   type BackgroundTaskRunner,
   yieldToEventLoop,
 } from "./background-tasks.js";
@@ -413,4 +427,42 @@ export interface RedisGatewayCommands {
     ...keysAndArgs: ReadonlyArray<string | number>
   ) => Promise<A>;
   readonly flushdb: () => Promise<"OK">;
+}
+
+/** The replica's connected Redis store, closed with the application. */
+export class GatewayRedis extends Context.Service<
+  GatewayRedis,
+  RedisGatewayStore
+>()("@lootlog/gateway/platform/GatewayRedis") {
+  static readonly layer = Layer.effect(
+    GatewayRedis,
+    Effect.gen(function* () {
+      const config = yield* GatewayConfig;
+      const background = yield* Background;
+      const client = yield* Redis.Redis;
+
+      return yield* Effect.acquireRelease(
+        Effect.tryPromise({
+          try: async () => {
+            const store = new RedisGatewayStore(
+              client,
+              {
+                ...config.redis,
+                password: Redacted.value(config.redis.password),
+              },
+              background.runPromise,
+              background.run,
+            );
+
+            await store.connect();
+
+            return store;
+          },
+          catch: (cause) =>
+            new Error("Failed to connect Gateway Redis", { cause }),
+        }),
+        (store) => Effect.tryPromise(() => store.close()).pipe(Effect.orDie),
+      );
+    }),
+  );
 }

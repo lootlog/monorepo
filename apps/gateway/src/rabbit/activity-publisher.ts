@@ -2,10 +2,16 @@ import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
   signActivityEvent,
 } from "@lootlog/protocol/rabbit/activity-signature";
-import type { RabbitMessagingService } from "@lootlog/messaging";
+import {
+  type RabbitMessagingService,
+  RabbitMessaging,
+} from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { Clock, Effect, Redacted } from "effect";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
+import { Clock, Effect, Redacted, Context, Layer } from "effect";
+import {
+  type GatewayConfiguration,
+  GatewayConfig,
+} from "#src/config/gateway-config";
 import type { SessionData } from "#src/realtime/session";
 
 export class ActivityPublisher {
@@ -111,4 +117,19 @@ export class ActivityPublisher {
       );
     });
   }
+}
+
+/** Records connections in the activity log of each Lootlog. */
+export class Activity extends Context.Service<Activity, ActivityPublisher>()(
+  "@lootlog/gateway/rabbit/Activity",
+) {
+  static readonly layer = Layer.effect(
+    Activity,
+    Effect.gen(function* () {
+      return new ActivityPublisher(
+        yield* RabbitMessaging,
+        yield* GatewayConfig,
+      );
+    }),
+  );
 }

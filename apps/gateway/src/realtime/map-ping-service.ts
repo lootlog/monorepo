@@ -4,7 +4,7 @@ import {
   type MapPingEvent,
   type MapPingSendPayload,
 } from "@lootlog/schema/map-ping";
-import { Schema } from "effect";
+import { Schema, Context, Effect, Layer } from "effect";
 import { ContextLogger } from "@lootlog/instrumentation";
 import {
   consumePingRateLimit,
@@ -12,8 +12,9 @@ import {
   getPingSender,
   type PingScriptStore,
 } from "#src/realtime/ping-routing";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import { type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket } from "#src/realtime/session";
+import { GatewayRedis } from "#src/platform/redis-store";
 
 const RATE_LIMIT = 5;
 
@@ -106,4 +107,16 @@ export class MapPingService {
       payload.y <= MAX_COORDINATE
     );
   }
+}
+
+/** Relays map pings to players of the same map. */
+export class MapPings extends Context.Service<MapPings, MapPingService>()(
+  "@lootlog/gateway/realtime/MapPings",
+) {
+  static readonly layer = Layer.effect(
+    MapPings,
+    Effect.gen(function* () {
+      return new MapPingService(yield* GatewayRedis, yield* Hub);
+    }),
+  );
 }

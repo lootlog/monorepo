@@ -20,13 +20,14 @@ import {
 } from "@lootlog/schema/air-tag";
 import type { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { chunk } from "es-toolkit";
-import { Effect, Metric, Schedule, Schema } from "effect";
+import { Effect, Metric, Schedule, Schema, Context, Layer } from "effect";
 import { ContextLogger } from "@lootlog/instrumentation";
-import type {
-  RedisGatewayStore,
-  RedisScriptReply,
+import {
+  type RedisGatewayStore,
+  type RedisScriptReply,
+  GatewayRedis,
 } from "#src/platform/redis-store";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import { type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import type { AirTagScope, GatewaySocket } from "#src/realtime/session";
 import {
   canReadPreciseLocation,
@@ -1166,4 +1167,20 @@ export class AirTagService {
       targets: [...snapshot.targets],
     };
   }
+}
+
+/** AirTag observations, their scopes and map threats, with the interest refresh. */
+export class AirTags extends Context.Service<AirTags, AirTagService>()(
+  "@lootlog/gateway/realtime/AirTags",
+) {
+  static readonly layer = Layer.effect(
+    AirTags,
+    Effect.gen(function* () {
+      const airTags = new AirTagService(yield* GatewayRedis, yield* Hub);
+
+      yield* airTags.runInterestRefresh().pipe(Effect.forkScoped);
+
+      return airTags;
+    }),
+  );
 }

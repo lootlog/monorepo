@@ -1,16 +1,21 @@
 import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
-import { Clock, Effect, Option, Result, Schema } from "effect";
+import { Clock, Effect, Option, Result, Schema, Context, Layer } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
+import {
+  type GatewayConfiguration,
+  GatewayConfig,
+} from "#src/config/gateway-config";
 import type { GetUserGuildsOptions, UserGuildData } from "#src/guilds/guild";
 import { CACHE_TTL, getUserGuildsCacheKey } from "#src/guilds/cache-keys";
-import type {
-  RedisGatewayStore,
-  RedisScriptReply,
+import {
+  type RedisGatewayStore,
+  type RedisScriptReply,
+  GatewayRedis,
 } from "#src/platform/redis-store";
 import { SingleFlight } from "#src/platform/single-flight";
+import { HttpClient } from "effect/http";
 
 const UserGuildsJson = Schema.fromJsonString(
   Schema.Array(UserGuildPermissionsDtoSchema),
@@ -275,3 +280,19 @@ export const makeGuildStore = (
       ),
   };
 };
+
+/** The Organizations and roles of each User, cached in Redis. */
+export class Guilds extends Context.Service<Guilds, GuildStore>()(
+  "@lootlog/gateway/guilds/Guilds",
+) {
+  static readonly layer = Layer.effect(
+    Guilds,
+    Effect.gen(function* () {
+      return makeGuildStore(
+        yield* GatewayConfig,
+        yield* GatewayRedis,
+        yield* HttpClient.HttpClient,
+      );
+    }),
+  );
+}

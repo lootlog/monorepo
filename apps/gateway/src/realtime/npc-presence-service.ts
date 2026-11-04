@@ -10,16 +10,17 @@ import {
 } from "@lootlog/schema/npc-presence";
 import { Permission } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
-import { Schema } from "effect";
+import { Schema, Context, Effect, Layer } from "effect";
 import { ContextLogger } from "@lootlog/instrumentation";
 import {
   consumePingRateLimit,
   type PingScriptStore,
 } from "#src/realtime/ping-routing";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import { type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, NpcPresenceState } from "#src/realtime/session";
 import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
 import { canSubscribe, hasPermission } from "#src/realtime/subscription-policy";
+import { GatewayRedis } from "#src/platform/redis-store";
 
 // A client reports only when the NPCs on its map change.
 const RATE_LIMIT = 30;
@@ -461,4 +462,17 @@ export class NpcPresenceService {
 
     return next;
   }
+}
+
+/** NPCs that Members report standing on their maps. */
+export class NpcPresence extends Context.Service<
+  NpcPresence,
+  NpcPresenceService
+>()("@lootlog/gateway/realtime/NpcPresence") {
+  static readonly layer = Layer.effect(
+    NpcPresence,
+    Effect.gen(function* () {
+      return new NpcPresenceService(yield* GatewayRedis, yield* Hub);
+    }),
+  );
 }

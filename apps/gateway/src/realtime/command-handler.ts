@@ -24,14 +24,35 @@ import {
   Option,
   Schedule,
   Schema,
+  Context,
+  Layer,
 } from "effect";
-import type { GuildStore, GuildStoreFailure } from "#src/guilds/guild-store";
-import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
-import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
-import type { AirTagService } from "#src/realtime/air-tag-service";
-import type { BattlePingService } from "#src/realtime/battle-ping-service";
-import type { LootSplitService } from "#src/realtime/loot-split-service";
-import type { NpcPresenceService } from "#src/realtime/npc-presence-service";
+import {
+  type GuildStore,
+  type GuildStoreFailure,
+  Guilds,
+} from "#src/guilds/guild-store";
+import {
+  type MargonemProofVerifier,
+  ProofVerifier,
+} from "#src/auth/margonem-proof";
+import {
+  type ActivityPublisher,
+  Activity,
+} from "#src/rabbit/activity-publisher";
+import { type AirTagService, AirTags } from "#src/realtime/air-tag-service";
+import {
+  type BattlePingService,
+  BattlePings,
+} from "#src/realtime/battle-ping-service";
+import {
+  type LootSplitService,
+  LootSplits,
+} from "#src/realtime/loot-split-service";
+import {
+  type NpcPresenceService,
+  NpcPresence,
+} from "#src/realtime/npc-presence-service";
 import type {
   NpcPresenceReportAck,
   NpcPresenceSnapshot,
@@ -41,12 +62,13 @@ import {
   AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
   CommandAdmission,
   JOIN_ADMISSION_LIMITS,
+  CommandAdmissions,
 } from "#src/realtime/command-admission";
-import type { MapPingService } from "#src/realtime/map-ping-service";
+import { type MapPingService, MapPings } from "#src/realtime/map-ping-service";
 import { getGlobalChatStats } from "#src/realtime/gateway-metrics";
 import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
-import type { PresenceStore } from "#src/realtime/presence-store";
-import { getScopeKey, type RealtimeHub } from "#src/realtime/realtime-hub";
+import { type PresenceStore, Presence } from "#src/realtime/presence-store";
+import { getScopeKey, type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import {
   hasValidApiKeyLease,
   type GatewaySocket,
@@ -72,6 +94,8 @@ import {
   publishesPresenceTo,
   type PermissionViewer,
 } from "#src/realtime/subscription-policy";
+import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 
 type Command = typeof ClientCommand.Type;
 
@@ -1116,4 +1140,39 @@ export class CommandHandler {
       ? Effect.void
       : Effect.fail(new SessionNotJoined());
   }
+}
+
+/** Decodes and runs the commands of this replica's sessions. */
+export class Commands extends Context.Service<Commands, CommandHandler>()(
+  "@lootlog/gateway/realtime/Commands",
+) {
+  static readonly layer = Layer.effect(
+    Commands,
+    Effect.gen(function* () {
+      const messaging = yield* RabbitMessaging;
+      const admissions = yield* CommandAdmissions;
+
+      return new CommandHandler(
+        yield* Guilds,
+        yield* ProofVerifier,
+        (event) =>
+          messaging
+            .publish({
+              routingKey: RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1,
+              content: new TextEncoder().encode(JSON.stringify(event)),
+            })
+            .pipe(Effect.asVoid),
+        yield* Presence,
+        yield* Hub,
+        yield* Activity,
+        yield* MapPings,
+        yield* BattlePings,
+        yield* LootSplits,
+        yield* AirTags,
+        yield* NpcPresence,
+        admissions.joins,
+        admissions.airTagObservations,
+      );
+    }),
+  );
 }

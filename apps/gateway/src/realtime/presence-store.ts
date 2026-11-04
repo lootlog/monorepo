@@ -23,20 +23,29 @@ import {
 import { chunk } from "es-toolkit";
 import { SingleFlight } from "#src/platform/single-flight";
 import { yieldToEventLoop } from "#src/platform/background-tasks";
-import type { RedisGatewayStore } from "#src/platform/redis-store";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import {
+  type RedisGatewayStore,
+  GatewayRedis,
+} from "#src/platform/redis-store";
+import { type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import {
   canReadPreciseLocation,
   type PermissionViewer,
 } from "#src/realtime/subscription-policy";
-import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
-import { Effect, Option, Schedule, Schema } from "effect";
+import {
+  type CoveragePublisher,
+  Coverage,
+} from "#src/rabbit/coverage-publisher";
+import { Effect, Option, Schedule, Schema, Context, Layer } from "effect";
 import {
   PresenceNotPublished,
   PresenceSessionMismatch,
   RealtimeStoreError,
 } from "#src/realtime/realtime-errors";
+import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import { OnlineHistories } from "#src/realtime/online-history";
 
 type PresenceFailure =
   | PresenceNotPublished
@@ -1861,4 +1870,37 @@ export class PresenceStore {
 
     return Effect.all(updates, { concurrency: "unbounded", discard: true });
   }
+}
+
+/** Organization presence of this replica's sessions, with its sweeps. */
+export class Presence extends Context.Service<Presence, PresenceStore>()(
+  "@lootlog/gateway/realtime/Presence",
+) {
+  static readonly layer = Layer.effect(
+    Presence,
+    Effect.gen(function* () {
+      const messaging = yield* RabbitMessaging;
+
+      const presence = new PresenceStore(
+        yield* GatewayRedis,
+        yield* Hub,
+        Date.now,
+        yield* Coverage,
+        yield* OnlineHistories,
+        (event) =>
+          messaging
+            .publish({
+              routingKey: RabbitRoutingKey.GAME_CHARACTER_OFFLINE,
+              content: new TextEncoder().encode(JSON.stringify(event)),
+            })
+            .pipe(Effect.asVoid),
+      );
+
+      yield* presence.runDeltaFlush().pipe(Effect.forkScoped);
+      yield* presence.runExpirySweep().pipe(Effect.forkScoped);
+      yield* presence.runOfflineSweep().pipe(Effect.forkScoped);
+
+      return presence;
+    }),
+  );
 }
