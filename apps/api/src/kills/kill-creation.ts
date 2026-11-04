@@ -370,7 +370,7 @@ export const makeKillCreation = (
               ...(activityFeedNpcCategory(input.npcType) !== "OTHER"
                 ? [
                     transaction.insert(guildKillActivityTable).values({
-                      id: randomUUID(),
+                      id: Bun.randomUUIDv7(),
                       guildId: input.guildId,
                       world: input.world,
                       npcId: input.npcId,

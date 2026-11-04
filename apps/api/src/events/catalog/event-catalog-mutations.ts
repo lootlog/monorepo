@@ -6,7 +6,6 @@ import {
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { makeEventMapRead } from "./event-map-read.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { randomUUID } from "node:crypto";
 import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import {
@@ -249,7 +248,7 @@ export const makeEventCatalogMutations = (
           }
         }
 
-        const heroId = randomUUID();
+        const heroId = Bun.randomUUIDv7();
 
         const added = yield* query(
           "events.catalog.addHero.transaction",
@@ -269,7 +268,7 @@ export const makeEventCatalogMutations = (
               if (data.maps && data.maps.length > 0) {
                 yield* transaction.insert(eventMapTable).values(
                   data.maps.map((map) => ({
-                    id: randomUUID(),
+                    id: Bun.randomUUIDv7(),
                     heroNpcId: heroId,
                     mapId: map.mapId,
                     mapName: map.mapName,
@@ -442,7 +441,7 @@ export const makeEventCatalogMutations = (
           return yield* Effect.fail(
             new InvalidRequestError("Map already exists for this hero"),
           );
-        const id = randomUUID();
+        const id = Bun.randomUUIDv7();
 
         const rows = yield* query(
           "events.catalog.addMap.transaction",
@@ -460,7 +459,7 @@ export const makeEventCatalogMutations = (
                 .returning();
 
               yield* transaction.insert(eventMapCoverageGapTable).values({
-                id: randomUUID(),
+                id: Bun.randomUUIDv7(),
                 mapId: id,
                 heroNpcId: heroId,
                 gapType: "UNASSIGNED",
@@ -553,7 +552,7 @@ export const makeEventCatalogMutations = (
           database
             .insert(eventMapLocationTable)
             .values({
-              id: randomUUID(),
+              id: Bun.randomUUIDv7(),
               heroNpcId: heroId,
               name: data.name,
               order: (maxRows[0]?.order ?? -1) + 1,
