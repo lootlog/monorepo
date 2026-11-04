@@ -7,8 +7,26 @@ import {
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
+import { Option, Schema } from "effect";
+
+const decodeDocumentLoaderData = Schema.decodeUnknownOption(
+  Schema.Struct({
+    document: Schema.optional(
+      Schema.Struct({ title: Schema.optional(Schema.String) }),
+    ),
+  }),
+);
 
 export const Route = createFileRoute("/_authenticated/$guildId/docs/$docId")({
+  staticData: {
+    navigation: ({ t, match, currentEntityLabel }) => ({
+      label:
+        Option.getOrUndefined(decodeDocumentLoaderData(match.loaderData))
+          ?.document?.title ??
+        currentEntityLabel ??
+        t("common.breadcrumbs.docFallback", { id: match.params?.docId }),
+    }),
+  },
   loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       try {

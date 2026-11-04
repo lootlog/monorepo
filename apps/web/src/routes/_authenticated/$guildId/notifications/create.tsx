@@ -6,6 +6,11 @@ import { NotificationCreateSkeleton } from "@/features/guild/notifications/notif
 export const Route = createFileRoute(
   "/_authenticated/$guildId/notifications/create",
 )({
+  staticData: {
+    navigation: ({ t }) => ({
+      label: t("common.breadcrumbs.notificationCreate"),
+    }),
+  },
   component: NotificationRuleFormPage,
   pendingComponent: NotificationCreateSkeleton,
   loader: loadNotificationRuleForm,

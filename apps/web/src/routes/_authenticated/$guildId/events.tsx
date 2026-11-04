@@ -6,6 +6,9 @@ import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$guildId/events")({
+  staticData: {
+    navigation: ({ t }) => ({ label: t("common.breadcrumbs.events") }),
+  },
   component: Events,
   pendingComponent: EventsPageSkeleton,
   loader: ({ abortController, context, params }) =>

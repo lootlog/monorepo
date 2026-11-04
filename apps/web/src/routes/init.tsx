@@ -11,6 +11,9 @@ const decodeInitSearch = Schema.decodeUnknownSync(
 );
 
 export const Route = createFileRoute("/init")({
+  staticData: {
+    navigation: ({ t }) => ({ label: t("common.documentTitle.init") }),
+  },
   component: Init,
   pendingComponent: FullScreenLoading,
   validateSearch: decodeInitSearch,

@@ -3,4 +3,11 @@ import { ReservationShareInvitationRoute } from "@/features/guild/reservations/s
 
 export const Route = createFileRoute(
   "/_authenticated/reservation-sharing/invitations/$token",
-)({ component: ReservationShareInvitationRoute });
+)({
+  staticData: {
+    navigation: ({ t }) => ({
+      label: t("reservations.sharing.standaloneTitle"),
+    }),
+  },
+  component: ReservationShareInvitationRoute,
+});

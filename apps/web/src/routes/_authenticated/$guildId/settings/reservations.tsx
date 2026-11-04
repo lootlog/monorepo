@@ -6,6 +6,12 @@ import { ReservationsSettingsSkeleton } from "@/features/guild/settings/reservat
 export const Route = createFileRoute(
   "/_authenticated/$guildId/settings/reservations",
 )({
+  staticData: {
+    navigation: ({ t }) => ({
+      label: t("common.breadcrumbs.reservations"),
+      tab: true,
+    }),
+  },
   loader: loadGuildSettings,
   component: ReservationsSettings,
   pendingComponent: ReservationsSettingsSkeleton,

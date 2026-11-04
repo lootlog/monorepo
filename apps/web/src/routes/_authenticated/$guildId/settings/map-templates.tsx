@@ -5,6 +5,12 @@ import { MapTemplatesSkeleton } from "@/features/guild/settings/map-templates/ma
 export const Route = createFileRoute(
   "/_authenticated/$guildId/settings/map-templates",
 )({
+  staticData: {
+    navigation: ({ t }) => ({
+      label: t("common.breadcrumbs.mapTemplates"),
+      tab: true,
+    }),
+  },
   component: MapTemplatesSettings,
   pendingComponent: MapTemplatesSkeleton,
 });

@@ -3,6 +3,19 @@ linker = "isolated"
 # Wait three days before installing a newly published version, so a
 # compromised release can be caught and unpublished before it lands here.
 minimumReleaseAge = "3d"
+# Better Auth 1.7.16 security release (2026-11-03). Remove after 2026-11-07.
+minimumReleaseAgeExcludes = [
+  "better-auth",
+  "better-call",
+  "@better-auth/api-key",
+  "@better-auth/core",
+  "@better-auth/drizzle-adapter",
+  "@better-auth/kysely-adapter",
+  "@better-auth/memory-adapter",
+  "@better-auth/mongo-adapter",
+  "@better-auth/prisma-adapter",
+  "@better-auth/telemetry",
+]
 
 [install.lockfile]
 save = true

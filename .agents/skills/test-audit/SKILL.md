@@ -158,7 +158,7 @@ to increase deletion counts.
    scripts list files explicitly and CI runs only what they list, so register
    every moved or renamed integration suite there.
 3. For removed source greps or contract assertions, run the command that owns
-   the real contract, such as `bun run client:check` or `bun run openapi:parity`.
+   the real contract, such as `bun run client:check`.
 4. Run `bunx oxfmt <changed-paths>`, then `git diff --check`.
 5. Run `bunx turbo run lint typecheck test --filter=<workspace>` for every
    affected workspace, and `bun run knip` to catch exports and files the

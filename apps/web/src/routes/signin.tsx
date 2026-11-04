@@ -16,6 +16,9 @@ const decodeSigninSearch = Schema.decodeUnknownSync(
 );
 
 export const Route = createFileRoute("/signin")({
+  staticData: {
+    navigation: ({ t }) => ({ label: t("common.documentTitle.signin") }),
+  },
   component: SignIn,
   pendingComponent: SigninPageSkeleton,
   validateSearch: decodeSigninSearch,
