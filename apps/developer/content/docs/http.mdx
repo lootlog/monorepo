@@ -112,7 +112,10 @@ curl --fail-with-body -G "$LOOTLOG_API_URL/guilds/$GUILD_ID/timers" \
 <Tab value="TypeScript">
 
 ```ts
-const guildId = organizations[0].id;
+const organization = organizations.find((item) => item.hasLootlogAccess);
+if (!organization) throw new Error("The key cannot read any Organization");
+
+const guildId = organization.id;
 const url = new URL(`https://dev-api.lootlog.pl/guilds/${guildId}/timers`);
 url.searchParams.set("world", "fobos");
 
@@ -126,7 +129,13 @@ const timers = await timersResponse.json();
 <Tab value="Python">
 
 ```python
-guild_id = response.json()[0]["id"]
+organization = next(
+    (item for item in response.json() if item["hasLootlogAccess"]), None
+)
+if organization is None:
+    raise RuntimeError("The key cannot read any Organization")
+
+guild_id = organization["id"]
 
 response = requests.get(
     f"https://dev-api.lootlog.pl/guilds/{guild_id}/timers",
