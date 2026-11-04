@@ -24,7 +24,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "lint": "oxlint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "test": "vitest run",
     "doctor": "react-doctor ."
   },

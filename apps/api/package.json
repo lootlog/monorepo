@@ -24,7 +24,7 @@
     "start": "bun --enable-source-maps dist/src/main.js",
     "start:debug": "bun --conditions=development --inspect-wait --watch --enable-source-maps src/main.ts",
     "lint": "oxlint src test",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "bun check -p tsconfig.json",
     "format": "oxfmt src test",
     "test": "bun --conditions=development test --timeout=30000 --path-ignore-patterns=dist src ./test/database-fixtures.test.ts",
     "test:integration": "bun --conditions=development test --preload ./test/bun.e2e.setup.ts --max-concurrency 1 ./test/*.integration.test.ts",
@@ -55,8 +55,7 @@
     "effect": "catalog:",
     "es-toolkit": "catalog:",
     "sharp": "^0.35.5",
-    "superjson": "catalog:",
-    "uuid": "^14.0.3"
+    "superjson": "catalog:"
   },
   "devDependencies": {
     "@effect/sql-pglite": "^4.1.2",

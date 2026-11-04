@@ -201,7 +201,7 @@ export const makeNotificationJobScheduler = (
     const now = new Date(yield* Clock.currentTimeMillis);
 
     const values = {
-      id: randomUUID(),
+      id: Bun.randomUUIDv7(),
       ruleId: options.notificationRule.id,
       targetId: options.target.id,
       ownerType: options.notificationRule.ownerType,

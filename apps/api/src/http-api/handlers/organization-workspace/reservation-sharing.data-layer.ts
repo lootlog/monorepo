@@ -1,6 +1,6 @@
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
-import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
 import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Clock, Effect, Layer } from "effect";
@@ -219,7 +219,7 @@ export const makeReservationSharingDataLayer = (
               const rows = yield* database
                 .insert(reservationShareInvitationTable)
                 .values({
-                  id: randomUUID(),
+                  id: Bun.randomUUIDv7(),
                   sourceGuildId: guildId,
                   tokenHash: hashToken(token),
                   createdByUserId: userId,
@@ -426,7 +426,7 @@ export const makeReservationSharingDataLayer = (
                   const rows = yield* transaction
                     .insert(reservationShareTable)
                     .values({
-                      id: existing[0]?.id ?? randomUUID(),
+                      id: existing[0]?.id ?? Bun.randomUUIDv7(),
                       firstGuildId,
                       secondGuildId,
                       createdByUserId: invitation.createdByUserId,

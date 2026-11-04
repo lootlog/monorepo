@@ -12,7 +12,7 @@
     "build:fast": "bun run typecheck && FAST_BUILD=1 vite build && bun ./src/scripts/copy-entrypoint.mjs",
     "build:local-prod": "bun run typecheck && vite build --mode production-local && bun ./src/scripts/generate-local-entrypoint.mjs --output ./dist/@lootlog/game-client-local.user.js --bundle-url http://127.0.0.1:4173/@lootlog/game-client.user.js",
     "preview": "vite preview",
-    "typecheck": "wxt prepare && tsc --noEmit",
+    "typecheck": "wxt prepare && bun check",
     "lint": "oxlint src extension sandbox wxt.config.ts vite.shared.ts vite.sandbox.config.ts --deny-warnings",
     "doctor": "react-doctor .",
     "test": "vitest run",
