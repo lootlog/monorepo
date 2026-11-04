@@ -18,7 +18,7 @@
     "deploy:version:develop": "wrangler versions upload dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client",
     "cloudflare:typegen": "wrangler types",
     "lint": "oxlint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "test": "vitest run --config ./vitest.config.ts"
   },
   "dependencies": {

@@ -1,5 +1,4 @@
 import { activeEventCondition } from "#src/events/event-scope-query";
-import { randomUUID } from "node:crypto";
 import { and, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { RedlockService } from "#src/redis/redlock";
@@ -80,7 +79,7 @@ export const makeEventPresenceTracking = (
       yield* query(
         "events.presence.gap.open",
         database.insert(eventMapCoverageGapTable).values({
-          id: randomUUID(),
+          id: Bun.randomUUIDv7(),
           mapId,
           heroNpcId,
           gapType,
@@ -336,7 +335,7 @@ export const makeEventPresenceTracking = (
                 yield* query(
                   "events.presence.create",
                   database.insert(eventPresenceLogTable).values({
-                    id: randomUUID(),
+                    id: Bun.randomUUIDv7(),
                     mapId: map.id,
                     memberId: member.id,
                     isAfk,

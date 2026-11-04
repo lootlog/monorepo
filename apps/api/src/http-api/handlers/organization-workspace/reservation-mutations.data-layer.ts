@@ -334,7 +334,7 @@ const scheduleReminder = (
     ].join(":");
 
     const values = {
-      id: randomUUID(),
+      id: Bun.randomUUIDv7(),
       ruleId: rule.id,
       targetId: options.context.target.id,
       ownerType: rule.ownerType,

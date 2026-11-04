@@ -3,7 +3,6 @@ import { getTrackingDurationSecondsForRanking } from "#src/events/kills/event-ra
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { selectEventKillPoints } from "#src/events/kills/event-point-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, gte, inArray, isNull, lt } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -314,7 +313,7 @@ export const makeEventParticipation = (
 
                   yield* addRankingRows(transaction, [
                     {
-                      id: randomUUID(),
+                      id: Bun.randomUUIDv7(),
                       eventId,
                       memberId: point.memberId,
                       heroNpcName: heroName,

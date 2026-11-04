@@ -1,4 +1,3 @@
-import { v6 } from "uuid";
 import { and, asc, desc, eq, gt, isNull, or, type SQL } from "drizzle-orm";
 import { Effect, Exit, Layer, Option, Schema } from "effect";
 import {
@@ -351,7 +350,7 @@ export const makeGlobalChatOperations = (
             world: string | undefined,
           ): StoredGlobalChatMessage => {
             const stored = {
-              id: v6(),
+              id: Bun.randomUUIDv7(),
               displayName,
               message: payload.message,
               timestamp,
@@ -484,7 +483,7 @@ export const makeGlobalChatOperations = (
           // Muting a muted sender again replaces the earlier mute.
           const [row] = yield* database
             .insert(globalChatMuteTable)
-            .values({ id: v6(), userId: senderUserId, ...mute })
+            .values({ id: Bun.randomUUIDv7(), userId: senderUserId, ...mute })
             .onConflictDoUpdate({
               target: globalChatMuteTable.userId,
               set: mute,
