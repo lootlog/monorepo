@@ -7,7 +7,6 @@ import {
 import { mapValues } from "es-toolkit";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 import type { GuildLootCreatedEventV2 } from "@lootlog/schema/loot-events";
-import { GatewayEvent } from "@/config/gateway";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { findGuildByRouteId } from "@/lib/current-user-guilds";
@@ -38,10 +37,10 @@ export const LootUnreadProvider = ({ children }: PropsWithChildren) => {
   );
 
   useEffect(() => {
-    socket.on(GatewayEvent.LOOTS_CREATE, handleLootCreate);
+    socket.on("loot.created", handleLootCreate);
 
     return () => {
-      socket.off(GatewayEvent.LOOTS_CREATE, handleLootCreate);
+      socket.off("loot.created", handleLootCreate);
     };
   }, [socket]);
 

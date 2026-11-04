@@ -4,7 +4,6 @@ import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
-import { GatewayEvent } from "@/config/gateway";
 import { GatewayClient } from "./gateway-client";
 
 class GatewayWebSocket extends EventTarget {
@@ -81,7 +80,7 @@ it.each(["development", "production-local", "production"])(
 
     const client = new GatewayClient();
     const joined = vi.fn();
-    client.on(GatewayEvent.JOIN, joined);
+    client.on("join", joined);
 
     try {
       client.connect();
@@ -94,10 +93,10 @@ it.each(["development", "production-local", "production"])(
       expect(socket.protocols).toContain("lootlog.realtime.json.v1");
       socket.readyState = 1;
       socket.dispatchEvent(new Event("open"));
-      client.emit(GatewayEvent.JOIN);
+      client.join();
       await vi.waitFor(() =>
         expect(joined).toHaveBeenCalledWith(
-          expect.objectContaining({ status: "success" }),
+          expect.objectContaining({ guildIds: expect.any(Array) }),
         ),
       );
       expect(client.connected).toBe(true);

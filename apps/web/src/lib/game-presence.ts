@@ -5,8 +5,7 @@ export type GamePresenceUpdatePayload = {
   discordId: string;
   sessionId?: string;
   player?: PlayerPresence;
-  disconnected?: boolean;
-  status?: "online" | "offline";
+  status: "online" | "offline";
 };
 
 export const applyGamePresenceUpdate = (
@@ -14,10 +13,10 @@ export const applyGamePresenceUpdate = (
   payload: GamePresenceUpdatePayload,
 ): Map<string, PlayerPresence[]> => {
   const nextPresenceByDiscordId = new Map(presenceByDiscordId ?? []);
-  const { discordId, sessionId, player, disconnected, status } = payload;
+  const { discordId, sessionId, player, status } = payload;
   const disconnectedSessionId = sessionId ?? player?.sessionId;
 
-  if ((disconnected || status === "offline") && disconnectedSessionId) {
+  if (status === "offline" && disconnectedSessionId) {
     const existingPresence = nextPresenceByDiscordId.get(discordId) ?? [];
 
     const filteredPresence = existingPresence.filter(

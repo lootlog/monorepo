@@ -6,7 +6,6 @@ import {
   getKillsControllerGetUserKillStatsQueryKey,
   getKillsControllerGetUserNpcKillsQueryKey,
 } from "@lootlog/client/main";
-import { GatewayEvent } from "@/config/gateway";
 import type { GatewayClient } from "@/lib/gateway-client";
 
 const queryKeys = [
@@ -40,13 +39,13 @@ export function useKillStatsUpdates(socket: Pick<GatewayClient, "on" | "off">) {
       if (payload.recover) scheduleRefresh();
     };
 
-    socket.on(GatewayEvent.KILLS_CHANGED, scheduleRefresh);
-    socket.on(GatewayEvent.JOIN, onJoin);
+    socket.on("kills.changed", scheduleRefresh);
+    socket.on("join", onJoin);
 
     return () => {
       clearTimeout(timer);
-      socket.off(GatewayEvent.KILLS_CHANGED, scheduleRefresh);
-      socket.off(GatewayEvent.JOIN, onJoin);
+      socket.off("kills.changed", scheduleRefresh);
+      socket.off("join", onJoin);
     };
   }, [queryClient, socket]);
 }
