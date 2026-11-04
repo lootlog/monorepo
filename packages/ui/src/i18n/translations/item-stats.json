@@ -249,7 +249,6 @@
   "binds": "Wiąże po założeniu",
   "artisan_worthless": "Bezużyteczny składnik rzemieślniczy",
   "canpreview": "Można podejrzeć zawartość",
-  "enhancement_upgrade_lvl": "Poziom ulepszenia: <value>{{value}}</value>",
   "recovered": "Przedmiot odzyskany, obniżona wartość",
   "noauction": "Tego przedmiotu nie można wystawić na aukcję",
   "nodepo": "Przedmiotu nie można przechowywać w depozycie",

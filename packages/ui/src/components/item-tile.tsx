@@ -1,3 +1,4 @@
+import { itemStatUpgradeLevel } from "@lootlog/domain/item-upgrade";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
 import type { ItemDisplayValue } from "@lootlog/ui/components/item-stat-utils";
@@ -28,6 +29,8 @@ export type ItemTileLabels = {
   obtainedBy?: string;
   rarity: Record<string, string>;
   type: Record<string, string>;
+  /** Names the upgrade level badge for assistive technology. */
+  upgradeLevel: string;
 };
 
 /** An item the tooltip shows beside this one, such as the one worn instead. */
@@ -77,6 +80,7 @@ export const ItemTile: FC<ItemTileProps> = ({
       icon={icon}
       rarity={normalizedRarity}
       shareIndex={shareIndex}
+      upgradeLevel={itemStatUpgradeLevel(stat)}
     />
   );
 
