@@ -31,6 +31,7 @@ import { subscribeToChatScrollToMessage } from "../chat-scroll-to-message";
 import { ChatTranscriptPopups } from "./chat-transcript-popups";
 import { ChatTranscriptRow } from "./chat-transcript-row";
 import { ChatTranscriptViewport } from "./chat-transcript-viewport";
+import { useTranscriptWindow } from "../hooks/use-transcript-window";
 
 export type ChatScrollPosition = {
   atEnd: boolean;
@@ -65,6 +66,17 @@ export type ChatTranscriptProps = {
 };
 
 const noopDeleteMessage = () => undefined;
+
+const findMessageRowIndex = (
+  renderables: readonly ChatRenderableMessage[],
+  messageId: string,
+) =>
+  renderables.findIndex(
+    (item) =>
+      item.kind !== "date-divider" &&
+      (item.message.id === messageId ||
+        (item.kind === "npc-group" && item.messageIds.includes(messageId))),
+  );
 
 export const ChatTranscript = ({
   appearance = CHAT_APPEARANCE_READABLE_PRESET,
@@ -101,35 +113,61 @@ export const ChatTranscript = ({
   );
 
   useEffect(() => () => clearTimeout(highlightTimer.current), []);
-  const initialPosition = useRef(position);
+  const [initialPosition] = useState(position);
   const restored = useRef(false);
   const isEmpty = renderables.length === 0;
 
-  const jump = useEffectEvent((messageId: string) => {
-    const row = renderables.find(
-      (item) =>
-        item.kind !== "date-divider" &&
-        (item.message.id === messageId ||
-          (item.kind === "npc-group" && item.messageIds.includes(messageId))),
-    );
+  const savedMessageId =
+    initialPosition?.atEnd === false ? initialPosition.messageId : undefined;
 
-    if (
-      !row ||
-      row.kind === "date-divider" ||
-      !scrollToMessage(row.message.id, { align: "center", behavior: "instant" })
-    ) {
-      return false;
-    }
+  const transcriptWindow = useTranscriptWindow(
+    renderables,
+    savedMessageId === undefined
+      ? -1
+      : findMessageRowIndex(renderables, savedMessageId),
+  );
+
+  // A jump to a row outside the window scrolls once that row has mounted.
+  const pendingJumpId = useRef<string | null>(null);
+
+  const scrollToRow = (messageId: string) => {
+    if (!scrollToMessage(messageId, { align: "center", behavior: "instant" }))
+      return;
 
     clearTimeout(highlightTimer.current);
-    setHighlightedMessageId(row.message.id);
+    setHighlightedMessageId(messageId);
     highlightTimer.current = setTimeout(
       () => setHighlightedMessageId(null),
       1500,
     );
+  };
 
-    return true;
+  const jump = useEffectEvent((messageId: string) => {
+    const index = findMessageRowIndex(renderables, messageId);
+    const row = renderables[index];
+
+    if (!row || row.kind === "date-divider") return;
+
+    if (transcriptWindow.reveal(index)) pendingJumpId.current = row.message.id;
+    else scrollToRow(row.message.id);
   });
+
+  const finishJump = useEffectEvent(() => {
+    const messageId = pendingJumpId.current;
+
+    if (messageId === null) return;
+    pendingJumpId.current = null;
+    scrollToRow(messageId);
+  });
+
+  // The scroller keeps the reader's rows in place after a prepend, which
+  // would undo a scroll made in the same commit; jump on the next frame.
+  useEffect(() => {
+    if (pendingJumpId.current === null) return;
+    const frame = requestAnimationFrame(finishJump);
+
+    return () => cancelAnimationFrame(frame);
+  }, [transcriptWindow.rows.length]);
 
   const observeVisible = useEffectEvent(() => {
     if (
@@ -180,7 +218,7 @@ export const ChatTranscript = ({
 
     const frame = requestAnimationFrame(() => {
       restored.current = true;
-      const saved = initialPosition.current;
+      const saved = initialPosition;
 
       if (saved?.atEnd === false && saved.messageId) {
         scrollToMessage(saved.messageId, {
@@ -194,12 +232,41 @@ export const ChatTranscript = ({
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [isEmpty, scrollToMessage]);
+  }, [initialPosition, isEmpty, scrollToMessage]);
 
   const savePosition = () => {
     if (!restored.current || !isActive || !viewport.current) return;
     onPositionChange?.(getViewportPosition(viewport.current));
   };
+
+  // Mounts the previous page a screen before the reader reaches the top.
+  const revealOlderNearStart = () => {
+    const element = viewport.current;
+
+    if (
+      transcriptWindow.hasOlder &&
+      element &&
+      element.scrollTop <= element.clientHeight
+    )
+      transcriptWindow.revealOlder();
+  };
+
+  const fillViewport = useEffectEvent(() => {
+    const element = viewport.current;
+
+    // A window shorter than the viewport cannot scroll, so it is filled here.
+    if (
+      transcriptWindow.hasOlder &&
+      element &&
+      element.clientHeight > 0 &&
+      element.scrollHeight <= element.clientHeight
+    )
+      transcriptWindow.revealOlder();
+  });
+
+  useEffect(() => {
+    fillViewport();
+  }, [transcriptWindow.rows.length]);
 
   const savePositionFromEffect = useEffectEvent(savePosition);
   // Persist actual DOM scroll geometry after virtualized rows change; the parent does not own this viewport.
@@ -230,10 +297,13 @@ export const ChatTranscript = ({
         ) : null
       }
       selectableText
-      onScroll={savePosition}
+      onScroll={() => {
+        savePosition();
+        revealOlderNearStart();
+      }}
       popups={ChatTranscriptPopups}
     >
-      {renderables.map((row) => {
+      {transcriptWindow.rows.map((row) => {
         const message = row.kind === "date-divider" ? null : row.message;
 
         return (
