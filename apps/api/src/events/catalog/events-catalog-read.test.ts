@@ -1,5 +1,4 @@
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
-import superjson from "superjson";
 import { describe, expect, it, mock } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Effect } from "effect";
@@ -52,7 +51,7 @@ describe("event catalog read Effect module", () => {
         cacheRead();
 
         return Effect.succeed(
-          options.codec.parse(superjson.stringify(cachedEvent)),
+          options.codec.parse(options.codec.stringify(cachedEvent)),
         );
       },
     };
