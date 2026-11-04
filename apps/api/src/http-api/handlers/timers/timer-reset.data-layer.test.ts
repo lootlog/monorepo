@@ -121,6 +121,7 @@ it("resets an event respawn timer to the window the event opened", async () => {
         send: <A>() => Effect.succeed("OK" as A),
         eval: () => () => Effect.die("unused"),
         subscribe: () => Queue.unbounded(),
+        reserve: Effect.die("unused"),
       },
       {},
       Effect.runPromise,

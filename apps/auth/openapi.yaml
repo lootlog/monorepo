@@ -109,7 +109,6 @@ paths:
         - name: authorization
           in: header
           schema:
-            nullable: true
             type: string
           required: false
       responses:

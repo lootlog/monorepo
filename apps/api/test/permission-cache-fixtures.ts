@@ -42,6 +42,7 @@ export const createPermissionCacheBoundary = () => {
         return reply as A;
       }),
     subscribe: () => Queue.unbounded(),
+    reserve: Effect.die("unused"),
     eval:
       (script) =>
       (...parameters) =>

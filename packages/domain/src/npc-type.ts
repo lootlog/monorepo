@@ -54,8 +54,6 @@ export const NPC_TYPES_STRONGEST_FIRST = [
   "COMMON",
 ] as const;
 
-export type RankedNpcType = (typeof NPC_TYPES_STRONGEST_FIRST)[number];
-
 /** Position in `NPC_TYPES_STRONGEST_FIRST`; any other type or none ranks last. */
 export const getNpcTypeStrengthRank = (type: string | null | undefined) => {
   const rank = NPC_TYPES_STRONGEST_FIRST.findIndex(

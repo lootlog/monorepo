@@ -61,12 +61,3 @@ export const formatIsoWeekday = (weekday: number, short = false) =>
     // 5 January 2026 is a Monday.
     new Date(Date.UTC(2026, 0, 4 + weekday, 12)),
   );
-
-/** Collapses a range that starts and ends on the same day to that day. */
-export const formatStatisticsDateRange = (
-  startDate: string,
-  endDate: string,
-) =>
-  startDate === endDate
-    ? formatStatisticsDate(startDate)
-    : `${formatStatisticsDate(startDate)} – ${formatStatisticsDate(endDate)}`;

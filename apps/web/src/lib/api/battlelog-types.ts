@@ -1,5 +1,4 @@
 import type {
-  BattleCharactersResponseDtoOutputCharactersItem,
   BattleDurationStatsResponseDtoOutput,
   BattleRawResponseDtoOutputRawData,
   BattleRawResponseDtoOutputRawDataEventsItem,
@@ -29,8 +28,6 @@ export type BattleWarrior =
 export type BattleListResponse = BattlesListResponseDtoOutput;
 
 export type BattleListParams = BattlesControllerGetDashboardBattlesParams;
-
-export type BattleCharacter = BattleCharactersResponseDtoOutputCharactersItem;
 
 export type AbyssSeason = AbyssSeasonResponseDtoOutput;
 

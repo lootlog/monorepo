@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as p from "@clack/prompts";
-import { chalk } from "zx";
+import { styleText } from "node:util";
 import { Schema } from "effect";
 import { createRabbitMQClient } from "../../rabbitmq/client.js";
 
@@ -38,7 +38,8 @@ const loadFixtures = async (): Promise<Map<string, EventFixture>> => {
     }
   } catch (error) {
     console.error(
-      chalk.red(
+      styleText(
+        "red",
         `\n❌ Failed to load fixtures: ${error instanceof Error ? error.message : String(error)}\n`,
       ),
     );
@@ -83,17 +84,17 @@ const parseCliArgs = (args: string[]): PublishCliArgs => {
 
 const showHelp = (): void => {
   console.log(`
-${chalk.bold("publish - Publish test events to RabbitMQ")}
+${styleText("bold", "publish - Publish test events to RabbitMQ")}
 
-${chalk.bold("Usage:")}
+${styleText("bold", "Usage:")}
   bun run events:publish [options]
 
-${chalk.bold("Interactive Mode (recommended):")}
+${styleText("bold", "Interactive Mode (recommended):")}
   bun run events:publish
 
   Launches an interactive menu to select and publish predefined events.
 
-${chalk.bold("Continuous Mode:")}
+${styleText("bold", "Continuous Mode:")}
   bun run events:publish --continuous
 
   Keeps the connection open and allows publishing multiple events sequentially
@@ -101,11 +102,11 @@ ${chalk.bold("Continuous Mode:")}
   event selection, allowing you to modify JSON files on-the-fly. Perfect for
   testing event flows.
 
-${chalk.bold("Non-Interactive Mode:")}
+${styleText("bold", "Non-Interactive Mode:")}
   bun run events:publish --event <name>
   bun run events:publish --exchange <name> --routing-key <key> --payload <json>
 
-${chalk.bold("Options:")}
+${styleText("bold", "Options:")}
   -c, --continuous             Enable continuous mode (publish multiple events)
   -e, --event <name>           Publish a predefined event by name
   -x, --exchange <name>        Custom exchange name
@@ -113,26 +114,26 @@ ${chalk.bold("Options:")}
   -p, --payload <json>         Custom payload as JSON string
   -h, --help                   Show this help message
 
-${chalk.bold("Examples:")}
-  ${chalk.gray("# Interactive mode (single event)")}
+${styleText("bold", "Examples:")}
+  ${styleText("gray", "# Interactive mode (single event)")}
   bun run events:publish
 
-  ${chalk.gray("# Continuous mode (multiple events)")}
+  ${styleText("gray", "# Continuous mode (multiple events)")}
   bun run events:publish --continuous
 
-  ${chalk.gray("# Publish predefined event")}
+  ${styleText("gray", "# Publish predefined event")}
   bun run events:publish --event loot-created
 
-  ${chalk.gray("# Custom event")}
+  ${styleText("gray", "# Custom event")}
   bun run events:publish \\
     --exchange lootlog.events \\
     --routing-key custom.test \\
     --payload '{"test": "data"}'
 
-${chalk.bold("Available Events:")}
+${styleText("bold", "Available Events:")}
   Run 'bun run events:publish' to see available predefined events.
 
-${chalk.bold("Requirements:")}
+${styleText("bold", "Requirements:")}
   - RABBITMQ_URI environment variable must be set
   - RabbitMQ server must be running and accessible
   `);
@@ -142,14 +143,14 @@ const publishInteractive = async (
   fixtures: Map<string, EventFixture>,
   continuous = false,
 ): Promise<void> => {
-  p.intro(chalk.bold.cyan("🐰 Publish RabbitMQ Event"));
+  p.intro(styleText(["bold", "cyan"], "🐰 Publish RabbitMQ Event"));
 
   let currentFixtures = fixtures;
 
   const getFixtureNames = () => Array.from(currentFixtures.keys());
 
   if (getFixtureNames().length === 0) {
-    p.outro(chalk.red("No event fixtures found"));
+    p.outro(styleText("red", "No event fixtures found"));
     process.exit(1);
   }
 
@@ -174,7 +175,7 @@ const publishInteractive = async (
       const fixtureNames = getFixtureNames();
 
       if (fixtureNames.length === 0) {
-        p.outro(chalk.red("No event fixtures found"));
+        p.outro(styleText("red", "No event fixtures found"));
         break;
       }
 
@@ -199,7 +200,7 @@ const publishInteractive = async (
       const fixture = currentFixtures.get(selectedEvent);
 
       if (!fixture) {
-        p.outro(chalk.red("Event not found"));
+        p.outro(styleText("red", "Event not found"));
         break;
       }
 
@@ -232,7 +233,7 @@ const publishInteractive = async (
     await client.close();
   }
 
-  p.outro(chalk.green("✓ Done!"));
+  p.outro(styleText("green", "✓ Done!"));
 };
 
 const publishNonInteractive = async (
@@ -251,11 +252,13 @@ const publishNonInteractive = async (
       const fixture = fixtures.get(args.event);
 
       if (!fixture) {
-        console.error(chalk.red(`\n❌ Event '${args.event}' not found\n`));
-        console.log(chalk.gray("Available events:"));
+        console.error(
+          styleText("red", `\n❌ Event '${args.event}' not found\n`),
+        );
+        console.log(styleText("gray", "Available events:"));
 
         for (const name of fixtures.keys()) {
-          console.log(chalk.cyan(`  - ${name}`));
+          console.log(styleText("cyan", `  - ${name}`));
         }
 
         console.log();
@@ -274,7 +277,8 @@ const publishNonInteractive = async (
         payload = parsePayload(args.payload);
       } catch (error) {
         console.error(
-          chalk.red(
+          styleText(
+            "red",
             `\n❌ Invalid JSON payload: ${error instanceof Error ? error.message : String(error)}\n`,
           ),
         );
@@ -287,9 +291,10 @@ const publishNonInteractive = async (
         payload,
       });
     } else {
-      console.error(chalk.red("\n❌ Invalid arguments\n"));
+      console.error(styleText("red", "\n❌ Invalid arguments\n"));
       console.log(
-        chalk.gray(
+        styleText(
+          "gray",
           "Either provide --event or all of --exchange, --routing-key, and --payload\n",
         ),
       );

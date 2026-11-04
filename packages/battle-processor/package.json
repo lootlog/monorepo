@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "lint": "oxlint src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "bun check"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

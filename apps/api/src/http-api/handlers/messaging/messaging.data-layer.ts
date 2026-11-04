@@ -3,7 +3,6 @@ import type { PartyGatheringNpc } from "@lootlog/schema/party-ready-room";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { randomUUID } from "node:crypto";
-import { v4 as uuid } from "uuid";
 
 import { Clock, Effect, Layer, Schema } from "effect";
 import { getNpcType } from "@lootlog/domain/npc-type";
@@ -220,7 +219,7 @@ export const makeMessagingDataLayer = (
                 return yield* Effect.fail(new PermissionDeniedError());
               }
 
-              const notificationId = uuid();
+              const notificationId = Bun.randomUUIDv7();
 
               const now = yield* Clock.currentTimeMillis;
               const createdAt = new Date(now).toISOString();
