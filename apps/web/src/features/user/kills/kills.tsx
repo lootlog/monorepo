@@ -44,7 +44,7 @@ import {
   KILL_STATS_PERIODS,
   type KillStatsPeriod,
 } from "@/features/kills/components/kill-stats-period-select";
-import { sortingTableFeatures } from "@/lib/tanstack-table-features";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { useCursorStack } from "@/hooks/use-cursor-stack";
 import { RetryButton } from "@/components/common/retry-button";
 import { ClearFiltersButton } from "@/components/common/clear-filters-button";
@@ -181,7 +181,7 @@ export const KillsPage: React.FC = () => {
   const columns = createKillsColumns(firstRank);
 
   const table = useTable({
-    features: sortingTableFeatures,
+    features: coreTableFeatures,
     data: data?.items || [],
     columns,
     state: {

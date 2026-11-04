@@ -24,12 +24,6 @@ export const LootShareSourceEnum = {
 export type LootShareSourceEnum =
   (typeof LootShareSourceEnum)[keyof typeof LootShareSourceEnum];
 
-export const LootShareSourceSchema = Schema.Literals([
-  LootShareSourceEnum.NONE,
-  LootShareSourceEnum.ITEM_OWNER,
-  LootShareSourceEnum.CHAT_MESSAGE,
-]);
-
 export const ProfessionEnum = {
   WARRIOR: "WARRIOR",
   PALADIN: "PALADIN",
@@ -87,38 +81,3 @@ export const ItemTypeEnum = {
 } as const;
 
 export type ItemTypeEnum = (typeof ItemTypeEnum)[keyof typeof ItemTypeEnum];
-
-export const ItemTypeSchema = Schema.Literals([
-  ItemTypeEnum.ONE_HAND_WEAPON,
-  ItemTypeEnum.TWO_HAND_WEAPON,
-  ItemTypeEnum.ONE_AND_HALF_HAND_WEAPON,
-  ItemTypeEnum.DISTANCE_WEAPON,
-  ItemTypeEnum.HELP_WEAPON,
-  ItemTypeEnum.WAND_WEAPON,
-  ItemTypeEnum.ORB_WEAPON,
-  ItemTypeEnum.ARMOR,
-  ItemTypeEnum.HELMET,
-  ItemTypeEnum.BOOTS,
-  ItemTypeEnum.GLOVES,
-  ItemTypeEnum.RING,
-  ItemTypeEnum.NECKLACE,
-  ItemTypeEnum.SHIELD,
-  ItemTypeEnum.NEUTRAL,
-  ItemTypeEnum.CONSUME,
-  ItemTypeEnum.GOLD,
-  ItemTypeEnum.KEYS,
-  ItemTypeEnum.QUEST,
-  ItemTypeEnum.RENEWABLE,
-  ItemTypeEnum.ARROWS,
-  ItemTypeEnum.TALISMAN,
-  ItemTypeEnum.BOOK,
-  ItemTypeEnum.BAG,
-  ItemTypeEnum.BLESS,
-  ItemTypeEnum.UPGRADE,
-  ItemTypeEnum.RECIPE,
-  ItemTypeEnum.COINAGE,
-  ItemTypeEnum.QUIVER,
-  ItemTypeEnum.OUTFITS,
-  ItemTypeEnum.PETS,
-  ItemTypeEnum.TELEPORTS,
-]);
