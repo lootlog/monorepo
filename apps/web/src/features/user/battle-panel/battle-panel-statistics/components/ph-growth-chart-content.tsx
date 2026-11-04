@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { formatStatisticsInstantDay } from "@/components/common/kill-analytics/format-statistics-date";
 import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { GrowthChartSection } from "./growth-chart-section";
 
@@ -18,10 +19,7 @@ export function PhGrowthChart({ data, isLoading }: PhGrowthChartProps) {
   const { t } = useTranslation();
 
   const chartData = data.map((point) => ({
-    date: new Date(point.date).toLocaleDateString("pl-PL", {
-      day: "2-digit",
-      month: "2-digit",
-    }),
+    date: formatStatisticsInstantDay(point.date),
     cumulativePh: point.cumulativePh,
     ph: point.ph,
   }));
