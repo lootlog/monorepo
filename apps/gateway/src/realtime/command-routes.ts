@@ -2,7 +2,6 @@ import type { ClientCommand, CommandSuccess } from "@lootlog/protocol/realtime";
 import { Effect } from "effect";
 import {
   OrganizationAccessDenied,
-  RealtimeDependencyError,
   type CommandFailure,
 } from "#src/realtime/realtime-errors";
 import type { GatewaySocket } from "#src/realtime/session";
@@ -43,16 +42,6 @@ export const runCommandRoute = <Type extends CommandType>(
   data: CommandData[Type],
 ): Effect.Effect<CommandSuccess<Type>, CommandFailure> =>
   routes[type].run(socket, data);
-
-/** A dependency's Promise, which fails the command as a retryable error. */
-export const fromDependency = <A>(
-  operation: CommandType,
-  evaluate: () => Promise<A>,
-): Effect.Effect<A, RealtimeDependencyError> =>
-  Effect.tryPromise({
-    try: evaluate,
-    catch: (cause) => new RealtimeDependencyError({ operation, cause }),
-  });
 
 /** A dependency answers `null` when the session may not read what it asked for. */
 export const orAccessDenied = <A, E>(

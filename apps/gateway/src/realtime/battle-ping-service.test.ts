@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { describe, expect, test } from "bun:test";
 import { makeGamePingSocket as makeSocket } from "../../test/realtime-fixtures.js";
 import { BattlePingService } from "./battle-ping-service.js";
@@ -24,12 +25,14 @@ describe("BattlePingService", () => {
       },
     );
 
-    const response = await service.send(makeSocket(), {
-      expectedMapId: 7,
-      type: "attack",
-      warriorId: -42,
-      recipientCharacterIds: ["123", "789"],
-    });
+    const response = await Effect.runPromise(
+      service.send(makeSocket(), {
+        expectedMapId: 7,
+        type: "attack",
+        warriorId: -42,
+        recipientCharacterIds: ["123", "789"],
+      }),
+    );
 
     expect(response).toMatchObject({
       status: "accepted",
@@ -90,12 +93,14 @@ describe("BattlePingService", () => {
     );
 
     expect(
-      await service.send(makeSocket(), {
-        expectedMapId: 7,
-        type: "heal",
-        warriorId: 123,
-        recipientCharacterIds: ["123"],
-      }),
+      await Effect.runPromise(
+        service.send(makeSocket(), {
+          expectedMapId: 7,
+          type: "heal",
+          warriorId: 123,
+          recipientCharacterIds: ["123"],
+        }),
+      ),
     ).toEqual({ status: "rejected", code: "invalid-payload" });
     expect(evaluations).toBe(0);
   });

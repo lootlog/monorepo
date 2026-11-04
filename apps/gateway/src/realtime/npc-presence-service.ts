@@ -10,8 +10,7 @@ import {
 } from "@lootlog/schema/npc-presence";
 import { Permission } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
-import { Schema, Context, Effect, Layer } from "effect";
-import { ContextLogger } from "@lootlog/instrumentation";
+import { Schema, Context, Effect, Exit, Layer, Semaphore } from "effect";
 import {
   consumePingRateLimit,
   type PingScriptStore,
@@ -22,10 +21,17 @@ import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
 import { canSubscribe, hasPermission } from "#src/realtime/subscription-policy";
 import { GatewayRedis } from "#src/platform/redis-store";
 import {
-  fromDependency,
   orAccessDenied,
   type CommandRoutes,
 } from "#src/realtime/command-routes";
+import { RealtimeStoreError } from "#src/realtime/realtime-errors";
+
+/** A Redis call that fails the operation with a tagged error. */
+const storeCall = <A>(operation: string, evaluate: () => Promise<A>) =>
+  Effect.tryPromise({
+    try: evaluate,
+    catch: (cause) => new RealtimeStoreError({ operation, cause }),
+  });
 
 // A client reports only when the NPCs on its map change.
 const RATE_LIMIT = 30;
@@ -219,8 +225,8 @@ const planOperations = (
  * an NPC gains its first reporter or loses its last one.
  */
 export class NpcPresenceService {
-  private readonly logger = new ContextLogger(NpcPresenceService.name);
-  private readonly operations = new WeakMap<GatewaySocket, Promise<unknown>>();
+  /** Each socket's reports change one at a time, in the order it sent them. */
+  private readonly locks = new WeakMap<GatewaySocket, Semaphore.Semaphore>();
 
   constructor(
     private readonly redis: PingScriptStore,
@@ -230,174 +236,206 @@ export class NpcPresenceService {
   report(
     socket: GatewaySocket,
     payload: NpcPresenceReport,
-  ): Promise<NpcPresenceReportAck> {
-    return this.serialize(socket, () => this.performReport(socket, payload));
+  ): Effect.Effect<NpcPresenceReportAck> {
+    return this.serialize(socket, this.performReport(socket, payload));
   }
 
   /** Keeps the socket's reports alive; called on its presence heartbeat. */
-  refresh(socket: GatewaySocket): Promise<void> {
-    if (!socket.data.npcPresence) return Promise.resolve();
+  refresh(socket: GatewaySocket): Effect.Effect<void> {
+    if (!socket.data.npcPresence) return Effect.void;
 
-    return this.serialize(socket, async () => {
-      const state = socket.data.npcPresence;
+    return this.serialize(
+      socket,
+      Effect.suspend(() => {
+        const state = socket.data.npcPresence;
 
-      if (!state) return;
+        if (!state) return Effect.void;
 
-      const allowed = this.reportableOrganizations(
-        socket,
-        state.organizationIds,
-      );
+        const allowed = this.reportableOrganizations(
+          socket,
+          state.organizationIds,
+        );
 
-      try {
-        await this.apply(
+        return this.apply(
           socket,
           state.organizationIds.map((organizationId) =>
             allowed.includes(organizationId)
               ? operation(organizationId, state)
               : operation(organizationId, state, []),
           ),
+        ).pipe(
+          Effect.catch((error) =>
+            Effect.logWarning("Failed to refresh NPC presence", error),
+          ),
+          Effect.ensuring(
+            Effect.sync(() => {
+              socket.data.npcPresence =
+                allowed.length > 0
+                  ? { ...state, organizationIds: allowed }
+                  : undefined;
+            }),
+          ),
         );
-      } catch (error) {
-        this.logger.warn("Failed to refresh NPC presence", error);
-      }
-
-      socket.data.npcPresence =
-        allowed.length > 0 ? { ...state, organizationIds: allowed } : undefined;
-    });
+      }),
+    );
   }
 
   /** Withdraws every report of a socket that closed or changed character. */
-  withdraw(socket: GatewaySocket): Promise<void> {
-    if (!socket.data.npcPresence) return Promise.resolve();
+  withdraw(socket: GatewaySocket): Effect.Effect<void, RealtimeStoreError> {
+    if (!socket.data.npcPresence) return Effect.void;
 
-    return this.serialize(socket, async () => {
-      const state = socket.data.npcPresence;
+    return this.serialize(
+      socket,
+      Effect.suspend(() => {
+        const state = socket.data.npcPresence;
 
-      if (!state) return;
-      socket.data.npcPresence = undefined;
-      await this.apply(
-        socket,
-        state.organizationIds.map((organizationId) =>
-          operation(organizationId, state, []),
-        ),
-      );
-    });
+        if (!state) return Effect.void;
+        socket.data.npcPresence = undefined;
+
+        return this.apply(
+          socket,
+          state.organizationIds.map((organizationId) =>
+            operation(organizationId, state, []),
+          ),
+        );
+      }),
+    );
   }
 
   /** NPCs standing in one Organization and world, for a client that just connected. */
-  async fetch(
+  fetch(
     socket: GatewaySocket,
     organizationId: string,
     world: string,
-  ): Promise<NpcPresenceSnapshot | null> {
+  ): Effect.Effect<NpcPresenceSnapshot | null, RealtimeStoreError> {
     if (
       !canSubscribe(socket.data, {
         topic: "organization.timers",
         organizationId,
       })
     )
-      return null;
+      return Effect.succeed(null);
 
-    const snapshot = decodeSnapshot(
-      String(
-        await this.redis.command.eval(
-          SNAPSHOT_SCRIPT,
-          3,
-          ...keys(organizationId, world),
+    return storeCall("npc-presence.snapshot", async () =>
+      decodeSnapshot(
+        String(
+          await this.redis.command.eval(
+            SNAPSHOT_SCRIPT,
+            3,
+            ...keys(organizationId, world),
+          ),
         ),
       ),
+    ).pipe(
+      Effect.map((snapshot) => ({
+        revision: snapshot.revision,
+        npcs: snapshot.npcs.filter(({ npc, since }) =>
+          canReadSourceEvent(
+            socket.data,
+            presenceEvent(organizationId, world, {
+              npc,
+              since,
+              standing: true,
+              revision: snapshot.revision,
+            }),
+          ),
+        ),
+      })),
     );
-
-    return {
-      revision: snapshot.revision,
-      npcs: snapshot.npcs.filter(({ npc, since }) =>
-        canReadSourceEvent(
-          socket.data,
-          presenceEvent(organizationId, world, {
-            npc,
-            since,
-            standing: true,
-            revision: snapshot.revision,
-          }),
-        ),
-      ),
-    };
   }
 
-  private async performReport(
+  private performReport(
     socket: GatewaySocket,
     payload: NpcPresenceReport,
-  ): Promise<NpcPresenceReportAck> {
-    const character = socket.data.character;
+  ): Effect.Effect<NpcPresenceReportAck> {
+    const { redis } = this;
+    const apply = this.apply.bind(this);
+    const reportableOrganizations = this.reportableOrganizations.bind(this);
 
-    if (
-      socket.data.platform !== "game" ||
-      !character ||
-      character.world !== payload.world
-    )
-      return { status: "rejected", code: "invalid-context" };
+    return Effect.gen(function* () {
+      const character = socket.data.character;
 
-    const rateLimit = await consumePingRateLimit(this.redis, this.logger, {
-      key: `npc-presence:rate:${socket.data.connectionId}`,
-      windowMs: RATE_LIMIT_WINDOW_MS,
-      limit: RATE_LIMIT,
-      pingId: crypto.randomUUID(),
-    });
+      if (
+        socket.data.platform !== "game" ||
+        !character ||
+        character.world !== payload.world
+      )
+        return { status: "rejected", code: "invalid-context" } as const;
 
-    if (!rateLimit)
-      return { status: "rejected", code: "temporarily-unavailable" };
-    const [accepted, , retryAfterMs] = rateLimit;
+      const rateLimit = yield* consumePingRateLimit(
+        redis,
+        "NpcPresenceService",
+        {
+          key: `npc-presence:rate:${socket.data.connectionId}`,
+          windowMs: RATE_LIMIT_WINDOW_MS,
+          limit: RATE_LIMIT,
+          pingId: crypto.randomUUID(),
+        },
+      );
 
-    if (accepted !== 1)
-      return { status: "rejected", code: "rate-limited", retryAfterMs };
+      if (!rateLimit)
+        return { status: "rejected", code: "temporarily-unavailable" } as const;
+      const [accepted, , retryAfterMs] = rateLimit;
 
-    const previous = socket.data.npcPresence;
+      if (accepted !== 1)
+        return {
+          status: "rejected",
+          code: "rate-limited",
+          retryAfterMs,
+        } as const;
 
-    const npcs = new Map(
-      payload.npcs
-        .filter((npc) => npc.wt >= NPC_PRESENCE_MIN_WT)
-        .map((npc) => [npc.id, npc]),
-    );
+      const previous = socket.data.npcPresence;
 
-    const organizationIds = this.reportableOrganizations(socket, [
-      ...new Set(payload.organizationIds),
-    ]);
+      const npcs = new Map(
+        payload.npcs
+          .filter((npc) => npc.wt >= NPC_PRESENCE_MIN_WT)
+          .map((npc) => [npc.id, npc]),
+      );
 
-    const next: NpcPresenceState | undefined =
-      npcs.size > 0 && organizationIds.length > 0
-        ? {
+      const organizationIds = reportableOrganizations(socket, [
+        ...new Set(payload.organizationIds),
+      ]);
+
+      const next: NpcPresenceState | undefined =
+        npcs.size > 0 && organizationIds.length > 0
+          ? {
+              world: payload.world,
+              characterId: character.characterId,
+              organizationIds,
+              npcs,
+            }
+          : undefined;
+
+      // After a failed write nothing is known to be stored, so every reported
+      // scope is replaced, even with no NPCs.
+      const operations = previous
+        ? planOperations(previous, next)
+        : organizationIds.map((organizationId) => ({
+            organizationId,
             world: payload.world,
-            characterId: character.characterId,
-            organizationIds,
-            npcs,
-          }
-        : undefined;
+            npcs: [...npcs.values()],
+          }));
 
-    // After a failed write nothing is known to be stored, so every reported
-    // scope is replaced, even with no NPCs.
-    const operations = previous
-      ? planOperations(previous, next)
-      : organizationIds.map((organizationId) => ({
-          organizationId,
-          world: payload.world,
-          npcs: [...npcs.values()],
-        }));
+      // A failed report is resent whole and replaces whatever this connection
+      // stored, so nothing is assumed to be stored meanwhile.
+      socket.data.npcPresence = undefined;
 
-    // A failed report is resent whole and replaces whatever this connection
-    // stored, so nothing is assumed to be stored meanwhile.
-    socket.data.npcPresence = undefined;
+      return yield* apply(socket, operations).pipe(
+        Effect.map(() => {
+          socket.data.npcPresence = next;
 
-    try {
-      await this.apply(socket, operations);
-    } catch (error) {
-      this.logger.warn("Failed to store NPC presence", error);
-
-      return { status: "rejected", code: "temporarily-unavailable" };
-    }
-
-    socket.data.npcPresence = next;
-
-    return { status: "accepted" };
+          return { status: "accepted" } as const;
+        }),
+        Effect.catch((error) =>
+          Effect.logWarning("Failed to store NPC presence", error).pipe(
+            Effect.as({
+              status: "rejected",
+              code: "temporarily-unavailable",
+            } as const),
+          ),
+        ),
+      );
+    }).pipe(Effect.annotateLogs({ context: "NpcPresenceService" }));
   }
 
   /** Reporting reveals a timer NPC, so it takes the right to write timers. */
@@ -416,56 +454,75 @@ export class NpcPresenceService {
     );
   }
 
-  private async apply(
+  private apply(
     socket: GatewaySocket,
     operations: readonly Operation[],
-  ): Promise<void> {
-    // Organizations are independent; each keeps its own change order.
-    await Promise.all(
-      operations.map(async ({ organizationId, world, npcs }) => {
-        const changes = decodeChanges(
-          String(
-            await this.redis.command.eval(
-              APPLY_SCRIPT,
-              3,
-              ...keys(organizationId, world),
-              socket.data.connectionId,
-              NPC_PRESENCE_TTL_MS,
-              JSON.stringify(npcs),
-              REVISION_TTL_MS,
+  ): Effect.Effect<void, RealtimeStoreError> {
+    const { redis, hub } = this;
+
+    // Organizations are independent; each keeps its own change order, and a
+    // failed one does not stop the others.
+    return Effect.forEach(
+      operations,
+      ({ organizationId, world, npcs }) =>
+        storeCall("npc-presence.apply", async () =>
+          decodeChanges(
+            String(
+              await redis.command.eval(
+                APPLY_SCRIPT,
+                3,
+                ...keys(organizationId, world),
+                socket.data.connectionId,
+                NPC_PRESENCE_TTL_MS,
+                JSON.stringify(npcs),
+                REVISION_TTL_MS,
+              ),
             ),
           ),
-        );
+        ).pipe(
+          Effect.flatMap((changes) =>
+            Effect.forEach(
+              changes,
+              (change) =>
+                Effect.tryPromise(() =>
+                  hub.publishToScopes(
+                    [{ topic: "organization.timers", organizationId }],
+                    presenceEvent(organizationId, world, change),
+                    // Any world: timers can show a world other than the recipient's own.
+                    { recipientPlatform: "game" },
+                  ),
+                ).pipe(
+                  Effect.catch((error) =>
+                    Effect.logWarning("Failed to publish NPC presence", error),
+                  ),
+                ),
+              { discard: true },
+            ),
+          ),
+          Effect.exit,
+        ),
+      { concurrency: "unbounded" },
+    ).pipe(
+      Effect.flatMap((exits) => {
+        const failed = exits.find(Exit.isFailure);
 
-        for (const change of changes) {
-          try {
-            await this.hub.publishToScopes(
-              [{ topic: "organization.timers", organizationId }],
-              presenceEvent(organizationId, world, change),
-              // Any world: timers can show a world other than the recipient's own.
-              { recipientPlatform: "game" },
-            );
-          } catch (error) {
-            this.logger.warn("Failed to publish NPC presence", error);
-          }
-        }
+        return failed ? failed : Effect.void;
       }),
     );
   }
 
-  private serialize<T>(
+  private serialize<A, E>(
     socket: GatewaySocket,
-    operation: () => Promise<T>,
-  ): Promise<T> {
-    const previous = this.operations.get(socket) ?? Promise.resolve();
-    const next = previous.then(operation, operation);
+    effect: Effect.Effect<A, E>,
+  ): Effect.Effect<A, E> {
+    let lock = this.locks.get(socket);
 
-    this.operations.set(
-      socket,
-      next.catch(() => undefined),
-    );
+    if (!lock) {
+      lock = Semaphore.makeUnsafe(1);
+      this.locks.set(socket, lock);
+    }
 
-    return next;
+    return lock.withPermits(1)(effect);
   }
 }
 
@@ -488,19 +545,12 @@ export const npcPresenceRoutes = (
   ({
     "npc-presence.report": {
       joined: true,
-      run: (socket, data) =>
-        fromDependency("npc-presence.report", () =>
-          npcPresence.report(socket, data),
-        ),
+      run: (socket, data) => npcPresence.report(socket, data),
     },
     "npc-presence.fetch": {
       joined: true,
       run: (socket, { organizationId, world }) =>
-        orAccessDenied(
-          fromDependency("npc-presence.fetch", () =>
-            npcPresence.fetch(socket, organizationId, world),
-          ),
-        ),
+        orAccessDenied(npcPresence.fetch(socket, organizationId, world)),
     },
   }) satisfies Pick<
     CommandRoutes,

@@ -264,14 +264,16 @@ export class Ingress extends Context.Service<Ingress, CommandIngress>()(
                       ),
                     ),
                   ),
-                Effect.tryPromise(() => npcPresence.withdraw(socket)).pipe(
-                  Effect.catchCause((error) =>
-                    Effect.logError(
-                      "Gateway disconnect NPC presence failed",
-                      error,
+                npcPresence
+                  .withdraw(socket)
+                  .pipe(
+                    Effect.catchCause((error) =>
+                      Effect.logError(
+                        "Gateway disconnect NPC presence failed",
+                        error,
+                      ),
                     ),
                   ),
-                ),
               ],
               { concurrency: 3, discard: true },
             );

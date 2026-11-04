@@ -191,13 +191,13 @@ const makeSocket = (platform: SessionData["platform"] = "web-app") => {
 const setup = (
   guildStore?: GuildStore,
   updateSubscription: AirTagService["updateSubscription"] = () =>
-    Promise.reject(new Error("Unexpected air tag subscribe")),
+    Effect.die("Unexpected air tag subscribe"),
   realtimeHub?: ConstructorParameters<typeof CommandHandler>[4],
   joinAdmission?: CommandAdmission,
   registerInterest: AirTagService["registerInterest"] = () =>
-    Promise.reject(new Error("Unexpected air tag interest")),
+    Effect.die("Unexpected air tag interest"),
   publishObservations: AirTagService["publishObservations"] = () =>
-    Promise.reject(new Error("Unexpected air tag observation")),
+    Effect.die("Unexpected air tag observation"),
   airTagObservationAdmission?: CommandAdmission,
   accounts: {
     readonly verifier?: MargonemProofVerifier;
@@ -214,16 +214,15 @@ const setup = (
   const airTags = {
     updateSubscription,
     publishObservations,
-    fetchMapThreats: () =>
-      Promise.reject(new Error("Unexpected map threat fetch")),
+    fetchMapThreats: () => Effect.die("Unexpected map threat fetch"),
     registerInterest,
   };
 
   const npcPresence = {
-    report: () => Promise.reject(new Error("Unexpected NPC presence report")),
-    refresh: () => Promise.resolve(),
-    withdraw: () => Promise.resolve(),
-    fetch: () => Promise.reject(new Error("Unexpected NPC presence fetch")),
+    report: () => Effect.die("Unexpected NPC presence report"),
+    refresh: () => Effect.void,
+    withdraw: () => Effect.void,
+    fetch: () => Effect.die("Unexpected NPC presence fetch"),
   };
 
   const handler = new CommandHandler(
@@ -238,14 +237,14 @@ const setup = (
     { npcPresence, airTags },
     gatewayFeatureRoutes({
       mapPings: {
-        send: () => Promise.reject(new Error("Unexpected map ping")),
+        send: () => Effect.die("Unexpected map ping"),
       },
       battlePings: {
-        send: () => Promise.reject(new Error("Unexpected battle ping")),
+        send: () => Effect.die("Unexpected battle ping"),
       },
       lootSplits: {
-        send: () => Promise.reject(new Error("Unexpected loot split")),
-        autoAccept: () => Promise.reject(new Error("Unexpected loot split")),
+        send: () => Effect.die("Unexpected loot split"),
+        autoAccept: () => Effect.die("Unexpected loot split"),
       },
       airTags,
       airTagObservationAdmission:
@@ -321,7 +320,8 @@ test("heartbeat completion metrics include defects and interruptions without cre
   }
 
   expect(exits.map(Exit.isSuccess)).toEqual([true, true, false, false]);
-  expect(hub.responses).toHaveLength(2);
+  // A defect is answered so the client retries; an interruption is not.
+  expect(hub.responses).toHaveLength(3);
   expect(spans).toEqual([]);
 
   const outcomes = Effect.runSync(
@@ -897,41 +897,37 @@ describe("CommandHandler session lifecycle", () => {
       activity,
       {
         npcPresence: {
-          refresh: () => Promise.resolve(),
-          withdraw: () => Promise.resolve(),
+          refresh: () => Effect.void,
+          withdraw: () => Effect.void,
         },
         airTags: {
-          registerInterest: () =>
-            Promise.reject(new Error("Unexpected air tag interest")),
+          registerInterest: () => Effect.die("Unexpected air tag interest"),
         },
       },
       gatewayFeatureRoutes({
         mapPings: {
-          send: () => Promise.reject(new Error("Unexpected map ping")),
+          send: () => Effect.die("Unexpected map ping"),
         },
         battlePings: {
-          send: () => Promise.reject(new Error("Unexpected battle ping")),
+          send: () => Effect.die("Unexpected battle ping"),
         },
         lootSplits: {
-          send: () => Promise.reject(new Error("Unexpected loot split")),
-          autoAccept: () => Promise.reject(new Error("Unexpected loot split")),
+          send: () => Effect.die("Unexpected loot split"),
+          autoAccept: () => Effect.die("Unexpected loot split"),
         },
         airTags: {
           updateSubscription: () =>
-            Promise.reject(new Error("Unexpected air tag subscription")),
+            Effect.die("Unexpected air tag subscription"),
           publishObservations: () =>
-            Promise.reject(new Error("Unexpected air tag observation")),
-          fetchMapThreats: () =>
-            Promise.reject(new Error("Unexpected map threat fetch")),
+            Effect.die("Unexpected air tag observation"),
+          fetchMapThreats: () => Effect.die("Unexpected map threat fetch"),
         },
         airTagObservationAdmission: new CommandAdmission(
           AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
         ),
         npcPresence: {
-          report: () =>
-            Promise.reject(new Error("Unexpected NPC presence report")),
-          fetch: () =>
-            Promise.reject(new Error("Unexpected NPC presence fetch")),
+          report: () => Effect.die("Unexpected NPC presence report"),
+          fetch: () => Effect.die("Unexpected NPC presence fetch"),
         },
       }),
     );
@@ -1185,12 +1181,17 @@ describe("CommandHandler session lifecycle", () => {
       undefined,
       undefined,
       undefined,
-      async () => {
-        merges++;
-        await stalled.promise;
+      () =>
+        Effect.promise(async () => {
+          merges++;
+          await stalled.promise;
 
-        return { status: "accepted", acceptedScopes: 1, acceptedTargets: 1 };
-      },
+          return {
+            status: "accepted",
+            acceptedScopes: 1,
+            acceptedTargets: 1,
+          } as const;
+        }),
       new CommandAdmission(
         {
           ratePerSecond: 0,
@@ -1746,33 +1747,31 @@ describe("CommandHandler session lifecycle", () => {
       },
       {
         npcPresence: {
-          refresh: () => Promise.resolve(),
-          withdraw: () => Promise.resolve(),
+          refresh: () => Effect.void,
+          withdraw: () => Effect.void,
         },
         airTags: {
-          registerInterest: () => Promise.reject(new Error("unused")),
+          registerInterest: () => Effect.die("unused"),
         },
       },
       gatewayFeatureRoutes({
-        mapPings: { send: () => Promise.reject(new Error("unused")) },
-        battlePings: { send: () => Promise.reject(new Error("unused")) },
+        mapPings: { send: () => Effect.die("unused") },
+        battlePings: { send: () => Effect.die("unused") },
         lootSplits: {
-          send: () => Promise.reject(new Error("unused")),
-          autoAccept: () => Promise.reject(new Error("unused")),
+          send: () => Effect.die("unused"),
+          autoAccept: () => Effect.die("unused"),
         },
         airTags: {
-          updateSubscription: () => Promise.reject(new Error("unused")),
-          publishObservations: () => Promise.reject(new Error("unused")),
-          fetchMapThreats: () => Promise.reject(new Error("unused")),
+          updateSubscription: () => Effect.die("unused"),
+          publishObservations: () => Effect.die("unused"),
+          fetchMapThreats: () => Effect.die("unused"),
         },
         airTagObservationAdmission: new CommandAdmission(
           AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
         ),
         npcPresence: {
-          report: () =>
-            Promise.reject(new Error("Unexpected NPC presence report")),
-          fetch: () =>
-            Promise.reject(new Error("Unexpected NPC presence fetch")),
+          report: () => Effect.die("Unexpected NPC presence report"),
+          fetch: () => Effect.die("Unexpected NPC presence fetch"),
         },
       }),
     );
@@ -2254,10 +2253,13 @@ describe("CommandHandler session lifecycle", () => {
   test("answers air-tag.subscription with the settled acknowledgement", async () => {
     const settled =
       Promise.withResolvers<
-        Awaited<ReturnType<AirTagService["updateSubscription"]>>
+        Effect.Success<ReturnType<AirTagService["updateSubscription"]>>
       >();
 
-    const { handler, hub } = setup(undefined, () => settled.promise);
+    const { handler, hub } = setup(undefined, () =>
+      Effect.promise(() => settled.promise),
+    );
+
     const target = makeSocket();
     target.socket.data.joined = true;
 
@@ -2314,12 +2316,12 @@ describe("CommandHandler session lifecycle", () => {
       ).not.toThrow();
   });
 
-  test("reports a failed air-tag.subscription update as a retryable command error", async () => {
+  test("answers a defective air-tag.subscription update with a retryable command error", async () => {
     const { handler, hub } = setup();
     const target = makeSocket();
     target.socket.data.joined = true;
 
-    await Effect.runPromise(
+    await Effect.runPromiseExit(
       handler.handle(
         target.socket,
         JSON.stringify({
@@ -2352,12 +2354,8 @@ describe("CommandHandler session lifecycle", () => {
       override subscribe(): void {}
     })();
 
-    const { handler } = setup(
-      undefined,
-      undefined,
-      hub,
-      undefined,
-      () => registered.promise,
+    const { handler } = setup(undefined, undefined, hub, undefined, () =>
+      Effect.promise(() => registered.promise),
     );
 
     const target = makeSocket();

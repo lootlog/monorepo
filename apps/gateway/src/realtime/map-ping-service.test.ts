@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { describe, expect, test } from "bun:test";
 import { makeGamePingSocket as makeSocket } from "../../test/realtime-fixtures.js";
 import { MapPingService } from "./map-ping-service.js";
@@ -17,12 +18,14 @@ describe("MapPingService legacy parity", () => {
       },
     );
 
-    const response = await service.send(makeSocket(), {
-      expectedMapId: 7,
-      type: "enemy",
-      x: 10,
-      y: 11,
-    });
+    const response = await Effect.runPromise(
+      service.send(makeSocket(), {
+        expectedMapId: 7,
+        type: "enemy",
+        x: 10,
+        y: 11,
+      }),
+    );
 
     expect(response).toMatchObject({
       status: "accepted",
@@ -76,12 +79,14 @@ describe("MapPingService legacy parity", () => {
     );
 
     expect(
-      await service.send(makeSocket(), {
-        expectedMapId: 8,
-        type: "enemy",
-        x: 1,
-        y: 1,
-      }),
+      await Effect.runPromise(
+        service.send(makeSocket(), {
+          expectedMapId: 8,
+          type: "enemy",
+          x: 1,
+          y: 1,
+        }),
+      ),
     ).toEqual({ status: "rejected", code: "invalid-context" });
     expect(evaluations).toBe(0);
   });
@@ -100,10 +105,14 @@ describe("MapPingService legacy parity", () => {
 
     const ping = { expectedMapId: 7, type: "enemy", x: 10, y: 11 } as const;
 
-    await service.send(makeSocket(), { ...ping, npcId: 42 });
-    await service.send(makeSocket(), ping);
+    await Effect.runPromise(service.send(makeSocket(), { ...ping, npcId: 42 }));
+    await Effect.runPromise(service.send(makeSocket(), ping));
 
-    expect(await service.send(makeSocket(), { ...ping, npcId: 0 })).toEqual({
+    expect(
+      await Effect.runPromise(
+        service.send(makeSocket(), { ...ping, npcId: 0 }),
+      ),
+    ).toEqual({
       status: "rejected",
       code: "invalid-payload",
     });
@@ -127,10 +136,14 @@ describe("MapPingService legacy parity", () => {
 
     const ping = { expectedMapId: 7, type: "enemy", x: 10, y: 11 } as const;
 
-    await service.send(makeSocket(), { ...ping, playerId: 5_001 });
+    await Effect.runPromise(
+      service.send(makeSocket(), { ...ping, playerId: 5_001 }),
+    );
 
     expect(
-      await service.send(makeSocket(), { ...ping, npcId: 42, playerId: 5_001 }),
+      await Effect.runPromise(
+        service.send(makeSocket(), { ...ping, npcId: 42, playerId: 5_001 }),
+      ),
     ).toEqual({ status: "rejected", code: "invalid-payload" });
     expect(events).toEqual([expect.objectContaining({ playerId: 5_001 })]);
     expect(events[0]).not.toHaveProperty("npcId");

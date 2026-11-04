@@ -5,9 +5,8 @@ import {
   type MapPingSendPayload,
 } from "@lootlog/schema/map-ping";
 import { Schema, Context, Effect, Layer } from "effect";
-import { ContextLogger } from "@lootlog/instrumentation";
 import {
-  consumePingRateLimit,
+  relayWithRateLimit,
   getPingScopes,
   getPingSender,
   type PingScriptStore,
@@ -15,10 +14,7 @@ import {
 import { type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket } from "#src/realtime/session";
 import { GatewayRedis } from "#src/platform/redis-store";
-import {
-  fromDependency,
-  type CommandRoutes,
-} from "#src/realtime/command-routes";
+import type { CommandRoutes } from "#src/realtime/command-routes";
 
 const RATE_LIMIT = 5;
 
@@ -29,77 +25,69 @@ const MAX_COORDINATE = 65_535;
 const isMapPingSendPayload = Schema.is(MapPingSendPayloadSchema);
 
 export class MapPingService {
-  private readonly logger = new ContextLogger(MapPingService.name);
-
   constructor(
     private readonly redis: PingScriptStore,
     private readonly hub: Pick<RealtimeHub, "publishToScopes">,
   ) {}
 
-  async send(
+  send(
     socket: GatewaySocket,
     payload: MapPingSendPayload,
-  ): Promise<MapPingAck> {
-    if (!this.hasValidPayload(payload)) {
-      return { status: "rejected", code: "invalid-payload" };
-    }
+  ): Effect.Effect<MapPingAck> {
+    const { redis, hub } = this;
+
+    if (!this.hasValidPayload(payload))
+      return Effect.succeed({ status: "rejected", code: "invalid-payload" });
 
     const context = getPingSender(socket, payload.expectedMapId);
 
-    if (!context) return { status: "rejected", code: "invalid-context" };
+    if (!context)
+      return Effect.succeed({ status: "rejected", code: "invalid-context" });
 
     const scopes = getPingScopes(socket, context);
 
-    if (scopes.length === 0) return { status: "rejected", code: "forbidden" };
+    if (scopes.length === 0)
+      return Effect.succeed({ status: "rejected", code: "forbidden" });
 
     const pingId = crypto.randomUUID();
 
-    const rateLimit = await consumePingRateLimit(this.redis, this.logger, {
-      key: `map-ping:rate:${socket.data.userId}`,
-      windowMs: RATE_LIMIT_WINDOW_MS,
-      limit: RATE_LIMIT,
-      pingId,
+    return relayWithRateLimit({
+      redis,
+      context: "MapPingService",
+      rateLimit: {
+        key: `map-ping:rate:${socket.data.userId}`,
+        windowMs: RATE_LIMIT_WINDOW_MS,
+        limit: RATE_LIMIT,
+        pingId,
+      },
+      publish: (createdAt) => {
+        const event: MapPingEvent = {
+          pingId,
+          world: context.world,
+          mapId: context.mapId,
+          type: payload.type,
+          x: payload.x,
+          y: payload.y,
+          ...(payload.npcId !== undefined && { npcId: payload.npcId }),
+          ...(payload.playerId !== undefined && { playerId: payload.playerId }),
+          sender: { characterId: context.characterId, name: context.name },
+          createdAt,
+        };
+
+        return hub.publishToScopes(
+          scopes,
+          { v: 1, type: "map-ping.received", data: event },
+          {
+            excludeConnectionId: socket.data.connectionId,
+            recipientPlatform: "game",
+            recipientWorld: context.world,
+            recipientMapId: context.mapId,
+          },
+        );
+      },
+      failure: "Failed to route map ping",
+      accepted: { status: "accepted", pingId } as const,
     });
-
-    if (!rateLimit)
-      return { status: "rejected", code: "temporarily-unavailable" };
-    const [accepted, createdAt, retryAfterMs] = rateLimit;
-
-    if (accepted !== 1) {
-      return { status: "rejected", code: "rate-limited", retryAfterMs };
-    }
-
-    const event: MapPingEvent = {
-      pingId,
-      world: context.world,
-      mapId: context.mapId,
-      type: payload.type,
-      x: payload.x,
-      y: payload.y,
-      ...(payload.npcId !== undefined && { npcId: payload.npcId }),
-      ...(payload.playerId !== undefined && { playerId: payload.playerId }),
-      sender: { characterId: context.characterId, name: context.name },
-      createdAt,
-    };
-
-    try {
-      await this.hub.publishToScopes(
-        scopes,
-        { v: 1, type: "map-ping.received", data: event },
-        {
-          excludeConnectionId: socket.data.connectionId,
-          recipientPlatform: "game",
-          recipientWorld: context.world,
-          recipientMapId: context.mapId,
-        },
-      );
-    } catch (error) {
-      this.logger.warn("Failed to route map ping", error);
-
-      return { status: "rejected", code: "temporarily-unavailable" };
-    }
-
-    return { status: "accepted", pingId };
   }
 
   private hasValidPayload(payload: MapPingSendPayload): boolean {
@@ -130,7 +118,6 @@ export const mapPingRoutes = (pings: Pick<MapPingService, "send">) =>
   ({
     "map-ping.send": {
       joined: true,
-      run: (socket, data) =>
-        fromDependency("map-ping.send", () => pings.send(socket, data)),
+      run: (socket, data) => pings.send(socket, data),
     },
   }) satisfies Pick<CommandRoutes, "map-ping.send">;

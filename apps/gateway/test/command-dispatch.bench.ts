@@ -6,10 +6,8 @@ import {
 import assert from "node:assert/strict";
 import type { ClientCommand } from "@lootlog/protocol/realtime";
 import { Effect } from "effect";
-import {
-  AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
-  CommandAdmission,
-} from "#src/realtime/command-admission";
+import { AirTagService } from "#src/realtime/air-tag-service";
+import { CommandAdmission } from "#src/realtime/command-admission";
 import {
   CommandHandler,
   gatewayFeatureRoutes,
@@ -23,7 +21,7 @@ const commands = 200_000;
 
 const warmupCommands = 20_000;
 
-const unexpected = () => Promise.reject(new Error("Unexpected command"));
+const unexpected = () => Effect.die("Unexpected command");
 
 const hub = new RealtimeHub(
   benchmarkConfig,
@@ -34,6 +32,42 @@ const hub = new RealtimeHub(
 // One map ping per command passes a 5-per-15 s window only with a stub reply.
 const mapPings = new MapPingService(
   { command: { eval: () => Promise.resolve([1, 1_783_000_000_000, 0]) } },
+  hub,
+);
+
+// The admission replies with one enabled scope and the merge with one moved target.
+const airTags = new AirTagService(
+  {
+    command: {
+      mget: () => Promise.resolve([]),
+      sadd: () => Promise.resolve(1),
+      smembers: () => Promise.resolve([]),
+      expire: () => Promise.resolve(1),
+      eval: (_script, keys) =>
+        Promise.resolve(
+          keys === 7
+            ? JSON.stringify({
+                epochId: "epoch",
+                epochStartedAt: 1,
+                revision: 2,
+                acceptedTargets: 1,
+                targets: [
+                  {
+                    targetId: "target",
+                    nickname: "Enemy",
+                    relation: 3,
+                    x: 1,
+                    y: 2,
+                    observedAt: 1,
+                  },
+                ],
+                removed: [],
+                remoteRecipients: false,
+              })
+            : [1, 0, 0],
+        ),
+    },
+  },
   hub,
 );
 
@@ -54,25 +88,23 @@ const handler = new CommandHandler(
   { publish: () => Effect.void },
   {
     npcPresence: {
-      refresh: () => Promise.resolve(),
-      withdraw: () => Promise.resolve(),
+      refresh: () => Effect.void,
+      withdraw: () => Effect.void,
     },
-    airTags: {
-      registerInterest: unexpected,
-    },
+    airTags,
   },
   gatewayFeatureRoutes({
     mapPings: mapPings,
     battlePings: { send: unexpected },
     lootSplits: { send: unexpected, autoAccept: unexpected },
-    airTags: {
-      updateSubscription: unexpected,
-      publishObservations: unexpected,
-      fetchMapThreats: unexpected,
-    },
-    airTagObservationAdmission: new CommandAdmission(
-      AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
-    ),
+    airTags,
+    // Unbounded, so the benchmark measures the observation, not its rejection.
+    airTagObservationAdmission: new CommandAdmission({
+      ratePerSecond: Number.MAX_SAFE_INTEGER,
+      burst: Number.MAX_SAFE_INTEGER,
+      concurrent: 64,
+      retryAfterMs: { min: 1, max: 2 },
+    }),
     npcPresence: {
       report: unexpected,
       fetch: unexpected,
@@ -103,6 +135,17 @@ const scenarios = {
       data: { expectedMapId: 7, type: "enemy", x: 10, y: 11 },
     }),
   ],
+  "air-tag.observation": [
+    frame({
+      type: "air-tag.observation",
+      data: {
+        expectedMapId: 7,
+        observations: [
+          { targetId: "target", nickname: "Enemy", relation: 3, x: 1, y: 2 },
+        ],
+      },
+    }),
+  ],
   // Alternates so every subscribe changes the socket's subscriptions.
   "subscription.subscribe+unsubscribe": [
     frame({ type: "subscription.subscribe", data: presenceScope }),
@@ -114,6 +157,20 @@ for (const [scenario, frames] of Object.entries(scenarios)) {
   let responses = 0;
   let lastResponse = "";
   const socket = makeGamePingSocket();
+
+  socket.data.airTagScopes = [
+    {
+      guildId: "organization-1",
+      world: "classic",
+      mapId: 7,
+      subscription: {
+        topic: "map.air-tags",
+        organizationId: "organization-1",
+        world: "classic",
+        mapId: 7,
+      },
+    },
+  ];
 
   socket.send = (text: string | Uint8Array) => {
     responses++;
@@ -144,6 +201,7 @@ for (const [scenario, frames] of Object.entries(scenarios)) {
 
   assert.equal(responses, commands);
   assert.match(lastResponse, /"status":"success"/);
+  assert.doesNotMatch(lastResponse, /"rejected"/);
   console.log(
     JSON.stringify({
       scenario,
