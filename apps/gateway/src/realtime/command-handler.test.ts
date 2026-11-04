@@ -506,37 +506,6 @@ describe("presence fetch delivery", () => {
     },
   );
 
-  test("keeps event delivery for commands without a response address", async () => {
-    const { handler, hub, presence } = setup();
-    const { socket } = makeSocket();
-    socket.data.joined = true;
-    socket.data.guilds = [guild()];
-
-    const snapshot = {
-      organizationId: "organization-1",
-      revision: 8,
-      presences: [],
-    };
-
-    presence.snapshot = () => Effect.succeed(snapshot);
-
-    await Effect.runPromise(
-      handler.handle(
-        socket,
-        JSON.stringify({
-          v: 1,
-          type: "presence.fetch",
-          data: { organizationId: "organization-1", delivery: "response" },
-        }),
-      ),
-    );
-
-    expect(hub.responses).toEqual([]);
-    expect(hub.events).toEqual([
-      { v: 1, type: "presence.snapshot", sequence: 8, data: snapshot },
-    ]);
-  });
-
   test("does not expose a snapshot after Organization access is revoked", async () => {
     const { handler, hub } = setup();
     const { socket } = makeSocket();
@@ -891,17 +860,6 @@ describe("CommandHandler session lifecycle", () => {
     handler.rejectOverloaded(socket, "{");
     expect(closes).toEqual([1007]);
     expect(hub.responses).toEqual([]);
-  });
-
-  test("overload closes legacy commands without request IDs instead of silently dropping them", () => {
-    const { handler, activity } = setup();
-    const { socket, closes } = makeSocket();
-    handler.rejectOverloaded(
-      socket,
-      JSON.stringify({ v: 1, type: "session.join", data: {} }),
-    );
-    expect(closes).toEqual([1013]);
-    expect(activity.calls).toEqual([]);
   });
 
   test("rejects subscription exhaustion while allowing unsubscribe", async () => {
@@ -1288,33 +1246,6 @@ describe("CommandHandler session lifecycle", () => {
     ]);
   });
 
-  test("a join over capacity without a request ID closes the socket so the client retries", async () => {
-    const { handler, hub } = setup(
-      undefined,
-      undefined,
-      undefined,
-      new CommandAdmission({
-        ratePerSecond: 0,
-        burst: 0,
-        concurrent: 1,
-        retryAfterMs: { min: 1_000, max: 1_000 },
-      }),
-    );
-
-    const { socket, closes } = makeSocket();
-
-    await Effect.runPromise(
-      handler.handle(
-        socket,
-        JSON.stringify({ v: 1, type: "session.join", data: {} }),
-      ),
-    );
-
-    expect(closes).toEqual([1013]);
-    expect(hub.responses).toEqual([]);
-    expect(socket.data.joined).toBe(false);
-  });
-
   test("a socket closing after a federation gap acts on no command", async () => {
     const { handler, hub } = setup();
     const { socket } = makeSocket();
@@ -1595,7 +1526,14 @@ describe("CommandHandler session lifecycle", () => {
   test("reconnect snapshots retain a stable compact version until access changes", async () => {
     const { handler, guilds, hub } = setup();
     const target = makeSocket();
-    const join = JSON.stringify({ v: 1, type: "session.join", data: {} });
+
+    const join = JSON.stringify({
+      v: 1,
+      type: "session.join",
+      requestId: "join",
+      data: {},
+    });
+
     await Effect.runPromise(handler.handle(target.socket, join));
     await Effect.runPromise(handler.handle(target.socket, join));
 

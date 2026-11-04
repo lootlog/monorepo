@@ -175,15 +175,22 @@ export function createPageTransport(
     connect,
     disconnect,
     // The extension decoded these already; the page decodes what crossed the port.
+    // The extension correlates its own request; the command still names one.
     join: (data) =>
       request({
         type: "command",
-        command: { v: 1, type: "session.join", data },
+        command: {
+          v: 1,
+          type: "session.join",
+          requestId: crypto.randomUUID(),
+          data,
+        },
       }).then((response) => decodeCommandSuccess("session.join", response)),
     request: (type, data) =>
-      request({ type: "command", command: { v: 1, type, data } }).then(
-        (response) => decodeCommandSuccess(type, response),
-      ),
+      request({
+        type: "command",
+        command: { v: 1, type, requestId: crypto.randomUUID(), data },
+      }).then((response) => decodeCommandSuccess(type, response)),
     subscribe: (listener) => {
       events.add(listener);
 

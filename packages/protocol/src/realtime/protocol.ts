@@ -214,7 +214,7 @@ const command = <
   Schema.Struct({
     v: Schema.Literal(REALTIME_PROTOCOL_VERSION),
     type: Schema.Literal(type),
-    requestId: Schema.optional(RequestId),
+    requestId: RequestId,
     data,
   });
 

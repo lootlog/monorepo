@@ -98,10 +98,12 @@ An integration connection does not represent a character's presence in the game.
 ## Presence snapshots
 
 `presence.fetch` takes an Organization ID, an optional world and an optional
-`delivery: "response"`. With a `requestId` and that option, the snapshot arrives
-only in the correlated response. Without the option, the gateway also emits a
-`presence.snapshot` event, and a command without a `requestId` always receives
-that event.
+`delivery: "response"`. With that option, the snapshot arrives only in the
+correlated response. Without it, the gateway also emits a `presence.snapshot`
+event.
+
+Every command carries a `requestId`, and the gateway answers each one with a
+correlated response. It closes the connection on a command without one.
 
 With response delivery, start from the response and apply `presence.delta`
 events for later changes. Permission and location filters apply to both
