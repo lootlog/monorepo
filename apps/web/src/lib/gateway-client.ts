@@ -18,8 +18,6 @@ import {
   GatewayEvent,
 } from "@/config/gateway";
 import {
-  REALTIME_SUBPROTOCOL,
-  REALTIME_JSON_SUBPROTOCOL,
   RealtimeClient,
   RealtimeRequestError,
   type BasicPresence,
@@ -123,18 +121,14 @@ const serverEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
 const FRESH_JOIN_WINDOW_MS = 2_000;
 
 export class GatewayClient {
-  private readonly readable =
-    import.meta.env.VITE_GATEWAY_FRAME_ENCODING === "json";
   private readonly realtime = new RealtimeClient({
     url: GATEWAY_URL,
     path: GATEWAY_SOCKET_PATH || "/ws",
     protocols: [
-      this.readable ? REALTIME_JSON_SUBPROTOCOL : REALTIME_SUBPROTOCOL,
       REALTIME_FEED_CAPABILITY,
       REALTIME_LOOT_SNAPSHOT_CAPABILITY,
       REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
     ],
-    frameEncoding: this.readable ? "json" : "messagepack",
   });
   private readonly listeners = new RealtimeEventListeners<GatewayEvent>();
   private wasConnected = false;

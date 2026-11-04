@@ -1,11 +1,4 @@
-import {
-  decodeClientCommand,
-  type ServerEvent,
-} from "@lootlog/protocol/realtime";
-import {
-  decodeRealtimeFrame,
-  encodeRealtimeFrame,
-} from "@lootlog/protocol/realtime/codec";
+import { decodeRealtimeFrame } from "@lootlog/protocol/realtime";
 import { afterEach, describe, expect, it, vi } from "#test/bun-test";
 import { RealtimeClient, type RealtimeWebSocket } from "./realtime-client.js";
 
@@ -14,10 +7,11 @@ type Listener = (event: {
   readonly code?: number;
 }) => void;
 
+const decodeFrame = (text: string) => decodeRealtimeFrame(JSON.parse(text));
+
 class TestWebSocket implements RealtimeWebSocket {
-  binaryType: BinaryType = "blob";
   readyState = 0;
-  readonly sent: Array<string | Uint8Array> = [];
+  readonly sent: string[] = [];
   readonly closeCodes: Array<number | undefined> = [];
   readonly listeners = new Map<string, Set<Listener>>();
 
@@ -27,7 +21,7 @@ class TestWebSocket implements RealtimeWebSocket {
     this.listeners.set(type, listeners);
   }
 
-  send(data: string | Uint8Array): void {
+  send(data: string): void {
     this.sent.push(data);
   }
 
@@ -54,7 +48,7 @@ class TestWebSocket implements RealtimeWebSocket {
     this.dispatch("open");
   }
 
-  message(data: string | Uint8Array | Blob): void {
+  message(data: string | Uint8Array): void {
     this.dispatch("message", { data });
   }
 
@@ -82,16 +76,15 @@ const respondToLastRequest = (
 ): void => {
   const lastRequest = socket.sent.at(-1);
 
-  if (!(lastRequest instanceof Uint8Array))
-    throw new Error("Expected a binary request frame");
-  const request = decodeRealtimeFrame(lastRequest);
+  if (lastRequest === undefined) throw new Error("Expected a request frame");
+  const request = decodeFrame(lastRequest);
 
   if (!("requestId" in request) || !request.requestId) {
     throw new Error("Expected a request frame");
   }
 
   socket.message(
-    encodeRealtimeFrame({
+    JSON.stringify({
       v: 1,
       requestId: request.requestId,
       status: "success",
@@ -118,12 +111,11 @@ const socketAt = (sockets: TestWebSocket[], index: number): TestWebSocket => {
 };
 
 const frameAt = (socket: TestWebSocket, index: number) => {
-  const bytes = socket.sent[index];
+  const text = socket.sent[index];
 
-  if (!(bytes instanceof Uint8Array))
-    throw new Error(`Expected binary frame at index ${index}`);
+  if (text === undefined) throw new Error(`Expected frame at index ${index}`);
 
-  return decodeRealtimeFrame(bytes);
+  return decodeFrame(text);
 };
 
 const heartbeatSession = async () => {
@@ -185,13 +177,13 @@ const rejectLastRequest = async (
 ) => {
   const last = socket.sent.at(-1);
 
-  if (!(last instanceof Uint8Array)) throw new Error("Missing request");
-  const frame = decodeRealtimeFrame(last);
+  if (last === undefined) throw new Error("Missing request");
+  const frame = decodeFrame(last);
 
   if (!("requestId" in frame) || !frame.requestId)
     throw new Error("Missing request ID");
   socket.message(
-    encodeRealtimeFrame({
+    JSON.stringify({
       v: 1,
       requestId: frame.requestId,
       status: "error",
@@ -240,7 +232,7 @@ describe("RealtimeClient", () => {
     await joined;
 
     socketAt(sockets, 0).message(
-      encodeRealtimeFrame({
+      JSON.stringify({
         v: 1,
         type: "permissions.updated",
         data: { organizationIds: ["org-1"], subscriptionScopes: [] },
@@ -250,7 +242,7 @@ describe("RealtimeClient", () => {
 
     // Commands decoded from a server connection must never reach event consumers.
     socketAt(sockets, 0).message(
-      encodeRealtimeFrame({
+      JSON.stringify({
         v: 1,
         type: "presence.fetch",
         data: { organizationId: "org-1" },
@@ -470,7 +462,7 @@ describe("RealtimeClient", () => {
       respondToLastRequest(socket);
       await joined;
       socket.message(
-        encodeRealtimeFrame({
+        JSON.stringify({
           v: 1,
           type: "permissions.updated",
           data: { organizationIds: ["org-1"], subscriptionScopes: [] },
@@ -797,7 +789,7 @@ describe("RealtimeClient", () => {
     client.disconnect();
   });
 
-  it("preserves only configured frame and capability protocols on reconnect", async () => {
+  it("offers the JSON frame protocol and configured capabilities on reconnect", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
     const protocolsSeen: Array<string[] | undefined> = [];
@@ -806,7 +798,7 @@ describe("RealtimeClient", () => {
       url: "https://gateway.example.test?ticket=must-be-removed",
       reconnectBaseDelayMs: 1_000,
       random: () => 0,
-      protocols: ["lootlog.realtime.v1", "lootlog.cap.feed.v1"],
+      protocols: ["lootlog.cap.feed.v1"],
       webSocketFactory: (url, protocols) => {
         expect(url).toBe("wss://gateway.example.test/ws");
         protocolsSeen.push(protocols);
@@ -820,7 +812,7 @@ describe("RealtimeClient", () => {
     client.connect();
     await flushMessages();
     expect(protocolsSeen[0]).toEqual([
-      "lootlog.realtime.v1",
+      "lootlog.realtime.json.v1",
       "lootlog.cap.feed.v1",
     ]);
     socketAt(sockets, 0).open();
@@ -828,14 +820,37 @@ describe("RealtimeClient", () => {
     await vi.advanceTimersByTimeAsync(500);
     await flushMessages();
     expect(protocolsSeen[1]).toEqual([
-      "lootlog.realtime.v1",
+      "lootlog.realtime.json.v1",
       "lootlog.cap.feed.v1",
     ]);
     client.disconnect();
   });
 
-  it("closes malformed frames with a browser-permitted code and reconnects", async () => {
-    vi.useFakeTimers();
+  it.each([
+    ["text", "not JSON"],
+    ["binary", new Uint8Array([0x80])],
+  ])(
+    "closes a malformed %s frame with a browser-permitted code and reconnects",
+    async (_kind, frame) => {
+      vi.useFakeTimers();
+      const socket = new TestWebSocket();
+
+      const client = new RealtimeClient({
+        url: "https://gateway.example.test",
+        webSocketFactory: () => socket,
+      });
+
+      client.connect();
+      socket.open();
+      socket.message(frame);
+      await flushMessages();
+      expect(socket.readyState).toBe(3);
+      expect(client.state).toBe("reconnecting");
+      client.disconnect();
+    },
+  );
+
+  it("rejects a malformed command instead of sending it to the gateway", async () => {
     const socket = new TestWebSocket();
 
     const client = new RealtimeClient({
@@ -845,49 +860,14 @@ describe("RealtimeClient", () => {
 
     client.connect();
     socket.open();
-    socket.message("unexpected text instead of MessagePack");
-    await flushMessages();
-    expect(socket.readyState).toBe(3);
-    expect(client.state).toBe("reconnecting");
+
+    await expect(
+      // A caller outside TypeScript can send any payload.
+      client.request("presence.publish", JSON.parse('{"organizationIds":1}')),
+    ).rejects.toThrow();
+    expect(socket.sent).toEqual([]);
+    expect(socket.readyState).toBe(1);
     client.disconnect();
-  });
-
-  it("uses readable JSON frames when requested", async () => {
-    const sockets: TestWebSocket[] = [];
-
-    const client = new RealtimeClient({
-      url: "https://gateway.example.test",
-      frameEncoding: "json",
-      webSocketFactory: () => {
-        const socket = new TestWebSocket();
-        sockets.push(socket);
-
-        return socket;
-      },
-    });
-
-    client.connect();
-    const socket = socketAt(sockets, 0);
-    socket.open();
-    const joined = client.join(joinData);
-    const request = socket.sent.at(-1);
-
-    if (request === undefined || request instanceof Uint8Array)
-      throw new Error("Expected a JSON request");
-    const frame = decodeClientCommand(JSON.parse(request));
-    expect(frame.requestId).toBeDefined();
-    socket.message(
-      JSON.stringify({
-        v: 1,
-        requestId: frame.requestId,
-        status: "success",
-        data: { organizationIds: ["org-1"] },
-      }),
-    );
-    await flushMessages();
-
-    await joined;
-    expect(client.state).toBe("ready");
   });
 
   it("retries a transient heartbeat rejection on the same socket without replaying startup", async () => {
@@ -980,7 +960,7 @@ describe("RealtimeClient", () => {
       await advance(500);
       // Preserve gateway FIFO: the publication was queued before this heartbeat.
       socket.message(
-        encodeRealtimeFrame({
+        JSON.stringify({
           v: 1,
           requestId: publish.requestId,
           status: "success",
@@ -1114,80 +1094,4 @@ describe("RealtimeClient", () => {
     await vi.advanceTimersByTimeAsync(25_000);
     expect(socket.sent).toHaveLength(sentAfterClear);
   });
-});
-
-it("discards decoded and queued frames from a previous connection after reconnect", async () => {
-  const sockets: TestWebSocket[] = [];
-
-  const client = new RealtimeClient({
-    url: "https://gateway.example.test",
-    webSocketFactory: () => {
-      const socket = new TestWebSocket();
-      sockets.push(socket);
-
-      return socket;
-    },
-  });
-
-  const events: ServerEvent[] = [];
-  client.subscribe((event) => events.push(event));
-  const decoding = Promise.withResolvers<void>();
-  const bytes = Promise.withResolvers<ArrayBuffer>();
-
-  class DelayedFrame extends Blob {
-    override arrayBuffer(): Promise<ArrayBuffer> {
-      decoding.resolve();
-
-      return bytes.promise;
-    }
-  }
-
-  try {
-    client.connect();
-    const first = socketAt(sockets, 0);
-    first.open();
-    first.message(new DelayedFrame());
-    first.message(
-      encodeRealtimeFrame({
-        v: 1,
-        type: "permissions.updated",
-        data: {
-          organizationIds: ["previous-organization"],
-          subscriptionScopes: [],
-        },
-      }),
-    );
-    await decoding.promise;
-    first.close();
-    client.connect();
-    const replacement = socketAt(sockets, 1);
-    replacement.open();
-
-    const hello = {
-      v: 1,
-      type: "session.hello",
-      data: { connectionId: "new-connection" },
-    } satisfies ServerEvent;
-
-    const delivered = Promise.withResolvers<void>();
-    client.subscribe((event) => {
-      if (
-        event.type === "session.hello" &&
-        event.data.connectionId === "new-connection"
-      )
-        delivered.resolve();
-    });
-    replacement.message(encodeRealtimeFrame(hello));
-    bytes.resolve(
-      encodeRealtimeFrame({
-        v: 1,
-        type: "session.hello",
-        data: { connectionId: "old-connection" },
-      }).slice().buffer,
-    );
-    await delivered.promise;
-    expect(events).toEqual([hello]);
-  } finally {
-    client.disconnect();
-  }
 });

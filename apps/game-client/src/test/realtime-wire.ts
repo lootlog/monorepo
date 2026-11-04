@@ -1,33 +1,39 @@
 import type { RealtimeWebSocket } from "@lootlog/client/realtime";
 import {
   decodeRealtimeFrame,
-  encodeRealtimeFrame,
-} from "@lootlog/protocol/realtime/codec";
+  type RealtimeFrame,
+} from "@lootlog/protocol/realtime";
 
 type WireEvent = Parameters<RealtimeWebSocket["addEventListener"]>[0];
 
 type WireListener = Parameters<RealtimeWebSocket["addEventListener"]>[1];
 
+/** A frame as the gateway sends it. */
+export const encodeFrame = (frame: RealtimeFrame): string =>
+  JSON.stringify(frame);
+
+/** A frame the client sent. */
+export const decodeFrame = (text: string) =>
+  decodeRealtimeFrame(JSON.parse(text));
+
 export class RealtimeWire implements RealtimeWebSocket {
-  binaryType: BinaryType = "arraybuffer";
   readyState = 0;
-  readonly frames: ReturnType<typeof decodeRealtimeFrame>[] = [];
+  readonly frames: ReturnType<typeof decodeFrame>[] = [];
   private readonly listeners = new Map<WireEvent, WireListener>();
 
   addEventListener(type: WireEvent, listener: WireListener): void {
     this.listeners.set(type, listener);
   }
 
-  send(data: string | Uint8Array): void {
-    if (!(data instanceof Uint8Array)) throw new Error("Expected binary frame");
-    this.frames.push(decodeRealtimeFrame(data));
+  send(data: string): void {
+    this.frames.push(decodeFrame(data));
   }
 
-  receive(frame: Parameters<typeof encodeRealtimeFrame>[0]): void {
-    this.listeners.get("message")?.({ data: encodeRealtimeFrame(frame) });
+  receive(frame: RealtimeFrame): void {
+    this.receiveText(encodeFrame(frame));
   }
 
-  receiveBytes(data: Uint8Array): void {
+  receiveText(data: string): void {
     this.listeners.get("message")?.({ data });
   }
 
