@@ -101,6 +101,8 @@ Organization:
 <Tab value="curl">
 
 ```bash
+GUILD_ID=123456789012345678 # the id from the previous response
+
 curl --fail-with-body -G "$LOOTLOG_API_URL/guilds/$GUILD_ID/timers" \
   -d world=fobos \
   -H "X-Api-Key: $LOOTLOG_API_KEY"
@@ -110,19 +112,22 @@ curl --fail-with-body -G "$LOOTLOG_API_URL/guilds/$GUILD_ID/timers" \
 <Tab value="TypeScript">
 
 ```ts
+const guildId = organizations[0].id;
 const url = new URL(`https://dev-api.lootlog.pl/guilds/${guildId}/timers`);
 url.searchParams.set("world", "fobos");
 
-const response = await fetch(url, {
+const timersResponse = await fetch(url, {
   headers: { "X-Api-Key": process.env.LOOTLOG_API_KEY! },
 });
-const timers = await response.json();
+const timers = await timersResponse.json();
 ```
 
 </Tab>
 <Tab value="Python">
 
 ```python
+guild_id = response.json()[0]["id"]
+
 response = requests.get(
     f"https://dev-api.lootlog.pl/guilds/{guild_id}/timers",
     params={"world": "fobos"},

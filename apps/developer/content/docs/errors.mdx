@@ -16,23 +16,25 @@ description: Handle rejected requests, read paginated lists and stay within rate
 
 ## Error body
 
-Every `4xx` and `5xx` response of the main API has the same JSON body:
+Most `4xx` and `5xx` responses of the main API have this JSON body:
 
 ```json
 { "code": "RESERVATION_OVERLAP", "message": "optional text", "details": {} }
 ```
 
-- `code` is always present, stable and machine-readable. Branch on it: common
-  codes are `NOT_FOUND`, `FORBIDDEN`, `VALIDATION_ERROR`, `INVALID_CURSOR` and
-  `RATE_LIMITED`, and operations add reasons of their own.
+- `code` is stable and machine-readable. Common codes are `NOT_FOUND`,
+  `VALIDATION_ERROR` and `INVALID_CURSOR`, and operations add reasons of their
+  own.
 - `message` is optional text for people. It can change at any time, so do not
   parse it.
 - `details` is optional and holds the values behind the reason, such as `limit`
   for `ACTIVE_LIMIT_REACHED`. A `VALIDATION_ERROR` lists the rejected fields in
   `details.issues`, each with a `path` and a `message`.
 
-A `401` that asks the user to sign in again carries `requiresReauth: true`
-next to its `code`.
+Many `403` and `429` responses carry only `{ "message": "..." }`, and the
+reference shows which body each operation returns. Branch on the status first
+and on `code` only when it is present. A `401` that asks the user to sign in
+again carries `requiresReauth: true` next to its `code`.
 
 ## Pages
 
@@ -47,7 +49,9 @@ page. It is `null` on the last page. A cursor is opaque and bound to its
 filters: sent with other filters, it returns `400` with `INVALID_CURSOR`.
 
 ```ts
-async function* readAll(url: URL, apiKey: string) {
+async function* readAll(listUrl: URL, apiKey: string) {
+  const url = new URL(listUrl);
+  url.searchParams.delete("cursor");
   let cursor: string | null = null;
 
   do {
