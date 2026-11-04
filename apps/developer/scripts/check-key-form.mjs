@@ -271,7 +271,7 @@ try {
     await page.getByText(secret, { exact: true }).isVisible(),
     "Saved secret survives failed refresh and retry",
   );
-  await page.getByRole("button", { name: "Key saved — close" }).click();
+  await page.getByRole("button", { name: "I saved the key" }).click();
   assert.equal(await page.getByText(secret, { exact: true }).count(), 0);
   await page.waitForFunction(
     () => document.activeElement?.textContent?.trim() === "Create key",
@@ -326,7 +326,7 @@ try {
   });
 
   await dialog.getByRole("button", { name: "Delete key", exact: true }).click();
-  await dialog.getByText(/The operation failed/).waitFor();
+  await dialog.getByText(/The request failed/).waitFor();
   assert.equal(deletionAttempts, 1);
   assert.ok(
     await dialog.isVisible(),
@@ -417,7 +417,7 @@ try {
   await page.getByRole("button", { name: "Sign in with Discord" }).click();
   await page
     .getByRole("alert")
-    .filter({ hasText: "The operation failed" })
+    .filter({ hasText: "The request failed" })
     .waitFor();
   assert.deepEqual(signInRequest, {
     provider: "discord",
