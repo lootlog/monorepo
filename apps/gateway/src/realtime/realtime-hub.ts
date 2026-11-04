@@ -123,19 +123,8 @@ export const globalChatScope = (world: string | undefined): Scope =>
     ? { topic: "global.chat" }
     : { topic: "global.chat.world", world };
 
+/** Identifies a scope; JSON keeps field values that contain delimiters apart. */
 export const getScopeKey = (scope: Scope): string =>
-  [
-    scope.topic,
-    scope.organizationId ?? "",
-    scope.eventId ?? "",
-    scope.world ?? "",
-    scope.mapId?.toString() ?? "",
-  ].join("|");
-
-const getIdentityAudienceKey = (kind: "user" | "discord", id: string): string =>
-  JSON.stringify([kind, id]);
-
-const getScopeAudienceKey = (scope: Scope): string =>
   JSON.stringify([
     scope.topic,
     scope.organizationId,
@@ -143,6 +132,9 @@ const getScopeAudienceKey = (scope: Scope): string =>
     scope.world,
     scope.mapId,
   ]);
+
+const getIdentityAudienceKey = (kind: "user" | "discord", id: string): string =>
+  JSON.stringify([kind, id]);
 
 const getLocationAudienceKey = (
   platform: SessionData["platform"],
@@ -318,7 +310,7 @@ export class RealtimeHub {
     socket.data.subscriptions.set(key, scope);
 
     if (this.sockets.get(socket.data.connectionId) === socket)
-      this.addAudience(getScopeAudienceKey(scope), socket);
+      this.addAudience(getScopeKey(scope), socket);
   }
 
   unsubscribe(socket: GatewaySocket, scope: Scope): void {
@@ -327,10 +319,10 @@ export class RealtimeHub {
 
     if (!removed) return;
     socket.data.subscriptions.delete(key);
-    const audienceKey = getScopeAudienceKey(removed);
+    const audienceKey = getScopeKey(removed);
 
     for (const subscription of socket.data.subscriptions.values()) {
-      if (getScopeAudienceKey(subscription) === audienceKey) return;
+      if (getScopeKey(subscription) === audienceKey) return;
     }
 
     this.removeAudience(audienceKey, socket);
@@ -352,14 +344,14 @@ export class RealtimeHub {
     ) {
       // Reconciliation must never retain subscriptions revoked by a permission change.
       for (const scope of socket.data.subscriptions.values())
-        this.removeAudience(getScopeAudienceKey(scope), socket);
+        this.removeAudience(getScopeKey(scope), socket);
       socket.data.subscriptions.clear();
       socket.close(1008, "subscription limit exceeded");
       throw new SubscriptionLimitExceeded();
     }
 
     for (const scope of socket.data.subscriptions.values())
-      this.removeAudience(getScopeAudienceKey(scope), socket);
+      this.removeAudience(getScopeKey(scope), socket);
     socket.data.subscriptions.clear();
 
     for (const scope of replacements.values()) this.subscribe(socket, scope);
@@ -517,7 +509,7 @@ export class RealtimeHub {
     for (const key of this.audiences.keys()) {
       if (!key.startsWith(`${prefix},`)) continue;
 
-      // SAFETY: keys with this topic prefix come only from getScopeAudienceKey.
+      // SAFETY: keys with this topic prefix come only from getScopeKey.
       const [, organizationId, eventId, world, mapId] = JSON.parse(key) as [
         string,
         string | null,
@@ -927,7 +919,7 @@ export class RealtimeHub {
     return [
       getIdentityAudienceKey("user", session.userId),
       getIdentityAudienceKey("discord", session.discordId),
-      ...Array.from(session.subscriptions.values(), getScopeAudienceKey),
+      ...Array.from(session.subscriptions.values(), getScopeKey),
     ];
   }
 

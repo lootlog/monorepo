@@ -955,7 +955,7 @@ describe("RealtimeHub federation", () => {
     expect(overlapping.sent).toHaveLength(3);
   });
 
-  test("keeps literal delimiters distinct and removes only the replaced or unsubscribed scope", async () => {
+  test("keeps scopes whose fields contain the delimiter distinct and removes only the unsubscribed one", async () => {
     const hub = makeHub();
 
     const first = {
@@ -989,16 +989,20 @@ describe("RealtimeHub federation", () => {
     expect([firstTarget.sent.length, secondTarget.sent.length]).toEqual([1, 0]);
     await hub.publishToScope(second, event);
     expect([firstTarget.sent.length, secondTarget.sent.length]).toEqual([1, 1]);
+    // A second subscription whose fields join to the same text is its own scope.
     hub.subscribe(firstTarget.socket, second);
+    expect(firstTarget.socket.data.subscriptions.size).toBe(2);
     await hub.publishToScope(first, event);
-    expect(firstTarget.sent).toHaveLength(1);
-    hub.subscribe(firstTarget.socket, wildcard);
+    expect(firstTarget.sent).toHaveLength(2);
     hub.unsubscribe(firstTarget.socket, second);
     await hub.publishToScope(second, event);
     expect(firstTarget.sent).toHaveLength(2);
-    hub.unsubscribe(firstTarget.socket, wildcard);
+    await hub.publishToScope(first, event);
+    expect(firstTarget.sent).toHaveLength(3);
+    hub.subscribe(firstTarget.socket, wildcard);
+    hub.unsubscribe(firstTarget.socket, first);
     await hub.publishToScopes([first, second], event);
-    expect(firstTarget.sent).toHaveLength(2);
+    expect(firstTarget.sent).toHaveLength(4);
   });
 
   test.each(["scope", "scopes", "user", "discord", "presence"] as const)(
