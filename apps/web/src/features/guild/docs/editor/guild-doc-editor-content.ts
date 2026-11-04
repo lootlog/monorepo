@@ -1,5 +1,5 @@
 import type { SerializedEditorState } from "lexical";
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import { createEmptyGuildDocumentContent } from "@lootlog/domain/guild-documents";
 
 export const EMPTY_GUILD_DOC_EDITOR_CONTENT: GuildDocEditorContent =
@@ -12,14 +12,19 @@ export type GuildDocEditorContent = Exclude<
   null
 >;
 
-export const guildDocContent = z
-  .record(z.string(), z.json())
-  .refine((content) => "root" in content);
+const decodeGuildDocContent = Schema.decodeUnknownOption(
+  Schema.Record(Schema.String, Schema.MutableJson).check(
+    Schema.makeFilter((content) => "root" in content),
+  ),
+);
 
 export const normalizeGuildDocEditorContent = (
   content: GuildDocumentResponseDto["content"] | GuildDocEditorContent,
 ): GuildDocEditorContent =>
-  guildDocContent.safeParse(content).data ?? EMPTY_GUILD_DOC_EDITOR_CONTENT;
+  Option.getOrElse(
+    decodeGuildDocContent(content),
+    () => EMPTY_GUILD_DOC_EDITOR_CONTENT,
+  );
 
 /**
  * Lexical serializes optional node fields as explicit `undefined`, which is not
@@ -29,7 +34,7 @@ export const normalizeGuildDocEditorContent = (
 export const serializeGuildDocEditorState = (
   state: SerializedEditorState,
 ): GuildDocEditorContent | null =>
-  guildDocContent.safeParse(JSON.parse(JSON.stringify(state))).data ?? null;
+  Option.getOrNull(decodeGuildDocContent(JSON.parse(JSON.stringify(state))));
 
 export const stringifyGuildDocEditorContent = (
   content: GuildDocEditorContent,

@@ -1,19 +1,28 @@
-import { z } from "zod";
+import { looseStruct } from "@lootlog/schema/stored-value";
+import { Option, Schema } from "effect";
 import {
   referenceMetadata,
   type ReferenceService,
 } from "~/lib/reference-metadata";
 
-export const referenceDocumentSchema = z.looseObject({
-  openapi: z.string(),
-  info: z.looseObject({ title: z.string() }),
-  paths: z.record(z.string(), z.record(z.string(), z.unknown())),
+const UnknownRecord = Schema.Record(Schema.String, Schema.Unknown);
+
+const ReferenceDocumentSchema = looseStruct({
+  openapi: Schema.String,
+  info: looseStruct({ title: Schema.String }),
+  paths: Schema.Record(Schema.String, UnknownRecord),
 });
 
-export type ReferenceDocument = z.infer<typeof referenceDocumentSchema>;
+export type ReferenceDocument = typeof ReferenceDocumentSchema.Type;
+
+export const decodeReferenceDocument = Schema.decodeUnknownSync(
+  ReferenceDocumentSchema,
+);
 
 // A path item also holds shared `parameters`, which carry no tags.
-const operation = z.looseObject({ tags: z.array(z.string()).optional() });
+const decodeOperation = Schema.decodeUnknownOption(
+  Schema.Struct({ tags: Schema.optional(Schema.Array(Schema.String)) }),
+);
 
 const sdkInstallation = [
   {
@@ -30,7 +39,7 @@ export function getOperationTags({ paths }: ReferenceDocument) {
     ...new Set(
       Object.values(paths).flatMap((item) =>
         Object.values(item).flatMap(
-          (entry) => operation.safeParse(entry).data?.tags ?? [],
+          (entry) => Option.getOrUndefined(decodeOperation(entry))?.tags ?? [],
         ),
       ),
     ),

@@ -5,7 +5,7 @@ import battlelog from "@lootlog/sdk/openapi/battlelog.json";
 import search from "@lootlog/sdk/openapi/search.json";
 import {
   getOperationTags,
-  referenceDocumentSchema,
+  decodeReferenceDocument,
 } from "~/lib/reference-document";
 import { referenceMetadata } from "~/lib/reference-metadata";
 
@@ -19,7 +19,7 @@ describe("API reference metadata", () => {
     (service) => {
       const metadata = referenceMetadata[service];
       const grouped = metadata.groups.flatMap((group) => group.tags);
-      const document = referenceDocumentSchema.parse(specs[service]);
+      const document = decodeReferenceDocument(specs[service]);
 
       for (const tag of getOperationTags(document)) {
         expect(metadata.tags[tag], tag).toBeDefined();

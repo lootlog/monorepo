@@ -1,4 +1,5 @@
-import { z } from "zod";
+import { Schema, SchemaTransformation } from "effect";
+import { requiredWithFallback } from "@lootlog/schema/stored-value";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import {
   createLoader,
@@ -127,123 +128,198 @@ export const battlePanelSingleBattleSearchParsers = {
   turn: parseAsInteger,
 };
 
-const routeSearchString = z
-  .union([
-    z.string(),
-    z
-      .array(z.string().optional().catch(undefined))
-      .transform((values) => values.find((value) => value !== undefined)),
-  ])
-  .optional()
-  .catch(undefined);
+const isString = Schema.is(Schema.String);
 
-const routeSearchStrings = z
-  .union([
-    z.string().transform((value) => [value]),
-    z.array(z.string().optional().catch(undefined)),
-  ])
-  .catch([])
-  .transform((values) => {
-    const parts = values.flatMap(
-      (value) =>
-        value
-          ?.split(",")
-          .map((part) => part.trim())
-          .filter(Boolean) ?? [],
-    );
+/** A search value, or the first string of a repeated one. */
+const RouteSearchString = requiredWithFallback(
+  Schema.Union([
+    Schema.String,
+    Schema.Array(Schema.Unknown).pipe(
+      Schema.decodeTo(
+        Schema.UndefinedOr(Schema.String),
+        SchemaTransformation.transform<
+          string | undefined,
+          ReadonlyArray<unknown>
+        >({
+          decode: (values) => values.find(isString),
+          encode: (value) => (value === undefined ? [] : [value]),
+        }),
+      ),
+    ),
+  ]),
+  undefined,
+);
 
-    return parts.length ? parts : undefined;
-  });
+/** Comma-separated or repeated values, trimmed; none reads as missing. */
+const RouteSearchStrings = requiredWithFallback(
+  Schema.Union([
+    Schema.String.pipe(
+      Schema.decodeTo(
+        Schema.Array(Schema.Unknown),
+        SchemaTransformation.transform<ReadonlyArray<unknown>, string>({
+          decode: (value) => [value],
+          encode: String,
+        }),
+      ),
+    ),
+    Schema.Array(Schema.Unknown),
+  ]),
+  [],
+).pipe(
+  Schema.decodeTo(
+    Schema.UndefinedOr(Schema.Array(Schema.String)),
+    SchemaTransformation.transform<
+      ReadonlyArray<string> | undefined,
+      ReadonlyArray<unknown>
+    >({
+      decode: (values) => {
+        const parts = values.flatMap((value) =>
+          isString(value)
+            ? value
+                .split(",")
+                .map((part) => part.trim())
+                .filter(Boolean)
+            : [],
+        );
+
+        return parts.length ? parts : undefined;
+      },
+      encode: (values) => values ?? [],
+    }),
+  ),
+);
 
 const routeSearchLiterals = <Value extends string>(allowed: readonly Value[]) =>
-  routeSearchStrings.transform((values) => {
-    const selected = values?.filter((value): value is Value =>
-      allowed.some((candidate) => candidate === value),
-    );
+  RouteSearchStrings.pipe(
+    Schema.decodeTo(
+      Schema.UndefinedOr(Schema.Array(Schema.Literals(allowed))),
+      SchemaTransformation.transform<
+        ReadonlyArray<Value> | undefined,
+        ReadonlyArray<string> | undefined
+      >({
+        decode: (values) => {
+          const selected = values?.filter((value): value is Value =>
+            allowed.some((candidate) => candidate === value),
+          );
 
-    return selected?.length ? selected : undefined;
-  });
+          return selected?.length ? selected : undefined;
+        },
+        encode: (values) => values,
+      }),
+    ),
+  );
 
-const routeSearchInteger = z
-  .union([
-    z.number(),
-    routeSearchString.transform((value) => {
-      const parsed = value ? Number.parseInt(value, 10) : Number.NaN;
+const RouteSearchInteger = requiredWithFallback(
+  Schema.Union([
+    Schema.Finite,
+    RouteSearchString.pipe(
+      Schema.decodeTo(
+        Schema.UndefinedOr(Schema.Number),
+        SchemaTransformation.transform<number | undefined, string | undefined>({
+          decode: (value) => {
+            const parsed = value ? Number.parseInt(value, 10) : Number.NaN;
 
-      return Number.isNaN(parsed) ? undefined : parsed;
+            return Number.isNaN(parsed) ? undefined : parsed;
+          },
+          encode: (value) => value?.toString(),
+        }),
+      ),
+    ),
+  ]),
+  undefined,
+);
+
+const RouteSearchBoolean = requiredWithFallback(
+  Schema.Union([
+    Schema.Boolean,
+    RouteSearchString.pipe(
+      Schema.decodeTo(
+        Schema.UndefinedOr(Schema.Boolean),
+        SchemaTransformation.transform<boolean | undefined, string | undefined>(
+          {
+            decode: (value) => {
+              if (value === "true") return true;
+
+              if (value === "false") return false;
+
+              return undefined;
+            },
+            encode: (value) => value?.toString(),
+          },
+        ),
+      ),
+    ),
+  ]),
+  undefined,
+);
+
+const decodeBattlePanelBattlesRouteSearch = Schema.decodeUnknownSync(
+  requiredWithFallback(
+    Schema.Struct({
+      cursor: Schema.optional(RouteSearchString),
+      page: Schema.optional(RouteSearchInteger),
+      world: Schema.optional(RouteSearchString),
+      type: Schema.optional(routeSearchLiterals(BATTLE_TYPE_VALUES)),
+      search: Schema.optional(RouteSearchString),
+      result: Schema.optional(routeSearchLiterals(BATTLE_RESULT_VALUES)),
+      ph: Schema.optional(RouteSearchBoolean),
+      matchmaking: Schema.optional(RouteSearchBoolean),
+      startDate: Schema.optional(RouteSearchString),
+      endDate: Schema.optional(RouteSearchString),
+      characterId: Schema.optional(RouteSearchStrings),
+      minLevel: Schema.optional(RouteSearchInteger),
+      maxLevel: Schema.optional(RouteSearchInteger),
     }),
-  ])
-  .catch(undefined);
+    {},
+  ),
+);
 
-const routeSearchBoolean = z
-  .union([
-    z.boolean(),
-    routeSearchString.transform((value) => {
-      if (value === "true") return true;
+/** The route search without the params that read as missing. */
+const toBattlePanelBattlesRouteSearch = (
+  input: ReturnType<typeof decodeBattlePanelBattlesRouteSearch>,
+): BattlePanelBattlesRouteSearch => {
+  const search: BattlePanelBattlesRouteSearch = {};
 
-      if (value === "false") return false;
+  if (input.cursor !== undefined) search.cursor = input.cursor;
 
-      return undefined;
-    }),
-  ])
-  .catch(undefined);
+  if (input.page !== undefined) search.page = input.page;
 
-const battlePanelBattlesRouteSearch = z
-  .object({
-    cursor: routeSearchString,
-    page: routeSearchInteger,
-    world: routeSearchString,
-    type: routeSearchLiterals(BATTLE_TYPE_VALUES),
-    search: routeSearchString,
-    result: routeSearchLiterals(BATTLE_RESULT_VALUES),
-    ph: routeSearchBoolean,
-    matchmaking: routeSearchBoolean,
-    startDate: routeSearchString,
-    endDate: routeSearchString,
-    characterId: routeSearchStrings,
-    minLevel: routeSearchInteger,
-    maxLevel: routeSearchInteger,
-  })
-  .partial()
-  .catch({})
-  .transform((input): BattlePanelBattlesRouteSearch => {
-    const search: BattlePanelBattlesRouteSearch = {};
+  if (input.world !== undefined) search.world = input.world;
 
-    if (input.cursor !== undefined) search.cursor = input.cursor;
+  if (input.type !== undefined) search.type = [...input.type];
 
-    if (input.page !== undefined) search.page = input.page;
+  if (input.search !== undefined) search.search = input.search;
 
-    if (input.world !== undefined) search.world = input.world;
+  if (input.result !== undefined) search.result = [...input.result];
 
-    if (input.type !== undefined) search.type = input.type;
+  if (input.ph !== undefined) search.ph = input.ph;
 
-    if (input.search !== undefined) search.search = input.search;
+  if (input.matchmaking !== undefined) search.matchmaking = input.matchmaking;
 
-    if (input.result !== undefined) search.result = input.result;
+  if (input.startDate !== undefined) search.startDate = input.startDate;
 
-    if (input.ph !== undefined) search.ph = input.ph;
+  if (input.endDate !== undefined) search.endDate = input.endDate;
 
-    if (input.matchmaking !== undefined) search.matchmaking = input.matchmaking;
+  if (input.characterId !== undefined)
+    search.characterId = [...input.characterId];
 
-    if (input.startDate !== undefined) search.startDate = input.startDate;
+  if (input.minLevel !== undefined) search.minLevel = input.minLevel;
 
-    if (input.endDate !== undefined) search.endDate = input.endDate;
+  if (input.maxLevel !== undefined) search.maxLevel = input.maxLevel;
 
-    if (input.characterId !== undefined) search.characterId = input.characterId;
-
-    if (input.minLevel !== undefined) search.minLevel = input.minLevel;
-
-    if (input.maxLevel !== undefined) search.maxLevel = input.maxLevel;
-
-    return search;
-  });
+  return search;
+};
 
 export const battlePanelBattlesSearchSchema = {
   "~standard": {
     version: 1 as const,
     vendor: "lootlog",
-    validate(input: Parameters<typeof battlePanelBattlesRouteSearch.parse>[0]) {
-      return { value: battlePanelBattlesRouteSearch.parse(input) };
+    validate(input: Parameters<typeof decodeBattlePanelBattlesRouteSearch>[0]) {
+      return {
+        value: toBattlePanelBattlesRouteSearch(
+          decodeBattlePanelBattlesRouteSearch(input),
+        ),
+      };
     },
   },
 };

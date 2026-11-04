@@ -66,13 +66,11 @@
       "react-doctor": "0.9.18",
       "react-dom": "^19.3.0",
       "react-hook-form": "7.90.0",
-      "superjson": "^2.2.6",
       "tailwindcss": "^4.3.3",
       "typescript": "^7.0.2",
       "vite": "^8.3.4",
       "vitest": "^5.0.5",
-      "yaml": "2.9.1",
-      "zod": "^4.6.7"
+      "yaml": "2.9.1"
     }
   },
   "scripts": {

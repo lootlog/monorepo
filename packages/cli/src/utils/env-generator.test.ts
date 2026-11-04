@@ -7,6 +7,8 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { BunServices } from "@effect/platform-bun";
+import { Effect } from "effect";
 import { generate } from "../commands/env/generate.js";
 import assert from "node:assert/strict";
 import { describe, test } from "bun:test";
@@ -281,13 +283,27 @@ const withEnvFixture = async (run: (root: string) => Promise<void>) => {
   }
 };
 
+const autoOptions = {
+  auto: true,
+  interactive: false,
+  skipExisting: false,
+  force: false,
+};
+
+const skipExistingOptions = { ...autoOptions, skipExisting: true };
+
+const runGenerate = (options: typeof autoOptions, root: string) =>
+  Effect.runPromise(
+    generate(options, root).pipe(Effect.provide(BunServices.layer)),
+  );
+
 const readSignatureEnv = (root: string, app: string) =>
   readFileSync(join(root, app, ".env"), "utf8");
 
 describe("activity signing environment generation", () => {
   test("uses one generated secret in root, publisher and consumer", () =>
     withEnvFixture(async (root) => {
-      await generate(["--auto"], root);
+      await runGenerate(autoOptions, root);
       assert.equal(
         readSignatureEnv(root, "apps/activity"),
         readSignatureEnv(root, ""),
@@ -301,7 +317,7 @@ describe("activity signing environment generation", () => {
   test("shares a generated secret when skipped root predates the signing key", () =>
     withEnvFixture(async (root) => {
       writeFileSync(join(root, ".env"), "REDIS_PASSWORD=existing\n");
-      await generate(["--skip-existing"], root);
+      await runGenerate(skipExistingOptions, root);
       assert.equal(
         readSignatureEnv(root, "apps/activity"),
         readSignatureEnv(root, "apps/gateway"),
@@ -314,7 +330,7 @@ describe("activity signing environment generation", () => {
       writeFileSync(join(root, ".env"), "REDIS_PASSWORD=existing\n");
       const existing = `${signatureKey}=existing-signature-secret-at-least-32-characters\n`;
       writeFileSync(join(root, "apps/gateway/.env"), existing);
-      await generate(["--skip-existing"], root);
+      await runGenerate(skipExistingOptions, root);
       assert.equal(readSignatureEnv(root, "apps/activity"), existing);
       assert.equal(readSignatureEnv(root, "apps/gateway"), existing);
     }));
@@ -327,7 +343,7 @@ describe("activity signing environment generation", () => {
         `${signatureKey}=gateway-secret\n`,
       );
       await assert.rejects(
-        generate(["--skip-existing"], root),
+        runGenerate(skipExistingOptions, root),
         (cause: unknown) => {
           assert.ok(cause instanceof Error);
           assert.match(cause.message, /ACTIVITY_EVENT_SIGNATURE_SECRET/);

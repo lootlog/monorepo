@@ -12,6 +12,19 @@ import {
 const t = (key: string, options?: TOptions) =>
   options?.count ? `${key}:${options.count}` : key;
 
+const validate = (
+  maxNpcCount: number,
+  values: Parameters<
+    ReturnType<typeof ruleFormSchema>["~standard"]["validate"]
+  >[0],
+) => {
+  const result = ruleFormSchema(t, maxNpcCount)["~standard"].validate(values);
+
+  if (result instanceof Promise) throw new Error("Expected sync validation");
+
+  return result;
+};
+
 const createBaseTimerFormValues = () => ({
   name: "",
   triggerType: NotificationTriggerType.TIMER_BEFORE_SPAWN,
@@ -33,16 +46,33 @@ const createBaseTimerFormValues = () => ({
 });
 
 describe("ruleFormSchema", () => {
+  it("reports missing content and targets alongside an invalid level", () => {
+    const result = validate(5, {
+      ...createBaseTimerFormValues(),
+      contentTemplate: " ",
+      targetIds: [],
+      npcLevelMin: 1.5,
+    });
+
+    expect(result.issues?.map((issue) => issue.path)).toEqual(
+      expect.arrayContaining([
+        ["npcLevelMin"],
+        ["contentTemplate"],
+        ["targetIds"],
+      ]),
+    );
+  });
+
   it("requires at least one manual npc id when manual mode is enabled", () => {
-    const result = ruleFormSchema(t, 5).safeParse({
+    const result = validate(5, {
       ...createBaseTimerFormValues(),
       manualNpcEntry: true,
       npcIds: [],
       manualNpcIds: "",
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error?.issues).toEqual(
+    expect(result.issues).toBeDefined();
+    expect(result.issues).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           path: ["manualNpcIds"],
@@ -53,15 +83,15 @@ describe("ruleFormSchema", () => {
   });
 
   it("rejects invalid manual npc ids", () => {
-    const result = ruleFormSchema(t, 5).safeParse({
+    const result = validate(5, {
       ...createBaseTimerFormValues(),
       manualNpcEntry: true,
       npcIds: [],
       manualNpcIds: "101, abc",
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error?.issues).toEqual(
+    expect(result.issues).toBeDefined();
+    expect(result.issues).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           path: ["manualNpcIds"],
@@ -72,15 +102,15 @@ describe("ruleFormSchema", () => {
   });
 
   it("enforces the same npc limit in manual mode", () => {
-    const result = ruleFormSchema(t, 2).safeParse({
+    const result = validate(2, {
       ...createBaseTimerFormValues(),
       manualNpcEntry: true,
       npcIds: [],
       manualNpcIds: "101, 202, 303",
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error?.issues).toEqual(
+    expect(result.issues).toBeDefined();
+    expect(result.issues).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           path: ["manualNpcIds"],
@@ -91,12 +121,12 @@ describe("ruleFormSchema", () => {
   });
 
   it("accepts a timer rule for all worlds so saved all-world rules stay editable", () => {
-    const result = ruleFormSchema(t, 5).safeParse({
+    const result = validate(5, {
       ...createBaseTimerFormValues(),
       world: ALL_WORLDS_VALUE,
     });
 
-    expect(result.success).toBe(true);
+    expect(result.issues).toBeUndefined();
   });
 
   it("rejects a hero sighting rule whose level range is reversed", () => {
@@ -106,20 +136,20 @@ describe("ruleFormSchema", () => {
       npcIds: [],
     };
 
-    const reversed = ruleFormSchema(t, 5).safeParse({
+    const reversed = validate(5, {
       ...heroRule,
       npcLevelMin: 300,
       npcLevelMax: 250,
     });
 
-    expect(reversed.error?.issues).toEqual([
+    expect(reversed.issues).toEqual([
       expect.objectContaining({
         path: ["npcLevelMax"],
         message: "settings.notifications.validation.npcLevelOrder",
       }),
     ]);
     expect(
-      ruleFormSchema(t, 5).safeParse({ ...heroRule, npcLevelMin: 300 }).success,
-    ).toBe(true);
+      validate(5, { ...heroRule, npcLevelMin: 300 }).issues,
+    ).toBeUndefined();
   });
 });

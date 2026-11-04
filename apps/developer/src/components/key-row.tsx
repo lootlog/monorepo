@@ -23,7 +23,7 @@ export function KeyRow({
   observedAt,
 }: {
   apiKey: ApiKey;
-  organizations: { id: string; name: string }[];
+  organizations: readonly { readonly id: string; readonly name: string }[];
   observedAt: number;
   onChange: () => Promise<void>;
 }) {

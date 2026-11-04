@@ -1,4 +1,6 @@
 import { styleText } from "node:util";
+import { Effect, Option } from "effect";
+import { Command, Flag } from "effect/cli";
 import { scrapeItems } from "./scrapers/items-scraper.js";
 import { scrapeNpcs } from "./scrapers/npcs-scraper.js";
 import { generatePlayers } from "./generators/players-generator.js";
@@ -8,153 +10,20 @@ import path from "node:path";
 import { fileExists } from "./utils/file-exists.js";
 import { SEED_CONFIG } from "./config.js";
 
-const displaySeedHelp = (): void => {
-  console.log(`
-${styleText(["bold", "blue"], "Seed Command")}
-
-${styleText("bold", "Usage:")}
-  bun run seed <subcommand> [options]
-
-${styleText("bold", "Subcommands:")}
-  scrape:items              Scrape items from margoworld.pl
-  scrape:npcs               Scrape NPCs from margoworld.pl
-  scrape:all                Scrape both items and NPCs
-  generate:players          Generate mock player data
-  run                       Seed the database
-  setup                     Complete setup (scrape, generate, seed)
-
-${styleText("bold", "Options:")}
-  --force, -f               Force re-scraping even if files exist
-  --guilds <number>         Number of guilds to create (default: ${SEED_CONFIG.guilds.count})
-  --loots <number>          Number of loots to create (default: ${SEED_CONFIG.loots.count})
-  --battles <number>        Number of battles to create (default: ${SEED_CONFIG.battles.count})
-  --players <number>        Number of players to generate (default: ${SEED_CONFIG.players.count})
-  --no-clean                Don't clean database before seeding
-  --skip-scrape             Skip scraping (use existing data)
-  --help, -h                Show this help message
-
-${styleText("bold", "Environment Variables:")}
-  DISCORD_DEVELOPMENT_GUILD_ID    Discord guild ID(s) for development
-                                  (supports multiple IDs separated by commas)
-  DISCORD_DEVELOPMENT_USER_ID     Discord user ID for development owner
-  SEEDING_USER_ID                 User ID for battles seeding (required for battles)
-
-${styleText("bold", "Examples:")}
-  bun run seed:scrape                      # Scrape items and NPCs
-  bun run seed:scrape --force              # Force re-scrape
-  bun run seed:generate:players                # Generate ${SEED_CONFIG.players.count} players
-  bun run seed run --guilds 10 --loots 500     # Seed with custom counts
-  bun run seed:setup                           # Complete setup
-  bun run seed:setup --skip-scrape             # Setup without scraping
-
-${styleText("bold", "Development Guild Setup:")}
-  When DISCORD_DEVELOPMENT_GUILD_ID and DISCORD_DEVELOPMENT_USER_ID are set in .env:
-  - First N guilds will use the provided Discord guild IDs
-  - Dev user will be set as the owner of these guilds
-  - All timers in dev guilds will be created by the dev user
-  - Dev user will be included in loot submissions for dev guilds
-  `);
-};
-
 interface SeedOptions {
-  force?: boolean;
+  force: boolean;
   guilds?: number;
   loots?: number;
   battles?: number;
   players?: number;
-  clean?: boolean;
-  skipScrape?: boolean;
-  itemsOutput?: string;
-  npcsOutput?: string;
-  output?: string;
-  count?: number;
+  skipScrape: boolean;
 }
-
-type SeedSubcommandHandler = (options: SeedOptions) => Promise<void>;
 
 const DEFAULT_ITEMS_OUTPUT = "./packages/cli/src/mocks/data/items.json";
 
 const DEFAULT_NPCS_OUTPUT = "./packages/cli/src/mocks/data/npcs.json";
 
 const DEFAULT_PLAYERS_OUTPUT = "./packages/cli/src/mocks/data/players.json";
-
-const parseOptions = (args: string[]): SeedOptions => {
-  const options: SeedOptions = {};
-  const takeNextArg = (index: number): string | undefined => args[index + 1];
-
-  const parseIntegerOption = (index: number): number | undefined => {
-    const value = takeNextArg(index);
-
-    return value === undefined ? undefined : Number.parseInt(value, 10);
-  };
-
-  const setOption = <K extends keyof SeedOptions>(
-    key: K,
-    value: SeedOptions[K],
-  ) => {
-    if (value !== undefined) {
-      options[key] = value;
-    }
-  };
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-
-    if (arg === "--force" || arg === "-f") {
-      options.force = true;
-    } else if (arg === "--guilds") {
-      setOption("guilds", parseIntegerOption(i));
-      i++;
-    } else if (arg === "--loots") {
-      setOption("loots", parseIntegerOption(i));
-      i++;
-    } else if (arg === "--battles") {
-      setOption("battles", parseIntegerOption(i));
-      i++;
-    } else if (arg === "--players") {
-      setOption("players", parseIntegerOption(i));
-      i++;
-    } else if (arg === "--no-clean") {
-      options.clean = false;
-    } else if (arg === "--skip-scrape") {
-      options.skipScrape = true;
-    } else if (arg === "--items-output") {
-      setOption("itemsOutput", takeNextArg(i));
-      i++;
-    } else if (arg === "--npcs-output") {
-      setOption("npcsOutput", takeNextArg(i));
-      i++;
-    } else if (arg === "-o" || arg === "--output") {
-      setOption("output", takeNextArg(i));
-      i++;
-    } else if (arg === "-c" || arg === "--count") {
-      setOption("count", parseIntegerOption(i));
-      i++;
-    }
-  }
-
-  return options;
-};
-
-const scrapeItemsCommand: SeedSubcommandHandler = async (options) => {
-  await scrapeItems(options.output ?? DEFAULT_ITEMS_OUTPUT, options.force);
-};
-
-const scrapeNpcsCommand: SeedSubcommandHandler = async (options) => {
-  await scrapeNpcs(options.output ?? DEFAULT_NPCS_OUTPUT, options.force);
-};
-
-const scrapeAllCommand: SeedSubcommandHandler = async (options) => {
-  console.log(styleText("blue", "🔄 Starting complete scraping process...\n"));
-
-  await scrapeItems(options.itemsOutput ?? DEFAULT_ITEMS_OUTPUT, options.force);
-  console.log();
-
-  await scrapeNpcs(options.npcsOutput ?? DEFAULT_NPCS_OUTPUT, options.force);
-  console.log();
-
-  console.log(styleText("green", "✅ Scraping completed successfully!"));
-};
 
 const generatePlayersFile = async (
   count: number,
@@ -186,23 +55,6 @@ const generatePlayersFile = async (
   );
 };
 
-const generatePlayersCommand: SeedSubcommandHandler = async (options) => {
-  await generatePlayersFile(
-    options.count ?? options.players ?? SEED_CONFIG.players.count,
-    options.output ?? DEFAULT_PLAYERS_OUTPUT,
-    options.force,
-  );
-};
-
-const runSeedCommand: SeedSubcommandHandler = async (options) => {
-  await seed({
-    guildsCount: options.guilds,
-    lootsCount: options.loots,
-    battlesCount: options.battles,
-    clean: options.clean !== false,
-  });
-};
-
 const scrapeSetupData = async (options: SeedOptions): Promise<void> => {
   if (options.skipScrape) {
     console.log(
@@ -228,7 +80,7 @@ const generateSetupPlayers = async (
   console.log();
 };
 
-const setupCommand: SeedSubcommandHandler = async (options) => {
+const setup = async (options: SeedOptions): Promise<void> => {
   console.log(styleText("blue", "🚀 Starting complete setup...\n"));
   await scrapeSetupData(options);
 
@@ -246,51 +98,185 @@ const setupCommand: SeedSubcommandHandler = async (options) => {
   console.log(styleText("green", "\n✅ Complete setup finished successfully!"));
 };
 
-const SEED_SUBCOMMAND_HANDLERS = new Map<string, SeedSubcommandHandler>(
-  Object.entries({
-    "scrape:items": scrapeItemsCommand,
-    "scrape:npcs": scrapeNpcsCommand,
-    "scrape:all": scrapeAllCommand,
-    "generate:players": generatePlayersCommand,
-    run: runSeedCommand,
-    setup: setupCommand,
-  } satisfies Record<string, SeedSubcommandHandler>),
+const force = Flag.Boolean("force").pipe(
+  Flag.withAlias("f"),
+  Flag.withDescription("Force re-scraping or regenerating even if files exist"),
+  Flag.withDefault(false),
 );
 
-export const seedCommand = async (args: string[]): Promise<void> => {
-  if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
-    displaySeedHelp();
+const output = (defaultPath: string) =>
+  Flag.String("output").pipe(
+    Flag.withAlias("o"),
+    Flag.withDescription("Output file"),
+    Flag.withDefault(defaultPath),
+  );
 
-    return;
-  }
+const count = (name: string, description: string) =>
+  Flag.Int(name).pipe(Flag.withDescription(description), Flag.optional);
 
-  const [subcommand, ...rest] = args;
-
-  if (!subcommand) {
-    displaySeedHelp();
-
-    return;
-  }
-
-  const options = parseOptions(rest);
-  const handler = SEED_SUBCOMMAND_HANDLERS.get(subcommand);
-
-  if (!handler) {
-    console.error(styleText("red", `\n❌ Unknown subcommand: ${subcommand}\n`));
-    console.log(
-      styleText(
-        "gray",
-        `Run 'bun run seed -- --help' to see available subcommands.\n`,
-      ),
-    );
-    process.exit(1);
-  }
-
-  try {
-    await handler(options);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(styleText("red", `\n❌ Error: ${message}\n`));
-    process.exit(1);
-  }
+const seedCounts = {
+  guilds: count(
+    "guilds",
+    `Number of guilds to create (default: ${SEED_CONFIG.guilds.count})`,
+  ),
+  loots: count(
+    "loots",
+    `Number of loots to create (default: ${SEED_CONFIG.loots.count})`,
+  ),
+  battles: count(
+    "battles",
+    `Number of battles to create (default: ${SEED_CONFIG.battles.count})`,
+  ),
 };
+
+const players = count(
+  "players",
+  `Number of players to generate (default: ${SEED_CONFIG.players.count})`,
+);
+
+const scrapeItemsCommand = Command.make(
+  "scrape:items",
+  { force, output: output(DEFAULT_ITEMS_OUTPUT) },
+  (options) => Effect.promise(() => scrapeItems(options.output, options.force)),
+).pipe(Command.withDescription("Scrape items from margoworld.pl"));
+
+const scrapeNpcsCommand = Command.make(
+  "scrape:npcs",
+  { force, output: output(DEFAULT_NPCS_OUTPUT) },
+  (options) => Effect.promise(() => scrapeNpcs(options.output, options.force)),
+).pipe(Command.withDescription("Scrape NPCs from margoworld.pl"));
+
+const scrapeAllCommand = Command.make(
+  "scrape:all",
+  {
+    force,
+    itemsOutput: Flag.String("items-output").pipe(
+      Flag.withDescription("Output file for scraped items"),
+      Flag.withDefault(DEFAULT_ITEMS_OUTPUT),
+    ),
+    npcsOutput: Flag.String("npcs-output").pipe(
+      Flag.withDescription("Output file for scraped NPCs"),
+      Flag.withDefault(DEFAULT_NPCS_OUTPUT),
+    ),
+  },
+  (options) =>
+    Effect.promise(async () => {
+      console.log(
+        styleText("blue", "🔄 Starting complete scraping process...\n"),
+      );
+
+      await scrapeItems(options.itemsOutput, options.force);
+      console.log();
+
+      await scrapeNpcs(options.npcsOutput, options.force);
+      console.log();
+
+      console.log(styleText("green", "✅ Scraping completed successfully!"));
+    }),
+).pipe(Command.withDescription("Scrape both items and NPCs"));
+
+const generatePlayersCommand = Command.make(
+  "generate:players",
+  {
+    force,
+    output: output(DEFAULT_PLAYERS_OUTPUT),
+    count: Flag.Int("count").pipe(
+      Flag.withAlias("c"),
+      Flag.withDescription("Number of players to generate (same as --players)"),
+      Flag.optional,
+    ),
+    players,
+  },
+  (options) =>
+    Effect.promise(() =>
+      generatePlayersFile(
+        Option.getOrElse(
+          Option.orElse(options.count, () => options.players),
+          () => SEED_CONFIG.players.count,
+        ),
+        options.output,
+        options.force,
+      ),
+    ),
+).pipe(Command.withDescription("Generate mock player data"));
+
+const DEVELOPMENT_GUILD_NOTE =
+  "When DISCORD_DEVELOPMENT_GUILD_ID (comma-separated IDs allowed) and DISCORD_DEVELOPMENT_USER_ID are set, the first guilds use those Discord guild IDs and the dev user owns them, creates their timers, and joins their loot submissions. SEEDING_USER_ID is required to seed battles.";
+
+const runSeedCommand = Command.make(
+  "run",
+  {
+    ...seedCounts,
+    clean: Flag.Boolean("clean").pipe(
+      Flag.withDescription(
+        "Clean the database before seeding (--no-clean to keep it)",
+      ),
+      Flag.withDefault(true),
+    ),
+  },
+  (options) =>
+    Effect.promise(() =>
+      seed({
+        guildsCount: Option.getOrUndefined(options.guilds),
+        lootsCount: Option.getOrUndefined(options.loots),
+        battlesCount: Option.getOrUndefined(options.battles),
+        clean: options.clean,
+      }),
+    ),
+).pipe(
+  Command.withShortDescription("Seed the database"),
+  Command.withDescription(`Seed the database. ${DEVELOPMENT_GUILD_NOTE}`),
+);
+
+const setupCommand = Command.make(
+  "setup",
+  {
+    ...seedCounts,
+    force,
+    players,
+    skipScrape: Flag.Boolean("skip-scrape").pipe(
+      Flag.withDescription("Skip scraping (use existing data)"),
+      Flag.withDefault(false),
+    ),
+  },
+  (options) =>
+    Effect.promise(() =>
+      setup({
+        force: options.force,
+        guilds: Option.getOrUndefined(options.guilds),
+        loots: Option.getOrUndefined(options.loots),
+        battles: Option.getOrUndefined(options.battles),
+        players: Option.getOrUndefined(options.players),
+        skipScrape: options.skipScrape,
+      }),
+    ),
+).pipe(
+  Command.withDescription(
+    `Complete setup (scrape, generate, seed). ${DEVELOPMENT_GUILD_NOTE}`,
+  ),
+);
+
+export const seedCommand = Command.make("seed").pipe(
+  Command.withDescription(
+    "Database seeding (scrape data, generate mocks, populate DB)",
+  ),
+  Command.withSubcommands([
+    scrapeItemsCommand,
+    scrapeNpcsCommand,
+    scrapeAllCommand,
+    generatePlayersCommand,
+    runSeedCommand,
+    setupCommand,
+  ]),
+  Command.withExamples([
+    { command: "bun run seed:scrape --force", description: "Force re-scrape" },
+    {
+      command: "bun run seed run --guilds 10 --loots 500",
+      description: "Seed with custom counts",
+    },
+    {
+      command: "bun run seed:setup --skip-scrape",
+      description: "Setup without scraping",
+    },
+  ]),
+);

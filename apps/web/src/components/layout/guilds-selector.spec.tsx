@@ -27,7 +27,7 @@ import {
 } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
 import { Toaster, toast } from "sonner";
-import { z } from "zod";
+import { Schema } from "effect";
 import { createUserPreferences } from "@/lib/testing/preferences";
 import { createOrganizationTestWrapper } from "@/lib/testing/router";
 import { createTestGateway } from "@/lib/testing/gateway";
@@ -100,12 +100,16 @@ beforeEach(() => {
 
             if (writeResponse) return writeResponse();
 
-            const update = z
-              .object({
-                hiddenGuildIds: z.array(z.string()).optional(),
-                guildsOrder: z.array(z.string()).optional(),
-              })
-              .parse(await request.json());
+            const update = Schema.decodeUnknownSync(
+              Schema.Struct({
+                hiddenGuildIds: Schema.optional(
+                  Schema.mutable(Schema.Array(Schema.String)),
+                ),
+                guildsOrder: Schema.optional(
+                  Schema.mutable(Schema.Array(Schema.String)),
+                ),
+              }),
+            )(await request.json());
 
             preferences = { ...preferences, ...update };
 

@@ -1,4 +1,8 @@
-import { useMutationState, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutationState,
+  useQueryClient,
+  type Mutation,
+} from "@tanstack/react-query";
 import {
   getListPinnedEventsQueryKey,
   useListPinnedEvents,
@@ -15,11 +19,20 @@ import {
   restorePinnedEvent,
 } from "./event-pin-cache";
 
-import { z } from "zod";
+import { Option, Schema } from "effect";
 
-const pinMutationVariables = z.object({
-  pathParams: z.object({ eventId: z.string(), guildId: z.string() }),
-});
+const decodePinMutationVariables = Schema.decodeUnknownOption(
+  Schema.Struct({
+    pathParams: Schema.Struct({
+      eventId: Schema.String,
+      guildId: Schema.String,
+    }),
+  }),
+);
+
+const selectPinPathParams = (mutation: Mutation) =>
+  Option.getOrUndefined(decodePinMutationVariables(mutation.state.variables))
+    ?.pathParams;
 
 export const useToggleEventPin = (guildId: string) => {
   const { t } = useTranslation();
@@ -112,14 +125,12 @@ export const useToggleEventPin = (guildId: string) => {
 
   const pendingPinPaths = useMutationState({
     filters: { mutationKey: ["pinEvent"], status: "pending" },
-    select: (mutation) =>
-      pinMutationVariables.safeParse(mutation.state.variables).data?.pathParams,
+    select: selectPinPathParams,
   });
 
   const pendingUnpinPaths = useMutationState({
     filters: { mutationKey: ["unpinEvent"], status: "pending" },
-    select: (mutation) =>
-      pinMutationVariables.safeParse(mutation.state.variables).data?.pathParams,
+    select: selectPinPathParams,
   });
 
   const isPinned = (eventId: string) =>

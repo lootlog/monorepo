@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { getQueryKeyPath } from "./query-key-path";
 import type { Query, QueryClient } from "@tanstack/react-query";
 import {
   getEventsRankingControllerGetEventHeroStatsQueryKey,
@@ -12,7 +12,7 @@ const getEventHeroesPathPrefix = (guildId: string, eventId: string) =>
 
 // Matches the kill history list and the kill detail and timeline reads.
 const isEventKillQuery = (query: Query, guildId: string, eventId: string) => {
-  const path = z.string().safeParse(query.queryKey[0]).data;
+  const path = getQueryKeyPath(query.queryKey);
 
   if (path === undefined) {
     return false;

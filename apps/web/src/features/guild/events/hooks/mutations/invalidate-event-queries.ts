@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
-import { z } from "zod";
+import { getQueryKeyPath } from "./query-key-path";
 import {
   getListEventMapsQueryKey,
   getListEventsQueryKey,
@@ -14,7 +14,7 @@ export function reconcileEventPolicyQueries(
 ) {
   const filters = {
     predicate: (query: { queryKey: readonly unknown[] }) => {
-      const path = z.string().safeParse(query.queryKey[0]).data;
+      const path = getQueryKeyPath(query.queryKey);
 
       return (
         path !== undefined &&

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getPortalEnvironment } from "~/lib/environment";
 import {
-  referenceDocumentSchema,
+  decodeReferenceDocument,
   presentReferenceDocument,
 } from "~/lib/reference-document";
 import main from "@lootlog/sdk/openapi/main.json";
@@ -10,10 +10,10 @@ import battlelog from "@lootlog/sdk/openapi/battlelog.json";
 import search from "@lootlog/sdk/openapi/search.json";
 
 const specs = {
-  main: referenceDocumentSchema.parse(main),
-  activity: referenceDocumentSchema.parse(activity),
-  battlelog: referenceDocumentSchema.parse(battlelog),
-  search: referenceDocumentSchema.parse(search),
+  main: decodeReferenceDocument(main),
+  activity: decodeReferenceDocument(activity),
+  battlelog: decodeReferenceDocument(battlelog),
+  search: decodeReferenceDocument(search),
 };
 
 export const Route = createFileRoute("/openapi/$service")({

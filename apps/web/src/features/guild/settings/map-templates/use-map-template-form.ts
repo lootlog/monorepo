@@ -1,6 +1,6 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { filterAvailableGameMaps } from "@/utils/filter-available-game-maps";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   invalidateMapTemplatesControllerGetTemplates,
   useMapTemplatesControllerCreateTemplate,
@@ -16,7 +16,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import * as z from "zod";
+import { Schema } from "effect";
 
 type MapTemplateFormProps =
   | {
@@ -31,14 +31,24 @@ type MapTemplateFormProps =
     };
 
 const createFormSchema = (t: (key: string) => string) =>
-  z.object({
-    name: z.string().min(1, t("settings.mapTemplates.form.nameRequired")),
-    maps: z
-      .array(z.object({ id: z.number(), name: z.string() }))
-      .min(1, t("settings.mapTemplates.form.mapsRequired")),
-  });
+  Schema.toStandardSchemaV1(
+    Schema.Struct({
+      name: Schema.String.check(
+        Schema.isMinLength(1, {
+          message: t("settings.mapTemplates.form.nameRequired"),
+        }),
+      ),
+      maps: Schema.mutable(
+        Schema.Array(Schema.Struct({ id: Schema.Finite, name: Schema.String })),
+      ).check(
+        Schema.isMinLength(1, {
+          message: t("settings.mapTemplates.form.mapsRequired"),
+        }),
+      ),
+    }),
+  );
 
-type FormData = z.infer<ReturnType<typeof createFormSchema>>;
+type FormData = ReturnType<typeof createFormSchema>["Type"];
 
 export const useMapTemplateForm = ({
   mode,
@@ -88,7 +98,7 @@ export const useMapTemplateForm = ({
   const formSchema = createFormSchema(t);
 
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       name: template?.name ?? "",
       maps: template?.maps ?? [],

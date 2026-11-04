@@ -1,11 +1,12 @@
 import { ApiError } from "@lootlog/client/transport";
-import { z } from "zod";
+import { Schema } from "effect";
 
-const reauthenticationResponse = z.object({ requiresReauth: z.literal(true) });
+const isReauthenticationResponse = Schema.is(
+  Schema.Struct({ requiresReauth: Schema.Literal(true) }),
+);
 
 export const requiresReauthentication = (error: Error | null): boolean =>
-  error instanceof ApiError &&
-  reauthenticationResponse.safeParse(error.data).success;
+  error instanceof ApiError && isReauthenticationResponse(error.data);
 
 export const isReauthenticationError = (error: Error | null): boolean =>
   error instanceof ApiError &&

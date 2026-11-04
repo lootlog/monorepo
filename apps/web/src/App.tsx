@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { Button } from "@lootlog/ui/components/button";
 import { UiLabelsProvider } from "@lootlog/ui/components/ui-labels";
@@ -13,78 +12,12 @@ import { RouteErrorState } from "@/components/router/route-error-state";
 import { RouteRetryButton } from "@/components/router/route-retry-button";
 import { ROUTES } from "@/config/routes";
 import { releaseStartupScreenOnFirstResolve } from "@/lib/startup-screen";
+import { parseSearch, stringifySearch } from "@/lib/router/search-string";
 
 export interface RouterContext {
   queryClient: QueryClient;
   session?: SessionData | null;
 }
-
-const parseSearchValue = (values: string[]) => {
-  if (values.length > 1) {
-    return values;
-  }
-
-  return values[0] ?? "";
-};
-
-const parseSearch = (searchString: string) => {
-  const normalizedSearch = searchString.startsWith("?")
-    ? searchString.slice(1)
-    : searchString;
-
-  const searchParams = new URLSearchParams(normalizedSearch);
-  // SAFETY: The null-prototype dictionary starts empty; this function only assigns URLSearchParams strings or string arrays.
-  const parsedSearch = Object.create(null) as Record<string, string | string[]>;
-  const seenKeys = new Set<string>();
-
-  for (const key of searchParams.keys()) {
-    if (seenKeys.has(key)) {
-      continue;
-    }
-
-    seenKeys.add(key);
-
-    const values = searchParams.getAll(key);
-    parsedSearch[key] = parseSearchValue(values);
-  }
-
-  return parsedSearch;
-};
-
-const searchValuesSchema = z.record(
-  z.string(),
-  z.union([z.array(z.coerce.string().nullish()), z.coerce.string()]).nullish(),
-);
-
-const stringifySearch = (
-  search: Parameters<typeof searchValuesSchema.parse>[0],
-) => {
-  const searchParams = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(searchValuesSchema.parse(search))) {
-    if (value === null || value === undefined) {
-      continue;
-    }
-
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        if (item === null || item === undefined) {
-          continue;
-        }
-
-        searchParams.append(key, String(item));
-      }
-
-      continue;
-    }
-
-    searchParams.set(key, String(value));
-  }
-
-  const serializedSearch = searchParams.toString();
-
-  return serializedSearch ? `?${serializedSearch}` : "";
-};
 
 const router = createRouter({
   routeTree,

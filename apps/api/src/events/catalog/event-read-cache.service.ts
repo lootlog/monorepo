@@ -1,10 +1,9 @@
 import { Logger } from "#src/shared/application-logger";
-import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
-import superjson from "superjson";
+import { makeTypeJsonCodec, RedisService } from "#src/redis/redis.service";
 import { Effect, Schema } from "effect";
 import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
 
-const EVENT_READ_CACHE_PREFIX = "event-read:v2";
+const EVENT_READ_CACHE_PREFIX = "event-read:v3";
 
 const EVENT_READ_CACHE_TTL_SECONDS = 10;
 
@@ -65,7 +64,7 @@ export const makeEventReadCache = (
       schema: S,
       factory: () => Effect.Effect<S["Type"], E>,
     ): Effect.Effect<S["Type"], E> {
-      const codec = makeJsonCodec(Schema.toType(schema), superjson);
+      const codec = makeTypeJsonCodec(schema);
 
       return redis.getOrSetJsonEffect({
         ...entry,

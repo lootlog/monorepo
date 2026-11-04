@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
-import { z } from "zod";
+import { DateTimeString } from "@lootlog/schema/http-scalars";
+import { Option, Schema } from "effect";
 import { GatewayEvent } from "@/config/gateway";
 import type { GatewayClient } from "@/lib/gateway-client";
 import {
@@ -10,31 +11,39 @@ import {
   writeHeroSightingToCache,
 } from "./hero-sighting-cache";
 
-const memberView = z.object({
-  memberId: z.number(),
-  userId: z.string().nullable(),
-  displayName: z.string(),
-  avatarUrl: z.string().nullable(),
+const MemberView = Schema.Struct({
+  memberId: Schema.Finite,
+  userId: Schema.NullOr(Schema.String),
+  displayName: Schema.String,
+  avatarUrl: Schema.NullOr(Schema.String),
 });
 
 // The gateway forwards the API's HeroSightingResponseDto. Validate the fields
 // this view reads before putting an incremental payload in cache.
-const heroSightingView = z.object({
-  id: z.number(),
-  guildId: z.string().min(1),
-  world: z.string().min(1),
-  hero: z.object({ key: z.string().min(1), name: z.string(), lvl: z.number() }),
-  state: z.enum(["ROAMING", "SPAWNING"]),
-  mapName: z.string(),
-  firstSeenAt: z.iso.datetime(),
-  lastSeenAt: z.iso.datetime(),
-  closedAt: z.iso.datetime().nullable(),
-  detectedBy: memberView,
-  lastSeenBy: memberView,
-  claims: z.array(z.object({ member: memberView })),
-});
+const decodeHeroSightingView = Schema.decodeUnknownOption(
+  Schema.Struct({
+    id: Schema.Finite,
+    guildId: Schema.NonEmptyString,
+    world: Schema.NonEmptyString,
+    hero: Schema.Struct({
+      key: Schema.NonEmptyString,
+      name: Schema.String,
+      lvl: Schema.Finite,
+    }),
+    state: Schema.Literals(["ROAMING", "SPAWNING"]),
+    mapName: Schema.String,
+    firstSeenAt: DateTimeString,
+    lastSeenAt: DateTimeString,
+    closedAt: Schema.NullOr(DateTimeString),
+    detectedBy: MemberView,
+    lastSeenBy: MemberView,
+    claims: Schema.Array(Schema.Struct({ member: MemberView })),
+  }),
+);
 
-const organizationId = z.object({ guildId: z.string().min(1) });
+const decodeOrganizationId = Schema.decodeUnknownOption(
+  Schema.Struct({ guildId: Schema.NonEmptyString }),
+);
 
 type Options = {
   socket: GatewayClient;
@@ -75,13 +84,15 @@ export const useHeroSightingsSocket = ({ socket, guilds }: Options) => {
     };
 
     const onUpdated = (payload: HeroSightingResponseDto) => {
-      const sighting = heroSightingView.safeParse(payload);
+      const sighting = decodeHeroSightingView(payload);
 
-      if (!sighting.success) {
-        const guild = organizationId.safeParse(payload);
+      if (Option.isNone(sighting)) {
+        const guild = decodeOrganizationId(payload);
 
         refetch(
-          guild.success ? organizationIds(guild.data.guildId) : undefined,
+          Option.isSome(guild)
+            ? organizationIds(guild.value.guildId)
+            : undefined,
         );
 
         return;
@@ -89,7 +100,7 @@ export const useHeroSightingsSocket = ({ socket, guilds }: Options) => {
 
       writeHeroSightingToCache(
         queryClient,
-        organizationIds(sighting.data.guildId),
+        organizationIds(sighting.value.guildId),
         payload,
       );
     };
