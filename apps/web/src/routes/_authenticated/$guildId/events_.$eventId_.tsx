@@ -9,10 +9,27 @@ import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
+import { getNavigationEvent } from "@/features/guild/events/event-route-navigation";
 
 export const Route = createFileRoute(
   "/_authenticated/$guildId/events_/$eventId_",
 )({
+  staticData: {
+    navigation: ({ t, parentPath, matches }) => {
+      const name = getNavigationEvent(matches).event?.name;
+
+      return {
+        ancestors: [
+          {
+            label: t("common.breadcrumbs.events"),
+            path: `${parentPath}/events`,
+          },
+        ],
+        label: name ?? t("common.breadcrumbs.event"),
+        documentContext: name,
+      };
+    },
+  },
   component: EventRouteLayout,
   pendingComponent: EventRoutePending,
   loader: ({ abortController, context, params }) =>

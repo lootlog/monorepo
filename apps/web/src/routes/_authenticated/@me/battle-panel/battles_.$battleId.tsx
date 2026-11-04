@@ -10,10 +10,16 @@ import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
+import { getBattleRouteLabel } from "@/lib/battle/battle-route-label";
 
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/battles_/$battleId",
 )({
+  staticData: {
+    navigation: ({ t, match, currentBattle }) => ({
+      label: getBattleRouteLabel(match, t, { currentBattle }),
+    }),
+  },
   validateSearch: battlePanelSingleBattleSearchSchema,
   loader: ({ abortController, context, params, preload }) =>
     withRouteLoaderCancellation(abortController, async () => {

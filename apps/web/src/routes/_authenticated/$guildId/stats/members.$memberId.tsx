@@ -17,6 +17,19 @@ import {
 export const Route = createFileRoute(
   "/_authenticated/$guildId/stats/members/$memberId",
 )({
+  staticData: {
+    navigation: ({ t, match, parentPath, currentEntityLabel }) => ({
+      ancestors: [
+        {
+          label: t("common.breadcrumbs.memberRanking"),
+          path: `${parentPath}/ranking`,
+        },
+      ],
+      label:
+        currentEntityLabel ||
+        t("common.breadcrumbs.memberFallback", { id: match.params?.memberId }),
+    }),
+  },
   loader: ({ abortController, context, location, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       const memberId = Number.parseInt(params.memberId, 10);
