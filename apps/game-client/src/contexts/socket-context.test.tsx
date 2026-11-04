@@ -356,14 +356,18 @@ describe("SocketProvider", () => {
 
         const failedRequests = joinRequests().length;
 
-        // An invalid response leaves the socket open and is retried; a refusal
-        // closes it until the player reconnects.
+        // An invalid response closes the socket, which reconnects on its own;
+        // a refusal closes it until the player reconnects.
         if (failure === "refused")
           act(() => {
             getSocket().connect();
             test.open();
           });
-        else await act(() => vi.advanceTimersByTimeAsync(2_000));
+        else {
+          await act(() => vi.advanceTimersByTimeAsync(2_000));
+          test.open();
+        }
+
         await answerJoin("success", failedRequests);
         await waitFor(() => expect(result.current.status).toBe("online"));
         expect(joinRequests()).toHaveLength(failedRequests + 1);

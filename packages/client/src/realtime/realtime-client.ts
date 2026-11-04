@@ -17,7 +17,6 @@ import {
   decodeCommandSuccess,
   decodeRealtimeFrame,
   encodeRealtimeFrame,
-  RealtimeCodecError,
 } from "@lootlog/protocol/realtime/codec";
 import { Predicate } from "effect";
 import { notifyListeners } from "./notify-listeners.js";
@@ -449,8 +448,7 @@ export class RealtimeClient {
 
       return result;
     } catch (error) {
-      // A malformed join keeps the transport; its caller retries on this socket.
-      if (this.socket === socket && !(error instanceof RealtimeCodecError)) {
+      if (this.socket === socket) {
         if (error instanceof RealtimeRequestError && !error.retryable) {
           this.manuallyClosed = true;
           this.clearReconnect();

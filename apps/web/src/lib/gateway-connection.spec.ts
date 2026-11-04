@@ -25,23 +25,21 @@ class GatewayWebSocket extends EventTarget {
       throw new Error("Expected a realtime request");
     }
 
+    const joined = {
+      connectionId: "connection-1",
+      organizationIds: [],
+      subscriptionScopes: [],
+      accessPolicy: { version: "policy-1", organizations: [] },
+    };
+
     const reply = {
       v: 1,
       requestId: request.requestId,
       status: "success",
-      data: {},
+      data: "type" in request && request.type === "session.join" ? joined : {},
     } as const;
 
-    const event = {
-      v: 1,
-      type: "session.joined",
-      data: {
-        connectionId: "connection-1",
-        organizationIds: [],
-        subscriptionScopes: [],
-        accessPolicy: { version: "policy-1", organizations: [] },
-      },
-    } as const;
+    const event = { v: 1, type: "session.joined", data: joined } as const;
 
     for (const frame of [reply, event]) {
       this.dispatchEvent(

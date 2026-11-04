@@ -82,25 +82,24 @@ class Wire implements RealtimeWebSocket {
     if (!("requestId" in command) || !command.requestId)
       throw new Error("Expected request");
     const requestId = command.requestId;
+    const isJoin = "type" in command && command.type === "session.join";
+
+    const joined = {
+      connectionId: "connection-1",
+      organizationIds: ["guild-1"],
+      subscriptionScopes: [],
+      accessPolicy: Wire.accessPolicy,
+    };
+
     queueMicrotask(() => {
       this.deliver({
         v: 1,
         requestId,
         status: "success",
-        data: { sessionId: "presence-1" },
+        data: isJoin ? joined : { sessionId: "presence-1" },
       });
 
-      if ("type" in command && command.type === "session.join")
-        this.deliver({
-          v: 1,
-          type: "session.joined",
-          data: {
-            connectionId: "connection-1",
-            organizationIds: ["guild-1"],
-            subscriptionScopes: [],
-            accessPolicy: Wire.accessPolicy,
-          },
-        });
+      if (isJoin) this.deliver({ v: 1, type: "session.joined", data: joined });
     });
   }
 }

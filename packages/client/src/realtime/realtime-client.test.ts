@@ -6,6 +6,7 @@ import type {
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
+  RealtimeCodecError,
 } from "@lootlog/protocol/realtime/codec";
 import { afterEach, describe, expect, it, vi } from "#test/bun-test";
 import { RealtimeClient, type RealtimeWebSocket } from "./realtime-client.js";
@@ -795,6 +796,44 @@ describe("RealtimeClient", () => {
     socketAt(sockets, 1).close();
     await vi.advanceTimersByTimeAsync(1_000);
     expect(sockets).toHaveLength(3);
+    client.disconnect();
+  });
+
+  it("reconnects instead of staying half-joined after a malformed join response", async () => {
+    vi.useFakeTimers();
+    const sockets: TestWebSocket[] = [];
+
+    const client = new RealtimeClient({
+      url: "https://gateway.example.test",
+      reconnectBaseDelayMs: 1_000,
+      random: () => 0,
+      webSocketFactory: () => {
+        const socket = new TestWebSocket();
+        sockets.push(socket);
+
+        return socket;
+      },
+    });
+
+    client.connect();
+    socketAt(sockets, 0).open();
+    const joined = client.join(joinData).catch((error: Error) => error);
+    const request = frameAt(socketAt(sockets, 0), 0);
+
+    if (!("requestId" in request) || !request.requestId)
+      throw new Error("Expected a request frame");
+    socketAt(sockets, 0).message(
+      encodeRealtimeFrame({
+        v: 1,
+        requestId: request.requestId,
+        status: "success",
+        data: { joined: true },
+      }),
+    );
+    expect(await joined).toBeInstanceOf(RealtimeCodecError);
+    expect(socketAt(sockets, 0).readyState).toBe(3);
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(sockets).toHaveLength(2);
     client.disconnect();
   });
 
