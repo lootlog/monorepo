@@ -1,15 +1,10 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
-import { decodeRealtimeFrame as parseRealtimeFrame } from "@lootlog/protocol/realtime";
-import {
-  decodeRealtimeFrame,
-  encodeRealtimeFrame,
-} from "@lootlog/protocol/realtime/codec";
+import { decodeRealtimeFrame } from "@lootlog/protocol/realtime";
 import { GatewayEvent } from "@/config/gateway";
 import { GatewayClient } from "./gateway-client";
 
 class GatewayWebSocket extends EventTarget {
-  binaryType = "arraybuffer";
   readyState = 0;
   static instances: GatewayWebSocket[] = [];
 
@@ -21,14 +16,8 @@ class GatewayWebSocket extends EventTarget {
     GatewayWebSocket.instances.push(this);
   }
 
-  send(data: string | Uint8Array) {
-    const json = this.protocols.includes("lootlog.realtime.json.v1");
-    expect(data).toEqual(json ? expect.any(String) : expect.any(Uint8Array));
-
-    const request =
-      data instanceof Uint8Array
-        ? decodeRealtimeFrame(data)
-        : parseRealtimeFrame(JSON.parse(data));
+  send(data: string) {
+    const request = decodeRealtimeFrame(JSON.parse(data));
 
     if (!("requestId" in request) || !request.requestId) {
       throw new Error("Expected a realtime request");
@@ -54,7 +43,7 @@ class GatewayWebSocket extends EventTarget {
     for (const frame of [reply, event]) {
       this.dispatchEvent(
         new MessageEvent("message", {
-          data: json ? JSON.stringify(frame) : encodeRealtimeFrame(frame),
+          data: JSON.stringify(frame),
         }),
       );
     }
@@ -72,47 +61,47 @@ afterEach(() => {
   GatewayWebSocket.instances = [];
 });
 
-it.each([
-  ["development", "messagepack", "lootlog.realtime.v1"],
-  ["production-local", "messagepack", "lootlog.realtime.v1"],
-  ["production", "messagepack", "lootlog.realtime.v1"],
-  ["development", "json", "lootlog.realtime.json.v1"],
-])("joins and stays connected in %s", async (mode, encoding, protocol) => {
-  vi.stubEnv("MODE", mode);
-  vi.stubEnv("VITE_GATEWAY_FRAME_ENCODING", encoding);
-  vi.stubGlobal("WebSocket", GatewayWebSocket);
+it.each(["development", "production-local", "production"])(
+  "joins and stays connected in %s",
+  async (mode) => {
+    vi.stubEnv("MODE", mode);
+    vi.stubGlobal("WebSocket", GatewayWebSocket);
 
-  const restore = configureApiClients({
-    auth: {
-      baseUrl: "http://auth.test",
-      fetch: async () => Response.json({ ticket: "test-ticket", expiresAt: 1 }),
-    },
-  });
+    const restore = configureApiClients({
+      auth: {
+        baseUrl: "http://auth.test",
+        fetch: async () =>
+          Response.json({ ticket: "test-ticket", expiresAt: 1 }),
+      },
+    });
 
-  const client = new GatewayClient();
-  const joined = vi.fn();
-  client.on(GatewayEvent.JOIN, joined);
+    const client = new GatewayClient();
+    const joined = vi.fn();
+    client.on(GatewayEvent.JOIN, joined);
 
-  try {
-    client.connect();
-    await vi.waitFor(() => expect(GatewayWebSocket.instances).toHaveLength(1));
-    const socket = GatewayWebSocket.instances[0];
+    try {
+      client.connect();
+      await vi.waitFor(() =>
+        expect(GatewayWebSocket.instances).toHaveLength(1),
+      );
+      const socket = GatewayWebSocket.instances[0];
 
-    if (!socket) throw new Error("WebSocket was not created");
-    expect(socket.protocols).toContain(protocol);
-    socket.readyState = 1;
-    socket.dispatchEvent(new Event("open"));
-    client.emit(GatewayEvent.JOIN);
-    await vi.waitFor(() =>
-      expect(joined).toHaveBeenCalledWith(
-        expect.objectContaining({ status: "success" }),
-      ),
-    );
-    expect(client.connected).toBe(true);
-    client.disconnect();
-    expect(client.connected).toBe(false);
-  } finally {
-    client.disconnect();
-    restore();
-  }
-});
+      if (!socket) throw new Error("WebSocket was not created");
+      expect(socket.protocols).toContain("lootlog.realtime.json.v1");
+      socket.readyState = 1;
+      socket.dispatchEvent(new Event("open"));
+      client.emit(GatewayEvent.JOIN);
+      await vi.waitFor(() =>
+        expect(joined).toHaveBeenCalledWith(
+          expect.objectContaining({ status: "success" }),
+        ),
+      );
+      expect(client.connected).toBe(true);
+      client.disconnect();
+      expect(client.connected).toBe(false);
+    } finally {
+      client.disconnect();
+      restore();
+    }
+  },
+);

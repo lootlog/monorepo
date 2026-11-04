@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  REALTIME_JSON_SUBPROTOCOL,
-  REALTIME_SUBPROTOCOL,
-} from "@lootlog/client/realtime";
+import { REALTIME_JSON_SUBPROTOCOL } from "@lootlog/client/realtime";
 
 import {
   REALTIME_SESSION_HELLO_CAPABILITY,
@@ -26,63 +23,55 @@ afterEach(() => {
 });
 
 describe("game realtime handshake", () => {
-  it.each(["json", "messagepack"])(
-    "opens %s WebSocket directly without an HTTP credential request",
-    async (encoding) => {
-      vi.stubEnv("VITE_GATEWAY_URL", "https://gateway.example.test");
-      vi.stubEnv("VITE_GATEWAY_SOCKET_PATH", "/ws");
-      vi.stubEnv("VITE_GATEWAY_FRAME_ENCODING", encoding);
-      const fetcher = vi.fn<typeof fetch>();
-      vi.stubGlobal("fetch", fetcher);
-      const handshakes: Array<{ url: string; protocols?: string[] }> = [];
-      vi.stubGlobal(
-        "WebSocket",
-        class extends EventTarget {
-          binaryType = "blob";
-          readyState = 0;
-          constructor(url: string, protocols?: string[]) {
-            super();
-            handshakes.push({ url, protocols });
-          }
-          close() {
-            this.readyState = 3;
-          }
+  it("opens a JSON WebSocket directly without an HTTP credential request", async () => {
+    vi.stubEnv("VITE_GATEWAY_URL", "https://gateway.example.test");
+    vi.stubEnv("VITE_GATEWAY_SOCKET_PATH", "/ws");
+    const fetcher = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetcher);
+    const handshakes: Array<{ url: string; protocols?: string[] }> = [];
+    vi.stubGlobal(
+      "WebSocket",
+      class extends EventTarget {
+        readyState = 0;
+        constructor(url: string, protocols?: string[]) {
+          super();
+          handshakes.push({ url, protocols });
+        }
+        close() {
+          this.readyState = 3;
+        }
+      },
+    );
+
+    const { createGameRealtimeClient } = await import("./game-client-platform");
+
+    const client = createGameRealtimeClient();
+
+    try {
+      client.connect();
+      expect(handshakes).toEqual([
+        {
+          url: "wss://gateway.example.test/ws",
+          protocols: [
+            REALTIME_JSON_SUBPROTOCOL,
+            REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
+            REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+            REALTIME_BATTLE_PING_CAPABILITY,
+            REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+            REALTIME_LOOT_SPLIT_CAPABILITY,
+            REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
+            REALTIME_SESSION_HELLO_CAPABILITY,
+            REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
+            REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
+            REALTIME_NPC_PRESENCE_CAPABILITY,
+            REALTIME_GLOBAL_CHAT_CAPABILITY,
+            REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
+          ],
         },
-      );
-
-      const { createGameRealtimeClient } =
-        await import("./game-client-platform");
-
-      const client = createGameRealtimeClient();
-
-      try {
-        client.connect();
-        expect(handshakes).toEqual([
-          {
-            url: "wss://gateway.example.test/ws",
-            protocols: [
-              encoding === "json"
-                ? REALTIME_JSON_SUBPROTOCOL
-                : REALTIME_SUBPROTOCOL,
-              REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
-              REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-              REALTIME_BATTLE_PING_CAPABILITY,
-              REALTIME_TEAM_BATTLE_PING_CAPABILITY,
-              REALTIME_LOOT_SPLIT_CAPABILITY,
-              REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
-              REALTIME_SESSION_HELLO_CAPABILITY,
-              REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
-              REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
-              REALTIME_NPC_PRESENCE_CAPABILITY,
-              REALTIME_GLOBAL_CHAT_CAPABILITY,
-              REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
-            ],
-          },
-        ]);
-        expect(fetcher).not.toHaveBeenCalled();
-      } finally {
-        client.disconnect();
-      }
-    },
-  );
+      ]);
+      expect(fetcher).not.toHaveBeenCalled();
+    } finally {
+      client.disconnect();
+    }
+  });
 });

@@ -3,10 +3,7 @@ import {
   RealtimeClient,
   type RealtimeWebSocket,
 } from "@lootlog/client/realtime";
-import {
-  decodeRealtimeFrame,
-  encodeRealtimeFrame,
-} from "@lootlog/protocol/realtime/codec";
+import { decodeFrame, encodeFrame } from "@/test/realtime-wire";
 import { API_URL } from "@/config/api";
 import { createBackgroundConnection } from "./background-connection";
 import {
@@ -19,9 +16,8 @@ import {
 
 class Socket implements RealtimeWebSocket {
   private readonly target = new EventTarget();
-  binaryType: BinaryType = "arraybuffer";
   readyState = 0;
-  sent: Uint8Array[] = [];
+  sent: string[] = [];
   addEventListener(
     type: "open" | "close" | "message" | "error",
     listener: (event: { readonly data?: unknown }) => void,
@@ -30,9 +26,7 @@ class Socket implements RealtimeWebSocket {
       listener(event instanceof MessageEvent ? { data: event.data } : {}),
     );
   }
-  send(data: string | Uint8Array) {
-    if (!(data instanceof Uint8Array))
-      throw new Error("Expected binary protocol");
+  send(data: string) {
     this.sent.push(data);
   }
   open() {
@@ -48,13 +42,13 @@ class Socket implements RealtimeWebSocket {
     const bytes = this.sent.at(-1);
 
     if (bytes === undefined) throw new Error("No request sent");
-    const frame = decodeRealtimeFrame(bytes);
+    const frame = decodeFrame(bytes);
 
     if (!("requestId" in frame) || !frame.requestId)
       throw new Error("Expected request ID");
     this.target.dispatchEvent(
       new MessageEvent("message", {
-        data: encodeRealtimeFrame({
+        data: encodeFrame({
           v: 1,
           requestId: frame.requestId,
           status: "success",
@@ -129,7 +123,7 @@ describe("background connection", () => {
       type: "heartbeat-latency",
       latencyMs: 37,
     });
-    expect(bridge.socket.sent.map(decodeRealtimeFrame)).toEqual([
+    expect(bridge.socket.sent.map(decodeFrame)).toEqual([
       expect.objectContaining({ type: "presence.publish" }),
       expect.objectContaining({ type: "presence.heartbeat" }),
     ]);
@@ -199,13 +193,10 @@ describe("background connection", () => {
       data: { presences: [] },
     });
     expect(bridge.messages).toContainEqual({ type: "state", state: "ready" });
-    expect(bridge.factory).toHaveBeenCalledWith(
-      "wss://gateway.lootlog.pl/ws",
-      undefined,
-    );
-    expect(
-      bridge.socket.sent.map((frame) => decodeRealtimeFrame(frame)),
-    ).toEqual([
+    expect(bridge.factory).toHaveBeenCalledWith("wss://gateway.lootlog.pl/ws", [
+      "lootlog.realtime.json.v1",
+    ]);
+    expect(bridge.socket.sent.map((frame) => decodeFrame(frame))).toEqual([
       expect.objectContaining({
         type: "session.join",
         data: {

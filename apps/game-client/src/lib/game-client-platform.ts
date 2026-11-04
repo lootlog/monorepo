@@ -1,8 +1,4 @@
-import {
-  RealtimeClient,
-  REALTIME_JSON_SUBPROTOCOL,
-  REALTIME_SUBPROTOCOL,
-} from "@lootlog/client/realtime";
+import { RealtimeClient } from "@lootlog/client/realtime";
 import { GATEWAY_URL, GATEWAY_SOCKET_PATH } from "@/config/gateway";
 import {
   REALTIME_SESSION_HELLO_CAPABILITY,
@@ -38,13 +34,10 @@ export interface GameClientPlatform {
 }
 
 export function createGameRealtimeClient(): RealtimeClient {
-  const readable = import.meta.env.VITE_GATEWAY_FRAME_ENCODING === "json";
-
   return new RealtimeClient({
     url: GATEWAY_URL,
     path: GATEWAY_SOCKET_PATH || "/ws",
     protocols: [
-      readable ? REALTIME_JSON_SUBPROTOCOL : REALTIME_SUBPROTOCOL,
       REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
       REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
       REALTIME_BATTLE_PING_CAPABILITY,
@@ -58,7 +51,6 @@ export function createGameRealtimeClient(): RealtimeClient {
       REALTIME_GLOBAL_CHAT_CAPABILITY,
       REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
     ],
-    frameEncoding: readable ? "json" : "messagepack",
   });
 }
 
