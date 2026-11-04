@@ -711,9 +711,8 @@ from: string;
 to: string;
 /**
  * @minLength 1
- * @nullable
  */
-world?: string | null;
+world?: string;
 };
 
 export type UsersActivityControllerGetOnline401 = {

@@ -480,14 +480,10 @@ const BATTLELOG_INVALID_REQUEST_SCHEMA: JsonValue = {
                 items: {
                   anyOf: [
                     { type: "string" },
+                    { type: "number" },
                     {
-                      anyOf: [
-                        { type: "number" },
-                        {
-                          type: "string",
-                          enum: ["Infinity", "-Infinity", "NaN"],
-                        },
-                      ],
+                      type: "string",
+                      enum: ["Infinity", "-Infinity", "NaN"],
                     },
                   ],
                 },
@@ -836,7 +832,7 @@ const normalizeServiceAuthentication = (
         name: "authorization",
         in: "header",
         required: false,
-        schema: { nullable: true, type: "string" },
+        schema: { type: "string" },
       },
     ];
 
@@ -2330,7 +2326,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
             name: "world",
             in: "query",
             required: false,
-            schema: { nullable: true, type: "string", minLength: 1 },
+            schema: { type: "string", minLength: 1 },
           },
         ],
         security: [{ bearer: [] }],

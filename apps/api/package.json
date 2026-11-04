@@ -59,7 +59,7 @@
     "uuid": "^14.0.3"
   },
   "devDependencies": {
-    "@effect/sql-pglite": "^4.0.4",
+    "@effect/sql-pglite": "^4.1.2",
     "@electric-sql/pglite": "^0.5.9",
     "@lootlog/typescript-config": "workspace:*",
     "@testcontainers/postgresql": "^12.2.1",
