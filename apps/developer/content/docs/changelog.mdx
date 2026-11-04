@@ -3,6 +3,33 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-04 — Correlated realtime commands and no capability negotiation (breaking)
+
+The realtime gateway closes the connection on a command without a
+`requestId`, and answers every command with a correlated response.
+`session.joined` and the `session.join` response no longer list
+`capabilities`: every gateway answers `connection.ping`. `session.joined` and
+`permissions.updated` always carry `accessPolicy`, and `permissions.updated`
+always carries `changes`.
+
+An API key connection on an `organization.loots` subscription now also receives
+`feed.entry` and `kills.changed`.
+
+The next SDK release follows this contract. To migrate from 0.3.0:
+
+- Replace `RealtimeClient.send()` with `request()`, which sends a `requestId`
+  and resolves with the decoded response. `send()` is removed: the gateway
+  closes a connection that uses it.
+- Remove the `protocols` option. The client always offers
+  `lootlog.realtime.json.v1`, the only subprotocol the gateway reads.
+- Stop reading `capabilities` from `session.joined`.
+- Handle `RealtimeCodecError` from `request()` and `join()`: a response that
+  does not match its command's contract rejects with it. A malformed join
+  response also closes the connection, which then reconnects.
+
+An integration with its own WebSocket client sends a `requestId` with every
+command.
+
 ## 2026-11-04 — SDK 0.3.0 and JSON-only realtime frames (breaking)
 
 The realtime gateway exchanges only JSON text frames. It no longer sends or
