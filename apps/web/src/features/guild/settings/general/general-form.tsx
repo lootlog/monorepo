@@ -1,7 +1,7 @@
 import { BandSection } from "@/components/common/band-section";
 import { getGuildSettingsErrorMessage } from "../get-guild-settings-error-message";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   Form,
   FormControl,
@@ -50,7 +50,7 @@ export const GeneralForm = () => {
   const navigate = useNavigate();
 
   const form = useForm<GeneralFormValues>({
-    resolver: zodResolver(createGeneralFormSchema(t)),
+    resolver: standardSchemaResolver(createGeneralFormSchema(t)),
     defaultValues: {
       vanityUrl: guild?.vanityUrl ?? "",
       publicStatsCardEnabled: guild?.publicStatsCardEnabled ?? false,

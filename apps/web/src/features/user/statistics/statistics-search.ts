@@ -1,4 +1,9 @@
-import { z } from "zod";
+import { Schema, SchemaTransformation } from "effect";
+import {
+  CoercedFinite,
+  optionalWithFallback,
+  withFallback,
+} from "@/lib/lenient-schema";
 import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
 
 export const STATISTICS_TABS = [
@@ -61,43 +66,77 @@ export const resolveStatisticsSort = (
     : { field: fields[0] ?? "kills", asc: false };
 };
 
-export const parseStatisticsSearch = z
-  .object({
-    tab: z.enum(STATISTICS_TABS).catch("overview"),
-    days: z.coerce
-      .number()
-      .transform(
-        (days) => STATISTICS_DAYS.find((value) => value === days) ?? 30,
-      )
-      .catch(30),
-    world: z
-      .string()
-      .transform((world) => world.trim().slice(0, 100) || undefined)
-      .optional()
-      .catch(undefined),
-    characterId: z
-      .string()
-      .transform((id) => id.trim().slice(0, 100) || undefined)
-      .optional()
-      .catch(undefined),
-    npcType: z
-      .string()
-      .transform((type) => TRACKABLE_NPC_TYPES.find((value) => value === type))
-      .optional()
-      .catch(undefined),
-    sort: z.enum(STATISTICS_SORTS).optional().catch(undefined),
-    q: z
-      .string()
-      .transform((q) => q.slice(0, 100) || undefined)
-      .optional()
-      .catch(undefined),
-    asc: z
-      .union([z.literal(true), z.literal("true")])
-      .transform(() => true as const)
-      .optional()
-      .catch(undefined),
-  })
-  // A character id is unique only within its world, so it never stands alone.
-  .transform((search) =>
-    search.world ? search : { ...search, characterId: undefined },
-  ).parse;
+/** An optional search value, normalized; one it cannot use reads as missing. */
+const optionalSearchValue = <To extends Schema.Codec<string>>(
+  to: To,
+  normalize: (value: string) => To["Type"] | undefined,
+) =>
+  optionalWithFallback(
+    Schema.String.pipe(
+      Schema.decodeTo(
+        Schema.UndefinedOr(to),
+        SchemaTransformation.transform<To["Type"] | undefined, string>({
+          decode: normalize,
+          encode: (value) => value ?? "",
+        }),
+      ),
+    ),
+  );
+
+const searchText = (prepare: (value: string) => string) =>
+  optionalSearchValue(
+    Schema.String,
+    (value) => prepare(value).slice(0, 100) || undefined,
+  );
+
+const StatisticsSearchSchema = Schema.Struct({
+  tab: withFallback(Schema.Literals(STATISTICS_TABS), "overview"),
+  days: withFallback(
+    CoercedFinite.pipe(
+      Schema.decodeTo(
+        Schema.Literals(STATISTICS_DAYS),
+        SchemaTransformation.transform<StatisticsDays, number>({
+          decode: (days) =>
+            STATISTICS_DAYS.find((value) => value === days) ?? 30,
+          encode: (days) => days,
+        }),
+      ),
+    ),
+    30,
+  ),
+  world: searchText((world) => world.trim()),
+  characterId: searchText((id) => id.trim()),
+  npcType: optionalSearchValue(Schema.Literals(TRACKABLE_NPC_TYPES), (type) =>
+    TRACKABLE_NPC_TYPES.find((value) => value === type),
+  ),
+  sort: optionalWithFallback(Schema.Literals(STATISTICS_SORTS)),
+  q: searchText((q) => q),
+  asc: optionalWithFallback(
+    Schema.Literals([true, "true"]).pipe(
+      Schema.decodeTo(
+        Schema.Literal(true),
+        SchemaTransformation.transform<true, true | "true">({
+          decode: () => true,
+          encode: (asc) => asc,
+        }),
+      ),
+    ),
+  ),
+});
+
+export const parseStatisticsSearch = Schema.decodeUnknownSync(
+  StatisticsSearchSchema.pipe(
+    Schema.decode(
+      SchemaTransformation.transform<
+        typeof StatisticsSearchSchema.Type,
+        typeof StatisticsSearchSchema.Type
+      >({
+        // A character id is unique only within its world, so it never stands
+        // alone.
+        decode: (search) =>
+          search.world ? search : { ...search, characterId: undefined },
+        encode: (search) => search,
+      }),
+    ),
+  ),
+);

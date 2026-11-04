@@ -9,23 +9,29 @@ import {
   type Spread,
 } from "lexical";
 import type { ReactNode } from "react";
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import { GuildDocItemChip } from "./guild-doc-item-chip";
 
 /**
  * A copy of the catalog entry, so the text reads the same after the game
  * changes the item.
  */
-const guildDocItemSnapshotSchema = z.object({
-  name: z.string(),
-  icon: z.string(),
-  stat: z.string(),
-  rarity: z.string().nullable(),
-  type: z.string().nullable(),
-  catalogId: z.number().nullable(),
+const GuildDocItemSnapshotSchema = Schema.Struct({
+  name: Schema.String,
+  icon: Schema.String,
+  stat: Schema.String,
+  rarity: Schema.NullOr(Schema.String),
+  type: Schema.NullOr(Schema.String),
+  catalogId: Schema.NullOr(Schema.Finite),
 });
 
-export type GuildDocItemSnapshot = z.infer<typeof guildDocItemSnapshotSchema>;
+export type GuildDocItemSnapshot = typeof GuildDocItemSnapshotSchema.Type;
+
+const decodeGuildDocItemSnapshot = Schema.decodeUnknownOption(
+  GuildDocItemSnapshotSchema,
+);
+
+const decodeItemId = Schema.decodeUnknownOption(Schema.String);
 
 /**
  * An item in a document. A pasted in-game identifier alone is enough to start
@@ -76,9 +82,10 @@ export class GuildDocItemNode extends DecoratorNode<ReactNode> {
   static importJSON(serializedNode: SerializedGuildDocItemNode) {
     // A saved entry this version cannot read shows as an unknown item.
     return $createGuildDocItemNode({
-      snapshot:
-        guildDocItemSnapshotSchema.safeParse(serializedNode.item).data ?? null,
-      itemId: z.string().safeParse(serializedNode.itemId).data ?? null,
+      snapshot: Option.getOrNull(
+        decodeGuildDocItemSnapshot(serializedNode.item),
+      ),
+      itemId: Option.getOrNull(decodeItemId(serializedNode.itemId)),
     }).updateFromJSON(serializedNode);
   }
 

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { getPortalEnvironment } from "./environment";
-import { createdKeySchema, isApiKeyActive } from "./key-client";
+import { decodeCreatedKey, isApiKeyActive } from "./key-client";
 
 test("developer hosts never cross environments and unknown hosts fail closed", () => {
   const development = getPortalEnvironment("dev-developer.lootlog.pl");
@@ -31,13 +31,9 @@ test("key creation validates the one-time secret and scope before displaying suc
     key: "secret",
   };
 
-  expect(createdKeySchema.parse(key).key).toBe("secret");
-  expect(createdKeySchema.safeParse({ ...key, key: undefined }).success).toBe(
-    false,
-  );
-  expect(createdKeySchema.safeParse({ ...key, mode: "admin" }).success).toBe(
-    false,
-  );
+  expect(decodeCreatedKey(key).key).toBe("secret");
+  expect(() => decodeCreatedKey({ ...key, key: undefined })).toThrow();
+  expect(() => decodeCreatedKey({ ...key, mode: "admin" })).toThrow();
 });
 
 test("expired keys do not consume the UI limit of active keys", () => {

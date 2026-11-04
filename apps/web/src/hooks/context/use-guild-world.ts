@@ -1,7 +1,8 @@
 import { useRouter, useSearch } from "@tanstack/react-router";
 import { useEffect, useEffectEvent, useSyncExternalStore } from "react";
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { withFallback } from "@/lib/lenient-schema";
 
 /** The search param a link may use to open an Organization on a world. */
 export const GUILD_WORLD_SEARCH_PARAM = "world";
@@ -12,7 +13,9 @@ const getGuildWorldStorageKey = (guildId: string | undefined) =>
   `lootlog:guild:${guildId ?? "global"}:world`;
 
 // Anything unreadable falls back to all worlds instead of failing the page.
-const storedGuildWorld = z.string().nullable().catch(null);
+const decodeStoredGuildWorld = Schema.decodeUnknownSync(
+  withFallback(Schema.NullOr(Schema.String), null),
+);
 
 // An empty value comes from the time a world had to be picked first.
 const toGuildWorld = (value: string | null | undefined) => value || null;
@@ -32,7 +35,7 @@ export const readStoredGuildWorld = (
     const stored = localStorage.getItem(key);
 
     return toGuildWorld(
-      stored ? storedGuildWorld.parse(JSON.parse(stored)) : null,
+      stored ? decodeStoredGuildWorld(JSON.parse(stored)) : null,
     );
   } catch {
     return null;
@@ -74,15 +77,16 @@ const subscribeToStoredGuildWorld = (onChange: () => void) => {
   };
 };
 
-const guildWorldSearch = z.object({
-  [GUILD_WORLD_SEARCH_PARAM]: z.string().optional(),
-});
+const decodeGuildWorldSearch = Schema.decodeUnknownOption(
+  Schema.Struct({ [GUILD_WORLD_SEARCH_PARAM]: Schema.optional(Schema.String) }),
+);
 
 const useUrlWorld = () =>
   // The router's own search, not a copy that catches up a render later: on a
   // move between Organizations it must never pair one's world with the other.
   toGuildWorld(
-    guildWorldSearch.safeParse(useSearch({ strict: false })).data?.world,
+    Option.getOrUndefined(decodeGuildWorldSearch(useSearch({ strict: false })))
+      ?.world,
   );
 
 const useStoredGuildWorld = (guildId: string | undefined) =>

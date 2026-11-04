@@ -2,7 +2,7 @@ import { BandSection } from "@/components/common/band-section";
 import { getGuildSettingsErrorMessage } from "../get-guild-settings-error-message";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { toast } from "sonner";
 
 import {
@@ -58,7 +58,7 @@ export const ReservationsSettingsForm = ({
   const settings = resolveReservationSettings(guild);
 
   const form = useForm<ReservationsSettingsFormValues>({
-    resolver: zodResolver(reservationsSettingsFormSchema),
+    resolver: standardSchemaResolver(reservationsSettingsFormSchema),
     defaultValues: settings,
   });
 

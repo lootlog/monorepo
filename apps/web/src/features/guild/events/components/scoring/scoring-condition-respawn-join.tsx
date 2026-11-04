@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 import {
   SECONDS_BOUNDS,
-  scoringNumberSchema,
+  getScoringNumberError,
 } from "../../utils/scoring-number-validation";
 import { ScoringField } from "./scoring-field";
 import type { ScoringRulesFormValues } from "./scoring-rules-editor";
@@ -60,8 +60,7 @@ export const ScoringConditionRespawnJoin = ({
     setParts(toParts(field.value));
   }
 
-  const error = scoringNumberSchema(SECONDS_BOUNDS).safeParse(field.value).error
-    ?.issues[0]?.message;
+  const error = getScoringNumberError(field.value, SECONDS_BOUNDS);
 
   const change = (next: typeof parts) => {
     setParts(next);

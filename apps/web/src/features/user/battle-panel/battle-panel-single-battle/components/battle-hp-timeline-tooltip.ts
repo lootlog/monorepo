@@ -1,4 +1,9 @@
-import { z } from "zod";
+import { Schema, SchemaTransformation } from "effect";
+import {
+  CoercedFinite,
+  readableEntries,
+  withFallback,
+} from "@/lib/lenient-schema";
 import type { BattleTimelineResponseDtoOutputTimelineItem } from "@lootlog/client/battlelog";
 
 export type BattleHpTimelineTooltipDeltaKey =
@@ -79,46 +84,58 @@ export const formatBattleHpTimelineTooltipNumber = (
     minimumFractionDigits: 0,
   }).format(getRoundedTooltipNumber(value));
 
-const tooltipDelta = z.object({
-  key: z.enum(["damage", "healing", "mitigation"]),
-  labelKey: z.string(),
-  value: z.number(),
+const TooltipDelta = Schema.Struct({
+  key: Schema.Literals(["damage", "healing", "mitigation"]),
+  labelKey: Schema.String,
+  value: Schema.Finite,
 });
 
-const tooltipLegendaryBonus = z.object({
-  labelKey: z.string(),
-  recipientName: z.string().nullable(),
-  team: z.number(),
-  color: z.string(),
+const TooltipLegendaryBonus = Schema.Struct({
+  labelKey: Schema.String,
+  recipientName: Schema.NullOr(Schema.String),
+  team: Schema.Finite,
+  color: Schema.String,
 });
 
-const tooltipPayload = z
-  .object({
-    turn: z.coerce.number(),
-    team1: z.coerce.number(),
-    team2: z.coerce.number(),
-    momentum: z.coerce.number().optional(),
-    deltas: z
-      .array(tooltipDelta.nullable().catch(null))
-      .catch([])
-      .transform((values) => values.filter((value) => value !== null)),
-    legendaryBonuses: z
-      .array(tooltipLegendaryBonus.nullable().catch(null))
-      .catch([])
-      .transform((values) => values.filter((value) => value !== null)),
-    flagLabelKeys: z
-      .array(z.string().nullable().catch(null))
-      .catch([])
-      .transform((values) => values.filter((value) => value !== null)),
-  })
-  .transform((payload): BattleHpTimelineTooltipData => ({
-    ...payload,
-    momentum: payload.momentum ?? payload.team1 - payload.team2,
-  }));
+const TooltipData = Schema.Struct({
+  turn: Schema.Finite,
+  team1: Schema.Finite,
+  team2: Schema.Finite,
+  momentum: Schema.Finite,
+  deltas: Schema.Array(TooltipDelta),
+  legendaryBonuses: Schema.Array(TooltipLegendaryBonus),
+  flagLabelKeys: Schema.Array(Schema.String),
+});
 
-export const getBattleHpTimelineTooltipPayload = tooltipPayload
-  .nullable()
-  .catch(null).parse;
+const TooltipPayload = Schema.Struct({
+  turn: CoercedFinite,
+  team1: CoercedFinite,
+  team2: CoercedFinite,
+  momentum: Schema.optional(CoercedFinite),
+  deltas: readableEntries(TooltipDelta),
+  legendaryBonuses: readableEntries(TooltipLegendaryBonus),
+  flagLabelKeys: readableEntries(Schema.String),
+}).pipe(
+  Schema.decodeTo(
+    TooltipData,
+    SchemaTransformation.transform<
+      typeof TooltipData.Encoded,
+      Omit<typeof TooltipData.Encoded, "momentum"> & {
+        readonly momentum?: number | undefined;
+      }
+    >({
+      decode: (payload) => ({
+        ...payload,
+        momentum: payload.momentum ?? payload.team1 - payload.team2,
+      }),
+      encode: (data) => data,
+    }),
+  ),
+);
+
+export const getBattleHpTimelineTooltipPayload = Schema.decodeUnknownSync(
+  withFallback(Schema.NullOr(TooltipPayload), null),
+);
 
 export const buildBattleHpTimelineTooltipData = (
   turn: BattleHpTimelineTooltipTurn,

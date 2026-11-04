@@ -40,21 +40,21 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { KeyList } from "~/components/key-list";
 import { getPortalEnvironment } from "~/lib/environment";
 import {
-  createdKeySchema,
+  decodeCreatedKey,
   getKeyErrorMessage,
   isApiKeyActive,
-  keyListSchema,
+  decodeKeyList,
   keyRequest,
-  organizationsSchema,
+  decodeOrganizations,
   type ApiKey,
 } from "~/lib/key-client";
 import { portalText as t } from "~/lib/translations";
 
 export function KeyManager() {
-  const [keys, setKeys] = useState<ApiKey[]>([]);
+  const [keys, setKeys] = useState<readonly ApiKey[]>([]);
 
   const [organizations, setOrganizations] = useState<
-    { id: string; name: string }[]
+    readonly { readonly id: string; readonly name: string }[]
   >([]);
 
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
@@ -89,7 +89,7 @@ export function KeyManager() {
     setRefreshState("loading");
 
     try {
-      setKeys(keyListSchema.parse(await keyRequest()).keys);
+      setKeys(decodeKeyList(await keyRequest()).keys);
       setObservedAt(Date.now());
       setRefreshState("ready");
     } catch {
@@ -112,8 +112,8 @@ export function KeyManager() {
     ])
       .then(([keyResponse, organizationResponse]) => {
         if (controller.signal.aborted) return;
-        setKeys(keyListSchema.parse(keyResponse).keys);
-        setOrganizations(organizationsSchema.parse(organizationResponse));
+        setKeys(decodeKeyList(keyResponse).keys);
+        setOrganizations(decodeOrganizations(organizationResponse));
         setObservedAt(Date.now());
         setLoadState("ready");
       })
@@ -155,7 +155,7 @@ export function KeyManager() {
     try {
       const days = data.get("expiresIn");
 
-      const result = createdKeySchema.parse(
+      const result = decodeCreatedKey(
         await keyRequest("", {
           method: "POST",
           body: JSON.stringify({

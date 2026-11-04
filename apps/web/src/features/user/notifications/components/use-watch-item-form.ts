@@ -1,11 +1,11 @@
 import { uniqBy } from "es-toolkit";
 import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
 import { useEffect, useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import * as z from "zod";
+import { Schema } from "effect";
 
 import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
@@ -18,58 +18,64 @@ import {
 
 import { useItemsControllerGetItems } from "@lootlog/client/search";
 
-const watchFormSchema = z
-  .object({
-    guildIds: z.array(z.string()).min(1),
-    world: z.string().min(1),
-    manualEntry: z.boolean(),
-    item: z
-      .object({
-        id: z.number(),
-        name: z.string(),
-        icon: z.string(),
-        lvl: z.number(),
-        rarity: z.string().nullable(),
-      })
-      .nullable(),
-    manualItemId: z.string(),
-    manualItemName: z.string(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.manualEntry) {
-      if (!data.manualItemId.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["manualItemId"],
-          message: "manualItemIdRequired",
-        });
-      } else if (!/^\d+$/.test(data.manualItemId.trim())) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["manualItemId"],
-          message: "manualItemIdInvalid",
-        });
+const WatchFormFields = Schema.Struct({
+  guildIds: Schema.mutable(Schema.Array(Schema.String)),
+  world: Schema.String,
+  manualEntry: Schema.Boolean,
+  item: Schema.NullOr(
+    Schema.Struct({
+      id: Schema.Finite,
+      name: Schema.String,
+      icon: Schema.String,
+      lvl: Schema.Finite,
+      rarity: Schema.NullOr(Schema.String),
+    }),
+  ),
+  manualItemId: Schema.String,
+  manualItemName: Schema.String,
+});
+
+type WatchFormValues = typeof WatchFormFields.Type;
+
+// One filter reports the required fields together with the item rules, so a
+// submit shows every problem at once.
+const watchFormSchema = Schema.toStandardSchemaV1(
+  WatchFormFields.check(
+    Schema.makeFilter((data) => {
+      const issues: Array<Schema.FilterIssue> = [];
+
+      if (data.guildIds.length === 0) {
+        issues.push({ path: ["guildIds"], issue: "guildIdsRequired" });
       }
 
-      if (!data.manualItemName.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["manualItemName"],
-          message: "manualItemNameRequired",
-        });
+      if (data.world.length === 0) {
+        issues.push({ path: ["world"], issue: "worldRequired" });
       }
-    } else {
-      if (!data.item) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["item"],
-          message: "itemRequired",
-        });
-      }
-    }
-  });
 
-type WatchFormValues = z.infer<typeof watchFormSchema>;
+      if (data.manualEntry) {
+        if (!data.manualItemId.trim()) {
+          issues.push({
+            path: ["manualItemId"],
+            issue: "manualItemIdRequired",
+          });
+        } else if (!/^\d+$/.test(data.manualItemId.trim())) {
+          issues.push({ path: ["manualItemId"], issue: "manualItemIdInvalid" });
+        }
+
+        if (!data.manualItemName.trim()) {
+          issues.push({
+            path: ["manualItemName"],
+            issue: "manualItemNameRequired",
+          });
+        }
+      } else if (!data.item) {
+        issues.push({ path: ["item"], issue: "itemRequired" });
+      }
+
+      return issues;
+    }),
+  ),
+);
 
 export function useWatchItemForm({
   hasActiveDm,
@@ -94,7 +100,7 @@ export function useWatchItemForm({
   const [itemSearchValue, setItemSearchValue] = useState("");
 
   const form = useForm<WatchFormValues>({
-    resolver: zodResolver(watchFormSchema),
+    resolver: standardSchemaResolver(watchFormSchema),
     defaultValues: {
       guildIds: [],
       world: "",

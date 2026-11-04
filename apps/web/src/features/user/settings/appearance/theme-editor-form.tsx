@@ -10,7 +10,7 @@ import { useUpdateUserTheme } from "@/hooks/api/user/use-user-themes";
 import { useTheme } from "@/hooks/context/use-theme";
 import { CUSTOM_THEME_FONTS } from "@lootlog/ui/themes/custom-theme";
 import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { UserThemeResponseDto } from "@lootlog/client/main";
 import {
   CUSTOM_THEME_FONT_IDS,
@@ -66,7 +66,7 @@ export const ThemeEditorForm = ({
   const updateTheme = useUpdateUserTheme();
 
   const form = useForm<ThemeEditorFormValues>({
-    resolver: zodResolver(createThemeEditorFormSchema(t)),
+    resolver: standardSchemaResolver(createThemeEditorFormSchema(t)),
     defaultValues: toFormValues(theme),
   });
 

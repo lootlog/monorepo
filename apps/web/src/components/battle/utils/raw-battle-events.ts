@@ -1,4 +1,5 @@
-import { z } from "zod";
+import { Option, Schema } from "effect";
+import { withFallback } from "@/lib/lenient-schema";
 import type {
   RawBattle,
   RawBattleParsedEvent,
@@ -75,21 +76,29 @@ const parseMove = (move: string): RawBattleParsedEvent => {
   };
 };
 
-const sourceBattleEvent = z
-  .object({
-    f: z.object({ m: z.array(z.string().nullable().catch(null)) }),
-  })
-  .nullable()
-  .catch(null);
+const decodeSourceBattleEvents = Schema.decodeUnknownOption(
+  Schema.Array(
+    withFallback(
+      Schema.NullOr(
+        Schema.Struct({
+          f: Schema.Struct({
+            m: Schema.Array(withFallback(Schema.NullOr(Schema.String), null)),
+          }),
+        }),
+      ),
+      null,
+    ),
+  ),
+);
 
 export const parseRawBattleSourceEvents = (
   sourceEvents: RawBattle["sourceEvents"],
 ): RawBattleParsedEvent[] | null => {
-  const result = z.array(sourceBattleEvent).safeParse(sourceEvents);
+  const result = decodeSourceBattleEvents(sourceEvents);
 
-  if (!result.success) return null;
+  if (Option.isNone(result)) return null;
 
-  const parsedEvents = result.data.flatMap(
+  const parsedEvents = result.value.flatMap(
     (event) =>
       event?.f.m.flatMap((move) => (move === null ? [] : [parseMove(move)])) ??
       [],

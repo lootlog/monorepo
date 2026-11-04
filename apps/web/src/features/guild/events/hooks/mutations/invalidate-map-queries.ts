@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { getQueryKeyPath } from "./query-key-path";
 import type { QueryClient } from "@tanstack/react-query";
 import {
   getEventsMonitoringControllerGetActiveGapForMapQueryKey,
@@ -57,7 +57,7 @@ export function invalidateGapQueries(
   });
   queryClient.invalidateQueries({
     predicate: (query) => {
-      const path = z.string().safeParse(query.queryKey[0]).data;
+      const path = getQueryKeyPath(query.queryKey);
 
       return path !== undefined && isEventHeroGapPath(path, guildId, eventId);
     },

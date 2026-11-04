@@ -5,7 +5,7 @@ import {
   getUsersControllerGetUserPreferencesQueryKey,
 } from "@lootlog/client/main";
 import { createUserPreferences } from "@/lib/testing/preferences";
-import { z } from "zod";
+import { Schema } from "effect";
 // @vitest-environment happy-dom
 
 import { initializeTestTranslations } from "@/lib/testing/i18n";
@@ -91,9 +91,11 @@ describe("ServerVisibilitySettings", () => {
             if (request.method === "PATCH") {
               requests.push(request.clone());
 
-              const update = z
-                .object({ hiddenGuildIds: z.array(z.string()) })
-                .parse(await request.json());
+              const update = Schema.decodeUnknownSync(
+                Schema.Struct({
+                  hiddenGuildIds: Schema.mutable(Schema.Array(Schema.String)),
+                }),
+              )(await request.json());
 
               preferences = { ...preferences, ...update };
             }

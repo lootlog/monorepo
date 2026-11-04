@@ -1,5 +1,5 @@
 import type { InfiniteData, QueryClient } from "@tanstack/react-query";
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import { getShortnameByProf } from "@lootlog/domain/profession";
 import {
   getLootsControllerFetchLootByIdQueryKey,
@@ -16,23 +16,25 @@ export const FIRST_PAGE_CURSOR = "";
 
 type LootsInfiniteData = InfiniteData<LootPageResponseDto>;
 
-const LootListParams = z.object({
-  world: z.string().optional(),
-  hid: z.string().optional(),
-  search: z.string().optional(),
-  npcs: z.array(z.string()).optional(),
-  npcTypes: z.array(z.string()).optional(),
-  players: z.array(z.string()).optional(),
-  rarities: z.array(z.string()).optional(),
-  professions: z.array(z.string()).optional(),
-  itemNames: z.array(z.string()).optional(),
-  npcLevelMin: z.number().optional(),
-  npcLevelMax: z.number().optional(),
-  itemLevelMin: z.number().optional(),
-  itemLevelMax: z.number().optional(),
-  playerLevelMin: z.number().optional(),
-  playerLevelMax: z.number().optional(),
+const LootListParams = Schema.Struct({
+  world: Schema.optional(Schema.String),
+  hid: Schema.optional(Schema.String),
+  search: Schema.optional(Schema.String),
+  npcs: Schema.optional(Schema.Array(Schema.String)),
+  npcTypes: Schema.optional(Schema.Array(Schema.String)),
+  players: Schema.optional(Schema.Array(Schema.String)),
+  rarities: Schema.optional(Schema.Array(Schema.String)),
+  professions: Schema.optional(Schema.Array(Schema.String)),
+  itemNames: Schema.optional(Schema.Array(Schema.String)),
+  npcLevelMin: Schema.optional(Schema.Finite),
+  npcLevelMax: Schema.optional(Schema.Finite),
+  itemLevelMin: Schema.optional(Schema.Finite),
+  itemLevelMax: Schema.optional(Schema.Finite),
+  playerLevelMin: Schema.optional(Schema.Finite),
+  playerLevelMax: Schema.optional(Schema.Finite),
 });
+
+const decodeLootListParams = Schema.decodeUnknownOption(LootListParams);
 
 const someIn = (
   allowed: ReadonlyArray<string> | undefined,
@@ -59,7 +61,7 @@ const someInRange = (
  */
 export function lootMatchesListParams(
   loot: Loot,
-  params: z.infer<typeof LootListParams>,
+  params: typeof LootListParams.Type,
 ): boolean | undefined {
   if (params.search?.trim()) return undefined;
 
@@ -174,15 +176,19 @@ const placeLoot = (
 
 // Event pages and the HID lookup cache plain results under the same path as
 // the paged lists, so lists are told apart by their data.
-const LootPage = z.object({
-  items: z.array(z.unknown()),
-  nextCursor: z.string().nullable(),
+const LootPage = Schema.Struct({
+  items: Schema.Array(Schema.Unknown),
+  nextCursor: Schema.NullOr(Schema.String),
 });
 
-const LootPages = z.object({ pages: z.array(LootPage) });
+const isLootPage = Schema.is(LootPage);
+
+const isLootPageList = Schema.is(
+  Schema.Struct({ pages: Schema.Array(LootPage) }),
+);
 
 const isLootPages = (data: unknown): data is LootsInfiniteData =>
-  LootPages.safeParse(data).success;
+  isLootPageList(data);
 
 const cachedLootLists = (queryClient: QueryClient, guildId: string) => {
   const path = `/guilds/${guildId}/loots`;
@@ -204,11 +210,11 @@ export function applyLootSnapshots(
   let needsServer = false;
 
   for (const [key] of cachedLootLists(queryClient, guildId)) {
-    const params = LootListParams.safeParse(key[1] ?? {});
+    const params = decodeLootListParams(key[1] ?? {});
 
     for (const loot of loots) {
-      const matches = params.success
-        ? lootMatchesListParams(loot, params.data)
+      const matches = Option.isSome(params)
+        ? lootMatchesListParams(loot, params.value)
         : undefined;
 
       if (matches === undefined) {
@@ -293,23 +299,24 @@ export async function reconcileActiveLootLists(
   );
 }
 
+const isLootPath = Schema.is(
+  Schema.String.check(Schema.isPattern(/^\/guilds\/[^/]+\/loots(?:\/\d+)?$/)),
+);
+
 export async function clearLootPolicyData(
   queryClient: QueryClient,
   organizationRoutes?: readonly string[],
 ) {
-  const lootPath = z.string().regex(/^\/guilds\/[^/]+\/loots(?:\/\d+)?$/);
   const paths = organizationRoutes?.map((id) => `/guilds/${id}/loots`);
 
   const filters = {
     predicate: (query: { queryKey: readonly unknown[] }) => {
-      const key = lootPath.safeParse(query.queryKey[0]);
+      const [key] = query.queryKey;
 
       return (
-        key.success &&
+        isLootPath(key) &&
         (paths === undefined ||
-          paths.some(
-            (path) => key.data === path || key.data.startsWith(`${path}/`),
-          ))
+          paths.some((path) => key === path || key.startsWith(`${path}/`)))
       );
     },
   };
@@ -325,7 +332,7 @@ export async function clearLootPolicyData(
       key,
       isLootPages(data)
         ? { pages: [], pageParams: [] }
-        : LootPage.safeParse(data).success
+        : isLootPage(data)
           ? { items: [], nextCursor: null }
           : null,
     );

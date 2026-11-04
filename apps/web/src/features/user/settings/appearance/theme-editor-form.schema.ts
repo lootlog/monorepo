@@ -3,19 +3,24 @@ import {
   type CustomThemeDefinition,
 } from "@lootlog/schema/custom-theme";
 import type { TFunction } from "i18next";
-import * as z from "zod";
+import { Schema } from "effect";
 
 /** The editor's draft: the definition's controls build it, so it is trusted. */
 export const createThemeEditorFormSchema = (t: TFunction) =>
-  z.object({
-    name: z
-      .string()
-      .trim()
-      .min(1, t("settings.appearance.editor.nameRequired"))
-      .max(CUSTOM_THEME_NAME_MAX_LENGTH),
-    definition: z.custom<CustomThemeDefinition>(),
-  });
+  Schema.toStandardSchemaV1(
+    Schema.Struct({
+      name: Schema.Trim.check(
+        Schema.isMinLength(1, {
+          message: t("settings.appearance.editor.nameRequired"),
+        }),
+        Schema.isMaxLength(CUSTOM_THEME_NAME_MAX_LENGTH),
+      ),
+      definition: Schema.declare(
+        (_input): _input is CustomThemeDefinition => true,
+      ),
+    }),
+  );
 
-export type ThemeEditorFormValues = z.input<
-  ReturnType<typeof createThemeEditorFormSchema>
->;
+export type ThemeEditorFormValues = ReturnType<
+  typeof createThemeEditorFormSchema
+>["Encoded"];

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { Schema, SchemaGetter } from "effect";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { Button } from "@lootlog/ui/components/button";
 import { UiLabelsProvider } from "@lootlog/ui/components/ui-labels";
@@ -51,17 +51,29 @@ const parseSearch = (searchString: string) => {
   return parsedSearch;
 };
 
-const searchValuesSchema = z.record(
-  z.string(),
-  z.union([z.array(z.coerce.string().nullish()), z.coerce.string()]).nullish(),
+const SearchString = Schema.Unknown.pipe(
+  Schema.decodeTo(Schema.String, {
+    decode: SchemaGetter.String(),
+    encode: SchemaGetter.passthrough({ strict: false }),
+  }),
 );
 
-const stringifySearch = (
-  search: Parameters<typeof searchValuesSchema.parse>[0],
-) => {
+const decodeSearchValues = Schema.decodeUnknownSync(
+  Schema.Record(
+    Schema.String,
+    Schema.NullishOr(
+      Schema.Union([
+        Schema.Array(Schema.NullishOr(SearchString)),
+        SearchString,
+      ]),
+    ),
+  ),
+);
+
+const stringifySearch = (search: Parameters<typeof decodeSearchValues>[0]) => {
   const searchParams = new URLSearchParams();
 
-  for (const [key, value] of Object.entries(searchValuesSchema.parse(search))) {
+  for (const [key, value] of Object.entries(decodeSearchValues(search))) {
     if (value === null || value === undefined) {
       continue;
     }

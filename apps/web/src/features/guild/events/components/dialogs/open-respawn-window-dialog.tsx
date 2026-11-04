@@ -2,8 +2,8 @@ import { DialogActionFooter } from "./dialog-action-footer";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { Schema } from "effect";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
@@ -28,18 +28,24 @@ interface OpenRespawnWindowDialogProps {
   isLoading?: boolean;
 }
 
-const createFormSchema = (t: (key: string) => string) =>
-  z
-    .object({
-      minTime: z.date({ message: t("events.respawn.minTimeRequired") }),
-      maxTime: z.date({ message: t("events.respawn.maxTimeRequired") }),
-    })
-    .refine((data) => data.minTime < data.maxTime, {
-      message: t("events.respawn.invalidTimeRange"),
-      path: ["maxTime"],
-    });
+const requiredDate = (message: string) =>
+  Schema.Date.annotate({ message }).annotateKey({ messageMissingKey: message });
 
-type FormValues = z.infer<ReturnType<typeof createFormSchema>>;
+const createFormSchema = (t: (key: string) => string) =>
+  Schema.toStandardSchemaV1(
+    Schema.Struct({
+      minTime: requiredDate(t("events.respawn.minTimeRequired")),
+      maxTime: requiredDate(t("events.respawn.maxTimeRequired")),
+    }).check(
+      Schema.makeFilter((data) =>
+        data.minTime < data.maxTime
+          ? undefined
+          : { path: ["maxTime"], issue: t("events.respawn.invalidTimeRange") },
+      ),
+    ),
+  );
+
+type FormValues = ReturnType<typeof createFormSchema>["Type"];
 
 const getDefaultValues = () => {
   const now = new Date();
@@ -64,7 +70,7 @@ export const OpenRespawnWindowDialog = ({
   const formSchema = createFormSchema(t);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: getDefaultValues(),
   });
 
