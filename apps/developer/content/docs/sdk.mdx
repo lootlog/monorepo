@@ -108,13 +108,15 @@ A failed request throws an `Error` with the response `status` and the parsed
 
 ```ts
 try {
-  await timersControllerGetTimers({ guildId }, { world: "fobos" });
+  await timersControllerGetTimers(
+    { guildId: organization.id },
+    { world: "fobos" },
+  );
 } catch (error) {
   const status = (error as { status?: number }).status;
-  const body = (error as { data?: { code?: string } }).data;
 
   if (status === 403) console.warn("The key cannot read these timers");
-  else if (body?.code === "RATE_LIMITED") console.warn("Slow down");
+  else if (status === 429) console.warn("Slow down");
   else throw error;
 }
 ```
