@@ -3,6 +3,28 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-04 — SDK 0.3.0 and JSON-only realtime frames (breaking)
+
+The realtime gateway exchanges only JSON text frames. It no longer sends or
+accepts MessagePack, and it rejects a WebSocket handshake that offers
+`lootlog.realtime.v1` without `lootlog.realtime.json.v1` with a `400`.
+
+[`@lootlog/sdk@0.3.0`](https://www.npmjs.com/package/@lootlog/sdk/v/0.3.0)
+always offers `lootlog.realtime.json.v1` and exchanges JSON frames. SDK 0.2.0
+and older clients that did not pass `frameEncoding: "json"` exchanged
+MessagePack and stop working when the gateway drops it.
+
+To migrate from 0.2.0:
+
+- Remove `frameEncoding` from the `RealtimeClient` options.
+- Remove `REALTIME_JSON_SUBPROTOCOL` from `protocols`; the client adds it.
+  Passing it is still accepted. `REALTIME_SUBPROTOCOL` is no longer exported.
+- A `RealtimeWebSocketFactory` returns a socket whose `send` accepts a string;
+  the client no longer sets `binaryType`.
+
+An integration with its own WebSocket client sends commands as JSON text
+frames, offers `lootlog.realtime.json.v1`, and reads every frame as JSON text.
+
 ## 2026-11-03 — SDK 0.2.0 (breaking)
 
 [`@lootlog/sdk@0.2.0`](https://www.npmjs.com/package/@lootlog/sdk/v/0.2.0)
