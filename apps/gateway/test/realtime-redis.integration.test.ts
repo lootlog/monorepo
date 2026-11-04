@@ -3010,12 +3010,14 @@ describe("realtime Dragonfly integration", () => {
 
       for (let index = 0; index < 5; index += 1) {
         await expect(
-          mapPings.send(source.socket, {
-            expectedMapId: 7,
-            type: "enemy",
-            x: index,
-            y: index,
-          }),
+          Effect.runPromise(
+            mapPings.send(source.socket, {
+              expectedMapId: 7,
+              type: "enemy",
+              x: index,
+              y: index,
+            }),
+          ),
         ).resolves.toMatchObject({ status: "accepted" });
 
         if (index === 2) {
@@ -3035,12 +3037,14 @@ describe("realtime Dragonfly integration", () => {
       }
 
       await expect(
-        mapPings.send(source.socket, {
-          expectedMapId: 7,
-          type: "enemy",
-          x: 6,
-          y: 6,
-        }),
+        Effect.runPromise(
+          mapPings.send(source.socket, {
+            expectedMapId: 7,
+            type: "enemy",
+            x: 6,
+            y: 6,
+          }),
+        ),
       ).resolves.toMatchObject({ status: "rejected", code: "rate-limited" });
       await waitFor(
         () => eventsOfType(recipient.frames, "map-ping.received").length >= 5,
@@ -3085,12 +3089,14 @@ describe("realtime Dragonfly integration", () => {
 
       // The exhausted map ping budget must not block battle pings.
       await expect(
-        new BattlePingService(firstStore, firstHub).send(source.socket, {
-          expectedMapId: 7,
-          type: "attack",
-          warriorId: -1,
-          recipientCharacterIds: ["100"],
-        }),
+        Effect.runPromise(
+          new BattlePingService(firstStore, firstHub).send(source.socket, {
+            expectedMapId: 7,
+            type: "attack",
+            warriorId: -1,
+            recipientCharacterIds: ["100"],
+          }),
+        ),
       ).resolves.toMatchObject({ status: "accepted" });
       await waitFor(
         () =>
@@ -3110,16 +3116,20 @@ describe("realtime Dragonfly integration", () => {
       );
       const sourceAirTags = new AirTagService(firstStore, firstHub);
       const recipientAirTags = new AirTagService(secondStore, secondHub);
-      await sourceAirTags.updateSubscription(source.socket, {
-        requestId: "source-subscription",
-        enabled: true,
-        expectedMapId: 7,
-      });
-      await recipientAirTags.updateSubscription(recipient.socket, {
-        requestId: "recipient-subscription",
-        enabled: true,
-        expectedMapId: 7,
-      });
+      await Effect.runPromise(
+        sourceAirTags.updateSubscription(source.socket, {
+          requestId: "source-subscription",
+          enabled: true,
+          expectedMapId: 7,
+        }),
+      );
+      await Effect.runPromise(
+        recipientAirTags.updateSubscription(recipient.socket, {
+          requestId: "recipient-subscription",
+          enabled: true,
+          expectedMapId: 7,
+        }),
+      );
 
       const observation = {
         targetId: "target-1",
@@ -3130,10 +3140,12 @@ describe("realtime Dragonfly integration", () => {
       };
 
       await expect(
-        sourceAirTags.publishObservations(source.socket, {
-          expectedMapId: 7,
-          observations: [observation, { ...observation, x: 12 }],
-        }),
+        Effect.runPromise(
+          sourceAirTags.publishObservations(source.socket, {
+            expectedMapId: 7,
+            observations: [observation, { ...observation, x: 12 }],
+          }),
+        ),
       ).resolves.toEqual({
         status: "accepted",
         acceptedScopes: 1,
@@ -3150,13 +3162,12 @@ describe("realtime Dragonfly integration", () => {
       const reconnected = makeSocket("reconnected");
       secondHub.register(reconnected.socket);
 
-      const rejoined = await recipientAirTags.updateSubscription(
-        reconnected.socket,
-        {
+      const rejoined = await Effect.runPromise(
+        recipientAirTags.updateSubscription(reconnected.socket, {
           requestId: "reconnected-subscription",
           enabled: true,
           expectedMapId: 7,
-        },
+        }),
       );
 
       expect(rejoined).toMatchObject({
@@ -3165,31 +3176,34 @@ describe("realtime Dragonfly integration", () => {
       });
 
       for (let index = 0; index < 14; index += 1) {
-        const acknowledgement = await sourceAirTags.publishObservations(
-          source.socket,
-          { expectedMapId: 7, observations: [observation] },
+        const acknowledgement = await Effect.runPromise(
+          sourceAirTags.publishObservations(source.socket, {
+            expectedMapId: 7,
+            observations: [observation],
+          }),
         );
 
         expect(acknowledgement).toMatchObject({ status: "accepted" });
       }
 
       await expect(
-        sourceAirTags.publishObservations(source.socket, {
-          expectedMapId: 7,
-          observations: [observation],
-        }),
+        Effect.runPromise(
+          sourceAirTags.publishObservations(source.socket, {
+            expectedMapId: 7,
+            observations: [observation],
+          }),
+        ),
       ).resolves.toMatchObject({ status: "rejected", code: "rate-limited" });
 
       await Bun.sleep(10_100);
       const afterExpiry = makeSocket("after-expiry");
 
-      const expiredSnapshot = await recipientAirTags.updateSubscription(
-        afterExpiry.socket,
-        {
+      const expiredSnapshot = await Effect.runPromise(
+        recipientAirTags.updateSubscription(afterExpiry.socket, {
           requestId: "expired-subscription",
           enabled: true,
           expectedMapId: 7,
-        },
+        }),
       );
 
       expect(expiredSnapshot).toMatchObject({
@@ -3240,10 +3254,12 @@ describe("realtime Dragonfly integration", () => {
 
       const publishThreat = async (sighting: typeof clanEnemy) =>
         expect(
-          sourceAirTags.publishObservations(source.socket, {
-            expectedMapId: 7,
-            observations: [sighting, observation],
-          }),
+          Effect.runPromise(
+            sourceAirTags.publishObservations(source.socket, {
+              expectedMapId: 7,
+              observations: [sighting, observation],
+            }),
+          ),
         ).resolves.toMatchObject({ status: "accepted" });
 
       const threatEvents = () =>
@@ -3265,10 +3281,12 @@ describe("realtime Dragonfly integration", () => {
       } = clanEnemy;
 
       await expect(
-        sourceAirTags.publishObservations(source.socket, {
-          expectedMapId: 7,
-          observations: [legacySighting],
-        }),
+        Effect.runPromise(
+          sourceAirTags.publishObservations(source.socket, {
+            expectedMapId: 7,
+            observations: [legacySighting],
+          }),
+        ),
       ).resolves.toMatchObject({ status: "accepted" });
       await waitFor(() => threatEvents().length === 2);
       await Bun.sleep(100);
@@ -3302,17 +3320,21 @@ describe("realtime Dragonfly integration", () => {
       source.socket.data.confidence = "verified";
       const { clan: _clan, ...clanless } = clanEnemy;
       await expect(
-        sourceAirTags.publishObservations(source.socket, {
-          expectedMapId: 7,
-          observations: [{ ...clanless, targetId: "clanless" }],
-        }),
+        Effect.runPromise(
+          sourceAirTags.publishObservations(source.socket, {
+            expectedMapId: 7,
+            observations: [{ ...clanless, targetId: "clanless" }],
+          }),
+        ),
       ).resolves.toMatchObject({ status: "accepted" });
 
       await expect(
-        recipientAirTags.fetchMapThreats(
-          threatWatcher.socket,
-          "organization-1",
-          "classic",
+        Effect.runPromise(
+          recipientAirTags.fetchMapThreats(
+            threatWatcher.socket,
+            "organization-1",
+            "classic",
+          ),
         ),
       ).resolves.toMatchObject({
         threats: [
@@ -3326,10 +3348,12 @@ describe("realtime Dragonfly integration", () => {
         ],
       });
       await expect(
-        recipientAirTags.fetchMapThreats(
-          locationBlind.socket,
-          "organization-1",
-          "classic",
+        Effect.runPromise(
+          recipientAirTags.fetchMapThreats(
+            locationBlind.socket,
+            "organization-1",
+            "classic",
+          ),
         ),
       ).resolves.toBeNull();
       expect(
@@ -3358,18 +3382,22 @@ describe("realtime Dragonfly integration", () => {
       secondHub.register(scopeRecipient.socket);
       await Promise.all(
         observers.map((target) =>
-          sourceAirTags.updateSubscription(target.socket, {
-            requestId: `${target.socket.data.connectionId}-subscription`,
-            enabled: true,
-            expectedMapId: 9,
-          }),
+          Effect.runPromise(
+            sourceAirTags.updateSubscription(target.socket, {
+              requestId: `${target.socket.data.connectionId}-subscription`,
+              enabled: true,
+              expectedMapId: 9,
+            }),
+          ),
         ),
       );
-      await recipientAirTags.updateSubscription(scopeRecipient.socket, {
-        requestId: "scope-recipient-subscription",
-        enabled: true,
-        expectedMapId: 9,
-      });
+      await Effect.runPromise(
+        recipientAirTags.updateSubscription(scopeRecipient.socket, {
+          requestId: "scope-recipient-subscription",
+          enabled: true,
+          expectedMapId: 9,
+        }),
+      );
 
       const scopeUpdates = () =>
         scopeRecipient.frames.flatMap((frame) => {
@@ -3400,10 +3428,12 @@ describe("realtime Dragonfly integration", () => {
         >,
       ) =>
         expect(
-          sourceAirTags.publishObservations(target.socket, {
-            expectedMapId: 9,
-            ...batch,
-          }),
+          Effect.runPromise(
+            sourceAirTags.publishObservations(target.socket, {
+              expectedMapId: 9,
+              ...batch,
+            }),
+          ),
         ).resolves.toMatchObject({ status: "accepted" });
 
       await report(firstObserver, { observations: [wanderer, lurker] });
@@ -3463,11 +3493,13 @@ describe("realtime Dragonfly integration", () => {
         scopeRecipient.socket.data.presence,
       );
       await expect(
-        recipientAirTags.updateSubscription(afterDeparture.socket, {
-          requestId: "after-departure-subscription",
-          enabled: true,
-          expectedMapId: 9,
-        }),
+        Effect.runPromise(
+          recipientAirTags.updateSubscription(afterDeparture.socket, {
+            requestId: "after-departure-subscription",
+            enabled: true,
+            expectedMapId: 9,
+          }),
+        ),
       ).resolves.toMatchObject({
         status: "accepted",
         scopes: [{ targets: [{ targetId: "lurker" }] }],
@@ -3495,21 +3527,25 @@ describe("realtime Dragonfly integration", () => {
       secondHub.register(remoteWatcher.socket);
 
       for (const target of [soloObserver, localWatcher])
-        await sourceAirTags.updateSubscription(target.socket, {
-          requestId: `${target.socket.data.connectionId}-subscription`,
-          enabled: true,
-          expectedMapId: 11,
-        });
+        await Effect.runPromise(
+          sourceAirTags.updateSubscription(target.socket, {
+            requestId: `${target.socket.data.connectionId}-subscription`,
+            enabled: true,
+            expectedMapId: 11,
+          }),
+        );
 
       const soloUpdates = (target: ReturnType<typeof makeSocket>) =>
         eventsOfType(target.frames, "air-tag.scope-updated").length;
 
       const reportSolo = (x: number) =>
         expect(
-          sourceAirTags.publishObservations(soloObserver.socket, {
-            expectedMapId: 11,
-            observations: [{ ...observation, targetId: "solo", x }],
-          }),
+          Effect.runPromise(
+            sourceAirTags.publishObservations(soloObserver.socket, {
+              expectedMapId: 11,
+              observations: [{ ...observation, targetId: "solo", x }],
+            }),
+          ),
         ).resolves.toMatchObject({ status: "accepted" });
 
       await reportSolo(1);
@@ -3517,11 +3553,13 @@ describe("realtime Dragonfly integration", () => {
       await Bun.sleep(100);
       expect(channelUpdates).toHaveLength(0);
 
-      await recipientAirTags.updateSubscription(remoteWatcher.socket, {
-        requestId: "remote-watcher-subscription",
-        enabled: true,
-        expectedMapId: 11,
-      });
+      await Effect.runPromise(
+        recipientAirTags.updateSubscription(remoteWatcher.socket, {
+          requestId: "remote-watcher-subscription",
+          enabled: true,
+          expectedMapId: 11,
+        }),
+      );
       await reportSolo(2);
       await waitFor(() => soloUpdates(remoteWatcher) === 1);
       expect(soloUpdates(localWatcher)).toBe(2);
@@ -3557,17 +3595,21 @@ describe("realtime Dragonfly integration", () => {
       moveAirTagSocket(soloObserver.socket, { mapId: 12, map: "Elsewhere" });
       secondHub.register(anyMapWatcher.socket);
       secondHub.subscribe(anyMapWatcher.socket, anyMap);
-      await recipientAirTags.registerInterest(anyMap);
-      await sourceAirTags.updateSubscription(soloObserver.socket, {
-        requestId: "solo-observer-elsewhere",
-        enabled: true,
-        expectedMapId: 12,
-      });
-      await expect(
-        sourceAirTags.publishObservations(soloObserver.socket, {
+      await Effect.runPromise(recipientAirTags.registerInterest(anyMap));
+      await Effect.runPromise(
+        sourceAirTags.updateSubscription(soloObserver.socket, {
+          requestId: "solo-observer-elsewhere",
+          enabled: true,
           expectedMapId: 12,
-          observations: [{ ...observation, targetId: "elsewhere" }],
         }),
+      );
+      await expect(
+        Effect.runPromise(
+          sourceAirTags.publishObservations(soloObserver.socket, {
+            expectedMapId: 12,
+            observations: [{ ...observation, targetId: "elsewhere" }],
+          }),
+        ),
       ).resolves.toMatchObject({ status: "accepted" });
       await waitFor(() => soloUpdates(anyMapWatcher) === 1);
       channelListener.close();
@@ -3654,10 +3696,10 @@ describe("realtime Dragonfly integration", () => {
       });
 
       await expect(
-        service.report(first.socket, report([elite])),
+        Effect.runPromise(service.report(first.socket, report([elite]))),
       ).resolves.toEqual({ status: "accepted" });
       await expect(
-        service.report(second.socket, report([elite])),
+        Effect.runPromise(service.report(second.socket, report([elite]))),
       ).resolves.toEqual({ status: "accepted" });
 
       expect(presenceUpdates(first.frames)).toEqual([
@@ -3672,14 +3714,18 @@ describe("realtime Dragonfly integration", () => {
       expect(presenceUpdates(lowLevelReader.frames)).toEqual([]);
 
       await expect(
-        service.fetch(second.socket, "organization-1", "classic"),
+        Effect.runPromise(
+          service.fetch(second.socket, "organization-1", "classic"),
+        ),
       ).resolves.toMatchObject({ npcs: [{ npc: elite }] });
       await expect(
-        service.fetch(lowLevelReader.socket, "organization-1", "classic"),
+        Effect.runPromise(
+          service.fetch(lowLevelReader.socket, "organization-1", "classic"),
+        ),
       ).resolves.toMatchObject({ npcs: [] });
 
       // The first reporter leaving keeps the NPC standing for the second one.
-      await service.withdraw(first.socket);
+      await Effect.runPromise(service.withdraw(first.socket));
       expect(presenceUpdates(second.frames)).toHaveLength(1);
 
       // A report from another world withdraws the NPCs seen in the previous one.
@@ -3687,7 +3733,9 @@ describe("realtime Dragonfly integration", () => {
         ...second.socket.data.character!,
         world: "tempest",
       };
-      await service.report(second.socket, report([], "tempest"));
+      await Effect.runPromise(
+        service.report(second.socket, report([], "tempest")),
+      );
 
       const updates = presenceUpdates(second.frames);
       expect(updates).toEqual([
@@ -3700,14 +3748,20 @@ describe("realtime Dragonfly integration", () => {
       ]);
       expect(updates[1]!.revision).toBeGreaterThan(updates[0]!.revision);
       await expect(
-        service.fetch(second.socket, "organization-1", "classic"),
+        Effect.runPromise(
+          service.fetch(second.socket, "organization-1", "classic"),
+        ),
       ).resolves.toMatchObject({ npcs: [] });
 
       // A report after a failed write replaces what the connection stored,
       // so an NPC killed meanwhile does not keep standing.
-      await service.report(second.socket, report([elite], "tempest"));
+      await Effect.runPromise(
+        service.report(second.socket, report([elite], "tempest")),
+      );
       second.socket.data.npcPresence = undefined;
-      await service.report(second.socket, report([], "tempest"));
+      await Effect.runPromise(
+        service.report(second.socket, report([], "tempest")),
+      );
       expect(presenceUpdates(second.frames).slice(-2)).toEqual([
         expect.objectContaining({ world: "tempest", standing: true }),
         expect.objectContaining({ world: "tempest", standing: false }),

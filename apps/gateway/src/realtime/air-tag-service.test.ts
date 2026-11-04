@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { describe, expect, test } from "bun:test";
 import { Permission } from "@lootlog/schema/permissions";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
@@ -144,11 +145,13 @@ describe("AirTagService", () => {
 
     const socket = makeSocket();
 
-    const subscription = await service.updateSubscription(socket, {
-      requestId: "request-1",
-      enabled: true,
-      expectedMapId: 7,
-    });
+    const subscription = await Effect.runPromise(
+      service.updateSubscription(socket, {
+        requestId: "request-1",
+        enabled: true,
+        expectedMapId: 7,
+      }),
+    );
 
     expect(subscription).toEqual({
       status: "accepted",
@@ -167,12 +170,14 @@ describe("AirTagService", () => {
       ],
     });
 
-    const response = await service.publishObservations(socket, {
-      expectedMapId: 7,
-      observations: [
-        { targetId: "target", nickname: "Enemy", relation: 3, x: 1, y: 2 },
-      ],
-    });
+    const response = await Effect.runPromise(
+      service.publishObservations(socket, {
+        expectedMapId: 7,
+        observations: [
+          { targetId: "target", nickname: "Enemy", relation: 3, x: 1, y: 2 },
+        ],
+      }),
+    );
 
     expect(response).toEqual({
       status: "accepted",
@@ -233,10 +238,12 @@ describe("AirTagService", () => {
     );
 
     expect(
-      await service.publishObservations(makeSocket(), {
-        expectedMapId: 7,
-        observations: [],
-      }),
+      await Effect.runPromise(
+        service.publishObservations(makeSocket(), {
+          expectedMapId: 7,
+          observations: [],
+        }),
+      ),
     ).toEqual({ status: "rejected", code: "invalid-payload" });
     expect(evaluations).toBe(0);
   });
@@ -317,19 +324,21 @@ describe("AirTagService map threats", () => {
     ];
 
     await expect(
-      service.publishObservations(socket, {
-        expectedMapId: 7,
-        observations: [
-          {
-            targetId: "enemy",
-            nickname: "Rival",
-            clan: { id: 5, name: "Rivals" },
-            relation: 6,
-            x: 1,
-            y: 2,
-          },
-        ],
-      }),
+      Effect.runPromise(
+        service.publishObservations(socket, {
+          expectedMapId: 7,
+          observations: [
+            {
+              targetId: "enemy",
+              nickname: "Rival",
+              clan: { id: 5, name: "Rivals" },
+              relation: 6,
+              x: 1,
+              y: 2,
+            },
+          ],
+        }),
+      ),
     ).resolves.toMatchObject({ status: "accepted" });
     expect(threatPublications).toHaveLength(0);
 

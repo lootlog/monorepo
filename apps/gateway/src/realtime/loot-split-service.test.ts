@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { describe, expect, test } from "bun:test";
 import { makeGamePingSocket as makeSocket } from "../../test/realtime-fixtures.js";
 import type { PingScriptStore } from "./ping-routing.js";
@@ -24,12 +25,14 @@ describe("LootSplitService", () => {
       },
     });
 
-    const response = await service.send(makeSocket(), {
-      splitId: "1200653658",
-      choices: { "1200653658": 0, "1200653660": 2 },
-      accepted: true,
-      recipientCharacterIds: ["123", "789", "1466"],
-    });
+    const response = await Effect.runPromise(
+      service.send(makeSocket(), {
+        splitId: "1200653658",
+        choices: { "1200653658": 0, "1200653660": 2 },
+        accepted: true,
+        recipientCharacterIds: ["123", "789", "1466"],
+      }),
+    );
 
     expect(response).toEqual({ status: "accepted" });
     // Loot split frames must not drain the map or battle ping budgets.
@@ -74,9 +77,11 @@ describe("LootSplitService", () => {
       },
     });
 
-    const response = await service.autoAccept(makeSocket(), {
-      recipientCharacterIds: ["123", "16051"],
-    });
+    const response = await Effect.runPromise(
+      service.autoAccept(makeSocket(), {
+        recipientCharacterIds: ["123", "16051"],
+      }),
+    );
 
     expect(response).toEqual({ status: "accepted" });
     expect(publications).toEqual([
@@ -138,12 +143,14 @@ describe("LootSplitService", () => {
     };
 
     expect(
-      await service.send(hidden, {
-        splitId: "1200653658",
-        choices: { "1200653658": 1 },
-        accepted: false,
-        recipientCharacterIds: ["789"],
-      }),
+      await Effect.runPromise(
+        service.send(hidden, {
+          splitId: "1200653658",
+          choices: { "1200653658": 1 },
+          accepted: false,
+          recipientCharacterIds: ["789"],
+        }),
+      ),
     ).toEqual({ status: "rejected", code: "forbidden" });
     expect(evaluations).toBe(0);
   });
@@ -154,12 +161,14 @@ describe("LootSplitService", () => {
     });
 
     expect(
-      await service.send(makeSocket(), {
-        splitId: "1200653658",
-        choices: { "<script>": 1 },
-        accepted: false,
-        recipientCharacterIds: ["789"],
-      }),
+      await Effect.runPromise(
+        service.send(makeSocket(), {
+          splitId: "1200653658",
+          choices: { "<script>": 1 },
+          accepted: false,
+          recipientCharacterIds: ["789"],
+        }),
+      ),
     ).toEqual({ status: "rejected", code: "invalid-payload" });
   });
 });

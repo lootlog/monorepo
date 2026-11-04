@@ -9,19 +9,15 @@ import {
 } from "@lootlog/schema/loot-split";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { Schema, Context, Effect, Layer } from "effect";
-import { ContextLogger } from "@lootlog/instrumentation";
 import {
-  consumePingRateLimit,
+  relayWithRateLimit,
   getPingScopes,
   type PingScriptStore,
 } from "#src/realtime/ping-routing";
 import { type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket } from "#src/realtime/session";
 import { GatewayRedis } from "#src/platform/redis-store";
-import {
-  fromDependency,
-  type CommandRoutes,
-} from "#src/realtime/command-routes";
+import type { CommandRoutes } from "#src/realtime/command-routes";
 
 /**
  * A choice change, an accept, and the frame a new fight sends for the split
@@ -48,8 +44,6 @@ type LootSplitRelayedEvent = Extract<
  * client that missed a frame keeps the last state it has.
  */
 export class LootSplitService {
-  private readonly logger = new ContextLogger(LootSplitService.name);
-
   constructor(
     private readonly redis: PingScriptStore,
     private readonly hub: Pick<RealtimeHub, "publishToScopes">,
@@ -58,9 +52,9 @@ export class LootSplitService {
   send(
     socket: GatewaySocket,
     payload: LootSplitSendPayload,
-  ): Promise<LootSplitAck> {
+  ): Effect.Effect<LootSplitAck> {
     if (!isLootSplitSendPayload(payload))
-      return Promise.resolve({ status: "rejected", code: "invalid-payload" });
+      return Effect.succeed({ status: "rejected", code: "invalid-payload" });
 
     return this.relay(
       socket,
@@ -84,9 +78,9 @@ export class LootSplitService {
   autoAccept(
     socket: GatewaySocket,
     payload: LootSplitAutoAcceptPayload,
-  ): Promise<LootSplitAck> {
+  ): Effect.Effect<LootSplitAck> {
     if (!isLootSplitAutoAcceptPayload(payload))
-      return Promise.resolve({ status: "rejected", code: "invalid-payload" });
+      return Effect.succeed({ status: "rejected", code: "invalid-payload" });
 
     return this.relay(
       socket,
@@ -99,7 +93,7 @@ export class LootSplitService {
     );
   }
 
-  private async relay(
+  private relay(
     socket: GatewaySocket,
     requestedRecipientCharacterIds: readonly string[],
     buildEvent: (
@@ -107,7 +101,8 @@ export class LootSplitService {
       world: string,
       sentAt: number,
     ) => LootSplitRelayedEvent,
-  ): Promise<LootSplitAck> {
+  ): Effect.Effect<LootSplitAck> {
+    const { redis, hub } = this;
     const character = socket.data.presence?.character;
 
     if (
@@ -116,54 +111,46 @@ export class LootSplitService {
       !character.characterId ||
       !character.name
     )
-      return { status: "rejected", code: "invalid-context" };
+      return Effect.succeed({ status: "rejected", code: "invalid-context" });
+
+    const { world, characterId, name } = character;
 
     const recipientCharacterIds = requestedRecipientCharacterIds.filter(
-      (characterId) => characterId !== character.characterId,
+      (recipient) => recipient !== characterId,
     );
 
     if (recipientCharacterIds.length === 0)
-      return { status: "rejected", code: "invalid-payload" };
+      return Effect.succeed({ status: "rejected", code: "invalid-payload" });
 
     // Participants stay on one world but may leave the map, so no map.
-    const scopes = getPingScopes(socket, { world: character.world });
+    const scopes = getPingScopes(socket, { world });
 
-    if (scopes.length === 0) return { status: "rejected", code: "forbidden" };
+    if (scopes.length === 0)
+      return Effect.succeed({ status: "rejected", code: "forbidden" });
 
-    const rateLimit = await consumePingRateLimit(this.redis, this.logger, {
-      key: `loot-split:rate:${socket.data.userId}`,
-      windowMs: RATE_LIMIT_WINDOW_MS,
-      limit: RATE_LIMIT,
-      pingId: crypto.randomUUID(),
+    return relayWithRateLimit({
+      redis,
+      context: "LootSplitService",
+      rateLimit: {
+        key: `loot-split:rate:${socket.data.userId}`,
+        windowMs: RATE_LIMIT_WINDOW_MS,
+        limit: RATE_LIMIT,
+        pingId: crypto.randomUUID(),
+      },
+      publish: (sentAt) =>
+        hub.publishToScopes(
+          scopes,
+          buildEvent({ characterId, name }, world, sentAt),
+          {
+            excludeConnectionId: socket.data.connectionId,
+            recipientPlatform: "game",
+            recipientWorld: world,
+            recipientCharacterIds,
+          },
+        ),
+      failure: "Failed to route loot split choices",
+      accepted: { status: "accepted" } as const,
     });
-
-    if (!rateLimit)
-      return { status: "rejected", code: "temporarily-unavailable" };
-    const [accepted, sentAt, retryAfterMs] = rateLimit;
-
-    if (accepted !== 1)
-      return { status: "rejected", code: "rate-limited", retryAfterMs };
-
-    const event = buildEvent(
-      { characterId: character.characterId, name: character.name },
-      character.world,
-      sentAt,
-    );
-
-    try {
-      await this.hub.publishToScopes(scopes, event, {
-        excludeConnectionId: socket.data.connectionId,
-        recipientPlatform: "game",
-        recipientWorld: character.world,
-        recipientCharacterIds,
-      });
-    } catch (error) {
-      this.logger.warn("Failed to route loot split choices", error);
-
-      return { status: "rejected", code: "temporarily-unavailable" };
-    }
-
-    return { status: "accepted" };
   }
 }
 
@@ -186,15 +173,11 @@ export const lootSplitRoutes = (
   ({
     "loot-split.send": {
       joined: true,
-      run: (socket, data) =>
-        fromDependency("loot-split.send", () => lootSplits.send(socket, data)),
+      run: (socket, data) => lootSplits.send(socket, data),
     },
     "loot-split.auto-accept": {
       joined: true,
-      run: (socket, data) =>
-        fromDependency("loot-split.auto-accept", () =>
-          lootSplits.autoAccept(socket, data),
-        ),
+      run: (socket, data) => lootSplits.autoAccept(socket, data),
     },
   }) satisfies Pick<
     CommandRoutes,

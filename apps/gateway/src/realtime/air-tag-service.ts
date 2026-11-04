@@ -20,8 +20,18 @@ import {
 } from "@lootlog/schema/air-tag";
 import type { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { chunk } from "es-toolkit";
-import { Effect, Metric, Schedule, Schema, Context, Layer } from "effect";
-import { ContextLogger } from "@lootlog/instrumentation";
+import {
+  Context,
+  Effect,
+  Exit,
+  Layer,
+  Metric,
+  Schedule,
+  Schema,
+  Semaphore,
+} from "effect";
+import { runLogEffect } from "@lootlog/instrumentation";
+import { RealtimeStoreError } from "#src/realtime/realtime-errors";
 import {
   type RedisGatewayStore,
   type RedisScriptReply,
@@ -34,7 +44,6 @@ import {
   canSubscribe,
 } from "#src/realtime/subscription-policy";
 import {
-  fromDependency,
   orAccessDenied,
   type CommandRoutes,
 } from "#src/realtime/command-routes";
@@ -68,6 +77,15 @@ const federatedUpdates = Metric.counter(
   "lootlog_gateway_air_tag_federated_updates_total",
   { incremental: true },
 );
+
+// Attributed once: deriving them on every batch costs more than the update.
+const skippedFederatedUpdates = Metric.withAttributes(federatedUpdates, {
+  outcome: "skipped",
+});
+
+const publishedFederatedUpdates = Metric.withAttributes(federatedUpdates, {
+  outcome: "published",
+});
 
 // A still enemy is sighted at most 6.25 s apart; re-reporting a sighting this old keeps its
 // age under `AIR_TAG_MAP_THREAT_FRESH_MS` on recipients.
@@ -466,11 +484,31 @@ type ScriptStore = {
   };
 };
 
+/** Logs are annotated only when written: annotating costs on every batch. */
+const warn = (message: string, cause: unknown) =>
+  Effect.logWarning(message, cause).pipe(
+    Effect.annotateLogs({ context: "AirTagService" }),
+  );
+
+/** A Redis call whose reply is decoded inside it, failing as a store error. */
+const storeCall = <A>(operation: string, evaluate: () => Promise<A>) =>
+  Effect.tryPromise({
+    try: evaluate,
+    catch: (cause) => new RealtimeStoreError({ operation, cause }),
+  });
+
+type ThreatScope = Pick<AirTagScope, "guildId" | "world" | "mapId">;
+
+const UNAVAILABLE = {
+  status: "rejected",
+  code: "temporarily-unavailable",
+} as const;
+
 export class AirTagService {
-  private readonly logger = new ContextLogger(AirTagService.name);
-  private readonly subscriptionOperations = new WeakMap<
+  /** Each socket's subscription changes one at a time, in the order it sent them. */
+  private readonly subscriptionLocks = new WeakMap<
     GatewaySocket,
-    Promise<unknown>
+    Semaphore.Semaphore
   >();
   private readonly threatFlushes = new Map<
     string,
@@ -492,28 +530,30 @@ export class AirTagService {
   updateSubscription(
     socket: GatewaySocket,
     payload: { requestId: string; enabled: boolean; expectedMapId?: number },
-  ): Promise<AirTagSubscriptionAck> {
-    return this.serialize(socket, () =>
-      this.performSubscriptionUpdate(socket, payload),
+  ): Effect.Effect<AirTagSubscriptionAck> {
+    return this.serialize(
+      socket,
+      Effect.suspend(() => this.performSubscriptionUpdate(socket, payload)),
     );
   }
 
-  private async performSubscriptionUpdate(
+  private performSubscriptionUpdate(
     socket: GatewaySocket,
     payload: { requestId: string; enabled: boolean; expectedMapId?: number },
-  ): Promise<AirTagSubscriptionAck> {
+  ): Effect.Effect<AirTagSubscriptionAck> {
+    const { requestId } = payload;
     this.clearSubscription(socket);
 
     if (!payload.enabled)
-      return { status: "accepted", requestId: payload.requestId, scopes: [] };
+      return Effect.succeed({ status: "accepted", requestId, scopes: [] });
     const context = this.getContext(socket, payload.expectedMapId);
 
     if (!context)
-      return {
+      return Effect.succeed({
         status: "rejected",
-        requestId: payload.requestId,
+        requestId,
         code: "invalid-context",
-      };
+      });
 
     const eligibleScopes = this.getEligibleScopes(
       socket,
@@ -522,58 +562,71 @@ export class AirTagService {
     );
 
     if (eligibleScopes.length === 0)
-      return {
+      return Effect.succeed({
         status: "rejected",
-        requestId: payload.requestId,
+        requestId,
         code: "forbidden",
-      };
+      });
 
-    try {
-      const disabled = await this.redis.command.mget(
+    const unavailable = {
+      status: "rejected",
+      requestId,
+      code: "temporarily-unavailable",
+    } as const;
+
+    return storeCall("air-tag.disabled", () =>
+      this.redis.command.mget(
         eligibleScopes.map((scope) => this.disabledKey(scope)),
-      );
+      ),
+    ).pipe(
+      Effect.flatMap((disabled) => {
+        const enabledScopes = eligibleScopes.filter(
+          (_, index) => disabled[index] !== "1",
+        );
 
-      const enabledScopes = eligibleScopes.filter(
-        (_, index) => disabled[index] !== "1",
-      );
+        if (enabledScopes.length === 0) return Effect.succeed(unavailable);
 
-      if (enabledScopes.length === 0)
-        return {
-          status: "rejected",
-          requestId: payload.requestId,
-          code: "temporarily-unavailable",
-        };
-      socket.data.airTagScopes = enabledScopes;
+        return Effect.try({
+          try: () => {
+            socket.data.airTagScopes = enabledScopes;
 
-      for (const scope of enabledScopes)
-        this.hub.subscribe(socket, scope.subscription);
-
-      const scopes = await Promise.all(
-        enabledScopes.map((scope) => this.loadSnapshot(scope)),
-      );
-
-      return { status: "accepted", requestId: payload.requestId, scopes };
-    } catch (error) {
-      this.clearSubscription(socket);
-      this.logger.warn("Failed to load air tag snapshots", error);
-
-      return {
-        status: "rejected",
-        requestId: payload.requestId,
-        code: "temporarily-unavailable",
-      };
-    }
+            for (const scope of enabledScopes)
+              this.hub.subscribe(socket, scope.subscription);
+          },
+          catch: (cause) =>
+            new RealtimeStoreError({ operation: "air-tag.subscribe", cause }),
+        }).pipe(
+          Effect.andThen(
+            Effect.forEach(enabledScopes, (scope) => this.loadSnapshot(scope), {
+              concurrency: "unbounded",
+            }),
+          ),
+          Effect.map((scopes): AirTagSubscriptionAck => ({
+            status: "accepted",
+            requestId,
+            scopes,
+          })),
+        );
+      }),
+      Effect.catch((error) =>
+        Effect.sync(() => this.clearSubscription(socket)).pipe(
+          Effect.andThen(warn("Failed to load air tag snapshots", error)),
+          Effect.as(unavailable),
+        ),
+      ),
+    );
   }
 
-  async publishObservations(
+  publishObservations(
     socket: GatewaySocket,
     payload: ObservationBatch,
-  ): Promise<AirTagObservationAck> {
+  ): Effect.Effect<AirTagObservationAck, RealtimeStoreError> {
     if (!this.hasValidBatch(payload))
-      return { status: "rejected", code: "invalid-payload" };
+      return Effect.succeed({ status: "rejected", code: "invalid-payload" });
     const context = this.getContext(socket, payload.expectedMapId);
 
-    if (!context) return { status: "rejected", code: "invalid-context" };
+    if (!context)
+      return Effect.succeed({ status: "rejected", code: "invalid-context" });
 
     const scopes = socket.data.airTagScopes.filter(
       (scope) =>
@@ -582,151 +635,191 @@ export class AirTagService {
         canSubscribe(socket.data, scope.subscription),
     );
 
-    if (scopes.length === 0) return { status: "rejected", code: "forbidden" };
+    if (scopes.length === 0)
+      return Effect.succeed({ status: "rejected", code: "forbidden" });
 
-    const admission = await this.admitBatch(socket, scopes);
+    return this.admitBatch(socket, scopes).pipe(
+      Effect.flatMap(
+        (
+          admission,
+        ): Effect.Effect<AirTagObservationAck, RealtimeStoreError> => {
+          if (!admission) return Effect.succeed(UNAVAILABLE);
 
-    if (!admission)
-      return { status: "rejected", code: "temporarily-unavailable" };
+          if (admission.status === "rate-limited")
+            return Effect.succeed({
+              status: "rejected",
+              code: "rate-limited",
+              retryAfterMs: admission.retryAfterMs,
+            });
 
-    if (admission.status === "rate-limited")
-      return {
-        status: "rejected",
-        code: "rate-limited",
-        retryAfterMs: admission.retryAfterMs,
-      };
+          const observations = [
+            ...new Map(
+              payload.observations.map((item) => [item.targetId, item]),
+            ).values(),
+          ];
 
-    const observations = [
-      ...new Map(
-        payload.observations.map((item) => [item.targetId, item]),
-      ).values(),
-    ];
+          const observedIds = new Set(
+            observations.map((item) => item.targetId),
+          );
 
-    const observedIds = new Set(observations.map((item) => item.targetId));
+          // A sighting in the same batch supersedes a departure.
+          const departures = [
+            ...new Map(
+              (payload.departures ?? []).map((item) => [item.targetId, item]),
+            ).values(),
+          ].filter((item) => !observedIds.has(item.targetId));
 
-    // A sighting in the same batch supersedes a departure.
-    const departures = [
-      ...new Map(
-        (payload.departures ?? []).map((item) => [item.targetId, item]),
-      ).values(),
-    ].filter((item) => !observedIds.has(item.targetId));
+          // Proof-checked characters only: a threat reaches the whole Organization's timers.
+          const threatsAllowed =
+            socket.data.confidence === "verified" &&
+            context.mapName.length <= AIR_TAG_MAX_MAP_NAME_LENGTH;
 
-    // Proof-checked characters only: a threat reaches the whole Organization's timers.
-    const threatsAllowed =
-      socket.data.confidence === "verified" &&
-      context.mapName.length <= AIR_TAG_MAX_MAP_NAME_LENGTH;
-
-    const results = await Promise.allSettled(
-      admission.enabledScopes.map(async (scope) => {
-        return {
-          scope,
-          result: await this.merge(scope, {
-            observer: socket.data.connectionId,
-            observations,
-            departures,
-            threatsAllowed,
-            mapName: context.mapName,
-          }),
-        };
-      }),
+          // Scopes are independent: a failed merge does not stop the others.
+          // Forking costs more than a merge, and most observers share one scope.
+          return Effect.forEach(
+            admission.enabledScopes,
+            (scope) =>
+              this.merge(scope, {
+                observer: socket.data.connectionId,
+                observations,
+                departures,
+                threatsAllowed,
+                mapName: context.mapName,
+              }).pipe(
+                Effect.map((result) => ({ scope, result })),
+                Effect.exit,
+              ),
+            {
+              concurrency: admission.enabledScopes.length > 1 ? "unbounded" : 1,
+            },
+          ).pipe(
+            Effect.flatMap((results) =>
+              this.publishMerges(
+                results,
+                socket.data.connectionId,
+                context.mapName,
+              ),
+            ),
+          );
+        },
+      ),
     );
+  }
 
-    const successes = results.flatMap((result) =>
-      result.status === "fulfilled" && result.value ? [result.value] : [],
-    );
-
-    for (const result of results)
-      if (result.status === "rejected")
-        this.logger.warn("Failed to merge air tag observations", result.reason);
-
-    if (successes.length === 0)
-      return { status: "rejected", code: "temporarily-unavailable" };
+  /** Publishes each merged scope's threat and changes, in scope order. */
+  private publishMerges(
+    results: ReadonlyArray<
+      Exit.Exit<{ scope: AirTagScope; result: MergeResult }, RealtimeStoreError>
+    >,
+    observer: string,
+    mapName: string,
+  ): Effect.Effect<AirTagObservationAck, RealtimeStoreError> {
+    const steps: Array<Effect.Effect<void, RealtimeStoreError>> = [];
+    let acceptedScopes = 0;
     let acceptedTargets = 0;
 
-    for (const { scope, result } of successes) {
+    for (const merged of results) {
+      if (Exit.isFailure(merged)) {
+        steps.push(warn("Failed to merge air tag observations", merged.cause));
+        continue;
+      }
+
+      const { scope, result } = merged.value;
+      acceptedScopes += 1;
       acceptedTargets += result.acceptedTargets;
 
-      if (result.threat)
-        await this.publishThreat({
-          guildId: scope.guildId,
-          world: scope.world,
-          mapId: scope.mapId,
-          mapName: context.mapName,
-          revision: result.threat.revision,
-          enemies: result.threat.enemies,
-        });
+      if (result.threat) {
+        const { revision, enemies } = result.threat;
 
-      if (result.threatPendingMs !== undefined)
-        this.scheduleThreatFlush(scope, result.threatPendingMs);
+        steps.push(
+          this.publishThreat({
+            guildId: scope.guildId,
+            world: scope.world,
+            mapId: scope.mapId,
+            mapName,
+            revision,
+            enemies,
+          }),
+        );
+      }
 
-      if (result.targets.length === 0 && result.removed.length === 0) continue;
+      const pendingMs = result.threatPendingMs;
 
-      await this.publishScopeUpdate(
-        scope,
-        socket.data.connectionId,
-        result.remoteRecipients,
-        {
-          guildId: scope.guildId,
-          world: scope.world,
-          mapId: scope.mapId,
-          epochId: result.epochId,
-          epochStartedAt: result.epochStartedAt,
-          revision: result.revision,
-          targets: result.targets,
-          removedTargetIds: result.removed,
-        },
-      );
+      if (pendingMs !== undefined)
+        steps.push(
+          Effect.sync(() => this.scheduleThreatFlush(scope, pendingMs)),
+        );
+
+      if (result.targets.length > 0 || result.removed.length > 0)
+        steps.push(
+          this.publishScopeUpdate(scope, observer, result.remoteRecipients, {
+            guildId: scope.guildId,
+            world: scope.world,
+            mapId: scope.mapId,
+            epochId: result.epochId,
+            epochStartedAt: result.epochStartedAt,
+            revision: result.revision,
+            targets: result.targets,
+            removedTargetIds: result.removed,
+          }),
+        );
     }
 
-    return {
-      status: "accepted",
-      acceptedScopes: successes.length,
-      acceptedTargets,
-    };
+    const outcome: AirTagObservationAck =
+      acceptedScopes === 0
+        ? UNAVAILABLE
+        : { status: "accepted", acceptedScopes, acceptedTargets };
+
+    return Effect.forEach(steps, (step) => step, { discard: true }).pipe(
+      Effect.as(outcome),
+    );
   }
 
   /** One publication per batch. */
-  private async publishScopeUpdate(
+  private publishScopeUpdate(
     scope: AirTagScope,
     excludeConnectionId: string,
     remoteRecipients: boolean,
     event: AirTagScopeUpdateEvent,
-  ): Promise<void> {
+  ): Effect.Effect<void, RealtimeStoreError> {
     const localOnly = !remoteRecipients;
 
-    const options = {
-      excludeConnectionId,
-      recipientPlatform: "game",
-      recipientWorld: scope.world,
-      recipientMapId: scope.mapId,
-      localOnly,
-    } as const;
-
-    Effect.runSync(
-      Metric.update(
-        Metric.withAttributes(federatedUpdates, {
-          outcome: localOnly ? "skipped" : "published",
-        }),
-        1,
+    return Metric.update(
+      localOnly ? skippedFederatedUpdates : publishedFederatedUpdates,
+      1,
+    ).pipe(
+      Effect.andThen(
+        storeCall("air-tag.publish", () =>
+          this.hub.publishToScopes(
+            [scope.subscription],
+            {
+              v: 1,
+              type: "air-tag.scope-updated",
+              sequence: event.revision,
+              data: event,
+            },
+            {
+              excludeConnectionId,
+              recipientPlatform: "game",
+              recipientWorld: scope.world,
+              recipientMapId: scope.mapId,
+              localOnly,
+            },
+          ),
+        ),
       ),
     );
-
-    const frame = {
-      v: 1,
-      type: "air-tag.scope-updated",
-      sequence: event.revision,
-      data: event,
-    } as const;
-
-    await this.hub.publishToScopes([scope.subscription], frame, options);
   }
 
   /** Current map threats of one Organization and world, for a client that just connected. */
-  async fetchMapThreats(
+  fetchMapThreats(
     socket: GatewaySocket,
     organizationId: string,
     world: string,
-  ): Promise<{ threats: AirTagMapThreatEvent[] } | null> {
+  ): Effect.Effect<
+    { threats: AirTagMapThreatEvent[] } | null,
+    RealtimeStoreError
+  > {
     if (
       !canSubscribe(socket.data, {
         topic: "organization.presence",
@@ -735,45 +828,57 @@ export class AirTagService {
       !canReadPreciseLocation(socket.data, organizationId) ||
       !WORLD_PATTERN.test(world)
     )
-      return null;
+      return Effect.succeed(null);
 
-    const mapIds = await this.redis.command.smembers(
-      this.threatMapsKey(organizationId, world),
-    );
+    return storeCall("air-tag.threat-maps", () =>
+      this.redis.command.smembers(this.threatMapsKey(organizationId, world)),
+    ).pipe(
+      Effect.flatMap((mapIds) =>
+        Effect.forEach(
+          mapIds,
+          (value) => {
+            const mapId = Number(value);
 
-    const threats = await Promise.all(
-      mapIds.map(async (value) => {
-        const mapId = Number(value);
+            if (!Number.isInteger(mapId)) return Effect.succeed([]);
 
-        if (!Number.isInteger(mapId)) return [];
-        const hashTag = this.hashTag({ guildId: organizationId, world, mapId });
+            const hashTag = this.hashTag({
+              guildId: organizationId,
+              world,
+              mapId,
+            });
 
-        const result = String(
-          await this.redis.command.eval(
-            THREAT_SNAPSHOT_SCRIPT,
-            2,
-            `${hashTag}:threats`,
-            `${hashTag}:threat-state`,
-            AIR_TAG_MAP_THREAT_TTL_MS,
-          ),
-        );
+            return storeCall("air-tag.threat-snapshot", async () => {
+              const result = String(
+                await this.redis.command.eval(
+                  THREAT_SNAPSHOT_SCRIPT,
+                  2,
+                  `${hashTag}:threats`,
+                  `${hashTag}:threat-state`,
+                  AIR_TAG_MAP_THREAT_TTL_MS,
+                ),
+              );
 
-        if (result === "") return [];
-        const snapshot = Schema.decodeUnknownSync(ThreatSnapshotJson)(result);
+              if (result === "") return [];
 
-        return [
-          {
-            guildId: organizationId,
-            world,
-            mapId,
-            ...snapshot,
-            enemies: [...snapshot.enemies],
+              const snapshot =
+                Schema.decodeUnknownSync(ThreatSnapshotJson)(result);
+
+              return [
+                {
+                  guildId: organizationId,
+                  world,
+                  mapId,
+                  ...snapshot,
+                  enemies: [...snapshot.enemies],
+                },
+              ];
+            });
           },
-        ];
-      }),
+          { concurrency: "unbounded" },
+        ),
+      ),
+      Effect.map((threats) => ({ threats: threats.flat() })),
     );
-
-    return { threats: threats.flat() };
   }
 
   clearSubscription(socket: GatewaySocket): void {
@@ -782,24 +887,18 @@ export class AirTagService {
     socket.data.airTagScopes = [];
   }
 
-  private async serialize<T>(
+  private serialize<A, E>(
     socket: GatewaySocket,
-    operation: () => Promise<T>,
-  ): Promise<T> {
-    const previous = this.subscriptionOperations.get(socket);
+    effect: Effect.Effect<A, E>,
+  ): Effect.Effect<A, E> {
+    let lock = this.subscriptionLocks.get(socket);
 
-    const current = (previous ?? Promise.resolve())
-      .catch(() => undefined)
-      .then(operation);
-
-    this.subscriptionOperations.set(socket, current);
-
-    try {
-      return await current;
-    } finally {
-      if (this.subscriptionOperations.get(socket) === current)
-        this.subscriptionOperations.delete(socket);
+    if (!lock) {
+      lock = Semaphore.makeUnsafe(1);
+      this.subscriptionLocks.set(socket, lock);
     }
+
+    return lock.withPermits(1)(effect);
   }
 
   private getContext(socket: GatewaySocket, expectedMapId: number | undefined) {
@@ -858,7 +957,7 @@ export class AirTagService {
    * lost with it stays in Redis for `fetchMapThreats`.
    */
   private scheduleThreatFlush(
-    scope: Pick<AirTagScope, "guildId" | "world" | "mapId">,
+    scope: ThreatScope,
     delayMs: number,
     failedAttempts = 0,
   ): void {
@@ -871,20 +970,20 @@ export class AirTagService {
       setTimeout(
         () => {
           this.threatFlushes.delete(hashTag);
-          void this.flushThreat(scope, failedAttempts);
+          runLogEffect(this.flushThreat(scope, failedAttempts));
         },
         Math.max(0, delayMs),
       ),
     );
   }
 
-  private async flushThreat(
-    scope: Pick<AirTagScope, "guildId" | "world" | "mapId">,
+  private flushThreat(
+    scope: ThreatScope,
     failedAttempts: number,
-  ): Promise<void> {
+  ): Effect.Effect<void> {
     const hashTag = this.hashTag(scope);
 
-    try {
+    return storeCall("air-tag.threat-flush", async () => {
       const result = String(
         await this.redis.command.eval(
           THREAT_FLUSH_SCRIPT,
@@ -897,52 +996,57 @@ export class AirTagService {
         ),
       );
 
-      if (result === "") return;
-      const flush = Schema.decodeUnknownSync(ThreatFlushJson)(result);
+      return result === ""
+        ? undefined
+        : Schema.decodeUnknownSync(ThreatFlushJson)(result);
+    }).pipe(
+      Effect.flatMap((flush) => {
+        if (flush === undefined) return Effect.void;
 
-      if ("retryInMs" in flush) {
-        this.scheduleThreatFlush(scope, flush.retryInMs, failedAttempts);
+        if ("retryInMs" in flush)
+          return Effect.sync(() =>
+            this.scheduleThreatFlush(scope, flush.retryInMs, failedAttempts),
+          );
 
-        return;
-      }
-
-      await this.publishThreat(
-        { ...scope, ...flush, enemies: [...flush.enemies] },
-        failedAttempts,
-      );
-    } catch (error) {
-      if (!this.retryThreat(scope, failedAttempts))
-        this.logger.warn("Gave up publishing map threat", error);
-    }
-  }
-
-  /** Returns false once the list has failed too often to try again. */
-  private retryThreat(
-    scope: Pick<AirTagScope, "guildId" | "world" | "mapId">,
-    failedAttempts: number,
-  ): boolean {
-    if (failedAttempts >= THREAT_PUBLISH_ATTEMPTS - 1) return false;
-
-    this.scheduleThreatFlush(
-      scope,
-      THREAT_BROADCAST_THROTTLE_MS * (failedAttempts + 1),
-      failedAttempts + 1,
+        return this.publishThreat(
+          { ...scope, ...flush, enemies: [...flush.enemies] },
+          failedAttempts,
+        );
+      }),
+      Effect.catch((error) =>
+        this.giveUpOrRetryThreat(scope, failedAttempts, error),
+      ),
     );
-
-    return true;
   }
 
-  private async publishThreat(
+  /** Retries the list later, or logs once it has failed too often. */
+  private giveUpOrRetryThreat(
+    scope: ThreatScope,
+    failedAttempts: number,
+    error: RealtimeStoreError,
+  ): Effect.Effect<void> {
+    if (failedAttempts >= THREAT_PUBLISH_ATTEMPTS - 1)
+      return warn("Gave up publishing map threat", error);
+
+    return Effect.sync(() =>
+      this.scheduleThreatFlush(
+        scope,
+        THREAT_BROADCAST_THROTTLE_MS * (failedAttempts + 1),
+        failedAttempts + 1,
+      ),
+    );
+  }
+
+  private publishThreat(
     event: AirTagMapThreatEvent,
     failedAttempts = 0,
-  ): Promise<void> {
-    try {
-      await this.redis.command.sadd(
-        this.threatMapsKey(event.guildId, event.world),
-        String(event.mapId),
-      );
+  ): Effect.Effect<void> {
+    const threatMaps = this.threatMapsKey(event.guildId, event.world);
+
+    return storeCall("air-tag.threat-publish", async () => {
+      await this.redis.command.sadd(threatMaps, String(event.mapId));
       await this.redis.command.expire(
-        this.threatMapsKey(event.guildId, event.world),
+        threatMaps,
         AIR_TAG_MAP_THREAT_TTL_MS / 1_000,
       );
       await this.hub.publishToScopes(
@@ -956,53 +1060,60 @@ export class AirTagService {
           presenceAudience: "precise",
         },
       );
-    } catch (error) {
+    }).pipe(
       // AirTag updates of the same batch must still go out; the list goes out again later.
-      if (!this.retryThreat(event, failedAttempts))
-        this.logger.warn("Gave up publishing map threat", error);
-    }
+      Effect.catch((error) =>
+        this.giveUpOrRetryThreat(event, failedAttempts, error),
+      ),
+    );
   }
 
   /**
    * Registers this replica for a `map.air-tags` subscription made outside
    * `air-tag.subscription`, so later updates merged on other replicas reach it.
    */
-  registerInterest(scope: SubscriptionScope): Promise<void> {
+  registerInterest(
+    scope: SubscriptionScope,
+  ): Effect.Effect<void, RealtimeStoreError> {
     return this.register([this.interestKeyFor(scope)]);
   }
 
   /** Keeps this replica registered for every air-tag scope a local socket follows. */
   runInterestRefresh() {
-    return Effect.tryPromise(() => this.refreshInterest()).pipe(
+    return Effect.suspend(() => this.refreshInterest()).pipe(
       Effect.catchCause((cause) =>
-        Effect.logWarning("Air tag interest refresh failed", cause),
+        warn("Air tag interest refresh failed", cause),
       ),
       Effect.repeat(Schedule.spaced(INTEREST_REFRESH_MS)),
     );
   }
 
-  private async refreshInterest(): Promise<void> {
+  private refreshInterest(): Effect.Effect<void, RealtimeStoreError> {
     const keys = new Set(
       this.hub
         .getLocalScopes("map.air-tags")
         .map((scope) => this.interestKeyFor(scope)),
     );
 
-    await Promise.all(
-      chunk([...keys], INTEREST_BATCH_SIZE).map((batch) =>
-        this.register(batch),
-      ),
+    return Effect.forEach(
+      chunk([...keys], INTEREST_BATCH_SIZE),
+      (batch) => this.register(batch),
+      { concurrency: "unbounded", discard: true },
     );
   }
 
-  private async register(keys: ReadonlyArray<string>): Promise<void> {
-    await this.redis.command.eval(
-      REGISTER_INTEREST_SCRIPT,
-      keys.length,
-      ...keys,
-      this.hub.instanceId,
-      INTEREST_TTL_MS,
-    );
+  private register(
+    keys: ReadonlyArray<string>,
+  ): Effect.Effect<void, RealtimeStoreError> {
+    return storeCall("air-tag.interest", async () => {
+      await this.redis.command.eval(
+        REGISTER_INTEREST_SCRIPT,
+        keys.length,
+        ...keys,
+        this.hub.instanceId,
+        INTEREST_TTL_MS,
+      );
+    });
   }
 
   /** A scope without a world or map follows every map of its Organization. */
@@ -1022,9 +1133,7 @@ export class AirTagService {
     return `{air-tag:${organizationId}}:any-map:replicas`;
   }
 
-  private interestKey(
-    scope: Pick<AirTagScope, "guildId" | "world" | "mapId">,
-  ): string {
+  private interestKey(scope: ThreatScope): string {
     return `${this.hashTag(scope)}:replicas`;
   }
 
@@ -1032,15 +1141,16 @@ export class AirTagService {
     return `air-tag:threat-maps:${guildId}:${world}`;
   }
 
-  private async admitBatch(
+  /** The batch's rate-limit verdict and enabled scopes, or null when Redis cannot decide. */
+  private admitBatch(
     socket: GatewaySocket,
     scopes: ReadonlyArray<AirTagScope>,
-  ): Promise<
+  ): Effect.Effect<
     | { status: "admitted"; enabledScopes: AirTagScope[] }
     | { status: "rate-limited"; retryAfterMs: number }
     | null
   > {
-    try {
+    return storeCall("air-tag.admission", async () => {
       const reply = await this.redis.command.eval(
         ADMISSION_SCRIPT,
         2 + scopes.length,
@@ -1058,17 +1168,20 @@ export class AirTagService {
       const [admitted, retryAfterMs = 0, ...disabled] =
         Schema.decodeUnknownSync(AdmissionReply)(reply.map(Number));
 
-      if (admitted !== 1) return { status: "rate-limited", retryAfterMs };
+      if (admitted !== 1)
+        return { status: "rate-limited", retryAfterMs } as const;
 
       return {
         status: "admitted",
         enabledScopes: scopes.filter((_, index) => disabled[index] !== 1),
-      };
-    } catch (error) {
-      this.logger.warn("Failed to admit air tag observations", error);
-
-      return null;
-    }
+      } as const;
+    }).pipe(
+      Effect.catch((error) =>
+        warn("Failed to admit air tag observations", error).pipe(
+          Effect.as(null),
+        ),
+      ),
+    );
   }
 
   private disabledKey(scope: Pick<AirTagScope, "guildId" | "world">): string {
@@ -1085,13 +1198,11 @@ export class AirTagService {
     ];
   }
 
-  private hashTag(
-    scope: Pick<AirTagScope, "guildId" | "world" | "mapId">,
-  ): string {
+  private hashTag(scope: ThreatScope): string {
     return `{air-tag:${scope.guildId}:${scope.world}:${scope.mapId}}`;
   }
 
-  private async merge(
+  private merge(
     scope: AirTagScope,
     {
       observer,
@@ -1106,72 +1217,78 @@ export class AirTagService {
       threatsAllowed: boolean;
       mapName: string;
     },
-  ): Promise<MergeResult> {
+  ): Effect.Effect<MergeResult, RealtimeStoreError> {
     const hashTag = this.hashTag(scope);
 
-    const result = await this.redis.command.eval(
-      MERGE_SCRIPT,
-      7,
-      ...this.keys(scope),
-      `${hashTag}:threats`,
-      `${hashTag}:threat-state`,
-      this.interestKey(scope),
-      this.anyMapInterestKey(scope.guildId),
-      crypto.randomUUID(),
-      JSON.stringify(observations),
-      TARGET_TTL_MS,
-      IDLE_TTL_SECONDS,
-      MAX_TARGETS,
-      BROADCAST_INTERVAL_MS,
-      AIR_TAG_ENEMY_RELATION,
-      AIR_TAG_CLAN_ENEMY_RELATION,
-      AIR_TAG_MAP_THREAT_TTL_MS,
-      THREAT_REFRESH_MS,
-      THREAT_BROADCAST_THROTTLE_MS,
-      threatsAllowed ? "1" : "0",
-      mapName,
-      observer,
-      JSON.stringify(departures),
-      this.hub.instanceId,
-    );
+    return storeCall("air-tag.merge", async () => {
+      const result = await this.redis.command.eval(
+        MERGE_SCRIPT,
+        7,
+        ...this.keys(scope),
+        `${hashTag}:threats`,
+        `${hashTag}:threat-state`,
+        this.interestKey(scope),
+        this.anyMapInterestKey(scope.guildId),
+        crypto.randomUUID(),
+        JSON.stringify(observations),
+        TARGET_TTL_MS,
+        IDLE_TTL_SECONDS,
+        MAX_TARGETS,
+        BROADCAST_INTERVAL_MS,
+        AIR_TAG_ENEMY_RELATION,
+        AIR_TAG_CLAN_ENEMY_RELATION,
+        AIR_TAG_MAP_THREAT_TTL_MS,
+        THREAT_REFRESH_MS,
+        THREAT_BROADCAST_THROTTLE_MS,
+        threatsAllowed ? "1" : "0",
+        mapName,
+        observer,
+        JSON.stringify(departures),
+        this.hub.instanceId,
+      );
 
-    const { threat, ...parsed } = Schema.decodeUnknownSync(MergeResultJson)(
-      String(result),
-    );
+      const { threat, ...parsed } = Schema.decodeUnknownSync(MergeResultJson)(
+        String(result),
+      );
 
-    return {
-      ...parsed,
-      targets: [...parsed.targets],
-      removed: [...parsed.removed],
-      ...(threat && {
-        threat: { revision: threat.revision, enemies: [...threat.enemies] },
-      }),
-    };
+      return {
+        ...parsed,
+        targets: [...parsed.targets],
+        removed: [...parsed.removed],
+        ...(threat && {
+          threat: { revision: threat.revision, enemies: [...threat.enemies] },
+        }),
+      };
+    });
   }
 
-  private async loadSnapshot(scope: AirTagScope): Promise<AirTagScopeSnapshot> {
-    const result = await this.redis.command.eval(
-      SNAPSHOT_SCRIPT,
-      4,
-      ...this.keys(scope),
-      this.interestKey(scope),
-      crypto.randomUUID(),
-      IDLE_TTL_SECONDS,
-      this.hub.instanceId,
-      INTEREST_TTL_MS,
-    );
+  private loadSnapshot(
+    scope: AirTagScope,
+  ): Effect.Effect<AirTagScopeSnapshot, RealtimeStoreError> {
+    return storeCall("air-tag.snapshot", async () => {
+      const result = await this.redis.command.eval(
+        SNAPSHOT_SCRIPT,
+        4,
+        ...this.keys(scope),
+        this.interestKey(scope),
+        crypto.randomUUID(),
+        IDLE_TTL_SECONDS,
+        this.hub.instanceId,
+        INTEREST_TTL_MS,
+      );
 
-    const snapshot = Schema.decodeUnknownSync(SnapshotResultJson)(
-      String(result),
-    );
+      const snapshot = Schema.decodeUnknownSync(SnapshotResultJson)(
+        String(result),
+      );
 
-    return {
-      guildId: scope.guildId,
-      world: scope.world,
-      mapId: scope.mapId,
-      ...snapshot,
-      targets: [...snapshot.targets],
-    };
+      return {
+        guildId: scope.guildId,
+        world: scope.world,
+        mapId: scope.mapId,
+        ...snapshot,
+        targets: [...snapshot.targets],
+      };
+    });
   }
 }
 
@@ -1201,10 +1318,7 @@ export const airTagRoutes = (
   ({
     "air-tag.subscription": {
       joined: true,
-      run: (socket, data) =>
-        fromDependency("air-tag.subscription", () =>
-          airTags.updateSubscription(socket, data),
-        ),
+      run: (socket, data) => airTags.updateSubscription(socket, data),
     },
     "air-tag.observation": {
       joined: true,
@@ -1220,19 +1334,15 @@ export const airTagRoutes = (
               retryAfterMs: admission.retryAfterMs,
             });
 
-          return fromDependency("air-tag.observation", () =>
-            airTags.publishObservations(socket, data),
-          ).pipe(Effect.ensuring(Effect.sync(admission.release)));
+          return airTags
+            .publishObservations(socket, data)
+            .pipe(Effect.ensuring(Effect.sync(admission.release)));
         }),
     },
     "air-tag.map-threats.fetch": {
       joined: true,
       run: (socket, { organizationId, world }) =>
-        orAccessDenied(
-          fromDependency("air-tag.map-threats.fetch", () =>
-            airTags.fetchMapThreats(socket, organizationId, world),
-          ),
-        ),
+        orAccessDenied(airTags.fetchMapThreats(socket, organizationId, world)),
     },
   }) satisfies Pick<
     CommandRoutes,

@@ -1,6 +1,5 @@
 import { recordRealtimeCommand } from "#src/realtime/connection-metrics";
 import {
-  fromDependency,
   runCommandRoute,
   type CommandRoutes,
 } from "#src/realtime/command-routes";
@@ -373,12 +372,15 @@ export class CommandHandler {
       : dispatch;
 
     return traced.pipe(
-      Effect.catch((error) => {
+      Effect.catchCause((cause) => {
+        if (Cause.hasInterruptsOnly(cause)) return Effect.interrupt;
+        const error = Option.getOrUndefined(Cause.findErrorOption(cause));
+
         const failure = isCommandFailure(error)
           ? commandFailureDetails(error)
           : { message: "command temporarily unavailable", retryable: true };
 
-        return Effect.sync(() => {
+        const respond = Effect.sync(() => {
           this.hub.sendResponse(
             socket,
             errorResponse(
@@ -390,6 +392,12 @@ export class CommandHandler {
             ),
           );
         });
+
+        // A defect still fails the command, but its client learns to retry
+        // instead of waiting for the request to time out.
+        return Cause.hasDies(cause)
+          ? respond.pipe(Effect.andThen(Effect.die(Cause.squash(cause))))
+          : respond;
       }),
       Effect.asVoid,
     );
@@ -760,12 +768,12 @@ export class CommandHandler {
         run: (socket, { sessionId }) =>
           presence.heartbeat(socket, sessionId).pipe(
             // The heartbeat must not wait for Redis scripts it does not need.
+            // Forking costs as much as the heartbeat, so only sockets with
+            // reports pay for it.
             Effect.tap(() =>
-              Effect.sync(() => {
-                sessionFeatures.npcPresence
-                  .refresh(socket)
-                  .catch(() => undefined);
-              }),
+              socket.data.npcPresence
+                ? Effect.forkDetach(sessionFeatures.npcPresence.refresh(socket))
+                : Effect.void,
             ),
             Effect.map((lastSeen) => ({ lastSeen })),
           ),
@@ -840,9 +848,7 @@ export class CommandHandler {
             // Other replicas publish air-tag updates only to registered followers.
             Effect.tap(() =>
               scope.topic === "map.air-tags"
-                ? fromDependency("subscription.subscribe", () =>
-                    sessionFeatures.airTags.registerInterest(scope),
-                  )
+                ? sessionFeatures.airTags.registerInterest(scope)
                 : Effect.void,
             ),
             // Counts otherwise arrive with the next metrics sample, up to 10 s later.
@@ -897,11 +903,11 @@ export class CommandHandler {
     )
       return Effect.void;
 
-    return Effect.tryPromise(() =>
-      this.sessionFeatures.npcPresence.withdraw(socket),
-    ).pipe(
-      Effect.catch(() => Effect.logWarning("NPC presence withdraw failed")),
-    );
+    return this.sessionFeatures.npcPresence
+      .withdraw(socket)
+      .pipe(
+        Effect.catch(() => Effect.logWarning("NPC presence withdraw failed")),
+      );
   }
 
   private join(
