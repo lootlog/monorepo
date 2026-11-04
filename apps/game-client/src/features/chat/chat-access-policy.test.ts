@@ -6,6 +6,7 @@ import type { ChatMessage } from "@/api/chat.api";
 import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
 import {
   applyChatAccessPolicy,
+  applyCurrentChatAccess,
   refreshChatAfterReconnect,
   retainChatAccessPolicy,
 } from "./chat-access-policy";
@@ -444,4 +445,22 @@ describe("chat policy reconciliation", () => {
     releaseSecond();
     client.clear();
   });
+});
+
+it("does not filter a later session's chat with the policy of a released one", () => {
+  const client = new QueryClient();
+  const release = retainChatAccessPolicy(client);
+  applyChatAccessPolicy(client, policy(false));
+  const rows = [message("one", "titan")];
+
+  expect(applyCurrentChatAccess(client, rows)).toEqual([]);
+  release();
+
+  const releaseNext = retainChatAccessPolicy(client);
+
+  try {
+    expect(applyCurrentChatAccess(client, rows)).toBe(rows);
+  } finally {
+    releaseNext();
+  }
 });
