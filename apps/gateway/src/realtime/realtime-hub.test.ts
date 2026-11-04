@@ -1,6 +1,15 @@
 import * as npcRouting from "@lootlog/domain/npc-routing";
 import * as realtimeCodec from "@lootlog/protocol/realtime/codec";
-import { createRabbitDelivery } from "../../test/rabbit-fixtures.js";
+import { makeRabbitBridgeHarness } from "../../test/rabbit-fixtures.js";
+import {
+  makeFederationBus,
+  makeSession,
+  makeTestSocket,
+  membership,
+  startHubs,
+  unusedFederationStore,
+  withApiKey,
+} from "../../test/realtime-fixtures.js";
 import { Permission } from "@lootlog/schema/permissions";
 import type {
   PartyGatheringSummary,
@@ -9,97 +18,71 @@ import type {
 } from "@lootlog/schema/party-ready-room";
 import { describe, expect, spyOn, test } from "bun:test";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
-import type {
-  RabbitDelivery,
-  RabbitMessagingService,
-} from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type {
   GlobalChatChannelUpdate,
   GlobalChatMessage,
 } from "@lootlog/schema/chat";
 import { Effect } from "effect";
-import {
-  decodeFederatedRealtimeMessage,
-  encodeFederatedRealtimeMessage,
-  type FederatedFrameTexts,
-  type FederatedRealtimeMessage,
-} from "#src/platform/redis-store";
+import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import { getScopeKey, RealtimeHub } from "./realtime-hub.js";
-import { RabbitBridge, gatewayConsumerSpecs } from "#src/rabbit/rabbit-bridge";
 import type { SessionData } from "./session.js";
 import { SubscriptionLimitExceeded } from "./realtime-errors.js";
 import { canSubscribe } from "./subscription-policy.js";
-
-class FederationBus {
-  readonly listeners: Array<(message: FederatedRealtimeMessage) => void> = [];
-}
-
-class FakeRedisStore {
-  constructor(private readonly bus: FederationBus) {}
-
-  async subscribe(
-    listener: (message: FederatedRealtimeMessage) => void,
-  ): Promise<void> {
-    this.bus.listeners.push(listener);
-  }
-
-  async publish(
-    message: FederatedRealtimeMessage,
-    frames?: FederatedFrameTexts,
-  ): Promise<void> {
-    let delivered: FederatedRealtimeMessage;
-
-    // Redis subscribers drop a message they cannot decode.
-    try {
-      delivered = decodeFederatedRealtimeMessage(
-        encodeFederatedRealtimeMessage(message, frames),
-      );
-    } catch {
-      return;
-    }
-
-    for (const listener of this.bus.listeners) {
-      listener(delivered);
-      listener(delivered);
-    }
-  }
-}
 
 const config = {
   maxBackpressureBytes: 1_024,
 };
 
-const makeSession = (connectionId: string): SessionData => ({
-  discordId: `discord-${connectionId}`,
-  userId: `user-${connectionId}`,
-  connectionId,
-  platform: "web-app",
-  joined: true,
-  guilds: ["organization-1", "organization-2"].map((id) => ({
-    guild: { id, ownerId: `discord-${connectionId}` },
-    roles: [
-      {
-        id: "admin",
-        permissions: [Permission.ADMIN],
-        lvlRangeFrom: 0,
-        lvlRangeTo: 500,
-      },
-    ],
-  })),
-  subscriptions: new Map(),
-  airTagScopes: [],
-  confidence: "reported",
-});
+/** An unstarted hub whose federation publishes go nowhere. */
+const makeHub = () => new RealtimeHub(config, makeFederationBus().store);
+
+/** Two started replicas sharing one federation bus. */
+const startPair = async () => {
+  const { hubs, bus } = await startHubs();
+  const [local, remote] = hubs;
+
+  if (!local || !remote) throw new Error("Missing federated hubs");
+
+  return [local, remote, bus] as const;
+};
+
+/** A web session that owns and administers both Lootlogs. */
+const makeAdminSession = (
+  connectionId: string,
+  overrides: Partial<SessionData> = {},
+): SessionData => {
+  const discordId = `discord-${connectionId}`;
+
+  return makeSession({
+    discordId,
+    userId: `user-${connectionId}`,
+    connectionId,
+    guilds: ["organization-1", "organization-2"].map((id) =>
+      membership(id, [Permission.ADMIN], {
+        ownerId: discordId,
+        roleId: "admin",
+      }),
+    ),
+    ...overrides,
+  });
+};
 
 const makeGamePresence = (
   session: SessionData,
   world = "tempest",
   mapId = 1,
+  {
+    characterId = "123",
+    organizationIds = session.guilds.map(({ guild }) => guild.id),
+  }: {
+    readonly characterId?: string;
+    readonly organizationIds?: string[];
+  } = {},
 ): NonNullable<SessionData["presence"]> => ({
   userId: session.userId,
   sessionId: session.connectionId,
-  organizationIds: session.guilds.map(({ guild }) => guild.id),
+  organizationIds,
   platform: "game",
   status: "online",
   confidence: "reported",
@@ -109,33 +92,13 @@ const makeGamePresence = (
     world,
     name: "Player",
     lvl: 200,
-    characterId: "123",
+    characterId,
     accountId: "456",
     prof: "w",
     icon: "icon",
   },
   location: { mapId, map: `Map ${mapId}` },
 });
-
-const makeSocket = (data: SessionData, bufferedAmount = 0) => {
-  const sent: string[] = [];
-  const closes: number[] = [];
-
-  const socket = {
-    data,
-    getBufferedAmount: () => bufferedAmount,
-    send: (text: string) => {
-      sent.push(text);
-
-      return text.length;
-    },
-    close: (code: number) => {
-      closes.push(code);
-    },
-  };
-
-  return { socket, sent, closes };
-};
 
 describe("RealtimeHub federation", () => {
   test.each([
@@ -146,20 +109,16 @@ describe("RealtimeHub federation", () => {
   ] as const)(
     "rechecks %s grants for stale audiences on every instance",
     async (topic, type) => {
-      const bus = new FederationBus();
-      const local = new RealtimeHub(config, new FakeRedisStore(bus));
-      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+      const [local, remote] = await startPair();
       const scope = { topic, organizationId: "organization-1" };
 
       const targets = [local, remote].map((hub, index) => {
-        const target = makeSocket(makeSession(`revoked-${index}`));
+        const target = makeTestSocket(makeAdminSession(`revoked-${index}`));
         hub.register(target.socket);
         hub.subscribe(target.socket, scope);
 
         return target;
       });
-
-      for (const hub of [local, remote]) await Effect.runPromise(hub.start());
 
       const event = {
         v: 1,
@@ -186,13 +145,11 @@ describe("RealtimeHub federation", () => {
   );
 
   test("blocks revoked Organization payloads on direct user, Discord and snapshot delivery", async () => {
-    const bus = new FederationBus();
-    const local = new RealtimeHub(config, new FakeRedisStore(bus));
-    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+    const [local, remote] = await startPair();
 
     const targets = [local, remote].map((hub, index) => {
-      const target = makeSocket({
-        ...makeSession(`direct-${index}`),
+      const target = makeTestSocket({
+        ...makeAdminSession(`direct-${index}`),
         userId: "shared-user",
         discordId: "shared-discord",
       });
@@ -201,8 +158,6 @@ describe("RealtimeHub federation", () => {
 
       return target;
     });
-
-    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
 
     const event = {
       v: 1,
@@ -260,9 +215,7 @@ describe("RealtimeHub federation", () => {
   test.each([false, true])(
     "delivers shared map pings only through an authorized matching Organization with location filtering: %s",
     async (filterLocation) => {
-      const bus = new FederationBus();
-      const local = new RealtimeHub(config, new FakeRedisStore(bus));
-      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+      const [local, remote] = await startPair();
 
       const scopes = ["organization-1", "organization-2"].map(
         (organizationId) => ({ topic: "map.pings", organizationId }) as const,
@@ -317,7 +270,7 @@ describe("RealtimeHub federation", () => {
       const targets = [local, remote].flatMap((hub, index) =>
         scenarios.map((scenario) => {
           const session: SessionData = {
-            ...makeSession(`ping-${index}-${scenario.id}`),
+            ...makeAdminSession(`ping-${index}-${scenario.id}`),
             platform: scenario.id === "web" ? "web-app" : "game",
           };
 
@@ -326,23 +279,19 @@ describe("RealtimeHub federation", () => {
             scenario.id === "other-world" ? "other-world" : "tempest",
             scenario.id === "other-map" ? 2 : 1,
           );
-          const target = makeSocket(session);
+          const target = makeTestSocket(session);
           target.socket.data.guilds = target.socket.data.guilds.filter(
             (_, guildIndex) => scenario.allowed.includes(guildIndex),
           );
 
-          if (scenario.keyScope) {
-            target.socket.data.apiKeyAccess = {
-              keyId: scenario.id,
-              organizationIds: scenario.keyScope.map(
+          if (scenario.keyScope)
+            withApiKey(
+              target.socket.data,
+              scenario.keyScope.map(
                 (guildIndex) => `organization-${guildIndex + 1}`,
               ),
-              mode: "read",
-              personalData: false,
-              expiresAt: null,
-            };
-            target.socket.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
-          }
+              { keyId: scenario.id },
+            );
 
           hub.register(target.socket);
 
@@ -356,8 +305,6 @@ describe("RealtimeHub federation", () => {
           return { ...target, delivered: scenario.delivered };
         }),
       );
-
-      for (const hub of [local, remote]) await Effect.runPromise(hub.start());
 
       const ping = {
         v: 1,
@@ -397,25 +344,21 @@ describe("RealtimeHub federation", () => {
   test.each(["wildcard", "exact"] as const)(
     "keeps %s map-ping recipients current through presence, access and connection changes on both gateways",
     async (subscription) => {
-      const bus = new FederationBus();
-      const local = new RealtimeHub(config, new FakeRedisStore(bus));
-      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+      const [local, remote] = await startPair();
       const organizationIds = ["organization-1", "organization-2"];
 
       const targets = [local, remote].map((hub, index) => {
         const session: SessionData = {
-          ...makeSession(`ping-lifecycle-${index}`),
+          ...makeAdminSession(`ping-lifecycle-${index}`),
           platform: "game",
         };
 
-        const target = makeSocket(session);
+        const target = makeTestSocket(session);
         hub.setPresence(target.socket, makeGamePresence(session));
         hub.register(target.socket);
 
         return { hub, target };
       });
-
-      for (const hub of [local, remote]) await Effect.runPromise(hub.start());
 
       const subscribeAt = (world: string, mapId: number) => {
         for (const { hub, target } of targets) {
@@ -536,7 +479,7 @@ describe("RealtimeHub federation", () => {
       await publish("other-world", 2, false);
 
       for (const { hub, target } of targets) {
-        target.socket.data.guilds = makeSession(
+        target.socket.data.guilds = makeAdminSession(
           target.socket.data.connectionId,
         ).guilds;
         hub.replaceSubscriptions(target.socket, []);
@@ -551,7 +494,7 @@ describe("RealtimeHub federation", () => {
 
       for (const entry of targets) {
         const previous = entry.target.socket;
-        entry.target = makeSocket({
+        entry.target = makeTestSocket({
           ...previous.data,
           subscriptions: new Map(previous.data.subscriptions),
           presence: makeGamePresence(previous.data, "other-world", 3),
@@ -585,7 +528,7 @@ describe("RealtimeHub federation", () => {
       await publish("other-world", 3, false);
 
       for (const entry of targets) {
-        entry.target = makeSocket({
+        entry.target = makeTestSocket({
           ...entry.target.socket.data,
           connectionId: `${entry.target.socket.data.connectionId}-reconnected`,
         });
@@ -596,104 +539,8 @@ describe("RealtimeHub federation", () => {
     },
   );
 
-  test.each([
-    { type: "attack", team: false },
-    { type: "quick-fight", team: true },
-  ] as const)(
-    "delivers $type battle pings only to listed characters on every instance",
-    async ({ type, team }) => {
-      const bus = new FederationBus();
-      const local = new RealtimeHub(config, new FakeRedisStore(bus));
-      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
-
-      const scope = {
-        topic: "map.pings",
-        organizationId: "organization-1",
-        world: "tempest",
-        mapId: 1,
-      } as const;
-
-      const scenarios = [
-        { id: "listed", characterId: "100" },
-        { id: "bystander", characterId: "200" },
-      ].map((scenario) => ({
-        ...scenario,
-        delivered: scenario.characterId === "100",
-      }));
-
-      const targets = [local, remote].flatMap((hub, index) =>
-        scenarios.map((scenario) => {
-          const base = makeSession(`battle-${index}-${scenario.id}`);
-
-          const session: SessionData = {
-            ...base,
-            platform: "game",
-            presence: {
-              userId: base.userId,
-              sessionId: `presence-${base.connectionId}`,
-              organizationIds: ["organization-1"],
-              platform: "game",
-              status: "online",
-              confidence: "verified",
-              isAfk: false,
-              lastSeen: 1,
-              character: {
-                world: scope.world,
-                name: `Hero-${scenario.characterId}`,
-                lvl: 100,
-                icon: "icon",
-                characterId: scenario.characterId,
-                accountId: `account-${scenario.characterId}`,
-                prof: "w",
-              },
-              location: { mapId: scope.mapId, map: "Map", x: 1, y: 1 },
-            },
-          };
-
-          const target = makeSocket(session);
-          hub.register(target.socket);
-          hub.subscribe(target.socket, scope);
-
-          return { ...target, delivered: scenario.delivered };
-        }),
-      );
-
-      for (const hub of [local, remote]) await Effect.runPromise(hub.start());
-
-      const ping = {
-        v: 1,
-        type: "battle-ping.received",
-        data: {
-          pingId: "ping",
-          world: scope.world,
-          mapId: scope.mapId,
-          type,
-          warriorId: team ? 300 : -5,
-          sender: { characterId: "300", name: "Sender" },
-          createdAt: 1,
-        },
-      } as const;
-
-      await local.publishToScopes([scope], ping, {
-        recipientPlatform: "game",
-        recipientWorld: scope.world,
-        recipientMapId: scope.mapId,
-        recipientCharacterIds: ["100"],
-      });
-
-      for (const target of targets) {
-        // Without a routing scope a ping has no Organization to authorize it.
-        await local.publishToUser(target.socket.data.userId, ping);
-        expect(local.sendEvent(target.socket, ping)).toBe(false);
-        expect(target.sent).toHaveLength(target.delivered ? 1 : 0);
-      }
-    },
-  );
-
   test("delivers loot split choices and filter accepts to listed participants on any map of the world and every instance", async () => {
-    const bus = new FederationBus();
-    const local = new RealtimeHub(config, new FakeRedisStore(bus));
-    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+    const [local, remote] = await startPair();
 
     const scope = {
       topic: "map.pings",
@@ -729,34 +576,21 @@ describe("RealtimeHub federation", () => {
 
     const targets = [local, remote].flatMap((hub, index) =>
       scenarios.map((scenario) => {
-        const base = makeSession(`loot-split-${index}-${scenario.id}`);
-
-        const session: SessionData = {
-          ...base,
+        const session = makeAdminSession(`loot-split-${index}-${scenario.id}`, {
           platform: "game",
-          presence: {
-            userId: base.userId,
-            sessionId: `presence-${base.connectionId}`,
-            organizationIds: [scenario.organization],
-            platform: "game",
-            status: "online",
-            confidence: "verified",
-            isAfk: false,
-            lastSeen: 1,
-            character: {
-              world: scope.world,
-              name: `Hero-${scenario.characterId}`,
-              lvl: 100,
-              icon: "icon",
-              characterId: scenario.characterId,
-              accountId: `account-${scenario.characterId}`,
-              prof: "w",
-            },
-            location: { mapId: scenario.mapId, map: "Map", x: 1, y: 1 },
-          },
-        };
+        });
 
-        const target = makeSocket(session);
+        session.presence = makeGamePresence(
+          session,
+          scope.world,
+          scenario.mapId,
+          {
+            characterId: scenario.characterId,
+            organizationIds: [scenario.organization],
+          },
+        );
+
+        const target = makeTestSocket(session);
         hub.register(target.socket);
         hub.subscribe(target.socket, {
           topic: "map.pings",
@@ -767,7 +601,7 @@ describe("RealtimeHub federation", () => {
       }),
     );
 
-    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+    const sender = { characterId: "300", name: "Sender" };
 
     const choices = {
       v: 1,
@@ -775,7 +609,7 @@ describe("RealtimeHub federation", () => {
       data: {
         splitId: "1200653658",
         world: scope.world,
-        sender: { characterId: "300", name: "Sender" },
+        sender,
         choices: { "1200653658": 2 },
         accepted: false,
         sentAt: 1,
@@ -788,21 +622,13 @@ describe("RealtimeHub federation", () => {
       recipientCharacterIds: ["100"],
     });
 
-    for (const target of targets) {
-      // Without a routing scope the choices have no Organization to authorize them.
-      await local.publishToUser(target.socket.data.userId, choices);
-      expect(local.sendEvent(target.socket, choices)).toBe(false);
+    for (const target of targets)
       expect(target.sent).toHaveLength(target.delivered ? 1 : 0);
-    }
 
     const autoAccepted = {
       v: 1,
       type: "loot-split.auto-accepted",
-      data: {
-        world: scope.world,
-        sender: { characterId: "300", name: "Sender" },
-        sentAt: 1,
-      },
+      data: { world: scope.world, sender, sentAt: 1 },
     } as const;
 
     await local.publishToScopes([scope], autoAccepted, {
@@ -813,12 +639,32 @@ describe("RealtimeHub federation", () => {
 
     for (const target of targets)
       expect(target.sent).toHaveLength(target.delivered ? 2 : 0);
+
+    const battlePing = {
+      v: 1,
+      type: "battle-ping.received",
+      data: {
+        pingId: "ping",
+        world: scope.world,
+        mapId: 1,
+        type: "attack",
+        warriorId: -5,
+        sender,
+        createdAt: 1,
+      },
+    } as const;
+
+    // Without a routing scope a ping has no Organization to authorize it.
+    for (const event of [choices, autoAccepted, battlePing])
+      for (const target of targets) {
+        await local.publishToUser(target.socket.data.userId, event);
+        expect(local.sendEvent(target.socket, event)).toBe(false);
+        expect(target.sent).toHaveLength(target.delivered ? 2 : 0);
+      }
   });
 
   test("filters hero events from RabbitMQ on local and federated connections after role changes", async () => {
-    const bus = new FederationBus();
-    const local = new RealtimeHub(config, new FakeRedisStore(bus));
-    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+    const [local, remote] = await startPair();
 
     const scope = {
       topic: "event.coordination",
@@ -827,21 +673,17 @@ describe("RealtimeHub federation", () => {
 
     const targets = [local, remote].flatMap((hub, index) =>
       [false, true].map((visible) => {
-        const session = makeSession(`${index}-${visible}`);
-        session.guilds = [
-          {
-            guild: { id: scope.organizationId, ownerId: "owner" },
-            roles: [
-              {
-                id: "role",
-                permissions: [Permission.LOOTLOG_EVENTS_READ],
-                lvlRangeFrom: 1,
-                lvlRangeTo: visible ? 500 : 100,
-              },
-            ],
-          },
-        ];
-        const target = makeSocket(session);
+        const session = makeAdminSession(`${index}-${visible}`, {
+          guilds: [
+            membership(scope.organizationId, [Permission.LOOTLOG_EVENTS_READ], {
+              roleId: "role",
+              lvlRangeFrom: 1,
+              lvlRangeTo: visible ? 500 : 100,
+            }),
+          ],
+        });
+
+        const target = makeTestSocket(session);
         hub.register(target.socket);
         hub.subscribe(target.socket, scope);
 
@@ -849,72 +691,30 @@ describe("RealtimeHub federation", () => {
       }),
     );
 
-    const handlers = new Map<
-      string,
-      (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
-    >();
+    const { bridge, deliver } = makeRabbitBridgeHarness(local);
 
-    const messaging: RabbitMessagingService = {
-      publish: () => Effect.void,
-      ack: () => Effect.void,
-      nack: () => Effect.void,
-      consume: (options, handler) =>
-        Effect.sync(() => {
-          handlers.set(options.queue, handler);
-
-          return { consumerTag: options.queue, cancel: Effect.void };
-        }),
-    };
-
-    const unexpected = () => {
-      throw new Error("Unexpected control operation");
-    };
-
-    const bridge = new RabbitBridge(
-      messaging,
-      local,
-      { rebalanceAcrossInstances: unexpected },
-      { coverageForMap: unexpected },
-      { publish: unexpected },
-    );
-
-    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
     await Effect.runPromise(
       Effect.scoped(
         Effect.gen(function* () {
           yield* bridge.start();
 
-          const routingKeys = [
+          for (const routingKey of [
             RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE,
             RabbitRoutingKey.EVENT_HERO_KILLED,
             RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
             RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED,
-          ];
-
-          for (const routingKey of routingKeys) {
-            const spec = gatewayConsumerSpecs.find(
-              (entry) => entry.routingKey === routingKey,
+          ])
+            yield* deliver(
+              routingKey,
+              {
+                guildId: scope.organizationId,
+                eventId: "event",
+                heroId: "hidden-hero",
+                mapId: "hidden-map",
+                heroNpcLvl: 300,
+              },
+              { messageId: routingKey },
             );
-
-            const handler = spec && handlers.get(spec.queue);
-
-            if (!handler) throw new Error("Missing event consumer");
-            yield* handler(
-              createRabbitDelivery(
-                routingKey,
-                Buffer.from(
-                  JSON.stringify({
-                    guildId: scope.organizationId,
-                    eventId: "event",
-                    heroId: "hidden-hero",
-                    mapId: "hidden-map",
-                    heroNpcLvl: 300,
-                  }),
-                ),
-                routingKey,
-              ),
-            );
-          }
 
           for (const target of targets)
             expect(target.sent).toHaveLength(target.visible ? 4 : 0);
@@ -949,12 +749,9 @@ describe("RealtimeHub federation", () => {
   });
 
   test("bounds retained subscriptions, permits replacement at capacity and reclaims capacity", async () => {
-    const hub = new RealtimeHub(
-      config,
-      new FakeRedisStore(new FederationBus()),
-    );
+    const hub = makeHub();
 
-    const target = makeSocket(makeSession("bounded"));
+    const target = makeTestSocket(makeAdminSession("bounded"));
     hub.register(target.socket);
 
     const scope = {
@@ -998,12 +795,9 @@ describe("RealtimeHub federation", () => {
   });
 
   test("rejects oversized UTF-8 scopes and clears revoked audiences when replacement exceeds the budget", async () => {
-    const hub = new RealtimeHub(
-      config,
-      new FakeRedisStore(new FederationBus()),
-    );
+    const hub = makeHub();
 
-    const target = makeSocket(makeSession("oversized"));
+    const target = makeTestSocket(makeAdminSession("oversized"));
     hub.register(target.socket);
 
     const scope = {
@@ -1033,11 +827,7 @@ describe("RealtimeHub federation", () => {
   });
 
   test("keeps local and federated delivery aligned through subscription changes and disconnect", async () => {
-    const bus = new FederationBus();
-
-    const hubs = [0, 1].map(
-      () => new RealtimeHub(config, new FakeRedisStore(bus)),
-    );
+    const { hubs } = await startHubs();
 
     const scope = {
       topic: "organization.chat",
@@ -1047,14 +837,12 @@ describe("RealtimeHub federation", () => {
     const otherScope = { ...scope, organizationId: "organization-2" };
 
     const targets = hubs.map((hub, index) => {
-      const target = makeSocket(makeSession(`lifecycle-${index}`));
+      const target = makeTestSocket(makeAdminSession(`lifecycle-${index}`));
       target.socket.data.subscriptions.set(getScopeKey(scope), scope);
       hub.register(target.socket);
 
       return target;
     });
-
-    for (const hub of hubs) await Effect.runPromise(hub.start());
 
     const publish = async (organizationId = "organization-1") => {
       await hubs[0]?.publishToScope(
@@ -1105,10 +893,7 @@ describe("RealtimeHub federation", () => {
   });
 
   test("matches every optional scope dimension and delivers overlapping scopes only once", async () => {
-    const hub = new RealtimeHub(
-      config,
-      new FakeRedisStore(new FederationBus()),
-    );
+    const hub = makeHub();
 
     const scope = {
       topic: "organization.chat",
@@ -1133,14 +918,14 @@ describe("RealtimeHub federation", () => {
     ] as const;
 
     const targets = subscriptions.map((subscription, index) => {
-      const target = makeSocket(makeSession(`dimension-${index}`));
+      const target = makeTestSocket(makeAdminSession(`dimension-${index}`));
       hub.register(target.socket);
       hub.subscribe(target.socket, subscription);
 
       return target;
     });
 
-    const overlapping = makeSocket(makeSession("overlapping"));
+    const overlapping = makeTestSocket(makeAdminSession("overlapping"));
     hub.register(overlapping.socket);
 
     for (const subscription of subscriptions.slice(0, 6))
@@ -1171,10 +956,7 @@ describe("RealtimeHub federation", () => {
   });
 
   test("keeps literal delimiters distinct and removes only the replaced or unsubscribed scope", async () => {
-    const hub = new RealtimeHub(
-      config,
-      new FakeRedisStore(new FederationBus()),
-    );
+    const hub = makeHub();
 
     const first = {
       topic: "organization.chat",
@@ -1190,8 +972,8 @@ describe("RealtimeHub federation", () => {
       organizationId: first.organizationId,
     };
 
-    const firstTarget = makeSocket(makeSession("literal-first"));
-    const secondTarget = makeSocket(makeSession("literal-second"));
+    const firstTarget = makeTestSocket(makeAdminSession("literal-first"));
+    const secondTarget = makeTestSocket(makeAdminSession("literal-second"));
     hub.register(firstTarget.socket);
     hub.register(secondTarget.socket);
     hub.subscribe(firstTarget.socket, first);
@@ -1222,10 +1004,7 @@ describe("RealtimeHub federation", () => {
   test.each(["scope", "scopes", "user", "discord", "presence"] as const)(
     "sends canonical local and remote frames through %s publication and rejects malformed federation",
     async (publication) => {
-      const bus = new FederationBus();
-      const store = new FakeRedisStore(bus);
-      const local = new RealtimeHub(config, store);
-      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+      const [local, remote, { store }] = await startPair();
 
       const scope = {
         topic: "organization.chat",
@@ -1238,8 +1017,8 @@ describe("RealtimeHub federation", () => {
           discordId: "canonical-discord",
         };
 
-        const target = makeSocket({
-          ...makeSession(`canonical-${index}`),
+        const target = makeTestSocket({
+          ...makeAdminSession(`canonical-${index}`),
           ...identity,
         });
 
@@ -1248,9 +1027,6 @@ describe("RealtimeHub federation", () => {
 
         return target.sent;
       });
-
-      await Effect.runPromise(local.start());
-      await Effect.runPromise(remote.start());
 
       const canonical = {
         v: 1,
@@ -1265,6 +1041,18 @@ describe("RealtimeHub federation", () => {
         ...canonical,
         untrusted: "strip",
         data: { ...canonical.data, untrusted: "strip" },
+      };
+
+      // Administrators read precise presence, so they receive this variant.
+      const preciseCanonical = {
+        ...canonical,
+        data: { ...canonical.data, payload: { id: "message-precise" } },
+      };
+
+      const preciseWithUnknownFields = {
+        ...preciseCanonical,
+        untrusted: "strip",
+        data: { ...preciseCanonical.data, untrusted: "strip" },
       };
 
       switch (publication) {
@@ -1284,7 +1072,7 @@ describe("RealtimeHub federation", () => {
           await local.publishPresence(
             scope,
             withUnknownFields,
-            withUnknownFields,
+            preciseWithUnknownFields,
           );
           break;
       }
@@ -1301,7 +1089,7 @@ describe("RealtimeHub federation", () => {
       for (const sent of targets) {
         // Parse the wire text without the protocol schema, which would hide leaked fields.
         expect(sent.map((text) => JSON.parse(text))).toEqual([
-          canonical,
+          publication === "presence" ? preciseCanonical : canonical,
           canonical,
         ]);
       }
@@ -1333,23 +1121,19 @@ describe("RealtimeHub federation", () => {
   );
 
   test("strips fields of another schema and forwards canonical frames from other replicas without validating them", async () => {
-    const bus = new FederationBus();
-    const local = new RealtimeHub(config, new FakeRedisStore(bus));
-    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+    const [local, remote, bus] = await startPair();
 
     const scope = {
       topic: "organization.chat",
       organizationId: "organization-1",
     } as const;
 
-    const target = makeSocket(makeSession("federated"));
+    const target = makeTestSocket(makeAdminSession("federated"));
     remote.register(target.socket);
     remote.subscribe(target.socket, scope);
 
     const published: FederatedRealtimeMessage[] = [];
     bus.listeners.push((message) => published.push(message));
-    await Effect.runPromise(local.start());
-    await Effect.runPromise(remote.start());
 
     const event = {
       v: 1,
@@ -1395,9 +1179,7 @@ describe("RealtimeHub federation", () => {
   });
 
   test("keeps JSON normalization and rejected payload keys aligned locally and remotely", async () => {
-    const bus = new FederationBus();
-    const local = new RealtimeHub(config, new FakeRedisStore(bus));
-    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+    const [local, remote] = await startPair();
 
     const scope = {
       topic: "organization.chat",
@@ -1405,15 +1187,12 @@ describe("RealtimeHub federation", () => {
     } as const;
 
     const targets = [local, remote].map((hub, index) => {
-      const target = makeSocket(makeSession(`normalized-${index}`));
+      const target = makeTestSocket(makeAdminSession(`normalized-${index}`));
       hub.register(target.socket);
       hub.subscribe(target.socket, scope);
 
       return target.sent;
     });
-
-    await Effect.runPromise(local.start());
-    await Effect.runPromise(remote.start());
 
     const customPayload = Object.defineProperty({ id: "message" }, "toJSON", {
       value: () => ({ id: "custom" }),
@@ -1474,16 +1253,12 @@ describe("RealtimeHub federation", () => {
   });
 
   test("targets every user or Discord connection across gateways without subscriptions", async () => {
-    const bus = new FederationBus();
-
-    const hubs = [0, 1].map(
-      () => new RealtimeHub(config, new FakeRedisStore(bus)),
-    );
+    const { hubs } = await startHubs();
 
     const targets = hubs.map((hub, index) =>
       ["shared", "shared", "other"].map((identity, connection) => {
-        const target = makeSocket({
-          ...makeSession(`identity-${index}-${connection}`),
+        const target = makeTestSocket({
+          ...makeAdminSession(`identity-${index}-${connection}`),
           userId: `user-${identity}`,
           discordId: `discord-${identity}`,
         });
@@ -1493,8 +1268,6 @@ describe("RealtimeHub federation", () => {
         return target;
       }),
     );
-
-    for (const hub of hubs) await Effect.runPromise(hub.start());
 
     const event = {
       v: 1,
@@ -1524,9 +1297,8 @@ describe("RealtimeHub federation", () => {
   });
 
   test("filters kill and loot source visibility before local and remote delivery, preserving retries", async () => {
-    const bus = new FederationBus();
-    const stores = [new FakeRedisStore(bus), new FakeRedisStore(bus)];
-    const hubs = stores.map((store) => new RealtimeHub(config, store));
+    const [local, remote, bus] = await startPair();
+    const hubs = [local, remote];
 
     const scope = {
       topic: "organization.loots",
@@ -1564,10 +1336,10 @@ describe("RealtimeHub federation", () => {
 
     const targets = hubs.map((hub, index) =>
       variants.map((variant) => {
-        const session = makeSession(`${index}-${variant.name}`);
+        const session = makeAdminSession(`${index}-${variant.name}`, {
+          platform: variant.name === "game" ? "game" : "web-app",
+        });
 
-        if (variant.name === "game")
-          Object.assign(session, { platform: "game" });
         session.guilds = [
           {
             guild: {
@@ -1581,42 +1353,15 @@ describe("RealtimeHub federation", () => {
             roles: variant.roles,
           },
         ];
-        session.subscriptions.set(getScopeKey(scope), scope);
-        const target = makeSocket(session);
+        const target = makeTestSocket(session);
         hub.register(target.socket);
+        hub.subscribe(target.socket, scope);
 
         return target;
       }),
     );
 
-    const handlers = new Map<
-      string,
-      (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
-    >();
-
-    const messaging: RabbitMessagingService = {
-      publish: () => Effect.void,
-      ack: () => Effect.void,
-      nack: () => Effect.void,
-      consume: (options, handler) =>
-        Effect.sync(() => {
-          handlers.set(options.queue, handler);
-
-          return { consumerTag: options.queue, cancel: Effect.void };
-        }),
-    };
-
-    const unexpected = () => {
-      throw new Error("Unexpected control handler");
-    };
-
-    const bridge = new RabbitBridge(
-      messaging,
-      hubs[0]!,
-      { rebalanceAcrossInstances: unexpected },
-      { coverageForMap: unexpected },
-      { publish: unexpected },
-    );
+    const { bridge, deliver } = makeRabbitBridgeHarness(local);
 
     const feedEntry = {
       id: "kill:organization-1:tempest:1:minute",
@@ -1637,37 +1382,26 @@ describe("RealtimeHub federation", () => {
       npc: { type: "HERO", lvl: 100 },
     };
 
-    const content = Buffer.from(JSON.stringify(payload));
+    const deliverKill = () =>
+      deliver(RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1, payload, {
+        messageId: "accepted-kill-1",
+        redelivered: true,
+      });
 
-    const delivery = createRabbitDelivery(
-      RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1,
-      content,
-      "accepted-kill-1",
-      true,
-    );
-
-    const properties = delivery.properties;
-    const fields = delivery.raw.fields;
     await Effect.runPromise(
       Effect.scoped(
         Effect.gen(function* () {
-          for (const hub of hubs) yield* hub.start();
           yield* bridge.start();
-          const handler = handlers.get("gateway-guilds-kills-accepted-v1");
+          const publish = bus.store.publish;
+          bus.store.publish = () =>
+            Promise.reject(new Error("Redis unavailable"));
 
-          if (!handler) throw new Error("Missing kill consumer");
-          const firstStore = stores[0]!;
-          const publish = firstStore.publish.bind(firstStore);
-          firstStore.publish = async () => {
-            throw new Error("Redis unavailable");
-          };
-
-          expect((yield* handler(delivery).pipe(Effect.result))._tag).toBe(
+          expect((yield* deliverKill().pipe(Effect.result))._tag).toBe(
             "Failure",
           );
-          firstStore.publish = publish;
-          yield* handler(delivery);
-          yield* handler(delivery);
+          bus.store.publish = publish;
+          yield* deliverKill();
+          yield* deliverKill();
 
           for (const group of targets)
             expect(group.map((target) => target.sent.length)).toEqual([
@@ -1680,9 +1414,6 @@ describe("RealtimeHub federation", () => {
               type: "feed.entry",
               data: feedEntry,
             });
-          const lootHandler = handlers.get("gateway-guilds-loots-create");
-
-          if (!lootHandler) throw new Error("Missing loot consumer");
           const { count: _count, ...baseEntry } = feedEntry;
 
           const lootEntry = {
@@ -1719,28 +1450,11 @@ describe("RealtimeHub federation", () => {
             loot,
           };
 
-          const lootContent = Buffer.from(JSON.stringify(lootPayload));
-
-          const lootFields = {
-            ...fields,
-            routingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE,
-          };
-
-          const lootProperties = { ...properties, messageId: "loot-visible" };
-
-          const lootDelivery = {
-            ...lootFields,
-            content: lootContent,
-            properties: lootProperties,
-            raw: {
-              content: lootContent,
-              properties: lootProperties,
-              fields: lootFields,
-            },
-          };
-
-          yield* lootHandler(lootDelivery);
-          yield* lootHandler(lootDelivery);
+          for (let attempt = 0; attempt < 2; attempt++)
+            yield* deliver(RabbitRoutingKey.GUILDS_LOOTS_CREATE, lootPayload, {
+              messageId: "loot-visible",
+              redelivered: true,
+            });
 
           for (const group of targets) {
             expect(group.map((target) => target.sent.length)).toEqual([
@@ -1777,7 +1491,7 @@ describe("RealtimeHub federation", () => {
 
           for (const group of targets) group[0]!.socket.data.guilds = [];
           yield* Effect.promise(() =>
-            hubs[0]!.publishToScope(
+            local.publishToScope(
               scope,
               {
                 v: 1,
@@ -1794,7 +1508,7 @@ describe("RealtimeHub federation", () => {
 
           for (const group of targets) expect(group[0]!.sent).toHaveLength(4);
           yield* Effect.promise(() =>
-            hubs[0]!.publishToScope(
+            local.publishToScope(
               scope,
               {
                 v: 1,
@@ -1823,85 +1537,49 @@ describe("RealtimeHub federation", () => {
   });
 
   test("deduplicates outbox replays across gateways without losing a failed federation publish", async () => {
-    const bus = new FederationBus();
-    const firstStore = new FakeRedisStore(bus);
-    const first = new RealtimeHub(config, firstStore);
-    const second = new RealtimeHub(config, new FakeRedisStore(bus));
+    const [first, second, bus] = await startPair();
 
     const targets = [first, second].map((hub, index) => {
       // The Game client reads new loots as `loot.created`.
-      const target = makeSocket({
-        ...makeSession(`loot-${index}`),
+      const target = makeTestSocket({
+        ...makeAdminSession(`loot-${index}`),
         platform: "game",
       });
 
-      for (const organizationId of ["organization-1", "organization-2"]) {
-        const scope = { topic: "organization.loots", organizationId } as const;
-        target.socket.data.subscriptions.set(getScopeKey(scope), scope);
+      for (const organizationId of ["organization-1", "organization-2"])
         target.socket.data.guilds.push({
           guild: { id: organizationId, ownerId: target.socket.data.discordId },
           roles: [],
         });
-      }
 
       hub.register(target.socket);
+
+      for (const organizationId of ["organization-1", "organization-2"])
+        hub.subscribe(target.socket, {
+          topic: "organization.loots",
+          organizationId,
+        });
 
       return target;
     });
 
-    const handlers = [first, second].map(
-      () =>
-        new Map<
-          string,
-          (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
-        >(),
+    const harnesses = [first, second].map((hub) =>
+      makeRabbitBridgeHarness(hub),
     );
-
-    const bridges = [first, second].map((hub, index) => {
-      const messaging: RabbitMessagingService = {
-        publish: () => Effect.void,
-        ack: () => Effect.void,
-        nack: () => Effect.void,
-        consume: (options, handler) =>
-          Effect.sync(() => {
-            handlers[index]?.set(options.queue, handler);
-
-            return { consumerTag: options.queue, cancel: Effect.void };
-          }),
-      };
-
-      const unexpected = () => {
-        throw new Error("Unexpected non-loot handler");
-      };
-
-      return new RabbitBridge(
-        messaging,
-        hub,
-        { rebalanceAcrossInstances: unexpected },
-        { coverageForMap: unexpected },
-        { publish: unexpected },
-      );
-    });
 
     const deliver = (
       instance: number,
       messageId?: string,
       guildId = "organization-1",
     ) => {
-      const handler = handlers[instance]?.get("gateway-guilds-loots-create");
+      const harness = harnesses[instance];
 
-      if (!handler) throw new Error("Loot consumer not started");
+      if (!harness) throw new Error("Missing loot consumer");
 
-      const content = Buffer.from(
-        JSON.stringify({ version: 2, guildId, lootId: 42, npcs: [] }),
-      );
-
-      return handler(
-        createRabbitDelivery(
-          RabbitRoutingKey.GUILDS_LOOTS_CREATE,
-          content,
-          messageId,
-        ),
+      return harness.deliver(
+        RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+        { version: 2, guildId, lootId: 42, npcs: [] },
+        { messageId },
       );
     };
 
@@ -1920,14 +1598,10 @@ describe("RealtimeHub federation", () => {
     await Effect.runPromise(
       Effect.scoped(
         Effect.gen(function* () {
-          yield* first.start();
-          yield* second.start();
-
-          for (const bridge of bridges) yield* bridge.start();
-          const publish = firstStore.publish.bind(firstStore);
-          firstStore.publish = async () => {
-            throw new Error("Redis unavailable");
-          };
+          for (const { bridge } of harnesses) yield* bridge.start();
+          const publish = bus.store.publish;
+          bus.store.publish = () =>
+            Promise.reject(new Error("Redis unavailable"));
 
           const failed = yield* deliver(0, "loot-publication:1").pipe(
             Effect.result,
@@ -1936,7 +1610,7 @@ describe("RealtimeHub federation", () => {
           expect(failed._tag).toBe("Failure");
           expect(frames()).toEqual([[event()], []]);
 
-          firstStore.publish = publish;
+          bus.store.publish = publish;
           yield* deliver(0, "loot-publication:1");
           yield* deliver(1, "loot-publication:1");
           expect(frames()).toEqual([[event()], [event()]]);
@@ -1956,90 +1630,14 @@ describe("RealtimeHub federation", () => {
 
           expect(frames()).toEqual([expected, expected]);
 
-          for (const bridge of bridges) yield* bridge.stop();
+          for (const { bridge } of harnesses) yield* bridge.stop();
         }),
       ),
     );
   });
 
-  test("shares encoded broadcasts while retaining recipient filtering and backpressure", async () => {
-    const hub = new RealtimeHub(
-      config,
-      new FakeRedisStore(new FederationBus()),
-    );
-
-    const scope = {
-      topic: "organization.chat",
-      organizationId: "organization-1",
-    } as const;
-
-    const targets = [
-      makeSocket(makeSession("first")),
-      makeSocket(makeSession("second")),
-      makeSocket(makeSession("slow"), 2_048),
-      makeSocket(makeSession("other")),
-    ];
-
-    for (const [index, target] of targets.entries()) {
-      if (index < 3)
-        target.socket.data.subscriptions.set(getScopeKey(scope), scope);
-      hub.register(target.socket);
-    }
-
-    const event = {
-      v: 1,
-      type: "chat.cleared",
-      data: { organizationId: "organization-1", payload: { id: "message-1" } },
-    } as const;
-
-    await hub.publishToScope(scope, event);
-    expect(targets[0]?.sent).toEqual([JSON.stringify(event)]);
-    expect(targets[1]?.sent).toEqual([JSON.stringify(event)]);
-    expect(targets[2]?.sent).toEqual([]);
-    expect(targets[2]?.closes).toEqual([1013]);
-    expect(targets[3]?.sent).toEqual([]);
-  });
-
-  test("sends direct events as JSON text", () => {
-    const hub = new RealtimeHub(
-      config,
-      new FakeRedisStore(new FederationBus()),
-    );
-
-    const data = makeSession("direct");
-    const sent: string[] = [];
-
-    const socket = {
-      data,
-      getBufferedAmount: () => 0,
-      send: (frame: string) => sent.push(frame),
-      close: () => {},
-    };
-
-    hub.sendEvent(socket, {
-      v: 1,
-      type: "chat.created",
-      data: { organizationId: "organization-1", payload: { id: "message-1" } },
-    });
-
-    expect(sent).toEqual([
-      JSON.stringify({
-        v: 1,
-        type: "chat.created",
-        data: {
-          organizationId: "organization-1",
-          payload: { id: "message-1" },
-        },
-      }),
-    ]);
-  });
-
   test("fans permission rebalance out to every instance once", async () => {
-    const bus = new FederationBus();
-    const first = new RealtimeHub(config, new FakeRedisStore(bus));
-    const second = new RealtimeHub(config, new FakeRedisStore(bus));
-    await Effect.runPromise(first.start());
-    await Effect.runPromise(second.start());
+    const [first, second] = await startPair();
     const received: string[] = [];
     second.onPermissionRebalance((discordId, userId) =>
       Effect.sync(() => received.push(`${discordId}:${userId}`)).pipe(
@@ -2054,12 +1652,9 @@ describe("RealtimeHub federation", () => {
   });
 
   test("delivers a ready-room removal to a recipient who lost its Organization", async () => {
-    const bus = new FederationBus();
-    const first = new RealtimeHub(config, new FakeRedisStore(bus));
-    const second = new RealtimeHub(config, new FakeRedisStore(bus));
+    const [first, second] = await startPair();
 
-    for (const hub of [first, second]) await Effect.runPromise(hub.start());
-    const target = makeSocket(makeSession("former-member"));
+    const target = makeTestSocket(makeAdminSession("former-member"));
 
     second.register(target.socket);
 
@@ -2090,18 +1685,13 @@ describe("RealtimeHub federation", () => {
   });
 
   test("routes global chat messages and moderation to the channel's subscribers only", async () => {
-    const bus = new FederationBus();
-    const local = new RealtimeHub(config, new FakeRedisStore(bus));
-    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+    const [local, remote] = await startPair();
 
-    const session = (id: string): SessionData => ({
-      ...makeSession(id),
-      platform: "game",
-    });
+    const session = (id: string) => makeAdminSession(id, { platform: "game" });
 
-    const gordion = makeSocket(session("remote-gordion"));
-    const shared = makeSocket(session("remote-shared"));
-    const localShared = makeSocket(session("local-shared"));
+    const gordion = makeTestSocket(session("remote-gordion"));
+    const shared = makeTestSocket(session("remote-shared"));
+    const localShared = makeTestSocket(session("local-shared"));
     remote.register(gordion.socket);
     remote.subscribe(gordion.socket, {
       topic: "global.chat.world",
@@ -2112,34 +1702,33 @@ describe("RealtimeHub federation", () => {
     local.register(localShared.socket);
     local.subscribe(localShared.socket, { topic: "global.chat" });
 
-    const handlers = new Map<
-      string,
-      (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
-    >();
+    // Only Members in the Game client may read global chat, even when subscribed.
+    const excluded = [local, remote].flatMap((hub, index) => {
+      const recipients = {
+        unsubscribed: makeTestSocket(session(`${index}-unsubscribed`)),
+        webApp: makeTestSocket(makeAdminSession(`${index}-web-app`)),
+        apiKey: makeTestSocket(
+          withApiKey(makeAdminSession(`${index}-api-key`), ["organization-1"]),
+        ),
+        noOrganization: makeTestSocket(
+          makeAdminSession(`${index}-former-member`, {
+            platform: "game",
+            guilds: [],
+          }),
+        ),
+      };
 
-    const messaging: RabbitMessagingService = {
-      publish: () => Effect.void,
-      ack: () => Effect.void,
-      nack: () => Effect.void,
-      consume: (options, handler) =>
-        Effect.sync(() => {
-          handlers.set(options.queue, handler);
+      for (const [role, target] of Object.entries(recipients)) {
+        hub.register(target.socket);
 
-          return { consumerTag: options.queue, cancel: Effect.void };
-        }),
-    };
+        if (role !== "unsubscribed")
+          hub.subscribe(target.socket, { topic: "global.chat" });
+      }
 
-    const unexpected = () => {
-      throw new Error("Unexpected control operation");
-    };
+      return Object.values(recipients);
+    });
 
-    const bridge = new RabbitBridge(
-      messaging,
-      local,
-      { rebalanceAcrossInstances: unexpected },
-      { coverageForMap: unexpected },
-      { publish: unexpected },
-    );
+    const { bridge, deliver } = makeRabbitBridgeHarness(local);
 
     const sharedMessage = {
       id: "in-shared",
@@ -2151,58 +1740,34 @@ describe("RealtimeHub federation", () => {
 
     const inGordion = { ...sharedMessage, id: "in-gordion", world: "gordion" };
 
-    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+    const deliveries: ReadonlyArray<
+      readonly [string, string, GlobalChatMessage | GlobalChatChannelUpdate]
+    > = [
+      [RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE, inGordion.id, inGordion],
+      [
+        RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE,
+        sharedMessage.id,
+        sharedMessage,
+      ],
+      [
+        RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE,
+        "delete",
+        { type: "deleted", world: "gordion", id: "in-gordion" },
+      ],
+      [
+        RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE,
+        "pin",
+        { type: "pinned", message: sharedMessage },
+      ],
+    ];
 
     await Effect.runPromise(
       Effect.scoped(
         Effect.gen(function* () {
           yield* bridge.start();
 
-          const deliver = (
-            routingKey: string,
-            id: string,
-            payload: GlobalChatMessage | GlobalChatChannelUpdate,
-          ) => {
-            const spec = gatewayConsumerSpecs.find(
-              (entry) => entry.routingKey === routingKey,
-            );
-
-            const handler = spec && handlers.get(spec.queue);
-
-            if (!handler) throw new Error(`Missing consumer for ${routingKey}`);
-
-            return handler(
-              createRabbitDelivery(
-                routingKey,
-                Buffer.from(JSON.stringify(payload)),
-                id,
-              ),
-            );
-          };
-
-          yield* deliver(
-            RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE,
-            inGordion.id,
-            inGordion,
-          );
-          yield* deliver(
-            RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE,
-            sharedMessage.id,
-            sharedMessage,
-          );
-          yield* deliver(
-            RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE,
-            "delete",
-            {
-              type: "deleted",
-              world: "gordion",
-              id: "in-gordion",
-            },
-          );
-          yield* deliver(RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE, "pin", {
-            type: "pinned",
-            message: sharedMessage,
-          });
+          for (const [routingKey, messageId, payload] of deliveries)
+            yield* deliver(routingKey, payload, { messageId });
         }),
       ),
     );
@@ -2231,173 +1796,33 @@ describe("RealtimeHub federation", () => {
       },
     ]);
     expect(received(localShared.sent)).toEqual(received(shared.sent));
-  });
 
-  test("delivers global chat from RabbitMQ only to subscribed Members in the Game client", async () => {
-    const bus = new FederationBus();
-    const local = new RealtimeHub(config, new FakeRedisStore(bus));
-    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
-    const scope = { topic: "global.chat" } as const;
-
-    const audience = (hub: RealtimeHub, name: string) => {
-      const capable = (id: string): SessionData => ({
-        ...makeSession(`${name}-${id}`),
-        platform: "game",
-      });
-
-      const recipients = {
-        subscribed: makeSocket(capable("subscribed")),
-        unsubscribed: makeSocket(capable("unsubscribed")),
-        webApp: makeSocket(makeSession(`${name}-web-app`)),
-        apiKey: makeSocket({
-          ...makeSession(`${name}-api-key`),
-          apiKeyAccess: {
-            keyId: "key",
-            organizationIds: ["organization-1"],
-            mode: "read",
-            personalData: false,
-            expiresAt: null,
-          },
-          apiKeyLeaseExpiresAt: Number.MAX_SAFE_INTEGER,
-        }),
-        noOrganization: makeSocket({ ...capable("former-member"), guilds: [] }),
-      };
-
-      for (const [role, target] of Object.entries(recipients)) {
-        hub.register(target.socket);
-
-        if (role !== "unsubscribed") hub.subscribe(target.socket, scope);
-      }
-
-      return recipients;
-    };
-
-    const recipients = [audience(local, "local"), audience(remote, "remote")];
-
-    const handlers = new Map<
-      string,
-      (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
-    >();
-
-    const messaging: RabbitMessagingService = {
-      publish: () => Effect.void,
-      ack: () => Effect.void,
-      nack: () => Effect.void,
-      consume: (options, handler) =>
-        Effect.sync(() => {
-          handlers.set(options.queue, handler);
-
-          return { consumerTag: options.queue, cancel: Effect.void };
-        }),
-    };
-
-    const unexpected = () => {
-      throw new Error("Unexpected control operation");
-    };
-
-    const bridge = new RabbitBridge(
-      messaging,
-      local,
-      { rebalanceAcrossInstances: unexpected },
-      { coverageForMap: unexpected },
-      { publish: unexpected },
-    );
-
-    const message = {
-      id: "message-1",
-      displayName: "Author",
-      message: "Hello everyone",
-      timestamp: "2026-10-06T12:00:00.000Z",
-    };
-
-    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          yield* bridge.start();
-
-          const spec = gatewayConsumerSpecs.find(
-            (entry) =>
-              entry.routingKey === RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE,
-          );
-
-          const handler = spec && handlers.get(spec.queue);
-
-          if (!handler) throw new Error("Missing global chat consumer");
-
-          const deliver = (id: string) =>
-            handler(
-              createRabbitDelivery(
-                RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE,
-                Buffer.from(JSON.stringify({ ...message, id })),
-                id,
-              ),
-            );
-
-          yield* deliver(message.id);
-        }),
-      ),
-    );
-
-    for (const { subscribed, ...others } of recipients) {
-      expect(
-        subscribed.sent.map((bytes) => decodeRealtimeFrame(bytes)),
-      ).toEqual([{ v: 1, type: "global-chat.created", data: message }]);
-
-      for (const other of Object.values(others))
-        expect(other.sent).toHaveLength(0);
-    }
-  });
-
-  test("delivers a federated event once to an exact logical subscription", async () => {
-    const bus = new FederationBus();
-    const first = new RealtimeHub(config, new FakeRedisStore(bus));
-    const second = new RealtimeHub(config, new FakeRedisStore(bus));
-    await Effect.runPromise(first.start());
-    await Effect.runPromise(second.start());
-
-    const scope = {
-      topic: "organization.chat",
-      organizationId: "organization-1",
-    } as const;
-
-    const target = makeSocket(makeSession("target"));
-    target.socket.data.subscriptions.set(getScopeKey(scope), scope);
-    second.register(target.socket);
-
-    await first.publishToScope(scope, {
-      v: 1,
-      type: "chat.cleared",
-      data: { organizationId: "organization-1", payload: { id: "message-1" } },
-    });
-
-    expect(target.sent).toHaveLength(1);
-    expect(decodeRealtimeFrame(target.sent[0] ?? "")).toHaveProperty(
-      "type",
-      "chat.cleared",
-    );
+    for (const target of excluded) expect(target.sent).toHaveLength(0);
   });
 
   test("closes on the first dropped event and never resumes a session with a delivery gap", async () => {
-    const bus = new FederationBus();
+    const {
+      hubs: [hub],
+    } = await startHubs(1, { maxBackpressureBytes: 1 });
 
-    const hub = new RealtimeHub(
-      { ...config, maxBackpressureBytes: 1 },
-      new FakeRedisStore(bus),
-    );
-
-    await Effect.runPromise(hub.start());
+    if (!hub) throw new Error("Missing hub");
 
     const scope = {
       topic: "organization.chat",
       organizationId: "organization-1",
     } as const;
 
-    const target = makeSocket(makeSession("slow"), 10);
+    const target = makeTestSocket(makeAdminSession("slow"), 10);
     let bufferedAmount = 10;
     target.socket.getBufferedAmount = () => bufferedAmount;
-    target.socket.data.subscriptions.set(getScopeKey(scope), scope);
-    hub.register(target.socket);
+
+    // Registered after the slow socket, so an aborted broadcast would skip it.
+    const healthy = makeTestSocket(makeAdminSession("healthy"));
+
+    for (const recipient of [target, healthy]) {
+      hub.register(recipient.socket);
+      hub.subscribe(recipient.socket, scope);
+    }
 
     const event = {
       v: 1,
@@ -2407,19 +1832,24 @@ describe("RealtimeHub federation", () => {
 
     await hub.publishToScope(scope, event);
     expect(target.closes).toEqual([1013]);
+    expect(healthy.sent).toEqual([JSON.stringify(event)]);
     bufferedAmount = 0;
     await hub.publishToScope(scope, event);
     await hub.publishToScope(scope, event);
     expect(target.sent).toHaveLength(0);
     expect(target.closes).toEqual([1013]);
+    expect(healthy.sent).toHaveLength(3);
+    expect(healthy.closes).toEqual([]);
   });
 
   test("skips federation decoding without a local audience and validates frames once recipients subscribe", async () => {
-    const bus = new FederationBus();
-    const redis = new FakeRedisStore(bus);
-    const hub = new RealtimeHub(config, redis);
-    await Effect.runPromise(hub.start());
-    const target = makeSocket(makeSession("target"));
+    const {
+      hubs: [hub],
+      bus: { store: redis },
+    } = await startHubs(1);
+
+    if (!hub) throw new Error("Missing hub");
+    const target = makeTestSocket(makeAdminSession("target"));
     hub.register(target.socket);
 
     const scope = {
@@ -2464,22 +1894,25 @@ describe("RealtimeHub federation", () => {
   });
 
   test("accepts queued frames but closes a session when Bun drops a frame below the buffer threshold", () => {
-    const hub = new RealtimeHub(
-      config,
-      new FakeRedisStore(new FederationBus()),
-    );
-
-    const target = makeSocket(makeSession("transport-backpressure"));
+    const hub = new RealtimeHub(config, unusedFederationStore);
+    const target = makeTestSocket(makeAdminSession("transport-backpressure"));
+    const texts: string[] = [];
     let result = -1;
-    target.socket.send = () => result;
+
+    target.socket.send = (text) => {
+      texts.push(text);
+
+      return result;
+    };
 
     const event = {
       v: 1,
-      type: "chat.cleared",
-      data: { organizationId: "organization-1", payload: {} },
+      type: "chat.created",
+      data: { organizationId: "organization-1", payload: { id: "message-1" } },
     } as const;
 
     expect(hub.sendEvent(target.socket, event)).toBe(true);
+    expect(texts).toEqual([JSON.stringify(event)]);
     expect(target.closes).toEqual([]);
     result = 0;
     expect(hub.sendEvent(target.socket, event)).toBe(false);
@@ -2491,9 +1924,7 @@ describe("RealtimeHub federation", () => {
 });
 
 test("gathering rosters reach authorized observers across gateways without exposing hidden sources or legacy clients", async () => {
-  const bus = new FederationBus();
-  const local = new RealtimeHub(config, new FakeRedisStore(bus));
-  const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+  const [local, remote] = await startPair();
   const sourceGuild = "organization-1";
   const sharedGuild = "organization-2";
 
@@ -2566,42 +1997,33 @@ test("gathering rosters reach authorized observers across gateways without expos
 
   const targets = [local, remote].flatMap((hub, index) =>
     scenarios.map((scenario) => {
-      const base = makeSession(`${index}-${scenario.name}`);
-      const discordId = scenario.organizer ? "organizer" : base.discordId;
+      const connectionId = `${index}-${scenario.name}`;
+
+      const discordId = scenario.organizer
+        ? "organizer"
+        : `discord-${connectionId}`;
+
       const organizations = scenario.organizations ?? [sourceGuild];
 
-      const session: SessionData = {
-        ...base,
+      const session = makeAdminSession(connectionId, {
         platform: "game",
         discordId,
-        guilds: organizations.map((id) => ({
-          guild: {
-            id,
+        guilds: organizations.map((id) =>
+          membership(id, scenario.permissions ?? readPermissions, {
             ownerId: scenario.owner ? discordId : "different-owner",
-          },
-          roles: [
-            {
-              id: "reader",
-              permissions: scenario.permissions ?? readPermissions,
-              lvlRangeFrom: scenario.minimumLevel ?? 0,
-              lvlRangeTo: 500,
-            },
-          ],
-        })),
-      };
+            roleId: "reader",
+            lvlRangeFrom: scenario.minimumLevel ?? 0,
+          }),
+        ),
+      });
 
-      if (scenario.apiKey) {
-        session.apiKeyAccess = {
+      if (scenario.apiKey)
+        withApiKey(session, organizations, {
           keyId: "key",
-          organizationIds: organizations,
-          mode: "read",
           personalData: true,
-          expiresAt: null,
-        };
-        session.apiKeyLeaseExpiresAt = Date.now() + 60_000;
-      }
+        });
 
-      const target = makeSocket(session);
+      const target = makeTestSocket(session);
       hub.register(target.socket);
 
       for (const organizationId of organizations) {
@@ -2618,34 +2040,7 @@ test("gathering rosters reach authorized observers across gateways without expos
     }),
   );
 
-  const handlers = new Map<
-    string,
-    (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
-  >();
-
-  const messaging: RabbitMessagingService = {
-    publish: () => Effect.void,
-    ack: () => Effect.void,
-    nack: () => Effect.void,
-    consume: (options, handler) =>
-      Effect.sync(() => {
-        handlers.set(options.queue, handler);
-
-        return { consumerTag: options.queue, cancel: Effect.void };
-      }),
-  };
-
-  const unexpected = () => {
-    throw new Error("Unexpected control call");
-  };
-
-  const bridge = new RabbitBridge(
-    messaging,
-    local,
-    { rebalanceAcrossInstances: unexpected },
-    { coverageForMap: unexpected },
-    { publish: unexpected },
-  );
+  const harness = makeRabbitBridgeHarness(local);
 
   const volunteer: PartyGatheringVolunteer = {
     characterId: "volunteer",
@@ -2702,25 +2097,19 @@ test("gathering rosters reach authorized observers across gateways without expos
     update: { type: "UPSERT", gathering },
   };
 
-  for (const hub of [local, remote]) await Effect.runPromise(hub.start());
   await Effect.runPromise(
     Effect.scoped(
       Effect.gen(function* () {
-        yield* bridge.start();
-        const handler = handlers.get("gateway-guilds-party-gathering-updated");
-
-        if (!handler) throw new Error("Missing gathering state consumer");
+        yield* harness.bridge.start();
 
         const deliver = (
           payload: PartyGatheringUpdateEnvelope,
           messageId: string,
         ) =>
-          handler(
-            createRabbitDelivery(
-              RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED,
-              Buffer.from(JSON.stringify(payload)),
-              messageId,
-            ),
+          harness.deliver(
+            RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED,
+            payload,
+            { messageId },
           );
 
         yield* deliver(envelope, "gathering-created");
@@ -2904,35 +2293,66 @@ test("gathering rosters reach authorized observers across gateways without expos
   );
 });
 
-const npcDeliveryCases = (npcType: string, npcLevel: number, tier: string) =>
+const npcTopicPermissions = {
+  "organization.timers": {
+    read: Permission.LOOTLOG_TIMERS_READ,
+    heroes: Permission.LOOTLOG_TIMERS_HEROES_READ,
+    titans: Permission.LOOTLOG_TIMERS_TITANS_READ,
+  },
+  "organization.chat": {
+    read: Permission.LOOTLOG_CHAT_READ,
+    heroes: Permission.LOOTLOG_CHAT_HEROES_READ,
+    titans: Permission.LOOTLOG_CHAT_TITANS_READ,
+  },
+  "organization.notifications": {
+    read: Permission.LOOTLOG_NOTIFICATIONS_READ,
+    heroes: Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
+    titans: Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
+  },
+  "organization.loots": {
+    read: Permission.LOOTLOG_LOOTS_READ,
+    heroes: Permission.LOOTLOG_LOOTS_HEROES_READ,
+    titans: Permission.LOOTLOG_LOOTS_TITANS_READ,
+  },
+} as const;
+
+const allNpcReadPermissions = Object.values(npcTopicPermissions).flatMap(
+  (permissions) => Object.values(permissions),
+);
+
+const npcDeliveryCases = (
+  npcType: string,
+  npcLevel: number,
+  tier: "heroes" | "titans",
+) =>
   [
     [
       "timers update",
-      "gateway-guilds-timers-update",
+      RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
       "organization.timers",
       { npc: { lvl: npcLevel, type: npcType } },
     ],
     [
       "timers delete",
-      "gateway-guilds-timers-delete",
+      RabbitRoutingKey.GUILDS_TIMERS_DELETE,
       "organization.timers",
       { npcId: 105, routing: { tier, npcLevel } },
     ],
     [
       "NPC chat",
-      "gateway-guilds-send-message",
+      RabbitRoutingKey.GUILDS_SEND_MESSAGE,
       "organization.chat",
       { type: "NPC", npc: { lvl: npcLevel, type: npcType } },
     ],
     [
       "NPC party chat",
-      "gateway-guilds-send-message",
+      RabbitRoutingKey.GUILDS_SEND_MESSAGE,
       "organization.chat",
       { type: "PARTY_GATHERING", npc: { lvl: npcLevel, type: npcType } },
     ],
     [
       "system party chat update",
-      "gateway-guilds-update-message",
+      RabbitRoutingKey.GUILDS_UPDATE_MESSAGE,
       "organization.chat",
       {
         messageId: "message",
@@ -2942,19 +2362,19 @@ const npcDeliveryCases = (npcType: string, npcLevel: number, tier: string) =>
     ],
     [
       "chat delete",
-      "gateway-guilds-delete-message",
+      RabbitRoutingKey.GUILDS_DELETE_MESSAGE,
       "organization.chat",
       { messageId: "message", routing: { tier, npcLevel } },
     ],
     [
       "NPC notification",
-      "gateway-guilds-send-notification",
+      RabbitRoutingKey.GUILDS_NOTIFICATIONS_SEND,
       "organization.notifications",
       { npc: { lvl: npcLevel, type: npcType } },
     ],
     [
       "loot share",
-      "gateway-guilds-loots-share-update",
+      RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE,
       "organization.loots",
       {
         version: 2,
@@ -2965,95 +2385,77 @@ const npcDeliveryCases = (npcType: string, npcLevel: number, tier: string) =>
     ],
   ] as const;
 
-const npcReadPermissions = [
-  Permission.LOOTLOG_TIMERS_READ,
-  Permission.LOOTLOG_TIMERS_HEROES_READ,
-  Permission.LOOTLOG_CHAT_READ,
-  Permission.LOOTLOG_CHAT_HEROES_READ,
-  Permission.LOOTLOG_NOTIFICATIONS_READ,
-  Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
-  Permission.LOOTLOG_LOOTS_READ,
-  Permission.LOOTLOG_LOOTS_HEROES_READ,
-];
-
-const allNpcReadPermissions = [
-  ...npcReadPermissions,
-  Permission.LOOTLOG_TIMERS_TITANS_READ,
-  Permission.LOOTLOG_CHAT_TITANS_READ,
-  Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
-  Permission.LOOTLOG_LOOTS_TITANS_READ,
-];
-
+// Each topic must check its own tier permission: a denied reader holds every
+// other topic's grants, and an allowed reader holds only this topic's.
 for (const scenario of [
   {
     name: "level range",
     type: "HERO",
     level: 105,
     tier: "heroes",
-    permissions: allNpcReadPermissions,
-    from: 200,
+    withholdTier: false,
   },
   {
     name: "titan permission",
     type: "TITAN",
     level: 250,
     tier: "titans",
-    permissions: npcReadPermissions,
-    from: 200,
+    withholdTier: true,
   },
   {
     name: "hero permission",
     type: "HERO",
     level: 250,
     tier: "heroes",
-    permissions: npcReadPermissions.filter(
-      (permission) => !permission.endsWith("HEROES_READ"),
-    ),
-    from: 200,
+    withholdTier: true,
   },
-]) {
-  for (const [name, queue, topic, data] of npcDeliveryCases(
+] as const) {
+  for (const [name, routingKey, topic, data] of npcDeliveryCases(
     scenario.type,
     scenario.level,
     scenario.tier,
   )) {
     test(`${name} requires ${scenario.name} on game and web across gateways`, async () => {
-      const bus = new FederationBus();
-
-      const hubs = [0, 1].map(
-        () => new RealtimeHub(config, new FakeRedisStore(bus)),
-      );
-
+      const { hubs } = await startHubs();
       const scope = { topic, organizationId: "organization-1" };
+      const topicPermissions = npcTopicPermissions[topic];
+      const tierPermission = topicPermissions[scenario.tier];
+
+      const deniedPermissions = scenario.withholdTier
+        ? allNpcReadPermissions.filter(
+            (permission) => permission !== tierPermission,
+          )
+        : allNpcReadPermissions;
 
       const targets = hubs.flatMap((hub, i) =>
-        ["game", "web-app"].flatMap((platform) =>
+        (["game", "web-app"] as const).flatMap((platform) =>
           [false, true].map((allowed) => {
-            const session = makeSession(`${i}-${platform}-${allowed}`);
-            Object.assign(session, { platform });
-            session.guilds = [
-              {
-                guild: { id: "organization-1", ownerId: "owner" },
-                roles: [
-                  {
-                    id: "permission",
-                    permissions: allowed
-                      ? allNpcReadPermissions
-                      : scenario.permissions,
-                    lvlRangeFrom: allowed ? 0 : scenario.from,
-                    lvlRangeTo: 500,
-                  },
-                  {
-                    id: "empty",
-                    permissions: [],
-                    lvlRangeFrom: 0,
-                    lvlRangeTo: 500,
-                  },
-                ],
-              },
-            ];
+            const session = makeAdminSession(`${i}-${platform}-${allowed}`, {
+              platform,
+              guilds: [
+                {
+                  guild: { id: "organization-1", ownerId: "owner" },
+                  roles: [
+                    {
+                      id: "permission",
+                      permissions: allowed
+                        ? [topicPermissions.read, tierPermission]
+                        : deniedPermissions,
+                      lvlRangeFrom: allowed ? 0 : 200,
+                      lvlRangeTo: 500,
+                    },
+                    {
+                      id: "empty",
+                      permissions: [],
+                      lvlRangeFrom: 0,
+                      lvlRangeTo: 500,
+                    },
+                  ],
+                },
+              ],
+            });
 
-            const t = makeSocket(session);
+            const t = makeTestSocket(session);
             hub.register(t.socket);
             hub.subscribe(t.socket, scope);
 
@@ -3062,52 +2464,20 @@ for (const scenario of [
         ),
       );
 
-      const handlers = new Map<
-        string,
-        (d: RabbitDelivery) => Effect.Effect<void, unknown>
-      >();
+      const [local] = hubs;
 
-      const messaging: RabbitMessagingService = {
-        publish: () => Effect.void,
-        ack: () => Effect.void,
-        nack: () => Effect.void,
-        consume: (options, handler) =>
-          Effect.sync(() => {
-            handlers.set(options.queue, handler);
+      if (!local) throw new Error("Missing hub");
+      const { bridge, deliver } = makeRabbitBridgeHarness(local);
 
-            return { consumerTag: options.queue, cancel: Effect.void };
-          }),
-      };
-
-      const unexpected = () => {
-        throw new Error("unexpected control");
-      };
-
-      const bridge = new RabbitBridge(
-        messaging,
-        hubs[0]!,
-        { rebalanceAcrossInstances: unexpected },
-        { coverageForMap: unexpected },
-        { publish: unexpected },
-      );
-
-      for (const hub of hubs) await Effect.runPromise(hub.start());
       await Effect.runPromise(
         Effect.scoped(
           Effect.gen(function* () {
             yield* bridge.start();
-
-            const content = Buffer.from(
-              JSON.stringify({ guildId: "organization-1", ...data }),
+            yield* deliver(
+              routingKey,
+              { guildId: "organization-1", ...data },
+              { messageId: "npc-delivery" },
             );
-
-            const delivery = createRabbitDelivery(
-              queue,
-              content,
-              "npc-delivery",
-            );
-
-            yield* handlers.get(queue)!(delivery);
 
             for (const t of targets.filter((t) => t.allowed))
               expect(t.sent).toHaveLength(1);
@@ -3122,11 +2492,7 @@ for (const scenario of [
 }
 
 test("chat capabilities and shared frames stay recipient-specific locally and remotely", async () => {
-  const bus = new FederationBus();
-  const local = new RealtimeHub(config, new FakeRedisStore(bus));
-  const remote = new RealtimeHub(config, new FakeRedisStore(bus));
-
-  for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+  const [local, remote] = await startPair();
 
   const scope = {
     topic: "organization.chat",
@@ -3162,28 +2528,16 @@ test("chat capabilities and shared frames stay recipient-specific locally and re
 
   const targets = [local, remote].map((hub) =>
     viewers.map((viewer) => {
-      const session = { ...makeSession(viewer.id), discordId: viewer.id };
-      session.guilds = [
-        {
-          guild: { id: "organization-1", ownerId: "owner" },
-          roles: [
-            {
-              id: "role",
-              permissions: viewer.permissions,
-              lvlRangeFrom: 0,
-              lvlRangeTo: 500,
-            },
+      const { socket, sent } = makeTestSocket(
+        makeAdminSession(viewer.id, {
+          discordId: viewer.id,
+          guilds: [
+            membership("organization-1", viewer.permissions, {
+              roleId: "role",
+            }),
           ],
-        },
-      ];
-      const sent: string[] = [];
-
-      const socket = {
-        data: session,
-        getBufferedAmount: () => 0,
-        close: () => {},
-        send: (frame: string) => sent.push(frame),
-      };
+        }),
+      );
 
       hub.register(socket);
       hub.subscribe(socket, scope);
@@ -3226,53 +2580,37 @@ test("chat capabilities and shared frames stay recipient-specific locally and re
 });
 
 test("keeps basic and precise presence private for local and remote recipients", async () => {
-  const bus = new FederationBus();
-  const local = new RealtimeHub(config, new FakeRedisStore(bus));
-  const remote = new RealtimeHub(config, new FakeRedisStore(bus));
-
-  for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+  const [local, remote] = await startPair();
 
   const scope = {
     topic: "organization.presence",
     organizationId: "organization-1",
   } as const;
 
+  const presenceMembership = (precise: boolean) =>
+    membership(
+      scope.organizationId,
+      precise
+        ? [
+            Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+            Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+          ]
+        : [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+      { roleId: "role" },
+    );
+
   const targets = [local, remote].flatMap((hub, index) =>
     [false, true].map((precise) => {
-      const session = makeSession(`presence-${index}-${precise}`);
-
-      const permissions: Permission[] = [
-        Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-      ];
-
-      const role = {
-        id: "role",
-        permissions,
-        lvlRangeFrom: 0,
-        lvlRangeTo: 500,
-      };
-
-      if (precise)
-        role.permissions.push(Permission.LOOTLOG_PRESENCE_LOCATION_READ);
-      session.guilds = [
-        {
-          guild: { id: scope.organizationId, ownerId: "owner" },
-          roles: [role],
-        },
-      ];
-      const sent: string[] = [];
-
-      const socket = {
-        data: session,
-        getBufferedAmount: () => 0,
-        close: () => {},
-        send: (frame: string) => sent.push(frame),
-      };
+      const { socket, sent } = makeTestSocket(
+        makeAdminSession(`presence-${index}-${precise}`, {
+          guilds: [presenceMembership(precise)],
+        }),
+      );
 
       hub.register(socket);
       hub.subscribe(socket, scope);
 
-      return { sent, session, role, precise };
+      return { sent, session: socket.data, precise };
     }),
   );
 
@@ -3317,22 +2655,7 @@ test("keeps basic and precise presence private for local and remote recipients",
 
   // A permission change replaces the session's grants, as commitAccess does.
   for (const target of targets) {
-    target.session.guilds = [
-      {
-        guild: { id: scope.organizationId, ownerId: "owner" },
-        roles: [
-          {
-            ...target.role,
-            permissions: target.precise
-              ? [Permission.LOOTLOG_ONLINE_PLAYERS_READ]
-              : [
-                  Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-                  Permission.LOOTLOG_PRESENCE_LOCATION_READ,
-                ],
-          },
-        ],
-      },
-    ];
+    target.session.guilds = [presenceMembership(!target.precise)];
   }
 
   await local.publishPresence(scope, basic, precise);
@@ -3347,19 +2670,25 @@ test("keeps basic and precise presence private for local and remote recipients",
 });
 
 test("expired API key sockets cannot receive responses or user-targeted events", async () => {
-  const bus = new FederationBus();
-  const hub = new RealtimeHub(config, new FakeRedisStore(bus));
-  await Effect.runPromise(hub.start());
-  const target = makeSocket(makeSession("integration"));
-  target.socket.data.apiKeyAccess = {
-    keyId: "key",
-    organizationIds: ["123"],
-    mode: "read",
-    personalData: true,
-    expiresAt: null,
-  };
-  target.socket.data.apiKeyLeaseExpiresAt = 0;
+  const [hub] = await startPair();
+
+  const target = makeTestSocket(
+    withApiKey(
+      makeAdminSession("integration", {
+        guilds: [{ guild: { id: "123", ownerId: "owner" }, roles: [] }],
+      }),
+      ["123"],
+      { keyId: "key", personalData: true, leaseExpiresAt: 0 },
+    ),
+  );
+
   hub.register(target.socket);
+  await hub.publishToUser(target.socket.data.userId, {
+    v: 1,
+    type: "reservation.created",
+    data: { organizationId: "123", payload: {} },
+  });
+  expect(target.sent).toHaveLength(0);
   expect(
     hub.sendResponse(target.socket, {
       v: 1,
@@ -3373,21 +2702,18 @@ test("expired API key sockets cannot receive responses or user-targeted events",
 });
 
 test("API key user-targeted organization events stay inside selected current organizations", async () => {
-  const bus = new FederationBus();
-  const hub = new RealtimeHub(config, new FakeRedisStore(bus));
-  await Effect.runPromise(hub.start());
-  const target = makeSocket(makeSession("integration"));
-  target.socket.data.apiKeyAccess = {
-    keyId: "key",
-    organizationIds: ["123"],
-    mode: "read",
-    personalData: false,
-    expiresAt: null,
-  };
-  target.socket.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
-  target.socket.data.guilds = [
-    { guild: { id: "123", ownerId: "owner" }, roles: [] },
-  ];
+  const [hub] = await startPair();
+
+  const target = makeTestSocket(
+    withApiKey(
+      makeAdminSession("integration", {
+        guilds: [{ guild: { id: "123", ownerId: "owner" }, roles: [] }],
+      }),
+      ["123"],
+      { keyId: "key" },
+    ),
+  );
+
   hub.register(target.socket);
   await hub.publishToUser(target.socket.data.userId, {
     v: 1,
@@ -3421,10 +2747,7 @@ test("resolves timer routing once while preserving recipient authorization acros
   const routing = spyOn(npcRouting, "getNpcRoutingTier");
 
   try {
-    const hub = new RealtimeHub(
-      config,
-      new FakeRedisStore(new FederationBus()),
-    );
+    const hub = makeHub();
 
     const scope = {
       topic: "organization.timers",
@@ -3432,25 +2755,20 @@ test("resolves timer routing once while preserving recipient authorization acros
     } as const;
 
     const targets = Array.from({ length: 300 }, (_, index) => {
-      const target = makeSocket({
-        ...makeSession(String(index)),
-        guilds: [
-          {
-            guild: { id: scope.organizationId, ownerId: "owner" },
-            roles: [
-              {
-                id: "role",
-                lvlRangeFrom: 0,
-                lvlRangeTo: index % 2 === 0 ? 500 : 50,
-                permissions: [
-                  Permission.LOOTLOG_TIMERS_READ,
-                  Permission.LOOTLOG_TIMERS_HEROES_READ,
-                ],
-              },
-            ],
-          },
-        ],
-      });
+      const target = makeTestSocket(
+        makeAdminSession(String(index), {
+          guilds: [
+            membership(
+              scope.organizationId,
+              [
+                Permission.LOOTLOG_TIMERS_READ,
+                Permission.LOOTLOG_TIMERS_HEROES_READ,
+              ],
+              { roleId: "role", lvlRangeTo: index % 2 === 0 ? 500 : 50 },
+            ),
+          ],
+        }),
+      );
 
       hub.register(target.socket);
       hub.subscribe(target.socket, scope);

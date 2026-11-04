@@ -45,6 +45,28 @@ function socket(keyId: string, userId = "u", discordId = "d") {
   return { socket: result, closes };
 }
 
+function validStatuses(targets: ReadonlyArray<{ socket: GatewaySocket }>) {
+  return Response.json({
+    keys: targets.map(({ socket: { data } }) => ({
+      keyId: data.apiKeyAccess?.keyId,
+      valid: true,
+      userId: data.userId,
+      discordId: data.discordId,
+      access: data.apiKeyAccess,
+    })),
+  });
+}
+
+function renewWithClock(leases: ApiKeyLeases) {
+  return Effect.runPromise(
+    Effect.gen(function* () {
+      const renewal = yield* leases.renew().pipe(Effect.forkChild);
+      yield* TestClock.adjust("16 seconds");
+      yield* Fiber.join(renewal);
+    }).pipe(Effect.provide(TestClock.layer())),
+  );
+}
+
 test("renewal batches duplicate keys and refreshes a shared user once before extending leases", async () => {
   const first = socket("k"),
     second = socket("k");
@@ -55,19 +77,7 @@ test("renewal batches duplicate keys and refreshes a shared user once before ext
   const client = httpClientFromResponses(() => {
     calls += 1;
 
-    return Effect.succeed(
-      Response.json({
-        keys: [
-          {
-            keyId: "k",
-            valid: true,
-            userId: "u",
-            discordId: "d",
-            access: first.socket.data.apiKeyAccess,
-          },
-        ],
-      }),
-    );
+    return Effect.succeed(validStatuses([first]));
   });
 
   const leases = new ApiKeyLeases(
@@ -136,19 +146,7 @@ test("slow independent user refreshes share the renewal deadline concurrently", 
 
   const leases = new ApiKeyLeases(
     config,
-    httpClientFromResponses(() =>
-      Effect.succeed(
-        Response.json({
-          keys: targets.map(({ socket: { data } }) => ({
-            keyId: data.apiKeyAccess?.keyId,
-            valid: true,
-            userId: data.userId,
-            discordId: data.discordId,
-            access: data.apiKeyAccess,
-          })),
-        }),
-      ),
-    ),
+    httpClientFromResponses(() => Effect.succeed(validStatuses(targets))),
     () => targets.map((target) => target.socket),
     () =>
       Effect.gen(function* () {
@@ -161,13 +159,7 @@ test("slow independent user refreshes share the renewal deadline concurrently", 
     () => 30_000,
   );
 
-  await Effect.runPromise(
-    Effect.gen(function* () {
-      const renewal = yield* leases.renew().pipe(Effect.forkChild);
-      yield* TestClock.adjust("16 seconds");
-      yield* Fiber.join(renewal);
-    }).pipe(Effect.provide(TestClock.layer())),
-  );
+  await renewWithClock(leases);
   expect(completed).toBe(16);
   expect(peak).toBeGreaterThan(1);
   expect(peak).toBeLessThanOrEqual(8);
@@ -178,51 +170,24 @@ test("slow independent user refreshes share the renewal deadline concurrently", 
   }
 });
 
-test("failed, timed out or expired refreshes never extend authority", async () => {
-  for (const outcome of ["failure", "timeout", "expired"] as const) {
-    const target = socket("k");
-    let now = 30_000;
+test("a permission refresh that outlives the lease never extends authority", async () => {
+  const target = socket("k");
+  let now = 30_000;
 
-    const leases = new ApiKeyLeases(
-      config,
-      httpClientFromResponses(() =>
-        Effect.succeed(
-          Response.json({
-            keys: [
-              {
-                keyId: "k",
-                valid: true,
-                userId: "u",
-                discordId: "d",
-                access: target.socket.data.apiKeyAccess,
-              },
-            ],
-          }),
-        ),
-      ),
-      () => [target.socket],
-      () => {
-        if (outcome === "failure") return Effect.fail(new Error("unavailable"));
+  const leases = new ApiKeyLeases(
+    config,
+    httpClientFromResponses(() => Effect.succeed(validStatuses([target]))),
+    () => [target.socket],
+    () =>
+      Effect.sync(() => {
+        now = 60_000;
+      }),
+    () => now,
+  );
 
-        if (outcome === "timeout") return Effect.never;
-
-        return Effect.sync(() => {
-          now = 60_000;
-        });
-      },
-      () => now,
-    );
-
-    await Effect.runPromise(
-      Effect.gen(function* () {
-        const renewal = yield* leases.renew().pipe(Effect.forkChild);
-        yield* TestClock.adjust("16 seconds");
-        yield* Fiber.join(renewal);
-      }).pipe(Effect.provide(TestClock.layer())),
-    );
-    expect(target.closes).toEqual([outcome === "expired" ? 1008 : 1013]);
-    expect(target.socket.data.apiKeyLeaseExpiresAt).toBe(0);
-  }
+  await Effect.runPromise(leases.renew());
+  expect(target.closes).toEqual([1008]);
+  expect(target.socket.data.apiKeyLeaseExpiresAt).toBe(0);
 });
 
 test.each(["failure", "defect", "timeout"] as const)(
@@ -234,19 +199,7 @@ test.each(["failure", "defect", "timeout"] as const)(
 
     const leases = new ApiKeyLeases(
       config,
-      httpClientFromResponses(() =>
-        Effect.succeed(
-          Response.json({
-            keys: targets.map(({ socket: { data } }) => ({
-              keyId: data.apiKeyAccess?.keyId,
-              valid: true,
-              userId: data.userId,
-              discordId: data.discordId,
-              access: data.apiKeyAccess,
-            })),
-          }),
-        ),
-      ),
+      httpClientFromResponses(() => Effect.succeed(validStatuses(targets))),
       () => targets.map((target) => target.socket),
       (_discordId, userId) => {
         if (userId === "healthy-user") return Effect.void;
@@ -260,13 +213,7 @@ test.each(["failure", "defect", "timeout"] as const)(
       () => 30_000,
     );
 
-    await Effect.runPromise(
-      Effect.gen(function* () {
-        const renewal = yield* leases.renew().pipe(Effect.forkChild);
-        yield* TestClock.adjust("16 seconds");
-        yield* Fiber.join(renewal);
-      }).pipe(Effect.provide(TestClock.layer())),
-    );
+    await renewWithClock(leases);
 
     for (const target of unavailable) {
       expect(target.closes).toEqual([1013]);

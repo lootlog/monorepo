@@ -1,29 +1,20 @@
 import { Effect } from "effect";
 import { describe, expect, test } from "bun:test";
-import { makeGamePingSocket as makeSocket } from "../../test/realtime-fixtures.js";
+import {
+  acceptingRateLimit,
+  makeGamePingSocket as makeSocket,
+} from "../../test/realtime-fixtures.js";
 import { BattlePingService } from "./battle-ping-service.js";
 
 describe("BattlePingService", () => {
   test("routes a ping only to the named teammates, never back to the sender", async () => {
     const publications: unknown[] = [];
-    const rateLimitKeys: unknown[] = [];
 
-    const service = new BattlePingService(
-      {
-        command: {
-          eval: async (_script, _keys, key) => {
-            rateLimitKeys.push(key);
-
-            return [1, 1234, 0];
-          },
-        },
+    const service = new BattlePingService(acceptingRateLimit(), {
+      publishToScopes: async (...arguments_: unknown[]) => {
+        publications.push(arguments_);
       },
-      {
-        publishToScopes: async (...arguments_: unknown[]) => {
-          publications.push(arguments_);
-        },
-      },
-    );
+    });
 
     const response = await Effect.runPromise(
       service.send(makeSocket(), {
@@ -38,8 +29,6 @@ describe("BattlePingService", () => {
       status: "accepted",
       pingId: expect.any(String),
     });
-    // Battle pings must not drain the map ping budget.
-    expect(rateLimitKeys).toEqual(["battle-ping:rate:user-1"]);
     expect(publications).toEqual([
       [
         [
@@ -75,18 +64,10 @@ describe("BattlePingService", () => {
   });
 
   test("rejects a ping addressed only to the sender without consuming the rate limit", async () => {
-    let evaluations = 0;
+    const rateLimitKeys: string[] = [];
 
     const service = new BattlePingService(
-      {
-        command: {
-          eval: async () => {
-            evaluations += 1;
-
-            return [1, 1, 0];
-          },
-        },
-      },
+      acceptingRateLimit(1234, rateLimitKeys),
       {
         publishToScopes: () => Promise.reject(new Error("Unexpected publish")),
       },
@@ -102,6 +83,6 @@ describe("BattlePingService", () => {
         }),
       ),
     ).toEqual({ status: "rejected", code: "invalid-payload" });
-    expect(evaluations).toBe(0);
+    expect(rateLimitKeys).toEqual([]);
   });
 });

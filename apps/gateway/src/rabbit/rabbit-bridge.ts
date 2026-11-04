@@ -80,7 +80,7 @@ const retryable = (
   installRetryQueue,
 });
 
-export const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
+const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
   retryable(
     "gateway-guilds-kills-accepted-v1",
     RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1,

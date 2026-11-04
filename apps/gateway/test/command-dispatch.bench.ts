@@ -1,17 +1,14 @@
 import {
   benchmarkConfig,
+  commandFrame,
   makeGamePingSocket,
   unusedFederationStore,
 } from "./realtime-fixtures.js";
+import { makeCommandHandler } from "./command-handler-fixtures.js";
 import assert from "node:assert/strict";
-import type { ClientCommand } from "@lootlog/protocol/realtime";
 import { Effect } from "effect";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { CommandAdmission } from "#src/realtime/command-admission";
-import {
-  CommandHandler,
-  gatewayFeatureRoutes,
-} from "#src/realtime/command-handler";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
 
@@ -20,8 +17,6 @@ import { RealtimeHub } from "#src/realtime/realtime-hub";
 const commands = 200_000;
 
 const warmupCommands = 20_000;
-
-const unexpected = () => Effect.die("Unexpected command");
 
 const hub = new RealtimeHub(
   benchmarkConfig,
@@ -71,32 +66,23 @@ const airTags = new AirTagService(
   hub,
 );
 
-const handler = new CommandHandler(
-  {
+const { handler } = makeCommandHandler({
+  guilds: {
     getUserGuilds: () => Effect.die("Unexpected guild read"),
     invalidate: () => Effect.void,
   },
-  { verify: () => Effect.die("Unexpected proof") },
-  () => Effect.void,
-  {
+  verifier: { verify: () => Effect.die("Unexpected proof") },
+  presence: {
     heartbeat: () => Effect.succeed(1_783_000_000_000),
     publish: () => Effect.die("Unexpected presence publish"),
     snapshot: () => Effect.die("Unexpected snapshot"),
     reconcileAccess: () => Effect.void,
   },
   hub,
-  { publish: () => Effect.void },
-  {
-    npcPresence: {
-      refresh: () => Effect.void,
-      withdraw: () => Effect.void,
-    },
-    airTags,
-  },
-  gatewayFeatureRoutes({
-    mapPings: mapPings,
-    battlePings: { send: unexpected },
-    lootSplits: { send: unexpected, autoAccept: unexpected },
+  activity: { publish: () => Effect.void },
+  sessionFeatures: { airTags },
+  features: {
+    mapPings,
     airTags,
     // Unbounded, so the benchmark measures the observation, not its rejection.
     airTagObservationAdmission: new CommandAdmission({
@@ -105,19 +91,8 @@ const handler = new CommandHandler(
       concurrent: 64,
       retryAfterMs: { min: 1, max: 2 },
     }),
-    npcPresence: {
-      report: unexpected,
-      fetch: unexpected,
-    },
-  }),
-);
-
-type CommandBody<Command> = Command extends unknown
-  ? Omit<Command, "v" | "requestId">
-  : never;
-
-const frame = (command: CommandBody<ClientCommand>) =>
-  JSON.stringify({ v: 1, requestId: "request-1", ...command });
+  },
+});
 
 const presenceScope = {
   topic: "organization.presence",
@@ -125,18 +100,21 @@ const presenceScope = {
 } as const;
 
 const scenarios = {
-  "connection.ping": [frame({ type: "connection.ping", data: {} })],
+  "connection.ping": [commandFrame({ type: "connection.ping", data: {} })],
   "presence.heartbeat": [
-    frame({ type: "presence.heartbeat", data: { sessionId: "presence-1" } }),
+    commandFrame({
+      type: "presence.heartbeat",
+      data: { sessionId: "presence-1" },
+    }),
   ],
   "map-ping.send": [
-    frame({
+    commandFrame({
       type: "map-ping.send",
       data: { expectedMapId: 7, type: "enemy", x: 10, y: 11 },
     }),
   ],
   "air-tag.observation": [
-    frame({
+    commandFrame({
       type: "air-tag.observation",
       data: {
         expectedMapId: 7,
@@ -148,8 +126,8 @@ const scenarios = {
   ],
   // Alternates so every subscribe changes the socket's subscriptions.
   "subscription.subscribe+unsubscribe": [
-    frame({ type: "subscription.subscribe", data: presenceScope }),
-    frame({ type: "subscription.unsubscribe", data: presenceScope }),
+    commandFrame({ type: "subscription.subscribe", data: presenceScope }),
+    commandFrame({ type: "subscription.unsubscribe", data: presenceScope }),
   ],
 } satisfies Record<string, ReadonlyArray<string>>;
 

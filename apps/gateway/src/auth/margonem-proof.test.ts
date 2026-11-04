@@ -37,6 +37,9 @@ const proofOptions = () => {
 
 const response = (body: Uint8Array) => new Response(new Uint8Array(body));
 
+const invalidKeyResponse = () =>
+  response(new TextEncoder().encode("-----BEGIN PUBLIC KEY-----\ninvalid\n"));
+
 describe("Margonem proof verifier", () => {
   test("rejects malformed proof without an outbound request", async () => {
     const get = mock(() => Effect.die("HTTP must not run"));
@@ -52,26 +55,6 @@ describe("Margonem proof verifier", () => {
       ),
     ).resolves.toEqual({ valid: false, reason: "missing or malformed proof" });
     expect(get).not.toHaveBeenCalled();
-  });
-
-  test("performs one forced idempotent key refresh after signature rejection", async () => {
-    const get = mock(() =>
-      Effect.succeed(
-        response(
-          new TextEncoder().encode("-----BEGIN PUBLIC KEY-----\ninvalid\n"),
-        ),
-      ),
-    );
-
-    const verifier = makeMargonemProofVerifier(
-      config,
-      httpClientFromResponses(get),
-    );
-
-    await expect(
-      Effect.runPromise(verifier.verify(proofOptions())),
-    ).resolves.toEqual({ valid: false, reason: "invalid proof signature" });
-    expect(get).toHaveBeenCalledTimes(2);
   });
 
   test("rejects oversized key responses and bounds the refresh attempts", async () => {
@@ -104,11 +87,7 @@ describe("Margonem proof verifier", () => {
     while (get.mock.calls.length === 0) await Bun.sleep(1);
     const other = Effect.runPromise(verifier.verify(proofOptions()));
     await Effect.runPromise(Fiber.interrupt(first));
-    responseReady.resolve(
-      response(
-        new TextEncoder().encode("-----BEGIN PUBLIC KEY-----\ninvalid\n"),
-      ),
-    );
+    responseReady.resolve(invalidKeyResponse());
     expect(await other).toEqual({
       valid: false,
       reason: "invalid proof signature",
@@ -118,13 +97,7 @@ describe("Margonem proof verifier", () => {
   });
 
   test("an invalid-signature join storm performs only one forced refresh per minute", async () => {
-    const get = mock(() =>
-      Effect.succeed(
-        response(
-          new TextEncoder().encode("-----BEGIN PUBLIC KEY-----\ninvalid\n"),
-        ),
-      ),
-    );
+    const get = mock(() => Effect.succeed(invalidKeyResponse()));
 
     const verifier = makeMargonemProofVerifier(
       config,
@@ -137,7 +110,9 @@ describe("Margonem proof verifier", () => {
       ),
     );
 
-    expect(results.every((result) => !result.valid)).toBe(true);
+    expect(results).toEqual(
+      results.map(() => ({ valid: false, reason: "invalid proof signature" })),
+    );
     expect(get).toHaveBeenCalledTimes(2);
     await Effect.runPromise(verifier.verify(proofOptions()));
     expect(get).toHaveBeenCalledTimes(2);

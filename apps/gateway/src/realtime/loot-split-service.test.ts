@@ -1,29 +1,24 @@
 import { Effect } from "effect";
 import { describe, expect, test } from "bun:test";
-import { makeGamePingSocket as makeSocket } from "../../test/realtime-fixtures.js";
-import type { PingScriptStore } from "./ping-routing.js";
+import {
+  acceptingRateLimit,
+  makeGamePingSocket as makeSocket,
+} from "../../test/realtime-fixtures.js";
 import { LootSplitService } from "./loot-split-service.js";
-
-const acceptingRateLimit = (keys: unknown[] = []): PingScriptStore => ({
-  command: {
-    eval: async (_script, _keys, key) => {
-      keys.push(key);
-
-      return [1, 1234, 0];
-    },
-  },
-});
 
 describe("LootSplitService", () => {
   test("routes choices to the split's other participants on the sender's world, whatever their map", async () => {
     const publications: unknown[] = [];
-    const rateLimitKeys: unknown[] = [];
+    const rateLimitKeys: string[] = [];
 
-    const service = new LootSplitService(acceptingRateLimit(rateLimitKeys), {
-      publishToScopes: async (...arguments_: unknown[]) => {
-        publications.push(arguments_);
+    const service = new LootSplitService(
+      acceptingRateLimit(1234, rateLimitKeys),
+      {
+        publishToScopes: async (...arguments_: unknown[]) => {
+          publications.push(arguments_);
+        },
       },
-    });
+    );
 
     const response = await Effect.runPromise(
       service.send(makeSocket(), {
@@ -113,19 +108,11 @@ describe("LootSplitService", () => {
   });
 
   test("rejects a sender that shows itself in no Lootlog without consuming the rate limit", async () => {
-    let evaluations = 0;
+    const rateLimitKeys: string[] = [];
     const socket = makeSocket();
 
     const service = new LootSplitService(
-      {
-        command: {
-          eval: async () => {
-            evaluations += 1;
-
-            return [1, 1, 0];
-          },
-        },
-      },
+      acceptingRateLimit(1234, rateLimitKeys),
       {
         publishToScopes: () => Promise.reject(new Error("Unexpected publish")),
       },
@@ -152,7 +139,7 @@ describe("LootSplitService", () => {
         }),
       ),
     ).toEqual({ status: "rejected", code: "forbidden" });
-    expect(evaluations).toBe(0);
+    expect(rateLimitKeys).toEqual([]);
   });
 
   test("rejects choices keyed by something other than an item id", async () => {

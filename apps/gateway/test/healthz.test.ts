@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, test } from "bun:test";
 import { httpServerRequestCount } from "@lootlog/instrumentation";
 import {
   ConfigProvider,
@@ -13,7 +13,10 @@ import { makeObservabilityLayer } from "@lootlog/instrumentation/observability";
 import { Permission } from "@lootlog/schema/permissions";
 import { makeGatewayAuth } from "../src/auth/auth-service.js";
 import type { UserGuildData } from "../src/guilds/guild.js";
-import type { GatewayHttpDependencies } from "../src/http-api/gateway-http.js";
+import {
+  makeGatewayHttpBoundary,
+  type GatewayHttpDependencies,
+} from "../src/http-api/gateway-http.js";
 
 import { createGatewayFetch } from "../src/app.js";
 
@@ -90,6 +93,19 @@ const application = {
 
 const server = { upgrade: () => false };
 
+const boundaries: Array<ReturnType<typeof makeGatewayHttpBoundary>> = [];
+
+afterAll(() => Promise.all(boundaries.map((boundary) => boundary.dispose())));
+
+const gatewayFetch = (
+  dependencies: Parameters<typeof createGatewayFetch>[0] = application,
+) => {
+  const boundary = makeGatewayHttpBoundary(dependencies);
+  boundaries.push(boundary);
+
+  return createGatewayFetch(dependencies, boundary.handler);
+};
+
 describe("gateway HTTP boundary", () => {
   test("exports gateway server spans with parent context, status and no credentials", async () => {
     const payloads: unknown[] = [];
@@ -130,7 +146,7 @@ describe("gateway HTTP boundary", () => {
         runtime.runPromise(effect),
     };
 
-    const fetch = createGatewayFetch(tracedApplication);
+    const fetch = gatewayFetch(tracedApplication);
 
     const traceparent =
       "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01";
@@ -273,7 +289,7 @@ describe("gateway HTTP boundary", () => {
     const before = await Effect.runPromise(Metric.value(counter));
     const failure = new Error("Upgrade unavailable");
     await expect(
-      createGatewayFetch(application)(
+      gatewayFetch()(
         new Request("https://gateway.example/ws", {
           headers: {
             origin: "https://classic.margonem.pl",
@@ -294,7 +310,7 @@ describe("gateway HTTP boundary", () => {
   });
 
   test("keeps the health contract independent from websocket auth", async () => {
-    const response = await createGatewayFetch(application)(
+    const response = await gatewayFetch()(
       new Request("https://gateway.example/healthz"),
       server,
     );
@@ -309,7 +325,7 @@ describe("gateway HTTP boundary", () => {
 
     let upgraded = false;
 
-    const fetch = createGatewayFetch({
+    const fetch = gatewayFetch({
       ...application,
       hub: { unavailableReason: () => reason },
     });
@@ -359,7 +375,7 @@ describe("gateway HTTP boundary", () => {
 
   test("serves Organization presence only to viewers allowed to read online players there", async () => {
     snapshotReads.length = 0;
-    const fetch = createGatewayFetch(application);
+    const fetch = gatewayFetch();
 
     const read = (discordId?: string) =>
       fetch(
@@ -398,7 +414,7 @@ describe("gateway HTTP boundary", () => {
   });
 
   test("rejects credentials in websocket URLs before upgrade", async () => {
-    const response = await createGatewayFetch(application)(
+    const response = await gatewayFetch()(
       new Request("https://gateway.example/ws?ticket=secret"),
       server,
     );
@@ -412,7 +428,7 @@ describe("gateway HTTP boundary", () => {
   ])("rejects unauthorized upgrades: %j", async ({ origin, status }) => {
     let upgraded = false;
 
-    const response = await createGatewayFetch(application)(
+    const response = await gatewayFetch()(
       new Request("https://gateway.example/ws", { headers: { origin } }),
       {
         upgrade: () => {
@@ -439,14 +455,7 @@ describe("gateway HTTP boundary", () => {
       },
     });
 
-    const response = await createGatewayFetch({
-      config: { websocketPath: "/ws", environment: "test" },
-      runPromise: Effect.runPromise,
-      auth,
-      hub,
-      guilds,
-      presence,
-    })(request, {
+    const response = await gatewayFetch()(request, {
       upgrade: (_request, options) => {
         upgradeOptions = options;
 
@@ -474,14 +483,7 @@ describe("gateway HTTP boundary", () => {
         },
       });
 
-      const response = await createGatewayFetch({
-        config: { websocketPath: "/ws", environment: "test" },
-        runPromise: Effect.runPromise,
-        auth,
-        hub,
-        guilds,
-        presence,
-      })(request, {
+      const response = await gatewayFetch()(request, {
         upgrade: () => {
           upgraded = true;
 
@@ -503,7 +505,7 @@ test("server API key upgrades allow absent Origin while preserving session and a
     apiKeyStatusSecret: Redacted.make("test"),
   });
 
-  const fetch = createGatewayFetch({ ...application, auth: keyAuth });
+  const fetch = gatewayFetch({ ...application, auth: keyAuth });
 
   const headers = {
     "sec-websocket-protocol": "lootlog.realtime.json.v1",

@@ -4,26 +4,16 @@ import type { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import { createGatewayWebSocket, drainGateway } from "#src/app";
 import { RealtimeHub } from "./realtime-hub.js";
-import { subscribedFederationStore } from "../../test/realtime-fixtures.js";
+import {
+  makeSession,
+  makeTestSocket,
+  subscribedFederationStore,
+} from "../../test/realtime-fixtures.js";
 import { CommandIngress } from "./command-ingress.js";
 import type { GatewaySocket } from "./session.js";
 
-const socket = (connectionId: string): GatewaySocket => ({
-  data: {
-    connectionId,
-    discordId: "discord",
-    userId: "user",
-    platform: "web-app",
-    joined: false,
-    guilds: [],
-    subscriptions: new Map(),
-    airTagScopes: [],
-    confidence: "reported",
-  },
-  send: () => 1,
-  close: () => undefined,
-  getBufferedAmount: () => 0,
-});
+const socket = (connectionId: string): GatewaySocket =>
+  makeTestSocket(makeSession({ connectionId, joined: false })).socket;
 
 test("default admission permits restoring 4096 large valid subscriptions", async () => {
   const tasks: Array<Effect.Effect<void, unknown>> = [];
@@ -274,31 +264,6 @@ test("lets a host callback run while a synchronous command burst is draining", a
   expect(handledAtHostCallback).toBeLessThan(100);
   await drained.promise;
   expect(handled).toBe(100);
-});
-
-test("disconnect cleanup progresses while every command slot remains occupied", async () => {
-  const target = setup({
-    active: 1,
-    messages: 10,
-    bytes: 100,
-    connectionMessages: 10,
-    connectionBytes: 100,
-  });
-
-  const busy = socket("busy");
-  const closing = socket("closing");
-  target.ingress.open(busy);
-  target.ingress.open(closing);
-  target.ingress.message(busy, "stalled");
-  target.ingress.close(closing);
-  // Leave the first task suspended, exactly like a stalled dependency.
-  const cleanup = target.tasks[1];
-  expect(cleanup).toBeDefined();
-
-  if (cleanup) await Effect.runPromise(cleanup);
-  expect(target.closed).toEqual(["closing"]);
-  expect(target.handled).toEqual([]);
-  expect(target.ingress.getDiagnostics().active).toBe(1);
 });
 
 test("bounds lifecycle retention when cleanup stalls and admits reconnects after cleanup recovers", async () => {

@@ -19,30 +19,24 @@ describe("AuthService websocket upgrade boundary", () => {
     expect(service.isAllowedOrigin(null)).toBe(false);
   });
 
-  test("allows configured Chrome origins and classifies extensions as game clients", () => {
+  test("allows only configured extension origins and classifies extensions as game clients", () => {
     for (const origin of config.allowedExtensionOrigins) {
       expect(service.isAllowedOrigin(origin)).toBe(true);
       expect(service.getPlatform(origin)).toBe("game");
       expect(service.isAllowedOrigin(`${origin}.attacker.example`)).toBe(false);
     }
 
-    expect(
-      service.isAllowedOrigin(
-        "chrome-extension://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-      ),
-    ).toBe(false);
-    expect(service.isAllowedOrigin("moz-extension://not-a-uuid")).toBe(false);
-    expect(service.isAllowedOrigin("null")).toBe(false);
+    for (const origin of [
+      "chrome-extension://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "moz-extension://a7e55f76-3efa-4d42-90c3-9800d48d882e",
+      "moz-extension://not-a-uuid",
+      "null",
+    ]) {
+      expect(service.isAllowedOrigin(origin)).toBe(false);
+    }
+
     expect(service.getPlatform("https://lootlog.example")).toBe("web-app");
     expect(service.getPlatform("https://berufs.margonem.pl")).toBe("game");
-  });
-
-  test("rejects unconfigured Firefox installation origins", () => {
-    expect(
-      service.isAllowedOrigin(
-        "moz-extension://a7e55f76-3efa-4d42-90c3-9800d48d882e",
-      ),
-    ).toBe(false);
   });
 
   test("reads both verified identity headers", () => {

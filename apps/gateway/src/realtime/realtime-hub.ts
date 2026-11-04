@@ -110,16 +110,11 @@ export const closeGradually = (
     }
   });
 
-interface FederationRecovery {
-  /** How long sessions wait for a dropped subscription to prove it lost nothing. */
-  readonly graceMs?: number;
-  /** Spreads the closes when sessions did miss frames. */
-  readonly closeSpreadMs?: number;
-}
-
+// How long sessions wait for a dropped subscription to prove it lost nothing.
 // Covers a 5 s Dragonfly stall plus the resubscribe backoff and reorder window.
 const FEDERATION_GRACE_MS = 15_000;
 
+// Spreads the closes when sessions did miss frames.
 const FEDERATION_CLOSE_SPREAD_MS = 10_000;
 
 /** The global chat channel of `world`, or the one every world shares. */
@@ -232,7 +227,6 @@ export class RealtimeHub {
     private readonly config: Pick<GatewayConfiguration, "maxBackpressureBytes">,
     private readonly redis: RealtimeFederationStore,
     private readonly runBackground: BackgroundTaskRunner = unmanagedBackgroundTaskRunner,
-    private readonly federationRecovery: FederationRecovery = {},
   ) {}
 
   start(): Effect.Effect<void, unknown> {
@@ -600,7 +594,7 @@ export class RealtimeHub {
     });
     this.federationGrace = setTimeout(
       () => this.closeAfterFederationGap(),
-      this.federationRecovery.graceMs ?? FEDERATION_GRACE_MS,
+      FEDERATION_GRACE_MS,
     );
     this.federationGrace.unref?.();
   }
@@ -630,14 +624,11 @@ export class RealtimeHub {
 
     this.runBackground(
       "realtime.federation.close",
-      closeGradually(
-        sockets,
-        this.federationRecovery.closeSpreadMs ?? FEDERATION_CLOSE_SPREAD_MS,
-        (socket) =>
-          socket.close(
-            REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
-            "realtime federation unavailable",
-          ),
+      closeGradually(sockets, FEDERATION_CLOSE_SPREAD_MS, (socket) =>
+        socket.close(
+          REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+          "realtime federation unavailable",
+        ),
       ),
     );
   }
