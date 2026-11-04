@@ -219,7 +219,7 @@ export const makeMessagingDataLayer = (
                 return yield* Effect.fail(new PermissionDeniedError());
               }
 
-              const notificationId = randomUUID();
+              const notificationId = Bun.randomUUIDv7();
 
               const now = yield* Clock.currentTimeMillis;
               const createdAt = new Date(now).toISOString();
