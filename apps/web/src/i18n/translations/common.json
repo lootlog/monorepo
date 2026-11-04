@@ -84,8 +84,6 @@
     "all": "Wszystko"
   },
   "breadcrumbs": {
-    "guild": "Lootlog",
-    "page": "Strona",
     "lootsList": "Lista łupów",
     "timers": "Timery",
     "reservations": "Rezerwacje",
@@ -98,7 +96,6 @@
     "npcFallback": "Potwór #{{id}}",
     "memberFallback": "Członek #{{id}}",
     "events": "Eventy",
-    "newEvent": "Nowy event",
     "event": "Event",
     "killHistory": "Historia bić",
     "hero": "Heros",

@@ -4,6 +4,12 @@ import { StatsRanking } from "@/features/guild/stats/stats-ranking";
 import { StatsTablePageSkeleton } from "@/features/guild/stats/stats-table-page-skeleton";
 
 export const Route = createFileRoute("/_authenticated/$guildId/stats/ranking")({
+  staticData: {
+    navigation: ({ t }) => ({
+      label: t("common.breadcrumbs.memberRanking"),
+      tab: true,
+    }),
+  },
   component: StatsRanking,
   pendingComponent: () => (
     <StatsTablePageSkeleton

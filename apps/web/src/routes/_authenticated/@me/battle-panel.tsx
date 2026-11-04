@@ -5,6 +5,9 @@ import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel")({
+  staticData: {
+    navigation: ({ t }) => ({ label: t("layout.navigation.battlePanel") }),
+  },
   loader: ({ abortController, context }) =>
     withRouteLoaderCancellation(abortController, async () => {
       void prefetchRouteQuery(

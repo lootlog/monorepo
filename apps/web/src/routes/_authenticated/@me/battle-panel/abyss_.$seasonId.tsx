@@ -7,6 +7,14 @@ import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/abyss_/$seasonId",
 )({
+  staticData: {
+    navigation: ({ t, parentPath }) => ({
+      ancestors: [
+        { label: t("layout.breadcrumbs.abyss"), path: `${parentPath}/abyss` },
+      ],
+      label: t("layout.breadcrumbs.abyssSeason"),
+    }),
+  },
   validateSearch: battlePanelAbyssSeasonSearchSchema,
   loader: ({ abortController, context, location, params, preload }) =>
     withRouteLoaderCancellation(abortController, async () => {
