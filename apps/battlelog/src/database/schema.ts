@@ -155,7 +155,7 @@ export const userCharacters = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => Bun.randomUUIDv7()),
     userId: text("userId").notNull(),
     characterId: text("characterId").notNull(),
     name: text("name").notNull(),

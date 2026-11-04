@@ -1,5 +1,8 @@
 [install]
 linker = "isolated"
+# Wait three days before installing a newly published version, so a
+# compromised release can be caught and unpublished before it lands here.
+minimumReleaseAge = "3d"
 
 [install.lockfile]
 save = true

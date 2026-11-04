@@ -15,6 +15,8 @@ type ItemImageProps = {
   icon: string;
   rarity: ItemRarity;
   shareIndex?: number;
+  /** Shown over the icon as `+N`, as the game does, when above 0. */
+  upgradeLevel?: number;
 };
 
 export const ItemImage: FC<ItemImageProps> = ({
@@ -23,6 +25,7 @@ export const ItemImage: FC<ItemImageProps> = ({
   icon,
   rarity,
   shareIndex,
+  upgradeLevel = 0,
 }) => {
   return (
     <div className={cn("relative", className)}>
@@ -44,6 +47,14 @@ export const ItemImage: FC<ItemImageProps> = ({
           backgroundImage: `url(${itemIconUrl(icon)})`,
         }}
       />
+      {upgradeLevel > 0 ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute top-0 right-0.5 text-[11px] leading-none font-bold text-green-400 tabular-nums [text-shadow:0_0_2px_#000,0_0_1px_#000]"
+        >
+          +{upgradeLevel}
+        </span>
+      ) : null}
       {shareIndex !== undefined && (
         <div
           className="absolute -right-1 top-7 flex size-4 items-center justify-center rounded-sm text-xs font-medium shadow-sm"

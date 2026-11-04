@@ -1,5 +1,4 @@
 import { selectEventKillPoints } from "#src/events/kills/event-point-query";
-import { randomUUID } from "node:crypto";
 
 import {
   and,
@@ -206,7 +205,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
           const rows = entries
             .toSorted((left, right) => left.memberId - right.memberId)
             .map((entry) => ({
-              id: randomUUID(),
+              id: Bun.randomUUIDv7(),
               eventId,
               memberId: entry.memberId,
               heroNpcName,
@@ -337,7 +336,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
             else if (item.kind === "create")
               yield* transaction.insert(eventRankingTable).values({
                 ...item.data,
-                id: randomUUID(),
+                id: Bun.randomUUIDv7(),
                 updatedAt: new Date(yield* Clock.currentTimeMillis),
               });
             else

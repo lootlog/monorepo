@@ -19,7 +19,7 @@
     "./realtime/event-listeners": "./src/realtime/event-listeners.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "lint": "oxlint src/*.ts src/realtime scripts orval.config.ts --deny-warnings",
     "test": "bun test",
     "client:check": "bun ./scripts/check-openapi-parity.ts && bun ./scripts/check-generated.ts",

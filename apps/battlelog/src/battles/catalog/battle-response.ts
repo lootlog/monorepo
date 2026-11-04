@@ -306,10 +306,6 @@ const BattleAcceptedResponseSchema = Schema.Struct({
   status: Schema.Literal("ACCEPTED"),
 });
 
-export type BattleTimelineResponseInput = DeepMutable<
-  typeof BattleTimelineResponseSchema.Encoded
->;
-
 export const BattleResponseSchemas = {
   accepted: BattleAcceptedResponseSchema,
   battle: BattleResponseSchema,

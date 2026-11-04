@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import { and, asc, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -65,7 +63,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
     return run((database) =>
       database.transaction((transaction) =>
         Effect.gen(function* () {
-          const killId = randomUUID();
+          const killId = Bun.randomUUIDv7();
 
           const killRows = yield* transaction
             .insert(eventHeroKillTable)
@@ -124,7 +122,9 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
           if (points.length > 0)
             yield* transaction
               .insert(eventKillPointTable)
-              .values(points.map((point) => ({ ...point, id: randomUUID() })));
+              .values(
+                points.map((point) => ({ ...point, id: Bun.randomUUIDv7() })),
+              );
 
           if (params.mapIds.length > 0) {
             yield* transaction

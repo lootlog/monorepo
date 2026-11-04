@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import {
   and,
   eq,
@@ -109,9 +107,10 @@ export const makeEventSummaryStore = (database: ApiDatabaseValue) => ({
   }) {
     return database.transaction((transaction) =>
       Effect.gen(function* () {
-        yield* transaction
-          .insert(eventRespawnWindowSummaryTable)
-          .values({ ...options.data, id: options.data.id ?? randomUUID() });
+        yield* transaction.insert(eventRespawnWindowSummaryTable).values({
+          ...options.data,
+          id: options.data.id ?? Bun.randomUUIDv7(),
+        });
 
         const deletedLogs =
           options.mapIds.length === 0

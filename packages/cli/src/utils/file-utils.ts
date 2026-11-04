@@ -1,5 +1,4 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { glob } from "zx";
 import path from "node:path";
 import type { EnvFile, EnvVariable } from "../types.js";
 
@@ -18,7 +17,13 @@ export const discoverEnvFiles = async (
     });
   }
 
-  const appsSampleFiles = await glob(`${rootPath}/apps/**/.env.example`);
+  const appsSampleFiles = await Array.fromAsync(
+    new Bun.Glob("apps/**/.env.example").scan({
+      cwd: rootPath,
+      absolute: true,
+      dot: true,
+    }),
+  );
 
   for (const samplePath of appsSampleFiles) {
     const appDir = path.dirname(samplePath);

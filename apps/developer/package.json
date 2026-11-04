@@ -8,7 +8,7 @@
     "dev": "vite dev",
     "build": "vite build",
     "start": "bun server.js",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "lint": "oxlint .",
     "test": "bun test server-handler.test.js src"
   },

@@ -100,6 +100,8 @@ const TECHNICAL_STAT_KEYS = new Set([
   "created",
   "doubleshoot",
   "emo",
+  // The tooltip header shows the upgrade level instead of a stat row.
+  "enhancement_upgrade_lvl",
   "item_value",
   "key",
   "legbon_test",
@@ -902,7 +904,6 @@ const STAT_SECTIONS = [
       "binds",
       "artisan_worthless",
       "canpreview",
-      "enhancement_upgrade_lvl",
       "recovered",
       "noauction",
       "nodepo",

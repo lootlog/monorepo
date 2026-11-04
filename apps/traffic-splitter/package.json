@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "wrangler deploy --env=\"\" --dry-run --outdir dist && tsc --noEmit",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "lint": "oxlint .",
     "test": "vitest run"
   },

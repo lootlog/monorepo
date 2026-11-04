@@ -3,7 +3,6 @@ import { eventMapScope } from "#src/events/event-scope-query";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { makeEventMapRead } from "#src/events/catalog/event-map-read";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { randomUUID } from "node:crypto";
 import { and, eq, isNull } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -183,7 +182,7 @@ export const makeEventMapAssignments = (
           : query(
               `events.assignments.open${gapType}`,
               database.insert(eventMapCoverageGapTable).values({
-                id: randomUUID(),
+                id: Bun.randomUUIDv7(),
                 mapId,
                 heroNpcId,
                 gapType,
@@ -315,7 +314,7 @@ export const makeEventMapAssignments = (
                 yield* transaction
                   .insert(eventMapAssignmentHistoryTable)
                   .values({
-                    id: randomUUID(),
+                    id: Bun.randomUUIDv7(),
                     mapId,
                     heroNpcId: scoped.hero.id,
                     memberId,

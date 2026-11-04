@@ -12,7 +12,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "oxlint .",
-    "typecheck": "tsc -b",
+    "typecheck": "bun check -b",
     "test": "vitest run",
     "doctor": "react-doctor ."
   },
