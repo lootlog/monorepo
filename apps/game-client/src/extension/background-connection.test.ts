@@ -1,3 +1,4 @@
+import { publishedPresence } from "@/test/realtime-wire";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   RealtimeClient,
@@ -116,11 +117,11 @@ describe("background connection", () => {
       },
     });
 
-    bridge.socket.respond({ sessionId: "session" });
+    bridge.socket.respond(publishedPresence("session"));
     await publication;
     await vi.advanceTimersByTimeAsync(25_000);
     now += 37;
-    bridge.socket.respond({});
+    bridge.socket.respond({ lastSeen: 1 });
     await vi.advanceTimersByTimeAsync(0);
     expect(bridge.messages).toContainEqual({
       type: "heartbeat-latency",
@@ -157,7 +158,11 @@ describe("background connection", () => {
       },
     });
 
-    bridge.socket.respond({ organizationIds: ["organization"] });
+    bridge.socket.respond({
+      connectionId: "connection-1",
+      organizationIds: ["organization"],
+      subscriptionScopes: [],
+    });
     await join;
 
     const presence = bridge.receive({
@@ -174,7 +179,14 @@ describe("background connection", () => {
       },
     });
 
-    bridge.socket.respond({ presences: [] });
+    const snapshot = {
+      organizationId: "organization",
+      world: "jaruna",
+      revision: 1,
+      presences: [],
+    };
+
+    bridge.socket.respond(snapshot);
     await presence;
 
     // A world's global chat channel is the one topic the page may follow.
@@ -188,12 +200,14 @@ describe("background connection", () => {
       },
     });
 
-    bridge.socket.respond({});
+    bridge.socket.respond({
+      scope: { topic: "global.chat.world", world: "jaruna" },
+    });
     await follow;
     expect(bridge.messages).toContainEqual({
       type: "result",
       id: "presence",
-      data: { presences: [] },
+      data: snapshot,
     });
     expect(bridge.messages).toContainEqual({ type: "state", state: "ready" });
     expect(bridge.factory).toHaveBeenCalledWith("wss://gateway.lootlog.pl/ws", [

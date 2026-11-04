@@ -164,6 +164,7 @@ const setup = async ({
           data: {
             connectionId: "test",
             organizationIds: ["guild-1"],
+            subscriptionScopes: [],
             capabilities: [
               REALTIME_BATTLE_PING_CAPABILITY,
               ...(teamBattlePings

@@ -1,19 +1,11 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { LootSplitAckSchema } from "@lootlog/schema/loot-split";
 import { Predicate, Result, Schema } from "effect";
 import {
-  PresenceSnapshot,
-  MapPingAckSchema,
-  AirTagSubscriptionAck,
-  AirTagObservationAck,
-  AirTagMapThreatsFetchResponse,
+  CommandSuccess,
   RealtimeFrame,
+  type ClientCommand,
   type RealtimeFrame as RealtimeFrameType,
 } from "./protocol.js";
-import {
-  NpcPresenceReportAckSchema,
-  NpcPresenceSnapshotSchema,
-} from "@lootlog/schema/npc-presence";
 
 export class RealtimeCodecError extends TaggedErrorClass<RealtimeCodecError>()(
   "RealtimeCodecError",
@@ -165,36 +157,34 @@ export const tryDecodeRealtimeFrame = (text: string) =>
 export const decodeRealtimeFrame = (text: string): RealtimeFrameType =>
   Result.getOrThrow(tryDecodeRealtimeFrame(text));
 
-export const decodePresenceSnapshot =
-  Schema.decodeUnknownSync(PresenceSnapshot);
+type CommandType = ClientCommand["type"];
 
-export const isMapPingAcknowledgement = Schema.is(MapPingAckSchema);
+// Built on first use, so a client pays only for the commands it sends.
+const commandSuccessDecoders = new Map<
+  CommandType,
+  ReturnType<typeof Schema.decodeUnknownSync>
+>();
 
-export const isLootSplitAcknowledgement = Schema.is(LootSplitAckSchema);
+/** Decode the `data` of a successful response to a command of this type. */
+export const decodeCommandSuccess = <Type extends CommandType>(
+  type: Type,
+  data: unknown,
+): CommandSuccess<Type> => {
+  let decode = commandSuccessDecoders.get(type);
 
-export const isAirTagSubscriptionAcknowledgement = Schema.is(
-  AirTagSubscriptionAck,
-);
+  if (!decode) {
+    decode = Schema.decodeUnknownSync(CommandSuccess[type]);
+    commandSuccessDecoders.set(type, decode);
+  }
 
-export const isAirTagObservationAcknowledgement =
-  Schema.is(AirTagObservationAck);
-
-export const isAirTagMapThreatsFetchResponse = Schema.is(
-  AirTagMapThreatsFetchResponse,
-);
-
-export const isNpcPresenceReportAcknowledgement = Schema.is(
-  NpcPresenceReportAckSchema,
-);
-
-export const isNpcPresenceSnapshot = Schema.is(NpcPresenceSnapshotSchema);
-
-export const hasRealtimeCapabilities = Schema.is(
-  Schema.Struct({ capabilities: Schema.Array(Schema.NonEmptyString) }),
-);
-
-export const isPresenceFetchResult = Schema.is(
-  Schema.Struct({
-    presences: Schema.optional(PresenceSnapshot.fields.presences),
-  }),
-);
+  try {
+    // SAFETY: the decoder stored under `type` is CommandSuccess[type]'s.
+    return decode(data) as CommandSuccess<Type>;
+  } catch (cause) {
+    throw new RealtimeCodecError({
+      operation: "decode",
+      message: `Invalid ${type} response`,
+      cause,
+    });
+  }
+};

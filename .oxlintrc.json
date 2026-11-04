@@ -82,6 +82,17 @@
       }
     },
     {
+      "files": ["packages/protocol/src/realtime/codec.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decodeCommandSuccess"]
+          }
+        ]
+      }
+    },
+    {
       "files": ["packages/domain/src/activity-feed.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [

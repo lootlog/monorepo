@@ -1,3 +1,4 @@
+import { publishedPresence } from "@/test/realtime-wire";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
@@ -109,7 +110,7 @@ describe("shared presence map projection", () => {
       v: 1,
       requestId: publication.requestId,
       status: "success",
-      data: { sessionId: "presence-session" },
+      data: publishedPresence("presence-session"),
     });
 
     await waitFor(() => expect(harness.fetchPresence).toHaveBeenCalledOnce());

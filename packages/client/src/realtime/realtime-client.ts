@@ -9,13 +9,16 @@ import {
   REALTIME_SERVER_CLOSE_CODES,
   REALTIME_SERVER_CLOSE_RECONNECT_WINDOW_MS,
   type ClientCommand,
+  type CommandSuccess,
   type ServerEvent,
+  type SessionJoined,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
 import {
+  decodeCommandSuccess,
   decodeRealtimeFrame,
   encodeRealtimeFrame,
-  hasRealtimeCapabilities,
+  RealtimeCodecError,
 } from "@lootlog/protocol/realtime/codec";
 import { Predicate } from "effect";
 import { notifyListeners } from "./notify-listeners.js";
@@ -68,7 +71,7 @@ export interface RealtimeClientOptions {
 interface PendingRequest {
   readonly type: CommandType;
   readonly startedAt: number;
-  readonly resolve: (data: unknown) => void;
+  readonly resolve: (data: CommandSuccess<CommandType>) => void;
   readonly reject: (error: Error) => void;
   readonly timeout: ReturnType<typeof setTimeout>;
 }
@@ -125,12 +128,6 @@ const SERVER_CLOSE_CODES: ReadonlySet<number> = new Set(
   Object.values(REALTIME_SERVER_CLOSE_CODES),
 );
 
-const getPresenceSessionId = (data: unknown): string | null => {
-  if (!data || typeof data !== "object" || !("sessionId" in data)) return null;
-
-  return typeof data.sessionId === "string" ? data.sessionId : null;
-};
-
 export class RealtimeClient {
   private readonly url: string;
   private readonly protocols: string[];
@@ -155,7 +152,7 @@ export class RealtimeClient {
   private joinAttempt: {
     readonly socket: RealtimeWebSocket;
     readonly key: string;
-    readonly promise: Promise<unknown>;
+    readonly promise: ReturnType<RealtimeClient["join"]>;
   } | null = null;
   private reconnectAttempt = 0;
   private reconnectNotBeforeMs = 0;
@@ -271,13 +268,15 @@ export class RealtimeClient {
     this.rejoinHandler = handler;
   }
 
-  join(data: CommandData<"session.join">): Promise<unknown> {
+  join(data: CommandData<"session.join">): Promise<SessionJoined | undefined> {
     this.joinData = data;
 
     return this.performJoin();
   }
 
-  subscribeScope(scope: SubscriptionScope): Promise<unknown> {
+  subscribeScope(
+    scope: SubscriptionScope,
+  ): Promise<CommandSuccess<"subscription.subscribe"> | undefined> {
     this.subscriptions.set(scopeKey(scope), scope);
 
     if (!this.connected || this.stateValue !== "ready") {
@@ -287,7 +286,9 @@ export class RealtimeClient {
     return this.request("subscription.subscribe", scope);
   }
 
-  unsubscribeScope(scope: SubscriptionScope): Promise<unknown> {
+  unsubscribeScope(
+    scope: SubscriptionScope,
+  ): Promise<CommandSuccess<"subscription.unsubscribe"> | undefined> {
     this.subscriptions.delete(scopeKey(scope));
 
     if (!this.connected || this.stateValue !== "ready") {
@@ -300,7 +301,7 @@ export class RealtimeClient {
   request<Type extends CommandType>(
     type: Type,
     data: CommandData<Type>,
-  ): Promise<unknown> {
+  ): Promise<CommandSuccess<Type>> {
     return this.requestWithTimeout(type, data, this.requestTimeoutMs);
   }
 
@@ -308,7 +309,7 @@ export class RealtimeClient {
     type: Type,
     data: CommandData<Type>,
     timeoutMs: number,
-  ): ReturnType<RealtimeClient["request"]> {
+  ): Promise<CommandSuccess<Type>> {
     const activeSocket = this.socket;
 
     if (!activeSocket || activeSocket.readyState !== WEBSOCKET_OPEN) {
@@ -328,7 +329,8 @@ export class RealtimeClient {
       this.pending.set(requestId, {
         type,
         startedAt: performance.now(),
-        resolve,
+        // SAFETY: the response is decoded with the schema of this pending type.
+        resolve: resolve as PendingRequest["resolve"],
         reject,
         timeout,
       });
@@ -423,7 +425,9 @@ export class RealtimeClient {
     });
   }
 
-  private performJoin(data = this.joinData): Promise<unknown> {
+  private performJoin(
+    data = this.joinData,
+  ): ReturnType<RealtimeClient["join"]> {
     const socket = this.socket;
 
     if (!data || !socket || !this.connected) return Promise.resolve(undefined);
@@ -456,15 +460,14 @@ export class RealtimeClient {
 
   private async restoreSession(
     socket: RealtimeWebSocket,
-    joined: Promise<unknown>,
-  ): ReturnType<RealtimeClient["join"]> {
+    joined: Promise<SessionJoined>,
+  ): Promise<SessionJoined> {
     try {
       const result = await joined;
 
       if (this.socket !== socket) return result;
       this.pingSupported =
-        hasRealtimeCapabilities(result) &&
-        result.capabilities.includes(REALTIME_PING_CAPABILITY);
+        result.capabilities?.includes(REALTIME_PING_CAPABILITY) ?? false;
       await Promise.all(
         [...this.subscriptions.values()].map((scope) =>
           this.request("subscription.subscribe", scope),
@@ -477,7 +480,8 @@ export class RealtimeClient {
 
       return result;
     } catch (error) {
-      if (this.socket === socket) {
+      // A malformed join keeps the transport; its caller retries on this socket.
+      if (this.socket === socket && !(error instanceof RealtimeCodecError)) {
         if (error instanceof RealtimeRequestError && !error.retryable) {
           this.manuallyClosed = true;
           this.clearReconnect();
@@ -514,13 +518,26 @@ export class RealtimeClient {
       this.pending.delete(frame.requestId);
 
       if (frame.status === "success") {
+        let data: CommandSuccess<CommandType>;
+
+        try {
+          data = decodeCommandSuccess(pending.type, frame.data);
+        } catch (error) {
+          pending.reject(
+            error instanceof Error ? error : new Error(String(error)),
+          );
+
+          return;
+        }
+
         if (pending.type === "presence.publish") {
-          this.presenceSessionId = getPresenceSessionId(frame.data);
+          this.presenceSessionId =
+            data && "sessionId" in data ? data.sessionId : null;
           this.presenceRefreshedAt = pending.startedAt;
           this.scheduleHeartbeat();
         }
 
-        pending.resolve(frame.data);
+        pending.resolve(data);
       } else {
         pending.reject(
           new RealtimeRequestError(

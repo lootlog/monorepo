@@ -1,9 +1,21 @@
 import type { RealtimeWebSocket } from "@lootlog/client/realtime";
-import type { RealtimeFrame } from "@lootlog/protocol/realtime";
+import type { BasicPresence, RealtimeFrame } from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
+
+/** The presence the gateway answers a `presence.publish` with. */
+export const publishedPresence = (sessionId: string): BasicPresence => ({
+  userId: "user-1",
+  sessionId,
+  organizationIds: ["guild-1"],
+  platform: "game",
+  status: "online",
+  confidence: "reported",
+  isAfk: false,
+  lastSeen: 1,
+});
 
 type WireEvent = Parameters<RealtimeWebSocket["addEventListener"]>[0];
 

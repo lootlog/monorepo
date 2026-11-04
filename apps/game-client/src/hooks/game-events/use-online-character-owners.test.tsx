@@ -50,7 +50,11 @@ async function setup() {
               v: 1,
               requestId,
               status: "success",
-              data: { presences },
+              data: {
+                organizationId: request.data.organizationId,
+                revision: 1,
+                presences,
+              },
             },
       ),
     );

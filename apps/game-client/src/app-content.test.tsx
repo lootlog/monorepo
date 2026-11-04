@@ -91,7 +91,11 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
       v: 1,
       requestId,
       status: "success",
-      data: { connectionId: "test", organizationIds: ["guild-1"] },
+      data: {
+        connectionId: "test",
+        organizationIds: ["guild-1"],
+        subscriptionScopes: [],
+      },
     }),
   );
   await waitFor(() =>

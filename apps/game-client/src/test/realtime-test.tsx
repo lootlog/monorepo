@@ -204,6 +204,7 @@ export const createRealtimeTest = () => {
         data: {
           connectionId: "connection-1",
           organizationIds,
+          subscriptionScopes: [],
           accessPolicy,
           capabilities,
         },

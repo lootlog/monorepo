@@ -4,6 +4,7 @@ import {
   type ServerEvent,
 } from "@lootlog/client/realtime";
 import { decodeServerEvent } from "@lootlog/protocol/realtime";
+import { decodeCommandSuccess } from "@lootlog/protocol/realtime/codec";
 import type {
   GameClientPlatform,
   GameRealtimeClient,
@@ -173,13 +174,16 @@ export function createPageTransport(
   const realtime: GameRealtimeClient = {
     connect,
     disconnect,
+    // The extension decoded these already; the page decodes what crossed the port.
     join: (data) =>
       request({
         type: "command",
         command: { v: 1, type: "session.join", data },
-      }),
+      }).then((response) => decodeCommandSuccess("session.join", response)),
     request: (type, data) =>
-      request({ type: "command", command: { v: 1, type, data } }),
+      request({ type: "command", command: { v: 1, type, data } }).then(
+        (response) => decodeCommandSuccess(type, response),
+      ),
     subscribe: (listener) => {
       events.add(listener);
 
