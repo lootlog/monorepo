@@ -22,7 +22,12 @@ import {
 } from "../../api/test/organization-fixtures.js";
 import type { GatewayConfiguration } from "../src/config/gateway-config.js";
 import { makeGuildStore } from "../src/guilds/guild-store.js";
-import type { FederatedRealtimeMessage } from "../src/platform/redis-store.js";
+import {
+  decodeFederatedRealtimeMessage,
+  encodeFederatedRealtimeMessage,
+  type FederatedFrameTexts,
+  type FederatedRealtimeMessage,
+} from "../src/platform/redis-store.js";
 import {
   RabbitBridge,
   gatewayConsumerSpecs,
@@ -151,8 +156,15 @@ const setup = async () => {
       listeners.push(listener);
       changed?.(true);
     },
-    publish: async (message: FederatedRealtimeMessage) => {
-      for (const listener of listeners) listener(message);
+    publish: async (
+      message: FederatedRealtimeMessage,
+      frames?: FederatedFrameTexts,
+    ) => {
+      const delivered = decodeFederatedRealtimeMessage(
+        encodeFederatedRealtimeMessage(message, frames),
+      );
+
+      for (const listener of listeners) listener(delivered);
     },
   };
 

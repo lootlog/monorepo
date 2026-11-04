@@ -4,6 +4,7 @@ import {
   createAccessPolicySnapshot,
   diffAccessPolicies,
 } from "@lootlog/protocol/realtime/access-policy";
+import { parseRealtimeJson } from "@lootlog/protocol/realtime/codec";
 import {
   decodeClientCommand,
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
@@ -162,13 +163,6 @@ const errorResponse = (
     status: "error",
     error: retryAfterMs === undefined ? error : { ...error, retryAfterMs },
   };
-};
-
-// Code that copies command fields by assignment would turn this key into a prototype.
-const rejectProtoKey = (key: string, value: Schema.Json) => {
-  if (key === "__proto__") throw new Error("The key __proto__ is not allowed");
-
-  return value;
 };
 
 const invalidLegacyPayloadResponse = Function.compose(
@@ -348,7 +342,7 @@ export class CommandHandler {
       return Effect.sync(() => socket.close(1003, "text JSON frames required"));
 
     try {
-      decoded = JSON.parse(input, rejectProtoKey);
+      decoded = parseRealtimeJson(input);
     } catch {
       return Effect.sync(() => socket.close(1007, "malformed realtime frame"));
     }

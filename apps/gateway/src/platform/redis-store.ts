@@ -5,6 +5,7 @@ import {
   type PartyGatheringEventSource,
 } from "#src/realtime/npc-event-visibility";
 import { SubscriptionScope } from "@lootlog/protocol/realtime";
+import { parseRealtimeJson } from "@lootlog/protocol/realtime/codec";
 import { Cause, Effect, Predicate, Queue, Schedule, Schema } from "effect";
 import * as Redis from "effect/persistence/Redis";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
@@ -39,9 +40,10 @@ export interface FederatedRealtimeMessage {
   readonly organizationId?: string;
   /** `FRAME_SCHEMA` of the publishing replica; absent before version 8. */
   readonly frameSchema?: string;
-  readonly frameJson?: string;
-  /** Precise presence variant of `frameJson` for readers of precise location. */
-  readonly preciseFrameJson?: string;
+  /** The frame, as its encoded JSON value. */
+  readonly event?: Schema.Json;
+  /** Precise presence variant of `event` for readers of precise location. */
+  readonly preciseEvent?: Schema.Json;
   readonly control?: {
     readonly type: "permissions.rebalance";
     readonly discordId: string;
@@ -49,48 +51,80 @@ export interface FederatedRealtimeMessage {
   };
 }
 
-const FederatedRealtimeMessageJson = Schema.fromJsonString(
-  Schema.Struct({
-    id: Schema.String,
-    sequence: Schema.optional(Schema.Number),
-    sourceInstanceId: Schema.String,
-    partyGatheringSource: Schema.optional(PartyGatheringEventSourceSchema),
-    sourceNpcs: Schema.optional(
-      Schema.Array(
-        Schema.Struct({
-          level: Schema.NullOr(Schema.Number),
-          type: Schema.NullOr(Schema.String),
-        }),
-      ),
-    ),
-    scopeKey: Schema.optional(Schema.String),
-    scope: Schema.optional(SubscriptionScope),
-    scopes: Schema.optional(Schema.Array(SubscriptionScope)),
-    userId: Schema.optional(Schema.String),
-    discordId: Schema.optional(Schema.String),
-    excludeConnectionId: Schema.optional(Schema.String),
-    recipientPlatform: Schema.optional(Schema.Literals(["game", "web-app"])),
-    recipientWorld: Schema.optional(Schema.String),
-    recipientMapId: Schema.optional(Schema.Number),
-    recipientCharacterIds: Schema.optional(Schema.Array(Schema.String)),
-    presenceAudience: Schema.optional(Schema.Literals(["basic", "precise"])),
-    organizationId: Schema.optional(Schema.String),
-    frameSchema: Schema.optional(Schema.String),
-    frameJson: Schema.optional(Schema.String),
-    preciseFrameJson: Schema.optional(Schema.String),
-    control: Schema.optional(
+/** Canonical JSON texts of the frames that a published message carries. */
+export interface FederatedFrameTexts {
+  readonly event: string;
+  readonly preciseEvent?: string;
+}
+
+const FederatedRealtimeMessageSchema = Schema.Struct({
+  id: Schema.String,
+  sequence: Schema.optional(Schema.Number),
+  sourceInstanceId: Schema.String,
+  partyGatheringSource: Schema.optional(PartyGatheringEventSourceSchema),
+  sourceNpcs: Schema.optional(
+    Schema.Array(
       Schema.Struct({
-        type: Schema.Literal("permissions.rebalance"),
-        discordId: Schema.String,
-        userId: Schema.String,
+        level: Schema.NullOr(Schema.Number),
+        type: Schema.NullOr(Schema.String),
       }),
     ),
-  }),
+  ),
+  scopeKey: Schema.optional(Schema.String),
+  scope: Schema.optional(SubscriptionScope),
+  scopes: Schema.optional(Schema.Array(SubscriptionScope)),
+  userId: Schema.optional(Schema.String),
+  discordId: Schema.optional(Schema.String),
+  excludeConnectionId: Schema.optional(Schema.String),
+  recipientPlatform: Schema.optional(Schema.Literals(["game", "web-app"])),
+  recipientWorld: Schema.optional(Schema.String),
+  recipientMapId: Schema.optional(Schema.Number),
+  recipientCharacterIds: Schema.optional(Schema.Array(Schema.String)),
+  presenceAudience: Schema.optional(Schema.Literals(["basic", "precise"])),
+  organizationId: Schema.optional(Schema.String),
+  frameSchema: Schema.optional(Schema.String),
+  event: Schema.optional(Schema.Unknown),
+  preciseEvent: Schema.optional(Schema.Unknown),
+  control: Schema.optional(
+    Schema.Struct({
+      type: Schema.Literal("permissions.rebalance"),
+      discordId: Schema.String,
+      userId: Schema.String,
+    }),
+  ),
+});
+
+const decodeFederatedRealtimeMessageValue = Schema.decodeUnknownSync(
+  FederatedRealtimeMessageSchema,
 );
 
-const decodeFederatedRealtimeMessage = Schema.decodeUnknownSync(
-  FederatedRealtimeMessageJson,
-);
+// Frames arrive as nested JSON, so one parse covers the envelope and its
+// frames; a string-wrapped frame would be escaped and parsed twice.
+export const decodeFederatedRealtimeMessage = (
+  raw: string,
+): FederatedRealtimeMessage =>
+  // SAFETY: JSON.parse produced the frames, so they are JSON values; validating
+  // them as Schema.Json would walk every frame again.
+  decodeFederatedRealtimeMessageValue(
+    parseRealtimeJson(raw),
+  ) as FederatedRealtimeMessage;
+
+/** Splices the canonical frame texts in instead of encoding their values again. */
+export const encodeFederatedRealtimeMessage = (
+  message: FederatedRealtimeMessage,
+  frames: FederatedFrameTexts | undefined,
+): string => {
+  const header = JSON.stringify(message);
+
+  if (frames === undefined) return header;
+
+  const precise =
+    frames.preciseEvent === undefined
+      ? ""
+      : `,"preciseEvent":${frames.preciseEvent}`;
+
+  return `${header.slice(0, -1)},"event":${frames.event}${precise}}`;
+};
 
 const FEDERATION_SEQUENCE_KEY = "realtime:federation:v1:sequence";
 
@@ -202,7 +236,10 @@ export class RedisGatewayStore {
     return Promise.resolve();
   }
 
-  async publish(message: FederatedRealtimeMessage): Promise<void> {
+  async publish(
+    message: FederatedRealtimeMessage,
+    frames?: FederatedFrameTexts,
+  ): Promise<void> {
     this.pendingPublications++;
 
     try {
@@ -211,7 +248,7 @@ export class RedisGatewayStore {
         1,
         FEDERATION_SEQUENCE_KEY,
         this.channel,
-        JSON.stringify(message),
+        encodeFederatedRealtimeMessage(message, frames),
       );
     } finally {
       this.pendingPublications--;
@@ -309,7 +346,7 @@ export class RedisGatewayStore {
               resumed();
 
             if (
-              message.frameJson !== undefined ||
+              message.event !== undefined ||
               message.control?.type === "permissions.rebalance"
             ) {
               listener(message);

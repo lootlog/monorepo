@@ -148,9 +148,11 @@ and can be removed from deployment configuration. The byte threshold and the
 existing reconnect protocol are unchanged; no coordinated client rollout is
 required.
 
-Federated events without local subscription or identity recipients skip frame
-decoding. Events that reach a local audience still pass the same validation and
-recipient authorization. The presence expiry sweep removes empty Organizations
+A federated message carries its frames as nested JSON, so one parse reads the
+envelope and its frames, and the receiving replica encodes a frame once, for its
+first recipient. Federated events without local subscription or identity
+recipients skip frame validation. Events that reach a local audience still pass
+the same validation and recipient authorization. The presence expiry sweep removes empty Organizations
 from its Redis registry atomically with the cardinality check. Heartbeats and
 publications restore both indexes atomically, including after partial eviction;
 pruning does not remove the pending offline queue or shorten its ten-second grace.
