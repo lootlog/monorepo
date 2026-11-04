@@ -15,6 +15,8 @@ import { SidebarProvider } from "@lootlog/ui/components/sidebar";
 import { ThemeContext } from "@/contexts/theme-context";
 import { UserShell } from "./user-shell";
 import { HeaderSlotPortal } from "./header-slot-portal";
+import { Route as SettingsRoute } from "../../routes/_authenticated/@me/settings";
+import { Route as AccountRoute } from "../../routes/_authenticated/@me/settings/account";
 import "@/i18n/config";
 
 const theme = TEST_THEME_CONTEXT;
@@ -48,6 +50,7 @@ const renderAccountPage = async () => {
   const settings = createRoute({
     getParentRoute: () => user,
     path: "settings",
+    staticData: SettingsRoute.options.staticData,
   });
 
   const settingsIndex = createRoute({
@@ -63,6 +66,7 @@ const renderAccountPage = async () => {
   const account = createRoute({
     getParentRoute: () => settings,
     path: "account",
+    staticData: AccountRoute.options.staticData,
     component: () => (
       <div>
         <HeaderSlotPortal slot="actions">

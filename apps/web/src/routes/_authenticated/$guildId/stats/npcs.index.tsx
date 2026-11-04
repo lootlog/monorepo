@@ -4,6 +4,9 @@ import { StatsNpcsList } from "@/features/guild/stats/stats-npcs-list";
 import { StatsTablePageSkeleton } from "@/features/guild/stats/stats-table-page-skeleton";
 
 export const Route = createFileRoute("/_authenticated/$guildId/stats/npcs/")({
+  staticData: {
+    navigation: ({ t }) => ({ label: t("common.breadcrumbs.npcs"), tab: true }),
+  },
   component: StatsNpcsList,
   pendingComponent: () => (
     <StatsTablePageSkeleton

@@ -17,6 +17,17 @@ import {
 export const Route = createFileRoute(
   "/_authenticated/$guildId/stats/npcs/$npcId",
 )({
+  staticData: {
+    navigation: ({ t, match, parentPath, currentEntityLabel }) => ({
+      ancestors: [
+        { label: t("common.breadcrumbs.npcs"), path: `${parentPath}/npcs` },
+      ],
+      // An empty label falls back like a missing one.
+      label:
+        currentEntityLabel ||
+        t("common.breadcrumbs.npcFallback", { id: match.params?.npcId }),
+    }),
+  },
   loader: ({ abortController, context, location, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       const npcId = Number.parseInt(params.npcId, 10);

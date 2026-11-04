@@ -12,6 +12,12 @@ import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/abyss")({
+  staticData: {
+    navigation: ({ t }) => ({
+      label: t("layout.breadcrumbs.abyss"),
+      tab: true,
+    }),
+  },
   validateSearch: battlePanelAbyssSearchSchema,
   loader: ({ abortController, context, location, preload }) =>
     withRouteLoaderCancellation(abortController, async () => {

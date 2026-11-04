@@ -12,6 +12,9 @@ function GuildDocsLayout() {
 }
 
 export const Route = createFileRoute("/_authenticated/$guildId/docs")({
+  staticData: {
+    navigation: ({ t }) => ({ label: t("common.breadcrumbs.docs") }),
+  },
   loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       void prefetchRouteQuery(

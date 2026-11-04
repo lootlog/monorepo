@@ -12,6 +12,12 @@ import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 export const Route = createFileRoute(
   "/_authenticated/$guildId/notifications/channels",
 )({
+  staticData: {
+    navigation: ({ t }) => ({
+      label: t("common.breadcrumbs.notificationChannels"),
+      tab: true,
+    }),
+  },
   loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       void Promise.all([

@@ -4,6 +4,12 @@ import { SettingsListSkeleton } from "@/components/common/settings-list-skeleton
 
 export const Route = createFileRoute("/_authenticated/$guildId/settings/roles")(
   {
+    staticData: {
+      navigation: ({ t }) => ({
+        label: t("common.breadcrumbs.roles"),
+        tab: true,
+      }),
+    },
     component: RolesSettings,
     pendingComponent: SettingsListSkeleton,
   },

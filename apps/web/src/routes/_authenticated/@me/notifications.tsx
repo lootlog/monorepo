@@ -11,6 +11,9 @@ import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/@me/notifications")({
+  staticData: {
+    navigation: ({ t }) => ({ label: t("layout.navigation.notifications") }),
+  },
   component: UserNotifications,
   pendingComponent: UserNotificationsPageSkeleton,
   loader: ({ abortController, context }) =>

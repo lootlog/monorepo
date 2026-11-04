@@ -17,6 +17,9 @@ const getSearchParamValues = (searchParams: URLSearchParams, key: string) => {
 };
 
 export const Route = createFileRoute("/_authenticated/$guildId/activity-logs")({
+  staticData: {
+    navigation: ({ t }) => ({ label: t("common.breadcrumbs.activityLogs") }),
+  },
   loader: ({ abortController, context, location, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       const searchParams = new URLSearchParams(location.searchStr);

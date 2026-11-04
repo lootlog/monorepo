@@ -13,6 +13,11 @@ import {
 } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/battles/$id")({
+  staticData: {
+    navigation: ({ t, match }) => ({
+      label: t("common.documentTitle.publicBattle", { id: match.params?.id }),
+    }),
+  },
   validateSearch: battlePanelSingleBattleSearchSchema,
   loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {

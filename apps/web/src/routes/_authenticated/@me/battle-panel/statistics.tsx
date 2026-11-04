@@ -7,6 +7,12 @@ import { battlePanelStatisticsSearchSchema } from "@/features/user/battle-panel/
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics",
 )({
+  staticData: {
+    navigation: ({ t }) => ({
+      label: t("layout.breadcrumbs.statistics"),
+      tab: true,
+    }),
+  },
   validateSearch: battlePanelStatisticsSearchSchema,
   loader: loadBattlePanelStatistics,
   component: BattlePanelStatistics,
