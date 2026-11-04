@@ -18,6 +18,12 @@ import { buildHeadToHeadParams } from "@/features/user/battle-panel/battle-panel
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/opponents",
 )({
+  staticData: {
+    navigation: ({ t }) => ({
+      label: t("layout.breadcrumbs.opponents"),
+      tab: true,
+    }),
+  },
   validateSearch: battlePanelHeadToHeadSearchSchema,
   loader: ({ abortController, context, location, preload }) =>
     withRouteLoaderCancellation(abortController, async () => {

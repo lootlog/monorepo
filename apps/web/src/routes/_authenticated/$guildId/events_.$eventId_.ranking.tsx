@@ -5,6 +5,9 @@ import { EventRankingSkeleton } from "@/features/guild/events/event-ranking-skel
 export const Route = createFileRoute(
   "/_authenticated/$guildId/events_/$eventId_/ranking",
 )({
+  staticData: {
+    navigation: ({ t }) => ({ label: t("common.breadcrumbs.ranking") }),
+  },
   component: EventRankingPage,
   pendingComponent: EventRankingSkeleton,
 });

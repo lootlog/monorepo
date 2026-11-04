@@ -5,6 +5,9 @@ import { EventKillsSkeleton } from "@/features/guild/events/event-kills-skeleton
 export const Route = createFileRoute(
   "/_authenticated/$guildId/events_/$eventId_/kills",
 )({
+  staticData: {
+    navigation: ({ t }) => ({ label: t("common.breadcrumbs.killHistory") }),
+  },
   component: EventKillsHistory,
   pendingComponent: EventKillsSkeleton,
 });
