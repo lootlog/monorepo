@@ -51,6 +51,8 @@ export type LootSplit = Readonly<{
   deadline: number;
   closedAt: number | null;
   items: readonly LootSplitItem[];
+  /** Fight loot is split only among the fight's players. */
+  fromFight: boolean;
   participants: readonly LootSplitParticipant[];
   /** By character id; a participant without a view sent nothing. */
   views: Readonly<Record<string, LootSplitView>>;
@@ -266,16 +268,54 @@ const getFighters = (event: GameEvent, context: LootSplitContext) =>
     : context.fighters;
 
 const getParticipants = (
+  members: readonly LootSplitParticipant[],
+  fromFight: boolean,
+  { heroId, fighters }: LootSplitContext,
+) =>
+  !fromFight || fighters.size === 0
+    ? members
+    : members.filter(
+        ({ characterId }) =>
+          characterId === heroId || fighters.has(characterId),
+      );
+
+/**
+ * A changed map hands the open loot window over again: NI re-inits without
+ * closing it (`on_loot` closes it only once fully initialized), and SI reloads
+ * the page. The split goes on with what this client already knows of it.
+ */
+const resumeSplit = (
+  state: LootSplitState,
+  split: LootSplit,
   event: GameEvent,
-  { heroId, party, fighters }: LootSplitContext,
-) => {
-  const members = partyFromEvent(event) ?? party;
+  context: LootSplitContext,
+): LootSplitState => {
+  const loot = event.loot;
+  const view = split.views[context.heroId];
+  const choices = toChoices(loot?.states ?? {});
 
-  if (event.loot?.source !== "fight" || fighters.size === 0) return members;
+  const resumed: LootSplit = {
+    ...split,
+    deadline:
+      loot?.endTs !== undefined && event.ev !== undefined
+        ? context.at + (loot.endTs - event.ev) * 1_000
+        : split.deadline,
+    views:
+      view && sameChoices(choices, view.choices)
+        ? split.views
+        : {
+            ...split.views,
+            [context.heroId]: {
+              ...(view ?? { accepted: false, autoAccept: null }),
+              choices,
+            },
+          },
+  };
 
-  return members.filter(
-    ({ characterId }) => characterId === heroId || fighters.has(characterId),
-  );
+  return {
+    ...replaceSplit(state, resumed),
+    ownSplitId: split.id,
+  };
 };
 
 const openSplit = (
@@ -284,10 +324,9 @@ const openSplit = (
   context: LootSplitContext,
 ): LootSplitState => {
   const loot = event.loot;
-  const closed = closeOwnWindow({ ...state, heroId: context.heroId });
 
   // `init` counts the split's participants; one is a solo loot.
-  if (!loot?.init || loot.init <= 1) return closed;
+  const grouped = loot?.init !== undefined && loot.init > 1;
 
   const items = Object.entries(event.item ?? {})
     .filter(([, item]) => item.loc === "l")
@@ -301,13 +340,26 @@ const openSplit = (
     .toSorted((left, right) => Number(left.id) - Number(right.id));
 
   const [first] = items;
+  const known = state.splits.find(({ id }) => id === first?.id);
 
-  if (!first) return closed;
+  if (grouped && known?.phase === "open")
+    return resumeSplit(
+      { ...state, heroId: context.heroId },
+      known,
+      event,
+      context,
+    );
+
+  const closed = closeOwnWindow({ ...state, heroId: context.heroId });
+
+  if (!loot || !grouped || !first) return closed;
 
   const seconds =
     loot.endTs !== undefined && event.ev !== undefined
       ? loot.endTs - event.ev
       : DEFAULT_SPLIT_SECONDS;
+
+  const fromFight = loot.source === "fight";
 
   const split: LootSplit = {
     id: first.id,
@@ -316,7 +368,12 @@ const openSplit = (
     deadline: context.at + seconds * 1_000,
     closedAt: null,
     items,
-    participants: getParticipants(event, context),
+    fromFight,
+    participants: getParticipants(
+      partyFromEvent(event) ?? context.party,
+      fromFight,
+      context,
+    ),
     views: {
       [context.heroId]: {
         choices: toChoices(loot.states),
@@ -569,6 +626,43 @@ export const expireSplits = (
     pendingFilterAccepts.length !== state.pendingFilterAccepts.length;
 
   return changed ? { ...state, splits, pendingFilterAccepts } : state;
+};
+
+/**
+ * Fills in the party of an open split that opened before this client knew
+ * it: after a page reload the loot window can arrive ahead of the party.
+ */
+export const fillParticipants = (
+  state: LootSplitState,
+  context: LootSplitContext,
+): LootSplitState => {
+  const unknownParty = (split: LootSplit) =>
+    split.phase === "open" &&
+    split.participants.every(
+      ({ characterId }) => characterId === context.heroId,
+    );
+
+  if (!state.splits.some(unknownParty)) return state;
+
+  const splits = state.splits.map((split) => {
+    if (!unknownParty(split)) return split;
+
+    const participants = getParticipants(
+      context.party,
+      split.fromFight,
+      context,
+    );
+
+    return participants.some(
+      ({ characterId }) => characterId !== context.heroId,
+    )
+      ? { ...split, participants }
+      : split;
+  });
+
+  return splits.every((split, index) => split === state.splits[index])
+    ? state
+    : { ...state, splits };
 };
 
 /** Splits whose hero view changed, so the hero's choices must be shared. */

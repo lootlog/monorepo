@@ -18,6 +18,7 @@ import {
   applyRemoteFilterAccept,
   changedOwnSplits,
   EMPTY_LOOT_SPLIT_STATE,
+  fillParticipants,
   openOwnSplits,
   ownLootFilterAcceptRecipients,
   type LootSplit,
@@ -176,9 +177,19 @@ export const useLootSplitSync = () => {
       },
     );
 
+    const unsubscribeParty = usePartyStore.subscribe((party, previous) => {
+      if (party.members === previous.members) return;
+
+      const context = readContext();
+
+      if (context)
+        lootSplitStore.update((state) => fillParticipants(state, context));
+    });
+
     return () => {
       unsubscribeProjected();
       unsubscribeCommand();
+      unsubscribeParty();
 
       for (const timer of pending.values()) clearTimeout(timer);
 

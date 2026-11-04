@@ -57,12 +57,19 @@ export const LootSplitWindow = () => {
 
   const newestSplitId = splits[0]?.id;
 
+  // After a reload the split can arrive before the gateway and the settings,
+  // so it opens as soon as both are there.
   useEffect(() => {
-    if (!newestSplitId || seenSplitIds.current.has(newestSplitId)) return;
+    if (
+      !newestSplitId ||
+      !enabled ||
+      !shared ||
+      seenSplitIds.current.has(newestSplitId)
+    )
+      return;
 
     seenSplitIds.current.add(newestSplitId);
-
-    if (enabled && shared) setOpen("loot-split", true);
+    setOpen("loot-split", true);
   }, [newestSplitId, enabled, shared, setOpen]);
 
   return (
