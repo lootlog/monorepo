@@ -1,9 +1,10 @@
 import { lootEventVisibilityNpcs } from "#src/realtime/source-event-visibility";
-import type {
-  MessagingError,
-  RabbitMessagingService,
-  RabbitConsumer,
-  RabbitDelivery,
+import {
+  RabbitMessaging,
+  type MessagingError,
+  type RabbitMessagingService,
+  type RabbitConsumer,
+  type RabbitDelivery,
 } from "@lootlog/messaging";
 import {
   decodeRabbitEventJson,
@@ -21,11 +22,18 @@ import type {
   SubscriptionScope,
 } from "@lootlog/protocol/realtime";
 import type { GlobalChatChannelUpdate } from "@lootlog/schema/chat";
-import { Effect, Option, Schema, type Types, type Scope } from "effect";
-import type { CommandHandler } from "#src/realtime/command-handler";
-import { globalChatScope, type RealtimeHub } from "#src/realtime/realtime-hub";
-import type { PresenceStore } from "#src/realtime/presence-store";
-import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
+import { Effect, Layer, Option, Schema, type Types, type Scope } from "effect";
+import { Commands, type CommandHandler } from "#src/realtime/command-handler";
+import {
+  globalChatScope,
+  Hub,
+  type RealtimeHub,
+} from "#src/realtime/realtime-hub";
+import { Presence, type PresenceStore } from "#src/realtime/presence-store";
+import {
+  Coverage,
+  type CoveragePublisher,
+} from "#src/rabbit/coverage-publisher";
 
 type Event = typeof ServerEvent.Type;
 
@@ -412,6 +420,23 @@ const gatheringUpdateMismatch = (
 };
 
 export class RabbitBridge {
+  /** Consumes the Gateway's queues for as long as the replica runs. */
+  static readonly layer = Layer.effectDiscard(
+    Effect.gen(function* () {
+      const bridge = new RabbitBridge(
+        yield* RabbitMessaging,
+        yield* Hub,
+        yield* Commands,
+        yield* Presence,
+        yield* Coverage,
+      );
+
+      yield* Effect.acquireRelease(bridge.start(), () =>
+        bridge.stop().pipe(Effect.orDie),
+      );
+    }),
+  );
+
   private consumers: RabbitConsumer[] = [];
 
   constructor(

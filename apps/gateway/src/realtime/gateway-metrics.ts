@@ -1,13 +1,21 @@
 import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
 import type { GlobalChatStats } from "@lootlog/schema/chat";
-import { Effect, Metric, Schedule, Schema } from "effect";
-import type {
-  RedisGatewayCommands,
-  RedisGatewayStore,
+import { Effect, Layer, Metric, Schedule, Schema } from "effect";
+import {
+  GatewayRedis,
+  type RedisGatewayCommands,
+  type RedisGatewayStore,
 } from "#src/platform/redis-store";
-import type { CommandIngress } from "#src/realtime/command-ingress";
-import type { CommandAdmission } from "#src/realtime/command-admission";
-import { globalChatScope, type RealtimeHub } from "#src/realtime/realtime-hub";
+import { Ingress, type CommandIngress } from "#src/realtime/command-ingress";
+import {
+  CommandAdmissions,
+  type CommandAdmission,
+} from "#src/realtime/command-admission";
+import {
+  globalChatScope,
+  Hub,
+  type RealtimeHub,
+} from "#src/realtime/realtime-hub";
 
 const SNAPSHOTS = "realtime:metrics:instances:v2";
 
@@ -146,6 +154,23 @@ const runtimeGauges = {
 // Fixed metric names, no user/Organization/connection labels or payload retention.
 // Sample independently of Redis health so a stalled dependency remains visible.
 export class GatewayRuntimeMetrics {
+  /** Samples this replica's sockets, ingress and admissions while it runs. */
+  static readonly layer = Layer.effectDiscard(
+    Effect.gen(function* () {
+      const admissions = yield* CommandAdmissions;
+
+      yield* new GatewayRuntimeMetrics(
+        yield* GatewayRedis,
+        yield* Hub,
+        yield* Ingress,
+        admissions.joins,
+        admissions.airTagObservations,
+      )
+        .run()
+        .pipe(Effect.forkScoped);
+    }),
+  );
+
   constructor(
     private readonly redis: Pick<RedisGatewayStore, "getDiagnostics">,
     private readonly hub: Pick<
@@ -201,6 +226,15 @@ export class GatewayRuntimeMetrics {
 }
 
 export class GatewayMetrics {
+  /** Samples the cluster's counts every 10 seconds while the replica runs. */
+  static readonly layer = Layer.effectDiscard(
+    Effect.gen(function* () {
+      yield* new GatewayMetrics((yield* GatewayRedis).command, yield* Hub)
+        .run()
+        .pipe(Effect.forkScoped);
+    }),
+  );
+
   constructor(
     private readonly redis: Pick<RedisGatewayCommands, "eval">,
     private readonly hub: Pick<

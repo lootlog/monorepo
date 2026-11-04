@@ -4,7 +4,7 @@ import {
   type BattlePingSendPayload,
 } from "@lootlog/schema/battle-ping";
 import type { MapPingAck } from "@lootlog/schema/map-ping";
-import { Schema } from "effect";
+import { Schema, Context, Effect, Layer } from "effect";
 import { ContextLogger } from "@lootlog/instrumentation";
 import {
   consumePingRateLimit,
@@ -12,8 +12,9 @@ import {
   getPingSender,
   type PingScriptStore,
 } from "#src/realtime/ping-routing";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import { type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket } from "#src/realtime/session";
+import { GatewayRedis } from "#src/platform/redis-store";
 
 const RATE_LIMIT = 8;
 
@@ -97,4 +98,17 @@ export class BattlePingService {
 
     return { status: "accepted", pingId };
   }
+}
+
+/** Relays battle pings to the listed teammates. */
+export class BattlePings extends Context.Service<
+  BattlePings,
+  BattlePingService
+>()("@lootlog/gateway/realtime/BattlePings") {
+  static readonly layer = Layer.effect(
+    BattlePings,
+    Effect.gen(function* () {
+      return new BattlePingService(yield* GatewayRedis, yield* Hub);
+    }),
+  );
 }

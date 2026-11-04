@@ -8,15 +8,16 @@ import {
   type LootSplitSendPayload,
 } from "@lootlog/schema/loot-split";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
-import { Schema } from "effect";
+import { Schema, Context, Effect, Layer } from "effect";
 import { ContextLogger } from "@lootlog/instrumentation";
 import {
   consumePingRateLimit,
   getPingScopes,
   type PingScriptStore,
 } from "#src/realtime/ping-routing";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import { type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket } from "#src/realtime/session";
+import { GatewayRedis } from "#src/platform/redis-store";
 
 /**
  * A choice change, an accept, and the frame a new fight sends for the split
@@ -160,4 +161,16 @@ export class LootSplitService {
 
     return { status: "accepted" };
   }
+}
+
+/** Relays loot split choices to the split's participants. */
+export class LootSplits extends Context.Service<LootSplits, LootSplitService>()(
+  "@lootlog/gateway/realtime/LootSplits",
+) {
+  static readonly layer = Layer.effect(
+    LootSplits,
+    Effect.gen(function* () {
+      return new LootSplitService(yield* GatewayRedis, yield* Hub);
+    }),
+  );
 }

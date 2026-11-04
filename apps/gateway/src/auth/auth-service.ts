@@ -3,8 +3,11 @@ import {
   API_KEY_LEASE_MS,
 } from "@lootlog/schema/api-key-access";
 import { readApiKeyAccess } from "@lootlog/schema/api-key-policy";
-import { Redacted } from "effect";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
+import { Redacted, Context, Effect, Layer } from "effect";
+import {
+  type GatewayConfiguration,
+  GatewayConfig,
+} from "#src/config/gateway-config";
 import { GAME_URL_REGEX } from "#src/auth/game-url";
 import type { AuthenticatedIdentity } from "#src/realtime/session";
 
@@ -79,3 +82,13 @@ export const makeGatewayAuth = (
     };
   },
 });
+
+/** Reads the identity Traefik's forward auth attached to a handshake. */
+export class Auth extends Context.Service<Auth, GatewayAuth>()(
+  "@lootlog/gateway/auth/Auth",
+) {
+  static readonly layer = Layer.effect(
+    Auth,
+    Effect.map(GatewayConfig, makeGatewayAuth),
+  );
+}

@@ -23,16 +23,21 @@ import {
   REALTIME_SERVER_CLOSE_CODES,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect, Predicate, Result, Schema } from "effect";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
+import { Context, Effect, Layer, Predicate, Result, Schema } from "effect";
 import {
+  GatewayConfig,
+  type GatewayConfiguration,
+} from "#src/config/gateway-config";
+import {
+  Background,
   type BackgroundTaskRunner,
   unmanagedBackgroundTaskRunner,
 } from "#src/platform/background-tasks";
 import { ContextLogger } from "@lootlog/instrumentation";
-import type {
-  FederatedRealtimeMessage,
-  RedisGatewayStore,
+import {
+  GatewayRedis,
+  type FederatedRealtimeMessage,
+  type RedisGatewayStore,
 } from "#src/platform/redis-store";
 import {
   hasValidApiKeyLease,
@@ -1123,4 +1128,24 @@ export class RealtimeHub {
 
     return true;
   }
+}
+
+/** This replica's socket registry and federation. */
+export class Hub extends Context.Service<Hub, RealtimeHub>()(
+  "@lootlog/gateway/realtime/Hub",
+) {
+  static readonly layer = Layer.effect(
+    Hub,
+    Effect.gen(function* () {
+      const hub = new RealtimeHub(
+        yield* GatewayConfig,
+        yield* GatewayRedis,
+        (yield* Background).run,
+      );
+
+      yield* hub.start();
+
+      return hub;
+    }),
+  );
 }
