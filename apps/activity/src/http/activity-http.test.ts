@@ -178,6 +178,7 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
           return reply as A;
         }),
       subscribe: () => Queue.unbounded<Redis.RedisMessage, Redis.RedisError>(),
+      reserve: Effect.die("unused"),
       eval:
         <
           Config extends {
@@ -349,6 +350,7 @@ const probeDatabaseLayer = (
     SqlClient.SqlClient,
     SqlClient.make({
       compiler: PgClient.makeCompiler(),
+      driver: "pg",
       spanAttributes: [],
       acquirer: Effect.as(connect, {
         execute: () => query,

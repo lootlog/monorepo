@@ -61,19 +61,11 @@
                                       "type": "string"
                                     },
                                     {
-                                      "anyOf": [
-                                        {
-                                          "type": "number"
-                                        },
-                                        {
-                                          "type": "string",
-                                          "enum": [
-                                            "Infinity",
-                                            "-Infinity",
-                                            "NaN"
-                                          ]
-                                        }
-                                      ]
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": ["Infinity", "-Infinity", "NaN"]
                                     }
                                   ]
                                 }
@@ -371,19 +363,11 @@
                                       "type": "string"
                                     },
                                     {
-                                      "anyOf": [
-                                        {
-                                          "type": "number"
-                                        },
-                                        {
-                                          "type": "string",
-                                          "enum": [
-                                            "Infinity",
-                                            "-Infinity",
-                                            "NaN"
-                                          ]
-                                        }
-                                      ]
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": ["Infinity", "-Infinity", "NaN"]
                                     }
                                   ]
                                 }
@@ -3266,19 +3250,11 @@
                                       "type": "string"
                                     },
                                     {
-                                      "anyOf": [
-                                        {
-                                          "type": "number"
-                                        },
-                                        {
-                                          "type": "string",
-                                          "enum": [
-                                            "Infinity",
-                                            "-Infinity",
-                                            "NaN"
-                                          ]
-                                        }
-                                      ]
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": ["Infinity", "-Infinity", "NaN"]
                                     }
                                   ]
                                 }

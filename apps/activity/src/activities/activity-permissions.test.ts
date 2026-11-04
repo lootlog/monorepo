@@ -49,6 +49,7 @@ describe("Activity permissions", () => {
         return Effect.succeed(reply as A);
       },
       subscribe: () => Queue.unbounded<Redis.RedisMessage, Redis.RedisError>(),
+      reserve: Effect.die("unused"),
       eval:
         <
           Config extends {

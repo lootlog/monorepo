@@ -24,6 +24,7 @@ test("federation backlog yields to timers while preserving order and isolating m
 
               return Effect.never;
             }),
+          connect: Effect.die("Unexpected dedicated Redis connection"),
         });
 
         const scope = yield* Effect.scope;
@@ -122,6 +123,7 @@ test("a dropped subscriber reports the interruption before delivering its whole 
 
               return Deferred.await(terminal);
             }),
+          connect: Effect.die("Unexpected dedicated Redis connection"),
         });
 
         const scope = yield* Effect.scope;
