@@ -91,14 +91,6 @@ export function EquipmentSetSlot({
         labels={ITEM_TILE_LABELS}
         renderStat={renderItemStat}
       />
-      {worn.upgrade.level > 0 ? (
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-1.5 -bottom-1.5 rounded-full border border-border bg-popover px-1 text-[10px] leading-3.5 font-semibold text-primary tabular-nums"
-        >
-          +{worn.upgrade.level}
-        </span>
-      ) : null}
       {overlay}
       {issues.length > 0 ? (
         <span

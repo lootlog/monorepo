@@ -41,6 +41,7 @@ export const ItemTile: FC<ItemTileProps> = ({
       [ItemRarity.UPGRADED]: t("itemRarity.UPGRADED"),
     },
     type: typeLabels,
+    upgradeLevel: t("loots.list.upgradeLevel"),
   };
 
   return (
