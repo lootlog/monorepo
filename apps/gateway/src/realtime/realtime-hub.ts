@@ -15,6 +15,7 @@ import {
   tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
 import {
+  decodeRealtimeFrame,
   type Response as RealtimeResponse,
   RealtimeFrame,
   type ServerEvent,
@@ -165,6 +166,18 @@ const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
 
 const fromBase64 = (value: string): Uint8Array => Buffer.from(value, "base64");
+
+/**
+ * The JSON text a JSON recipient of this replica receives, for replicas that
+ * stop publishing MessagePack bytes. Absent when local delivery rejects the
+ * frame as well.
+ */
+const federatedJson = (prepared: ReturnType<typeof prepareRealtimeFrame>) =>
+  Result.getOrUndefined(
+    Result.try(() =>
+      JSON.stringify(prepared.frame ?? decodeMessagePack(prepared.bytes)),
+    ),
+  );
 
 /** The global chat channel of `world`, or the one every world shares. */
 export const globalChatScope = (world: string | undefined): Scope =>
@@ -792,6 +805,8 @@ export class RealtimeHub {
         frameSchema: FRAME_SCHEMA,
         frame: toBase64(prepared.bytes),
         preciseFrame: preparedPrecise && toBase64(preparedPrecise.bytes),
+        frameJson: federatedJson(prepared),
+        preciseFrameJson: preparedPrecise && federatedJson(preparedPrecise),
       },
     };
   }
@@ -815,15 +830,20 @@ export class RealtimeHub {
     this.deliver(message);
   }
 
-  /** The event of a frame and, when they are canonical, its MessagePack bytes. */
+  /** The event of a frame and, when they are canonical, its encoded forms. */
   private publicationFrame(
     frame: string | undefined,
+    frameJson: string | undefined,
     frameSchema: string | undefined,
     local?: ReturnType<typeof prepareRealtimeFrame>,
   ): PublishedFrame | undefined {
-    if (frame === undefined) return;
+    if (frame === undefined && local === undefined) {
+      return frameJson === undefined
+        ? undefined
+        : this.jsonPublicationFrame(frameJson, frameSchema);
+    }
 
-    const bytes = local?.bytes ?? fromBase64(frame);
+    const bytes = local?.bytes ?? fromBase64(frame ?? "");
     // Bytes from another schema must be re-encoded after validation strips
     // the fields this replica does not know.
     const canonical = local !== undefined || frameSchema === FRAME_SCHEMA;
@@ -859,6 +879,42 @@ export class RealtimeHub {
     return { event: decoded.success, binary: canonical ? bytes : undefined };
   }
 
+  /** A frame from a replica that publishes only JSON text. */
+  private jsonPublicationFrame(
+    frameJson: string,
+    frameSchema: string | undefined,
+  ): PublishedFrame | undefined {
+    const canonical = frameSchema === FRAME_SCHEMA;
+
+    const decoded = Result.try({
+      try: () => {
+        const value: unknown = JSON.parse(frameJson);
+
+        if (!canonical) return decodeRealtimeFrame(value);
+
+        if (!Predicate.isObject(value))
+          throw new Error("Federation frame is not an object");
+
+        // SAFETY: a replica with this schema encoded this text through it.
+        return value as RealtimeFrame;
+      },
+      catch: (cause) => cause,
+    });
+
+    if (Result.isFailure(decoded)) {
+      this.logger.warn(
+        "Rejected malformed Redis federation frame",
+        decoded.failure,
+      );
+
+      return;
+    }
+
+    if (!isServerEventFrame(decoded.success)) return;
+
+    return { event: decoded.success, json: canonical ? frameJson : undefined };
+  }
+
   private deliver(
     message: FederatedRealtimeMessage,
     local?: ReturnType<typeof prepareRealtimeFrame>,
@@ -871,6 +927,7 @@ export class RealtimeHub {
 
     const published = this.publicationFrame(
       message.frame,
+      message.frameJson,
       message.frameSchema,
       local,
     );
@@ -961,10 +1018,16 @@ export class RealtimeHub {
     message: FederatedRealtimeMessage,
     local?: ReturnType<typeof prepareRealtimeFrame>,
   ) {
-    if (message.preciseFrame === undefined || !message.organizationId) return;
+    if (
+      (message.preciseFrame === undefined &&
+        message.preciseFrameJson === undefined) ||
+      !message.organizationId
+    )
+      return;
 
     const published = this.publicationFrame(
       message.preciseFrame,
+      message.preciseFrameJson,
       message.frameSchema,
       local,
     );

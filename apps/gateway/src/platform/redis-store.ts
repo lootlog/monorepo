@@ -42,6 +42,10 @@ export interface FederatedRealtimeMessage {
   readonly frame?: string;
   /** Precise presence variant of `frame` for readers of precise location. */
   readonly preciseFrame?: string;
+  /** JSON text of `frame`; replicas that publish no MessagePack send only this. */
+  readonly frameJson?: string;
+  /** JSON text of `preciseFrame`. */
+  readonly preciseFrameJson?: string;
   readonly control?: {
     readonly type: "permissions.rebalance";
     readonly discordId: string;
@@ -78,6 +82,8 @@ const FederatedRealtimeMessageJson = Schema.fromJsonString(
     frameSchema: Schema.optional(Schema.String),
     frame: Schema.optional(Schema.String),
     preciseFrame: Schema.optional(Schema.String),
+    frameJson: Schema.optional(Schema.String),
+    preciseFrameJson: Schema.optional(Schema.String),
     control: Schema.optional(
       Schema.Struct({
         type: Schema.Literal("permissions.rebalance"),
@@ -310,6 +316,7 @@ export class RedisGatewayStore {
 
             if (
               message.frame !== undefined ||
+              message.frameJson !== undefined ||
               message.control?.type === "permissions.rebalance"
             ) {
               listener(message);
