@@ -516,3 +516,59 @@ it("lets the provider rejoin the current world once after reconnect", async () =
     restore();
   }
 });
+
+it("fails a join when the gateway never says hello instead of waiting forever", async () => {
+  vi.useFakeTimers();
+  const listeners = new Map<string, (event: { data?: unknown }) => void>();
+  const sentTypes: string[] = [];
+
+  const realtime = new RealtimeClient({
+    url: "https://gateway.example.test",
+    webSocketFactory: () => ({
+      readyState: 1,
+      addEventListener: (type, listener) => listeners.set(type, listener),
+      close: () => listeners.get("close")?.({}),
+      send: (bytes) => {
+        const frame = decodeRealtimeFrame(bytes);
+
+        if ("type" in frame) sentTypes.push(frame.type);
+      },
+    }),
+  });
+
+  const restore = configureGameClientPlatform({
+    fetch: globalThis.fetch,
+    createRealtime: () => realtime,
+  });
+
+  disposeSocket();
+  const facade = getSocket();
+
+  try {
+    facade.connect();
+    listeners.get("open")?.({});
+
+    const join = facade.join({
+      world: "alpha",
+      accountId: "20",
+      characterId: "10",
+      name: "Hero",
+      lvl: 100,
+      prof: "w",
+      icon: "hero.gif",
+    });
+
+    const failure = join.then(
+      () => undefined,
+      (error: Error) => error,
+    );
+
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect((await failure)?.message).toContain("hello timeout");
+    expect(sentTypes).not.toContain("session.join");
+  } finally {
+    disposeSocket();
+    restore();
+    vi.useRealTimers();
+  }
+});
