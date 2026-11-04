@@ -73,6 +73,9 @@ export const getGameSessionIdentity = (
 ): string =>
   JSON.stringify([data.world, data.accountId, data.characterId, data.clan?.id]);
 
+/** How long a join waits for `session.hello` before it fails into a retry. */
+const SESSION_HELLO_TIMEOUT_MS = 5_000;
+
 /** Events whose data carries no Organization envelope to unwrap. */
 const UNWRAPPED_EVENT_TYPES: ReadonlySet<ServerEvent["type"]> = new Set([
   "map-ping.received",
@@ -390,7 +393,20 @@ export class AppSocket {
     };
 
     ensureCurrent();
-    const connectionId = await this.hello.promise;
+    let helloTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    // A gateway that never says hello must fail the join, so the player gets
+    // HTTP snapshots and a retry instead of a silent half-connected session.
+    const connectionId = await Promise.race([
+      this.hello.promise,
+      new Promise<never>((_resolve, reject) => {
+        helloTimeout = setTimeout(
+          () => reject(new Error("Realtime session hello timeout")),
+          SESSION_HELLO_TIMEOUT_MS,
+        );
+      }),
+    ]).finally(() => clearTimeout(helloTimeout));
+
     ensureCurrent();
 
     if (!connectionId)
