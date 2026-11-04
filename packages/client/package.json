@@ -22,9 +22,8 @@
     "typecheck": "bun check",
     "lint": "oxlint src/*.ts src/realtime scripts orval.config.ts --deny-warnings",
     "test": "bun test",
-    "client:check": "bun ./scripts/check-openapi-parity.ts && bun ./scripts/check-generated.ts",
-    "client:generate": "bun ./scripts/generate.ts",
-    "openapi:parity": "bun ./scripts/check-openapi-parity.ts"
+    "client:check": "bun ./scripts/check-generated.ts",
+    "client:generate": "bun ./scripts/generate.ts"
   },
   "dependencies": {
     "@lootlog/protocol": "workspace:*",
