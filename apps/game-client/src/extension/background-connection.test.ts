@@ -19,9 +19,8 @@ import {
 
 class Socket implements RealtimeWebSocket {
   private readonly target = new EventTarget();
-  binaryType: BinaryType = "arraybuffer";
   readyState = 0;
-  sent: Uint8Array[] = [];
+  sent: string[] = [];
   addEventListener(
     type: "open" | "close" | "message" | "error",
     listener: (event: { readonly data?: unknown }) => void,
@@ -30,9 +29,7 @@ class Socket implements RealtimeWebSocket {
       listener(event instanceof MessageEvent ? { data: event.data } : {}),
     );
   }
-  send(data: string | Uint8Array) {
-    if (!(data instanceof Uint8Array))
-      throw new Error("Expected binary protocol");
+  send(data: string) {
     this.sent.push(data);
   }
   open() {
@@ -199,10 +196,9 @@ describe("background connection", () => {
       data: { presences: [] },
     });
     expect(bridge.messages).toContainEqual({ type: "state", state: "ready" });
-    expect(bridge.factory).toHaveBeenCalledWith(
-      "wss://gateway.lootlog.pl/ws",
-      undefined,
-    );
+    expect(bridge.factory).toHaveBeenCalledWith("wss://gateway.lootlog.pl/ws", [
+      "lootlog.realtime.json.v1",
+    ]);
     expect(
       bridge.socket.sent.map((frame) => decodeRealtimeFrame(frame)),
     ).toEqual([

@@ -30,7 +30,6 @@ import {
   REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_JSON_SUBPROTOCOL,
   REALTIME_SERVER_CLOSE_CODES,
-  REALTIME_SUBPROTOCOL,
 } from "@lootlog/protocol/realtime";
 import {
   Context,
@@ -415,22 +414,8 @@ const negotiateCapabilities = (
   };
 };
 
-const websocketResponseHeaders = (
-  request: Request,
-  frameEncoding: SessionData["frameEncoding"],
-): HeadersInit | undefined => {
-  const protocols = request.headers
-    .get("sec-websocket-protocol")
-    ?.split(",")
-    .map((protocol) => protocol.trim());
-
-  const selectedProtocol =
-    frameEncoding === "json" ? REALTIME_JSON_SUBPROTOCOL : REALTIME_SUBPROTOCOL;
-
-  return protocols?.includes(selectedProtocol)
-    ? { "sec-websocket-protocol": selectedProtocol }
-    : undefined;
-};
+// Offered without the JSON subprotocol only by clients that exchange MessagePack.
+const MESSAGEPACK_SUBPROTOCOL = "lootlog.realtime.v1";
 
 const probePaths = new Set(["/healthz", "/readyz"]);
 
@@ -522,12 +507,15 @@ export const createGatewayFetch = (
           ?.split(",")
           .map((protocol) => protocol.trim()) ?? [];
 
-      const frameEncoding =
-        application.config.environment === "local" ||
-        (identity.apiKeyAccess &&
-          offeredProtocols.includes(REALTIME_JSON_SUBPROTOCOL))
-          ? "json"
-          : undefined;
+      const offersJson = offeredProtocols.includes(REALTIME_JSON_SUBPROTOCOL);
+
+      if (!offersJson && offeredProtocols.includes(MESSAGEPACK_SUBPROTOCOL)) {
+        return complete(
+          new Response("MessagePack realtime frames are not supported", {
+            status: 400,
+          }),
+        );
+      }
 
       const upgraded = activeServer.upgrade(request, {
         data: {
@@ -541,14 +529,15 @@ export const createGatewayFetch = (
             ? "web-app"
             : application.auth.getPlatform(origin ?? ""),
           userAgent: request.headers.get("user-agent") ?? undefined,
-          frameEncoding,
           joined: false,
           guilds: [],
           subscriptions: new Map(),
           airTagScopes: [],
           confidence: "reported",
         },
-        headers: websocketResponseHeaders(request, frameEncoding),
+        headers: offersJson
+          ? { "sec-websocket-protocol": REALTIME_JSON_SUBPROTOCOL }
+          : undefined,
       });
 
       return complete(

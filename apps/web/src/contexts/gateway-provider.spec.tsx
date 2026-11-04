@@ -7,11 +7,7 @@ import {
 } from "@lootlog/client/main";
 import type { RealtimeWebSocket } from "@lootlog/client/realtime";
 import { configureApiClients } from "@lootlog/client/transport";
-import {
-  REALTIME_JSON_SUBPROTOCOL,
-  decodeRealtimeFrame as parseRealtimeFrame,
-  type RealtimeFrame,
-} from "@lootlog/protocol/realtime";
+import type { RealtimeFrame } from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
@@ -43,15 +39,12 @@ import { GatewayProvider } from "./gateway-provider";
 type Listener = Parameters<RealtimeWebSocket["addEventListener"]>[1];
 
 class Wire implements RealtimeWebSocket {
-  binaryType: BinaryType = "arraybuffer";
   readyState = 0;
   static instances: Wire[] = [];
   static accessPolicy: AccessPolicySnapshot | undefined;
   readonly frames: ReturnType<typeof decodeRealtimeFrame>[] = [];
   private readonly listeners = new Map<string, Listener>();
-  private readonly readable: boolean;
-  constructor(_url: string, protocols: string[]) {
-    this.readable = protocols.includes(REALTIME_JSON_SUBPROTOCOL);
+  constructor() {
     Wire.instances.push(this);
   }
   addEventListener(type: string, listener: Listener) {
@@ -67,14 +60,11 @@ class Wire implements RealtimeWebSocket {
   }
   deliver(frame: RealtimeFrame) {
     this.listeners.get("message")?.({
-      data: this.readable ? JSON.stringify(frame) : encodeRealtimeFrame(frame),
+      data: encodeRealtimeFrame(frame),
     });
   }
-  send(bytes: string | Uint8Array) {
-    const command =
-      bytes instanceof Uint8Array
-        ? decodeRealtimeFrame(bytes)
-        : parseRealtimeFrame(JSON.parse(bytes));
+  send(text: string) {
+    const command = decodeRealtimeFrame(text);
 
     this.frames.push(command);
 

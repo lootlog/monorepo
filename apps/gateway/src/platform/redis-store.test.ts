@@ -68,7 +68,7 @@ test("federation backlog yields to timers while preserving order and isolating m
             message: JSON.stringify({
               id: String(index),
               sourceInstanceId: "other",
-              frame: "test",
+              frameJson: "test",
             }),
           });
           enqueue({ channel: store.channel, message: "{" });
@@ -164,7 +164,7 @@ test("a dropped subscriber reports the interruption before delivering its whole 
             message: JSON.stringify({
               id: String(index),
               sourceInstanceId: "other",
-              frame: "test",
+              frameJson: "test",
             }),
           });
         disconnect();
