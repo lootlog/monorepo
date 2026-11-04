@@ -53,7 +53,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "lint": "oxlint src/*.ts scripts *.ts --deny-warnings",
     "test": "bun test",
     "prepack": "bun run build",

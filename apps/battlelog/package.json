@@ -24,7 +24,7 @@
     "start": "bun dist/src/main.js",
     "start:debug": "bun --conditions=development --env-file=.env --inspect --watch src/main.ts",
     "lint": "oxlint src test",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "bun check -p tsconfig.json",
     "format": "oxfmt src test",
     "test": "bun --conditions=development test --path-ignore-patterns=dist --path-ignore-patterns='**/*.integration.*' src test",
     "test:debug": "bun --conditions=development test --path-ignore-patterns=dist --inspect-brk src test",
