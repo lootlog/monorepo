@@ -2,8 +2,8 @@ import { DialogActionFooter } from "./dialog-action-footer";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { Schema } from "effect";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
@@ -30,34 +30,51 @@ interface CloseRespawnWindowDialogProps {
   isLoading?: boolean;
 }
 
-const createFormSchema = (t: (key: string) => string) =>
-  z
-    .object({
-      createNewWindow: z.boolean(),
-      minTime: z.string(),
-      maxTime: z.string(),
-    })
-    .refine((data) => !data.createNewWindow || data.minTime, {
-      message: t("events.respawn.minTimeRequired"),
-      path: ["minTime"],
-    })
-    .refine((data) => !data.createNewWindow || data.maxTime, {
-      message: t("events.respawn.maxTimeRequired"),
-      path: ["maxTime"],
-    })
-    .refine(
-      (data) =>
-        !data.createNewWindow ||
-        !data.minTime ||
-        !data.maxTime ||
-        new Date(data.minTime) < new Date(data.maxTime),
-      {
-        message: t("events.respawn.invalidTimeRange"),
-        path: ["maxTime"],
-      },
-    );
+const FormFields = Schema.Struct({
+  createNewWindow: Schema.Boolean,
+  minTime: Schema.String,
+  maxTime: Schema.String,
+});
 
-type FormValues = z.infer<ReturnType<typeof createFormSchema>>;
+type FormValues = typeof FormFields.Type;
+
+const createFormSchema = (t: (key: string) => string) =>
+  Schema.toStandardSchemaV1(
+    FormFields.check(
+      Schema.makeFilter((data) => {
+        if (!data.createNewWindow) return;
+
+        const issues: Array<Schema.FilterIssue> = [];
+
+        if (!data.minTime) {
+          issues.push({
+            path: ["minTime"],
+            issue: t("events.respawn.minTimeRequired"),
+          });
+        }
+
+        if (!data.maxTime) {
+          issues.push({
+            path: ["maxTime"],
+            issue: t("events.respawn.maxTimeRequired"),
+          });
+        }
+
+        if (
+          data.minTime &&
+          data.maxTime &&
+          !(new Date(data.minTime) < new Date(data.maxTime))
+        ) {
+          issues.push({
+            path: ["maxTime"],
+            issue: t("events.respawn.invalidTimeRange"),
+          });
+        }
+
+        return issues;
+      }),
+    ),
+  );
 
 export const CloseRespawnWindowDialog = ({
   open,
@@ -71,7 +88,7 @@ export const CloseRespawnWindowDialog = ({
   const formSchema = createFormSchema(t);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       createNewWindow: false,
       minTime: "",

@@ -1,5 +1,5 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   getNotificationsGuildControllerGetAvailableGuildTargetsQueryKey,
   getNotificationsGuildControllerGetAvailableGuildTargetsQueryOptions,
@@ -15,27 +15,30 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import * as z from "zod";
+import { Schema } from "effect";
 import { invalidateGuildNotificationQueries } from "../notifications-api";
 
-const targetFormSchema = (t: (key: string) => string, isCreateMode: boolean) =>
-  z
-    .object({
-      externalId: z.string(),
-      displayName: z.string(),
-      active: z.boolean(),
-    })
-    .superRefine((values, context) => {
-      if (isCreateMode && values.externalId.trim().length === 0) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["externalId"],
-          message: t("settings.notifications.validation.channelRequired"),
-        });
-      }
-    });
+const TargetFormFields = Schema.Struct({
+  externalId: Schema.String,
+  displayName: Schema.String,
+  active: Schema.Boolean,
+});
 
-type TargetFormValues = z.infer<ReturnType<typeof targetFormSchema>>;
+type TargetFormValues = typeof TargetFormFields.Type;
+
+const targetFormSchema = (t: (key: string) => string, isCreateMode: boolean) =>
+  Schema.toStandardSchemaV1(
+    TargetFormFields.check(
+      Schema.makeFilter((values) =>
+        isCreateMode && values.externalId.trim().length === 0
+          ? {
+              path: ["externalId"],
+              issue: t("settings.notifications.validation.channelRequired"),
+            }
+          : undefined,
+      ),
+    ),
+  );
 
 type NotificationTargetDialogProps = {
   open: boolean;
@@ -107,7 +110,7 @@ export const useNotificationTargetForm = ({
     );
 
   const form = useForm<TargetFormValues>({
-    resolver: zodResolver(targetFormSchema(t, isCreateMode)),
+    resolver: standardSchemaResolver(targetFormSchema(t, isCreateMode)),
     defaultValues: {
       externalId: "",
       displayName: "",

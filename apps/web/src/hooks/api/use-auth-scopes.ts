@@ -4,16 +4,23 @@ import {
   useAuthControllerGetScopes,
 } from "@lootlog/client/auth";
 
-import { z } from "zod";
+import { Schema, SchemaTransformation } from "effect";
+import { readableEntries } from "@/lib/lenient-schema";
 
-const normalizeAuthScopes = z
-  .union([
-    z
-      .array(z.string().nullable().catch(null))
-      .transform((scopes) => scopes.filter((scope) => scope !== null)),
-    z.string().transform((scopes) => scopes.split(/\s+/).filter(Boolean)),
-  ])
-  .catch([]).parse;
+const normalizeAuthScopes = Schema.decodeUnknownSync(
+  Schema.Union([
+    Schema.String.pipe(
+      Schema.decodeTo(
+        Schema.Array(Schema.String),
+        SchemaTransformation.transform<ReadonlyArray<string>, string>({
+          decode: (scopes) => scopes.split(/\s+/).filter(Boolean),
+          encode: (scopes) => scopes.join(" "),
+        }),
+      ),
+    ),
+    readableEntries(Schema.String),
+  ]),
+);
 
 export const authScopesQueryOptions = () =>
   getAuthControllerGetScopesQueryOptions({

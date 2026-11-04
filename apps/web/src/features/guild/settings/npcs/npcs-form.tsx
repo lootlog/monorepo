@@ -4,8 +4,8 @@ import {
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { Schema } from "effect";
 
 import {
   Form,
@@ -36,11 +36,15 @@ type NpcsFormProps = {
   npc: LootlogConfigNpc;
 };
 
-const formSchema = z.object({
-  LEGENDARY: z.boolean(),
-  HEROIC: z.boolean(),
-  UNIQUE: z.boolean(),
-});
+const formSchema = Schema.toStandardSchemaV1(
+  Schema.Struct({
+    LEGENDARY: Schema.Boolean,
+    HEROIC: Schema.Boolean,
+    UNIQUE: Schema.Boolean,
+  }),
+);
+
+type FormValues = typeof formSchema.Type;
 
 export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
   const guildId = useGuildId();
@@ -51,8 +55,8 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
 
   const { t } = useTranslation();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<FormValues>({
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       LEGENDARY: npc.allowedRarities.includes("LEGENDARY"),
       HEROIC: npc.allowedRarities.includes("HEROIC"),
@@ -69,7 +73,7 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [npc]);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: FormValues) {
     if (isPending) return;
 
     updateGuildLootlogNpc(

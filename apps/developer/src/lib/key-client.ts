@@ -1,26 +1,37 @@
-import { z } from "zod";
+import { DateTimeString } from "@lootlog/schema/http-scalars";
+import { Option, Schema } from "effect";
 import { portalText as t } from "./translations";
 import { getPortalEnvironment } from "./environment";
 
-const keySchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  start: z.string().nullable(),
-  createdAt: z.iso.datetime(),
-  expiresAt: z.iso.datetime().nullable(),
-  organizationIds: z.array(z.string()),
-  mode: z.enum(["read", "read-write"]),
-  personalData: z.boolean(),
-});
+const keyFields = {
+  id: Schema.String,
+  name: Schema.String,
+  start: Schema.NullOr(Schema.String),
+  createdAt: DateTimeString,
+  expiresAt: Schema.NullOr(DateTimeString),
+  organizationIds: Schema.Array(Schema.String),
+  mode: Schema.Literals(["read", "read-write"]),
+  personalData: Schema.Boolean,
+};
 
-export type ApiKey = z.infer<typeof keySchema>;
+const Key = Schema.Struct(keyFields);
 
-export const keyListSchema = z.object({ keys: z.array(keySchema) });
+export type ApiKey = typeof Key.Type;
 
-export const createdKeySchema = keySchema.extend({ key: z.string() });
+export const decodeKeyList = Schema.decodeUnknownSync(
+  Schema.Struct({ keys: Schema.Array(Key) }),
+);
 
-export const organizationsSchema = z.array(
-  z.object({ id: z.string(), name: z.string() }),
+export const decodeCreatedKey = Schema.decodeUnknownSync(
+  Schema.Struct({ ...keyFields, key: Schema.String }),
+);
+
+export const decodeOrganizations = Schema.decodeUnknownSync(
+  Schema.Array(Schema.Struct({ id: Schema.String, name: Schema.String })),
+);
+
+const decodeErrorBody = Schema.decodeUnknownOption(
+  Schema.Struct({ message: Schema.String }),
 );
 
 const keyErrorMessages = new Map([
@@ -50,10 +61,10 @@ export async function keyRequest(path = "", init?: RequestInit) {
 
   if (!response.ok) {
     const body: unknown = await response.json().catch(() => null);
-    const parsed = z.object({ message: z.string() }).safeParse(body);
+    const parsed = decodeErrorBody(body);
     throw new KeyRequestError(
-      parsed.success
-        ? (keyErrorMessages.get(parsed.data.message) ?? t.error)
+      Option.isSome(parsed)
+        ? (keyErrorMessages.get(parsed.value.message) ?? t.error)
         : t.error,
     );
   }

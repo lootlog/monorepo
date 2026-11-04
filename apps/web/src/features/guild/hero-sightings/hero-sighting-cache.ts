@@ -8,11 +8,15 @@ import {
   getHeroSightingKey,
   upsertNewestHeroSighting,
 } from "@lootlog/domain/hero-sightings";
-import { z } from "zod";
+import { Option, Schema } from "effect";
 
-const boardParameters = z.object({ world: z.string() });
+const decodeBoardParameters = Schema.decodeUnknownOption(
+  Schema.Struct({ world: Schema.String }),
+);
 
-const historyParameters = z.object({ world: z.string(), hero: z.string() });
+const decodeHistoryParameters = Schema.decodeUnknownOption(
+  Schema.Struct({ world: Schema.String, hero: Schema.String }),
+);
 
 /** The query paths of an Organization, under its id and its vanity URL. */
 export const getHeroSightingPaths = (organizationIds: readonly string[]) => ({
@@ -42,7 +46,7 @@ export const writeHeroSightingToCache = (
   >({
     predicate: (query) =>
       paths.board.some((path) => path === query.queryKey[0]) &&
-      boardParameters.safeParse(query.queryKey[1]).data?.world ===
+      Option.getOrUndefined(decodeBoardParameters(query.queryKey[1]))?.world ===
         sighting.world,
   })) {
     const query = { queryKey, exact: true };
@@ -67,7 +71,9 @@ export const writeHeroSightingToCache = (
 
   void queryClient.invalidateQueries({
     predicate: (query) => {
-      const parameters = historyParameters.safeParse(query.queryKey[1]).data;
+      const parameters = Option.getOrUndefined(
+        decodeHistoryParameters(query.queryKey[1]),
+      );
 
       return (
         paths.history.some((path) => path === query.queryKey[0]) &&
@@ -78,9 +84,11 @@ export const writeHeroSightingToCache = (
   });
 };
 
-const heroSightingPath = z
-  .string()
-  .regex(/^\/guilds\/[^/]+\/hero-sightings(?:\/history)?$/);
+const isHeroSightingPath = Schema.is(
+  Schema.String.check(
+    Schema.isPattern(/^\/guilds\/[^/]+\/hero-sightings(?:\/history)?$/),
+  ),
+);
 
 /** Every hero sighting read, or only those of the given Organizations. */
 export const heroSightingQueries = (organizationIds?: readonly string[]) => {
@@ -88,7 +96,7 @@ export const heroSightingQueries = (organizationIds?: readonly string[]) => {
 
   return {
     predicate: (query: { queryKey: readonly unknown[] }) =>
-      heroSightingPath.safeParse(query.queryKey[0]).success &&
+      isHeroSightingPath(query.queryKey[0]) &&
       (!paths ||
         [...paths.board, ...paths.history].some(
           (path) => path === query.queryKey[0],

@@ -10,32 +10,40 @@ import {
   type TimerIdentity,
 } from "@lootlog/domain/timers";
 import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
-import { z } from "zod";
+import { DateTimeString } from "@lootlog/schema/http-scalars";
+import { Option, Schema } from "effect";
 import { GatewayEvent } from "@/config/gateway";
 import type { GatewayClient } from "@/lib/gateway-client";
 
-const timerIdentity = z.object({
-  guildId: z.string().min(1),
-  world: z.string().min(1),
-  timerKey: z.string().min(1),
-});
+const timerIdentityFields = {
+  guildId: Schema.NonEmptyString,
+  world: Schema.NonEmptyString,
+  timerKey: Schema.NonEmptyString,
+};
+
+const decodeTimerIdentity = Schema.decodeUnknownOption(
+  Schema.Struct(timerIdentityFields),
+);
 
 // The authenticated gateway forwards the API's TimerResponseDto. Validate the
 // fields consumed by this view before putting an incremental payload in cache.
-const timerView = timerIdentity.extend({
-  minSpawnTime: z.iso.datetime(),
-  maxSpawnTime: z.iso.datetime(),
-  npc: z.object({
-    id: z.number(),
-    name: z.string(),
-    lvl: z.number(),
-    prof: z.string(),
-    type: z.string(),
-    icon: z.string().nullable(),
+const isTimerView = Schema.is(
+  Schema.Struct({
+    ...timerIdentityFields,
+    minSpawnTime: DateTimeString,
+    maxSpawnTime: DateTimeString,
+    npc: Schema.Struct({
+      id: Schema.Finite,
+      name: Schema.String,
+      lvl: Schema.Finite,
+      prof: Schema.String,
+      type: Schema.String,
+      icon: Schema.NullOr(Schema.String),
+    }),
+    member: Schema.optional(Schema.Struct({ name: Schema.String })),
+    entranceClosesAt: Schema.optional(Schema.NullOr(DateTimeString)),
   }),
-  member: z.object({ name: z.string() }).optional(),
-  entranceClosesAt: z.iso.datetime().nullable().optional(),
-});
+);
 
 type Options = {
   socket: GatewayClient;
@@ -44,9 +52,13 @@ type Options = {
 
 type PolicyUpdate = { accessPolicyChanges?: readonly AccessPolicyChange[] };
 
-const timerPath = z.string().regex(/^\/guilds\/[^/]+\/timers$/);
+const isTimerPath = Schema.is(
+  Schema.String.check(Schema.isPattern(/^\/guilds\/[^/]+\/timers$/)),
+);
 
-const timerParameters = z.object({ world: z.string().optional() }).optional();
+const decodeTimerParameters = Schema.decodeUnknownOption(
+  Schema.UndefinedOr(Schema.Struct({ world: Schema.optional(Schema.String) })),
+);
 
 export const useTimersSocket = ({ socket, guilds }: Options) => {
   const queryClient = useQueryClient();
@@ -54,7 +66,7 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
   useEffect(() => {
     const allTimers = {
       predicate: (query: { queryKey: readonly unknown[] }) =>
-        timerPath.safeParse(query.queryKey[0]).success,
+        isTimerPath(query.queryKey[0]),
     };
 
     const organizationPaths = (guildId: string) => {
@@ -72,27 +84,28 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
     };
 
     const update = (payload: TimerIdentity, timer?: TimerResponseDto) => {
-      const identity = timerIdentity.safeParse(payload);
+      const decodedIdentity = decodeTimerIdentity(payload);
 
-      if (!identity.success) return;
+      if (Option.isNone(decodedIdentity)) return;
 
-      const paths = organizationPaths(identity.data.guildId);
+      const identity = decodedIdentity.value;
+      const paths = organizationPaths(identity.guildId);
 
       for (const [queryKey] of queryClient.getQueriesData<TimerResponseDto[]>({
         predicate: (query) => {
-          const parameters = timerParameters.safeParse(query.queryKey[1]);
+          const parameters = decodeTimerParameters(query.queryKey[1]);
 
           return (
             paths.some((path) => path === query.queryKey[0]) &&
-            parameters.success &&
-            (!parameters.data?.world ||
-              parameters.data.world === identity.data.world)
+            Option.isSome(parameters) &&
+            (!parameters.value?.world ||
+              parameters.value.world === identity.world)
           );
         },
       })) {
         const query = { queryKey, exact: true };
 
-        if (timer && !timerView.safeParse(timer).success) {
+        if (timer && !isTimerView(timer)) {
           void queryClient.cancelQueries(query);
           void queryClient.invalidateQueries(query);
           continue;
@@ -114,7 +127,7 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
           (old) =>
             timer
               ? upsertTimerInCollection(old, timer)
-              : removeTimerFromCollection(old, identity.data),
+              : removeTimerFromCollection(old, identity),
           { updatedAt: state?.dataUpdatedAt },
         );
 

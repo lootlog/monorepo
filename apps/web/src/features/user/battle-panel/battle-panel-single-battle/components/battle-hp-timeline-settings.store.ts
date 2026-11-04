@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import {
@@ -7,6 +7,7 @@ import {
   type BattleHpTimelineLayerConfig,
   type BattleHpTimelineLayerKey,
 } from "./battle-hp-timeline-layers";
+import { optionalWithFallback, withFallback } from "@/lib/lenient-schema";
 
 export type BattleHpTimelineHeightMode = "default" | "expanded";
 
@@ -51,16 +52,20 @@ const isBattleHpTimelineHeightMode = (
 ): value is BattleHpTimelineHeightMode =>
   value === "default" || value === "expanded";
 
-const storedLayers = z.record(
-  z.string(),
-  z.boolean().optional().catch(undefined),
+const StoredLayers = Schema.Record(
+  Schema.String,
+  withFallback(Schema.UndefinedOr(Schema.Boolean), undefined),
 );
 
-const storedSettings = z.object({
-  heightMode: z.enum(["default", "expanded"]).optional().catch(undefined),
-  isChartHidden: z.boolean().optional().catch(undefined),
-  layers: storedLayers.optional().catch(undefined),
-});
+const decodeStoredLayers = Schema.decodeUnknownOption(StoredLayers);
+
+const decodeStoredSettings = Schema.decodeUnknownOption(
+  Schema.Struct({
+    heightMode: optionalWithFallback(Schema.Literals(["default", "expanded"])),
+    isChartHidden: optionalWithFallback(Schema.Boolean),
+    layers: optionalWithFallback(StoredLayers),
+  }),
+);
 
 const readLegacyLayerConfig = () => {
   if (typeof localStorage === "undefined") return;
@@ -72,7 +77,7 @@ const readLegacyLayerConfig = () => {
   if (!value) return;
 
   try {
-    return storedLayers.safeParse(JSON.parse(value)).data;
+    return Option.getOrUndefined(decodeStoredLayers(JSON.parse(value)));
   } catch {
     // Ignore malformed legacy preferences and use the defaults.
   }
@@ -144,7 +149,7 @@ export const useBattleHpTimelineSettingsStore =
         merge: (persistedState, currentState) => ({
           ...currentState,
           ...normalizeBattleHpTimelineSettingsState(
-            storedSettings.safeParse(persistedState).data,
+            Option.getOrUndefined(decodeStoredSettings(persistedState)),
             currentState,
           ),
         }),

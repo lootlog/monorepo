@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import type { TOptions } from "i18next";
 import type { Battle } from "@/lib/api/battlelog-types";
 
@@ -9,15 +9,19 @@ export type BattleRouteLabelMatch = {
   params?: Record<string, string | undefined>;
 };
 
-const battleLabel = z.object({
-  id: z.string(),
-  type: z.string(),
-  warriors: z.array(z.object({ name: z.string(), team: z.number() })),
+const BattleLabel = Schema.Struct({
+  id: Schema.String,
+  type: Schema.String,
+  warriors: Schema.Array(
+    Schema.Struct({ name: Schema.String, team: Schema.Finite }),
+  ),
 });
 
-type BattleLabel = z.output<typeof battleLabel>;
+type BattleLabel = typeof BattleLabel.Type;
 
-const battleRouteLoaderData = z.object({ battle: battleLabel.optional() });
+const decodeBattleRouteLoaderData = Schema.decodeUnknownOption(
+  Schema.Struct({ battle: Schema.optional(BattleLabel) }),
+);
 
 type BattleRouteLabelOptions = {
   currentBattle?: Battle;
@@ -64,8 +68,9 @@ function getRouteBattle(
     return;
   }
 
-  const loaderBattle = battleRouteLoaderData.safeParse(match?.loaderData).data
-    ?.battle;
+  const loaderBattle = Option.getOrUndefined(
+    decodeBattleRouteLoaderData(match?.loaderData),
+  )?.battle;
 
   if (loaderBattle?.id === battleId) {
     return loaderBattle;
