@@ -106,7 +106,6 @@ try {
       new PresenceStore(
         { command },
         {
-          instanceId: crypto.randomUUID(),
           publishPresence: () => Promise.resolve(),
           setPresence: (socket, presence) => {
             socket.data.presence = presence;

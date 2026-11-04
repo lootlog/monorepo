@@ -108,10 +108,7 @@ export class PresenceStore {
 
   constructor(
     private readonly redis: PresenceRedis,
-    private readonly hub: Pick<
-      RealtimeHub,
-      "instanceId" | "setPresence" | "publishPresence"
-    >,
+    private readonly hub: Pick<RealtimeHub, "setPresence" | "publishPresence">,
     private readonly now: () => number = Date.now,
     private readonly coverage?: Pick<CoveragePublisher, "publish">,
     private readonly onlineHistory?: Pick<OnlineHistory, "observe">,

@@ -353,6 +353,9 @@ find it unchanged on the next.
 - Keep E2E fakes at genuine external boundaries. Verify resulting state, not
   only status codes, and never mock the unit under test or internal application
   layers.
+- Prove a Redis Lua script against a real Dragonfly through testcontainers. A
+  fake that re-implements the script in TypeScript proves only the fake; keep
+  such a fake for the TypeScript logic around the script.
 - Add contract or end-to-end coverage when a change crosses Game client, HTTP,
   RabbitMQ, gateway, or generated-client boundaries. Game client runtime,
   adapter, processor, projection, and domain-store changes require relevant

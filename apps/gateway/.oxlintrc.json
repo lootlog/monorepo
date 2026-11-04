@@ -10,13 +10,13 @@
   },
   "overrides": [
     {
-      // The fixture builds a plain socket value, not an Effect service.
+      // The fixtures build plain test values, not Effect services.
       "files": ["test/command-dispatch.bench.ts"],
       "rules": {
         "anti-slop-effect/no-service-constructor-imports": [
           "error",
           {
-            "nonServiceImports": ["makeGamePingSocket"]
+            "nonServiceImports": ["makeGamePingSocket", "makeCommandHandler"]
           }
         ]
       }

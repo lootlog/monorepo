@@ -189,24 +189,15 @@ interface UpgradeServer {
 
 const probePaths = new Set(["/healthz", "/readyz"]);
 
-export const createGatewayFetch = (
-  application: GatewayHttpDependencies &
-    Pick<GatewayApplicationService, "auth" | "runPromise"> & {
-      config: Pick<GatewayConfiguration, "websocketPath" | "environment">;
-    },
-  httpHandler?: (request: Request) => Promise<Response>,
-) => {
-  let defaultBoundary: ReturnType<typeof makeGatewayHttpBoundary> | undefined;
-
-  const handleHttp =
-    httpHandler ??
-    ((request: Request) => {
-      defaultBoundary ??= makeGatewayHttpBoundary(application);
-
-      return defaultBoundary.handler(request);
-    });
-
-  return async (
+export const createGatewayFetch =
+  (
+    application: GatewayHttpDependencies &
+      Pick<GatewayApplicationService, "auth" | "runPromise"> & {
+        config: Pick<GatewayConfiguration, "websocketPath" | "environment">;
+      },
+    handleHttp: (request: Request) => Promise<Response>,
+  ) =>
+  async (
     request: Request,
     activeServer: UpgradeServer,
   ): Promise<Response | undefined> => {
@@ -354,13 +345,13 @@ export const createGatewayFetch = (
       );
     }
   };
-};
 
 export const createGatewayWebSocket = (
   application: Pick<GatewayApplicationService, "hub" | "ingress">,
-  metrics = new GatewayConnectionMetrics(),
-) =>
-  ({
+) => {
+  const metrics = new GatewayConnectionMetrics();
+
+  return {
     perMessageDeflate: false,
     maxPayloadLength: 256 * 1_024,
     idleTimeout: 70,
@@ -401,7 +392,8 @@ export const createGatewayWebSocket = (
       application.hub.detach(socket);
       application.ingress.close(socket);
     },
-  }) satisfies Bun.WebSocketHandler<SessionData>;
+  } satisfies Bun.WebSocketHandler<SessionData>;
+};
 
 interface DrainTiming {
   /** Lets Traefik drop the terminating endpoint before sockets move. */

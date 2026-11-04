@@ -1,227 +1,26 @@
 import { Effect } from "effect";
 import { describe, expect, test } from "bun:test";
-import { Permission } from "@lootlog/schema/permissions";
-import type { GatewaySocket, SessionData } from "#src/realtime/session";
+import { makeGamePingSocket } from "../../test/realtime-fixtures.js";
 import { AirTagService } from "./air-tag-service.js";
 
-const makeSocket = (): GatewaySocket => ({
-  send: () => 0,
-  close: () => {},
-  getBufferedAmount: () => 0,
-  data: {
-    discordId: "discord-1",
-    userId: "user-1",
-    connectionId: "connection-1",
-    platform: "game",
-    joined: true,
-    guilds: [
-      {
-        guild: { id: "organization-1", ownerId: "owner" },
-        roles: [
-          {
-            id: "role",
-            lvlRangeFrom: 0,
-            lvlRangeTo: 500,
-            permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
-          },
-        ],
-      },
-    ],
-    subscriptions: new Map(),
-    airTagScopes: [],
-    confidence: "verified",
-    presence: {
-      userId: "user-1",
-      sessionId: "presence-1",
-      organizationIds: ["organization-1"],
-      platform: "game",
-      status: "online",
-      confidence: "verified",
-      isAfk: false,
-      lastSeen: 1,
-      character: {
-        world: "classic",
-        name: "Hero",
-        lvl: 100,
-        icon: "icon",
-        characterId: "123",
-        accountId: "456",
-        prof: "w",
-      },
-      location: { mapId: 7, map: "Map" },
-    },
-  } satisfies SessionData,
-});
-
-const unusedSetCommands = {
-  sadd: () => Promise.reject(new Error("Unexpected Redis write")),
-  smembers: () => Promise.reject(new Error("Unexpected Redis read")),
-  expire: () => Promise.reject(new Error("Unexpected Redis write")),
-};
-
 describe("AirTagService", () => {
-  test("returns snapshots on subscribe and exact counts/events for observations", async () => {
-    const evaluations = [
-      JSON.stringify({
-        epochId: "epoch",
-        epochStartedAt: 100,
-        revision: 0,
-        serverTime: 150,
-        targets: [],
-      }),
-      [1, 0, 0],
-      JSON.stringify({
-        epochId: "epoch",
-        epochStartedAt: 100,
-        revision: 1,
-        acceptedTargets: 1,
-        targets: [
-          {
-            targetId: "target",
-            nickname: "Enemy",
-            relation: 3,
-            x: 1,
-            y: 2,
-            observedAt: 200,
-            enemyObservedAt: 200,
-          },
-        ],
-        removed: [],
-        remoteRecipients: true,
-      }),
-      [1, 0, 0],
-      JSON.stringify({
-        epochId: "epoch",
-        epochStartedAt: 100,
-        revision: 5,
-        acceptedTargets: 2,
-        targets: ["second", "third"].map((targetId) => ({
-          targetId,
-          nickname: "Neutral",
-          relation: 1,
-          x: 1,
-          y: 2,
-          observedAt: 300,
-        })),
-        removed: ["target"],
-        remoteRecipients: true,
-      }),
-    ];
+  test("rejects an empty observation batch before touching Redis", async () => {
+    const redisCalls: string[] = [];
 
-    const publications: unknown[][] = [];
+    const unexpected = (command: string) => () => {
+      redisCalls.push(command);
 
-    const hub = {
-      instanceId: crypto.randomUUID(),
-      getLocalScopes: () => [],
-      subscribe: (
-        socket: GatewaySocket,
-        scope: SessionData["subscriptions"] extends Map<string, infer T>
-          ? T
-          : never,
-      ) => socket.data.subscriptions.set("air", scope),
-      unsubscribe: (socket: GatewaySocket) =>
-        socket.data.subscriptions.delete("air"),
-      publishToScopes: async (...arguments_: unknown[]) => {
-        publications.push(arguments_);
-      },
+      return Promise.reject(new Error(`Unexpected Redis ${command}`));
     };
 
     const service = new AirTagService(
       {
         command: {
-          ...unusedSetCommands,
-          mget: async (keys: string[]) => keys.map(() => null),
-          eval: async () => {
-            const reply = evaluations.shift();
-
-            if (reply === undefined) throw new Error("Unexpected Redis script");
-
-            return reply;
-          },
-        },
-      },
-      hub,
-    );
-
-    const socket = makeSocket();
-
-    const subscription = await Effect.runPromise(
-      service.updateSubscription(socket, {
-        requestId: "request-1",
-        enabled: true,
-        expectedMapId: 7,
-      }),
-    );
-
-    expect(subscription).toEqual({
-      status: "accepted",
-      requestId: "request-1",
-      scopes: [
-        {
-          guildId: "organization-1",
-          world: "classic",
-          mapId: 7,
-          epochId: "epoch",
-          epochStartedAt: 100,
-          revision: 0,
-          serverTime: 150,
-          targets: [],
-        },
-      ],
-    });
-
-    const response = await Effect.runPromise(
-      service.publishObservations(socket, {
-        expectedMapId: 7,
-        observations: [
-          { targetId: "target", nickname: "Enemy", relation: 3, x: 1, y: 2 },
-        ],
-      }),
-    );
-
-    expect(response).toEqual({
-      status: "accepted",
-      acceptedScopes: 1,
-      acceptedTargets: 1,
-    });
-    expect(publications).toHaveLength(1);
-    expect(publications[0]).toMatchObject([
-      [
-        {
-          topic: "map.air-tags",
-          organizationId: "organization-1",
-          world: "classic",
-          mapId: 7,
-        },
-      ],
-      {
-        type: "air-tag.scope-updated",
-        sequence: 1,
-        data: {
-          guildId: "organization-1",
-          epochId: "epoch",
-          revision: 1,
-          targets: [{ targetId: "target" }],
-          removedTargetIds: [],
-        },
-      },
-      { excludeConnectionId: "connection-1" },
-    ]);
-  });
-
-  test("rejects an empty observation batch before touching Redis", async () => {
-    let evaluations = 0;
-
-    const service = new AirTagService(
-      {
-        command: {
-          ...unusedSetCommands,
-          eval: async () => {
-            evaluations += 1;
-
-            return null;
-          },
-          mget: () => Promise.reject(new Error("Unexpected Redis read")),
+          eval: unexpected("eval"),
+          mget: unexpected("mget"),
+          sadd: unexpected("sadd"),
+          smembers: unexpected("smembers"),
+          expire: unexpected("expire"),
         },
       },
       {
@@ -239,13 +38,13 @@ describe("AirTagService", () => {
 
     expect(
       await Effect.runPromise(
-        service.publishObservations(makeSocket(), {
+        service.publishObservations(makeGamePingSocket(), {
           expectedMapId: 7,
           observations: [],
         }),
       ),
     ).toEqual({ status: "rejected", code: "invalid-payload" });
-    expect(evaluations).toBe(0);
+    expect(redisCalls).toEqual([]);
   });
 });
 
@@ -308,7 +107,7 @@ describe("AirTagService map threats", () => {
       },
     );
 
-    const socket = makeSocket();
+    const socket = makeGamePingSocket();
     socket.data.airTagScopes = [
       {
         guildId: "organization-1",

@@ -23,7 +23,7 @@ type Departing = {
   readonly character?: { readonly characterId: string; readonly world: string };
 };
 
-export const OFFLINE_DUE_INDEX = "presence:offline:due";
+const OFFLINE_DUE_INDEX = "presence:offline:due";
 
 const OFFLINE_OUTBOX_INDEX = "presence:offline:outbox";
 
@@ -132,7 +132,7 @@ const decodeOffline = Schema.decodeUnknownOption(
   Schema.fromJsonString(GameCharacterOffline),
 );
 
-export const offlineCharacterKey = (presence: Departing): string =>
+const offlineCharacterKey = (presence: Departing): string =>
   `presence:offline:character:${JSON.stringify([presence.userId, presence.character?.world, presence.character?.characterId])}`;
 
 /**
