@@ -4,6 +4,9 @@ import { HeroSightingsPageSkeleton } from "@/features/guild/hero-sightings/hero-
 
 export const Route = createFileRoute("/_authenticated/$guildId/hero-sightings")(
   {
+    staticData: {
+      navigation: ({ t }) => ({ label: t("heroSightings.title") }),
+    },
     component: HeroSightings,
     pendingComponent: HeroSightingsPageSkeleton,
   },

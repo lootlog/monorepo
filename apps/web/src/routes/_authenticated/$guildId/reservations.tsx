@@ -5,6 +5,9 @@ import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/$guildId/reservations")({
+  staticData: {
+    navigation: ({ t }) => ({ label: t("common.breadcrumbs.reservations") }),
+  },
   loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       await prefetchRouteQuery(

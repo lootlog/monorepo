@@ -31,6 +31,9 @@ const isLandingRoute = (
 ): itemId is keyof typeof LANDING_ROUTES => itemId in LANDING_ROUTES;
 
 export const Route = createFileRoute("/_authenticated/$guildId/")({
+  staticData: {
+    navigation: ({ t }) => ({ label: t("common.breadcrumbs.lootsList") }),
+  },
   component: LootsListPage,
   pendingComponent: LootsListPageSkeleton,
   loader: async ({ abortController, context, params }) => {

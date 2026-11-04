@@ -11,6 +11,12 @@ const decodeAppearanceSearch = Schema.decodeUnknownSync(
 
 export const Route = createFileRoute("/_authenticated/@me/settings/appearance")(
   {
+    staticData: {
+      navigation: ({ t }) => ({
+        label: t("settings.appearance.title"),
+        tab: true,
+      }),
+    },
     component: AppearanceSettings,
     pendingComponent: AppearanceSettingsPageSkeleton,
     validateSearch: decodeAppearanceSearch,

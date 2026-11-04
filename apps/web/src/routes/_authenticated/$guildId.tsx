@@ -9,6 +9,7 @@ import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
+import { Option, Schema } from "effect";
 
 const rememberVisitedOrganization = (match: {
   status: string;
@@ -22,7 +23,23 @@ const rememberVisitedOrganization = (match: {
   }
 };
 
+const decodeOrganizationLoaderData = Schema.decodeUnknownOption(
+  Schema.Struct({
+    guild: Schema.optional(
+      Schema.Struct({ name: Schema.optional(Schema.String) }),
+    ),
+  }),
+);
+
 export const Route = createFileRoute("/_authenticated/$guildId")({
+  staticData: {
+    navigation: ({ match, organizationName }) => ({
+      documentContext:
+        organizationName ??
+        Option.getOrUndefined(decodeOrganizationLoaderData(match.loaderData))
+          ?.guild?.name,
+    }),
+  },
   component: GuildRouteProviders,
   beforeLoad: ({ params }) => {
     return {
