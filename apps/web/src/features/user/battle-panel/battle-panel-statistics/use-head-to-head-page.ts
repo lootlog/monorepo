@@ -15,7 +15,7 @@ import type {
   HeadToHeadRecord,
   SearchWarrior,
 } from "@/lib/api/battlelog-types";
-import { sortingTableFeatures } from "@/lib/tanstack-table-features";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { useBattlesControllerGetHeadToHead } from "@lootlog/client/battlelog";
 import {
   functionalUpdate,
@@ -41,7 +41,7 @@ export type HeadToHeadSeasonScope = {
 };
 
 export type HeadToHeadPageVariantProps = {
-  columns: ColumnDef<typeof sortingTableFeatures, HeadToHeadRecord>[];
+  columns: ColumnDef<typeof coreTableFeatures, HeadToHeadRecord>[];
   emptyDescriptionKey: string;
   emptyTitleKey: string;
   matchmaking: boolean;
@@ -266,7 +266,7 @@ export function useHeadToHeadPage({
   };
 
   const table = useTable({
-    features: sortingTableFeatures,
+    features: coreTableFeatures,
     data: data?.records ?? [],
     columns,
     state: {
