@@ -66,7 +66,6 @@
       "react-doctor": "0.9.18",
       "react-dom": "^19.3.0",
       "react-hook-form": "7.90.0",
-      "superjson": "^2.2.6",
       "tailwindcss": "^4.3.3",
       "typescript": "^7.0.2",
       "vite": "^8.3.4",

@@ -23,19 +23,26 @@ const decodeJsonUnknown = Schema.decodeUnknownSync(
 
 export const makeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
   schema: S,
-  serialization: {
-    readonly parse: (text: string) => unknown;
-    readonly stringify: (value: unknown) => string;
-  } = {
-    parse: decodeJsonUnknown,
-    stringify: JSON.stringify,
-  },
 ): JsonCodec<S["Type"]> => {
   const decodeValue = Schema.decodeUnknownSync(schema);
 
   return {
-    stringify: serialization.stringify,
-    parse: (text) => decodeValue(serialization.parse(text)),
+    stringify: JSON.stringify,
+    parse: (text) => decodeValue(decodeJsonUnknown(text)),
+  };
+};
+
+/** Caches a schema's decoded values, such as `Date`, in their canonical JSON form. */
+export const makeTypeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
+  schema: S,
+): JsonCodec<S["Type"]> => {
+  const codec = Schema.fromJsonString(
+    Schema.toCodecJson(Schema.toType(schema)),
+  );
+
+  return {
+    stringify: Schema.encodeUnknownSync(codec),
+    parse: Schema.decodeUnknownSync(codec),
   };
 };
 
