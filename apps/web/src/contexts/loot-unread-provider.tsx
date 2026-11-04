@@ -6,7 +6,7 @@ import {
 } from "react";
 import { mapValues } from "es-toolkit";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
-import type { GuildLootCreatedEventV2 } from "@lootlog/schema/loot-events";
+import type { LootSnapshotEvent } from "@lootlog/protocol/realtime";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { findGuildByRouteId } from "@/lib/current-user-guilds";
@@ -23,24 +23,23 @@ export const LootUnreadProvider = ({ children }: PropsWithChildren) => {
     Record<string, number[]>
   >({});
 
-  const handleLootCreate = useEffectEvent(
-    (payload: GuildLootCreatedEventV2) => {
-      if (payload.guildId === currentGuildId) return;
-      setUnreadLootIdsByGuild((previous) => {
-        const lootIds = previous[payload.guildId] ?? [];
+  // The Web app reads each new loot once, as `loot.snapshot`.
+  const handleLootSnapshot = useEffectEvent((payload: LootSnapshotEvent) => {
+    if (payload.guildId === currentGuildId) return;
+    setUnreadLootIdsByGuild((previous) => {
+      const lootIds = previous[payload.guildId] ?? [];
 
-        if (lootIds.includes(payload.lootId)) return previous;
+      if (lootIds.includes(payload.lootId)) return previous;
 
-        return { ...previous, [payload.guildId]: [...lootIds, payload.lootId] };
-      });
-    },
-  );
+      return { ...previous, [payload.guildId]: [...lootIds, payload.lootId] };
+    });
+  });
 
   useEffect(() => {
-    socket.on("loot.created", handleLootCreate);
+    socket.on("loot.snapshot", handleLootSnapshot);
 
     return () => {
-      socket.off("loot.created", handleLootCreate);
+      socket.off("loot.snapshot", handleLootSnapshot);
     };
   }, [socket]);
 
