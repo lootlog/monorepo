@@ -63,7 +63,6 @@ export enum GatewayEvent {
   LOOT_SPLIT_AUTO_ACCEPT_RECEIVE = "loot-split:auto-accept:receive",
   AIR_TAG_SUBSCRIPTION = "air-tag:subscription",
   AIR_TAG_OBSERVATION = "air-tag:observation",
-  AIR_TAG_UPDATE = "air-tag:update",
   AIR_TAG_SCOPE_UPDATE = "air-tag:scope:update",
   AIR_TAG_MAP_THREAT_UPDATE = "air-tag:map-threat:update",
   NPC_PRESENCE_UPDATE = "npc-presence:update",

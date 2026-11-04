@@ -207,7 +207,6 @@ const moveAirTagSocket = (
   const presence = socket.data.presence;
 
   if (!presence) throw new Error("Missing air tag presence");
-  Object.assign(socket.data, { supportsAirTagScopeUpdates: true });
   setSocketPresence(socket, { ...presence, location });
 };
 
@@ -841,15 +840,13 @@ describe("realtime Dragonfly integration", () => {
         () => {},
       );
 
-      const listener = (id: string, channels: boolean, world: string) => {
+      const listener = (id: string, world: string) => {
         const target = makeSocket(id);
         const { data } = target.socket;
 
         Object.assign(target.socket, {
           data: {
             ...data,
-            supportsGlobalChat: true,
-            supportsGlobalChatChannels: channels,
             presence: data.presence?.character && {
               ...data.presence,
               character: { ...data.presence.character, world },
@@ -863,17 +860,17 @@ describe("realtime Dragonfly integration", () => {
       const firstHub = new RealtimeHub(makeConfiguration(), store);
       const secondHub = new RealtimeHub(makeConfiguration(), store);
       // Who plays where differs from who follows which channel.
-      const gordionA = listener("chat-gordion-a", true, "gordion");
-      const sharedA = listener("chat-shared-a", true, "gordion");
-      const gordionB = listener("chat-gordion-b", true, "classic");
-      const legacyB = listener("chat-legacy-b", false, "classic");
+      const gordionA = listener("chat-gordion-a", "gordion");
+      const sharedA = listener("chat-shared-a", "gordion");
+      const gordionB = listener("chat-gordion-b", "classic");
+      const sharedB = listener("chat-shared-b", "classic");
       const gordion = { topic: "global.chat.world", world: "gordion" } as const;
 
       for (const [hub, target, scope] of [
         [firstHub, gordionA, gordion],
         [firstHub, sharedA, { topic: "global.chat" }],
         [secondHub, gordionB, gordion],
-        [secondHub, legacyB, { topic: "global.chat" }],
+        [secondHub, sharedB, { topic: "global.chat" }],
       ] as const) {
         hub.register(target.socket);
         hub.subscribe(target.socket, scope);
@@ -913,8 +910,9 @@ describe("realtime Dragonfly integration", () => {
           data: { world: "gordion", online: 0, listeners: 1 },
         },
       ]);
-      // A client without channels would close the socket on the stats event.
-      expect(stats(legacyB.frames)).toEqual([]);
+      expect(stats(sharedB.frames)).toEqual([
+        { v: 1, type: "global-chat.stats", data: { online: 2, listeners: 1 } },
+      ]);
     } finally {
       await runtime.dispose();
     }
@@ -2697,10 +2695,7 @@ describe("realtime Dragonfly integration", () => {
       const connect = (hub: RealtimeHub, connectionId: string) => {
         const target = makeSocket(connectionId);
         const closes: Array<{ code?: number; reason?: string }> = [];
-        Object.assign(target.socket.data, {
-          platform: "web-app",
-          supportsFeed: true,
-        });
+        Object.assign(target.socket.data, { platform: "web-app" });
         target.socket.data.guilds = [
           {
             guild: { id: "organization-1", ownerId: "other-owner" },
@@ -2883,10 +2878,7 @@ describe("realtime Dragonfly integration", () => {
       const hiddenFeed = makeSocket("hidden-feed");
 
       for (const target of [visibleFeed, hiddenFeed]) {
-        Object.assign(target.socket.data, {
-          platform: "web-app",
-          supportsFeed: true,
-        });
+        Object.assign(target.socket.data, { platform: "web-app" });
         target.socket.data.guilds = [
           {
             guild: { id: "organization-1", ownerId: "other-owner" },
@@ -3124,7 +3116,6 @@ describe("realtime Dragonfly integration", () => {
           throw new Error("Missing battle ping presence");
         target.socket.data = {
           ...target.socket.data,
-          supportsBattlePings: true,
           presence: {
             ...presence,
             character: { ...presence.character, characterId },
@@ -3196,9 +3187,12 @@ describe("realtime Dragonfly integration", () => {
         acceptedTargets: 1,
       });
       await waitFor(
-        () => eventsOfType(recipient.frames, "air-tag.updated").length === 1,
+        () =>
+          eventsOfType(recipient.frames, "air-tag.scope-updated").length === 1,
       );
-      expect(eventsOfType(source.frames, "air-tag.updated")).toHaveLength(0);
+      expect(eventsOfType(source.frames, "air-tag.scope-updated")).toHaveLength(
+        0,
+      );
 
       const reconnected = makeSocket("reconnected");
       secondHub.register(reconnected.socket);
@@ -3252,11 +3246,9 @@ describe("realtime Dragonfly integration", () => {
 
       const threatWatcher = makeSocket("threat-watcher");
       const locationBlind = makeSocket("location-blind");
-      const legacyClient = makeSocket("legacy-client");
 
-      for (const target of [threatWatcher, locationBlind, legacyClient]) {
+      for (const target of [threatWatcher, locationBlind]) {
         Object.assign(target.socket.data, {
-          supportsAirTagMapThreats: target !== legacyClient,
           presence: {
             ...target.socket.data.presence,
             location: { mapId: 8, map: "Karka-han" },
@@ -3390,9 +3382,6 @@ describe("realtime Dragonfly integration", () => {
       expect(
         eventsOfType(locationBlind.frames, "air-tag.map-threat-updated"),
       ).toHaveLength(0);
-      expect(
-        eventsOfType(legacyClient.frames, "air-tag.map-threat-updated"),
-      ).toHaveLength(0);
 
       // A target leaves once no observer still sees it and one saw it leave the map.
       firstHub.clusterFederationVersion = FEDERATION_VERSION;
@@ -3414,9 +3403,6 @@ describe("realtime Dragonfly integration", () => {
 
       [...observers, scopeRecipient].forEach(moveToNithal);
       observers.forEach((target) => firstHub.register(target.socket));
-      Object.assign(scopeRecipient.socket.data, {
-        supportsAirTagScopeUpdates: true,
-      });
       secondHub.register(scopeRecipient.socket);
       await Promise.all(
         observers.map((target) =>
@@ -3480,9 +3466,6 @@ describe("realtime Dragonfly integration", () => {
           removedTargetIds: [],
         },
       ]);
-      expect(
-        eventsOfType(scopeRecipient.frames, "air-tag.updated"),
-      ).toHaveLength(0);
 
       // The second observer still sees both.
       await report(firstObserver, {
@@ -3688,7 +3671,6 @@ describe("realtime Dragonfly integration", () => {
         const created = makeSocket(connectionId);
         created.socket.data.guilds = timerGuild(lvlRangeTo);
         created.socket.data.character = created.socket.data.presence?.character;
-        Object.assign(created.socket.data, { supportsNpcPresence: true });
         hub.register(created.socket);
         hub.subscribe(created.socket, {
           topic: "organization.timers",

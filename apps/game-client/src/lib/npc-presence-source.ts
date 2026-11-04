@@ -73,7 +73,7 @@ export class NpcPresenceSource {
   private readonly hydrate = async (): Promise<void> => {
     if (this.socket.connectionState !== "ready") return;
     const fetchId = ++this.fetchId;
-    let snapshot: NpcPresenceSnapshot | null;
+    let snapshot: NpcPresenceSnapshot;
 
     try {
       snapshot = await this.socket.fetchNpcPresence(this.guildId, this.world);
@@ -82,7 +82,7 @@ export class NpcPresenceSource {
       snapshot = { revision: 0, npcs: [] };
     }
 
-    if (fetchId !== this.fetchId || !snapshot) return;
+    if (fetchId !== this.fetchId) return;
 
     const next = new Map(
       snapshot.npcs.map(({ npc, since }) => [npc.id, since]),

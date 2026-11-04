@@ -154,7 +154,6 @@ export const createRealtimeTest = () => {
   const join = async (
     organizationIds = ["guild-1"],
     accessPolicy?: AccessPolicySnapshot,
-    capabilities?: string[],
   ) => {
     await act(async () => {
       if (realtime.state === "ready") {
@@ -206,7 +205,6 @@ export const createRealtimeTest = () => {
           organizationIds,
           subscriptionScopes: [],
           accessPolicy,
-          capabilities,
         },
       });
       await joined;

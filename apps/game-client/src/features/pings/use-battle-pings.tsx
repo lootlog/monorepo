@@ -326,16 +326,8 @@ export const useBattlePings = () => {
       context.heroId,
     );
 
-    const routed = isBattleTeamPingType(type)
-      ? socket.supportsTeamBattlePings()
-      : socket.supportsBattlePings();
-
-    // A solo fight has nobody to tell, and a gateway that does not route
-    // this ping would close the socket on the command; the local mark is
-    // then the whole effect.
-    if (recipientCharacterIds.length === 0 || !routed) {
-      return;
-    }
+    // A solo fight has nobody to tell; the local mark is the whole effect.
+    if (recipientCharacterIds.length === 0) return;
 
     socket.timeout(ACK_TIMEOUT_MS).emit(
       GatewayEvent.BATTLE_PING_SEND,

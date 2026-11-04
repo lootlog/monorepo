@@ -2,7 +2,6 @@ import type {
   AirTagScopeSnapshot,
   AirTagScopeUpdateEvent,
   AirTagTarget,
-  AirTagUpdateEvent,
 } from "@lootlog/schema/air-tag";
 import { AirTagReceiveController } from "./air-tag-receive-controller";
 
@@ -29,19 +28,6 @@ const createSnapshot = (
   ...overrides,
 });
 
-const createUpdate = (
-  overrides: Partial<AirTagUpdateEvent> = {},
-): AirTagUpdateEvent => ({
-  guildId: "guild-1",
-  world: "aether",
-  mapId: 42,
-  epochId: "epoch-a",
-  epochStartedAt: 100,
-  revision: 4,
-  target: createTarget({ x: 14, observedAt: 2_000 }),
-  ...overrides,
-});
-
 const createScopeUpdate = (
   overrides: Partial<AirTagScopeUpdateEvent> = {},
 ): AirTagScopeUpdateEvent => ({
@@ -55,6 +41,13 @@ const createScopeUpdate = (
   removedTargetIds: [],
   ...overrides,
 });
+
+/** A delta that moves one target. */
+const createUpdate = ({
+  target = createTarget({ x: 14, observedAt: 2_000 }),
+  ...overrides
+}: Partial<AirTagScopeUpdateEvent> & { target?: AirTagTarget } = {}) =>
+  createScopeUpdate({ targets: [target], ...overrides });
 
 describe("AirTagReceiveController", () => {
   it("removes a departed target and keeps a late frame of another gateway from restoring it", () => {
@@ -149,7 +142,7 @@ describe("AirTagReceiveController", () => {
   it("applies queued deltas newer than the subscription snapshot", () => {
     const controller = new AirTagReceiveController(() => 2_000);
     controller.beginSubscription("request-1", "aether", 42);
-    controller.handleUpdate(createUpdate());
+    controller.handleScopeUpdate(createUpdate());
     controller.applySubscriptionAck({
       status: "accepted",
       requestId: "request-1",
@@ -180,7 +173,7 @@ describe("AirTagReceiveController", () => {
     ]);
 
     now = 62_000;
-    controller.handleUpdate(
+    controller.handleScopeUpdate(
       createUpdate({ target: createTarget({ x: 14, observedAt: 3_000 }) }),
     );
     expect(controller.getRenderableTargets(now + 9_000, 10_000)).toEqual([
@@ -201,7 +194,7 @@ describe("AirTagReceiveController", () => {
       requestId: "current",
       scopes: [createSnapshot()],
     });
-    controller.handleUpdate(createUpdate({ revision: 3 }));
+    controller.handleScopeUpdate(createUpdate({ revision: 3 }));
 
     expect(controller.getRenderableTargets(1_100, 10_000)).toEqual([
       expect.objectContaining({ x: 10 }),
@@ -216,7 +209,7 @@ describe("AirTagReceiveController", () => {
       requestId: "request-1",
       scopes: [createSnapshot({ revision: 200 })],
     });
-    controller.handleUpdate(
+    controller.handleScopeUpdate(
       createUpdate({
         epochId: "epoch-b",
         epochStartedAt: 200,
@@ -224,7 +217,7 @@ describe("AirTagReceiveController", () => {
         target: createTarget({ x: 30, observedAt: 3_000 }),
       }),
     );
-    controller.handleUpdate(
+    controller.handleScopeUpdate(
       createUpdate({
         epochId: "epoch-a",
         epochStartedAt: 100,
@@ -280,7 +273,7 @@ describe("AirTagReceiveController", () => {
       requestId: "request-1",
       scopes: [createSnapshot()],
     });
-    controller.handleUpdate({ mapId: 42, target: {} });
+    controller.handleScopeUpdate({ mapId: 42, targets: [{}] });
 
     expect(controller.getRenderableTargets(11_000, 10_000)).toEqual([]);
   });
@@ -309,7 +302,7 @@ it("prunes revoked scopes during an in-flight refresh without clearing unrelated
   expect(controller.getRenderableTargets(1100, 10000)).toEqual([
     expect.objectContaining({ targetId: "target-2" }),
   ]);
-  controller.handleUpdate(createUpdate());
+  controller.handleScopeUpdate(createUpdate());
   controller.applySubscriptionAck({
     status: "accepted",
     requestId: "refresh",

@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import {
-  REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
-  type ServerEvent,
-} from "@lootlog/protocol/realtime";
+import type { ServerEvent } from "@lootlog/protocol/realtime";
 import type { AirTagMapThreatEvent } from "@lootlog/schema/air-tag";
 import { Permission } from "@lootlog/schema/permissions";
 import { createOnlinePlayersTest } from "@/features/online-players/online-players-test-fixtures";
@@ -71,17 +68,15 @@ const threat = (...args: Parameters<typeof threatData>): ServerEvent => ({
 
 async function setup({
   members = new Set<string>(),
-  capabilities,
   location = true,
 }: {
   members?: Set<string>;
-  capabilities?: string[];
   location?: boolean;
 } = {}) {
   const harness = createOnlinePlayersTest();
   getSocket().connect();
   harness.open();
-  await harness.join(["guild-1"], policy(location), capabilities);
+  await harness.join(["guild-1"], policy(location));
   let now = 1_000_000;
   const memberListeners = new Set<(presence?: PlayerPresence) => void>();
 
@@ -221,10 +216,7 @@ describe("map threat source", () => {
   });
 
   it("fetches stored sightings once precise-location access is granted", async () => {
-    const { harness, release } = await setup({
-      location: false,
-      capabilities: [REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY],
-    });
+    const { harness, release } = await setup({ location: false });
 
     const fetches = () =>
       harness.wire.frames.filter(
@@ -246,10 +238,8 @@ describe("map threat source", () => {
     release();
   });
 
-  it("hydrates sightings made before it connected from a gateway that supports the fetch", async () => {
-    const { harness, source, release } = await setup({
-      capabilities: [REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY],
-    });
+  it("hydrates sightings made before it connected", async () => {
+    const { harness, source, release } = await setup();
 
     const request = harness.wire.frames.findLast(
       (frame) => "type" in frame && frame.type === "air-tag.map-threats.fetch",

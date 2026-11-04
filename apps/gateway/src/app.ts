@@ -14,20 +14,6 @@ import { BunRedis } from "@effect/platform-bun";
 import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
-  REALTIME_BATTLE_PING_CAPABILITY,
-  REALTIME_LOOT_SPLIT_CAPABILITY,
-  REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
-  REALTIME_SESSION_HELLO_CAPABILITY,
-  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
-  REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
-  REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
-  REALTIME_NPC_PRESENCE_CAPABILITY,
-  REALTIME_GLOBAL_CHAT_CAPABILITY,
-  REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
-  REALTIME_FEED_CAPABILITY,
-  REALTIME_LOOT_SNAPSHOT_CAPABILITY,
-  REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-  REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_JSON_SUBPROTOCOL,
   REALTIME_SERVER_CLOSE_CODES,
 } from "@lootlog/protocol/realtime";
@@ -369,54 +355,6 @@ interface UpgradeServer {
   ) => boolean;
 }
 
-/** Capabilities a client opts into by offering them as subprotocols. */
-const negotiateCapabilities = (
-  offeredProtocols: readonly string[],
-  apiKeyAccess: boolean,
-) => {
-  // API key integrations never receive game-client events.
-  const offersGameCapability = (capability: string) =>
-    !apiKeyAccess && offeredProtocols.includes(capability);
-
-  return {
-    supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
-    supportsLootSnapshot:
-      !apiKeyAccess &&
-      offeredProtocols.includes(REALTIME_LOOT_SNAPSHOT_CAPABILITY),
-    supportsSessionHello: offersGameCapability(
-      REALTIME_SESSION_HELLO_CAPABILITY,
-    ),
-    supportsNotificationVolunteer: offersGameCapability(
-      REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-    ),
-    supportsPartyGatheringState: offersGameCapability(
-      REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
-    ),
-    supportsBattlePings: offersGameCapability(REALTIME_BATTLE_PING_CAPABILITY),
-    supportsAirTagMapThreats: offersGameCapability(
-      REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
-    ),
-    supportsTeamBattlePings: offersGameCapability(
-      REALTIME_TEAM_BATTLE_PING_CAPABILITY,
-    ),
-    supportsLootSplit: offersGameCapability(REALTIME_LOOT_SPLIT_CAPABILITY),
-    supportsLootSplitAutoAccept: offersGameCapability(
-      REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
-    ),
-    supportsAirTagScopeUpdates: offersGameCapability(
-      REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
-    ),
-    supportsNpcPresence: offersGameCapability(REALTIME_NPC_PRESENCE_CAPABILITY),
-    supportsGlobalChat: offersGameCapability(REALTIME_GLOBAL_CHAT_CAPABILITY),
-    supportsGlobalChatChannels: offersGameCapability(
-      REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
-    ),
-  };
-};
-
-// Offered without the JSON subprotocol only by clients that exchange MessagePack.
-const MESSAGEPACK_SUBPROTOCOL = "lootlog.realtime.v1";
-
 const probePaths = new Set(["/healthz", "/readyz"]);
 
 export const createGatewayFetch = (
@@ -507,13 +445,14 @@ export const createGatewayFetch = (
           ?.split(",")
           .map((protocol) => protocol.trim()) ?? [];
 
-      const offersJson = offeredProtocols.includes(REALTIME_JSON_SUBPROTOCOL);
-
-      if (!offersJson && offeredProtocols.includes(MESSAGEPACK_SUBPROTOCOL)) {
+      if (!offeredProtocols.includes(REALTIME_JSON_SUBPROTOCOL)) {
         return complete(
-          new Response("MessagePack realtime frames are not supported", {
-            status: 400,
-          }),
+          new Response(
+            `The ${REALTIME_JSON_SUBPROTOCOL} subprotocol is required`,
+            {
+              status: 400,
+            },
+          ),
         );
       }
 
@@ -521,10 +460,6 @@ export const createGatewayFetch = (
         data: {
           ...identity,
           connectionId,
-          ...negotiateCapabilities(
-            offeredProtocols,
-            Boolean(identity.apiKeyAccess),
-          ),
           platform: identity.apiKeyAccess
             ? "web-app"
             : application.auth.getPlatform(origin ?? ""),
@@ -535,9 +470,7 @@ export const createGatewayFetch = (
           airTagScopes: [],
           confidence: "reported",
         },
-        headers: offersJson
-          ? { "sec-websocket-protocol": REALTIME_JSON_SUBPROTOCOL }
-          : undefined,
+        headers: { "sec-websocket-protocol": REALTIME_JSON_SUBPROTOCOL },
       });
 
       return complete(
@@ -622,12 +555,11 @@ export const createGatewayWebSocket = (
       metrics.open(socket);
       application.hub.register(socket);
 
-      if (socket.data.supportsSessionHello)
-        application.hub.sendEvent(socket, {
-          v: 1,
-          type: "session.hello",
-          data: { connectionId: socket.data.connectionId },
-        });
+      application.hub.sendEvent(socket, {
+        v: 1,
+        type: "session.hello",
+        data: { connectionId: socket.data.connectionId },
+      });
     },
     message(socket: GatewaySocket, message: string | Buffer) {
       application.ingress.message(socket, message);

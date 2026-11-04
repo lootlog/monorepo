@@ -3,11 +3,6 @@ import {
   type AccessPolicySnapshot,
 } from "@lootlog/protocol/realtime/access-policy";
 import {
-  REALTIME_FEED_CAPABILITY,
-  REALTIME_LOOT_SNAPSHOT_CAPABILITY,
-  REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-} from "@lootlog/protocol/realtime";
-import {
   RealtimeEventListeners,
   unwrapOrganizationEvent,
 } from "@lootlog/client/realtime/event-listeners";
@@ -123,11 +118,6 @@ export class GatewayClient {
   private readonly realtime = new RealtimeClient({
     url: GATEWAY_URL,
     path: GATEWAY_SOCKET_PATH || "/ws",
-    protocols: [
-      REALTIME_FEED_CAPABILITY,
-      REALTIME_LOOT_SNAPSHOT_CAPABILITY,
-      REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-    ],
   });
   private readonly listeners = new RealtimeEventListeners<GatewayEvent>();
   private wasConnected = false;

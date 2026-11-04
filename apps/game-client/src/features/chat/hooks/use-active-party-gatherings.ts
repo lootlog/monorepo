@@ -9,7 +9,6 @@ import {
   type ActivePartyGatheringsCache,
 } from "@/features/chat/active-party-gatherings-cache";
 import { isApiError } from "@lootlog/client/transport";
-import { throttle } from "es-toolkit";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { partyReadyRoomControllerActive } from "@lootlog/client/main";
@@ -21,11 +20,6 @@ import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { useSession } from "@/hooks/auth/use-session";
 
 export const ACTIVE_GATHERINGS_QUERY_KEY = ["active-party-gatherings"];
-
-// Chat edits and participant updates arrive in bursts. Coalesce them into at
-// most one refetch per window instead of cancelling and restarting the request
-// for each; the trailing edge fires after the last update, so none is missed.
-const RECONCILE_THROTTLE_MS = 500;
 
 const decodeGatherings = Schema.decodeUnknownSync(
   Schema.Array(PartyGatheringSummarySchema),
@@ -84,17 +78,12 @@ export function useActivePartyGatherings() {
       });
     };
 
-    const reconcile = throttle(invalidate, RECONCILE_THROTTLE_MS, {
-      edges: ["trailing"],
-    });
-
     const permissionsChanged = ({ changes }: PermissionsUpdatedPayload) => {
       const relevant = changes?.filter((change) =>
         change.areas.some((area) => GATHERING_ACCESS_AREAS.has(area)),
       );
 
       if (relevant?.length === 0) return;
-      reconcile.cancel();
 
       // Revoked access must hide rooms at once; a grant keeps the current bar
       // visible while discovery adds the newly readable rooms.
@@ -103,30 +92,6 @@ export function useActivePartyGatherings() {
         void queryClient.resetQueries({
           queryKey: ACTIVE_GATHERINGS_QUERY_KEY,
         });
-    };
-
-    const events = [
-      GatewayEvent.CHAT_MESSAGE_UPDATE,
-      GatewayEvent.CHAT_MESSAGE_DELETE,
-      GatewayEvent.PARTY_GATHERING_SEND,
-      GatewayEvent.PARTY_GATHERING_CANCEL,
-    ];
-
-    // Gateways with live gathering state push every committed change, so only
-    // older gateways need the legacy signals to trigger discovery reads.
-    const legacyReconcile = () => {
-      if (!socket.supportsGatheringState) reconcile();
-    };
-
-    const newGathering = (payload: {
-      type?: string;
-      isGatheringParty?: boolean;
-    }) => {
-      if (
-        payload.type === "PARTY_GATHERING" ||
-        payload.isGatheringParty === true
-      )
-        legacyReconcile();
     };
 
     const gatheringUpdated = (update: PartyGatheringClientUpdate) => {
@@ -138,21 +103,10 @@ export function useActivePartyGatherings() {
     };
 
     socket.on(GatewayEvent.PARTY_GATHERING_STATE_UPDATE, gatheringUpdated);
-    socket.on(GatewayEvent.PARTY_READY_ROOM_UPDATE, legacyReconcile);
-    socket.on(GatewayEvent.NOTIFICATION, newGathering);
-    socket.on(GatewayEvent.CHAT_MESSAGE, newGathering);
-
-    for (const event of events) socket.on(event, legacyReconcile);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
 
     return () => {
-      reconcile.cancel();
       socket.off(GatewayEvent.PARTY_GATHERING_STATE_UPDATE, gatheringUpdated);
-      socket.off(GatewayEvent.PARTY_READY_ROOM_UPDATE, legacyReconcile);
-      socket.off(GatewayEvent.NOTIFICATION, newGathering);
-      socket.off(GatewayEvent.CHAT_MESSAGE, newGathering);
-
-      for (const event of events) socket.off(event, legacyReconcile);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
     };
   }, [connected, joined, socket, queryClient, userId, world]);

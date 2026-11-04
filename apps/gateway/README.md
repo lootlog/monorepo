@@ -24,8 +24,8 @@ The repository's development route demonstrates this with `stripAuthIdentity`
 before `apiForwardAuth` in `traefik/dev/traefik_dynamic.yml`. Production dynamic
 router configuration is maintained outside this repository; apply the same
 middleware ordering and network restriction there. Keep Auth and Gateway traffic
-inside the trusted network. Preserve WebSocket upgrade headers and the existing
-realtime subprotocols.
+inside the trusted network. Preserve WebSocket upgrade headers and the
+`lootlog.realtime.json.v1` subprotocol.
 
 ## Coordinated rollout
 
@@ -63,19 +63,24 @@ include cookie values or private handshake headers in reports or committed tests
 
 ## Realtime connection diagnostics
 
-### Gathering state rollout
+### Client features by platform
 
-Deploy every Gateway replica with federation version 3 before deploying the API
-publisher of `guilds.party-gathering.updated`, then deploy the Game client.
-Gateway retries the new queue while any live replica reports an older federation
-version. Complete the Gateway rollout before enabling the publisher; the normal
-bounded retry policy still applies and exhausted deliveries reach its DLQ.
+Every client offers only the `lootlog.realtime.json.v1` subprotocol; a handshake
+without it is rejected with `400`. What a session receives follows from its
+platform instead of negotiated capabilities:
 
-Clients offer `lootlog.party-gathering-state.v1` alongside the wire subprotocol.
-Only opted-in session clients receive `party-gathering.state-updated`; API keys
-and older clients do not. The join acknowledgement advertises this capability
-only after the whole Gateway cluster supports it. Existing gathering notification
-and private ready-room events remain unchanged.
+- Game client sessions receive battle pings, loot splits, AirTag map threats,
+  party gathering state, NPC presence and the global chat.
+- Web app sessions receive feed and kill events and read new loots as
+  `loot.snapshot` instead of `loot.created`.
+- Game client and Web app sessions receive volunteer notifications; API key
+  sessions receive none of the above except feed and kill events.
+
+Every connection receives `session.hello` with its connection ID as soon as the
+socket opens. The Game client uses it to obtain the Margonem account proof
+before its first `session.join`.
+
+### Gathering state
 
 The state event carries an Organization-scoped volunteer roster and the last
 observed party composition. Each replica applies the same chat/NPC source policy
@@ -89,20 +94,8 @@ authorized organizer without chat-read permission still receives updates. Source
 authorization remains required, and overlapping direct and chat audiences receive
 one frame per publication.
 Volunteering or accepting an invitation does not establish party membership.
-Game clients on a Gateway with this capability rely on these events and the
-reconnect snapshot; they no longer refetch discovery for chat, notification or
-private ready-room events.
-
-### Session hello
-
-Clients offer `lootlog.session-hello.v1` alongside the wire subprotocol. The
-Gateway then sends `session.hello` with the connection ID as soon as the socket
-opens, before any join. The Game client uses it to obtain the Margonem account
-proof before its first `session.join`, so a connection needs one join instead
-of an unverified join followed by a proof-bearing one. Clients that receive no
-hello within one second, including those on older Gateways, keep the two-step
-join. Deploy the Gateway before the Game client; rolling the Gateway back only
-restores the two-step join.
+Game clients rely on these events and the reconnect snapshot; they do not
+refetch discovery for chat, notification or private ready-room events.
 
 ### Connection metrics
 
@@ -164,7 +157,7 @@ map. A map-filtered publication, such as a map or battle ping, intersects that
 index with its subscription audiences before checking individual recipients.
 Wildcard Organization subscriptions retain their existing meaning.
 Authorization, API-key restrictions, sender exclusion, the battle-team character
-filter, ping capability negotiation and delivery deduplication still run for
+filter, the recipient's platform and delivery deduplication still run for
 each candidate, locally and after federation. `RealtimeHub.setPresence` owns presence assignment and index
 maintenance; callers must use it when publishing, clearing or reconciling presence.
 The index is local to a replica and rebuilds as connections register.
@@ -387,8 +380,7 @@ rolling upgrade runs old and new replicas side by side. Each replica therefore
 reports `FEDERATION_VERSION` in its metrics snapshot (older images report
 none, read as `1`), and `clusterFederationVersion` holds the lowest version
 among live replicas. A new federated event type bumps the version and is
-published only once every live replica reports it; until then AirTags federate
-one `air-tag.updated` per target instead of `air-tag.scope-updated`. A replica
+published only once every live replica reports it. A replica
 that rejoins after a rollback is noticed within one 10-second sample.
 
 Redis Pub/Sub has no replay. When a replica's federation subscriber disconnects,

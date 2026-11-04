@@ -497,7 +497,7 @@ test("drain refuses new sessions, closes local sockets and waits for their disco
   expect(hub.getLocalSockets()).toEqual([]);
 });
 
-test("announces the connection before join only to clients that negotiated session hello", async () => {
+test("announces the connection before join", async () => {
   const hub = new RealtimeHub(
     { maxBackpressureBytes: 1024 },
     subscribedFederationStore,
@@ -509,24 +509,18 @@ test("announces the connection before join only to clients that negotiated sessi
   const transport = createGatewayWebSocket({ hub, ingress: target.ingress });
   const frames: ReturnType<typeof decodeRealtimeFrame>[] = [];
 
-  for (const supportsSessionHello of [false, true]) {
-    const base = socket(supportsSessionHello ? "new-client" : "old-client");
+  const client: GatewaySocket = {
+    ...socket("client"),
+    send: (text: string) => {
+      frames.push(decodeRealtimeFrame(text));
 
-    const client: GatewaySocket = {
-      ...base,
-      data: { ...base.data, supportsSessionHello },
-      send: (text: string) => {
-        frames.push(decodeRealtimeFrame(text));
+      return 1;
+    },
+  };
 
-        return 1;
-      },
-    };
-
-    transport.open(client);
-    expect(client.data.joined).toBe(false);
-  }
-
+  transport.open(client);
+  expect(client.data.joined).toBe(false);
   expect(frames).toEqual([
-    { v: 1, type: "session.hello", data: { connectionId: "new-client" } },
+    { v: 1, type: "session.hello", data: { connectionId: "client" } },
   ]);
 });

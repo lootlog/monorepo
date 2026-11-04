@@ -7,18 +7,7 @@ import {
 import { parseRealtimeJson } from "@lootlog/protocol/realtime/codec";
 import {
   decodeClientCommand,
-  REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
-  REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
-  REALTIME_NPC_PRESENCE_CAPABILITY,
-  REALTIME_GLOBAL_CHAT_CAPABILITY,
-  REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
-  REALTIME_BATTLE_PING_CAPABILITY,
-  REALTIME_LOOT_SPLIT_CAPABILITY,
-  REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
-  REALTIME_PING_CAPABILITY,
-  REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_SERVER_CLOSE_CODES,
-  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   type ClientCommand,
   type CommandSuccess,
   type Response,
@@ -57,15 +46,7 @@ import type { MapPingService } from "#src/realtime/map-ping-service";
 import { getGlobalChatStats } from "#src/realtime/gateway-metrics";
 import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
 import type { PresenceStore } from "#src/realtime/presence-store";
-import {
-  getScopeKey,
-  GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION,
-  GLOBAL_CHAT_FEDERATION_VERSION,
-  LOOT_SPLIT_AUTO_ACCEPT_FEDERATION_VERSION,
-  LOOT_SPLIT_FEDERATION_VERSION,
-  PARTY_GATHERING_STATE_FEDERATION_VERSION,
-  type RealtimeHub,
-} from "#src/realtime/realtime-hub";
+import { getScopeKey, type RealtimeHub } from "#src/realtime/realtime-hub";
 import {
   hasValidApiKeyLease,
   type GatewaySocket,
@@ -215,55 +196,6 @@ const API_KEY_COMMANDS: ReadonlySet<Command["type"]> = new Set([
 const canApiKeySend = (session: SessionData, type: Command["type"]) =>
   !session.apiKeyAccess || API_KEY_COMMANDS.has(type);
 
-/**
- * Game client capabilities whose events federate between replicas, from the
- * federation version every replica needs: an older replica drops the event,
- * so its sockets would miss what the capability promises.
- */
-const FEDERATED_GAME_CAPABILITIES = [
-  [
-    REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
-    PARTY_GATHERING_STATE_FEDERATION_VERSION,
-  ],
-  [REALTIME_LOOT_SPLIT_CAPABILITY, LOOT_SPLIT_FEDERATION_VERSION],
-  [
-    REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
-    LOOT_SPLIT_AUTO_ACCEPT_FEDERATION_VERSION,
-  ],
-] as const;
-
-const federatedGameCapabilities = (
-  session: SessionData,
-  clusterFederationVersion: number,
-): string[] =>
-  session.apiKeyAccess
-    ? []
-    : FEDERATED_GAME_CAPABILITIES.flatMap(([capability, version]) =>
-        clusterFederationVersion >= version ? [capability] : [],
-      );
-
-/** Global chat capabilities the client decodes and every replica supports. */
-const globalChatCapabilities = (
-  session: SessionData,
-  clusterFederationVersion: number,
-): string[] => {
-  const capabilities: string[] = [];
-
-  if (
-    session.supportsGlobalChat &&
-    clusterFederationVersion >= GLOBAL_CHAT_FEDERATION_VERSION
-  )
-    capabilities.push(REALTIME_GLOBAL_CHAT_CAPABILITY);
-
-  if (
-    session.supportsGlobalChatChannels &&
-    clusterFederationVersion >= GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION
-  )
-    capabilities.push(REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY);
-
-  return capabilities;
-};
-
 export class CommandHandler {
   constructor(
     private readonly guilds: GuildStore,
@@ -278,7 +210,6 @@ export class CommandHandler {
     private readonly hub: Pick<
       RealtimeHub,
       | "onPermissionRebalance"
-      | "clusterFederationVersion"
       | "globalChatCounts"
       | "sendResponse"
       | "sendEvent"
@@ -1169,24 +1100,6 @@ export class CommandHandler {
           accessPolicy: sessionAccessPolicy(socket.data),
           organizationIds: organizationIds(socket.data),
           subscriptionScopes: scopes,
-          capabilities: [
-            REALTIME_PING_CAPABILITY,
-            REALTIME_BATTLE_PING_CAPABILITY,
-            REALTIME_TEAM_BATTLE_PING_CAPABILITY,
-            REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
-            REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
-            ...(socket.data.apiKeyAccess
-              ? []
-              : [REALTIME_NPC_PRESENCE_CAPABILITY]),
-            ...federatedGameCapabilities(
-              socket.data,
-              hub.clusterFederationVersion,
-            ),
-            ...globalChatCapabilities(
-              socket.data,
-              hub.clusterFederationVersion,
-            ),
-          ],
         },
       } satisfies Event;
 

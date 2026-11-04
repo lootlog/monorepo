@@ -4,10 +4,6 @@ import {
   createSettingsDocuments,
   seedSettingsDocuments,
 } from "@/test/settings-documents-fixtures";
-import {
-  REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
-  REALTIME_LOOT_SPLIT_CAPABILITY,
-} from "@lootlog/protocol/realtime";
 import type { GameEvent, Item } from "@lootlog/margonem/game-events";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
@@ -130,10 +126,6 @@ const setup = async (lootSplit?: { enabled: boolean; rarities: string[] }) => {
         connectionId: "test",
         organizationIds: ["guild-1"],
         subscriptionScopes: [],
-        capabilities: [
-          REALTIME_LOOT_SPLIT_CAPABILITY,
-          REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
-        ],
       },
     }),
   );

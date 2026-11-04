@@ -58,7 +58,7 @@ const unusedSetCommands = {
   expire: () => Promise.reject(new Error("Unexpected Redis write")),
 };
 
-describe("AirTagService legacy parity", () => {
+describe("AirTagService", () => {
   test("returns snapshots on subscribe and exact counts/events for observations", async () => {
     const evaluations = [
       JSON.stringify({
@@ -202,32 +202,6 @@ describe("AirTagService legacy parity", () => {
         },
       },
       { excludeConnectionId: "connection-1" },
-    ]);
-
-    // An older replica drops a frame type it does not know: its clients still get the targets.
-    hub.clusterFederationVersion = 1;
-    publications.length = 0;
-    await service.publishObservations(socket, {
-      expectedMapId: 7,
-      observations: [
-        { targetId: "second", nickname: "Neutral", relation: 1, x: 1, y: 2 },
-        { targetId: "third", nickname: "Neutral", relation: 1, x: 1, y: 2 },
-      ],
-      departures: [{ targetId: "target", reason: "left-map" }],
-    });
-    expect(publications.map((publication) => publication[1])).toMatchObject([
-      {
-        type: "air-tag.scope-updated",
-        data: { revision: 3, targets: [], removedTargetIds: ["target"] },
-      },
-      {
-        type: "air-tag.updated",
-        data: { revision: 4, target: { targetId: "second" } },
-      },
-      {
-        type: "air-tag.updated",
-        data: { revision: 5, target: { targetId: "third" } },
-      },
     ]);
   });
 

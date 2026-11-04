@@ -173,7 +173,7 @@ export class MapThreatSource {
 
       if (fetchId !== this.fetchId) return;
 
-      for (const threat of threats ?? []) this.apply(threat);
+      for (const threat of threats) this.apply(threat);
     } catch {
       // Live events still arrive; a failed snapshot only delays older sightings.
     }

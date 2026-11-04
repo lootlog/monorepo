@@ -3,7 +3,6 @@ import {
   REALTIME_JSON_SUBPROTOCOL,
   PRESENCE_HEARTBEAT_INTERVAL_MS,
   PRESENCE_EXPIRY_MS,
-  REALTIME_PING_CAPABILITY,
   REALTIME_PROTOCOL_VERSION,
   REALTIME_CLIENT_CLOSE_CODES,
   REALTIME_SERVER_CLOSE_CODES,
@@ -59,8 +58,6 @@ export type RealtimeWebSocketFactory = (
 export interface RealtimeClientOptions {
   readonly url: string;
   readonly path?: string;
-  /** Capability subprotocols to offer next to `REALTIME_JSON_SUBPROTOCOL`. */
-  readonly protocols?: ReadonlyArray<string>;
   readonly requestTimeoutMs?: number;
   readonly reconnectBaseDelayMs?: number;
   readonly reconnectMaxDelayMs?: number;
@@ -130,7 +127,6 @@ const SERVER_CLOSE_CODES: ReadonlySet<number> = new Set(
 
 export class RealtimeClient {
   private readonly url: string;
-  private readonly protocols: string[];
   private readonly requestTimeoutMs: number;
   private readonly reconnectBaseDelayMs: number;
   private readonly reconnectMaxDelayMs: number;
@@ -160,16 +156,12 @@ export class RealtimeClient {
   private heartbeatTimeout: ReturnType<typeof setTimeout> | null = null;
   private presenceSessionId: string | null = null;
   private presenceRefreshedAt = 0;
-  private pingSupported = false;
   private latencyProbeInFlight = false;
   private manuallyClosed = false;
   private rejoinHandler: (() => Promise<void>) | null = null;
 
   constructor(options: RealtimeClientOptions) {
     this.url = normalizeUrl(options.url, options.path ?? "/ws");
-    this.protocols = [
-      ...new Set([REALTIME_JSON_SUBPROTOCOL, ...(options.protocols ?? [])]),
-    ];
     this.requestTimeoutMs = options.requestTimeoutMs ?? 20_000;
     this.reconnectBaseDelayMs = options.reconnectBaseDelayMs ?? 1_000;
     this.reconnectMaxDelayMs = options.reconnectMaxDelayMs ?? 30_000;
@@ -196,7 +188,6 @@ export class RealtimeClient {
     this.manuallyClosed = true;
     this.clearReconnect();
     this.clearHeartbeat();
-    this.pingSupported = false;
     this.rejectPending(new Error("Realtime client disconnected"));
     const activeSocket = this.socket;
     this.socket = null;
@@ -229,16 +220,10 @@ export class RealtimeClient {
   }
 
   /**
-   * Measures the round trip now instead of at the next heartbeat. A gateway
-   * that does not advertise `connection.ping` keeps the heartbeat measurement.
+   * Measures the round trip now instead of at the next heartbeat.
    */
   probeLatency(): void {
-    if (
-      !this.pingSupported ||
-      this.stateValue !== "ready" ||
-      this.latencyProbeInFlight
-    )
-      return;
+    if (this.stateValue !== "ready" || this.latencyProbeInFlight) return;
     const socket = this.socket;
     const startedAt = performance.now();
     this.latencyProbeInFlight = true;
@@ -371,7 +356,7 @@ export class RealtimeClient {
     this.setState(state);
 
     if (this.manuallyClosed) return;
-    const socket = this.webSocketFactory(this.url, this.protocols);
+    const socket = this.webSocketFactory(this.url, [REALTIME_JSON_SUBPROTOCOL]);
     this.socket = socket;
     socket.addEventListener("open", () => {
       if (this.socket !== socket) return;
@@ -417,7 +402,6 @@ export class RealtimeClient {
         );
 
       this.clearHeartbeat();
-      this.pingSupported = false;
       this.rejectPending(new Error("Realtime connection closed"));
       this.setState("disconnected");
 
@@ -466,8 +450,6 @@ export class RealtimeClient {
       const result = await joined;
 
       if (this.socket !== socket) return result;
-      this.pingSupported =
-        result.capabilities?.includes(REALTIME_PING_CAPABILITY) ?? false;
       await Promise.all(
         [...this.subscriptions.values()].map((scope) =>
           this.request("subscription.subscribe", scope),

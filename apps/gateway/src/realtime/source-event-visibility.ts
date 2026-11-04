@@ -6,7 +6,6 @@ import {
   type LootVisibilityNpc,
 } from "@lootlog/domain/loot-visibility";
 import { Permission } from "@lootlog/schema/permissions";
-import { isBattleTeamPingType } from "@lootlog/schema/battle-ping";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import {
   prepareNpcSourceEvent,
@@ -78,59 +77,44 @@ export const findEventGuild = (
     ? undefined
     : session.guilds.find((entry) => entry.guild.id === organizationId);
 
-/** Older game clients close the socket on a global chat event they cannot decode. */
-const canDecodeGlobalChatEvent = (
-  session: SessionData,
-  type: Event["type"],
-): boolean =>
-  type === "global-chat.created"
-    ? session.supportsGlobalChat === true
-    : session.supportsGlobalChatChannels === true;
+/** Game clients receive their own features' events; web and API key sessions do not. */
+const isGameSession = (session: SessionData): boolean =>
+  session.platform === "game";
 
-/** A snapshot session receives each new loot once, as `loot.snapshot`. */
+/** The Web app reads each new loot once, as `loot.snapshot`; others read `loot.created`. */
+const readsLootSnapshots = (session: SessionData): boolean =>
+  session.platform === "web-app" && !session.apiKeyAccess;
+
 const canReadLootEvent = (
   session: SessionData,
   guild: UserGuildData | undefined,
   type: "loot.created" | "loot.snapshot" | "loot.share-updated",
   npcs: readonly LootVisibilityNpc[],
 ): boolean => {
-  if (type === "loot.snapshot") {
-    if (session.platform !== "web-app" || !session.supportsLootSnapshot)
-      return false;
-  } else if (type === "loot.created" && session.supportsLootSnapshot) {
-    return false;
-  }
+  if (type === "loot.snapshot" && !readsLootSnapshots(session)) return false;
+
+  if (type === "loot.created" && readsLootSnapshots(session)) return false;
 
   return canReadLootSource(session, guild, npcs, false);
 };
 
-/**
- * Whether the session decodes an event that only game clients offering its
- * capability understand; older game clients close the socket on an event
- * type they cannot decode. `undefined` for every other event.
- */
-const decodesGameClientEvent = (
-  session: SessionData,
-  event: Event,
-  isTeamBattlePing: boolean,
-): boolean | undefined => {
-  switch (event.type) {
-    case "notification.volunteer":
-      return session.supportsNotificationVolunteer === true;
-    case "battle-ping.received":
-      return isTeamBattlePing
-        ? session.supportsTeamBattlePings === true
-        : session.supportsBattlePings === true;
-    case "loot-split.received":
-      return session.supportsLootSplit === true;
-    case "loot-split.auto-accepted":
-      return session.supportsLootSplitAutoAccept === true;
-    case "air-tag.map-threat-updated":
-      return session.supportsAirTagMapThreats === true;
-    default:
-      return undefined;
-  }
-};
+/** Game client events whose routing scope or payload already decides who reads them. */
+const GAME_CLIENT_EVENTS: ReadonlySet<Event["type"]> = new Set([
+  "battle-ping.received",
+  "loot-split.received",
+  "loot-split.auto-accepted",
+  "air-tag.map-threat-updated",
+  "global-chat.created",
+  "global-chat.deleted",
+  "global-chat.pinned",
+  "global-chat.stats",
+]);
+
+/** Game client events that are also filtered by the Organization's NPC access. */
+const GAME_CLIENT_NPC_EVENTS: ReadonlySet<Event["type"]> = new Set([
+  "party-gathering.state-updated",
+  "npc-presence.updated",
+]);
 
 export const prepareSourceEventVisibility = (
   event: Event,
@@ -138,10 +122,6 @@ export const prepareSourceEventVisibility = (
   gatheringSource?: PartyGatheringEventSource,
 ) => {
   const canReadApiKey = prepareApiKeyEventVisibility(event);
-
-  const isTeamBattlePing =
-    event.type === "battle-ping.received" &&
-    isBattleTeamPingType(event.data.type);
 
   const canReadNpc = prepareNpcSourceEvent(event, gatheringSource);
 
@@ -155,24 +135,13 @@ export const prepareSourceEventVisibility = (
   return (session: SessionData, guild: UserGuildData | undefined): boolean => {
     if (!canReadApiKey(session)) return false;
 
-    if (
-      event.type === "party-gathering.state-updated" &&
-      !session.supportsPartyGatheringState
-    )
+    if (GAME_CLIENT_EVENTS.has(event.type)) return isGameSession(session);
+
+    if (GAME_CLIENT_NPC_EVENTS.has(event.type) && !isGameSession(session))
       return false;
 
-    const decodes = decodesGameClientEvent(session, event, isTeamBattlePing);
-
-    if (decodes !== undefined) return decodes;
-
-    if (
-      event.type === "npc-presence.updated" &&
-      session.supportsNpcPresence !== true
-    )
-      return false;
-
-    if (event.type.startsWith("global-chat."))
-      return canDecodeGlobalChatEvent(session, event.type);
+    // API keys never read it; `canReadApiKey` already refused them.
+    if (event.type === "notification.volunteer") return true;
 
     if (!canReadNpc(session, guild)) return false;
 
@@ -183,8 +152,7 @@ export const prepareSourceEventVisibility = (
         return canReadLootEvent(session, guild, event.type, npcs);
       case "kills.changed":
       case "feed.entry":
-        if (session.platform !== "web-app" || !session.supportsFeed)
-          return false;
+        if (session.platform !== "web-app") return false;
 
         return canReadLootSource(
           session,

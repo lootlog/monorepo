@@ -8,7 +8,6 @@ import type {
   AirTagObservationBatch,
   AirTagScopeUpdateEvent,
   AirTagSubscriptionPayload,
-  AirTagUpdateEvent,
 } from "@lootlog/schema/air-tag";
 import {
   AIR_TAG_BATCH_INTERVAL_MS,
@@ -150,10 +149,6 @@ export class AirTagRuntime {
     }
   }
 
-  handleUpdate(event: AirTagUpdateEvent): void {
-    airTagReceiveController.handleUpdate(event);
-  }
-
   handleScopeUpdate(event: AirTagScopeUpdateEvent): void {
     airTagReceiveController.handleScopeUpdate(event);
   }
@@ -252,14 +247,7 @@ export class AirTagRuntime {
     if (!this.isPublishing(this.state)) return;
     const socket = getSocket();
 
-    // Older gateways reject a batch without observations; their targets expire instead.
-    const batch: AirTagObservationBatch =
-      socket.supportsAirTagDepartures?.() === true
-        ? observed
-        : {
-            expectedMapId: observed.expectedMapId,
-            observations: observed.observations,
-          };
+    const batch = observed;
 
     if (batch.observations.length === 0 && !batch.departures?.length) return;
 

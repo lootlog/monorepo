@@ -553,7 +553,7 @@ describe("RealtimeClient", () => {
     },
   );
 
-  it("probes latency only while the joined gateway advertises connection.ping", async () => {
+  it("probes latency once at a time while ready", async () => {
     vi.useFakeTimers();
     let now = 0;
     vi.spyOn(performance, "now").mockImplementation(() => now);
@@ -576,7 +576,7 @@ describe("RealtimeClient", () => {
     const current = socketAt(sockets, 0);
     current.open();
     const joined = client.join(joinData);
-    respondToLastRequest(current, { capabilities: ["connection.ping"] });
+    respondToLastRequest(current);
     await flushMessages();
     await joined;
 
@@ -591,18 +591,6 @@ describe("RealtimeClient", () => {
     respondToLastRequest(current);
     await flushMessages();
     expect(latencies.at(-1)).toBe(30);
-
-    // A gateway rollback must not receive a command it closes the socket for.
-    current.close(4000);
-    await vi.advanceTimersByTimeAsync(1_000);
-    const rolledBack = socketAt(sockets, 1);
-    rolledBack.open();
-    respondToLastRequest(rolledBack, { organizationIds: ["org-1"] });
-    await flushMessages();
-    expect(client.state).toBe("ready");
-
-    client.probeLatency();
-    expect(rolledBack.sent).toHaveLength(1);
     client.disconnect();
   });
 
@@ -834,7 +822,7 @@ describe("RealtimeClient", () => {
     client.disconnect();
   });
 
-  it("offers the JSON frame protocol and configured capabilities on reconnect", async () => {
+  it("offers the JSON frame protocol on reconnect", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
     const protocolsSeen: Array<string[] | undefined> = [];
@@ -843,7 +831,6 @@ describe("RealtimeClient", () => {
       url: "https://gateway.example.test?ticket=must-be-removed",
       reconnectBaseDelayMs: 1_000,
       random: () => 0,
-      protocols: ["lootlog.cap.feed.v1"],
       webSocketFactory: (url, protocols) => {
         expect(url).toBe("wss://gateway.example.test/ws");
         protocolsSeen.push(protocols);
@@ -856,18 +843,12 @@ describe("RealtimeClient", () => {
 
     client.connect();
     await flushMessages();
-    expect(protocolsSeen[0]).toEqual([
-      "lootlog.realtime.json.v1",
-      "lootlog.cap.feed.v1",
-    ]);
+    expect(protocolsSeen[0]).toEqual(["lootlog.realtime.json.v1"]);
     socketAt(sockets, 0).open();
     socketAt(sockets, 0).close();
     await vi.advanceTimersByTimeAsync(500);
     await flushMessages();
-    expect(protocolsSeen[1]).toEqual([
-      "lootlog.realtime.json.v1",
-      "lootlog.cap.feed.v1",
-    ]);
+    expect(protocolsSeen[1]).toEqual(["lootlog.realtime.json.v1"]);
     client.disconnect();
   });
 

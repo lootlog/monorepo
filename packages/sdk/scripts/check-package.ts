@@ -73,8 +73,10 @@ const restore = configureLootlogApi({apiKey:'test-only', fetch: async (input,ini
 }});
 assert.deepEqual(await usersControllerGetCurrentUserGuilds(),[]);
 assert.equal(calls,1); restore();
-const realtime = new RealtimeClient({url:'wss://gateway.lootlog.pl/ws',protocols:[REALTIME_JSON_SUBPROTOCOL]});
+const realtime = new RealtimeClient({url:'wss://gateway.lootlog.pl/ws'});
 assert.equal(realtime.state,'disconnected');
+// Integrations with their own WebSocket client offer this subprotocol.
+assert.equal(REALTIME_JSON_SUBPROTOCOL,'lootlog.realtime.json.v1');
 const version: LootlogGameClientApi['apiVersion'] = 2;
 assert.equal(version,2);
 `,
