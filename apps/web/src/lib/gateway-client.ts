@@ -89,7 +89,6 @@ const groupPresence = <TValue>(
 
 /** Server events delivered to listeners under their protocol type. */
 const FORWARDED_EVENT_TYPES = [
-  "chat.created",
   "feed.entry",
   "kills.changed",
   "loot.created",
@@ -101,8 +100,6 @@ const FORWARDED_EVENT_TYPES = [
   "reservation.created",
   "reservation.deleted",
   "reservation.changed",
-  "notification.sent",
-  "notification.volunteer",
   "member-refresh.updated",
   "event.map-status-updated",
   "event.hero-killed",
