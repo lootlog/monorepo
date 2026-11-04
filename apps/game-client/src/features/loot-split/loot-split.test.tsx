@@ -349,10 +349,13 @@ it("tells the fight's players when the hero's loot filter took the drop, and sho
   );
 
   await receivePacket(
-    groupLoot({
-      [HERO]: { nick: "Tester", prof: "w" },
-      "365": { nick: "Knoper S", prof: "h" },
-    }),
+    groupLoot(
+      {
+        [HERO]: { nick: "Tester", prof: "w" },
+        "365": { nick: "Knoper S", prof: "h" },
+      },
+      { "1200900001": item("71b0", "Przepaska zaklinacza sępów", "w") },
+    ),
   );
   await act(() =>
     test.wire.receive({
