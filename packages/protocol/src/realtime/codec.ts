@@ -100,14 +100,26 @@ export const prepareRealtimeFrame = (frame: RealtimeFrameType) => {
 export const encodeRealtimeFrame = (frame: RealtimeFrameType): string =>
   Result.getOrThrow(tryEncodeRealtimeFrame(frame));
 
-// JSON.stringify writes a `__proto__` key only in this form. Receivers that
-// copy keys by assignment would turn it into a prototype, so no frame has one.
-const PROTO_KEY = '"__proto__":';
+// Receivers that copy keys by assignment would turn this key into a prototype.
+const rejectProtoKey = (key: string, value: Schema.Json) => {
+  if (key === "__proto__") throw new Error("The key __proto__ is not allowed");
 
-const assertNoProtoKey = (text: string): void => {
-  if (text.includes(PROTO_KEY))
-    throw new Error("The key __proto__ is not allowed");
+  return value;
 };
+
+/**
+ * Whether a JSON text cannot have a `__proto__` key. A key can spell it only
+ * literally or through a `\u` escape.
+ */
+const isWithoutProtoKey = (text: string): boolean =>
+  !text.includes("__proto__") && !text.includes("\\u");
+
+/**
+ * JSON-parse a realtime text, rejecting any `__proto__` key. The reviver makes
+ * parsing several times slower, so it runs only when the text may need it.
+ */
+export const parseRealtimeJson = (text: string): Schema.Json =>
+  isWithoutProtoKey(text) ? JSON.parse(text) : JSON.parse(text, rejectProtoKey);
 
 /**
  * Parse a frame that a peer encoded through this schema, without validating it
@@ -116,8 +128,7 @@ const assertNoProtoKey = (text: string): void => {
 export const tryParseEncodedRealtimeFrame = (text: string) =>
   Result.try({
     try: () => {
-      assertNoProtoKey(text);
-      const value: unknown = JSON.parse(text);
+      const value = parseRealtimeJson(text);
 
       if (!Predicate.isObject(value))
         throw new Error("Realtime frame is not an object");
@@ -133,13 +144,9 @@ export const tryParseEncodedRealtimeFrame = (text: string) =>
       }),
   });
 
-export const tryDecodeRealtimeFrame = (text: string) =>
+const tryDecode = (input: () => Schema.Json) =>
   Result.try({
-    try: () => {
-      assertNoProtoKey(text);
-
-      return Schema.decodeUnknownSync(RealtimeFrame)(JSON.parse(text));
-    },
+    try: () => Schema.decodeUnknownSync(RealtimeFrame)(input()),
     catch: (error) =>
       new RealtimeCodecError({
         operation: "decode",
@@ -147,6 +154,13 @@ export const tryDecodeRealtimeFrame = (text: string) =>
         cause: error,
       }),
   });
+
+/** Validate a frame that arrived already parsed by `parseRealtimeJson`. */
+export const tryDecodeRealtimeFrameValue = (value: Schema.Json) =>
+  tryDecode(() => value);
+
+export const tryDecodeRealtimeFrame = (text: string) =>
+  tryDecode(() => parseRealtimeJson(text));
 
 export const decodeRealtimeFrame = (text: string): RealtimeFrameType =>
   Result.getOrThrow(tryDecodeRealtimeFrame(text));

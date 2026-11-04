@@ -264,8 +264,17 @@ describe("realtime JSON codec", () => {
       },
     });
 
-    expect(() => decodeRealtimeFrame(frame)).toThrow(RealtimeCodecError);
-    expect(Result.isFailure(tryParseEncodedRealtimeFrame(frame))).toBe(true);
+    // Text from outside this codec can spell the key with whitespace or escapes.
+    const variants = [
+      frame,
+      frame.replace('"__proto__":', '"__proto__" :'),
+      frame.replace('"__proto__":', '"\\u005f_proto__":'),
+    ];
+
+    for (const text of variants) {
+      expect(() => decodeRealtimeFrame(text)).toThrow(RealtimeCodecError);
+      expect(Result.isFailure(tryParseEncodedRealtimeFrame(text))).toBe(true);
+    }
   });
 
   test("returns typed failures for untrusted frames", () => {

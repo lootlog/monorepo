@@ -19,7 +19,12 @@ import type {
   GlobalChatMessage,
 } from "@lootlog/schema/chat";
 import { Effect } from "effect";
-import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
+import {
+  decodeFederatedRealtimeMessage,
+  encodeFederatedRealtimeMessage,
+  type FederatedFrameTexts,
+  type FederatedRealtimeMessage,
+} from "#src/platform/redis-store";
 import { getScopeKey, RealtimeHub } from "./realtime-hub.js";
 import { RabbitBridge, gatewayConsumerSpecs } from "#src/rabbit/rabbit-bridge";
 import type { SessionData } from "./session.js";
@@ -39,10 +44,24 @@ class FakeRedisStore {
     this.bus.listeners.push(listener);
   }
 
-  async publish(message: FederatedRealtimeMessage): Promise<void> {
+  async publish(
+    message: FederatedRealtimeMessage,
+    frames?: FederatedFrameTexts,
+  ): Promise<void> {
+    let delivered: FederatedRealtimeMessage;
+
+    // Redis subscribers drop a message they cannot decode.
+    try {
+      delivered = decodeFederatedRealtimeMessage(
+        encodeFederatedRealtimeMessage(message, frames),
+      );
+    } catch {
+      return;
+    }
+
     for (const listener of this.bus.listeners) {
-      listener(message);
-      listener(message);
+      listener(delivered);
+      listener(delivered);
     }
   }
 }
@@ -1309,12 +1328,14 @@ describe("RealtimeHub federation", () => {
           break;
       }
 
-      await store.publish({
-        id: "raw-federation",
-        sourceInstanceId: "external-instance",
-        scope,
-        frameJson: JSON.stringify(withUnknownFields),
-      });
+      await store.publish(
+        {
+          id: "raw-federation",
+          sourceInstanceId: "external-instance",
+          scope,
+        },
+        { event: JSON.stringify(withUnknownFields) },
+      );
 
       for (const sent of targets) {
         // Parse the wire text without the protocol schema, which would hide leaked fields.
@@ -1324,8 +1345,7 @@ describe("RealtimeHub federation", () => {
         ]);
       }
 
-      for (const [index, frameJson] of [
-        "{",
+      for (const [index, event] of [
         JSON.stringify({ ...canonical, v: 2 }),
         JSON.stringify({ ...canonical, type: "unsupported.event" }),
         JSON.stringify({ ...canonical, data: { payload: {} } }),
@@ -1337,19 +1357,21 @@ describe("RealtimeHub federation", () => {
         }),
         JSON.stringify({ v: 1, type: "session.join", data: {} }),
       ].entries()) {
-        await store.publish({
-          id: `malformed-federation-${index}`,
-          sourceInstanceId: "external-instance",
-          scope,
-          frameJson,
-        });
+        await store.publish(
+          {
+            id: `malformed-federation-${index}`,
+            sourceInstanceId: "external-instance",
+            scope,
+          },
+          { event },
+        );
       }
 
       for (const sent of targets) expect(sent).toHaveLength(2);
     },
   );
 
-  test("strips fields of another schema and forwards canonical text from other replicas unchanged", async () => {
+  test("strips fields of another schema and forwards canonical frames from other replicas without validating them", async () => {
     const bus = new FederationBus();
     const local = new RealtimeHub(config, new FakeRedisStore(bus));
     const remote = new RealtimeHub(config, new FakeRedisStore(bus));
@@ -1378,9 +1400,9 @@ describe("RealtimeHub federation", () => {
     const message = published[0];
 
     if (!message) throw new Error("Missing federation message");
-    expect(message.frameJson).toBe(JSON.stringify(event));
+    expect(message.event).toEqual(event);
 
-    // A replica with this schema already encoded the text, in its own key order.
+    // A replica with this schema already encoded the frame, in its own key order.
     const canonicalText = JSON.stringify({
       data: event.data,
       type: event.type,
@@ -1388,7 +1410,7 @@ describe("RealtimeHub federation", () => {
     });
 
     // A replica with another schema may send fields this one strips.
-    for (const [id, frameSchema, frameJson] of [
+    for (const [id, frameSchema, text] of [
       ["canonical-schema", message.frameSchema, canonicalText],
       [
         "other-schema",
@@ -1402,7 +1424,7 @@ describe("RealtimeHub federation", () => {
           id,
           sourceInstanceId: "other-replica",
           frameSchema,
-          frameJson,
+          event: JSON.parse(text),
         });
     }
 
@@ -2468,23 +2490,26 @@ describe("RealtimeHub federation", () => {
       id: "no-audience",
       sourceInstanceId: "remote",
       scope,
-      frameJson: JSON.stringify(event),
     };
 
-    const decodeFrame = spyOn(realtimeCodec, "tryDecodeRealtimeFrame");
+    const frames = { event: JSON.stringify(event) };
+    const decodeFrame = spyOn(realtimeCodec, "tryDecodeRealtimeFrameValue");
 
     try {
-      await redis.publish(message);
+      await redis.publish(message, frames);
       expect(decodeFrame).not.toHaveBeenCalled();
       expect(target.sent).toEqual([]);
       hub.subscribe(target.socket, scope);
       // Already observed publications must not be replayed after joining.
-      await redis.publish(message);
+      await redis.publish(message, frames);
       expect(target.sent).toEqual([]);
-      await redis.publish({ ...message, id: "subscribed" });
+      await redis.publish({ ...message, id: "subscribed" }, frames);
       expect(decodeFrame).toHaveBeenCalledTimes(1);
       expect(target.sent.map(decodeRealtimeFrame)).toEqual([event]);
-      await redis.publish({ ...message, id: "malformed", frameJson: "{" });
+      await redis.publish(
+        { ...message, id: "malformed" },
+        { event: JSON.stringify({ v: 1 }) },
+      );
       expect(target.sent).toHaveLength(1);
     } finally {
       decodeFrame.mockRestore();
