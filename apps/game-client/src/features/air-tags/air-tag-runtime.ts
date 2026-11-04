@@ -226,7 +226,8 @@ export class AirTagRuntime {
     // A lost acknowledgement is resent by the next subscription change.
     void getSocket()
       .request("air-tag.subscription", payload)
-      .then(acknowledgement, () => undefined);
+      .then(acknowledgement)
+      .catch(() => undefined);
   }
 
   private readonly publishObservations = (
@@ -239,8 +240,9 @@ export class AirTagRuntime {
 
     if (batch.observations.length === 0 && !batch.departures?.length) return;
 
-    void socket.request("air-tag.observation", batch).then(
-      (acknowledgement) => {
+    void socket
+      .request("air-tag.observation", batch)
+      .then((acknowledgement) => {
         if (
           acknowledgement.status === "rejected" &&
           acknowledgement.code === "rate-limited"
@@ -249,9 +251,8 @@ export class AirTagRuntime {
             batch,
             acknowledgement.retryAfterMs ?? AIR_TAG_BATCH_INTERVAL_MS,
           );
-      },
-      () => undefined,
-    );
+      })
+      .catch(() => undefined);
   };
 
   private getCurrentMapId(): number | null {
