@@ -129,6 +129,31 @@ describe("chat transcript rendering", () => {
         .map((id) => expect.stringContaining(`Public fixture ${id}`)),
     );
   });
+  it("keeps fully revealed history mounted when retention evicts its oldest row", () => {
+    const view = render(
+      <ChatMessageList {...props} renderables={rows(history)} />,
+      { wrapper: createChatTestWrapper().wrapper },
+    );
+
+    const viewport = queryViewport(view.container);
+    Object.defineProperty(viewport, "clientHeight", { value: 300 });
+    Object.defineProperty(viewport, "scrollHeight", { value: 4000 });
+    Object.defineProperty(viewport, "scrollTop", { value: 0, writable: true });
+    fireEvent.scroll(viewport);
+    fireEvent.scroll(viewport);
+    expect(screen.getByText("Public fixture m0")).toBeInTheDocument();
+
+    view.rerender(
+      <ChatMessageList
+        {...props}
+        renderables={rows([...history.slice(1), "m120"])}
+      />,
+    );
+
+    expect(screen.queryByText("Public fixture m0")).not.toBeInTheDocument();
+    expect(screen.getByText("Public fixture m1")).toBeInTheDocument();
+    expect(screen.getByText("Public fixture m120")).toBeInTheDocument();
+  });
   it("mounts an older message outside the window before jumping to it", () => {
     render(<ChatMessageList {...props} renderables={rows(history)} />, {
       wrapper: createChatTestWrapper().wrapper,

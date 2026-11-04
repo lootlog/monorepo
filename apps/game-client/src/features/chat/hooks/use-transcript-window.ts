@@ -7,39 +7,47 @@ import { useState } from "react";
  */
 export const TRANSCRIPT_WINDOW_PAGE_SIZE = 50;
 
+const anchorKeysFrom = (rows: readonly { key: string }[], start: number) =>
+  rows.slice(start, start + TRANSCRIPT_WINDOW_PAGE_SIZE).map((row) => row.key);
+
 /**
  * Mounts only the newest rows and grows toward older history on request.
- * The window is pinned to its first row's key, so appended messages extend it
- * without unmounting rows the reader may be looking at. When that row leaves
- * the list (eviction, deletion, a replaced list), the window falls back to the
- * newest page.
+ * The window is pinned to the keys of its first rows, so appended messages
+ * extend it without unmounting rows the reader may be looking at, and evicting
+ * or deleting its first row moves the start to the next surviving one. Only
+ * when none survive, as with a replaced list, does it reopen at the newest
+ * page.
  */
 export function useTranscriptWindow<Row extends { key: string }>(
   rows: readonly Row[],
   /** A row the first window must include, such as a restored position. */
   initialIndex = -1,
 ) {
-  const [startKey, setStartKey] = useState<string | null>(null);
+  const [anchorKeys, setAnchorKeys] = useState<readonly string[] | null>(null);
 
-  const pinnedIndex =
-    startKey === null ? -1 : rows.findIndex((row) => row.key === startKey);
+  let start = -1;
 
-  let start = pinnedIndex;
+  for (const key of anchorKeys ?? []) {
+    start = rows.findIndex((row) => row.key === key);
+
+    if (start !== -1) break;
+  }
 
   if (start === -1) {
     start = Math.max(0, rows.length - TRANSCRIPT_WINDOW_PAGE_SIZE);
 
-    if (initialIndex !== -1) start = Math.min(start, initialIndex);
+    if (anchorKeys === null && initialIndex !== -1)
+      start = Math.min(start, initialIndex);
   }
 
-  const firstKey = rows[start]?.key ?? null;
+  const firstKey = rows[start]?.key;
 
-  if (firstKey !== null && firstKey !== startKey) setStartKey(firstKey);
+  if (firstKey !== undefined && firstKey !== anchorKeys?.[0])
+    setAnchorKeys(anchorKeysFrom(rows, start));
 
   const revealFrom = (index: number) => {
-    const key = rows[Math.max(0, index)]?.key;
-
-    if (key !== undefined && index < start) setStartKey(key);
+    if (index < start && rows.length > 0)
+      setAnchorKeys(anchorKeysFrom(rows, Math.max(0, index)));
   };
 
   return {
