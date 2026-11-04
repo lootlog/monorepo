@@ -57,7 +57,6 @@ class FakeGuildStore {
 }
 
 class FakeHub {
-  clusterFederationVersion = 2;
   readonly deliveryOrder: string[] = [];
   readonly responses: unknown[] = [];
   readonly events: unknown[] = [];

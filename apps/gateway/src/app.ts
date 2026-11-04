@@ -1,7 +1,6 @@
 import {
   GatewayMetrics,
   GatewayRuntimeMetrics,
-  readClusterFederationVersion,
 } from "#src/realtime/gateway-metrics";
 import { GatewayConnectionMetrics } from "#src/realtime/connection-metrics";
 import { OnlineHistory } from "#src/realtime/online-history";
@@ -128,10 +127,7 @@ class GatewayApplication extends Context.Service<
 
       const auth = makeGatewayAuth(config);
 
-      const hub = new RealtimeHub(config, redis, runBackground, {
-        readClusterFederationVersion: () =>
-          readClusterFederationVersion(redis.command),
-      });
+      const hub = new RealtimeHub(config, redis, runBackground);
 
       yield* hub.start();
       yield* new GatewayMetrics(redis.command, hub)

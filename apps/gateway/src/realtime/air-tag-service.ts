@@ -26,10 +26,7 @@ import type {
   RedisGatewayStore,
   RedisScriptReply,
 } from "#src/platform/redis-store";
-import {
-  AIR_TAG_INTEREST_FEDERATION_VERSION,
-  type RealtimeHub,
-} from "#src/realtime/realtime-hub";
+import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { AirTagScope, GatewaySocket } from "#src/realtime/session";
 import {
   canReadPreciseLocation,
@@ -480,7 +477,6 @@ export class AirTagService {
       | "subscribe"
       | "unsubscribe"
       | "publishToScopes"
-      | "clusterFederationVersion"
       | "instanceId"
       | "getLocalScopes"
     >,
@@ -689,9 +685,7 @@ export class AirTagService {
     remoteRecipients: boolean,
     event: AirTagScopeUpdateEvent,
   ): Promise<void> {
-    const localOnly =
-      !remoteRecipients &&
-      this.hub.clusterFederationVersion >= AIR_TAG_INTEREST_FEDERATION_VERSION;
+    const localOnly = !remoteRecipients;
 
     const options = {
       excludeConnectionId,

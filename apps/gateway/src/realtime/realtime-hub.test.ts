@@ -2151,10 +2151,7 @@ describe("RealtimeHub federation", () => {
 
     const inGordion = { ...sharedMessage, id: "in-gordion", world: "gordion" };
 
-    for (const hub of [local, remote]) {
-      await Effect.runPromise(hub.start());
-      hub.clusterFederationVersion = 7;
-    }
+    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
 
     await Effect.runPromise(
       Effect.scoped(
@@ -2337,10 +2334,6 @@ describe("RealtimeHub federation", () => {
               ),
             );
 
-          // A replica that predates the event would drop it, so none is sent.
-          yield* deliver("before-rollout");
-
-          for (const hub of [local, remote]) hub.clusterFederationVersion = 6;
           yield* deliver(message.id);
         }),
       ),
@@ -2730,14 +2723,6 @@ test("gathering rosters reach authorized observers across gateways without expos
             ),
           );
 
-        const rollout = yield* Effect.exit(
-          deliver(envelope, "gathering-created"),
-        );
-
-        expect(rollout._tag).toBe("Failure");
-        expect(targets.every((target) => target.sent.length === 0)).toBe(true);
-        local.clusterFederationVersion = 3;
-        remote.clusterFederationVersion = 3;
         yield* deliver(envelope, "gathering-created");
         yield* deliver(envelope, "gathering-created");
 
@@ -3240,132 +3225,126 @@ test("chat capabilities and shared frames stay recipient-specific locally and re
   }
 });
 
-test.each([7, 8] as const)(
-  "keeps basic and precise presence private for local and remote recipients at federation version %d",
-  async (clusterFederationVersion) => {
-    const bus = new FederationBus();
-    const local = new RealtimeHub(config, new FakeRedisStore(bus));
-    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+test("keeps basic and precise presence private for local and remote recipients", async () => {
+  const bus = new FederationBus();
+  const local = new RealtimeHub(config, new FakeRedisStore(bus));
+  const remote = new RealtimeHub(config, new FakeRedisStore(bus));
 
-    for (const hub of [local, remote]) {
-      hub.clusterFederationVersion = clusterFederationVersion;
-      await Effect.runPromise(hub.start());
-    }
+  for (const hub of [local, remote]) await Effect.runPromise(hub.start());
 
-    const scope = {
-      topic: "organization.presence",
-      organizationId: "organization-1",
-    } as const;
+  const scope = {
+    topic: "organization.presence",
+    organizationId: "organization-1",
+  } as const;
 
-    const targets = [local, remote].flatMap((hub, index) =>
-      [false, true].map((precise) => {
-        const session = makeSession(`presence-${index}-${precise}`);
+  const targets = [local, remote].flatMap((hub, index) =>
+    [false, true].map((precise) => {
+      const session = makeSession(`presence-${index}-${precise}`);
 
-        const permissions: Permission[] = [
-          Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-        ];
+      const permissions: Permission[] = [
+        Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+      ];
 
-        const role = {
-          id: "role",
-          permissions,
-          lvlRangeFrom: 0,
-          lvlRangeTo: 500,
-        };
+      const role = {
+        id: "role",
+        permissions,
+        lvlRangeFrom: 0,
+        lvlRangeTo: 500,
+      };
 
-        if (precise)
-          role.permissions.push(Permission.LOOTLOG_PRESENCE_LOCATION_READ);
-        session.guilds = [
-          {
-            guild: { id: scope.organizationId, ownerId: "owner" },
-            roles: [role],
+      if (precise)
+        role.permissions.push(Permission.LOOTLOG_PRESENCE_LOCATION_READ);
+      session.guilds = [
+        {
+          guild: { id: scope.organizationId, ownerId: "owner" },
+          roles: [role],
+        },
+      ];
+      const sent: string[] = [];
+
+      const socket = {
+        data: session,
+        getBufferedAmount: () => 0,
+        close: () => {},
+        send: (frame: string) => sent.push(frame),
+      };
+
+      hub.register(socket);
+      hub.subscribe(socket, scope);
+
+      return { sent, session, role, precise };
+    }),
+  );
+
+  const presence = {
+    userId: "player",
+    sessionId: "game-session",
+    organizationIds: [scope.organizationId],
+    platform: "game",
+    status: "online",
+    confidence: "verified",
+    isAfk: false,
+    lastSeen: 1,
+  } as const;
+
+  const basic = {
+    v: 1,
+    type: "presence.delta",
+    data: {
+      organizationId: scope.organizationId,
+      revision: 1,
+      changes: [{ action: "upsert", presence }],
+    },
+  } as const;
+
+  const precise = {
+    ...basic,
+    data: {
+      ...basic.data,
+      changes: [
+        {
+          action: "upsert",
+          presence: {
+            ...presence,
+            location: { mapId: 7, map: "Ithan", x: 1, y: 2 },
           },
-        ];
-        const sent: string[] = [];
+        },
+      ],
+    },
+  } as const;
 
-        const socket = {
-          data: session,
-          getBufferedAmount: () => 0,
-          close: () => {},
-          send: (frame: string) => sent.push(frame),
-        };
+  await local.publishPresence(scope, basic, precise);
 
-        hub.register(socket);
-        hub.subscribe(socket, scope);
-
-        return { sent, session, role, precise };
-      }),
-    );
-
-    const presence = {
-      userId: "player",
-      sessionId: "game-session",
-      organizationIds: [scope.organizationId],
-      platform: "game",
-      status: "online",
-      confidence: "verified",
-      isAfk: false,
-      lastSeen: 1,
-    } as const;
-
-    const basic = {
-      v: 1,
-      type: "presence.delta",
-      data: {
-        organizationId: scope.organizationId,
-        revision: 1,
-        changes: [{ action: "upsert", presence }],
-      },
-    } as const;
-
-    const precise = {
-      ...basic,
-      data: {
-        ...basic.data,
-        changes: [
+  // A permission change replaces the session's grants, as commitAccess does.
+  for (const target of targets) {
+    target.session.guilds = [
+      {
+        guild: { id: scope.organizationId, ownerId: "owner" },
+        roles: [
           {
-            action: "upsert",
-            presence: {
-              ...presence,
-              location: { mapId: 7, map: "Ithan", x: 1, y: 2 },
-            },
+            ...target.role,
+            permissions: target.precise
+              ? [Permission.LOOTLOG_ONLINE_PLAYERS_READ]
+              : [
+                  Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+                  Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+                ],
           },
         ],
       },
-    } as const;
+    ];
+  }
 
-    await local.publishPresence(scope, basic, precise);
+  await local.publishPresence(scope, basic, precise);
 
-    // A permission change replaces the session's grants, as commitAccess does.
-    for (const target of targets) {
-      target.session.guilds = [
-        {
-          guild: { id: scope.organizationId, ownerId: "owner" },
-          roles: [
-            {
-              ...target.role,
-              permissions: target.precise
-                ? [Permission.LOOTLOG_ONLINE_PLAYERS_READ]
-                : [
-                    Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-                    Permission.LOOTLOG_PRESENCE_LOCATION_READ,
-                  ],
-            },
-          ],
-        },
-      ];
-    }
+  for (const target of targets) {
+    const frames = target.sent.map((frame) => JSON.parse(frame));
 
-    await local.publishPresence(scope, basic, precise);
-
-    for (const target of targets) {
-      const frames = target.sent.map((frame) => JSON.parse(frame));
-
-      expect(frames).toEqual(
-        target.precise ? [precise, basic] : [basic, precise],
-      );
-    }
-  },
-);
+    expect(frames).toEqual(
+      target.precise ? [precise, basic] : [basic, precise],
+    );
+  }
+});
 
 test("expired API key sockets cannot receive responses or user-targeted events", async () => {
   const bus = new FederationBus();

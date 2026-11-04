@@ -7,11 +7,7 @@ import type {
 } from "#src/platform/redis-store";
 import type { CommandIngress } from "#src/realtime/command-ingress";
 import type { CommandAdmission } from "#src/realtime/command-admission";
-import {
-  FEDERATION_VERSION,
-  globalChatScope,
-  type RealtimeHub,
-} from "#src/realtime/realtime-hub";
+import { globalChatScope, type RealtimeHub } from "#src/realtime/realtime-hub";
 
 const SNAPSHOTS = "realtime:metrics:instances:v2";
 
@@ -24,7 +20,6 @@ redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(snapshot))
 redis.call('EXPIRE', KEYS[1], 60)
 local snapshots = redis.call('HGETALL', KEYS[1])
 local connections, sessions, count = 0, 0, 0
-local federationVersion = math.huge
 local players = {}
 local listeners = {}
 local worldPlayers = {}
@@ -35,49 +30,22 @@ for i = 1, #snapshots, 2 do
   else
     connections = connections + value.connections
     sessions = sessions + value.sessions
-    -- Replicas that predate the field decode version 1 frames only.
-    federationVersion = math.min(federationVersion, tonumber(value.federationVersion) or 1)
     for _, player in ipairs(value.players) do
       if not players[player] then players[player] = true; count = count + 1 end
     end
-    -- Replicas that predate global chat stats send no listeners.
-    for channel, listening in pairs(value.globalChatListeners or {}) do
+    for channel, listening in pairs(value.globalChatListeners) do
       listeners[channel] = (listeners[channel] or 0) + listening
     end
-    for world, playing in pairs(value.worldPlayers or {}) do
+    for world, playing in pairs(value.worldPlayers) do
       worldPlayers[world] = (worldPlayers[world] or 0) + playing
     end
   end
 end
-return {connections, sessions, count, federationVersion, cjson.encode(listeners), cjson.encode(worldPlayers)}
+return {connections, sessions, count, cjson.encode(listeners), cjson.encode(worldPlayers)}
 `;
-
-// Same liveness rule as SAMPLE, without writing this replica's snapshot.
-const CLUSTER_FEDERATION_VERSION = `
-local time = redis.call('TIME')
-local now = tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000)
-local version = nil
-for _, raw in ipairs(redis.call('HVALS', KEYS[1])) do
-  local value = cjson.decode(raw)
-  if now - value.at < 30000 then
-    local current = tonumber(value.federationVersion) or 1
-    if version == nil or current < version then version = current end
-  end
-end
-return version or 1
-`;
-
-/** Lowest `FEDERATION_VERSION` among the replicas that sampled in the last 30 s. */
-export const readClusterFederationVersion = (
-  redis: Pick<RedisGatewayCommands, "eval">,
-) =>
-  Effect.tryPromise(() =>
-    redis.eval(CLUSTER_FEDERATION_VERSION, 1, SNAPSHOTS),
-  ).pipe(Effect.map(Schema.decodeUnknownSync(Schema.Number)));
 
 const decodeCounts = Schema.decodeUnknownSync(
   Schema.Tuple([
-    Schema.Number,
     Schema.Number,
     Schema.Number,
     Schema.Number,
@@ -237,11 +205,7 @@ export class GatewayMetrics {
     private readonly redis: Pick<RedisGatewayCommands, "eval">,
     private readonly hub: Pick<
       RealtimeHub,
-      | "instanceId"
-      | "getLocalSockets"
-      | "clusterFederationVersion"
-      | "globalChatCounts"
-      | "publishToScopes"
+      "instanceId" | "getLocalSockets" | "globalChatCounts" | "publishToScopes"
     >,
     private readonly now: () => number = Date.now,
   ) {}
@@ -290,7 +254,6 @@ export class GatewayMetrics {
           connections: sockets.length,
           sessions,
           players: [...players],
-          federationVersion: FEDERATION_VERSION,
           globalChatListeners: countUsers(chatListeners),
           worldPlayers: countUsers(worldPlayers),
         }),
@@ -301,13 +264,10 @@ export class GatewayMetrics {
       connectionCount,
       sessionCount,
       playerCount,
-      federationVersion,
       listeners,
       playersByWorld,
     ] = decodeCounts(counts);
 
-    // Each replica samples every 10 s, so a starting older replica is seen within that.
-    this.hub.clusterFederationVersion = federationVersion;
     const chatCounts = { online: playerCount, playersByWorld, listeners };
     // A new subscriber gets these at once instead of waiting for the next sample.
     this.hub.globalChatCounts = chatCounts;

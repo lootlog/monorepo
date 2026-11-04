@@ -23,13 +23,7 @@ import type {
 import type { GlobalChatChannelUpdate } from "@lootlog/schema/chat";
 import { Effect, Option, Schema, type Types, type Scope } from "effect";
 import type { CommandHandler } from "#src/realtime/command-handler";
-import {
-  GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION,
-  GLOBAL_CHAT_FEDERATION_VERSION,
-  globalChatScope,
-  PARTY_GATHERING_STATE_FEDERATION_VERSION,
-  type RealtimeHub,
-} from "#src/realtime/realtime-hub";
+import { globalChatScope, type RealtimeHub } from "#src/realtime/realtime-hub";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 
@@ -751,16 +745,6 @@ export class RabbitBridge {
     if (routingKey === RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE) {
       const data = decodeRabbitEventJson(routingKey, serializedPayload);
 
-      // Sessions subscribe only once the cluster advertises global chat or its
-      // channels, and older replicas drop the frame; readers fetch the stored message.
-      if (
-        this.hub.clusterFederationVersion <
-        (data.world === undefined
-          ? GLOBAL_CHAT_FEDERATION_VERSION
-          : GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION)
-      )
-        return Effect.void;
-
       return publish(
         data.world,
         { v: 1, type: "global-chat.created", data },
@@ -769,13 +753,6 @@ export class RabbitBridge {
     }
 
     const data = decodeRabbitEventJson(routingKey, serializedPayload);
-
-    // Readers see moderation on their next fetch until every replica decodes it.
-    if (
-      this.hub.clusterFederationVersion <
-      GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION
-    )
-      return Effect.void;
 
     return publish(data.world, globalChatChannelEvent(data), messageId);
   }
@@ -791,16 +768,6 @@ export class RabbitBridge {
       return Effect.fail(
         new Error(
           `Gathering update does not match its source: ${mismatch} differs`,
-        ),
-      );
-
-    if (
-      this.hub.clusterFederationVersion <
-      PARTY_GATHERING_STATE_FEDERATION_VERSION
-    )
-      return Effect.fail(
-        new Error(
-          `Gathering state federation rollout is incomplete: cluster version ${this.hub.clusterFederationVersion}, required ${PARTY_GATHERING_STATE_FEDERATION_VERSION}`,
         ),
       );
 
