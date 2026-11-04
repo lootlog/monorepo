@@ -1,71 +1,177 @@
 ---
-title: Your first HTTP request
-description: Create a key, choose an environment, and read Organization data.
+title: Quick start
+description: Create a key, list your Organizations and read their timers over HTTP.
 ---
 
-This guide runs from your terminal or server. For code running inside Margonem, use the [game client API](/docs/game-client).
+This guide runs from your terminal or a server. For code that runs inside
+Margonem, use the [game client API](/docs/game-client) instead.
 
-## Setup
+<Steps>
+<Step>
 
-### 1. Create an API key
+### Create an API key
 
-Open [API Keys](/keys) in your target environment and sign in with Discord. Create a key with at least one Organization and read-only access. Access to your own data is not needed for this request.
+Open [API Keys](/keys) in the environment you want to use and sign in with
+Discord. Create a key with at least one Organization and **Read only**
+permissions.
 
-Copy the secret from the confirmation before dismissing it. It is shown only once. Store it as `LOOTLOG_API_KEY` in your server's environment or secret store. See [keys and permissions](/docs/keys) for scope and rotation rules.
+The secret is shown only once. Store it as `LOOTLOG_API_KEY` in your server's
+environment or secret store.
 
-### 2. Choose an environment
+</Step>
+<Step>
 
-Use the same environment for your key and requests. This guide uses development.
+### List your Organizations
 
-| Service   | Development                        | Production                     |
-| --------- | ---------------------------------- | ------------------------------ |
-| Main API  | `https://dev-api.lootlog.pl`       | `https://api.lootlog.pl`       |
-| Activity  | `https://dev-activity.lootlog.pl`  | `https://activity.lootlog.pl`  |
-| Battlelog | `https://dev-battlelog.lootlog.pl` | `https://battlelog.lootlog.pl` |
-| Search    | `https://dev-search.lootlog.pl`    | `https://search.lootlog.pl`    |
+Send the key in the `X-Api-Key` header. This guide uses development; use
+`https://api.lootlog.pl` with a production key.
 
-### 3. Send your first request
-
-With `LOOTLOG_API_KEY` set, copy and run this command:
+<Tabs items={["curl", "TypeScript", "Python"]}>
+<Tab value="curl">
 
 ```bash
 export LOOTLOG_API_URL=https://dev-api.lootlog.pl
+
 curl --fail-with-body "$LOOTLOG_API_URL/users/@me/guilds" \
   -H "X-Api-Key: $LOOTLOG_API_KEY"
 ```
 
-A successful request returns JSON with your Organizations and their Lootlog access status, limited by the key's scope and your current access. API paths and response fields use `guild` for the Discord server that anchors an Organization.
+</Tab>
+<Tab value="TypeScript">
 
-If the request is rejected, check the environment, key expiration, and selected Organizations. See [errors and limits](/docs/errors) for the response status.
+```ts
+const response = await fetch("https://dev-api.lootlog.pl/users/@me/guilds", {
+  headers: { "X-Api-Key": process.env.LOOTLOG_API_KEY! },
+});
 
-## Operation reference
+if (!response.ok) throw new Error(`Lootlog returned ${response.status}`);
 
-Open the [API Reference](/reference), select the main API, and find `GET /users/@me/guilds`. Enter your key in the `X-Api-Key` authentication field to try the request and inspect its response. Switch services to explore Activity, Battlelog, and Search.
+const organizations = await response.json();
+console.log(organizations);
+```
 
-Scalar displays operations, parameters, and response schemas from the generated OpenAPI specifications. The portal does not persist the key or transfer it from API Keys; requests go directly to the selected Lootlog environment.
+</Tab>
+<Tab value="Python">
 
-Send the key only in the `X-Api-Key` header. Do not add it to the URL. An invalid key causes access to be denied even if the browser also has an active session.
+```python
+import os
+import requests
 
-For typed requests in a server application, continue with the [TypeScript SDK](/docs/sdk). To receive changes over WebSocket, see [Realtime](/docs/realtime).
+response = requests.get(
+    "https://dev-api.lootlog.pl/users/@me/guilds",
+    headers={"X-Api-Key": os.environ["LOOTLOG_API_KEY"]},
+    timeout=10,
+)
+response.raise_for_status()
+print(response.json())
+```
 
-## Player search
+</Tab>
+</Tabs>
 
-For Search `GET /players` and `GET /all`, `world` selects one literal world name for player results. Pass the name as a URL-encoded query parameter. Quotes and backslashes are treated as part of the value, not as filter operators. In `/all`, this parameter does not filter NPC or item results.
+The response lists the Organizations the key can reach:
 
-## Writes
+```json
+[
+  {
+    "id": "123456789012345678",
+    "name": "My Organization",
+    "icon": null,
+    "vanityUrl": null,
+    "ownerId": "234567890123456789",
+    "publicStatsCardEnabled": false,
+    "hasLootlogAccess": true,
+    "isAccessDataStale": false
+  }
+]
+```
 
-A write operation requires a read/write key and the user's current permissions for that operation in the Organization. A key does not grant access to account management, other keys, or internal operations.
+`id` is the Organization's `guildId`. `hasLootlogAccess` tells whether you can
+read its Lootlog data right now.
 
-Do not automatically retry writes after losing a response. The request may have succeeded; check the operation's result first. See the reference for each operation's idempotency rules.
+</Step>
+<Step>
 
-## User settings and Organizations
+### Read the Organization's timers
 
-Access to your own data lets you read and change supported personal settings, but does not expand the key's Organization scope.
+Pass that `guildId` and a world to list the respawn timers of your
+Organization:
 
-- In `GET /users/@me/preferences`, `guildsOrder` and `hiddenGuildIds` contain only Organizations selected for the key that you can still access. Attempting to change these two fields with a key returns `403`; editing them requires a user session.
-- In `GET /users/@me/game-preferences/accounts/{id}`, detector rules referring to other Organizations are hidden, and `guildIds` in notification settings are limited to permitted Organizations. Changing `detector.routingRules` or notification `guildIds` with a key returns `403` and requires a session.
-- Supported personal settings, such as theme, appearance, and toggles, can still be changed with a read/write key that has access to your own data.
+<Tabs items={["curl", "TypeScript", "Python"]}>
+<Tab value="curl">
 
-Organization feeds and ready rooms do not require access to your own data merely because their URL starts with `/users/@me`. Organization scope applies. A shared resource spanning several Organizations is accessible with a key only when all required Organizations are within its current scope.
+```bash
+GUILD_ID=123456789012345678 # the id from the previous response
 
-Generic settings documents under `/preferences` and operations in the `/timer-settings` family (read, write, and migration) require a user session. They are not part of the API available to keys. This restriction applies to timer settings, not to reading or writing timers themselves. Typed account preferences and supported sound settings remain available according to the key's scope.
+curl --fail-with-body -G "$LOOTLOG_API_URL/guilds/$GUILD_ID/timers" \
+  -d world=fobos \
+  -H "X-Api-Key: $LOOTLOG_API_KEY"
+```
+
+</Tab>
+<Tab value="TypeScript">
+
+```ts
+const guildId = organizations[0].id;
+const url = new URL(`https://dev-api.lootlog.pl/guilds/${guildId}/timers`);
+url.searchParams.set("world", "fobos");
+
+const timersResponse = await fetch(url, {
+  headers: { "X-Api-Key": process.env.LOOTLOG_API_KEY! },
+});
+const timers = await timersResponse.json();
+```
+
+</Tab>
+<Tab value="Python">
+
+```python
+guild_id = response.json()[0]["id"]
+
+response = requests.get(
+    f"https://dev-api.lootlog.pl/guilds/{guild_id}/timers",
+    params={"world": "fobos"},
+    headers={"X-Api-Key": os.environ["LOOTLOG_API_KEY"]},
+    timeout=10,
+)
+timers = response.json()
+```
+
+</Tab>
+</Tabs>
+
+Each timer has its NPC and the window in which it respawns, between
+`minSpawnTime` and `maxSpawnTime`.
+
+</Step>
+</Steps>
+
+## If the request fails
+
+| Status | Check                                                                    |
+| ------ | ------------------------------------------------------------------------ |
+| `401`  | The key and the URL belong to the same environment, and the key is valid |
+| `403`  | The key includes this Organization and you can read its timers           |
+| `404`  | The `guildId` is right and the Organization is visible to you            |
+| `429`  | Wait for `Retry-After` seconds before you send another request           |
+
+[Errors, pages and limits](/docs/errors) explains every status and the error
+body.
+
+## Explore the API reference
+
+The [API Reference](/reference) lists every operation of the four services with
+its parameters and response schema. Paste your key into the `X-Api-Key` field
+to send requests from the page. The portal does not store the key, and requests
+go straight to the selected environment.
+
+Use `GET /openapi/main.json` (and `activity.json`, `battlelog.json`,
+`search.json`) on this portal to download the OpenAPI documents for your own
+tools.
+
+## Next steps
+
+- Use the [TypeScript SDK](/docs/sdk) for typed requests instead of `fetch`.
+- [Subscribe to realtime events](/docs/realtime) to react to new timers and
+  loot without polling.
+- Read [keys and permissions](/docs/keys) before you add write operations.

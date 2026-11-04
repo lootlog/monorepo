@@ -355,7 +355,9 @@
           "in": "path",
           "name": "guildId",
           "required": true,
-          "schema": {}
+          "schema": {
+            "type": "string"
+          }
         },
         {
           "in": "query",
@@ -625,7 +627,9 @@
           "in": "path",
           "name": "guildId",
           "required": true,
-          "schema": {}
+          "schema": {
+            "type": "string"
+          }
         },
         {
           "in": "query",
@@ -1067,7 +1071,9 @@
           "in": "path",
           "name": "guildId",
           "required": true,
-          "schema": {}
+          "schema": {
+            "type": "string"
+          }
         },
         {
           "in": "query",
@@ -1172,7 +1178,9 @@
           "in": "path",
           "name": "guildId",
           "required": true,
-          "schema": {}
+          "schema": {
+            "type": "string"
+          }
         },
         {
           "in": "query",
@@ -1228,7 +1236,9 @@
           "in": "path",
           "name": "guildId",
           "required": true,
-          "schema": {}
+          "schema": {
+            "type": "string"
+          }
         },
         {
           "in": "path",
@@ -1542,7 +1552,9 @@
           "in": "path",
           "name": "guildId",
           "required": true,
-          "schema": {}
+          "schema": {
+            "type": "string"
+          }
         },
         {
           "in": "query",
@@ -2045,7 +2057,9 @@
           "in": "path",
           "name": "guildId",
           "required": true,
-          "schema": {}
+          "schema": {
+            "type": "string"
+          }
         },
         {
           "in": "query",
@@ -2189,7 +2203,9 @@
           "in": "path",
           "name": "guildId",
           "required": true,
-          "schema": {}
+          "schema": {
+            "type": "string"
+          }
         },
         {
           "in": "query",
@@ -2246,7 +2262,9 @@
           "in": "path",
           "name": "guildId",
           "required": true,
-          "schema": {}
+          "schema": {
+            "type": "string"
+          }
         },
         {
           "in": "path",
@@ -2340,7 +2358,9 @@
           "in": "path",
           "name": "guildId",
           "required": true,
-          "schema": {}
+          "schema": {
+            "type": "string"
+          }
         },
         {
           "in": "path",

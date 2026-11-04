@@ -56,12 +56,12 @@ export type LootlogConfigOrganizationPath =
   typeof LootlogConfigOrganizationPath.Type;
 
 export const LootlogConfigOrganizationPath = Schema.Struct({
-  guildId: JsonValue,
+  guildId: Schema.String,
 });
 
 export type NpcLootlogConfigPath = typeof NpcLootlogConfigPath.Type;
 
 export const NpcLootlogConfigPath = Schema.Struct({
   npcId: PositiveSafeInteger.annotate({ examples: [1] }),
-  guildId: JsonValue,
+  guildId: Schema.String,
 });

@@ -1,11 +1,8 @@
-import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { Card, CardContent } from "@lootlog/ui/components/card";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
-import { Field, FieldGroup, FieldLabel } from "@lootlog/ui/components/field";
-import { Input } from "@lootlog/ui/components/input";
 import { useState } from "react";
+import { KeyRenameDialog } from "~/components/key-rename-dialog";
 import {
   getKeyErrorMessage,
   isApiKeyActive,
@@ -30,24 +27,21 @@ export function KeyRow({
   observedAt: number;
   onChange: () => Promise<void>;
 }) {
-  const [name, setName] = useState(apiKey.name);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function mutate(method: "PATCH" | "DELETE") {
+  async function remove() {
     setPending(true);
     setError(null);
 
     try {
-      const request: RequestInit = { method };
-
-      if (method === "PATCH") request.body = JSON.stringify({ name });
-      await keyRequest(`/${encodeURIComponent(apiKey.id)}`, request);
+      await keyRequest(`/${encodeURIComponent(apiKey.id)}`, {
+        method: "DELETE",
+      });
       await onChange();
     } catch (error) {
       setError(getKeyErrorMessage(error));
-
-      if (method === "DELETE") throw error;
+      throw error;
     } finally {
       setPending(false);
     }
@@ -55,106 +49,73 @@ export function KeyRow({
 
   const expired = !isApiKeyActive(apiKey, observedAt);
 
+  const scope = [
+    ...apiKey.organizationIds.map(
+      (id) => organizations.find((org) => org.id === id)?.name ?? id,
+    ),
+    ...(apiKey.personalData ? [t.personal] : []),
+  ];
+
   return (
-    <Card>
-      <CardContent>
-        <form
-          aria-busy={pending}
-          onSubmit={(event) => {
-            event.preventDefault();
-            void mutate("PATCH");
-          }}
-        >
-          <FieldGroup className="gap-6">
-            <Field>
-              <FieldLabel htmlFor={`key-name-${apiKey.id}`}>
-                {t.name}
-              </FieldLabel>
-              <Input
-                id={`key-name-${apiKey.id}`}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                required
-                maxLength={80}
-              />
-            </Field>
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-5 text-sm [&_dt]:mb-1 [&_dt]:text-muted-foreground [&_dd]:break-words">
-              <div>
-                <dt>{t.status}</dt>
-                <dd>
-                  <Badge variant={expired ? "outline" : "ready"}>
-                    {expired ? t.expired : t.active}
-                  </Badge>
-                </dd>
-              </div>
-              <div>
-                <dt>{t.created}</dt>
-                <dd>{dateFormatter.format(new Date(apiKey.createdAt))}</dd>
-              </div>
-              <div>
-                <dt>{t.personal}</dt>
-                <dd>{apiKey.personalData ? t.yes : t.no}</dd>
-              </div>
-              <div>
-                <dt>{t.mode}</dt>
-                <dd>{apiKey.mode === "read" ? t.read : t.readWrite}</dd>
-              </div>
-              <div>
-                <dt>{t.expires}</dt>
-                <dd>
-                  {apiKey.expiresAt
-                    ? dateFormatter.format(new Date(apiKey.expiresAt))
-                    : t.never}
-                </dd>
-              </div>
-              <div>
-                <dt>{t.organizations}</dt>
-                <dd>
-                  {apiKey.organizationIds
-                    .map(
-                      (id) =>
-                        organizations.find((org) => org.id === id)?.name ?? id,
-                    )
-                    .join(", ") || "—"}
-                </dd>
-              </div>
-            </dl>
-            <div className="flex flex-wrap gap-3">
-              <Button
-                variant="outline"
-                disabled={pending || name === apiKey.name}
-                type="submit"
-              >
-                {t.save}
-              </Button>
-              <ConfirmDeleteDialog
-                disabled={pending}
-                title={t.confirmRemoveTitle(apiKey.name)}
-                description={
-                  error ? `${t.confirmRemove} ${error}` : t.confirmRemove
-                }
-                confirmButtonLabel={t.remove}
-                cancelButtonLabel={t.cancel}
-                onConfirm={() => mutate("DELETE")}
-                trigger={
-                  <Button
-                    variant="destructive"
-                    type="button"
-                    aria-label={`${t.remove}: ${apiKey.name}`}
-                  >
-                    {t.remove}
-                  </Button>
-                }
-              />
-            </div>
-          </FieldGroup>
-        </form>
-        {error && (
-          <Alert variant="destructive" className="mt-4">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-      </CardContent>
-    </Card>
+    <li
+      aria-busy={pending}
+      className="grid gap-4 border-b border-border px-5 py-4 last:border-b-0 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_13rem_auto] md:items-center md:gap-6"
+    >
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <div className="flex min-w-0 items-center gap-2">
+          <h3 className="truncate text-sm font-semibold">{apiKey.name}</h3>
+          <Badge variant={expired ? "outline" : "ready"}>
+            {expired ? t.expired : t.active}
+          </Badge>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {t.created} {dateFormatter.format(new Date(apiKey.createdAt))}
+        </p>
+      </div>
+      <dl className="grid min-w-0 gap-1 text-sm">
+        <dt className="text-xs text-muted-foreground">{t.scope}</dt>
+        <dd className="break-words">{scope.join(", ") || "—"}</dd>
+      </dl>
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm whitespace-nowrap">
+        <div className="grid gap-1">
+          <dt className="text-xs text-muted-foreground">{t.mode}</dt>
+          <dd>{apiKey.mode === "read" ? t.read : t.readWrite}</dd>
+        </div>
+        <div className="grid gap-1">
+          <dt className="text-xs text-muted-foreground">{t.expires}</dt>
+          <dd>
+            {apiKey.expiresAt
+              ? dateFormatter.format(new Date(apiKey.expiresAt))
+              : t.never}
+          </dd>
+        </div>
+      </dl>
+      <div className="-mx-3 flex flex-wrap items-center gap-1 md:mx-0 md:justify-end">
+        <KeyRenameDialog
+          apiKey={apiKey}
+          disabled={pending}
+          onChange={onChange}
+        />
+        <ConfirmDeleteDialog
+          disabled={pending}
+          title={t.confirmRemoveTitle(apiKey.name)}
+          description={error ? `${t.confirmRemove} ${error}` : t.confirmRemove}
+          confirmButtonLabel={t.remove}
+          cancelButtonLabel={t.cancel}
+          onConfirm={remove}
+          trigger={
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              className="text-destructive hover:text-destructive"
+              aria-label={`${t.remove}: ${apiKey.name}`}
+            >
+              {t.removeShort}
+            </Button>
+          }
+        />
+      </div>
+    </li>
   );
 }

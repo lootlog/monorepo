@@ -1,55 +1,112 @@
 ---
-title: Errors and limits
-description: Distinguish access denials, rate limits, and service outages.
+title: Errors, pages and limits
+description: Handle rejected requests, read paginated lists and stay within rate limits.
 ---
 
-| Status | Integration action                                                                              |
-| ------ | ----------------------------------------------------------------------------------------------- |
-| `400`  | Correct the input to match the operation's schema                                               |
-| `401`  | Check the secret, expiration, and environment; do not retry automatically                       |
-| `403`  | Check the key's scope and the user's current permissions                                        |
-| `404`  | The resource does not exist or is not visible; do not treat this as confirmation that it exists |
-| `429`  | Wait for the duration specified by `Retry-After` before retrying                                |
-| `5xx`  | The service is unavailable; show an error state and retry reads cautiously                      |
+## Status codes
+
+| Status | What to do                                                                           |
+| ------ | ------------------------------------------------------------------------------------ |
+| `400`  | Fix the input so it matches the operation's schema                                   |
+| `401`  | Check the secret, its expiration and the environment; do not retry automatically     |
+| `403`  | Check the key's Organizations and permissions, and your current access               |
+| `404`  | The resource does not exist or is hidden from you; do not take it as proof of either |
+| `429`  | Wait for `Retry-After` seconds, then retry                                           |
+| `5xx`  | The service is unavailable; show an error state and retry reads with backoff         |
 
 ## Error body
 
-Every `4xx` and `5xx` response from the main API has the same JSON body:
+Most `4xx` and `5xx` responses of the main API have this JSON body:
 
 ```json
 { "code": "RESERVATION_OVERLAP", "message": "optional text", "details": {} }
 ```
 
-- `code` is always present. Branch on it: it is stable and machine-readable,
-  such as `NOT_FOUND`, `FORBIDDEN`, `VALIDATION_ERROR`, `INVALID_CURSOR`,
-  `RATE_LIMITED` or a reason specific to the operation.
-- `message` is optional text for people. It can change at any time; do not
+- `code` is stable and machine-readable. Common codes are `NOT_FOUND`,
+  `VALIDATION_ERROR` and `INVALID_CURSOR`, and operations add reasons of their
+  own.
+- `message` is optional text for people. It can change at any time, so do not
   parse it.
-- `details` is optional and holds the values that explain the reason, such as
-  `limit` for `ACTIVE_LIMIT_REACHED`. A `VALIDATION_ERROR` lists the rejected
-  fields in `details.issues`, each with a `path` and a `message`.
+- `details` is optional and holds the values behind the reason, such as `limit`
+  for `ACTIVE_LIMIT_REACHED`. A `VALIDATION_ERROR` lists the rejected fields in
+  `details.issues`, each with a `path` and a `message`.
 
-A `401` that asks the user to sign in again carries `code` and
-`requiresReauth: true`. A `429` sends `Retry-After` in seconds whenever the
-wait is known.
+Many `403` and `429` responses carry only `{ "message": "..." }`, and the
+reference shows which body each operation returns. Branch on the status first
+and on `code` only when it is present. A `401` that asks the user to sign in
+again carries `requiresReauth: true` next to its `code`.
 
-## Lists and filters
+## Pages
 
-A paginated list takes `limit` (1 to 100) and returns
-`{ "items": [...], "nextCursor": "..." }`. Pass `nextCursor` back as `cursor`
-with the same filters to read the next page; it is `null` on the last page. A
-cursor is opaque and bound to the filters it was issued for, so a cursor sent
-with other filters returns `400` with `INVALID_CURSOR`.
+A paginated list takes `limit` (1 to 100) and returns:
 
-Filters share one meaning across operations: `world` is trimmed and compared
-in lower case, `search` matches its text literally (`%` and `_` are not
-wildcards), `npcTypes` repeats the parameter once per type, an unknown NPC
-type is a `400`, `npcLevelMin` must not exceed `npcLevelMax`, and `period`
-is one of `24h`, `3d`, `7d`, `14d`, `30d`, `90d`, `180d` or `all`, defaulting
-to `7d`.
+```json
+{ "items": [], "nextCursor": "eyJ2IjoxfQ" }
+```
+
+Pass `nextCursor` back as `cursor`, with the same filters, to read the next
+page. It is `null` on the last page. A cursor is opaque and bound to its
+filters: sent with other filters, it returns `400` with `INVALID_CURSOR`.
+
+```ts
+async function* readAll(listUrl: URL, apiKey: string) {
+  const url = new URL(listUrl);
+  url.searchParams.delete("cursor");
+  let cursor: string | null = null;
+
+  do {
+    if (cursor) url.searchParams.set("cursor", cursor);
+    const response = await fetch(url, { headers: { "X-Api-Key": apiKey } });
+
+    if (!response.ok) throw new Error(`Lootlog returned ${response.status}`);
+    const page = await response.json();
+
+    yield* page.items;
+    cursor = page.nextCursor;
+  } while (cursor);
+}
+```
+
+## Filters
+
+Filters mean the same in every operation:
+
+- `world` is trimmed and compared in lower case.
+- `search` matches its text literally; `%` and `_` are not wildcards.
+- `npcTypes` repeats the parameter once per type. An unknown type is a `400`.
+- `npcLevelMin` must not exceed `npcLevelMax`.
+- `period` is one of `24h`, `3d`, `7d`, `14d`, `30d`, `90d`, `180d` or `all`,
+  and defaults to `7d`.
+
+In Search, `world` on `GET /players` and `GET /all` selects one literal world
+name for player results. URL-encode it; quotes and backslashes are part of the
+value, not operators. On `/all` it does not filter NPCs or items.
 
 ## Rate limits
 
-The initial limit is 120 requests per key in a 60-second window starting with the first accepted request. Later requests do not extend the window. All auth replicas share the same Redis counter. If the counter is unavailable, authentication returns `503` instead of bypassing the limit. Operation-specific limits still apply. Do not bypass them by creating additional keys.
+Each key can send 120 requests in a 60-second window, which starts with the
+first accepted request; later requests do not extend it. Some operations have
+lower limits of their own. Do not work around limits by creating more keys.
 
-Do not turn a failed data fetch into an empty list. Keep the last result marked as stale, or show that data is unavailable. For writes, losing the response does not prove that the operation failed.
+A `429` sends `Retry-After` in seconds whenever the wait is known:
+
+```ts
+async function fetchWithRetry(url: string, init: RequestInit, attempts = 3) {
+  for (let attempt = 1; ; attempt++) {
+    const response = await fetch(url, init);
+
+    if (response.status !== 429 || attempt === attempts) return response;
+    const seconds = Number(response.headers.get("Retry-After") ?? "1");
+    await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+  }
+}
+```
+
+If the rate-limit store is unavailable, authentication fails with `503` instead
+of letting requests through.
+
+## Show stale data honestly
+
+Do not turn a failed read into an empty list. Keep the last result and mark it
+as stale, or say that the data is unavailable. For writes, a lost response does
+not prove that the operation failed; read the resource before you repeat it.

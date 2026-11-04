@@ -2818,7 +2818,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
         - name: world
           in: query
@@ -4887,7 +4888,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
         - name: limit
           in: query
@@ -5107,7 +5109,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
         - name: period
           in: query
@@ -5310,7 +5313,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
         - name: hid
           in: query
@@ -5401,7 +5405,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -5478,7 +5483,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -5629,7 +5635,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -5708,7 +5715,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -5792,7 +5800,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -5869,7 +5878,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -6036,7 +6046,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -6115,7 +6126,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -6249,7 +6261,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -6323,7 +6336,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -6401,7 +6415,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -6480,7 +6495,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -8470,7 +8486,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -8536,7 +8553,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -8609,7 +8627,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -8679,7 +8698,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -8754,7 +8774,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -8831,7 +8852,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -8895,7 +8917,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -8985,7 +9008,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -9060,7 +9084,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -9144,7 +9169,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -9220,7 +9246,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -9299,7 +9326,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -9370,7 +9398,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
       security:
         - bearer: []
@@ -15664,7 +15693,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
         - name: npcTypes
           in: query
@@ -16281,7 +16311,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
         - name: limit
           in: query
@@ -16409,7 +16440,8 @@ paths:
       parameters:
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
         - name: limit
           in: query
@@ -16511,7 +16543,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
         - name: limit
           in: query
@@ -16620,7 +16653,8 @@ paths:
           required: true
         - name: guildId
           in: path
-          schema: {}
+          schema:
+            type: string
           required: true
         - name: npcLevelMin
           in: query
