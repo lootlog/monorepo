@@ -22,15 +22,15 @@ of their own.
 The [TypeScript SDK](/docs/sdk) provides `RealtimeClient`, which speaks the
 protocol and accepts a server-side WebSocket implementation.
 
+Frames are JSON text. A client of your own offers the
+`lootlog.realtime.json.v1` subprotocol and sends each command as a text frame.
+
 ## Bun example
 
 Run this example on a server using Bun. In a TypeScript project, use Bun types and the `ES2022` or `ESNext` library without `DOM` so the WebSocket constructor accepts server options. Set `LOOTLOG_API_KEY` and `LOOTLOG_ORGANIZATION_ID` for the development environment. The WebSocket factory adds the key header; do not pass it in the URL.
 
 ```ts
-import {
-  RealtimeClient,
-  REALTIME_JSON_SUBPROTOCOL,
-} from "@lootlog/sdk/realtime";
+import { RealtimeClient } from "@lootlog/sdk/realtime";
 
 const apiKey = process.env.LOOTLOG_API_KEY;
 const organizationId = process.env.LOOTLOG_ORGANIZATION_ID;
@@ -39,8 +39,6 @@ if (!apiKey || !organizationId)
 
 const client = new RealtimeClient({
   url: "wss://dev-gateway.lootlog.pl",
-  protocols: [REALTIME_JSON_SUBPROTOCOL],
-  frameEncoding: "json",
   webSocketFactory: (url, protocols) =>
     new WebSocket(url, {
       protocols,
