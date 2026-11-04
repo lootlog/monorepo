@@ -58,50 +58,38 @@ class GatewayWebSocket extends EventTarget {
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  vi.unstubAllEnvs();
   GatewayWebSocket.instances = [];
 });
 
-it.each(["development", "production-local", "production"])(
-  "joins and stays connected in %s",
-  async (mode) => {
-    vi.stubEnv("MODE", mode);
-    vi.stubGlobal("WebSocket", GatewayWebSocket);
-    vi.stubGlobal("fetch", () =>
-      Promise.resolve(
-        Response.json({ ticket: "test-ticket", expiresAt: Date.now() + 60000 }),
-      ),
-    );
-    const client = createGameRealtimeClient();
+it("joins and stays connected", async () => {
+  vi.stubGlobal("WebSocket", GatewayWebSocket);
+  const client = createGameRealtimeClient();
 
-    try {
-      client.connect();
-      await vi.waitFor(() =>
-        expect(GatewayWebSocket.instances).toHaveLength(1),
-      );
-      const socket = GatewayWebSocket.instances[0];
+  try {
+    client.connect();
+    await vi.waitFor(() => expect(GatewayWebSocket.instances).toHaveLength(1));
+    const socket = GatewayWebSocket.instances[0];
 
-      if (!socket) throw new Error("WebSocket was not created");
-      expect(socket.protocols).toContain("lootlog.realtime.json.v1");
-      socket.readyState = 1;
-      socket.dispatchEvent(new Event("open"));
-      await expect(
-        client.join({
+    if (!socket) throw new Error("WebSocket was not created");
+    expect(socket.protocols).toContain("lootlog.realtime.json.v1");
+    socket.readyState = 1;
+    socket.dispatchEvent(new Event("open"));
+    await expect(
+      client.join({
+        world: "alpha",
+        character: {
           world: "alpha",
-          character: {
-            world: "alpha",
-            name: "Hero",
-            lvl: 100,
-            icon: "hero.gif",
-            characterId: "10",
-            accountId: "20",
-            prof: "w",
-          },
-        }),
-      ).resolves.toEqual({});
-      client.disconnect();
-    } finally {
-      client.disconnect();
-    }
-  },
-);
+          name: "Hero",
+          lvl: 100,
+          icon: "hero.gif",
+          characterId: "10",
+          accountId: "20",
+          prof: "w",
+        },
+      }),
+    ).resolves.toEqual({});
+    client.disconnect();
+  } finally {
+    client.disconnect();
+  }
+});

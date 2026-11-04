@@ -55,10 +55,15 @@ test("federation backlog yields to timers while preserving order and isolating m
           store.subscribe((message) => {
             received.push(message.id);
 
-            if (received.length === 1)
-              timer = setTimeout(() => {
-                countAtTimer = received.length;
-              }, 0);
+            if (received.length !== 1) return;
+            timer = setTimeout(() => {
+              countAtTimer = received.length;
+            }, 0);
+
+            // Make the timer due before the backlog could drain without yielding.
+            const due = performance.now() + 2;
+
+            while (performance.now() < due);
           }),
         );
 
@@ -68,7 +73,7 @@ test("federation backlog yields to timers while preserving order and isolating m
             message: JSON.stringify({
               id: String(index),
               sourceInstanceId: "other",
-              frameJson: "test",
+              event: "test",
             }),
           });
           enqueue({ channel: store.channel, message: "{" });
@@ -164,7 +169,7 @@ test("a dropped subscriber reports the interruption before delivering its whole 
             message: JSON.stringify({
               id: String(index),
               sourceInstanceId: "other",
-              frameJson: "test",
+              event: "test",
             }),
           });
         disconnect();
