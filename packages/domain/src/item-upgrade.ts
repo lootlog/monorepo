@@ -204,6 +204,10 @@ export const itemStatValue = (stat: string, key: string) =>
     .find((entry) => entry.startsWith(`${key}=`))
     ?.slice(key.length + 1);
 
+/** The level an item is upgraded to, 0 when it is not. */
+export const itemStatUpgradeLevel = (stat: string) =>
+  Number(itemStatValue(stat, "enhancement_upgrade_lvl") ?? 0);
+
 const decimalsOf = (value: string) => value.split(".")[1]?.length ?? 0;
 
 const roundTo = (value: number, decimals: number) =>
