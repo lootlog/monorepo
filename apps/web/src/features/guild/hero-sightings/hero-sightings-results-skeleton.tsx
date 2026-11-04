@@ -29,7 +29,7 @@ export const HeroSightingsResultsSkeleton = () => (
           LIST_TILE_RULE_CLASS,
           LIST_TILE_INSET_CLASS,
           "grid grid-cols-[2.25rem_minmax(0,1fr)_auto] gap-x-3 gap-y-2.5 py-3",
-          "xl:grid-cols-[2.25rem_minmax(0,1.3fr)_minmax(0,1fr)_9rem_minmax(0,0.6fr)_9rem] xl:items-center xl:gap-x-4",
+          "xl:grid-cols-[2.25rem_minmax(0,0.8fr)_minmax(0,1fr)_12rem_minmax(0,0.7fr)_9rem] xl:items-center xl:gap-x-4",
         )}
       >
         <Skeleton className="size-9 rounded-lg" />
