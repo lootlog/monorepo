@@ -1,3 +1,4 @@
+import { publishedPresence } from "@/test/realtime-wire";
 import { act, render, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
@@ -84,7 +85,11 @@ describe("SocketProvider", () => {
         v: 1,
         requestId,
         status: "success",
-        data: { connectionId: "connection-1", organizationIds: ["guild-1"] },
+        data: {
+          connectionId: "connection-1",
+          organizationIds: ["guild-1"],
+          subscriptionScopes: [],
+        },
       }),
     );
     await waitFor(() =>
@@ -124,8 +129,12 @@ describe("SocketProvider", () => {
           status: "success",
           data:
             "type" in command && command.type === "session.join"
-              ? { connectionId: connection, organizationIds: ["guild-1"] }
-              : { sessionId: connection },
+              ? {
+                  connectionId: connection,
+                  organizationIds: ["guild-1"],
+                  subscriptionScopes: [],
+                }
+              : publishedPresence(connection),
         }),
       );
     });
@@ -308,7 +317,11 @@ describe("SocketProvider", () => {
                   status: "success",
                   data:
                     answer === "success"
-                      ? { connectionId: "connection-1", organizationIds: [] }
+                      ? {
+                          connectionId: "connection-1",
+                          organizationIds: [],
+                          subscriptionScopes: [],
+                        }
                       : {},
                 },
           ),

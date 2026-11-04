@@ -20,6 +20,7 @@ import {
   REALTIME_SERVER_CLOSE_CODES,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   type ClientCommand,
+  type CommandSuccess,
   type Response,
   type ServerEvent,
   type SubscriptionScope,
@@ -784,7 +785,7 @@ export class CommandHandler {
   private dispatch(
     socket: GatewaySocket,
     command: Command,
-  ): Effect.Effect<unknown, CommandFailure> {
+  ): Effect.Effect<CommandSuccess<Command["type"]>, CommandFailure> {
     if (!hasValidApiKeyLease(socket.data))
       return Effect.fail(new OrganizationAccessDenied());
 
@@ -1038,7 +1039,7 @@ export class CommandHandler {
   private join(
     socket: GatewaySocket,
     data: Extract<Command, { type: "session.join" }>["data"],
-  ): Effect.Effect<unknown, CommandFailure> {
+  ): Effect.Effect<CommandSuccess<"session.join">, CommandFailure> {
     const {
       activity,
       guilds,

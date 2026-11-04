@@ -8,6 +8,7 @@ import {
   REALTIME_GLOBAL_CHAT_CAPABILITY,
   REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+  type CommandSuccess,
 } from "@lootlog/protocol/realtime";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -15,14 +16,13 @@ import {
   RealtimeClient,
   type ServerEvent,
   type ClientCommand,
-  type BasicPresence,
 } from "@lootlog/client/realtime";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { RealtimeWire } from "@/test/realtime-wire";
 
 type SocketServerResponse =
   | Awaited<ReturnType<AppSocket["emitWithAck"]>>
-  | { presences: BasicPresence[] };
+  | CommandSuccess<ClientCommand["type"]>;
 
 const mocks = {
   join: vi.fn<
@@ -97,8 +97,18 @@ describe("game realtime verification and presence selection", () => {
     mocks.join.mockResolvedValue({
       connectionId: "connection-1",
       organizationIds: ["organization-1"],
+      subscriptionScopes: [],
     });
-    mocks.request.mockResolvedValue(undefined);
+    // What the gateway answers when a test does not care about the result.
+    mocks.request.mockImplementation(async (type, data) => {
+      if (
+        type === "subscription.subscribe" ||
+        type === "subscription.unsubscribe"
+      )
+        return { scope: data };
+
+      return undefined;
+    });
     const originalSend = wire.send.bind(wire);
     vi.spyOn(wire, "send").mockImplementation((bytes) => {
       originalSend(bytes);
@@ -170,7 +180,11 @@ describe("game realtime verification and presence selection", () => {
       organizationIds: ["organization-1"],
     };
 
-    mocks.request.mockResolvedValueOnce({ presences: [presence] });
+    mocks.request.mockResolvedValueOnce({
+      organizationId: "organization-1",
+      revision: 1,
+      presences: [presence],
+    });
     await expect(
       socket.emitWithAck(GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH, {
         guildId: "organization-1",
@@ -311,6 +325,7 @@ describe("game realtime verification and presence selection", () => {
           mocks.join.mockResolvedValue({
             connectionId: "connection-2",
             organizationIds: ["organization-1"],
+            subscriptionScopes: [],
           });
         }
 
@@ -420,6 +435,7 @@ describe("game realtime verification and presence selection", () => {
     mocks.join.mockResolvedValue({
       connectionId: "connection-1",
       organizationIds: ["organization-1"],
+      subscriptionScopes: [],
       capabilities: ["connection.ping", REALTIME_BATTLE_PING_CAPABILITY],
     });
     socket.disconnect();
@@ -438,6 +454,7 @@ describe("game realtime verification and presence selection", () => {
     mocks.join.mockResolvedValue({
       connectionId: "connection-1",
       organizationIds: ["organization-1"],
+      subscriptionScopes: [],
       capabilities: [
         "connection.ping",
         REALTIME_BATTLE_PING_CAPABILITY,
@@ -479,6 +496,7 @@ describe("game realtime verification and presence selection", () => {
       mocks.join.mockResolvedValue({
         connectionId: "connection-1",
         organizationIds: ["organization-1"],
+        subscriptionScopes: [],
         capabilities,
       });
       socket.disconnect();
@@ -586,6 +604,7 @@ describe("game realtime verification and presence selection", () => {
       mocks.join.mockResolvedValue({
         connectionId: "connection-1",
         organizationIds: ["organization-1", "organization-2"],
+        subscriptionScopes: [],
       });
 
       const scopesAtJoin: unknown[] = [];
@@ -610,11 +629,7 @@ describe("game realtime verification and presence selection", () => {
   );
 
   it("passes exact map-ping and air-tag acknowledgements through unchanged", async () => {
-    const mapAck = {
-      status: "accepted" as const,
-      pingId: "ping-1",
-      extension: { sequence: 1 },
-    };
+    const mapAck = { status: "accepted" as const, pingId: "ping-1" };
 
     const subscriptionAck = {
       status: "accepted" as const,

@@ -1,3 +1,4 @@
+import type { CommandSuccess } from "@lootlog/protocol/realtime";
 // @vitest-environment happy-dom
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
@@ -140,7 +141,7 @@ it("ignores an outstanding response after leaving the presence scope", async () 
   const gateway = createTestGateway();
   const resolveResponse = vi.fn<() => void>();
 
-  const response = new Promise((resolve) => {
+  const response = new Promise<CommandSuccess<"presence.fetch">>((resolve) => {
     resolveResponse.mockImplementation(() => {
       resolve({ organizationId: "guild-1", revision: 1, presences: [] });
     });

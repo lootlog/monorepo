@@ -1,3 +1,8 @@
+import type {
+  BasicPresence,
+  ClientCommand,
+  SessionJoined,
+} from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
@@ -71,16 +76,51 @@ const joinData = {
   },
 };
 
+const publishedPresence = {
+  userId: "user-1",
+  sessionId: "presence-1",
+  organizationIds: ["org-1"],
+  platform: "game",
+  status: "online",
+  confidence: "reported",
+  isAfk: false,
+  lastSeen: 1,
+} satisfies BasicPresence;
+
+type SuccessFields = Partial<SessionJoined> & Partial<BasicPresence>;
+
+/** The gateway's success `data` for a command, with fields a test cares about. */
+const successData = (command: ClientCommand, fields?: SuccessFields) => {
+  switch (command.type) {
+    case "session.join":
+      return {
+        connectionId: "connection-1",
+        organizationIds: [],
+        subscriptionScopes: [],
+        ...fields,
+      };
+    case "presence.heartbeat":
+      return { lastSeen: 1 };
+    case "presence.publish":
+      return fields && { ...publishedPresence, ...fields };
+    case "subscription.subscribe":
+    case "subscription.unsubscribe":
+      return { scope: command.data };
+    default:
+      return {};
+  }
+};
+
 const respondToLastRequest = (
   socket: TestWebSocket,
-  data: unknown = undefined,
+  fields?: SuccessFields,
 ): void => {
   const lastRequest = socket.sent.at(-1);
 
   if (lastRequest === undefined) throw new Error("Expected a request frame");
   const request = decodeRealtimeFrame(lastRequest);
 
-  if (!("requestId" in request) || !request.requestId) {
+  if (!("requestId" in request) || !request.requestId || "status" in request) {
     throw new Error("Expected a request frame");
   }
 
@@ -89,7 +129,7 @@ const respondToLastRequest = (
       v: 1,
       requestId: request.requestId,
       status: "success",
-      data,
+      data: successData(request, fields),
     }),
   );
 };
@@ -313,15 +353,19 @@ describe("RealtimeClient", () => {
 
     expect(socket.sent).toHaveLength(1);
     respondToLastRequest(socket, { connectionId: "first-join" });
-    await expect(joined).resolves.toEqual({ connectionId: "first-join" });
-    await expect(duplicate).resolves.toEqual({ connectionId: "first-join" });
+    await expect(joined).resolves.toMatchObject({ connectionId: "first-join" });
+    await expect(duplicate).resolves.toMatchObject({
+      connectionId: "first-join",
+    });
     expect(socket.sent).toHaveLength(2);
     expect(frameAt(socket, 1)).toMatchObject({
       type: "session.join",
       data: { margonemAccountProof: "proof" },
     });
     respondToLastRequest(socket, { connectionId: "verified-join" });
-    await expect(updated).resolves.toEqual({ connectionId: "verified-join" });
+    await expect(updated).resolves.toMatchObject({
+      connectionId: "verified-join",
+    });
     expect(client.state).toBe("ready");
     client.disconnect();
   });
@@ -965,7 +1009,7 @@ describe("RealtimeClient", () => {
           v: 1,
           requestId: publish.requestId,
           status: "success",
-          data: { sessionId: "presence-1" },
+          data: publishedPresence,
         }),
       );
       await flushMessages();

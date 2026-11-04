@@ -129,6 +129,7 @@ const setup = async (lootSplit?: { enabled: boolean; rarities: string[] }) => {
       data: {
         connectionId: "test",
         organizationIds: ["guild-1"],
+        subscriptionScopes: [],
         capabilities: [
           REALTIME_LOOT_SPLIT_CAPABILITY,
           REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,

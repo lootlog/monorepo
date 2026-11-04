@@ -1,15 +1,3 @@
-import { isString } from "es-toolkit";
-import {
-  hasRealtimeCapabilities,
-  isMapPingAcknowledgement,
-  isLootSplitAcknowledgement,
-  isAirTagSubscriptionAcknowledgement,
-  isAirTagObservationAcknowledgement,
-  isAirTagMapThreatsFetchResponse,
-  isNpcPresenceReportAcknowledgement,
-  isNpcPresenceSnapshot,
-  isPresenceFetchResult,
-} from "@lootlog/protocol/realtime/codec";
 import type { AirTagMapThreatEvent } from "@lootlog/schema/air-tag";
 import type { LootSplitAck } from "@lootlog/schema/loot-split";
 import type {
@@ -37,6 +25,7 @@ import {
   type LootSplitCommand,
   type MapPingCommand,
   type MapPingAckSchema,
+  type SessionJoined,
 } from "@lootlog/protocol/realtime";
 import type { PlayerPresenceAckPayload } from "@/lib/online-players-presence";
 import {
@@ -63,7 +52,6 @@ import { getGameClientPlatform } from "@/lib/game-client-platform";
 import {
   createAccessPolicySnapshot,
   diffAccessPolicies,
-  isAccessPolicySnapshot,
   type AccessPolicySnapshot,
   type AccessPolicyChange,
 } from "@lootlog/protocol/realtime/access-policy";
@@ -98,27 +86,6 @@ export const getGameSessionIdentity = (
   },
 ): string =>
   JSON.stringify([data.world, data.accountId, data.characterId, data.clan?.id]);
-
-interface JoinResult {
-  readonly connectionId: string;
-  readonly organizationIds: string[];
-  readonly accessPolicy?: AccessPolicySnapshot;
-  readonly capabilities?: readonly string[];
-}
-
-const isJoinResult = (value: unknown): value is JoinResult =>
-  Boolean(
-    value &&
-    typeof value === "object" &&
-    "connectionId" in value &&
-    typeof value.connectionId === "string" &&
-    "organizationIds" in value &&
-    Array.isArray(value.organizationIds) &&
-    value.organizationIds.every(isString) &&
-    (!("accessPolicy" in value) ||
-      value.accessPolicy === undefined ||
-      isAccessPolicySnapshot(value.accessPolicy)),
-  );
 
 const toLegacyPresence = (
   guildId: string,
@@ -256,7 +223,7 @@ export class AppSocket {
   private hello = Promise.withResolvers<string | undefined>();
   private joinAttempt: {
     key: string;
-    promise: Promise<JoinResult>;
+    promise: Promise<SessionJoined>;
     cancel: () => void;
   } | null = null;
   /** What the joined gateway advertised; empty until a join succeeds. */
@@ -369,9 +336,6 @@ export class AppSocket {
       world,
     });
 
-    if (!isAirTagMapThreatsFetchResponse(response))
-      throw new Error("Invalid air-tag.map-threats.fetch response");
-
     return response.threats;
   }
 
@@ -381,15 +345,8 @@ export class AppSocket {
   }
 
   /** Replaces the timer NPCs this character reports standing on its map. */
-  async reportNpcPresence(
-    report: NpcPresenceReport,
-  ): Promise<NpcPresenceReportAck> {
-    const response = await this.realtime.request("npc-presence.report", report);
-
-    if (!isNpcPresenceReportAcknowledgement(response))
-      throw new Error("Invalid npc-presence.report response");
-
-    return response;
+  reportNpcPresence(report: NpcPresenceReport): Promise<NpcPresenceReportAck> {
+    return this.realtime.request("npc-presence.report", report);
   }
 
   /** NPCs standing in one Organization and world, or null when the gateway predates them. */
@@ -399,15 +356,10 @@ export class AppSocket {
   ): Promise<NpcPresenceSnapshot | null> {
     if (!this.capabilities.has(REALTIME_NPC_PRESENCE_CAPABILITY)) return null;
 
-    const response = await this.realtime.request("npc-presence.fetch", {
+    return await this.realtime.request("npc-presence.fetch", {
       organizationId,
       world,
     });
-
-    if (!isNpcPresenceSnapshot(response))
-      throw new Error("Invalid npc-presence.fetch response");
-
-    return response;
   }
 
   /**
@@ -504,7 +456,7 @@ export class AppSocket {
     return this;
   }
 
-  join(data: GameSessionJoinData): Promise<JoinResult> {
+  join(data: GameSessionJoinData): Promise<SessionJoined> {
     const key = JSON.stringify(data);
 
     if (this.joinAttempt?.key === key) return this.joinAttempt.promise;
@@ -537,7 +489,7 @@ export class AppSocket {
     generation: number,
     revision: number,
     signal: AbortSignal,
-  ): Promise<JoinResult> {
+  ): Promise<SessionJoined> {
     const ensureCurrent = () => {
       if (
         this.disposed ||
@@ -575,14 +527,14 @@ export class AppSocket {
       },
     };
 
-    let response: JoinResult | undefined;
+    let response: SessionJoined | undefined;
 
     if (!connectionId) {
       const reported = await this.realtime.join(session);
       ensureCurrent();
 
-      if (!isJoinResult(reported))
-        throw new Error("Invalid session.join response");
+      // Undefined when the connection closed before the join was sent.
+      if (!reported) throw new Error("Invalid session.join response");
       response = reported;
       connectionId = reported.connectionId;
     }
@@ -610,16 +562,13 @@ export class AppSocket {
 
       ensureCurrent();
 
-      if (!isJoinResult(joined))
-        throw new Error("Invalid session.join response");
+      if (!joined) throw new Error("Invalid session.join response");
       response = joined;
     }
 
     this.id = response.connectionId;
 
-    this.capabilities = new Set(
-      hasRealtimeCapabilities(response) ? response.capabilities : [],
-    );
+    this.capabilities = new Set(response.capabilities);
     this.joinedOrganizationIds = [...response.organizationIds];
 
     if (response.accessPolicy) this.applyAccessPolicy(response.accessPolicy);
@@ -777,11 +726,9 @@ export class AppSocket {
         delivery: "response",
       });
 
-      if (!isPresenceFetchResult(response))
-        throw new Error("Invalid presence.fetch response");
       const players: Record<string, ReturnType<typeof toLegacyPresence>[]> = {};
 
-      for (const presence of response.presences ?? []) {
+      for (const presence of response.presences) {
         if (presence.platform !== "game") continue;
         (players[presence.discordId ?? presence.userId] ??= []).push(
           toLegacyPresence(data.guildId, presence),
@@ -816,82 +763,48 @@ export class AppSocket {
     }
 
     if (event === GatewayEvent.MAP_PING_SEND) {
-      const response = await this.realtime.request(
+      return await this.realtime.request(
         "map-ping.send",
         requirePayload(payload, "map-ping.send"),
       );
-
-      if (!isMapPingAcknowledgement(response))
-        throw new Error("Invalid map-ping.send response");
-
-      return response;
     }
 
     if (event === GatewayEvent.BATTLE_PING_SEND) {
-      const response = await this.realtime.request(
+      return this.realtime.request(
         "battle-ping.send",
         requirePayload(payload, "battle-ping.send"),
       );
-
-      // Battle pings share the map ping acknowledgement contract.
-      if (!isMapPingAcknowledgement(response))
-        throw new Error("Invalid battle-ping.send response");
-
-      return response;
     }
 
     if (event === GatewayEvent.LOOT_SPLIT_SEND) {
-      const response = await this.realtime.request(
+      return this.realtime.request(
         "loot-split.send",
         requirePayload(payload, "loot-split.send"),
       );
-
-      if (!isLootSplitAcknowledgement(response))
-        throw new Error("Invalid loot-split.send response");
-
-      return response;
     }
 
     if (event === GatewayEvent.LOOT_SPLIT_AUTO_ACCEPT_SEND) {
-      const response = await this.realtime.request(
+      return this.realtime.request(
         "loot-split.auto-accept",
         requirePayload(payload, "loot-split.auto-accept"),
       );
-
-      if (!isLootSplitAcknowledgement(response))
-        throw new Error("Invalid loot-split.auto-accept response");
-
-      return response;
     }
 
     if (event === GatewayEvent.AIR_TAG_SUBSCRIPTION) {
       if (!payload) throw new Error("Missing air-tag.subscription payload");
       const data = payload;
 
-      const response = await this.realtime.request("air-tag.subscription", {
+      return this.realtime.request("air-tag.subscription", {
         requestId: data.requestId,
         enabled: data.enabled,
         expectedMapId: data.expectedMapId,
       });
-
-      if (!isAirTagSubscriptionAcknowledgement(response))
-        throw new Error("Invalid air-tag.subscription response");
-
-      return response;
     }
 
     if (event === GatewayEvent.AIR_TAG_OBSERVATION) {
       if (!payload) throw new Error("Missing air-tag.observation payload");
 
-      const response = await this.realtime.request(
-        "air-tag.observation",
-        payload,
-      );
-
-      if (!isAirTagObservationAcknowledgement(response))
-        throw new Error("Invalid air-tag.observation response");
-
-      return response;
+      return this.realtime.request("air-tag.observation", payload);
     }
 
     return undefined;
@@ -1001,7 +914,7 @@ export class AppSocket {
     } satisfies PermissionsUpdatedPayload);
   }
 
-  private dispatchJoin(result: JoinResult, data: GameSessionJoinData): void {
+  private dispatchJoin(result: SessionJoined, data: GameSessionJoinData): void {
     if (!result.accessPolicy) {
       this.currentAccessPolicy = undefined;
       this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {

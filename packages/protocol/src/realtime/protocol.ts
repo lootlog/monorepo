@@ -19,6 +19,7 @@ import {
   BattlePingSendPayloadSchema,
 } from "@lootlog/schema/battle-ping";
 import {
+  LootSplitAckSchema,
   LootSplitAutoAcceptedEventSchema,
   LootSplitAutoAcceptPayloadSchema,
   LootSplitEventSchema,
@@ -26,7 +27,9 @@ import {
 } from "@lootlog/schema/loot-split";
 import {
   NpcPresenceEventSchema,
+  NpcPresenceReportAckSchema,
   NpcPresenceReportSchema,
+  NpcPresenceSnapshotSchema,
 } from "@lootlog/schema/npc-presence";
 import {
   MapPingAckSchema,
@@ -333,19 +336,16 @@ export const MapPingCommand = command(
   MapPingSendPayloadSchema,
 );
 
-// Acknowledged with `MapPingAckSchema`: both pings share one reject vocabulary.
 export const BattlePingCommand = command(
   "battle-ping.send",
   BattlePingSendPayloadSchema,
 );
 
-// Acknowledged with `LootSplitAckSchema`.
 export const LootSplitCommand = command(
   "loot-split.send",
   LootSplitSendPayloadSchema,
 );
 
-// Acknowledged with `LootSplitAckSchema`.
 export const LootSplitAutoAcceptCommand = command(
   "loot-split.auto-accept",
   LootSplitAutoAcceptPayloadSchema,
@@ -447,6 +447,47 @@ export const ClientCommand = Schema.Union([
 
 export type ClientCommand = typeof ClientCommand.Type;
 
+export const SessionJoined = Schema.Struct({
+  connectionId: Schema.NonEmptyString,
+  organizationIds: Schema.Array(Schema.NonEmptyString),
+  subscriptionScopes: Schema.Array(SubscriptionScope),
+  accessPolicy: Schema.optional(AccessPolicySnapshot),
+  capabilities: Schema.optional(Schema.Array(Schema.NonEmptyString)),
+});
+
+export type SessionJoined = typeof SessionJoined.Type;
+
+const ScopeAck = Schema.Struct({ scope: SubscriptionScope });
+
+/** The `data` of a successful response to each command. */
+export const CommandSuccess = {
+  "session.join": SessionJoined,
+  "presence.heartbeat": Schema.Struct({ lastSeen: Timestamp }),
+  "connection.ping": Schema.Struct({}),
+  // Absent when the session publishes to no Lootlog.
+  "presence.publish": Schema.UndefinedOr(
+    Schema.Union([PresenceWithLocation, BasicPresence]),
+  ),
+  "presence.fetch": PresenceSnapshot,
+  "subscription.subscribe": ScopeAck,
+  "subscription.unsubscribe": ScopeAck,
+  "map-ping.send": MapPingAckSchema,
+  // Both pings share one reject vocabulary.
+  "battle-ping.send": MapPingAckSchema,
+  "loot-split.send": LootSplitAckSchema,
+  "loot-split.auto-accept": LootSplitAckSchema,
+  "air-tag.subscription": AirTagSubscriptionAck,
+  "air-tag.observation": AirTagObservationAck,
+  "air-tag.map-threats.fetch": AirTagMapThreatsFetchResponse,
+  "npc-presence.report": NpcPresenceReportAckSchema,
+  "npc-presence.fetch": NpcPresenceSnapshotSchema,
+} as const satisfies {
+  readonly [Type in ClientCommand["type"]]: Schema.Codec<unknown, unknown>;
+};
+
+export type CommandSuccess<Type extends ClientCommand["type"]> =
+  (typeof CommandSuccess)[Type]["Type"];
+
 const RealtimeError = Schema.Struct({
   code: Schema.NonEmptyString,
   message: Schema.NonEmptyString,
@@ -498,16 +539,7 @@ export const ServerEvent = Schema.Union([
     "session.hello",
     Schema.Struct({ connectionId: Schema.NonEmptyString }),
   ),
-  serverEvent(
-    "session.joined",
-    Schema.Struct({
-      connectionId: Schema.NonEmptyString,
-      organizationIds: Schema.Array(Schema.NonEmptyString),
-      subscriptionScopes: Schema.Array(SubscriptionScope),
-      accessPolicy: Schema.optional(AccessPolicySnapshot),
-      capabilities: Schema.optional(Schema.Array(Schema.NonEmptyString)),
-    }),
-  ),
+  serverEvent("session.joined", SessionJoined),
   serverEvent(
     "permissions.updated",
     Schema.Struct({

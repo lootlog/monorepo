@@ -308,6 +308,7 @@ describe("access policy synchronization", () => {
             data: {
               connectionId: "connection",
               organizationIds: ["organization-1"],
+              subscriptionScopes: [],
               accessPolicy: includePolicy ? policy : undefined,
             },
           }),
@@ -448,7 +449,11 @@ it("lets the provider rejoin the current world once after reconnect", async () =
             v: 1,
             requestId: frame.requestId,
             status: "success",
-            data: { connectionId: "fixture", organizationIds: [] },
+            data: {
+              connectionId: "fixture",
+              organizationIds: [],
+              subscriptionScopes: [],
+            },
           });
 
           queueMicrotask(() => listeners.get("message")?.({ data: response }));

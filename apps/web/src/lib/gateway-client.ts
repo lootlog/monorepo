@@ -1,4 +1,3 @@
-import { decodePresenceSnapshot } from "@lootlog/protocol/realtime/codec";
 import {
   diffAccessPolicies,
   type AccessPolicySnapshot,
@@ -191,12 +190,10 @@ export class GatewayClient {
 
   async fetchPresence(guildId: string): Promise<OrganizationPresenceResponse> {
     try {
-      const response = await this.realtime.request("presence.fetch", {
+      const { presences } = await this.realtime.request("presence.fetch", {
         organizationId: guildId,
         delivery: "response",
       });
-
-      const { presences } = decodePresenceSnapshot(response);
 
       return {
         status: "success",

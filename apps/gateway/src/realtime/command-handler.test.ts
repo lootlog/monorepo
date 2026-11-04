@@ -19,7 +19,7 @@ import {
   type ClientCommand,
   type ServerEvent,
 } from "@lootlog/protocol/realtime";
-import { isAirTagSubscriptionAcknowledgement } from "@lootlog/protocol/realtime/codec";
+import { decodeCommandSuccess } from "@lootlog/protocol/realtime/codec";
 import {
   GuildStoreFailure,
   makeGuildStore,
@@ -2430,14 +2430,15 @@ describe("CommandHandler session lifecycle", () => {
         data: acknowledgement,
       },
     ]);
-    // The Game client discards any reply that fails this guard.
-    expect(
-      hub.responses.every(
-        (response) =>
-          Predicate.hasProperty(response, "data") &&
-          isAirTagSubscriptionAcknowledgement(response.data),
-      ),
-    ).toBe(true);
+
+    // The Game client rejects any reply that fails this decoder.
+    for (const response of hub.responses)
+      expect(() =>
+        decodeCommandSuccess(
+          "air-tag.subscription",
+          Predicate.hasProperty(response, "data") ? response.data : undefined,
+        ),
+      ).not.toThrow();
   });
 
   test("reports a failed air-tag.subscription update as a retryable command error", async () => {

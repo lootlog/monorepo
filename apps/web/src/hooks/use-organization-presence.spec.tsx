@@ -2,7 +2,7 @@
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import type { PresenceWithLocation } from "@lootlog/client/realtime";
-import type { decodePresenceSnapshot } from "@lootlog/protocol/realtime/codec";
+import type { CommandSuccess } from "@lootlog/protocol/realtime";
 import { createTestGateway } from "@/lib/testing/gateway";
 import { useMemberGamePresence } from "@/features/guild/settings/members/use-member-game-presence";
 import { useMemberWebPresence } from "@/features/guild/settings/members/use-member-web-presence";
@@ -215,7 +215,7 @@ it("reconciles a successful rejoin even when React keeps subscribers mounted", a
 it("keeps a newer live removal when an older snapshot resolves", async () => {
   const gateway = createTestGateway();
 
-  type PresenceSnapshot = ReturnType<typeof decodePresenceSnapshot>;
+  type PresenceSnapshot = CommandSuccess<"presence.fetch">;
 
   let resolveResponse = (_value: PresenceSnapshot): void => {
     throw new Error("Presence request has not started");

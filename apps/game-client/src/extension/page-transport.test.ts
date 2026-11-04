@@ -293,8 +293,15 @@ describe("page transport", () => {
       type: "command",
       command: { v: 1, type: "session.join", data: { world: "jaruna" } },
     });
-    bridge.send({ type: "result", id: request.id, data: { joined: true } });
-    await expect(join).resolves.toEqual({ joined: true });
+
+    const joined = {
+      connectionId: "connection",
+      organizationIds: [],
+      subscriptionScopes: [],
+    };
+
+    bridge.send({ type: "result", id: request.id, data: joined });
+    await expect(join).resolves.toEqual(joined);
 
     const heartbeat = realtime.request("presence.heartbeat", {
       sessionId: "session",
@@ -322,6 +329,15 @@ describe("page transport", () => {
     });
     await rejection;
     await expect(heartbeat).rejects.toBeInstanceOf(RealtimeRequestError);
+  });
+
+  it("rejects a command result that is not that command's success", async () => {
+    const bridge = setup();
+    const join = bridge.platform.createRealtime().join({ world: "jaruna" });
+    const request = await bridge.next();
+
+    bridge.send({ type: "result", id: request.id, data: { joined: true } });
+    await expect(join).rejects.toThrow("Invalid session.join response");
   });
 
   it.each(["session.hello", "session.joined"] as const)(

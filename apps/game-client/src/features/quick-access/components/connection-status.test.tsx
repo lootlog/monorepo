@@ -1,3 +1,4 @@
+import { publishedPresence } from "@/test/realtime-wire";
 import { createTimerRealtimeFixture } from "@/features/timers/timer-realtime-fixtures";
 import { createTimerGuildFixture } from "@/features/timers/timer-fixtures";
 import { act, fireEvent, render, screen } from "@testing-library/react";
@@ -90,7 +91,7 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
         v: 1,
         requestId: publicationRequestId,
         status: "success",
-        data: { sessionId: "presence-session" },
+        data: publishedPresence("presence-session"),
       });
       await vi.advanceTimersByTimeAsync(0);
       await vi.advanceTimersByTimeAsync(25_000);
@@ -111,7 +112,7 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
         v: 1,
         requestId: heartbeatRequestId,
         status: "success",
-        data: {},
+        data: { lastSeen: 1 },
       });
       await vi.advanceTimersByTimeAsync(0);
     });
