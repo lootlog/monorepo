@@ -35,7 +35,14 @@ import {
 import { ActivityPublisher } from "../src/rabbit/activity-publisher.js";
 import { CoveragePublisher } from "../src/rabbit/coverage-publisher.js";
 import { makeMargonemProofVerifier } from "../src/auth/margonem-proof.js";
-import { CommandHandler } from "../src/realtime/command-handler.js";
+import {
+  AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
+  CommandAdmission,
+} from "../src/realtime/command-admission.js";
+import {
+  CommandHandler,
+  gatewayFeatureRoutes,
+} from "../src/realtime/command-handler.js";
 import { PresenceStore } from "../src/realtime/presence-store.js";
 import { MapPingService } from "../src/realtime/map-ping-service.js";
 import { BattlePingService } from "../src/realtime/battle-ping-service.js";
@@ -211,6 +218,8 @@ const setup = async () => {
 
     const presence = new PresenceStore(presenceRedis, hub);
     const activity = new ActivityPublisher(messaging, config);
+    const npcPresence = new NpcPresenceService(presenceRedis, hub);
+    const airTags = new AirTagService(presenceRedis, hub);
 
     const commands = new CommandHandler(
       store,
@@ -219,11 +228,17 @@ const setup = async () => {
       presence,
       hub,
       activity,
-      new MapPingService(presenceRedis, hub),
-      new BattlePingService(presenceRedis, hub),
-      new LootSplitService(presenceRedis, hub),
-      new AirTagService(presenceRedis, hub),
-      new NpcPresenceService(presenceRedis, hub),
+      { npcPresence, airTags },
+      gatewayFeatureRoutes({
+        mapPings: new MapPingService(presenceRedis, hub),
+        battlePings: new BattlePingService(presenceRedis, hub),
+        lootSplits: new LootSplitService(presenceRedis, hub),
+        airTags,
+        airTagObservationAdmission: new CommandAdmission(
+          AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
+        ),
+        npcPresence,
+      }),
     );
 
     return { store, hub, commands, presence };

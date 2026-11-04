@@ -21,6 +21,11 @@ import type { GatewaySocket, NpcPresenceState } from "#src/realtime/session";
 import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
 import { canSubscribe, hasPermission } from "#src/realtime/subscription-policy";
 import { GatewayRedis } from "#src/platform/redis-store";
+import {
+  fromDependency,
+  orAccessDenied,
+  type CommandRoutes,
+} from "#src/realtime/command-routes";
 
 // A client reports only when the NPCs on its map change.
 const RATE_LIMIT = 30;
@@ -476,3 +481,28 @@ export class NpcPresence extends Context.Service<
     }),
   );
 }
+
+export const npcPresenceRoutes = (
+  npcPresence: Pick<NpcPresenceService, "report" | "fetch">,
+) =>
+  ({
+    "npc-presence.report": {
+      joined: true,
+      run: (socket, data) =>
+        fromDependency("npc-presence.report", () =>
+          npcPresence.report(socket, data),
+        ),
+    },
+    "npc-presence.fetch": {
+      joined: true,
+      run: (socket, { organizationId, world }) =>
+        orAccessDenied(
+          fromDependency("npc-presence.fetch", () =>
+            npcPresence.fetch(socket, organizationId, world),
+          ),
+        ),
+    },
+  }) satisfies Pick<
+    CommandRoutes,
+    "npc-presence.report" | "npc-presence.fetch"
+  >;

@@ -6,7 +6,14 @@ import {
 import assert from "node:assert/strict";
 import type { ClientCommand } from "@lootlog/protocol/realtime";
 import { Effect } from "effect";
-import { CommandHandler } from "#src/realtime/command-handler";
+import {
+  AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
+  CommandAdmission,
+} from "#src/realtime/command-admission";
+import {
+  CommandHandler,
+  gatewayFeatureRoutes,
+} from "#src/realtime/command-handler";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
 
@@ -45,21 +52,32 @@ const handler = new CommandHandler(
   },
   hub,
   { publish: () => Effect.void },
-  mapPings,
-  { send: unexpected },
-  { send: unexpected, autoAccept: unexpected },
   {
-    updateSubscription: unexpected,
-    publishObservations: unexpected,
-    fetchMapThreats: unexpected,
-    registerInterest: unexpected,
+    npcPresence: {
+      refresh: () => Promise.resolve(),
+      withdraw: () => Promise.resolve(),
+    },
+    airTags: {
+      registerInterest: unexpected,
+    },
   },
-  {
-    report: unexpected,
-    refresh: () => Promise.resolve(),
-    withdraw: () => Promise.resolve(),
-    fetch: unexpected,
-  },
+  gatewayFeatureRoutes({
+    mapPings: mapPings,
+    battlePings: { send: unexpected },
+    lootSplits: { send: unexpected, autoAccept: unexpected },
+    airTags: {
+      updateSubscription: unexpected,
+      publishObservations: unexpected,
+      fetchMapThreats: unexpected,
+    },
+    airTagObservationAdmission: new CommandAdmission(
+      AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
+    ),
+    npcPresence: {
+      report: unexpected,
+      fetch: unexpected,
+    },
+  }),
 );
 
 type CommandBody<Command> = Command extends unknown

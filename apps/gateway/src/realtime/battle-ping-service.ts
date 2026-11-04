@@ -15,6 +15,10 @@ import {
 import { type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket } from "#src/realtime/session";
 import { GatewayRedis } from "#src/platform/redis-store";
+import {
+  fromDependency,
+  type CommandRoutes,
+} from "#src/realtime/command-routes";
 
 const RATE_LIMIT = 8;
 
@@ -112,3 +116,13 @@ export class BattlePings extends Context.Service<
     }),
   );
 }
+
+/** Battle pings are relayed to teammates, never stored. */
+export const battlePingRoutes = (pings: Pick<BattlePingService, "send">) =>
+  ({
+    "battle-ping.send": {
+      joined: true,
+      run: (socket, data) =>
+        fromDependency("battle-ping.send", () => pings.send(socket, data)),
+    },
+  }) satisfies Pick<CommandRoutes, "battle-ping.send">;

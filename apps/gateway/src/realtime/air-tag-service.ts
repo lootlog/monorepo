@@ -33,6 +33,12 @@ import {
   canReadPreciseLocation,
   canSubscribe,
 } from "#src/realtime/subscription-policy";
+import {
+  fromDependency,
+  orAccessDenied,
+  type CommandRoutes,
+} from "#src/realtime/command-routes";
+import type { CommandAdmission } from "#src/realtime/command-admission";
 
 const TARGET_TTL_MS = 10_000;
 
@@ -1184,3 +1190,51 @@ export class AirTags extends Context.Service<AirTags, AirTagService>()(
     }),
   );
 }
+
+export const airTagRoutes = (
+  airTags: Pick<
+    AirTagService,
+    "updateSubscription" | "publishObservations" | "fetchMapThreats"
+  >,
+  observationAdmission: Pick<CommandAdmission, "tryAcquire">,
+) =>
+  ({
+    "air-tag.subscription": {
+      joined: true,
+      run: (socket, data) =>
+        fromDependency("air-tag.subscription", () =>
+          airTags.updateSubscription(socket, data),
+        ),
+    },
+    "air-tag.observation": {
+      joined: true,
+      run: (socket, data) =>
+        Effect.suspend(() => {
+          const admission = observationAdmission.tryAcquire();
+
+          // A rejected batch loses nothing: the client merges it into its next one.
+          if (!admission.admitted)
+            return Effect.succeed<AirTagObservationAck>({
+              status: "rejected",
+              code: "rate-limited",
+              retryAfterMs: admission.retryAfterMs,
+            });
+
+          return fromDependency("air-tag.observation", () =>
+            airTags.publishObservations(socket, data),
+          ).pipe(Effect.ensuring(Effect.sync(admission.release)));
+        }),
+    },
+    "air-tag.map-threats.fetch": {
+      joined: true,
+      run: (socket, { organizationId, world }) =>
+        orAccessDenied(
+          fromDependency("air-tag.map-threats.fetch", () =>
+            airTags.fetchMapThreats(socket, organizationId, world),
+          ),
+        ),
+    },
+  }) satisfies Pick<
+    CommandRoutes,
+    "air-tag.subscription" | "air-tag.observation" | "air-tag.map-threats.fetch"
+  >;
