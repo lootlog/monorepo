@@ -10,7 +10,7 @@ import {
 } from "../src/rabbit/rabbit-bridge.js";
 import type { RealtimeHub } from "../src/realtime/realtime-hub.js";
 
-export const createRabbitDelivery = (
+const createRabbitDelivery = (
   routingKey: string,
   content: Buffer,
   messageId?: string,

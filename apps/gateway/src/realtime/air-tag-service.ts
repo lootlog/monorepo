@@ -174,7 +174,7 @@ local function effective(target, now, ttl, enemy, clanEnemy)
   return tonumber(target.relation)
 end
 local function isThreat(relation, enemy, clanEnemy) return relation == enemy or relation == clanEnemy end
--- Older game clients omit level, profession and stasis; keep the last reported value instead of erasing it.
+-- An observation omits level, profession and stasis when they did not change; keep the last reported value.
 local function carry(target, observation, existing, field)
   if observation[field] ~= nil then target[field]=observation[field] elseif existing ~= nil then target[field]=existing[field] end
 end

@@ -1,13 +1,13 @@
 import { Permission } from "@lootlog/schema/permissions";
 
-export interface GuildRole {
+interface GuildRole {
   readonly id: string;
   readonly lvlRangeFrom: number;
   readonly lvlRangeTo: number;
   readonly permissions: ReadonlyArray<Permission>;
 }
 
-export interface Guild {
+interface Guild {
   readonly id: string;
   readonly ownerId: string;
 }

@@ -41,11 +41,11 @@ const Proof = Schema.Struct({
 
 const decodeProof = Schema.decodeUnknownOption(Proof);
 
-export type ProofVerification =
+type ProofVerification =
   | { readonly valid: true }
   | { readonly valid: false; readonly reason: string };
 
-export interface ProofVerificationOptions {
+interface ProofVerificationOptions {
   readonly proof: unknown;
   readonly socketId: string;
   readonly accountId: string;
