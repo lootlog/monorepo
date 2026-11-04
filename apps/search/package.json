@@ -12,7 +12,7 @@
     "build": "bun build src/main.ts --target=bun --packages=external --outdir=dist/src --sourcemap=linked",
     "start": "bun --enable-source-maps dist/src/main.js",
     "lint": "oxlint src test",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "openapi:generate": "bun --conditions=development src/openapi/generate-openapi.ts",

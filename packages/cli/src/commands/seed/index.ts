@@ -1,4 +1,4 @@
-import { chalk } from "zx";
+import { styleText } from "node:util";
 import { scrapeItems } from "./scrapers/items-scraper.js";
 import { scrapeNpcs } from "./scrapers/npcs-scraper.js";
 import { generatePlayers } from "./generators/players-generator.js";
@@ -10,12 +10,12 @@ import { SEED_CONFIG } from "./config.js";
 
 const displaySeedHelp = (): void => {
   console.log(`
-${chalk.bold.blue("Seed Command")}
+${styleText(["bold", "blue"], "Seed Command")}
 
-${chalk.bold("Usage:")}
+${styleText("bold", "Usage:")}
   bun run seed <subcommand> [options]
 
-${chalk.bold("Subcommands:")}
+${styleText("bold", "Subcommands:")}
   scrape:items              Scrape items from margoworld.pl
   scrape:npcs               Scrape NPCs from margoworld.pl
   scrape:all                Scrape both items and NPCs
@@ -23,7 +23,7 @@ ${chalk.bold("Subcommands:")}
   run                       Seed the database
   setup                     Complete setup (scrape, generate, seed)
 
-${chalk.bold("Options:")}
+${styleText("bold", "Options:")}
   --force, -f               Force re-scraping even if files exist
   --guilds <number>         Number of guilds to create (default: ${SEED_CONFIG.guilds.count})
   --loots <number>          Number of loots to create (default: ${SEED_CONFIG.loots.count})
@@ -33,13 +33,13 @@ ${chalk.bold("Options:")}
   --skip-scrape             Skip scraping (use existing data)
   --help, -h                Show this help message
 
-${chalk.bold("Environment Variables:")}
+${styleText("bold", "Environment Variables:")}
   DISCORD_DEVELOPMENT_GUILD_ID    Discord guild ID(s) for development
                                   (supports multiple IDs separated by commas)
   DISCORD_DEVELOPMENT_USER_ID     Discord user ID for development owner
   SEEDING_USER_ID                 User ID for battles seeding (required for battles)
 
-${chalk.bold("Examples:")}
+${styleText("bold", "Examples:")}
   bun run seed:scrape                      # Scrape items and NPCs
   bun run seed:scrape --force              # Force re-scrape
   bun run seed:generate:players                # Generate ${SEED_CONFIG.players.count} players
@@ -47,7 +47,7 @@ ${chalk.bold("Examples:")}
   bun run seed:setup                           # Complete setup
   bun run seed:setup --skip-scrape             # Setup without scraping
 
-${chalk.bold("Development Guild Setup:")}
+${styleText("bold", "Development Guild Setup:")}
   When DISCORD_DEVELOPMENT_GUILD_ID and DISCORD_DEVELOPMENT_USER_ID are set in .env:
   - First N guilds will use the provided Discord guild IDs
   - Dev user will be set as the owner of these guilds
@@ -145,7 +145,7 @@ const scrapeNpcsCommand: SeedSubcommandHandler = async (options) => {
 };
 
 const scrapeAllCommand: SeedSubcommandHandler = async (options) => {
-  console.log(chalk.blue("🔄 Starting complete scraping process...\n"));
+  console.log(styleText("blue", "🔄 Starting complete scraping process...\n"));
 
   await scrapeItems(options.itemsOutput ?? DEFAULT_ITEMS_OUTPUT, options.force);
   console.log();
@@ -153,7 +153,7 @@ const scrapeAllCommand: SeedSubcommandHandler = async (options) => {
   await scrapeNpcs(options.npcsOutput ?? DEFAULT_NPCS_OUTPUT, options.force);
   console.log();
 
-  console.log(chalk.green("✅ Scraping completed successfully!"));
+  console.log(styleText("green", "✅ Scraping completed successfully!"));
 };
 
 const generatePlayersFile = async (
@@ -166,7 +166,8 @@ const generatePlayersFile = async (
 
   if (outputExists && !force) {
     console.log(
-      chalk.yellow(
+      styleText(
+        "yellow",
         `⏭️  Players file already exists at ${outputPath}. Use --force to regenerate.`,
       ),
     );
@@ -174,11 +175,12 @@ const generatePlayersFile = async (
     return;
   }
 
-  console.log(chalk.blue(`Generating ${count} players...`));
+  console.log(styleText("blue", `Generating ${count} players...`));
   const players = generatePlayers(count);
   await writeFile(outputPath, JSON.stringify(players, null, 2));
   console.log(
-    chalk.green(
+    styleText(
+      "green",
       `✅ Generated ${players.length} players saved to ${outputPath}`,
     ),
   );
@@ -204,13 +206,13 @@ const runSeedCommand: SeedSubcommandHandler = async (options) => {
 const scrapeSetupData = async (options: SeedOptions): Promise<void> => {
   if (options.skipScrape) {
     console.log(
-      chalk.gray("⏭️  Step 1: Skipped scraping (using existing data)\n"),
+      styleText("gray", "⏭️  Step 1: Skipped scraping (using existing data)\n"),
     );
 
     return;
   }
 
-  console.log(chalk.blue("📥 Step 1: Scraping data from margoworld.pl"));
+  console.log(styleText("blue", "📥 Step 1: Scraping data from margoworld.pl"));
   await scrapeItems(DEFAULT_ITEMS_OUTPUT, options.force);
   console.log();
   await scrapeNpcs(DEFAULT_NPCS_OUTPUT, options.force);
@@ -221,19 +223,19 @@ const generateSetupPlayers = async (
   playerCount: number,
   force: boolean | undefined,
 ): Promise<void> => {
-  console.log(chalk.blue("👥 Step 2: Generating players"));
+  console.log(styleText("blue", "👥 Step 2: Generating players"));
   await generatePlayersFile(playerCount, DEFAULT_PLAYERS_OUTPUT, force);
   console.log();
 };
 
 const setupCommand: SeedSubcommandHandler = async (options) => {
-  console.log(chalk.blue("🚀 Starting complete setup...\n"));
+  console.log(styleText("blue", "🚀 Starting complete setup...\n"));
   await scrapeSetupData(options);
 
   const playerCount = options.players ?? SEED_CONFIG.players.count;
   await generateSetupPlayers(playerCount, options.force);
 
-  console.log(chalk.blue("🌱 Step 3: Seeding database"));
+  console.log(styleText("blue", "🌱 Step 3: Seeding database"));
   await seed({
     guildsCount: options.guilds,
     lootsCount: options.loots,
@@ -241,7 +243,7 @@ const setupCommand: SeedSubcommandHandler = async (options) => {
     clean: true,
   });
 
-  console.log(chalk.green("\n✅ Complete setup finished successfully!"));
+  console.log(styleText("green", "\n✅ Complete setup finished successfully!"));
 };
 
 const SEED_SUBCOMMAND_HANDLERS = new Map<string, SeedSubcommandHandler>(
@@ -274,9 +276,10 @@ export const seedCommand = async (args: string[]): Promise<void> => {
   const handler = SEED_SUBCOMMAND_HANDLERS.get(subcommand);
 
   if (!handler) {
-    console.error(chalk.red(`\n❌ Unknown subcommand: ${subcommand}\n`));
+    console.error(styleText("red", `\n❌ Unknown subcommand: ${subcommand}\n`));
     console.log(
-      chalk.gray(
+      styleText(
+        "gray",
         `Run 'bun run seed -- --help' to see available subcommands.\n`,
       ),
     );
@@ -287,7 +290,7 @@ export const seedCommand = async (args: string[]): Promise<void> => {
     await handler(options);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(chalk.red(`\n❌ Error: ${message}\n`));
+    console.error(styleText("red", `\n❌ Error: ${message}\n`));
     process.exit(1);
   }
 };

@@ -1,6 +1,6 @@
 import amqp from "amqplib";
 import type { Schema } from "effect";
-import { chalk } from "zx";
+import { styleText } from "node:util";
 
 interface PublishOptions {
   exchange: string;
@@ -46,10 +46,16 @@ class RabbitMQClient {
         persistent: true,
       });
 
-      console.log(chalk.green("\n✓ Event published successfully!\n"));
-      console.log(chalk.gray("Exchange:"), chalk.cyan(exchange));
-      console.log(chalk.gray("Routing Key:"), chalk.cyan(routingKey));
-      console.log(chalk.gray("Payload:\n"), chalk.dim(serializedPayload));
+      console.log(styleText("green", "\n✓ Event published successfully!\n"));
+      console.log(styleText("gray", "Exchange:"), styleText("cyan", exchange));
+      console.log(
+        styleText("gray", "Routing Key:"),
+        styleText("cyan", routingKey),
+      );
+      console.log(
+        styleText("gray", "Payload:\n"),
+        styleText("dim", serializedPayload),
+      );
       console.log();
     } catch (error) {
       throw new Error(
@@ -69,7 +75,10 @@ class RabbitMQClient {
       }
     } catch {
       console.warn(
-        chalk.yellow(`Warning: Failed to close RabbitMQ connection gracefully`),
+        styleText(
+          "yellow",
+          `Warning: Failed to close RabbitMQ connection gracefully`,
+        ),
       );
     }
   }
@@ -80,13 +89,22 @@ export const createRabbitMQClient = async (): Promise<RabbitMQClient> => {
 
   if (!uri) {
     console.error(
-      chalk.red("\n❌ Error: RABBITMQ_URI environment variable is not set\n"),
+      styleText(
+        "red",
+        "\n❌ Error: RABBITMQ_URI environment variable is not set\n",
+      ),
     );
     console.log(
-      chalk.gray("Please set RABBITMQ_URI in your .env file or export it:\n"),
+      styleText(
+        "gray",
+        "Please set RABBITMQ_URI in your .env file or export it:\n",
+      ),
     );
     console.log(
-      chalk.cyan("  export RABBITMQ_URI=amqp://user:pass@localhost:5672\n"),
+      styleText(
+        "cyan",
+        "  export RABBITMQ_URI=amqp://user:pass@localhost:5672\n",
+      ),
     );
     process.exit(1);
   }

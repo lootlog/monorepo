@@ -44,7 +44,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "lint": "oxlint src",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "test": "bun test"
   },
   "dependencies": {

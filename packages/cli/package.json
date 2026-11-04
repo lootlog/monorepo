@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "lint": "oxlint src",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "test": "bun test",
     "env:generate": "bun src/commands/env/generate.ts",
     "events": "bun src/index.ts events",
@@ -31,8 +31,7 @@
     "effect": "catalog:",
     "node-html-parser": "^9.0.4",
     "pg": "^8.23.1",
-    "random-words": "^2.0.1",
-    "zx": "^8.8.5"
+    "random-words": "^2.0.1"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

@@ -1,4 +1,4 @@
-import { chalk } from "zx";
+import { styleText } from "node:util";
 import { publish } from "./publish.js";
 
 const EVENTS_COMMANDS = new Map(
@@ -12,23 +12,23 @@ export const events = async (args: string[]): Promise<void> => {
 
   if (!subcommand || subcommand === "--help" || subcommand === "-h") {
     console.log(`
-${chalk.bold("events - RabbitMQ event management")}
+${styleText("bold", "events - RabbitMQ event management")}
 
-${chalk.bold("Usage:")}
+${styleText("bold", "Usage:")}
   bun run events <command> [options]
 
-${chalk.bold("Commands:")}
+${styleText("bold", "Commands:")}
   publish     Publish test events to RabbitMQ
 
-${chalk.bold("Examples:")}
+${styleText("bold", "Examples:")}
   bun run events:publish              # Interactive event selection
   bun run events:publish --help       # Show publish command help
   bun run events:publish --event loot-created
 
-${chalk.bold("Global Options:")}
+${styleText("bold", "Global Options:")}
   -h, --help                       Show this help message
 
-${chalk.bold("Requirements:")}
+${styleText("bold", "Requirements:")}
   - RABBITMQ_URI environment variable must be set
   - RabbitMQ server must be running and accessible
     `);
@@ -39,9 +39,12 @@ ${chalk.bold("Requirements:")}
   const commandHandler = EVENTS_COMMANDS.get(subcommand);
 
   if (!commandHandler) {
-    console.error(chalk.red(`\n❌ Unknown command: ${subcommand}\n`));
+    console.error(styleText("red", `\n❌ Unknown command: ${subcommand}\n`));
     console.log(
-      chalk.gray(`Run 'bun run events -- --help' to see available commands.\n`),
+      styleText(
+        "gray",
+        `Run 'bun run events -- --help' to see available commands.\n`,
+      ),
     );
     process.exit(1);
   }
