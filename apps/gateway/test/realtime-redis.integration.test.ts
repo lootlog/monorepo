@@ -2,7 +2,10 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { RedisClient } from "bun";
 import { slidingWindowRateLimitScript } from "@lootlog/database/sliding-window-rate-limit";
 import { BunRedis } from "@effect/platform-bun";
-import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
+import {
+  decodeRealtimeFrame,
+  tryDecodeRealtimeFrameValue,
+} from "@lootlog/protocol/realtime/codec";
 import { Permission } from "@lootlog/schema/permissions";
 import {
   Effect,
@@ -22,7 +25,10 @@ import {
   Wait,
 } from "testcontainers";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
-import { RedisGatewayStore } from "#src/platform/redis-store";
+import {
+  decodeFederatedRealtimeMessage,
+  RedisGatewayStore,
+} from "#src/platform/redis-store";
 import {
   GatewayMetrics,
   readClusterFederationVersion,
@@ -182,11 +188,10 @@ const federatedAirTagRevision = (
   raw: string,
   mapId: number,
 ): number | undefined => {
-  // SAFETY: the Gateway publishes only JSON objects on its federation channel.
-  const { frameJson } = JSON.parse(raw) as { frameJson?: string };
+  const { event } = decodeFederatedRealtimeMessage(raw);
 
-  if (!frameJson) return undefined;
-  const decoded = decodeRealtimeFrame(frameJson);
+  if (event === undefined) return undefined;
+  const decoded = Result.getOrThrow(tryDecodeRealtimeFrameValue(event));
 
   return "type" in decoded &&
     decoded.type === "air-tag.scope-updated" &&

@@ -12,7 +12,7 @@ import {
 import {
   encodeRealtimeFrame,
   prepareRealtimeFrame,
-  tryDecodeRealtimeFrame,
+  tryDecodeRealtimeFrameValue,
   tryParseEncodedRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
 import {
@@ -23,7 +23,7 @@ import {
   REALTIME_SERVER_CLOSE_CODES,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect, Result, Schema } from "effect";
+import { Effect, Predicate, Result, Schema } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
   type BackgroundTaskRunner,
@@ -95,7 +95,7 @@ export const GLOBAL_CHAT_FEDERATION_VERSION = 6;
 /** Replicas from this version decode `global-chat.deleted` and `global-chat.pinned`. */
 export const GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION = 7;
 
-/** Replicas from this version deliver `preciseFrame` of a presence publication. */
+/** Replicas from this version deliver `preciseEvent` of a presence publication. */
 export const PRESENCE_PAIR_FEDERATION_VERSION = 8;
 
 /** Replicas from this version decode `loot-split.received`. */
@@ -431,7 +431,7 @@ export class RealtimeHub {
       readonly discordId?: string;
     } = {},
   ): Promise<void> {
-    const { message, prepared } = this.createFederatedMessage({
+    const { message, prepared, frames } = this.createFederatedMessage({
       id: publicationId
         ? JSON.stringify([getScopeKey(scope), event.type, publicationId])
         : undefined,
@@ -443,7 +443,7 @@ export class RealtimeHub {
 
     this.deliver(message, prepared);
     // Retry federation even when this instance already delivered the publication.
-    await this.redis.publish(message);
+    await this.redis.publish(message, frames);
   }
 
   async publishToScopes(
@@ -465,7 +465,7 @@ export class RealtimeHub {
     if (scopes.length === 0) return;
     const { localOnly, ...recipients } = options;
 
-    const { message, prepared } = this.createFederatedMessage({
+    const { message, prepared, frames } = this.createFederatedMessage({
       scopes,
       frame: event,
       ...recipients,
@@ -473,27 +473,27 @@ export class RealtimeHub {
 
     this.deliver(message, prepared);
 
-    if (!localOnly) await this.redis.publish(message);
+    if (!localOnly) await this.redis.publish(message, frames);
   }
 
   async publishToUser(userId: string, event: Event): Promise<void> {
-    const { message, prepared } = this.createFederatedMessage({
+    const { message, prepared, frames } = this.createFederatedMessage({
       userId,
       frame: event,
     });
 
     this.deliver(message, prepared);
-    await this.redis.publish(message);
+    await this.redis.publish(message, frames);
   }
 
   async publishToDiscord(discordId: string, event: Event): Promise<void> {
-    const { message, prepared } = this.createFederatedMessage({
+    const { message, prepared, frames } = this.createFederatedMessage({
       discordId,
       frame: event,
     });
 
     this.deliver(message, prepared);
-    await this.redis.publish(message);
+    await this.redis.publish(message, frames);
   }
 
   onPermissionRebalance(
@@ -537,10 +537,10 @@ export class RealtimeHub {
 
     const scopeKey = getScopeKey(scope);
 
-    // `frame` stays the basic variant: a replica that predates the pair
-    // ignores `preciseFrame` and degrades its readers to basic presence.
+    // `event` stays the basic variant: a replica that predates the pair
+    // ignores `preciseEvent` and degrades its readers to basic presence.
     if (this.clusterFederationVersion >= PRESENCE_PAIR_FEDERATION_VERSION) {
-      const { message, prepared, preparedPrecise } =
+      const { message, prepared, preparedPrecise, frames } =
         this.createFederatedMessage({
           scopeKey,
           scope,
@@ -550,7 +550,7 @@ export class RealtimeHub {
         });
 
       this.deliver(message, prepared, preparedPrecise);
-      await this.redis.publish(message);
+      await this.redis.publish(message, frames);
 
       return;
     }
@@ -573,9 +573,9 @@ export class RealtimeHub {
     ];
 
     await Promise.all(
-      messages.map(async ({ message, prepared }) => {
+      messages.map(async ({ message, prepared, frames }) => {
         this.deliver(message, prepared);
-        await this.redis.publish(message);
+        await this.redis.publish(message, frames);
       }),
     );
   }
@@ -779,9 +779,8 @@ export class RealtimeHub {
         organizationId: options.organizationId,
         presenceAudience: options.presenceAudience,
         frameSchema: FRAME_SCHEMA,
-        frameJson: prepared.text,
-        preciseFrameJson: preparedPrecise?.text,
       },
+      frames: { event: prepared.text, preciseEvent: preparedPrecise?.text },
     };
   }
 
@@ -804,24 +803,28 @@ export class RealtimeHub {
     this.deliver(message);
   }
 
-  /** The event of a frame and, when it is canonical, its JSON text. */
+  /** The event of a frame and, when this replica encoded it, its JSON text. */
   private publicationFrame(
-    frameJson: string | undefined,
+    value: Schema.Json | undefined,
     frameSchema: string | undefined,
     local?: ReturnType<typeof prepareRealtimeFrame>,
   ): PublishedFrame | undefined {
-    const text = local?.text ?? frameJson;
+    const decoded =
+      local !== undefined
+        ? local.frame
+          ? Result.succeed(local.frame)
+          : tryParseEncodedRealtimeFrame(local.text)
+        : value === undefined
+          ? undefined
+          : frameSchema === FRAME_SCHEMA
+            ? Predicate.isObject(value)
+              ? // SAFETY: a replica with this schema encoded the value through it.
+                Result.succeed(value as typeof RealtimeFrame.Type)
+              : Result.fail(new Error("Federation frame is not an object"))
+            : // Validation strips the fields of another schema before re-encoding.
+              tryDecodeRealtimeFrameValue(value);
 
-    if (text === undefined) return;
-    // Text from another schema must be re-encoded after validation strips
-    // the fields this replica does not know.
-    const canonical = local !== undefined || frameSchema === FRAME_SCHEMA;
-
-    const decoded = local?.frame
-      ? Result.succeed(local.frame)
-      : canonical
-        ? tryParseEncodedRealtimeFrame(text)
-        : tryDecodeRealtimeFrame(text);
+    if (decoded === undefined) return;
 
     if (Result.isFailure(decoded)) {
       this.logger.warn(
@@ -834,7 +837,7 @@ export class RealtimeHub {
 
     if (!isServerEventFrame(decoded.success)) return;
 
-    return { event: decoded.success, text: canonical ? text : undefined };
+    return { event: decoded.success, text: local?.text };
   }
 
   private deliver(
@@ -848,7 +851,7 @@ export class RealtimeHub {
     if (candidates.size === 0) return;
 
     const published = this.publicationFrame(
-      message.frameJson,
+      message.event,
       message.frameSchema,
       local,
     );
@@ -931,11 +934,14 @@ export class RealtimeHub {
     message: FederatedRealtimeMessage,
     local?: ReturnType<typeof prepareRealtimeFrame>,
   ) {
-    if (message.preciseFrameJson === undefined || !message.organizationId)
+    if (
+      (local === undefined && message.preciseEvent === undefined) ||
+      !message.organizationId
+    )
       return;
 
     const published = this.publicationFrame(
-      message.preciseFrameJson,
+      message.preciseEvent,
       message.frameSchema,
       local,
     );
