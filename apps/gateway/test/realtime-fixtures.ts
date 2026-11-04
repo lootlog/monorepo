@@ -1,10 +1,35 @@
 import { Permission } from "@lootlog/schema/permissions";
+import { Redacted } from "effect";
+import type { GatewayConfiguration } from "../src/config/gateway-config.js";
 import type {
   FederatedRealtimeMessage,
   FederationState,
 } from "../src/platform/redis-store.js";
 import type { RealtimeHub } from "../src/realtime/realtime-hub.js";
 import type { GatewaySocket, SessionData } from "../src/realtime/session.js";
+
+/** Configuration for benchmarks that never open a connection. */
+export const benchmarkConfig = {
+  environment: "benchmark",
+  port: 0,
+  serviceName: "gateway",
+  serviceNamespace: "benchmark",
+  apiUrl: "http://localhost",
+  margonemSigningKeyUrl: "http://localhost",
+  rabbitmqUri: Redacted.make("unused"),
+  activityEventSignatureSecret: Redacted.make("unused"),
+  redis: {
+    host: "localhost",
+    port: 6379,
+    username: "",
+    password: Redacted.make("unused"),
+    keyPrefix: "benchmark",
+  },
+  websocketPath: "/ws",
+  allowedWebOrigins: new Set<string>(),
+  allowedExtensionOrigins: new Set<string>(),
+  maxBackpressureBytes: 1_048_576,
+} satisfies GatewayConfiguration;
 
 const unexpectedFederationIO = () =>
   Promise.reject(new Error("Unexpected federation I/O"));
