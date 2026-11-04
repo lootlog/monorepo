@@ -1,6 +1,6 @@
 {
   "name": "@lootlog/sdk",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Typed HTTP and realtime clients for the Lootlog public API",
   "homepage": "https://developer.lootlog.pl/docs/sdk",
   "bugs": {
@@ -62,7 +62,6 @@
     "test:package": "bun scripts/check-package.ts"
   },
   "dependencies": {
-    "@msgpack/msgpack": "^3.1.3",
     "effect": "4.1.2"
   },
   "devDependencies": {

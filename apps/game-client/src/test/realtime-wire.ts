@@ -1,4 +1,5 @@
 import type { RealtimeWebSocket } from "@lootlog/client/realtime";
+import type { RealtimeFrame } from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
@@ -9,7 +10,6 @@ type WireEvent = Parameters<RealtimeWebSocket["addEventListener"]>[0];
 type WireListener = Parameters<RealtimeWebSocket["addEventListener"]>[1];
 
 export class RealtimeWire implements RealtimeWebSocket {
-  binaryType: BinaryType = "arraybuffer";
   readyState = 0;
   readonly frames: ReturnType<typeof decodeRealtimeFrame>[] = [];
   private readonly listeners = new Map<WireEvent, WireListener>();
@@ -18,16 +18,15 @@ export class RealtimeWire implements RealtimeWebSocket {
     this.listeners.set(type, listener);
   }
 
-  send(data: string | Uint8Array): void {
-    if (!(data instanceof Uint8Array)) throw new Error("Expected binary frame");
+  send(data: string): void {
     this.frames.push(decodeRealtimeFrame(data));
   }
 
-  receive(frame: Parameters<typeof encodeRealtimeFrame>[0]): void {
-    this.listeners.get("message")?.({ data: encodeRealtimeFrame(frame) });
+  receive(frame: RealtimeFrame): void {
+    this.receiveText(encodeRealtimeFrame(frame));
   }
 
-  receiveBytes(data: Uint8Array): void {
+  receiveText(data: string): void {
     this.listeners.get("message")?.({ data });
   }
 

@@ -395,18 +395,12 @@ describe("usePings on the map", () => {
   });
   it("drops an unsupported raw ping type before presentation", async () => {
     const test = await setup();
-    const bytes = encodeRealtimeFrame(remotePing());
-    const text = new TextDecoder().decode(bytes);
-    const marker = new TextEncoder().encode("attention");
+    const text = encodeRealtimeFrame(remotePing());
 
-    const offset = bytes.findIndex((_, index) =>
-      marker.every((byte, j) => bytes[index + j] === byte),
+    expect(text).toContain('"attention"');
+    await act(() =>
+      test.wire.receiveText(text.replace('"attention"', '"bad-value"')),
     );
-
-    expect(text).toContain("attention");
-    expect(offset).toBeGreaterThanOrEqual(0);
-    bytes.set(new TextEncoder().encode("bad-value"), offset);
-    await act(() => test.wire.receiveBytes(bytes));
     expect(test.play).not.toHaveBeenCalled();
     expect(test.addDraw).not.toHaveBeenCalled();
   });

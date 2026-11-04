@@ -51,7 +51,6 @@ export interface SessionData extends AuthenticatedIdentity {
   readonly supportsGlobalChat?: boolean;
   /** Decodes global chat moderation and stats, and follows per-world channels. */
   readonly supportsGlobalChatChannels?: boolean;
-  readonly frameEncoding?: "json";
   joined: boolean;
   /** Set when the gateway will close the socket; it no longer acts on commands. */
   closing?: boolean;

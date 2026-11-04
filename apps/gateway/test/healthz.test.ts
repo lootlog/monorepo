@@ -471,7 +471,7 @@ describe("gateway HTTP boundary", () => {
           origin: "https://classic.margonem.pl",
           "x-auth-user-id": "user-1",
           "x-auth-discord-id": "discord-1",
-          "sec-websocket-protocol": `lootlog.realtime.v1${supportsFeed ? ", lootlog.feed.v1" : ""}${supportsNotificationVolunteer ? ", lootlog.notification-volunteer.v1" : ""}${supportsBattlePings ? ", lootlog.battle-ping.v1" : ""}${supportsTeamBattlePings ? ", lootlog.battle-ping.team.v1" : ""}${supportsPartyGatheringState ? ", lootlog.party-gathering-state.v1" : ""}${supportsSessionHello ? ", lootlog.session-hello.v1" : ""}`,
+          "sec-websocket-protocol": `lootlog.realtime.json.v1${supportsFeed ? ", lootlog.feed.v1" : ""}${supportsNotificationVolunteer ? ", lootlog.notification-volunteer.v1" : ""}${supportsBattlePings ? ", lootlog.battle-ping.v1" : ""}${supportsTeamBattlePings ? ", lootlog.battle-ping.team.v1" : ""}${supportsPartyGatheringState ? ", lootlog.party-gathering-state.v1" : ""}${supportsSessionHello ? ", lootlog.session-hello.v1" : ""}`,
         },
       });
 
@@ -505,27 +505,13 @@ describe("gateway HTTP boundary", () => {
         supportsSessionHello,
       );
       expect(upgradeOptions?.headers).toEqual({
-        "sec-websocket-protocol": "lootlog.realtime.v1",
+        "sec-websocket-protocol": "lootlog.realtime.json.v1",
       });
     },
   );
 
-  test("uses readable JSON frames locally when the browser strips public subprotocols", async () => {
-    let upgradeOptions:
-      | {
-          readonly data: { readonly frameEncoding?: string };
-          readonly headers?: HeadersInit;
-        }
-      | undefined;
-
-    const authenticated = {
-      config: { websocketPath: "/ws", environment: "local" },
-      runPromise: Effect.runPromise,
-      auth,
-      hub,
-      guilds,
-      presence,
-    };
+  test("accepts a client that offers no subprotocol", async () => {
+    let upgradeOptions: { readonly headers?: HeadersInit } | undefined;
 
     const request = new Request("https://gateway.example/ws", {
       headers: {
@@ -535,7 +521,14 @@ describe("gateway HTTP boundary", () => {
       },
     });
 
-    await createGatewayFetch(authenticated)(request, {
+    const response = await createGatewayFetch({
+      config: { websocketPath: "/ws", environment: "test" },
+      runPromise: Effect.runPromise,
+      auth,
+      hub,
+      guilds,
+      presence,
+    })(request, {
       upgrade: (_request, options) => {
         upgradeOptions = options;
 
@@ -543,8 +536,75 @@ describe("gateway HTTP boundary", () => {
       },
     });
 
-    expect(upgradeOptions?.data.frameEncoding).toBe("json");
+    expect(response).toBeUndefined();
+    expect(upgradeOptions).toBeDefined();
     expect(upgradeOptions?.headers).toBeUndefined();
+  });
+
+  test("echoes the JSON subprotocol to a session client that offers it", async () => {
+    let upgradeOptions: { readonly headers?: HeadersInit } | undefined;
+
+    const request = new Request("https://gateway.example/ws", {
+      headers: {
+        origin: "https://classic.margonem.pl",
+        "sec-websocket-protocol":
+          "lootlog.realtime.v1, lootlog.realtime.json.v1, lootlog.session-hello.v1",
+        "x-auth-user-id": "user-1",
+        "x-auth-discord-id": "discord-1",
+      },
+    });
+
+    const response = await createGatewayFetch({
+      config: { websocketPath: "/ws", environment: "test" },
+      runPromise: Effect.runPromise,
+      auth,
+      hub,
+      guilds,
+      presence,
+    })(request, {
+      upgrade: (_request, options) => {
+        upgradeOptions = options;
+
+        return true;
+      },
+    });
+
+    expect(response).toBeUndefined();
+    expect(upgradeOptions?.headers).toEqual({
+      "sec-websocket-protocol": "lootlog.realtime.json.v1",
+    });
+  });
+
+  test("rejects a client that offers only MessagePack frames without upgrading", async () => {
+    let upgraded = false;
+
+    const request = new Request("https://gateway.example/ws", {
+      headers: {
+        origin: "https://classic.margonem.pl",
+        "sec-websocket-protocol":
+          "lootlog.realtime.v1, lootlog.session-hello.v1",
+        "x-auth-user-id": "user-1",
+        "x-auth-discord-id": "discord-1",
+      },
+    });
+
+    const response = await createGatewayFetch({
+      config: { websocketPath: "/ws", environment: "test" },
+      runPromise: Effect.runPromise,
+      auth,
+      hub,
+      guilds,
+      presence,
+    })(request, {
+      upgrade: () => {
+        upgraded = true;
+
+        return true;
+      },
+    });
+
+    expect(response?.status).toBe(400);
+    expect(upgraded).toBe(false);
   });
 });
 
@@ -560,7 +620,7 @@ test("server API key upgrades allow absent Origin while preserving session and a
 
   const headers = {
     "sec-websocket-protocol":
-      "lootlog.realtime.v1, lootlog.party-gathering-state.v1",
+      "lootlog.realtime.json.v1, lootlog.party-gathering-state.v1",
     "x-auth-user-id": "u",
     "x-auth-discord-id": "d",
     "x-auth-api-key-access": JSON.stringify({

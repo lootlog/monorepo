@@ -1,6 +1,5 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { LootSplitAckSchema } from "@lootlog/schema/loot-split";
-import { decode, encode } from "@msgpack/msgpack";
 import { Predicate, Result, Schema } from "effect";
 import {
   PresenceSnapshot,
@@ -33,10 +32,7 @@ const tryEncodeFrame = (frame: RealtimeFrameType) =>
     try: () => {
       const validated = Schema.encodeUnknownSync(RealtimeFrame)(frame);
 
-      return {
-        frame: validated,
-        bytes: encode(validated, { ignoreUndefined: true }),
-      };
+      return { frame: validated, text: JSON.stringify(validated) };
     },
     catch: (error) =>
       new RealtimeCodecError({
@@ -47,18 +43,19 @@ const tryEncodeFrame = (frame: RealtimeFrameType) =>
   });
 
 export const tryEncodeRealtimeFrame = (frame: RealtimeFrameType) =>
-  Result.map(tryEncodeFrame(frame), ({ bytes }) => bytes);
+  Result.map(tryEncodeFrame(frame), ({ text }) => text);
 
-// Only reuse values that MessagePack would leave unchanged. In particular,
+// Only reuse values that a JSON round trip would leave unchanged. In particular,
 // open payloads may contain accessors, binary views, undefined or custom objects.
-// Keep the decoder as the authority for normalization and rejected map keys.
-const isMessagePackStable = (value: unknown): value is Schema.Json => {
-  if (Predicate.isNumber(value)) return !Object.is(value, -0);
-
-  if (Predicate.isString(value)) return !/[\uD800-\uDFFF]/u.test(value);
+// Keep the decoder as the authority for normalization and rejected keys.
+const isJsonStable = (value: unknown): value is Schema.Json => {
+  if (Predicate.isNumber(value))
+    return Number.isFinite(value) && !Object.is(value, -0);
 
   if (!Predicate.isObjectOrArray(value))
-    return value === null || Predicate.isBoolean(value);
+    return (
+      value === null || Predicate.isBoolean(value) || Predicate.isString(value)
+    );
 
   const prototype: unknown = Object.getPrototypeOf(value);
   const array = Array.isArray(value);
@@ -81,9 +78,9 @@ const isMessagePackStable = (value: unknown): value is Schema.Json => {
 
     if (!property?.enumerable || !("value" in property)) return false;
 
-    if (key === "__proto__" || /[\uD800-\uDFFF]/u.test(key)) return false;
+    if (key === "__proto__") return false;
 
-    if (!isMessagePackStable(property.value)) return false;
+    if (!isJsonStable(property.value)) return false;
   }
 
   return true;
@@ -94,22 +91,39 @@ export const prepareRealtimeFrame = (frame: RealtimeFrameType) => {
   const encoded = Result.getOrThrow(tryEncodeFrame(frame));
 
   return {
-    bytes: encoded.bytes,
+    text: encoded.text,
     // An absent value requests the normal decoder path, never the original input.
-    frame: isMessagePackStable(encoded.frame) ? encoded.frame : undefined,
+    frame: isJsonStable(encoded.frame) ? encoded.frame : undefined,
   };
 };
 
-export const encodeRealtimeFrame = (
-  frame: RealtimeFrameType,
-): Uint8Array<ArrayBuffer> => Result.getOrThrow(tryEncodeRealtimeFrame(frame));
+export const encodeRealtimeFrame = (frame: RealtimeFrameType): string =>
+  Result.getOrThrow(tryEncodeRealtimeFrame(frame));
 
-export const tryDecodeRealtimeFrame = (bytes: Uint8Array | ArrayBuffer) =>
+// JSON.stringify writes a `__proto__` key only in this form. Receivers that
+// copy keys by assignment would turn it into a prototype, so no frame has one.
+const PROTO_KEY = '"__proto__":';
+
+const assertNoProtoKey = (text: string): void => {
+  if (text.includes(PROTO_KEY))
+    throw new Error("The key __proto__ is not allowed");
+};
+
+/**
+ * Parse a frame that a peer encoded through this schema, without validating it
+ * again. Use `tryDecodeRealtimeFrame` for any other input.
+ */
+export const tryParseEncodedRealtimeFrame = (text: string) =>
   Result.try({
     try: () => {
-      const input = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+      assertNoProtoKey(text);
+      const value: unknown = JSON.parse(text);
 
-      return Schema.decodeUnknownSync(RealtimeFrame)(decode(input));
+      if (!Predicate.isObject(value))
+        throw new Error("Realtime frame is not an object");
+
+      // SAFETY: the caller vouches that this schema encoded the text.
+      return value as RealtimeFrameType;
     },
     catch: (error) =>
       new RealtimeCodecError({
@@ -119,9 +133,23 @@ export const tryDecodeRealtimeFrame = (bytes: Uint8Array | ArrayBuffer) =>
       }),
   });
 
-export const decodeRealtimeFrame = (
-  bytes: Uint8Array | ArrayBuffer,
-): RealtimeFrameType => Result.getOrThrow(tryDecodeRealtimeFrame(bytes));
+export const tryDecodeRealtimeFrame = (text: string) =>
+  Result.try({
+    try: () => {
+      assertNoProtoKey(text);
+
+      return Schema.decodeUnknownSync(RealtimeFrame)(JSON.parse(text));
+    },
+    catch: (error) =>
+      new RealtimeCodecError({
+        operation: "decode",
+        message: getErrorMessage(error),
+        cause: error,
+      }),
+  });
+
+export const decodeRealtimeFrame = (text: string): RealtimeFrameType =>
+  Result.getOrThrow(tryDecodeRealtimeFrame(text));
 
 export const decodePresenceSnapshot =
   Schema.decodeUnknownSync(PresenceSnapshot);

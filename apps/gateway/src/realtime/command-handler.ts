@@ -4,7 +4,6 @@ import {
   createAccessPolicySnapshot,
   diffAccessPolicies,
 } from "@lootlog/protocol/realtime/access-policy";
-import { decode } from "@msgpack/msgpack";
 import {
   decodeClientCommand,
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
@@ -156,13 +155,20 @@ const errorResponse = (
 ): RealtimeResponse => {
   const error = { code, message, retryable };
 
-  // MessagePack encodes an undefined field as nil, which the schema rejects.
+  // The frame schema rejects an undefined field.
   return {
     v: 1,
     requestId,
     status: "error",
     error: retryAfterMs === undefined ? error : { ...error, retryAfterMs },
   };
+};
+
+// Code that copies command fields by assignment would turn this key into a prototype.
+const rejectProtoKey = (key: string, value: Schema.Json) => {
+  if (key === "__proto__") throw new Error("The key __proto__ is not allowed");
+
+  return value;
 };
 
 const invalidLegacyPayloadResponse = Function.compose(
@@ -338,34 +344,13 @@ export class CommandHandler {
       );
     let decoded: unknown;
 
-    if (socket.data.frameEncoding === "json") {
-      if (Buffer.isBuffer(input)) {
-        return Effect.sync(() =>
-          socket.close(1003, "text JSON frames required"),
-        );
-      }
+    if (Buffer.isBuffer(input))
+      return Effect.sync(() => socket.close(1003, "text JSON frames required"));
 
-      try {
-        decoded = JSON.parse(input);
-      } catch {
-        return Effect.sync(() =>
-          socket.close(1007, "malformed realtime frame"),
-        );
-      }
-    } else {
-      if (!Buffer.isBuffer(input)) {
-        return Effect.sync(() =>
-          socket.close(1003, "binary MessagePack frames required"),
-        );
-      }
-
-      try {
-        decoded = decode(input);
-      } catch {
-        return Effect.sync(() =>
-          socket.close(1007, "malformed realtime frame"),
-        );
-      }
+    try {
+      decoded = JSON.parse(input, rejectProtoKey);
+    } catch {
+      return Effect.sync(() => socket.close(1007, "malformed realtime frame"));
     }
 
     let command: Command;

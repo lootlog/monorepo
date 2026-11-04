@@ -76,7 +76,7 @@
         "*.config.{ts,mts,js,mjs}",
         "**/*.{spec,test}.{ts,tsx,js}"
       ],
-      "ignoreDependencies": ["@msgpack/msgpack", "@lootlog/protocol"]
+      "ignoreDependencies": ["@lootlog/protocol"]
     }
   },
   "ignoreWorkspaces": ["repos/**"],

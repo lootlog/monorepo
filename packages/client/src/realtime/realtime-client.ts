@@ -1,6 +1,6 @@
 import {
-  decodeRealtimeFrame,
   isServerEventFrame,
+  REALTIME_JSON_SUBPROTOCOL,
   PRESENCE_HEARTBEAT_INTERVAL_MS,
   PRESENCE_EXPIRY_MS,
   REALTIME_PING_CAPABILITY,
@@ -13,11 +13,11 @@ import {
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
 import {
+  decodeRealtimeFrame,
   encodeRealtimeFrame,
   hasRealtimeCapabilities,
-  tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
-import { Result } from "effect";
+import { Predicate } from "effect";
 import { notifyListeners } from "./notify-listeners.js";
 
 type CommandType = ClientCommand["type"];
@@ -36,7 +36,6 @@ export type RealtimeConnectionState =
   | "reconnecting";
 
 export interface RealtimeWebSocket {
-  binaryType: BinaryType;
   readonly readyState: number;
   addEventListener(
     type: "open" | "close" | "error" | "message",
@@ -45,7 +44,7 @@ export interface RealtimeWebSocket {
       readonly code?: number;
     }) => void,
   ): void;
-  send(data: string | Uint8Array<ArrayBuffer>): void;
+  send(data: string): void;
   close(code?: number, reason?: string): void;
 }
 
@@ -57,8 +56,8 @@ export type RealtimeWebSocketFactory = (
 export interface RealtimeClientOptions {
   readonly url: string;
   readonly path?: string;
+  /** Capability subprotocols to offer next to `REALTIME_JSON_SUBPROTOCOL`. */
   readonly protocols?: ReadonlyArray<string>;
-  readonly frameEncoding?: "json" | "messagepack";
   readonly requestTimeoutMs?: number;
   readonly reconnectBaseDelayMs?: number;
   readonly reconnectMaxDelayMs?: number;
@@ -122,15 +121,6 @@ const scopeKey = (scope: SubscriptionScope): string =>
     scope.mapId ?? null,
   ]);
 
-const toBytes = async (data: unknown): Promise<Uint8Array> => {
-  if (data instanceof Uint8Array) return data;
-
-  if (data instanceof ArrayBuffer) return new Uint8Array(data);
-
-  if (data instanceof Blob) return new Uint8Array(await data.arrayBuffer());
-  throw new Error("Gateway returned a non-binary realtime frame");
-};
-
 const SERVER_CLOSE_CODES: ReadonlySet<number> = new Set(
   Object.values(REALTIME_SERVER_CLOSE_CODES),
 );
@@ -143,13 +133,12 @@ const getPresenceSessionId = (data: unknown): string | null => {
 
 export class RealtimeClient {
   private readonly url: string;
-  private readonly protocols?: string[];
+  private readonly protocols: string[];
   private readonly requestTimeoutMs: number;
   private readonly reconnectBaseDelayMs: number;
   private readonly reconnectMaxDelayMs: number;
   private readonly random: () => number;
   private readonly webSocketFactory: RealtimeWebSocketFactory;
-  private readonly frameEncoding: "json" | "messagepack";
   private readonly eventListeners = new Set<(event: ServerEvent) => void>();
   private readonly stateListeners = new Set<
     (state: RealtimeConnectionState) => void
@@ -177,18 +166,18 @@ export class RealtimeClient {
   private pingSupported = false;
   private latencyProbeInFlight = false;
   private manuallyClosed = false;
-  private messageChain = Promise.resolve();
   private rejoinHandler: (() => Promise<void>) | null = null;
 
   constructor(options: RealtimeClientOptions) {
     this.url = normalizeUrl(options.url, options.path ?? "/ws");
-    this.protocols = options.protocols ? [...options.protocols] : undefined;
+    this.protocols = [
+      ...new Set([REALTIME_JSON_SUBPROTOCOL, ...(options.protocols ?? [])]),
+    ];
     this.requestTimeoutMs = options.requestTimeoutMs ?? 20_000;
     this.reconnectBaseDelayMs = options.reconnectBaseDelayMs ?? 1_000;
     this.reconnectMaxDelayMs = options.reconnectMaxDelayMs ?? 30_000;
     this.random = options.random ?? Math.random;
     this.webSocketFactory = options.webSocketFactory ?? nativeWebSocketFactory;
-    this.frameEncoding = options.frameEncoding ?? "messagepack";
   }
 
   get state(): RealtimeConnectionState {
@@ -347,7 +336,7 @@ export class RealtimeClient {
       try {
         // SAFETY: the command discriminator and payload are coupled by CommandData<Type>.
         activeSocket.send(
-          this.encodeFrame({
+          encodeRealtimeFrame({
             v: REALTIME_PROTOCOL_VERSION,
             type,
             requestId,
@@ -368,7 +357,7 @@ export class RealtimeClient {
     if (!activeSocket || activeSocket.readyState !== WEBSOCKET_OPEN) return;
     // SAFETY: the command discriminator and payload are coupled by CommandData<Type>.
     activeSocket.send(
-      this.encodeFrame({
+      encodeRealtimeFrame({
         v: REALTIME_PROTOCOL_VERSION,
         type,
         data,
@@ -381,7 +370,6 @@ export class RealtimeClient {
 
     if (this.manuallyClosed) return;
     const socket = this.webSocketFactory(this.url, this.protocols);
-    socket.binaryType = "arraybuffer";
     this.socket = socket;
     socket.addEventListener("open", () => {
       if (this.socket !== socket) return;
@@ -406,14 +394,14 @@ export class RealtimeClient {
       }
     });
     socket.addEventListener("message", (event) => {
-      this.messageChain = this.messageChain
-        .then(() => this.handleMessage(event.data, socket))
-        .catch(() =>
-          socket.close(
-            REALTIME_CLIENT_CLOSE_CODES.malformedFrame,
-            "malformed realtime frame",
-          ),
+      try {
+        this.handleMessage(event.data, socket);
+      } catch {
+        socket.close(
+          REALTIME_CLIENT_CLOSE_CODES.malformedFrame,
+          "malformed realtime frame",
         );
+      }
     });
     socket.addEventListener("close", (event) => {
       if (this.socket !== socket) return;
@@ -511,14 +499,12 @@ export class RealtimeClient {
     }
   }
 
-  private async handleMessage(
-    data: unknown,
-    socket: RealtimeWebSocket,
-  ): Promise<void> {
+  private handleMessage(data: unknown, socket: RealtimeWebSocket): void {
     if (this.socket !== socket) return;
-    const frame = await this.decodeFrame(data);
 
-    if (this.socket !== socket) return;
+    if (!Predicate.isString(data))
+      throw new Error("Gateway returned a non-text realtime frame");
+    const frame = decodeRealtimeFrame(data);
 
     if ("status" in frame) {
       const pending = this.pending.get(frame.requestId);
@@ -556,27 +542,6 @@ export class RealtimeClient {
       (listener) => listener(frame),
       `server event ${frame.type}`,
     );
-  }
-
-  private encodeFrame(frame: ClientCommand): string | Uint8Array<ArrayBuffer> {
-    return this.frameEncoding === "json"
-      ? JSON.stringify(frame)
-      : encodeRealtimeFrame(frame);
-  }
-
-  private async decodeFrame(data: unknown) {
-    if (this.frameEncoding === "json") {
-      if (typeof data !== "string")
-        throw new Error("Gateway returned a non-text realtime frame");
-
-      return decodeRealtimeFrame(JSON.parse(data));
-    }
-
-    const decoded = tryDecodeRealtimeFrame(await toBytes(data));
-
-    if (Result.isFailure(decoded)) throw decoded.failure;
-
-    return decoded.success;
   }
 
   private scheduleReconnect(): void {

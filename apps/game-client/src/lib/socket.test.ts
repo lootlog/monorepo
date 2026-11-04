@@ -41,8 +41,6 @@ it.each(["success", "legacy", "policy", "player"])(
     const listeners = new Map<string, (event: { data?: unknown }) => void>();
 
     const send = vi.fn<RealtimeWebSocket["send"]>((bytes) => {
-      if (!(bytes instanceof Uint8Array))
-        throw new Error("Expected binary frame");
       const frame = decodeRealtimeFrame(bytes);
 
       if (!("requestId" in frame) || !frame.requestId)
@@ -70,7 +68,6 @@ it.each(["success", "legacy", "policy", "player"])(
 
     const wire: RealtimeWebSocket = {
       readyState: 1,
-      binaryType: "arraybuffer",
       addEventListener: (type, listener) => {
         listeners.set(type, listener);
       },
@@ -156,8 +153,7 @@ it.each(["success", "legacy", "policy", "player"])(
       await vi.waitFor(() => expect(send).toHaveBeenCalledOnce());
       const bytes = send.mock.calls[0]?.[0];
 
-      if (!(bytes instanceof Uint8Array))
-        throw new Error("Expected presence publication");
+      if (bytes === undefined) throw new Error("Expected presence publication");
       expect(decodeRealtimeFrame(bytes)).toMatchObject({
         type: "presence.publish",
         data: { organizationIds: ["organization-1"] },
@@ -186,7 +182,6 @@ it("dispatches private volunteer frames to the legacy volunteer listener", async
     url: "https://gateway.example.test",
     webSocketFactory: () => ({
       readyState: 1,
-      binaryType: "arraybuffer",
       addEventListener: (type, listener) => listeners.set(type, listener),
       send: () => {},
       close: () => {},
@@ -268,8 +263,6 @@ describe("access policy synchronization", () => {
     });
 
     const send = vi.fn<RealtimeWebSocket["send"]>((bytes) => {
-      if (!(bytes instanceof Uint8Array))
-        throw new Error("Expected binary frame");
       const frame = decodeRealtimeFrame(bytes);
 
       if (!("requestId" in frame) || !frame.requestId)
@@ -326,7 +319,6 @@ describe("access policy synchronization", () => {
       url: "https://gateway.example.test",
       webSocketFactory: () => ({
         readyState: 1,
-        binaryType: "arraybuffer",
         addEventListener: (type, listener) => listeners.set(type, listener),
         send,
         close: () => listeners.get("close")?.({}),
@@ -440,13 +432,10 @@ it("lets the provider rejoin the current world once after reconnect", async () =
       const listeners = new Map<string, (event: { data?: unknown }) => void>();
 
       const wire: RealtimeWebSocket = {
-        binaryType: "arraybuffer",
         readyState: 1,
         addEventListener: (type, listener) => listeners.set(type, listener),
         close: () => listeners.get("close")?.({}),
         send: (bytes) => {
-          if (!(bytes instanceof Uint8Array))
-            throw new Error("Expected binary frame");
           const frame = decodeRealtimeFrame(bytes);
 
           if (!("requestId" in frame) || !frame.requestId)

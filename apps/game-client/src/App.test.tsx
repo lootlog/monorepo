@@ -116,7 +116,6 @@ describe("extension session lifecycle", () => {
 
     const socket: RealtimeWebSocket = {
       readyState: 0,
-      binaryType: "arraybuffer",
       addEventListener: vi.fn<RealtimeWebSocket["addEventListener"]>(),
       send: vi.fn<RealtimeWebSocket["send"]>(),
       close: vi.fn<RealtimeWebSocket["close"]>(),

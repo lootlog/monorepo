@@ -116,15 +116,15 @@ const makeSession = (connectionId: string): SessionData => ({
 });
 
 const makeSocket = (connectionId: string) => {
-  const frames: Uint8Array[] = [];
+  const frames: string[] = [];
 
   const socket = {
     data: makeSession(connectionId),
     getBufferedAmount: () => 0,
-    send: (bytes: Uint8Array) => {
-      frames.push(bytes);
+    send: (text: string) => {
+      frames.push(text);
 
-      return bytes.byteLength;
+      return text.length;
     },
     close: () => undefined,
   };
@@ -183,10 +183,10 @@ const federatedAirTagRevision = (
   mapId: number,
 ): number | undefined => {
   // SAFETY: the Gateway publishes only JSON objects on its federation channel.
-  const { frame } = JSON.parse(raw) as { frame?: string };
+  const { frameJson } = JSON.parse(raw) as { frameJson?: string };
 
-  if (!frame) return undefined;
-  const decoded = decodeRealtimeFrame(Buffer.from(frame, "base64"));
+  if (!frameJson) return undefined;
+  const decoded = decodeRealtimeFrame(frameJson);
 
   return "type" in decoded &&
     decoded.type === "air-tag.scope-updated" &&
@@ -206,7 +206,7 @@ const moveAirTagSocket = (
   setSocketPresence(socket, { ...presence, location });
 };
 
-const eventsOfType = (frames: ReadonlyArray<Uint8Array>, type: string) => {
+const eventsOfType = (frames: ReadonlyArray<string>, type: string) => {
   const events: ReturnType<typeof decodeRealtimeFrame>[] = [];
 
   for (const frame of frames) {
@@ -881,7 +881,7 @@ describe("realtime Dragonfly integration", () => {
         new GatewayMetrics(store.command, firstHub).sample(),
       );
 
-      const stats = (frames: Uint8Array[]) =>
+      const stats = (frames: string[]) =>
         frames.flatMap((bytes) => {
           const frame = decodeRealtimeFrame(bytes);
 
@@ -3697,7 +3697,7 @@ describe("realtime Dragonfly integration", () => {
       const second = timerSocket("second-reporter");
       const lowLevelReader = timerSocket("low-level-reader", 50);
 
-      const presenceUpdates = (frames: readonly Uint8Array[]) =>
+      const presenceUpdates = (frames: readonly string[]) =>
         frames.flatMap((frame) => {
           const decoded = decodeRealtimeFrame(frame);
 

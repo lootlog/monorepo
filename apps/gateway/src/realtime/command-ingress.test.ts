@@ -1,6 +1,5 @@
 import { expect, test } from "bun:test";
 import { Effect, Metric } from "effect";
-import { encode } from "@msgpack/msgpack";
 import type { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import { createGatewayWebSocket, drainGateway } from "#src/app";
@@ -26,65 +25,57 @@ const socket = (connectionId: string): GatewaySocket => ({
   getBufferedAmount: () => 0,
 });
 
-test.each(["json", "msgpack"] as const)(
-  "default admission permits restoring 4096 large valid subscriptions using %s",
-  async (encoding) => {
-    const tasks: Array<Effect.Effect<void, unknown>> = [];
-    let rejected = 0;
-    let completed = 0;
+test("default admission permits restoring 4096 large valid subscriptions", async () => {
+  const tasks: Array<Effect.Effect<void, unknown>> = [];
+  let rejected = 0;
+  let completed = 0;
 
-    const ingress = new CommandIngress(
-      () =>
-        Effect.sync(() => {
-          completed++;
-        }),
-      () => {
-        rejected++;
-      },
-      () => Effect.void,
-      (_label, task) => {
-        tasks.push(task);
-      },
-    );
+  const ingress = new CommandIngress(
+    () =>
+      Effect.sync(() => {
+        completed++;
+      }),
+    () => {
+      rejected++;
+    },
+    () => Effect.void,
+    (_label, task) => {
+      tasks.push(task);
+    },
+  );
 
-    const connection = socket("reconnect");
-    ingress.open(connection);
+  const connection = socket("reconnect");
+  ingress.open(connection);
 
-    for (let index = 0; index < 4096; index++) {
-      const scope = {
-        topic: "map.pings",
-        organizationId: "organization",
-        world: "w".repeat(900),
-        mapId: index,
-      } satisfies SubscriptionScope;
+  for (let index = 0; index < 4096; index++) {
+    const scope = {
+      topic: "map.pings",
+      organizationId: "organization",
+      world: "w".repeat(900),
+      mapId: index,
+    } satisfies SubscriptionScope;
 
-      const frame = {
-        v: 1,
-        requestId: `restore-${index}`,
-        type: "subscription.subscribe",
-        data: scope,
-      };
+    const frame = {
+      v: 1,
+      requestId: `restore-${index}`,
+      type: "subscription.subscribe",
+      data: scope,
+    };
 
-      ingress.message(
-        connection,
-        encoding === "json"
-          ? JSON.stringify(frame)
-          : Buffer.from(encode(frame)),
-      );
-    }
+    ingress.message(connection, JSON.stringify(frame));
+  }
 
-    expect(rejected).toBe(0);
+  expect(rejected).toBe(0);
 
-    while (tasks.length > 0) {
-      const task = tasks.shift();
+  while (tasks.length > 0) {
+    const task = tasks.shift();
 
-      if (task) await Effect.runPromise(task);
-    }
+    if (task) await Effect.runPromise(task);
+  }
 
-    expect(completed).toBe(4096);
-    expect(ingress.getDiagnostics()).toMatchObject({ pending: 0, bytes: 0 });
-  },
-);
+  expect(completed).toBe(4096);
+  expect(ingress.getDiagnostics()).toMatchObject({ pending: 0, bytes: 0 });
+});
 
 const setup = (
   limits: ConstructorParameters<typeof CommandIngress>[4] = {
@@ -524,10 +515,8 @@ test("announces the connection before join only to clients that negotiated sessi
     const client: GatewaySocket = {
       ...base,
       data: { ...base.data, supportsSessionHello },
-      send: (bytes) => {
-        if (!(bytes instanceof Uint8Array))
-          throw new Error("Expected binary hello");
-        frames.push(decodeRealtimeFrame(bytes));
+      send: (text: string) => {
+        frames.push(decodeRealtimeFrame(text));
 
         return 1;
       },
