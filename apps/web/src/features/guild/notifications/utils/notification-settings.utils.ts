@@ -100,14 +100,6 @@ export const getGuildNotificationRuleNpcCount = (
   rule: Pick<GuildNotificationRule, "filters">,
 ) => getGuildNotificationRuleNpcIds(rule).length;
 
-export const getGuildNotificationTargetUsageCount = (
-  targetId: number,
-  rules: GuildNotificationRule[],
-) =>
-  rules.filter((rule) =>
-    rule.targets.some(({ target }) => target.id === targetId),
-  ).length;
-
 export const getGuildNotificationOrphanedRuleCount = (
   targetId: number,
   rules: GuildNotificationRule[],

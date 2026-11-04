@@ -5,14 +5,14 @@ import { RankBadge } from "@/components/common/rank-badge";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import i18n from "@/i18n/config";
 import type { UserNpcKillsResponseDtoOutputItemsItem } from "@lootlog/client/main";
-import type { sortingTableFeatures } from "@/lib/tanstack-table-features";
+import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { formatNumber } from "@/lib/format-number";
 
 type NpcKill = UserNpcKillsResponseDtoOutputItemsItem;
 
 export const createKillsColumns = (
   startRank: number,
-): ColumnDef<typeof sortingTableFeatures, NpcKill>[] => [
+): ColumnDef<typeof coreTableFeatures, NpcKill>[] => [
   {
     id: "rank",
     header: () => <div className="text-center w-8">#</div>,
