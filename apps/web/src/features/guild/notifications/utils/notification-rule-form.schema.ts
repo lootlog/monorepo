@@ -1,5 +1,5 @@
 import type { TOptions } from "i18next";
-import { Schema } from "effect";
+import { Result, Schema, SchemaParser } from "effect";
 import {
   CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
   CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
@@ -14,8 +14,8 @@ import { parseManualNotificationRuleNpcIds } from "./notification-rule-form-npc.
 
 export const ALL_WORLDS_VALUE = "__all_worlds__";
 
-const LevelFilter = Schema.Int.check(
-  Schema.isBetween({ minimum: 0, maximum: 500 }),
+const decodeLevelFilter = SchemaParser.decodeUnknownResult(
+  Schema.Int.check(Schema.isBetween({ minimum: 0, maximum: 500 })),
 );
 
 const RuleFormFields = Schema.Struct({
@@ -36,8 +36,8 @@ const RuleFormFields = Schema.Struct({
   scheduleTimeOfDay: Schema.optional(Schema.String),
   scheduleWeekday: Schema.optional(Schema.String),
   scheduledUntil: Schema.optional(Schema.String),
-  npcLevelMin: Schema.optional(LevelFilter),
-  npcLevelMax: Schema.optional(LevelFilter),
+  npcLevelMin: Schema.optional(Schema.Number),
+  npcLevelMax: Schema.optional(Schema.Number),
   targetIds: Schema.mutable(Schema.Array(Schema.String)),
   enabled: Schema.Boolean,
 });
@@ -283,10 +283,22 @@ const validateHeroSightingRule = (
 export const ruleFormSchema = (t: Translator, maxNpcCount: number) =>
   Schema.toStandardSchemaV1(
     RuleFormFields.check(
-      // One filter keeps the field rules and the trigger rules reporting
-      // together, so a submit shows every problem at once.
+      // Struct filters run only once every field decodes, so the fields take
+      // any value the inputs produce and every rule lives in this one filter:
+      // a submit then shows every problem at once.
       Schema.makeFilter((data) => {
         const issues: RuleFormIssues = [];
+
+        for (const key of ["npcLevelMin", "npcLevelMax"] as const) {
+          const level = data[key];
+
+          if (level === undefined) continue;
+          const decoded = decodeLevelFilter(level);
+
+          if (Result.isFailure(decoded)) {
+            issues.push({ path: [key], issue: decoded.failure });
+          }
+        }
 
         if (data.contentTemplate.length === 0) {
           addIssue(

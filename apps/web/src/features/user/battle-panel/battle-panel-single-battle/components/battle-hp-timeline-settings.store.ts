@@ -7,7 +7,10 @@ import {
   type BattleHpTimelineLayerConfig,
   type BattleHpTimelineLayerKey,
 } from "./battle-hp-timeline-layers";
-import { optionalWithFallback, withFallback } from "@/lib/lenient-schema";
+import {
+  optionalOrUndefined,
+  requiredWithFallback,
+} from "@lootlog/schema/stored-value";
 
 export type BattleHpTimelineHeightMode = "default" | "expanded";
 
@@ -54,16 +57,16 @@ const isBattleHpTimelineHeightMode = (
 
 const StoredLayers = Schema.Record(
   Schema.String,
-  withFallback(Schema.UndefinedOr(Schema.Boolean), undefined),
+  requiredWithFallback(Schema.UndefinedOr(Schema.Boolean), undefined),
 );
 
 const decodeStoredLayers = Schema.decodeUnknownOption(StoredLayers);
 
 const decodeStoredSettings = Schema.decodeUnknownOption(
   Schema.Struct({
-    heightMode: optionalWithFallback(Schema.Literals(["default", "expanded"])),
-    isChartHidden: optionalWithFallback(Schema.Boolean),
-    layers: optionalWithFallback(StoredLayers),
+    heightMode: optionalOrUndefined(Schema.Literals(["default", "expanded"])),
+    isChartHidden: optionalOrUndefined(Schema.Boolean),
+    layers: optionalOrUndefined(StoredLayers),
   }),
 );
 

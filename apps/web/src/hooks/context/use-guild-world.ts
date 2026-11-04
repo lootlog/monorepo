@@ -2,7 +2,7 @@ import { useRouter, useSearch } from "@tanstack/react-router";
 import { useEffect, useEffectEvent, useSyncExternalStore } from "react";
 import { Option, Schema } from "effect";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { withFallback } from "@/lib/lenient-schema";
+import { requiredWithFallback } from "@lootlog/schema/stored-value";
 
 /** The search param a link may use to open an Organization on a world. */
 export const GUILD_WORLD_SEARCH_PARAM = "world";
@@ -14,7 +14,7 @@ const getGuildWorldStorageKey = (guildId: string | undefined) =>
 
 // Anything unreadable falls back to all worlds instead of failing the page.
 const decodeStoredGuildWorld = Schema.decodeUnknownSync(
-  withFallback(Schema.NullOr(Schema.String), null),
+  requiredWithFallback(Schema.NullOr(Schema.String), null),
 );
 
 // An empty value comes from the time a world had to be picked first.

@@ -1,9 +1,6 @@
 import { Schema, SchemaTransformation } from "effect";
-import {
-  CoercedFinite,
-  readableEntries,
-  withFallback,
-} from "@/lib/lenient-schema";
+import { requiredWithFallback } from "@lootlog/schema/stored-value";
+import { CoercedFinite, readableEntries } from "@/lib/lenient-schema";
 import type { BattleTimelineResponseDtoOutputTimelineItem } from "@lootlog/client/battlelog";
 
 export type BattleHpTimelineTooltipDeltaKey =
@@ -134,7 +131,7 @@ const TooltipPayload = Schema.Struct({
 );
 
 export const getBattleHpTimelineTooltipPayload = Schema.decodeUnknownSync(
-  withFallback(Schema.NullOr(TooltipPayload), null),
+  requiredWithFallback(Schema.NullOr(TooltipPayload), null),
 );
 
 export const buildBattleHpTimelineTooltipData = (

@@ -3,10 +3,10 @@ import { AppearanceSettings } from "@/features/user/settings/appearance/appearan
 import { AppearanceSettingsPageSkeleton } from "@/features/user/settings/appearance/appearance-page-skeleton";
 
 import { Schema } from "effect";
-import { optionalWithFallback } from "@/lib/lenient-schema";
+import { optionalOrUndefined } from "@lootlog/schema/stored-value";
 
 const decodeAppearanceSearch = Schema.decodeUnknownSync(
-  Schema.Struct({ theme: optionalWithFallback(Schema.String) }),
+  Schema.Struct({ theme: optionalOrUndefined(Schema.String) }),
 );
 
 export const Route = createFileRoute("/_authenticated/@me/settings/appearance")(

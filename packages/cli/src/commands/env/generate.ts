@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { styleText } from "node:util";
-import { Effect } from "effect";
+import { Effect, Option } from "effect";
 import { Command, Flag, Prompt } from "effect/cli";
 import type { CliOptions, EnvFile, EnvVariable } from "../../types.js";
 import {
@@ -49,13 +49,19 @@ const processEnvFile = Effect.fn("processEnvFile")(function* (
   }
 
   if (exists && !options.force) {
-    const overwrite = yield* Prompt.run(
-      Prompt.Confirm({
-        message: styleText(
-          "yellow",
-          `⚠️  ${envFile.name}/.env already exists. Overwrite?`,
+    // Ctrl+C skips this file, like answering no.
+    const overwrite = Option.getOrElse(
+      yield* Effect.option(
+        Prompt.run(
+          Prompt.Confirm({
+            message: styleText(
+              "yellow",
+              `⚠️  ${envFile.name}/.env already exists. Overwrite?`,
+            ),
+          }),
         ),
-      }),
+      ),
+      () => false,
     );
 
     if (!overwrite) {

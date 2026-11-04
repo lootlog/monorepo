@@ -46,6 +46,23 @@ const createBaseTimerFormValues = () => ({
 });
 
 describe("ruleFormSchema", () => {
+  it("reports missing content and targets alongside an invalid level", () => {
+    const result = validate(5, {
+      ...createBaseTimerFormValues(),
+      contentTemplate: " ",
+      targetIds: [],
+      npcLevelMin: 1.5,
+    });
+
+    expect(result.issues?.map((issue) => issue.path)).toEqual(
+      expect.arrayContaining([
+        ["npcLevelMin"],
+        ["contentTemplate"],
+        ["targetIds"],
+      ]),
+    );
+  });
+
   it("requires at least one manual npc id when manual mode is enabled", () => {
     const result = validate(5, {
       ...createBaseTimerFormValues(),

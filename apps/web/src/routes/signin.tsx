@@ -6,12 +6,12 @@ import { restoreLastOrganization } from "@/lib/router/restore-last-organization"
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 import { Schema } from "effect";
-import { optionalWithFallback } from "@/lib/lenient-schema";
+import { optionalOrUndefined } from "@lootlog/schema/stored-value";
 
 const decodeSigninSearch = Schema.decodeUnknownSync(
   Schema.Struct({
-    error: optionalWithFallback(Schema.String),
-    redirect: optionalWithFallback(Schema.String),
+    error: optionalOrUndefined(Schema.String),
+    redirect: optionalOrUndefined(Schema.String),
   }),
 );
 
