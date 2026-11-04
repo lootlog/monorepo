@@ -12,6 +12,28 @@ import { LOOT_RARITY_CHART_COLORS } from "@lootlog/ui/lib/item-rarity-colors";
 import { getLootRarityChartConfig } from "./loot-rarity-chart-config";
 import { ChartSection } from "@/components/common/chart-section";
 import { CHART_SERIES_ANIMATION } from "@/lib/motion";
+import {
+  formatStatisticsDay,
+  formatStatisticsHour,
+} from "@/components/common/kill-analytics/format-statistics-date";
+
+// Hourly points are instants shown in Polish time; daily and weekly points are
+// the Polish calendar day written as UTC midnight, so they format in UTC.
+const tooltipDayFormatter = new Intl.DateTimeFormat("pl-PL", {
+  timeZone: "UTC",
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+});
+
+const tooltipHourFormatter = new Intl.DateTimeFormat("pl-PL", {
+  timeZone: "Europe/Warsaw",
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 type LootTimelineChartProps = {
   data?: LootStatsResponseDtoOutputTimelineItem[];
@@ -27,17 +49,11 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-
-    return hourly
-      ? date.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" })
-      : date.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit" });
-  };
-
   const chartData =
     data?.map((point) => ({
-      date: formatDate(point.date),
+      date: hourly
+        ? formatStatisticsHour(point.date)
+        : formatStatisticsDay(point.date.slice(0, 10)),
       fullDate: point.date,
       LEGENDARY: point.byRarity.LEGENDARY ?? 0,
       HEROIC: point.byRarity.HEROIC ?? 0,
@@ -81,15 +97,10 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
                 );
 
                 if (!item) return "";
-                const fullDate = item.fullDate;
-                const date = new Date(fullDate);
 
-                return date.toLocaleDateString("pl-PL", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "short",
-                  ...(hourly && { hour: "2-digit", minute: "2-digit" }),
-                });
+                return (
+                  hourly ? tooltipHourFormatter : tooltipDayFormatter
+                ).format(new Date(item.fullDate));
               }}
             />
           />
