@@ -6,7 +6,6 @@ import {
   createAccessPolicySnapshot,
 } from "@lootlog/protocol/realtime/access-policy";
 import { describe, expect, test } from "bun:test";
-import { decode, encode } from "@msgpack/msgpack";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Exit, Fiber, Metric, Predicate, Tracer } from "effect";
 import { TestClock } from "effect/testing";
@@ -291,14 +290,12 @@ test("heartbeat completion metrics include defects and interruptions without cre
         handler
           .handle(
             socket,
-            Buffer.from(
-              encode({
-                v: 1,
-                type: "presence.heartbeat",
-                requestId: "heartbeat",
-                data: { sessionId: socket.data.connectionId },
-              }),
-            ),
+            JSON.stringify({
+              v: 1,
+              type: "presence.heartbeat",
+              requestId: "heartbeat",
+              data: { sessionId: socket.data.connectionId },
+            }),
           )
           .pipe(
             Effect.provideService(Metric.MetricRegistry, registry),
@@ -339,9 +336,12 @@ test("session join traces preserve failure status before sending a correlated re
     handler
       .handle(
         socket,
-        Buffer.from(
-          encode({ v: 1, type: "session.join", requestId: "join", data: {} }),
-        ),
+        JSON.stringify({
+          v: 1,
+          type: "session.join",
+          requestId: "join",
+          data: {},
+        }),
       )
       .pipe(Effect.withTracer(tracer)),
   );
@@ -358,14 +358,13 @@ test("session join traces preserve failure status before sending a correlated re
 });
 
 test.each([
-  ["binary on JSON", "json", Buffer.from([0]), "1003", "unsupported_frame"],
-  ["text on MessagePack", undefined, "{}", "1003", "unsupported_frame"],
-  ["oversized", "json", "x".repeat(300 * 1_024), "1006", "payload_limit"],
+  ["binary", Buffer.from([0]), "1003", "unsupported_frame"],
+  ["oversized", "x".repeat(300 * 1_024), "1006", "payload_limit"],
 ] as const)(
   "classifies rejected %s wire frames",
-  async (_name, frameEncoding, frame, closeCode, cause) => {
+  async (_name, frame, closeCode, cause) => {
     const { handler } = setup();
-    const data = { ...makeSocket().socket.data, frameEncoding };
+    const { data } = makeSocket().socket;
     const tasks: Promise<unknown>[] = [];
 
     const ingress = new CommandIngress(
@@ -488,14 +487,12 @@ describe("presence fetch delivery", () => {
       await Effect.runPromise(
         handler.handle(
           socket,
-          Buffer.from(
-            encode({
-              v: 1,
-              type: "presence.fetch",
-              requestId: "fetch-1",
-              data,
-            }),
-          ),
+          JSON.stringify({
+            v: 1,
+            type: "presence.fetch",
+            requestId: "fetch-1",
+            data,
+          }),
         ),
       );
 
@@ -527,13 +524,11 @@ describe("presence fetch delivery", () => {
     await Effect.runPromise(
       handler.handle(
         socket,
-        Buffer.from(
-          encode({
-            v: 1,
-            type: "presence.fetch",
-            data: { organizationId: "organization-1", delivery: "response" },
-          }),
-        ),
+        JSON.stringify({
+          v: 1,
+          type: "presence.fetch",
+          data: { organizationId: "organization-1", delivery: "response" },
+        }),
       ),
     );
 
@@ -551,14 +546,12 @@ describe("presence fetch delivery", () => {
     await Effect.runPromise(
       handler.handle(
         socket,
-        Buffer.from(
-          encode({
-            v: 1,
-            type: "presence.fetch",
-            requestId: "denied",
-            data: { organizationId: "organization-1", delivery: "response" },
-          }),
-        ),
+        JSON.stringify({
+          v: 1,
+          type: "presence.fetch",
+          requestId: "denied",
+          data: { organizationId: "organization-1", delivery: "response" },
+        }),
       ),
     );
 
@@ -608,7 +601,7 @@ describe("presence reciprocity", () => {
       });
 
     const send = (command: ClientCommand) =>
-      Effect.runPromise(handler.handle(socket, Buffer.from(encode(command))));
+      Effect.runPromise(handler.handle(socket, JSON.stringify(command)));
 
     const publish = (requestId: string, organizationIds: string[]) =>
       send({
@@ -693,7 +686,7 @@ describe("presence reciprocity", () => {
       );
 
     const send = (command: ClientCommand) =>
-      Effect.runPromise(handler.handle(socket, Buffer.from(encode(command))));
+      Effect.runPromise(handler.handle(socket, JSON.stringify(command)));
 
     await send({
       v: 1,
@@ -733,7 +726,6 @@ describe("CommandHandler session lifecycle", () => {
       const { socket, closes } = makeSocket();
       Object.assign(socket.data, {
         joined,
-        frameEncoding: "json",
         guilds: joined ? [guild()] : [],
       });
       const previousGuilds = socket.data.guilds;
@@ -828,9 +820,7 @@ describe("CommandHandler session lifecycle", () => {
       for (const requestId of ["first", "second", "overload"]) {
         ingress.message(
           socket,
-          Buffer.from(
-            encode({ v: 1, type: "session.join", requestId, data: {} }),
-          ),
+          JSON.stringify({ v: 1, type: "session.join", requestId, data: {} }),
         );
       }
 
@@ -864,52 +854,41 @@ describe("CommandHandler session lifecycle", () => {
     }
   });
 
-  test.each(["json", "msgpack"] as const)(
-    "rejects overloaded %s commands without joining or publishing activity",
-    (frameEncoding) => {
-      const { handler, hub, activity } = setup();
-      const { socket, closes } = makeSocket();
-      Object.assign(socket.data, {
-        frameEncoding: frameEncoding === "json" ? "json" : undefined,
-      });
+  test("rejects overloaded commands without joining or publishing activity", () => {
+    const { handler, hub, activity } = setup();
+    const { socket, closes } = makeSocket();
 
-      const command = {
+    handler.rejectOverloaded(
+      socket,
+      JSON.stringify({
         v: 1,
         type: "session.join",
         requestId: "overloaded",
         data: {},
-      };
+      }),
+    );
 
-      const input =
-        frameEncoding === "json"
-          ? JSON.stringify(command)
-          : Buffer.from(encode(command));
-
-      handler.rejectOverloaded(socket, input);
-
-      expect(hub.responses).toEqual([
-        {
-          v: 1,
-          requestId: "overloaded",
-          status: "error",
-          error: {
-            code: "COMMAND_REJECTED",
-            message: "command temporarily unavailable",
-            retryable: true,
-          },
+    expect(hub.responses).toEqual([
+      {
+        v: 1,
+        requestId: "overloaded",
+        status: "error",
+        error: {
+          code: "COMMAND_REJECTED",
+          message: "command temporarily unavailable",
+          retryable: true,
         },
-      ]);
-      expect(socket.data.joined).toBe(false);
-      expect(activity.calls).toEqual([]);
-      expect(hub.events).toEqual([]);
-      expect(closes).toEqual([]);
-    },
-  );
+      },
+    ]);
+    expect(socket.data.joined).toBe(false);
+    expect(activity.calls).toEqual([]);
+    expect(hub.events).toEqual([]);
+    expect(closes).toEqual([]);
+  });
 
   test("overload preserves malformed-frame rejection", () => {
     const { handler, hub } = setup();
     const { socket, closes } = makeSocket();
-    Object.assign(socket.data, { frameEncoding: "json" });
     handler.rejectOverloaded(socket, "{");
     expect(closes).toEqual([1007]);
     expect(hub.responses).toEqual([]);
@@ -920,165 +899,118 @@ describe("CommandHandler session lifecycle", () => {
     const { socket, closes } = makeSocket();
     handler.rejectOverloaded(
       socket,
-      Buffer.from(encode({ v: 1, type: "session.join", data: {} })),
+      JSON.stringify({ v: 1, type: "session.join", data: {} }),
     );
     expect(closes).toEqual([1013]);
     expect(activity.calls).toEqual([]);
   });
 
-  test.each(["json", "msgpack"] as const)(
-    "rejects subscription exhaustion through %s commands while allowing unsubscribe",
-    async (frameEncoding) => {
-      const hub = new RealtimeHub(
-        { maxBackpressureBytes: 1_024 },
-        unusedFederationStore,
-      );
+  test("rejects subscription exhaustion while allowing unsubscribe", async () => {
+    const hub = new RealtimeHub(
+      { maxBackpressureBytes: 1_024 },
+      unusedFederationStore,
+    );
 
-      const { guilds, presence, activity } = setup();
+    const { guilds, presence, activity } = setup();
 
-      const handler = new CommandHandler(
-        guilds,
-        {
-          verify: () =>
-            Effect.succeed({ valid: false, reason: "not supplied" }),
-        },
-        () => Effect.void,
-        presence,
-        hub,
-        activity,
-        { send: () => Promise.reject(new Error("Unexpected map ping")) },
-        { send: () => Promise.reject(new Error("Unexpected battle ping")) },
-        {
-          send: () => Promise.reject(new Error("Unexpected loot split")),
-          autoAccept: () => Promise.reject(new Error("Unexpected loot split")),
-        },
-        {
-          updateSubscription: () =>
-            Promise.reject(new Error("Unexpected air tag subscription")),
-          publishObservations: () =>
-            Promise.reject(new Error("Unexpected air tag observation")),
-          fetchMapThreats: () =>
-            Promise.reject(new Error("Unexpected map threat fetch")),
-          registerInterest: () =>
-            Promise.reject(new Error("Unexpected air tag interest")),
-        },
-        {
-          report: () =>
-            Promise.reject(new Error("Unexpected NPC presence report")),
-          refresh: () => Promise.resolve(),
-          withdraw: () => Promise.resolve(),
-          fetch: () =>
-            Promise.reject(new Error("Unexpected NPC presence fetch")),
-        },
-      );
+    const handler = new CommandHandler(
+      guilds,
+      {
+        verify: () => Effect.succeed({ valid: false, reason: "not supplied" }),
+      },
+      () => Effect.void,
+      presence,
+      hub,
+      activity,
+      { send: () => Promise.reject(new Error("Unexpected map ping")) },
+      { send: () => Promise.reject(new Error("Unexpected battle ping")) },
+      {
+        send: () => Promise.reject(new Error("Unexpected loot split")),
+        autoAccept: () => Promise.reject(new Error("Unexpected loot split")),
+      },
+      {
+        updateSubscription: () =>
+          Promise.reject(new Error("Unexpected air tag subscription")),
+        publishObservations: () =>
+          Promise.reject(new Error("Unexpected air tag observation")),
+        fetchMapThreats: () =>
+          Promise.reject(new Error("Unexpected map threat fetch")),
+        registerInterest: () =>
+          Promise.reject(new Error("Unexpected air tag interest")),
+      },
+      {
+        report: () =>
+          Promise.reject(new Error("Unexpected NPC presence report")),
+        refresh: () => Promise.resolve(),
+        withdraw: () => Promise.resolve(),
+        fetch: () => Promise.reject(new Error("Unexpected NPC presence fetch")),
+      },
+    );
 
-      const responses: unknown[] = [];
-      const target = makeSocket();
+    const responses: unknown[] = [];
+    const target = makeSocket();
 
-      const socket: GatewaySocket = {
-        ...target.socket,
-        data: {
-          ...target.socket.data,
-          frameEncoding: frameEncoding === "json" ? "json" : undefined,
-          joined: true,
-        },
-        send: (data) => {
-          if (Predicate.isString(data)) {
-            responses.push(JSON.parse(data));
+    const socket: GatewaySocket = {
+      ...target.socket,
+      data: {
+        ...target.socket.data,
+        joined: true,
+      },
+      send: (data) => {
+        if (!Predicate.isString(data))
+          throw new Error("Unexpected binary frame");
+        responses.push(JSON.parse(data));
 
-            return Buffer.byteLength(data);
-          }
+        return Buffer.byteLength(data);
+      },
+    };
 
-          if (data instanceof Uint8Array) {
-            responses.push(decode(data));
+    for (let index = 0; index < 4_096; index += 1)
+      hub.subscribe(socket, {
+        topic: "party.ready-room",
+        eventId: String(index),
+      });
 
-            return data.byteLength;
-          }
-
-          throw new Error("Unexpected frame encoding");
-        },
+    for (const [requestId, type, eventId] of [
+      ["over-capacity", "subscription.subscribe", "extra"],
+      ["oversized", "subscription.subscribe", "ą".repeat(512)],
+      ["replacement", "subscription.subscribe", "0"],
+      ["unsubscribe", "subscription.unsubscribe", "0"],
+      ["new-slot", "subscription.subscribe", "extra"],
+    ]) {
+      const command = {
+        v: 1,
+        requestId,
+        type,
+        data: { topic: "party.ready-room", eventId },
       };
 
-      for (let index = 0; index < 4_096; index += 1)
-        hub.subscribe(socket, {
-          topic: "party.ready-room",
-          eventId: String(index),
-        });
+      await Effect.runPromise(handler.handle(socket, JSON.stringify(command)));
+    }
 
-      for (const [requestId, type, eventId] of [
-        ["over-capacity", "subscription.subscribe", "extra"],
-        ["oversized", "subscription.subscribe", "ą".repeat(512)],
-        ["replacement", "subscription.subscribe", "0"],
-        ["unsubscribe", "subscription.unsubscribe", "0"],
-        ["new-slot", "subscription.subscribe", "extra"],
-      ]) {
-        const command = {
-          v: 1,
-          requestId,
-          type,
-          data: { topic: "party.ready-room", eventId },
-        };
-
-        await Effect.runPromise(
-          handler.handle(
-            socket,
-            frameEncoding === "json"
-              ? JSON.stringify(command)
-              : Buffer.from(encode(command)),
-          ),
-        );
-      }
-
-      expect(responses).toEqual([
-        ...["over-capacity", "oversized"].map((requestId) => ({
-          v: 1,
-          requestId,
-          status: "error",
-          error: {
-            code: "COMMAND_REJECTED",
-            message: "subscription limit exceeded",
-            retryable: false,
-          },
-        })),
-        ...["replacement", "unsubscribe", "new-slot"].map((requestId) =>
-          expect.objectContaining({ requestId, status: "success" }),
-        ),
-      ]);
-      expect(socket.data.subscriptions.size).toBe(4_096);
-      expect(target.closes).toEqual([]);
-    },
-  );
-
-  test("accepts readable JSON commands for local diagnostic sockets", async () => {
-    const { handler, hub } = setup();
-    const target = makeSocket();
-    Object.assign(target.socket.data, { frameEncoding: "json" });
-
-    await Effect.runPromise(
-      handler.handle(
-        target.socket,
-        JSON.stringify({
-          v: 1,
-          type: "session.join",
-          requestId: "request-json",
-          data: {},
-        }),
+    expect(responses).toEqual([
+      ...["over-capacity", "oversized"].map((requestId) => ({
+        v: 1,
+        requestId,
+        status: "error",
+        error: {
+          code: "COMMAND_REJECTED",
+          message: "subscription limit exceeded",
+          retryable: false,
+        },
+      })),
+      ...["replacement", "unsubscribe", "new-slot"].map((requestId) =>
+        expect.objectContaining({ requestId, status: "success" }),
       ),
-    );
-
+    ]);
+    expect(socket.data.subscriptions.size).toBe(4_096);
     expect(target.closes).toEqual([]);
-    expect(hub.responses).toContainEqual(
-      expect.objectContaining({
-        requestId: "request-json",
-        status: "success",
-      }),
-    );
   });
 
   test("announces a verified Margonem account once and joins even when the announcement fails", async () => {
     const published: MargonemAccountVerifiedV1[] = [];
 
-    const join = encode({
+    const join = JSON.stringify({
       v: 1,
       type: "session.join",
       requestId: "request-1",
@@ -1117,7 +1049,7 @@ describe("CommandHandler session lifecycle", () => {
       );
 
       const { socket } = makeSocket("game");
-      await Effect.runPromise(handler.handle(socket, Buffer.from(join)));
+      await Effect.runPromise(handler.handle(socket, join));
       expect(socket.data.joined).toBe(true);
       expect(socket.data.confidence).toBe("verified");
     }
@@ -1138,7 +1070,7 @@ describe("CommandHandler session lifecycle", () => {
     const { socket } = makeSocket();
     socket.data = { ...socket.data, platform: "game" };
 
-    const command = encode({
+    const command = JSON.stringify({
       v: 1,
       type: "session.join",
       requestId: "request-1",
@@ -1157,7 +1089,7 @@ describe("CommandHandler session lifecycle", () => {
       },
     });
 
-    await Effect.runPromise(handler.handle(socket, Buffer.from(command)));
+    await Effect.runPromise(handler.handle(socket, command));
 
     expect(socket.data.joined).toBe(true);
     expect(socket.data.confidence).toBe("reported");
@@ -1207,9 +1139,7 @@ describe("CommandHandler session lifecycle", () => {
 
       return handler.handle(
         socket,
-        Buffer.from(
-          encode({ v: 1, type: "session.join", requestId, data: {} }),
-        ),
+        JSON.stringify({ v: 1, type: "session.join", requestId, data: {} }),
       );
     };
 
@@ -1299,14 +1229,12 @@ describe("CommandHandler session lifecycle", () => {
       Effect.runPromise(
         handler.handle(
           socket,
-          Buffer.from(
-            encode({
-              v: 1,
-              type: "air-tag.observation",
-              requestId,
-              data: batch,
-            }),
-          ),
+          JSON.stringify({
+            v: 1,
+            type: "air-tag.observation",
+            requestId,
+            data: batch,
+          }),
         ),
       );
 
@@ -1318,14 +1246,12 @@ describe("CommandHandler session lifecycle", () => {
     await Effect.runPromise(
       handler.handle(
         socket,
-        Buffer.from(
-          encode({
-            v: 1,
-            type: "presence.heartbeat",
-            requestId: "heartbeat",
-            data: { sessionId: "session-1" },
-          }),
-        ),
+        JSON.stringify({
+          v: 1,
+          type: "presence.heartbeat",
+          requestId: "heartbeat",
+          data: { sessionId: "session-1" },
+        }),
       ),
     );
     stalled.resolve();
@@ -1381,7 +1307,7 @@ describe("CommandHandler session lifecycle", () => {
     await Effect.runPromise(
       handler.handle(
         socket,
-        Buffer.from(encode({ v: 1, type: "session.join", data: {} })),
+        JSON.stringify({ v: 1, type: "session.join", data: {} }),
       ),
     );
 
@@ -1399,14 +1325,12 @@ describe("CommandHandler session lifecycle", () => {
     await Effect.runPromise(
       handler.handle(
         socket,
-        Buffer.from(
-          encode({
-            v: 1,
-            type: "presence.heartbeat",
-            requestId: "heartbeat",
-            data: { sessionId: "presence-1" },
-          }),
-        ),
+        JSON.stringify({
+          v: 1,
+          type: "presence.heartbeat",
+          requestId: "heartbeat",
+          data: { sessionId: "presence-1" },
+        }),
       ),
     );
 
@@ -1419,15 +1343,15 @@ describe("CommandHandler session lifecycle", () => {
     const { handler, hub, activity } = setup();
     const { socket } = makeSocket();
 
-    const command = encode({
+    const command = JSON.stringify({
       v: 1,
       type: "session.join",
       requestId: "request-1",
       data: {},
     });
 
-    await Effect.runPromise(handler.handle(socket, Buffer.from(command)));
-    await Effect.runPromise(handler.handle(socket, Buffer.from(command)));
+    await Effect.runPromise(handler.handle(socket, command));
+    await Effect.runPromise(handler.handle(socket, command));
     expect(socket.data.joined).toBe(true);
     expect(hub.responses).toHaveLength(2);
     expect(hub.events).toHaveLength(2);
@@ -1517,14 +1441,12 @@ describe("CommandHandler session lifecycle", () => {
       await Effect.runPromise(
         handler.handle(
           socket,
-          Buffer.from(
-            encode({
-              v: 1,
-              type: "session.join",
-              requestId: "join",
-              data: {},
-            }),
-          ),
+          JSON.stringify({
+            v: 1,
+            type: "session.join",
+            requestId: "join",
+            data: {},
+          }),
         ),
       );
       const capability = [advertised];
@@ -1554,9 +1476,12 @@ describe("CommandHandler session lifecycle", () => {
     await Effect.runPromise(
       handler.handle(
         game,
-        Buffer.from(
-          encode({ v: 1, type: "session.join", requestId: "join", data: {} }),
-        ),
+        JSON.stringify({
+          v: 1,
+          type: "session.join",
+          requestId: "join",
+          data: {},
+        }),
       ),
     );
     expect(hub.responses[0]).toMatchObject({
@@ -1579,9 +1504,12 @@ describe("CommandHandler session lifecycle", () => {
       await Effect.runPromise(
         handler.handle(
           socket,
-          Buffer.from(
-            encode({ v: 1, type: "connection.ping", requestId, data: {} }),
-          ),
+          JSON.stringify({
+            v: 1,
+            type: "connection.ping",
+            requestId,
+            data: {},
+          }),
         ),
       );
     // Compare the serialized frames: an undefined `data` would vanish on the wire.
@@ -1776,7 +1704,7 @@ describe("CommandHandler session lifecycle", () => {
   test("reconnect snapshots retain a stable compact version until access changes", async () => {
     const { handler, guilds, hub } = setup();
     const target = makeSocket();
-    const join = Buffer.from(encode({ v: 1, type: "session.join", data: {} }));
+    const join = JSON.stringify({ v: 1, type: "session.join", data: {} });
     await Effect.runPromise(handler.handle(target.socket, join));
     await Effect.runPromise(handler.handle(target.socket, join));
 
@@ -1840,14 +1768,12 @@ describe("CommandHandler session lifecycle", () => {
       await Effect.runPromise(
         handler.handle(
           target.socket,
-          Buffer.from(
-            encode({
-              v: 1,
-              type: "session.join",
-              requestId: "denied-join",
-              data: {},
-            }),
-          ),
+          JSON.stringify({
+            v: 1,
+            type: "session.join",
+            requestId: "denied-join",
+            data: {},
+          }),
         ),
       );
       expect(hub.events).toHaveLength(1);
@@ -1911,8 +1837,8 @@ describe("CommandHandler session lifecycle", () => {
 
       const socket: GatewaySocket = {
         ...target.socket,
-        send: (frame: Uint8Array) => {
-          frames.push(decode(frame));
+        send: (frame: string) => {
+          frames.push(JSON.parse(frame));
 
           return 1;
         },
@@ -2378,16 +2304,29 @@ describe("CommandHandler session lifecycle", () => {
     expect(target.closes).toEqual([]);
   });
 
-  test("closes unknown MessagePack commands as malformed protocol frames", async () => {
+  test("closes unknown commands as malformed protocol frames", async () => {
     const { handler } = setup();
     const target = makeSocket();
     await Effect.runPromise(
       handler.handle(
         target.socket,
-        Buffer.from(encode({ v: 1, type: "rooms.join-raw", data: {} })),
+        JSON.stringify({ v: 1, type: "rooms.join-raw", data: {} }),
       ),
     );
     expect(target.closes).toEqual([1007]);
+  });
+
+  test("closes a command with a __proto__ key, even when the key is escaped", async () => {
+    const { handler, hub } = setup();
+    const target = makeSocket();
+    await Effect.runPromise(
+      handler.handle(
+        target.socket,
+        '{"v":1,"type":"map-ping.send","requestId":"proto","data":{"expectedMapId":7,"type":"enemy","x":1,"y":1,"\\u005f_proto__":{"hidden":true}}}',
+      ),
+    );
+    expect(target.closes).toEqual([1007]);
+    expect(hub.responses).toEqual([]);
   });
 
   test("preserves invalid-payload acknowledgements for legacy map commands", async () => {
@@ -2396,14 +2335,12 @@ describe("CommandHandler session lifecycle", () => {
     await Effect.runPromise(
       handler.handle(
         target.socket,
-        Buffer.from(
-          encode({
-            v: 1,
-            type: "map-ping.send",
-            requestId: "request-invalid",
-            data: { expectedMapId: 7, type: "enemy", x: -1, y: 1 },
-          }),
-        ),
+        JSON.stringify({
+          v: 1,
+          type: "map-ping.send",
+          requestId: "request-invalid",
+          data: { expectedMapId: 7, type: "enemy", x: -1, y: 1 },
+        }),
       ),
     );
     expect(target.closes).toEqual([]);
@@ -2421,14 +2358,12 @@ describe("CommandHandler session lifecycle", () => {
     await Effect.runPromise(
       handler.handle(
         target.socket,
-        Buffer.from(
-          encode({
-            v: 1,
-            type: "subscription.unsubscribe",
-            requestId: "request-not-joined",
-            data: { topic: "organization.presence" },
-          }),
-        ),
+        JSON.stringify({
+          v: 1,
+          type: "subscription.unsubscribe",
+          requestId: "request-not-joined",
+          data: { topic: "organization.presence" },
+        }),
       ),
     );
     expect(hub.responses).toContainEqual({
@@ -2456,14 +2391,12 @@ describe("CommandHandler session lifecycle", () => {
     const completed = Effect.runPromise(
       handler.handle(
         target.socket,
-        Buffer.from(
-          encode({
-            v: 1,
-            type: "air-tag.subscription",
-            requestId: "request-air-tag",
-            data: { requestId: "air-tag-1", enabled: true, expectedMapId: 12 },
-          }),
-        ),
+        JSON.stringify({
+          v: 1,
+          type: "air-tag.subscription",
+          requestId: "request-air-tag",
+          data: { requestId: "air-tag-1", enabled: true, expectedMapId: 12 },
+        }),
       ),
     );
 
@@ -2515,14 +2448,12 @@ describe("CommandHandler session lifecycle", () => {
     await Effect.runPromise(
       handler.handle(
         target.socket,
-        Buffer.from(
-          encode({
-            v: 1,
-            type: "air-tag.subscription",
-            requestId: "request-air-tag",
-            data: { requestId: "air-tag-1", enabled: true },
-          }),
-        ),
+        JSON.stringify({
+          v: 1,
+          type: "air-tag.subscription",
+          requestId: "request-air-tag",
+          data: { requestId: "air-tag-1", enabled: true },
+        }),
       ),
     );
 
@@ -2562,14 +2493,12 @@ describe("CommandHandler session lifecycle", () => {
     const handled = Effect.runPromise(
       handler.handle(
         target.socket,
-        Buffer.from(
-          encode({
-            v: 1,
-            type: "subscription.subscribe",
-            requestId: "request-air-tags",
-            data: { topic: "map.air-tags", organizationId: "organization-1" },
-          }),
-        ),
+        JSON.stringify({
+          v: 1,
+          type: "subscription.subscribe",
+          requestId: "request-air-tags",
+          data: { topic: "map.air-tags", organizationId: "organization-1" },
+        }),
       ),
     );
 
@@ -2610,14 +2539,12 @@ describe("CommandHandler session lifecycle", () => {
       await Effect.runPromise(
         handler.handle(
           target.socket,
-          Buffer.from(
-            encode({
-              v: 1,
-              type: "subscription.subscribe",
-              requestId: "request-chat",
-              data,
-            }),
-          ),
+          JSON.stringify({
+            v: 1,
+            type: "subscription.subscribe",
+            requestId: "request-chat",
+            data,
+          }),
         ),
       );
     };
@@ -2656,14 +2583,12 @@ describe("CommandHandler session lifecycle", () => {
     await Effect.runPromise(
       handler.handle(
         target.socket,
-        Buffer.from(
-          encode({
-            v: 1,
-            type: "presence.heartbeat",
-            requestId: "request-dependency",
-            data: { sessionId: "connection-1" },
-          }),
-        ),
+        JSON.stringify({
+          v: 1,
+          type: "presence.heartbeat",
+          requestId: "request-dependency",
+          data: { sessionId: "connection-1" },
+        }),
       ),
     );
     expect(hub.responses).toContainEqual({
@@ -2780,9 +2705,12 @@ test("API key joins and rebalances preserve each key's organization scope withou
     await Effect.runPromise(
       handler.handle(
         target,
-        Buffer.from(
-          encode({ v: 1, requestId: "join", type: "session.join", data: {} }),
-        ),
+        JSON.stringify({
+          v: 1,
+          requestId: "join",
+          type: "session.join",
+          data: {},
+        }),
       ),
     );
   expect(socket.data.guilds.map(({ guild }) => guild.id)).toEqual([
@@ -2823,14 +2751,12 @@ test("API key sockets reject presence writes and expired leases before dispatch"
   await Effect.runPromise(
     handler.handle(
       socket,
-      Buffer.from(
-        encode({
-          v: 1,
-          requestId: "heartbeat",
-          type: "presence.heartbeat",
-          data: { sessionId: "session-1" },
-        }),
-      ),
+      JSON.stringify({
+        v: 1,
+        requestId: "heartbeat",
+        type: "presence.heartbeat",
+        data: { sessionId: "session-1" },
+      }),
     ),
   );
   expect(hub.responses).toContainEqual(
@@ -2840,9 +2766,12 @@ test("API key sockets reject presence writes and expired leases before dispatch"
   await Effect.runPromise(
     handler.handle(
       socket,
-      Buffer.from(
-        encode({ v: 1, requestId: "join", type: "session.join", data: {} }),
-      ),
+      JSON.stringify({
+        v: 1,
+        requestId: "join",
+        type: "session.join",
+        data: {},
+      }),
     ),
   );
   expect(closes).toEqual([1008]);

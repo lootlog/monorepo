@@ -7,10 +7,11 @@ import {
 } from "@lootlog/client/main";
 import type { RealtimeWebSocket } from "@lootlog/client/realtime";
 import { configureApiClients } from "@lootlog/client/transport";
+import type { RealtimeFrame } from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
-  type RealtimeFrame,
-} from "@lootlog/protocol/realtime";
+  encodeRealtimeFrame,
+} from "@lootlog/protocol/realtime/codec";
 import {
   createAccessPolicySnapshot,
   type AccessPolicySnapshot,
@@ -59,11 +60,11 @@ class Wire implements RealtimeWebSocket {
   }
   deliver(frame: RealtimeFrame) {
     this.listeners.get("message")?.({
-      data: JSON.stringify(frame),
+      data: encodeRealtimeFrame(frame),
     });
   }
   send(text: string) {
-    const command = decodeRealtimeFrame(JSON.parse(text));
+    const command = decodeRealtimeFrame(text);
 
     this.frames.push(command);
 

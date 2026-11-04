@@ -1,24 +1,17 @@
 import type { RealtimeWebSocket } from "@lootlog/client/realtime";
+import type { RealtimeFrame } from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
-  type RealtimeFrame,
-} from "@lootlog/protocol/realtime";
+  encodeRealtimeFrame,
+} from "@lootlog/protocol/realtime/codec";
 
 type WireEvent = Parameters<RealtimeWebSocket["addEventListener"]>[0];
 
 type WireListener = Parameters<RealtimeWebSocket["addEventListener"]>[1];
 
-/** A frame as the gateway sends it. */
-export const encodeFrame = (frame: RealtimeFrame): string =>
-  JSON.stringify(frame);
-
-/** A frame the client sent. */
-export const decodeFrame = (text: string) =>
-  decodeRealtimeFrame(JSON.parse(text));
-
 export class RealtimeWire implements RealtimeWebSocket {
   readyState = 0;
-  readonly frames: ReturnType<typeof decodeFrame>[] = [];
+  readonly frames: ReturnType<typeof decodeRealtimeFrame>[] = [];
   private readonly listeners = new Map<WireEvent, WireListener>();
 
   addEventListener(type: WireEvent, listener: WireListener): void {
@@ -26,11 +19,11 @@ export class RealtimeWire implements RealtimeWebSocket {
   }
 
   send(data: string): void {
-    this.frames.push(decodeFrame(data));
+    this.frames.push(decodeRealtimeFrame(data));
   }
 
   receive(frame: RealtimeFrame): void {
-    this.receiveText(encodeFrame(frame));
+    this.receiveText(encodeRealtimeFrame(frame));
   }
 
   receiveText(data: string): void {

@@ -1,5 +1,5 @@
 import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
-import { encodeFrame } from "@/test/realtime-wire";
+import { encodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import {
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
@@ -395,7 +395,7 @@ describe("usePings on the map", () => {
   });
   it("drops an unsupported raw ping type before presentation", async () => {
     const test = await setup();
-    const text = encodeFrame(remotePing());
+    const text = encodeRealtimeFrame(remotePing());
 
     expect(text).toContain('"attention"');
     await act(() =>

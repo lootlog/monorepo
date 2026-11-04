@@ -3,7 +3,10 @@ import {
   type RealtimeWebSocket,
   type ServerEvent,
 } from "@lootlog/client/realtime";
-import { decodeFrame, encodeFrame } from "@/test/realtime-wire";
+import {
+  decodeRealtimeFrame,
+  encodeRealtimeFrame,
+} from "@lootlog/protocol/realtime/codec";
 import { stubMargonemAccountFetch } from "@/test/margonem-account-fetch";
 import { configureGameClientPlatform } from "./game-client-platform";
 import { useGameStore } from "@/store/game.store";
@@ -38,14 +41,14 @@ it.each(["success", "legacy", "policy", "player"])(
     const listeners = new Map<string, (event: { data?: unknown }) => void>();
 
     const send = vi.fn<RealtimeWebSocket["send"]>((bytes) => {
-      const frame = decodeFrame(bytes);
+      const frame = decodeRealtimeFrame(bytes);
 
       if (!("requestId" in frame) || !frame.requestId)
         throw new Error("Expected request frame");
       const requestId = frame.requestId;
       queueMicrotask(() =>
         listeners.get("message")?.({
-          data: encodeFrame({
+          data: encodeRealtimeFrame({
             v: 1,
             requestId,
             ...(rejectPublication
@@ -126,7 +129,7 @@ it.each(["success", "legacy", "policy", "player"])(
         await import("@lootlog/protocol/realtime/access-policy");
 
       listeners.get("message")?.({
-        data: encodeFrame({
+        data: encodeRealtimeFrame({
           v: 1,
           type: "permissions.updated",
           data: {
@@ -151,7 +154,7 @@ it.each(["success", "legacy", "policy", "player"])(
       const bytes = send.mock.calls[0]?.[0];
 
       if (bytes === undefined) throw new Error("Expected presence publication");
-      expect(decodeFrame(bytes)).toMatchObject({
+      expect(decodeRealtimeFrame(bytes)).toMatchObject({
         type: "presence.publish",
         data: { organizationIds: ["organization-1"] },
       });
@@ -217,7 +220,7 @@ it("dispatches private volunteer frames to the legacy volunteer listener", async
     };
 
     listeners.get("message")?.({
-      data: encodeFrame({ v: 1, type: "notification.volunteer", data }),
+      data: encodeRealtimeFrame({ v: 1, type: "notification.volunteer", data }),
     });
     await vi.waitFor(() => expect(received).toHaveBeenCalledWith(data));
   } finally {
@@ -260,7 +263,7 @@ describe("access policy synchronization", () => {
     });
 
     const send = vi.fn<RealtimeWebSocket["send"]>((bytes) => {
-      const frame = decodeFrame(bytes);
+      const frame = decodeRealtimeFrame(bytes);
 
       if (!("requestId" in frame) || !frame.requestId)
         throw new Error("Expected request");
@@ -269,7 +272,7 @@ describe("access policy synchronization", () => {
       if (denyJoin) {
         queueMicrotask(() => {
           listeners.get("message")?.({
-            data: encodeFrame({
+            data: encodeRealtimeFrame({
               v: 1,
               type: "permissions.updated",
               data: {
@@ -280,7 +283,7 @@ describe("access policy synchronization", () => {
             }),
           });
           listeners.get("message")?.({
-            data: encodeFrame({
+            data: encodeRealtimeFrame({
               v: 1,
               requestId,
               status: "error",
@@ -298,7 +301,7 @@ describe("access policy synchronization", () => {
 
       queueMicrotask(() =>
         listeners.get("message")?.({
-          data: encodeFrame({
+          data: encodeRealtimeFrame({
             v: 1,
             requestId,
             status: "success",
@@ -347,7 +350,7 @@ describe("access policy synchronization", () => {
       socket.connect();
       listeners.get("open")?.({});
       listeners.get("message")?.({
-        data: encodeFrame({
+        data: encodeRealtimeFrame({
           v: 1,
           type: "session.hello",
           data: { connectionId: "connection" },
@@ -366,7 +369,7 @@ describe("access policy synchronization", () => {
 
       for (let i = 0; i < 10; i += 1) {
         listeners.get("message")?.({
-          data: encodeFrame({
+          data: encodeRealtimeFrame({
             v: 1,
             type: "permissions.updated",
             data: {
@@ -433,7 +436,7 @@ it("lets the provider rejoin the current world once after reconnect", async () =
         addEventListener: (type, listener) => listeners.set(type, listener),
         close: () => listeners.get("close")?.({}),
         send: (bytes) => {
-          const frame = decodeFrame(bytes);
+          const frame = decodeRealtimeFrame(bytes);
 
           if (!("requestId" in frame) || !frame.requestId)
             throw new Error("Expected request");
@@ -441,7 +444,7 @@ it("lets the provider rejoin the current world once after reconnect", async () =
           if ("type" in frame && frame.type === "session.join")
             joinedWorlds.push(frame.data.world);
 
-          const response = encodeFrame({
+          const response = encodeRealtimeFrame({
             v: 1,
             requestId: frame.requestId,
             status: "success",
@@ -456,7 +459,7 @@ it("lets the provider rejoin the current world once after reconnect", async () =
         open: () => {
           listeners.get("open")?.({});
           listeners.get("message")?.({
-            data: encodeFrame({
+            data: encodeRealtimeFrame({
               v: 1,
               type: "session.hello",
               data: { connectionId: "fixture" },

@@ -1,6 +1,4 @@
 import {
-  ClientCommand as ClientCommandSchema,
-  decodeRealtimeFrame,
   isServerEventFrame,
   REALTIME_JSON_SUBPROTOCOL,
   PRESENCE_HEARTBEAT_INTERVAL_MS,
@@ -14,8 +12,12 @@ import {
   type ServerEvent,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { hasRealtimeCapabilities } from "@lootlog/protocol/realtime/codec";
-import { Predicate, Schema } from "effect";
+import {
+  decodeRealtimeFrame,
+  encodeRealtimeFrame,
+  hasRealtimeCapabilities,
+} from "@lootlog/protocol/realtime/codec";
+import { Predicate } from "effect";
 import { notifyListeners } from "./notify-listeners.js";
 
 type CommandType = ClientCommand["type"];
@@ -102,11 +104,6 @@ const normalizeUrl = (baseUrl: string, path: string): string => {
 
   return url.toString();
 };
-
-// Validation strips unknown fields and rejects a malformed command before it
-// reaches the gateway, which closes the connection on one.
-const encodeCommand = (command: ClientCommand): string =>
-  JSON.stringify(Schema.encodeUnknownSync(ClientCommandSchema)(command));
 
 const nativeWebSocketFactory: RealtimeWebSocketFactory = (url, protocols) =>
   new WebSocket(url, protocols);
@@ -339,7 +336,7 @@ export class RealtimeClient {
       try {
         // SAFETY: the command discriminator and payload are coupled by CommandData<Type>.
         activeSocket.send(
-          encodeCommand({
+          encodeRealtimeFrame({
             v: REALTIME_PROTOCOL_VERSION,
             type,
             requestId,
@@ -360,7 +357,7 @@ export class RealtimeClient {
     if (!activeSocket || activeSocket.readyState !== WEBSOCKET_OPEN) return;
     // SAFETY: the command discriminator and payload are coupled by CommandData<Type>.
     activeSocket.send(
-      encodeCommand({
+      encodeRealtimeFrame({
         v: REALTIME_PROTOCOL_VERSION,
         type,
         data,
@@ -507,7 +504,7 @@ export class RealtimeClient {
 
     if (!Predicate.isString(data))
       throw new Error("Gateway returned a non-text realtime frame");
-    const frame = decodeRealtimeFrame(JSON.parse(data));
+    const frame = decodeRealtimeFrame(data);
 
     if ("status" in frame) {
       const pending = this.pending.get(frame.requestId);

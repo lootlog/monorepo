@@ -43,7 +43,7 @@ describe("volunteer delivery", () => {
         const discordId =
           connectionId === "legacy-organizer" ? "organizer" : connectionId;
 
-        const frames: Uint8Array[] = [];
+        const frames: string[] = [];
 
         const session: SessionData = {
           discordId,
@@ -61,10 +61,10 @@ describe("volunteer delivery", () => {
         hub.register({
           data: session,
           getBufferedAmount: () => 0,
-          send: (frame: Uint8Array) => {
+          send: (frame: string) => {
             frames.push(frame);
 
-            return frame.byteLength;
+            return frame.length;
           },
           close: () => {},
         });

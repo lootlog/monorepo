@@ -1,4 +1,7 @@
-import { decodeRealtimeFrame } from "@lootlog/protocol/realtime";
+import {
+  decodeRealtimeFrame,
+  encodeRealtimeFrame,
+} from "@lootlog/protocol/realtime/codec";
 import { afterEach, describe, expect, it, vi } from "#test/bun-test";
 import { RealtimeClient, type RealtimeWebSocket } from "./realtime-client.js";
 
@@ -6,8 +9,6 @@ type Listener = (event: {
   readonly data?: unknown;
   readonly code?: number;
 }) => void;
-
-const decodeFrame = (text: string) => decodeRealtimeFrame(JSON.parse(text));
 
 class TestWebSocket implements RealtimeWebSocket {
   readyState = 0;
@@ -77,14 +78,14 @@ const respondToLastRequest = (
   const lastRequest = socket.sent.at(-1);
 
   if (lastRequest === undefined) throw new Error("Expected a request frame");
-  const request = decodeFrame(lastRequest);
+  const request = decodeRealtimeFrame(lastRequest);
 
   if (!("requestId" in request) || !request.requestId) {
     throw new Error("Expected a request frame");
   }
 
   socket.message(
-    JSON.stringify({
+    encodeRealtimeFrame({
       v: 1,
       requestId: request.requestId,
       status: "success",
@@ -115,7 +116,7 @@ const frameAt = (socket: TestWebSocket, index: number) => {
 
   if (text === undefined) throw new Error(`Expected frame at index ${index}`);
 
-  return decodeFrame(text);
+  return decodeRealtimeFrame(text);
 };
 
 const heartbeatSession = async () => {
@@ -178,12 +179,12 @@ const rejectLastRequest = async (
   const last = socket.sent.at(-1);
 
   if (last === undefined) throw new Error("Missing request");
-  const frame = decodeFrame(last);
+  const frame = decodeRealtimeFrame(last);
 
   if (!("requestId" in frame) || !frame.requestId)
     throw new Error("Missing request ID");
   socket.message(
-    JSON.stringify({
+    encodeRealtimeFrame({
       v: 1,
       requestId: frame.requestId,
       status: "error",
@@ -232,7 +233,7 @@ describe("RealtimeClient", () => {
     await joined;
 
     socketAt(sockets, 0).message(
-      JSON.stringify({
+      encodeRealtimeFrame({
         v: 1,
         type: "permissions.updated",
         data: { organizationIds: ["org-1"], subscriptionScopes: [] },
@@ -242,7 +243,7 @@ describe("RealtimeClient", () => {
 
     // Commands decoded from a server connection must never reach event consumers.
     socketAt(sockets, 0).message(
-      JSON.stringify({
+      encodeRealtimeFrame({
         v: 1,
         type: "presence.fetch",
         data: { organizationId: "org-1" },
@@ -462,7 +463,7 @@ describe("RealtimeClient", () => {
       respondToLastRequest(socket);
       await joined;
       socket.message(
-        JSON.stringify({
+        encodeRealtimeFrame({
           v: 1,
           type: "permissions.updated",
           data: { organizationIds: ["org-1"], subscriptionScopes: [] },
@@ -960,7 +961,7 @@ describe("RealtimeClient", () => {
       await advance(500);
       // Preserve gateway FIFO: the publication was queued before this heartbeat.
       socket.message(
-        JSON.stringify({
+        encodeRealtimeFrame({
           v: 1,
           requestId: publish.requestId,
           status: "success",
