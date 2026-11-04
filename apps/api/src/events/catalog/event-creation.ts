@@ -5,7 +5,6 @@ import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
 } from "@lootlog/domain/scoring";
-import { randomUUID } from "node:crypto";
 import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -84,7 +83,7 @@ export const makeEventCreation =
 
     return Effect.gen(function* () {
       const input = yield* normalized;
-      const eventId = randomUUID();
+      const eventId = Bun.randomUUIDv7();
 
       const created = yield* database
         .transaction((transaction) =>
@@ -119,7 +118,7 @@ export const makeEventCreation =
             const heroes = [];
 
             for (const hero of input.heroNpcs) {
-              const heroId = randomUUID();
+              const heroId = Bun.randomUUIDv7();
 
               const heroRows = yield* transaction
                 .insert(eventHeroNpcTable)
@@ -142,7 +141,7 @@ export const makeEventCreation =
                       .insert(eventMapTable)
                       .values(
                         hero.maps.map((map) => ({
-                          id: randomUUID(),
+                          id: Bun.randomUUIDv7(),
                           heroNpcId: heroId,
                           mapId: map.mapId,
                           mapName: map.mapName,
