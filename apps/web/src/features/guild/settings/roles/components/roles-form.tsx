@@ -4,7 +4,7 @@ import {
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 
 import {
   Form,
@@ -69,7 +69,9 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
   const { t } = useTranslation();
 
   const form = useForm<RolesFormInput>({
-    resolver: zodResolver(createRolesFormSchema(t), undefined, { raw: true }),
+    resolver: standardSchemaResolver(createRolesFormSchema(t), undefined, {
+      raw: true,
+    }),
     defaultValues: toRolesFormValues(role),
   });
 

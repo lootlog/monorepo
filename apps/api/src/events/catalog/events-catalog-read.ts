@@ -8,14 +8,13 @@ import {
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { eventReadCacheEntry } from "#src/events/catalog/event-read-cache.service";
-import superjson from "superjson";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
   eventTable,
   roleTable,
 } from "#src/database/drizzle/schema";
-import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
+import { makeTypeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
@@ -58,7 +57,7 @@ export const makeEventsCatalogRead = (
     schema: S,
     load: Effect.Effect<S["Type"], unknown>,
   ) => {
-    const codec = makeJsonCodec(Schema.toType(schema), superjson);
+    const codec = makeTypeJsonCodec(schema);
 
     return redis.getOrSetJsonEffect({
       ...entry,

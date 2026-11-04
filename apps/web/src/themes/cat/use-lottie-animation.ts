@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
-import { z } from "zod";
+import { Schema } from "effect";
 
-const animationSchema = z.record(z.string(), z.unknown());
+const decodeAnimation = Schema.decodeUnknownSync(
+  Schema.Record(Schema.String, Schema.Unknown),
+);
 
 export function useLottieAnimation(url: string) {
   return useQuery(
@@ -15,7 +17,7 @@ export function useLottieAnimation(url: string) {
           throw new Error(`Animation request failed: ${response.status}`);
         }
 
-        return animationSchema.parse(await response.json());
+        return decodeAnimation(await response.json());
       },
       staleTime: Infinity,
       placeholderData: undefined,

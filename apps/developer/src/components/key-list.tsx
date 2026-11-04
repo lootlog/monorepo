@@ -13,8 +13,8 @@ export function KeyList({
   refreshState,
   onRefresh,
 }: {
-  keys: ApiKey[];
-  organizations: { id: string; name: string }[];
+  keys: readonly ApiKey[];
+  organizations: readonly { readonly id: string; readonly name: string }[];
   observedAt: number;
   refreshState: "ready" | "loading" | "error";
   onRefresh: () => Promise<void>;

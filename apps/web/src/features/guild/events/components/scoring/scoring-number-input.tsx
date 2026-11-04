@@ -8,7 +8,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 import {
-  scoringNumberSchema,
+  getScoringNumberError,
   type ScoringNumberBounds,
 } from "../../utils/scoring-number-validation";
 import type { ScoringRulesFormValues } from "./scoring-rules-editor";
@@ -47,8 +47,7 @@ export const ScoringNumberInput = ({
   const errorId = useId();
 
   const error =
-    scoringNumberSchema(bounds).safeParse(useWatch({ control, name })).error
-      ?.issues[0]?.message ?? extraError;
+    getScoringNumberError(useWatch({ control, name }), bounds) ?? extraError;
 
   return (
     <div className="min-w-0 flex-1">

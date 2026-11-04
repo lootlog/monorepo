@@ -13,19 +13,20 @@
     "test": "bun test server-handler.test.js src"
   },
   "dependencies": {
+    "@lootlog/schema": "workspace:*",
     "@lootlog/ui": "workspace:*",
     "@scalar/api-reference-react": "^0.9.80",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "^1.169.1",
     "better-auth": "1.7.7",
     "cn": "catalog:",
+    "effect": "catalog:",
     "fumadocs-core": "^16.17.2",
     "fumadocs-mdx": "^15.4.7",
     "fumadocs-ui": "^16.17.2",
     "lucide-react": "^1.56.0",
     "react": "catalog:",
-    "react-dom": "catalog:",
-    "zod": "catalog:"
+    "react-dom": "catalog:"
   },
   "devDependencies": {
     "@lootlog/sdk": "workspace:*",

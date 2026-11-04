@@ -11,7 +11,7 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { afterEach, expect, it, onTestFinished, vi } from "vitest";
-import { z } from "zod";
+import { Schema } from "effect";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { useTheme } from "@/hooks/context/use-theme";
 import { initializeTestTranslations } from "@/lib/testing/i18n";
@@ -117,9 +117,9 @@ it("persists the last selected theme when an earlier save is delayed", async () 
       main: {
         baseUrl: "https://api.test",
         fetch: async (input, init) => {
-          const { theme } = z
-            .object({ theme: z.string() })
-            .parse(await new Request(input, init).json());
+          const { theme } = Schema.decodeUnknownSync(
+            Schema.Struct({ theme: Schema.String }),
+          )(await new Request(input, init).json());
 
           writes.push(theme);
 

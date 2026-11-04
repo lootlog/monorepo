@@ -1,31 +1,39 @@
-import * as z from "zod";
+import { Schema } from "effect";
 import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/domain/reservations";
 
-export const reservationsSettingsFormSchema = z
-  .object({
-    reservationMaxDurationMinutes: z.number().int().min(30).max(720),
-    reservationMinDurationMinutes: z.number().int().min(5).max(240),
-    reservationTimeGranularityMinutes: z
-      .number()
-      .int()
-      .refine((value) =>
-        RESERVATION_TIME_GRANULARITY_OPTIONS.some(
-          (granularity) => granularity === value,
-        ),
-      ),
-    reservationMaxAdvanceDays: z.number().int().min(1).max(30),
-    reservationActiveLimitPerSpot: z.number().int().min(1).max(10),
-  })
-  .refine(
-    (values) =>
-      values.reservationMinDurationMinutes <=
-      values.reservationMaxDurationMinutes,
-    {
-      message: "settings.reservations.validation.minGreaterThanMax",
-      path: ["reservationMinDurationMinutes"],
-    },
+const boundedInt = (minimum: number, maximum: number) =>
+  Schema.Int.check(
+    Schema.isGreaterThanOrEqualTo(minimum),
+    Schema.isLessThanOrEqualTo(maximum),
   );
 
-export type ReservationsSettingsFormValues = z.infer<
-  typeof reservationsSettingsFormSchema
->;
+const ReservationsSettingsFormFields = Schema.Struct({
+  reservationMaxDurationMinutes: boundedInt(30, 720),
+  reservationMinDurationMinutes: boundedInt(5, 240),
+  reservationTimeGranularityMinutes: Schema.Int.check(
+    Schema.makeFilter((value) =>
+      RESERVATION_TIME_GRANULARITY_OPTIONS.some(
+        (granularity) => granularity === value,
+      ),
+    ),
+  ),
+  reservationMaxAdvanceDays: boundedInt(1, 30),
+  reservationActiveLimitPerSpot: boundedInt(1, 10),
+});
+
+export const reservationsSettingsFormSchema = Schema.toStandardSchemaV1(
+  ReservationsSettingsFormFields.check(
+    Schema.makeFilter((values) =>
+      values.reservationMinDurationMinutes <=
+      values.reservationMaxDurationMinutes
+        ? undefined
+        : {
+            path: ["reservationMinDurationMinutes"],
+            issue: "settings.reservations.validation.minGreaterThanMax",
+          },
+    ),
+  ),
+);
+
+export type ReservationsSettingsFormValues =
+  typeof ReservationsSettingsFormFields.Type;

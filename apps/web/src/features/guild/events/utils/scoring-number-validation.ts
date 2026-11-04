@@ -3,7 +3,7 @@ import type {
   EventScoringRules,
 } from "@lootlog/domain/scoring";
 import type { GroupSizeRange } from "@lootlog/domain/scoring-presence";
-import { z } from "zod";
+import { Schema } from "effect";
 
 export type ScoringNumberBounds = {
   /** Inclusive upper bound; a bound of 100 reads as a percentage. */
@@ -23,7 +23,9 @@ export const GROUP_SIZE_BOUNDS = {
 
 export const SECONDS_BOUNDS = { integer: true } satisfies ScoringNumberBounds;
 
-export function scoringNumberSchema({
+const FINITE_NUMBER_ERROR = "events.scoring.validation.finiteNumber";
+
+function scoringNumberSchema({
   max,
   integer = false,
   min = 0,
@@ -35,15 +37,35 @@ export function scoringNumberSchema({
         ? "events.scoring.validation.nonNegative"
         : "events.scoring.validation.percentage";
 
-  const number = z
-    .number({ error: "events.scoring.validation.finiteNumber" })
-    .min(min, rangeError);
+  return Schema.toStandardSchemaV1(
+    Schema.Number.annotate({ message: FINITE_NUMBER_ERROR }).check(
+      Schema.isFinite({ message: FINITE_NUMBER_ERROR }),
+      Schema.isGreaterThanOrEqualTo(min, { message: rangeError }),
+      ...(max === undefined
+        ? []
+        : [Schema.isLessThanOrEqualTo(max, { message: rangeError })]),
+      ...(integer
+        ? [
+            Schema.makeFilter(Number.isSafeInteger, {
+              message: "events.scoring.validation.wholeNumber",
+            }),
+          ]
+        : []),
+    ),
+  );
+}
 
-  const bounded = max === undefined ? number : number.max(max, rangeError);
+/**
+ * The first problem with a scoring number, as an i18n key. A form field typed
+ * for any condition value may hold a boolean, which is not a number.
+ */
+export function getScoringNumberError(
+  value: number | boolean,
+  bounds?: ScoringNumberBounds,
+): string | undefined {
+  const result = scoringNumberSchema(bounds)["~standard"].validate(value);
 
-  return integer
-    ? bounded.int("events.scoring.validation.wholeNumber")
-    : bounded;
+  return "issues" in result ? result.issues?.[0]?.message : undefined;
 }
 
 /** An inverted `BETWEEN` range ("od 4 do 2 osób") is rejected. */
@@ -53,7 +75,7 @@ export const getGroupSizeRangeError = (size: GroupSizeRange) =>
     : undefined;
 
 const isValidScoringNumber = (value: number, bounds?: ScoringNumberBounds) =>
-  scoringNumberSchema(bounds).safeParse(value).success;
+  getScoringNumberError(value, bounds) === undefined;
 
 const isValidCondition = (condition: EventScoringCondition) => {
   switch (condition.type) {

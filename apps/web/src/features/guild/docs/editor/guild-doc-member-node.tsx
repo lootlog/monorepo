@@ -6,17 +6,19 @@ import {
   type Spread,
 } from "lexical";
 import type { ReactNode } from "react";
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import { GuildDocMemberChip } from "./guild-doc-member-chip";
 
-const guildDocMemberSchema = z.object({
+const GuildDocMemberSchema = Schema.Struct({
   /** The member's `userId` from member references; it outlives renames. */
-  userId: z.string(),
+  userId: Schema.String,
   /** The name when it was mentioned, shown if the member is gone. */
-  name: z.string(),
+  name: Schema.String,
 });
 
-export type GuildDocMember = z.infer<typeof guildDocMemberSchema>;
+export type GuildDocMember = typeof GuildDocMemberSchema.Type;
+
+const decodeGuildDocMember = Schema.decodeUnknownOption(GuildDocMemberSchema);
 
 const UNKNOWN_MEMBER: GuildDocMember = { userId: "", name: "" };
 
@@ -41,8 +43,10 @@ export class GuildDocMemberNode extends DecoratorNode<ReactNode> {
 
   static importJSON(serializedNode: SerializedGuildDocMemberNode) {
     return $createGuildDocMemberNode(
-      guildDocMemberSchema.safeParse(serializedNode.member).data ??
-        UNKNOWN_MEMBER,
+      Option.getOrElse(
+        decodeGuildDocMember(serializedNode.member),
+        () => UNKNOWN_MEMBER,
+      ),
     ).updateFromJSON(serializedNode);
   }
 

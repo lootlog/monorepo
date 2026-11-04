@@ -1,24 +1,25 @@
-import * as z from "zod";
+import { Schema } from "effect";
 import type { TFunction } from "i18next";
 import { parseVanityUrl } from "@lootlog/domain/organization-vanity-url";
 
 export const createGeneralFormSchema = (t: TFunction) =>
-  z.object({
-    vanityUrl: z.string().superRefine((input, context) => {
-      if (input === "") return;
+  Schema.toStandardSchemaV1(
+    Schema.Struct({
+      vanityUrl: Schema.String.check(
+        Schema.makeFilter((input) => {
+          if (input === "") return;
 
-      const result = parseVanityUrl(input);
+          const result = parseVanityUrl(input);
 
-      if (result.success === false) {
-        context.addIssue({
-          code: "custom",
-          message: t(`settings.general.vanityUrl.${result.reason}`),
-        });
-      }
+          return result.success === false
+            ? t(`settings.general.vanityUrl.${result.reason}`)
+            : undefined;
+        }),
+      ),
+      publicStatsCardEnabled: Schema.Boolean,
     }),
-    publicStatsCardEnabled: z.boolean(),
-  });
+  );
 
-export type GeneralFormValues = z.infer<
-  ReturnType<typeof createGeneralFormSchema>
->;
+export type GeneralFormValues = ReturnType<
+  typeof createGeneralFormSchema
+>["Type"];

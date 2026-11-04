@@ -43,6 +43,7 @@
     "class-variance-authority": "^0.7.1",
     "cn": "catalog:",
     "date-fns": "^4.4.0",
+    "effect": "catalog:",
     "es-toolkit": "catalog:",
     "framer-motion": "^14.2.0",
     "i18next": "^26.4.4",
@@ -59,7 +60,6 @@
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.8",
     "usehooks-ts": "^3.1.1",
-    "zod": "catalog:",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

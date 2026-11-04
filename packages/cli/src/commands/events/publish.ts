@@ -1,8 +1,8 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import * as p from "@clack/prompts";
 import { styleText } from "node:util";
-import { Schema } from "effect";
+import { Console, Effect, Option, Schema } from "effect";
+import { Command, Flag, Prompt } from "effect/cli";
 import { createRabbitMQClient } from "../../rabbitmq/client.js";
 
 const EventFixture = Schema.Struct({
@@ -37,294 +37,207 @@ const loadFixtures = async (): Promise<Map<string, EventFixture>> => {
       fixtures.set(name, fixture);
     }
   } catch (error) {
-    console.error(
-      styleText(
-        "red",
-        `\n❌ Failed to load fixtures: ${error instanceof Error ? error.message : String(error)}\n`,
-      ),
+    throw new Error(
+      `Failed to load fixtures: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
     );
-    process.exit(1);
   }
 
   return fixtures;
 };
 
-interface PublishCliArgs {
-  event?: string;
-  exchange?: string;
-  routingKey?: string;
-  payload?: string;
-  continuous?: boolean;
-}
+const formatEventName = (name: string) =>
+  name.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
-const parseCliArgs = (args: string[]): PublishCliArgs => {
-  const parsed: PublishCliArgs = {};
+const publishInteractive = Effect.fn("publishInteractive")(function* (
+  continuous: boolean,
+) {
+  yield* Console.log(styleText(["bold", "cyan"], "🐰 Publish RabbitMQ Event"));
 
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
+  yield* Console.log(styleText("gray", "Connecting to RabbitMQ..."));
 
-    if ((arg === "--event" || arg === "-e") && i + 1 < args.length) {
-      parsed.event = args[++i];
-    } else if ((arg === "--exchange" || arg === "-x") && i + 1 < args.length) {
-      parsed.exchange = args[++i];
-    } else if (
-      (arg === "--routing-key" || arg === "-r") &&
-      i + 1 < args.length
-    ) {
-      parsed.routingKey = args[++i];
-    } else if ((arg === "--payload" || arg === "-p") && i + 1 < args.length) {
-      parsed.payload = args[++i];
-    } else if (arg === "--continuous" || arg === "-c") {
-      parsed.continuous = true;
+  const client = yield* Effect.acquireRelease(
+    Effect.promise(() => createRabbitMQClient()),
+    (client) => Effect.promise(() => client.close()),
+  );
+
+  yield* Console.log(styleText("gray", "Connected to RabbitMQ"));
+
+  for (let iteration = 0; ; iteration++) {
+    // Continuous mode reloads fixtures so edits show up without a restart.
+    const fixtures = yield* Effect.promise(() => loadFixtures());
+
+    if (fixtures.size === 0) {
+      return yield* Effect.die(new Error("No event fixtures found"));
     }
+
+    // Ctrl+C cancels the picker without failing the command.
+    const selected = yield* Effect.option(
+      Prompt.run(
+        Prompt.Select({
+          message:
+            continuous && iteration > 0
+              ? "Select an event to publish (fixtures reloaded):"
+              : "Select an event to publish:",
+          choices: Array.from(fixtures, ([name, fixture]) => ({
+            title: formatEventName(name),
+            value: fixture,
+          })),
+        }),
+      ),
+    );
+
+    if (Option.isNone(selected)) {
+      yield* Console.log(styleText("gray", "Operation cancelled"));
+      break;
+    }
+
+    const fixture = selected.value;
+
+    yield* Effect.promise(() => client.publish(fixture));
+
+    const another =
+      continuous &&
+      Option.getOrElse(
+        yield* Effect.option(
+          Prompt.run(
+            Prompt.Confirm({
+              message: "Publish another event?",
+              initial: true,
+            }),
+          ),
+        ),
+        () => false,
+      );
+
+    if (!another) break;
   }
 
-  return parsed;
+  yield* Console.log(styleText("green", "✓ Done!"));
+}, Effect.scoped);
+
+const publishFixture = async (name: string): Promise<void> => {
+  const fixtures = await loadFixtures();
+  const fixture = fixtures.get(name);
+
+  if (!fixture) {
+    throw new Error(
+      `Event '${name}' not found. Available events: ${Array.from(fixtures.keys()).join(", ")}`,
+    );
+  }
+
+  await publishWith(fixture);
 };
 
-const showHelp = (): void => {
-  console.log(`
-${styleText("bold", "publish - Publish test events to RabbitMQ")}
-
-${styleText("bold", "Usage:")}
-  bun run events:publish [options]
-
-${styleText("bold", "Interactive Mode (recommended):")}
-  bun run events:publish
-
-  Launches an interactive menu to select and publish predefined events.
-
-${styleText("bold", "Continuous Mode:")}
-  bun run events:publish --continuous
-
-  Keeps the connection open and allows publishing multiple events sequentially
-  without restarting the script. Fixtures are automatically reloaded before each
-  event selection, allowing you to modify JSON files on-the-fly. Perfect for
-  testing event flows.
-
-${styleText("bold", "Non-Interactive Mode:")}
-  bun run events:publish --event <name>
-  bun run events:publish --exchange <name> --routing-key <key> --payload <json>
-
-${styleText("bold", "Options:")}
-  -c, --continuous             Enable continuous mode (publish multiple events)
-  -e, --event <name>           Publish a predefined event by name
-  -x, --exchange <name>        Custom exchange name
-  -r, --routing-key <key>      Custom routing key
-  -p, --payload <json>         Custom payload as JSON string
-  -h, --help                   Show this help message
-
-${styleText("bold", "Examples:")}
-  ${styleText("gray", "# Interactive mode (single event)")}
-  bun run events:publish
-
-  ${styleText("gray", "# Continuous mode (multiple events)")}
-  bun run events:publish --continuous
-
-  ${styleText("gray", "# Publish predefined event")}
-  bun run events:publish --event loot-created
-
-  ${styleText("gray", "# Custom event")}
-  bun run events:publish \\
-    --exchange lootlog.events \\
-    --routing-key custom.test \\
-    --payload '{"test": "data"}'
-
-${styleText("bold", "Available Events:")}
-  Run 'bun run events:publish' to see available predefined events.
-
-${styleText("bold", "Requirements:")}
-  - RABBITMQ_URI environment variable must be set
-  - RabbitMQ server must be running and accessible
-  `);
-};
-
-const publishInteractive = async (
-  fixtures: Map<string, EventFixture>,
-  continuous = false,
+const publishCustom = async (
+  exchange: string,
+  routingKey: string,
+  payload: string,
 ): Promise<void> => {
-  p.intro(styleText(["bold", "cyan"], "🐰 Publish RabbitMQ Event"));
-
-  let currentFixtures = fixtures;
-
-  const getFixtureNames = () => Array.from(currentFixtures.keys());
-
-  if (getFixtureNames().length === 0) {
-    p.outro(styleText("red", "No event fixtures found"));
-    process.exit(1);
-  }
-
-  const spinner = p.spinner();
-  spinner.start("Connecting to RabbitMQ...");
-
-  const client = await createRabbitMQClient();
-  spinner.stop("Connected to RabbitMQ");
-
-  let continuePublishing = true;
-  let iterationCount = 0;
+  let parsedPayload: typeof Schema.Json.Type;
 
   try {
-    while (continuePublishing) {
-      // Reload fixtures in continuous mode after first iteration
-      if (continuous && iterationCount > 0) {
-        spinner.start("Reloading fixtures...");
-        currentFixtures = await loadFixtures();
-        spinner.stop("Fixtures reloaded");
-      }
+    parsedPayload = parsePayload(payload);
+  } catch (error) {
+    throw new Error(
+      `Invalid JSON payload: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  }
 
-      const fixtureNames = getFixtureNames();
+  await publishWith({ exchange, routingKey, payload: parsedPayload });
+};
 
-      if (fixtureNames.length === 0) {
-        p.outro(styleText("red", "No event fixtures found"));
-        break;
-      }
+const publishWith = async (fixture: EventFixture): Promise<void> => {
+  const client = await createRabbitMQClient();
 
-      const selectedEvent = await p.select({
-        message:
-          continuous && iterationCount > 0
-            ? "Select an event to publish (fixtures reloaded):"
-            : "Select an event to publish:",
-        options: fixtureNames.map((name) => ({
-          value: name,
-          label: name
-            .replace(/-/g, " ")
-            .replace(/\b\w/g, (l) => l.toUpperCase()),
-        })),
-      });
-
-      if (p.isCancel(selectedEvent)) {
-        p.cancel("Operation cancelled");
-        break;
-      }
-
-      const fixture = currentFixtures.get(selectedEvent);
-
-      if (!fixture) {
-        p.outro(styleText("red", "Event not found"));
-        break;
-      }
-
-      spinner.start("Publishing event...");
-
-      await client.publish({
-        exchange: fixture.exchange,
-        routingKey: fixture.routingKey,
-        payload: fixture.payload,
-      });
-
-      spinner.stop("Event published");
-
-      iterationCount++;
-
-      if (!continuous) {
-        continuePublishing = false;
-      } else {
-        const shouldContinue = await p.confirm({
-          message: "Publish another event?",
-          initialValue: true,
-        });
-
-        if (p.isCancel(shouldContinue) || !shouldContinue) {
-          continuePublishing = false;
-        }
-      }
-    }
+  try {
+    await client.publish(fixture);
   } finally {
     await client.close();
   }
-
-  p.outro(styleText("green", "✓ Done!"));
 };
 
-const publishNonInteractive = async (
-  fixtures: Map<string, EventFixture>,
-  args: {
-    event?: string;
-    exchange?: string;
-    routingKey?: string;
-    payload?: string;
+export const publishCommand = Command.make(
+  "publish",
+  {
+    continuous: Flag.Boolean("continuous").pipe(
+      Flag.withAlias("c"),
+      Flag.withDescription(
+        "Publish several events in a row, reloading fixtures",
+      ),
+      Flag.withDefault(false),
+    ),
+    event: Flag.String("event").pipe(
+      Flag.withAlias("e"),
+      Flag.withDescription("Publish a predefined event fixture by name"),
+      Flag.optional,
+    ),
+    exchange: Flag.String("exchange").pipe(
+      Flag.withAlias("x"),
+      Flag.withDescription("Custom exchange name"),
+      Flag.optional,
+    ),
+    routingKey: Flag.String("routing-key").pipe(
+      Flag.withAlias("r"),
+      Flag.withDescription("Custom routing key"),
+      Flag.optional,
+    ),
+    payload: Flag.String("payload").pipe(
+      Flag.withAlias("p"),
+      Flag.withDescription("Custom payload as a JSON string"),
+      Flag.optional,
+    ),
   },
-): Promise<void> => {
-  const client = await createRabbitMQClient();
+  ({ continuous, event, exchange, routingKey, payload }) => {
+    if (Option.isSome(event)) {
+      return Effect.promise(() => publishFixture(event.value));
+    }
 
-  try {
-    if (args.event) {
-      const fixture = fixtures.get(args.event);
+    if (
+      Option.isSome(exchange) &&
+      Option.isSome(routingKey) &&
+      Option.isSome(payload)
+    ) {
+      return Effect.promise(() =>
+        publishCustom(exchange.value, routingKey.value, payload.value),
+      );
+    }
 
-      if (!fixture) {
-        console.error(
-          styleText("red", `\n❌ Event '${args.event}' not found\n`),
-        );
-        console.log(styleText("gray", "Available events:"));
-
-        for (const name of fixtures.keys()) {
-          console.log(styleText("cyan", `  - ${name}`));
-        }
-
-        console.log();
-        process.exit(1);
-      }
-
-      await client.publish({
-        exchange: fixture.exchange,
-        routingKey: fixture.routingKey,
-        payload: fixture.payload,
-      });
-    } else if (args.exchange && args.routingKey && args.payload) {
-      let payload: typeof Schema.Json.Type;
-
-      try {
-        payload = parsePayload(args.payload);
-      } catch (error) {
-        console.error(
-          styleText(
-            "red",
-            `\n❌ Invalid JSON payload: ${error instanceof Error ? error.message : String(error)}\n`,
-          ),
-        );
-        process.exit(1);
-      }
-
-      await client.publish({
-        exchange: args.exchange,
-        routingKey: args.routingKey,
-        payload,
-      });
-    } else {
-      console.error(styleText("red", "\n❌ Invalid arguments\n"));
-      console.log(
-        styleText(
-          "gray",
-          "Either provide --event or all of --exchange, --routing-key, and --payload\n",
+    if (
+      Option.isSome(exchange) ||
+      Option.isSome(routingKey) ||
+      Option.isSome(payload)
+    ) {
+      return Effect.die(
+        new Error(
+          "Either provide --event or all of --exchange, --routing-key, and --payload",
         ),
       );
-      showHelp();
-      process.exit(1);
     }
-  } finally {
-    await client.close();
-  }
-};
 
-export const publish = async (args: string[]): Promise<void> => {
-  if (args.includes("--help") || args.includes("-h")) {
-    showHelp();
-
-    return;
-  }
-
-  const fixtures = await loadFixtures();
-  const parsedArgs = parseCliArgs(args);
-
-  const isInteractive =
-    !parsedArgs.event &&
-    !parsedArgs.exchange &&
-    !parsedArgs.routingKey &&
-    !parsedArgs.payload;
-
-  if (isInteractive) {
-    await publishInteractive(fixtures, parsedArgs.continuous);
-  } else {
-    await publishNonInteractive(fixtures, parsedArgs);
-  }
-};
+    return publishInteractive(continuous);
+  },
+).pipe(
+  Command.withDescription(
+    "Publish test events to RabbitMQ. Without flags it opens an interactive picker of the fixtures in src/events/fixtures.",
+  ),
+  Command.withExamples([
+    {
+      command: "bun run events:publish",
+      description: "Pick an event interactively",
+    },
+    {
+      command: "bun run events:publish --continuous",
+      description: "Publish several events in a row",
+    },
+    {
+      command: "bun run events:publish --event loot-created",
+      description: "Publish a predefined event",
+    },
+    {
+      command: `bun run events:publish --exchange lootlog.events --routing-key custom.test --payload '{"test": "data"}'`,
+      description: "Publish a custom event",
+    },
+  ]),
+);

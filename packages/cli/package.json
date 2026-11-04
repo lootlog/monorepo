@@ -8,7 +8,7 @@
     "lint": "oxlint src",
     "typecheck": "bun check",
     "test": "bun test",
-    "env:generate": "bun src/commands/env/generate.ts",
+    "env:generate": "bun src/index.ts env generate",
     "events": "bun src/index.ts events",
     "events:publish": "bun src/index.ts events publish",
     "seed": "bun --env-file=../../.env src/index.ts seed",
@@ -19,7 +19,7 @@
     "seed:setup": "bun --env-file=../../.env src/index.ts seed setup"
   },
   "dependencies": {
-    "@clack/prompts": "^1.8.1",
+    "@effect/platform-bun": "catalog:",
     "@lootlog/api": "workspace:*",
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/battlelog": "workspace:*",

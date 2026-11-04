@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { getQueryKeyPath } from "./query-key-path";
 import type { Query, QueryClient } from "@tanstack/react-query";
 import {
   getEventsMonitoringControllerGetHeroRespawnConfigQueryKey,
@@ -17,7 +17,7 @@ const isEventRespawnRelatedQuery = (
   guildId: string,
   eventId: string,
 ) => {
-  const path = z.string().safeParse(query.queryKey[0]).data;
+  const path = getQueryKeyPath(query.queryKey);
 
   if (path === undefined) {
     return false;

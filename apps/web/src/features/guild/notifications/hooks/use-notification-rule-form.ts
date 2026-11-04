@@ -1,7 +1,7 @@
 import { getNotificationFieldVisibility } from "../utils/notification-field-visibility";
-import { z } from "zod";
+import { Schema } from "effect";
 import { useEffect, useRef, useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -407,7 +407,9 @@ const useTimerNpcSelection = (
   };
 };
 
-const notificationRuleRouteParams = z.object({ ruleId: z.string().optional() });
+const decodeNotificationRuleRouteParams = Schema.decodeUnknownSync(
+  Schema.Struct({ ruleId: Schema.optional(Schema.String) }),
+);
 
 export const useNotificationRuleForm = () => {
   const { t } = useTranslation();
@@ -415,7 +417,7 @@ export const useNotificationRuleForm = () => {
   const guildId = useGuildId();
   const queryClient = useQueryClient();
   const params = useParams({ strict: false });
-  const ruleId = notificationRuleRouteParams.parse(params).ruleId;
+  const ruleId = decodeNotificationRuleRouteParams(params).ruleId;
   const isCreateMode = ruleId === undefined;
   const draftIdentity = JSON.stringify([guildId, ruleId]);
 
@@ -473,7 +475,7 @@ export const useNotificationRuleForm = () => {
     useState(false);
 
   const form = useForm<RuleFormValues>({
-    resolver: zodResolver(ruleFormSchema(t, maxNpcCount)),
+    resolver: standardSchemaResolver(ruleFormSchema(t, maxNpcCount)),
     defaultValues: getEmptyRuleFormValues(),
   });
 

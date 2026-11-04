@@ -54,8 +54,7 @@
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "es-toolkit": "catalog:",
-    "sharp": "^0.35.5",
-    "superjson": "catalog:"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@effect/sql-pglite": "^4.1.2",

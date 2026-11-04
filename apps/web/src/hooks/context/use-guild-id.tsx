@@ -1,11 +1,13 @@
-import { z } from "zod";
+import { Schema } from "effect";
 import { useParams, useSearch } from "@tanstack/react-router";
 
-const guildSearch = z.object({ guild_id: z.string().optional() });
+const decodeGuildSearch = Schema.decodeUnknownSync(
+  Schema.Struct({ guild_id: Schema.optional(Schema.String) }),
+);
 
 export const useGuildId = () => {
   const params = useParams({ strict: false });
-  const search = guildSearch.parse(useSearch({ strict: false }));
+  const search = decodeGuildSearch(useSearch({ strict: false }));
 
   const guildIdFromPath = "guildId" in params ? params.guildId : undefined;
 

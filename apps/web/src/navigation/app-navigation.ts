@@ -1,5 +1,5 @@
 import { maxBy, upperFirst } from "es-toolkit";
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import type { TOptions } from "i18next";
 import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
 import i18n from "@/i18n/config";
@@ -78,37 +78,49 @@ type ResolveAppNavigationOptions = {
   accessPolicy?: AccessPolicy;
 };
 
-const organizationRouteLoaderData = z.object({
-  guild: z.object({ name: z.string().optional() }).optional(),
-});
+const decodeOrganizationRouteLoaderData = Schema.decodeUnknownOption(
+  Schema.Struct({
+    guild: Schema.optional(
+      Schema.Struct({ name: Schema.optional(Schema.String) }),
+    ),
+  }),
+);
 
-const eventRouteLoaderData = z.object({
-  event: z
-    .object({
-      name: z.string().optional(),
-      heroNpcs: z
-        .array(
-          z.object({
-            id: z.union([z.number(), z.string()]),
-            npcName: z.string(),
-          }),
-        )
-        .optional(),
-    })
-    .optional(),
-  rankings: z
-    .array(
-      z.object({
-        memberId: z.number(),
-        member: z.object({ name: z.string().optional() }).optional(),
+const decodeEventRouteLoaderData = Schema.decodeUnknownOption(
+  Schema.Struct({
+    event: Schema.optional(
+      Schema.Struct({
+        name: Schema.optional(Schema.String),
+        heroNpcs: Schema.optional(
+          Schema.Array(
+            Schema.Struct({
+              id: Schema.Union([Schema.Finite, Schema.String]),
+              npcName: Schema.String,
+            }),
+          ),
+        ),
       }),
-    )
-    .optional(),
-});
+    ),
+    rankings: Schema.optional(
+      Schema.Array(
+        Schema.Struct({
+          memberId: Schema.Finite,
+          member: Schema.optional(
+            Schema.Struct({ name: Schema.optional(Schema.String) }),
+          ),
+        }),
+      ),
+    ),
+  }),
+);
 
-const documentRouteLoaderData = z.object({
-  document: z.object({ title: z.string().optional() }).optional(),
-});
+const decodeDocumentRouteLoaderData = Schema.decodeUnknownOption(
+  Schema.Struct({
+    document: Schema.optional(
+      Schema.Struct({ title: Schema.optional(Schema.String) }),
+    ),
+  }),
+);
 
 type RegistryItem = {
   id: AppNavigationItemId;
@@ -443,7 +455,10 @@ type GetNavigationInfoArgs = {
   guildName?: string;
   eventName?: string;
   eventHeroNpcs?: Array<{ id: string; npcName: string }>;
-  eventRankings: Array<{ memberId: number; member?: { name?: string } }>;
+  eventRankings: ReadonlyArray<{
+    memberId: number;
+    member?: { name?: string };
+  }>;
   /** The document title from the document route's loader. */
   docTitle?: string;
   /** The name of the entity the page shows, looked up by the top bar. */
@@ -457,13 +472,15 @@ function navigationInfo(
   return { breadcrumbs, backPath };
 }
 
-const abyssSeasonSearch = z.object({
-  seasonId: z.string(),
-  characterId: z.string(),
+const AbyssSeasonSearch = Schema.Struct({
+  seasonId: Schema.String,
+  characterId: Schema.String,
 });
 
+const decodeAbyssSeasonSearch = Schema.decodeUnknownOption(AbyssSeasonSearch);
+
 /** The Abyss season a page was opened from, as its search names it. */
-type AbyssSeasonOrigin = z.infer<typeof abyssSeasonSearch>;
+type AbyssSeasonOrigin = typeof AbyssSeasonSearch.Type;
 
 function resolvePlayerVsPlayerNavigation(
   battlePanel: Breadcrumb,
@@ -745,7 +762,7 @@ function resolveUserAppNavigation(
   const userNavigation = resolveUserNavigationInfo(
     lastMatch.pathname,
     getBattleRouteLabel(lastMatch, t, { currentBattle }),
-    abyssSeasonSearch.safeParse(lastMatch.search).data,
+    Option.getOrUndefined(decodeAbyssSeasonSearch(lastMatch.search)),
   );
 
   const sidebarItems = resolveSidebarItems(
@@ -785,19 +802,25 @@ function createMissingOrganizationNavigation(): AppNavigation {
 }
 
 function getOrganizationLoaderContext(matches: readonly AppNavigationMatch[]) {
-  const organization = organizationRouteLoaderData.safeParse(
-    getMatchByRouteId(matches, "/_authenticated/$guildId")?.loaderData,
-  ).data;
+  const organization = Option.getOrUndefined(
+    decodeOrganizationRouteLoaderData(
+      getMatchByRouteId(matches, "/_authenticated/$guildId")?.loaderData,
+    ),
+  );
 
-  const event = eventRouteLoaderData.safeParse(
-    getMatchByRouteId(matches, "/_authenticated/$guildId/events_/$eventId_")
-      ?.loaderData,
-  ).data;
+  const event = Option.getOrUndefined(
+    decodeEventRouteLoaderData(
+      getMatchByRouteId(matches, "/_authenticated/$guildId/events_/$eventId_")
+        ?.loaderData,
+    ),
+  );
 
-  const document = documentRouteLoaderData.safeParse(
-    getMatchByRouteId(matches, "/_authenticated/$guildId/docs/$docId")
-      ?.loaderData,
-  ).data;
+  const document = Option.getOrUndefined(
+    decodeDocumentRouteLoaderData(
+      getMatchByRouteId(matches, "/_authenticated/$guildId/docs/$docId")
+        ?.loaderData,
+    ),
+  );
 
   return { organization, event, document };
 }

@@ -5,17 +5,20 @@ import { SigninPageSkeleton } from "@/features/signin/signin-page-skeleton";
 import { restoreLastOrganization } from "@/lib/router/restore-last-organization";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
-import { z } from "zod";
+import { Schema } from "effect";
+import { optionalOrUndefined } from "@lootlog/schema/stored-value";
 
-const signinSearch = z.object({
-  error: z.string().optional().catch(undefined),
-  redirect: z.string().optional().catch(undefined),
-});
+const decodeSigninSearch = Schema.decodeUnknownSync(
+  Schema.Struct({
+    error: optionalOrUndefined(Schema.String),
+    redirect: optionalOrUndefined(Schema.String),
+  }),
+);
 
 export const Route = createFileRoute("/signin")({
   component: SignIn,
   pendingComponent: SigninPageSkeleton,
-  validateSearch: signinSearch.parse,
+  validateSearch: decodeSigninSearch,
   beforeLoad: async ({ context, search, preload, abortController }) => {
     const session = await withRouteLoaderCancellation(abortController, () =>
       context.queryClient.fetchQuery(sessionQueryOptions),
