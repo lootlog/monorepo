@@ -15,7 +15,10 @@ import {
   getMembersControllerGetGuildMembersQueryKey,
   getMembersControllerGetLatestRefreshJobQueryKey,
 } from "@lootlog/client/main";
-import { createTestGateway } from "@/lib/testing/gateway";
+import {
+  createTestAccessPolicy,
+  createTestGateway,
+} from "@/lib/testing/gateway";
 import { createOrganizationTestWrapper } from "@/lib/testing/router";
 import { RefreshStatusProvider } from "../contexts/refresh-status-provider";
 import "@/i18n/config";
@@ -129,6 +132,7 @@ it("replaces progress missed during a disconnect with the job state after rejoin
         connectionId: "connection-2",
         organizationIds: ["guild-1"],
         subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy(["guild-1"]),
       },
     }),
   );

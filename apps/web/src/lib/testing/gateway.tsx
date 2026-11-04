@@ -3,10 +3,25 @@ import {
   type ServerEvent,
   type RealtimeConnectionState,
 } from "@lootlog/client/realtime";
+import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
+import type { Permission } from "@lootlog/schema/permissions";
 import { vi } from "vitest";
 import type { PropsWithChildren } from "react";
 import { GatewayClient } from "@/lib/gateway-client";
 import { GatewayContext } from "@/contexts/gateway-context";
+
+/** Builds the access policy the gateway sends for a member of these Organizations. */
+export const createTestAccessPolicy = (
+  organizationIds: readonly string[],
+  permissions: Permission[] = [],
+) =>
+  createAccessPolicySnapshot(
+    organizationIds.map((id) => ({
+      guild: { id, ownerId: "owner" },
+      roles: [{ permissions, lvlRangeFrom: 0, lvlRangeTo: 500 }],
+    })),
+    "discord-member",
+  );
 
 export const createTestGateway = (
   options: { connected?: boolean; joined?: boolean } = {},

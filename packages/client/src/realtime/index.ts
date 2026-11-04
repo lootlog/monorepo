@@ -1,6 +1,8 @@
 export {
   RealtimeClient,
   RealtimeRequestError,
+  type CommandData,
+  type CommandType,
   type RealtimeClientOptions,
   type RealtimeConnectionState,
   type RealtimeWebSocket,

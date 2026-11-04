@@ -293,19 +293,12 @@ quiet while retaining visible rows. Timer, chat, notification, and presence
 changes remain scoped to their Organization and area. Gateway preserves
 still-authorized custom subscriptions and air-tag scopes during rebalance.
 
-### Policy rollout and rollback
+### Policy delivery
 
-Deploy Gateway before the updated game client. The additional fields are
-optional in realtime v1, so existing clients can decode the events and continue
-to use the existing organization and subscription fields. This change requires
-no HTTP schema or database migration.
-
-An updated client connected to a gateway without policy snapshots uses a
-conservative fallback for legacy permission events: cancel and clear affected
-cache families, clear stored notifications, and coalesce required refetches over
-five seconds. This fallback cannot preserve the same selective view as a full
-policy snapshot. Gateway-first rollout enables selective updates immediately;
-rolling Gateway back may temporarily restore broader view clearing.
+Every `session.joined` and `permissions.updated` event carries the session's
+access policy snapshot, and every `permissions.updated` event carries its
+changes, so clients reconcile selectively and have no fallback for an event
+without them. This requires no HTTP schema or database migration.
 
 Verify unchanged rebalances, a tier revocation, a level-range restriction, and a
 reconnect after an offline permission change. Check both userscript and extension

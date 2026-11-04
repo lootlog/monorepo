@@ -1,5 +1,4 @@
-import { GatewayEvent } from "@/config/gateway";
-import type { AppSocket, PermissionsUpdatedPayload } from "@/lib/socket";
+import type { AppSocket, AppSocketEvent, AccessUpdate } from "@/lib/socket";
 import { useEffect, useRef } from "react";
 
 type SocketWithListeners = {
@@ -12,7 +11,7 @@ type BufferedSocketIngressBaseOptions<TPayload> = {
   connected: boolean;
   accountId: string | null | undefined;
   isReady: boolean;
-  event: GatewayEvent;
+  event: AppSocketEvent;
   onProcessBatch: (payloads: readonly TPayload[]) => void;
   maxPendingItems?: number;
   isPayloadAllowed?: (payload: TPayload) => boolean;
@@ -27,7 +26,7 @@ type BufferedSocketIngressWithoutCancel = {
 };
 
 type BufferedSocketIngressWithCancel<TPayload, TCancelPayload> = {
-  cancelEvent: GatewayEvent;
+  cancelEvent: AppSocketEvent;
   onCancel: (payload: TCancelPayload) => void;
   getPayloadId: (payload: TPayload) => string;
   getCancelId: (payload: TCancelPayload) => string;
@@ -136,8 +135,9 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
   }, [accountId]);
 
   useEffect(() => {
-    const handlePermissionsUpdated = (data?: PermissionsUpdatedPayload) => {
-      if (data?.accessPolicy && isPayloadAllowedRef.current) {
+    const handlePermissionsUpdated = (data?: AccessUpdate) => {
+      // A disconnect carries no access update and drops everything pending.
+      if (data && isPayloadAllowedRef.current) {
         pendingItemsRef.current = pendingItemsRef.current.filter(
           isPayloadAllowedRef.current,
         );
@@ -149,12 +149,12 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
       pendingCancelIdsRef.current.clear();
     };
 
-    socket?.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
-    socket?.on(GatewayEvent.DISCONNECT, handlePermissionsUpdated);
+    socket?.on("access.updated", handlePermissionsUpdated);
+    socket?.on("disconnect", handlePermissionsUpdated);
 
     return () => {
-      socket?.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
-      socket?.off(GatewayEvent.DISCONNECT, handlePermissionsUpdated);
+      socket?.off("access.updated", handlePermissionsUpdated);
+      socket?.off("disconnect", handlePermissionsUpdated);
     };
   }, [socket]);
 

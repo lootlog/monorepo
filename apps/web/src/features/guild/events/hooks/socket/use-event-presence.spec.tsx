@@ -3,7 +3,10 @@ import type { CommandSuccess } from "@lootlog/protocol/realtime";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import type { PresenceWithLocation } from "@lootlog/client/realtime";
-import { createTestGateway } from "@/lib/testing/gateway";
+import {
+  createTestAccessPolicy,
+  createTestGateway,
+} from "@/lib/testing/gateway";
 import { useEventPresence } from "./use-event-presence";
 
 afterEach(() => {
@@ -95,7 +98,12 @@ it("tracks world changes and clears cached presence while an unknown policy is r
     gateway.deliver({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: [], subscriptionScopes: [] },
+      data: {
+        changes: [],
+        organizationIds: [],
+        subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy([]),
+      },
     }),
   );
   await waitFor(() => expect(gateway.request).toHaveBeenCalledTimes(2));

@@ -229,6 +229,7 @@ describe("map threat source", () => {
       v: 1,
       type: "permissions.updated",
       data: {
+        changes: [],
         organizationIds: ["guild-1"],
         subscriptionScopes: [],
         accessPolicy: policy(true),
@@ -277,6 +278,7 @@ describe("map threat source", () => {
           v: 1,
           type: "permissions.updated",
           data: {
+            changes: [],
             organizationIds: ["guild-1"],
             subscriptionScopes: [],
             accessPolicy: policy(false),

@@ -1,3 +1,4 @@
+import { ownerAccessPolicy } from "@/test/realtime-wire";
 import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import {
   accountPreferenceValues,
@@ -126,6 +127,7 @@ const setup = async (lootSplit?: { enabled: boolean; rarities: string[] }) => {
         connectionId: "test",
         organizationIds: ["guild-1"],
         subscriptionScopes: [],
+        accessPolicy: ownerAccessPolicy(["guild-1"]),
       },
     }),
   );

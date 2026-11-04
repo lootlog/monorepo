@@ -373,7 +373,7 @@ export const SessionJoined = Schema.Struct({
   connectionId: Schema.NonEmptyString,
   organizationIds: Schema.Array(Schema.NonEmptyString),
   subscriptionScopes: Schema.Array(SubscriptionScope),
-  accessPolicy: Schema.optional(AccessPolicySnapshot),
+  accessPolicy: AccessPolicySnapshot,
 });
 
 export type SessionJoined = typeof SessionJoined.Type;
@@ -464,10 +464,10 @@ export const ServerEvent = Schema.Union([
   serverEvent(
     "permissions.updated",
     Schema.Struct({
-      changes: Schema.optional(Schema.Array(AccessPolicyChange)),
+      changes: Schema.Array(AccessPolicyChange),
       organizationIds: Schema.Array(Schema.NonEmptyString),
       subscriptionScopes: Schema.Array(SubscriptionScope),
-      accessPolicy: Schema.optional(AccessPolicySnapshot),
+      accessPolicy: AccessPolicySnapshot,
     }),
   ),
   serverEvent("presence.snapshot", PresenceSnapshot),

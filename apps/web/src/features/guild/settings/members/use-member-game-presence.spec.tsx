@@ -1,7 +1,10 @@
 // @vitest-environment happy-dom
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { createTestGateway } from "@/lib/testing/gateway";
+import {
+  createTestAccessPolicy,
+  createTestGateway,
+} from "@/lib/testing/gateway";
 import { isMemberOnlineInGame } from "./member-game-presence.utils";
 import { useMemberGamePresence } from "./use-member-game-presence";
 
@@ -62,7 +65,12 @@ it("clears current presence before rechecking an unknown permission policy", asy
     gateway.deliver({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: [], subscriptionScopes: [] },
+      data: {
+        changes: [],
+        organizationIds: [],
+        subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy([]),
+      },
     }),
   );
   await waitFor(() => expect(gateway.request).toHaveBeenCalledTimes(2));

@@ -22,7 +22,10 @@ import { Permission } from "@lootlog/schema/permissions";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { Storage as MemoryStorage } from "happy-dom";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
-import { createTestGateway } from "@/lib/testing/gateway";
+import {
+  createTestAccessPolicy,
+  createTestGateway,
+} from "@/lib/testing/gateway";
 import { storeGuildWorld } from "@/hooks/context/use-guild-world";
 import { ThemeContext } from "@/contexts/theme-context";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
@@ -400,6 +403,7 @@ it("retains visible loots through reconnect, background refresh and its failure"
         connectionId: "reconnected",
         organizationIds: ["one"],
         subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy(["one"]),
       },
     });
     await vi.advanceTimersByTimeAsync(1);
@@ -457,7 +461,12 @@ it.each(["permissions", "reconnect"] as const)(
         gateway.deliver({
           v: 1,
           type: "permissions.updated",
-          data: { organizationIds: [], subscriptionScopes: [] },
+          data: {
+            changes: [],
+            organizationIds: [],
+            subscriptionScopes: [],
+            accessPolicy: createTestAccessPolicy([]),
+          },
         });
       } else {
         gateway.setConnectionState("disconnected");
@@ -469,6 +478,7 @@ it.each(["permissions", "reconnect"] as const)(
             connectionId: "reconnected",
             organizationIds: [],
             subscriptionScopes: [],
+            accessPolicy: createTestAccessPolicy([]),
           },
         });
       }
@@ -563,6 +573,7 @@ it("reports a fetched empty page as empty but a policy clear as pending", async 
       v: 1,
       type: "permissions.updated",
       data: {
+        changes: [],
         organizationIds: ["one"],
         subscriptionScopes: [],
         accessPolicy: createAccessPolicySnapshot(
@@ -645,6 +656,7 @@ it.each(["reconnect", "permissions"] as const)(
           v: 1,
           type: "permissions.updated",
           data: {
+            changes: [],
             organizationIds: ["one", "two"],
             subscriptionScopes: [],
             accessPolicy: policy(true),
@@ -719,6 +731,7 @@ it("does not refetch the list after the page's first join", async () => {
         connectionId: "connection",
         organizationIds: ["one", "two"],
         subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy(["one", "two"]),
       },
     });
     await vi.advanceTimersByTimeAsync(40_000);
@@ -746,6 +759,7 @@ it("keeps fetched loots when joining before the route alias is resolved", async 
         connectionId: "connection",
         organizationIds: ["one"],
         subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy(["one"]),
       },
     });
     await vi.advanceTimersByTimeAsync(1);

@@ -1,19 +1,15 @@
-import { GatewayEvent } from "@/config/gateway";
 import {
   applyPresenceUpdates,
   canReadPresence,
   canReadPresenceLocation,
   filterPresenceByPolicy,
   getPresenceKey,
-  normalizePresence,
-  normalizePresenceResponse,
   requestServerPresence,
   type PlayerPresence,
   type PlayerPresenceResponse,
-  type PlayerPresenceUpdatePayload,
 } from "./online-players-presence";
 import { PresenceMapIndex, type MapOccupancy } from "./presence-map-index";
-import type { AppSocket, PermissionsUpdatedPayload } from "./socket";
+import type { AppSocket, AccessUpdate } from "./socket";
 import {
   createScopedSourceRegistry,
   KeyedListeners,
@@ -211,15 +207,13 @@ export class PlayersPresenceSource {
         )
           return this.getSnapshot();
 
-        if (!response) throw new Error("Online players response was empty");
-
         if (response.status === "forbidden") {
           this.restrict(true);
 
           return this.getSnapshot();
         }
 
-        let players = normalizePresenceResponse(response.players);
+        let players = response.players;
         players = applyPresenceUpdates(players, [
           ...(this.snapshotUpdates?.values() ?? []),
         ]);
@@ -273,14 +267,11 @@ export class PlayersPresenceSource {
 
   private start(hydrate: boolean): void {
     this.active = true;
-    this.socket.on(
-      GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
-      this.handlePresence,
-    );
-    this.socket.on(GatewayEvent.PERMISSIONS_UPDATED, this.handlePermissions);
-    this.socket.on(GatewayEvent.JOIN, this.handleJoin);
-    this.socket.on(GatewayEvent.DISCONNECT, this.handleDisconnect);
-    this.socket.on(GatewayEvent.PRESENCE_PUBLISHED, this.handlePublished);
+    this.socket.on("presence.changed", this.handlePresence);
+    this.socket.on("access.updated", this.handlePermissions);
+    this.socket.on("join", this.handleJoin);
+    this.socket.on("disconnect", this.handleDisconnect);
+    this.socket.on("presence.published", this.handlePublished);
 
     if (hydrate) void this.refresh();
   }
@@ -288,14 +279,11 @@ export class PlayersPresenceSource {
   private stop(): void {
     if (!this.active) return;
     this.active = false;
-    this.socket.off(
-      GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
-      this.handlePresence,
-    );
-    this.socket.off(GatewayEvent.PERMISSIONS_UPDATED, this.handlePermissions);
-    this.socket.off(GatewayEvent.JOIN, this.handleJoin);
-    this.socket.off(GatewayEvent.DISCONNECT, this.handleDisconnect);
-    this.socket.off(GatewayEvent.PRESENCE_PUBLISHED, this.handlePublished);
+    this.socket.off("presence.changed", this.handlePresence);
+    this.socket.off("access.updated", this.handlePermissions);
+    this.socket.off("join", this.handleJoin);
+    this.socket.off("disconnect", this.handleDisconnect);
+    this.socket.off("presence.published", this.handlePublished);
     this.invalidate();
 
     if (this.policyTimer !== null) clearTimeout(this.policyTimer);
@@ -318,8 +306,8 @@ export class PlayersPresenceSource {
     this.frame = null;
   }
 
-  private handleJoin = (payload: { status: string }): void => {
-    if (payload.status === "success") void this.refresh();
+  private handleJoin = (): void => {
+    void this.refresh();
   };
 
   // Unlike a role change, this character's own publication needs no
@@ -340,9 +328,8 @@ export class PlayersPresenceSource {
     this.notify();
   };
 
-  private handlePresence = (payload: PlayerPresenceUpdatePayload): void => {
-    if (payload.guildId !== this.guildId || !this.ready()) return;
-    const presence = normalizePresence(payload);
+  private handlePresence = (presence: PlayerPresence): void => {
+    if (presence.guildId !== this.guildId || !this.ready()) return;
 
     if (
       presence.player?.world !== this.world &&
@@ -432,26 +419,14 @@ export class PlayersPresenceSource {
     this.notify();
   }
 
-  private handlePermissions = (payload: PermissionsUpdatedPayload): void => {
-    if (!payload.accessPolicy) {
-      this.invalidate();
-      this.index.replace({});
-      this.rowsDirty = false;
-      this.snapshot = emptyPlayersPresenceSnapshot;
-      this.notify();
-      this.scheduleRefresh();
-
-      return;
-    }
-
+  private handlePermissions = (payload: AccessUpdate): void => {
     const organization = this.organization();
 
-    const changes =
-      payload.changes?.filter(
-        (change) =>
-          change.organizationId === this.guildId &&
-          change.areas.includes("presence"),
-      ) ?? [];
+    const changes = payload.changes.filter(
+      (change) =>
+        change.organizationId === this.guildId &&
+        change.areas.includes("presence"),
+    );
 
     if (organization && changes.length === 0) return;
 

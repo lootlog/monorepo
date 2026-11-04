@@ -1,4 +1,7 @@
-import { createTestGateway } from "@/lib/testing/gateway";
+import {
+  createTestAccessPolicy,
+  createTestGateway,
+} from "@/lib/testing/gateway";
 import { configureApiClients } from "@lootlog/client/transport";
 import {
   getUsersControllerGetUserFeedQueryKey,
@@ -45,6 +48,7 @@ function deliverLifecycleEvent(
         connectionId: "connection-1",
         organizationIds,
         subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy(organizationIds),
       },
     });
 
@@ -55,7 +59,12 @@ function deliverLifecycleEvent(
     gateway.deliver({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds, subscriptionScopes: [] },
+      data: {
+        changes: [],
+        organizationIds,
+        subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy(organizationIds),
+      },
     });
 
     return;

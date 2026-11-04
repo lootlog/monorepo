@@ -22,9 +22,10 @@ import {
 import { Predicate } from "effect";
 import { notifyListeners } from "./notify-listeners.js";
 
-type CommandType = ClientCommand["type"];
+export type CommandType = ClientCommand["type"];
 
-type CommandData<Type extends CommandType> = Extract<
+/** The data a command of `Type` sends. */
+export type CommandData<Type extends CommandType> = Extract<
   ClientCommand,
   { type: Type }
 >["data"];

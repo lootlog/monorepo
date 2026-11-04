@@ -7,7 +7,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
 import { expect, it, vi } from "vitest";
 import { useGameStore } from "@/store/game.store";
-import { GatewayEvent } from "@/config/gateway";
 import { SocketProvider } from "@/contexts/socket-context";
 import { getSocket } from "@/lib/socket";
 import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
@@ -75,7 +74,7 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
     vi.useFakeTimers();
     let now = 1_000;
     vi.spyOn(performance, "now").mockImplementation(() => now);
-    getSocket().emit(GatewayEvent.PLAYER_PRESENCE_UPDATE);
+    void getSocket().publishPresence();
     const publication = gateway.wire.frames.at(-1);
 
     if (

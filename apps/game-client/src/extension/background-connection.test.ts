@@ -1,4 +1,4 @@
-import { publishedPresence } from "@/test/realtime-wire";
+import { ownerAccessPolicy, publishedPresence } from "@/test/realtime-wire";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   RealtimeClient,
@@ -164,6 +164,7 @@ describe("background connection", () => {
       connectionId: "connection-1",
       organizationIds: ["organization"],
       subscriptionScopes: [],
+      accessPolicy: ownerAccessPolicy(["organization"]),
     });
     await join;
 
@@ -254,7 +255,12 @@ describe("background connection", () => {
     {
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: [], subscriptionScopes: [] },
+      data: {
+        accessPolicy: ownerAccessPolicy([]),
+        changes: [],
+        organizationIds: [],
+        subscriptionScopes: [],
+      },
     },
     { v: 1, requestId: "fake", status: "success", data: {} },
   ])(

@@ -40,6 +40,7 @@ class GatewayWebSocket extends EventTarget {
         connectionId: "connection-1",
         organizationIds: [],
         subscriptionScopes: [],
+        accessPolicy: { version: "policy-1", organizations: [] },
       },
     } as const;
 

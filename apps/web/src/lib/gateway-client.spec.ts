@@ -197,7 +197,7 @@ it("treats the first access policy as the page's baseline and reports later revo
   const handler = vi.fn();
   client.on(GatewayEvent.JOIN, handler);
 
-  const joined = (permissions?: Permission[]) =>
+  const joined = (permissions: Permission[]) =>
     deliver?.({
       v: 1,
       type: "session.joined",
@@ -205,17 +205,15 @@ it("treats the first access policy as the page's baseline and reports later revo
         connectionId: "connection-1",
         organizationIds: ["organization-1"],
         subscriptionScopes: [],
-        accessPolicy: permissions
-          ? createAccessPolicySnapshot(
-              [
-                {
-                  guild: { id: "organization-1", ownerId: "owner" },
-                  roles: [{ permissions, lvlRangeFrom: 0, lvlRangeTo: 500 }],
-                },
-              ],
-              "discord-member",
-            )
-          : undefined,
+        accessPolicy: createAccessPolicySnapshot(
+          [
+            {
+              guild: { id: "organization-1", ownerId: "owner" },
+              roles: [{ permissions, lvlRangeFrom: 0, lvlRangeTo: 500 }],
+            },
+          ],
+          "discord-member",
+        ),
       },
     });
 
@@ -236,11 +234,6 @@ it("treats the first access policy as the page's baseline and reports later revo
       ],
     }),
   );
-
-  joined();
-  expect(handler).toHaveBeenLastCalledWith(
-    expect.objectContaining({ accessPolicyChanges: undefined }),
-  );
 });
 
 it("keeps a permissions update without a baseline unknown so stale caches are cleared", () => {
@@ -255,6 +248,7 @@ it("keeps a permissions update without a baseline unknown so stale caches are cl
     v: 1,
     type: "permissions.updated",
     data: {
+      changes: [],
       organizationIds: [],
       subscriptionScopes: [],
       accessPolicy: createAccessPolicySnapshot([], "discord-member"),
@@ -294,6 +288,7 @@ it.each([
           connectionId: "connection-1",
           organizationIds: ["organization-1"],
           subscriptionScopes: [],
+          accessPolicy: createAccessPolicySnapshot([], "discord-member"),
         },
       });
 

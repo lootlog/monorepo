@@ -1,3 +1,4 @@
+import { ownerAccessPolicy } from "@/test/realtime-wire";
 import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import { encodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import {
@@ -160,6 +161,7 @@ const setup = async ({
             connectionId: "test",
             organizationIds: ["guild-1"],
             subscriptionScopes: [],
+            accessPolicy: ownerAccessPolicy(["guild-1"]),
           },
         });
       });

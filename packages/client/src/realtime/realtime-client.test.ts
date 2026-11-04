@@ -97,6 +97,7 @@ const successData = (command: ClientCommand, fields?: SuccessFields) => {
         connectionId: "connection-1",
         organizationIds: [],
         subscriptionScopes: [],
+        accessPolicy: { version: "policy-1", organizations: [] },
         ...fields,
       };
     case "presence.heartbeat":
@@ -276,7 +277,12 @@ describe("RealtimeClient", () => {
       encodeRealtimeFrame({
         v: 1,
         type: "permissions.updated",
-        data: { organizationIds: ["org-1"], subscriptionScopes: [] },
+        data: {
+          changes: [],
+          organizationIds: ["org-1"],
+          subscriptionScopes: [],
+          accessPolicy: { version: "policy-1", organizations: [] },
+        },
       }),
     );
     await flushMessages();
@@ -511,7 +517,12 @@ describe("RealtimeClient", () => {
         encodeRealtimeFrame({
           v: 1,
           type: "permissions.updated",
-          data: { organizationIds: ["org-1"], subscriptionScopes: [] },
+          data: {
+            changes: [],
+            organizationIds: ["org-1"],
+            subscriptionScopes: [],
+            accessPolicy: { version: "policy-1", organizations: [] },
+          },
         }),
       );
       await flushMessages();

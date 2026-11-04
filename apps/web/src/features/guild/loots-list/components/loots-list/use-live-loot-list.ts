@@ -390,12 +390,10 @@ export const useLiveLootList = () => {
 
     const onJoin = (payload: {
       guildIds: string[];
-      accessPolicyChanges?: readonly AccessPolicyChange[];
+      accessPolicyChanges: readonly AccessPolicyChange[];
       recover: boolean;
     }) => {
-      const restricted = restrictedOrganizations(
-        payload.accessPolicyChanges ?? [],
-      );
+      const restricted = restrictedOrganizations(payload.accessPolicyChanges);
 
       // Until guilds load, currentGuildId may still be the route's alias.
       if (

@@ -1,5 +1,4 @@
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
-import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useCurrentGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { readSettingsValue } from "@/features/settings/persistence/settings-snapshot";
@@ -194,10 +193,10 @@ export const useMapPings = () => {
       }
     };
 
-    socket.on(GatewayEvent.MAP_PING_RECEIVE, handleMapPing);
+    socket.on("map-ping.received", handleMapPing);
 
     return () => {
-      socket.off(GatewayEvent.MAP_PING_RECEIVE, handleMapPing);
+      socket.off("map-ping.received", handleMapPing);
     };
   }, [connected, enabled, isNewInterface, joined, socket, t]);
 
@@ -300,22 +299,15 @@ export const useMapPings = () => {
 
     if (character?.kind === "player") payload.playerId = character.id;
 
-    socket
-      .timeout(ACK_TIMEOUT_MS)
-      .emit(
-        GatewayEvent.MAP_PING_SEND,
-        payload,
-        (error: Error | null, acknowledgement?: MapPingAck) => {
-          if (error || !acknowledgement) {
-            return;
-          }
-
-          if (acknowledgement.status === "rejected") {
-            mapPingController.remove(localPingId);
-            showHint(acknowledgement);
-          }
-        },
-      );
+    socket.request("map-ping.send", payload, ACK_TIMEOUT_MS).then(
+      (acknowledgement) => {
+        if (acknowledgement.status === "rejected") {
+          mapPingController.remove(localPingId);
+          showHint(acknowledgement);
+        }
+      },
+      () => undefined,
+    );
   };
 
   return { active, resolveStart, send };

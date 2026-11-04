@@ -13,8 +13,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { partyReadyRoomControllerActive } from "@lootlog/client/main";
 import { useSocket } from "@/contexts/socket-context";
-import { GatewayEvent } from "@/config/gateway";
-import type { PermissionsUpdatedPayload } from "@/lib/socket";
+import type { AccessUpdate } from "@/lib/socket";
 import { useGameStore } from "@/store/game.store";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { useSession } from "@/hooks/auth/use-session";
@@ -78,16 +77,16 @@ export function useActivePartyGatherings() {
       });
     };
 
-    const permissionsChanged = ({ changes }: PermissionsUpdatedPayload) => {
-      const relevant = changes?.filter((change) =>
+    const permissionsChanged = ({ changes }: AccessUpdate) => {
+      const relevant = changes.filter((change) =>
         change.areas.some((area) => GATHERING_ACCESS_AREAS.has(area)),
       );
 
-      if (relevant?.length === 0) return;
+      if (relevant.length === 0) return;
 
       // Revoked access must hide rooms at once; a grant keeps the current bar
       // visible while discovery adds the newly readable rooms.
-      if (relevant?.every((change) => !change.restricted)) invalidate();
+      if (relevant.every((change) => !change.restricted)) invalidate();
       else
         void queryClient.resetQueries({
           queryKey: ACTIVE_GATHERINGS_QUERY_KEY,
@@ -102,12 +101,12 @@ export function useActivePartyGatherings() {
       );
     };
 
-    socket.on(GatewayEvent.PARTY_GATHERING_STATE_UPDATE, gatheringUpdated);
-    socket.on(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
+    socket.on("party-gathering.state-updated", gatheringUpdated);
+    socket.on("access.updated", permissionsChanged);
 
     return () => {
-      socket.off(GatewayEvent.PARTY_GATHERING_STATE_UPDATE, gatheringUpdated);
-      socket.off(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
+      socket.off("party-gathering.state-updated", gatheringUpdated);
+      socket.off("access.updated", permissionsChanged);
     };
   }, [connected, joined, socket, queryClient, userId, world]);
   useEffect(() => {

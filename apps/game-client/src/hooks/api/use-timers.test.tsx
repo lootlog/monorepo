@@ -56,8 +56,8 @@ it("completes one initial request while applying the latest policy before exposi
   try {
     await waitFor(() => expect(fixture.requests).toHaveLength(1));
     act(() =>
-      access.apply({
-        accessPolicy: createAccessPolicySnapshot(
+      access.apply(
+        createAccessPolicySnapshot(
           [
             {
               guild: { id: "a", ownerId: "owner" },
@@ -76,7 +76,7 @@ it("completes one initial request while applying the latest policy before exposi
           ],
           "reader",
         ),
-      }),
+      ),
     );
     expect(fixture.requests).toHaveLength(1);
     response.resolve(Response.json([allowed, removed]));

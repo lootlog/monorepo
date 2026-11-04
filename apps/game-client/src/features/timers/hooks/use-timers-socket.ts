@@ -1,7 +1,6 @@
 import { useEffect, useEffectEvent, useRef } from "react";
 import { normalizeTimerResponse, type Timer } from "@/api/timers.api";
 import type { TimerResponseDto } from "@lootlog/client/main";
-import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useTimersCache } from "@/hooks/api/use-timers-cache";
 import { useQueryClient, type Query } from "@tanstack/react-query";
@@ -58,15 +57,15 @@ export const useTimersSocket = () => {
       handleTimerDelete(data);
     };
 
-    socket.on(GatewayEvent.TIMERS_CREATE, onTimerCreate);
-    socket.on(GatewayEvent.TIMERS_DELETE, onTimerDelete);
+    socket.on("timer.created", onTimerCreate);
+    socket.on("timer.deleted", onTimerDelete);
 
     if (needsCatchUp.current) refreshAfterReconnect();
     needsCatchUp.current = true;
 
     return () => {
-      socket.off(GatewayEvent.TIMERS_CREATE, onTimerCreate);
-      socket.off(GatewayEvent.TIMERS_DELETE, onTimerDelete);
+      socket.off("timer.created", onTimerCreate);
+      socket.off("timer.deleted", onTimerDelete);
     };
   }, [connected, joined, socket, status]);
 };

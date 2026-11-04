@@ -1,3 +1,4 @@
+import { ownerAccessPolicy } from "@/test/realtime-wire";
 import {
   act,
   render as renderUi,
@@ -10,7 +11,6 @@ import { Permission } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
 import type { ChatMessage } from "@/api/chat.api";
-import { GatewayEvent } from "@/config/gateway";
 import { authClient } from "@/lib/auth-client";
 import { getSocket } from "@/lib/socket";
 import { useGameStore } from "@/store/game.store";
@@ -42,10 +42,15 @@ const created = (message: ChatMessage): ServerEvent => ({
   data: { organizationId: message.guildId, payload: message },
 });
 
-const legacyPermissions = (organizationIds = ["guild-1"]): ServerEvent => ({
+const accessUpdate = (organizationIds: string[]): ServerEvent => ({
   v: 1,
   type: "permissions.updated",
-  data: { organizationIds, subscriptionScopes: [] },
+  data: {
+    accessPolicy: ownerAccessPolicy(organizationIds),
+    changes: [],
+    organizationIds,
+    subscriptionScopes: [],
+  },
 });
 
 const ChatListener = () => {
@@ -115,8 +120,8 @@ describe("useChatMessagesListener", () => {
     // The party gathering bar listens to the same events and, as a child of
     // the chat, subscribes first.
     const gatheringListener = vi.fn();
-    getSocket().on(GatewayEvent.CHAT_MESSAGE, gatheringListener);
-    getSocket().on(GatewayEvent.CHAT_MESSAGE_DELETE, gatheringListener);
+    getSocket().on("chat.created", gatheringListener);
+    getSocket().on("chat.deleted", gatheringListener);
     harness.queryClient.setQueryData(key(), [message("deleted")]);
     mount();
     await harness.receive(created(message("live")), {
@@ -130,50 +135,16 @@ describe("useChatMessagesListener", () => {
     flushFrame();
     expect(cached()).toEqual([message("live")]);
     expect(gatheringListener).toHaveBeenCalledTimes(2);
-    getSocket().off(GatewayEvent.CHAT_MESSAGE, gatheringListener);
-    getSocket().off(GatewayEvent.CHAT_MESSAGE_DELETE, gatheringListener);
+    getSocket().off("chat.created", gatheringListener);
+    getSocket().off("chat.deleted", gatheringListener);
   });
 
   it("discards queued chat messages after permission changes", async () => {
     mount();
-    await harness.receive(
-      created(message("hidden-titan")),
-      legacyPermissions(),
-    );
+    await harness.receive(accessUpdate(["guild-1"]));
+    await harness.receive(created(message("hidden-titan")), accessUpdate([]));
     flushFrame();
     expect(cached()).toEqual([]);
-  });
-
-  it("loads history immediately on the first legacy join without a second delayed request", async () => {
-    vi.useFakeTimers();
-    const history = [message("available-history")];
-    harness.chatHistoryRequest.mockImplementation(() =>
-      Promise.resolve(Response.json(history)),
-    );
-
-    const { result } = renderHook(
-      () => {
-        useChatMessagesListener();
-        useChatMessagesListener();
-
-        return useChatGuildData({
-          currentCharacterNick: "Current Hero",
-          guilds: [{ id: "guild-1", name: "Guild 1" }],
-          selectedGuildId: "guild-1",
-        });
-      },
-      { wrapper: harness.wrapper },
-    );
-
-    harness.open();
-    expect(harness.chatHistoryRequest).not.toHaveBeenCalled();
-    await harness.join();
-    await act(() => vi.advanceTimersByTimeAsync(0));
-    expect(harness.chatHistoryRequest).toHaveBeenCalledOnce();
-    expect(result.current.messagesByGuildId["guild-1"]).toEqual(history);
-    await act(() => vi.advanceTimersByTimeAsync(5_000));
-    expect(harness.chatHistoryRequest).toHaveBeenCalledOnce();
-    expect(result.current.messagesByGuildId["guild-1"]).toEqual(history);
   });
 
   it("defers initial history until join, serves REST when unreachable, and recovers the first offline gap", async () => {
@@ -388,13 +359,14 @@ describe("useChatMessagesListener", () => {
     const response = Promise.withResolvers<Response>();
     harness.memberRequest.mockReturnValue(response.promise);
     mount();
+    await harness.receive(accessUpdate(["guild-1"]));
     await harness.receive(
       created(
         message("hidden-titan", "guild-1", { message: "Hej @Current Hero" }),
       ),
     );
     await waitFor(() => expect(harness.memberRequest).toHaveBeenCalledOnce());
-    await harness.receive(legacyPermissions());
+    await harness.receive(accessUpdate([]));
     await act(async () => {
       response.resolve(Response.json(createChatMember()));
       await response.promise;
@@ -425,6 +397,7 @@ describe("useChatMessagesListener", () => {
       v: 1,
       type: "permissions.updated",
       data: {
+        changes: [],
         organizationIds: ["guild-1", "guild-2"],
         subscriptionScopes: [],
         accessPolicy: policy,
@@ -440,6 +413,7 @@ describe("useChatMessagesListener", () => {
       v: 1,
       type: "permissions.updated",
       data: {
+        changes: [],
         organizationIds: ["guild-1", "guild-2"],
         subscriptionScopes: [],
         accessPolicy: createAccessPolicySnapshot(
@@ -728,6 +702,7 @@ describe("useChatMessagesListener", () => {
       v: 1,
       type: "permissions.updated",
       data: {
+        changes: [],
         organizationIds: ["guild-1"],
         subscriptionScopes: [],
         accessPolicy: policy(["guild-1"]),

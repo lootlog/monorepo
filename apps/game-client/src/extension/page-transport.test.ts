@@ -1,3 +1,4 @@
+import { ownerAccessPolicy } from "@/test/realtime-wire";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RealtimeRequestError } from "@lootlog/client/realtime";
 import { createPageTransport } from "./page-transport";
@@ -275,7 +276,12 @@ describe("page transport", () => {
     const event = {
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: [], subscriptionScopes: [] },
+      data: {
+        accessPolicy: ownerAccessPolicy([]),
+        changes: [],
+        organizationIds: [],
+        subscriptionScopes: [],
+      },
     };
 
     bridge.send({ type: "event", event });
@@ -298,6 +304,7 @@ describe("page transport", () => {
       connectionId: "connection",
       organizationIds: [],
       subscriptionScopes: [],
+      accessPolicy: ownerAccessPolicy([]),
     };
 
     bridge.send({ type: "result", id: request.id, data: joined });
@@ -361,6 +368,7 @@ describe("page transport", () => {
                 connectionId: "connection",
                 organizationIds: [],
                 subscriptionScopes: [],
+                accessPolicy: ownerAccessPolicy([]),
               },
       };
 

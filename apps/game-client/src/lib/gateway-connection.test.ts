@@ -1,3 +1,4 @@
+import { ownerAccessPolicy } from "@/test/realtime-wire";
 import { afterEach, expect, it, vi } from "vitest";
 import {
   decodeRealtimeFrame,
@@ -28,6 +29,7 @@ class GatewayWebSocket extends EventTarget {
       v: 1,
       type: "session.joined",
       data: {
+        accessPolicy: ownerAccessPolicy([]),
         connectionId: "connection-1",
         organizationIds: [],
         subscriptionScopes: [],
