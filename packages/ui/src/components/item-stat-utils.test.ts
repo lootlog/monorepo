@@ -192,7 +192,6 @@ describe("item stat utilities", () => {
       { key: "custom_teleport.set", value: ["id", "12", "34", "Tuzmer"] },
     ]);
     expect(sections.find(({ index }) => index === 8)?.values).toEqual([
-      { key: "enhancement_upgrade_lvl", value: "4" },
       { key: "nodepoclan", value: true },
     ]);
     expect(sections.find(({ index }) => index === 9)?.values).toEqual([

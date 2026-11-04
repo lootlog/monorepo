@@ -66,4 +66,5 @@ export const ITEM_TILE_LABELS = {
   type: Object.fromEntries(
     ITEM_TYPE_OPTIONS.map((type) => [type, t(`itemType.${type}`)]),
   ),
+  upgradeLevel: t("upgrade.label"),
 };
