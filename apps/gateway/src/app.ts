@@ -524,8 +524,7 @@ export const createGatewayFetch = (
 
       const frameEncoding =
         application.config.environment === "local" ||
-        (identity.apiKeyAccess &&
-          offeredProtocols.includes(REALTIME_JSON_SUBPROTOCOL))
+        offeredProtocols.includes(REALTIME_JSON_SUBPROTOCOL)
           ? "json"
           : undefined;
 

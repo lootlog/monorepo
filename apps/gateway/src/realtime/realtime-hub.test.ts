@@ -1372,6 +1372,80 @@ describe("RealtimeHub federation", () => {
     },
   );
 
+  test("delivers frames from replicas that publish only JSON text", async () => {
+    const bus = new FederationBus();
+    const local = new RealtimeHub(config, new FakeRedisStore(bus));
+    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+
+    const scope = {
+      topic: "organization.chat",
+      organizationId: "organization-1",
+    } as const;
+
+    const binary = makeSocket(makeSession("json-only-binary"));
+    const json: string[] = [];
+
+    const jsonSocket = {
+      data: {
+        ...makeSession("json-only-json"),
+        frameEncoding: "json" as const,
+      },
+      getBufferedAmount: () => 0,
+      send: (frame: string) => json.push(frame),
+      close: () => {},
+    };
+
+    for (const socket of [binary.socket, jsonSocket]) {
+      remote.register(socket);
+      remote.subscribe(socket, scope);
+    }
+
+    const published: FederatedRealtimeMessage[] = [];
+    bus.listeners.push((message) => published.push(message));
+    await Effect.runPromise(local.start());
+    await Effect.runPromise(remote.start());
+
+    const event = {
+      v: 1,
+      type: "chat.cleared",
+      data: { organizationId: scope.organizationId, payload: { id: "a" } },
+    } as const;
+
+    await local.publishToScope(scope, event);
+    const message = published[0];
+
+    expect(message?.frameJson).toBe(JSON.stringify(event));
+
+    // A replica with another schema may send fields this one strips.
+    for (const [id, frameSchema, frame] of [
+      ["json-only-canonical", message?.frameSchema, event],
+      [
+        "json-only-other-schema",
+        "other",
+        { ...event, data: { ...event.data, unknown: "strip" } },
+      ],
+    ] as const) {
+      for (const listener of bus.listeners)
+        listener({
+          ...message!,
+          id,
+          sourceInstanceId: "json-only-replica",
+          frameSchema,
+          frame: undefined,
+          frameJson: JSON.stringify(frame),
+        });
+    }
+
+    expect(binary.sent.slice(-2).map((bytes) => decode(bytes))).toEqual([
+      event,
+      event,
+    ]);
+    expect(json.slice(-2).map((text) => JSON.parse(text))).toEqual([
+      event,
+      event,
+    ]);
+  });
+
   test("keeps MessagePack normalization and rejected payload keys aligned locally and remotely", async () => {
     const bus = new FederationBus();
     const local = new RealtimeHub(config, new FakeRedisStore(bus));

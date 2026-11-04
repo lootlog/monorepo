@@ -67,7 +67,8 @@ test("federation backlog yields to timers while preserving order and isolating m
             message: JSON.stringify({
               id: String(index),
               sourceInstanceId: "other",
-              frame: "test",
+              // Replicas that stop publishing MessagePack send only JSON text.
+              [index % 2 === 0 ? "frame" : "frameJson"]: "test",
             }),
           });
           enqueue({ channel: store.channel, message: "{" });

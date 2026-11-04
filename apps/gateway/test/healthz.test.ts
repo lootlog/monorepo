@@ -546,6 +546,45 @@ describe("gateway HTTP boundary", () => {
     expect(upgradeOptions?.data.frameEncoding).toBe("json");
     expect(upgradeOptions?.headers).toBeUndefined();
   });
+
+  test("uses JSON frames for a session client that offers the JSON subprotocol", async () => {
+    let upgradeOptions:
+      | {
+          readonly data: { readonly frameEncoding?: string };
+          readonly headers?: HeadersInit;
+        }
+      | undefined;
+
+    const request = new Request("https://gateway.example/ws", {
+      headers: {
+        origin: "https://classic.margonem.pl",
+        "sec-websocket-protocol":
+          "lootlog.realtime.json.v1, lootlog.session-hello.v1",
+        "x-auth-user-id": "user-1",
+        "x-auth-discord-id": "discord-1",
+      },
+    });
+
+    await createGatewayFetch({
+      config: { websocketPath: "/ws", environment: "test" },
+      runPromise: Effect.runPromise,
+      auth,
+      hub,
+      guilds,
+      presence,
+    })(request, {
+      upgrade: (_request, options) => {
+        upgradeOptions = options;
+
+        return true;
+      },
+    });
+
+    expect(upgradeOptions?.data.frameEncoding).toBe("json");
+    expect(upgradeOptions?.headers).toEqual({
+      "sec-websocket-protocol": "lootlog.realtime.json.v1",
+    });
+  });
 });
 
 test("server API key upgrades allow absent Origin while preserving session and attacker Origin rejection", async () => {
