@@ -1,3 +1,4 @@
+import type { GatewayJoin } from "@/lib/gateway-client";
 import { invalidateReservationQueries } from "./invalidate-reservation-queries";
 import { useEffect, useRef, useState } from "react";
 import { addDays, differenceInCalendarDays, startOfWeek } from "date-fns";
@@ -19,7 +20,6 @@ import {
   useGuildsControllerGetGuildById,
 } from "@lootlog/client/main";
 
-import { GatewayEvent } from "@/config/gateway";
 import { ROUTES } from "@/config/routes";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -164,29 +164,21 @@ export function ReservationsSchedule() {
       void invalidateReservationQueries(queryClient, guildId, spotId);
     };
 
-    const rejoin = (payload: {
-      status: "success" | "error";
-      guildIds: string[];
-      recover: boolean;
-    }) => {
-      if (
-        payload.status === "success" &&
-        payload.recover &&
-        payload.guildIds.includes(organizationId)
-      )
+    const rejoin = (payload: GatewayJoin) => {
+      if (payload.recover && payload.guildIds.includes(organizationId))
         void invalidateReservationQueries(queryClient, guildId, spotId);
     };
 
-    socket.on(GatewayEvent.JOIN, rejoin);
-    socket.on(GatewayEvent.RESERVATIONS_CHANGED, refresh);
-    socket.on(GatewayEvent.RESERVATIONS_CREATE, refresh);
-    socket.on(GatewayEvent.RESERVATIONS_DELETE, refresh);
+    socket.on("join", rejoin);
+    socket.on("reservation.changed", refresh);
+    socket.on("reservation.created", refresh);
+    socket.on("reservation.deleted", refresh);
 
     return () => {
-      socket.off(GatewayEvent.JOIN, rejoin);
-      socket.off(GatewayEvent.RESERVATIONS_CHANGED, refresh);
-      socket.off(GatewayEvent.RESERVATIONS_CREATE, refresh);
-      socket.off(GatewayEvent.RESERVATIONS_DELETE, refresh);
+      socket.off("join", rejoin);
+      socket.off("reservation.changed", refresh);
+      socket.off("reservation.created", refresh);
+      socket.off("reservation.deleted", refresh);
     };
   }, [organizationId, guildId, queryClient, socket, spotId]);
 

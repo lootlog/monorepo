@@ -1,6 +1,9 @@
 import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
-import { GatewayEvent } from "@/config/gateway";
-import type { GatewayClient, PlayerPresence } from "@/lib/gateway-client";
+import type {
+  GatewayClient,
+  GatewayJoin,
+  PlayerPresence,
+} from "@/lib/gateway-client";
 import {
   applyGamePresenceUpdate,
   mapMemberGamePresenceByDiscordId,
@@ -106,14 +109,11 @@ export class OrganizationPresence {
 
     if (!this.subscribed) {
       this.subscribed = true;
-      this.socket.on(GatewayEvent.EVENT_PRESENCE_UPDATE, this.handleGameUpdate);
-      this.socket.on(
-        GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE,
-        this.handleWebUpdate,
-      );
-      this.socket.on(GatewayEvent.PERMISSIONS_UPDATED, this.handlePermissions);
-      this.socket.on(GatewayEvent.JOIN, this.handleJoin);
-      this.socket.on(GatewayEvent.DISCONNECT, this.handleDisconnect);
+      this.socket.on("game-presence.changed", this.handleGameUpdate);
+      this.socket.on("web-presence.changed", this.handleWebUpdate);
+      this.socket.on("access.updated", this.handlePermissions);
+      this.socket.on("join", this.handleJoin);
+      this.socket.on("disconnect", this.handleDisconnect);
       this.refetch();
     }
 
@@ -128,20 +128,11 @@ export class OrganizationPresence {
         this.cancelRetry();
         this.snapshot = emptySnapshot;
         this.pendingUpdates = undefined;
-        this.socket.off(
-          GatewayEvent.EVENT_PRESENCE_UPDATE,
-          this.handleGameUpdate,
-        );
-        this.socket.off(
-          GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE,
-          this.handleWebUpdate,
-        );
-        this.socket.off(
-          GatewayEvent.PERMISSIONS_UPDATED,
-          this.handlePermissions,
-        );
-        this.socket.off(GatewayEvent.JOIN, this.handleJoin);
-        this.socket.off(GatewayEvent.DISCONNECT, this.handleDisconnect);
+        this.socket.off("game-presence.changed", this.handleGameUpdate);
+        this.socket.off("web-presence.changed", this.handleWebUpdate);
+        this.socket.off("access.updated", this.handlePermissions);
+        this.socket.off("join", this.handleJoin);
+        this.socket.off("disconnect", this.handleDisconnect);
       });
     };
   };
@@ -235,12 +226,8 @@ export class OrganizationPresence {
     this.refetch();
   };
 
-  private handleJoin = (payload: {
-    status: "success" | "error";
-    accessPolicyChanges?: readonly AccessPolicyChange[];
-  }) => {
-    if (payload.status === "success") this.handlePermissions(payload);
-  };
+  private handleJoin = (payload: GatewayJoin) =>
+    this.handlePermissions(payload);
 
   private handleGameUpdate = (payload: GamePresenceUpdatePayload) =>
     this.handleUpdate({ platform: "game", payload });

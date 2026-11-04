@@ -55,7 +55,7 @@ it("tracks world changes and clears cached presence while an unknown policy is r
     expect(result.current.presenceData?.get("user-1")).toEqual([
       expect.objectContaining({
         name: "Wild",
-        lvl: "300",
+        lvl: 300,
         mapId: 2354,
         mapName: "Sala Mroźnych Szeptów",
       }),

@@ -1,6 +1,5 @@
 import { useEffect, useEffectEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { invalidateKillQueries } from "../mutations/invalidate-kill-queries";
 import {
@@ -102,30 +101,18 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
       return;
     }
 
-    socket.on(GatewayEvent.EVENT_MAP_STATUS_UPDATE, handleMapStatusUpdate);
-    socket.on(GatewayEvent.EVENT_HERO_KILLED, handleHeroKilled);
-    socket.on(GatewayEvent.EVENT_RANKING_UPDATE, handleRankingUpdate);
-    socket.on(
-      GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED,
-      handleRespawnWindowChange,
-    );
-    socket.on(
-      GatewayEvent.EVENT_RESPAWN_WINDOW_CLOSED,
-      handleRespawnWindowChange,
-    );
+    socket.on("event.map-status-updated", handleMapStatusUpdate);
+    socket.on("event.hero-killed", handleHeroKilled);
+    socket.on("event.ranking-updated", handleRankingUpdate);
+    socket.on("event.respawn-window-opened", handleRespawnWindowChange);
+    socket.on("event.respawn-window-closed", handleRespawnWindowChange);
 
     return () => {
-      socket.off(GatewayEvent.EVENT_MAP_STATUS_UPDATE, handleMapStatusUpdate);
-      socket.off(GatewayEvent.EVENT_HERO_KILLED, handleHeroKilled);
-      socket.off(GatewayEvent.EVENT_RANKING_UPDATE, handleRankingUpdate);
-      socket.off(
-        GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED,
-        handleRespawnWindowChange,
-      );
-      socket.off(
-        GatewayEvent.EVENT_RESPAWN_WINDOW_CLOSED,
-        handleRespawnWindowChange,
-      );
+      socket.off("event.map-status-updated", handleMapStatusUpdate);
+      socket.off("event.hero-killed", handleHeroKilled);
+      socket.off("event.ranking-updated", handleRankingUpdate);
+      socket.off("event.respawn-window-opened", handleRespawnWindowChange);
+      socket.off("event.respawn-window-closed", handleRespawnWindowChange);
     };
   }, [eventId, guildId, routeGuildId, socket]);
 

@@ -336,7 +336,7 @@ export const MapCard = ({
                   id: player.characterId,
                   name: player.name,
                   icon: player.icon,
-                  lvl: Number(player.lvl),
+                  lvl: player.lvl,
                   prof: player.prof,
                 }}
                 className={player.isAfk ? "opacity-50" : ""}

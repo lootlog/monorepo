@@ -45,7 +45,7 @@ describe("web realtime handshake", () => {
   });
 });
 
-it("dispatches private volunteer frames to the legacy volunteer listener", async () => {
+it("dispatches private volunteer frames to their listener", async () => {
   vi.stubEnv("VITE_GATEWAY_URL", "https://gateway.example.test");
   let dispatch: ((event: Event) => boolean) | undefined;
   vi.stubGlobal(
@@ -63,11 +63,10 @@ it("dispatches private volunteer frames to the legacy volunteer listener", async
     },
   );
   const { socket: client } = await import("./gateway-client");
-  const { GatewayEvent } = await import("@/config/gateway");
   const received = vi.fn();
 
   try {
-    client.on(GatewayEvent.NOTIFICATIONS_VOLUNTEER, received);
+    client.on("notification.volunteer", received);
     client.connect();
     dispatch?.(new Event("open"));
 

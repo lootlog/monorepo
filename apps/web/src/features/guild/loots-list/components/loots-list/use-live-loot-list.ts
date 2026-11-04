@@ -34,7 +34,6 @@ import {
 
 import { createLootListReconciliation } from "./loot-list-reconciliation";
 
-import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import {
   getPageScroller,
@@ -410,22 +409,22 @@ export const useLiveLootList = () => {
     };
 
     const resume = () => reconciliation.resume();
-    socket.on(GatewayEvent.JOIN, onJoin);
-    socket.on(GatewayEvent.PERMISSIONS_UPDATED, onPermissions);
-    socket.on(GatewayEvent.LOOTS_CREATE, onLootCreate);
-    socket.on(GatewayEvent.LOOTS_SHARE_UPDATE, onLootShareUpdate);
-    socket.on(GatewayEvent.LOOTS_SNAPSHOT, onLootSnapshot);
+    socket.on("join", onJoin);
+    socket.on("access.updated", onPermissions);
+    socket.on("loot.created", onLootCreate);
+    socket.on("loot.share-updated", onLootShareUpdate);
+    socket.on("loot.snapshot", onLootSnapshot);
     document.addEventListener("visibilitychange", resume);
 
     return () => {
       pendingReconciliationRef.current = reconciliation.isDirty();
       reconciliation.dispose();
       reconciliationRef.current = null;
-      socket.off(GatewayEvent.JOIN, onJoin);
-      socket.off(GatewayEvent.PERMISSIONS_UPDATED, onPermissions);
-      socket.off(GatewayEvent.LOOTS_CREATE, onLootCreate);
-      socket.off(GatewayEvent.LOOTS_SHARE_UPDATE, onLootShareUpdate);
-      socket.off(GatewayEvent.LOOTS_SNAPSHOT, onLootSnapshot);
+      socket.off("join", onJoin);
+      socket.off("access.updated", onPermissions);
+      socket.off("loot.created", onLootCreate);
+      socket.off("loot.share-updated", onLootShareUpdate);
+      socket.off("loot.snapshot", onLootSnapshot);
       document.removeEventListener("visibilitychange", resume);
     };
   }, [
