@@ -10,12 +10,7 @@ import { MemberSyncButton } from "@/features/guild/settings/members/components/m
 import { MemberStatusBadge } from "@/features/guild/settings/members/member-status-badge";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@lootlog/ui/components/avatar";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import { Button } from "@lootlog/ui/components/button";
 import {
   DropdownMenu,
@@ -112,14 +107,12 @@ export const MemberTile = ({
           params={{ guildId, memberId: String(member.id) }}
           className={getListTileLinkClassName(true)}
         >
-          <Avatar className="size-9 shrink-0 rounded-lg">
-            <AvatarImage
-              src={getDiscordAvatarUrl(member.userId, member.avatar)}
-            />
-            <AvatarFallback className="rounded-lg">
-              {member.name.slice(0, 1)}
-            </AvatarFallback>
-          </Avatar>
+          <MemberAvatar
+            userId={member.userId}
+            avatar={member.avatar}
+            name={member.name}
+            className="size-9"
+          />
           <span className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="flex h-5 min-w-0 items-center gap-1">
               <span

@@ -38,9 +38,7 @@ export function EventMapTemplates({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {t("events.maps.loadFromTemplate")}
-        </Label>
+        <Label>{t("events.maps.loadFromTemplate")}</Label>
         {templates && templates.length > 0 && (
           <TextLink
             target="_blank"

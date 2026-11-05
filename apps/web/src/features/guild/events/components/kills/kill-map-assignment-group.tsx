@@ -2,16 +2,11 @@ import { useState } from "react";
 import type { TFunction } from "i18next";
 import { ChevronDown } from "lucide-react";
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@lootlog/ui/components/avatar";
-import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@lootlog/ui/components/collapsible";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import { cn } from "cn";
 import { formatTimeShort } from "../../utils/format-date";
 import { formatDurationHuman } from "../../utils/format-duration";
@@ -33,18 +28,13 @@ export const KillMapAssignmentGroup = ({
 
   const rowContent = (
     <>
-      <Avatar className="size-6 shrink-0">
-        <AvatarImage
-          src={getDiscordAvatarUrl(
-            assignment.memberUserId,
-            assignment.memberAvatar,
-            32,
-          )}
-        />
-        <AvatarFallback className="text-[9px]">
-          {assignment.memberName.charAt(0).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
+      <MemberAvatar
+        userId={assignment.memberUserId}
+        avatar={assignment.memberAvatar}
+        name={assignment.memberName}
+        imageSize={32}
+        className="size-6"
+      />
       <span
         className="min-w-0 flex-1 truncate text-xs font-medium"
         style={roleColor ? { color: roleColor } : undefined}

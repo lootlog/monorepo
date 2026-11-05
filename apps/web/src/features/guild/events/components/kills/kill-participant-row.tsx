@@ -4,11 +4,6 @@ import { TextLink } from "@lootlog/ui/components/text-link";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@lootlog/ui/components/avatar";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Tooltip,
@@ -17,7 +12,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { ChevronDown, Info, MapPin, Pencil } from "lucide-react";
 import { cn } from "cn";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
@@ -122,12 +117,6 @@ export const KillParticipantRow = ({
     trackingPercentage,
   } = buildParticipantScoringView(participant, t);
 
-  const avatarUrl = getDiscordAvatarUrl(
-    participant.member.userId,
-    participant.member.avatar,
-    32,
-  );
-
   const roleCssColor = getCustomRoleCssColor(
     getMemberDisplayRole(participant.member.roles)?.color,
   );
@@ -174,12 +163,11 @@ export const KillParticipantRow = ({
         </span>
 
         <div className="flex min-w-0 items-center gap-2">
-          <Avatar className="size-8 shrink-0">
-            <AvatarImage src={avatarUrl} />
-            <AvatarFallback className="text-xs">
-              {participant.member.name.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <MemberAvatar
+            userId={participant.member.userId}
+            avatar={participant.member.avatar}
+            name={participant.member.name}
+          />
           <div className="min-w-0 flex-1">
             {memberLinkParams ? (
               <TextLink

@@ -135,7 +135,7 @@ export const EventSummaryDialog = ({
             aria-label={t("events.summaryDialog.previous")}
             onClick={() => selectSlide(activeIndex - 1)}
           >
-            <span className="flex size-9 items-center justify-center rounded-full border border-border bg-background/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+            <span className="flex size-9 items-center justify-center rounded-full border border-border bg-background/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-visible:ring-2 group-focus-visible:ring-ring pointer-coarse:opacity-100">
               <ArrowLeft className="size-4" />
             </span>
           </button>
@@ -147,7 +147,7 @@ export const EventSummaryDialog = ({
             aria-label={t("events.summaryDialog.next")}
             onClick={() => selectSlide(activeIndex + 1)}
           >
-            <span className="flex size-9 items-center justify-center rounded-full border border-border bg-background/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+            <span className="flex size-9 items-center justify-center rounded-full border border-border bg-background/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-visible:ring-2 group-focus-visible:ring-ring pointer-coarse:opacity-100">
               <ArrowRight className="size-4" />
             </span>
           </button>
@@ -194,7 +194,7 @@ export const EventSummaryDialog = ({
           ) : null}
         </header>
 
-        <main
+        <section
           ref={stageRef}
           className="relative min-h-0 flex-1 overflow-hidden bg-background"
         >
@@ -202,7 +202,7 @@ export const EventSummaryDialog = ({
           <p className="sr-only" aria-live="polite" aria-atomic="true">
             {activeSlideLabel}
           </p>
-        </main>
+        </section>
 
         {deck?.mode === "presentation" && activeSlide ? (
           <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-6">
@@ -213,7 +213,7 @@ export const EventSummaryDialog = ({
               disabled={activeIndex === 0}
             >
               <ArrowLeft className="size-4" />
-              <span className="hidden sm:inline">
+              <span className="max-sm:sr-only">
                 {t("events.summaryDialog.previous")}
               </span>
             </Button>
@@ -233,7 +233,7 @@ export const EventSummaryDialog = ({
                 variant="outline"
                 onClick={() => selectSlide(activeIndex + 1)}
               >
-                <span className="hidden sm:inline">
+                <span className="max-sm:sr-only">
                   {t("events.summaryDialog.next")}
                 </span>
                 <ArrowRight className="size-4" />

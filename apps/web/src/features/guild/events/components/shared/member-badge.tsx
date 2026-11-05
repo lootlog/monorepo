@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { getMemberColor } from "@/utils/get-member-color";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import type { Member } from "../../types/api";
 
 interface MemberBadgeProps {
@@ -11,7 +11,6 @@ interface MemberBadgeProps {
 
 export const MemberBadge = ({ eventId, guildId, member }: MemberBadgeProps) => {
   const color = getMemberColor(member);
-  const avatarUrl = getDiscordAvatarUrl(member.userId, member.avatar, 32);
 
   return (
     <Link
@@ -23,8 +22,12 @@ export const MemberBadge = ({ eventId, guildId, member }: MemberBadgeProps) => {
       }}
       className="flex min-w-0 items-center gap-2 border-b border-r border-sidebar-border px-3 py-2.5 outline-none transition-colors hover:bg-muted/30 focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     >
-      {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
-      <img src={avatarUrl} alt="" className="size-7 shrink-0 rounded-full" />
+      <MemberAvatar
+        userId={member.userId}
+        avatar={member.avatar}
+        name={member.name}
+        className="size-7"
+      />
       <span
         className="min-w-0 truncate text-sm font-semibold"
         style={{ color }}

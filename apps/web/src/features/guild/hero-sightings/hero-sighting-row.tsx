@@ -57,7 +57,7 @@ export const HeroSightingRow = ({
       aria-labelledby={titleId}
       className={cn(
         "grid grid-cols-[2.25rem_minmax(0,1fr)_auto] gap-x-3 gap-y-2.5 py-3",
-        "xl:grid-cols-[2.25rem_minmax(0,0.8fr)_minmax(0,1fr)_12rem_minmax(0,0.7fr)_9rem] xl:items-center xl:gap-x-4",
+        "xl:grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,1fr)_12rem_minmax(0,0.5fr)_9rem] xl:items-center xl:gap-x-4",
         LIST_TILE_INSET_CLASS,
       )}
     >

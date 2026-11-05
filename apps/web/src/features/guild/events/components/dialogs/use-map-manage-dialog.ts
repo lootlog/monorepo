@@ -127,8 +127,7 @@ export function useMapManageDialog({
     setReorderedLocationIds(newOrder.map((location) => location.id));
   };
 
-  const handleDragEnd = () => {
-    if (!reorderedLocationIds || reorderLocations.isPending) return;
+  const saveLocationOrder = (locationIds: string[]) => {
     reorderLocations.mutate(
       {
         pathParams: {
@@ -136,7 +135,7 @@ export function useMapManageDialog({
           eventId,
           heroId: hero.id,
         },
-        data: { locationIds: reorderedLocationIds },
+        data: { locationIds },
       },
       {
         onError: () => {
@@ -145,6 +144,11 @@ export function useMapManageDialog({
         onSettled: () => setReorderedLocationIds(null),
       },
     );
+  };
+
+  const handleDragEnd = () => {
+    if (!reorderedLocationIds || reorderLocations.isPending) return;
+    saveLocationOrder(reorderedLocationIds);
   };
 
   const locationOrder = new Map(
@@ -159,6 +163,19 @@ export function useMapManageDialog({
         (left, right) => getLocationRank(left.id) - getLocationRank(right.id),
       )
     : heroLocations;
+
+  /** Moves a location one place up or down from the keyboard and saves it. */
+  const handleMoveLocation = (locationId: string, offset: -1 | 1) => {
+    if (reorderLocations.isPending) return;
+    const ids = displayedLocations.map((location) => location.id);
+    const from = ids.indexOf(locationId);
+    const to = from + offset;
+
+    if (from === -1 || to < 0 || to >= ids.length) return;
+    ids.splice(to, 0, ...ids.splice(from, 1));
+    setReorderedLocationIds(ids);
+    saveLocationOrder(ids);
+  };
 
   const allMapsFromLocations = heroLocations.flatMap(
     (location) => location.maps,
@@ -373,6 +390,7 @@ export function useMapManageDialog({
     deleteLocation,
     isReordering: reorderLocations.isPending,
     handleDragEnd,
+    handleMoveLocation,
     heroLocations,
     handleDeleteMap,
     handleMapLocationChange,

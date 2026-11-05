@@ -8,7 +8,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { UserPlus, X, AlertTriangle, Users, ChevronDown } from "lucide-react";
 import { cn } from "cn";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import { PlayerTile } from "@/components/tiles/player-tile";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
 import type { EventMap } from "../../types/api";
@@ -213,24 +213,14 @@ export const MapCard = ({
                   }
 
                   return (
-                    <div
+                    <MemberAvatar
                       key={member.id}
-                      className={cn(
-                        "flex size-5 items-center justify-center overflow-hidden rounded-full border-2 bg-muted",
-                        avatarBorderClassName,
-                      )}
-                    >
-                      {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
-                      <img
-                        src={getDiscordAvatarUrl(
-                          member.userId,
-                          member.avatar,
-                          32,
-                        )}
-                        alt={member.name}
-                        className="size-full object-cover"
-                      />
-                    </div>
+                      userId={member.userId}
+                      avatar={member.avatar}
+                      name={member.name}
+                      imageSize={32}
+                      className={cn("size-5 border-2", avatarBorderClassName)}
+                    />
                   );
                 })}
                 {memberCount > 3 && (
