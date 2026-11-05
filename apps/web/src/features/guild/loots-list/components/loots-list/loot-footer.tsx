@@ -24,11 +24,12 @@ export const LootFooter = ({
   return (
     <div
       className={cn(
-        "mt-auto flex items-center justify-between gap-4 py-1.5",
+        "mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-1.5",
         LIST_TILE_INSET_CLASS,
       )}
     >
-      {/* One row: the location truncates and the counters keep their width. */}
+      {/* The location keeps room for a readable name; when it would get less,
+          the date and counters wrap to a second line instead. */}
       {world && (
         <MetaItem
           icon={Globe}
@@ -40,7 +41,7 @@ export const LootFooter = ({
       )}
       <MetaItem
         icon={MapPin}
-        className="min-h-5 min-w-0 flex-1"
+        className="min-h-5 min-w-32 flex-1"
         title={location}
       >
         <span className="min-w-0 truncate">{location}</span>
