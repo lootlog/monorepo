@@ -1,6 +1,7 @@
 import { and, desc, eq, gte, isNotNull } from "drizzle-orm";
 import { Clock, Effect, Layer, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import { apiKeyAllowsOrganization } from "@lootlog/schema/api-key-policy";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import {
   guildTable,
@@ -163,7 +164,10 @@ export const makeMembersDataLayer = (
             options.guildId,
           ))?.id;
 
-          if (!desiredGuildId) {
+          if (
+            !desiredGuildId ||
+            !apiKeyAllowsOrganization(options.identity.apiKey, desiredGuildId)
+          ) {
             return yield* Effect.fail(
               new ResourceNotFoundError({
                 code: GuildErrorKey.GUILD_NOT_FOUND,

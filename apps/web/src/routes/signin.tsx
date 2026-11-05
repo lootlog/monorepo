@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { SignIn } from "@/features/signin/signin";
+import { signinRedirectPath } from "@/features/signin/signin-redirect-path";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { SigninPageSkeleton } from "@/features/signin/signin-page-skeleton";
 import { restoreLastOrganization } from "@/lib/router/restore-last-organization";
@@ -28,8 +29,10 @@ export const Route = createFileRoute("/signin")({
     );
 
     if (session?.data?.session && !search.error) {
-      if (search.redirect) {
-        throw redirect({ to: search.redirect, replace: true });
+      const redirectPath = signinRedirectPath(search.redirect);
+
+      if (redirectPath) {
+        throw redirect({ to: redirectPath, replace: true });
       }
 
       const guildId = preload
