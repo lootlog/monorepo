@@ -3,39 +3,58 @@ title: Panel walk Margonem i analiza PvP
 description: Sprawdź wynik, obrażenia i przebieg tur w panelu walk Margonem. Dowiedz się, jak zapisywać walki PvP w Lootlog i udostępniać ich analizę.
 ---
 
-Panel walk Lootlog pozwala analizować zapisane walki PvP w Margonem.
-W jednym miejscu znajdziesz historię walk swojej postaci, podsumowanie wyników
-i szczegóły przebiegu każdej obsługiwanej walki. Panel wykorzystuje logi
-zarejestrowane przez dodatek, nie symuluje mechaniki gry.
-
-## Zanim zaczniesz
-
-- Dodatek musi być aktywny podczas walki.
-- Musisz być zalogowany na właściwe konto.
-- W panelu wybierz postać i świat, na których odbyła się walka.
-
-Walki sprzed instalacji dodatku nie są dostępne.
+Panel walk pokazuje historię walk PvP Twoich postaci, bilans z każdym
+przeciwnikiem i przebieg każdej walki tura po turze. Dzięki temu po przegranej
+sprawdzisz, w której turze walka się odwróciła. Panel korzysta z logów
+zapisanych przez dodatek i nie symuluje mechaniki gry.
 
 ## Jak zapisać i otworzyć walkę
 
-1. [Zainstaluj dodatek Lootlog](/docs/installation) i zaloguj się przez Discord.
-2. Zagraj obsługiwaną walkę PvP z aktywnym dodatkiem.
-3. Otwórz [panel webowy Lootlog](https://lootlog.pl/@me) na tym samym koncie.
-4. Przejdź do panelu walk, wybierz postać i świat, a następnie otwórz zapis
-   z listy.
+Zapisywanie walk jest domyślnie wyłączone i włączasz je osobno dla każdej
+postaci.
 
-Jeśli zapis nie pojawia się na liście, sprawdź zakres czasu i wskazówki
-w sekcji [Sprawdź rezultat](#sprawdź-rezultat).
+<Steps>
+<Step>
 
-Jeśli zginiesz w walce grupowej i zamkniesz ją, zanim się skończy, Lootlog
-zapisze ją jako **niedokończoną**. Zapis obejmuje tury do chwili zamknięcia
-i nie ma wyniku, więc nie wlicza się do zwycięstw, porażek ani serii. Aby
-zapisać pełną walkę z wynikiem, nie zamykaj jej do końca.
+### Włącz zbieranie walk
+
+W grze otwórz **Ustawienia → Panel walk** i włącz **Włącz zbieranie walk**.
+Zrób to na każdej postaci, której walki chcesz analizować.
+
+</Step>
+<Step>
+
+### Zagraj walkę PvP
+
+Walcz normalnie z aktywnym i zalogowanym dodatkiem. Walki sprzed włączenia
+zbierania nie są dostępne.
+
+</Step>
+<Step>
+
+### Otwórz Panel walk
+
+Na [lootlog.pl/@me](https://lootlog.pl/@me) wybierz **Panel walk**, ustaw
+postać i świat, a potem otwórz walkę z listy.
+
+</Step>
+</Steps>
+
+Jeśli zginiesz w walce grupowej i zamkniesz ją przed końcem, Lootlog zapisze
+ją jako **niedokończoną**. Zapis obejmuje tury do chwili zamknięcia i nie ma
+wyniku, więc nie wlicza się do zwycięstw, porażek ani serii. Żeby mieć pełną
+walkę z wynikiem, nie zamykaj jej do końca.
 
 ## Zakładki panelu
 
 Panel walk ma cztery zakładki. Postać wybierasz na początku paska nad
 wynikami, tak samo jak w statystykach.
+
+<ProductScreenshot
+  src="/screenshots/battle-panel.jpg"
+  alt="Zakładka Walki w Panelu walk z tabelą walk, wynikiem, drużynami, światem, czasem i filtrami"
+  title="Panel webowy · Panel walk"
+/>
 
 - **Walki** to lista zapisanych walk.
 - **Analityka** pokazuje bilans, punkty honoru, aktualną passę, czas walk,
@@ -78,7 +97,7 @@ z przebiegiem tur. To pozwala wrócić do konkretnego zdarzenia zamiast oceniać
 walkę wyłącznie po końcowym wyniku.
 
 Sposób odczytu efektów i ograniczenia danych opisuje
-[Mechanika analizy walk](/docs/battle-panel-mechanics).
+[Jak czytać analizę walki](/docs/battle-panel-mechanics).
 
 ## Licznik zabitych graczy na broni
 
@@ -102,28 +121,18 @@ interfejsach gry.
 Dobicie zostanie zaliczone tylko wtedy, gdy zabójca ma aktywny dodatek.
 Dobicia sprzed tej funkcji nie są policzone.
 
-## Udostępnianie
+## Udostępnij walkę linkiem
 
-Prywatna walka jest widoczna tylko dla właściciela. Po zmianie widoczności na
-publiczną możesz skopiować bezpośredni link. W każdej chwili możesz ponownie
-ukryć udostępniony zapis.
+Prywatna walka jest widoczna tylko dla Ciebie. Po zmianie widoczności na
+publiczną skopiujesz bezpośredni link do niej.
+W każdej chwili możesz ponownie ukryć walkę. Przed wysłaniem linku sprawdź, co
+pokazuje strona.
 
-Przed wysłaniem linku sprawdź, czy widok zawiera dane, które chcesz pokazać.
+## Nie widzę walki
 
-## Sprawdź rezultat
-
-Analiza działa poprawnie, gdy nowa walka pojawia się na liście właściwej
-postaci, a jej szczegóły pokazują uczestników, wynik i dostępny przebieg tur.
-
-Jeżeli walki brakuje:
-
-1. sprawdź, czy dodatek był aktywny;
-2. wybierz właściwą postać, świat i zakres czasu;
-3. odśwież panel;
-4. w razie powtarzalnego problemu zgłoś identyfikator walki na
+1. Sprawdź, czy na tej postaci jest włączone **Włącz zbieranie walk** w
+   **Ustawienia → Panel walk** w grze.
+2. Sprawdź, czy dodatek był zalogowany i połączony podczas walki.
+3. Wybierz właściwą postać, świat i zakres czasu, a potem odśwież panel.
+4. Problem się powtarza? Zgłoś identyfikator walki na
    [Discordzie](https://discord.gg/mPcczaeYMu).
-
-## Następny krok
-
-Wróć do [Panelu webowego](/docs/web-panel) albo przejdź do
-[Pomocy i FAQ](/docs/faq), jeśli logi nie są rejestrowane.

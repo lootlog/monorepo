@@ -1,47 +1,48 @@
-import { useDocsLayout } from "fumadocs-ui/layouts/docs";
-import { DocsBrand } from "./docs-brand";
+import { Link } from "@tanstack/react-router";
+import {
+  FullSearchTrigger,
+  SearchTrigger,
+} from "fumadocs-ui/layouts/shared/slots/search-trigger";
+import { PortalHeader } from "@lootlog/ui/components/portal-header";
+import { docsTranslations } from "@/lib/polish-translations";
+
+const t = docsTranslations.header;
+
+const links = [
+  { id: "home", label: t.home, href: "https://lootlog.pl" },
+  {
+    id: "developers",
+    label: t.developers,
+    href: "https://developer.lootlog.pl",
+  },
+  {
+    id: "github",
+    label: t.github,
+    href: "https://github.com/lootlog/monorepo",
+  },
+  { id: "discord", label: t.discord, href: "https://discord.gg/mPcczaeYMu" },
+];
 
 export function DocsHeader() {
-  const { slots } = useDocsLayout();
-
   return (
-    <header className="docs-header">
-      <DocsBrand />
-      <nav className="docs-header-links" aria-label="Główne linki">
-        <a href="https://lootlog.pl">Strona główna</a>
-        <a
-          href="https://github.com/lootlog/monorepo"
-          target="_blank"
-          rel="noreferrer"
-        >
-          GitHub
-        </a>
-        <a
-          href="https://discord.gg/mPcczaeYMu"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Discord
-        </a>
-      </nav>
-      <div className="docs-header-actions">
-        {slots.searchTrigger && (
-          <>
-            <slots.searchTrigger.full
-              hideIfDisabled
-              className="docs-header-search"
-            />
-            <slots.searchTrigger.sm
-              hideIfDisabled
-              className="docs-header-search-mobile"
-            />
-          </>
-        )}
-        <slots.sidebar.trigger className="docs-menu-trigger">
-          <span aria-hidden="true">☰</span>
-          <span className="sr-only">Otwórz nawigację</span>
-        </slots.sidebar.trigger>
-      </div>
-    </header>
+    <PortalHeader
+      title={docsTranslations.metadata.title}
+      section={t.section}
+      home={<Link to="/docs/$" params={{ _splat: "" }} />}
+      links={links.map(({ href, ...link }) => ({
+        ...link,
+        render: <a href={href} />,
+      }))}
+      search={
+        <FullSearchTrigger className="portal-header-search h-8 w-56 lg:w-64" />
+      }
+      compactSearch={<SearchTrigger />}
+      labels={{
+        skipToContent: t.skipToContent,
+        navigation: t.navigation,
+        menu: t.menu,
+        closeNavigation: t.closeNavigation,
+      }}
+    />
   );
 }

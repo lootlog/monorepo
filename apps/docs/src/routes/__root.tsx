@@ -5,6 +5,7 @@ import {
   createRootRoute,
 } from "@tanstack/react-router";
 import { RootProvider } from "fumadocs-ui/provider/tanstack";
+import { DocsHeader } from "@/components/docs-header";
 import { DocsSearchDialog } from "@/components/docs-search-dialog";
 import {
   docsTranslations,
@@ -17,6 +18,8 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "theme-color", content: "#081421" },
+      { name: "color-scheme", content: "dark" },
       { title: docsTranslations.metadata.title },
       {
         name: "description",
@@ -38,13 +41,16 @@ function RootDocument() {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="min-h-screen bg-background text-foreground antialiased">
         <RootProvider
           theme={{ enabled: false }}
           i18n={{ locale: "pl", translations: polishTranslations }}
           search={{ SearchDialog: DocsSearchDialog }}
         >
-          <Outlet />
+          <DocsHeader />
+          <div id="portal-content" tabIndex={-1} className="outline-none">
+            <Outlet />
+          </div>
         </RootProvider>
         <Scripts />
       </body>
