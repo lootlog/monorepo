@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 
 import { ClosingCta } from "@/src/components/landing/closing-cta";
 import { FaqPanel } from "@/src/components/landing/faq-panel";
-import { FeatureBand } from "@/src/components/landing/feature-band";
 import { GuidesShowcase } from "@/src/components/landing/guides-showcase";
 import { LandingFooter } from "@/src/components/landing/footer";
 import { LandingHeader } from "@/src/components/landing/header";
@@ -22,7 +21,6 @@ export function HomeContent() {
 
       <main>
         <HeroSection />
-        <FeatureBand />
         <ProductProof />
         <HowItWorks />
         <GuidesShowcase />
