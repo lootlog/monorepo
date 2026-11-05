@@ -6,13 +6,15 @@ import {
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
 import { isElasticLootDrawItem } from "@lootlog/domain/loot-draw";
+import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { getShortnameByProf } from "@lootlog/domain/profession";
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import { EmptyState } from "@/components/common/empty-state";
 import { LoadingSlot } from "@/components/common/loading-slot";
 import { RetryButton } from "@/components/common/retry-button";
 import { CircleAlert, Dices } from "lucide-react";
-import { useState } from "react";
+import { cn } from "cn";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import { buildLootDrawSetup } from "./build-loot-draw-entrants";
@@ -37,8 +39,13 @@ export const LootDrawDialog = ({
 }) => {
   const { t } = useTranslation();
   const draws = useLootDraws(loot.id);
+  const reducedMotion = usePrefersReducedMotion();
   // The draw this viewer just ran spins; any other result is shown at rest.
   const [spunDrawId, setSpunDrawId] = useState<number | null>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  // While a spin runs, the body keeps the editor's height so nothing moves
+  // under the wheel; once the winner shows it eases down to the result.
+  const [lockedHeight, setLockedHeight] = useState<number | null>(null);
   const { data, isLoading, isError, isFetching, refetch } = draws.drawsQuery;
   const itemDraws = (data ?? []).filter(({ itemHid }) => itemHid === item.hid);
   const standing = itemDraws.find(({ voided }) => voided === null);
@@ -56,7 +63,7 @@ export const LootDrawDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[min(90dvh,46rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+      <DialogContent className="flex max-h-[min(90dvh,48rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
         <DialogHeader className="shrink-0 border-b border-border px-4 py-3 pr-12 text-left">
           <div className="flex min-w-0 items-center gap-3">
             <WatchableItemTile
@@ -83,8 +90,16 @@ export const LootDrawDialog = ({
             </DialogDescription>
           )}
         </DialogHeader>
-        {/* A fixed height keeps the dialog still when a spin swaps the editor for the result. */}
-        <div className="grid min-h-0 flex-1 content-start gap-4 overflow-y-auto p-4">
+        <div
+          ref={bodyRef}
+          className={cn(
+            "grid min-h-0 flex-1 content-start gap-4 overflow-y-auto p-4",
+            // Locking is instant; only the release eases down to the result.
+            lockedHeight === null &&
+              "transition-[min-height] duration-300 ease-out motion-reduce:transition-none",
+          )}
+          style={{ minHeight: lockedHeight ?? 0 }}
+        >
           {isLoading && (
             <div className="flex justify-center py-10">
               <LoadingSlot size="small" />
@@ -110,6 +125,7 @@ export const LootDrawDialog = ({
               draws={draws}
               spin={standing.id === spunDrawId}
               canManage={canManage}
+              onRevealed={() => setLockedHeight(null)}
             />
           )}
           {data && !standing && canManage && setup && (
@@ -118,7 +134,16 @@ export const LootDrawDialog = ({
               item={item}
               setup={setup}
               draws={draws}
-              onDrawn={(draw) => setSpunDrawId(draw.id)}
+              onSpinStart={() =>
+                setLockedHeight(bodyRef.current?.offsetHeight ?? null)
+              }
+              onSpinFailed={() => setLockedHeight(null)}
+              onDrawn={(draw) => {
+                setSpunDrawId(draw.id);
+
+                // Without motion the result shows at once, with no spin to wait for.
+                if (reducedMotion) setLockedHeight(null);
+              }}
             />
           )}
           {data && !standing && !canManage && (

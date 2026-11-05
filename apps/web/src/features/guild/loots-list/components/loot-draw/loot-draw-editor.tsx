@@ -31,12 +31,16 @@ export const LootDrawEditor = ({
   item,
   setup,
   draws,
+  onSpinStart,
+  onSpinFailed,
   onDrawn,
 }: {
   loot: Loot;
   item: Item;
   setup: LootDrawSetup;
   draws: ReturnType<typeof useLootDraws>;
+  onSpinStart: () => void;
+  onSpinFailed: () => void;
   onDrawn: (draw: LootDrawResponseDto) => void;
 }) => {
   const { t } = useTranslation();
@@ -67,6 +71,7 @@ export const LootDrawEditor = ({
   const spin = () => {
     if (!guildId) return;
 
+    onSpinStart();
     createDraw.mutate(
       {
         pathParams: { guildId, lootId: loot.id },
@@ -80,14 +85,16 @@ export const LootDrawEditor = ({
       },
       {
         onSuccess: onDrawn,
-        onError: (error: ApiError) =>
+        onError: (error: ApiError) => {
+          onSpinFailed();
           toast.error(
             t(
               error.status === 409
                 ? "loots.details.draw.drawConflict"
                 : "loots.details.draw.drawError",
             ),
-          ),
+          );
+        },
       },
     );
   };
