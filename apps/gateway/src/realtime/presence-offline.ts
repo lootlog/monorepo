@@ -9,8 +9,8 @@ import {
   decodeStoredKeys,
   readOrganization,
   releaseLease,
-  storeCall,
 } from "#src/realtime/presence-records";
+import { storeCall } from "#src/realtime/realtime-errors";
 
 type OfflineRecord = {
   readonly key: string;

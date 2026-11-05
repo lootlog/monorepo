@@ -1,4 +1,4 @@
-import { Match, Schema } from "effect";
+import { Effect, Match, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 
 export class SessionNotJoined extends TaggedErrorClass<SessionNotJoined>()(
@@ -45,6 +45,15 @@ export class RealtimeStoreError extends TaggedErrorClass<RealtimeStoreError>()(
   "RealtimeStoreError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
+
+export const storeCall = <A>(
+  operation: string,
+  evaluate: () => Promise<A>,
+): Effect.Effect<A, RealtimeStoreError> =>
+  Effect.tryPromise({
+    try: evaluate,
+    catch: (cause) => new RealtimeStoreError({ operation, cause }),
+  });
 
 export class RealtimeDependencyError extends TaggedErrorClass<RealtimeDependencyError>()(
   "RealtimeDependencyError",

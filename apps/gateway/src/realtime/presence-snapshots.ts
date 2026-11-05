@@ -6,8 +6,8 @@ import {
   type PresenceRedis,
   readOrganization,
   revisionKey,
-  storeCall,
 } from "#src/realtime/presence-records";
+import { storeCall } from "#src/realtime/realtime-errors";
 
 export type CachedSnapshot = {
   readonly revision: number;
