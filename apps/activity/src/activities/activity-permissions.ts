@@ -12,11 +12,11 @@ const UserPermissions = Schema.Array(UserGuildPermissionsDtoSchema);
 
 export interface PermissionsValue {
   readonly resolveGuildId: (id: string) => Effect.Effect<string | null, Error>;
-  readonly getUserGuildPermissions: (
+  /** Reads the user's grants once; the result answers for any guild. */
+  readonly getUserCapabilities: (
     discordId: string,
     userId: string,
-    guildId: string,
-  ) => Effect.Effect<Permission[], Error>;
+  ) => Effect.Effect<(guildId: string) => Permission[], Error>;
 }
 
 export class Permissions extends Context.Service<
@@ -175,20 +175,23 @@ export class Permissions extends Context.Service<
         },
       );
 
-      const getUserGuildPermissions = Effect.fn(
-        "Permissions.getUserGuildPermissions",
-      )(function* (discordId: string, userId: string, guildId: string) {
-        const grants = yield* getUserPermissions(discordId, userId);
-        const guild = grants.find((entry) => entry.guild.id === guildId);
+      const getUserCapabilities = (discordId: string, userId: string) =>
+        getUserPermissions(discordId, userId).pipe(
+          Effect.map((grants) => (guildId: string): Permission[] => {
+            const guild = grants.find((entry) => entry.guild.id === guildId);
 
-        if (!guild) return [];
+            if (!guild) return [];
 
-        if (guild.guild.ownerId === discordId) return Object.values(Permission);
+            if (guild.guild.ownerId === discordId)
+              return Object.values(Permission);
 
-        return [...new Set(guild.roles.flatMap((role) => role.permissions))];
-      });
+            return [
+              ...new Set(guild.roles.flatMap((role) => role.permissions)),
+            ];
+          }),
+        );
 
-      return Permissions.of({ resolveGuildId, getUserGuildPermissions });
+      return Permissions.of({ resolveGuildId, getUserCapabilities });
     }),
   );
 

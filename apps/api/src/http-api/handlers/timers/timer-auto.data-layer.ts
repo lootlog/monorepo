@@ -1,3 +1,4 @@
+import { publishTimerEvents } from "./timer-update-publication.js";
 import { activeEventCondition } from "#src/events/event-scope-query";
 import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
 import { pruneTimerHistory } from "./timer-history-retention.js";
@@ -71,19 +72,6 @@ import {
 } from "#src/timers/timer-projection";
 
 const DEDUP_TTL_SECONDS = 30;
-
-const publishTimerEvents = Effect.fnUntraced(function* (
-  realtime: Effect.Effect<unknown, unknown>,
-  notifications: Effect.Effect<unknown, unknown>,
-) {
-  // Wait for both confirms even when one delivery fails.
-  const results = yield* Effect.all([realtime, notifications], {
-    concurrency: 2,
-    mode: "result",
-  });
-
-  for (const result of results) yield* Effect.fromResult(result);
-});
 
 type EventHeroCheck = {
   readonly guildId: string;

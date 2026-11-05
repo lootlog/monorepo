@@ -120,7 +120,14 @@ const authorize = Effect.fn("Activity.authorize")(function* (
 
   if (!discordId || !userId) return yield* fail(401, "Unauthorized");
 
-  const guildId = yield* permissions.resolveGuildId(guildIdentifier).pipe(
+  // The grants do not depend on the guild, so both reads start together.
+  const [guildId, capabilitiesFor] = yield* Effect.all(
+    [
+      permissions.resolveGuildId(guildIdentifier),
+      permissions.getUserCapabilities(discordId, userId),
+    ],
+    { concurrency: "unbounded" },
+  ).pipe(
     Effect.mapError(
       () =>
         new ActivityHttpFailure({
@@ -136,17 +143,7 @@ const authorize = Effect.fn("Activity.authorize")(function* (
   if (apiKey === null || !apiKeyAllowsOrganization(apiKey, guildId))
     return yield* fail(403, "Insufficient permissions");
 
-  const capabilities = yield* permissions
-    .getUserGuildPermissions(discordId, userId, guildId)
-    .pipe(
-      Effect.mapError(
-        () =>
-          new ActivityHttpFailure({
-            status: 503,
-            message: "Authorization service unavailable",
-          }),
-      ),
-    );
+  const capabilities = capabilitiesFor(guildId);
 
   if (!createAccessPolicy({ capabilities }).allows(required)) {
     return yield* fail(403, "Insufficient permissions");

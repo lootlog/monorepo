@@ -969,7 +969,7 @@ describe("durable private online history", () => {
       Layer.provideMerge(
         Layer.succeed(Permissions, {
           resolveGuildId: () => Effect.die("unused"),
-          getUserGuildPermissions: () => Effect.die("unused"),
+          getUserCapabilities: () => Effect.die("unused"),
         }),
       ),
       Layer.provideMerge(HttpServer.layerServices),
