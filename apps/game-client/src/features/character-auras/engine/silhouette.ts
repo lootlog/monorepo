@@ -1,5 +1,5 @@
 import type { EdgeSite } from "./particles";
-import { BAND_COUNT, bandOf, distanceField } from "./pixel";
+import { bandOf, distanceField } from "./pixel";
 
 /**
  * The outline an aura hugs: a sprite frame's silhouette or a tooltip's box, pre-built
@@ -13,16 +13,27 @@ export interface AuraSilhouette {
   /** White silhouette, crisp. */
   sil: HTMLCanvasElement;
   /**
-   * White pixel-art outline bands, inner to outer (`bandOf`); null when the sprite's pixels
-   * can't be read (cross-origin), and then the blurred `near`/`far` glows stand in.
+   * The silhouette's pixels as flat lists into the padded canvas, so a tick writes the tinted
+   * outline straight into a buffer; null when the sprite's pixels can't be read (cross-origin),
+   * and then the blurred `near`/`far` glows stand in.
    */
-  bands: HTMLCanvasElement[] | null;
+  pixels: SilhouettePixels | null;
   near: HTMLCanvasElement | null;
   far: HTMLCanvasElement | null;
   edge: EdgeSite[];
   bounds: { x: number; y: number; w: number; h: number };
   /** Where a halo sits: above the head for characters, the top right corner for boxes. */
   head: { x: number; y: number };
+}
+
+/** Pixel indices (`y * width + x` in the padded canvas), each list with its parallel data. */
+export interface SilhouettePixels {
+  /** Outline pixels and their band, inner to outer (`bandOf`). */
+  outline: Uint32Array;
+  band: Uint8Array;
+  /** Pixels of the shape itself and their alpha. */
+  body: Uint32Array;
+  bodyAlpha: Uint8Array;
 }
 
 /** Room for the widest glow (~3σ of the fallback blur) so it never clips at the canvas edge. */
@@ -102,15 +113,15 @@ function finishSilhouette(
   bounds: AuraSilhouette["bounds"],
   head: AuraSilhouette["head"],
 ): AuraSilhouette {
-  const bands = alpha ? buildBands(alpha, sil.width, sil.height) : null;
+  const pixels = alpha ? silhouettePixels(alpha, sil.width, sil.height) : null;
 
-  if (bands)
+  if (pixels)
     return {
       pad: PAD,
       width,
       height,
       sil,
-      bands,
+      pixels,
       near: null,
       far: null,
       edge,
@@ -131,7 +142,7 @@ function finishSilhouette(
     width,
     height,
     sil,
-    bands: null,
+    pixels: null,
     near,
     far,
     edge,
@@ -140,39 +151,62 @@ function finishSilhouette(
   };
 }
 
-/** One white mask per outline band, from the silhouette's alpha. */
-function buildBands(
+/** The outline bands and the shape's own pixels, from the silhouette's alpha. */
+function silhouettePixels(
   alpha: Uint8ClampedArray,
   width: number,
   height: number,
-): HTMLCanvasElement[] {
-  const solid = new Uint8Array(width * height);
+): SilhouettePixels {
+  const size = width * height;
+  const solid = new Uint8Array(size);
+  let bodyCount = 0;
 
-  for (let i = 0; i < solid.length; i++)
-    solid[i] = (alpha[i * 4 + 3] ?? 0) > 96 ? 1 : 0;
+  for (let i = 0; i < size; i++) {
+    const a = alpha[i * 4 + 3] ?? 0;
+
+    if (a > 96) solid[i] = 1;
+
+    if (a > 0) bodyCount++;
+  }
+
   const distance = distanceField(solid, width, height);
-
-  const images = Array.from(
-    { length: BAND_COUNT },
-    () => new ImageData(width, height),
-  );
+  const bands = new Int8Array(size);
+  let outlineCount = 0;
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = y * width + x;
       const band = bandOf(distance[i] ?? 0, x, y);
+      bands[i] = band;
 
-      if (band < 0) continue;
-      images[band]?.data.set([255, 255, 255, 255], i * 4);
+      if (band >= 0) outlineCount++;
     }
   }
 
-  return images.map((image) => {
-    const canvas = createCanvas(width, height);
-    context2d(canvas).putImageData(image, 0, 0);
+  const pixels: SilhouettePixels = {
+    outline: new Uint32Array(outlineCount),
+    band: new Uint8Array(outlineCount),
+    body: new Uint32Array(bodyCount),
+    bodyAlpha: new Uint8Array(bodyCount),
+  };
 
-    return canvas;
-  });
+  for (let i = 0, o = 0, b = 0; i < size; i++) {
+    const band = bands[i] ?? -1;
+
+    if (band >= 0) {
+      pixels.outline[o] = i;
+      pixels.band[o++] = band;
+    }
+
+    const a = alpha[i * 4 + 3] ?? 0;
+
+    if (a > 0) {
+      pixels.body[b] = i;
+      pixels.bodyAlpha[b++] = a;
+    }
+  }
+
+  return pixels;
 }
 
 /** Silhouette of one sprite frame. Reads pixels for the outline when the image allows it. */

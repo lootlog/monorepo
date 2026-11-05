@@ -177,11 +177,19 @@ interface Composite {
   silhouette: AuraSilhouette | null;
   key: string;
   canvas: HTMLCanvasElement;
+  /** The pixel buffer written into `canvas`, reused while its size holds. */
+  image: ImageData | null;
 }
 
 function createComposite(): Composite {
-  return { silhouette: null, key: "", canvas: createCanvas(1, 1) };
+  return { silhouette: null, key: "", canvas: createCanvas(1, 1), image: null };
 }
+
+/** The outline bands' alpha, inner to outer. */
+const BAND_ALPHAS = [0.95, 0.8, 0.7, 0.55] as const;
+
+/** Which of the three aura tones each outline band takes. */
+const BAND_TONES = [0, 1, 2, 2] as const;
 
 /** A live aura on one character or tooltip: its own particles, clock and signature effects. */
 export class Aura {
@@ -575,33 +583,61 @@ export class Aura {
     const { silhouette } = place;
     const p = this.preset;
 
-    if (silhouette.bands) {
-      const bands = silhouette.bands;
+    if (silhouette.pixels) {
+      const { outline, band } = silhouette.pixels;
+      const prism = p.fx.includes("prism");
 
-      const composite = this.composite(this.outline, silhouette, (octx) => {
-        const [light, mid, dark] = this.rgb.tones;
-        const alphas = [0.95, 0.8, 0.7, 0.55];
-        const tones = [light, mid, dark, dark];
+      const bandAlpha = BAND_ALPHAS.map((alpha, index) => {
+        // The outer dither only shows near the top of a pulse, so the glow visibly breathes.
+        const a =
+          index === 3
+            ? smoothstep(0.75, 1.05, glow) * alpha
+            : clamp(alpha * glow, 0, 1);
 
-        for (const [band, mask] of bands.entries()) {
-          // The outer dither only shows near the top of a pulse, so the glow visibly breathes.
-          const alpha = alphas[band] ?? 0;
-
-          const a =
-            band === 3
-              ? smoothstep(0.75, 1.05, glow) * alpha
-              : clamp(alpha * glow, 0, 1);
-
-          this.paintMask(octx, mask, tones[band] ?? dark, a, band);
-        }
-
-        const inner = bands[0];
-
-        if (this.flash > 0.05 && inner) {
-          octx.globalCompositeOperation = "lighter";
-          this.paintMask(octx, inner, [255, 255, 255], this.flash * 0.7);
-        }
+        return a > 0.02 ? a : 0;
       });
+
+      const bandColors = BAND_ALPHAS.map((_, index) =>
+        prism ? this.rainbowStops(index) : [this.rgb.tones[BAND_TONES[index]]],
+      );
+
+      const flash = this.flash > 0.05 ? this.flash * 0.7 : 0;
+      // The flash adds white over the inner band (the prism's own rainbow on the prism).
+      const flashColors = prism ? (bandColors[0] ?? []) : [WHITE];
+
+      const composite = this.composite(this.outline, silhouette, (octx) =>
+        this.paintPixels(octx, this.outline, (data, width, height) => {
+          for (let n = 0; n < outline.length; n++) {
+            const b = band[n] ?? 0;
+            const a = bandAlpha[b] ?? 0;
+            const f = b === 0 ? flash : 0;
+
+            if (a === 0 && f === 0) continue;
+            const i = outline[n] ?? 0;
+            const color = colorAt(bandColors[b] ?? [], i, width, height);
+
+            if (f === 0) {
+              writePixel(data, i, color, a);
+              continue;
+            }
+
+            // `lighter` over the band: premultiplied colours add, then clamp.
+            const light = colorAt(flashColors, i, width, height);
+            const alpha = Math.min(1, a + f);
+
+            writePixel(
+              data,
+              i,
+              [
+                Math.min(255, color[0] * a + light[0] * f) / alpha,
+                Math.min(255, color[1] * a + light[1] * f) / alpha,
+                Math.min(255, color[2] * a + light[2] * f) / alpha,
+              ],
+              alpha,
+            );
+          }
+        }),
+      );
 
       ctx.globalCompositeOperation = "source-over";
       this.blitComposite(ctx, place, composite);
@@ -642,9 +678,28 @@ export class Aura {
 
     if (alpha <= 0.02) return;
 
-    const composite = this.composite(this.inner, place.silhouette, (octx) =>
-      this.paintMask(octx, place.silhouette.sil, this.rgb.tones[0], alpha),
-    );
+    const { pixels } = place.silhouette;
+
+    const colors = this.preset.fx.includes("prism")
+      ? this.rainbowStops(0)
+      : [this.rgb.tones[0]];
+
+    const composite = this.composite(this.inner, place.silhouette, (octx) => {
+      if (!pixels) {
+        this.paintMask(octx, place.silhouette.sil, this.rgb.tones[0], alpha);
+
+        return;
+      }
+
+      const { body, bodyAlpha } = pixels;
+      this.paintPixels(octx, this.inner, (data, width, height) => {
+        for (let n = 0; n < body.length; n++) {
+          const i = body[n] ?? 0;
+          const a = (alpha * (bodyAlpha[n] ?? 0)) / 255;
+          writePixel(data, i, colorAt(colors, i, width, height), a);
+        }
+      });
+    });
 
     ctx.globalCompositeOperation = "lighter";
     this.blitComposite(ctx, place, composite);
@@ -681,6 +736,21 @@ export class Aura {
     octx.globalCompositeOperation = "source-over";
 
     return canvas;
+  }
+
+  /** Writes `fill`'s pixels into a cleared composite through its reused buffer. */
+  private paintPixels(
+    octx: CanvasRenderingContext2D,
+    composite: Composite,
+    fill: (data: Uint8ClampedArray, width: number, height: number) => void,
+  ): void {
+    const { width, height } = composite.canvas;
+    let image = composite.image;
+
+    if (image?.width === width && image.height === height) image.data.fill(0);
+    else image = composite.image = new ImageData(width, height);
+    fill(image.data, width, height);
+    octx.putImageData(image, 0, 0);
   }
 
   private blitComposite(
@@ -760,16 +830,21 @@ export class Aura {
     h: number,
     band: number,
   ): CanvasGradient {
-    const gradient = sctx.createLinearGradient(0, 0, w * 0.3, h);
-    const shift = this.time * 90 + band * 40;
+    const gradient = sctx.createLinearGradient(0, 0, w * RAINBOW_RUN, h);
 
-    for (let i = 0; i <= 6; i++)
-      gradient.addColorStop(
-        i / 6,
-        rgba(hslToRgb(shift + i * 60, 1, band ? 0.55 : 0.72), 1),
-      );
+    for (const [i, stop] of this.rainbowStops(band).entries())
+      gradient.addColorStop(i / 6, rgba(stop, 1));
 
     return gradient;
+  }
+
+  /** The rainbow's seven evenly spaced stops for `band`. */
+  private rainbowStops(band: number): Rgb[] {
+    const shift = this.time * 90 + band * 40;
+
+    return Array.from({ length: 7 }, (_, i) =>
+      hslToRgb(shift + i * 60, 1, band ? 0.55 : 0.72),
+    );
   }
 
   // --- decorations ---------------------------------------------------------------------------
@@ -1670,6 +1745,55 @@ function blitLayer(
     box.w,
     box.h,
   );
+}
+
+const WHITE: Rgb = [255, 255, 255];
+
+/** The prism gradient runs from the top-left corner to this fraction of the width at the bottom. */
+const RAINBOW_RUN = 0.3;
+
+/**
+ * The colour at pixel `i` of a `width`×`height` buffer: the only colour, or the rainbow
+ * gradient through evenly spaced `stops` sampled at the pixel centre, as `rainbow` paints it.
+ */
+function colorAt(
+  stops: readonly Rgb[],
+  i: number,
+  width: number,
+  height: number,
+): Rgb {
+  const first = stops[0] ?? WHITE;
+
+  if (stops.length < 2) return first;
+  const gx = width * RAINBOW_RUN;
+  const x = (i % width) + 0.5;
+  const y = Math.floor(i / width) + 0.5;
+  const t = clamp((x * gx + y * height) / (gx * gx + height * height), 0, 1);
+  const position = t * (stops.length - 1);
+  const index = Math.min(stops.length - 2, Math.floor(position));
+  const from = stops[index] ?? first;
+  const to = stops[index + 1] ?? from;
+  const k = position - index;
+
+  return [
+    from[0] + (to[0] - from[0]) * k,
+    from[1] + (to[1] - from[1]) * k,
+    from[2] + (to[2] - from[2]) * k,
+  ];
+}
+
+/** Sets pixel `i` to `color` at `alpha`; the clamped buffer rounds the channels. */
+function writePixel(
+  data: Uint8ClampedArray,
+  i: number,
+  color: Rgb,
+  alpha: number,
+): void {
+  const o = i * 4;
+  data[o] = color[0];
+  data[o + 1] = color[1];
+  data[o + 2] = color[2];
+  data[o + 3] = alpha * 255;
 }
 
 let scratch: HTMLCanvasElement | null = null;
