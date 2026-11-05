@@ -1,6 +1,5 @@
 import { describe, expect, it } from "bun:test";
 import {
-  canWearLootDrawItem,
   capturesMapPlayers,
   groupedLootDrawTicketOrder,
   isLootDrawItem,
@@ -9,50 +8,31 @@ import {
   shuffleLootDrawTicketOrder,
 } from "./loot-draw.js";
 
-const mageWand = { prof: ["MAGE"], lvl: 279, stat: "lvl=279;reqp=m" };
+const mageWand = { prof: ["MAGE"] };
 
 describe("lootDrawWinnerTickets", () => {
   it("counts every party member who can wear the item, the winner included", () => {
     const party = [
-      { prof: "MAGE", lvl: 300 },
-      { prof: "MAGE", lvl: 302 },
-      { prof: "MAGE", lvl: 290 },
-      { prof: "WARRIOR", lvl: 305 },
+      { prof: "MAGE" },
+      { prof: "MAGE" },
+      { prof: "MAGE" },
+      { prof: "WARRIOR" },
     ];
 
     expect(lootDrawWinnerTickets(mageWand, party)).toBe(3);
   });
 
-  it("leaves out party members below the item's level", () => {
+  it("counts party members by profession alone, whatever their level", () => {
     const party = [
       { prof: "MAGE", lvl: 300 },
-      { prof: "MAGE", lvl: 278 },
+      { prof: "MAGE", lvl: 120 },
     ];
 
-    expect(lootDrawWinnerTickets(mageWand, party)).toBe(1);
+    expect(lootDrawWinnerTickets(mageWand, party)).toBe(2);
   });
 
   it("gives a winner who cannot wear the item one ticket when nobody else can", () => {
-    expect(
-      lootDrawWinnerTickets(mageWand, [{ prof: "WARRIOR", lvl: 300 }]),
-    ).toBe(1);
-  });
-});
-
-describe("canWearLootDrawItem", () => {
-  it("ignores the level of an elastic item", () => {
-    const elastic = { prof: ["MAGE"], lvl: 300, stat: "lvladjust;lvl=300" };
-
-    expect(canWearLootDrawItem(elastic, { prof: "MAGE", lvl: 120 })).toBe(true);
-  });
-
-  it("lets in a player of the right profession whose level is unknown", () => {
-    expect(canWearLootDrawItem(mageWand, { prof: "MAGE", lvl: null })).toBe(
-      true,
-    );
-    expect(canWearLootDrawItem(mageWand, { prof: "WARRIOR", lvl: null })).toBe(
-      false,
-    );
+    expect(lootDrawWinnerTickets(mageWand, [{ prof: "WARRIOR" }])).toBe(1);
   });
 });
 

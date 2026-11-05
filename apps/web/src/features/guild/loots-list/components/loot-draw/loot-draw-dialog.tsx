@@ -1,19 +1,15 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
-import { isElasticLootDrawItem } from "@lootlog/domain/loot-draw";
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
-import { getShortnameByProf } from "@lootlog/domain/profession";
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import { EmptyState } from "@/components/common/empty-state";
 import { LoadingSlot } from "@/components/common/loading-slot";
 import { RetryButton } from "@/components/common/retry-button";
 import { CircleAlert, Dices } from "lucide-react";
-import { cn } from "cn";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Item, Loot } from "@/lib/loots/loot-types";
@@ -44,22 +40,13 @@ export const LootDrawDialog = ({
   const [spunDrawId, setSpunDrawId] = useState<number | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   // While a spin runs, the body keeps the editor's height so nothing moves
-  // under the wheel; once the winner shows it eases down to the result.
+  // under the wheel; once the winner shows, the dialog eases down to the result.
   const [lockedHeight, setLockedHeight] = useState<number | null>(null);
   const { data, isLoading, isError, isFetching, refetch } = draws.drawsQuery;
   const itemDraws = (data ?? []).filter(({ itemHid }) => itemHid === item.hid);
   const standing = itemDraws.find(({ voided }) => voided === null);
   const voided = itemDraws.filter(({ voided }) => voided !== null);
   const setup = buildLootDrawSetup(loot, item);
-  const winner = setup?.entrants[0];
-
-  const professions = item.prof
-    .map((profession) =>
-      t(`professions.${getShortnameByProf(profession) ?? profession}`),
-    )
-    .join(", ");
-
-  const isElastic = isElasticLootDrawItem(item);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -70,34 +57,14 @@ export const LootDrawDialog = ({
               item={item}
               watchContext={{ world: loot.world }}
             />
-            <div className="min-w-0">
-              <DialogTitle className="line-clamp-2 text-base">
-                {t("loots.details.draw.openFor", { item: item.name })}
-              </DialogTitle>
-              <p className="text-xs text-muted-foreground">
-                {isElastic
-                  ? t("loots.details.draw.requirementsElastic", { professions })
-                  : t("loots.details.draw.requirements", {
-                      professions,
-                      level: item.lvl,
-                    })}
-              </p>
-            </div>
+            <DialogTitle className="line-clamp-2 px-0 pt-0 text-base">
+              {t("loots.details.draw.openFor", { item: item.name })}
+            </DialogTitle>
           </div>
-          {winner && (
-            <DialogDescription className="mt-2 text-xs">
-              {t("loots.details.draw.description", { winner: winner.name })}
-            </DialogDescription>
-          )}
         </DialogHeader>
         <div
           ref={bodyRef}
-          className={cn(
-            "grid min-h-0 flex-1 content-start gap-4 overflow-y-auto p-4",
-            // Locking is instant; only the release eases down to the result.
-            lockedHeight === null &&
-              "transition-[min-height] duration-300 ease-out motion-reduce:transition-none",
-          )}
+          className="grid min-h-0 flex-1 content-start gap-4 overflow-y-auto p-4"
           style={{ minHeight: lockedHeight ?? 0 }}
         >
           {isLoading && (

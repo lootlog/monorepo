@@ -1,5 +1,6 @@
 "use client";
 
+import { useAnimatedHeight } from "@lootlog/ui/hooks/use-animated-height";
 import { Drawer as DrawerPrimitive } from "@base-ui/react/drawer";
 import * as React from "react";
 
@@ -90,9 +91,11 @@ function DrawerSwipeHandle({
 function DrawerContent({
   className,
   children,
+  ref,
   ...props
 }: DrawerPrimitive.Popup.Props) {
   const { modal, showSwipeHandle, swipeDirection } = useDrawer();
+  const animatedHeightRef = useAnimatedHeight(ref);
 
   const swipeAxis =
     swipeDirection === "down" || swipeDirection === "up" ? "y" : "x";
@@ -106,6 +109,7 @@ function DrawerContent({
         className="pointer-events-none fixed inset-0 z-50 select-none data-[modal=true]:pointer-events-auto"
       >
         <DrawerPrimitive.Popup
+          ref={animatedHeightRef}
           data-slot="drawer-popup"
           data-swipe-axis={swipeAxis}
           className={cn(

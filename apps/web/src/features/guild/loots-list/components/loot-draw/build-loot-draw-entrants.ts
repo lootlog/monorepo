@@ -96,13 +96,15 @@ export const buildLootDrawSetup = (
   };
 };
 
-/** Why a hand-added player cannot enter, or null when they can. */
+/**
+ * Why a hand-added player cannot enter, or null when they can. The form
+ * offers only the item's professions, so the profession always fits.
+ */
 export const lootDrawAddError = (
   loot: Loot,
-  item: Item,
   entrants: readonly LootDrawDraftEntrant[],
-  candidate: { name: string; prof: string | null; lvl: number | null },
-): "inParty" | "duplicate" | "ineligible" | null => {
+  candidate: { name: string },
+): "inParty" | "duplicate" | null => {
   const key = nameKey(candidate.name);
 
   if (loot.players.some((player) => nameKey(player.name) === key)) {
@@ -113,5 +115,5 @@ export const lootDrawAddError = (
     return "duplicate";
   }
 
-  return canWearLootDrawItem(item, candidate) ? null : "ineligible";
+  return null;
 };

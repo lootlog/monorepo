@@ -121,15 +121,16 @@ describe("buildLootDrawEntrants", () => {
     expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_OUTSIDER_IN_PARTY });
   });
 
-  it("refuses an outsider of another profession or below the item's level", () => {
-    for (const ineligible of [
-      outsider({ prof: "WARRIOR" }),
-      outsider({ lvl: 278 }),
-    ]) {
-      expect(
-        buildLootDrawEntrants(loot, request([winner, ineligible])),
-      ).toEqual({ error: ErrorKey.LOOT_DRAW_OUTSIDER_INELIGIBLE });
-    }
+  it("refuses an outsider of another profession, whatever the level", () => {
+    expect(
+      buildLootDrawEntrants(
+        loot,
+        request([winner, outsider({ prof: "WARRIOR" })]),
+      ),
+    ).toEqual({ error: ErrorKey.LOOT_DRAW_OUTSIDER_INELIGIBLE });
+    expect(
+      buildLootDrawEntrants(loot, request([winner, outsider({ lvl: 120 })])),
+    ).toHaveProperty("entrants");
   });
 
   it("refuses the same outsider twice", () => {

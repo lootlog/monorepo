@@ -205,13 +205,14 @@ export const LootDrawEditor = ({
           <LootDrawAddPlayerForm
             professions={item.prof}
             validate={(candidate) =>
-              lootDrawAddError(loot, item, entrants, candidate)
+              lootDrawAddError(loot, entrants, candidate)
             }
             onAdd={(candidate) =>
               update([
                 ...entrants,
                 {
                   ...candidate,
+                  lvl: null,
                   key: lootDrawPlayerKey({
                     characterId: null,
                     name: candidate.name,

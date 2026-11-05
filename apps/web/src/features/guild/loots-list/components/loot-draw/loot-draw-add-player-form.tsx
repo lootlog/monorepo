@@ -19,7 +19,6 @@ type Profession = Item["prof"][number];
 const ERROR_KEYS = {
   inParty: "loots.details.draw.addInParty",
   duplicate: "loots.details.draw.addDuplicate",
-  ineligible: "loots.details.draw.addIneligible",
 } as const;
 
 export type LootDrawAddError = keyof typeof ERROR_KEYS;
@@ -38,23 +37,15 @@ export const LootDrawAddPlayerForm = ({
   validate: (candidate: {
     name: string;
     prof: Profession;
-    lvl: number | null;
   }) => LootDrawAddError | null;
-  onAdd: (candidate: {
-    name: string;
-    prof: Profession;
-    lvl: number | null;
-  }) => void;
+  onAdd: (candidate: { name: string; prof: Profession }) => void;
 }) => {
   const { t } = useTranslation();
   const id = useId();
   const [name, setName] = useState("");
   const [prof, setProf] = useState<Profession | null>(professions[0] ?? null);
-  const [level, setLevel] = useState("");
   const [error, setError] = useState<LootDrawAddError | null>(null);
 
-  // The level is optional: without it only the profession is checked.
-  const lvl = Number(level) > 0 ? Number(level) : null;
   const isComplete = name.trim().length > 0 && prof !== null;
 
   const professionLabel = (profession: Profession) =>
@@ -68,7 +59,7 @@ export const LootDrawAddPlayerForm = ({
 
         if (!isComplete) return;
 
-        const candidate = { name: name.trim(), prof, lvl };
+        const candidate = { name: name.trim(), prof };
         const reason = validate(candidate);
 
         setError(reason);
@@ -77,12 +68,11 @@ export const LootDrawAddPlayerForm = ({
 
         onAdd(candidate);
         setName("");
-        setLevel("");
       }}
     >
       <p className="text-sm font-medium">{t("loots.details.draw.addTitle")}</p>
-      <div className="grid grid-cols-[minmax(0,1fr)_6rem_auto] items-end gap-2">
-        <div className="col-span-3 grid gap-1.5">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,12rem)_auto] items-end gap-2 max-sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="grid gap-1.5 max-sm:col-span-2">
           <Label htmlFor={`${id}-name`}>
             {t("loots.details.draw.addName")}
           </Label>
@@ -125,21 +115,6 @@ export const LootDrawAddPlayerForm = ({
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor={`${id}-lvl`}>
-            {t("loots.details.draw.addLevel")}
-          </Label>
-          <Input
-            id={`${id}-lvl`}
-            inputMode="numeric"
-            placeholder={t("loots.details.draw.optional")}
-            value={level}
-            onChange={(event) => {
-              setLevel(event.target.value.replace(/\D/g, "").slice(0, 3));
-              setError(null);
-            }}
-          />
         </div>
         <Button type="submit" variant="secondary" disabled={!isComplete}>
           <Plus className="size-4" />
