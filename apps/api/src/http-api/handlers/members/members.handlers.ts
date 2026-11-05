@@ -1,4 +1,5 @@
 import { AccessRequirement } from "@lootlog/domain/access-policy";
+import type { ApiKeyAccess } from "@lootlog/schema/api-key-access";
 import type { MemberWithRoles } from "#src/members/member.types";
 import {
   pathString,
@@ -32,6 +33,7 @@ import {
 export type MembersIdentity = {
   readonly userId: string;
   readonly discordId: string;
+  readonly apiKey?: ApiKeyAccess;
 };
 
 export type MembersGuildAccess = MembersIdentity & {

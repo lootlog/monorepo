@@ -104,3 +104,76 @@ test("manual deactivation delivers its revocation after cache and broker failure
     await boundary.dispose();
   }
 });
+
+test("an API key scoped to one Organization cannot read the owner's membership in another", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    await boundary.run(
+      boundary.database
+        .insert(guildTable)
+        .values([
+          createGuildFixture({ id: "111" }),
+          createGuildFixture({ id: "222" }),
+        ]),
+    );
+    await boundary.run(
+      boundary.database.insert(memberTable).values(
+        createMemberFixture({
+          userId: "discord-1",
+          guildId: "222",
+          globalUserId: "user-1",
+          lastDiscordSyncAt: new Date(),
+        }),
+      ),
+    );
+
+    const membersLayer = makeMembersDataLayer(
+      {
+        refreshGuildMember: () => Effect.die("Unexpected refresh"),
+        recordStaleUse: () => Effect.void,
+        enqueueBulkRefresh: () => Effect.void,
+        publishRefreshJobUpdate: () => Effect.void,
+        deliverMemberChanges: () => Effect.void,
+      },
+      RuntimeEnvironment.LOCAL,
+    );
+
+    const getMe = (organizationIds: ReadonlyArray<string>) =>
+      Effect.gen(function* () {
+        const members = yield* MembersData;
+
+        return yield* members.getMe(
+          {
+            userId: "user-1",
+            discordId: "discord-1",
+            apiKey: {
+              keyId: "key-1",
+              organizationIds: [...organizationIds],
+              mode: "read",
+              personalData: false,
+              expiresAt: null,
+            },
+          },
+          "222",
+          false,
+        );
+      }).pipe(Effect.provide(membersLayer));
+
+    const outOfScope = await boundary.run(Effect.result(getMe(["111"])));
+
+    expect(Result.isFailure(outOfScope)).toBe(true);
+
+    if (Result.isFailure(outOfScope)) {
+      expect(applicationErrorStatusOrUndefined(outOfScope.failure.cause)).toBe(
+        404,
+      );
+    }
+
+    expect(await boundary.run(getMe(["222"]))).toMatchObject({
+      guildId: "222",
+    });
+  } finally {
+    await boundary.dispose();
+  }
+});
