@@ -34,9 +34,14 @@ const buildCommand = (command, files) => {
   return `${command} ${targets.map(quote).join(" ")}`;
 };
 
+// lint-staged runs different globs concurrently, so a file must match only one
+// glob; within it, the commands run in order and lint sees the formatted file.
 export default {
   "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}": (files) =>
-    buildCommand("oxlint --no-error-on-unmatched-pattern", files),
-  "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,json,md,css,html,yml,yaml}": (files) =>
+    [
+      buildCommand("oxfmt --no-error-on-unmatched-pattern", files),
+      buildCommand("oxlint --no-error-on-unmatched-pattern", files),
+    ].flat(),
+  "**/*.{json,md,css,html,yml,yaml}": (files) =>
     buildCommand("oxfmt --no-error-on-unmatched-pattern", files),
 };

@@ -1,0 +1,3 @@
+[test]
+# Runs before any --preload passed on the command line.
+preload = ["./test/bun.infrastructure-guard.ts"]
