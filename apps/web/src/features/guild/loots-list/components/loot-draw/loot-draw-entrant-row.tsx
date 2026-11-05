@@ -50,7 +50,7 @@ export const LootDrawEntrantRow = ({
   return (
     <li
       className={cn(
-        "flex min-h-12 flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 sm:px-4",
+        "flex min-h-14 flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 sm:px-4",
         isWinner && "bg-primary/10",
       )}
     >
@@ -81,11 +81,6 @@ export const LootDrawEntrantRow = ({
           <p className="text-sm font-semibold tabular-nums">
             {t("loots.details.draw.chance", { percent })}
           </p>
-          {!onTicketsChange && (
-            <p className="text-xs tabular-nums text-muted-foreground">
-              {t("loots.details.draw.tickets", { count: entrant.tickets })}
-            </p>
-          )}
           {onTicketsChange &&
             defaultTickets !== undefined &&
             defaultTickets !== entrant.tickets && (
@@ -100,13 +95,20 @@ export const LootDrawEntrantRow = ({
               </button>
             )}
         </div>
+        {/* A result keeps the stepper's room, so its rows match the editor's
+            and a spin moves nothing. */}
+        {!onTicketsChange && (
+          <p className="flex h-[34px] w-24 shrink-0 items-center justify-center border border-transparent text-xs tabular-nums text-muted-foreground">
+            {t("loots.details.draw.tickets", { count: entrant.tickets })}
+          </p>
+        )}
         {onTicketsChange && (
           <div
             role="group"
             aria-label={t("loots.details.draw.ticketsOf", {
               name: entrant.name,
             })}
-            className="flex shrink-0 items-center rounded-md border border-border"
+            className="flex w-24 shrink-0 items-center justify-between rounded-md border border-border"
           >
             <Button
               size="icon-sm"
@@ -147,6 +149,8 @@ export const LootDrawEntrantRow = ({
             <X className="size-4" />
           </Button>
         )}
+        {/* Every row keeps the remove button's room, so the columns line up. */}
+        {!onRemove && <span aria-hidden="true" className="size-8 shrink-0" />}
       </div>
     </li>
   );
