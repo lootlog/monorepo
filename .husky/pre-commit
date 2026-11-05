@@ -1,18 +1,12 @@
 #!/bin/sh
 set -e
 
-echo "🚀 Running pre-commit checks..."
+# Repository-wide formatting, tests and dependents' checks run in CI.
 
-echo "\n📝 Formatting staged files..."
+echo "📝 Formatting staged files..."
 bunx lint-staged
 
-echo "\n🔍 Linting changed packages..."
-bunx turbo run lint --filter=[HEAD]
+echo "\n🔍 Linting and type checking changed packages..."
+bunx turbo run lint typecheck --filter=[HEAD]
 
-echo "\n🎨 Checking code formatting..."
-bun run format:check
-
-echo "\n🧪 Running tests for changed packages..."
-bunx turbo run test --filter=[HEAD]
-
-echo "\n✅ All pre-commit checks passed!"
+echo "\n✅ Pre-commit checks passed!"

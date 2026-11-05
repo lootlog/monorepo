@@ -56,10 +56,10 @@ after tracing every caller and affected boundary. Treat current code and
 verification as evidence; roadmap documents and target architecture are not
 proof that a feature already exists.
 
-## GPT-6 Astra operating defaults
+## Operating defaults
 
-These defaults tune GPT-6 Astra and define the same work contract for other
-capable agents:
+These defaults define the work contract for every agent; their wording is
+tuned for GPT-6 Astra:
 
 - Infer the user's intent and authorized scope from their request and the prior
   conversation. Treat requests such as “help me,” “can you,” and “I want to” as
