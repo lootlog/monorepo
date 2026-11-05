@@ -28,14 +28,15 @@ export const makeEventKillHistoryProjection = (
       return yield* Effect.fail(new ResourceNotFoundError("Kill not found"));
     }
 
-    const heroMaps = yield* repository.findMaps(heroId);
-
     const effectiveKilledAt = getEffectiveWindowEndAt(
       kill.killedAt,
       kill.maxSpawnTimeAtKill,
     );
 
-    const windowStartByKillId = yield* getEffectiveWindowStartByKillId([kill]);
+    const [heroMaps, windowStartByKillId] = yield* Effect.all(
+      [repository.findMaps(heroId), getEffectiveWindowStartByKillId([kill])],
+      { concurrency: "unbounded" },
+    );
 
     const overlapWindowStartTime =
       windowStartByKillId.get(kill.id) ??
@@ -64,21 +65,6 @@ export const makeEventKillHistoryProjection = (
 
     // Reaches back to the minimum respawn time as well, so the breakdown can
     // rebuild the whole scoring window's presence.
-    const assignments = yield* repository.findAssignments({
-      mapIds,
-      memberIds,
-      killedAt: effectiveKilledAt,
-      overlapStart:
-        overlapWindowStartTime < trackingWindowStartTime
-          ? overlapWindowStartTime
-          : trackingWindowStartTime,
-    });
-
-    const assignmentsByMember = Map.groupBy(
-      assignments,
-      (assignment) => assignment.memberId,
-    );
-
     const fallbackMemberIds = [
       ...new Set(
         normalizedPoints
@@ -91,13 +77,31 @@ export const makeEventKillHistoryProjection = (
       ),
     ];
 
-    const fallbackPresenceStats =
-      yield* pointsService.getMembersPresenceStatsPerMap(
-        mapIds,
-        fallbackMemberIds,
-        overlapWindowStartTime,
-        effectiveKilledAt,
-      );
+    const [assignments, fallbackPresenceStats] = yield* Effect.all(
+      [
+        repository.findAssignments({
+          mapIds,
+          memberIds,
+          killedAt: effectiveKilledAt,
+          overlapStart:
+            overlapWindowStartTime < trackingWindowStartTime
+              ? overlapWindowStartTime
+              : trackingWindowStartTime,
+        }),
+        pointsService.getMembersPresenceStatsPerMap(
+          mapIds,
+          fallbackMemberIds,
+          overlapWindowStartTime,
+          effectiveKilledAt,
+        ),
+      ],
+      { concurrency: "unbounded" },
+    );
+
+    const assignmentsByMember = Map.groupBy(
+      assignments,
+      (assignment) => assignment.memberId,
+    );
 
     const fallbackPresenceByMemberMap = new Map<
       string,
@@ -273,14 +277,15 @@ export const makeEventKillHistoryProjection = (
       return yield* Effect.fail(new ResourceNotFoundError("Kill not found"));
     }
 
-    const summary = yield* repository.findWindowSummary(killId);
+    const [summary, maps] = yield* Effect.all(
+      [repository.findWindowSummary(killId), repository.findMaps(heroId)],
+      { concurrency: "unbounded" },
+    );
 
     const summaryGaps = summary?.gapsTimeline ?? [];
 
     const scoringWindowStartTime =
       summary?.windowOpenedAt ?? kill.minSpawnTimeAtKill;
-
-    const maps = yield* repository.findMaps(heroId);
 
     const timelineAssignments = yield* repository.findTimelineAssignments({
       mapIds: maps.map((map) => map.id),

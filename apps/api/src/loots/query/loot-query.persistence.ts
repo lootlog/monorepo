@@ -627,12 +627,15 @@ export const makeLootQueryPersistence = (
     Effect.gen(function* () {
       if (ids.length === 0) return new Map<number, LootSummary>();
 
-      const [loots, items, players, npcs] = yield* Effect.all([
-        selectLoots(ids),
-        selectItems(ids),
-        selectPlayers(ids),
-        selectNpcs(ids),
-      ]);
+      const [loots, items, players, npcs] = yield* Effect.all(
+        [
+          selectLoots(ids),
+          selectItems(ids),
+          selectPlayers(ids),
+          selectNpcs(ids),
+        ],
+        { concurrency: "unbounded" },
+      );
 
       const summaries = new Map<number, LootSummary>();
 

@@ -199,33 +199,40 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
 
                 const { member, ownerId } = found;
 
-                const granted = yield* selectGuildIdsGrantingPermissions(
-                  database,
-                  [discordId],
-                  [{ id: guildId, ownerId }],
-                  [Permission.LOOTLOG_LOOTS_WRITE],
+                const [granted, configs] = yield* Effect.all(
+                  [
+                    selectGuildIdsGrantingPermissions(
+                      database,
+                      [discordId],
+                      [{ id: guildId, ownerId }],
+                      [Permission.LOOTLOG_LOOTS_WRITE],
+                    ),
+                    database
+                      .select()
+                      .from(userCharactersLootlogSettingsTable)
+                      .where(
+                        and(
+                          eq(
+                            userCharactersLootlogSettingsTable.userId,
+                            discordId,
+                          ),
+                          // The summary is scoped to this Lootlog's characters.
+                          arrayContains(
+                            userCharactersLootlogSettingsTable.catchingGuildIds,
+                            [guildId],
+                          ),
+                        ),
+                      )
+                      .orderBy(
+                        asc(userCharactersLootlogSettingsTable.accountId),
+                        asc(userCharactersLootlogSettingsTable.characterId),
+                      ),
+                  ],
+                  { concurrency: "unbounded" },
                 );
 
                 const catchesForGuild =
                   granted.get(discordId)?.has(guildId) ?? false;
-
-                const configs = yield* database
-                  .select()
-                  .from(userCharactersLootlogSettingsTable)
-                  .where(
-                    and(
-                      eq(userCharactersLootlogSettingsTable.userId, discordId),
-                      // The summary is scoped to this Lootlog's characters.
-                      arrayContains(
-                        userCharactersLootlogSettingsTable.catchingGuildIds,
-                        [guildId],
-                      ),
-                    ),
-                  )
-                  .orderBy(
-                    asc(userCharactersLootlogSettingsTable.accountId),
-                    asc(userCharactersLootlogSettingsTable.characterId),
-                  );
 
                 const references = [
                   ...new Map(

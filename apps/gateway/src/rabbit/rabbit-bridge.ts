@@ -750,7 +750,7 @@ export class RabbitBridge {
             { topic: "organization.reservations", organizationId },
             { v: 1, type: "reservation.changed", data },
           ),
-        { discard: true },
+        { concurrency: "unbounded", discard: true },
       ),
     [RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED]: (data) =>
       Effect.forEach(
@@ -760,7 +760,7 @@ export class RabbitBridge {
             data.recipientDiscordId,
             organizationEvent("party-ready-room.updated", id, data.update),
           ),
-        { discard: true },
+        { concurrency: "unbounded", discard: true },
       ),
     [RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE]: (data) =>
       this.publish(

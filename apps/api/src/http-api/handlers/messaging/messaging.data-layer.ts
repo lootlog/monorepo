@@ -307,7 +307,7 @@ export const makeMessagingDataLayer = (
                       guildId,
                     })
                     .pipe(Effect.ignore),
-                { discard: true },
+                { concurrency: "unbounded", discard: true },
               );
 
               return { notificationId, guildIds };
