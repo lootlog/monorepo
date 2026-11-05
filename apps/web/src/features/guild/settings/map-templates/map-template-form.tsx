@@ -109,7 +109,7 @@ export const MapTemplateForm = (
                                   label: map.name,
                                 })}
                                 onClick={() => handleRemoveMap(map.id)}
-                                className="hover:text-destructive shrink-0"
+                                className="-my-1 -mr-1.5 inline-flex size-6 shrink-0 items-center justify-center rounded-sm outline-none hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
                               >
                                 <X className="w-3 h-3" />
                               </button>

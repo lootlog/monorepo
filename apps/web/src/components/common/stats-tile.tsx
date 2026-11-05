@@ -33,7 +33,10 @@ type StatsTileProps = {
   detail?: ReactNode;
 };
 
-/** One statistic in a `StatsTileGrid`: a row on phones, a column on tablets. */
+/**
+ * One statistic in a `StatsTileGrid`: the icon beside the value when the tile
+ * has room for both, above it in a narrow tile, whatever the viewport.
+ */
 export const StatsTile = ({
   icon: Icon,
   media,
@@ -41,27 +44,25 @@ export const StatsTile = ({
   value,
   detail,
 }: StatsTileProps) => (
-  <div
-    className={cn(
-      "flex items-center gap-3 p-4 sm:flex-col sm:items-start xl:flex-row xl:items-center",
-      STATS_TILE_CELL_CLASS,
-    )}
-  >
-    {media ??
-      (Icon && (
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-          <Icon className="size-5 text-primary" aria-hidden="true" />
+  <div className={cn("@container", STATS_TILE_CELL_CLASS)}>
+    <div className="flex h-full flex-col items-start gap-3 p-4 @[16rem]:flex-row @[16rem]:items-center">
+      {media ??
+        (Icon && (
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <Icon className="size-5 text-primary" aria-hidden="true" />
+          </div>
+        ))}
+      <div className="flex min-w-0 max-w-full flex-col gap-0.5">
+        <div className="truncate text-xs font-medium text-muted-foreground">
+          {label}
         </div>
-      ))}
-    <div className="flex min-w-0 max-w-full flex-col gap-0.5">
-      <div className="truncate text-xs font-medium text-muted-foreground">
-        {label}
-      </div>
-      <div className="truncate text-2xl leading-7 font-semibold tabular-nums">
-        {value}
-      </div>
-      <div className="min-h-4 truncate text-xs text-muted-foreground">
-        {detail}
+        {/* A name, such as the week's monster, wraps instead of losing its end. */}
+        <div className="line-clamp-2 text-2xl leading-7 font-semibold break-words tabular-nums">
+          {value}
+        </div>
+        <div className="min-h-4 truncate text-xs text-muted-foreground">
+          {detail}
+        </div>
       </div>
     </div>
   </div>
