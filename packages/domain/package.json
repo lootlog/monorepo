@@ -20,6 +20,7 @@
     "./item-type": "./src/item-type.ts",
     "./item-upgrade": "./src/item-upgrade.ts",
     "./loot-acceptance": "./src/loot-acceptance.ts",
+    "./loot-draw": "./src/loot-draw.ts",
     "./loot-visibility": "./src/loot-visibility.ts",
     "./member-display-role": "./src/member-display-role.ts",
     "./npc-appearance": "./src/npc-appearance.ts",

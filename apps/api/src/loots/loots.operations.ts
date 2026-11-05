@@ -10,11 +10,18 @@ import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { Clock, Effect, Schema } from "effect";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
+import { randomInt } from "node:crypto";
+import {
+  pickLootDrawEntrant,
+  totalLootDrawTickets,
+} from "@lootlog/domain/loot-draw";
 import {
   InvalidRequestError,
   PermissionDeniedError,
+  ResourceConflictError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
+import { buildLootDrawEntrants } from "#src/loots/loot-draw-entrants";
 import {
   DEFAULT_PAGE_SIZE,
   decodePageCursor,
@@ -23,7 +30,10 @@ import {
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   type CreateLootCommentRequest,
+  type CreateLootDrawRequest,
+  type LootDrawResponse,
   type LootsQuery,
+  type VoidLootDrawRequest,
   LootListResponse,
 } from "#src/contracts/loots/schemas";
 import { PositiveSafeInteger } from "@lootlog/schema/http-scalars";
@@ -76,6 +86,7 @@ export type LootPage = {
 type LootsFailure =
   | InvalidRequestError
   | PermissionDeniedError
+  | ResourceConflictError
   | LootPersistenceError
   | LootQueryError
   | LootsOperationError
@@ -105,6 +116,29 @@ export interface LootsOperations {
     readonly accessPolicy: AccessPolicy;
     readonly roles: Role[];
   }) => LootsEffect<LootComment>;
+  readonly getDraws: (options: {
+    readonly guild: Guild;
+    readonly lootId: number;
+    readonly accessPolicy: AccessPolicy;
+    readonly roles: Role[];
+  }) => LootsEffect<ReadonlyArray<LootDrawResponse>>;
+  readonly createDraw: (options: {
+    readonly discordId: string;
+    readonly guild: Guild;
+    readonly lootId: number;
+    readonly body: CreateLootDrawRequest;
+    readonly accessPolicy: AccessPolicy;
+    readonly roles: Role[];
+  }) => LootsEffect<LootDrawResponse>;
+  readonly voidDraw: (options: {
+    readonly discordId: string;
+    readonly guild: Guild;
+    readonly lootId: number;
+    readonly drawId: number;
+    readonly body: VoidLootDrawRequest;
+    readonly accessPolicy: AccessPolicy;
+    readonly roles: Role[];
+  }) => LootsEffect<LootDrawResponse>;
   readonly setLike: (options: {
     readonly discordId: string;
     readonly guild: Guild;
@@ -342,6 +376,78 @@ export const makeLootsOperations = ({
         yield* invalidateList([options.guild.id]);
 
         return comment;
+      }),
+
+    getDraws: (options) =>
+      Effect.gen(function* () {
+        const loot = yield* visibleLoot(
+          options.guild,
+          options.accessPolicy,
+          options.roles,
+          options.lootId,
+        );
+
+        if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
+
+        return yield* persistence.listDraws(options.guild.id, options.lootId);
+      }),
+
+    createDraw: (options) =>
+      Effect.gen(function* () {
+        // The entrants come from the loot as the caller may see it, so a
+        // draw never reveals players or items outside their visibility.
+        const loot = yield* visibleLoot(
+          options.guild,
+          options.accessPolicy,
+          options.roles,
+          options.lootId,
+        );
+
+        if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
+
+        const built = buildLootDrawEntrants(loot, options.body);
+
+        if ("error" in built) {
+          return yield* Effect.fail(
+            new InvalidRequestError({ code: built.error }),
+          );
+        }
+
+        const roll = yield* Effect.sync(() =>
+          randomInt(totalLootDrawTickets(built.entrants)),
+        );
+
+        const winner = pickLootDrawEntrant(built.entrants, roll);
+
+        return yield* persistence.createDraw({
+          discordId: options.discordId,
+          guildId: options.guild.id,
+          lootId: options.lootId,
+          itemHid: options.body.itemHid,
+          entrants: built.entrants,
+          roll,
+          winnerIndex: built.entrants.indexOf(winner),
+        });
+      }),
+
+    voidDraw: (options) =>
+      Effect.gen(function* () {
+        const loot = yield* visibleLoot(
+          options.guild,
+          options.accessPolicy,
+          options.roles,
+          options.lootId,
+        );
+
+        if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
+
+        return yield* persistence.voidDraw({
+          discordId: options.discordId,
+          guildId: options.guild.id,
+          lootId: options.lootId,
+          drawId: options.drawId,
+          reason: options.body.reason,
+        });
       }),
 
     setLike: (options) =>

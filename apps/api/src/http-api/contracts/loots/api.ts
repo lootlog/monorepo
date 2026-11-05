@@ -27,6 +27,11 @@ import {
   LootShareResponse,
   LootSharePath,
   UpdateLootShareRequest,
+  CreateLootDrawRequest,
+  LootDrawPath,
+  LootDrawResponse,
+  LootDrawsResponse,
+  VoidLootDrawRequest,
 } from "#src/contracts/loots/schemas";
 
 export class LootsGroup extends HttpApiGroup.make("loots").add(
@@ -175,6 +180,68 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     .annotate(OpenApi.Identifier, "LootsController_createComment")
     .annotate(OpenApi.Summary, "Create loot comment")
     .annotate(OpenApi.Description, "Add a comment to a loot"),
+  HttpApiEndpoint.get(
+    "LootsControllerGetDraws",
+    "/guilds/:guildId/loots/:lootId/draws",
+    {
+      params: LootPath,
+      success: LootDrawsResponse,
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "LootsController_getDraws")
+    .annotate(OpenApi.Summary, "Get loot draws")
+    .annotate(
+      OpenApi.Description,
+      "List the draws run for a loot's items, newest first, voided ones included",
+    ),
+  HttpApiEndpoint.post(
+    "LootsControllerCreateDraw",
+    "/guilds/:guildId/loots/:lootId/draws",
+    {
+      params: LootPath,
+      payload: CreateLootDrawRequest,
+      success: LootDrawResponse.pipe(HttpApiSchema.status(201)),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "LootsController_createDraw")
+    .annotate(OpenApi.Summary, "Draw a loot item")
+    .annotate(
+      OpenApi.Description,
+      "Draw an item among the player who caught it and eligible players outside the party; the server picks the winner. 409 while the item has a standing draw",
+    ),
+  HttpApiEndpoint.post(
+    "LootsControllerVoidDraw",
+    "/guilds/:guildId/loots/:lootId/draws/:drawId/void",
+    {
+      params: LootDrawPath,
+      payload: VoidLootDrawRequest,
+      success: LootDrawResponse,
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+      ],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "LootsController_voidDraw")
+    .annotate(OpenApi.Summary, "Void a loot draw")
+    .annotate(
+      OpenApi.Description,
+      "Void a draw with a reason so the item can be drawn again; the voided draw stays in the history",
+    ),
   HttpApiEndpoint.put(
     "LootsControllerLikeLoot",
     "/guilds/:guildId/loots/:lootId/likes",
