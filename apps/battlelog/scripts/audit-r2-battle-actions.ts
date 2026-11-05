@@ -3,7 +3,8 @@ import {
   ListObjectsV2Command,
   S3Client,
 } from "@aws-sdk/client-s3";
-import { BattleProcessor, type ParsedMove } from "@lootlog/battle-processor";
+import type { ParsedMove } from "@lootlog/battle-processor/battle-log";
+import { BattleProcessor } from "@lootlog/battle-processor/battle-processor";
 import { Config, Effect, Option, Redacted, Schema } from "effect";
 import { Client } from "pg";
 import { gunzipSync } from "node:zlib";

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { findFinishingBlows } from "@lootlog/battle-processor";
+import { findFinishingBlows } from "@lootlog/battle-processor/finishing-blows";
 import { and, count, eq } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { BattleReadBudget } from "#src/database/battle-read-budget";
