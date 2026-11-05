@@ -15,6 +15,8 @@ export const MapPlayersSnapshot = Schema.Array(
     name: NonEmptyString,
     prof: Schema.NullOr(ProfessionSchema),
     icon: Schema.NullOr(Schema.String),
+    // Add-ons before loot draws send no level; a draw needs one to enter.
+    lvl: Schema.optionalKey(Schema.NullOr(PositiveSafeInteger)),
   }),
 ).check(Schema.isMinLength(1));
 

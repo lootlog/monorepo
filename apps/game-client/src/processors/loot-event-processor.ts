@@ -1,8 +1,8 @@
-import { getNpcType, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
+import { MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { resolveLootAcceptance } from "@lootlog/domain/loot-acceptance";
+import { capturesMapPlayers } from "@lootlog/domain/loot-draw";
 import { getFreshCharacterCatchingGuildIds } from "@/hooks/api/use-lootlog-characters-config";
-import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import {
   CreateLootDtoSource,
   type CreateLootDtoMapPlayersSnapshotItem,
@@ -211,7 +211,11 @@ export class LootEventProcessor {
       npcs,
       loots,
       players: party,
-      ...this.captureMapPlayers(npcs, loots, game),
+      ...this.captureMapPlayers(
+        LOOT_SOURCE_BY_EVENT_SOURCE[loot.source],
+        loots,
+        game,
+      ),
       accountId: hero.accountId,
       characterId: hero.characterId,
     };
@@ -285,23 +289,19 @@ export class LootEventProcessor {
   }
 
   private captureMapPlayers(
-    npcs: Npc[],
+    source: string,
     loots: ReturnType<typeof getLoot>,
     game: RuntimeGameSnapshot,
   ) {
     if (
-      !loots.some(
-        (item) => getItemStat(item.stat ?? "", "rarity") === "legendary",
-      )
+      !capturesMapPlayers({
+        source,
+        rarities: loots.map((item) =>
+          getItemStat(item.stat ?? "", "rarity")?.toUpperCase(),
+        ),
+      })
     )
       return {};
-
-    const primary = npcs.reduce<Npc | undefined>(
-      (current, npc) => (!current || npc.wt > current.wt ? npc : current),
-      undefined,
-    );
-
-    if (!primary || getNpcType(NpcType, primary) !== NpcType.ELITE2) return {};
 
     const others = useOthersStore.getState();
     const currentGame = useGameStore.getState();
@@ -338,6 +338,7 @@ export class LootEventProcessor {
         name: character.name,
         prof: getProfByShortname(character.profession) ?? null,
         icon: character.icon || null,
+        lvl: character.level > 0 ? character.level : null,
       });
     }
 

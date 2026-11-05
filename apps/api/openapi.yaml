@@ -5787,6 +5787,275 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateCommentDto"
         required: true
+  /guilds/{guildId}/loots/{lootId}/draws:
+    get:
+      tags:
+        - loots
+      operationId: LootsController_getDraws
+      parameters:
+        - name: lootId
+          in: path
+          schema:
+            type: number
+          required: true
+        - name: guildId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LootDrawResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: List the draws run for a loot's items, newest first, voided ones included
+      summary: Get loot draws
+    post:
+      tags:
+        - loots
+      operationId: LootsController_createDraw
+      parameters:
+        - name: lootId
+          in: path
+          schema:
+            type: number
+          required: true
+        - name: guildId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "201":
+          description: LootDrawResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LootDrawResponseDto"
+        "400":
+          description: HttpErrorResponse | RequestValidationError
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Draw an item among the player who caught it and eligible players outside the party; the server picks the winner. 409 while the item has a standing draw
+      summary: Draw a loot item
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLootDrawDto"
+        required: true
+  /guilds/{guildId}/loots/{lootId}/draws/{drawId}/void:
+    post:
+      tags:
+        - loots
+      operationId: LootsController_voidDraw
+      parameters:
+        - name: lootId
+          in: path
+          schema:
+            type: number
+          required: true
+        - name: guildId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: drawId
+          in: path
+          schema:
+            type: number
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: LootDrawResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LootDrawResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Void a draw with a reason so the item can be drawn again; the voided draw stays in the history
+      summary: Void a loot draw
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoidLootDrawDto"
+        required: true
   /guilds/{guildId}/loots/{lootId}/likes:
     put:
       tags:
@@ -29818,6 +30087,181 @@ components:
       required:
         - likes
       additionalProperties: false
+    LootDrawResponseDto:
+      type: object
+      properties:
+        id:
+          type: number
+        lootId:
+          type: number
+        itemHid:
+          type: string
+        entrants:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                minLength: 1
+              accountId:
+                nullable: true
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              characterId:
+                nullable: true
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              prof:
+                nullable: true
+                type: string
+                enum:
+                  - WARRIOR
+                  - PALADIN
+                  - HUNTER
+                  - MAGE
+                  - BLADE_DANCER
+                  - TRACKER
+              lvl:
+                nullable: true
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              icon:
+                nullable: true
+                type: string
+              source:
+                type: string
+                enum:
+                  - WINNER
+                  - MAP
+                  - MANUAL
+              tickets:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+            required:
+              - name
+              - accountId
+              - characterId
+              - prof
+              - lvl
+              - icon
+              - source
+              - tickets
+            additionalProperties: false
+        roll:
+          type: number
+        winnerIndex:
+          type: number
+        createdBy:
+          $ref: "#/components/schemas/MemberSummary"
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        voided:
+          nullable: true
+          type: object
+          properties:
+            at:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            by:
+              $ref: "#/components/schemas/MemberSummary"
+            reason:
+              type: string
+          required:
+            - at
+            - by
+            - reason
+          additionalProperties: false
+      required:
+        - id
+        - lootId
+        - itemHid
+        - entrants
+        - roll
+        - winnerIndex
+        - createdBy
+        - createdAt
+        - voided
+      additionalProperties: false
+    VoidLootDrawDto:
+      type: object
+      properties:
+        reason:
+          type: string
+      required:
+        - reason
+      additionalProperties: false
+    CreateLootDrawDto:
+      type: object
+      properties:
+        itemHid:
+          type: string
+          minLength: 1
+        outsiders:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootDrawOutsiderDto"
+          minItems: 1
+          maxItems: 100
+      required:
+        - itemHid
+        - outsiders
+      additionalProperties: false
+    LootDrawOutsiderDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        accountId:
+          nullable: true
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        characterId:
+          nullable: true
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        prof:
+          nullable: true
+          type: string
+          enum:
+            - WARRIOR
+            - PALADIN
+            - HUNTER
+            - MAGE
+            - BLADE_DANCER
+            - TRACKER
+        lvl:
+          nullable: true
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        icon:
+          nullable: true
+          type: string
+        source:
+          type: string
+          enum:
+            - MAP
+            - MANUAL
+      required:
+        - name
+        - accountId
+        - characterId
+        - prof
+        - lvl
+        - icon
+        - source
+      additionalProperties: false
     LootCommentResponseDto:
       type: object
       properties:
@@ -29960,6 +30404,11 @@ components:
               icon:
                 nullable: true
                 type: string
+              lvl:
+                nullable: true
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
             required:
               - accountId
               - characterId
@@ -30274,6 +30723,11 @@ components:
               icon:
                 nullable: true
                 type: string
+              lvl:
+                nullable: true
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
             required:
               - accountId
               - characterId
@@ -30972,6 +31426,11 @@ components:
               icon:
                 nullable: true
                 type: string
+              lvl:
+                nullable: true
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
             required:
               - accountId
               - characterId
