@@ -47,9 +47,11 @@ export const makeBattleDeletion = (
 
         const ids = pending.map((item) => item.battleId);
 
-        for (const userId of new Set(pending.map((item) => item.userId))) {
-          yield* analytics.invalidateAnalyticsCache(userId);
-        }
+        yield* Effect.forEach(
+          new Set(pending.map((item) => item.userId)),
+          (userId) => analytics.invalidateAnalyticsCache(userId),
+          { concurrency: 8, discard: true },
+        );
 
         const deleted = yield* Effect.result(
           Effect.tryPromise(() => objects.deleteBattlesData(ids)),

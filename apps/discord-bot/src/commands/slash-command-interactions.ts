@@ -116,16 +116,23 @@ const handleCommand = (
   Effect.gen(function* () {
     const isPublic = interaction.options.getBoolean(VISIBILITY_OPTION) === true;
 
-    yield* Effect.tryPromise(() =>
-      interaction.deferReply(isPublic ? {} : { flags: MessageFlags.Ephemeral }),
-    );
-
-    const reply = yield* answerCommand(
-      interaction.commandName,
-      commandInvocation(
-        interaction,
-        (name) => interaction.options.getUser(name)?.id ?? null,
-      ),
+    // The answer needs only the invocation; only editReply waits for the defer.
+    const [, reply] = yield* Effect.all(
+      [
+        Effect.tryPromise(() =>
+          interaction.deferReply(
+            isPublic ? {} : { flags: MessageFlags.Ephemeral },
+          ),
+        ),
+        answerCommand(
+          interaction.commandName,
+          commandInvocation(
+            interaction,
+            (name) => interaction.options.getUser(name)?.id ?? null,
+          ),
+        ),
+      ],
+      { concurrency: "unbounded" },
     );
 
     yield* Effect.tryPromise(() =>

@@ -190,21 +190,26 @@ export class PresenceStore {
         true,
       );
 
-      for (const organizationId of selectedOrganizationIds) {
-        yield* this.publishCoverageChange(
-          socket.data.discordId,
-          organizationId,
-          previousPresence?.organizationIds.includes(organizationId)
-            ? previousPresence
-            : undefined,
-          presence,
-        );
-      }
-
-      yield* this.offline.cancel(presence);
-      yield* (
-        this.onlineHistory?.observe(socket.data, presence.lastSeen) ??
-          Effect.void
+      yield* Effect.all(
+        [
+          Effect.forEach(
+            selectedOrganizationIds,
+            (organizationId) =>
+              this.publishCoverageChange(
+                socket.data.discordId,
+                organizationId,
+                previousPresence?.organizationIds.includes(organizationId)
+                  ? previousPresence
+                  : undefined,
+                presence,
+              ),
+            { concurrency: "unbounded", discard: true },
+          ),
+          this.offline.cancel(presence),
+          this.onlineHistory?.observe(socket.data, presence.lastSeen) ??
+            Effect.void,
+        ],
+        { concurrency: "unbounded", discard: true },
       );
 
       return presence;
@@ -231,15 +236,17 @@ export class PresenceStore {
       const presence = { ...socket.data.presence, lastSeen: this.now() };
       this.hub.setPresence(socket, presence);
 
-      yield* this.refresh(
-        presence.organizationIds,
-        presence,
-        socket.data.discordId,
-      );
-
-      yield* (
-        this.onlineHistory?.observe(socket.data, presence.lastSeen) ??
-          Effect.void
+      yield* Effect.all(
+        [
+          this.refresh(
+            presence.organizationIds,
+            presence,
+            socket.data.discordId,
+          ),
+          this.onlineHistory?.observe(socket.data, presence.lastSeen) ??
+            Effect.void,
+        ],
+        { concurrency: "unbounded", discard: true },
       );
 
       return presence.lastSeen;
@@ -269,15 +276,23 @@ export class PresenceStore {
       yield* this.offline.schedule(presence);
 
       // Coverage is derived; a failed event must not keep the session online.
-      if ("location" in presence && presence.location?.map && this.coverage)
-        for (const organizationId of presence.organizationIds)
-          yield* this.coverage.publish({
-            guildId: organizationId,
-            mapName: presence.location.map,
-            discordId: session.discordId,
-            hasPlayer: false,
-            isAfk: presence.isAfk,
-          });
+      if ("location" in presence && presence.location?.map && this.coverage) {
+        const { coverage } = this;
+        const mapName = presence.location.map;
+
+        yield* Effect.forEach(
+          presence.organizationIds,
+          (organizationId) =>
+            coverage.publish({
+              guildId: organizationId,
+              mapName,
+              discordId: session.discordId,
+              hasPlayer: false,
+              isAfk: presence.isAfk,
+            }),
+          { concurrency: "unbounded", discard: true },
+        );
+      }
     });
   }
 

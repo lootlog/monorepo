@@ -138,18 +138,24 @@ export const makeAccessibleGuilds = (
 
     if (guilds.length === 0) return [];
 
-    const members = yield* database
-      .select()
-      .from(memberTable)
-      .where(
-        and(
-          eq(memberTable.userId, identity.discordId),
-          inArray(
-            memberTable.guildId,
-            guilds.map(({ id }) => id),
+    const [members, preferredIds] = yield* Effect.all(
+      [
+        database
+          .select()
+          .from(memberTable)
+          .where(
+            and(
+              eq(memberTable.userId, identity.discordId),
+              inArray(
+                memberTable.guildId,
+                guilds.map(({ id }) => id),
+              ),
+            ),
           ),
-        ),
-      );
+        readGuildOrderPreference(database, identity.userId),
+      ],
+      { concurrency: "unbounded" },
+    );
 
     const membersWithRoles = yield* hydrateMemberRoles(database, members);
 
@@ -201,11 +207,6 @@ export const makeAccessibleGuilds = (
         .filter((guild) => memberByGuild.get(guild.id)?.globalUserId)
         .map(({ id }) => id),
       "guild-access-background",
-    );
-
-    const preferredIds = yield* readGuildOrderPreference(
-      database,
-      identity.userId,
     );
 
     const result = sortGuildsByPreference(summaries, preferredIds);
