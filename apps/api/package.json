@@ -14,7 +14,7 @@
     }
   },
   "exports": {
-    "./database/schema": "./src/database/drizzle/schema.ts",
+    "./database/*.schema": "./src/database/drizzle/*.schema.ts",
     "./timers/timer-key": "./src/timers/timer-key.ts"
   },
   "scripts": {

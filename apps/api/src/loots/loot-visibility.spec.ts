@@ -4,8 +4,8 @@ import {
   lootTable,
   lootNpcTable,
   npcSnapshotTable,
-  type roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
+import type { roleTable } from "#src/database/drizzle/organization.schema";
 import {
   buildLootNpcVisibilityCondition,
   toLootVisibilityRoles,

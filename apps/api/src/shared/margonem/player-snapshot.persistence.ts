@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { and, asc, eq, isNull, or } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
-import { playerSnapshotTable } from "#src/database/drizzle/schema";
+import { playerSnapshotTable } from "#src/database/drizzle/loot.schema";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 
 type PlayerSnapshot = typeof playerSnapshotTable.$inferSelect;

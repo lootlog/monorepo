@@ -6,7 +6,10 @@ import {
   createGuildFixture,
   createMemberFixture,
 } from "../../../../test/organization-fixtures.js";
-import { guildTable, memberTable } from "#src/database/drizzle/schema";
+import {
+  guildTable,
+  memberTable,
+} from "#src/database/drizzle/organization.schema";
 import { ErrorKey } from "#src/members/error-key";
 import { makeMemberDelivery } from "#src/members/member-delivery.operations";
 import { makeMemberStore } from "#src/members/member.store";

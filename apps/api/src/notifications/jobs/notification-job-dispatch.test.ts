@@ -17,14 +17,18 @@ import {
   memberTable,
   memberToRoleTable,
   roleTable,
+} from "#src/database/drizzle/organization.schema";
+import {
   lootTable,
   lootNpcTable,
   npcSnapshotTable,
   organizationLootRecordTable,
+} from "#src/database/drizzle/loot.schema";
+import {
   notificationJobTable,
   notificationRuleTable,
   notificationTargetTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job-store";
 import { canDispatchLootNotification } from "#src/notifications/notification-loot-source-visibility";
 import {

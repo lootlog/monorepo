@@ -11,7 +11,7 @@ import {
   type guildTable,
   memberTable,
   type roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import { UserOrganizationPermissionsResponse } from "#src/contracts/guilds/schemas";
 import { apiKeyCacheSuffix } from "#src/runtime/auth/organization-scope";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";

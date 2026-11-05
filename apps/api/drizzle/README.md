@@ -1,6 +1,7 @@
 # API database migration evidence
 
-The API schema is maintained in `src/database/drizzle/schema.ts`. New databases
+The API schema is maintained in the per-domain
+`src/database/drizzle/*.schema.ts` modules. New databases
 use `migrations/20260901121000_legacy_prisma_baseline/migration.sql` followed by
 subsequent Drizzle migrations. Preserve deployed migration names and SQL hashes.
 The baseline includes database constraints originally introduced by handwritten

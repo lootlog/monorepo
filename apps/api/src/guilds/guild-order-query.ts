@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { userSettingsTable } from "#src/database/drizzle/schema";
+import { userSettingsTable } from "#src/database/drizzle/user.schema";
 
 export const readGuildOrderPreference = (
   database: ApiDatabaseValue,

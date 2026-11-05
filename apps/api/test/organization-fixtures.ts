@@ -1,7 +1,7 @@
 import type {
   guildTable,
   memberTable,
-} from "../src/database/drizzle/schema.js";
+} from "../src/database/drizzle/organization.schema.js";
 
 type Guild = typeof guildTable.$inferSelect;
 

@@ -11,8 +11,8 @@ import {
   memberTable,
   memberToRoleTable,
   roleTable,
-  userCharactersLootlogSettingsTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   UserLootlogConfigData,

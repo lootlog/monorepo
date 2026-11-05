@@ -14,12 +14,14 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
   memberTable,
+} from "#src/database/drizzle/organization.schema";
+import {
   notificationJobTable,
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
-  reservationTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
+import { reservationTable } from "#src/database/drizzle/reservation.schema";
 import { NotificationJobKind } from "#src/notifications/notification-enums";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/content/discord-timestamp";
 import {

@@ -7,7 +7,10 @@ import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import type { RESTAPIPartialCurrentUserGuild } from "discord-api-types/v10";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { guildTable, memberTable } from "#src/database/drizzle/schema";
+import {
+  guildTable,
+  memberTable,
+} from "#src/database/drizzle/organization.schema";
 import { getMemberCacheSoftTtl } from "#src/members/member-cache";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
 import {

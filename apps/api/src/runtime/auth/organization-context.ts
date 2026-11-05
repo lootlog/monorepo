@@ -13,7 +13,7 @@ import {
   guildTable,
   memberTable,
   roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import {
   readCachedGuild,

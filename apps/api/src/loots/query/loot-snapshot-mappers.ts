@@ -6,7 +6,7 @@ import type {
   itemSnapshotTable,
   playerSnapshotTable,
   npcSnapshotTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 
 type LootItemWithSnapshot = {
   hid: string;

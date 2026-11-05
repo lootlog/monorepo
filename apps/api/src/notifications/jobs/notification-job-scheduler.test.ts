@@ -8,7 +8,7 @@ import {
   notificationJobTable,
   notificationRuleTable,
   notificationTargetTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 import { scheduleNotificationOccurrence } from "./notification-scheduled-occurrence.js";
 import { describe, expect, it } from "bun:test";
 import {

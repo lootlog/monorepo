@@ -1,7 +1,7 @@
 import { and, asc, eq, gte, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
-import { notificationJobTable } from "#src/database/drizzle/schema";
+import { notificationJobTable } from "#src/database/drizzle/notification.schema";
 import { NotificationJobKind } from "@lootlog/schema/notifications";
 
 export const NOTIFICATION_TEST_WINDOW_MS = 15 * 60_000;

@@ -12,7 +12,7 @@ import {
   memberTable,
   roleTable,
   memberToRoleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import {
   PARTY_OBSERVATION_HEARTBEAT_MS,
   type PartyGatheringUpdateEnvelope,

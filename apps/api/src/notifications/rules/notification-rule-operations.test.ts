@@ -9,13 +9,13 @@ import {
   createNotificationTargetFixture,
 } from "../../../test/notification-fixtures.js";
 import { UpdateNotificationRuleRequest } from "#src/contracts/notifications/schemas";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import {
-  guildTable,
   notificationJobTable,
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 import { makeNotificationUserTargets } from "../targets/notification-user-targets.js";
 import { makeNotificationRuleOperations } from "./notification-rule-operations.js";
 

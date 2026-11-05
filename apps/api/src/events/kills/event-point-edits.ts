@@ -16,7 +16,7 @@ import {
   eventPointsEditHistoryTable,
   eventRankingTable,
   eventTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { RedisService } from "#src/redis/redis.service";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";

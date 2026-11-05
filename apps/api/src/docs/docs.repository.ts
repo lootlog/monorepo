@@ -20,8 +20,8 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildDocumentHistoryTable,
   guildDocumentTable,
-  guildTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/guild-document.schema";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import { findMemberNames } from "#src/members/member-names";
 import type { GuildDocumentContent } from "./guild-document-content.schema.js";
 

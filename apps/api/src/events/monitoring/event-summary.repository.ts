@@ -18,8 +18,8 @@ import {
   eventMapTable,
   eventPresenceLogTable,
   eventRespawnWindowSummaryTable,
-  memberTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
+import { memberTable } from "#src/database/drizzle/organization.schema";
 
 const overlapsWindow = (
   startedAt: SQLWrapper,

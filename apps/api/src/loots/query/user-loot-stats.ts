@@ -6,10 +6,12 @@ import { and, desc, eq, gte, inArray, or, sql } from "drizzle-orm";
 import {
   lootPlayerTable,
   playerSnapshotTable,
+} from "#src/database/drizzle/loot.schema";
+import {
   userCharacterKillBucketTable,
-  userCharactersLootlogSettingsTable,
   userKillBucketTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/kill-statistics.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import type {
   UserLootStatsQuery,
   UserLootStatsResponse,

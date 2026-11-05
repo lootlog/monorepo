@@ -7,7 +7,7 @@ import type { Queue } from "bullmq";
 import type {
   eventHeroNpcTable,
   eventTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
 import { randomUUID } from "node:crypto";
 import { RedisService } from "#src/redis/redis.service";
 import type { EventEmitter } from "#src/events/event-emitter";

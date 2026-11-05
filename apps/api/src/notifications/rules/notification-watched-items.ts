@@ -9,13 +9,13 @@ import { and, count, desc, eq, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { pickGuildByIdOrVanityUrl } from "#src/guilds/active-guild-lookup";
+import { itemSnapshotTable } from "#src/database/drizzle/loot.schema";
 import {
-  itemSnapshotTable,
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
   watchedItemTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 import {
   InvalidRequestError,
   ResourceConflictError,

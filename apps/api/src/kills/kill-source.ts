@@ -8,7 +8,7 @@ import {
   memberKillTotalTable,
   userKillBucketTable,
   userKillTotalTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/kill-statistics.schema";
 
 const query = new QueryBuilder();
 

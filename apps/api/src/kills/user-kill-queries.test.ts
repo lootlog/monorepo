@@ -13,7 +13,7 @@ import type { CreateKillRequest } from "#src/contracts/kills/schemas";
 import {
   userKillBucketTable,
   userKillTotalTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/kill-statistics.schema";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 
 describe("user kill queries Effect module", () => {

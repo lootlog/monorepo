@@ -31,11 +31,11 @@ import {
   lootPlayerTable,
   lootSubmissionTable,
   lootTable,
-  memberTable,
   npcSnapshotTable,
   organizationLootRecordTable,
   playerSnapshotTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
+import { memberTable } from "#src/database/drizzle/organization.schema";
 import {
   buildLootQueryConditions,
   LOOT_SEARCH_SNAPSHOT_LIMIT,

@@ -9,8 +9,8 @@ import {
 import {
   guildTable,
   memberTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 import { RedisService } from "#src/redis/redis.service";
 import { RedlockService } from "#src/redis/redlock";
 import { applicationLogger } from "#src/shared/application-logger";

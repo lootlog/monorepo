@@ -37,19 +37,23 @@ import {
 } from "../src/database/drizzle/database.js";
 import {
   guildTable,
+  memberTable,
+  memberToRoleTable,
+  roleTable,
+} from "../src/database/drizzle/organization.schema.js";
+import {
   eventTable,
   eventHeroNpcTable,
   eventHeroKillTable,
   eventKillPointTable,
-  itemSnapshotTable,
+} from "../src/database/drizzle/event.schema.js";
+import { itemSnapshotTable } from "../src/database/drizzle/loot.schema.js";
+import {
   notificationTargetTable,
   watchedItemTable,
-  memberTable,
-  memberToRoleTable,
-  roleTable,
-  timerTable,
-  userSettingDocumentTable,
-} from "../src/database/drizzle/schema.js";
+} from "../src/database/drizzle/notification.schema.js";
+import { timerTable } from "../src/database/drizzle/timer.schema.js";
+import { userSettingDocumentTable } from "../src/database/drizzle/user.schema.js";
 
 const caller = {
   userId: "user-1",

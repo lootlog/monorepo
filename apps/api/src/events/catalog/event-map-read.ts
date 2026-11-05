@@ -9,8 +9,8 @@ import {
   eventMapLocationTable,
   eventMapTable,
   eventMapToMemberTable,
-  memberTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
+import { memberTable } from "#src/database/drizzle/organization.schema";
 
 type EventMapRow = typeof eventMapTable.$inferSelect;
 

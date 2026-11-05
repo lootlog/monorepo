@@ -4,7 +4,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { notificationJobTable } from "#src/database/drizzle/schema";
+import { notificationJobTable } from "#src/database/drizzle/notification.schema";
 import {
   InvalidRequestError,
   ResourceNotFoundError,

@@ -12,7 +12,7 @@ import {
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { mapTemplateTable } from "#src/database/drizzle/schema";
+import { mapTemplateTable } from "#src/database/drizzle/map-template.schema";
 import {
   MapTemplateResponseSchema,
   type MapTemplateResponse,

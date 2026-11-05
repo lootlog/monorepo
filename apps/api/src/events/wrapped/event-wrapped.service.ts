@@ -5,7 +5,10 @@ import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { Logger } from "#src/shared/application-logger";
 import type { Permission } from "@lootlog/schema/permissions";
 import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
-import type { guildTable, roleTable } from "#src/database/drizzle/schema";
+import type {
+  guildTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
 import type { LootNpcNameSummary } from "#src/loots/query/loot-query.operations";
 import type { LootsOperations } from "#src/loots/loots.operations";
 import { Clock, Effect } from "effect";

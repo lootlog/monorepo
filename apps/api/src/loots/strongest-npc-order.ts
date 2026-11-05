@@ -1,6 +1,6 @@
 import { asc, sql, type SQL } from "drizzle-orm";
 import { NPC_TYPES_STRONGEST_FIRST } from "@lootlog/domain/npc-type";
-import { npcSnapshotTable as npc } from "#src/database/drizzle/schema";
+import { npcSnapshotTable as npc } from "#src/database/drizzle/loot.schema";
 
 // The order is a constant of the code, never input, so it is inlined as
 // literals and the planner sees one fixed expression in every query.

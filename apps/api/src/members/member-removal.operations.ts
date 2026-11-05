@@ -2,7 +2,10 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, inArray, isNotNull, notInArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { memberTable, memberToRoleTable } from "#src/database/drizzle/schema";
+import {
+  memberTable,
+  memberToRoleTable,
+} from "#src/database/drizzle/organization.schema";
 import type { MemberDelivery } from "./member-delivery.operations.js";
 import { queueMemberDeliveries } from "./member.store.js";
 import type { DeactivateMembersMissingFromDiscordGuildsOptions } from "./member.types.js";

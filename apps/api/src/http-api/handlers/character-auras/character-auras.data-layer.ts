@@ -2,7 +2,7 @@ import { asc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Layer, Schema } from "effect";
 import { CharacterAuraIdSchema } from "@lootlog/schema/character-aura";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { userCharacterAuraTable } from "#src/database/drizzle/schema";
+import { userCharacterAuraTable } from "#src/database/drizzle/user.schema";
 import { currentMargonemAccountPlayers } from "#src/margonem-accounts/margonem-accounts";
 import {
   CharacterAuraAccessDenied,

@@ -11,8 +11,8 @@ import {
   eventHeroNpcTable,
   eventMapTable,
   eventTable,
-  type roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
+import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
 

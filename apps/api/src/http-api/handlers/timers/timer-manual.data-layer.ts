@@ -3,7 +3,7 @@ import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 import { findActiveGuildMember } from "#src/members/member-access-query";
 import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { timerTable } from "#src/database/drizzle/schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { respawnFromSpawnWindow } from "@lootlog/domain/timers";

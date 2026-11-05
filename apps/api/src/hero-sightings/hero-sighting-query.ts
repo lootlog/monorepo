@@ -5,9 +5,9 @@ import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   heroSightingClaimTable,
   heroSightingTable,
-  memberTable,
-  playerSnapshotTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/hero-sighting.schema";
+import { memberTable } from "#src/database/drizzle/organization.schema";
+import { playerSnapshotTable } from "#src/database/drizzle/loot.schema";
 import { getDiscordAvatarUrl } from "#src/reservations/reservation-presentation";
 import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
 

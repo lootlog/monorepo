@@ -24,7 +24,7 @@ import {
   memberTable,
   memberToRoleTable,
   roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 
 /**
  * A Member grants role access only while it is active and linked to a User.

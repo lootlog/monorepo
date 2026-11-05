@@ -7,9 +7,9 @@ import {
   lootDrawTable,
   lootLikeTable,
   type LootDrawEntrantRecord,
-  memberTable,
   organizationLootRecordTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
+import { memberTable } from "#src/database/drizzle/organization.schema";
 import {
   PermissionDeniedError,
   ResourceConflictError,

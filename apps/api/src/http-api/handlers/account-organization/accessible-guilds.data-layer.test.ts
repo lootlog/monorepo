@@ -12,7 +12,7 @@ import {
   memberTable,
   memberToRoleTable,
   roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import {
   type GuildSummary,
   makeAccessibleGuilds,

@@ -8,16 +8,20 @@ import {
   eventMapAssignmentHistoryTable,
   eventMapTable,
   eventTable,
+} from "#src/database/drizzle/event.schema";
+import {
   guildTable,
+  memberTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
+import {
   itemSnapshotTable,
   lootItemTable,
   lootNpcTable,
   lootTable,
-  memberTable,
   npcSnapshotTable,
   organizationLootRecordTable,
-  roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 import { makeEventWrappedStore } from "#src/events/wrapped/event-wrapped.repository";
 import { makeEventWrapped } from "#src/events/wrapped/event-wrapped.service";
 import { makeLootPersistence } from "#src/loots/loot-persistence";

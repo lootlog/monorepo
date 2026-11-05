@@ -12,12 +12,12 @@ import type {
   GlobalChatMuteResponse,
 } from "#src/contracts/global-chat/schemas";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import { globalChatMuteTable } from "#src/database/drizzle/global-chat.schema";
 import {
-  globalChatMuteTable,
   guildTable,
   memberTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import {
   GlobalChatAccessDenied,

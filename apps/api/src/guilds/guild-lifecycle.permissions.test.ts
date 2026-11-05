@@ -11,7 +11,7 @@ import {
   memberTable,
   memberToRoleTable,
   roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { makeMemberDelivery } from "#src/members/member-delivery.operations";
 import { makeMemberStore } from "#src/members/member.store";

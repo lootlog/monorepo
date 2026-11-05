@@ -2,7 +2,7 @@ import {
   lootNpcTable,
   lootTable,
   npcSnapshotTable,
-} from "@lootlog/api/database/schema";
+} from "@lootlog/api/database/loot.schema";
 import { asc, eq, sql } from "drizzle-orm";
 import { Schema } from "effect";
 import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";

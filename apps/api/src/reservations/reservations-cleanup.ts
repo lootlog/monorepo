@@ -1,7 +1,7 @@
 import { Clock, Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { lt } from "drizzle-orm";
-import { reservationTable } from "#src/database/drizzle/schema";
+import { reservationTable } from "#src/database/drizzle/reservation.schema";
 
 export const makeReservationsCleanup = (
   database: ApiDatabaseValue,

@@ -9,7 +9,7 @@ import { ChatGroup } from "../../contracts/chat/api.js";
 import { BearerSecurityMiddleware } from "../../contracts/shared.js";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { Permission } from "@lootlog/schema/permissions";
-import type { roleTable } from "#src/database/drizzle/schema";
+import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import {
   ChatOperationError,
