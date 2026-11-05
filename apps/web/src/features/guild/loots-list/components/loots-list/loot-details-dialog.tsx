@@ -12,13 +12,11 @@ import {
 } from "@lootlog/ui/components/drawer";
 import { Button } from "@lootlog/ui/components/button";
 import { LootNpcs } from "@/features/guild/loots-list/components/loots-list/loot-npcs";
-import { LootComments } from "@/features/guild/loots-list/components/loots-list/loot-comments";
 import { LootLikeButton } from "@/features/guild/loots-list/components/loots-list/loot-like-button";
-import { LootItemIds } from "@/features/guild/loots-list/components/loots-list/loot-item-ids";
-import { LootPlayersSection } from "@/features/guild/loots-list/components/loots-list/loot-players-section";
+import { LootDetailsRoster } from "@/features/guild/loots-list/components/loots-list/loot-details-roster";
+import { LootCommentsPanel } from "@/features/guild/loots-list/components/loots-list/loot-comments-panel";
 import { MetaItem } from "@/components/common/meta-item";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { LootDetailsActions } from "@/features/guild/loots-list/components/loots-list/loot-details-actions";
 import { AlertCircle, Calendar, MapPin, Package, Users, X } from "lucide-react";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
@@ -127,11 +125,20 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
           </div>
         </div>
       </header>
-      <ScrollArea className="min-h-0 flex-1" orientation="vertical">
-        <LootPlayersSection loot={loot} onShowPlayerLoots={onShowPlayerLoots} />
-        <LootItemIds loot={loot} />
-        <LootComments lootId={loot.id} />
-      </ScrollArea>
+      {/* Side by side from lg, so the comments stay in view next to the loot;
+          narrower dialogs read the loot, then the comments, in one scroller. */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:grid lg:grid-cols-2 lg:overflow-hidden">
+        <div className="min-w-0 lg:min-h-0 lg:overflow-y-auto">
+          <LootDetailsRoster
+            loot={loot}
+            onShowPlayerLoots={onShowPlayerLoots}
+          />
+        </div>
+        <LootCommentsPanel
+          lootId={loot.id}
+          className="border-t border-border max-lg:min-h-96 lg:border-t-0 lg:border-l"
+        />
+      </div>
     </>
   );
 };
@@ -261,7 +268,7 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeLootDetails()}>
       <DialogContent
         // A fixed height keeps the dialog still while comments are added.
-        className="flex h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border-border bg-background p-0 sm:max-w-3xl"
+        className="flex h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border-border bg-background p-0 sm:max-w-3xl lg:max-w-6xl"
         aria-describedby={undefined}
         initialFocus={false}
       >

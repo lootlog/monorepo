@@ -2,10 +2,10 @@ import { PlayerTile } from "@/components/tiles/player-tile";
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
-import { getShortnameByProf } from "@lootlog/domain/profession";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import type { LootRosterPlayer } from "./build-loot-roster";
+import { formatRosterPlayerDetail } from "./format-roster-player-detail";
 
 export const LootRosterRow = ({
   player,
@@ -20,14 +20,7 @@ export const LootRosterRow = ({
 }) => {
   const { t } = useTranslation();
 
-  const professionShortname = player.prof
-    ? (getShortnameByProf(player.prof) ?? player.prof.charAt(0).toLowerCase())
-    : undefined;
-
-  const detailParts = [
-    player.lvl !== null ? t("common.levelShort", { level: player.lvl }) : null,
-    professionShortname ? t(`professions.${professionShortname}`) : null,
-  ].filter((part) => part !== null);
+  const detail = formatRosterPlayerDetail(t, player);
 
   return (
     <li
@@ -48,10 +41,8 @@ export const LootRosterRow = ({
         <p className="min-w-0 break-words text-sm font-medium leading-tight">
           {player.name}
         </p>
-        {detailParts.length > 0 && (
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {detailParts.join(" · ")}
-          </p>
+        {detail && (
+          <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p>
         )}
       </div>
       {player.items.length > 0 && (
