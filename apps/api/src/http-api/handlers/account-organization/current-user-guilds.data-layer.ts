@@ -111,18 +111,16 @@ export const makeCurrentUserGuilds = (
       .discordGuilds(identity, { refresh })
       .pipe(
         Effect.map((result) => ({ kind: "discord" as const, ...result })),
-        Effect.catch((error) =>
-          fallbackEligible(error)
-            ? ports.accessibleFallback(identity).pipe(
-                Effect.map((guilds) => ({
-                  kind: "fallback" as const,
-                  guilds: guilds.map((guild) => ({
-                    ...guild,
-                    isAccessDataStale: true,
-                  })),
-                })),
-              )
-            : Effect.fail(error),
+        Effect.catchIf(fallbackEligible, () =>
+          ports.accessibleFallback(identity).pipe(
+            Effect.map((guilds) => ({
+              kind: "fallback" as const,
+              guilds: guilds.map((guild) => ({
+                ...guild,
+                isAccessDataStale: true,
+              })),
+            })),
+          ),
         ),
       );
 

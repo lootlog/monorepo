@@ -276,10 +276,12 @@ export const makeNotificationWatchedItems = (
         ),
       )
       .pipe(
-        Effect.mapError(
-          databaseFailure("notifications.watchedItems.activeTargets"),
-        ),
-        Effect.map((rows) => rows.map(({ id }) => id)),
+        Effect.mapBoth({
+          onFailure: databaseFailure(
+            "notifications.watchedItems.activeTargets",
+          ),
+          onSuccess: (rows) => rows.map(({ id }) => id),
+        }),
       );
 
   const upsert = Effect.fn("notifications.watchedItems.upsert")(function* (

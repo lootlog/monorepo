@@ -130,8 +130,9 @@ describe("loot statistics date parameter compatibility", () => {
             }),
           )
           .pipe(
-            Effect.catch((error) =>
-              error === rollback ? Effect.void : Effect.fail(error),
+            Effect.catchIf(
+              (error) => error === rollback,
+              () => Effect.void,
             ),
           );
       }).pipe(Effect.provide(ApiDatabaseLive), Effect.runPromise);

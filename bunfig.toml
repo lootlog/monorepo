@@ -15,6 +15,16 @@ minimumReleaseAgeExcludes = [
   "@better-auth/mongo-adapter",
   "@better-auth/prisma-adapter",
   "@better-auth/telemetry",
+  # @effect/tsgo 0.67.3 (2026-11-05) for the Effect diagnostics in apps/api;
+  # pinned exactly there. Remove after 2026-11-08.
+  "@effect/tsgo",
+  "@effect/tsgo-darwin-arm64",
+  "@effect/tsgo-darwin-x64",
+  "@effect/tsgo-linux-arm",
+  "@effect/tsgo-linux-arm64",
+  "@effect/tsgo-linux-x64",
+  "@effect/tsgo-win32-arm64",
+  "@effect/tsgo-win32-x64",
 ]
 
 [install.lockfile]

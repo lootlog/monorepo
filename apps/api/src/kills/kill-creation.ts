@@ -442,17 +442,17 @@ export const makeKillCreation = (
           periodStart,
         ),
       ).pipe(
-        Effect.catch((error) =>
-          error.operation === "kills.dedup.user"
-            ? Effect.fail(error)
-            : Effect.sync(() => {
-                logger.error({
-                  message: "Failed to upsert user kill stats",
-                  error,
-                });
+        Effect.catchIf(
+          (error) => error.operation !== "kills.dedup.user",
+          (error) =>
+            Effect.sync(() => {
+              logger.error({
+                message: "Failed to upsert user kill stats",
+                error,
+              });
 
-                return false;
-              }),
+              return false;
+            }),
         ),
       );
 

@@ -135,8 +135,10 @@ export class MapTemplatesData extends Context.Service<
             )
             .returning()
             .pipe(
-              Effect.map((rows) => rows[0] ?? null),
-              Effect.mapError(persistenceError),
+              Effect.mapBoth({
+                onSuccess: (rows) => rows[0] ?? null,
+                onFailure: persistenceError,
+              }),
             ),
         delete: (guildId, templateId) =>
           database
@@ -149,8 +151,10 @@ export class MapTemplatesData extends Context.Service<
             )
             .returning({ id: mapTemplateTable.id })
             .pipe(
-              Effect.map((rows) => rows.length > 0),
-              Effect.mapError(persistenceError),
+              Effect.mapBoth({
+                onSuccess: (rows) => rows.length > 0,
+                onFailure: persistenceError,
+              }),
             ),
       });
     }),

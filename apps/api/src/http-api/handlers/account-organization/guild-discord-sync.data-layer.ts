@@ -1,6 +1,6 @@
 import { notificationChannelMetadata } from "#src/notifications/targets/notification-channel-metadata";
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { Clock, Effect } from "effect";
+import { Clock, Effect, Predicate } from "effect";
 import {
   DiscordGuildSyncStatus,
   type DiscordGuildChannelSnapshot,
@@ -323,9 +323,7 @@ export const makeGuildDiscordSyncData = (
       return yield* synchronize(guildId).pipe(
         Effect.catch((error) =>
           loadState(database, guildId).pipe(
-            Effect.flatMap((latest) =>
-              latest ? Effect.succeed(latest) : Effect.fail(error),
-            ),
+            Effect.filterOrFail(Predicate.isNotNullish, () => error),
           ),
         ),
       );

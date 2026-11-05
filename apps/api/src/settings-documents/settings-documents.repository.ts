@@ -352,8 +352,10 @@ export class SettingsDocumentsRepository extends Context.Service<
             )
             .limit(1)
             .pipe(
-              Effect.map((rows) => rows.length > 0),
-              Effect.mapError(persistenceError),
+              Effect.mapBoth({
+                onSuccess: (rows) => rows.length > 0,
+                onFailure: persistenceError,
+              }),
             ),
         findActiveGuildMemberships: (userId, guildIds) =>
           guildIds.length === 0
@@ -369,10 +371,12 @@ export class SettingsDocumentsRepository extends Context.Service<
                   ),
                 )
                 .pipe(
-                  Effect.map((rows) => [
-                    ...new Set(rows.map((row) => row.guildId)),
-                  ]),
-                  Effect.mapError(persistenceError),
+                  Effect.mapBoth({
+                    onSuccess: (rows) => [
+                      ...new Set(rows.map((row) => row.guildId)),
+                    ],
+                    onFailure: persistenceError,
+                  }),
                 ),
         applyOperations: (userId, operations) =>
           // An empty batch would build a lock predicate matching every
