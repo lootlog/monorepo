@@ -120,9 +120,6 @@ export function distanceField(
   return d;
 }
 
-/** Number of outline bands an aura is built from, inner to outer. */
-export const BAND_COUNT = 4;
-
 /**
  * Which outline band a pixel at distance `d` falls in, or -1: a clean 1 px outline touching
  * the shape only orthogonally, a solid second ring, then a checkerboard and a sparse ordered
