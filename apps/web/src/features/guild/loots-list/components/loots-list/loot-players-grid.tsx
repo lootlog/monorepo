@@ -6,15 +6,22 @@ import { useTranslation } from "react-i18next";
 import type { LootRosterPlayer } from "./build-loot-roster";
 import { formatRosterPlayerDetail } from "./format-roster-player-detail";
 
-/** Party members who received nothing, packed tighter than the recipients. */
-export const LootPlayersWithoutItems = ({
+/**
+ * Players without items under a heading, packed tighter than the recipients:
+ * party members who got nothing, or those on the map outside the party.
+ */
+export const LootPlayersGrid = ({
+  title,
   players,
   watchContext,
   showLootsFor,
+  muted = false,
 }: {
+  title: string;
   players: LootRosterPlayer[];
   watchContext: WatchedItemScope;
   showLootsFor: (playerName: string) => (() => void) | undefined;
+  muted?: boolean;
 }) => {
   const { t } = useTranslation();
 
@@ -28,7 +35,7 @@ export const LootPlayersWithoutItems = ({
           LIST_TILE_INSET_CLASS,
         )}
       >
-        {t("loots.details.playersWithoutItems", { count: players.length })}
+        {title}
       </h3>
       <ul
         className={cn(
@@ -39,7 +46,10 @@ export const LootPlayersWithoutItems = ({
         {players.map((player) => (
           <li
             key={player.key}
-            className="flex min-w-0 items-center gap-2.5 py-1"
+            className={cn(
+              "flex min-w-0 items-center gap-2.5 py-1",
+              muted && "opacity-70",
+            )}
           >
             <PlayerTile
               player={player}

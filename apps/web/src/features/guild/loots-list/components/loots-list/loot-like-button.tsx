@@ -8,6 +8,7 @@ import {
 import { Heart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
+import { Button } from "@lootlog/ui/components/button";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import {
   Tooltip,
@@ -30,7 +31,17 @@ const COUNT_ROLL: Variants = {
 
 type Pop = { key: number; liked: boolean };
 
-export const LootLikeButton = ({ loot }: { loot: Loot }) => {
+/**
+ * `link` sits among the quiet links of a loot card; `button` is the bordered
+ * control of the loot details header.
+ */
+export const LootLikeButton = ({
+  loot,
+  appearance = "link",
+}: {
+  loot: Loot;
+  appearance?: "link" | "button";
+}) => {
   const { t } = useTranslation();
   const { liked, likes, toggle } = useLootLike(loot);
   const reduceMotion = useReducedMotion();
@@ -62,17 +73,32 @@ export const LootLikeButton = ({ loot }: { loot: Loot }) => {
     <Tooltip>
       <TooltipTrigger
         render={
-          <TextLink
-            render={<button type="button" />}
-            aria-pressed={liked}
-            aria-label={t("loots.list.likeLabel", { count })}
-            onClick={onClick}
-            className={cn(
-              "inline-flex h-8 items-center gap-1 tabular-nums hover:text-pink-500",
-              count > 0 && "text-foreground",
-              liked && "text-pink-500",
-            )}
-          />
+          appearance === "button" ? (
+            <Button
+              variant="outline"
+              size="sm"
+              aria-pressed={liked}
+              aria-label={t("loots.list.likeLabel", { count })}
+              onClick={onClick}
+              className={cn(
+                "gap-1.5 tabular-nums hover:border-pink-500/60 hover:text-pink-500",
+                liked &&
+                  "border-pink-500/50 bg-pink-500/10 text-pink-500 hover:bg-pink-500/15",
+              )}
+            />
+          ) : (
+            <TextLink
+              render={<button type="button" />}
+              aria-pressed={liked}
+              aria-label={t("loots.list.likeLabel", { count })}
+              onClick={onClick}
+              className={cn(
+                "inline-flex h-8 items-center gap-1 tabular-nums hover:text-pink-500",
+                count > 0 && "text-foreground",
+                liked && "text-pink-500",
+              )}
+            />
+          )
         }
       >
         <span
