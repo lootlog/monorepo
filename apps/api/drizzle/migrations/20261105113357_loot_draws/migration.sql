@@ -3,6 +3,7 @@ CREATE TABLE "LootDraw" (
 	"organizationLootRecordId" integer NOT NULL,
 	"itemHid" text NOT NULL,
 	"entrants" jsonb NOT NULL,
+	"ticketOrder" jsonb NOT NULL,
 	"roll" integer NOT NULL,
 	"winnerIndex" integer NOT NULL,
 	"createdByMemberId" integer NOT NULL,

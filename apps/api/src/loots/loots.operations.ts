@@ -12,10 +12,6 @@ import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { randomInt } from "node:crypto";
 import {
-  pickLootDrawEntrant,
-  totalLootDrawTickets,
-} from "@lootlog/domain/loot-draw";
-import {
   InvalidRequestError,
   PermissionDeniedError,
   ResourceConflictError,
@@ -413,11 +409,8 @@ export const makeLootsOperations = ({
           );
         }
 
-        const roll = yield* Effect.sync(() =>
-          randomInt(totalLootDrawTickets(built.entrants)),
-        );
-
-        const winner = pickLootDrawEntrant(built.entrants, roll);
+        const { ticketOrder } = options.body;
+        const roll = yield* Effect.sync(() => randomInt(ticketOrder.length));
 
         return yield* persistence.createDraw({
           discordId: options.discordId,
@@ -425,8 +418,9 @@ export const makeLootsOperations = ({
           lootId: options.lootId,
           itemHid: options.body.itemHid,
           entrants: built.entrants,
+          ticketOrder,
           roll,
-          winnerIndex: built.entrants.indexOf(winner),
+          winnerIndex: ticketOrder[roll] ?? 0,
         });
       }),
 

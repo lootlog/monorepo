@@ -39,7 +39,7 @@
     "LOOTLOG_ACCESS": "Podstawowe uprawnienie, które daje dostęp do tego Lootloga",
     "LOOTLOG_LOOTS_READ": "Pozwala przeglądać łupy i komentarze",
     "LOOTLOG_LOOTS_WRITE": "Pozwala zapisywać łupy w Lootlogu",
-    "LOOTLOG_LOOTS_ARCHIVE": "Pozwala ukrywać łupy w tym Lootlogu bez usuwania ich z innych Lootlogów",
+    "LOOTLOG_LOOTS_ARCHIVE": "Pozwala ukrywać łupy w tym Lootlogu bez usuwania ich z innych Lootlogów oraz losować przedmioty wśród graczy spoza grupy",
     "LOOTLOG_LOOTS_TITANS_READ": "Dostęp do łupów z tytanów",
     "LOOTLOG_LOOTS_HEROES_READ": "Dostęp do łupów z herosów, także eventowych",
     "LOOTLOG_TIMERS_READ": "Pozwala na przeglądanie podstawowych timerów",

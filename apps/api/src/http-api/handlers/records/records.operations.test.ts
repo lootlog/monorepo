@@ -366,17 +366,29 @@ describe("Kills and Loots HttpApi handlers", () => {
     const error = await Effect.runPromise(
       createLootDraw("guild-a", 42, {
         itemHid: "hid",
-        outsiders: [
+        entrants: [
+          {
+            name: "Winner",
+            accountId: 1,
+            characterId: 1,
+            prof: "MAGE",
+            lvl: 300,
+            icon: null,
+            source: "WINNER",
+            tickets: 1,
+          },
           {
             name: "Outsider",
-            accountId: 1,
+            accountId: 2,
             characterId: 2,
             prof: "MAGE",
             lvl: 300,
             icon: null,
             source: "MAP",
+            tickets: 1,
           },
         ],
+        ticketOrder: [0, 1],
       }).pipe(
         Effect.flip,
         Effect.provide(

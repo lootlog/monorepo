@@ -1005,7 +1005,9 @@ export const lootDrawTable = pgTable(
     organizationLootRecordId: integer("organizationLootRecordId").notNull(),
     itemHid: text("itemHid").notNull(),
     entrants: jsonb("entrants").$type<LootDrawEntrantRecord[]>().notNull(),
-    // The drawn ticket, counted from 0 across the entrants in order.
+    // The wheel's tickets in order, each an index into `entrants`.
+    ticketOrder: jsonb("ticketOrder").$type<number[]>().notNull(),
+    // The drawn position in `ticketOrder`.
     roll: integer("roll").notNull(),
     winnerIndex: integer("winnerIndex").notNull(),
     createdByMemberId: integer("createdByMemberId").notNull(),

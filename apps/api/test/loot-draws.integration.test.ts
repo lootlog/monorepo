@@ -104,7 +104,8 @@ describe("loot draws against migrated PostgreSQL", () => {
           lootId,
           itemHid: "wand-hid",
           entrants,
-          roll: 2,
+          ticketOrder: [0, 1, 0],
+          roll: 1,
           winnerIndex: 1,
         };
 
@@ -141,14 +142,19 @@ describe("loot draws against migrated PostgreSQL", () => {
           body: { code: ErrorKey.LOOT_DRAW_ALREADY_VOIDED },
         });
 
-        const redrawn = yield* persistence.createDraw({ ...draw, roll: 0 });
+        const redrawn = yield* persistence.createDraw({
+          ...draw,
+          roll: 0,
+          winnerIndex: 0,
+        });
+
         const history = yield* persistence.listDraws(guildId, lootId);
 
         expect(history.map(({ id, voided }) => [id, voided !== null])).toEqual([
           [redrawn.id, false],
           [first.id, true],
         ]);
-        expect(history[1]?.entrants).toEqual(entrants);
+        expect(history[1]).toMatchObject({ entrants, ticketOrder: [0, 1, 0] });
       }),
     );
   });
@@ -165,6 +171,7 @@ describe("loot draws against migrated PostgreSQL", () => {
           lootId,
           itemHid: "wand-hid",
           entrants,
+          ticketOrder: [0, 0, 1],
           roll: 0,
           winnerIndex: 0,
         });

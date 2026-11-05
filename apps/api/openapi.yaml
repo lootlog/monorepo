@@ -30152,6 +30152,10 @@ components:
               - source
               - tickets
             additionalProperties: false
+        ticketOrder:
+          type: array
+          items:
+            type: number
         roll:
           type: number
         winnerIndex:
@@ -30184,6 +30188,7 @@ components:
         - lootId
         - itemHid
         - entrants
+        - ticketOrder
         - roll
         - winnerIndex
         - createdBy
@@ -30204,17 +30209,25 @@ components:
         itemHid:
           type: string
           minLength: 1
-        outsiders:
+        entrants:
           type: array
           items:
-            $ref: "#/components/schemas/LootDrawOutsiderDto"
-          minItems: 1
-          maxItems: 100
+            $ref: "#/components/schemas/LootDrawEntrantDto"
+          minItems: 2
+          maxItems: 101
+        ticketOrder:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 9007199254740991
+          maxItems: 9999
       required:
         - itemHid
-        - outsiders
+        - entrants
+        - ticketOrder
       additionalProperties: false
-    LootDrawOutsiderDto:
+    LootDrawEntrantDto:
       type: object
       properties:
         name:
@@ -30251,8 +30264,13 @@ components:
         source:
           type: string
           enum:
+            - WINNER
             - MAP
             - MANUAL
+        tickets:
+          type: integer
+          minimum: 1
+          maximum: 99
       required:
         - name
         - accountId
@@ -30261,6 +30279,7 @@ components:
         - lvl
         - icon
         - source
+        - tickets
       additionalProperties: false
     LootCommentResponseDto:
       type: object

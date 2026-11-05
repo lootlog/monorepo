@@ -40,18 +40,22 @@ export const capturesMapPlayers = (loot: {
   loot.rarities.some((rarity) => DRAW_RARITIES.has(rarity ?? ""));
 
 /** Elastic items take the looter's level, so they require none of their own. */
-const isElasticItem = (item: LootDrawItem) =>
+export const isElasticLootDrawItem = (item: Pick<LootDrawItem, "stat">) =>
   item.stat.split(";").some((entry) => /^lvladjust(=|$)/.test(entry));
 
-/** Whether the candidate's profession and level let them wear the item. */
+/**
+ * Whether the candidate's profession lets them wear the item, and their
+ * level when it is known: hand-added players often come without one.
+ */
 export const canWearLootDrawItem = (
   item: LootDrawItem,
   candidate: LootDrawCandidate,
 ) =>
   candidate.prof !== null &&
   item.prof.includes(candidate.prof) &&
-  (isElasticItem(item) ||
-    (candidate.lvl !== null && candidate.lvl >= item.lvl));
+  (isElasticLootDrawItem(item) ||
+    candidate.lvl === null ||
+    candidate.lvl >= item.lvl);
 
 /** The tickets of the player who caught the item, from the whole party. */
 export const lootDrawWinnerTickets = (
@@ -63,25 +67,57 @@ export const lootDrawWinnerTickets = (
     party.filter((member) => canWearLootDrawItem(item, member)).length,
   );
 
-/**
- * The entrant holding ticket `roll`, counting tickets from 0 in entrant
- * order; `roll` must be below the total.
- */
-export const pickLootDrawEntrant = <T extends { tickets: number }>(
-  entrants: readonly T[],
-  roll: number,
-): T => {
-  let remaining = roll;
-
-  for (const entrant of entrants) {
-    if (remaining < entrant.tickets) return entrant;
-
-    remaining -= entrant.tickets;
-  }
-
-  throw new RangeError(`Roll ${roll} is outside the drawn tickets`);
-};
+/** The most tickets one entrant may hold, so a wheel stays readable. */
+export const MAX_LOOT_DRAW_TICKETS = 99;
 
 export const totalLootDrawTickets = (
   entrants: readonly { tickets: number }[],
 ) => entrants.reduce((total, entrant) => total + entrant.tickets, 0);
+
+/**
+ * The wheel's tickets in order, each naming its entrant's index: every
+ * entrant's tickets side by side, as a wheel shows them before a shuffle.
+ */
+export const groupedLootDrawTicketOrder = (
+  entrants: readonly { tickets: number }[],
+) =>
+  entrants.flatMap((entrant, index) =>
+    Array.from({ length: entrant.tickets }, () => index),
+  );
+
+/** Whether `order` holds exactly each entrant's tickets, in any order. */
+export const isLootDrawTicketOrder = (
+  order: readonly number[],
+  entrants: readonly { tickets: number }[],
+) => {
+  const counts = entrants.map(() => 0);
+
+  for (const index of order) {
+    if (!Number.isInteger(index) || counts[index] === undefined) return false;
+
+    counts[index] += 1;
+  }
+
+  return counts.every((count, index) => count === entrants[index]?.tickets);
+};
+
+/** A uniformly shuffled copy of `order`, for a wheel with mixed slices. */
+export const shuffleLootDrawTicketOrder = (
+  order: readonly number[],
+  random: () => number = Math.random,
+) => {
+  const shuffled = [...order];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const other = Math.floor(random() * (index + 1));
+    const current = shuffled[index];
+    const swapped = shuffled[other];
+
+    if (current === undefined || swapped === undefined) continue;
+
+    shuffled[index] = swapped;
+    shuffled[other] = current;
+  }
+
+  return shuffled;
+};

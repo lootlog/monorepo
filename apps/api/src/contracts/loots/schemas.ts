@@ -31,6 +31,7 @@ import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { LootSourceSchema, ProfessionSchema } from "@lootlog/schema/loot";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { MAX_LOOT_DRAW_TICKETS } from "@lootlog/domain/loot-draw";
 import { MemberSummary } from "#src/contracts/shared";
 import {
   CharacterIdQuery,
@@ -477,21 +478,37 @@ const LootDrawPlayer = {
   icon: Schema.NullOr(Schema.String),
 };
 
-export type LootDrawOutsider = typeof LootDrawOutsider.Type;
+const LootDrawEntrantSource = Schema.Literals(["WINNER", "MAP", "MANUAL"]);
 
-/** A player outside the party: from the map at the drop, or added by hand. */
-export const LootDrawOutsider = Schema.Struct({
+const LootDrawTickets = PositiveSafeInteger.check(
+  Schema.isLessThanOrEqualTo(MAX_LOOT_DRAW_TICKETS),
+);
+
+export type LootDrawEntrantInput = typeof LootDrawEntrantInput.Type;
+
+/**
+ * One entrant: WINNER caught the item in the game, MAP stood on the map at
+ * the drop and MANUAL was added by hand. Managers may change the tickets.
+ */
+export const LootDrawEntrantInput = Schema.Struct({
   ...LootDrawPlayer,
-  source: Schema.Literals(["MAP", "MANUAL"]),
-}).annotate({ identifier: "LootDrawOutsiderDto" });
+  source: LootDrawEntrantSource,
+  tickets: LootDrawTickets,
+}).annotate({ identifier: "LootDrawEntrantDto" });
 
 export type CreateLootDrawRequest = typeof CreateLootDrawRequest.Type;
 
 export const CreateLootDrawRequest = Schema.Struct({
   itemHid: NonEmptyString,
-  outsiders: Schema.Array(LootDrawOutsider).check(
-    Schema.isMinLength(1).annotate({ expected: "at least one outsider" }),
-    Schema.isMaxLength(LOOT_DRAW_MAX_OUTSIDERS),
+  entrants: Schema.Array(LootDrawEntrantInput).check(
+    Schema.isMinLength(2).annotate({ expected: "the winner and an outsider" }),
+    Schema.isMaxLength(LOOT_DRAW_MAX_OUTSIDERS + 1),
+  ),
+  /** The wheel's tickets in order, each naming its entrant's index. */
+  ticketOrder: Schema.Array(
+    Schema.Int.check(Schema.isGreaterThanOrEqualTo(0)),
+  ).check(
+    Schema.isMaxLength((LOOT_DRAW_MAX_OUTSIDERS + 1) * MAX_LOOT_DRAW_TICKETS),
   ),
 }).annotate({ identifier: "CreateLootDrawDto" });
 
@@ -513,11 +530,13 @@ export const LootDrawResponse = Schema.Struct({
   entrants: Schema.Array(
     Schema.Struct({
       ...LootDrawPlayer,
-      source: Schema.Literals(["WINNER", "MAP", "MANUAL"]),
+      source: LootDrawEntrantSource,
       tickets: PositiveSafeInteger,
     }),
   ),
-  /** The drawn ticket, counted from 0 across the entrants in order. */
+  /** The wheel's tickets in order, each naming its entrant's index. */
+  ticketOrder: Schema.Array(FiniteNumber),
+  /** The drawn position in `ticketOrder`. */
   roll: FiniteNumber,
   winnerIndex: FiniteNumber,
   createdBy: MemberSummary,
