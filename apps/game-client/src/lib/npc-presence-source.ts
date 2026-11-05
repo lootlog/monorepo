@@ -2,7 +2,6 @@ import type {
   NpcPresenceEvent,
   NpcPresenceSnapshot,
 } from "@lootlog/schema/npc-presence";
-import { GatewayEvent } from "@/config/gateway";
 import type { AppSocket } from "./socket";
 import {
   createScopedSourceRegistry,
@@ -47,33 +46,33 @@ export class NpcPresenceSource {
 
   private start(): void {
     this.active = true;
-    this.socket.on(GatewayEvent.NPC_PRESENCE_UPDATE, this.apply);
-    this.socket.on(GatewayEvent.JOIN, this.handleJoin);
-    this.socket.on(GatewayEvent.PERMISSIONS_UPDATED, this.hydrate);
-    this.socket.on(GatewayEvent.DISCONNECT, this.clear);
+    this.socket.on("npc-presence.updated", this.apply);
+    this.socket.on("join", this.handleJoin);
+    this.socket.on("access.updated", this.hydrate);
+    this.socket.on("disconnect", this.clear);
     void this.hydrate();
   }
 
   private stop(): void {
     if (!this.active) return;
     this.active = false;
-    this.socket.off(GatewayEvent.NPC_PRESENCE_UPDATE, this.apply);
-    this.socket.off(GatewayEvent.JOIN, this.handleJoin);
-    this.socket.off(GatewayEvent.PERMISSIONS_UPDATED, this.hydrate);
-    this.socket.off(GatewayEvent.DISCONNECT, this.clear);
+    this.socket.off("npc-presence.updated", this.apply);
+    this.socket.off("join", this.handleJoin);
+    this.socket.off("access.updated", this.hydrate);
+    this.socket.off("disconnect", this.clear);
     this.fetchId += 1;
     this.clear();
   }
 
-  private readonly handleJoin = (payload: { status: string }): void => {
-    if (payload.status === "success") void this.hydrate();
+  private readonly handleJoin = (): void => {
+    void this.hydrate();
   };
 
   /** NPCs reported before this client connected; newer updates keep their own state. */
   private readonly hydrate = async (): Promise<void> => {
     if (this.socket.connectionState !== "ready") return;
     const fetchId = ++this.fetchId;
-    let snapshot: NpcPresenceSnapshot | null;
+    let snapshot: NpcPresenceSnapshot;
 
     try {
       snapshot = await this.socket.fetchNpcPresence(this.guildId, this.world);
@@ -82,7 +81,7 @@ export class NpcPresenceSource {
       snapshot = { revision: 0, npcs: [] };
     }
 
-    if (fetchId !== this.fetchId || !snapshot) return;
+    if (fetchId !== this.fetchId) return;
 
     const next = new Map(
       snapshot.npcs.map(({ npc, since }) => [npc.id, since]),

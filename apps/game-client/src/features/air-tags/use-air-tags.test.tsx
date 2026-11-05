@@ -4,25 +4,27 @@ import { createAirTagTest } from "./air-tag-test";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import { useAirTags } from "./use-air-tags";
 
+const target = {
+  targetId: "guild-1",
+  nickname: "Target",
+  relation: 1 as const,
+  x: 20,
+  y: 20,
+  observedAt: Date.now(),
+};
+
+const scope = {
+  guildId: "guild-1",
+  world: "fobos",
+  mapId: 12,
+  epochId: "epoch",
+  epochStartedAt: 100,
+};
+
 const update = {
   v: 1 as const,
-  type: "air-tag.updated" as const,
-  data: {
-    guildId: "guild-1",
-    world: "fobos",
-    mapId: 12,
-    epochId: "epoch",
-    epochStartedAt: 100,
-    revision: 2,
-    target: {
-      targetId: "guild-1",
-      nickname: "Target",
-      relation: 1 as const,
-      x: 20,
-      y: 20,
-      observedAt: Date.now(),
-    },
-  },
+  type: "air-tag.scope-updated" as const,
+  data: { ...scope, revision: 2, targets: [target], removedTargetIds: [] },
 };
 
 describe("useAirTags", () => {
@@ -40,7 +42,6 @@ describe("useAirTags", () => {
     expect(
       airTagReceiveController.getRenderableTargets(Date.now(), 10000),
     ).toEqual([expect.objectContaining({ targetId: "guild-1", x: 20 })]);
-    const { target, ...scope } = update.data;
     await test.receive({
       v: 1,
       type: "air-tag.scope-updated",
@@ -61,7 +62,7 @@ describe("useAirTags", () => {
         data: {
           ...update.data,
           revision: 4,
-          target: { ...update.data.target, x: 40 },
+          targets: [{ ...target, x: 40 }],
         },
       }),
     );

@@ -12,7 +12,10 @@ import { configureApiClients } from "@lootlog/client/transport";
 import { RealtimeClient } from "@lootlog/client/realtime";
 import { createElement, type PropsWithChildren } from "react";
 import { afterEach, expect, it, onTestFinished, vi } from "vitest";
-import { createTestGateway } from "@/lib/testing/gateway";
+import {
+  createTestAccessPolicy,
+  createTestGateway,
+} from "@/lib/testing/gateway";
 import { useTimersSocket } from "./use-timers-socket";
 
 const timer: TimerResponseDto = {
@@ -244,7 +247,15 @@ it("clears restricted cached worlds and aliases and rejects an old in-flight res
     gateway.deliver({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: ["one"], subscriptionScopes: [] },
+      data: {
+        changes: [],
+        organizationIds: ["one"],
+        subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy(
+          ["one"],
+          [Permission.LOOTLOG_TIMERS_READ],
+        ),
+      },
     }),
   );
   await waitFor(() => expect(result.current.data).toEqual([]));
@@ -320,6 +331,7 @@ it("clears a restricted inactive organization's alias without disturbing the ope
       v: 1,
       type: "permissions.updated",
       data: {
+        changes: [],
         organizationIds: ["one", "two"],
         subscriptionScopes: [],
         accessPolicy: policy(50),

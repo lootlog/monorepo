@@ -7,5 +7,19 @@
     "anti-slop-effect/prefer-effect-match": "error",
     "complexity": "error",
     "@typescript-eslint/consistent-type-imports": "off"
-  }
+  },
+  "overrides": [
+    {
+      // The fixtures build plain test values, not Effect services.
+      "files": ["test/command-dispatch.bench.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeGamePingSocket", "makeCommandHandler"]
+          }
+        ]
+      }
+    }
+  ]
 }

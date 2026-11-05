@@ -1,3 +1,4 @@
+import { ownerAccessPolicy, publishedPresence } from "@/test/realtime-wire";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   RealtimeClient,
@@ -111,16 +112,17 @@ describe("background connection", () => {
       id: "publish",
       command: {
         v: 1,
+        requestId: "page-command",
         type: "presence.publish",
         data: { organizationIds: ["organization"] },
       },
     });
 
-    bridge.socket.respond({ sessionId: "session" });
+    bridge.socket.respond(publishedPresence("session"));
     await publication;
     await vi.advanceTimersByTimeAsync(25_000);
     now += 37;
-    bridge.socket.respond({});
+    bridge.socket.respond({ lastSeen: 1 });
     await vi.advanceTimersByTimeAsync(0);
     expect(bridge.messages).toContainEqual({
       type: "heartbeat-latency",
@@ -149,6 +151,7 @@ describe("background connection", () => {
       id: "join",
       command: {
         v: 1,
+        requestId: "page-command",
         type: "session.join",
         data: {
           world: "jaruna",
@@ -157,7 +160,12 @@ describe("background connection", () => {
       },
     });
 
-    bridge.socket.respond({ organizationIds: ["organization"] });
+    bridge.socket.respond({
+      connectionId: "connection-1",
+      organizationIds: ["organization"],
+      subscriptionScopes: [],
+      accessPolicy: ownerAccessPolicy(["organization"]),
+    });
     await join;
 
     const presence = bridge.receive({
@@ -165,6 +173,7 @@ describe("background connection", () => {
       id: "presence",
       command: {
         v: 1,
+        requestId: "page-command",
         type: "presence.fetch",
         data: {
           organizationId: "organization",
@@ -174,7 +183,14 @@ describe("background connection", () => {
       },
     });
 
-    bridge.socket.respond({ presences: [] });
+    const snapshot = {
+      organizationId: "organization",
+      world: "jaruna",
+      revision: 1,
+      presences: [],
+    };
+
+    bridge.socket.respond(snapshot);
     await presence;
 
     // A world's global chat channel is the one topic the page may follow.
@@ -183,17 +199,20 @@ describe("background connection", () => {
       id: "follow",
       command: {
         v: 1,
+        requestId: "page-command",
         type: "subscription.subscribe",
         data: { topic: "global.chat.world", world: "jaruna" },
       },
     });
 
-    bridge.socket.respond({});
+    bridge.socket.respond({
+      scope: { topic: "global.chat.world", world: "jaruna" },
+    });
     await follow;
     expect(bridge.messages).toContainEqual({
       type: "result",
       id: "presence",
-      data: { presences: [] },
+      data: snapshot,
     });
     expect(bridge.messages).toContainEqual({ type: "state", state: "ready" });
     expect(bridge.factory).toHaveBeenCalledWith("wss://gateway.lootlog.pl/ws", [
@@ -236,7 +255,12 @@ describe("background connection", () => {
     {
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: [], subscriptionScopes: [] },
+      data: {
+        accessPolicy: ownerAccessPolicy([]),
+        changes: [],
+        organizationIds: [],
+        subscriptionScopes: [],
+      },
     },
     { v: 1, requestId: "fake", status: "success", data: {} },
   ])(

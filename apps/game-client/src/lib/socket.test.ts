@@ -1,3 +1,4 @@
+import { ownerAccessPolicy } from "@/test/realtime-wire";
 import {
   RealtimeClient,
   type RealtimeWebSocket,
@@ -34,7 +35,7 @@ describe("realtime socket facade lifecycle", () => {
   });
 });
 
-it.each(["success", "legacy", "policy", "player"])(
+it.each(["success", "policy", "player"])(
   "publishes once after replacing a shared transport facade and handles rejection: %s",
   async (mode) => {
     const rejectPublication = mode !== "success";
@@ -133,20 +134,18 @@ it.each(["success", "legacy", "policy", "player"])(
           v: 1,
           type: "permissions.updated",
           data: {
+            changes: [],
             organizationIds: ["organization-1"],
             subscriptionScopes: [],
-            accessPolicy:
-              mode === "policy"
-                ? createAccessPolicySnapshot(
-                    [
-                      {
-                        guild: { id: "organization-1", ownerId: "owner" },
-                        roles: [],
-                      },
-                    ],
-                    "user",
-                  )
-                : undefined,
+            accessPolicy: createAccessPolicySnapshot(
+              [
+                {
+                  guild: { id: "organization-1", ownerId: "owner" },
+                  roles: [],
+                },
+              ],
+              "user",
+            ),
           },
         }),
       });
@@ -159,10 +158,7 @@ it.each(["success", "legacy", "policy", "player"])(
         data: { organizationIds: ["organization-1"] },
       });
 
-      if (mode === "player") {
-        const { GatewayEvent } = await import("@/config/gateway");
-        activeFacade.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE);
-      }
+      if (mode === "player") void activeFacade.publishPresence();
 
       await vi.waitFor(() =>
         expect(send).toHaveBeenCalledTimes(mode === "player" ? 2 : 1),
@@ -175,7 +171,7 @@ it.each(["success", "legacy", "policy", "player"])(
   },
 );
 
-it("dispatches private volunteer frames to the legacy volunteer listener", async () => {
+it("dispatches private volunteer frames to their listener", async () => {
   const listeners = new Map<string, (event: { data?: unknown }) => void>();
 
   const realtime = new RealtimeClient({
@@ -193,7 +189,6 @@ it("dispatches private volunteer frames to the legacy volunteer listener", async
     createRealtime: () => realtime,
   });
 
-  const { GatewayEvent } = await import("@/config/gateway");
   disposeSocket();
   const socket = getSocket();
 
@@ -205,7 +200,7 @@ it("dispatches private volunteer frames to the legacy volunteer listener", async
     >();
 
   try {
-    socket.on(GatewayEvent.NOTIFICATIONS_VOLUNTEER, received);
+    socket.on("notification.volunteer", received);
     socket.connect();
     listeners.get("open")?.({});
 
@@ -234,7 +229,6 @@ describe("access policy synchronization", () => {
     const { createAccessPolicySnapshot } =
       await import("@lootlog/protocol/realtime/access-policy");
 
-    const { GatewayEvent } = await import("@/config/gateway");
     const { Permission } = await import("@lootlog/schema/permissions");
 
     let policy = createAccessPolicySnapshot(
@@ -253,7 +247,6 @@ describe("access policy synchronization", () => {
       "user",
     );
 
-    let includePolicy = true;
     let denyJoin = false;
     const listeners = new Map<string, (event: { data?: unknown }) => void>();
     const received: string[] = [];
@@ -276,6 +269,7 @@ describe("access policy synchronization", () => {
               v: 1,
               type: "permissions.updated",
               data: {
+                changes: [],
                 organizationIds: [],
                 subscriptionScopes: [],
                 accessPolicy: policy,
@@ -308,7 +302,8 @@ describe("access policy synchronization", () => {
             data: {
               connectionId: "connection",
               organizationIds: ["organization-1"],
-              accessPolicy: includePolicy ? policy : undefined,
+              subscriptionScopes: [],
+              accessPolicy: policy,
             },
           }),
         }),
@@ -359,8 +354,8 @@ describe("access policy synchronization", () => {
     };
 
     try {
-      socket.on(GatewayEvent.PERMISSIONS_UPDATED, policies);
-      socket.on(GatewayEvent.JOIN, () => received.push("join"));
+      socket.on("access.updated", policies);
+      socket.on("join", () => received.push("join"));
       openConnection();
       await socket.join(joinData);
       expect(received).toEqual(["policy", "join"]);
@@ -373,6 +368,7 @@ describe("access policy synchronization", () => {
             v: 1,
             type: "permissions.updated",
             data: {
+              changes: [],
               organizationIds: ["organization-1"],
               subscriptionScopes: [],
               accessPolicy: policy,
@@ -395,10 +391,6 @@ describe("access policy synchronization", () => {
       expect(socket.getAccessPolicy()).toEqual(policy);
       await socket.join({ ...joinData, accountId: "other" });
       expect(policies).toHaveBeenCalledTimes(3);
-      includePolicy = false;
-      await socket.join(joinData);
-      expect(policies).toHaveBeenCalledTimes(4);
-      expect(socket.getAccessPolicy()).toBeUndefined();
       expect(received.slice(-2)).toEqual(["policy", "join"]);
       denyJoin = true;
       openConnection();
@@ -412,8 +404,9 @@ describe("access policy synchronization", () => {
         joinsBeforeDenial,
       );
       denyJoin = false;
+      // Returning to the first account dropped the other account's policy.
       expect(socket.getAccessPolicy()).toEqual(policy);
-      expect(policies).toHaveBeenCalledTimes(5);
+      expect(policies).toHaveBeenCalledTimes(4);
     } finally {
       externalFetch.mockRestore();
       disposeSocket();
@@ -448,7 +441,12 @@ it("lets the provider rejoin the current world once after reconnect", async () =
             v: 1,
             requestId: frame.requestId,
             status: "success",
-            data: { connectionId: "fixture", organizationIds: [] },
+            data: {
+              connectionId: "fixture",
+              organizationIds: [],
+              subscriptionScopes: [],
+              accessPolicy: ownerAccessPolicy([]),
+            },
           });
 
           queueMicrotask(() => listeners.get("message")?.({ data: response }));
@@ -480,13 +478,12 @@ it("lets the provider rejoin the current world once after reconnect", async () =
 
   disposeSocket();
   const facade = getSocket();
-  const { GatewayEvent } = await import("@/config/gateway");
   let world = "alpha";
 
   const externalFetch = stubMargonemAccountFetch();
 
   const pending: Array<Promise<unknown>> = [];
-  facade.on(GatewayEvent.CONNECT, () =>
+  facade.on("connect", () =>
     queueMicrotask(() => {
       pending.push(
         facade.join({
@@ -517,5 +514,61 @@ it("lets the provider rejoin the current world once after reconnect", async () =
     externalFetch.mockRestore();
     disposeSocket();
     restore();
+  }
+});
+
+it("fails a join when the gateway never says hello instead of waiting forever", async () => {
+  vi.useFakeTimers();
+  const listeners = new Map<string, (event: { data?: unknown }) => void>();
+  const sentTypes: string[] = [];
+
+  const realtime = new RealtimeClient({
+    url: "https://gateway.example.test",
+    webSocketFactory: () => ({
+      readyState: 1,
+      addEventListener: (type, listener) => listeners.set(type, listener),
+      close: () => listeners.get("close")?.({}),
+      send: (bytes) => {
+        const frame = decodeRealtimeFrame(bytes);
+
+        if ("type" in frame) sentTypes.push(frame.type);
+      },
+    }),
+  });
+
+  const restore = configureGameClientPlatform({
+    fetch: globalThis.fetch,
+    createRealtime: () => realtime,
+  });
+
+  disposeSocket();
+  const facade = getSocket();
+
+  try {
+    facade.connect();
+    listeners.get("open")?.({});
+
+    const join = facade.join({
+      world: "alpha",
+      accountId: "20",
+      characterId: "10",
+      name: "Hero",
+      lvl: 100,
+      prof: "w",
+      icon: "hero.gif",
+    });
+
+    const failure = join.then(
+      () => undefined,
+      (error: Error) => error,
+    );
+
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect((await failure)?.message).toContain("hello timeout");
+    expect(sentTypes).not.toContain("session.join");
+  } finally {
+    disposeSocket();
+    restore();
+    vi.useRealTimers();
   }
 });

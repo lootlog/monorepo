@@ -135,14 +135,15 @@ it("does not re-render the section while AirTag updates only move players", asyn
 
   act(() => {
     for (let revision = 2; revision < 30; revision += 1) {
-      airTagReceiveController.handleUpdate({
+      airTagReceiveController.handleScopeUpdate({
         guildId: "guild-1",
         world: "aether",
         mapId: 7,
         epochId: "epoch",
         epochStartedAt: 1,
         revision,
-        target: { ...enemy, x: revision, observedAt: Date.now() },
+        targets: [{ ...enemy, x: revision, observedAt: Date.now() }],
+        removedTargetIds: [],
       });
     }
   });

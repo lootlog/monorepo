@@ -7,36 +7,3 @@ export const resolveGatewaySocketPath = (environment: {
 export const GATEWAY_SOCKET_PATH = resolveGatewaySocketPath({
   VITE_GATEWAY_SOCKET_PATH: import.meta.env.VITE_GATEWAY_SOCKET_PATH,
 });
-
-export enum GatewayEvent {
-  DISCONNECT = "disconnect",
-  CONNECT = "connect",
-  JOIN = "join",
-  PERMISSIONS_UPDATED = "permissions-updated",
-  CHAT_MESSAGE = "chat-message",
-  FEED_ENTRY = "feed-entry",
-  KILLS_CHANGED = "kills-changed",
-  LOOTS_CREATE = "loots-create",
-  LOOTS_SHARE_UPDATE = "loots-share-update",
-  LOOTS_SNAPSHOT = "loots-snapshot",
-  MEMBER_WEB_PRESENCE_UPDATE = "member-web-presence:update",
-  TIMERS_CREATE = "timers-create",
-  TIMERS_DELETE = "timers-delete",
-  HERO_SIGHTING_UPDATED = "hero-sighting-updated",
-  RESERVATIONS_CREATE = "reservations-create",
-  RESERVATIONS_DELETE = "reservations-delete",
-  RESERVATIONS_CHANGED = "reservations-changed",
-  NOTIFICATION = "notifications-send",
-  NOTIFICATIONS_VOLUNTEER = "notifications-volunteer",
-  MEMBERS_REFRESH_JOB_UPDATE = "members-refresh-job-update",
-
-  // Event map presence
-  EVENT_PRESENCE_UPDATE = "event-presence:update",
-
-  // Margo Events (game-specific)
-  EVENT_MAP_STATUS_UPDATE = "event:map-status:update",
-  EVENT_HERO_KILLED = "event:hero:killed",
-  EVENT_RANKING_UPDATE = "event:ranking:update",
-  EVENT_RESPAWN_WINDOW_OPENED = "event:respawn-window:opened",
-  EVENT_RESPAWN_WINDOW_CLOSED = "event:respawn-window:closed",
-}

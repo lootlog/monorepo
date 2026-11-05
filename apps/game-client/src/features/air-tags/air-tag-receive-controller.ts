@@ -2,7 +2,6 @@ import type { AirTagSubscriptionAck } from "@lootlog/protocol/realtime";
 import {
   isAirTagScopeSnapshot,
   isAirTagScopeUpdateEvent,
-  isAirTagUpdateEvent,
   type AirTagScopeSnapshot,
   type AirTagScopeUpdateEvent,
   type AirTagTarget,
@@ -135,14 +134,6 @@ export class AirTagReceiveController {
       })
       .forEach((update) => this.applyUpdate(update));
     this.notifyChange();
-  }
-
-  /** One target from a gateway that predates `air-tag.scope-updated`. */
-  handleUpdate(value: unknown): void {
-    if (!isAirTagUpdateEvent(value)) return;
-    const { target, ...scope } = value;
-
-    this.receive({ ...scope, targets: [target], removedTargetIds: [] });
   }
 
   handleScopeUpdate(value: unknown): void {

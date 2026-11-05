@@ -2,7 +2,6 @@ import {
   AIR_TAG_CLAN_ENEMY_RELATION,
   AIR_TAG_ENEMY_RELATION,
   isAirTagScopeSnapshot,
-  isAirTagUpdateEvent,
   type AirTagTarget,
 } from "@lootlog/schema/air-tag";
 import { getAirTagEffectiveRelation } from "@lootlog/domain/air-tag";
@@ -60,16 +59,5 @@ describe("AirTag shared contracts", () => {
         targets: [target],
       }),
     ).toBe(true);
-    expect(
-      isAirTagUpdateEvent({
-        guildId: "guild-1",
-        world: "fobos",
-        mapId: 12,
-        epochId: "epoch-1",
-        epochStartedAt: 1_000,
-        revision: 2,
-        target: { ...target, x: Number.NaN },
-      }),
-    ).toBe(false);
   });
 });

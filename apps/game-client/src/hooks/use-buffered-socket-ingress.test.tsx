@@ -1,10 +1,10 @@
 import { RealtimeEventListeners } from "@lootlog/client/realtime/event-listeners";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GatewayEvent } from "@/config/gateway";
 import { useBufferedSocketIngress } from "@/hooks/use-buffered-socket-ingress";
+import type { AppSocketEvent } from "@/lib/socket";
 
-const listeners = new RealtimeEventListeners<GatewayEvent>();
+const listeners = new RealtimeEventListeners<AppSocketEvent>();
 
 const socket = {
   on: listeners.add.bind(listeners),
@@ -35,17 +35,17 @@ describe("useBufferedSocketIngress", () => {
         connected: true,
         accountId: "account-1",
         isReady: true,
-        event: GatewayEvent.NOTIFICATION,
+        event: "notification.sent",
         onProcessBatch,
       }),
     );
-    emit(GatewayEvent.NOTIFICATION, { notificationId: "hidden-titan" });
-    emit(GatewayEvent.PERMISSIONS_UPDATED, {});
+    emit("notification.sent", { notificationId: "hidden-titan" });
+    emit("access.updated", {});
     await act(async () => {
       await Promise.resolve();
     });
     expect(onProcessBatch).not.toHaveBeenCalled();
-    emit(GatewayEvent.NOTIFICATION, { notificationId: "allowed" });
+    emit("notification.sent", { notificationId: "allowed" });
     await act(async () => {
       await Promise.resolve();
     });
@@ -62,7 +62,7 @@ describe("useBufferedSocketIngress", () => {
           connected: true,
           accountId: null,
           isReady,
-          event: GatewayEvent.NOTIFICATION,
+          event: "notification.sent",
           onProcessBatch: processPayloadBatch,
         }),
       {
@@ -72,7 +72,7 @@ describe("useBufferedSocketIngress", () => {
       },
     );
 
-    emit(GatewayEvent.NOTIFICATION, { notificationId: "notification-1" });
+    emit("notification.sent", { notificationId: "notification-1" });
 
     expect(processPayloadBatch).not.toHaveBeenCalled();
 
@@ -100,7 +100,7 @@ describe("useBufferedSocketIngress", () => {
           connected: true,
           accountId,
           isReady,
-          event: GatewayEvent.NOTIFICATION,
+          event: "notification.sent",
           onProcessBatch: processPayloadBatch,
         }),
       {
@@ -111,7 +111,7 @@ describe("useBufferedSocketIngress", () => {
       },
     );
 
-    emit(GatewayEvent.NOTIFICATION, { notificationId: "notification-1" });
+    emit("notification.sent", { notificationId: "notification-1" });
 
     rerender({
       accountId: "account-1",
@@ -137,8 +137,8 @@ describe("useBufferedSocketIngress", () => {
           connected: true,
           accountId: null,
           isReady,
-          event: GatewayEvent.PARTY_GATHERING_SEND,
-          cancelEvent: GatewayEvent.PARTY_GATHERING_CANCEL,
+          event: "party-gathering.updated",
+          cancelEvent: "party-gathering.cancelled",
           onProcessBatch: processPayloadBatch,
           onCancel: cancelPayload,
           getPayloadId: (payload: { notificationId: string }) =>
@@ -153,10 +153,10 @@ describe("useBufferedSocketIngress", () => {
       },
     );
 
-    emit(GatewayEvent.PARTY_GATHERING_SEND, {
+    emit("party-gathering.updated", {
       notificationId: "notification-1",
     });
-    emit(GatewayEvent.PARTY_GATHERING_CANCEL, {
+    emit("party-gathering.cancelled", {
       notificationId: "notification-1",
     });
 
@@ -173,8 +173,8 @@ describe("useBufferedSocketIngress", () => {
         connected: true,
         accountId: null,
         isReady: true,
-        event: GatewayEvent.PARTY_GATHERING_SEND,
-        cancelEvent: GatewayEvent.PARTY_GATHERING_CANCEL,
+        event: "party-gathering.updated",
+        cancelEvent: "party-gathering.cancelled",
         onProcessBatch: processPayloadBatch,
         onCancel: cancelPayload,
         getPayloadId: (payload: { notificationId: string }) =>
@@ -184,7 +184,7 @@ describe("useBufferedSocketIngress", () => {
       }),
     );
 
-    emit(GatewayEvent.PARTY_GATHERING_CANCEL, {
+    emit("party-gathering.cancelled", {
       notificationId: "notification-1",
     });
 
@@ -200,14 +200,14 @@ describe("useBufferedSocketIngress", () => {
         connected: true,
         accountId: "account-1",
         isReady: true,
-        event: GatewayEvent.NOTIFICATION,
+        event: "notification.sent",
         onProcessBatch: processPayloadBatch,
       }),
     );
 
-    emit(GatewayEvent.NOTIFICATION, { notificationId: "notification-1" });
-    emit(GatewayEvent.NOTIFICATION, { notificationId: "notification-2" });
-    emit(GatewayEvent.NOTIFICATION, { notificationId: "notification-3" });
+    emit("notification.sent", { notificationId: "notification-1" });
+    emit("notification.sent", { notificationId: "notification-2" });
+    emit("notification.sent", { notificationId: "notification-3" });
 
     expect(processPayloadBatch).not.toHaveBeenCalled();
     await act(() => Promise.resolve());
@@ -226,12 +226,12 @@ describe("useBufferedSocketIngress", () => {
         connected: true,
         accountId: "account-1",
         isReady: true,
-        event: GatewayEvent.NOTIFICATION,
+        event: "notification.sent",
         onProcessBatch: processPayloadBatch,
       }),
     );
 
-    emit(GatewayEvent.NOTIFICATION, { notificationId: "notification-1" });
+    emit("notification.sent", { notificationId: "notification-1" });
     unmount();
     await act(() => Promise.resolve());
 
@@ -245,8 +245,8 @@ describe("useBufferedSocketIngress", () => {
         connected: true,
         accountId: "account-1",
         isReady: true,
-        event: GatewayEvent.PARTY_GATHERING_SEND,
-        cancelEvent: GatewayEvent.PARTY_GATHERING_CANCEL,
+        event: "party-gathering.updated",
+        cancelEvent: "party-gathering.cancelled",
         onProcessBatch: processPayloadBatch,
         onCancel: cancelPayload,
         getPayloadId: (payload: { notificationId: string }) =>
@@ -256,10 +256,10 @@ describe("useBufferedSocketIngress", () => {
       }),
     );
 
-    emit(GatewayEvent.PARTY_GATHERING_SEND, {
+    emit("party-gathering.updated", {
       notificationId: "notification-1",
     });
-    emit(GatewayEvent.PARTY_GATHERING_CANCEL, {
+    emit("party-gathering.cancelled", {
       notificationId: "notification-1",
     });
 
@@ -279,7 +279,7 @@ describe("useBufferedSocketIngress", () => {
           connected: true,
           accountId: null,
           isReady,
-          event: GatewayEvent.NOTIFICATION,
+          event: "notification.sent",
           onProcessBatch: processPayloadBatch,
         }),
       {
@@ -290,7 +290,7 @@ describe("useBufferedSocketIngress", () => {
     );
 
     for (let index = 0; index < 100; index += 1) {
-      emit(GatewayEvent.NOTIFICATION, {
+      emit("notification.sent", {
         notificationId: `notification-${index}`,
       });
     }
@@ -320,16 +320,16 @@ it("keeps unaffected queued notifications and rejects revoked data at flush", as
       connected: true,
       accountId: "account",
       isReady: true,
-      event: GatewayEvent.NOTIFICATION,
+      event: "notification.sent",
       isPayloadAllowed: (payload: { guildId: string }) =>
         allowedGuilds.has(payload.guildId),
       onProcessBatch,
     }),
   );
-  emit(GatewayEvent.NOTIFICATION, { guildId: "a" });
-  emit(GatewayEvent.NOTIFICATION, { guildId: "b" });
+  emit("notification.sent", { guildId: "a" });
+  emit("notification.sent", { guildId: "b" });
   allowedGuilds = new Set(["b"]);
-  emit(GatewayEvent.PERMISSIONS_UPDATED, {
+  emit("access.updated", {
     accessPolicy: { version: "new", organizations: [] },
   });
   await act(async () => {

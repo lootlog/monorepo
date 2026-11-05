@@ -1,55 +1,26 @@
 import {
   GatewayMetrics,
   GatewayRuntimeMetrics,
-  readClusterFederationVersion,
 } from "#src/realtime/gateway-metrics";
 import { GatewayConnectionMetrics } from "#src/realtime/connection-metrics";
-import { OnlineHistory } from "#src/realtime/online-history";
-import {
-  ACTIVITY_EVENT_SIGNATURE_HEADER,
-  signActivityEvent,
-} from "@lootlog/protocol/rabbit/activity-signature";
-import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import { OnlineHistories } from "#src/realtime/online-history";
 import { BunRedis } from "@effect/platform-bun";
 import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
-  REALTIME_BATTLE_PING_CAPABILITY,
-  REALTIME_LOOT_SPLIT_CAPABILITY,
-  REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
-  REALTIME_SESSION_HELLO_CAPABILITY,
-  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
-  REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
-  REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
-  REALTIME_NPC_PRESENCE_CAPABILITY,
-  REALTIME_GLOBAL_CHAT_CAPABILITY,
-  REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
-  REALTIME_FEED_CAPABILITY,
-  REALTIME_LOOT_SNAPSHOT_CAPABILITY,
-  REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-  REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_JSON_SUBPROTOCOL,
   REALTIME_SERVER_CLOSE_CODES,
 } from "@lootlog/protocol/realtime";
-import {
-  Context,
-  Duration,
-  Effect,
-  FiberSet,
-  Layer,
-  Option,
-  Redacted,
-} from "effect";
-import { Headers, HttpClient, HttpTraceContext } from "effect/http";
-import { Redis } from "effect/persistence";
-import { makeGatewayAuth, type GatewayAuth } from "#src/auth/auth-service";
+import { Context, Duration, Effect, Layer, Option, Redacted } from "effect";
+import { Headers, HttpTraceContext } from "effect/http";
+import { Auth, type GatewayAuth } from "#src/auth/auth-service";
 import { ApiKeyLeases } from "#src/auth/api-key-leases";
-import { makeMargonemProofVerifier } from "#src/auth/margonem-proof";
+import { ProofVerifier } from "#src/auth/margonem-proof";
 import {
   GatewayConfig,
   type GatewayConfiguration,
 } from "#src/config/gateway-config";
-import { makeGuildStore, type GuildStore } from "#src/guilds/guild-store";
+import { Guilds, type GuildStore } from "#src/guilds/guild-store";
 import {
   isOrganizationPresencePath,
   makeGatewayHttpBoundary,
@@ -57,30 +28,33 @@ import {
   type GatewayHttpDependencies,
 } from "#src/http-api/gateway-http";
 import {
-  makeBackgroundTaskRunner,
+  Background,
   type BackgroundTaskRunner,
 } from "#src/platform/background-tasks";
-import { RedisGatewayStore } from "#src/platform/redis-store";
+import { GatewayRedis } from "#src/platform/redis-store";
 import {
   gatewayQueueDefinitions,
   RabbitBridge,
 } from "#src/rabbit/rabbit-bridge";
-import { ActivityPublisher } from "#src/rabbit/activity-publisher";
-import { CoveragePublisher } from "#src/rabbit/coverage-publisher";
-import { CommandHandler } from "#src/realtime/command-handler";
-import { CommandIngress } from "#src/realtime/command-ingress";
 import {
-  AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
-  CommandAdmission,
-  JOIN_ADMISSION_LIMITS,
-} from "#src/realtime/command-admission";
-import { AirTagService } from "#src/realtime/air-tag-service";
-import { MapPingService } from "#src/realtime/map-ping-service";
-import { BattlePingService } from "#src/realtime/battle-ping-service";
-import { LootSplitService } from "#src/realtime/loot-split-service";
-import { NpcPresenceService } from "#src/realtime/npc-presence-service";
-import { PresenceStore } from "#src/realtime/presence-store";
-import { closeGradually, RealtimeHub } from "#src/realtime/realtime-hub";
+  Activity,
+  type ActivityPublisher,
+} from "#src/rabbit/activity-publisher";
+import { Coverage } from "#src/rabbit/coverage-publisher";
+import { Commands, type CommandHandler } from "#src/realtime/command-handler";
+import { Ingress, type CommandIngress } from "#src/realtime/command-ingress";
+import { CommandAdmissions } from "#src/realtime/command-admission";
+import { AirTags } from "#src/realtime/air-tag-service";
+import { MapPings } from "#src/realtime/map-ping-service";
+import { BattlePings } from "#src/realtime/battle-ping-service";
+import { LootSplits } from "#src/realtime/loot-split-service";
+import { NpcPresence } from "#src/realtime/npc-presence-service";
+import { Presence, type PresenceStore } from "#src/realtime/presence-store";
+import {
+  closeGradually,
+  Hub,
+  type RealtimeHub,
+} from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
 export interface GatewayApplicationService {
@@ -96,6 +70,42 @@ export interface GatewayApplicationService {
   readonly runPromise: <A, E>(effect: Effect.Effect<A, E>) => Promise<A>;
 }
 
+const PlatformLive = GatewayRedis.layer.pipe(
+  Layer.provideMerge(Background.layer),
+);
+
+const DependenciesLive = Layer.mergeAll(
+  Auth.layer,
+  ProofVerifier.layer,
+  Coverage.layer,
+  Activity.layer,
+  OnlineHistories.layer,
+  Guilds.layer,
+  CommandAdmissions.layer,
+).pipe(Layer.provideMerge(Hub.layer), Layer.provideMerge(PlatformLive));
+
+const FeaturesLive = Layer.mergeAll(
+  Presence.layer,
+  MapPings.layer,
+  BattlePings.layer,
+  LootSplits.layer,
+  AirTags.layer,
+  NpcPresence.layer,
+).pipe(Layer.provideMerge(DependenciesLive));
+
+const RealtimeLive = Ingress.layer.pipe(
+  Layer.provideMerge(Commands.layer),
+  Layer.provideMerge(FeaturesLive),
+);
+
+// Background work that only runs for as long as the replica does.
+const ReplicaTasksLive = Layer.mergeAll(
+  GatewayMetrics.layer,
+  GatewayRuntimeMetrics.layer,
+  ApiKeyLeases.layer,
+  RabbitBridge.layer,
+).pipe(Layer.provideMerge(RealtimeLive));
+
 class GatewayApplication extends Context.Service<
   GatewayApplication,
   GatewayApplicationService
@@ -104,200 +114,8 @@ class GatewayApplication extends Context.Service<
     GatewayApplication,
     Effect.gen(function* () {
       const config = yield* GatewayConfig;
-      const messaging = yield* RabbitMessaging;
-      const httpClient = yield* HttpClient.HttpClient;
-      const backgroundFibers = yield* FiberSet.make<unknown, unknown>();
-
-      const runBackgroundEffect =
-        yield* FiberSet.runtime(backgroundFibers)<never>();
-
-      const runPromise =
-        yield* FiberSet.runtimePromise(backgroundFibers)<never>();
-
-      const runBackground = makeBackgroundTaskRunner(runBackgroundEffect);
-      const redisClient = yield* Redis.Redis;
-
-      const redis = yield* Effect.acquireRelease(
-        Effect.tryPromise({
-          try: async () => {
-            const store = new RedisGatewayStore(
-              redisClient,
-              {
-                ...config.redis,
-                password: Redacted.value(config.redis.password),
-              },
-              runPromise,
-              runBackground,
-            );
-
-            await store.connect();
-
-            return store;
-          },
-          catch: (cause) =>
-            new Error("Failed to connect Gateway Redis", { cause }),
-        }),
-        (store) => Effect.tryPromise(() => store.close()).pipe(Effect.orDie),
-      );
-
-      const auth = makeGatewayAuth(config);
-
-      const hub = new RealtimeHub(config, redis, runBackground, {
-        readClusterFederationVersion: () =>
-          readClusterFederationVersion(redis.command),
-      });
-
-      yield* hub.start();
-      yield* new GatewayMetrics(redis.command, hub)
-        .run()
-        .pipe(Effect.forkScoped);
-      const coverage = new CoveragePublisher(messaging);
-
-      const onlineHistory = new OnlineHistory(redis.command, (payload) =>
-        messaging
-          .publish({
-            routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
-            content: new TextEncoder().encode(JSON.stringify(payload)),
-            headers: {
-              [ACTIVITY_EVENT_SIGNATURE_HEADER]: signActivityEvent(
-                payload,
-                Redacted.value(config.activityEventSignatureSecret),
-              ),
-            },
-          })
-          .pipe(Effect.asVoid),
-      );
-
-      yield* onlineHistory.run().pipe(Effect.forkScoped);
-
-      const presence = new PresenceStore(
-        redis,
-        hub,
-        Date.now,
-        coverage,
-        onlineHistory,
-        (event) =>
-          messaging
-            .publish({
-              routingKey: RabbitRoutingKey.GAME_CHARACTER_OFFLINE,
-              content: new TextEncoder().encode(JSON.stringify(event)),
-            })
-            .pipe(Effect.asVoid),
-      );
-
-      yield* presence.runDeltaFlush().pipe(Effect.forkScoped);
-      yield* presence.runExpirySweep().pipe(Effect.forkScoped);
-      yield* presence.runOfflineSweep().pipe(Effect.forkScoped);
-      const activity = new ActivityPublisher(messaging, config);
-      const mapPings = new MapPingService(redis, hub);
-      const battlePings = new BattlePingService(redis, hub);
-      const lootSplits = new LootSplitService(redis, hub);
-      const airTags = new AirTagService(redis, hub);
-      const npcPresence = new NpcPresenceService(redis, hub);
-      yield* airTags.runInterestRefresh().pipe(Effect.forkScoped);
-      const guilds = makeGuildStore(config, redis, httpClient);
-      const joinAdmission = new CommandAdmission(JOIN_ADMISSION_LIMITS);
-
-      const airTagObservationAdmission = new CommandAdmission(
-        AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
-      );
-
-      const commands = new CommandHandler(
-        guilds,
-        makeMargonemProofVerifier(config, httpClient),
-        (event) =>
-          messaging
-            .publish({
-              routingKey: RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1,
-              content: new TextEncoder().encode(JSON.stringify(event)),
-            })
-            .pipe(Effect.asVoid),
-        presence,
-        hub,
-        activity,
-        mapPings,
-        battlePings,
-        lootSplits,
-        airTags,
-        npcPresence,
-        joinAdmission,
-        airTagObservationAdmission,
-      );
-
-      const ingress = new CommandIngress(
-        (socket, message) => commands.handle(socket, message),
-        (socket, message) => commands.rejectOverloaded(socket, message),
-        (socket) =>
-          Effect.suspend(() => {
-            if (socket.data.apiKeyAccess) return Effect.void;
-
-            return Effect.all(
-              [
-                activity
-                  .publish("DISCONNECT_EVENT", socket.data)
-                  .pipe(
-                    Effect.catchCause((error) =>
-                      Effect.logError(
-                        "Gateway disconnect activity failed",
-                        error,
-                      ),
-                    ),
-                  ),
-                presence
-                  .disconnect(socket.data)
-                  .pipe(
-                    Effect.catchCause((error) =>
-                      Effect.logError(
-                        "Gateway disconnect presence failed",
-                        error,
-                      ),
-                    ),
-                  ),
-                Effect.tryPromise(() => npcPresence.withdraw(socket)).pipe(
-                  Effect.catchCause((error) =>
-                    Effect.logError(
-                      "Gateway disconnect NPC presence failed",
-                      error,
-                    ),
-                  ),
-                ),
-              ],
-              { concurrency: 3, discard: true },
-            );
-          }),
-        runBackground,
-      );
-
-      yield* new GatewayRuntimeMetrics(
-        redis,
-        hub,
-        ingress,
-        joinAdmission,
-        airTagObservationAdmission,
-      )
-        .run()
-        .pipe(Effect.forkScoped);
-
-      yield* new ApiKeyLeases(
-        config,
-        httpClient,
-        () => hub.getLocalSockets(),
-        (discordId, userId) => commands.rebalanceUser(discordId, userId),
-      )
-        .run()
-        .pipe(Effect.forkScoped);
-
-      const rabbit = new RabbitBridge(
-        messaging,
-        hub,
-        commands,
-        presence,
-        coverage,
-      );
-
-      yield* Effect.acquireRelease(rabbit.start(), () =>
-        rabbit.stop().pipe(Effect.orDie),
-      );
+      const hub = yield* Hub;
+      const background = yield* Background;
 
       yield* Effect.logInfo("Gateway application initialized").pipe(
         Effect.annotateLogs({
@@ -308,18 +126,18 @@ class GatewayApplication extends Context.Service<
 
       return GatewayApplication.of({
         config,
-        auth,
+        auth: yield* Auth,
         hub,
-        presence,
-        guilds,
-        commands,
-        ingress,
-        activity,
-        runBackground,
-        runPromise,
+        presence: yield* Presence,
+        guilds: yield* Guilds,
+        commands: yield* Commands,
+        ingress: yield* Ingress,
+        activity: yield* Activity,
+        runBackground: background.run,
+        runPromise: background.runPromise,
       });
     }),
-  );
+  ).pipe(Layer.provide(ReplicaTasksLive));
 }
 
 const RabbitLive = Layer.unwrap(
@@ -369,74 +187,17 @@ interface UpgradeServer {
   ) => boolean;
 }
 
-/** Capabilities a client opts into by offering them as subprotocols. */
-const negotiateCapabilities = (
-  offeredProtocols: readonly string[],
-  apiKeyAccess: boolean,
-) => {
-  // API key integrations never receive game-client events.
-  const offersGameCapability = (capability: string) =>
-    !apiKeyAccess && offeredProtocols.includes(capability);
-
-  return {
-    supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
-    supportsLootSnapshot:
-      !apiKeyAccess &&
-      offeredProtocols.includes(REALTIME_LOOT_SNAPSHOT_CAPABILITY),
-    supportsSessionHello: offersGameCapability(
-      REALTIME_SESSION_HELLO_CAPABILITY,
-    ),
-    supportsNotificationVolunteer: offersGameCapability(
-      REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-    ),
-    supportsPartyGatheringState: offersGameCapability(
-      REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
-    ),
-    supportsBattlePings: offersGameCapability(REALTIME_BATTLE_PING_CAPABILITY),
-    supportsAirTagMapThreats: offersGameCapability(
-      REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
-    ),
-    supportsTeamBattlePings: offersGameCapability(
-      REALTIME_TEAM_BATTLE_PING_CAPABILITY,
-    ),
-    supportsLootSplit: offersGameCapability(REALTIME_LOOT_SPLIT_CAPABILITY),
-    supportsLootSplitAutoAccept: offersGameCapability(
-      REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
-    ),
-    supportsAirTagScopeUpdates: offersGameCapability(
-      REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
-    ),
-    supportsNpcPresence: offersGameCapability(REALTIME_NPC_PRESENCE_CAPABILITY),
-    supportsGlobalChat: offersGameCapability(REALTIME_GLOBAL_CHAT_CAPABILITY),
-    supportsGlobalChatChannels: offersGameCapability(
-      REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
-    ),
-  };
-};
-
-// Offered without the JSON subprotocol only by clients that exchange MessagePack.
-const MESSAGEPACK_SUBPROTOCOL = "lootlog.realtime.v1";
-
 const probePaths = new Set(["/healthz", "/readyz"]);
 
-export const createGatewayFetch = (
-  application: GatewayHttpDependencies &
-    Pick<GatewayApplicationService, "auth" | "runPromise"> & {
-      config: Pick<GatewayConfiguration, "websocketPath" | "environment">;
-    },
-  httpHandler?: (request: Request) => Promise<Response>,
-) => {
-  let defaultBoundary: ReturnType<typeof makeGatewayHttpBoundary> | undefined;
-
-  const handleHttp =
-    httpHandler ??
-    ((request: Request) => {
-      defaultBoundary ??= makeGatewayHttpBoundary(application);
-
-      return defaultBoundary.handler(request);
-    });
-
-  return async (
+export const createGatewayFetch =
+  (
+    application: GatewayHttpDependencies &
+      Pick<GatewayApplicationService, "auth" | "runPromise"> & {
+        config: Pick<GatewayConfiguration, "websocketPath" | "environment">;
+      },
+    handleHttp: (request: Request) => Promise<Response>,
+  ) =>
+  async (
     request: Request,
     activeServer: UpgradeServer,
   ): Promise<Response | undefined> => {
@@ -507,13 +268,14 @@ export const createGatewayFetch = (
           ?.split(",")
           .map((protocol) => protocol.trim()) ?? [];
 
-      const offersJson = offeredProtocols.includes(REALTIME_JSON_SUBPROTOCOL);
-
-      if (!offersJson && offeredProtocols.includes(MESSAGEPACK_SUBPROTOCOL)) {
+      if (!offeredProtocols.includes(REALTIME_JSON_SUBPROTOCOL)) {
         return complete(
-          new Response("MessagePack realtime frames are not supported", {
-            status: 400,
-          }),
+          new Response(
+            `The ${REALTIME_JSON_SUBPROTOCOL} subprotocol is required`,
+            {
+              status: 400,
+            },
+          ),
         );
       }
 
@@ -521,10 +283,6 @@ export const createGatewayFetch = (
         data: {
           ...identity,
           connectionId,
-          ...negotiateCapabilities(
-            offeredProtocols,
-            Boolean(identity.apiKeyAccess),
-          ),
           platform: identity.apiKeyAccess
             ? "web-app"
             : application.auth.getPlatform(origin ?? ""),
@@ -535,9 +293,7 @@ export const createGatewayFetch = (
           airTagScopes: [],
           confidence: "reported",
         },
-        headers: offersJson
-          ? { "sec-websocket-protocol": REALTIME_JSON_SUBPROTOCOL }
-          : undefined,
+        headers: { "sec-websocket-protocol": REALTIME_JSON_SUBPROTOCOL },
       });
 
       return complete(
@@ -589,13 +345,13 @@ export const createGatewayFetch = (
       );
     }
   };
-};
 
 export const createGatewayWebSocket = (
   application: Pick<GatewayApplicationService, "hub" | "ingress">,
-  metrics = new GatewayConnectionMetrics(),
-) =>
-  ({
+) => {
+  const metrics = new GatewayConnectionMetrics();
+
+  return {
     perMessageDeflate: false,
     maxPayloadLength: 256 * 1_024,
     idleTimeout: 70,
@@ -622,12 +378,11 @@ export const createGatewayWebSocket = (
       metrics.open(socket);
       application.hub.register(socket);
 
-      if (socket.data.supportsSessionHello)
-        application.hub.sendEvent(socket, {
-          v: 1,
-          type: "session.hello",
-          data: { connectionId: socket.data.connectionId },
-        });
+      application.hub.sendEvent(socket, {
+        v: 1,
+        type: "session.hello",
+        data: { connectionId: socket.data.connectionId },
+      });
     },
     message(socket: GatewaySocket, message: string | Buffer) {
       application.ingress.message(socket, message);
@@ -637,7 +392,8 @@ export const createGatewayWebSocket = (
       application.hub.detach(socket);
       application.ingress.close(socket);
     },
-  }) satisfies Bun.WebSocketHandler<SessionData>;
+  } satisfies Bun.WebSocketHandler<SessionData>;
+};
 
 interface DrainTiming {
   /** Lets Traefik drop the terminating endpoint before sockets move. */

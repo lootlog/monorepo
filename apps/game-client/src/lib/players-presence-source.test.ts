@@ -1,3 +1,4 @@
+import { publishedPresence } from "@/test/realtime-wire";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
@@ -109,7 +110,7 @@ describe("shared presence map projection", () => {
       v: 1,
       requestId: publication.requestId,
       status: "success",
-      data: { sessionId: "presence-session" },
+      data: publishedPresence("presence-session"),
     });
 
     await waitFor(() => expect(harness.fetchPresence).toHaveBeenCalledOnce());
@@ -294,6 +295,7 @@ describe("shared presence map projection", () => {
           v: 1,
           type: "permissions.updated",
           data: {
+            changes: [],
             organizationIds: ["guild-1"],
             subscriptionScopes: [],
             accessPolicy:
@@ -318,7 +320,7 @@ describe("shared presence map projection", () => {
     },
   );
 
-  it("never infers location access from legacy map fields and removes occupancy when access is revoked", async () => {
+  it("removes occupancy when location access is revoked", async () => {
     const harness = createOnlinePlayersTest();
 
     const rows = renderHook(() => usePlayersPresence("guild-1", "alpha"), {
@@ -326,14 +328,8 @@ describe("shared presence map projection", () => {
     });
 
     harness.open();
-    await harness.join();
-    await waitFor(() => expect(rows.result.current.hasLoaded).toBe(true));
-    const source = getPlayersPresenceSource(getSocket(), "guild-1", "alpha");
-    expect(rows.result.current.onlinePlayers["discord-1"]?.[0]?.mapName).toBe(
-      "Karka-han",
-    );
-    expect(source.isMapOccupied("Karka-han")).toBe(false);
     await harness.join(["guild-1"], policy());
+    const source = getPlayersPresenceSource(getSocket(), "guild-1", "alpha");
     await waitFor(() => expect(source.isMapOccupied("Karka-han")).toBe(true));
     const changed = vi.fn();
     const unsubscribe = source.subscribeMap("Karka-han", changed);
@@ -341,6 +337,7 @@ describe("shared presence map projection", () => {
       v: 1,
       type: "permissions.updated",
       data: {
+        changes: [],
         organizationIds: ["guild-1"],
         subscriptionScopes: [],
         accessPolicy: policy(false),
@@ -432,6 +429,7 @@ describe("shared presence map projection", () => {
       v: 1,
       type: "permissions.updated",
       data: {
+        changes: [],
         organizationIds: ["guild-1"],
         subscriptionScopes: [],
         accessPolicy: policy(false),

@@ -1,7 +1,10 @@
 // @vitest-environment happy-dom
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
-import { createTestGateway } from "@/lib/testing/gateway";
+import {
+  createTestAccessPolicy,
+  createTestGateway,
+} from "@/lib/testing/gateway";
 import { getListSpotReservationsQueryKey } from "@lootlog/client/main";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -440,6 +443,7 @@ it.each(["guild-1", "organization-alias"])(
           connectionId: "reconnected",
           organizationIds: ["guild-1"],
           subscriptionScopes: [],
+          accessPolicy: createTestAccessPolicy(["guild-1"]),
         },
       });
     });

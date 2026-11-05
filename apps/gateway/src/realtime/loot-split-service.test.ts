@@ -1,35 +1,33 @@
+import { Effect } from "effect";
 import { describe, expect, test } from "bun:test";
-import { makeGamePingSocket as makeSocket } from "../../test/realtime-fixtures.js";
-import type { PingScriptStore } from "./ping-routing.js";
+import {
+  acceptingRateLimit,
+  makeGamePingSocket as makeSocket,
+} from "../../test/realtime-fixtures.js";
 import { LootSplitService } from "./loot-split-service.js";
-
-const acceptingRateLimit = (keys: unknown[] = []): PingScriptStore => ({
-  command: {
-    eval: async (_script, _keys, key) => {
-      keys.push(key);
-
-      return [1, 1234, 0];
-    },
-  },
-});
 
 describe("LootSplitService", () => {
   test("routes choices to the split's other participants on the sender's world, whatever their map", async () => {
     const publications: unknown[] = [];
-    const rateLimitKeys: unknown[] = [];
+    const rateLimitKeys: string[] = [];
 
-    const service = new LootSplitService(acceptingRateLimit(rateLimitKeys), {
-      publishToScopes: async (...arguments_: unknown[]) => {
-        publications.push(arguments_);
+    const service = new LootSplitService(
+      acceptingRateLimit(1234, rateLimitKeys),
+      {
+        publishToScopes: async (...arguments_: unknown[]) => {
+          publications.push(arguments_);
+        },
       },
-    });
+    );
 
-    const response = await service.send(makeSocket(), {
-      splitId: "1200653658",
-      choices: { "1200653658": 0, "1200653660": 2 },
-      accepted: true,
-      recipientCharacterIds: ["123", "789", "1466"],
-    });
+    const response = await Effect.runPromise(
+      service.send(makeSocket(), {
+        splitId: "1200653658",
+        choices: { "1200653658": 0, "1200653660": 2 },
+        accepted: true,
+        recipientCharacterIds: ["123", "789", "1466"],
+      }),
+    );
 
     expect(response).toEqual({ status: "accepted" });
     // Loot split frames must not drain the map or battle ping budgets.
@@ -74,9 +72,11 @@ describe("LootSplitService", () => {
       },
     });
 
-    const response = await service.autoAccept(makeSocket(), {
-      recipientCharacterIds: ["123", "16051"],
-    });
+    const response = await Effect.runPromise(
+      service.autoAccept(makeSocket(), {
+        recipientCharacterIds: ["123", "16051"],
+      }),
+    );
 
     expect(response).toEqual({ status: "accepted" });
     expect(publications).toEqual([
@@ -108,19 +108,11 @@ describe("LootSplitService", () => {
   });
 
   test("rejects a sender that shows itself in no Lootlog without consuming the rate limit", async () => {
-    let evaluations = 0;
+    const rateLimitKeys: string[] = [];
     const socket = makeSocket();
 
     const service = new LootSplitService(
-      {
-        command: {
-          eval: async () => {
-            evaluations += 1;
-
-            return [1, 1, 0];
-          },
-        },
-      },
+      acceptingRateLimit(1234, rateLimitKeys),
       {
         publishToScopes: () => Promise.reject(new Error("Unexpected publish")),
       },
@@ -138,14 +130,16 @@ describe("LootSplitService", () => {
     };
 
     expect(
-      await service.send(hidden, {
-        splitId: "1200653658",
-        choices: { "1200653658": 1 },
-        accepted: false,
-        recipientCharacterIds: ["789"],
-      }),
+      await Effect.runPromise(
+        service.send(hidden, {
+          splitId: "1200653658",
+          choices: { "1200653658": 1 },
+          accepted: false,
+          recipientCharacterIds: ["789"],
+        }),
+      ),
     ).toEqual({ status: "rejected", code: "forbidden" });
-    expect(evaluations).toBe(0);
+    expect(rateLimitKeys).toEqual([]);
   });
 
   test("rejects choices keyed by something other than an item id", async () => {
@@ -154,12 +148,14 @@ describe("LootSplitService", () => {
     });
 
     expect(
-      await service.send(makeSocket(), {
-        splitId: "1200653658",
-        choices: { "<script>": 1 },
-        accepted: false,
-        recipientCharacterIds: ["789"],
-      }),
+      await Effect.runPromise(
+        service.send(makeSocket(), {
+          splitId: "1200653658",
+          choices: { "<script>": 1 },
+          accepted: false,
+          recipientCharacterIds: ["789"],
+        }),
+      ),
     ).toEqual({ status: "rejected", code: "invalid-payload" });
   });
 });

@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useSocket } from "@/contexts/socket-context";
-import { GatewayEvent } from "@/config/gateway";
 import { queryKeys } from "@/features/public-api/query-keys";
 import {
   clearReadyRoomCache,
@@ -63,10 +62,10 @@ export function usePartyReadyRoomSync(): void {
       });
     };
 
-    socket.on(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
+    socket.on("access.updated", permissionsChanged);
 
     return () => {
-      socket.off(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
+      socket.off("access.updated", permissionsChanged);
     };
   }, [queryClient, socket]);
 }

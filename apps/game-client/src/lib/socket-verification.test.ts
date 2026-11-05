@@ -1,28 +1,19 @@
-import type { PlayerPresenceUpdatePayload } from "@/lib/online-players-presence";
+import type { PlayerPresence } from "@/lib/online-players-presence";
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { GLOBAL_CHAT_SHARED_CHANNEL } from "@/store/global-chat.store";
-import { GatewayEvent } from "@/config/gateway";
-import {
-  REALTIME_BATTLE_PING_CAPABILITY,
-  REALTIME_GLOBAL_CHAT_CAPABILITY,
-  REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
-  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
-} from "@lootlog/protocol/realtime";
+import type { CommandSuccess } from "@lootlog/protocol/realtime";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   RealtimeClient,
   type ServerEvent,
   type ClientCommand,
-  type BasicPresence,
 } from "@lootlog/client/realtime";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
-import { RealtimeWire } from "@/test/realtime-wire";
+import { ownerAccessPolicy, RealtimeWire } from "@/test/realtime-wire";
 
-type SocketServerResponse =
-  | Awaited<ReturnType<AppSocket["emitWithAck"]>>
-  | { presences: BasicPresence[] };
+type SocketServerResponse = CommandSuccess<ClientCommand["type"]> | undefined;
 
 const mocks = {
   join: vi.fn<
@@ -49,18 +40,15 @@ const proofRequests: Request[] = [];
 
 const sockets: AppSocket[] = [];
 
-const createSocket = (hello = true) => {
+const hello = (connectionId: string) =>
+  wire.receive({ v: 1, type: "session.hello", data: { connectionId } });
+
+const createSocket = () => {
   const socket = new AppSocket();
   sockets.push(socket);
   socket.connect();
   wire.open();
-
-  if (hello)
-    wire.receive({
-      v: 1,
-      type: "session.hello",
-      data: { connectionId: "connection-1" },
-    });
+  hello("connection-1");
 
   return socket;
 };
@@ -97,8 +85,19 @@ describe("game realtime verification and presence selection", () => {
     mocks.join.mockResolvedValue({
       connectionId: "connection-1",
       organizationIds: ["organization-1"],
+      subscriptionScopes: [],
+      accessPolicy: ownerAccessPolicy([]),
     });
-    mocks.request.mockResolvedValue(undefined);
+    // What the gateway answers when a test does not care about the result.
+    mocks.request.mockImplementation(async (type, data) => {
+      if (
+        type === "subscription.subscribe" ||
+        type === "subscription.unsubscribe"
+      )
+        return { scope: data };
+
+      return undefined;
+    });
     const originalSend = wire.send.bind(wire);
     vi.spyOn(wire, "send").mockImplementation((bytes) => {
       originalSend(bytes);
@@ -153,10 +152,10 @@ describe("game realtime verification and presence selection", () => {
     useSettingsStore.setState({ guildIdByCharId: {} });
   });
 
-  it("hydrates via the response without replaying legacy snapshots as deltas", async () => {
+  it("hydrates via the response and reports each delta change", async () => {
     const socket = createSocket();
-    const listener = vi.fn<(payload: PlayerPresenceUpdatePayload) => void>();
-    socket.on(GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE, listener);
+    const listener = vi.fn<(payload: PlayerPresence) => void>();
+    socket.on("presence.changed", listener);
 
     const presence = {
       userId: "internal-user-1",
@@ -168,31 +167,37 @@ describe("game realtime verification and presence selection", () => {
       isAfk: false,
       lastSeen: 1,
       organizationIds: ["organization-1"],
+      character: {
+        world: "alpha",
+        name: "Hero",
+        lvl: 100,
+        icon: "hero.gif",
+        characterId: "10",
+        accountId: "20",
+        prof: "w",
+      },
     };
 
-    mocks.request.mockResolvedValueOnce({ presences: [presence] });
+    mocks.request.mockResolvedValueOnce({
+      organizationId: "organization-1",
+      revision: 1,
+      presences: [presence],
+    });
     await expect(
-      socket.emitWithAck(GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH, {
-        guildId: "organization-1",
-      }),
+      socket.fetchPresence("organization-1", "alpha", 5_000),
     ).resolves.toMatchObject({
-      players: { "discord-1": [{ discordId: "discord-1" }] },
+      status: "success",
+      players: {
+        "discord-1": [{ sessionId: "session-1", guildId: "organization-1" }],
+      },
     });
     expect(mocks.request).toHaveBeenCalledWith("presence.fetch", {
       organizationId: "organization-1",
+      world: "alpha",
       delivery: "response",
     });
 
     const events: ServerEvent[] = [
-      {
-        v: 1,
-        type: "presence.snapshot",
-        data: {
-          organizationId: "organization-1",
-          revision: 1,
-          presences: [presence],
-        },
-      },
       {
         v: 1,
         type: "presence.delta",
@@ -253,32 +258,8 @@ describe("game realtime verification and presence selection", () => {
     expect(mocks.join).toHaveBeenCalledOnce();
   });
 
-  it("upgrades an older gateway session with its connection-bound proof without repeating local hydration", async () => {
-    vi.useFakeTimers();
-    const socket = createSocket(false);
-    const onJoin = vi.fn();
-    socket.on(GatewayEvent.JOIN, onJoin);
-    const joined = socket.join(joinData);
-    await vi.advanceTimersByTimeAsync(1_000);
-    await joined;
-    await socket.join(joinData);
-    expect(proofRequests).toHaveLength(1);
-    expect(mocks.join).toHaveBeenCalledTimes(2);
-    expect(mocks.join.mock.calls[0]?.[0]).not.toHaveProperty(
-      "margonemAccountProof",
-    );
-    expect(mocks.join.mock.calls[1]?.[0]).toMatchObject({
-      margonemAccountProof: {
-        characterId: "10",
-        token: expect.stringContaining("lootlog:connection-1:20:"),
-        signatureBase64: "signature",
-      },
-    });
-    expect(onJoin).toHaveBeenCalledOnce();
-  });
-
   it.each(["dispose", "reconnect", "character"] as const)(
-    "does not upgrade an obsolete legacy session after %s while its proof is pending",
+    "does not join with an obsolete proof after %s while it is pending",
     async (change) => {
       vi.useFakeTimers();
       const fetchProof = globalThis.fetch;
@@ -294,11 +275,11 @@ describe("game realtime verification and presence selection", () => {
         .mockImplementation(fetchProof);
 
       vi.stubGlobal("fetch", proofFetch);
-      const socket = createSocket(false);
+      const socket = createSocket();
       const oldJoin = socket.join(joinData);
       const oldOutcome = oldJoin.catch((error: Error) => error);
       await vi.advanceTimersByTimeAsync(1_000);
-      expect(mocks.join).toHaveBeenCalledOnce();
+      expect(mocks.join).not.toHaveBeenCalled();
       expect(proofFetch).toHaveBeenCalledOnce();
 
       if (change === "dispose") {
@@ -308,9 +289,12 @@ describe("game realtime verification and presence selection", () => {
           socket.disconnect();
           socket.connect();
           wire.open();
+          hello("connection-2");
           mocks.join.mockResolvedValue({
             connectionId: "connection-2",
             organizationIds: ["organization-1"],
+            subscriptionScopes: [],
+            accessPolicy: ownerAccessPolicy([]),
           });
         }
 
@@ -385,83 +369,30 @@ describe("game realtime verification and presence selection", () => {
     });
   });
 
-  it.each([true, false])(
-    "keeps one reported join when the proof times out (hello: %s)",
-    async (hello) => {
-      vi.useFakeTimers();
-      vi.stubGlobal(
-        "fetch",
-        (_input: Parameters<typeof fetch>[0], init?: RequestInit) =>
-          new Promise<Response>((_resolve, reject) => {
-            init?.signal?.addEventListener(
-              "abort",
-              () => reject(init.signal?.reason),
-              { once: true },
-            );
-          }),
-      );
-      const socket = createSocket(hello);
-      const joined = socket.join(joinData);
-      await vi.advanceTimersByTimeAsync(hello ? 5_000 : 6_000);
-      await joined;
-      expect(mocks.join).toHaveBeenCalledOnce();
-      expect(mocks.join.mock.calls[0]?.[0]).not.toHaveProperty(
-        "margonemAccountProof",
-      );
-    },
-  );
-
-  it("sends battle pings only while joined to a gateway that advertises them", async () => {
+  it("keeps one reported join when the proof times out", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      (_input: Parameters<typeof fetch>[0], init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => reject(init.signal?.reason),
+            { once: true },
+          );
+        }),
+    );
     const socket = createSocket();
-    await socket.join(joinData);
-    // Older gateways close the socket on an unknown battle-ping.send.
-    expect(socket.supportsBattlePings()).toBe(false);
-
-    mocks.join.mockResolvedValue({
-      connectionId: "connection-1",
-      organizationIds: ["organization-1"],
-      capabilities: ["connection.ping", REALTIME_BATTLE_PING_CAPABILITY],
-    });
-    socket.disconnect();
-    socket.connect();
-    wire.open();
-    wire.receive({
-      v: 1,
-      type: "session.hello",
-      data: { connectionId: "connection-1" },
-    });
-    await socket.join(joinData);
-    expect(socket.supportsBattlePings()).toBe(true);
-    // A v1 gateway cannot decode team pings such as `quick-fight`.
-    expect(socket.supportsTeamBattlePings()).toBe(false);
-
-    mocks.join.mockResolvedValue({
-      connectionId: "connection-1",
-      organizationIds: ["organization-1"],
-      capabilities: [
-        "connection.ping",
-        REALTIME_BATTLE_PING_CAPABILITY,
-        REALTIME_TEAM_BATTLE_PING_CAPABILITY,
-      ],
-    });
-    socket.disconnect();
-    socket.connect();
-    wire.open();
-    wire.receive({
-      v: 1,
-      type: "session.hello",
-      data: { connectionId: "connection-1" },
-    });
-    await socket.join(joinData);
-    expect(socket.supportsTeamBattlePings()).toBe(true);
-
-    // The next connection may reach an older gateway before it rejoins.
-    wire.close();
-    expect(socket.supportsBattlePings()).toBe(false);
-    expect(socket.supportsTeamBattlePings()).toBe(false);
+    const joined = socket.join(joinData);
+    await vi.advanceTimersByTimeAsync(5_000);
+    await joined;
+    expect(mocks.join).toHaveBeenCalledOnce();
+    expect(mocks.join.mock.calls[0]?.[0]).not.toHaveProperty(
+      "margonemAccountProof",
+    );
   });
 
-  it("follows a global chat channel only on gateways that advertise it, renewing it on every join", async () => {
+  it("follows a global chat channel once joined, renewing it on every join", async () => {
     const globalChatRequests = () =>
       mocks.request.mock.calls.filter(([type]) =>
         type.startsWith("subscription."),
@@ -469,38 +400,23 @@ describe("game realtime verification and presence selection", () => {
 
     const subscribed = vi.fn();
     const socket = createSocket();
-    socket.on(GatewayEvent.GLOBAL_CHAT_SUBSCRIBED, subscribed);
+    socket.on("global-chat.subscribed", subscribed);
     socket.followGlobalChat("gordion");
+    // The join renews the subscription, so none is sent before it.
+    expect(globalChatRequests()).toEqual([]);
     await socket.join(joinData);
-    // Older gateways close the socket on an unknown subscription topic.
-    expect(globalChatRequests()).toEqual([]);
-
-    const rejoin = async (capabilities: string[]) => {
-      mocks.join.mockResolvedValue({
-        connectionId: "connection-1",
-        organizationIds: ["organization-1"],
-        capabilities,
-      });
-      socket.disconnect();
-      socket.connect();
-      wire.open();
-      wire.receive({
-        v: 1,
-        type: "session.hello",
-        data: { connectionId: "connection-1" },
-      });
-      await socket.join(joinData);
-    };
-
-    // A gateway with only the shared channel cannot follow a world.
-    await rejoin([REALTIME_GLOBAL_CHAT_CAPABILITY]);
-    expect(globalChatRequests()).toEqual([]);
-
-    await rejoin([
-      REALTIME_GLOBAL_CHAT_CAPABILITY,
-      REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
-    ]);
     await vi.waitFor(() => expect(subscribed).toHaveBeenCalledWith("gordion"));
+
+    socket.disconnect();
+    socket.connect();
+    wire.open();
+    wire.receive({
+      v: 1,
+      type: "session.hello",
+      data: { connectionId: "connection-1" },
+    });
+    await socket.join(joinData);
+    await vi.waitFor(() => expect(subscribed).toHaveBeenCalledTimes(2));
 
     socket.followGlobalChat(GLOBAL_CHAT_SHARED_CHANNEL);
     await vi.waitFor(() =>
@@ -510,6 +426,10 @@ describe("game realtime verification and presence selection", () => {
 
     await vi.waitFor(() =>
       expect(globalChatRequests()).toEqual([
+        [
+          "subscription.subscribe",
+          { topic: "global.chat.world", world: "gordion" },
+        ],
         [
           "subscription.subscribe",
           { topic: "global.chat.world", world: "gordion" },
@@ -586,11 +506,13 @@ describe("game realtime verification and presence selection", () => {
       mocks.join.mockResolvedValue({
         connectionId: "connection-1",
         organizationIds: ["organization-1", "organization-2"],
+        subscriptionScopes: [],
+        accessPolicy: ownerAccessPolicy([]),
       });
 
       const scopesAtJoin: unknown[] = [];
 
-      socket.on(GatewayEvent.JOIN, () => {
+      socket.on("join", () => {
         for (const [type, data] of mocks.request.mock.calls) {
           if (type === "presence.publish") scopesAtJoin.push(data);
         }
@@ -598,7 +520,7 @@ describe("game realtime verification and presence selection", () => {
 
       const { clan: _clan, ...clanlessJoinData } = joinData;
       await socket.join(clanlessJoinData);
-      socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE);
+      void socket.publishPresence();
 
       expect(scopesAtJoin).toEqual(publishedAtJoin);
       expect(
@@ -609,66 +531,6 @@ describe("game realtime verification and presence selection", () => {
     },
   );
 
-  it("passes exact map-ping and air-tag acknowledgements through unchanged", async () => {
-    const mapAck = {
-      status: "accepted" as const,
-      pingId: "ping-1",
-      extension: { sequence: 1 },
-    };
-
-    const subscriptionAck = {
-      status: "accepted" as const,
-      requestId: "air-request-1",
-      scopes: [],
-    };
-
-    const observationAck = {
-      status: "accepted" as const,
-      acceptedScopes: 1,
-      acceptedTargets: 2,
-    };
-
-    mocks.request
-      .mockResolvedValueOnce(mapAck)
-      .mockResolvedValueOnce(subscriptionAck)
-      .mockResolvedValueOnce(observationAck);
-    const socket = createSocket();
-
-    await expect(
-      socket.emitWithAck(GatewayEvent.MAP_PING_SEND, {
-        expectedMapId: 7,
-        type: "enemy",
-        x: 1,
-        y: 2,
-      }),
-    ).resolves.toEqual(mapAck);
-    await expect(
-      socket.emitWithAck(GatewayEvent.AIR_TAG_SUBSCRIPTION, {
-        requestId: "air-request-1",
-        enabled: true,
-        expectedMapId: 7,
-      }),
-    ).resolves.toEqual(subscriptionAck);
-    await expect(
-      socket.emitWithAck(GatewayEvent.AIR_TAG_OBSERVATION, {
-        expectedMapId: 7,
-        observations: [],
-      }),
-    ).resolves.toEqual(observationAck);
-    expect(mocks.request).toHaveBeenNthCalledWith(2, "air-tag.subscription", {
-      requestId: "air-request-1",
-      enabled: true,
-      expectedMapId: 7,
-    });
-  });
-  it("keeps unsupported legacy commands local and resolves without an acknowledgement payload", async () => {
-    const socket = createSocket();
-    await expect(
-      socket.emitWithAck(GatewayEvent.CHAT_MESSAGE),
-    ).resolves.toBeUndefined();
-    expect(wire.frames).toHaveLength(0);
-  });
-
   it("reports one timeout and ignores a later successful server acknowledgement", async () => {
     let complete: ((response: SocketServerResponse) => void) | undefined;
     mocks.request.mockReturnValueOnce(
@@ -678,23 +540,17 @@ describe("game realtime verification and presence selection", () => {
     );
     const socket = createSocket();
 
-    const acknowledgement =
-      vi.fn<(error: Error | null, response?: SocketServerResponse) => void>();
+    const acknowledgement = socket.request(
+      "map-ping.send",
+      { expectedMapId: 7, type: "enemy", x: 1, y: 2 },
+      5,
+    );
 
-    socket
-      .timeout(5)
-      .emit(
-        GatewayEvent.MAP_PING_SEND,
-        { expectedMapId: 7, type: "enemy", x: 1, y: 2 },
-        acknowledgement,
-      );
-    await vi.waitFor(() => expect(acknowledgement).toHaveBeenCalledOnce());
-    expect(acknowledgement.mock.calls[0]?.[0]?.message).toBe(
+    await expect(acknowledgement).rejects.toThrow(
       "Realtime acknowledgement timeout",
     );
     complete?.({ status: "accepted", pingId: "late" });
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
-    expect(acknowledgement).toHaveBeenCalledOnce();
     expect(mocks.request).toHaveBeenCalledOnce();
   });
 
@@ -704,7 +560,7 @@ describe("game realtime verification and presence selection", () => {
     );
     const socket = createSocket();
 
-    const result = socket.emitWithAck(GatewayEvent.MAP_PING_SEND, {
+    const result = socket.request("map-ping.send", {
       expectedMapId: 7,
       type: "enemy",
       x: 1,

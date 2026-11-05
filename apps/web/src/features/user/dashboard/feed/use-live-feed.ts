@@ -1,3 +1,4 @@
+import type { GatewayAccessUpdate, GatewayJoin } from "@/lib/gateway-client";
 import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -7,7 +8,6 @@ import {
   type UserFeedResponseDtoOutput,
   type UsersControllerGetUserFeedParams,
 } from "@lootlog/client/main";
-import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import {
   initialLiveFeedState,
@@ -128,18 +128,14 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
       }
     };
 
-    const handlePermissions = (payload?: {
-      guilds: ReadonlyArray<{ guild: { id: string } }>;
-    }) => {
+    const handlePermissions = (payload: GatewayAccessUpdate) => {
       // Remove revoked organizations immediately; keep the remaining rows mounted.
       // Discard cached and pending data from the previous policy.
       cancel();
       queryClient.removeQueries({ queryKey });
       dispatch({
         type: "revalidate",
-        organizationIds: new Set(
-          payload?.guilds.map(({ guild }) => guild.id) ?? [],
-        ),
+        organizationIds: new Set(payload.organizationIds),
       });
       buffered = [];
       permissionsChanged = true;
@@ -153,12 +149,9 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
       }, 5000);
     };
 
-    const handleJoin = (payload: {
-      status: "success" | "error";
-      recover: boolean;
-    }) => {
+    const handleJoin = (payload: GatewayJoin) => {
       // A join right after the initial history fetch has nothing to catch up.
-      if (payload.status !== "success" || !payload.recover) return;
+      if (!payload.recover) return;
       // Pausing live updates does not pause source-access revalidation.
       void refresh(true);
     };
@@ -186,9 +179,9 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
         else if (!revalidatingAccess) cancel();
       },
     };
-    socket.on(GatewayEvent.FEED_ENTRY, onEntry);
-    socket.on(GatewayEvent.JOIN, handleJoin);
-    socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissions);
+    socket.on("feed.entry", onEntry);
+    socket.on("join", handleJoin);
+    socket.on("access.updated", handlePermissions);
 
     appliedFiltersKey.current = JSON.stringify(getFilters());
     dispatch({ type: "filters", filters: getFilters() });
@@ -201,9 +194,9 @@ export function useLiveFeed({ filters, paused, ready }: LiveFeedOptions) {
       clearTimeout(accessRefreshTimer);
       cancel();
       controlsRef.current = undefined;
-      socket.off(GatewayEvent.FEED_ENTRY, onEntry);
-      socket.off(GatewayEvent.JOIN, handleJoin);
-      socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissions);
+      socket.off("feed.entry", onEntry);
+      socket.off("join", handleJoin);
+      socket.off("access.updated", handlePermissions);
     };
   }, [socket, queryClient, hasNoGuilds, ready]);
   useEffect(() => {

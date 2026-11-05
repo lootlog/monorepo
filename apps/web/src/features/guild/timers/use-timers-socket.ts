@@ -9,11 +9,13 @@ import {
   upsertTimerInCollection,
   type TimerIdentity,
 } from "@lootlog/domain/timers";
-import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
 import { DateTimeString } from "@lootlog/schema/http-scalars";
 import { Option, Schema } from "effect";
-import { GatewayEvent } from "@/config/gateway";
-import type { GatewayClient } from "@/lib/gateway-client";
+import type {
+  GatewayAccessUpdate,
+  GatewayClient,
+  GatewayJoin,
+} from "@/lib/gateway-client";
 
 const timerIdentityFields = {
   guildId: Schema.NonEmptyString,
@@ -49,8 +51,6 @@ type Options = {
   socket: GatewayClient;
   guilds: readonly { id: string; vanityUrl?: string | null }[] | undefined;
 };
-
-type PolicyUpdate = { accessPolicyChanges?: readonly AccessPolicyChange[] };
 
 const isTimerPath = Schema.is(
   Schema.String.check(Schema.isPattern(/^\/guilds\/[^/]+\/timers$/)),
@@ -150,8 +150,8 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
       void queryClient.invalidateQueries(filters);
     };
 
-    const onPermissions = (payload?: PolicyUpdate) => {
-      const changes = payload?.accessPolicyChanges;
+    const onPermissions = (payload: GatewayAccessUpdate) => {
+      const changes = payload.accessPolicyChanges;
 
       if (!changes) {
         clearRestrictedTimers();
@@ -190,13 +190,10 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
         reconcile();
     };
 
-    const onJoin = (
-      payload: PolicyUpdate & { guildIds: string[]; recover: boolean },
-    ) => {
+    const onJoin = (payload: GatewayJoin) => {
       const joinedGuilds = new Set(payload.guildIds);
 
       if (
-        !payload.accessPolicyChanges ||
         payload.accessPolicyChanges.some(
           (change) =>
             change.restricted &&
@@ -217,16 +214,16 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
     const onCreate = (payload: TimerResponseDto) => update(payload, payload);
     const onDelete = (payload: TimerIdentity) => update(payload);
 
-    socket.on(GatewayEvent.TIMERS_CREATE, onCreate);
-    socket.on(GatewayEvent.TIMERS_DELETE, onDelete);
-    socket.on(GatewayEvent.JOIN, onJoin);
-    socket.on(GatewayEvent.PERMISSIONS_UPDATED, onPermissions);
+    socket.on("timer.created", onCreate);
+    socket.on("timer.deleted", onDelete);
+    socket.on("join", onJoin);
+    socket.on("access.updated", onPermissions);
 
     return () => {
-      socket.off(GatewayEvent.TIMERS_CREATE, onCreate);
-      socket.off(GatewayEvent.TIMERS_DELETE, onDelete);
-      socket.off(GatewayEvent.JOIN, onJoin);
-      socket.off(GatewayEvent.PERMISSIONS_UPDATED, onPermissions);
+      socket.off("timer.created", onCreate);
+      socket.off("timer.deleted", onDelete);
+      socket.off("join", onJoin);
+      socket.off("access.updated", onPermissions);
     };
   }, [guilds, queryClient, socket]);
 };

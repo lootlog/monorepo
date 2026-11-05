@@ -6,10 +6,24 @@ import {
 } from "#src/realtime/npc-event-visibility";
 import { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { parseRealtimeJson } from "@lootlog/protocol/realtime/codec";
-import { Cause, Effect, Predicate, Queue, Schedule, Schema } from "effect";
-import * as Redis from "effect/persistence/Redis";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
+  Cause,
+  Context,
+  Effect,
+  Layer,
+  Predicate,
+  Queue,
+  Redacted,
+  Schedule,
+  Schema,
+} from "effect";
+import * as Redis from "effect/persistence/Redis";
+import {
+  GatewayConfig,
+  type GatewayConfiguration,
+} from "#src/config/gateway-config";
+import {
+  Background,
   type BackgroundTaskRunner,
   yieldToEventLoop,
 } from "./background-tasks.js";
@@ -21,7 +35,7 @@ type RedisGatewayConfig = Omit<GatewayConfiguration["redis"], "password"> & {
 
 export interface FederatedRealtimeMessage {
   readonly id: string;
-  /** Position in the federation stream; replicas before version 4 omit it. */
+  /** Position in the federation stream; Redis adds it when it publishes. */
   readonly sequence?: number;
   readonly sourceInstanceId: string;
   readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
@@ -36,9 +50,10 @@ export interface FederatedRealtimeMessage {
   readonly recipientWorld?: string;
   readonly recipientMapId?: number;
   readonly recipientCharacterIds?: ReadonlyArray<string>;
-  readonly presenceAudience?: "basic" | "precise";
+  /** Only readers of precise location receive it. */
+  readonly presenceAudience?: "precise";
   readonly organizationId?: string;
-  /** `FRAME_SCHEMA` of the publishing replica; absent before version 8. */
+  /** `FRAME_SCHEMA` of the publishing replica. */
   readonly frameSchema?: string;
   /** The frame, as its encoded JSON value. */
   readonly event?: Schema.Json;
@@ -80,7 +95,7 @@ const FederatedRealtimeMessageSchema = Schema.Struct({
   recipientWorld: Schema.optional(Schema.String),
   recipientMapId: Schema.optional(Schema.Number),
   recipientCharacterIds: Schema.optional(Schema.Array(Schema.String)),
-  presenceAudience: Schema.optional(Schema.Literals(["basic", "precise"])),
+  presenceAudience: Schema.optional(Schema.Literal("precise")),
   organizationId: Schema.optional(Schema.String),
   frameSchema: Schema.optional(Schema.String),
   event: Schema.optional(Schema.Unknown),
@@ -129,7 +144,7 @@ export const encodeFederatedRealtimeMessage = (
 const FEDERATION_SEQUENCE_KEY = "realtime:federation:v1:sequence";
 
 // Numbering and publication are one step, so a number exists only for a frame
-// Redis published. Older replicas ignore the added field.
+// Redis published.
 const publishSequencedScript = `
 local sequence = redis.call("INCR", KEYS[1])
 redis.call("PUBLISH", ARGV[1], '{"sequence":' .. sequence .. ',' .. string.sub(ARGV[2], 2))
@@ -230,10 +245,6 @@ export class RedisGatewayStore {
 
   async connect(): Promise<void> {
     await this.runEffect(this.redis.send("PING"));
-  }
-
-  close(): Promise<void> {
-    return Promise.resolve();
   }
 
   async publish(
@@ -412,4 +423,40 @@ export interface RedisGatewayCommands {
     ...keysAndArgs: ReadonlyArray<string | number>
   ) => Promise<A>;
   readonly flushdb: () => Promise<"OK">;
+}
+
+/** The replica's connected Redis store, closed with the application. */
+export class GatewayRedis extends Context.Service<
+  GatewayRedis,
+  RedisGatewayStore
+>()("@lootlog/gateway/platform/GatewayRedis") {
+  static readonly layer = Layer.effect(
+    GatewayRedis,
+    Effect.gen(function* () {
+      const config = yield* GatewayConfig;
+      const background = yield* Background;
+      const client = yield* Redis.Redis;
+
+      // The Redis layer owns and closes the client.
+      return yield* Effect.tryPromise({
+        try: async () => {
+          const store = new RedisGatewayStore(
+            client,
+            {
+              ...config.redis,
+              password: Redacted.value(config.redis.password),
+            },
+            background.runPromise,
+            background.run,
+          );
+
+          await store.connect();
+
+          return store;
+        },
+        catch: (cause) =>
+          new Error("Failed to connect Gateway Redis", { cause }),
+      });
+    }),
+  );
 }

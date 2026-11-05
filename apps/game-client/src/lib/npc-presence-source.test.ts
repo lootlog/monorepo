@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import {
-  REALTIME_NPC_PRESENCE_CAPABILITY,
-  type ServerEvent,
-} from "@lootlog/protocol/realtime";
+import type { ServerEvent } from "@lootlog/protocol/realtime";
 import type { NpcPresenceSnapshot } from "@lootlog/schema/npc-presence";
 import { Permission } from "@lootlog/schema/permissions";
 import { createOnlinePlayersTest } from "@/features/online-players/online-players-test-fixtures";
@@ -50,7 +47,6 @@ async function setup() {
       ],
       "user",
     ),
-    [REALTIME_NPC_PRESENCE_CAPABILITY],
   );
 
   const source = new NpcPresenceSource(getSocket(), "guild-1", "alpha");

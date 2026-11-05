@@ -1,4 +1,8 @@
-import { createTestGateway } from "@/lib/testing/gateway";
+import type { GatewayClientEvent } from "@/lib/gateway-client";
+import {
+  createTestAccessPolicy,
+  createTestGateway,
+} from "@/lib/testing/gateway";
 import { configureApiClients } from "@lootlog/client/transport";
 import {
   getSettingsDocumentsControllerGetPreferencesQueryKey,
@@ -32,7 +36,6 @@ import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import "@/i18n/config";
 import { DashboardLiveFeed } from "./dashboard-live-feed";
 import { feedResponse, feedKill } from "./live-feed-test-data";
-import { GatewayEvent } from "@/config/gateway";
 
 const mocks = {
   request: vi.fn<() => Promise<ReturnType<typeof feedResponse>>>(),
@@ -98,22 +101,22 @@ function seedAccount(queryClient: QueryClient) {
 let gateway: ReturnType<typeof createTestGateway>;
 
 function deliverLifecycleEvent(
-  event: GatewayEvent,
+  event: GatewayClientEvent,
   organizationIds = [feedKill.guild.id],
 ) {
-  if (event === GatewayEvent.CONNECT) {
+  if (event === "connect") {
     gateway.setConnectionState("ready");
 
     return;
   }
 
-  if (event === GatewayEvent.DISCONNECT) {
+  if (event === "disconnect") {
     gateway.setConnectionState("disconnected");
 
     return;
   }
 
-  if (event === GatewayEvent.JOIN) {
+  if (event === "join") {
     gateway.deliver({
       v: 1,
       type: "session.joined",
@@ -121,17 +124,23 @@ function deliverLifecycleEvent(
         connectionId: "connection-1",
         organizationIds,
         subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy(organizationIds),
       },
     });
 
     return;
   }
 
-  if (event === GatewayEvent.PERMISSIONS_UPDATED) {
+  if (event === "access.updated") {
     gateway.deliver({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds, subscriptionScopes: [] },
+      data: {
+        changes: [],
+        organizationIds,
+        subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy(organizationIds),
+      },
     });
 
     return;
@@ -306,11 +315,11 @@ it("adds organization copies to one row and preserves that row during an HTTP re
   link.focus();
 
   for (const event of [
-    GatewayEvent.JOIN,
-    GatewayEvent.DISCONNECT,
-    GatewayEvent.CONNECT,
-    GatewayEvent.JOIN,
-  ]) {
+    "join",
+    "disconnect",
+    "connect",
+    "join",
+  ] satisfies GatewayClientEvent[]) {
     act(() => deliverLifecycleEvent(event));
     expect(
       screen.getByRole("link", { name: "Bicie: Heros" }).closest("li"),
@@ -392,7 +401,7 @@ it("keeps the same focused row throughout debounced permission revalidation", as
   ).toBeTruthy();
 
   for (let index = 0; index < 3; index += 1) {
-    act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+    act(() => deliverLifecycleEvent("access.updated"));
     expect(
       screen.queryByRole("link", { name: "Odebrana organizacja" }),
     ).toBeNull();

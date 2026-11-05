@@ -4,7 +4,6 @@ import type {
   LootSplitEvent,
 } from "@lootlog/schema/loot-split";
 import { useEffect, useRef } from "react";
-import { GatewayEvent } from "@/config/gateway";
 import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
 import { runtimeEventPipeline } from "@/lib/margonem-runtime/runtime-event-pipeline";
 import type { AppSocket } from "@/lib/socket";
@@ -86,12 +85,14 @@ const sendOwnView = (socket: AppSocket, splitId: string) => {
   // Nobody else takes part, so nobody needs the frame.
   if (recipientCharacterIds.length === 0) return;
 
-  socket.emit(GatewayEvent.LOOT_SPLIT_SEND, {
-    splitId: split.id,
-    choices: view.choices,
-    accepted: view.accepted,
-    recipientCharacterIds,
-  });
+  void socket
+    .request("loot-split.send", {
+      splitId: split.id,
+      choices: view.choices,
+      accepted: view.accepted,
+      recipientCharacterIds,
+    })
+    .catch(() => undefined);
 };
 
 /**
@@ -152,16 +153,15 @@ export const useLootSplitSync = () => {
         );
 
         // Not queued while offline: the split is over within seconds.
-        if (
-          recipientCharacterIds &&
-          socketRef.current?.supportsLootSplitAutoAccept()
-        )
-          socketRef.current.emit(GatewayEvent.LOOT_SPLIT_AUTO_ACCEPT_SEND, {
-            recipientCharacterIds: recipientCharacterIds.slice(
-              0,
-              MAX_RECIPIENTS,
-            ),
-          });
+        if (recipientCharacterIds && socketRef.current)
+          void socketRef.current
+            .request("loot-split.auto-accept", {
+              recipientCharacterIds: recipientCharacterIds.slice(
+                0,
+                MAX_RECIPIENTS,
+              ),
+            })
+            .catch(() => undefined);
       },
     );
 
@@ -221,15 +221,12 @@ export const useLootSplitSync = () => {
       );
     };
 
-    socket.on(GatewayEvent.LOOT_SPLIT_RECEIVE, handleChoices);
-    socket.on(GatewayEvent.LOOT_SPLIT_AUTO_ACCEPT_RECEIVE, handleFilterAccept);
+    socket.on("loot-split.received", handleChoices);
+    socket.on("loot-split.auto-accepted", handleFilterAccept);
 
     return () => {
-      socket.off(GatewayEvent.LOOT_SPLIT_RECEIVE, handleChoices);
-      socket.off(
-        GatewayEvent.LOOT_SPLIT_AUTO_ACCEPT_RECEIVE,
-        handleFilterAccept,
-      );
+      socket.off("loot-split.received", handleChoices);
+      socket.off("loot-split.auto-accepted", handleFilterAccept);
     };
   }, [socket]);
 };

@@ -1,9 +1,14 @@
-import { Effect } from "effect";
+import { Effect, Context, Layer } from "effect";
 import {
+  Background,
   yieldToEventLoop,
   type BackgroundTaskRunner,
 } from "#src/platform/background-tasks";
 import type { GatewaySocket } from "#src/realtime/session";
+import { Activity } from "#src/rabbit/activity-publisher";
+import { Commands } from "#src/realtime/command-handler";
+import { NpcPresence } from "#src/realtime/npc-presence-service";
+import { Presence } from "#src/realtime/presence-store";
 
 type Message = string | Buffer;
 
@@ -216,4 +221,65 @@ export class CommandIngress {
       this.draining = false;
     }
   }
+}
+
+/** Admits, orders and runs each socket's frames, then its disconnect cleanup. */
+export class Ingress extends Context.Service<Ingress, CommandIngress>()(
+  "@lootlog/gateway/realtime/Ingress",
+) {
+  static readonly layer = Layer.effect(
+    Ingress,
+    Effect.gen(function* () {
+      const commands = yield* Commands;
+      const activity = yield* Activity;
+      const presence = yield* Presence;
+      const npcPresence = yield* NpcPresence;
+
+      return new CommandIngress(
+        (socket, message) => commands.handle(socket, message),
+        (socket, message) => commands.rejectOverloaded(socket, message),
+        (socket) =>
+          Effect.suspend(() => {
+            if (socket.data.apiKeyAccess) return Effect.void;
+
+            return Effect.all(
+              [
+                activity
+                  .publish("DISCONNECT_EVENT", socket.data)
+                  .pipe(
+                    Effect.catchCause((error) =>
+                      Effect.logError(
+                        "Gateway disconnect activity failed",
+                        error,
+                      ),
+                    ),
+                  ),
+                presence
+                  .disconnect(socket.data)
+                  .pipe(
+                    Effect.catchCause((error) =>
+                      Effect.logError(
+                        "Gateway disconnect presence failed",
+                        error,
+                      ),
+                    ),
+                  ),
+                npcPresence
+                  .withdraw(socket)
+                  .pipe(
+                    Effect.catchCause((error) =>
+                      Effect.logError(
+                        "Gateway disconnect NPC presence failed",
+                        error,
+                      ),
+                    ),
+                  ),
+              ],
+              { concurrency: 3, discard: true },
+            );
+          }),
+        (yield* Background).run,
+      );
+    }),
+  );
 }

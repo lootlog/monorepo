@@ -9,8 +9,11 @@ import React, {
 import { useTimersSocket } from "@/features/guild/timers/use-timers-socket";
 import { useHeroSightingsSocket } from "@/features/guild/hero-sightings/use-hero-sightings-socket";
 import { useKillStatsUpdates } from "@/hooks/utils/use-kill-stats-updates";
-import { GatewayEvent } from "@/config/gateway";
-import { socket } from "@/lib/gateway-client";
+import {
+  socket,
+  type GatewayAccessUpdate,
+  type GatewayJoin,
+} from "@/lib/gateway-client";
 import { useUser } from "@/hooks/api/user/use-user";
 import {
   invalidateUsersControllerGetCurrentUserAccessibleGuilds,
@@ -18,29 +21,19 @@ import {
 } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
 import { LootUnreadProvider } from "./loot-unread-provider";
-import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
 import { reconcileEventPolicyQueries } from "@/features/guild/events/hooks/mutations/invalidate-event-queries";
-
-type GatewayPolicyPayload = {
-  accessPolicyChanges?: readonly AccessPolicyChange[];
-};
-
-type GatewayJoinPayload = GatewayPolicyPayload & {
-  status: "error" | "success";
-  recover: boolean;
-};
 
 type Props = {
   children: React.ReactNode;
 };
 
 const subscribeConnection = (listener: () => void) => {
-  socket.on(GatewayEvent.CONNECT, listener);
-  socket.on(GatewayEvent.DISCONNECT, listener);
+  socket.on("connect", listener);
+  socket.on("disconnect", listener);
 
   return () => {
-    socket.off(GatewayEvent.CONNECT, listener);
-    socket.off(GatewayEvent.DISCONNECT, listener);
+    socket.off("connect", listener);
+    socket.off("disconnect", listener);
   };
 };
 
@@ -62,13 +55,9 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
     setJoined(false);
   });
 
-  const handleJoin = useEffectEvent((data: GatewayJoinPayload) => {
-    if (data.status === "error") {
-      return;
-    }
-
-    // A first join with a known policy leaves the freshly loaded data alone.
-    if (data.recover || !data.accessPolicyChanges)
+  const handleJoin = useEffectEvent((data: GatewayJoin) => {
+    // A first join leaves the freshly loaded data alone.
+    if (data.recover)
       void reconcileEventPolicyQueries(queryClient, data.accessPolicyChanges);
 
     setJoined(true);
@@ -76,26 +65,26 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
 
   const emitJoin = useEffectEvent(() => {
     if (connected && canConnect) {
-      socket.emit(GatewayEvent.JOIN);
+      socket.join();
     }
   });
 
   const handlePermissionsUpdated = useEffectEvent(
-    (data: GatewayPolicyPayload) => {
+    (data: GatewayAccessUpdate) => {
       void reconcileEventPolicyQueries(queryClient, data.accessPolicyChanges);
       void invalidateUsersControllerGetCurrentUserAccessibleGuilds(queryClient);
     },
   );
 
   useEffect(() => {
-    socket.on(GatewayEvent.DISCONNECT, handleDisconnect);
-    socket.on(GatewayEvent.JOIN, handleJoin);
-    socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("join", handleJoin);
+    socket.on("access.updated", handlePermissionsUpdated);
 
     return () => {
-      socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
-      socket.off(GatewayEvent.JOIN, handleJoin);
-      socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("join", handleJoin);
+      socket.off("access.updated", handlePermissionsUpdated);
     };
   }, []);
 

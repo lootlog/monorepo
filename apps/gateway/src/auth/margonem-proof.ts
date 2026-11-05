@@ -1,9 +1,13 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { verify as verifySignatureValue } from "node:crypto";
-import { Cause, Clock, Effect, Option, Schema } from "effect";
+import { Cause, Clock, Effect, Option, Schema, Context, Layer } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 import { SingleFlight } from "#src/platform/single-flight";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
+import {
+  type GatewayConfiguration,
+  GatewayConfig,
+} from "#src/config/gateway-config";
+import { HttpClient } from "effect/http";
 
 const FORCED_REFRESH_INTERVAL_MS = 60_000;
 
@@ -37,11 +41,11 @@ const Proof = Schema.Struct({
 
 const decodeProof = Schema.decodeUnknownOption(Proof);
 
-export type ProofVerification =
+type ProofVerification =
   | { readonly valid: true }
   | { readonly valid: false; readonly reason: string };
 
-export interface ProofVerificationOptions {
+interface ProofVerificationOptions {
   readonly proof: unknown;
   readonly socketId: string;
   readonly accountId: string;
@@ -301,3 +305,19 @@ export const makeMargonemProofVerifier = (
       ),
   };
 };
+
+/** Verifies the Margonem account proof a Game client sends on join. */
+export class ProofVerifier extends Context.Service<
+  ProofVerifier,
+  MargonemProofVerifier
+>()("@lootlog/gateway/auth/ProofVerifier") {
+  static readonly layer = Layer.effect(
+    ProofVerifier,
+    Effect.gen(function* () {
+      return makeMargonemProofVerifier(
+        yield* GatewayConfig,
+        yield* HttpClient.HttpClient,
+      );
+    }),
+  );
+}

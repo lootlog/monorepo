@@ -35,22 +35,6 @@ export interface SessionData extends AuthenticatedIdentity {
   readonly connectionId: string;
   readonly platform: typeof PresencePlatform.Type;
   readonly userAgent?: string;
-  readonly supportsFeed?: boolean;
-  /** Receives `loot.snapshot` in place of `loot.created`. */
-  readonly supportsLootSnapshot?: boolean;
-  readonly supportsSessionHello?: boolean;
-  readonly supportsNotificationVolunteer?: boolean;
-  readonly supportsPartyGatheringState?: boolean;
-  readonly supportsBattlePings?: boolean;
-  readonly supportsTeamBattlePings?: boolean;
-  readonly supportsLootSplit?: boolean;
-  readonly supportsLootSplitAutoAccept?: boolean;
-  readonly supportsAirTagMapThreats?: boolean;
-  readonly supportsAirTagScopeUpdates?: boolean;
-  readonly supportsNpcPresence?: boolean;
-  readonly supportsGlobalChat?: boolean;
-  /** Decodes global chat moderation and stats, and follows per-world channels. */
-  readonly supportsGlobalChatChannels?: boolean;
   joined: boolean;
   /** Set when the gateway will close the socket; it no longer acts on commands. */
   closing?: boolean;

@@ -1,5 +1,5 @@
+import type { GatewayJoin } from "@/lib/gateway-client";
 import { useEffect, useEffectEvent } from "react";
-import { GatewayEvent } from "@/config/gateway";
 import type { RefreshJobUpdate } from "@/types/refresh-job";
 import { useGateway } from "./use-gateway";
 
@@ -14,31 +14,24 @@ export const useRefreshJobUpdates = (
     if (update.guildId === guildId) onUpdate(update);
   });
 
-  const handleJoin = useEffectEvent(
-    (payload: {
-      status: "success" | "error";
-      guildIds: string[];
-      recover: boolean;
-    }) => {
-      // The gateway does not replay progress missed while disconnected.
-      if (
-        payload.status === "success" &&
-        payload.recover &&
-        guildId !== undefined &&
-        payload.guildIds.includes(guildId)
-      )
-        onRejoin();
-    },
-  );
+  const handleJoin = useEffectEvent((payload: GatewayJoin) => {
+    // The gateway does not replay progress missed while disconnected.
+    if (
+      payload.recover &&
+      guildId !== undefined &&
+      payload.guildIds.includes(guildId)
+    )
+      onRejoin();
+  });
 
   useEffect(() => {
     if (!guildId) return;
-    socket.on(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, handleUpdate);
-    socket.on(GatewayEvent.JOIN, handleJoin);
+    socket.on("member-refresh.updated", handleUpdate);
+    socket.on("join", handleJoin);
 
     return () => {
-      socket.off(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, handleUpdate);
-      socket.off(GatewayEvent.JOIN, handleJoin);
+      socket.off("member-refresh.updated", handleUpdate);
+      socket.off("join", handleJoin);
     };
   }, [guildId, socket]);
 };

@@ -6,7 +6,6 @@ import {
 } from "@lootlog/client/realtime";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { GatewayEvent } from "@/config/gateway";
 import { GatewayClient } from "./gateway-client";
 
 const presence: BasicPresence = {
@@ -74,8 +73,8 @@ describe("gateway presence identity", () => {
     const deliver = subscribe.mock.calls[0]?.[0];
     const webUpdates = vi.fn();
     const gameUpdates = vi.fn();
-    client.on(GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE, webUpdates);
-    client.on(GatewayEvent.EVENT_PRESENCE_UPDATE, gameUpdates);
+    client.on("web-presence.changed", webUpdates);
+    client.on("game-presence.changed", gameUpdates);
 
     deliver?.({
       v: 1,
@@ -155,7 +154,7 @@ it("adapts kill invalidation signals without adding an actor or NPC identity", (
   const client = new GatewayClient();
   const deliver = subscribe.mock.calls[0]?.[0];
   const handler = vi.fn();
-  client.on(GatewayEvent.KILLS_CHANGED, handler);
+  client.on("kills.changed", handler);
   deliver?.({
     v: 1,
     type: "kills.changed",
@@ -170,8 +169,8 @@ it("delivers complete feed entries without turning them into loot invalidation s
   const deliver = subscribe.mock.calls[0]?.[0];
   const entryHandler = vi.fn();
   const lootHandler = vi.fn();
-  client.on(GatewayEvent.FEED_ENTRY, entryHandler);
-  client.on(GatewayEvent.LOOTS_CREATE, lootHandler);
+  client.on("feed.entry", entryHandler);
+  client.on("loot.created", lootHandler);
 
   const entry = {
     id: "kill:organization-1:world:1:minute",
@@ -195,9 +194,9 @@ it("treats the first access policy as the page's baseline and reports later revo
   const client = new GatewayClient();
   const deliver = subscribe.mock.calls[0]?.[0];
   const handler = vi.fn();
-  client.on(GatewayEvent.JOIN, handler);
+  client.on("join", handler);
 
-  const joined = (permissions?: Permission[]) =>
+  const joined = (permissions: Permission[]) =>
     deliver?.({
       v: 1,
       type: "session.joined",
@@ -205,17 +204,15 @@ it("treats the first access policy as the page's baseline and reports later revo
         connectionId: "connection-1",
         organizationIds: ["organization-1"],
         subscriptionScopes: [],
-        accessPolicy: permissions
-          ? createAccessPolicySnapshot(
-              [
-                {
-                  guild: { id: "organization-1", ownerId: "owner" },
-                  roles: [{ permissions, lvlRangeFrom: 0, lvlRangeTo: 500 }],
-                },
-              ],
-              "discord-member",
-            )
-          : undefined,
+        accessPolicy: createAccessPolicySnapshot(
+          [
+            {
+              guild: { id: "organization-1", ownerId: "owner" },
+              roles: [{ permissions, lvlRangeFrom: 0, lvlRangeTo: 500 }],
+            },
+          ],
+          "discord-member",
+        ),
       },
     });
 
@@ -236,11 +233,6 @@ it("treats the first access policy as the page's baseline and reports later revo
       ],
     }),
   );
-
-  joined();
-  expect(handler).toHaveBeenLastCalledWith(
-    expect.objectContaining({ accessPolicyChanges: undefined }),
-  );
 });
 
 it("keeps a permissions update without a baseline unknown so stale caches are cleared", () => {
@@ -248,13 +240,14 @@ it("keeps a permissions update without a baseline unknown so stale caches are cl
   const client = new GatewayClient();
   const deliver = subscribe.mock.calls[0]?.[0];
   const handler = vi.fn();
-  client.on(GatewayEvent.PERMISSIONS_UPDATED, handler);
+  client.on("access.updated", handler);
 
   // The gateway sends this before rejecting a join that lost every Organization.
   deliver?.({
     v: 1,
     type: "permissions.updated",
     data: {
+      changes: [],
       organizationIds: [],
       subscriptionScopes: [],
       accessPolicy: createAccessPolicySnapshot([], "discord-member"),
@@ -282,7 +275,7 @@ it.each([
     const client = new GatewayClient();
     const deliver = subscribe.mock.calls[0]?.[0];
     const handler = vi.fn();
-    client.on(GatewayEvent.JOIN, handler);
+    client.on("join", handler);
     client.connect();
     vi.advanceTimersByTime(delay);
 
@@ -294,6 +287,7 @@ it.each([
           connectionId: "connection-1",
           organizationIds: ["organization-1"],
           subscriptionScopes: [],
+          accessPolicy: createAccessPolicySnapshot([], "discord-member"),
         },
       });
 

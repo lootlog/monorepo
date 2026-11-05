@@ -1,3 +1,4 @@
+import { publishedPresence } from "@/test/realtime-wire";
 import { createTimerRealtimeFixture } from "@/features/timers/timer-realtime-fixtures";
 import { createTimerGuildFixture } from "@/features/timers/timer-fixtures";
 import { act, fireEvent, render, screen } from "@testing-library/react";
@@ -6,7 +7,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
 import { expect, it, vi } from "vitest";
 import { useGameStore } from "@/store/game.store";
-import { GatewayEvent } from "@/config/gateway";
 import { SocketProvider } from "@/contexts/socket-context";
 import { getSocket } from "@/lib/socket";
 import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
@@ -74,7 +74,7 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
     vi.useFakeTimers();
     let now = 1_000;
     vi.spyOn(performance, "now").mockImplementation(() => now);
-    getSocket().emit(GatewayEvent.PLAYER_PRESENCE_UPDATE);
+    void getSocket().publishPresence();
     const publication = gateway.wire.frames.at(-1);
 
     if (
@@ -90,7 +90,7 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
         v: 1,
         requestId: publicationRequestId,
         status: "success",
-        data: { sessionId: "presence-session" },
+        data: publishedPresence("presence-session"),
       });
       await vi.advanceTimersByTimeAsync(0);
       await vi.advanceTimersByTimeAsync(25_000);
@@ -111,7 +111,7 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
         v: 1,
         requestId: heartbeatRequestId,
         status: "success",
-        data: {},
+        data: { lastSeen: 1 },
       });
       await vi.advanceTimersByTimeAsync(0);
     });

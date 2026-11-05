@@ -17,7 +17,7 @@ import { SocketProvider } from "@/contexts/socket-context";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { disposeSocket, getSocket } from "@/lib/socket";
 import { queryClient } from "@/lib/query-client";
-import { RealtimeWire } from "@/test/realtime-wire";
+import { ownerAccessPolicy, RealtimeWire } from "@/test/realtime-wire";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
@@ -154,7 +154,6 @@ export const createRealtimeTest = () => {
   const join = async (
     organizationIds = ["guild-1"],
     accessPolicy?: AccessPolicySnapshot,
-    capabilities?: string[],
   ) => {
     await act(async () => {
       if (realtime.state === "ready") {
@@ -204,8 +203,8 @@ export const createRealtimeTest = () => {
         data: {
           connectionId: "connection-1",
           organizationIds,
-          accessPolicy,
-          capabilities,
+          subscriptionScopes: [],
+          accessPolicy: accessPolicy ?? ownerAccessPolicy(organizationIds),
         },
       });
       await joined;
