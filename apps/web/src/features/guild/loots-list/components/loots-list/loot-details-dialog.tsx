@@ -131,6 +131,7 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
         <div className="min-w-0 lg:min-h-0 lg:overflow-y-auto">
           <LootDetailsRoster
             loot={loot}
+            canManageLoots={canManageLoots}
             onShowPlayerLoots={onShowPlayerLoots}
           />
         </div>

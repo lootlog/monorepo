@@ -5,7 +5,9 @@ import { cn } from "cn";
 import { PackageOpen } from "lucide-react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
-import { buildLootRoster, type LootRosterInput } from "./build-loot-roster";
+import type { Loot } from "@/lib/loots/loot-types";
+import { LootDrawButton } from "@/features/guild/loots-list/components/loot-draw/loot-draw-button";
+import { buildLootRoster } from "./build-loot-roster";
 import { groupIdenticalItems } from "./group-identical-items";
 import { LootItemLine } from "./loot-item-line";
 import { LootPlayersWithoutItems } from "./loot-players-without-items";
@@ -15,9 +17,12 @@ import { LootRosterRow } from "./loot-roster-row";
 /** Who received what, with every item's name and identifier in its row. */
 export const LootDetailsRoster = ({
   loot,
+  canManageLoots,
   onShowPlayerLoots,
 }: {
-  loot: LootRosterInput;
+  loot: Loot;
+  /** Managers draw items among the players left outside the party. */
+  canManageLoots: boolean;
   onShowPlayerLoots?: (playerName: string) => void;
 }) => {
   const { t } = useTranslation();
@@ -45,6 +50,13 @@ export const LootDetailsRoster = ({
               player={player}
               watchContext={watchContext}
               onShowLoots={showLootsFor(player.name)}
+              renderItemAction={(item) => (
+                <LootDrawButton
+                  loot={loot}
+                  item={item}
+                  canManage={canManageLoots}
+                />
+              )}
             />
           ))}
         {unassignedItems.length > 0 && (

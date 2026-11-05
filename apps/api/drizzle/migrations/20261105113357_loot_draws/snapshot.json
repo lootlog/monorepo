@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "7aed6bbb-b248-432b-8dd9-39b4be26d80a",
+  "id": "8af7c07e-2dc9-4e0a-baaa-dcb59ac48931",
   "prevIds": ["5276bccd-9045-449f-8162-9d1cfda2b3e2"],
   "ddl": [
     {
@@ -4202,6 +4202,19 @@
       "generated": null,
       "identity": null,
       "name": "entrants",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "LootDraw"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ticketOrder",
       "entityType": "columns",
       "schema": "public",
       "table": "LootDraw"

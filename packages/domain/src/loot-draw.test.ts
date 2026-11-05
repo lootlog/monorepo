@@ -2,8 +2,10 @@ import { describe, expect, it } from "bun:test";
 import {
   canWearLootDrawItem,
   capturesMapPlayers,
+  groupedLootDrawTicketOrder,
+  isLootDrawTicketOrder,
   lootDrawWinnerTickets,
-  pickLootDrawEntrant,
+  shuffleLootDrawTicketOrder,
 } from "./loot-draw.js";
 
 const mageWand = { prof: ["MAGE"], lvl: 279, stat: "lvl=279;reqp=m" };
@@ -43,27 +45,39 @@ describe("canWearLootDrawItem", () => {
     expect(canWearLootDrawItem(elastic, { prof: "MAGE", lvl: 120 })).toBe(true);
   });
 
-  it("keeps out a player whose level is unknown", () => {
+  it("lets in a player of the right profession whose level is unknown", () => {
     expect(canWearLootDrawItem(mageWand, { prof: "MAGE", lvl: null })).toBe(
+      true,
+    );
+    expect(canWearLootDrawItem(mageWand, { prof: "WARRIOR", lvl: null })).toBe(
       false,
     );
   });
 });
 
-describe("pickLootDrawEntrant", () => {
-  const entrants = [
-    { name: "winner", tickets: 3 },
-    { name: "outsider", tickets: 1 },
-  ];
+describe("isLootDrawTicketOrder", () => {
+  const entrants = [{ tickets: 3 }, { tickets: 1 }];
 
-  it("maps each roll to the entrant holding that ticket", () => {
-    expect(
-      [0, 1, 2, 3].map((roll) => pickLootDrawEntrant(entrants, roll).name),
-    ).toEqual(["winner", "winner", "winner", "outsider"]);
+  it("accepts any arrangement of every entrant's tickets", () => {
+    expect(isLootDrawTicketOrder([0, 1, 0, 0], entrants)).toBe(true);
   });
 
-  it("rejects a roll past the last ticket", () => {
-    expect(() => pickLootDrawEntrant(entrants, 4)).toThrow(RangeError);
+  it("rejects an order that gives an entrant more or fewer tickets", () => {
+    for (const order of [
+      [0, 0, 1, 1],
+      [0, 0, 0],
+      [0, 0, 0, 1, 2],
+    ]) {
+      expect(isLootDrawTicketOrder(order, entrants)).toBe(false);
+    }
+  });
+
+  it("keeps every ticket through a shuffle", () => {
+    const shuffled = shuffleLootDrawTicketOrder(
+      groupedLootDrawTicketOrder(entrants),
+    );
+
+    expect(isLootDrawTicketOrder(shuffled, entrants)).toBe(true);
   });
 });
 

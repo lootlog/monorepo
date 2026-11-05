@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { LootDrawOutsider } from "#src/contracts/loots/schemas";
+import type { LootDrawEntrantInput } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
 import { buildLootDrawEntrants } from "#src/loots/loot-draw-entrants";
 
@@ -41,9 +41,20 @@ const loot = {
   lootShare: { "1": ["wand-hid"] },
 };
 
+const winner: LootDrawEntrantInput = {
+  name: "Rozdaje Kolby",
+  accountId: 10,
+  characterId: 1,
+  prof: "MAGE",
+  lvl: 300,
+  icon: null,
+  source: "WINNER",
+  tickets: 2,
+};
+
 const outsider = (
-  overrides: Partial<LootDrawOutsider> = {},
-): LootDrawOutsider => ({
+  overrides: Partial<LootDrawEntrantInput> = {},
+): LootDrawEntrantInput => ({
   name: "Spoza Grupy",
   accountId: 900,
   characterId: 90,
@@ -51,78 +62,102 @@ const outsider = (
   lvl: 290,
   icon: null,
   source: "MAP",
+  tickets: 1,
   ...overrides,
 });
 
+const request = (
+  entrants: LootDrawEntrantInput[],
+  ticketOrder = entrants.flatMap((entrant, index) =>
+    Array.from({ length: entrant.tickets }, () => index),
+  ),
+) => ({ itemHid: "wand-hid", entrants, ticketOrder });
+
 describe("buildLootDrawEntrants", () => {
-  it("gives the winner a ticket per party mage and each outsider one", () => {
-    const result = buildLootDrawEntrants(loot, {
-      itemHid: "wand-hid",
-      outsiders: [outsider()],
-    });
+  it("keeps the manager's tickets and stores the winner as the loot records them", () => {
+    const result = buildLootDrawEntrants(
+      loot,
+      request([
+        { ...winner, name: "rozdaje kolby", characterId: null, tickets: 5 },
+        outsider({ tickets: 3 }),
+      ]),
+    );
 
     expect(result).toEqual({
       entrants: [
         expect.objectContaining({
           name: "Rozdaje Kolby",
+          characterId: 1,
           source: "WINNER",
-          tickets: 2,
+          tickets: 5,
         }),
-        expect.objectContaining({
-          name: "Spoza Grupy",
-          source: "MAP",
-          tickets: 1,
-        }),
+        expect.objectContaining({ name: "Spoza Grupy", tickets: 3 }),
       ],
     });
   });
 
+  it("refuses a WINNER who did not catch the item", () => {
+    const result = buildLootDrawEntrants(
+      loot,
+      request([{ ...winner, name: "Xabz", characterId: 3 }, outsider()]),
+    );
+
+    expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_WINNER_MISMATCH });
+  });
+
   it("refuses a party member entered again as an outsider, even by name", () => {
-    const result = buildLootDrawEntrants(loot, {
-      itemHid: "wand-hid",
-      outsiders: [
+    const result = buildLootDrawEntrants(
+      loot,
+      request([
+        winner,
         outsider({
           name: " mikrowojczan ",
           characterId: null,
           source: "MANUAL",
         }),
-      ],
-    });
+      ]),
+    );
 
     expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_OUTSIDER_IN_PARTY });
   });
 
-  it("refuses an outsider who cannot wear the item", () => {
+  it("refuses an outsider of another profession or below the item's level", () => {
     for (const ineligible of [
       outsider({ prof: "WARRIOR" }),
       outsider({ lvl: 278 }),
-      outsider({ lvl: null }),
     ]) {
       expect(
-        buildLootDrawEntrants(loot, {
-          itemHid: "wand-hid",
-          outsiders: [ineligible],
-        }),
+        buildLootDrawEntrants(loot, request([winner, ineligible])),
       ).toEqual({ error: ErrorKey.LOOT_DRAW_OUTSIDER_INELIGIBLE });
     }
   });
 
   it("refuses the same outsider twice", () => {
-    const result = buildLootDrawEntrants(loot, {
-      itemHid: "wand-hid",
-      outsiders: [
+    const result = buildLootDrawEntrants(
+      loot,
+      request([
+        winner,
         outsider(),
         outsider({ characterId: null, source: "MANUAL" }),
-      ],
-    });
+      ]),
+    );
 
     expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_DUPLICATE_OUTSIDER });
+  });
+
+  it("refuses a ticket order that does not hold each entrant's tickets", () => {
+    const result = buildLootDrawEntrants(
+      loot,
+      request([winner, outsider()], [0, 1, 1]),
+    );
+
+    expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_INVALID_TICKET_ORDER });
   });
 
   it("refuses an item nobody in the party caught", () => {
     const result = buildLootDrawEntrants(
       { ...loot, lootShare: {} },
-      { itemHid: "wand-hid", outsiders: [outsider()] },
+      request([winner, outsider()]),
     );
 
     expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_ITEM_UNASSIGNED });

@@ -2,7 +2,9 @@ import { PlayerTile } from "@/components/tiles/player-tile";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import { cn } from "cn";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import type { Item } from "@/lib/loots/loot-types";
 import type { LootRosterPlayer } from "./build-loot-roster";
 import { formatRosterPlayerDetail } from "./format-roster-player-detail";
 import { groupIdenticalItems } from "./group-identical-items";
@@ -17,11 +19,13 @@ export const LootRecipientRow = ({
   watchContext,
   onShowLoots,
   muted = false,
+  renderItemAction,
 }: {
   player: LootRosterPlayer;
   watchContext: WatchedItemScope;
   onShowLoots?: () => void;
   muted?: boolean;
+  renderItemAction?: (item: Item) => ReactNode;
 }) => {
   const { t } = useTranslation();
   const detail = formatRosterPlayerDetail(t, player);
@@ -60,6 +64,7 @@ export const LootRecipientRow = ({
                 key={entry.item.hid}
                 entry={entry}
                 watchContext={watchContext}
+                action={renderItemAction?.(entry.item)}
               />
             ))}
           </div>

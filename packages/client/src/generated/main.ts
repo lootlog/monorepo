@@ -7863,6 +7863,7 @@ export interface LootDrawResponseDto {
   lootId: number;
   itemHid: string;
   entrants: LootDrawResponseDtoEntrantsItem[];
+  ticketOrder: number[];
   roll: number;
   winnerIndex: number;
   createdBy: MemberSummary;
@@ -7879,10 +7880,10 @@ export interface VoidLootDrawDto {
 /**
  * @nullable
  */
-export type LootDrawOutsiderDtoProf = typeof LootDrawOutsiderDtoProf[keyof typeof LootDrawOutsiderDtoProf] | null;
+export type LootDrawEntrantDtoProf = typeof LootDrawEntrantDtoProf[keyof typeof LootDrawEntrantDtoProf] | null;
 
 
-export const LootDrawOutsiderDtoProf = {
+export const LootDrawEntrantDtoProf = {
   WARRIOR: 'WARRIOR',
   PALADIN: 'PALADIN',
   HUNTER: 'HUNTER',
@@ -7891,15 +7892,16 @@ export const LootDrawOutsiderDtoProf = {
   TRACKER: 'TRACKER',
 } as const;
 
-export type LootDrawOutsiderDtoSource = typeof LootDrawOutsiderDtoSource[keyof typeof LootDrawOutsiderDtoSource];
+export type LootDrawEntrantDtoSource = typeof LootDrawEntrantDtoSource[keyof typeof LootDrawEntrantDtoSource];
 
 
-export const LootDrawOutsiderDtoSource = {
+export const LootDrawEntrantDtoSource = {
+  WINNER: 'WINNER',
   MAP: 'MAP',
   MANUAL: 'MANUAL',
 } as const;
 
-export interface LootDrawOutsiderDto {
+export interface LootDrawEntrantDto {
   /** @minLength 1 */
   name: string;
   /**
@@ -7915,7 +7917,7 @@ export interface LootDrawOutsiderDto {
      */
   characterId: number | null;
   /** @nullable */
-  prof: LootDrawOutsiderDtoProf;
+  prof: LootDrawEntrantDtoProf;
   /**
      * @minimum 1
      * @maximum 9007199254740991
@@ -7924,17 +7926,28 @@ export interface LootDrawOutsiderDto {
   lvl: number | null;
   /** @nullable */
   icon: string | null;
-  source: LootDrawOutsiderDtoSource;
+  source: LootDrawEntrantDtoSource;
+  /**
+     * @minimum 1
+     * @maximum 99
+     */
+  tickets: number;
 }
 
 export interface CreateLootDrawDto {
   /** @minLength 1 */
   itemHid: string;
   /**
-     * @minItems 1
-     * @maxItems 100
+     * @minItems 2
+     * @maxItems 101
      */
-  outsiders: LootDrawOutsiderDto[];
+  entrants: LootDrawEntrantDto[];
+  /**
+     * @maxItems 9999
+     * @items.minimum 0
+     * @items.maximum 9007199254740991
+     */
+  ticketOrder: number[];
 }
 
 export type LootCommentResponseDtoMemberRolesItem = {

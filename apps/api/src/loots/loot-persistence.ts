@@ -77,6 +77,7 @@ export interface LootPersistence {
     readonly lootId: number;
     readonly itemHid: string;
     readonly entrants: ReadonlyArray<LootDrawEntrantRecord>;
+    readonly ticketOrder: ReadonlyArray<number>;
     readonly roll: number;
     readonly winnerIndex: number;
   }) => PersistenceEffect<LootDrawResponse>;
@@ -211,6 +212,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
             lootId,
             itemHid: draw.itemHid,
             entrants: draw.entrants,
+            ticketOrder: draw.ticketOrder,
             roll: draw.roll,
             winnerIndex: draw.winnerIndex,
             createdBy: yield* memberOf(draw.createdByMemberId),
@@ -476,6 +478,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                   organizationLootRecordId: record.id,
                   itemHid: options.itemHid,
                   entrants: [...options.entrants],
+                  ticketOrder: [...options.ticketOrder],
                   roll: options.roll,
                   winnerIndex: options.winnerIndex,
                   createdByMemberId: member.id,

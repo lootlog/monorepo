@@ -347,6 +347,33 @@ Gracze z grupy, którym nic nie przypadło, są zebrani niżej w sekcji
 **Bez przedmiotów**. Na szerokim ekranie komentarze są w prawej połowie okna,
 z polem do pisania na dole; na węższym znajdziesz je pod listą graczy.
 
+### Losowanie przedmiotów
+
+Margonem mieści w grupie dziesięciu graczy. Gdy na mapie byli też gracze,
+którym zabrakło miejsca, przedmiot można rozlosować między nimi a osobą, która
+złapała go w grze. Przycisk z kostką przy przedmiocie w oknie szczegółów łupu
+otwiera losowanie. Prowadzą je osoby z uprawnieniem `LOOTLOG_LOOTS_ARCHIVE`,
+a wynik widzi każdy, kto widzi łup.
+
+Na kole jest zawsze zwycięzca z gry. Domyślnie dostaje tyle losów, ilu graczy
+w grupie mogło założyć przedmiot, łącznie z nim, a każdy uprawniony gracz spoza
+grupy jeden los. Uprawniony jest gracz, którego profesja pasuje do przedmiotu
+i który ma wymagany poziom; gracz bez znanego poziomu jest sprawdzany tylko po
+profesji.
+
+Przy łupach z walki, w których wypadł przynajmniej przedmiot unikatowy, dodatek
+zapisuje graczy obecnych na mapie i podpowiada ich na liście. Przed losowaniem
+możesz usunąć z niej każdego, np. gracza z wrogiej frakcji, dopisać brakującego
+gracza z nickiem, profesją i opcjonalnym poziomem, zmienić liczbę losów
+dowolnego uczestnika oraz potasować koło. Starsze łupy nie mają tej listy,
+więc uczestników spoza grupy dopisujesz ręcznie.
+
+Zwycięzcę wybiera serwer Lootloga, a koło zatrzymuje się na wylosowanym losie.
+Wynik zostaje zapisany razem z uczestnikami, ich losami i osobą, która
+losowała; przy przedmiocie pojawia się nazwa zwycięzcy. Jeśli losowanie trzeba
+powtórzyć, unieważnij wynik z podaniem powodu. Unieważniony wynik zostaje
+w historii, a przedmiot można losować ponownie.
+
 Zmiana filtrów lub świata przewija listę łupów na początek. Po pojawieniu się
 nowych łupów rozwinięty stos przedmiotów w widoku listy i siatki pozostaje przypisany
 do tego samego łupu.
