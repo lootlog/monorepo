@@ -63,7 +63,7 @@ export const LootDrawDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(90dvh,48rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+      <DialogContent className="flex max-h-[min(90dvh,48rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 shadow-2xl sm:max-w-3xl lg:max-w-4xl">
         <DialogHeader className="shrink-0 border-b border-border px-4 py-3 pr-12 text-left">
           <div className="flex min-w-0 items-center gap-3">
             <WatchableItemTile

@@ -260,7 +260,8 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeLootDetails()}>
       <DialogContent
-        className="flex max-h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border-border bg-background p-0 sm:max-w-3xl"
+        // Under an item's draw the loot steps back, so the draw reads as on top.
+        className="flex max-h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border-border bg-background p-0 transition-[scale,filter] duration-200 ease-out data-nested-dialog-open:scale-[0.97] data-nested-dialog-open:brightness-50 motion-reduce:transition-none sm:max-w-3xl"
         aria-describedby={undefined}
         initialFocus={false}
         // The header draws its own close button beside like and more actions.
