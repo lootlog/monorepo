@@ -55,11 +55,13 @@ export const makeBattlePagination = (
     const { size = 20, cursor, includeTotal } = options;
     const decodedCursor = cursor ? decodeCursor(cursor) : null;
 
-    if (cursor && !decodedCursor) {
-      return Effect.fail(new InvalidRequestError("Invalid pagination cursor"));
-    }
-
     return Effect.gen(function* () {
+      if (cursor && !decodedCursor) {
+        return yield* Effect.fail(
+          new InvalidRequestError("Invalid pagination cursor"),
+        );
+      }
+
       const startTime = yield* Clock.currentTimeMillis;
 
       // A previous page reads towards the start of the list from its cursor,

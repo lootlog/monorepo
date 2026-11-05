@@ -1,77 +1,452 @@
 {
-  "version": "8",
+  "type": "base",
+  "version": "9",
   "dialect": "postgres",
   "id": "4ec1e0b6-bbd2-4bde-b498-cd693013243a",
   "prevIds": ["00000000-0000-0000-0000-000000000000"],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": ["enum", "public", "ActivitySource"],
+      "writes": [
+        "s|enum|public.ActivitySource",
+        "n|enum|public.ActivitySource",
+        "e|enum|public.ActivitySource",
+        "n|type|public.ActivitySource"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": ["enum", "public", "ActivityType"],
+      "writes": [
+        "s|enum|public.ActivityType",
+        "n|enum|public.ActivityType",
+        "e|enum|public.ActivityType",
+        "n|type|public.ActivityType"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "Activity"],
+      "writes": [
+        "s|tbl|public.Activity",
+        "n|tbl|public.Activity",
+        "e|tbl|public.Activity",
+        "n|rel|public.Activity",
+        "n|type|public.Activity",
+        "n|rel|public.Activity_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.ActivityType",
+        "n|enum|public.ActivitySource"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "ActivityActorSnapshot"],
+      "writes": [
+        "s|tbl|public.ActivityActorSnapshot",
+        "n|tbl|public.ActivityActorSnapshot",
+        "e|tbl|public.ActivityActorSnapshot",
+        "n|rel|public.ActivityActorSnapshot",
+        "n|type|public.ActivityActorSnapshot",
+        "n|rel|public.ActivityActorSnapshot_pkey"
+      ],
+      "reads": ["n|sch|public", "n|enum|public.ActivitySource"]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "MemberActivitySession"],
+      "writes": [
+        "s|tbl|public.MemberActivitySession",
+        "n|tbl|public.MemberActivitySession",
+        "e|tbl|public.MemberActivitySession",
+        "n|rel|public.MemberActivitySession",
+        "n|type|public.MemberActivitySession",
+        "n|rel|public.MemberActivitySession_pkey"
+      ],
+      "reads": ["n|sch|public", "n|enum|public.ActivitySource"]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "MemberActivityStats"],
+      "writes": [
+        "s|tbl|public.MemberActivityStats",
+        "n|tbl|public.MemberActivityStats",
+        "e|tbl|public.MemberActivityStats",
+        "n|rel|public.MemberActivityStats",
+        "n|type|public.MemberActivityStats",
+        "n|rel|public.MemberActivityStats_pkey"
+      ],
+      "reads": ["n|sch|public", "n|enum|public.ActivitySource"]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "UserOnlineCollector"],
+      "writes": [
+        "s|tbl|public.UserOnlineCollector",
+        "n|tbl|public.UserOnlineCollector",
+        "e|tbl|public.UserOnlineCollector",
+        "n|rel|public.UserOnlineCollector",
+        "n|type|public.UserOnlineCollector",
+        "n|rel|public.UserOnlineCollector_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "UserOnlineInterval"],
+      "writes": [
+        "s|tbl|public.UserOnlineInterval",
+        "n|tbl|public.UserOnlineInterval",
+        "e|tbl|public.UserOnlineInterval",
+        "n|rel|public.UserOnlineInterval",
+        "n|type|public.UserOnlineInterval",
+        "n|rel|public.UserOnlineInterval_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "UserOnlineTracking"],
+      "writes": [
+        "s|tbl|public.UserOnlineTracking",
+        "n|tbl|public.UserOnlineTracking",
+        "e|tbl|public.UserOnlineTracking",
+        "n|rel|public.UserOnlineTracking",
+        "n|type|public.UserOnlineTracking",
+        "n|rel|public.UserOnlineTracking_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Activity",
+        "Activity_idempotencyKey_createdAt_key"
+      ],
+      "writes": [
+        "s|idx|public.Activity_idempotencyKey_createdAt_key",
+        "n|idx|public.Activity_idempotencyKey_createdAt_key",
+        "e|idx|public.Activity_idempotencyKey_createdAt_key",
+        "n|rel|public.Activity_idempotencyKey_createdAt_key"
+      ],
+      "reads": [
+        "n|tbl|public.Activity",
+        "n|sch|public",
+        "n|col|public.Activity.idempotencyKey",
+        "n|col|public.Activity.createdAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Activity",
+        "Activity_createdAt_guildId_idx"
+      ],
+      "writes": [
+        "s|idx|public.Activity_createdAt_guildId_idx",
+        "n|idx|public.Activity_createdAt_guildId_idx",
+        "e|idx|public.Activity_createdAt_guildId_idx",
+        "n|rel|public.Activity_createdAt_guildId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Activity",
+        "n|sch|public",
+        "n|col|public.Activity.guildId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Activity",
+        "Activity_createdAt_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.Activity_createdAt_userId_idx",
+        "n|idx|public.Activity_createdAt_userId_idx",
+        "e|idx|public.Activity_createdAt_userId_idx",
+        "n|rel|public.Activity_createdAt_userId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Activity",
+        "n|sch|public",
+        "n|col|public.Activity.userId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Activity",
+        "Activity_createdAt_type_idx"
+      ],
+      "writes": [
+        "s|idx|public.Activity_createdAt_type_idx",
+        "n|idx|public.Activity_createdAt_type_idx",
+        "e|idx|public.Activity_createdAt_type_idx",
+        "n|rel|public.Activity_createdAt_type_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Activity",
+        "n|sch|public",
+        "n|col|public.Activity.type"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Activity",
+        "Activity_guildId_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.Activity_guildId_createdAt_idx",
+        "n|idx|public.Activity_guildId_createdAt_idx",
+        "e|idx|public.Activity_guildId_createdAt_idx",
+        "n|rel|public.Activity_guildId_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.Activity",
+        "n|sch|public",
+        "n|col|public.Activity.guildId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ActivityActorSnapshot",
+        "ActivityActorSnapshot_fingerprint_key"
+      ],
+      "writes": [
+        "s|idx|public.ActivityActorSnapshot_fingerprint_key",
+        "n|idx|public.ActivityActorSnapshot_fingerprint_key",
+        "e|idx|public.ActivityActorSnapshot_fingerprint_key",
+        "n|rel|public.ActivityActorSnapshot_fingerprint_key"
+      ],
+      "reads": [
+        "n|tbl|public.ActivityActorSnapshot",
+        "n|sch|public",
+        "n|col|public.ActivityActorSnapshot.fingerprint"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MemberActivitySession",
+        "MemberActivitySession_guildId_discordId_source_idx"
+      ],
+      "writes": [
+        "s|idx|public.MemberActivitySession_guildId_discordId_source_idx",
+        "n|idx|public.MemberActivitySession_guildId_discordId_source_idx",
+        "e|idx|public.MemberActivitySession_guildId_discordId_source_idx",
+        "n|rel|public.MemberActivitySession_guildId_discordId_source_idx"
+      ],
+      "reads": [
+        "n|tbl|public.MemberActivitySession",
+        "n|sch|public",
+        "n|col|public.MemberActivitySession.guildId",
+        "n|col|public.MemberActivitySession.discordId",
+        "n|col|public.MemberActivitySession.source"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MemberActivitySession",
+        "MemberActivitySession_guildId_source_idx"
+      ],
+      "writes": [
+        "s|idx|public.MemberActivitySession_guildId_source_idx",
+        "n|idx|public.MemberActivitySession_guildId_source_idx",
+        "e|idx|public.MemberActivitySession_guildId_source_idx",
+        "n|rel|public.MemberActivitySession_guildId_source_idx"
+      ],
+      "reads": [
+        "n|tbl|public.MemberActivitySession",
+        "n|sch|public",
+        "n|col|public.MemberActivitySession.guildId",
+        "n|col|public.MemberActivitySession.source"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MemberActivitySession",
+        "MemberActivitySession_lastSeenAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.MemberActivitySession_lastSeenAt_idx",
+        "n|idx|public.MemberActivitySession_lastSeenAt_idx",
+        "e|idx|public.MemberActivitySession_lastSeenAt_idx",
+        "n|rel|public.MemberActivitySession_lastSeenAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.MemberActivitySession",
+        "n|sch|public",
+        "n|col|public.MemberActivitySession.lastSeenAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MemberActivityStats",
+        "MemberActivityStats_guildId_source_idx"
+      ],
+      "writes": [
+        "s|idx|public.MemberActivityStats_guildId_source_idx",
+        "n|idx|public.MemberActivityStats_guildId_source_idx",
+        "e|idx|public.MemberActivityStats_guildId_source_idx",
+        "n|rel|public.MemberActivityStats_guildId_source_idx"
+      ],
+      "reads": [
+        "n|tbl|public.MemberActivityStats",
+        "n|sch|public",
+        "n|col|public.MemberActivityStats.guildId",
+        "n|col|public.MemberActivityStats.source"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "UserOnlineInterval",
+        "UserOnlineInterval_userId_endedAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.UserOnlineInterval_userId_endedAt_idx",
+        "n|idx|public.UserOnlineInterval_userId_endedAt_idx",
+        "e|idx|public.UserOnlineInterval_userId_endedAt_idx",
+        "n|rel|public.UserOnlineInterval_userId_endedAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.UserOnlineInterval",
+        "n|sch|public",
+        "n|col|public.UserOnlineInterval.userId",
+        "n|col|public.UserOnlineInterval.endedAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "UserOnlineInterval",
+        "UserOnlineInterval_endedAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.UserOnlineInterval_endedAt_idx",
+        "n|idx|public.UserOnlineInterval_endedAt_idx",
+        "e|idx|public.UserOnlineInterval_endedAt_idx",
+        "n|rel|public.UserOnlineInterval_endedAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.UserOnlineInterval",
+        "n|sch|public",
+        "n|col|public.UserOnlineInterval.endedAt"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": ["table", "public", "Activity"],
+      "writes": [
+        "s|fk|public.Activity.Activity_actorSnapshotId_fkey",
+        "n|fk|public.Activity.Activity_actorSnapshotId_fkey",
+        "e|fk|public.Activity.Activity_actorSnapshotId_fkey",
+        "n|con|public.Activity.Activity_actorSnapshotId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.Activity",
+        "n|sch|public",
+        "n|tbl|public.ActivityActorSnapshot",
+        "n|sch|public",
+        "n|col|public.Activity.actorSnapshotId",
+        "n|col|public.ActivityActorSnapshot.id",
+        "e|uniqueness|public.ActivityActorSnapshot.id"
+      ]
+    }
+  ],
   "ddl": [
     {
-      "values": ["GAME", "WEB_APP"],
-      "name": "ActivitySource",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
-      "values": ["CONNECT_EVENT", "DISCONNECT_EVENT"],
-      "name": "ActivityType",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
+      "schema": "public",
       "name": "Activity",
-      "entityType": "tables",
-      "schema": "public"
+      "isRlsEnabled": false,
+      "entityType": "tables"
     },
     {
-      "isRlsEnabled": false,
+      "schema": "public",
       "name": "ActivityActorSnapshot",
-      "entityType": "tables",
-      "schema": "public"
+      "isRlsEnabled": false,
+      "entityType": "tables"
     },
     {
-      "isRlsEnabled": false,
+      "schema": "public",
       "name": "MemberActivitySession",
-      "entityType": "tables",
-      "schema": "public"
+      "isRlsEnabled": false,
+      "entityType": "tables"
     },
     {
-      "isRlsEnabled": false,
+      "schema": "public",
       "name": "MemberActivityStats",
-      "entityType": "tables",
-      "schema": "public"
+      "isRlsEnabled": false,
+      "entityType": "tables"
     },
     {
-      "isRlsEnabled": false,
+      "schema": "public",
       "name": "UserOnlineCollector",
-      "entityType": "tables",
-      "schema": "public"
+      "isRlsEnabled": false,
+      "entityType": "tables"
     },
     {
-      "isRlsEnabled": false,
+      "schema": "public",
       "name": "UserOnlineInterval",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
       "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
       "name": "UserOnlineTracking",
-      "entityType": "tables",
-      "schema": "public"
+      "isRlsEnabled": false,
+      "entityType": "tables"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
+      "schema": "public",
+      "name": "ActivitySource",
+      "values": ["GAME", "WEB_APP"],
+      "entityType": "enums"
+    },
+    {
+      "schema": "public",
+      "name": "ActivityType",
+      "values": ["CONNECT_EVENT", "DISCONNECT_EVENT"],
+      "entityType": "enums"
+    },
+    {
+      "schema": "public",
+      "table": "Activity",
       "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Activity"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -79,12 +454,12 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "Activity",
       "name": "userId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Activity"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -92,12 +467,12 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "Activity",
       "name": "guildId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Activity"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -105,12 +480,25 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "discordId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Activity"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "Activity",
+      "name": "discordId",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "Activity",
+      "name": "type",
       "type": "ActivityType",
       "typeSchema": "public",
       "notNull": true,
@@ -118,12 +506,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "type",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Activity"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "Activity",
+      "name": "createdAt",
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -131,12 +519,12 @@
       "default": "now()",
       "generated": null,
       "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Activity"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "Activity",
+      "name": "source",
       "type": "ActivitySource",
       "typeSchema": "public",
       "notNull": true,
@@ -144,12 +532,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "source",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Activity"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "Activity",
+      "name": "details",
       "type": "jsonb",
       "typeSchema": null,
       "notNull": false,
@@ -157,25 +545,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "details",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Activity"
+      "entityType": "columns"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
+      "schema": "public",
+      "table": "Activity",
       "name": "actorSnapshotId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Activity"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": false,
@@ -183,25 +558,25 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "world",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Activity"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "Activity",
+      "name": "world",
       "type": "text",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "Activity",
       "name": "idempotencyKey",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Activity"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -209,25 +584,25 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ActivityActorSnapshot"
+      "entityType": "columns"
     },
     {
-      "type": "integer",
+      "schema": "public",
+      "table": "ActivityActorSnapshot",
+      "name": "id",
+      "type": "text",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ActivityActorSnapshot",
       "name": "accountId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ActivityActorSnapshot"
-    },
-    {
       "type": "integer",
       "typeSchema": null,
       "notNull": true,
@@ -235,51 +610,64 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ActivityActorSnapshot",
       "name": "characterId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ActivityActorSnapshot"
-    },
-    {
-      "type": "text",
+      "type": "integer",
       "typeSchema": null,
-      "notNull": false,
+      "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ActivityActorSnapshot",
       "name": "clanName",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ActivityActorSnapshot"
-    },
-    {
       "type": "text",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ActivityActorSnapshot",
       "name": "icon",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ActivityActorSnapshot"
-    },
-    {
-      "type": "integer",
+      "type": "text",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ActivityActorSnapshot",
       "name": "lvl",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ActivityActorSnapshot"
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "ActivityActorSnapshot",
+      "name": "source",
       "type": "ActivitySource",
       "typeSchema": "public",
       "notNull": true,
@@ -287,25 +675,25 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "source",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ActivityActorSnapshot"
+      "entityType": "columns"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
+      "schema": "public",
+      "table": "ActivityActorSnapshot",
       "name": "fingerprint",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ActivityActorSnapshot"
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "ActivityActorSnapshot",
+      "name": "createdAt",
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -313,38 +701,25 @@
       "default": "now()",
       "generated": null,
       "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ActivityActorSnapshot"
+      "entityType": "columns"
     },
     {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
+      "schema": "public",
+      "table": "ActivityActorSnapshot",
       "name": "clanId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ActivityActorSnapshot"
-    },
-    {
-      "type": "text",
+      "type": "integer",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ActivityActorSnapshot",
       "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ActivityActorSnapshot"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -352,12 +727,12 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ActivityActorSnapshot",
       "name": "prof",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ActivityActorSnapshot"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -365,12 +740,12 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "MemberActivitySession",
       "name": "guildId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivitySession"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -378,12 +753,25 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "discordId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivitySession"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "MemberActivitySession",
+      "name": "discordId",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "MemberActivitySession",
+      "name": "source",
       "type": "ActivitySource",
       "typeSchema": "public",
       "notNull": true,
@@ -391,12 +779,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "source",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivitySession"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "MemberActivitySession",
+      "name": "sessionId",
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -404,25 +792,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "sessionId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivitySession"
+      "entityType": "columns"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
+      "schema": "public",
+      "table": "MemberActivitySession",
       "name": "userId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivitySession"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": false,
@@ -430,12 +805,12 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "MemberActivitySession",
       "name": "userAgent",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivitySession"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": false,
@@ -443,25 +818,25 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "MemberActivitySession",
       "name": "world",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivitySession"
-    },
-    {
-      "type": "timestamp with time zone",
+      "type": "text",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
-      "default": "now()",
+      "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "MemberActivitySession",
       "name": "connectedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivitySession"
-    },
-    {
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -469,25 +844,25 @@
       "default": "now()",
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "MemberActivitySession",
       "name": "lastSeenAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivitySession"
-    },
-    {
-      "type": "text",
+      "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
+      "default": "now()",
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "MemberActivityStats",
       "name": "guildId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivityStats"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -495,12 +870,25 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "discordId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivityStats"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "MemberActivityStats",
+      "name": "discordId",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "MemberActivityStats",
+      "name": "source",
       "type": "ActivitySource",
       "typeSchema": "public",
       "notNull": true,
@@ -508,12 +896,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "source",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivityStats"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "MemberActivityStats",
+      "name": "lastSeenAt",
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": false,
@@ -521,25 +909,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "lastSeenAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivityStats"
+      "entityType": "columns"
     },
     {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
+      "schema": "public",
+      "table": "MemberActivityStats",
       "name": "visitCount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivityStats"
-    },
-    {
       "type": "integer",
       "typeSchema": null,
       "notNull": true,
@@ -547,12 +922,25 @@
       "default": "0",
       "generated": null,
       "identity": null,
-      "name": "activeSessionCount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivityStats"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "MemberActivityStats",
+      "name": "activeSessionCount",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "MemberActivityStats",
+      "name": "createdAt",
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -560,12 +948,12 @@
       "default": "now()",
       "generated": null,
       "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivityStats"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "MemberActivityStats",
+      "name": "updatedAt",
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -573,12 +961,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MemberActivityStats"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "UserOnlineCollector",
+      "name": "id",
       "type": "integer",
       "typeSchema": null,
       "notNull": true,
@@ -586,25 +974,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineCollector"
+      "entityType": "columns"
     },
     {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
+      "schema": "public",
+      "table": "UserOnlineCollector",
       "name": "degradedUntil",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineCollector"
-    },
-    {
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": false,
@@ -612,12 +987,25 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "UserOnlineCollector",
       "name": "trackingStartedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineCollector"
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "UserOnlineCollector",
+      "name": "observedAt",
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -625,25 +1013,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "observedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineCollector"
+      "entityType": "columns"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
+      "schema": "public",
+      "table": "UserOnlineCollector",
       "name": "status",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineCollector"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -651,12 +1026,12 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "UserOnlineInterval",
       "name": "userId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineInterval"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -664,12 +1039,12 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "UserOnlineInterval",
       "name": "sessionId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineInterval"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -677,12 +1052,25 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "segmentId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineInterval"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "UserOnlineInterval",
+      "name": "segmentId",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "UserOnlineInterval",
+      "name": "world",
       "type": "text",
       "typeSchema": null,
       "notNull": false,
@@ -690,25 +1078,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "world",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineInterval"
+      "entityType": "columns"
     },
     {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
+      "schema": "public",
+      "table": "UserOnlineInterval",
       "name": "startedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineInterval"
-    },
-    {
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -716,12 +1091,12 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "UserOnlineInterval",
       "name": "endedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineInterval"
-    },
-    {
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -729,12 +1104,25 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "observedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineInterval"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "UserOnlineInterval",
+      "name": "observedAt",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "UserOnlineTracking",
+      "name": "userId",
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -742,12 +1130,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "userId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineTracking"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "UserOnlineTracking",
+      "name": "lastObservedAt",
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -755,12 +1143,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "lastObservedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "UserOnlineTracking"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "Activity",
+      "name": "Activity_idempotencyKey_createdAt_key",
       "nameExplicit": true,
       "columns": [
         {
@@ -783,12 +1171,12 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Activity_idempotencyKey_createdAt_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Activity"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "Activity",
+      "name": "Activity_createdAt_guildId_idx",
       "nameExplicit": true,
       "columns": [
         {
@@ -811,12 +1199,12 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Activity_createdAt_guildId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Activity"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "Activity",
+      "name": "Activity_createdAt_userId_idx",
       "nameExplicit": true,
       "columns": [
         {
@@ -839,12 +1227,12 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Activity_createdAt_userId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Activity"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "Activity",
+      "name": "Activity_createdAt_type_idx",
       "nameExplicit": true,
       "columns": [
         {
@@ -867,12 +1255,12 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Activity_createdAt_type_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Activity"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "Activity",
+      "name": "Activity_guildId_createdAt_idx",
       "nameExplicit": true,
       "columns": [
         {
@@ -895,12 +1283,12 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Activity_guildId_createdAt_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Activity"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "ActivityActorSnapshot",
+      "name": "ActivityActorSnapshot_fingerprint_key",
       "nameExplicit": true,
       "columns": [
         {
@@ -916,12 +1304,12 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "ActivityActorSnapshot_fingerprint_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "ActivityActorSnapshot"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "MemberActivitySession",
+      "name": "MemberActivitySession_guildId_discordId_source_idx",
       "nameExplicit": true,
       "columns": [
         {
@@ -951,12 +1339,12 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "MemberActivitySession_guildId_discordId_source_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "MemberActivitySession"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "MemberActivitySession",
+      "name": "MemberActivitySession_guildId_source_idx",
       "nameExplicit": true,
       "columns": [
         {
@@ -979,12 +1367,12 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "MemberActivitySession_guildId_source_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "MemberActivitySession"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "MemberActivitySession",
+      "name": "MemberActivitySession_lastSeenAt_idx",
       "nameExplicit": true,
       "columns": [
         {
@@ -1000,12 +1388,12 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "MemberActivitySession_lastSeenAt_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "MemberActivitySession"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "MemberActivityStats",
+      "name": "MemberActivityStats_guildId_source_idx",
       "nameExplicit": true,
       "columns": [
         {
@@ -1028,12 +1416,12 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "MemberActivityStats_guildId_source_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "MemberActivityStats"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "UserOnlineInterval",
+      "name": "UserOnlineInterval_userId_endedAt_idx",
       "nameExplicit": true,
       "columns": [
         {
@@ -1056,12 +1444,12 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "UserOnlineInterval_userId_endedAt_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "UserOnlineInterval"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "UserOnlineInterval",
+      "name": "UserOnlineInterval_endedAt_idx",
       "nameExplicit": true,
       "columns": [
         {
@@ -1077,12 +1465,12 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "UserOnlineInterval_endedAt_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "UserOnlineInterval"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "Activity",
+      "name": "Activity_actorSnapshotId_fkey",
       "nameExplicit": true,
       "columns": ["actorSnapshotId"],
       "schemaTo": "public",
@@ -1090,88 +1478,84 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
-      "name": "Activity_actorSnapshotId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Activity"
+      "entityType": "fks"
     },
     {
+      "schema": "public",
+      "table": "Activity",
+      "name": "Activity_pkey",
       "columns": ["id", "createdAt"],
       "nameExplicit": true,
-      "name": "Activity_pkey",
-      "entityType": "pks",
-      "schema": "public",
-      "table": "Activity"
+      "entityType": "pks"
     },
     {
+      "schema": "public",
+      "table": "MemberActivitySession",
+      "name": "MemberActivitySession_pkey",
       "columns": ["guildId", "discordId", "source", "sessionId"],
       "nameExplicit": true,
-      "name": "MemberActivitySession_pkey",
-      "entityType": "pks",
-      "schema": "public",
-      "table": "MemberActivitySession"
+      "entityType": "pks"
     },
     {
+      "schema": "public",
+      "table": "MemberActivityStats",
+      "name": "MemberActivityStats_pkey",
       "columns": ["guildId", "discordId", "source"],
       "nameExplicit": true,
-      "name": "MemberActivityStats_pkey",
-      "entityType": "pks",
-      "schema": "public",
-      "table": "MemberActivityStats"
+      "entityType": "pks"
     },
     {
+      "schema": "public",
+      "table": "UserOnlineInterval",
+      "name": "UserOnlineInterval_pkey",
       "columns": ["userId", "sessionId", "segmentId"],
       "nameExplicit": false,
-      "name": "UserOnlineInterval_pkey",
-      "entityType": "pks",
-      "schema": "public",
-      "table": "UserOnlineInterval"
+      "entityType": "pks"
     },
     {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "ActivityActorSnapshot_pkey",
       "schema": "public",
       "table": "ActivityActorSnapshot",
-      "entityType": "pks"
-    },
-    {
+      "name": "ActivityActorSnapshot_pkey",
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "UserOnlineCollector_pkey",
+      "entityType": "pks"
+    },
+    {
       "schema": "public",
       "table": "UserOnlineCollector",
+      "name": "UserOnlineCollector_pkey",
+      "columns": ["id"],
+      "nameExplicit": false,
       "entityType": "pks"
     },
     {
-      "columns": ["userId"],
-      "nameExplicit": false,
-      "name": "UserOnlineTracking_pkey",
       "schema": "public",
       "table": "UserOnlineTracking",
+      "name": "UserOnlineTracking_pkey",
+      "columns": ["userId"],
+      "nameExplicit": false,
       "entityType": "pks"
     },
     {
-      "value": "\"id\" = 1",
+      "schema": "public",
+      "table": "UserOnlineCollector",
       "name": "UserOnlineCollector_id_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "UserOnlineCollector"
+      "value": "\"id\" = 1",
+      "entityType": "checks"
     },
     {
-      "value": "\"status\" IN ('healthy', 'degraded')",
+      "schema": "public",
+      "table": "UserOnlineCollector",
       "name": "UserOnlineCollector_status_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "UserOnlineCollector"
+      "value": "\"status\" IN ('healthy', 'degraded')",
+      "entityType": "checks"
     },
     {
-      "value": "\"endedAt\" >= \"startedAt\" AND \"observedAt\" >= \"endedAt\"",
-      "name": "UserOnlineInterval_check",
-      "entityType": "checks",
       "schema": "public",
-      "table": "UserOnlineInterval"
+      "table": "UserOnlineInterval",
+      "name": "UserOnlineInterval_check",
+      "value": "\"endedAt\" >= \"startedAt\" AND \"observedAt\" >= \"endedAt\"",
+      "entityType": "checks"
     }
-  ],
-  "renames": []
+  ]
 }

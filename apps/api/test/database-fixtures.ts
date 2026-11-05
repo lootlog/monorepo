@@ -4,7 +4,10 @@ import { makeWithDefaults } from "drizzle-orm/effect-pglite";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { Effect, ManagedRuntime } from "effect";
 import { fileURLToPath } from "node:url";
-import { ApiDatabase } from "../src/database/drizzle/database.js";
+import {
+  ApiDatabase,
+  type ApiDatabaseValue,
+} from "../src/database/drizzle/database.js";
 
 let migratedDatabase: Promise<Blob> | undefined;
 
@@ -47,7 +50,13 @@ export const createDatabaseBoundary = async () => {
   );
 
   try {
-    const database = await runtime.runPromise(makeWithDefaults());
+    const pgliteDatabase = await runtime.runPromise(makeWithDefaults());
+
+    const database: ApiDatabaseValue & Pick<typeof pgliteDatabase, "$client"> =
+      // SAFETY: PGlite stands in for @effect/sql-pg. Their raw `execute`
+      // results differ only in metadata; the API reads `rows` alone.
+      pgliteDatabase as never;
+
     const client = await runtime.runPromise(PgliteClient.PgliteClient);
     await runtime.runPromise(client.refreshArrayTypes);
 
