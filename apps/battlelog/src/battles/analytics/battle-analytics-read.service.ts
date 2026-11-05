@@ -167,39 +167,42 @@ export const makeBattleAnalyticsRead = (
       hasFlee: false,
     });
 
-    const [row] = yield* db
-      .select({
-        avgWinDuration:
-          sql<number>`coalesce(avg(${battles.duration}) filter (where ${user.team} = ${battles.winningTeam}), 0)`.mapWith(
-            Number,
-          ),
-        avgLossDuration:
-          sql<number>`coalesce(avg(${battles.duration}) filter (where ${user.team} <> ${battles.winningTeam}), 0)`.mapWith(
-            Number,
-          ),
-      })
-      .from(battles)
-      .innerJoinLateral(user, sql`true`)
-      .leftJoinLateral(opponent, sql`true`)
-      .where(where);
-
-    const fastest = yield* db
-      .select({ duration: battles.duration, battleId: battles.id })
-      .from(battles)
-      .innerJoinLateral(user, sql`true`)
-      .leftJoinLateral(opponent, sql`true`)
-      .where(where)
-      .orderBy(asc(battles.duration), asc(battles.id))
-      .limit(1);
-
-    const longest = yield* db
-      .select({ duration: battles.duration, battleId: battles.id })
-      .from(battles)
-      .innerJoinLateral(user, sql`true`)
-      .leftJoinLateral(opponent, sql`true`)
-      .where(where)
-      .orderBy(desc(battles.duration), desc(battles.id))
-      .limit(1);
+    const [[row], fastest, longest] = yield* Effect.all(
+      [
+        db
+          .select({
+            avgWinDuration:
+              sql<number>`coalesce(avg(${battles.duration}) filter (where ${user.team} = ${battles.winningTeam}), 0)`.mapWith(
+                Number,
+              ),
+            avgLossDuration:
+              sql<number>`coalesce(avg(${battles.duration}) filter (where ${user.team} <> ${battles.winningTeam}), 0)`.mapWith(
+                Number,
+              ),
+          })
+          .from(battles)
+          .innerJoinLateral(user, sql`true`)
+          .leftJoinLateral(opponent, sql`true`)
+          .where(where),
+        db
+          .select({ duration: battles.duration, battleId: battles.id })
+          .from(battles)
+          .innerJoinLateral(user, sql`true`)
+          .leftJoinLateral(opponent, sql`true`)
+          .where(where)
+          .orderBy(asc(battles.duration), asc(battles.id))
+          .limit(1),
+        db
+          .select({ duration: battles.duration, battleId: battles.id })
+          .from(battles)
+          .innerJoinLateral(user, sql`true`)
+          .leftJoinLateral(opponent, sql`true`)
+          .where(where)
+          .orderBy(desc(battles.duration), desc(battles.id))
+          .limit(1),
+      ],
+      { concurrency: "unbounded" },
+    );
 
     return {
       avgWinDuration: Math.round(row?.avgWinDuration ?? 0),

@@ -941,6 +941,7 @@ export class CommandHandler {
       yield* withdrawNpcPresence(socket, data.character);
       socket.data.character = data.character;
       socket.data.confidence = "reported";
+      let announceVerified: Effect.Effect<void> = Effect.void;
 
       if (data.character) {
         const verification = yield* proofVerifier.verify({
@@ -955,7 +956,7 @@ export class CommandHandler {
           socket.data.confidence = "verified";
 
           // Other services trust account ownership only from this fact.
-          yield* publishAccountVerified({
+          announceVerified = publishAccountVerified({
             version: 1,
             userId: socket.data.userId,
             accountId: data.character.accountId,
@@ -975,7 +976,13 @@ export class CommandHandler {
         }
       }
 
-      const userGuilds = yield* guilds.getUserGuilds(socket.data);
+      // The fact is published whether or not the guild read succeeds.
+      const [, userGuildsResult] = yield* Effect.all(
+        [announceVerified, Effect.result(guilds.getUserGuilds(socket.data))],
+        { concurrency: "unbounded" },
+      );
+
+      const userGuilds = yield* Effect.fromResult(userGuildsResult);
       const authorizedGuilds = scopedGuilds(socket.data, userGuilds);
 
       if (authorizedGuilds.length === 0) {

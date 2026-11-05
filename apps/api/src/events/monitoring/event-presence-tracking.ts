@@ -253,7 +253,7 @@ export const makeEventPresenceTracking = (
       if (mapRows.length === 0) return;
       const mapIds = mapRows.map(({ map }) => map.id);
 
-      const [assignmentRows, activeRows] = yield* Effect.all(
+      const [assignmentRows, activeRows, hasTimer] = yield* Effect.all(
         [
           query(
             "events.presence.assignments",
@@ -285,17 +285,16 @@ export const makeEventPresenceTracking = (
                 ),
               ),
           ),
+          timers.hasEventRespawnTimers(
+            mapRows.map(({ hero, event }) => ({
+              guildId,
+              world: event.world,
+              npcId: getEventHeroNpcId(hero),
+              npcName: hero.npcName,
+            })),
+          ),
         ],
         { concurrency: "unbounded" },
-      );
-
-      const hasTimer = yield* timers.hasEventRespawnTimers(
-        mapRows.map(({ hero, event }) => ({
-          guildId,
-          world: event.world,
-          npcId: getEventHeroNpcId(hero),
-          npcName: hero.npcName,
-        })),
       );
 
       const member = activeMember ?? null;

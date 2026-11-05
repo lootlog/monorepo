@@ -192,7 +192,9 @@ export const makeReadyRoomRepository = (
               Schema.decodeUnknownSync(Schema.Array(Schema.String))(value),
             ),
           ),
-          Effect.flatMap((ids) => Effect.all(ids.map(get))),
+          Effect.flatMap((ids) =>
+            Effect.all(ids.map(get), { concurrency: "unbounded" }),
+          ),
           Effect.map((rooms) =>
             rooms.filter(
               (room): room is ReadyRoomAggregate =>
@@ -223,7 +225,7 @@ export const makeReadyRoomRepository = (
 
             const ids = [...new Set(result)];
 
-            return Effect.all(ids.map(get)).pipe(
+            return Effect.all(ids.map(get), { concurrency: "unbounded" }).pipe(
               Effect.tap((aggregates) => {
                 const missing = ids.filter((_, index) => !aggregates[index]);
 

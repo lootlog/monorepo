@@ -147,10 +147,6 @@ export const makeNotificationWatchedItems = (
   ) {
     const ruleIds = rows.flatMap(({ rule }) => (rule ? [rule.id] : []));
 
-    const targets = yield* readNotificationRuleTargets(database, ruleIds).pipe(
-      Effect.mapError(databaseFailure("notifications.watchedItems.targets")),
-    );
-
     const pairs = [
       ...new Map(
         rows.map(({ watchedItem }) => [
@@ -160,43 +156,52 @@ export const makeNotificationWatchedItems = (
       ).values(),
     ];
 
-    const snapshots =
-      pairs.length === 0
-        ? []
-        : yield* database
-            .selectDistinctOn(
-              [itemSnapshotTable.itemId, itemSnapshotTable.name],
-              {
-                itemId: itemSnapshotTable.itemId,
-                name: itemSnapshotTable.name,
-                icon: itemSnapshotTable.icon,
-                rarity: itemSnapshotTable.rarity,
-                lvl: itemSnapshotTable.lvl,
-                itemType: itemSnapshotTable.itemType,
-                statRaw: itemSnapshotTable.statRaw,
-              },
-            )
-            .from(itemSnapshotTable)
-            .where(
-              or(
-                ...pairs.map(({ itemId, itemName }) =>
-                  and(
-                    eq(itemSnapshotTable.itemId, itemId),
-                    eq(itemSnapshotTable.name, itemName),
+    const [targets, snapshots] = yield* Effect.all(
+      [
+        readNotificationRuleTargets(database, ruleIds).pipe(
+          Effect.mapError(
+            databaseFailure("notifications.watchedItems.targets"),
+          ),
+        ),
+        pairs.length === 0
+          ? Effect.succeed([])
+          : database
+              .selectDistinctOn(
+                [itemSnapshotTable.itemId, itemSnapshotTable.name],
+                {
+                  itemId: itemSnapshotTable.itemId,
+                  name: itemSnapshotTable.name,
+                  icon: itemSnapshotTable.icon,
+                  rarity: itemSnapshotTable.rarity,
+                  lvl: itemSnapshotTable.lvl,
+                  itemType: itemSnapshotTable.itemType,
+                  statRaw: itemSnapshotTable.statRaw,
+                },
+              )
+              .from(itemSnapshotTable)
+              .where(
+                or(
+                  ...pairs.map(({ itemId, itemName }) =>
+                    and(
+                      eq(itemSnapshotTable.itemId, itemId),
+                      eq(itemSnapshotTable.name, itemName),
+                    ),
                   ),
                 ),
+              )
+              .orderBy(
+                itemSnapshotTable.itemId,
+                itemSnapshotTable.name,
+                desc(itemSnapshotTable.createdAt),
+              )
+              .pipe(
+                Effect.mapError(
+                  databaseFailure("notifications.watchedItems.snapshots"),
+                ),
               ),
-            )
-            .orderBy(
-              itemSnapshotTable.itemId,
-              itemSnapshotTable.name,
-              desc(itemSnapshotTable.createdAt),
-            )
-            .pipe(
-              Effect.mapError(
-                databaseFailure("notifications.watchedItems.snapshots"),
-              ),
-            );
+      ],
+      { concurrency: "unbounded" },
+    );
 
     const snapshotByKey = new Map(
       snapshots.map((snapshot) => [

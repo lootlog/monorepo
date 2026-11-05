@@ -136,7 +136,7 @@ export const cancelAggregate = Effect.fnUntraced(function* (
           guildId,
         })
         .pipe(Effect.ignore),
-    { discard: true },
+    { concurrency: "unbounded", discard: true },
   );
   yield* context.publish(result.aggregate, recipients);
   // The cancellation is committed and retries cannot repeat it, so a chat
