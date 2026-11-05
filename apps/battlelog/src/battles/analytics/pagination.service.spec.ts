@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
 import { PgliteClient } from "@effect/sql-pglite";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { makeWithDefaults } from "drizzle-orm/effect-pglite";
 import { migrate } from "drizzle-orm/effect-pglite/migrator";
 import { Effect, ManagedRuntime } from "effect";
@@ -64,7 +64,12 @@ beforeAll(async () => {
 afterAll(() => runtime.dispose());
 
 const pagination = () =>
-  makeBattlePagination(database, (effect) => effect).paginateBattles;
+  makeBattlePagination(
+    // SAFETY: PGlite stands in for @effect/sql-pg. Their raw `execute` results
+    // differ only in metadata; pagination reads rows alone.
+    database as never,
+    (effect) => effect,
+  ).paginateBattles;
 
 const page = (sortOrder: SortOrder, cursor?: string) =>
   runtime.runPromise(
@@ -118,14 +123,50 @@ describe("battle list pagination against PostgreSQL", () => {
     });
   }
 
-  it("rejects a malformed cursor instead of returning the first page", async () => {
+  it("rejects a malformed cursor without taking a read permit", async () => {
     const previousFormat = `${new Date(FIRST_BATTLE_AT).toISOString()}_${ownerBattleIds[0]}`;
+    let budgetedReads = 0;
+
+    const read = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+      Effect.sync(() => {
+        budgetedReads += 1;
+      }).pipe(Effect.andThen(effect));
+
+    const paginate = makeBattlePagination(
+      // SAFETY: PGlite stands in for @effect/sql-pg. Their raw `execute` results
+      // differ only in metadata; pagination reads rows alone.
+      database as never,
+      read,
+    ).paginateBattles;
 
     for (const cursor of [previousFormat, "not-a-cursor"]) {
-      await expect(page("desc", cursor)).rejects.toBeInstanceOf(
-        InvalidRequestError,
-      );
+      await expect(
+        runtime.runPromise(
+          paginate((table) => eq(table.userId, "owner"), {
+            size: 3,
+            sortOrder: "desc",
+            includeTotal: false,
+            cursor,
+          }),
+        ),
+      ).rejects.toBeInstanceOf(InvalidRequestError);
     }
+
+    expect(budgetedReads).toBe(0);
+  });
+
+  it("estimates the total of an unfiltered list from table statistics", async () => {
+    await runtime.runPromise(database.execute(sql`ANALYZE ${battles}`));
+
+    const result = await runtime.runPromise(
+      pagination()(() => undefined, {
+        size: 3,
+        sortOrder: "desc",
+        includeTotal: true,
+      }),
+    );
+
+    expect(result.pagination.total).toBe(OWNER_BATTLE_OFFSETS.length + 1);
   });
 });
 
