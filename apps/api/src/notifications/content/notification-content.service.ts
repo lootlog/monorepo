@@ -94,10 +94,12 @@ class NotificationContent {
       scheduleOffsetMinutes: params.notificationRule.scheduleOffsetMinutes ?? 0,
     });
 
+    const template =
+      params.notificationRule.contentTemplate ??
+      DEFAULT_TIMER_NOTIFICATION_TEMPLATE;
+
     const content = this.renderTimerNotificationContent({
-      template:
-        params.notificationRule.contentTemplate ??
-        DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
+      template,
       notificationRuleName: params.notificationRule.name,
       npcId: params.npcId,
       npcName: params.npcName,
@@ -112,7 +114,7 @@ class NotificationContent {
       message,
       content,
       allowedMentions: this.buildAllowedMentionsForTarget(
-        content,
+        template,
         params.target.targetType,
       ),
       ruleId: params.notificationRule.id,
@@ -152,10 +154,12 @@ class NotificationContent {
 
     const message = scheduledMessageNotification(ruleName);
 
+    const template =
+      params.notificationRule.contentTemplate ??
+      DEFAULT_SCHEDULED_MESSAGE_TEMPLATE;
+
     const content = this.renderScheduledMessageContent({
-      template:
-        params.notificationRule.contentTemplate ??
-        DEFAULT_SCHEDULED_MESSAGE_TEMPLATE,
+      template,
       notificationRuleName: params.notificationRule.name,
       scheduledFor: params.scheduledFor,
     });
@@ -165,7 +169,7 @@ class NotificationContent {
       message,
       content,
       allowedMentions: this.buildAllowedMentionsForTarget(
-        content,
+        template,
         params.target.targetType,
       ),
       ruleId: params.notificationRule.id,
@@ -233,7 +237,7 @@ class NotificationContent {
       ),
       content,
       allowedMentions: this.buildAllowedMentionsForTarget(
-        content,
+        template,
         params.target.targetType,
       ),
       ruleId: params.notificationRule.id,
@@ -285,13 +289,14 @@ class NotificationContent {
   }
 
   /**
-   * Builds Discord allowedMentions based on rendered template content.
-   * Role mentions (<@&roleId>), @everyone, and @here found in templates are
-   * intentionally forwarded - guild admins control templates and are trusted
-   * to configure mentions. DM targets skip mentions entirely.
+   * Builds Discord allowedMentions from the admin-authored template, before
+   * placeholders are filled. Role mentions (<@&roleId>), @everyone, and @here
+   * written in the template are forwarded because guild admins control
+   * templates; placeholder values such as hero, map, or timer names come from
+   * Members and must never grant a ping. DM targets skip mentions entirely.
    */
   buildAllowedMentionsForTarget(
-    content: string,
+    template: string,
     targetType: NotificationTargetType,
   ) {
     if (targetType === NotificationTargetType.DM) {
@@ -300,7 +305,7 @@ class NotificationContent {
 
     const roleIds = Array.from(
       new Set(
-        Array.from(content.matchAll(/<@&(\d+)>/g))
+        Array.from(template.matchAll(/<@&(\d+)>/g))
           .map((match) => match[1])
           .filter((roleId): roleId is string => typeof roleId === "string"),
       ),
@@ -308,7 +313,7 @@ class NotificationContent {
 
     const parse: Array<"everyone"> = [];
 
-    if (content.includes("@everyone") || content.includes("@here")) {
+    if (template.includes("@everyone") || template.includes("@here")) {
       parse.push("everyone");
     }
 

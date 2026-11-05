@@ -36,7 +36,7 @@ const { Route } = await import("../../routes/signin");
 
 await initializeTestTranslations();
 
-const renderSignIn = async (error = "state_mismatch") => {
+const renderSignIn = async (error = "state_mismatch", redirect = "/@me") => {
   const root = createRootRoute();
 
   const signin = createRoute({
@@ -49,7 +49,9 @@ const renderSignIn = async (error = "state_mismatch") => {
   const router = createRouter({
     routeTree: root.addChildren([signin]),
     history: createMemoryHistory({
-      initialEntries: [`/signin?error=${error}&redirect=%2F%40me`],
+      initialEntries: [
+        `/signin?error=${error}&redirect=${encodeURIComponent(redirect)}`,
+      ],
     }),
   });
 
@@ -111,6 +113,25 @@ describe("SignIn OAuth recovery", () => {
       provider: "discord",
     });
   });
+
+  it.each([
+    "@evil.example/",
+    "//evil.example/",
+    "/\\evil.example/",
+    "/\t/evil.example/",
+  ])(
+    "never sends the OAuth callback off-origin for redirect %j",
+    async (redirect) => {
+      await renderSignIn(undefined, redirect);
+      fireEvent.click(
+        screen.getByRole("button", { name: "auth.signin.submit" }),
+      );
+      await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(1));
+      expect(
+        JSON.parse(String(signInFetch.mock.calls[0]?.[1]?.body)),
+      ).toMatchObject({ callbackURL: `${window.location.origin}/signin` });
+    },
+  );
 
   it.each([429, 503])(
     "allows another sign-in attempt after HTTP %i without an authenticated layout",
