@@ -14,7 +14,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   timerHistoryEntryTable,
   timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/timer.schema";
 
 import {
   InvalidRequestError,

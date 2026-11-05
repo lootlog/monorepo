@@ -11,8 +11,8 @@ import {
   eventPointsEditHistoryTable,
   eventRankingTable,
   eventTable,
-  memberTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
+import { memberTable } from "#src/database/drizzle/organization.schema";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { findMemberNames } from "#src/members/member-names";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";

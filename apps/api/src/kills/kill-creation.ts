@@ -20,11 +20,11 @@ import {
   memberKillBucketTable,
   memberKillTotalTable,
   userCharacterKillBucketTable,
-  userCharactersLootlogSettingsTable,
   userKillBucketTable,
   userKillCharacterTable,
   userKillTotalTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/kill-statistics.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import { getKillNpcId } from "#src/shared/margonem/npc-identity";
 import type { CreateKillRequest } from "#src/contracts/kills/schemas";

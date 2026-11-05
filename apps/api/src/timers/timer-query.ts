@@ -1,10 +1,8 @@
 import { eq } from "drizzle-orm";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import {
-  memberTable,
-  playerSnapshotTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
+import { memberTable } from "#src/database/drizzle/organization.schema";
+import { playerSnapshotTable } from "#src/database/drizzle/loot.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 
 export const selectTimersWithActors = (database: ApiDatabaseValue) =>
   database

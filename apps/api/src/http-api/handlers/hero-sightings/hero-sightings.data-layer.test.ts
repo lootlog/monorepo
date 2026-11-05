@@ -9,12 +9,12 @@ import {
 } from "../../../../test/organization-fixtures.js";
 import {
   guildTable,
-  heroSightingTable,
   memberTable,
   memberToRoleTable,
   roleTable,
-  userCharactersLootlogSettingsTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { heroSightingTable } from "#src/database/drizzle/hero-sighting.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import type {
   CreateHeroSightingRequest,
   HeroSightingResponse,

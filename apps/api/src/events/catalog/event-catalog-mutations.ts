@@ -19,8 +19,8 @@ import {
   eventMapTable,
   eventRankingTable,
   eventTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 import type { RedisService } from "#src/redis/redis.service";
 import {
   InvalidRequestError,

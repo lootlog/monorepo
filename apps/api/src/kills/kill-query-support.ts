@@ -4,7 +4,7 @@ import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
 import { Effect, Schema } from "effect";
-import type { roleTable } from "#src/database/drizzle/schema";
+import type { roleTable } from "#src/database/drizzle/organization.schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import type { KillStatsFilter } from "./kill-stats-persistence.js";
 

@@ -10,7 +10,7 @@ import {
   roleTable,
   memberSyncDeliveryTable,
   memberToRoleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import { applicationLogger } from "#src/shared/application-logger";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { MEMBER_LAST_DISCORD_STATUS } from "./member-discord-status.js";

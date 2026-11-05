@@ -15,12 +15,12 @@ import { randomUUID } from "node:crypto";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import {
-  guildTable,
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 import { NotificationFiltersResponse } from "#src/notifications/notification-response.schema";
 import type { JsonObject } from "#src/database/json";
 import type {

@@ -34,9 +34,9 @@ import { and, asc, desc, eq, gte, inArray, lt, or } from "drizzle-orm";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
-  reservationTable,
   roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { reservationTable } from "#src/database/drizzle/reservation.schema";
 import { presentReservation } from "#src/reservations/reservation-presentation";
 import {
   ApplicationError,

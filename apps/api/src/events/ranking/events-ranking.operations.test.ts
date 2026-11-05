@@ -11,10 +11,12 @@ import {
 import {
   eventTable,
   eventHeroNpcTable,
+} from "#src/database/drizzle/event.schema";
+import {
   guildTable,
   memberTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 import { makeEventHeroSummary } from "#src/events/kills/event-hero-summary";
 import { makeEventTimersPort } from "#src/events/respawn/event-timers.port";
 import { makeEventTimerStore } from "#src/events/respawn/event-timer.store";

@@ -4,7 +4,7 @@ import {
   isLootDrawTicketOrder,
 } from "@lootlog/domain/loot-draw";
 import type { CreateLootDrawRequest } from "#src/contracts/loots/schemas";
-import type { LootDrawEntrantRecord } from "#src/database/drizzle/schema";
+import type { LootDrawEntrantRecord } from "#src/database/drizzle/loot.schema";
 import { ErrorKey } from "#src/loots/error-key";
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 

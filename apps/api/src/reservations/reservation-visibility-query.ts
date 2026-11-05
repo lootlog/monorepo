@@ -1,7 +1,7 @@
 import { and, eq, isNull, or } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
-import { reservationShareTable } from "#src/database/drizzle/schema";
+import { reservationShareTable } from "#src/database/drizzle/reservation.schema";
 
 export const selectActiveReservationShares = (
   database: typeof ApiDatabase.Service,

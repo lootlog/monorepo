@@ -16,7 +16,7 @@ import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
-import type { guildTable } from "#src/database/drizzle/schema";
+import type { guildTable } from "#src/database/drizzle/organization.schema";
 import { findActiveGuildMember } from "#src/members/member-access-query";
 
 import { OrganizationSummary } from "#src/contracts/shared";

@@ -12,9 +12,9 @@ import {
   guildTable,
   memberTable,
   memberRefreshJobTable,
-  reservationTable,
-  timerTable,
-} from "../src/database/drizzle/schema.js";
+} from "../src/database/drizzle/organization.schema.js";
+import { reservationTable } from "../src/database/drizzle/reservation.schema.js";
+import { timerTable } from "../src/database/drizzle/timer.schema.js";
 import { makeMemberBulkRefreshProcessor } from "../src/members/member-bulk-refresh.processor.js";
 import { MEMBER_REFRESH_PRIORITY } from "../src/members/member-refresh-queue.js";
 import { makeMemberRefreshProcessor } from "../src/members/member-refresh.processor.js";

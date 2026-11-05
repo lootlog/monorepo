@@ -21,8 +21,8 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildKillBucketTable,
   memberKillBucketTable,
-  memberTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/kill-statistics.schema";
+import { memberTable } from "#src/database/drizzle/organization.schema";
 import {
   guildKillSource,
   memberKillSource,

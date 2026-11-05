@@ -9,7 +9,7 @@ import {
   guildTable,
   memberTable,
   roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import { makeMemberDelivery } from "#src/members/member-delivery.operations";
 import { makeMemberStore } from "#src/members/member.store";
 import { makeMemberSync } from "#src/members/member-sync.operations";

@@ -3,7 +3,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { timerTable } from "#src/database/drizzle/schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 
 type TimerWrite = Omit<
   typeof timerTable.$inferInsert,

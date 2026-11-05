@@ -4,7 +4,7 @@ import {
   eventHeroNpcTable,
   eventMapTable,
   eventTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
 
 export const eventHeroScope = (
   guildId: string,

@@ -4,25 +4,31 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberKillTotalTable,
   memberKillBucketTable,
-  memberTable,
-  memberToRoleTable,
-  notificationRuleTable,
-  notificationTargetTable,
-  userCharacterAuraGameAccountTable,
-  userCharacterAuraTable,
   userCharacterKillBucketTable,
-  userCharactersLootlogSettingsTable,
   userKillCharacterTable,
   userKillTotalTable,
   userKillBucketTable,
+} from "#src/database/drizzle/kill-statistics.schema";
+import {
+  memberTable,
+  memberToRoleTable,
+} from "#src/database/drizzle/organization.schema";
+import {
+  notificationRuleTable,
+  notificationTargetTable,
+  watchedItemTable,
+} from "#src/database/drizzle/notification.schema";
+import {
+  userCharacterAuraGameAccountTable,
+  userCharacterAuraTable,
+  userCharactersLootlogSettingsTable,
   userMargonemAccountTable,
-  userPinnedEventTable,
-  userPinnedReservationSpotTable,
   userSettingDocumentTable,
   userSettingsTable,
   userThemeTable,
-  watchedItemTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/user.schema";
+import { userPinnedEventTable } from "#src/database/drizzle/event.schema";
+import { userPinnedReservationSpotTable } from "#src/database/drizzle/reservation.schema";
 import { NotificationOwnerType } from "#src/notifications/notification-enums";
 import {
   getGuildMemberForbiddenCacheKey,

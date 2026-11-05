@@ -9,7 +9,7 @@ import {
   roleTable,
   memberTable,
   memberToRoleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import { RolesData } from "#src/http-api/handlers/organization-workspace/organization-workspace.operations";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);

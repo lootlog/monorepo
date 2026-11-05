@@ -5,9 +5,9 @@ import {
   type PresenceChange,
   type PresenceRedis,
   revisionKey,
-  storeCall,
   withoutLocation,
 } from "#src/realtime/presence-records";
+import { storeCall } from "#src/realtime/realtime-errors";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 
 // Keeps a burst's frames far below the socket backpressure limit.

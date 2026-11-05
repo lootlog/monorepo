@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 
-import type { roleTable } from "#src/database/drizzle/schema";
+import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { makeEventAccess } from "#src/events/event-access";
 
 type Role = typeof roleTable.$inferSelect;

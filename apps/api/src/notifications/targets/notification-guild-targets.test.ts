@@ -9,12 +9,12 @@ import {
   type NotificationPendingJobs,
 } from "#src/notifications/targets/notification-guild-targets";
 import { makeNotificationUserTargets } from "#src/notifications/targets/notification-user-targets";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import {
-  guildTable,
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 import { createGuildFixture } from "../../../test/organization-fixtures.js";
 import {
   createNotificationRuleFixture,

@@ -2,13 +2,13 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, countDistinct, eq, gte, isNull, sql } from "drizzle-orm";
 import { Context, Effect, Layer, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import {
-  guildTable,
   itemSnapshotTable,
   lootItemTable,
   lootTable,
   organizationLootRecordTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 
 export type GuildStatsCardGuild = {
   readonly id: string;

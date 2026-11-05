@@ -11,8 +11,8 @@ import {
 import {
   guildTable,
   memberTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 import { makeEventTimerStore } from "#src/events/respawn/event-timer.store";
 import { makeEventTimersPort } from "#src/events/respawn/event-timers.port";
 import { RedisService } from "#src/redis/redis.service";

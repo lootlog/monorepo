@@ -10,8 +10,8 @@ import {
   eventMapToMemberTable,
   eventPresenceLogTable,
   eventTable,
-  memberTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
+import { memberTable } from "#src/database/drizzle/organization.schema";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { EventEmitter } from "#src/events/event-emitter";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";

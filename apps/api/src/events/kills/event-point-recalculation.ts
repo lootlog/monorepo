@@ -3,7 +3,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { eventTable } from "#src/database/drizzle/schema";
+import { eventTable } from "#src/database/drizzle/event.schema";
 import type { RedisService } from "#src/redis/redis.service";
 import { getEventWrappedCachePattern } from "#src/shared/cache";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";

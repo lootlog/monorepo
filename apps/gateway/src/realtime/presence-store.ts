@@ -30,7 +30,6 @@ import {
   metadataKey,
   presenceKey,
   readOrganization,
-  storeCall,
   withoutLocation,
 } from "#src/realtime/presence-records";
 import { PresenceSnapshots } from "#src/realtime/presence-snapshots";
@@ -38,6 +37,7 @@ import {
   PresenceNotPublished,
   PresenceSessionMismatch,
   RealtimeStoreError,
+  storeCall,
 } from "#src/realtime/realtime-errors";
 import { type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";

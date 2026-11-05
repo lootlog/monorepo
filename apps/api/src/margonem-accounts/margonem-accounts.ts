@@ -2,7 +2,7 @@ import { desc, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import type { MargonemAccountVerifiedV1 } from "@lootlog/protocol/rabbit/events";
 import type { ApiDatabaseValue as Database } from "#src/database/drizzle/database";
-import { userMargonemAccountTable } from "#src/database/drizzle/schema";
+import { userMargonemAccountTable } from "#src/database/drizzle/user.schema";
 
 /** Records the gateway's fact; a late or repeated one never moves time back. */
 export const recordMargonemAccountVerification = (

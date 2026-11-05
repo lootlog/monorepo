@@ -19,7 +19,7 @@ import {
   notificationRuleTargetTable,
   notificationTargetTable,
   watchedItemTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 import {
   InvalidRequestError,
   PermissionDeniedError,

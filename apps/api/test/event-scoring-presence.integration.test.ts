@@ -16,9 +16,11 @@ import {
   eventPointsEditHistoryTable,
   eventRankingTable,
   eventTable,
+} from "../src/database/drizzle/event.schema.js";
+import {
   guildTable,
   memberTable,
-} from "../src/database/drizzle/schema.js";
+} from "../src/database/drizzle/organization.schema.js";
 import { makeEventReadCache } from "../src/events/catalog/event-read-cache.service.js";
 import { makeEventEmitter } from "../src/events/event-emitter.js";
 import { makeEventPointsStore } from "../src/events/kills/event-points.repository.js";

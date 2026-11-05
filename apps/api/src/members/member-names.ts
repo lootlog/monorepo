@@ -1,7 +1,7 @@
 import { and, eq, inArray, or } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
-import { memberTable } from "#src/database/drizzle/schema";
+import { memberTable } from "#src/database/drizzle/organization.schema";
 
 /**
  * The actor keys records store: the Discord id older records keep, or the

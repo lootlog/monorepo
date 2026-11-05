@@ -7,10 +7,12 @@ import {
 } from "../src/database/drizzle/database.js";
 import {
   guildTable,
-  lootTable,
   memberTable,
+} from "../src/database/drizzle/organization.schema.js";
+import {
+  lootTable,
   organizationLootRecordTable,
-} from "../src/database/drizzle/schema.js";
+} from "../src/database/drizzle/loot.schema.js";
 import { ErrorKey } from "../src/loots/error-key.js";
 import { makeLootPersistence } from "../src/loots/loot-persistence.js";
 import {

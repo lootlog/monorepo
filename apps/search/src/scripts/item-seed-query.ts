@@ -4,7 +4,7 @@ import {
   lootNpcTable,
   lootTable,
   npcSnapshotTable,
-} from "@lootlog/api/database/schema";
+} from "@lootlog/api/database/loot.schema";
 import { DROP_SOURCE_BOSS_TYPES } from "@lootlog/domain/npc-type";
 import { asc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import type { drizzle } from "drizzle-orm/bun-sql";

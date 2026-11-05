@@ -1,7 +1,10 @@
 import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import { desc, eq, inArray } from "drizzle-orm";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { memberToRoleTable, roleTable } from "#src/database/drizzle/schema";
+import {
+  memberToRoleTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
 
 export const memberDisplayRolesQuery = (
   database: ApiDatabaseValue,

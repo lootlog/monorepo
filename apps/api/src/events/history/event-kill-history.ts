@@ -5,9 +5,11 @@ import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
   eventTable,
+} from "#src/database/drizzle/event.schema";
+import {
   memberTable,
   type roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import type { EventAccess } from "#src/events/event-access";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import type { EventPoints } from "#src/events/kills/event-points.service";

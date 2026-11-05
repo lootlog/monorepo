@@ -1,6 +1,6 @@
 import { Logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
-import type { eventMapCoverageGapTable } from "#src/database/drizzle/schema";
+import type { eventMapCoverageGapTable } from "#src/database/drizzle/event.schema";
 import {
   clipToWindow,
   clipToWindowSeconds,

@@ -5,7 +5,7 @@ import {
 } from "@lootlog/protocol/realtime";
 import { Effect, Option, Schema } from "effect";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
-import { RealtimeStoreError } from "#src/realtime/realtime-errors";
+import { RealtimeStoreError, storeCall } from "#src/realtime/realtime-errors";
 
 export type PresenceRedis = {
   readonly command: Pick<
@@ -38,15 +38,6 @@ export const metadataKey = (organizationId: string, sessionId: string) =>
 
 export const revisionKey = (organizationId: string) =>
   `presence:revision:${organizationId}`;
-
-export const storeCall = <A>(
-  operation: string,
-  evaluate: () => Promise<A>,
-): Effect.Effect<A, RealtimeStoreError> =>
-  Effect.tryPromise({
-    try: evaluate,
-    catch: (cause) => new RealtimeStoreError({ operation, cause }),
-  });
 
 // Releases a lease only while its holder still owns it.
 const RELEASE_LEASE = `

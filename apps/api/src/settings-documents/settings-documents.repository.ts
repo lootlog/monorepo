@@ -21,10 +21,8 @@ import {
   Predicate,
 } from "effect";
 import { ApiDatabase } from "../database/drizzle/database.js";
-import {
-  memberTable,
-  userSettingDocumentTable,
-} from "../database/drizzle/schema.js";
+import { memberTable } from "../database/drizzle/organization.schema.js";
+import { userSettingDocumentTable } from "../database/drizzle/user.schema.js";
 import { applySettingsPatch, type JsonRecord } from "./settings-resolver.js";
 
 type SettingsOperation = PatchSettingsDocuments["operations"][number];

@@ -20,14 +20,18 @@ import {
 import {
   eventHeroNpcTable,
   eventTable,
+} from "#src/database/drizzle/event.schema";
+import {
   guildTable,
   memberTable,
   memberToRoleTable,
-  playerSnapshotTable,
   roleTable,
+} from "#src/database/drizzle/organization.schema";
+import { playerSnapshotTable } from "#src/database/drizzle/loot.schema";
+import {
   timerHistoryEntryTable,
   timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/timer.schema";
 import { LootlogApiRouter } from "#src/runtime/application/http-routes";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";

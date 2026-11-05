@@ -6,7 +6,11 @@ import {
 import {
   guildTable,
   memberTable,
-  userCharactersLootlogSettingsTable,
+  memberToRoleTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
+import {
   userKillBucketTable,
   userKillTotalTable,
   memberKillBucketTable,
@@ -14,9 +18,7 @@ import {
   guildKillActivityTable,
   guildKillBucketTable,
   guildKillTotalTable,
-  memberToRoleTable,
-  roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/kill-statistics.schema";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import { applicationLogger as logger } from "#src/shared/application-logger";

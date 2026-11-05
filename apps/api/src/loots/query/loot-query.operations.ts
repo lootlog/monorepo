@@ -1,7 +1,10 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Schema } from "effect";
-import type { guildTable, roleTable } from "#src/database/drizzle/schema";
+import type {
+  guildTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
 import type { LootsQuery } from "#src/contracts/loots/schemas";
 import type { LootItemDto } from "#src/loots/query/loot-item";
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";

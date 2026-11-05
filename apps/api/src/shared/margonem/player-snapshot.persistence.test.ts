@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
-import { playerSnapshotTable } from "#src/database/drizzle/schema";
+import { playerSnapshotTable } from "#src/database/drizzle/loot.schema";
 import {
   parseCharacterIdentity,
   resolvePlayerSnapshots,

@@ -10,7 +10,7 @@ import {
   lootNpcTable,
   lootTable,
   npcSnapshotTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 import { makeMonsterStatisticsPublisher } from "#src/loots/monster-statistics";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);

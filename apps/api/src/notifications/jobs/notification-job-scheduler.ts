@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { notificationJobTable } from "#src/database/drizzle/schema";
+import { notificationJobTable } from "#src/database/drizzle/notification.schema";
 import type { JsonObject, JsonValue } from "#src/database/json";
 import {
   NotificationJobKind,

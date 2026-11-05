@@ -1,4 +1,4 @@
-import { guildKillActivityTable } from "#src/database/drizzle/schema";
+import { guildKillActivityTable } from "#src/database/drizzle/kill-statistics.schema";
 import { and, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { RabbitMessaging } from "@lootlog/messaging";

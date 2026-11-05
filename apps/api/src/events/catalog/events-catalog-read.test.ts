@@ -8,11 +8,13 @@ import {
   eventMapTable,
   eventMapToMemberTable,
   eventTable,
+} from "#src/database/drizzle/event.schema";
+import {
   guildTable,
   memberTable,
   memberToRoleTable,
   roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 
 import type { RedisGetOrSetJsonBestEffortOptions } from "#src/redis/redis.service";
 

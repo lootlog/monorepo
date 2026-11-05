@@ -4,7 +4,7 @@ import {
   eventKillPointTable,
   eventHeroKillTable,
   eventHeroNpcTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
 
 export const selectEventKillPoints = (
   database: Pick<typeof ApiDatabase.Service, "select">,

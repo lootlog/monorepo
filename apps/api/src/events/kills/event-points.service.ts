@@ -4,7 +4,7 @@ import {
   KILL_POINT_ADJUSTMENTS_TRACKED_SINCE,
   roundPoints,
 } from "#src/events/kills/event-ranking-policy";
-import type { eventKillPointTable } from "#src/database/drizzle/schema";
+import type { eventKillPointTable } from "#src/database/drizzle/event.schema";
 import { Array as Arr, Clock, Effect } from "effect";
 import type { EventEmitter } from "#src/events/event-emitter";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";

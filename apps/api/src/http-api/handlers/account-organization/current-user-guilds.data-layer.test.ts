@@ -12,7 +12,7 @@ import {
   memberTable,
   memberToRoleTable,
   roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import { makeCurrentUserGuilds } from "./current-user-guilds.data-layer.js";
 
 test("guild list waits on Discord only for missing access and at most twice", async () => {

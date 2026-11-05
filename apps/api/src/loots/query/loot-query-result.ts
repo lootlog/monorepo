@@ -1,6 +1,6 @@
 import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
 import type { MemberSummary } from "#src/contracts/shared";
-import type { lootTable } from "#src/database/drizzle/schema";
+import type { lootTable } from "#src/database/drizzle/loot.schema";
 import type { LootItemDto } from "#src/loots/query/loot-item";
 import type { LootNpcDto } from "#src/loots/query/loot-npc";
 import type { LootPlayerDto } from "#src/loots/query/loot-player";

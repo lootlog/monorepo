@@ -10,6 +10,12 @@ import {
 import { buildTimerKey } from "@lootlog/api/timers/timer-key";
 import {
   guildTable,
+  memberRefreshJobTable,
+  memberTable,
+  memberToRoleTable,
+  roleTable,
+} from "@lootlog/api/database/organization.schema";
+import {
   itemSnapshotTable,
   lootCommentTable,
   lootItemTable,
@@ -20,17 +26,15 @@ import {
   lootTable,
   lootlogConfigNpcTable,
   lootlogConfigTable,
-  memberRefreshJobTable,
-  memberTable,
-  memberToRoleTable,
   npcSnapshotTable,
   organizationLootRecordTable,
   playerSnapshotTable,
-  roleTable,
-  timerTable,
+} from "@lootlog/api/database/loot.schema";
+import { timerTable } from "@lootlog/api/database/timer.schema";
+import {
   userCharactersLootlogSettingsTable,
   userSettingsTable,
-} from "@lootlog/api/database/schema";
+} from "@lootlog/api/database/user.schema";
 import {
   battles as battlesTable,
   battleTimelines as battleTimelinesTable,

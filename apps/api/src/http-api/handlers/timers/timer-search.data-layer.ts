@@ -2,7 +2,7 @@ import { isObjectRecord } from "@lootlog/schema/records";
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { timerTable } from "#src/database/drizzle/schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 import type { TimerNpcSearchQuery } from "#src/contracts/timers/schemas";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { containsPattern } from "#src/shared/sql-like";

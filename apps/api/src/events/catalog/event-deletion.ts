@@ -11,8 +11,8 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventTable,
   eventHeroNpcTable,
-  type roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
+import type { roleTable } from "#src/database/drizzle/organization.schema";
 import type { RedisService } from "#src/redis/redis.service";
 import { getEventWrappedCachePattern } from "#src/shared/cache";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";

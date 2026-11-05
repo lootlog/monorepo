@@ -6,8 +6,8 @@ import {
   eventHeroKillTable,
   eventHeroNpcTable,
   eventTable,
-  guildTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import { makeEventKillStore } from "./event-kill.repository.js";
 
 it("records one kill per hero respawn window even when Redis no longer remembers it", async () => {

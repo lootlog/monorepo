@@ -8,7 +8,7 @@ import {
   eventMapAssignmentHistoryTable,
   eventMapTable,
   eventMapToMemberTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
 
 type Database = ApiDatabaseValue;
 

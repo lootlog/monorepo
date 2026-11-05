@@ -4,7 +4,8 @@ import {
   type CharacterAuraId,
 } from "@lootlog/schema/character-aura";
 import { AURAS } from "./presets";
-import { Aura, type AuraPlacement } from "./render";
+import type { AuraPlacement } from "./placement";
+import { Aura } from "./render";
 import { buildBoxSilhouette, type AuraSilhouette } from "./silhouette";
 
 const isCharacterAuraId = Schema.is(CharacterAuraIdSchema);
