@@ -2,15 +2,15 @@
   "name": "@lootlog/app",
   "version": "1.0.0",
   "private": true,
-  "description": "Full-stack microservices application for Margonem clan loot tracking, battle logging, and Discord bot integration",
+  "description": "Open-source Margonem companion that connects an in-game client, a shared web workspace, and Discord for organized groups",
   "keywords": [
     "battle-logging",
-    "clan-management",
     "discord-bot",
     "effect",
     "lootlog",
     "margonem",
     "microservices",
+    "organizations",
     "react",
     "turborepo",
     "typescript"
