@@ -23,7 +23,8 @@ export const DetailBarFact = ({
     )}
   >
     <span className="text-[11px] leading-4 text-muted-foreground">{label}</span>
-    <span className="flex min-w-0 items-center gap-1.5 truncate text-sm leading-5 font-medium tabular-nums">
+    {/* A block, not a flex row: text in a flex row clips without an ellipsis. */}
+    <span className="block min-w-0 truncate text-sm leading-5 font-medium tabular-nums">
       {children}
     </span>
   </div>

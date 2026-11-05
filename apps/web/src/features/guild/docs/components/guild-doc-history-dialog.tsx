@@ -93,9 +93,6 @@ export const GuildDocHistoryDialog = ({
         title={history.title}
         onClick={() => setSelectedHistoryId(history.id)}
       >
-        {isSelected && (
-          <span className="absolute inset-y-2 left-0 w-0.5 rounded-r-full bg-primary" />
-        )}
         <div className="flex items-center justify-between gap-2 pl-1">
           <span className="truncate text-sm font-medium leading-tight">
             {t("docs.history.version", { version: history.version })}

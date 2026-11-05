@@ -46,6 +46,8 @@ export const LootHeaderActions = ({ loot }: { loot: Loot }) => {
       <ChevronLink
         render={renderLootDetailsLink(lootId)}
         aria-label={t("loots.list.details")}
+        // On phones only the chevron shows; keep a 32px target behind it.
+        className="max-sm:min-w-8 max-sm:justify-end"
       >
         <span className="max-sm:sr-only">{t("loots.list.details")}</span>
       </ChevronLink>

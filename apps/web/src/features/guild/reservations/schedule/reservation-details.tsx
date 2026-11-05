@@ -7,11 +7,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useDeleteReservation } from "@lootlog/client/main";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@lootlog/ui/components/avatar";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
@@ -27,6 +22,7 @@ import {
 } from "@lootlog/ui/components/drawer";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import { ReservationOrganizationBadge } from "@/components/reservation-organization-badge";
 import { useReservationOrganizationIcon } from "@/features/user/reservations/use-reservation-organization-icon";
 import { getReservationErrorMessage } from "../get-reservation-error-message";
@@ -92,9 +88,6 @@ export function ReservationDetails({
     );
   }
 
-  const fallback =
-    displayedReservation.author.displayName.charAt(0).toUpperCase() || "?";
-
   const title = t("reservations.details.title");
 
   const description = t("reservations.details.description", {
@@ -104,13 +97,11 @@ export function ReservationDetails({
   const content = (
     <div className="space-y-4">
       <div className="flex min-w-0 items-center gap-3">
-        <Avatar className="size-10 shrink-0 border border-border">
-          <AvatarImage
-            src={displayedReservation.author.avatarUrl ?? undefined}
-            alt=""
-          />
-          <AvatarFallback>{fallback}</AvatarFallback>
-        </Avatar>
+        <MemberAvatar
+          avatarUrl={displayedReservation.author.avatarUrl ?? null}
+          name={displayedReservation.author.displayName}
+          className="size-10 border border-border"
+        />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">
             {displayedReservation.author.displayName}

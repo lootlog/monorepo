@@ -4,16 +4,25 @@ import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Search, X, Users, UserPlus, AlertTriangle } from "lucide-react";
+import {
+  AlertTriangle,
+  CircleAlert,
+  Search,
+  UserPlus,
+  Users,
+  X,
+} from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { cn } from "cn";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { Spinner } from "@lootlog/ui/components/spinner";
+import { MemberAvatar } from "@/components/common/member-avatar";
+import { RetryButton } from "@/components/common/retry-button";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMembersControllerGetGuildMembers } from "@lootlog/client/main";
 import { SearchInput } from "@/components/ui/search-input";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
-import { LoadingSlot } from "@/components/common/loading-slot";
 
 interface MemberAssignmentModalProps {
   open: boolean;
@@ -71,9 +80,11 @@ export const MemberAssignmentModal = ({
 
   const guildId = useGuildId();
 
-  const { data: members, isLoading } = useMembersControllerGetGuildMembers({
+  const membersQuery = useMembersControllerGetGuildMembers({
     guildId: guildId ?? "",
   });
+
+  const members = membersQuery.data;
 
   const filteredMembers = members?.filter((member) =>
     member.name.toLowerCase().includes(search.toLowerCase()),
@@ -104,7 +115,7 @@ export const MemberAssignmentModal = ({
         <div className="flex-1 overflow-y-auto custom-scrollbar [scrollbar-gutter:stable]">
           <div className="p-5 space-y-5">
             <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <Label>
                 {t("events.maps.assignedMembers")}
                 {assignedMembers.length > 0 && (
                   <span className="ml-1.5 text-foreground">
@@ -118,21 +129,18 @@ export const MemberAssignmentModal = ({
                   {assignedMembers.map((member) => (
                     <div
                       key={member.id}
-                      className="group inline-flex items-center gap-2 pl-1 pr-1.5 py-1 bg-signal-ready/10 hover:bg-signal-ready/15 rounded-full border border-signal-ready/20 transition-colors"
+                      className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full border border-signal-ready/20 bg-signal-ready/10 py-0.5 pr-0.5 pl-1"
                     >
-                      <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center overflow-hidden ring-2 ring-signal-ready/20">
-                        {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
-                        <img
-                          src={getDiscordAvatarUrl(
-                            member.userId,
-                            member.avatar,
-                            32,
-                          )}
-                          alt={member.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <span className="text-xs font-medium">{member.name}</span>
+                      <MemberAvatar
+                        userId={member.userId}
+                        avatar={member.avatar}
+                        name={member.name}
+                        imageSize={32}
+                        className="size-6"
+                      />
+                      <span className="min-w-0 truncate text-xs font-medium">
+                        {member.name}
+                      </span>
                       <Button
                         variant="ghost"
                         size="icon-xs"
@@ -143,9 +151,8 @@ export const MemberAssignmentModal = ({
                         disabled={Boolean(pendingAction)}
                         icon=<X className="size-3" />
                         aria-label={t("events.maps.unassign")}
-                        onClick={() => handleUnassign(member.id)}
-                        className="p-0.5 rounded-full hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
                         title={t("events.maps.unassign")}
+                        onClick={() => handleUnassign(member.id)}
                       />
                     </div>
                   ))}
@@ -168,10 +175,7 @@ export const MemberAssignmentModal = ({
                   </p>
                 </div>
               )}
-              <Label
-                htmlFor={memberSearchInputId}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+              <Label htmlFor={memberSearchInputId}>
                 {t("events.maps.addMember")}
               </Label>
               <SearchInput
@@ -183,12 +187,36 @@ export const MemberAssignmentModal = ({
               />
 
               <ScrollArea className="h-[220px] rounded-lg border relative">
-                {isLoading ? (
-                  <div className="flex flex-col items-center justify-center h-full py-8">
-                    <LoadingSlot size="small" className="mb-2" />
-                    <p className="text-xs text-muted-foreground">
-                      {t("common.loading")}
-                    </p>
+                {membersQuery.isPending ? (
+                  <div
+                    className="divide-y"
+                    role="status"
+                    aria-label={t("common.loading")}
+                  >
+                    {Array.from({ length: 4 }, (_, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 px-3 py-2.5"
+                      >
+                        <Skeleton className="size-8 shrink-0 rounded-full" />
+                        <Skeleton className="h-4 w-1/2" />
+                      </div>
+                    ))}
+                  </div>
+                ) : membersQuery.isError ? (
+                  <div role="alert">
+                    <EmptyState
+                      compact
+                      icon={CircleAlert}
+                      title={t("events.maps.membersLoadError")}
+                      action={
+                        <RetryButton
+                          size="sm"
+                          onRetry={() => membersQuery.refetch()}
+                          isRetrying={membersQuery.isFetching}
+                        />
+                      }
+                    />
                   </div>
                 ) : filteredMembers?.length === 0 ? (
                   <EmptyState
@@ -203,54 +231,48 @@ export const MemberAssignmentModal = ({
                         (m) => m.id === member.id,
                       );
 
+                      const isPending =
+                        pendingAction?.kind === "assign" &&
+                        pendingAction.memberId === member.id;
+
                       return (
-                        <Button
-                          variant="ghost"
-                          loading={
-                            pendingAction?.kind === "assign" &&
-                            pendingAction.memberId === member.id
-                          }
+                        <button
+                          type="button"
                           key={member.id}
-                          onClick={() =>
-                            !isAssigned &&
-                            !isAssignDisabled &&
-                            handleAssign(member.id)
-                          }
+                          onClick={() => handleAssign(member.id)}
                           disabled={
                             isAssigned ||
                             isAssignDisabled ||
                             Boolean(pendingAction)
                           }
-                          className={cn(
-                            "h-auto w-full justify-start rounded-none flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
-                            isAssigned || isAssignDisabled
-                              ? "opacity-50 cursor-default bg-muted/30"
-                              : "hover:bg-muted/50 cursor-pointer",
-                          )}
+                          aria-busy={isPending || undefined}
+                          className="flex w-full items-center gap-3 px-3 py-2.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:cursor-pointer enabled:hover:bg-muted/40 disabled:cursor-default motion-reduce:transition-none"
                         >
-                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden ring-2 ring-border">
-                            {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
-                            <img
-                              src={getDiscordAvatarUrl(
-                                member.userId,
-                                member.avatar,
-                                32,
-                              )}
-                              alt={member.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <span className="flex-1 text-sm font-medium">
+                          <MemberAvatar
+                            userId={member.userId}
+                            avatar={member.avatar}
+                            name={member.name}
+                            imageSize={64}
+                          />
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium">
                             {member.name}
                           </span>
                           {isAssigned ? (
-                            <span className="text-[10px] font-medium text-signal-ready bg-signal-ready/10 px-2 py-0.5 rounded-full">
+                            <span className="shrink-0 rounded-full bg-signal-ready/10 px-2 py-0.5 text-xs font-medium text-signal-ready">
                               {t("events.maps.alreadyAssigned")}
                             </span>
+                          ) : isPending ? (
+                            <Spinner className="size-4 text-muted-foreground" />
                           ) : (
-                            <UserPlus className="size-4 text-muted-foreground" />
+                            <UserPlus
+                              aria-hidden
+                              className={cn(
+                                "size-4 shrink-0 text-muted-foreground",
+                                isAssignDisabled && "opacity-50",
+                              )}
+                            />
                           )}
-                        </Button>
+                        </button>
                       );
                     })}
                   </div>

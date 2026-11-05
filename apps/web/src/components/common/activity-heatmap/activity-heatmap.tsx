@@ -117,6 +117,12 @@ export function ActivityHeatmap({
             gridTemplateRows: `20px repeat(7, ${fill ? "var(--activity-cell, 20px)" : "20px"})`,
           }}
         >
+          {/* Covers month labels scrolled under the weekday column. */}
+          <span
+            aria-hidden
+            className="sticky left-0 z-10 bg-card"
+            style={{ gridColumn: 1, gridRow: 1 }}
+          />
           {Array.from({ length: 7 }, (_, weekday) => (
             <span
               key={`weekday-${weekday}`}

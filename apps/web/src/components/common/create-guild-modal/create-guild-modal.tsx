@@ -136,7 +136,7 @@ export const CreateGuildModal: FC = () => {
                   <AvatarImage src={avatarSrc} alt="" />
                   <AvatarFallback>{guild.name[0]}</AvatarFallback>
                 </Avatar>
-                <p className="truncate text-md font-semibold">{guild.name}</p>
+                <p className="truncate text-base font-semibold">{guild.name}</p>
               </div>
               <Button
                 onClick={() => handleAddToGuild(guild.id)}

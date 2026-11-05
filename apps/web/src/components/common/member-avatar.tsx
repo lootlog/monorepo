@@ -10,7 +10,8 @@ type MemberAvatarSource =
   | {
       /** Discord user id, which picks the default avatar when none is set. */
       userId: string;
-      avatar: string | null;
+      /** Discord avatar hash; without one Discord's default avatar shows. */
+      avatar?: string | null;
       avatarUrl?: never;
     }
   | {
@@ -40,9 +41,13 @@ export const MemberAvatar = ({
       : source.avatarUrl;
 
   return (
-    <Avatar className={cn("size-8 shrink-0", className)}>
+    // Decorative: the member's name always sits beside it, so the initial must
+    // not join the name a link or button announces.
+    <Avatar aria-hidden className={cn("size-8 shrink-0", className)}>
       {src && <AvatarImage src={src} alt="" />}
-      <AvatarFallback className="text-xs">{name[0]}</AvatarFallback>
+      <AvatarFallback className="text-xs">
+        {name.charAt(0).toUpperCase() || "?"}
+      </AvatarFallback>
     </Avatar>
   );
 };

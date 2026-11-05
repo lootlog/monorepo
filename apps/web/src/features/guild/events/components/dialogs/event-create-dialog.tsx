@@ -76,10 +76,7 @@ export const EventCreateDialog = ({
             className="p-5 space-y-5 overflow-y-auto"
           >
             <div className="space-y-2">
-              <Label
-                htmlFor={nameInputId}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+              <Label htmlFor={nameInputId}>
                 {t("events.createDialog.nameLabel")}
               </Label>
               <Input
@@ -91,10 +88,7 @@ export const EventCreateDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label
-                htmlFor={worldInputId}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+              <Label htmlFor={worldInputId}>
                 {t("events.createDialog.worldLabel")}
               </Label>
               <Input
@@ -107,9 +101,7 @@ export const EventCreateDialog = ({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t("events.createDialog.startsAtLabel")}
-                </Label>
+                <Label>{t("events.createDialog.startsAtLabel")}</Label>
                 <DateTimePicker
                   value={form.watch("startsAt")}
                   onChange={(value) => form.setValue("startsAt", value)}
@@ -118,9 +110,7 @@ export const EventCreateDialog = ({
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t("events.createDialog.endsAtLabel")}
-                </Label>
+                <Label>{t("events.createDialog.endsAtLabel")}</Label>
                 <DateTimePicker
                   value={form.watch("endsAt")}
                   onChange={(value) => form.setValue("endsAt", value)}
@@ -131,10 +121,7 @@ export const EventCreateDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label
-                htmlFor={participationInputId}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+              <Label htmlFor={participationInputId}>
                 {t("events.settings.participationConfirmation")}
               </Label>
               <Input
@@ -151,7 +138,7 @@ export const EventCreateDialog = ({
             <div className="space-y-2">
               <Label
                 htmlFor={rulebookInputId}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5"
+                className="flex items-center gap-1.5"
               >
                 <BookOpenText className="size-3" />
                 {t("events.rulebook.label")}
@@ -166,7 +153,7 @@ export const EventCreateDialog = ({
 
             {scoringMode === "ADVANCED" && (
               <div className="space-y-3">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <Label className="flex items-center gap-1.5">
                   <Settings className="size-3" />
                   {t("events.scoring.title")}
                 </Label>

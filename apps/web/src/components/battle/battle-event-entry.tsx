@@ -85,9 +85,8 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
         "flex border-b border-background outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
         onSelect && "cursor-pointer hover:bg-muted/40",
         searchMatched && "bg-amber-400/5",
-        selected && "bg-primary/10 shadow-[inset_2px_0_0_0_var(--primary)]",
-        activeSearchMatch &&
-          "bg-amber-400/15 shadow-[inset_2px_0_0_0_var(--color-amber-400)]",
+        selected && "bg-primary/10",
+        activeSearchMatch && "bg-amber-400/15",
       )}
       role={onSelect ? "button" : undefined}
       data-battle-turn={turn}

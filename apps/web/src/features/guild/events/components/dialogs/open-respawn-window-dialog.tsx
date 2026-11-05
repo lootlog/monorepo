@@ -121,9 +121,7 @@ export const OpenRespawnWindowDialog = ({
                 name="minTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      {t("events.respawn.minSpawnTime")}
-                    </FormLabel>
+                    <FormLabel>{t("events.respawn.minSpawnTime")}</FormLabel>
                     <FormControl
                       render=<DateTimePicker
                         value={field.value}
@@ -141,9 +139,7 @@ export const OpenRespawnWindowDialog = ({
                 name="maxTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      {t("events.respawn.maxSpawnTime")}
-                    </FormLabel>
+                    <FormLabel>{t("events.respawn.maxSpawnTime")}</FormLabel>
                     <FormControl
                       render=<DateTimePicker
                         value={field.value}
