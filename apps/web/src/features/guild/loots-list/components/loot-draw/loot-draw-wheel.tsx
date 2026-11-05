@@ -15,8 +15,21 @@ const SPIN_TURNS = 6;
 
 const SPIN_MS = 4500;
 
-/** Segments narrower than this carry no name; the legend still lists them. */
-const MIN_LABEL_ANGLE = 22;
+/** Names run along the radius from the rim, at most this size. */
+const MAX_FONT_SIZE = 11;
+
+const MIN_FONT_SIZE = 7;
+
+/** The smallest size a long name shrinks to before it is cut. */
+const READABLE_FONT_SIZE = 8.5;
+
+/** Room left between a name and the rim, and around the hub. */
+const RIM_GAP = 9;
+
+const HUB_RADIUS = 22;
+
+/** A semibold name's average glyph width, as a share of its font size. */
+const GLYPH_WIDTH = 0.6;
 
 type WheelEntrant = { name: string };
 
@@ -41,8 +54,57 @@ const segmentPath = (from: number, to: number) => {
   return `M ${CENTER} ${CENTER} L ${start.x} ${start.y} A ${RADIUS} ${RADIUS} 0 ${largeArc} 1 ${end.x} ${end.y} Z`;
 };
 
-const shortName = (name: string) =>
-  name.length > 12 ? `${name.slice(0, 11)}…` : name;
+/**
+ * A slice's name laid along its radius, as a wheel of names writes them: the
+ * font fits the slice's width, and the name stops where neighbouring slices
+ * get too narrow to hold it. Null when the slice is too thin for any name;
+ * the legend still lists it.
+ */
+const radialLabel = (name: string, from: number, to: number) => {
+  const sweep = ((to - from) * Math.PI) / 180;
+  const widest = Math.min(MAX_FONT_SIZE, sweep * (RADIUS * 0.8) * 0.75);
+
+  // How many characters fit along the radius at a font size: closer to the
+  // hub the slice narrows below the font height.
+  const capacity = (fontSize: number) =>
+    Math.floor(
+      (RADIUS - RIM_GAP - Math.max(HUB_RADIUS, fontSize / sweep)) /
+        (fontSize * GLYPH_WIDTH),
+    );
+
+  // A long name first gets a smaller font, and is cut only below the floor.
+  let fontSize = widest;
+
+  while (
+    fontSize - 0.5 >= READABLE_FONT_SIZE &&
+    capacity(fontSize) < name.length
+  ) {
+    fontSize -= 0.5;
+  }
+
+  if (fontSize < MIN_FONT_SIZE) return null;
+
+  const maxChars = capacity(fontSize);
+
+  if (maxChars < 3) return null;
+
+  const text =
+    name.length > maxChars ? `${name.slice(0, maxChars - 1)}…` : name;
+
+  const middle = (from + to) / 2;
+  const anchor = pointAt(middle, RADIUS - RIM_GAP);
+  // Names on the left half turn over, so none reads upside down.
+  const flipped = middle > 180;
+
+  return {
+    text,
+    fontSize,
+    x: anchor.x,
+    y: anchor.y,
+    rotation: flipped ? middle + 90 : middle - 90,
+    textAnchor: flipped ? ("start" as const) : ("end" as const),
+  };
+};
 
 /**
  * A wheel with a slice per run of one entrant's tickets in `ticketOrder`, so
@@ -114,9 +176,9 @@ export const LootDrawWheel = ({
 
     const from = (start / total) * 360;
     const to = (end / total) * 360;
-    const label = pointAt((from + to) / 2, RADIUS * 0.62);
+    const label = radialLabel(entrant.name, from, to);
 
-    return [{ entrant, index, from, to, label, start }];
+    return [{ index, from, to, label, start }];
   });
 
   return (
@@ -140,7 +202,7 @@ export const LootDrawWheel = ({
             : undefined,
         }}
       >
-        {segments.map(({ entrant, index, from, to, label, start }) => (
+        {segments.map(({ index, from, to, label, start }) => (
           <g key={start}>
             <path
               d={segmentPath(from, to)}
@@ -148,21 +210,23 @@ export const LootDrawWheel = ({
               stroke="var(--background)"
               strokeWidth={segments.length > 1 ? 1.5 : 0}
             />
-            {to - from >= MIN_LABEL_ANGLE && (
+            {label && (
               <text
                 x={label.x}
                 y={label.y}
-                transform={`rotate(${(from + to) / 2} ${label.x} ${label.y})`}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="fill-white text-[10px] font-semibold"
+                transform={`rotate(${label.rotation} ${label.x} ${label.y})`}
+                textAnchor={label.textAnchor}
+                dominantBaseline="central"
+                fontSize={label.fontSize}
+                className="fill-white font-semibold"
                 style={{
                   paintOrder: "stroke",
-                  stroke: "rgb(0 0 0 / 0.45)",
-                  strokeWidth: 2,
+                  stroke: "rgb(0 0 0 / 0.55)",
+                  strokeWidth: 2.5,
+                  strokeLinejoin: "round",
                 }}
               >
-                {shortName(entrant.name)}
+                {label.text}
               </text>
             )}
           </g>
