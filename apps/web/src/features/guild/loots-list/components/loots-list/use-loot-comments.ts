@@ -9,15 +9,18 @@ import {
 
 export const LOOT_COMMENT_MAX_LENGTH = 256;
 
-/** A loot's comments, newest first, and the draft of the next one. */
-export const useLootComments = (lootId: number) => {
+/**
+ * A loot's comments, newest first, and the draft of the next one. They load
+ * only once `enabled`, such as when a collapsed section opens.
+ */
+export const useLootComments = (lootId: number, enabled = true) => {
   const guildId = useGuildId();
   const queryClient = useQueryClient();
   const [value, setValue] = useState("");
 
   const commentsQuery = useLootsControllerGetComments(
     { guildId: guildId ?? "", lootId },
-    { query: { enabled: !!guildId && !!lootId } },
+    { query: { enabled: enabled && !!guildId && !!lootId } },
   );
 
   const { mutate: createComment, isPending } = useLootsControllerCreateComment({

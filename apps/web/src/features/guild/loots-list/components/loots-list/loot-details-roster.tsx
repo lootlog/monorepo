@@ -10,9 +10,8 @@ import { LootDrawButton } from "@/features/guild/loots-list/components/loot-draw
 import { buildLootRoster } from "./build-loot-roster";
 import { groupIdenticalItems } from "./group-identical-items";
 import { LootItemLine } from "./loot-item-line";
-import { LootPlayersWithoutItems } from "./loot-players-without-items";
+import { LootPlayersGrid } from "./loot-players-grid";
 import { LootRecipientRow } from "./loot-recipient-row";
-import { LootRosterRow } from "./loot-roster-row";
 
 /** Who received what, with every item's name and identifier in its row. */
 export const LootDetailsRoster = ({
@@ -89,34 +88,22 @@ export const LootDetailsRoster = ({
           </li>
         )}
       </ul>
-      <LootPlayersWithoutItems
+      <LootPlayersGrid
+        title={t("loots.details.playersWithoutItems", {
+          count: recipients.filter((player) => player.items.length === 0)
+            .length,
+        })}
         players={recipients.filter((player) => player.items.length === 0)}
         watchContext={watchContext}
         showLootsFor={showLootsFor}
       />
-      {bystanders.length > 0 && (
-        <>
-          <h3
-            className={cn(
-              "border-b border-border/70 bg-muted/20 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground",
-              LIST_TILE_INSET_CLASS,
-            )}
-          >
-            {t("loots.details.bystanders", { count: bystanders.length })}
-          </h3>
-          <ul className="divide-y divide-border/50">
-            {bystanders.map((player) => (
-              <LootRosterRow
-                key={player.key}
-                player={player}
-                watchContext={watchContext}
-                onShowLoots={showLootsFor(player.name)}
-                muted
-              />
-            ))}
-          </ul>
-        </>
-      )}
+      <LootPlayersGrid
+        title={t("loots.details.bystanders", { count: bystanders.length })}
+        players={bystanders}
+        watchContext={watchContext}
+        showLootsFor={showLootsFor}
+        muted
+      />
       {isSnapshotUnavailable && (
         <p
           className={cn(

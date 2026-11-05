@@ -213,7 +213,8 @@
     "itemCopy": "Egzemplarz {{index}}",
     "delete": {
       "title": "Usunąć ten łup?",
-      "description": "Łup zniknie z listy i statystyk Lootloga. Tej operacji nie można cofnąć."
+      "description": "Łup zniknie z listy i statystyk Lootloga. Tej operacji nie można cofnąć.",
+      "action": "Usuń łup"
     },
     "draw": {
       "open": "Losowanie",
@@ -275,6 +276,7 @@
       "unshuffle": "Ułóż po kolei",
       "addLevel": "Poziom",
       "optional": "opcjonalnie"
-    }
+    },
+    "moreActions": "Więcej akcji"
   }
 }

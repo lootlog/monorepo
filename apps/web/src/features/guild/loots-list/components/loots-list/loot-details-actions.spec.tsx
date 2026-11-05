@@ -79,7 +79,10 @@ it("deletes only after confirmation and reports completion once the request fini
         <RouterProvider router={router} />
       </QueryClientProvider>,
     );
-    fireEvent.click(await screen.findByRole("button", { name: "Usuń" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Więcej akcji" }),
+    );
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Usuń łup" }));
     expect(fetch).not.toHaveBeenCalled();
 
     const dialog = await screen.findByRole("alertdialog");

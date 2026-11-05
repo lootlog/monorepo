@@ -1,6 +1,7 @@
 import type { ComponentType, FC, ReactNode } from "react";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
@@ -14,7 +15,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { LootNpcs } from "@/features/guild/loots-list/components/loots-list/loot-npcs";
 import { LootLikeButton } from "@/features/guild/loots-list/components/loots-list/loot-like-button";
 import { LootDetailsRoster } from "@/features/guild/loots-list/components/loots-list/loot-details-roster";
-import { LootCommentsPanel } from "@/features/guild/loots-list/components/loots-list/loot-comments-panel";
+import { LootCommentsSection } from "@/features/guild/loots-list/components/loots-list/loot-comments-section";
 import { MetaItem } from "@/components/common/meta-item";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { LootDetailsActions } from "@/features/guild/loots-list/components/loots-list/loot-details-actions";
@@ -29,7 +30,6 @@ import { useTranslation } from "react-i18next";
 import type { Loot } from "@/lib/loots/loot-types";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useLootsControllerFetchLootById } from "@lootlog/client/main";
-import { cn } from "cn";
 import { EmptyState } from "@/components/common/empty-state";
 import { LoadingSlot } from "@/components/common/loading-slot";
 
@@ -81,14 +81,9 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
 
   return (
     <>
-      <header
-        className={cn(
-          "shrink-0 border-b border-border px-3 py-3 text-left sm:px-4",
-          closeButton ? "pr-3" : "pr-12 sm:pr-14",
-        )}
-      >
-        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-          <div className="min-w-0 flex-1 basis-56">
+      <header className="shrink-0 border-b border-border px-3 py-3 text-left sm:px-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <Title className="px-0 pt-0 text-base leading-tight">
               <LootNpcs npcs={loot.npcs} size="lg" />
             </Title>
@@ -116,8 +111,9 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
               </MetaItem>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <LootLikeButton loot={loot} />
+          {/* Like, more actions and close share one row of 32px controls. */}
+          <div className="flex shrink-0 items-center gap-1">
+            <LootLikeButton loot={loot} appearance="button" />
             {canManageLoots && (
               <LootDetailsActions loot={loot} onDeleted={onDeleted} />
             )}
@@ -125,19 +121,15 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
           </div>
         </div>
       </header>
-      {/* Side by side from lg, so the comments stay in view next to the loot;
-          narrower dialogs read the loot, then the comments, in one scroller. */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:grid lg:grid-cols-2 lg:overflow-hidden">
-        <div className="min-w-0 lg:min-h-0 lg:overflow-y-auto">
-          <LootDetailsRoster
-            loot={loot}
-            canManageLoots={canManageLoots}
-            onShowPlayerLoots={onShowPlayerLoots}
-          />
-        </div>
-        <LootCommentsPanel
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <LootDetailsRoster
+          loot={loot}
+          canManageLoots={canManageLoots}
+          onShowPlayerLoots={onShowPlayerLoots}
+        />
+        <LootCommentsSection
           lootId={loot.id}
-          className="border-t border-border max-lg:min-h-96 lg:border-t-0 lg:border-l"
+          commentsCount={loot.commentsCount}
         />
       </div>
     </>
@@ -245,7 +237,7 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
         open={isOpen}
         onOpenChange={(open) => !open && closeLootDetails()}
       >
-        <DrawerContent className="flex h-[92dvh] max-h-[92dvh] flex-col overflow-hidden border-border bg-background p-0">
+        <DrawerContent className="flex max-h-[92dvh] flex-col overflow-hidden border-border bg-background p-0">
           {renderContent(
             DrawerTitle,
             <DrawerClose
@@ -268,12 +260,26 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeLootDetails()}>
       <DialogContent
-        // A fixed height keeps the dialog still while comments are added.
-        className="flex h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border-border bg-background p-0 sm:max-w-3xl lg:max-w-6xl"
+        className="flex max-h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border-border bg-background p-0 sm:max-w-3xl"
         aria-describedby={undefined}
         initialFocus={false}
+        // The header draws its own close button beside like and more actions.
+        showCloseButton={false}
       >
-        {renderContent(DialogTitle)}
+        {renderContent(
+          DialogTitle,
+          <DialogClose
+            render={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t("common.close")}
+              />
+            }
+          >
+            <X className="size-4" />
+          </DialogClose>,
+        )}
       </DialogContent>
     </Dialog>
   );
