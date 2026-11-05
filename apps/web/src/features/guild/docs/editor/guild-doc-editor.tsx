@@ -1,7 +1,6 @@
 import { createLinkMatcherWithRegExp, formatUrl } from "@lexical/link";
 import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
 import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
-import { ClickableLinkPlugin } from "@lexical/react/LexicalClickableLinkPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
@@ -18,6 +17,7 @@ import { TRANSFORMERS } from "@lexical/markdown";
 import { cn } from "cn";
 import type { ReactNode } from "react";
 import { GuildDocEditorEditablePlugin } from "./guild-doc-editor-editable-plugin";
+import { GuildDocLinkOpenPlugin } from "./guild-doc-link-open-plugin";
 import { GuildDocCodeHighlightPlugin } from "./guild-doc-code-highlight-plugin";
 import { GuildDocItemIdPlugin } from "./guild-doc-item-id-plugin";
 import { GuildDocMemberMentionPlugin } from "./guild-doc-member-mention-plugin";
@@ -101,7 +101,7 @@ export const GuildDocEditor = ({
         <CheckListPlugin />
         <LinkPlugin />
         <AutoLinkPlugin matchers={AUTO_LINK_MATCHERS} />
-        <ClickableLinkPlugin newTab disabled={editable} />
+        <GuildDocLinkOpenPlugin />
         <TablePlugin hasHorizontalScroll />
         <HorizontalRulePlugin />
         <GuildDocCodeHighlightPlugin />
