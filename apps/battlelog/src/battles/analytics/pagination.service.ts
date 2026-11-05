@@ -55,13 +55,13 @@ export const makeBattlePagination = (
     const { size = 20, cursor, includeTotal } = options;
     const decodedCursor = cursor ? decodeCursor(cursor) : null;
 
-    return Effect.gen(function* () {
-      if (cursor && !decodedCursor) {
-        return yield* Effect.fail(
-          new InvalidRequestError("Invalid pagination cursor"),
-        );
-      }
+    // A malformed cursor fails before the read takes a permit and a transaction.
+    const validateCursor =
+      cursor && !decodedCursor
+        ? Effect.fail(new InvalidRequestError("Invalid pagination cursor"))
+        : Effect.void;
 
+    const readPage = Effect.gen(function* () {
       const startTime = yield* Clock.currentTimeMillis;
 
       // A previous page reads towards the start of the list from its cursor,
@@ -129,8 +129,10 @@ export const makeBattlePagination = (
           estimatedTotal: !!total,
         },
       };
-    }).pipe(
-      read,
+    }).pipe(read);
+
+    return validateCursor.pipe(
+      Effect.andThen(readPage),
       Effect.withSpan("BattlePagination_paginate", {
         attributes: { adapter: "drizzle", retryCount: 0 },
       }),
@@ -140,13 +142,14 @@ export const makeBattlePagination = (
   const getEstimatedCount = (where: SQL | undefined) =>
     Effect.gen(function* () {
       if (!where) {
-        const result = yield* drizzle.execute<{ estimated_count: string }>(sql`
+        const [row] = yield* drizzle.execute<{ estimated_count: string }>(
+          sql`
             SELECT reltuples::BIGINT AS estimated_count
             FROM pg_class
             WHERE relname = 'battles'
-          `);
-
-        const row = result[0];
+          `,
+          "objects",
+        );
 
         return Number(row?.estimated_count ?? 0);
       }
