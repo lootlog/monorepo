@@ -3,9 +3,11 @@ import {
   eventHeroNpcTable,
   eventMapTable,
   eventMapToMemberTable,
+} from "#src/database/drizzle/event.schema";
+import {
   guildTable,
   memberTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import { describe, expect, it, mock } from "bun:test";

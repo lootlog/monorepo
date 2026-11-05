@@ -27,7 +27,8 @@ import {
 } from "@lootlog/schema/permissions";
 import { CUSTOM_THEME_PREFERENCE_PREFIX } from "@lootlog/schema/custom-theme";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { guildTable, timerTable } from "#src/database/drizzle/schema";
+import { guildTable } from "#src/database/drizzle/organization.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 import {
   InvalidRequestError,
   ResourceNotFoundError,

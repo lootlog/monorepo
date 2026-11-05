@@ -14,14 +14,18 @@ import {
 import {
   guildTable,
   memberTable,
+} from "#src/database/drizzle/organization.schema";
+import {
   notificationJobTable,
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
+} from "#src/database/drizzle/notification.schema";
+import {
   timerHistoryEntryTable,
   timerTable,
-  userCharactersLootlogSettingsTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/timer.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import { makeNotificationContent } from "#src/notifications/content/notification-content.service";
 import { makeNotificationEventStore } from "#src/notifications/delivery/notification-event-store";
 import { makeNotificationsEvents } from "#src/notifications/delivery/notifications-events.handler";

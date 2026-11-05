@@ -4,7 +4,7 @@ import { createAccessPolicy, Capability } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { Schema } from "effect";
 import { PgDialect } from "drizzle-orm/pg-core";
-import { guildKillTotalTable } from "#src/database/drizzle/schema";
+import { guildKillTotalTable } from "#src/database/drizzle/kill-statistics.schema";
 import {
   readableRoles,
   visibilityFilter,

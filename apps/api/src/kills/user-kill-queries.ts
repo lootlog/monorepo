@@ -16,7 +16,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   userKillCharacterTable,
   type userKillBucketTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/kill-statistics.schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   USER_TOP_NPCS_DEFAULT_LIMIT,

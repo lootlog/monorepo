@@ -12,9 +12,11 @@ import {
   eventRankingTable,
   eventTable,
   eventHeroNpcTable,
+} from "#src/database/drizzle/event.schema";
+import {
   guildTable,
   memberTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import {
   InvalidRequestError,
   ResourceConflictError,

@@ -24,7 +24,7 @@ import {
   lootTable,
   npcSnapshotTable,
   playerSnapshotTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import { containsPattern } from "#src/shared/sql-like";
 

@@ -19,13 +19,17 @@ import {
   memberTable,
   roleTable,
   memberToRoleTable,
+} from "#src/database/drizzle/organization.schema";
+import {
   lootTable,
   organizationLootRecordTable,
+} from "#src/database/drizzle/loot.schema";
+import {
   eventTable,
   eventHeroNpcTable,
   eventMapTable,
   eventMapCoverageGapTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
 import { makeLootsOperations } from "#src/loots/loots.operations";
 import { makeLootPersistence } from "#src/loots/loot-persistence";
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";

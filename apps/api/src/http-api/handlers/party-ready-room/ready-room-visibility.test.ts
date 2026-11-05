@@ -11,7 +11,7 @@ import {
   memberTable,
   memberToRoleTable,
   roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 import { readyRoomSourceVisibility } from "./ready-room-visibility.js";
 

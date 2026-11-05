@@ -15,7 +15,10 @@ import {
 } from "@lootlog/schema/notifications";
 import { Permission } from "@lootlog/schema/permissions";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { guildTable, memberTable } from "#src/database/drizzle/schema";
+import {
+  guildTable,
+  memberTable,
+} from "#src/database/drizzle/organization.schema";
 import type { TimerNpcIdentity } from "#src/timers/timer-projection";
 
 type LootCreatedEvent = {

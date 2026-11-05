@@ -12,7 +12,7 @@ import {
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 import { makeNotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import {
   makeNotificationJobRecovery,

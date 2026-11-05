@@ -33,10 +33,8 @@ import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import { Permission } from "@lootlog/schema/permissions";
-import type {
-  guildTable,
-  lootlogConfigNpcTable,
-} from "#src/database/drizzle/schema";
+import type { guildTable } from "#src/database/drizzle/organization.schema";
+import type { lootlogConfigNpcTable } from "#src/database/drizzle/loot.schema";
 import type {
   CreateLootRequest,
   CreateLootResponse,

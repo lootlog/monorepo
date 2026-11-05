@@ -10,12 +10,14 @@ import {
 } from "../src/database/drizzle/database.js";
 import {
   guildTable,
+  memberTable,
+} from "../src/database/drizzle/organization.schema.js";
+import {
   memberKillBucketTable,
   memberKillTotalTable,
-  memberTable,
   userKillBucketTable,
   userKillTotalTable,
-} from "../src/database/drizzle/schema.js";
+} from "../src/database/drizzle/kill-statistics.schema.js";
 import { makeKillStatsPersistence } from "../src/kills/kill-stats-persistence.js";
 import { makeMemberKillQuery } from "../src/kills/member-kill-query.js";
 import { makeUserKillQueries } from "../src/kills/user-kill-queries.js";

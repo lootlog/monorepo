@@ -5,7 +5,7 @@ import {
   lootNpcTable,
   lootTable,
   npcSnapshotTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 
 /**
  * Every recorded fight of every monster, numbered from the monster's first,

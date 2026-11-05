@@ -5,12 +5,12 @@ import type {
   GlobalChatMessage,
 } from "@lootlog/schema/chat";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import { globalChatMuteTable } from "#src/database/drizzle/global-chat.schema";
 import {
-  globalChatMuteTable,
   guildTable,
   memberTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
 import {
   createGuildFixture,

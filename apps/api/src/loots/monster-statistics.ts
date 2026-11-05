@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { chunk } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { lootTable } from "#src/database/drizzle/schema";
+import { lootTable } from "#src/database/drizzle/loot.schema";
 import {
   buildMonsterLevelsQuery,
   toMonsterFormerLevels,

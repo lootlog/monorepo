@@ -11,8 +11,8 @@ import {
   discordGuildChannelSnapshotTable,
   discordGuildSyncStateTable,
   guildTable,
-  notificationTargetTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { notificationTargetTable } from "#src/database/drizzle/notification.schema";
 import { RateLimitedError } from "#src/shared/http/http-errors";
 import { AccountOrganizationOperationError } from "./account-organization.operations.js";
 

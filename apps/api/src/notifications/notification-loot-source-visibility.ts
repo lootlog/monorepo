@@ -2,12 +2,12 @@ import { and, eq, exists, isNull, not, or, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { memberCapabilities } from "@lootlog/domain/access-policy";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
+import type { guildTable } from "#src/database/drizzle/organization.schema";
 import {
-  type guildTable,
   lootTable,
-  notificationJobTable,
   organizationLootRecordTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
+import { notificationJobTable } from "#src/database/drizzle/notification.schema";
 import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { selectNotificationMemberships } from "#src/notifications/rules/notification-matching.service";

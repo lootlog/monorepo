@@ -2,15 +2,15 @@ import { expect, it } from "bun:test";
 import { Effect } from "effect";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
 import { createGuildFixture } from "../../../../test/organization-fixtures.js";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import {
-  guildTable,
   notificationJobTable,
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
-  userPinnedReservationSpotTable,
   watchedItemTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
+import { userPinnedReservationSpotTable } from "#src/database/drizzle/reservation.schema";
 import { makeUserAccountDeletion } from "./user-account-deletion.data-layer.js";
 
 it("removes the deleted User's personal notifications and pins but keeps other owners' rows", async () => {

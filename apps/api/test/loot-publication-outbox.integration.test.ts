@@ -21,10 +21,11 @@ import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import { lootPublicationOutboxTable } from "#src/database/drizzle/loot-publication-outbox.schema";
 import {
   guildTable,
+  memberTable,
+} from "#src/database/drizzle/organization.schema";
+import {
   lootlogConfigTable,
   lootlogConfigNpcTable,
-  memberTable,
-  userCharactersLootlogSettingsTable,
   lootTable,
   lootItemTable,
   lootNpcTable,
@@ -35,10 +36,13 @@ import {
   playerSnapshotTable,
   organizationLootRecordTable,
   lootSubmissionTable,
+} from "#src/database/drizzle/loot.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
+import {
   notificationTargetTable,
   notificationRuleTable,
   notificationJobTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 import {
   makeNotificationJobScheduler,
   type NotificationJobInput,

@@ -14,9 +14,9 @@ import {
   guildTable,
   memberRefreshJobTable,
   memberTable,
-  playerSnapshotTable,
-  userCharactersLootlogSettingsTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { playerSnapshotTable } from "#src/database/drizzle/loot.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { getAdminBulkRefreshRateLimit } from "#src/members/member-cache";
 import { ErrorKey } from "#src/members/error-key";

@@ -8,8 +8,8 @@ import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
   eventTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 import { isLegacyNpcIdIdentifier } from "#src/timers/timer-key";
 
 export const canViewTimer = (

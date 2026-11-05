@@ -7,8 +7,8 @@ import {
 import {
   guildTable,
   memberTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 import { makeEventTimerStore } from "./event-timer.store.js";
 
 describe("event timer name lookup", () => {

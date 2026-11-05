@@ -19,10 +19,12 @@ import {
   eventRankingTable,
   eventRespawnWindowSummaryTable,
   eventTable,
+} from "#src/database/drizzle/event.schema";
+import {
   guildTable,
   memberTable,
   type roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import { makeEventReadCache } from "#src/events/catalog/event-read-cache.service";
 import { makeEventAccess } from "#src/events/event-access";
 import { makeEventEmitter } from "#src/events/event-emitter";

@@ -1,7 +1,10 @@
 import { and, eq, sql } from "drizzle-orm";
 import { groupBy } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { itemSnapshotTable, lootItemTable } from "#src/database/drizzle/schema";
+import {
+  itemSnapshotTable,
+  lootItemTable,
+} from "#src/database/drizzle/loot.schema";
 import { buildMonsterFights } from "./monster-fights.js";
 
 /**

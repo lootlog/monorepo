@@ -1,5 +1,5 @@
 import type { Permission } from "@lootlog/schema/permissions";
-import type { roleTable } from "#src/database/drizzle/schema";
+import type { roleTable } from "#src/database/drizzle/organization.schema";
 
 type VisibilityRole = Pick<
   typeof roleTable.$inferSelect,

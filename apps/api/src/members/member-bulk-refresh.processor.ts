@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import type { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { memberRefreshJobTable } from "#src/database/drizzle/schema";
+import { memberRefreshJobTable } from "#src/database/drizzle/organization.schema";
 
 export const makeMemberBulkRefreshProcessor = (
   database: ApiDatabaseValue,

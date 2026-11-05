@@ -1,6 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { memberTable, memberToRoleTable } from "#src/database/drizzle/schema";
+import {
+  memberTable,
+  memberToRoleTable,
+} from "#src/database/drizzle/organization.schema";
 
 /**
  * Active members whose permission projection includes this role. Inactive

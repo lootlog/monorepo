@@ -1,8 +1,8 @@
 import {
   eventTable,
   eventHeroNpcTable,
-  guildTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import { describe, expect, it, mock } from "bun:test";

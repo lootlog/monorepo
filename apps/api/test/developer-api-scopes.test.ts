@@ -26,9 +26,9 @@ import {
   memberTable,
   memberToRoleTable,
   roleTable,
-  timerTable,
-  guildKillActivityTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
+import { guildKillActivityTable } from "#src/database/drizzle/kill-statistics.schema";
 import { createDatabaseBoundary } from "./database-fixtures.js";
 import {
   createGuildFixture,

@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
-import { timerHistoryEntryTable } from "#src/database/drizzle/schema";
+import { timerHistoryEntryTable } from "#src/database/drizzle/timer.schema";
 
 export const pruneTimerHistory = Effect.fnUntraced(function* (
   transaction: Pick<typeof ApiDatabase.Service, "select" | "delete">,

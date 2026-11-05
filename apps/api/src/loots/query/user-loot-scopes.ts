@@ -6,11 +6,11 @@ import {
 import { and, eq, or, sql, type SQLWrapper } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  organizationLootRecordTable,
-  type guildTable,
-  type roleTable,
-} from "#src/database/drizzle/schema";
+import { organizationLootRecordTable } from "#src/database/drizzle/loot.schema";
+import type {
+  guildTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
 import {
   selectAccessibleGuilds,
   selectActiveGuildMembers,

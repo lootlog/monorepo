@@ -6,7 +6,7 @@ import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   itemSnapshotTable,
   npcSnapshotTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import type { GameVersion } from "@lootlog/schema/game-version";

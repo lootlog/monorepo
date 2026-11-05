@@ -6,7 +6,7 @@ import {
   userKillBucketTable,
   userKillCharacterTable,
   userKillTotalTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/kill-statistics.schema";
 import { STATS_TIME_ZONE, statsLocalTime } from "./kill-stats-period.js";
 
 export const getKillAnalyticsRange = (now: DateTime.Utc, days: number) => {

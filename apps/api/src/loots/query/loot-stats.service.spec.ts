@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import type { roleTable } from "#src/database/drizzle/schema";
+import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { LootStatsService } from "#src/loots/query/loot-stats.service";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 

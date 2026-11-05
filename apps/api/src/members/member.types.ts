@@ -1,4 +1,7 @@
-import type { memberTable, roleTable } from "../database/drizzle/schema.js";
+import type {
+  memberTable,
+  roleTable,
+} from "../database/drizzle/organization.schema.js";
 import type {
   MemberRefreshStatus,
   MemberSyncStatus,

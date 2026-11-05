@@ -12,7 +12,7 @@ import { HttpApiBuilder } from "effect/http-api";
 import { and, arrayOverlaps, desc, eq, or, sql } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import { getUserLootlogConfigCacheScope } from "#src/shared/cache";
 import { LootlogApi } from "../../lootlog-api.js";
 import {

@@ -11,8 +11,8 @@ import {
   memberTable,
   memberToRoleTable,
   roleTable,
-  userCharactersLootlogSettingsTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import { makeMemberReadDataLayer } from "./member-read.data-layer.js";
 import { MemberReadData } from "./members.handlers.js";
 

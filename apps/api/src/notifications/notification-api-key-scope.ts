@@ -5,7 +5,7 @@ import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   notificationJobTable,
   notificationRuleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";

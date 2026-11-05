@@ -27,7 +27,7 @@ import {
   eventRankingTable,
   eventRespawnWindowSummaryTable,
   eventTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
 
 type Database = ApiDatabaseValue;
 

@@ -24,16 +24,16 @@ import {
 import { QueryBuilder } from "drizzle-orm/pg-core";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
+import { guildKillActivityTable } from "#src/database/drizzle/kill-statistics.schema";
 import {
-  guildKillActivityTable,
   lootTable,
   organizationLootRecordTable,
   lootNpcTable,
   npcSnapshotTable,
   lootItemTable,
   itemSnapshotTable,
-  guildTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import {
   buildUserLootRecordCondition,
   loadUserLootScopes,

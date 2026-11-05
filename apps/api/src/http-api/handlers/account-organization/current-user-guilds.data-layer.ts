@@ -10,7 +10,10 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { guildTable, memberTable } from "#src/database/drizzle/schema";
+import {
+  guildTable,
+  memberTable,
+} from "#src/database/drizzle/organization.schema";
 import { isDiscordAdministrator } from "#src/discord/is-discord-administrator";
 import { getMemberCacheSoftTtl } from "#src/members/member-cache";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";

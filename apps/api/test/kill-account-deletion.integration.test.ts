@@ -10,15 +10,17 @@ import {
 } from "../src/database/drizzle/database.js";
 import {
   guildKillBucketTable,
-  guildTable,
   memberKillTotalTable,
   memberKillBucketTable,
-  memberTable,
   userKillTotalTable,
   userKillBucketTable,
   userCharacterKillBucketTable,
   userKillCharacterTable,
-} from "../src/database/drizzle/schema.js";
+} from "../src/database/drizzle/kill-statistics.schema.js";
+import {
+  guildTable,
+  memberTable,
+} from "../src/database/drizzle/organization.schema.js";
 import { makeUserAccountDeletion } from "../src/http-api/handlers/account-organization/user-account-deletion.data-layer.js";
 import { createGuildFixture } from "./organization-fixtures.js";
 

@@ -19,16 +19,20 @@ import {
   memberTable,
   roleTable,
   memberToRoleTable,
+} from "#src/database/drizzle/organization.schema";
+import {
   lootTable,
   organizationLootRecordTable,
   npcSnapshotTable,
   lootNpcTable,
+} from "#src/database/drizzle/loot.schema";
+import {
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
   notificationJobTable,
   watchedItemTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import { makeNotificationRuleOperations } from "./rules/notification-rule-operations.js";

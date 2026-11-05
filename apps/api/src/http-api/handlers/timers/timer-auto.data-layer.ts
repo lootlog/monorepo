@@ -34,10 +34,12 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
   eventTable,
+} from "#src/database/drizzle/event.schema";
+import {
   timerHistoryEntryTable,
   timerTable,
-  userCharactersLootlogSettingsTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/timer.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import type { JsonValue } from "#src/http-api/contracts/shared";
 import {

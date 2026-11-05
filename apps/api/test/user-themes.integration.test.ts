@@ -12,7 +12,7 @@ import {
 import {
   userSettingsTable,
   userThemeTable,
-} from "../src/database/drizzle/schema.js";
+} from "../src/database/drizzle/user.schema.js";
 import { makeUserAccountDeletion } from "../src/http-api/handlers/account-organization/user-account-deletion.data-layer.js";
 import {
   createUserTheme,

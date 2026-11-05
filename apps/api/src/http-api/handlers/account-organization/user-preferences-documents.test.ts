@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
-import { userSettingDocumentTable } from "#src/database/drizzle/schema";
+import { userSettingDocumentTable } from "#src/database/drizzle/user.schema";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";

@@ -39,7 +39,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   userSettingsTable,
   userThemeTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/user.schema";
 import type {
   SettingsDocuments,
   SettingsDocumentsResponse,

@@ -20,8 +20,8 @@ import { alias, QueryBuilder } from "drizzle-orm/pg-core";
 import {
   lootNpcTable,
   npcSnapshotTable,
-  type roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
+import type { roleTable } from "#src/database/drizzle/organization.schema";
 
 type Role = typeof roleTable.$inferSelect;
 

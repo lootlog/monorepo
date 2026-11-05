@@ -15,8 +15,8 @@ import {
 import {
   guildDocumentHistoryTable,
   guildDocumentTable,
-  guildTable,
-} from "../src/database/drizzle/schema.js";
+} from "../src/database/drizzle/guild-document.schema.js";
+import { guildTable } from "../src/database/drizzle/organization.schema.js";
 import {
   DOCUMENT_HISTORY_RETAINED_ENTRIES,
   DocsPersistenceError,

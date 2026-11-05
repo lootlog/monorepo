@@ -11,12 +11,12 @@ import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { findActiveGuildMember } from "#src/members/member-access-query";
 import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import { memberTable } from "#src/database/drizzle/organization.schema";
+import { playerSnapshotTable } from "#src/database/drizzle/loot.schema";
 import {
-  memberTable,
-  playerSnapshotTable,
   timerHistoryEntryTable,
   timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/timer.schema";
 import {
   InvalidRequestError,
   ResourceConflictError,

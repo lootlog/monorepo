@@ -5,7 +5,7 @@ import {
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 
 import type { NotificationOwnerType } from "#src/notifications/notification-enums";
 import type { UpdateNotificationTargetRequest } from "#src/contracts/notifications/schemas";
