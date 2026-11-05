@@ -268,7 +268,7 @@
       "defaultTickets_few": "Przywróć {{count}} losy",
       "defaultTickets_many": "Przywróć {{count}} losów",
       "defaultTickets_other": "Przywróć {{count}} losu",
-      "shuffle": "Tasuj",
+      "shuffle": "Shuffle",
       "unshuffle": "Ułóż po kolei"
     },
     "moreActions": "Więcej akcji"
