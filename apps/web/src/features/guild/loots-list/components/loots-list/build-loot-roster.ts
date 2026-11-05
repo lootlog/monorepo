@@ -1,4 +1,4 @@
-import { compareNpcsStrongestFirst } from "@lootlog/domain/npc-type";
+import { capturesMapPlayers } from "@lootlog/domain/loot-draw";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import {
   buildLootData,
@@ -22,30 +22,21 @@ export type LootRoster = {
   unassignedItems: Item[];
   /** Players recorded on the map at drop time who did not take part. */
   bystanders: LootRosterPlayer[];
-  /** True when a snapshot was expected for this loot but none was recorded. */
+  /**
+   * True when the add-on keeps map players for loots like this one (a fight
+   * with a legendary drop) but none were recorded.
+   */
   isSnapshotUnavailable: boolean;
 };
 
 export type LootRosterInput = LootPresentationData &
   Pick<Loot, "source" | "mapPlayersSnapshot">;
 
-// Only legendary drops from an ELITE2 fight capture the map roster, so only
-// those can report a missing snapshot.
-const expectsSnapshot = (loot: LootRosterInput) => {
-  if (loot.source !== "FIGHT") return false;
-
-  const [primaryNpc] = [...loot.npcs].sort((left, right) =>
-    compareNpcsStrongestFirst(
-      { ...left, npcId: left.id },
-      { ...right, npcId: right.id },
-    ),
-  );
-
-  return (
-    primaryNpc?.type === "ELITE2" &&
-    loot.items.some((item) => item.rarity === "LEGENDARY")
-  );
-};
+const expectsSnapshot = (loot: LootRosterInput) =>
+  capturesMapPlayers({
+    source: loot.source,
+    rarities: loot.items.map((item) => item.rarity),
+  });
 
 export const buildLootRoster = (loot: LootRosterInput): LootRoster => {
   const { sortedPlayers, itemsByPlayer, unassignedItems } = buildLootData(loot);
@@ -76,7 +67,7 @@ export const buildLootRoster = (loot: LootRosterInput): LootRoster => {
     .map<LootRosterPlayer>((player) => ({
       key: `map:${player.accountId}:${player.characterId}`,
       name: player.name,
-      lvl: null,
+      lvl: player.lvl ?? null,
       prof: player.prof,
       icon: player.icon,
       accountId: player.accountId,

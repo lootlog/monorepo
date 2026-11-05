@@ -398,6 +398,7 @@ export const makeLootQueryPersistence = (
         name: playerSnapshotTable.name,
         prof: playerSnapshotTable.prof,
         icon: playerSnapshotTable.icon,
+        lvl: lootMapPlayerTable.lvl,
       })
       .from(organizationLootRecordTable)
       .innerJoin(

@@ -7791,6 +7791,165 @@ export interface LootLikesResponseDto {
   likes: MemberSummary[];
 }
 
+/**
+ * @nullable
+ */
+export type LootDrawResponseDtoEntrantsItemProf = typeof LootDrawResponseDtoEntrantsItemProf[keyof typeof LootDrawResponseDtoEntrantsItemProf] | null;
+
+
+export const LootDrawResponseDtoEntrantsItemProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type LootDrawResponseDtoEntrantsItemSource = typeof LootDrawResponseDtoEntrantsItemSource[keyof typeof LootDrawResponseDtoEntrantsItemSource];
+
+
+export const LootDrawResponseDtoEntrantsItemSource = {
+  WINNER: 'WINNER',
+  MAP: 'MAP',
+  MANUAL: 'MANUAL',
+} as const;
+
+export type LootDrawResponseDtoEntrantsItem = {
+  /** @minLength 1 */
+  name: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  accountId: number | null;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  characterId: number | null;
+  /** @nullable */
+  prof: LootDrawResponseDtoEntrantsItemProf;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+  source: LootDrawResponseDtoEntrantsItemSource;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  tickets: number;
+};
+
+/**
+ * @nullable
+ */
+export type LootDrawResponseDtoVoided = {
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  at: string;
+  by: MemberSummary;
+  reason: string;
+} | null;
+
+export interface LootDrawResponseDto {
+  id: number;
+  lootId: number;
+  itemHid: string;
+  entrants: LootDrawResponseDtoEntrantsItem[];
+  ticketOrder: number[];
+  roll: number;
+  winnerIndex: number;
+  createdBy: MemberSummary;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  createdAt: string;
+  /** @nullable */
+  voided: LootDrawResponseDtoVoided;
+}
+
+export interface VoidLootDrawDto {
+  reason: string;
+}
+
+/**
+ * @nullable
+ */
+export type LootDrawEntrantDtoProf = typeof LootDrawEntrantDtoProf[keyof typeof LootDrawEntrantDtoProf] | null;
+
+
+export const LootDrawEntrantDtoProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type LootDrawEntrantDtoSource = typeof LootDrawEntrantDtoSource[keyof typeof LootDrawEntrantDtoSource];
+
+
+export const LootDrawEntrantDtoSource = {
+  WINNER: 'WINNER',
+  MAP: 'MAP',
+  MANUAL: 'MANUAL',
+} as const;
+
+export interface LootDrawEntrantDto {
+  /** @minLength 1 */
+  name: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  accountId: number | null;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  characterId: number | null;
+  /** @nullable */
+  prof: LootDrawEntrantDtoProf;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+  source: LootDrawEntrantDtoSource;
+  /**
+     * @minimum 1
+     * @maximum 99
+     */
+  tickets: number;
+}
+
+export interface CreateLootDrawDto {
+  /** @minLength 1 */
+  itemHid: string;
+  /**
+     * @minItems 2
+     * @maxItems 101
+     */
+  entrants: LootDrawEntrantDto[];
+  /**
+     * @maxItems 9999
+     * @items.minimum 0
+     * @items.maximum 9007199254740991
+     */
+  ticketOrder: number[];
+}
+
 export type LootCommentResponseDtoMemberRolesItem = {
   /** @nullable */
   color: number | null;
@@ -7880,6 +8039,12 @@ export type CreateLootDtoMapPlayersSnapshotItem = {
   prof: CreateLootDtoMapPlayersSnapshotItemProf;
   /** @nullable */
   icon: string | null;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  lvl?: number | null;
 };
 
 export type CreateLootDtoLootsItem = {
@@ -8105,6 +8270,12 @@ export type NullableLootResponseDtoMapPlayersSnapshotItem = {
   prof: NullableLootResponseDtoMapPlayersSnapshotItemProf;
   /** @nullable */
   icon: string | null;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  lvl?: number | null;
 };
 
 /**
@@ -8581,6 +8752,12 @@ export type LootResponseDtoMapPlayersSnapshotItem = {
   prof: LootResponseDtoMapPlayersSnapshotItemProf;
   /** @nullable */
   icon: string | null;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  lvl?: number | null;
 };
 
 export type LootResponseDtoNpcsItem = {
@@ -13201,6 +13378,55 @@ export type LootsControllerCreateComment403 = HttpErrorResponse | {
 };
 
 export type LootsControllerCreateComment429 = {
+  message: string;
+};
+
+export type LootsControllerGetDrawsPathParameters = {
+ guildId: string,
+    lootId: number,
+ }
+export type LootsControllerGetDraws401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type LootsControllerGetDraws403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type LootsControllerGetDraws429 = {
+  message: string;
+};
+
+export type LootsControllerCreateDrawPathParameters = {
+ guildId: string,
+    lootId: number,
+ }
+export type LootsControllerCreateDraw401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type LootsControllerCreateDraw403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type LootsControllerCreateDraw429 = {
+  message: string;
+};
+
+export type LootsControllerVoidDrawPathParameters = {
+ guildId: string,
+    lootId: number,
+    drawId: number,
+ }
+export type LootsControllerVoidDraw401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type LootsControllerVoidDraw403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type LootsControllerVoidDraw429 = {
   message: string;
 };
 
@@ -25271,6 +25497,330 @@ export const useLootsControllerCreateComment = <TError = ErrorType<RequestValida
         TContext
       > => {
       return useMutation(getLootsControllerCreateCommentMutationOptions(options), queryClient);
+    }
+
+export const getLootsControllerGetDrawsUrl = ({ guildId, lootId }: LootsControllerGetDrawsPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/loots/${lootId}/draws`
+}
+
+/**
+ * List the draws run for a loot's items, newest first, voided ones included
+ * @summary Get loot draws
+ */
+export const lootsControllerGetDraws = async ({ guildId, lootId }: LootsControllerGetDrawsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<LootDrawResponseDto[]> => {
+
+  return mainFetch<LootDrawResponseDto[]>(getLootsControllerGetDrawsUrl({ guildId, lootId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getLootsControllerGetDrawsQueryKey = ({ guildId, lootId }: LootsControllerGetDrawsPathParameters,) => {
+    return [
+    `/guilds/${guildId}/loots/${lootId}/draws`
+    ] as const;
+    }
+
+
+export const getLootsControllerGetDrawsQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerGetDraws>>, TError = ErrorType<RequestValidationError | LootsControllerGetDraws401 | LootsControllerGetDraws403 | HttpErrorResponse | LootsControllerGetDraws429>>({ guildId, lootId }: LootsControllerGetDrawsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetDraws>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getLootsControllerGetDrawsQueryKey({ guildId, lootId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof lootsControllerGetDraws>>> = ({ signal }) => lootsControllerGetDraws({ guildId, lootId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined && lootId !== null && lootId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetDraws>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type LootsControllerGetDrawsQueryResult = NonNullable<Awaited<ReturnType<typeof lootsControllerGetDraws>>>
+export type LootsControllerGetDrawsQueryError = ErrorType<RequestValidationError | LootsControllerGetDraws401 | LootsControllerGetDraws403 | HttpErrorResponse | LootsControllerGetDraws429>
+
+
+export function useLootsControllerGetDraws<TData = Awaited<ReturnType<typeof lootsControllerGetDraws>>, TError = ErrorType<RequestValidationError | LootsControllerGetDraws401 | LootsControllerGetDraws403 | HttpErrorResponse | LootsControllerGetDraws429>>(
+ pathParams: LootsControllerGetDrawsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetDraws>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof lootsControllerGetDraws>>,
+          TError,
+          Awaited<ReturnType<typeof lootsControllerGetDraws>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useLootsControllerGetDraws<TData = Awaited<ReturnType<typeof lootsControllerGetDraws>>, TError = ErrorType<RequestValidationError | LootsControllerGetDraws401 | LootsControllerGetDraws403 | HttpErrorResponse | LootsControllerGetDraws429>>(
+ pathParams: LootsControllerGetDrawsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetDraws>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof lootsControllerGetDraws>>,
+          TError,
+          Awaited<ReturnType<typeof lootsControllerGetDraws>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useLootsControllerGetDraws<TData = Awaited<ReturnType<typeof lootsControllerGetDraws>>, TError = ErrorType<RequestValidationError | LootsControllerGetDraws401 | LootsControllerGetDraws403 | HttpErrorResponse | LootsControllerGetDraws429>>(
+ pathParams: LootsControllerGetDrawsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetDraws>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get loot draws
+ */
+
+export function useLootsControllerGetDraws<TData = Awaited<ReturnType<typeof lootsControllerGetDraws>>, TError = ErrorType<RequestValidationError | LootsControllerGetDraws401 | LootsControllerGetDraws403 | HttpErrorResponse | LootsControllerGetDraws429>>(
+ { guildId, lootId }: LootsControllerGetDrawsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetDraws>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getLootsControllerGetDrawsQueryOptions({ guildId, lootId },options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get loot draws
+ */
+export const prefetchLootsControllerGetDrawsQuery = async <TData = Awaited<ReturnType<typeof lootsControllerGetDraws>>, TError = ErrorType<RequestValidationError | LootsControllerGetDraws401 | LootsControllerGetDraws403 | HttpErrorResponse | LootsControllerGetDraws429>>(
+ queryClient: QueryClient, { guildId, lootId }: LootsControllerGetDrawsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetDraws>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getLootsControllerGetDrawsQueryOptions({ guildId, lootId },options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useLootsControllerGetDraws} query
+ */
+export const invalidateLootsControllerGetDraws = async (
+ queryClient: QueryClient, { guildId, lootId }: LootsControllerGetDrawsPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getLootsControllerGetDrawsQueryKey({ guildId, lootId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get loot draws
+ */
+export const useSetLootsControllerGetDrawsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, lootId }: LootsControllerGetDrawsPathParameters,updater: Awaited<ReturnType<typeof lootsControllerGetDraws>> | undefined | ((old: Awaited<ReturnType<typeof lootsControllerGetDraws>> | undefined) => Awaited<ReturnType<typeof lootsControllerGetDraws>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof lootsControllerGetDraws>>>({ exact: $exactMatch, queryKey: getLootsControllerGetDrawsQueryKey({ guildId, lootId }) }, updater);
+  };
+}
+
+/**
+ * @summary Get loot draws
+ */
+export const useGetLootsControllerGetDrawsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, lootId }: LootsControllerGetDrawsPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof lootsControllerGetDraws>>>(getLootsControllerGetDrawsQueryKey({ guildId, lootId }));
+}
+
+
+
+export const getLootsControllerCreateDrawUrl = ({ guildId, lootId }: LootsControllerCreateDrawPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/loots/${lootId}/draws`
+}
+
+/**
+ * Draw a legendary item that is not permanently bound among the player who caught it and eligible players outside the party; the server picks the winner. 409 while the item has a standing draw
+ * @summary Draw a loot item
+ */
+export const lootsControllerCreateDraw = async ({ guildId, lootId }: LootsControllerCreateDrawPathParameters,
+    createLootDrawDto: CreateLootDrawDto, options?: Parameters<typeof mainFetch>[1]): Promise<LootDrawResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<LootDrawResponseDto>(getLootsControllerCreateDrawUrl({ guildId, lootId }),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createLootDrawDto)
+  }
+);}
+
+
+
+
+
+export const getLootsControllerCreateDrawMutationKey = () => ['lootsControllerCreateDraw'] as const;
+
+export const getLootsControllerCreateDrawMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | LootsControllerCreateDraw401 | LootsControllerCreateDraw403 | LootsControllerCreateDraw429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerCreateDraw>>, TError,LootsControllerCreateDrawMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof lootsControllerCreateDraw>>, TError,LootsControllerCreateDrawMutationVariables, TContext> => {
+
+const mutationKey = getLootsControllerCreateDrawMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof lootsControllerCreateDraw>>, LootsControllerCreateDrawMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  lootsControllerCreateDraw(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LootsControllerCreateDrawMutationResult = NonNullable<Awaited<ReturnType<typeof lootsControllerCreateDraw>>>
+    export type LootsControllerCreateDrawMutationBody = BodyType<CreateLootDrawDto>
+    export type LootsControllerCreateDrawMutationError = ErrorType<HttpErrorResponse | RequestValidationError | LootsControllerCreateDraw401 | LootsControllerCreateDraw403 | LootsControllerCreateDraw429>
+    export type LootsControllerCreateDrawMutationVariables = {pathParams: LootsControllerCreateDrawPathParameters;data: BodyType<CreateLootDrawDto>}
+
+    /**
+ * @summary Draw a loot item
+ */
+export const useLootsControllerCreateDraw = <TError = ErrorType<HttpErrorResponse | RequestValidationError | LootsControllerCreateDraw401 | LootsControllerCreateDraw403 | LootsControllerCreateDraw429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerCreateDraw>>, TError,LootsControllerCreateDrawMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof lootsControllerCreateDraw>>,
+        TError,
+        LootsControllerCreateDrawMutationVariables,
+        TContext
+      > => {
+      return useMutation(getLootsControllerCreateDrawMutationOptions(options), queryClient);
+    }
+
+export const getLootsControllerVoidDrawUrl = ({ guildId, lootId, drawId }: LootsControllerVoidDrawPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/loots/${lootId}/draws/${drawId}/void`
+}
+
+/**
+ * Void a draw with a reason so the item can be drawn again; the voided draw stays in the history
+ * @summary Void a loot draw
+ */
+export const lootsControllerVoidDraw = async ({ guildId, lootId, drawId }: LootsControllerVoidDrawPathParameters,
+    voidLootDrawDto: VoidLootDrawDto, options?: Parameters<typeof mainFetch>[1]): Promise<LootDrawResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<LootDrawResponseDto>(getLootsControllerVoidDrawUrl({ guildId, lootId, drawId }),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(voidLootDrawDto)
+  }
+);}
+
+
+
+
+
+export const getLootsControllerVoidDrawMutationKey = () => ['lootsControllerVoidDraw'] as const;
+
+export const getLootsControllerVoidDrawMutationOptions = <TError = ErrorType<RequestValidationError | LootsControllerVoidDraw401 | LootsControllerVoidDraw403 | HttpErrorResponse | LootsControllerVoidDraw429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerVoidDraw>>, TError,LootsControllerVoidDrawMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof lootsControllerVoidDraw>>, TError,LootsControllerVoidDrawMutationVariables, TContext> => {
+
+const mutationKey = getLootsControllerVoidDrawMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof lootsControllerVoidDraw>>, LootsControllerVoidDrawMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  lootsControllerVoidDraw(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LootsControllerVoidDrawMutationResult = NonNullable<Awaited<ReturnType<typeof lootsControllerVoidDraw>>>
+    export type LootsControllerVoidDrawMutationBody = BodyType<VoidLootDrawDto>
+    export type LootsControllerVoidDrawMutationError = ErrorType<RequestValidationError | LootsControllerVoidDraw401 | LootsControllerVoidDraw403 | HttpErrorResponse | LootsControllerVoidDraw429>
+    export type LootsControllerVoidDrawMutationVariables = {pathParams: LootsControllerVoidDrawPathParameters;data: BodyType<VoidLootDrawDto>}
+
+    /**
+ * @summary Void a loot draw
+ */
+export const useLootsControllerVoidDraw = <TError = ErrorType<RequestValidationError | LootsControllerVoidDraw401 | LootsControllerVoidDraw403 | HttpErrorResponse | LootsControllerVoidDraw429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerVoidDraw>>, TError,LootsControllerVoidDrawMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof lootsControllerVoidDraw>>,
+        TError,
+        LootsControllerVoidDrawMutationVariables,
+        TContext
+      > => {
+      return useMutation(getLootsControllerVoidDrawMutationOptions(options), queryClient);
     }
 
 export const getLootsControllerLikeLootUrl = ({ guildId, lootId }: LootsControllerLikeLootPathParameters,) => {

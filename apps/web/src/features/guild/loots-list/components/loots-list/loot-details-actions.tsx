@@ -1,8 +1,14 @@
 import { Button } from "@lootlog/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@lootlog/ui/components/dropdown-menu";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import { useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
-import type { FC } from "react";
+import { MoreHorizontal, Trash2 } from "lucide-react";
+import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import type { Loot } from "@/lib/loots/loot-types";
@@ -23,6 +29,7 @@ export const LootDetailsActions: FC<LootDetailsActionsProps> = ({
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const { mutateAsync: deleteLoot, isPending } = useLootsControllerDeleteLoot({
     mutation: {
@@ -57,25 +64,42 @@ export const LootDetailsActions: FC<LootDetailsActionsProps> = ({
     onDeleted?.();
   };
 
+  // Deleting stays behind a menu, away from the everyday controls beside it.
   return (
-    <div className="flex shrink-0 items-center gap-2">
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("loots.details.moreActions")}
+              title={t("loots.details.moreActions")}
+              loading={isPending}
+            >
+              <MoreHorizontal className="size-4" />
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end" className="w-44">
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onClick={() => setIsConfirmOpen(true)}
+          >
+            <Trash2 className="size-4" />
+            {t("loots.details.delete.action")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <ConfirmDeleteDialog
+        open={isConfirmOpen}
+        onOpenChange={setIsConfirmOpen}
         title={t("loots.details.delete.title")}
         description={t("loots.details.delete.description")}
         confirmButtonLabel={t("common.delete")}
         cancelButtonLabel={t("common.cancel")}
         onConfirm={handleLootDelete}
-        trigger={
-          <Button
-            variant="destructive"
-            size="sm"
-            className="text-xs"
-            icon={<Trash2 className="size-3.5" />}
-          >
-            {t("common.delete")}
-          </Button>
-        }
       />
-    </div>
+    </>
   );
 };

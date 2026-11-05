@@ -14,6 +14,7 @@ import type {
 
 import {
   createComment,
+  createLootDraw,
   createKill,
   createLoot,
   fetchLoot,
@@ -68,6 +69,9 @@ const makeData = (overrides: Partial<RecordsData["Service"]> = {}) =>
     getMemberKills: unimplemented,
     fetchLoots: unimplemented,
     getLootStats: unimplemented,
+    getDraws: unimplemented,
+    createDraw: unimplemented,
+    voidDraw: unimplemented,
     getUserLootStats: unimplemented,
     resolveLootItem: unimplemented,
     fetchLoot: unimplemented,
@@ -356,6 +360,58 @@ describe("Kills and Loots HttpApi handlers", () => {
 
     expect(result).toBe(created);
     expect(authorizationCalls).toEqual([Permission.LOOTLOG_LOOTS_WRITE]);
+  });
+
+  it("keeps a member who cannot manage loots from drawing an item", async () => {
+    const error = await Effect.runPromise(
+      createLootDraw("guild-a", 42, {
+        itemHid: "hid",
+        entrants: [
+          {
+            name: "Winner",
+            accountId: 1,
+            characterId: 1,
+            prof: "MAGE",
+            lvl: 300,
+            icon: null,
+            source: "WINNER",
+            tickets: 1,
+          },
+          {
+            name: "Outsider",
+            accountId: 2,
+            characterId: 2,
+            prof: "MAGE",
+            lvl: 300,
+            icon: null,
+            source: "MAP",
+            tickets: 1,
+          },
+        ],
+        ticketOrder: [0, 1],
+      }).pipe(
+        Effect.flip,
+        Effect.provide(
+          services(
+            makeAuthorization({
+              requireGuild: (options) =>
+                options.capability === Permission.LOOTLOG_LOOTS_ARCHIVE
+                  ? Effect.fail(
+                      new RecordsAccessDenied({
+                        status: 403,
+                        code: "FORBIDDEN",
+                      }),
+                    )
+                  : Effect.succeed(guildCaller),
+            }),
+            // Any data access would die: the draw must stop at authorization.
+            makeData(),
+          ),
+        ),
+      ),
+    );
+
+    expect(error).toBeInstanceOf(RecordsAccessDenied);
   });
 
   it("preserves the legacy hidden-member sentinel inside the scoped guild", async () => {

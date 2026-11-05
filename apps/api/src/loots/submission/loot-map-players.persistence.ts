@@ -82,16 +82,15 @@ export const captureLootMapPlayers = Effect.fnUntraced(function* (
       new DependencyUnavailableError("Failed to resolve loot world"),
     );
 
-  const snapshots = yield* resolvePlayerSnapshots(
-    transaction,
-    mapPlayersToSnapshotInputs(loot.world, players),
-  );
+  const inputs = mapPlayersToSnapshotInputs(loot.world, players);
+  const snapshots = yield* resolvePlayerSnapshots(transaction, inputs);
 
   yield* transaction.insert(lootMapPlayerTable).values(
     missing.flatMap(({ id }) =>
-      snapshots.map((snapshot) => ({
+      snapshots.map((snapshot, index) => ({
         organizationLootRecordId: id,
         playerSnapshotId: snapshot.id,
+        lvl: inputs[index]?.lvl ?? null,
       })),
     ),
   );

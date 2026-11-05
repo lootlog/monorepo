@@ -27284,6 +27284,12 @@
                 "icon": {
                   "nullable": true,
                   "type": "string"
+                },
+                "lvl": {
+                  "nullable": true,
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
                 }
               },
               "required": ["accountId", "characterId", "name", "prof", "icon"],
@@ -27903,6 +27909,12 @@
                 "icon": {
                   "nullable": true,
                   "type": "string"
+                },
+                "lvl": {
+                  "nullable": true,
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
                 }
               },
               "required": ["accountId", "characterId", "name", "prof", "icon"],
@@ -28141,6 +28153,12 @@
                 "icon": {
                   "nullable": true,
                   "type": "string"
+                },
+                "lvl": {
+                  "nullable": true,
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
                 }
               },
               "required": ["accountId", "characterId", "name", "prof", "icon"],

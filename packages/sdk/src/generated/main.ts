@@ -2110,6 +2110,12 @@ export type LootResponseDtoMapPlayersSnapshotItem = {
   prof: LootResponseDtoMapPlayersSnapshotItemProf;
   /** @nullable */
   icon: string | null;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  lvl?: number | null;
 };
 
 export type LootResponseDtoNpcsItem = {
@@ -2415,6 +2421,12 @@ export type NullableLootResponseDtoMapPlayersSnapshotItem = {
   prof: NullableLootResponseDtoMapPlayersSnapshotItemProf;
   /** @nullable */
   icon: string | null;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  lvl?: number | null;
 };
 
 /**
@@ -2563,6 +2575,12 @@ export type CreateLootDtoMapPlayersSnapshotItem = {
   prof: CreateLootDtoMapPlayersSnapshotItemProf;
   /** @nullable */
   icon: string | null;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  lvl?: number | null;
 };
 
 export type CreateLootDtoLootsItem = {

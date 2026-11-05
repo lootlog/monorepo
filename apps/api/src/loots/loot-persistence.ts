@@ -1,17 +1,24 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   lootCommentTable,
+  lootDrawTable,
   lootLikeTable,
+  type LootDrawEntrantRecord,
   memberTable,
   organizationLootRecordTable,
 } from "#src/database/drizzle/schema";
-import { PermissionDeniedError } from "#src/shared/http/http-errors";
+import {
+  PermissionDeniedError,
+  ResourceConflictError,
+  ResourceNotFoundError,
+} from "#src/shared/http/http-errors";
 import type {
   CreateLootCommentRequest,
   LootCommentResponse,
+  LootDrawResponse,
 } from "#src/contracts/loots/schemas";
 import type { MemberSummary } from "#src/contracts/shared";
 import { ErrorKey } from "#src/loots/error-key";
@@ -23,7 +30,11 @@ export class LootPersistenceError extends TaggedErrorClass<LootPersistenceError>
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-type PersistenceFailure = PermissionDeniedError | LootPersistenceError;
+type PersistenceFailure =
+  | PermissionDeniedError
+  | ResourceConflictError
+  | ResourceNotFoundError
+  | LootPersistenceError;
 
 type PersistenceEffect<A> = Effect.Effect<A, PersistenceFailure>;
 
@@ -51,6 +62,32 @@ export interface LootPersistence {
     readonly lootId: number;
     readonly liked: boolean;
   }) => PersistenceEffect<ReadonlyArray<MemberSummary> | null>;
+  /** Draws of the loot's items, newest first; voided ones included. */
+  readonly listDraws: (
+    guildId: string,
+    lootId: number,
+  ) => PersistenceEffect<ReadonlyArray<LootDrawResponse>>;
+  /**
+   * Stores a drawn result for one item; fails with a conflict while the item
+   * has a standing draw, so a retried request cannot add a second one.
+   */
+  readonly createDraw: (options: {
+    readonly discordId: string;
+    readonly guildId: string;
+    readonly lootId: number;
+    readonly itemHid: string;
+    readonly entrants: ReadonlyArray<LootDrawEntrantRecord>;
+    readonly ticketOrder: ReadonlyArray<number>;
+    readonly roll: number;
+    readonly winnerIndex: number;
+  }) => PersistenceEffect<LootDrawResponse>;
+  readonly voidDraw: (options: {
+    readonly discordId: string;
+    readonly guildId: string;
+    readonly lootId: number;
+    readonly drawId: number;
+    readonly reason: string;
+  }) => PersistenceEffect<LootDrawResponse>;
 }
 
 type Database = typeof ApiDatabase.Service;
@@ -59,7 +96,9 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
       Effect.mapError((cause): PersistenceFailure =>
-        cause instanceof PermissionDeniedError
+        cause instanceof PermissionDeniedError ||
+        cause instanceof ResourceConflictError ||
+        cause instanceof ResourceNotFoundError
           ? cause
           : new LootPersistenceError({ operation, cause }),
       ),
@@ -104,6 +143,92 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
         },
       }));
     });
+
+  const toMemberSummary = (member: typeof memberTable.$inferSelect) => ({
+    id: member.id,
+    name: member.name,
+    avatar: member.avatar,
+    userId: member.userId,
+  });
+
+  /** Draw rows with the Members who ran and voided them. */
+  const projectDraws = (
+    lootId: number,
+    draws: ReadonlyArray<typeof lootDrawTable.$inferSelect>,
+  ) =>
+    Effect.gen(function* () {
+      const memberIds = [
+        ...new Set(
+          draws.flatMap((draw) =>
+            draw.voidedByMemberId === null
+              ? [draw.createdByMemberId]
+              : [draw.createdByMemberId, draw.voidedByMemberId],
+          ),
+        ),
+      ];
+
+      const members =
+        memberIds.length === 0
+          ? []
+          : yield* database
+              .select()
+              .from(memberTable)
+              .where(inArray(memberTable.id, memberIds));
+
+      const membersById = new Map(
+        members.map((member) => [member.id, toMemberSummary(member)]),
+      );
+
+      const memberOf = (id: number) => {
+        const member = membersById.get(id);
+
+        if (!member) {
+          return Effect.fail(
+            new LootPersistenceError({
+              operation: "loots.draws.project.member",
+              cause: "member-missing",
+            }),
+          );
+        }
+
+        return Effect.succeed(member);
+      };
+
+      return yield* Effect.forEach(draws, (draw) =>
+        Effect.gen(function* () {
+          const voided =
+            draw.voidedAt !== null &&
+            draw.voidedByMemberId !== null &&
+            draw.voidReason !== null
+              ? {
+                  at: draw.voidedAt.toISOString(),
+                  by: yield* memberOf(draw.voidedByMemberId),
+                  reason: draw.voidReason,
+                }
+              : null;
+
+          return {
+            id: draw.id,
+            lootId,
+            itemHid: draw.itemHid,
+            entrants: draw.entrants,
+            ticketOrder: draw.ticketOrder,
+            roll: draw.roll,
+            winnerIndex: draw.winnerIndex,
+            createdBy: yield* memberOf(draw.createdByMemberId),
+            createdAt: draw.createdAt.toISOString(),
+            voided,
+          };
+        }),
+      );
+    });
+
+  const recordCondition = (guildId: string, lootId: number) =>
+    and(
+      eq(organizationLootRecordTable.guildId, guildId),
+      eq(organizationLootRecordTable.lootId, lootId),
+      isNull(organizationLootRecordTable.archivedAt),
+    );
 
   return {
     archive: (options) =>
@@ -270,6 +395,213 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
             createdAt: comment.createdAt.toISOString(),
             updatedAt: comment.updatedAt.toISOString(),
           };
+        }),
+      ),
+
+    listDraws: (guildId, lootId) =>
+      protect(
+        "loots.draws.list",
+        Effect.gen(function* () {
+          const rows = yield* database
+            .select({ draw: lootDrawTable })
+            .from(lootDrawTable)
+            .innerJoin(
+              organizationLootRecordTable,
+              eq(
+                organizationLootRecordTable.id,
+                lootDrawTable.organizationLootRecordId,
+              ),
+            )
+            .where(recordCondition(guildId, lootId))
+            .orderBy(desc(lootDrawTable.createdAt), desc(lootDrawTable.id));
+
+          return yield* projectDraws(
+            lootId,
+            rows.map(({ draw }) => draw),
+          );
+        }),
+      ),
+
+    createDraw: (options) =>
+      protect(
+        "loots.draws.create.transaction",
+        Effect.gen(function* () {
+          const draw = yield* database.transaction((transaction) =>
+            Effect.gen(function* () {
+              // The record lock serialises draws of one loot, so two managers
+              // drawing the same item at once get one result and a conflict.
+              const [record] = yield* transaction
+                .select({ id: organizationLootRecordTable.id })
+                .from(organizationLootRecordTable)
+                .where(recordCondition(options.guildId, options.lootId))
+                .limit(1)
+                .for("update");
+
+              if (!record)
+                return yield* Effect.fail(new ResourceNotFoundError());
+
+              const member = yield* findActiveGuildMember(
+                transaction,
+                options.discordId,
+                options.guildId,
+              );
+
+              if (!member) {
+                return yield* Effect.fail(
+                  new PermissionDeniedError({ code: "MEMBER_NOT_FOUND" }),
+                );
+              }
+
+              const [standing] = yield* transaction
+                .select({ id: lootDrawTable.id })
+                .from(lootDrawTable)
+                .where(
+                  and(
+                    eq(lootDrawTable.organizationLootRecordId, record.id),
+                    eq(lootDrawTable.itemHid, options.itemHid),
+                    isNull(lootDrawTable.voidedAt),
+                  ),
+                )
+                .limit(1);
+
+              if (standing) {
+                return yield* Effect.fail(
+                  new ResourceConflictError({
+                    code: ErrorKey.LOOT_DRAW_ALREADY_EXISTS,
+                  }),
+                );
+              }
+
+              const [created] = yield* transaction
+                .insert(lootDrawTable)
+                .values({
+                  organizationLootRecordId: record.id,
+                  itemHid: options.itemHid,
+                  entrants: [...options.entrants],
+                  ticketOrder: [...options.ticketOrder],
+                  roll: options.roll,
+                  winnerIndex: options.winnerIndex,
+                  createdByMemberId: member.id,
+                  createdAt: new Date(yield* Clock.currentTimeMillis),
+                })
+                .returning();
+
+              if (!created) {
+                return yield* Effect.fail(
+                  new LootPersistenceError({
+                    operation: "loots.draws.create.insert",
+                    cause: "insert-failed",
+                  }),
+                );
+              }
+
+              return created;
+            }),
+          );
+
+          const [projected] = yield* projectDraws(options.lootId, [draw]);
+
+          if (!projected) {
+            return yield* Effect.fail(
+              new LootPersistenceError({
+                operation: "loots.draws.create.projection",
+                cause: "projection-missing",
+              }),
+            );
+          }
+
+          return projected;
+        }),
+      ),
+
+    voidDraw: (options) =>
+      protect(
+        "loots.draws.void.transaction",
+        Effect.gen(function* () {
+          const draw = yield* database.transaction((transaction) =>
+            Effect.gen(function* () {
+              const [found] = yield* transaction
+                .select({ draw: lootDrawTable })
+                .from(lootDrawTable)
+                .innerJoin(
+                  organizationLootRecordTable,
+                  eq(
+                    organizationLootRecordTable.id,
+                    lootDrawTable.organizationLootRecordId,
+                  ),
+                )
+                .where(
+                  and(
+                    eq(lootDrawTable.id, options.drawId),
+                    recordCondition(options.guildId, options.lootId),
+                  ),
+                )
+                .limit(1)
+                .for("update", { of: lootDrawTable });
+
+              if (!found) {
+                return yield* Effect.fail(
+                  new ResourceNotFoundError({
+                    code: ErrorKey.LOOT_DRAW_NOT_FOUND,
+                  }),
+                );
+              }
+
+              if (found.draw.voidedAt !== null) {
+                return yield* Effect.fail(
+                  new ResourceConflictError({
+                    code: ErrorKey.LOOT_DRAW_ALREADY_VOIDED,
+                  }),
+                );
+              }
+
+              const member = yield* findActiveGuildMember(
+                transaction,
+                options.discordId,
+                options.guildId,
+              );
+
+              if (!member) {
+                return yield* Effect.fail(
+                  new PermissionDeniedError({ code: "MEMBER_NOT_FOUND" }),
+                );
+              }
+
+              const [voided] = yield* transaction
+                .update(lootDrawTable)
+                .set({
+                  voidedAt: new Date(yield* Clock.currentTimeMillis),
+                  voidedByMemberId: member.id,
+                  voidReason: options.reason,
+                })
+                .where(eq(lootDrawTable.id, found.draw.id))
+                .returning();
+
+              if (!voided) {
+                return yield* Effect.fail(
+                  new LootPersistenceError({
+                    operation: "loots.draws.void.update",
+                    cause: "update-failed",
+                  }),
+                );
+              }
+
+              return voided;
+            }),
+          );
+
+          const [projected] = yield* projectDraws(options.lootId, [draw]);
+
+          if (!projected) {
+            return yield* Effect.fail(
+              new LootPersistenceError({
+                operation: "loots.draws.void.projection",
+                cause: "projection-missing",
+              }),
+            );
+          }
+
+          return projected;
         }),
       ),
 

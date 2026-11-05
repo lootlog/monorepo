@@ -59,6 +59,10 @@ import type {
   ResolveLootItemQuery,
   LootShareResponse,
   UpdateLootShareRequest,
+  CreateLootDrawRequest,
+  LootDrawResponse,
+  LootDrawsResponse,
+  VoidLootDrawRequest,
 } from "#src/contracts/loots/schemas";
 import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
@@ -214,6 +218,21 @@ export class RecordsData extends Context.Service<
       lootId: number,
       payload: CreateLootCommentRequest,
     ) => DataEffect<LootCommentResponse | null>;
+    readonly getDraws: (
+      caller: AuthorizedGuildCaller,
+      lootId: number,
+    ) => DataEffect<LootDrawsResponse | null>;
+    readonly createDraw: (
+      caller: AuthorizedGuildCaller,
+      lootId: number,
+      payload: CreateLootDrawRequest,
+    ) => DataEffect<LootDrawResponse | null>;
+    readonly voidDraw: (
+      caller: AuthorizedGuildCaller,
+      lootId: number,
+      drawId: number,
+      payload: VoidLootDrawRequest,
+    ) => DataEffect<LootDrawResponse | null>;
     readonly setLike: (
       caller: AuthorizedGuildCaller,
       lootId: number,
@@ -492,6 +511,55 @@ export const createComment = Effect.fn("loots.createComment")(function* (
   }
 
   return comment;
+});
+
+const lootNotFound = () =>
+  new RecordsNotFound({ status: 404, code: "LOOT_NOT_FOUND" });
+
+export const getLootDraws = Effect.fn("loots.getDraws")(function* (
+  guildId: string | undefined,
+  lootId: number,
+) {
+  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+  const draws = yield* data((service) => service.getDraws(caller, lootId));
+
+  if (draws === null) return yield* lootNotFound();
+
+  return draws;
+});
+
+// Drawing and voiding decide who receives an item, as managing loots does.
+export const createLootDraw = Effect.fn("loots.createDraw")(function* (
+  guildId: string | undefined,
+  lootId: number,
+  payload: CreateLootDrawRequest,
+) {
+  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_ARCHIVE);
+
+  const draw = yield* data((service) =>
+    service.createDraw(caller, lootId, payload),
+  );
+
+  if (draw === null) return yield* lootNotFound();
+
+  return draw;
+});
+
+export const voidLootDraw = Effect.fn("loots.voidDraw")(function* (
+  guildId: string | undefined,
+  lootId: number,
+  drawId: number,
+  payload: VoidLootDrawRequest,
+) {
+  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_ARCHIVE);
+
+  const draw = yield* data((service) =>
+    service.voidDraw(caller, lootId, drawId, payload),
+  );
+
+  if (draw === null) return yield* lootNotFound();
+
+  return draw;
 });
 
 export const setLootLike = Effect.fn("loots.setLike")(function* (
