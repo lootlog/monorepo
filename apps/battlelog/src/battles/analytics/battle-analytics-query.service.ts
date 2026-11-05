@@ -18,6 +18,7 @@ import {
   desc,
   type SQL,
 } from "drizzle-orm";
+import { EmptyFilter } from "drizzle-orm/relations";
 import { Effect } from "effect";
 import type {
   AnalyticsDateRange,
@@ -52,7 +53,7 @@ export const makeBattleAnalyticsQuery = (
           where: {
             userId,
             characterId: query.characterId,
-            ...(query.world && { world: query.world }),
+            world: query.world || EmptyFilter,
           },
         });
 
@@ -69,7 +70,7 @@ export const makeBattleAnalyticsQuery = (
       const userChars = yield* drizzle.query.userCharacters.findMany({
         where: {
           userId,
-          ...(query.world && { world: query.world }),
+          world: query.world || EmptyFilter,
         },
         columns: { characterId: true },
       });

@@ -379,7 +379,9 @@ const createTestApplication = ({
   };
 
   const battlesModule = makeBattles(
-    drizzle,
+    // SAFETY: PGlite stands in for @effect/sql-pg. Their raw `execute` results
+    // differ only in metadata; battles read `rows` alone.
+    drizzle as never,
     objectStorage,
     redisService,
     { paginateBattles: () => Effect.die("Unexpected pagination") },
