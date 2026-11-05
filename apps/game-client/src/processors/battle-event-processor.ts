@@ -19,7 +19,7 @@ import {
 } from "@/store/game-store/battle.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { createKill, createBattle, recordWeaponKills } from "@/api/battle.api";
-import { findFinishingBlows } from "@lootlog/battle-processor";
+import { findFinishingBlows } from "@lootlog/battle-processor/finishing-blows";
 import { getHeroMainWeaponItemId } from "@/lib/margonem-runtime/adapters/item-tip-runtime-adapter";
 import { setWeaponKills } from "@/lib/margonem-tooltips/weapon-kills";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

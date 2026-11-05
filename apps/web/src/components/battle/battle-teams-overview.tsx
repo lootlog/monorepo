@@ -1,3 +1,4 @@
+import { isBattleDraw } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
 import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
 import { cn } from "cn";
 import type { FC } from "react";
@@ -37,6 +38,8 @@ export const BattleTeamsOverview: FC<BattleTeamsOverviewProps> = ({
     ) {
       return null;
     }
+
+    if (isBattleDraw(battle)) return "draw";
 
     if (battle.winningTeam === teamNumber) {
       return getWinnerResult(battle);

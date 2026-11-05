@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import {
-  BattleProcessor,
-  calculateBattleStatistics,
-  findFinishingBlows,
+  parseBattleMoves,
   type BattlePayload,
-} from "@lootlog/battle-processor";
+} from "@lootlog/battle-processor/battle-log";
+import { BattleProcessor } from "@lootlog/battle-processor/battle-processor";
+import { findFinishingBlows } from "@lootlog/battle-processor/finishing-blows";
+import { calculateBattleStatistics } from "@lootlog/battle-processor/statistics";
 import type { CreateBattleInput } from "#src/battles/submission/create-battle";
 
 // Persisted warrior statistics must remain identical when timeline work is skipped.
@@ -30,6 +31,41 @@ const processBattleWithStatisticsParity = (battleData: BattlePayload) => {
 
   return detailed;
 };
+
+const duelist = (originalId: number, name: string, team: number) => ({
+  originalId,
+  name,
+  lvl: 50,
+  prof: "w",
+  icon: "icon",
+  team,
+});
+
+/** A battle between Attacker (1) and Defender (2) with the given rows. */
+const duel = (moves: string[]): CreateBattleInput => ({
+  accountId: "test-account",
+  characterId: "1",
+  world: "test-world",
+  events: [
+    {
+      ev: 1000,
+      f: {
+        w: {
+          "1": duelist(1, "Attacker", 1),
+          "2": duelist(2, "Defender", 2),
+          "3": duelist(3, "Ally", 1),
+          "4": duelist(4, "Bystander", 2),
+        },
+        m: moves,
+      },
+    },
+  ],
+});
+
+const findWarrior = (
+  result: ReturnType<BattleProcessor["processBattle"]>,
+  name: string,
+) => result.warriors.find((w) => w.name === name);
 
 describe("BattleProcessor", () => {
   let processor: BattleProcessor;
@@ -95,7 +131,7 @@ describe("BattleProcessor", () => {
     });
   });
 
-  describe("extractAndParseMoves", () => {
+  describe("parseBattleMoves", () => {
     it("should parse moves correctly", () => {
       const events: BattlePayload["events"] = [
         {
@@ -106,7 +142,7 @@ describe("BattleProcessor", () => {
         },
       ];
 
-      const moves = processor.extractAndParseMoves(events);
+      const moves = parseBattleMoves(events);
 
       expect(moves).toHaveLength(2);
       expect(moves[0]).toEqual({
@@ -135,7 +171,7 @@ describe("BattleProcessor", () => {
         },
       ];
 
-      const moves = processor.extractAndParseMoves(events);
+      const moves = parseBattleMoves(events);
 
       expect(moves[0]).toEqual({
         attackerId: null,
@@ -156,7 +192,7 @@ describe("BattleProcessor", () => {
         },
       ];
 
-      const moves = processor.extractAndParseMoves(events);
+      const moves = parseBattleMoves(events);
 
       expect(moves[0].actions).toEqual([
         { actionType: "step", param: "" },
@@ -208,6 +244,53 @@ describe("BattleProcessor", () => {
         loser: "",
         winningTeam: 0,
         losingTeam: 0,
+      });
+    });
+
+    it("names no winner when the battle reaches the turn limit", () => {
+      const battleData: CreateBattleInput = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": duelist(1, "Attacker", 1),
+                "2": duelist(2, "Defender", 2),
+              },
+              m: ["1=100;2=40;+dmg=600;-dmg=600", "0;0;winner=?"],
+              endBattle: 1,
+            },
+          },
+        ],
+      };
+
+      const result = processBattleWithStatisticsParity(battleData);
+
+      expect(result.outcome).toMatchObject({
+        unfinished: false,
+        winningTeam: 0,
+        losingTeam: 0,
+      });
+    });
+
+    // Margonem ends a flee with `winner=?` too; the flee-aware views and
+    // analytics still read its inferred teams.
+    it("keeps the inferred teams of a battle a warrior fled from", () => {
+      const result = processBattleWithStatisticsParity(
+        duel([
+          "1=100;2=40;+dmg=600;-dmg=600",
+          "1=100;2=40;flee",
+          "0;0;winner=?",
+        ]),
+      );
+
+      expect(result.outcome).toMatchObject({
+        hasFlee: true,
+        winningTeam: 1,
+        losingTeam: 2,
       });
     });
 
@@ -953,6 +1036,134 @@ describe("BattleProcessor", () => {
     });
   });
 
+  // Row semantics follow Margonem's own battle log renderer
+  // (core/battle/BattleMessages.js) and its Polish dictionary.
+  describe("Margonem log semantics", () => {
+    it("credits a wide swing's extra hit to the attacker instead of reflecting it", () => {
+      const result = processBattleWithStatisticsParity(
+        duel([
+          "1=100;2=90;+swing;+dmg=500;-dmg=400;+oth_dmg=300,dmg,Bystander(80%)",
+        ]),
+      );
+
+      expect(findWarrior(result, "Attacker")).toMatchObject({
+        damageDealtAfterDefensive: 700,
+        damageTaken: 0,
+        reflectedDamageTaken: 0,
+      });
+      expect(findWarrior(result, "Bystander")?.damageTaken).toBe(300);
+      expect(result.battleTimeline[0]?.deltas.byWarrior["4"]?.damageTaken).toBe(
+        300,
+      );
+    });
+
+    it("counts damage the log names on the actor as reflected by the target", () => {
+      const result = processBattleWithStatisticsParity(
+        duel(["1=90;2=100;+dmg=500;-dmg=0;+oth_dmg=150,dmg,Attacker(90%)"]),
+      );
+
+      expect(findWarrior(result, "Attacker")).toMatchObject({
+        damageTaken: 150,
+        reflectedDamageTaken: 150,
+      });
+      expect(findWarrior(result, "Defender")?.reflectedDamage).toBe(150);
+      expect(result.battleTimeline[0]?.deltas.byWarrior["2"]?.damageDealt).toBe(
+        150,
+      );
+    });
+
+    it("adds unavoidable and frost over-time damage to the actor's damage taken", () => {
+      const result = processBattleWithStatisticsParity(
+        duel([
+          "1=95;0;frost=120,10",
+          "1=90;0;absolute=80",
+          "1=85;0;physical=40",
+        ]),
+      );
+
+      expect(findWarrior(result, "Attacker")?.damageTaken).toBe(240);
+      expect(result.actionCoverage.unknown).toHaveLength(0);
+    });
+
+    it("counts off-hand and unlisted damage suffixes as attack damage", () => {
+      const result = processBattleWithStatisticsParity(
+        duel(["1=100;2=90;+of_dmg=200;+dmgx=50;-dmgx=50"]),
+      );
+
+      expect(findWarrior(result, "Attacker")).toMatchObject({
+        damageDealt: 250,
+        auxiliaryDamage: 200,
+        damageDealtAfterDefensive: 50,
+      });
+      expect(findWarrior(result, "Defender")?.damageTaken).toBe(50);
+      expect(result.actionCoverage.unknown).toHaveLength(0);
+    });
+
+    it("keeps the sign of energy, mana and healing changes", () => {
+      const result = processBattleWithStatisticsParity(
+        duel([
+          "1=100;2=100;en-regen=30",
+          "1=100;0;energy=-20",
+          "1=100;0;energy=15",
+          "1=100;0;mana=-40",
+          "1=100;0;heal=-50",
+          "1=100;0;heal=70",
+        ]),
+      );
+
+      expect(findWarrior(result, "Attacker")).toMatchObject({
+        regeneratedEnergy: 35,
+        regeneratedMana: 40,
+        passiveHealing: 70,
+      });
+      expect(findWarrior(result, "Defender")?.regeneratedEnergy).toBe(0);
+      expect(
+        result.battleTimeline[3]?.deltas.byWarrior["1"]?.resourceDelta,
+      ).toBe(40);
+      expect(result.battleTimeline[4]?.deltas.healing).toBe(0);
+    });
+
+    it("renews absorption on the defender and never on an absorption breaker", () => {
+      const result = processBattleWithStatisticsParity(
+        duel([
+          "1=100;2=100;+dmg=500;+abdest=60;+absorb=40;-absorb=100;-dmg=200",
+        ]),
+      );
+
+      const deltas = result.battleTimeline[0]?.deltas.byWarrior;
+
+      expect(deltas?.["1"]?.absorbGained).toBe(0);
+      expect(deltas?.["2"]?.absorbGained).toBe(40);
+      expect(deltas?.["2"]?.absorbSpent).toBe(100);
+    });
+
+    it("marks a kill only on the row the warrior falls in", () => {
+      const result = processBattleWithStatisticsParity(
+        duel(["1=100;2=0;+dmg=900;-dmg=900", "3=100;4=90;+dmg=100;-dmg=100"]),
+      );
+
+      const [killRow, laterRow] = result.battleTimeline;
+
+      expect(killRow?.labels).toContain("kill:2");
+      expect(killRow?.reason).toBe("kill");
+      expect(laterRow?.flags).not.toContain("kill");
+    });
+
+    it("credits last heal to the warrior the log names", () => {
+      const result = processBattleWithStatisticsParity(
+        duel(["1=100;2=100;+dmg=100;legbon_lastheal=300,Ally;-dmg=100"]),
+      );
+
+      expect(findWarrior(result, "Ally")).toMatchObject({
+        legbonLastheal: 1,
+        legbonLasthealValue: 300,
+      });
+      expect(
+        result.battleTimeline[0]?.deltas.byWarrior["3"]?.healingReceived,
+      ).toBe(300);
+    });
+  });
+
   describe("combat timeline analytics", () => {
     it("should build HP timeline and team HP snapshots for group PvP", () => {
       const battleData: CreateBattleInput = {
@@ -1099,9 +1310,11 @@ describe("BattleProcessor", () => {
 
       const flags = result.battleTimeline[0]?.flags ?? [];
 
-      expect(defender?.evasions).toBe(1);
-      expect(defender?.blocks).toBe(3);
-      expect(defender?.blockedDamage).toBe(36);
+      // Evade, parry and arrow block make the attack miss; a pierce block
+      // only cancels the armor pierce.
+      expect(defender?.evasions).toBe(3);
+      expect(defender?.blocks).toBe(0);
+      expect(defender?.blockedDamage).toBe(0);
       expect(flags).toEqual(
         expect.arrayContaining([
           "evade",
@@ -1219,7 +1432,9 @@ describe("BattleProcessor", () => {
       expect(energyDestroyAction?.param).toBe("12,3");
     });
 
-    it("should classify special damage effects in timeline and coverage", () => {
+    // Margonem prints rage and the beast's stigma as "atak +X": a bonus inside
+    // the attack the row already reports, not a second damage instance.
+    it("should not count attack bonuses as separate timeline damage", () => {
       const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "1",
@@ -1246,7 +1461,7 @@ describe("BattleProcessor", () => {
                   team: 2,
                 },
               },
-              m: ["1=100;2=92;+rage=80;+taken_dmg=45"],
+              m: ["1=100;2=92;+dmg=300;+rage=80;+taken_dmg=45;-dmg=200"],
             },
           },
         ],
@@ -1263,13 +1478,15 @@ describe("BattleProcessor", () => {
         (action) => action.actionType === "+taken_dmg",
       );
 
-      expect(turn?.deltas.damage).toBe(125);
-      expect(turn?.deltas.byWarrior["1"]?.damageDealt).toBe(125);
-      expect(turn?.deltas.byWarrior["2"]?.damageTaken).toBe(125);
-      expect(rageAction?.category).toBe("damage");
-      expect(rageAction?.handled).toBe(true);
-      expect(stigmaAction?.category).toBe("damage");
-      expect(stigmaAction?.handled).toBe(true);
+      const attacker = result.warriors.find((w) => w.name === "Attacker");
+
+      expect(turn?.deltas.damage).toBe(200);
+      expect(turn?.deltas.byWarrior["1"]?.damageDealt).toBe(200);
+      expect(turn?.deltas.byWarrior["2"]?.damageTaken).toBe(200);
+      expect(attacker?.rageDamageDealt).toBe(80);
+      expect(attacker?.stigmaDamageDealt).toBe(45);
+      expect(rageAction?.category).toBe("buff");
+      expect(stigmaAction?.category).toBe("buff");
       expect(result.actionCoverage.unknown).toHaveLength(0);
     });
 
@@ -1330,7 +1547,7 @@ describe("BattleProcessor", () => {
       expect(result.actionCoverage.unknown).toHaveLength(0);
     });
 
-    it("should expose resource self-spend and regeneration in timeline", () => {
+    it("should take destroyed energy from the target, not the actor", () => {
       const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "1",
@@ -1366,8 +1583,9 @@ describe("BattleProcessor", () => {
       const result = processBattleWithStatisticsParity(battleData);
       const turn = result.battleTimeline[0];
 
-      expect(turn?.deltas.byWarrior["1"]?.resourceDelta).toBe(-10);
-      expect(turn?.deltas.resourcePressure).toBe(0);
+      expect(turn?.deltas.byWarrior["1"]?.resourceDelta).toBe(-6);
+      expect(turn?.deltas.byWarrior["2"]?.resourceDelta).toBe(-4);
+      expect(turn?.deltas.energyPressure).toBe(4);
       expect(turn?.flags).toContain("resource");
       expect(result.actionCoverage.unknown).toHaveLength(0);
     });

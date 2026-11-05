@@ -28,6 +28,14 @@ export const getBattleTeams = (battle: Battle) => {
   };
 };
 
+/**
+ * Margonem names `?` the winner of a battle without one. Without a flee, the
+ * battle reached the turn limit.
+ */
+export const isBattleDraw = (
+  battle: Pick<Battle, "winner" | "hasFlee">,
+): boolean => battle.winner === "?" && !battle.hasFlee;
+
 export const getBattleResult = (battle: Battle): BattleResultStatusValue => {
   if (battle.unfinished) {
     return "unfinished";
@@ -35,6 +43,10 @@ export const getBattleResult = (battle: Battle): BattleResultStatusValue => {
 
   if (battle.hasFlee) {
     return "flee";
+  }
+
+  if (isBattleDraw(battle)) {
+    return "draw";
   }
 
   const userWarrior = battle.warriors.find(
@@ -53,6 +65,10 @@ export const getPlayerVsPlayerBattleResult = (
 ): BattleResultStatusValue => {
   if (battle.hasFlee) {
     return "flee";
+  }
+
+  if (isBattleDraw(battle)) {
+    return "draw";
   }
 
   if (battle.userWarrior.name === battle.winner) {
