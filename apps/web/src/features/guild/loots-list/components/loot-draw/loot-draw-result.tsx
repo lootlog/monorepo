@@ -19,12 +19,15 @@ export const LootDrawResult = ({
   draws,
   spin,
   canManage,
+  onRevealed,
 }: {
   draw: LootDrawResponseDto;
   draws: ReturnType<typeof useLootDraws>;
   /** Spins the wheel to the result, for the draw the viewer just ran. */
   spin: boolean;
   canManage: boolean;
+  /** Called when a spin settles and the winner shows. */
+  onRevealed?: () => void;
 }) => {
   const { t } = useTranslation();
   const reducedMotion = usePrefersReducedMotion();
@@ -40,7 +43,10 @@ export const LootDrawResult = ({
           ticketOrder={draw.ticketOrder}
           roll={draw.roll}
           spin={spin}
-          onSettled={() => setRevealed(true)}
+          onSettled={() => {
+            setRevealed(true);
+            onRevealed?.();
+          }}
           className="max-lg:max-w-48"
         />
       }
