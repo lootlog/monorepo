@@ -1,11 +1,12 @@
 ---
 title: Pomoc i FAQ
-description: Rozwiąż najczęstsze problemy z instalacją, synchronizacją, dostępem do klanu i analizą walk.
+description: Rozwiąż najczęstsze problemy z Lootlog. Logowanie, brak timerów i łupów, dostęp do Lootloga grupy, bot Discord i zapis walk.
 ---
 
-Zacznij od sekcji odpowiadającej objawowi. Jeżeli problem pozostaje, przygotuj
-nazwę przeglądarki, opis wykonanych kroków i zrzut ekranu bez prywatnych
-danych.
+Znajdź swój objaw w spisie treści albo w wyszukiwarce. Jeśli problem zostaje,
+napisz na [Discordzie Lootlog](https://discord.gg/mPcczaeYMu): jaka
+przeglądarka, co już sprawdziłeś i tekst z **Kopiuj informacje
+diagnostyczne**.
 
 ## Produkt i konto
 
@@ -28,7 +29,8 @@ regulaminów Margonem.
 
 ### Czy konto Discord jest wymagane?
 
-Tak. Discord jest używany do logowania i powiązania z obsługiwanymi klanami.
+Tak. Discord to jedyny sposób logowania, a Lootlog grupy jest powiązany z jej
+serwerem Discord.
 
 ### Logowanie do panelu zakończyło się błędem
 
@@ -61,18 +63,17 @@ Jeśli błąd pojawił się na innej stronie panelu, użyj **Spróbuj ponownie**
 albo wróć do dashboardu. **Szczegóły techniczne** zawierają dodatkowy opis
 przydatny przy zgłoszeniu problemu.
 
-## Instalacja
+## Instalacja i logowanie
 
 ### Dodatek nie pojawia się po instalacji
 
 1. Sprawdź, czy skrypt jest włączony w Tampermonkey.
 2. Odśwież kartę gry z pominięciem pamięci podręcznej.
-3. Upewnij się, że rozszerzenie może działać na stronie Margonem.
-4. Komunikat **Nie udało się wczytać Lootloga** oznacza, że skrypt dodatku
-   nie dotarł z serwera Lootloga. Sprawdź połączenie i odśwież grę.
-5. Tymczasowo wyłącz inne skrypty i sprawdź konflikt.
+3. Komunikat **Nie udało się wczytać Lootloga** oznacza, że skrypt nie pobrał
+   się z serwera Lootloga. Sprawdź połączenie i odśwież grę.
+4. Wyłącz na chwilę inne skrypty i sprawdź, czy to nie konflikt.
 
-Pełna procedura znajduje się w [Instalacji](/docs/installation).
+Pełna instrukcja jest w [Instalacji](/docs/installation).
 
 ### Logowanie z gry nie działa
 
@@ -121,100 +122,116 @@ a ikona połączenia na pasku szybkiego dostępu zmienia się w ikonę logowania
   **Kopiuj informacje diagnostyczne** kopiuje opis błędu do zgłoszenia. Po
   zamknięciu okna przycisk w miejscu paska szybkiego dostępu otwiera je znowu.
 
-## Dane i synchronizacja
+## Timery i łupy
+
+### Nie widzę timerów
+
+1. Sprawdź, czy w oknie timerów albo w panelu wybrany jest właściwy Lootlog
+   i świat.
+2. Sprawdź filtry typu i zakresu poziomów w oknie timerów.
+3. Graczy i wrogów przy timerach widzisz tylko w Lootlogach zaznaczonych w
+   [Zakresie zbierania](/docs/settings#zakres-zbierania-dla-których-lootlogów-grasz)
+   postaci, którą grasz.
+4. Twoja rola musi mieć `LOOTLOG_TIMERS_READ`, a timery tytanów i herosów
+   wymagają osobnych uprawnień. Zakres poziomów roli też ukrywa timery.
+
+Okno pokazuje **Nie należysz do żadnego Lootloga**? Zobacz
+[Nie widzę Lootloga grupy](#nie-widzę-lootloga-grupy).
+
+### Moje bicia nie tworzą timerów
+
+- Postać musi mieć zaznaczony Lootlog w **Zakresie zbierania**. Bez tego
+  dodatek nic nie wysyła.
+- Dodatek musi być zalogowany do Lootloga.
+- Postać w trybie AFK nie wysyła automatycznych timerów, bo zniknięcie
+  potwora z jej ekranu nie musi oznaczać zabicia.
+- Przy chwilowym błędzie sieci dodatek ponawia wysłanie timera najwyżej trzy
+  razy. Po odświeżeniu strony niewysłane timery przepadają.
+
+Szczegóły nieudanej wysyłki znajdziesz w **Ustawienia → Diagnostyka → Logi**.
 
 ### Nie widzę nowych łupów
 
-Sprawdź kolejno:
+1. Czy dodatek działał i był zalogowany, gdy zdobyłeś przedmiot?
+2. Czy postać ma zaznaczony ten Lootlog w **Zakresie zbierania**?
+3. Czy w panelu wybrany jest właściwy Lootlog i świat?
+4. Czy filtry listy łupów czegoś nie ukrywają?
+5. Czy Twoja rola ma `LOOTLOG_LOOTS_READ` i obejmuje poziom potwora?
 
-1. aktywność dodatku podczas zdobycia przedmiotu;
-2. wybrany świat i klan;
-3. przypisanie postaci;
-4. filtry listy;
-5. uprawnienie `LOOTLOG_LOOTS_READ`.
+### Łupy trafiają do złego Lootloga
 
-### Wysłanie łupu, timera lub powiadomienia zakończyło się błędem
+Zmień Lootlogi dla postaci w **Ustawienia → Zakres zbierania** w grze. Nowe
+łupy pójdą już na właściwe miejsce. Wcześniejsze wpisy nie przeniosą się
+same.
 
-Otwórz **Ustawienia → Diagnostyka → Logi** w dodatku i sprawdź szczegóły nieudanej akcji.
-Błąd walidacji API wskazuje pole, które wymaga poprawy, np. `npc.location`.
+### Wysłanie łupu, timera lub powiadomienia skończyło się błędem
 
-Przy chwilowym błędzie sieci lub API dodatek ponawia wysłanie automatycznego
-timera, maksymalnie do trzech prób. Każda próba wysłania automatycznego timera
-ma limit 8 sekund, a kolejna próba może zacząć się najpóźniej 20 sekund od
-rozpoczęcia wysyłania; po dłuższym uśpieniu karty nie jest wznawiana. Dotyczy
-to rozszerzenia, userskryptu i instalacji w grze. Po wyczerpaniu prób błąd
-pozostaje w logach. Dodatek nie przechowuje kolejki timerów do wysłania po
-odświeżeniu strony.
+Otwórz **Ustawienia → Diagnostyka → Logi** w dodatku i rozwiń nieudaną akcję.
+Błąd walidacji wskazuje pole, np. `npc.location`. Jeśli dodatek nie może
+ustalić nazwy mapy, nie wysyła niepełnych danych i zapisuje to w logach. Gdy
+problem się powtarza, odśwież grę i zgłoś błąd z informacją, którego
+interfejsu gry używasz.
 
-Automatyczny timer jest wysyłany tylko po zalogowaniu do Lootloga. Jeśli
-konfiguracja postaci jeszcze się pobiera albo jej pobranie się nie udało,
-dodatek wysyła timer, a API sprawdza aktualne przypisania i uprawnienia.
-Pobrana konfiguracja bez wybranych Lootlogów dla tej postaci wyłącza wysyłanie.
-Postać w stanie nieaktywności (AFK) nie wysyła automatycznych timerów, bo
-moment, w którym widzi zniknięcie potwora, nie musi być momentem jego zabicia.
-Dzięki temu nie nadpisuje timera dodanego wcześniej przez inną postać.
-
-Jeśli dodatek nie może ustalić nazwy mapy, zapisuje komunikat o braku
-lokalizacji i nie wysyła niepełnych danych. Dotyczy to nowego i starego
-interfejsu Margonem. Jeśli problem się powtarza, odśwież grę i do zgłoszenia
-dołącz szczegóły błędu oraz informację, którego interfejsu używasz.
-
-### Timery nie są widoczne
-
-Upewnij się, że patrzysz na właściwy klan i masz
-`LOOTLOG_TIMERS_READ`. Dostęp do tytanów lub herosów może wymagać dodatkowego
-uprawnienia kategorii.
-
-### Dane pojawiają się w złym klanie
-
-Sprawdź przypisania postaci w [Ustawieniach](/docs/settings). Po poprawce
-wykonaj nowe zdarzenie testowe; wcześniejsze wpisy nie muszą zostać
-automatycznie przeniesione.
-
-## Panel walki
+## Panel walk
 
 ### Nie widzę walki
 
-Walki są rejestrowane od momentu aktywacji dodatku. Sprawdź postać, świat,
-zakres czasu oraz to, czy dodatek działał podczas walki.
+Zapisywanie walk jest domyślnie wyłączone. Włącz **Włącz zbieranie walk** w
+**Ustawienia → Panel walk** w grze, osobno na każdej postaci. Potem sprawdź
+w panelu postać, świat i zakres czasu.
 
 ### Czy mogę wysłać link do walki?
 
 Tak, jeżeli zmienisz jej widoczność na publiczną. Przed udostępnieniem
 sprawdź zawartość strony. Szczegóły opisuje
-[Analiza walk](/docs/battle-panel).
+[Panel walk](/docs/battle-panel#udostępnij-walkę-linkiem).
 
-## Klan i dostęp
+## Lootlog grupy i dostęp
 
-### Anulowano dodawanie bota lub organizacja nie jest jeszcze gotowa
+### Nie widzę serwera na liście przy dodawaniu bota
 
-Jeśli po powrocie z Discorda strona informuje o braku wskazanego serwera,
-wybierz **Przejdź do dashboardu**. Stamtąd możesz ponownie rozpocząć
-dodawanie bota. Jeśli bot został dodany, ale organizacja nie jest jeszcze
-dostępna, poczekaj chwilę i wybierz **Spróbuj ponownie**.
+Lista pokazuje tylko serwery, na których masz uprawnienie **Administrator**.
+Nowy serwer albo nowe uprawnienie może pojawić się do 10 minut.
+
+### Anulowano dodawanie bota albo Lootlog nie jest jeszcze gotowy
+
+Jeśli po powrocie z Discorda strona mówi, że nie ma wskazanego serwera,
+wybierz **Przejdź do dashboardu** i zacznij dodawanie bota od nowa. Jeśli bot
+został dodany, ale Lootloga jeszcze nie ma, poczekaj chwilę i wybierz
+**Spróbuj ponownie**.
 
 ### Panel nie może potwierdzić uprawnień bota
 
-W ustawieniach organizacji i powiadomień poczekaj na wynik synchronizacji.
+W ustawieniach Lootloga i w powiadomieniach poczekaj na wynik synchronizacji.
 Jeśli sprawdzenie się nie powiedzie, ponów je przyciskiem obok komunikatu.
 Brak potwierdzenia nie oznacza braku uprawnień. Ponownie dodaj bota dopiero,
 gdy panel potwierdzi brak bota lub wymaganych uprawnień.
 
-### Nie widzę klanu
+### Nie widzę Lootloga grupy
 
-Sprawdź, czy korzystasz z konta Discord należącego do serwera klanu. Jeśli
-klan nadal się nie pojawia, poproś administratora o potwierdzenie integracji.
+W grze okna timerów, czatu i graczy online pokazują wtedy **Nie należysz do
+żadnego Lootloga**.
 
-W grze okna timerów, czatu i graczy online pokazują wtedy komunikat
-**Nie należysz do żadnego Lootloga**. Lootloga tworzy administrator serwera
-Discord grupy, dodając do niego bota Lootlog. Pozostali członkowie proszą o to
-lidera; po dodaniu bota dostęp pojawia się sam.
+1. Sprawdź, czy logujesz się kontem Discord, które jest na serwerze grupy.
+2. Sprawdź, czy na serwerze jest bot Lootlog. Jeśli nie, poproś lidera lub
+   administratora serwera o jego dodanie. Po dodaniu dostęp pojawi się sam.
+3. Sprawdź, czy Twoja rola na Discordzie ma w Lootlogu **Dostęp do
+   aplikacji**. Administrator może też odświeżyć Twoje uprawnienia w
+   **Ustawienia → Członkowie**.
 
-### Nie widzę konkretnej sekcji
+### Nie widzę konkretnej strony w Lootlogu
 
-Najczęściej brakuje wymaganej roli. Porównaj zakres z
-[kanoniczną listą uprawnień](/docs/permissions) i poproś lidera o możliwie
-najwęższy potrzebny dostęp.
+Najczęściej Twojej roli brakuje uprawnienia. **Logi aktywności**,
+**Powiadomienia** i **Ustawienia** widzą tylko administratorzy. Porównaj
+stronę z [listą uprawnień](/docs/permissions#lista-uprawnień) i poproś lidera
+o najwęższy potrzebny dostęp.
+
+### Bot nie wysyła powiadomień na kanał
+
+Wpisz na tym kanale `/lootlog diagnostyka`. Bot sprawdzi swoje uprawnienia.
+Potrzebuje: wyświetlania kanału, wysyłania wiadomości, osadzania linków,
+załączania plików i czytania historii. Status wysyłek i przyczyny błędów są
+w **Powiadomienia → Historia**. Zobacz [Discord](/docs/discord).
 
 ## Prywatność
 

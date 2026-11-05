@@ -8,6 +8,7 @@
     "./globals.css": "./src/styles/globals.css",
     "./scroll-fade.css": "./src/styles/scroll-fade.css",
     "./page-scroll.css": "./src/styles/page-scroll.css",
+    "./portal.css": "./src/styles/portal.css",
     "./scrollbars.css": "./src/styles/scrollbars.css",
     "./components.json": "./components.json",
     "./lib/*": "./src/lib/*.ts",

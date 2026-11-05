@@ -1,0 +1,115 @@
+---
+title: Czat Lootloga
+description: Czat Lootloga w grze, powiadomienia z wykrzyknikiem, wysyłanie pozycji i wzywanie pomocy, Szybki czat oraz czat globalny.
+---
+
+Czat Lootloga to wspólny kanał Twojej grupy w osobnym oknie w grze. Działa w
+nowym i starym interfejsie. Trafiają tu wiadomości, powiadomienia,
+zgłoszenia potworów z wykrywacza i [zbiórki](/docs/groups).
+
+Okno otworzysz kafelkiem **Czat** albo skrótem `Shift+C`. Integracja z
+czatem gry jest tymczasowo niedostępna.
+
+## Do którego Lootloga piszesz
+
+Lootlog wybierasz u góry czatu. **Wszystkie Lootlogi** pokazuje wiadomości ze
+wszystkich, ale żeby coś wysłać, musisz wybrać jeden. Odpowiedź na wiadomość
+trafia zawsze do Lootloga wiadomości, na którą odpowiadasz.
+
+## Widoki czatu
+
+- **Wszystko** łączy oba widoki i jest domyślne.
+- **Rozmowy** to wiadomości, powiadomienia `!` i odpowiedzi.
+- **Zdarzenia** to zgłoszenia potworów.
+
+Ikona filtrów obok regulacji przezroczystości chowa i pokazuje ten pasek.
+Wybór jest zapamiętany.
+
+## Wiadomość, powiadomienie, zbiórka
+
+Ikona po lewej stronie pola pisania pokazuje, co wyśle Enter. Tryb zmienisz
+prefiksem albo klikając ikonę:
+
+| Tryb          | Jak włączyć        | Co robi                                           |
+| ------------- | ------------------ | ------------------------------------------------- |
+| Wiadomość     | domyślnie          | Zwykła wiadomość na czacie                        |
+| Powiadomienie | `!` na początku    | Powiadomienie dla całego Lootloga (dzwonek)       |
+| Zbiórka       | `/grp` na początku | Tworzy [zbiórkę](/docs/groups) (fioletowe miecze) |
+
+Backspace na początku pola wraca do zwykłej wiadomości i zachowuje tekst.
+Powiadomienie bez treści nie zostanie wysłane. `@` podpowiada osoby i role.
+
+## Pozycja i pomoc
+
+Przycisk **+** w prawym dolnym rogu czatu ma trzy akcje:
+
+- **Pozycja** (`Alt+P`) od razu wysyła wpis w formacie
+  `Postać(230w), Ithan (1, 2)`;
+- **Pomoc** (`Alt+H`) od razu wysyła powiadomienie do wybranego Lootloga; gdy
+  dodatek zna sytuację na mapie, dopisuje liczbę wrogich postaci;
+- **Utwórz zbiórkę** tworzy pustą zbiórkę, tak jak `/grp` bez opisu.
+
+## Odpowiedzi, usuwanie, historia
+
+- Prawy przycisk myszy na wiadomości i **Odpowiedz** ustawia cytat.
+  Kliknięcie cytatu przewija czat do oryginału i podświetla go.
+- Wysłanych wiadomości nie można edytować. Usunięcie wiadomości i
+  wyczyszczenie czatu komendą `/clr` wymagają potwierdzenia.
+- Czat trzyma 300 ostatnich wpisów na Lootlog. Gdy czytasz starsze, nowe
+  wiadomości nie przewijają widoku. **Najnowsze** wraca na dół.
+- Szkice, cytaty i pozycja przewijania zostają do końca sesji.
+
+## Ukrywanie wiadomości o NPC
+
+Zgłoszenia NPC wybranych typów wyłączysz w **Ustawienia → Czat → Filtry**,
+np. elity II przy zachowanych herosach i tytanach. Szybciej: kliknij
+wiadomość o NPC prawym przyciskiem i wybierz **Ukryj wiadomości**. Ukryte typy
+nie wywołują też powiadomień o wzmiankach. Po ponownym włączeniu historia
+wraca w całości.
+
+Wygląd czatu, skalę tekstu i układ wiadomości NPC zmienisz w **Ustawienia →
+Czat → Wygląd**.
+
+## Szybki czat
+
+**Szybki czat** (`Shift+S` albo kafelek na pasku) otwiera u góry ekranu samo
+pole pisania, bez okna czatu. Działa jak pole czatu: Enter wysyła, `!` wysyła
+powiadomienie, `/grp opis` tworzy zbiórkę, a `@` podpowiada osoby i role.
+
+Lista pod polem wybiera Lootlog, do którego trafi wpis. Wybór jest
+zapamiętany. `Escape` zamyka Szybki czat i czyści wpis, kliknięcie obok
+zamyka go z zachowaniem tekstu.
+
+## Czat globalny
+
+**Czat globalny** (ikona globu na pasku szybkiego dostępu, okno **Global**)
+łączy graczy ze wszystkich Lootlogów. Pisać i czytać może każdy, kto należy
+do co najmniej jednego Lootloga.
+
+- Każdy świat ma własny kanał, a kanał **Wszystkie światy** jest wspólny.
+  Kanał wybierasz pod tytułem okna. Trzy ostatnie światy są w grupie
+  **Ostatnio używane**.
+- Zielona kropka z liczbą pokazuje, ilu graczy z Lootlogiem jest teraz w grze
+  na danym świecie lub na wszystkich.
+- Przy wiadomości widać tylko nazwę z Discorda, bez nicku postaci i Lootloga.
+  Na kanale **Wszystkie światy** widać też świat autora.
+- Wiadomość ma do 128 znaków, kolejną wyślesz po 3 sekundach. Linki nie są
+  klikalne. Nie ma odpowiedzi, wzmianek, komend, powiadomień ani zbiórek.
+- Przycisk z uśmiechem otwiera emoji. Wyszukasz je po polskiej lub angielskiej
+  nazwie, np. „serce” albo „heart”.
+- Nowe wiadomości przy zamkniętym oknie zwiększają licznik na przycisku
+  czatu. Każdy kanał trzyma 2000 ostatnich wiadomości.
+
+### Administratorzy czatu globalnego
+
+Nazwy administratorów Lootloga są czerwone. Z menu wiadomości mogą ją
+przypiąć (jedna przypięta na kanał), usunąć u wszystkich albo wyciszyć
+autora na czas od 5 minut do 30 dni lub na stałe. Wyciszona osoba dalej czyta
+czat i widzi w polu pisania, do kiedy nie może pisać. Przycisk z megafonem
+wysyła wiadomość administratora naraz na wszystkie kanały.
+
+## Uprawnienia
+
+Czat Lootloga wymaga `LOOTLOG_CHAT_READ` do czytania i `LOOTLOG_CHAT_WRITE`
+do pisania. Wiadomości o tytanach i herosach wymagają osobnych uprawnień
+`LOOTLOG_CHAT_TITANS_READ` i `LOOTLOG_CHAT_HEROES_READ`.
