@@ -1,8 +1,8 @@
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@lootlog/ui/components/popover";
 import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
 import { cn } from "cn";
 import { upperFirst } from "es-toolkit";
@@ -80,8 +80,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({
       : null;
 
   return (
-    <Tooltip>
-      <TooltipTrigger
+    <Popover>
+      <PopoverTrigger
+        openOnHover
         render={
           <button
             type="button"
@@ -147,7 +148,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
           </button>
         }
       />
-      <TooltipContent className="grid gap-2">
+      <PopoverContent className="grid w-auto gap-2 px-3 py-2">
         {phase === "entrance" && timer.entranceClosesAt && (
           <div>
             <span className="block text-xs text-muted-foreground">
@@ -177,7 +178,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             {timestampToDate(timer.maxSpawnTime, DATE_TIME_WITH_SECONDS_FORMAT)}
           </span>
         </div>
-      </TooltipContent>
-    </Tooltip>
+      </PopoverContent>
+    </Popover>
   );
 };

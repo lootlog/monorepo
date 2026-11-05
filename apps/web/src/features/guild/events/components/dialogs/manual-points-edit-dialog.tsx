@@ -100,10 +100,7 @@ export const ManualPointsEditDialog = ({
         />
         <form className="space-y-4 p-5" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <Label
-              htmlFor={pointsInputId}
-              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-            >
+            <Label htmlFor={pointsInputId}>
               {t("events.points.deltaLabel")}
             </Label>
             <Input
@@ -118,13 +115,13 @@ export const ManualPointsEditDialog = ({
           </div>
           <div className="grid grid-cols-3 gap-2 text-sm">
             <div className="px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {t("events.points.currentValueLabel")}
               </p>
               <p className="font-semibold">{formatPoints(currentPoints)}</p>
             </div>
             <div className="px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {t("events.points.deltaPreviewLabel")}
               </p>
               <p className="font-semibold">
@@ -134,7 +131,7 @@ export const ManualPointsEditDialog = ({
               </p>
             </div>
             <div className="px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {t("events.points.resultValueLabel")}
               </p>
               <p className="font-semibold text-primary">
@@ -143,10 +140,7 @@ export const ManualPointsEditDialog = ({
             </div>
           </div>
           <div className="space-y-2">
-            <Label
-              htmlFor={commentInputId}
-              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-            >
+            <Label htmlFor={commentInputId}>
               {t("events.points.commentLabel")}
             </Label>
             <Textarea

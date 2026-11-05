@@ -229,3 +229,32 @@ it("keeps the reordered list until its refresh completes, then follows later ser
     expect(result.current.displayedLocations).toEqual([firstLocation]),
   );
 });
+
+it("saves a location moved from the keyboard and ignores a move past the end of the list", async () => {
+  const savedOrders: unknown[] = [];
+
+  const { result } = renderMapManagement(async (input, init) => {
+    const request = new Request(input, init);
+
+    if (request.url.endsWith("/locations/reorder")) {
+      savedOrders.push(await request.json());
+
+      return new Response(null, { status: 204 });
+    }
+
+    return Response.json([]);
+  });
+
+  act(() => result.current.handleMoveLocation("location-2", 1));
+  expect(savedOrders).toEqual([]);
+
+  act(() => result.current.handleMoveLocation("location-2", -1));
+  expect(
+    result.current.displayedLocations.map((location) => location.id),
+  ).toEqual(["location-2", "location-1"]);
+  await waitFor(() =>
+    expect(savedOrders).toEqual([
+      { locationIds: ["location-2", "location-1"] },
+    ]),
+  );
+});

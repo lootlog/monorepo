@@ -118,7 +118,7 @@ async function openCreateDialog() {
     }),
     { target: { value: createdTemplate.name } },
   );
-  fireEvent.click(await screen.findByRole("checkbox", { name: /Ithan/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /^Ithan/ }));
 }
 
 function saveTemplate() {
@@ -162,7 +162,7 @@ it("opens create and edit dialogs and refreshes the saved name and map selection
     }),
     { target: { value: "Torneg" } },
   );
-  fireEvent.click(screen.getByRole("checkbox", { name: /Torneg/ }));
+  fireEvent.click(screen.getByRole("button", { name: /^Torneg/ }));
   saveTemplate();
 
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());

@@ -179,7 +179,7 @@ export const CloseRespawnWindowDialog = ({
                     name="minTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        <FormLabel>
                           {t("events.respawn.minSpawnTime")}
                         </FormLabel>
                         <FormControl
@@ -199,7 +199,7 @@ export const CloseRespawnWindowDialog = ({
                     name="maxTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        <FormLabel>
                           {t("events.respawn.maxSpawnTime")}
                         </FormLabel>
                         <FormControl
