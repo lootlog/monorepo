@@ -34,6 +34,9 @@ function DialogOverlay({
       data-slot="dialog-overlay"
       className={cn(
         "fixed inset-0 z-50 bg-black/50 transition-opacity duration-150 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-none",
+        // A nested dialog's backdrop only catches the outside click: the
+        // dialog under it already dims the page.
+        "[[data-slot=dialog-portal]_[data-slot=dialog-portal]_&]:bg-transparent",
         className,
       )}
       {...props}
@@ -55,7 +58,9 @@ function DialogContent({
 
   return (
     <DialogPortal data-slot="dialog-portal">
-      <DialogOverlay />
+      {/* Base UI skips a nested dialog's backdrop, and its own fallback sits
+          under the parent's, so clicks outside a nested dialog never closed it. */}
+      <DialogOverlay forceRender />
       <DialogPrimitive.Popup
         ref={animatedHeightRef}
         data-slot="dialog-content"
