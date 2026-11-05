@@ -101,6 +101,11 @@ describe("battle panel battle presentation", () => {
         createBattle({ unfinished: true, winningTeam: 0, losingTeam: 0 }),
       ),
     ).toBe("unfinished");
+    expect(
+      getBattleResult(
+        createBattle({ winner: "?", winningTeam: 0, losingTeam: 0 }),
+      ),
+    ).toBe("draw");
   });
 
   it("derives player-vs-player results from winner and flee state", () => {
@@ -117,5 +122,10 @@ describe("battle panel battle presentation", () => {
         createPlayerVsPlayerBattle({ hasFlee: true }),
       ),
     ).toBe("flee");
+    expect(
+      getPlayerVsPlayerBattleResult(
+        createPlayerVsPlayerBattle({ winner: "?" }),
+      ),
+    ).toBe("draw");
   });
 });

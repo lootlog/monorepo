@@ -1,4 +1,4 @@
-import { BattleProcessor } from "@lootlog/battle-processor";
+import { BattleProcessor } from "@lootlog/battle-processor/battle-processor";
 import { PgliteClient } from "@effect/sql-pglite";
 import { makeWithDefaults } from "drizzle-orm/effect-pglite";
 import { migrate } from "drizzle-orm/effect-pglite/migrator";

@@ -1,4 +1,4 @@
-import { calculateBattleStatistics } from "@lootlog/battle-processor";
+import { calculateBattleStatistics } from "@lootlog/battle-processor/statistics";
 import { Effect, Schema } from "effect";
 import { battlelogOperation } from "./battlelog-operation.js";
 import type { Battles } from "#src/battles/battles.service";

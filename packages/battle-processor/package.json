@@ -6,7 +6,12 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    "./battle-log": "./src/battle-log.ts",
+    "./battle-processor": "./src/battle-processor.ts",
+    "./finishing-blows": "./src/finishing-blows.ts",
+    "./statistics": "./src/statistics.ts",
+    "./timeline": "./src/timeline.ts",
+    "./warrior": "./src/warrior.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

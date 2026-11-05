@@ -114,6 +114,7 @@
       "won": "Wygrana",
       "lost": "Przegrana",
       "flee": "Ucieczka",
+      "draw": "Remis",
       "unfinished": "Niedokończona"
     }
   },

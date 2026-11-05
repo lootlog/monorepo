@@ -7,6 +7,7 @@ import { BATTLE_BADGE_COLORS } from "@/components/battle/utils/battle-color-pale
 import { cn } from "cn";
 import {
   CircleDashed,
+  Equal,
   Flag,
   Trophy,
   XCircle,
@@ -14,7 +15,12 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-export type BattleResultStatusValue = "flee" | "lost" | "unfinished" | "won";
+export type BattleResultStatusValue =
+  | "draw"
+  | "flee"
+  | "lost"
+  | "unfinished"
+  | "won";
 
 type BattleResultStatusProps = {
   className?: string;
@@ -39,6 +45,11 @@ const BATTLE_RESULT_STATUS_CONFIG: Record<
     className: BATTLE_BADGE_COLORS.result.lost,
     icon: XCircle,
     labelKey: "battlePanel.list.results.lost",
+  },
+  draw: {
+    className: BATTLE_BADGE_COLORS.result.draw,
+    icon: Equal,
+    labelKey: "battlePanel.list.results.draw",
   },
   flee: {
     className: BATTLE_BADGE_COLORS.result.flee,
