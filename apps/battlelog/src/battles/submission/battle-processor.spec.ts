@@ -1137,6 +1137,18 @@ describe("BattleProcessor", () => {
       expect(deltas?.["2"]?.absorbSpent).toBe(100);
     });
 
+    it("marks a kill only on the row the warrior falls in", () => {
+      const result = processBattleWithStatisticsParity(
+        duel(["1=100;2=0;+dmg=900;-dmg=900", "3=100;4=90;+dmg=100;-dmg=100"]),
+      );
+
+      const [killRow, laterRow] = result.battleTimeline;
+
+      expect(killRow?.labels).toContain("kill:2");
+      expect(killRow?.reason).toBe("kill");
+      expect(laterRow?.flags).not.toContain("kill");
+    });
+
     it("credits last heal to the warrior the log names", () => {
       const result = processBattleWithStatisticsParity(
         duel(["1=100;2=100;+dmg=100;legbon_lastheal=300,Ally;-dmg=100"]),

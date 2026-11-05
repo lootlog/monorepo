@@ -278,7 +278,16 @@ export class TimelineRecorder {
       [move.attackerId, move.attackerHpPercentage],
       [move.defenderId, move.defenderHpPercentage],
     ] as const) {
-      if (id && hp !== null) this.hp.set(id, hp);
+      if (!id || hp === null) continue;
+
+      // A kill belongs to the row a warrior falls in, not to every later
+      // row it stays dead in. A revived warrior can fall again.
+      if (hp <= 0 && (this.hp.get(id) ?? 100) > 0) {
+        row.flags.add("kill");
+        row.labels.add(`kill:${id}`);
+      }
+
+      this.hp.set(id, hp);
     }
 
     const hpByWarrior = Object.fromEntries(
@@ -293,13 +302,6 @@ export class TimelineRecorder {
         roundToHundredths(hp - (teamHpBefore[team] ?? hp)),
       ]),
     );
-
-    for (const [warriorId, hp] of Object.entries(hpByWarrior)) {
-      if (hp <= 0) {
-        row.flags.add("kill");
-        row.labels.add(`kill:${warriorId}`);
-      }
-    }
 
     for (const [warriorId, delta] of Object.entries(row.byWarrior)) {
       const total = this.cumulative.get(warriorId) ?? createEmptyDelta();
