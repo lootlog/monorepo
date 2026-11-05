@@ -1,4 +1,5 @@
 import { Button } from "@lootlog/ui/components/button";
+import { isLootDrawItem } from "@lootlog/domain/loot-draw";
 import { Dices, Trophy } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -7,8 +8,8 @@ import { LootDrawDialog } from "./loot-draw-dialog";
 import { useLootDraws } from "./use-loot-draws";
 
 /**
- * Opens an item's draw: managers run it, everyone sees the standing result,
- * whose winner the button names.
+ * Opens a legendary item's draw: managers run it, everyone sees the
+ * standing result, whose winner the button names.
  */
 export const LootDrawButton = ({
   loot,
@@ -29,7 +30,7 @@ export const LootDrawButton = ({
 
   const winner = standing?.entrants[standing.winnerIndex];
 
-  if (!canManage && !winner) return null;
+  if (!isLootDrawItem(item) || (!canManage && !winner)) return null;
 
   return (
     <>

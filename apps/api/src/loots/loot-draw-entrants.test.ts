@@ -26,7 +26,7 @@ const wand = {
   icon: "roz/rozdzka149.gif",
   stat: "lvl=279;reqp=m",
   type: "WAND_WEAPON",
-  rarity: "UNIQUE" as const,
+  rarity: "LEGENDARY" as const,
   lvl: 279,
   prof: ["MAGE" as const],
 };
@@ -152,6 +152,24 @@ describe("buildLootDrawEntrants", () => {
     );
 
     expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_INVALID_TICKET_ORDER });
+  });
+
+  it("refuses an item that is not legendary", () => {
+    const result = buildLootDrawEntrants(
+      { ...loot, items: [{ ...wand, rarity: "HEROIC" }] },
+      request([winner, outsider()]),
+    );
+
+    expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_ITEM_NOT_DRAWABLE });
+  });
+
+  it("refuses a legendary item bound for good, as colossi and titans drop", () => {
+    const result = buildLootDrawEntrants(
+      { ...loot, items: [{ ...wand, stat: "lvl=279;permbound;reqp=m" }] },
+      request([winner, outsider()]),
+    );
+
+    expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_ITEM_NOT_DRAWABLE });
   });
 
   it("refuses an item nobody in the party caught", () => {

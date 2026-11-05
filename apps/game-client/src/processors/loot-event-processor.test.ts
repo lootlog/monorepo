@@ -161,7 +161,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it("captures map characters and the hero once, with levels, for a unique or better fight loot", async () => {
+it("captures map characters and the hero once, with levels, for a legendary fight loot", async () => {
   const fixture = createFixture();
   useOthersStore.getState().replaceOthers({
     "303": {
@@ -206,8 +206,8 @@ it("captures map characters and the hero once, with levels, for a unique or bett
 });
 
 it.each([
-  ["upgraded", 20],
-  ["upgraded", 100],
+  ["heroic", 20],
+  ["unique", 100],
 ])("omits map characters for rarity %s and weight %s", async (rarity, wt) => {
   const fixture = createFixture();
   useOthersStore.getState().replaceOthers({});

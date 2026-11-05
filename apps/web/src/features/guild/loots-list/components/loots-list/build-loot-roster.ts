@@ -24,7 +24,7 @@ export type LootRoster = {
   bystanders: LootRosterPlayer[];
   /**
    * True when the add-on keeps map players for loots like this one (a fight
-   * with a unique or better drop) but none were recorded.
+   * with a legendary drop) but none were recorded.
    */
   isSnapshotUnavailable: boolean;
 };

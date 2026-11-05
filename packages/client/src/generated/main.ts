@@ -25652,7 +25652,7 @@ export const getLootsControllerCreateDrawUrl = ({ guildId, lootId }: LootsContro
 }
 
 /**
- * Draw an item among the player who caught it and eligible players outside the party; the server picks the winner. 409 while the item has a standing draw
+ * Draw a legendary item that is not permanently bound among the player who caught it and eligible players outside the party; the server picks the winner. 409 while the item has a standing draw
  * @summary Draw a loot item
  */
 export const lootsControllerCreateDraw = async ({ guildId, lootId }: LootsControllerCreateDrawPathParameters,
