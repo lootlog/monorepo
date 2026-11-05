@@ -209,7 +209,8 @@
     "players": "Gracze ({{count}})",
     "bystanders": "Pozostali na mapie w chwili dropu ({{count}})",
     "mapPlayersUnavailable": "Brak danych o graczach na mapie w chwili dropu",
-    "itemIds": "Identyfikatory przedmiotów ({{count}})",
+    "playersWithoutItems": "Bez przedmiotów ({{count}})",
+    "itemCopy": "Egzemplarz {{index}}",
     "delete": {
       "title": "Usunąć ten łup?",
       "description": "Łup zniknie z listy i statystyk Lootloga. Tej operacji nie można cofnąć."
