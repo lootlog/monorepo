@@ -1,5 +1,6 @@
 "use client";
 
+import { useAnimatedHeight } from "@lootlog/ui/hooks/use-animated-height";
 import * as React from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
@@ -33,6 +34,9 @@ function DialogOverlay({
       data-slot="dialog-overlay"
       className={cn(
         "fixed inset-0 z-50 bg-black/50 transition-opacity duration-150 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-none",
+        // A nested dialog's backdrop only catches the outside click: the
+        // dialog under it already dims the page.
+        "[[data-slot=dialog-portal]_[data-slot=dialog-portal]_&]:bg-transparent",
         className,
       )}
       {...props}
@@ -44,16 +48,21 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  ref,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
 }) {
   const labels = useUiLabels();
+  const animatedHeightRef = useAnimatedHeight(ref);
 
   return (
     <DialogPortal data-slot="dialog-portal">
-      <DialogOverlay />
+      {/* Base UI skips a nested dialog's backdrop, and its own fallback sits
+          under the parent's, so clicks outside a nested dialog never closed it. */}
+      <DialogOverlay forceRender />
       <DialogPrimitive.Popup
+        ref={animatedHeightRef}
         data-slot="dialog-content"
         className={cn(
           "bg-background fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] overflow-hidden rounded-lg border p-0 shadow-lg transition-[scale,opacity] duration-200 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0 motion-reduce:transition-none sm:max-w-lg",

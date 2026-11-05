@@ -227,6 +227,7 @@ describe("durable loot publications", () => {
       name: "Map observer",
       prof: "WARRIOR",
       icon: null,
+      lvl: 280,
     },
   ];
 
@@ -1077,6 +1078,7 @@ describe("durable loot publications", () => {
         name: `Player A ${randomUUID()}`,
         prof: "WARRIOR" as const,
         icon: "player-a.png",
+        lvl: 281,
       };
 
       const playerB = {
@@ -1085,6 +1087,7 @@ describe("durable loot publications", () => {
         name: `Player B ${randomUUID()}`,
         prof: "MAGE" as const,
         icon: "player-b.png",
+        lvl: 282,
       };
 
       const [baseItem] = first.request.submission.loots;
@@ -1264,6 +1267,7 @@ describe("durable loot publications", () => {
           name: "Player",
           prof: "WARRIOR",
           icon: "player.png",
+          lvl: 283,
         },
       ];
 
@@ -1359,6 +1363,7 @@ describe("durable loot publications", () => {
       name: "Foo",
       prof: "WARRIOR" as const,
       icon: "outfit.gif",
+      lvl: 284,
     };
 
     const observer = { ...legacyObserver, name: "Foow", prof: null };
@@ -1430,6 +1435,7 @@ describe("durable loot publications", () => {
         name: "Player",
         prof: "WARRIOR" as const,
         icon: "player.png",
+        lvl: 285,
       };
 
       request.submission = {
@@ -1472,11 +1478,15 @@ describe("durable loot publications", () => {
           .where(eq(playerSnapshotTable.world, request.submission.world)),
       );
 
+      // The level belongs to the loot's map link, not the player snapshot.
+      const { lvl: _originalLvl, ...originalPlayer } = original;
+      const { lvl: _changedLvl, ...changedPlayer } = changed;
+
       expect(storedSnapshots).toHaveLength(2);
       expect(storedSnapshots).toEqual(
         expect.arrayContaining([
-          expect.objectContaining(original),
-          expect.objectContaining(changed),
+          expect.objectContaining(originalPlayer),
+          expect.objectContaining(changedPlayer),
         ]),
       );
       expect((await lootRecord(id, first.id))?.mapPlayersSnapshot).toEqual([
@@ -1540,7 +1550,7 @@ describe("durable loot publications", () => {
     expect(await pending(result.id)).toHaveLength(intentsBeforeRetry);
   });
 
-  it("ignores map snapshots for other NPC types, rarities, and loot sources", async () => {
+  it("keeps map players for a legendary from any NPC type, but not for other rarities or sources", async () => {
     await Promise.all(
       (["hero", "heroic", "dialog"] as const).map(async (variant) => {
         const { id, request } = await seed(variant !== "hero");
@@ -1558,6 +1568,16 @@ describe("durable loot publications", () => {
         };
         const result = await runtime.runPromise(acceptance().accept(request));
         snapshotTestLootIds.push(result.id);
+
+        // Draws need the outsiders of a hero's legendary as much as an elite's.
+        if (variant === "hero") {
+          expect((await lootRecord(id, result.id))?.mapPlayersSnapshot).toEqual(
+            mapPlayersSnapshot,
+          );
+
+          return;
+        }
+
         expect(
           (await lootRecord(id, result.id))?.mapPlayersSnapshot,
         ).toBeNull();

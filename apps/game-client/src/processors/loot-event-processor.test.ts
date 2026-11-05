@@ -161,7 +161,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it("captures map characters and the hero once for a legendary elite II loot", async () => {
+it("captures map characters and the hero once, with levels, for a legendary fight loot", async () => {
   const fixture = createFixture();
   useOthersStore.getState().replaceOthers({
     "303": {
@@ -191,6 +191,7 @@ it("captures map characters and the hero once for a legendary elite II loot", as
         name: "Tester",
         prof: "WARRIOR",
         icon: "hero.gif",
+        lvl: expect.any(Number),
       },
       {
         accountId: 404,
@@ -198,6 +199,7 @@ it("captures map characters and the hero once for a legendary elite II loot", as
         name: "Other",
         prof: "MAGE",
         icon: "other.gif",
+        lvl: 123,
       },
     ],
   });
@@ -205,8 +207,7 @@ it("captures map characters and the hero once for a legendary elite II loot", as
 
 it.each([
   ["heroic", 20],
-  ["legendary", 80],
-  ["legendary", 100],
+  ["unique", 100],
 ])("omits map characters for rarity %s and weight %s", async (rarity, wt) => {
   const fixture = createFixture();
   useOthersStore.getState().replaceOthers({});

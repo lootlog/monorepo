@@ -89,6 +89,9 @@ const makeOperations = (
       listComments: () => Effect.succeed([]),
       createComment: () => Effect.die("Unexpected comment write"),
       setLike: () => Effect.die("Unexpected like write"),
+      listDraws: () => Effect.die("Unexpected draw read"),
+      createDraw: () => Effect.die("Unexpected draw write"),
+      voidDraw: () => Effect.die("Unexpected draw void"),
     },
     stats: { invalidateCache: () => Effect.void },
     redis: {
@@ -507,6 +510,9 @@ describe("loot list pages", () => {
       listComments: () => Effect.die("Unexpected comment read"),
       createComment: () => Effect.die("Unexpected comment write"),
       setLike: () => Effect.die("Unexpected like write"),
+      listDraws: () => Effect.die("Unexpected draw read"),
+      createDraw: () => Effect.die("Unexpected draw write"),
+      voidDraw: () => Effect.die("Unexpected draw void"),
     },
     stats: { invalidateCache: () => Effect.void },
     redis: {

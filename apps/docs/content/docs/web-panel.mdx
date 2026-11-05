@@ -339,6 +339,41 @@ szczegółów łupu. Liczba obok serduszka mówi, ile osób z Lootloga polubiło
 łup, a po najechaniu na nie zobaczysz, kto to był. Polubić może każdy, kto
 widzi łup. Polubienia innych osób zobaczysz po odświeżeniu listy.
 
+Okno szczegółów łupu pokazuje przy każdym graczu przedmioty, które złapał,
+z nazwą i poziomem. Kilka sztuk tego samego przedmiotu zajmuje jedną linię
+z liczbą sztuk, np. **×3**. Przycisk kopiowania obok przedmiotu kopiuje jego
+identyfikator `ITEM#…`; przy kilku sztukach wybierasz, którego egzemplarza.
+Gracze z grupy, którym nic nie przypadło, są zebrani niżej w sekcji
+**Bez przedmiotów**, a gracze spoza grupy obecni na mapie w sekcji
+**Pozostali na mapie w chwili dropu**. Komentarze są na dole okna, zwinięte;
+kliknij **Komentarze**, aby je rozwinąć i dodać własny. Osoby z uprawnieniem
+`LOOTLOG_LOOTS_ARCHIVE` usuwają łup z menu **⋯** w nagłówku okna.
+
+### Losowanie przedmiotów
+
+Margonem mieści w grupie dziesięciu graczy. Gdy na mapie byli też gracze,
+którym zabrakło miejsca, przedmiot legendarny, którego nie związano na stałe, można rozlosować między nimi a osobą, która
+złapała go w grze. Przycisk z kostką przy przedmiocie w oknie szczegółów łupu
+otwiera losowanie. Prowadzą je osoby z uprawnieniem `LOOTLOG_LOOTS_ARCHIVE`,
+a wynik widzi każdy, kto widzi łup.
+
+Na kole jest zawsze zwycięzca z gry. Domyślnie dostaje tyle losów, ilu graczy
+w grupie ma profesję pasującą do przedmiotu, łącznie z nim, a każdy taki gracz
+spoza grupy jeden los. Poziom graczy nie ma znaczenia.
+
+Przy łupach z walki, w których wypadł przedmiot legendarny, dodatek
+zapisuje graczy obecnych na mapie i podpowiada ich na liście. Przed losowaniem
+możesz usunąć z niej każdego, np. gracza z wrogiej frakcji, dopisać brakującego
+gracza z nickiem i profesją, zmienić liczbę losów
+dowolnego uczestnika oraz potasować koło. Starsze łupy nie mają tej listy,
+więc uczestników spoza grupy dopisujesz ręcznie.
+
+Zwycięzcę wybiera serwer Lootloga, a koło zatrzymuje się na wylosowanym losie.
+Wynik zostaje zapisany razem z uczestnikami, ich losami i osobą, która
+losowała; przy przedmiocie pojawia się nazwa zwycięzcy. Jeśli losowanie trzeba
+powtórzyć, unieważnij wynik z podaniem powodu. Unieważniony wynik zostaje
+w historii, a przedmiot można losować ponownie.
+
 Zmiana filtrów lub świata przewija listę łupów na początek. Po pojawieniu się
 nowych łupów rozwinięty stos przedmiotów w widoku listy i siatki pozostaje przypisany
 do tego samego łupu.
@@ -411,17 +446,13 @@ przedział **Poziom herosa od / do** ogranicza regułę do herosów z tego zakre
 
 Jak powstają wykrycia, opisuje [Wykryci herosi](/docs/features#wykryci-herosi).
 
-### Gracze na mapie przy legendzie z elity II
+### Gracze na mapie przy legendzie
 
-Jeśli główny przeciwnik (potwór o najwyższej wadze w walce) jest elitą II
-i wypadł co najmniej jeden przedmiot legendarny, w szczegółach łupu
+Jeśli w walce wypadł co najmniej jeden przedmiot legendarny, w szczegółach łupu
 sekcja **Gracze na mapie w chwili dropu** pokazuje liczbę i zapisane postacie:
-ikonę, nick oraz profesję, jeśli jest dostępna. Lista obejmuje także własną postać
+ikonę, nick, poziom oraz profesję, jeśli są dostępne. Lista obejmuje także własną postać
 zgłaszającego i jest oddzielona od uczestników walki — obecność na mapie nie oznacza
 udziału w walce.
-
-Sama obecność elity II wśród przeciwników nie wystarcza, jeśli inny potwór
-ma wyższą wagę.
 
 Organizacja zachowuje pierwszy dostępny zapis dla danego łupu. Kolejne zgłoszenia
 nie łączą list ani nie zastępują zapisu. Dane dotyczą chwili dropu, więc późniejsze

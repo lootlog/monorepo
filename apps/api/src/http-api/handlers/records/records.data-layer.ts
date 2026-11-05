@@ -22,6 +22,8 @@ import {
   LootDetailResponse,
   LootListResponse,
   LootCommentsResponse,
+  LootDrawResponse,
+  LootDrawsResponse,
   LootLikesResponse,
 } from "#src/contracts/loots/schemas";
 
@@ -305,6 +307,53 @@ export const recordsDataLayer = (services: RecordsServices) =>
       ).pipe(
         Effect.flatMap((result) =>
           decode(Schema.decodeUnknownSync(LootCommentResponse), result),
+        ),
+      ),
+    getDraws: (caller, lootId) =>
+      lootOperation(
+        "LootsController_getDraws",
+        services.loots.getDraws({
+          lootId,
+          guild: caller.guild,
+          accessPolicy: caller.accessPolicy,
+          roles: [...caller.roles],
+        }),
+      ).pipe(
+        Effect.flatMap((result) =>
+          decode(Schema.decodeUnknownSync(LootDrawsResponse), result),
+        ),
+      ),
+    createDraw: (caller, lootId, payload) =>
+      lootOperation(
+        "LootsController_createDraw",
+        services.loots.createDraw({
+          discordId: caller.discordId,
+          lootId,
+          body: payload,
+          guild: caller.guild,
+          accessPolicy: caller.accessPolicy,
+          roles: [...caller.roles],
+        }),
+      ).pipe(
+        Effect.flatMap((result) =>
+          decode(Schema.decodeUnknownSync(LootDrawResponse), result),
+        ),
+      ),
+    voidDraw: (caller, lootId, drawId, payload) =>
+      lootOperation(
+        "LootsController_voidDraw",
+        services.loots.voidDraw({
+          discordId: caller.discordId,
+          lootId,
+          drawId,
+          body: payload,
+          guild: caller.guild,
+          accessPolicy: caller.accessPolicy,
+          roles: [...caller.roles],
+        }),
+      ).pipe(
+        Effect.flatMap((result) =>
+          decode(Schema.decodeUnknownSync(LootDrawResponse), result),
         ),
       ),
     setLike: (caller, lootId, liked) =>

@@ -1,3 +1,4 @@
+import { capturesMapPlayers } from "@lootlog/domain/loot-draw";
 import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
 import {
   createItemSnapshotHash,
@@ -282,14 +283,14 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         );
       }
 
-      const mapPlayersSnapshot =
-        options.submission.source === "FIGHT" &&
-        primaryNpcType === NpcType.ELITE2 &&
-        options.submission.loots.some(
-          (item) => this.getItemStats(item).rarity === "LEGENDARY",
-        )
-          ? (options.submission.mapPlayersSnapshot ?? null)
-          : null;
+      const mapPlayersSnapshot = capturesMapPlayers({
+        source: options.submission.source,
+        rarities: options.submission.loots.map(
+          (item) => this.getItemStats(item).rarity,
+        ),
+      })
+        ? (options.submission.mapPlayersSnapshot ?? null)
+        : null;
 
       if (existingLootId !== null) {
         yield* this.acceptExistingLoot(

@@ -80,28 +80,23 @@ describe("buildLootRoster", () => {
     expect(roster.isSnapshotUnavailable).toBe(false);
   });
 
-  it("reports a missing snapshot only for legendary ELITE2 fight loot", () => {
+  it("reports a missing snapshot only for fight loot with a legendary item", () => {
     expect(
       buildLootRoster({ ...loot, mapPlayersSnapshot: null })
         .isSnapshotUnavailable,
     ).toBe(true);
 
     expect(
-      buildLootRoster({ ...loot, mapPlayersSnapshot: [] })
-        .isSnapshotUnavailable,
+      buildLootRoster({
+        ...loot,
+        npcs: [{ ...loot.npcs[0]!, type: "HERO" as const }],
+        mapPlayersSnapshot: [],
+      }).isSnapshotUnavailable,
     ).toBe(true);
 
     for (const other of [
       { ...loot, source: "LOOTBOX" as const },
       { ...loot, items: [{ ...loot.items[0]!, rarity: "HEROIC" as const }] },
-      { ...loot, npcs: [{ ...loot.npcs[0]!, type: "HERO" as const }] },
-      {
-        ...loot,
-        npcs: [
-          loot.npcs[0]!,
-          { ...loot.npcs[0]!, wt: 100, type: "HERO" as const },
-        ],
-      },
     ]) {
       expect(
         buildLootRoster({ ...other, mapPlayersSnapshot: null })

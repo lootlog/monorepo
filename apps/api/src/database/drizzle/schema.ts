@@ -1,4 +1,5 @@
 import type { JsonValue } from "#src/database/json";
+import type { ProfessionEnum } from "@lootlog/schema/loot";
 // Hand-maintained API database schema. Generate SQL migrations from this source.
 import { sql } from "drizzle-orm";
 import {
@@ -858,6 +859,8 @@ export const lootMapPlayerTable = pgTable(
   {
     organizationLootRecordId: integer("organizationLootRecordId").notNull(),
     playerSnapshotId: integer("playerSnapshotId").notNull(),
+    // Null for add-ons that captured the map before reporting levels.
+    lvl: integer("lvl"),
   },
   (table) => [
     primaryKey({
@@ -976,6 +979,76 @@ export const lootLikeTable = pgTable(
       columns: [table["memberId"]],
       foreignColumns: [memberTable["id"]],
       name: "LootLike_memberId_fkey",
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+  ],
+);
+
+/** One entrant of a loot draw, as it stood when the draw ran. */
+export type LootDrawEntrantRecord = {
+  name: string;
+  accountId: number | null;
+  characterId: number | null;
+  prof: ProfessionEnum | null;
+  lvl: number | null;
+  icon: string | null;
+  /** WINNER caught the item in the game; MAP and MANUAL stood outside the party. */
+  source: "WINNER" | "MAP" | "MANUAL";
+  tickets: number;
+};
+
+export const lootDrawTable = pgTable(
+  "LootDraw",
+  {
+    id: serial("id").notNull().primaryKey(),
+    organizationLootRecordId: integer("organizationLootRecordId").notNull(),
+    itemHid: text("itemHid").notNull(),
+    entrants: jsonb("entrants").$type<LootDrawEntrantRecord[]>().notNull(),
+    // The wheel's tickets in order, each an index into `entrants`.
+    ticketOrder: jsonb("ticketOrder").$type<number[]>().notNull(),
+    // The drawn position in `ticketOrder`.
+    roll: integer("roll").notNull(),
+    winnerIndex: integer("winnerIndex").notNull(),
+    createdByMemberId: integer("createdByMemberId").notNull(),
+    createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
+      .defaultNow()
+      .notNull(),
+    voidedAt: timestamp("voidedAt", { mode: "date", precision: 3 }),
+    voidedByMemberId: integer("voidedByMemberId"),
+    voidReason: text("voidReason"),
+  },
+  (table) => [
+    index("LootDraw_organizationLootRecordId_createdAt_idx").on(
+      table["organizationLootRecordId"],
+      table["createdAt"],
+    ),
+    // One standing result per item: a retried draw cannot add a second one.
+    uniqueIndex("LootDraw_organizationLootRecordId_itemHid_active_key")
+      .on(table["organizationLootRecordId"], table["itemHid"])
+      .where(sql`${table["voidedAt"]} IS NULL`),
+    check(
+      "LootDraw_void_complete",
+      sql`(${table["voidedAt"]} IS NULL) = (${table["voidedByMemberId"]} IS NULL) AND (${table["voidedAt"]} IS NULL) = (${table["voidReason"]} IS NULL)`,
+    ),
+    foreignKey({
+      columns: [table["organizationLootRecordId"]],
+      foreignColumns: [organizationLootRecordTable["id"]],
+      name: "LootDraw_organizationLootRecordId_fkey",
+    })
+      .onDelete("cascade")
+      .onUpdate("cascade"),
+    foreignKey({
+      columns: [table["createdByMemberId"]],
+      foreignColumns: [memberTable["id"]],
+      name: "LootDraw_createdByMemberId_fkey",
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+    foreignKey({
+      columns: [table["voidedByMemberId"]],
+      foreignColumns: [memberTable["id"]],
+      name: "LootDraw_voidedByMemberId_fkey",
     })
       .onDelete("restrict")
       .onUpdate("cascade"),

@@ -29,8 +29,9 @@ import {
 } from "@lootlog/schema/http-scalars";
 import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
-import { LootSourceSchema } from "@lootlog/schema/loot";
+import { LootSourceSchema, ProfessionSchema } from "@lootlog/schema/loot";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { MAX_LOOT_DRAW_TICKETS } from "@lootlog/domain/loot-draw";
 import { MemberSummary } from "#src/contracts/shared";
 import {
   CharacterIdQuery,
@@ -461,4 +462,103 @@ export type LootSharePath = typeof LootSharePath.Type;
 
 export const LootSharePath = Schema.Struct({
   id: FiniteNumber,
+});
+
+/** Outsiders a draw may hold besides the winner; a map holds a few dozen. */
+export const LOOT_DRAW_MAX_OUTSIDERS = 100;
+
+export const LOOT_DRAW_VOID_REASON_MAX_LENGTH = 200;
+
+const LootDrawPlayer = {
+  name: NonEmptyString,
+  accountId: Schema.NullOr(PositiveSafeInteger),
+  characterId: Schema.NullOr(PositiveSafeInteger),
+  prof: Schema.NullOr(ProfessionSchema),
+  lvl: Schema.NullOr(PositiveSafeInteger),
+  icon: Schema.NullOr(Schema.String),
+};
+
+const LootDrawEntrantSource = Schema.Literals(["WINNER", "MAP", "MANUAL"]);
+
+const LootDrawTickets = PositiveSafeInteger.check(
+  Schema.isLessThanOrEqualTo(MAX_LOOT_DRAW_TICKETS),
+);
+
+export type LootDrawEntrantInput = typeof LootDrawEntrantInput.Type;
+
+/**
+ * One entrant: WINNER caught the item in the game, MAP stood on the map at
+ * the drop and MANUAL was added by hand. Managers may change the tickets.
+ */
+export const LootDrawEntrantInput = Schema.Struct({
+  ...LootDrawPlayer,
+  source: LootDrawEntrantSource,
+  tickets: LootDrawTickets,
+}).annotate({ identifier: "LootDrawEntrantDto" });
+
+export type CreateLootDrawRequest = typeof CreateLootDrawRequest.Type;
+
+export const CreateLootDrawRequest = Schema.Struct({
+  itemHid: NonEmptyString,
+  entrants: Schema.Array(LootDrawEntrantInput).check(
+    Schema.isMinLength(2).annotate({ expected: "the winner and an outsider" }),
+    Schema.isMaxLength(LOOT_DRAW_MAX_OUTSIDERS + 1),
+  ),
+  /** The wheel's tickets in order, each naming its entrant's index. */
+  ticketOrder: Schema.Array(
+    Schema.Int.check(Schema.isGreaterThanOrEqualTo(0)),
+  ).check(
+    Schema.isMaxLength((LOOT_DRAW_MAX_OUTSIDERS + 1) * MAX_LOOT_DRAW_TICKETS),
+  ),
+}).annotate({ identifier: "CreateLootDrawDto" });
+
+export type VoidLootDrawRequest = typeof VoidLootDrawRequest.Type;
+
+export const VoidLootDrawRequest = Schema.Struct({
+  reason: Schema.String.pipe(Schema.decode(SchemaTransformation.trim())).check(
+    Schema.isMinLength(1).annotate({ expected: "a reason" }),
+    Schema.isMaxLength(LOOT_DRAW_VOID_REASON_MAX_LENGTH),
+  ),
+}).annotate({ identifier: "VoidLootDrawDto" });
+
+export type LootDrawResponse = typeof LootDrawResponse.Type;
+
+export const LootDrawResponse = Schema.Struct({
+  id: FiniteNumber,
+  lootId: FiniteNumber,
+  itemHid: Schema.String,
+  entrants: Schema.Array(
+    Schema.Struct({
+      ...LootDrawPlayer,
+      source: LootDrawEntrantSource,
+      tickets: PositiveSafeInteger,
+    }),
+  ),
+  /** The wheel's tickets in order, each naming its entrant's index. */
+  ticketOrder: Schema.Array(FiniteNumber),
+  /** The drawn position in `ticketOrder`. */
+  roll: FiniteNumber,
+  winnerIndex: FiniteNumber,
+  createdBy: MemberSummary,
+  createdAt: DateTimeString,
+  voided: Schema.NullOr(
+    Schema.Struct({
+      at: DateTimeString,
+      by: MemberSummary,
+      reason: Schema.String,
+    }),
+  ),
+}).annotate({ identifier: "LootDrawResponseDto" });
+
+export type LootDrawsResponse = typeof LootDrawsResponse.Type;
+
+/** Newest first, voided draws included. */
+export const LootDrawsResponse = Schema.Array(LootDrawResponse);
+
+export type LootDrawPath = typeof LootDrawPath.Type;
+
+export const LootDrawPath = Schema.Struct({
+  lootId: FiniteNumber,
+  guildId: Schema.String,
+  drawId: FiniteNumber,
 });
