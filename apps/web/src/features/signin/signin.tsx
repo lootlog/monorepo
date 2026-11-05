@@ -4,6 +4,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { useSearch } from "@tanstack/react-router";
 import { useDiscordSignIn } from "@/hooks/auth/use-discord-sign-in";
+import { signinRedirectPath } from "@/features/signin/signin-redirect-path";
 import { useTranslation } from "react-i18next";
 
 // Better Auth redirects OAuth callback failures to errorCallbackURL?error=<code>.
@@ -23,9 +24,7 @@ export const SignIn: React.FC = () => {
 
   const handleDiscordSignIn = () =>
     signIn({
-      callbackURL: search.redirect
-        ? `${window.location.origin}${search.redirect}`
-        : `${window.location.origin}/signin`,
+      callbackURL: `${window.location.origin}${signinRedirectPath(search.redirect) ?? "/signin"}`,
       errorCallbackURL: window.location.href,
     });
 
