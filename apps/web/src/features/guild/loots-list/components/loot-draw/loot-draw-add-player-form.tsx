@@ -62,7 +62,7 @@ export const LootDrawAddPlayerForm = ({
 
   return (
     <form
-      className="grid gap-3 border-t border-border px-3 py-3 sm:px-4"
+      className="grid gap-3 px-3 py-3 sm:px-4"
       onSubmit={(event) => {
         event.preventDefault();
 

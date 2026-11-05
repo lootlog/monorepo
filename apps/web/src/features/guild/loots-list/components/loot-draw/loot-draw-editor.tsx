@@ -18,6 +18,7 @@ import {
 } from "./build-loot-draw-entrants";
 import { LootDrawAddPlayerForm } from "./loot-draw-add-player-form";
 import { LootDrawEntrantRow } from "./loot-draw-entrant-row";
+import { LootDrawLayout } from "./loot-draw-layout";
 import { LootDrawWheel } from "./loot-draw-wheel";
 import type { useLootDraws } from "./use-loot-draws";
 
@@ -92,15 +93,17 @@ export const LootDrawEditor = ({
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start">
-      <div className="grid justify-items-center gap-2">
+    <LootDrawLayout
+      wheel={
         <LootDrawWheel
           entrants={entrants}
           ticketOrder={ticketOrder}
           roll={null}
           className="max-lg:max-w-48"
         />
-        <div className="flex gap-1">
+      }
+      wheelActions={
+        <>
           <Button
             size="sm"
             variant="ghost"
@@ -119,94 +122,55 @@ export const LootDrawEditor = ({
               {t("loots.details.draw.unshuffle")}
             </Button>
           )}
-        </div>
-      </div>
-      <div className="min-w-0 overflow-hidden rounded-lg border border-border">
-        <div className="flex min-h-11 items-center justify-between gap-3 border-b border-border px-3 py-1.5 sm:px-4">
-          <p className="text-sm font-semibold">
-            {t("loots.details.draw.entrants", { count: entrants.length })}
-          </p>
-          {mapOutsidersRemoved && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() =>
-                update([
-                  ...setup.entrants.map((entrant) =>
-                    entrant.source === "WINNER"
-                      ? (entrants.find(({ source }) => source === "WINNER") ??
-                        entrant)
-                      : entrant,
-                  ),
-                  ...outsiders.filter(({ source }) => source === "MANUAL"),
-                ])
-              }
-            >
-              <RotateCcw className="size-4" />
-              {t("loots.details.draw.restore")}
-            </Button>
-          )}
-        </div>
-        <ul className="divide-y divide-border/50">
-          {entrants.map((entrant, index) => (
-            <LootDrawEntrantRow
-              key={entrant.key}
-              index={index}
-              entrant={entrant}
-              totalTickets={ticketOrder.length}
-              defaultTickets={entrant.defaultTickets}
-              onTicketsChange={(tickets) =>
-                update(
-                  entrants.map((current, position) =>
-                    position === index ? { ...current, tickets } : current,
-                  ),
-                )
-              }
-              onRemove={
-                entrant.source === "WINNER"
-                  ? undefined
-                  : () =>
-                      update(
-                        entrants.filter((_, position) => position !== index),
-                      )
-              }
-            />
-          ))}
-        </ul>
-        {(!setup.hasMapPlayers || setup.ineligibleCount > 0) && (
-          <p className="border-t border-border/50 px-3 py-2 text-xs text-muted-foreground sm:px-4">
-            {setup.hasMapPlayers
-              ? t("loots.details.draw.skippedIneligible", {
-                  count: setup.ineligibleCount,
-                })
-              : t("loots.details.draw.noMapPlayers")}
-          </p>
-        )}
-        <LootDrawAddPlayerForm
-          professions={item.prof}
-          validate={(candidate) =>
-            lootDrawAddError(loot, item, entrants, candidate)
+        </>
+      }
+      entrantsCount={entrants.length}
+      entrantsAction={
+        mapOutsidersRemoved && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() =>
+              update([
+                ...setup.entrants.map((entrant) =>
+                  entrant.source === "WINNER"
+                    ? (entrants.find(({ source }) => source === "WINNER") ??
+                      entrant)
+                    : entrant,
+                ),
+                ...outsiders.filter(({ source }) => source === "MANUAL"),
+              ])
+            }
+          >
+            <RotateCcw className="size-4" />
+            {t("loots.details.draw.restore")}
+          </Button>
+        )
+      }
+      entrants={entrants.map((entrant, index) => (
+        <LootDrawEntrantRow
+          key={entrant.key}
+          index={index}
+          entrant={entrant}
+          totalTickets={ticketOrder.length}
+          defaultTickets={entrant.defaultTickets}
+          onTicketsChange={(tickets) =>
+            update(
+              entrants.map((current, position) =>
+                position === index ? { ...current, tickets } : current,
+              ),
+            )
           }
-          onAdd={(candidate) =>
-            update([
-              ...entrants,
-              {
-                ...candidate,
-                key: lootDrawPlayerKey({
-                  characterId: null,
-                  name: candidate.name,
-                }),
-                accountId: null,
-                characterId: null,
-                icon: null,
-                source: "MANUAL",
-                tickets: 1,
-                defaultTickets: 1,
-              },
-            ])
+          onRemove={
+            entrant.source === "WINNER"
+              ? undefined
+              : () =>
+                  update(entrants.filter((_, position) => position !== index))
           }
         />
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-card/20 px-3 py-3 sm:px-4">
+      ))}
+      footer={
+        <>
           <p className="text-xs text-muted-foreground">
             {outsiders.length === 0 && t("loots.details.draw.noOutsiders")}
           </p>
@@ -218,8 +182,45 @@ export const LootDrawEditor = ({
             <Dices className="size-4" />
             {t("loots.details.draw.spin")}
           </Button>
+        </>
+      }
+      below={
+        <div className="overflow-hidden rounded-lg border border-border">
+          {(!setup.hasMapPlayers || setup.ineligibleCount > 0) && (
+            <p className="border-b border-border/50 px-3 py-2 text-xs text-muted-foreground sm:px-4">
+              {setup.hasMapPlayers
+                ? t("loots.details.draw.skippedIneligible", {
+                    count: setup.ineligibleCount,
+                  })
+                : t("loots.details.draw.noMapPlayers")}
+            </p>
+          )}
+          <LootDrawAddPlayerForm
+            professions={item.prof}
+            validate={(candidate) =>
+              lootDrawAddError(loot, item, entrants, candidate)
+            }
+            onAdd={(candidate) =>
+              update([
+                ...entrants,
+                {
+                  ...candidate,
+                  key: lootDrawPlayerKey({
+                    characterId: null,
+                    name: candidate.name,
+                  }),
+                  accountId: null,
+                  characterId: null,
+                  icon: null,
+                  source: "MANUAL",
+                  tickets: 1,
+                  defaultTickets: 1,
+                },
+              ])
+            }
+          />
         </div>
-      </div>
-    </div>
+      }
+    />
   );
 };
