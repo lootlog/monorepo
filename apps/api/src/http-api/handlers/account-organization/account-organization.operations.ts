@@ -333,6 +333,7 @@ export class GuildConfigurationData extends Context.Service<
                       compact([guildId, oldGuild?.vanityUrl, guild.vanityUrl]),
                     ),
                   ].map((key) => cache.del(getGuildCacheKey(key))),
+                  { concurrency: "unbounded" },
                 );
 
                 return guild;

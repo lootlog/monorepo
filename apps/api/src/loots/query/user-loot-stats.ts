@@ -312,39 +312,59 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
     const latest = <T>(column: AnyPgColumn) =>
       sql<T>`(array_agg(${column} order by ${killBuckets.periodStart} desc))[1]`;
 
-    const kills = yield* runLootStatsQuery(
-      "loot-stats.user-monster-kills",
-      database
-        .select({
-          world: killBuckets.world,
-          name: killBuckets.npcName,
-          npcId: latest<number>(killBuckets.npcId),
-          lvl: latest<number>(killBuckets.npcLvl),
-          icon: latest<string | null>(killBuckets.npcIcon),
-          kills: sql<number>`sum(${killBuckets.kills})`.mapWith(Number),
-        })
-        .from(killBuckets)
-        .where(
-          and(
-            eq(killBuckets.discordUserId, discordId),
-            gte(killBuckets.periodStart, sql`${range.start}::timestamptz`),
-            query.world ? eq(killBuckets.world, query.world) : undefined,
-            characterId === undefined
-              ? undefined
-              : eq(
-                  userCharacterKillBucketTable.characterId,
-                  String(characterId),
+    const legendGroups = Object.values(
+      groupBy(legendRows, (row) => `${row.item_id}:${legendMonsterKey(row)}`),
+    );
+
+    const catchesByLegend = legendGroups.map((rows) =>
+      countCatches(rows, caughtCharacter),
+    );
+
+    const [kills, characterNames] = yield* Effect.all(
+      [
+        runLootStatsQuery(
+          "loot-stats.user-monster-kills",
+          database
+            .select({
+              world: killBuckets.world,
+              name: killBuckets.npcName,
+              npcId: latest<number>(killBuckets.npcId),
+              lvl: latest<number>(killBuckets.npcLvl),
+              icon: latest<string | null>(killBuckets.npcIcon),
+              kills: sql<number>`sum(${killBuckets.kills})`.mapWith(Number),
+            })
+            .from(killBuckets)
+            .where(
+              and(
+                eq(killBuckets.discordUserId, discordId),
+                gte(killBuckets.periodStart, sql`${range.start}::timestamptz`),
+                query.world ? eq(killBuckets.world, query.world) : undefined,
+                characterId === undefined
+                  ? undefined
+                  : eq(
+                      userCharacterKillBucketTable.characterId,
+                      String(characterId),
+                    ),
+                or(
+                  inArray(killBuckets.npcType, [...BOSS_TYPES]),
+                  // Any monster that dropped a legend, whatever its type.
+                  legendMonsters.length
+                    ? sql`(${killBuckets.world}, ${killBuckets.npcName}) IN (SELECT * FROM unnest(${sql.param(legendMonsters.map((row) => row.world))}::text[], ${sql.param(legendMonsters.map((row) => row.npc_name))}::text[]))`
+                    : undefined,
                 ),
-            or(
-              inArray(killBuckets.npcType, [...BOSS_TYPES]),
-              // Any monster that dropped a legend, whatever its type.
-              legendMonsters.length
-                ? sql`(${killBuckets.world}, ${killBuckets.npcName}) IN (SELECT * FROM unnest(${sql.param(legendMonsters.map((row) => row.world))}::text[], ${sql.param(legendMonsters.map((row) => row.npc_name))}::text[]))`
-                : undefined,
-            ),
+              ),
+            )
+            .groupBy(killBuckets.world, killBuckets.npcName),
+        ),
+        readCharacterNames(
+          database,
+          lootIds,
+          Object.values(groupBy(catchesByLegend.flat(), characterKey)).flatMap(
+            ([character]) => (character ? [character] : []),
           ),
-        )
-        .groupBy(killBuckets.world, killBuckets.npcName),
+        ),
+      ],
+      { concurrency: "unbounded" },
     );
 
     const killsByMonster = new Map(kills.map((row) => [monsterKey(row), row]));
@@ -355,22 +375,6 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
     const monsterNpcId = (key: string) =>
       killsByMonster.get(key)?.npcId ??
       Math.min(...(dropsByMonster[key] ?? []).map((row) => row.npc_id));
-
-    const legendGroups = Object.values(
-      groupBy(legendRows, (row) => `${row.item_id}:${legendMonsterKey(row)}`),
-    );
-
-    const catchesByLegend = legendGroups.map((rows) =>
-      countCatches(rows, caughtCharacter),
-    );
-
-    const characterNames = yield* readCharacterNames(
-      database,
-      lootIds,
-      Object.values(groupBy(catchesByLegend.flat(), characterKey)).flatMap(
-        ([character]) => (character ? [character] : []),
-      ),
-    );
 
     const legends = legendGroups
       .flatMap((rows, index) => {

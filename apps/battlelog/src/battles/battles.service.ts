@@ -1028,180 +1028,189 @@ export const makeBattles = (
           (w) => w.originalId === data.characterId,
         );
 
-        if (userWarrior) {
-          yield* battleMetadataService.upsertUserCharacter({
-            userId,
-            characterId: data.characterId,
-            name: userWarrior.name,
-            world: data.world,
-            icon: userWarrior.icon,
-          });
-        }
-
-        const battle = yield* adapter("Battles_storeTransaction", () =>
-          drizzle.transaction((tx) =>
-            Effect.gen(function* () {
-              const now = yield* Clock.currentTimeMillis;
-              const battleId = createBattleId(now);
-
-              // The submission row claims the ID first; a concurrent retry
-              // that loses the claim reads the winner's battle instead.
-              if (data.submissionId) {
-                const [claimed] = yield* tx
-                  .insert(battleSubmissions)
-                  .values({
-                    userId,
-                    submissionId: data.submissionId,
-                    battleId: battleId.id,
-                  })
-                  .onConflictDoNothing()
-                  .returning({ battleId: battleSubmissions.battleId });
-
-                if (!claimed) return null;
-              }
-
-              const [insertedBattle] = yield* tx
-                .insert(battles)
-                .values({
-                  ...battleId,
+        // The character upsert logs and absorbs its own failures, so it never
+        // aborts the battle transaction it runs beside.
+        const [, battle] = yield* Effect.all(
+          [
+            userWarrior
+              ? battleMetadataService.upsertUserCharacter({
                   userId,
-                  updatedAt: new Date(now),
-                  accountId: data.accountId,
                   characterId: data.characterId,
-                  semanticFingerprint,
+                  name: userWarrior.name,
                   world: data.world,
-                  duration: analysis.duration,
-                  type: analysis.type,
-                  winner: analysis.outcome.winner,
-                  loser: analysis.outcome.loser,
-                  winningTeam: analysis.outcome.winningTeam,
-                  losingTeam: analysis.outcome.losingTeam,
-                  hasFlee: analysis.outcome.hasFlee,
-                  unfinished: analysis.outcome.unfinished,
-                  matchmaking: !!analysis.matchmaking,
-                  ...(analysis.matchmaking && {
-                    difficultyRank: analysis.matchmaking.difficultyRank,
-                    result: analysis.matchmaking.result,
-                    ratingDelta: analysis.matchmaking.ratingDelta,
-                    opponentLvl: analysis.matchmaking.opponentLvl,
-                    opponentOplvl: analysis.matchmaking.opponentOplvl,
-                    opponentRating: analysis.matchmaking.opponentRating,
-                    rating: analysis.matchmaking.rating,
-                    status: analysis.matchmaking.status,
-                    pointsGained: analysis.matchmaking.pointsGained,
-                    placementCur: analysis.matchmaking.placementCur,
-                    placementMax: analysis.matchmaking.placementMax,
-                    dailyStageId: analysis.matchmaking.dailyStageId,
-                    dailyPointsCur: analysis.matchmaking.dailyPointsCur,
-                    dailyPointsMax: analysis.matchmaking.dailyPointsMax,
-                    dailyPointsStep: analysis.matchmaking.dailyPointsStep,
-                    dailyRewardsLast: analysis.matchmaking.dailyRewardsLast,
-                    dailyRewardsCur: analysis.matchmaking.dailyRewardsCur,
-                    dailyRewardsMax: analysis.matchmaking.dailyRewardsMax,
-                  }),
+                  icon: userWarrior.icon,
                 })
-                .returning({ id: battles.id });
+              : Effect.void,
+            adapter("Battles_storeTransaction", () =>
+              drizzle.transaction((tx) =>
+                Effect.gen(function* () {
+                  const now = yield* Clock.currentTimeMillis;
+                  const battleId = createBattleId(now);
 
-              const warriorValues = analysis.warriors.map(
-                (warrior: Warrior) => ({
-                  battleId: insertedBattle.id,
-                  originalId: warrior.originalId,
-                  name: warrior.name,
-                  lvl: warrior.lvl,
-                  prof: warrior.prof,
-                  icon: warrior.icon,
-                  team: warrior.team,
-                  isDead: warrior.isDead,
-                  surrendered: warrior.surrendered,
-                  fled: warrior.fled,
-                  maxHp: warrior.maxHp,
-                  turns: warrior.turns,
-                  turnsLost: warrior.turnsLost,
-                  steps: warrior.steps,
-                  normalAttacks: warrior.normalAttacks,
-                  spellsUsed: warrior.spellsUsed,
-                  spellsUsedMap: warrior.spellsUsedMap,
-                  damageDealt: warrior.damageDealt,
-                  distanceDamage: warrior.distanceDamage,
-                  meleeDamage: warrior.meleeDamage,
-                  auxiliaryDamage: warrior.auxiliaryDamage,
-                  fireDamage: warrior.fireDamage,
-                  frostDamage: warrior.frostDamage,
-                  lightningDamage: warrior.lightningDamage,
-                  thirdAttDamage: warrior.thirdAttDamage,
-                  damageDealtAfterDefensive: warrior.damageDealtAfterDefensive,
-                  damageDealtAfterDefensivePercentage:
-                    warrior.damageDealtAfterDefensivePercentage,
-                  damageTaken: warrior.damageTaken,
-                  distanceDamageTaken: warrior.distanceDamageTaken,
-                  meleeDamageTaken: warrior.meleeDamageTaken,
-                  auxiliaryDamageTaken: warrior.auxiliaryDamageTaken,
-                  fireDamageTaken: warrior.fireDamageTaken,
-                  frostDamageTaken: warrior.frostDamageTaken,
-                  lightningDamageTaken: warrior.lightningDamageTaken,
-                  thirdAttDamageTaken: warrior.thirdAttDamageTaken,
-                  flatDamageTaken: warrior.flatDamageTaken,
-                  rageDamageDealt: warrior.rageDamageDealt,
-                  trueDamageDealt: warrior.trueDamageDealt,
-                  trueDamageTaken: warrior.trueDamageTaken,
-                  stigmaDamageDealt: warrior.stigmaDamageDealt,
-                  stigmaDamageTaken: warrior.stigmaDamageTaken,
-                  passiveHealing: warrior.passiveHealing,
-                  activeHealing: warrior.activeHealing,
-                  armorPierces: warrior.armorPierces,
-                  criticalHits: warrior.criticalHits,
-                  reducedArmor: warrior.reducedArmor,
-                  reducedPoisonResistance: warrior.reducedPoisonResistance,
-                  magicResistanceDestroyed: warrior.magicResistanceDestroyed,
-                  evasions: warrior.evasions,
-                  attacksEvaded: warrior.attacksEvaded,
-                  counters: warrior.counters,
-                  fastArrows: warrior.fastArrows,
-                  blocks: warrior.blocks,
-                  attacksBlocked: warrior.attacksBlocked,
-                  blockedDamage: warrior.blockedDamage,
-                  woundDamageTaken: warrior.woundDamageTaken,
-                  poisonDamageTaken: warrior.poisonDamageTaken,
-                  injureDamageTaken: warrior.injureDamageTaken,
-                  injures: warrior.injures,
-                  critWoundDamageTaken: warrior.critWoundDamageTaken,
-                  firePassiveDamageTaken: warrior.firePassiveDamageTaken,
-                  lightningPassiveDamageTaken:
-                    warrior.lightningPassiveDamageTaken,
-                  destroyedEnergy: warrior.destroyedEnergy,
-                  destroyedMana: warrior.destroyedMana,
-                  regeneratedEnergy: warrior.regeneratedEnergy,
-                  regeneratedMana: warrior.regeneratedMana,
-                  reflectedDamage: warrior.reflectedDamage,
-                  reflectedDamageTaken: warrior.reflectedDamageTaken,
-                  legbonCurse: warrior.legbonCurse,
-                  legbonCleanse: warrior.legbonCleanse,
-                  legbonLastheal: warrior.legbonLastheal,
-                  legbonLasthealValue: warrior.legbonLasthealValue,
-                  legbonGlare: warrior.legbonGlare,
-                  legbonHolytouch: warrior.legbonHolytouch,
-                  legbonHolytouchValue: warrior.legbonHolytouchValue,
-                  legbonCritredValue: warrior.legbonCritredValue,
-                  legbonVerycrit: warrior.legbonVerycrit,
-                  legbonAnguish: warrior.legbonAnguish,
-                  legbonFacadeValue: warrior.legbonFacadeValue,
-                  legbonPunctureValue: warrior.legbonPunctureValue,
-                  legbons: warrior.legbons,
-                  legbonAnguishDamageTaken: warrior.legbonAnguishDamageTaken,
-                  ph: warrior.ph,
+                  // The submission row claims the ID first; a concurrent retry
+                  // that loses the claim reads the winner's battle instead.
+                  if (data.submissionId) {
+                    const [claimed] = yield* tx
+                      .insert(battleSubmissions)
+                      .values({
+                        userId,
+                        submissionId: data.submissionId,
+                        battleId: battleId.id,
+                      })
+                      .onConflictDoNothing()
+                      .returning({ battleId: battleSubmissions.battleId });
+
+                    if (!claimed) return null;
+                  }
+
+                  const [insertedBattle] = yield* tx
+                    .insert(battles)
+                    .values({
+                      ...battleId,
+                      userId,
+                      updatedAt: new Date(now),
+                      accountId: data.accountId,
+                      characterId: data.characterId,
+                      semanticFingerprint,
+                      world: data.world,
+                      duration: analysis.duration,
+                      type: analysis.type,
+                      winner: analysis.outcome.winner,
+                      loser: analysis.outcome.loser,
+                      winningTeam: analysis.outcome.winningTeam,
+                      losingTeam: analysis.outcome.losingTeam,
+                      hasFlee: analysis.outcome.hasFlee,
+                      unfinished: analysis.outcome.unfinished,
+                      matchmaking: !!analysis.matchmaking,
+                      ...(analysis.matchmaking && {
+                        difficultyRank: analysis.matchmaking.difficultyRank,
+                        result: analysis.matchmaking.result,
+                        ratingDelta: analysis.matchmaking.ratingDelta,
+                        opponentLvl: analysis.matchmaking.opponentLvl,
+                        opponentOplvl: analysis.matchmaking.opponentOplvl,
+                        opponentRating: analysis.matchmaking.opponentRating,
+                        rating: analysis.matchmaking.rating,
+                        status: analysis.matchmaking.status,
+                        pointsGained: analysis.matchmaking.pointsGained,
+                        placementCur: analysis.matchmaking.placementCur,
+                        placementMax: analysis.matchmaking.placementMax,
+                        dailyStageId: analysis.matchmaking.dailyStageId,
+                        dailyPointsCur: analysis.matchmaking.dailyPointsCur,
+                        dailyPointsMax: analysis.matchmaking.dailyPointsMax,
+                        dailyPointsStep: analysis.matchmaking.dailyPointsStep,
+                        dailyRewardsLast: analysis.matchmaking.dailyRewardsLast,
+                        dailyRewardsCur: analysis.matchmaking.dailyRewardsCur,
+                        dailyRewardsMax: analysis.matchmaking.dailyRewardsMax,
+                      }),
+                    })
+                    .returning({ id: battles.id });
+
+                  const warriorValues = analysis.warriors.map(
+                    (warrior: Warrior) => ({
+                      battleId: insertedBattle.id,
+                      originalId: warrior.originalId,
+                      name: warrior.name,
+                      lvl: warrior.lvl,
+                      prof: warrior.prof,
+                      icon: warrior.icon,
+                      team: warrior.team,
+                      isDead: warrior.isDead,
+                      surrendered: warrior.surrendered,
+                      fled: warrior.fled,
+                      maxHp: warrior.maxHp,
+                      turns: warrior.turns,
+                      turnsLost: warrior.turnsLost,
+                      steps: warrior.steps,
+                      normalAttacks: warrior.normalAttacks,
+                      spellsUsed: warrior.spellsUsed,
+                      spellsUsedMap: warrior.spellsUsedMap,
+                      damageDealt: warrior.damageDealt,
+                      distanceDamage: warrior.distanceDamage,
+                      meleeDamage: warrior.meleeDamage,
+                      auxiliaryDamage: warrior.auxiliaryDamage,
+                      fireDamage: warrior.fireDamage,
+                      frostDamage: warrior.frostDamage,
+                      lightningDamage: warrior.lightningDamage,
+                      thirdAttDamage: warrior.thirdAttDamage,
+                      damageDealtAfterDefensive:
+                        warrior.damageDealtAfterDefensive,
+                      damageDealtAfterDefensivePercentage:
+                        warrior.damageDealtAfterDefensivePercentage,
+                      damageTaken: warrior.damageTaken,
+                      distanceDamageTaken: warrior.distanceDamageTaken,
+                      meleeDamageTaken: warrior.meleeDamageTaken,
+                      auxiliaryDamageTaken: warrior.auxiliaryDamageTaken,
+                      fireDamageTaken: warrior.fireDamageTaken,
+                      frostDamageTaken: warrior.frostDamageTaken,
+                      lightningDamageTaken: warrior.lightningDamageTaken,
+                      thirdAttDamageTaken: warrior.thirdAttDamageTaken,
+                      flatDamageTaken: warrior.flatDamageTaken,
+                      rageDamageDealt: warrior.rageDamageDealt,
+                      trueDamageDealt: warrior.trueDamageDealt,
+                      trueDamageTaken: warrior.trueDamageTaken,
+                      stigmaDamageDealt: warrior.stigmaDamageDealt,
+                      stigmaDamageTaken: warrior.stigmaDamageTaken,
+                      passiveHealing: warrior.passiveHealing,
+                      activeHealing: warrior.activeHealing,
+                      armorPierces: warrior.armorPierces,
+                      criticalHits: warrior.criticalHits,
+                      reducedArmor: warrior.reducedArmor,
+                      reducedPoisonResistance: warrior.reducedPoisonResistance,
+                      magicResistanceDestroyed:
+                        warrior.magicResistanceDestroyed,
+                      evasions: warrior.evasions,
+                      attacksEvaded: warrior.attacksEvaded,
+                      counters: warrior.counters,
+                      fastArrows: warrior.fastArrows,
+                      blocks: warrior.blocks,
+                      attacksBlocked: warrior.attacksBlocked,
+                      blockedDamage: warrior.blockedDamage,
+                      woundDamageTaken: warrior.woundDamageTaken,
+                      poisonDamageTaken: warrior.poisonDamageTaken,
+                      injureDamageTaken: warrior.injureDamageTaken,
+                      injures: warrior.injures,
+                      critWoundDamageTaken: warrior.critWoundDamageTaken,
+                      firePassiveDamageTaken: warrior.firePassiveDamageTaken,
+                      lightningPassiveDamageTaken:
+                        warrior.lightningPassiveDamageTaken,
+                      destroyedEnergy: warrior.destroyedEnergy,
+                      destroyedMana: warrior.destroyedMana,
+                      regeneratedEnergy: warrior.regeneratedEnergy,
+                      regeneratedMana: warrior.regeneratedMana,
+                      reflectedDamage: warrior.reflectedDamage,
+                      reflectedDamageTaken: warrior.reflectedDamageTaken,
+                      legbonCurse: warrior.legbonCurse,
+                      legbonCleanse: warrior.legbonCleanse,
+                      legbonLastheal: warrior.legbonLastheal,
+                      legbonLasthealValue: warrior.legbonLasthealValue,
+                      legbonGlare: warrior.legbonGlare,
+                      legbonHolytouch: warrior.legbonHolytouch,
+                      legbonHolytouchValue: warrior.legbonHolytouchValue,
+                      legbonCritredValue: warrior.legbonCritredValue,
+                      legbonVerycrit: warrior.legbonVerycrit,
+                      legbonAnguish: warrior.legbonAnguish,
+                      legbonFacadeValue: warrior.legbonFacadeValue,
+                      legbonPunctureValue: warrior.legbonPunctureValue,
+                      legbons: warrior.legbons,
+                      legbonAnguishDamageTaken:
+                        warrior.legbonAnguishDamageTaken,
+                      ph: warrior.ph,
+                    }),
+                  );
+
+                  yield* tx.insert(battleWarriors).values(warriorValues);
+                  yield* tx.insert(battleTimelines).values({
+                    battleId: insertedBattle.id,
+                    userId,
+                    events: encodeBattleEvents(data.events),
+                  });
+
+                  return insertedBattle;
                 }),
-              );
-
-              yield* tx.insert(battleWarriors).values(warriorValues);
-              yield* tx.insert(battleTimelines).values({
-                battleId: insertedBattle.id,
-                userId,
-                events: encodeBattleEvents(data.events),
-              });
-
-              return insertedBattle;
-            }),
-          ),
+              ),
+            ),
+          ],
+          { concurrency: "unbounded" },
         );
 
         if (battle) return battle;

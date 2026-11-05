@@ -173,12 +173,11 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     uniqueId: string;
   }): Effect.Effect<CreateLootResponse, unknown> {
     return Effect.gen({ self: this }, function* () {
-      const existingLootId = yield* this.repository.findLootIdByUniqueId(
-        options.uniqueId,
-      );
-
-      const { guilds, characterConfig } = yield* Effect.all(
+      const { existingLootId, guilds, characterConfig } = yield* Effect.all(
         {
+          existingLootId: this.repository.findLootIdByUniqueId(
+            options.uniqueId,
+          ),
           guilds: this.repository.findGuildsForPermissions(options.discordId, [
             Permission.LOOTLOG_LOOTS_WRITE,
           ]),
