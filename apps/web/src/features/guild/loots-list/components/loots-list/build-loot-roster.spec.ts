@@ -80,7 +80,7 @@ describe("buildLootRoster", () => {
     expect(roster.isSnapshotUnavailable).toBe(false);
   });
 
-  it("reports a missing snapshot only for fight loot with a unique or better item", () => {
+  it("reports a missing snapshot only for fight loot with a legendary item", () => {
     expect(
       buildLootRoster({ ...loot, mapPlayersSnapshot: null })
         .isSnapshotUnavailable,
@@ -89,7 +89,6 @@ describe("buildLootRoster", () => {
     expect(
       buildLootRoster({
         ...loot,
-        items: [{ ...loot.items[0]!, rarity: "UNIQUE" as const }],
         npcs: [{ ...loot.npcs[0]!, type: "HERO" as const }],
         mapPlayersSnapshot: [],
       }).isSnapshotUnavailable,
@@ -97,7 +96,7 @@ describe("buildLootRoster", () => {
 
     for (const other of [
       { ...loot, source: "LOOTBOX" as const },
-      { ...loot, items: [{ ...loot.items[0]!, rarity: "UPGRADED" as const }] },
+      { ...loot, items: [{ ...loot.items[0]!, rarity: "HEROIC" as const }] },
     ]) {
       expect(
         buildLootRoster({ ...other, mapPlayersSnapshot: null })

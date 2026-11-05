@@ -219,7 +219,7 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     .annotate(OpenApi.Summary, "Draw a loot item")
     .annotate(
       OpenApi.Description,
-      "Draw an item among the player who caught it and eligible players outside the party; the server picks the winner. 409 while the item has a standing draw",
+      "Draw a legendary item that is not permanently bound among the player who caught it and eligible players outside the party; the server picks the winner. 409 while the item has a standing draw",
     ),
   HttpApiEndpoint.post(
     "LootsControllerVoidDraw",

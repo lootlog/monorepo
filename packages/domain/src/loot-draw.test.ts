@@ -3,6 +3,7 @@ import {
   canWearLootDrawItem,
   capturesMapPlayers,
   groupedLootDrawTicketOrder,
+  isLootDrawItem,
   isLootDrawTicketOrder,
   lootDrawWinnerTickets,
   shuffleLootDrawTicketOrder,
@@ -81,13 +82,25 @@ describe("isLootDrawTicketOrder", () => {
   });
 });
 
-describe("capturesMapPlayers", () => {
-  it("keeps map players for fights that dropped a unique or better item", () => {
+describe("isLootDrawItem", () => {
+  it("draws only legendary items that are not bound for good", () => {
+    expect(isLootDrawItem({ rarity: "LEGENDARY", stat: "binds;lvl=243" })).toBe(
+      true,
+    );
     expect(
-      capturesMapPlayers({ source: "FIGHT", rarities: [null, "UNIQUE"] }),
+      isLootDrawItem({ rarity: "LEGENDARY", stat: "lvl=279;permbound" }),
+    ).toBe(false);
+    expect(isLootDrawItem({ rarity: "UNIQUE", stat: "lvl=279" })).toBe(false);
+  });
+});
+
+describe("capturesMapPlayers", () => {
+  it("keeps map players only for fights that dropped a legendary item", () => {
+    expect(
+      capturesMapPlayers({ source: "FIGHT", rarities: [null, "LEGENDARY"] }),
     ).toBe(true);
     expect(
-      capturesMapPlayers({ source: "FIGHT", rarities: [null, "UPGRADED"] }),
+      capturesMapPlayers({ source: "FIGHT", rarities: ["UNIQUE", "HEROIC"] }),
     ).toBe(false);
     expect(
       capturesMapPlayers({ source: "DIALOG", rarities: ["LEGENDARY"] }),

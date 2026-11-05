@@ -5952,7 +5952,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Draw an item among the player who caught it and eligible players outside the party; the server picks the winner. 409 while the item has a standing draw
+      description: Draw a legendary item that is not permanently bound among the player who caught it and eligible players outside the party; the server picks the winner. 409 while the item has a standing draw
       summary: Draw a loot item
       requestBody:
         content:

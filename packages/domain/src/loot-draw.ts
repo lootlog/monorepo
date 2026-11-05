@@ -1,6 +1,6 @@
 /**
- * The draw a Lootlog runs for a looted item among the players who could not
- * join the party, because Margonem fits ten players in one.
+ * The draw a Lootlog runs for a looted legendary item among the players who
+ * could not join the party, because Margonem fits ten players in one.
  *
  * Whoever caught the item in the game always enters. They get one ticket for
  * every party member who could wear the item, themselves included, because
@@ -21,27 +21,35 @@ export type LootDrawCandidate = Readonly<{
   lvl: number | null;
 }>;
 
-/** Drops worth a draw, the ones whose map players a Lootlog keeps. */
-const DRAW_RARITIES: ReadonlySet<string> = new Set([
-  "UNIQUE",
-  "HEROIC",
-  "LEGENDARY",
-]);
+const hasStatFlag = (stat: string, flag: string) =>
+  stat
+    .split(";")
+    .some((entry) => entry === flag || entry.startsWith(`${flag}=`));
+
+/**
+ * Only legendary items are drawn among the players left out of the party,
+ * and only those the winner can hand over: colossi and titans drop items
+ * bound for good (`permbound`).
+ */
+export const isLootDrawItem = (item: {
+  rarity: string | null | undefined;
+  stat: string;
+}) => item.rarity === "LEGENDARY" && !hasStatFlag(item.stat, "permbound");
 
 /**
  * Whether a loot keeps the players on the map at the drop: a fight that
- * dropped a unique or better item.
+ * dropped a legendary item.
  */
 export const capturesMapPlayers = (loot: {
   source: string;
   rarities: readonly (string | null | undefined)[];
 }) =>
   loot.source === "FIGHT" &&
-  loot.rarities.some((rarity) => DRAW_RARITIES.has(rarity ?? ""));
+  loot.rarities.some((rarity) => rarity === "LEGENDARY");
 
 /** Elastic items take the looter's level, so they require none of their own. */
 export const isElasticLootDrawItem = (item: Pick<LootDrawItem, "stat">) =>
-  item.stat.split(";").some((entry) => /^lvladjust(=|$)/.test(entry));
+  hasStatFlag(item.stat, "lvladjust");
 
 /**
  * Whether the candidate's profession lets them wear the item, and their

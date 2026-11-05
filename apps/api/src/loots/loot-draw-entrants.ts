@@ -1,5 +1,6 @@
 import {
   canWearLootDrawItem,
+  isLootDrawItem,
   isLootDrawTicketOrder,
 } from "@lootlog/domain/loot-draw";
 import type { CreateLootDrawRequest } from "#src/contracts/loots/schemas";
@@ -22,7 +23,7 @@ const playerKeys = (player: { characterId: number | null; name: string }) =>
     : [nameKey(player.name)];
 
 /**
- * Checks a manager's draw for one of the loot's items. The one WINNER must
+ * Checks a manager's draw for one of the loot's drawable items. The one WINNER must
  * be the party member who caught it; it is stored as the loot records them.
  * Every other entrant must be outside the party, listed once and able to
  * wear the item. Tickets are the manager's, and the ticket order must hold
@@ -35,6 +36,10 @@ export const buildLootDrawEntrants = (
   const item = loot.items.find(({ hid }) => hid === request.itemHid);
 
   if (!item) return { error: ErrorKey.LOOT_DRAW_ITEM_NOT_FOUND };
+
+  if (!isLootDrawItem(item)) {
+    return { error: ErrorKey.LOOT_DRAW_ITEM_NOT_DRAWABLE };
+  }
 
   const ownerId = Object.entries(loot.lootShare).find(([, hids]) =>
     hids.includes(item.hid),

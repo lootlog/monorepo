@@ -350,7 +350,7 @@ z polem do pisania na dole; na węższym znajdziesz je pod listą graczy.
 ### Losowanie przedmiotów
 
 Margonem mieści w grupie dziesięciu graczy. Gdy na mapie byli też gracze,
-którym zabrakło miejsca, przedmiot można rozlosować między nimi a osobą, która
+którym zabrakło miejsca, przedmiot legendarny, którego nie związano na stałe, można rozlosować między nimi a osobą, która
 złapała go w grze. Przycisk z kostką przy przedmiocie w oknie szczegółów łupu
 otwiera losowanie. Prowadzą je osoby z uprawnieniem `LOOTLOG_LOOTS_ARCHIVE`,
 a wynik widzi każdy, kto widzi łup.
@@ -361,7 +361,7 @@ grupy jeden los. Uprawniony jest gracz, którego profesja pasuje do przedmiotu
 i który ma wymagany poziom; gracz bez znanego poziomu jest sprawdzany tylko po
 profesji.
 
-Przy łupach z walki, w których wypadł przynajmniej przedmiot unikatowy, dodatek
+Przy łupach z walki, w których wypadł przedmiot legendarny, dodatek
 zapisuje graczy obecnych na mapie i podpowiada ich na liście. Przed losowaniem
 możesz usunąć z niej każdego, np. gracza z wrogiej frakcji, dopisać brakującego
 gracza z nickiem, profesją i opcjonalnym poziomem, zmienić liczbę losów
@@ -446,17 +446,13 @@ przedział **Poziom herosa od / do** ogranicza regułę do herosów z tego zakre
 
 Jak powstają wykrycia, opisuje [Wykryci herosi](/docs/features#wykryci-herosi).
 
-### Gracze na mapie przy legendzie z elity II
+### Gracze na mapie przy legendzie
 
-Jeśli główny przeciwnik (potwór o najwyższej wadze w walce) jest elitą II
-i wypadł co najmniej jeden przedmiot legendarny, w szczegółach łupu
+Jeśli w walce wypadł co najmniej jeden przedmiot legendarny, w szczegółach łupu
 sekcja **Gracze na mapie w chwili dropu** pokazuje liczbę i zapisane postacie:
-ikonę, nick oraz profesję, jeśli jest dostępna. Lista obejmuje także własną postać
+ikonę, nick, poziom oraz profesję, jeśli są dostępne. Lista obejmuje także własną postać
 zgłaszającego i jest oddzielona od uczestników walki — obecność na mapie nie oznacza
 udziału w walce.
-
-Sama obecność elity II wśród przeciwników nie wystarcza, jeśli inny potwór
-ma wyższą wagę.
 
 Organizacja zachowuje pierwszy dostępny zapis dla danego łupu. Kolejne zgłoszenia
 nie łączą list ani nie zastępują zapisu. Dane dotyczą chwili dropu, więc późniejsze
