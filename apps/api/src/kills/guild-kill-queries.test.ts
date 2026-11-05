@@ -5,10 +5,12 @@ import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
   guildKillTotalTable,
-  guildTable,
   memberKillTotalTable,
+} from "#src/database/drizzle/kill-statistics.schema";
+import {
+  guildTable,
   memberTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import { applicationLogger as logger } from "#src/shared/application-logger";
 import type { KillQueryCache } from "./kill-query-support.js";
 import { makeGuildKillQueries } from "./guild-kill-queries.js";

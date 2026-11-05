@@ -20,7 +20,7 @@ import type {
   guildTable,
   memberTable,
   roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import {
   EventMutationResponse,
   EventOverviewResponse,

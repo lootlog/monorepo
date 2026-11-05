@@ -9,8 +9,8 @@ import {
   eventRankingTable,
   eventRespawnWindowSummaryTable,
   eventTable,
-  memberTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
+import { memberTable } from "#src/database/drizzle/organization.schema";
 
 export const makeEventWrappedStore = (
   database: typeof ApiDatabase.Service,

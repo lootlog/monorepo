@@ -8,7 +8,10 @@ import {
 import { Permission } from "@lootlog/schema/permissions";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { Clock, Effect, Schema } from "effect";
-import type { guildTable, roleTable } from "#src/database/drizzle/schema";
+import type {
+  guildTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { randomInt } from "node:crypto";
 import {

@@ -1,7 +1,10 @@
 import { Permission } from "@lootlog/schema/permissions";
 import { expect, it } from "bun:test";
 import { sql } from "drizzle-orm";
-import { guildTable, roleTable } from "../src/database/drizzle/schema.js";
+import {
+  guildTable,
+  roleTable,
+} from "../src/database/drizzle/organization.schema.js";
 import { createDatabaseBoundary } from "./database-fixtures.js";
 import { createGuildFixture } from "./organization-fixtures.js";
 

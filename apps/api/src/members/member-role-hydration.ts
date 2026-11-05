@@ -1,7 +1,10 @@
 import { desc, eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
-import { memberToRoleTable, roleTable } from "#src/database/drizzle/schema";
+import {
+  memberToRoleTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
 
 export const hydrateMemberRoles = Effect.fnUntraced(function* <
   Member extends { id: number },

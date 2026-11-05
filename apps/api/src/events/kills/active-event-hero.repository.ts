@@ -1,7 +1,10 @@
 import { activeEventCondition } from "#src/events/event-scope-query";
 import { and, eq } from "drizzle-orm";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { eventHeroNpcTable, eventTable } from "#src/database/drizzle/schema";
+import {
+  eventHeroNpcTable,
+  eventTable,
+} from "#src/database/drizzle/event.schema";
 
 export const makeActiveEventHeroStore = (database: ApiDatabaseValue) => ({
   findActiveHeroes(guildId: string, world: string, referenceTime: Date) {

@@ -27,10 +27,12 @@ import {
   eventMapTable,
   eventRespawnWindowSummaryTable,
   eventTable,
+} from "#src/database/drizzle/event.schema";
+import {
   memberTable,
   memberToRoleTable,
   roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import type { HistoryBoundary } from "#src/events/history/event-kill-history.cursor";
 
 const MapPresenceSnapshot = Schema.Array(

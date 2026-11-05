@@ -13,9 +13,9 @@ import {
   memberTable,
   roleTable,
   memberToRoleTable,
-  guildKillActivityTable,
-  userCharactersLootlogSettingsTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { guildKillActivityTable } from "#src/database/drizzle/kill-statistics.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import {
   makeUserFeed,
   buildUserFeedQuery,

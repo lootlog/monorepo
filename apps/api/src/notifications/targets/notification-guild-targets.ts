@@ -9,7 +9,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { notificationTargetTable } from "#src/database/drizzle/schema";
+import { notificationTargetTable } from "#src/database/drizzle/notification.schema";
 import type {
   CreateNotificationTargetRequest,
   UpdateNotificationTargetRequest,

@@ -3,7 +3,7 @@ import {
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 
-import type { roleTable } from "#src/database/drizzle/schema";
+import type { roleTable } from "#src/database/drizzle/organization.schema";
 
 type Role = typeof roleTable.$inferSelect;
 

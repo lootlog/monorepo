@@ -11,7 +11,7 @@ import { LootCreatedNotificationEventV2Schema } from "@lootlog/schema/notificati
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { RabbitMessaging } from "@lootlog/messaging";
 import type { ApiDatabase } from "#src/database/drizzle/database";
-import { organizationLootRecordTable } from "#src/database/drizzle/schema";
+import { organizationLootRecordTable } from "#src/database/drizzle/loot.schema";
 import { lootPublicationOutboxTable } from "#src/database/drizzle/loot-publication-outbox.schema";
 
 const RabbitPublication = Schema.Union([

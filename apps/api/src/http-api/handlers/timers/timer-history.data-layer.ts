@@ -24,12 +24,16 @@ import {
 import {
   eventHeroNpcTable,
   eventTable,
+} from "#src/database/drizzle/event.schema";
+import {
   guildTable,
   memberTable,
-  playerSnapshotTable,
+} from "#src/database/drizzle/organization.schema";
+import { playerSnapshotTable } from "#src/database/drizzle/loot.schema";
+import {
   timerHistoryEntryTable,
   timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/timer.schema";
 import { ErrorKey } from "#src/timers/error-key";
 import { isLegacyNpcIdIdentifier } from "#src/timers/timer-key";
 import { InvalidRequestError } from "#src/shared/http/http-errors";

@@ -4,7 +4,7 @@ import { and, eq, exists, sql } from "drizzle-orm";
 import {
   timerHistoryEntryTable,
   timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/timer.schema";
 import { TIMER_TYPES } from "./timer-limits.js";
 
 export const makeTimersCleanup = (

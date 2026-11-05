@@ -19,8 +19,8 @@ import { zip } from "es-toolkit";
 import { lootPublicationOutboxTable } from "#src/database/drizzle/loot-publication-outbox.schema";
 import type { LootPublication } from "./loot-publication-outbox.js";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import {
-  guildTable,
   lootItemTable,
   lootlogConfigNpcTable,
   lootlogConfigTable,
@@ -30,8 +30,8 @@ import {
   lootTable,
   npcSnapshotTable,
   organizationLootRecordTable,
-  userCharactersLootlogSettingsTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import type { Permission } from "@lootlog/schema/permissions";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import {

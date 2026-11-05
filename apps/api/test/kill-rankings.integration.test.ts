@@ -15,13 +15,17 @@ import {
   eventHeroNpcTable,
   eventRankingTable,
   eventTable,
+} from "../src/database/drizzle/event.schema.js";
+import {
   guildTable,
   memberTable,
+} from "../src/database/drizzle/organization.schema.js";
+import {
   memberKillBucketTable,
   memberKillTotalTable,
   guildKillBucketTable,
   guildKillTotalTable,
-} from "../src/database/drizzle/schema.js";
+} from "../src/database/drizzle/kill-statistics.schema.js";
 import { makeEventCatalogMutations } from "../src/events/catalog/event-catalog-mutations.js";
 import { makeEventPointsStore } from "../src/events/kills/event-points.repository.js";
 import { makeKillStatsPersistence } from "../src/kills/kill-stats-persistence.js";

@@ -4,7 +4,8 @@ import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import { describe, expect, it } from "bun:test";
 import { eq, sql } from "drizzle-orm";
 import { Effect } from "effect";
-import { guildTable, lootTable } from "#src/database/drizzle/schema";
+import { guildTable } from "#src/database/drizzle/organization.schema";
+import { lootTable } from "#src/database/drizzle/loot.schema";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   buildLootStatsQueries,

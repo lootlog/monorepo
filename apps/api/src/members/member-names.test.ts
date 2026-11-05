@@ -4,7 +4,10 @@ import {
   createGuildFixture,
   createMemberFixture,
 } from "../../test/organization-fixtures.js";
-import { guildTable, memberTable } from "#src/database/drizzle/schema";
+import {
+  guildTable,
+  memberTable,
+} from "#src/database/drizzle/organization.schema";
 import { findMemberNames } from "./member-names.js";
 
 test("names actors by their member in the requested Organization only", async () => {

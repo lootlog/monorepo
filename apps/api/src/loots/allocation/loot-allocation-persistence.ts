@@ -31,17 +31,19 @@ import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
+  memberTable,
+} from "#src/database/drizzle/organization.schema";
+import {
   itemSnapshotTable,
   lootItemTable,
   lootNpcTable,
   lootPlayerTable,
   lootSubmissionTable,
   lootTable,
-  memberTable,
   npcSnapshotTable,
   organizationLootRecordTable,
   playerSnapshotTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 import type { LootShare } from "#src/loots/loot-response.schema";
 
 type AuthorizedLootOptions = {

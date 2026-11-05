@@ -14,10 +14,12 @@ import {
   eventMapToMemberTable,
   eventPresenceLogTable,
   eventTable,
+} from "#src/database/drizzle/event.schema";
+import {
   guildTable,
   memberTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 import { makeEventReadCache } from "#src/events/catalog/event-read-cache.service";
 import { makeEventTimersPort } from "#src/events/respawn/event-timers.port";
 import { makeEventTimerStore } from "#src/events/respawn/event-timer.store";

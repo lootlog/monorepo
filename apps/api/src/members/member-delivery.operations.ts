@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { memberTable } from "#src/database/drizzle/schema";
+import type { memberTable } from "#src/database/drizzle/organization.schema";
 import type { MemberStore } from "./member.store.js";
 import type { MemberRemovalNotificationTarget } from "./member.types.js";
 

@@ -4,9 +4,9 @@ import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   notificationRuleTable,
-  timerTable,
   watchedItemTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 
 export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
   const timerRules = (guildId: string, world: string) =>

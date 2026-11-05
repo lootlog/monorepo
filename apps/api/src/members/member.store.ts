@@ -20,7 +20,7 @@ import {
   memberTable,
   memberToRoleTable,
   roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 
 type MemberWrite = {
   readonly avatar: string | null;

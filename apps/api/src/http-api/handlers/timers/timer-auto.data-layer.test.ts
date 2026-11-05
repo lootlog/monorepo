@@ -7,12 +7,16 @@ import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import {
   eventHeroNpcTable,
   eventTable,
+} from "#src/database/drizzle/event.schema";
+import {
   guildTable,
   memberTable,
+} from "#src/database/drizzle/organization.schema";
+import {
   timerHistoryEntryTable,
   timerTable,
-  userCharactersLootlogSettingsTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/timer.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import { buildTimerKey } from "#src/timers/timer-key";
 import {
   getEventHeroSyntheticNpcId,

@@ -7,7 +7,7 @@ import {
   lootMapPlayerTable,
   lootTable,
   organizationLootRecordTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 import { resolvePlayerSnapshots } from "#src/shared/margonem/player-snapshot.persistence";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 

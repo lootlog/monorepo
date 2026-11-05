@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { DEFAULT_RESERVATION_SETTINGS } from "@lootlog/domain/reservations";
 import { getTableColumns } from "drizzle-orm";
-import { guildTable } from "../database/drizzle/schema.js";
+import { guildTable } from "../database/drizzle/organization.schema.js";
 
 describe("Reservation settings defaults", () => {
   it("keeps TypeScript fallbacks aligned with persisted Guild defaults", () => {

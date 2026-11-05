@@ -10,15 +10,19 @@ import {
 } from "../../../../test/organization-fixtures.js";
 import {
   guildTable,
-  eventTable,
-  eventHeroNpcTable,
   memberTable,
   memberToRoleTable,
-  playerSnapshotTable,
   roleTable,
+} from "#src/database/drizzle/organization.schema";
+import {
+  eventTable,
+  eventHeroNpcTable,
+} from "#src/database/drizzle/event.schema";
+import { playerSnapshotTable } from "#src/database/drizzle/loot.schema";
+import {
   timerTable,
   timerHistoryEntryTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/timer.schema";
 import { makeAllTimerList } from "./timer-list.data-layer.js";
 import { makeResetTimer } from "./timer-reset.data-layer.js";
 import { makeDeleteTimer } from "./timer-delete.data-layer.js";

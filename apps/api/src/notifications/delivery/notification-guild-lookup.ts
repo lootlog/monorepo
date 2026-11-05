@@ -1,7 +1,7 @@
 import { inArray } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { guildTable } from "#src/database/drizzle/schema";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 
 export const makeNotificationGuildLookup =
   (database: ApiDatabaseValue) => (guildIds: readonly string[]) =>

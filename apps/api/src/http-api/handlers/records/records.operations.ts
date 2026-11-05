@@ -22,7 +22,10 @@ import {
 import { Context, Effect, Layer, Metric, Schema } from "effect";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { HttpServerResponse } from "effect/http";
-import type { guildTable, roleTable } from "#src/database/drizzle/schema";
+import type {
+  guildTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
 import type {
   CreateKillResponse,
   CreateKillRequest,

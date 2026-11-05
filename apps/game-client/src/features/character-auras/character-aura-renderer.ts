@@ -7,7 +7,8 @@ import {
   rendererRuntimeAdapter,
   type RuntimeDrawable,
 } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
-import { Aura, type AuraPlacement, isAuraInView } from "./engine/render";
+import { Aura, isAuraInView } from "./engine/render";
+import type { AuraPlacement } from "./engine/placement";
 import { SilhouetteCache } from "./engine/silhouette";
 
 /** The key of the hero among the drawn characters; others use their character id. */

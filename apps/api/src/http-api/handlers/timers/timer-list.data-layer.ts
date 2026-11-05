@@ -16,10 +16,8 @@ import { Clock, Effect } from "effect";
 import { canViewTimer } from "./timer-selection.js";
 import { canViewNpcTimer } from "@lootlog/domain/npc-permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  timerTable,
-  userSettingDocumentTable,
-} from "#src/database/drizzle/schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
+import { userSettingDocumentTable } from "#src/database/drizzle/user.schema";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { Permission } from "@lootlog/schema/permissions";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";

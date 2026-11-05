@@ -3,11 +3,11 @@ import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
 import { and, asc, eq, gt, inArray, lt } from "drizzle-orm";
 import { Clock, Effect, Layer } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import {
-  guildTable,
   reservationTable,
   userPinnedReservationSpotTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/reservation.schema";
 import { presentReservation } from "#src/reservations/reservation-presentation";
 import { parseReservationWindow } from "#src/reservations/reservation-policy";
 import { canModerateReservations } from "#src/reservations/reservation-viewer";

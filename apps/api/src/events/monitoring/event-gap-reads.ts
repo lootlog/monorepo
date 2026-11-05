@@ -9,7 +9,7 @@ import {
   eventMapCoverageGapTable,
   eventMapTable,
   eventTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
 import { makeTypeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";

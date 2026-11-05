@@ -19,9 +19,9 @@ import {
   memberTable,
   memberToRoleTable,
   roleTable,
-  timerTable,
-  userSettingDocumentTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
+import { userSettingDocumentTable } from "#src/database/drizzle/user.schema";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
   makeAllTimerList,

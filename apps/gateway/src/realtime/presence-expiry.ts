@@ -12,8 +12,8 @@ import {
   metadataKey,
   presenceKey,
   releaseLease,
-  storeCall,
 } from "#src/realtime/presence-records";
+import { storeCall } from "#src/realtime/realtime-errors";
 
 export const EXPIRY_DUE_INDEX = "presence:expiry:due";
 

@@ -10,13 +10,15 @@ import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   discordGuildSyncStateTable,
   guildTable,
+  memberTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
+import {
   itemRarityEnum,
   lootlogConfigNpcTable,
   lootlogConfigTable,
-  memberTable,
   npcTypeEnum,
-  roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 import type {
   GuildCreated,
   GuildDeleted,

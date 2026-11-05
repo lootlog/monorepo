@@ -5,6 +5,11 @@ import { eq } from "drizzle-orm";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   guildTable,
+  memberTable,
+  memberToRoleTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
+import {
   itemSnapshotTable,
   lootCommentTable,
   lootItemTable,
@@ -12,13 +17,10 @@ import {
   lootPlayerTable,
   lootSubmissionTable,
   lootTable,
-  memberTable,
-  memberToRoleTable,
   npcSnapshotTable,
   organizationLootRecordTable,
   playerSnapshotTable,
-  roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
 import { makeLootAllocationPersistence } from "#src/loots/allocation/loot-allocation-persistence";

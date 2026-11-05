@@ -7,7 +7,7 @@ import {
   eventHeroNpcTable,
   eventTable,
   userPinnedEventTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
 
 class PinnedEventsPersistenceError extends TaggedErrorClass<PinnedEventsPersistenceError>()(
   "PinnedEventsPersistenceError",

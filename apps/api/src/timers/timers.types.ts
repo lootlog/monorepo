@@ -1,9 +1,11 @@
 import type {
   guildTable,
   roleTable,
+} from "#src/database/drizzle/organization.schema";
+import type {
   timerHistoryEntryTable,
   timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/timer.schema";
 
 export type Guild = typeof guildTable.$inferSelect;
 

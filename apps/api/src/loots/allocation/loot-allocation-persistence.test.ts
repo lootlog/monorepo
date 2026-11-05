@@ -10,19 +10,21 @@ import {
 } from "../../../test/organization-fixtures.js";
 import {
   guildTable,
+  memberTable,
+  memberToRoleTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
+import {
   itemSnapshotTable,
   lootItemTable,
   lootNpcTable,
   lootPlayerTable,
   lootTable,
   lootSubmissionTable,
-  memberTable,
-  memberToRoleTable,
   npcSnapshotTable,
   organizationLootRecordTable,
   playerSnapshotTable,
-  roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { makeLootAllocationPersistence } from "./loot-allocation-persistence.js";
 import { makeLootAllocationOperations } from "./loot-allocation.operations.js";

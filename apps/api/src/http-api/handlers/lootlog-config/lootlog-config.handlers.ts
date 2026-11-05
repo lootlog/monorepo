@@ -17,7 +17,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   lootlogConfigNpcTable,
   lootlogConfigTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
   LootlogConfigResponse,

@@ -4,8 +4,8 @@ import { createGuildFixture } from "../../../test/organization-fixtures.js";
 import {
   eventHeroNpcTable,
   eventTable,
-  guildTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import { makeActiveEventHeroStore } from "./active-event-hero.repository.js";
 import { findActiveEventHeroesByNpc } from "./find-active-event-heroes-by-npc.js";
 

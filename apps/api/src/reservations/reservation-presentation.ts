@@ -1,7 +1,5 @@
-import type {
-  guildTable,
-  reservationTable,
-} from "#src/database/drizzle/schema";
+import type { guildTable } from "#src/database/drizzle/organization.schema";
+import type { reservationTable } from "#src/database/drizzle/reservation.schema";
 
 type Guild = typeof guildTable.$inferSelect;
 

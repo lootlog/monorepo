@@ -2,7 +2,10 @@ import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
-import type { guildTable, roleTable } from "#src/database/drizzle/schema";
+import type {
+  guildTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
 import type { EventWrapped } from "#src/events/wrapped/event-wrapped.service";
 import type { EventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import type { EventCreation } from "#src/events/catalog/event-creation";

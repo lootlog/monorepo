@@ -6,15 +6,15 @@ import {
   ApiDatabase,
   ApiDatabaseLive,
 } from "../src/database/drizzle/database.js";
+import { guildTable } from "../src/database/drizzle/organization.schema.js";
 import {
-  guildTable,
   itemSnapshotTable,
   lootItemTable,
   lootNpcTable,
   lootTable,
   npcSnapshotTable,
   organizationLootRecordTable,
-} from "../src/database/drizzle/schema.js";
+} from "../src/database/drizzle/loot.schema.js";
 import { buildLootStatsQueries } from "../src/loots/query/loot-stats-query.js";
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
 

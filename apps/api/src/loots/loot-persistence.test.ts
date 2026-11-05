@@ -3,10 +3,12 @@ import { Permission } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
 import {
   guildTable,
-  lootTable,
   memberTable,
+} from "#src/database/drizzle/organization.schema";
+import {
+  lootTable,
   organizationLootRecordTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/loot.schema";
 import { makeLootPersistence } from "#src/loots/loot-persistence";
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
 import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";

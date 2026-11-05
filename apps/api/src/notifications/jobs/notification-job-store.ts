@@ -8,8 +8,8 @@ import {
   notificationJobTable,
   notificationRuleTable,
   notificationTargetTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 import type { JsonValue } from "#src/database/json";
 import type {
   NotificationJobStatus,

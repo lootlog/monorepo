@@ -9,8 +9,8 @@ import {
 import {
   guildTable,
   memberTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
+import { timerTable } from "#src/database/drizzle/timer.schema";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import type { Role } from "#src/timers/timers.types";
 import { makeTimerSearch } from "./timer-search.data-layer.js";

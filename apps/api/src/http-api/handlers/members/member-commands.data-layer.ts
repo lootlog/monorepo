@@ -9,7 +9,7 @@ import {
   memberTable,
   memberToRoleTable,
   roleTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/organization.schema";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import {
   getAdminBulkRefreshRateLimit,

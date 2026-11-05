@@ -16,7 +16,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   userSettingsTable,
   userThemeTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/user.schema";
 import { LootlogApi } from "../../lootlog-api.js";
 import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 import {

@@ -11,7 +11,7 @@ import {
   eventHeroNpcTable,
   eventMapTable,
   eventTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
 import type { RedisService } from "#src/redis/redis.service";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";

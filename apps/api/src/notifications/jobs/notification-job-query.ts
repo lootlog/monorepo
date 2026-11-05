@@ -4,7 +4,7 @@ import {
   notificationJobTable,
   notificationRuleTable,
   notificationTargetTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 
 export const selectNotificationJobsWithRelations = (
   database: typeof ApiDatabase.Service,

@@ -5,11 +5,11 @@ import { createHash, randomBytes } from "node:crypto";
 import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Clock, Effect, Layer } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import {
-  guildTable,
   reservationShareInvitationTable,
   reservationShareTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/reservation.schema";
 import {
   ResourceConflictError,
   ResourceGoneError,

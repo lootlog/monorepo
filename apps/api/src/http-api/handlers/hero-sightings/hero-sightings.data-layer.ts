@@ -23,8 +23,8 @@ import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   heroSightingClaimTable,
   heroSightingTable,
-  userCharactersLootlogSettingsTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/hero-sighting.schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import {
   findActiveGuildMember,
   selectAccessibleGuildRoles,

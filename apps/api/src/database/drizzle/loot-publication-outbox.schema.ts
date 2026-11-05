@@ -7,7 +7,7 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import { lootTable } from "./schema.js";
+import { lootTable } from "./loot.schema.js";
 
 export const lootPublicationOutboxTable = pgTable(
   "LootPublicationOutbox",

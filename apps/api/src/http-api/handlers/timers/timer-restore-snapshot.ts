@@ -2,7 +2,7 @@ import {
   TimerHistoryAction,
   type TimerHistoryEntry,
 } from "#src/timers/timers.types";
-import type { timerTable } from "#src/database/drizzle/schema";
+import type { timerTable } from "#src/database/drizzle/timer.schema";
 import { isEqual } from "es-toolkit";
 
 export const getTimerHistoryValues = (

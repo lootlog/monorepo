@@ -8,9 +8,11 @@ import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import {
   guildTable,
   memberTable,
+} from "#src/database/drizzle/organization.schema";
+import {
   timerHistoryEntryTable,
   timerTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/timer.schema";
 import { makeDeleteTimer } from "#src/http-api/handlers/timers/timer-delete.data-layer";
 import { makeRestoreTimer } from "#src/http-api/handlers/timers/timer-restore.data-layer";
 import { makeResetTimer } from "#src/http-api/handlers/timers/timer-reset.data-layer";

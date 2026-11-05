@@ -10,7 +10,7 @@ import {
   notificationJobTable,
   notificationRuleTable,
   notificationTargetTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/notification.schema";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { makeNotificationJobOperations } from "#src/notifications/jobs/notification-job-operations";
 

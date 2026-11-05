@@ -9,7 +9,7 @@ import {
   eventHeroKillTable,
   eventHeroNpcTable,
   eventTable,
-} from "#src/database/drizzle/schema";
+} from "#src/database/drizzle/event.schema";
 import { guildKillSource } from "#src/kills/kill-source";
 import { makeTypeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
