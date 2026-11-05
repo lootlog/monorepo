@@ -28,7 +28,7 @@ import { makeLootAllocationPersistence } from "./loot-allocation-persistence.js"
 import { makeLootAllocationOperations } from "./loot-allocation.operations.js";
 import { applicationLogger } from "#src/shared/application-logger";
 
-test("neither a session nor an API key updates a shared allocation when one Organization hides its NPC revision", async () => {
+test("the submitting Organization's NPC visibility decides the allocation, not other Organizations recording the loot", async () => {
   const boundary = await createDatabaseBoundary();
 
   try {
@@ -85,7 +85,7 @@ test("neither a session nor an API key updates a shared allocation when one Orga
             Permission.LOOTLOG_LOOTS_READ,
           ],
           lvlRangeFrom: 0,
-          lvlRangeTo: id === 1 ? 250 : 190,
+          lvlRangeTo: id === 1 ? 190 : 250,
         }),
       );
       await run(
@@ -113,28 +113,30 @@ test("neither a session nor an API key updates a shared allocation when one Orga
       submissionCutoff: new Date(now.getTime() - 60_000),
     };
 
-    const keyed = <A, E>(effect: Effect.Effect<A, E>) =>
-      run(
-        effect.pipe(
-          Effect.provideService(ForwardAuthIdentity, {
-            userId: "user",
-            discordId: "reader",
-            apiKey: {
-              keyId: "both",
-              organizationIds: ["1", "2"],
-              mode: "read-write",
-              personalData: true,
-              expiresAt: null,
-            },
-          }),
-        ),
-      );
+    const keyedTo =
+      (organizationIds: string[]) =>
+      <A, E>(effect: Effect.Effect<A, E>) =>
+        run(
+          effect.pipe(
+            Effect.provideService(ForwardAuthIdentity, {
+              userId: "user",
+              discordId: "reader",
+              apiKey: {
+                keyId: organizationIds.join(","),
+                organizationIds,
+                mode: "read-write",
+                personalData: true,
+                expiresAt: null,
+              },
+            }),
+          ),
+        );
 
+    const keyed = keyedTo(["1", "2"]);
+
+    // The Organization the loot was submitted in hides its NPC revision.
     expect(await run(persistence.findAuthorizedLoot(options))).toBeNull();
     expect(await keyed(persistence.findAuthorizedLoot(options))).toBeNull();
-    expect(
-      await keyed(persistence.findAuthorizedAllocationState(options)),
-    ).toBeNull();
     expect(
       await keyed(
         persistence.compareAndSetChatAllocation({ ...options, lootShare: {} }),
@@ -145,40 +147,33 @@ test("neither a session nor an API key updates a shared allocation when one Orga
       database
         .update(roleTable)
         .set({ lvlRangeTo: 250 })
-        .where(eq(roleTable.id, "2")),
+        .where(eq(roleTable.id, "1")),
     );
-    expect(await keyed(persistence.findAuthorizedLoot(options))).toMatchObject({
-      id: 1,
-    });
-    await run(
-      database
-        .update(organizationLootRecordTable)
-        .set({ archivedAt: now })
-        .where(eq(organizationLootRecordTable.id, 2)),
-    );
-    // An archived record no longer shows the loot in its Organization.
     await run(
       database
         .update(roleTable)
         .set({ lvlRangeTo: 190 })
         .where(eq(roleTable.id, "2")),
     );
+    // Another Organization recording the same loot, e.g. for a mixed party,
+    // does not block the submitter.
+    expect(await run(persistence.findAuthorizedLoot(options))).toMatchObject({
+      id: 1,
+    });
     expect(await keyed(persistence.findAuthorizedLoot(options))).toMatchObject({
       id: 1,
     });
-    await run(
-      database
-        .update(organizationLootRecordTable)
-        .set({ archivedAt: null })
-        .where(eq(organizationLootRecordTable.id, 2)),
-    );
+    // An API key acts only through the submissions inside its scope.
     expect(
-      await keyed(
-        persistence.compareAndSetChatAllocation({ ...options, lootShare: {} }),
-      ),
-    ).toBe(false);
+      await keyedTo(["2"])(persistence.findAuthorizedLoot(options)),
+    ).toBeNull();
     expect(
       await run(
+        persistence.compareAndSetChatAllocation({ ...options, lootShare: {} }),
+      ),
+    ).toBe(true);
+    expect(
+      await keyed(
         persistence.compareAndSetChatAllocation({ ...options, lootShare: {} }),
       ),
     ).toBe(false);
@@ -187,7 +182,7 @@ test("neither a session nor an API key updates a shared allocation when one Orga
   }
 });
 
-test("allocation requires a recent actor submission and access to every organization at the atomic update", async () => {
+test("allocation requires a recent actor submission at the atomic update", async () => {
   const boundary = await createDatabaseBoundary();
 
   try {
@@ -280,14 +275,11 @@ test("allocation requires a recent actor submission and access to every organiza
         .insert(organizationLootRecordTable)
         .values({ id: 2, lootId: 1, guildId: "2", updatedAt: now }),
     );
-    expect(
-      await scoped(
-        persistence.compareAndSetChatAllocation({ ...options, lootShare: {} }),
-      ),
-    ).toBe(false);
+    // A mixed party also records the loot in an Organization outside the
+    // actor's reach; their own submission still confirms the allocation.
     expect(
       await scoped(persistence.findAuthorizedAllocationState(options)),
-    ).toBeNull();
+    ).toEqual({ lootShare: {}, lootShareSource: "NONE" });
     await run(
       database
         .delete(organizationLootRecordTable)
