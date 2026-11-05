@@ -41,7 +41,7 @@ import { encodeBattleEvents } from "@lootlog/battlelog/battles/battle-timeline";
 import { GuildGenerator } from "./generators/guild-generator.js";
 import { LootGenerator } from "./generators/loot-generator.js";
 import { BattlesGenerator } from "./generators/battles-generator.js";
-import { BattleProcessor } from "@lootlog/battle-processor";
+import { BattleProcessor } from "@lootlog/battle-processor/battle-processor";
 import { SCRAPER_CONFIG, SEED_CONFIG } from "./config.js";
 import path from "node:path";
 import { and, eq } from "drizzle-orm";

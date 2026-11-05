@@ -46,11 +46,15 @@ import {
   normalizeBattleSubmission,
 } from "#src/battles/submission/battle-submission";
 import {
-  BattleProcessor,
-  type Warrior,
-  type BattleAnalysis,
+  calculateBattleDuration,
+  parseBattleMoves,
   type BattleWarriorSnapshot,
-} from "@lootlog/battle-processor";
+} from "@lootlog/battle-processor/battle-log";
+import {
+  BattleProcessor,
+  type BattleAnalysis,
+} from "@lootlog/battle-processor/battle-processor";
+import type { Warrior } from "@lootlog/battle-processor/warrior";
 import {
   decodeRawBattleDataJson,
   type BattleWithRelations,
@@ -214,7 +218,7 @@ export const makeBattles = (
           (result) =>
             battlesModule.preserveCanonicalBattleDuration(
               result.battleId,
-              BattleProcessor.calculateBattleDuration(normalizedData.events),
+              calculateBattleDuration(normalizedData.events),
               userId,
             ),
         );
@@ -253,7 +257,7 @@ export const makeBattles = (
         if (canonicalBattleId) {
           yield* battlesModule.preserveCanonicalBattleDuration(
             canonicalBattleId,
-            BattleProcessor.calculateBattleDuration(data.events),
+            calculateBattleDuration(data.events),
             userId,
           );
 
@@ -899,15 +903,11 @@ export const makeBattles = (
         return rawBattleData;
       }
 
-      const processor = new BattleProcessor();
-
       return {
         ...rawBattleData,
         rawData: {
           ...rawBattleData.rawData,
-          events: processor.extractAndParseMoves(
-            rawBattleData.rawData.sourceEvents,
-          ),
+          events: parseBattleMoves(rawBattleData.rawData.sourceEvents),
         },
       };
     },

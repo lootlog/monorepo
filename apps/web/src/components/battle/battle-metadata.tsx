@@ -10,6 +10,7 @@ import {
   CircleDashed,
   Clock,
   Earth,
+  Equal,
   Lock,
   Swords,
   Unlock,
@@ -23,6 +24,7 @@ import type { Battle } from "@/lib/api/battlelog-types";
 import { upperFirst } from "es-toolkit";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
+import { isBattleDraw } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
 
 export type BattleMetadataProps = {
   battle: Battle;
@@ -96,6 +98,15 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({ battle }) => {
       icon: CircleDashed,
       label: t("battleUi.metadata.unfinished"),
       tooltip: t("battleUi.metadata.unfinishedTooltip"),
+    });
+  }
+
+  if (isBattleDraw(battle)) {
+    items.push({
+      key: "draw",
+      icon: Equal,
+      label: t("battleUi.metadata.draw"),
+      tooltip: t("battleUi.metadata.drawTooltip"),
     });
   }
 

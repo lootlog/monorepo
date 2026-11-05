@@ -1,4 +1,4 @@
-import type { BattlePayload } from "@lootlog/battle-processor";
+import type { BattlePayload } from "@lootlog/battle-processor/battle-log";
 import { Schema } from "effect";
 import { readFile } from "node:fs/promises";
 import path from "node:path";

@@ -3,12 +3,21 @@
 This document is a developer reference for the `m` entries consumed by
 `@lootlog/battle-processor`.
 
-It is based on three sources:
+It is based on these sources:
 
 - the official Margonem combat mechanics article:
   <https://pomoc.margonem.pl/index/view%2C372>;
-- the current implementation in `packages/battle-processor/src/index.ts`;
+- Margonem's own battle log renderer, `core/battle/BattleMessages.js`, which
+  lists every key the client understands and which side of a row it belongs
+  to;
+- the Polish dictionary the client loads
+  (`dev-commons.margonem.pl/js/dictionaries/dictionary_pl.js`), whose
+  `msg_<key>` entries name each effect;
 - observed PvP, Otchlan (Abyss), and group PvP payloads stored by Lootlog.
+
+The key catalog lives in `src/action-keys.ts`; warrior totals in
+`src/combat-totals.ts`; the timeline in `src/timeline.ts`; the outcome in
+`src/outcome.ts`.
 
 The processor is a log analytics tool. It does not simulate Margonem combat from
 first principles. It explains and aggregates what is visible in battle logs.
@@ -49,8 +58,12 @@ All remaining segments are actions. An action can be:
 
 Numeric parsing is intentionally defensive:
 
-- the processor parses only the first comma-separated value;
-- numeric values are stored as absolute values, and direction comes from the key;
+- the processor parses only the first comma-separated value; a second value
+  such as `wound=2817,20` or `-endest=12,3` is how much the effect was
+  weakened (`osłabione o …`);
+- most values are read without their sign, and direction comes from the key;
+  `en-regen`, `energy`, `mana`, `heal`, `+engback`, and `managain` keep it,
+  because Margonem reports a gain and a loss with the same key;
 - missing or non-numeric values resolve to `0`;
 - raw `param` is still kept in timeline actions for inspection.
 
@@ -77,11 +90,11 @@ Skill rows usually look like this:
 23476=100.00;617=100.00;tspell=Szarża;skillId=130
 ```
 
-| Key        | Processor behavior                                                                                                                    |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `tspell`   | Skill/spell display name. This can be Polish text and is stored in `spellsUsedMap`.                                                   |
-| `skillId`  | Numeric skill identity. The processor uses this for follow-up logic.                                                                  |
-| `+oth_dmg` | With an active spell row, treated as spell true/auxiliary follow-up damage. Without an active spell row, treated as reflected damage. |
+| Key        | Processor behavior                                                                         |
+| ---------- | ------------------------------------------------------------------------------------------ |
+| `tspell`   | Skill/spell display name. This can be Polish text and is stored in `spellsUsedMap`.        |
+| `skillId`  | Numeric skill identity. The processor uses this for follow-up logic.                       |
+| `+oth_dmg` | `value,class,Name(hp%)`: damage the named warrior took. See [Other damage](#other-damage). |
 
 Important: `tspell` is not a stable skill id. Use `skillId` for identity and
 follow-up behavior. The processor currently treats `skillId` `97` and `239` as
@@ -100,19 +113,23 @@ Regular dealt-damage keys increase `warrior.damageDealt` and the listed damage
 family. Special damage-effect keys are also classified as timeline damage, but
 their flat warrior fields stay in their dedicated buckets.
 
-| Key          | Family                | Notes                                                                                                |
-| ------------ | --------------------- | ---------------------------------------------------------------------------------------------------- |
-| `+dmgd`      | `distanceDamage`      | Ranged/physical distance damage.                                                                     |
-| `+dmg`       | `meleeDamage`         | Physical/melee damage in current processor naming.                                                   |
-| `+dmgo`      | `auxiliaryDamage`     | Auxiliary/offhand/additional damage.                                                                 |
-| `+dmga`      | `auxiliaryDamage`     | Auxiliary taken/damage family observed in R2 logs.                                                   |
-| `+dmgf`      | `fireDamage`          | Fire damage.                                                                                         |
-| `+dmgc`      | `frostDamage`         | Cold/frost damage.                                                                                   |
-| `+dmgl`      | `lightningDamage`     | Lightning damage.                                                                                    |
-| `+thirdatt`  | `thirdAttDamage`      | Third attack damage.                                                                                 |
-| `+rage`      | `rageDamageDealt`     | Rage damage; timeline damage for actor and target.                                                   |
-| `+taken_dmg` | `stigmaDamageDealt`   | Stigma-like damage; timeline damage for actor and target, flat target bucket is `stigmaDamageTaken`. |
-| `+oth_dmg`   | true/reflected damage | Spell context decides whether this is spell true damage or reflected damage.                         |
+| Key         | Family            | Notes                                                                                            |
+| ----------- | ----------------- | ------------------------------------------------------------------------------------------------ |
+| `+dmgd`     | `distanceDamage`  | Ranged/physical distance damage.                                                                 |
+| `+dmg`      | `meleeDamage`     | Physical/melee damage in current processor naming.                                               |
+| `+dmgo`     | `auxiliaryDamage` | Auxiliary/offhand/additional damage.                                                             |
+| `+dmga`     | `auxiliaryDamage` | Auxiliary taken/damage family observed in R2 logs.                                               |
+| `+dmgf`     | `fireDamage`      | Fire damage.                                                                                     |
+| `+dmgc`     | `frostDamage`     | Cold/frost damage.                                                                               |
+| `+dmgl`     | `lightningDamage` | Lightning damage.                                                                                |
+| `+thirdatt` | `thirdAttDamage`  | Third attack damage.                                                                             |
+| `+of_dmg`   | `auxiliaryDamage` | Off-hand damage added to the same attack.                                                        |
+| `+dmg…`     | none              | Margonem treats every `+dmg…` key as attack damage; an unlisted suffix counts only in the total. |
+
+`+rage` ("Wściekłość: atak +X") and `+taken_dmg` ("Piętno bestii: atak +X")
+are attack bonuses already inside the attack the row reports. They keep their
+`rageDamageDealt`, `stigmaDamageDealt`, and `stigmaDamageTaken` buckets, but
+the timeline counts them as buffs, not as a second damage instance.
 
 ### Taken / Post-Defense Damage
 
@@ -130,6 +147,7 @@ they also increase defender `damageTaken`, the listed taken family, and
 | `-dmgc`     | `frostDamageTaken`     |
 | `-dmgl`     | `lightningDamageTaken` |
 | `-thirdatt` | `thirdAttDamageTaken`  |
+| `-dmg…`     | none                   |
 
 `-dmg=0` is meaningful. It often means the row carried an attempted attack, but
 the final post-defense damage was zero because another defense, resistance, or
@@ -148,6 +166,9 @@ These rows normally use the affected warrior as the actor and `0` as target.
 | `fire`      | `firePassiveDamageTaken`, `damageTaken`                            |
 | `light`     | `lightningPassiveDamageTaken`, `damageTaken`                       |
 | `anguish`   | `legbonAnguishDamageTaken`, `damageTaken`                          |
+| `frost`     | `damageTaken`                                                      |
+| `absolute`  | `damageTaken` (unavoidable damage, `obrażenia nieuchronne`)        |
+| `physical`  | `damageTaken`                                                      |
 
 Example:
 
@@ -155,21 +176,36 @@ Example:
 617=95.72;0;wound=2817,20
 ```
 
-The processor reads the first value as `2817`. The `20` is retained in raw
-timeline action params but is not currently used as a duration formula.
+The processor reads the first value as `2817`. The `20` means the wound was
+weakened by 20%; it stays in the raw timeline action param.
+
+## Other Damage
+
+`+oth_dmg=value,class,Name(hp%)` is damage a warrior other than the row's
+target took, rendered as "-value obrażeń otrzymał(a) Name".
+
+| Named warrior               | Processor behavior                                                                                                |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| the actor or its team       | reflected by the target: named `damageTaken`, `trueDamageTaken`, `reflectedDamageTaken`; target `reflectedDamage` |
+| an opponent, in a spell row | spell damage: actor `damageDealt`, `trueDamageDealt`; named `damageTaken`, `trueDamageTaken`                      |
+| an opponent, otherwise      | an extra hit such as a wide swing: actor `damageDealt`, `damageDealtAfterDefensive`; named `damageTaken`          |
+| not found                   | spell rows go to the row's target, other rows are reflected onto the actor                                        |
 
 ## Defense, Mitigation, And Counters
 
 These keys are visible target-side defensive events.
 
+The mechanics article groups evade, parry, and arrow block as events that make
+the attack miss, and treats block separately: it cuts main-weapon damage by
+30%. A pierce block only cancels an armor pierce.
+
 | Key           | Processor aggregate                                        | Timeline flag/category      |
 | ------------- | ---------------------------------------------------------- | --------------------------- |
 | `-evade`      | defender `evasions`, actor `attacksEvaded`                 | `evade`, `mitigation`       |
+| `-parry`      | defender `evasions`, actor `attacksEvaded`                 | `parry`, `mitigation`       |
+| `-arrowblock` | defender `evasions`, actor `attacksEvaded`                 | `arrowBlock`, `mitigation`  |
 | `-blok`       | defender `blocks`, `blockedDamage`; actor `attacksBlocked` | `block`, `mitigation`       |
-| `-block`      | same as `-blok`                                            | `block`, `mitigation`       |
-| `-parry`      | same block bucket, with parry flag                         | `parry`, `mitigation`       |
-| `-arrowblock` | same block bucket, with arrow-block flag                   | `arrowBlock`, `mitigation`  |
-| `-pierceb`    | same block bucket, with pierce-block flag                  | `pierceBlock`, `mitigation` |
+| `-pierceb`    | none                                                       | `pierceBlock`, `mitigation` |
 | `-contra`     | defender `counters`                                        | `counter`                   |
 
 `-contra` is intentionally not counted as mitigation. It means counterattack,
@@ -178,28 +214,25 @@ not prevented damage.
 If a block-like key has no value, for example `-blok`, the event still counts as
 a block, but `blockedDamage` increases by `0`.
 
-The processor also recognizes these defensive/modifier keys for timeline
-coverage, but does not currently turn them into the same warrior aggregates as
-block/evade:
-
-| Key                           | Meaning in analytics                                               |
-| ----------------------------- | ------------------------------------------------------------------ |
-| `active_decblock_per`         | active block-reduction modifier, recognized as mitigation metadata |
-| `active_decblock_per-enemies` | enemy-side active block-reduction modifier                         |
-| `alllowdmg`                   | low/all damage modifier, recognized as mitigation metadata         |
+`active_decblock_per`, `active_decblock_per-enemies` (lower the enemies' block
+chance), and `alllowdmg` (weaken the enemies' attack) are percentage debuffs,
+not prevented damage.
 
 ## Healing Keys
 
-| Key                     | Processor aggregate                                               |
-| ----------------------- | ----------------------------------------------------------------- |
-| `heal`                  | actor `passiveHealing`                                            |
-| `bandage`               | actor `activeHealing`                                             |
-| `heal_target`           | target `activeHealing`; actor `healingDone` in timeline analytics |
-| `healall_per`           | recognized as healing coverage metadata                           |
-| `lowheal_per-enemies`   | recognized as healing coverage metadata                           |
-| `achpp_per`             | recognized as healing coverage metadata                           |
-| `legbon_lastheal`       | legendary last-heal count and value                               |
-| `legbon_holytouch_heal` | holy-touch heal value                                             |
+| Key                     | Processor aggregate                                                |
+| ----------------------- | ------------------------------------------------------------------ |
+| `heal`                  | actor `passiveHealing`; a negative value is lost life, not healing |
+| `afterheal`             | actor `passiveHealing`                                             |
+| `bandage`, `npc_heal`   | actor `activeHealing`                                              |
+| `vamp`                  | actor `activeHealing` (life drained from the target)               |
+| `heal_target`           | target `activeHealing`; actor `healingDone` in timeline analytics  |
+| `healall_per`           | healing flag only; the value is a percentage                       |
+| `legbon_lastheal`       | `value,Name`: the named warrior's last-heal count and value        |
+| `legbon_holytouch_heal` | holy-touch heal value                                              |
+
+`lowheal_per-enemies` lowers the enemies' healing and `achpp_per` raises
+armor, so both are classified as debuff and buff.
 
 Example:
 
@@ -214,16 +247,17 @@ This is a self/passive healing tick for warrior `617`, not a targeted attack.
 The official mechanics article treats absorption as part of damage resolution.
 The combat log exposes both physical and magical absorption events.
 
-| Key                     | Timeline behavior                                     |
-| ----------------------- | ----------------------------------------------------- |
-| `+absorb`               | actor physical absorption gained                      |
-| `+abdest`               | actor physical absorption gained                      |
-| `+abdest_per`           | actor physical absorption gained                      |
-| `active_absorbdest_per` | actor physical absorption gained                      |
-| `+absorbm`              | actor magic absorption gained                         |
-| `+abmdest_per`          | actor magic absorption gained                         |
-| `-absorb`               | target physical absorption spent; timeline mitigation |
-| `-absorbm`              | target magic absorption spent; timeline mitigation    |
+| Key        | Timeline behavior                                     |
+| ---------- | ----------------------------------------------------- |
+| `+absorb`  | target physical absorption renewed                    |
+| `+absorbm` | target magic absorption renewed                       |
+| `-absorb`  | target physical absorption spent; timeline mitigation |
+| `-absorbm` | target magic absorption spent; timeline mitigation    |
+
+Margonem renders absorption renewal on the defending side of a row.
+`+abdest`, `+abdest_per`, `+abmdest_per`, and `active_absorbdest_per` destroy
+the target's absorption ("Zniszczono X absorpcji"), so they are debuffs and
+never absorption gained.
 
 Absorption contributes to the timeline mitigation family, but it is tracked
 separately from block/evade counters.
@@ -232,18 +266,18 @@ separately from block/evade counters.
 
 Resource pressure is split into energy pressure and mana pressure.
 
-| Key         | Timeline / pressure behavior                                                   |
-| ----------- | ------------------------------------------------------------------------------ |
-| `energy`    | actor `resourceDelta` decreases by value                                       |
-| `en-regen`  | actor `resourceDelta` increases by value                                       |
-| `+energy`   | actor `resourceDelta` increases                                                |
-| `+engback`  | actor `resourceDelta` increases                                                |
-| `energyout` | actor `resourceDelta` decreases by value; no pressure because it is self-spend |
-| `+endest`   | actor `resourceDelta` decreases by value; no pressure because it is self-spend |
-| `-endest`   | defender `destroyedEnergy`; actor energy pressure                              |
-| `mana`      | actor `resourceDelta` decreases by value                                       |
-| `-manadest` | defender `destroyedMana`; actor mana pressure                                  |
-| `stealmana` | defender mana loss, actor mana pressure                                        |
+| Key                      | Warrior aggregate and timeline behavior                                    |
+| ------------------------ | -------------------------------------------------------------------------- |
+| `en-regen`, `+engback`   | actor `regeneratedEnergy` and `resourceDelta` change by the signed value   |
+| `energy`                 | positive is spent, negative is gained energy                               |
+| `energyout`              | actor `resourceDelta` decreases by value                                   |
+| `+endest`, `-endest`     | target `destroyedEnergy`; actor energy pressure                            |
+| `+energy`                | target energy lowered after a blackout; target `destroyedEnergy`, pressure |
+| `mana`                   | negative is mana the actor received; actor `regeneratedMana`               |
+| `managain`               | actor `regeneratedMana`                                                    |
+| `manatransfer`           | target `regeneratedMana`; actor gives the mana                             |
+| `+manadest`, `-manadest` | target `destroyedMana`; actor mana pressure                                |
+| `stealmana`              | target `destroyedMana`, actor `regeneratedMana`; actor mana pressure       |
 
 Rows such as `-endest=12,3` use `12` as the numeric value. Extra metadata is
 kept in the raw action param.
@@ -270,32 +304,29 @@ are tolerated in name comparisons.
 These keys are recognized for action coverage and timeline labels. Some are
 also aggregated directly.
 
-| Key                      | Current aggregation                                            |
-| ------------------------ | -------------------------------------------------------------- |
-| `+pierce`                | actor `armorPierces`                                           |
-| `+crit`                  | actor `criticalHits`                                           |
-| `+fastarrow`             | actor `fastArrows`                                             |
-| `+injure`                | defender `injures`                                             |
-| `+wound`                 | buff/effect marker; not the same as `wound` damage tick        |
-| `+woundpoison`           | buff/effect marker                                             |
-| `+of_crit`               | observed offensive critical modifier metadata                  |
-| `+critwound`             | critical wound marker; damage tick is `critwound` without plus |
-| `+crush_physical`        | physical crush modifier metadata                               |
-| `+crush_distance`        | distance crush modifier metadata                               |
-| `+critpierce`            | critical pierce modifier metadata                              |
-| `+spell-taken_dmg-all`   | spell taken-damage modifier metadata                           |
-| `aura-sa_per`            | aura speed modifier metadata                                   |
-| `aura-adddmg2_per-meele` | aura added-damage modifier metadata                            |
-| `critval-allies`         | allies critical-value modifier metadata                        |
-| `critmval-allies`        | allies magic-critical modifier metadata                        |
-| `absolute`               | absolute/zeroing-effect metadata                               |
-| `+exp`                   | exp marker, recognized but outside combat analytics scope      |
-| `+acdmg`                 | actor `reducedArmor`                                           |
-| `+actdmg`                | actor `reducedPoisonResistance`                                |
-| `+resdmg`                | actor `magicResistanceDestroyed`                               |
-| `-redabdest_per`         | absorption-destruction reduction metadata                      |
-| `-poison_lowdmg_per`     | poison low-damage modifier metadata                            |
-| `critwound`              | also handled as passive damage taken                           |
+| Key                       | Current aggregation                                            |
+| ------------------------- | -------------------------------------------------------------- |
+| `+pierce`                 | actor `armorPierces`                                           |
+| `+crit`                   | actor `criticalHits`                                           |
+| `+fastarrow`              | actor `fastArrows`                                             |
+| `+injure`                 | defender `injures`                                             |
+| `+wound`                  | buff/effect marker; not the same as `wound` damage tick        |
+| `+woundpoison`            | buff/effect marker                                             |
+| `+of_crit`                | observed offensive critical modifier metadata                  |
+| `+critwound`              | critical wound marker; damage tick is `critwound` without plus |
+| `+crush_physical`         | physical crush modifier metadata                               |
+| `+crush_distance`         | distance crush modifier metadata                               |
+| `+critpierce`             | critical pierce modifier metadata                              |
+| `+spell-taken_dmg-all`    | spell taken-damage modifier metadata                           |
+| `aura-sa_per`             | aura speed modifier metadata                                   |
+| `aura-adddmg2_per-meele`  | aura added-damage modifier metadata                            |
+| `critval-allies`          | allies critical-value modifier metadata                        |
+| `critmval-allies`         | allies magic-critical modifier metadata                        |
+| `+acdmg`, `+critpierce`   | actor `reducedArmor`                                           |
+| `+actdmg`                 | actor `reducedPoisonResistance`                                |
+| `+resdmg`, `+resdmgf/c/l` | actor `magicResistanceDestroyed`                               |
+| `-redabdest_per`          | absorption-destruction reduction metadata                      |
+| `-poison_lowdmg_per`      | poison low-damage modifier metadata                            |
 
 ## Legendary Bonus Keys
 
@@ -330,12 +361,18 @@ kept in their value fields.
 | `combo-max` | recognized as combo metadata                                            |
 | `step`      | actor movement step, increments `steps`                                 |
 | `+swing`    | movement/tempo metadata                                                 |
-| `winner`    | sets battle outcome winner name                                         |
+| `winner`    | sets battle outcome winner name; `winner=?` means no winner (see below) |
 | `loser`     | sets battle outcome loser name and marks the matching warrior dead      |
 | `flee`      | marks actor fled and battle has flee                                    |
 | `+ph`       | sets PH for the player character, sign corrected after outcome is known |
+| `+exp`      | exp marker, outside combat analytics scope                              |
 | `txt`       | system text row, used for lost turns and surrender                      |
 | `shout`     | system text/voice metadata                                              |
+
+Margonem sends `winner=?` both when a warrior flees and when a battle reaches
+the turn limit. Every stored flee has it. A flee keeps the teams inferred from
+HP and damage, which the flee-aware views and analytics read; without a flee
+the battle is a draw with `winningTeam` and `losingTeam` `0`.
 
 ## Observed But Not Fully Aggregated
 
@@ -470,7 +507,8 @@ Use this excerpt:
 ```
 
 - actor `23476` triggers curse (`legbonCurse`);
-- `-endest=12,3` uses `12` as numeric value and keeps `12,3` raw;
+- `-endest=12,3` uses `12` as numeric value; `3` is how many points the
+  destruction was weakened by;
 - target `617` takes `3947` final physical damage.
 
 ### Passive wound tick
@@ -506,10 +544,12 @@ Use this excerpt:
 
 When adding support for a new action key:
 
-1. Add it to the appropriate category set or damage map in
-   `packages/battle-processor/src/index.ts`.
-2. Decide whether it should affect warrior aggregates, timeline deltas,
-   or only `actionCoverage`.
+1. Look the key up in Margonem's `BattleMessages.js` and its `msg_<key>`
+   dictionary entry, then add it to the catalog in
+   `packages/battle-processor/src/action-keys.ts`.
+2. Decide whether it should affect warrior aggregates
+   (`src/combat-totals.ts`), timeline deltas (`src/timeline.ts`), or only
+   `actionCoverage`.
 3. Add or update processor tests with one minimal row for that key.
 4. Update this document with the key, target/actor semantics, and aggregation
    behavior.
