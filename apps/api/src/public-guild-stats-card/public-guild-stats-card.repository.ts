@@ -67,8 +67,10 @@ export class PublicGuildStatsCardRepository extends Context.Service<
             .where(and(eq(guildTable.id, guildId), eq(guildTable.active, true)))
             .limit(1)
             .pipe(
-              Effect.map((rows) => rows[0] ?? null),
-              Effect.mapError(persistenceError),
+              Effect.mapBoth({
+                onSuccess: (rows) => rows[0] ?? null,
+                onFailure: persistenceError,
+              }),
             ),
         getLootStats: (guildId, dateFrom) =>
           database
@@ -101,15 +103,15 @@ export class PublicGuildStatsCardRepository extends Context.Service<
               ),
             )
             .pipe(
-              Effect.map(
-                (rows) =>
+              Effect.mapBoth({
+                onSuccess: (rows) =>
                   rows[0] ?? {
                     totalLoots: 0,
                     legendaryItems: 0,
                     heroicItems: 0,
                   },
-              ),
-              Effect.mapError(persistenceError),
+                onFailure: persistenceError,
+              }),
             ),
       });
     }),

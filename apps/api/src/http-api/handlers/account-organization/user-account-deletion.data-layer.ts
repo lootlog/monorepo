@@ -257,13 +257,12 @@ export const makeUserAccountDeletion = (
     identity: AuthenticatedIdentity,
   ) {
     yield* ports.cleanupBattlelog(identity.userId).pipe(
-      Effect.catch(() =>
-        Effect.fail(
+      Effect.mapError(
+        () =>
           new DependencyUnavailableError({
             code: "BATTLELOG_SERVICE_UNAVAILABLE",
             retryAfterMs: 60_000,
           }),
-        ),
       ),
     );
 

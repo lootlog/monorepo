@@ -81,6 +81,7 @@
   },
   "ignoreWorkspaces": ["repos/**"],
   "ignoreDependencies": [
+    "@effect/language-service",
     "@fontsource-variable/geist",
     "@fontsource-variable/geist-mono",
     "@tailwindcss/postcss",

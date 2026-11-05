@@ -192,7 +192,7 @@ export const makeReadyRoomRepository = (
               Schema.decodeUnknownSync(Schema.Array(Schema.String))(value),
             ),
           ),
-          Effect.flatMap((ids) => Effect.all(ids.map(get))),
+          Effect.flatMap((ids) => Effect.forEach(ids, get)),
           Effect.map((rooms) =>
             rooms.filter(
               (room): room is ReadyRoomAggregate =>
@@ -223,7 +223,7 @@ export const makeReadyRoomRepository = (
 
             const ids = [...new Set(result)];
 
-            return Effect.all(ids.map(get)).pipe(
+            return Effect.forEach(ids, get).pipe(
               Effect.tap((aggregates) => {
                 const missing = ids.filter((_, index) => !aggregates[index]);
 

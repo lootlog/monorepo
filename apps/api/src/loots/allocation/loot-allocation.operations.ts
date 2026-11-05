@@ -302,8 +302,9 @@ export const makeLootAllocationOperations = (options: {
           ),
         ];
 
-        yield* Effect.all(
-          organizationIds.map((guildId) =>
+        yield* Effect.forEach(
+          organizationIds,
+          (guildId) =>
             options.cache.invalidateScopes(getLootListCacheScope(guildId)).pipe(
               Effect.catch((error) =>
                 Effect.sync(() =>
@@ -314,11 +315,11 @@ export const makeLootAllocationOperations = (options: {
                 ),
               ),
             ),
-          ),
           { concurrency: "unbounded", discard: true },
         );
-        yield* Effect.all(
-          organizationIds.map((guildId) =>
+        yield* Effect.forEach(
+          organizationIds,
+          (guildId) =>
             options.publisher.publish(
               RabbitExchange.DEFAULT,
               RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE,
@@ -330,7 +331,6 @@ export const makeLootAllocationOperations = (options: {
                 npcs: socketNpcs(authorized.lootNpcs),
               },
             ),
-          ),
           { concurrency: "unbounded", discard: true },
         );
 

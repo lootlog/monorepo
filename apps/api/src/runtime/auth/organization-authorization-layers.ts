@@ -185,15 +185,16 @@ const guildAccess =
     requirements: PermissionRequirements,
   ) =>
     resolveAccess(lookup, guildId, requirements).pipe(
-      Effect.map(project),
-      Effect.mapError((error) =>
-        mapAccessError(error, {
-          notFound: () =>
-            new NotFoundError({ status: 404, code: "GUILD_NOT_FOUND" }),
-          forbidden: () =>
-            new ForbiddenError({ status: 403, code: "FORBIDDEN" }),
-        }),
-      ),
+      Effect.mapBoth({
+        onSuccess: project,
+        onFailure: (error) =>
+          mapAccessError(error, {
+            notFound: () =>
+              new NotFoundError({ status: 404, code: "GUILD_NOT_FOUND" }),
+            forbidden: () =>
+              new ForbiddenError({ status: 403, code: "FORBIDDEN" }),
+          }),
+      }),
     );
 
 const toGuildScope = (access: ResolvedAccess) => ({

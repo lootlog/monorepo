@@ -161,7 +161,7 @@ describe("Users and Guilds HttpApi handlers", () => {
           Effect.provide(
             GuildsHandlers.pipe(HttpRouter.provideRequest(services)),
           ),
-          Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
+          Effect.provideService(BearerSecurityMiddleware, bearer),
           Effect.provide(apiKeyEndpointPolicyLayer("main")),
           Effect.provide(SchemaErrorResponseLive),
         );
@@ -204,7 +204,7 @@ describe("Users and Guilds HttpApi handlers", () => {
           Effect.provide(
             GuildsHandlers.pipe(HttpRouter.provideRequest(services)),
           ),
-          Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
+          Effect.provideService(BearerSecurityMiddleware, bearer),
           Effect.provide(apiKeyEndpointPolicyLayer("main")),
           Effect.provide(SchemaErrorResponseLive),
         );

@@ -64,15 +64,12 @@ const offlineRoom = (
     if (result.status === "committed")
       yield* context.publish(result.aggregate, recipients);
   }).pipe(
-    Effect.catch((error) => {
-      if (
+    Effect.catchIf(
+      (error) =>
         error instanceof ResourceConflictError &&
-        attempt + 1 < MAX_CAS_ATTEMPTS
-      )
-        return offlineRoom(context, notificationId, event, attempt + 1);
-
-      return Effect.fail(error);
-    }),
+        attempt + 1 < MAX_CAS_ATTEMPTS,
+      () => offlineRoom(context, notificationId, event, attempt + 1),
+    ),
   );
 
 export const characterOffline = (

@@ -95,13 +95,11 @@ const routingFor = (message: Pick<ChatStoredMessage, "type" | "npc">) => {
 export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
   const rawMessages = (guildId: string) =>
     redis.lrange(messageKey(guildId), 0, -1).pipe(
-      Effect.catch((error) => {
-        if (error instanceof Error && error.message.includes("WRONGTYPE")) {
-          return redis.del(messageKey(guildId)).pipe(Effect.as([]));
-        }
-
-        return Effect.fail(error);
-      }),
+      Effect.catchIf(
+        (error) =>
+          error instanceof Error && error.message.includes("WRONGTYPE"),
+        () => redis.del(messageKey(guildId)).pipe(Effect.as([])),
+      ),
       Effect.map((elements) =>
         elements.flatMap((element) => {
           try {

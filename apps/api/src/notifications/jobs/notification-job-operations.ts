@@ -83,25 +83,26 @@ export const makeNotificationJobOperations = (
       return yield* (
         history ? query.limit(NOTIFICATIONS_HISTORY_RESPONSE_LIMIT) : query
       ).pipe(
-        Effect.mapError(databaseFailure("notifications.jobs.list")),
-        Effect.map((rows) =>
-          rows.map(({ job, rule, target }) => ({
-            ...job,
-            payloadSnapshot: Schema.decodeUnknownSync(
-              NotificationJobPayloadSnapshotResponse,
-            )(job.payloadSnapshot),
-            rule: {
-              ...rule,
-              filters:
-                rule.filters === null
-                  ? null
-                  : Schema.decodeUnknownSync(NotificationFiltersResponse)(
-                      rule.filters,
-                    ),
-            },
-            target,
-          })),
-        ),
+        Effect.mapBoth({
+          onFailure: databaseFailure("notifications.jobs.list"),
+          onSuccess: (rows) =>
+            rows.map(({ job, rule, target }) => ({
+              ...job,
+              payloadSnapshot: Schema.decodeUnknownSync(
+                NotificationJobPayloadSnapshotResponse,
+              )(job.payloadSnapshot),
+              rule: {
+                ...rule,
+                filters:
+                  rule.filters === null
+                    ? null
+                    : Schema.decodeUnknownSync(NotificationFiltersResponse)(
+                        rule.filters,
+                      ),
+              },
+              target,
+            })),
+        }),
       );
     });
 
