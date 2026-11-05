@@ -74,7 +74,9 @@ describe("Activity permissions", () => {
     });
 
     const read = Effect.flatMap(Permissions, (service) =>
-      service.getUserGuildPermissions("discord-1", "user-1", "guild-1"),
+      service
+        .getUserCapabilities("discord-1", "user-1")
+        .pipe(Effect.map((capabilitiesFor) => capabilitiesFor("guild-1"))),
     );
 
     const [before, after] = await Effect.runPromise(
