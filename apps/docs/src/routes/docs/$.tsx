@@ -4,29 +4,38 @@ import { staticFunctionMiddleware } from "@tanstack/start-static-server-function
 import { useFumadocsLoader } from "fumadocs-core/source/client";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import defaultMdxComponents from "fumadocs-ui/mdx";
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 import {
   DocsBody,
   DocsDescription,
   DocsPage,
   DocsTitle,
+  EditOnGitHub,
 } from "fumadocs-ui/page";
-import { use, type CSSProperties } from "react";
-import { DocsChapterRail } from "@/components/docs-chapter-rail";
-import { DocsHeader } from "@/components/docs-header";
+import { use } from "react";
+import { PageMarkdownActions } from "@lootlog/ui/components/page-markdown-actions";
+import { getMarkdownPath } from "@lootlog/ui/lib/docs-markdown";
 import { DocsScrollToTop } from "@/components/docs-scroll-to-top";
-import { DocsSidebarSeparator } from "@/components/docs-sidebar-separator";
 import { ProductScreenshot } from "@/components/product-screenshot";
-import { getChapterBySlug } from "@/lib/docs-chapters";
 import { docsTranslations } from "@/lib/polish-translations";
 import { docs, source } from "@/lib/source";
 
-type DocsLayoutStyle = CSSProperties & {
-  "--fd-header-height": string;
+const mdxComponents = {
+  ...defaultMdxComponents,
+  ProductScreenshot,
+  Step,
+  Steps,
+  Tab,
+  Tabs,
 };
 
-type ChapterStyle = CSSProperties & {
-  "--active-chapter-color": string;
-};
+function getPageMarkdownPath(slugs: readonly string[]) {
+  return getMarkdownPath(
+    slugs.length ? `/docs/${slugs.join("/")}` : "/docs",
+    slugs,
+  );
+}
 
 const loadStaticPage = createServerFn({ method: "GET" })
   .validator((slugs: string[]) => slugs)
@@ -73,6 +82,11 @@ export const Route = createFileRoute("/docs/$")({
           rel: "canonical",
           href: `https://docs.lootlog.pl/docs${loaderData.slugs.length ? `/${loaderData.slugs.join("/")}` : ""}`,
         },
+        {
+          rel: "alternate",
+          type: "text/markdown",
+          href: getPageMarkdownPath(loaderData.slugs),
+        },
       ],
       meta: [
         {
@@ -95,82 +109,32 @@ function DocsRoute() {
 
   const { toc } = use(page.load());
   const MDX = page.body;
-  const chapter = getChapterBySlug(slugs);
-
-  const layoutStyle: DocsLayoutStyle = {
-    "--fd-header-height": "72px",
-    gridTemplate: `"header header header"
-"sidebar toc-popover toc"
-"sidebar main toc" 1fr / var(--fd-sidebar-col) minmax(0, 1fr) var(--fd-toc-width)`,
-  };
-
-  const chapterStyle: ChapterStyle = {
-    "--active-chapter-color": chapter.color,
-  };
 
   return (
     <DocsLayout
       tree={pageTree}
-      nav={{ url: "/docs" }}
+      nav={{ title: docsTranslations.header.section, url: "/docs" }}
       themeSwitch={{ enabled: false }}
-      searchToggle={{
-        full: { className: "docs-search-trigger" },
-        sm: { className: "docs-search-trigger-mobile" },
-      }}
-      slots={{ header: DocsHeader }}
-      containerProps={{
-        className: "docs-layout",
-        style: layoutStyle,
-      }}
-      sidebar={{
-        collapsible: false,
-        components: { Separator: DocsSidebarSeparator },
-        footer: (
-          <nav className="docs-sidebar-footer" aria-label="Linki Lootlog">
-            <a href="https://lootlog.pl">lootlog.pl</a>
-            <a
-              href="https://github.com/lootlog/monorepo"
-              target="_blank"
-              rel="noreferrer"
-            >
-              GitHub
-            </a>
-            <a
-              href="https://discord.gg/mPcczaeYMu"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Discord
-            </a>
-          </nav>
-        ),
-      }}
+      searchToggle={{ enabled: false }}
+      containerProps={{ className: "documentation-layout" }}
     >
       <DocsScrollToTop />
-      <DocsPage
-        toc={toc}
-        footer={{ className: "docs-page-footer" }}
-        className={`docs-article docs-chapter-${chapter.id}`}
-        style={chapterStyle}
-      >
-        <div className="docs-article-content">
-          <DocsChapterRail activeChapterId={chapter.id} />
-          <div className="docs-article-heading">
-            <p className="docs-article-kicker">
-              {chapter.number} · {chapter.label}
-            </p>
-            <DocsTitle>{page.title}</DocsTitle>
-            <DocsDescription>{page.description}</DocsDescription>
-          </div>
-          <DocsBody className="docs-body">
-            <MDX
-              components={{
-                ...defaultMdxComponents,
-                ProductScreenshot,
-              }}
-            />
-          </DocsBody>
-        </div>
+      <DocsPage toc={toc} tableOfContent={{ style: "clerk" }}>
+        <DocsTitle>{page.title}</DocsTitle>
+        <DocsDescription className="mb-0">{page.description}</DocsDescription>
+        <PageMarkdownActions
+          markdownUrl={getPageMarkdownPath(slugs)}
+          labels={docsTranslations.markdownActions}
+        />
+        <DocsBody>
+          <MDX components={mdxComponents} />
+        </DocsBody>
+        <EditOnGitHub
+          href={`https://github.com/lootlog/monorepo/blob/main/apps/docs/content/docs/${path}`}
+          className="self-start"
+        >
+          {docsTranslations.editOnGitHub}
+        </EditOnGitHub>
       </DocsPage>
     </DocsLayout>
   );

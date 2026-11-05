@@ -1,0 +1,116 @@
+---
+title: Lista łupów i statystyki
+description: Gdzie są łupy grupy w Lootlog. Wyszukiwanie i filtry łupów, szczegóły dropu, polubienia, losowanie legend i statystyki Lootloga.
+---
+
+**Lista łupów** to pierwsza strona Lootloga w panelu na
+[lootlog.pl](https://lootlog.pl/@me). Trafia tu każdy łup zgłoszony przez
+członków. Nowe łupy pojawiają się na żywo, bez odświeżania strony.
+
+<ProductScreenshot
+  src="/screenshots/loot-list.jpg"
+  alt="Lista łupów Lootloga z wyszukiwarką, wyborem świata i siatką kafelków pokonanych potworów z przedmiotami i oznaczeniami Heros i Kolos"
+  title="Lootlog · Lista łupów"
+/>
+
+## Znajdź łup
+
+- **Świat** wybierasz w górnym pasku. **Wszystkie światy** pokazuje łupy ze
+  wszystkich, z nazwą świata przy wpisie.
+- **Wyszukiwarka nad listą** podpowiada potwory, przedmioty i graczy,
+  rozpoznaje wklejony identyfikator przedmiotu i pozwala szukać wpisanego
+  tekstu w łupach. Wybrana podpowiedź dodaje filtr.
+- **Panel filtrów** przy prawej krawędzi ma sekcje **Potwory**,
+  **Przedmioty** i **Gracze** oraz szybkie filtry. Przycisk w nagłówku zwija
+  go do paska ikon, a kropka przy ikonie oznacza aktywny filtr. Na telefonie
+  filtry otwierasz okrągłym przyciskiem w prawym dolnym rogu.
+- Po prawej stronie paska wyszukiwania przełączysz widok listy i siatki.
+
+Podpowiedzi potworów i przedmiotów obejmują wszystkie światy tej samej wersji
+gry (margonem.pl albo margonem.com), bo mają tam te same ID. Filtr świata
+nadal zawęża samą listę.
+
+Gdy przewiniesz listę w dół, nowe łupy czekają pod przyciskiem z ich liczbą u
+góry i nie przesuwają czytanych wpisów.
+
+## Szczegóły łupu
+
+Kliknij łup, żeby otworzyć szczegóły:
+
+- przy każdym graczu przedmioty, które złapał; kilka sztuk tego samego to
+  jedna linia z licznikiem, np. **×3**;
+- przycisk kopiowania obok przedmiotu kopiuje jego identyfikator `ITEM#…`;
+- **Bez przedmiotów** to gracze z grupy, którym nic nie przypadło;
+- komentarze na dole okna, zwinięte pod **Komentarze**.
+
+Serduszko w nagłówku łupu to polubienie. Liczba obok mówi, ile osób z
+Lootloga polubiło łup, a po najechaniu zobaczysz kto.
+
+### Gracze na mapie w chwili dropu
+
+Gdy w walce wypadł przedmiot legendarny, sekcja **Pozostali na mapie w chwili
+dropu** pokazuje postacie, które były na mapie: nick, poziom i profesję.
+Obecność na mapie nie oznacza udziału w walce. Lista dotyczy chwili dropu i
+później się nie zmienia.
+
+**Brak danych o graczach na mapie** znaczy, że dodatek nie dostarczył
+wiarygodnej listy, np. przy starszym łupie, a nie że mapa była pusta.
+
+## Losowanie legendy
+
+Margonem mieści w grupie dziesięciu graczy. Gdy na mapie byli też gracze,
+którym zabrakło miejsca, niezwiązany na stałe przedmiot legendarny można
+rozlosować między nimi a osobą, która złapała go w grze.
+
+1. W szczegółach łupu kliknij przycisk z kostką przy przedmiocie.
+2. Sprawdź listę uczestników. Dodatek podpowiada graczy obecnych na mapie.
+   Usuń np. graczy z wrogiej frakcji, dopisz brakujących z nickiem i
+   profesją, zmień liczbę losów.
+3. Zakręć kołem. Zwycięzcę wybiera serwer Lootloga.
+
+Zwycięzca z gry jest zawsze na kole. Domyślnie dostaje tyle losów, ilu graczy
+w grupie ma profesję pasującą do przedmiotu, łącznie z nim, a każdy taki
+gracz spoza grupy jeden los. Poziom nie ma znaczenia.
+
+Wynik zostaje zapisany z uczestnikami, losami i osobą losującą, a przy
+przedmiocie pojawia się nazwa zwycięzcy. Jeśli trzeba powtórzyć, unieważnij
+wynik z podaniem powodu. Unieważniony wynik zostaje w historii.
+
+Losowanie prowadzą osoby z `LOOTLOG_LOOTS_ARCHIVE`, a wynik widzi każdy, kto
+widzi łup. Te same osoby usuwają łup z menu **⋯** w szczegółach.
+
+## Statystyki Lootloga
+
+Strona **Statystyki** Lootloga ma zakładki **Łupy** i **Bicia**.
+
+- Okres, np. 24 godziny albo 7 dni, liczy się wstecz od bieżącej pełnej
+  godziny, więc obie zakładki obejmują ten sam czas.
+- **Bicia** pokazuje wszystkie bicia i udział tytanów, kolosów, herosów,
+  herosów eventowych i elit II. Kliknij typ potwora, żeby zobaczyć jego
+  czołówkę członków i potworów. Niżej są wykres bić, rekordy okresu i mapa
+  **Kiedy bijecie** według dnia tygodnia i godziny.
+- Licznik **Legendarne** liczy wszystkie legendarne przedmioty, a
+  **Najczęstsze legendy** pomijają błogosławieństwa, ulepszenia i przedmioty
+  jednorazowe.
+
+Łup z walki z kilkoma potworami należy do najsilniejszego: liczy się typ
+(tytan, kolos, heros, heros eventowy, elita III, elita II, elita), potem
+siła i poziom. Dlatego łup z elity II trafia do niej, a nie do obstawy z
+wyższym poziomem. Tak samo liczą statystyki, lista łupów i dashboard.
+
+Godziny i dni są w czasie polskim.
+
+## Kto widzi łupy
+
+Odczyt łupów wymaga `LOOTLOG_LOOTS_READ`, a łupy z tytanów i herosów osobnych
+uprawnień. Rola widzi łup tylko wtedy, gdy poziom potwora zapisany przy łupie
+mieści się w jej zakresie poziomów. Statystyki bić pokazują tylko potwory,
+których łupy rola może zobaczyć. Szczegóły w
+[Rolach i uprawnieniach](/docs/permissions#łupy).
+
+Część starszych łupów może po aktualizacji pokazywać inny poziom potwora albo
+nazwę przedmiotu z wersji gry, na której padł łup. Lootlog zmienia je tylko
+wtedy, gdy ma dowód, np. poziom z timerów z tego samego czasu. Może to zmienić
+widoczność takich wpisów dla ról z zakresem poziomów.
+
+Nie widzisz nowych łupów? Zobacz [Pomoc](/docs/faq#nie-widzę-nowych-łupów).

@@ -1,0 +1,138 @@
+---
+title: Discord i powiadomienia
+description: Jak ustawić powiadomienia Lootlog na Discordzie. Kanał dla bota, reguły przypomnień przed spawnem i wykrycia herosa, prywatne wiadomości i komendy bota.
+---
+
+Bot Lootlog przenosi dane z gry na Wasz serwer Discord. Wysyła na kanały
+przypomnienia przed respawnem i wykrycia herosów, a komendami pokaże timery,
+rankingi, łupy i rezerwacje bez otwierania gry.
+
+Bota dodaje administrator serwera przy
+[zakładaniu Lootloga](/docs/clan-features#jak-założyć-lootlog-dla-grupy).
+
+## Powiadomienia na kanale
+
+Powiadomienia ustawiają administratorzy Lootloga w panelu, w **Zarządzanie →
+Powiadomienia**. Strona ma zakładki **Reguły**, **Kanały** i **Historia**.
+
+<Steps>
+<Step>
+
+### Sprawdź uprawnienia bota
+
+Bot potrzebuje na kanale uprawnień: wyświetlanie kanałów, wysyłanie
+wiadomości, osadzanie linków, załączanie plików i czytanie historii
+wiadomości. Ich stan pokazuje **Ustawienia → Informacje**. Bez nich nie
+dodasz kanału ani reguły.
+
+</Step>
+<Step>
+
+### Dodaj kanał
+
+W zakładce **Kanały** wybierz **Dodaj kanał docelowy**, wskaż **Kanał
+Discorda** i opcjonalnie **Nazwę wyświetlaną**.
+
+</Step>
+<Step>
+
+### Dodaj regułę
+
+W zakładce **Reguły** wybierz **Dodaj regułę**. Ustaw **Typ powiadomienia**,
+świat, potwory i **Kanały docelowe**. Jedna reguła może wysyłać na kilka
+kanałów.
+
+</Step>
+<Step>
+
+### Wyślij test
+
+**Wyślij test** sprawdza regułę od razu, bez czekania na respawn.
+
+</Step>
+</Steps>
+
+### Reguły powiadomień
+
+| Typ                             | Kiedy bot pisze                                                                   |
+| ------------------------------- | --------------------------------------------------------------------------------- |
+| **Przypomnienie przed spawnem** | Przed respawnem potwora z timerem, z wybranym wyprzedzeniem                       |
+| **Wykrycie herosa**             | Gdy ktoś [wykryje herosa](/docs/heroes) i gdy heros pojawi się w wykrytym miejscu |
+| **Zaplanowana wiadomość**       | O wybranej porze: jednorazowo, co X godzin, codziennie, co tydzień                |
+
+**Przypomnienie przed spawnem**
+
+- **Punkt odniesienia** to minimalny albo maksymalny czas spawnu, a
+  **Wyprzedzenie** liczba minut przed nim.
+- Reguła może dotyczyć jednego świata albo wszystkich.
+- **Filtr NPC** obejmuje do 5 potworów z timerem w Twoim Lootlogu. Potwór z
+  dopiskiem „każdy spawn” obejmuje wszystkie miejsca odrodzenia, a pozycję
+  jednego miejsca wybierzesz dopiero po wskazaniu świata.
+- Potwora bez timera dodasz, wpisując jego ID ręcznie.
+- Reguła bez wybranych potworów obejmuje wszystkie timery, także ręczne.
+
+**Wykrycie herosa** wysyła wiadomość przy nowym miejscu herosa i drugi raz,
+gdy heros się pojawi. Kolejne potwierdzenia nic nie wysyłają. **Poziom herosa
+od / do** zawęża regułę.
+
+**Szablon wiadomości** ustala treść. Masz gotowe szablony **Prosty**,
+**Szczegółowy** i **Minimalny**, zmienne, formatowanie Markdown i wzmianki
+ról.
+
+### Historia i błędy
+
+Zakładka **Historia** pokazuje każdą wysyłkę z jej stanem. Po chwilowej
+awarii Lootlog ponawia wysyłkę. Gdy próby się wyczerpią, wpis dostaje status
+błędu z przyczyną.
+
+Powiadomienie, którego nie dało się wysłać w ciągu 15 minut od terminu, nie
+zostanie wysłane, bo byłoby nieaktualne. Przypomnienie przed spawnem jest
+aktualne do końca okna respawnu. Reguła cykliczna przechodzi wtedy do
+najbliższego terminu, bez nadrabiania.
+
+## Prywatne powiadomienia
+
+W strefie osobistej, w **Powiadomienia**, ustawisz prywatne wiadomości od
+bota:
+
+1. W sekcji **Kanał powiadomień** wybierz **Włącz powiadomienia**.
+   **Testuj powiadomienie** sprawdzi, czy wiadomość dociera.
+2. **Dodaj przedmiot** zaczyna obserwację przedmiotu na wybranym świecie w
+   Twoich Lootlogach. Gdy przedmiot wypadnie, dostaniesz wiadomość.
+
+Możesz obserwować do 20 przedmiotów. Ten sam kanał wysyła przypomnienia o
+[rezerwacjach](/docs/reservations#przypomnienie-w-dm). Jeśli wiadomości nie
+docierają, sprawdź ustawienia prywatności na Discordzie.
+
+## Komendy bota
+
+Na serwerze z botem wpisz `/`. Bot odpowiada danymi Lootloga tego serwera i
+pokazuje tylko to, co widzisz na stronie zgodnie ze swoją rolą. Żeby z nich
+korzystać, zaloguj się raz na stronie Lootloga przez Discord.
+
+| Komenda                                                  | Co pokazuje                                                               |
+| -------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `/timery`                                                | Najbliższe respawny, z filtrem typu potworów i świata                     |
+| `/timer`                                                 | Okno respawnu jednego potwora, świat i mapę                               |
+| `/lupy`                                                  | Ostatnie łupy, z filtrem postaci, potwora i rzadkości                     |
+| `/przedmiot`                                             | Kto i z którego potwora zdobył przedmiot                                  |
+| `/ranking`                                               | Ranking bić członków dla typu potworów, z Twoim miejscem                  |
+| `/statystyki`                                            | Twoje bicia (lub wskazanego członka) według typu potworów                 |
+| `/npc`                                                   | Kto najczęściej bije wybranego potwora                                    |
+| `/online`                                                | Ile postaci członków jest w grze na każdym świecie, w tym AFK             |
+| `/rezerwacje moje`, `/rezerwacje miejsca`                | Twoje nadchodzące rezerwacje albo zajętość expowisk                       |
+| `/event ranking`, `/event status`, `/event podsumowanie` | Punkty eventu, okna respawnu herosów eventu i podsumowanie                |
+| `/karta`                                                 | Publiczną kartę statystyk łupów, jeśli administrator ją włączył           |
+| `/lootlog link`, `/lootlog diagnostyka`                  | Linki do Lootloga i instalacji oraz stan konta i uprawnień bota na kanale |
+
+- Odpowiedź domyślnie widzisz tylko Ty. Opcja `publiczne` pokazuje ją
+  wszystkim na kanale. `/rezerwacje moje` i `/lootlog diagnostyka` są zawsze
+  prywatne.
+- `/ranking`, `/statystyki` i `/npc` mają opcję `okres`: od ostatnich 24
+  godzin do całej historii.
+- Publiczne rankingi nie oznaczają graczy. Wyjątkiem są publiczne
+  `/statystyki` innego członka, bo dotyczą tylko jego.
+- Czasy respawnów i rezerwacji Discord pokazuje w Twojej strefie czasowej i
+  odlicza na bieżąco.
+
+Bot nie odpowiada albo nie może pisać na kanale? Użyj `/lootlog diagnostyka`.

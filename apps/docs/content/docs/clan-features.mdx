@@ -3,500 +3,113 @@ title: Darmowy lootlog klanowy w Margonem
 description: Załóż lootlog klanowy dla swojej grupy w Margonem. Połącz serwer Discord, wspólne łupy, timery, statystyki i rezerwacje w bezpłatnym Lootlog.
 ---
 
-Lootlog jest darmowym narzędziem do wspólnego zapisywania łupów i koordynacji
-gry w Margonem. Lootlog klanowy działa w ramach organizacji powiązanej
-z jednym serwerem Discord. Organizacja może obejmować kilka klanów i światów
-Margonem oraz graczy bez klanu. Dostęp do każdego narzędzia zależy od roli
-przypisanej w Lootlog.
+Lootlog grupy zbiera łupy, timery, bicia i obecność wszystkich członków w
+jednym miejscu, bez ręcznego wpisywania. Jest darmowy i działa na bazie
+Waszego serwera Discord: kto jest na serwerze, ten może być członkiem, a role
+z Discorda decydują o dostępie.
 
-## Jak założyć lootlog klanowy
+Jeden Lootlog może obejmować kilka klanów Margonem, kilka światów i graczy
+bez klanu.
 
-1. Zaloguj się na [lootlog.pl](https://lootlog.pl/@me) przez konto Discord,
-   które ma uprawnienie administratora na serwerze twojej grupy.
-2. Wybierz **Dodaj** na pasku bocznym panelu i dodaj bota Lootlog do serwera.
-   Lista pokazuje tylko serwery, którymi administrujesz.
-3. Skonfiguruj [role i uprawnienia](/docs/permissions), aby członkowie mieli
-   dostęp do właściwych danych i narzędzi.
-4. Poproś członków o [instalację dodatku](/docs/installation) i zalogowanie
-   się kontem Discord należącym do tego serwera.
-5. W ustawieniach dodatku otwórz **Zakres zbierania** i wybierz organizację
-   dla swojej postaci. Każdy członek wykonuje ten krok u siebie.
+## Jak założyć Lootlog dla grupy
 
-Po zapisaniu obsługiwanego zdarzenia sprawdź, czy łup lub timer trafił do
-właściwej organizacji. Pełną instrukcję połączenia gry i panelu znajdziesz
-w [Pierwszych krokach](/docs/getting-started).
+Potrzebujesz konta Discord z uprawnieniem **Administrator** na serwerze
+grupy.
 
-## Zanim zaczniesz
+<Steps>
+<Step>
 
-- Zaloguj się kontem należącym do właściwego serwera Discord.
-- Wybierz właściwą organizację w panelu.
-- Sprawdź, czy masz co najmniej `LOOTLOG_ACCESS` oraz uprawnienia wymagane
-  przez konkretny widok.
+### Dodaj bota Lootlog
 
-## Łupy i statystyki
+Zaloguj się na [lootlog.pl](https://lootlog.pl/@me) przez Discord. Wybierz
+**Dodaj** na pasku bocznym i dodaj bota Lootlog do serwera. Lista pokazuje
+tylko serwery, na których jesteś administratorem. Nowy serwer albo nowe
+uprawnienie może pojawić się na liście do 10 minut.
 
-Lista łupów pozwala przeglądać wspólne wpisy, a statystyki agregują aktywność
-członków, potworów i zdobytych przedmiotów. Filtry świata i typu NPC pomagają
-porównywać dane o tej samej skali.
+</Step>
+<Step>
 
-Podpowiedzi potworów i przedmiotów w filtrach łupów obejmują wszystkie światy
-tej samej wersji gry (margonem.pl albo margonem.com), bo potwory i itemy mają
-na nich te same ID. Filtr świata nadal zawęża samą listę łupów.
+### Nadaj uprawnienia rolom
 
-Część starszych łupów może po aktualizacji pokazywać inny poziom potwora albo
-nazwę itemu z wersji gry, na której padł łup. Lootlog zmienia je tylko wtedy,
-gdy ma na to dowód, na przykład poziom zapisany w timerach z tego samego
-czasu. Poziom potwora decyduje o tym, które role widzą łup, więc widoczność
-takich wpisów może się zmienić.
+W **Ustawienia → Role** zdecyduj, co widzi i może każda rola z Discorda.
+Role Discorda z uprawnieniem Administrator mają w Lootlogu pełny dostęp.
+Zobacz [Role i uprawnienia](/docs/permissions).
 
-W szczegółach legendarnego łupu z elity II możesz zobaczyć graczy obecnych na
-mapie w chwili dropu, jeśli klient zapisał te dane. Kolorowe wyróżnienie i ikona
-drużyny przy nicku oznaczają postać, która uczestniczyła w tej walce. Przy
-starszych wpisach bez zapisanych danych o obecności zobaczysz informację o ich braku.
+</Step>
+<Step>
 
-Przytrzymaj Shift i najedź na gracza na mapie albo w oknie **Gracze na mapie**,
-aby zobaczyć w jego dymku sekcję **Lootlog**. Jeśli gracz gra z Twoim
-Lootlogiem, sekcja pokazuje jego nazwę i Lootlogi, do których dodaje łupy
-i timery. Twój wybrany Lootlog jest na początku listy i wyróżniony na niebiesko.
-Kolor kropki odpowiada poświacie gracza na mapie. Gdy gracz nie gra z Twoim
-Lootlogiem, sekcja to pokazuje. Puszczenie Shift usuwa sekcję z dymka. Sekcja
-działa, gdy w Lootlogu wybrany jest konkretny Lootlog, a nie widok wszystkich.
+### Zaproś członków
 
-W **Statystykach → Łupy** i **Statystykach → Bicia** okres, np. ostatnie
-24 godziny albo 7 dni, liczy się wstecz od bieżącej pełnej godziny, więc obie
-zakładki obejmują ten sam czas. Wykres co godzinę pokazuje kolejne godziny,
-a dzienny i tygodniowy — dni i tygodnie w czasie polskim. Łup, w którym
-walczyło kilka potworów, należy do najsilniejszego z nich: liczy się typ
-potwora (tytan, kolos, heros, heros eventowy, elita III, elita II, elita),
-a przy tym samym typie siła potwora w grze, potem poziom. Dlatego łup z elity
-II trafia do niej, a nie do jej obstawy z wyższym poziomem — tak samo
-w statystykach, na liście łupów i w ostatnich zdarzeniach na dashboardzie.
-Licznik **Legendarne** obejmuje wszystkie legendarne przedmioty,
-a **Najczęstsze legendy** pomijają legendarne błogosławieństwa, ulepszenia
-i przedmioty jednorazowe.
+Poproś członków o [instalację dodatku](/docs/installation) i logowanie tym
+kontem Discord, którym są na serwerze. Lootlog pojawi się u nich sam.
 
-W **Statystykach → Bicia** podsumowanie pokazuje wszystkie bicia i udział
-tytanów, kolosów, herosów, herosów eventowych oraz elit II. Kliknij typ
-potwora, aby przełączyć na niego czołówkę członków i potworów. Pod czołówką
-znajdziesz wykres bić (co godzinę dla ostatnich 24 godzin i 3 dni, dziennie
-dla dłuższych okresów), rekordy wybranego okresu oraz mapę **Kiedy bijecie**
-z biciami według dnia tygodnia i godziny w czasie polskim.
+</Step>
+<Step>
+
+### Wybierzcie zakres zbierania
+
+Każdy członek zaznacza Lootlog grupy w **Ustawienia → Zakres zbierania** w
+grze, osobno dla każdej postaci. Bez tego postać nic nie wysyła.
+
+</Step>
+</Steps>
+
+Sprawdź, czy pierwszy łup lub timer trafił do Lootloga. Nazwa i ikona
+Lootloga są brane z serwera Discord i aktualizują się same.
+
+## Co dostaje grupa
+
+<Cards>
+  <Card title="Lista łupów i statystyki" href="/docs/loot-list">
+    Każdy łup z wyszukiwarką, komentarzami i losowaniem legend.
+  </Card>
+  <Card title="Timery" href="/docs/timers">
+    Wspólne timery w grze, w panelu i na Discordzie.
+  </Card>
+  <Card title="Rezerwacje" href="/docs/reservations">
+    Kto i kiedy expi na danym expowisku.
+  </Card>
+  <Card title="Eventy" href="/docs/events">
+    Przypisania do map, punkty i ranking herosów.
+  </Card>
+  <Card title="Bot Discord" href="/docs/discord">
+    Powiadomienia na kanałach i komendy z danymi Lootloga.
+  </Card>
+  <Card title="Czat i zbiórki" href="/docs/chat">
+    Czat grupy w grze i zbieranie drużyny.
+  </Card>
+  <Card title="Role i uprawnienia" href="/docs/permissions">
+    Kto co widzi, także w zakresie poziomów.
+  </Card>
+  <Card title="Ustawienia Lootloga" href="/docs/lootlog-settings">
+    Skrócony link, potwory, szablony map, członkowie.
+  </Card>
+</Cards>
 
 <ProductScreenshot
-  src="/screenshots/guild-kill-stats-current.png"
-  alt="Statystyki bić Lootloga z filtrami, licznikami typów potworów i czołówką członków"
-  title="Klan · Statystyki bić"
+  src="/screenshots/guild-stats.jpg"
+  alt="Statystyki Lootloga w zakładce Bicia z liczbą bić według typu potwora, najaktywniejszymi członkami i najczęściej bitymi potworami"
+  title="Lootlog · Statystyki"
 />
 
-## Rezerwacje map
+## Dokumenty
 
-Rezerwacje pomagają ograniczyć nakładanie się polowań na tych samych mapach.
+**Dokumenty** to wspólne notatki grupy: zasady, rejestry, depozyty.
 
-1. Otwórz **Klan → Rezerwacje**.
-2. Znajdź wolną mapę.
-3. Wybierz ją, aby utworzyć rezerwację.
-4. Po zakończeniu zwolnij mapę lub poczekaj na automatyczne wygaśnięcie.
+- Nazwę dokumentu zmieniasz wprost w górnym pasku (ikona ołówka). Bez prawa
+  edycji widać kłódkę i informację, kto i kiedy ostatnio zmienił dokument.
+- **Przedmiot** w pasku narzędzi wstawia przedmiot: wyszukaj go po nazwie albo
+  wklej jego ID z gry (`ITEM#…`). Wklejone ID zamienia się w przedmiot samo.
+  Po najechaniu widać jego statystyki.
+- `@` oznacza gracza z aktualnym nickiem i avatarem z Discorda.
+- **Szablony** wstawia gotowe układy, np. rejestr albo depozyt przedmiotów.
+- Historia przechowuje 100 ostatnich wersji dokumentu.
 
-Odczyt wymaga `LOOTLOG_RESERVATIONS_READ`, a tworzenie i zmiana
-`LOOTLOG_RESERVATIONS_WRITE`.
-
-Jeśli nie można zapisać rezerwacji, komunikat wskazuje przyczynę, np. limit
-aktywnych rezerwacji na danym spocie, zajęty termin lub niedozwolony czas trwania.
-Po osiągnięciu limitu anuluj niepotrzebną rezerwację albo poczekaj na zakończenie
-aktywnej. Następnie spróbuj ponownie.
-
-Kalendarz odświeża rezerwacje po zmianach w organizacji oraz w udostępnionych
-kalendarzach partnerów. Po przywróceniu połączenia pobiera pominięte zmiany.
-
-## Czat i powiadomienia
-
-Przy odrzuceniu powiadomienia komunikat wskazuje przyczynę, np. brak aktywnego
-celu DM lub osiągnięcie limitu. Po przekroczeniu limitu wysyłania odczekaj przed
-kolejną próbą. W ustawieniach organizacji zajęty skrócony link wymaga wybrania
-innej nazwy. Skrócony link nie może składać się z samych cyfr ani być nazwą
-zarezerwowaną; organizacja pozostaje zawsze dostępna pod swoim identyfikatorem.
-
-Czat zapewnia wspólny kanał komunikacji, a powiadomienia mogą przenosić
-istotne zdarzenia do wybranych odbiorców lub kanałów Discord.
-
-Jeśli chwilowa awaria uniemożliwi przekazanie powiadomienia do wysyłki na
-Discord, Lootlog ponawia próbę. Po wyczerpaniu prób powiadomienie trafia do
-historii ze statusem błędu i jego przyczyną. Błąd jednego wykonania reguły
-cyklicznej nie zatrzymuje kolejnych terminów.
-
-Powiadomienie, którego nie udało się wysłać w ciągu 15 minut od zaplanowanego
-terminu, nie zostanie już wysłane, bo byłoby nieaktualne. Przypomnienie przed
-spawnem pozostaje aktualne do końca okna respawnu. Pominięte powiadomienie
-trafia do historii ze statusem błędu, a reguła cykliczna przechodzi do
-najbliższego przyszłego terminu bez nadrabiania pominiętych.
-
-W regule zaplanowanej wiadomości zmiana terminu jednorazowego na harmonogram
-cykliczny wyznacza najbliższe wykonanie według nowego harmonogramu. Ukryta data
-z poprzedniego trybu nie opóźnia wysyłki. Wyczyść datę końca i zapisz regułę,
-aby usunąć ograniczenie czasu jej działania. Odświeżenie listy reguł w tle
-zachowuje niezapisane zmiany w otwartym formularzu.
-
-Regułę przypomnienia przed spawnem możesz ustawić dla jednego świata albo dla
-wszystkich światów. Wyszukiwarka w regule pokazuje potwory, które mają timer
-w twoim Lootlogu, także te bez zgłoszonego łupu. Widzisz tylko timery
-dostępne dla twojej roli. Potwór z dopiskiem „każdy spawn” obejmuje timery
-wszystkich miejsc, w których się odradza. Pozycja bez tego dopisku wskazuje
-timer jednego miejsca i można ją wybrać dopiero po wskazaniu świata. Timer
-rozpoznaje potwora po pierwszym zabiciu zgłoszonym przez zaktualizowany dodatek.
-
-Potwora, który nie ma jeszcze timera, dodasz, wpisując jego ID ręcznie.
-Ręczne timery nie pojawiają się w wyszukiwarce, ale reguła bez wybranych NPC
-obejmuje także je. Wybrany NPC, którego timera nie widzisz, ma w formularzu
-opis „Brak dostępnego timera”. Możesz go usunąć albo zastąpić innym. Jeśli reguła dla
-wszystkich światów zawiera pojedynczy spawn, formularz pokaże ostrzeżenie.
-
-Dostęp kontrolują między innymi:
-
-- `LOOTLOG_CHAT_READ` i `LOOTLOG_CHAT_WRITE`;
-- `LOOTLOG_NOTIFICATIONS_READ` i `LOOTLOG_NOTIFICATIONS_SEND`;
-- oddzielne uprawnienia do informacji o tytanach i herosach.
-
-### Czat w grze
-
-Czat Lootlog jest dostępny w osobnym, przesuwanym oknie zarówno w NI, jak
-i w starym interfejsie. Integracja z czatem gry jest tymczasowo niedostępna.
-W oknach dodatku w grze organizacja nazywa się Lootlogiem, na przykład
-przełącznik **Wszystkie Lootlogi** u góry czatu.
-
-Ustawienia czatu znajdziesz w zakładce **Czat** okna ustawień dodatku. Podzakładka
-**Wygląd** zawiera gotowe ustawienia, układ wiadomości NPC, skalę tekstu i metadane, a **Filtry**
-pozwala wyłączyć wiadomości NPC wybranych typów, np. elity II, zachowując herosów
-i tytanów. Domyślnie wszystkie typy są włączone. Wyłączone typy nie pojawiają się
-w czacie i nie wywołują powiadomień o wzmiankach; po ponownym włączeniu historia
-wraca w całości. Ten sam filtr włączysz z czatu: kliknij prawym przyciskiem
-wiadomość o NPC i wybierz **Ukryj wiadomości** dla jego typu.
-
-W oknach Lootlog z uchwytem zmiany rozmiaru możesz dojść do niego klawiszem Tab
-i zmieniać rozmiar strzałkami. Każde naciśnięcie zmienia rozmiar o 1 piksel,
-a z przytrzymanym Shift — o 10 pikseli, w kierunkach obsługiwanych przez dane okno.
-
-- **Wszystko** łączy oba widoki i jest domyślnie wybrane.
-- **Rozmowy** zawierają wiadomości, powiadomienia `!` i odpowiedzi.
-- **Zdarzenia** zawierają zgłoszenia potworów.
-
-Ostatnio wybrany widok jest zapamiętywany.
-
-Czat zachowuje 300 ostatnich wpisów na organizację. Podczas czytania historii nowe wiadomości
-nie przenoszą widoku na koniec. Przycisk **Najnowsze** pozwala wrócić do rozmowy.
-Po ponownym połączeniu z Lootlogiem otwarty czat uzupełnia historię w tle,
-zachowując widoczne wiadomości podczas pobierania. Przy kolejnych krótkich przerwach
-aktualizacja może pojawić się po kilku sekundach. Historię pozostałych organizacji
-czat pobiera po ich otwarciu.
-Ikona filtrów obok regulacji przezroczystości pokazuje lub ukrywa pasek
-**Wszystko / Rozmowy / Zdarzenia**. Domyślnie pasek jest widoczny, a wybór
-jest zapamiętywany. Ukrycie filtrów przywraca widok wszystkich wiadomości.
-
-Szkice, cytaty i pozycja przewijania pozostają w bieżącej sesji.
-Organizację do rozmowy i wysyłania wybierasz wyłącznie u góry czatu.
-Pole pisania jest zawsze widoczne. W widoku wszystkich organizacji wysyłanie wiadomości jest nieaktywne do czasu
-wyboru organizacji. Menu **+** pozostaje dostępne.
-Odpowiedź wybiera organizację wiadomości źródłowej.
-
-Kliknij wiadomość prawym przyciskiem myszy i wybierz **Odpowiedz**, aby ustawić
-cytat i przejść do pisania. Z klawiatury przejdź do wiadomości klawiszem Tab i otwórz menu
-skrótem Shift+F10 lub klawiszem menu kontekstowego.
-Wysłanych wiadomości nie można edytować. Usunięcie wiadomości i wyczyszczenie
-czatu (`/clr`) wymagają potwierdzenia: fokus trafia na **Anuluj**, a Escape
-zamyka pytanie bez zmian.
-Cytat na liście ma wyróżnione tło; treść zawija się pod autorem. Najedź na niego,
-aby zobaczyć pełną treść, albo kliknij, aby przejść do oryginału.
-Kliknięcie cytatu przewija czat do oryginalnej wiadomości i podświetla ją na
-1,5 sekundy. Ponowne kliknięcie przedłuża podświetlenie.
-
-Przycisk **+** w prawym dolnym rogu czatu otwiera menu **Pozycja**, **Pomoc**,
-**Utwórz zbiórkę**, która od razu tworzy pustą zbiórkę, tak jak `/grp` bez opisu.
-Korzysta z Lootloga wybranego u góry czatu; bez wybranego Lootloga jest nieaktywna.
-Obok akcji **Pozycja** i **Pomoc** widoczny jest aktualny skrót, który możesz przypisać w ustawieniach
-skrótów klawiszowych. Domyślnie **Alt+P** wysyła pozycję, a **Alt+H** wzywa pomoc.
-Skrót **Utwórz zbiórkę** jest domyślnie nieprzypisany. Po przypisaniu
-otwiera okno **Nowa zbiórka** z formularzem; nie działa podczas pisania.
-`!` wpisany na początku przełącza pole w tryb powiadomienia, a `/grp` w tryb zbiórki.
-Prefiks znika wtedy z pola, tekst przyjmuje kolor trybu, a puste pole podpowiada, co wpisać. Ikona po lewej stronie pola pokazuje, co wyśle Enter: wiadomość, powiadomienie
-(dzwonek w kolorze powiadomień) albo zbiórkę (fioletowe miecze). Kliknięcie ikony otwiera listę
-trybów **Wiadomość**, **Powiadomienie** (`!`) i **Zbiórka** (`/grp`) ze skrótem, który włącza
-dany tryb podczas pisania. Aktualny tryb jest zaznaczony. Wybór trybu zachowuje wpisany tekst
-i przywraca kursor do pola. Z klawiatury przejdź do ikony klawiszem Tab, otwórz listę Enterem,
-wybierz tryb strzałkami i zatwierdź Enterem; Escape zamyka samą listę. Powiadomienie bez treści
-nie zostanie wysłane; zbiórka bez opisu tworzy pustą zbiórkę. Backspace na początku pola
-wraca do zwykłej wiadomości i zachowuje wpisany tekst.
-**Pozycja** od razu wysyła wpis w formacie `Postać(230w), Ithan (1, 2)`, zachowując szkic. **Pomoc**
-od razu wysyła powiadomienie do organizacji wybranej u góry czatu. Gdy aktualne
-dane gry są dostępne, wiadomość zawiera liczbę wykrytych wrogich postaci.
-
-### Szybki czat
-
-**Szybki czat** (domyślnie **Shift+S** albo przycisk w pasku szybkiego dostępu) otwiera u góry
-ekranu pole czatu do szybkiego wysyłania bez otwierania okna czatu. Działa jak pole czatu:
-Enter wysyła wiadomość, `!` wysyła powiadomienie, `/grp opis` tworzy zbiórkę, a `@` podpowiada
-osoby i role. Przyciski **Powiadomienie** i **Zbiórka** pod polem włączają albo wyłączają
-ten tryb. Ikona trybu po lewej stronie pola otwiera tę samą listę trybów co w oknie czatu;
-Escape w liście zamyka tylko listę, a Szybki czat zostaje otwarty.
-
-Lista pod polem wybiera jedną organizację, do której trafia wpis. Z klawiatury przejdź do niej
-klawiszem Tab, otwórz ją Enterem i wybierz strzałkami; po wyborze kursor wraca do pola.
-Wybór jest zapamiętywany; bez niego Szybki czat wysyła do organizacji wybranej dla postaci.
-Szybki czat nie dołącza cytatu przygotowanego w oknie czatu.
-
-Escape zamyka Szybki czat i czyści wpis. Kliknięcie poza nią zamyka ją, ale zachowuje
-niewysłany tekst.
-
-### Czat globalny
-
-**Czat globalny** (przycisk z ikoną globu w pasku szybkiego dostępu) łączy członków wszystkich
-Lootlogów, niezależnie od organizacji. Pisać i czytać może każdy, kto należy do co najmniej
-jednego Lootloga.
-
-Czat (okno **Global**) ma osobny kanał dla każdego świata i wspólny kanał **Wszystkie światy**.
-Kanał wybierasz na pasku pod tytułem okna, a Lootlog zapamiętuje wybór w tej przeglądarce. Trzy
-ostatnio wybrane światy są na górze listy, w grupie **Ostatnio używane**. Dopóki nie wybierzesz
-kanału, czat pokazuje kanał **Wszystkie światy**; przycisk z ikoną globu na pasku wraca do niego
-jednym kliknięciem. Świat dostaje kanał, gdy którakolwiek organizacja zapisze na nim timer. Jeśli
-wybrany kanał zniknie, czat wraca do kanału **Wszystkie światy**.
-
-Zielona kropka z liczbą w lewym górnym rogu okna pokazuje, ilu graczy z włączonym Lootlogiem jest teraz w grze:
-na kanale świata tylko na tym świecie, a na kanale **Wszystkie światy** na wszystkich. Obok
-przełącznika widać, ile osób
-jest na wybranym kanale. Liczby odświeżają się co kilkanaście sekund.
-
-Przy wiadomości widać tylko Twoją nazwę wyświetlaną z Discorda, bez nicku postaci i organizacji.
-Każda nazwa ma stały kolor, a Twoje wiadomości mają dodatkowo podkreśloną nazwę. Na kanale
-**Wszystkie światy** przy nazwie widać też świat, z którego ktoś pisze. Nazwa jest zapisywana
-w chwili wysłania: po jej zmianie na Discordzie nowa pojawi się przy kolejnych wiadomościach,
-gdy Lootlog odświeży Twoje dane z serwera Discord.
-
-To czat tekstowy z emoji: przycisk z uśmiechem po prawej stronie pola otwiera wszystkie emoji,
-które potrafi wyświetlić Twój system, podzielone na kategorie jak na klawiaturze telefonu.
-Ikony na dole przeskakują między kategoriami, a pierwsza z nich pokazuje ostatnio użyte emoji.
-Pole wyszukiwania u góry szuka emoji po polskiej lub angielskiej nazwie (np. „serce” albo
-„heart”), bez względu na polskie znaki; Enter wstawia pierwszy wynik. Kliknięte emoji trafia w miejsce kursora. Wiadomość ma do 128 znaków, linki nie są klikalne, a czat nie obsługuje odpowiedzi,
-wzmianek, komend, powiadomień ani zbiórek. Wiadomości z wybranego kanału, które przyjdą przy
-zamkniętym oknie, zwiększają licznik na przycisku czatu w pasku szybkiego dostępu. Licznik
-zeruje się po otwarciu okna i nie przetrwa przeładowania gry. Po otwarciu okna widać 100
-ostatnich wiadomości, a starsze doczytują się po przewinięciu w górę.
-
-Kolejną wiadomość możesz wysłać po 3 sekundach, niezależnie od kanału. Każdy kanał zachowuje
-2000 ostatnich wiadomości, a starsze usuwa automatycznie.
-
-#### Administratorzy czatu
-
-Nazwy administratorów Lootloga są napisane czerwoną czcionką, a treść ich wiadomości wygląda
-tak samo jak u pozostałych osób.
-Administratorzy mogą z menu wiadomości (prawy przycisk myszy albo klawisz menu na zaznaczonej
-wiadomości):
-
-- przypiąć ją nad historią kanału; każdy kanał ma jedną przypiętą wiadomość, którą
-  administrator odpina krzyżykiem,
-- usunąć ją z czatu u wszystkich,
-- wyciszyć jej autora na wszystkich kanałach na czas od 5 minut do 30 dni albo na stałe,
-- odciszyć jej autora.
-
-Wyciszona osoba nadal czyta czat, ale w polu wiadomości widzi, do kiedy nie może pisać.
-Administrator widzi listę wyciszonych pod ikoną na pasku kanału i może tam zdjąć wyciszenie.
-
-Przycisk z megafonem obok pola wiadomości wysyła następną wiadomość administratora naraz na
-kanał **Wszystkie światy** i na kanał każdego świata. Na każdym kanale powstaje osobna kopia,
-którą można przypiąć albo usunąć niezależnie od pozostałych. Po wysłaniu przycisk się wyłącza.
-
-### Zbiórki
-
-Zgłoszenia NPC zajmują pełną szerokość wiersza i mają subtelne tło zgodne
-z ustawieniami **Wygląd → Kolory NPC**, tak jak pasek zbiórki.
-Nie mają przycisków tworzenia zbiórki ani przygotowania komunikatu.
-
-Opcja **Utwórz zbiórkę** w menu **+** tworzy zbiórkę w Lootlogu wybranym
-w czacie, tak jak **Pozycja** i **Pomoc**.
-
-Każda zbiórka należy do jednego Lootloga i widzą ją tylko jego członkowie.
-Nie da się utworzyć jednej zbiórki w kilku Lootlogach naraz. W oknie
-**Nowa zbiórka** wybierasz Lootlog z listy; domyślnie jest to Lootlog wybrany
-dla postaci. `/grp`, menu **+** i Szybki czat tworzą zbiórkę w Lootlogu, do
-którego wysyłają wpis. Zbiórka z detektora NPC trafia do Lootloga wybranego
-dla postaci, jeśli reguły detektora kierują tam tego NPC, a w przeciwnym razie
-do pierwszego Lootloga z pasującej reguły.
-
-Utworzenie zbiórki z NPC lub bez NPC nie dodaje wiadomości do historii czatu.
-Aktywne zbiórki są widoczne na liście nad polem pisania, gdzie możesz zgłosić
-chęć udziału.
-
-Pływający panel u góry czatu pokazuje od razu dostępne zbiórki innych graczy ze wszystkich
-włączonych organizacji na bieżącym świecie, od najnowszej. Jest niezależna od historii
-wiadomości i filtra rozmowy. Zbiórki są pobierane również po wejściu do gry
-i ponownym połączeniu. Kliknięcie celu lub opisu cudzej zbiórki służy do zgłoszenia. Domyślnie widoczna jest najnowsza zbiórka; przycisk z liczbą pozostałych rozwija starsze. Ukrywanie jest dostępne w menu zbiórki.
-Twoja zbiórka, gdy jesteś organizatorem, znajduje się zawsze na końcu listy,
-najbliżej pola pisania. Panel organizatora pokazuje nazwę NPC lub „Twoja zbiórka”, licznik i przycisk „Zaproś”. Zarządzanie oraz anulowanie są dostępne w menu. Zbiórki mają gradient od przezroczystości do delikatnego fioletu, a pole pisania zachowuje zwykłe tło czatu.
-Zbiórki oddzielają cienkie, neutralne poziome linie. Przycisk ukrytych zbiórek znajduje się w prawym dolnym rogu obszaru wiadomości.
-Nazwa NPC pozostaje jasna. Pasek mieści się nad
-odpowiedzią i nie przesuwa pola pisania. Informacje mogą zajmować kilka linii.
-Stan aktywnej zbiórki jest widoczny w panelu czatu; szybki dostęp nie dodaje
-osobnej zielonej ikony.
-Pasek zbiórki oddziela cel i opis od wymaganego poziomu. Opis nie ma cudzysłowów.
-Zbiórka bez NPC i bez opisu pokazuje tekst „Brak opisu”.
-Zbiórki NPC pokazują również grafikę potwora, jeśli zapisano ją przy zgłoszeniu.
-Obok grafiki widać nazwę, poziom i dostępną profesję, a niżej lokację oraz
-współrzędne, jeśli zostały podane.
-Nagłówek zbiórki pokazuje nazwę organizatora z Discorda w kolorze jego roli — przed zgłoszeniem i po nim.
-Zbiórka na czacie zajmuje jeden zwarty pasek i nie wypisuje chętnych ani
-członków grupy; skład grupy widać w oknie grupy w grze.
-
-Licznik obok tytułu pokazuje liczbę osób w grupie względem limitu 10 osób.
-Przykładowo `(2/10)` oznacza dwie osoby w odczytanym składzie, niezależnie
-od liczby chętnych. Przed pierwszym odczytem wyświetla `(—/10)`, a podpowiedź
-informuje, że skład grupy jest nieznany. Po dwóch minutach bez nowego odczytu
-lub utracie synchronizacji licznik ma postać `(~2/10)`, a podpowiedź ostrzega
-o możliwie nieaktualnym składzie.
-Dodatek organizatora ponawia odczyt co minutę również wtedy, gdy skład się
-nie zmienia, więc ostrzeżenie oznacza, że odczyty przestały docierać, na
-przykład po rozłączeniu organizatora.
-Starszy dodatek może nie dostarczać całego składu. Wtedy brak odczytu
-pozostaje widoczny jako stan nieznany.
-
-Zgłoszenia, wycofania, usunięcia i zmiany składu docierają na żywo,
-bez okresowego odpytywania serwera. Ponowne połączenie pobiera bieżący stan.
-Uczestnik dodatkowo widzi status swojej postaci na przycisku zgłoszenia.
-Zielony znacznik potwierdza zgłoszenie. Informacja o obecności w grupie
-wymaga aktualnego odczytu z gry. Przyjęcie zaproszenia samo jej nie potwierdza.
-Ikona **Zaproś zgłoszonych** zaprasza osoby pozostające poza grupą. Przy NPC
-znajduje się po prawej stronie jego danych. Bez NPC jest obok opisu lub
-zakresu poziomów; tylko pusta zbiórka ma tę akcję w nagłówku.
-Zapraszanie działa na postaci organizatora po synchronizacji zbiórki.
-Wysłanie zaproszenia nie oznacza, że dana osoba już dołączyła do grupy.
-Po chwilowym błędzie wysyłania składu Lootlog ponawia zgłoszenie najwyżej
-dwa razy, po 1 i 2 sekundach, zawsze z najnowszym składem grupy. Każda próba
-odczytu lub wysłania danych ma limit 5 sekund. Przed ponowieniem Lootlog
-odświeża stan zbiórki, również po konflikcie z inną zmianą. Po udanej
-synchronizacji osoba, która opuściła grupę, ponownie kwalifikuje się do zaproszenia.
-Jeśli wszystkie próby zawiodą, nowe zgłoszenie rozpoczyna się po zmianie składu,
-ponownym połączeniu albo minutę po ostatniej próbie.
-Organizator ma w menu zbiórki opcję **Lista chętnych**. Otwiera ona okno
-**Twoja zbiórka**, dostępne tylko dla organizatora. Okno pokazuje zgłoszonych,
-którzy są jeszcze poza grupą; osoby, które już dołączyły, znikają z listy.
-Nagłówek okna pokazuje stan grupy i czas do wygaśnięcia zbiórki. Plus w wierszu
-lub dwuklik zaprasza gracza, a prawy przycisk myszy otwiera menu z opcjami
-**Dodaj do znajomych** i **Usuń ze zbiórki**. **Zaproś wszystkich** pokazuje
-liczbę osób do zaproszenia. Obok znajduje się **Anuluj zbiórkę**, które przed
-anulowaniem zbiórki prosi o potwierdzenie.
-
-W tym oknie po nicku, poziomie i profesji widać klan gracza. Na liście graczy
-online klan pokazuje podpowiedź po najechaniu na wiersz. Kolor wiersza pokazuje
-relację z Twoją postacią: turkusowy to Ty, fioletowy Twoja grupa, zielony Twój
-klan, niebieski znajomy, żółty sojuszniczy klan, a czerwony wróg lub wrogi
-klan. Gra wysyła listę znajomych dopiero po otwarciu
-okna **Społeczność**, a sojusze klanu po otwarciu zakładki **Dyplomacja**.
-Lootlog zapamiętuje je dla każdej postaci i uzupełnia na bieżąco na podstawie
-graczy spotkanych na mapie, np. gracz oznaczony jako sojusznik wskazuje, że cały
-jego klan jest sojuszniczy.
-Uczestnik sprawdza swój status w czacie i wycofuje
-zgłoszenie, klikając ponownie zaznaczony przycisk zgłoszenia.
-Zgłoszenie z powiadomienia otwiera czat z paskiem tej zbiórki.
-Ikony akcji pokazują podpowiedzi po najechaniu lub ustawieniu fokusu.
-
-Jeśli odświeżenie się nie powiedzie, ostatnia lista pozostaje widoczna jako
-nieaktualna. Przycisk **Odśwież** ponawia pobranie; zgłaszanie jest niedostępne
-do czasu potwierdzenia danych. Błędy zgłoszenia, wycofania i anulowania są
-pokazywane osobno. Odświeżanie nie ponawia tych akcji automatycznie.
-
-Ikona postaci z plusem **Zgłoś się** znajduje się obok szczegółów zbiórki, a przy pustej zbiórce
-w nagłówku. Podpowiedź ikony w pierwszej widocznej zbiórce pokazuje aktualny
-skrót do zgłoszenia albo informację **Skrót nieustawiony**. Skrót zgłasza do tej
-zbiórki; przyciski w innych wierszach zgłaszają do wybranych zbiórek.
-**Zgłoś się** zapisuje postać jako chętną, ale nie rezerwuje miejsca w grupie
-Margonem. Organizator wybiera osoby i wysyła zaproszenia. Po zgłoszeniu
-możesz je wycofać. Inne zbiórki pozostają widoczne, a zgłoszenie do kolejnej
-wymaga wycofania obecnego. Pierwsza zbiórka i cel skrótu nie zmieniają się,
-gdy lista jest pod kursorem, ma fokus klawiatury lub trwa wysyłanie zgłoszenia.
-
-Przed zgłoszeniem możesz wybrać ikonę **Ukryj zbiórkę**. Ukrywa tylko tę
-zbiórkę do jej zakończenia, także po odświeżeniu strony. Ustawienie jest
-zapisywane lokalnie, osobno dla konta Lootlog, świata i postaci. Nowe zbiórki
-tego samego organizatora nadal się pojawiają. Ukrywanie nie wysyła zgłoszenia
-ani nie wycofuje już wysłanego.
-Pasek wybiera kolejną dostępną zbiórkę; gdy nie ma następnej, znika, a pole
-pisania wraca do zwykłego tła. Skrót do zgłaszania pomija ukryte zbiórki.
-Przycisk z ikoną grupy i licznikiem w prawym dolnym rogu czatu otwiera listę
-z zakładkami **Aktywne** i **Ukryte**. Z obu zakładek możesz wybrać **Zgłoś się**.
-Przycisk **Pokaż w czacie** przywraca ukrytą zbiórkę na pasek; samo zgłoszenie
-nie zmienia ustawienia ukrywania. Lista obejmuje dostępne zbiórki dla poziomu
-postaci i pomija zbiórkę, w której już uczestniczysz.
-
-Po rozłączeniu z grą masz około **10 sekund** na powrót. Odświeżenie, po którym
-postać ponownie połączy się w tym czasie, zachowuje zbiórkę i zgłoszenie.
-Po dłuższej nieobecności organizatora zbiórka kończy się wszystkim; nieobecność
-chętnego wycofuje tylko jego zgłoszenie. Czas jest liczony od wykrycia rozłączenia
-przez serwer. Druga połączona sesja tej samej postaci zachowuje zbiórkę.
-
-Własną zbiórkę możesz zobaczyć i anulować również po zmianie postaci lub
-świata na tym samym koncie Margonem, jeśli zachowujesz wymagany dostęp do
-organizacji. Zaproszenia pozostają dostępne na postaci organizatora. Żadna
-postać z konta organizatora nie może się zgłosić. Postacie z innych kont
-Margonem połączonych z tym samym kontem Discord widzą zbiórkę jak inni gracze:
-mogą się do niej zgłosić, ale nie widzą opcji organizatora ani zaproszeń. Aby
-utworzyć kolejną zbiórkę, najpierw zakończ poprzednią.
-
-Organizator z uprawnieniem do tworzenia zbiórek widzi własną zbiórkę NPC
-i może ją anulować także wtedy, gdy poziom lub typ NPC nie mieści się w jego
-uprawnieniach odczytu. Pozostałe osoby nadal widzą tylko zbiórki dozwolone
-przez ich uprawnienia i zakres poziomów.
-
-W ustawieniach skrótów możesz przypisać alarm działający także przy zamkniętym
-czacie do tej samej wybranej organizacji oraz zgłoszenie do zbiórki widocznej na pasku. Oba skróty są domyślnie
-nieprzypisane. Ponowne użycie skrótu zgłoszenia wycofuje obecne zgłoszenie.
-Skrót nie działa przy ukrytym pasku i nie anuluje zbiórki organizatora.
+Odczyt wymaga `LOOTLOG_DOCS_READ`, a edycja `LOOTLOG_DOCS_WRITE`.
 
 ## Logi aktywności
 
-Logi pomagają ustalić, kto i kiedy wykonał istotną zmianę, na przykład w
-eventach, timerach, rezerwacjach lub konfiguracji. Korzystaj z nich do
-wyjaśniania zmian, a nie jako zamiennika właściwego podziału uprawnień.
-
-## Integracja Discord
-
-Discord jest używany do logowania i identyfikacji klanów. Dodatkowa
-konfiguracja bota może rozszerzać przepływ o powiadomienia na serwerze.
-Aktualny sposób podłączenia integracji potwierdzisz na
-[Discordzie Lootlog](https://discord.gg/mPcczaeYMu).
-
-### Komendy na Discordzie
-
-Na serwerze z botem Lootlog wpisz `/`, aby skorzystać z komend. Bot odpowiada
-danymi Lootloga tego serwera i pokazuje tylko to, co widzisz na stronie zgodnie
-ze swoją rolą. Aby z nich korzystać, zaloguj się przez Discorda na stronie
-Lootloga i otwórz Lootlog tego serwera.
-
-| Komenda                                                  | Co pokazuje                                                                                                  |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `/ranking`                                               | Ranking bić członków dla wybranego typu potworów, np. elit II, herosów, tytanów i kolosów, z Twoim miejscem  |
-| `/statystyki`                                            | Twoje bicia (lub wskazanego członka) według typu potworów i miejsce w rankingu                               |
-| `/npc`                                                   | Kto najczęściej bije wybranego potwora i Twoje miejsce wśród bijących                                        |
-| `/timery`                                                | Najbliższe respawny, z filtrem typu potworów i świata                                                        |
-| `/timer`                                                 | Okno respawnu jednego potwora, świat i mapę                                                                  |
-| `/rezerwacje moje`, `/rezerwacje miejsca`                | Twoje nadchodzące rezerwacje lub zajętość miejsc expienia                                                    |
-| `/event ranking`, `/event status`, `/event podsumowanie` | Punkty z Twoim miejscem przy każdym herosie, okna respawnu herosów oraz podsumowanie eventu z Twoim wynikiem |
-| `/lupy`                                                  | Ostatnie łupy, z filtrem postaci, potwora i rzadkości                                                        |
-| `/przedmiot`                                             | Kto i z którego potwora zdobył przedmiot                                                                     |
-| `/online`                                                | Liczbę postaci członków w grze na każdym świecie, w tym AFK                                                  |
-| `/karta`                                                 | Publiczną kartę statystyk łupów, jeśli administrator ją włączył                                              |
-| `/lootlog link`, `/lootlog diagnostyka`                  | Linki do Lootloga i instalacji dodatku oraz stan połączenia konta i uprawnień bota na kanale                 |
-
-Odpowiedź domyślnie widzisz tylko Ty. Ustaw opcję `publiczne`, aby pokazać ją
-wszystkim na kanale; bot nie oznacza wtedy graczy z rankingów. Wyjątkiem są
-publiczne `/statystyki` innego członka: bot oznacza tę osobę, bo odpowiedź
-dotyczy tylko jej. Gdy nie mieścisz się w pokazanej czołówce rankingu, bot
-dopisuje pod nią Twoje miejsce. Czasy respawnów
-i rezerwacji Discord wyświetla w Twojej strefie czasowej i odlicza na bieżąco.
-
-## Sprawdź rezultat
-
-Konfiguracja jest poprawna, gdy członkowie widzą wyłącznie sekcje zgodne z
-rolą, nowe dane trafiają do właściwego klanu, a rezerwacje i powiadomienia
-mają oczekiwanych odbiorców.
-
-## Następny krok
-
-- Skonfiguruj [Eventy](/docs/events).
-- Uporządkuj [Role i uprawnienia](/docs/permissions).
-- Dostosuj [Ustawienia](/docs/settings) klanu.
+**Logi aktywności** (grupa **Zarządzanie**, dla administratorów) pokazują,
+kto i kiedy zmienił eventy, timery, rezerwacje albo konfigurację, oraz
+wejścia i wyjścia postaci z gry. Przydają się do wyjaśniania zmian, ale nie
+zastąpią sensownego podziału uprawnień.

@@ -1,0 +1,121 @@
+---
+title: Wykrywacz NPC i herosi
+description: Wykrywanie potworów na mapie, autowysyłka do Lootloga, tropiciele herosów i zapisywanie wyników zwoju wykrywającego herosa.
+---
+
+Lootlog sam zauważa ważne potwory na Twojej mapie i daje znać reszcie grupy.
+Zapisuje też wyniki zwojów wykrywających herosa, żeby nikt nie musiał ich
+przepisywać na czat.
+
+## Wykrywacz NPC
+
+Wykrywacz sprawdza bieżącą mapę i pokazuje rozpoznane potwory z nazwą,
+poziomem, typem i pozycją. Okno otwiera się samo przy wykryciu i nie zabiera
+fokusu klawiatury, więc grasz dalej.
+
+- Typy potworów, dźwięk i powiadomienia ustawisz w **Ustawienia →
+  Wykrywacz**. Każdy typ NPC ma tam własny wiersz.
+- Zamknięcie okna czyści jego listę. Pojedynczy wpis zamkniesz jego
+  przyciskiem.
+- Własny dźwięk dla typu NPC ustawisz w **Ustawienia → Dźwięki**
+  ([szczegóły](/docs/settings#dźwięki)).
+
+### Autowysyłka
+
+Autowysyłka wysyła wykryte potwory do Lootlogów bez pytania. Inni członkowie
+dostają wtedy powiadomienie.
+
+- W tabeli **Wykrywacz** kolumna **Autowysyłka** włącza ją dla wybranych
+  typów potworów.
+- Sekcja **Gdzie wysyłać powiadomienia** pod tabelą ma reguły: zakres poziomu
+  potwora, świat (puste pole to każdy świat) i Lootlogi. Reguła bez żadnego
+  Lootloga ma ostrzeżenie, że nic nie wysyła.
+- Przełącznik **Autowysyłka na tej postaci** nad tabelą wyłącza autowysyłkę
+  wszystkich typów naraz, tylko na postaci, którą grasz. Możesz mu przypisać
+  skrót w **Sterowanie** (domyślnie nieprzypisany).
+
+Kolejne zgłoszenia tego samego NPC na tym samym świecie trafiają do jednego
+powiadomienia z licznikiem, np. x3. Dźwięk gra tylko przy pierwszym.
+
+### Tropiciele herosów w wykrywaczu
+
+Wykrywacz rozpoznaje tropicieli herosów i pokazuje ich stan: **Nikt go
+jeszcze nie odkrył** albo **Wejście otwarte** z czasem do zamknięcia.
+Gdy tropiciel na Twojej mapie zostanie odkryty, wykrywacz zgłasza go ponownie:
+gra dźwięk i, przy włączonej autowysyłce, wysyła powiadomienie o otwartym
+wejściu. Powiadomienie znika samo po zamknięciu wejścia. Tropiciele nie
+trafiają na czat Lootloga. Ich timer opisuje strona
+[Timery](/docs/timers#tropiciele-herosów).
+
+## Wykryci herosi
+
+Gdy użyjesz zwoju wykrywającego herosa, gra pisze na czacie systemowym, gdzie
+heros **grasuje** (żyje na tej mapie) albo gdzie **pojawi się** (tam
+wylosowano jego następne odrodzenie). Lootlog zapisuje tę odpowiedź w
+Lootlogach z Twojego zakresu zbierania i otwiera okno **Wykryci herosi**.
+
+Okno otworzysz też z paska szybkiego dostępu. Licznik na ikonie pokazuje,
+ilu herosów jest teraz wykrytych.
+
+Gra podaje tylko nazwę mapy, bez współrzędnych. Heros może mieć na jednej
+mapie kilka miejsc odrodzenia.
+
+### Co widać przy herosie
+
+- stan i mapę oraz czas od ostatniego potwierdzenia;
+- kto wykrył herosa jako pierwszy i jaką postacią;
+- kto obstawia herosa.
+
+### Obstawianie
+
+Obstawianie deklarujesz sam przyciskiem **Obstawiam**, wykrycie nikogo nie
+zapisuje automatycznie. Herosa może obstawiać kilka osób. **Wycofaj** cofa
+deklarację. Po Twoim wykryciu okno pokazuje u góry skrót **Wykryłeś** z
+przyciskiem **Obstawiam**.
+
+### Stany wykrycia
+
+- Kolejne wykrycia w tym samym miejscu tylko potwierdzają wpis.
+- Gdy heros, który miał się pojawić, zostanie wykryty jako grasujący na tej
+  samej mapie, wpis i deklaracje zostają.
+- Gdy nowe wykrycie przeczy poprzedniemu, np. heros jest na innej mapie,
+  stary wpis dostaje oznaczenie **prawdopodobnie zbity**. To wniosek, nie
+  pewność.
+- Gdy herosa zabije ktoś z Lootloga, wpis jest **zbity**.
+- Grasujący heros bez potwierdzenia przez 30 minut jest **niepotwierdzony**.
+
+Timer herosa z aktualnym wykryciem dostaje mapę z wykrycia. Widać wtedy na
+nim liczby graczy z Lootloga i wrogów, a podpowiedź timera ma sekcję
+**Wykrywacz herosów**.
+
+Lootlog przechowuje 20 ostatnich wykryć każdego herosa.
+
+## Wykryte herosy w panelu webowym
+
+Strona **Wykryte herosy** w Lootlogu na [lootlog.pl](https://lootlog.pl/@me)
+pokazuje ostatnie wykrycie każdego herosa na wybranym świecie. Herosy są
+pogrupowane według stanu: **Grasuje**, **Pojawi się**, **Niepotwierdzony**,
+**Prawdopodobnie zbity**, **Zbity**.
+
+<ProductScreenshot
+  src="/screenshots/hero-sightings.jpg"
+  alt="Strona Wykryte herosy z listą herosów, ich lokacją, oknem respawnu i przyciskiem Obstawiam"
+  title="Lootlog · Wykryte herosy"
+/>
+
+Przy herosie widać mapę, czas wykrycia i ostatniego potwierdzenia, osobę,
+która go wykryła, obstawiających oraz jego timer. Gdy timer wygasł albo
+został usunięty, wiersz pokazuje, jak dawno, i ostatnie znane okno. Heros
+mógł się od tego czasu pojawić bez nowego timera.
+
+Ikona historii otwiera 20 ostatnich wykryć herosa. **Obstawiam** i
+**Wycofaj** działają tak jak w grze. Zmiany pojawiają się na żywo.
+
+Wiadomość na Discordzie o nowym wykryciu ustawisz regułą **Wykrycie herosa**
+([Discord](/docs/discord#reguły-powiadomień)).
+
+## Uprawnienia
+
+Wykrycia korzystają z uprawnień timerów. Widzisz je z `LOOTLOG_TIMERS_READ` i
+`LOOTLOG_TIMERS_HEROES_READ` w zakresie poziomu herosa. Obstawianie wymaga
+`LOOTLOG_TIMERS_WRITE`.
