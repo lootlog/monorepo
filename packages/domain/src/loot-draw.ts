@@ -3,23 +3,17 @@
  * could not join the party, because Margonem fits ten players in one.
  *
  * Whoever caught the item in the game always enters. They get one ticket for
- * every party member who could wear the item, themselves included, because
- * the game already drew between those; never fewer than one. Each player
- * outside the party who could wear it gets one ticket.
+ * every party member of a profession that can wear the item, themselves
+ * included, because the game already drew between those; never fewer than
+ * one. Each player outside the party of such a profession gets one ticket.
  */
 
 export type LootDrawItem = Readonly<{
   /** Professions that can wear the item. */
   prof: readonly string[];
-  /** The level it requires. */
-  lvl: number;
-  stat: string;
 }>;
 
-export type LootDrawCandidate = Readonly<{
-  prof: string | null;
-  lvl: number | null;
-}>;
+export type LootDrawCandidate = Readonly<{ prof: string | null }>;
 
 const hasStatFlag = (stat: string, flag: string) =>
   stat
@@ -47,23 +41,11 @@ export const capturesMapPlayers = (loot: {
   loot.source === "FIGHT" &&
   loot.rarities.some((rarity) => rarity === "LEGENDARY");
 
-/** Elastic items take the looter's level, so they require none of their own. */
-export const isElasticLootDrawItem = (item: Pick<LootDrawItem, "stat">) =>
-  hasStatFlag(item.stat, "lvladjust");
-
-/**
- * Whether the candidate's profession lets them wear the item, and their
- * level when it is known: hand-added players often come without one.
- */
+/** Whether the candidate's profession can wear the item; levels do not count. */
 export const canWearLootDrawItem = (
   item: LootDrawItem,
   candidate: LootDrawCandidate,
-) =>
-  candidate.prof !== null &&
-  item.prof.includes(candidate.prof) &&
-  (isElasticLootDrawItem(item) ||
-    candidate.lvl === null ||
-    candidate.lvl >= item.lvl);
+) => candidate.prof !== null && item.prof.includes(candidate.prof);
 
 /** The tickets of the player who caught the item, from the whole party. */
 export const lootDrawWinnerTickets = (
