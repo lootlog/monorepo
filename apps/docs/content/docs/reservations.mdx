@@ -1,0 +1,73 @@
+---
+title: Rezerwacje expowisk
+description: Jak zarezerwować expowisko w Lootlog, znaleźć wolny termin, ustawić przypomnienie na Discordzie i anulować rezerwację.
+---
+
+Rezerwacje mówią całej grupie, kto i kiedy expi na danym expowisku. Koniec z
+wchodzeniem sobie na mapy i pytaniem na Discordzie, czy ktoś tam stoi.
+
+## Zarezerwuj expowisko
+
+1. W Lootlogu otwórz **Rezerwacje**. Każde expowisko ma kartę z informacją,
+   czy jest **Wolne teraz** albo **Zajęte do** podanej godziny.
+2. Otwórz **Terminy** expowiska, żeby zobaczyć jego kalendarz.
+3. Wybierz **Dodaj rezerwację** albo kliknij wolne miejsce w kalendarzu.
+   **Znajdź najbliższy wolny termin** zrobi to za Ciebie.
+4. Ustaw początek i koniec, opcjonalnie komentarz i **Przypomnienie w DM**.
+5. Wybierz **Zarezerwuj**.
+
+<ProductScreenshot
+  src="/screenshots/reservations.jpg"
+  alt="Strona Rezerwacje z siatką expowisk ze statusem Wolne teraz lub Zajęte do oraz filtrami Wszystkie, Wolne teraz, Przypięte i Sojusz"
+  title="Lootlog · Rezerwacje"
+/>
+
+Nad kartami możesz filtrować expowiska po nazwie i przełączać **Wszystkie**,
+**Wolne teraz**, **Przypięte** i **Sojusz**. Ulubione expowiska przypniesz,
+żeby były na górze.
+
+## Zasady rezerwacji
+
+Administrator ustala zasady w **Ustawienia → Rezerwacje**. Zobaczysz je pod
+przyciskiem **Zasady** w kalendarzu:
+
+- minimalna i maksymalna długość rezerwacji;
+- krok siatki, do którego musi pasować początek i koniec;
+- jak daleko w przyszłość można rezerwować;
+- limit aktywnych rezerwacji jednego gracza na tym samym expowisku.
+
+Rezerwacja nie zapisze się, gdy łamie którąś zasadę albo koliduje z
+istniejącą. Komunikat mówi, co poprawić. Po osiągnięciu limitu anuluj
+niepotrzebną rezerwację albo poczekaj, aż aktywna się skończy.
+
+## Przypomnienie w DM
+
+Bot Lootlog może wysłać Ci prywatną wiadomość na Discordzie w momencie
+rozpoczęcia albo 5, 15 lub 30 minut wcześniej. Wymaga to ustawionych
+powiadomień prywatnych. Jeśli ich nie masz, formularz pokaże
+**Skonfiguruj powiadomienia**.
+
+## Moje rezerwacje i anulowanie
+
+Twoje rezerwacje ze wszystkich Lootlogów są na dashboardzie w sekcji **Moje
+rezerwacje**. **Pokaż wszystkie** otwiera stronę z zakładkami
+**Nadchodzące** i **Historia 30 dni** oraz filtrem po expowisku lub
+Lootlogu.
+
+**Anuluj rezerwację** zwalnia termin dla innych. Anulowania nie da się cofnąć,
+dlatego wymaga potwierdzenia.
+
+Na Discordzie te same dane pokażą komendy `/rezerwacje moje` i `/rezerwacje
+miejsca` ([Discord](/docs/discord#komendy-bota)).
+
+## Sojusz
+
+Jeśli Wasz Lootlog udostępnia kalendarze innemu Lootlogowi, ich rezerwacje
+widać w kalendarzu z oznaczeniem **Sojusz**. Dzięki temu nie zajmiecie tego
+samego expowiska.
+
+## Uprawnienia
+
+Odczyt wymaga `LOOTLOG_RESERVATIONS_READ`, a tworzenie
+`LOOTLOG_RESERVATIONS_WRITE`. Osoby z `LOOTLOG_MANAGE` mogą zmieniać i usuwać
+rezerwacje innych członków.

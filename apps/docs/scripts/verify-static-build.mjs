@@ -90,7 +90,7 @@ await Promise.all(
       document.includes(description),
       `${routePath} lacks its visible description`,
     );
-    assert.match(document, /class="[^"]*docs-body/u);
+    assert.match(document, /class="[^"]*prose/u);
     assert.ok(
       document.includes(
         `<link rel="canonical" href="https://docs.lootlog.pl/${routePath}"`,
@@ -119,6 +119,39 @@ for (const fileName of contentFiles) {
     `search index lacks ${publicPath}`,
   );
 }
+
+const [llmsIndex, llmsFull] = await Promise.all(
+  ["llms.txt", "llms-full.txt"].map((fileName) =>
+    readFile(path.join(clientDirectory, fileName), "utf8"),
+  ),
+);
+
+await Promise.all(
+  contentFiles.map(async (fileName) => {
+    const slug = fileName.slice(0, -".mdx".length);
+    const markdownPath = slug === "index" ? "docs/index.md" : `docs/${slug}.md`;
+
+    const [source, markdown] = await Promise.all([
+      readFile(path.join(contentDirectory, fileName), "utf8"),
+      readFile(path.join(clientDirectory, markdownPath), "utf8"),
+    ]);
+
+    const title = source.match(/^title: (.+)$/mu)?.[1];
+
+    assert.ok(
+      markdown.startsWith(`# ${title}\n`),
+      `${markdownPath} lacks its page title`,
+    );
+    assert.ok(
+      llmsIndex.includes(`(https://docs.lootlog.pl/${markdownPath})`),
+      `llms.txt lacks ${markdownPath}`,
+    );
+    assert.ok(
+      llmsFull.includes(`# ${title}\n`),
+      `llms-full.txt lacks ${markdownPath}`,
+    );
+  }),
+);
 
 const staticFunctionFiles = await readdir(
   path.join(clientDirectory, "__tsr/staticServerFnCache"),
@@ -150,7 +183,7 @@ await Promise.all(
   [
     "brand/favicon.svg",
     "brand/lootlog-apple-touch.png",
-    "screenshots/dashboard-current.png",
+    "screenshots/dashboard.jpg",
   ].map((assetPath) => access(path.join(clientDirectory, assetPath))),
 );
 

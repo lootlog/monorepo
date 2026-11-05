@@ -1,63 +1,91 @@
 ---
-title: Wprowadzenie
-description: Poznaj Lootlog i wybierz najkrótszą drogę od instalacji dodatku do wspólnego panelu organizacji.
+title: Od czego zacząć
+description: Mapa dokumentacji Lootlog. Instalacja dodatku, timery, łupy, Discord i zarządzanie Lootlogiem grupy w jednym miejscu.
 ---
 
-Lootlog łączy **dodatek działający podczas gry w Margonem** ze
-**wspólnym panelem webowym**. Dodatek rejestruje obsługiwane zdarzenia, a
-panel pozwala je przeglądać, analizować i wykorzystywać do koordynacji klanu.
+Lootlog to darmowy dodatek do Margonem i panel webowy na
+[lootlog.pl](https://lootlog.pl/@me). Dodatek zapisuje łupy, timery
+odrodzenia, walki i obecność graczy, a cała grupa widzi je na bieżąco: w
+grze, w przeglądarce i na Discordzie. Nie musisz niczego przepisywać ręcznie.
 
-<Callout type="info" title="Jedno konto, dwa miejsca">
-  W dodatku i panelu logujesz się przez to samo konto Discord. Możesz korzystać
-  z Lootlog na wielu postaciach i światach.
-</Callout>
+W dodatku i w panelu logujesz się tym samym kontem Discord. Jedno konto
+obsługuje wiele postaci i światów.
 
-## Najkrótsza ścieżka
+## Pierwsze uruchomienie
 
-1. [Zainstaluj dodatek](/docs/installation) przez Tampermonkey.
-2. Zaloguj się przez Discord i sprawdź, czy Lootlog pojawił się w grze.
-3. [Wykonaj pierwszą konfigurację](/docs/getting-started).
-4. Otwórz [panel webowy](https://lootlog.pl/@me) i wybierz postać lub organizację.
+<Cards>
+  <Card title="Zainstaluj dodatek" href="/docs/installation">
+    Tampermonkey, skrypt Lootlog i logowanie przez Discord.
+  </Card>
+  <Card title="Pierwsze kroki" href="/docs/getting-started">
+    Dołącz do Lootloga grupy, wybierz zakres zbierania i sprawdź pierwsze dane.
+  </Card>
+  <Card title="Załóż Lootlog dla grupy" href="/docs/clan-features">
+    Dla lidera lub administratora serwera Discord.
+  </Card>
+</Cards>
 
-Po wykonaniu tych kroków dodatek może rejestrować obsługiwane dane, a panel
-webowy pokaże je w odpowiednim kontekście.
+## Najczęstsze sprawy
 
-## Co znajdziesz w dokumentacji
+<Cards>
+  <Card title="Nie widzę timerów" href="/docs/faq#nie-widzę-timerów">
+    Zakres zbierania, wybrany Lootlog i uprawnienia.
+  </Card>
+  <Card title="Gdzie są łupy grupy" href="/docs/loot-list">
+    Lista łupów, wyszukiwanie, filtry i statystyki Lootloga.
+  </Card>
+  <Card title="Powiadomienia na Discordzie" href="/docs/discord">
+    Kanał dla bota, reguły powiadomień i komendy.
+  </Card>
+  <Card title="Dostęp członka i role" href="/docs/permissions">
+    Skąd biorą się członkowie i role, jakie uprawnienia nadać.
+  </Card>
+  <Card title="Timery w grze" href="/docs/timers">
+    Odliczanie, listy, historia, gracze przy timerze.
+  </Card>
+  <Card
+    title="Logowanie nie działa"
+    href="/docs/faq#logowanie-z-gry-nie-działa"
+  >
+    Pliki cookie innych firm i inne komunikaty okna logowania.
+  </Card>
+</Cards>
 
-**Dodatek w grze** opisuje łupy, timery odrodzenia i wykrywanie NPC.
-**Panel** prowadzi przez dane osobiste oraz analizę walk. **Organizacja** obejmuje
-narzędzia współdzielone: statystyki, rezerwacje, eventy, role i ustawienia.
+## Co gdzie znajdziesz
 
-Organizacja Lootloga odpowiada jednemu serwerowi Discord. Może obejmować wiele
-klanów Margonem, światów i powiązanych grup graczy. W interfejsie niektóre
-ścieżki nadal używają etykiety **Klan**.
+**Dodatek w grze** opisuje to, co widzisz podczas gry: timery, wykrywanie
+NPC i herosów, czat, zbiórki, pingi, podział łupów i ustawienia dodatku.
+
+**Panel webowy** to Twoja strefa osobista: dashboard, statystyki konta,
+panel walk PvP i wygląd panelu.
+
+**Lootlog dla grupy** jest dla wszystkich, którzy grają w zorganizowanej
+grupie: lista łupów, rezerwacje, eventy, bot Discord, role i ustawienia
+Lootloga.
 
 <ProductScreenshot
-  src="/screenshots/dashboard-current.png"
-  alt="Dashboard Lootlog z osobistymi statystykami bić i najczęściej pokonywanymi potworami"
+  src="/screenshots/dashboard.jpg"
+  alt="Dashboard Lootlog z kafelkami Twój dzień, feedem zdarzeń z Lootlogów, moimi rezerwacjami, ostatnimi walkami i kalendarzem aktywności"
   title="Panel webowy · Dashboard"
 />
 
-## Dlaczego Lootlog działa w ten sposób
+## Lootlog, klan i serwer Discord
 
-Dodatek jest źródłem informacji z bieżącej rozgrywki. Panel webowy porządkuje
-je w widoki przydatne po walce, podczas planowania polowania lub przy
-zarządzaniu dostępem w klanie. Dzięki temu nie musisz ręcznie przepisywać
-timerów, historii łupów ani wyników.
+Lootlog grupy jest przypięty do jednego serwera Discord. Może obejmować kilka
+klanów Margonem, kilka światów i graczy bez klanu. Kto jest na serwerze
+Discord, ten może być członkiem Lootloga, a role z Discorda decydują o
+dostępie. Jeśli należysz do kilku takich serwerów, masz kilka Lootlogów i
+przełączasz się między nimi.
 
-Lootlog jest bezpłatny i otwartoźródłowy. Kod możesz sprawdzić na
-[GitHubie](https://github.com/lootlog/monorepo). Dodatek nie steruje postacią,
-nie wykonuje akcji za gracza i nie modyfikuje silnika gry.
+Lootlog jest bezpłatny i otwartoźródłowy, kod jest na
+[GitHubie](https://github.com/lootlog/monorepo). Dodatek nie steruje
+postacią, nie wykonuje akcji za gracza i nie modyfikuje silnika gry.
 
-## Następny krok
-
-Jeśli korzystasz z Lootlog po raz pierwszy, przejdź do
-[instalacji dodatku](/docs/installation). Masz już działający dodatek?
-Otwórz [Pierwsze kroki](/docs/getting-started).
-
-Pomoc społeczności znajdziesz na
+Pomoc innych graczy znajdziesz na
 [Discordzie Lootlog](https://discord.gg/mPcczaeYMu).
 
 ## Dla programistów
 
-Tworzysz integrację lub dodatek do Margonem? W [portalu dla programistów](https://developer.lootlog.pl) znajdziesz klucze API, dokumentację SDK i opis API. Dokumentacja integracji jest dostępna po angielsku.
+Tworzysz integrację lub dodatek do Margonem? W
+[portalu dla programistów](https://developer.lootlog.pl) znajdziesz klucze
+API, dokumentację SDK i opis API. Dokumentacja integracji jest po angielsku.
