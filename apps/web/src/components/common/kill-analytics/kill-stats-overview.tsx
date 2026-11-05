@@ -150,17 +150,20 @@ export const KillStatsOverview = ({
                 )}
               />
               <span className="truncate">{t(`npcType.${type}`)}</span>
-              {!isLoading && total > 0 && (
-                <span className="ml-auto tabular-nums">
-                  {shareFormatter.format(kills / total)}
-                </span>
-              )}
             </span>
+            {/* The share sits by the count, leaving the label the tile's width. */}
             {isLoading ? (
               <Skeleton className="h-7 w-16" />
             ) : (
-              <span className="text-2xl leading-7 font-semibold tabular-nums">
-                {formatNumber(kills)}
+              <span className="flex items-baseline justify-between gap-2">
+                <span className="text-2xl leading-7 font-semibold tabular-nums">
+                  {formatNumber(kills)}
+                </span>
+                {total > 0 && (
+                  <span className="text-xs font-medium text-muted-foreground tabular-nums">
+                    {shareFormatter.format(kills / total)}
+                  </span>
+                )}
               </span>
             )}
             {isLoading
