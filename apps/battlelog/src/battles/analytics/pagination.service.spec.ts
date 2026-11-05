@@ -64,7 +64,12 @@ beforeAll(async () => {
 afterAll(() => runtime.dispose());
 
 const pagination = () =>
-  makeBattlePagination(database, (effect) => effect).paginateBattles;
+  makeBattlePagination(
+    // SAFETY: PGlite stands in for @effect/sql-pg. Their raw `execute` results
+    // differ only in metadata; pagination reads `rows` alone.
+    database as never,
+    (effect) => effect,
+  ).paginateBattles;
 
 const page = (sortOrder: SortOrder, cursor?: string) =>
   runtime.runPromise(
