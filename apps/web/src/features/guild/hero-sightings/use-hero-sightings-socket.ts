@@ -4,8 +4,11 @@ import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
 import { DateTimeString } from "@lootlog/schema/http-scalars";
 import { Option, Schema } from "effect";
-import { GatewayEvent } from "@/config/gateway";
-import type { GatewayClient } from "@/lib/gateway-client";
+import type {
+  GatewayAccessUpdate,
+  GatewayClient,
+  GatewayJoin,
+} from "@/lib/gateway-client";
 import {
   heroSightingQueries,
   writeHeroSightingToCache,
@@ -49,8 +52,6 @@ type Options = {
   socket: GatewayClient;
   guilds: readonly { id: string; vanityUrl?: string | null }[] | undefined;
 };
-
-type PolicyUpdate = { accessPolicyChanges?: readonly AccessPolicyChange[] };
 
 const touchesHeroSightings = (change: AccessPolicyChange) =>
   change.areas.includes("timers") || change.areas.includes("organization");
@@ -139,24 +140,24 @@ export const useHeroSightingsSocket = ({ socket, guilds }: Options) => {
         refetch();
     };
 
-    const onPermissions = (payload?: PolicyUpdate) =>
-      onPolicyChanges(payload?.accessPolicyChanges);
+    const onPermissions = (payload: GatewayAccessUpdate) =>
+      onPolicyChanges(payload.accessPolicyChanges);
 
-    const onJoin = (payload: PolicyUpdate & { recover: boolean }) => {
+    const onJoin = (payload: GatewayJoin) => {
       onPolicyChanges(payload.accessPolicyChanges);
 
       // Join confirms the subscription: HTTP recovers updates missed offline.
       if (payload.recover) refetch();
     };
 
-    socket.on(GatewayEvent.HERO_SIGHTING_UPDATED, onUpdated);
-    socket.on(GatewayEvent.JOIN, onJoin);
-    socket.on(GatewayEvent.PERMISSIONS_UPDATED, onPermissions);
+    socket.on("hero-sighting.updated", onUpdated);
+    socket.on("join", onJoin);
+    socket.on("access.updated", onPermissions);
 
     return () => {
-      socket.off(GatewayEvent.HERO_SIGHTING_UPDATED, onUpdated);
-      socket.off(GatewayEvent.JOIN, onJoin);
-      socket.off(GatewayEvent.PERMISSIONS_UPDATED, onPermissions);
+      socket.off("hero-sighting.updated", onUpdated);
+      socket.off("join", onJoin);
+      socket.off("access.updated", onPermissions);
     };
   }, [guilds, queryClient, socket]);
 };

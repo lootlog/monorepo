@@ -51,7 +51,7 @@ export class RealtimeDependencyError extends TaggedErrorClass<RealtimeDependency
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-export type CommandRejection =
+type CommandRejection =
   | JoinCapacityExceeded
   | SubscriptionLimitExceeded
   | SessionNotJoined

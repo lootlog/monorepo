@@ -82,16 +82,6 @@ export interface AirTagScopeSnapshot {
   serverTime?: number;
 }
 
-export interface AirTagUpdateEvent {
-  guildId: string;
-  world: string;
-  mapId: number;
-  epochId: string;
-  epochStartedAt: number;
-  revision: number;
-  target: AirTagTarget;
-}
-
 /**
  * Every change of one scope from one merged batch. Removals precede updates:
  * `targets[i]` carries revision `revision - (targets.length - 1 - i)`.
@@ -231,11 +221,6 @@ export const AirTagScopeSnapshotSchema = Schema.Struct({
   serverTime: Schema.optionalKey(SafeNatural),
 });
 
-export const AirTagUpdateEventSchema = Schema.Struct({
-  ...AirTagScopeIdentityFields,
-  target: AirTagTargetSchema,
-});
-
 export const AirTagScopeUpdateEventSchema = Schema.Struct({
   ...AirTagScopeIdentityFields,
   targets: Schema.Array(AirTagTargetSchema),
@@ -268,8 +253,6 @@ export const isAirTagObservation = Schema.is(AirTagObservationSchema);
 export const isAirTagRelation = Schema.is(AirTagRelationSchema);
 
 export const isAirTagScopeSnapshot = Schema.is(AirTagScopeSnapshotSchema);
-
-export const isAirTagUpdateEvent = Schema.is(AirTagUpdateEventSchema);
 
 export const isAirTagScopeUpdateEvent = Schema.is(AirTagScopeUpdateEventSchema);
 

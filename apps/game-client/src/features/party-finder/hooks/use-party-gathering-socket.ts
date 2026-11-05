@@ -1,5 +1,4 @@
 import { canReadNotification } from "@/features/notifications/notification-access-policy";
-import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useNotificationPresenter } from "@/features/notifications/hooks/use-notification-presenter";
 import { isNotificationMuted } from "@/features/notifications/utils/notification-mutes";
@@ -79,8 +78,8 @@ export const usePartyGatheringSocket = () => {
     isPayloadAllowed: (notification) =>
       canReadNotification(socket?.getAccessPolicy?.(), notification),
     isReady: isReady && areMutesReady,
-    event: GatewayEvent.PARTY_GATHERING_SEND,
-    cancelEvent: GatewayEvent.PARTY_GATHERING_CANCEL,
+    event: "party-gathering.updated",
+    cancelEvent: "party-gathering.cancelled",
     onProcessBatch: processNotifications,
     onCancel: (data: { notificationId: string }) => {
       removeNotification(data.notificationId);

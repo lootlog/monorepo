@@ -1,3 +1,4 @@
+import { ownerAccessPolicy } from "@/test/realtime-wire";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RealtimeRequestError } from "@lootlog/client/realtime";
 import { createPageTransport } from "./page-transport";
@@ -275,7 +276,12 @@ describe("page transport", () => {
     const event = {
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: [], subscriptionScopes: [] },
+      data: {
+        accessPolicy: ownerAccessPolicy([]),
+        changes: [],
+        organizationIds: [],
+        subscriptionScopes: [],
+      },
     };
 
     bridge.send({ type: "event", event });
@@ -293,8 +299,16 @@ describe("page transport", () => {
       type: "command",
       command: { v: 1, type: "session.join", data: { world: "jaruna" } },
     });
-    bridge.send({ type: "result", id: request.id, data: { joined: true } });
-    await expect(join).resolves.toEqual({ joined: true });
+
+    const joined = {
+      connectionId: "connection",
+      organizationIds: [],
+      subscriptionScopes: [],
+      accessPolicy: ownerAccessPolicy([]),
+    };
+
+    bridge.send({ type: "result", id: request.id, data: joined });
+    await expect(join).resolves.toEqual(joined);
 
     const heartbeat = realtime.request("presence.heartbeat", {
       sessionId: "session",
@@ -324,6 +338,15 @@ describe("page transport", () => {
     await expect(heartbeat).rejects.toBeInstanceOf(RealtimeRequestError);
   });
 
+  it("rejects a command result that is not that command's success", async () => {
+    const bridge = setup();
+    const join = bridge.platform.createRealtime().join({ world: "jaruna" });
+    const request = await bridge.next();
+
+    bridge.send({ type: "result", id: request.id, data: { joined: true } });
+    await expect(join).rejects.toThrow("Invalid session.join response");
+  });
+
   it.each(["session.hello", "session.joined"] as const)(
     "delivers realtime state and %s events and honors unsubscription",
     async (type) => {
@@ -345,6 +368,7 @@ describe("page transport", () => {
                 connectionId: "connection",
                 organizationIds: [],
                 subscriptionScopes: [],
+                accessPolicy: ownerAccessPolicy([]),
               },
       };
 

@@ -23,16 +23,21 @@ import {
   REALTIME_SERVER_CLOSE_CODES,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect, Predicate, Result, Schema } from "effect";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
+import { Context, Effect, Layer, Predicate, Result, Schema } from "effect";
 import {
+  GatewayConfig,
+  type GatewayConfiguration,
+} from "#src/config/gateway-config";
+import {
+  Background,
   type BackgroundTaskRunner,
   unmanagedBackgroundTaskRunner,
 } from "#src/platform/background-tasks";
 import { ContextLogger } from "@lootlog/instrumentation";
-import type {
-  FederatedRealtimeMessage,
-  RedisGatewayStore,
+import {
+  GatewayRedis,
+  type FederatedRealtimeMessage,
+  type RedisGatewayStore,
 } from "#src/platform/redis-store";
 import {
   hasValidApiKeyLease,
@@ -48,7 +53,6 @@ import {
   isReadyRoomRemoval,
   type PartyGatheringEventSource,
 } from "#src/realtime/npc-event-visibility";
-import { toLegacyAirTagUpdates } from "#src/realtime/air-tag-legacy-updates";
 import type { GlobalChatCounts } from "#src/realtime/gateway-metrics";
 
 type Scope = typeof SubscriptionScope.Type;
@@ -72,37 +76,6 @@ const MAX_DEDUPLICATION_ENTRIES = 10_000;
 const MAX_SUBSCRIPTIONS = 4_096;
 
 const MAX_SCOPE_BYTES = 1_024;
-
-/**
- * Federated frame types this replica decodes and federation guarantees it
- * provides. Bump it with a new federated event type and publish that type only
- * once `clusterFederationVersion` reaches it: a replica drops a frame its
- * schema does not know.
- */
-export const FEDERATION_VERSION = 10;
-
-export const PARTY_GATHERING_STATE_FEDERATION_VERSION = 3;
-
-/** Every replica numbers its publications, so a subscriber can prove it lost none. */
-export const SEQUENCED_FEDERATION_VERSION = 4;
-
-/** Replicas from this version register the air-tag scopes their sockets follow. */
-export const AIR_TAG_INTEREST_FEDERATION_VERSION = 5;
-
-/** Replicas from this version decode `global-chat.created`. */
-export const GLOBAL_CHAT_FEDERATION_VERSION = 6;
-
-/** Replicas from this version decode `global-chat.deleted` and `global-chat.pinned`. */
-export const GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION = 7;
-
-/** Replicas from this version deliver `preciseEvent` of a presence publication. */
-export const PRESENCE_PAIR_FEDERATION_VERSION = 8;
-
-/** Replicas from this version decode `loot-split.received`. */
-export const LOOT_SPLIT_FEDERATION_VERSION = 9;
-
-/** Replicas from this version decode `loot-split.auto-accepted`. */
-export const LOOT_SPLIT_AUTO_ACCEPT_FEDERATION_VERSION = 10;
 
 /**
  * Identifies the frame schema of this build. A replica with the same schema
@@ -137,22 +110,11 @@ export const closeGradually = (
     }
   });
 
-interface FederationRecovery {
-  /** How long sessions wait for a dropped subscription to prove it lost nothing. */
-  readonly graceMs?: number;
-  /** Spreads the closes when sessions did miss frames. */
-  readonly closeSpreadMs?: number;
-  /**
-   * Reads the lowest `FEDERATION_VERSION` of the live replicas when a
-   * resubscription vouches for sessions. The periodic sample can predate a
-   * replica that started, or rolled back, during the gap.
-   */
-  readonly readClusterFederationVersion?: () => Effect.Effect<number, unknown>;
-}
-
+// How long sessions wait for a dropped subscription to prove it lost nothing.
 // Covers a 5 s Dragonfly stall plus the resubscribe backoff and reorder window.
 const FEDERATION_GRACE_MS = 15_000;
 
+// Spreads the closes when sessions did miss frames.
 const FEDERATION_CLOSE_SPREAD_MS = 10_000;
 
 /** The global chat channel of `world`, or the one every world shares. */
@@ -161,19 +123,8 @@ export const globalChatScope = (world: string | undefined): Scope =>
     ? { topic: "global.chat" }
     : { topic: "global.chat.world", world };
 
+/** Identifies a scope; JSON keeps field values that contain delimiters apart. */
 export const getScopeKey = (scope: Scope): string =>
-  [
-    scope.topic,
-    scope.organizationId ?? "",
-    scope.eventId ?? "",
-    scope.world ?? "",
-    scope.mapId?.toString() ?? "",
-  ].join("|");
-
-const getIdentityAudienceKey = (kind: "user" | "discord", id: string): string =>
-  JSON.stringify([kind, id]);
-
-const getScopeAudienceKey = (scope: Scope): string =>
   JSON.stringify([
     scope.topic,
     scope.organizationId,
@@ -181,6 +132,9 @@ const getScopeAudienceKey = (scope: Scope): string =>
     scope.world,
     scope.mapId,
   ]);
+
+const getIdentityAudienceKey = (kind: "user" | "discord", id: string): string =>
+  JSON.stringify([kind, id]);
 
 const getLocationAudienceKey = (
   platform: SessionData["platform"],
@@ -258,8 +212,6 @@ export class RealtimeHub {
   private federationEpoch = 0;
   private draining = false;
   readonly instanceId = crypto.randomUUID();
-  /** Lowest `FEDERATION_VERSION` among live replicas, kept by `GatewayMetrics`; 1 until known. */
-  clusterFederationVersion = 1;
   /** Cluster-wide global chat counts, kept by `GatewayMetrics`; undefined until sampled. */
   globalChatCounts?: GlobalChatCounts;
 
@@ -267,7 +219,6 @@ export class RealtimeHub {
     private readonly config: Pick<GatewayConfiguration, "maxBackpressureBytes">,
     private readonly redis: RealtimeFederationStore,
     private readonly runBackground: BackgroundTaskRunner = unmanagedBackgroundTaskRunner,
-    private readonly federationRecovery: FederationRecovery = {},
   ) {}
 
   start(): Effect.Effect<void, unknown> {
@@ -359,7 +310,7 @@ export class RealtimeHub {
     socket.data.subscriptions.set(key, scope);
 
     if (this.sockets.get(socket.data.connectionId) === socket)
-      this.addAudience(getScopeAudienceKey(scope), socket);
+      this.addAudience(getScopeKey(scope), socket);
   }
 
   unsubscribe(socket: GatewaySocket, scope: Scope): void {
@@ -368,10 +319,10 @@ export class RealtimeHub {
 
     if (!removed) return;
     socket.data.subscriptions.delete(key);
-    const audienceKey = getScopeAudienceKey(removed);
+    const audienceKey = getScopeKey(removed);
 
     for (const subscription of socket.data.subscriptions.values()) {
-      if (getScopeAudienceKey(subscription) === audienceKey) return;
+      if (getScopeKey(subscription) === audienceKey) return;
     }
 
     this.removeAudience(audienceKey, socket);
@@ -393,14 +344,14 @@ export class RealtimeHub {
     ) {
       // Reconciliation must never retain subscriptions revoked by a permission change.
       for (const scope of socket.data.subscriptions.values())
-        this.removeAudience(getScopeAudienceKey(scope), socket);
+        this.removeAudience(getScopeKey(scope), socket);
       socket.data.subscriptions.clear();
       socket.close(1008, "subscription limit exceeded");
       throw new SubscriptionLimitExceeded();
     }
 
     for (const scope of socket.data.subscriptions.values())
-      this.removeAudience(getScopeAudienceKey(scope), socket);
+      this.removeAudience(getScopeKey(scope), socket);
     socket.data.subscriptions.clear();
 
     for (const scope of replacements.values()) this.subscribe(socket, scope);
@@ -537,47 +488,17 @@ export class RealtimeHub {
 
     const scopeKey = getScopeKey(scope);
 
-    // `event` stays the basic variant: a replica that predates the pair
-    // ignores `preciseEvent` and degrades its readers to basic presence.
-    if (this.clusterFederationVersion >= PRESENCE_PAIR_FEDERATION_VERSION) {
-      const { message, prepared, preparedPrecise, frames } =
-        this.createFederatedMessage({
-          scopeKey,
-          scope,
-          organizationId,
-          frame: basicEvent,
-          preciseFrame: preciseEvent,
-        });
-
-      this.deliver(message, prepared, preparedPrecise);
-      await this.redis.publish(message, frames);
-
-      return;
-    }
-
-    const messages = [
+    const { message, prepared, preparedPrecise, frames } =
       this.createFederatedMessage({
         scopeKey,
         scope,
         organizationId,
-        presenceAudience: "basic",
         frame: basicEvent,
-      }),
-      this.createFederatedMessage({
-        scopeKey,
-        scope,
-        organizationId,
-        presenceAudience: "precise",
-        frame: preciseEvent,
-      }),
-    ];
+        preciseFrame: preciseEvent,
+      });
 
-    await Promise.all(
-      messages.map(async ({ message, prepared, frames }) => {
-        this.deliver(message, prepared);
-        await this.redis.publish(message, frames);
-      }),
-    );
+    this.deliver(message, prepared, preparedPrecise);
+    await this.redis.publish(message, frames);
   }
 
   /** Distinct scopes of `topic` that a local socket subscribes to. */
@@ -588,7 +509,7 @@ export class RealtimeHub {
     for (const key of this.audiences.keys()) {
       if (!key.startsWith(`${prefix},`)) continue;
 
-      // SAFETY: keys with this topic prefix come only from getScopeAudienceKey.
+      // SAFETY: keys with this topic prefix come only from getScopeKey.
       const [, organizationId, eventId, world, mapId] = JSON.parse(key) as [
         string,
         string | null,
@@ -637,30 +558,10 @@ export class RealtimeHub {
       return;
     }
 
-    // Sequence continuity covers only sequenced frames. Trust it only when
-    // every live replica numbers its frames, read now rather than sampled.
-    const epoch = this.federationEpoch;
-
-    const read =
-      this.federationRecovery.readClusterFederationVersion?.() ??
-      Effect.succeed(this.clusterFederationVersion);
-
-    this.runBackground(
-      "realtime.federation.verify",
-      read.pipe(
-        Effect.orElseSucceed(() => 1),
-        Effect.map((version) => {
-          if (epoch !== this.federationEpoch) return;
-          this.clusterFederationVersion = version;
-
-          if (version < SEQUENCED_FEDERATION_VERSION)
-            this.closeAfterFederationGap();
-          clearTimeout(this.federationGrace);
-          this.federationGrace = undefined;
-          this.markFederated();
-        }),
-      ),
-    );
+    // Every frame is sequenced, so the resubscription proved none was lost.
+    clearTimeout(this.federationGrace);
+    this.federationGrace = undefined;
+    this.markFederated();
   }
 
   private markFederated(): void {
@@ -679,20 +580,13 @@ export class RealtimeHub {
     if (!this.federated) return;
     this.federated = false;
 
-    // A replica that does not number its frames can lose them unnoticed.
-    if (this.clusterFederationVersion < SEQUENCED_FEDERATION_VERSION) {
-      this.closeAfterFederationGap();
-
-      return;
-    }
-
     this.logger.warn("Realtime federation subscription interrupted", {
       instanceId: this.instanceId,
       sockets: this.sockets.size,
     });
     this.federationGrace = setTimeout(
       () => this.closeAfterFederationGap(),
-      this.federationRecovery.graceMs ?? FEDERATION_GRACE_MS,
+      FEDERATION_GRACE_MS,
     );
     this.federationGrace.unref?.();
   }
@@ -722,14 +616,11 @@ export class RealtimeHub {
 
     this.runBackground(
       "realtime.federation.close",
-      closeGradually(
-        sockets,
-        this.federationRecovery.closeSpreadMs ?? FEDERATION_CLOSE_SPREAD_MS,
-        (socket) =>
-          socket.close(
-            REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
-            "realtime federation unavailable",
-          ),
+      closeGradually(sockets, FEDERATION_CLOSE_SPREAD_MS, (socket) =>
+        socket.close(
+          REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
+          "realtime federation unavailable",
+        ),
       ),
     );
   }
@@ -749,7 +640,7 @@ export class RealtimeHub {
     readonly recipientMapId?: number;
     readonly recipientCharacterIds?: readonly string[];
     readonly organizationId?: string;
-    readonly presenceAudience?: "basic" | "precise";
+    readonly presenceAudience?: "precise";
     readonly frame: Event;
     readonly preciseFrame?: Event;
   }) {
@@ -864,8 +755,6 @@ export class RealtimeHub {
     if (precise === null) return;
     const chatFrames = new Map<boolean, string>();
 
-    let legacyAirTagFrames: ReadonlyArray<string> | undefined;
-
     const canReadSource = prepareSourceEventVisibility(
       frame,
       message.sourceNpcs,
@@ -903,17 +792,6 @@ export class RealtimeHub {
             chatPermissions(socket.data, guild),
           ),
         );
-        continue;
-      }
-
-      if (
-        frame.type === "air-tag.scope-updated" &&
-        !socket.data.supportsAirTagScopeUpdates
-      ) {
-        legacyAirTagFrames ??= toLegacyAirTagUpdates(frame).map((legacy) =>
-          JSON.stringify(legacy),
-        );
-        this.sendEach(socket, legacyAirTagFrames);
         continue;
       }
 
@@ -1037,17 +915,11 @@ export class RealtimeHub {
     return encoded;
   }
 
-  private sendEach(socket: GatewaySocket, frames: ReadonlyArray<string>): void {
-    for (const frame of frames) {
-      if (!this.send(socket, frame)) return;
-    }
-  }
-
   private audienceKeys(session: SessionData): string[] {
     return [
       getIdentityAudienceKey("user", session.userId),
       getIdentityAudienceKey("discord", session.discordId),
-      ...Array.from(session.subscriptions.values(), getScopeAudienceKey),
+      ...Array.from(session.subscriptions.values(), getScopeKey),
     ];
   }
 
@@ -1194,9 +1066,8 @@ export class RealtimeHub {
     message: FederatedRealtimeMessage,
   ): boolean {
     if (!message.presenceAudience || !message.organizationId) return true;
-    const precise = canReadPreciseLocation(socket.data, message.organizationId);
 
-    return message.presenceAudience === "precise" ? precise : !precise;
+    return canReadPreciseLocation(socket.data, message.organizationId);
   }
 
   private remember(id: string): boolean {
@@ -1240,4 +1111,24 @@ export class RealtimeHub {
 
     return true;
   }
+}
+
+/** This replica's socket registry and federation. */
+export class Hub extends Context.Service<Hub, RealtimeHub>()(
+  "@lootlog/gateway/realtime/Hub",
+) {
+  static readonly layer = Layer.effect(
+    Hub,
+    Effect.gen(function* () {
+      const hub = new RealtimeHub(
+        yield* GatewayConfig,
+        yield* GatewayRedis,
+        (yield* Background).run,
+      );
+
+      yield* hub.start();
+
+      return hub;
+    }),
+  );
 }

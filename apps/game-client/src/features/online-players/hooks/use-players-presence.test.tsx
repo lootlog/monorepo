@@ -6,7 +6,6 @@ import type {
 } from "@lootlog/protocol/realtime";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { normalizePresenceResponse } from "@/lib/online-players-presence";
 import {
   createOnlinePlayersTest,
   createOnlinePresence,
@@ -36,6 +35,7 @@ const permissionEvent = (
   v: 1,
   type: "permissions.updated",
   data: {
+    changes: [],
     organizationIds: accessPolicy.organizations.map(
       (row) => row.organizationId,
     ),
@@ -92,28 +92,6 @@ describe("usePlayersPresence", () => {
       },
     });
     expect(harness.fetchPresence).toHaveBeenCalledWith("guild-1", "alpha");
-  });
-
-  it("retains numeric-string compatibility in the legacy presence normalizer", () => {
-    const normalized = normalizePresenceResponse({
-      "discord-1": [
-        {
-          discordId: "discord-1",
-          player: {
-            world: "alpha",
-            name: "Hero",
-            lvl: "123",
-            characterId: "10",
-            accountId: "20",
-            icon: "hero.png",
-            prof: "w",
-            location: { map: "Karka-han" },
-          },
-        },
-      ],
-    });
-
-    expect(normalized["discord-1"]?.[0]?.player?.lvl).toBe(123);
   });
 
   it("deduplicates initial presence fetch payloads by character and keeps the newest presence", async () => {
@@ -408,26 +386,6 @@ describe("usePlayersPresence", () => {
       organizationId: "guild-2",
     });
     await waitFor(() => expect(result.current.hasLoaded).toBe(true));
-  });
-
-  it("coalesces legacy permission updates and clears stale players before a denied refetch", async () => {
-    const { result } = await mount(false);
-    await waitFor(() => expect(result.current.hasLoaded).toBe(true));
-    vi.useFakeTimers();
-    harness.fetchPresence.mockRejectedValue(new Error("denied"));
-
-    const event: ServerEvent = {
-      v: 1,
-      type: "permissions.updated",
-      data: { organizationIds: ["guild-1"], subscriptionScopes: [] },
-    };
-
-    await harness.receive(event, event);
-    expect(result.current.onlinePlayers).toEqual({});
-    expect(harness.fetchPresence).toHaveBeenCalledTimes(1);
-    await act(() => vi.advanceTimersByTimeAsync(5000));
-    expect(harness.fetchPresence).toHaveBeenCalledTimes(2);
-    expect(result.current.accessState).toBe("forbidden");
   });
 
   it("keeps rows for unrelated changes, scrubs revoked location, and ignores the old request", async () => {

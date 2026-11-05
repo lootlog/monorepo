@@ -3,7 +3,6 @@ import {
   type PartyReadyRoomClientUpdate,
 } from "@lootlog/schema/party-ready-room";
 import { useEffect, useEffectEvent } from "react";
-import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
 
@@ -32,10 +31,10 @@ export function usePartyReadyRoomSocket(): void {
       handleUpdate(payload);
     };
 
-    socket.on(GatewayEvent.PARTY_READY_ROOM_UPDATE, onUpdate);
+    socket.on("party-ready-room.updated", onUpdate);
 
     return () => {
-      socket.off(GatewayEvent.PARTY_READY_ROOM_UPDATE, onUpdate);
+      socket.off("party-ready-room.updated", onUpdate);
     };
   }, [socket, connected]);
 }

@@ -1,12 +1,13 @@
-import { unusedFederationStore } from "./realtime-fixtures.js";
+import {
+  benchmarkConfig as config,
+  unusedFederationStore,
+} from "./realtime-fixtures.js";
 import assert from "node:assert/strict";
 import type {
   BasicPresence,
   ServerEvent,
   SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Redacted } from "effect";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
 import { getScopeKey, RealtimeHub } from "#src/realtime/realtime-hub";
 import type { SessionData } from "#src/realtime/session";
 
@@ -16,28 +17,6 @@ const connections = 5_000;
 const publications = 20_000;
 
 const warmupPublications = 200;
-
-const config = {
-  environment: "benchmark",
-  port: 0,
-  serviceName: "gateway",
-  serviceNamespace: "benchmark",
-  apiUrl: "http://localhost",
-  margonemSigningKeyUrl: "http://localhost",
-  rabbitmqUri: Redacted.make("unused"),
-  activityEventSignatureSecret: Redacted.make("unused"),
-  redis: {
-    host: "localhost",
-    port: 6379,
-    username: "",
-    password: Redacted.make("unused"),
-    keyPrefix: "benchmark",
-  },
-  websocketPath: "/ws",
-  allowedWebOrigins: new Set<string>(),
-  allowedExtensionOrigins: new Set<string>(),
-  maxBackpressureBytes: 1_048_576,
-} satisfies GatewayConfiguration;
 
 const redis = { ...unusedFederationStore, publish: () => Promise.resolve() };
 

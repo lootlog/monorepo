@@ -1,13 +1,10 @@
+import { ownerAccessPolicy } from "@/test/realtime-wire";
 import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import {
   accountPreferenceValues,
   createSettingsDocuments,
   seedSettingsDocuments,
 } from "@/test/settings-documents-fixtures";
-import {
-  REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
-  REALTIME_LOOT_SPLIT_CAPABILITY,
-} from "@lootlog/protocol/realtime";
 import type { GameEvent, Item } from "@lootlog/margonem/game-events";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
@@ -129,10 +126,8 @@ const setup = async (lootSplit?: { enabled: boolean; rarities: string[] }) => {
       data: {
         connectionId: "test",
         organizationIds: ["guild-1"],
-        capabilities: [
-          REALTIME_LOOT_SPLIT_CAPABILITY,
-          REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
-        ],
+        subscriptionScopes: [],
+        accessPolicy: ownerAccessPolicy(["guild-1"]),
       },
     }),
   );

@@ -1,4 +1,8 @@
 import { recordRealtimeCommand } from "#src/realtime/connection-metrics";
+import {
+  runCommandRoute,
+  type CommandRoutes,
+} from "#src/realtime/command-routes";
 import { createHash } from "node:crypto";
 import {
   createAccessPolicySnapshot,
@@ -7,19 +11,9 @@ import {
 import { parseRealtimeJson } from "@lootlog/protocol/realtime/codec";
 import {
   decodeClientCommand,
-  REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
-  REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
-  REALTIME_NPC_PRESENCE_CAPABILITY,
-  REALTIME_GLOBAL_CHAT_CAPABILITY,
-  REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
-  REALTIME_BATTLE_PING_CAPABILITY,
-  REALTIME_LOOT_SPLIT_CAPABILITY,
-  REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
-  REALTIME_PING_CAPABILITY,
-  REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_SERVER_CLOSE_CODES,
-  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   type ClientCommand,
+  type CommandSuccess,
   type Response,
   type ServerEvent,
   type SubscriptionScope,
@@ -34,37 +28,47 @@ import {
   Option,
   Schedule,
   Schema,
+  Context,
+  Layer,
 } from "effect";
-import type { GuildStore, GuildStoreFailure } from "#src/guilds/guild-store";
-import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
-import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
-import type { AirTagService } from "#src/realtime/air-tag-service";
-import type { BattlePingService } from "#src/realtime/battle-ping-service";
-import type { LootSplitService } from "#src/realtime/loot-split-service";
-import type { NpcPresenceService } from "#src/realtime/npc-presence-service";
-import type {
-  NpcPresenceReportAck,
-  NpcPresenceSnapshot,
-} from "@lootlog/schema/npc-presence";
-import type { AirTagObservationAck } from "@lootlog/schema/air-tag";
 import {
-  AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
+  type GuildStore,
+  type GuildStoreFailure,
+  Guilds,
+} from "#src/guilds/guild-store";
+import {
+  type MargonemProofVerifier,
+  ProofVerifier,
+} from "#src/auth/margonem-proof";
+import {
+  type ActivityPublisher,
+  Activity,
+} from "#src/rabbit/activity-publisher";
+import {
+  type AirTagService,
+  AirTags,
+  airTagRoutes,
+} from "#src/realtime/air-tag-service";
+import {
+  BattlePings,
+  battlePingRoutes,
+} from "#src/realtime/battle-ping-service";
+import { LootSplits, lootSplitRoutes } from "#src/realtime/loot-split-service";
+import {
+  type NpcPresenceService,
+  NpcPresence,
+  npcPresenceRoutes,
+} from "#src/realtime/npc-presence-service";
+import {
   CommandAdmission,
   JOIN_ADMISSION_LIMITS,
+  CommandAdmissions,
 } from "#src/realtime/command-admission";
-import type { MapPingService } from "#src/realtime/map-ping-service";
+import { MapPings, mapPingRoutes } from "#src/realtime/map-ping-service";
 import { getGlobalChatStats } from "#src/realtime/gateway-metrics";
 import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
-import type { PresenceStore } from "#src/realtime/presence-store";
-import {
-  getScopeKey,
-  GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION,
-  GLOBAL_CHAT_FEDERATION_VERSION,
-  LOOT_SPLIT_AUTO_ACCEPT_FEDERATION_VERSION,
-  LOOT_SPLIT_FEDERATION_VERSION,
-  PARTY_GATHERING_STATE_FEDERATION_VERSION,
-  type RealtimeHub,
-} from "#src/realtime/realtime-hub";
+import { type PresenceStore, Presence } from "#src/realtime/presence-store";
+import { getScopeKey, type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import {
   hasValidApiKeyLease,
   type GatewaySocket,
@@ -90,6 +94,8 @@ import {
   publishesPresenceTo,
   type PermissionViewer,
 } from "#src/realtime/subscription-policy";
+import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 
 type Command = typeof ClientCommand.Type;
 
@@ -165,7 +171,9 @@ const errorResponse = (
   };
 };
 
-const invalidLegacyPayloadResponse = Function.compose(
+// Ping, loot split and AirTag acks have a rejection for an invalid payload, so
+// a malformed one of those is answered instead of closing the socket.
+const invalidPayloadRejection = Function.compose(
   Schema.decodeUnknownOption(
     Schema.Struct({
       v: Schema.Literal(1),
@@ -190,80 +198,37 @@ const invalidLegacyPayloadResponse = Function.compose(
   }),
 );
 
-const RELAY_COMMANDS = [
-  "map-ping.send",
-  "battle-ping.send",
-  "loot-split.send",
-  "loot-split.auto-accept",
-] as const satisfies ReadonlyArray<Command["type"]>;
+/** Commands of the session itself; every other route belongs to a feature. */
+type SessionCommand =
+  | "session.join"
+  | "presence.heartbeat"
+  | "connection.ping"
+  | "presence.publish"
+  | "presence.fetch"
+  | "subscription.subscribe"
+  | "subscription.unsubscribe";
 
-type RelayCommand = Extract<Command, { type: (typeof RELAY_COMMANDS)[number] }>;
+export type FeatureRoutes = Omit<CommandRoutes, SessionCommand>;
 
-const isRelayCommand = (command: Command): command is RelayCommand =>
-  RELAY_COMMANDS.some((type) => type === command.type);
-
-/** The only commands an API key integration may send. */
-const API_KEY_COMMANDS: ReadonlySet<Command["type"]> = new Set([
-  "session.join",
-  "connection.ping",
-  "presence.fetch",
-  "subscription.subscribe",
-  "subscription.unsubscribe",
-]);
-
-const canApiKeySend = (session: SessionData, type: Command["type"]) =>
-  !session.apiKeyAccess || API_KEY_COMMANDS.has(type);
-
-/**
- * Game client capabilities whose events federate between replicas, from the
- * federation version every replica needs: an older replica drops the event,
- * so its sockets would miss what the capability promises.
- */
-const FEDERATED_GAME_CAPABILITIES = [
-  [
-    REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
-    PARTY_GATHERING_STATE_FEDERATION_VERSION,
-  ],
-  [REALTIME_LOOT_SPLIT_CAPABILITY, LOOT_SPLIT_FEDERATION_VERSION],
-  [
-    REALTIME_LOOT_SPLIT_AUTO_ACCEPT_CAPABILITY,
-    LOOT_SPLIT_AUTO_ACCEPT_FEDERATION_VERSION,
-  ],
-] as const;
-
-const federatedGameCapabilities = (
-  session: SessionData,
-  clusterFederationVersion: number,
-): string[] =>
-  session.apiKeyAccess
-    ? []
-    : FEDERATED_GAME_CAPABILITIES.flatMap(([capability, version]) =>
-        clusterFederationVersion >= version ? [capability] : [],
-      );
-
-/** Global chat capabilities the client decodes and every replica supports. */
-const globalChatCapabilities = (
-  session: SessionData,
-  clusterFederationVersion: number,
-): string[] => {
-  const capabilities: string[] = [];
-
-  if (
-    session.supportsGlobalChat &&
-    clusterFederationVersion >= GLOBAL_CHAT_FEDERATION_VERSION
-  )
-    capabilities.push(REALTIME_GLOBAL_CHAT_CAPABILITY);
-
-  if (
-    session.supportsGlobalChatChannels &&
-    clusterFederationVersion >= GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION
-  )
-    capabilities.push(REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY);
-
-  return capabilities;
-};
+/** Every feature's routes; a feature command without one does not compile. */
+export const gatewayFeatureRoutes = (features: {
+  readonly mapPings: Parameters<typeof mapPingRoutes>[0];
+  readonly battlePings: Parameters<typeof battlePingRoutes>[0];
+  readonly lootSplits: Parameters<typeof lootSplitRoutes>[0];
+  readonly airTags: Parameters<typeof airTagRoutes>[0];
+  readonly airTagObservationAdmission: Parameters<typeof airTagRoutes>[1];
+  readonly npcPresence: Parameters<typeof npcPresenceRoutes>[0];
+}): FeatureRoutes => ({
+  ...mapPingRoutes(features.mapPings),
+  ...battlePingRoutes(features.battlePings),
+  ...lootSplitRoutes(features.lootSplits),
+  ...airTagRoutes(features.airTags, features.airTagObservationAdmission),
+  ...npcPresenceRoutes(features.npcPresence),
+});
 
 export class CommandHandler {
+  private readonly routes: CommandRoutes;
+
   constructor(
     private readonly guilds: GuildStore,
     private readonly proofVerifier: MargonemProofVerifier,
@@ -277,7 +242,6 @@ export class CommandHandler {
     private readonly hub: Pick<
       RealtimeHub,
       | "onPermissionRebalance"
-      | "clusterFederationVersion"
       | "globalChatCounts"
       | "sendResponse"
       | "sendEvent"
@@ -290,29 +254,18 @@ export class CommandHandler {
       | "unsubscribe"
     >,
     private readonly activity: Pick<ActivityPublisher, "publish">,
-    private readonly mapPings: Pick<MapPingService, "send">,
-    private readonly battlePings: Pick<BattlePingService, "send">,
-    private readonly lootSplits: Pick<LootSplitService, "send" | "autoAccept">,
-    private readonly airTags: Pick<
-      AirTagService,
-      | "updateSubscription"
-      | "publishObservations"
-      | "fetchMapThreats"
-      | "registerInterest"
-    >,
-    private readonly npcPresence: Pick<
-      NpcPresenceService,
-      "report" | "refresh" | "withdraw" | "fetch"
-    >,
+    /** Features that follow the session's heartbeats, joins and subscriptions. */
+    private readonly sessionFeatures: {
+      readonly npcPresence: Pick<NpcPresenceService, "refresh" | "withdraw">;
+      readonly airTags: Pick<AirTagService, "registerInterest">;
+    },
+    featureRoutes: FeatureRoutes,
     private readonly joinAdmission: Pick<
       CommandAdmission,
       "tryAcquire"
     > = new CommandAdmission(JOIN_ADMISSION_LIMITS),
-    private readonly airTagObservationAdmission: Pick<
-      CommandAdmission,
-      "tryAcquire"
-    > = new CommandAdmission(AIR_TAG_OBSERVATION_ADMISSION_LIMITS),
   ) {
+    this.routes = { ...this.sessionRoutes(), ...featureRoutes };
     this.hub.onPermissionRebalance((discordId, userId) =>
       this.enforceRebalance(discordId, userId),
     );
@@ -352,7 +305,7 @@ export class CommandHandler {
     try {
       command = decodeClientCommand(decoded);
     } catch {
-      const rejection = invalidLegacyPayloadResponse(decoded);
+      const rejection = invalidPayloadRejection(decoded);
 
       if (rejection) {
         return Effect.sync(() => {
@@ -365,36 +318,27 @@ export class CommandHandler {
 
     if (overloaded) {
       return Effect.sync(() => {
-        if (command.requestId) {
-          this.hub.sendResponse(
-            socket,
-            errorResponse(
-              command.requestId,
-              "COMMAND_REJECTED",
-              "command temporarily unavailable",
-              true,
-            ),
-          );
-        } else {
-          // Legacy fire-and-forget commands cannot receive a correlated error.
-          socket.close(
-            REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
-            "command capacity exceeded",
-          );
-        }
+        this.hub.sendResponse(
+          socket,
+          errorResponse(
+            command.requestId,
+            "COMMAND_REJECTED",
+            "command temporarily unavailable",
+            true,
+          ),
+        );
       });
     }
 
     const dispatch = Effect.suspend(() => this.dispatch(socket, command)).pipe(
       Effect.tap((data) =>
         Effect.sync(() => {
-          if (command.requestId)
-            this.hub.sendResponse(socket, {
-              v: 1,
-              requestId: command.requestId,
-              status: "success",
-              data,
-            });
+          this.hub.sendResponse(socket, {
+            v: 1,
+            requestId: command.requestId,
+            status: "success",
+            data,
+          });
         }),
       ),
       Effect.onExit((exit) => {
@@ -419,40 +363,41 @@ export class CommandHandler {
       }),
     );
 
-    const traced =
-      command.type === "session.join" || command.type === "presence.publish"
-        ? dispatch.pipe(
-            Effect.withSpan("gateway.command", {
-              attributes: { "rpc.method": command.type },
-            }),
-          )
-        : dispatch;
+    const traced = this.routes[command.type].traced
+      ? dispatch.pipe(
+          Effect.withSpan("gateway.command", {
+            attributes: { "rpc.method": command.type },
+          }),
+        )
+      : dispatch;
 
     return traced.pipe(
-      Effect.catch((error) => {
+      Effect.catchCause((cause) => {
+        if (Cause.hasInterruptsOnly(cause)) return Effect.interrupt;
+        const error = Option.getOrUndefined(Cause.findErrorOption(cause));
+
         const failure = isCommandFailure(error)
           ? commandFailureDetails(error)
           : { message: "command temporarily unavailable", retryable: true };
 
-        return Effect.sync(() => {
-          if (command.requestId)
-            this.hub.sendResponse(
-              socket,
-              errorResponse(
-                command.requestId,
-                "COMMAND_REJECTED",
-                failure.message,
-                failure.retryable,
-                failure.retryAfterMs,
-              ),
-            );
-          // A join without a request ID would wait for session.joined forever.
-          else if (error instanceof JoinCapacityExceeded)
-            socket.close(
-              REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
-              "gateway is busy",
-            );
+        const respond = Effect.sync(() => {
+          this.hub.sendResponse(
+            socket,
+            errorResponse(
+              command.requestId,
+              "COMMAND_REJECTED",
+              failure.message,
+              failure.retryable,
+              failure.retryAfterMs,
+            ),
+          );
         });
+
+        // A defect still fails the command, but its client learns to retry
+        // instead of waiting for the request to time out.
+        return Cause.hasDies(cause)
+          ? respond.pipe(Effect.andThen(Effect.die(Cause.squash(cause))))
+          : respond;
       }),
       Effect.asVoid,
     );
@@ -767,24 +712,10 @@ export class CommandHandler {
     );
   }
 
-  /** Pings and loot split frames, relayed to other players and never stored. */
-  private relay(socket: GatewaySocket, command: RelayCommand) {
-    switch (command.type) {
-      case "map-ping.send":
-        return this.mapPings.send(socket, command.data);
-      case "battle-ping.send":
-        return this.battlePings.send(socket, command.data);
-      case "loot-split.send":
-        return this.lootSplits.send(socket, command.data);
-      case "loot-split.auto-accept":
-        return this.lootSplits.autoAccept(socket, command.data);
-    }
-  }
-
   private dispatch(
     socket: GatewaySocket,
     command: Command,
-  ): Effect.Effect<unknown, CommandFailure> {
+  ): Effect.Effect<CommandSuccess<Command["type"]>, CommandFailure> {
     if (!hasValidApiKeyLease(socket.data))
       return Effect.fail(new OrganizationAccessDenied());
 
@@ -797,223 +728,165 @@ export class CommandHandler {
         }),
       );
 
-    if (!canApiKeySend(socket.data, command.type))
+    const route = this.routes[command.type];
+
+    if (socket.data.apiKeyAccess && !route.apiKey)
       return Effect.fail(new OrganizationAccessDenied());
 
-    const fromPromise = <A>(evaluate: () => Promise<A>) =>
-      Effect.tryPromise({
-        try: evaluate,
-        catch: (cause) =>
-          new RealtimeDependencyError({ operation: command.type, cause }),
-      });
+    if (route.joined && !socket.data.joined)
+      return Effect.fail(new SessionNotJoined());
 
-    const requireJoined = this.requireJoined(socket);
-
-    if (isRelayCommand(command))
-      return requireJoined.pipe(
-        Effect.andThen(fromPromise(() => this.relay(socket, command))),
-      );
-
-    switch (command.type) {
-      case "session.join": {
-        const admission = this.joinAdmission.tryAcquire();
-
-        if (!admission.admitted)
-          return Effect.fail(
-            new JoinCapacityExceeded({
-              retryAfterMs: admission.retryAfterMs,
-            }),
-          );
-
-        return this.join(socket, command.data).pipe(
-          Effect.ensuring(Effect.sync(admission.release)),
-        );
-      }
-
-      case "presence.heartbeat":
-        return requireJoined.pipe(
-          Effect.andThen(
-            this.presence.heartbeat(socket, command.data.sessionId),
-          ),
-          // The heartbeat must not wait for Redis scripts it does not need.
-          Effect.tap(() =>
-            Effect.sync(() => {
-              this.npcPresence.refresh(socket).catch(() => undefined);
-            }),
-          ),
-          Effect.map((lastSeen) => ({ lastSeen })),
-        );
-      case "connection.ping":
-        return Effect.succeed({});
-      case "presence.publish":
-        return requireJoined.pipe(
-          Effect.andThen(this.publishPresence(socket, command.data)),
-        );
-      case "presence.fetch": {
-        const scope = {
-          topic: "organization.presence",
-          organizationId: command.data.organizationId,
-        } satisfies Scope;
-
-        if (!canSubscribe(socket.data, scope))
-          return Effect.fail(new OrganizationAccessDenied());
-
-        return requireJoined.pipe(
-          Effect.andThen(
-            this.presence.snapshot(
-              socket.data,
-              command.data.organizationId,
-              command.data.world,
-            ),
-          ),
-          Effect.tap((snapshot) =>
-            Effect.sync(() => {
-              if (command.requestId && command.data.delivery === "response")
-                return;
-
-              this.hub.sendEvent(socket, {
-                v: 1,
-                type: "presence.snapshot",
-                sequence: snapshot.revision,
-                data: snapshot,
-              });
-            }),
-          ),
-        );
-      }
-
-      case "subscription.subscribe":
-        if (!canSubscribe(socket.data, command.data))
-          return Effect.fail(new OrganizationAccessDenied());
-
-        return requireJoined.pipe(
-          Effect.andThen(
-            Effect.try({
-              try: () => {
-                this.hub.subscribe(socket, command.data);
-
-                return { scope: command.data };
-              },
-              catch: (cause) =>
-                cause instanceof SubscriptionLimitExceeded
-                  ? cause
-                  : new RealtimeDependencyError({
-                      operation: "subscribe",
-                      cause,
-                    }),
-            }),
-          ),
-          // Other replicas publish air-tag updates only to registered followers.
-          Effect.tap(({ scope }) =>
-            scope.topic === "map.air-tags"
-              ? fromPromise(() => this.airTags.registerInterest(scope))
-              : Effect.void,
-          ),
-          // Counts otherwise arrive with the next metrics sample, up to 10 s later.
-          Effect.tap(({ scope }) =>
-            Effect.sync(() => {
-              const counts = this.hub.globalChatCounts;
-
-              if (
-                !counts ||
-                (scope.topic !== "global.chat" &&
-                  scope.topic !== "global.chat.world")
-              )
-                return;
-
-              const event: Event = {
-                v: 1,
-                type: "global-chat.stats",
-                data: getGlobalChatStats(counts, scope.world),
-              };
-
-              if (canReadSourceEvent(socket.data, event))
-                this.hub.sendEvent(socket, event);
-            }),
-          ),
-        );
-      case "subscription.unsubscribe":
-        return requireJoined.pipe(
-          Effect.andThen(
-            Effect.sync(() => {
-              this.hub.unsubscribe(socket, command.data);
-
-              return { scope: command.data };
-            }),
-          ),
-        );
-      case "air-tag.subscription":
-        return requireJoined.pipe(
-          Effect.andThen(
-            fromPromise(() =>
-              this.airTags.updateSubscription(socket, command.data),
-            ),
-          ),
-        );
-      case "air-tag.observation":
-        return requireJoined.pipe(
-          Effect.andThen(
-            Effect.suspend(() => {
-              const admission = this.airTagObservationAdmission.tryAcquire();
-
-              if (!admission.admitted)
-                return Effect.succeed<AirTagObservationAck>({
-                  status: "rejected",
-                  code: "rate-limited",
-                  retryAfterMs: admission.retryAfterMs,
-                });
-
-              return fromPromise(() =>
-                this.airTags.publishObservations(socket, command.data),
-              ).pipe(Effect.ensuring(Effect.sync(admission.release)));
-            }),
-          ),
-        );
-      case "air-tag.map-threats.fetch":
-        return requireJoined.pipe(
-          Effect.andThen(
-            fromPromise(() =>
-              this.airTags.fetchMapThreats(
-                socket,
-                command.data.organizationId,
-                command.data.world,
-              ),
-            ),
-          ),
-          Effect.flatMap((result) =>
-            result
-              ? Effect.succeed(result)
-              : Effect.fail(new OrganizationAccessDenied()),
-          ),
-        );
-      default:
-        return requireJoined.pipe(
-          Effect.andThen(
-            fromPromise(() => this.dispatchNpcPresence(socket, command)),
-          ),
-          Effect.flatMap((result) =>
-            result
-              ? Effect.succeed(result)
-              : Effect.fail(new OrganizationAccessDenied()),
-          ),
-        );
-    }
+    return runCommandRoute(this.routes, socket, command.type, command.data);
   }
 
-  private dispatchNpcPresence(
-    socket: GatewaySocket,
-    command: Extract<
-      Command,
-      { type: "npc-presence.report" | "npc-presence.fetch" }
-    >,
-  ): Promise<NpcPresenceReportAck | NpcPresenceSnapshot | null> {
-    return command.type === "npc-presence.report"
-      ? this.npcPresence.report(socket, command.data)
-      : this.npcPresence.fetch(
-          socket,
-          command.data.organizationId,
-          command.data.world,
-        );
+  private sessionRoutes(): Pick<CommandRoutes, SessionCommand> {
+    const { hub, presence, sessionFeatures } = this;
+
+    return {
+      "session.join": {
+        joined: false,
+        apiKey: true,
+        traced: true,
+        run: (socket, data) =>
+          Effect.suspend(() => {
+            const admission = this.joinAdmission.tryAcquire();
+
+            if (!admission.admitted)
+              return Effect.fail(
+                new JoinCapacityExceeded({
+                  retryAfterMs: admission.retryAfterMs,
+                }),
+              );
+
+            return this.join(socket, data).pipe(
+              Effect.ensuring(Effect.sync(admission.release)),
+            );
+          }),
+      },
+      "presence.heartbeat": {
+        joined: true,
+        run: (socket, { sessionId }) =>
+          presence.heartbeat(socket, sessionId).pipe(
+            // The heartbeat must not wait for Redis scripts it does not need.
+            // Forking costs as much as the heartbeat, so only sockets with
+            // reports pay for it.
+            Effect.tap(() =>
+              socket.data.npcPresence
+                ? Effect.forkDetach(sessionFeatures.npcPresence.refresh(socket))
+                : Effect.void,
+            ),
+            Effect.map((lastSeen) => ({ lastSeen })),
+          ),
+      },
+      // Answered without I/O, so the round trip measures only the connection.
+      "connection.ping": {
+        joined: false,
+        apiKey: true,
+        run: () => Effect.succeed({}),
+      },
+      "presence.publish": {
+        joined: true,
+        traced: true,
+        run: (socket, data) => this.publishPresence(socket, data),
+      },
+      // Access is refused before the join check, as for subscriptions.
+      "presence.fetch": {
+        joined: false,
+        apiKey: true,
+        run: (socket, data) => {
+          const scope = {
+            topic: "organization.presence",
+            organizationId: data.organizationId,
+          } satisfies Scope;
+
+          if (!canSubscribe(socket.data, scope))
+            return Effect.fail(new OrganizationAccessDenied());
+
+          return this.requireJoined(socket).pipe(
+            Effect.andThen(
+              presence.snapshot(socket.data, data.organizationId, data.world),
+            ),
+            Effect.tap((snapshot) =>
+              Effect.sync(() => {
+                if (data.delivery === "response") return;
+
+                hub.sendEvent(socket, {
+                  v: 1,
+                  type: "presence.snapshot",
+                  sequence: snapshot.revision,
+                  data: snapshot,
+                });
+              }),
+            ),
+          );
+        },
+      },
+      "subscription.subscribe": {
+        joined: false,
+        apiKey: true,
+        run: (socket, scope) => {
+          if (!canSubscribe(socket.data, scope))
+            return Effect.fail(new OrganizationAccessDenied());
+
+          return this.requireJoined(socket).pipe(
+            Effect.andThen(
+              Effect.try({
+                try: () => {
+                  hub.subscribe(socket, scope);
+
+                  return { scope };
+                },
+                catch: (cause) =>
+                  cause instanceof SubscriptionLimitExceeded
+                    ? cause
+                    : new RealtimeDependencyError({
+                        operation: "subscribe",
+                        cause,
+                      }),
+              }),
+            ),
+            // Other replicas publish air-tag updates only to registered followers.
+            Effect.tap(() =>
+              scope.topic === "map.air-tags"
+                ? sessionFeatures.airTags.registerInterest(scope)
+                : Effect.void,
+            ),
+            // Counts otherwise arrive with the next metrics sample, up to 10 s later.
+            Effect.tap(() =>
+              Effect.sync(() => {
+                const counts = hub.globalChatCounts;
+
+                if (
+                  !counts ||
+                  (scope.topic !== "global.chat" &&
+                    scope.topic !== "global.chat.world")
+                )
+                  return;
+
+                const event: Event = {
+                  v: 1,
+                  type: "global-chat.stats",
+                  data: getGlobalChatStats(counts, scope.world),
+                };
+
+                if (canReadSourceEvent(socket.data, event))
+                  hub.sendEvent(socket, event);
+              }),
+            ),
+          );
+        },
+      },
+      "subscription.unsubscribe": {
+        joined: true,
+        apiKey: true,
+        run: (socket, scope) =>
+          Effect.sync(() => {
+            hub.unsubscribe(socket, scope);
+
+            return { scope };
+          }),
+      },
+    };
   }
 
   /** Reports belong to the character and world that saw the NPCs. */
@@ -1030,15 +903,17 @@ export class CommandHandler {
     )
       return Effect.void;
 
-    return Effect.tryPromise(() => this.npcPresence.withdraw(socket)).pipe(
-      Effect.catch(() => Effect.logWarning("NPC presence withdraw failed")),
-    );
+    return this.sessionFeatures.npcPresence
+      .withdraw(socket)
+      .pipe(
+        Effect.catch(() => Effect.logWarning("NPC presence withdraw failed")),
+      );
   }
 
   private join(
     socket: GatewaySocket,
     data: Extract<Command, { type: "session.join" }>["data"],
-  ): Effect.Effect<unknown, CommandFailure> {
+  ): Effect.Effect<CommandSuccess<"session.join">, CommandFailure> {
     const {
       activity,
       guilds,
@@ -1168,24 +1043,6 @@ export class CommandHandler {
           accessPolicy: sessionAccessPolicy(socket.data),
           organizationIds: organizationIds(socket.data),
           subscriptionScopes: scopes,
-          capabilities: [
-            REALTIME_PING_CAPABILITY,
-            REALTIME_BATTLE_PING_CAPABILITY,
-            REALTIME_TEAM_BATTLE_PING_CAPABILITY,
-            REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
-            REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
-            ...(socket.data.apiKeyAccess
-              ? []
-              : [REALTIME_NPC_PRESENCE_CAPABILITY]),
-            ...federatedGameCapabilities(
-              socket.data,
-              hub.clusterFederationVersion,
-            ),
-            ...globalChatCapabilities(
-              socket.data,
-              hub.clusterFederationVersion,
-            ),
-          ],
         },
       } satisfies Event;
 
@@ -1217,4 +1074,44 @@ export class CommandHandler {
       ? Effect.void
       : Effect.fail(new SessionNotJoined());
   }
+}
+
+/** Decodes and runs the commands of this replica's sessions. */
+export class Commands extends Context.Service<Commands, CommandHandler>()(
+  "@lootlog/gateway/realtime/Commands",
+) {
+  static readonly layer = Layer.effect(
+    Commands,
+    Effect.gen(function* () {
+      const messaging = yield* RabbitMessaging;
+      const admissions = yield* CommandAdmissions;
+      const airTags = yield* AirTags;
+      const npcPresence = yield* NpcPresence;
+
+      return new CommandHandler(
+        yield* Guilds,
+        yield* ProofVerifier,
+        (event) =>
+          messaging
+            .publish({
+              routingKey: RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1,
+              content: new TextEncoder().encode(JSON.stringify(event)),
+            })
+            .pipe(Effect.asVoid),
+        yield* Presence,
+        yield* Hub,
+        yield* Activity,
+        { npcPresence, airTags },
+        gatewayFeatureRoutes({
+          mapPings: yield* MapPings,
+          battlePings: yield* BattlePings,
+          lootSplits: yield* LootSplits,
+          airTags,
+          airTagObservationAdmission: admissions.airTagObservations,
+          npcPresence,
+        }),
+        admissions.joins,
+      );
+    }),
+  );
 }

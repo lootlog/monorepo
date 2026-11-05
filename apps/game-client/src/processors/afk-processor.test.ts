@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RealtimeClient } from "@lootlog/client/realtime";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { disposeSocket, getSocket } from "@/lib/socket";
-import { RealtimeWire } from "@/test/realtime-wire";
+import { ownerAccessPolicy, RealtimeWire } from "@/test/realtime-wire";
 import { useGlobalStore } from "@/store/global.store";
 import { useGameStore } from "@/store/game.store";
 import { AfkProcessor } from "./afk-processor";
@@ -68,7 +68,12 @@ describe("AfkProcessor", () => {
     wire.receive({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: ["guild-1"], subscriptionScopes: [] },
+      data: {
+        accessPolicy: ownerAccessPolicy(["guild-1"]),
+        changes: [],
+        organizationIds: ["guild-1"],
+        subscriptionScopes: [],
+      },
     });
     await vi.waitUntil(() => wire.frames.length === 1);
     wire.frames.length = 0;
@@ -144,10 +149,16 @@ describe("AfkProcessor", () => {
     processor.handle({ h: { stasis: 1 } });
     expect(wire.frames).toEqual([]);
 
+    // Gaining a Lootlog publishes presence again.
     wire.receive({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: ["guild-1"], subscriptionScopes: [] },
+      data: {
+        accessPolicy: ownerAccessPolicy(["guild-1", "guild-2"]),
+        changes: [],
+        organizationIds: ["guild-1", "guild-2"],
+        subscriptionScopes: [],
+      },
     });
 
     await vi.waitUntil(() => wire.frames.length === 1);

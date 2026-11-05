@@ -20,7 +20,7 @@ export const useNpcPresenceReporter = (): void => {
     const socket = getSocket();
 
     npcPresenceReporter.configure({
-      ready: connected && joined && socket.supportsNpcPresence(),
+      ready: connected && joined,
       world,
       characterId,
       organizationIds,

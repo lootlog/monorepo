@@ -1,14 +1,36 @@
 import { API_KEY_LEASE_MS, ApiKeyStatus } from "@lootlog/schema/api-key-access";
-import { Effect, Redacted, Schedule, Schema } from "effect";
+import { Effect, Layer, Redacted, Schedule, Schema } from "effect";
 import { REALTIME_SERVER_CLOSE_CODES } from "@lootlog/protocol/realtime";
 import { chunk } from "es-toolkit";
-import { HttpClientRequest, type HttpClient } from "effect/http";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
+import { HttpClient, HttpClientRequest } from "effect/http";
+import {
+  GatewayConfig,
+  type GatewayConfiguration,
+} from "#src/config/gateway-config";
+import { Commands } from "#src/realtime/command-handler";
+import { Hub } from "#src/realtime/realtime-hub";
 import { hasValidApiKeyLease, type GatewaySocket } from "#src/realtime/session";
 
 const StatusResponse = Schema.Struct({ keys: Schema.Array(ApiKeyStatus) });
 
 export class ApiKeyLeases {
+  /** Renews the leases of this replica's API key sessions while it runs. */
+  static readonly layer = Layer.effectDiscard(
+    Effect.gen(function* () {
+      const hub = yield* Hub;
+      const commands = yield* Commands;
+
+      yield* new ApiKeyLeases(
+        yield* GatewayConfig,
+        yield* HttpClient.HttpClient,
+        () => hub.getLocalSockets(),
+        (discordId, userId) => commands.rebalanceUser(discordId, userId),
+      )
+        .run()
+        .pipe(Effect.forkScoped);
+    }),
+  );
+
   constructor(
     private readonly config: Pick<
       GatewayConfiguration,

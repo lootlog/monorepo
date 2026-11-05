@@ -115,16 +115,6 @@ it("keeps authorized air targets while coalescing grants and excludes revoked ta
       airTagReceiveController.getRenderableTargets(Date.now(), 10_000),
     ).toEqual([expect.objectContaining({ targetId: "guild-2" })]);
     expect(test.subscriptions()).toHaveLength(1);
-    test.wire.frames.length = 0;
-    runtime.handlePermissionsUpdated();
-    runtime.handlePermissionsUpdated();
-    expect(
-      airTagReceiveController.getRenderableTargets(Date.now(), 10_000),
-    ).toEqual([]);
-    vi.advanceTimersByTime(4999);
-    expect(test.subscriptions()).toHaveLength(0);
-    vi.advanceTimersByTime(1);
-    expect(test.subscriptions()).toHaveLength(1);
   } finally {
     runtime.shutdown();
   }

@@ -1,6 +1,6 @@
+import { ownerAccessPolicy, publishedPresence } from "@/test/realtime-wire";
 import { act, render, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
 import { getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
@@ -84,7 +84,12 @@ describe("SocketProvider", () => {
         v: 1,
         requestId,
         status: "success",
-        data: { connectionId: "connection-1", organizationIds: ["guild-1"] },
+        data: {
+          connectionId: "connection-1",
+          organizationIds: ["guild-1"],
+          subscriptionScopes: [],
+          accessPolicy: ownerAccessPolicy(["guild-1"]),
+        },
       }),
     );
     await waitFor(() =>
@@ -124,8 +129,13 @@ describe("SocketProvider", () => {
           status: "success",
           data:
             "type" in command && command.type === "session.join"
-              ? { connectionId: connection, organizationIds: ["guild-1"] }
-              : { sessionId: connection },
+              ? {
+                  connectionId: connection,
+                  organizationIds: ["guild-1"],
+                  subscriptionScopes: [],
+                  accessPolicy: ownerAccessPolicy(["guild-1"]),
+                }
+              : publishedPresence(connection),
         }),
       );
     });
@@ -143,7 +153,7 @@ describe("SocketProvider", () => {
       useGameStore
         .getState()
         .replaceGame({ ...game, hero: { ...game.hero, stasis: true } });
-      getSocket().emit(GatewayEvent.PLAYER_PRESENCE_UPDATE);
+      void getSocket().publishPresence();
     });
     const firstCount = test.wire.frames.length;
     act(() => test.wire.close());
@@ -229,7 +239,12 @@ describe("SocketProvider", () => {
     await test.receive({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: ["guild-1", "guild-2"], subscriptionScopes: [] },
+      data: {
+        accessPolicy: ownerAccessPolicy(["guild-1", "guild-2"]),
+        changes: [],
+        organizationIds: ["guild-1", "guild-2"],
+        subscriptionScopes: [],
+      },
     });
     expect(useGlobalStore.getState().socketState.joinedGuilds).toEqual([
       "guild-1",
@@ -246,7 +261,12 @@ describe("SocketProvider", () => {
     await test.receive({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: [], subscriptionScopes: [] },
+      data: {
+        accessPolicy: ownerAccessPolicy([]),
+        changes: [],
+        organizationIds: [],
+        subscriptionScopes: [],
+      },
     });
     expect(useGlobalStore.getState().socketState.joinedGuilds).toEqual([]);
   });
@@ -308,7 +328,12 @@ describe("SocketProvider", () => {
                   status: "success",
                   data:
                     answer === "success"
-                      ? { connectionId: "connection-1", organizationIds: [] }
+                      ? {
+                          connectionId: "connection-1",
+                          organizationIds: [],
+                          subscriptionScopes: [],
+                          accessPolicy: ownerAccessPolicy([]),
+                        }
                       : {},
                 },
           ),
@@ -331,14 +356,18 @@ describe("SocketProvider", () => {
 
         const failedRequests = joinRequests().length;
 
-        // An invalid response leaves the socket open and is retried; a refusal
-        // closes it until the player reconnects.
+        // An invalid response closes the socket, which reconnects on its own;
+        // a refusal closes it until the player reconnects.
         if (failure === "refused")
           act(() => {
             getSocket().connect();
             test.open();
           });
-        else await act(() => vi.advanceTimersByTimeAsync(2_000));
+        else {
+          await act(() => vi.advanceTimersByTimeAsync(2_000));
+          test.open();
+        }
+
         await answerJoin("success", failedRequests);
         await waitFor(() => expect(result.current.status).toBe("online"));
         expect(joinRequests()).toHaveLength(failedRequests + 1);

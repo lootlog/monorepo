@@ -1,11 +1,21 @@
-import { Effect, Schedule, Schema } from "effect";
+import { Effect, Schedule, Schema, Context, Layer, Redacted } from "effect";
 import {
   UserOnlineCheckpointV1,
   type UserOnlineEventV1,
 } from "@lootlog/protocol/rabbit/events";
 import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
-import type { RedisGatewayCommands } from "#src/platform/redis-store";
+import {
+  type RedisGatewayCommands,
+  GatewayRedis,
+} from "#src/platform/redis-store";
 import type { SessionData } from "./session.js";
+import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import {
+  ACTIVITY_EVENT_SIGNATURE_HEADER,
+  signActivityEvent,
+} from "@lootlog/protocol/rabbit/activity-signature";
+import { GatewayConfig } from "#src/config/gateway-config";
 
 const PENDING = "online-history:pending";
 
@@ -88,7 +98,7 @@ const Pending = Schema.fromJsonString(
     userId: Schema.String,
     sessionId: Schema.String,
     segmentId: Schema.String,
-    world: Schema.optional(Schema.String),
+    world: Schema.String,
     started: Schema.Number,
     ended: Schema.Number,
     final: Schema.Boolean,
@@ -168,7 +178,7 @@ export class OnlineHistory {
             userId: item.userId,
             sessionId: item.sessionId,
             segmentId: item.segmentId,
-            world: item.world || undefined,
+            world: item.world,
             startedAt: new Date(item.started).toISOString(),
             endedAt: new Date(item.ended).toISOString(),
             observedAt: new Date(item.ended).toISOString(),
@@ -259,4 +269,39 @@ export class OnlineHistory {
       Effect.repeat(Schedule.spaced(FLUSH_INTERVAL_MS)),
     );
   }
+}
+
+/** Checkpoints of how long each character was online, signed for the activity service. */
+export class OnlineHistories extends Context.Service<
+  OnlineHistories,
+  OnlineHistory
+>()("@lootlog/gateway/realtime/OnlineHistories") {
+  static readonly layer = Layer.effect(
+    OnlineHistories,
+    Effect.gen(function* () {
+      const config = yield* GatewayConfig;
+      const messaging = yield* RabbitMessaging;
+
+      const history = new OnlineHistory(
+        (yield* GatewayRedis).command,
+        (payload) =>
+          messaging
+            .publish({
+              routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
+              content: new TextEncoder().encode(JSON.stringify(payload)),
+              headers: {
+                [ACTIVITY_EVENT_SIGNATURE_HEADER]: signActivityEvent(
+                  payload,
+                  Redacted.value(config.activityEventSignatureSecret),
+                ),
+              },
+            })
+            .pipe(Effect.asVoid),
+      );
+
+      yield* history.run().pipe(Effect.forkScoped);
+
+      return history;
+    }),
+  );
 }

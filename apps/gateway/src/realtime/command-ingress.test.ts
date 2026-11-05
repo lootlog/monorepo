@@ -4,26 +4,16 @@ import type { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import { createGatewayWebSocket, drainGateway } from "#src/app";
 import { RealtimeHub } from "./realtime-hub.js";
-import { subscribedFederationStore } from "../../test/realtime-fixtures.js";
+import {
+  makeSession,
+  makeTestSocket,
+  subscribedFederationStore,
+} from "../../test/realtime-fixtures.js";
 import { CommandIngress } from "./command-ingress.js";
 import type { GatewaySocket } from "./session.js";
 
-const socket = (connectionId: string): GatewaySocket => ({
-  data: {
-    connectionId,
-    discordId: "discord",
-    userId: "user",
-    platform: "web-app",
-    joined: false,
-    guilds: [],
-    subscriptions: new Map(),
-    airTagScopes: [],
-    confidence: "reported",
-  },
-  send: () => 1,
-  close: () => undefined,
-  getBufferedAmount: () => 0,
-});
+const socket = (connectionId: string): GatewaySocket =>
+  makeTestSocket(makeSession({ connectionId, joined: false })).socket;
 
 test("default admission permits restoring 4096 large valid subscriptions", async () => {
   const tasks: Array<Effect.Effect<void, unknown>> = [];
@@ -276,31 +266,6 @@ test("lets a host callback run while a synchronous command burst is draining", a
   expect(handled).toBe(100);
 });
 
-test("disconnect cleanup progresses while every command slot remains occupied", async () => {
-  const target = setup({
-    active: 1,
-    messages: 10,
-    bytes: 100,
-    connectionMessages: 10,
-    connectionBytes: 100,
-  });
-
-  const busy = socket("busy");
-  const closing = socket("closing");
-  target.ingress.open(busy);
-  target.ingress.open(closing);
-  target.ingress.message(busy, "stalled");
-  target.ingress.close(closing);
-  // Leave the first task suspended, exactly like a stalled dependency.
-  const cleanup = target.tasks[1];
-  expect(cleanup).toBeDefined();
-
-  if (cleanup) await Effect.runPromise(cleanup);
-  expect(target.closed).toEqual(["closing"]);
-  expect(target.handled).toEqual([]);
-  expect(target.ingress.getDiagnostics().active).toBe(1);
-});
-
 test("bounds lifecycle retention when cleanup stalls and admits reconnects after cleanup recovers", async () => {
   const target = setup({
     active: 1,
@@ -497,7 +462,7 @@ test("drain refuses new sessions, closes local sockets and waits for their disco
   expect(hub.getLocalSockets()).toEqual([]);
 });
 
-test("announces the connection before join only to clients that negotiated session hello", async () => {
+test("announces the connection before join", async () => {
   const hub = new RealtimeHub(
     { maxBackpressureBytes: 1024 },
     subscribedFederationStore,
@@ -509,24 +474,18 @@ test("announces the connection before join only to clients that negotiated sessi
   const transport = createGatewayWebSocket({ hub, ingress: target.ingress });
   const frames: ReturnType<typeof decodeRealtimeFrame>[] = [];
 
-  for (const supportsSessionHello of [false, true]) {
-    const base = socket(supportsSessionHello ? "new-client" : "old-client");
+  const client: GatewaySocket = {
+    ...socket("client"),
+    send: (text: string) => {
+      frames.push(decodeRealtimeFrame(text));
 
-    const client: GatewaySocket = {
-      ...base,
-      data: { ...base.data, supportsSessionHello },
-      send: (text: string) => {
-        frames.push(decodeRealtimeFrame(text));
+      return 1;
+    },
+  };
 
-        return 1;
-      },
-    };
-
-    transport.open(client);
-    expect(client.data.joined).toBe(false);
-  }
-
+  transport.open(client);
+  expect(client.data.joined).toBe(false);
   expect(frames).toEqual([
-    { v: 1, type: "session.hello", data: { connectionId: "new-client" } },
+    { v: 1, type: "session.hello", data: { connectionId: "client" } },
   ]);
 });

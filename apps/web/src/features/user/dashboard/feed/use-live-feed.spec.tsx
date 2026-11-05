@@ -1,4 +1,8 @@
-import { createTestGateway } from "@/lib/testing/gateway";
+import type { GatewayClientEvent } from "@/lib/gateway-client";
+import {
+  createTestAccessPolicy,
+  createTestGateway,
+} from "@/lib/testing/gateway";
 import { configureApiClients } from "@lootlog/client/transport";
 import {
   getUsersControllerGetUserFeedQueryKey,
@@ -9,7 +13,6 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
-import { GatewayEvent } from "@/config/gateway";
 import { DEFAULT_ACTIVITY_FEED_SETTINGS } from "@lootlog/domain/activity-feed";
 import { useLiveFeed } from "./use-live-feed";
 import type { FeedFilters } from "./live-feed-state";
@@ -22,22 +25,22 @@ const mocks = {
 let gateway: ReturnType<typeof createTestGateway>;
 
 function deliverLifecycleEvent(
-  event: GatewayEvent,
+  event: GatewayClientEvent,
   organizationIds = [feedKill.guild.id],
 ) {
-  if (event === GatewayEvent.CONNECT) {
+  if (event === "connect") {
     gateway.setConnectionState("ready");
 
     return;
   }
 
-  if (event === GatewayEvent.DISCONNECT) {
+  if (event === "disconnect") {
     gateway.setConnectionState("disconnected");
 
     return;
   }
 
-  if (event === GatewayEvent.JOIN) {
+  if (event === "join") {
     gateway.deliver({
       v: 1,
       type: "session.joined",
@@ -45,17 +48,23 @@ function deliverLifecycleEvent(
         connectionId: "connection-1",
         organizationIds,
         subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy(organizationIds),
       },
     });
 
     return;
   }
 
-  if (event === GatewayEvent.PERMISSIONS_UPDATED) {
+  if (event === "access.updated") {
     gateway.deliver({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds, subscriptionScopes: [] },
+      data: {
+        changes: [],
+        organizationIds,
+        subscriptionScopes: [],
+        accessPolicy: createTestAccessPolicy(organizationIds),
+      },
     });
 
     return;
@@ -169,19 +178,19 @@ it("receives complete live entries without further HTTP requests and refetches o
   await act(() => vi.advanceTimersByTimeAsync(5000));
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(result.current.state.items).toEqual(feedResponse(20).items);
-  act(() => deliverLifecycleEvent(GatewayEvent.CONNECT));
+  act(() => deliverLifecycleEvent("connect"));
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(result.current.state.items).toEqual(feedResponse(20).items);
   // A kill accepted while session.join is pending must appear in the post-join snapshot.
   mocks.request.mockResolvedValue(feedResponse(21));
-  act(() => deliverLifecycleEvent(GatewayEvent.JOIN));
+  act(() => deliverLifecycleEvent("join"));
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(mocks.request).toHaveBeenCalledTimes(2);
   expect(result.current.state.items).toEqual(feedResponse(21).items);
 });
 
-it.each([GatewayEvent.JOIN])(
+it.each<GatewayClientEvent>(["join"])(
   "retains the populated list and marks it stale when %s revalidation fails",
   async (event) => {
     mocks.request
@@ -211,7 +220,7 @@ it("ignores a pre-permission response that arrives after access was revoked", as
     .mockResolvedValueOnce({ ...feedResponse(), items: [] });
   const { result } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
-  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+  act(() => deliverLifecycleEvent("access.updated"));
   await act(async () => {
     await vi.advanceTimersByTimeAsync(0);
     finish(feedResponse());
@@ -330,7 +339,7 @@ it("ignores live entries while paused and fetches a fresh snapshot immediately o
   expect(result.current.state.items).toEqual(feedResponse(4).items);
 });
 
-it.each([GatewayEvent.JOIN])(
+it.each<GatewayClientEvent>(["join"])(
   "keeps a paused list until %s resolves its authoritative access snapshot",
   async (event) => {
     const response = deferredResponse();
@@ -362,7 +371,7 @@ it("finishes mandatory access revalidation when the user pauses during the reque
     .mockReturnValueOnce(response.promise);
   const { result, setPaused } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
-  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+  act(() => deliverLifecycleEvent("access.updated"));
   setPaused(true);
   expect(result.current.state.items).toEqual(feedResponse().items);
   await act(() => vi.advanceTimersByTimeAsync(5000));
@@ -437,7 +446,7 @@ it("ignores an in-flight HTTP snapshot after pause and refreshes on resume", asy
   expect(result.current.state.items).toEqual(feedResponse(4).items);
 });
 
-it.each([GatewayEvent.PERMISSIONS_UPDATED])(
+it.each<GatewayClientEvent>(["access.updated"])(
   "replaces a scrolled feed atomically after %s revalidation",
   async (event) => {
     const replacement = {
@@ -470,7 +479,7 @@ it("keeps the initial HTTP snapshot visible while the first successful join refr
   const { result } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
   const original = result.current.state.items;
-  act(() => deliverLifecycleEvent(GatewayEvent.JOIN));
+  act(() => deliverLifecycleEvent("join"));
   expect(result.current.state.items).toBe(original);
   expect(result.current.state.isFetching).toBe(true);
   await act(async () => {
@@ -504,11 +513,11 @@ it("retains the snapshot throughout repeated joins and reconnect requests", asyn
   const original = result.current.state.items;
 
   for (const event of [
-    GatewayEvent.JOIN,
-    GatewayEvent.DISCONNECT,
-    GatewayEvent.CONNECT,
-    GatewayEvent.JOIN,
-  ]) {
+    "join",
+    "disconnect",
+    "connect",
+    "join",
+  ] satisfies GatewayClientEvent[]) {
     act(() => deliverLifecycleEvent(event));
     expect(result.current.state.items).toBe(original);
   }
@@ -528,7 +537,7 @@ it("preserves live entries and their provenance across superseding refreshes", a
   act(() => result.current.refresh());
   const live = { ...feedKill, id: "new-live-kill", groupKey: "new-live-kill" };
   act(() => gateway.deliver({ v: 1, type: "feed.entry", data: live }));
-  act(() => deliverLifecycleEvent(GatewayEvent.JOIN));
+  act(() => deliverLifecycleEvent("join"));
   await act(async () => {
     first.resolve({ ...feedResponse(), items: [] });
     second.resolve(feedResponse());
@@ -559,7 +568,7 @@ it("does not restore pre-permission buffered entries after the authoritative sna
       },
     }),
   );
-  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+  act(() => deliverLifecycleEvent("access.updated"));
   expect(result.current.state.items).toEqual(feedResponse().items);
   await act(() => vi.advanceTimersByTimeAsync(5000));
   await act(async () => {
@@ -591,7 +600,7 @@ it.each([false, true])(
     });
     expect(result.current.state.pending).toBeDefined();
     setPaused(paused);
-    act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+    act(() => deliverLifecycleEvent("access.updated"));
     expect(result.current.state.items).toEqual(feedResponse().items);
     expect(result.current.state.pending).toBeUndefined();
     expect(
@@ -635,7 +644,7 @@ it("applies explicit join access revalidation while scrolled", async () => {
   const { result } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
   act(() => result.current.setAtTop(false));
-  act(() => deliverLifecycleEvent(GatewayEvent.JOIN));
+  act(() => deliverLifecycleEvent("join"));
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(result.current.state.items).toEqual([]);
   expect(result.current.state.pending).toBeUndefined();
@@ -647,7 +656,7 @@ it("keeps the snapshot through a rebalance burst and fetches five seconds after 
   await act(() => vi.advanceTimersByTimeAsync(0));
 
   for (let index = 0; index < 4; index += 1) {
-    act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+    act(() => deliverLifecycleEvent("access.updated"));
     expect(result.current.state.items).toEqual(feedResponse().items);
     await act(() => vi.advanceTimersByTimeAsync(1000));
     expect(result.current.state.items).toEqual(feedResponse().items);
@@ -664,7 +673,7 @@ it("cancels a scheduled rebalance refresh on unmount", async () => {
   mocks.request.mockResolvedValue(feedResponse());
   const { unmount } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
-  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+  act(() => deliverLifecycleEvent("access.updated"));
   unmount();
   await act(() => vi.advanceTimersByTimeAsync(5000));
   expect(mocks.request).toHaveBeenCalledTimes(1);
@@ -675,9 +684,9 @@ it("does not let joins or live entries bypass pending access revalidation", asyn
   const { result } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
   act(() => {
-    deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED);
-    deliverLifecycleEvent(GatewayEvent.CONNECT);
-    deliverLifecycleEvent(GatewayEvent.JOIN);
+    deliverLifecycleEvent("access.updated");
+    deliverLifecycleEvent("connect");
+    deliverLifecycleEvent("join");
     gateway.deliver({ v: 1, type: "feed.entry", data: feedKill });
   });
   expect(result.current.state.items).toEqual(feedResponse().items);
@@ -696,7 +705,7 @@ it("does not replay buffered live entries when permission revalidation fails", a
   );
   const { result } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
-  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+  act(() => deliverLifecycleEvent("access.updated"));
   await act(() => vi.advanceTimersByTimeAsync(5000));
   act(() =>
     gateway.deliver({
@@ -744,7 +753,7 @@ it("prunes revoked organizations immediately while retaining allowed rows during
       },
     }),
   );
-  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+  act(() => deliverLifecycleEvent("access.updated"));
   expect(result.current.state.items).toEqual([allowed]);
   expect(result.current.state.items?.[0]).toBe(originalAllowed);
   expect(result.current.state.pending).toBeUndefined();
@@ -767,7 +776,7 @@ it("clears all visible data immediately when no organizations are authorized", a
   await act(() => vi.advanceTimersByTimeAsync(0));
   await act(() => vi.advanceTimersByTimeAsync(0));
   act(() => result.current.refresh());
-  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED, []));
+  act(() => deliverLifecycleEvent("access.updated", []));
   expect(result.current.state.items).toEqual([]);
   await act(async () => {
     late.resolve(feedResponse());
@@ -785,10 +794,10 @@ it("loads history without a gateway connection and only catches up after a succe
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(result.current.state.items).toEqual(feedResponse().items);
-  act(() => deliverLifecycleEvent(GatewayEvent.CONNECT));
+  act(() => deliverLifecycleEvent("connect"));
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(mocks.request).toHaveBeenCalledTimes(1);
-  act(() => deliverLifecycleEvent(GatewayEvent.JOIN));
+  act(() => deliverLifecycleEvent("join"));
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(mocks.request).toHaveBeenCalledTimes(2);
   expect(result.current.state.items).toEqual(feedResponse().items);

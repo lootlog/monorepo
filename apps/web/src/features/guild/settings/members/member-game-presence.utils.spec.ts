@@ -15,7 +15,7 @@ const buildPresence = (overrides: Partial<PlayerPresence>): PlayerPresence => ({
   characterId: "10",
   accountId: "20",
   icon: "icon.gif",
-  lvl: "100",
+  lvl: 100,
   prof: "w",
   isAfk: false,
   updatedAt: 1,
@@ -38,12 +38,14 @@ describe("member game presence utils", () => {
     const added = applyGamePresenceUpdate(undefined, {
       guildId: "guild-1",
       discordId: "discord-1",
+      status: "online",
       player: buildPresence({ sessionId: "session-1", mapName: "Ithan" }),
     });
 
     const updated = applyGamePresenceUpdate(added, {
       guildId: "guild-1",
       discordId: "discord-1",
+      status: "online",
       player: buildPresence({ sessionId: "session-1", mapName: "Karka-han" }),
     });
 

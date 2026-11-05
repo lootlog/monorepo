@@ -1,22 +1,20 @@
 import {
   applyChatAccessPolicy,
-  applyLegacyChatAccessChange,
   retainChatAccessPolicy,
   refreshChatAfterReconnect,
 } from "@/features/chat/chat-access-policy";
 import { RealtimeRequestError } from "@lootlog/client/realtime";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { getFixedT } from "@/i18n/get-fixed-t";
-import { useNotificationsStore } from "@/store/notifications.store";
 import { reconcileNotificationAccess } from "@/features/notifications/notification-access-policy";
 import { createGameAccessCache } from "@/lib/game-access-cache";
 import { queryClient } from "@/lib/query-client";
-import { GatewayEvent } from "@/config/gateway";
 import {
   type AppSocket,
   getSocket,
   getGameSessionIdentity,
-  type PermissionsUpdatedPayload,
+  type AccessUpdate,
+  type JoinResult,
 } from "@/lib/socket";
 import {
   resolveRealtimeConnectionStatus,
@@ -93,12 +91,12 @@ const SocketContext = createContext<SocketContextValue>({
 
 const subscribeConnection = (listener: () => void) => {
   const socket = getSocket();
-  socket.on(GatewayEvent.CONNECT, listener);
-  socket.on(GatewayEvent.DISCONNECT, listener);
+  socket.on("connect", listener);
+  socket.on("disconnect", listener);
 
   return () => {
-    socket.off(GatewayEvent.CONNECT, listener);
-    socket.off(GatewayEvent.DISCONNECT, listener);
+    socket.off("connect", listener);
+    socket.off("disconnect", listener);
   };
 };
 
@@ -287,18 +285,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       setJoinedGuilds([]);
     };
 
-    const handleJoin = (data: {
-      status: "success" | "error";
-      characterIdentity: string;
-      code?: string;
-      message?: string;
-      guildsCount?: number;
-      guildIds?: string[];
-    }) => {
-      if (data.status === "error") {
-        return;
-      }
-
+    const handleJoin = (data: JoinResult) => {
       setJoinedCharacterIdentity(data.characterIdentity);
       setHasBeenOnline(true);
       setJoinFailed(false);
@@ -306,7 +293,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
       joinRejectionShown.current = false;
 
-      setJoinedGuilds(data.guildIds ?? []);
+      setJoinedGuilds([...data.guildIds]);
 
       if (!joinedConnection) {
         if (
@@ -314,59 +301,38 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
           hasBeenUnavailable.current ||
           !socket.getAccessPolicy()
         )
-          refreshChatAfterReconnect(queryClient, data.guildIds ?? []);
+          refreshChatAfterReconnect(queryClient, data.guildIds);
         hasJoined = true;
         joinedConnection = true;
       }
     };
 
-    const handlePermissionsUpdated = (data: PermissionsUpdatedPayload) => {
-      accessCache.apply(data);
-
-      if (data.accessPolicy) {
-        applyChatAccessPolicy(queryClient, data.accessPolicy);
-        reconcileNotificationAccess(data.accessPolicy);
-      } else {
-        applyLegacyChatAccessChange(queryClient);
-        useNotificationsStore.getState().clearNotifications();
-      }
-
-      const updatedGuildIds = data.guilds?.map((guild) => guild.guild.id);
-
-      if (!updatedGuildIds) {
-        if (import.meta.env.DEV) {
-          console.warn("[Gateway] No guilds data in permissions update");
-        }
-
-        setJoinedGuilds([]);
-        setJoinedCharacterIdentity(null);
-
-        return;
-      }
-
-      setJoinedGuilds(updatedGuildIds);
+    const handlePermissionsUpdated = (data: AccessUpdate) => {
+      accessCache.apply(data.accessPolicy);
+      applyChatAccessPolicy(queryClient, data.accessPolicy);
+      reconcileNotificationAccess(data.accessPolicy);
+      setJoinedGuilds(
+        data.accessPolicy.organizations.map(
+          ({ organizationId }) => organizationId,
+        ),
+      );
     };
 
-    socket.on(GatewayEvent.DISCONNECT, handleDisconnect);
-    socket.on(GatewayEvent.JOIN, handleJoin);
-    socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("join", handleJoin);
+    socket.on("access.updated", handlePermissionsUpdated);
     const currentPolicy = socket.getAccessPolicy?.();
 
     if (currentPolicy)
-      handlePermissionsUpdated({
-        accessPolicy: currentPolicy,
-        guilds: currentPolicy.organizations.map(({ organizationId }) => ({
-          guild: { id: organizationId },
-        })),
-      });
+      handlePermissionsUpdated({ accessPolicy: currentPolicy, changes: [] });
     socket.connect();
 
     return () => {
       accessCache.dispose();
       releaseChatPolicy();
-      socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
-      socket.off(GatewayEvent.JOIN, handleJoin);
-      socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("join", handleJoin);
+      socket.off("access.updated", handlePermissionsUpdated);
       socket.disconnect();
     };
   }, [socket]);

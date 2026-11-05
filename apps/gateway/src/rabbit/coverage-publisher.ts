@@ -1,6 +1,9 @@
-import type { RabbitMessagingService } from "@lootlog/messaging";
+import {
+  type RabbitMessagingService,
+  RabbitMessaging,
+} from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import type { Effect } from "effect";
+import { Context, Effect, Layer } from "effect";
 
 export interface CoverageUpdate {
   readonly guildId: string;
@@ -19,4 +22,17 @@ export class CoveragePublisher {
       content: new TextEncoder().encode(JSON.stringify(update)),
     });
   }
+}
+
+/** Asks the API to re-check map coverage when presence changes it. */
+export class Coverage extends Context.Service<Coverage, CoveragePublisher>()(
+  "@lootlog/gateway/rabbit/Coverage",
+) {
+  static readonly layer = Layer.effect(
+    Coverage,
+    Effect.map(
+      RabbitMessaging,
+      (messaging) => new CoveragePublisher(messaging),
+    ),
+  );
 }

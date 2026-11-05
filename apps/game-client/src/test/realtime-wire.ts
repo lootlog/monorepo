@@ -1,9 +1,37 @@
 import type { RealtimeWebSocket } from "@lootlog/client/realtime";
-import type { RealtimeFrame } from "@lootlog/protocol/realtime";
+import type { BasicPresence, RealtimeFrame } from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
+import {
+  createAccessPolicySnapshot,
+  type AccessPolicySnapshot,
+} from "@lootlog/protocol/realtime/access-policy";
+
+/** A policy owning every listed Lootlog, so no permission restricts the test. */
+export const ownerAccessPolicy = (
+  organizationIds: readonly string[],
+): AccessPolicySnapshot =>
+  createAccessPolicySnapshot(
+    organizationIds.map((id) => ({
+      guild: { id, ownerId: "owner" },
+      roles: [],
+    })),
+    "owner",
+  );
+
+/** The presence the gateway answers a `presence.publish` with. */
+export const publishedPresence = (sessionId: string): BasicPresence => ({
+  userId: "user-1",
+  sessionId,
+  organizationIds: ["guild-1"],
+  platform: "game",
+  status: "online",
+  confidence: "reported",
+  isAfk: false,
+  lastSeen: 1,
+});
 
 type WireEvent = Parameters<RealtimeWebSocket["addEventListener"]>[0];
 

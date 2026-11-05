@@ -1,10 +1,6 @@
 import { expect, test } from "bun:test";
-import { Effect, Redacted, Schema } from "effect";
+import { Effect, Schema } from "effect";
 import { HttpClient, HttpClientResponse } from "effect/http";
-import type {
-  RabbitDelivery,
-  RabbitMessagingService,
-} from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import { Permission } from "@lootlog/schema/permissions";
@@ -20,22 +16,9 @@ import {
   createGuildFixture,
   createMemberFixture,
 } from "../../api/test/organization-fixtures.js";
-import type { GatewayConfiguration } from "../src/config/gateway-config.js";
 import { makeGuildStore } from "../src/guilds/guild-store.js";
-import {
-  decodeFederatedRealtimeMessage,
-  encodeFederatedRealtimeMessage,
-  type FederatedFrameTexts,
-  type FederatedRealtimeMessage,
-} from "../src/platform/redis-store.js";
-import {
-  RabbitBridge,
-  gatewayConsumerSpecs,
-} from "../src/rabbit/rabbit-bridge.js";
 import { ActivityPublisher } from "../src/rabbit/activity-publisher.js";
-import { CoveragePublisher } from "../src/rabbit/coverage-publisher.js";
 import { makeMargonemProofVerifier } from "../src/auth/margonem-proof.js";
-import { CommandHandler } from "../src/realtime/command-handler.js";
 import { PresenceStore } from "../src/realtime/presence-store.js";
 import { MapPingService } from "../src/realtime/map-ping-service.js";
 import { BattlePingService } from "../src/realtime/battle-ping-service.js";
@@ -43,40 +26,28 @@ import { LootSplitService } from "../src/realtime/loot-split-service.js";
 import { NpcPresenceService } from "../src/realtime/npc-presence-service.js";
 import { AirTagService } from "../src/realtime/air-tag-service.js";
 import { RealtimeHub } from "../src/realtime/realtime-hub.js";
-import type { GatewaySocket, SessionData } from "../src/realtime/session.js";
+import { makeCommandHandler } from "./command-handler-fixtures.js";
 import { makeGuildStoreRedis } from "./guild-store-fixtures.js";
-import { createRabbitDelivery } from "./rabbit-fixtures.js";
+import { makeRabbitBridgeHarness } from "./rabbit-fixtures.js";
+import {
+  benchmarkConfig as config,
+  makeFederationBus,
+  makeSession,
+  makeTestSocket,
+  withApiKey,
+} from "./realtime-fixtures.js";
 
 const identity = { discordId: "discord-member", userId: "user-member" };
-
-const config: GatewayConfiguration = {
-  environment: "test",
-  port: 0,
-  serviceName: "gateway",
-  serviceNamespace: "test",
-  apiUrl: "http://api.test",
-  margonemSigningKeyUrl: "http://unused.test/key",
-  rabbitmqUri: Redacted.make("unused"),
-  activityEventSignatureSecret: Redacted.make("test"),
-  redis: {
-    host: "unused",
-    port: 0,
-    username: "",
-    password: Redacted.make(""),
-    keyPrefix: "test",
-  },
-  websocketPath: "/ws",
-  allowedWebOrigins: new Set(),
-  allowedExtensionOrigins: new Set(),
-  maxBackpressureBytes: 1_048_576,
-};
 
 const grantedPermissions = [
   Permission.LOOTLOG_ACCESS,
   Permission.LOOTLOG_CHAT_READ,
   Permission.LOOTLOG_TIMERS_READ,
   Permission.LOOTLOG_TIMERS_HEROES_READ,
+  Permission.LOOTLOG_TIMERS_TITANS_READ,
 ];
+
+type Npc = { readonly type: string; readonly lvl: number };
 
 type Members = Effect.Success<
   ReturnType<InternalGuildsPersistence["findMembersWithRoles"]>
@@ -122,8 +93,12 @@ const setup = async () => {
     apiRedis.cache,
   );
 
+  let permissionRequests = 0;
+
   const http = HttpClient.make((request) =>
     Effect.gen(function* () {
+      permissionRequests++;
+
       const query = Schema.decodeUnknownSync(InternalUserPermissionsQuery)(
         Object.fromEntries(new URL(request.url).searchParams),
       );
@@ -140,57 +115,20 @@ const setup = async () => {
 
   const redis = makeGuildStoreRedis(identity);
 
-  const stores = [
+  // The third replica holds none of the member's sockets.
+  const stores = Array.from({ length: 3 }, () =>
     makeGuildStore(config, redis.store, http),
-    makeGuildStore(config, redis.store, http),
-  ];
+  );
 
-  const listeners: Array<(message: FederatedRealtimeMessage) => void> = [];
+  const bus = makeFederationBus();
   const background: Promise<void>[] = [];
-
-  const federation = {
-    subscribe: async (
-      listener: (message: FederatedRealtimeMessage) => void,
-      changed?: (subscribed: boolean) => void,
-    ) => {
-      listeners.push(listener);
-      changed?.(true);
-    },
-    publish: async (
-      message: FederatedRealtimeMessage,
-      frames?: FederatedFrameTexts,
-    ) => {
-      const delivered = decodeFederatedRealtimeMessage(
-        encodeFederatedRealtimeMessage(message, frames),
-      );
-
-      for (const listener of listeners) listener(delivered);
-    },
-  };
-
-  const consumers = new Map<
-    string,
-    (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
-  >();
-
-  const messaging: RabbitMessagingService = {
-    publish: () => Effect.void,
-    ack: () => Effect.void,
-    nack: () => Effect.void,
-    consume: (options, consume) =>
-      Effect.sync(() => {
-        consumers.set(options.queue, consume);
-
-        return { consumerTag: options.queue, cancel: Effect.void };
-      }),
-  };
 
   const unexpected = () => {
     throw new Error("Unexpected presence Redis I/O for a web socket");
   };
 
   const replicas = stores.map((store) => {
-    const hub = new RealtimeHub(config, federation, (_label, effect) => {
+    const hub = new RealtimeHub(config, bus.store, (_label, effect) => {
       background.push(Effect.runPromise(effect));
     });
 
@@ -210,21 +148,24 @@ const setup = async () => {
     };
 
     const presence = new PresenceStore(presenceRedis, hub);
-    const activity = new ActivityPublisher(messaging, config);
+    const npcPresence = new NpcPresenceService(presenceRedis, hub);
+    const airTags = new AirTagService(presenceRedis, hub);
 
-    const commands = new CommandHandler(
-      store,
-      makeMargonemProofVerifier(config, http),
-      () => Effect.void,
+    const { handler: commands } = makeCommandHandler({
+      guilds: store,
+      verifier: makeMargonemProofVerifier(config, http),
       presence,
       hub,
-      activity,
-      new MapPingService(presenceRedis, hub),
-      new BattlePingService(presenceRedis, hub),
-      new LootSplitService(presenceRedis, hub),
-      new AirTagService(presenceRedis, hub),
-      new NpcPresenceService(presenceRedis, hub),
-    );
+      activity: new ActivityPublisher({ publish: () => Effect.void }, config),
+      sessionFeatures: { npcPresence, airTags },
+      features: {
+        mapPings: new MapPingService(presenceRedis, hub),
+        battlePings: new BattlePingService(presenceRedis, hub),
+        lootSplits: new LootSplitService(presenceRedis, hub),
+        airTags,
+        npcPresence,
+      },
+    });
 
     return { store, hub, commands, presence };
   });
@@ -234,57 +175,32 @@ const setup = async () => {
 
   if (!first) throw new Error("Missing first replica");
 
-  const bridge = new RabbitBridge(
-    messaging,
-    first.hub,
-    first.commands,
-    first.presence,
-    new CoveragePublisher(messaging),
-  );
+  const rabbit = makeRabbitBridgeHarness(first.hub, {
+    commands: first.commands,
+    presence: first.presence,
+  });
 
-  await Effect.runPromise(Effect.scoped(bridge.start()));
+  await Effect.runPromise(Effect.scoped(rabbit.bridge.start()));
 
   const join = async (
     replica: typeof first,
     connectionId: string,
     organizationIds?: string[],
   ) => {
+    const session = makeSession({ ...identity, connectionId, joined: false });
+
+    const { socket, closes } = makeTestSocket(
+      organizationIds
+        ? withApiKey(session, organizationIds, { keyId: connectionId })
+        : session,
+    );
+
     const frames: ReturnType<typeof decodeRealtimeFrame>[] = [];
-    const closes: number[] = [];
 
-    const data: SessionData = {
-      ...identity,
-      connectionId,
-      platform: "web-app",
-      joined: false,
-      guilds: [],
-      subscriptions: new Map(),
-      airTagScopes: [],
-      confidence: "reported",
-    };
+    socket.send = (frame: string) => {
+      frames.push(decodeRealtimeFrame(frame));
 
-    if (organizationIds) {
-      data.apiKeyAccess = {
-        keyId: connectionId,
-        organizationIds,
-        mode: "read",
-        personalData: false,
-        expiresAt: null,
-      };
-      data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
-    }
-
-    const socket: GatewaySocket = {
-      data,
-      send: (frame: string) => {
-        frames.push(decodeRealtimeFrame(frame));
-
-        return 1;
-      },
-      close: (code) => {
-        closes.push(code);
-      },
-      getBufferedAmount: () => 0,
+      return 1;
     };
 
     replica.hub.register(socket);
@@ -309,7 +225,7 @@ const setup = async () => {
 
   const targets = [];
 
-  for (const [index, replica] of replicas.entries()) {
+  for (const [index, replica] of replicas.slice(0, 2).entries()) {
     targets.push(await join(replica, `web-${index}`));
     targets.push(await join(replica, `key-1-${index}`, ["organization-1"]));
     targets.push(await join(replica, `key-2-${index}`, ["organization-2"]));
@@ -321,27 +237,16 @@ const setup = async () => {
       | typeof RabbitRoutingKey.GUILDS_MEMBERS_REMOVE
       | typeof RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE,
   ) => {
-    const spec = gatewayConsumerSpecs.find(
-      (entry) => entry.routingKey === routingKey,
-    );
-
-    const consumer = spec && consumers.get(spec.queue);
-
-    if (!consumer) throw new Error("Missing membership consumer");
     await Effect.runPromise(
-      consumer(
-        createRabbitDelivery(
-          routingKey,
-          Buffer.from(
-            JSON.stringify({ ...identity, guildId: "organization-1" }),
-          ),
-        ),
-      ),
+      rabbit.deliver(routingKey, { ...identity, guildId: "organization-1" }),
     );
     await Promise.all(background.splice(0));
   };
 
-  const publish = async (organizationId: string, npcLevel = 300) => {
+  const publish = async (
+    organizationId: string,
+    npc: Npc = { type: "HERO", lvl: 300 },
+  ) => {
     await first.hub.publishToScope(
       { topic: "organization.chat", organizationId },
       { v: 1, type: "chat.cleared", data: { organizationId, payload: {} } },
@@ -353,7 +258,7 @@ const setup = async () => {
         type: "timer.created",
         data: {
           organizationId,
-          payload: { npc: { type: "HERO", lvl: npcLevel } },
+          payload: { npc },
         },
       },
     );
@@ -368,7 +273,8 @@ const setup = async () => {
     first,
     publish,
     deliverChange,
-    narrowLevelRange: () => {
+    permissionRequests: () => permissionRequests,
+    narrowLevels: () => {
       members = members.map((entry) =>
         entry.guildId !== "organization-1"
           ? entry
@@ -378,6 +284,10 @@ const setup = async () => {
                 ...role,
                 lvlRangeFrom: 100,
                 lvlRangeTo: 200,
+                permissions: role.permissions.filter(
+                  (permission) =>
+                    permission !== Permission.LOOTLOG_TIMERS_TITANS_READ,
+                ),
               })),
             },
       );
@@ -437,11 +347,17 @@ for (const change of ["role", "membership"] as const) {
         }),
       ]),
     );
+
+    const requestsBefore = system.permissionRequests();
+
     await system.deliverChange(
       change === "membership"
         ? RabbitRoutingKey.GUILDS_MEMBERS_REMOVE
         : RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE,
     );
+
+    // One fresh read per replica holding the member's sockets; the idle one reads none.
+    expect(system.permissionRequests() - requestsBefore).toBe(2);
 
     for (const target of system.targets) target.frames.length = 0;
     await system.publish("organization-1");
@@ -485,9 +401,12 @@ for (const change of ["role", "membership"] as const) {
   });
 }
 
-test("narrowing NPC levels revokes out-of-range deliveries on both replicas without removing chat or in-range access", async () => {
+test("narrowing NPC levels and revoking a tier grant revokes those deliveries on both replicas without removing chat or in-range access", async () => {
   const system = await setup();
+  const titan = { type: "TITAN", lvl: 150 };
+
   await system.publish("organization-1");
+  await system.publish("organization-1", titan);
 
   for (const target of system.targets) {
     const canReadOrganization =
@@ -496,11 +415,11 @@ test("narrowing NPC levels revokes out-of-range deliveries on both replicas with
         "organization-1",
       );
 
-    expect(target.frames).toHaveLength(canReadOrganization ? 2 : 0);
+    expect(target.frames).toHaveLength(canReadOrganization ? 4 : 0);
     target.frames.length = 0;
   }
 
-  system.narrowLevelRange();
+  system.narrowLevels();
 
   const stale = await Effect.runPromise(
     system.api.getUserPermissions(identity.discordId, identity.userId),
@@ -519,9 +438,11 @@ test("narrowing NPC levels revokes out-of-range deliveries on both replicas with
   await system.deliverChange(RabbitRoutingKey.GUILDS_MEMBERS_UPDATE);
 
   for (const target of system.targets) target.frames.length = 0;
-  await system.publish("organization-1", 300);
-  await system.publish("organization-1", 150);
-  await system.publish("organization-2", 300);
+  await system.publish("organization-1");
+  await system.publish("organization-1", { type: "HERO", lvl: 150 });
+  await system.publish("organization-1", titan);
+  await system.publish("organization-2");
+  await system.publish("organization-2", titan);
 
   for (const target of system.targets) {
     const organizationIds = target.socket.data.apiKeyAccess
@@ -537,9 +458,10 @@ test("narrowing NPC levels revokes out-of-range deliveries on both replicas with
           type: "timer.created",
           data: {
             organizationId: "organization-1",
-            payload: { npc: { lvl: 150 } },
+            payload: { npc: { type: "HERO", lvl: 150 } },
           },
         },
+        { type: "chat.cleared", data: { organizationId: "organization-1" } },
       );
     }
 
@@ -550,8 +472,13 @@ test("narrowing NPC levels revokes out-of-range deliveries on both replicas with
           type: "timer.created",
           data: {
             organizationId: "organization-2",
-            payload: { npc: { lvl: 300 } },
+            payload: { npc: { type: "HERO", lvl: 300 } },
           },
+        },
+        { type: "chat.cleared", data: { organizationId: "organization-2" } },
+        {
+          type: "timer.created",
+          data: { organizationId: "organization-2", payload: { npc: titan } },
         },
       );
     }

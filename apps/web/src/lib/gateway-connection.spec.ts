@@ -4,7 +4,6 @@ import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
-import { GatewayEvent } from "@/config/gateway";
 import { GatewayClient } from "./gateway-client";
 
 class GatewayWebSocket extends EventTarget {
@@ -26,22 +25,21 @@ class GatewayWebSocket extends EventTarget {
       throw new Error("Expected a realtime request");
     }
 
+    const joined = {
+      connectionId: "connection-1",
+      organizationIds: [],
+      subscriptionScopes: [],
+      accessPolicy: { version: "policy-1", organizations: [] },
+    };
+
     const reply = {
       v: 1,
       requestId: request.requestId,
       status: "success",
-      data: {},
+      data: "type" in request && request.type === "session.join" ? joined : {},
     } as const;
 
-    const event = {
-      v: 1,
-      type: "session.joined",
-      data: {
-        connectionId: "connection-1",
-        organizationIds: [],
-        subscriptionScopes: [],
-      },
-    } as const;
+    const event = { v: 1, type: "session.joined", data: joined } as const;
 
     for (const frame of [reply, event]) {
       this.dispatchEvent(
@@ -80,7 +78,7 @@ it.each(["development", "production-local", "production"])(
 
     const client = new GatewayClient();
     const joined = vi.fn();
-    client.on(GatewayEvent.JOIN, joined);
+    client.on("join", joined);
 
     try {
       client.connect();
@@ -93,10 +91,10 @@ it.each(["development", "production-local", "production"])(
       expect(socket.protocols).toContain("lootlog.realtime.json.v1");
       socket.readyState = 1;
       socket.dispatchEvent(new Event("open"));
-      client.emit(GatewayEvent.JOIN);
+      client.join();
       await vi.waitFor(() =>
         expect(joined).toHaveBeenCalledWith(
-          expect.objectContaining({ status: "success" }),
+          expect.objectContaining({ guildIds: expect.any(Array) }),
         ),
       );
       expect(client.connected).toBe(true);

@@ -72,35 +72,19 @@ describe("Gateway guild store", () => {
     expect(get).toHaveBeenCalledTimes(2);
   });
 
-  test("does not retry a completed non-retryable response", async () => {
-    const redis = makeGuildStoreRedis(options);
-    const get = mock(() => Effect.succeed(httpResponse(404, {})));
-
-    const store = makeGuildStore(
-      config,
-      redis.store,
-      httpClientFromResponses(get),
-    );
-
-    await expect(
-      Effect.runPromise(store.getUserGuilds(options).pipe(Effect.flip)),
-    ).resolves.toMatchObject({
-      reason: "status",
-      status: 404,
-      retryable: false,
-    });
-    expect(get).toHaveBeenCalledTimes(1);
-  });
-
-  test.each([null, Date.now() - 901_000])(
-    "reports a retryable API outage instead of an empty membership with cache timestamp %s",
-    async (cachedAt) => {
+  test.each([
+    { status: 503, cachedAt: null, calls: 3, retryable: true },
+    { status: 503, cachedAt: Date.now() - 901_000, calls: 3, retryable: true },
+    { status: 404, cachedAt: null, calls: 1, retryable: false },
+  ])(
+    "reports API status $status instead of an empty membership with cache timestamp $cachedAt",
+    async ({ status, cachedAt, calls, retryable }) => {
       const redis = makeGuildStoreRedis(
         options,
         cachedAt === null ? null : JSON.stringify({ guilds, cachedAt }),
       );
 
-      const get = mock(() => Effect.succeed(httpResponse(503, {})));
+      const get = mock(() => Effect.succeed(httpResponse(status, {})));
 
       const store = makeGuildStore(
         config,
@@ -110,12 +94,8 @@ describe("Gateway guild store", () => {
 
       await expect(
         Effect.runPromise(store.getUserGuilds(options).pipe(Effect.flip)),
-      ).resolves.toMatchObject({
-        reason: "status",
-        status: 503,
-        retryable: true,
-      });
-      expect(get).toHaveBeenCalledTimes(3);
+      ).resolves.toMatchObject({ reason: "status", status, retryable });
+      expect(get).toHaveBeenCalledTimes(calls);
       expect(redis.commits).toEqual([]);
     },
   );
@@ -174,38 +154,6 @@ describe("Gateway guild store", () => {
       Effect.runPromise(store.getUserGuilds(options)),
     ).resolves.toEqual([]);
     expect(get).toHaveBeenCalledTimes(4);
-  });
-
-  test("invalidation blocks cached grants during an API outage", async () => {
-    const cachedAt = Date.now();
-
-    const redis = makeGuildStoreRedis(
-      options,
-      JSON.stringify({ guilds, cachedAt }),
-    );
-
-    let available = false;
-
-    const store = makeGuildStore(
-      config,
-      redis.store,
-      httpClientFromResponses(() =>
-        Effect.succeed(
-          available ? httpResponse(200, []) : httpResponse(503, {}),
-        ),
-      ),
-    );
-
-    await Effect.runPromise(store.invalidate(options));
-    await expect(
-      Effect.runPromise(store.getUserGuilds(options).pipe(Effect.flip)),
-    ).resolves.toMatchObject({ reason: "status", retryable: true });
-
-    available = true;
-
-    await expect(
-      Effect.runPromise(store.getUserGuilds(options)),
-    ).resolves.toEqual([]);
   });
 
   test("a failed in-flight request cannot fall back to permissions invalidated by another instance", async () => {

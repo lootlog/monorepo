@@ -1,89 +1,40 @@
-import { unusedFederationStore } from "../../test/realtime-fixtures.js";
-import { createRabbitDelivery } from "../../test/rabbit-fixtures.js";
+import {
+  makeSession,
+  makeTestSocket,
+  unusedFederationStore,
+} from "../../test/realtime-fixtures.js";
+import { makeRabbitBridgeHarness } from "../../test/rabbit-fixtures.js";
 import { describe, expect, test } from "bun:test";
 import { Effect } from "effect";
-import type {
-  RabbitDelivery,
-  RabbitMessagingService,
-} from "@lootlog/messaging";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
-import type { SessionData } from "#src/realtime/session";
-import { RabbitBridge } from "./rabbit-bridge.js";
 
 describe("volunteer delivery", () => {
   test("delivers a guildless volunteer privately to the organizer", async () => {
-    const handlers = new Map<
-      string,
-      (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
-    >();
-
-    const messaging: RabbitMessagingService = {
-      publish: () => Effect.void,
-      ack: () => Effect.void,
-      nack: () => Effect.void,
-      consume: (options, handler) =>
-        Effect.sync(() => {
-          handlers.set(options.queue, handler);
-
-          return { consumerTag: options.queue, cancel: Effect.void };
-        }),
-    };
-
     const hub = new RealtimeHub(
-      {
-        maxBackpressureBytes: 1024,
-      },
+      { maxBackpressureBytes: 1024 },
       { ...unusedFederationStore, publish: () => Promise.resolve() },
       () => {},
     );
 
-    const targets = ["organizer", "other-member", "legacy-organizer"].map(
-      (connectionId) => {
-        const discordId =
-          connectionId === "legacy-organizer" ? "organizer" : connectionId;
+    const [organizer, otherMember] = ["organizer", "other-member"].map(
+      (discordId) => {
+        const target = makeTestSocket(
+          makeSession({
+            discordId,
+            userId: discordId,
+            connectionId: discordId,
+            platform: "game",
+          }),
+        );
 
-        const frames: string[] = [];
+        hub.register(target.socket);
 
-        const session: SessionData = {
-          discordId,
-          userId: discordId,
-          connectionId,
-          supportsNotificationVolunteer: connectionId !== "legacy-organizer",
-          platform: "game",
-          joined: true,
-          guilds: [],
-          subscriptions: new Map(),
-          airTagScopes: [],
-          confidence: "reported",
-        };
-
-        hub.register({
-          data: session,
-          getBufferedAmount: () => 0,
-          send: (frame: string) => {
-            frames.push(frame);
-
-            return frame.length;
-          },
-          close: () => {},
-        });
-
-        return frames;
+        return target;
       },
     );
 
-    const unexpected = () => {
-      throw new Error("Unexpected control call");
-    };
-
-    const bridge = new RabbitBridge(
-      messaging,
-      hub,
-      { rebalanceAcrossInstances: unexpected },
-      { coverageForMap: unexpected },
-      { publish: unexpected },
-    );
+    const { bridge, deliver } = makeRabbitBridgeHarness(hub);
 
     const character = {
       nick: "Volunteer",
@@ -97,30 +48,24 @@ describe("volunteer delivery", () => {
 
     await Effect.runPromise(
       Effect.scoped(
-        Effect.gen(function* () {
-          yield* bridge.start();
-          const handle = handlers.get("gateway-guilds-notifications-volunteer");
-
-          if (!handle) throw new Error("Missing volunteer consumer");
-          yield* handle(
-            createRabbitDelivery(
+        bridge.start().pipe(
+          Effect.andThen(() =>
+            deliver(
               "guilds.notifications.volunteer",
-              Buffer.from(
-                JSON.stringify({
-                  notificationId: "notification",
-                  targetDiscordId: "organizer",
-                  volunteerDiscordId: "volunteer",
-                  world: "tempest",
-                  character,
-                }),
-              ),
-              "volunteer-delivery",
+              {
+                notificationId: "notification",
+                targetDiscordId: "organizer",
+                volunteerDiscordId: "volunteer",
+                world: "tempest",
+                character,
+              },
+              { messageId: "volunteer-delivery" },
             ),
-          );
-        }),
+          ),
+        ),
       ),
     );
-    expect(targets[0]?.map(decodeRealtimeFrame)).toEqual([
+    expect(organizer?.sent.map(decodeRealtimeFrame)).toEqual([
       {
         v: 1,
         type: "notification.volunteer",
@@ -130,7 +75,6 @@ describe("volunteer delivery", () => {
         },
       },
     ]);
-    expect(targets[1]).toEqual([]);
-    expect(targets[2]).toEqual([]);
+    expect(otherMember?.sent).toEqual([]);
   });
 });

@@ -1,22 +1,13 @@
-import { decodePresenceSnapshot } from "@lootlog/protocol/realtime/codec";
 import {
   diffAccessPolicies,
+  type AccessPolicyChange,
   type AccessPolicySnapshot,
 } from "@lootlog/protocol/realtime/access-policy";
-import {
-  REALTIME_FEED_CAPABILITY,
-  REALTIME_LOOT_SNAPSHOT_CAPABILITY,
-  REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-} from "@lootlog/protocol/realtime";
 import {
   RealtimeEventListeners,
   unwrapOrganizationEvent,
 } from "@lootlog/client/realtime/event-listeners";
-import {
-  GATEWAY_SOCKET_PATH,
-  GATEWAY_URL,
-  GatewayEvent,
-} from "@/config/gateway";
+import { GATEWAY_SOCKET_PATH, GATEWAY_URL } from "@/config/gateway";
 import {
   RealtimeClient,
   RealtimeRequestError,
@@ -24,16 +15,19 @@ import {
   type PresenceWithLocation,
   type ServerEvent,
 } from "@lootlog/client/realtime";
+import type { GamePresenceUpdatePayload } from "@/lib/game-presence";
+import type { MemberWebPresenceUpdatePayload } from "@/lib/web-presence";
 
 type Listener = (...arguments_: never[]) => void;
 
-const toLegacyPlayer = (presence: BasicPresence | PresenceWithLocation) => {
+const toPlayerPresence = (
+  presence: BasicPresence | PresenceWithLocation,
+): PlayerPresence | undefined => {
   if (!presence.character) return undefined;
   const location = "location" in presence ? presence.location : undefined;
 
   return {
     ...presence.character,
-    lvl: String(presence.character.lvl),
     margonemAccountVerified: presence.confidence === "verified",
     mapId: location?.mapId,
     mapName: location?.map,
@@ -49,7 +43,7 @@ export interface PlayerPresence {
   characterId: string;
   accountId: string;
   icon: string;
-  lvl: string;
+  lvl: number;
   prof: string;
   margonemAccountVerified?: boolean;
   mapId?: number;
@@ -93,28 +87,65 @@ const groupPresence = <TValue>(
   return grouped;
 };
 
-const serverEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
-  "chat.created": GatewayEvent.CHAT_MESSAGE,
-  "feed.entry": GatewayEvent.FEED_ENTRY,
-  "kills.changed": GatewayEvent.KILLS_CHANGED,
-  "loot.created": GatewayEvent.LOOTS_CREATE,
-  "loot.share-updated": GatewayEvent.LOOTS_SHARE_UPDATE,
-  "loot.snapshot": GatewayEvent.LOOTS_SNAPSHOT,
-  "timer.created": GatewayEvent.TIMERS_CREATE,
-  "timer.deleted": GatewayEvent.TIMERS_DELETE,
-  "hero-sighting.updated": GatewayEvent.HERO_SIGHTING_UPDATED,
-  "reservation.created": GatewayEvent.RESERVATIONS_CREATE,
-  "reservation.deleted": GatewayEvent.RESERVATIONS_DELETE,
-  "reservation.changed": GatewayEvent.RESERVATIONS_CHANGED,
-  "notification.sent": GatewayEvent.NOTIFICATION,
-  "notification.volunteer": GatewayEvent.NOTIFICATIONS_VOLUNTEER,
-  "member-refresh.updated": GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
-  "event.map-status-updated": GatewayEvent.EVENT_MAP_STATUS_UPDATE,
-  "event.hero-killed": GatewayEvent.EVENT_HERO_KILLED,
-  "event.ranking-updated": GatewayEvent.EVENT_RANKING_UPDATE,
-  "event.respawn-window-opened": GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED,
-  "event.respawn-window-closed": GatewayEvent.EVENT_RESPAWN_WINDOW_CLOSED,
+/** Server events delivered to listeners under their protocol type. */
+const FORWARDED_EVENT_TYPES = [
+  "feed.entry",
+  "kills.changed",
+  "loot.created",
+  "loot.share-updated",
+  "loot.snapshot",
+  "timer.created",
+  "timer.deleted",
+  "hero-sighting.updated",
+  "reservation.created",
+  "reservation.deleted",
+  "reservation.changed",
+  "member-refresh.updated",
+  "event.map-status-updated",
+  "event.hero-killed",
+  "event.ranking-updated",
+  "event.respawn-window-opened",
+  "event.respawn-window-closed",
+] as const satisfies ReadonlyArray<ServerEvent["type"]>;
+
+type ForwardedEventType = (typeof FORWARDED_EVENT_TYPES)[number];
+
+const forwardedEventTypes: ReadonlySet<string> = new Set(FORWARDED_EVENT_TYPES);
+
+const isForwardedEventType = (type: string): type is ForwardedEventType =>
+  forwardedEventTypes.has(type);
+
+/** A joined session and what changed in its access since the previous one. */
+export type GatewayJoin = {
+  readonly guildIds: readonly string[];
+  readonly accessPolicyChanges: readonly AccessPolicyChange[];
+  /** Whether listeners recover events the page's initial reads missed. */
+  readonly recover: boolean;
 };
+
+/** A new access policy; `accessPolicyChanges` is unknown without a baseline. */
+export type GatewayAccessUpdate = {
+  readonly organizationIds: readonly string[];
+  readonly accessPolicyChanges?: readonly AccessPolicyChange[];
+};
+
+/**
+ * What GatewayClient listeners hear: forwarded server events, and the events
+ * of the connection itself:
+ * - `connect` and `disconnect` follow the transport;
+ * - `join` carries a {@link GatewayJoin};
+ * - `access.updated` carries a {@link GatewayAccessUpdate};
+ * - `game-presence.changed` carries a `GamePresenceUpdatePayload`;
+ * - `web-presence.changed` carries a `MemberWebPresenceUpdatePayload`.
+ */
+export type GatewayClientEvent =
+  | ForwardedEventType
+  | "connect"
+  | "disconnect"
+  | "join"
+  | "access.updated"
+  | "game-presence.changed"
+  | "web-presence.changed";
 
 // Production joins complete 150–250 ms after the first connect. A slower first
 // join may follow events that the page's initial HTTP reads could not include.
@@ -124,13 +155,8 @@ export class GatewayClient {
   private readonly realtime = new RealtimeClient({
     url: GATEWAY_URL,
     path: GATEWAY_SOCKET_PATH || "/ws",
-    protocols: [
-      REALTIME_FEED_CAPABILITY,
-      REALTIME_LOOT_SNAPSHOT_CAPABILITY,
-      REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-    ],
   });
-  private readonly listeners = new RealtimeEventListeners<GatewayEvent>();
+  private readonly listeners = new RealtimeEventListeners<GatewayClientEvent>();
   private wasConnected = false;
   private accessPolicy: AccessPolicySnapshot | undefined;
   private hasJoined = false;
@@ -146,9 +172,7 @@ export class GatewayClient {
 
       if (connected === this.wasConnected) return;
       this.wasConnected = connected;
-      this.listeners.emit(
-        connected ? GatewayEvent.CONNECT : GatewayEvent.DISCONNECT,
-      );
+      this.listeners.emit(connected ? "connect" : "disconnect");
     });
   }
 
@@ -165,13 +189,13 @@ export class GatewayClient {
     this.realtime.disconnect();
   }
 
-  on(event: GatewayEvent, listener: Listener): this {
+  on(event: GatewayClientEvent, listener: Listener): this {
     this.listeners.add(event, listener);
 
     return this;
   }
 
-  off(event: GatewayEvent, listener: Listener): this {
+  off(event: GatewayClientEvent, listener: Listener): this {
     this.listeners.delete(event, listener);
 
     return this;
@@ -181,26 +205,21 @@ export class GatewayClient {
     this.listeners.clear();
   }
 
-  emit(event: GatewayEvent.JOIN): this {
-    if (event === GatewayEvent.JOIN) {
-      void this.realtime.join({}).catch(() => undefined);
-    }
-
-    return this;
+  /** Joins the signed-in user's Lootlogs; `join` follows once it succeeds. */
+  join(): void {
+    void this.realtime.join({}).catch(() => undefined);
   }
 
   async fetchPresence(guildId: string): Promise<OrganizationPresenceResponse> {
     try {
-      const response = await this.realtime.request("presence.fetch", {
+      const { presences } = await this.realtime.request("presence.fetch", {
         organizationId: guildId,
         delivery: "response",
       });
 
-      const { presences } = decodePresenceSnapshot(response);
-
       return {
         status: "success",
-        players: groupPresence(presences, "game", toLegacyPlayer),
+        players: groupPresence(presences, "game", toPlayerPresence),
         sessions: groupPresence(presences, "web-app", (presence) => ({
           sessionId: presence.sessionId,
         })),
@@ -220,21 +239,13 @@ export class GatewayClient {
     }
   }
 
-  private updateAccessPolicy(
-    next: AccessPolicySnapshot | undefined,
-    isFirstJoin = false,
-  ) {
+  private updateAccessPolicy(next: AccessPolicySnapshot) {
     const previous = this.accessPolicy;
     this.accessPolicy = next;
 
-    if (!next) return undefined;
-
-    if (previous) return diffAccessPolicies(previous, next);
-
-    // The first join's snapshot describes the access the page's HTTP data was
-    // loaded under. Any other event without a baseline, such as the empty
-    // update sent before a join is rejected, may revoke cached data.
-    return isFirstJoin ? [] : undefined;
+    // Without a baseline, such as the empty update sent before a join is
+    // rejected, the changes are unknown and may revoke cached data.
+    return previous && diffAccessPolicies(previous, next);
   }
 
   private handleServerEvent(event: ServerEvent): void {
@@ -246,10 +257,10 @@ export class GatewayClient {
         this.firstConnectAt === undefined ||
         Date.now() - this.firstConnectAt > FRESH_JOIN_WINDOW_MS;
 
-      const accessPolicyChanges = this.updateAccessPolicy(
-        event.data.accessPolicy,
-        !this.hasJoined,
-      );
+      // The first join's snapshot describes the access the page's HTTP data
+      // was loaded under.
+      const accessPolicyChanges =
+        this.updateAccessPolicy(event.data.accessPolicy) ?? [];
 
       this.hasJoined = true;
 
@@ -262,13 +273,11 @@ export class GatewayClient {
           .catch(() => undefined);
       }
 
-      this.listeners.emit(GatewayEvent.JOIN, {
-        status: "success",
-        guildsCount: event.data.organizationIds.length,
+      this.listeners.emit("join", {
         guildIds: [...event.data.organizationIds],
         accessPolicyChanges,
         recover,
-      });
+      } satisfies GatewayJoin);
 
       return;
     }
@@ -287,11 +296,10 @@ export class GatewayClient {
           .catch(() => undefined);
       }
 
-      this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
-        guilds: event.data.organizationIds.map((id) => ({ guild: { id } })),
-        featureRooms: event.data.subscriptionScopes.map((scope) => scope.topic),
+      this.listeners.emit("access.updated", {
+        organizationIds: [...event.data.organizationIds],
         accessPolicyChanges,
-      });
+      } satisfies GatewayAccessUpdate);
 
       return;
     }
@@ -299,11 +307,7 @@ export class GatewayClient {
     if (event.type === "presence.delta") {
       for (const change of event.data.changes) {
         if (change.action === "upsert") {
-          this.dispatchPresence(
-            event.data.organizationId,
-            change.presence,
-            false,
-          );
+          this.dispatchPresence(event.data.organizationId, change.presence);
         } else {
           this.dispatchPresenceRemoval(
             event.data.organizationId,
@@ -316,35 +320,34 @@ export class GatewayClient {
       return;
     }
 
-    const legacyEvent = serverEventNames[event.type];
-
-    if (legacyEvent)
-      this.listeners.emit(legacyEvent, unwrapOrganizationEvent(event));
+    if (isForwardedEventType(event.type))
+      this.listeners.emit(event.type, unwrapOrganizationEvent(event));
   }
 
   private dispatchPresence(
     guildId: string,
     presence: BasicPresence | PresenceWithLocation,
-    disconnected: boolean,
   ): void {
     const base = {
       guildId,
       discordId: presence.discordId ?? presence.userId,
       sessionId: presence.sessionId,
-      status: disconnected ? "offline" : presence.status,
-      disconnected,
+      status: presence.status,
     };
 
     if (presence.platform === "web-app") {
-      this.listeners.emit(GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE, base);
+      this.listeners.emit(
+        "web-presence.changed",
+        base satisfies MemberWebPresenceUpdatePayload,
+      );
 
       return;
     }
 
-    this.listeners.emit(GatewayEvent.EVENT_PRESENCE_UPDATE, {
+    this.listeners.emit("game-presence.changed", {
       ...base,
-      player: toLegacyPlayer(presence),
-    });
+      player: toPlayerPresence(presence),
+    } satisfies GamePresenceUpdatePayload);
   }
 
   private dispatchPresenceRemoval(
@@ -357,11 +360,10 @@ export class GatewayClient {
       discordId,
       sessionId,
       status: "offline",
-      disconnected: true,
-    };
+    } as const;
 
-    this.listeners.emit(GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE, payload);
-    this.listeners.emit(GatewayEvent.EVENT_PRESENCE_UPDATE, payload);
+    this.listeners.emit("web-presence.changed", payload);
+    this.listeners.emit("game-presence.changed", payload);
   }
 }
 

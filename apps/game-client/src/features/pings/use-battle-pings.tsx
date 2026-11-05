@@ -1,4 +1,3 @@
-import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { readSettingsValue } from "@/features/settings/persistence/settings-snapshot";
 import { useAccountEnabledFlag } from "@/features/settings/persistence/use-account-enabled-flag";
@@ -204,10 +203,10 @@ export const useBattlePings = () => {
       playPingSound(event.type, forMe);
     };
 
-    socket.on(GatewayEvent.BATTLE_PING_RECEIVE, handleBattlePing);
+    socket.on("battle-ping.received", handleBattlePing);
 
     return () => {
-      socket.off(GatewayEvent.BATTLE_PING_RECEIVE, handleBattlePing);
+      socket.off("battle-ping.received", handleBattlePing);
     };
   }, [online, socket]);
 
@@ -326,39 +325,35 @@ export const useBattlePings = () => {
       context.heroId,
     );
 
-    const routed = isBattleTeamPingType(type)
-      ? socket.supportsTeamBattlePings()
-      : socket.supportsBattlePings();
+    // A solo fight has nobody to tell; the local mark is the whole effect.
+    if (recipientCharacterIds.length === 0) return;
 
-    // A solo fight has nobody to tell, and a gateway that does not route
-    // this ping would close the socket on the command; the local mark is
-    // then the whole effect.
-    if (recipientCharacterIds.length === 0 || !routed) {
-      return;
-    }
+    const retract = (acknowledgement?: MapPingAck) => {
+      // Undelivered: a ping the team never saw must not stay up or in the
+      // fight's history.
+      battlePingStore.retract(entryId, previousTarget);
 
-    socket.timeout(ACK_TIMEOUT_MS).emit(
-      GatewayEvent.BATTLE_PING_SEND,
-      {
-        expectedMapId: context.game.map.id,
-        recipientCharacterIds,
-        type,
-        warriorId,
-      },
-      (error: Error | null, acknowledgement?: MapPingAck) => {
-        if (!error && acknowledgement?.status === "accepted") {
-          return;
-        }
+      if (acknowledgement?.status === "rejected") showHint(acknowledgement);
+    };
 
-        // Undelivered: a ping the team never saw must not stay up or in the
-        // fight's history.
-        battlePingStore.retract(entryId, previousTarget);
-
-        if (acknowledgement?.status === "rejected") {
-          showHint(acknowledgement);
-        }
-      },
-    );
+    socket
+      .request(
+        "battle-ping.send",
+        {
+          expectedMapId: context.game.map.id,
+          recipientCharacterIds,
+          type,
+          warriorId,
+        },
+        ACK_TIMEOUT_MS,
+      )
+      .then(
+        (acknowledgement) => {
+          if (acknowledgement.status !== "accepted") retract(acknowledgement);
+        },
+        () => retract(),
+      )
+      .catch(() => undefined);
   };
 
   return { active: online, resolveStart, send };

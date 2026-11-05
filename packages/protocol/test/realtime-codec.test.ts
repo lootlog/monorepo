@@ -1,11 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { Result } from "effect";
 import {
-  decodePresenceSnapshot,
-  isMapPingAcknowledgement,
-  isAirTagSubscriptionAcknowledgement,
-  isAirTagObservationAcknowledgement,
-  isPresenceFetchResult,
+  decodeCommandSuccess,
   decodeRealtimeFrame,
   encodeRealtimeFrame,
   prepareRealtimeFrame,
@@ -294,7 +290,7 @@ describe("realtime JSON codec", () => {
   });
 });
 
-test("realtime policy snapshots and legacy permission events share the v1 codec", () => {
+test("realtime policy snapshots round-trip through the v1 codec", () => {
   const accessPolicy = {
     version: "canonical-policy-version",
     organizations: [
@@ -312,112 +308,96 @@ test("realtime policy snapshots and legacy permission events share the v1 codec"
     ],
   } as const;
 
-  for (const includePolicy of [false, true]) {
-    const baseData = {
-      organizationIds: ["organization-1"],
-      subscriptionScopes: [
-        { topic: "organization.timers", organizationId: "organization-1" },
-      ],
-    } as const;
+  const data = {
+    organizationIds: ["organization-1"],
+    subscriptionScopes: [
+      { topic: "organization.timers", organizationId: "organization-1" },
+    ],
+    accessPolicy,
+  } as const;
 
-    const data = includePolicy ? { ...baseData, accessPolicy } : baseData;
-
-    const permissionData = includePolicy
-      ? ({
-          ...data,
-          changes: [
-            {
-              organizationId: "organization-1",
-              areas: ["timers"],
-              restricted: true,
-              expanded: false,
-            },
-          ],
-        } as const)
-      : data;
-
-    const frames = [
-      {
-        v: 1,
-        type: "session.joined",
-        data: { ...data, connectionId: "connection-1" },
+  const frames = [
+    {
+      v: 1,
+      type: "session.joined",
+      data: { ...data, connectionId: "connection-1" },
+    },
+    {
+      v: 1,
+      type: "permissions.updated",
+      data: {
+        ...data,
+        changes: [
+          {
+            organizationId: "organization-1",
+            areas: ["timers"],
+            restricted: true,
+            expanded: false,
+          },
+        ],
       },
-      {
-        v: 1,
-        type: "permissions.updated",
-        data: permissionData,
-      },
-    ] satisfies RealtimeFrame[];
+    },
+  ] satisfies RealtimeFrame[];
 
-    for (const frame of frames)
-      expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
-  }
+  for (const frame of frames)
+    expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
 });
 
-describe("presence request acknowledgement", () => {
-  test("decodes the gateway snapshot and rejects malformed acknowledgements", () => {
+describe("command success decoding", () => {
+  test("decodes the gateway presence snapshot and rejects malformed ones", () => {
     const snapshot = {
       organizationId: "organization-1",
       revision: 4,
       presences: [],
     };
 
-    expect(decodePresenceSnapshot(snapshot)).toEqual(snapshot);
+    expect(decodeCommandSuccess("presence.fetch", snapshot)).toEqual(snapshot);
     expect(() =>
-      decodePresenceSnapshot({ ...snapshot, presences: [{}] }),
-    ).toThrow();
-    expect(() => decodePresenceSnapshot({ presences: [] })).toThrow();
+      decodeCommandSuccess("presence.fetch", {
+        ...snapshot,
+        presences: [{}],
+      }),
+    ).toThrow("Invalid presence.fetch response");
+    expect(() =>
+      decodeCommandSuccess("presence.fetch", { presences: [] }),
+    ).toThrow(RealtimeCodecError);
   });
-});
 
-describe("realtime acknowledgement validation", () => {
   test("accepts extensible acknowledgements and rejects malformed success payloads", () => {
     expect(
-      isMapPingAcknowledgement({
+      decodeCommandSuccess("map-ping.send", {
         status: "accepted",
         pingId: "ping",
         extension: { revision: 2 },
       }),
-    ).toBe(true);
-    expect(isMapPingAcknowledgement({ status: "accepted", pingId: 2 })).toBe(
-      false,
-    );
+    ).toEqual({ status: "accepted", pingId: "ping" });
+    expect(() =>
+      decodeCommandSuccess("map-ping.send", { status: "accepted", pingId: 2 }),
+    ).toThrow("Invalid map-ping.send response");
     expect(
-      isAirTagSubscriptionAcknowledgement({
+      decodeCommandSuccess("air-tag.subscription", {
         status: "accepted",
         requestId: "request",
         scopes: [],
       }),
-    ).toBe(true);
-    expect(
-      isAirTagSubscriptionAcknowledgement({
+    ).toEqual({ status: "accepted", requestId: "request", scopes: [] });
+    expect(() =>
+      decodeCommandSuccess("air-tag.subscription", {
         status: "accepted",
         requestId: "request",
         scopes: [{ guildId: "organization" }],
       }),
-    ).toBe(false);
-    expect(
-      isAirTagObservationAcknowledgement({
-        status: "accepted",
-        acceptedScopes: 1,
-        acceptedTargets: 2,
-      }),
-    ).toBe(true);
-    expect(
-      isAirTagObservationAcknowledgement({
+    ).toThrow(RealtimeCodecError);
+    expect(() =>
+      decodeCommandSuccess("air-tag.observation", {
         status: "accepted",
         acceptedScopes: -1,
         acceptedTargets: 2,
       }),
-    ).toBe(false);
+    ).toThrow(RealtimeCodecError);
   });
-  test("retains empty legacy presence responses while rejecting invalid presence arrays", () => {
-    expect(isPresenceFetchResult({})).toBe(true);
-    expect(isPresenceFetchResult({ presences: undefined })).toBe(true);
-    expect(isPresenceFetchResult({ presences: [] })).toBe(true);
-    expect(isPresenceFetchResult({ presences: null })).toBe(false);
-    expect(isPresenceFetchResult({ presences: [{ platform: "game" }] })).toBe(
-      false,
-    );
+
+  test("accepts a presence publication that reached no Lootlog", () => {
+    expect(decodeCommandSuccess("presence.publish", undefined)).toBeUndefined();
   });
 });

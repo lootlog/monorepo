@@ -7,10 +7,7 @@ import {
   type OrganizationAccessPolicy,
 } from "@lootlog/protocol/realtime/access-policy";
 import type { QueryClient, Query } from "@tanstack/react-query";
-import {
-  getChatMessagesQueryGuildId,
-  isChatMessagesQuery,
-} from "./chat-query-cache.helpers";
+import { getChatMessagesQueryGuildId } from "./chat-query-cache.helpers";
 
 const REFRESH_DELAY_MS = 5_000;
 
@@ -137,6 +134,8 @@ export const retainChatAccessPolicy = (queryClient: QueryClient) => {
     state.listeners -= 1;
 
     if (state.listeners === 0) {
+      // The policy belongs to the session that retained it.
+      state.policy = undefined;
       clearTimeout(state.timer);
       state.timer = undefined;
       state.refresh = undefined;
@@ -328,28 +327,4 @@ export const applyChatAccessPolicy = (
 
   if (changes.length === 0) return;
   scheduleRefresh(queryClient, state, initial);
-};
-
-/** Old gateways cannot identify which cached rows were revoked. Purge once per burst and refetch through current server authorization. */
-export const applyLegacyChatAccessChange = (queryClient: QueryClient) => {
-  const state = getState(queryClient);
-  state.policy = undefined;
-
-  const queries = queryClient
-    .getQueryCache()
-    .findAll({ predicate: isChatMessagesQuery });
-
-  void queryClient.cancelQueries({ predicate: isChatMessagesQuery });
-
-  for (const query of queries) {
-    const guildId = getChatMessagesQueryGuildId(query);
-
-    if (guildId !== undefined) state.pendingGuilds.add(guildId);
-  }
-
-  queryClient.setQueriesData<ChatMessage[]>(
-    { predicate: isChatMessagesQuery },
-    [],
-  );
-  scheduleRefresh(queryClient, state);
 };

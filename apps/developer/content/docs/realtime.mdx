@@ -80,7 +80,7 @@ needs the matching read permission in that Organization.
 | Topic                        | Needs permission to read | Events                                                                                     |
 | ---------------------------- | ------------------------ | ------------------------------------------------------------------------------------------ |
 | `organization.timers`        | Timers                   | `timer.created` (also sent when a timer changes), `timer.deleted`, `hero-sighting.updated` |
-| `organization.loots`         | Loot                     | `loot.created`, `loot.share-updated`                                                       |
+| `organization.loots`         | Loot                     | `loot.created`, `loot.share-updated`, `feed.entry`, `kills.changed`                        |
 | `organization.chat`          | Chat                     | `chat.created`, `chat.updated`, `chat.deleted`, `chat.cleared`                             |
 | `organization.reservations`  | Reservations             | `reservation.created`, `reservation.changed`, `reservation.deleted`                        |
 | `organization.notifications` | Notifications            | `notification.sent`, `party-gathering.updated`, `party-gathering.cancelled`                |
@@ -98,10 +98,12 @@ An integration connection does not represent a character's presence in the game.
 ## Presence snapshots
 
 `presence.fetch` takes an Organization ID, an optional world and an optional
-`delivery: "response"`. With a `requestId` and that option, the snapshot arrives
-only in the correlated response. Without the option, the gateway also emits a
-`presence.snapshot` event, and a command without a `requestId` always receives
-that event.
+`delivery: "response"`. With that option, the snapshot arrives only in the
+correlated response. Without it, the gateway also emits a `presence.snapshot`
+event.
+
+Every command carries a `requestId`, and the gateway answers each one with a
+correlated response. It closes the connection on a command without one.
 
 With response delivery, start from the response and apply `presence.delta`
 events for later changes. Permission and location filters apply to both
@@ -109,17 +111,13 @@ delivery modes.
 
 ## Connection latency
 
-`session.joined` and the `session.join` response list the gateway's
-`capabilities`. When the list contains `connection.ping`, the gateway answers a
-`connection.ping` command at once with an empty `data` object, without touching
-presence or other state. Send it only when the capability is listed: a gateway
-closes the connection on a command it does not know.
+The gateway answers a `connection.ping` command at once with an empty `data`
+object, without touching presence or other state.
 
-The SDK's `probeLatency()` sends one ping when the gateway supports it and the
-client is `ready`, and reports the round trip through
-`subscribeHeartbeatLatency`. Without the capability, that subscription keeps
-reporting the presence heartbeat, which runs every 25 seconds. Probe only while
-the latency is on screen instead of on a fixed fast interval.
+The SDK's `probeLatency()` sends one ping when the client is `ready` and reports
+the round trip through `subscribeHeartbeatLatency`. Between probes, that
+subscription reports the presence heartbeat, which runs every 25 seconds. Probe
+only while the latency is on screen instead of on a fixed fast interval.
 
 ## Reconnect
 

@@ -1,6 +1,12 @@
+import type {
+  BasicPresence,
+  ClientCommand,
+  SessionJoined,
+} from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
+  RealtimeCodecError,
 } from "@lootlog/protocol/realtime/codec";
 import { afterEach, describe, expect, it, vi } from "#test/bun-test";
 import { RealtimeClient, type RealtimeWebSocket } from "./realtime-client.js";
@@ -71,16 +77,52 @@ const joinData = {
   },
 };
 
+const publishedPresence = {
+  userId: "user-1",
+  sessionId: "presence-1",
+  organizationIds: ["org-1"],
+  platform: "game",
+  status: "online",
+  confidence: "reported",
+  isAfk: false,
+  lastSeen: 1,
+} satisfies BasicPresence;
+
+type SuccessFields = Partial<SessionJoined> & Partial<BasicPresence>;
+
+/** The gateway's success `data` for a command, with fields a test cares about. */
+const successData = (command: ClientCommand, fields?: SuccessFields) => {
+  switch (command.type) {
+    case "session.join":
+      return {
+        connectionId: "connection-1",
+        organizationIds: [],
+        subscriptionScopes: [],
+        accessPolicy: { version: "policy-1", organizations: [] },
+        ...fields,
+      };
+    case "presence.heartbeat":
+      return { lastSeen: 1 };
+    case "presence.publish":
+      return fields && { ...publishedPresence, ...fields };
+    case "subscription.subscribe":
+    case "subscription.unsubscribe":
+      return { scope: command.data };
+    default:
+      return {};
+  }
+};
+
 const respondToLastRequest = (
   socket: TestWebSocket,
-  data: unknown = undefined,
+  fields?: SuccessFields,
 ): void => {
   const lastRequest = socket.sent.at(-1);
 
   if (lastRequest === undefined) throw new Error("Expected a request frame");
   const request = decodeRealtimeFrame(lastRequest);
 
-  if (!("requestId" in request) || !request.requestId) {
+  if (!("requestId" in request) || !request.requestId || "status" in request) {
     throw new Error("Expected a request frame");
   }
 
@@ -89,7 +131,7 @@ const respondToLastRequest = (
       v: 1,
       requestId: request.requestId,
       status: "success",
-      data,
+      data: successData(request, fields),
     }),
   );
 };
@@ -236,7 +278,12 @@ describe("RealtimeClient", () => {
       encodeRealtimeFrame({
         v: 1,
         type: "permissions.updated",
-        data: { organizationIds: ["org-1"], subscriptionScopes: [] },
+        data: {
+          changes: [],
+          organizationIds: ["org-1"],
+          subscriptionScopes: [],
+          accessPolicy: { version: "policy-1", organizations: [] },
+        },
       }),
     );
     await flushMessages();
@@ -246,6 +293,7 @@ describe("RealtimeClient", () => {
       encodeRealtimeFrame({
         v: 1,
         type: "presence.fetch",
+        requestId: "server-command",
         data: { organizationId: "org-1" },
       }),
     );
@@ -313,15 +361,19 @@ describe("RealtimeClient", () => {
 
     expect(socket.sent).toHaveLength(1);
     respondToLastRequest(socket, { connectionId: "first-join" });
-    await expect(joined).resolves.toEqual({ connectionId: "first-join" });
-    await expect(duplicate).resolves.toEqual({ connectionId: "first-join" });
+    await expect(joined).resolves.toMatchObject({ connectionId: "first-join" });
+    await expect(duplicate).resolves.toMatchObject({
+      connectionId: "first-join",
+    });
     expect(socket.sent).toHaveLength(2);
     expect(frameAt(socket, 1)).toMatchObject({
       type: "session.join",
       data: { margonemAccountProof: "proof" },
     });
     respondToLastRequest(socket, { connectionId: "verified-join" });
-    await expect(updated).resolves.toEqual({ connectionId: "verified-join" });
+    await expect(updated).resolves.toMatchObject({
+      connectionId: "verified-join",
+    });
     expect(client.state).toBe("ready");
     client.disconnect();
   });
@@ -466,7 +518,12 @@ describe("RealtimeClient", () => {
         encodeRealtimeFrame({
           v: 1,
           type: "permissions.updated",
-          data: { organizationIds: ["org-1"], subscriptionScopes: [] },
+          data: {
+            changes: [],
+            organizationIds: ["org-1"],
+            subscriptionScopes: [],
+            accessPolicy: { version: "policy-1", organizations: [] },
+          },
         }),
       );
       await flushMessages();
@@ -509,7 +566,7 @@ describe("RealtimeClient", () => {
     },
   );
 
-  it("probes latency only while the joined gateway advertises connection.ping", async () => {
+  it("probes latency once at a time while ready", async () => {
     vi.useFakeTimers();
     let now = 0;
     vi.spyOn(performance, "now").mockImplementation(() => now);
@@ -532,7 +589,7 @@ describe("RealtimeClient", () => {
     const current = socketAt(sockets, 0);
     current.open();
     const joined = client.join(joinData);
-    respondToLastRequest(current, { capabilities: ["connection.ping"] });
+    respondToLastRequest(current);
     await flushMessages();
     await joined;
 
@@ -547,18 +604,6 @@ describe("RealtimeClient", () => {
     respondToLastRequest(current);
     await flushMessages();
     expect(latencies.at(-1)).toBe(30);
-
-    // A gateway rollback must not receive a command it closes the socket for.
-    current.close(4000);
-    await vi.advanceTimersByTimeAsync(1_000);
-    const rolledBack = socketAt(sockets, 1);
-    rolledBack.open();
-    respondToLastRequest(rolledBack, { organizationIds: ["org-1"] });
-    await flushMessages();
-    expect(client.state).toBe("ready");
-
-    client.probeLatency();
-    expect(rolledBack.sent).toHaveLength(1);
     client.disconnect();
   });
 
@@ -754,6 +799,44 @@ describe("RealtimeClient", () => {
     client.disconnect();
   });
 
+  it("reconnects instead of staying half-joined after a malformed join response", async () => {
+    vi.useFakeTimers();
+    const sockets: TestWebSocket[] = [];
+
+    const client = new RealtimeClient({
+      url: "https://gateway.example.test",
+      reconnectBaseDelayMs: 1_000,
+      random: () => 0,
+      webSocketFactory: () => {
+        const socket = new TestWebSocket();
+        sockets.push(socket);
+
+        return socket;
+      },
+    });
+
+    client.connect();
+    socketAt(sockets, 0).open();
+    const joined = client.join(joinData).catch((error: Error) => error);
+    const request = frameAt(socketAt(sockets, 0), 0);
+
+    if (!("requestId" in request) || !request.requestId)
+      throw new Error("Expected a request frame");
+    socketAt(sockets, 0).message(
+      encodeRealtimeFrame({
+        v: 1,
+        requestId: request.requestId,
+        status: "success",
+        data: { joined: true },
+      }),
+    );
+    expect(await joined).toBeInstanceOf(RealtimeCodecError);
+    expect(socketAt(sockets, 0).readyState).toBe(3);
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(sockets).toHaveLength(2);
+    client.disconnect();
+  });
+
   it("spreads rejoins across the reconnect window when a gateway replica restarts", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
@@ -790,7 +873,7 @@ describe("RealtimeClient", () => {
     client.disconnect();
   });
 
-  it("offers the JSON frame protocol and configured capabilities on reconnect", async () => {
+  it("offers the JSON frame protocol on reconnect", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
     const protocolsSeen: Array<string[] | undefined> = [];
@@ -799,7 +882,6 @@ describe("RealtimeClient", () => {
       url: "https://gateway.example.test?ticket=must-be-removed",
       reconnectBaseDelayMs: 1_000,
       random: () => 0,
-      protocols: ["lootlog.cap.feed.v1"],
       webSocketFactory: (url, protocols) => {
         expect(url).toBe("wss://gateway.example.test/ws");
         protocolsSeen.push(protocols);
@@ -812,18 +894,12 @@ describe("RealtimeClient", () => {
 
     client.connect();
     await flushMessages();
-    expect(protocolsSeen[0]).toEqual([
-      "lootlog.realtime.json.v1",
-      "lootlog.cap.feed.v1",
-    ]);
+    expect(protocolsSeen[0]).toEqual(["lootlog.realtime.json.v1"]);
     socketAt(sockets, 0).open();
     socketAt(sockets, 0).close();
     await vi.advanceTimersByTimeAsync(500);
     await flushMessages();
-    expect(protocolsSeen[1]).toEqual([
-      "lootlog.realtime.json.v1",
-      "lootlog.cap.feed.v1",
-    ]);
+    expect(protocolsSeen[1]).toEqual(["lootlog.realtime.json.v1"]);
     client.disconnect();
   });
 
@@ -965,7 +1041,7 @@ describe("RealtimeClient", () => {
           v: 1,
           requestId: publish.requestId,
           status: "success",
-          data: { sessionId: "presence-1" },
+          data: publishedPresence,
         }),
       );
       await flushMessages();

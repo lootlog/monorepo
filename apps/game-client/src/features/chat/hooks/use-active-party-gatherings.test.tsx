@@ -1,3 +1,4 @@
+import { ownerAccessPolicy } from "@/test/realtime-wire";
 import type { ServerEvent } from "@lootlog/client/realtime";
 import type { PartyGatheringSummary } from "@lootlog/schema/party-ready-room";
 import { getSocket } from "@/lib/socket";
@@ -13,7 +14,7 @@ import { Permission } from "@lootlog/schema/permissions";
 import { createRealtimeTest } from "@/test/realtime-test";
 import { useActivePartyGatherings } from "./use-active-party-gatherings";
 
-it("discovers gatherings without chat messages and preserves visible state during refresh failures", async () => {
+it("discovers gatherings on join and preserves visible state during refresh failures", async () => {
   const harness = createRealtimeTest();
   const guildsKey = getUsersControllerGetCurrentUserAccessibleGuildsQueryKey();
   const guilds = [{ id: "guild-1", name: "Guild" }];
@@ -86,129 +87,6 @@ it("discovers gatherings without chat messages and preserves visible state durin
       await vi.advanceTimersByTimeAsync(10 * 60_000);
     });
     expect(request).toHaveBeenCalledTimes(requestsAfterJoin);
-    const genericRoom = { ...room, notificationId: "generic" };
-    request.mockImplementation(async () => Response.json([room, genericRoom]));
-    await harness.receive({
-      v: 1,
-      type: "party-gathering.updated",
-      data: {
-        organizationId: "guild-1",
-        payload: {
-          notificationId: "generic",
-          guildId: "guild-1",
-          discordId: "organizer-discord",
-          world: "luvia",
-          createdAt: room.createdAt,
-          character: {
-            nick: "Organizer",
-            lvl: 100,
-            prof: "w",
-            characterId: "2",
-            accountId: "2",
-            icon: "hero.gif",
-          },
-        },
-      },
-    });
-    await waitFor(() =>
-      expect(result.current.data.map((entry) => entry.notificationId)).toEqual([
-        "active",
-        "generic",
-      ]),
-    );
-
-    const requestsBeforeBurst = request.mock.calls.length;
-
-    const participantUpdate = {
-      v: 1 as const,
-      type: "party-gathering.updated" as const,
-      data: {
-        organizationId: "guild-1",
-        payload: {
-          notificationId: "generic",
-          guildId: "guild-1",
-          discordId: "organizer-discord",
-          world: "luvia",
-          createdAt: room.createdAt,
-          character: {
-            nick: "Organizer",
-            lvl: 100,
-            prof: "w",
-            characterId: "2",
-            accountId: "2",
-            icon: "hero.gif",
-          },
-        },
-      },
-    };
-
-    request.mockImplementation(async () =>
-      Response.json([room, { ...genericRoom, applicantCount: 5 }]),
-    );
-    await harness.receive(
-      ...Array.from({ length: 5 }, () => participantUpdate),
-    );
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(600);
-    });
-    await waitFor(() =>
-      expect(
-        result.current.data.find((entry) => entry.notificationId === "generic")
-          ?.applicantCount,
-      ).toBe(5),
-    );
-    expect(request.mock.calls.length - requestsBeforeBurst).toBeLessThanOrEqual(
-      2,
-    );
-
-    const npc = {
-      id: 1,
-      name: "Titan",
-      location: "Test map",
-      wt: 100,
-      lvl: 100,
-      prof: "w",
-      type: "TITAN",
-    };
-
-    const npcRoom = { ...room, notificationId: "npc", npc };
-    request.mockImplementation(async () => Response.json([room, npcRoom]));
-    await harness.receive({
-      v: 1,
-      type: "notification.sent",
-      data: {
-        organizationId: "guild-1",
-        payload: {
-          notificationId: "npc",
-          guildId: "guild-1",
-          discordId: "organizer-discord",
-          world: "luvia",
-          createdAt: room.createdAt,
-          isGatheringParty: true,
-          npc,
-        },
-      },
-    });
-    await waitFor(() =>
-      expect(result.current.data.map((entry) => entry.notificationId)).toEqual([
-        "active",
-        "npc",
-      ]),
-    );
-    request.mockImplementation(async () => Response.json([room]));
-    await harness.receive({
-      v: 1,
-      type: "party-gathering.cancelled",
-      data: {
-        organizationId: "guild-1",
-        payload: { notificationId: "npc" },
-      },
-    });
-    await waitFor(() =>
-      expect(result.current.data.map((entry) => entry.notificationId)).toEqual([
-        "active",
-      ]),
-    );
     request.mockImplementation(async () =>
       Response.json({ message: "Unavailable" }, { status: 500 }),
     );
@@ -304,9 +182,7 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
   try {
     act(() => harness.setSessionDiscordId("observer"));
     harness.open();
-    await harness.join(["guild-1"], policy([Permission.LOOTLOG_CHAT_READ]), [
-      "lootlog.party-gathering-state.v1",
-    ]);
+    await harness.join(["guild-1"], policy([Permission.LOOTLOG_CHAT_READ]));
     await waitFor(() => expect(request).toHaveBeenCalled());
     const requestsAfterJoin = request.mock.calls.length;
 
@@ -383,8 +259,9 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
     );
     expect(result.current.data).toHaveLength(1);
 
-    // Live state already carries these changes, so legacy signals and a
-    // policy change outside gathering access must not reread or blank the bar.
+    // Live state already carries these changes, so chat and notification
+    // frames and a policy change outside gathering access must not reread or
+    // blank the bar.
     await harness.receive(
       {
         v: 1,
@@ -406,6 +283,7 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
         v: 1,
         type: "permissions.updated",
         data: {
+          changes: [],
           organizationIds: ["guild-1"],
           subscriptionScopes: [],
           accessPolicy: policy([
@@ -464,9 +342,7 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
       getSocket().connect();
       harness.wire.open();
     });
-    await harness.join(["guild-1"], undefined, [
-      "lootlog.party-gathering-state.v1",
-    ]);
+    await harness.join(["guild-1"], undefined);
     await waitFor(() =>
       expect(result.current.data.map((entry) => entry.notificationId)).toEqual([
         restored.notificationId,
@@ -520,7 +396,12 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
     await harness.receive({
       v: 1,
       type: "permissions.updated",
-      data: { organizationIds: [], subscriptionScopes: [] },
+      data: {
+        accessPolicy: ownerAccessPolicy([]),
+        changes: [],
+        organizationIds: [],
+        subscriptionScopes: [],
+      },
     });
     await waitFor(() => expect(result.current.data).toEqual([]));
     await act(async () => {

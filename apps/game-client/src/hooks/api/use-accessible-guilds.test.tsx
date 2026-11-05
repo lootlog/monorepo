@@ -58,11 +58,7 @@ it.each([false, true])(
 
     try {
       await waitFor(() => expect(fixture.requests).toHaveLength(1));
-      act(() =>
-        access.apply({
-          accessPolicy: policy(missingGrant ? ["a", "b"] : ["a"]),
-        }),
-      );
+      act(() => access.apply(policy(missingGrant ? ["a", "b"] : ["a"])));
       expect(fixture.requests).toHaveLength(1);
       response.resolve(
         Response.json([guild, createTimerGuildFixture({ id: "removed" })]),

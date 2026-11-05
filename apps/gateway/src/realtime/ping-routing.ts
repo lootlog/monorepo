@@ -1,7 +1,6 @@
 import { slidingWindowRateLimitScript } from "@lootlog/database/sliding-window-rate-limit";
 import type { SubscriptionScope } from "@lootlog/protocol/realtime";
-import { Schema } from "effect";
-import type { ContextLogger } from "@lootlog/instrumentation";
+import { Effect, Schema } from "effect";
 import type {
   RedisGatewayStore,
   RedisScriptReply,
@@ -86,17 +85,17 @@ export const getPingScopes = (
  * Records one ping in a sliding window and returns `[accepted, createdAt, retryAfterMs]`,
  * or null when Redis cannot decide, so the caller fails closed.
  */
-export const consumePingRateLimit = async (
+export const consumePingRateLimit = (
   redis: PingScriptStore,
-  logger: Pick<ContextLogger, "warn">,
+  context: string,
   options: {
     readonly key: string;
     readonly windowMs: number;
     readonly limit: number;
     readonly pingId: string;
   },
-): Promise<readonly [number, number, number] | null> => {
-  try {
+): Effect.Effect<readonly [number, number, number] | null> =>
+  Effect.tryPromise(async () => {
     const result = await redis.command.eval(
       RATE_LIMIT_SCRIPT,
       1,
@@ -106,12 +105,65 @@ export const consumePingRateLimit = async (
       options.pingId,
     );
 
-    if (!Array.isArray(result)) return null;
+    return Array.isArray(result)
+      ? decodeRateLimitReply(result.map(Number))
+      : null;
+  }).pipe(
+    Effect.catch((error) =>
+      Effect.logWarning("Failed to apply ping rate limit", error).pipe(
+        Effect.annotateLogs({ context }),
+        Effect.as(null),
+      ),
+    ),
+  );
 
-    return decodeRateLimitReply(result.map(Number));
-  } catch (error) {
-    logger.warn("Failed to apply ping rate limit", error);
+const UNAVAILABLE = {
+  status: "rejected",
+  code: "temporarily-unavailable",
+} as const;
 
-    return null;
-  }
-};
+type RelayRejection =
+  | { readonly status: "rejected"; readonly code: "temporarily-unavailable" }
+  | {
+      readonly status: "rejected";
+      readonly code: "rate-limited";
+      readonly retryAfterMs: number;
+    };
+
+/**
+ * Consumes one relay from the sender's sliding window, then publishes it.
+ * Redis or a failed publication rejects it as temporarily unavailable, so the
+ * sender learns it was not delivered instead of losing the socket. Logs are
+ * annotated only on failure, and no generator runs: relays are hot.
+ */
+export const relayWithRateLimit = <Accepted>(options: {
+  readonly redis: PingScriptStore;
+  readonly context: string;
+  readonly rateLimit: Parameters<typeof consumePingRateLimit>[2];
+  readonly publish: (createdAt: number) => Promise<void>;
+  readonly failure: string;
+  readonly accepted: Accepted;
+}): Effect.Effect<Accepted | RelayRejection> =>
+  consumePingRateLimit(options.redis, options.context, options.rateLimit).pipe(
+    Effect.flatMap((rateLimit): Effect.Effect<Accepted | RelayRejection> => {
+      if (!rateLimit) return Effect.succeed(UNAVAILABLE);
+      const [accepted, createdAt, retryAfterMs] = rateLimit;
+
+      if (accepted !== 1)
+        return Effect.succeed({
+          status: "rejected",
+          code: "rate-limited",
+          retryAfterMs,
+        });
+
+      return Effect.tryPromise(() => options.publish(createdAt)).pipe(
+        Effect.as<Accepted | RelayRejection>(options.accepted),
+        Effect.catch((error) =>
+          Effect.logWarning(options.failure, error).pipe(
+            Effect.annotateLogs({ context: options.context }),
+            Effect.as(UNAVAILABLE),
+          ),
+        ),
+      );
+    }),
+  );

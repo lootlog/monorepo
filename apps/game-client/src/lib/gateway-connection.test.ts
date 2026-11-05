@@ -1,3 +1,4 @@
+import { ownerAccessPolicy } from "@/test/realtime-wire";
 import { afterEach, expect, it, vi } from "vitest";
 import {
   decodeRealtimeFrame,
@@ -24,21 +25,23 @@ class GatewayWebSocket extends EventTarget {
       throw new Error("Expected a realtime request");
     }
 
-    const reply = {
-      v: 1,
-      requestId: request.requestId,
-      status: "success",
-      data: {},
-    } as const;
-
     const event = {
       v: 1,
       type: "session.joined",
       data: {
+        accessPolicy: ownerAccessPolicy([]),
         connectionId: "connection-1",
         organizationIds: [],
         subscriptionScopes: [],
       },
+    } as const;
+
+    // The gateway answers a join with the session it announces.
+    const reply = {
+      v: 1,
+      requestId: request.requestId,
+      status: "success",
+      data: event.data,
     } as const;
 
     for (const frame of [reply, event]) {
@@ -87,7 +90,7 @@ it("joins and stays connected", async () => {
           prof: "w",
         },
       }),
-    ).resolves.toEqual({});
+    ).resolves.toMatchObject({ connectionId: "connection-1" });
     client.disconnect();
   } finally {
     client.disconnect();
