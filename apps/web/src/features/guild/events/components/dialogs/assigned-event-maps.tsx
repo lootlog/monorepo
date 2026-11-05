@@ -49,7 +49,7 @@ export function AssignedEventMaps({
 
   return (
     <div className="space-y-2">
-      <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <Label>
         {t("events.maps.assigned")}
         {totalMapsCount > 0 && (
           <span className="ml-1.5 text-foreground">({totalMapsCount})</span>

@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
 import { cn } from "cn";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@lootlog/ui/components/popover";
 import { parseMsToTime } from "@lootlog/datetime";
 import type { EventTimer } from "../../types/api";
 import { getHeroTimerCountdownState } from "./hero-timer-countdown-state";
@@ -45,8 +45,9 @@ export const HeroTimerCountdownContent = ({ timer }: { timer: EventTimer }) => {
   const isWaiting = countdownState.phase === "waiting";
 
   return (
-    <Tooltip>
-      <TooltipTrigger
+    <Popover>
+      <PopoverTrigger
+        openOnHover
         render={
           <button
             type="button"
@@ -64,7 +65,7 @@ export const HeroTimerCountdownContent = ({ timer }: { timer: EventTimer }) => {
           </button>
         }
       />
-      <TooltipContent>
+      <PopoverContent className="w-auto max-w-72 px-3 py-2">
         <div className="text-sm space-y-1">
           <p>
             {t("events.respawn.minSpawnTime")}:{" "}
@@ -85,7 +86,7 @@ export const HeroTimerCountdownContent = ({ timer }: { timer: EventTimer }) => {
               : t("events.heroes.countdownUntilSpawnWindowEnd")}
           </p>
         </div>
-      </TooltipContent>
-    </Tooltip>
+      </PopoverContent>
+    </Popover>
   );
 };

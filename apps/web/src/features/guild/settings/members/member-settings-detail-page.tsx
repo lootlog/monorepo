@@ -5,18 +5,13 @@ import { ROUTES } from "@/config/routes";
 import { SettingsDetailNotFound } from "@/components/common/settings-detail-not-found";
 import { SettingsListError } from "@/components/common/settings-list-error";
 import { MemberSettingsDetailSkeleton } from "./member-settings-detail-skeleton";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@lootlog/ui/components/avatar";
 import { RefreshCw, UserRoundX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Permission } from "@lootlog/schema/permissions";
 import { getColorFromRole } from "@/utils/get-color-from-role";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   useGuildsControllerGetGuildById,
@@ -145,15 +140,13 @@ const MemberSettingsDetailPageContent = () => {
     <DetailPage
       name={member.name}
       media={
-        <Avatar className="size-5 shrink-0 rounded-md" aria-hidden>
-          <AvatarImage
-            src={getDiscordAvatarUrl(member.userId, member.avatar)}
-            alt=""
-          />
-          <AvatarFallback className="rounded-md text-[10px]">
-            {member.name.slice(0, 1)}
-          </AvatarFallback>
-        </Avatar>
+        <MemberAvatar
+          userId={member.userId}
+          avatar={member.avatar}
+          name={member.name}
+          imageSize={32}
+          className="size-5"
+        />
       }
       nameStyle={{ color: memberColor }}
       meta={

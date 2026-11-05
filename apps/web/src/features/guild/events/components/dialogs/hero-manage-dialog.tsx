@@ -138,10 +138,7 @@ export const HeroManageDialog = ({
         >
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label
-                htmlFor={npcIdInputId}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+              <Label htmlFor={npcIdInputId}>
                 {t("events.createDialog.heroIdLabel")}
               </Label>
               <Input
@@ -154,10 +151,7 @@ export const HeroManageDialog = ({
               />
             </div>
             <div className="space-y-2">
-              <Label
-                htmlFor={npcNameInputId}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+              <Label htmlFor={npcNameInputId}>
                 {t("events.createDialog.heroNameLabel")}
               </Label>
               <Input

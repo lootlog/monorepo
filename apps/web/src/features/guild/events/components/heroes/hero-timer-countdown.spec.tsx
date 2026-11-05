@@ -45,14 +45,15 @@ describe("HeroTimerCountdown", () => {
     vi.useRealTimers();
   });
 
-  it("shows a countdown to the beginning of the spawn window", () => {
+  it("shows a countdown to the beginning of the spawn window when tapped", () => {
     vi.setSystemTime("2026-07-30T11:00:00.000Z");
 
     render(<HeroTimerCountdown timer={timer} />);
 
-    const timerContainer = screen.getByText("01:00:00").parentElement;
-
-    fireEvent.focus(timerContainer!);
+    // Tapping the countdown shows its window, so touch screens reach it too.
+    act(() =>
+      fireEvent.click(screen.getByRole("button", { name: /01:00:00/ })),
+    );
 
     expect(screen.getByText("Do początku okna respawnu")).toBeTruthy();
     expect(screen.queryByText("Do końca okna respawnu")).toBeNull();
@@ -63,9 +64,9 @@ describe("HeroTimerCountdown", () => {
 
     render(<HeroTimerCountdown timer={timer} />);
 
-    const timerContainer = screen.getByText("02:00:00").parentElement;
-
-    fireEvent.focus(timerContainer!);
+    act(() =>
+      fireEvent.click(screen.getByRole("button", { name: /02:00:00/ })),
+    );
 
     expect(screen.getByText("Do końca okna respawnu")).toBeTruthy();
   });

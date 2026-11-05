@@ -1,11 +1,9 @@
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
-import { SearchInput } from "@/components/ui/search-input";
+import { GameMapPicker } from "@/components/common/game-map-picker";
 import { Button } from "@lootlog/ui/components/button";
-import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   Select,
   SelectContent,
@@ -13,11 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { Reorder } from "framer-motion";
 import { useId } from "react";
-import { FolderPlus, MapPin, Search } from "lucide-react";
-import { EmptyState } from "@/components/common/empty-state";
+import { FolderPlus, MapPin } from "lucide-react";
 import { AssignedEventMaps } from "./assigned-event-maps";
 import { EventMapTemplates } from "./event-map-templates";
 import {
@@ -49,6 +45,7 @@ export const MapManageDialog = ({
     deleteLocation,
     isReordering,
     handleDragEnd,
+    handleMoveLocation,
     heroLocations,
     handleDeleteMap,
     handleMapLocationChange,
@@ -80,10 +77,7 @@ export const MapManageDialog = ({
         <div className="flex-1 overflow-y-auto custom-scrollbar [scrollbar-gutter:stable]">
           <div className="p-5 space-y-5">
             <div className="space-y-2">
-              <Label
-                htmlFor={locationNameInputId}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+              <Label htmlFor={locationNameInputId}>
                 {t("events.locations.title")}
               </Label>
 
@@ -134,6 +128,9 @@ export const MapManageDialog = ({
                       deletionDisabled={deleteLocation.isPending}
                       isReordering={isReordering}
                       onDragEnd={handleDragEnd}
+                      onMove={(offset) =>
+                        handleMoveLocation(location.id, offset)
+                      }
                     />
                   ))}
                 </Reorder.Group>
@@ -157,10 +154,7 @@ export const MapManageDialog = ({
               handleLoadTemplate={handleLoadTemplate}
             />
             <div className="space-y-2">
-              <Label
-                htmlFor={mapSearchInputId}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
+              <Label htmlFor={mapSearchInputId}>
                 {t("events.maps.searchMaps")}
               </Label>
 
@@ -202,56 +196,19 @@ export const MapManageDialog = ({
                 </div>
               )}
 
-              <SearchInput
+              <GameMapPicker
                 id={mapSearchInputId}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                search={searchQuery}
+                onSearchChange={setSearchQuery}
                 placeholder={t("events.maps.searchPlaceholder")}
-                className="text-sm"
+                maps={filteredGameMaps}
+                onAdd={handleAddMapFromGame}
+                noResultsLabel={t("events.maps.noResults", {
+                  query: searchQuery,
+                })}
+                hintLabel={t("events.maps.searchHint")}
+                isAdding={isAdding}
               />
-
-              <ScrollArea className="h-[180px] rounded-lg border relative">
-                {isAdding && (
-                  <div className="absolute inset-0 bg-background backdrop-blur-[1px] z-10 flex items-center justify-center">
-                    <Spinner className="size-5 text-primary" />
-                  </div>
-                )}
-                {filteredGameMaps.length > 0 ? (
-                  <div className="divide-y">
-                    {filteredGameMaps.map((gameMap) => (
-                      <label
-                        key={gameMap.id}
-                        className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50 cursor-pointer transition-colors"
-                      >
-                        <Checkbox
-                          checked={false}
-                          onCheckedChange={(checked) => {
-                            if (checked) handleAddMapFromGame(gameMap);
-                          }}
-                          disabled={isAdding}
-                          className="size-4"
-                        />
-                        <span className="flex-1 text-sm">{gameMap.name}</span>
-                        <span className="text-[10px] font-mono text-muted-foreground/70">
-                          {gameMap.id}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                ) : searchQuery ? (
-                  <EmptyState
-                    compact
-                    icon={Search}
-                    title={t("events.maps.noResults", { query: searchQuery })}
-                  />
-                ) : (
-                  <EmptyState
-                    compact
-                    icon={MapPin}
-                    title={t("events.maps.searchHint")}
-                  />
-                )}
-              </ScrollArea>
             </div>
           </div>
         </div>
