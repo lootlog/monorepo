@@ -8,13 +8,11 @@ import {
   isNotNull,
   isNull,
   ne,
-  not,
-  notExists,
   or,
   sql,
   type SQL,
 } from "drizzle-orm";
-import { alias, type AnyPgColumn, QueryBuilder } from "drizzle-orm/pg-core";
+import { alias, QueryBuilder } from "drizzle-orm/pg-core";
 import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import {
@@ -153,39 +151,25 @@ export const makeLootAllocationPersistence = (
       });
     });
 
-  // The allocation lives on the shared loot, so it changes in every
-  // Organization that keeps a record of it. Sessions and API keys alike may
-  // change it only when they may write it in each of those Organizations.
+  // The chat allocation is a game fact the actor witnessed: they submitted
+  // this loot recently in an Organization where they may write and see it.
+  // A mixed party records the same loot in Organizations the actor is not a
+  // member of, so requiring write access in every recording Organization
+  // would reject every mixed-party allocation. The first chat allocation
+  // wins; a conflicting one is rejected by the caller.
   const allocationAuthorization = (options: AuthorizedLootOptions) =>
     Effect.gen(function* () {
       const organizations = yield* writableOrganizations(
         options.actorDiscordId,
       );
 
-      const writableIn = (recordGuildId: AnyPgColumn) =>
+      return authorizedSubmissionExists(
+        options,
         or(
           ...organizations.map(({ guildId, visibility }) =>
-            and(eq(recordGuildId, guildId), visibility),
+            and(eq(allocationRecord.guildId, guildId), visibility),
           ),
-        ) ?? sql`false`;
-
-      return and(
-        authorizedSubmissionExists(
-          options,
-          writableIn(allocationRecord.guildId),
-        ),
-        notExists(
-          query
-            .select({ id: organizationLootRecordTable.id })
-            .from(organizationLootRecordTable)
-            .where(
-              and(
-                eq(organizationLootRecordTable.lootId, lootTable.id),
-                isNull(organizationLootRecordTable.archivedAt),
-                not(writableIn(organizationLootRecordTable.guildId)),
-              ),
-            ),
-        ),
+        ) ?? sql`false`,
       );
     });
 
