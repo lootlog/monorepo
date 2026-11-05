@@ -24,14 +24,9 @@ import {
   orAccessDenied,
   type CommandRoutes,
 } from "#src/realtime/command-routes";
-import { RealtimeStoreError } from "#src/realtime/realtime-errors";
+import { RealtimeStoreError, storeCall } from "#src/realtime/realtime-errors";
 
 /** A Redis call that fails the operation with a tagged error. */
-const storeCall = <A>(operation: string, evaluate: () => Promise<A>) =>
-  Effect.tryPromise({
-    try: evaluate,
-    catch: (cause) => new RealtimeStoreError({ operation, cause }),
-  });
 
 // A client reports only when the NPCs on its map change.
 const RATE_LIMIT = 30;
