@@ -17,21 +17,14 @@ export const makeBattleReadBudget = (
     { consistentSnapshot = false } = {},
   ) =>
     database
-      .transaction((transaction) =>
-        Effect.gen(function* () {
-          if (consistentSnapshot) {
-            // Effect-native Drizzle has no transaction isolation option.
-            yield* transaction.execute(
-              sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ`,
-            );
-          }
-
-          yield* transaction.execute(
-            sql`SELECT set_config('statement_timeout', ${`${options.statementTimeoutMs}ms`}, true)`,
-          );
-
-          return yield* effect;
-        }),
+      .transaction(
+        (transaction) =>
+          transaction
+            .execute(
+              sql`SELECT set_config('statement_timeout', ${`${options.statementTimeoutMs}ms`}, true)`,
+            )
+            .pipe(Effect.andThen(effect)),
+        consistentSnapshot ? { isolationLevel: "repeatable read" } : undefined,
       )
       .pipe(semaphore.withPermit, Effect.timeout(options.timeoutMs));
 };
