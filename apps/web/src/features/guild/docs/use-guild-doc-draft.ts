@@ -175,15 +175,16 @@ export const useGuildDocDraft = () => {
     );
   };
 
+  /** Resolves whether the document reached the trash. */
   const moveDocumentToTrash = async () => {
-    if (!document || !canWrite) {
-      return;
-    }
+    if (!document || !canWrite) return false;
 
-    if (!(await moveToTrash(docId))) return;
+    if (!(await moveToTrash(docId))) return false;
 
     setTrashConfirmOpen(false);
     navigate({ to: `/${guildId}/docs` });
+
+    return true;
   };
 
   const requestTrash = () => {

@@ -1,9 +1,11 @@
+import { TileChevron } from "@/components/common/tile-chevron";
 import { upperFirst } from "es-toolkit";
 import { MetaItem } from "@/components/common/meta-item";
 import {
   getListTileLinkClassName,
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
@@ -11,7 +13,6 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
 import {
   CalendarDays,
-  ChevronRight,
   Globe,
   Star,
   Swords,
@@ -68,14 +69,15 @@ export const EventListCard = ({
     <div data-list-tile className={LIST_TILE_RULE_CLASS}>
       <div
         className={cn(
-          "flex items-center transition-colors hover:bg-muted/30 motion-reduce:transition-none",
+          "flex items-center",
+          LIST_TILE_HOVER_CLASS,
           isEventActive && "bg-signal-live/[0.04] hover:bg-signal-live/[0.08]",
         )}
       >
         <Link
           to="/$guildId/events/$eventId"
           params={{ guildId: guildId ?? "", eventId: event.id }}
-          className={cn(getListTileLinkClassName(true), "group/event")}
+          className={cn(getListTileLinkClassName(true), "group/tile")}
         >
           <div
             className={cn(
@@ -123,7 +125,7 @@ export const EventListCard = ({
             </div>
           </div>
 
-          <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-[color,translate] duration-150 ease-emphasized group-hover/event:translate-x-0.5 group-hover/event:text-foreground motion-reduce:transition-none" />
+          <TileChevron />
         </Link>
 
         <div className={LIST_TILE_ACTIONS_CLASS}>

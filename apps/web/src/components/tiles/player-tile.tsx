@@ -116,8 +116,11 @@ export const PlayerTile: FC<PlayerTileProps> = ({
       className={cn(
         "inline-flex cursor-pointer appearance-none rounded-lg border-0 bg-transparent p-0 outline-none",
         size === "compact" && "relative h-9 w-6 shrink-0 rounded-sm",
-        !highlighted &&
-          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        // A highlighted sprite already wears the selection ring, so focus
+        // draws an outline just outside it instead of replacing it.
+        highlighted
+          ? "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-solid focus-visible:outline-ring"
+          : "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       )}
       onClick={(event) => event.stopPropagation()}
       onMouseEnter={handleMouseEnter}

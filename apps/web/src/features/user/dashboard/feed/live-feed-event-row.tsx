@@ -3,7 +3,10 @@ import { Skull } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { NpcTile } from "@/components/tiles/npc-tile";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_HOVER_CLASS,
+} from "@/components/common/list-tile";
 import { LEGENDARY_LOOT_ROW_CLASS } from "@/features/guild/loots-list/loots-list-layout";
 import { NPC_CATEGORY_APPEARANCE } from "../npc-category-appearance";
 import { LiveFeedEventLoot } from "./live-feed-event-loot";
@@ -32,7 +35,8 @@ export function LiveFeedEventRow({ group, now }: Props) {
   return (
     <div
       className={cn(
-        "grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 py-3 transition-colors hover:bg-muted/20 @lg:grid-cols-[2.5rem_minmax(0,1fr)_auto_auto]",
+        "grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 py-3 @lg:grid-cols-[2.5rem_minmax(0,1fr)_auto_auto]",
+        LIST_TILE_HOVER_CLASS,
         LIST_TILE_INSET_CLASS,
         legendary && LEGENDARY_LOOT_ROW_CLASS,
       )}

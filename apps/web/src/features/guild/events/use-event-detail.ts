@@ -202,8 +202,9 @@ export const useEventDetail = () => {
         },
       });
       toast.success(t("events.heroes.deleted"));
-    } catch {
+    } catch (error) {
       toast.error(t("events.heroes.deleteError"));
+      throw error;
     }
   };
 

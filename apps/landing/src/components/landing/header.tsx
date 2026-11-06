@@ -11,7 +11,7 @@ import { useSession } from "@/src/hooks/use-session";
 import { authClient } from "@/src/lib/auth-client";
 import { useMatchingBackgroundMask } from "@/src/hooks/use-matching-background-mask";
 import { MenuIcon } from "./menu-icon";
-import { LootlogMark } from "./lootlog-mark";
+import { LootlogMark } from "@lootlog/ui/components/lootlog-mark";
 
 const navigationLinkClassName =
   "rounded-md transition-colors hover:text-[var(--broadcast-lime)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-lime)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--broadcast-ink)]";

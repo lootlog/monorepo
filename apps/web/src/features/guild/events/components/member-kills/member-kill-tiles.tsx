@@ -1,6 +1,7 @@
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import type { KillHistoryMemberEntry } from "@lootlog/client/main";
 import { cn } from "cn";
@@ -45,7 +46,8 @@ export const MemberKillTiles = ({
           >
             <div
               className={cn(
-                "relative flex h-16 items-center gap-3 transition-colors hover:bg-muted/40",
+                "relative flex h-16 items-center gap-3",
+                LIST_TILE_HOVER_CLASS,
                 LIST_TILE_INSET_CLASS,
               )}
             >
