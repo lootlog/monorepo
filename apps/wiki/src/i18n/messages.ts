@@ -165,7 +165,10 @@ const messages = {
       "Gra daje ten przedmiot na poziomie postaci, która go zdobyła: najwyższym z poziomów co 5, który nie przekracza jej poziomu, od 40 do 300.",
     defaultLevel:
       "Pokazujemy przedmiot na {{level}} poziomie. Wpisz poziom postaci, żeby zobaczyć go takim, jaki by zdobyła.",
-    itemLevel: "Twoja postać zdobyłaby go na {{level}} poziomie.",
+    itemLevel:
+      "Postać z zestawu zdobyłaby go na {{level}} poziomie. Wpisz inny poziom, żeby go podejrzeć; zestaw się nie zmieni.",
+    previewLevel:
+      "Postać na {{character}} poziomie zdobyłaby go na {{level}} poziomie. Zestaw się nie zmienia.",
     dropsHint:
       "Część przedmiotów dostaje poziom postaci, która je zdobyła. Bez poziomu postaci pokazujemy je na 300 poziomie; wpisz swój, żeby zobaczyć je takie, jakie byś zdobył.",
     computed:

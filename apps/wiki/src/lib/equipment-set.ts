@@ -36,6 +36,9 @@ export const LEGACY_EQUIPMENT_SET_PARAM = "zestaw";
 
 export const MAX_CHARACTER_LEVEL = 500;
 
+export const isCharacterLevel = (level: number) =>
+  Number.isInteger(level) && level > 0 && level <= MAX_CHARACTER_LEVEL;
+
 // One worn item: its slot letter, its id and its upgrade.
 const SET_PART = new RegExp(`^([a-z])(\\d{1,12})${ITEM_UPGRADE_PATTERN}$`);
 
@@ -89,10 +92,7 @@ export const decodeEquipmentSet = (value: string): EquipmentSet => {
 
   return {
     profession: isProfession(profession) ? profession : null,
-    level:
-      Number.isInteger(level) && level > 0 && level <= MAX_CHARACTER_LEVEL
-        ? level
-        : null,
+    level: isCharacterLevel(level) ? level : null,
     items,
     upgrades,
   };
