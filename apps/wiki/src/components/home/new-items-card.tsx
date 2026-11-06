@@ -8,6 +8,7 @@ import {
   resolveItemRarity,
 } from "@lootlog/ui/lib/item-rarity";
 import { CatalogItemTile } from "@/components/catalog/catalog-item-tile";
+import { useGridColumnCount } from "@/hooks/use-grid-column-count";
 import { t } from "@/i18n/messages";
 
 type NewItemsCardProps = {
@@ -25,13 +26,23 @@ type NewItemsCardProps = {
 
 const ITEMS_SHOWN = 12;
 
+/**
+ * How many tiles fill whole rows of `columnCount` columns, as close to the
+ * first few items and the count tile as whole rows allow.
+ */
+const slotCount = (columnCount: number | null) =>
+  columnCount === null
+    ? ITEMS_SHOWN + 1
+    : Math.max(1, Math.round((ITEMS_SHOWN + 1) / columnCount)) * columnCount;
+
 const rarityRank = ({ rarity }: CatalogItemDtoOutput) =>
   ITEM_RARITIES_BY_VALUE.indexOf(resolveItemRarity(rarity));
 
 /**
  * A boss or an event with its newest items, the most valuable first: the
  * header opens its page and every item opens its own. Items past the first
- * few are counted in a tile that opens the page too.
+ * few are counted in a tile that opens the page too, in the last place of
+ * the last row, so it never wraps onto a row of its own.
  */
 export function NewItemsCard({
   title,
@@ -41,6 +52,10 @@ export function NewItemsCard({
   items,
   itemCount,
 }: NewItemsCardProps) {
+  const { ref: gridRef, columnCount } = useGridColumnCount();
+  const slots = slotCount(columnCount);
+  const shownCount = itemCount > slots ? slots - 1 : itemCount;
+
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border/50 bg-card">
       <Link
@@ -67,24 +82,25 @@ export function NewItemsCard({
         />
       </Link>
       <ul
+        ref={gridRef}
         aria-label={t("home.itemsOf", { name: title })}
-        className="flex flex-1 flex-wrap content-start gap-2 border-t border-border/50 bg-background/30 px-4 py-3"
+        className="grid flex-1 grid-cols-[repeat(auto-fill,2.25rem)] content-start gap-2 border-t border-border/50 bg-background/30 px-4 py-3"
       >
         {sortBy(items, [rarityRank])
-          .slice(0, ITEMS_SHOWN)
+          .slice(0, shownCount)
           .map((item) => (
             <li key={item.id}>
               <CatalogItemTile item={item} />
             </li>
           ))}
-        {itemCount > ITEMS_SHOWN ? (
+        {itemCount > shownCount ? (
           <li>
             <Link
               {...link}
               aria-label={t("home.allItemsOf", { name: title })}
               className="grid size-9 place-items-center rounded-lg border-2 border-border bg-muted/30 text-xs font-medium text-muted-foreground tabular-nums outline-none transition-[color,border-color] duration-150 hover:border-primary/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
             >
-              {t("home.moreItems", { count: itemCount - ITEMS_SHOWN })}
+              {t("home.moreItems", { count: itemCount - shownCount })}
             </Link>
           </li>
         ) : null}
