@@ -7,6 +7,7 @@ import {
   getCatalogControllerGetItemsQueryKey,
 } from "@lootlog/client/search";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
+import { eventsByPriority } from "@/lib/hero-trackers";
 import { latestEventOf } from "@/lib/item-events";
 
 const PAGE_SIZE = 96;
@@ -19,7 +20,8 @@ const MAX_ITEMS = 1000;
  * event's name, and the game adds items in id order, so pages of the newest
  * ones are read until an event past the last wanted one starts: one large
  * event, such as Halloween, would otherwise fill a whole page alone. Older
- * items that came back belong to their latest event.
+ * items that came back belong to their latest event. Tropiciele Herosów
+ * editions follow the game's own events.
  */
 export const useLatestEvents = (count: number) => {
   const params = {
@@ -60,9 +62,10 @@ export const useLatestEvents = (count: number) => {
         ({ stat }) => latestEventOf(stat) ?? "",
       );
 
-      return [...events]
-        .slice(0, count)
-        .map((name) => ({ name, items: byEvent[name] ?? [] }));
+      return eventsByPriority([...events].slice(0, count)).map((name) => ({
+        name,
+        items: byEvent[name] ?? [],
+      }));
     },
   });
 };
