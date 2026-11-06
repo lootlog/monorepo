@@ -16,7 +16,7 @@ import { EquipmentSlotMenu } from "./equipment-slot-menu";
 import { EquipmentSlotPreview } from "./equipment-slot-preview";
 
 const SLOT_FRAME =
-  "relative flex size-11 items-center justify-center rounded-md border bg-background/60 transition-[color,border-color,box-shadow] duration-200 motion-reduce:transition-none";
+  "relative flex size-full items-center justify-center rounded-lg border bg-background/70 shadow-[inset_0_1px_3px_rgb(0_0_0/0.35)] transition-[color,border-color,box-shadow] duration-200 motion-reduce:transition-none";
 
 type EquipmentSetSlotProps = {
   slot: EquipmentSlot;

@@ -3,7 +3,6 @@ import { ChevronDown, MapPin } from "lucide-react";
 import type { CatalogNpcDtoOutput } from "@lootlog/client/search";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
-import { CATALOG_GRID } from "@/components/catalog/catalog-item-grid";
 import { t } from "@/i18n/messages";
 
 // A hero spawns on many maps; the most fought ones show first.
@@ -38,11 +37,14 @@ export function NpcLocations({
           {t("catalog.locationsDescription")}
         </p>
       ) : null}
-      <ul id="npc-location-list" className={CATALOG_GRID}>
+      <ul
+        id="npc-location-list"
+        className="grid gap-x-6 overflow-hidden rounded-xl border border-border/50 bg-card px-4 py-1 md:grid-cols-2"
+      >
         {shown.map(({ map, share }) => (
           <li
             key={map}
-            className="flex min-w-0 items-center gap-3 rounded-lg border border-border/50 bg-card px-3 py-2.5"
+            className="flex min-h-11 min-w-0 items-center gap-3 border-b border-border/40 py-2 last:border-b-0 md:[&:nth-last-child(2):nth-child(odd)]:border-b-0"
           >
             <MapPin
               aria-hidden="true"
@@ -56,7 +58,7 @@ export function NpcLocations({
                 {/* The share is read from its number; the meter only shows it. */}
                 <span
                   aria-hidden="true"
-                  className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-muted"
+                  className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-muted"
                 >
                   <span
                     className="block h-full rounded-full bg-primary"

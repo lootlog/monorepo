@@ -10,6 +10,8 @@ type ShareLinkButtonProps = {
   /** The query parameter that carries what is shared, and its value. */
   param: string;
   value: string;
+  /** An icon alone, for a panel's header. */
+  compact?: boolean;
   className?: string;
 };
 
@@ -18,6 +20,7 @@ export function ShareLinkButton({
   path,
   param,
   value,
+  compact = false,
   className,
 }: ShareLinkButtonProps) {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
@@ -39,12 +42,16 @@ export function ShareLinkButton({
     setTimeout(() => setCopyState("idle"), 2000);
   };
 
+  const label =
+    copyState === "idle" ? t("share.share") : t(`share.${copyState}`);
+
   return (
     <Button
       type="button"
-      variant="outline"
-      size="sm"
+      variant={compact ? "ghost" : "outline"}
+      size={compact ? "icon-sm" : "sm"}
       className={cn(className)}
+      title={compact ? label : undefined}
       onClick={() => void share()}
     >
       {copyState === "copied" ? (
@@ -52,8 +59,8 @@ export function ShareLinkButton({
       ) : (
         <Link2 aria-hidden="true" />
       )}
-      <span aria-live="polite">
-        {copyState === "idle" ? t("share.share") : t(`share.${copyState}`)}
+      <span aria-live="polite" className={cn(compact && "sr-only")}>
+        {label}
       </span>
     </Button>
   );

@@ -1,9 +1,11 @@
+import { Link } from "@tanstack/react-router";
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import { ItemTile } from "@lootlog/ui/components/item-tile";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { renderItemStat } from "@/components/render-item-stat";
 import { useWornItem } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
+import { itemPageParams, itemPageSearch } from "@/lib/catalog-links";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import {
@@ -19,7 +21,7 @@ type CatalogItemTileProps = {
 };
 
 /**
- * A catalog item's tile. Its tooltip sets the item at its upgrade beside the
+ * A catalog item's tile, linking to its page at the upgrade shown. Its tooltip sets the item at its upgrade beside the
  * one the set wears in its slot, unless that is this very item at the same
  * upgrade.
  */
@@ -59,6 +61,14 @@ export function CatalogItemTile({
       }
       labels={ITEM_TILE_LABELS}
       renderStat={renderItemStat}
+      render={
+        <Link
+          to="/items/$itemSlug"
+          params={itemPageParams(item)}
+          search={itemPageSearch(upgrade)}
+          className="block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      }
     />
   );
 }

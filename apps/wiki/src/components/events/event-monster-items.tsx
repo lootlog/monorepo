@@ -4,7 +4,7 @@ import type {
   CatalogItemDtoOutput,
 } from "@lootlog/client/search";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
-import { NpcTile } from "@lootlog/ui/components/npc-tile";
+import { NpcPortrait } from "@/components/common/npc-portrait";
 import { ItemsByRarity } from "@/components/catalog/items-by-rarity";
 import { t } from "@/i18n/messages";
 import { npcSummary } from "@/lib/npc-summary";
@@ -21,22 +21,17 @@ export function EventMonsterItems({ monster, items }: EventMonsterItemsProps) {
   const headingId = `event-monster-${monster?.key ?? "other"}`;
 
   return (
-    <section aria-labelledby={headingId} className="flex flex-col gap-4">
-      <div className="flex min-h-10 items-center gap-3 border-b border-border/50 pb-3">
-        {monster ? (
-          <NpcTile
-            npc={{
-              icon: monster.icon,
-              lvl: monster.lvl ?? undefined,
-              name: monster.name,
-            }}
-            levelLabel={(level) => t("common.levelShort", { level })}
-          />
-        ) : null}
+    <section
+      id={headingId}
+      aria-labelledby={`${headingId}-title`}
+      className="flex scroll-mt-20 flex-col gap-4"
+    >
+      <div className="flex min-h-10 items-center gap-4 border-b border-border/60 pb-3">
+        {monster ? <NpcPortrait icon={monster.icon} size="sm" /> : null}
         <div className="min-w-0 flex-1">
           <h2
-            id={headingId}
-            className="truncate text-base font-semibold text-foreground"
+            id={`${headingId}-title`}
+            className="truncate text-lg font-semibold tracking-tight text-foreground"
           >
             {monster ? monster.name : t("catalog.eventOtherItems")}
           </h2>

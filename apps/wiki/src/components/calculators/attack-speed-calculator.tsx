@@ -7,6 +7,7 @@ import {
 } from "@/lib/calculators";
 import { readNumberInput } from "@/lib/number-input";
 import { CalculatorCard } from "./calculator-card";
+import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
 
@@ -23,8 +24,30 @@ export function AttackSpeedCalculator() {
       source="official"
       sourceUrl={MECHANICS_DOCUMENTATION_URL}
       formula={t("calculators.attackSpeed.formula")}
+      results={
+        <CalculatorResults
+          results={[
+            {
+              label: t("calculators.attackSpeed.attackSpeed"),
+              value:
+                value === undefined
+                  ? undefined
+                  : attackSpeedFromAgility(value).toLocaleString("pl-PL", {
+                      maximumFractionDigits: 3,
+                    }),
+            },
+            {
+              label: t("calculators.attackSpeed.evade"),
+              value:
+                value === undefined
+                  ? undefined
+                  : evadeFromAgility(value).toLocaleString("pl-PL"),
+            },
+          ]}
+        />
+      }
     >
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className={CALCULATOR_FIELDS}>
         <CalculatorNumberField
           label={t("calculators.attackSpeed.agility")}
           value={agility}
@@ -33,26 +56,6 @@ export function AttackSpeedCalculator() {
           max={100_000}
         />
       </div>
-      <CalculatorResults
-        results={[
-          {
-            label: t("calculators.attackSpeed.attackSpeed"),
-            value:
-              value === undefined
-                ? undefined
-                : attackSpeedFromAgility(value).toLocaleString("pl-PL", {
-                    maximumFractionDigits: 3,
-                  }),
-          },
-          {
-            label: t("calculators.attackSpeed.evade"),
-            value:
-              value === undefined
-                ? undefined
-                : evadeFromAgility(value).toLocaleString("pl-PL"),
-          },
-        ]}
-      />
     </CalculatorCard>
   );
 }

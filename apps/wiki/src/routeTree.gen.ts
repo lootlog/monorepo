@@ -14,6 +14,7 @@ import { Route as CalculatorsRouteImport } from './routes/calculators'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ItemsRouteImport } from './routes/items'
 import { Route as NpcsRouteImport } from './routes/npcs'
+import { Route as SetRouteImport } from './routes/set'
 import { Route as EventsEventSlugRouteImport } from './routes/events.$eventSlug'
 import { Route as ItemsItemSlugRouteImport } from './routes/items_.$itemSlug'
 import { Route as NpcsNpcSlugRouteImport } from './routes/npcs_.$npcSlug'
@@ -44,6 +45,11 @@ const NpcsRoute = NpcsRouteImport.update({
   path: '/npcs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SetRoute = SetRouteImport.update({
+  id: '/set',
+  path: '/set',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventsEventSlugRoute = EventsEventSlugRouteImport.update({
   id: '/events/$eventSlug',
   path: '/events/$eventSlug',
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
+  '/set': typeof SetRoute
   '/events/$eventSlug': typeof EventsEventSlugRoute
   '/items/$itemSlug': typeof ItemsItemSlugRoute
   '/npcs/$npcSlug': typeof NpcsNpcSlugRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
+  '/set': typeof SetRoute
   '/events/$eventSlug': typeof EventsEventSlugRoute
   '/items/$itemSlug': typeof ItemsItemSlugRoute
   '/npcs/$npcSlug': typeof NpcsNpcSlugRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/compare': typeof CompareRoute
   '/items': typeof ItemsRoute
   '/npcs': typeof NpcsRoute
+  '/set': typeof SetRoute
   '/events/$eventSlug': typeof EventsEventSlugRoute
   '/items_/$itemSlug': typeof ItemsItemSlugRoute
   '/npcs_/$npcSlug': typeof NpcsNpcSlugRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/items'
     | '/npcs'
+    | '/set'
     | '/events/$eventSlug'
     | '/items/$itemSlug'
     | '/npcs/$npcSlug'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/items'
     | '/npcs'
+    | '/set'
     | '/events/$eventSlug'
     | '/items/$itemSlug'
     | '/npcs/$npcSlug'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/items'
     | '/npcs'
+    | '/set'
     | '/events/$eventSlug'
     | '/items_/$itemSlug'
     | '/npcs_/$npcSlug'
@@ -141,6 +153,7 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   ItemsRoute: typeof ItemsRoute
   NpcsRoute: typeof NpcsRoute
+  SetRoute: typeof SetRoute
   EventsEventSlugRoute: typeof EventsEventSlugRoute
   ItemsItemSlugRoute: typeof ItemsItemSlugRoute
   NpcsNpcSlugRoute: typeof NpcsNpcSlugRoute
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NpcsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/set': {
+      id: '/set'
+      path: '/set'
+      fullPath: '/set'
+      preLoaderRoute: typeof SetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/events/$eventSlug': {
       id: '/events/$eventSlug'
       path: '/events/$eventSlug'
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompareRoute: CompareRoute,
   ItemsRoute: ItemsRoute,
   NpcsRoute: NpcsRoute,
+  SetRoute: SetRoute,
   EventsEventSlugRoute: EventsEventSlugRoute,
   ItemsItemSlugRoute: ItemsItemSlugRoute,
   NpcsNpcSlugRoute: NpcsNpcSlugRoute,

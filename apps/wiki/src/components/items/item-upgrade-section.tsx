@@ -1,4 +1,5 @@
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import { ArticleSection } from "@/components/article/article-section";
 import { t } from "@/i18n/messages";
 import {
   type ItemUpgrade,
@@ -46,18 +47,11 @@ export function ItemUpgradeSection({
 
   return (
     <div className="flex flex-col gap-8">
-      <section aria-labelledby="item-upgrade" className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <h2
-            id="item-upgrade"
-            className="text-lg font-semibold tracking-tight text-foreground"
-          >
-            {t("upgrade.label")}
-          </h2>
-          <p className="text-sm text-pretty text-muted-foreground">
-            {t("upgrade.description")}
-          </p>
-        </div>
+      <ArticleSection
+        id="item-upgrade"
+        title={t("upgrade.label")}
+        description={t("upgrade.description")}
+      >
         <ItemUpgradeSteps
           itemLevel={item.lvl}
           value={upgrade.level}
@@ -92,7 +86,7 @@ export function ItemUpgradeSection({
             </div>
           ))}
         </dl>
-      </section>
+      </ArticleSection>
 
       <section
         aria-labelledby="item-upgrade-changes"

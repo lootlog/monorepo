@@ -9,6 +9,7 @@ import type { UpgradeLevel } from "@lootlog/domain/item-upgrade";
 import { readNumberInput } from "@/lib/number-input";
 import { UpgradeSelect } from "@/components/common/upgrade-select";
 import { CalculatorCard } from "./calculator-card";
+import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
 
@@ -49,8 +50,25 @@ export function AnguishCalculator() {
       source="official"
       sourceUrl={MECHANICS_DOCUMENTATION_URL}
       formula={t("calculators.anguish.formula")}
+      results={
+        <CalculatorResults
+          results={[
+            {
+              label: t("calculators.anguish.perTurn"),
+              value: damage?.toLocaleString("pl-PL"),
+            },
+            {
+              label: t("calculators.anguish.total"),
+              value:
+                damage === undefined
+                  ? undefined
+                  : (damage * ANGUISH_TURNS).toLocaleString("pl-PL"),
+            },
+          ]}
+        />
+      }
     >
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className={CALCULATOR_FIELDS}>
         <CalculatorNumberField
           label={t("calculators.itemLevel")}
           value={itemLevel}
@@ -60,7 +78,7 @@ export function AnguishCalculator() {
         />
         <UpgradeSelect value={upgrade} onChange={setUpgrade} />
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className={CALCULATOR_FIELDS}>
         <CalculatorNumberField
           label={t("calculators.anguish.strength")}
           value={strength}
@@ -80,21 +98,6 @@ export function AnguishCalculator() {
           {...ATTRIBUTE_LIMIT}
         />
       </div>
-      <CalculatorResults
-        results={[
-          {
-            label: t("calculators.anguish.perTurn"),
-            value: damage?.toLocaleString("pl-PL"),
-          },
-          {
-            label: t("calculators.anguish.total"),
-            value:
-              damage === undefined
-                ? undefined
-                : (damage * ANGUISH_TURNS).toLocaleString("pl-PL"),
-          },
-        ]}
-      />
     </CalculatorCard>
   );
 }

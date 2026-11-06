@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { AnguishCalculator } from "@/components/calculators/anguish-calculator";
 import { AttackSpeedCalculator } from "@/components/calculators/attack-speed-calculator";
+import {
+  type CalculatorId,
+  DEFAULT_CALCULATOR,
+  isCalculatorId,
+} from "@/components/calculators/calculator-list";
+import { CalculatorNav } from "@/components/calculators/calculator-nav";
 import { DefenceChanceCalculator } from "@/components/calculators/defence-chance-calculator";
 import { HolyTouchCalculator } from "@/components/calculators/holy-touch-calculator";
 import { LegendaryBonusCalculator } from "@/components/calculators/legendary-bonus-calculator";
@@ -8,66 +15,59 @@ import { ProfessionChangeCalculator } from "@/components/calculators/profession-
 import { QuestExperienceCalculator } from "@/components/calculators/quest-experience-calculator";
 import { TransferCostCalculator } from "@/components/calculators/transfer-cost-calculator";
 import { UnbindCostCalculator } from "@/components/calculators/unbind-cost-calculator";
+import { PageHeader } from "@/components/common/page-header";
 import { t } from "@/i18n/messages";
 
-// The calculators in page order, official formulas first; each card's id
-// is its anchor.
-const CONTENTS = [
-  { id: "unik-i-blok", titleKey: "calculators.defence.title" },
-  { id: "szybkosc-ataku", titleKey: "calculators.attackSpeed.title" },
-  { id: "bonus-legendarny", titleKey: "calculators.legendary.title" },
-  { id: "krwawa-udreka", titleKey: "calculators.anguish.title" },
-  { id: "dotyk-aniola", titleKey: "calculators.holyTouch.title" },
-  { id: "przeniesienie-postaci", titleKey: "calculators.transfer.title" },
-  { id: "odwiazanie", titleKey: "calculators.unbind.title" },
-  { id: "zmiana-profesji", titleKey: "calculators.profession.title" },
-  { id: "doswiadczenie-z-questa", titleKey: "calculators.quest.title" },
-] as const;
+const CALCULATORS: Record<CalculatorId, () => React.JSX.Element> = {
+  "unik-i-blok": DefenceChanceCalculator,
+  "szybkosc-ataku": AttackSpeedCalculator,
+  "bonus-legendarny": LegendaryBonusCalculator,
+  "krwawa-udreka": AnguishCalculator,
+  "dotyk-aniola": HolyTouchCalculator,
+  "przeniesienie-postaci": TransferCostCalculator,
+  odwiazanie: UnbindCostCalculator,
+  "zmiana-profesji": ProfessionChangeCalculator,
+  "doswiadczenie-z-questa": QuestExperienceCalculator,
+};
 
 export const Route = createFileRoute("/calculators")({
   component: CalculatorsRoute,
   head: () => ({
     meta: [{ title: `${t("calculators.metaTitle")} | ${t("meta.title")}` }],
   }),
+  validateSearch: (search: {
+    calculator?: unknown;
+  }): { calculator?: CalculatorId } =>
+    isCalculatorId(search.calculator) ? { calculator: search.calculator } : {},
 });
 
 function CalculatorsRoute() {
+  const { calculator } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const current = calculator ?? DEFAULT_CALCULATOR;
+  const Calculator = CALCULATORS[current];
+
+  // Links shared when every calculator had its own anchor open that one.
+  useEffect(() => {
+    const anchor = decodeURIComponent(window.location.hash.slice(1));
+
+    if (!calculator && isCalculatorId(anchor)) {
+      void navigate({ search: { calculator: anchor }, replace: true });
+    }
+  }, [calculator, navigate]);
+
   return (
     <div className="flex flex-col gap-6 py-6">
-      <header className="flex flex-col gap-4 rounded-xl border border-border/50 bg-card p-5">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            {t("calculators.title")}
-          </h1>
-          <p className="max-w-3xl text-sm text-pretty text-muted-foreground">
-            {t("calculators.description")}
-          </p>
+      <PageHeader
+        title={t("calculators.title")}
+        description={t("calculators.description")}
+      />
+      <div className="grid items-start gap-6 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8">
+        <div className="min-w-0 lg:sticky lg:top-20">
+          <CalculatorNav current={current} />
         </div>
-        <nav aria-label={t("calculators.contents")}>
-          <ul className="flex flex-wrap gap-2">
-            {CONTENTS.map(({ id, titleKey }) => (
-              <li key={id}>
-                <a
-                  href={`#${id}`}
-                  className="flex h-8 items-center rounded-md border border-border bg-background/60 px-3 text-xs font-medium text-foreground outline-none transition-colors duration-150 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
-                >
-                  {t(titleKey)}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </header>
-
-      <DefenceChanceCalculator />
-      <AttackSpeedCalculator />
-      <LegendaryBonusCalculator />
-      <AnguishCalculator />
-      <HolyTouchCalculator />
-      <TransferCostCalculator />
-      <UnbindCostCalculator />
-      <ProfessionChangeCalculator />
-      <QuestExperienceCalculator />
+        <Calculator key={current} />
+      </div>
     </div>
   );
 }

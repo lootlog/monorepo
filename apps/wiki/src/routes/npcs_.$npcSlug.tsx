@@ -1,12 +1,14 @@
-import { Navigate, createFileRoute } from "@tanstack/react-router";
+import { Navigate, createFileRoute, linkOptions } from "@tanstack/react-router";
 import { useCatalogControllerGetNpcs } from "@lootlog/client/search";
 import { catalogSlug } from "@lootlog/domain/catalog-slug";
-import { NpcTile } from "@lootlog/ui/components/npc-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { NpcDrops } from "@/components/npcs/npc-drops";
-import { NpcFormerLevels } from "@/components/npcs/npc-former-levels";
+import { ArticleSection } from "@/components/article/article-section";
+import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
+import { NpcInfobox } from "@/components/npcs/npc-infobox";
 import { NpcLocations } from "@/components/npcs/npc-locations";
+import { useStickyTop } from "@/hooks/use-sticky-top";
 import { t } from "@/i18n/messages";
 import { npcSummary } from "@/lib/npc-summary";
 import {
@@ -27,6 +29,7 @@ export const Route = createFileRoute("/npcs_/$npcSlug")({
 });
 
 function NpcRoute() {
+  const infoboxSticky = useStickyTop();
   const { npcSlug } = Route.useParams();
 
   const segment = readPageSegment(npcSlug);
@@ -54,71 +57,78 @@ function NpcRoute() {
     return <Navigate to="/npcs/$npcSlug" params={npcPageParams(npc)} replace />;
   }
 
+  if (npcQuery.isError) {
+    return (
+      <p role="alert" className="py-6 text-sm text-destructive">
+        {t("catalog.loadError")}
+      </p>
+    );
+  }
+
+  if ((!segment && !isNpcCatalogKey(npcSlug)) || (npcQuery.data && !npc)) {
+    return (
+      <p className="py-6 text-sm text-muted-foreground">
+        {t("catalog.npcNotFound")}
+      </p>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-6 py-6">
-      {npcQuery.isError ? (
-        <p role="alert" className="text-sm text-destructive">
-          {t("catalog.loadError")}
-        </p>
-      ) : (!segment && !isNpcCatalogKey(npcSlug)) || (npcQuery.data && !npc) ? (
-        <p className="text-sm text-muted-foreground">
-          {t("catalog.npcNotFound")}
-        </p>
-      ) : (
-        <>
-          <header className="flex items-center gap-4 rounded-xl border border-border/50 bg-card p-5">
-            {npc ? (
-              <NpcTile
-                npc={npc}
-                levelLabel={(level) => t("common.levelShort", { level })}
-              />
-            ) : (
-              <Skeleton className="h-10 w-8 rounded-md" />
-            )}
-            <div className="flex min-w-0 flex-col gap-1">
-              {npc ? (
-                <>
-                  <h1 className="truncate text-2xl font-semibold tracking-tight text-foreground">
-                    {npc.name}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    {npcSummary(npc)}
-                  </p>
-                  <NpcFormerLevels formerLevels={npc.formerLevels} />
-                </>
-              ) : (
-                <>
-                  <Skeleton className="h-7 w-48" />
-                  <Skeleton className="h-4 w-64" />
-                </>
-              )}
-            </div>
-          </header>
+    <article className="flex flex-col gap-6 py-6">
+      <PageBreadcrumbs
+        items={[
+          {
+            label: t("navigation.npcs"),
+            link: linkOptions({
+              to: "/npcs",
+              search: { query: "", types: "" },
+            }),
+          },
+          ...(npc
+            ? [
+                {
+                  label: t(`npcTypes.${npc.type}`),
+                  link: linkOptions({
+                    to: "/npcs",
+                    search: { query: "", types: npc.type },
+                  }),
+                },
+                { label: npc.name },
+              ]
+            : []),
+        ]}
+      />
 
-          <section
-            aria-labelledby="npc-locations"
-            className="flex flex-col gap-4"
-          >
-            <h2
-              id="npc-locations"
-              className="text-base font-semibold text-foreground"
-            >
-              {t("catalog.locationsTitle")}
-            </h2>
-            {npc ? (
-              <NpcLocations locations={npc.locations} />
-            ) : (
-              <Skeleton className="h-11 w-full max-w-sm rounded-lg" />
-            )}
-          </section>
+      <header className="flex min-w-0 flex-col gap-1">
+        {npc ? (
+          <>
+            <p className="text-sm text-muted-foreground">{npcSummary(npc)}</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
+              {npc.name}
+            </h1>
+          </>
+        ) : (
+          <>
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-10 w-72" />
+          </>
+        )}
+      </header>
 
-          <section aria-labelledby="npc-drops" className="flex flex-col gap-4">
-            <h2
-              id="npc-drops"
-              className="text-base font-semibold text-foreground"
-            >
-              {t("catalog.dropsTitle")}
-            </h2>
+      <div className="grid items-start gap-x-8 gap-y-10 xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <div
+          {...infoboxSticky}
+          className="xl:sticky xl:col-start-2 xl:row-start-1"
+        >
+          {npc ? (
+            <NpcInfobox npc={npc} />
+          ) : (
+            <Skeleton className="h-[26rem] rounded-xl" />
+          )}
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-12 xl:col-start-1 xl:row-start-1">
+          <ArticleSection id="npc-drops" title={t("catalog.dropsTitle")}>
             {npc ? (
               <NpcDrops npc={npc} />
             ) : (
@@ -129,9 +139,20 @@ function NpcRoute() {
                 emptyLabel=""
               />
             )}
-          </section>
-        </>
-      )}
-    </div>
+          </ArticleSection>
+
+          <ArticleSection
+            id="npc-locations"
+            title={t("catalog.locationsTitle")}
+          >
+            {npc ? (
+              <NpcLocations locations={npc.locations} />
+            ) : (
+              <Skeleton className="h-11 w-full max-w-sm rounded-lg" />
+            )}
+          </ArticleSection>
+        </div>
+      </div>
+    </article>
   );
 }

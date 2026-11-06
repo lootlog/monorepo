@@ -20,6 +20,11 @@ const messages = {
     npcs: "Potwory",
     compare: "Porównywarka",
     calculators: "Kalkulatory",
+    set: "Mój zestaw",
+    breadcrumbs: "Ścieżka strony",
+    menu: "Menu",
+    closeMenu: "Zamknij menu",
+    events: "Eventy",
   },
   header: {
     brand: "Lootlog",
@@ -44,6 +49,7 @@ const messages = {
     close: "zamknij",
   },
   slots: {
+    blessing: "Błogosławieństwo",
     helmet: "Hełm",
     ring: "Pierścień",
     necklace: "Naszyjnik",
@@ -55,11 +61,13 @@ const messages = {
   },
   equipment: {
     title: "Mój zestaw",
+    wornCount: "{{worn}}/{{total}}",
     profession: "Profesja postaci",
     anyProfession: "Dowolna profesja",
     level: "Poziom postaci",
     levelPlaceholder: "Lvl",
-    empty: "Załóż przedmioty, żeby zobaczyć sumę statystyk.",
+    empty:
+      "Kliknij pusty slot, żeby znaleźć do niego przedmiot. Tu zobaczysz sumę statystyk zestawu.",
     previewHint:
       "Najedź na przedmiot, żeby go porównać. Prawy klik w zestawie: ulepszenie.",
     previewing: "Porównanie: {{item}}",
@@ -76,10 +84,70 @@ const messages = {
     openItem: "Otwórz stronę przedmiotu",
     takeOff: "Zdejmij",
   },
+  setLayout: {
+    openWindow: "Okno postaci",
+    openPage: "Strona zestawu",
+  },
+  setPage: {
+    description:
+      "Twoja postać, założone przedmioty i suma ich statystyk. Zestaw zapisuje się w przeglądarce; link z przycisku udostępniania otwiera go u kogoś innego.",
+    itemsTitle: "Założone przedmioty",
+    noItems:
+      "Nie masz jeszcze założonych przedmiotów. Kliknij pusty slot, żeby znaleźć do niego przedmiot.",
+  },
+  setStats: {
+    sections: {
+      attack: "Atak",
+      defence: "Obrona",
+      power: "Moc",
+      basic: "Podstawowe",
+    },
+    stats: {
+      sa: "Szybkość ataku",
+      crit: "Szansa na cios krytyczny",
+      critval: "Moc krytyka fizycznego",
+      critmval: "Moc krytyka magicznego",
+      pierce: "Przebicie pancerza",
+      dmgmulabsolute: "Obrażenia nieuchronne",
+      acdmg: "Niszczenie pancerza",
+      resdmg: "Niszczenie odporności",
+      lowevade: "Obniżanie uniku",
+      slow: "Obniżanie szybkości ataku",
+      ac: "Pancerz",
+      evade: "Unik",
+      blok: "Blok",
+      lowcrit: "Obniżanie krytyka",
+      heal: "Leczenie turowe",
+      absorb: "Absorpcja fizyczna",
+      absorbm: "Absorpcja magiczna",
+      resfire: "Odporność na ogień",
+      reslight: "Odporność na błyskawice",
+      resfrost: "Odporność na zimno",
+      act: "Odporność na truciznę",
+      manadest: "Niszczenie many",
+      endest: "Niszczenie energii",
+      manabon: "Mana",
+      energybon: "Energia",
+      hp: "Życie",
+      strength: "Siła",
+      agility: "Zręczność",
+      intellect: "Intelekt",
+    },
+  },
   item: {
     level: "Poziom",
     professions: "Profesje",
     inGame: "Tak wygląda w grze",
+    factsTitle: "Informacje",
+    rarity: "Rzadkość",
+    type: "Typ",
+    noLevel: "Bez wymagań",
+    anyProfession: "Każda",
+    events: "Event",
+    actions: "Akcje przedmiotu",
+    relatedTitle: "Inne dropy: {{name}}",
+    relatedDescription: "Pozostałe przedmioty, które wypadają z tego potwora.",
+    relatedAll: "Wszystkie dropy",
   },
   elastic: {
     title: "Poziom zależny od postaci",
@@ -185,38 +253,41 @@ const messages = {
     searchLabel: "Szukaj przedmiotu",
     searchPlaceholder: "Wpisz nazwę przedmiotu, np. dria, serce, łowca",
     searchSubmit: "Szukaj",
-    raritiesTitle: "Rzadkość",
-    newMonstersTitle: "Nowe potwory",
+    newMonstersTitle: "Nowi bossowie",
     newMonstersDescription:
-      "Herosi, tytani i kolosi z najnowszymi przedmiotami w grze.",
+      "Herosi, tytani i kolosi, których przedmioty pojawiły się w grze ostatnio. Najedź na przedmiot, żeby zobaczyć jego statystyki, albo kliknij, żeby otworzyć jego stronę.",
     newMonstersEmpty: "Lootlog nie zna jeszcze nowych potworów.",
-    newEventItemsTitle: "Nowe przedmioty eventowe",
-    newEventItemsDescription: "Najnowsze przedmioty z ostatnich eventów.",
-    showAllEventItems: "Pokaż wszystkie",
+    newEventItemsTitle: "Ostatnie eventy",
+    newEventItemsDescription:
+      "Przedmioty, które wypadały podczas ostatnich eventów, z ich najsilniejszym potworem.",
+    eventBoss: "Event · {{name}}",
+    eventEyebrow: "Event",
+    itemCount: "Przedmioty: {{count}}",
+    itemsOf: "Przedmioty: {{name}}",
+    moreItems: "+{{count}}",
     newEventItemsEmpty:
       "Lootlog nie zna jeszcze nowych przedmiotów eventowych.",
-    sectionsTitle: "Działy wiki",
     quickSearchesLabel: "Szybkie wyszukiwania",
     quickSearches: {
       titanLegendaries: "Legendy z tytanów",
       colossusLegendaries: "Legendy z kolosów",
-      heroHeroics: "Heroiki z herosów",
+      heroHeroics: "Heroiczne z herosów",
       highLevelLegendaries: "Legendy 250+ lvl",
       fastestTrackerNecklaces: "Najszybsze naszyjniki tropiciela",
       fastestTrackerHelmets: "Najszybsze hełmy tropiciela",
       fastestHunterNecklaces: "Najszybsze naszyjniki łowcy",
     },
-    browseTitle: "Przeglądaj katalog",
-    browseDescription:
-      "Każdy skrót otwiera wyszukiwarkę przedmiotów z jednym filtrem.",
-    bonusesTitle: "Bonus legendarny",
-    bonusUpcoming: "Wkrótce w grze",
-    slotsTitle: "Slot",
+    lineupTitle: "Ostatnio w grze",
+    slotsTitle: "Przeglądaj wiki",
+    slotsDescription:
+      "Kliknij slot, żeby zobaczyć przedmioty, które w nim nosisz, albo otwórz jeden z działów.",
     itemsDescription:
       "Szukaj przedmiotów po nazwie, poziomie, rzadkości i profesji.",
     npcsDescription: "Szukaj NPC-ów i potworów po nazwie.",
     compareDescription:
       "Zestaw do czterech przedmiotów obok siebie i zobacz, który ma lepsze statystyki.",
+    setDescription:
+      "Złóż ekwipunek postaci, zobacz sumę statystyk jak w grze i udostępnij go linkiem.",
     calculatorsDescription:
       "Policz unik, blok, bonusy legendarne i koszty usług według wzorów z gry.",
     open: "Otwórz",
@@ -289,6 +360,7 @@ const messages = {
     eventDescription:
       "Przedmioty z eventu: {{count}}, według potworów i rzadkości.",
     eventOtherItems: "Pozostałe przedmioty",
+    eventMonsters: "Potwory eventu",
     loadError: "Nie udało się pobrać danych. Spróbuj ponownie.",
   },
   search: {
@@ -392,8 +464,15 @@ const messages = {
     metaTitle: "Kalkulatory",
     title: "Kalkulatory",
     description:
-      "Wyniki liczą się od razu. Przy każdym kalkulatorze widać, skąd pochodzi wzór: z dokumentacji gry albo z obserwacji graczy, których gra nie potwierdza.",
+      "Wybierz kalkulator z listy. Wynik liczy się od razu, a przy każdym widać, skąd pochodzi wzór: z dokumentacji gry albo z obserwacji graczy.",
     contents: "Spis kalkulatorów",
+    resultsTitle: "Wynik",
+    groups: {
+      combat: "Walka",
+      legendary: "Bonusy legendarne",
+      services: "Usługi",
+      character: "Postać",
+    },
     official: "Dokumentacja gry",
     community: "Niepotwierdzone",
     communityDescription:
@@ -490,7 +569,7 @@ const messages = {
       rarity: "Rzadkość",
       cost: "Koszt",
       formula:
-        "baza = 750 + 7,5 × poziom przedmiotu, koszt = ⌈baza × mnożnik⌉. Zwykły: bez limitu bazy, ×1. Unikat: baza do 4950, ×1,2. Heroik: baza do 2250, ×1,5. Legendarny: baza do 2250, ×3.",
+        "baza = 750 + 7,5 × poziom przedmiotu, koszt = ⌈baza × mnożnik⌉. Zwykły: bez limitu bazy, ×1. Unikat: baza do 4950, ×1,2. Heroiczny: baza do 2250, ×1,5. Legendarny: baza do 2250, ×3.",
     },
     profession: {
       title: "Koszt zmiany profesji",
@@ -529,7 +608,7 @@ const messages = {
   itemRarity: {
     COMMON: "Zwykły",
     UNIQUE: "Unikat",
-    HEROIC: "Heroik",
+    HEROIC: "Heroiczny",
     UPGRADED: "Ulepszony",
     LEGENDARY: "Legendarny",
   },
@@ -564,6 +643,14 @@ const messages = {
     RECIPE: "Recepta",
     COINAGE: "Waluta",
   },
+  npc: {
+    factsTitle: "Informacje",
+    type: "Rodzaj",
+    elasticLevel: "Jak postać",
+    topLocation: "Najczęściej",
+    locationCount: "Mapy",
+    historyTitle: "Historia",
+  },
   npcTypes: {
     COMMON: "Zwykły",
     ELITE: "Elita",
@@ -577,8 +664,6 @@ const messages = {
   },
   items: {
     title: "Wyszukiwarka przedmiotów",
-    description:
-      "Znajdź przedmiot po nazwie. Zawęź wyniki według slotu, poziomu, rzadkości, bonusu legendarnego i profesji.",
   },
   npcs: {
     title: "Wyszukiwarka NPC",
