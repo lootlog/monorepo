@@ -18,7 +18,7 @@ import {
 } from "lexical";
 import { useEffect, type FC } from "react";
 
-export const normalizeChatInputText = (
+const normalizeChatInputText = (
   text: string,
   maxLength = CHAT_INPUT_MAX_LENGTH,
 ) => {

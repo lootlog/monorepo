@@ -4,7 +4,7 @@
  * amount and a description that can carry per-instance text. They are stored
  * with the looted instance, never with the shared revision.
  */
-export const ITEM_INSTANCE_STAT_KEYS: ReadonlySet<string> = new Set([
+const ITEM_INSTANCE_STAT_KEYS: ReadonlySet<string> = new Set([
   "created",
   "gold",
   "amount",

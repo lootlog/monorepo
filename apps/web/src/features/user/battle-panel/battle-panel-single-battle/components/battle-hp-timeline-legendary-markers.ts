@@ -41,7 +41,7 @@ export type LegendaryBonusTimelineWarrior = {
   team: number;
 };
 
-export type LegendaryBonusMarker = LegendaryBonusMarkerDefinition & {
+type LegendaryBonusMarker = LegendaryBonusMarkerDefinition & {
   actionType: string;
   actorId: string | null;
   targetId: string | null;
@@ -61,7 +61,7 @@ type BuildLegendaryBonusMarkerGroupsOptions = {
   includeChartHidden?: boolean;
 };
 
-export const LEGENDARY_BONUS_MARKER_DEFINITIONS = new Map<
+const LEGENDARY_BONUS_MARKER_DEFINITIONS = new Map<
   string,
   LegendaryBonusMarkerDefinition
 >([

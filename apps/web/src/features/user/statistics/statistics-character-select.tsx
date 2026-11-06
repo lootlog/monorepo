@@ -7,8 +7,7 @@ import type { SelectableCharacter } from "@/components/filters/character-details
 import { CharacterSelector } from "@/components/filters/character-selector";
 import { useBattleCharacters } from "@/components/filters/use-battle-characters";
 
-export type StatisticsCharacter =
-  UserKillCharactersResponseDtoOutputCharactersItem;
+type StatisticsCharacter = UserKillCharactersResponseDtoOutputCharactersItem;
 
 type StatisticsCharacterSelectProps = {
   characterId: string | undefined;

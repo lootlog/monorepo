@@ -8,7 +8,8 @@ import type {
   ServerEvent,
   SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { getScopeKey, RealtimeHub } from "#src/realtime/realtime-hub";
+import { getScopeKey } from "#src/realtime/realtime-audiences";
+import { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { SessionData } from "#src/realtime/session";
 
 // Run with `bun run perf:routing`. This measures routing and encoding, not network I/O.

@@ -48,7 +48,7 @@ export interface EventWrappedLootHeroDto {
   rarityTotals: EventWrappedRarityTotalsDto;
 }
 
-export interface EventWrappedEventDto {
+interface EventWrappedEventDto {
   id: string;
   name: string;
   world: string;
@@ -59,7 +59,7 @@ export interface EventWrappedEventDto {
   spawnCount: number;
 }
 
-export interface EventWrappedOverviewDto {
+interface EventWrappedOverviewDto {
   totalKills: number;
   participantCount: number;
   totalPoints: number;
@@ -73,7 +73,7 @@ export interface EventWrappedOverviewDto {
   rarityTotals: EventWrappedRarityTotalsDto;
 }
 
-export interface EventWrappedLeadersDto {
+interface EventWrappedLeadersDto {
   topHunter: EventWrappedLeaderResultDto;
   topScorer: EventWrappedLeaderResultDto;
   longestDuty: EventWrappedLeaderResultDto;
@@ -94,7 +94,7 @@ export interface EventWrappedCoverageDto {
   roughestHeroCoverage: EventWrappedHeroCoverageDto | null;
 }
 
-export interface EventWrappedLootDto {
+interface EventWrappedLootDto {
   totalLoots: number;
   rarityTotals: EventWrappedRarityTotalsDto;
   heroBreakdown: EventWrappedLootHeroDto[];

@@ -8,7 +8,7 @@ import type { NotificationJobScheduler } from "#src/notifications/jobs/notificat
 import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import { NotificationJobStatus } from "#src/notifications/notification-enums";
 
-export type NotificationDeliveryJob = NotificationStoredJob;
+type NotificationDeliveryJob = NotificationStoredJob;
 
 export interface NotificationDeliveryStore {
   readonly find: (

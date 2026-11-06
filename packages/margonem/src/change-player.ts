@@ -1,4 +1,4 @@
-export type ChangePlayerCharacter = {
+type ChangePlayerCharacter = {
   icon: string;
   id: number;
   lvl: number;

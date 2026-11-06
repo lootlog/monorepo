@@ -22,12 +22,7 @@ export const STATISTICS_SORT_FIELDS = {
   legends: ["legends", "caught", "kills"],
 } as const;
 
-export const STATISTICS_SORTS = [
-  "kills",
-  "change",
-  "legends",
-  "caught",
-] as const;
+const STATISTICS_SORTS = ["kills", "change", "legends", "caught"] as const;
 
 export type StatisticsSort = (typeof STATISTICS_SORTS)[number];
 

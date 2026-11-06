@@ -90,7 +90,7 @@ const isInSrgbGamut = (linear: readonly number[]) =>
  * Converts to sRGB, lowering chroma until the colour fits the gamut so its
  * lightness and hue survive.
  */
-export const oklchToRgb = (color: OklchColor): RgbColor => {
+const oklchToRgb = (color: OklchColor): RgbColor => {
   const [lightness, chroma, hue] = color;
   let low = 0;
   let high = chroma;

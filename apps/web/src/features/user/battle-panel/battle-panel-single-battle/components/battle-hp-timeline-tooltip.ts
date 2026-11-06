@@ -8,7 +8,7 @@ export type BattleHpTimelineTooltipDeltaKey =
   | "healing"
   | "mitigation";
 
-export type BattleHpTimelineTooltipDelta = {
+type BattleHpTimelineTooltipDelta = {
   key: BattleHpTimelineTooltipDeltaKey;
   labelKey: string;
   value: number;

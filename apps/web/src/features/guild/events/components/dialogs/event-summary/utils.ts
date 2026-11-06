@@ -1,13 +1,13 @@
 import type { WrappedFactSlide } from "./build-wrapped-slides";
 import { formatDurationHuman } from "../../../utils/format-duration";
 
-export const formatMetric = (value: number): string => {
+const formatMetric = (value: number): string => {
   return new Intl.NumberFormat("pl-PL", {
     maximumFractionDigits: Number.isInteger(value) ? 0 : 2,
   }).format(value);
 };
 
-export const formatHourLabel = (hour: number | null): string => {
+const formatHourLabel = (hour: number | null): string => {
   if (hour === null) {
     return "";
   }

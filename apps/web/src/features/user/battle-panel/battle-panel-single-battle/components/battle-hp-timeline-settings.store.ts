@@ -44,10 +44,10 @@ type PartialBattleHpTimelineSettingsData = Partial<{
   layers: Partial<Record<string, boolean>>;
 }>;
 
-export const BATTLE_HP_TIMELINE_SETTINGS_STORAGE_KEY =
+const BATTLE_HP_TIMELINE_SETTINGS_STORAGE_KEY =
   "lootlog-battle-hp-timeline-settings-v1";
 
-export const LEGACY_BATTLE_HP_TIMELINE_LAYERS_STORAGE_KEY =
+const LEGACY_BATTLE_HP_TIMELINE_LAYERS_STORAGE_KEY =
   "lootlog-battle-timeline-layers-v2";
 
 const isBattleHpTimelineHeightMode = (
@@ -86,7 +86,7 @@ const readLegacyLayerConfig = () => {
   }
 };
 
-export const normalizeBattleHpTimelineSettingsState = (
+const normalizeBattleHpTimelineSettingsState = (
   state: PartialBattleHpTimelineSettingsData | undefined,
   fallback: BattleHpTimelineSettingsData,
 ): BattleHpTimelineSettingsData => ({

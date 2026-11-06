@@ -108,7 +108,7 @@ const NpcKillPage = Schema.Struct({
   participationsByType: Schema.Record(Schema.String, Schema.Number),
 });
 
-export const buildNpcKillPageSql = (
+const buildNpcKillPageSql = (
   source: UserKillSource | MemberKillSource,
   condition: SQL | undefined,
   options: PageOptions,

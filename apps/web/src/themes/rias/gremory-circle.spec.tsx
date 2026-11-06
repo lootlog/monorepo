@@ -9,7 +9,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GremoryCircle } from "./rias-effects";
+import { GremoryCircle } from "./gremory-circle";
 
 afterEach(() => {
   cleanup();

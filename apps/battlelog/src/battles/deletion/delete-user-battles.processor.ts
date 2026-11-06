@@ -29,6 +29,6 @@ export const makeDeleteUserBattlesProcessor = (
   return { process };
 };
 
-export type DeleteUserBattlesProcessor = ReturnType<
+type DeleteUserBattlesProcessor = ReturnType<
   typeof makeDeleteUserBattlesProcessor
 >;

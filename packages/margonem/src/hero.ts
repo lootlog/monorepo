@@ -94,27 +94,27 @@ export interface WarriorStats {
   legbon_critred: number;
 }
 
-export interface Attack {
+interface Attack {
   physicalMainHand: PhysicalMainHand;
 }
 
-export interface PhysicalMainHand {
+interface PhysicalMainHand {
   min: number;
   max: number;
   average: number;
 }
 
-export interface Fatigs {
+interface Fatigs {
   energy: Energy;
   mana: Mana;
 }
 
-export interface Energy {
+interface Energy {
   power: number;
   chance: number;
 }
 
-export interface Mana {
+interface Mana {
   power: number;
   chance: number;
 }

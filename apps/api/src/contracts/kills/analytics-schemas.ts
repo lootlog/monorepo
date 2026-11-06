@@ -43,7 +43,7 @@ export const UserKillActivityQuery = Schema.Struct({
 
 export type UserKillActivityQuery = typeof UserKillActivityQuery.Type;
 
-export const KillAnalyticsMeta = Schema.Struct({
+const KillAnalyticsMeta = Schema.Struct({
   timezone: Schema.Literal("Europe/Warsaw"),
   generatedAt: Schema.String,
   days: Count,

@@ -26,7 +26,7 @@ export const getChatMessagesQueryGuildId = (query: QueryWithKey) => {
   return CHAT_MESSAGES_QUERY_PATH_PATTERN.exec(queryPath)?.[1];
 };
 
-export const isChatMessagesQuery = (query: QueryWithKey) => {
+const isChatMessagesQuery = (query: QueryWithKey) => {
   return getChatMessagesQueryGuildId(query) !== undefined;
 };
 

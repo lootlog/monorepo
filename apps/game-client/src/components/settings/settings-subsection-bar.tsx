@@ -1,7 +1,7 @@
 import type { FC } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export type SettingsSubsectionOption = { id: string; label: string };
+type SettingsSubsectionOption = { id: string; label: string };
 
 type SettingsSubsectionBarProps = {
   label: string;

@@ -31,7 +31,7 @@ import { resolveSettingsDomain } from "./settings-resolver.js";
  */
 export const NEVER_STORED_AT = new Date(0);
 
-export interface SettingsContext {
+interface SettingsContext {
   domains: SettingsDomain[];
   gameAccountId?: string;
   characterId?: string;
@@ -43,7 +43,7 @@ export interface SettingsDocumentsResponse {
   domains: Partial<Record<SettingsDomain, SettingsDomainResolution>>;
 }
 
-export interface GuildSettingsContext {
+interface GuildSettingsContext {
   domains: SettingsDomain[];
   guildIds: string[];
 }

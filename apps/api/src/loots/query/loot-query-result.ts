@@ -6,14 +6,14 @@ import type { LootNpcDto } from "#src/loots/query/loot-npc";
 import type { LootPlayerDto } from "#src/loots/query/loot-player";
 import type { LootShare } from "#src/loots/loot-response.schema";
 
-export type SubmissionWithMember = {
+type SubmissionWithMember = {
   guildId: string;
   lootId: number;
   memberId: number;
   member: MemberSummary;
 };
 
-export type LootSelection = Pick<
+type LootSelection = Pick<
   typeof lootTable.$inferSelect,
   | "id"
   | "uniqueId"

@@ -43,7 +43,7 @@ export const normalizeChatMentionName = (value: string) => {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
 };
 
-export const getUniqueChatMentionNames = (values: string[]) => {
+const getUniqueChatMentionNames = (values: string[]) => {
   const normalizedValues = new Set<string>();
 
   return values.filter((value) => {
@@ -346,7 +346,7 @@ export const hasCurrentUserMention = (
   });
 };
 
-export const getChatMentionMemberNames = ({
+const getChatMentionMemberNames = ({
   members,
   messages,
 }: {
@@ -361,7 +361,7 @@ export const getChatMentionMemberNames = ({
   ]);
 };
 
-export const getChatMentionRoleNames = (roles?: RoleResponseDtoOutput[]) => {
+const getChatMentionRoleNames = (roles?: RoleResponseDtoOutput[]) => {
   return getUniqueChatMentionNames((roles ?? []).map((role) => role.name));
 };
 

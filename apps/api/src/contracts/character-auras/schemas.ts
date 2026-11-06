@@ -24,7 +24,7 @@ export const CharacterAuraGameAccountParams = Schema.Struct({
   gameAccountId: Schema.String.check(Schema.isPattern(/^[1-9]\d{0,19}$/)),
 });
 
-export const CharacterAuraResponse = Schema.Struct({
+const CharacterAuraResponse = Schema.Struct({
   gameAccountId: Schema.String,
   auraId: CharacterAuraIdSchema,
 }).annotate({ identifier: "CharacterAuraResponseDto" });

@@ -13,7 +13,7 @@ import {
 
 export const BATTLE_PANEL_FIRST_PAGE = 1;
 
-export const PERIOD_VALUES = [
+const PERIOD_VALUES = [
   "24h",
   "3d",
   "7d",

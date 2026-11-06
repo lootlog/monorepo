@@ -13,7 +13,7 @@ export const LOCATION_FIGHTS = 1000;
  * A map holding fewer of the monster's fights than this is noise: players
  * leave the map before the loot is recorded. Heroes keep spawn maps above it.
  */
-export const MIN_LOCATION_SHARE = 0.01;
+const MIN_LOCATION_SHARE = 0.01;
 
 /** The fights of a monster recorded on one map. */
 export type MonsterLocationFights = {

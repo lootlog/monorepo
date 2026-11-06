@@ -23,7 +23,7 @@ export const SERVICES_DOCUMENTATION_URL =
 const LEVEL_CAP = 300;
 
 /** Evade and block chances stop at 50%, however many points stack above. */
-export const MAX_DEFENCE_CHANCE = 50;
+const MAX_DEFENCE_CHANCE = 50;
 
 /**
  * The chance in percent that evade or block points turn an attack of an
@@ -76,7 +76,7 @@ const SCALED_WEAKENING_FROM_LEVEL = 120;
  * The level from which an item's legendary bonus weakens: `30 + lvl` below
  * level 120, `1.25 * lvl` from it.
  */
-export const weakeningStartLevel = (itemLevel: number) =>
+const weakeningStartLevel = (itemLevel: number) =>
   itemLevel < SCALED_WEAKENING_FROM_LEVEL ? 30 + itemLevel : 1.25 * itemLevel;
 
 /**

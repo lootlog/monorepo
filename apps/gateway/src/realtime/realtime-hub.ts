@@ -1,9 +1,6 @@
 import { canReadApiKeyEvent } from "#src/realtime/api-key-event-visibility";
 import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
-import {
-  prepareChatMessagePermissions,
-  withChatMessagePermissions,
-} from "#src/realtime/chat-message-envelope";
+import { prepareChatMessagePermissions } from "#src/realtime/chat-message-envelope";
 import {
   eventOrganizationId,
   findEventGuild,
@@ -44,15 +41,21 @@ import {
   type GatewaySocket,
   type SessionData,
 } from "#src/realtime/session";
+import { canReadPreciseLocation } from "#src/realtime/subscription-policy";
 import {
-  canReadPreciseLocation,
-  canSubscribe,
-} from "#src/realtime/subscription-policy";
+  getScopeKey,
+  RealtimeAudiences,
+} from "#src/realtime/realtime-audiences";
+import {
+  canReadOrganization,
+  encodeChatEvent,
+  isPingEvent,
+  matchesPresenceAudience,
+  matchesRecipient,
+  prepareScopeVisibility,
+} from "#src/realtime/realtime-delivery-policy";
 import { SubscriptionLimitExceeded } from "#src/realtime/realtime-errors";
-import {
-  isReadyRoomRemoval,
-  type PartyGatheringEventSource,
-} from "#src/realtime/npc-event-visibility";
+import type { PartyGatheringEventSource } from "#src/realtime/npc-event-visibility";
 import type { GlobalChatCounts } from "#src/realtime/gateway-metrics";
 
 type Scope = typeof SubscriptionScope.Type;
@@ -123,83 +126,12 @@ export const globalChatScope = (world: string | undefined): Scope =>
     ? { topic: "global.chat" }
     : { topic: "global.chat.world", world };
 
-/** Identifies a scope; JSON keeps field values that contain delimiters apart. */
-export const getScopeKey = (scope: Scope): string =>
-  JSON.stringify([
-    scope.topic,
-    scope.organizationId,
-    scope.eventId,
-    scope.world,
-    scope.mapId,
-  ]);
-
-const getIdentityAudienceKey = (kind: "user" | "discord", id: string): string =>
-  JSON.stringify([kind, id]);
-
-const getLocationAudienceKey = (
-  platform: SessionData["platform"],
-  world: string,
-  mapId: number,
-): string => JSON.stringify(["recipient-location", platform, world, mapId]);
-
-// Candidate selection and scope visibility both match a delivered scope.
-const scopeAudienceKeys = new WeakMap<Scope, string[]>();
-
-// Four optional fields produce at most 16 exact/wildcard subscription keys.
-const matchingScopeAudienceKeys = (scope: Scope): string[] => {
-  const cached = scopeAudienceKeys.get(scope);
-
-  if (cached) return cached;
-  let keys: Array<Array<string | number | undefined>> = [[scope.topic]];
-
-  for (const value of [
-    scope.organizationId,
-    scope.eventId,
-    scope.world,
-    scope.mapId,
-  ]) {
-    keys = keys.flatMap((key) =>
-      value === undefined
-        ? [[...key, undefined]]
-        : [
-            [...key, undefined],
-            [...key, value],
-          ],
-    );
-  }
-
-  const audienceKeys = keys.map((key) => JSON.stringify(key));
-  scopeAudienceKeys.set(scope, audienceKeys);
-
-  return audienceKeys;
-};
-
 type RealtimeFederationStore = Pick<RedisGatewayStore, "publish" | "subscribe">;
-
-// Pings and loot split choices carry no Organization, so they reach sockets
-// only through authorized routing scopes.
-const isPingEvent = (
-  event: Event,
-): event is Extract<
-  Event,
-  {
-    type:
-      | "map-ping.received"
-      | "battle-ping.received"
-      | "loot-split.received"
-      | "loot-split.auto-accepted";
-  }
-> =>
-  event.type === "map-ping.received" ||
-  event.type === "battle-ping.received" ||
-  event.type === "loot-split.received" ||
-  event.type === "loot-split.auto-accepted";
 
 export class RealtimeHub {
   private readonly logger = new ContextLogger(RealtimeHub.name);
   private readonly sockets = new Map<string, GatewaySocket>();
-  private readonly audiences = new Map<string, Set<GatewaySocket>>();
-  private readonly locationKeys = new WeakMap<GatewaySocket, string>();
+  private readonly audiences = new RealtimeAudiences();
   private readonly backpressuredSockets = new WeakSet<GatewaySocket>();
   // Insertion order makes the first entry the oldest.
   private readonly seenEventIds = new Set<string>();
@@ -253,26 +185,17 @@ export class RealtimeHub {
   register(socket: GatewaySocket): void {
     const previous = this.sockets.get(socket.data.connectionId);
 
-    if (previous) {
-      for (const key of this.audienceKeys(previous.data))
-        this.removeAudience(key, previous);
-      this.removeLocationAudience(previous);
-    }
+    if (previous) this.audiences.removeSession(previous);
 
     this.sockets.set(socket.data.connectionId, socket);
-
-    for (const key of this.audienceKeys(socket.data))
-      this.addAudience(key, socket);
+    this.audiences.addSession(socket);
     this.setPresence(socket, socket.data.presence);
   }
 
   detach(socket: GatewaySocket): void {
     if (this.sockets.get(socket.data.connectionId) !== socket) return;
     this.sockets.delete(socket.data.connectionId);
-
-    for (const key of this.audienceKeys(socket.data))
-      this.removeAudience(key, socket);
-    this.removeLocationAudience(socket);
+    this.audiences.removeSession(socket);
   }
 
   setPresence(socket: GatewaySocket, presence: SessionData["presence"]): void {
@@ -280,20 +203,14 @@ export class RealtimeHub {
     const world = presence?.character?.world;
     const mapId = presence?.location?.mapId;
 
-    const nextKey =
+    this.audiences.setLocation(
+      socket,
       this.sockets.get(socket.data.connectionId) === socket &&
-      world !== undefined &&
-      mapId !== undefined
-        ? getLocationAudienceKey(socket.data.platform, world, mapId)
-        : undefined;
-
-    if (this.locationKeys.get(socket) === nextKey) return;
-    this.removeLocationAudience(socket);
-
-    if (nextKey !== undefined) {
-      this.addAudience(nextKey, socket);
-      this.locationKeys.set(socket, nextKey);
-    }
+        world !== undefined &&
+        mapId !== undefined
+        ? { world, mapId }
+        : undefined,
+    );
   }
 
   subscribe(socket: GatewaySocket, scope: Scope): void {
@@ -310,7 +227,7 @@ export class RealtimeHub {
     socket.data.subscriptions.set(key, scope);
 
     if (this.sockets.get(socket.data.connectionId) === socket)
-      this.addAudience(getScopeKey(scope), socket);
+      this.audiences.addScope(scope, socket);
   }
 
   unsubscribe(socket: GatewaySocket, scope: Scope): void {
@@ -325,7 +242,7 @@ export class RealtimeHub {
       if (getScopeKey(subscription) === audienceKey) return;
     }
 
-    this.removeAudience(audienceKey, socket);
+    this.audiences.removeScope(removed, socket);
   }
 
   replaceSubscriptions(
@@ -344,14 +261,14 @@ export class RealtimeHub {
     ) {
       // Reconciliation must never retain subscriptions revoked by a permission change.
       for (const scope of socket.data.subscriptions.values())
-        this.removeAudience(getScopeKey(scope), socket);
+        this.audiences.removeScope(scope, socket);
       socket.data.subscriptions.clear();
       socket.close(1008, "subscription limit exceeded");
       throw new SubscriptionLimitExceeded();
     }
 
     for (const scope of socket.data.subscriptions.values())
-      this.removeAudience(getScopeKey(scope), socket);
+      this.audiences.removeScope(scope, socket);
     socket.data.subscriptions.clear();
 
     for (const scope of replacements.values()) this.subscribe(socket, scope);
@@ -366,7 +283,7 @@ export class RealtimeHub {
 
     if (isPingEvent(event)) return false;
 
-    if (!this.canReadOrganization(socket.data, event)) return false;
+    if (!canReadOrganization(socket.data, event)) return false;
 
     return this.sendFrame(socket, event);
   }
@@ -503,31 +420,7 @@ export class RealtimeHub {
 
   /** Distinct scopes of `topic` that a local socket subscribes to. */
   getLocalScopes(topic: Scope["topic"]): Scope[] {
-    const prefix = JSON.stringify([topic]).slice(0, -1);
-    const scopes: Scope[] = [];
-
-    for (const key of this.audiences.keys()) {
-      if (!key.startsWith(`${prefix},`)) continue;
-
-      // SAFETY: keys with this topic prefix come only from getScopeKey.
-      const [, organizationId, eventId, world, mapId] = JSON.parse(key) as [
-        string,
-        string | null,
-        string | null,
-        string | null,
-        number | null,
-      ];
-
-      scopes.push({
-        topic,
-        ...(organizationId !== null && { organizationId }),
-        ...(eventId !== null && { eventId }),
-        ...(world !== null && { world }),
-        ...(mapId !== null && { mapId }),
-      });
-    }
-
-    return scopes;
+    return this.audiences.localScopes(topic);
   }
 
   getLocalSockets(): ReadonlyArray<GatewaySocket> {
@@ -535,9 +428,7 @@ export class RealtimeHub {
   }
 
   getLocalSocketsForUser(userId: string): ReadonlyArray<GatewaySocket> {
-    return [
-      ...(this.audiences.get(getIdentityAudienceKey("user", userId)) ?? []),
-    ];
+    return this.audiences.socketsForUser(userId);
   }
 
   reconnectUser(discordId: string, userId: string): void {
@@ -737,7 +628,7 @@ export class RealtimeHub {
     localPrecise?: ReturnType<typeof prepareRealtimeFrame>,
   ): void {
     if (!this.remember(message.id)) return;
-    const candidates = this.candidates(message);
+    const candidates = this.audiences.candidates(message);
 
     if (candidates.size === 0) return;
 
@@ -763,7 +654,7 @@ export class RealtimeHub {
 
     const organizationId = eventOrganizationId(frame);
 
-    const canReadScope = this.prepareScopeVisibility(message, frame);
+    const canReadScope = prepareScopeVisibility(this.audiences, message, frame);
 
     const chatPermissions =
       frame.type === "chat.created"
@@ -771,22 +662,22 @@ export class RealtimeHub {
         : undefined;
 
     for (const socket of candidates) {
-      if (!this.matchesRecipient(socket, message)) continue;
+      if (!matchesRecipient(socket, message)) continue;
 
       if (!canReadScope(socket)) continue;
 
-      if (!this.matchesPresenceAudience(socket, message)) continue;
+      if (!matchesPresenceAudience(socket, message)) continue;
 
       const guild = findEventGuild(socket.data, organizationId);
 
-      if (!this.canReadOrganization(socket.data, frame, guild)) continue;
+      if (!canReadOrganization(socket.data, frame, guild)) continue;
 
       if (!canReadSource(socket.data, guild)) continue;
 
       if (frame.type === "chat.created" && chatPermissions) {
         this.send(
           socket,
-          this.encodeChatEvent(
+          encodeChatEvent(
             frame,
             chatFrames,
             chatPermissions(socket.data, guild),
@@ -827,247 +718,6 @@ export class RealtimeHub {
     return published
       ? { organizationId: message.organizationId, published }
       : null;
-  }
-
-  private canReadOrganization(
-    session: SessionData,
-    event: Event,
-    guild = findEventGuild(session, eventOrganizationId(event)),
-  ): boolean {
-    if (isReadyRoomRemoval(event)) return true;
-
-    if (event.type === "reservation.changed")
-      return event.data.audienceGuildIds.some((organizationId) =>
-        session.guilds.some((entry) => entry.guild.id === organizationId),
-      );
-
-    return eventOrganizationId(event) === undefined || guild !== undefined;
-  }
-
-  private prepareScopeVisibility(
-    message: FederatedRealtimeMessage,
-    frame: Event,
-  ): (socket: GatewaySocket) => boolean {
-    const scopes = message.scopes ?? (message.scope ? [message.scope] : []);
-
-    // A ping carries no Organization in its payload, so only routing scopes can authorize it.
-    if (isPingEvent(frame) && scopes.length === 0) return () => false;
-    const organizationId = eventOrganizationId(frame);
-
-    const scopeAudiences = scopes.map((scope) => ({
-      scope: {
-        ...scope,
-        organizationId: scope.organizationId ?? organizationId,
-      },
-      audiences: matchingScopeAudienceKeys(scope).flatMap((key) => {
-        const audience = this.audiences.get(key);
-
-        return audience ? [audience] : [];
-      }),
-    }));
-
-    return (socket) => {
-      const isGatheringOrganizer =
-        frame.type === "party-gathering.state-updated" &&
-        message.discordId === socket.data.discordId &&
-        message.partyGatheringSource?.organizerDiscordId ===
-          socket.data.discordId;
-
-      if (
-        scopeAudiences.length > 0 &&
-        !isGatheringOrganizer &&
-        !scopeAudiences.some(
-          ({ scope, audiences }) =>
-            canSubscribe(socket.data, scope) &&
-            audiences.some((audience) => audience.has(socket)),
-        )
-      )
-        return false;
-
-      if (socket.data.apiKeyAccess && isPingEvent(frame))
-        return scopes.every(
-          (scope) =>
-            scope.organizationId !== undefined &&
-            socket.data.apiKeyAccess?.organizationIds.includes(
-              scope.organizationId,
-            ) &&
-            socket.data.guilds.some(
-              ({ guild }) => guild.id === scope.organizationId,
-            ),
-        );
-
-      return true;
-    };
-  }
-
-  private encodeChatEvent(
-    event: Extract<Event, { type: "chat.created" }>,
-    frames: Map<boolean, string>,
-    permissions: { canDelete: boolean },
-  ): string {
-    let encoded = frames.get(permissions.canDelete);
-
-    if (encoded === undefined) {
-      encoded = JSON.stringify(withChatMessagePermissions(event, permissions));
-      frames.set(permissions.canDelete, encoded);
-    }
-
-    return encoded;
-  }
-
-  private audienceKeys(session: SessionData): string[] {
-    return [
-      getIdentityAudienceKey("user", session.userId),
-      getIdentityAudienceKey("discord", session.discordId),
-      ...Array.from(session.subscriptions.values(), getScopeKey),
-    ];
-  }
-
-  private addAudience(key: string, socket: GatewaySocket): void {
-    let audience = this.audiences.get(key);
-
-    if (!audience) {
-      audience = new Set();
-      this.audiences.set(key, audience);
-    }
-
-    audience.add(socket);
-  }
-
-  private removeAudience(key: string, socket: GatewaySocket): void {
-    const audience = this.audiences.get(key);
-
-    if (!audience) return;
-    audience.delete(socket);
-
-    if (audience.size === 0) this.audiences.delete(key);
-  }
-
-  private removeLocationAudience(socket: GatewaySocket): void {
-    const key = this.locationKeys.get(socket);
-
-    if (key === undefined) return;
-    this.removeAudience(key, socket);
-    this.locationKeys.delete(socket);
-  }
-
-  private candidates(
-    message: FederatedRealtimeMessage,
-  ): ReadonlySet<GatewaySocket> {
-    const keys: string[] = [];
-
-    if (message.userId !== undefined)
-      keys.push(getIdentityAudienceKey("user", message.userId));
-
-    if (message.discordId !== undefined)
-      keys.push(getIdentityAudienceKey("discord", message.discordId));
-    const scopes = message.scope ? [message.scope] : [];
-
-    if (message.scopes) scopes.push(...message.scopes);
-
-    for (const scope of scopes) {
-      keys.push(...matchingScopeAudienceKeys(scope));
-    }
-
-    const audiences = keys.flatMap((key) => {
-      const audience = this.audiences.get(key);
-
-      return audience ? [audience] : [];
-    });
-
-    if (
-      message.recipientPlatform !== undefined &&
-      message.recipientWorld !== undefined &&
-      message.recipientMapId !== undefined
-    ) {
-      const location = this.audiences.get(
-        getLocationAudienceKey(
-          message.recipientPlatform,
-          message.recipientWorld,
-          message.recipientMapId,
-        ),
-      );
-
-      const candidates = new Set<GatewaySocket>();
-
-      if (!location) return candidates;
-
-      const audienceSize = audiences.reduce(
-        (size, audience) => size + audience.size,
-        0,
-      );
-
-      if (location.size < audienceSize) {
-        for (const socket of location) {
-          if (audiences.some((audience) => audience.has(socket)))
-            candidates.add(socket);
-        }
-      } else {
-        for (const audience of audiences) {
-          for (const socket of audience) {
-            if (location.has(socket)) candidates.add(socket);
-          }
-        }
-      }
-
-      return candidates;
-    }
-
-    const [first, ...others] = audiences;
-
-    if (!first) return new Set();
-
-    if (others.length === 0) return first;
-    const candidates = new Set(first);
-
-    for (const audience of others) {
-      for (const socket of audience) candidates.add(socket);
-    }
-
-    return candidates;
-  }
-
-  private matchesRecipient(
-    socket: GatewaySocket,
-    message: FederatedRealtimeMessage,
-  ): boolean {
-    if (socket.data.connectionId === message.excludeConnectionId) return false;
-
-    if (
-      message.recipientPlatform !== undefined &&
-      socket.data.platform !== message.recipientPlatform
-    )
-      return false;
-
-    if (
-      message.recipientWorld !== undefined &&
-      socket.data.presence?.character?.world !== message.recipientWorld
-    )
-      return false;
-
-    if (
-      message.recipientMapId !== undefined &&
-      socket.data.presence?.location?.mapId !== message.recipientMapId
-    )
-      return false;
-
-    if (message.recipientCharacterIds !== undefined) {
-      const characterId = socket.data.presence?.character?.characterId;
-
-      if (!characterId || !message.recipientCharacterIds.includes(characterId))
-        return false;
-    }
-
-    return true;
-  }
-
-  private matchesPresenceAudience(
-    socket: GatewaySocket,
-    message: FederatedRealtimeMessage,
-  ): boolean {
-    if (!message.presenceAudience || !message.organizationId) return true;
-
-    return canReadPreciseLocation(socket.data, message.organizationId);
   }
 
   private remember(id: string): boolean {

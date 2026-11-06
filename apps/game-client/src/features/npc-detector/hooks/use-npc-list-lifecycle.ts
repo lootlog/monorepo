@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 
 export const NPC_NOTIFICATION_COOLDOWN_MS = 5000;
 
-export const NPC_DETECTION_ANIMATION_DURATION_MS = 1050;
+const NPC_DETECTION_ANIMATION_DURATION_MS = 1050;
 
 type UseNpcListLifecycleOptions = {
   activeDetectionAnimations: Record<number, number>;

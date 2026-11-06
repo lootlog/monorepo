@@ -25,7 +25,7 @@ export function invalidateMapQueries(
   return invalidateGapQueries(queryClient, guildId, eventId, mapId);
 }
 
-export function invalidateEventMapListQuery(
+function invalidateEventMapListQuery(
   queryClient: QueryClient,
   guildId: string,
   eventId: string,

@@ -9,7 +9,7 @@ import { DiscordAPIError, HTTPError, RateLimitError } from "discord.js";
  * 50001 Missing access, 50007 Cannot send messages to this user,
  * 50013 Missing permissions, 50035 Invalid form body.
  */
-export const NON_RETRYABLE_DISCORD_ERROR_CODES: ReadonlySet<number> = new Set([
+const NON_RETRYABLE_DISCORD_ERROR_CODES: ReadonlySet<number> = new Set([
   10_003, 10_004, 10_013, 50_001, 50_007, 50_013, 50_035,
 ]);
 

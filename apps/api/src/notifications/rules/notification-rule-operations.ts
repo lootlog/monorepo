@@ -81,7 +81,7 @@ export interface NotificationRuleDependencies {
   ) => Effect.Effect<unknown, unknown, never>;
 }
 
-export class NotificationRuleOperationFailure extends TaggedErrorClass<NotificationRuleOperationFailure>()(
+class NotificationRuleOperationFailure extends TaggedErrorClass<NotificationRuleOperationFailure>()(
   "NotificationRuleOperationFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

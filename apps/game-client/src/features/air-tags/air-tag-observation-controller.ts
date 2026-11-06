@@ -21,11 +21,11 @@ export const AIR_TAG_BATCH_INTERVAL_MS = 250;
 export const AIR_TAG_HEARTBEAT_INTERVAL_MS = 5_000;
 
 // Keeps a still target's sightings under 6.25 s apart, inside the 10 s AirTag and map-threat freshness windows.
-export const AIR_TAG_HEARTBEAT_SCAN_INTERVAL_MS = 1_000;
+const AIR_TAG_HEARTBEAT_SCAN_INTERVAL_MS = 1_000;
 
 const AIR_TAG_HEARTBEAT_ALIGNMENT_MS = 2_000;
 
-export const AIR_TAG_MOVEMENT_THRESHOLD_TILES = 2;
+const AIR_TAG_MOVEMENT_THRESHOLD_TILES = 2;
 
 // How far a walking player and the hero may both have moved since the game's last position update.
 const AIR_TAG_SIGHT_MARGIN_TILES = 3;

@@ -7,7 +7,7 @@ import type { UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuilds
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { pruneByRecency } from "@/lib/prune-by-recency";
 
-export type CharacterTooltipCatchingGuildsStatus =
+type CharacterTooltipCatchingGuildsStatus =
   | "idle"
   | "loading"
   | "success"

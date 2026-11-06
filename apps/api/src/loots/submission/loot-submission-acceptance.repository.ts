@@ -48,7 +48,7 @@ import type { GameVersion } from "@lootlog/schema/game-version";
 
 export type AcceptedNpcSnapshot = typeof npcSnapshotTable.$inferSelect;
 
-export type PersistedLootSubmission = {
+type PersistedLootSubmission = {
   guildId: string;
   memberId: number;
 };

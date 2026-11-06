@@ -69,7 +69,7 @@ export type SettingsDocumentsContext = {
   characterId?: string;
 };
 
-export const ALL_SETTINGS_DOMAINS = SETTINGS_DOMAINS.join(",");
+const ALL_SETTINGS_DOMAINS = SETTINGS_DOMAINS.join(",");
 
 export const getSettingsDocumentsParams = (
   context: SettingsDocumentsContext,

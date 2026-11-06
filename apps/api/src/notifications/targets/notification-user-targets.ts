@@ -75,7 +75,7 @@ export interface NotificationUserTargetJobs {
   ) => Effect.Effect<void, unknown>;
 }
 
-export class NotificationUserTargetFailure extends TaggedErrorClass<NotificationUserTargetFailure>()(
+class NotificationUserTargetFailure extends TaggedErrorClass<NotificationUserTargetFailure>()(
   "NotificationUserTargetFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

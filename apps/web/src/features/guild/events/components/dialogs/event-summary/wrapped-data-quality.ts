@@ -4,7 +4,7 @@ import type {
   EventWrappedLeaderResult,
 } from "../../../types/api";
 
-export type WrappedOmissionReason =
+type WrappedOmissionReason =
   | "invalid-value"
   | "kill-source-mismatch"
   | "insufficient-candidates"
@@ -13,7 +13,7 @@ export type WrappedOmissionReason =
   | "invalid-event-window"
   | "invalid-coverage";
 
-export type WrappedLeaderFact = {
+type WrappedLeaderFact = {
   leader: EventWrappedLeader;
   candidateCount: number;
 };

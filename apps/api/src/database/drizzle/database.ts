@@ -14,7 +14,7 @@ export class ApiDatabase extends Context.Service<
   static readonly layer = Layer.effect(ApiDatabase, makeWithDefaults());
 }
 
-export const PgClientLive = Layer.unwrap(
+const PgClientLive = Layer.unwrap(
   Config.Redacted("POSTGRESQL_CONNECTION_URI").pipe(
     Effect.map((url) =>
       makePostgresLayer({

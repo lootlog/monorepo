@@ -2,7 +2,7 @@ import { orderGuilds as orderLootlogGuilds } from "@lootlog/domain/guild-prefere
 import { useGameStore } from "@/store/game.store";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
 
-export function getCurrentCharacterId(): string | null {
+function getCurrentCharacterId(): string | null {
   try {
     const characterId = useGameStore.getState().game?.hero.characterId;
 

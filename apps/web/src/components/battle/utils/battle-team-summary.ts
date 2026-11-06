@@ -10,13 +10,13 @@ export const BATTLE_SUMMARY_METRICS = [
   "turns",
 ] as const;
 
-export type BattleSummaryMetric = (typeof BATTLE_SUMMARY_METRICS)[number];
+type BattleSummaryMetric = (typeof BATTLE_SUMMARY_METRICS)[number];
 
 /**
  * Damage types that add up to the dealt damage. Rage, third attack, stigma and reflected
  * damage are left out: they overlap these types or are not part of the dealt total.
  */
-export const BATTLE_DAMAGE_SEGMENTS = [
+const BATTLE_DAMAGE_SEGMENTS = [
   "meleeDamage",
   "distanceDamage",
   "auxiliaryDamage",
@@ -26,7 +26,7 @@ export const BATTLE_DAMAGE_SEGMENTS = [
   "trueDamageDealt",
 ] as const;
 
-export type BattleDamageSegment = (typeof BATTLE_DAMAGE_SEGMENTS)[number];
+type BattleDamageSegment = (typeof BATTLE_DAMAGE_SEGMENTS)[number];
 
 export type BattleSegmentValue<TKey extends string> = {
   key: TKey;

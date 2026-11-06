@@ -49,7 +49,7 @@ export interface LootAllocationPublisher {
   ) => Effect.Effect<void, unknown>;
 }
 
-export class LootAllocationOperationError extends TaggedErrorClass<LootAllocationOperationError>()(
+class LootAllocationOperationError extends TaggedErrorClass<LootAllocationOperationError>()(
   "LootAllocationOperationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

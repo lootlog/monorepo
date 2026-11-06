@@ -35,7 +35,7 @@ export const lootDrawPlayerKey = (player: {
     : nameKey(player.name);
 
 /** The party member who caught `item`, if anybody did. */
-export const findLootDrawWinner = (loot: Loot, item: Item) => {
+const findLootDrawWinner = (loot: Loot, item: Item) => {
   const ownerId = Object.entries(loot.lootShare).find(([, hids]) =>
     hids.includes(item.hid),
   )?.[0];

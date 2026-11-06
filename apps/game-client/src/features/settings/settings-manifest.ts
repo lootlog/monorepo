@@ -26,7 +26,7 @@ export type SettingsIconName =
   | "activity"
   | "info";
 
-export interface SettingsControlManifestItem<TId extends string = string> {
+interface SettingsControlManifestItem<TId extends string = string> {
   id: TId;
   labelKey: string;
   descriptionKey?: string;
@@ -39,9 +39,7 @@ export interface SettingsControlManifestItem<TId extends string = string> {
   };
 }
 
-export interface SettingsSubsectionManifestItem<
-  TControlId extends string = string,
-> {
+interface SettingsSubsectionManifestItem<TControlId extends string = string> {
   id: SettingsSubsectionValue;
   labelKey: string;
   controls: readonly SettingsControlManifestItem<TControlId>[];
@@ -678,7 +676,7 @@ export type SettingsControlId =
 export const SETTINGS_MANIFEST: readonly SettingsDomainManifestItem<SettingsControlId>[] =
   MANIFEST;
 
-export interface SettingsControlLocation {
+interface SettingsControlLocation {
   domain: SettingsDomainValue;
   subsection: SettingsSubsectionValue;
   control: SettingsControlManifestItem<SettingsControlId>;

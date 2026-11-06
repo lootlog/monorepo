@@ -25,7 +25,8 @@ import type {
 } from "@lootlog/schema/chat";
 import { Effect } from "effect";
 import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
-import { getScopeKey, RealtimeHub } from "./realtime-hub.js";
+import { getScopeKey } from "./realtime-audiences.js";
+import { RealtimeHub } from "./realtime-hub.js";
 import type { SessionData } from "./session.js";
 import { SubscriptionLimitExceeded } from "./realtime-errors.js";
 import { canSubscribe } from "./subscription-policy.js";

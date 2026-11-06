@@ -16,7 +16,7 @@ const SettingsDomainSchema = Schema.Literals(SETTINGS_DOMAINS);
 
 export type SettingsDomain = typeof SettingsDomainSchema.Type;
 
-export const SETTINGS_SCOPE_TYPES = [
+const SETTINGS_SCOPE_TYPES = [
   "USER",
   "GAME_ACCOUNT",
   "CHARACTER",

@@ -538,12 +538,12 @@ export const NotificationJobsResponse = Schema.Struct({
 
 export type NotificationJobsResponse = typeof NotificationJobsResponse.Type;
 
-export const NotificationTargetTestResponse = Schema.Struct({
+const NotificationTargetTestResponse = Schema.Struct({
   ...notificationTargetFields(NotificationTargetTestMetadata),
   testTrigger: NotificationTestQuota,
 }).annotate({ identifier: "NotificationTargetWithTestTriggerResponseDto" });
 
-export type NotificationTargetTestResponse =
+type NotificationTargetTestResponse =
   typeof NotificationTargetTestResponse.Type;
 
 export const WatchedItemResponse = Schema.Struct({

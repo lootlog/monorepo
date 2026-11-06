@@ -206,7 +206,7 @@ export const toPlayerPresenceResponse = (
   );
 };
 
-export const ONLINE_PLAYERS_PRESENCE_ACK_TIMEOUT_MS = 5_000;
+const ONLINE_PLAYERS_PRESENCE_ACK_TIMEOUT_MS = 5_000;
 
 // A timed-out fetch usually means a saturated gateway. Spread the retries so a
 // burst of joining clients does not return at the same moment.

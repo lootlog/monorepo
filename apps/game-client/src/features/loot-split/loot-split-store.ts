@@ -4,7 +4,7 @@ import {
   type LootSplitState,
 } from "./loot-split-model";
 
-export type LootSplitSnapshot = Readonly<{
+type LootSplitSnapshot = Readonly<{
   state: LootSplitState;
   /** Clock of the last change, for the countdowns. */
   now: number;

@@ -7,7 +7,7 @@ export type PartyGatheringCharacterBase = {
   icon: string;
 };
 
-export type PartyGatheringCharacter = PartyGatheringCharacterBase & {
+type PartyGatheringCharacter = PartyGatheringCharacterBase & {
   clan?: {
     id?: number;
     name?: string;

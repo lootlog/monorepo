@@ -26,7 +26,7 @@ export const KillHistoryQuery = Schema.Struct({
 
 export type KillHistoryQuery = typeof KillHistoryQuery.Type;
 
-export const KillHistoryMemberPoint = Schema.Struct({
+const KillHistoryMemberPoint = Schema.Struct({
   points: FiniteNumber,
   basePoints: FiniteNumber,
   manualAdjustmentPoints: Schema.NullOr(FiniteNumber),
@@ -37,7 +37,7 @@ export const KillHistoryMemberPoint = Schema.Struct({
   trackingDurationPercentage: Schema.NullOr(FiniteNumber),
 }).annotate({ identifier: "KillHistoryMemberPoint" });
 
-export const KillHistoryEntry = Schema.Struct({
+const KillHistoryEntry = Schema.Struct({
   id: Schema.String,
   heroNpcId: Schema.String,
   killedAt: IsoDateTime,
@@ -61,12 +61,12 @@ export const KillHistoryEntry = Schema.Struct({
   }),
 }).annotate({ identifier: "KillHistoryEntry" });
 
-export const KillHistoryEventResponse = Schema.Struct({
+const KillHistoryEventResponse = Schema.Struct({
   kind: Schema.Literal("event"),
   ...Page(KillHistoryEntry).fields,
 }).annotate({ identifier: "KillHistoryEventResponse" });
 
-export const KillHistoryMemberResponse = Schema.Struct({
+const KillHistoryMemberResponse = Schema.Struct({
   kind: Schema.Literal("member"),
   member: MemberSummary,
   ...Page(

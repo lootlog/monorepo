@@ -1,6 +1,6 @@
 import type { WrappedQualityModel } from "./wrapped-data-quality";
 
-export type WrappedFactId =
+type WrappedFactId =
   | "kills"
   | "tracked-time"
   | "loot-records"

@@ -3,7 +3,7 @@ import type { KeyboardEvent, ReactNode } from "react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 
-export type ChecklistMenuItem<Value extends string> = {
+type ChecklistMenuItem<Value extends string> = {
   value: Value;
   label: string;
   leading?: ReactNode;
