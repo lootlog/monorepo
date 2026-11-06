@@ -15,6 +15,9 @@ import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 const requests: Request[] = [];
 
+// The status the server answers an application with; 201 accepts it.
+let applyStatus = 201;
+
 let restoreClient = () => {};
 
 const previous = {
@@ -52,6 +55,7 @@ const room = (minLvl?: number) =>
 
 beforeEach(() => {
   requests.length = 0;
+  applyStatus = 201;
   restoreClient = configureApiClients({
     main: { baseUrl: "https://api.test" },
   });
@@ -74,6 +78,11 @@ beforeEach(() => {
             notificationId: "room-1",
             revision: 3,
           }),
+        );
+
+      if (applyStatus !== 201)
+        return Promise.resolve(
+          Response.json({ code: "REFUSED" }, { status: applyStatus }),
         );
 
       // The server moves the application onto the applying character.
@@ -154,4 +163,27 @@ it("ends the application when the new character does not fit the gathering", asy
   const [request] = mutations();
   expect(request?.method).toBe("DELETE");
   expect(await request?.json()).toEqual({ participantId: "applicant" });
+});
+
+it("ends the application when the server refuses the new character", async () => {
+  applyStatus = 409;
+  seedReadyRoomCache(queryClient, [room()]);
+  renderSwitch();
+
+  await waitFor(() =>
+    expect(mutations().map(({ method }) => method)).toEqual(["POST", "DELETE"]),
+  );
+});
+
+it("does not repeat a failed application on every room update", async () => {
+  applyStatus = 503;
+  seedReadyRoomCache(queryClient, [room()]);
+  renderSwitch();
+
+  await waitFor(() => expect(mutations()).toHaveLength(1));
+
+  seedReadyRoomCache(queryClient, [{ ...room(), revision: 3 }]);
+  await new Promise((resolve) => setTimeout(resolve, 50));
+
+  expect(mutations().map(({ method }) => method)).toEqual(["POST"]);
 });

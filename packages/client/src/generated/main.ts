@@ -4349,25 +4349,31 @@ export interface ActivePartyGatheringSummary {
   expiresAt: string;
 }
 
-export type NotificationGoingResponseDtoOutputGoingItemClan = {
-  id?: number | 'Infinity' | '-Infinity' | 'NaN';
+export type NotificationGoingResponseDtoOutputGuildsItemGoingItemClan = {
+  id?: number;
   name?: string;
 };
 
-export type NotificationGoingResponseDtoOutputGoingItem = {
-  discordId: string;
+export type NotificationGoingResponseDtoOutputGuildsItemGoingItem = {
+  userId: string;
   characterId: string;
   nick: string;
-  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
+  lvl: number;
   prof: string;
   icon: string;
-  clan?: NotificationGoingResponseDtoOutputGoingItemClan;
+  clan?: NotificationGoingResponseDtoOutputGuildsItemGoingItemClan;
+};
+
+export type NotificationGoingResponseDtoOutputGuildsItem = {
+  /** @minLength 1 */
+  guildId: string;
+  going: NotificationGoingResponseDtoOutputGuildsItemGoingItem[];
 };
 
 export interface NotificationGoingResponseDtoOutput {
   /** @minLength 1 */
   notificationId: string;
-  going: NotificationGoingResponseDtoOutputGoingItem[];
+  guilds: NotificationGoingResponseDtoOutputGuildsItem[];
 }
 
 export type NotificationGoingDtoCharacterClan = {
@@ -14525,7 +14531,7 @@ export type MessagingControllerGoing403 = HttpErrorResponse | {
   message: string;
 };
 
-export type MessagingControllerGoing429 = {
+export type MessagingControllerGoing429 = HttpErrorResponse | {
   message: string;
 };
 

@@ -54,6 +54,11 @@ export const NOTIFICATION_RATE_LIMIT_MAX_ATTEMPTS = 5;
 export const buildNotificationRateLimitKey = (userId: string) =>
   `messaging:notification-rate:${userId}`;
 
+// Every answer pushes to the Lootlogs and messages the reporter in game, so
+// toggling it is limited apart from sending notifications.
+const buildGoingRateLimitKey = (userId: string) =>
+  `messaging:notification-going-rate:${userId}`;
+
 const RATE_LIMIT_SCRIPT = slidingWindowRateLimitScript({
   refreshExpiryOnReject: false,
   includeTimestamp: false,
@@ -61,6 +66,8 @@ const RATE_LIMIT_SCRIPT = slidingWindowRateLimitScript({
 
 const NotificationMetadataSchema = Schema.Struct({
   discordId: Schema.String,
+  // The reporter's User, told about going answers to an NPC notification.
+  userId: Schema.optionalKey(Schema.String),
   guildIds: Schema.Array(Schema.String),
   createdAt: Schema.String,
   world: Schema.optionalKey(Schema.String),
@@ -154,14 +161,14 @@ export type NotificationRateLimitOutcome =
   | { readonly accepted: true }
   | { readonly accepted: false; readonly retryAfterMs: number };
 
-export const consumeNotificationRateLimit = (
+const consumeRateLimit = (
   redis: Pick<MessagingRedis, "eval">,
-  userId: string,
+  key: string,
 ): Effect.Effect<NotificationRateLimitOutcome, DependencyUnavailableError> =>
   redis
     .eval(
       RATE_LIMIT_SCRIPT,
-      [buildNotificationRateLimitKey(userId)],
+      [key],
       [
         NOTIFICATION_RATE_LIMIT_WINDOW_MS,
         NOTIFICATION_RATE_LIMIT_MAX_ATTEMPTS,
@@ -195,6 +202,11 @@ export const consumeNotificationRateLimit = (
         );
       }),
     );
+
+export const consumeNotificationRateLimit = (
+  redis: Pick<MessagingRedis, "eval">,
+  userId: string,
+) => consumeRateLimit(redis, buildNotificationRateLimitKey(userId));
 
 export const makeMessagingDataLayer = (
   redis: MessagingRedis,
@@ -314,6 +326,7 @@ export const makeMessagingDataLayer = (
 
               const metadataValue: NotificationMetadata = {
                 discordId,
+                userId,
                 guildIds,
                 createdAt,
                 world: data.world,
@@ -437,13 +450,37 @@ export const makeMessagingDataLayer = (
               }),
             ),
           ),
-        going: (discordId, notificationId, data: NotificationGoingRequest) =>
+        going: (
+          { userId, discordId },
+          notificationId,
+          data: NotificationGoingRequest,
+        ) =>
           operation(
             Effect.gen(function* () {
+              const rateLimit = yield* consumeRateLimit(
+                redis,
+                buildGoingRateLimitKey(userId),
+              );
+
+              if (rateLimit.accepted === false) {
+                return yield* Effect.fail(
+                  new RateLimitedError({
+                    code: "NOTIFICATION_GOING_RATE_LIMITED",
+                    retryAfterMs: rateLimit.retryAfterMs,
+                  }),
+                );
+              }
+
               const stored = yield* metadata(notificationId);
               const npc = stored?.npc;
+              const reporterUserId = stored?.userId;
 
-              if (!stored || !npc || stored.world !== data.world) {
+              if (
+                !stored ||
+                !npc ||
+                reporterUserId === undefined ||
+                stored.world !== data.world
+              ) {
                 return yield* Effect.fail(
                   new ResourceNotFoundError({ code: "NOTIFICATION_NOT_FOUND" }),
                 );
@@ -496,7 +533,7 @@ export const makeMessagingDataLayer = (
               }
 
               const player: NotificationGoingPlayer = {
-                discordId,
+                userId,
                 characterId: data.character.characterId,
                 nick: data.character.nick,
                 lvl: data.character.lvl,
@@ -505,7 +542,7 @@ export const makeMessagingDataLayer = (
                 ...(data.character.clan && { clan: data.character.clan }),
               };
 
-              const lists = yield* Effect.forEach(
+              const guilds = yield* Effect.forEach(
                 guildIds,
                 (guildId) =>
                   redis
@@ -514,7 +551,7 @@ export const makeMessagingDataLayer = (
                       [goingKey(notificationId, guildId)],
                       [
                         data.going ? "1" : "0",
-                        discordId,
+                        userId,
                         JSON.stringify(player),
                         ttl,
                       ],
@@ -530,7 +567,7 @@ export const makeMessagingDataLayer = (
                               guildId,
                               world: data.world,
                               notificationId,
-                              reporterDiscordId: stored.discordId,
+                              reporterUserId,
                               npcName: stored.npcName ?? "",
                               npc,
                               going,
@@ -538,17 +575,12 @@ export const makeMessagingDataLayer = (
                           )
                           .pipe(Effect.ignore),
                       ),
+                      Effect.map((going) => ({ guildId, going })),
                     ),
                 { concurrency: "unbounded" },
               );
 
-              const going = [
-                ...new Map(
-                  lists.flat().map((entry) => [entry.discordId, entry]),
-                ).values(),
-              ];
-
-              return { notificationId, going };
+              return { notificationId, guilds };
             }).pipe(
               Effect.withSpan("MessagingControllerGoing", {
                 attributes: { adapter: "Redis/RabbitMessaging", retryCount: 0 },

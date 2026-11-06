@@ -208,6 +208,8 @@ const consumerSpecs = [
     RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER_DLQ,
     false,
   ),
+  // No retry or DLQ: each answer carries the whole list and the answering
+  // client already has it from HTTP, so a lost push heals on the next answer.
   {
     queue: "gateway-guilds-notifications-going",
     routingKey: RabbitRoutingKey.GUILDS_NOTIFICATIONS_GOING,

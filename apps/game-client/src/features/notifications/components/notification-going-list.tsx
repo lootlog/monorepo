@@ -47,7 +47,7 @@ export function NotificationGoingList({
       <TooltipContent>
         <ul className="ll:m-0 ll:flex ll:list-none ll:flex-col ll:gap-0.5 ll:p-0">
           {going.map((player) => (
-            <li key={player.discordId}>
+            <li key={player.userId}>
               <PlayerName
                 name={player.nick}
                 level={player.lvl}

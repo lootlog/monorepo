@@ -132,6 +132,17 @@ export function ChatOwnGatheringBar({
             <Button
               size="xs"
               variant="menu"
+              className="ll:mt-1 ll:w-full ll:justify-start ll:gap-2"
+              title={t("gatherings.extendLabel")}
+              disabled={extension.isPending}
+              onClick={() => extension.mutate()}
+            >
+              <TimerReset size={16} aria-hidden />
+              {t("gatherings.extend")}
+            </Button>
+            <Button
+              size="xs"
+              variant="menu"
               className="ll:mt-1 ll:w-full ll:justify-start ll:gap-2 ll:text-red-400"
               aria-label={actionLabel}
               aria-busy={cancellation.isPending}

@@ -46,7 +46,7 @@ export class MessagingData extends Context.Service<
       payload: VolunteerForPartyRequest,
     ) => Effect.Effect<void, MessagingOperationError>;
     readonly going: (
-      discordId: string,
+      caller: MessagingCaller,
       notificationId: string,
       payload: NotificationGoingRequest,
     ) => Effect.Effect<unknown, MessagingOperationError>;
@@ -84,11 +84,7 @@ export const answerNotificationGoing = (
     const authenticated = yield* caller;
     const data = yield* MessagingData;
 
-    const result = yield* data.going(
-      authenticated.discordId,
-      notificationId,
-      payload,
-    );
+    const result = yield* data.going(authenticated, notificationId, payload);
 
     return yield* Schema.decodeUnknownEffect(NotificationGoingResponse)(
       result,

@@ -65,6 +65,8 @@ export class MessagingGroup extends HttpApiGroup.make("messaging").add(
         HttpErrorResponse.pipe(HttpApiSchema.status(401)),
         HttpErrorResponse.pipe(HttpApiSchema.status(403)),
         HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(429)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(503)),
       ],
     },
   )

@@ -28,11 +28,15 @@ export function NotificationGoingButton({
 }: NotificationGoingButtonProps) {
   const { t } = useTranslation("notifications");
   const { data: session } = useSession();
-  const discordId = session?.user?.discordId;
+  const userId = session?.user?.id;
+
+  const setGuildGoing = useNotificationGoingStore(
+    (state) => state.setGuildGoing,
+  );
 
   const going = useNotificationGoingStore((state) =>
     selectNotificationGoing(state, notification.recentReportIds).some(
-      (player) => player.discordId === discordId,
+      (player) => player.userId === userId,
     ),
   );
 
@@ -46,6 +50,12 @@ export function NotificationGoingButton({
         { notificationId: notification.notificationId },
         { world: notification.world, character, going: next },
       );
+    },
+    // The answer holds the same lists the Lootlogs push live, so the button
+    // settles without waiting for the socket.
+    onSuccess: ({ notificationId, guilds }) => {
+      for (const { guildId, going: players } of guilds)
+        setGuildGoing(notificationId, guildId, players);
     },
     onError: () => showRuntimeMessage(t("going.failed")),
   });
