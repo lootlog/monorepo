@@ -20,7 +20,7 @@ export const LootDetailsRoster = ({
   onShowPlayerLoots,
 }: {
   loot: Loot;
-  /** Managers draw items among the players left outside the party. */
+  /** Managers draw items, whoever caught them. */
   canManageLoots: boolean;
   onShowPlayerLoots?: (playerName: string) => void;
 }) => {
@@ -82,6 +82,13 @@ export const LootDetailsRoster = ({
                   key={entry.item.hid}
                   entry={entry}
                   watchContext={watchContext}
+                  action={
+                    <LootDrawButton
+                      loot={loot}
+                      item={entry.item}
+                      canManage={canManageLoots}
+                    />
+                  }
                 />
               ))}
             </div>

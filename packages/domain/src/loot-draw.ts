@@ -7,9 +7,10 @@
  * included, because the game already drew between those; never fewer than
  * one. Each player outside the party of such a profession gets one ticket.
  *
- * A Lootlog may also draw for its own reasons, among party members too. Then
- * the game's draw no longer stands for them: the winner gets one ticket, like
- * every other party member of such a profession.
+ * A Lootlog may also draw for its own reasons: among party members too, or
+ * for an item nobody caught. Once party members enter, the game's draw no
+ * longer stands for them: the winner gets one ticket, like every other party
+ * member of such a profession.
  */
 
 export type LootDrawItem = Readonly<{
@@ -44,6 +45,27 @@ export const capturesMapPlayers = (loot: {
 }) =>
   loot.source === "FIGHT" &&
   loot.rarities.some((rarity) => rarity === "LEGENDARY");
+
+/**
+ * The party member who caught the item: the one its loot share names, or the
+ * only player of a solo loot, whose share Margonem leaves empty. Null when the
+ * item stayed without a share in a party.
+ */
+export const findLootItemOwner = <Player extends { id: string | number }>(
+  loot: {
+    lootShare: Readonly<Record<string, readonly string[]>>;
+    players: readonly Player[];
+  },
+  hid: string,
+): Player | null => {
+  const owner = loot.players.find(({ id }) =>
+    loot.lootShare[String(id)]?.includes(hid),
+  );
+
+  if (owner) return owner;
+
+  return loot.players.length === 1 ? (loot.players[0] ?? null) : null;
+};
 
 /** Whether the candidate's profession can wear the item; levels do not count. */
 export const canWearLootDrawItem = (

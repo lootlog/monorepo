@@ -1,5 +1,6 @@
 import {
   canWearLootDrawItem,
+  findLootItemOwner,
   isLootDrawItem,
   isLootDrawTicketOrder,
 } from "@lootlog/domain/loot-draw";
@@ -39,12 +40,13 @@ const fromPartyMember = (
 });
 
 /**
- * Checks a manager's draw for one of the loot's drawable items. The one WINNER must
- * be the party member who caught it. PARTY entrants must be other members of
- * the party; both are stored as the loot records them. MAP and MANUAL
- * entrants must be outside the party. Everybody but the winner must be listed
- * once and able to wear the item. Tickets are the manager's, and the ticket
- * order must hold each entrant's tickets exactly.
+ * Checks a manager's draw for one of the loot's drawable items. When a party
+ * member caught it, they are the one WINNER; an item nobody caught has none.
+ * PARTY entrants must be other members of the party; both are stored as the
+ * loot records them. MAP and MANUAL entrants must be outside the party.
+ * Everybody but the winner must be listed once and able to wear the item.
+ * Tickets are the manager's, and the ticket order must hold each entrant's
+ * tickets exactly.
  */
 export const buildLootDrawEntrants = (
   loot: LootDrawLoot,
@@ -58,32 +60,25 @@ export const buildLootDrawEntrants = (
     return { error: ErrorKey.LOOT_DRAW_ITEM_NOT_DRAWABLE };
   }
 
-  const ownerId = Object.entries(loot.lootShare).find(([, hids]) =>
-    hids.includes(item.hid),
-  )?.[0];
-
-  const owner = loot.players.find(({ id }) => id === ownerId);
-
-  if (!owner) return { error: ErrorKey.LOOT_DRAW_ITEM_UNASSIGNED };
-
+  const owner = findLootItemOwner(loot, item.hid);
   const winners = request.entrants.filter(({ source }) => source === "WINNER");
-  const [winner] = winners;
-  const ownerKeys = playerKeys(owner);
+  const ownerKeys = owner ? playerKeys(owner) : [];
 
-  if (
-    winners.length !== 1 ||
-    !winner ||
-    !playerKeys(winner).some((key) => ownerKeys.includes(key))
-  ) {
-    return { error: ErrorKey.LOOT_DRAW_WINNER_MISMATCH };
-  }
+  const isWinnerValid = owner
+    ? winners.length === 1 &&
+      winners.every((winner) =>
+        playerKeys(winner).some((key) => ownerKeys.includes(key)),
+      )
+    : winners.length === 0;
+
+  if (!isWinnerValid) return { error: ErrorKey.LOOT_DRAW_WINNER_MISMATCH };
 
   const partyKeys = new Set(loot.players.flatMap(playerKeys));
   const enteredKeys = new Set(ownerKeys);
   const entrants: LootDrawEntrantRecord[] = [];
 
   for (const entrant of request.entrants) {
-    if (entrant.source === "WINNER") {
+    if (entrant.source === "WINNER" && owner) {
       entrants.push(fromPartyMember(owner, "WINNER", entrant.tickets));
       continue;
     }

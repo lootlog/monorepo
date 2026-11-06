@@ -508,7 +508,7 @@ export const CreateLootDrawRequest = Schema.Struct({
   itemHid: NonEmptyString,
   entrants: Schema.Array(LootDrawEntrantInput).check(
     Schema.isMinLength(2).annotate({
-      expected: "the winner and another entrant",
+      expected: "at least two entrants",
     }),
     Schema.isMaxLength(LOOT_DRAW_MAX_ENTRANTS),
   ),
