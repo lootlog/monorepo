@@ -8,6 +8,8 @@ import { NpcPortrait } from "@/components/common/npc-portrait";
 import { PageHeader } from "@/components/common/page-header";
 import { t } from "@/i18n/messages";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
+import { isHeroTrackersEvent } from "@/lib/hero-trackers";
+import { eventSubtitle } from "@/lib/item-events";
 
 export const Route = createFileRoute("/events")({
   component: EventsRoute,
@@ -15,6 +17,8 @@ export const Route = createFileRoute("/events")({
     meta: [{ title: `${t("meta.eventsTitle")} | ${t("meta.title")}` }],
   }),
 });
+
+const HERO_TRACKERS_SECTION = "hero-trackers";
 
 const EVENT_GRID = "grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3";
 
@@ -24,13 +28,19 @@ function EventsRoute() {
     gameVersion: WIKI_GAME_VERSION,
   });
 
-  // Years as keys come out in ascending order, so they are sorted again,
-  // the latest first and events without a year last.
-  const years = orderBy(
+  // Events by year, the latest first; Tropiciele Herosów editions, which
+  // have no year, come after them, and other events without one last.
+  const sections = orderBy(
     Object.entries(
-      groupBy(data?.events ?? [], ({ year }) => String(year ?? "")),
+      groupBy(data?.events ?? [], ({ name, year }) =>
+        year !== null
+          ? String(year)
+          : isHeroTrackersEvent(name)
+            ? HERO_TRACKERS_SECTION
+            : "",
+      ),
     ),
-    [([year]) => Number(year)],
+    [([key]) => (key === HERO_TRACKERS_SECTION ? 1 : Number(key))],
     ["desc"],
   );
 
@@ -54,16 +64,20 @@ function EventsRoute() {
             </li>
           ))}
         </ul>
-      ) : years.length === 0 ? (
+      ) : sections.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {t("catalog.eventsEmpty")}
         </p>
       ) : (
-        years.map(([year, events]) => (
+        sections.map(([key, events]) => (
           <ArticleSection
-            key={year}
-            id={`events-${year || "other"}`}
-            title={year || t("catalog.eventsWithoutYear")}
+            key={key}
+            id={`events-${key || "other"}`}
+            title={
+              key === HERO_TRACKERS_SECTION
+                ? t("npc.heroTrackers")
+                : key || t("catalog.eventsWithoutYear")
+            }
             count={events.length}
           >
             <ul className={EVENT_GRID}>
@@ -84,9 +98,7 @@ function EventsRoute() {
                         {event.name}
                       </span>
                       <span className="truncate text-xs text-muted-foreground">
-                        {event.boss
-                          ? t("home.eventBoss", { name: event.boss.name })
-                          : t("home.eventEyebrow")}
+                        {eventSubtitle(event.name, event.boss)}
                       </span>
                       <span className="text-xs text-muted-foreground tabular-nums">
                         {t("catalog.eventItemCount", {

@@ -6,6 +6,7 @@ import { NpcPortrait } from "@/components/common/npc-portrait";
 import { PageHeader } from "@/components/common/page-header";
 import { FilterTile } from "@/components/filter-tile";
 import { t } from "@/i18n/messages";
+import { npcSummary } from "@/lib/npc-summary";
 import { npcPageParams, WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { joinList, splitList } from "@/lib/items-search";
 import { NPC_TYPE_OPTIONS } from "@/lib/npc-types";
@@ -114,8 +115,7 @@ function NpcsRoute() {
                         {npc.name}
                       </span>
                       <span className="truncate text-xs text-muted-foreground">
-                        {t(`npcTypes.${npc.type}`)} ·{" "}
-                        {t("common.levelShort", { level: npc.lvl })}
+                        {npcSummary(npc)}
                       </span>
                     </span>
                   </Link>

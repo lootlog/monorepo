@@ -257,9 +257,11 @@ type UpgradableItem = {
   type: string | null;
 };
 
-// Item types worn in an equipment slot; arrows, quivers and blessings are not.
+// Item types worn in an equipment slot: quivers go in the secondary hand;
+// blessings are not equipment.
 const EQUIPMENT_TYPES = new Set([
   ...WEAPON_TYPES,
+  "QUIVER",
   "ARMOR",
   "HELMET",
   "GLOVES",

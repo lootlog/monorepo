@@ -38,6 +38,7 @@ export const ITEM_TYPE_OPTIONS = [
   "RING",
   "NECKLACE",
   "SHIELD",
+  "QUIVER",
   "NEUTRAL",
   "CONSUME",
   "OUTFITS",

@@ -93,6 +93,20 @@ describe("item upgrade", () => {
     }
   });
 
+  it("upgrades quivers, which the game wears in the secondary hand", () => {
+    const quiver = {
+      stat: "acdmg=45;binds;crit=1;dz=105;evade=18;hp=2527;lvl=181;poison=81,253;rarity=heroic;reqp=h;sa=53",
+      lvl: 181,
+      rarity: "HEROIC",
+      type: "QUIVER",
+    };
+
+    expect(statOf(upgradeItemStat(quiver, { level: 5 }), "poison")).not.toBe(
+      statOf(quiver.stat, "poison"),
+    );
+    expect(upgradeBonusOptions(quiver)).not.toEqual([]);
+  });
+
   it("adds the chosen +5 bonus from the item's class pool at the virtual level", () => {
     // One strength bonus at 262: 5 * 262 / 9 + 4, a stat the necklace lacked.
     const withStrength = upgradeItemStat(necklace, { level: 5, bonus: "ds" });
