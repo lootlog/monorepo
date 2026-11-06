@@ -14,7 +14,7 @@ import { WikiLayout } from "@/components/layout/wiki-layout";
 import { QueryDevtools } from "@/components/query-devtools";
 import { UserTheme } from "@/components/user-theme";
 import { getRuntimeConfig } from "@/config/runtime-config";
-import { getStoredThemeSelection } from "@/config/theme-cookie";
+import { getStoredTheme } from "@/config/theme-cookie";
 import { WikiContext } from "@/contexts/wiki-context";
 import { t } from "@/i18n/messages";
 import { createWikiAuthClient } from "@/lib/auth-client";
@@ -24,7 +24,7 @@ import appCss from "@/styles.css?url";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {
-    head: () => ({
+    head: ({ loaderData }) => ({
       meta: [
         {
           charSet: "utf-8",
@@ -49,16 +49,31 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { rel: "icon", href: "/favicon.ico", sizes: "any" },
         { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
         { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+        ...(loaderData?.documentTheme.fontStylesheet
+          ? [
+              {
+                rel: "stylesheet",
+                href: loaderData.documentTheme.fontStylesheet,
+              },
+            ]
+          : []),
       ],
     }),
     // Configuration and the stored theme hold for the whole visit.
     loader: async () => {
-      const [config, storedThemeSelection] = await Promise.all([
+      const [config, storedTheme] = await Promise.all([
         getRuntimeConfig(),
-        getStoredThemeSelection(),
+        getStoredTheme(),
       ]);
 
-      return { config, storedThemeSelection };
+      return {
+        config,
+        storedThemeSelection: storedTheme.selection,
+        documentTheme: getDocumentTheme(
+          storedTheme.selection,
+          storedTheme.customTheme,
+        ),
+      };
     },
     staleTime: Number.POSITIVE_INFINITY,
     shellComponent: RootDocument,
@@ -81,8 +96,7 @@ const uiLabels = {
 };
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const { config, storedThemeSelection } = Route.useLoaderData();
-  const documentTheme = getDocumentTheme(storedThemeSelection);
+  const { config, storedThemeSelection, documentTheme } = Route.useLoaderData();
 
   const [wikiContext] = useState(() => {
     configureWikiApiClients(config);
@@ -94,12 +108,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
   return (
     // The browser applies the User's theme to the root after hydration.
-    <html
-      lang="pl"
-      className={documentTheme.className}
-      style={documentTheme.style}
-      suppressHydrationWarning
-    >
+    <html lang="pl" {...documentTheme.root} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

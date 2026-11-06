@@ -16,7 +16,10 @@ import {
   resolveStoredSelection,
 } from "@lootlog/ui/themes/resolver";
 import { useSession } from "@/hooks/use-session";
-import { writeThemeCookie } from "@/lib/write-theme-cookie";
+import {
+  writeCustomThemeCookie,
+  writeThemeCookie,
+} from "@/lib/write-theme-cookie";
 
 type UserThemeProps = {
   /** The theme the server rendered the page in. */
@@ -68,6 +71,7 @@ export function UserTheme({ storedSelection }: UserThemeProps) {
     // Keep the cache while the list loads; once it has, it follows the pick.
     if (customThemeId === null || userThemes) {
       writeCachedCustomTheme(customTheme);
+      writeCustomThemeCookie(customTheme);
     }
   }, [selection, customThemeId, customTheme, userThemes]);
 
