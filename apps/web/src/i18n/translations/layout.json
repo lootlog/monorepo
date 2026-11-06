@@ -51,7 +51,14 @@
     "connectingDescription": "Do czasu połączenia nowe zmiany mogą się spóźniać.",
     "offline": "Brak połączenia",
     "offlineDescription": "Widoczne dane mogą być nieaktualne.",
-    "installAddon": "Zainstaluj dodatek do gry"
+    "installAddon": "Zainstaluj dodatek do gry",
+    "wiki": "Wiki Margonem"
+  },
+  "wikiAnnouncement": {
+    "title": "Nowość: Wiki Lootloga",
+    "description": "Przedmioty, potwory i ich dropy, porównywarka przedmiotów i kalkulatory w jednym miejscu.",
+    "open": "Otwórz wiki",
+    "dismiss": "Ukryj ogłoszenie"
   },
   "breadcrumbs": {
     "statistics": "Analityka",

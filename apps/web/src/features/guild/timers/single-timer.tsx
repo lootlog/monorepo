@@ -21,16 +21,13 @@ import {
 } from "@lootlog/domain/timers";
 import { formatLevel } from "@lootlog/domain/profession";
 import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
-import {
-  DATE_TIME_WITH_SECONDS_FORMAT,
-  timestampToDate,
-} from "@/utils/date/parse-timestamp-to-date";
 import { MetaItem } from "@/components/common/meta-item";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { TimerCountdown } from "./timer-countdown";
+import { TimerDetails } from "./timer-details";
 import { HeroSightingTimerLocation } from "@/features/guild/hero-sightings/hero-sighting-timer-location";
 
 /** An expired timer keeps its colour, darkened, as in the game client. */
@@ -153,35 +150,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         }
       />
       <PopoverContent className="grid w-auto gap-2 px-3 py-2">
-        {phase === "entrance" && timer.entranceClosesAt && (
-          <div>
-            <span className="block text-xs text-muted-foreground">
-              {t("timers.details.entranceClosesAt")}
-            </span>
-            <span className="block text-sm font-semibold tabular-nums">
-              {timestampToDate(
-                timer.entranceClosesAt,
-                DATE_TIME_WITH_SECONDS_FORMAT,
-              )}
-            </span>
-          </div>
-        )}
-        <div>
-          <span className="block text-xs text-muted-foreground">
-            {t("timers.details.minSpawnTime")}
-          </span>
-          <span className="block text-sm font-semibold tabular-nums">
-            {timestampToDate(timer.minSpawnTime, DATE_TIME_WITH_SECONDS_FORMAT)}
-          </span>
-        </div>
-        <div>
-          <span className="block text-xs text-muted-foreground">
-            {t("timers.details.maxSpawnTime")}
-          </span>
-          <span className="block text-sm font-semibold tabular-nums">
-            {timestampToDate(timer.maxSpawnTime, DATE_TIME_WITH_SECONDS_FORMAT)}
-          </span>
-        </div>
+        <TimerDetails timer={timer} phase={phase} />
       </PopoverContent>
     </Popover>
   );
