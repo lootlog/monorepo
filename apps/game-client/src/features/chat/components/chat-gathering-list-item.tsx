@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { ChatGatheringHeader } from "./chat-gathering-header";
 import { GatheringPartyCounter } from "@/components/common/gathering-party-counter";
 import { ChatGatheringDetails } from "./chat-gathering-details";
+import { ChatGatheringOrganizerMeta } from "./chat-gathering-organizer-meta";
+import { ReadyRoomMinutesLeft } from "@/components/common/ready-room-minutes-left";
+import { getSummaryOrganizer } from "@/features/chat/party-gathering-organizer";
 
 export function ChatGatheringListItem({
   gathering,
@@ -28,18 +31,22 @@ export function ChatGatheringListItem({
   return (
     <li className="ll-party-gathering-card ll:min-w-0 ll:border-x-0 ll:border-t-0 ll:border-b ll:border-gray-400/20 ll:p-2 ll:last:border-b-0">
       <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-1">
-        <div className="ll:min-w-0 ll:flex-1 ll:truncate">
-          <ChatGatheringHeader
-            organizerDiscordId={gathering.organizerDiscordId}
-            guildIds={gathering.guildIds}
-          />
+        <div className="ll:flex ll:min-w-0 ll:flex-1">
+          <ChatGatheringHeader organizer={getSummaryOrganizer(gathering)} />
         </div>
         <GatheringPartyCounter
           partyState={gathering.partyState}
           stale={stale}
         />
+        <ReadyRoomMinutesLeft expiresAt={gathering.expiresAt} />
       </div>
       <ChatGatheringDetails {...gathering} />
+      <ChatGatheringOrganizerMeta
+        clanName={gathering.organizerClan?.name}
+        mapName={gathering.organizerMapName}
+        organizerDiscordId={gathering.organizerDiscordId}
+        guildIds={gathering.guildIds}
+      />
       <div className="ll:mt-1 ll:flex ll:items-center ll:justify-between ll:gap-2">
         {hidden ? (
           <Button

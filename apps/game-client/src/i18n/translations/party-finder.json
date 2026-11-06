@@ -15,7 +15,10 @@
     "cancelPartyGathering": "Anuluj zbiórkę",
     "remove": "Usuń ze zbiórki",
     "invite": "Zaproś do grupy",
-    "addFriend": "Dodaj do znajomych"
+    "addFriend": "Dodaj do znajomych",
+    "extend": "Przedłuż",
+    "extendHint": "Zbiórka potrwa kolejne 10 minut",
+    "addFriendHint": "Spoza klanu i znajomych możesz dodać do grupy tylko gracza, który stoi obok. Znajomego dodasz z każdego miejsca."
   },
   "list": {
     "waiting": "Oczekiwanie na zgłoszenia…",
@@ -28,7 +31,7 @@
     "selectGuild": "Wybierz Lootlog",
     "guildLabel": "Lootlog",
     "descriptionLabel": "Opis (opcjonalny)",
-    "descriptionPlaceholder": "Np. szukam heala na tytana",
+    "descriptionPlaceholder": "Np. ustawka dycha dystów",
     "minLvlLabel": "Minimalny poziom",
     "maxLvlLabel": "Maksymalny poziom",
     "submit": "Utwórz zbiórkę"
@@ -44,11 +47,7 @@
   "messages": {
     "cancelSuccess": "Anulowano zbiórkę",
     "cancelFailed": "Nie udało się anulować zbiórki",
-    "removeFailed": "Nie udało się usunąć gracza ze zbiórki. Spróbuj ponownie."
-  },
-  "cancelConfirm": {
-    "title": "Anulować zbiórkę?",
-    "description": "Zbiórka zniknie u wszystkich członków Lootloga, a zgłoszeni do niej gracze nie dostaną zaproszeń.",
-    "confirm": "Anuluj zbiórkę"
+    "removeFailed": "Nie udało się usunąć gracza ze zbiórki. Spróbuj ponownie.",
+    "extendFailed": "Nie udało się przedłużyć zbiórki"
   }
 }

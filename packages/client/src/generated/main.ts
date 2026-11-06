@@ -3573,248 +3573,8 @@ export interface UpdateSoundSettingsDto {
   timersConfig?: UpdateSoundSettingsDtoTimersConfig;
 }
 
-export type PartyReadyRoomClientUpdateDtoOutputSchemaVersion = typeof PartyReadyRoomClientUpdateDtoOutputSchemaVersion[keyof typeof PartyReadyRoomClientUpdateDtoOutputSchemaVersion];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputSchemaVersion = {
-  NUMBER_3: 3,
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputType = typeof PartyReadyRoomClientUpdateDtoOutputType[keyof typeof PartyReadyRoomClientUpdateDtoOutputType];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputType = {
-  UPSERT: 'UPSERT',
-  REMOVE: 'REMOVE',
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionNpc = {
-  prof?: string;
-  icon?: string;
-  name: string;
-  location: string;
-  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
-  type: string;
-  x?: number | 'Infinity' | '-Infinity' | 'NaN';
-  y?: number | 'Infinity' | '-Infinity' | 'NaN';
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion = typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion = {
-  NUMBER_3: 3,
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacterClan = {
-  id?: number;
-  /** @maxLength 255 */
-  name?: string;
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacter = {
-  lvl: number;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  nick: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  accountId: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 100
-     */
-  prof: string;
-  /**
-     * @minLength 1
-     * @maxLength 2048
-     */
-  icon: string;
-  clan?: PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacterClan;
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionPartyState = {
-  status: 'UNKNOWN';
-} | {
-  status: 'OBSERVED';
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  observedAt: string;
-  /** @maxItems 20 */
-  members: {
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /** @maxLength 255 */
-  nick?: string;
-  /** @maxLength 2048 */
-  icon?: string;
-  lvl?: number;
-  /** @maxLength 100 */
-  prof?: string;
-}[];
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence = typeof PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence = {
-  OUTSIDE: 'OUTSIDE',
-  IN_PARTY: 'IN_PARTY',
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItem = {
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /** @maxLength 255 */
-  nick: string;
-  /** @maxLength 2048 */
-  icon: string;
-  lvl: number;
-  /** @maxLength 100 */
-  prof: string;
-  partyPresence: PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence;
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionStatus = typeof PartyReadyRoomClientUpdateDtoOutputProjectionStatus[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionStatus];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputProjectionStatus = {
-  ACTIVE: 'ACTIVE',
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionViewer = typeof PartyReadyRoomClientUpdateDtoOutputProjectionViewer[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionViewer];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputProjectionViewer = {
-  ORGANIZER: 'ORGANIZER',
-  PARTICIPANT: 'PARTICIPANT',
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacterClan = {
-  id?: number;
-  /** @maxLength 255 */
-  name?: string;
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacter = {
-  lvl: number;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  nick: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  accountId: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 100
-     */
-  prof: string;
-  /**
-     * @minLength 1
-     * @maxLength 2048
-     */
-  icon: string;
-  clan?: PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacterClan;
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence = typeof PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence = {
-  OUTSIDE: 'OUTSIDE',
-  IN_PARTY: 'IN_PARTY',
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipants = {[key: string]: {
-  participantId: string;
-  discordId: string;
-  character: PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacter;
-  partyPresence: PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-}};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjection = {
-  npc?: PartyReadyRoomClientUpdateDtoOutputProjectionNpc;
-  schemaVersion: PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion;
-  notificationId: string;
-  organizerDiscordId: string;
-  organizerCharacter: PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacter;
-  guildIds: string[];
-  world: string;
-  description?: string;
-  minLvl?: number;
-  maxLvl?: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  partyMemberCount?: number;
-  partyState?: PartyReadyRoomClientUpdateDtoOutputProjectionPartyState;
-  volunteers?: PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItem[];
-  status: PartyReadyRoomClientUpdateDtoOutputProjectionStatus;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  revision: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  expiresAt: string;
-  viewer: PartyReadyRoomClientUpdateDtoOutputProjectionViewer;
-  participants: PartyReadyRoomClientUpdateDtoOutputProjectionParticipants;
-  ownedParticipantIds?: string[];
-};
-
-export interface PartyReadyRoomClientUpdateDtoOutput {
-  schemaVersion: PartyReadyRoomClientUpdateDtoOutputSchemaVersion;
-  type: PartyReadyRoomClientUpdateDtoOutputType;
-  projection?: PartyReadyRoomClientUpdateDtoOutputProjection;
-  notificationId?: string;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  revision?: number;
-}
-
-export interface PartyReadyRoomExpectedRevisionDto {
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  expectedRevision: number;
-}
-
 export type PartyReadyRoomProjectionDtoOutputNpc = {
+  id?: number | 'Infinity' | '-Infinity' | 'NaN';
   prof?: string;
   icon?: string;
   name: string;
@@ -3891,6 +3651,11 @@ export type PartyReadyRoomProjectionDtoOutputPartyState = {
 }[];
 };
 
+export type PartyReadyRoomProjectionDtoOutputVolunteersItemClan = {
+  id?: number | 'Infinity' | '-Infinity' | 'NaN';
+  name?: string;
+};
+
 export type PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence = typeof PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence[keyof typeof PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence];
 
 
@@ -3912,6 +3677,7 @@ export type PartyReadyRoomProjectionDtoOutputVolunteersItem = {
   lvl: number;
   /** @maxLength 100 */
   prof: string;
+  clan?: PartyReadyRoomProjectionDtoOutputVolunteersItemClan;
   partyPresence: PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence;
 };
 
@@ -3991,6 +3757,7 @@ export interface PartyReadyRoomProjectionDtoOutput {
   notificationId: string;
   organizerDiscordId: string;
   organizerCharacter: PartyReadyRoomProjectionDtoOutputOrganizerCharacter;
+  organizerMapName?: string;
   guildIds: string[];
   world: string;
   description?: string;
@@ -4018,6 +3785,255 @@ export interface PartyReadyRoomProjectionDtoOutput {
   viewer: PartyReadyRoomProjectionDtoOutputViewer;
   participants: PartyReadyRoomProjectionDtoOutputParticipants;
   ownedParticipantIds?: string[];
+}
+
+export interface PartyReadyRoomExpectedRevisionDto {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  expectedRevision: number;
+}
+
+export type PartyReadyRoomClientUpdateDtoOutputSchemaVersion = typeof PartyReadyRoomClientUpdateDtoOutputSchemaVersion[keyof typeof PartyReadyRoomClientUpdateDtoOutputSchemaVersion];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputSchemaVersion = {
+  NUMBER_3: 3,
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputType = typeof PartyReadyRoomClientUpdateDtoOutputType[keyof typeof PartyReadyRoomClientUpdateDtoOutputType];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputType = {
+  UPSERT: 'UPSERT',
+  REMOVE: 'REMOVE',
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionNpc = {
+  id?: number | 'Infinity' | '-Infinity' | 'NaN';
+  prof?: string;
+  icon?: string;
+  name: string;
+  location: string;
+  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
+  type: string;
+  x?: number | 'Infinity' | '-Infinity' | 'NaN';
+  y?: number | 'Infinity' | '-Infinity' | 'NaN';
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion = typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion = {
+  NUMBER_3: 3,
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacterClan = {
+  id?: number;
+  /** @maxLength 255 */
+  name?: string;
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacter = {
+  lvl: number;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  nick: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  accountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  prof: string;
+  /**
+     * @minLength 1
+     * @maxLength 2048
+     */
+  icon: string;
+  clan?: PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacterClan;
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionPartyState = {
+  status: 'UNKNOWN';
+} | {
+  status: 'OBSERVED';
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  observedAt: string;
+  /** @maxItems 20 */
+  members: {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick?: string;
+  /** @maxLength 2048 */
+  icon?: string;
+  lvl?: number;
+  /** @maxLength 100 */
+  prof?: string;
+}[];
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemClan = {
+  id?: number | 'Infinity' | '-Infinity' | 'NaN';
+  name?: string;
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence = typeof PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence = {
+  OUTSIDE: 'OUTSIDE',
+  IN_PARTY: 'IN_PARTY',
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItem = {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick: string;
+  /** @maxLength 2048 */
+  icon: string;
+  lvl: number;
+  /** @maxLength 100 */
+  prof: string;
+  clan?: PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemClan;
+  partyPresence: PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence;
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionStatus = typeof PartyReadyRoomClientUpdateDtoOutputProjectionStatus[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionStatus];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputProjectionStatus = {
+  ACTIVE: 'ACTIVE',
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionViewer = typeof PartyReadyRoomClientUpdateDtoOutputProjectionViewer[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionViewer];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputProjectionViewer = {
+  ORGANIZER: 'ORGANIZER',
+  PARTICIPANT: 'PARTICIPANT',
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacterClan = {
+  id?: number;
+  /** @maxLength 255 */
+  name?: string;
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacter = {
+  lvl: number;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  nick: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  accountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  prof: string;
+  /**
+     * @minLength 1
+     * @maxLength 2048
+     */
+  icon: string;
+  clan?: PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacterClan;
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence = typeof PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence = {
+  OUTSIDE: 'OUTSIDE',
+  IN_PARTY: 'IN_PARTY',
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipants = {[key: string]: {
+  participantId: string;
+  discordId: string;
+  character: PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacter;
+  partyPresence: PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  createdAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  updatedAt: string;
+}};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjection = {
+  npc?: PartyReadyRoomClientUpdateDtoOutputProjectionNpc;
+  schemaVersion: PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion;
+  notificationId: string;
+  organizerDiscordId: string;
+  organizerCharacter: PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacter;
+  organizerMapName?: string;
+  guildIds: string[];
+  world: string;
+  description?: string;
+  minLvl?: number;
+  maxLvl?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  partyMemberCount?: number;
+  partyState?: PartyReadyRoomClientUpdateDtoOutputProjectionPartyState;
+  volunteers?: PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItem[];
+  status: PartyReadyRoomClientUpdateDtoOutputProjectionStatus;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  revision: number;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  createdAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  updatedAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  expiresAt: string;
+  viewer: PartyReadyRoomClientUpdateDtoOutputProjectionViewer;
+  participants: PartyReadyRoomClientUpdateDtoOutputProjectionParticipants;
+  ownedParticipantIds?: string[];
+};
+
+export interface PartyReadyRoomClientUpdateDtoOutput {
+  schemaVersion: PartyReadyRoomClientUpdateDtoOutputSchemaVersion;
+  type: PartyReadyRoomClientUpdateDtoOutputType;
+  projection?: PartyReadyRoomClientUpdateDtoOutputProjection;
+  notificationId?: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  revision?: number;
 }
 
 export type PartyReadyRoomObservationDtoMembersItem = {
@@ -4059,6 +4075,12 @@ export interface PartyReadyRoomObservationDto {
      * @maxLength 255
      */
   organizerCharacterId: string;
+  /**
+     * The map the organizer stands on, so applicants know where to go.
+     * @minLength 1
+     * @maxLength 255
+     */
+  organizerMapName?: string;
 }
 
 export type PartyReadyRoomInvitationTargetsDtoOutputTargetsItem = {
@@ -4215,6 +4237,16 @@ export interface CreatePartyGatheringDto {
   maxLvl?: number;
 }
 
+export type ActivePartyGatheringSummaryOrganizerClan = {
+  id?: number | 'Infinity' | '-Infinity' | 'NaN';
+  name?: string;
+};
+
+export type ActivePartyGatheringSummaryVolunteersItemClan = {
+  id?: number | 'Infinity' | '-Infinity' | 'NaN';
+  name?: string;
+};
+
 export type ActivePartyGatheringSummaryVolunteersItemPartyPresence = typeof ActivePartyGatheringSummaryVolunteersItemPartyPresence[keyof typeof ActivePartyGatheringSummaryVolunteersItemPartyPresence];
 
 
@@ -4236,6 +4268,7 @@ export type ActivePartyGatheringSummaryVolunteersItem = {
   lvl: number;
   /** @maxLength 100 */
   prof: string;
+  clan?: ActivePartyGatheringSummaryVolunteersItemClan;
   partyPresence: ActivePartyGatheringSummaryVolunteersItemPartyPresence;
 };
 
@@ -4263,6 +4296,7 @@ export type ActivePartyGatheringSummaryPartyState = {
 };
 
 export type ActivePartyGatheringSummaryNpc = {
+  id?: number | 'Infinity' | '-Infinity' | 'NaN';
   prof?: string;
   icon?: string;
   name: string;
@@ -4279,6 +4313,8 @@ export interface ActivePartyGatheringSummary {
   organizerDiscordId?: string;
   organizerLvl?: number;
   organizerProf?: string;
+  organizerClan?: ActivePartyGatheringSummaryOrganizerClan;
+  organizerMapName?: string;
   /**
      * @minimum 0
      * @maximum 9007199254740991
@@ -4311,6 +4347,74 @@ export interface ActivePartyGatheringSummary {
   createdAt: string;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   expiresAt: string;
+}
+
+export type NotificationGoingResponseDtoOutputGoingItemClan = {
+  id?: number | 'Infinity' | '-Infinity' | 'NaN';
+  name?: string;
+};
+
+export type NotificationGoingResponseDtoOutputGoingItem = {
+  discordId: string;
+  characterId: string;
+  nick: string;
+  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
+  prof: string;
+  icon: string;
+  clan?: NotificationGoingResponseDtoOutputGoingItemClan;
+};
+
+export interface NotificationGoingResponseDtoOutput {
+  /** @minLength 1 */
+  notificationId: string;
+  going: NotificationGoingResponseDtoOutputGoingItem[];
+}
+
+export type NotificationGoingDtoCharacterClan = {
+  id?: number;
+  /** @maxLength 255 */
+  name?: string;
+};
+
+export type NotificationGoingDtoCharacter = {
+  lvl: number;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  nick: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  accountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  prof: string;
+  /**
+     * @minLength 1
+     * @maxLength 2048
+     */
+  icon: string;
+  clan?: NotificationGoingDtoCharacterClan;
+};
+
+export interface NotificationGoingDto {
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world: string;
+  character: NotificationGoingDtoCharacter;
+  /** Whether the caller is going to the NPC or takes it back. */
+  going: boolean;
 }
 
 export type CreateVolunteerDtoCharacterClan = {
@@ -14410,6 +14514,21 @@ export type MessagingControllerVolunteer429 = {
   message: string;
 };
 
+export type MessagingControllerGoingPathParameters = {
+ notificationId: string,
+ }
+export type MessagingControllerGoing401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type MessagingControllerGoing403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type MessagingControllerGoing429 = {
+  message: string;
+};
+
 export type PartyReadyRoomControllerActiveParams = {
 /**
  * @minLength 1
@@ -14556,6 +14675,21 @@ export type PartyReadyRoomControllerCancel403 = HttpErrorResponse | {
 };
 
 export type PartyReadyRoomControllerCancel429 = {
+  message: string;
+};
+
+export type PartyReadyRoomControllerExtendPathParameters = {
+ notificationId: string,
+ }
+export type PartyReadyRoomControllerExtend401 = HttpErrorResponse | ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type PartyReadyRoomControllerExtend403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type PartyReadyRoomControllerExtend429 = {
   message: string;
 };
 
@@ -32284,6 +32418,96 @@ export const useMessagingControllerVolunteer = <TError = ErrorType<HttpErrorResp
       return useMutation(getMessagingControllerVolunteerMutationOptions(options), queryClient);
     }
 
+export const getMessagingControllerGoingUrl = ({ notificationId }: MessagingControllerGoingPathParameters,) => {
+
+
+
+
+  return `/messaging/${notificationId}/going`
+}
+
+/**
+ * Tell your Lootlog that you are going to the notification's NPC, or take it back. Members who received the notification see who is going.
+ * @summary Answer an NPC notification with going
+ */
+export const messagingControllerGoing = async ({ notificationId }: MessagingControllerGoingPathParameters,
+    notificationGoingDto: NotificationGoingDto, options?: Parameters<typeof mainFetch>[1]): Promise<NotificationGoingResponseDtoOutput> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<NotificationGoingResponseDtoOutput>(getMessagingControllerGoingUrl({ notificationId }),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(notificationGoingDto)
+  }
+);}
+
+
+
+
+
+export const getMessagingControllerGoingMutationKey = () => ['messagingControllerGoing'] as const;
+
+export const getMessagingControllerGoingMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | MessagingControllerGoing401 | MessagingControllerGoing403 | MessagingControllerGoing429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof messagingControllerGoing>>, TError,MessagingControllerGoingMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof messagingControllerGoing>>, TError,MessagingControllerGoingMutationVariables, TContext> => {
+
+const mutationKey = getMessagingControllerGoingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof messagingControllerGoing>>, MessagingControllerGoingMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  messagingControllerGoing(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MessagingControllerGoingMutationResult = NonNullable<Awaited<ReturnType<typeof messagingControllerGoing>>>
+    export type MessagingControllerGoingMutationBody = BodyType<NotificationGoingDto>
+    export type MessagingControllerGoingMutationError = ErrorType<HttpErrorResponse | RequestValidationError | MessagingControllerGoing401 | MessagingControllerGoing403 | MessagingControllerGoing429>
+    export type MessagingControllerGoingMutationVariables = {pathParams: MessagingControllerGoingPathParameters;data: BodyType<NotificationGoingDto>}
+
+    /**
+ * @summary Answer an NPC notification with going
+ */
+export const useMessagingControllerGoing = <TError = ErrorType<HttpErrorResponse | RequestValidationError | MessagingControllerGoing401 | MessagingControllerGoing403 | MessagingControllerGoing429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof messagingControllerGoing>>, TError,MessagingControllerGoingMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof messagingControllerGoing>>,
+        TError,
+        MessagingControllerGoingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getMessagingControllerGoingMutationOptions(options), queryClient);
+    }
+
 export const getPartyReadyRoomControllerActiveUrl = (params: PartyReadyRoomControllerActiveParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -33259,6 +33483,95 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getPartyReadyRoomControllerCancelMutationOptions(options), queryClient);
+    }
+
+export const getPartyReadyRoomControllerExtendUrl = ({ notificationId }: PartyReadyRoomControllerExtendPathParameters,) => {
+
+
+
+
+  return `/messaging/party-gathering/${notificationId}/extension`
+}
+
+/**
+ * @summary Restart the organizer's party gathering lifetime
+ */
+export const partyReadyRoomControllerExtend = async ({ notificationId }: PartyReadyRoomControllerExtendPathParameters,
+    partyReadyRoomExpectedRevisionDto: PartyReadyRoomExpectedRevisionDto, options?: Parameters<typeof mainFetch>[1]): Promise<PartyReadyRoomProjectionDtoOutput> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<PartyReadyRoomProjectionDtoOutput>(getPartyReadyRoomControllerExtendUrl({ notificationId }),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(partyReadyRoomExpectedRevisionDto)
+  }
+);}
+
+
+
+
+
+export const getPartyReadyRoomControllerExtendMutationKey = () => ['partyReadyRoomControllerExtend'] as const;
+
+export const getPartyReadyRoomControllerExtendMutationOptions = <TError = ErrorType<RequestValidationError | PartyReadyRoomControllerExtend401 | PartyReadyRoomControllerExtend403 | HttpErrorResponse | PartyReadyRoomControllerExtend429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerExtend>>, TError,PartyReadyRoomControllerExtendMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerExtend>>, TError,PartyReadyRoomControllerExtendMutationVariables, TContext> => {
+
+const mutationKey = getPartyReadyRoomControllerExtendMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof partyReadyRoomControllerExtend>>, PartyReadyRoomControllerExtendMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  partyReadyRoomControllerExtend(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PartyReadyRoomControllerExtendMutationResult = NonNullable<Awaited<ReturnType<typeof partyReadyRoomControllerExtend>>>
+    export type PartyReadyRoomControllerExtendMutationBody = BodyType<PartyReadyRoomExpectedRevisionDto>
+    export type PartyReadyRoomControllerExtendMutationError = ErrorType<RequestValidationError | PartyReadyRoomControllerExtend401 | PartyReadyRoomControllerExtend403 | HttpErrorResponse | PartyReadyRoomControllerExtend429>
+    export type PartyReadyRoomControllerExtendMutationVariables = {pathParams: PartyReadyRoomControllerExtendPathParameters;data: BodyType<PartyReadyRoomExpectedRevisionDto>}
+
+    /**
+ * @summary Restart the organizer's party gathering lifetime
+ */
+export const usePartyReadyRoomControllerExtend = <TError = ErrorType<RequestValidationError | PartyReadyRoomControllerExtend401 | PartyReadyRoomControllerExtend403 | HttpErrorResponse | PartyReadyRoomControllerExtend429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerExtend>>, TError,PartyReadyRoomControllerExtendMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof partyReadyRoomControllerExtend>>,
+        TError,
+        PartyReadyRoomControllerExtendMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPartyReadyRoomControllerExtendMutationOptions(options), queryClient);
     }
 
 export const getSoundSettingsControllerGetSettingsUrl = () => {

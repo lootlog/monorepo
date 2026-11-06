@@ -22,6 +22,8 @@ const makeData = (overrides: Partial<MessagingData["Service"]> = {}) =>
         guildIds: ["guild-a"],
       }),
     volunteer: () => Effect.void,
+    going: () =>
+      Effect.succeed({ notificationId: "notification-a", going: [] }),
     ...overrides,
   });
 

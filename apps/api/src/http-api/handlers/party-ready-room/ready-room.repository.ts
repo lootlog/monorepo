@@ -5,6 +5,7 @@ import {
   COMMIT_READY_ROOM_SCRIPT,
   CREATE_READY_ROOM_SCRIPT,
   EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
+  EXTEND_READY_ROOM_SCRIPT,
   FIND_READY_ROOM_IDS_SCRIPT,
   JOIN_READY_ROOM_SCRIPT,
   PRUNE_READY_ROOM_USER_INDEX_SCRIPT,
@@ -79,6 +80,10 @@ export interface ReadyRoomEffectRepository {
     participantId: string,
   ) => Effect.Effect<CommitReadyRoomResult, unknown>;
   readonly terminate: (
+    expected: ReadyRoomAggregate,
+    next: ReadyRoomAggregate,
+  ) => Effect.Effect<CommitReadyRoomResult, unknown>;
+  readonly extend: (
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
   ) => Effect.Effect<CommitReadyRoomResult, unknown>;
@@ -304,6 +309,15 @@ export const makeReadyRoomRepository = (
 
       if (!participant) return Effect.succeed({ status: "conflict" as const });
 
+      const previousCharacterId =
+        expected.participants[participantId]?.character.characterId;
+
+      const switchedCharacterId =
+        previousCharacterId !== undefined &&
+        previousCharacterId !== participant.character.characterId
+          ? previousCharacterId
+          : undefined;
+
       return evalWithIndexedRoomKeys(
         JOIN_READY_ROOM_SCRIPT,
         [
@@ -311,6 +325,10 @@ export const makeReadyRoomRepository = (
           userKey(participant.discordId),
           characterKey(next.world, participant.character.characterId),
           ...READY_ROOM_PUBLICATION_KEYS,
+          // The script takes the previous character's index as KEYS[6].
+          ...(switchedCharacterId === undefined
+            ? []
+            : [characterKey(next.world, switchedCharacterId)]),
         ],
         [
           JSON.stringify(expected),
@@ -319,6 +337,7 @@ export const makeReadyRoomRepository = (
           Date.parse(next.expiresAt),
           ttl,
           ROOM_PREFIX,
+          switchedCharacterId === undefined ? "0" : "1",
         ],
       ).pipe(
         Effect.flatMap(
@@ -366,6 +385,40 @@ export const makeReadyRoomRepository = (
             next.notificationId,
             ttl,
             ownerStillPresent ? 1 : 0,
+          ],
+        )
+        .pipe(Effect.flatMap((result) => parseCommit(result, next)));
+    },
+    extend: (expected, next) => {
+      const ttl = remainingTtl(next, clock);
+
+      if (ttl <= 0) return Effect.succeed({ status: "missing" as const });
+
+      const participantKeys = Object.values(expected.participants).flatMap(
+        (participant) => [
+          userKey(participant.discordId),
+          characterKey(expected.world, participant.character.characterId),
+        ],
+      );
+
+      return redis
+        .eval(
+          EXTEND_READY_ROOM_SCRIPT,
+          [
+            roomKey(next.notificationId),
+            organizerKey(next.organizerDiscordId),
+            characterKey(next.world, next.organizerCharacter.characterId),
+            ...next.guildIds.map((id) => discoveryKey(id, next.world)),
+            ...participantKeys,
+            ...READY_ROOM_PUBLICATION_KEYS,
+          ],
+          [
+            JSON.stringify(expected),
+            JSON.stringify(next),
+            next.notificationId,
+            ttl,
+            Date.parse(next.expiresAt),
+            next.guildIds.length,
           ],
         )
         .pipe(Effect.flatMap((result) => parseCommit(result, next)));

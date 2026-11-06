@@ -208,6 +208,10 @@ const consumerSpecs = [
     RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER_DLQ,
     false,
   ),
+  {
+    queue: "gateway-guilds-notifications-going",
+    routingKey: RabbitRoutingKey.GUILDS_NOTIFICATIONS_GOING,
+  },
   retryable(
     "gateway-users-party-ready-room-updated",
     RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED,
@@ -815,6 +819,10 @@ export class RabbitBridge {
     [RabbitRoutingKey.GUILDS_NOTIFICATIONS_SEND]: this.organizationEvent(
       "organization.notifications",
       "notification.sent",
+    ),
+    [RabbitRoutingKey.GUILDS_NOTIFICATIONS_GOING]: this.organizationEvent(
+      "organization.notifications",
+      "notification.going",
     ),
     [RabbitRoutingKey.GUILDS_PARTY_GATHERING]: this.organizationEvent(
       "organization.notifications",

@@ -540,4 +540,147 @@ return 1`,
       ).toBe("created");
     });
   }
+
+  const joinParticipant = async (
+    repository: ReturnType<typeof makeHarness>["repository"],
+    room: ReadyRoomAggregate,
+    participantId: string,
+    character: ReadyRoomAggregate["organizerCharacter"],
+  ) => {
+    const next: ReadyRoomAggregate = {
+      ...room,
+      revision: room.revision + 1,
+      participants: {
+        ...room.participants,
+        [participantId]: {
+          participantId,
+          discordId: `${room.notificationId}-player`,
+          character,
+          partyPresence: "OUTSIDE",
+          createdAt: room.createdAt,
+          updatedAt: room.updatedAt,
+        },
+      },
+    };
+
+    return {
+      next,
+      result: await Effect.runPromise(
+        repository.join(room, next, participantId),
+      ),
+    };
+  };
+
+  it("keeps an extended room discoverable and its applicants indexed past the original expiry", async () => {
+    let now = Date.now();
+    const { repository } = makeHarness(() => now);
+    const room = createAggregate(now);
+    expect((await Effect.runPromise(repository.create(room))).status).toBe(
+      "created",
+    );
+
+    const applicant = {
+      ...room.organizerCharacter,
+      accountId: `${room.notificationId}-account`,
+      characterId: `${room.notificationId}-applicant`,
+    };
+
+    const joined = await joinParticipant(
+      repository,
+      room,
+      "applicant",
+      applicant,
+    );
+
+    expect(joined.result.status).toBe("committed");
+
+    now += 50_000;
+
+    const extended: ReadyRoomAggregate = {
+      ...joined.next,
+      revision: joined.next.revision + 1,
+      expiresAt: new Date(now + 10 * 60_000).toISOString(),
+    };
+
+    expect(
+      (await Effect.runPromise(repository.extend(joined.next, extended)))
+        .status,
+    ).toBe("committed");
+
+    // Past the original expiry, every index still leads to the room.
+    now += 20_000;
+    expect(
+      await Effect.runPromise(repository.findActive(room.guildIds, room.world)),
+    ).toEqual([extended]);
+    expect(
+      await Effect.runPromise(
+        repository.findForUser(`${room.notificationId}-player`),
+      ),
+    ).toEqual([extended]);
+    expect(
+      await Effect.runPromise(repository.findForUser(room.organizerDiscordId)),
+    ).toEqual([extended]);
+    expect(
+      await redis.pttl(
+        `party-ready-room:v3:character:${room.world}:${applicant.characterId}`,
+      ),
+    ).toBeGreaterThan(5 * 60_000);
+
+    // A stale revision cannot extend the room again.
+    expect(
+      (await Effect.runPromise(repository.extend(joined.next, extended)))
+        .status,
+    ).toBe("conflict");
+  });
+
+  it("frees the previous character of an applicant who switched characters", async () => {
+    const { repository } = makeHarness();
+    const room = createAggregate();
+    expect((await Effect.runPromise(repository.create(room))).status).toBe(
+      "created",
+    );
+
+    const previous = {
+      ...room.organizerCharacter,
+      accountId: `${room.notificationId}-account`,
+      characterId: `${room.notificationId}-previous`,
+    };
+
+    const current = {
+      ...previous,
+      characterId: `${room.notificationId}-current`,
+    };
+
+    const joined = await joinParticipant(
+      repository,
+      room,
+      "applicant",
+      previous,
+    );
+
+    const switched = await joinParticipant(
+      repository,
+      joined.next,
+      "applicant",
+      current,
+    );
+
+    expect(switched.result.status).toBe("committed");
+
+    const other = createAggregate();
+    expect((await Effect.runPromise(repository.create(other))).status).toBe(
+      "created",
+    );
+
+    expect(
+      (await joinParticipant(repository, other, "current", current)).result,
+    ).toEqual({
+      status: "joined-elsewhere",
+      notificationId: room.notificationId,
+    });
+    expect(
+      (await joinParticipant(repository, other, "previous", previous)).result
+        .status,
+    ).toBe("committed");
+  });
 });

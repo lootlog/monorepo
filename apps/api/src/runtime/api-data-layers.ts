@@ -82,7 +82,7 @@ const coreDataLayers = Layer.mergeAll(
   MyReservationsData.layerDatabase,
   reservationMutationsData,
   accountOrganizationData,
-  timersData,
+  timersData.pipe(Layer.provide(readyRoomData)),
   heroSightingsData,
   recordsData,
   eventsData,

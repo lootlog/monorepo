@@ -23,6 +23,7 @@
     "./npc-appearance": "./src/npc-appearance.ts",
     "./npc-identity": "./src/npc-identity.ts",
     "./npc-presence": "./src/npc-presence.ts",
+    "./notification-going": "./src/notification-going.ts",
     "./npc-routing": "./src/npc-routing.ts",
     "./npc-type": "./src/npc-type.ts",
     "./openapi-compatibility": "./src/openapi-compatibility.ts",

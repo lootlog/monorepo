@@ -1,42 +1,18 @@
-import { useTranslation } from "react-i18next";
-import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
-import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
-import { getSelectedChatGuildId, useChatStore } from "@/store/chat.store";
+import { PlayerName } from "@/components/player-name";
+import type { GatheringOrganizer } from "@/features/chat/party-gathering-organizer";
 
 type Props = {
-  organizerDiscordId?: string;
-  guildIds: readonly string[];
+  organizer: GatheringOrganizer;
 };
 
-export function ChatGatheringHeader({ organizerDiscordId, guildIds }: Props) {
-  const { t } = useTranslation("chat");
-  const { visibleGuilds } = useLootlogGuilds();
-  const selectedGuildId = useChatStore(getSelectedChatGuildId);
-  const gatheringGuildIds = new Set(guildIds);
-
-  const gatheringGuilds = visibleGuilds.filter((guild) =>
-    gatheringGuildIds.has(guild.id),
-  );
-
-  const guildId =
-    gatheringGuilds.find((guild) => guild.id === selectedGuildId)?.id ??
-    gatheringGuilds[0]?.id ??
-    "";
-
-  const { data: members } = useGuildMembersSummary(
-    { guildId },
-    { query: { enabled: Boolean(guildId && organizerDiscordId) } },
-  );
-
-  const member = members?.find((entry) => entry.userId === organizerDiscordId);
-  const color = useMemberColor(member);
-
+/** The organizer's character; the clan has a line of its own below. */
+export function ChatGatheringHeader({ organizer }: Props) {
   return (
-    <span className="ll:min-h-[18px] ll:min-w-0 ll:[overflow-wrap:anywhere] ll:text-[12px] ll:leading-[18px]">
-      <span className="ll:font-semibold" style={{ color: `#${color}` }}>
-        {member?.name ?? t("contextMenu.unknownUser")}
-      </span>
-    </span>
+    <PlayerName
+      className="ll:min-h-[18px] ll:text-[12px] ll:leading-[18px] ll:font-semibold ll:text-white"
+      name={organizer.nick}
+      level={organizer.lvl}
+      profession={organizer.prof}
+    />
   );
 }

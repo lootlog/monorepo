@@ -226,7 +226,7 @@ describe("chat mutation source visibility", () => {
       fixture.endPartyGatheringMessages("party", ["organization"]),
     );
     const stored = JSON.parse(fixture.records[0] ?? "null");
-    expect(stored.message).toBe("Character zakończył zbieranie grupy");
+    expect(stored.message).toBe("Zbiórka Character zakończona");
     expect(stored.partyGathering).toBeUndefined();
     expect(fixture.published).toEqual([
       {

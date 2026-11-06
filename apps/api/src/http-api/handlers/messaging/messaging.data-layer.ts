@@ -2,14 +2,30 @@ import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { slidingWindowRateLimitScript } from "@lootlog/database/sliding-window-rate-limit";
 import type { PartyGatheringNpc } from "@lootlog/schema/party-ready-room";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
-import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import {
+  selectAccessibleGuildRoles,
+  selectAccessibleGuilds,
+} from "#src/members/member-access-query";
+import {
+  canReadNpcFeatureSource,
+  NOTIFICATION_SEND_PERMISSIONS,
+  NPC_FEATURE_PERMISSIONS,
+} from "@lootlog/domain/npc-permissions";
+import {
+  getNpcRoutingTier,
+  isRoutableNpcSource,
+} from "@lootlog/domain/npc-routing";
+import {
+  NotificationGoingPlayerSchema,
+  type NotificationGoingPlayer,
+} from "@lootlog/schema/notification-going";
+import { NpcRoutingDataSchema } from "@lootlog/schema/npc-routing";
 import { randomUUID } from "node:crypto";
 
-import { Clock, Effect, Layer, Schema } from "effect";
+import { Clock, Effect, Layer, Option, Schema } from "effect";
 import { getNpcType } from "@lootlog/domain/npc-type";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { NOTIFICATION_SEND_PERMISSIONS } from "@lootlog/domain/npc-permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 
 import {
@@ -17,12 +33,14 @@ import {
   PermissionDeniedError,
   DependencyUnavailableError,
   RateLimitedError,
+  ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import {
   MessagingData,
   MessagingOperationError,
 } from "./messaging.handlers.js";
 import type {
+  NotificationGoingRequest,
   SendNotificationRequest,
   VolunteerForPartyRequest,
 } from "#src/contracts/messaging/schemas";
@@ -41,19 +59,53 @@ const RATE_LIMIT_SCRIPT = slidingWindowRateLimitScript({
   includeTimestamp: false,
 });
 
-type NotificationMetadata = {
-  readonly discordId: string;
-  readonly guildIds: ReadonlyArray<string>;
-  readonly createdAt: string;
-};
+const NotificationMetadataSchema = Schema.Struct({
+  discordId: Schema.String,
+  guildIds: Schema.Array(Schema.String),
+  createdAt: Schema.String,
+  world: Schema.optionalKey(Schema.String),
+  npcName: Schema.optionalKey(Schema.String),
+  // The routing fields of an NPC notification, which decide who may see it.
+  npc: Schema.optionalKey(
+    Schema.Struct({ ...NpcRoutingDataSchema.fields, lvl: Schema.Number }),
+  ),
+});
+
+type NotificationMetadata = typeof NotificationMetadataSchema.Type;
 
 const NotificationMetadataJson = Schema.fromJsonString(
-  Schema.Struct({
-    discordId: Schema.String,
-    guildIds: Schema.Array(Schema.String),
-    createdAt: Schema.String,
-  }),
+  NotificationMetadataSchema,
 );
+
+const goingKey = (notificationId: string, guildId: string) =>
+  `notification:${notificationId}:going:${guildId}`;
+
+// Adds or removes one player and returns everyone still going.
+const UPDATE_GOING_SCRIPT = `
+if ARGV[1] == "1" then
+  redis.call("hset", KEYS[1], ARGV[2], ARGV[3])
+else
+  redis.call("hdel", KEYS[1], ARGV[2])
+end
+if redis.call("exists", KEYS[1]) == 1 then
+  redis.call("expire", KEYS[1], ARGV[4])
+end
+return redis.call("hvals", KEYS[1])
+`;
+
+const decodeGoingValues = Schema.decodeUnknownEffect(
+  Schema.Array(Schema.String),
+);
+
+const decodeGoingPlayer = Schema.decodeUnknownOption(
+  Schema.fromJsonString(NotificationGoingPlayerSchema),
+);
+
+// An entry that no longer decodes is skipped rather than failing the answer.
+const parseGoingPlayers = (
+  values: ReadonlyArray<string>,
+): NotificationGoingPlayer[] =>
+  values.flatMap((value) => Option.toArray(decodeGoingPlayer(value)));
 
 const decodeNotificationMetadata = Schema.decodeUnknownSync(
   NotificationMetadataJson,
@@ -77,7 +129,8 @@ export interface MessagingEvents {
   readonly publish: <
     Key extends
       | typeof RabbitRoutingKey.GUILDS_NOTIFICATIONS_SEND
-      | typeof RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER,
+      | typeof RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER
+      | typeof RabbitRoutingKey.GUILDS_NOTIFICATIONS_GOING,
   >(
     routingKey: Key,
     payload: CanonicalRabbitEvent<Key>,
@@ -259,9 +312,29 @@ export const makeMessagingDataLayer = (
                 });
               }
 
+              const metadataValue: NotificationMetadata = {
+                discordId,
+                guildIds,
+                createdAt,
+                world: data.world,
+                ...(data.npc && {
+                  npcName: data.npc.name,
+                  npc: {
+                    prof: data.npc.prof,
+                    type: getNpcType(NpcType, data.npc),
+                    wt: data.npc.wt,
+                    icon: data.npc.icon,
+                    lvl: data.npc.lvl,
+                    ...(data.npc.isHeroFromEvent !== undefined && {
+                      isHeroFromEvent: data.npc.isHeroFromEvent,
+                    }),
+                  },
+                }),
+              };
+
               yield* redis.set(
                 `notification:${notificationId}`,
-                JSON.stringify({ discordId, guildIds, createdAt }),
+                JSON.stringify(metadataValue),
                 NOTIFICATION_TTL_SECONDS,
               );
               const { guildIds: _guildIds, heroTracker, ...rest } = data;
@@ -360,6 +433,124 @@ export const makeMessagingDataLayer = (
                 .pipe(ignorePublicationFailure);
             }).pipe(
               Effect.withSpan("MessagingControllerVolunteer", {
+                attributes: { adapter: "Redis/RabbitMessaging", retryCount: 0 },
+              }),
+            ),
+          ),
+        going: (discordId, notificationId, data: NotificationGoingRequest) =>
+          operation(
+            Effect.gen(function* () {
+              const stored = yield* metadata(notificationId);
+              const npc = stored?.npc;
+
+              if (!stored || !npc || stored.world !== data.world) {
+                return yield* Effect.fail(
+                  new ResourceNotFoundError({ code: "NOTIFICATION_NOT_FOUND" }),
+                );
+              }
+
+              const access = yield* selectAccessibleGuildRoles(
+                database,
+                discordId,
+                [NPC_FEATURE_PERMISSIONS.notifications.base],
+              );
+
+              const routing = isRoutableNpcSource(npc)
+                ? { tier: getNpcRoutingTier(npc), npcLevel: npc.lvl }
+                : null;
+
+              // Only the Lootlogs where the caller could read the notification
+              // learn the answer; the others that received it never do.
+              const guildIds = stored.guildIds.filter((guildId) => {
+                const guild = access.get(guildId);
+
+                return (
+                  guild !== undefined &&
+                  routing !== null &&
+                  (guild.administers ||
+                    canReadNpcFeatureSource(
+                      guild.roles,
+                      "notifications",
+                      routing,
+                    ))
+                );
+              });
+
+              if (guildIds.length === 0) {
+                return yield* Effect.fail(new PermissionDeniedError());
+              }
+
+              const now = yield* Clock.currentTimeMillis;
+
+              const ttl = Math.ceil(
+                (Date.parse(stored.createdAt) +
+                  NOTIFICATION_TTL_SECONDS * 1000 -
+                  now) /
+                  1000,
+              );
+
+              if (ttl <= 0) {
+                return yield* Effect.fail(
+                  new ResourceNotFoundError({ code: "NOTIFICATION_NOT_FOUND" }),
+                );
+              }
+
+              const player: NotificationGoingPlayer = {
+                discordId,
+                characterId: data.character.characterId,
+                nick: data.character.nick,
+                lvl: data.character.lvl,
+                prof: data.character.prof,
+                icon: data.character.icon,
+                ...(data.character.clan && { clan: data.character.clan }),
+              };
+
+              const lists = yield* Effect.forEach(
+                guildIds,
+                (guildId) =>
+                  redis
+                    .eval(
+                      UPDATE_GOING_SCRIPT,
+                      [goingKey(notificationId, guildId)],
+                      [
+                        data.going ? "1" : "0",
+                        discordId,
+                        JSON.stringify(player),
+                        ttl,
+                      ],
+                    )
+                    .pipe(
+                      Effect.flatMap(decodeGoingValues),
+                      Effect.map(parseGoingPlayers),
+                      Effect.tap((going) =>
+                        events
+                          .publish(
+                            RabbitRoutingKey.GUILDS_NOTIFICATIONS_GOING,
+                            {
+                              guildId,
+                              world: data.world,
+                              notificationId,
+                              reporterDiscordId: stored.discordId,
+                              npcName: stored.npcName ?? "",
+                              npc,
+                              going,
+                            },
+                          )
+                          .pipe(Effect.ignore),
+                      ),
+                    ),
+                { concurrency: "unbounded" },
+              );
+
+              const going = [
+                ...new Map(
+                  lists.flat().map((entry) => [entry.discordId, entry]),
+                ).values(),
+              ];
+
+              return { notificationId, going };
+            }).pipe(
+              Effect.withSpan("MessagingControllerGoing", {
                 attributes: { adapter: "Redis/RabbitMessaging", retryCount: 0 },
               }),
             ),

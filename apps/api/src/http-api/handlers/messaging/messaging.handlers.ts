@@ -6,7 +6,9 @@ import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
+  NotificationGoingResponse,
   SentNotificationResponse,
+  type NotificationGoingRequest,
   type SendNotificationRequest,
   type VolunteerForPartyRequest,
 } from "#src/contracts/messaging/schemas";
@@ -43,6 +45,11 @@ export class MessagingData extends Context.Service<
       notificationId: string,
       payload: VolunteerForPartyRequest,
     ) => Effect.Effect<void, MessagingOperationError>;
+    readonly going: (
+      discordId: string,
+      notificationId: string,
+      payload: NotificationGoingRequest,
+    ) => Effect.Effect<unknown, MessagingOperationError>;
   }
 >()("@lootlog/api/http-api/messaging/data") {}
 
@@ -69,6 +76,25 @@ const volunteerForNotification = (
     yield* data.volunteer(authenticated.discordId, notificationId, payload);
   });
 
+export const answerNotificationGoing = (
+  notificationId: string,
+  payload: NotificationGoingRequest,
+) =>
+  Effect.gen(function* () {
+    const authenticated = yield* caller;
+    const data = yield* MessagingData;
+
+    const result = yield* data.going(
+      authenticated.discordId,
+      notificationId,
+      payload,
+    );
+
+    return yield* Schema.decodeUnknownEffect(NotificationGoingResponse)(
+      result,
+    ).pipe(Effect.mapError((cause) => new MessagingOperationError({ cause })));
+  });
+
 type MessagingHttpFailure = MessagingAccessDenied | MessagingOperationError;
 
 const orDieHttpFailure = <A, R>(
@@ -90,6 +116,11 @@ export const MessagingHandlers = HttpApiBuilder.group(
       .handle("MessagingControllerVolunteer", ({ params, payload }) =>
         orDieHttpFailure(
           volunteerForNotification(params.notificationId, payload),
+        ),
+      )
+      .handle("MessagingControllerGoing", ({ params, payload }) =>
+        orDieHttpFailure(
+          answerNotificationGoing(params.notificationId, payload),
         ),
       ),
 );

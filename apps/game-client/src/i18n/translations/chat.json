@@ -48,7 +48,13 @@
     "withdrawing": "Wycofywanie…",
     "retry": "Odśwież",
     "partyMemberCountStale": "Ostatnio w grupie: {{count}}/10. Stan może być nieaktualny.",
-    "countsStale": "(~{{inParty}}/10)"
+    "countsStale": "(~{{inParty}}/10)",
+    "minutesLeft": "{{minutes}} min",
+    "minutesLeftLabel": "Zbiórka wygasa za {{minutes}} min",
+    "expiring": "wygasa…",
+    "organizerMap": "Organizator: {{map}}",
+    "extend": "Przedłuż",
+    "extendLabel": "Przedłuż zbiórkę o 10 minut"
   },
   "integration": {
     "tab": "Lootlog",

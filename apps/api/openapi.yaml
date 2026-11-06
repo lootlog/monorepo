@@ -10885,6 +10885,89 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateVolunteerDto"
         required: true
+  /messaging/{notificationId}/going:
+    put:
+      tags:
+        - messaging
+      operationId: MessagingController_going
+      parameters:
+        - name: notificationId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: NotificationGoingResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationGoingResponseDto_Output"
+        "400":
+          description: HttpErrorResponse | RequestValidationError
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: HttpErrorResponse | ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Tell your Lootlog that you are going to the notification's NPC, or take it back. Members who received the notification see who is going.
+      summary: Answer an NPC notification with going
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationGoingDto"
+        required: true
   /messaging/party-gathering/active:
     get:
       tags:
@@ -11703,6 +11786,98 @@ paths:
                 required:
                   - message
                 additionalProperties: false
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomExpectedRevisionDto"
+        required: true
+  /messaging/party-gathering/{notificationId}/extension:
+    post:
+      tags:
+        - party-ready-room
+      operationId: PartyReadyRoomController_extend
+      parameters:
+        - name: notificationId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "201":
+          description: PartyReadyRoomProjectionDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: HttpErrorResponse | ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "422":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      summary: Restart the organizer's party gathering lifetime
       requestBody:
         content:
           application/json:
@@ -24638,6 +24813,351 @@ components:
               additionalProperties: false
           additionalProperties: false
       additionalProperties: false
+    PartyReadyRoomProjectionDto_Output:
+      type: object
+      properties:
+        npc:
+          type: object
+          properties:
+            id:
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
+            prof:
+              type: string
+            icon:
+              type: string
+            name:
+              type: string
+            location:
+              type: string
+            lvl:
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
+            type:
+              type: string
+            x:
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
+            y:
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
+          required:
+            - name
+            - location
+            - lvl
+            - type
+          additionalProperties: false
+        schemaVersion:
+          type: number
+          enum:
+            - 3
+        notificationId:
+          type: string
+        organizerDiscordId:
+          type: string
+        organizerCharacter:
+          type: object
+          properties:
+            lvl:
+              type: number
+            nick:
+              type: string
+              minLength: 1
+              maxLength: 255
+            accountId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            characterId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            prof:
+              type: string
+              minLength: 1
+              maxLength: 100
+            icon:
+              type: string
+              minLength: 1
+              maxLength: 2048
+            clan:
+              type: object
+              properties:
+                id:
+                  type: number
+                name:
+                  type: string
+                  maxLength: 255
+              additionalProperties: false
+          required:
+            - lvl
+            - nick
+            - accountId
+            - characterId
+            - prof
+            - icon
+          additionalProperties: false
+        organizerMapName:
+          type: string
+        guildIds:
+          type: array
+          items:
+            type: string
+        world:
+          type: string
+        description:
+          type: string
+        minLvl:
+          type: number
+        maxLvl:
+          type: number
+        partyMemberCount:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        partyState:
+          anyOf:
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - UNKNOWN
+              required:
+                - status
+              additionalProperties: false
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - OBSERVED
+                observedAt:
+                  type: string
+                  format: date-time
+                  pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                members:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      characterId:
+                        type: string
+                        minLength: 1
+                        maxLength: 255
+                      nick:
+                        type: string
+                        maxLength: 255
+                      icon:
+                        type: string
+                        maxLength: 2048
+                      lvl:
+                        type: number
+                      prof:
+                        type: string
+                        maxLength: 100
+                    required:
+                      - characterId
+                    additionalProperties: false
+                  maxItems: 20
+              required:
+                - status
+                - observedAt
+                - members
+              additionalProperties: false
+        volunteers:
+          type: array
+          items:
+            type: object
+            properties:
+              characterId:
+                type: string
+                minLength: 1
+                maxLength: 255
+              nick:
+                type: string
+                maxLength: 255
+              icon:
+                type: string
+                maxLength: 2048
+              lvl:
+                type: number
+              prof:
+                type: string
+                maxLength: 100
+              clan:
+                type: object
+                properties:
+                  id:
+                    anyOf:
+                      - type: number
+                      - type: string
+                        enum:
+                          - Infinity
+                          - -Infinity
+                          - NaN
+                  name:
+                    type: string
+                additionalProperties: false
+              partyPresence:
+                type: string
+                enum:
+                  - OUTSIDE
+                  - IN_PARTY
+            required:
+              - characterId
+              - nick
+              - icon
+              - lvl
+              - prof
+              - partyPresence
+            additionalProperties: false
+        status:
+          type: string
+          enum:
+            - ACTIVE
+        revision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        expiresAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        viewer:
+          type: string
+          enum:
+            - ORGANIZER
+            - PARTICIPANT
+        participants:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              participantId:
+                type: string
+              discordId:
+                type: string
+              character:
+                type: object
+                properties:
+                  lvl:
+                    type: number
+                  nick:
+                    type: string
+                    minLength: 1
+                    maxLength: 255
+                  accountId:
+                    type: string
+                    minLength: 1
+                    maxLength: 255
+                  characterId:
+                    type: string
+                    minLength: 1
+                    maxLength: 255
+                  prof:
+                    type: string
+                    minLength: 1
+                    maxLength: 100
+                  icon:
+                    type: string
+                    minLength: 1
+                    maxLength: 2048
+                  clan:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                      name:
+                        type: string
+                        maxLength: 255
+                    additionalProperties: false
+                required:
+                  - lvl
+                  - nick
+                  - accountId
+                  - characterId
+                  - prof
+                  - icon
+                additionalProperties: false
+              partyPresence:
+                type: string
+                enum:
+                  - OUTSIDE
+                  - IN_PARTY
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              updatedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            required:
+              - participantId
+              - discordId
+              - character
+              - partyPresence
+              - createdAt
+              - updatedAt
+            additionalProperties: false
+        ownedParticipantIds:
+          type: array
+          items:
+            type: string
+      required:
+        - schemaVersion
+        - notificationId
+        - organizerDiscordId
+        - organizerCharacter
+        - guildIds
+        - world
+        - status
+        - revision
+        - createdAt
+        - updatedAt
+        - expiresAt
+        - viewer
+        - participants
+      additionalProperties: false
+    PartyReadyRoomExpectedRevisionDto:
+      type: object
+      properties:
+        expectedRevision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+      required:
+        - expectedRevision
+      additionalProperties: false
     PartyReadyRoomClientUpdateDto_Output:
       type: object
       properties:
@@ -24656,6 +25176,14 @@ components:
             npc:
               type: object
               properties:
+                id:
+                  anyOf:
+                    - type: number
+                    - type: string
+                      enum:
+                        - Infinity
+                        - -Infinity
+                        - NaN
                 prof:
                   type: string
                 icon:
@@ -24746,6 +25274,8 @@ components:
                 - prof
                 - icon
               additionalProperties: false
+            organizerMapName:
+              type: string
             guildIds:
               type: array
               items:
@@ -24832,6 +25362,20 @@ components:
                   prof:
                     type: string
                     maxLength: 100
+                  clan:
+                    type: object
+                    properties:
+                      id:
+                        anyOf:
+                          - type: number
+                          - type: string
+                            enum:
+                              - Infinity
+                              - -Infinity
+                              - NaN
+                      name:
+                        type: string
+                    additionalProperties: false
                   partyPresence:
                     type: string
                     enum:
@@ -24971,327 +25515,6 @@ components:
         - schemaVersion
         - type
       additionalProperties: false
-    PartyReadyRoomExpectedRevisionDto:
-      type: object
-      properties:
-        expectedRevision:
-          type: integer
-          minimum: 1
-          maximum: 9007199254740991
-      required:
-        - expectedRevision
-      additionalProperties: false
-    PartyReadyRoomProjectionDto_Output:
-      type: object
-      properties:
-        npc:
-          type: object
-          properties:
-            prof:
-              type: string
-            icon:
-              type: string
-            name:
-              type: string
-            location:
-              type: string
-            lvl:
-              anyOf:
-                - type: number
-                - type: string
-                  enum:
-                    - Infinity
-                    - -Infinity
-                    - NaN
-            type:
-              type: string
-            x:
-              anyOf:
-                - type: number
-                - type: string
-                  enum:
-                    - Infinity
-                    - -Infinity
-                    - NaN
-            y:
-              anyOf:
-                - type: number
-                - type: string
-                  enum:
-                    - Infinity
-                    - -Infinity
-                    - NaN
-          required:
-            - name
-            - location
-            - lvl
-            - type
-          additionalProperties: false
-        schemaVersion:
-          type: number
-          enum:
-            - 3
-        notificationId:
-          type: string
-        organizerDiscordId:
-          type: string
-        organizerCharacter:
-          type: object
-          properties:
-            lvl:
-              type: number
-            nick:
-              type: string
-              minLength: 1
-              maxLength: 255
-            accountId:
-              type: string
-              minLength: 1
-              maxLength: 255
-            characterId:
-              type: string
-              minLength: 1
-              maxLength: 255
-            prof:
-              type: string
-              minLength: 1
-              maxLength: 100
-            icon:
-              type: string
-              minLength: 1
-              maxLength: 2048
-            clan:
-              type: object
-              properties:
-                id:
-                  type: number
-                name:
-                  type: string
-                  maxLength: 255
-              additionalProperties: false
-          required:
-            - lvl
-            - nick
-            - accountId
-            - characterId
-            - prof
-            - icon
-          additionalProperties: false
-        guildIds:
-          type: array
-          items:
-            type: string
-        world:
-          type: string
-        description:
-          type: string
-        minLvl:
-          type: number
-        maxLvl:
-          type: number
-        partyMemberCount:
-          type: integer
-          minimum: 0
-          maximum: 9007199254740991
-        partyState:
-          anyOf:
-            - type: object
-              properties:
-                status:
-                  type: string
-                  enum:
-                    - UNKNOWN
-              required:
-                - status
-              additionalProperties: false
-            - type: object
-              properties:
-                status:
-                  type: string
-                  enum:
-                    - OBSERVED
-                observedAt:
-                  type: string
-                  format: date-time
-                  pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                members:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      characterId:
-                        type: string
-                        minLength: 1
-                        maxLength: 255
-                      nick:
-                        type: string
-                        maxLength: 255
-                      icon:
-                        type: string
-                        maxLength: 2048
-                      lvl:
-                        type: number
-                      prof:
-                        type: string
-                        maxLength: 100
-                    required:
-                      - characterId
-                    additionalProperties: false
-                  maxItems: 20
-              required:
-                - status
-                - observedAt
-                - members
-              additionalProperties: false
-        volunteers:
-          type: array
-          items:
-            type: object
-            properties:
-              characterId:
-                type: string
-                minLength: 1
-                maxLength: 255
-              nick:
-                type: string
-                maxLength: 255
-              icon:
-                type: string
-                maxLength: 2048
-              lvl:
-                type: number
-              prof:
-                type: string
-                maxLength: 100
-              partyPresence:
-                type: string
-                enum:
-                  - OUTSIDE
-                  - IN_PARTY
-            required:
-              - characterId
-              - nick
-              - icon
-              - lvl
-              - prof
-              - partyPresence
-            additionalProperties: false
-        status:
-          type: string
-          enum:
-            - ACTIVE
-        revision:
-          type: integer
-          minimum: 1
-          maximum: 9007199254740991
-        createdAt:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        updatedAt:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        expiresAt:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        viewer:
-          type: string
-          enum:
-            - ORGANIZER
-            - PARTICIPANT
-        participants:
-          type: object
-          additionalProperties:
-            type: object
-            properties:
-              participantId:
-                type: string
-              discordId:
-                type: string
-              character:
-                type: object
-                properties:
-                  lvl:
-                    type: number
-                  nick:
-                    type: string
-                    minLength: 1
-                    maxLength: 255
-                  accountId:
-                    type: string
-                    minLength: 1
-                    maxLength: 255
-                  characterId:
-                    type: string
-                    minLength: 1
-                    maxLength: 255
-                  prof:
-                    type: string
-                    minLength: 1
-                    maxLength: 100
-                  icon:
-                    type: string
-                    minLength: 1
-                    maxLength: 2048
-                  clan:
-                    type: object
-                    properties:
-                      id:
-                        type: number
-                      name:
-                        type: string
-                        maxLength: 255
-                    additionalProperties: false
-                required:
-                  - lvl
-                  - nick
-                  - accountId
-                  - characterId
-                  - prof
-                  - icon
-                additionalProperties: false
-              partyPresence:
-                type: string
-                enum:
-                  - OUTSIDE
-                  - IN_PARTY
-              createdAt:
-                type: string
-                format: date-time
-                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-              updatedAt:
-                type: string
-                format: date-time
-                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            required:
-              - participantId
-              - discordId
-              - character
-              - partyPresence
-              - createdAt
-              - updatedAt
-            additionalProperties: false
-        ownedParticipantIds:
-          type: array
-          items:
-            type: string
-      required:
-        - schemaVersion
-        - notificationId
-        - organizerDiscordId
-        - organizerCharacter
-        - guildIds
-        - world
-        - status
-        - revision
-        - createdAt
-        - updatedAt
-        - expiresAt
-        - viewer
-        - participants
-      additionalProperties: false
     PartyReadyRoomObservationDto:
       type: object
       properties:
@@ -25338,6 +25561,11 @@ components:
           type: string
           minLength: 1
           maxLength: 255
+        organizerMapName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: The map the organizer stands on, so applicants know where to go.
       required:
         - memberCharacterIds
         - organizerAccountId
@@ -25543,6 +25771,22 @@ components:
           type: number
         organizerProf:
           type: string
+        organizerClan:
+          type: object
+          properties:
+            id:
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
+            name:
+              type: string
+          additionalProperties: false
+        organizerMapName:
+          type: string
         applicantCount:
           type: integer
           minimum: 0
@@ -25579,6 +25823,20 @@ components:
               prof:
                 type: string
                 maxLength: 100
+              clan:
+                type: object
+                properties:
+                  id:
+                    anyOf:
+                      - type: number
+                      - type: string
+                        enum:
+                          - Infinity
+                          - -Infinity
+                          - NaN
+                  name:
+                    type: string
+                additionalProperties: false
               partyPresence:
                 type: string
                 enum:
@@ -25657,6 +25915,14 @@ components:
         npc:
           type: object
           properties:
+            id:
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
             prof:
               type: string
             icon:
@@ -25713,6 +25979,118 @@ components:
         - world
         - createdAt
         - expiresAt
+      additionalProperties: false
+    NotificationGoingResponseDto_Output:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          minLength: 1
+        going:
+          type: array
+          items:
+            type: object
+            properties:
+              discordId:
+                type: string
+              characterId:
+                type: string
+              nick:
+                type: string
+              lvl:
+                anyOf:
+                  - type: number
+                  - type: string
+                    enum:
+                      - Infinity
+                      - -Infinity
+                      - NaN
+              prof:
+                type: string
+              icon:
+                type: string
+              clan:
+                type: object
+                properties:
+                  id:
+                    anyOf:
+                      - type: number
+                      - type: string
+                        enum:
+                          - Infinity
+                          - -Infinity
+                          - NaN
+                  name:
+                    type: string
+                additionalProperties: false
+            required:
+              - discordId
+              - characterId
+              - nick
+              - lvl
+              - prof
+              - icon
+            additionalProperties: false
+      required:
+        - notificationId
+        - going
+      additionalProperties: false
+    NotificationGoingDto:
+      type: object
+      properties:
+        world:
+          type: string
+          minLength: 1
+          maxLength: 50
+        character:
+          type: object
+          properties:
+            lvl:
+              type: number
+            nick:
+              type: string
+              minLength: 1
+              maxLength: 255
+            accountId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            characterId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            prof:
+              type: string
+              minLength: 1
+              maxLength: 100
+            icon:
+              type: string
+              minLength: 1
+              maxLength: 2048
+            clan:
+              type: object
+              properties:
+                id:
+                  type: number
+                name:
+                  type: string
+                  maxLength: 255
+              additionalProperties: false
+          required:
+            - lvl
+            - nick
+            - accountId
+            - characterId
+            - prof
+            - icon
+          additionalProperties: false
+        going:
+          type: boolean
+          description: Whether the caller is going to the NPC or takes it back.
+      required:
+        - world
+        - character
+        - going
       additionalProperties: false
     CreateVolunteerDto:
       type: object
