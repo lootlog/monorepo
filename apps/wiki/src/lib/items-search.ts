@@ -4,6 +4,7 @@ import {
 } from "@lootlog/client/search";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { findEquipmentSlotById } from "@/lib/equipment-slots";
+import { findMargonemWorld } from "@/lib/margonem-worlds";
 
 /**
  * The item search as the address bar holds it, so a link opens the same
@@ -16,9 +17,12 @@ export type ItemsSearch = {
   types: string;
   professions: string;
   rarities: string;
-  minLevel: string;
-  maxLevel: string;
+  minLevel: number | undefined;
+  maxLevel: number | undefined;
   stats: string;
+  events: string;
+  /** The world whose character searches: events it never saw stay out. */
+  world: string;
   bonuses: string;
   bosses: string;
   sort: string;
@@ -62,7 +66,22 @@ export const STAT_OPTIONS = [
   "pierce",
   "blok",
   "absorb",
+  "critval",
+  "heal",
+  "manabon",
+  "energybon",
 ] as const;
+
+/**
+ * Whether event items show: all of them, none (`exclude`) or only them
+ * (`only`). Event items carry the `etiquette` stat that names their events.
+ */
+export const EVENT_OPTIONS = ["exclude", "only"] as const;
+
+type EventOption = (typeof EVENT_OPTIONS)[number];
+
+const isEventOption = (value: unknown): value is EventOption =>
+  EVENT_OPTIONS.some((option) => option === value);
 
 export const splitList = (value: string) =>
   value
@@ -81,6 +100,8 @@ export function validateItemsSearch(search: {
   minLevel?: unknown;
   maxLevel?: unknown;
   stats?: unknown;
+  events?: unknown;
+  world?: unknown;
   bonuses?: unknown;
   bosses?: unknown;
   sort?: unknown;
@@ -95,16 +116,14 @@ export function validateItemsSearch(search: {
     professions:
       typeof search.professions === "string" ? search.professions : "",
     rarities: typeof search.rarities === "string" ? search.rarities : "",
-    // The router reads `?minLevel=200` as a number and a level it wrote as text.
-    minLevel:
-      typeof search.minLevel === "number" || typeof search.minLevel === "string"
-        ? String(search.minLevel)
-        : "",
-    maxLevel:
-      typeof search.maxLevel === "number" || typeof search.maxLevel === "string"
-        ? String(search.maxLevel)
-        : "",
+    minLevel: readLevel(String(search.minLevel ?? "")),
+    maxLevel: readLevel(String(search.maxLevel ?? "")),
     stats: typeof search.stats === "string" ? search.stats : "",
+    events: isEventOption(search.events) ? search.events : "",
+    world:
+      typeof search.world === "string" && findMargonemWorld(search.world)
+        ? search.world
+        : "",
     bonuses: typeof search.bonuses === "string" ? search.bonuses : "",
     bosses: typeof search.bosses === "string" ? search.bosses : "",
     sort:
@@ -114,8 +133,12 @@ export function validateItemsSearch(search: {
   };
 }
 
-export const readLevel = (value: string) => {
-  const level = Number.parseInt(value, 10);
+/**
+ * A level the address bar holds: the router reads `?minLevel=200` as a
+ * number, and links written before levels were numbers hold `"200"`.
+ */
+const readLevel = (value: string) => {
+  const level = Number.parseInt(value.replaceAll('"', ""), 10);
 
   return Number.isInteger(level) && level > 0 ? level : undefined;
 };
@@ -132,9 +155,14 @@ export const toCatalogParams = (
   ],
   professions: splitList(search.professions),
   rarities: splitList(search.rarities),
-  minLevel: readLevel(search.minLevel),
-  maxLevel: readLevel(search.maxLevel),
-  statKeys: splitList(search.stats),
+  minLevel: search.minLevel,
+  maxLevel: search.maxLevel,
+  statKeys: [
+    ...splitList(search.stats),
+    ...(search.events === "only" ? (["etiquette"] as const) : []),
+  ],
+  excludedStatKeys: search.events === "exclude" ? ["etiquette"] : [],
+  availableSince: findMargonemWorld(search.world)?.openedOn,
   legendaryBonuses: splitList(search.bonuses),
   dropSourceTypes: splitList(search.bosses),
   sort: effectiveSort(search),

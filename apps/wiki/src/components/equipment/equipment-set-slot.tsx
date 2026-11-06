@@ -38,7 +38,7 @@ export function EquipmentSetSlot({ slot, worn }: EquipmentSetSlotProps) {
           ...EMPTY_ITEMS_SEARCH,
           slot: slot.id,
           professions: set.profession ?? "",
-          maxLevel: set.level === null ? "" : String(set.level),
+          maxLevel: set.level ?? undefined,
         }}
         aria-label={t("equipment.findForSlot", { slot: label })}
         title={label}
