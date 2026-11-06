@@ -1,4 +1,3 @@
-import { animate, useMotionValue } from "framer-motion";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
@@ -10,17 +9,18 @@ import {
 } from "./get-day-swipe-direction";
 import {
   LONG_PRESS_DURATION_MS,
-  SWIPE_COMMIT_TRANSITION,
+  SWIPE_COMMIT_TIMING,
   SWIPE_DRAG_THRESHOLD_PX,
-  SWIPE_RETURN_TRANSITION,
+  SWIPE_RETURN_TIMING,
   TOUCH_MOVE_TOLERANCE_PX,
+  addSwipeSample,
   getDateAtMinutes,
   type DaySelection,
   type TouchSession,
   getMinutesFromClientY,
   getSelectedRange,
+  getSwipeVelocity,
   isReservationTarget,
-  resetSwipePosition,
 } from "./mobile-day-interactions";
 import { isReservationStartSelectable } from "./reservation-settings";
 import { useScrollToNowIndicator } from "./use-scroll-to-now-indicator";
@@ -49,12 +49,14 @@ export function useMobileDaySchedule({
   onDaySwipe,
   onRangeSelect,
 }: MobileDayScheduleProps) {
-  const swipeX = useMotionValue(0);
   const shouldReduceMotion = usePrefersReducedMotion();
   const isDaySwipeEnabled = useMobileDaySwipe();
   const gridRef = useRef<HTMLDivElement>(null);
   const nowRef = useRef<HTMLDivElement>(null);
   const swipeSurfaceRef = useRef<HTMLDivElement>(null);
+  const swipeTrackRef = useRef<HTMLDivElement>(null);
+  const swipeAnimationRef = useRef<Animation | null>(null);
+  const swipeOffsetRef = useRef(0);
   const selectionRef = useRef<DaySelection | null>(null);
   const touchSessionRef = useRef<TouchSession | null>(null);
   const contextMenuOpenRef = useRef(false);
@@ -96,6 +98,52 @@ export function useMobileDaySchedule({
     }, 0);
   };
 
+  /**
+   * The track follows the finger by writing its transform directly: it is a
+   * compositor layer, so a move neither re-renders React nor repaints.
+   */
+  const setSwipeOffset = (offset: number) => {
+    swipeOffsetRef.current = offset;
+    const track = swipeTrackRef.current;
+
+    if (!track) return;
+    track.style.transform = offset === 0 ? "none" : `translateX(${offset}px)`;
+  };
+
+  const resetSwipe = () => {
+    swipeAnimationRef.current?.cancel();
+    swipeAnimationRef.current = null;
+    setSwipeOffset(0);
+  };
+
+  /**
+   * Web Animations run on the compositor, so rendering the next day cannot
+   * stall the motion. The final frame holds until the caller resets it.
+   */
+  const animateSwipeTo = async (
+    offset: number,
+    timing: KeyframeAnimationOptions,
+  ) => {
+    const track = swipeTrackRef.current;
+    const from = swipeOffsetRef.current;
+
+    swipeAnimationRef.current?.cancel();
+    setSwipeOffset(offset);
+
+    if (!track) return;
+
+    const animation = track.animate(
+      [
+        { transform: `translateX(${from}px)` },
+        { transform: `translateX(${offset}px)` },
+      ],
+      { ...timing, fill: "forwards" },
+    );
+
+    swipeAnimationRef.current = animation;
+    await animation.finished;
+  };
+
   const finishDaySwipe = useEffectEvent(
     async ({ offsetX, velocityX }: { offsetX: number; velocityX: number }) => {
       const surface = swipeSurfaceRef.current;
@@ -113,7 +161,7 @@ export function useMobileDaySchedule({
 
       if (direction === null) {
         if (shouldReduceMotion) {
-          swipeX.set(0);
+          resetSwipe();
           clearSuppressedClickAfterCurrentEvent();
 
           return;
@@ -122,10 +170,11 @@ export function useMobileDaySchedule({
         swipeTransitioningRef.current = true;
 
         try {
-          swipeX.stop();
-          await animate(swipeX, 0, SWIPE_RETURN_TRANSITION);
+          await animateSwipeTo(0, SWIPE_RETURN_TIMING);
+        } catch {
+          // Cancelled by an unmount or a reset, which leaves the track settled.
         } finally {
-          swipeX.set(0);
+          resetSwipe();
           swipeTransitioningRef.current = false;
           suppressClickRef.current = false;
         }
@@ -134,7 +183,7 @@ export function useMobileDaySchedule({
       }
 
       if (shouldReduceMotion) {
-        swipeX.set(0);
+        resetSwipe();
         onDaySwipe(direction);
         clearSuppressedClickAfterCurrentEvent();
 
@@ -145,14 +194,16 @@ export function useMobileDaySchedule({
       const exitOffset = direction === 1 ? -width : width;
 
       try {
-        swipeX.stop();
-        await animate(swipeX, exitOffset, SWIPE_COMMIT_TRANSITION);
+        await animateSwipeTo(exitOffset, SWIPE_COMMIT_TIMING);
+        // The neighbouring day is on screen; render it as the current one
+        // before the track moves back, so both land in the same frame.
         flushSync(() => {
           onDaySwipe(direction);
         });
-        swipeX.set(0);
+      } catch {
+        // Cancelled by an unmount or a reset; the day stays as it was.
       } finally {
-        swipeX.set(0);
+        resetSwipe();
         swipeTransitioningRef.current = false;
         suppressClickRef.current = false;
       }
@@ -163,9 +214,9 @@ export function useMobileDaySchedule({
 
   useEffect(
     () => () => {
-      swipeX.stop();
+      swipeAnimationRef.current?.cancel();
     },
-    [swipeX],
+    [],
   );
 
   // eslint-disable-next-line react-doctor/effect-needs-cleanup -- clearLongPress cancels the callback-owned timer; cleanup removes all four touch listeners.
@@ -215,7 +266,7 @@ export function useMobileDaySchedule({
         identifier: touch.identifier,
         latestClientX: touch.clientX,
         latestClientY: touch.clientY,
-        startedAt: Date.now(),
+        samples: [{ clientX: touch.clientX, time: Date.now() }],
         startClientX: touch.clientX,
         startClientY: touch.clientY,
         swiping: false,
@@ -243,7 +294,7 @@ export function useMobileDaySchedule({
         }
 
         session.activated = true;
-        resetSwipePosition(swipeX);
+        resetSwipe();
         suppressClickRef.current = true;
 
         const nextSelection: DaySelection = {
@@ -287,8 +338,8 @@ export function useMobileDaySchedule({
           }
 
           event.preventDefault();
-          swipeX.stop();
-          swipeX.set(offsetX);
+          addSwipeSample(session, touch.clientX, Date.now());
+          setSwipeOffset(offsetX);
 
           return;
         }
@@ -329,19 +380,17 @@ export function useMobileDaySchedule({
         event.preventDefault();
         const touch = getTrackedTouch(event.changedTouches, session.identifier);
         const endClientX = touch?.clientX ?? session.latestClientX;
-        const elapsedMilliseconds = Math.max(1, Date.now() - session.startedAt);
         touchSessionRef.current = null;
         void finishDaySwipe({
           offsetX: endClientX - session.startClientX,
-          velocityX:
-            ((endClientX - session.startClientX) / elapsedMilliseconds) * 1000,
+          velocityX: getSwipeVelocity(session, endClientX, Date.now()),
         });
 
         return;
       }
 
       if (session.activated) {
-        resetSwipePosition(swipeX);
+        resetSwipe();
         event.preventDefault();
         const finishedSelection = selectionRef.current;
         selectionRef.current = null;
@@ -373,7 +422,7 @@ export function useMobileDaySchedule({
       setSelection(null);
 
       if (!swipeTransitioningRef.current) {
-        resetSwipePosition(swipeX);
+        resetSwipe();
         suppressClickRef.current = false;
       }
     };
@@ -396,7 +445,6 @@ export function useMobileDaySchedule({
     isDaySwipeEnabled,
     minuteStep,
     onRangeSelect,
-    swipeX,
   ]);
 
   const selectionStyle = (() => {
@@ -438,8 +486,9 @@ export function useMobileDaySchedule({
 
   return {
     swipeSurfaceRef,
+    swipeTrackRef,
     isDaySwipeEnabled,
-    swipeX,
+    resetSwipe,
     gridRef,
     contextMenuOpenRef,
     suppressClickRef,
