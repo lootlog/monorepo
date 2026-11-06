@@ -9,6 +9,7 @@ export const landingDocumentPaths = [
 ];
 
 export const links = {
+  wiki: "https://wiki.lootlog.pl",
   developer: "https://developer.lootlog.pl",
   docs: "https://docs.lootlog.pl/docs",
   installationGuide: "https://docs.lootlog.pl/docs/installation",

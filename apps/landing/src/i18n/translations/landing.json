@@ -15,6 +15,7 @@
   "header": {
     "brand": "Lootlog",
     "docs": "Dokumentacja",
+    "wiki": "Wiki",
     "support": "Wesprzyj",
     "openMenu": "Otwórz menu",
     "closeMenu": "Zamknij menu",
@@ -104,6 +105,20 @@
     "title": "Poradniki do dodatku",
     "description": "Instrukcje krok po kroku: jak ustawić timery, powiadomienia, okna i skróty klawiszowe w Margonem."
   },
+  "ecosystem": {
+    "title": "Więcej od Lootloga",
+    "description": "Wiki z przedmiotami i potworami Margonem oraz publiczne API dla twórców własnych narzędzi.",
+    "wiki": {
+      "title": "Wiki Margonem",
+      "description": "Przedmioty, potwory i ich dropy, lokacje, porównywarka przedmiotów i kalkulatory. Bez logowania.",
+      "action": "Otwórz wiki"
+    },
+    "developer": {
+      "title": "Dla programistów",
+      "description": "Klucze API, dokumentacja endpointów i poradniki integracji dla botów, stron i narzędzi klanowych.",
+      "action": "Przejdź do portalu"
+    }
+  },
   "trust": {
     "title": "O projekcie",
     "description": "Lootlog jest darmowym projektem open source rozwijanym przez graczy Margonem. Kod źródłowy i dokumentacja są publiczne.",
@@ -141,6 +156,7 @@
   },
   "footer": {
     "developer": "Dla programistów",
+    "wiki": "Wiki",
     "tagline": "Darmowy dodatek open source do Margonem dla graczy i\u00a0klanów.",
     "navigationLabel": "Linki w\u00a0stopce",
     "docs": "Dokumentacja",

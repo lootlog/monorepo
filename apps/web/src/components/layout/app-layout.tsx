@@ -13,7 +13,7 @@ import { SidebarProvider } from "@lootlog/ui/components/sidebar";
 import { Outlet, useLocation, useMatches } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { GlobalModals } from "@/components/common/global-modals";
-import { ThemeAnnouncement } from "@/components/common/theme-announcement";
+import { WikiAnnouncement } from "@/components/common/wiki-announcement";
 import { getRouteErrorStatus } from "@/lib/router/route-errors";
 
 export const AppLayout = () => {
@@ -80,7 +80,7 @@ export const AppLayout = () => {
         {t("layout.navigation.skipToContent")}
       </a>
       {/* Loaded with the shell: arriving later, it would push the page down. */}
-      <ThemeAnnouncement />
+      <WikiAnnouncement />
       {/* Desktop navigation stays expanded; only the mobile sheet opens and
           closes, from its menu button, so Ctrl/Cmd+B stays with the page. */}
       <SidebarProvider
