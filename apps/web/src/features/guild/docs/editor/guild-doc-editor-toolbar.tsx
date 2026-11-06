@@ -23,6 +23,7 @@ import { GuildDocLinkDialog } from "./guild-doc-link-dialog";
 import { GuildDocTableDialog } from "./guild-doc-table-dialog";
 
 import { useGuildDocEditorToolbarModel } from "./use-guild-doc-editor-toolbar-model";
+import { observeTopBarGlass } from "@/components/layout/observe-top-bar-glass";
 
 type GuildDocEditorToolbarProps = {
   /** The document's own actions, such as history, after the formatting controls. */
@@ -61,7 +62,7 @@ export const GuildDocEditorToolbar = ({
     <>
       <div
         data-list-tile
-        data-top-bar-glass
+        ref={observeTopBarGlass}
         className={cn(
           "glass-bar sticky top-(--page-sticky-top) z-10 flex min-h-12 items-center gap-1",
           LIST_TILE_RULE_CLASS,

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { HorizontalMenu as HorizontalMenuRoot } from "@lootlog/ui/components/horizontal-menu";
 import { cn } from "cn";
 import type { PageTab } from "./page-tabs-layout";
+import { observeTopBarGlass } from "./observe-top-bar-glass";
 
 type PageTabsProps = {
   tabs: PageTab[];
@@ -24,7 +25,7 @@ export const PageTabs = ({
   <HorizontalMenuRoot
     aria-label={ariaLabel}
     data-page-tabs
-    data-top-bar-glass
+    ref={observeTopBarGlass}
     data-list-tile
     className="glass-bar sticky top-(--page-sticky-top) z-20 h-(--page-tabs-height) border-b border-border"
   >

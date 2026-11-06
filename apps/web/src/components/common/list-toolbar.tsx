@@ -6,6 +6,7 @@ import {
 } from "./inline-search-field";
 import { LIST_TILE_INSET_CLASS, LIST_TILE_RULE_CLASS } from "./list-tile";
 import { FilterBarContext } from "@lootlog/ui/components/filter-bar-context";
+import { observeTopBarGlass } from "@/components/layout/observe-top-bar-glass";
 
 type ListToolbarProps = {
   search: string;
@@ -35,7 +36,7 @@ export const ListToolbar = ({
 }: ListToolbarProps) => (
   <div
     data-list-tile
-    data-top-bar-glass
+    ref={observeTopBarGlass}
     className={cn(
       "glass-bar sticky top-(--page-sticky-top) z-10 flex min-h-12 flex-wrap items-center gap-x-4 gap-y-2 py-2 transition-colors has-[input:focus-visible]:border-primary motion-reduce:transition-none",
       LIST_TILE_RULE_CLASS,

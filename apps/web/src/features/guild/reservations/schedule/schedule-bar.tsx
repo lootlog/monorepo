@@ -5,6 +5,7 @@ import {
 import { cn } from "cn";
 import type { ReactNode } from "react";
 import { SCHEDULE_BAR_HEIGHT } from "./constants";
+import { observeTopBarGlass } from "@/components/layout/observe-top-bar-glass";
 
 type ScheduleBarProps = {
   isCompact: boolean;
@@ -19,7 +20,7 @@ type ScheduleBarProps = {
 export const ScheduleBar = ({ isCompact, children }: ScheduleBarProps) => (
   <header
     data-list-tile
-    data-top-bar-glass
+    ref={observeTopBarGlass}
     className={cn(
       "glass-bar sticky top-(--page-sticky-top) z-10 flex items-center",
       isCompact ? "gap-1" : "gap-2",
