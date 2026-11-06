@@ -239,9 +239,18 @@ export const makeEventKills = (
         ? null
         : getEventKillRecentDedupKey(guildId, world, npcId);
 
-      const dedupHit = yield* runPromiseAdapter("redis.get", () =>
-        redis.get(dedupKey),
-      );
+      const readDedupHits = () =>
+        Effect.all(
+          [
+            runPromiseAdapter("redis.get", () => redis.get(dedupKey)),
+            recentDedupKey
+              ? runPromiseAdapter("redis.get", () => redis.get(recentDedupKey))
+              : Effect.succeed(null),
+          ],
+          { concurrency: "unbounded" },
+        );
+
+      const [dedupHit, recentDedupHit] = yield* readDedupHits();
 
       if (dedupHit) {
         logger.debug({
@@ -255,22 +264,16 @@ export const makeEventKills = (
         return;
       }
 
-      if (recentDedupKey) {
-        const recentDedupHit = yield* runPromiseAdapter("redis.get", () =>
-          redis.get(recentDedupKey),
-        );
+      if (recentDedupHit) {
+        logger.debug({
+          message: "Skipping duplicate event hero kill - recent kill active",
+          guildId,
+          world,
+          npcId,
+          npcName,
+        });
 
-        if (recentDedupHit) {
-          logger.debug({
-            message: "Skipping duplicate event hero kill - recent kill active",
-            guildId,
-            world,
-            npcId,
-            npcName,
-          });
-
-          return;
-        }
+        return;
       }
 
       // Try to acquire lock - if another request already has it, silently return
@@ -293,9 +296,8 @@ export const makeEventKills = (
       }
 
       const recordWhileLocked = Effect.gen(function* () {
-        const dedupHitAfterLock = yield* runPromiseAdapter("redis.get", () =>
-          redis.get(dedupKey),
-        );
+        const [dedupHitAfterLock, recentDedupHitAfterLock] =
+          yield* readDedupHits();
 
         if (dedupHitAfterLock) {
           logger.debug({
@@ -310,24 +312,17 @@ export const makeEventKills = (
           return;
         }
 
-        if (recentDedupKey) {
-          const recentDedupHitAfterLock = yield* runPromiseAdapter(
-            "redis.get",
-            () => redis.get(recentDedupKey),
-          );
+        if (recentDedupHitAfterLock) {
+          logger.debug({
+            message:
+              "Skipping duplicate event hero kill - recent kill active after lock",
+            guildId,
+            world,
+            npcId,
+            npcName,
+          });
 
-          if (recentDedupHitAfterLock) {
-            logger.debug({
-              message:
-                "Skipping duplicate event hero kill - recent kill active after lock",
-              guildId,
-              world,
-              npcId,
-              npcName,
-            });
-
-            return;
-          }
+          return;
         }
 
         const matches = yield* findActiveEventHeroesByNpc(
@@ -435,23 +430,27 @@ export const makeEventKills = (
           { concurrency: "unbounded", discard: true },
         );
 
-        yield* runPromiseAdapter("redis.set", () =>
-          redis.set(
-            dedupKey,
-            Date.now().toString(),
-            EVENT_KILL_DEDUP_TTL_SECONDS,
-          ),
-        );
-
-        if (recentDedupKey) {
-          yield* runPromiseAdapter("redis.set", () =>
-            redis.set(
-              recentDedupKey,
-              Date.now().toString(),
-              EVENT_KILL_RECENT_DEDUP_TTL_SECONDS,
+        yield* Effect.all(
+          [
+            runPromiseAdapter("redis.set", () =>
+              redis.set(
+                dedupKey,
+                Date.now().toString(),
+                EVENT_KILL_DEDUP_TTL_SECONDS,
+              ),
             ),
-          );
-        }
+            recentDedupKey
+              ? runPromiseAdapter("redis.set", () =>
+                  redis.set(
+                    recentDedupKey,
+                    Date.now().toString(),
+                    EVENT_KILL_RECENT_DEDUP_TTL_SECONDS,
+                  ),
+                )
+              : Effect.void,
+          ],
+          { concurrency: "unbounded", discard: true },
+        );
       });
 
       yield* recordWhileLocked.pipe(
@@ -738,48 +737,47 @@ export const makeEventKills = (
       yield* runPromiseAdapter("redis.eventReadCache.invalidate", () =>
         eventReadCache.invalidateEvent(guildId, event.id),
       );
-      yield* eventEmitter
-        .emit(RabbitRoutingKey.EVENT_HERO_KILLED, {
-          guildId,
-          eventId: event.id,
-          heroNpcLvl: eventHero.npcLvl,
-          killId: kill.kill.id,
-        })
-        .pipe(Effect.withSpan("rabbit.eventEmitter.emit"));
 
-      if (!isManualClose) {
-        yield* eventEmitter
-          .emit(RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED, {
-            guildId,
-            eventId: event.id,
-            heroNpcLvl: eventHero.npcLvl,
-            heroId: eventHero.id,
-          })
-          .pipe(Effect.withSpan("rabbit.eventEmitter.emit"));
+      const scope = {
+        guildId,
+        eventId: event.id,
+        heroNpcLvl: eventHero.npcLvl,
+      };
 
-        if (timerData.minSpawnTime && timerData.maxSpawnTime) {
-          yield* eventEmitter
-            .emit(RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
-              guildId,
-              eventId: event.id,
-              heroNpcLvl: eventHero.npcLvl,
+      const windowEmits = isManualClose
+        ? []
+        : [
+            eventEmitter.emit(RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED, {
+              ...scope,
               heroId: eventHero.id,
-            })
-            .pipe(Effect.withSpan("rabbit.eventEmitter.emit"));
-        }
-      }
+            }),
+            ...(timerData.minSpawnTime && timerData.maxSpawnTime
+              ? [
+                  eventEmitter.emit(
+                    RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
+                    { ...scope, heroId: eventHero.id },
+                  ),
+                ]
+              : []),
+          ];
 
-      yield* Effect.forEach(
-        heroMaps,
-        (map) =>
-          eventEmitter
-            .emit(RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE, {
-              guildId,
-              eventId: event.id,
-              heroNpcLvl: eventHero.npcLvl,
+      // Each routing key has its own gateway queue, so their relative order
+      // was never delivered; only the cache invalidation above must precede
+      // them.
+      yield* Effect.all(
+        [
+          eventEmitter.emit(RabbitRoutingKey.EVENT_HERO_KILLED, {
+            ...scope,
+            killId: kill.kill.id,
+          }),
+          ...windowEmits,
+          ...heroMaps.map((map) =>
+            eventEmitter.emit(RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE, {
+              ...scope,
               mapId: map.id,
-            })
-            .pipe(Effect.withSpan("rabbit.eventEmitter.emit")),
+            }),
+          ),
+        ].map((emit) => emit.pipe(Effect.withSpan("rabbit.eventEmitter.emit"))),
         { concurrency: "unbounded", discard: true },
       );
 

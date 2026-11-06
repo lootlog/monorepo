@@ -251,7 +251,7 @@ export const makeNotificationJobRebuild = (
           yield* Effect.forEach(
             eligible,
             ({ target }) => createTimerJob(rule, target, schedule, isPermitted),
-            { discard: true },
+            { concurrency: REBUILD_CONCURRENCY, discard: true },
           );
         }).pipe(
           Effect.mapError((cause): NotificationTimerRebuildFailure => ({

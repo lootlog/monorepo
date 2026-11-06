@@ -95,15 +95,17 @@ export const getRoom = (
   notificationId: string,
   guildIds: ReadonlyArray<string>,
 ) =>
-  context.getLive(notificationId).pipe(
-    Effect.flatMap((aggregate) =>
+  // The caller's own source visibility does not depend on the room, so it is
+  // read beside it.
+  Effect.all(
+    [
+      context.getLive(notificationId),
+      readyRoomSourceVisibility(context.database, identity.discordId, guildIds),
+    ],
+    { concurrency: "unbounded" },
+  ).pipe(
+    Effect.flatMap(([aggregate, visibleSources]) =>
       Effect.gen(function* () {
-        const visibleSources = yield* readyRoomSourceVisibility(
-          context.database,
-          identity.discordId,
-          guildIds,
-        );
-
         if (aggregate.npc && visibleSources(aggregate).length === 0)
           return yield* new PermissionDeniedError({
             code: "FORBIDDEN",

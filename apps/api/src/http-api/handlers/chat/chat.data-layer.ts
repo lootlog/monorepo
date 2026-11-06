@@ -177,12 +177,15 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
 
         return redis.rpush(messageKey(guildId), JSON.stringify(message)).pipe(
           Effect.flatMap(() =>
-            redis.ltrim(messageKey(guildId), -CHAT_MESSAGE_LIMIT, -1),
-          ),
-          Effect.flatMap(() =>
-            events
-              .publish(RabbitRoutingKey.GUILDS_SEND_MESSAGE, message)
-              .pipe(Effect.ignore),
+            Effect.all(
+              [
+                redis.ltrim(messageKey(guildId), -CHAT_MESSAGE_LIMIT, -1),
+                events
+                  .publish(RabbitRoutingKey.GUILDS_SEND_MESSAGE, message)
+                  .pipe(Effect.ignore),
+              ],
+              { concurrency: "unbounded", discard: true },
+            ),
           ),
           Effect.as({
             ...message,

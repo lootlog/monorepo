@@ -441,17 +441,16 @@ export class PresenceOfflineOutbox {
 
       // Read each group immediately before its single bounded claim. Never
       // retain these observations across another group's Redis round trip.
-      for (const organizationId of new Set(first.event.organizationIds)) {
-        const presences = yield* readOrganization(
-          this.redis,
-          organizationId,
-          this.now,
-        );
+      const organizations = yield* Effect.forEach(
+        new Set(first.event.organizationIds),
+        (organizationId) =>
+          readOrganization(this.redis, organizationId, this.now),
+        { concurrency: "unbounded" },
+      );
 
-        for (const presence of presences) {
-          if (presence.platform === "game" && presence.character)
-            online.add(offlineCharacterKey(presence));
-        }
+      for (const presence of organizations.flat()) {
+        if (presence.platform === "game" && presence.character)
+          online.add(offlineCharacterKey(presence));
       }
 
       const keys = [

@@ -110,12 +110,11 @@ export const createRoom = (
 export const cancelAggregate = Effect.fnUntraced(function* (
   context: ReadyRoomContext,
   aggregate: ReadyRoomAggregate,
+  recipients: ReadonlyArray<{
+    recipientDiscordId: string;
+    guildIds: string[];
+  }>,
 ) {
-  const recipients = yield* context.preparePublication(
-    aggregate,
-    getReadyRoomActiveRecipientDiscordIds(aggregate),
-  );
-
   const next: ReadyRoomAggregate = {
     ...aggregate,
     status: "CANCELLED",
@@ -127,36 +126,41 @@ export const cancelAggregate = Effect.fnUntraced(function* (
     .terminate(aggregate, next)
     .pipe(Effect.flatMap(assertCommitted));
 
-  yield* Effect.forEach(
-    result.aggregate.guildIds,
-    (guildId) =>
+  yield* Effect.all(
+    [
+      Effect.forEach(
+        result.aggregate.guildIds,
+        (guildId) =>
+          context.effects
+            .publishCancellation({
+              notificationId: result.aggregate.notificationId,
+              guildId,
+            })
+            .pipe(Effect.ignore),
+        { concurrency: "unbounded", discard: true },
+      ),
+      context.publish(result.aggregate, recipients),
+      // The cancellation is committed and retries cannot repeat it, so a chat
+      // cleanup failure must neither skip publications nor fail the request.
       context.effects
-        .publishCancellation({
-          notificationId: result.aggregate.notificationId,
-          guildId,
-        })
-        .pipe(Effect.ignore),
+        .endPartyGatheringMessages(
+          result.aggregate.notificationId,
+          result.aggregate.guildIds,
+        )
+        .pipe(
+          Effect.catch(() =>
+            Effect.logError(
+              "Cancelled gathering chat messages remain unchanged",
+            ).pipe(
+              Effect.annotateLogs({
+                notificationId: result.aggregate.notificationId,
+              }),
+            ),
+          ),
+        ),
+    ],
     { concurrency: "unbounded", discard: true },
   );
-  yield* context.publish(result.aggregate, recipients);
-  // The cancellation is committed and retries cannot repeat it, so a chat
-  // cleanup failure must neither skip publications nor fail the request.
-  yield* context.effects
-    .endPartyGatheringMessages(
-      result.aggregate.notificationId,
-      result.aggregate.guildIds,
-    )
-    .pipe(
-      Effect.catch(() =>
-        Effect.logError(
-          "Cancelled gathering chat messages remain unchanged",
-        ).pipe(
-          Effect.annotateLogs({
-            notificationId: result.aggregate.notificationId,
-          }),
-        ),
-      ),
-    );
 
   return result.aggregate;
 });
@@ -175,12 +179,14 @@ export const cancelRoom = (
       payload.expectedRevision,
     );
 
-    const viewerGuildIds = yield* context.projectionGuildIds(
-      aggregate,
-      identity.discordId,
-    );
+    const { recipients, viewerGuildIds } =
+      yield* context.preparePublicationForViewer(
+        aggregate,
+        getReadyRoomActiveRecipientDiscordIds(aggregate),
+        identity.discordId,
+      );
 
-    const cancelled = yield* cancelAggregate(context, aggregate);
+    const cancelled = yield* cancelAggregate(context, aggregate, recipients);
 
     return createReadyRoomClientUpdate(
       cancelled,

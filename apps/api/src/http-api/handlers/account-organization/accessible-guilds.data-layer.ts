@@ -197,21 +197,25 @@ export const makeAccessibleGuilds = (
       })
       .filter(({ hasLootlogAccess }) => hasLootlogAccess);
 
-    yield* queue(
-      identity,
-      summaries
-        .filter(
-          (guild) =>
-            guild.ownerId !== identity.discordId && guild.isAccessDataStale,
-        )
-        .filter((guild) => memberByGuild.get(guild.id)?.globalUserId)
-        .map(({ id }) => id),
-      "guild-access-background",
-    );
-
     const result = sortGuildsByPreference(summaries, preferredIds);
 
-    yield* ports.setCached(cacheKey, result, CACHE_TTL_SECONDS);
+    yield* Effect.all(
+      [
+        queue(
+          identity,
+          summaries
+            .filter(
+              (guild) =>
+                guild.ownerId !== identity.discordId && guild.isAccessDataStale,
+            )
+            .filter((guild) => memberByGuild.get(guild.id)?.globalUserId)
+            .map(({ id }) => id),
+          "guild-access-background",
+        ),
+        ports.setCached(cacheKey, result, CACHE_TTL_SECONDS),
+      ],
+      { concurrency: "unbounded", discard: true },
+    );
 
     return result;
   });
