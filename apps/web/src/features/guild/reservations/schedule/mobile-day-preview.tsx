@@ -82,7 +82,6 @@ export function MobileDayPreview({
           <ReservationBlock
             key={segment.id}
             segment={segment}
-            onSelect={() => undefined}
             className="pointer-events-none absolute z-10"
             style={{
               left: `calc(${laneFraction * 100}% + ${LABEL_COLUMN_WIDTH * (1 - laneFraction)}px + 1px)`,
