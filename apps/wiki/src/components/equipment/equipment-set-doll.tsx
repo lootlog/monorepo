@@ -11,7 +11,7 @@ export function EquipmentSetDoll({
   size?: "md" | "xl";
   className?: string;
 }) {
-  const { wornItems, preview, previewSlot } = useSetSummary();
+  const { wornItems } = useSetSummary();
 
   return (
     <div
@@ -27,11 +27,7 @@ export function EquipmentSetDoll({
       <EquipmentGrid
         size={size}
         renderSlot={(slot) => (
-          <EquipmentSetSlot
-            slot={slot}
-            worn={wornItems.get(slot.id)}
-            preview={previewSlot?.id === slot.id ? preview : null}
-          />
+          <EquipmentSetSlot slot={slot} worn={wornItems.get(slot.id)} />
         )}
       />
     </div>

@@ -18,10 +18,11 @@ import { EquipmentSetWindow } from "./equipment-set-window";
 
 /**
  * The set docked at the bottom of every page: its slots and key stats,
- * which a preview changes live, opening up into the full character window.
+ * which glide to their new values as the set changes, opening up into the
+ * full character window.
  */
 export function EquipmentSetDock() {
-  const { wornItems, preview, previewSlot } = useSetSummary();
+  const { wornItems } = useSetSummary();
 
   return (
     <Sheet>
@@ -36,21 +37,17 @@ export function EquipmentSetDock() {
           <ul className="flex min-w-0 gap-1.5 overflow-x-auto py-1 [scrollbar-width:none]">
             {EQUIPMENT_SLOTS.map((slot) => (
               <li key={slot.id} className="size-11 shrink-0">
-                <EquipmentSetSlot
-                  slot={slot}
-                  worn={wornItems.get(slot.id)}
-                  preview={previewSlot?.id === slot.id ? preview : null}
-                />
+                <EquipmentSetSlot slot={slot} worn={wornItems.get(slot.id)} />
               </li>
             ))}
           </ul>
-          <EquipmentKeyStats className="ml-auto max-lg:hidden" />
+          <EquipmentKeyStats className="ml-auto max-xl:hidden" />
           <SheetTrigger
             render={
               <Button
                 variant="outline"
                 size="sm"
-                className="shrink-0 max-lg:ml-auto"
+                className="shrink-0 max-xl:ml-auto"
                 icon={<ChevronUp />}
               />
             }

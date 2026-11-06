@@ -21,8 +21,10 @@ import type {
   SearchAllResponseDto_Output,
 } from "./contracts/all/schemas.js";
 import type {
+  CatalogControllerGetEventsQuery,
   CatalogControllerGetItemsQuery,
   CatalogControllerGetNpcsQuery,
+  CatalogEventsResponseDto_Output,
   CatalogItemsResponseDto_Output,
   CatalogNpcsResponseDto_Output,
 } from "./contracts/catalog/schemas.js";
@@ -69,6 +71,12 @@ export interface SearchOperationsValue {
   readonly catalogNpcs: (
     query: CatalogControllerGetNpcsQuery,
   ) => Effect.Effect<CatalogNpcsResponseDto_Output, SearchOperationFailureType>;
+  readonly catalogEvents: (
+    query: CatalogControllerGetEventsQuery,
+  ) => Effect.Effect<
+    CatalogEventsResponseDto_Output,
+    SearchOperationFailureType
+  >;
   readonly indexItems: (
     data: IndexItemsCommand,
   ) => Effect.Effect<void, SearchOperationFailureType>;
@@ -110,6 +118,7 @@ export class SearchOperations extends Context.Service<
       return SearchOperations.of({
         catalogItems: catalog.getItems,
         catalogNpcs: catalog.getNpcs,
+        catalogEvents: catalog.getEvents,
         searchPlayers: (query) =>
           players.getPlayers({
             ...query,

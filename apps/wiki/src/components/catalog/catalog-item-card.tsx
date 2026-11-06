@@ -2,7 +2,6 @@ import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import { CompareButton } from "@/components/comparison/compare-button";
 import { EquipButton } from "@/components/equipment/equip-button";
 import { useItemForCharacter } from "@/hooks/use-item-for-character";
-import { useItemPreviewHandlers } from "@/hooks/use-item-preview-handlers";
 import { t } from "@/i18n/messages";
 import {
   attackSpeedUpgrade,
@@ -49,13 +48,9 @@ export function CatalogItemCard({
     attackSpeed === "upgraded" ? attackSpeedUpgrade(looted) : NO_UPGRADE;
 
   const shown = { ...looted, stat: upgradeItemStat(looted, upgrade) };
-  const previewHandlers = useItemPreviewHandlers(shown);
 
   return (
-    <article
-      className="flex h-full min-w-0 items-center gap-2.5 rounded-md border border-border/50 bg-card px-2.5 py-2 transition-colors duration-150 hover:border-border hover:bg-accent/30 motion-reduce:transition-none"
-      {...previewHandlers}
-    >
+    <article className="flex h-full min-w-0 items-center gap-2.5 rounded-md border border-border/50 bg-card px-2.5 py-2 transition-colors duration-150 hover:border-border hover:bg-accent/30 motion-reduce:transition-none">
       <CatalogItemTile item={looted} upgrade={upgrade} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <ItemNameLink item={item} upgrade={upgrade} highlight={highlight} />

@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { TriangleAlert, X } from "lucide-react";
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import { ItemTile } from "@lootlog/ui/components/item-tile";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { cn } from "cn";
@@ -13,7 +12,6 @@ import type { EquipmentSlot } from "@/lib/equipment-slots";
 import { findRequirementIssues } from "@/lib/item-stat-totals";
 import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 import { EquipmentSlotMenu } from "./equipment-slot-menu";
-import { EquipmentSlotPreview } from "./equipment-slot-preview";
 
 const SLOT_FRAME =
   "relative flex size-full items-center justify-center rounded-lg border bg-background/70 shadow-[inset_0_1px_3px_rgb(0_0_0/0.35)] transition-[color,border-color,box-shadow] duration-200 motion-reduce:transition-none";
@@ -21,26 +19,16 @@ const SLOT_FRAME =
 type EquipmentSetSlotProps = {
   slot: EquipmentSlot;
   worn: WornItem | undefined;
-  /** The item the User points at, which this slot would wear instead. */
-  preview: CatalogItemDtoOutput | null;
 };
 
-/** One worn item, or an empty slot that opens a search for it. */
-export function EquipmentSetSlot({
-  slot,
-  worn,
-  preview,
-}: EquipmentSetSlotProps) {
+/**
+ * One worn item, or an empty slot that opens a search for it. An item put on
+ * grows into the slot.
+ */
+export function EquipmentSetSlot({ slot, worn }: EquipmentSetSlotProps) {
   const { set, unequip } = useEquipmentSet();
   const label = t(`slots.${slot.id}`);
   const Icon = slot.icon;
-
-  const previewClass =
-    preview && "border-dashed border-primary ring-2 ring-primary/25";
-
-  const overlay = preview ? (
-    <EquipmentSlotPreview key={preview.id} item={preview} />
-  ) : null;
 
   if (!worn) {
     return (
@@ -57,11 +45,9 @@ export function EquipmentSetSlot({
         className={cn(
           SLOT_FRAME,
           "border-border/60 text-muted-foreground outline-none hover:border-primary/50 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring",
-          previewClass,
         )}
       >
         <Icon aria-hidden="true" className="size-5" />
-        {overlay}
       </Link>
     );
   }
@@ -77,21 +63,24 @@ export function EquipmentSetSlot({
         SLOT_FRAME,
         "group/slot",
         issues.length > 0 ? "border-destructive/70" : "border-border",
-        previewClass,
       )}
     >
-      <ItemTile
-        item={{
-          icon: item.icon,
-          name: item.name,
-          rarity: resolveItemRarity(item.rarity),
-          stat: item.stat,
-          type: item.type,
-        }}
-        labels={ITEM_TILE_LABELS}
-        renderStat={renderItemStat}
-      />
-      {overlay}
+      <span
+        key={`${item.id}-${worn.upgrade.level}`}
+        className="flex scale-100 opacity-100 transition-[opacity,scale] duration-200 ease-out starting:scale-75 starting:opacity-0 motion-reduce:transition-none"
+      >
+        <ItemTile
+          item={{
+            icon: item.icon,
+            name: item.name,
+            rarity: resolveItemRarity(item.rarity),
+            stat: item.stat,
+            type: item.type,
+          }}
+          labels={ITEM_TILE_LABELS}
+          renderStat={renderItemStat}
+        />
+      </span>
       {issues.length > 0 ? (
         <span
           role="img"

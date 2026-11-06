@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   attackSpeedUpgrade,
   itemAtLevel,
+  itemUpgradeCost,
   itemStatValue,
   upgradeBonusOptions,
   upgradedAttackSpeed,
@@ -208,5 +209,45 @@ describe("armor of several professions", () => {
     expect(acAt200("wb")).toBe(acAt200("bw"));
     // 8 * 0.12375 * (66 + 1320) + 0.15 * 1320 at 200.
     expect(acAt200("bw")).toBe("1570");
+  });
+});
+
+describe("upgrade cost", () => {
+  const item = (rarity: string, stat = "lvl=100") => ({
+    stat,
+    lvl: 100,
+    rarity,
+    type: "HELMET",
+  });
+
+  it("needs more points per level, scaled by rarity, and the +5 extras only at +5", () => {
+    expect(itemUpgradeCost(item("COMMON"), 2)).toEqual({
+      points: 588,
+      essence: 0,
+      gold: 0,
+    });
+    expect(itemUpgradeCost(item("LEGENDARY"), 5)).toEqual({
+      points: 1_960_000,
+      essence: 60,
+      gold: 13_800_000,
+    });
+  });
+
+  it("prices an upgraded item's points by its own formula", () => {
+    expect(itemUpgradeCost(item("UPGRADED"), 5).points).toBe(294_000);
+  });
+
+  it("asks more breakdown currency of an item worth more in crafting", () => {
+    expect(
+      itemUpgradeCost(item("HEROIC", "artisanbon=250;lvl=100"), 5).essence,
+    ).toBe(150);
+  });
+
+  it("costs nothing for an item the game does not upgrade", () => {
+    expect(itemUpgradeCost({ ...item("HEROIC"), lvl: 15 }, 5)).toEqual({
+      points: 0,
+      essence: 0,
+      gold: 0,
+    });
   });
 });

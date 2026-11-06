@@ -15,6 +15,7 @@ const searchIndexSettingFields = [
   "searchableAttributes",
   "sortableAttributes",
   "distinctAttribute",
+  "faceting",
 ] as const;
 
 type IndexSettings = Record<
@@ -72,6 +73,10 @@ export const searchIndexSettings: IndexSettings = {
       "upgradedAttackSpeed",
     ],
     distinctAttribute: "id",
+    // The events list counts every event slug; Meilisearch's default of 100
+    // values per facet would drop the oldest. Written as Meilisearch returns
+    // it, so startup sees it unchanged.
+    faceting: { maxValuesPerFacet: 1000, sortFacetValuesBy: { "*": "alpha" } },
   },
 };
 

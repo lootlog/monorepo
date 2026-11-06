@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { AboutWiki } from "@/components/home/about-wiki";
 import { HeroLineup } from "@/components/home/hero-lineup";
 import { HomeSearch } from "@/components/home/home-search";
@@ -56,6 +57,11 @@ function HomeRoute() {
       <HomeSection
         title={t("home.newEventItemsTitle")}
         description={t("home.newEventItemsDescription")}
+        action={
+          <ChevronLink render={<Link to="/events" />}>
+            {t("catalog.allEvents")}
+          </ChevronLink>
+        }
       >
         <NewEventItems />
       </HomeSection>

@@ -9,39 +9,30 @@ import { EquipmentStatRow } from "./equipment-stat-row";
 
 type EquipmentSetTotalsProps = {
   totals: StatTotals;
-  /** The totals with the previewed item worn, shown as a change. */
-  previewTotals: StatTotals | null;
-  /** The previewed item's name, while one is previewed. */
-  previewName: string | null;
+  /** Whether the set has loaded, so a change of its totals is the User's. */
+  isLoaded: boolean;
   /** `columns` sets the sections side by side, for a wide window. */
   layout?: "stack" | "columns";
 };
 
 /**
  * The set's stats added up as the game's character window lists them, by
- * section, with the change a previewed item would make. Every stat keeps a
- * row that opens when the set or the preview has it.
+ * section, with the change the User's last edit of the set made. Every stat
+ * keeps a row that opens when the set has it.
  */
 export function EquipmentSetTotals({
   totals,
-  previewTotals,
-  previewName,
+  isLoaded,
   layout = "stack",
 }: EquipmentSetTotalsProps) {
   const hasValue = (stat: Parameters<typeof setStatValue>[1]) =>
-    setStatValue(totals, stat) !== undefined ||
-    (previewTotals !== null && setStatValue(previewTotals, stat) !== undefined);
+    setStatValue(totals, stat) !== undefined;
 
   const hasTotals = SET_STAT_SECTIONS.some(({ stats }) =>
     stats.some((stat) => setStatValue(totals, stat) !== undefined),
   );
 
-  const caption =
-    previewName !== null
-      ? t("equipment.previewing", { item: previewName })
-      : hasTotals
-        ? t("equipment.previewHint")
-        : t("equipment.empty");
+  const caption = hasTotals ? t("equipment.totalsHint") : t("equipment.empty");
 
   return (
     <div
@@ -52,13 +43,9 @@ export function EquipmentSetTotals({
       )}
     >
       <p
-        aria-live="polite"
         className={cn(
           layout === "columns" && "col-span-full",
-          "text-xs text-pretty transition-colors duration-200 motion-reduce:transition-none",
-          previewName === null
-            ? "text-muted-foreground"
-            : "font-medium text-foreground",
+          "text-xs text-pretty text-muted-foreground",
         )}
       >
         {caption}
@@ -86,11 +73,7 @@ export function EquipmentSetTotals({
                   label={t(`setStats.stats.${stat.id}`)}
                   unit={"unit" in stat ? stat.unit : ""}
                   total={setStatValue(totals, stat)}
-                  previewTotal={
-                    previewTotals === null
-                      ? null
-                      : setStatValue(previewTotals, stat)
-                  }
+                  isLoaded={isLoaded}
                 />
               ))}
             </dl>
