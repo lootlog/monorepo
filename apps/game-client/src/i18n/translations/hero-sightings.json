@@ -30,7 +30,7 @@
   },
   "quickAccess": {
     "count_one": "{{count}} heros",
-    "count_few": "{{count}} herosi",
+    "count_few": "{{count}} herosów",
     "count_many": "{{count}} herosów",
     "count_other": "{{count}} herosa"
   },
