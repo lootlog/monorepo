@@ -57,6 +57,7 @@ export const buildDropStatisticsQuery = (database: ApiDatabaseValue) => {
       name: fights.name,
       type: fights.type,
       itemId: itemSnapshotTable.itemId,
+      itemName: sql<string>`max(${itemSnapshotTable.name})`,
       drops: sql<number>`count(distinct ${fights.lootId})::int`,
       lastDropFight: sql<number>`max(${fights.fight})::int`,
       fights: sql<number>`max(${monsterFights.fights})`,
@@ -86,15 +87,48 @@ type ItemDropStatistics = DropStatistics & {
   readonly name: string;
   readonly type: string | null;
   readonly itemId: number;
+  readonly itemName: string;
 };
 
-/** For every monster that dropped anything, the items it no longer drops. */
-export const toRetiredDrops = (rows: ReadonlyArray<ItemDropStatistics>) =>
-  Object.values(
-    groupBy(rows, ({ gameVersion, name, type }) =>
-      JSON.stringify([gameVersion, name, type]),
-    ),
-  ).flatMap((drops) => {
+const monsterKey = ({ gameVersion, name, type }: ItemDropStatistics) =>
+  JSON.stringify([gameVersion, name, type]);
+
+// An item name of the monsters of one edition and name, whatever their type.
+const namesakeItemKey = ({ gameVersion, name, itemName }: ItemDropStatistics) =>
+  JSON.stringify([gameVersion, name, itemName]);
+
+/**
+ * For every monster that dropped anything, the items it no longer drops.
+ * Monsters of one edition and name share their loot, under the same or their
+ * own item ids: a Hero Tracker drops its hero's items but is fought on a few
+ * event days only, too rarely to tell by itself. So an item is retired too when another
+ * monster of its name no longer drops any item of the same name.
+ */
+export const toRetiredDrops = (rows: ReadonlyArray<ItemDropStatistics>) => {
+  const retiredBy = new Map<string, Set<string>>();
+
+  for (const drops of Object.values(
+    groupBy(rows, (row) => JSON.stringify([monsterKey(row), row.itemName])),
+  )) {
+    const [first] = drops;
+
+    if (first && drops.every(isRetiredDrop)) {
+      const key = namesakeItemKey(first);
+
+      retiredBy.set(
+        key,
+        (retiredBy.get(key) ?? new Set()).add(monsterKey(first)),
+      );
+    }
+  }
+
+  const isRetired = (row: ItemDropStatistics) =>
+    isRetiredDrop(row) ||
+    [...(retiredBy.get(namesakeItemKey(row)) ?? [])].some(
+      (key) => key !== monsterKey(row),
+    );
+
+  return Object.values(groupBy(rows, monsterKey)).flatMap((drops) => {
     const [first] = drops;
 
     return first
@@ -103,10 +137,9 @@ export const toRetiredDrops = (rows: ReadonlyArray<ItemDropStatistics>) =>
             gameVersion: first.gameVersion,
             name: first.name,
             type: first.type,
-            retiredItemIds: drops
-              .filter(isRetiredDrop)
-              .map(({ itemId }) => itemId),
+            retiredItemIds: drops.filter(isRetired).map(({ itemId }) => itemId),
           },
         ]
       : [];
   });
+};
