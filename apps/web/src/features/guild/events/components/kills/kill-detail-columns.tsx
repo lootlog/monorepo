@@ -19,7 +19,7 @@ export const KillDetailColumns = ({
   rules,
   loots,
 }: KillDetailColumnsProps) => (
-  <StatsSectionColumns className="xl:grid-cols-[minmax(0,1fr)_440px]">
+  <StatsSectionColumns fill className="xl:grid-cols-[minmax(0,1fr)_440px]">
     <div className="min-w-0 max-xl:contents">
       <div className="min-w-0 max-xl:order-1">{participants}</div>
       <div className="min-w-0 max-xl:order-4">{maps}</div>
