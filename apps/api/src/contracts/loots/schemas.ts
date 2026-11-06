@@ -464,8 +464,8 @@ export const LootSharePath = Schema.Struct({
   id: FiniteNumber,
 });
 
-/** Outsiders a draw may hold besides the winner; a map holds a few dozen. */
-const LOOT_DRAW_MAX_OUTSIDERS = 100;
+/** Entrants a draw may hold: a full party of ten and a map's few dozen outsiders. */
+const LOOT_DRAW_MAX_ENTRANTS = 110;
 
 const LOOT_DRAW_VOID_REASON_MAX_LENGTH = 200;
 
@@ -478,7 +478,12 @@ const LootDrawPlayer = {
   icon: Schema.NullOr(Schema.String),
 };
 
-const LootDrawEntrantSource = Schema.Literals(["WINNER", "MAP", "MANUAL"]);
+const LootDrawEntrantSource = Schema.Literals([
+  "WINNER",
+  "PARTY",
+  "MAP",
+  "MANUAL",
+]);
 
 const LootDrawTickets = PositiveSafeInteger.check(
   Schema.isLessThanOrEqualTo(MAX_LOOT_DRAW_TICKETS),
@@ -487,8 +492,9 @@ const LootDrawTickets = PositiveSafeInteger.check(
 export type LootDrawEntrantInput = typeof LootDrawEntrantInput.Type;
 
 /**
- * One entrant: WINNER caught the item in the game, MAP stood on the map at
- * the drop and MANUAL was added by hand. Managers may change the tickets.
+ * One entrant: WINNER caught the item in the game, PARTY was another member
+ * of the party, MAP stood on the map outside the party at the drop and MANUAL
+ * was added by hand. Managers may change the tickets.
  */
 export const LootDrawEntrantInput = Schema.Struct({
   ...LootDrawPlayer,
@@ -501,15 +507,15 @@ export type CreateLootDrawRequest = typeof CreateLootDrawRequest.Type;
 export const CreateLootDrawRequest = Schema.Struct({
   itemHid: NonEmptyString,
   entrants: Schema.Array(LootDrawEntrantInput).check(
-    Schema.isMinLength(2).annotate({ expected: "the winner and an outsider" }),
-    Schema.isMaxLength(LOOT_DRAW_MAX_OUTSIDERS + 1),
+    Schema.isMinLength(2).annotate({
+      expected: "at least two entrants",
+    }),
+    Schema.isMaxLength(LOOT_DRAW_MAX_ENTRANTS),
   ),
   /** The wheel's tickets in order, each naming its entrant's index. */
   ticketOrder: Schema.Array(
     Schema.Int.check(Schema.isGreaterThanOrEqualTo(0)),
-  ).check(
-    Schema.isMaxLength((LOOT_DRAW_MAX_OUTSIDERS + 1) * MAX_LOOT_DRAW_TICKETS),
-  ),
+  ).check(Schema.isMaxLength(LOOT_DRAW_MAX_ENTRANTS * MAX_LOOT_DRAW_TICKETS)),
 }).annotate({ identifier: "CreateLootDrawDto" });
 
 export type VoidLootDrawRequest = typeof VoidLootDrawRequest.Type;

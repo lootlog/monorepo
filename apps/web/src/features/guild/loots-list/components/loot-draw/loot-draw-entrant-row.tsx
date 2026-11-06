@@ -6,10 +6,11 @@ import { useTranslation } from "react-i18next";
 import { formatRosterPlayerDetail } from "@/features/guild/loots-list/components/loots-list/format-roster-player-detail";
 import { lootDrawSegmentColor } from "./loot-draw-colors";
 
-export type LootDrawEntrantSource = "WINNER" | "MAP" | "MANUAL";
+export type LootDrawEntrantSource = "WINNER" | "PARTY" | "MAP" | "MANUAL";
 
 const SOURCE_LABEL_KEYS = {
   WINNER: "loots.details.draw.winnerSource",
+  PARTY: "loots.details.draw.partySource",
   MAP: "loots.details.draw.mapSource",
   MANUAL: "loots.details.draw.manualSource",
 } as const;

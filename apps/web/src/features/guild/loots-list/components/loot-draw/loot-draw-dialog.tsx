@@ -95,7 +95,7 @@ export const LootDrawDialog = ({
               onRevealed={() => setLockedHeight(null)}
             />
           )}
-          {data && !standing && canManage && setup && (
+          {data && !standing && canManage && (
             <LootDrawEditor
               loot={loot}
               item={item}
