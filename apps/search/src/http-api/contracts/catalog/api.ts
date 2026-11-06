@@ -7,8 +7,10 @@ import {
   OpenApi,
 } from "effect/http-api";
 import {
+  CatalogControllerGetEventsQuery,
   CatalogControllerGetItemsQuery,
   CatalogControllerGetNpcsQuery,
+  CatalogEventsResponseDto_Output,
   CatalogItemsResponseDto_Output,
   CatalogNpcsResponseDto_Output,
 } from "./schemas.js";
@@ -36,4 +38,17 @@ export class CatalogGroup extends HttpApiGroup.make("Catalog")
     })
       .annotate(OpenApi.Identifier, "CatalogController_getNpcs")
       .annotate(OpenApi.Summary, "List NPCs in the public catalog"),
+  )
+  .add(
+    HttpApiEndpoint.get(
+      "CatalogControllerGetEvents",
+      "/public/catalog/events",
+      {
+        error: SearchUnavailable.pipe(HttpApiSchema.status(503)),
+        query: CatalogControllerGetEventsQuery,
+        success: CatalogEventsResponseDto_Output,
+      },
+    )
+      .annotate(OpenApi.Identifier, "CatalogController_getEvents")
+      .annotate(OpenApi.Summary, "List events in the public catalog"),
   ) {}

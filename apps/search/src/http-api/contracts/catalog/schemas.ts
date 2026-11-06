@@ -250,3 +250,52 @@ export const CatalogControllerGetNpcsQuery = Schema.Struct({
   limit: Schema.optionalKey(FiniteNumber.annotate({ default: 24 })),
   offset: Schema.optionalKey(FiniteNumber.annotate({ default: 0 })),
 });
+
+export const CatalogEventDto_Output = Schema.Struct({
+  slug: Schema.String.annotate({
+    description:
+      "The event's slug, its name and year, such as `halloween-2026`; `CatalogControllerGetItemsQuery.event` lists its items.",
+  }),
+  name: Schema.String.annotate({
+    description:
+      "The event as the game writes it, such as `Halloween 2026 r.`.",
+  }),
+  year: Schema.Union([FiniteNumber, Schema.Null]).annotate({
+    description: "The year its name gives; none for an event without one.",
+  }),
+  itemCount: FiniteNumber.annotate({
+    description: "How many catalog items belong to the event.",
+  }),
+  boss: Schema.Union([
+    Schema.Struct({
+      name: Schema.String,
+      icon: Schema.Union([Schema.String, Schema.Null]),
+    }),
+    Schema.Null,
+  ]).annotate({
+    description:
+      "The strongest monster its highest-level item drops from, which pictures the event; none when Lootlog has not seen that item drop.",
+  }),
+}).annotate({
+  description: "A Margonem event whose items are in the public catalog",
+  identifier: "CatalogEventDto_Output",
+});
+
+export type CatalogEventsResponseDto_Output =
+  typeof CatalogEventsResponseDto_Output.Type;
+
+export const CatalogEventsResponseDto_Output = Schema.Struct({
+  events: Schema.Array(CatalogEventDto_Output).annotate({
+    description: "The latest year first, then by name.",
+  }),
+}).annotate({
+  description: "Public catalog events",
+  identifier: "CatalogEventsResponseDto_Output",
+});
+
+export type CatalogControllerGetEventsQuery =
+  typeof CatalogControllerGetEventsQuery.Type;
+
+export const CatalogControllerGetEventsQuery = Schema.Struct({
+  gameVersion: Schema.optionalKey(CatalogGameVersion),
+});

@@ -36,6 +36,46 @@ export interface SearchUnavailableEncoded {
   message: string;
 }
 
+/**
+ * The strongest monster its highest-level item drops from, which pictures the event; none when Lootlog has not seen that item drop.
+ * @nullable
+ */
+export type CatalogEventDtoOutputBoss = {
+  name: string;
+  /** @nullable */
+  icon: string | null;
+} | null;
+
+/**
+ * A Margonem event whose items are in the public catalog
+ */
+export interface CatalogEventDtoOutput {
+  /** The event's slug, its name and year, such as `halloween-2026`; `CatalogControllerGetItemsQuery.event` lists its items. */
+  slug: string;
+  /** The event as the game writes it, such as `Halloween 2026 r.`. */
+  name: string;
+  /**
+     * The year its name gives; none for an event without one.
+     * @nullable
+     */
+  year: number | null;
+  /** How many catalog items belong to the event. */
+  itemCount: number;
+  /**
+     * The strongest monster its highest-level item drops from, which pictures the event; none when Lootlog has not seen that item drop.
+     * @nullable
+     */
+  boss: CatalogEventDtoOutputBoss;
+}
+
+/**
+ * Public catalog events
+ */
+export interface CatalogEventsResponseDtoOutput {
+  /** The latest year first, then by name. */
+  events: CatalogEventDtoOutput[];
+}
+
 export type CatalogNpcDtoOutputType = typeof CatalogNpcDtoOutputType[keyof typeof CatalogNpcDtoOutputType];
 
 
@@ -546,6 +586,33 @@ export type CatalogControllerGetNpcs403 = {
 };
 
 export type CatalogControllerGetNpcs429 = {
+  message: string;
+};
+
+export type CatalogControllerGetEventsParams = {
+/**
+ * Only entries of this game edition.
+ */
+gameVersion?: CatalogControllerGetEventsGameVersion;
+};
+
+export type CatalogControllerGetEventsGameVersion = typeof CatalogControllerGetEventsGameVersion[keyof typeof CatalogControllerGetEventsGameVersion];
+
+
+export const CatalogControllerGetEventsGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+export type CatalogControllerGetEvents401 = {
+  message: string;
+};
+
+export type CatalogControllerGetEvents403 = {
+  message: string;
+};
+
+export type CatalogControllerGetEvents429 = {
   message: string;
 };
 
@@ -1648,4 +1715,154 @@ export const useGetCatalogControllerGetNpcsQueryData = () => {
   const queryClient = useQueryClient();
   return (params?: CatalogControllerGetNpcsParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof catalogControllerGetNpcs>>>(getCatalogControllerGetNpcsQueryKey(params));
+}
+
+
+
+export const getCatalogControllerGetEventsUrl = (params?: CatalogControllerGetEventsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/public/catalog/events?${stringifiedParams}` : `/public/catalog/events`
+}
+
+/**
+ * @summary List events in the public catalog
+ */
+export const catalogControllerGetEvents = async (params?: CatalogControllerGetEventsParams, options?: Parameters<typeof searchFetch>[1]): Promise<CatalogEventsResponseDtoOutput> => {
+
+  return searchFetch<CatalogEventsResponseDtoOutput>(getCatalogControllerGetEventsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCatalogControllerGetEventsQueryKey = (params?: CatalogControllerGetEventsParams,) => {
+    return [
+    `/public/catalog/events`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCatalogControllerGetEventsQueryOptions = <TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>>(params?: CatalogControllerGetEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCatalogControllerGetEventsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof catalogControllerGetEvents>>> = ({ signal }) => catalogControllerGetEvents(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CatalogControllerGetEventsQueryResult = NonNullable<Awaited<ReturnType<typeof catalogControllerGetEvents>>>
+export type CatalogControllerGetEventsQueryError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>
+
+
+export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>>(
+ params: undefined |  CatalogControllerGetEventsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogControllerGetEvents>>,
+          TError,
+          Awaited<ReturnType<typeof catalogControllerGetEvents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof searchFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>>(
+ params?: CatalogControllerGetEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogControllerGetEvents>>,
+          TError,
+          Awaited<ReturnType<typeof catalogControllerGetEvents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof searchFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>>(
+ params?: CatalogControllerGetEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List events in the public catalog
+ */
+
+export function useCatalogControllerGetEvents<TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>>(
+ params?: CatalogControllerGetEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCatalogControllerGetEventsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List events in the public catalog
+ */
+export const prefetchCatalogControllerGetEventsQuery = async <TData = Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError = ErrorType<CatalogControllerGetEvents401 | CatalogControllerGetEvents403 | CatalogControllerGetEvents429 | SearchUnavailableEncoded>>(
+ queryClient: QueryClient, params?: CatalogControllerGetEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogControllerGetEvents>>, TError, TData>>, request?: SecondParameter<typeof searchFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getCatalogControllerGetEventsQueryOptions(params,options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useCatalogControllerGetEvents} query
+ */
+export const invalidateCatalogControllerGetEvents = async (
+ queryClient: QueryClient, params?: CatalogControllerGetEventsParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getCatalogControllerGetEventsQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary List events in the public catalog
+ */
+export const useSetCatalogControllerGetEventsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: CatalogControllerGetEventsParams | undefined,updater: Awaited<ReturnType<typeof catalogControllerGetEvents>> | undefined | ((old: Awaited<ReturnType<typeof catalogControllerGetEvents>> | undefined) => Awaited<ReturnType<typeof catalogControllerGetEvents>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof catalogControllerGetEvents>>>({ exact: $exactMatch, queryKey: getCatalogControllerGetEventsQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary List events in the public catalog
+ */
+export const useGetCatalogControllerGetEventsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params?: CatalogControllerGetEventsParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof catalogControllerGetEvents>>>(getCatalogControllerGetEventsQueryKey(params));
 }

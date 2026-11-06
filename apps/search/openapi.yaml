@@ -670,6 +670,68 @@ paths:
               schema:
                 $ref: "#/components/schemas/SearchUnavailableEncoded"
       summary: List NPCs in the public catalog
+  /public/catalog/events:
+    get:
+      tags:
+        - Catalog
+      operationId: CatalogController_getEvents
+      parameters:
+        - name: gameVersion
+          in: query
+          schema:
+            type: string
+            enum:
+              - en
+              - pl
+            description: Only entries of this game edition.
+          required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogEventsResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchUnavailableEncoded"
+      summary: List events in the public catalog
 components:
   schemas:
     SearchUnavailableEncoded:
@@ -684,6 +746,54 @@ components:
       required:
         - _tag
         - message
+    CatalogEventsResponseDto_Output:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogEventDto_Output"
+          description: The latest year first, then by name.
+      required:
+        - events
+      description: Public catalog events
+    CatalogEventDto_Output:
+      type: object
+      properties:
+        slug:
+          type: string
+          description: The event's slug, its name and year, such as `halloween-2026`; `CatalogControllerGetItemsQuery.event` lists its items.
+        name:
+          type: string
+          description: The event as the game writes it, such as `Halloween 2026 r.`.
+        year:
+          description: The year its name gives; none for an event without one.
+          nullable: true
+          type: number
+        itemCount:
+          type: number
+          description: How many catalog items belong to the event.
+        boss:
+          description: The strongest monster its highest-level item drops from, which pictures the event; none when Lootlog has not seen that item drop.
+          nullable: true
+          type: object
+          properties:
+            name:
+              type: string
+            icon:
+              nullable: true
+              type: string
+          required:
+            - name
+            - icon
+          additionalProperties: false
+      required:
+        - slug
+        - name
+        - year
+        - itemCount
+        - boss
+      description: A Margonem event whose items are in the public catalog
     CatalogNpcsResponseDto_Output:
       type: object
       properties:
