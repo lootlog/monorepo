@@ -12,7 +12,7 @@ export const GuildPinnedEventsSection = ({
   enabled: boolean;
   onNavigate?: () => void;
 }) => {
-  const { data: pinnedEvents, isPending } = useListPinnedEvents(
+  const { data: pinnedEvents } = useListPinnedEvents(
     { guildId },
     {
       query: {
@@ -24,10 +24,8 @@ export const GuildPinnedEventsSection = ({
   const pinnedActiveEvents = pinnedEvents?.map(({ event }) => event) ?? [];
   const hasPinnedEvents = pinnedActiveEvents.length > 0;
 
-  // Mounting only once the list has loaded makes the first answer appear at
-  // once; the banner grows only when a pin or the events access changes later.
-  if (enabled && isPending) return null;
-
+  // The route loader brings the pins, so they are usually there on the first
+  // render and appear at once; pins that arrive later grow into view.
   return (
     <CollapsePresence open={enabled && hasPinnedEvents}>
       <PinnedEventsBanner

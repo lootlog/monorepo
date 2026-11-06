@@ -171,15 +171,16 @@ function buildUserSidebarRegistry(): RegistryItem[] {
   ];
 }
 
+/** Whether the member sees the Organization's events and their navigation. */
+export const canViewEvents = (accessPolicy: AccessPolicy | undefined) =>
+  accessPolicy?.allowsAny([
+    Capability.LOOTLOG_EVENTS_READ,
+    Capability.LOOTLOG_EVENTS_MANAGE,
+  ]) ?? false;
+
 function buildOrganizationSidebarRegistry(
   organizationId: string,
 ): RegistryItem[] {
-  const canViewEvents = (accessPolicy: AccessPolicy | undefined) =>
-    accessPolicy?.allowsAny([
-      Capability.LOOTLOG_EVENTS_READ,
-      Capability.LOOTLOG_EVENTS_MANAGE,
-    ]) ?? false;
-
   const canManage = (accessPolicy: AccessPolicy | undefined) =>
     accessPolicy?.allows(Capability.ADMIN) ?? false;
 

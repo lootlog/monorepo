@@ -29,6 +29,8 @@ export type GuildNavItemProps = {
   guild: Guild;
   isDragging?: boolean;
   currentGuildId?: string;
+  /** The current server's page is still loading. */
+  isOpening?: boolean;
   unreadLootsCount?: number;
   isHidden?: boolean;
   onToggleHidden?: () => void;
@@ -41,6 +43,7 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
   guild,
   isDragging = false,
   currentGuildId,
+  isOpening,
   unreadLootsCount = 0,
   isHidden = false,
   onToggleHidden,
@@ -129,7 +132,7 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
           <TooltipTrigger
             render={
               <div className="group/rail-item relative mb-2 flex w-full items-center justify-center">
-                <RailItemIndicator isActive={isActive} />
+                <RailItemIndicator isActive={isActive} isLoading={isOpening} />
                 <Link
                   {...linkProps}
                   className="group/guild-item isolate block relative"

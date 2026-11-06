@@ -4,7 +4,11 @@ import { GuildRouteError } from "@/components/router/guild-route-error";
 import { GuildRouteNotFound } from "@/components/router/guild-route-not-found";
 import type { SessionData } from "@/hooks/auth/use-session";
 import { rememberOrganization } from "@/lib/last-organization";
-import { loadOrganization } from "@/lib/router/organization-loader";
+import {
+  loadOrganization,
+  loadOrganizationShell,
+  ORGANIZATION_OPEN_PENDING_MS,
+} from "@/lib/router/organization-loader";
 import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,
@@ -41,6 +45,10 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
     }),
   },
   component: GuildRouteProviders,
+  // Opening another Organization keeps the current page painted while the
+  // next one loads, and swaps them in one step; the rail marks the target at
+  // once. Only a slow load falls back to a skeleton.
+  pendingMs: ORGANIZATION_OPEN_PENDING_MS,
   beforeLoad: ({ params }) => {
     return {
       guildId: params.guildId,
@@ -49,7 +57,18 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
   loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       try {
-        return await loadOrganization(context.queryClient, params.guildId);
+        const organization = await loadOrganization(
+          context.queryClient,
+          params.guildId,
+        );
+
+        await loadOrganizationShell(
+          context.queryClient,
+          params.guildId,
+          organization.accessPolicy,
+        );
+
+        return organization;
       } catch (error) {
         rethrowNotFoundOrError(error);
       }

@@ -8,6 +8,7 @@ import { HeaderSlotsContext } from "@/contexts/header-slots-context";
 import { useHeaderSlotTargets } from "@/hooks/use-header-slot-targets";
 import { useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { useOrganizationSwitchFade } from "./use-organization-switch-fade";
 
 type GuildShellProps = {
   children: ReactNode;
@@ -21,6 +22,8 @@ export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
   const { slots, titleRef, actionsRef, contextRef } = useHeaderSlotTargets();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  useOrganizationSwitchFade();
 
   return (
     <GuildSearchContext.Provider

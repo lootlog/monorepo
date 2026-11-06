@@ -1,15 +1,31 @@
-import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
+import {
+  Capability,
+  createAccessPolicy,
+  type AccessPolicy,
+} from "@lootlog/domain/access-policy";
 import type { QueryClient } from "@tanstack/react-query";
 import {
   getGuildsControllerGetGuildByIdQueryOptions,
   getGuildsControllerGetGuildPermissionsQueryOptions,
+  getGuildsControllerGetWorldsByGuildIdQueryOptions,
+  getListEventHeroTimersQueryOptions,
+  getListEventsQueryOptions,
+  getListPinnedEventsQueryOptions,
   getMembersControllerGetMeQueryOptions,
 } from "@lootlog/client/main";
 import { throwForbiddenRouteError } from "@/lib/router/route-errors";
 import {
   ensureRouteQueryData,
   fetchRouteQueryData,
+  settleRoutePrefetches,
 } from "@/lib/router/route-prefetch";
+import { canViewEvents } from "@/navigation/app-navigation";
+
+/**
+ * How long opening an Organization keeps the previous page painted before
+ * its skeleton shows; most opens finish sooner and swap in one step.
+ */
+export const ORGANIZATION_OPEN_PENDING_MS = 400;
 
 export const loadOrganization = async (
   queryClient: QueryClient,
@@ -50,4 +66,50 @@ export const loadOrganization = async (
   }
 
   return { guild, guildMember, accessPolicy };
+};
+
+/**
+ * Loads what the Organization's shell shows around every page: the world
+ * switcher's worlds and, for a member who can see events, the sidebar's
+ * pinned events with the featured one's timers and the active event badge.
+ * Waiting for them lets a move between Organizations land in one step.
+ */
+export const loadOrganizationShell = (
+  queryClient: QueryClient,
+  guildId: string,
+  accessPolicy: AccessPolicy,
+) => {
+  const prefetches: Promise<unknown>[] = [
+    ensureRouteQueryData(
+      queryClient,
+      getGuildsControllerGetWorldsByGuildIdQueryOptions({ guildId }),
+    ),
+  ];
+
+  if (canViewEvents(accessPolicy)) {
+    prefetches.push(
+      ensureRouteQueryData(
+        queryClient,
+        getListEventsQueryOptions({ guildId }, { activeOnly: true }),
+      ),
+      ensureRouteQueryData(
+        queryClient,
+        getListPinnedEventsQueryOptions({ guildId }),
+      ).then((pinnedEvents) => {
+        const featuredEvent = pinnedEvents[0]?.event;
+
+        if (!featuredEvent?.world) return;
+
+        return ensureRouteQueryData(
+          queryClient,
+          getListEventHeroTimersQueryOptions(
+            { guildId, eventId: featuredEvent.id },
+            { world: featuredEvent.world },
+          ),
+        );
+      }),
+    );
+  }
+
+  return settleRoutePrefetches(prefetches);
 };
