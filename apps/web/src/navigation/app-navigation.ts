@@ -91,6 +91,8 @@ export type AppNavigationSidebarItem = {
   active: boolean;
   href: string;
   label: string;
+  /** The label where space is tight, such as a tab bar. */
+  shortLabel: string;
   /** Heading of the sidebar group the item belongs to; the first group has none. */
   group?: string;
   visible: boolean;
@@ -122,6 +124,7 @@ type ResolveAppNavigationOptions = {
 type RegistryItem = {
   id: AppNavigationItemId;
   labelKey: string;
+  shortLabelKey?: string;
   groupKey?: string;
   path: string;
   visible: (accessPolicy: AccessPolicy | undefined) => boolean;
@@ -146,12 +149,14 @@ function buildUserSidebarRegistry(): RegistryItem[] {
     {
       id: "user-battles",
       labelKey: "layout.navigation.battlePanel",
+      shortLabelKey: "layout.navigation.short.battles",
       path: ROUTES.user.battlePanel.base,
       visible: alwaysVisible,
     },
     {
       id: "user-notifications",
       labelKey: "layout.navigation.notifications",
+      shortLabelKey: "layout.navigation.short.notifications",
       groupKey: "layout.navigation.groups.account",
       path: ROUTES.user.notifications.base,
       visible: alwaysVisible,
@@ -182,6 +187,7 @@ function buildOrganizationSidebarRegistry(
     {
       id: "organization-loots",
       labelKey: "common.breadcrumbs.lootsList",
+      shortLabelKey: "layout.navigation.short.loots",
       path: ROUTES.guild.base(organizationId),
       visible: (accessPolicy) =>
         accessPolicy?.allows(Capability.LOOTLOG_LOOTS_READ) ?? false,
@@ -196,6 +202,7 @@ function buildOrganizationSidebarRegistry(
     {
       id: "organization-hero-sightings",
       labelKey: "heroSightings.title",
+      shortLabelKey: "layout.navigation.short.heroSightings",
       path: ROUTES.guild.heroSightings(organizationId),
       visible: canViewHeroSightings,
     },
@@ -263,6 +270,31 @@ export function getOrganizationLandingItemId(
   );
 
   return item?.id ?? null;
+}
+
+/** How many sections a phone tab bar holds before "More". */
+const TAB_BAR_TAB_COUNT = 4;
+
+export type AppTabBarSections = {
+  /** The first sections the member may see, in sidebar order. */
+  tabs: AppNavigationSidebarItem[];
+  /** Every other visible section, reached from "More". */
+  overflow: AppNavigationSidebarItem[];
+};
+
+/**
+ * Splits the visible sidebar sections between a phone tab bar and its "More"
+ * entry, so the bar follows the sidebar's order and access policy.
+ */
+export function resolveTabBarSections(
+  sidebarItems: readonly AppNavigationSidebarItem[],
+): AppTabBarSections {
+  const visible = sidebarItems.filter((item) => item.visible);
+
+  return {
+    tabs: visible.slice(0, TAB_BAR_TAB_COUNT),
+    overflow: visible.slice(TAB_BAR_TAB_COUNT),
+  };
 }
 
 function t(key: string, options?: TOptions) {
@@ -337,6 +369,7 @@ function resolveSidebarItems(
     active: item.id === activeItem?.id,
     href: item.path,
     label: t(item.labelKey),
+    shortLabel: t(item.shortLabelKey ?? item.labelKey),
     group: item.groupKey && t(item.groupKey),
     visible: item.visible(accessPolicy),
   }));

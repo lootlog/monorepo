@@ -112,7 +112,8 @@ export const ResultsSurface = ({
         // Overlaps the last row's rule while it sits right after the rows.
         <div
           ref={publishDockedFooterHeight}
-          className="sticky bottom-0 z-20 -mt-px bg-sidebar"
+          // Phones dock it above the tab bar.
+          className="sticky bottom-[var(--tab-bar-offset,0px)] z-20 -mt-px bg-sidebar"
         >
           {selectionBar && (
             <div className="border-t border-sidebar-border">{selectionBar}</div>
