@@ -1,6 +1,5 @@
 import { Navigate, createFileRoute, linkOptions } from "@tanstack/react-router";
 import { useCatalogControllerGetNpcs } from "@lootlog/client/search";
-import { catalogSlug } from "@lootlog/domain/catalog-slug";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { NpcDrops } from "@/components/npcs/npc-drops";
@@ -11,20 +10,40 @@ import { NpcLocations } from "@/components/npcs/npc-locations";
 import { useStickyTop } from "@/hooks/use-sticky-top";
 import { t } from "@/i18n/messages";
 import { npcSummary } from "@/lib/npc-summary";
+import { npcPageParams } from "@/lib/catalog-links";
 import {
-  isNpcCatalogKey,
-  npcPageParams,
-  readPageSegment,
-  WIKI_GAME_VERSION,
-} from "@/lib/catalog-links";
-
-// A template, a legacy and a runtime identity may share an id.
-const NPC_IDENTITIES = 3;
+  findPageNpc,
+  loadCatalogItems,
+  loadCatalogNpcs,
+  npcDropsQuery,
+  npcPageQuery,
+} from "@/lib/catalog-page-queries";
+import { linkPreviewMeta, npcLinkPreview } from "@/lib/link-preview";
 
 export const Route = createFileRoute("/npcs_/$npcSlug")({
   component: NpcRoute,
-  head: () => ({
-    meta: [{ title: `${t("meta.npcTitle")} | ${t("meta.title")}` }],
+  // The page loads the monster and its drops itself; a failed load leaves
+  // it the error.
+  loader: async ({ params }) => {
+    const query = npcPageQuery(params.npcSlug);
+
+    if (!query) return { npc: undefined, drops: [] };
+
+    const npcs = await loadCatalogNpcs(query).catch(() => undefined);
+    const npc = npcs && findPageNpc(npcs.hits, params.npcSlug);
+
+    if (!npc) return { npc: undefined, drops: [] };
+
+    const drops = await loadCatalogItems(npcDropsQuery(npc.key)).catch(
+      () => undefined,
+    );
+
+    return { npc, drops: drops?.hits ?? [] };
+  },
+  head: ({ loaderData }) => ({
+    meta: loaderData?.npc
+      ? linkPreviewMeta(npcLinkPreview(loaderData.npc, loaderData.drops))
+      : [{ title: `${t("meta.npcTitle")} | ${t("meta.title")}` }],
   }),
 });
 
@@ -32,26 +51,15 @@ function NpcRoute() {
   const infoboxSticky = useStickyTop();
   const { npcSlug } = Route.useParams();
 
-  const segment = readPageSegment(npcSlug);
+  const query = npcPageQuery(npcSlug);
 
   // The id finds the monster; old links carry the catalog key instead and
   // move to the id and name once it loads.
-  const npcQuery = useCatalogControllerGetNpcs(
-    {
-      ...(isNpcCatalogKey(npcSlug)
-        ? { keys: [npcSlug] }
-        : { ids: segment ? [segment.id] : [] }),
-      gameVersion: WIKI_GAME_VERSION,
-      limit: NPC_IDENTITIES,
-    },
-    { query: { enabled: segment !== undefined || isNpcCatalogKey(npcSlug) } },
-  );
+  const npcQuery = useCatalogControllerGetNpcs(query ?? {}, {
+    query: { enabled: query !== undefined },
+  });
 
-  // One id may name monsters of several identities; the name picks one.
-  const npc =
-    npcQuery.data?.hits.find(
-      (hit) => catalogSlug(hit.name) === segment?.slug,
-    ) ?? npcQuery.data?.hits[0];
+  const npc = npcQuery.data && findPageNpc(npcQuery.data.hits, npcSlug);
 
   if (npc && npcPageParams(npc).npcSlug !== npcSlug) {
     return <Navigate to="/npcs/$npcSlug" params={npcPageParams(npc)} replace />;
@@ -65,7 +73,7 @@ function NpcRoute() {
     );
   }
 
-  if ((!segment && !isNpcCatalogKey(npcSlug)) || (npcQuery.data && !npc)) {
+  if (!query || (npcQuery.data && !npc)) {
     return (
       <p className="py-6 text-sm text-muted-foreground">
         {t("catalog.npcNotFound")}

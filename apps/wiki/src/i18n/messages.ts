@@ -706,6 +706,11 @@ const messages = {
     TITAN: "Tytan",
     NPC: "NPC",
   },
+  linkPreview: {
+    droppedBy: "Wypada z: {{names}}",
+    locations: "Lokacje: {{names}}",
+    drops: "Dropy: {{names}}",
+  },
   items: {
     title: "Wyszukiwarka przedmiotów",
   },

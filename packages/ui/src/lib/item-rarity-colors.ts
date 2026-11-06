@@ -1,12 +1,14 @@
 import type { ItemRarity } from "./item-rarity";
 
 /**
- * Rarity accents, matching the frame colors of `ItemImage` in `@lootlog/ui`:
+ * Rarity accents where a class cannot reach, such as charts and link
+ * previews, matching the frame colors of `ItemImage` in `@lootlog/ui`:
  * legendary orange-600, heroic blue-500 and unique amber-300.
  */
-export const LOOT_RARITY_CHART_COLORS = {
+export const LOOT_RARITY_COLORS = {
   LEGENDARY: "#ea580c",
   HEROIC: "#3b82f6",
+  UNIQUE: "#fcd34d",
 } as const satisfies Partial<Record<ItemRarity, string>>;
 
 export const LOOT_RARITY_TEXT_CLASS: Record<ItemRarity, string> = {

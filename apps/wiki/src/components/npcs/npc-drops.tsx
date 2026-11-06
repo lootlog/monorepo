@@ -8,10 +8,8 @@ import { ItemsByRarity } from "@/components/catalog/items-by-rarity";
 import { NpcElasticDropsLevel } from "@/components/npcs/npc-elastic-drops-level";
 import { NpcRetiredDrops } from "@/components/npcs/npc-retired-drops";
 import { t } from "@/i18n/messages";
-import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
+import { npcDropsQuery } from "@/lib/catalog-page-queries";
 import { monsterIdentity } from "@/lib/group-items-by-monster";
-
-const DROPS_LIMIT = 96;
 
 /**
  * A monster's drops, the most valuable rarity first, highest level within
@@ -23,12 +21,9 @@ export function NpcDrops({
 }: {
   npc: Pick<CatalogNpcDtoOutput, "key" | "name" | "type">;
 }) {
-  const { data, isError } = useCatalogControllerGetItems({
-    droppedBy: npc.key,
-    gameVersion: WIKI_GAME_VERSION,
-    sort: "lvl:desc",
-    limit: DROPS_LIMIT,
-  });
+  const { data, isError } = useCatalogControllerGetItems(
+    npcDropsQuery(npc.key),
+  );
 
   if (!data || isError || data.hits.length === 0) {
     return (
