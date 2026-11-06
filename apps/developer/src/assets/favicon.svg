@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Lootlog Developer">
   <rect x="16" y="16" width="480" height="480" rx="112" fill="#07111f"/>
-  <path d="M373.4 138.6A166 166 0 1 0 419.5 227.2" fill="none" stroke="#a78bfa" stroke-linecap="round" stroke-width="58"/>
+  <path d="M373.4 138.6A166 166 0 1 0 419.5 227.2" fill="none" stroke="#9d7bff" stroke-linecap="round" stroke-width="58"/>
   <circle cx="419.5" cy="227.2" r="32" fill="#35d3e4"/>
   <path d="M216 208l-48 48 48 48M296 208l48 48-48 48M270 192l-28 128" fill="none" stroke="#ece6ff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
