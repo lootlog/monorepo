@@ -40,30 +40,6 @@ type ResultsSurfaceProps = {
  * `data-under-top-bar`: the `FilterBar` stays on top, a table header pins
  * right under it, and the footer stays at the bottom edge.
  */
-const DOCKED_FOOTER_HEIGHT_PROPERTY = "--docked-footer-height";
-
-// Publishes the docked footer's height on the surface, so a floating button,
-// such as the one opening the filters, rises above it.
-const publishDockedFooterHeight = (footer: HTMLDivElement | null) => {
-  const surface = footer?.parentElement;
-
-  if (!footer || !surface) return;
-
-  const observer = new ResizeObserver(() =>
-    surface.style.setProperty(
-      DOCKED_FOOTER_HEIGHT_PROPERTY,
-      `${footer.getBoundingClientRect().height}px`,
-    ),
-  );
-
-  observer.observe(footer);
-
-  return () => {
-    observer.disconnect();
-    surface.style.removeProperty(DOCKED_FOOTER_HEIGHT_PROPERTY);
-  };
-};
-
 export const ResultsSurface = ({
   search,
   filters,
@@ -111,8 +87,8 @@ export const ResultsSurface = ({
       {(selectionBar || footer) && (
         // Overlaps the last row's rule while it sits right after the rows.
         <div
-          ref={publishDockedFooterHeight}
-          className="sticky bottom-0 z-20 -mt-px bg-sidebar"
+          // Phones dock it above the tab bar.
+          className="sticky bottom-[var(--tab-bar-offset,0px)] z-20 -mt-px bg-sidebar"
         >
           {selectionBar && (
             <div className="border-t border-sidebar-border">{selectionBar}</div>

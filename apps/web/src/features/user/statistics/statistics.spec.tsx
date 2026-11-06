@@ -1,4 +1,5 @@
 import { TEST_THEME_CONTEXT } from "@/lib/testing/theme-context";
+import { createTopBarSlots } from "@/lib/testing/top-bar-slots";
 import { configureApiClients } from "@lootlog/client/transport";
 import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
 // @vitest-environment happy-dom
@@ -121,11 +122,17 @@ function renderStatistics(
   });
 
   const queryClient = new QueryClient();
-  onTestFinished(() => queryClient.clear());
+  const { actions, TopBarSlots } = createTopBarSlots();
+  onTestFinished(() => {
+    queryClient.clear();
+    actions.remove();
+  });
   render(
     <QueryClientProvider client={queryClient}>
       <ThemeContext.Provider value={TEST_THEME_CONTEXT}>
-        <RouterProvider router={router} />
+        <TopBarSlots>
+          <RouterProvider router={router} />
+        </TopBarSlots>
       </ThemeContext.Provider>
     </QueryClientProvider>,
   );

@@ -15,6 +15,7 @@ import { routeTree } from "../routeTree.gen";
 import {
   getOrganizationLandingItemId,
   resolveAppNavigation,
+  resolveTabBarSections,
 } from "./app-navigation";
 
 const router = createRouter({
@@ -389,6 +390,59 @@ describe("resolveAppNavigation", () => {
     expect(
       navigation.sidebarItems.find(({ id }) => id === "organization-settings"),
     ).toMatchObject({ visible: false });
+  });
+
+  it("fills the phone tab bar with the sections a member may see, the rest under More", () => {
+    const sectionIds = (accessPolicy: ReturnType<typeof policy>) => {
+      const { tabs, overflow } = resolveTabBarSections(
+        resolveAppNavigation({
+          matches: matchPage("/guild-1/reservations"),
+          accessPolicy,
+        }).sidebarItems,
+      );
+
+      return {
+        tabs: tabs.map(({ id }) => id),
+        overflow: overflow.map(({ id }) => id),
+      };
+    };
+
+    expect(
+      sectionIds(
+        policy(
+          Capability.LOOTLOG_TIMERS_READ,
+          Capability.LOOTLOG_RESERVATIONS_READ,
+          Capability.LOOTLOG_EVENTS_READ,
+        ),
+      ),
+    ).toEqual({
+      tabs: [
+        "organization-timers",
+        "organization-reservations",
+        "organization-events",
+      ],
+      overflow: [],
+    });
+
+    expect(
+      sectionIds(
+        policy(
+          Capability.LOOTLOG_LOOTS_READ,
+          Capability.LOOTLOG_TIMERS_READ,
+          Capability.LOOTLOG_TIMERS_HEROES_READ,
+          Capability.LOOTLOG_RESERVATIONS_READ,
+          Capability.LOOTLOG_DOCS_READ,
+        ),
+      ),
+    ).toEqual({
+      tabs: [
+        "organization-loots",
+        "organization-timers",
+        "organization-hero-sightings",
+        "organization-reservations",
+      ],
+      overflow: ["organization-docs", "organization-stats"],
+    });
   });
 
   it("lands a member without loot access on the first section they may read", () => {

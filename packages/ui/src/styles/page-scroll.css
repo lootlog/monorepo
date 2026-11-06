@@ -49,6 +49,12 @@
 
   .app-content-frame {
     --app-bar-sticky-top: 3.5rem;
+    /* The page ends above the phone tab bar floating over the bottom edge. */
+    padding-bottom: var(--tab-bar-offset, 0px);
+  }
+
+  html:has(.app-content-frame) {
+    scroll-padding-bottom: var(--tab-bar-offset, 0px);
   }
 
   html:has(.app-content-frame [data-page-tabs]) {

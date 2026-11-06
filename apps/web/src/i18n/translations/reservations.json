@@ -57,7 +57,8 @@
       "previousDay": "Poprzedni dzień",
       "nextDay": "Następny dzień",
       "today": "Dzisiaj",
-      "rules": "Zasady"
+      "rules": "Zasady",
+      "more": "Więcej akcji"
     },
     "infoDialog": {
       "title": "Zasady rezerwacji",
