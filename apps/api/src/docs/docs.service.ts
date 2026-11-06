@@ -7,7 +7,7 @@ import {
   InvalidRequestError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
-import { Effect, Schema } from "effect";
+import { Effect, Predicate, Schema } from "effect";
 import {
   GUILD_DOCUMENT_CONTENT_MAX_LENGTH,
   GUILD_DOCUMENT_DEFAULT_LIMIT,
@@ -166,10 +166,9 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
     repository
       .findActive(guildId, documentId)
       .pipe(
-        Effect.flatMap((document) =>
-          document
-            ? Effect.succeed(document)
-            : Effect.fail(new ResourceNotFoundError("Document not found")),
+        Effect.filterOrFail(
+          Predicate.isNotNullish,
+          () => new ResourceNotFoundError("Document not found"),
         ),
       );
 
