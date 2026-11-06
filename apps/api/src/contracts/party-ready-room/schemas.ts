@@ -33,6 +33,7 @@ const readyRoomFields = {
   notificationId: Schema.String,
   organizerDiscordId: Schema.String,
   organizerCharacter: GameCharacter,
+  organizerMapName: Schema.optionalKey(Schema.String),
   guildIds: Schema.Array(Schema.String),
   world: Schema.String,
   description: Schema.optionalKey(Schema.String),
@@ -210,6 +211,16 @@ export const ObservePartyRequest = Schema.Struct({
   organizerCharacterId: NonEmptyString.check(
     Schema.isMaxLength(255).annotate({
       expected: "a value with a length of at most 255",
+    }),
+  ),
+  organizerMapName: Schema.optionalKey(
+    NonEmptyString.check(
+      Schema.isMaxLength(255).annotate({
+        expected: "a value with a length of at most 255",
+      }),
+    ).annotate({
+      description:
+        "The map the organizer stands on, so applicants know where to go.",
     }),
   ),
 }).annotate({ identifier: "PartyReadyRoomObservationDto" });

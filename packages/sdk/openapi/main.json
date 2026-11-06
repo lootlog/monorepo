@@ -33479,6 +33479,17 @@
           "npc": {
             "type": "object",
             "properties": {
+              "id": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "enum": ["Infinity", "-Infinity", "NaN"]
+                  }
+                ]
+              },
               "prof": {
                 "type": "string"
               },
@@ -33596,6 +33607,9 @@
             ],
             "additionalProperties": false
           },
+          "organizerMapName": {
+            "type": "string"
+          },
           "guildIds": {
             "type": "array",
             "items": {
@@ -33705,6 +33719,26 @@
                 "prof": {
                   "type": "string",
                   "maxLength": 100
+                },
+                "clan": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "string",
+                          "enum": ["Infinity", "-Infinity", "NaN"]
+                        }
+                      ]
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "partyPresence": {
                   "type": "string",
@@ -34046,6 +34080,17 @@
               "npc": {
                 "type": "object",
                 "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "enum": ["Infinity", "-Infinity", "NaN"]
+                      }
+                    ]
+                  },
                   "prof": {
                     "type": "string"
                   },
@@ -34163,6 +34208,9 @@
                 ],
                 "additionalProperties": false
               },
+              "organizerMapName": {
+                "type": "string"
+              },
               "guildIds": {
                 "type": "array",
                 "items": {
@@ -34272,6 +34320,26 @@
                     "prof": {
                       "type": "string",
                       "maxLength": 100
+                    },
+                    "clan": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "string",
+                              "enum": ["Infinity", "-Infinity", "NaN"]
+                            }
+                          ]
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
                     },
                     "partyPresence": {
                       "type": "string",
@@ -34571,6 +34639,12 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 255
+          },
+          "organizerMapName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "The map the organizer stands on, so applicants know where to go."
           }
         },
         "required": [

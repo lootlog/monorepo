@@ -2,7 +2,7 @@ import { ChatGatheringCardView } from "./chat-gathering-card-view";
 import { ChatGatheringInviteButton } from "./chat-gathering-invite-button";
 import { ChatGatheringJoinButton } from "./chat-gathering-join-button";
 import { GatheringPartyCounter } from "@/components/common/gathering-party-counter";
-import { Settings2, Ban, Check, LoaderCircle } from "lucide-react";
+import { Settings2, Ban, Check, LoaderCircle, TimerReset } from "lucide-react";
 import { ChatGatheringMenu } from "./chat-gathering-menu";
 import { useWindowsStore } from "@/store/windows.store";
 import { useState } from "react";
@@ -15,15 +15,20 @@ import { useReadyRoomWithdrawal } from "@/features/party-finder/hooks/use-ready-
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
 import { Button } from "@/components/ui/button";
 import { useGatheringPartyState } from "@/components/common/use-gathering-party-state";
+import { useReadyRoomMinutesLeft } from "@/components/common/use-ready-room-minutes-left";
+import { ReadyRoomMinutesLeft } from "@/components/common/ready-room-minutes-left";
+import { IconButton } from "@/components/ui/icon-button";
+import { useExtendPartyGathering } from "@/hooks/api/use-extend-party-gathering";
+import { getRoomOrganizer } from "@/features/chat/party-gathering-organizer";
 
-function getLatestPartyState(
+// The organizer is offered to extend the gathering in its last minutes.
+const EXTEND_OFFER_MINUTES = 2;
+
+function getLatestDetails(
   room: PartyReadyRoomProjection,
   summary: PartyGatheringSummary | undefined,
 ) {
-  const latestDetails =
-    summary && (summary.revision ?? 0) > room.revision ? summary : room;
-
-  return latestDetails.partyState ?? summary?.partyState;
+  return summary && (summary.revision ?? 0) > room.revision ? summary : room;
 }
 
 export function ChatOwnGatheringBar({
@@ -41,11 +46,14 @@ export function ChatOwnGatheringBar({
   const { t } = useTranslation("chat");
   const openAndFocus = useWindowsStore((state) => state.openAndFocus);
   const cancellation = useCancelPartyGathering();
+  const extension = useExtendPartyGathering();
   const withdrawal = useReadyRoomWithdrawal(room);
   const [inviteFailed, setInviteFailed] = useState(false);
   const [withdrawFailed, setWithdrawFailed] = useState(false);
 
-  const partyState = getLatestPartyState(room, summary);
+  const latest = getLatestDetails(room, summary);
+  const partyState = latest.partyState ?? summary?.partyState;
+  const minutesLeft = useReadyRoomMinutesLeft(latest.expiresAt);
   const { observation, isStale } = useGatheringPartyState(partyState, stale);
 
   const actionLabel = t(
@@ -99,7 +107,17 @@ export function ChatOwnGatheringBar({
               {room.npc?.name ?? t("gatherings.ownTitle")}
             </span>
             <GatheringPartyCounter {...counts} />
+            <ReadyRoomMinutesLeft expiresAt={latest.expiresAt} />
           </div>
+          {minutesLeft <= EXTEND_OFFER_MINUTES ? (
+            <IconButton
+              label={t("gatherings.extendLabel")}
+              disabled={extension.isPending}
+              onClick={() => extension.mutate()}
+            >
+              <TimerReset aria-hidden className="ll:text-amber-200" />
+            </IconButton>
+          ) : null}
           {participationButton}
           <ChatGatheringMenu side="top">
             <Button
@@ -128,7 +146,10 @@ export function ChatOwnGatheringBar({
       ) : (
         <ChatGatheringCardView
           joined
+          organizer={getRoomOrganizer(room)}
           organizerDiscordId={room.organizerDiscordId}
+          organizerMapName={latest.organizerMapName}
+          expiresAt={latest.expiresAt}
           guildIds={room.guildIds}
           counters=<GatheringPartyCounter {...counts} />
           details={{ ...room, action: participationAction }}

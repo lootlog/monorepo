@@ -52,6 +52,9 @@ function createProjectionBase(
   if (aggregate.partyMemberCount !== undefined)
     projection.partyMemberCount = aggregate.partyMemberCount;
 
+  if (aggregate.organizerMapName !== undefined)
+    projection.organizerMapName = aggregate.organizerMapName;
+
   if (aggregate.npc) projection.npc = { ...aggregate.npc };
 
   if (aggregate.description !== undefined)
@@ -168,6 +171,7 @@ function createGatheringVolunteers(
     )
     .map(({ character, partyPresence }) => ({
       ...createGatheringCharacter(character),
+      ...(character.clan && { clan: { ...character.clan } }),
       partyPresence,
     }));
 }
@@ -184,6 +188,12 @@ export function createPartyGatheringSummary(
     organizerDiscordId: aggregate.organizerDiscordId,
     organizerLvl: aggregate.organizerCharacter.lvl,
     organizerProf: aggregate.organizerCharacter.prof,
+    ...(aggregate.organizerCharacter.clan && {
+      organizerClan: { ...aggregate.organizerCharacter.clan },
+    }),
+    ...(aggregate.organizerMapName !== undefined && {
+      organizerMapName: aggregate.organizerMapName,
+    }),
     applicantCount: volunteers.length,
     inPartyCount: volunteers.filter(
       ({ partyPresence }) => partyPresence === "IN_PARTY",

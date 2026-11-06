@@ -11,6 +11,8 @@ import {
   SendNotificationRequest,
   NotificationPath,
   VolunteerForPartyRequest,
+  NotificationGoingRequest,
+  NotificationGoingResponse,
 } from "#src/contracts/messaging/schemas";
 
 export class MessagingGroup extends HttpApiGroup.make("messaging").add(
@@ -50,5 +52,27 @@ export class MessagingGroup extends HttpApiGroup.make("messaging").add(
     .annotate(
       OpenApi.Description,
       "Send a volunteer request to the notification creator",
+    ),
+  HttpApiEndpoint.put(
+    "MessagingControllerGoing",
+    "/messaging/:notificationId/going",
+    {
+      params: NotificationPath,
+      payload: NotificationGoingRequest,
+      success: NotificationGoingResponse,
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "MessagingController_going")
+    .annotate(OpenApi.Summary, "Answer an NPC notification with going")
+    .annotate(
+      OpenApi.Description,
+      "Tell your Lootlog that you are going to the notification's NPC, or take it back. Members who received the notification see who is going.",
     ),
 ) {}

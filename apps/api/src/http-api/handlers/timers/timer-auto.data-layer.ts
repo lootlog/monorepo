@@ -81,6 +81,12 @@ import {
 const DEDUP_TTL_SECONDS = 30;
 
 export interface AutoTimerPorts {
+  readonly closeKilledNpcGatherings: (kill: {
+    readonly guildId: string;
+    readonly world: string;
+    readonly npcId: number;
+    readonly location: string;
+  }) => Effect.Effect<unknown, unknown>;
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
   readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
   readonly publishHeroSighting: (
@@ -705,6 +711,16 @@ export const makeAutoTimer = (
             JSON.stringify(result.projection),
             DEDUP_TTL_SECONDS,
           );
+
+          // Closing is idempotent, so a retried, unpublished attempt repeats it.
+          yield* ports
+            .closeKilledNpcGatherings({
+              guildId,
+              world: payload.world,
+              npcId: payload.npc.id,
+              location: payload.npc.location,
+            })
+            .pipe(Effect.ignore);
 
           if (Predicate.isTagged(result, "Unpublished")) return response;
 

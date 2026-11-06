@@ -42,6 +42,8 @@ function readObservation(
     ...new Set(members.map(({ characterId }) => characterId)),
   ].sort();
 
+  const mapName = useGameStore.getState().game?.map.name;
+
   return {
     scope: JSON.stringify([
       room.notificationId,
@@ -74,6 +76,7 @@ function readObservation(
       }),
       organizerAccountId: currentCharacter.accountId,
       organizerCharacterId: currentCharacter.characterId,
+      ...(mapName && { organizerMapName: mapName }),
     },
   };
 }
@@ -101,6 +104,7 @@ export function usePartyReadyRoomObserver(): void {
   const accountId = useGameStore((state) => state.game?.hero.accountId);
   const characterId = useGameStore((state) => state.game?.hero.characterId);
   const world = useGameStore((state) => state.game?.world);
+  const mapName = useGameStore((state) => state.game?.map.name);
 
   const reporter = useRef<ReturnType<
     typeof createReadyRoomPartyReporter
@@ -134,5 +138,6 @@ export function usePartyReadyRoomObserver(): void {
     accountId,
     characterId,
     world,
+    mapName,
   ]);
 }

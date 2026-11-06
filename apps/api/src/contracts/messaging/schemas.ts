@@ -2,6 +2,7 @@ import { GameCharacter } from "../game-character.schema.js";
 import { HeroTrackerEntranceSecondsLeft } from "#src/contracts/timers/schemas";
 /** Shared input and output schemas for the messaging feature. */
 import * as Schema from "effect/Schema";
+import { NotificationGoingPlayerSchema } from "@lootlog/schema/notification-going";
 import {
   DateTimeString,
   NonEmptyString,
@@ -144,3 +145,24 @@ export type NotificationPath = typeof NotificationPath.Type;
 export const NotificationPath = Schema.Struct({
   notificationId: Schema.String,
 });
+
+export type NotificationGoingRequest = typeof NotificationGoingRequest.Type;
+
+export const NotificationGoingRequest = Schema.Struct({
+  world: NonEmptyString.check(
+    Schema.isMaxLength(50).annotate({
+      expected: "a value with a length of at most 50",
+    }),
+  ),
+  character: GameCharacter,
+  going: Schema.Boolean.annotate({
+    description: "Whether the caller is going to the NPC or takes it back.",
+  }),
+}).annotate({ identifier: "NotificationGoingDto" });
+
+export const NotificationGoingResponse = Schema.Struct({
+  notificationId: NonEmptyString,
+  going: Schema.Array(NotificationGoingPlayerSchema),
+}).annotate({ identifier: "NotificationGoingResponseDto_Output" });
+
+export type NotificationGoingResponse = typeof NotificationGoingResponse.Type;

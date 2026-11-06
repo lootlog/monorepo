@@ -93,6 +93,8 @@ const services = Layer.mergeAll(
     remove: unused,
     resolveInvitationTargets: unused,
     observeParty: unused,
+    extend: unused,
+    npcKilled: unused,
   }),
 ).pipe(Layer.provide(Layer.succeed(ApiDatabase, database)));
 

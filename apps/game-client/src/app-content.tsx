@@ -37,6 +37,8 @@ import { usePartyReadyRoomSocket } from "@/features/party-finder/hooks/use-party
 import { usePartyReadyRoomSync } from "@/features/party-finder/hooks/use-party-ready-room-sync";
 import { useNpcPresenceReporter } from "@/features/npc-presence/use-npc-presence-reporter";
 import { usePresencePublicationScope } from "@/hooks/use-presence-publication-scope";
+import { useNotificationGoingSocket } from "@/features/notifications/hooks/use-notification-going-socket";
+import { ReadyRoomCharacterSwitch } from "@/features/party-finder/components/ready-room-character-switch";
 import { useSettingsHydration } from "@/features/settings/persistence/use-settings-hydration";
 import { useSelectedLootlogGuildInitialization } from "@/hooks/use-selected-lootlog-guild";
 
@@ -58,6 +60,7 @@ export const AppContent = () => {
     onChatPosition: () => void sendPosition(),
   });
   usePartyGatheringSocket();
+  useNotificationGoingSocket();
   usePartyReadyRoomSocket();
   usePartyReadyRoomSync();
   usePartyReadyRoomExpiry();
@@ -90,6 +93,7 @@ export const AppContent = () => {
       <CatchingWhitelistWarning />
       <BackendPreferencesWarning />
       <PartyFinder />
+      <ReadyRoomCharacterSwitch />
       <CreatePartyGathering />
       <PingWheel />
       <BattlePingMarkers />

@@ -184,6 +184,7 @@ describe("usePartyReadyRoomObserver", () => {
       ],
       organizerAccountId: "account",
       organizerCharacterId: "character",
+      organizerMapName: "Ithan",
     });
 
     const members = usePartyStore.getState().members;
@@ -254,6 +255,7 @@ describe("usePartyReadyRoomObserver", () => {
       ],
       organizerAccountId: "account",
       organizerCharacterId: "character",
+      organizerMapName: "Ithan",
     });
   });
 
@@ -370,6 +372,7 @@ describe("usePartyReadyRoomObserver", () => {
         ],
         organizerAccountId: "account",
         organizerCharacterId: "character",
+        organizerMapName: "Ithan",
       });
     },
   );
@@ -464,6 +467,7 @@ describe("usePartyReadyRoomObserver", () => {
       members: [],
       organizerAccountId: "account",
       organizerCharacterId: "character",
+      organizerMapName: "Ithan",
     });
     expect(
       readSeededReadyRoomCache(queryClient).projections["room-1"]?.participants
@@ -506,6 +510,7 @@ describe("usePartyReadyRoomObserver", () => {
       members: observedMembers("20"),
       organizerAccountId: "account",
       organizerCharacterId: "character",
+      organizerMapName: "Ithan",
     });
     expect(
       readSeededReadyRoomCache(queryClient).projections["room-1"]?.revision,
@@ -543,6 +548,7 @@ describe("usePartyReadyRoomObserver", () => {
       members: observedMembers("20"),
       organizerAccountId: "account",
       organizerCharacterId: "character",
+      organizerMapName: "Ithan",
     });
     await advanceTime(10_000);
     expect(observeParty).toHaveBeenCalledTimes(2);
@@ -604,6 +610,7 @@ describe("usePartyReadyRoomObserver", () => {
       members: observedMembers("20"),
       organizerAccountId: "account",
       organizerCharacterId: "character",
+      organizerMapName: "Ithan",
     });
   });
 
@@ -665,6 +672,7 @@ describe("usePartyReadyRoomObserver", () => {
       members: [],
       organizerAccountId: "account",
       organizerCharacterId: "character",
+      organizerMapName: "Ithan",
     });
     expect(canEnqueueReadyRoomInvitations(["volunteer"])).toBe(true);
   });
@@ -692,6 +700,7 @@ describe("usePartyReadyRoomObserver", () => {
         members: observedMembers("10"),
         organizerAccountId: "account",
         organizerCharacterId: "character",
+        organizerMapName: "Ithan",
       });
       expect(
         readSeededReadyRoomCache(queryClient).projections["room-1"]?.revision,
@@ -734,6 +743,7 @@ describe("usePartyReadyRoomObserver", () => {
         members: [],
         organizerAccountId: "account",
         organizerCharacterId: "character",
+        organizerMapName: "Ithan",
       });
 
       obsoleteResponse.resolve(Response.json({ ...projection, revision: 100 }));
@@ -853,6 +863,7 @@ describe("usePartyReadyRoomObserver", () => {
           members: observedMembers(...latestIds),
           organizerAccountId: "account",
           organizerCharacterId: "character",
+          organizerMapName: "Ithan",
         });
         expect(readSeededReadyRoomCache(queryClient).projections).toEqual({
           [currentRoom.notificationId]: settledRoom,
@@ -928,6 +939,7 @@ describe("usePartyReadyRoomObserver", () => {
       members: observedMembers("10"),
       organizerAccountId: "account",
       organizerCharacterId: "character",
+      organizerMapName: "Ithan",
     });
     expect(readSeededReadyRoomCache(queryClient).projections["room-1"]).toEqual(
       projection,

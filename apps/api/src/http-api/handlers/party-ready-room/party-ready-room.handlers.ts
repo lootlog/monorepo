@@ -1,4 +1,5 @@
 import type { GameCharacterOffline } from "@lootlog/protocol/rabbit/events";
+import type { ReadyRoomNpcKill } from "./ready-room-lifecycle.js";
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -103,6 +104,12 @@ export class ReadyRoomData extends Context.Service<
       notificationId: string,
       payload: PartyRevisionRequest,
     ) => DataEffect;
+    readonly extend: (
+      identity: ReadyRoomIdentity,
+      notificationId: string,
+      payload: PartyRevisionRequest,
+    ) => DataEffect;
+    readonly npcKilled: (kill: ReadyRoomNpcKill) => DataEffect;
   }
 >()("@lootlog/api/http-api/party-ready-room/data") {}
 
@@ -317,6 +324,20 @@ export const cancelReadyRoom = Effect.fn("cancelReadyRoom")(function* (
   return yield* decode(PartyReadyRoomUpdateDomainResponse, value);
 });
 
+export const extendReadyRoom = Effect.fn("extendReadyRoom")(function* (
+  notificationId: string,
+  payload: PartyRevisionRequest,
+) {
+  const current = yield* identity;
+  yield* assertVisible(current, notificationId);
+
+  const value = yield* data((service) =>
+    service.extend(current, notificationId, payload),
+  );
+
+  return yield* decode(PartyReadyRoomDomainResponse, value);
+});
+
 type ReadyRoomHttpFailure = ReadyRoomAccessDenied | ReadyRoomOperationError;
 
 const orDieHttpFailure = <A, R>(
@@ -365,5 +386,8 @@ export const PartyReadyRoomHandlers = HttpApiBuilder.group(
       )
       .handle("PartyReadyRoomControllerCancel", ({ params, payload }) =>
         orDieHttpFailure(cancelReadyRoom(params.notificationId, payload)),
+      )
+      .handle("PartyReadyRoomControllerExtend", ({ params, payload }) =>
+        orDieHttpFailure(extendReadyRoom(params.notificationId, payload)),
       ),
 );

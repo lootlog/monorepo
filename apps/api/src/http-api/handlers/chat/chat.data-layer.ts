@@ -47,6 +47,8 @@ export interface ChatRedis {
   readonly del: (key: string) => Effect.Effect<unknown, unknown>;
 }
 
+export type PartyGatheringEndReason = "ENDED" | "NPC_KILLED";
+
 type ChatEventPayloads = {
   [RabbitRoutingKey.GUILDS_SEND_MESSAGE]: ChatStoredMessage;
   [RabbitRoutingKey.GUILDS_CLEAR_MESSAGES]: { readonly guildId: string };
@@ -123,6 +125,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
   const endPartyGatheringMessages = (
     notificationId: string,
     guildIds: ReadonlyArray<string>,
+    reason: PartyGatheringEndReason = "ENDED",
   ) =>
     Effect.forEach(
       guildIds,
@@ -146,7 +149,10 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
 
                 const updated = {
                   ...message,
-                  message: `${message.characterData.nick} zakończył zbieranie grupy`,
+                  message:
+                    reason === "NPC_KILLED"
+                      ? `Zbiórka ${message.characterData.nick} zakończona: potwór zabity`
+                      : `Zbiórka ${message.characterData.nick} zakończona`,
                   partyGathering: undefined,
                 };
 

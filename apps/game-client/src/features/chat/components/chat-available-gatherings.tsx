@@ -11,6 +11,7 @@ import { UserPlus, LoaderCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { getSummaryOrganizer } from "@/features/chat/party-gathering-organizer";
 
 type Props = {
   candidates: PartyGatheringSummary[];
@@ -103,7 +104,10 @@ export function ChatAvailableGatherings({
             className="ll:min-w-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:first:border-t-0"
           >
             <ChatGatheringCardView
+              organizer={getSummaryOrganizer(candidate)}
               organizerDiscordId={candidate.organizerDiscordId}
+              organizerMapName={candidate.organizerMapName}
+              expiresAt={candidate.expiresAt}
               guildIds={candidate.guildIds}
               counters=<GatheringPartyCounter
                 partyState={candidate.partyState}

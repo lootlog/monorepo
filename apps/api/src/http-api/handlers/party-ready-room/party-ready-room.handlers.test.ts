@@ -74,6 +74,8 @@ const makeData = (overrides: Partial<ReadyRoomData["Service"]> = {}) =>
     resolveInvitationTargets: () => Effect.succeed({ targets: [] }),
     observeParty: () => Effect.succeed(projection),
     cancel: () => Effect.succeed(update),
+    extend: () => Effect.succeed(projection),
+    npcKilled: () => Effect.void,
     ...overrides,
   });
 

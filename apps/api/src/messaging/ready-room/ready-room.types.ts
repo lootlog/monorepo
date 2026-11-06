@@ -12,6 +12,7 @@ export interface ReadyRoomAggregate {
   notificationId: string;
   organizerDiscordId: string;
   organizerCharacter: PartyReadyRoomCharacter;
+  organizerMapName?: string;
   guildIds: string[];
   world: string;
   description?: string;

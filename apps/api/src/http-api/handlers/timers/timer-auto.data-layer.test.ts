@@ -103,6 +103,7 @@ it("limits independent Organization writes to three, settles delivery pairs, and
         let peak = 0;
 
         const create = makeAutoTimer(database, {
+          closeKilledNpcGatherings: () => Effect.void,
           get: (key) => Effect.sync(() => cache.get(key) ?? null),
           set: (key, value) => Effect.sync(() => cache.set(key, value)),
           setNx: () => Effect.succeed(true),
@@ -300,6 +301,7 @@ it.each([false, true])(
           let dedupReleased = false;
 
           const create = makeAutoTimer(database, {
+            closeKilledNpcGatherings: () => Effect.void,
             get: () => Effect.succeed(null),
             set: () => Effect.void,
             setNx: () => Effect.succeed(true),
@@ -427,6 +429,7 @@ it("writes a kill within the dedup window of an event respawn window that has no
     const publications: string[] = [];
 
     const create = makeAutoTimer(database, {
+      closeKilledNpcGatherings: () => Effect.void,
       get: () => Effect.succeed(null),
       set: () => Effect.void,
       setNx: () => Effect.succeed(true),
@@ -519,6 +522,7 @@ it.each([false, true])(
       const publications: string[] = [];
 
       const create = makeAutoTimer(database, {
+        closeKilledNpcGatherings: () => Effect.void,
         get: () => Effect.succeed(null),
         set: () =>
           failCacheWrite ? Effect.fail("Redis unavailable") : Effect.void,
@@ -683,6 +687,7 @@ it("keeps one timer per Hero Tracker across hiding places, measuring its respawn
     );
 
     const create = makeAutoTimer(database, {
+      closeKilledNpcGatherings: () => Effect.void,
       get: () => Effect.succeed(null),
       set: () => Effect.void,
       setNx: () => Effect.succeed(true),
@@ -787,6 +792,7 @@ it("keeps the window of an open Hero Tracker entrance when another player report
     const published: string[] = [];
 
     const create = makeAutoTimer(database, {
+      closeKilledNpcGatherings: () => Effect.void,
       get: () => Effect.succeed(null),
       set: () => Effect.void,
       setNx: () => Effect.succeed(true),
@@ -851,6 +857,7 @@ it("rejects a timer for an elite I, which Margonem weighs up to 19", async () =>
 
   try {
     const create = makeAutoTimer(boundary.database, {
+      closeKilledNpcGatherings: () => Effect.void,
       get: () => Effect.die("unused"),
       set: () => Effect.die("unused"),
       setNx: () => Effect.die("unused"),
