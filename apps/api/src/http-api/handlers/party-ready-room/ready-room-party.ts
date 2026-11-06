@@ -147,15 +147,12 @@ export const observeWithRetry = (
       },
     };
 
-    const recipients = yield* context.preparePublication(
-      aggregate,
-      getReadyRoomActiveRecipientDiscordIds(aggregate),
-    );
-
-    const viewerGuildIds = yield* context.projectionGuildIds(
-      aggregate,
-      discordId,
-    );
+    const { recipients, viewerGuildIds } =
+      yield* context.preparePublicationForViewer(
+        aggregate,
+        getReadyRoomActiveRecipientDiscordIds(aggregate),
+        discordId,
+      );
 
     const result = yield* context.repository.commit(aggregate, next);
 

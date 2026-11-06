@@ -31,7 +31,14 @@ const offlineRoom = (
       aggregate.organizerDiscordId === event.discordId &&
       aggregate.organizerCharacter.characterId === event.characterId
     ) {
-      yield* cancelAggregate(context, aggregate);
+      yield* cancelAggregate(
+        context,
+        aggregate,
+        yield* context.preparePublication(
+          aggregate,
+          getReadyRoomActiveRecipientDiscordIds(aggregate),
+        ),
+      );
 
       return;
     }

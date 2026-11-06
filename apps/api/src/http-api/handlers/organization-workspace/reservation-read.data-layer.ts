@@ -152,17 +152,18 @@ export const makeReservationReadDataLayer = (
         listWindow: (context, spotId, fromValue, toValue) =>
           operation(
             Effect.gen(function* () {
-              yield* catalog.getSpot(spotId);
+              const [, guildIds] = yield* Effect.all(
+                [
+                  catalog.getSpot(spotId),
+                  visibleReservationGuildIds(database, context.guildId),
+                ],
+                { concurrency: "unbounded" },
+              );
 
               const { from, to } = yield* Effect.try({
                 try: () => parseReservationWindow(fromValue, toValue),
                 catch: (cause) => cause,
               });
-
-              const guildIds = yield* visibleReservationGuildIds(
-                database,
-                context.guildId,
-              );
 
               const windowCondition = and(
                 eq(reservationTable.spotId, spotId),

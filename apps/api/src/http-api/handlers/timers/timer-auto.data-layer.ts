@@ -1,3 +1,4 @@
+import { selectCharacterCatchingGuildIds } from "#src/members/character-catching-guilds";
 import { publishTimerEvents } from "./timer-update-publication.js";
 import { activeEventCondition } from "#src/events/event-scope-query";
 import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
@@ -8,7 +9,7 @@ import {
 } from "#src/members/member-access-query";
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, gte } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import { Clock, Effect, Predicate, Result, Schema } from "effect";
 import { partition } from "es-toolkit";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
@@ -40,7 +41,6 @@ import {
   timerHistoryEntryTable,
   timerTable,
 } from "#src/database/drizzle/timer.schema";
-import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import type { JsonValue } from "#src/http-api/contracts/shared";
 import {
@@ -721,34 +721,20 @@ export const makeAutoTimer = (
             }),
     });
 
-    const guildRows = yield* selectAccessibleGuilds(
-      database,
-      identity.discordId,
-      [Permission.LOOTLOG_TIMERS_WRITE],
+    const [guildRows, catchingGuildIds] = yield* Effect.all(
+      [
+        selectAccessibleGuilds(database, identity.discordId, [
+          Permission.LOOTLOG_TIMERS_WRITE,
+        ]),
+        selectCharacterCatchingGuildIds(database, identity.discordId, payload),
+      ],
+      { concurrency: "unbounded" },
     );
 
     if (guildRows.length === 0)
       return yield* Effect.fail(new PermissionDeniedError());
 
-    const configs = yield* database
-      .select({
-        catchingGuildIds: userCharactersLootlogSettingsTable.catchingGuildIds,
-      })
-      .from(userCharactersLootlogSettingsTable)
-      .where(
-        and(
-          eq(userCharactersLootlogSettingsTable.userId, identity.discordId),
-          eq(userCharactersLootlogSettingsTable.accountId, payload.accountId),
-          eq(
-            userCharactersLootlogSettingsTable.characterId,
-            payload.characterId,
-          ),
-        ),
-      )
-      .orderBy(desc(userCharactersLootlogSettingsTable.createdAt))
-      .limit(1);
-
-    const catching = new Set(configs[0]?.catchingGuildIds ?? []);
+    const catching = new Set(catchingGuildIds);
 
     const [targets, excluded] = partition(guildRows, ({ guild }) =>
       catching.has(guild.id),
