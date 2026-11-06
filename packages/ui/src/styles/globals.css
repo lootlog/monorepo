@@ -19,6 +19,52 @@
   }
 }
 
+/*
+ * Surfaces that are translucent by default turn solid when the system asks
+ * for more contrast or less transparency, so text on them never competes
+ * with the content scrolling underneath.
+ */
+@custom-variant opaque {
+  @media (prefers-contrast: more) {
+    @slot;
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    @slot;
+  }
+}
+
+/*
+ * Increased contrast, whatever the theme: secondary text, borders and rules
+ * move towards the theme's own foreground. Themes set their tokens on the
+ * root element, so `body` derives the stronger values from them and every
+ * page, portal and custom theme inherits the result.
+ */
+@media (prefers-contrast: more) {
+  body {
+    --muted-foreground: color-mix(
+      in oklab,
+      var(--foreground) 88%,
+      var(--background)
+    );
+    --text-supporting: color-mix(
+      in oklab,
+      var(--foreground) 94%,
+      var(--background)
+    );
+    --secondary-foreground: var(--foreground);
+    --sidebar-foreground: var(--foreground);
+    --border: color-mix(in oklab, var(--foreground) 45%, var(--background));
+    --sidebar-border: color-mix(
+      in oklab,
+      var(--foreground) 40%,
+      var(--background)
+    );
+    --separator: color-mix(in oklab, var(--foreground) 32%, var(--background));
+    --ring: var(--foreground);
+  }
+}
+
 /* `.default` scopes the default palette to one element, such as a theme's
  * row in the theme list, whatever theme the page itself uses. */
 :root,
@@ -392,6 +438,11 @@
 }
 
 @theme inline {
+  /*
+   * The smallest text: badges, tab labels, dense captions. Nothing in the
+   * interface goes below it.
+   */
+  --text-2xs: 0.6875rem;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

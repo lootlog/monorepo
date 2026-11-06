@@ -21,7 +21,7 @@ import { useParams } from "@tanstack/react-router";
 import { Timer, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { getMapStatus } from "./components/maps/map-status";
 import { useEventPresence } from "./hooks/socket/use-event-presence";
 import {

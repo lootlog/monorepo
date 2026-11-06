@@ -108,7 +108,7 @@ export function BattleHpTimelineTooltipContent({
 
       {tooltipData.deltas.length > 0 ? (
         <div className="grid gap-1.5 border-t border-border/60 pt-2">
-          <p className="text-[11px] font-medium uppercase text-muted-foreground">
+          <p className="text-2xs font-medium uppercase text-muted-foreground">
             {t("battlePanel.single.chart.tooltip.deltas")}
           </p>
           {tooltipData.deltas.map((delta) => (
@@ -132,7 +132,7 @@ export function BattleHpTimelineTooltipContent({
 
       {tooltipData.legendaryBonuses.length > 0 ? (
         <div className="grid gap-1.5 border-t border-border/60 pt-2">
-          <p className="text-[11px] font-medium uppercase text-muted-foreground">
+          <p className="text-2xs font-medium uppercase text-muted-foreground">
             {t("battlePanel.single.chart.legendary.title")}
           </p>
           {tooltipData.legendaryBonuses.map((bonus, index) => (
@@ -162,7 +162,7 @@ export function BattleHpTimelineTooltipContent({
           {tooltipData.flagLabelKeys.map((labelKey) => (
             <span
               key={labelKey}
-              className="rounded-sm border border-border/70 bg-muted/40 px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground"
+              className="rounded-sm border border-border/70 bg-muted/40 px-1.5 py-0.5 text-2xs leading-none text-muted-foreground"
             >
               {t(labelKey)}
             </span>

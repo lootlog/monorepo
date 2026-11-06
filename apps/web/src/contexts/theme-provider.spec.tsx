@@ -9,7 +9,7 @@ import { configureApiClients } from "@lootlog/client/transport";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { afterEach, expect, it, onTestFinished, vi } from "vitest";
 import { Schema } from "effect";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";

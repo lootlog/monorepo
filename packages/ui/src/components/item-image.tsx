@@ -50,7 +50,7 @@ export const ItemImage: FC<ItemImageProps> = ({
       {upgradeLevel > 0 ? (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute top-0 right-0.5 text-[11px] leading-none font-bold text-green-400 tabular-nums [text-shadow:0_0_2px_#000,0_0_1px_#000]"
+          className="pointer-events-none absolute top-0 right-0.5 text-2xs leading-none font-bold text-green-400 tabular-nums [text-shadow:0_0_2px_#000,0_0_1px_#000]"
         >
           +{upgradeLevel}
         </span>

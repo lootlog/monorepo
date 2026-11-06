@@ -234,6 +234,7 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
   if (isMobile) {
     return (
       <Drawer
+        resizable
         open={isOpen}
         onOpenChange={(open) => !open && closeLootDetails()}
       >

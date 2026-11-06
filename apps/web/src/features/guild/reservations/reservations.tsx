@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { CalendarClock, CircleAlert, SearchX } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import {
   type ReservationSpotsResponseDto,
   getListReservationSpotsQueryKey,

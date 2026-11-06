@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import type { ReservationSettings } from "@lootlog/domain/reservations";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { useCreateReservation } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
 import { DialogFooter } from "@lootlog/ui/components/dialog";

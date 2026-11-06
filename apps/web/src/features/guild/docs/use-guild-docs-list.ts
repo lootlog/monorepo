@@ -1,9 +1,6 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import {
-  useDocsControllerDeleteDocument,
   useDocsControllerGetDocuments,
   type GuildDocumentListResponseDtoItemsItem,
 } from "@lootlog/client/main";
@@ -11,11 +8,9 @@ import {
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useTranslation } from "react-i18next";
-import {
-  guildDocsListQueryOptions,
-  invalidateGuildDocsQueries,
-} from "./docs-api";
+import { guildDocsListQueryOptions } from "./docs-api";
 import { canManageGuildDocs, canWriteGuildDocs } from "./docs-permissions";
+import { useGuildDocTrash } from "./use-guild-doc-trash";
 
 const filterGuildDocuments = (
   documents: GuildDocumentListResponseDtoItemsItem[],
@@ -33,7 +28,6 @@ const filterGuildDocuments = (
 export const useGuildDocsList = () => {
   const { t } = useTranslation();
   const guildId = useGuildId() ?? "";
-  const queryClient = useQueryClient();
   const { data: accessPolicy } = useGuildPermissions();
   const [searchValue, setSearchValue] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -49,7 +43,8 @@ export const useGuildDocsList = () => {
     },
   );
 
-  const deleteDocument = useDocsControllerDeleteDocument();
+  const { confirmBeforeTrash, deleteDocument, moveToTrash } =
+    useGuildDocTrash();
 
   const documents = documentsQuery.data?.items ?? [];
   const filteredDocuments = filterGuildDocuments(documents, searchValue);
@@ -70,16 +65,12 @@ export const useGuildDocsList = () => {
   const moveDocumentToTrash = async (
     document: GuildDocumentListResponseDtoItemsItem,
   ) => {
-    try {
-      await deleteDocument.mutateAsync({
-        pathParams: { guildId, docId: document.id },
-      });
-      await invalidateGuildDocsQueries(queryClient, guildId, document.id);
-      setDocumentPendingTrash(null);
-      toast.success(t("docs.trash.moved"));
-    } catch {
-      toast.error(t("docs.trash.moveError"));
-    }
+    if (await moveToTrash(document.id)) setDocumentPendingTrash(null);
+  };
+
+  const requestTrash = (document: GuildDocumentListResponseDtoItemsItem) => {
+    if (confirmBeforeTrash) setDocumentPendingTrash(document);
+    else void moveDocumentToTrash(document);
   };
 
   return {
@@ -103,5 +94,6 @@ export const useGuildDocsList = () => {
     trashOpen,
     documentPendingTrash,
     moveDocumentToTrash,
+    requestTrash,
   };
 };

@@ -9,7 +9,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,

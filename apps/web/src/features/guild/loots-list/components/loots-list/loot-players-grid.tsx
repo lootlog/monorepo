@@ -31,7 +31,7 @@ export const LootPlayersGrid = ({
     <div className="@container">
       <h3
         className={cn(
-          "border-b border-border/70 bg-muted/20 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground",
+          "border-b border-border/70 bg-muted/20 py-2 text-2xs font-semibold uppercase tracking-wide text-muted-foreground",
           LIST_TILE_INSET_CLASS,
         )}
       >

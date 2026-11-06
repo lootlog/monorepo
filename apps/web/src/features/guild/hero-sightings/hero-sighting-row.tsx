@@ -100,7 +100,7 @@ export const HeroSightingRow = ({
             avatarUrl={sighting.detectedBy.avatarUrl}
             name={sighting.detectedBy.displayName}
             imageSize={32}
-            className="size-4 text-[9px]"
+            className="size-4 text-2xs"
           />
           <span className="min-w-0 truncate">
             {t("heroSightings.detectedByShort")}{" "}

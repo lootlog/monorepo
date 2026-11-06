@@ -29,7 +29,7 @@ export const guildDocEditorTheme: EditorThemeClasses = {
     checklist: "my-2",
     listitem: "my-1 ml-6",
     listitemChecked:
-      "relative my-1 ml-6 list-none text-muted-foreground line-through before:absolute before:-left-6 before:top-0.5 before:size-4 before:rounded before:border before:border-primary before:bg-primary before:content-[''] after:absolute after:-left-[1.18rem] after:top-[0.1rem] after:text-[11px] after:font-bold after:text-primary-foreground after:content-['✓']",
+      "relative my-1 ml-6 list-none text-muted-foreground line-through before:absolute before:-left-6 before:top-0.5 before:size-4 before:rounded before:border before:border-primary before:bg-primary before:content-[''] after:absolute after:-left-[1.18rem] after:top-[0.1rem] after:text-2xs after:font-bold after:text-primary-foreground after:content-['✓']",
     listitemUnchecked:
       "relative my-1 ml-6 list-none before:absolute before:-left-6 before:top-0.5 before:size-4 before:rounded before:border before:border-border before:bg-background before:content-['']",
     nested: {

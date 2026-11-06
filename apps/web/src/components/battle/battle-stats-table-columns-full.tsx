@@ -138,7 +138,7 @@ export const getBattleStatsTableColumns = ({
                   <EmergencyExitIcon size={14} className="shrink-0" />
                 )}
               </span>
-              <span className="block text-[11px] font-normal text-muted-foreground">
+              <span className="block text-2xs font-normal text-muted-foreground">
                 {formatLevel(warrior.lvl, warrior.prof)}
               </span>
             </span>

@@ -8,6 +8,8 @@ import { cn } from "cn";
 
 type DrawerContextValue = {
   modal: DrawerPrimitive.Root.Props["modal"];
+  /** Set on a resizable drawer: opens it to its full height. */
+  expand: (() => void) | null;
   showSwipeHandle: boolean;
   swipeDirection: NonNullable<DrawerPrimitive.Root.Props["swipeDirection"]>;
 };
@@ -22,13 +24,43 @@ function useDrawer() {
   return context;
 }
 
+/** A resizable drawer's medium detent, as a share of the screen height. */
+const MEDIUM_DETENT = 0.5;
+
+/** Its large detent: the drawer's full height. */
+const LARGE_DETENT = 1;
+
+type DrawerProps = DrawerPrimitive.Root.Props & {
+  showSwipeHandle?: boolean;
+  /**
+   * Opens the drawer at half the screen, over the page it came from, and lets
+   * people drag it to its full height. Moving keyboard focus into the content
+   * opens it fully too, so nothing stays out of reach without a gesture.
+   */
+  resizable?: boolean;
+};
+
 function Drawer({
   modal = true,
   showSwipeHandle = true,
   swipeDirection = "down",
+  resizable = false,
+  onOpenChangeComplete,
   ...props
-}: DrawerPrimitive.Root.Props & { showSwipeHandle?: boolean }) {
-  const contextValue = { modal, showSwipeHandle, swipeDirection };
+}: DrawerProps) {
+  const [snapPoint, setSnapPoint] =
+    React.useState<DrawerPrimitive.Root.SnapPoint | null>(MEDIUM_DETENT);
+
+  const expand = resizable ? () => setSnapPoint(LARGE_DETENT) : null;
+  const contextValue = { modal, expand, showSwipeHandle, swipeDirection };
+
+  const snapProps: Partial<DrawerPrimitive.Root.Props> = resizable
+    ? {
+        snapPoints: [MEDIUM_DETENT, LARGE_DETENT],
+        snapPoint,
+        onSnapPointChange: setSnapPoint,
+      }
+    : {};
 
   return (
     // oxlint-disable-next-line react-doctor/context-provider-value-from-unmemoized-local-literal -- The consuming web build runs React Compiler over this source and memoizes the context fields.
@@ -37,6 +69,12 @@ function Drawer({
         data-slot="drawer"
         modal={modal}
         swipeDirection={swipeDirection}
+        onOpenChangeComplete={(open) => {
+          // The next opening starts at the medium detent again.
+          if (!open) setSnapPoint(MEDIUM_DETENT);
+          onOpenChangeComplete?.(open);
+        }}
+        {...snapProps}
         {...props}
       />
     </DrawerContext.Provider>
@@ -94,7 +132,7 @@ function DrawerContent({
   ref,
   ...props
 }: DrawerPrimitive.Popup.Props) {
-  const { modal, showSwipeHandle, swipeDirection } = useDrawer();
+  const { modal, expand, showSwipeHandle, swipeDirection } = useDrawer();
   const animatedHeightRef = useAnimatedHeight(ref);
 
   const swipeAxis =
@@ -114,7 +152,7 @@ function DrawerContent({
           data-swipe-axis={swipeAxis}
           className={cn(
             "group/drawer-popup bg-background pointer-events-auto fixed z-50 flex h-auto flex-col outline-none transition-[transform,opacity] duration-300 data-swiping:duration-0",
-            "transform-[translate3d(var(--drawer-swipe-movement-x,0),var(--drawer-swipe-movement-y,0),0)] data-starting-style:transform-(--closed-transform) data-ending-style:transform-(--closed-transform)",
+            "transform-[translate3d(var(--drawer-swipe-movement-x,0px),calc(var(--drawer-snap-point-offset,0px)+var(--drawer-swipe-movement-y,0px)),0)] data-starting-style:transform-(--closed-transform) data-ending-style:transform-(--closed-transform)",
             "data-[swipe-direction=up]:inset-x-0 data-[swipe-direction=up]:top-0 data-[swipe-direction=up]:mb-24 data-[swipe-direction=up]:max-h-[80vh] data-[swipe-direction=up]:rounded-b-lg data-[swipe-direction=up]:border-b data-[swipe-direction=up]:[--closed-transform:translate3d(0,-100%,0)]",
             "data-[swipe-direction=down]:inset-x-0 data-[swipe-direction=down]:bottom-0 data-[swipe-direction=down]:mt-24 data-[swipe-direction=down]:max-h-[80vh] data-[swipe-direction=down]:rounded-t-lg data-[swipe-direction=down]:border-t data-[swipe-direction=down]:[--closed-transform:translate3d(0,100%,0)]",
             "data-[swipe-direction=right]:inset-y-0 data-[swipe-direction=right]:right-0 data-[swipe-direction=right]:w-3/4 data-[swipe-direction=right]:border-l data-[swipe-direction=right]:sm:max-w-sm data-[swipe-direction=right]:[--closed-transform:translate3d(100%,0,0)]",
@@ -126,6 +164,11 @@ function DrawerContent({
           {showSwipeHandle ? <DrawerSwipeHandle /> : null}
           <DrawerPrimitive.Content
             data-slot="drawer-content"
+            onFocus={(event) => {
+              // Keyboard focus only: the focus a tap leaves when it opens
+              // the drawer must not skip the medium detent.
+              if (event.target.matches(":focus-visible")) expand?.();
+            }}
             className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]"
           >
             {children}

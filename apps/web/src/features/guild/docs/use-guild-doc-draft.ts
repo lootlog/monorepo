@@ -1,12 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
-  useDocsControllerDeleteDocument,
   useDocsControllerGetDocument,
   useDocsControllerUpdateDocument,
 } from "@lootlog/client/main";
@@ -16,6 +15,7 @@ import {
   invalidateGuildDocsQueries,
 } from "./docs-api";
 import { canWriteGuildDocs } from "./docs-permissions";
+import { useGuildDocTrash } from "./use-guild-doc-trash";
 import {
   normalizeGuildDocEditorContent,
   stringifyGuildDocEditorContent,
@@ -61,7 +61,10 @@ export const useGuildDocDraft = () => {
   );
 
   const updateDocument = useDocsControllerUpdateDocument();
-  const deleteDocument = useDocsControllerDeleteDocument();
+
+  const { confirmBeforeTrash, deleteDocument, moveToTrash } =
+    useGuildDocTrash();
+
   const document = documentQuery.data;
   const draftSignature = createDraftSignature(title, content);
   const isDirty = canWrite && savedSignature !== draftSignature;
@@ -177,19 +180,15 @@ export const useGuildDocDraft = () => {
       return;
     }
 
-    try {
-      await deleteDocument.mutateAsync({
-        pathParams: { guildId, docId },
-      });
-      await invalidateGuildDocsQueries(queryClient, guildId, docId);
-      setTrashConfirmOpen(false);
-      toast.success(t("docs.trash.moved"));
-      navigate({
-        to: `/${guildId}/docs`,
-      });
-    } catch {
-      toast.error(t("docs.trash.moveError"));
-    }
+    if (!(await moveToTrash(docId))) return;
+
+    setTrashConfirmOpen(false);
+    navigate({ to: `/${guildId}/docs` });
+  };
+
+  const requestTrash = () => {
+    if (confirmBeforeTrash) setTrashConfirmOpen(true);
+    else void moveDocumentToTrash();
   };
 
   return {
@@ -199,6 +198,7 @@ export const useGuildDocDraft = () => {
     canWrite,
     setHistoryOpen,
     deleteDocument,
+    requestTrash,
     setTrashConfirmOpen,
     saveDraft,
     setTitle,

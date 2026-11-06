@@ -1,7 +1,12 @@
 import * as React from "react";
 
+/**
+ * Whether the viewport is narrower than `maxWidth` CSS pixels at the default
+ * text size. The query is in `rem`, like Tailwind's breakpoints, so a larger
+ * browser text size switches layouts at the same points as the stylesheet.
+ */
 export function useMaxWidth(maxWidth: number) {
-  const query = `(max-width: ${maxWidth - 1}px)`;
+  const query = `(width < ${maxWidth / 16}rem)`;
 
   return React.useSyncExternalStore(
     (notify) => {

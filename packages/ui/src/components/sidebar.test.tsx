@@ -14,7 +14,7 @@ beforeEach(() => {
   vi.spyOn(window, "matchMedia").mockImplementation((query) => {
     const result = matchMedia(query);
 
-    if (query === "(max-width: 767px)")
+    if (query === "(width < 48rem)")
       Object.defineProperty(result, "matches", { value: true });
 
     return result;

@@ -102,7 +102,7 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
           */}
           <div
             className={cn(
-              "box-content flex h-14 items-center gap-1 border-t border-sidebar-border bg-sidebar/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg backdrop-saturate-150",
+              "box-content flex h-14 items-center gap-1 border-t border-sidebar-border bg-sidebar/80 opaque:bg-sidebar opaque:backdrop-blur-none pb-[env(safe-area-inset-bottom)] backdrop-blur-lg backdrop-saturate-150",
               LIST_TILE_INSET_CLASS,
             )}
           >

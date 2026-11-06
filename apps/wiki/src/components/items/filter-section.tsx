@@ -38,7 +38,7 @@ export function FilterSection({
           />
           <span className="min-w-0 truncate">{title}</span>
           {count > 0 ? (
-            <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-semibold text-primary-foreground tabular-nums">
+            <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary px-1 text-2xs font-semibold text-primary-foreground tabular-nums">
               {count}
             </span>
           ) : null}

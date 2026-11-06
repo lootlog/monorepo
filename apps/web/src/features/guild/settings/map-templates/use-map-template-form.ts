@@ -15,7 +15,7 @@ import { FileText, Pencil } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { Schema } from "effect";
 
 type MapTemplateFormProps =

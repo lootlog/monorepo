@@ -98,7 +98,7 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
     >
       <span
         aria-hidden="true"
-        className="w-10 shrink-0 select-none px-1.5 pt-1 text-right font-mono text-[10px] leading-none text-muted-foreground/70 tabular-nums"
+        className="w-10 shrink-0 select-none px-1.5 pt-1 text-right font-mono text-2xs leading-none text-muted-foreground/70 tabular-nums"
       >
         #{turn}
       </span>

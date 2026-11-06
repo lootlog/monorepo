@@ -21,7 +21,7 @@ export const LootUnassignedItems = ({
 
   return (
     <div className="flex max-w-full flex-col gap-1.5 @max-md:basis-full @max-md:border-t @max-md:border-border/40 @max-md:pt-2.5 @md:border-l @md:border-border/40 @md:pl-4">
-      <span className="text-[11px] font-medium leading-none text-muted-foreground">
+      <span className="text-2xs font-medium leading-none text-muted-foreground">
         {t("loots.list.unassignedItems")}
       </span>
       <div className="flex flex-row flex-wrap gap-1.5">

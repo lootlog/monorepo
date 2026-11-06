@@ -30,7 +30,7 @@ export const GuildNavItemMarks = ({
       ) : unreadLootsCount > 0 ? (
         <Badge
           variant="destructive"
-          className="pointer-events-none absolute bottom-0.5 right-0.5 z-20 h-4.5 min-w-4.5 justify-center px-1 text-[9px] leading-none ring-2 ring-sidebar"
+          className="pointer-events-none absolute bottom-0.5 right-0.5 z-20 h-4.5 min-w-4.5 justify-center px-1 text-2xs leading-none ring-2 ring-sidebar"
         >
           {unreadLootsCount > 99
             ? t("layout.guildsSelector.unreadLootsOverflow")

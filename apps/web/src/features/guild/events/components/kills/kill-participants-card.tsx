@@ -2,7 +2,7 @@ import { BandSection } from "@/components/common/band-section";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { Users } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { useEventsRankingControllerUpdateKillPoint } from "@lootlog/client/main";

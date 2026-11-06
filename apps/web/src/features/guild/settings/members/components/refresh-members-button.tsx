@@ -2,7 +2,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useCountdown } from "@/hooks/utils/use-countdown";
 import { useRefreshJob } from "@/hooks/utils/use-refresh-job";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { getApiErrorStringField } from "@lootlog/client/transport";
 import {
   getMembersControllerGetGuildMembersQueryKey,

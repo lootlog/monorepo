@@ -65,8 +65,8 @@ export function AssignedEventMaps({
                     <p
                       className={
                         group.unassigned
-                          ? "text-[10px] font-medium text-muted-foreground/60 uppercase"
-                          : "text-[10px] font-medium text-muted-foreground uppercase"
+                          ? "text-2xs font-medium text-muted-foreground/60 uppercase"
+                          : "text-2xs font-medium text-muted-foreground uppercase"
                       }
                     >
                       {group.name}

@@ -67,7 +67,7 @@ export const BattlePanelBattleCard = ({
             </span>
             <time
               dateTime={battle.createdAt}
-              className="text-[11px] tabular-nums text-muted-foreground"
+              className="text-2xs tabular-nums text-muted-foreground"
             >
               {exactTime}
             </time>
@@ -83,7 +83,7 @@ export const BattlePanelBattleCard = ({
       >
         <div className="grid min-w-0 grid-cols-2 gap-3">
           <div className="min-w-0">
-            <p className="mb-1 text-[11px] text-muted-foreground">
+            <p className="mb-1 text-2xs text-muted-foreground">
               {t("battlePanel.list.columns.yourTeam")}
             </p>
             <BattlePanelTeamSummary
@@ -93,7 +93,7 @@ export const BattlePanelBattleCard = ({
             />
           </div>
           <div className="min-w-0">
-            <p className="mb-1 text-[11px] text-muted-foreground">
+            <p className="mb-1 text-2xs text-muted-foreground">
               {t("battlePanel.list.columns.opponents")}
             </p>
             <BattlePanelTeamSummary team={rightTeam} maxVisibleWarriors={5} />

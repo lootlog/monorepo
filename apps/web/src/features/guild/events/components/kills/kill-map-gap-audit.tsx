@@ -66,7 +66,7 @@ export const KillMapGapAudit = ({ gaps, t }: KillMapGapAuditProps) => {
             <span className="text-xs font-semibold tabular-nums">
               {formatDurationHuman(gap.durationSeconds)}
             </span>
-            <span className="col-span-2 ml-4 text-[10px] tabular-nums text-muted-foreground">
+            <span className="col-span-2 ml-4 text-2xs tabular-nums text-muted-foreground">
               {formatTimeShort(new Date(gap.startedAt))} –{" "}
               {formatTimeShort(new Date(gap.endedAt))}
             </span>
@@ -79,7 +79,7 @@ export const KillMapGapAudit = ({ gaps, t }: KillMapGapAuditProps) => {
   return (
     <div>
       <div className="flex min-h-9 items-center justify-between gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
           {t(
             showAll
               ? "events.killDetail.mapCoverage.allGaps"

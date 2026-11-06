@@ -109,7 +109,7 @@ export const LootNpcs: FC<LootNpcsProps> = ({
       {specialNpcType && (
         <span
           className={cn(
-            "inline-flex h-5 w-fit shrink-0 items-center rounded-md border px-2 text-[11px] font-semibold leading-none",
+            "inline-flex h-5 w-fit shrink-0 items-center rounded-md border px-2 text-2xs font-semibold leading-none",
             getNpcBadgeStyle(specialNpcType),
           )}
         >

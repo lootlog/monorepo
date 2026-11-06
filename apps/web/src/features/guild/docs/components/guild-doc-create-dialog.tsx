@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { FilePlus2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,

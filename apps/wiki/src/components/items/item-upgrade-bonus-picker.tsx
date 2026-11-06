@@ -91,7 +91,7 @@ export function ItemUpgradeBonusPicker({
                           style={{ width: `${option.offerChance * 100}%` }}
                         />
                       </span>
-                      <span className="text-[11px] text-muted-foreground tabular-nums">
+                      <span className="text-2xs text-muted-foreground tabular-nums">
                         {formatOfferChance(option.offerChance)}
                       </span>
                     </span>

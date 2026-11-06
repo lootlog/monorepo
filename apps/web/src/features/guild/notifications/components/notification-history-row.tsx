@@ -63,7 +63,7 @@ export function NotificationHistoryRow({
         </span>
         <Badge
           {...getJobStatusBadgeProps(job.status)}
-          className="h-5 shrink-0 px-2 text-[11px]"
+          className="h-5 shrink-0 px-2 text-2xs"
         >
           {getJobStatusLabel(job.status, t)}
         </Badge>

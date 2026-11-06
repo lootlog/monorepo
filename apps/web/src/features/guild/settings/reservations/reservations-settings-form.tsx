@@ -3,7 +3,7 @@ import { getGuildSettingsErrorMessage } from "../get-guild-settings-error-messag
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 
 import {
   Form,

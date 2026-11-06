@@ -58,7 +58,7 @@ export const KillMapCoverageDiagnostics = ({
             detail: metric.detail,
           })}
         >
-          <dt className="truncate text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="truncate text-2xs font-medium uppercase tracking-wide text-muted-foreground">
             {metric.label}
           </dt>
           <dd className="mt-1 min-w-0 tabular-nums">
@@ -72,7 +72,7 @@ export const KillMapCoverageDiagnostics = ({
             </span>
             <span
               className={cn(
-                "mt-1 block truncate text-[10px] font-medium leading-none",
+                "mt-1 block truncate text-2xs font-medium leading-none",
                 metric.detailColorClassName,
               )}
             >
