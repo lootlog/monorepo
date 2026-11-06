@@ -23,10 +23,14 @@ export const itemPageParams = (item: { id: number; name: string }) => ({
   itemSlug: catalogPageSegment(item),
 });
 
-/** The upgrade an item page shows the item at, so a link keeps it. */
+/**
+ * The upgrade an item page shows the item at, and the character level an
+ * elastic one is previewed at, so a link keeps them.
+ */
 export type ItemPageSearch = {
   upgrade?: UpgradeLevel;
   bonus?: UpgradeBonusKey;
+  level?: number;
 };
 
 export const itemPageSearch = ({
