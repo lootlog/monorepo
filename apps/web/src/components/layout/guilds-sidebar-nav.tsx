@@ -8,9 +8,7 @@ import { SidebarNav } from "./sidebar-nav/sidebar-nav";
 import type { MenuItem } from "./sidebar-nav/types";
 import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
-import { GuildSidebarNavPlaceholder } from "./guild-sidebar-nav-placeholder";
 import { CollapsePresence } from "@/components/common/collapse-presence";
-import { useListPinnedEvents } from "@lootlog/client/main";
 import { useActiveEventCount } from "@/hooks/api/use-active-event-count";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMatches } from "@tanstack/react-router";
@@ -58,17 +56,6 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
 
   const activeEventCount = useActiveEventCount(activeEventsGuildId);
 
-  // Pinned events sit above the items, so the navigation waits for them
-  // instead of sliding down when they arrive.
-  const { isPending: isPinnedEventsPending } = useListPinnedEvents(
-    { guildId: activeEventsGuildId },
-    {
-      query: {
-        enabled: Boolean(activeEventsGuildId),
-      },
-    },
-  );
-
   const hasActiveEvents = activeEventCount > 0;
 
   const menuItems: MenuItem[] = navigation.sidebarItems.map((item) => ({
@@ -96,10 +83,6 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
     />
   );
 
-  if (activeEventsGuildId && isPinnedEventsPending) {
-    return <GuildSidebarNavPlaceholder />;
-  }
-
   return (
     <SidebarNav
       items={menuItems}
@@ -112,7 +95,9 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
               {t("layout.guildsSelector.noAccess")}
             </p>
           </CollapsePresence>
+          {/* Keyed, so another server's pins never stand in for its own. */}
           <GuildPinnedEventsSection
+            key={guildId}
             guildId={guildId ?? ""}
             enabled={Boolean(eventsNavigationItem?.visible)}
             onNavigate={handleItemClick}

@@ -79,7 +79,10 @@ export const SidebarNav = ({
   }
 
   return (
-    <div className="relative flex flex-col w-full flex-1 overflow-hidden">
+    <div
+      data-slot="sidebar-navigation"
+      className="relative flex flex-col w-full flex-1 overflow-hidden"
+    >
       <ThemeSidebarBackground />
       {header && (
         // A backdrop in the header (the server banner) grows it to the
