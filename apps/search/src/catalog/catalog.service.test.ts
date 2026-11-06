@@ -407,3 +407,62 @@ test("events take their name from the year the slug names, the latest first", as
     },
   ]);
 });
+
+test("the index reads every document past one batch, each item and monster once", async () => {
+  const fetches: Array<{ index: string; offset: number; filter?: string }> = [];
+
+  // Item 1 comes twice, as a renamed version is stored after the first.
+  const items = [
+    ...Array.from({ length: 5001 }, (_, index) => ({
+      id: 5001 - index,
+      name: `Item ${5001 - index}`,
+    })),
+    { id: 1, name: "Renamed item 1" },
+  ];
+
+  const npcs = [
+    {
+      id: 2,
+      name: "Tanroth",
+      type: "HERO",
+      gameVersion: "pl",
+      identityNamespace: "runtime",
+    },
+    {
+      id: 1,
+      name: "Tanroth",
+      type: "HERO",
+      gameVersion: "pl",
+      identityNamespace: "template",
+    },
+  ];
+
+  const client = new Meilisearch({
+    host: "http://search.invalid",
+    httpClient: (input, init) => {
+      const body = JSON.parse(String(init?.body));
+      const index = String(input).includes("/indexes/npcs/") ? "npcs" : "items";
+      const documents = index === "npcs" ? npcs : items;
+
+      fetches.push({ index, offset: body.offset, filter: body.filter });
+
+      return Promise.resolve({
+        results: documents.slice(body.offset, body.offset + body.limit),
+        offset: body.offset,
+        limit: body.limit,
+        total: documents.length,
+      });
+    },
+  });
+
+  const index = await Effect.runPromise(
+    makeCatalogModule(client, logger).getIndex({ gameVersion: "pl" }),
+  );
+
+  expect(index.items).toHaveLength(5001);
+  expect(index.items[0]).toEqual({ id: 1, name: "Item 1" });
+  expect(index.npcs).toEqual([{ id: 1, name: "Tanroth" }]);
+  expect(fetches.find(({ index }) => index === "npcs")?.filter).toBe(
+    'gameVersion = "pl" AND current != false',
+  );
+});
