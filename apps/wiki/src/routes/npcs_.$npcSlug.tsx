@@ -8,6 +8,7 @@ import { ArticleSection } from "@/components/article/article-section";
 import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
 import { NpcInfobox } from "@/components/npcs/npc-infobox";
 import { NpcLocations } from "@/components/npcs/npc-locations";
+import { useStickyTop } from "@/hooks/use-sticky-top";
 import { t } from "@/i18n/messages";
 import { npcSummary } from "@/lib/npc-summary";
 import {
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/npcs_/$npcSlug")({
 });
 
 function NpcRoute() {
+  const infoboxSticky = useStickyTop();
   const { npcSlug } = Route.useParams();
 
   const segment = readPageSegment(npcSlug);
@@ -114,7 +116,10 @@ function NpcRoute() {
       </header>
 
       <div className="grid items-start gap-x-8 gap-y-10 xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="xl:sticky xl:top-20 xl:col-start-2 xl:row-start-1">
+        <div
+          {...infoboxSticky}
+          className="xl:sticky xl:col-start-2 xl:row-start-1"
+        >
           {npc ? (
             <NpcInfobox npc={npc} />
           ) : (

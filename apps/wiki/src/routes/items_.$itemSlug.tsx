@@ -14,6 +14,7 @@ import { ItemElasticLevelSection } from "@/components/items/item-elastic-level-s
 import { ItemUpgradeSection } from "@/components/items/item-upgrade-section";
 import { renderStatChanges } from "@/components/render-stat-changes";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
+import { useStickyTop } from "@/hooks/use-sticky-top";
 import { t } from "@/i18n/messages";
 import {
   type ItemPageSearch,
@@ -58,6 +59,7 @@ export const Route = createFileRoute("/items_/$itemSlug")({
 });
 
 function ItemRoute() {
+  const infoboxSticky = useStickyTop();
   const { itemSlug } = Route.useParams();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
@@ -188,7 +190,10 @@ function ItemRoute() {
       </header>
 
       <div className="grid items-start gap-x-8 gap-y-10 xl:grid-cols-[minmax(0,1fr)_21rem]">
-        <div className="xl:sticky xl:top-20 xl:col-start-2 xl:row-start-1">
+        <div
+          {...infoboxSticky}
+          className="xl:sticky xl:col-start-2 xl:row-start-1"
+        >
           <ItemInfobox
             item={looted}
             stat={stat}
