@@ -1,25 +1,15 @@
-import { groupBy, orderBy, uniqBy } from "es-toolkit";
-import {
-  type CatalogItemDtoOutput,
-  useCatalogControllerGetItems,
-} from "@lootlog/client/search";
+import { orderBy, uniqBy } from "es-toolkit";
+import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import { itemEventSlug } from "@lootlog/domain/item-events";
 import { NpcPortrait } from "@/components/common/npc-portrait";
+import { useLatestEvents } from "@/hooks/use-latest-events";
 import { t } from "@/i18n/messages";
-import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { monsterIdentity } from "@/lib/group-items-by-monster";
-import { latestEventOf } from "@/lib/item-events";
+import { eventSubtitle } from "@/lib/item-events";
 import { NewItemsCard } from "./new-items-card";
 import { NewItemsCardsSkeleton } from "./new-items-cards-skeleton";
 
-// Event items carry the event's name; the newest of them are the latest
-// events' own, and older items that came back sort after them.
-const NEW_EVENT_ITEMS = {
-  statKeys: ["etiquette"],
-  sort: "id:desc",
-  limit: 96,
-} as const;
-
+// Two rows of the two-column grid.
 const EVENTS_SHOWN = 4;
 
 /** The event's strongest monster, which pictures it. */
@@ -35,11 +25,7 @@ const eventBoss = (items: readonly CatalogItemDtoOutput[]) =>
 
 /** The newest items of the latest events, under each event's name. */
 export function NewEventItems() {
-  const { data, isError } = useCatalogControllerGetItems({
-    ...NEW_EVENT_ITEMS,
-    gameVersion: WIKI_GAME_VERSION,
-    statKeys: [...NEW_EVENT_ITEMS.statKeys],
-  });
+  const { data: events, isError } = useLatestEvents(EVENTS_SHOWN);
 
   if (isError) {
     return (
@@ -49,14 +35,7 @@ export function NewEventItems() {
     );
   }
 
-  if (!data) return <NewItemsCardsSkeleton count={EVENTS_SHOWN} />;
-
-  const events = Object.entries(
-    groupBy(
-      data.hits.filter((item) => latestEventOf(item.stat) !== undefined),
-      (item) => latestEventOf(item.stat) ?? "",
-    ),
-  ).slice(0, EVENTS_SHOWN);
+  if (!events) return <NewItemsCardsSkeleton count={EVENTS_SHOWN} />;
 
   if (events.length === 0) {
     return (
@@ -68,22 +47,18 @@ export function NewEventItems() {
 
   return (
     <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      {events.map(([event, items]) => {
+      {events.map(({ name, items }) => {
         const boss = eventBoss(items);
 
         return (
-          <li key={event}>
+          <li key={name}>
             <NewItemsCard
-              title={event}
-              eyebrow={
-                boss
-                  ? t("home.eventBoss", { name: boss.name })
-                  : t("home.eventEyebrow")
-              }
+              title={name}
+              eyebrow={eventSubtitle(name, boss)}
               media={<NpcPortrait icon={boss?.icon} size="md" />}
               link={{
                 to: "/events/$eventSlug",
-                params: { eventSlug: itemEventSlug(event) },
+                params: { eventSlug: itemEventSlug(name) },
               }}
               items={items}
               itemCount={items.length}

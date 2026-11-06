@@ -50,7 +50,7 @@ const messages = {
     close: "zamknij",
   },
   slots: {
-    blessing: "Błogosławieństwo",
+    blessing: "Błoga",
     helmet: "Hełm",
     ring: "Pierścień",
     necklace: "Naszyjnik",
@@ -284,18 +284,18 @@ const messages = {
     searchLabel: "Szukaj przedmiotu",
     searchPlaceholder: "Wpisz nazwę przedmiotu, np. dria, serce, łowca",
     searchSubmit: "Szukaj",
-    newMonstersTitle: "Nowi bossowie",
+    newMonstersTitle: "Nowe potwory",
     newMonstersDescription:
-      "Herosi, tytani i kolosi, których przedmioty pojawiły się w grze ostatnio. Najedź na przedmiot, żeby zobaczyć jego statystyki, albo kliknij, żeby otworzyć jego stronę.",
+      "Herosi, tytani i kolosi, którym gra ostatnio dodała lub zmieniła przedmioty. Najedź na przedmiot, żeby zobaczyć jego statystyki, albo kliknij, żeby otworzyć jego stronę.",
     newMonstersEmpty: "Lootlog nie zna jeszcze nowych potworów.",
     newEventItemsTitle: "Ostatnie eventy",
     newEventItemsDescription:
       "Przedmioty, które wypadały podczas ostatnich eventów, z ich najsilniejszym potworem.",
-    eventBoss: "Event · {{name}}",
     eventEyebrow: "Event",
     itemCount: "Przedmioty: {{count}}",
     itemsOf: "Przedmioty: {{name}}",
     moreItems: "+{{count}}",
+    allItemsOf: "Wszystkie przedmioty: {{name}}",
     newEventItemsEmpty:
       "Lootlog nie zna jeszcze nowych przedmiotów eventowych.",
     quickSearchesLabel: "Szybkie wyszukiwania",
@@ -666,6 +666,7 @@ const messages = {
     RING: "Pierścień",
     NECKLACE: "Naszyjnik",
     SHIELD: "Tarcza",
+    QUIVER: "Strzały",
     NEUTRAL: "Neutralne",
     CONSUME: "Konsumpcyjne",
     OUTFITS: "Stroje",
@@ -684,6 +685,7 @@ const messages = {
   },
   npc: {
     factsTitle: "Informacje",
+    heroTrackers: "Tropiciele Herosów",
     type: "Rodzaj",
     elasticLevel: "Jak postać",
     topLocation: "Najczęściej",
