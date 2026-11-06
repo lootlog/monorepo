@@ -564,21 +564,23 @@ export function scheduleRuntimeTeardown(
   const failedRuntime = runtimeWindow.__lootlogGameClientRuntime;
 
   if (!failedRuntime) return;
-  let diagnostics = "";
 
-  // Teardown resets the bridge and the overlay's stores, so the report is
-  // taken while they still describe the failure.
-  try {
-    diagnostics = createDiagnosticsReport({
-      bridgeHealth: margonemRuntimeBridge.getHealth(),
-      failure,
-    });
-  } catch {
-    // The notice and the teardown must not depend on the report.
-  }
-
+  // Runs after the game callback that detected the failure, so building the
+  // report never stalls it.
   queueMicrotask(() => {
     if (runtimeWindow.__lootlogGameClientRuntime !== failedRuntime) return;
+    let diagnostics = "";
+
+    // Teardown resets the bridge and the overlay's stores, so the report is
+    // taken first, while they still describe the failure.
+    try {
+      diagnostics = createDiagnosticsReport({
+        bridgeHealth: margonemRuntimeBridge.getHealth(),
+        failure,
+      });
+    } catch {
+      // The notice and the teardown must not depend on the report.
+    }
 
     try {
       failedRuntime.dispose();

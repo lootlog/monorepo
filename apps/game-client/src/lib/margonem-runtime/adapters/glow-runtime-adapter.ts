@@ -423,19 +423,18 @@ class LootlogOtherGlowManager {
         combined.push(drawable);
       }
 
-      // The game's own list is returned untouched if a glow cannot update.
-      try {
-        for (const glow of this.glowsByCharacterId.values()) {
+      // A glow that cannot update is skipped; the others and the game's own
+      // drawables still render.
+      for (const glow of this.glowsByCharacterId.values()) {
+        try {
           glow.update();
           combined.push(glow);
+        } catch (error) {
+          if (!this.glowErrorReported) {
+            this.glowErrorReported = true;
+            console.warn("[Lootlog] Player glow skipped after error:", error);
+          }
         }
-      } catch (error) {
-        if (!this.glowErrorReported) {
-          this.glowErrorReported = true;
-          console.warn("[Lootlog] Player glows skipped after error:", error);
-        }
-
-        return drawables;
       }
 
       return combined;
