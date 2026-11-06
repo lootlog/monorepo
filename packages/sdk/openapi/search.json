@@ -699,6 +699,16 @@
             "required": false
           },
           {
+            "name": "availableSince",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Items a character on a world opened on this day (`YYYY-MM-DD`) can get: every item of no event, and event items of an edition that ended after it. Events end in the morning and worlds open later in the day, so an edition ending on the opening day is left out. An event without a year comes back, so its items stay."
+            },
+            "required": false
+          },
+          {
             "name": "sort",
             "in": "query",
             "schema": {
