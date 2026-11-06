@@ -24,7 +24,7 @@ const QUICK_SEARCHES: ReadonlyArray<{
   },
   {
     key: "highLevelLegendaries",
-    search: { rarities: ItemRarity.LEGENDARY, minLevel: "250" },
+    search: { rarities: ItemRarity.LEGENDARY, minLevel: 250 },
   },
   // Group fights go to whoever moves first, so players gear for speed.
   {

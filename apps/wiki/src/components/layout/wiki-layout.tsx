@@ -8,6 +8,10 @@ import { WikiHeader } from "./wiki-header";
 // so neither docks it.
 const PAGES_WITHOUT_DOCK = new Set(["/", "/set"]);
 
+// The item search pins its filters to the screen's left edge and gives the
+// results every column the screen has.
+const FULL_WIDTH_PAGES = new Set(["/items"]);
+
 /**
  * A public site rather than an app: a bar on top, the page under it and the
  * User's equipment set docked at the bottom, so pages keep their whole
@@ -16,13 +20,21 @@ const PAGES_WITHOUT_DOCK = new Set(["/", "/set"]);
 export function WikiLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const docksSet = !PAGES_WITHOUT_DOCK.has(pathname);
+  const isFullWidth = FULL_WIDTH_PAGES.has(pathname);
 
   return (
-    <div className="app-content-frame flex min-h-dvh w-full flex-col bg-background text-foreground">
+    <div
+      className={cn(
+        "app-content-frame flex min-h-dvh w-full flex-col bg-background text-foreground",
+        // Pages that pin a column to the screen end it above the dock.
+        docksSet && "[--wiki-dock-height:4.0625rem]",
+      )}
+    >
       <WikiHeader />
       <div
         className={cn(
-          "mx-auto w-full max-w-[100rem] flex-1 px-4 pb-10 md:px-6",
+          "mx-auto w-full flex-1 px-4 pb-10 md:px-6",
+          !isFullWidth && "max-w-[100rem]",
           docksSet && "pb-24",
         )}
       >

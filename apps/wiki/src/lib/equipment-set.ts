@@ -1,4 +1,5 @@
 import { PROFESSION_OPTIONS } from "@/lib/item-options";
+import type { SkillRanks } from "@/lib/skills/skill-tree";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-slots";
 import {
   decodeItemUpgrade,
@@ -12,13 +13,15 @@ export type Profession = (typeof PROFESSION_OPTIONS)[number];
 /**
  * A character's equipment: who wears it, the item id in each slot and how far
  * each worn item is upgraded, with its +5 bonus; a slot without an upgrade
- * wears it as dropped.
+ * wears it as dropped. `skills` holds the rank of each learned skill of the
+ * profession's tree, by the skill's id.
  */
 export type EquipmentSet = {
   profession: Profession | null;
   level: number | null;
   items: Partial<Record<EquipmentSlotId, number>>;
   upgrades: Partial<Record<EquipmentSlotId, ItemUpgrade>>;
+  skills: SkillRanks;
 };
 
 export const EMPTY_EQUIPMENT_SET: EquipmentSet = {
@@ -26,6 +29,7 @@ export const EMPTY_EQUIPMENT_SET: EquipmentSet = {
   level: null,
   items: {},
   upgrades: {},
+  skills: {},
 };
 
 /** The query parameter a shared set travels in. */
@@ -42,14 +46,18 @@ export const isCharacterLevel = (level: number) =>
 // One worn item: its slot letter, its id and its upgrade.
 const SET_PART = new RegExp(`^([a-z])(\\d{1,12})${ITEM_UPGRADE_PATTERN}$`);
 
+// One learned skill: its id and its rank.
+const SKILL_PART = /^(\d{1,5})x(\d{1,2})$/;
+
 const isProfession = (value: string): value is Profession =>
   PROFESSION_OPTIONS.some((profession) => profession === value);
 
 /**
  * A set as a short, readable link value: the character first, then one
  * `<slot letter><item id>` per worn item, with `u<level>` after an upgraded
- * one and the +5 bonus's stat after that, such as `h250_h12345u5ds_b678u2`.
- * An unknown character is `-`.
+ * one and the +5 bonus's stat after that, then `<skill id>x<rank>` per
+ * learned skill, such as `h250_h12345u5ds_b678u2_168x10`. An unknown
+ * character is `-`.
  */
 export const encodeEquipmentSet = (set: EquipmentSet) =>
   [
@@ -62,6 +70,9 @@ export const encodeEquipmentSet = (set: EquipmentSet) =>
 
       return [`${slot.code}${itemId}${encodeItemUpgrade(upgrade)}`];
     }),
+    ...Object.entries(set.skills)
+      .filter(([, rank = 0]) => rank > 0)
+      .map(([id, rank]) => `${id}x${rank}`),
   ].join("_");
 
 /**
@@ -76,8 +87,16 @@ export const decodeEquipmentSet = (value: string): EquipmentSet => {
 
   const items: EquipmentSet["items"] = {};
   const upgrades: EquipmentSet["upgrades"] = {};
+  const skills: SkillRanks = {};
 
   for (const part of parts) {
+    const skill = SKILL_PART.exec(part);
+
+    if (skill && Number(skill[2]) > 0) {
+      skills[Number(skill[1])] = Number(skill[2]);
+      continue;
+    }
+
     const match = SET_PART.exec(part);
     const slot = EQUIPMENT_SLOTS.find(({ code }) => code === match?.[1]);
 
@@ -95,5 +114,6 @@ export const decodeEquipmentSet = (value: string): EquipmentSet => {
     level: isCharacterLevel(level) ? level : null,
     items,
     upgrades,
+    skills,
   };
 };
