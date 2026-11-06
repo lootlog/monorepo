@@ -24,14 +24,14 @@ export const BattlePanelPvpBattleCardSkeleton = () => (
       <BattlePanelTeamColumnSkeleton />
     </div>
     <div className="mt-3 flex items-end justify-between gap-3">
-      <div className="text-[11px]">
+      <div className="text-2xs">
         <SkeletonLine className="h-2.5 w-24" />
       </div>
       <div className="flex flex-col items-end">
         <div className="text-sm">
           <SkeletonLine className="h-3.5 w-8" />
         </div>
-        <div className="text-[11px]">
+        <div className="text-2xs">
           <SkeletonLine className="h-2.5 w-16" />
         </div>
       </div>

@@ -53,6 +53,7 @@ export const GuildDocEditorPage = () => {
     canWrite,
     setHistoryOpen,
     deleteDocument,
+    requestTrash,
     setTrashConfirmOpen,
     saveDraft,
     setTitle,
@@ -153,7 +154,7 @@ export const GuildDocEditorPage = () => {
               aria-label={t("docs.trash.move")}
               className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
               disabled={deleteDocument.isPending}
-              onClick={() => setTrashConfirmOpen(true)}
+              onClick={requestTrash}
             >
               <Trash2 className="size-4" />
             </Button>

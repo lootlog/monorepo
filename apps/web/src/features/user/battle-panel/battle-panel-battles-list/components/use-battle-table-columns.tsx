@@ -171,7 +171,7 @@ export function useBattleTableColumns({
             </span>
             <time
               dateTime={battle.createdAt}
-              className="truncate text-[11px] tabular-nums text-muted-foreground"
+              className="truncate text-2xs tabular-nums text-muted-foreground"
             >
               {exactTime}
             </time>

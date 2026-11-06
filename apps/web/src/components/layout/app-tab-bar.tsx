@@ -30,7 +30,7 @@ const COLLAPSED_SIZE = 48;
 const GAP = 8;
 
 const TAB_CLASS =
-  "relative flex size-full flex-col items-center justify-center gap-0.5 rounded-full text-[10px] leading-none font-medium tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  "relative flex size-full flex-col items-center justify-center gap-0.5 rounded-full text-2xs leading-none font-medium tracking-tighter outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 // Publishes the bar's height, so docked footers and the
 // page's last content stay above it. Hidden from `md` up, it measures zero.
@@ -64,7 +64,8 @@ type AppTabBarProps = {
 
 /**
  * Phone navigation: a pill floating over the bottom edge with the first
- * sections and "More", which opens the full navigation sheet, and search as
+ * sections and "More", which opens the full navigation sheet and shows the
+ * open section when it is one of those behind it, and search as
  * its own circle. Scrolling down shrinks the pill to the current section and
  * scrolling up opens it again, following the scroll as it happens; tapping
  * the collapsed pill opens it too. The unsaved changes bar takes the edge
@@ -97,7 +98,13 @@ export const AppTabBar = ({ sections, badges, onSearch }: AppTabBarProps) => {
     (section) => section.active,
   );
 
-  const overflowActive = sections.overflow.some((section) => section.active);
+  // An open section behind "More" takes the tab's place, so the bar always
+  // shows where the reader is instead of hiding it behind a generic label.
+  const activeOverflow = sections.overflow.find((section) => section.active);
+
+  const OverflowIcon = activeOverflow
+    ? APP_NAVIGATION_ICONS[activeOverflow.id]
+    : Ellipsis;
 
   const overflowBadged = sections.overflow.some(
     (section) => (badges?.[section.id] ?? 0) > 0,
@@ -159,7 +166,7 @@ export const AppTabBar = ({ sections, badges, onSearch }: AppTabBarProps) => {
                     {badge > 0 && (
                       <span
                         aria-hidden="true"
-                        className="absolute -top-1.5 left-3.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground tabular-nums"
+                        className="absolute -top-1.5 left-3.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2xs font-semibold text-primary-foreground tabular-nums"
                       >
                         {badge}
                       </span>
@@ -176,15 +183,23 @@ export const AppTabBar = ({ sections, badges, onSearch }: AppTabBarProps) => {
             <button
               type="button"
               onClick={() => setOpenMobile(true)}
-              aria-current={overflowActive ? "page" : undefined}
+              aria-current={activeOverflow ? "page" : undefined}
+              aria-haspopup="dialog"
+              aria-label={
+                activeOverflow
+                  ? t("layout.navigation.tabBar.moreWithSection", {
+                      section: activeOverflow.label,
+                    })
+                  : undefined
+              }
               className={cn(
                 TAB_CLASS,
-                overflowActive ? "text-primary" : "text-muted-foreground",
+                activeOverflow ? "text-primary" : "text-muted-foreground",
               )}
             >
-              {overflowActive && lens}
+              {activeOverflow && lens}
               <span className="relative">
-                <Ellipsis className="size-5" aria-hidden="true" />
+                <OverflowIcon className="size-5" aria-hidden="true" />
                 {overflowBadged && (
                   <span
                     aria-hidden="true"
@@ -192,8 +207,9 @@ export const AppTabBar = ({ sections, badges, onSearch }: AppTabBarProps) => {
                   />
                 )}
               </span>
-              <span className="relative">
-                {t("layout.navigation.tabBar.more")}
+              <span className="relative max-w-full truncate">
+                {activeOverflow?.shortLabel ??
+                  t("layout.navigation.tabBar.more")}
               </span>
             </button>
           </li>

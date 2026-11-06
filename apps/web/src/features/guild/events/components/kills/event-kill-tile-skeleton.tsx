@@ -32,7 +32,7 @@ export const EventKillTileSkeleton = ({
         <div className="text-sm">
           <SkeletonLine className="h-3.5 w-28 max-w-full" />
         </div>
-        <div className="mt-0.5 text-[10px]">
+        <div className="mt-0.5 text-2xs">
           <SkeletonLine className="h-2.5 w-20" />
         </div>
       </div>

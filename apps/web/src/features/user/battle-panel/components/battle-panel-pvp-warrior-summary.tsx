@@ -33,7 +33,7 @@ export function BattlePanelPvpWarriorSummary({
       </div>
       <div className="min-w-0 leading-tight">
         <div className="truncate text-xs font-semibold">{warrior.name}</div>
-        <div className="flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-1 text-2xs text-muted-foreground">
           <span className="shrink-0">
             ({formatLevel(warrior.lvl, warrior.prof)})
           </span>

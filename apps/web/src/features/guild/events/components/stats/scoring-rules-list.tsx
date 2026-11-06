@@ -28,10 +28,10 @@ export const ScoringRulesList = ({
   return (
     <section>
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 px-3 pt-3 pb-1">
-        <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <h3 className="text-2xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           {label}
         </h3>
-        <p className="text-[11px] text-muted-foreground">{hint}</p>
+        <p className="text-2xs text-muted-foreground">{hint}</p>
       </div>
       <ul className="divide-y divide-border/60" aria-label={label}>
         {rules.map((rule) => {

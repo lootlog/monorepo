@@ -59,7 +59,7 @@ export const BattlePanelTeamSummary = ({
           <span className="truncate text-[13px] font-medium">
             {soloWarrior.name}
           </span>
-          <span className="truncate text-[11px] tabular-nums text-muted-foreground">
+          <span className="truncate text-2xs tabular-nums text-muted-foreground">
             {formatLevel(soloWarrior.lvl, soloWarrior.prof)}
           </span>
         </div>
@@ -88,7 +88,7 @@ export const BattlePanelTeamSummary = ({
             render={
               <span
                 aria-hidden="true"
-                className="relative z-1 flex h-9 min-w-6 shrink-0 items-center justify-center rounded-sm border border-border bg-muted/40 px-1 text-[11px] font-semibold tabular-nums text-muted-foreground"
+                className="relative z-1 flex h-9 min-w-6 shrink-0 items-center justify-center rounded-sm border border-border bg-muted/40 px-1 text-2xs font-semibold tabular-nums text-muted-foreground"
               >
                 +{hiddenWarriors.length}
               </span>

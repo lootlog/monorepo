@@ -3,7 +3,7 @@ import { useNotificationsGuildControllerCancelGuildJob } from "@lootlog/client/m
 import { getApiErrorMessage } from "@lootlog/client/transport";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import {
   getGuildNotificationMutationCallbacks,
   prepareGuildNotificationMutation,

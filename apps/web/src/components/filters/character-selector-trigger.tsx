@@ -93,7 +93,7 @@ export function CharacterSelectorTrigger({
         <span className="flex min-w-0 flex-col items-start leading-tight">
           <span className="max-w-full truncate">{value}</span>
           {selectedCharacters.length === 1 && selectedCharacter && (
-            <span className="text-[11px] font-normal text-muted-foreground">
+            <span className="text-2xs font-normal text-muted-foreground">
               {getCharacterDetails(selectedCharacter)}
             </span>
           )}

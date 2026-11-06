@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Ban, CircleAlert, Hourglass, Link2, Plus, Unlink } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { cn } from "cn";
 import {
   getListReservationSharesQueryKey,

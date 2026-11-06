@@ -4,7 +4,7 @@ import {
   lootsControllerUnlikeLoot,
 } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { useIsViewer } from "@/hooks/auth/use-is-viewer";
 import { useSession } from "@/hooks/auth/use-session";
 import { useGuildId } from "@/hooks/context/use-guild-id";

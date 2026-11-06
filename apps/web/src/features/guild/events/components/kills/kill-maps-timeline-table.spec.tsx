@@ -315,7 +315,7 @@ function installMatchMedia(matches: boolean) {
     configurable: true,
     value: vi.fn().mockImplementation(() => ({
       matches,
-      media: "(max-width: 767px)",
+      media: "(width < 48rem)",
       onchange: null,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),

@@ -32,7 +32,7 @@ export const BattlePanelH2hCardSkeleton = ({
         <div className="text-sm">
           <SkeletonLine className="h-3.5 w-12" />
         </div>
-        <div className="text-[11px]">
+        <div className="text-2xs">
           <SkeletonLine className="h-2.5 w-14" />
         </div>
       </div>

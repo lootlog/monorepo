@@ -135,7 +135,7 @@ export const SidebarNav = ({
                       <div className="flex items-center gap-2.5 pr-2 pb-2 pl-5">
                         <span
                           id={headingId}
-                          className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase"
+                          className="text-2xs font-semibold tracking-wider text-muted-foreground uppercase"
                         >
                           {heading}
                         </span>

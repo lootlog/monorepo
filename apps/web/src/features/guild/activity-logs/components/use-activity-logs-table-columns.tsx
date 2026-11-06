@@ -87,7 +87,7 @@ export const useActivityLogsTableColumns = ({
           </span>
           <time
             dateTime={activity.createdAt}
-            className="truncate text-[11px] tabular-nums text-muted-foreground"
+            className="truncate text-2xs tabular-nums text-muted-foreground"
           >
             {timestampToDate(activity.createdAt, DATE_TIME_WITH_SECONDS_FORMAT)}
           </time>

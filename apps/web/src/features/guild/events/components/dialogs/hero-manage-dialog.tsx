@@ -8,7 +8,7 @@ import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Swords, Plus, Pencil, Info } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import {
   useEventsAssignmentControllerAddHero,
   useEventsAssignmentControllerUpdateHero,

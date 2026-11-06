@@ -118,7 +118,7 @@ export const GuildSidebarHeader = ({
           {guild && (
             <Avatar className="size-6 rounded-md">
               <AvatarImage src={guild.icon ?? undefined} alt="" />
-              <AvatarFallback className="rounded-none text-[10px] font-medium">
+              <AvatarFallback className="rounded-none text-2xs font-medium">
                 {guild.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>

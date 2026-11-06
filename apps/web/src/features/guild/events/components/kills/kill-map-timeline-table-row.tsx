@@ -116,7 +116,7 @@ export const KillMapTimelineTableRow = ({
                       gaps={diagnostics.gaps}
                       t={t}
                     />
-                    <div className="mt-1 flex justify-between text-[10px] tabular-nums text-muted-foreground">
+                    <div className="mt-1 flex justify-between text-2xs tabular-nums text-muted-foreground">
                       <span>{formatTime(startTime)}</span>
                       <span>{formatTime(endTime)}</span>
                     </div>
@@ -124,7 +124,7 @@ export const KillMapTimelineTableRow = ({
 
                   {diagnostics.assignments.length > 0 ? (
                     <div className="border-t border-border/60 px-3 pt-2">
-                      <p className="flex min-h-8 items-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                      <p className="flex min-h-8 items-center text-2xs font-medium uppercase tracking-wide text-muted-foreground">
                         {t("events.killDetail.mapCoverage.assignedMembers")}
                       </p>
                       <div className="divide-y divide-border/50">

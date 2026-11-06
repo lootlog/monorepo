@@ -165,7 +165,7 @@ describe("virtual battle log", () => {
     vi.stubGlobal("matchMedia", (query: string) => {
       const result = nativeMatchMedia(query);
       Object.defineProperty(result, "matches", {
-        value: query === "(max-width: 767px)",
+        value: query === "(width < 48rem)",
       });
 
       return result;

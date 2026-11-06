@@ -20,9 +20,9 @@ export const FilterCount = ({
       className={cn(
         "inline-flex items-center justify-center rounded-full font-semibold tabular-nums",
         variant === "inline" &&
-          "h-5 min-w-5 bg-primary/15 px-1.5 text-[11px] text-primary",
+          "h-5 min-w-5 bg-primary/15 px-1.5 text-2xs text-primary",
         variant === "corner" &&
-          "absolute -top-1 -right-1 h-4 min-w-4 animate-pop-in bg-primary px-1 text-[10px] text-primary-foreground ring-2 ring-background motion-reduce:animate-none",
+          "absolute -top-1 -right-1 h-4 min-w-4 animate-pop-in bg-primary px-1 text-2xs text-primary-foreground ring-2 ring-background motion-reduce:animate-none",
         className,
       )}
     >

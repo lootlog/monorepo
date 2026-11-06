@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import {
   type MyReservationsResponseDtoItemsItem,
   getListMyReservationsQueryKey,

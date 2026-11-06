@@ -128,7 +128,11 @@ export const HeroSightingHistoryDialog = ({
 
   if (isMobile) {
     return (
-      <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <Drawer
+        resizable
+        open={isOpen}
+        onOpenChange={(open) => !open && onClose()}
+      >
         <DrawerContent className="flex h-[92dvh] max-h-[92dvh] flex-col overflow-hidden p-0">
           <DrawerHeader className="flex-row items-center gap-3 border-b group-data-[swipe-axis=y]/drawer-popup:text-left">
             <span className="shrink-0 rounded-lg bg-primary/10 p-2">

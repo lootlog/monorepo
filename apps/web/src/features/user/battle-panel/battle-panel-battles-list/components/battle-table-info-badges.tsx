@@ -22,7 +22,7 @@ type BattleTableInfoBadgesProps = {
 };
 
 const BATTLE_INFO_TAG_CLASS_NAME =
-  "inline-flex h-5 max-w-[92px] min-w-0 items-center justify-center truncate rounded-md border border-border bg-background/60 px-1.5 py-0 text-[11px] font-medium leading-none text-muted-foreground";
+  "inline-flex h-5 max-w-[92px] min-w-0 items-center justify-center truncate rounded-md border border-border bg-background/60 px-1.5 py-0 text-2xs font-medium leading-none text-muted-foreground";
 
 const BATTLE_INFO_TAG_ACTION_CLASS_NAME =
   "pointer-events-auto cursor-pointer transition-colors hover:border-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";

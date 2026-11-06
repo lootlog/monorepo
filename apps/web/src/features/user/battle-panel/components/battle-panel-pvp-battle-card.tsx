@@ -51,7 +51,7 @@ export const BattlePanelPvpBattleCard = ({
       </div>
       <div className="mt-3 grid min-w-0 grid-cols-2 gap-3">
         <div className="min-w-0">
-          <p className="mb-1 text-[11px] text-muted-foreground">
+          <p className="mb-1 text-2xs text-muted-foreground">
             {t("battlePanel.list.columns.yourTeam")}
           </p>
           <BattlePanelPvpWarriorSummary
@@ -61,7 +61,7 @@ export const BattlePanelPvpBattleCard = ({
           />
         </div>
         <div className="min-w-0">
-          <p className="mb-1 text-[11px] text-muted-foreground">
+          <p className="mb-1 text-2xs text-muted-foreground">
             {t("battlePanel.list.columns.opponents")}
           </p>
           <BattlePanelPvpWarriorSummary
@@ -72,7 +72,7 @@ export const BattlePanelPvpBattleCard = ({
         </div>
       </div>
       <div className="mt-3 flex items-end justify-between gap-3">
-        <p className="text-[11px] text-muted-foreground">{exactTime}</p>
+        <p className="text-2xs text-muted-foreground">{exactTime}</p>
         <div className="text-right">
           <p
             className={cn(
@@ -85,7 +85,7 @@ export const BattlePanelPvpBattleCard = ({
           >
             {ratingDeltaLabel}
           </p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-2xs text-muted-foreground">
             {t("battlePanel.statistics.columns.ratingDelta")}
           </p>
         </div>

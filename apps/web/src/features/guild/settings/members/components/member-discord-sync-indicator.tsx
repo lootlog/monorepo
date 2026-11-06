@@ -72,7 +72,7 @@ export const MemberDiscordSyncIndicator: FC<
                 `settings.members.discordSync.status.${presentation.copyKey}.description`,
               )}
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-muted-foreground">
               {t("settings.members.discordSync.fields.technicalStatus")}:{" "}
               {member.lastDiscordStatus ??
                 t("settings.members.discordSync.values.notAvailable")}

@@ -154,7 +154,7 @@ export const ItemTileDetails: FC<ItemTileDetailsProps> = ({
               className="absolute inset-0 size-7 fill-amber-300 text-amber-600"
               strokeWidth={1.5}
             />
-            <span className="relative pt-px text-[11px] leading-none font-bold text-amber-950 tabular-nums">
+            <span className="relative pt-px text-2xs leading-none font-bold text-amber-950 tabular-nums">
               {upgradeLevel}
             </span>
           </span>

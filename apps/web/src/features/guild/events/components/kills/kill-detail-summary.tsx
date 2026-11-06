@@ -114,7 +114,7 @@ export const KillDetailSummary = ({
                   render={
                     <Badge
                       variant="timer"
-                      className="h-5 gap-1 px-2 text-[11px]"
+                      className="h-5 gap-1 px-2 text-2xs"
                       tabIndex={0}
                       aria-label={t("events.killDetail.manualCloseTitle")}
                     />

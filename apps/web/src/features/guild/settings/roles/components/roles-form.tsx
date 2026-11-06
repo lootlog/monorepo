@@ -20,7 +20,7 @@ import { useEffect, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { cn } from "cn";
 
 import { PERMISSION_CATEGORIES } from "../constants/permission-categories";

@@ -3,7 +3,7 @@ import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Link2, TriangleAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { ROUTES } from "@/config/routes";
 import {
   useAcceptReservationShareInvitation,

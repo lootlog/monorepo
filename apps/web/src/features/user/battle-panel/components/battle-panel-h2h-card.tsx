@@ -72,7 +72,7 @@ export const BattlePanelH2hCard = ({
           >
             {record.winRate.toFixed(1)}%
           </p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-2xs text-muted-foreground">
             {t("battlePanel.statistics.columns.winRate")}
           </p>
         </div>

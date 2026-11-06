@@ -17,7 +17,7 @@ import { Spinner } from "@lootlog/ui/components/spinner";
 import { Link2, Link2Off, Share2 } from "lucide-react";
 import { useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 
 type ShareThemeDialogProps = {
   theme: UserThemeResponseDto;

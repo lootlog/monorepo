@@ -95,10 +95,7 @@ export const NotificationRuleRow = ({
                 {viewModel.displayName}
               </span>
               {!rule.enabled && (
-                <Badge
-                  variant="outline"
-                  className="h-5 shrink-0 px-2 text-[11px]"
-                >
+                <Badge variant="outline" className="h-5 shrink-0 px-2 text-2xs">
                   {viewModel.enabledLabel}
                 </Badge>
               )}
@@ -136,12 +133,12 @@ export const NotificationRuleRow = ({
           {/* Only a queued delivery has a time; the summary already says when the rest send. */}
           {nextJob && (
             <span className="flex shrink-0 flex-col items-end gap-0.5 text-right">
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-2xs text-muted-foreground">
                 {t("settings.notifications.rows.nextDelivery")}
               </span>
               <NotificationJobCountdown scheduledFor={nextJob.scheduledFor} />
               {nextJob.blockedReason && (
-                <span className="text-[11px] text-signal-timer">
+                <span className="text-2xs text-signal-timer">
                   {getJobErrorMessage(nextJob.blockedReason, t)}
                 </span>
               )}

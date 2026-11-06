@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNotificationsUserControllerDeleteWatchedItem } from "@lootlog/client/main";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { formatItemHid } from "@/lib/utils/hid-detection";
 import { useState } from "react";
 import { useCopyItemId } from "@/hooks/use-copy-item-id";

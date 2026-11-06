@@ -31,6 +31,7 @@
     "tabBar": {
       "ariaLabel": "Sekcje",
       "more": "Więcej",
+      "moreWithSection": "{{section}}. Więcej sekcji",
       "expand": "{{section}}. Pokaż zakładki"
     }
   },

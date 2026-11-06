@@ -6,7 +6,7 @@ import {
 } from "@lootlog/schema/custom-theme";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { ROUTES } from "@/config/routes";
 import { useCreateUserTheme } from "@/hooks/api/user/use-user-themes";
 

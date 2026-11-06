@@ -72,7 +72,7 @@ export const LootItemIdButton = ({
               <span className="shrink-0">
                 {t("loots.details.itemCopy", { index: index + 1 })}
               </span>
-              <code className="ml-auto min-w-0 truncate font-mono text-[11px] text-muted-foreground">
+              <code className="ml-auto min-w-0 truncate font-mono text-2xs text-muted-foreground">
                 {formattedHid.slice(5, 13)}…
               </code>
             </DropdownMenuItem>

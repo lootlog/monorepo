@@ -72,7 +72,7 @@ export function WeeklyActivityHeatmap({
             <span
               key={hour}
               aria-hidden
-              className="flex justify-center whitespace-nowrap text-[10px] text-muted-foreground tabular-nums"
+              className="flex justify-center whitespace-nowrap text-2xs text-muted-foreground tabular-nums"
             >
               {hour % 3 === 0 ? `${hour}:00` : ""}
             </span>
@@ -81,7 +81,7 @@ export function WeeklyActivityHeatmap({
             <div key={weekday} className="contents">
               <span
                 aria-hidden
-                className="flex items-center pr-1 text-[10px] text-muted-foreground"
+                className="flex items-center pr-1 text-2xs text-muted-foreground"
               >
                 {formatIsoWeekday(weekday, true)}
               </span>

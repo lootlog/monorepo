@@ -97,11 +97,11 @@ export const GuildDocHistoryDialog = ({
           <span className="truncate text-sm font-medium leading-tight">
             {t("docs.history.version", { version: history.version })}
           </span>
-          <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+          <span className="shrink-0 text-2xs tabular-nums text-muted-foreground">
             {editedAt}
           </span>
         </div>
-        <p className="mt-1 truncate pl-1 text-[11px] text-muted-foreground">
+        <p className="mt-1 truncate pl-1 text-2xs text-muted-foreground">
           {t("docs.history.editedBy", {
             action: actionLabel,
             name: actorName,
@@ -124,7 +124,7 @@ export const GuildDocHistoryDialog = ({
             <SectionCardHeader
               title={t("docs.history.versions")}
               actions={
-                <Badge variant="secondary" className="h-5 px-2 text-[10px]">
+                <Badge variant="secondary" className="h-5 px-2 text-2xs">
                   {historyItems.length}
                 </Badge>
               }

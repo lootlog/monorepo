@@ -6,7 +6,7 @@ import { useId } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import {
