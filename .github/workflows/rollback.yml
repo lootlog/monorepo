@@ -49,16 +49,17 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
+          source scripts/retry.sh
           while IFS= read -r target; do
             kind="$(jq -r '.previous.kind' <<< "$target")"
             project="$(jq -r '.previous.project' <<< "$target")"
             deployment_id="$(jq -r '.previous.deploymentId' <<< "$target")"
             if [[ "$kind" == "pages" ]]; then
-              curl --fail-with-body --silent --show-error --request POST \
+              retry curl --fail-with-body --silent --show-error --request POST \
                 --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --header "Content-Type: application/json" --data '{}' \
                 "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$project/deployments/$deployment_id/rollback"
             else
-              bunx wrangler rollback "$deployment_id" --config "$(jq -r '.previous.configPath' <<< "$target")" \
+              retry bunx wrangler rollback "$deployment_id" --config "$(jq -r '.previous.configPath' <<< "$target")" \
                 --env="" --name "$project" --message "Restore previous production state" --yes
             fi
           done < <(jq -c '[.[] | select(.previous.kind != "docker")] | sort_by(if .id == "traffic-splitter" then 1 else 0 end)[]' "$RUNNER_TEMP/rollback-targets.json")

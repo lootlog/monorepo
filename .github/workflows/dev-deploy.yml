@@ -93,8 +93,9 @@ jobs:
           PACKAGE: ${{ matrix.package }}
           PROJECT: ${{ matrix.development.project }}
         run: |
+          source scripts/retry.sh
           settings="$(
-            curl --fail-with-body --silent --show-error \
+            retry curl --fail-with-body --silent --show-error \
               --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
               "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT"
           )"
@@ -159,10 +160,11 @@ jobs:
           KIND: ${{ matrix.kind }}
           PROJECT: ${{ matrix.development.project }}
         run: |
+          source scripts/retry.sh
           if [[ "$KIND" == "pages" ]]; then
-            bunx wrangler pages deploy "$ARTIFACT_PATH" --project-name "$PROJECT" --branch develop --commit-hash "$GITHUB_SHA" --commit-dirty=false
+            retry bunx wrangler pages deploy "$ARTIFACT_PATH" --project-name "$PROJECT" --branch develop --commit-hash "$GITHUB_SHA" --commit-dirty=false
           else
-            bunx wrangler deploy --config "$CONFIG_PATH" --env "$ENVIRONMENT" --keep-vars --message "Deploy $GITHUB_SHA to development"
+            retry bunx wrangler deploy --config "$CONFIG_PATH" --env "$ENVIRONMENT" --keep-vars --message "Deploy $GITHUB_SHA to development"
           fi
 
   docker:
