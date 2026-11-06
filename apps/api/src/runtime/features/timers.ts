@@ -27,6 +27,7 @@ import { TimersData } from "#src/http-api/handlers/timers/timers.handlers";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { makeHeroSightingPublisher } from "#src/runtime/features/hero-sightings";
+import { ReadyRoomData } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
 
 export const timersData = Layer.unwrap(
   Effect.gen(function* () {
@@ -34,6 +35,7 @@ export const timersData = Layer.unwrap(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     const config = yield* ApiRuntimeConfig;
+    const readyRooms = yield* ReadyRoomData;
 
     const eventHeroKillQueue = yield* Effect.acquireRelease(
       Effect.sync(
@@ -88,6 +90,7 @@ export const timersData = Layer.unwrap(
     const service = TimersData.makeService({
       ...makeTimerHistory(database),
       createAuto: makeAutoTimer(database, {
+        closeKilledNpcGatherings: readyRooms.npcKilled,
         signalEventHeroChecks: eventHeroChecks.signal,
         get: (key) => attempt(() => redis.get(key)),
         invalidateList,

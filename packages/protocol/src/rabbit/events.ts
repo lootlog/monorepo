@@ -1,3 +1,4 @@
+import { NotificationGoingUpdateSchema } from "@lootlog/schema/notification-going";
 import { UserFeedItem } from "../feed.js";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import {
@@ -387,6 +388,7 @@ const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.GUILDS_CLEAR_MESSAGES]: OrganizationScopedEvent,
   [RabbitRoutingKey.GUILDS_NOTIFICATIONS_SEND]: OrganizationScopedEvent,
   [RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER]: NotificationVolunteer,
+  [RabbitRoutingKey.GUILDS_NOTIFICATIONS_GOING]: NotificationGoingUpdateSchema,
   [RabbitRoutingKey.GUILDS_PARTY_GATHERING]: OrganizationScopedEvent,
   [RabbitRoutingKey.GUILDS_PARTY_GATHERING_CANCEL]: OrganizationScopedEvent,
   [RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED]:

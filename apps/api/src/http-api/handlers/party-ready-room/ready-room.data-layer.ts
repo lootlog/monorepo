@@ -7,13 +7,15 @@ import { randomUUID } from "node:crypto";
 import { Effect, Layer } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { NOTIFICATION_SEND_PERMISSIONS } from "@lootlog/domain/npc-permissions";
-import type {
-  PartyGatheringNpc,
-  PartyGatheringUpdateEnvelope,
-  PartyReadyRoomCharacter,
-  PartyReadyRoomUpdateEnvelope,
+import {
+  PARTY_GATHERING_LIFETIME_MS,
+  type PartyGatheringNpc,
+  type PartyGatheringUpdateEnvelope,
+  type PartyReadyRoomCharacter,
+  type PartyReadyRoomUpdateEnvelope,
 } from "@lootlog/schema/party-ready-room";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import type { PartyGatheringEndReason } from "#src/http-api/handlers/chat/chat.data-layer";
 
 import {
   createReadyRoomClientUpdate,
@@ -33,8 +35,9 @@ import {
 } from "./party-ready-room.handlers.js";
 import {
   cancelRoom,
+  closeKilledNpcRooms,
   createRoom,
-  ROOM_LIFETIME_MS,
+  extendRoom,
 } from "./ready-room-lifecycle.js";
 import { characterOffline } from "./ready-room-offline.js";
 import {
@@ -77,6 +80,7 @@ export interface ReadyRoomEffects {
   readonly endPartyGatheringMessages: (
     notificationId: string,
     guildIds: ReadonlyArray<string>,
+    reason?: PartyGatheringEndReason,
   ) => Effect.Effect<void, unknown>;
 }
 
@@ -113,7 +117,7 @@ export const createReadyRoomForNotification = (
     revision: 1,
     createdAt: timestamp,
     updatedAt: timestamp,
-    expiresAt: new Date(now + ROOM_LIFETIME_MS).toISOString(),
+    expiresAt: new Date(now + PARTY_GATHERING_LIFETIME_MS).toISOString(),
     participants: {},
   };
 
@@ -429,12 +433,16 @@ export const makeReadyRoomDataLayer = (
               payload.organizerCharacterId,
               payload.memberCharacterIds,
               payload.members,
+              payload.organizerMapName,
               payload.expectedRevision,
               0,
             ),
           ),
         cancel: (identity, notificationId, payload) =>
           operation(cancelRoom(context, identity, notificationId, payload)),
+        extend: (identity, notificationId, payload) =>
+          operation(extendRoom(context, identity, notificationId, payload)),
+        npcKilled: (kill) => operation(closeKilledNpcRooms(context, kill)),
       });
     }),
   );

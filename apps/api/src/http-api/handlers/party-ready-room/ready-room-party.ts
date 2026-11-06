@@ -74,6 +74,7 @@ export const observeWithRetry = (
   organizerCharacterId: string,
   memberCharacterIds: ReadonlyArray<string>,
   members: ReadonlyArray<PartyGatheringPartyMember> | undefined,
+  organizerMapName: string | undefined,
   expectedRevision: number | undefined,
   attempt: number,
 ): Effect.Effect<unknown, unknown> =>
@@ -100,6 +101,7 @@ export const observeWithRetry = (
     }
 
     const memberIds = new Set(memberCharacterIds);
+    const mapName = organizerMapName ?? aggregate.organizerMapName;
 
     const partyMembers = observePartyMembers(aggregate, memberIds, members);
 
@@ -129,6 +131,7 @@ export const observeWithRetry = (
       expectedRevision === undefined &&
       changed.length === 0 &&
       aggregate.partyMemberCount === memberIds.size &&
+      aggregate.organizerMapName === mapName &&
       isFreshObservation(aggregate, partyMembers, context.clock())
     ) {
       return yield* context.projectionForViewer(aggregate, discordId);
@@ -140,6 +143,7 @@ export const observeWithRetry = (
       updatedAt,
       participants,
       partyMemberCount: memberIds.size,
+      ...(mapName !== undefined && { organizerMapName: mapName }),
       partyState: {
         status: "OBSERVED",
         observedAt: updatedAt,
@@ -175,6 +179,7 @@ export const observeWithRetry = (
             organizerCharacterId,
             memberCharacterIds,
             members,
+            organizerMapName,
             expectedRevision,
             attempt + 1,
           );

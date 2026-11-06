@@ -32,6 +32,7 @@ import {
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
+import { NotificationGoingButton } from "@/features/notifications/components/notification-going-button";
 import { useTranslation } from "react-i18next";
 import { getNotificationSettingsKey } from "@/features/notifications/utils/get-notification-settings-key";
 import { getNotificationAutoHideDeadlineMs } from "@/features/notifications/notification-auto-hide";
@@ -410,6 +411,11 @@ export const SingleNotification = memo(function SingleNotification({
           {renderNotificationContent({ notification, meetsLevelReq })}
         </div>
         <div className="ll:relative ll:flex ll:shrink-0 ll:items-center">
+          {isRegularNotification(notification) &&
+          notification.npc &&
+          !notification.isGatheringParty ? (
+            <NotificationGoingButton notification={notification} />
+          ) : null}
           {showJoinAction ? (
             <IconButton
               label={t("actions.joinAria")}

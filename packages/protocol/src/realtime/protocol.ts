@@ -499,6 +499,7 @@ export const ServerEvent = Schema.Union([
   serverEvent("reservation.deleted", OrganizationEvent),
   serverEvent("reservation.changed", ReservationChangedEventV2),
   serverEvent("notification.sent", OrganizationEvent),
+  serverEvent("notification.going", OrganizationEvent),
   serverEvent("member-refresh.updated", OrganizationEvent),
   serverEvent("party-gathering.updated", OrganizationEvent),
   serverEvent("party-gathering.cancelled", OrganizationEvent),

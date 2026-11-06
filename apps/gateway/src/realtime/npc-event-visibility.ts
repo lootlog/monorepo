@@ -46,6 +46,7 @@ type NpcEvent = Extract<
       | "chat.updated"
       | "chat.deleted"
       | "notification.sent"
+      | "notification.going"
       | "party-ready-room.updated";
   }
 >;
@@ -169,6 +170,9 @@ const eventRouting = (event: NpcEvent): Routing | null => {
       return payload.npc === undefined
         ? { tier: "base" }
         : npcRouting(payload.npc);
+    // Only NPC notifications take answers, so a missing NPC denies the push.
+    case "notification.going":
+      return npcRouting(payload.npc);
     case "chat.created":
       if (
         payload.type === "NPC" ||
@@ -213,6 +217,7 @@ const canReadFeatureEvent = (
       feature = HERO_SIGHTING_READ_FEATURE;
       break;
     case "notification.sent":
+    case "notification.going":
       feature = "notifications";
       break;
     default:
@@ -351,7 +356,8 @@ export const prepareNpcSourceEvent = (
     case "chat.created":
     case "chat.updated":
     case "chat.deleted":
-    case "notification.sent": {
+    case "notification.sent":
+    case "notification.going": {
       const routing = eventRouting(event);
 
       const organizer =

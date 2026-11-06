@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { Lock } from "lucide-react";
 import { cn } from "cn";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
-import { ConfirmPopover } from "@/components/confirm-popover";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { WindowFooter } from "@/components/draggable-window/window-footer";
 import { Button } from "@/components/ui/button";
@@ -14,6 +12,7 @@ import { useWindowsStore } from "@/store/windows.store";
 import { useAccountOwnedReadyRoom } from "@/features/party-finder/hooks/use-ready-rooms";
 import { usePartyStore } from "@/store/party.store";
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
+import { useExtendPartyGathering } from "@/hooks/api/use-extend-party-gathering";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslation } from "react-i18next";
 import { ReadyRoomParticipantsList } from "@/features/party-finder/components/ready-room-participants-list";
@@ -22,7 +21,7 @@ import {
   characterIdentitiesMatch,
   selectParticipantsOutsideParty,
 } from "@/features/party-finder/ready-room-cache";
-import { ReadyRoomExpiry } from "@/features/party-finder/components/ready-room-expiry";
+import { ReadyRoomExpiry } from "@/components/common/ready-room-expiry";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 
 const PARTY_SIZE_LIMIT = 10;
@@ -31,7 +30,6 @@ export const PartyFinder = () => {
   const { t } = useTranslation(["partyFinder", "chat"]);
   const open = useWindowsStore((state) => state["party-finder"].open);
   const setOpen = useWindowsStore((state) => state.setOpen);
-  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
 
   const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
   const readyRoom = useAccountOwnedReadyRoom();
@@ -40,6 +38,9 @@ export const PartyFinder = () => {
 
   const { mutate: cancelPartyGathering, isPending: isCancelling } =
     useCancelPartyGathering();
+
+  const { mutate: extendPartyGathering, isPending: isExtending } =
+    useExtendPartyGathering();
 
   const { inviteParticipants, canInviteParticipants } =
     useReadyRoomInvitations();
@@ -119,31 +120,26 @@ export const PartyFinder = () => {
               {t("actions.inviteAll", { count: waitingCount })}
             </Button>
           ) : null}
-          <ConfirmPopover
-            open={cancelConfirmOpen}
-            onOpenChange={setCancelConfirmOpen}
-            title={t("cancelConfirm.title")}
-            description={t("cancelConfirm.description")}
-            confirmLabel={t("cancelConfirm.confirm")}
-            pending={isCancelling}
-            onConfirm={() =>
-              cancelPartyGathering(undefined, {
-                onSettled: () => setCancelConfirmOpen(false),
-              })
-            }
-            trigger={
-              <Button
-                variant="destructive"
-                size="xs"
-                className={isOrganizerCharacter ? undefined : "ll:flex-1"}
-                disabled={isCancelling}
-              >
-                {isCancelling
-                  ? t("actions.ending")
-                  : t("actions.cancelPartyGathering")}
-              </Button>
-            }
-          />
+          <Button
+            variant="secondary"
+            size="xs"
+            title={t("actions.extendHint")}
+            disabled={isExtending}
+            onClick={() => extendPartyGathering()}
+          >
+            {t("actions.extend")}
+          </Button>
+          <Button
+            variant="destructive"
+            size="xs"
+            className={isOrganizerCharacter ? undefined : "ll:flex-1"}
+            disabled={isCancelling}
+            onClick={() => cancelPartyGathering()}
+          >
+            {isCancelling
+              ? t("actions.ending")
+              : t("actions.cancelPartyGathering")}
+          </Button>
         </WindowFooter>
       </div>
     </DraggableWindow>

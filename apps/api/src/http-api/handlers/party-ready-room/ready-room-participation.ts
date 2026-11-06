@@ -61,6 +61,49 @@ export const exitParticipant = Effect.fnUntraced(function* (
   );
 });
 
+/**
+ * The room with the applicant added. A player who logs in to another
+ * character of the same Margonem account keeps their application; it follows
+ * the character they play now.
+ */
+const placeApplicant = (
+  aggregate: ReadyRoomAggregate,
+  discordId: string,
+  character: PartyReadyRoomCharacter,
+  idGenerator: () => string,
+  updatedAt: string,
+) => {
+  const switched = Object.values(aggregate.participants).find(
+    (participant) =>
+      participant.discordId === discordId &&
+      participant.character.accountId === character.accountId,
+  );
+
+  const participantId = switched?.participantId ?? idGenerator();
+
+  const inParty =
+    aggregate.partyState?.status === "OBSERVED" &&
+    aggregate.partyState.members.some(
+      (member) => member.characterId === character.characterId,
+    );
+
+  const next: ReadyRoomAggregate = {
+    ...aggregate,
+    revision: aggregate.revision + 1,
+    updatedAt,
+    participants: {
+      ...aggregate.participants,
+      [participantId]: {
+        ...createParticipant(discordId, character, participantId, updatedAt),
+        ...(switched && { createdAt: switched.createdAt }),
+        ...(inParty && { partyPresence: "IN_PARTY" as const }),
+      },
+    },
+  };
+
+  return { next, participantId };
+};
+
 export const joinWithRetry = (
   context: ReadyRoomContext,
   discordId: string,
@@ -120,32 +163,13 @@ export const joinWithRetry = (
       return yield* context.projectionForViewer(aggregate, discordId);
     }
 
-    const updatedAt = new Date(context.clock()).toISOString();
-    const participantId = context.idGenerator();
-
-    const next: ReadyRoomAggregate = {
-      ...aggregate,
-      revision: aggregate.revision + 1,
-      updatedAt,
-      participants: {
-        ...aggregate.participants,
-        [participantId]: createParticipant(
-          discordId,
-          character,
-          participantId,
-          updatedAt,
-        ),
-      },
-    };
-
-    if (
-      aggregate.partyState?.status === "OBSERVED" &&
-      aggregate.partyState.members.some(
-        (member) => member.characterId === character.characterId,
-      )
-    ) {
-      next.participants[participantId].partyPresence = "IN_PARTY";
-    }
+    const { next, participantId } = placeApplicant(
+      aggregate,
+      discordId,
+      character,
+      context.idGenerator,
+      new Date(context.clock()).toISOString(),
+    );
 
     const { recipients, viewerGuildIds } =
       yield* context.preparePublicationForViewer(

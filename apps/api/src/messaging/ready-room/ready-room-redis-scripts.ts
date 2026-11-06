@@ -100,6 +100,10 @@ if userIndexTtl < tonumber(ARGV[5]) then
   redis.call("expire", KEYS[2], ARGV[5])
 end
 redis.call("set", KEYS[3], ARGV[3], "EX", ARGV[5])
+-- A participant who switched characters leaves the previous one's index.
+if ARGV[7] == "1" and redis.call("get", KEYS[6]) == ARGV[3] then
+  redis.call("del", KEYS[6])
+end
 enqueuePublication(4)
 return { "COMMITTED" }
 `;
@@ -127,6 +131,44 @@ if characterRoomId == ARGV[3] then
   redis.call("del", KEYS[3])
 end
 enqueuePublication(4)
+return { "COMMITTED" }
+`;
+
+// Moves every index entry of the room to its new expiry: the organizer and
+// discovery keys, then each participant's user index and character key.
+export const EXTEND_READY_ROOM_SCRIPT = `
+${ENQUEUE_READY_ROOM_PUBLICATION_SCRIPT}
+${ASSERT_READY_ROOM_REVISION_SCRIPT}
+
+local ttl = tonumber(ARGV[4])
+local function keepUntilExpiry(key)
+  if redis.call("ttl", key) < ttl then redis.call("expire", key, ttl) end
+end
+
+redis.call("set", KEYS[1], ARGV[2], "EX", ttl)
+
+for keyIndex = 2, 3 do
+  if redis.call("get", KEYS[keyIndex]) == ARGV[3] then
+    redis.call("expire", KEYS[keyIndex], ttl)
+  end
+end
+
+local lastDiscoveryKey = 3 + tonumber(ARGV[6])
+for keyIndex = 4, lastDiscoveryKey do
+  redis.call("zadd", KEYS[keyIndex], "XX", ARGV[5], ARGV[3])
+  keepUntilExpiry(KEYS[keyIndex])
+end
+
+for keyIndex = lastDiscoveryKey + 1, #KEYS - 2, 2 do
+  if redis.call("zscore", KEYS[keyIndex], ARGV[3]) then
+    redis.call("zadd", KEYS[keyIndex], ARGV[5], ARGV[3])
+    keepUntilExpiry(KEYS[keyIndex])
+  end
+  if redis.call("get", KEYS[keyIndex + 1]) == ARGV[3] then
+    redis.call("expire", KEYS[keyIndex + 1], ttl)
+  end
+end
+enqueuePublication(#KEYS - 1)
 return { "COMMITTED" }
 `;
 

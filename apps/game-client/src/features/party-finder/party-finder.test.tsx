@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, expect, it } from "vitest";
@@ -109,15 +109,8 @@ it("shows and cancels an owned gathering after switching character and world wit
     name: /Zakończ|Anuluj|Rozwiąż/i,
   });
 
+  // One click ends the gathering; there is no confirmation step.
   await user.click(cancelGathering);
-  await user.keyboard("{Escape}");
-  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
-  await user.click(cancelGathering);
-  await user.click(
-    within(screen.getByRole("alertdialog")).getByRole("button", {
-      name: "Anuluj zbiórkę",
-    }),
-  );
   await waitFor(() => expect(requests).toHaveLength(1));
   const request = requests[0];
 
