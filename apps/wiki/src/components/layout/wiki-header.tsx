@@ -1,10 +1,10 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { BookOpen } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { cn } from "cn";
 import { t } from "@/i18n/messages";
 import { findWikiSection, WIKI_NAVIGATION } from "@/navigation/wiki-navigation";
 import { WikiHeaderSearch } from "./wiki-header-search";
+import { WikiMark } from "./wiki-mark";
 import { WikiUserMenu } from "./wiki-user-menu";
 
 // The home page is the logo's link; the bar lists the sections that search.
@@ -62,9 +62,7 @@ export function WikiHeader() {
           to="/"
           className="flex h-10 shrink-0 items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <BookOpen aria-hidden="true" className="size-4" />
-          </span>
+          <WikiMark className="size-8 rounded-lg" />
           <span className="text-[0.9375rem] font-semibold tracking-tight text-foreground">
             {t("header.brand")}{" "}
             <span className="text-muted-foreground">
