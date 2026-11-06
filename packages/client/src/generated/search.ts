@@ -141,6 +141,17 @@ export interface CatalogNpcsResponseDtoOutput {
 }
 
 /**
+ * How often the boss's kills drop the item, counted by the Organizations whose loot settings keep its rarity, from their hourly kill counts on. Lootlog recomputes it daily and gives none for other NPCs or under 100 such kills.
+ * @nullable
+ */
+export type CatalogDropSourceDtoOutputDropRate = {
+  /** Kills that dropped the item. */
+  drops: number;
+  /** Kills that could have recorded the drop. */
+  kills: number;
+} | null;
+
+/**
  * An NPC an item drops from
  */
 export interface CatalogDropSourceDtoOutput {
@@ -156,6 +167,29 @@ export interface CatalogDropSourceDtoOutput {
   type: string | null;
   /** Whether the NPC no longer drops the item: Lootlog has recorded its loot far too often since the item's last drop for the gap to be chance. */
   retired: boolean;
+  /**
+     * How often the boss's kills drop the item, counted by the Organizations whose loot settings keep its rarity, from their hourly kill counts on. Lootlog recomputes it daily and gives none for other NPCs or under 100 such kills.
+     * @nullable
+     */
+  dropRate: CatalogDropSourceDtoOutputDropRate;
+}
+
+/**
+ * A change the game made to an item
+ */
+export interface CatalogItemRevisionDtoOutput {
+  name: string;
+  icon: string;
+  /** The level both revisions have; an elastic item's change is shown at one of its levels. */
+  lvl: number;
+  stat: string;
+  previousName: string;
+  previousIcon: string;
+  previousStat: string;
+  /** The day in Poland, as `YYYY-MM-DD`, the old revision was last looted: the game changed the item after it. */
+  changedAfter: string;
+  /** The day in Poland, as `YYYY-MM-DD`, the new revision was first looted: the game changed the item by then. */
+  changedBy: string;
 }
 
 /**
@@ -172,6 +206,8 @@ export interface CatalogItemDtoOutput {
   /** @nullable */
   type: string | null;
   droppedBy: CatalogDropSourceDtoOutput[];
+  /** The changes the game made to the item, oldest first, as Lootlog saw them in loots. Revisions looted side by side, as variants are, are no history and are left out. Lootlog recomputes them daily. */
+  revisions: CatalogItemRevisionDtoOutput[];
   /** Whether the item takes the level of the character who loots it, so `lvl` and `stat` describe one of its levels. */
   elasticLevel: boolean;
 }
@@ -511,7 +547,7 @@ event?: string;
  */
 droppedBy?: string;
 /**
- * `id:desc` lists the items Margonem added most recently first. `attackSpeed:desc` lists first the items that add the most attack speed to a character with at least 100 agility: their own attack speed plus 0.002 for each point of agility or all attributes. `upgradedAttackSpeed:desc` ranks the same attack speed with each item upgraded to +5 and given the +5 bonus that adds the most of it: attack speed on weapons, agility or all attributes on other pieces.
+ * `id:desc` lists the items Margonem added most recently first. `changedOn:desc` lists first the items the game changed most recently, by the day their latest revision was first looted; items without a change follow. `attackSpeed:desc` lists first the items that add the most attack speed to a character with at least 100 agility: their own attack speed plus 0.002 for each point of agility or all attributes. `upgradedAttackSpeed:desc` ranks the same attack speed with each item upgraded to +5 and given the +5 bonus that adds the most of it: attack speed on weapons, agility or all attributes on other pieces.
  */
 sort?: CatalogControllerGetItemsSort;
 limit?: number;
@@ -532,6 +568,7 @@ export type CatalogControllerGetItemsSort = typeof CatalogControllerGetItemsSort
 export const CatalogControllerGetItemsSort = {
   relevance: 'relevance',
   'id:desc': 'id:desc',
+  'changedOn:desc': 'changedOn:desc',
   'lvl:asc': 'lvl:asc',
   'lvl:desc': 'lvl:desc',
   'name:asc': 'name:asc',

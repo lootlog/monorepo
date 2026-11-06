@@ -15,7 +15,8 @@ const DROPS_LIMIT = 96;
 
 /**
  * A monster's drops, the most valuable rarity first, highest level within
- * each; the items it no longer drops follow, folded away. Drops that take
+ * each, with how often a boss's kills drop them; the items it no longer
+ * drops follow, folded away. Drops that take
  * their looter's level come with the character level they show at.
  */
 export function NpcDrops({
@@ -49,13 +50,31 @@ export function NpcDrops({
     ),
   );
 
+  // Only bosses Lootlog counts kills of have drop rates.
+  const hasDropRates = current.some(({ droppedBy }) =>
+    droppedBy.some(
+      (source) =>
+        source.dropRate !== null &&
+        monsterIdentity(source) === monsterIdentity(npc),
+    ),
+  );
+
   return (
     <div className="flex flex-col gap-8">
       {data.hits.some(({ elasticLevel }) => elasticLevel) ? (
         <NpcElasticDropsLevel />
       ) : null}
+      {hasDropRates ? (
+        <p className="max-w-3xl text-sm text-pretty text-muted-foreground">
+          {t("catalog.dropRatesDescription")}
+        </p>
+      ) : null}
       {current.length > 0 ? (
-        <ItemsByRarity items={current} idPrefix="npc-drops" />
+        <ItemsByRarity
+          items={current}
+          idPrefix="npc-drops"
+          dropRateOf={hasDropRates ? npc : undefined}
+        />
       ) : (
         <p className="text-sm text-muted-foreground">
           {t("catalog.noCurrentDrops")}

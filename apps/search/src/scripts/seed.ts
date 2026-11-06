@@ -29,7 +29,7 @@ import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
 import { groupBy } from "es-toolkit";
 import { Meilisearch, type EnqueuedTask, type Task } from "meilisearch";
 import { ITEMS_INDEX } from "#src/items/search-index";
-import { toItemDocuments } from "#src/items/items.service";
+import { type ItemDropRate, toItemDocuments } from "#src/items/items.service";
 import {
   SEARCH_INDEX_PRIMARY_KEY,
   searchIndexSettings,
@@ -345,48 +345,55 @@ const seedPlayers = async () => {
   await indexDocuments(PLAYERS_INDEX, documents, formatDuration(startedAt));
 };
 
-const RETIRED_DROPS_PAGE = 10_000;
+const SCHEDULED_FIELDS_PAGE = 10_000;
+
+type ScheduledItemFields = {
+  uid: string;
+  retiredDropMonsterKeys?: string[];
+  dropRates?: ItemDropRate[];
+  revisions?: unknown[];
+  changedOn?: string | null;
+};
 
 /**
- * The live index's retired drops by catalog key. The API publishes them on a
- * schedule, not from loots, so the rebuild carries them over; a live index
- * without the field yet has none.
+ * The live index's fields the API publishes on a schedule, not from loots,
+ * by catalog key: retired drops, drop rates and changes. The rebuild carries
+ * them over; a live index without a field yet has none.
  */
-const loadRetiredDrops = async () => {
-  const index = meilisearch.index<{
-    uid: string;
-    retiredDropMonsterKeys: string[];
-  }>(ITEMS_INDEX);
-
-  const retiredDrops = new Map<string, string[]>();
+const loadScheduledFields = async () => {
+  const index = meilisearch.index<ScheduledItemFields>(ITEMS_INDEX);
+  const scheduled = new Map<string, ScheduledItemFields>();
 
   try {
-    for (let offset = 0; ; offset += RETIRED_DROPS_PAGE) {
+    for (let offset = 0; ; offset += SCHEDULED_FIELDS_PAGE) {
       const page = await index.getDocuments({
-        filter: "retiredDropMonsterKeys IS NOT EMPTY",
-        fields: ["uid", "retiredDropMonsterKeys"],
-        limit: RETIRED_DROPS_PAGE,
+        fields: [
+          "uid",
+          "retiredDropMonsterKeys",
+          "dropRates",
+          "revisions",
+          "changedOn",
+        ],
+        limit: SCHEDULED_FIELDS_PAGE,
         offset,
       });
 
-      for (const { uid, retiredDropMonsterKeys } of page.results) {
-        retiredDrops.set(uid, retiredDropMonsterKeys);
+      for (const document of page.results) {
+        scheduled.set(document.uid, document);
       }
 
-      if (page.results.length < RETIRED_DROPS_PAGE) return retiredDrops;
+      if (page.results.length < SCHEDULED_FIELDS_PAGE) return scheduled;
     }
   } catch (error) {
-    if (getMeilisearchErrorCode(error) !== "invalid_document_filter") {
-      throw error;
-    }
+    if (getMeilisearchErrorCode(error) !== "index_not_found") throw error;
 
-    return retiredDrops;
+    return scheduled;
   }
 };
 
 const seedItems = async () => {
   const startedAt = performance.now();
-  const retiredDrops = await loadRetiredDrops();
+  const scheduled = await loadScheduledFields();
 
   // One after the other: both aggregate every loot link.
   const rows = await buildItemSeedQuery(database);
@@ -422,14 +429,25 @@ const seedItems = async () => {
   await indexDocuments(
     ITEMS_INDEX,
     documents.map((document) => {
-      // Only monsters the rebuilt entry still names can retire it.
-      const retiredDropMonsterKeys = retiredDrops
-        .get(document.uid)
-        ?.filter((key) => document.droppedByMonsterKeys.includes(key));
+      const stored = scheduled.get(document.uid);
 
-      return retiredDropMonsterKeys?.length
-        ? { ...document, retiredDropMonsterKeys }
-        : document;
+      // Only monsters the rebuilt entry still names can retire or rate it.
+      const names = (key: string) =>
+        document.droppedByMonsterKeys.includes(key);
+
+      const retiredDropMonsterKeys =
+        stored?.retiredDropMonsterKeys?.filter(names) ?? [];
+
+      const dropRates =
+        stored?.dropRates?.filter(({ monsterKey }) => names(monsterKey)) ?? [];
+
+      return {
+        ...document,
+        retiredDropMonsterKeys,
+        dropRates,
+        revisions: stored?.revisions ?? [],
+        changedOn: stored?.changedOn ?? null,
+      };
     }),
     formatDuration(startedAt),
   );

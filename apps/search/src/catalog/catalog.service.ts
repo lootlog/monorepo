@@ -5,6 +5,7 @@ import { attemptMeilisearch } from "#src/meilisearch/search-operation-failure";
 import { buildMeilisearchInFilter } from "#src/meilisearch/query-builder";
 import { ITEMS_INDEX } from "#src/items/search-index";
 import type { DropSource } from "#src/items/item-drops";
+import type { ItemDropRate } from "#src/items/items.service";
 import { isElasticLevel } from "#src/items/item-levels";
 import { collapseByNameAndType } from "#src/npcs/npcs.service";
 import { NPCS_INDEX } from "#src/npcs/search-index";
@@ -52,6 +53,8 @@ type CatalogItemDocument = {
   type: string | null;
   droppedBy?: DropSource[];
   retiredDropMonsterKeys?: string[];
+  dropRates?: ItemDropRate[];
+  revisions?: CatalogItemsResponseDto_Output["hits"][number]["revisions"];
   observedLevels?: number[];
 };
 
@@ -74,6 +77,9 @@ const page = (query: { limit?: number; offset?: number }) => ({
   limit: Math.min(Math.max(Math.floor(query.limit ?? 24), 1), MAX_LIMIT),
   offset: Math.max(Math.floor(query.offset ?? 0), 0),
 });
+
+const toDropRate = (rate: ItemDropRate | undefined) =>
+  rate ? { drops: rate.drops, kills: rate.kills } : null;
 
 const sortBy = (sort: CatalogControllerGetItemsQuery["sort"]) =>
   sort === undefined || sort === "relevance" ? undefined : [sort];
@@ -204,6 +210,8 @@ export const makeCatalogModule = (
         "type",
         "droppedBy",
         "retiredDropMonsterKeys",
+        "dropRates",
+        "revisions",
         "observedLevels",
       ],
     };
@@ -290,8 +298,16 @@ export const makeCatalogModule = (
     return {
       estimatedTotalHits: response.total,
       hits: response.hits.map(
-        ({ droppedBy, retiredDropMonsterKeys, observedLevels, ...item }) => ({
+        ({
+          droppedBy,
+          retiredDropMonsterKeys,
+          dropRates,
+          revisions,
+          observedLevels,
+          ...item
+        }) => ({
           ...item,
+          revisions: revisions ?? [],
           elasticLevel: isElasticLevel({ observedLevels }),
           // A boss seen by older clients keeps a runtime or legacy entry beside
           // its template one; each monster is listed once.
@@ -304,6 +320,9 @@ export const makeCatalogModule = (
             }) => ({
               ...source,
               retired: retiredDropMonsterKeys?.includes(monsterKey) ?? false,
+              dropRate: toDropRate(
+                dropRates?.find((rate) => rate.monsterKey === monsterKey),
+              ),
             }),
           ),
         }),

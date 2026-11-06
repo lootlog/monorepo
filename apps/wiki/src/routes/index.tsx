@@ -7,6 +7,7 @@ import { HomeSection } from "@/components/home/home-section";
 import { NewEventItems } from "@/components/home/new-event-items";
 import { NewMonsters } from "@/components/home/new-monsters";
 import { QuickSearches } from "@/components/home/quick-searches";
+import { RecentItemChanges } from "@/components/home/recent-item-changes";
 import { SectionTile } from "@/components/home/section-tile";
 import { SlotSearch } from "@/components/home/slot-search";
 import { t } from "@/i18n/messages";
@@ -64,6 +65,13 @@ function HomeRoute() {
         }
       >
         <NewEventItems />
+      </HomeSection>
+
+      <HomeSection
+        title={t("revisions.recentTitle")}
+        description={t("revisions.recentDescription")}
+      >
+        <RecentItemChanges />
       </HomeSection>
 
       <HomeSection
