@@ -1,9 +1,9 @@
 import { useState } from "react";
 
-// Below the site bar, and the gap kept above the bottom of the screen.
+// Below the site bar, and above the set docked at the bottom of the screen.
 const TOP_GAP = 80;
 
-const BOTTOM_GAP = 16;
+const BOTTOM_GAP = 80;
 
 /**
  * The `top` of a side panel that sticks under the site bar. A panel taller
