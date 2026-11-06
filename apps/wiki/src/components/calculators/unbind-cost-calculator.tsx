@@ -16,6 +16,7 @@ import {
 import { formatScales } from "@/lib/calculator-format";
 import { readNumberInput } from "@/lib/number-input";
 import { CalculatorCard } from "./calculator-card";
+import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
 
@@ -41,8 +42,21 @@ export function UnbindCostCalculator() {
       description={t("calculators.unbind.description")}
       source="community"
       formula={t("calculators.unbind.formula")}
+      results={
+        <CalculatorResults
+          results={[
+            {
+              label: t("calculators.unbind.cost"),
+              value:
+                value === undefined
+                  ? undefined
+                  : formatScales(unbindCost(value, rarity)),
+            },
+          ]}
+        />
+      }
     >
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className={CALCULATOR_FIELDS}>
         <CalculatorNumberField
           label={t("calculators.itemLevel")}
           value={level}
@@ -74,17 +88,6 @@ export function UnbindCostCalculator() {
           </Select>
         </Field>
       </div>
-      <CalculatorResults
-        results={[
-          {
-            label: t("calculators.unbind.cost"),
-            value:
-              value === undefined
-                ? undefined
-                : formatScales(unbindCost(value, rarity)),
-          },
-        ]}
-      />
     </CalculatorCard>
   );
 }

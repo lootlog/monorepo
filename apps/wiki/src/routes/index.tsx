@@ -1,15 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AboutWiki } from "@/components/home/about-wiki";
+import { HeroLineup } from "@/components/home/hero-lineup";
 import { HomeSearch } from "@/components/home/home-search";
 import { HomeSection } from "@/components/home/home-section";
-import { HomeSubsection } from "@/components/home/home-subsection";
-import { LegendaryBonusShortcuts } from "@/components/home/legendary-bonus-shortcuts";
 import { NewEventItems } from "@/components/home/new-event-items";
 import { NewMonsters } from "@/components/home/new-monsters";
 import { QuickSearches } from "@/components/home/quick-searches";
-import { RarityShortcuts } from "@/components/home/rarity-shortcuts";
 import { SectionTile } from "@/components/home/section-tile";
-import { SlotShortcuts } from "@/components/home/slot-shortcuts";
+import { SlotSearch } from "@/components/home/slot-search";
 import { t } from "@/i18n/messages";
 import { WIKI_NAVIGATION } from "@/navigation/wiki-navigation";
 
@@ -32,33 +30,21 @@ export const Route = createFileRoute("/")({
 function HomeRoute() {
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-14 pb-6 md:gap-16">
-      <header className="flex flex-col pt-10 md:pt-14">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
-          {t("home.title")}
-        </h1>
-        <p className="mt-3 max-w-2xl text-base text-pretty text-muted-foreground">
-          {t("home.description")}
-        </p>
-        <div className="mt-6 flex w-full flex-col gap-3">
-          <HomeSearch />
-          <QuickSearches />
+      <header className="grid grid-cols-[minmax(0,1fr)] items-center gap-8 pt-8 md:pt-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:gap-10">
+        <div className="flex flex-col">
+          <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
+            {t("home.title")}
+          </h1>
+          <p className="mt-3 max-w-2xl text-base text-pretty text-muted-foreground">
+            {t("home.description")}
+          </p>
+          <div className="mt-6 flex w-full flex-col gap-3">
+            <HomeSearch />
+            <QuickSearches />
+          </div>
         </div>
+        <HeroLineup />
       </header>
-
-      <HomeSection title={t("home.sectionsTitle")}>
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {sections.map((section) => (
-            <li key={section.link.to}>
-              <SectionTile
-                link={section.link}
-                icon={section.icon}
-                label={t(section.labelKey)}
-                description={t(section.descriptionKey)}
-              />
-            </li>
-          ))}
-        </ul>
-      </HomeSection>
 
       <HomeSection
         title={t("home.newMonstersTitle")}
@@ -75,21 +61,23 @@ function HomeRoute() {
       </HomeSection>
 
       <HomeSection
-        title={t("home.browseTitle")}
-        description={t("home.browseDescription")}
+        title={t("home.slotsTitle")}
+        description={t("home.slotsDescription")}
       >
-        <div className="flex flex-col gap-8">
-          <HomeSubsection title={t("home.bonusesTitle")}>
-            <LegendaryBonusShortcuts />
-          </HomeSubsection>
-          <div className="grid gap-8 lg:grid-cols-2 lg:gap-6">
-            <HomeSubsection title={t("home.slotsTitle")}>
-              <SlotShortcuts />
-            </HomeSubsection>
-            <HomeSubsection title={t("home.raritiesTitle")}>
-              <RarityShortcuts />
-            </HomeSubsection>
-          </div>
+        <div className="grid items-center gap-8 rounded-2xl border border-border/50 bg-card/60 p-5 md:grid-cols-[auto_minmax(0,1fr)] md:p-8">
+          <SlotSearch />
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {sections.map((section) => (
+              <li key={section.link.to}>
+                <SectionTile
+                  link={section.link}
+                  icon={section.icon}
+                  label={t(section.labelKey)}
+                  description={t(section.descriptionKey)}
+                />
+              </li>
+            ))}
+          </ul>
         </div>
       </HomeSection>
 

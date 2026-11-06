@@ -4,6 +4,7 @@ import { professionChangeCost } from "@/lib/calculators";
 import { formatScales } from "@/lib/calculator-format";
 import { readNumberInput } from "@/lib/number-input";
 import { CalculatorCard } from "./calculator-card";
+import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
 
@@ -19,8 +20,21 @@ export function ProfessionChangeCalculator() {
       description={t("calculators.profession.description")}
       source="community"
       formula={t("calculators.profession.formula")}
+      results={
+        <CalculatorResults
+          results={[
+            {
+              label: t("calculators.profession.cost"),
+              value:
+                value === undefined
+                  ? undefined
+                  : formatScales(professionChangeCost(value)),
+            },
+          ]}
+        />
+      }
     >
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className={CALCULATOR_FIELDS}>
         <CalculatorNumberField
           label={t("calculators.characterLevel")}
           value={level}
@@ -29,17 +43,6 @@ export function ProfessionChangeCalculator() {
           max={1000}
         />
       </div>
-      <CalculatorResults
-        results={[
-          {
-            label: t("calculators.profession.cost"),
-            value:
-              value === undefined
-                ? undefined
-                : formatScales(professionChangeCost(value)),
-          },
-        ]}
-      />
     </CalculatorCard>
   );
 }

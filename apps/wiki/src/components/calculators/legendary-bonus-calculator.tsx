@@ -29,6 +29,7 @@ import {
 import { readNumberInput } from "@/lib/number-input";
 import { UpgradeSelect } from "@/components/common/upgrade-select";
 import { CalculatorCard } from "./calculator-card";
+import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorFromSetButton } from "./calculator-from-set-button";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
@@ -136,8 +137,28 @@ export function LegendaryBonusCalculator() {
           onClick={fillFromSet}
         />
       }
+      results={
+        <CalculatorResults
+          results={[
+            {
+              label: t(
+                `calculators.legendary.parameter.${BONUS_PARAMETER[bonus]}`,
+              ),
+              value:
+                knownStrengths.length === 0
+                  ? undefined
+                  : formatPercent(
+                      legendaryBonusValue(
+                        LEGENDARY_BONUS_START_VALUES[bonus],
+                        knownStrengths,
+                      ),
+                    ),
+            },
+          ]}
+        />
+      }
     >
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className={CALCULATOR_FIELDS}>
         <Field>
           <FieldLabel htmlFor={bonusFieldId}>
             {t("calculators.legendary.bonus")}
@@ -235,25 +256,6 @@ export function LegendaryBonusCalculator() {
           {t("calculators.legendary.addItem")}
         </Button>
       </fieldset>
-
-      <CalculatorResults
-        results={[
-          {
-            label: t(
-              `calculators.legendary.parameter.${BONUS_PARAMETER[bonus]}`,
-            ),
-            value:
-              knownStrengths.length === 0
-                ? undefined
-                : formatPercent(
-                    legendaryBonusValue(
-                      LEGENDARY_BONUS_START_VALUES[bonus],
-                      knownStrengths,
-                    ),
-                  ),
-          },
-        ]}
-      />
     </CalculatorCard>
   );
 }

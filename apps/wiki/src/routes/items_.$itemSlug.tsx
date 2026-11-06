@@ -1,20 +1,15 @@
-import { Navigate, createFileRoute } from "@tanstack/react-router";
+import { Navigate, createFileRoute, linkOptions } from "@tanstack/react-router";
 import { useCatalogControllerGetItems } from "@lootlog/client/search";
-import { Card } from "@lootlog/ui/components/card";
-import {
-  ITEM_RARITY_STYLES,
-  ItemTileDetails,
-} from "@lootlog/ui/components/item-tile-details";
+import { ITEM_RARITY_STYLES } from "@lootlog/ui/components/item-tile-details";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { cn } from "cn";
 import { CompareButton } from "@/components/comparison/compare-button";
 import { EquipButton } from "@/components/equipment/equip-button";
-import {
-  ItemDropSources,
-  MAX_HEADER_DROP_SOURCES,
-} from "@/components/items/item-drop-sources";
-import { ItemHero } from "@/components/items/item-hero";
+import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
+import { ItemDropSources } from "@/components/items/item-drop-sources";
+import { ItemInfobox } from "@/components/items/item-infobox";
+import { ItemRelatedDrops } from "@/components/items/item-related-drops";
 import { ItemElasticLevelSection } from "@/components/items/item-elastic-level-section";
 import { ItemUpgradeSection } from "@/components/items/item-upgrade-section";
 import { renderStatChanges } from "@/components/render-stat-changes";
@@ -39,6 +34,7 @@ import {
   upgradeItemStat,
 } from "@lootlog/domain/item-upgrade";
 import { findStatChanges } from "@/lib/stat-changes";
+import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
 export const Route = createFileRoute("/items_/$itemSlug")({
   component: ItemRoute,
@@ -98,10 +94,11 @@ function ItemRoute() {
   if (!item) {
     return (
       <div className="flex flex-col gap-6 py-6">
-        <Skeleton className="h-44 w-full rounded-2xl" />
-        <div className="grid items-start gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
+        <Skeleton className="h-4 w-64" />
+        <Skeleton className="h-12 w-96 max-w-full" />
+        <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_21rem]">
           <Skeleton className="h-96 w-full rounded-xl" />
-          <Skeleton className="h-96 w-full rounded-xl" />
+          <Skeleton className="h-[36rem] w-full rounded-xl max-xl:order-first" />
         </div>
       </div>
     );
@@ -131,70 +128,77 @@ function ItemRoute() {
 
   const stat = upgradeItemStat(looted, upgrade);
   const rarity = resolveItemRarity(item.rarity);
-
-  // A few sources sit beside the name; more, or an item with no upgrade
-  // section, give them a section of their own.
-  const sourcesInHero =
-    canUpgrade && item.droppedBy.length <= MAX_HEADER_DROP_SOURCES;
-
-  const dropSources = sourcesInHero ? null : (
-    <ItemDropSources sources={item.droppedBy} variant="section" />
-  );
+  const styles = ITEM_RARITY_STYLES[rarity];
+  const typeLabel = item.type ? ITEM_TILE_LABELS.type[item.type] : undefined;
+  const slot = findEquipmentSlot(item.type);
 
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-6 py-6",
-        ITEM_RARITY_STYLES[rarity].accent,
-      )}
-    >
-      <ItemHero
-        item={looted}
-        upgrade={upgrade.level}
-        withDropSources={sourcesInHero}
-        actions={
-          <>
-            <EquipButton item={item} upgrade={upgrade} />
-            <CompareButton item={item} upgrade={upgrade} />
-          </>
-        }
+    <article className={cn("flex flex-col gap-6 py-6", styles.accent)}>
+      <PageBreadcrumbs
+        items={[
+          {
+            label: t("navigation.items"),
+            link: linkOptions({ to: "/items", search: EMPTY_ITEMS_SEARCH }),
+          },
+          ...(typeLabel && item.type
+            ? [
+                {
+                  label: typeLabel,
+                  link: linkOptions({
+                    to: "/items",
+                    search: slot
+                      ? { ...EMPTY_ITEMS_SEARCH, slot: slot.id }
+                      : { ...EMPTY_ITEMS_SEARCH, types: item.type },
+                  }),
+                },
+              ]
+            : []),
+          { label: item.name },
+        ]}
       />
 
-      {canUpgrade ? dropSources : null}
-
-      <div
-        className={cn(
-          "grid items-start gap-6 lg:grid-cols-[20rem_minmax(0,1fr)] xl:gap-8",
-          // Monster cards fit beside the tooltip sooner than the upgrade does.
-          !canUpgrade && "sm:grid-cols-[18rem_minmax(0,1fr)]",
-        )}
-      >
-        <aside
-          aria-label={t("item.inGame")}
-          // The in-game tooltip stays as narrow as in the game.
-          className="flex flex-col gap-2 sm:max-w-80 lg:sticky lg:top-20"
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+        <div className="flex min-w-0 flex-col gap-1">
+          <p className="text-sm">
+            <span className={cn("font-semibold", styles.label)}>
+              {ITEM_TILE_LABELS.rarity[rarity]}
+            </span>
+            {typeLabel ? (
+              <span className="text-muted-foreground"> · {typeLabel}</span>
+            ) : null}
+            {looted.lvl > 0 ? (
+              <span className="text-muted-foreground tabular-nums">
+                {" "}
+                · {t("common.levelShort", { level: looted.lvl })}
+              </span>
+            ) : null}
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
+            {item.name}
+          </h1>
+        </div>
+        <div
+          role="group"
+          aria-label={t("item.actions")}
+          className="flex flex-wrap gap-2"
         >
-          <p className="text-xs text-muted-foreground">{t("item.inGame")}</p>
-          <Card className="gap-0 overflow-hidden border-[color-mix(in_oklab,var(--item-rarity)_40%,var(--border))] p-0">
-            <ItemTileDetails
-              color=""
-              icon={item.icon}
-              labels={ITEM_TILE_LABELS}
-              name={item.name}
-              rarity={rarity}
-              renderStat={renderStatChanges(looted.stat, stat)}
-              stat={stat}
-              type={item.type ?? ""}
-            />
-          </Card>
-          {!canUpgrade && findEquipmentSlot(item.type) ? (
-            <p className="text-xs text-muted-foreground">
-              {t("upgrade.notUpgradable")}
-            </p>
-          ) : null}
-        </aside>
+          <EquipButton item={item} upgrade={upgrade} />
+          <CompareButton item={item} upgrade={upgrade} />
+        </div>
+      </header>
 
-        <div className="flex flex-col gap-8">
+      <div className="grid items-start gap-x-8 gap-y-10 xl:grid-cols-[minmax(0,1fr)_21rem]">
+        <div className="xl:sticky xl:top-20 xl:col-start-2 xl:row-start-1">
+          <ItemInfobox
+            item={looted}
+            stat={stat}
+            upgradeLevel={upgrade.level}
+            renderStat={renderStatChanges(looted.stat, stat)}
+          />
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-12 xl:col-start-1 xl:row-start-1">
+          <ItemDropSources sources={item.droppedBy} />
           <ItemElasticLevelSection item={item} level={looted.lvl} />
           {canUpgrade ? (
             <ItemUpgradeSection
@@ -209,11 +213,14 @@ function ItemRoute() {
                 })
               }
             />
-          ) : (
-            dropSources
-          )}
+          ) : slot ? (
+            <p className="text-sm text-muted-foreground">
+              {t("upgrade.notUpgradable")}
+            </p>
+          ) : null}
+          <ItemRelatedDrops item={item} />
         </div>
       </div>
-    </div>
+    </article>
   );
 }

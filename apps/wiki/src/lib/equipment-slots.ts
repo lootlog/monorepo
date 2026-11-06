@@ -7,10 +7,12 @@ import {
   type LucideIcon,
   Shield,
   Shirt,
+  Sparkles,
   Sword,
 } from "lucide-react";
 
 export type EquipmentSlotId =
+  | "blessing"
   | "helmet"
   | "ring"
   | "necklace"
@@ -32,11 +34,19 @@ export type EquipmentSlot = {
 };
 
 /**
- * Margonem's equipment, laid out as the game draws it: the helmet on top,
- * ring, necklace and gloves under it, then weapon, armor and the secondary
- * hand, and boots at the bottom. The bag is not equipment and has no slot.
+ * Margonem's equipment, laid out as the game draws it: the blessing and the
+ * helmet on top, ring, necklace and gloves under them, then weapon, armor and
+ * the secondary hand, and boots at the bottom. The bag is not equipment and
+ * has no slot.
  */
 export const EQUIPMENT_SLOTS: readonly EquipmentSlot[] = [
+  {
+    id: "blessing",
+    code: "l",
+    icon: Sparkles,
+    types: ["BLESS"],
+    position: "col-start-1 row-start-1",
+  },
   {
     id: "helmet",
     code: "h",
