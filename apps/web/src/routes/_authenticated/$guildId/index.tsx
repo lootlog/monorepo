@@ -7,7 +7,18 @@ import {
 import { LootsListPage } from "@/features/guild/loots-list/loots-list";
 import { LootsListPageSkeleton } from "@/features/guild/loots-list/loots-list-page-skeleton";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
-import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
+import { ORGANIZATION_OPEN_PENDING_MS } from "@/lib/router/organization-loader";
+import {
+  ensureRouteQueryData,
+  prefetchRouteInfiniteQuery,
+  settleRoutePrefetches,
+} from "@/lib/router/route-prefetch";
+import { readGuildWorld } from "@/hooks/context/use-guild-world";
+import { loadLootsFilters } from "@/hooks/use-loots-filters";
+import {
+  getLootQueryParams,
+  lootListInfiniteQueryOptions,
+} from "@/features/guild/loots-list/components/loots-list/loot-list-query";
 import {
   getOrganizationLandingItemId,
   type AppNavigationItemId,
@@ -36,7 +47,10 @@ export const Route = createFileRoute("/_authenticated/$guildId/")({
   },
   component: LootsListPage,
   pendingComponent: LootsListPageSkeleton,
-  loader: async ({ abortController, context, params }) => {
+  // The server rail opens every Organization here, so this page holds the
+  // previous one as long as the Organization route does.
+  pendingMs: ORGANIZATION_OPEN_PENDING_MS,
+  loader: async ({ abortController, context, location, params }) => {
     // The parent route ensures the same query, so this is a cache read.
     const permissions = await withRouteLoaderCancellation(abortController, () =>
       ensureRouteQueryData(
@@ -66,5 +80,18 @@ export const Route = createFileRoute("/_authenticated/$guildId/")({
         params: { guildId: params.guildId },
       });
     }
+
+    await settleRoutePrefetches([
+      prefetchRouteInfiniteQuery(
+        context.queryClient,
+        lootListInfiniteQueryOptions(
+          params.guildId,
+          getLootQueryParams(
+            loadLootsFilters(location.searchStr),
+            readGuildWorld(params.guildId, location.searchStr),
+          ),
+        ),
+      ),
+    ]);
   },
 });

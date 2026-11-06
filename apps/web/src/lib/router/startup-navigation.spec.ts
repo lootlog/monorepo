@@ -10,10 +10,16 @@ import {
 import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
+  getListPinnedEventsQueryKey,
   type GuildResponseDtoOutput,
   type NullableMemberResponseDto,
 } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
+import {
+  getLootQueryParams,
+  lootListInfiniteQueryOptions,
+} from "@/features/guild/loots-list/components/loots-list/loot-list-query";
+import { loadLootsFilters } from "@/hooks/use-loots-filters";
 import { Capability } from "@lootlog/domain/access-policy";
 import { onlineManager, QueryClient } from "@tanstack/react-query";
 import {
@@ -266,6 +272,7 @@ const createNavigation = ({
       // SAFETY: The test tree supplies the same authenticated context and guild params.
       return loader({
         context: context.context,
+        location: context.location,
         params: context.params,
       } as Parameters<typeof loader>[0]);
     },
@@ -667,4 +674,44 @@ it("returns to the dashboard even if the inaccessible preference cannot be remov
   expect(
     router.state.matches.every((match) => match.status === "success"),
   ).toBe(true);
+});
+
+it("opens an organization with its sidebar pins and loot list already loaded", async () => {
+  const { router, queryClient } = createNavigation({
+    permissions: [
+      Capability.LOOTLOG_LOOTS_READ,
+      Capability.LOOTLOG_EVENTS_READ,
+    ],
+    organizationResponse: (path) => {
+      // Answers after the other requests, as a slower endpoint would.
+      if (path === "/guilds/42/pinned-events")
+        return new Promise<Response>((resolve) =>
+          setTimeout(() => resolve(Response.json([])), 20),
+        );
+
+      if (path === "/guilds/42/events" || path === "/guilds/42/worlds")
+        return Response.json([]);
+
+      if (path === "/guilds/42/loots")
+        return Response.json({ items: [], nextCursor: null });
+
+      return undefined;
+    },
+  });
+
+  await router.load();
+  await router.navigate({ href: "/42?rarities=legendary" });
+
+  // The page renders complete in one step instead of filling in afterwards.
+  expect(
+    queryClient.getQueryData(getListPinnedEventsQueryKey({ guildId: "42" })),
+  ).toEqual([]);
+  expect(
+    queryClient.getQueryData(
+      lootListInfiniteQueryOptions(
+        "42",
+        getLootQueryParams(loadLootsFilters("?rarities=legendary"), null),
+      ).queryKey,
+    ),
+  ).toBeDefined();
 });
