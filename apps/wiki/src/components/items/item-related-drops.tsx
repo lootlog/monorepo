@@ -9,22 +9,18 @@ import { ArticleSection } from "@/components/article/article-section";
 import { CatalogItemTile } from "@/components/catalog/catalog-item-tile";
 import { ItemNameLink } from "@/components/catalog/item-name-link";
 import { t } from "@/i18n/messages";
-import { npcPageParams, WIKI_GAME_VERSION } from "@/lib/catalog-links";
-
-const RELATED_LIMIT = 13;
+import { npcPageParams } from "@/lib/catalog-links";
+import {
+  relatedDropsQuery,
+  relatedDropsSource,
+} from "@/lib/catalog-page-queries";
 
 /** The other items of the monster the item drops from, as a gallery. */
 export function ItemRelatedDrops({ item }: { item: CatalogItemDtoOutput }) {
-  const source =
-    item.droppedBy.find(({ retired }) => !retired) ?? item.droppedBy[0];
+  const source = relatedDropsSource(item);
 
   const { data } = useCatalogControllerGetItems(
-    {
-      droppedBy: source?.key ?? "",
-      gameVersion: WIKI_GAME_VERSION,
-      sort: "lvl:desc",
-      limit: RELATED_LIMIT,
-    },
+    relatedDropsQuery(source?.key ?? ""),
     { query: { enabled: source !== undefined } },
   );
 

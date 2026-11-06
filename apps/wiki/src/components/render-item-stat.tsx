@@ -1,33 +1,15 @@
-import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
 import {
   formatItemDisplayValue,
-  getItemStatTemplateValues,
   ITEM_STAT_TAG_CLASS_NAMES,
   type ItemDisplayValue,
 } from "@lootlog/ui/components/item-stat-utils";
-import itemStats from "@lootlog/ui/i18n/translations/item-stats.json";
 import type { ReactNode } from "react";
+import { itemStatTagPattern, itemStatTemplate } from "@/lib/item-stat-text";
 
 const tagClassNames = new Map(Object.entries(ITEM_STAT_TAG_CLASS_NAMES));
 
-const translations = createTranslationLookup(itemStats);
-
-function resolveTranslation(path: string) {
-  const normalizedPath = path.startsWith("itemStats.")
-    ? path.slice("itemStats.".length)
-    : path;
-
-  return translations.get(normalizedPath);
-}
-
-function interpolateTemplate(template: string, values: Record<string, string>) {
-  return template.replace(/{{\s*(\w+)\s*}}/g, (_match, variableName) => {
-    return values[variableName] ?? "";
-  });
-}
-
 function renderTaggedTemplate(template: string) {
-  const tagPattern = /<(value|description|gold|legbon)>(.*?)<\/\1>/gs;
+  const tagPattern = itemStatTagPattern();
   const nodes: ReactNode[] = [];
   let currentIndex = 0;
   let match: RegExpExecArray | null;
@@ -62,7 +44,7 @@ export function renderItemStat(displayValue: ItemDisplayValue) {
     return null;
   }
 
-  const template = resolveTranslation(displayValue.key);
+  const template = itemStatTemplate(displayValue);
 
   if (!template) {
     return (
@@ -75,17 +57,5 @@ export function renderItemStat(displayValue: ItemDisplayValue) {
     );
   }
 
-  const interpolatedTemplate = interpolateTemplate(
-    template,
-    Object.fromEntries(
-      Object.entries(
-        getItemStatTemplateValues(
-          displayValue,
-          (key, fallback) => resolveTranslation(key) ?? fallback,
-        ),
-      ).map(([key, value]) => [key, String(value ?? "")]),
-    ),
-  );
-
-  return <>{renderTaggedTemplate(interpolatedTemplate)}</>;
+  return <>{renderTaggedTemplate(template)}</>;
 }
