@@ -10,7 +10,7 @@ const CHAT_MESSAGE_DEDUPE_WINDOW_MS = 200;
 
 const CHAT_NPC_GROUP_WINDOW_MS = 60_000;
 
-const CHAT_VISIBLE_MESSAGE_LIMIT = 500;
+export const CHAT_VISIBLE_MESSAGE_LIMIT = 500;
 
 const padDatePart = (value: number) => String(value).padStart(2, "0");
 
