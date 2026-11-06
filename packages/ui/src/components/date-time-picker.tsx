@@ -19,7 +19,7 @@ import type { Matcher } from "react-day-picker";
 export interface DateTimePickerProps {
   value?: Date;
   onChange?: (date: Date | undefined) => void;
-  placeholder?: string;
+  placeholder: string;
   className?: string;
   size?: "default" | "lg";
   disabled?: Matcher | Matcher[];
@@ -27,8 +27,8 @@ export interface DateTimePickerProps {
   min?: Date;
   max?: Date;
   minuteStep?: number;
-  timeLabel?: string;
-  clearLabel?: string;
+  timeLabel: string;
+  clearLabel: string;
   required?: boolean;
 }
 
@@ -63,7 +63,7 @@ const getDisabledDays = (
 export function DateTimePicker({
   value,
   onChange,
-  placeholder = "Wybierz datę i czas",
+  placeholder,
   className,
   size,
   disabled,
@@ -71,8 +71,8 @@ export function DateTimePicker({
   min,
   max,
   minuteStep = 1,
-  timeLabel = "Czas",
-  clearLabel = "Wyczyść datę i czas",
+  timeLabel,
+  clearLabel,
   required = false,
 }: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false);

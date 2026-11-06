@@ -130,7 +130,8 @@ it("waits for every deletion after a partial failure and retains the failed sele
   expect(mocks.error).not.toHaveBeenCalled();
   await act(async () => {
     second.resolve();
-    await operation;
+    // Rejecting keeps the confirmation open for a retry.
+    await expect(operation).rejects.toThrow("Some battles were not deleted.");
   });
   expect(result.current.isDeletePending).toBe(false);
   expect(result.current.isBulkDeleteDialogOpen).toBe(true);

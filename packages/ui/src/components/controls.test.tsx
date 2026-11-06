@@ -98,6 +98,7 @@ it("names filter search by its context and allows selecting a filtered option", 
     <FilterPopover
       placeholder="Świat"
       searchPlaceholder="Szukaj…"
+      emptyMessage="Brak wyników"
       options={[{ value: "luvia", label: "Luvia" }]}
       onValueChange={onValueChange}
     />,

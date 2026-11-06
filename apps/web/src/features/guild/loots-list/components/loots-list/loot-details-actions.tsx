@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@lootlog/ui/components/dropdown-menu";
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal, Trash2 } from "lucide-react";
 import { useState, type FC } from "react";
@@ -91,7 +91,7 @@ export const LootDetailsActions: FC<LootDetailsActionsProps> = ({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <ConfirmDeleteDialog
+      <ConfirmDialog
         open={isConfirmOpen}
         onOpenChange={setIsConfirmOpen}
         title={t("loots.details.delete.title")}

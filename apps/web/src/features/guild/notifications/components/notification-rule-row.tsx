@@ -3,6 +3,7 @@ import {
   getListTileLinkClassName,
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import type {
   GuildNotificationRulesResponseDto,
@@ -35,7 +36,7 @@ import {
   timestampToDate,
 } from "@/utils/date/parse-timestamp-to-date";
 import { getJobErrorMessage } from "../utils/notification-settings.utils";
-import { NotificationConfirmDialog } from "./notification-confirm-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { NotificationJobCountdown } from "./notification-job-countdown";
 import { NotificationLastDelivery } from "./notification-last-delivery";
 import { useNotificationRuleActions } from "./use-notification-rule-actions";
@@ -82,7 +83,7 @@ export const NotificationRuleRow = ({
 
   return (
     <div data-list-tile className={LIST_TILE_RULE_CLASS}>
-      <div className="flex items-center transition-colors hover:bg-muted/30 motion-reduce:transition-none">
+      <div className={cn("flex items-center", LIST_TILE_HOVER_CLASS)}>
         <Link to={editLink} className={getListTileLinkClassName(true)}>
           <span className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="flex min-w-0 items-center gap-2">
@@ -223,25 +224,27 @@ export const NotificationRuleRow = ({
           </DropdownMenu>
         </div>
       </div>
-      <NotificationConfirmDialog
+      <ConfirmDialog
         open={confirm === "delete"}
         onOpenChange={(open) => !open && setConfirm(null)}
         title={t("settings.notifications.deleteRuleDialog.title")}
         description={t("settings.notifications.deleteRuleDialog.description", {
           name: viewModel.displayName,
         })}
-        confirmLabel={t("settings.notifications.actions.delete")}
+        confirmButtonLabel={t("settings.notifications.actions.delete")}
+        cancelButtonLabel={t("settings.notifications.actions.cancel")}
         onConfirm={handleDelete}
       />
       {nextJob && (
-        <NotificationConfirmDialog
+        <ConfirmDialog
           open={confirm === "cancelJob"}
           onOpenChange={(open) => !open && setConfirm(null)}
           title={t("settings.notifications.cancelJobDialog.title")}
           description={t("settings.notifications.cancelJobDialog.description", {
             name: viewModel.displayName,
           })}
-          confirmLabel={t("settings.notifications.actions.cancelPending")}
+          confirmButtonLabel={t("settings.notifications.actions.cancelPending")}
+          cancelButtonLabel={t("settings.notifications.actions.cancel")}
           onConfirm={() => onCancelJob(nextJob.id)}
         />
       )}

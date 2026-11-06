@@ -101,7 +101,7 @@ export const RoleSettingsDetailPage = () => {
         </>
       }
     >
-      <RolesForm role={role} />
+      <RolesForm key={role.id} role={role} />
     </DetailPage>
   );
 };

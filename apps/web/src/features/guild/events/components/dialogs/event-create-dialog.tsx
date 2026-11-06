@@ -106,6 +106,8 @@ export const EventCreateDialog = ({
                   value={form.watch("startsAt")}
                   onChange={(value) => form.setValue("startsAt", value)}
                   placeholder={t("events.createDialog.startsAtPlaceholder")}
+                  timeLabel={t("common.dateTimePicker.time")}
+                  clearLabel={t("common.dateTimePicker.clear")}
                   className="w-full"
                 />
               </div>
@@ -115,6 +117,8 @@ export const EventCreateDialog = ({
                   value={form.watch("endsAt")}
                   onChange={(value) => form.setValue("endsAt", value)}
                   placeholder={t("events.createDialog.endsAtPlaceholder")}
+                  timeLabel={t("common.dateTimePicker.time")}
+                  clearLabel={t("common.dateTimePicker.clear")}
                   className="w-full"
                 />
               </div>

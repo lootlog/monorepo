@@ -66,7 +66,7 @@ export function BattleHpTimelineMarkerGroup({
   return (
     <g
       aria-label={label}
-      className="cursor-pointer outline-none"
+      className="group/marker cursor-pointer outline-none"
       role="button"
       tabIndex={0}
       onClick={handleClick}
@@ -79,6 +79,16 @@ export function BattleHpTimelineMarkerGroup({
         r={visibleMarkers.length > 1 ? multipleHitRadius : singleHitRadius}
         fill="transparent"
         stroke="transparent"
+      />
+      {/* An SVG group draws no outline, so the ring around the hit area shows focus. */}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={visibleMarkers.length > 1 ? multipleHitRadius : singleHitRadius}
+        fill="none"
+        pointerEvents="none"
+        strokeWidth={2}
+        className="stroke-ring opacity-0 group-focus-visible/marker:opacity-100"
       />
       {visibleMarkers.map((marker, index) => {
         const Icon = marker.Icon;

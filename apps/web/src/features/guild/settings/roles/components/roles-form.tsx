@@ -2,6 +2,7 @@ import { BandSection } from "@/components/common/band-section";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -16,7 +17,7 @@ import {
   FormMessage,
 } from "@lootlog/ui/components/form";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { useEffect, type FC } from "react";
+import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 
@@ -72,13 +73,10 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
     resolver: standardSchemaResolver(createRolesFormSchema(t), undefined, {
       raw: true,
     }),
-    defaultValues: toRolesFormValues(role),
+    // A refetch updates untouched fields and keeps the unsaved edits.
+    values: toRolesFormValues(role),
+    resetOptions: { keepDirtyValues: true },
   });
-
-  useEffect(() => {
-    form.reset(toRolesFormValues(role));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [role]);
 
   function onSubmit(values: RolesFormInput) {
     if (isPending) return;
@@ -191,7 +189,8 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                     <FormItem
                       data-list-tile
                       className={cn(
-                        "relative flex flex-row items-center gap-3 py-3 transition-colors hover:bg-muted/30 motion-reduce:transition-none",
+                        "relative flex flex-row items-center gap-3 py-3",
+                        LIST_TILE_HOVER_CLASS,
                         LIST_TILE_RULE_CLASS,
                         LIST_TILE_INSET_CLASS,
                         field.value && "bg-primary/5",

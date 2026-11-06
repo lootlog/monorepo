@@ -79,8 +79,8 @@ export function ReservationFormFields({
             max={maxStart}
             minuteStep={settings.reservationTimeGranularityMinutes}
             placeholder={t("reservations.schedule.dialog.startDatePlaceholder")}
-            timeLabel={t("reservations.datePicker.time")}
-            clearLabel={t("reservations.datePicker.clear")}
+            timeLabel={t("common.dateTimePicker.time")}
+            clearLabel={t("common.dateTimePicker.clear")}
             required
           />
         </div>
@@ -93,8 +93,8 @@ export function ReservationFormFields({
             max={maxEnd}
             minuteStep={settings.reservationTimeGranularityMinutes}
             placeholder={t("reservations.schedule.dialog.endDatePlaceholder")}
-            timeLabel={t("reservations.datePicker.time")}
-            clearLabel={t("reservations.datePicker.clear")}
+            timeLabel={t("common.dateTimePicker.time")}
+            clearLabel={t("common.dateTimePicker.clear")}
             required
           />
         </div>

@@ -16,6 +16,7 @@
     "@lootlog/schema": "workspace:*",
     "@lootlog/ui": "workspace:*",
     "@scalar/api-reference-react": "^0.9.80",
+    "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "^1.169.1",
     "better-auth": "1.7.16",

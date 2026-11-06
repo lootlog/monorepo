@@ -27,33 +27,54 @@ export interface FilterPopoverOption<T = string> {
   render?: () => ReactNode;
 }
 
-interface FilterPopoverProps<T = string> {
-  options: FilterPopoverOption<T>[];
-  value?: T | T[];
-  onValueChange: (value: T) => void;
-  placeholder?: string;
-  emptyMessage?: string;
-  searchPlaceholder?: string;
-  icon?: LucideIcon;
-  multiSelect?: boolean;
-  width?: string;
-  size?: "sm" | "default" | "lg";
-  variant?: "outline" | "ghost";
-  iconClassName?: string;
-  align?: "start" | "center" | "end";
-  triggerClassName?: string;
-  contentClassName?: string;
-  disabled?: boolean;
-  showSearch?: boolean;
-  shouldFilter?: boolean;
-  renderTriggerLabel?: (selectedCount: number) => string;
-  /** The filter's name on its chip in a filter bar; defaults to the placeholder. */
-  label?: string;
-  /** The filter narrows the results; in a filter bar its chip takes the accent. */
-  active?: boolean;
-  /** Shows the up-down chevron; a phone toolbar's menu goes without it. */
-  indicator?: boolean;
-}
+type FilterPopoverSearchProps =
+  | {
+      showSearch?: true;
+      searchPlaceholder: string;
+      /** Shown when the search matches no option. */
+      emptyMessage: string;
+    }
+  | {
+      showSearch: false;
+      searchPlaceholder?: never;
+      /** Shown when there are no options at all. */
+      emptyMessage?: string;
+    };
+
+type FilterPopoverSelectionProps =
+  | {
+      multiSelect: true;
+      /** The trigger's text for the number of chosen options. */
+      renderTriggerLabel: (selectedCount: number) => string;
+    }
+  | {
+      multiSelect?: false;
+      renderTriggerLabel?: (selectedCount: number) => string;
+    };
+
+type FilterPopoverProps<T = string> = FilterPopoverSearchProps &
+  FilterPopoverSelectionProps & {
+    options: FilterPopoverOption<T>[];
+    value?: T | T[];
+    onValueChange: (value: T) => void;
+    placeholder: string;
+    icon?: LucideIcon;
+    width?: string;
+    size?: "sm" | "default" | "lg";
+    variant?: "outline" | "ghost";
+    iconClassName?: string;
+    align?: "start" | "center" | "end";
+    triggerClassName?: string;
+    contentClassName?: string;
+    disabled?: boolean;
+    shouldFilter?: boolean;
+    /** The filter's name on its chip in a filter bar; defaults to the placeholder. */
+    label?: string;
+    /** The filter narrows the results; in a filter bar its chip takes the accent. */
+    active?: boolean;
+    /** Shows the up-down chevron; a phone toolbar's menu goes without it. */
+    indicator?: boolean;
+  };
 
 function getSelectedValues<T>(value: T | T[] | undefined): T[] {
   if (Array.isArray(value)) {
@@ -72,20 +93,16 @@ function getTriggerLabel<T>({
   options,
   selectedValues,
   placeholder,
-  multiSelect,
   renderTriggerLabel,
 }: {
   options: FilterPopoverOption<T>[];
   selectedValues: T[];
   placeholder: string;
-  multiSelect: boolean;
   renderTriggerLabel?: (selectedCount: number) => string;
 }) {
   if (renderTriggerLabel) return renderTriggerLabel(selectedValues.length);
 
   if (selectedValues.length === 0) return placeholder;
-
-  if (multiSelect) return `${selectedValues.length} selected`;
 
   return (
     options.find((option) => option.value === selectedValues[0])?.label ??
@@ -97,9 +114,9 @@ export function FilterPopover<T extends string = string>({
   options,
   value,
   onValueChange,
-  placeholder = "Select...",
-  emptyMessage = "No options found",
-  searchPlaceholder = "Search...",
+  placeholder,
+  emptyMessage,
+  searchPlaceholder,
   icon: Icon,
   multiSelect = false,
   width = "w-[180px]",
@@ -127,7 +144,6 @@ export function FilterPopover<T extends string = string>({
     options,
     selectedValues,
     placeholder,
-    multiSelect,
     renderTriggerLabel,
   });
 
@@ -206,7 +222,7 @@ export function FilterPopover<T extends string = string>({
             />
           )}
           <CommandList className="max-h-52">
-            <CommandEmpty>{emptyMessage}</CommandEmpty>
+            {emptyMessage && <CommandEmpty>{emptyMessage}</CommandEmpty>}
             <CommandGroup>
               {options.map((option) => {
                 const OptionIcon = option.icon;

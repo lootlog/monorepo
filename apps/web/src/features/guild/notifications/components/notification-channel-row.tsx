@@ -2,6 +2,7 @@ import {
   getListTileLinkClassName,
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import type {
   GuildNotificationRulesResponseDto,
@@ -30,7 +31,7 @@ import {
   getGuildNotificationTargetLabel,
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
-import { NotificationConfirmDialog } from "./notification-confirm-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { useDeleteNotificationTarget } from "./use-delete-notification-target";
 
 type NotificationChannelRowProps = {
@@ -78,7 +79,8 @@ export const NotificationChannelRow = ({
     <div data-list-tile className={LIST_TILE_RULE_CLASS}>
       <div
         className={cn(
-          "flex items-center transition-colors hover:bg-muted/30 motion-reduce:transition-none",
+          "flex items-center",
+          LIST_TILE_HOVER_CLASS,
           problem && "bg-signal-timer/[0.06] hover:bg-signal-timer/10",
         )}
       >
@@ -158,7 +160,7 @@ export const NotificationChannelRow = ({
           </DropdownMenu>
         </div>
       </div>
-      <NotificationConfirmDialog
+      <ConfirmDialog
         open={isConfirmingDelete}
         onOpenChange={setIsConfirmingDelete}
         title={t("settings.notifications.deleteTargetDialog.title")}
@@ -172,7 +174,8 @@ export const NotificationChannelRow = ({
                 name: label,
               })
         }
-        confirmLabel={t("settings.notifications.actions.delete")}
+        confirmButtonLabel={t("settings.notifications.actions.delete")}
+        cancelButtonLabel={t("settings.notifications.actions.cancel")}
         onConfirm={handleDelete}
       />
     </div>

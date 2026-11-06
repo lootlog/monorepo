@@ -2,7 +2,10 @@ import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
 import type { Loot } from "@/lib/loots/loot-types";
 import { cn } from "cn";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
-import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
+import {
+  LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
+} from "@/components/common/list-tile";
 import { LootPresentation } from "./loot-presentation";
 import { LootHeaderActions } from "./loot-header-actions";
 import { LootItemStackLootIdContext } from "./loot-item-stack-context";
@@ -33,7 +36,8 @@ export const LootsListItem = ({
       data-presentation={variant}
       className={cn(
         // Isolated, so stack badges never paint over a pinned section heading.
-        "group relative isolate flex h-full flex-col transition-colors hover:bg-muted/20",
+        "group relative isolate flex h-full flex-col",
+        LIST_TILE_HOVER_CLASS,
         variant === "tile" && LIST_TILE_RULE_CLASS,
         // Alternate embedded rows so neighbouring kills stay apart in a dense
         // list; legendary rows keep their own glow.

@@ -11,7 +11,6 @@ import {
 import { getApiErrorMessage } from "@lootlog/client/transport";
 import { NotificationTargetType } from "@lootlog/schema/notifications";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "@lootlog/ui/components/sonner";
@@ -111,20 +110,15 @@ export const useNotificationTargetForm = ({
 
   const form = useForm<TargetFormValues>({
     resolver: standardSchemaResolver(targetFormSchema(t, isCreateMode)),
-    defaultValues: {
-      externalId: "",
-      displayName: "",
-      active: true,
-    },
-  });
-
-  useEffect(() => {
-    form.reset({
+    // A refetch of the target updates untouched fields and keeps the
+    // unsaved edits; closing the dialog discards them.
+    values: {
       externalId: "",
       displayName: target?.displayName ?? "",
       active: target?.active ?? true,
-    });
-  }, [form, open, target]);
+    },
+    resetOptions: { keepDirtyValues: true },
+  });
 
   const existingExternalIds = new Set(
     existingTargets.map((existingTarget) => existingTarget.externalId),

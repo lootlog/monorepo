@@ -351,6 +351,7 @@ export const BattlesTable = ({
 
       <BattleTableDeleteDialogs
         isBulkDeleteDialogOpen={isBulkDeleteDialogOpen}
+        isBusy={isRowActionBusy}
         isDeletePending={isDeletePending}
         onBulkDelete={handleBulkDelete}
         onBulkDeleteOpenChange={setIsBulkDeleteDialogOpen}

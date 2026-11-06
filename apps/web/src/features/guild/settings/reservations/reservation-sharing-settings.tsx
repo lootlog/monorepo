@@ -19,7 +19,7 @@ import {
 } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
 
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import {
   Alert,
   AlertAction,
@@ -182,7 +182,7 @@ export function ReservationSharingSettings() {
                 <span className="min-w-0 flex-1 truncate text-sm font-semibold">
                   {share.partner.name}
                 </span>
-                <ConfirmDeleteDialog
+                <ConfirmDialog
                   title={t("settings.reservations.sharing.disconnectTitle")}
                   description={t(
                     "settings.reservations.sharing.disconnectDescription",
@@ -241,7 +241,7 @@ export function ReservationSharingSettings() {
                     })}
                   </span>
                 </span>
-                <ConfirmDeleteDialog
+                <ConfirmDialog
                   title={t("settings.reservations.sharing.revokeTitle")}
                   description={t(
                     "settings.reservations.sharing.revokeDescription",
