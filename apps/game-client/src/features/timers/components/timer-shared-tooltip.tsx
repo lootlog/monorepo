@@ -1,4 +1,6 @@
 import type { FC } from "react";
+import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
+import { TIMER_TOOLTIP_EXPAND_DELAY_MS } from "../constants/timer-tooltip";
 import { useTimerNpcPresence } from "../hooks/use-timer-npc-presence";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import {
@@ -13,7 +15,10 @@ type TimerSharedTooltipProps = {
   timer: TimerWithTimeLeft;
 };
 
-/** Tooltip body for the tile the grid's shared tooltip is open on. */
+/**
+ * Tooltip body for the tile the grid's shared tooltip is open on. Mount it
+ * keyed by the tile, so the expand delay starts over on every tile.
+ */
 export const TimerSharedTooltip: FC<TimerSharedTooltipProps> = ({
   guildNamesById,
   timer,
@@ -22,6 +27,7 @@ export const TimerSharedTooltip: FC<TimerSharedTooltipProps> = ({
   const threat = useTimerMapThreat(timer);
   const heroSighting = useTimerHeroSighting(timer);
   const isStanding = useTimerNpcPresence(timer);
+  const expanded = useDelayedVisibility(true, TIMER_TOOLTIP_EXPAND_DELAY_MS);
 
   return (
     <TimerTooltip
@@ -31,6 +37,7 @@ export const TimerSharedTooltip: FC<TimerSharedTooltipProps> = ({
       threat={threat}
       heroSighting={heroSighting}
       isStanding={isStanding}
+      expanded={expanded}
     />
   );
 };

@@ -302,6 +302,33 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
     var(--ll-ease-exit) both;
 }
 
+/* A timer tooltip held open unfolds the rest of its players and enemies,
+   each row easing in a moment after the one above it. */
+@keyframes ll-timer-tooltip-reveal {
+  from {
+    grid-template-rows: 0fr;
+  }
+}
+
+@keyframes ll-timer-tooltip-reveal-row {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
+}
+
+.ll-timer-tooltip-reveal {
+  display: grid;
+  grid-template-rows: 1fr;
+  animation: ll-timer-tooltip-reveal 320ms var(--ll-ease-enter) both;
+}
+
+.ll-timer-tooltip-reveal-row {
+  animation: ll-timer-tooltip-reveal-row var(--ll-transition-duration-medium)
+    var(--ll-ease-enter) both;
+  animation-delay: calc(min(var(--ll-reveal-index), 12) * 24ms);
+}
+
 /* Short elastic scale bump: a value or icon acknowledging a change. */
 @keyframes ll-bump {
   0%,

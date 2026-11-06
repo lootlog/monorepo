@@ -81,4 +81,39 @@ describe("TimerTooltip", () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Dodano:")).not.toBeInTheDocument();
   });
+
+  it("summarises players past the first rows until the tooltip expands", () => {
+    const occupancy = {
+      allAfk: false,
+      players: Array.from({ length: 10 }, (_, index) => ({
+        key: `player-${index}`,
+        name: `Player ${index}`,
+        isAfk: false,
+      })),
+    };
+
+    const view = render(
+      <TimerTooltip
+        timer={createTimer()}
+        guildNamesById={{}}
+        occupancy={occupancy}
+      />,
+    );
+
+    expect(screen.getByText("Player 7")).toBeVisible();
+    expect(screen.queryByText("Player 8")).not.toBeInTheDocument();
+    expect(screen.getByText("i jeszcze 2")).toBeVisible();
+
+    view.rerender(
+      <TimerTooltip
+        timer={createTimer()}
+        guildNamesById={{}}
+        occupancy={occupancy}
+        expanded
+      />,
+    );
+
+    expect(screen.getByText("Player 9")).toBeVisible();
+    expect(screen.queryByText("i jeszcze 2")).not.toBeInTheDocument();
+  });
 });
