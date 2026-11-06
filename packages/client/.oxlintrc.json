@@ -131,17 +131,6 @@
           }
         ]
       }
-    },
-    {
-      "files": ["scripts/check-openapi.ts"],
-      "rules": {
-        "anti-slop/no-unknown-parameters": [
-          "error",
-          {
-            "boundaryFunctions": ["assert"]
-          }
-        ]
-      }
     }
   ]
 }

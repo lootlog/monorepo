@@ -1,7 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
-import { checkOpenApi } from "./check-openapi";
 import { fixGeneratedOutput } from "./fix-generated-output";
 import { clientServices } from "./client-services";
 
@@ -23,8 +22,6 @@ const run = (command: string, arguments_: string[]) => {
     );
   }
 };
-
-checkOpenApi();
 
 rmSync(generatedRoot, { force: true, recursive: true });
 
