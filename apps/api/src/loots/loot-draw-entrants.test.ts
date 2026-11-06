@@ -121,6 +121,62 @@ describe("buildLootDrawEntrants", () => {
     expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_OUTSIDER_IN_PARTY });
   });
 
+  it("draws within the party alone, storing each member as the loot records them", () => {
+    const result = buildLootDrawEntrants(
+      loot,
+      request([
+        { ...winner, tickets: 1 },
+        outsider({
+          name: "mikrowojczan",
+          characterId: null,
+          accountId: null,
+          lvl: null,
+          source: "PARTY",
+        }),
+      ]),
+    );
+
+    expect(result).toEqual({
+      entrants: [
+        expect.objectContaining({ name: "Rozdaje Kolby", source: "WINNER" }),
+        expect.objectContaining({
+          name: "Mikrowojczan",
+          characterId: 2,
+          accountId: 20,
+          lvl: 300,
+          source: "PARTY",
+        }),
+      ],
+    });
+  });
+
+  it("refuses a PARTY entrant who was not in the party, or is the winner again", () => {
+    expect(
+      buildLootDrawEntrants(
+        loot,
+        request([winner, outsider({ source: "PARTY" })]),
+      ),
+    ).toEqual({ error: ErrorKey.LOOT_DRAW_PARTY_MEMBER_NOT_FOUND });
+    expect(
+      buildLootDrawEntrants(
+        loot,
+        request([winner, { ...winner, source: "PARTY", tickets: 1 }]),
+      ),
+    ).toEqual({ error: ErrorKey.LOOT_DRAW_DUPLICATE_OUTSIDER });
+  });
+
+  it("refuses a party member of another profession", () => {
+    const result = buildLootDrawEntrants(
+      loot,
+      request([
+        winner,
+        outsider({ name: "Xabz", characterId: 3, source: "PARTY" }),
+      ]),
+    );
+
+    expect(result).toEqual({ error: ErrorKey.LOOT_DRAW_OUTSIDER_INELIGIBLE });
+  });
+
   it("refuses an outsider of another profession, whatever the level", () => {
     expect(
       buildLootDrawEntrants(

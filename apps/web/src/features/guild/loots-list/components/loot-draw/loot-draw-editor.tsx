@@ -5,7 +5,13 @@ import {
 } from "@lootlog/domain/loot-draw";
 import type { LootDrawResponseDto } from "@lootlog/client/main";
 import type { ApiError } from "@lootlog/client/transport";
-import { ArrowDownWideNarrow, Dices, RotateCcw, Shuffle } from "lucide-react";
+import {
+  ArrowDownWideNarrow,
+  Dices,
+  RotateCcw,
+  Shuffle,
+  UsersRound,
+} from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "@lootlog/ui/components/sonner";
@@ -13,6 +19,7 @@ import type { Item, Loot } from "@/lib/loots/loot-types";
 import {
   lootDrawAddError,
   lootDrawPlayerKey,
+  withLootDrawWinnerTickets,
   type LootDrawDraftEntrant,
   type LootDrawSetup,
 } from "./build-loot-draw-entrants";
@@ -23,8 +30,9 @@ import { LootDrawWheel } from "./loot-draw-wheel";
 import type { useLootDraws } from "./use-loot-draws";
 
 /**
- * The draw before it runs: the winner from the game stays, outsiders can be
- * removed or added, anybody's tickets changed, and the wheel shuffled.
+ * The draw before it runs: the winner from the game stays, outsiders and
+ * party members can be removed or added, anybody's tickets changed, and the
+ * wheel shuffled.
  */
 export const LootDrawEditor = ({
   loot,
@@ -54,7 +62,11 @@ export const LootDrawEditor = ({
   const { guildId, createDraw } = draws;
 
   // Any change of entrants or tickets lays the wheel out again, shuffled or not.
-  const update = (next: LootDrawDraftEntrant[], shuffled = isShuffled) => {
+  const update = (
+    changed: readonly LootDrawDraftEntrant[],
+    shuffled = isShuffled,
+  ) => {
+    const next = withLootDrawWinnerTickets(loot, item, changed);
     const grouped = groupedLootDrawTicketOrder(next);
 
     setEntrants(next);
@@ -62,11 +74,15 @@ export const LootDrawEditor = ({
     setTicketOrder(shuffled ? shuffleLootDrawTicketOrder(grouped) : grouped);
   };
 
-  const outsiders = entrants.filter(({ source }) => source !== "WINNER");
+  const others = entrants.filter(({ source }) => source !== "WINNER");
 
   const mapOutsidersRemoved =
     setup.entrants.length - 1 >
-    outsiders.filter(({ source }) => source === "MAP").length;
+    others.filter(({ source }) => source === "MAP").length;
+
+  const missingPartyMembers = setup.partyMembers.filter(
+    (member) => !entrants.some(({ key }) => key === member.key),
+  );
 
   const spin = () => {
     if (!guildId) return;
@@ -133,25 +149,39 @@ export const LootDrawEditor = ({
       }
       entrantsCount={entrants.length}
       entrantsAction={
-        mapOutsidersRemoved && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() =>
-              update([
-                ...setup.entrants.map((entrant) =>
-                  entrant.source === "WINNER"
-                    ? (entrants.find(({ source }) => source === "WINNER") ??
-                      entrant)
-                    : entrant,
-                ),
-                ...outsiders.filter(({ source }) => source === "MANUAL"),
-              ])
-            }
-          >
-            <RotateCcw className="size-4" />
-            {t("loots.details.draw.restore")}
-          </Button>
+        (missingPartyMembers.length > 0 || mapOutsidersRemoved) && (
+          <div className="flex flex-wrap justify-end gap-1">
+            {missingPartyMembers.length > 0 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => update([...entrants, ...missingPartyMembers])}
+              >
+                <UsersRound className="size-4" />
+                {t("loots.details.draw.addParty")}
+              </Button>
+            )}
+            {mapOutsidersRemoved && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() =>
+                  update([
+                    ...setup.entrants.map((entrant) =>
+                      entrant.source === "WINNER"
+                        ? (entrants.find(({ source }) => source === "WINNER") ??
+                          entrant)
+                        : entrant,
+                    ),
+                    ...others.filter(({ source }) => source !== "MAP"),
+                  ])
+                }
+              >
+                <RotateCcw className="size-4" />
+                {t("loots.details.draw.restore")}
+              </Button>
+            )}
+          </div>
         )
       }
       entrants={entrants.map((entrant, index) => (
@@ -179,11 +209,11 @@ export const LootDrawEditor = ({
       footer={
         <>
           <p className="text-xs text-muted-foreground">
-            {outsiders.length === 0 && t("loots.details.draw.noOutsiders")}
+            {others.length === 0 && t("loots.details.draw.noOutsiders")}
           </p>
           <Button
             onClick={spin}
-            disabled={outsiders.length === 0 || createDraw.isPending}
+            disabled={others.length === 0 || createDraw.isPending}
             loading={createDraw.isPending}
           >
             <Dices className="size-4" />
