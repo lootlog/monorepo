@@ -21,8 +21,9 @@ import {
   itemPageParams,
   itemPageSearch,
   readPageSegment,
-  WIKI_GAME_VERSION,
 } from "@/lib/catalog-links";
+import { itemPageQuery, loadCatalogItems } from "@/lib/catalog-page-queries";
+import { itemLinkPreview, linkPreviewMeta } from "@/lib/link-preview";
 import { itemForCharacter } from "@lootlog/domain/elastic-level";
 import { isCharacterLevel } from "@/lib/equipment-set";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
@@ -40,8 +41,27 @@ import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
 export const Route = createFileRoute("/items_/$itemSlug")({
   component: ItemRoute,
-  head: () => ({
-    meta: [{ title: `${t("meta.itemTitle")} | ${t("meta.title")}` }],
+  // The page loads the item itself; a failed load leaves it the error.
+  loader: async ({ params }) => {
+    const id = readPageSegment(params.itemSlug)?.id;
+
+    if (id === undefined) return { item: undefined };
+
+    const data = await loadCatalogItems(itemPageQuery(id)).catch(
+      () => undefined,
+    );
+
+    return { item: data?.hits[0] };
+  },
+  head: ({ loaderData, match }) => ({
+    meta: loaderData?.item
+      ? linkPreviewMeta(
+          itemLinkPreview(loaderData.item, {
+            characterLevel: match.search.level,
+            upgrade: searchedUpgrade(match.search),
+          }),
+        )
+      : [{ title: `${t("meta.itemTitle")} | ${t("meta.title")}` }],
   }),
   validateSearch: (search: {
     upgrade?: unknown;
@@ -77,11 +97,7 @@ function ItemRoute() {
   const id = readPageSegment(itemSlug)?.id;
 
   const { data, isError } = useCatalogControllerGetItems(
-    {
-      ids: id === undefined ? [] : [id],
-      gameVersion: WIKI_GAME_VERSION,
-      limit: 1,
-    },
+    itemPageQuery(id ?? 0),
     { query: { enabled: id !== undefined } },
   );
 
