@@ -92,6 +92,25 @@ describe("page transport", () => {
     ).toHaveLength(1);
   });
 
+  it("reconnects after the extension's client was left disconnected by a refused join", async () => {
+    const bridge = setup();
+    const realtime = bridge.platform.createRealtime();
+    const states: string[] = [];
+    realtime.subscribeState((state) => states.push(state));
+    realtime.connect();
+    const initial = await bridge.next();
+    bridge.send({ type: "result", id: initial.id, data: null });
+    bridge.send({ type: "state", state: "ready" });
+    bridge.send({ type: "state", state: "disconnected" });
+    await vi.waitFor(() =>
+      expect(states.slice(-2)).toEqual(["ready", "disconnected"]),
+    );
+
+    realtime.connect();
+
+    expect((await bridge.next()).type).toBe("connect");
+  });
+
   it("serializes HTTP through the port and reconstructs the response", async () => {
     const bridge = setup();
 
