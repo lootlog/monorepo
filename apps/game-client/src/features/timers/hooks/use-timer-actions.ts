@@ -173,9 +173,11 @@ export const useTimerActions = (
         failedResetScopes.current =
           failedScopes.length > 0 ? { identity, scopes: failedScopes } : null;
 
-        return results;
+        // A retry sends only the scopes that failed before, so the message
+        // counts against every scope of the timer.
+        return { results, scopeCount: originalScopes.length };
       },
-      onSuccess: (results) => {
+      onSuccess: ({ results, scopeCount }) => {
         const failures = results.filter(
           (result) => result.status === "rejected",
         );
@@ -190,8 +192,8 @@ export const useTimerActions = (
           showRuntimeMessage(
             t("messages.resetPartialFailure", {
               name: timer.npc.name,
-              succeeded: results.length - failures.length,
-              failed: failures.length,
+              succeeded: scopeCount - failures.length,
+              total: scopeCount,
             }),
           );
         }
@@ -234,7 +236,7 @@ export const useTimerActions = (
 
     return restartTimer(world)
       .then(
-        (results) =>
+        ({ results }) =>
           results.length > 0 &&
           results.every((result) => result.status === "fulfilled"),
       )

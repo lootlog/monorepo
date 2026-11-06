@@ -29,6 +29,7 @@ type TimerTooltipProps = {
   threat?: MapThreat;
   heroSighting?: TimerHeroSighting;
   isStanding?: boolean;
+  expanded?: boolean;
 };
 
 const DATE_FORMAT = "dd.MM HH:mm:ss";
@@ -40,6 +41,7 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   threat,
   heroSighting,
   isStanding = false,
+  expanded = false,
 }) => {
   const { t } = useTranslation("timers");
   const levelSuffix = getLevelSuffix(timer.npc);
@@ -120,9 +122,11 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
 
       {heroSighting && <TimerHeroSightingSection heroSighting={heroSighting} />}
 
-      {occupancy && <TimerMapOccupancyList occupancy={occupancy} />}
+      {occupancy && (
+        <TimerMapOccupancyList occupancy={occupancy} expanded={expanded} />
+      )}
 
-      {threat && <TimerMapThreatList threat={threat} />}
+      {threat && <TimerMapThreatList threat={threat} expanded={expanded} />}
 
       {(firstMemberWithGuild || timer.updatedAt) && (
         <TimerTooltipSection>
