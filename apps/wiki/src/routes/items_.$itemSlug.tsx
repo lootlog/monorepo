@@ -24,6 +24,7 @@ import {
   WIKI_GAME_VERSION,
 } from "@/lib/catalog-links";
 import { itemForCharacter } from "@lootlog/domain/elastic-level";
+import { isCharacterLevel } from "@/lib/equipment-set";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import {
@@ -45,18 +46,27 @@ export const Route = createFileRoute("/items_/$itemSlug")({
   validateSearch: (search: {
     upgrade?: unknown;
     bonus?: unknown;
+    level?: unknown;
   }): ItemPageSearch => {
-    const level = Number(search.upgrade);
+    const upgrade = Number(search.upgrade);
     const bonus = String(search.bonus ?? "");
+    const characterLevel = Number(search.level);
 
-    if (!isUpgradeLevel(level) || level === 0) return {};
+    const level = isCharacterLevel(characterLevel)
+      ? { level: characterLevel }
+      : {};
+
+    if (!isUpgradeLevel(upgrade) || upgrade === 0) return level;
 
     // Only a +5 item carries a bonus.
-    return level === 5 && isUpgradeBonusKey(bonus)
-      ? { upgrade: level, bonus }
-      : { upgrade: level };
+    return upgrade === 5 && isUpgradeBonusKey(bonus)
+      ? { upgrade, bonus, ...level }
+      : { upgrade, ...level };
   },
 });
+
+const searchedUpgrade = ({ upgrade, bonus }: ItemPageSearch): ItemUpgrade =>
+  upgrade ? { level: upgrade, bonus } : NO_UPGRADE;
 
 function ItemRoute() {
   const infoboxSticky = useStickyTop();
@@ -118,15 +128,12 @@ function ItemRoute() {
     );
   }
 
-  // An elastic item shows as the set's character would loot it, and is
-  // upgraded from there.
-  const looted = itemForCharacter(item, set.level);
+  // An elastic item shows as the previewed level, else the set's character,
+  // would loot it, and is upgraded from there. The preview leaves the set be.
+  const looted = itemForCharacter(item, search.level ?? set.level);
   const canUpgrade = isUpgradable(looted);
 
-  const upgrade: ItemUpgrade =
-    canUpgrade && search.upgrade
-      ? { level: search.upgrade, bonus: search.bonus }
-      : NO_UPGRADE;
+  const upgrade = canUpgrade ? searchedUpgrade(search) : NO_UPGRADE;
 
   const stat = upgradeItemStat(looted, upgrade);
   const rarity = resolveItemRarity(item.rarity);
@@ -204,7 +211,18 @@ function ItemRoute() {
 
         <div className="flex min-w-0 flex-col gap-12 xl:col-start-1 xl:row-start-1">
           <ItemDropSources sources={item.droppedBy} />
-          <ItemElasticLevelSection item={item} level={looted.lvl} />
+          <ItemElasticLevelSection
+            item={item}
+            level={looted.lvl}
+            previewLevel={search.level}
+            onPreviewLevelChange={(level) =>
+              void navigate({
+                replace: true,
+                resetScroll: false,
+                search: (prev) => ({ ...prev, level }),
+              })
+            }
+          />
           {canUpgrade ? (
             <ItemUpgradeSection
               item={looted}
@@ -214,7 +232,10 @@ function ItemRoute() {
                 void navigate({
                   replace: true,
                   resetScroll: false,
-                  search: itemPageSearch(next),
+                  search: (prev) => ({
+                    ...itemPageSearch(next),
+                    level: prev.level,
+                  }),
                 })
               }
             />
