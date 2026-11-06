@@ -365,6 +365,11 @@
     "apps/traffic-splitter": {
       "name": "@lootlog/traffic-splitter",
       "version": "0.0.1",
+      "dependencies": {
+        "@lootlog/domain": "workspace:*",
+        "effect": "catalog:",
+        "es-toolkit": "catalog:",
+      },
       "devDependencies": {
         "@lootlog/typescript-config": "workspace:*",
         "typescript": "catalog:",

@@ -6,12 +6,14 @@ import {
 } from "./index";
 
 const environment = {
+  BATTLELOG_ORIGIN: "https://dev-battlelog.lootlog.pl",
   DOCS_ORIGIN: "https://lootlog-docs-develop.example.workers.dev",
   LANDING_ORIGIN: "https://develop.lootlog-landing.pages.dev",
   WEB_ORIGIN: "https://develop.lootlog-web-monorepo.pages.dev",
 } satisfies TrafficSplitterEnvironment;
 
 const productionEnvironment = {
+  BATTLELOG_ORIGIN: "https://battlelog.lootlog.pl",
   DOCS_ORIGIN: "https://lootlog-docs.example.workers.dev",
   LANDING_ORIGIN: "https://lootlog-landing.pages.dev",
   WEB_ORIGIN: "https://lootlog-web-monorepo.pages.dev",
@@ -375,5 +377,116 @@ describe("traffic splitter", () => {
     expect(upstreamRequest?.headers.get("x-request-id")).toBe("request-1");
     expect(upstreamRequest?.headers.has("authorization")).toBe(false);
     expect(upstreamRequest?.headers.has("cookie")).toBe(false);
+  });
+
+  describe("battle link previews", () => {
+    const battleId = "01a1067f-44e4-7000-9d23-a16542758469";
+
+    const discordBot =
+      "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)";
+
+    const publicBattle = {
+      type: "2v1",
+      world: "luvia",
+      winner: "Femboi Carti",
+      hasFlee: false,
+      unfinished: false,
+      warriors: [
+        { name: "Piabi", lvl: 190, prof: "m", team: 1 },
+        { name: "Femboi Carti", lvl: 190, prof: "h", team: 2 },
+        { name: "<Uloj>", lvl: 190, prof: "w", team: 1 },
+      ],
+    };
+
+    function createUpstream(battleResponse: Response) {
+      return vi.fn<UpstreamFetch>((request) =>
+        Promise.resolve(
+          request.url.startsWith(environment.BATTLELOG_ORIGIN)
+            ? battleResponse
+            : new Response("<!doctype html><div id=root></div>", {
+                headers: { "content-type": "text/html" },
+              }),
+        ),
+      );
+    }
+
+    function requestBattle(userAgent: string) {
+      return new Request(`https://dev.lootlog.pl/battles/${battleId}?tab=log`, {
+        headers: { "user-agent": userAgent },
+      });
+    }
+
+    it("gives an unfurling bot the battle's Open Graph tags", async () => {
+      const upstreamFetch = createUpstream(Response.json(publicBattle));
+
+      const response = await routeRequest(
+        requestBattle(discordBot),
+        environment,
+        upstreamFetch,
+      );
+
+      const html = await response.text();
+
+      expect(upstreamFetch).toHaveBeenCalledOnce();
+      expect(upstreamFetch.mock.calls[0]?.[0].url).toBe(
+        `${environment.BATTLELOG_ORIGIN}/battles/public/${battleId}`,
+      );
+      expect(response.headers.get("cache-control")).toBe("private, no-store");
+      expect(html).toContain(
+        '<meta property="og:title" content="Piabi (190m), &lt;Uloj&gt; (190w) vs Femboi Carti (190h)" />',
+      );
+      expect(html).toContain(
+        '<meta property="og:description" content="Zwycięzca: Femboi Carti · Luvia · 2v1" />',
+      );
+      expect(html).toContain(
+        `<meta property="og:url" content="https://dev.lootlog.pl/battles/${battleId}" />`,
+      );
+    });
+
+    it("does not name a winner for a fled battle", async () => {
+      const upstreamFetch = createUpstream(
+        Response.json({ ...publicBattle, winner: "?", hasFlee: true }),
+      );
+
+      const response = await routeRequest(
+        requestBattle(discordBot),
+        environment,
+        upstreamFetch,
+      );
+
+      expect(await response.text()).toContain(
+        'content="Walka zakończona ucieczką · Luvia · 2v1"',
+      );
+    });
+
+    it("serves people the web app without asking Battlelog", async () => {
+      const upstreamFetch = createUpstream(Response.json(publicBattle));
+
+      await routeRequest(
+        requestBattle("Mozilla/5.0 (Macintosh) Chrome/142.0"),
+        environment,
+        upstreamFetch,
+      );
+
+      expect(upstreamFetch).toHaveBeenCalledOnce();
+      expect(upstreamFetch.mock.calls[0]?.[0].url).toBe(
+        `${environment.WEB_ORIGIN}/battles/${battleId}?tab=log`,
+      );
+    });
+
+    it("falls back to the web app when the battle is not public", async () => {
+      const upstreamFetch = createUpstream(new Response(null, { status: 404 }));
+
+      const response = await routeRequest(
+        requestBattle(discordBot),
+        environment,
+        upstreamFetch,
+      );
+
+      expect(upstreamFetch.mock.calls[1]?.[0].url).toBe(
+        `${environment.WEB_ORIGIN}/battles/${battleId}?tab=log`,
+      );
+      expect(await response.text()).not.toContain("og:title");
+    });
   });
 });

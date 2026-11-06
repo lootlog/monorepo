@@ -1,4 +1,10 @@
+import {
+  createBattleLinkPreview,
+  getPreviewBattleId,
+} from "./battle-link-preview";
+
 export interface TrafficSplitterEnvironment {
+  BATTLELOG_ORIGIN: string;
   DOCS_ORIGIN: string;
   LANDING_ORIGIN: string;
   WEB_ORIGIN: string;
@@ -284,6 +290,21 @@ export async function routeRequest(
     canonicalUrl.search = requestUrl.search;
 
     return Response.redirect(canonicalUrl.href, 308);
+  }
+
+  const previewBattleId = getPreviewBattleId(request, requestUrl);
+
+  if (previewBattleId) {
+    const preview = await createBattleLinkPreview(
+      previewBattleId,
+      requestUrl,
+      environment.BATTLELOG_ORIGIN,
+      upstreamFetch,
+    );
+
+    if (preview) {
+      return preview;
+    }
   }
 
   const ambiguousLegacyAssetReferer = getAmbiguousLegacyAssetReferer(

@@ -11,6 +11,7 @@
     },
   ],
   "vars": {
+    "BATTLELOG_ORIGIN": "https://battlelog.lootlog.pl",
     "DOCS_ORIGIN": "https://lootlog-docs.communicator-dev.workers.dev",
     "LANDING_ORIGIN": "https://lootlog-landing.pages.dev",
     "WEB_ORIGIN": "https://lootlog-web-monorepo.pages.dev",
@@ -26,6 +27,7 @@
         },
       ],
       "vars": {
+        "BATTLELOG_ORIGIN": "https://dev-battlelog.lootlog.pl",
         "DOCS_ORIGIN": "https://lootlog-docs-develop.communicator-dev.workers.dev",
         "LANDING_ORIGIN": "https://develop.lootlog-landing.pages.dev",
         "WEB_ORIGIN": "https://develop.lootlog-web-monorepo.pages.dev",
