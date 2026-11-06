@@ -69,14 +69,12 @@ export type TabBarTab = {
 };
 
 export type TabBarMore = {
-  /** "More", or the open section behind it. */
+  /** "More", which stays the tab's name so it reads as the way in. */
   shortLabel: string;
   icon: LucideIcon;
-  /** Whether the open section is one of those behind "More". */
-  active: boolean;
-  /** The open section's full name when it is behind "More". */
-  activeLabel?: string;
-  /** The button's name when an open section replaces "More". */
+  /** The open section when it is one of those behind "More". */
+  activeSection?: ActiveSection;
+  /** The button's name while an open section is behind "More". */
   ariaLabel?: string;
   /** Whether a section behind "More" carries a badge. */
   badged: boolean;
@@ -110,10 +108,7 @@ const resolveActiveSection = (
   if (activeTab) return activeTab;
 
   if (more) {
-    return {
-      icon: more.icon,
-      label: (more.active ? more.activeLabel : undefined) ?? more.shortLabel,
-    };
+    return more.activeSection ?? { icon: more.icon, label: more.shortLabel };
   }
 
   return { icon: tabs[0]?.icon ?? Search, label: tabs[0]?.label ?? "" };
@@ -152,7 +147,7 @@ export function TabBar({
   const tabsScale = useTransform(progress, [0, 1], [1, 0.92]);
   const iconOpacity = useTransform(progress, [0.4, 0.9], [0, 1]);
 
-  const moreIsActive = more?.active === true;
+  const moreIsActive = more?.activeSection !== undefined;
   const active = resolveActiveSection(tabs, more);
   const ActiveIcon = active.icon;
 
