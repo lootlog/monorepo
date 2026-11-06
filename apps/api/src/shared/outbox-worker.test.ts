@@ -1,7 +1,7 @@
 import { expect, it } from "bun:test";
 import { Deferred, Effect, Queue } from "effect";
 import { TestClock } from "effect/testing";
-import { makeLootPublicationWorker } from "./loot-publication-worker.js";
+import { makeOutboxWorker } from "./outbox-worker.js";
 
 it("dispatches on startup, coalesces acceptance bursts during delivery, and wakes immediately between fallback polls", async () => {
   await Effect.gen(function* () {
@@ -9,7 +9,8 @@ it("dispatches on startup, coalesces acceptance bursts during delivery, and wake
     const releaseFirstDelivery = yield* Deferred.make<void>();
     let runs = 0;
 
-    const worker = yield* makeLootPublicationWorker(
+    const worker = yield* makeOutboxWorker(
+      "Test outbox",
       Effect.gen(function* () {
         runs += 1;
         yield* Queue.offer(started, runs);
@@ -41,7 +42,8 @@ it("retries durable work after a failed dispatch without requiring another accep
     let runs = 0;
     let pending = true;
 
-    const worker = yield* makeLootPublicationWorker(
+    const worker = yield* makeOutboxWorker(
+      "Test outbox",
       Effect.gen(function* () {
         runs += 1;
         yield* Queue.offer(attempted, runs);
