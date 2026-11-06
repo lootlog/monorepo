@@ -16,6 +16,8 @@ type StatsLeaderboardRowProps = {
   title: ReactNode;
   subtitle?: ReactNode;
   value: number;
+  /** Writes the value, such as event points with their unit. */
+  formatValue?: (value: number) => string;
   link?: LinkProps;
   /** Marks the viewer's own place. */
   isViewer?: boolean;
@@ -27,6 +29,7 @@ export const StatsLeaderboardRow = ({
   title,
   subtitle,
   value,
+  formatValue = formatNumber,
   link,
   isViewer = false,
 }: StatsLeaderboardRowProps) => {
@@ -45,7 +48,7 @@ export const StatsLeaderboardRow = ({
         )}
       </span>
       <span className="shrink-0 text-sm font-semibold tabular-nums">
-        {formatNumber(value)}
+        {formatValue(value)}
       </span>
     </span>
   );
