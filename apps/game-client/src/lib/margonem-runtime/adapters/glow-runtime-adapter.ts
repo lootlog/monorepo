@@ -388,6 +388,7 @@ class LootlogOtherGlowManager {
     CharacterGlow<RuntimeOther>
   >();
   private nativeGlowSuppressed = false;
+  private glowErrorReported = false;
   private originalGetDrawableList: OriginalGetDrawableList | null = null;
 
   install(): void {
@@ -422,9 +423,19 @@ class LootlogOtherGlowManager {
         combined.push(drawable);
       }
 
-      for (const glow of this.glowsByCharacterId.values()) {
-        glow.update();
-        combined.push(glow);
+      // The game's own list is returned untouched if a glow cannot update.
+      try {
+        for (const glow of this.glowsByCharacterId.values()) {
+          glow.update();
+          combined.push(glow);
+        }
+      } catch (error) {
+        if (!this.glowErrorReported) {
+          this.glowErrorReported = true;
+          console.warn("[Lootlog] Player glows skipped after error:", error);
+        }
+
+        return drawables;
       }
 
       return combined;
