@@ -11,7 +11,8 @@ let nextLogSequence = 0;
 
 export type LogActionType = string;
 
-export type LogEntryStatus = "success" | "error" | "partial";
+/** `skipped`: Lootlog saw the game event but deliberately sent nothing. */
+export type LogEntryStatus = "success" | "error" | "partial" | "skipped";
 
 export type LogRequestStatus = "success" | "error";
 
@@ -47,6 +48,7 @@ type AppendActionInput = {
   actionType: LogActionType;
   payload: SerializableValue;
   details?: SerializableValue;
+  status?: LogEntryStatus;
 };
 
 type UpdateActionInput = {
@@ -184,14 +186,14 @@ const withRetentionLimits = (actions: LoggedAction[]): LoggedAction[] => {
 
 export const useLogsStore = create<LogsState>()((set) => ({
   actions: [],
-  appendAction: ({ actionType, payload, details }) => {
+  appendAction: ({ actionType, payload, details, status = "success" }) => {
     const actionId = createLogId();
 
     const action: LoggedAction = {
       id: actionId,
       createdAt: new Date().toISOString(),
       actionType,
-      status: "success",
+      status,
       payload,
       details,
       requests: [],

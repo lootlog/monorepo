@@ -26,6 +26,7 @@ import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-ru
 import { getFixedT } from "@/i18n/get-fixed-t";
 import {
   getErrorStatusCode,
+  logSkippedAction,
   shouldRetryLoggedActionStatus,
 } from "@/lib/logs/log-actions";
 import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
@@ -107,6 +108,41 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
 };
 
 /**
+ * The NPCs among `keys` that would have produced a kill, alive or dead. The
+ * classification matches `resolveKillIntent`.
+ */
+const getTrackableNpcs = (
+  warriors: BattleWarriorsWithAccountId,
+  keys: Iterable<string> = Object.keys(warriors),
+) =>
+  Array.from(keys).flatMap((key) => {
+    const warrior = warriors[key];
+
+    if (!key.startsWith("-") || !warrior) return [];
+
+    const npcType = getNpcType(NpcType, {
+      wt: warrior.wt,
+      prof: warrior.prof || "",
+      type: warrior.type,
+      icon: warrior.mapNpc?.icon ?? normalizeNpcIcon(warrior.icon),
+      isHeroFromEvent: warrior.mapNpc?.isHeroFromEvent,
+      name: warrior.name,
+    });
+
+    if (!TRACKABLE_NPC_TYPES.has(npcType)) return [];
+
+    return [
+      {
+        id: Number.parseInt(key, 10),
+        name: warrior.name,
+        lvl: warrior.lvl,
+        type: npcType,
+        dead: isWarriorDead(warrior),
+      },
+    ];
+  });
+
+/**
  * A player who dies in a group battle may close it while the others fight on.
  * Margonem then sends `close` and never `endBattle`, so the capture so far is
  * submitted as an unfinished battle. A `close` that arrives with `init` belongs
@@ -121,12 +157,28 @@ const getBattleEnding = (
   return battleData.close !== undefined && !startsBattle ? "left" : null;
 };
 
+type KillSkipReason =
+  | "battle-start-not-seen"
+  | "left-battle"
+  | "missing-game"
+  | "npc-alive";
+
+const getKillSkipReason = (
+  ending: "ended" | "left",
+  game: RuntimeGameSnapshot | null,
+): KillSkipReason => {
+  if (!game) return "missing-game";
+
+  return ending === "left" ? "left-battle" : "npc-alive";
+};
+
 export class BattleEventProcessor {
   private observedTeams = new Set<number>();
   private hasMultipleTeams = false;
   // NPC battles are never submitted, so their packets are not worth capturing.
   private hasNpcWarrior = false;
   private hasWarnedCaptureOverflow = false;
+  private lastEndedBattleNpcKeys = new Set<string>();
 
   async handle(
     event: GameEvent,
@@ -161,6 +213,10 @@ export class BattleEventProcessor {
       battleStore.addEvent(event);
     }
 
+    if (battleState !== "in-battle") {
+      this.logUnseenBattleStart(event.f, battleWarriors, ingress);
+    }
+
     if (!ending) {
       battleStore.applyBatch({
         battleState: startsBattle ? "in-battle" : undefined,
@@ -171,6 +227,10 @@ export class BattleEventProcessor {
     }
 
     const capture = battleStore.getCaptureSnapshot();
+
+    this.lastEndedBattleNpcKeys = new Set(
+      Object.keys(battleWarriors).filter((key) => key.startsWith("-")),
+    );
 
     const game = ingress?.game ?? useGameStore.getState().game;
     const hasMultipleTeams = this.hasMultipleTeams;
@@ -194,6 +254,14 @@ export class BattleEventProcessor {
       ending === "ended" ? topNpc : null,
       game,
     );
+
+    if (!killIntent) {
+      this.logSkippedKill(
+        getKillSkipReason(ending, game),
+        getTrackableNpcs(battleWarriors),
+        game,
+      );
+    }
 
     const battleIntent = await this.resolveBattleIntent({
       events: battlePanelStore.isBattleCollectionEnabled ? pvpEvents : null,
@@ -270,6 +338,50 @@ export class BattleEventProcessor {
         return;
       }
     }
+  }
+
+  /**
+   * A repeated final packet of the last battle names only its NPCs; another
+   * NPC means a battle began before Lootlog could see it.
+   */
+  private logUnseenBattleStart(
+    battleData: BattleData,
+    battleWarriors: BattleWarriorsWithAccountId,
+    ingress?: RuntimeIngressSnapshot,
+  ): void {
+    if (battleData.endBattle !== 1 || !battleData.w) return;
+
+    const unseenKeys = Object.keys(battleData.w).filter(
+      (key) => !this.lastEndedBattleNpcKeys.has(key),
+    );
+
+    this.logSkippedKill(
+      "battle-start-not-seen",
+      getTrackableNpcs(battleWarriors, unseenKeys),
+      ingress?.game ?? useGameStore.getState().game,
+    );
+  }
+
+  /**
+   * A battle against a monster that sets a timer ended without a kill report.
+   * The reason lands in the action log, the only trace players can export.
+   */
+  private logSkippedKill(
+    reason: KillSkipReason,
+    npcs: ReturnType<typeof getTrackableNpcs>,
+    game: RuntimeGameSnapshot | null,
+  ): void {
+    if (npcs.length === 0) return;
+
+    logSkippedAction({
+      actionType: "create_kill",
+      payload: {
+        world: game?.world,
+        characterId: game?.hero.characterId,
+        npcs,
+      },
+      reason,
+    });
   }
 
   private resolveKillIntent(
