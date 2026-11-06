@@ -1,6 +1,9 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { groupBy, orderBy } from "es-toolkit";
-import { useCatalogControllerGetEvents } from "@lootlog/client/search";
+import {
+  getCatalogControllerGetEventsQueryOptions,
+  useCatalogControllerGetEvents,
+} from "@lootlog/client/search";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ArticleSection } from "@/components/article/article-section";
 import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
@@ -9,12 +12,23 @@ import { PageHeader } from "@/components/common/page-header";
 import { t } from "@/i18n/messages";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { isHeroTrackersEvent } from "@/lib/hero-trackers";
+import { prefetchPageQueries } from "@/lib/catalog-page-queries";
 import { eventSubtitle } from "@/lib/item-events";
+import { canonicalLink } from "@/lib/link-preview";
+
+const EVENTS_QUERY = { gameVersion: WIKI_GAME_VERSION } as const;
 
 export const Route = createFileRoute("/events")({
   component: EventsRoute,
+  loader: ({ context: { queryClient } }) =>
+    prefetchPageQueries(
+      queryClient.prefetchQuery(
+        getCatalogControllerGetEventsQueryOptions(EVENTS_QUERY),
+      ),
+    ),
   head: () => ({
     meta: [{ title: `${t("meta.eventsTitle")} | ${t("meta.title")}` }],
+    links: [canonicalLink("/events")],
   }),
 });
 
@@ -24,9 +38,7 @@ const EVENT_GRID = "grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3";
 
 /** Every event Lootlog knows items of, by year, the latest first. */
 function EventsRoute() {
-  const { data, isError } = useCatalogControllerGetEvents({
-    gameVersion: WIKI_GAME_VERSION,
-  });
+  const { data, isError } = useCatalogControllerGetEvents(EVENTS_QUERY);
 
   // Events by year, the latest first; Tropiciele Herosów editions, which
   // have no year, come after them, and other events without one last.

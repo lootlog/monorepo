@@ -1,5 +1,14 @@
-import { Navigate, createFileRoute, linkOptions } from "@tanstack/react-router";
-import { useCatalogControllerGetNpcs } from "@lootlog/client/search";
+import {
+  Navigate,
+  createFileRoute,
+  linkOptions,
+  redirect,
+} from "@tanstack/react-router";
+import {
+  getCatalogControllerGetItemsQueryOptions,
+  getCatalogControllerGetNpcsQueryOptions,
+  useCatalogControllerGetNpcs,
+} from "@lootlog/client/search";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { NpcDrops } from "@/components/npcs/npc-drops";
@@ -13,34 +22,53 @@ import { npcSummary } from "@/lib/npc-summary";
 import { npcPageParams } from "@/lib/catalog-links";
 import {
   findPageNpc,
-  loadCatalogItems,
-  loadCatalogNpcs,
   npcDropsQuery,
   npcPageQuery,
 } from "@/lib/catalog-page-queries";
-import { linkPreviewMeta, npcLinkPreview } from "@/lib/link-preview";
+import {
+  canonicalLink,
+  linkPreviewMeta,
+  npcLinkPreview,
+} from "@/lib/link-preview";
 
 export const Route = createFileRoute("/npcs_/$npcSlug")({
   component: NpcRoute,
   // The page loads the monster and its drops itself; a failed load leaves
   // it the error.
-  loader: async ({ params }) => {
+  loader: async ({ params, context: { queryClient } }) => {
     const query = npcPageQuery(params.npcSlug);
 
     if (!query) return { npc: undefined, drops: [] };
 
-    const npcs = await loadCatalogNpcs(query).catch(() => undefined);
+    const npcs = await queryClient
+      .ensureQueryData(getCatalogControllerGetNpcsQueryOptions(query))
+      .catch(() => undefined);
+
     const npc = npcs && findPageNpc(npcs.hits, params.npcSlug);
 
     if (!npc) return { npc: undefined, drops: [] };
 
-    const drops = await loadCatalogItems(npcDropsQuery(npc.key)).catch(
-      () => undefined,
-    );
+    // Old links carry the catalog key or an outdated name.
+    if (npcPageParams(npc).npcSlug !== params.npcSlug) {
+      throw redirect({
+        to: "/npcs/$npcSlug",
+        params: npcPageParams(npc),
+        statusCode: 301,
+      });
+    }
+
+    const drops = await queryClient
+      .ensureQueryData(
+        getCatalogControllerGetItemsQueryOptions(npcDropsQuery(npc.key)),
+      )
+      .catch(() => undefined);
 
     return { npc, drops: drops?.hits ?? [] };
   },
   head: ({ loaderData }) => ({
+    links: loaderData?.npc
+      ? [canonicalLink(`/npcs/${npcPageParams(loaderData.npc).npcSlug}`)]
+      : [],
     meta: loaderData?.npc
       ? linkPreviewMeta(npcLinkPreview(loaderData.npc, loaderData.drops))
       : [{ title: `${t("meta.npcTitle")} | ${t("meta.title")}` }],

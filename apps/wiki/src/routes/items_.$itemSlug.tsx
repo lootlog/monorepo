@@ -1,5 +1,13 @@
-import { Navigate, createFileRoute, linkOptions } from "@tanstack/react-router";
-import { useCatalogControllerGetItems } from "@lootlog/client/search";
+import {
+  Navigate,
+  createFileRoute,
+  linkOptions,
+  redirect,
+} from "@tanstack/react-router";
+import {
+  getCatalogControllerGetItemsQueryOptions,
+  useCatalogControllerGetItems,
+} from "@lootlog/client/search";
 import { ITEM_RARITY_STYLES } from "@lootlog/ui/components/item-tile-details";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
@@ -22,8 +30,17 @@ import {
   itemPageSearch,
   readPageSegment,
 } from "@/lib/catalog-links";
-import { itemPageQuery, loadCatalogItems } from "@/lib/catalog-page-queries";
-import { itemLinkPreview, linkPreviewMeta } from "@/lib/link-preview";
+import {
+  itemPageQuery,
+  prefetchPageQueries,
+  relatedDropsQuery,
+  relatedDropsSource,
+} from "@/lib/catalog-page-queries";
+import {
+  canonicalLink,
+  itemLinkPreview,
+  linkPreviewMeta,
+} from "@/lib/link-preview";
 import { itemForCharacter } from "@lootlog/domain/elastic-level";
 import { isCharacterLevel } from "@/lib/equipment-set";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
@@ -42,18 +59,49 @@ import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 export const Route = createFileRoute("/items_/$itemSlug")({
   component: ItemRoute,
   // The page loads the item itself; a failed load leaves it the error.
-  loader: async ({ params }) => {
+  loader: async ({ params, location, context: { queryClient } }) => {
     const id = readPageSegment(params.itemSlug)?.id;
 
     if (id === undefined) return { item: undefined };
 
-    const data = await loadCatalogItems(itemPageQuery(id)).catch(
-      () => undefined,
+    const data = await queryClient
+      .ensureQueryData(
+        getCatalogControllerGetItemsQueryOptions(itemPageQuery(id)),
+      )
+      .catch(() => undefined);
+
+    const item = data?.hits[0];
+
+    if (!item) return { item };
+
+    // An old link, or one with an outdated name, moves to the item's own URL.
+    if (itemPageParams(item).itemSlug !== params.itemSlug) {
+      throw redirect({
+        to: "/items/$itemSlug",
+        params: itemPageParams(item),
+        search: location.search,
+        statusCode: 301,
+      });
+    }
+
+    const source = relatedDropsSource(item);
+
+    await prefetchPageQueries(
+      source
+        ? queryClient.prefetchQuery(
+            getCatalogControllerGetItemsQueryOptions(
+              relatedDropsQuery(source.key),
+            ),
+          )
+        : Promise.resolve(),
     );
 
-    return { item: data?.hits[0] };
+    return { item };
   },
   head: ({ loaderData, match }) => ({
+    links: loaderData?.item
+      ? [canonicalLink(`/items/${itemPageParams(loaderData.item).itemSlug}`)]
+      : [],
     meta: loaderData?.item
       ? linkPreviewMeta(
           itemLinkPreview(loaderData.item, {

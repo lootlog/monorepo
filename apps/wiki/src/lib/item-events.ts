@@ -1,4 +1,8 @@
-import { itemEventLabels, latestItemEvent } from "@lootlog/domain/item-events";
+import {
+  itemEventLabels,
+  itemEventSlug,
+  latestItemEvent,
+} from "@lootlog/domain/item-events";
 import { parseItemStats } from "@lootlog/ui/components/item-stat-utils";
 import { t } from "@/i18n/messages";
 import { isHeroTrackersEvent } from "@/lib/hero-trackers";
@@ -9,6 +13,15 @@ export const itemEvents = (stat: string) =>
     String(
       parseItemStats(stat).find(({ key }) => key === "etiquette")?.value ?? "",
     ),
+  );
+
+/** The event a slug names, as any of its items writes it. */
+export const eventNameOf = (
+  items: readonly { stat: string }[],
+  eventSlug: string,
+) =>
+  itemEvents(items[0]?.stat ?? "").find(
+    (label) => itemEventSlug(label) === eventSlug,
   );
 
 /** The latest event an item belongs to; none for an item of no event. */

@@ -710,6 +710,8 @@ const messages = {
     droppedBy: "Wypada z: {{names}}",
     locations: "Lokacje: {{names}}",
     drops: "Dropy: {{names}}",
+    eventDescription:
+      "Przedmioty z eventu {{name}} według potworów i rzadkości: statystyki, poziomy i z czego wypadają.",
   },
   items: {
     title: "Wyszukiwarka przedmiotów",
