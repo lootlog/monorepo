@@ -19,6 +19,8 @@ type EventRankingLeaderboardProps = {
   limit: number;
   /** Adds the member's own place when it falls outside the leaders. */
   currentMemberId?: number;
+  /** Keeps the member's own place in view at the bottom of a scrolling rail. */
+  pinViewer?: boolean;
 };
 
 /** The event's leaders by points, each opening the member's kills. */
@@ -28,6 +30,7 @@ export const EventRankingLeaderboard = ({
   eventId,
   limit,
   currentMemberId,
+  pinViewer = false,
 }: EventRankingLeaderboardProps) => {
   const { t } = useTranslation();
   const membersMap = useGuildMemberMap(guildId);
@@ -72,6 +75,7 @@ export const EventRankingLeaderboard = ({
         params: { guildId, eventId, memberId: String(ranking.memberId) },
       }}
       isViewer={ranking.memberId === currentMemberId}
+      pinned={pinViewer && ranking.memberId === currentMemberId}
     />
   );
 
