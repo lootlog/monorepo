@@ -21,7 +21,7 @@ import { type Cell, useTable } from "@tanstack/react-table";
 import { cn } from "cn";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { BattleTableActionsMenu } from "./battle-table-actions-menu";
 import { getBattleTableColumnClassName } from "./battle-table-column-class-name";
 import { BattleTableDeleteDialogs } from "./battle-table-delete-dialogs";

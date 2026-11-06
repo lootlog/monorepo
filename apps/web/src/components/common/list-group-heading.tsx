@@ -27,7 +27,7 @@ export const ListGroupHeading = ({
     <h2 id={id} className="flex min-w-0 items-center gap-2">
       <span className="truncate">{children}</span>
       {count !== undefined && (
-        <span className="shrink-0 rounded-full bg-foreground/10 px-1.5 text-[11px] leading-4 font-medium tabular-nums">
+        <span className="shrink-0 rounded-full bg-foreground/10 px-1.5 text-2xs leading-4 font-medium tabular-nums">
           {count}
         </span>
       )}

@@ -53,7 +53,7 @@ export const KillMapsTimelineTable = ({
       id: "id",
       header: t("events.killDetail.mapCoverage.columns.id"),
       cell: ({ row }) => (
-        <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+        <span className="font-mono text-2xs tabular-nums text-muted-foreground">
           #{row.original.numericMapId}
         </span>
       ),
@@ -80,7 +80,7 @@ export const KillMapsTimelineTable = ({
             >
               {map.mapName}
             </span>
-            <span className="mt-0.5 flex items-center gap-1 text-[11px] tabular-nums text-muted-foreground md:hidden">
+            <span className="mt-0.5 flex items-center gap-1 text-2xs tabular-nums text-muted-foreground md:hidden">
               <Users className="size-3.5" />
               {t("events.killDetail.mapCoverage.memberCount", {
                 count: diagnostics.assignments.length,

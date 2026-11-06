@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { type Cell, type ColumnDef, useTable } from "@tanstack/react-table";
 import { Trophy } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { useUpdateRankingPoints } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Table, TableCell, TableRow } from "@lootlog/ui/components/table";
@@ -246,7 +246,7 @@ export const EventRankingTable = ({
           <span className="flex justify-end">
             <Badge
               variant="secondary"
-              className="px-1.5 py-0 text-[11px] tabular-nums"
+              className="px-1.5 py-0 text-2xs tabular-nums"
             >
               {afkPercentage}%
             </Badge>

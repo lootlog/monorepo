@@ -8,7 +8,7 @@ import type { ApiError } from "@lootlog/client/transport";
 import { ArrowDownWideNarrow, Dices, RotateCcw, Shuffle } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import {
   lootDrawAddError,

@@ -14,7 +14,7 @@ export const LootDrawHistory = ({
 
   return (
     <section className="grid gap-2">
-      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <h3 className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
         {t("loots.details.draw.history", { count: draws.length })}
       </h3>
       <ul className="divide-y divide-border/50 overflow-hidden rounded-lg border border-border">

@@ -60,7 +60,7 @@ export function ItemUpgradeSteps({
               >
                 {t("upgrade.level", { level })}
               </span>
-              <span className="text-[11px] text-muted-foreground tabular-nums sm:text-xs">
+              <span className="text-2xs text-muted-foreground tabular-nums sm:text-xs">
                 {t("upgrade.effectiveLevelValue", {
                   level: upgradedItemLevel(itemLevel, level),
                 })}

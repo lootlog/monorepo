@@ -18,7 +18,7 @@ import {
   useUserPreferences,
 } from "@/hooks/api/user/use-user-preferences";
 
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import { RotateCcw } from "lucide-react";

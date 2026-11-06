@@ -47,7 +47,7 @@ export const ScoringPresenceTimelineBar = ({
           <div
             key={segment.start}
             className={cn(
-              "absolute inset-y-0 flex items-center justify-center border-r border-background/60 text-[10px] font-semibold tabular-nums text-primary-foreground",
+              "absolute inset-y-0 flex items-center justify-center border-r border-background/60 text-2xs font-semibold tabular-nums text-primary-foreground",
               SIZE_CLASS_NAMES[
                 Math.min(segment.size, SIZE_CLASS_NAMES.length) - 1
               ],

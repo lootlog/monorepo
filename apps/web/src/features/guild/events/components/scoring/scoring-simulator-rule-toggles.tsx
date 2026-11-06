@@ -23,7 +23,7 @@ export function ScoringSimulatorRuleToggles({
 
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-muted-foreground mb-2">
+      <p className="text-2xs uppercase tracking-[0.18em] font-semibold text-muted-foreground mb-2">
         {t("events.scoring.simulator.activeRules")}
       </p>
       <div className="space-y-1">

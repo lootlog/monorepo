@@ -32,7 +32,7 @@ export const LootlogStripTile = ({
     </span>
     <span
       className={cn(
-        "max-w-full truncate text-[11px] leading-tight",
+        "max-w-full truncate text-2xs leading-tight",
         isActive
           ? "font-semibold text-foreground"
           : "font-medium text-muted-foreground",

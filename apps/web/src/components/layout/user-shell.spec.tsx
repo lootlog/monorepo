@@ -108,7 +108,10 @@ describe("user shell navigation", () => {
     ).toBeNull();
     // A settings tab is a sibling of the overview, not its child.
     expect(screen.queryByRole("link", { name: /^Wróć/ })).toBeNull();
-    expect(screen.getByText("Ustawienia")).toBeDefined();
+    // The phone tab bar shows the open section too; the top bar names it.
+    expect(
+      screen.getByText("Ustawienia", { ignore: '[aria-label="Sekcje"] *' }),
+    ).toBeDefined();
 
     await act(async () => {
       await router.navigate({ to: "/@me/settings" });

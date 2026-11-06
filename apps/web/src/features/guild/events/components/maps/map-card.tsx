@@ -224,7 +224,7 @@ export const MapCard = ({
                   );
                 })}
                 {memberCount > 3 && (
-                  <div className="flex size-5 items-center justify-center rounded-full border border-background bg-primary/20 text-[10px] font-medium text-primary">
+                  <div className="flex size-5 items-center justify-center rounded-full border border-background bg-primary/20 text-2xs font-medium text-primary">
                     +{memberCount - 3}
                   </div>
                 )}

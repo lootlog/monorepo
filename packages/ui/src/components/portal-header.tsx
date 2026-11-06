@@ -78,7 +78,7 @@ export function PortalHeader({
   });
 
   return (
-    <header className="portal-header fixed inset-x-0 top-0 z-40 flex items-center gap-2 border-b border-sidebar-border bg-sidebar/80 px-3 backdrop-blur-lg backdrop-saturate-150 sm:px-4 md:gap-4">
+    <header className="portal-header fixed inset-x-0 top-0 z-40 flex items-center gap-2 border-b border-sidebar-border bg-sidebar/80 opaque:bg-sidebar opaque:backdrop-blur-none px-3 backdrop-blur-lg backdrop-saturate-150 sm:px-4 md:gap-4">
       <TextLink
         href="#portal-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:bg-background focus:px-4 focus:py-3"

@@ -22,7 +22,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Copy, Lock, MoreHorizontal, Share2, Trash2 } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { RecentOpponentBattlesDialog } from "./recent-opponent-battles-dialog";
 
 export type BattlePanelSingleBattleActionsProps = {
@@ -70,9 +70,7 @@ export const BattlePanelSingleBattleActions: FC<
       try {
         await deleteBattle({ pathParams: { battleId: battle.id } });
       } catch (error) {
-        toast.error(t("battlePanel.toasts.battleDeleteError"), {
-          duration: 3000,
-        });
+        toast.error(t("battlePanel.toasts.battleDeleteError"));
         throw error;
       }
 

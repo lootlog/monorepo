@@ -5,7 +5,7 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { getApiErrorMessage } from "@lootlog/client/transport";
 import {

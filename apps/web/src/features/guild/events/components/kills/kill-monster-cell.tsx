@@ -83,7 +83,7 @@ export const KillMonsterCell = ({
         )}
         <div
           className={cn(
-            "mt-0.5 truncate text-[10px] text-muted-foreground tabular-nums",
+            "mt-0.5 truncate text-2xs text-muted-foreground tabular-nums",
             !alwaysShowsDate && "sm:hidden",
           )}
         >

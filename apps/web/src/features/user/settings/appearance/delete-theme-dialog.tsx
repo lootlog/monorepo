@@ -5,7 +5,7 @@ import type { UserThemeResponseDto } from "@lootlog/client/main";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 
 type DeleteThemeDialogProps = {
   theme: UserThemeResponseDto;

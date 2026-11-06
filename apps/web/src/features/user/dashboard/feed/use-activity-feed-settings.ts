@@ -10,7 +10,7 @@ import {
   type ActivityFeedSettings,
 } from "@lootlog/domain/activity-feed";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { useUserPreferences } from "@/hooks/api/user/use-user-preferences";
 
 const params = { domains: "general" };

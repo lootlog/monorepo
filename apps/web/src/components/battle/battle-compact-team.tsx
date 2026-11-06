@@ -64,7 +64,7 @@ export const BattleCompactTeam: FC<BattleCompactTeamProps> = ({
           />
           <span className="truncate">{label}</span>
           {isGroup && (
-            <span className="shrink-0 rounded-full bg-foreground/10 px-1.5 text-[11px] leading-4 font-medium tabular-nums text-foreground">
+            <span className="shrink-0 rounded-full bg-foreground/10 px-1.5 text-2xs leading-4 font-medium tabular-nums text-foreground">
               {team.length}
             </span>
           )}

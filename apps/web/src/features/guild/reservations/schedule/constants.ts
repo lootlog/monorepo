@@ -20,7 +20,7 @@ export const SCHEDULE_BAR_HEIGHT = "calc(3rem + 1px)";
 
 /** An hour's label in the schedule's time column. */
 export const SCHEDULE_HOUR_LABEL_CLASS =
-  "pt-1 pr-2 text-right text-[11px] leading-none tabular-nums text-muted-foreground";
+  "pt-1 pr-2 text-right text-2xs leading-none tabular-nums text-muted-foreground";
 
 /** Time that has passed, where no reservation can start. */
 export const SCHEDULE_PAST_CLASS = "bg-muted/40";

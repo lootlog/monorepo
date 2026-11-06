@@ -5,7 +5,7 @@ import { BATTLELOG_PUBLIC_URL } from "@/config/addon";
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCopyToClipboard } from "usehooks-ts";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { useTranslation } from "react-i18next";
 
 const composeBattleUrl = (battleId: string) => {
@@ -28,7 +28,7 @@ export const useBattleSharing = () => {
   const handleCopy = async (url: string) => {
     try {
       if (!(await copy(url))) {
-        toast.error(t("battlePanel.toasts.linkCopyError"), { duration: 3000 });
+        toast.error(t("battlePanel.toasts.linkCopyError"));
 
         return;
       }
@@ -37,9 +37,7 @@ export const useBattleSharing = () => {
         duration: 3000,
       });
     } catch {
-      toast.error(t("battlePanel.toasts.linkCopyError"), {
-        duration: 3000,
-      });
+      toast.error(t("battlePanel.toasts.linkCopyError"));
     }
   };
 

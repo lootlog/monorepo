@@ -16,6 +16,7 @@ import { RootRouteNotFound } from "@/components/router/root-route-not-found";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
 import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes/adapters";
 import { Toaster } from "@lootlog/ui/components/sonner";
+import { useTranslation } from "react-i18next";
 
 import "@lootlog/ui/globals.css";
 import "@lootlog/ui/themes/default.css";
@@ -35,6 +36,7 @@ const ReactQueryDevtools = lazy(() =>
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const prefersReducedMotion = usePrefersReducedMotion();
+  const { t } = useTranslation();
 
   useEffect(() => {
     document.documentElement.classList.add("theme-ready");
@@ -50,7 +52,9 @@ function RootComponent() {
             <NuqsAdapter>
               <GlobalContextProvider>
                 <Outlet />
-                <Toaster />
+                <Toaster
+                  toastOptions={{ closeButtonAriaLabel: t("common.close") }}
+                />
                 {!prefersReducedMotion && <ThemeRootEffects />}
                 {import.meta.env.DEV ? (
                   <Suspense fallback={null}>

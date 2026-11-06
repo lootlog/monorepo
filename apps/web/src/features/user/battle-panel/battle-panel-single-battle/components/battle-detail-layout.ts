@@ -5,7 +5,7 @@
  * From this width the log rail scrolls on its own beside the battle. Below it the page
  * scrolls as a whole and reads the rail last.
  */
-export const BATTLE_DETAIL_WIDE_MEDIA_QUERY = "(min-width: 1280px)";
+export const BATTLE_DETAIL_WIDE_MEDIA_QUERY = "(width >= 80rem)";
 
 /** The details bar, then the battle and its rail. */
 export const BATTLE_DETAIL_CONTENT_CLASS_NAME = "flex flex-col xl:h-full";

@@ -26,7 +26,7 @@ import {
 } from "@lootlog/client/main";
 
 import { cn } from "cn";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";

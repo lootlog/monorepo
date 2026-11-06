@@ -7,7 +7,7 @@ import { EventLoadError } from "./components/event-load-error";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Plus, SearchX, Trophy } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 

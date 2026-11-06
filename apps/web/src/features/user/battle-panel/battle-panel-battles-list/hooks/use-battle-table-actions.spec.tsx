@@ -1,6 +1,6 @@
 import { configureApiClients } from "@lootlog/client/transport";
 import { getBattlesControllerGetDashboardBattlesQueryKey } from "@lootlog/client/battlelog";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 // @vitest-environment happy-dom
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { act, cleanup, renderHook } from "@testing-library/react";
@@ -138,7 +138,6 @@ it("waits for every deletion after a partial failure and retains the failed sele
   expect(queryClient.getQueryState(dashboardKey)?.isInvalidated).toBe(true);
   expect(mocks.error).toHaveBeenCalledWith(
     "battlePanel.toasts.bulkBattleDeleteError",
-    { duration: 3000 },
   );
 });
 

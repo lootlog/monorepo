@@ -64,7 +64,7 @@ export const MemberStatusBadge = ({ member }: { member: GuildMember }) => {
   return (
     <Badge
       variant={copy.variant}
-      className={cn("h-6 gap-1.5 px-2 text-[11px]", copy.className)}
+      className={cn("h-6 gap-1.5 px-2 text-2xs", copy.className)}
     >
       <Icon className="size-3" />
       {copy.label}

@@ -18,18 +18,18 @@ export const MemberKillBreakdown = ({ kill }: MemberKillBreakdownProps) => {
   return (
     <>
       <div className="mb-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <p className="text-2xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           {t("events.kills.scoringBreakdown")}
         </p>
         {(kill.isManualClose || hasManualPointsAdjustment) && (
           <div className="mt-1 flex flex-wrap items-center gap-2">
             {kill.isManualClose && (
-              <span className="text-[10px] font-medium text-amber-400">
+              <span className="text-2xs font-medium text-amber-400">
                 {t("events.kills.manualClose")}
               </span>
             )}
             {hasManualPointsAdjustment && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-400">
+              <span className="inline-flex items-center gap-1 text-2xs font-medium text-amber-400">
                 <Info className="size-3" />
                 {t("events.points.modified")}
               </span>

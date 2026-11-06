@@ -25,7 +25,7 @@ export const GuildSidebarNavPlaceholder = () => {
       </div>
       <div className="pt-3.5">
         {renderRows(leadingRows)}
-        <div className="flex items-center gap-2.5 pt-5 pr-2 pb-2 pl-5 text-[11px]">
+        <div className="flex items-center gap-2.5 pt-5 pr-2 pb-2 pl-5 text-2xs">
           <SkeletonLine className="h-2 w-20" />
           <span className="h-px flex-1 bg-sidebar-border" />
         </div>

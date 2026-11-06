@@ -53,7 +53,7 @@ export const NotificationDiscordMessage = ({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-1.5">
           <span className="font-medium text-[#f2f3f5]">Lootlog</span>
-          <span className="rounded-[3px] bg-[#5865f2] px-1 text-[10px] leading-4 font-semibold text-white uppercase">
+          <span className="rounded-[3px] bg-[#5865f2] px-1 text-2xs leading-4 font-semibold text-white uppercase">
             {t("settings.notifications.templateEditor.discordAppTag")}
           </span>
           <span className="text-xs text-[#949ba4]">

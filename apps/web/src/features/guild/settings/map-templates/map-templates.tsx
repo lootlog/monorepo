@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import { FileText, Plus, SearchX } from "lucide-react";
 import { ListToolbar } from "@/components/common/list-toolbar";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { MapTemplateFormDialog } from "./map-template-form-dialog";
 import { MapTemplateRowsSkeleton } from "./map-template-rows-skeleton";
 import { MapTemplateTile } from "./map-template-tile";

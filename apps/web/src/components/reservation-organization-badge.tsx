@@ -23,7 +23,7 @@ export function ReservationOrganizationBadge({
     <Badge
       variant="outline"
       className={cn(
-        "h-6 max-w-full gap-1.5 rounded-md border-border/60 bg-muted/40 px-1.5 text-[11px] font-medium normal-case tracking-normal text-muted-foreground shadow-none",
+        "h-6 max-w-full gap-1.5 rounded-md border-border/60 bg-muted/40 px-1.5 text-2xs font-medium normal-case tracking-normal text-muted-foreground shadow-none",
         className,
       )}
     >

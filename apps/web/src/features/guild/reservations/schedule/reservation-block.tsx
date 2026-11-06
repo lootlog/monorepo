@@ -118,7 +118,7 @@ export function ReservationBlock({
         >
           <AvatarImage src={avatar.url ?? undefined} alt="" />
           <AvatarFallback
-            className={cn("text-[10px]", isPartner && "rounded-[4px]")}
+            className={cn("text-2xs", isPartner && "rounded-[4px]")}
           >
             {avatar.fallback}
           </AvatarFallback>
@@ -135,18 +135,18 @@ export function ReservationBlock({
               />
             )}
             {showInlineTime && (
-              <span className="ml-auto shrink-0 text-[11px] font-normal leading-tight tabular-nums text-muted-foreground">
+              <span className="ml-auto shrink-0 text-2xs font-normal leading-tight tabular-nums text-muted-foreground">
                 {time}
               </span>
             )}
           </div>
           {showStackedTime && (
-            <span className="mt-0.5 block truncate text-[11px] leading-tight tabular-nums text-muted-foreground">
+            <span className="mt-0.5 block truncate text-2xs leading-tight tabular-nums text-muted-foreground">
               {time}
             </span>
           )}
           {showDetails && isPartner && (
-            <span className="mt-0.5 block truncate text-[11px] leading-tight text-muted-foreground">
+            <span className="mt-0.5 block truncate text-2xs leading-tight text-muted-foreground">
               {reservation.sourceOrganization.name}
             </span>
           )}

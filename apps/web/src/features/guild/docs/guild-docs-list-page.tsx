@@ -45,6 +45,7 @@ export const GuildDocsListPage = () => {
     trashOpen,
     documentPendingTrash,
     moveDocumentToTrash,
+    requestTrash,
   } = useGuildDocsList();
 
   const toolbarActions = (
@@ -157,7 +158,7 @@ export const GuildDocsListPage = () => {
             document={document}
             canWrite={canWrite}
             trashDisabled={deleteDocument.isPending}
-            onTrash={() => setDocumentPendingTrash(document)}
+            onTrash={() => requestTrash(document)}
           />
         ))}
       </div>
