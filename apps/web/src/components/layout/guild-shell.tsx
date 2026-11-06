@@ -1,5 +1,6 @@
 import { AppContentFrame } from "@lootlog/ui/components/app-content-frame";
 import { GuildNavigationTopBar } from "@/components/layout/guild-navigation-top-bar";
+import { GuildTabBar } from "@/components/layout/guild-tab-bar";
 import { AppTopBar } from "@lootlog/ui/components/app-top-bar";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { GuildSearchContext } from "@/contexts/guild-search-context";
@@ -17,7 +18,9 @@ type GuildShellProps = {
 export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
   const { t } = useTranslation();
 
-  const { slots, titleRef, actionsRef, contextRef } = useHeaderSlotTargets();
+  const { slots, titleRef, actionsRef, contextRef, accessoryRef } =
+    useHeaderSlotTargets();
+
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
@@ -49,6 +52,7 @@ export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
         >
           {children}
         </AppContentFrame>
+        {variant === "ready" && <GuildTabBar accessoryRef={accessoryRef} />}
       </HeaderSlotsContext.Provider>
     </GuildSearchContext.Provider>
   );

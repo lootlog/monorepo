@@ -1,4 +1,3 @@
-import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import type { ReactNode, Ref } from "react";
 import { AppTopBar } from "@lootlog/ui/components/app-top-bar";
 import { TopBarHeading } from "@/components/layout/top-bar-heading";
@@ -26,7 +25,6 @@ export const AppNavigationTopBar = ({
         {/* Ghost controls at the bar's edges pull out by their own padding, so
             their glyphs, not their hit areas, line up with the page content. */}
         <div className="-ml-2 flex min-w-0 flex-1 items-center gap-1">
-          <SidebarTrigger className="md:hidden" />
           <TopBarHeading heading={heading} titleRef={titleRef} />
         </div>
 

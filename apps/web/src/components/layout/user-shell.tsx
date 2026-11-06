@@ -1,5 +1,6 @@
 import { AppContentFrame } from "@lootlog/ui/components/app-content-frame";
 import { AppNavigationTopBar } from "./app-navigation-top-bar";
+import { UserTabBar } from "./user-tab-bar";
 import { HeaderSlotsContext } from "@/contexts/header-slots-context";
 import { useHeaderSlotTargets } from "@/hooks/use-header-slot-targets";
 import { useMatches } from "@tanstack/react-router";
@@ -12,7 +13,10 @@ type UserShellProps = {
 
 export const UserShell: FC<UserShellProps> = ({ children }) => {
   const matches = useMatches();
-  const { slots, titleRef, actionsRef, contextRef } = useHeaderSlotTargets();
+
+  const { slots, titleRef, actionsRef, contextRef, accessoryRef } =
+    useHeaderSlotTargets();
+
   const navigationInfo = resolveAppNavigation({ matches });
 
   return (
@@ -29,6 +33,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
       >
         {children}
       </AppContentFrame>
+      <UserTabBar accessoryRef={accessoryRef} />
     </HeaderSlotsContext.Provider>
   );
 };

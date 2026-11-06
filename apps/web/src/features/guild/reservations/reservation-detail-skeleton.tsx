@@ -3,6 +3,7 @@ import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
+import { TAB_BAR_GLASS_CLASS } from "@/components/layout/tab-bar-glass";
 import { ScheduleActionDock } from "./schedule/schedule-action-dock";
 import { ScheduleBar } from "./schedule/schedule-bar";
 import { useCompactScheduleLayout } from "./schedule/use-compact-schedule-layout";
@@ -20,7 +21,7 @@ export const ReservationDetailSkeleton = () => {
     <div
       className={cn(
         "flex items-center gap-1",
-        isCompact ? "rounded-xl border bg-background p-1 shadow-lg" : "ml-auto",
+        isCompact ? cn(TAB_BAR_GLASS_CLASS, "p-1") : "ml-auto",
       )}
     >
       <Skeleton

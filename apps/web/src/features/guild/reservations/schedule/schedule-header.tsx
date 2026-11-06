@@ -31,6 +31,7 @@ import {
 import { cn } from "cn";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { ReservationSettingsInfoDialog } from "./reservation-settings-info-dialog";
+import { TAB_BAR_GLASS_CLASS } from "@/components/layout/tab-bar-glass";
 import { ScheduleActionDock } from "./schedule-action-dock";
 import { ScheduleBar } from "./schedule-bar";
 import { ScheduleIconButton } from "./schedule-icon-button";
@@ -144,11 +145,7 @@ export function ScheduleHeader({
       aria-label={t("reservations.schedule.header.actions")}
       className={cn(
         "flex items-center gap-1",
-        compactValue(
-          isCompact,
-          "pointer-events-auto rounded-xl border bg-background p-1 shadow-lg",
-          "ml-auto",
-        ),
+        compactValue(isCompact, cn(TAB_BAR_GLASS_CLASS, "p-1"), "ml-auto"),
       )}
     >
       {isCompact && todayButton}

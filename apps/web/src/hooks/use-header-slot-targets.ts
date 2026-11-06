@@ -6,13 +6,15 @@ export const useHeaderSlotTargets = () => {
   const [title, setTitle] = useState<HTMLElement | null>(null);
   const [actions, setActions] = useState<HTMLElement | null>(null);
   const [context, setContext] = useState<HTMLElement | null>(null);
+  const [accessory, setAccessory] = useState<HTMLElement | null>(null);
 
-  const slots: HeaderSlots = { title, actions, context };
+  const slots: HeaderSlots = { title, actions, context, accessory };
 
   return {
     slots,
     titleRef: setTitle,
     actionsRef: setActions,
     contextRef: setContext,
+    accessoryRef: setAccessory,
   };
 };

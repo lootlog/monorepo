@@ -94,7 +94,9 @@ export function MobileDaySchedule({
       >
         <div
           data-slot="compact-schedule-scroll-content"
-          className="pb-[calc(5rem+env(safe-area-inset-bottom))]"
+          // Room for the floating action dock; phones carry the actions in
+          // the tab bar, whose height the page already leaves free.
+          className="pb-[calc(5rem+env(safe-area-inset-bottom))] max-md:pb-0"
         >
           <m.div
             data-slot="mobile-day-swipe-track"
