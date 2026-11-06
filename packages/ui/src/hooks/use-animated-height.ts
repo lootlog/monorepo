@@ -20,15 +20,16 @@ const assignRef = <T>(ref: Ref<T> | undefined, value: T | null) => {
  * observer reports the new layout height before it is painted; the element
  * eases from the old height to it and is then left at its natural height,
  * so the layout inside keeps working. A change mid-way eases from the height
- * on screen towards the new one. Skipped under reduced motion and while a
- * drawer is being swiped.
+ * on screen towards the new one. Skipped while the popup opens or closes,
+ * under reduced motion and while a drawer is being swiped.
  */
 export const useAnimatedHeight = <T extends HTMLElement>(
   forwardedRef?: Ref<T>,
 ): RefCallback<T> => {
-  // Kept across renders, so re-attaching the observer never loses the height
-  // the next resize animates from.
-  const settledHeight = useRef<number | null>(null);
+  // Kept across renders, so re-attaching the observer to the same popup never
+  // loses the height the next resize animates from. A popup mounted by a new
+  // opening starts unmeasured instead of easing from the last one's height.
+  const settled = useRef<{ element: T; height: number } | null>(null);
 
   return (element) => {
     assignRef(forwardedRef, element);
@@ -41,6 +42,8 @@ export const useAnimatedHeight = <T extends HTMLElement>(
     ) {
       return;
     }
+
+    if (settled.current?.element !== element) settled.current = null;
 
     let animation: Animation | null = null;
     let target = 0;
@@ -62,18 +65,28 @@ export const useAnimatedHeight = <T extends HTMLElement>(
       });
     };
 
+    // Content laid out while the popup opens (late fonts, fast data, lazy
+    // chunks) belongs to its first height, not to a resize.
+    const isTransitioning = () =>
+      element.hasAttribute("data-starting-style") ||
+      element.hasAttribute("data-ending-style") ||
+      element
+        .getAnimations()
+        .some((running) => running instanceof CSSTransition);
+
     const canAnimate = () =>
       !window.matchMedia?.(REDUCED_MOTION_QUERY).matches &&
-      !element.hasAttribute("data-swiping");
+      !element.hasAttribute("data-swiping") &&
+      !isTransitioning();
 
     const observer = new ResizeObserver(([entry]) => {
       // Each frame of a running animation resizes the element too.
       if (animation || !entry) return;
 
       const next = entry.borderBoxSize[0]?.blockSize ?? element.offsetHeight;
-      const previous = settledHeight.current;
+      const previous = settled.current?.height ?? null;
 
-      settledHeight.current = next;
+      settled.current = { element, height: next };
 
       if (previous === null || Math.abs(previous - next) < 1 || !canAnimate()) {
         return;
@@ -96,7 +109,7 @@ export const useAnimatedHeight = <T extends HTMLElement>(
 
       const natural = element.offsetHeight;
 
-      settledHeight.current = natural;
+      settled.current = { element, height: natural };
 
       if (Math.abs(natural - target) < 1) {
         // Same destination: carry on from where the motion was.
