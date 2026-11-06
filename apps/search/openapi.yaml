@@ -488,6 +488,13 @@ paths:
             type: string
             description: Items that drop from the NPC with this catalog key.
           required: false
+        - name: availableSince
+          in: query
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}$
+            description: "Items a character on a world opened on this day (`YYYY-MM-DD`) can get: every item of no event, and event items of an edition that ended after it. Events end in the morning and worlds open later in the day, so an edition ending on the opening day is left out. An event without a year comes back, so its items stay."
+          required: false
         - name: sort
           in: query
           schema:
@@ -733,6 +740,68 @@ paths:
               schema:
                 $ref: "#/components/schemas/SearchUnavailableEncoded"
       summary: List events in the public catalog
+  /public/catalog/index:
+    get:
+      tags:
+        - Catalog
+      operationId: CatalogController_getIndex
+      parameters:
+        - name: gameVersion
+          in: query
+          schema:
+            type: string
+            enum:
+              - en
+              - pl
+            description: Only entries of this game edition.
+          required: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogIndexResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "503":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchUnavailableEncoded"
+      summary: List every item and NPC in the public catalog
 components:
   schemas:
     SearchUnavailableEncoded:
@@ -747,6 +816,36 @@ components:
       required:
         - _tag
         - message
+    CatalogIndexResponseDto_Output:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogIndexEntryDto_Output"
+          description: Every item, by id.
+        npcs:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogIndexEntryDto_Output"
+          description: Every NPC as it is now, once per monster, as `CatalogControllerGetNpcs` lists it; by id.
+      required:
+        - items
+        - npcs
+      description: Every item and NPC of the public catalog, unlike its searches, which stop at 1000 hits
+    CatalogIndexEntryDto_Output:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        name:
+          type: string
+      required:
+        - id
+        - name
+      description: A catalog entry by the id and name its links carry, such as `/items/41392-odzienie-dominujacego-czaru` on the wiki.
     CatalogEventsResponseDto_Output:
       type: object
       properties:

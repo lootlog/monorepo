@@ -11,7 +11,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
 import type { LootStatsResponseDtoOutputTopNpcsItem } from "@lootlog/client/main";
-import { LOOT_RARITY_CHART_COLORS } from "@lootlog/ui/lib/item-rarity-colors";
+import { LOOT_RARITY_COLORS } from "@lootlog/ui/lib/item-rarity-colors";
 import { getLootRarityChartConfig } from "./loot-rarity-chart-config";
 import { ChartSection } from "@/components/common/chart-section";
 import { CHART_SERIES_ANIMATION } from "@/lib/motion";
@@ -87,14 +87,14 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
             {...CHART_SERIES_ANIMATION}
             dataKey="LEGENDARY"
             stackId="a"
-            fill={LOOT_RARITY_CHART_COLORS.LEGENDARY}
+            fill={LOOT_RARITY_COLORS.LEGENDARY}
             radius={[0, 0, 0, 0]}
           />
           <Bar
             {...CHART_SERIES_ANIMATION}
             dataKey="HEROIC"
             stackId="a"
-            fill={LOOT_RARITY_CHART_COLORS.HEROIC}
+            fill={LOOT_RARITY_COLORS.HEROIC}
             radius={[0, 4, 4, 0]}
           />
         </BarChart>

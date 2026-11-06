@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { groupBy } from "es-toolkit";
 import {
   type CatalogControllerGetItemsParams,
@@ -9,6 +9,9 @@ import {
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { eventsByPriority } from "@/lib/hero-trackers";
 import { latestEventOf } from "@/lib/item-events";
+
+/** The events the home page shows: two rows of its two-column grid. */
+export const HOME_EVENTS_SHOWN = 4;
 
 const PAGE_SIZE = 96;
 
@@ -23,14 +26,14 @@ const MAX_ITEMS = 1000;
  * items that came back belong to their latest event. Tropiciele Herosów
  * editions follow the game's own events.
  */
-export const useLatestEvents = (count: number) => {
+export const latestEventsQueryOptions = (count: number) => {
   const params = {
     gameVersion: WIKI_GAME_VERSION,
     statKeys: ["etiquette"],
     sort: "id:desc",
   } satisfies CatalogControllerGetItemsParams;
 
-  return useQuery({
+  return queryOptions({
     queryKey: [
       ...getCatalogControllerGetItemsQueryKey(params),
       "events",
@@ -69,3 +72,6 @@ export const useLatestEvents = (count: number) => {
     },
   });
 };
+
+export const useLatestEvents = (count: number) =>
+  useQuery(latestEventsQueryOptions(count));

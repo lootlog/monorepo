@@ -1,4 +1,9 @@
-import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
+import type { QueryClient } from "@tanstack/react-query";
+import {
+  HeadContent,
+  Scripts,
+  createRootRouteWithContext,
+} from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-provider";
 import { UiLabelsProvider } from "@lootlog/ui/components/ui-labels";
@@ -6,7 +11,7 @@ import { preventIosFocusZoom } from "@lootlog/ui/lib/ios-focus-zoom";
 import { ItemComparisonProvider } from "@/components/comparison/item-comparison-provider";
 import { EquipmentSetProvider } from "@/components/equipment/equipment-set-provider";
 import { WikiLayout } from "@/components/layout/wiki-layout";
-import QueryProvider from "@/components/query-provider";
+import { QueryDevtools } from "@/components/query-devtools";
 import { UserTheme } from "@/components/user-theme";
 import { getRuntimeConfig } from "@/config/runtime-config";
 import { getStoredThemeSelection } from "@/config/theme-cookie";
@@ -17,46 +22,48 @@ import { configureWikiApiClients } from "@/lib/configure-api-clients";
 import { getDocumentTheme } from "@/lib/document-theme";
 import appCss from "@/styles.css?url";
 
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      {
-        charSet: "utf-8",
-      },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
-      },
-      {
-        title: t("meta.title"),
-      },
-      {
-        name: "description",
-        content: t("meta.description"),
-      },
-    ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-      { rel: "icon", href: "/favicon.ico", sizes: "any" },
-      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
-    ],
-  }),
-  // Configuration and the stored theme hold for the whole visit.
-  loader: async () => {
-    const [config, storedThemeSelection] = await Promise.all([
-      getRuntimeConfig(),
-      getStoredThemeSelection(),
-    ]);
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
+  {
+    head: () => ({
+      meta: [
+        {
+          charSet: "utf-8",
+        },
+        {
+          name: "viewport",
+          content: "width=device-width, initial-scale=1",
+        },
+        {
+          title: t("meta.title"),
+        },
+        {
+          name: "description",
+          content: t("meta.description"),
+        },
+      ],
+      links: [
+        {
+          rel: "stylesheet",
+          href: appCss,
+        },
+        { rel: "icon", href: "/favicon.ico", sizes: "any" },
+        { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+        { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      ],
+    }),
+    // Configuration and the stored theme hold for the whole visit.
+    loader: async () => {
+      const [config, storedThemeSelection] = await Promise.all([
+        getRuntimeConfig(),
+        getStoredThemeSelection(),
+      ]);
 
-    return { config, storedThemeSelection };
+      return { config, storedThemeSelection };
+    },
+    staleTime: Number.POSITIVE_INFINITY,
+    shellComponent: RootDocument,
   },
-  staleTime: Number.POSITIVE_INFINITY,
-  shellComponent: RootDocument,
-});
+);
 
 const uiLabels = {
   close: t("uiLabels.close"),
@@ -98,18 +105,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="font-sans antialiased [overflow-wrap:anywhere]">
         <WikiContext value={wikiContext}>
-          <QueryProvider>
-            <UiLabelsProvider labels={uiLabels}>
-              <SharedTooltipProvider>
-                <UserTheme storedSelection={storedThemeSelection} />
-                <EquipmentSetProvider>
-                  <ItemComparisonProvider>
-                    <WikiLayout>{children}</WikiLayout>
-                  </ItemComparisonProvider>
-                </EquipmentSetProvider>
-              </SharedTooltipProvider>
-            </UiLabelsProvider>
-          </QueryProvider>
+          <UiLabelsProvider labels={uiLabels}>
+            <SharedTooltipProvider>
+              <UserTheme storedSelection={storedThemeSelection} />
+              <EquipmentSetProvider>
+                <ItemComparisonProvider>
+                  <WikiLayout>{children}</WikiLayout>
+                </ItemComparisonProvider>
+              </EquipmentSetProvider>
+            </SharedTooltipProvider>
+          </UiLabelsProvider>
+          <QueryDevtools />
         </WikiContext>
         <Scripts />
       </body>
