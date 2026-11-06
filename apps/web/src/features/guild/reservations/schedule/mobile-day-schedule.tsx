@@ -1,7 +1,6 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
 import { addDays } from "date-fns";
-import * as m from "framer-motion/m";
 import type { ReactNode } from "react";
 import { HOURS, LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
 import { isEventInsideElement } from "./is-event-inside-element";
@@ -9,7 +8,6 @@ import {
   getDateAtMinutes,
   getMinutesFromClientY,
   isReservationTarget,
-  resetSwipePosition,
 } from "./mobile-day-interactions";
 import { MobileDayPreview } from "./mobile-day-preview";
 import { MobileReservationHour } from "./mobile-reservation-hour";
@@ -39,8 +37,9 @@ export function MobileDaySchedule({
 }) {
   const {
     swipeSurfaceRef,
+    swipeTrackRef,
     isDaySwipeEnabled,
-    swipeX,
+    resetSwipe,
     gridRef,
     contextMenuOpenRef,
     suppressClickRef,
@@ -93,13 +92,17 @@ export function MobileDaySchedule({
         )}
       >
         <div data-slot="compact-schedule-scroll-content">
-          <m.div
+          {/* Its own compositor layer, so dragging and settling the day only
+              move pixels that are already painted. */}
+          <div
+            ref={swipeTrackRef}
             data-slot="mobile-day-swipe-track"
             className={cn(
               "relative flex",
-              isDaySwipeEnabled ? "-left-full w-[300%]" : "w-full",
+              isDaySwipeEnabled
+                ? "-left-full w-[300%] will-change-transform"
+                : "w-full",
             )}
-            style={isDaySwipeEnabled ? { x: swipeX } : undefined}
           >
             {isDaySwipeEnabled && (
               <div
@@ -264,7 +267,7 @@ export function MobileDaySchedule({
                       onContextMenuOpenChange={(open) => {
                         contextMenuOpenRef.current = open;
 
-                        if (open) resetSwipePosition(swipeX);
+                        if (open) resetSwipe();
                       }}
                       onContextMenuOutsidePress={(event) => {
                         const grid = gridRef.current;
@@ -273,7 +276,7 @@ export function MobileDaySchedule({
                         suppressClickRef.current = true;
                         touchSessionRef.current = null;
                         updateSelection(null);
-                        resetSwipePosition(swipeX);
+                        resetSwipe();
                       }}
                       className={cn(
                         "absolute z-10",
@@ -307,7 +310,7 @@ export function MobileDaySchedule({
                 />
               </div>
             )}
-          </m.div>
+          </div>
         </div>
       </div>
     </ScrollArea>

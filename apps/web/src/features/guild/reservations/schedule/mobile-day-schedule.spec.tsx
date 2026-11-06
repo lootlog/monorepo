@@ -847,6 +847,47 @@ describe("MobileDaySchedule", () => {
     await expectSettledTrack(container);
   });
 
+  it("changes the day when a slow drag ends with a quick flick", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 0, 7, 12, 0));
+
+    const { container, grid, onDaySwipe } = renderSchedule();
+
+    const swipeSurface = container.querySelector(
+      '[data-slot="mobile-day-swipe-surface"]',
+    );
+
+    if (!(swipeSurface instanceof HTMLDivElement)) {
+      throw new Error("Missing swipe surface");
+    }
+
+    vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(0, 0, 390, 800),
+    );
+
+    fireEvent.touchStart(grid, {
+      touches: [{ clientX: 300, clientY: 400, identifier: 17 }],
+    });
+    vi.setSystemTime(new Date(2026, 0, 7, 12, 0, 0, 400));
+    fireEvent.touchMove(grid, {
+      touches: [{ clientX: 290, clientY: 401, identifier: 17 }],
+    });
+    vi.setSystemTime(new Date(2026, 0, 7, 12, 0, 0, 430));
+    fireEvent.touchMove(grid, {
+      touches: [{ clientX: 270, clientY: 402, identifier: 17 }],
+    });
+    await act(async () => {
+      fireEvent.touchEnd(grid, {
+        changedTouches: [{ clientX: 270, clientY: 402, identifier: 17 }],
+        touches: [],
+      });
+      await new Promise<void>((resolve) => setTimeout(resolve, 250));
+    });
+
+    expect(onDaySwipe).toHaveBeenCalledWith(1);
+    await expectSettledTrack(container);
+  });
+
   it("fully settles an incomplete swipe before accepting another gesture", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 0, 7, 12, 0));

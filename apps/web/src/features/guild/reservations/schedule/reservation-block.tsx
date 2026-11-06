@@ -22,7 +22,8 @@ type ReservationBlockProps = {
   segment: ReservationSegment;
   className?: string;
   style?: React.CSSProperties;
-  onSelect: () => void;
+  /** Without it the block is a static picture, as in a neighbouring day. */
+  onSelect?: () => void;
   onCancel?: () => void;
   isCancelPending?: boolean;
   cancelDisabled?: boolean;
@@ -161,6 +162,9 @@ export function ReservationBlock({
       )}
     </button>
   );
+
+  // A static block skips the context menu, which is most of its render cost.
+  if (!onSelect) return block;
 
   return (
     <ContextMenu
