@@ -82,19 +82,23 @@ export const SidebarNav = ({
     <div className="relative flex flex-col w-full flex-1 overflow-hidden">
       <ThemeSidebarBackground />
       {header && (
-        <div className="group/sidebar-header relative isolate h-14 min-h-14 flex flex-row items-center justify-between border-b border-sidebar-border px-2 font-semibold">
-          {header}
-          {isMobile && (
-            <Button
-              variant="ghost"
-              size="icon-lg"
-              aria-label={t("common.close")}
-              onClick={() => setOpenMobile(false)}
-              className="ml-2 shrink-0 rounded-full bg-sidebar-accent/60 text-muted-foreground hover:text-foreground"
-            >
-              <X aria-hidden="true" />
-            </Button>
-          )}
+        // A backdrop in the header (the server banner) grows it to the
+        // backdrop's own height; the header row keeps its place on top.
+        <div className="group/sidebar-header relative isolate shrink-0 border-b border-sidebar-border has-data-[slot=sidebar-header-backdrop]:aspect-video">
+          <div className="flex h-14 flex-row items-center justify-between px-2 font-semibold">
+            {header}
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="icon-lg"
+                aria-label={t("common.close")}
+                onClick={() => setOpenMobile(false)}
+                className="ml-2 shrink-0 rounded-full bg-sidebar-accent/60 text-muted-foreground hover:text-foreground"
+              >
+                <X aria-hidden="true" />
+              </Button>
+            )}
+          </div>
         </div>
       )}
       <ScrollArea
