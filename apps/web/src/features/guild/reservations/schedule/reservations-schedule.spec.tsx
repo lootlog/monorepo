@@ -25,6 +25,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Toaster } from "sonner";
+import { createTopBarSlots } from "@/lib/testing/top-bar-slots";
 import { ReservationsSchedule } from "./reservations-schedule";
 
 await initializeTestTranslations();
@@ -80,6 +81,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  document.body.replaceChildren();
   client?.clear();
   restoreClient();
   vi.unstubAllGlobals();
@@ -169,10 +171,16 @@ const renderSchedule = async (
     path: "reservations",
   });
 
+  const { TopBarSlots } = createTopBarSlots();
+
   const route = createRoute({
     getParentRoute: () => reservations,
     path: "$reservationId",
-    component: ReservationsSchedule,
+    component: () => (
+      <TopBarSlots>
+        <ReservationsSchedule />
+      </TopBarSlots>
+    ),
   });
 
   const router = createRouter({

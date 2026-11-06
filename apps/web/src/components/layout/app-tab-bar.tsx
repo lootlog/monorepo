@@ -2,10 +2,8 @@ import { useSidebar } from "@lootlog/ui/components/sidebar";
 import { Link } from "@tanstack/react-router";
 import * as m from "framer-motion/m";
 import { Ellipsis, Search } from "lucide-react";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
-import { TAB_BAR_GLASS_CLASS } from "@/components/layout/tab-bar-glass";
 import { useScrollDownCollapse } from "@/hooks/utils/use-scroll-down-collapse";
 import type {
   AppNavigationItemId,
@@ -18,10 +16,14 @@ const TAB_BAR_OFFSET_PROPERTY = "--tab-bar-offset";
 /** The sidebar's spring, so the bar settles like the navigation does. */
 const SPRING = { type: "spring", stiffness: 520, damping: 40 } as const;
 
+/** A translucent surface floating over the page. */
+const GLASS_CLASS =
+  "pointer-events-auto rounded-full border border-sidebar-border/70 bg-sidebar/70 shadow-[0_10px_30px_-8px_rgb(0_0_0/0.55),inset_0_1px_0_rgb(255_255_255/0.06)] backdrop-blur-xl backdrop-saturate-150";
+
 const TAB_CLASS =
   "relative flex size-full flex-col items-center justify-center gap-0.5 rounded-full text-[10px] leading-none font-medium tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-// Publishes the bar's height, so floating controls, docked footers and the
+// Publishes the bar's height, so docked footers and the
 // page's last content stay above it. Hidden from `md` up, it measures zero.
 const publishTabBarOffset = (bar: HTMLDivElement | null) => {
   if (!bar) return;
@@ -49,61 +51,19 @@ type AppTabBarProps = {
   badges?: Partial<Record<AppNavigationItemId, number>>;
   /** The shell's search, as a circle at the bar's trailing end. */
   onSearch?: () => void;
-  /** Receives the element pages render their accessory into. */
-  accessoryRef?: (element: HTMLElement | null) => void;
 };
-
-// Expanded, the accessory rides above the tabs; collapsed, it slides in
-// between the current section and search. Its row stays reserved either way,
-// so the bar's height, and the page above it, never change while scrolling.
-const getGridStyle = (collapsed: boolean, hasAccessory: boolean) => ({
-  gridTemplateColumns: collapsed
-    ? "auto minmax(0, 1fr) auto"
-    : "minmax(0, 1fr) auto",
-  gridTemplateRows: hasAccessory ? "3rem 4rem" : "4rem",
-  gridTemplateAreas: [
-    hasAccessory && (collapsed ? '". . ."' : '"accessory accessory"'),
-    collapsed ? '"tabs accessory search"' : '"tabs search"',
-  ]
-    .filter(Boolean)
-    .join(" "),
-});
 
 /**
  * Phone navigation: a pill floating over the bottom edge with the first
  * sections and "More", which opens the full navigation sheet, and search as
- * its own circle. A page can add one accessory, such as its filters, through
- * the `accessory` header slot. Scrolling down shrinks the pill to the current
- * section; tapping it brings the tabs back. The unsaved changes bar takes the
- * edge over while it is shown.
+ * its own circle. Scrolling down shrinks the pill to the current section;
+ * tapping it brings the tabs back. The unsaved changes bar takes the edge
+ * over while it is shown.
  */
-export const AppTabBar = ({
-  sections,
-  badges,
-  onSearch,
-  accessoryRef,
-}: AppTabBarProps) => {
+export const AppTabBar = ({ sections, badges, onSearch }: AppTabBarProps) => {
   const { t } = useTranslation();
   const { setOpenMobile } = useSidebar();
   const [collapsed, setCollapsed] = useScrollDownCollapse();
-  const [hasAccessory, setHasAccessory] = useState(false);
-
-  const attachAccessory = (element: HTMLDivElement | null) => {
-    accessoryRef?.(element);
-
-    if (!element) return;
-
-    const update = () => setHasAccessory(element.childElementCount > 0);
-    const observer = new MutationObserver(update);
-
-    update();
-    observer.observe(element, { childList: true });
-
-    return () => {
-      observer.disconnect();
-      accessoryRef?.(null);
-    };
-  };
 
   const activeSection = [...sections.tabs, ...sections.overflow].find(
     (section) => section.active,
@@ -131,15 +91,16 @@ export const AppTabBar = ({
   return (
     <div
       ref={publishTabBarOffset}
-      style={getGridStyle(collapsed, hasAccessory)}
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 grid items-end gap-2 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-300 motion-reduce:transition-none md:hidden [body:has([data-slot=unsaved-changes-bar])_&]:translate-y-[calc(100%+1rem)]"
+      // A collapsed pill keeps the full bar's room, so the page does not
+      // shorten under the reader as it scrolls.
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 box-content flex h-16 items-end justify-between gap-2 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-300 motion-reduce:transition-none md:hidden [body:has([data-slot=unsaved-changes-bar])_&]:translate-y-[calc(100%+1rem)]"
     >
       <m.nav
         layout
         transition={SPRING}
         aria-label={t("layout.navigation.tabBar.ariaLabel")}
-        className={cn(TAB_BAR_GLASS_CLASS, collapsed ? "size-12" : "h-16")}
-        style={{ gridArea: "tabs", borderRadius: 9999 }}
+        className={cn(GLASS_CLASS, collapsed ? "size-12" : "h-16 flex-1")}
+        style={{ borderRadius: 9999 }}
       >
         {collapsed ? (
           <m.button
@@ -217,13 +178,6 @@ export const AppTabBar = ({
           </ul>
         )}
       </m.nav>
-      <m.div
-        ref={attachAccessory}
-        layout
-        transition={SPRING}
-        className="flex h-12 min-w-0 empty:hidden"
-        style={{ gridArea: "accessory" }}
-      />
       {onSearch && (
         <m.button
           layout
@@ -232,11 +186,11 @@ export const AppTabBar = ({
           onClick={onSearch}
           aria-label={t("layout.navigation.search")}
           className={cn(
-            TAB_BAR_GLASS_CLASS,
+            GLASS_CLASS,
             "flex shrink-0 items-center justify-center text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring",
             collapsed ? "size-12" : "size-16",
           )}
-          style={{ gridArea: "search", borderRadius: 9999 }}
+          style={{ borderRadius: 9999 }}
         >
           <Search className="size-5" aria-hidden="true" />
         </m.button>

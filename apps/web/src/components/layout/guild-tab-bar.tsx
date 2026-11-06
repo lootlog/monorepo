@@ -10,12 +10,8 @@ import {
   resolveTabBarSections,
 } from "@/navigation/app-navigation";
 
-type GuildTabBarProps = {
-  accessoryRef: (element: HTMLElement | null) => void;
-};
-
 /** The Organization's phone navigation, with its search and event badge. */
-export const GuildTabBar = ({ accessoryRef }: GuildTabBarProps) => {
+export const GuildTabBar = () => {
   const guildId = useGuildId();
   const { data: accessPolicy } = useGuildPermissions();
   const { setIsOpen: setIsSearchOpen } = useContext(GuildSearchContext);
@@ -35,7 +31,6 @@ export const GuildTabBar = ({ accessoryRef }: GuildTabBarProps) => {
       sections={resolveTabBarSections(sidebarItems)}
       badges={{ "organization-events": activeEventCount }}
       onSearch={() => setIsSearchOpen(true)}
-      accessoryRef={accessoryRef}
     />
   );
 };

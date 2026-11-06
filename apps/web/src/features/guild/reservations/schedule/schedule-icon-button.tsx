@@ -12,7 +12,7 @@ type ScheduleIconButtonProps = Omit<
 > & {
   /** Names the button and fills its tooltip. */
   label: string;
-  size: "icon-sm" | "icon-lg";
+  size: "icon-sm" | "icon" | "icon-lg";
 };
 
 export const ScheduleIconButton = ({

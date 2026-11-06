@@ -1,4 +1,4 @@
-import { FiltersFab } from "@/components/filters/filters-fab";
+import { FiltersButton } from "@/components/filters/filters-button";
 import { FiltersOverlay } from "@/components/filters/filters-overlay";
 import { cn } from "cn";
 import { useState, type ReactNode } from "react";
@@ -128,10 +128,9 @@ export const FilterBar = ({
         )}
         {chipsPlaceholder}
       </div>
-      {/* Outside the bar, whose backdrop filter would pin a fixed button to it. */}
       {usesPanel && (
         <>
-          <FiltersFab
+          <FiltersButton
             activeFilterCount={activeFilterCount}
             onOpenFilters={() => setIsPanelOpen(true)}
           />
