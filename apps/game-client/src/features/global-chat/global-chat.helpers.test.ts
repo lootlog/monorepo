@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GlobalChatMessageResponse } from "@lootlog/client/main";
+import { CHAT_VISIBLE_MESSAGE_LIMIT } from "@/features/chat/chat.helpers";
 import { GLOBAL_CHAT_SHARED_CHANNEL } from "@/store/global-chat.store";
 import {
   appendGlobalChatMessage,
@@ -89,6 +90,43 @@ describe("global chat history", () => {
     ]);
     expect(pinned?.pages[0]?.pinned).toEqual(own);
     expect(unpinned?.pages[0]?.pinned).toBeNull();
+  });
+
+  const range = (from: number, count: number) =>
+    Array.from({ length: count }, (_, index) => message(String(from + index)));
+
+  it("drops the oldest pages past the limit and keeps the cursor before the oldest kept page", () => {
+    const pageSize = CHAT_VISIBLE_MESSAGE_LIMIT / 2;
+
+    const data = pages(
+      range(2 * pageSize, pageSize - 1),
+      range(pageSize, pageSize),
+      range(0, 2),
+    );
+
+    data.pages[1] = { ...data.pages[1]!, nextCursor: "older" };
+    data.pages[2] = { ...data.pages[2]!, nextCursor: "oldest" };
+
+    const capped = appendGlobalChatMessage(data, message("live"));
+
+    expect(capped?.pages).toHaveLength(2);
+    expect(capped?.pageParams).toHaveLength(2);
+    expect(capped?.pages.at(-1)?.nextCursor).toBe("older");
+    expect(messageIds(capped).at(-1)).toEqual(["live", false]);
+  });
+
+  it("keeps the newest messages of a page that alone outgrows the limit, with no gap before them", () => {
+    const data = pages(range(0, CHAT_VISIBLE_MESSAGE_LIMIT));
+
+    data.pages[0] = { ...data.pages[0]!, nextCursor: "older" };
+
+    const capped = appendGlobalChatMessage(data, message("live"));
+    const ids = messageIds(capped);
+
+    expect(ids).toHaveLength(CHAT_VISIBLE_MESSAGE_LIMIT);
+    expect(ids[0]).toEqual(["1", false]);
+    expect(ids.at(-1)).toEqual(["live", false]);
+    expect(capped?.pages[0]?.nextCursor).toBeNull();
   });
 });
 

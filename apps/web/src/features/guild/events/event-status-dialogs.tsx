@@ -1,5 +1,5 @@
 import { toast } from "@lootlog/ui/components/sonner";
-import { EventActionDialog } from "./components/dialogs/event-action-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import type { useEventHeader } from "./use-event-header";
 
 type Props = Pick<
@@ -34,14 +34,13 @@ export const EventStatusDialogs = ({
   navigate,
 }: Props) => (
   <>
-    <EventActionDialog
+    <ConfirmDialog
       open={endDialogOpen}
       onOpenChange={setEndDialogOpen}
-      eventName={event.name}
-      titleKey="events.endDialog.title"
-      descriptionKey="events.endDialog.description"
-      actionLabelKey="events.end"
-      variant="destructive"
+      title={t("events.endDialog.title")}
+      description={t("events.endDialog.description", { name: event.name })}
+      confirmButtonLabel={t("events.end")}
+      cancelButtonLabel={t("common.cancel")}
       onConfirm={async () => {
         try {
           await updateEvent.mutateAsync({
@@ -59,15 +58,15 @@ export const EventStatusDialogs = ({
           throw error;
         }
       }}
-      isPending={updateEvent.isPending}
     />
-    <EventActionDialog
+    <ConfirmDialog
       open={resumeDialogOpen}
       onOpenChange={setResumeDialogOpen}
-      eventName={event.name}
-      titleKey="events.resumeDialog.title"
-      descriptionKey="events.resumeDialog.description"
-      actionLabelKey="events.resume"
+      variant="default"
+      title={t("events.resumeDialog.title")}
+      description={t("events.resumeDialog.description", { name: event.name })}
+      confirmButtonLabel={t("events.resume")}
+      cancelButtonLabel={t("common.cancel")}
       onConfirm={async () => {
         try {
           await updateEvent.mutateAsync({
@@ -85,18 +84,16 @@ export const EventStatusDialogs = ({
           throw error;
         }
       }}
-      isPending={updateEvent.isPending}
     />
-    <EventActionDialog
+    <ConfirmDialog
       open={deleteDialogOpen}
       onOpenChange={setDeleteDialogOpen}
-      eventName={event.name}
-      requireNameConfirmation
-      titleKey="events.deleteDialog.title"
-      descriptionKey="events.deleteDialog.description"
-      actionLabelKey="events.delete"
-      variant="destructive"
-      isPending={deleteEvent.isPending}
+      title={t("events.deleteDialog.title")}
+      description={t("events.deleteDialog.description", { name: event.name })}
+      confirmText={event.name}
+      confirmLabel={t("events.deleteDialog.confirmHint", { name: event.name })}
+      confirmButtonLabel={t("events.delete")}
+      cancelButtonLabel={t("common.cancel")}
       onConfirm={async () => {
         try {
           await deleteEvent.mutateAsync({
@@ -106,13 +103,13 @@ export const EventStatusDialogs = ({
             },
           });
           toast.success(t("events.deleteSuccess"));
-          setDeleteDialogOpen(false);
           navigate({
             to: "/$guildId/events",
             params: { guildId: queryGuildId },
           });
-        } catch {
+        } catch (error) {
           toast.error(t("events.deleteError"));
+          throw error;
         }
       }}
     />

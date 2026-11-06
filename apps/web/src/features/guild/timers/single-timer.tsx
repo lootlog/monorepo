@@ -26,7 +26,10 @@ import {
   timestampToDate,
 } from "@/utils/date/parse-timestamp-to-date";
 import { MetaItem } from "@/components/common/meta-item";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_HOVER_CLASS,
+} from "@/components/common/list-tile";
 import { TimerCountdown } from "./timer-countdown";
 import { HeroSightingTimerLocation } from "@/features/guild/hero-sightings/hero-sighting-timer-location";
 
@@ -91,7 +94,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               backgroundImage: `linear-gradient(${wash}, ${wash})`,
             }}
             className={cn(
-              "flex h-full w-full items-center gap-3 py-2.5 text-left outline-none transition-colors hover:bg-muted/30 focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset motion-reduce:transition-none",
+              "flex h-full w-full items-center gap-3 py-2.5 text-left outline-none focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+              LIST_TILE_HOVER_CLASS,
               LIST_TILE_INSET_CLASS,
               phase === "expired" && "opacity-75",
             )}

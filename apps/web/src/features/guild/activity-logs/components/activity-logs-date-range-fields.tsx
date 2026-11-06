@@ -48,6 +48,8 @@ export const ActivityLogsDateRangeFields = ({
             });
           }}
           placeholder={t("activityLogs.filters.startDatePlaceholder")}
+          timeLabel={t("common.dateTimePicker.time")}
+          clearLabel={t("common.dateTimePicker.clear")}
           size="lg"
           className="w-full"
           disabled={isStartDateDisabled}
@@ -63,6 +65,8 @@ export const ActivityLogsDateRangeFields = ({
             updateFilters({ endDate: date?.toISOString() ?? "" })
           }
           placeholder={t("activityLogs.filters.endDatePlaceholder")}
+          timeLabel={t("common.dateTimePicker.time")}
+          clearLabel={t("common.dateTimePicker.clear")}
           size="lg"
           className="w-full"
           disabled={isEndDateDisabled}

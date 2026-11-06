@@ -21,6 +21,11 @@
   "noResults": "Brak wyników",
   "searchUnavailable": "Wyszukiwarka jest chwilowo niedostępna. Spróbuj ponownie.",
   "clear": "Wyczyść",
+  "dateTimePicker": {
+    "placeholder": "Wybierz datę i godzinę",
+    "time": "Godzina",
+    "clear": "Wyczyść datę i godzinę"
+  },
   "selectOptions": "Wybierz opcje",
   "loading": "Ładowanie...",
   "removeOption": "Usuń {{label}}",

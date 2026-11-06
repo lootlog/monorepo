@@ -4,6 +4,7 @@ import {
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import type { MapTemplateResponseDto } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
@@ -12,7 +13,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@lootlog/ui/components/collapsible";
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { cn } from "cn";
 import { ChevronRight, MapPin, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -36,7 +37,7 @@ export const MapTemplateTile = ({
   return (
     <li data-list-tile className={LIST_TILE_RULE_CLASS}>
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-        <div className="flex items-center transition-colors hover:bg-muted/30 motion-reduce:transition-none">
+        <div className={cn("flex items-center", LIST_TILE_HOVER_CLASS)}>
           <CollapsibleTrigger
             className={cn(getListTileLinkClassName(true), "text-left")}
           >
@@ -73,12 +74,14 @@ export const MapTemplateTile = ({
             >
               <Pencil className="size-4" />
             </Button>
-            <ConfirmDeleteDialog
+            <ConfirmDialog
               onConfirm={onDelete}
               title={t("settings.mapTemplates.deleteConfirmTitle")}
               description={t("settings.mapTemplates.deleteConfirmDescription", {
                 name: template.name,
               })}
+              confirmButtonLabel={t("common.delete")}
+              cancelButtonLabel={t("common.cancel")}
               trigger={
                 <Button
                   type="button"

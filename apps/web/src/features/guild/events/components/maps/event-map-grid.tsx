@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { MapPin, ChevronDown, ChevronRight } from "lucide-react";
+import { MapPin, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Permission } from "@lootlog/schema/permissions";
 import { cn } from "cn";
@@ -106,11 +106,13 @@ const LocationSection = ({
           isUngrouped && "text-muted-foreground",
         )}
       >
-        {isExpanded ? (
-          <ChevronDown className="w-4 h-4 shrink-0" />
-        ) : (
-          <ChevronRight className="w-4 h-4 shrink-0" />
-        )}
+        <ChevronRight
+          aria-hidden
+          className={cn(
+            "size-4 shrink-0 transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
+            isExpanded && "rotate-90",
+          )}
+        />
         <span className="truncate">{title}</span>
         <span className="ml-auto text-xs text-muted-foreground shrink-0">
           {canShowCoverageCount ? (

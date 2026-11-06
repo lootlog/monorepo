@@ -7,16 +7,7 @@ import { MetaItem } from "@/components/common/meta-item";
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@lootlog/ui/components/alert-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -248,41 +239,23 @@ export const GuildDocEditorPage = () => {
         />
       )}
       {canWrite && (
-        <AlertDialog
+        <ConfirmDialog
           open={trashConfirmOpen}
-          onOpenChange={(open) => {
-            if (!deleteDocument.isPending) setTrashConfirmOpen(open);
+          onOpenChange={setTrashConfirmOpen}
+          title={t("docs.trash.moveTitle")}
+          description={t("docs.trash.moveDescription", {
+            title: document.title,
+          })}
+          confirmButtonLabel={t("docs.trash.move")}
+          cancelButtonLabel={t("common.cancel")}
+          pending={deleteDocument.isPending}
+          onConfirm={async () => {
+            // The move reports its own failure; keep the dialog for a retry.
+            if (!(await moveDocumentToTrash())) {
+              throw new Error("The document did not reach the trash.");
+            }
           }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("docs.trash.moveTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("docs.trash.moveDescription", {
-                  title: document.title,
-                })}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={deleteDocument.isPending}>
-                {t("common.cancel")}
-              </AlertDialogCancel>
-              <AlertDialogAction
-                render=<Button
-                  variant="destructive"
-                  loading={deleteDocument.isPending}
-                />
-                disabled={deleteDocument.isPending}
-                onClick={(event) => {
-                  event.preventBaseUIHandler();
-                  void moveDocumentToTrash();
-                }}
-              >
-                {t("docs.trash.move")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        />
       )}
     </div>
   );

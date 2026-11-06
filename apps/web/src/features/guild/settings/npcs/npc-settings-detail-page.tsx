@@ -80,7 +80,7 @@ export const NpcSettingsDetailPage = () => {
         </>
       }
     >
-      <NpcsForm npc={npc} />
+      <NpcsForm key={npc.id} npc={npc} />
     </DetailPage>
   );
 };

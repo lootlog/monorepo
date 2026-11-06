@@ -7,7 +7,7 @@ import { addRecentWorld } from "@/lib/recent-worlds";
 import { useGuildsControllerGetWorldsByGuildId } from "@lootlog/client/main";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
-import { type FC, useEffect, useMemo } from "react";
+import { type FC, useEffect } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { storageKey } from "@/lib/storage-key";
 import { useTranslation } from "react-i18next";
@@ -101,14 +101,10 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     }
   }, [guildId, isFetched, worlds, world, defaultWorld, setWorld]);
 
-  const worldGroups = useMemo(
-    () =>
-      getRecentWorldGroups(worlds ?? [], recentWorlds, {
-        recent: t("worldSelector.recent"),
-        rest: t("worldSelector.allWorlds"),
-      }),
-    [recentWorlds, t, worlds],
-  );
+  const worldGroups = getRecentWorldGroups(worlds ?? [], recentWorlds, {
+    recent: t("worldSelector.recent"),
+    rest: t("worldSelector.allWorlds"),
+  });
 
   const handleWorldChange = (newWorld: string) => {
     if (!guildId) return;

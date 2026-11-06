@@ -2,6 +2,7 @@ import { DraggableWindow } from "@/components/draggable-window/draggable-window"
 import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { isWarriorDead } from "@/hooks/game-events/helpers/battle.helpers";
+import { useNow } from "@/hooks/ui/use-now";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
@@ -47,9 +48,11 @@ export const BattlePingWindow = () => {
   const [isMaxHeightAdjustmentArmed, setIsMaxHeightAdjustmentArmed] =
     useState(false);
 
-  const [now, setNow] = useState(() => performance.now());
   const hasHistory = history.length > 0;
   const visible = open && hasHistory;
+  // Ticks the "seconds ago" labels only while the window is shown, on the
+  // `performance.now()` timeline the pings were received on.
+  const now = useNow(1_000, visible) - performance.timeOrigin;
 
   // Opens once per fight: a rejected ping emptying the history must not
   // reopen a window the player closed.
@@ -57,17 +60,12 @@ export const BattlePingWindow = () => {
     if (fightPinged) setOpen("battle-pings", true);
   }, [fightPinged, setOpen]);
 
-  // Ticks the "seconds ago" labels only while the window is shown, and lets
-  // go of a highlighted warrior when the window goes away under the pointer.
+  // Lets go of a highlighted warrior when the window goes away under the
+  // pointer.
   useEffect(() => {
     if (!visible) return;
 
-    const interval = window.setInterval(() => setNow(performance.now()), 1_000);
-
-    return () => {
-      window.clearInterval(interval);
-      battlePingStore.highlightWarrior(null);
-    };
+    return () => battlePingStore.highlightWarrior(null);
   }, [visible]);
 
   const formatAgo = (receivedAt: number) => {

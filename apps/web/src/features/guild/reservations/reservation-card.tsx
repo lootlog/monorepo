@@ -7,7 +7,10 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { cn } from "cn";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_HOVER_CLASS,
+} from "@/components/common/list-tile";
 import { MetaItem } from "@/components/common/meta-item";
 import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
 import type { ViewMode } from "@/hooks/use-view-mode";
@@ -156,7 +159,8 @@ export function ReservationCard({
     <div data-list-tile className={getReservationCellClassName(viewMode)}>
       <div
         className={cn(
-          "relative h-full transition-colors hover:bg-muted/20 motion-reduce:transition-none",
+          "relative h-full",
+          LIST_TILE_HOVER_CLASS,
           LIST_TILE_INSET_CLASS,
           viewMode === "grid"
             ? "flex flex-col gap-2 pt-1.5 pb-3"

@@ -8,12 +8,14 @@ import { Permission } from "@lootlog/schema/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
   screen,
   waitFor,
 } from "@testing-library/react";
+import { useEffect, useState } from "react";
 import { afterEach, expect, it, onTestFinished, vi } from "vitest";
 import { RolesForm } from "./roles-form";
 
@@ -37,6 +39,23 @@ const role = {
   lvlRangeTo: 500,
 } satisfies RoleResponseDtoOutput;
 
+let refetchRole: (next: RoleResponseDtoOutput) => void = () => {};
+
+/** Stands in for the role query, whose refetch hands the form a new role. */
+const RefetchedRolesForm = ({
+  initialRole,
+}: {
+  initialRole: RoleResponseDtoOutput;
+}) => {
+  const [currentRole, setCurrentRole] = useState(initialRole);
+
+  useEffect(() => {
+    refetchRole = setCurrentRole;
+  }, []);
+
+  return <RolesForm role={currentRole} />;
+};
+
 const renderForm = async (initialRole: RoleResponseDtoOutput = role) => {
   const save = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) =>
     Promise.resolve(Response.json(initialRole)),
@@ -53,7 +72,11 @@ const renderForm = async (initialRole: RoleResponseDtoOutput = role) => {
   });
 
   onTestFinished(() => queryClient.clear());
-  const router = createOrganizationTestRouter(<RolesForm role={initialRole} />);
+
+  const router = createOrganizationTestRouter(
+    <RefetchedRolesForm initialRole={initialRole} />,
+  );
+
   await router.load();
 
   render(
@@ -150,3 +173,13 @@ it.each([true, false])(
     });
   },
 );
+
+it("keeps an unsaved edit and takes the other server changes when the role refetches", async () => {
+  const { from, to } = await renderForm();
+  fireEvent.change(from, { target: { value: "100" } });
+
+  act(() => refetchRole({ ...role, lvlRangeTo: 400 }));
+
+  await waitFor(() => expect(to.value).toBe("400"));
+  expect(from.value).toBe("100");
+});

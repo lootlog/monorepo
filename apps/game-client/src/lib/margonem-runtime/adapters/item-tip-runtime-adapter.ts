@@ -61,7 +61,7 @@ export function wrapItemTipBuilder(
   let active = true;
 
   const wrapped: RuntimeFunction = function (...args) {
-    const html = original.apply(this, args);
+    const html = Reflect.apply(original, this, args);
     const [item] = args;
 
     if (!active || !isTipHtml(html) || !isObjectRecord(item)) return html;

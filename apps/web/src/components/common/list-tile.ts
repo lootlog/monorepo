@@ -43,9 +43,18 @@ export const LIST_TILE_GRID_CLASS = "-mr-px grid grid-cols-1";
 export const LIST_TILE_GRID_CELL_CLASS = `${LIST_TILE_RULE_CLASS} lg:border-r`;
 
 /**
+ * The hover highlight of a tile, on whichever element is the tile: the row
+ * that holds a link and its actions, so both share it, or the link itself
+ * when it is the whole tile. Matches the hover of a results table row.
+ */
+export const LIST_TILE_HOVER_CLASS =
+  "transition-colors hover:bg-muted/40 motion-reduce:transition-none";
+
+/**
  * A tile split into a link and trailing actions, such as pin or delete. The
  * link fills the tile's height and takes its inset; with actions after it,
- * they take the right inset instead.
+ * they take the right inset instead. The tile, not the link, takes
+ * `LIST_TILE_HOVER_CLASS`, so its actions share the highlight.
  */
 export const getListTileLinkClassName = (hasActions: boolean) =>
   cn(

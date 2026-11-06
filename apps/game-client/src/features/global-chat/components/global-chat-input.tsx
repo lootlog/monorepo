@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2, Megaphone } from "lucide-react";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
@@ -20,7 +20,6 @@ import {
   type GlobalChatChannel,
 } from "@/store/global-chat.store";
 import { format } from "@/utils/local-date";
-import { GlobalChatEmojiPicker } from "./global-chat-emoji-picker";
 
 type GlobalChatInputProps = {
   channel: GlobalChatChannel;
@@ -41,7 +40,7 @@ const sendErrorKey = (status: number | undefined) => {
 };
 
 /**
- * Plain text and emoji: Enter sends, and a failed send keeps the draft. An
+ * Plain text: Enter sends, and a failed send keeps the draft. An
  * admin may send one message to every channel; the choice resets once sent.
  */
 export const GlobalChatInput = ({
@@ -51,7 +50,6 @@ export const GlobalChatInput = ({
   onRefused,
 }: GlobalChatInputProps) => {
   const { t } = useTranslation("globalChat");
-  const inputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState("");
   const [allWorlds, setAllWorlds] = useState(false);
   const currentWorld = useGameStore((state) => state.game?.world);
@@ -76,20 +74,6 @@ export const GlobalChatInput = ({
       },
     },
   });
-
-  const insertEmoji = (emoji: string) => {
-    const input = inputRef.current;
-    const start = input?.selectionStart ?? draft.length;
-    const end = input?.selectionEnd ?? draft.length;
-    const next = draft.slice(0, start) + emoji + draft.slice(end);
-
-    if (next.length > GLOBAL_CHAT_MESSAGE_MAX_LENGTH) return;
-    setDraft(next);
-    // The caret follows the emoji once React writes the new value.
-    requestAnimationFrame(() =>
-      input?.setSelectionRange(start + emoji.length, start + emoji.length),
-    );
-  };
 
   const placeholder = muted
     ? viewer?.mutedUntil
@@ -124,7 +108,6 @@ export const GlobalChatInput = ({
         rowClassName="ll:gap-0.5 ll:pl-1 ll:pr-0.5"
       >
         <Input
-          ref={inputRef}
           variant="borderless"
           value={draft}
           readOnly={isPending}
@@ -153,10 +136,6 @@ export const GlobalChatInput = ({
             <Megaphone aria-hidden className="ll:size-3.5" />
           </IconButton>
         ) : null}
-        <GlobalChatEmojiPicker
-          disabled={muted || isPending}
-          onPick={insertEmoji}
-        />
       </WindowFooter>
     </form>
   );

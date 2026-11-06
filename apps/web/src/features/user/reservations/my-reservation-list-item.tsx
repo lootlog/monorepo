@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { Link } from "@tanstack/react-router";
@@ -5,7 +6,7 @@ import { Bell, Clock3, Pencil, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import {
   Avatar,
   AvatarFallback,
@@ -20,6 +21,7 @@ import {
   getListTileLinkClassName,
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { MetaItem } from "@/components/common/meta-item";
 import { useReservationOrganizationIcon } from "./use-reservation-organization-icon";
@@ -57,7 +59,7 @@ export function MyReservationListItem({
 
   return (
     <li data-list-tile className={LIST_TILE_RULE_CLASS}>
-      <div className="flex h-full items-center transition-colors hover:bg-muted/30 motion-reduce:transition-none">
+      <div className={cn("flex h-full items-center", LIST_TILE_HOVER_CLASS)}>
         <Link
           to={reservation.sourceOrganization.calendarPath}
           className={getListTileLinkClassName(hasActions)}
@@ -133,7 +135,7 @@ export function MyReservationListItem({
               </Tooltip>
             )}
             {canCancel && (
-              <ConfirmDeleteDialog
+              <ConfirmDialog
                 title={t("reservations.my.cancelConfirmTitle", {
                   spot: reservation.spotName,
                 })}

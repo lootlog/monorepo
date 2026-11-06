@@ -2,7 +2,7 @@ import { ArchiveRestore, CircleAlert, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "@lootlog/ui/components/sonner";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
@@ -165,7 +165,7 @@ export const GuildDocTrashDialog = ({
                         >
                           {t("docs.trash.restore")}
                         </Button>
-                        <ConfirmDeleteDialog
+                        <ConfirmDialog
                           disabled={isMutating}
                           title={t("docs.trash.purgeTitle")}
                           description={t("docs.trash.purgeDescription", {
