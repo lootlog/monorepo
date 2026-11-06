@@ -1,10 +1,14 @@
 import { Button } from "@lootlog/ui/components/button";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import type { Ref } from "react";
 import { useTranslation } from "react-i18next";
+import { cn } from "cn";
 import type { AppNavigationHeading } from "@/navigation/app-navigation";
 import { APP_NAVIGATION_ICONS } from "@/navigation/app-navigation-icons";
+import { GLASS_SURFACE_CLASS } from "./glass-surface";
+import { TopBarTitle } from "./top-bar-title";
 
 type TopBarHeadingProps = {
   heading: AppNavigationHeading;
@@ -19,6 +23,7 @@ type TopBarHeadingProps = {
  */
 export const TopBarHeading = ({ heading, titleRef }: TopBarHeadingProps) => {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const { title, trail, section } = heading;
   const SectionIcon = section ? APP_NAVIGATION_ICONS[section] : null;
   const parent = trail[trail.length - 1];
@@ -26,16 +31,22 @@ export const TopBarHeading = ({ heading, titleRef }: TopBarHeadingProps) => {
   return (
     <nav
       aria-label={t("layout.navigation.breadcrumbsAriaLabel")}
-      className="flex min-w-0 items-center"
+      className="flex min-w-0 items-center max-md:gap-3"
     >
       {parent && (
         <Button
           variant="ghost"
-          size="icon-sm"
+          size={isMobile ? "icon-lg" : "icon-sm"}
           nativeButton={false}
           render={<Link to={parent.path} search={parent.search} />}
           aria-label={t("common.actions.backTo", { page: parent.label })}
-          className="shrink-0 text-muted-foreground hover:text-foreground @2xl/top-bar:hidden"
+          className={cn(
+            "shrink-0 @2xl/top-bar:hidden",
+            // Phones float the way back as a glass circle, as iOS does.
+            isMobile
+              ? cn(GLASS_SURFACE_CLASS, "text-foreground")
+              : "text-muted-foreground hover:text-foreground",
+          )}
         >
           <ChevronLeft aria-hidden="true" />
         </Button>
@@ -68,17 +79,21 @@ export const TopBarHeading = ({ heading, titleRef }: TopBarHeadingProps) => {
         ))}
         <li className="flex min-w-0 items-center">
           <div ref={titleRef} className="peer flex min-w-0 empty:hidden" />
-          <span
-            aria-current="page"
-            className="flex h-8 min-w-0 items-center gap-2 px-2 text-sm font-semibold text-foreground peer-[:not(:empty)]:hidden"
-          >
-            {trail.length === 0 && SectionIcon && (
-              <SectionIcon
-                aria-hidden="true"
-                className="size-4 shrink-0 text-primary"
-              />
-            )}
-            <span className="truncate">{title}</span>
+          <span className="flex min-w-0 peer-[:not(:empty)]:hidden">
+            <TopBarTitle
+              media={
+                trail.length === 0 &&
+                SectionIcon && (
+                  // Phones name the section in the tab bar already.
+                  <SectionIcon
+                    aria-hidden="true"
+                    className="size-4 shrink-0 text-primary max-md:hidden"
+                  />
+                )
+              }
+            >
+              {title}
+            </TopBarTitle>
           </span>
         </li>
       </ol>

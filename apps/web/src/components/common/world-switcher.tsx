@@ -24,6 +24,8 @@ type WorldSwitcherProps = {
   triggerClassName?: string;
   contentClassName?: string;
   worlds?: string[];
+  /** Shows the trigger's up-down chevron. */
+  indicator?: boolean;
 };
 
 export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
@@ -39,6 +41,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
   triggerClassName,
   contentClassName,
   worlds: externalWorlds,
+  indicator,
 }) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
@@ -123,6 +126,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
         contentClassName={cn("max-h-64", contentClassName)}
         showSearch
         active={showAllOption && value !== null}
+        indicator={indicator}
       />
     </div>
   );

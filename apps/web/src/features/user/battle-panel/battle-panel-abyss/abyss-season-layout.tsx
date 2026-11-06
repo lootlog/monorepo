@@ -9,6 +9,7 @@ import { DetailBarFacts } from "@/components/common/detail-bar-facts";
 import { EmptyState } from "@/components/common/empty-state";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
+import { TopBarTitle } from "@/components/layout/top-bar-title";
 import { StatisticsQueryPanel } from "@/features/user/battle-panel/battle-panel-statistics/components/statistics-query-panel";
 import { useBattleCharacters } from "@/components/filters/use-battle-characters";
 import { ROUTES } from "@/config/routes";
@@ -134,12 +135,7 @@ export function AbyssSeasonLayout() {
       <h1 className="sr-only">{title}</h1>
       {/* The top bar names the season, so it reads like a document title. */}
       <HeaderSlotPortal slot="title">
-        <span
-          aria-current="page"
-          className="flex h-8 min-w-0 items-center px-2 text-sm font-semibold"
-        >
-          <span className="truncate">{title}</span>
-        </span>
+        <TopBarTitle>{title}</TopBarTitle>
       </HeaderSlotPortal>
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
         <StatisticsQueryPanel query={seasonsQuery}>

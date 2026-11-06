@@ -4,6 +4,7 @@ import * as m from "framer-motion/m";
 import { Ellipsis, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
+import { GLASS_SURFACE_CLASS } from "@/components/layout/glass-surface";
 import { useScrollDownCollapse } from "@/hooks/utils/use-scroll-down-collapse";
 import type {
   AppNavigationItemId,
@@ -16,9 +17,7 @@ const TAB_BAR_OFFSET_PROPERTY = "--tab-bar-offset";
 /** The sidebar's spring, so the bar settles like the navigation does. */
 const SPRING = { type: "spring", stiffness: 520, damping: 40 } as const;
 
-/** A translucent surface floating over the page. */
-const GLASS_CLASS =
-  "pointer-events-auto rounded-full border border-sidebar-border/70 bg-sidebar/70 shadow-[0_10px_30px_-8px_rgb(0_0_0/0.55),inset_0_1px_0_rgb(255_255_255/0.06)] backdrop-blur-xl backdrop-saturate-150";
+const GLASS_CLASS = cn("pointer-events-auto", GLASS_SURFACE_CLASS);
 
 const TAB_CLASS =
   "relative flex size-full flex-col items-center justify-center gap-0.5 rounded-full text-[10px] leading-none font-medium tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-ring";
