@@ -20,6 +20,7 @@ const messages = {
     npcs: "Potwory",
     compare: "Porównywarka",
     calculators: "Kalkulatory",
+    set: "Mój zestaw",
     breadcrumbs: "Ścieżka strony",
     events: "Eventy",
   },
@@ -80,6 +81,17 @@ const messages = {
     comparedWith: "Założony w zestawie",
     openItem: "Otwórz stronę przedmiotu",
     takeOff: "Zdejmij",
+  },
+  setLayout: {
+    openWindow: "Okno postaci",
+    openPage: "Strona zestawu",
+  },
+  setPage: {
+    description:
+      "Twoja postać, założone przedmioty i suma ich statystyk. Zestaw zapisuje się w przeglądarce; link z przycisku udostępniania otwiera go u kogoś innego.",
+    itemsTitle: "Założone przedmioty",
+    noItems:
+      "Nie masz jeszcze założonych przedmiotów. Kliknij pusty slot, żeby znaleźć do niego przedmiot.",
   },
   setStats: {
     sections: {
@@ -272,6 +284,8 @@ const messages = {
     npcsDescription: "Szukaj NPC-ów i potworów po nazwie.",
     compareDescription:
       "Zestaw do czterech przedmiotów obok siebie i zobacz, który ma lepsze statystyki.",
+    setDescription:
+      "Złóż ekwipunek postaci, zobacz sumę statystyk jak w grze i udostępnij go linkiem.",
     calculatorsDescription:
       "Policz unik, blok, bonusy legendarne i koszty usług według wzorów z gry.",
     open: "Otwórz",

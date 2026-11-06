@@ -13,6 +13,8 @@ type EquipmentSetTotalsProps = {
   previewTotals: StatTotals | null;
   /** The previewed item's name, while one is previewed. */
   previewName: string | null;
+  /** `columns` sets the sections side by side, for a wide window. */
+  layout?: "stack" | "columns";
 };
 
 /**
@@ -24,6 +26,7 @@ export function EquipmentSetTotals({
   totals,
   previewTotals,
   previewName,
+  layout = "stack",
 }: EquipmentSetTotalsProps) {
   const hasValue = (stat: Parameters<typeof setStatValue>[1]) =>
     setStatValue(totals, stat) !== undefined ||
@@ -41,10 +44,17 @@ export function EquipmentSetTotals({
         : t("equipment.empty");
 
   return (
-    <div className="flex flex-col gap-3">
+    <div
+      className={cn(
+        layout === "columns"
+          ? "grid items-start gap-x-8 gap-y-5 @lg:grid-cols-2 @[54rem]:grid-cols-4"
+          : "flex flex-col gap-3",
+      )}
+    >
       <p
         aria-live="polite"
         className={cn(
+          layout === "columns" && "col-span-full",
           "text-xs text-pretty transition-colors duration-200 motion-reduce:transition-none",
           previewName === null
             ? "text-muted-foreground"

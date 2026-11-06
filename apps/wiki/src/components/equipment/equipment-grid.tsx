@@ -6,13 +6,14 @@ type EquipmentGridProps = {
   /** One slot's content, placed where the game draws that slot. */
   renderSlot: (slot: EquipmentSlot) => ReactNode;
   /** `md` fits a side panel; `lg` gives each slot room for its label. */
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "xl";
   className?: string;
 };
 
 const GRID = {
   md: "grid-cols-[repeat(3,3.25rem)] grid-rows-[repeat(4,3.25rem)] gap-2",
   lg: "grid-cols-[repeat(3,6.25rem)] grid-rows-[repeat(4,5.5rem)] gap-2",
+  xl: "grid-cols-[repeat(3,4.25rem)] grid-rows-[repeat(4,4.25rem)] gap-2.5",
 } as const;
 
 /** Margonem's equipment grid: three columns, four rows. */
