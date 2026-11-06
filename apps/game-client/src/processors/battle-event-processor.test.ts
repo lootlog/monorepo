@@ -11,6 +11,7 @@ import { BattleEventProcessor } from "./battle-event-processor";
 import { EventDispatcher } from "@/lib/event-dispatcher";
 import { testRuntimeWindow } from "@/test/test-runtime-window";
 import { useNpcsStore } from "@/store/npcs.store";
+import { useLogsStore } from "@/store/logs.store";
 
 const pvpStart = (moves = ["start"]): GameEvent => ({
   f: {
@@ -632,4 +633,54 @@ it("ignores an end packet while no battle is active", async () => {
   const fixture = createBattleTest();
   await new BattleEventProcessor().handle(end);
   expect(fixture.requests).toHaveLength(0);
+});
+
+const eliteBattleStart = (): GameEvent => ({
+  f: {
+    init: "1",
+    w: {
+      "12345": createBattleWarrior(12345),
+      "-100": createBattleWarrior(-100, { hpp: 100, wt: 25 }),
+    },
+  },
+});
+
+const skippedKills = () =>
+  useLogsStore
+    .getState()
+    .actions.filter(
+      (action) =>
+        action.actionType === "create_kill" && action.status === "skipped",
+    )
+    .map((action) => action.details);
+
+it("explains a kill that was not sent because the player left the elite battle", async () => {
+  const fixture = createBattleTest();
+  useLogsStore.getState().clearActions();
+  const processor = new BattleEventProcessor();
+  await processor.handle(eliteBattleStart());
+  await processor.handle({ f: { close: 1 } });
+
+  expect(fixture.kills()).toHaveLength(0);
+  expect(skippedKills()).toEqual([{ reason: "left-battle" }]);
+});
+
+it("explains an elite battle that began before Lootlog saw it, once", async () => {
+  const fixture = createBattleTest();
+  useLogsStore.getState().clearActions();
+  const processor = new BattleEventProcessor();
+
+  const unseenEnd: GameEvent = {
+    f: { endBattle: 1, w: { "-100": createBattleWarrior(-100, { wt: 25 }) } },
+  };
+
+  await processor.handle(unseenEnd);
+  expect(fixture.kills()).toHaveLength(0);
+  expect(skippedKills()).toEqual([{ reason: "battle-start-not-seen" }]);
+
+  await processor.handle(eliteBattleStart());
+  await processor.handle(unseenEnd);
+  await processor.handle(unseenEnd);
+  expect(fixture.kills()).toHaveLength(1);
+  expect(skippedKills()).toHaveLength(1);
 });

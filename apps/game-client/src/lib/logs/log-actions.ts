@@ -376,6 +376,27 @@ export const getAggregateActionStatus = (
   return "success";
 };
 
+/**
+ * Records a game event Lootlog recognized but did not report, with the reason,
+ * so a missing kill or timer can be explained from the exported action log.
+ */
+export const logSkippedAction = ({
+  actionType,
+  payload,
+  reason,
+}: {
+  actionType: LogActionType;
+  payload: unknown;
+  reason: string;
+}): void => {
+  useLogsStore.getState().appendAction({
+    actionType,
+    status: "skipped",
+    payload: serializeLogValue(payload),
+    details: { reason },
+  });
+};
+
 export const startLoggedAction = ({
   actionType,
   payload,

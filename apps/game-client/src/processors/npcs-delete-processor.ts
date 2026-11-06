@@ -12,6 +12,7 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { isSignedOut } from "@/lib/auth-client";
 import { createAutoTimer } from "@/api/timers.api";
+import { logSkippedAction } from "@/lib/logs/log-actions";
 import { getFreshCharacterCatchingGuildIds } from "@/hooks/api/use-lootlog-characters-config";
 
 export class NpcsDeleteProcessor {
@@ -65,10 +66,6 @@ export class NpcsDeleteProcessor {
       return timerContext;
     };
 
-    // A character in stasis learns about kills late, so the deletion time is
-    // not the kill time. Margonem's own kill timer skips these deletions too.
-    if (game?.hero.stasis) return;
-
     deletedNpcs.forEach(({ data, deletion }) => {
       if (!data || !deletion.respBaseSeconds) return;
 
@@ -76,13 +73,40 @@ export class NpcsDeleteProcessor {
       if (data.weight < MIN_TIMER_NPC_WT && !isHeroTrackerName(data.name))
         return;
 
+      // The action log is the only trace of a timer players expected.
+      const skip = (reason: string) =>
+        logSkippedAction({
+          actionType: "create_timer",
+          payload: {
+            world,
+            npc: { id: data.id, name: data.name, lvl: data.level },
+            respBaseSeconds: deletion.respBaseSeconds,
+          },
+          reason,
+        });
+
       if (deletion.respBaseSeconds < MIN_RESP_BASE_SECONDS) {
+        skip("respawn-below-minimum");
+
+        return;
+      }
+
+      // A character in stasis learns about kills late, so the deletion time
+      // is not the kill time. Margonem's own kill timer skips these too.
+      if (game?.hero.stasis) {
+        skip("stasis");
+
         return;
       }
 
       const context = getTimerContext();
 
-      if (!context) return;
+      if (!context) {
+        skip(game ? "signed-out" : "missing-game");
+
+        return;
+      }
+
       const elite2Name = SpecialE2.get(String(context.mapId)) || data.name;
 
       const npcType = getNpcType(NpcType, {
@@ -97,6 +121,8 @@ export class NpcsDeleteProcessor {
       const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.name;
 
       if (context.catchingGuildIds?.length === 0) {
+        skip("no-catching-organization");
+
         return;
       }
 
