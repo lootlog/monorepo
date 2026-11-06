@@ -14,28 +14,9 @@
         "src/App.tsx",
         "src/openapi/generate-openapi.ts",
         "scripts/**/*.{ts,mjs}",
-        "server.js"
-      ],
-      "project": [
-        "src/**/*.{ts,tsx}",
-        "test/**/*.{ts,tsx}",
-        "scripts/**/*.{ts,mjs}",
-        "*.{ts,mts,js,mjs}",
-        "*.config.{ts,mts,js,mjs}",
-        "**/*.{spec,test,e2e-spec}.{ts,tsx,js}"
-      ]
-    },
-    "apps/wiki": {
-      "entry": [
-        "src/index.ts",
-        "src/main.ts",
-        "src/main.tsx",
-        "src/App.tsx",
-        "src/openapi/generate-openapi.ts",
-        "scripts/**/*.{ts,mjs}",
         "server.js",
-        "vite.worktree.mts",
-        "src/**/*.test.{ts,tsx}"
+        "src/**/*.test.{ts,tsx}",
+        "vite.worktree.mts"
       ],
       "project": [
         "src/**/*.{ts,tsx}",
@@ -75,24 +56,8 @@
       ],
       "includeEntryExports": true
     },
-    "packages/ui": {
-      "project": [
-        "src/**/*.{ts,tsx}",
-        "scripts/**/*.{ts,mjs}",
-        "*.{ts,mts,js,mjs}",
-        "*.config.{ts,mts,js,mjs}",
-        "**/*.{spec,test}.{ts,tsx,js}"
-      ]
-    },
-    "packages/game-client-api": {
-      "project": [
-        "src/**/*.{ts,tsx}",
-        "scripts/**/*.{ts,mjs}",
-        "*.{ts,mts,js,mjs}",
-        "*.config.{ts,mts,js,mjs}",
-        "**/*.{spec,test}.{ts,tsx,js}"
-      ]
-    },
+    "packages/ui": {},
+    "packages/game-client-api": {},
     "packages/client": {
       "entry": ["src/generated/**/*.{ts,tsx}", "scripts/**/*.{ts,mjs}"],
       "project": [
