@@ -128,15 +128,23 @@ export const makeUserGuildList = (
 
     const discordGuilds = yield* ports.freshDiscordGuilds(identity);
     const discordGuildIds = discordGuilds.map(({ id }) => id);
-    yield* ports.deactivateMissing({
+
+    const deactivateMissing = ports.deactivateMissing({
       ...identity,
       activeDiscordGuildIds: discordGuildIds,
     });
 
-    if (discordGuildIds.length === 0) return [];
+    if (discordGuildIds.length === 0) {
+      yield* deactivateMissing;
 
-    const [guilds, preferredIds] = yield* Effect.all(
+      return [];
+    }
+
+    // Deactivating Members does not touch the Guild rows or preferences read
+    // beside it.
+    const [, guilds, preferredIds] = yield* Effect.all(
       [
+        deactivateMissing,
         database
           .select()
           .from(guildTable)

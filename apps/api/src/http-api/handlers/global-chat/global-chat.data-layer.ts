@@ -317,12 +317,15 @@ export const makeGlobalChatOperations = (
         }),
       sendMessage: (caller, payload) =>
         Effect.gen(function* () {
-          const displayName = yield* sender(caller);
+          const [displayName, muted] = yield* Effect.all(
+            [sender(caller), activeMute(caller.userId)],
+            { concurrency: "unbounded" },
+          );
 
           if (payload.allWorlds) yield* requireAdmin(caller);
           yield* requireChannel(payload.world);
 
-          if (yield* activeMute(caller.userId)) return yield* accessDenied();
+          if (muted) return yield* accessDenied();
 
           const acquired = yield* storeCall(
             store.acquireSendSlot(caller.userId),

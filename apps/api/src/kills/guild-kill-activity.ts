@@ -21,30 +21,35 @@ export const makeGuildKillActivityPublisher = (
         Math.floor(input.lastKilledAt.getTime() / 60000) * 60000,
       );
 
-      const feedEntry = yield* readPublishedFeedEntry(database, input.guildId, {
-        kill: { ...input, minute },
-      });
+      // The NPC read is wasted only for a kill without a feed entry.
+      const [feedEntry, sourceNpcs] = yield* Effect.all(
+        [
+          readPublishedFeedEntry(database, input.guildId, {
+            kill: { ...input, minute },
+          }),
+          database
+            .selectDistinct({
+              level: guildKillActivityTable.npcLvl,
+              type: guildKillActivityTable.npcType,
+            })
+            .from(guildKillActivityTable)
+            .where(
+              and(
+                eq(guildKillActivityTable.guildId, input.guildId),
+                eq(guildKillActivityTable.world, input.world),
+                eq(guildKillActivityTable.npcId, input.npcId),
+                gte(guildKillActivityTable.occurredAt, minute),
+                lt(
+                  guildKillActivityTable.occurredAt,
+                  new Date(minute.getTime() + 60000),
+                ),
+              ),
+            ),
+        ],
+        { concurrency: "unbounded" },
+      );
 
       if (!feedEntry || feedEntry.type !== "kill") return;
-
-      const sourceNpcs = yield* database
-        .selectDistinct({
-          level: guildKillActivityTable.npcLvl,
-          type: guildKillActivityTable.npcType,
-        })
-        .from(guildKillActivityTable)
-        .where(
-          and(
-            eq(guildKillActivityTable.guildId, input.guildId),
-            eq(guildKillActivityTable.world, input.world),
-            eq(guildKillActivityTable.npcId, input.npcId),
-            gte(guildKillActivityTable.occurredAt, minute),
-            lt(
-              guildKillActivityTable.occurredAt,
-              new Date(minute.getTime() + 60000),
-            ),
-          ),
-        );
 
       yield* rabbit.publish({
         exchange: "default",

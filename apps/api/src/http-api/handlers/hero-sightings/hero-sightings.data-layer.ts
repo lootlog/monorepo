@@ -1,3 +1,4 @@
+import { selectCharacterCatchingGuildIds } from "#src/members/character-catching-guilds";
 import { and, desc, eq, inArray, isNull, lte, or } from "drizzle-orm";
 import { Clock, Effect, Result } from "effect";
 import { partition } from "es-toolkit";
@@ -24,7 +25,6 @@ import {
   heroSightingClaimTable,
   heroSightingTable,
 } from "#src/database/drizzle/hero-sighting.schema";
-import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import {
   findActiveGuildMember,
   selectAccessibleGuildRoles,
@@ -309,34 +309,25 @@ export const makeCreateHeroSighting = (
 
     const observedAt = yield* getObservedAt(payload.observedAt, now);
 
-    const guildRows = yield* selectAccessibleGuilds(
-      database,
-      identity.discordId,
-      [HERO_SIGHTING_WRITE_PERMISSION],
+    // The response follows read visibility: writing to an Organization does
+    // not let a role outside the hero's level range read its sighting there.
+    const [guildRows, catchingGuildIds, readers] = yield* Effect.all(
+      [
+        selectAccessibleGuilds(database, identity.discordId, [
+          HERO_SIGHTING_WRITE_PERMISSION,
+        ]),
+        selectCharacterCatchingGuildIds(database, identity.discordId, payload),
+        selectAccessibleGuildRoles(database, identity.discordId, [
+          NPC_FEATURE_PERMISSIONS[HERO_SIGHTING_READ_FEATURE].base,
+        ]),
+      ],
+      { concurrency: "unbounded" },
     );
 
     if (guildRows.length === 0)
       return yield* Effect.fail(new PermissionDeniedError());
 
-    const configs = yield* database
-      .select({
-        catchingGuildIds: userCharactersLootlogSettingsTable.catchingGuildIds,
-      })
-      .from(userCharactersLootlogSettingsTable)
-      .where(
-        and(
-          eq(userCharactersLootlogSettingsTable.userId, identity.discordId),
-          eq(userCharactersLootlogSettingsTable.accountId, payload.accountId),
-          eq(
-            userCharactersLootlogSettingsTable.characterId,
-            payload.characterId,
-          ),
-        ),
-      )
-      .orderBy(desc(userCharactersLootlogSettingsTable.createdAt))
-      .limit(1);
-
-    const catching = new Set(configs[0]?.catchingGuildIds ?? []);
+    const catching = new Set(catchingGuildIds);
 
     const [targets, excluded] = partition(guildRows, ({ guild }) =>
       catching.has(guild.id),
@@ -357,14 +348,6 @@ export const makeCreateHeroSighting = (
           details: { submittedGuilds: [], rejectedGuilds },
         }),
       );
-
-    // The response follows read visibility: writing to an Organization does
-    // not let a role outside the hero's level range read its sighting there.
-    const readers = yield* selectAccessibleGuildRoles(
-      database,
-      identity.discordId,
-      [NPC_FEATURE_PERMISSIONS[HERO_SIGHTING_READ_FEATURE].base],
-    );
 
     const outcomes = yield* Effect.forEach(
       targets,

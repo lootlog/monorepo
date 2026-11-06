@@ -233,6 +233,30 @@ const makeReadyRoomContext = (
       { concurrency: 4 },
     );
 
+  // The viewer's projection is read with the recipients' instead of after
+  // them, and only once when the viewer is also a recipient.
+  const preparePublicationForViewer = (
+    aggregate: ReadyRoomAggregate,
+    recipients: ReadonlyArray<string>,
+    viewerDiscordId: string,
+  ) =>
+    preparePublication(aggregate, [...recipients, viewerDiscordId]).pipe(
+      Effect.map((prepared) => {
+        const recipientIds = new Set(recipients);
+
+        return {
+          recipients: prepared.filter(({ recipientDiscordId }) =>
+            recipientIds.has(recipientDiscordId),
+          ),
+          viewerGuildIds:
+            prepared.find(
+              ({ recipientDiscordId }) =>
+                recipientDiscordId === viewerDiscordId,
+            )?.guildIds ?? [],
+        };
+      }),
+    );
+
   const publish = (
     aggregate: ReadyRoomAggregate,
     recipients: ReadonlyArray<{
@@ -240,28 +264,35 @@ const makeReadyRoomContext = (
       guildIds: string[];
     }>,
   ) =>
-    Effect.forEach(
-      recipients,
-      ({ recipientDiscordId, guildIds }) => {
-        const update = createReadyRoomClientUpdate(
-          aggregate,
-          recipientDiscordId,
-          guildIds,
-        );
+    Effect.all(
+      [
+        Effect.forEach(
+          recipients,
+          ({ recipientDiscordId, guildIds }) => {
+            const update = createReadyRoomClientUpdate(
+              aggregate,
+              recipientDiscordId,
+              guildIds,
+            );
 
-        return effects
-          .publish({
-            recipientDiscordId,
-            eligibleGuildIds:
-              update.type === "UPSERT"
-                ? update.projection.guildIds
-                : [...aggregate.guildIds],
-            update,
-          })
-          .pipe(Effect.ignore);
-      },
+            return effects
+              .publish({
+                recipientDiscordId,
+                eligibleGuildIds:
+                  update.type === "UPSERT"
+                    ? update.projection.guildIds
+                    : [...aggregate.guildIds],
+                update,
+              })
+              .pipe(Effect.ignore);
+          },
+          { concurrency: "unbounded", discard: true },
+        ),
+        // The outbox keeps the gathering update pending on failure.
+        gatheringPublications.publish(aggregate),
+      ],
       { concurrency: "unbounded", discard: true },
-    ).pipe(Effect.andThen(gatheringPublications.publish(aggregate)));
+    );
 
   const getLive = (notificationId: string) =>
     repository.get(notificationId).pipe(
@@ -309,6 +340,7 @@ const makeReadyRoomContext = (
     projectionGuildIds,
     projectionForViewer,
     preparePublication,
+    preparePublicationForViewer,
     publish,
     getLive,
   };
