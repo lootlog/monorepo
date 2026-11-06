@@ -21,7 +21,7 @@ import {
 
 import type { GeneralFormValues } from "./general-form.schema";
 import type { UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 
 type StatsCardSettingsSectionProps = {
   form: UseFormReturn<GeneralFormValues>;

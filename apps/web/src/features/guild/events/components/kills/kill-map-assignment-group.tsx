@@ -87,11 +87,11 @@ export const KillMapAssignmentGroup = ({
               key={period.id}
               className="flex min-h-8 items-center justify-between gap-3 border-t border-border/50 first:border-t-0"
             >
-              <span className="text-[11px] tabular-nums text-muted-foreground">
+              <span className="text-2xs tabular-nums text-muted-foreground">
                 {formatTimeShort(new Date(period.assignedAt))} –{" "}
                 {formatTimeShort(new Date(period.unassignedAt))}
               </span>
-              <span className="text-[11px] font-medium tabular-nums">
+              <span className="text-2xs font-medium tabular-nums">
                 {formatDurationHuman(period.durationSeconds)}
               </span>
             </div>

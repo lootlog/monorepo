@@ -5,7 +5,7 @@ import { pl } from "date-fns/locale";
 import { Bell, CalendarClock, MessageSquareText, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { useDeleteReservation } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
 import {

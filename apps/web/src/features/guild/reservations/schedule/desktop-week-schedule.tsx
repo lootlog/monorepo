@@ -294,7 +294,7 @@ export function DesktopWeekSchedule({
               className="pointer-events-none absolute left-0 z-20 flex -translate-y-1/2 justify-end pr-1"
               style={{ top: hoverTop, width: LABEL_COLUMN_WIDTH }}
             >
-              <span className="rounded-sm bg-primary px-1 text-[11px] leading-4 font-medium tabular-nums text-primary-foreground">
+              <span className="rounded-sm bg-primary px-1 text-2xs leading-4 font-medium tabular-nums text-primary-foreground">
                 {hoverTime}
               </span>
             </div>

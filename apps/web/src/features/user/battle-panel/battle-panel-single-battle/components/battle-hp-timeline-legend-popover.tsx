@@ -72,7 +72,7 @@ export function BattleHpTimelineLegendPopover({
             <div className="flex flex-col gap-3 p-3">
               {legend.eventItems.length > 0 ? (
                 <div className="flex flex-col gap-1.5">
-                  <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <div className="text-2xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                     {t("battlePanel.single.chart.legend.layers")}
                   </div>
                   <div className="flex flex-col gap-1">
@@ -88,7 +88,7 @@ export function BattleHpTimelineLegendPopover({
               ) : null}
               {legend.legendaryItems.length > 0 ? (
                 <div className="flex flex-col gap-1.5">
-                  <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <div className="text-2xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                     {t("battlePanel.single.chart.legend.legendary")}
                   </div>
                   <div className="flex flex-col gap-1">

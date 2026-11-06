@@ -187,7 +187,7 @@ export const KillParticipantRow = ({
                 {memberName}
               </span>
             )}
-            <div className="mt-0.5 flex min-w-0 items-center gap-1.5 truncate text-[10px] tabular-nums text-muted-foreground lg:hidden">
+            <div className="mt-0.5 flex min-w-0 items-center gap-1.5 truncate text-2xs tabular-nums text-muted-foreground lg:hidden">
               <span>{trackingDuration}</span>
               <span aria-hidden="true">·</span>
               <span>{trackingPercentage}</span>
@@ -291,7 +291,7 @@ export const KillParticipantRow = ({
       {isExpanded ? (
         <div className="grid gap-4 border-t border-border/60 bg-muted/40 px-5 py-4 lg:grid-cols-2 lg:px-6">
           <div className="min-w-0">
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <p className="mb-2 text-2xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               {t("events.kills.scoringBreakdown")}
             </p>
             <ScoringBreakdownList
@@ -302,7 +302,7 @@ export const KillParticipantRow = ({
 
           {scoring ? (
             <div className="min-w-0 lg:col-span-2 lg:row-start-2">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <p className="mb-1 text-2xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 {t("events.kills.presenceBreakdown")}
               </p>
               <p className="mb-2 text-xs text-muted-foreground">
@@ -321,7 +321,7 @@ export const KillParticipantRow = ({
           ) : null}
 
           <div className="min-w-0">
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <p className="mb-2 text-2xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               {t("events.kills.mapBreakdown")}
             </p>
             {aggregatedMaps.length > 0 ? (

@@ -110,6 +110,7 @@
     "moveTitle": "Przenieść dokument do kosza?",
     "moveDescription": "Dokument „{{title}}” zniknie z listy, ale admin lub właściciel będzie mógł go przywrócić.",
     "moved": "Dokument przeniesiony do kosza",
+    "undo": "Cofnij",
     "moveError": "Nie udało się przenieść dokumentu do kosza.",
     "deletedBy": "Usunięto: {{name}} · {{date}}",
     "restore": "Przywróć",

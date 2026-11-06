@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useId } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";

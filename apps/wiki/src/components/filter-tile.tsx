@@ -52,7 +52,7 @@ export function FilterTile({
         {label}
       </span>
       {centered ? null : isLocked ? (
-        <span className="flex shrink-0 items-center gap-1 text-[11px] font-normal">
+        <span className="flex shrink-0 items-center gap-1 text-2xs font-normal">
           <Lock aria-hidden="true" className="size-3" />
           {lockedLabel}
         </span>

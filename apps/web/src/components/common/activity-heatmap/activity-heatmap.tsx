@@ -127,7 +127,7 @@ export function ActivityHeatmap({
             <span
               key={`weekday-${weekday}`}
               aria-hidden
-              className="sticky left-0 z-10 flex items-center justify-end bg-card pr-1 text-[10px] text-muted-foreground"
+              className="sticky left-0 z-10 flex items-center justify-end bg-card pr-1 text-2xs text-muted-foreground"
               style={{ gridColumn: 1, gridRow: weekday + 2 }}
             >
               {formatIsoWeekday(weekday + 1, true)}
@@ -139,7 +139,7 @@ export function ActivityHeatmap({
                 (index === 0 && Number(day.date.slice(8)) <= 24)) && (
                 <span
                   aria-hidden
-                  className="text-[10px] text-muted-foreground"
+                  className="text-2xs text-muted-foreground"
                   style={{
                     gridColumn: Math.floor((index + offset) / 7) + 2,
                     gridRow: 1,

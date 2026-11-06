@@ -45,7 +45,7 @@ export const HeroTimerDisplay = ({
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1 text-[11px] text-muted-foreground whitespace-nowrap",
+          "inline-flex items-center gap-1 text-2xs text-muted-foreground whitespace-nowrap",
           className,
         )}
       >
@@ -97,7 +97,7 @@ const HeroTimerDisplayContent = ({
         render={
           <span
             className={cn(
-              "inline-flex items-center gap-1 text-[11px] font-medium whitespace-nowrap",
+              "inline-flex items-center gap-1 text-2xs font-medium whitespace-nowrap",
               isOverdue
                 ? "text-signal-alert"
                 : isClose

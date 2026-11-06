@@ -102,7 +102,7 @@ export const createEventHeroesTableColumns = ({
               </div>
               <div
                 className={cn(
-                  "mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] leading-none text-muted-foreground",
+                  "mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-2xs leading-none text-muted-foreground",
                   showStandings && "lg:hidden",
                 )}
               >

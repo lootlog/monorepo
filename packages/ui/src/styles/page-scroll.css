@@ -162,6 +162,14 @@
   }
 }
 
+/* More contrast or less transparency asked by the system: solid bars. */
+@media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-bar-cover: 100%;
+    --glass-bar-blur: 0px;
+  }
+}
+
 :root .glass-bar {
   background-color: color-mix(
     in oklab,

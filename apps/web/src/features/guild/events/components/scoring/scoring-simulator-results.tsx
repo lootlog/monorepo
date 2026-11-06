@@ -25,7 +25,7 @@ export function ScoringSimulatorResults({
       />
       <div className="flex items-baseline gap-4">
         <div className="text-center">
-          <p className="text-[10px] text-muted-foreground/60">
+          <p className="text-2xs text-muted-foreground/60">
             {t("events.scoring.simulator.base")}
           </p>
           <p className="text-lg font-mono font-bold">
@@ -34,7 +34,7 @@ export function ScoringSimulatorResults({
         </div>
         <span className="text-muted-foreground/40 text-lg">+</span>
         <div className="text-center">
-          <p className="text-[10px] text-muted-foreground/60">
+          <p className="text-2xs text-muted-foreground/60">
             {t("events.scoring.simulator.bonus")}
           </p>
           <p className="text-lg font-mono font-bold text-green-400">
@@ -43,7 +43,7 @@ export function ScoringSimulatorResults({
         </div>
         <span className="text-muted-foreground/40 text-lg">=</span>
         <div className="text-center">
-          <p className="text-[10px] text-muted-foreground/60">
+          <p className="text-2xs text-muted-foreground/60">
             {t("events.scoring.simulator.total")}
           </p>
           <p
@@ -54,7 +54,7 @@ export function ScoringSimulatorResults({
           >
             {formatPoints(result.totalPoints)}
             {isCapped && (
-              <span className="text-[10px] font-normal text-amber-400/70 ml-1">
+              <span className="text-2xs font-normal text-amber-400/70 ml-1">
                 {t("events.scoring.simulator.capped")}
               </span>
             )}
@@ -64,7 +64,7 @@ export function ScoringSimulatorResults({
 
       {result.appliedRules.length > 0 ? (
         <div className="mt-2 pt-2 border-t border-border/40">
-          <p className="text-[10px] text-muted-foreground/60 mb-1">
+          <p className="text-2xs text-muted-foreground/60 mb-1">
             {t("events.scoring.simulator.firedRules")}:
           </p>
           <div className="flex flex-wrap gap-1">
@@ -73,7 +73,7 @@ export function ScoringSimulatorResults({
                 key={rule.ruleId}
                 variant="outline"
                 className={cn(
-                  "text-[10px] font-normal",
+                  "text-2xs font-normal",
                   rule.actionType === "SET_BASE" &&
                     "border-blue-500/30 text-blue-400",
                   rule.actionType === "ADD_BONUS" &&
@@ -97,7 +97,7 @@ export function ScoringSimulatorResults({
           </div>
         </div>
       ) : (
-        <p className="mt-2 pt-2 border-t border-border/40 text-[11px] text-muted-foreground/50">
+        <p className="mt-2 pt-2 border-t border-border/40 text-2xs text-muted-foreground/50">
           {t("events.scoring.simulator.noRulesFired")}
         </p>
       )}

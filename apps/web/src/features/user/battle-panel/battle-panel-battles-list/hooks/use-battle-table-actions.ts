@@ -10,7 +10,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { useCopyToClipboard } from "usehooks-ts";
 
 type UseBattleTableActionsParams = {
@@ -87,16 +87,12 @@ export const useBattleTableActions = ({
       }
 
       if (results.some((result) => result.status === "rejected")) {
-        toast.error(t("battlePanel.toasts.bulkBattleShareError"), {
-          duration: 3000,
-        });
+        toast.error(t("battlePanel.toasts.bulkBattleShareError"));
 
         return;
       }
     } catch {
-      toast.error(t("battlePanel.toasts.bulkBattleShareError"), {
-        duration: 3000,
-      });
+      toast.error(t("battlePanel.toasts.bulkBattleShareError"));
 
       return;
     }
@@ -109,9 +105,7 @@ export const useBattleTableActions = ({
       const copied = await copy(links);
 
       if (!copied) {
-        toast.error(t("battlePanel.toasts.linkCopyError"), {
-          duration: 3000,
-        });
+        toast.error(t("battlePanel.toasts.linkCopyError"));
 
         return;
       }
@@ -125,9 +119,7 @@ export const useBattleTableActions = ({
         },
       );
     } catch {
-      toast.error(t("battlePanel.toasts.linkCopyError"), {
-        duration: 3000,
-      });
+      toast.error(t("battlePanel.toasts.linkCopyError"));
     }
   };
 
@@ -159,9 +151,7 @@ export const useBattleTableActions = ({
       });
 
       if (results.some((result) => result.status === "rejected")) {
-        toast.error(t("battlePanel.toasts.bulkBattleDeleteError"), {
-          duration: 3000,
-        });
+        toast.error(t("battlePanel.toasts.bulkBattleDeleteError"));
 
         return;
       }
@@ -177,9 +167,7 @@ export const useBattleTableActions = ({
       clearSelection();
       setIsBulkDeleteDialogOpen(false);
     } catch {
-      toast.error(t("battlePanel.toasts.bulkBattleDeleteError"), {
-        duration: 3000,
-      });
+      toast.error(t("battlePanel.toasts.bulkBattleDeleteError"));
     }
   };
 
@@ -199,9 +187,7 @@ export const useBattleTableActions = ({
       removeBattleFromSelection(singleDeleteBattle.id);
       setSingleDeleteBattle(null);
     } catch {
-      toast.error(t("battlePanel.toasts.battleDeleteError"), {
-        duration: 3000,
-      });
+      toast.error(t("battlePanel.toasts.battleDeleteError"));
     }
   };
 

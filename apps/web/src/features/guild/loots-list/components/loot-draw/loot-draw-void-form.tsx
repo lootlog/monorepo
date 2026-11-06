@@ -5,7 +5,7 @@ import type { LootDrawResponseDto } from "@lootlog/client/main";
 import { Ban } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import type { useLootDraws } from "./use-loot-draws";
 
 const MAX_REASON_LENGTH = 200;

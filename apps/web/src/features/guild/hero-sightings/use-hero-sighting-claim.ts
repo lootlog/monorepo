@@ -6,7 +6,7 @@ import {
 } from "@lootlog/client/main";
 import { isHeroSightingClaimedBy } from "@lootlog/domain/hero-sightings";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useSession } from "@/hooks/auth/use-session";
 import {

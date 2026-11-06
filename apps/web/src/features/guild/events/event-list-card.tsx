@@ -102,10 +102,7 @@ export const EventListCard = ({
               <h3 className="min-w-0 break-words text-sm font-semibold">
                 {event.name}
               </h3>
-              <Badge
-                variant={eventStatusVariant}
-                className="h-5 px-2 text-[11px]"
-              >
+              <Badge variant={eventStatusVariant} className="h-5 px-2 text-2xs">
                 {t(eventStatusLabelKey)}
               </Badge>
             </div>

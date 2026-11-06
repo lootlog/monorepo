@@ -1,5 +1,5 @@
 import { ArchiveRestore, CircleAlert, RotateCcw, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@lootlog/ui/components/sonner";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
@@ -10,7 +10,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useDocsControllerGetTrash,
   useDocsControllerPurgeDocument,
-  useDocsControllerRestoreDocument,
 } from "@lootlog/client/main";
 import {
   guildDocsTrashQueryOptions,
@@ -21,6 +20,7 @@ import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { useTranslation } from "react-i18next";
 import { RetryButton } from "@/components/common/retry-button";
+import { useGuildDocTrash } from "../use-guild-doc-trash";
 
 type GuildDocTrashDialogProps = {
   canManage: boolean;
@@ -48,25 +48,13 @@ export const GuildDocTrashDialog = ({
     },
   );
 
-  const restoreDocument = useDocsControllerRestoreDocument();
+  const { restore: handleRestore, restoreDocument } = useGuildDocTrash();
   const purgeDocument = useDocsControllerPurgeDocument();
   const trashItems = trashQuery.data?.items ?? [];
   const isMutating = restoreDocument.isPending || purgeDocument.isPending;
 
   const refreshDocs = async (docId?: string) => {
     await invalidateGuildDocsQueries(queryClient, guildId, docId);
-  };
-
-  const handleRestore = async (docId: string) => {
-    try {
-      await restoreDocument.mutateAsync({
-        pathParams: { guildId, docId },
-      });
-      await refreshDocs(docId);
-      toast.success(t("docs.trash.restored"));
-    } catch {
-      toast.error(t("docs.trash.restoreError"));
-    }
   };
 
   const handlePurge = async (docId: string) => {
@@ -145,7 +133,7 @@ export const GuildDocTrashDialog = ({
                         </h3>
                         <Badge
                           variant="outline"
-                          className="h-5 shrink-0 px-1.5 text-[10px]"
+                          className="h-5 shrink-0 px-1.5 text-2xs"
                         >
                           {t("docs.list.version", {
                             version: document.version,
