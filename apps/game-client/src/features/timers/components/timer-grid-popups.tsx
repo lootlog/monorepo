@@ -46,6 +46,7 @@ export const TimerGridPopups = ({
           return timer ? (
             <TooltipContent className="ll:w-64 ll:max-w-64">
               <TimerSharedTooltip
+                key={payload}
                 timer={timer}
                 guildNamesById={guildNamesById}
               />
