@@ -18,7 +18,6 @@
     "./tooltip": "./src/tooltip.ts"
   },
   "scripts": {
-    "build": "tsc --noEmit",
     "lint": "oxlint src",
     "typecheck": "bun check"
   },

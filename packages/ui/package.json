@@ -23,7 +23,6 @@
     "./i18n/translation-lookup": "./src/i18n/translation-lookup.ts"
   },
   "scripts": {
-    "build": "tsc --noEmit",
     "lint": "oxlint .",
     "typecheck": "bun check",
     "test": "vitest run",
