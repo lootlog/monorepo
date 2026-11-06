@@ -9,7 +9,6 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc --noEmit",
     "lint": "oxlint src",
     "test": "bun test",
     "typecheck": "bun check"

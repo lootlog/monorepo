@@ -27,7 +27,6 @@
     "perf:commands": "bun --conditions=development test/command-dispatch.bench.ts",
     "test:integration": "bun --conditions=development test test/realtime-redis.integration.test.ts",
     "test:debug": "bun --conditions=development test --inspect-brk --path-ignore-patterns=dist src/auth src/realtime src/rabbit test",
-    "test:e2e": "bun --conditions=development test --path-ignore-patterns=dist --path-ignore-patterns='**/*.integration.*' ./test",
     "test:watch": "bun --conditions=development test --watch --path-ignore-patterns=dist src/auth src/realtime src/rabbit test",
     "openapi:generate": "bun --conditions=development src/openapi/generate-openapi.ts"
   },

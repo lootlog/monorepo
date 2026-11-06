@@ -1,12 +1,17 @@
-import { RabbitMessaging, type RabbitDelivery } from "@lootlog/messaging";
+import {
+  RabbitMessaging,
+  UnprocessableDelivery,
+  type RabbitDelivery,
+} from "@lootlog/messaging";
 import {
   RabbitExchange,
   RabbitRoutingKey,
   makeDeadLetterQueue,
   makeRetryQueue,
   type RabbitQueueDefinition,
+  type RabbitRoutingKeyName,
 } from "@lootlog/protocol/rabbit/topology";
-import { Effect, Layer, Option, Redacted, Result, Schema } from "effect";
+import { Effect, Layer, Option, Redacted, Schema } from "effect";
 import { ActivityRepository } from "./activity-repository.js";
 import {
   decodeCreateActivity,
@@ -62,29 +67,25 @@ export const activityQueues = [
   }),
 ] as const;
 
-const decodeJson = (delivery: RabbitDelivery) =>
-  Result.try({
+/**
+ * Decodes a delivery or fails it as unprocessable, which the retry policy
+ * sends straight to the dead-letter queue instead of retrying it.
+ */
+const decodeDelivery = <A>(
+  delivery: RabbitDelivery,
+  reason: string,
+  decode: (input: Schema.Json) => A,
+) =>
+  Effect.try({
     try: () =>
-      Schema.decodeUnknownSync(Schema.fromJsonString(Schema.Json))(
-        new TextDecoder().decode(delivery.content),
+      decode(
+        Schema.decodeUnknownSync(Schema.fromJsonString(Schema.Json))(
+          new TextDecoder().decode(delivery.content),
+        ),
       ),
-    catch: (cause) => cause,
+    catch: (cause) =>
+      new UnprocessableDelivery({ cause: new Error(reason, { cause }) }),
   });
-
-const retryCount = (delivery: RabbitDelivery): number => {
-  const death = delivery.properties.headers?.["x-death"];
-
-  if (!Array.isArray(death) || death.length === 0) return 0;
-
-  const entry = Schema.decodeUnknownOption(
-    Schema.Struct({ count: Schema.Number }),
-  )(death[0]);
-
-  return Option.getOrElse(
-    Option.map(entry, ({ count }) => count),
-    () => 0,
-  );
-};
 
 const header = (delivery: RabbitDelivery, name: string): string | undefined => {
   const value = delivery.properties.headers?.[name];
@@ -96,119 +97,51 @@ const header = (delivery: RabbitDelivery, name: string): string | undefined => {
   );
 };
 
+const retryPolicy = (
+  retryRoutingKey: RabbitRoutingKeyName,
+  deadLetterRoutingKey: RabbitRoutingKeyName,
+) =>
+  ({
+    strategy: "retry",
+    maxRetries: 3,
+    retryRoutingKey,
+    deadLetterRoutingKey,
+  }) as const;
+
 export const ActivityConsumers = Layer.effectDiscard(
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
     const repository = yield* ActivityRepository;
     const config = yield* ActivityConfig;
 
-    const publishDlq = (
-      delivery: RabbitDelivery,
-      routingKey:
-        | typeof RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ
-        | typeof RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
-      errorHeaders: {
-        "x-signature-error"?: string;
-        "x-validation-error"?: string;
-        "x-error-type"?: "permanent";
-      },
-    ) =>
-      rabbit
-        .publish({
-          exchange: RabbitExchange.DEAD_LETTER,
-          routingKey,
-          content: delivery.content,
-          contentType: delivery.properties.contentType ?? undefined,
-          headers: {
-            ...delivery.properties.headers,
-            ...errorHeaders,
-            "x-final-attempt": true,
-            "x-sent-to-dlq-at": new Date().toISOString(),
-          },
-        })
-        .pipe(
-          Effect.tap(() =>
-            Effect.logWarning("Activity message sent to DLQ", {
-              routingKey,
-              reason:
-                errorHeaders["x-signature-error"] ??
-                errorHeaders["x-validation-error"] ??
-                "Retry limit exhausted",
-              retryCount: retryCount(delivery),
-            }),
-          ),
-        );
-
     yield* rabbit.consume(
       {
         queue: "activity-log-create",
         prefetch: 1,
-        failurePolicy: { strategy: "nack" },
+        failurePolicy: retryPolicy(
+          RabbitRoutingKey.ACTIVITY_LOG_CREATE_RETRY,
+          RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ,
+        ),
       },
       (delivery) =>
         Effect.gen(function* () {
-          const decoded = decodeJson(delivery);
+          const dto = yield* decodeDelivery(
+            delivery,
+            "Invalid activity event",
+            (input) => {
+              if (
+                !verifyActivityEventSignature({
+                  payload: input,
+                  secret: Redacted.value(config.signatureSecret),
+                  signature: header(delivery, ACTIVITY_EVENT_SIGNATURE_HEADER),
+                })
+              ) {
+                throw new Error("Invalid activity event signature");
+              }
 
-          if (Result.isFailure(decoded)) {
-            yield* publishDlq(
-              delivery,
-              RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ,
-              {
-                "x-validation-error": "Malformed JSON",
-                "x-error-type": "permanent",
-              },
-            );
-
-            return;
-          }
-
-          const input = decoded.success;
-
-          if (
-            !verifyActivityEventSignature({
-              payload: input,
-              secret: Redacted.value(config.signatureSecret),
-              signature: header(delivery, ACTIVITY_EVENT_SIGNATURE_HEADER),
-            })
-          ) {
-            yield* publishDlq(
-              delivery,
-              RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ,
-              {
-                "x-error-type": "permanent",
-                "x-signature-error": "Invalid activity event signature",
-              },
-            );
-
-            return;
-          }
-
-          let dto;
-
-          try {
-            dto = decodeCreateActivity(input);
-          } catch {
-            yield* publishDlq(
-              delivery,
-              RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ,
-              {
-                "x-validation-error": "Validation failed",
-                "x-error-type": "permanent",
-              },
-            );
-
-            return;
-          }
-
-          if (retryCount(delivery) >= 3) {
-            yield* publishDlq(
-              delivery,
-              RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ,
-              {},
-            );
-
-            return;
-          }
+              return decodeCreateActivity(input);
+            },
+          );
 
           yield* repository.create(dto);
         }),
@@ -217,52 +150,18 @@ export const ActivityConsumers = Layer.effectDiscard(
       {
         queue: "guilds-members-remove",
         prefetch: 1,
-        failurePolicy: { strategy: "nack" },
+        failurePolicy: retryPolicy(
+          RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_RETRY,
+          RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
+        ),
       },
       (delivery) =>
         Effect.gen(function* () {
-          const decoded = decodeJson(delivery);
-
-          if (Result.isFailure(decoded)) {
-            yield* publishDlq(
-              delivery,
-              RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
-              {
-                "x-validation-error": "Malformed JSON",
-                "x-error-type": "permanent",
-              },
-            );
-
-            return;
-          }
-
-          const input = decoded.success;
-          let dto;
-
-          try {
-            dto = decodeGuildMemberRemoved(input);
-          } catch {
-            yield* publishDlq(
-              delivery,
-              RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
-              {
-                "x-validation-error": "Validation failed",
-                "x-error-type": "permanent",
-              },
-            );
-
-            return;
-          }
-
-          if (retryCount(delivery) >= 3) {
-            yield* publishDlq(
-              delivery,
-              RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
-              {},
-            );
-
-            return;
-          }
+          const dto = yield* decodeDelivery(
+            delivery,
+            "Invalid member removal",
+            decodeGuildMemberRemoved,
+          );
 
           yield* repository.clearActiveSessionsForMember({
             guildId: dto.guildId,

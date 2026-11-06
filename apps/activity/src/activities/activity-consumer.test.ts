@@ -1,6 +1,8 @@
 import { describe, expect, it, mock } from "bun:test";
 import {
   RabbitMessaging,
+  UnprocessableDelivery,
+  type FailurePolicy,
   type RabbitDelivery,
   type RabbitMessagingService,
 } from "@lootlog/messaging";
@@ -8,7 +10,7 @@ import {
   RabbitExchange,
   RabbitRoutingKey,
 } from "@lootlog/protocol/rabbit/topology";
-import { Effect, Layer, Redacted } from "effect";
+import { Cause, Effect, Exit, Layer, Option, Redacted, Schema } from "effect";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ActivityConsumers, activityQueues } from "./activity-consumer.js";
 import { ActivityRepository } from "./activity-repository.js";
@@ -103,6 +105,8 @@ describe("Activity RabbitMQ topology", () => {
         (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
       >();
 
+      const policies = new Map<string, FailurePolicy>();
+
       const publish = mock<RabbitMessagingService["publish"]>(
         () => Effect.void,
       );
@@ -115,6 +119,7 @@ describe("Activity RabbitMQ topology", () => {
         nack: () => Effect.void,
         consume: (options, handler) => {
           handlers.set(options.queue, handler);
+          policies.set(options.queue, options.failurePolicy);
 
           return Effect.succeed({
             consumerTag: options.queue,
@@ -146,7 +151,7 @@ describe("Activity RabbitMQ topology", () => {
         signatureSecret: Redacted.make("a".repeat(32)),
       });
 
-      await Effect.runPromise(
+      const outcome = await Effect.runPromise(
         Effect.gen(function* () {
           yield* Layer.build(
             ActivityConsumers.pipe(
@@ -169,7 +174,7 @@ describe("Activity RabbitMQ topology", () => {
                   ),
                 });
 
-          yield* handler(delivery);
+          return yield* Effect.exit(handler(delivery));
         }).pipe(Effect.scoped),
       );
 
@@ -179,22 +184,26 @@ describe("Activity RabbitMQ topology", () => {
       expect(handlers.has("guilds-members-remove.dlq")).toBe(false);
 
       if (scenario === "valid") {
+        expect(Exit.isSuccess(outcome)).toBe(true);
         expect(create).toHaveBeenCalledWith(payload);
-        expect(publish).not.toHaveBeenCalled();
 
         return;
       }
 
+      // An unprocessable delivery skips retries and the retry policy routes it
+      // to the dead-letter queue, where it stays available for recovery.
       expect(create).not.toHaveBeenCalled();
-      expect(publish).toHaveBeenCalledTimes(1);
-      expect(publish.mock.calls[0]?.[0].headers).toMatchObject(
-        scenario === "wrong-secret"
-          ? { "x-signature-error": "Invalid activity event signature" }
-          : { "x-validation-error": "Malformed JSON" },
-      );
-      expect(publish.mock.calls[0]?.[0].routingKey).toBe(
-        RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ,
-      );
+      expect(
+        Exit.isFailure(outcome) &&
+          Option.exists(
+            Cause.findErrorOption(outcome.cause),
+            Schema.is(UnprocessableDelivery),
+          ),
+      ).toBe(true);
+      expect(policies.get("activity-log-create")).toMatchObject({
+        strategy: "retry",
+        deadLetterRoutingKey: RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ,
+      });
     },
   );
 });

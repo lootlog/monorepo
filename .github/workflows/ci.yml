@@ -28,10 +28,12 @@ jobs:
       docker-targets: ${{ steps.plan.outputs.docker_targets }}
       run-client-check: ${{ steps.plan.outputs.run_client_check }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: oven-sh/setup-bun@v2
+          # History for affected-package detection without every blob.
+          filter: blob:none
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.4.4
       - name: Create plan
@@ -41,10 +43,10 @@ jobs:
           HEAD_SHA: ${{ github.sha }}
         run: |
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-            affected_packages="$(bunx turbo@2.11.7 ls --output=json | jq -c '[.packages.items[].name]')"
+            affected_packages="$(bunx turbo@2.11.8 ls --output=json | jq -c '[.packages.items[].name]')"
             list_changed_files() { :; }
           else
-            affected="$(bunx turbo@2.11.7 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
+            affected="$(bunx turbo@2.11.8 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
             affected_packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
             list_changed_files() { git diff --name-only -z "$BASE_SHA" "$HEAD_SHA"; }
           fi
@@ -72,15 +74,32 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          filter: blob:none
       - uses: ./.github/actions/setup-bun
       - run: bun test scripts/deployment-targets.test.mjs scripts/development-deployment-plan.test.mjs scripts/static-assets.test.mjs
       - run: bun run format:check
       - run: bun run deps:check
+      # The root is not a workspace, so Turbo never lints the CI planning scripts.
+      - name: Lint repository scripts
+        run: bunx oxlint scripts
+      - name: Check migrations match their schemas
+        # drizzle-kit only reads its config's connection settings to generate.
+        env:
+          POSTGRESQL_CONNECTION_URI: postgresql://drift:drift@127.0.0.1:1/drift
+        run: |
+          for app in api auth activity battlelog; do
+            (cd "apps/$app" && bun run db:generate)
+          done
+          if [[ -n "$(git status --porcelain -- 'apps/*/drizzle')" ]]; then
+            git status --porcelain -- 'apps/*/drizzle'
+            echo "::error::A schema change has no committed migration. Run db:generate in the listed app and commit the result."
+            exit 1
+          fi
       - name: Check workflow syntax
-        uses: docker://rhysd/actionlint:1.7.12
+        uses: docker://rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
         # actionlint 1.7.12 does not recognize GitHub's documented concurrency queue key.
         with:
           args: -ignore=^unexpected.key..queue..for..concurrency..section
@@ -96,9 +115,10 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.workspace-shards) }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          filter: blob:none
       - uses: ./.github/actions/setup-bun
         with:
           turbo-cache-scope: ci-workspaces-${{ matrix.id }}
@@ -126,9 +146,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          filter: blob:none
       - uses: ./.github/actions/setup-bun
         with:
           turbo-cache-scope: ci-integration
@@ -151,9 +172,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          filter: blob:none
       - uses: ./.github/actions/setup-bun
         with:
           turbo-cache-scope: ci-generated-client
@@ -173,10 +195,10 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.docker-targets) }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Build packaging-sensitive image
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ${{ matrix.dockerfile }}

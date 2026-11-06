@@ -67,9 +67,13 @@ const setup = (permissions: Permission[], levelFrom = 200) => {
 
   const redis: ChatRedis = {
     lrange: () => Effect.sync(() => [...records]),
-    lset: (_key, index, value) =>
+    replace: (_key, previous, next) =>
       Effect.sync(() => {
-        records[index] = value;
+        const index = records.indexOf(previous);
+
+        if (index >= 0) records[index] = next;
+
+        return index >= 0;
       }),
     lrem: (_key, _count, value) =>
       Effect.sync(() => {

@@ -599,7 +599,7 @@ describe("notification job rebuild", () => {
         releaseDedup: () => Effect.void,
         invalidateList: () => Effect.void,
         publishHeroSighting: () => Effect.void,
-        enqueueEventHeroCheck: () => Effect.void,
+        signalEventHeroChecks: Effect.void,
         withLock: (_key, operation) => operation,
         publish: (routingKey, payload) =>
           Effect.sync(() => {

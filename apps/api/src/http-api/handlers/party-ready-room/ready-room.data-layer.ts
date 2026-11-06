@@ -1,3 +1,4 @@
+import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { readyRoomSourceVisibility } from "./ready-room-visibility.js";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
@@ -158,7 +159,7 @@ export const createReadyRoomForNotification = (
         return effects
           .publish(envelope)
           .pipe(
-            Effect.ignore,
+            ignorePublicationFailure,
             Effect.andThen(gatheringPublications.publish(result.aggregate)),
             Effect.as(result.aggregate),
           );
@@ -284,7 +285,7 @@ const makeReadyRoomContext = (
                     : [...aggregate.guildIds],
                 update,
               })
-              .pipe(Effect.ignore);
+              .pipe(ignorePublicationFailure);
           },
           { concurrency: "unbounded", discard: true },
         ),

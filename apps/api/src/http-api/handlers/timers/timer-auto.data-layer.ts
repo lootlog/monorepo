@@ -1,3 +1,4 @@
+import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { selectCharacterCatchingGuildIds } from "#src/members/character-catching-guilds";
 import { publishTimerEvents } from "./timer-update-publication.js";
 import { activeEventCondition } from "#src/events/event-scope-query";
@@ -41,6 +42,12 @@ import {
   timerHistoryEntryTable,
   timerTable,
 } from "#src/database/drizzle/timer.schema";
+import { eventHeroCheckOutboxTable } from "#src/database/drizzle/event-hero-check-outbox.schema";
+import {
+  buildEventHeroKillJobId,
+  createEventHeroKillJobData,
+  getEventHeroKillWindowKey,
+} from "#src/events/kills/event-hero-kill-job";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import type { JsonValue } from "#src/http-api/contracts/shared";
 import {
@@ -73,27 +80,7 @@ import {
 
 const DEDUP_TTL_SECONDS = 30;
 
-type EventHeroCheck = {
-  readonly guildId: string;
-  readonly world: string;
-  readonly npcId: number;
-  readonly npcName: string;
-  readonly npcIcon: string;
-  readonly npcLvl: number;
-  readonly timerData: {
-    readonly minSpawnTime: Date;
-    readonly maxSpawnTime: Date;
-    readonly memberId: number;
-    readonly previousMinSpawnTime: Date | null;
-    readonly previousMaxSpawnTime: Date | null;
-    readonly windowOpenedAt: Date | null;
-  };
-};
-
 export interface AutoTimerPorts {
-  readonly enqueueEventHeroCheck: (
-    check: EventHeroCheck,
-  ) => Effect.Effect<unknown, unknown>;
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
   readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
   readonly publishHeroSighting: (
@@ -118,6 +105,8 @@ export interface AutoTimerPorts {
     value: string,
     ttlSeconds: number,
   ) => Effect.Effect<unknown, unknown>;
+  /** Wakes the dispatcher for checks committed with a timer. */
+  readonly signalEventHeroChecks: Effect.Effect<void>;
   readonly setNx: (
     key: string,
     value: string,
@@ -335,6 +324,56 @@ const badRequest = (code: ErrorKey, rejectedGuilds: ReadonlyArray<JsonValue>) =>
     details: { submittedGuilds: [], rejectedGuilds },
   });
 
+type TimerRow = typeof timerTable.$inferSelect;
+
+/**
+ * Commits the event hero check with its timer, so a failed publication or
+ * enqueue cannot lose the event points this kill may award.
+ */
+const insertEventHeroCheck = (
+  transaction: Pick<typeof ApiDatabase.Service, "insert">,
+  {
+    guildId,
+    payload,
+    timer,
+    previousTimer,
+  }: {
+    readonly guildId: string;
+    readonly payload: CreateAutoTimerRequest;
+    readonly timer: TimerRow;
+    readonly previousTimer: TimerRow | null;
+  },
+) => {
+  const check = {
+    guildId,
+    world: payload.world,
+    npcId: payload.npc.id,
+    npcName: payload.npc.name,
+    npcIcon: normalizeNpcIcon(payload.npc.icon),
+    npcLvl: payload.npc.lvl,
+    timerData: {
+      minSpawnTime: timer.minSpawnTime,
+      maxSpawnTime: timer.maxSpawnTime,
+      memberId: timer.createdById,
+      previousMinSpawnTime: previousTimer?.minSpawnTime ?? null,
+      previousMaxSpawnTime: previousTimer?.maxSpawnTime ?? null,
+      windowOpenedAt: previousTimer?.windowOpenedAt ?? null,
+    },
+  };
+
+  return transaction.insert(eventHeroCheckOutboxTable).values({
+    guildId,
+    jobId: buildEventHeroKillJobId({
+      guildId,
+      world: payload.world,
+      npcId: payload.npc.id,
+      windowKey: getEventHeroKillWindowKey(check.timerData),
+      isManualClose: false,
+    }),
+    payload: createEventHeroKillJobData(check, false),
+  });
+};
+
 const findRecentlyCreatedTimer = Effect.fnUntraced(function* (
   database: Pick<typeof ApiDatabase.Service, "select">,
   timer: typeof timerTable.$inferSelect | null,
@@ -550,6 +589,13 @@ export const makeAutoTimer = (
             timerKey,
           );
 
+          yield* insertEventHeroCheck(transaction, {
+            guildId,
+            payload,
+            timer,
+            previousTimer,
+          });
+
           // A hero Lootlog saw killed is no longer where it was detected.
           const closedHeroSightingId =
             getNpcTypeRoutingTier(npc.type) === "heroes"
@@ -617,6 +663,7 @@ export const makeAutoTimer = (
           const response = mapTimerResponse(result.projection);
 
           if (Predicate.isTagged(result, "Duplicate")) return response;
+          yield* ports.signalEventHeroChecks;
 
           // The dedup entry is written only after publication succeeds, so a
           // retry of a failed attempt republishes instead of returning it.
@@ -667,30 +714,9 @@ export const makeAutoTimer = (
             ]);
 
             yield* Effect.forEach(closed, ports.publishHeroSighting).pipe(
-              Effect.ignore,
+              ignorePublicationFailure,
             );
           }
-
-          yield* ports
-            .enqueueEventHeroCheck({
-              guildId,
-              world: payload.world,
-              npcId: payload.npc.id,
-              npcName: payload.npc.name,
-              npcIcon: normalizeNpcIcon(payload.npc.icon),
-              npcLvl: payload.npc.lvl,
-              timerData: {
-                minSpawnTime: result.projection.minSpawnTime,
-                maxSpawnTime: result.projection.maxSpawnTime,
-                memberId: result.projection.createdById,
-                previousMinSpawnTime:
-                  result.previousTimer?.minSpawnTime ?? null,
-                previousMaxSpawnTime:
-                  result.previousTimer?.maxSpawnTime ?? null,
-                windowOpenedAt: result.previousTimer?.windowOpenedAt ?? null,
-              },
-            })
-            .pipe(Effect.ignore);
 
           return response;
         }),

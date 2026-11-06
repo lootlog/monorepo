@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && tsc --noEmit",
+    "build": "vite build",
     "preview": "vite preview",
     "deploy": "wrangler deploy dist/server/index.js --config wrangler.jsonc --env=\"\" --assets dist/client",
     "deploy:develop": "wrangler deploy dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client",
