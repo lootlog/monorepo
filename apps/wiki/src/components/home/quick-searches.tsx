@@ -45,13 +45,14 @@ export function QuickSearches() {
   return (
     <nav
       aria-label={t("home.quickSearchesLabel")}
-      className="flex flex-wrap gap-2"
+      className="-mx-4 flex w-[calc(100%+2rem)] max-w-3xl gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:px-0"
     >
       {QUICK_SEARCHES.map(({ key, search }) => (
         <Button
           key={key}
           variant="outline"
           size="sm"
+          className="shrink-0"
           nativeButton={false}
           render={
             <Link to="/items" search={{ ...EMPTY_ITEMS_SEARCH, ...search }} />

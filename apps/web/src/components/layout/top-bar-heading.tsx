@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import type { AppNavigationHeading } from "@/navigation/app-navigation";
 import { APP_NAVIGATION_ICONS } from "@/navigation/app-navigation-icons";
-import { GLASS_SURFACE_CLASS } from "./glass-surface";
+import { GLASS_SURFACE_CLASS } from "@lootlog/ui/lib/glass-surface";
 import { TopBarTitle } from "./top-bar-title";
 
 type TopBarHeadingProps = {

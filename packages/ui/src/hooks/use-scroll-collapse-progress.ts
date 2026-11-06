@@ -7,7 +7,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { usePageScrollsDocument } from "@/hooks/utils/use-page-scroll";
+import { useIsMobile } from "./use-mobile.js";
 
 /** How far the reader scrolls to take the chrome all the way in or out. */
 const COLLAPSE_DISTANCE = 56;
@@ -41,11 +41,11 @@ const settleTo = (
  * How collapsed scroll-away chrome is, from 0 (open) to 1 (collapsed). It
  * follows the scroll as it happens, as iOS toolbars do: scrolling down takes
  * it in, scrolling up brings it back, and it may rest half-way while a finger
- * holds the page. Once the page rests it settles to the nearer end. Only
- * phones scroll the document, so wider layouts stay open.
+ * holds the page. Once the page rests it settles to the nearer end. The
+ * chrome is a phone's, so from `md` up it stays open.
  */
 export const useScrollCollapseProgress = () => {
-  const scrollsDocument = usePageScrollsDocument();
+  const scrollsDocument = useIsMobile();
   const reduceMotion = useReducedMotion();
   const progress = useMotionValue(0);
   const [collapsed, setCollapsed] = useState(false);
