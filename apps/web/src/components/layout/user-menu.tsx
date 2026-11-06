@@ -5,80 +5,40 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@lootlog/ui/components/dropdown-menu";
-import {
-  Blocks,
-  ChevronUp,
-  LogOut,
-  Palette,
-  Server,
-  UserRound,
-} from "lucide-react";
+import { Blocks, ChevronUp, LogOut } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useSidebar } from "@lootlog/ui/components/sidebar";
 import { cn } from "cn";
-import { useUser } from "@/hooks/api/user/use-user";
-import { useLogout } from "@/hooks/auth/use-logout";
 import { Link } from "@tanstack/react-router";
-import { ROUTES } from "@/config/routes";
 import { useTranslation } from "react-i18next";
-import { useGateway } from "@/hooks/utils/use-gateway";
-import { useGlobalContext } from "@/hooks/context/use-global-context";
+import { UserSignalAvatar } from "@/components/layout/user-signal-avatar";
 import {
-  type LiveSignal,
-  UserSignalAvatar,
-} from "@/components/layout/user-signal-avatar";
-
-const SIGNAL_LABEL_COLOR: Record<LiveSignal, string> = {
-  live: "text-sidebar-foreground/60",
-  connecting: "text-sidebar-foreground/60",
-  offline: "text-signal-timer",
-};
-
-const SIGNAL_DOT_COLOR: Record<LiveSignal, string> = {
-  live: "bg-signal-live",
-  connecting: "bg-muted-foreground animate-pulse motion-reduce:animate-none",
-  offline: "bg-signal-timer",
-};
+  SIGNAL_DOT_COLOR,
+  SIGNAL_LABEL_COLOR,
+  useUserMenu,
+} from "@/components/layout/use-user-menu";
 
 /** The avatar column continues the server rail above it. */
 const BAR_GRID =
   "grid h-14 w-full grid-cols-[4rem_minmax(0,1fr)_2.75rem] items-center";
 
-// The phone sheet has no rail to continue, so its avatar cell has no edge.
 const AVATAR_CELL =
-  "flex h-full items-center justify-center md:border-r md:border-solid md:border-sidebar-border";
+  "flex h-full items-center justify-center border-r border-solid border-sidebar-border";
 
 export const UserMenu = () => {
-  const { user, isPending } = useUser();
   const { t } = useTranslation();
-  const { logout, isPending: isLogoutPending } = useLogout();
-  const { connected, joined } = useGateway();
   const { setOpenMobile } = useSidebar();
-  const { installAddonModal } = useGlobalContext();
 
-  let signal: LiveSignal = "offline";
-
-  if (joined) signal = "live";
-  else if (connected) signal = "connecting";
-
-  const settingsLinks = [
-    {
-      to: ROUTES.user.settings.account,
-      label: t("settings.account.title"),
-      icon: UserRound,
-    },
-    {
-      to: ROUTES.user.settings.servers,
-      label: t("settings.servers.navigation"),
-      icon: Server,
-    },
-    {
-      to: ROUTES.user.settings.appearance,
-      label: t("settings.appearance.title"),
-      icon: Palette,
-    },
-  ];
+  const {
+    user,
+    isPending,
+    signal,
+    settingsLinks,
+    logout,
+    isLogoutPending,
+    openInstallAddon,
+  } = useUserMenu();
 
   // The bar needs only the session, so it does not wait for preferences.
   if (!user) {
@@ -193,7 +153,7 @@ export const UserMenu = () => {
         <DropdownMenuSeparator className="m-0" />
         <div className="p-1.5">
           <DropdownMenuItem
-            onClick={() => installAddonModal.dispatch({ type: "OPEN" })}
+            onClick={openInstallAddon}
             className="rounded-lg px-2.5 py-2"
           >
             <Blocks />
