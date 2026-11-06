@@ -17,6 +17,8 @@ import { getMyHeroScores } from "./utils/my-hero-scores";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
 import { EventOverviewRail } from "./event-overview-rail";
+import { useMediaQuery } from "usehooks-ts";
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 
 export const EventDetail = () => {
   const {
@@ -54,6 +56,9 @@ export const EventDetail = () => {
   } = useEventDetail();
 
   const currentMember = useCurrentMember(queryGuildId);
+  // From `xl` the ranking is a rail as tall as the page view, so it lists
+  // every place instead of stopping short of the bottom.
+  const isRail = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   if (isLoading || isMapsLoading) {
     return <EventDetailSkeleton />;
@@ -190,8 +195,9 @@ export const EventDetail = () => {
                 heroNpcs={heroes}
                 guildId={queryGuildId}
                 eventId={queryEventId}
-                limit={10}
+                limit={isRail ? Infinity : 10}
                 currentMemberId={currentMember.data?.id}
+                pinViewer={isRail}
               />
             }
           />
