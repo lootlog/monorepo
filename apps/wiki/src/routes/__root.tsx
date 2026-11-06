@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-provider";
 import { UiLabelsProvider } from "@lootlog/ui/components/ui-labels";
 import { preventIosFocusZoom } from "@lootlog/ui/lib/ios-focus-zoom";
-import { EquipmentPreviewProvider } from "@/components/equipment/equipment-preview-provider";
 import { ItemComparisonProvider } from "@/components/comparison/item-comparison-provider";
 import { EquipmentSetProvider } from "@/components/equipment/equipment-set-provider";
 import { WikiLayout } from "@/components/layout/wiki-layout";
@@ -103,13 +102,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <UiLabelsProvider labels={uiLabels}>
               <SharedTooltipProvider>
                 <UserTheme storedSelection={storedThemeSelection} />
-                <EquipmentPreviewProvider>
-                  <EquipmentSetProvider>
-                    <ItemComparisonProvider>
-                      <WikiLayout>{children}</WikiLayout>
-                    </ItemComparisonProvider>
-                  </EquipmentSetProvider>
-                </EquipmentPreviewProvider>
+                <EquipmentSetProvider>
+                  <ItemComparisonProvider>
+                    <WikiLayout>{children}</WikiLayout>
+                  </ItemComparisonProvider>
+                </EquipmentSetProvider>
               </SharedTooltipProvider>
             </UiLabelsProvider>
           </QueryProvider>

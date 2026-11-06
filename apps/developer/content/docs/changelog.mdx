@@ -3,6 +3,14 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-06 — Public catalog events
+
+The Search API adds `GET /public/catalog/events`, which works without an API
+key or a session. It lists every event with items in the public catalog, the
+latest year first: its `slug`, which `GET /public/catalog/items?event=` takes,
+its `name` as the game writes it, its `year`, its `itemCount`, and the `boss`
+its highest-level item drops from.
+
 ## 2026-11-06 — SDK 0.4.0, correlated realtime commands and no capability negotiation (breaking)
 
 The realtime gateway closes the connection on a command without a

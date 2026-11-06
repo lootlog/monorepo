@@ -24,7 +24,7 @@ const useSetItems = () => {
   const { set } = useEquipmentSet();
   const ids = Object.values(set.items);
 
-  const { data } = useCatalogControllerGetItems(
+  const { data, isPlaceholderData } = useCatalogControllerGetItems(
     { ids, gameVersion: WIKI_GAME_VERSION, limit: ids.length },
     {
       query: {
@@ -37,6 +37,9 @@ const useSetItems = () => {
   return {
     set,
     itemsById: new Map((data?.hits ?? []).map((item) => [item.id, item])),
+    // While a changed set loads, the previous response stands in and lacks
+    // the new items, so the set is not yet as worn.
+    isLoaded: ids.length === 0 || (data !== undefined && !isPlaceholderData),
   };
 };
 
@@ -58,17 +61,24 @@ const wornIn = (
   };
 };
 
-/** The set's items as they are worn, upgrades included, by slot. */
-export const useWornItems = (): Map<EquipmentSlotId, WornItem> => {
-  const setItems = useSetItems();
-
-  return new Map(
+const wornItemsOf = (setItems: ReturnType<typeof useSetItems>) =>
+  new Map(
     EQUIPMENT_SLOTS.flatMap(({ id }) => {
       const worn = wornIn(setItems, id);
 
       return worn ? [[id, worn] as const] : [];
     }),
   );
+
+/** The set's items as they are worn, upgrades included, by slot. */
+export const useWornItems = (): Map<EquipmentSlotId, WornItem> =>
+  wornItemsOf(useSetItems());
+
+/** The worn items and whether they have loaded at all. */
+export const useLoadedWornItems = () => {
+  const setItems = useSetItems();
+
+  return { wornItems: wornItemsOf(setItems), isLoaded: setItems.isLoaded };
 };
 
 /** The item worn in one slot, if it has loaded. */

@@ -5,7 +5,7 @@ import { EquipmentSetTotals } from "./equipment-set-totals";
 
 /** The set as a game window: the character and slots beside every stat. */
 export function EquipmentSetWindow() {
-  const { preview, totals, previewTotals } = useSetSummary();
+  const { totals, isLoaded } = useSetSummary();
 
   return (
     <div className="grid items-start gap-6 md:grid-cols-[17rem_minmax(0,1fr)] md:gap-8">
@@ -16,8 +16,7 @@ export function EquipmentSetWindow() {
       <div className="@container">
         <EquipmentSetTotals
           totals={totals}
-          previewTotals={previewTotals}
-          previewName={previewTotals ? (preview?.name ?? null) : null}
+          isLoaded={isLoaded}
           layout="columns"
         />
       </div>

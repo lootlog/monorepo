@@ -27,6 +27,7 @@ const makeBoundary = (overrides: Partial<SearchOperationsValue> = {}) => {
     searchAll: () => Effect.succeed({ items: [], npcs: [], players: [] }),
     catalogItems: () => Effect.succeed({ hits: [], estimatedTotalHits: 0 }),
     catalogNpcs: () => Effect.succeed({ hits: [], estimatedTotalHits: 0 }),
+    catalogEvents: () => Effect.succeed({ events: [] }),
     indexItems: () => Effect.void,
     markRetiredDrops: () => Effect.void,
     indexNpcs: () => Effect.void,

@@ -1,36 +1,16 @@
-import { useEquipmentPreview } from "@/contexts/equipment-preview-context";
-import { useWornItems } from "@/hooks/use-worn-items";
-import { findEquipmentSlot } from "@/lib/equipment-slots";
+import { useLoadedWornItems } from "@/hooks/use-worn-items";
 import { sumItemStats } from "@/lib/item-stat-totals";
 
 /**
- * The set as worn, its stats added up, and the stats it would have with
- * the item the User points at worn instead of the one in its slot.
+ * The set as worn and its stats added up. A change counts as the User's once
+ * the set has loaded: loading it shows its stats, not a gain.
  */
 export const useSetSummary = () => {
-  const preview = useEquipmentPreview();
-  const wornItems = useWornItems();
-  const previewSlot = preview ? findEquipmentSlot(preview.type) : undefined;
-
-  const totals = sumItemStats(
-    [...wornItems.values()].map(({ item }) => item.stat),
-  );
-
-  const previewTotals =
-    preview && previewSlot
-      ? sumItemStats([
-          ...[...wornItems].flatMap(([slotId, { item }]) =>
-            slotId === previewSlot.id ? [] : [item.stat],
-          ),
-          preview.stat,
-        ])
-      : null;
+  const { wornItems, isLoaded } = useLoadedWornItems();
 
   return {
     wornItems,
-    preview: previewSlot ? preview : null,
-    previewSlot,
-    totals,
-    previewTotals,
+    totals: sumItemStats([...wornItems.values()].map(({ item }) => item.stat)),
+    isLoaded,
   };
 };

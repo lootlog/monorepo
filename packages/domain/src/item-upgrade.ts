@@ -871,3 +871,82 @@ export const attackSpeedUpgrade = (item: UpgradableItem): ItemUpgrade => {
 /** The most attack speed the item adds, at its `attackSpeedUpgrade`. */
 export const upgradedAttackSpeed = (item: UpgradableItem) =>
   itemStatAttackSpeed(upgradeItemStat(item, attackSpeedUpgrade(item)));
+
+/**
+ * Upgrade cost factors by rarity, from the game's rules: the points an
+ * upgrade needs and the gold the +5 step takes. An upgraded item's points
+ * follow their own formula.
+ */
+const UPGRADE_COST_FACTORS = new Map(
+  Object.entries({
+    COMMON: { points: 1, gold: 1 },
+    UNIQUE: { points: 10, gold: 10 },
+    HEROIC: { points: 100, gold: 30 },
+    UPGRADED: { points: undefined, gold: 40 },
+    LEGENDARY: { points: 1000, gold: 60 },
+  }),
+);
+
+/** The share of an upgrade's points each level, +0 to +5, takes in all. */
+const UPGRADE_LEVEL_COST_FACTORS = [0, 1, 2.1, 3.4, 5, 7] as const;
+
+// An item's crafting value in percent; most items have the full 100.
+const DEFAULT_ARTISAN_BONUS = 100;
+
+// The +5 step takes three times the currency the unupgraded item breaks into.
+const ESSENCE_COST_MULTIPLIER = 3;
+
+/**
+ * What upgrading an item from +0 to a level costs: the upgrade points its
+ * ingredients must give, and for the +5 step also the breakdown currency of
+ * the item's rarity and gold, both taken once the points are in. The game's
+ * rules do not say how it rounds, so each amount is rounded to a whole.
+ */
+export type ItemUpgradeCost = {
+  points: number;
+  /** In the breakdown currency of the item's rarity. */
+  essence: number;
+  gold: number;
+};
+
+export const NO_UPGRADE_COST: ItemUpgradeCost = {
+  points: 0,
+  essence: 0,
+  gold: 0,
+};
+
+/**
+ * The cost of upgrading the item from +0 to `level`; none for an item the
+ * game does not upgrade.
+ */
+export const itemUpgradeCost = (
+  item: UpgradableItem,
+  level: UpgradeLevel,
+): ItemUpgradeCost => {
+  const factors = UPGRADE_COST_FACTORS.get(item.rarity ?? "COMMON");
+
+  if (level === 0 || !factors || !isUpgradable(item)) return NO_UPGRADE_COST;
+
+  const levelFactor = UPGRADE_LEVEL_COST_FACTORS[level];
+
+  const points =
+    factors.points === undefined
+      ? levelFactor * (150 * item.lvl + 27_000)
+      : factors.points * levelFactor * (180 + item.lvl);
+
+  if (level !== MAX_UPGRADE_LEVEL) {
+    return { ...NO_UPGRADE_COST, points: Math.round(points) };
+  }
+
+  const artisanBonus = Number(
+    itemStatValue(item.stat, "artisanbon") ?? DEFAULT_ARTISAN_BONUS,
+  );
+
+  const breakdown = ((item.lvl / 10 + 10) * artisanBonus) / 100;
+
+  return {
+    points: Math.round(points),
+    essence: Math.round(ESSENCE_COST_MULTIPLIER * breakdown),
+    gold: Math.round((10 * item.lvl + 1300) * item.lvl * factors.gold),
+  };
+};

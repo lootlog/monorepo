@@ -1,5 +1,6 @@
 import { Effect } from "effect";
-import type { Meilisearch, SearchParams } from "meilisearch";
+import { maxBy, orderBy } from "es-toolkit";
+import type { Meilisearch, MultiSearchParams, SearchParams } from "meilisearch";
 import { attemptMeilisearch } from "#src/meilisearch/search-operation-failure";
 import { buildMeilisearchInFilter } from "#src/meilisearch/query-builder";
 import { ITEMS_INDEX } from "#src/items/search-index";
@@ -11,16 +12,20 @@ import {
   ELASTIC_LEVELS,
   elasticItemLevel,
 } from "@lootlog/domain/elastic-level";
+import { itemEventLabels, itemEventSlug } from "@lootlog/domain/item-events";
 import {
   itemAtLevel,
   itemStatAttackSpeed,
+  itemStatValue,
   upgradedAttackSpeed,
 } from "@lootlog/domain/item-upgrade";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import type { AppLogger } from "#src/shared/logger";
 import type {
+  CatalogControllerGetEventsQuery,
   CatalogControllerGetItemsQuery,
   CatalogControllerGetNpcsQuery,
+  CatalogEventsResponseDto_Output,
   CatalogItemsResponseDto_Output,
   CatalogNpcsResponseDto_Output,
 } from "#src/http-api/contracts/catalog/schemas";
@@ -414,5 +419,86 @@ export const makeCatalogModule = (
     } satisfies CatalogNpcsResponseDto_Output;
   });
 
-  return { getItems, getNpcs };
+  /**
+   * Every event with items in the catalog: Meilisearch counts the items of
+   * each event slug, and each event's highest-level item gives its name as
+   * the game writes it and the monster that pictures it.
+   */
+  const getEvents = Effect.fn("Catalog.events")(function* (
+    query: CatalogControllerGetEventsQuery,
+  ) {
+    const filters = [
+      gameVersionFilter(query.gameVersion),
+      `statsKeys = "etiquette"`,
+    ].filter((filter) => filter !== undefined);
+
+    const counts = yield* attemptMeilisearch("catalog.events.counts", () =>
+      meilisearch.index(ITEMS_INDEX).search("", {
+        filter: filters.join(" AND "),
+        facets: ["eventSlugs"],
+        limit: 0,
+      }),
+    ).pipe(
+      Effect.map(({ facetDistribution }) =>
+        Object.entries(facetDistribution?.eventSlugs ?? {}),
+      ),
+    );
+
+    if (counts.length === 0) return { events: [] };
+
+    const { results } = yield* attemptMeilisearch("catalog.events.items", () =>
+      meilisearch.multiSearch<
+        MultiSearchParams,
+        Pick<CatalogItemDocument, "stat" | "droppedBy">
+      >({
+        queries: counts.map(([slug]) => ({
+          indexUid: ITEMS_INDEX,
+          q: "",
+          filter: [...filters, `eventSlugs = ${JSON.stringify(slug)}`].join(
+            " AND ",
+          ),
+          sort: ["lvl:desc"],
+          limit: 1,
+          attributesToRetrieve: ["stat", "droppedBy"],
+        })),
+      }),
+    ).pipe(
+      Effect.tapError((error) =>
+        Effect.sync(() => logger.error("Catalog events error", { error })),
+      ),
+    );
+
+    const events = counts.flatMap(([slug, itemCount], index) => {
+      const item = results[index]?.hits[0];
+
+      const name = itemEventLabels(
+        itemStatValue(item?.stat ?? "", "etiquette") ?? "",
+      ).find((label) => itemEventSlug(label) === slug);
+
+      if (!name) return [];
+
+      const boss = maxBy(item?.droppedBy ?? [], ({ lvl }) => lvl ?? 0);
+      const year = /\b(\d{4})\b/.exec(name)?.[1];
+
+      return [
+        {
+          slug,
+          name,
+          year: year === undefined ? null : Number(year),
+          itemCount,
+          boss: boss ? { name: boss.name, icon: boss.icon } : null,
+        },
+      ];
+    });
+
+    return {
+      events: orderBy(
+        events,
+        [({ year }) => year ?? 0, ({ name }) => name],
+        ["desc", "asc"],
+      ),
+    } satisfies CatalogEventsResponseDto_Output;
+  });
+
+  return { getItems, getNpcs, getEvents };
 };
