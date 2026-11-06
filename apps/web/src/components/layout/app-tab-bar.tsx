@@ -79,9 +79,14 @@ export const AppTabBar = ({ sections, badges, onSearch }: AppTabBarProps) => {
   // moves with the page without rendering on every frame.
   const size = useTransform(progress, [0, 1], [OPEN_SIZE, COLLAPSED_SIZE]);
   const open = useTransform(progress, (value) => 1 - value);
-  const searchRoom = onSearch ? GAP : 0;
 
-  const navWidth = useMotionTemplate`calc(${COLLAPSED_SIZE}px + (100% - ${COLLAPSED_SIZE}px - ${onSearch ? size : 0}px - ${searchRoom}px) * ${open})`;
+  // A motion value even without search: the template drops a literal 0,
+  // which leaves the width invalid and the pill without tabs.
+  const searchRoom = useTransform(size, (value) =>
+    onSearch ? value + GAP : 0,
+  );
+
+  const navWidth = useMotionTemplate`calc(${COLLAPSED_SIZE}px + (100% - ${COLLAPSED_SIZE}px - ${searchRoom}px) * ${open})`;
 
   // The fades overlap around half-way, so the pill is never empty.
   const tabsOpacity = useTransform(progress, [0, 0.6], [1, 0]);
