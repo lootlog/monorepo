@@ -532,7 +532,7 @@ export const upgradeItemStat = (item: UpgradableItem, upgrade: ItemUpgrade) => {
  * class's pool, each with a chance by its group's power, the player keeping
  * one. Its value is one bonus of that stat at the item's +5 virtual level.
  */
-export const UPGRADE_BONUS_KEYS = [
+const UPGRADE_BONUS_KEYS = [
   "da",
   "di",
   "ds",

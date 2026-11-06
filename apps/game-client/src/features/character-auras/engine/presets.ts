@@ -3,10 +3,10 @@ import { heartbeat, noise1 } from "./math";
 import type { EmitterSpec } from "./particles";
 
 /** Item rarities of the game, for when auras become rewards. */
-export type AuraTier = "unique" | "heroic" | "legendary";
+type AuraTier = "unique" | "heroic" | "legendary";
 
 /** Signature effects drawn by the renderer on top of the shared glow and particles. */
-export type AuraFx =
+type AuraFx =
   | "rays"
   | "lightning"
   | "orbits"
@@ -46,7 +46,7 @@ export type BurstKind =
   | "aurora-flare"
   | "conqueror";
 
-export type GroundStyle =
+type GroundStyle =
   | "disc"
   | "ring"
   | "vortex"

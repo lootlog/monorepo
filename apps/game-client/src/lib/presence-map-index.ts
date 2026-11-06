@@ -4,7 +4,7 @@ import {
   type PlayerPresenceResponse,
 } from "./online-players-presence";
 
-export type MapOccupant = {
+type MapOccupant = {
   key: string;
   name: string;
   isAfk: boolean;

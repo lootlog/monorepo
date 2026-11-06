@@ -36,7 +36,7 @@ export interface AccessTokenRequest {
   readonly discordId: string;
 }
 
-export interface IdpTokenResponse {
+interface IdpTokenResponse {
   readonly accessToken: string;
   readonly expiresIn: number;
   readonly scopes: ReadonlyArray<string>;

@@ -1,8 +1,8 @@
 import { useLayoutEffect, useRef, useState } from "react";
 
-export const COMPACT_SCHEDULE_MAX_WIDTH = 840;
+const COMPACT_SCHEDULE_MAX_WIDTH = 840;
 
-export function shouldUseCompactSchedule(width: number): boolean {
+function shouldUseCompactSchedule(width: number): boolean {
   return width < COMPACT_SCHEDULE_MAX_WIDTH;
 }
 

@@ -5,7 +5,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { requiredWithFallback } from "@lootlog/schema/stored-value";
 
 /** The search param a link may use to open an Organization on a world. */
-export const GUILD_WORLD_SEARCH_PARAM = "world";
+const GUILD_WORLD_SEARCH_PARAM = "world";
 
 const GUILD_WORLD_CHANGE_EVENT = "lootlog:guild-world-change";
 

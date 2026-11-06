@@ -81,40 +81,40 @@ const ActivityResponse = Schema.Struct({
   ),
 });
 
-export type PaginatedActivitiesResponseDto =
+type PaginatedActivitiesResponseDto =
   typeof PaginatedActivitiesResponseDto.Type;
 
-export const PaginatedActivitiesResponseDto = Schema.Struct({
+const PaginatedActivitiesResponseDto = Schema.Struct({
   data: Schema.Array(ActivityResponse),
   nextCursor: Schema.optionalKey(Schema.String),
   hasMore: Schema.Boolean,
 }).annotate({ identifier: "PaginatedActivitiesResponseDto" });
 
-export type ActorNameSuggestionsResponseDto_Output =
+type ActorNameSuggestionsResponseDto_Output =
   typeof ActorNameSuggestionsResponseDto_Output.Type;
 
-export const ActorNameSuggestionsResponseDto_Output = Schema.Struct({
+const ActorNameSuggestionsResponseDto_Output = Schema.Struct({
   suggestions: Schema.Array(Schema.String),
 }).annotate({ identifier: "ActorNameSuggestionsResponseDto_Output" });
 
-export type WorldSuggestionsResponseDto_Output =
+type WorldSuggestionsResponseDto_Output =
   typeof WorldSuggestionsResponseDto_Output.Type;
 
-export const WorldSuggestionsResponseDto_Output = Schema.Struct({
+const WorldSuggestionsResponseDto_Output = Schema.Struct({
   worlds: Schema.Array(Schema.String),
 }).annotate({ identifier: "WorldSuggestionsResponseDto_Output" });
 
-export type ClanNameSuggestionsResponseDto_Output =
+type ClanNameSuggestionsResponseDto_Output =
   typeof ClanNameSuggestionsResponseDto_Output.Type;
 
-export const ClanNameSuggestionsResponseDto_Output = Schema.Struct({
+const ClanNameSuggestionsResponseDto_Output = Schema.Struct({
   suggestions: Schema.Array(Schema.String),
 }).annotate({ identifier: "ClanNameSuggestionsResponseDto_Output" });
 
-export type MemberActivityStatsResponseDto =
+type MemberActivityStatsResponseDto =
   typeof MemberActivityStatsResponseDto.Type;
 
-export const MemberActivityStatsResponseDto = Schema.Struct({
+const MemberActivityStatsResponseDto = Schema.Struct({
   guildId: Schema.String,
   discordId: Schema.String,
   source: ActivitySource,
@@ -134,16 +134,16 @@ export const MemberActivityStatsResponseDto = Schema.Struct({
   updatedAt: DateTimeString,
 }).annotate({ identifier: "MemberActivityStatsResponseDto" });
 
-export type ActivityResponseDto = typeof ActivityResponseDto.Type;
+type ActivityResponseDto = typeof ActivityResponseDto.Type;
 
-export const ActivityResponseDto = ActivityResponse.annotate({
+const ActivityResponseDto = ActivityResponse.annotate({
   identifier: "ActivityResponseDto",
 });
 
-export type DeleteActivityResponseDto_Output =
+type DeleteActivityResponseDto_Output =
   typeof DeleteActivityResponseDto_Output.Type;
 
-export const DeleteActivityResponseDto_Output = Schema.Struct({
+const DeleteActivityResponseDto_Output = Schema.Struct({
   count: FiniteNumber,
 }).annotate({ identifier: "DeleteActivityResponseDto_Output" });
 

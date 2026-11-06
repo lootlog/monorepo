@@ -136,7 +136,7 @@ const ReadyRoomParticipantDomainResponse = Schema.Struct({
   updatedAt: DomainDateTime,
 });
 
-export const PartyReadyRoomDomainResponse = Schema.Struct({
+const PartyReadyRoomDomainResponse = Schema.Struct({
   ...PartyReadyRoomResponse.fields,
   createdAt: DomainDateTime,
   updatedAt: DomainDateTime,
@@ -147,16 +147,16 @@ export const PartyReadyRoomDomainResponse = Schema.Struct({
   ),
 });
 
-export const PartyReadyRoomsDomainResponse = Schema.Array(
+const PartyReadyRoomsDomainResponse = Schema.Array(
   PartyReadyRoomDomainResponse,
 );
 
-export const PartyReadyRoomUpdateDomainResponse = Schema.Struct({
+const PartyReadyRoomUpdateDomainResponse = Schema.Struct({
   ...PartyReadyRoomUpdateResponse.fields,
   projection: Schema.optionalKey(PartyReadyRoomDomainResponse),
 });
 
-export const ActivePartyGatheringsDomainResponse = Schema.Array(
+const ActivePartyGatheringsDomainResponse = Schema.Array(
   Schema.Struct({
     ...ActivePartyGatheringSummary.fields,
     createdAt: DomainDateTime,
@@ -190,7 +190,7 @@ export const activeReadyRooms = Effect.fn("activeReadyRooms")(function* (
   return yield* decode(ActivePartyGatheringsDomainResponse, value);
 });
 
-export const listReadyRooms = Effect.fn("listReadyRooms")(function* () {
+const listReadyRooms = Effect.fn("listReadyRooms")(function* () {
   const current = yield* identity;
   const guildIds = yield* accessibleGuildIds(current.discordId);
   const value = yield* data((service) => service.list(current, guildIds));
@@ -234,7 +234,7 @@ export const getReadyRoom = Effect.fn("getReadyRoom")(function* (
   return yield* decode(PartyReadyRoomDomainResponse, value);
 });
 
-export const applyToReadyRoom = Effect.fn("applyToReadyRoom")(function* (
+const applyToReadyRoom = Effect.fn("applyToReadyRoom")(function* (
   notificationId: string,
   payload: ApplyToPartyReadyRoomRequest,
 ) {
@@ -248,18 +248,19 @@ export const applyToReadyRoom = Effect.fn("applyToReadyRoom")(function* (
   return yield* decode(PartyReadyRoomDomainResponse, value);
 });
 
-export const withdrawFromReadyRoom = Effect.fn("withdrawFromReadyRoom")(
-  function* (notificationId: string, payload: PartyParticipantIdentity) {
-    const current = yield* identity;
-    yield* assertVisible(current, notificationId);
+const withdrawFromReadyRoom = Effect.fn("withdrawFromReadyRoom")(function* (
+  notificationId: string,
+  payload: PartyParticipantIdentity,
+) {
+  const current = yield* identity;
+  yield* assertVisible(current, notificationId);
 
-    const value = yield* data((service) =>
-      service.withdraw(current, notificationId, payload),
-    );
+  const value = yield* data((service) =>
+    service.withdraw(current, notificationId, payload),
+  );
 
-    return yield* decode(PartyReadyRoomUpdateDomainResponse, value);
-  },
-);
+  return yield* decode(PartyReadyRoomUpdateDomainResponse, value);
+});
 
 export const removeFromReadyRoom = Effect.fn("removeFromReadyRoom")(function* (
   notificationId: string,
@@ -275,7 +276,7 @@ export const removeFromReadyRoom = Effect.fn("removeFromReadyRoom")(function* (
   return yield* decode(PartyReadyRoomUpdateDomainResponse, value);
 });
 
-export const resolveReadyRoomInvitationTargets = Effect.fn(
+const resolveReadyRoomInvitationTargets = Effect.fn(
   "resolveReadyRoomInvitationTargets",
 )(function* (notificationId: string, payload: ResolvePartyInvitationsRequest) {
   const current = yield* identity;
@@ -288,18 +289,19 @@ export const resolveReadyRoomInvitationTargets = Effect.fn(
   return yield* decode(PartyInvitationTargetsResponse, value);
 });
 
-export const observeReadyRoomParty = Effect.fn("observeReadyRoomParty")(
-  function* (notificationId: string, payload: ObservePartyRequest) {
-    const current = yield* identity;
-    yield* assertVisible(current, notificationId);
+const observeReadyRoomParty = Effect.fn("observeReadyRoomParty")(function* (
+  notificationId: string,
+  payload: ObservePartyRequest,
+) {
+  const current = yield* identity;
+  yield* assertVisible(current, notificationId);
 
-    const value = yield* data((service) =>
-      service.observeParty(current, notificationId, payload),
-    );
+  const value = yield* data((service) =>
+    service.observeParty(current, notificationId, payload),
+  );
 
-    return yield* decode(PartyReadyRoomDomainResponse, value);
-  },
-);
+  return yield* decode(PartyReadyRoomDomainResponse, value);
+});
 
 export const cancelReadyRoom = Effect.fn("cancelReadyRoom")(function* (
   notificationId: string,

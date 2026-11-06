@@ -19,7 +19,7 @@ export function mulberry32(seed: number): Rng {
 
 export const TAU = Math.PI * 2;
 
-export function lerp(a: number, b: number, t: number): number {
+function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
@@ -82,7 +82,7 @@ export function rgba([r, g, b]: Rgb, alpha: number): string {
   return `rgba(${r},${g},${b},${clamp(alpha, 0, 1).toFixed(3)})`;
 }
 
-export function mixRgb(a: Rgb, b: Rgb, t: number): Rgb {
+function mixRgb(a: Rgb, b: Rgb, t: number): Rgb {
   return [
     Math.round(lerp(a[0], b[0], t)),
     Math.round(lerp(a[1], b[1], t)),

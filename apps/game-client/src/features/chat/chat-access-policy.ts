@@ -157,7 +157,7 @@ export const retainChatAccessPolicy = (queryClient: QueryClient) => {
   };
 };
 
-export const canReadChatMessage = (
+const canReadChatMessage = (
   organization: OrganizationAccessPolicy | undefined,
   message: ChatMessage,
 ) => {

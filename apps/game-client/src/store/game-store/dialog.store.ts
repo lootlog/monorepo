@@ -6,7 +6,7 @@ export type DialogNpcContextSource =
   | "fallback-lookup"
   | "talk-request";
 
-export type DialogNpcContext = {
+type DialogNpcContext = {
   npcId: number;
   npc: NpcSnapshot | null;
   source: DialogNpcContextSource;

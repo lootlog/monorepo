@@ -29,7 +29,7 @@ import {
 import { createSettingsPatchQueue } from "./settings-patch-queue";
 import { useSettingsSaveStatusStore } from "./settings-save-status.store";
 
-export const getCurrentSettingsContext = (): SettingsDocumentsContext => {
+const getCurrentSettingsContext = (): SettingsDocumentsContext => {
   const hero = useGameStore.getState().game?.hero;
 
   return {
@@ -38,7 +38,7 @@ export const getCurrentSettingsContext = (): SettingsDocumentsContext => {
   };
 };
 
-export const getCurrentUserId = () =>
+const getCurrentUserId = () =>
   queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
     getUsersControllerGetUserPreferencesQueryKey(),
   )?.userId;
@@ -55,7 +55,7 @@ export const readCurrentSettingsDocuments = () =>
  * Resolves the concrete scope for a patch from the signed-in user and the
  * current character. Returns undefined while that context is unknown.
  */
-export const resolveSettingsScope = (
+const resolveSettingsScope = (
   scopeType: SettingsScopeType,
   guildId?: string,
 ): SettingsScope | undefined => {

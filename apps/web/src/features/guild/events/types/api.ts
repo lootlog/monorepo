@@ -6,14 +6,13 @@ import type {
   EventOverviewResponseDtoHeroNpcsItem,
   EventRankingEntryResponseDto,
   EventWrappedApiResponseDtoOutput,
-  HeroRespawnConfigResponseDtoWindowStatus,
   KillTimelineMapResponseDto,
   KillTimelineMapResponseDtoAssignmentsItem,
   KillTimelineMapResponseDtoGapsItem,
   MemberSummary,
 } from "@lootlog/client/main";
 
-export type MemberRole =
+type MemberRole =
   EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItemRolesItem;
 
 export type Member = {
@@ -69,8 +68,6 @@ export type EventWrappedLeaderResult = {
 };
 
 export type EventWrapped = EventWrappedApiResponseDtoOutput;
-
-export type WindowStatus = HeroRespawnConfigResponseDtoWindowStatus;
 
 export type MapAssignment = KillTimelineMapResponseDtoAssignmentsItem;
 

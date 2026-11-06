@@ -1,6 +1,6 @@
 import type { EventTimer } from "../../types/api";
 
-export type HeroTimerCountdownPhase = "waiting" | "open" | "expired";
+type HeroTimerCountdownPhase = "waiting" | "open" | "expired";
 
 export interface HeroTimerCountdownState {
   phase: HeroTimerCountdownPhase;

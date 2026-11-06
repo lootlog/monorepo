@@ -76,9 +76,9 @@ export const MemberLootlogConfigSummaryResponse = Schema.Struct({
   ),
 }).annotate({ identifier: "MemberLootlogConfigSummaryResponseDto_Output" });
 
-export type MemberReferenceResponse = typeof MemberReferenceResponse.Type;
+type MemberReferenceResponse = typeof MemberReferenceResponse.Type;
 
-export const MemberReferenceResponse = Schema.Struct({
+const MemberReferenceResponse = Schema.Struct({
   id: FiniteNumber,
   userId: Schema.String,
   name: Schema.String,
@@ -87,9 +87,9 @@ export const MemberReferenceResponse = Schema.Struct({
   active: Schema.Boolean,
 }).annotate({ identifier: "MemberReferenceResponseDto_Output" });
 
-export type MemberSummaryResponse = typeof MemberSummaryResponse.Type;
+type MemberSummaryResponse = typeof MemberSummaryResponse.Type;
 
-export const MemberSummaryResponse = Schema.Struct({
+const MemberSummaryResponse = Schema.Struct({
   id: FiniteNumber,
   userId: Schema.String,
   name: Schema.String,

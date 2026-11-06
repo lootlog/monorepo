@@ -23,7 +23,7 @@ export class CommandFailure extends TaggedErrorClass<CommandFailure>()(
 
 type QueryValue = string | number | boolean | ReadonlyArray<string>;
 
-export type Query = Readonly<Record<string, QueryValue | undefined>>;
+type Query = Readonly<Record<string, QueryValue | undefined>>;
 
 type Read = <A, I>(
   path: string,

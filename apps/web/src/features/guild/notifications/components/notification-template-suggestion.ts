@@ -70,7 +70,7 @@ export type SuggestionPosition = {
   top: number;
 };
 
-export const getSuggestionPosition = (
+const getSuggestionPosition = (
   editorSurface: HTMLDivElement | null,
 ): SuggestionPosition => {
   const selection = window.getSelection();
@@ -89,7 +89,7 @@ export const getSuggestionPosition = (
   };
 };
 
-export const buildSuggestion = (
+const buildSuggestion = (
   match: RegExpExecArray,
   prefixLength: number,
   position: SuggestionPosition,
@@ -106,7 +106,7 @@ export const buildSuggestion = (
   };
 };
 
-export const getActiveTemplateSuggestion = (
+const getActiveTemplateSuggestion = (
   textBeforeCursor: string,
   position: SuggestionPosition,
 ): ActiveSuggestion => {

@@ -8,9 +8,7 @@ const LOOTLOG_STORAGE_PREFIXES = [
 ];
 
 /** Keys the game client owns in the given storage; Margonem's own keys are left alone. */
-export const listLootlogStorageKeys = (
-  storage: Pick<Storage, "length" | "key">,
-) => {
+const listLootlogStorageKeys = (storage: Pick<Storage, "length" | "key">) => {
   const keys: string[] = [];
 
   for (let index = 0; index < storage.length; index += 1) {

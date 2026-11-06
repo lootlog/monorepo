@@ -27,7 +27,7 @@ export const readForwardAuthIdentity = (
     : { userId, discordId, apiKey };
 };
 
-export const forwardAuthMiddleware = BearerSecurityMiddleware.of({
+const forwardAuthMiddleware = BearerSecurityMiddleware.of({
   bearer: (httpEffect) =>
     Effect.flatMap(HttpServerRequest.HttpServerRequest, (request) => {
       const identity = readForwardAuthIdentity(request.headers);

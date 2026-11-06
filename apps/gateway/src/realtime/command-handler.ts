@@ -3,15 +3,15 @@ import {
   runCommandRoute,
   type CommandRoutes,
 } from "#src/realtime/command-routes";
-import { createHash } from "node:crypto";
+import { diffAccessPolicies } from "@lootlog/protocol/realtime/access-policy";
 import {
-  createAccessPolicySnapshot,
-  diffAccessPolicies,
-} from "@lootlog/protocol/realtime/access-policy";
+  announceAccess,
+  scopedGuilds,
+  sessionAccessPolicy,
+} from "#src/realtime/session-access";
 import { parseRealtimeJson } from "@lootlog/protocol/realtime/codec";
 import {
   decodeClientCommand,
-  REALTIME_SERVER_CLOSE_CODES,
   type ClientCommand,
   type CommandSuccess,
   type Response,
@@ -68,7 +68,7 @@ import { MapPings, mapPingRoutes } from "#src/realtime/map-ping-service";
 import { getGlobalChatStats } from "#src/realtime/gateway-metrics";
 import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
 import { type PresenceStore, Presence } from "#src/realtime/presence-store";
-import { getScopeKey, type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
+import { type RealtimeHub, Hub } from "#src/realtime/realtime-hub";
 import {
   hasValidApiKeyLease,
   type GatewaySocket,
@@ -90,9 +90,6 @@ import {
   canSubscribe,
   defaultScopes,
   organizationIds,
-  PRESENCE_PERMISSIONS,
-  publishesPresenceTo,
-  type PermissionViewer,
 } from "#src/realtime/subscription-policy";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -112,46 +109,6 @@ const permissionRebalanceRetry = Schedule.max([
 
 // Bounds how long unconfirmed authority survives a failing permission lookup.
 const PERMISSION_REBALANCE_DEADLINE = "30 seconds";
-
-const scopedGuilds = (
-  session: SessionData,
-  guilds: SessionData["guilds"],
-): SessionData["guilds"] => {
-  const access = session.apiKeyAccess;
-
-  return access
-    ? guilds.filter(({ guild }) => access.organizationIds.includes(guild.id))
-    : guilds;
-};
-
-const sessionAccessPolicy = (session: PermissionViewer) => {
-  const organizations = createAccessPolicySnapshot(
-    session.guilds,
-    session.discordId,
-  ).organizations.map((organization) =>
-    publishesPresenceTo(session, organization.organizationId)
-      ? organization
-      : {
-          ...organization,
-          permissions: organization.permissions.filter(
-            (permission) => !PRESENCE_PERMISSIONS.has(permission),
-          ),
-        },
-  );
-
-  return {
-    organizations,
-    version: createHash("sha256")
-      .update(JSON.stringify(organizations))
-      .digest("hex"),
-  };
-};
-
-/** Whether a socket kept its subscriptions, and what to log about the change. */
-type AccessAnnouncement = {
-  readonly resubscribed: boolean;
-  readonly warnings: ReadonlyArray<Effect.Effect<void>>;
-};
 
 const errorResponse = (
   requestId: string,
@@ -527,7 +484,7 @@ export class CommandHandler {
           .map(({ organizationId }) => organizationId)
           .filter((id) => !updatedIds.has(id));
 
-        const announced = this.announceAccess(socket, accessPolicy, changes);
+        const announced = announceAccess(hub, socket, accessPolicy, changes);
         sideEffects.push(...announced.warnings);
 
         if (!announced.resubscribed) continue;
@@ -568,75 +525,6 @@ export class CommandHandler {
 
       return Effect.all(sideEffects, { concurrency: 8, discard: true });
     });
-  }
-
-  /** Moves one socket to its changed access policy and tells its client. */
-  private announceAccess(
-    socket: GatewaySocket,
-    accessPolicy: ReturnType<typeof sessionAccessPolicy>,
-    changes: ReturnType<typeof diffAccessPolicies>,
-  ): AccessAnnouncement {
-    const { hub } = this;
-
-    socket.data.airTagScopes = socket.data.airTagScopes.filter((scope) =>
-      canSubscribe(socket.data, scope.subscription),
-    );
-    const scopes = defaultScopes(socket.data);
-    const scopeKeys = new Set(scopes.map(getScopeKey));
-
-    for (const scope of socket.data.subscriptions.values()) {
-      if (
-        canSubscribe(socket.data, scope) &&
-        !scopeKeys.has(getScopeKey(scope))
-      ) {
-        scopes.push(scope);
-        scopeKeys.add(getScopeKey(scope));
-      }
-    }
-
-    try {
-      hub.replaceSubscriptions(socket, scopes);
-    } catch (cause) {
-      socket.data.subscriptions.clear();
-      socket.data.airTagScopes = [];
-      socket.close(1008, "subscription reconciliation failed");
-
-      return {
-        resubscribed: false,
-        warnings: [
-          Effect.logWarning("Subscription reconciliation failed", cause),
-        ],
-      };
-    }
-
-    const event = {
-      v: 1,
-      type: "permissions.updated",
-      data: {
-        accessPolicy,
-        changes,
-        organizationIds: organizationIds(socket.data),
-        subscriptionScopes: scopes,
-      },
-    } satisfies Event;
-
-    try {
-      hub.sendEvent(socket, event);
-    } catch (cause) {
-      socket.close(
-        REALTIME_SERVER_CLOSE_CODES.tryAgainLater,
-        "permission update delivery failed",
-      );
-
-      return {
-        resubscribed: true,
-        warnings: [
-          Effect.logWarning("Permission update delivery failed", cause),
-        ],
-      };
-    }
-
-    return { resubscribed: true, warnings: [] };
   }
 
   /**
@@ -681,7 +569,8 @@ export class CommandHandler {
             const warnings =
               changes.length === 0
                 ? []
-                : this.announceAccess(socket, accessPolicy, changes).warnings;
+                : announceAccess(this.hub, socket, accessPolicy, changes)
+                    .warnings;
 
             return Effect.all(
               [...warnings, this.recordPresenceActivity(socket)],

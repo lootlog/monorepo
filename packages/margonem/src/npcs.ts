@@ -1,4 +1,4 @@
-export type Npc = {
+type Npc = {
   d: GameNpc;
 };
 
@@ -20,7 +20,7 @@ export type GameNpc = {
   isHeroFromEvent?: boolean;
 };
 
-export type NpcMap = {
+type NpcMap = {
   [key: string]: Npc;
 };
 

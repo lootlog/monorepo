@@ -14,7 +14,9 @@
         "src/App.tsx",
         "src/openapi/generate-openapi.ts",
         "scripts/**/*.{ts,mjs}",
-        "server.js"
+        "server.js",
+        "src/**/*.test.{ts,tsx}",
+        "vite.worktree.mts"
       ],
       "project": [
         "src/**/*.{ts,tsx}",
@@ -30,7 +32,8 @@
         "src/main.tsx",
         "sandbox/main.ts",
         "extension/entrypoints/**/*.ts",
-        "vite.config.ts"
+        "vite.config.ts",
+        "src/shims/use-sync-external-store-with-selector.ts"
       ],
       "project": [
         "src/**/*.{ts,tsx}",
@@ -53,6 +56,8 @@
       ],
       "includeEntryExports": true
     },
+    "packages/ui": {},
+    "packages/game-client-api": {},
     "packages/client": {
       "entry": ["src/generated/**/*.{ts,tsx}", "scripts/**/*.{ts,mjs}"],
       "project": [

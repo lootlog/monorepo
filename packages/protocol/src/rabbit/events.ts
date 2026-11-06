@@ -215,7 +215,7 @@ export const GuildKillsAcceptedV1 = Schema.Struct({
 
 export type GuildKillsAcceptedV1 = typeof GuildKillsAcceptedV1.Type;
 
-export const EventScope = Schema.Struct({
+const EventScope = Schema.Struct({
   guildId: Schema.NonEmptyString,
   eventId: Schema.NonEmptyString,
 });
@@ -272,7 +272,7 @@ const NotificationTimerDeleted = Schema.Struct({
   npcId: Schema.optional(SafeInteger),
 });
 
-export const LootCreatedNotificationEventV2 = Schema.Struct({
+const LootCreatedNotificationEventV2 = Schema.Struct({
   version: Schema.Literal(2),
   lootId: NonNegativeInt,
   world: Schema.NonEmptyString,

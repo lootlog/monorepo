@@ -35,7 +35,7 @@ export type ParticleKind =
  * - `scorch`: bounces once, then leaves a glowing mark that cools;
  * - `puddle`: joins or starts a puddle that bubbles and dries.
  */
-export type LandMode =
+type LandMode =
   | "none"
   | "vanish"
   | "bounce"
@@ -117,7 +117,7 @@ export interface SpawnFrame {
 }
 
 /** `above`: a band over the head; `cloud`: under the frame's cloud; `orbit`: on a circle round the centre. */
-export type SpawnFrom =
+type SpawnFrom =
   | "edge"
   | "edge-low"
   | "edge-high"
@@ -171,7 +171,7 @@ export interface EmitterSpec {
 export const MAX_PARTICLES = 260;
 
 /** Gusts plus the frame's steady wind, px/s, the same for every particle at a time. */
-export function windAt(time: number, steady = 0): number {
+function windAt(time: number, steady = 0): number {
   return steady + noise1(time * 0.25, 77) * 18 + noise1(time * 1.1, 78) * 6;
 }
 

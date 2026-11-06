@@ -54,7 +54,7 @@ export interface NotificationPendingJobs {
   }) => Effect.Effect<unknown, unknown>;
 }
 
-export class NotificationGuildTargetFailure extends TaggedErrorClass<NotificationGuildTargetFailure>()(
+class NotificationGuildTargetFailure extends TaggedErrorClass<NotificationGuildTargetFailure>()(
   "NotificationGuildTargetFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

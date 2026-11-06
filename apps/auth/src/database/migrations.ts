@@ -19,7 +19,7 @@ const migrationConfig = {
   migrationsTable: "__drizzle_migrations",
 };
 
-export type AuthMigrationViolation = {
+type AuthMigrationViolation = {
   readonly code:
     | "ACCOUNT_IDENTITY_COLLISION"
     | "ACTIVE_DISCORD_ACCOUNT_MISSING"

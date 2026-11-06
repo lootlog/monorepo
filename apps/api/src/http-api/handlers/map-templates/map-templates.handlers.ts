@@ -173,7 +173,7 @@ const authorize = (guildId: string, capability: PermissionValue) =>
     authorization.requireCapability({ guildId, capability }),
   );
 
-export const getMapTemplates = Effect.fn("getMapTemplates")(function* (
+const getMapTemplates = Effect.fn("getMapTemplates")(function* (
   guildId: string,
 ) {
   const access = yield* authorize(guildId, Permission.LOOTLOG_ACCESS);
@@ -219,7 +219,7 @@ export const updateMapTemplate = Effect.fn("updateMapTemplate")(function* (
   return yield* decodeStoredTemplate(template);
 });
 
-export const deleteMapTemplate = Effect.fn("deleteMapTemplate")(function* (
+const deleteMapTemplate = Effect.fn("deleteMapTemplate")(function* (
   guildId: string,
   templateId: string,
 ) {
@@ -275,5 +275,3 @@ export const MapTemplatesHandlers = HttpApiBuilder.group(
         toHttpResponse(deleteMapTemplate(params.guildId, params.templateId)),
       ),
 );
-
-export type { MapTemplateResponse };

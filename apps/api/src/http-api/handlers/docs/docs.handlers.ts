@@ -345,7 +345,7 @@ const execute = <A>(
     }),
   );
 
-export const listDocuments = (guildId: string) =>
+const listDocuments = (guildId: string) =>
   execute(
     "DocsControllerGetDocuments",
     guildId,
@@ -380,7 +380,7 @@ export const getHistory = (guildId: string, documentId: string) =>
     Schema.decodeUnknownSync(DocumentHistoryResponse),
   );
 
-export const getHistorySnapshot = (
+const getHistorySnapshot = (
   guildId: string,
   documentId: string,
   historyId: string,
@@ -412,7 +412,7 @@ export const updateDocument = (
     Schema.decodeUnknownSync(DocumentResponse),
   );
 
-export const deleteDocument = (guildId: string, documentId: string) =>
+const deleteDocument = (guildId: string, documentId: string) =>
   execute(
     "DocsControllerDeleteDocument",
     guildId,
@@ -428,7 +428,7 @@ export const restoreDocument = (guildId: string, documentId: string) =>
     Schema.decodeUnknownSync(DocumentMutationResponse),
   );
 
-export const purgeDocument = (guildId: string, documentId: string) =>
+const purgeDocument = (guildId: string, documentId: string) =>
   execute(
     "DocsControllerPurgeDocument",
     guildId,

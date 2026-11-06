@@ -86,7 +86,7 @@ export const choice = (name: string, value: string): AutocompleteChoice => ({
   value: value.slice(0, MAX_CHOICE_NAME_LENGTH),
 });
 
-export const LOOTLOG_COLOR = 0xf5a524;
+const LOOTLOG_COLOR = 0xf5a524;
 
 /** The read time in the footer tells a later reader how fresh the data is. */
 export const lootlogEmbed = (title: string, color = LOOTLOG_COLOR) =>

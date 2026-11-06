@@ -80,7 +80,7 @@ export const lootDistanceFromKill = (
 };
 
 /** The reader's feed preferences, stored under `general.activityFeed`. */
-export const ActivityFeedSettingsSchema = Schema.Struct({
+const ActivityFeedSettingsSchema = Schema.Struct({
   excludedGuildIds: Schema.Array(Schema.String),
   excludedNpcCategories: Schema.Array(ActivityFeedNpcCategorySchema),
   withLootOnly: Schema.Boolean,

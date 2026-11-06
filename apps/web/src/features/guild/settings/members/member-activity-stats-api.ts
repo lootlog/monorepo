@@ -12,7 +12,7 @@ export type MemberActivityStats = {
   updatedAt: string;
 };
 
-export const getMemberActivityStatsQueryKey = (guildId: string) => [
+const getMemberActivityStatsQueryKey = (guildId: string) => [
   "activity",
   "guilds",
   guildId,
@@ -21,10 +21,7 @@ export const getMemberActivityStatsQueryKey = (guildId: string) => [
 
 const activityApiClient = createApiClient("activity");
 
-export const fetchMemberActivityStats = (
-  guildId: string,
-  signal?: AbortSignal,
-) =>
+const fetchMemberActivityStats = (guildId: string, signal?: AbortSignal) =>
   activityApiClient.get<MemberActivityStats[]>(
     `/guilds/${guildId}/member-activity-stats`,
     { signal },

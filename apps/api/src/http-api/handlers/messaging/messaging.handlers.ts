@@ -59,7 +59,7 @@ export const sendNotification = (payload: SendNotificationRequest) =>
     ).pipe(Effect.mapError((cause) => new MessagingOperationError({ cause })));
   });
 
-export const volunteerForNotification = (
+const volunteerForNotification = (
   notificationId: string,
   payload: VolunteerForPartyRequest,
 ) =>

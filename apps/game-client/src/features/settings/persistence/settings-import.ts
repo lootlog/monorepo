@@ -62,7 +62,7 @@ export const markSettingsImportDone = (domain: SettingsDomain) => {
   localStorage.setItem(SETTINGS_IMPORT_STORAGE_KEY, JSON.stringify(state));
 };
 
-export type LocalSettingsSnapshot = {
+type LocalSettingsSnapshot = {
   /** Raw persisted timers store state (decoded through the codec). */
   timers: unknown;
   hotkeys: SettingsCatalogValue<"controls.hotkeys">;

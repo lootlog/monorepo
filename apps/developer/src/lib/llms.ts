@@ -17,7 +17,7 @@ const services = [
   ["search", portalText.searchDescription],
 ] as const;
 
-export function getPageMarkdownPath(page: PortalPage) {
+function getPageMarkdownPath(page: PortalPage) {
   return getMarkdownPath(page.url, page.slugs);
 }
 

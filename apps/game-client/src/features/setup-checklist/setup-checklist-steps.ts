@@ -8,7 +8,7 @@ export type SetupStepId = "sign-in" | "join-lootlog" | "catching" | "realtime";
  * - `pending`: still being checked, so neither done nor missing yet.
  * - `blocked`: waits for an earlier step.
  */
-export type SetupStepStatus = "done" | "todo" | "pending" | "blocked";
+type SetupStepStatus = "done" | "todo" | "pending" | "blocked";
 
 export type SetupStep = { id: SetupStepId; status: SetupStepStatus };
 

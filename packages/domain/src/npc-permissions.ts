@@ -70,7 +70,7 @@ const isNpcLevelWithinRoleRange = (
   npcLevel: number,
 ): boolean => role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel;
 
-export const hasRolePermissionInLevelRange = (
+const hasRolePermissionInLevelRange = (
   roles: readonly RolePermissionData[],
   permission: string,
   npcLevel: number,
@@ -101,7 +101,7 @@ export const canViewNpcTimer = (
 
 export type NpcFeature = keyof typeof NPC_FEATURE_PERMISSIONS;
 
-export type NpcFeatureTier = keyof (typeof NPC_FEATURE_PERMISSIONS)[NpcFeature];
+type NpcFeatureTier = keyof (typeof NPC_FEATURE_PERMISSIONS)[NpcFeature];
 
 /** An NPC-scoped source, reduced to what the visibility rule needs. */
 export type NpcFeatureSource = {

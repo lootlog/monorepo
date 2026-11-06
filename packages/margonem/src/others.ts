@@ -29,7 +29,7 @@ export type OldOtherMap = {
   [key: string]: LegacyGameOther;
 };
 
-export type OtherMap = {
+type OtherMap = {
   [key: string]: Other;
 };
 

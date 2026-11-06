@@ -513,7 +513,7 @@ export const toOrganizationWorkspaceHttpResponse = <A, R>(
     },
   });
 
-export const toDeclaredOrganizationWorkspaceError = <A, R>(
+const toDeclaredOrganizationWorkspaceError = <A, R>(
   effect: Effect.Effect<A, OrganizationWorkspaceFailure, R>,
   statuses: ReadonlyArray<number>,
 ) =>
@@ -663,17 +663,15 @@ export const updateGuildRole = Effect.fn("RolesControllerUpdateGuildRole")(
   },
 );
 
-export const getGuildRoles = Effect.fn("RolesControllerGetGuildRoles")(
-  function* (guildId: string) {
-    const access = yield* requireGuild(guildId, [Permission.LOOTLOG_ACCESS]);
+const getGuildRoles = Effect.fn("RolesControllerGetGuildRoles")(function* (
+  guildId: string,
+) {
+  const access = yield* requireGuild(guildId, [Permission.LOOTLOG_ACCESS]);
 
-    const value = yield* rolesData((service) =>
-      service.getRoles(access.guildId),
-    );
+  const value = yield* rolesData((service) => service.getRoles(access.guildId));
 
-    return yield* decode(RolesResponse, value);
-  },
-);
+  return yield* decode(RolesResponse, value);
+});
 
 const requireSharingAdmin = (guildId: string) =>
   requireGuild(guildId, { anyOf: AccessRequirement.ADMINISTER });

@@ -18,9 +18,9 @@ type ReadyRoomVersion = {
   presence: "PRESENT" | "REMOVED";
 };
 
-export const READY_ROOM_TOMBSTONE_TTL_MS = 120_000;
+const READY_ROOM_TOMBSTONE_TTL_MS = 120_000;
 
-export const READY_ROOM_TOMBSTONE_CAP = 512;
+const READY_ROOM_TOMBSTONE_CAP = 512;
 
 /**
  * Ready Rooms arrive from the list endpoint, from socket updates and from the

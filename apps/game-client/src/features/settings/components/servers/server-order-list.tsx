@@ -1,5 +1,5 @@
 import { ToggleGroup } from "@/components/ui/toggle-group";
-import { SettingsGuildPickerItem } from "@/features/settings/components/shared/settings-guild-picker";
+import { SettingsGuildPickerItem } from "@/features/settings/components/shared/settings-guild-picker-item";
 import { useSortableList } from "@/hooks/ui/use-sortable-list";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
 import { cn } from "cn";

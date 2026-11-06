@@ -77,7 +77,7 @@ class LootsOperationError extends TaggedErrorClass<LootsOperationError>()(
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-export type LootPage = {
+type LootPage = {
   readonly items: LootQueryResult[];
   readonly nextCursor: string | null;
 };

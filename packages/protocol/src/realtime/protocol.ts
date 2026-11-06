@@ -253,27 +253,21 @@ const UnsubscribeCommand = command(
   SubscriptionScope,
 );
 
-export const MapPingCommand = command(
-  "map-ping.send",
-  MapPingSendPayloadSchema,
-);
+const MapPingCommand = command("map-ping.send", MapPingSendPayloadSchema);
 
-export const BattlePingCommand = command(
+const BattlePingCommand = command(
   "battle-ping.send",
   BattlePingSendPayloadSchema,
 );
 
-export const LootSplitCommand = command(
-  "loot-split.send",
-  LootSplitSendPayloadSchema,
-);
+const LootSplitCommand = command("loot-split.send", LootSplitSendPayloadSchema);
 
-export const LootSplitAutoAcceptCommand = command(
+const LootSplitAutoAcceptCommand = command(
   "loot-split.auto-accept",
   LootSplitAutoAcceptPayloadSchema,
 );
 
-export const AirTagSubscriptionCommand = command(
+const AirTagSubscriptionCommand = command(
   "air-tag.subscription",
   Schema.Struct({
     requestId: RequestId,
@@ -282,12 +276,12 @@ export const AirTagSubscriptionCommand = command(
   }),
 );
 
-export const AirTagObservationCommand = command(
+const AirTagObservationCommand = command(
   "air-tag.observation",
   AirTagObservationBatchSchema,
 );
 
-export const AirTagMapThreatsFetchCommand = command(
+const AirTagMapThreatsFetchCommand = command(
   "air-tag.map-threats.fetch",
   Schema.Struct({
     organizationId: Schema.NonEmptyString,
@@ -295,16 +289,16 @@ export const AirTagMapThreatsFetchCommand = command(
   }),
 );
 
-export const AirTagMapThreatsFetchResponse = Schema.Struct({
+const AirTagMapThreatsFetchResponse = Schema.Struct({
   threats: Schema.Array(AirTagMapThreatEventSchema),
 });
 
-export const NpcPresenceReportCommand = command(
+const NpcPresenceReportCommand = command(
   "npc-presence.report",
   NpcPresenceReportSchema,
 );
 
-export const NpcPresenceFetchCommand = command(
+const NpcPresenceFetchCommand = command(
   "npc-presence.fetch",
   Schema.Struct({
     organizationId: Schema.NonEmptyString,
@@ -312,7 +306,7 @@ export const NpcPresenceFetchCommand = command(
   }),
 );
 
-export const AirTagRejectCode = Schema.Literals([
+const AirTagRejectCode = Schema.Literals([
   "forbidden",
   "invalid-context",
   "invalid-payload",
@@ -333,7 +327,7 @@ export const AirTagSubscriptionAck = Schema.Union([
   }),
 ]);
 
-export const AirTagObservationAck = Schema.Union([
+const AirTagObservationAck = Schema.Union([
   Schema.Struct({
     status: Schema.Literal("accepted"),
     acceptedScopes: NonNegativeInt,
@@ -345,8 +339,6 @@ export const AirTagObservationAck = Schema.Union([
     retryAfterMs: Schema.optional(NonNegativeInt),
   }),
 ]);
-
-export { MapPingAckSchema };
 
 export const ClientCommand = Schema.Union([
   SessionJoinCommand,

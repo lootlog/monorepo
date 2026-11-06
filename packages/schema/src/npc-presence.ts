@@ -6,7 +6,7 @@ export const NPC_PRESENCE_MIN_WT = 20;
 
 export const NPC_PRESENCE_MAX_NPCS = 50;
 
-export const NPC_PRESENCE_MAX_ORGANIZATIONS = 20;
+const NPC_PRESENCE_MAX_ORGANIZATIONS = 20;
 
 /**
  * A reported NPC stops standing this long after its reporter's last heartbeat.
@@ -61,7 +61,7 @@ export const NpcPresenceSnapshotSchema = Schema.Struct({
 
 export type NpcPresenceSnapshot = typeof NpcPresenceSnapshotSchema.Type;
 
-export const NpcPresenceRejectCode = Schema.Literals([
+const NpcPresenceRejectCode = Schema.Literals([
   "forbidden",
   "invalid-context",
   "invalid-payload",

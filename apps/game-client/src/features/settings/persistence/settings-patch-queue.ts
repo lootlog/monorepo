@@ -9,7 +9,7 @@ import type { QueryKey } from "@tanstack/react-query";
 import type { SettingsOperation } from "./settings-documents";
 import type { SettingsSaveStatus } from "./settings-save-status.store";
 
-export type QueuedSettingsPatch = {
+type QueuedSettingsPatch = {
   operation: SettingsOperation;
   /** Cache entries this operation belongs to (optimistic update + reconcile). */
   queryKeys: QueryKey[];
@@ -17,7 +17,7 @@ export type QueuedSettingsPatch = {
   afterSave?: () => void;
 };
 
-export type SettingsSendOptions = {
+type SettingsSendOptions = {
   /** Lets the request outlive the page (sent while the page unloads). */
   keepalive?: boolean;
 };

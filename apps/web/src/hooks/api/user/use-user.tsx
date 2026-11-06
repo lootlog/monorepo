@@ -4,11 +4,11 @@ import {
 } from "@lootlog/client/main";
 import { useSession, type SessionData } from "@/hooks/auth/use-session";
 
-export type SessionUser = NonNullable<SessionData>["user"];
+type SessionUser = NonNullable<SessionData>["user"];
 
-export type UserPreferences = UsersControllerGetUserPreferencesQueryResult;
+type UserPreferences = UsersControllerGetUserPreferencesQueryResult;
 
-export type User = SessionUser & {
+type User = SessionUser & {
   preferences?: UserPreferences;
 };
 

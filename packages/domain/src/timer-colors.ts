@@ -55,9 +55,7 @@ const LEGACY_ACCENTS = {
   white: "#9ca3af",
 } satisfies Record<keyof typeof TIMERS_COLORS, string>;
 
-export const isTimerColor = (
-  color: string,
-): color is keyof typeof TIMERS_COLORS =>
+const isTimerColor = (color: string): color is keyof typeof TIMERS_COLORS =>
   Object.keys(TIMERS_COLORS).includes(color);
 
 export const getTimerColor = (

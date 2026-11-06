@@ -4,7 +4,7 @@ export type MemberDiscordSyncTone =
   | "danger"
   | "neutral";
 
-export type MemberDiscordSyncCopyKey =
+type MemberDiscordSyncCopyKey =
   | "success"
   | "queued"
   | "cached"

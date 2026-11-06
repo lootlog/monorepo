@@ -15,9 +15,9 @@ import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/domain/reservatio
 import { ErrorKey } from "#src/guilds/error-key";
 import { organizationSummaryFields } from "#src/contracts/shared";
 
-export type UserOrganizationSummary = typeof UserOrganizationSummary.Type;
+type UserOrganizationSummary = typeof UserOrganizationSummary.Type;
 
-export const UserOrganizationSummary = Schema.Struct({
+const UserOrganizationSummary = Schema.Struct({
   ...organizationSummaryFields,
   reservationMaxDurationMinutes: Schema.optionalKey(FiniteNumber),
   reservationMinDurationMinutes: Schema.optionalKey(FiniteNumber),
@@ -41,12 +41,12 @@ export const OrganizationPermissionsResponse = Schema.Struct({
   ),
 }).annotate({ identifier: "UserGuildPermissionsDto_Output" });
 
-export type ManageableOrganizationResponse =
+type ManageableOrganizationResponse =
   typeof ManageableOrganizationResponse.Type;
 
 // Discord installation candidates may not have an Organization yet.
 // The current-user guild list supplies no owner ID or Lootlog configuration.
-export const ManageableOrganizationResponse = Schema.Struct({
+const ManageableOrganizationResponse = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
   icon: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),

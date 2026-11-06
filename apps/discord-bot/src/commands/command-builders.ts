@@ -26,7 +26,7 @@ export const visibilityOption = (option: SlashCommandBooleanOption) =>
     .setName(VISIBILITY_OPTION)
     .setDescription(COMMAND_TEXT.visibilityOption);
 
-export const PERIOD_OPTION = "okres";
+const PERIOD_OPTION = "okres";
 
 export const periodOption = (option: SlashCommandStringOption) =>
   option

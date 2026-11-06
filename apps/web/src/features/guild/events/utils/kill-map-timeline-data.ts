@@ -10,7 +10,7 @@ export type NormalizedMapGap = Omit<
   sourceIds: string[];
 };
 
-export interface NormalizedAssignmentPeriod {
+interface NormalizedAssignmentPeriod {
   id: string;
   assignedAt: string;
   unassignedAt: string;

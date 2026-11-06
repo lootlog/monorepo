@@ -58,7 +58,7 @@ const getPresenceSortKey = (presence: PlayerPresence) => {
   return `${presence.player?.accountId ?? ""}-${presence.player?.characterId ?? ""}`;
 };
 
-export const comparePlayerPresencesByLevel = (
+const comparePlayerPresencesByLevel = (
   firstPresence: PlayerPresence,
   secondPresence: PlayerPresence,
 ) => {

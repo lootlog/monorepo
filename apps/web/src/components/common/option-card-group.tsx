@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@lootlog/ui/components/radio-group";
 import { cn } from "cn";
 import type { CSSProperties } from "react";
 
-export type OptionCard<Value extends string> = {
+type OptionCard<Value extends string> = {
   value: Value;
   title: string;
   description: string;

@@ -39,4 +39,4 @@ const DEFAULT_CATEGORY_IDS = [
   "resources",
 ] as const;
 
-export type CategoryId = (typeof DEFAULT_CATEGORY_IDS)[number];
+type CategoryId = (typeof DEFAULT_CATEGORY_IDS)[number];

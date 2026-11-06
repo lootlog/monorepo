@@ -109,7 +109,7 @@ const isHeroWeight = (wt: number) => wt > 79 && wt < 90;
  * only reports the weight and the graphic, so an event graphic identifies it
  * where the flag is unknown. Event colossi stay colossi.
  */
-export const isEventHero = (npc: NpcClassification): boolean =>
+const isEventHero = (npc: NpcClassification): boolean =>
   isHeroWeight(npc.wt) &&
   (npc.isHeroFromEvent === true ||
     (npc.icon !== undefined &&

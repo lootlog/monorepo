@@ -27,7 +27,7 @@ export interface AuraSilhouette {
 }
 
 /** Pixel indices (`y * width + x` in the padded canvas), each list with its parallel data. */
-export interface SilhouettePixels {
+interface SilhouettePixels {
   /** Outline pixels and their band, inner to outer (`bandOf`). */
   outline: Uint32Array;
   band: Uint8Array;
@@ -210,7 +210,7 @@ function silhouettePixels(
 }
 
 /** Silhouette of one sprite frame. Reads pixels for the outline when the image allows it. */
-export function buildSpriteSilhouette(
+function buildSpriteSilhouette(
   image: CanvasImageSource,
   sx: number,
   sy: number,
@@ -282,7 +282,7 @@ export function buildBoxSilhouette(
 }
 
 /** Outline pixels of an RGBA buffer (alpha > 96 next to transparency) with gradient normals. */
-export function traceOutline(
+function traceOutline(
   data: Uint8ClampedArray,
   width: number,
   height: number,

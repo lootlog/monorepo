@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useWikiContext } from "@/contexts/wiki-context";
 
-export const SESSION_QUERY_KEY = ["session"] as const;
+const SESSION_QUERY_KEY = ["session"] as const;
 
 /** The signed-in User, shared with the Web app through the auth cookie. */
 export const useSession = () => {

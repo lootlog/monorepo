@@ -286,9 +286,9 @@ const EventSummary = Schema.Struct({
   heroNpcs: Schema.Array(EventHeroSummary),
 });
 
-export type EventListItemResponse = typeof EventListItemResponse.Type;
+type EventListItemResponse = typeof EventListItemResponse.Type;
 
-export const EventListItemResponse = EventSummary.annotate({
+const EventListItemResponse = EventSummary.annotate({
   identifier: "EventListItemResponseDto",
 });
 
@@ -603,9 +603,9 @@ export const ConfirmParticipationForKillResponse = Schema.Struct({
   confirmedNow: Schema.Boolean,
 }).annotate({ identifier: "ConfirmParticipationForKillResponseDto_Output" });
 
-export type EventRankingEntryResponse = typeof EventRankingEntryResponse.Type;
+type EventRankingEntryResponse = typeof EventRankingEntryResponse.Type;
 
-export const EventRankingEntryResponse = Schema.Struct({
+const EventRankingEntryResponse = Schema.Struct({
   id: Schema.String,
   eventId: Schema.String,
   memberId: FiniteNumber,
@@ -642,9 +642,9 @@ export const UpdateRankingPointsRequest = PointAdjustment.annotate({
   identifier: "UpdateRankingPointsDto",
 });
 
-export type EventTimerResponse = typeof EventTimerResponse.Type;
+type EventTimerResponse = typeof EventTimerResponse.Type;
 
-export const EventTimerResponse = Schema.Struct({
+const EventTimerResponse = Schema.Struct({
   npcId: FiniteNumber,
   world: Schema.String,
   minSpawnTime: DateTimeString,
@@ -655,9 +655,9 @@ export const EventTimerResponse = Schema.Struct({
   }),
 }).annotate({ identifier: "EventTimerResponseDto" });
 
-export type EventHeroStatsResponse = typeof EventHeroStatsResponse.Type;
+type EventHeroStatsResponse = typeof EventHeroStatsResponse.Type;
 
-export const EventHeroStatsResponse = Schema.Struct({
+const EventHeroStatsResponse = Schema.Struct({
   heroId: Schema.String,
   npcId: Schema.Union([FiniteNumber, Schema.Null]),
   npcName: Schema.String,
@@ -741,9 +741,9 @@ export const UpdateKillPointRequest = PointAdjustment.annotate({
   identifier: "UpdateKillPointDto",
 });
 
-export type KillTimelineMapResponse = typeof KillTimelineMapResponse.Type;
+type KillTimelineMapResponse = typeof KillTimelineMapResponse.Type;
 
-export const KillTimelineMapResponse = Schema.Struct({
+const KillTimelineMapResponse = Schema.Struct({
   mapId: Schema.String,
   mapName: Schema.String,
   numericMapId: FiniteNumber,
@@ -765,9 +765,9 @@ export const KillTimelineMapResponse = Schema.Struct({
   ),
 }).annotate({ identifier: "KillTimelineMapResponseDto" });
 
-export type HeroCoverageGapResponse = typeof HeroCoverageGapResponse.Type;
+type HeroCoverageGapResponse = typeof HeroCoverageGapResponse.Type;
 
-export const HeroCoverageGapResponse = Schema.Struct({
+const HeroCoverageGapResponse = Schema.Struct({
   ...EventCoverageGap.fields,
   map: Schema.Struct({
     mapName: Schema.String,
@@ -775,9 +775,9 @@ export const HeroCoverageGapResponse = Schema.Struct({
   }),
 }).annotate({ identifier: "HeroCoverageGapResponseDto" });
 
-export type CoverageGapResponse = typeof CoverageGapResponse.Type;
+type CoverageGapResponse = typeof CoverageGapResponse.Type;
 
-export const CoverageGapResponse = EventCoverageGap.annotate({
+const CoverageGapResponse = EventCoverageGap.annotate({
   identifier: "CoverageGapResponseDto",
 });
 

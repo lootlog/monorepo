@@ -21,7 +21,7 @@ export type EventConfig = {
   scoringRules: EventScoringRules | null;
 };
 
-export type KillDetailResponse = Omit<KillDetailResponseDto, "eventConfig"> & {
+type KillDetailResponse = Omit<KillDetailResponseDto, "eventConfig"> & {
   eventConfig: EventConfig;
 };
 
