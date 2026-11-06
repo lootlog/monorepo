@@ -48,7 +48,7 @@ export function StatisticsLoots({ search }: { search: StatisticsSearch }) {
           <LootTopNpcsChart data={data?.topNpcs} isLoading={isLoading} />
         </Suspense>
       </StatsSectionColumns>
-      <StatsSectionColumns className="xl:grid-cols-2">
+      <StatsSectionColumns fill className="xl:grid-cols-2">
         <StatisticsLegends
           legends={data?.legends}
           isLoading={isLoading}

@@ -17,7 +17,7 @@ export const HeroDetailResponsiveLayout = ({
   participants,
   sidebar,
 }: HeroDetailResponsiveLayoutProps) => (
-  <StatsSectionColumns className="xl:grid-cols-[minmax(0,1fr)_440px]">
+  <StatsSectionColumns fill className="xl:grid-cols-[minmax(0,1fr)_440px]">
     <div className="min-w-0 max-xl:order-2">{maps}</div>
     <div className="min-w-0 max-xl:contents">
       {participants && (

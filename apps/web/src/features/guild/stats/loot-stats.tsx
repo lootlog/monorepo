@@ -72,7 +72,7 @@ export const LootStats = () => {
           <LootTopNpcsChart data={data?.topNpcs} isLoading={isLoading} />
         </Suspense>
       </StatsSectionColumns>
-      <StatsSectionColumns className="xl:grid-cols-2">
+      <StatsSectionColumns fill className="xl:grid-cols-2">
         <LootTopContributors
           data={data?.topContributors}
           isLoading={isLoading}
