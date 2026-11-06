@@ -24,8 +24,9 @@ export const PageTabs = ({
   <HorizontalMenuRoot
     aria-label={ariaLabel}
     data-page-tabs
+    data-top-bar-glass
     data-list-tile
-    className="sticky top-(--page-sticky-top) z-20 h-(--page-tabs-height) border-b border-border backdrop-blur-sm"
+    className="glass-bar sticky top-(--page-sticky-top) z-20 h-(--page-tabs-height) border-b border-border"
   >
     {tabs.map((tab) => {
       const active = tab.id === activeId;

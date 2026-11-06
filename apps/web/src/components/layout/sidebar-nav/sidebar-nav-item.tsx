@@ -24,6 +24,7 @@ export const SidebarNavItem = ({
   label,
   badge,
   isCatTheme,
+  size,
   onItemClick,
 }: {
   url: string;
@@ -33,6 +34,7 @@ export const SidebarNavItem = ({
   label: string;
   badge?: MenuItem["badge"];
   isCatTheme: boolean;
+  size?: "default" | "touch";
   onItemClick: (e: MouseEvent) => void;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -53,6 +55,7 @@ export const SidebarNavItem = ({
       icon={icon}
       label={label}
       badge={badge}
+      size={size}
     >
       {isCatTheme && isHovered && !badge ? (
         <span

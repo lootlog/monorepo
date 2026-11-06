@@ -5,6 +5,10 @@ import type { Variants } from "framer-motion";
 import { cn } from "cn";
 import { CollapsePresence } from "@/components/common/collapse-presence";
 import { useSidebar } from "@lootlog/ui/components/sidebar";
+import { Button } from "@lootlog/ui/components/button";
+import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { GuildsSelector } from "@/components/layout/guilds-selector";
 import type { MenuItem } from "./types";
 import { SidebarNavItem } from "./sidebar-nav-item";
 import { useWarmRouteChunks } from "@/lib/router/use-warm-route-chunks";
@@ -48,6 +52,7 @@ export const SidebarNav = ({
   footer,
   ariaLabel,
 }: SidebarNavProps) => {
+  const { t } = useTranslation();
   const { isCatTheme } = useThemeMeta();
   const { isMobile, setOpenMobile } = useSidebar();
   const groupIdPrefix = useId();
@@ -79,6 +84,17 @@ export const SidebarNav = ({
       {header && (
         <div className="group/sidebar-header relative isolate h-14 min-h-14 flex flex-row items-center justify-between border-b border-sidebar-border px-2 font-semibold">
           {header}
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="icon-lg"
+              aria-label={t("common.close")}
+              onClick={() => setOpenMobile(false)}
+              className="ml-2 shrink-0 rounded-full bg-sidebar-accent/60 text-muted-foreground hover:text-foreground"
+            >
+              <X aria-hidden="true" />
+            </Button>
+          )}
         </div>
       )}
       <ScrollArea
@@ -86,6 +102,14 @@ export const SidebarNav = ({
         className="relative min-h-0 flex-1 [&>[data-slot=scroll-area-viewport]]:overscroll-contain"
       >
         <div className="flex flex-col pb-2">
+          {/* Phones have no server rail, so the sheet opens on a labelled
+              strip of Lootlogs above the open one's sections. */}
+          {isMobile && (
+            <GuildsSelector
+              orientation="horizontal"
+              onSelect={() => setOpenMobile(false)}
+            />
+          )}
           {beforeItems}
           <nav key={basePath} aria-label={ariaLabel} className="pt-3.5">
             {groups.map(({ heading, items: groupItems }, groupIndex) => {
@@ -122,7 +146,12 @@ export const SidebarNav = ({
                         />
                       </div>
                     )}
-                    <ul className="flex flex-col gap-1.5">
+                    <ul
+                      className={cn(
+                        "flex flex-col",
+                        isMobile ? "gap-0.5" : "gap-1.5",
+                      )}
+                    >
                       {visibleItems.map(
                         ({ active, icon, path, label, available, badge }) => (
                           <SidebarNavItem
@@ -134,6 +163,7 @@ export const SidebarNav = ({
                             label={label}
                             badge={badge}
                             isCatTheme={isCatTheme}
+                            size={isMobile ? "touch" : "default"}
                             onItemClick={() => {
                               if (isMobile) setOpenMobile(false);
                             }}

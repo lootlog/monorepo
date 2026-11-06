@@ -5,11 +5,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
+import { Tooltip, TooltipTrigger } from "@lootlog/ui/components/tooltip";
 import type { FC, MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { ThemeCircularFrame } from "@/themes/adapters";
@@ -23,6 +19,11 @@ import {
 } from "@lootlog/ui/components/context-menu";
 import { Eye, EyeOff } from "lucide-react";
 import { GuildNavItemMarks } from "./guild-nav-item-marks";
+import { GuildNavItemTooltip } from "./guild-nav-item-tooltip";
+import {
+  LOOTLOG_STRIP_TILE_CLASS,
+  LootlogStripTile,
+} from "./lootlog-strip-tile";
 
 export type GuildNavItemProps = {
   guild: Guild;
@@ -31,6 +32,9 @@ export type GuildNavItemProps = {
   unreadLootsCount?: number;
   isHidden?: boolean;
   onToggleHidden?: () => void;
+  /** `strip` is the labelled tile of the phone sheet. */
+  variant?: "rail" | "strip";
+  onSelect?: () => void;
 };
 
 export const GuildNavItem: FC<GuildNavItemProps> = ({
@@ -40,6 +44,8 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
   unreadLootsCount = 0,
   isHidden = false,
   onToggleHidden,
+  variant = "rail",
+  onSelect,
 }) => {
   const { t } = useTranslation();
 
@@ -60,6 +66,8 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
     if (event.detail > 0) {
       event.currentTarget.blur();
     }
+
+    onSelect?.();
   };
 
   const avatarElement = (
@@ -85,53 +93,67 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
     </Avatar>
   );
 
+  const marks = (
+    <GuildNavItemMarks
+      isHidden={isHidden}
+      isLocked={isLocked}
+      unreadLootsCount={isActive ? 0 : unreadLootsCount}
+    />
+  );
+
+  const linkProps = {
+    to: "/$guildId",
+    params: { guildId: guild.vanityUrl ?? guild.id },
+    draggable: false,
+    onClick: handleClick,
+    style: { pointerEvents: isDragging ? "none" : "auto" },
+  } as const;
+
+  const trigger =
+    variant === "strip" ? (
+      <Link
+        {...linkProps}
+        data-active={isActive || undefined}
+        className={LOOTLOG_STRIP_TILE_CLASS}
+      >
+        <LootlogStripTile label={guild.name} isActive={isActive}>
+          <ThemeCircularFrame isActive={isActive}>
+            {avatarElement}
+          </ThemeCircularFrame>
+          {marks}
+        </LootlogStripTile>
+      </Link>
+    ) : (
+      <div>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <div className="group/rail-item relative mb-2 flex w-full items-center justify-center">
+                <RailItemIndicator isActive={isActive} />
+                <Link
+                  {...linkProps}
+                  className="group/guild-item isolate block relative"
+                >
+                  <ThemeCircularFrame isActive={isActive}>
+                    {avatarElement}
+                  </ThemeCircularFrame>
+                  {marks}
+                </Link>
+              </div>
+            }
+          />
+          <GuildNavItemTooltip
+            name={guild.name}
+            isLocked={isLocked}
+            isHidden={isHidden}
+          />
+        </Tooltip>
+      </div>
+    );
+
   return (
     <ContextMenu>
-      <ContextMenuTrigger
-        render={
-          <div>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <div className="group/rail-item relative mb-2 flex w-full items-center justify-center">
-                    <RailItemIndicator isActive={isActive} />
-                    <Link
-                      to="/$guildId"
-                      params={{ guildId: guild.vanityUrl ?? guild.id }}
-                      draggable={false}
-                      className="group/guild-item isolate block relative"
-                      onClick={handleClick}
-                      style={{ pointerEvents: isDragging ? "none" : "auto" }}
-                    >
-                      <ThemeCircularFrame isActive={isActive}>
-                        {avatarElement}
-                      </ThemeCircularFrame>
-                      <GuildNavItemMarks
-                        isHidden={isHidden}
-                        isLocked={isLocked}
-                        unreadLootsCount={isActive ? 0 : unreadLootsCount}
-                      />
-                    </Link>
-                  </div>
-                }
-              />
-              <TooltipContent side="right" className="font-medium">
-                <div>{guild.name}</div>
-                {isLocked ? (
-                  <div className="text-xs font-normal text-muted-foreground">
-                    {t("layout.guildsSelector.noAccess")}
-                  </div>
-                ) : null}
-                {isHidden ? (
-                  <div className="text-xs font-normal text-muted-foreground">
-                    {t("settings.servers.hiddenInGameClient")}
-                  </div>
-                ) : null}
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        }
-      />
+      <ContextMenuTrigger render={trigger} />
       <ContextMenuContent>
         <ContextMenuItem onClick={onToggleHidden}>
           {isHidden ? (

@@ -1,4 +1,5 @@
 import { Reorder, useDragControls } from "framer-motion";
+import { cn } from "cn";
 import {
   useEffect,
   useRef,
@@ -31,16 +32,18 @@ type GuildReorderItemProps<T> = {
   children: ReactNode;
   onDragStart: () => void;
   onDragEnd: () => void;
+  className?: string;
 };
 
 // Reorder.Item's own drag listener sets `touch-action: pan-x`, which blocks
-// vertical scrolling of the rail on touch screens. A mouse or pen drags right
+// scrolling of the rail on touch screens. A mouse or pen drags right
 // away; touch scrolls natively and drags only after a press and hold.
 export const GuildReorderItem = <T,>({
   value,
   children,
   onDragStart,
   onDragEnd,
+  className,
 }: GuildReorderItemProps<T>) => {
   const dragControls = useDragControls();
   const itemRef = useRef<HTMLLIElement>(null);
@@ -149,7 +152,10 @@ export const GuildReorderItem = <T,>({
       }}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      className="w-full flex items-center justify-center select-none cursor-grab active:cursor-grabbing"
+      className={cn(
+        "flex items-center justify-center select-none cursor-grab active:cursor-grabbing",
+        className,
+      )}
       animate={{ scale: isLifted ? 1.1 : 1, transition: LIFT_TRANSITION }}
       whileDrag={{ scale: 1.1, zIndex: 50, transition: LIFT_TRANSITION }}
     >

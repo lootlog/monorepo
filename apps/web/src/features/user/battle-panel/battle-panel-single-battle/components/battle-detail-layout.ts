@@ -32,4 +32,4 @@ export const BATTLE_DETAIL_PANELS_UNDER_TABS_CLASS_NAME =
   "[--filter-bar-height:var(--page-tabs-height)]";
 
 export const BATTLE_DETAIL_TABS_CLASS_NAME =
-  "sticky top-(--page-sticky-top) z-30 h-(--page-tabs-height) bg-background backdrop-blur-sm";
+  "glass-bar sticky top-(--page-sticky-top) z-30 h-(--page-tabs-height)";
