@@ -143,7 +143,7 @@
   },
   "characterAura": {
     "title": "Aura postaci",
-    "description": "Pikselowa aura wokół każdej twojej postaci i jej dymka. Widzą ją wszyscy gracze z Lootlogiem, na każdym koncie Margonem, na którym grasz.",
+    "description": "Pikselowa aura wokół każdej Twojej postaci i jej dymka. Widzą ją wszyscy gracze z Lootlogiem, na każdym koncie Margonem, na którym grasz.",
     "none": "Brak",
     "auras": {
       "divine": "Boski blask",
@@ -292,7 +292,7 @@
     "autoHideDescription": "Po ilu sekundach powiadomienie samo zniknie. 0 = zostaje, aż je zamkniesz.",
     "serversTitle": "Z których Lootlogów",
     "rulesTitle": "Co pokazywać",
-    "serversDescription": "Jeden wybór dla wszystkich typów powiadomień. Dostajesz tylko powiadomienia z zaznaczonych Lootlogów; kliknij Lootlog, aby ją włączyć lub wyłączyć.",
+    "serversDescription": "Jeden wybór dla wszystkich typów powiadomień. Dostajesz tylko powiadomienia z zaznaczonych Lootlogów; kliknij Lootlog, aby go włączyć lub wyłączyć.",
     "rulesDescription": "Każdy wiersz to jeden typ powiadomienia. Włącz „Pokazuj”, a potem dobierz pozostałe opcje. Najedź na nagłówek kolumny, aby zobaczyć wyjaśnienie.",
     "categoryHeader": "Typ",
     "cellLabel": "{{category}}: {{setting}}",

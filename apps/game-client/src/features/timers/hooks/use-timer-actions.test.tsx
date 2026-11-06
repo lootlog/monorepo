@@ -284,7 +284,7 @@ describe("useTimerActions", () => {
         getFixedT("timers")("messages.resetPartialFailure", {
           name: "Tanroth",
           succeeded: 1,
-          failed: 1,
+          total: 2,
         }),
       ]);
       recovering = true;

@@ -22,6 +22,12 @@ export function TimerMapThreatList({ threat }: { threat: MapThreat }) {
               threat.freshCount > 0
                 ? "tooltip.enemiesHeading"
                 : "tooltip.enemiesStaleHeading",
+              {
+                count:
+                  threat.freshCount > 0
+                    ? threat.freshCount
+                    : threat.enemies.length,
+              },
             )}
           </span>
         </>

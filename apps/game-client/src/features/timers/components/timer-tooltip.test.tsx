@@ -49,7 +49,7 @@ describe("TimerTooltip", () => {
 
     expect(screen.getByText("Tanroth")).toBeVisible();
     expect(screen.getByText("(120w)")).toBeVisible();
-    expect(screen.getByText("Dodane przez:")).toBeVisible();
+    expect(screen.getByText("Dodany przez:")).toBeVisible();
     expect(screen.getByText("Tester (Alpha)")).toBeVisible();
     expect(screen.getByText("Hero One (300b)")).toBeVisible();
     expect(screen.getByText("+1")).toBeVisible();
@@ -75,7 +75,7 @@ describe("TimerTooltip", () => {
       />,
     );
 
-    expect(screen.queryByText("Dodane przez:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Dodany przez:")).not.toBeInTheDocument();
     expect(
       screen.queryByText("Timer został zresetowany"),
     ).not.toBeInTheDocument();
