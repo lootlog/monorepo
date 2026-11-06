@@ -1,3 +1,4 @@
+import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { and, asc, desc, eq, gt, isNull, or, type SQL } from "drizzle-orm";
 import { Effect, Exit, Layer, Option, Schema } from "effect";
 import {
@@ -268,7 +269,7 @@ export const makeGlobalChatOperations = (
             ...channelWorld(world),
             message: null,
           })
-          .pipe(Effect.ignore);
+          .pipe(ignorePublicationFailure);
       });
 
     return GlobalChatData.of({
@@ -391,7 +392,9 @@ export const makeGlobalChatOperations = (
                 );
 
                 // The message is stored; a lost broadcast reaches readers on their next fetch.
-                yield* events.publish(published(stored)).pipe(Effect.ignore);
+                yield* events
+                  .publish(published(stored))
+                  .pipe(ignorePublicationFailure);
               }),
             { concurrency: 8, discard: true },
           );
@@ -418,7 +421,7 @@ export const makeGlobalChatOperations = (
                 ...channelWorld(world),
                 id: messageId,
               })
-              .pipe(Effect.ignore);
+              .pipe(ignorePublicationFailure);
         }),
       pinMessage: (caller, { world, messageId }) =>
         Effect.gen(function* () {
@@ -433,7 +436,7 @@ export const makeGlobalChatOperations = (
               ...channelWorld(world),
               message: published(stored),
             })
-            .pipe(Effect.ignore);
+            .pipe(ignorePublicationFailure);
 
           return response(stored, caller);
         }),
