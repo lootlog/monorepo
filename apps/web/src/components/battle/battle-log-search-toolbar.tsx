@@ -46,7 +46,7 @@ export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
       data-battle-log-toolbar=""
       data-list-tile
       className={cn(
-        "sticky top-[var(--battle-log-sticky-top,calc(var(--page-sticky-top,0px)+var(--filter-bar-height,0px)))] z-10 flex min-h-12 items-center gap-x-4 bg-background py-2 backdrop-blur-sm transition-colors has-[input:focus-visible]:border-primary motion-reduce:transition-none",
+        "glass-bar sticky top-[var(--battle-log-sticky-top,calc(var(--page-sticky-top,0px)+var(--filter-bar-height,0px)))] z-10 flex min-h-12 items-center gap-x-4 py-2 transition-colors has-[input:focus-visible]:border-primary motion-reduce:transition-none",
         LIST_TILE_RULE_CLASS,
         LIST_TILE_INSET_CLASS,
       )}
