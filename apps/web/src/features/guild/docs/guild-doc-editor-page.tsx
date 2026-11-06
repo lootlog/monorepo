@@ -35,6 +35,7 @@ import {
   useGuildDocDraft,
 } from "./use-guild-doc-draft";
 import { RetryButton } from "@/components/common/retry-button";
+import { observeTopBarGlass } from "@/components/layout/observe-top-bar-glass";
 
 export const GuildDocEditorPage = () => {
   const {
@@ -171,7 +172,7 @@ export const GuildDocEditorPage = () => {
   const readerBar = !canWrite && (
     <div
       data-list-tile
-      data-top-bar-glass
+      ref={observeTopBarGlass}
       className={cn(
         "glass-bar sticky top-(--page-sticky-top) z-10 flex min-h-12 flex-wrap items-center gap-x-4 gap-y-1 py-2",
         LIST_TILE_RULE_CLASS,

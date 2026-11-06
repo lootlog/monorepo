@@ -26,6 +26,23 @@ import { RetryButton } from "@/components/common/retry-button";
 /** Events listed before the rest folds behind "show older". */
 const VISIBLE_GROUPS = 8;
 
+/**
+ * Stacked in the page, a fixed number of events keeps the feed's height
+ * steady while live entries arrive; older ones wait behind "show older".
+ * Beside the side column the feed scrolls on its own and lists them all.
+ */
+const foldGroups = <T,>(
+  groups: T[],
+  { isWide, expanded }: { isWide: boolean; expanded: boolean },
+) => {
+  const folds = !isWide && groups.length > VISIBLE_GROUPS;
+
+  return {
+    folds,
+    shownGroups: folds && !expanded ? groups.slice(0, VISIBLE_GROUPS) : groups,
+  };
+};
+
 export function DashboardLiveFeed() {
   const { t } = useTranslation();
   const titleId = useId();
@@ -69,10 +86,8 @@ export function DashboardLiveFeed() {
     ) ?? [],
   ).filter((group) => isGroupVisible(group, settings));
 
-  // A fixed number of events keeps the feed's height steady while live
-  // entries arrive; older ones wait behind "show older".
   const [expanded, setExpanded] = useState(false);
-  const shownGroups = expanded ? groups : groups.slice(0, VISIBLE_GROUPS);
+  const { folds, shownGroups } = foldGroups(groups, { isWide, expanded });
 
   const activeFilterCount = [
     settings.excludedGuildIds.length > 0,
@@ -225,7 +240,7 @@ export function DashboardLiveFeed() {
               animatedKeys={state.animatedKeys}
               now={now}
             />
-            {groups.length > VISIBLE_GROUPS && (
+            {folds && (
               <LiveFeedShowOlder
                 expanded={expanded}
                 hiddenCount={groups.length - VISIBLE_GROUPS}

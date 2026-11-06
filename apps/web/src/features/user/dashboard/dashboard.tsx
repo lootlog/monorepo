@@ -13,7 +13,7 @@ export const Dashboard = () => {
 
   return (
     <ScrollArea data-under-top-bar className="h-full min-h-0">
-      <div className="min-w-0">
+      <div className="flex min-w-0 flex-col xl:h-full">
         <h1 className="sr-only">{t("statistics.dashboard")}</h1>
         <DashboardOnboarding />
         <DashboardToday />

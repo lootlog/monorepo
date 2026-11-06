@@ -25,7 +25,7 @@ export const LootStatsPageSkeleton = () => {
         <LootTimelineChartSkeleton />
         <LootTopNpcsChartSkeleton />
       </StatsSectionColumns>
-      <StatsSectionColumns className="xl:grid-cols-2">
+      <StatsSectionColumns fill className="xl:grid-cols-2">
         <LootTopContributors isLoading />
         <LootTopItems isLoading />
       </StatsSectionColumns>

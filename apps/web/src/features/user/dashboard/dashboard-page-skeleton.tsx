@@ -20,7 +20,11 @@ export function DashboardPageSkeleton() {
 
   return (
     <ScrollArea data-under-top-bar className="h-full min-h-0">
-      <div className="min-w-0" role="status" aria-label={t("common.loading")}>
+      <div
+        className="flex min-w-0 flex-col xl:h-full"
+        role="status"
+        aria-label={t("common.loading")}
+      >
         <BandSection
           id="dashboard-today-skeleton"
           title={t("statistics.today.title")}
