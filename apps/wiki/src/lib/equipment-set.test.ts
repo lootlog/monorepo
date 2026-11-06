@@ -7,7 +7,7 @@ describe("equipment set link", () => {
     const set = {
       profession: "h" as const,
       level: 250,
-      items: { helmet: 12_345, weapon: 678, boots: 9 },
+      items: { blessing: 60_532, helmet: 12_345, weapon: 678, boots: 9 },
       upgrades: {
         weapon: { level: 5 as const, bonus: "ds" as const },
         boots: { level: 2 as const },

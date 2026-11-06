@@ -1,10 +1,13 @@
-import { Link } from "@tanstack/react-router";
-import { groupBy } from "es-toolkit";
-import { useCatalogControllerGetItems } from "@lootlog/client/search";
+import { groupBy, orderBy, uniqBy } from "es-toolkit";
+import {
+  type CatalogItemDtoOutput,
+  useCatalogControllerGetItems,
+} from "@lootlog/client/search";
 import { itemEventSlug } from "@lootlog/domain/item-events";
-import { ChevronLink } from "@lootlog/ui/components/chevron-link";
+import { NpcPortrait } from "@/components/common/npc-portrait";
 import { t } from "@/i18n/messages";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
+import { monsterIdentity } from "@/lib/group-items-by-monster";
 import { latestEventOf } from "@/lib/item-events";
 import { NewItemsCard } from "./new-items-card";
 import { NewItemsCardsSkeleton } from "./new-items-cards-skeleton";
@@ -19,7 +22,16 @@ const NEW_EVENT_ITEMS = {
 
 const EVENTS_SHOWN = 4;
 
-const ITEMS_SHOWN = 12;
+/** The event's strongest monster, which pictures it. */
+const eventBoss = (items: readonly CatalogItemDtoOutput[]) =>
+  orderBy(
+    uniqBy(
+      items.flatMap(({ droppedBy }) => droppedBy),
+      monsterIdentity,
+    ),
+    [({ lvl }) => lvl ?? 0],
+    ["desc"],
+  )[0];
 
 /** The newest items of the latest events, under each event's name. */
 export function NewEventItems() {
@@ -55,27 +67,30 @@ export function NewEventItems() {
   }
 
   return (
-    <ul className="grid gap-4 lg:grid-cols-2">
-      {events.map(([event, items]) => (
-        <li key={event}>
-          <NewItemsCard
-            title={event}
-            action={
-              <ChevronLink
-                render={
-                  <Link
-                    to="/events/$eventSlug"
-                    params={{ eventSlug: itemEventSlug(event) }}
-                  />
-                }
-              >
-                {t("home.showAllEventItems")}
-              </ChevronLink>
-            }
-            items={items.slice(0, ITEMS_SHOWN)}
-          />
-        </li>
-      ))}
+    <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      {events.map(([event, items]) => {
+        const boss = eventBoss(items);
+
+        return (
+          <li key={event}>
+            <NewItemsCard
+              title={event}
+              eyebrow={
+                boss
+                  ? t("home.eventBoss", { name: boss.name })
+                  : t("home.eventEyebrow")
+              }
+              media={<NpcPortrait icon={boss?.icon} size="md" />}
+              link={{
+                to: "/events/$eventSlug",
+                params: { eventSlug: itemEventSlug(event) },
+              }}
+              items={items}
+              itemCount={items.length}
+            />
+          </li>
+        );
+      })}
     </ul>
   );
 }

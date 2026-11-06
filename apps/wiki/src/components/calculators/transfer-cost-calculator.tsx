@@ -16,6 +16,7 @@ import {
 import { formatScales } from "@/lib/calculator-format";
 import { readNumberInput } from "@/lib/number-input";
 import { CalculatorCard } from "./calculator-card";
+import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
 
@@ -44,8 +45,21 @@ export function TransferCostCalculator() {
       source="official"
       sourceUrl={SERVICES_DOCUMENTATION_URL}
       formula={t("calculators.transfer.formula")}
+      results={
+        <CalculatorResults
+          results={[
+            {
+              label: t("calculators.transfer.cost"),
+              value:
+                value === undefined
+                  ? undefined
+                  : formatScales(characterTransferCost(value, route)),
+            },
+          ]}
+        />
+      }
     >
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className={CALCULATOR_FIELDS}>
         <CalculatorNumberField
           label={t("calculators.characterLevel")}
           value={level}
@@ -77,17 +91,6 @@ export function TransferCostCalculator() {
           </Select>
         </Field>
       </div>
-      <CalculatorResults
-        results={[
-          {
-            label: t("calculators.transfer.cost"),
-            value:
-              value === undefined
-                ? undefined
-                : formatScales(characterTransferCost(value, route)),
-          },
-        ]}
-      />
       {route === "uniaToPrivate" ? (
         <p className="text-xs text-muted-foreground">
           {t("calculators.transfer.uniaFee")}

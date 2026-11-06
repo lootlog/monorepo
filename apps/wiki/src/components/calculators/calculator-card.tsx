@@ -11,7 +11,6 @@ import { t } from "@/i18n/messages";
 import type { FormulaSource } from "@/lib/calculators";
 
 type CalculatorCardProps = {
-  /** The card's anchor, which the contents link to. */
   id: string;
   title: string;
   description: string;
@@ -22,12 +21,15 @@ type CalculatorCardProps = {
   formula: string;
   /** Actions beside the title, such as filling the fields from the set. */
   actions?: ReactNode;
+  /** The answers, beside the fields where there is room. */
+  results: ReactNode;
+  /** The fields. */
   children: ReactNode;
 };
 
 /**
- * One calculator: what it answers, where its formula comes from, its fields
- * and results, and the formula itself folded away.
+ * One calculator: what it answers and where its formula comes from, its
+ * fields beside its results, and the formula itself folded away.
  */
 export function CalculatorCard({
   id,
@@ -37,29 +39,33 @@ export function CalculatorCard({
   sourceUrl,
   formula,
   actions,
+  results,
   children,
 }: CalculatorCardProps) {
   const SourceIcon = source === "official" ? BookCheck : CircleHelp;
 
   return (
     <section
-      id={id}
       aria-labelledby={`${id}-title`}
-      className="flex scroll-mt-20 flex-col gap-4 rounded-xl border border-border/50 bg-card p-5"
+      className="flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card"
     >
-      <header className="grid items-start gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border/50 p-5">
         <div className="flex min-w-0 flex-col gap-1.5">
           <h2
             id={`${id}-title`}
-            className="text-base font-semibold text-foreground"
+            className="text-xl font-semibold tracking-tight text-foreground"
           >
             {title}
           </h2>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-sm text-pretty text-muted-foreground">
+            {description}
+          </p>
           <p
             className={cn(
-              "flex items-center gap-1.5 text-xs font-medium",
-              source === "official" ? "text-signal-ready" : "text-signal-timer",
+              "mt-1 flex w-fit items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium",
+              source === "official"
+                ? "bg-signal-ready/10 text-signal-ready"
+                : "bg-signal-timer/10 text-signal-timer",
             )}
             title={
               source === "community"
@@ -74,9 +80,14 @@ export function CalculatorCard({
         {actions}
       </header>
 
-      {children}
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <div className="flex min-w-0 flex-col gap-4 p-5">{children}</div>
+        <div className="border-t border-border/50 bg-background/40 p-5 lg:border-t-0 lg:border-l">
+          {results}
+        </div>
+      </div>
 
-      <Collapsible className="border-t border-border/50 pt-2">
+      <Collapsible className="border-t border-border/50 px-4 py-1.5">
         <CollapsibleTrigger className="group/formula flex h-9 items-center gap-2 rounded-md px-1 text-left text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <ChevronDown
             aria-hidden="true"
