@@ -179,6 +179,12 @@ export const CatalogControllerGetItemsQuery = Schema.Struct({
       description: "Items that drop from the NPC with this catalog key.",
     }),
   ),
+  availableSince: Schema.optionalKey(
+    Schema.String.check(Schema.isPattern(/^\d{4}-\d{2}-\d{2}$/u)).annotate({
+      description:
+        "Items a character on a world opened on this day (`YYYY-MM-DD`) can get: every item of no event, and event items of an edition that ended after it. Events end in the morning and worlds open later in the day, so an edition ending on the opening day is left out. An event without a year comes back, so its items stay.",
+    }),
+  ),
   sort: Schema.optionalKey(CatalogItemSort),
   limit: Schema.optionalKey(FiniteNumber.annotate({ default: 24 })),
   offset: Schema.optionalKey(FiniteNumber.annotate({ default: 0 })),

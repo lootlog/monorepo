@@ -287,6 +287,44 @@ test("narrows items to one edition's event drops of a kind of boss that carry th
   );
 });
 
+test("a world's search keeps items of no event and of the editions it saw, including items that came back", async () => {
+  const searches: Array<{ filter?: string; facets?: string[] }> = [];
+
+  const client = new Meilisearch({
+    host: "http://search.invalid",
+    httpClient: (_input, init) => {
+      const body = JSON.parse(String(init?.body));
+
+      searches.push(body);
+
+      return Promise.resolve({
+        hits: [],
+        estimatedTotalHits: 0,
+        facetDistribution: {
+          eventSlugs: {
+            "wielkanoc-2026": 3,
+            "noc-kupaly-2026": 2,
+            "wakacje-2021": 4,
+            "wakacje-2026": 5,
+            "dzien-mlodego-smoka": 6,
+          },
+        },
+      });
+    },
+  });
+
+  await Effect.runPromise(
+    makeCatalogModule(client, logger).getItems({
+      gameVersion: "pl",
+      availableSince: "2026-06-29",
+    }),
+  );
+
+  expect(searches.at(-1)?.filter).toBe(
+    `gameVersion = "pl" AND (NOT statsKeys = "etiquette" OR eventSlugs IN ["wakacje-2026", "dzien-mlodego-smoka"])`,
+  );
+});
+
 test("ranks an elastic item by its attack speed at the searched level, not the one the index last saw", async () => {
   const armor = (id: number, lvl: number, sa: number) => ({
     id,

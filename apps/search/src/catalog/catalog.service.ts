@@ -12,7 +12,11 @@ import {
   ELASTIC_LEVELS,
   elasticItemLevel,
 } from "@lootlog/domain/elastic-level";
-import { itemEventLabels, itemEventSlug } from "@lootlog/domain/item-events";
+import {
+  isEventEditionAvailableSince,
+  itemEventLabels,
+  itemEventSlug,
+} from "@lootlog/domain/item-events";
 import {
   itemAtLevel,
   itemStatAttackSpeed,
@@ -177,6 +181,35 @@ export const makeCatalogModule = (
       }),
     ).pipe(Effect.map(({ hits }) => hits[0]?.monsterKey));
 
+  /**
+   * Items a world opened on `since` has: those of no event, and those of an
+   * edition it saw. An item that came back keeps any edition it saw, so the
+   * filter names the editions to keep rather than those to leave out.
+   */
+  const availabilityFilter = (gameVersion: string | undefined, since: string) =>
+    attemptMeilisearch("catalog.items.editions", () =>
+      meilisearch.index(ITEMS_INDEX).search("", {
+        filter: [gameVersionFilter(gameVersion), `statsKeys = "etiquette"`]
+          .filter((filter) => filter !== undefined)
+          .join(" AND "),
+        facets: ["eventSlugs"],
+        limit: 0,
+      }),
+    ).pipe(
+      Effect.map(({ facetDistribution }) => {
+        const seen = Object.keys(facetDistribution?.eventSlugs ?? {}).filter(
+          (slug) => isEventEditionAvailableSince(slug, since),
+        );
+
+        return seen.length === 0
+          ? `NOT statsKeys = "etiquette"`
+          : `(NOT statsKeys = "etiquette" OR ${buildMeilisearchInFilter("eventSlugs", seen)})`;
+      }),
+      Effect.tapError((error) =>
+        Effect.sync(() => logger.error("Catalog editions error", { error })),
+      ),
+    );
+
   const getItems = Effect.fn("Catalog.items")(function* (
     query: CatalogControllerGetItemsQuery,
   ) {
@@ -195,7 +228,15 @@ export const makeCatalogModule = (
         ? undefined
         : yield* findMonsterKey(query.droppedBy);
 
-    const filters = itemFilters(query, monsterKey);
+    const availability =
+      query.availableSince === undefined
+        ? undefined
+        : yield* availabilityFilter(query.gameVersion, query.availableSince);
+
+    const filters = [
+      ...itemFilters(query, monsterKey),
+      ...(availability === undefined ? [] : [availability]),
+    ];
 
     const params: SearchParams = {
       attributesToSearchOn: ["name"],
