@@ -18,7 +18,9 @@ export function TimerMapOccupancyList({
         <>
           <TimerMapPresenceIndicator occupancy={occupancy} decorative />
           <span className="ll:text-green-400">
-            {t("tooltip.alliesHeading")}
+            {t("tooltip.alliesHeading", {
+              count: occupancy.players.length,
+            })}
           </span>
         </>
       }

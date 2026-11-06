@@ -42,7 +42,7 @@
     "pin": "Przypnij",
     "delete": "Usuń",
     "mute": "Wycisz autora",
-    "unmute": "Odcisz autora",
+    "unmute": "Zdejmij wyciszenie",
     "deleteConfirm": {
       "title": "Usunąć wiadomość?",
       "description": "Zniknie z czatu u wszystkich."
@@ -73,7 +73,7 @@
     "empty": "Nikt nie jest wyciszony.",
     "until": "do {{date}}",
     "permanent": "na stałe",
-    "unmute": "Odcisz {{name}}",
+    "unmute": "Zdejmij wyciszenie: {{name}}",
     "loadError": "Nie udało się wczytać wyciszonych"
   },
   "input": {
@@ -81,8 +81,8 @@
     "worldPlaceholder": "Wiadomość na świat {{world}}…",
     "allWorldsPlaceholder": "Wiadomość na wszystkie kanały…",
     "allWorlds": "Wyślij na wszystkie kanały",
-    "mutedUntil": "Wyciszono cię do {{date}}",
-    "mutedPermanently": "Wyciszono cię na stałe",
+    "mutedUntil": "Wyciszono Cię do {{date}}",
+    "mutedPermanently": "Wyciszono Cię na stałe",
     "pending": "Wysyłanie wiadomości"
   },
   "quickAccess": {

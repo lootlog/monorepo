@@ -191,7 +191,7 @@ export const useTimerActions = (
             t("messages.resetPartialFailure", {
               name: timer.npc.name,
               succeeded: results.length - failures.length,
-              failed: failures.length,
+              total: results.length,
             }),
           );
         }
