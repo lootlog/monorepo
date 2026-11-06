@@ -188,6 +188,32 @@
       }
     },
     {
+      "files": [
+        "src/lib/margonem-runtime/adapters/chat-host-runtime-adapter.ts"
+      ],
+      "rules": {
+        "anti-slop/no-reflect-apply": [
+          "error",
+          {
+            "boundaryFunctions": ["apply"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/lib/margonem-runtime/adapters/item-tip-runtime-adapter.ts"
+      ],
+      "rules": {
+        "anti-slop/no-reflect-apply": [
+          "error",
+          {
+            "boundaryFunctions": ["wrapped"]
+          }
+        ]
+      }
+    },
+    {
       "files": ["src/lib/logs/log-actions.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
