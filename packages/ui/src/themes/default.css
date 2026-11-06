@@ -1,25 +1,47 @@
 /*
- * The app lifts the shared navy content surfaces so content sits a step above
- * the sidebar, as in every other theme; public surfaces keep the `:root` navy.
- * `.default` alone previews it on one element, such as a theme list row.
+ * The app's default palette: near-black neutrals, close to true black like
+ * Apple's dark mode, with one quiet sky-blue accent and status colours at
+ * matching lightness so none of them shouts. Content sits a step above the
+ * sidebar, as in every other theme. Public surfaces keep the `:root` palette;
+ * `.default` alone previews this one on a single element, such as a theme
+ * list row.
  */
 :root.default,
 .default {
-  --background: #121d2c;
-  --card: #192639;
-  --popover: #192639;
-  --secondary: #203148;
-  --muted: #24354c;
-  --border: #384961;
-  --primary: #c8f135;
-  --primary-foreground: #07111f;
-  --accent: #34402e;
-  --accent-foreground: #f7f8f2;
-  --chart-1: #7991ff;
-  --ring: #c8f135;
-  --sidebar-primary: #c8f135;
-  --sidebar-primary-foreground: #07111f;
-  --sidebar-accent: #273321;
-  --sidebar-accent-foreground: #f7f8f2;
-  --sidebar-ring: #c8f135;
+  --background: oklch(0.165 0.002 260);
+  --foreground: oklch(0.955 0.002 260);
+  --card: oklch(0.195 0.002 260);
+  --card-foreground: oklch(0.955 0.002 260);
+  --popover: oklch(0.21 0.002 260);
+  --popover-foreground: oklch(0.955 0.002 260);
+  --primary: oklch(0.77 0.105 258);
+  --primary-foreground: oklch(0.125 0.002 260);
+  --secondary: oklch(0.225 0.002 260);
+  --secondary-foreground: oklch(0.885 0.002 260);
+  --muted: oklch(0.24 0.002 260);
+  --muted-foreground: oklch(0.715 0.003 260);
+  --accent: oklch(0.27 0.035 258);
+  --accent-foreground: oklch(0.955 0.002 260);
+  --destructive: oklch(0.705 0.15 25);
+  --destructive-foreground: oklch(0.125 0.002 260);
+  --border: oklch(0.32 0.002 260);
+  --ring: oklch(0.77 0.105 258);
+  --chart-1: oklch(0.77 0.105 258);
+  --chart-2: oklch(0.79 0.085 200);
+  --chart-3: oklch(0.8 0.12 152);
+  --chart-4: oklch(0.83 0.11 78);
+  --chart-5: oklch(0.72 0.12 350);
+  --signal-live: oklch(0.79 0.085 200);
+  --signal-ready: oklch(0.8 0.12 152);
+  --signal-timer: oklch(0.83 0.11 78);
+  --signal-alert: oklch(0.705 0.15 25);
+  --text-supporting: oklch(0.83 0.003 260);
+  --sidebar: oklch(0.125 0.002 260);
+  --sidebar-foreground: oklch(0.885 0.002 260);
+  --sidebar-primary: oklch(0.77 0.105 258);
+  --sidebar-primary-foreground: oklch(0.125 0.002 260);
+  --sidebar-accent: oklch(0.2 0.002 260);
+  --sidebar-accent-foreground: oklch(0.955 0.002 260);
+  --sidebar-border: oklch(0.225 0.002 260);
+  --sidebar-ring: oklch(0.77 0.105 258);
 }
