@@ -116,7 +116,7 @@ export const GuildSidebarHeader = ({
           className="flex min-w-0 items-center gap-2.5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200"
         >
           {guild && (
-            <Avatar className="size-6 rounded-md">
+            <Avatar className="size-6 rounded-md shadow-[0_1px_4px_rgb(0_0_0/0.5)]">
               <AvatarImage src={guild.icon ?? undefined} alt="" />
               <AvatarFallback className="rounded-none text-2xs font-medium">
                 {guild.name.charAt(0).toUpperCase()}
@@ -127,6 +127,10 @@ export const GuildSidebarHeader = ({
             className={cn(
               "truncate text-sm",
               (isRukiaTheme || isRiasTheme) && "font-semibold",
+              // A halo in the sidebar color keeps the name readable over the
+              // banner in every theme; Rukia's gradient text has its own glow.
+              !isRukiaTheme &&
+                "[text-shadow:0_1px_2px_var(--sidebar),0_0_10px_var(--sidebar)]",
             )}
             style={
               isRukiaTheme
