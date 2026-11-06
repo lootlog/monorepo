@@ -1,6 +1,7 @@
 {
   "extends": "@lootlog/typescript-config/base.json",
   "compilerOptions": {
+    "lib": ["ES2024", "DOM"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
