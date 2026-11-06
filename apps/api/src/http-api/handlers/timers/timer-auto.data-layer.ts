@@ -51,6 +51,7 @@ import {
 import { getProfByShortname } from "@lootlog/domain/profession";
 import type { JsonValue } from "#src/http-api/contracts/shared";
 import {
+  ApplicationError,
   InvalidRequestError,
   ResourceConflictError,
   PermissionDeniedError,
@@ -807,6 +808,9 @@ export const makeAutoTimer = (
       if (Result.isSuccess(result)) {
         submittedGuilds.push({ guildId: guild.id, guildName: guild.name });
       } else {
+        yield* Effect.logWarning("Auto timer write failed").pipe(
+          Effect.annotateLogs({ guildId: guild.id, cause: result.failure }),
+        );
         rejectedGuilds.push({
           guildId: guild.id,
           guildName: guild.name,
@@ -837,6 +841,30 @@ export const makeAutoTimer = (
     return { submittedGuilds, rejectedGuilds };
   });
 
+  // The game client reports kills unattended, so a rejected report is the
+  // only trace of a timer that players expected to appear.
+  const logRejection = (
+    payload: CreateAutoTimerRequest,
+    error: ApplicationError,
+  ) =>
+    Effect.logWarning("Auto timer rejected").pipe(
+      Effect.annotateLogs({
+        code: error.body.code,
+        details: error.body.details,
+        world: payload.world,
+        characterId: payload.characterId,
+        npcId: payload.npc.id,
+        npcName: payload.npc.name,
+      }),
+    );
+
   return (identity: TimersIdentity, payload: CreateAutoTimerRequest) =>
-    operation(identity, payload).pipe(Effect.mapError(toTimersDataFailure));
+    operation(identity, payload).pipe(
+      Effect.tapError((error) =>
+        error instanceof ApplicationError
+          ? logRejection(payload, error)
+          : Effect.void,
+      ),
+      Effect.mapError(toTimersDataFailure),
+    );
 };

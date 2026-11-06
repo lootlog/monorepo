@@ -521,7 +521,8 @@
       "all": "Wszystkie statusy",
       "success": "Sukces",
       "partial": "Częściowy sukces",
-      "error": "Błąd"
+      "error": "Błąd",
+      "skipped": "Pominięto"
     },
     "actionTypes": {
       "create_kill": "Dodanie zabicia",

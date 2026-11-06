@@ -125,6 +125,18 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+/** The reason of each logged timer that was skipped without a request. */
+const skippedTimerReasons = () =>
+  useLogsStore
+    .getState()
+    .actions.map((action) =>
+      action.actionType === "create_timer" &&
+      action.status === "skipped" &&
+      action.requests.length === 0
+        ? action.details
+        : action,
+    );
+
 it("ignores packets without deleted NPCs", () => {
   const fixture = createFixture();
   fixture.handle({});
@@ -189,7 +201,7 @@ it("does not submit a kill observed while the character is in stasis", () => {
   fixture.ingress.game = { ...game, hero: { ...game.hero, stasis: true } };
   fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
   expect(useNpcDetectorStore.getState().npcs).toEqual([]);
-  expect(useLogsStore.getState().actions).toEqual([]);
+  expect(skippedTimerReasons()).toEqual([{ reason: "stasis" }]);
 });
 
 it("does not submit low-weight NPCs", () => {
@@ -206,15 +218,18 @@ it("does not submit without whitelisted guilds", () => {
   const fixture = createFixture();
   queryClient.setQueryData(configKey, { "101": { catchingGuildIds: [] } });
   fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
-  // A submission logs its action synchronously, before sending a request.
-  expect(useLogsStore.getState().actions).toEqual([]);
+  expect(skippedTimerReasons()).toEqual([
+    { reason: "no-catching-organization" },
+  ]);
 });
 
 it("does not submit when the loaded configuration has no entry for the character", () => {
   const fixture = createFixture();
   queryClient.setQueryData(configKey, { "999": { catchingGuildIds: ["g"] } });
   fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
-  expect(useLogsStore.getState().actions).toEqual([]);
+  expect(skippedTimerReasons()).toEqual([
+    { reason: "no-catching-organization" },
+  ]);
 });
 
 it("does not submit without a signed-in session", () => {
@@ -225,7 +240,7 @@ it("does not submit without a signed-in session", () => {
   onTestFinished(() => session.set(previous));
   session.set({ ...session.value, data: null, error: null, isPending: false });
   fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
-  expect(useLogsStore.getState().actions).toEqual([]);
+  expect(skippedTimerReasons()).toEqual([{ reason: "signed-out" }]);
 });
 
 it.each(["refetching", "invalidated"] as const)(
@@ -248,7 +263,9 @@ it.each(["refetching", "invalidated"] as const)(
     }
 
     fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
-    expect(useLogsStore.getState().actions).toEqual([]);
+    expect(skippedTimerReasons()).toEqual([
+      { reason: "no-catching-organization" },
+    ]);
   },
 );
 

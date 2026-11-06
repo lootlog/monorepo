@@ -10,6 +10,7 @@ export const LOG_STATUS_VALUES = [
   "success",
   "partial",
   "error",
+  "skipped",
 ] as const;
 
 export type LogStatusFilter = (typeof LOG_STATUS_VALUES)[number];
@@ -45,6 +46,7 @@ export const STATUS_LABEL_KEYS: Record<LogEntryStatus, string> = {
   success: "settings.logs.statuses.success",
   partial: "settings.logs.statuses.partial",
   error: "settings.logs.statuses.error",
+  skipped: "settings.logs.statuses.skipped",
 };
 
 export const LOG_STATUS_CHIP_CLASS_NAMES: Record<
@@ -54,6 +56,7 @@ export const LOG_STATUS_CHIP_CLASS_NAMES: Record<
   success: "ll:bg-emerald-500/15 ll:text-emerald-300",
   partial: "ll:bg-white/10 ll:text-muted-foreground",
   error: "ll:bg-destructive/15 ll:text-destructive",
+  skipped: "ll:bg-amber-500/15 ll:text-amber-300",
 };
 
 /** Shared chip shape; pair with a LOG_STATUS_CHIP_CLASS_NAMES colour. */
