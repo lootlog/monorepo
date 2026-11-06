@@ -8,7 +8,7 @@ import type { EventRanking, EventHeroNpc } from "../../types/api";
 import { BandSection } from "@/components/common/band-section";
 import { useState } from "react";
 import { EventRankingHeroSelect } from "./event-ranking-hero-select";
-import { EventRankingTable } from "./event-ranking-table";
+import { EventRankingLeaderboard } from "./event-ranking-leaderboard";
 
 interface EventRankingPreviewProps {
   rankings: EventRanking[];
@@ -77,11 +77,10 @@ export const EventRankingPreview = ({
             title={t("events.ranking.noRanking")}
           />
         ) : (
-          <EventRankingTable
+          <EventRankingLeaderboard
             rankings={filteredRankings}
             guildId={guildId}
             eventId={eventId}
-            variant="compact"
             limit={limit}
             currentMemberId={currentMemberId}
           />

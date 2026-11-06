@@ -13,7 +13,7 @@ import { Trophy } from "lucide-react";
 import { toast } from "@lootlog/ui/components/sonner";
 import { useUpdateRankingPoints } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
-import { Table, TableCell, TableRow } from "@lootlog/ui/components/table";
+import { Table } from "@lootlog/ui/components/table";
 import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
@@ -38,12 +38,6 @@ type EventRankingTableProps = {
   eventId?: string;
   canEdit?: boolean;
   currentMemberId?: number;
-  variant?: "default" | "compact";
-  /**
-   * Shows only the leaders, plus the current member's own place below them
-   * when it falls outside.
-   */
-  limit?: number;
 };
 
 const LINK_COLUMN_IDS = new Set(["position", "member", "kills", "time", "afk"]);
@@ -52,10 +46,7 @@ const PRIMARY_LINK_COLUMN_ID = "member";
 
 const RIGHT_ALIGNED_COLUMN_IDS = new Set(["kills", "time", "afk", "points"]);
 
-const getColumnClassName = (
-  columnId: string,
-  variant: EventRankingTableProps["variant"],
-) => {
+const getColumnClassName = (columnId: string) => {
   if (columnId === "position") {
     return "w-12";
   }
@@ -77,10 +68,6 @@ const getColumnClassName = (
   }
 
   if (columnId === "points") {
-    if (variant === "compact") {
-      return "w-32 text-right @md/ranking:w-36";
-    }
-
     return "w-28 text-right md:w-36";
   }
 
@@ -97,8 +84,6 @@ export const EventRankingTable = ({
   eventId,
   canEdit = false,
   currentMemberId,
-  variant = "default",
-  limit,
 }: EventRankingTableProps) => {
   const { t } = useTranslation();
   const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
@@ -159,24 +144,6 @@ export const EventRankingTable = ({
       rightRanking.totalPoints - leftRanking.totalPoints,
   );
 
-  const placeById = new Map(
-    sortedRankings.map((ranking, index) => [ranking.id, index + 1]),
-  );
-
-  const leaders =
-    limit === undefined ? sortedRankings : sortedRankings.slice(0, limit);
-
-  const ownRankingBelow =
-    limit === undefined
-      ? undefined
-      : sortedRankings
-          .slice(limit)
-          .find((ranking) => ranking.memberId === currentMemberId);
-
-  const visibleRankings = ownRankingBelow
-    ? [...leaders, ownRankingBelow]
-    : leaders;
-
   const allColumns: ColumnDef<typeof coreTableFeatures, EventRanking>[] = [
     {
       id: "position",
@@ -188,9 +155,7 @@ export const EventRankingTable = ({
           #
         </span>
       ),
-      cell: ({ row }) => (
-        <RankBadge rank={placeById.get(row.original.id) ?? row.index + 1} />
-      ),
+      cell: ({ row }) => <RankBadge rank={row.index + 1} />,
       enableSorting: false,
     },
     {
@@ -282,17 +247,10 @@ export const EventRankingTable = ({
     },
   ];
 
-  const columns =
-    variant === "compact"
-      ? allColumns.filter((column) =>
-          ["position", "member", "kills", "points"].includes(column.id ?? ""),
-        )
-      : allColumns;
-
   const table = useTable({
     features: coreTableFeatures,
-    data: visibleRankings,
-    columns,
+    data: sortedRankings,
+    columns: allColumns,
     getRowId: (ranking) => ranking.id,
   });
 
@@ -330,11 +288,9 @@ export const EventRankingTable = ({
     );
   };
 
-  const isPage = variant === "default";
-
   const renderRankings = () => {
     if (rankings.length === 0) {
-      return isPage ? (
+      return (
         <div className="p-3">
           <EmptyState
             fill
@@ -342,12 +298,10 @@ export const EventRankingTable = ({
             title={t("events.ranking.noRanking")}
           />
         </div>
-      ) : (
-        <EmptyState icon={Trophy} title={t("events.ranking.noRanking")} />
       );
     }
 
-    if (isPage && !usesTable && guildId && eventId) {
+    if (!usesTable && guildId && eventId) {
       return (
         <EventRankingTiles
           rankings={sortedRankings}
@@ -363,26 +317,16 @@ export const EventRankingTable = ({
     }
 
     return (
-      <Table
-        className={cn(
-          "w-full table-fixed",
-          isPage && "border-b",
-          // The preview ends inside a column, so its last row keeps its rule.
-          !isPage && "[&_tbody_tr:last-child]:border-b",
-        )}
-      >
+      <Table className="w-full table-fixed border-b">
         <TanStackTableHeader
           table={table}
-          // A short preview scrolls past whole; only the full ranking pins it.
-          className={
-            variant === "compact" ? "bg-sidebar" : FILTERED_TABLE_HEADER_CLASS
-          }
+          className={FILTERED_TABLE_HEADER_CLASS}
           rowClassName="border-b-1! border-border hover:bg-transparent"
           getHeadClassName={(header) =>
             cn(
               "whitespace-nowrap align-middle",
               header.column.id === "position" && "pl-4",
-              getColumnClassName(header.column.id, variant),
+              getColumnClassName(header.column.id),
             )
           }
         />
@@ -397,8 +341,7 @@ export const EventRankingTable = ({
           getCellClassName={(cell) =>
             cn(
               "h-14 overflow-hidden p-0! align-middle",
-              getColumnClassName(cell.column.id, variant),
-              variant === "compact" && cell.column.id === "points" && "pr-3!",
+              getColumnClassName(cell.column.id),
             )
           }
           getRowProps={(row) => ({
@@ -407,36 +350,12 @@ export const EventRankingTable = ({
               row.original.memberId === currentMemberId || undefined,
           })}
           renderCellContent={renderRankingLinkCell}
-          renderRowDetail={(row) =>
-            ownRankingBelow && row.index === leaders.length - 1 ? (
-              // The places skipped between the leaders and the member's own.
-              <TableRow
-                aria-hidden="true"
-                className="h-6 border-b border-border hover:bg-transparent"
-              >
-                {/* One cell per column, so hidden columns stay hidden here too. */}
-                {columns.map((column, index) => (
-                  <TableCell
-                    key={column.id}
-                    className={cn(
-                      "py-0 text-xs leading-none text-muted-foreground",
-                      getColumnClassName(column.id ?? "", variant),
-                      index === 0 && "pl-4!",
-                    )}
-                  >
-                    {index === 0 && "⋯"}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ) : null
-          }
         />
       </Table>
     );
   };
 
   return (
-    // The page lays the ranking edge to edge; the preview card frames it.
     <section className="@container/ranking w-full min-w-0 overflow-clip">
       {renderRankings()}
       {canEdit && editingRanking && (

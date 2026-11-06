@@ -264,7 +264,7 @@ describe("EventRankingTable", () => {
     const createRankingTable = () => (
       <QueryClientProvider client={queryClient}>
         <Profiler id="ranking" onRender={() => (commitCount += 1)}>
-          <EventRankingTable rankings={[ranking]} variant="compact" />
+          <EventRankingTable rankings={[ranking]} />
         </Profiler>
       </QueryClientProvider>
     );
@@ -315,70 +315,6 @@ describe("EventRankingTable", () => {
         .filter((link) => link !== primaryLink)
         .every((link) => link.tabIndex === -1),
     ).toBe(true);
-  });
-
-  it("renders the shared table without nested card styling in compact mode", () => {
-    const { container } = renderRankingTable(
-      [createRanking({ id: "ranking-1", memberId: 1 })],
-      { variant: "compact" },
-    );
-
-    const section = container.querySelector("section");
-    const headers = screen.getAllByRole("columnheader");
-    const pointsCell = container.querySelector("tbody td:last-child");
-
-    expect(headers).toHaveLength(4);
-    expect(
-      screen.getByRole("columnheader", { name: "events.ranking.player" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("columnheader", { name: "events.ranking.points" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("columnheader", { name: "events.ranking.kills" }),
-    ).toBeTruthy();
-    expect(screen.getByText("2")).toBeTruthy();
-    expect(section?.className).not.toContain("border-border");
-    expect(pointsCell?.className).toContain("pr-3!");
-    expect(
-      screen.queryByRole("button", { name: "events.ranking.moreActions" }),
-    ).toBeNull();
-  });
-
-  it("shows kills only when the ranking widget is wide enough", () => {
-    const { container } = renderRankingTable(
-      [createRanking({ id: "ranking-1", memberId: 1 })],
-      { variant: "compact" },
-    );
-
-    const section = container.querySelector("section");
-
-    const killsHeader = screen.getByRole("columnheader", {
-      name: "events.ranking.kills",
-    });
-
-    expect(section?.className).toContain("@container/ranking");
-    expect(killsHeader.classList.contains("hidden")).toBe(true);
-    expect(killsHeader.classList.contains("@md/ranking:table-cell")).toBe(true);
-    expect(killsHeader.classList.contains("md:table-cell")).toBe(false);
-  });
-
-  it("uses compact typography until the ranking widget becomes wide", () => {
-    const { container } = renderRankingTable(
-      [createRanking({ id: "ranking-1", memberId: 1 })],
-      { variant: "compact" },
-    );
-
-    const memberName = screen.getByText("Member 1");
-
-    const pointsValue = container.querySelector(
-      "tbody td:last-child .font-bold",
-    );
-
-    expect(memberName.classList.contains("text-xs")).toBe(true);
-    expect(memberName.classList.contains("@md/ranking:text-sm")).toBe(true);
-    expect(pointsValue?.classList.contains("text-sm")).toBe(true);
-    expect(pointsValue?.classList.contains("@md/ranking:text-base")).toBe(true);
   });
 
   it("keeps point sorting and formats non-zero AFK values", () => {
@@ -482,43 +418,6 @@ describe("EventRankingTable", () => {
     );
     expect(firstRow?.textContent).not.toContain("common.inactiveMember");
   });
-
-  it.each([
-    [12, ["Member 1", "Member 2", "Member 3", "Member 12"], "12"],
-    [2, ["Member 1", "Member 2", "Member 3"], "3"],
-    [99, ["Member 1", "Member 2", "Member 3"], "3"],
-  ])(
-    "shows the leaders plus member %i's own place when it is outside them",
-    (currentMemberId, expectedNames, expectedLastPlace) => {
-      const rankings = Array.from({ length: 15 }, (_, index) =>
-        createRanking({
-          id: `ranking-${index + 1}`,
-          memberId: index + 1,
-          totalPoints: 100 - index,
-        }),
-      );
-
-      renderRankingTable(rankings, {
-        currentMemberId,
-        limit: 3,
-        variant: "compact",
-      });
-
-      const memberRows = screen
-        .getAllByRole("row")
-        .filter((row) => row.textContent?.includes("Member"));
-
-      expect(
-        memberRows.map(
-          (row) => within(row).getByText(/^Member \d+$/).textContent,
-        ),
-      ).toEqual(expectedNames);
-
-      expect(
-        memberRows[memberRows.length - 1]?.querySelector("td")?.textContent,
-      ).toBe(expectedLastPlace);
-    },
-  );
 
   it("marks manually modified points next to their value", () => {
     renderRankingTable(
@@ -629,8 +528,6 @@ type RankingTableOptions = {
   currentMemberId?: number;
   eventId?: string;
   guildId?: string;
-  limit?: number;
-  variant?: "default" | "compact";
 };
 
 function renderRankingTable(
@@ -654,8 +551,6 @@ function renderRankingTable(
         eventId={options.eventId ?? "event-1"}
         canEdit={options.canEdit ?? true}
         currentMemberId={options.currentMemberId}
-        variant={options.variant}
-        limit={options.limit}
       />
     </QueryClientProvider>
   );
