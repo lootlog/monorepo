@@ -1,6 +1,5 @@
 import { BandSection } from "@/components/common/band-section";
 import { getGuildSettingsErrorMessage } from "../get-guild-settings-error-message";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { toast } from "@lootlog/ui/components/sonner";
@@ -55,32 +54,12 @@ export const ReservationsSettingsForm = ({
   const { mutate: updateGuildConfig, isPending } =
     useGuildsControllerUpdateGuildConfig();
 
-  const settings = resolveReservationSettings(guild);
-
   const form = useForm<ReservationsSettingsFormValues>({
     resolver: standardSchemaResolver(reservationsSettingsFormSchema),
-    defaultValues: settings,
+    // A refetch updates untouched fields and keeps the unsaved edits.
+    values: resolveReservationSettings(guild),
+    resetOptions: { keepDirtyValues: true },
   });
-
-  useEffect(() => {
-    form.reset(
-      resolveReservationSettings({
-        reservationActiveLimitPerSpot: guild.reservationActiveLimitPerSpot,
-        reservationMaxAdvanceDays: guild.reservationMaxAdvanceDays,
-        reservationMaxDurationMinutes: guild.reservationMaxDurationMinutes,
-        reservationMinDurationMinutes: guild.reservationMinDurationMinutes,
-        reservationTimeGranularityMinutes:
-          guild.reservationTimeGranularityMinutes,
-      }),
-    );
-  }, [
-    form,
-    guild.reservationActiveLimitPerSpot,
-    guild.reservationMaxAdvanceDays,
-    guild.reservationMaxDurationMinutes,
-    guild.reservationMinDurationMinutes,
-    guild.reservationTimeGranularityMinutes,
-  ]);
 
   function onSubmit(values: ReservationsSettingsFormValues) {
     if (isPending) return;

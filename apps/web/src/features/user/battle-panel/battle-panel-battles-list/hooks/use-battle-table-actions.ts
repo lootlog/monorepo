@@ -151,9 +151,7 @@ export const useBattleTableActions = ({
       });
 
       if (results.some((result) => result.status === "rejected")) {
-        toast.error(t("battlePanel.toasts.bulkBattleDeleteError"));
-
-        return;
+        throw new Error("Some battles were not deleted.");
       }
 
       toast.success(
@@ -165,9 +163,9 @@ export const useBattleTableActions = ({
         },
       );
       clearSelection();
-      setIsBulkDeleteDialogOpen(false);
-    } catch {
+    } catch (error) {
       toast.error(t("battlePanel.toasts.bulkBattleDeleteError"));
+      throw error;
     }
   };
 
@@ -185,9 +183,9 @@ export const useBattleTableActions = ({
       );
       toast.success(t("battlePanel.toasts.battleDeleted"), { duration: 3000 });
       removeBattleFromSelection(singleDeleteBattle.id);
-      setSingleDeleteBattle(null);
-    } catch {
+    } catch (error) {
       toast.error(t("battlePanel.toasts.battleDeleteError"));
+      throw error;
     }
   };
 

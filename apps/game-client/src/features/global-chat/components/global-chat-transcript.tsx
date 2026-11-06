@@ -8,6 +8,7 @@ import { Spinner } from "@/components/ui/spinner";
 import type { GlobalChatRow as GlobalChatRowData } from "../global-chat.helpers";
 import { SharedContextMenu } from "@/components/common/shared-context-menu";
 import { ChatTranscriptViewport } from "@/features/chat/components/chat-transcript-viewport";
+import { useTranscriptWindow } from "@/features/chat/hooks/use-transcript-window";
 import { GlobalChatRow, type GlobalChatRowContext } from "./global-chat-row";
 
 type GlobalChatTranscriptProps = {
@@ -21,7 +22,10 @@ type GlobalChatTranscriptProps = {
   onLoadOlder: () => void;
 };
 
-/** Follows the newest message and reads an older page when scrolled to the top. */
+/**
+ * Follows the newest message and mounts older rows when scrolled to the top,
+ * reading an older page once every loaded row is mounted.
+ */
 export const GlobalChatTranscript = ({
   appearance,
   rows,
@@ -37,11 +41,24 @@ export const GlobalChatTranscript = ({
   const isEmpty = rows.length === 0;
   // Also true while the history is shorter than the viewport, which fills it.
   const atStart = !isEmpty && !start;
+  const transcriptWindow = useTranscriptWindow(rows);
   const loadOlder = useEffectEvent(onLoadOlder);
+  const revealOlder = useEffectEvent(transcriptWindow.revealOlder);
 
+  // Mounts the loaded rows above the window before reading an older page.
   useEffect(() => {
-    if (atStart && hasOlder && !loadingOlder && !olderFailed) loadOlder();
-  }, [atStart, hasOlder, loadingOlder, olderFailed]);
+    if (!atStart) return;
+
+    if (transcriptWindow.hasOlder) revealOlder();
+    else if (hasOlder && !loadingOlder && !olderFailed) loadOlder();
+  }, [
+    atStart,
+    transcriptWindow.hasOlder,
+    transcriptWindow.rows.length,
+    hasOlder,
+    loadingOlder,
+    olderFailed,
+  ]);
 
   return (
     <ChatTranscriptViewport
@@ -80,7 +97,7 @@ export const GlobalChatTranscript = ({
       preserveScrollOnPrepend
       popups={SharedContextMenu}
     >
-      {rows.map((row) => (
+      {transcriptWindow.rows.map((row) => (
         <GlobalChatRow
           key={row.key}
           appearance={appearance}

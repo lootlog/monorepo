@@ -1075,9 +1075,10 @@ body {
     rotate: -8deg;
   }
 
-  .landing-cta-emblem img {
+  .landing-cta-emblem svg {
     width: 62%;
     height: auto;
+    aspect-ratio: 1;
   }
 
   .landing-cta-emblem::before {

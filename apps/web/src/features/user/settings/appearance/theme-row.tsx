@@ -76,7 +76,7 @@ export const ThemeRow = ({
         isThemed && [themeClass, "font-sans text-foreground"],
         isActive
           ? "from-primary/15 to-primary/15"
-          : "from-transparent to-transparent hover:from-muted/30 hover:to-muted/30",
+          : "from-transparent to-transparent hover:from-muted/40 hover:to-muted/40",
       )}
       style={isThemed ? themeStyle : undefined}
       onPointerEnter={() => setIsPointedAt(true)}

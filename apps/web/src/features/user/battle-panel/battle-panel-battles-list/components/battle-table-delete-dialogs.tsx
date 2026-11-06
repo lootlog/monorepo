@@ -1,23 +1,17 @@
 import type { Battle } from "@/lib/api/battlelog-types";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@lootlog/ui/components/alert-dialog";
-import { Button } from "@lootlog/ui/components/button";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { useTranslation } from "react-i18next";
-import { stopBattleTableAction } from "./battle-table-events";
 
 type BattleTableDeleteDialogsProps = {
   isBulkDeleteDialogOpen: boolean;
+  /** Another table action is running, so deleting must wait. */
+  isBusy: boolean;
   isDeletePending: boolean;
-  onBulkDelete: () => void;
+  /** Rejects to keep the dialog open, as after a failed request. */
+  onBulkDelete: () => Promise<void>;
   onBulkDeleteOpenChange: (open: boolean) => void;
-  onSingleDelete: () => void;
+  /** Rejects to keep the dialog open, as after a failed request. */
+  onSingleDelete: () => Promise<void>;
   onSingleDeleteOpenChange: (open: boolean) => void;
   selectedCount: number;
   singleDeleteBattle: Battle | null;
@@ -25,6 +19,7 @@ type BattleTableDeleteDialogsProps = {
 
 export const BattleTableDeleteDialogs = ({
   isBulkDeleteDialogOpen,
+  isBusy,
   isDeletePending,
   onBulkDelete,
   onBulkDeleteOpenChange,
@@ -37,67 +32,30 @@ export const BattleTableDeleteDialogs = ({
 
   return (
     <>
-      <AlertDialog
+      <ConfirmDialog
         open={isBulkDeleteDialogOpen}
-        onOpenChange={(open) => {
-          if (!isDeletePending) onBulkDeleteOpenChange(open);
-        }}
-      >
-        <AlertDialogContent onClick={stopBattleTableAction}>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("battlePanel.bulk.deleteDialog.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("battlePanel.bulk.deleteDialog.description", {
-                count: selectedCount,
-              })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletePending}>
-              {t("common.cancel")}
-            </AlertDialogCancel>
-            <Button
-              variant="destructive"
-              onClick={onBulkDelete}
-              loading={isDeletePending}
-            >
-              {t("battlePanel.bulk.deleteDialog.confirm")}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
+        onOpenChange={onBulkDeleteOpenChange}
+        title={t("battlePanel.bulk.deleteDialog.title")}
+        description={t("battlePanel.bulk.deleteDialog.description", {
+          count: selectedCount,
+        })}
+        confirmButtonLabel={t("battlePanel.bulk.deleteDialog.confirm")}
+        cancelButtonLabel={t("common.cancel")}
+        disabled={isBusy}
+        pending={isDeletePending}
+        onConfirm={onBulkDelete}
+      />
+      <ConfirmDialog
         open={Boolean(singleDeleteBattle)}
-        onOpenChange={(open) => {
-          if (!isDeletePending) onSingleDeleteOpenChange(open);
-        }}
-      >
-        <AlertDialogContent onClick={stopBattleTableAction}>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("battlePanel.dialogs.deleteBattle.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("battlePanel.dialogs.deleteBattle.description")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletePending}>
-              {t("common.cancel")}
-            </AlertDialogCancel>
-            <Button
-              variant="destructive"
-              onClick={onSingleDelete}
-              loading={isDeletePending}
-            >
-              {t("battlePanel.dialogs.deleteBattle.confirm")}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onOpenChange={onSingleDeleteOpenChange}
+        title={t("battlePanel.dialogs.deleteBattle.title")}
+        description={t("battlePanel.dialogs.deleteBattle.description")}
+        confirmButtonLabel={t("battlePanel.dialogs.deleteBattle.confirm")}
+        cancelButtonLabel={t("common.cancel")}
+        disabled={isBusy}
+        pending={isDeletePending}
+        onConfirm={onSingleDelete}
+      />
     </>
   );
 };

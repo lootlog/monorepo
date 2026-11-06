@@ -2,6 +2,7 @@ import { formatSignedBattleMetric } from "@/components/battle/utils/value-utils"
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { BattlePanelH2hOpponentSummary } from "@/features/user/battle-panel/components/battle-panel-h2h-opponent-summary";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
@@ -35,7 +36,8 @@ export const BattlePanelH2hCard = ({
   const totalRatingDelta = record.totalRatingDelta ?? 0;
 
   const className = cn(
-    "block w-full py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+    "block w-full py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+    LIST_TILE_HOVER_CLASS,
     LIST_TILE_RULE_CLASS,
     LIST_TILE_INSET_CLASS,
   );

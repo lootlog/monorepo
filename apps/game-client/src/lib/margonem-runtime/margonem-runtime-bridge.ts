@@ -141,7 +141,17 @@ export class MargonemRuntimeBridge {
       initializeGame();
       const intent = captureIntent();
       // Reflect calls the foreign callable even if an addon overrides its own apply property.
-      const result = Reflect.apply(originalInbound, this, args);
+      let result: unknown;
+
+      try {
+        result = Reflect.apply(originalInbound, this, args);
+      } catch (error) {
+        // The packet's intent must not reach the next packet; Margonem's
+        // exception propagates unchanged.
+        clearIntent();
+        throw error;
+      }
+
       initializeGame();
       const envelope = createEnvelope(args[0], intent);
       clearIntent();

@@ -1,8 +1,10 @@
+import { cn } from "cn";
 import { MetaItem } from "@/components/common/meta-item";
 import {
   getListTileLinkClassName,
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import type { GuildDocumentListResponseDtoItemsItem } from "@lootlog/client/main";
@@ -33,7 +35,7 @@ export const GuildDocTile = ({
 
   return (
     <div data-list-tile className={LIST_TILE_RULE_CLASS}>
-      <div className="flex h-full items-center transition-colors hover:bg-muted/30 motion-reduce:transition-none">
+      <div className={cn("flex h-full items-center", LIST_TILE_HOVER_CLASS)}>
         <Link
           to="/$guildId/docs/$docId"
           params={{ guildId, docId: document.id }}

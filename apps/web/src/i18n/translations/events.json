@@ -48,8 +48,6 @@
   "deleteDialog": {
     "title": "Usunąć event?",
     "description": "Czy na pewno chcesz usunąć event „{{name}}”? Ta operacja usuwa wszystkie dane eventowe i jest nieodwracalna.",
-    "confirmLabel": "Wpisz nazwę eventu, aby potwierdzić",
-    "confirmPlaceholder": "Nazwa eventu",
     "confirmHint": "Aby usunąć event, wpisz dokładnie: {{name}}"
   },
   "endDialog": {

@@ -40,10 +40,6 @@
     "noResults": "Brak pasujących expowisk",
     "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej expowisk."
   },
-  "datePicker": {
-    "clear": "Wyczyść datę",
-    "time": "Godzina"
-  },
   "schedule": {
     "header": {
       "actions": "Akcje kalendarza rezerwacji",
