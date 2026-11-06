@@ -34,7 +34,7 @@ type UseSortableListConfig = {
   disabled?: boolean;
 };
 
-export const moveId = (
+const moveId = (
   ids: readonly string[],
   fromIndex: number,
   toIndex: number,

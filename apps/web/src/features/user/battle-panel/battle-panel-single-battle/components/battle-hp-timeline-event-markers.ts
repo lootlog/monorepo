@@ -29,7 +29,7 @@ export type BattleHpTimelineEventWarrior = {
   team: number;
 };
 
-export type BattleHpTimelineEventMarker = BattleHpTimelineLayerDefinition & {
+type BattleHpTimelineEventMarker = BattleHpTimelineLayerDefinition & {
   count: number;
 };
 

@@ -8,7 +8,7 @@ import {
 } from "@lootlog/client/main";
 import type { StoredNotification } from "@/store/notifications.store";
 
-export type NotificationGuildMembersByGuildId = Record<
+type NotificationGuildMembersByGuildId = Record<
   string,
   Record<string, MemberSummaryResponseDtoOutput>
 >;

@@ -158,7 +158,7 @@ export type EventScoringContext = {
   } | null;
 };
 
-export type EventScoringUnknownReason =
+type EventScoringUnknownReason =
   | "NO_PRESENCE_DATA"
   | "WINDOW_UNKNOWN"
   | "PARTICIPANT_DATA_MISSING"
@@ -168,7 +168,7 @@ export type EventScoringConditionOutcome =
   | { status: "MET" | "NOT_MET" }
   | { status: "UNKNOWN"; reason: EventScoringUnknownReason };
 
-export type EventScoringRuleExplanation = {
+type EventScoringRuleExplanation = {
   ruleId: string;
   ruleName: string | null;
   enabled: boolean;

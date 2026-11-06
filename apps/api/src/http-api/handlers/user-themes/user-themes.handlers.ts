@@ -41,7 +41,7 @@ export class UserThemeLimitReached extends TaggedErrorClass<UserThemeLimitReache
   },
 ) {}
 
-export class UserThemesPersistenceError extends TaggedErrorClass<UserThemesPersistenceError>()(
+class UserThemesPersistenceError extends TaggedErrorClass<UserThemesPersistenceError>()(
   "UserThemesPersistenceError",
   { cause: Schema.Defect() },
 ) {}

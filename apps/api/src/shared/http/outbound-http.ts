@@ -3,7 +3,7 @@ import { Cause, Effect, Schema } from "effect";
 import { HttpBody } from "effect/http";
 import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 
-export type OutboundHttpMethod = "GET" | "POST";
+type OutboundHttpMethod = "GET" | "POST";
 
 export class OutboundHttpFailure extends TaggedErrorClass<OutboundHttpFailure>()(
   "OutboundHttpFailure",

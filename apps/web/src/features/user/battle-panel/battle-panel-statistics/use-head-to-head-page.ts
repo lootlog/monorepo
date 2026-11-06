@@ -33,7 +33,7 @@ import {
 } from "@/features/user/battle-panel/battle-panel-request-params";
 
 /** The battles of one Abyss season, which fix the character and dates. */
-export type HeadToHeadSeasonScope = {
+type HeadToHeadSeasonScope = {
   id: string;
   characterId: string;
   startDate: string;

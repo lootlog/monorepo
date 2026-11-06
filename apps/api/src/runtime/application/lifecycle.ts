@@ -1,6 +1,6 @@
 import { Effect, Layer } from "effect";
 
-export interface ApiLifecycleHooks {
+interface ApiLifecycleHooks {
   readonly onStart?: Effect.Effect<void>;
   readonly onStop?: Effect.Effect<void>;
 }

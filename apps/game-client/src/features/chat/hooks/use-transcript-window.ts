@@ -5,7 +5,7 @@ import { useState } from "react";
  * screenful is about 15–30 rows; mounting all 500 retained rows took 317 ms
  * of main thread at a 6x CPU slowdown, and that render is synchronous.
  */
-export const TRANSCRIPT_WINDOW_PAGE_SIZE = 50;
+const TRANSCRIPT_WINDOW_PAGE_SIZE = 50;
 
 const anchorKeysFrom = (rows: readonly { key: string }[], start: number) =>
   rows.slice(start, start + TRANSCRIPT_WINDOW_PAGE_SIZE).map((row) => row.key);

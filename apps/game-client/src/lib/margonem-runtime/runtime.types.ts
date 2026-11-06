@@ -34,7 +34,7 @@ export type RuntimeNpc = Readonly<{
   y: number;
 }>;
 
-export type RuntimeMap = Readonly<{
+type RuntimeMap = Readonly<{
   id: number;
   name: string;
   visibility: number;

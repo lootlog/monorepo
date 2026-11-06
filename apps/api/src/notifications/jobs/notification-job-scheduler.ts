@@ -65,7 +65,7 @@ export interface NotificationCancellationFilters {
   readonly sourceEntityId?: string;
 }
 
-export class NotificationJobSchedulerFailure extends TaggedErrorClass<NotificationJobSchedulerFailure>()(
+class NotificationJobSchedulerFailure extends TaggedErrorClass<NotificationJobSchedulerFailure>()(
   "NotificationJobSchedulerFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

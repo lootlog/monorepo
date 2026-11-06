@@ -9,11 +9,11 @@ import { getFixedT } from "@/i18n/get-fixed-t";
 
 export const LOG_VALUE_BYTE_CAP = 256 * 1024;
 
-export const LOG_VALUE_MAX_DEPTH = 10;
+const LOG_VALUE_MAX_DEPTH = 10;
 
-export const LOG_VALUE_MAX_ARRAY_ITEMS = 1_000;
+const LOG_VALUE_MAX_ARRAY_ITEMS = 1_000;
 
-export const LOG_VALUE_MAX_STRING_BYTES = 16 * 1024;
+const LOG_VALUE_MAX_STRING_BYTES = 16 * 1024;
 
 type SerializationContext = {
   bytes: number;

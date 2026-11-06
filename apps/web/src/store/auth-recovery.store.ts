@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type AuthRecoveryFailure = {
+type AuthRecoveryFailure = {
   readonly requiresReauth: boolean;
   readonly status: number | undefined;
 };

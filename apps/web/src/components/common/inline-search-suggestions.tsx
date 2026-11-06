@@ -2,7 +2,7 @@ import { ComboboxContent } from "@lootlog/ui/components/combobox";
 import type { ReactNode, RefObject } from "react";
 
 /** The bar an `InlineSearchField` sits in, which its suggestions hang from. */
-export const INLINE_SEARCH_BAR_ATTRIBUTE = "data-inline-search-bar";
+const INLINE_SEARCH_BAR_ATTRIBUTE = "data-inline-search-bar";
 
 /** A suggestion row, ruled off and inset like a list tile. */
 export const INLINE_SEARCH_SUGGESTION_CLASS =

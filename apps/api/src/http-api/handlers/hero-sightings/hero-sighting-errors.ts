@@ -12,7 +12,7 @@ export class HeroSightingsMemberNotFound extends TaggedErrorClass<HeroSightingsM
   { guildId: Schema.String, userId: Schema.String },
 ) {}
 
-export class HeroSightingsInfrastructureError extends TaggedErrorClass<HeroSightingsInfrastructureError>()(
+class HeroSightingsInfrastructureError extends TaggedErrorClass<HeroSightingsInfrastructureError>()(
   "HeroSightingsInfrastructureError",
   { cause: Schema.Defect() },
 ) {}

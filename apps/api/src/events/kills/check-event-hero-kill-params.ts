@@ -1,6 +1,6 @@
 import type { KillTimerData } from "#src/events/respawn/kill-timer-data";
 
-export interface CheckEventHeroKillParams {
+interface CheckEventHeroKillParams {
   guildId: string;
   world: string;
   npcId: number;

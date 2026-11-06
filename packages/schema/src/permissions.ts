@@ -38,12 +38,15 @@ export const Capability = {
 
 export type Capability = (typeof Capability)[keyof typeof Capability];
 
+/** @alias Legacy name for Capability. */
 export const Permission = Capability;
 
+/** @alias */
 export type Permission = Capability;
 
 export const CapabilitySchema = Schema.Literals(Object.values(Capability));
 
+/** @alias */
 export const PermissionSchema = CapabilitySchema;
 
 const UserGuildPermissionsRoleSchema = Schema.Struct({

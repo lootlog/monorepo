@@ -1,4 +1,4 @@
-export type ChatChannelKey =
+type ChatChannelKey =
   | "system"
   | "global"
   | "clan"
@@ -18,7 +18,7 @@ export type ChatEventMsg = {
   ts: number;
 };
 
-export type ChatEventChannel = {
+type ChatEventChannel = {
   archivedIds: string[];
   msg: ChatEventMsg[];
 };

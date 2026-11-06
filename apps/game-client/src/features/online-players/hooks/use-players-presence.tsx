@@ -7,7 +7,7 @@ import type { PlayerPresenceResponse } from "@/lib/online-players-presence";
 import { useSyncExternalStore } from "react";
 import type { AsyncResourceState } from "@/types/async-resource-state";
 
-export type OnlinePlayersAccessState = "allowed" | "forbidden";
+type OnlinePlayersAccessState = "allowed" | "forbidden";
 
 export type PlayersPresenceState = AsyncResourceState & {
   accessState: OnlinePlayersAccessState;

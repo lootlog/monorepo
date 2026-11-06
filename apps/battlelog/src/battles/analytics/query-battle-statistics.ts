@@ -5,7 +5,7 @@ import {
 } from "#src/infrastructure/query-schema";
 import { QueryBattleAnalyticsSchema } from "#src/battles/analytics/query-battle-analytics";
 
-export const QueryBattleStatisticsSchema = Schema.Struct({
+const QueryBattleStatisticsSchema = Schema.Struct({
   ...QueryBattleAnalyticsSchema.fields,
   period: Schema.optional(
     Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"]),
@@ -35,7 +35,7 @@ export const QueryBattleStatisticsSchema = Schema.Struct({
 
 export type BattleStatisticsQuery = typeof QueryBattleStatisticsSchema.Type;
 
-export const QueryPlayerVsPlayerSchema = Schema.Struct({
+const QueryPlayerVsPlayerSchema = Schema.Struct({
   ...QueryBattleStatisticsSchema.fields,
   opponentId: Schema.String,
   excludeBattleId: Schema.optional(Schema.String),
@@ -43,7 +43,7 @@ export const QueryPlayerVsPlayerSchema = Schema.Struct({
 
 export type PlayerVsPlayerQuery = typeof QueryPlayerVsPlayerSchema.Type;
 
-export const QueryAbyssSeasonsSchema = Schema.Struct({
+const QueryAbyssSeasonsSchema = Schema.Struct({
   characterId: Schema.String,
   world: Schema.optional(Schema.String),
 });

@@ -9,7 +9,7 @@ import { HttpApiSchema } from "effect/http-api";
 
 export const GuildParams = Schema.Struct({ guildId: Schema.String });
 
-export const DiscordGuildChannel = Schema.Struct({
+const DiscordGuildChannel = Schema.Struct({
   ...discordGuildChannelFields,
   lastSyncedAt: Schema.String,
 }).annotate({ identifier: "DiscordGuildChannel" });

@@ -6,7 +6,7 @@ import {
   withFallback,
 } from "./stored-value.js";
 
-export type NpcType =
+type NpcType =
   | "COMMON"
   | "ELITE"
   | "ELITE2"

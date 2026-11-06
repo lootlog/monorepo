@@ -40,14 +40,14 @@ export const mergeReadyRoomProjectionIntoCache = (
   );
 };
 
-export const applyReadyRoomUpdateToCache = (
+const applyReadyRoomUpdateToCache = (
   update: PartyReadyRoomClientUpdate,
   client: QueryClient = gameQueryClient,
 ) => {
   writeReadyRoomCache(client, (cache) => applyReadyRoomUpdate(cache, update));
 };
 
-export const removeReadyRoomFromCache = (
+const removeReadyRoomFromCache = (
   notificationId: string,
   client: QueryClient = gameQueryClient,
 ) => {

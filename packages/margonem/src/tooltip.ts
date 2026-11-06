@@ -1,4 +1,4 @@
-export type CharacterTip = [content: string, type?: string, options?: unknown];
+type CharacterTip = [content: string, type?: string, options?: unknown];
 
 export type CharacterTooltipOwner = {
   tip?: CharacterTip;

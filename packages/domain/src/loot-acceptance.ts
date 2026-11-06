@@ -1,13 +1,13 @@
 import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 
-export type LootRejectionReason =
+type LootRejectionReason =
   | "NOT_ON_CHARACTER_WHITELIST"
   | "MISSING_LOOTLOG_CONFIG"
   | "LOOT_NOT_ACCEPTED_BY_CONFIG"
   | "MISSING_MEMBER";
 
-export type LootAcceptanceConfig = {
+type LootAcceptanceConfig = {
   readonly npcs: ReadonlyArray<{
     readonly npcType: NpcType;
     readonly allowedRarities: readonly ItemRarity[];

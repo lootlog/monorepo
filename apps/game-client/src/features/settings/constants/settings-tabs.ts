@@ -32,8 +32,7 @@ export const LEGACY_SETTINGS_TAB_VALUES = [
   "debug",
 ] as const;
 
-export type LegacySettingsTabValue =
-  (typeof LEGACY_SETTINGS_TAB_VALUES)[number];
+type LegacySettingsTabValue = (typeof LEGACY_SETTINGS_TAB_VALUES)[number];
 
 export type SettingsTabValue = SettingsDomainValue | LegacySettingsTabValue;
 

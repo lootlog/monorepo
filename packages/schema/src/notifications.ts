@@ -24,16 +24,19 @@ export enum NotificationTriggerType {
 
 export enum NotificationScheduleAnchor {
   MIN_SPAWN = "MIN_SPAWN",
+  /** @public Persisted database enum value. */
   MAX_SPAWN = "MAX_SPAWN",
 }
 
 export enum NotificationJobKind {
+  /** @public Persisted database enum value. */
   SCHEDULED = "SCHEDULED",
+  /** @public Persisted database enum value. */
   INSTANT = "INSTANT",
   TEST = "TEST",
 }
 
-export enum NotificationJobStatus {
+enum NotificationJobStatus {
   PENDING = "PENDING",
   PROCESSING = "PROCESSING",
   SENT = "SENT",

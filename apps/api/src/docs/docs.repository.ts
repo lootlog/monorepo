@@ -37,7 +37,7 @@ export class DocsPersistenceError extends TaggedErrorClass<DocsPersistenceError>
   { cause: Schema.Defect() },
 ) {}
 
-export type DocsRepositoryFailure = ApplicationError | DocsPersistenceError;
+type DocsRepositoryFailure = ApplicationError | DocsPersistenceError;
 
 export type StoredDocument = typeof guildDocumentTable.$inferSelect;
 

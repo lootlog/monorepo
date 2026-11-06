@@ -39,7 +39,7 @@ import {
 } from "#src/database/schema";
 import type { CreateActivity, QueryActivities } from "./activity-model.js";
 
-export class ActivityNotFound extends TaggedErrorClass<ActivityNotFound>()(
+class ActivityNotFound extends TaggedErrorClass<ActivityNotFound>()(
   "ActivityNotFound",
   { id: Schema.String },
 ) {}

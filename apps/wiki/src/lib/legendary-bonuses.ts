@@ -46,7 +46,7 @@ const UNSEARCHED_BONUSES = new Set(["pushback", "resgain"]);
 const UPCOMING_BONUSES = new Set(["frenzy", "retaliation"]);
 
 /** Every legendary bonus with its icon, as item cards name them. */
-export const LEGENDARY_BONUSES = LEGENDARY_BONUS_NAMES.map((name) => ({
+const LEGENDARY_BONUSES = LEGENDARY_BONUS_NAMES.map((name) => ({
   name,
   icon: LEGENDARY_BONUS_ICONS.get(name) ?? Sparkles,
   isUpcoming: UPCOMING_BONUSES.has(name),

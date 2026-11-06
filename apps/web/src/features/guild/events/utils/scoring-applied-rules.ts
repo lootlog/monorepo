@@ -33,7 +33,7 @@ export type EvaluationContext = {
   presence?: EventScoringContext["presence"];
 };
 
-export type ScoringSimulationAppliedRule = {
+type ScoringSimulationAppliedRule = {
   ruleId: string;
   ruleName: string | null;
   points: number;

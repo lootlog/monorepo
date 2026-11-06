@@ -18,13 +18,13 @@ export type GuildNotificationCacheSnapshot = {
   jobs: NotificationJobsResponseDto | undefined;
 };
 
-export const guildNotificationRulesCacheQueryKey = (guildId: string) =>
+const guildNotificationRulesCacheQueryKey = (guildId: string) =>
   getNotificationsGuildControllerGetGuildRulesQueryKey({ guildId });
 
-export const guildNotificationTargetsCacheQueryKey = (guildId: string) =>
+const guildNotificationTargetsCacheQueryKey = (guildId: string) =>
   getNotificationsGuildControllerGetGuildTargetsQueryKey({ guildId });
 
-export const guildNotificationJobsCacheQueryKey = (guildId: string) =>
+const guildNotificationJobsCacheQueryKey = (guildId: string) =>
   getNotificationsGuildControllerGetGuildJobsQueryKey({ guildId });
 
 /** Polls the jobs while a delivery is queued, so it shows up once sent. */
@@ -55,7 +55,7 @@ export const invalidateGuildNotificationQueries = async (
   ]);
 };
 
-export const cancelGuildNotificationQueries = async (
+const cancelGuildNotificationQueries = async (
   queryClient: QueryClient,
   guildId: string,
 ) => {
@@ -72,7 +72,7 @@ export const cancelGuildNotificationQueries = async (
   ]);
 };
 
-export const getGuildNotificationCacheSnapshot = (
+const getGuildNotificationCacheSnapshot = (
   queryClient: QueryClient,
   guildId: string,
 ): GuildNotificationCacheSnapshot => ({
@@ -87,7 +87,7 @@ export const getGuildNotificationCacheSnapshot = (
   ),
 });
 
-export const restoreGuildNotificationCacheSnapshot = (
+const restoreGuildNotificationCacheSnapshot = (
   queryClient: QueryClient,
   guildId: string,
   snapshot: GuildNotificationCacheSnapshot | undefined,

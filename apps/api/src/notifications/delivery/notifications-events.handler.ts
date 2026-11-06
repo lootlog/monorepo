@@ -35,7 +35,7 @@ export interface TimerDeletedEvent {
   readonly npcId?: number;
 }
 
-export class NotificationTimerRebuildError extends TaggedErrorClass<NotificationTimerRebuildError>()(
+class NotificationTimerRebuildError extends TaggedErrorClass<NotificationTimerRebuildError>()(
   "NotificationTimerRebuildError",
   { ruleIds: Schema.Array(Schema.Number) },
 ) {}
@@ -49,7 +49,7 @@ const HERO_SIGHTING_NOTIFICATION_MAX_AGE_MS = 15 * 60 * 1000;
  * that is later seen roaming announces that the hero appeared. Repeated
  * confirmations map to the same transition, so they notify once.
  */
-export const heroSightingNotificationTransition = (
+const heroSightingNotificationTransition = (
   sighting: Pick<
     HeroSightingResponse,
     "closedAt" | "lastSeenAt" | "spawnedAt" | "state"

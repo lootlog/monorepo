@@ -11,17 +11,17 @@ import {
   useCharacterTooltipCatchingGuildsStore,
 } from "@/store/character-tooltip-catching-guilds.store";
 
-export const CATCHING_GUILDS_BATCH_SIZE = 100;
+const CATCHING_GUILDS_BATCH_SIZE = 100;
 
 export const CATCHING_GUILDS_CACHE_TIME_MS = 60_000;
 
-export const CATCHING_GUILDS_REQUEST_TIMEOUT_MS = 5_000;
+const CATCHING_GUILDS_REQUEST_TIMEOUT_MS = 5_000;
 
-export const CATCHING_GUILDS_RETRY_DELAY_MS = 300;
+const CATCHING_GUILDS_RETRY_DELAY_MS = 300;
 
 export const CATCHING_GUILDS_FAILURE_TTL_MS = 5 * 60 * 1000;
 
-export const CATCHING_GUILDS_FAILURE_CAP = 500;
+const CATCHING_GUILDS_FAILURE_CAP = 500;
 
 type FailedActivation = {
   activation: number;

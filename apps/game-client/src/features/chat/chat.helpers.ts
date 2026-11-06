@@ -10,12 +10,12 @@ const CHAT_MESSAGE_DEDUPE_WINDOW_MS = 200;
 
 const CHAT_NPC_GROUP_WINDOW_MS = 60_000;
 
-export const CHAT_VISIBLE_MESSAGE_LIMIT = 500;
+const CHAT_VISIBLE_MESSAGE_LIMIT = 500;
 
 const padDatePart = (value: number) => String(value).padStart(2, "0");
 
 /** The player's local calendar day, which the date dividers label. */
-export const getChatMessageDayKey = (timestamp: string) => {
+const getChatMessageDayKey = (timestamp: string) => {
   const date = new Date(timestamp);
 
   return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
@@ -213,7 +213,7 @@ export const getVisibleChatMessageAliases = (
   );
 };
 
-export const EMPTY_HIDDEN_NPC_TYPES: ReadonlySet<NpcTypeEnum> = new Set();
+const EMPTY_HIDDEN_NPC_TYPES: ReadonlySet<NpcTypeEnum> = new Set();
 
 export const isHiddenNpcChatMessage = (
   message: ChatMessageType,

@@ -17,7 +17,7 @@ import { getItemStat } from "@/utils/game/get-item-stat";
  * therefore keeps the participants it opened with.
  */
 
-export type LootSplitParticipant = Readonly<{
+type LootSplitParticipant = Readonly<{
   characterId: string;
   name: string;
 }>;
@@ -32,7 +32,7 @@ export type LootSplitItem = Readonly<{
   rarity: ItemRarityEnum | null;
 }>;
 
-export type LootSplitView = Readonly<{
+type LootSplitView = Readonly<{
   choices: Readonly<Record<string, LootSplitChoice>>;
   accepted: boolean;
   /**

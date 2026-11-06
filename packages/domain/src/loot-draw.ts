@@ -60,10 +60,6 @@ export const lootDrawWinnerTickets = (
 /** The most tickets one entrant may hold, so a wheel stays readable. */
 export const MAX_LOOT_DRAW_TICKETS = 99;
 
-export const totalLootDrawTickets = (
-  entrants: readonly { tickets: number }[],
-) => entrants.reduce((total, entrant) => total + entrant.tickets, 0);
-
 /**
  * The wheel's tickets in order, each naming its entrant's index: every
  * entrant's tickets side by side, as a wheel shows them before a shuffle.

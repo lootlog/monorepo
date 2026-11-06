@@ -13,7 +13,7 @@ import {
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 import { READY_ROOM_PUBLICATION_KEYS } from "#src/messaging/ready-room/ready-room-publication-outbox";
 
-export type CreateReadyRoomResult =
+type CreateReadyRoomResult =
   | { readonly status: "created"; readonly aggregate: ReadyRoomAggregate }
   | { readonly status: "active-room-exists"; readonly notificationId: string }
   | { readonly status: "joined-elsewhere"; readonly notificationId: string }
@@ -24,7 +24,7 @@ export type CommitReadyRoomResult =
   | { readonly status: "conflict" }
   | { readonly status: "missing" };
 
-export type JoinReadyRoomResult =
+type JoinReadyRoomResult =
   | CommitReadyRoomResult
   | { readonly status: "joined-elsewhere"; readonly notificationId: string };
 

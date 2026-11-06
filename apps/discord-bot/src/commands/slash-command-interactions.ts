@@ -29,7 +29,7 @@ import {
 } from "./slash-command.js";
 import { timerCommand, timersCommand } from "./timer-commands.js";
 
-export const SLASH_COMMANDS: ReadonlyArray<SlashCommand> = [
+const SLASH_COMMANDS: ReadonlyArray<SlashCommand> = [
   rankingCommand,
   statisticsCommand,
   npcCommand,
@@ -76,7 +76,7 @@ export const answerCommand = (
 };
 
 /** Suggestions are best effort: any failure offers nothing to choose from. */
-export const answerAutocomplete = (
+const answerAutocomplete = (
   commandName: string,
   invocation: AutocompleteInvocation,
 ): Effect.Effect<ReadonlyArray<AutocompleteChoice>, never, CommandServices> => {

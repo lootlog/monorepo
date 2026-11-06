@@ -13,7 +13,7 @@ const requestSchema = Schema.Struct({
   body: Schema.optional(Schema.String),
 });
 
-export type ExtensionHttpRequest = typeof requestSchema.Type;
+type ExtensionHttpRequest = typeof requestSchema.Type;
 
 const decodeRequest = Schema.decodeUnknownSync(requestSchema, {
   onExcessProperty: "error",
