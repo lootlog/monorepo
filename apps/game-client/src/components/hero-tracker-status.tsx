@@ -1,7 +1,7 @@
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { parseMsToTime } from "@lootlog/datetime";
-import { useTimersUpdate } from "@/features/timers/hooks/use-timers-update";
+import { useNow } from "@/hooks/ui/use-now";
 
 type HeroTrackerStatusProps = {
   /** Epoch ms when the entrance closes; absent while nobody claimed it. */
@@ -13,7 +13,7 @@ export const HeroTrackerStatus: FC<HeroTrackerStatusProps> = ({
   entranceClosesAt,
 }) => {
   const { t } = useTranslation("common");
-  const now = useTimersUpdate(entranceClosesAt !== undefined);
+  const now = useNow(1_000, entranceClosesAt !== undefined);
 
   if (entranceClosesAt === undefined) {
     return (

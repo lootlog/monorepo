@@ -6,6 +6,7 @@ import type {
 import type { GlobalChatMessage } from "@lootlog/schema/chat";
 import { hashString } from "@lootlog/ui/lib/seeded-random";
 import {
+  CHAT_VISIBLE_MESSAGE_LIMIT,
   withChatDateDividers,
   type ChatDateDividerRow,
 } from "@/features/chat/chat.helpers";
@@ -51,10 +52,41 @@ export const appendGlobalChatMessage = (
     };
   }
 
-  return {
+  return capGlobalChatHistory({
     ...data,
     pages: [{ ...newest, messages: [...newest.messages, message] }, ...older],
-  };
+  });
+};
+
+/**
+ * Keeps an open window's history to the game chat's message limit as live
+ * messages arrive. Whole oldest pages go first, so the oldest kept page's
+ * cursor still reads the history before it. A newest page that alone
+ * outgrows the limit loses its oldest messages, and with them the cursor:
+ * older history comes back once the window is opened again.
+ */
+const capGlobalChatHistory = (data: GlobalChatPages): GlobalChatPages => {
+  let total = data.pages.reduce((sum, page) => sum + page.messages.length, 0);
+
+  if (total <= CHAT_VISIBLE_MESSAGE_LIMIT) return data;
+  const pages = [...data.pages];
+  const pageParams = [...data.pageParams];
+
+  while (pages.length > 1 && total > CHAT_VISIBLE_MESSAGE_LIMIT) {
+    total -= pages.pop()?.messages.length ?? 0;
+    pageParams.pop();
+  }
+
+  const [newest] = pages;
+
+  if (newest && total > CHAT_VISIBLE_MESSAGE_LIMIT)
+    pages[0] = {
+      ...newest,
+      messages: newest.messages.slice(-CHAT_VISIBLE_MESSAGE_LIMIT),
+      nextCursor: null,
+    };
+
+  return { pages, pageParams };
 };
 
 /** A message the gateway delivered, which never knows whose it is. */

@@ -1,8 +1,9 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, render, renderHook } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useTimersUpdate } from "./use-timers-update";
+import { useNow } from "./use-now";
 
-describe("useTimersUpdate", () => {
+describe("useNow", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -16,7 +17,7 @@ describe("useTimersUpdate", () => {
 
     renderHook(() => {
       renderCount += 1;
-      useTimersUpdate();
+      useNow(1_000);
     });
 
     expect(renderCount).toBe(1);
@@ -32,7 +33,7 @@ describe("useTimersUpdate", () => {
     const initialEpoch = new Date("2026-07-20T10:00:00.000Z").getTime();
     vi.setSystemTime(initialEpoch);
 
-    const clock = renderHook(() => useTimersUpdate());
+    const clock = renderHook(() => useNow(1_000));
 
     expect(clock.result.current).toBe(initialEpoch);
 
@@ -46,7 +47,7 @@ describe("useTimersUpdate", () => {
   it("keeps one interval across rerenders and clears it on unmount", () => {
     const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
     const clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");
-    const { rerender, unmount } = renderHook(() => useTimersUpdate());
+    const { rerender, unmount } = renderHook(() => useNow(1_000));
 
     rerender();
 
@@ -61,8 +62,8 @@ describe("useTimersUpdate", () => {
 
   it("shares one interval across multiple visible timer presentations", () => {
     const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
-    const firstClock = renderHook(() => useTimersUpdate());
-    const secondClock = renderHook(() => useTimersUpdate());
+    const firstClock = renderHook(() => useNow(1_000));
+    const secondClock = renderHook(() => useNow(1_000));
 
     expect(setIntervalSpy).toHaveBeenCalledTimes(1);
     expect(vi.getTimerCount()).toBe(1);
@@ -80,7 +81,7 @@ describe("useTimersUpdate", () => {
 
     renderHook(() => {
       renderCount += 1;
-      useTimersUpdate(false);
+      useNow(1_000, false);
     });
 
     act(() => {
@@ -94,7 +95,7 @@ describe("useTimersUpdate", () => {
 
   it("starts and stops the clock when visibility changes", () => {
     const { rerender } = renderHook(
-      ({ enabled }: { enabled: boolean }) => useTimersUpdate(enabled),
+      ({ enabled }: { enabled: boolean }) => useNow(1_000, enabled),
       { initialProps: { enabled: false } },
     );
 
@@ -114,7 +115,7 @@ describe("useTimersUpdate", () => {
     const clock = renderHook(() => {
       renderCount += 1;
 
-      return useTimersUpdate();
+      return useNow(1_000);
     });
 
     for (let second = 0; second < 10; second += 1) {
@@ -153,7 +154,7 @@ describe("useTimersUpdate", () => {
 
   it("does not start ticking when mounted in an already hidden document", () => {
     const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
-    const clock = renderHook(() => useTimersUpdate());
+    const clock = renderHook(() => useNow(1_000));
     expect(vi.getTimerCount()).toBe(0);
     act(() => {
       vi.advanceTimersByTime(10_000);
@@ -164,5 +165,55 @@ describe("useTimersUpdate", () => {
     expect(vi.getTimerCount()).toBe(1);
     clock.unmount();
     hidden.mockRestore();
+  });
+
+  it("renders a caller mounted later under another of the same period once per tick", () => {
+    const childRender = vi.fn<() => void>();
+
+    const Child = () => {
+      childRender();
+      useNow(1_000);
+
+      return null;
+    };
+
+    const Parent = ({ children }: { children?: ReactNode }) => {
+      useNow(1_000);
+
+      return children;
+    };
+
+    const view = render(<Parent />);
+
+    act(() => vi.advanceTimersByTime(400));
+    view.rerender(
+      <Parent>
+        <Child />
+      </Parent>,
+    );
+    childRender.mockClear();
+
+    act(() => vi.advanceTimersByTime(1_000));
+
+    expect(childRender).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(1);
+  });
+
+  it("keeps a coarser period from ticking with a finer one", () => {
+    let coarseRenders = 0;
+
+    renderHook(() => useNow(1_000));
+    renderHook(() => {
+      coarseRenders += 1;
+      useNow(60_000);
+    });
+
+    act(() => vi.advanceTimersByTime(59_000));
+
+    expect(coarseRenders).toBe(1);
+
+    act(() => vi.advanceTimersByTime(1_000));
+
+    expect(coarseRenders).toBe(2);
   });
 });
