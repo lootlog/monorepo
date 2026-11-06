@@ -14,7 +14,7 @@ ARG PACKAGE
 COPY . .
 
 RUN test -n "${PACKAGE}" && \
-    bunx turbo prune "${PACKAGE}" --docker --out-dir=/pruned
+    bunx turbo@2.11.8 prune "${PACKAGE}" --docker --out-dir=/pruned
 
 FROM build-base AS builder
 

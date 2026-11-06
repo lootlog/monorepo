@@ -7,28 +7,32 @@ const catalogPath = fileURLToPath(
   new URL("../.github/deployment-targets.json", import.meta.url),
 );
 
-const clientProducers = new Set([
-  "@lootlog/activity",
-  "@lootlog/api",
-  "@lootlog/auth",
-  "@lootlog/battlelog",
-  "@lootlog/client",
-  "@lootlog/sdk",
-  "@lootlog/game-client-api",
-  "@lootlog/gateway",
-  "@lootlog/discord-bot",
-  "@lootlog/search",
-]);
+const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 
-const integrationPackages = new Set([
-  "@lootlog/database",
-  "@lootlog/battlelog",
-  "@lootlog/activity",
-  "@lootlog/api",
-  "@lootlog/auth",
-  "@lootlog/gateway",
-  "@lootlog/messaging",
-]);
+const readWorkspaceManifests = async () => {
+  const manifests = [];
+
+  for await (const path of new Bun.Glob("{apps,packages}/*/package.json").scan(
+    repositoryRoot,
+  )) {
+    manifests.push(
+      JSON.parse(await readFile(`${repositoryRoot}/${path}`, "utf8")),
+    );
+  }
+
+  return manifests;
+};
+
+// Derived from package scripts so a new suite or producer is never skipped
+// until someone remembers to list it here.
+const packagesWithScript = (manifests, scripts) =>
+  new Set(
+    manifests
+      .filter((manifest) =>
+        scripts.some((script) => manifest.scripts?.[script] !== undefined),
+      )
+      .map((manifest) => manifest.name),
+  );
 
 // Each of these test suites saturates a runner on its own, so CI checks each
 // package on a dedicated runner and the remaining packages on a shared one.
@@ -296,6 +300,20 @@ export async function createDeploymentPlan(input) {
   }
 
   if (input.mode === "ci") {
+    const manifests = await readWorkspaceManifests();
+
+    const integrationPackages = packagesWithScript(manifests, [
+      "test:integration",
+    ]);
+
+    const clientProducers = packagesWithScript(manifests, [
+      "openapi:generate",
+      "client:generate",
+    ]);
+
+    // The SDK package check installs and type-checks this public package too.
+    clientProducers.add("@lootlog/game-client-api");
+
     const packages = [...affectedPackages]
       .filter((name) => isString(name) && name.startsWith("@lootlog/"))
       .sort();

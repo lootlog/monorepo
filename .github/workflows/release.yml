@@ -55,10 +55,10 @@ jobs:
       docker-targets: ${{ steps.plan.outputs.docker_targets }}
       cloudflare-targets: ${{ steps.plan.outputs.cloudflare_targets }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.4.4
       - name: Validate SHA and target
@@ -107,12 +107,12 @@ jobs:
       WEB_VITE_GATEWAY_URL: ${{ vars.WEB_VITE_GATEWAY_URL }}
       WEB_VITE_SEARCH_API_URL: ${{ vars.WEB_VITE_SEARCH_API_URL }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.source_sha }}
       # Deployment helpers come from the workflow's revision, so releasing or
       # re-releasing an older source SHA uses the current deployment behavior.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: deployment-tools
           sparse-checkout: scripts/retry.sh
@@ -120,14 +120,14 @@ jobs:
       - uses: ./.github/actions/setup-bun
         with:
           turbo-cache-scope: release
-      - uses: docker/setup-buildx-action@v4
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
         if: needs.plan.outputs.docker-targets != '[]'
-      - uses: docker/login-action@v4
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         if: needs.plan.outputs.docker-targets != '[]'
         with:
           username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
           password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ env.INFRA_REPOSITORY }}
           ref: main
@@ -186,7 +186,7 @@ jobs:
                 --label "org.opencontainers.image.revision=$SOURCE_SHA" \
                 --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
                 --cache-from "type=gha,scope=docker-$id" --cache-to "type=gha,mode=min,scope=docker-$id"
-              docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.74.0 \
+              docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 \
                 image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL "$reference"
               push_output="$(docker push "$reference")"
               printf '%s\n' "$push_output"
@@ -194,7 +194,7 @@ jobs:
             fi
             [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::Registry did not return an image digest"; exit 1; }
             docker run --rm --user "$(id -u):$(id -g)" -e IMAGE="$image" -e TAG="sha-$SOURCE_SHA" \
-              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.6 \
+              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.6@sha256:cfc4eee658595834ef304eadb0c3ea721f3b7cb6404ad8b7cb909cc5b5145b23 \
               -i '(.images[] | select(.name == strenv(IMAGE))).newTag = strenv(TAG)' \
               "apps/prod/$id/kustomization.yml"
             next="$(mktemp)"
@@ -307,7 +307,7 @@ jobs:
           if jq -e '.[] | select(.id == "developer")' <<< "$TARGETS" >/dev/null && \
              ! grep -qE '^[[:space:]]*-[[:space:]]+developer$' "$INFRA_REPO_PATH/apps/prod/kustomization.yml"; then
             docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/$INFRA_REPO_PATH:/workdir" \
-              mikefarah/yq:4.53.6 -i '.resources += ["developer"]' apps/prod/kustomization.yml
+              mikefarah/yq:4.53.6@sha256:cfc4eee658595834ef304eadb0c3ea721f3b7cb6404ad8b7cb909cc5b5145b23 -i '.resources += ["developer"]' apps/prod/kustomization.yml
           fi
 
       - name: Commit production state
