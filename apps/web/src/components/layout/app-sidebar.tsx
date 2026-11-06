@@ -1,5 +1,6 @@
 import { GuildsSelector } from "@/components/layout/guilds-selector";
 import { UserMenu } from "@/components/layout/user-menu";
+import { UserMenuSheet } from "@/components/layout/user-menu-sheet";
 import { AppNavigationSheet } from "@/components/layout/app-navigation-sheet";
 import {
   Sidebar,
@@ -28,7 +29,7 @@ export const AppSidebar = ({
   // navigation column carries the Lootlog strip instead of the server rail.
   if (isMobile) {
     return (
-      <AppNavigationSheet footer={compact ? undefined : <UserMenu />}>
+      <AppNavigationSheet footer={compact ? undefined : <UserMenuSheet />}>
         {compact || !navigation ? (
           <GuildsSelector
             orientation="horizontal"

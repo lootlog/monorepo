@@ -30,7 +30,8 @@ export const AppNavigationSheet = ({
       <DrawerContent
         data-sidebar="sidebar"
         data-mobile="true"
-        className="bg-sidebar text-sidebar-foreground"
+        // Recedes while the account sheet is stacked over it.
+        className="bg-sidebar text-sidebar-foreground data-nested-drawer-open:brightness-60"
       >
         <DrawerTitle className="sr-only">
           {t("layout.navigation.tabBar.more")}
