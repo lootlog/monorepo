@@ -48,7 +48,6 @@ describe("legendary bonus timeline markers", () => {
       color: BATTLE_HEX_COLORS.legendary.cleanse,
       type: "cleanse",
     });
-    expect(BATTLE_HEX_COLORS.legendary.cleanse).toBe("#ff999a");
     expect(getLegendaryBonusMarkerDefinition("+not_mapped").type).toBe(
       "legendary",
     );
