@@ -26,7 +26,6 @@ import { ItemResults } from "@/components/items/item-results";
 import { ItemsFilterPanel } from "@/components/items/items-filter-panel";
 import { ItemsFiltersHeader } from "@/components/items/items-filters-header";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
-import { PageHeader } from "@/components/common/page-header";
 import { t } from "@/i18n/messages";
 import {
   effectiveSort,
@@ -162,10 +161,7 @@ function ItemsRoute() {
       </aside>
 
       <div className="flex min-w-0 flex-col gap-4">
-        <PageHeader
-          title={t("items.title")}
-          description={t("items.description")}
-        />
+        <h1 className="sr-only">{t("items.title")}</h1>
 
         <div className="flex flex-wrap items-center gap-2">
           <InputGroup size="lg" className="min-w-48 flex-1">

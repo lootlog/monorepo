@@ -609,8 +609,6 @@ const messages = {
   },
   items: {
     title: "Wyszukiwarka przedmiotów",
-    description:
-      "Znajdź przedmiot po nazwie. Zawęź wyniki według slotu, poziomu, rzadkości, bonusu legendarnego i profesji.",
   },
   npcs: {
     title: "Wyszukiwarka NPC",
