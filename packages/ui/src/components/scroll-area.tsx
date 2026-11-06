@@ -29,8 +29,11 @@ const ScrollArea = React.forwardRef<
     return (
       <ScrollAreaPrimitive.Root
         data-slot="scroll-area"
+        // A flex column, so the viewport scrolls inside a root that a max
+        // height or a flex parent sizes; `height: 100%` alone resolves only
+        // against a definite height and otherwise clips the content.
         className={cn(
-          "relative [&:hover>[data-slot=scroll-area-scrollbar]]:opacity-100 [&:focus-within>[data-slot=scroll-area-scrollbar]]:opacity-100",
+          "relative flex flex-col [&:hover>[data-slot=scroll-area-scrollbar]]:opacity-100 [&:focus-within>[data-slot=scroll-area-scrollbar]]:opacity-100",
           className,
         )}
         {...props}
@@ -40,7 +43,7 @@ const ScrollArea = React.forwardRef<
           data-slot="scroll-area-viewport"
           data-scroll-fade-viewport={scrollFade ? "" : undefined}
           className={cn(
-            "focus-visible:ring-ring/50 focus-visible:ring-[3px] size-full rounded-[inherit] transition-[color,box-shadow] outline-none",
+            "focus-visible:ring-ring/50 focus-visible:ring-[3px] size-full min-h-0 flex-1 rounded-[inherit] transition-[color,box-shadow] outline-none",
             scrollFade &&
               (orientation === "horizontal"
                 ? "scroll-fade-x"
