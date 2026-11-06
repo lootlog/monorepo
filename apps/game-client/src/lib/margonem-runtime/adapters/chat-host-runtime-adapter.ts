@@ -175,7 +175,7 @@ export function watchIntegratedChatHost(
             /* The native method must still run. */
           }
 
-          return target.apply(receiver, args);
+          return Reflect.apply(target, receiver, args);
         },
       });
 
