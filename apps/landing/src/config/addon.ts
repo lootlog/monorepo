@@ -1,6 +1,6 @@
 const DEFAULT_ADDON_URL = "https://github.com/lootlog/monorepo/releases/latest";
 
-export function resolveAddonUrl(configuredUrl?: string): string {
+function resolveAddonUrl(configuredUrl?: string): string {
   return configuredUrl || DEFAULT_ADDON_URL;
 }
 
