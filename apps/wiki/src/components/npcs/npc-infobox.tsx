@@ -4,6 +4,7 @@ import { InfoboxRow } from "@/components/article/infobox-row";
 import { InfoboxSection } from "@/components/article/infobox-section";
 import { NpcPortrait } from "@/components/common/npc-portrait";
 import { t } from "@/i18n/messages";
+import { npcKind } from "@/lib/npc-summary";
 import { NpcFormerLevels } from "./npc-former-levels";
 
 /** The monster's fact box: its sprite, kind, level and where it is fought. */
@@ -13,13 +14,11 @@ export function NpcInfobox({ npc }: { npc: CatalogNpcDtoOutput }) {
   return (
     <Infobox
       title={npc.name}
-      subtitle={t(`npcTypes.${npc.type}`)}
+      subtitle={npcKind(npc)}
       media={<NpcPortrait key={npc.icon} icon={npc.icon} size="lg" />}
     >
       <InfoboxSection title={t("npc.factsTitle")}>
-        <InfoboxRow label={t("npc.type")}>
-          {t(`npcTypes.${npc.type}`)}
-        </InfoboxRow>
+        <InfoboxRow label={t("npc.type")}>{npcKind(npc)}</InfoboxRow>
         <InfoboxRow label={t("item.level")}>
           {npc.lvl > 0 ? (
             <span className="tabular-nums">{npc.lvl}</span>

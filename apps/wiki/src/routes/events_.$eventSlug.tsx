@@ -9,6 +9,7 @@ import { EventMonsterItems } from "@/components/events/event-monster-items";
 import { useEventItems } from "@/hooks/use-event-items";
 import { t } from "@/i18n/messages";
 import { groupItemsByMonster } from "@/lib/group-items-by-monster";
+import { isHeroTrackersEvent } from "@/lib/hero-trackers";
 import { itemEvents } from "@/lib/item-events";
 
 export const Route = createFileRoute("/events_/$eventSlug")({
@@ -71,6 +72,11 @@ function EventRoute() {
       />
       <header className="flex flex-col gap-5">
         <div className="flex flex-col gap-1.5">
+          {name && isHeroTrackersEvent(name) ? (
+            <p className="text-sm font-medium text-muted-foreground">
+              {t("npc.heroTrackers")}
+            </p>
+          ) : null}
           {name ? (
             <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
               {name}

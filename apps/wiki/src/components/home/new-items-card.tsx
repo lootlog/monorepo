@@ -1,7 +1,12 @@
 import { Link, type LinkOptions } from "@tanstack/react-router";
+import { sortBy } from "es-toolkit";
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import {
+  ITEM_RARITIES_BY_VALUE,
+  resolveItemRarity,
+} from "@lootlog/ui/lib/item-rarity";
 import { CatalogItemTile } from "@/components/catalog/catalog-item-tile";
 import { t } from "@/i18n/messages";
 
@@ -20,9 +25,13 @@ type NewItemsCardProps = {
 
 const ITEMS_SHOWN = 12;
 
+const rarityRank = ({ rarity }: CatalogItemDtoOutput) =>
+  ITEM_RARITIES_BY_VALUE.indexOf(resolveItemRarity(rarity));
+
 /**
- * A boss or an event with its newest items: the header opens its page and
- * every item opens its own.
+ * A boss or an event with its newest items, the most valuable first: the
+ * header opens its page and every item opens its own. Items past the first
+ * few are counted in a tile that opens the page too.
  */
 export function NewItemsCard({
   title,
@@ -61,14 +70,22 @@ export function NewItemsCard({
         aria-label={t("home.itemsOf", { name: title })}
         className="flex flex-1 flex-wrap content-start gap-2 border-t border-border/50 bg-background/30 px-4 py-3"
       >
-        {items.slice(0, ITEMS_SHOWN).map((item) => (
-          <li key={item.id}>
-            <CatalogItemTile item={item} />
-          </li>
-        ))}
+        {sortBy(items, [rarityRank])
+          .slice(0, ITEMS_SHOWN)
+          .map((item) => (
+            <li key={item.id}>
+              <CatalogItemTile item={item} />
+            </li>
+          ))}
         {itemCount > ITEMS_SHOWN ? (
-          <li className="flex h-9 items-center px-1 text-xs text-muted-foreground tabular-nums">
-            {t("home.moreItems", { count: itemCount - ITEMS_SHOWN })}
+          <li>
+            <Link
+              {...link}
+              aria-label={t("home.allItemsOf", { name: title })}
+              className="grid size-9 place-items-center rounded-lg border-2 border-border bg-muted/30 text-xs font-medium text-muted-foreground tabular-nums outline-none transition-[color,border-color] duration-150 hover:border-primary/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
+            >
+              {t("home.moreItems", { count: itemCount - ITEMS_SHOWN })}
+            </Link>
           </li>
         ) : null}
       </ul>
