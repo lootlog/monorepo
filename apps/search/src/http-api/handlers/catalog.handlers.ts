@@ -23,5 +23,10 @@ export const CatalogHandlers = HttpApiBuilder.group(
         Effect.flatMap(SearchOperations, (search) =>
           runSearchOperation(search.catalogEvents(query)),
         ),
+      )
+      .handle("CatalogControllerGetIndex", ({ query }) =>
+        Effect.flatMap(SearchOperations, (search) =>
+          runSearchOperation(search.catalogIndex(query)),
+        ),
       ),
 );
