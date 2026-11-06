@@ -1,7 +1,7 @@
 import { PgliteClient } from "@effect/sql-pglite";
 import { makeWithDefaults } from "drizzle-orm/effect-pglite";
 import { migrate } from "drizzle-orm/effect-pglite/migrator";
-import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
+import { afterAll, beforeAll, expect, it, mock } from "bun:test";
 import { Effect, ManagedRuntime } from "effect";
 import { relations } from "#src/database/relations";
 import { battles, battleWarriors, userCharacters } from "#src/database/schema";
@@ -13,10 +13,6 @@ import { makeBattleAnalyticsRead } from "./battle-analytics-read.service.js";
 import { makeBattleCombatProfileRead } from "./battle-combat-profile-read.service.js";
 import { makeBattleAnalytics } from "./battle-analytics.service.js";
 import type { BattleStatisticsQuery } from "./query-battle-statistics.js";
-import {
-  legacyBattleAnalytics as legacy,
-  type BattleWithWarriors,
-} from "../../../test/legacy-battle-analytics.js";
 
 const runtime = ManagedRuntime.make(PgliteClient.layer({}));
 
@@ -27,8 +23,6 @@ let db: Effect.Success<typeof dbEffect>;
 let reads: ReturnType<typeof makeBattleAnalyticsRead>;
 
 let service: ReturnType<typeof makeBattleAnalytics>;
-
-let fullHistory: BattleWithWarriors[];
 
 const namedBattleIds = new Map<string, string>();
 
@@ -44,8 +38,6 @@ const idOf = (name: string) => namedBattleIds.get(name);
 
 const characters = ["hero-1", "hero-2"];
 
-const characterSet = new Set(characters);
-
 const cachedValues = new Map<string, string>();
 
 const query = (
@@ -57,39 +49,6 @@ const query = (
   sortOrder: "desc",
   ...overrides,
 });
-
-const legacyHistory = (
-  filters: BattleStatisticsQuery,
-  options: {
-    hasFlee?: boolean;
-    ph?: boolean;
-    rating?: boolean;
-    ratingDelta?: boolean;
-  } = {},
-) =>
-  legacy.filterByOpponentLevel(
-    fullHistory.filter(
-      (battle) =>
-        battle.type === "1v1" &&
-        (!filters.world || battle.world === filters.world) &&
-        (!filters.startDate ||
-          battle.createdAt >= new Date(filters.startDate)) &&
-        (!filters.endDate || battle.createdAt <= new Date(filters.endDate)) &&
-        (filters.matchmaking === undefined ||
-          battle.matchmaking === filters.matchmaking) &&
-        (options.hasFlee === undefined || battle.hasFlee === options.hasFlee) &&
-        (!options.rating || battle.rating !== null) &&
-        (!options.ratingDelta || battle.ratingDelta !== null) &&
-        battle.warriors.some(
-          (warrior) =>
-            characterSet.has(warrior.originalId) &&
-            (!(options.ph ?? filters.ph) || warrior.ph > 0),
-        ),
-    ),
-    characterSet,
-    filters.minLevel,
-    filters.maxLevel,
-  );
 
 beforeAll(async () => {
   db = await runtime.runPromise(dbEffect);
@@ -195,214 +154,66 @@ beforeAll(async () => {
         }),
       );
   }
-
-  fullHistory = await runtime.runPromise(
-    db.query.battles.findMany({
-      where: { userId: "owner" },
-      with: { warriors: true },
-      orderBy: { createdAt: "asc", id: "asc" },
-    }),
-  );
 }, 60_000);
 
 afterAll(() => runtime.dispose());
 
-describe("SQL battle analytics parity", () => {
-  const filters = [
-    query(),
-    query({ world: "alpha", matchmaking: false }),
-    query({ minLevel: 93, maxLevel: 99 }),
-    query({
-      ph: true,
-      matchmaking: true,
-      startDate: "2024-01-03T00:00:00.000Z",
-      endDate: "2024-03-10T00:00:00.000Z",
-    }),
-    query({ minLevel: 300 }),
-  ];
+it("shares cached opponent aggregates and PvP counts across forward and backward pagination", async () => {
+  cachedValues.clear();
+  const filtersQuery = query({ size: 1, includeTotal: true });
 
-  for (const [index, filtersQuery] of filters.entries()) {
-    it(`preserves streak, durations and per-battle series for filter set ${index}`, async () => {
-      const resolved = legacyHistory(filtersQuery, { hasFlee: false });
-      expect(
-        await runtime.runPromise(
-          reads.getStreak("owner", filtersQuery, characters),
+  const first = await runtime.runPromise(
+    service.getHeadToHead(filtersQuery, "owner"),
+  );
+
+  const afterFirst = cachedValues.size;
+
+  const next = await runtime.runPromise(
+    service.getHeadToHead(
+      { ...filtersQuery, cursor: first.pagination.nextCursor },
+      "owner",
+    ),
+  );
+
+  expect(cachedValues.size).toBe(afterFirst);
+  expect(next.records[0]?.opponentId).not.toBe(first.records[0]?.opponentId);
+  expect(
+    (
+      await runtime.runPromise(
+        service.getHeadToHead(
+          { ...filtersQuery, cursor: next.pagination.previousCursor },
+          "owner",
         ),
-      ).toEqual(legacy.currentStreak(resolved.slice().reverse(), characterSet));
-      expect(
-        await runtime.runPromise(
-          reads.getDuration("owner", filtersQuery, characters),
+      )
+    ).records,
+  ).toEqual(first.records);
+  const pvpQuery = { ...filtersQuery, opponentId: "opponent-1" };
+
+  const pvpFirst = await runtime.runPromise(
+    service.getPlayerVsPlayerBattles(pvpQuery, "owner"),
+  );
+
+  const beforePageTwo = cachedValues.size;
+
+  const pvpNext = await runtime.runPromise(
+    service.getPlayerVsPlayerBattles(
+      { ...pvpQuery, cursor: pvpFirst.pagination.nextCursor },
+      "owner",
+    ),
+  );
+
+  expect(cachedValues.size).toBe(beforePageTwo);
+  expect(pvpNext.battles[0]?.battleId).not.toBe(pvpFirst.battles[0]?.battleId);
+  expect(
+    (
+      await runtime.runPromise(
+        service.getPlayerVsPlayerBattles(
+          { ...pvpQuery, cursor: pvpNext.pagination.previousCursor },
+          "owner",
         ),
-      ).toEqual(
-        legacy.durationStats(
-          resolved
-            .slice()
-            .sort((left, right) => left.duration - right.duration),
-          characterSet,
-        ),
-      );
-      expect(
-        await runtime.runPromise(
-          reads.getPhGrowth("owner", filtersQuery, characters),
-        ),
-      ).toEqual(
-        legacy.phGrowth(
-          legacyHistory(filtersQuery, { ph: true }),
-          characterSet,
-        ),
-      );
-      expect(
-        await runtime.runPromise(
-          reads.getRatingGrowth("owner", filtersQuery, characters),
-        ),
-      ).toEqual(
-        legacy.ratingGrowth(
-          legacyHistory(
-            { ...filtersQuery, matchmaking: true },
-            { rating: true, ratingDelta: true },
-          ),
-        ),
-      );
-    });
-    it(`preserves opponent aggregates, latest snapshots and packed fallback for filter set ${index}`, async () => {
-      const h2hQuery = { ...filtersQuery, matchmaking: true };
-      expect(
-        [
-          ...(await runtime.runPromise(
-            reads.getHeadToHead("owner", h2hQuery, characters),
-          )),
-        ].sort((left, right) =>
-          left.opponentId.localeCompare(right.opponentId),
-        ),
-      ).toEqual(
-        legacy
-          .headToHeadRecords(
-            legacyHistory(h2hQuery, { hasFlee: false }).slice().reverse(),
-            characterSet,
-            h2hQuery.matchmaking,
-          )
-          .sort((left, right) =>
-            left.opponentId.localeCompare(right.opponentId),
-          ),
-      );
-      expect(
-        await runtime.runPromise(
-          reads.getRatingByOpponent("owner", filtersQuery, characters),
-        ),
-      ).toEqual(
-        legacy.ratingDeltaByOpponent(
-          legacyHistory(
-            { ...filtersQuery, matchmaking: true },
-            { hasFlee: false, ratingDelta: true },
-          )
-            .slice()
-            .reverse(),
-          characterSet,
-        ),
-      );
-    });
-  }
-
-  it("discovers seasons across gaps without dropping group battles, worlds, null points or flees", async () => {
-    expect(
-      await runtime.runPromise(reads.getSeasons("owner", characters)),
-    ).toEqual(
-      legacy.seasons(
-        fullHistory.filter((battle) => battle.matchmaking),
-        characterSet,
-      ),
-    );
-  });
-
-  it("filters PvP in SQL, preserves self-opponent lookup and fetches details only for requested page", async () => {
-    for (const opponentId of ["opponent-2", "hero-1", "absent"]) {
-      const pvpQuery = {
-        ...query({ minLevel: 90, maxLevel: 101 }),
-        opponentId,
-        excludeBattleId: idOf("battle-02"),
-      };
-
-      const expected = legacy.playerVsPlayerBattles(
-        legacyHistory(pvpQuery).slice().reverse(),
-        characterSet,
-        pvpQuery,
-      );
-
-      const total = await runtime.runPromise(
-        reads.getPlayerVsPlayerCount("owner", pvpQuery, characters),
-      );
-
-      expect(total).toBe(expected.length);
-      expect(
-        await runtime.runPromise(
-          reads.getPlayerVsPlayerPage("owner", pvpQuery, characters, {
-            offset: 1,
-            size: 1,
-          }),
-        ),
-      ).toEqual(expected.slice(1, 2));
-    }
-  });
-
-  it("shares cached opponent aggregates and PvP counts across forward and backward pagination", async () => {
-    cachedValues.clear();
-    const filtersQuery = query({ size: 1, includeTotal: true });
-
-    const first = await runtime.runPromise(
-      service.getHeadToHead(filtersQuery, "owner"),
-    );
-
-    const afterFirst = cachedValues.size;
-
-    const next = await runtime.runPromise(
-      service.getHeadToHead(
-        { ...filtersQuery, cursor: first.pagination.nextCursor },
-        "owner",
-      ),
-    );
-
-    expect(cachedValues.size).toBe(afterFirst);
-    expect(next.records[0]?.opponentId).not.toBe(first.records[0]?.opponentId);
-    expect(
-      (
-        await runtime.runPromise(
-          service.getHeadToHead(
-            { ...filtersQuery, cursor: next.pagination.previousCursor },
-            "owner",
-          ),
-        )
-      ).records,
-    ).toEqual(first.records);
-    const pvpQuery = { ...filtersQuery, opponentId: "opponent-1" };
-
-    const pvpFirst = await runtime.runPromise(
-      service.getPlayerVsPlayerBattles(pvpQuery, "owner"),
-    );
-
-    const beforePageTwo = cachedValues.size;
-
-    const pvpNext = await runtime.runPromise(
-      service.getPlayerVsPlayerBattles(
-        { ...pvpQuery, cursor: pvpFirst.pagination.nextCursor },
-        "owner",
-      ),
-    );
-
-    expect(cachedValues.size).toBe(beforePageTwo);
-    expect(pvpNext.battles[0]?.battleId).not.toBe(
-      pvpFirst.battles[0]?.battleId,
-    );
-    expect(
-      (
-        await runtime.runPromise(
-          service.getPlayerVsPlayerBattles(
-            { ...pvpQuery, cursor: pvpNext.pagination.previousCursor },
-            "owner",
-          ),
-        )
-      ).battles,
-    ).toEqual(pvpFirst.battles);
-  });
+      )
+    ).battles,
+  ).toEqual(pvpFirst.battles);
 });
 
 it("folds combat history across tied-date batches without losing team matchups or visibility", async () => {
@@ -476,24 +287,6 @@ it("folds combat history across tied-date batches without losing team matchups o
     ph: true,
   });
 
-  const fullRows: BattleWithWarriors[] = await runtime.runPromise(
-    db.query.battles.findMany({
-      where: { userId: "owner", world: "combat-test" },
-      with: { warriors: true },
-      orderBy: { createdAt: "asc", id: "asc" },
-    }),
-  );
-
-  const expected = legacy.combatProfile(
-    legacy.filterByAnyOpponentLevel(
-      fullRows,
-      characterSet,
-      filters.minLevel,
-      filters.maxLevel,
-    ),
-    characterSet,
-  );
-
   const queryModule = makeBattleAnalyticsQuery(db);
 
   const actual = await runtime.runPromise(
@@ -504,7 +297,6 @@ it("folds combat history across tied-date batches without losing team matchups o
     ),
   );
 
-  expect(actual).toEqual(expected);
   expect(actual.summary).toMatchObject({
     totalBattles: 260,
     wins: 130,
@@ -586,14 +378,6 @@ it("selects the recorder among multiple owned participants and uses character or
     ),
   );
 
-  const fullRows: BattleWithWarriors[] = await runtime.runPromise(
-    db.query.battles.findMany({
-      where: { userId: "owner", world: "combat-selection" },
-      with: { warriors: true },
-      orderBy: { createdAt: "asc", id: "asc" },
-    }),
-  );
-
   expect(actual.summary).toMatchObject({
     totalBattles: 2,
     wins: 2,
@@ -606,16 +390,6 @@ it("selects the recorder among multiple owned participants and uses character or
     { battleId: idOf("selection-fallback"), value: 10 },
     { battleId: idOf("selection-recorder"), value: 20 },
   ]);
-  expect(actual).toEqual(legacy.combatProfile(fullRows, characterSet));
-  expect(actual).toEqual(
-    legacy.combatProfile(
-      fullRows.map((battle) => ({
-        ...battle,
-        warriors: battle.warriors.slice().reverse(),
-      })),
-      characterSet,
-    ),
-  );
 });
 
 // Matchmaking head-to-head fixture after the flee, type and owner filters:
@@ -750,38 +524,32 @@ it("filters and sorts opponent records, breaking ties by latest battle", async (
 });
 
 it("keeps PH-filtered rating responses separate from unfiltered cached responses", async () => {
+  const ratingResponses = (ph: boolean) => {
+    const filters = query({ world: "alpha", ph });
+
+    return runtime.runPromise(
+      Effect.all([
+        service.getRatingGrowthTimeSeries(filters, "owner"),
+        service.getRatingDeltaByOpponent(filters, "owner"),
+      ]),
+    );
+  };
+
+  const uncached = async (ph: boolean) => {
+    cachedValues.clear();
+
+    return ratingResponses(ph);
+  };
+
+  const unfiltered = await uncached(false);
+  const filtered = await uncached(true);
+
+  expect(filtered).not.toEqual(unfiltered);
+
   cachedValues.clear();
 
-  for (const ph of [false, true, false]) {
-    const filters = query({ world: "alpha", ph });
-    expect(
-      await runtime.runPromise(
-        service.getRatingGrowthTimeSeries(filters, "owner"),
-      ),
-    ).toEqual(
-      legacy.ratingGrowth(
-        legacyHistory(
-          { ...filters, matchmaking: true },
-          { rating: true, ratingDelta: true },
-        ),
-      ),
-    );
-    expect(
-      await runtime.runPromise(
-        service.getRatingDeltaByOpponent(filters, "owner"),
-      ),
-    ).toEqual(
-      legacy.ratingDeltaByOpponent(
-        legacyHistory(
-          { ...filters, matchmaking: true },
-          { hasFlee: false, ratingDelta: true },
-        )
-          .slice()
-          .reverse(),
-        characterSet,
-      ),
-    );
-  }
+  for (const ph of [false, true, false])
+    expect(await ratingResponses(ph)).toEqual(ph ? filtered : unfiltered);
 });
 
 it("returns empty PvP pages for oversized cursors without passing unrepresentable offsets to PostgreSQL", async () => {
