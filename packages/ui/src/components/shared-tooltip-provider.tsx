@@ -152,6 +152,26 @@ function SharedTooltipRoot({
     };
   }, [controllerRef]);
 
+  // A press closes it, as it does a tooltip of its own, and cancels one
+  // about to open: the press that focuses a trigger schedules it. A trigger
+  // that opens a page leaves without a pointer or focus event, and the
+  // tooltip would otherwise stay over the next page.
+  useEffect(() => {
+    const closeOnPress = () => {
+      clearShowTimeout();
+      clearHideTimeout();
+      setTooltipState((currentTooltipState) =>
+        currentTooltipState.open
+          ? createClosedTooltipState()
+          : currentTooltipState,
+      );
+    };
+
+    document.addEventListener("click", closeOnPress, true);
+
+    return () => document.removeEventListener("click", closeOnPress, true);
+  }, []);
+
   useEffect(() => {
     if (!tooltipState.open || !tooltipState.triggerElement) {
       return;

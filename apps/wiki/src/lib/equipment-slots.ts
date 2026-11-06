@@ -99,7 +99,7 @@ export const EQUIPMENT_SLOTS: readonly EquipmentSlot[] = [
     id: "secondary",
     code: "s",
     icon: Shield,
-    types: ["SHIELD", "HELP_WEAPON", "ORB_WEAPON"],
+    types: ["SHIELD", "HELP_WEAPON", "ORB_WEAPON", "QUIVER"],
     position: "col-start-3 row-start-3",
   },
   {

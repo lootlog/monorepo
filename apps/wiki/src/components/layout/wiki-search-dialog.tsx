@@ -18,6 +18,7 @@ import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { cn } from "cn";
 import { HighlightedText } from "@/components/highlighted-text";
 import { t } from "@/i18n/messages";
+import { npcSummary } from "@/lib/npc-summary";
 import {
   MIN_SEARCH_QUERY_LENGTH,
   useWikiSearchHits,
@@ -268,8 +269,7 @@ export function WikiSearchDialog({
                     <HighlightedText text={npc.name} query={debouncedQuery} />
                   </span>
                   <span className="truncate text-xs text-muted-foreground">
-                    {t(`npcTypes.${npc.type}`)} ·{" "}
-                    {t("common.levelShort", { level: npc.lvl })}
+                    {npcSummary(npc)}
                   </span>
                 </span>
               </CommandItem>
