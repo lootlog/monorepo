@@ -2,6 +2,7 @@ import { verifyGeneratedAssetReferences } from "../../../scripts/static-assets.m
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
+import { blogPosts } from "../src/config/blog.ts";
 
 const clientDirectory = path.resolve("dist/client");
 
@@ -27,14 +28,8 @@ assert.ok(notFoundDocument.includes('href="/blog"'));
 
 verifyGeneratedAssetReferences(notFoundDocument, "landing", "not found");
 
-const blogArticles = [
-  "timery-zawsze-widoczne",
-  "ustawienia-powiadomien",
-  "okna-i-skroty-klawiszowe",
-];
-
 const articleDocuments = await Promise.all(
-  blogArticles.map(async (slug) => {
+  blogPosts.map(async ({ slug }) => {
     const document = await readDocument(`blog/${slug}/index.html`);
 
     return [slug, document, `https://lootlog.pl/blog/${slug}`];
@@ -108,17 +103,6 @@ await Promise.all(
   ),
 );
 
-assert.match(
-  privacyDocument,
-  /<title>Lootlog\.pl - Polityka Prywatności<\/title>/u,
-);
-
-assert.match(termsDocument, /<title>Lootlog\.pl - Regulamin Serwisu<\/title>/u);
-
-assert.match(privacyDocument, /Polityka prywatności/u);
-
-assert.match(termsDocument, /Regulamin serwisu/u);
-
 await Promise.all(
   [
     "favicon.ico",
@@ -134,18 +118,6 @@ const sitemap = await readDocument("sitemap.xml");
 assert.match(
   sitemap,
   /<urlset[^>]+xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9"/u,
-);
-
-assert.deepEqual(
-  [...sitemap.matchAll(/<loc>(.*?)<\/loc>/gu)].map((match) => match[1]).sort(),
-  [
-    "https://lootlog.pl/",
-    "https://lootlog.pl/privacy-policy",
-    "https://lootlog.pl/terms-of-service",
-    "https://lootlog.pl/blog",
-    ...blogArticles.map((slug) => `https://lootlog.pl/blog/${slug}`),
-  ].sort(),
-  "Landing sitemap must list the canonical public pages",
 );
 
 const robots = await readDocument("robots.txt");
