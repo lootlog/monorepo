@@ -1,8 +1,10 @@
+import { cn } from "cn";
 import { MetaItem } from "@/components/common/meta-item";
 import {
   getListTileLinkClassName,
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 import { MemberDiscordSyncIndicator } from "@/features/guild/settings/members/components/member-discord-sync-indicator";
@@ -101,7 +103,7 @@ export const MemberTile = ({
       data-list-tile
       className={LIST_TILE_RULE_CLASS}
     >
-      <div className="flex items-center transition-colors hover:bg-muted/30 motion-reduce:transition-none">
+      <div className={cn("flex items-center", LIST_TILE_HOVER_CLASS)}>
         <Link
           to="/$guildId/settings/members/$memberId"
           params={{ guildId, memberId: String(member.id) }}

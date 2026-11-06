@@ -1,15 +1,14 @@
+import { TileChevron } from "@/components/common/tile-chevron";
 import type { ReactNode } from "react";
-import { ChevronRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { formatDistance } from "date-fns";
 import { upperFirst } from "es-toolkit";
-import { pl } from "date-fns/locale";
-import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
+import { RelativeTime } from "@/components/common/relative-time";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import {
   getListTileLinkClassName,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import type { BattlesListResponseDtoOutputBattlesItem } from "@lootlog/client/battlelog";
 import {
@@ -37,14 +36,15 @@ export function DashboardRecentBattle({
   return (
     <li
       className={cn(
-        "group flex min-w-0 items-stretch transition-colors hover:bg-muted/20 focus-within:bg-muted/20",
+        "flex min-w-0 items-stretch",
+        LIST_TILE_HOVER_CLASS,
         LIST_TILE_RULE_CLASS,
       )}
     >
       <Link
         to="/@me/battle-panel/battles/$battleId"
         params={{ battleId: battle.id }}
-        className={getListTileLinkClassName(true)}
+        className={cn(getListTileLinkClassName(true), "group/tile")}
       >
         <BattleResultStatus result={getBattleResult(battle)} />
         <div className="min-w-0 flex-1">
@@ -53,21 +53,10 @@ export function DashboardRecentBattle({
           </p>
           <p className="mt-1 truncate text-xs text-muted-foreground">
             {upperFirst(battle.world)} ·{" "}
-            <time
-              dateTime={battle.createdAt}
-              title={timestampToDate(battle.createdAt)}
-            >
-              {formatDistance(new Date(battle.createdAt), now, {
-                locale: pl,
-                addSuffix: true,
-              })}
-            </time>
+            <RelativeTime at={battle.createdAt} now={now} />
           </p>
         </div>
-        <ChevronRight
-          aria-hidden
-          className="size-4 shrink-0 text-muted-foreground transition-[color,translate] duration-150 ease-emphasized group-hover:translate-x-0.5 group-hover:text-primary motion-reduce:transition-none"
-        />
+        <TileChevron />
       </Link>
       {actions}
     </li>

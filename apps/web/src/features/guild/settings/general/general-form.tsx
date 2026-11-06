@@ -15,7 +15,6 @@ import { Input } from "@lootlog/ui/components/input";
 import { normalizeVanityUrl } from "@lootlog/domain/organization-vanity-url";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@lootlog/ui/components/sonner";
-import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -52,20 +51,16 @@ export const GeneralForm = () => {
   const form = useForm<GeneralFormValues>({
     resolver: standardSchemaResolver(createGeneralFormSchema(t)),
     defaultValues: {
-      vanityUrl: guild?.vanityUrl ?? "",
-      publicStatsCardEnabled: guild?.publicStatsCardEnabled ?? false,
+      vanityUrl: "",
+      publicStatsCardEnabled: false,
     },
+    // A refetch updates untouched fields and keeps the unsaved edits.
+    values: guild && {
+      vanityUrl: guild.vanityUrl ?? "",
+      publicStatsCardEnabled: guild.publicStatsCardEnabled,
+    },
+    resetOptions: { keepDirtyValues: true },
   });
-
-  useEffect(() => {
-    if (guild) {
-      form.reset({
-        vanityUrl: guild.vanityUrl ?? "",
-        publicStatsCardEnabled: guild.publicStatsCardEnabled,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [guild?.vanityUrl, guild?.publicStatsCardEnabled]);
 
   function onSubmit(values: GeneralFormValues) {
     if (isPending) return;

@@ -6,6 +6,7 @@ import {
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { BattlePanelH2hOpponentSummary } from "@/features/user/battle-panel/components/battle-panel-h2h-opponent-summary";
 import type { HeadToHeadRecord } from "@/lib/api/battlelog-types";
@@ -36,7 +37,8 @@ export const BattleOpponentRow = ({
       <Link
         {...link}
         className={cn(
-          "flex min-h-12 min-w-0 items-center gap-3 py-1.5 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+          "flex min-h-12 min-w-0 items-center gap-3 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+          LIST_TILE_HOVER_CLASS,
           LIST_TILE_INSET_CLASS,
         )}
       >

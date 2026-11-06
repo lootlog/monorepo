@@ -10,7 +10,7 @@ import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import type { EventHeroNpc } from "../../types/api";
-import { EventActionDialog } from "../dialogs/event-action-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import {
   createEventHeroesTableColumns,
   type EventHeroTableRow,
@@ -30,6 +30,11 @@ type EventHeroesTableProps = {
   showStandings?: boolean;
 };
 
+/**
+ * A short, unfiltered band beside the event's ranking and kill previews, which
+ * fold columns the same way: below `lg` the maps, kills and place move into the
+ * hero's own line, so the table never scrolls sideways and needs no tiles.
+ */
 const getColumnClassName = (columnId: string) => {
   if (columnId === "hero") return "min-w-0";
 
@@ -39,7 +44,6 @@ const getColumnClassName = (columnId: string) => {
 
   if (columnId === "timer") return "w-28 text-right";
 
-  // Below `lg` the hero's own line names the place.
   if (columnId === "mine") return "hidden w-0 text-right lg:table-cell lg:w-24";
 
   if (columnId === "actions") return "w-16 text-right";
@@ -124,20 +128,21 @@ export const EventHeroesTable = ({
           />
         </Table>
       )}
-      <EventActionDialog
+      <ConfirmDialog
         open={heroToDelete !== null}
         onOpenChange={(open) => {
           if (!open) setHeroToDelete(null);
         }}
-        eventName={heroToDelete?.npcName ?? ""}
+        title={t("events.heroes.deleteTitle")}
+        description={t("events.heroes.deleteDescription", {
+          name: heroToDelete?.npcName ?? "",
+        })}
+        confirmButtonLabel={t("events.heroes.deleteAction")}
+        cancelButtonLabel={t("common.cancel")}
+        pending={isDeleteHeroPending}
         onConfirm={async () => {
           if (heroToDelete) await onDeleteHero(heroToDelete.id);
         }}
-        isPending={isDeleteHeroPending}
-        titleKey="events.heroes.deleteTitle"
-        descriptionKey="events.heroes.deleteDescription"
-        actionLabelKey="events.heroes.deleteAction"
-        variant="destructive"
       />
     </BandSection>
   );

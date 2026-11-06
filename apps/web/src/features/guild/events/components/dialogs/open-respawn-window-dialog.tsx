@@ -126,6 +126,9 @@ export const OpenRespawnWindowDialog = ({
                       render=<DateTimePicker
                         value={field.value}
                         onChange={field.onChange}
+                        placeholder={t("common.dateTimePicker.placeholder")}
+                        timeLabel={t("common.dateTimePicker.time")}
+                        clearLabel={t("common.dateTimePicker.clear")}
                         className="w-full"
                       />
                     />
@@ -144,6 +147,9 @@ export const OpenRespawnWindowDialog = ({
                       render=<DateTimePicker
                         value={field.value}
                         onChange={field.onChange}
+                        placeholder={t("common.dateTimePicker.placeholder")}
+                        timeLabel={t("common.dateTimePicker.time")}
+                        clearLabel={t("common.dateTimePicker.clear")}
                         className="w-full"
                       />
                     />

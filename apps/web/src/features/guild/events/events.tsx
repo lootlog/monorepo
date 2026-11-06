@@ -8,7 +8,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Plus, SearchX, Trophy } from "lucide-react";
 import { toast } from "@lootlog/ui/components/sonner";
-import { EventActionDialog } from "./components/dialogs/event-action-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 
 import { useEventList } from "./use-event-list";
@@ -149,18 +149,22 @@ export const Events = () => {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
       />
-      <EventActionDialog
+      <ConfirmDialog
+        key={eventToDelete?.id}
         open={!!eventToDelete}
         onOpenChange={(open) => {
           if (!open) setEventToDelete(null);
         }}
-        eventName={eventToDelete?.name ?? ""}
-        requireNameConfirmation
-        titleKey="events.deleteDialog.title"
-        descriptionKey="events.deleteDialog.description"
-        actionLabelKey="events.delete"
-        variant="destructive"
-        isPending={deleteEvent.isPending}
+        title={t("events.deleteDialog.title")}
+        description={t("events.deleteDialog.description", {
+          name: eventToDelete?.name ?? "",
+        })}
+        confirmText={eventToDelete?.name ?? ""}
+        confirmLabel={t("events.deleteDialog.confirmHint", {
+          name: eventToDelete?.name ?? "",
+        })}
+        confirmButtonLabel={t("events.delete")}
+        cancelButtonLabel={t("common.cancel")}
         onConfirm={async () => {
           if (!eventToDelete) return;
 
@@ -172,9 +176,9 @@ export const Events = () => {
               },
             });
             toast.success(t("events.deleteSuccess"));
-            setEventToDelete(null);
-          } catch {
+          } catch (error) {
             toast.error(t("events.deleteError"));
+            throw error;
           }
         }}
       />

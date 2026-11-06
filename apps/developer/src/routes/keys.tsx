@@ -4,7 +4,9 @@ import { useState } from "react";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { KeyManager } from "~/components/key-manager";
+import { createKeyQueryClient } from "~/lib/key-queries";
 import { PortalFooter } from "~/components/portal-footer";
 import { getPortalEnvironment } from "~/lib/environment";
 import { pageHead } from "~/lib/seo";
@@ -37,6 +39,7 @@ function KeysPage() {
   );
 
   const session = auth.useSession();
+  const [queryClient] = useState(createKeyQueryClient);
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -119,7 +122,14 @@ function KeysPage() {
               </Button>
             </section>
           )}
-          {session.data && <KeyManager key={session.data.user.id} />}
+          {session.data && (
+            <QueryClientProvider client={queryClient}>
+              <KeyManager
+                key={session.data.user.id}
+                userId={session.data.user.id}
+              />
+            </QueryClientProvider>
+          )}
           {(error || (session.error && !session.data)) && (
             <Alert variant="destructive">
               <AlertDescription>{t.error}</AlertDescription>

@@ -2,6 +2,7 @@ import { MetaItem } from "@/components/common/meta-item";
 import {
   getListTileLinkClassName,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import type { LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc } from "@lootlog/client/main";
 import { Link } from "@tanstack/react-router";
@@ -29,10 +30,7 @@ export const NpcTile = ({ guildId, npc }: NpcTileProps) => {
       <Link
         to="/$guildId/settings/npcs/$npcId"
         params={{ guildId, npcId: String(npc.id) }}
-        className={cn(
-          getListTileLinkClassName(false),
-          "transition-colors hover:bg-muted/30 motion-reduce:transition-none",
-        )}
+        className={cn(getListTileLinkClassName(false), LIST_TILE_HOVER_CLASS)}
       >
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="truncate text-sm font-semibold">

@@ -2,6 +2,7 @@ import { formatSignedBattleMetric } from "@/components/battle/utils/value-utils"
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import type { PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
@@ -38,7 +39,8 @@ export const BattlePanelPvpBattleCard = ({
       {...link}
       data-list-tile
       className={cn(
-        "block w-full py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+        "block w-full py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+        LIST_TILE_HOVER_CLASS,
         LIST_TILE_RULE_CLASS,
         LIST_TILE_INSET_CLASS,
       )}

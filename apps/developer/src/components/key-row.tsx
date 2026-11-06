@@ -1,6 +1,6 @@
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { useState } from "react";
 import { KeyRenameDialog } from "~/components/key-rename-dialog";
 import {
@@ -96,7 +96,7 @@ export function KeyRow({
           disabled={pending}
           onChange={onChange}
         />
-        <ConfirmDeleteDialog
+        <ConfirmDialog
           disabled={pending}
           title={t.confirmRemoveTitle(apiKey.name)}
           description={error ? `${t.confirmRemove} ${error}` : t.confirmRemove}

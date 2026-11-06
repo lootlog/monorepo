@@ -1,3 +1,4 @@
+import { TileChevron } from "@/components/common/tile-chevron";
 import {
   formatBattleMetric,
   formatSignedBattleMetric,
@@ -6,6 +7,7 @@ import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palet
 import {
   getListTileLinkClassName,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import {
   FILTERED_TABLE_HEADER_CLASS,
@@ -20,7 +22,6 @@ import { Table } from "@lootlog/ui/components/table";
 import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { cn } from "cn";
-import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMediaQuery } from "usehooks-ts";
@@ -138,10 +139,9 @@ export function AbyssSeasonsList({
         </span>
       ),
       cell: () => (
-        <ChevronRight
-          className="ml-auto size-4 text-muted-foreground"
-          aria-hidden="true"
-        />
+        <span className="flex justify-end">
+          <TileChevron />
+        </span>
       ),
     },
   ];
@@ -162,7 +162,8 @@ export function AbyssSeasonsList({
               {...getSeasonLink(season)}
               className={cn(
                 getListTileLinkClassName(false),
-                "transition-colors hover:bg-muted/40",
+                LIST_TILE_HOVER_CLASS,
+                "group/tile",
               )}
             >
               <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -182,10 +183,7 @@ export function AbyssSeasonsList({
                   </span>
                 </span>
               </span>
-              <ChevronRight
-                className="size-4 shrink-0 text-muted-foreground"
-                aria-hidden="true"
-              />
+              <TileChevron />
             </Link>
           </li>
         ))}
@@ -204,7 +202,7 @@ export function AbyssSeasonsList({
       <TanStackTableBody
         table={table}
         rowHeaderColumnId="range"
-        rowClassName="h-14 border-b border-border hover:bg-muted/40"
+        rowClassName="group/tile h-14 border-b border-border hover:bg-muted/40"
         getCellClassName={(cell) =>
           cn(
             "relative tabular-nums",

@@ -1,6 +1,7 @@
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import type { KillHistoryEntry } from "@lootlog/client/main";
 import { cn } from "cn";
@@ -29,7 +30,8 @@ export const EventKillTiles = ({
           key={kill.id}
           data-list-tile
           className={cn(
-            "relative flex h-16 items-center gap-3 transition-colors hover:bg-muted/40",
+            "relative flex h-16 items-center gap-3",
+            LIST_TILE_HOVER_CLASS,
             LIST_TILE_RULE_CLASS,
             LIST_TILE_INSET_CLASS,
           )}
