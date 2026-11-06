@@ -7,6 +7,7 @@ import {
 } from "@/lib/calculators";
 import { readNumberInput } from "@/lib/number-input";
 import { CalculatorCard } from "./calculator-card";
+import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
 
@@ -24,8 +25,25 @@ export function HolyTouchCalculator() {
       source="official"
       sourceUrl={MECHANICS_DOCUMENTATION_URL}
       formula={t("calculators.holyTouch.formula")}
+      results={
+        <CalculatorResults
+          results={[
+            {
+              label: t("calculators.holyTouch.perTurn"),
+              value: heal?.toLocaleString("pl-PL"),
+            },
+            {
+              label: t("calculators.holyTouch.total"),
+              value:
+                heal === undefined
+                  ? undefined
+                  : (heal * HOLY_TOUCH_TURNS).toLocaleString("pl-PL"),
+            },
+          ]}
+        />
+      }
     >
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className={CALCULATOR_FIELDS}>
         <CalculatorNumberField
           label={t("calculators.holyTouch.health")}
           value={health}
@@ -34,21 +52,6 @@ export function HolyTouchCalculator() {
           max={10_000_000}
         />
       </div>
-      <CalculatorResults
-        results={[
-          {
-            label: t("calculators.holyTouch.perTurn"),
-            value: heal?.toLocaleString("pl-PL"),
-          },
-          {
-            label: t("calculators.holyTouch.total"),
-            value:
-              heal === undefined
-                ? undefined
-                : (heal * HOLY_TOUCH_TURNS).toLocaleString("pl-PL"),
-          },
-        ]}
-      />
     </CalculatorCard>
   );
 }

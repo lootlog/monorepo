@@ -161,14 +161,7 @@ function ItemsRoute() {
       </aside>
 
       <div className="flex min-w-0 flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            {t("items.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("items.description")}
-          </p>
-        </div>
+        <h1 className="sr-only">{t("items.title")}</h1>
 
         <div className="flex flex-wrap items-center gap-2">
           <InputGroup size="lg" className="min-w-48 flex-1">

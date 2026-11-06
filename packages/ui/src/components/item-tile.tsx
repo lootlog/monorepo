@@ -14,8 +14,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import { useRender } from "@base-ui/react/use-render";
 import { cn } from "cn";
-import type { FC, ReactNode } from "react";
+import type {
+  FC,
+  FocusEvent,
+  MouseEvent,
+  ReactElement,
+  ReactNode,
+} from "react";
 
 export type GameItem = {
   icon: string;
@@ -45,6 +52,11 @@ export type ItemTileProps = {
   comparison?: ItemTileComparison;
   item: GameItem;
   labels: ItemTileLabels;
+  /**
+   * The element the icon is drawn in, such as a link to the item's page;
+   * a button by default.
+   */
+  render?: ReactElement;
   renderStat?: (displayValue: ItemDisplayValue) => ReactNode;
   shareIndex?: number;
   shareNickname?: string;
@@ -58,6 +70,7 @@ export const ItemTile: FC<ItemTileProps> = ({
   comparison,
   item: { icon, name, rarity, stat, type },
   labels,
+  render = <button type="button" />,
   renderStat = fallbackRenderStat,
   shareIndex,
   shareNickname,
@@ -139,51 +152,40 @@ export const ItemTile: FC<ItemTileProps> = ({
     details
   );
 
-  if (sharedTooltip) {
-    return (
-      <button
-        aria-label={name}
-        className={triggerClassName}
-        onBlur={sharedTooltip.hideTooltip}
-        onFocus={({ currentTarget }) =>
-          sharedTooltip.showTooltip(
-            tooltipContent,
-            currentTarget.getBoundingClientRect(),
-            {
-              contentClassName: tooltipBorderClassName,
-              triggerElement: currentTarget,
-            },
-          )
-        }
-        onMouseEnter={({ currentTarget }) =>
-          sharedTooltip.showTooltip(
-            tooltipContent,
-            currentTarget.getBoundingClientRect(),
-            {
-              contentClassName: tooltipBorderClassName,
-              triggerElement: currentTarget,
-            },
-          )
-        }
-        onMouseLeave={sharedTooltip.hideTooltip}
-        type="button"
-      >
-        {itemImage}
-      </button>
+  const showSharedTooltip = (currentTarget: HTMLElement) =>
+    sharedTooltip?.showTooltip(
+      tooltipContent,
+      currentTarget.getBoundingClientRect(),
+      {
+        contentClassName: tooltipBorderClassName,
+        triggerElement: currentTarget,
+      },
     );
-  }
+
+  const sharedTrigger = useRender({
+    render,
+    props: {
+      "aria-label": name,
+      className: triggerClassName,
+      children: itemImage,
+      onBlur: sharedTooltip?.hideTooltip,
+      onFocus: ({ currentTarget }: FocusEvent<HTMLElement>) =>
+        showSharedTooltip(currentTarget),
+      onMouseEnter: ({ currentTarget }: MouseEvent<HTMLElement>) =>
+        showSharedTooltip(currentTarget),
+      onMouseLeave: sharedTooltip?.hideTooltip,
+    },
+  });
+
+  if (sharedTooltip) return sharedTrigger;
 
   return (
     <TooltipProvider delay={100}>
       <Tooltip>
         <TooltipTrigger
-          render={
-            <button
-              aria-label={name}
-              className={triggerClassName}
-              type="button"
-            />
-          }
+          render={render}
+          aria-label={name}
+          className={triggerClassName}
         >
           {itemImage}
         </TooltipTrigger>

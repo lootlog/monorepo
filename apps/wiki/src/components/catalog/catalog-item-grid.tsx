@@ -21,10 +21,6 @@ type CatalogItemGridProps = {
   attackSpeed?: AttackSpeedRanking;
 };
 
-/** The catalog's grid of tiles, as many columns as fit. */
-export const CATALOG_GRID =
-  "grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-3";
-
 // Item rows are wider than tiles, so a name and its source share a line.
 const ITEM_LIST =
   "grid grid-cols-[repeat(auto-fill,minmax(min(22rem,100%),1fr))] gap-1.5";

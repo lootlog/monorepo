@@ -11,6 +11,7 @@ import { formatPercent } from "@/lib/calculator-format";
 import { sumItemStats } from "@/lib/item-stat-totals";
 import { readNumberInput } from "@/lib/number-input";
 import { CalculatorCard } from "./calculator-card";
+import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorFromSetButton } from "./calculator-from-set-button";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
@@ -52,8 +53,35 @@ export function DefenceChanceCalculator() {
           onClick={fillFromSet}
         />
       }
+      results={
+        <CalculatorResults
+          results={[
+            {
+              label: t("calculators.defence.evadeChance"),
+              value:
+                enemy === undefined || evadePoints === undefined
+                  ? undefined
+                  : formatPercent(defenceChance(evadePoints, enemy)),
+            },
+            {
+              label: t("calculators.defence.blockChance"),
+              value:
+                enemy === undefined || blockPoints === undefined
+                  ? undefined
+                  : formatPercent(defenceChance(blockPoints, enemy)),
+            },
+            {
+              label: t("calculators.defence.pointsForMax"),
+              value:
+                enemy === undefined
+                  ? undefined
+                  : pointsForMaxDefence(enemy).toLocaleString("pl-PL"),
+            },
+          ]}
+        />
+      }
     >
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className={CALCULATOR_FIELDS}>
         <CalculatorNumberField
           label={t("calculators.defence.evadePoints")}
           value={evade}
@@ -76,31 +104,6 @@ export function DefenceChanceCalculator() {
           max={1000}
         />
       </div>
-      <CalculatorResults
-        results={[
-          {
-            label: t("calculators.defence.evadeChance"),
-            value:
-              enemy === undefined || evadePoints === undefined
-                ? undefined
-                : formatPercent(defenceChance(evadePoints, enemy)),
-          },
-          {
-            label: t("calculators.defence.blockChance"),
-            value:
-              enemy === undefined || blockPoints === undefined
-                ? undefined
-                : formatPercent(defenceChance(blockPoints, enemy)),
-          },
-          {
-            label: t("calculators.defence.pointsForMax"),
-            value:
-              enemy === undefined
-                ? undefined
-                : pointsForMaxDefence(enemy).toLocaleString("pl-PL"),
-          },
-        ]}
-      />
     </CalculatorCard>
   );
 }

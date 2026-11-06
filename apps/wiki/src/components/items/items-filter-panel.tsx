@@ -116,7 +116,7 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
                   title={t(`slots.${slot.id}`)}
                   onClick={() => onChange({ slot: isSelected ? "" : slot.id })}
                   className={cn(
-                    "flex size-11 items-center justify-center rounded-md border outline-none transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring active:scale-95 motion-reduce:transition-none",
+                    "flex size-full items-center justify-center rounded-lg border outline-none transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring active:scale-95 motion-reduce:transition-none",
                     isSelected
                       ? "border-primary bg-primary/15 text-primary shadow-[0_0_14px_color-mix(in_oklab,var(--primary)_35%,transparent)]"
                       : "border-border/70 bg-card/80 text-muted-foreground hover:border-primary/50 hover:text-primary",

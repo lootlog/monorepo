@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { orderBy } from "es-toolkit";
 import { itemEventSlug } from "@lootlog/domain/item-events";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
+import { NpcPortrait } from "@/components/common/npc-portrait";
 import { EventMonsterItems } from "@/components/events/event-monster-items";
 import { useEventItems } from "@/hooks/use-event-items";
 import { t } from "@/i18n/messages";
@@ -57,22 +59,57 @@ function EventRoute() {
   );
 
   return (
-    <div className="flex flex-col gap-8 py-6">
-      <header className="flex flex-col gap-1 rounded-xl border border-border/50 bg-card p-5">
-        {name ? (
-          <h1 className="truncate text-2xl font-semibold tracking-tight text-foreground">
-            {name}
-          </h1>
-        ) : (
-          <Skeleton className="h-8 w-56" />
-        )}
-        <p className="text-sm text-muted-foreground">
-          {items
-            ? t("catalog.eventDescription", {
-                count: items.length.toLocaleString("pl-PL"),
-              })
-            : t("search.loading")}
-        </p>
+    <div className="flex flex-col gap-10 py-6">
+      <PageBreadcrumbs
+        items={[
+          { label: t("navigation.events") },
+          ...(name ? [{ label: name }] : []),
+        ]}
+      />
+      <header className="flex flex-col gap-5">
+        <div className="flex flex-col gap-1.5">
+          {name ? (
+            <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
+              {name}
+            </h1>
+          ) : (
+            <Skeleton className="h-10 w-72" />
+          )}
+          <p className="text-sm text-muted-foreground md:text-[0.9375rem]">
+            {items
+              ? t("catalog.eventDescription", {
+                  count: items.length.toLocaleString("pl-PL"),
+                })
+              : t("search.loading")}
+          </p>
+        </div>
+        {items ? (
+          <nav aria-label={t("catalog.eventMonsters")}>
+            <ul className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none]">
+              {monsters.flatMap(({ monster }) =>
+                monster
+                  ? [
+                      <li key={monster.key} className="w-28 shrink-0">
+                        <a
+                          href={`#event-monster-${monster.key}`}
+                          className="group/monster flex flex-col gap-1.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <NpcPortrait
+                            icon={monster.icon}
+                            size="md"
+                            className="w-28 transition-[border-color] duration-150 group-hover/monster:border-primary/50 motion-reduce:transition-none"
+                          />
+                          <span className="truncate text-xs font-medium text-foreground group-hover/monster:underline">
+                            {monster.name}
+                          </span>
+                        </a>
+                      </li>,
+                    ]
+                  : [],
+              )}
+            </ul>
+          </nav>
+        ) : null}
       </header>
       {items ? (
         monsters.map(({ monster, items: monsterItems }) => (
