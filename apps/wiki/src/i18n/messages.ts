@@ -5,7 +5,7 @@ const messages = {
     title: "Lootlog Wiki",
     description:
       "Wiki Lootloga do wyszukiwania przedmiotów, NPC-ów i potworów z Margonem.",
-    homeTitle: "Lootlog Wiki",
+    homeTitle: "Wiki Margonem",
     itemsTitle: "Przedmioty",
     npcsTitle: "NPC i potwory",
     itemTitle: "Przedmiot",
@@ -179,13 +179,13 @@ const messages = {
   },
   home: {
     eyebrow: "Wiki Margonem",
-    title: "Wszystko, co spada w Margonem",
+    title: "Lootlog Wiki",
     description:
-      "Przedmioty, NPC i potwory z Margonem, uzupełniane na bieżąco danymi z Lootloga.",
+      "Katalog przedmiotów i potworów z Margonem. Wyszukasz tu przedmioty po statystykach i bonusach, sprawdzisz, z których potworów wypadają, i porównasz je ze sobą.",
     searchLabel: "Szukaj przedmiotu",
     searchPlaceholder: "Wpisz nazwę przedmiotu, np. dria, serce, łowca",
     searchSubmit: "Szukaj",
-    raritiesTitle: "Przeglądaj według rzadkości",
+    raritiesTitle: "Rzadkość",
     newMonstersTitle: "Nowe potwory",
     newMonstersDescription:
       "Herosi, tytani i kolosi z najnowszymi przedmiotami w grze.",
@@ -206,11 +206,12 @@ const messages = {
       fastestTrackerHelmets: "Najszybsze hełmy tropiciela",
       fastestHunterNecklaces: "Najszybsze naszyjniki łowcy",
     },
-    bonusesTitle: "Szukaj po bonusie legendarnym",
+    browseTitle: "Przeglądaj katalog",
+    browseDescription:
+      "Każdy skrót otwiera wyszukiwarkę przedmiotów z jednym filtrem.",
+    bonusesTitle: "Bonus legendarny",
     bonusUpcoming: "Wkrótce w grze",
-    bonusesDescription:
-      "Wybierz bonus, żeby zobaczyć wszystkie przedmioty, które go mają.",
-    slotsTitle: "Przeglądaj według slotu",
+    slotsTitle: "Slot",
     itemsDescription:
       "Szukaj przedmiotów po nazwie, poziomie, rzadkości i profesji.",
     npcsDescription: "Szukaj NPC-ów i potworów po nazwie.",
@@ -219,6 +220,18 @@ const messages = {
     calculatorsDescription:
       "Policz unik, blok, bonusy legendarne i koszty usług według wzorów z gry.",
     open: "Otwórz",
+    about: {
+      title: "O wiki",
+      dropsTitle: "Źródło danych",
+      dropsDescription:
+        "Przedmiot pojawia się w wiki, gdy gracz z Lootlogiem zdobędzie go w grze. Jeśli wypadł z potwora, wiki zapisuje też potwora.",
+      statsTitle: "Statystyki",
+      statsDescription:
+        "Wymagania, bonusy i statystyki pochodzą z opisu przedmiotu w grze.",
+      planningTitle: "Zestaw ekwipunku",
+      planningDescription:
+        "Przedmioty możesz dodać do zestawu, porównać do czterech naraz i przeliczyć w kalkulatorach.",
+    },
   },
   catalog: {
     droppedBy: "Z:",
