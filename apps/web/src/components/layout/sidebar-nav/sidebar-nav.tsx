@@ -84,8 +84,10 @@ export const SidebarNav = ({
       {header && (
         // A backdrop in the header (the server banner) grows it to the
         // backdrop's own height; the header row keeps its place on top.
+        // Like the app top bar, the header is 56px with its rule inside, so
+        // both rules meet in one line.
         <div className="group/sidebar-header relative isolate shrink-0 border-b border-sidebar-border has-data-[slot=sidebar-header-backdrop]:aspect-video">
-          <div className="flex h-14 flex-row items-center justify-between px-2 font-semibold">
+          <div className="flex h-[calc(--spacing(14)-1px)] flex-row items-center justify-between px-2 font-semibold">
             {header}
             {isMobile && (
               <Button
