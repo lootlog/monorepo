@@ -15,7 +15,10 @@ import {
   type RefObject,
 } from "react";
 
+type TooltipAlign = "start" | "center" | "end";
+
 type SharedTooltipState = {
+  align?: TooltipAlign;
   content: ReactNode | null;
   contentClassName?: string;
   open: boolean;
@@ -24,6 +27,8 @@ type SharedTooltipState = {
 };
 
 type SharedTooltipOptions = {
+  /** Where the content lines up with its trigger; centered by default. */
+  align?: TooltipAlign;
   contentClassName?: string;
   triggerElement?: HTMLElement | null;
 };
@@ -115,6 +120,7 @@ function SharedTooltipRoot({
       },
       showTooltip: (content, triggerRect, options) => {
         const nextTooltipState: SharedTooltipState = {
+          align: options?.align,
           content,
           contentClassName: options?.contentClassName,
           open: true,
@@ -225,6 +231,7 @@ function SharedTooltipRoot({
         }
       />
       <TooltipContent
+        align={tooltipState.align}
         className={cn("pointer-events-none", tooltipState.contentClassName)}
       >
         {tooltipState.content}

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, linkOptions } from "@tanstack/react-router";
 import { orderBy } from "es-toolkit";
 import { itemEventSlug } from "@lootlog/domain/item-events";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
@@ -11,7 +11,7 @@ import { t } from "@/i18n/messages";
 import { groupItemsByMonster } from "@/lib/group-items-by-monster";
 import { itemEvents } from "@/lib/item-events";
 
-export const Route = createFileRoute("/events/$eventSlug")({
+export const Route = createFileRoute("/events_/$eventSlug")({
   component: EventRoute,
   head: () => ({
     meta: [{ title: `${t("meta.eventTitle")} | ${t("meta.title")}` }],
@@ -62,7 +62,10 @@ function EventRoute() {
     <div className="flex flex-col gap-10 py-6">
       <PageBreadcrumbs
         items={[
-          { label: t("navigation.events") },
+          {
+            label: t("navigation.events"),
+            link: linkOptions({ to: "/events" }),
+          },
           ...(name ? [{ label: name }] : []),
         ]}
       />

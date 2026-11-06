@@ -2,6 +2,7 @@ import { linkOptions } from "@tanstack/react-router";
 import {
   Backpack,
   Calculator,
+  CalendarDays,
   House,
   Package,
   Scale,
@@ -45,6 +46,12 @@ export const WIKI_NAVIGATION = [
     labelKey: "navigation.npcs",
     descriptionKey: "home.npcsDescription",
     icon: Skull,
+  },
+  {
+    link: linkOptions({ to: "/events" }),
+    labelKey: "navigation.events",
+    descriptionKey: "home.eventsDescription",
+    icon: CalendarDays,
   },
   {
     link: linkOptions({ to: "/set" }),
