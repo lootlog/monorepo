@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { decodeEquipmentSet, encodeEquipmentSet } from "./equipment-set";
-import { findRequirementIssues, sumItemStats } from "./item-stat-totals";
+import {
+  findRequirementIssues,
+  SET_STAT_SECTIONS,
+  type SetStatDefinition,
+  setStatValue,
+  sumItemStats,
+} from "./item-stat-totals";
 
 describe("equipment set link", () => {
   it("opens the set it was shared from", () => {
@@ -32,6 +38,25 @@ describe("equipment set stats", () => {
     expect(
       sumItemStats(["hp=500;crit=2;binds", "hp=250;legbon=lastheal,200"]),
     ).toEqual({ hp: 750, crit: 2 });
+  });
+
+  it("shows attack speed in whole points and attributes with all attributes", () => {
+    const totals = sumItemStats(["sa=83;ds=20;da=5", "sa=251;da=10"]);
+
+    const valueOf = (id: string) => {
+      const stat = SET_STAT_SECTIONS.flatMap(
+        (section): readonly SetStatDefinition[] => section.stats,
+      ).find((candidate) => candidate.id === id);
+
+      if (!stat) throw new Error(`No set stat ${id}`);
+
+      return setStatValue(totals, stat);
+    };
+
+    expect(valueOf("sa")).toBe(3.34);
+    expect(valueOf("strength")).toBe(35);
+    expect(valueOf("agility")).toBe(15);
+    expect(valueOf("ac")).toBeUndefined();
   });
 
   it("flags an item another profession or a higher level needs", () => {
