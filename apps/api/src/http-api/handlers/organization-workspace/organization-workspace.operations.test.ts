@@ -587,7 +587,7 @@ describe("reservation HTTP error responses", () => {
           Effect.provide(
             ReservationsHandlers.pipe(HttpRouter.provideRequest(services)),
           ),
-          Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
+          Effect.provideService(BearerSecurityMiddleware, bearer),
           Effect.provide(apiKeyEndpointPolicyLayer("main")),
           Effect.provide(SchemaErrorResponseLive),
         );

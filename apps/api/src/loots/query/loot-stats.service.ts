@@ -52,8 +52,9 @@ export class LootStatsService {
   invalidateCache(guildIds: string[]) {
     const uniqueGuildIds = [...new Set(guildIds)];
 
-    return Effect.all(
-      uniqueGuildIds.map((guildId) =>
+    return Effect.forEach(
+      uniqueGuildIds,
+      (guildId) =>
         Effect.tryPromise({
           try: () =>
             this.redis.invalidateScopes(getLootStatsCacheScope(guildId)),
@@ -68,7 +69,6 @@ export class LootStatsService {
             ),
           ),
         ),
-      ),
       { concurrency: "unbounded" },
     ).pipe(Effect.asVoid);
   }

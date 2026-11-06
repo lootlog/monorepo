@@ -80,8 +80,10 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .where(eq(notificationJobTable.id, jobId))
       .limit(1)
       .pipe(
-        Effect.mapError(failure("notifications.jobStore.findJob")),
-        Effect.map((rows) => rows[0] ?? null),
+        Effect.mapBoth({
+          onFailure: failure("notifications.jobStore.findJob"),
+          onSuccess: (rows) => rows[0] ?? null,
+        }),
       );
 
   const findJobWithRelations = (jobId: string) =>
@@ -89,17 +91,19 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .where(eq(notificationJobTable.id, jobId))
       .limit(1)
       .pipe(
-        Effect.mapError(failure("notifications.jobStore.findWithRelations")),
-        Effect.map((rows): NotificationJobWithRelations | null => {
-          const row = rows[0];
+        Effect.mapBoth({
+          onFailure: failure("notifications.jobStore.findWithRelations"),
+          onSuccess: (rows): NotificationJobWithRelations | null => {
+            const row = rows[0];
 
-          return row
-            ? {
-                ...row.job,
-                rule: row.rule,
-                target: row.target,
-              }
-            : null;
+            return row
+              ? {
+                  ...row.job,
+                  rule: row.rule,
+                  target: row.target,
+                }
+              : null;
+          },
         }),
       );
 
@@ -125,8 +129,10 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .where(eligibleJobForAttempt(jobId, retrying))
       .returning({ id: notificationJobTable.id })
       .pipe(
-        Effect.mapError(failure("notifications.jobStore.claim")),
-        Effect.map((rows) => rows.length > 0),
+        Effect.mapBoth({
+          onFailure: failure("notifications.jobStore.claim"),
+          onSuccess: (rows) => rows.length > 0,
+        }),
       );
 
   const failClaim = (
@@ -149,8 +155,10 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       )
       .returning({ id: notificationJobTable.id })
       .pipe(
-        Effect.mapError(failure("notifications.jobStore.failClaim")),
-        Effect.map((rows) => rows.length > 0),
+        Effect.mapBoth({
+          onFailure: failure("notifications.jobStore.failClaim"),
+          onSuccess: (rows) => rows.length > 0,
+        }),
       );
 
   const blockJob = (jobId: string, reason: string, retrying = false) =>
@@ -211,8 +219,10 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         )
         .returning({ id: notificationJobTable.id });
     }).pipe(
-      Effect.mapError(failure("notifications.jobStore.closeMissed")),
-      Effect.map((rows) => rows.length > 0),
+      Effect.mapBoth({
+        onFailure: failure("notifications.jobStore.closeMissed"),
+        onSuccess: (rows) => rows.length > 0,
+      }),
     );
 
   const recordDelivery = (options: NotificationDeliveryUpdate) =>
@@ -323,8 +333,10 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       )
       .returning({ id: notificationRuleTable.id })
       .pipe(
-        Effect.mapError(failure("notifications.jobStore.advanceRule")),
-        Effect.map((rows) => rows.length > 0),
+        Effect.mapBoth({
+          onFailure: failure("notifications.jobStore.advanceRule"),
+          onSuccess: (rows) => rows.length > 0,
+        }),
       );
 
   const prune = (

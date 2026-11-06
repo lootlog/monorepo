@@ -182,7 +182,7 @@ export class OrganizationContextLookup extends Context.Service<
               cache,
               idOrVanityUrl,
               decodeCachedGuild,
-            ).pipe(Effect.catch(() => Effect.succeed(null)));
+            ).pipe(Effect.orElseSucceed(() => null));
 
             if (cached) return cached;
 
@@ -264,7 +264,7 @@ export class OrganizationContextLookup extends Context.Service<
 
               const cached = yield* cache
                 .get(permissionsKey)
-                .pipe(Effect.catch(() => Effect.succeed(null)));
+                .pipe(Effect.orElseSucceed(() => null));
 
               const now = yield* Clock.currentTimeMillis;
 

@@ -1014,7 +1014,7 @@ describe("API HTTP boundary", () => {
         .where(eq(guildTable.id, forbiddenGuildId))
         .pipe(
           Effect.as("stored"),
-          Effect.catch(() => Effect.succeed("rejected")),
+          Effect.orElseSucceed(() => "rejected"),
         ),
     );
 

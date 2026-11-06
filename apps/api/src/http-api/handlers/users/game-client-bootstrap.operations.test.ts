@@ -69,104 +69,102 @@ const run = ({
 }: StartupReads = {}) =>
   Effect.runPromise(
     getGameClientBootstrap({ gameAccountId: "202", characterId: "7" }).pipe(
-      Effect.provide(
-        Layer.mergeAll(
-          Layer.succeed(
-            AccountOrganizationAuthorization,
-            AccountOrganizationAuthorization.of({
-              identity: Effect.succeed(identity),
-              requireGuild: ({ guildId }) =>
-                Effect.succeed({
-                  guildId,
-                  permissions: [Permission.LOOTLOG_ACCESS],
-                }),
-            }),
-          ),
-          Layer.succeed(
-            AccountOrganizationData,
-            AccountOrganizationData.of({
-              deleteAccount: notReadAtStartup,
-              getUserPreferences: () => Effect.succeed(userPreferences),
-              userOwnsTheme: notReadAtStartup,
-              updateUserPreferences: notReadAtStartup,
-              getCurrentUserGuilds: notReadAtStartup,
-              getCurrentUserAccessibleGuilds: () =>
-                Effect.mapError(
-                  accessibleGuilds,
-                  (cause) => new AccountOrganizationOperationError({ cause }),
-                ),
-              getUserGameAccountPreferences: notReadAtStartup,
-              updateUserGameAccountPreferences: notReadAtStartup,
-              getUserGuilds: notReadAtStartup,
-              getUserGuildsWithPermissions: notReadAtStartup,
-              getManageableUserGuilds: notReadAtStartup,
-              getGuildDiscordSyncStatus: notReadAtStartup,
-              refreshGuildDiscordSync: notReadAtStartup,
-            }),
-          ),
-          Layer.succeed(
-            SettingsIdentity,
-            SettingsIdentity.of({ userId: Effect.succeed(identity.userId) }),
-          ),
-          Layer.succeed(
-            SettingsData,
-            SettingsData.of({
-              getGlobalTimerSettings: notReadAtStartup,
-              updateGlobalTimerSettings: notReadAtStartup,
-              getGuildTimerSettings: notReadAtStartup,
-              updateGuildTimerSettings: notReadAtStartup,
-              migrateTimerSettings: notReadAtStartup,
-              getPreferences: () => Effect.succeed({ domains: {} }),
-              getGuildPreferences: (_userId, query) => {
-                guildPreferenceQueries.push(query);
-
-                return Effect.succeed({ guilds: {} });
-              },
-              patchPreferences: notReadAtStartup,
-              getSoundSettings: notReadAtStartup,
-              updateSoundSettings: notReadAtStartup,
-            }),
-          ),
-          Layer.succeed(
-            UserLootlogConfigIdentity,
-            UserLootlogConfigIdentity.of({
-              discordId: Effect.succeed(identity.discordId),
-            }),
-          ),
-          Layer.succeed(
-            UserLootlogConfigData,
-            UserLootlogConfigData.of({
-              getAccount: () =>
-                Effect.mapError(
-                  lootlogConfig,
-                  (cause) => new UserLootlogConfigOperationError({ cause }),
-                ),
-              upsertCharacter: notReadAtStartup,
-              getPlayersCatchingGuilds: notReadAtStartup,
-            }),
-          ),
-          Layer.succeed(
-            CharacterAurasIdentity,
-            CharacterAurasIdentity.of({
-              userId: Effect.succeed(identity.userId),
-            }),
-          ),
-          Layer.succeed(
-            CharacterAurasData,
-            CharacterAurasData.of({
-              getAuras: () => Effect.succeed({ auras: [] }),
-              getOwnAura: () =>
-                Effect.succeed({
-                  auraId: null,
-                  canChange: false,
-                  gameAccountIds: [],
-                }),
-              updateOwnAura: notReadAtStartup,
-              linkGameAccount: notReadAtStartup,
-            }),
-          ),
+      Effect.provide([
+        Layer.succeed(
+          AccountOrganizationAuthorization,
+          AccountOrganizationAuthorization.of({
+            identity: Effect.succeed(identity),
+            requireGuild: ({ guildId }) =>
+              Effect.succeed({
+                guildId,
+                permissions: [Permission.LOOTLOG_ACCESS],
+              }),
+          }),
         ),
-      ),
+        Layer.succeed(
+          AccountOrganizationData,
+          AccountOrganizationData.of({
+            deleteAccount: notReadAtStartup,
+            getUserPreferences: () => Effect.succeed(userPreferences),
+            userOwnsTheme: notReadAtStartup,
+            updateUserPreferences: notReadAtStartup,
+            getCurrentUserGuilds: notReadAtStartup,
+            getCurrentUserAccessibleGuilds: () =>
+              Effect.mapError(
+                accessibleGuilds,
+                (cause) => new AccountOrganizationOperationError({ cause }),
+              ),
+            getUserGameAccountPreferences: notReadAtStartup,
+            updateUserGameAccountPreferences: notReadAtStartup,
+            getUserGuilds: notReadAtStartup,
+            getUserGuildsWithPermissions: notReadAtStartup,
+            getManageableUserGuilds: notReadAtStartup,
+            getGuildDiscordSyncStatus: notReadAtStartup,
+            refreshGuildDiscordSync: notReadAtStartup,
+          }),
+        ),
+        Layer.succeed(
+          SettingsIdentity,
+          SettingsIdentity.of({ userId: Effect.succeed(identity.userId) }),
+        ),
+        Layer.succeed(
+          SettingsData,
+          SettingsData.of({
+            getGlobalTimerSettings: notReadAtStartup,
+            updateGlobalTimerSettings: notReadAtStartup,
+            getGuildTimerSettings: notReadAtStartup,
+            updateGuildTimerSettings: notReadAtStartup,
+            migrateTimerSettings: notReadAtStartup,
+            getPreferences: () => Effect.succeed({ domains: {} }),
+            getGuildPreferences: (_userId, query) => {
+              guildPreferenceQueries.push(query);
+
+              return Effect.succeed({ guilds: {} });
+            },
+            patchPreferences: notReadAtStartup,
+            getSoundSettings: notReadAtStartup,
+            updateSoundSettings: notReadAtStartup,
+          }),
+        ),
+        Layer.succeed(
+          UserLootlogConfigIdentity,
+          UserLootlogConfigIdentity.of({
+            discordId: Effect.succeed(identity.discordId),
+          }),
+        ),
+        Layer.succeed(
+          UserLootlogConfigData,
+          UserLootlogConfigData.of({
+            getAccount: () =>
+              Effect.mapError(
+                lootlogConfig,
+                (cause) => new UserLootlogConfigOperationError({ cause }),
+              ),
+            upsertCharacter: notReadAtStartup,
+            getPlayersCatchingGuilds: notReadAtStartup,
+          }),
+        ),
+        Layer.succeed(
+          CharacterAurasIdentity,
+          CharacterAurasIdentity.of({
+            userId: Effect.succeed(identity.userId),
+          }),
+        ),
+        Layer.succeed(
+          CharacterAurasData,
+          CharacterAurasData.of({
+            getAuras: () => Effect.succeed({ auras: [] }),
+            getOwnAura: () =>
+              Effect.succeed({
+                auraId: null,
+                canChange: false,
+                gameAccountIds: [],
+              }),
+            updateOwnAura: notReadAtStartup,
+            linkGameAccount: notReadAtStartup,
+          }),
+        ),
+      ]),
     ),
   );
 

@@ -193,7 +193,7 @@ export const makeReadyRoomRepository = (
             ),
           ),
           Effect.flatMap((ids) =>
-            Effect.all(ids.map(get), { concurrency: "unbounded" }),
+            Effect.forEach(ids, get, { concurrency: "unbounded" }),
           ),
           Effect.map((rooms) =>
             rooms.filter(
@@ -225,7 +225,7 @@ export const makeReadyRoomRepository = (
 
             const ids = [...new Set(result)];
 
-            return Effect.all(ids.map(get), { concurrency: "unbounded" }).pipe(
+            return Effect.forEach(ids, get, { concurrency: "unbounded" }).pipe(
               Effect.tap((aggregates) => {
                 const missing = ids.filter((_, index) => !aggregates[index]);
 
