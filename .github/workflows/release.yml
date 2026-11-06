@@ -7,26 +7,66 @@ on:
         description: Full commit SHA from main
         required: true
         type: string
-      target:
-        description: Deployment target
-        required: true
-        type: choice
-        options:
-          - activity
-          - api
-          - auth
-          - battlelog-service
-          - developer
-          - discord-bot
-          - gateway
-          - search
-          - traffic-splitter
-          - landing
-          - web
-          - game-client
-          - docs
-          - wiki
-          - all
+      all:
+        description: Deploy every target
+        type: boolean
+        default: false
+      activity:
+        description: Deploy activity
+        type: boolean
+        default: false
+      api:
+        description: Deploy api
+        type: boolean
+        default: false
+      auth:
+        description: Deploy auth
+        type: boolean
+        default: false
+      battlelog-service:
+        description: Deploy battlelog-service
+        type: boolean
+        default: false
+      developer:
+        description: Deploy developer
+        type: boolean
+        default: false
+      discord-bot:
+        description: Deploy discord-bot
+        type: boolean
+        default: false
+      gateway:
+        description: Deploy gateway
+        type: boolean
+        default: false
+      search:
+        description: Deploy search
+        type: boolean
+        default: false
+      traffic-splitter:
+        description: Deploy traffic-splitter
+        type: boolean
+        default: false
+      landing:
+        description: Deploy landing
+        type: boolean
+        default: false
+      web:
+        description: Deploy web
+        type: boolean
+        default: false
+      game-client:
+        description: Deploy game-client
+        type: boolean
+        default: false
+      docs:
+        description: Deploy docs
+        type: boolean
+        default: false
+      wiki:
+        description: Deploy wiki
+        type: boolean
+        default: false
       auth_migration_confirmed:
         description: Confirm pending Auth database migrations and the current upgrade runbook are complete
         required: true
@@ -66,13 +106,16 @@ jobs:
         env:
           AUTH_MIGRATION_CONFIRMED: ${{ inputs.auth_migration_confirmed }}
           SOURCE_SHA: ${{ inputs.source_sha }}
-          TARGET: ${{ inputs.target }}
+          # Every checked boolean other than the Auth confirmation names a
+          # deployment target; the planner rejects names outside the catalog.
+          SELECTION: ${{ toJSON(inputs) }}
         run: |
           [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source_sha must be a full lowercase SHA"; exit 1; }
           git fetch origin main
           git cat-file -e "$SOURCE_SHA^{commit}"
           git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "::error::source_sha is not on main"; exit 1; }
-          plan="$(bun scripts/deployment-targets.mjs "$(jq -cn --arg target "$TARGET" --argjson authMigrationConfirmed "$AUTH_MIGRATION_CONFIRMED" '{mode: "release", target: $target, authMigrationConfirmed: $authMigrationConfirmed}')")"
+          targets="$(jq -c '[to_entries[] | select(.key != "auth_migration_confirmed" and (.value == true or .value == "true")) | .key]' <<< "$SELECTION")"
+          plan="$(bun scripts/deployment-targets.mjs "$(jq -cn --argjson targets "$targets" --argjson authMigrationConfirmed "$AUTH_MIGRATION_CONFIRMED" '{mode: "release", targets: $targets, authMigrationConfirmed: $authMigrationConfirmed}')")"
           {
             echo "targets=$(jq -c '.targets' <<< "$plan")"
             echo "docker_targets=$(jq -c '[.targets[] | select(.kind == "docker")]' <<< "$plan")"

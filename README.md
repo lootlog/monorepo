@@ -131,8 +131,8 @@ workflow. See [SDK publication](packages/sdk/PUBLISHING.md) for npm setup,
 versioning and release steps.
 
 Merging a pull request deploys affected targets to development. Production is
-manual: choose a full commit SHA from `main` and one deployment target (or
-`all`) in the Release workflow.
+manual: choose a full commit SHA from `main` and check the deployment targets
+(or `all`) in the Release workflow.
 
 `dev.lootlog.pl` and `lootlog.pl` use the same repository-owned
 `@lootlog/traffic-splitter` implementation but remain separate Cloudflare
