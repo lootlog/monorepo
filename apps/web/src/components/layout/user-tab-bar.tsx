@@ -5,19 +5,10 @@ import {
   resolveTabBarSections,
 } from "@/navigation/app-navigation";
 
-type UserTabBarProps = {
-  accessoryRef: (element: HTMLElement | null) => void;
-};
-
 /** The personal space's phone navigation. */
-export const UserTabBar = ({ accessoryRef }: UserTabBarProps) => {
+export const UserTabBar = () => {
   const matches = useMatches();
   const { sidebarItems } = resolveAppNavigation({ matches });
 
-  return (
-    <AppTabBar
-      sections={resolveTabBarSections(sidebarItems)}
-      accessoryRef={accessoryRef}
-    />
-  );
+  return <AppTabBar sections={resolveTabBarSections(sidebarItems)} />;
 };

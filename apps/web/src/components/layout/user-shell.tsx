@@ -14,8 +14,7 @@ type UserShellProps = {
 export const UserShell: FC<UserShellProps> = ({ children }) => {
   const matches = useMatches();
 
-  const { slots, titleRef, actionsRef, contextRef, accessoryRef } =
-    useHeaderSlotTargets();
+  const { slots, titleRef, actionsRef, contextRef } = useHeaderSlotTargets();
 
   const navigationInfo = resolveAppNavigation({ matches });
 
@@ -33,7 +32,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
       >
         {children}
       </AppContentFrame>
-      <UserTabBar accessoryRef={accessoryRef} />
+      <UserTabBar />
     </HeaderSlotsContext.Provider>
   );
 };

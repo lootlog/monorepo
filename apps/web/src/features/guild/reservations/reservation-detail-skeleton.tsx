@@ -3,35 +3,34 @@ import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
-import { TAB_BAR_GLASS_CLASS } from "@/components/layout/tab-bar-glass";
-import { ScheduleActionDock } from "./schedule/schedule-action-dock";
+import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { ScheduleBar } from "./schedule/schedule-bar";
 import { useCompactScheduleLayout } from "./schedule/use-compact-schedule-layout";
 
 /**
- * Route-level stand-in for `ReservationsSchedule`: its bar and dock with the
- * same control sizes, above the schedule's own loading state.
+ * Route-level stand-in for `ReservationsSchedule`: its bar and top bar actions
+ * with the same control sizes, above the schedule's own loading state.
  */
 export const ReservationDetailSkeleton = () => {
   const { t } = useTranslation();
   const { containerRef, isCompact } = useCompactScheduleLayout();
   const iconButton = isCompact ? "size-10" : "size-8";
 
-  const actionToolbar = (
-    <div
-      className={cn(
-        "flex items-center gap-1",
-        isCompact ? cn(TAB_BAR_GLASS_CLASS, "p-1") : "ml-auto",
-      )}
-    >
-      <Skeleton
-        className={cn("rounded-lg", isCompact ? "size-10" : "h-8 w-24")}
-      />
-      <Skeleton className={cn("rounded-lg", iconButton)} />
-      <Skeleton className={cn("rounded-lg", iconButton)} />
-      <Skeleton
-        className={cn("rounded-lg", isCompact ? "size-10" : "h-8 w-8 sm:w-36")}
-      />
+  const actionToolbar = isCompact ? (
+    <HeaderSlotPortal slot="actions">
+      <div className="flex items-center gap-1">
+        <Skeleton className="size-9 rounded-lg" />
+        <Skeleton className="size-9 rounded-lg" />
+        <Skeleton className="size-9 rounded-lg" />
+        <Skeleton className="size-9 rounded-full max-md:mr-2.5" />
+      </div>
+    </HeaderSlotPortal>
+  ) : (
+    <div className="ml-auto flex items-center gap-1">
+      <Skeleton className="h-8 w-24 rounded-lg" />
+      <Skeleton className="size-8 rounded-lg" />
+      <Skeleton className="size-8 rounded-lg" />
+      <Skeleton className="h-8 w-8 rounded-lg sm:w-36" />
     </div>
   );
 
@@ -65,7 +64,7 @@ export const ReservationDetailSkeleton = () => {
         {!isCompact && actionToolbar}
       </ScheduleBar>
 
-      {isCompact && <ScheduleActionDock>{actionToolbar}</ScheduleActionDock>}
+      {isCompact && actionToolbar}
 
       <div className="flex justify-center py-16" role="status">
         <LoadingSlot size="small" />

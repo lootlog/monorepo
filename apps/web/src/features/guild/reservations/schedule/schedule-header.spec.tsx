@@ -13,6 +13,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_RESERVATION_SETTINGS } from "@lootlog/domain/reservations";
+import { createTopBarSlots } from "@/lib/testing/top-bar-slots";
 import { ScheduleHeader } from "./schedule-header";
 
 await initializeTestTranslations({
@@ -22,12 +23,14 @@ await initializeTestTranslations({
     "Znajdź najbliższy wolny termin",
   "reservations.schedule.header.findingNearestSlot": "Szukanie wolnego terminu",
   "reservations.schedule.header.info": "Zasady rezerwacji",
+  "reservations.schedule.header.more": "Więcej akcji",
   "reservations.schedule.header.settings": "Ustawienia rezerwacji",
   "reservations.schedule.header.today": "Dzisiaj",
 });
 
 afterEach(() => {
   cleanup();
+  document.body.replaceChildren();
 });
 
 const renderHeader = async ({
@@ -45,20 +48,24 @@ const renderHeader = async ({
   const onFindNearestFreeSlot = vi.fn<() => void>();
   const onToday = vi.fn<() => void>();
 
+  const { actions: topBarActions, TopBarSlots } = createTopBarSlots();
+
   const router = createOrganizationTestRouter(
-    <ScheduleHeader
-      date={date}
-      isCompact={isCompact}
-      settings={DEFAULT_RESERVATION_SETTINGS}
-      settingsHref="/guild/settings/reservations"
-      canManageReservationSettings={canManageReservationSettings}
-      isFindingNearestFreeSlot={isFindingNearestFreeSlot}
-      onPrevious={vi.fn<() => void>()}
-      onNext={vi.fn<() => void>()}
-      onToday={onToday}
-      onFindNearestFreeSlot={onFindNearestFreeSlot}
-      onAddReservation={onAddReservation}
-    />,
+    <TopBarSlots>
+      <ScheduleHeader
+        date={date}
+        isCompact={isCompact}
+        settings={DEFAULT_RESERVATION_SETTINGS}
+        settingsHref="/guild/settings/reservations"
+        canManageReservationSettings={canManageReservationSettings}
+        isFindingNearestFreeSlot={isFindingNearestFreeSlot}
+        onPrevious={vi.fn<() => void>()}
+        onNext={vi.fn<() => void>()}
+        onToday={onToday}
+        onFindNearestFreeSlot={onFindNearestFreeSlot}
+        onAddReservation={onAddReservation}
+      />
+    </TopBarSlots>,
   );
 
   await router.load();
@@ -67,6 +74,7 @@ const renderHeader = async ({
   return {
     ...result,
     router,
+    topBarActions,
     onAddReservation,
     onFindNearestFreeSlot,
     onToday,
@@ -74,58 +82,85 @@ const renderHeader = async ({
 };
 
 describe("ScheduleHeader", () => {
-  it("moves every compact action into the floating dock", async () => {
+  it("moves every compact action into the app's top bar, the rarer ones under More", async () => {
     const {
       container,
       router,
+      topBarActions,
       onAddReservation,
       onFindNearestFreeSlot,
       onToday,
     } = await renderHeader({ isCompact: true });
 
-    const header = container.querySelector("header");
-
     const toolbar = screen.getByRole("toolbar", {
       name: "Akcje kalendarza rezerwacji",
     });
 
-    expect(header?.contains(toolbar)).toBe(false);
-    expect(
-      toolbar.closest('[data-slot="schedule-action-dock"]'),
-    ).not.toBeNull();
+    expect(container.querySelector("header")?.contains(toolbar)).toBe(false);
+    expect(topBarActions.contains(toolbar)).toBe(true);
 
     const actions = within(toolbar).getAllByRole("button");
     expect(actions.map((action) => action.getAttribute("aria-label"))).toEqual([
       "Dzisiaj",
-      "Zasady rezerwacji",
-      "Ustawienia rezerwacji",
       "Znajdź najbliższy wolny termin",
+      "Więcej akcji",
       "Dodaj rezerwację",
     ]);
 
-    const [todayAction, , settingsAction, nearestSlotAction, addAction] =
-      actions;
+    const [todayAction, nearestSlotAction, moreAction, addAction] = actions;
 
-    if (!todayAction || !nearestSlotAction || !settingsAction || !addAction) {
+    if (!todayAction || !nearestSlotAction || !moreAction || !addAction) {
       throw new Error("Expected every compact schedule action");
     }
 
     fireEvent.click(todayAction);
     fireEvent.click(nearestSlotAction);
-    fireEvent.click(settingsAction);
     fireEvent.click(addAction);
     expect(onToday).toHaveBeenCalledOnce();
     expect(onFindNearestFreeSlot).toHaveBeenCalledOnce();
+    expect(onAddReservation).toHaveBeenCalledOnce();
+
+    fireEvent.click(moreAction);
+    expect(
+      await screen.findByRole("menuitem", { name: "Zasady rezerwacji" }),
+    ).not.toBeNull();
+    fireEvent.click(
+      screen.getByRole("menuitem", { name: "Ustawienia rezerwacji" }),
+    );
     await waitFor(() =>
       expect(router.state.location.pathname).toBe(
         "/guild/settings/reservations",
       ),
     );
-    expect(onAddReservation).toHaveBeenCalledOnce();
+  });
+
+  it("shows the rules directly to members who cannot manage the settings", async () => {
+    await renderHeader({
+      canManageReservationSettings: false,
+      isCompact: true,
+    });
+
+    const toolbar = screen.getByRole("toolbar", {
+      name: "Akcje kalendarza rezerwacji",
+    });
+
+    expect(
+      within(toolbar)
+        .getAllByRole("button")
+        .map((action) => action.getAttribute("aria-label")),
+    ).toEqual([
+      "Dzisiaj",
+      "Znajdź najbliższy wolny termin",
+      "Zasady rezerwacji",
+      "Dodaj rezerwację",
+    ]);
   });
 
   it("keeps the actions in the header for the wide layout, with today beside the week arrows", async () => {
-    const { container } = await renderHeader({ isCompact: false });
+    const { container, topBarActions } = await renderHeader({
+      isCompact: false,
+    });
+
     const header = container.querySelector("header");
 
     const toolbar = screen.getByRole("toolbar", {
@@ -138,9 +173,7 @@ describe("ScheduleHeader", () => {
         container.querySelector('[data-slot="schedule-date-navigation"]')!,
       ).getByRole("button", { name: "Dzisiaj" }),
     ).not.toBeNull();
-    expect(
-      container.querySelector('[data-slot="schedule-action-dock"]'),
-    ).toBeNull();
+    expect(topBarActions.childElementCount).toBe(0);
   });
 
   it("disables today while the visible week already holds it", async () => {

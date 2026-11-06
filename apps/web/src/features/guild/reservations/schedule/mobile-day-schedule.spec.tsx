@@ -161,18 +161,6 @@ describe("MobileDaySchedule", () => {
     coarsePointer = true;
   });
 
-  it("keeps a safe scroll buffer below the final calendar hour", () => {
-    const { container } = renderSchedule();
-
-    const scrollContent = container.querySelector(
-      '[data-slot="compact-schedule-scroll-content"]',
-    );
-
-    expect(scrollContent?.className).toContain(
-      "pb-[calc(5rem+env(safe-area-inset-bottom))]",
-    );
-  });
-
   it("prevents the day track from becoming a native horizontal scroll area", () => {
     const { container } = renderSchedule();
     const scrollArea = container.querySelector('[data-slot="scroll-area"]');

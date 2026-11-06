@@ -14,6 +14,7 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Ellipsis,
   Info,
   Plus,
   Settings,
@@ -24,15 +25,20 @@ import { useTranslation } from "react-i18next";
 import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { Button } from "@lootlog/ui/components/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@lootlog/ui/components/dropdown-menu";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
+import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { ReservationSettingsInfoDialog } from "./reservation-settings-info-dialog";
-import { TAB_BAR_GLASS_CLASS } from "@/components/layout/tab-bar-glass";
-import { ScheduleActionDock } from "./schedule-action-dock";
 import { ScheduleBar } from "./schedule-bar";
 import { ScheduleIconButton } from "./schedule-icon-button";
 
@@ -123,7 +129,7 @@ export function ScheduleHeader({
     <Button
       type="button"
       variant={compactValue(isCompact, "ghost", "outline")}
-      size={compactValue(isCompact, "icon-lg", "sm")}
+      size={compactValue(isCompact, "icon", "sm")}
       disabled={showsToday}
       onClick={onToday}
       aria-label={t("reservations.schedule.header.today")}
@@ -139,92 +145,135 @@ export function ScheduleHeader({
   // the 32px labelled buttons.
   const iconButtonSize = compactValue(isCompact, "icon-lg", "icon-sm");
 
+  // Touch layouts carry the actions in the app's top bar, as a toolbar's
+  // trailing group: the frequent ones as icons, the rest under "More", and
+  // adding a reservation as the one prominent action at the edge.
+  const compactActions = (
+    <HeaderSlotPortal slot="actions">
+      <div
+        role="toolbar"
+        aria-label={t("reservations.schedule.header.actions")}
+        className="flex items-center gap-1"
+      >
+        {todayButton}
+        <ScheduleIconButton
+          label={t("reservations.schedule.header.findNearestSlot")}
+          size="icon"
+          loading={isFindingNearestFreeSlot}
+          onClick={onFindNearestFreeSlot}
+        >
+          <WandSparkles />
+        </ScheduleIconButton>
+        {canManageReservationSettings ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t("reservations.schedule.header.more")}
+                >
+                  <Ellipsis />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => setInfoOpen(true)}>
+                <Info className="size-4" />
+                {t("reservations.schedule.header.info")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={!settingsHref}
+                onClick={() => settingsHref && navigate({ to: settingsHref })}
+              >
+                <Settings className="size-4" />
+                {t("reservations.schedule.header.settings")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          // A single rarer action needs no menu of its own.
+          <ScheduleIconButton
+            label={t("reservations.schedule.header.info")}
+            size="icon"
+            onClick={() => setInfoOpen(true)}
+          >
+            <Info />
+          </ScheduleIconButton>
+        )}
+        <Button
+          type="button"
+          size="icon"
+          // The bar pulls its trailing controls out so ghost glyphs line up
+          // with the page; a filled circle keeps the page's own inset.
+          className="rounded-full max-md:mr-2.5"
+          onClick={onAddReservation}
+          aria-label={t("reservations.schedule.header.addReservation")}
+        >
+          <Plus />
+        </Button>
+      </div>
+    </HeaderSlotPortal>
+  );
+
   const actionToolbar = (
     <div
       role="toolbar"
       aria-label={t("reservations.schedule.header.actions")}
-      className={cn(
-        "flex items-center gap-1",
-        compactValue(isCompact, cn(TAB_BAR_GLASS_CLASS, "p-1"), "ml-auto"),
-      )}
+      className="ml-auto flex items-center gap-1"
     >
-      {isCompact && todayButton}
-      {isCompact ? (
-        <ScheduleIconButton
-          label={t("reservations.schedule.header.info")}
-          size={iconButtonSize}
-          onClick={() => setInfoOpen(true)}
-        >
-          <Info />
-        </ScheduleIconButton>
-      ) : (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          icon=<Info />
-          aria-label={t("reservations.schedule.header.info")}
-          onClick={() => setInfoOpen(true)}
-        >
-          {t("reservations.schedule.header.rules")}
-        </Button>
-      )}
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        icon=<Info />
+        aria-label={t("reservations.schedule.header.info")}
+        onClick={() => setInfoOpen(true)}
+      >
+        {t("reservations.schedule.header.rules")}
+      </Button>
       {canManageReservationSettings && (
         <ScheduleIconButton
           label={t("reservations.schedule.header.settings")}
-          size={iconButtonSize}
+          size="icon-sm"
           disabled={!settingsHref}
           onClick={() => settingsHref && navigate({ to: settingsHref })}
         >
           <Settings />
         </ScheduleIconButton>
       )}
-      {!isCompact && (
-        <div aria-hidden="true" className="mx-1.5 h-5 w-px bg-border" />
-      )}
-      {isCompact ? (
-        <ScheduleIconButton
-          label={t("reservations.schedule.header.findNearestSlot")}
-          size={iconButtonSize}
-          loading={isFindingNearestFreeSlot}
-          onClick={onFindNearestFreeSlot}
+      <div aria-hidden="true" className="mx-1.5 h-5 w-px bg-border" />
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              loading={isFindingNearestFreeSlot}
+              icon=<WandSparkles />
+              aria-label={t("reservations.schedule.header.findNearestSlot")}
+              onClick={onFindNearestFreeSlot}
+            />
+          }
         >
-          <WandSparkles />
-        </ScheduleIconButton>
-      ) : (
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                loading={isFindingNearestFreeSlot}
-                icon=<WandSparkles />
-                aria-label={t("reservations.schedule.header.findNearestSlot")}
-                onClick={onFindNearestFreeSlot}
-              />
-            }
-          >
-            <span className="max-xl:sr-only">
-              {t("reservations.schedule.header.findNearestSlot")}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="xl:hidden">
+          <span className="max-xl:sr-only">
             {t("reservations.schedule.header.findNearestSlot")}
-          </TooltipContent>
-        </Tooltip>
-      )}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="xl:hidden">
+          {t("reservations.schedule.header.findNearestSlot")}
+        </TooltipContent>
+      </Tooltip>
       <Button
         type="button"
-        size={compactValue(isCompact, "icon-lg", "sm")}
+        size="sm"
         onClick={onAddReservation}
         aria-label={t("reservations.schedule.header.addReservation")}
       >
         <Plus />
-        <span
-          className={compactValue(isCompact, "sr-only", "hidden sm:inline")}
-        >
+        <span className="hidden sm:inline">
           {t("reservations.schedule.header.addReservation")}
         </span>
       </Button>
@@ -299,7 +348,7 @@ export function ScheduleHeader({
         {!isCompact && actionToolbar}
       </ScheduleBar>
 
-      {isCompact && <ScheduleActionDock>{actionToolbar}</ScheduleActionDock>}
+      {isCompact && compactActions}
 
       <ReservationSettingsInfoDialog
         open={infoOpen}
