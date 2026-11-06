@@ -10,6 +10,11 @@
     "lint": "oxlint .",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@lootlog/domain": "workspace:*",
+    "effect": "catalog:",
+    "es-toolkit": "catalog:"
+  },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "typescript": "catalog:",
