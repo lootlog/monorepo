@@ -4,6 +4,7 @@ import { SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { FilterCount } from "@/components/common/filter-count";
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
+import { TopBarItemGroup } from "@/components/layout/top-bar-item-group";
 
 type FiltersButtonProps = {
   activeFilterCount: number;
@@ -24,21 +25,23 @@ export const FiltersButton = ({
 
   return (
     <HeaderSlotPortal slot="actions">
-      <Button
-        type="button"
-        variant={isMobile ? "ghost" : "outline"}
-        size="icon"
-        onClick={onOpenFilters}
-        aria-label={
-          activeFilterCount > 0
-            ? `${t("common.filters.title")}. ${t("common.filters.activeCount", { count: activeFilterCount })}`
-            : t("common.filters.title")
-        }
-        className="relative"
-      >
-        <SlidersHorizontal aria-hidden="true" />
-        <FilterCount count={activeFilterCount} variant="corner" />
-      </Button>
+      <TopBarItemGroup>
+        <Button
+          type="button"
+          variant={isMobile ? "ghost" : "outline"}
+          size="icon"
+          onClick={onOpenFilters}
+          aria-label={
+            activeFilterCount > 0
+              ? `${t("common.filters.title")}. ${t("common.filters.activeCount", { count: activeFilterCount })}`
+              : t("common.filters.title")
+          }
+          className="relative"
+        >
+          <SlidersHorizontal aria-hidden="true" />
+          <FilterCount count={activeFilterCount} variant="corner" />
+        </Button>
+      </TopBarItemGroup>
     </HeaderSlotPortal>
   );
 };
