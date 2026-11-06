@@ -18,6 +18,8 @@ interface EventRankingPreviewProps {
   limit?: number;
   /** Adds the member's own place when it falls outside the leaders. */
   currentMemberId?: number;
+  /** Keeps the member's own place in view at the bottom of a scrolling rail. */
+  pinViewer?: boolean;
 }
 
 export const EventRankingPreview = ({
@@ -27,6 +29,7 @@ export const EventRankingPreview = ({
   eventId,
   limit = 5,
   currentMemberId,
+  pinViewer,
 }: EventRankingPreviewProps) => {
   const { t } = useTranslation();
   const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
@@ -83,6 +86,7 @@ export const EventRankingPreview = ({
             eventId={eventId}
             limit={limit}
             currentMemberId={currentMemberId}
+            pinViewer={pinViewer}
           />
         )}
       </div>

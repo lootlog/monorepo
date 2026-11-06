@@ -21,6 +21,8 @@ type StatsLeaderboardRowProps = {
   link?: LinkProps;
   /** Marks the viewer's own place. */
   isViewer?: boolean;
+  /** Sticks to the bottom of its scroller while its place is below the view. */
+  pinned?: boolean;
 };
 
 export const StatsLeaderboardRow = ({
@@ -32,6 +34,7 @@ export const StatsLeaderboardRow = ({
   formatValue = formatNumber,
   link,
   isViewer = false,
+  pinned = false,
 }: StatsLeaderboardRowProps) => {
   const content = (
     <span className="flex min-w-0 flex-1 items-center gap-3">
@@ -62,7 +65,10 @@ export const StatsLeaderboardRow = ({
     <li
       data-list-tile
       aria-current={isViewer || undefined}
-      className={LIST_TILE_RULE_CLASS}
+      className={cn(
+        LIST_TILE_RULE_CLASS,
+        pinned && "sticky bottom-0 z-10 bg-background",
+      )}
     >
       {link ? (
         <Link
