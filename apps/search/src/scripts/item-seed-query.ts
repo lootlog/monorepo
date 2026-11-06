@@ -69,9 +69,9 @@ export const buildItemSeedQuery = (database: SeedDatabase) => {
 };
 
 /**
- * Every item revision with each NPC it dropped from, by the rule live
- * indexing applies: fights only, from their only NPC or the only boss among
- * a group (`DROP_SOURCE_BOSS_TYPES`).
+ * Every item revision with each NPC it came from, by the rule live indexing
+ * applies: a dialog's or a fight's only NPC, or the only boss of a group
+ * fight (`DROP_SOURCE_BOSS_TYPES`).
  */
 export const buildItemDropSourceQuery = (database: SeedDatabase) => {
   const isBoss = inArray(npcSnapshotTable.type, [...DROP_SOURCE_BOSS_TYPES]);
@@ -83,7 +83,8 @@ export const buildItemDropSourceQuery = (database: SeedDatabase) => {
         // Escorts share a group fight; only a sole boss names its drops.
         npcSnapshotId: sql<number | null>`case
           when count(*) = 1 then min(${lootNpcTable.npcSnapshotId})
-          when count(*) filter (where ${isBoss}) = 1
+          when ${eq(lootTable.source, "FIGHT")}
+            and count(*) filter (where ${isBoss}) = 1
             then min(${lootNpcTable.npcSnapshotId}) filter (where ${isBoss})
         end`.as("npc_snapshot_id"),
       })
@@ -93,8 +94,8 @@ export const buildItemDropSourceQuery = (database: SeedDatabase) => {
         npcSnapshotTable,
         eq(npcSnapshotTable.id, lootNpcTable.npcSnapshotId),
       )
-      .where(eq(lootTable.source, "FIGHT"))
-      .groupBy(lootNpcTable.lootId),
+      .where(inArray(lootTable.source, ["DIALOG", "FIGHT"]))
+      .groupBy(lootNpcTable.lootId, lootTable.source),
   );
 
   const itemSources = database.$with("item_sources").as(
