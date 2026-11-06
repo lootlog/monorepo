@@ -61,8 +61,9 @@ export const GuildDocEditorToolbar = ({
     <>
       <div
         data-list-tile
+        data-top-bar-glass
         className={cn(
-          "sticky top-(--page-sticky-top) z-10 flex min-h-12 items-center gap-1 backdrop-blur-sm",
+          "glass-bar sticky top-(--page-sticky-top) z-10 flex min-h-12 items-center gap-1",
           LIST_TILE_RULE_CLASS,
           LIST_TILE_INSET_CLASS,
         )}
