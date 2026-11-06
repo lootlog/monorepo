@@ -118,7 +118,7 @@ export const mapGuildMembersByUserId = (
   return membersByUserId;
 };
 
-export const normalizeTimerMemberRole = (role: MemberResponseDtoRolesItem) => {
+const normalizeTimerMemberRole = (role: MemberResponseDtoRolesItem) => {
   return {
     position: role.position ?? null,
     color: role.color ?? null,

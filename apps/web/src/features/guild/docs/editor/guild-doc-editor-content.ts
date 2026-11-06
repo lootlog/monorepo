@@ -2,7 +2,7 @@ import type { SerializedEditorState } from "lexical";
 import { Option, Schema } from "effect";
 import { createEmptyGuildDocumentContent } from "@lootlog/domain/guild-documents";
 
-export const EMPTY_GUILD_DOC_EDITOR_CONTENT: GuildDocEditorContent =
+const EMPTY_GUILD_DOC_EDITOR_CONTENT: GuildDocEditorContent =
   createEmptyGuildDocumentContent();
 
 import type { GuildDocumentResponseDto } from "@lootlog/client/main";

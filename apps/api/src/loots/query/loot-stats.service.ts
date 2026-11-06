@@ -248,7 +248,7 @@ export const toLootStatsOverview = (
     : 0,
 });
 
-export const readLootStatsOverview = <E>(
+const readLootStatsOverview = <E>(
   query: Effect.Effect<ReadonlyArray<OverviewRow>, E>,
 ) =>
   runLootStatsQuery("loot-stats.overview", query).pipe(
@@ -352,7 +352,7 @@ type TopItemRow = {
   count: number;
 };
 
-export const readLootStatsTopItems = <E>(
+const readLootStatsTopItems = <E>(
   query: Effect.Effect<ReadonlyArray<TopItemRow>, E>,
 ) =>
   runLootStatsQuery("loot-stats.top-items", query).pipe(

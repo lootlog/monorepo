@@ -1,6 +1,6 @@
 import type { Loot } from "@/lib/loots/loot-types";
 
-export type LootItemOwnerMap = Record<string, string | undefined>;
+type LootItemOwnerMap = Record<string, string | undefined>;
 
 export const buildLootItemOwnerMap = (
   lootShare: Loot["lootShare"] | null | undefined,

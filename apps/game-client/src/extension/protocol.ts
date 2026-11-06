@@ -2,7 +2,7 @@ import { Schema } from "effect";
 
 export const EXTENSION_CHANNEL = "lootlog.extension.v1";
 
-export const MAX_MESSAGE_LENGTH = 20 * 1024 * 1024;
+const MAX_MESSAGE_LENGTH = 20 * 1024 * 1024;
 
 export const MAX_PENDING_REQUESTS = 64;
 

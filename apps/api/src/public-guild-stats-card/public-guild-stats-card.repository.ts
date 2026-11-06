@@ -17,7 +17,7 @@ export type GuildStatsCardGuild = {
   readonly publicStatsCardEnabled: boolean;
 };
 
-export type GuildStatsCardLootStats = {
+type GuildStatsCardLootStats = {
   readonly totalLoots: number;
   readonly legendaryItems: number;
   readonly heroicItems: number;

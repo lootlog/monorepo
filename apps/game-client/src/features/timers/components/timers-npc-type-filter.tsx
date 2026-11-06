@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/popover";
 import { toolbarStripLightDividerClassName } from "@/components/ui/toolbar-strip";
 
-export const NPC_TYPE_FILTER_OPTIONS = [
+const NPC_TYPE_FILTER_OPTIONS = [
   NpcType.ELITE2,
   NpcType.ELITE3,
   NpcType.HERO,

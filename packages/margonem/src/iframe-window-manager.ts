@@ -1,5 +1,5 @@
 /** IframeWindowManager.ts builds the profile URL from these options. */
-export interface PlayerProfileOptions {
+interface PlayerProfileOptions {
   staticUrl?: string | false;
   accountId?: string | number;
   characterId?: string | number;

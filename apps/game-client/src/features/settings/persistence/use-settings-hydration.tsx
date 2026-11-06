@@ -176,7 +176,7 @@ const setGuildTimerLists = (
 };
 
 /** Projects one guild's timer document into the per-guild lists. */
-export const applyGuildTimerDocuments = (
+const applyGuildTimerDocuments = (
   guildId: string,
   documents: SettingsDocuments,
 ) => {

@@ -34,7 +34,7 @@ type PendingObservation = {
 
 const RETRY_DELAYS_MS = [1_000, 2_000];
 
-export const READY_ROOM_PARTY_REQUEST_TIMEOUT_MS = 5_000;
+const READY_ROOM_PARTY_REQUEST_TIMEOUT_MS = 5_000;
 
 // Share the bounded request across remounts to avoid unnecessary CAS conflicts.
 let activeReport: Promise<void> | null = null;

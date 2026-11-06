@@ -1,10 +1,10 @@
-export type OtherMovement = {
+type OtherMovement = {
   x: number;
   y: number;
   dir: number;
 };
 
-export type OtherDelete = {
+type OtherDelete = {
   del: number;
 };
 

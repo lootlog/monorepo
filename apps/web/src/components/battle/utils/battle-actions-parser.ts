@@ -8,7 +8,7 @@ import {
   isSystemAction,
 } from "./battle-action-constants";
 
-export type ParsedAction = {
+type ParsedAction = {
   type: string;
   value: string;
 };

@@ -19,7 +19,7 @@ export type OnlineCharacterOwner = {
   userId: string;
 };
 
-export type OnlineCharacterOwnersStatus =
+type OnlineCharacterOwnersStatus =
   | "idle"
   | "loading"
   | "success"

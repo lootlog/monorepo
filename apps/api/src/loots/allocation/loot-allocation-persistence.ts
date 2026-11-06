@@ -101,7 +101,7 @@ const authorizedSubmissionExists = (
       ),
   );
 
-export class LootAllocationPersistenceError extends TaggedErrorClass<LootAllocationPersistenceError>()(
+class LootAllocationPersistenceError extends TaggedErrorClass<LootAllocationPersistenceError>()(
   "LootAllocationPersistenceError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

@@ -16,7 +16,7 @@ export interface NotificationDispatch {
   ) => Effect.Effect<void, unknown, never>;
 }
 
-export class NotificationDispatchFailure extends TaggedErrorClass<NotificationDispatchFailure>()(
+class NotificationDispatchFailure extends TaggedErrorClass<NotificationDispatchFailure>()(
   "NotificationDispatchFailure",
   { jobId: Schema.String, cause: Schema.Defect() },
 ) {}

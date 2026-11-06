@@ -3,10 +3,10 @@ import * as Schema from "effect/Schema";
 import { FiniteNumber } from "@lootlog/schema/http-scalars";
 import { OrganizationPermissionsResponse } from "#src/contracts/guilds/schemas";
 
-export type InternalOrganizationPermissionsResponse =
+type InternalOrganizationPermissionsResponse =
   typeof InternalOrganizationPermissionsResponse.Type;
 
-export const InternalOrganizationPermissionsResponse = Schema.Struct(
+const InternalOrganizationPermissionsResponse = Schema.Struct(
   OrganizationPermissionsResponse.fields,
 ).annotate({ identifier: "UserGuildPermissionsDto" });
 

@@ -19,7 +19,7 @@ const decodeHistoryParameters = Schema.decodeUnknownOption(
 );
 
 /** The query paths of an Organization, under its id and its vanity URL. */
-export const getHeroSightingPaths = (organizationIds: readonly string[]) => ({
+const getHeroSightingPaths = (organizationIds: readonly string[]) => ({
   board: organizationIds.map(
     (guildId) =>
       getHeroSightingsControllerGetHeroSightingsQueryKey({ guildId })[0],

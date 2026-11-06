@@ -12,7 +12,7 @@ export interface WidgetManager {
 }
 
 /** Fields read by WidgetManager.createOneWidget from its native definition table. */
-export interface WidgetDefinition {
+interface WidgetDefinition {
   default?: boolean;
   index?: number;
   pos?: string;
@@ -20,9 +20,9 @@ export interface WidgetDefinition {
   type?: string;
 }
 
-export type Widgets = Record<string, WidgetDefinition>;
+type Widgets = Record<string, WidgetDefinition>;
 
-export type WidgetFirstSlot = {
+type WidgetFirstSlot = {
   slot: number;
   container: string;
 };

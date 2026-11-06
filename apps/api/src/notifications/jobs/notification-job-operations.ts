@@ -41,7 +41,7 @@ export interface NotificationJobCancellation {
   }) => Effect.Effect<unknown, unknown>;
 }
 
-export class NotificationJobOperationFailure extends TaggedErrorClass<NotificationJobOperationFailure>()(
+class NotificationJobOperationFailure extends TaggedErrorClass<NotificationJobOperationFailure>()(
   "NotificationJobOperationFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

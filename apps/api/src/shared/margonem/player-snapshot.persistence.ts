@@ -13,7 +13,7 @@ export type PlayerSnapshotInput = Pick<
 >;
 
 /** Margonem does not report the account of every character it shows. */
-export const UNKNOWN_ACCOUNT_ID = 0;
+const UNKNOWN_ACCOUNT_ID = 0;
 
 const parsePositiveId = (value: string): number | null => {
   const id = Number(value);

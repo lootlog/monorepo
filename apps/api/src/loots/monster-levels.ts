@@ -8,19 +8,19 @@ import { buildMonsterFights } from "./monster-fights.js";
  * A level holding fewer of the monster's fights than this is noise, such as
  * a client that reported a stale level, and no version of the monster.
  */
-export const MIN_LEVEL_SHARE = 0.01;
+const MIN_LEVEL_SHARE = 0.01;
 
 /**
  * A monster fought at more levels than this follows its fighter's level, as
  * Margonem's elastic monsters do; its levels are no history.
  */
-export const MAX_LEVEL_VERSIONS = 4;
+const MAX_LEVEL_VERSIONS = 4;
 
 /**
  * A level first fought within this many days of another one is a second
  * monster of the same name, such as one on another map, not a new version.
  */
-export const MIN_VERSION_DAYS = 7;
+const MIN_VERSION_DAYS = 7;
 
 const DAY = 24 * 60 * 60 * 1000;
 

@@ -24,7 +24,7 @@ const QUERY_OPTIONS = {
   retry: false,
 } as const;
 
-export const useSettingsDocumentsContext = () => {
+const useSettingsDocumentsContext = () => {
   const gameAccountId = useGameStore((state) => state.game?.hero.accountId);
   const characterId = useGameStore((state) => state.game?.hero.characterId);
 

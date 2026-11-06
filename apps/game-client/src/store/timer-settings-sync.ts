@@ -49,7 +49,7 @@ const hasTimersQueryKey = (queryKey: readonly unknown[]) =>
   isString(queryKey[0]) && queryKey[0].startsWith("/timers");
 
 /** The timer list API applies always-visible expired timers server-side. */
-export const invalidateTimerLists = () =>
+const invalidateTimerLists = () =>
   void queryClient.invalidateQueries({
     predicate: ({ queryKey }) => hasTimersQueryKey(queryKey),
   });

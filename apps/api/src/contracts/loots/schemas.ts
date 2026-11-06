@@ -360,7 +360,7 @@ export const LootCommentResponse = Schema.Struct({
 
 export type CreateLootCommentRequest = typeof CreateLootCommentRequest.Type;
 
-export const LOOT_COMMENT_MAX_LENGTH = 256;
+const LOOT_COMMENT_MAX_LENGTH = 256;
 
 export const CreateLootCommentRequest = Schema.Struct({
   content: Schema.String.pipe(Schema.decode(SchemaTransformation.trim())).check(
@@ -465,9 +465,9 @@ export const LootSharePath = Schema.Struct({
 });
 
 /** Outsiders a draw may hold besides the winner; a map holds a few dozen. */
-export const LOOT_DRAW_MAX_OUTSIDERS = 100;
+const LOOT_DRAW_MAX_OUTSIDERS = 100;
 
-export const LOOT_DRAW_VOID_REASON_MAX_LENGTH = 200;
+const LOOT_DRAW_VOID_REASON_MAX_LENGTH = 200;
 
 const LootDrawPlayer = {
   name: NonEmptyString,

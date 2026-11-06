@@ -8,7 +8,7 @@ import type {
 } from "./member-discord-sync-status.js";
 import type { MemberLastDiscordStatus } from "./member-discord-status.js";
 
-export type Member = typeof memberTable.$inferSelect;
+type Member = typeof memberTable.$inferSelect;
 
 export type Role = typeof roleTable.$inferSelect;
 

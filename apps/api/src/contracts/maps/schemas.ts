@@ -2,9 +2,9 @@
 import * as Schema from "effect/Schema";
 import { FiniteNumber } from "@lootlog/schema/http-scalars";
 
-export type GameMapResponse = typeof GameMapResponse.Type;
+type GameMapResponse = typeof GameMapResponse.Type;
 
-export const GameMapResponse = Schema.Struct({
+const GameMapResponse = Schema.Struct({
   id: FiniteNumber,
   name: Schema.String,
 }).annotate({ identifier: "GameMapResponseDto_Output" });

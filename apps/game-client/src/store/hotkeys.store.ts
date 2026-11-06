@@ -29,21 +29,21 @@ type HotkeyModifiers = {
   alt: boolean;
 };
 
-export type KeyboardHotkeyBinding = HotkeyModifiers & {
+type KeyboardHotkeyBinding = HotkeyModifiers & {
   type: "keyboard";
   key: string;
 };
 
-export type MouseHotkeyButton = 1 | 3 | 4;
+type MouseHotkeyButton = 1 | 3 | 4;
 
-export type MouseHotkeyBinding = HotkeyModifiers & {
+type MouseHotkeyBinding = HotkeyModifiers & {
   type: "mouse";
   button: MouseHotkeyButton;
 };
 
 export type HotkeyBinding = KeyboardHotkeyBinding | MouseHotkeyBinding;
 
-export type HotkeyScope = "global" | "map-surface";
+type HotkeyScope = "global" | "map-surface";
 
 export type HotkeyCategory = "communication" | "windows" | "party";
 
@@ -318,7 +318,7 @@ export const useHotkeysStore = create<HotkeysState>()(
   ),
 );
 
-export const bindingsEqual = (
+const bindingsEqual = (
   first: HotkeyBinding,
   second: HotkeyBinding,
 ): boolean => {

@@ -9,10 +9,8 @@ import {
   CHARACTER_AURA_IDS,
   type CharacterAuraId,
 } from "@lootlog/schema/character-aura";
-import {
-  SettingsChoiceCards,
-  type SettingsChoiceOption,
-} from "@/components/settings/settings-choice-card";
+import type { SettingsChoiceOption } from "@/components/settings/settings-choice-card";
+import { SettingsChoiceCards } from "@/components/settings/settings-choice-cards";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { useOwnCharacterAura } from "@/features/character-auras/hooks/use-own-character-aura";

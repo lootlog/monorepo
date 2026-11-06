@@ -2,6 +2,6 @@ export interface ServerStorage {
   get: (key: string) => Storage;
 }
 
-export type Storage = {
+type Storage = {
   [key: string]: [];
 };

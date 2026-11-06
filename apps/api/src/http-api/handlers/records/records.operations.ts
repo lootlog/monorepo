@@ -100,7 +100,7 @@ export class RecordsNotFound extends TaggedErrorClass<RecordsNotFound>()(
   },
 ) {}
 
-export class RecordsBadRequest extends TaggedErrorClass<RecordsBadRequest>()(
+class RecordsBadRequest extends TaggedErrorClass<RecordsBadRequest>()(
   "RecordsBadRequest",
   {
     status: Schema.Literal(400),

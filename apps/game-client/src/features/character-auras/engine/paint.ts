@@ -195,9 +195,9 @@ export function pixelDisc(
   }
 }
 
-export const dotTextures = new Map<string, HTMLCanvasElement>();
+const dotTextures = new Map<string, HTMLCanvasElement>();
 
-export const DOT_SIZE = 64;
+const DOT_SIZE = 64;
 
 /** A soft round light of `diameter` px, dithered into pixels by the layer finish. */
 export function drawDot(

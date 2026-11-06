@@ -2,8 +2,6 @@ import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import type { LootStatsQuery as LootStatsQueryDto } from "#src/contracts/loots/schemas";
 
-export type { LootStatsQueryDto };
-
 export interface LootStatsOverview {
   totalLoots: number;
   totalItems: number;
@@ -42,7 +40,7 @@ export interface TopContributor {
   byRarity: Partial<Record<ItemRarity, number>>;
 }
 
-export interface TopItem {
+interface TopItem {
   itemId: number;
   hid: string;
   name: string;

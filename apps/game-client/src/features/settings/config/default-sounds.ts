@@ -18,7 +18,7 @@ const isDefaultSoundKey = (
 ): key is keyof typeof DEFAULT_SOUND_URLS =>
   Object.hasOwn(DEFAULT_SOUND_URLS, key);
 
-export const getDefaultSoundUrl = (key: string): string | undefined =>
+const getDefaultSoundUrl = (key: string): string | undefined =>
   isDefaultSoundKey(key) ? DEFAULT_SOUND_URLS[key] : undefined;
 
 type SoundConfig = Readonly<Record<string, Partial<NpcTypeSoundConfig>>>;

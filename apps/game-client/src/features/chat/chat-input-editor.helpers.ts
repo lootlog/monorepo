@@ -98,7 +98,7 @@ export const $selectChatInputRange = (start: number, end = start) => {
   $setSelection(selection);
 };
 
-export const $selectChatInputOffset = (requestedOffset: number) => {
+const $selectChatInputOffset = (requestedOffset: number) => {
   $selectChatInputRange(requestedOffset);
 };
 

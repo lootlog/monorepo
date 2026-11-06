@@ -35,7 +35,7 @@ export const CUSTOM_THEME_NAME_MAX_LENGTH = 40;
 /** A stored theme preference that points at one of the User's own themes. */
 export const CUSTOM_THEME_PREFERENCE_PREFIX = "custom:";
 
-export const CustomThemePreferenceSchema = Schema.String.check(
+const CustomThemePreferenceSchema = Schema.String.check(
   Schema.isPattern(
     // Only the `u` flag: JSON Schema exports drop a pattern with other flags.
     /^custom:[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{12}$/u,
@@ -58,7 +58,7 @@ export const CUSTOM_THEME_FONT_IDS = [
   "atkinson-hyperlegible",
 ] as const;
 
-export const CustomThemeFontIdSchema = Schema.Literals(CUSTOM_THEME_FONT_IDS);
+const CustomThemeFontIdSchema = Schema.Literals(CUSTOM_THEME_FONT_IDS);
 
 export type CustomThemeFontId = typeof CustomThemeFontIdSchema.Type;
 
@@ -70,9 +70,7 @@ export const CUSTOM_THEME_RADIUS_STEPS = [
   "pill",
 ] as const;
 
-export const CustomThemeRadiusSchema = Schema.Literals(
-  CUSTOM_THEME_RADIUS_STEPS,
-);
+const CustomThemeRadiusSchema = Schema.Literals(CUSTOM_THEME_RADIUS_STEPS);
 
 export type CustomThemeRadius = typeof CustomThemeRadiusSchema.Type;
 
@@ -116,18 +114,16 @@ export const CUSTOM_THEME_TOKEN_KEYS = [
   "sidebar-ring",
 ] as const;
 
-export const CustomThemeTokenKeySchema = Schema.Literals(
-  CUSTOM_THEME_TOKEN_KEYS,
-);
+const CustomThemeTokenKeySchema = Schema.Literals(CUSTOM_THEME_TOKEN_KEYS);
 
 export type CustomThemeTokenKey = typeof CustomThemeTokenKeySchema.Type;
 
-export const HexColorSchema = Schema.String.check(
+const HexColorSchema = Schema.String.check(
   Schema.isPattern(/^#[\dA-Fa-f]{6}$/u),
 );
 
 /** The content surfaces' hue, lightness and colourfulness, in OKLCH terms. */
-export const CustomThemeSurfaceSchema = Schema.Struct({
+const CustomThemeSurfaceSchema = Schema.Struct({
   hue: Schema.Finite.check(Schema.isBetween({ minimum: 0, maximum: 360 })),
   lightness: Schema.Finite.check(
     Schema.isBetween({ minimum: 0.08, maximum: 0.28 }),
@@ -141,7 +137,7 @@ export type CustomThemeSurface = typeof CustomThemeSurfaceSchema.Type;
  * `base` keeps the base theme's wallpaper and `none` shows none; any other
  * value names a wallpaper the Web app ships, and an unknown one shows none.
  */
-export const CustomThemeWallpaperSchema = Schema.String.check(
+const CustomThemeWallpaperSchema = Schema.String.check(
   Schema.isPattern(/^[a-z\d-]{1,48}$/u),
 );
 

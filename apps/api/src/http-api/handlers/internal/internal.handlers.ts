@@ -26,7 +26,7 @@ import {
 } from "#src/contracts/internal/schemas";
 import { LootlogApi } from "../../lootlog-api.js";
 
-export class InternalMemberNotFound extends TaggedErrorClass<InternalMemberNotFound>()(
+class InternalMemberNotFound extends TaggedErrorClass<InternalMemberNotFound>()(
   "InternalMemberNotFound",
   { status: Schema.Literal(404), code: Schema.Literal("MEMBER_NOT_FOUND") },
 ) {}
@@ -186,7 +186,7 @@ export const getInternalGuild = (idOrVanityUrl: string) =>
  * member whose Lootlog User is known resolves; every other case is the same
  * 404, so the bot cannot tell a missing guild from a missing member.
  */
-export const getInternalMemberIdentity = (guildId: string, discordId: string) =>
+const getInternalMemberIdentity = (guildId: string, discordId: string) =>
   Effect.gen(function* () {
     const data = yield* InternalGuildsData;
     const identity = yield* data.getMemberIdentity(guildId, discordId);

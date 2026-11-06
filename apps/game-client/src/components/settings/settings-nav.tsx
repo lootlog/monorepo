@@ -3,7 +3,7 @@ import { cn } from "cn";
 import { Search, type LucideIcon } from "lucide-react";
 import type { FC, KeyboardEvent } from "react";
 
-export type SettingsNavDomain = {
+type SettingsNavDomain = {
   id: string;
   label: string;
   icon: LucideIcon;

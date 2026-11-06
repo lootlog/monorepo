@@ -4,7 +4,7 @@ import { JsonValue } from "@lootlog/schema/http-scalars";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { HttpApiMiddleware, HttpApiSecurity, OpenApi } from "effect/http-api";
 
-export const BearerSecurity = HttpApiSecurity.bearer.pipe(
+const BearerSecurity = HttpApiSecurity.bearer.pipe(
   HttpApiSecurity.annotate(OpenApi.Format, "JWT"),
 );
 

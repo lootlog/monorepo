@@ -1,4 +1,4 @@
-export type PartyEventMember = {
+type PartyEventMember = {
   account: number;
   nick: string;
   icon: string;

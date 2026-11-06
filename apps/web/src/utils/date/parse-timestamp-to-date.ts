@@ -2,7 +2,7 @@ import { format } from "date-fns";
 
 export const DATE_FORMAT = "dd.MM.yyyy";
 
-export const DATE_TIME_FORMAT = "dd.MM.yyyy HH:mm";
+const DATE_TIME_FORMAT = "dd.MM.yyyy HH:mm";
 
 /** For technical and log views where the exact second matters. */
 export const DATE_TIME_WITH_SECONDS_FORMAT = "dd.MM.yyyy HH:mm:ss";

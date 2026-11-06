@@ -12,7 +12,7 @@ import { useSettingsControlHighlight } from "./use-settings-control-highlight";
  * Width of a wide control (slider, select, text input, keybind) in a row.
  * Every wide control shares it so their left edges line up down a section.
  */
-export const SETTINGS_WIDE_CONTROL_CLASS_NAME = "ll:w-48 ll:max-w-full";
+const SETTINGS_WIDE_CONTROL_CLASS_NAME = "ll:w-48 ll:max-w-full";
 
 type SettingsRowProps = {
   /** Manifest id; enables search highlighting and "recently changed". */

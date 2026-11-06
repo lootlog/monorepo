@@ -21,7 +21,7 @@ const DISCORD_HTTP_SYNC_STATUS_PREFIX = "DISCORD_HTTP_";
 type MemberDiscordSyncStatusValue =
   (typeof MEMBER_DISCORD_SYNC_STATUS)[keyof typeof MEMBER_DISCORD_SYNC_STATUS];
 
-export type DiscordHttpSyncStatus =
+type DiscordHttpSyncStatus =
   `${typeof DISCORD_HTTP_SYNC_STATUS_PREFIX}${number}`;
 
 export type MemberSyncStatus =

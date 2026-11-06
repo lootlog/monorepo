@@ -8,7 +8,7 @@ import type { ViewMode } from "@/hooks/use-view-mode";
 import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import { ListToolbar } from "@/components/common/list-toolbar";
 
-export type TimerGroupOption = { key: string; label: string; count: number };
+type TimerGroupOption = { key: string; label: string; count: number };
 
 type TimersToolbarProps = {
   search: string;

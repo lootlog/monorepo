@@ -54,7 +54,7 @@ export interface NotificationWatchedItemJobs {
   }) => Effect.Effect<unknown, unknown>;
 }
 
-export class NotificationWatchedItemFailure extends TaggedErrorClass<NotificationWatchedItemFailure>()(
+class NotificationWatchedItemFailure extends TaggedErrorClass<NotificationWatchedItemFailure>()(
   "NotificationWatchedItemFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

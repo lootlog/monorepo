@@ -6,7 +6,7 @@ import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
  * Both ids are undefined while the guild and session queries are loading, so
  * they must never be compared directly: that would grant owner-only UI.
  */
-export const isGuildOwner = (
+const isGuildOwner = (
   ownerId: string | null | undefined,
   discordId: string | null | undefined,
 ) => Boolean(ownerId && discordId && ownerId === discordId);

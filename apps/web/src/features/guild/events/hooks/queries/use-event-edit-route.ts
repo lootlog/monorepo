@@ -1,7 +1,7 @@
 import { useParams } from "@tanstack/react-router";
 import { useShowEventOverview } from "@lootlog/client/main";
 
-export type EventRouteParams = {
+type EventRouteParams = {
   guildId: string;
   eventId: string;
 };

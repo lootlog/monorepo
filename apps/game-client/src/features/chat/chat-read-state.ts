@@ -102,7 +102,7 @@ export const getChatUnreadSummary = (state: ChatReadState, guildId: string) => {
   };
 };
 
-export type ChatUnreadSummary = ReturnType<typeof getChatUnreadSummary>;
+type ChatUnreadSummary = ReturnType<typeof getChatUnreadSummary>;
 
 const EMPTY_UNREAD_SUMMARY: ChatUnreadSummary = Object.freeze({
   ids: new Set<string>(),

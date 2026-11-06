@@ -18,7 +18,7 @@ export type MessageType = (typeof MessageType)[keyof typeof MessageType];
 
 export type ChatCharacterData = SendMessageDtoCharacterData;
 
-export type ChatNpc = SendMessageDtoNpc;
+type ChatNpc = SendMessageDtoNpc;
 
 export type ChatMessage = ChatMessageResponseDtoOutput;
 
@@ -30,7 +30,7 @@ export type SendChatMessageOptions = {
   npc?: ChatNpc;
 };
 
-export type SendChatMessageSuccess = {
+type SendChatMessageSuccess = {
   guildId: string;
   messageId: string;
 };

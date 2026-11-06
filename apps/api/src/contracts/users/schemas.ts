@@ -158,10 +158,9 @@ export const UpdateUserPreferencesRequest = Schema.Struct({
   ),
 }).annotate({ identifier: "UpdateUserPreferencesDto" });
 
-export type CurrentOrganizationResponse =
-  typeof CurrentOrganizationResponse.Type;
+type CurrentOrganizationResponse = typeof CurrentOrganizationResponse.Type;
 
-export const CurrentOrganizationResponse = Schema.Struct({
+const CurrentOrganizationResponse = Schema.Struct({
   ...organizationSummaryFields,
   hasLootlogAccess: Schema.Boolean,
   isAccessDataStale: Schema.Boolean,

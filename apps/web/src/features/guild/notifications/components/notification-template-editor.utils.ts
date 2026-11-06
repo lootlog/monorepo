@@ -34,10 +34,7 @@ const TIMER_VARIABLE_KEYS = [
   "scheduledFor",
 ] as const;
 
-export const SCHEDULED_MESSAGE_VARIABLE_KEYS = new Set([
-  "ruleName",
-  "scheduledFor",
-]);
+const SCHEDULED_MESSAGE_VARIABLE_KEYS = new Set(["ruleName", "scheduledFor"]);
 
 const HERO_SIGHTING_VARIABLE_KEYS = [
   "ruleName",

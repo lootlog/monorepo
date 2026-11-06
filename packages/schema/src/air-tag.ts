@@ -120,7 +120,7 @@ export interface AirTagMapThreatEvent {
   enemies: readonly AirTagMapThreatEnemy[];
 }
 
-export type AirTagRejectCode =
+type AirTagRejectCode =
   | "forbidden"
   | "invalid-context"
   | "invalid-payload"
@@ -188,7 +188,7 @@ export const AirTagObservationSchema = Schema.Struct({
   stasis: Schema.optionalKey(Schema.Boolean),
 });
 
-export const AirTagDepartureSchema = Schema.Struct({
+const AirTagDepartureSchema = Schema.Struct({
   targetId: ShortString,
   reason: Schema.Literals(["left-map", "out-of-sight"]),
 });

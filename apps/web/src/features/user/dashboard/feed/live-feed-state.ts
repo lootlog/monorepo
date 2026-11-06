@@ -11,7 +11,7 @@ type FeedItems = UserFeedResponseDtoOutput["items"];
 
 type FeedItem = FeedItems[number];
 
-export type FeedKill = Extract<FeedItem, { type: "kill" }>;
+type FeedKill = Extract<FeedItem, { type: "kill" }>;
 
 export type FeedLoot = Extract<FeedItem, { type: "loot" }>;
 

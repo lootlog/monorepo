@@ -5,7 +5,7 @@ import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 
-export type BattleBreakdownRow = {
+type BattleBreakdownRow = {
   type: string;
   value: number | string;
   color: string;

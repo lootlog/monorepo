@@ -14,7 +14,7 @@ export const CHARACTER_LIST_CACHE_FRESH_TTL_MS = 15 * 60 * 1000;
 
 export const CHARACTER_LIST_CACHE_STALE_TTL_MS = 24 * 60 * 60 * 1000;
 
-export const CHARACTER_LIST_CACHE_ENTRY_CAP = 20;
+const CHARACTER_LIST_CACHE_ENTRY_CAP = 20;
 
 const CHARACTER_LIST_CACHE_KEY_PREFIX = "lootlog:margonem-character-list:v1";
 

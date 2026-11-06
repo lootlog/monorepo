@@ -124,7 +124,7 @@ export const PartyGatheringNpcSchema = Schema.Struct({
 
 export type PartyGatheringNpc = typeof PartyGatheringNpcSchema.Type;
 
-export const PartyGatheringCharacterSchema = Schema.Struct({
+const PartyGatheringCharacterSchema = Schema.Struct({
   characterId: NonEmptyString.check(Schema.isMaxLength(255)),
   nick: Schema.String.check(Schema.isMaxLength(255)),
   icon: Schema.String.check(Schema.isMaxLength(2048)),

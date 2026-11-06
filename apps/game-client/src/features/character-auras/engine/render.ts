@@ -47,7 +47,7 @@ import {
  * The animation steps at 10 fps, as the game's own animated item icons do (120 ms frames);
  * a smooth 60 fps glow looks pasted onto pixel art.
  */
-export const TICK = 0.1;
+const TICK = 0.1;
 
 /** Room around the padded silhouette for particles drifting away from it. */
 const MARGIN = 28;

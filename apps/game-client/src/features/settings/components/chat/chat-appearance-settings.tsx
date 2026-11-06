@@ -1,8 +1,6 @@
 import { useChatAppearanceDraft } from "./use-chat-appearance-draft";
-import {
-  SettingsChoiceCards,
-  type SettingsChoiceOption,
-} from "@/components/settings/settings-choice-card";
+import type { SettingsChoiceOption } from "@/components/settings/settings-choice-card";
+import { SettingsChoiceCards } from "@/components/settings/settings-choice-cards";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsSliderField } from "@/components/settings/settings-slider-field";

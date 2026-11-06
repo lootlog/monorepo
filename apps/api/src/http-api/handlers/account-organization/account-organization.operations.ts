@@ -439,14 +439,12 @@ export const toAccountOrganizationHttpResponse = <A, R>(
     },
   });
 
-export const deleteCurrentAccount = Effect.fn("deleteCurrentAccount")(
-  function* () {
-    const current = yield* identity;
-    yield* data((service) => service.deleteAccount(current));
+const deleteCurrentAccount = Effect.fn("deleteCurrentAccount")(function* () {
+  const current = yield* identity;
+  yield* data((service) => service.deleteAccount(current));
 
-    return yield* decode(StatusOk, { status: "OK" });
-  },
-);
+  return yield* decode(StatusOk, { status: "OK" });
+});
 
 export const getCurrentUserPreferences = Effect.fn("getCurrentUserPreferences")(
   function* () {

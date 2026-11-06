@@ -101,7 +101,7 @@ export const DEFAULT_PERIOD: Period = "7d";
 /** `true`/`false` query flag. */
 export const BooleanQuery = Schema.Boolean;
 
-export const WORLD_MAX_LENGTH = 64;
+const WORLD_MAX_LENGTH = 64;
 
 /**
  * Margonem world in a path or filter, trimmed and lower-cased like stored
@@ -117,7 +117,7 @@ export const WorldParam = Schema.String.check(
   )
   .check(Schema.isMinLength(1).annotate({ expected: "a non-empty world" }));
 
-export const SEARCH_TEXT_MAX_LENGTH = 100;
+const SEARCH_TEXT_MAX_LENGTH = 100;
 
 /**
  * Free-text search, trimmed. Match it with a LIKE pattern built by the API's
