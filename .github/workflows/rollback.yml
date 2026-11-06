@@ -22,9 +22,9 @@ jobs:
     timeout-minutes: 30
     environment: prod
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-bun
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ env.INFRA_REPOSITORY }}
           ref: main
@@ -73,7 +73,7 @@ jobs:
             tag="$(jq -r '.previous.reference | capture(":(?<tag>[^:]+)$").tag' <<< "$target")"
             docker manifest inspect "$reference" >/dev/null || { echo "::error::Rollback image does not exist: $reference"; exit 1; }
             docker run --rm --user "$(id -u):$(id -g)" -e IMAGE="$image" -e TAG="$tag" \
-              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.6 \
+              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.6@sha256:cfc4eee658595834ef304eadb0c3ea721f3b7cb6404ad8b7cb909cc5b5145b23 \
               -i '(.images[] | select(.name == strenv(IMAGE))).newTag = strenv(TAG)' \
               "apps/prod/$id/kustomization.yml"
           done < <(jq -c '.[] | select(.previous.kind == "docker")' "$RUNNER_TEMP/rollback-targets.json")

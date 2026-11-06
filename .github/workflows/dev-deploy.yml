@@ -27,10 +27,10 @@ jobs:
       docker-targets: ${{ steps.plan.outputs.docker_targets }}
       cloudflare-targets: ${{ steps.plan.outputs.cloudflare_targets }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.4.4
       - name: Select affected deployment targets
@@ -53,7 +53,7 @@ jobs:
           if [[ "$deploy_all" == "true" ]]; then
             plan="$(bun scripts/deployment-targets.mjs '{"mode":"dev","deployAll":true}')"
           else
-            affected="$(bunx turbo@2.11.7 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
+            affected="$(bunx turbo@2.11.8 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
             packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
             plan="$(
               git diff --name-only -z "$BASE_SHA" "$HEAD_SHA" |
@@ -81,7 +81,7 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.cloudflare-targets) }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-bun
         with:
           turbo-cache-scope: dev-${{ matrix.id }}
@@ -178,13 +178,13 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.docker-targets) }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
-      - uses: docker/login-action@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
           password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
-      - uses: docker/build-push-action@v7
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ${{ matrix.dockerfile }}
@@ -212,7 +212,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ env.INFRA_REPOSITORY }}
           ref: main
@@ -228,7 +228,7 @@ jobs:
             image="$(jq -r '.image' <<< "$target")"
             tag="dev-$GITHUB_SHA"
             docker run --rm --user "$(id -u):$(id -g)" -e IMAGE="$image" -e TAG="$tag" \
-              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.6 \
+              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.6@sha256:cfc4eee658595834ef304eadb0c3ea721f3b7cb6404ad8b7cb909cc5b5145b23 \
               -i '(.images[] | select(.name == strenv(IMAGE))).newTag = strenv(TAG)' \
               "apps/dev/$id/kustomization.yml"
           done < <(jq -c '.[]' <<< "$TARGETS")
