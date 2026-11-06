@@ -1,3 +1,4 @@
+import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { Effect } from "effect";
 
 import {
@@ -98,7 +99,7 @@ export const createRoom = (
           maxLvl: result.aggregate.maxLvl,
         }),
       })
-      .pipe(Effect.ignore);
+      .pipe(ignorePublicationFailure);
 
     return createReadyRoomProjection(result.aggregate, identity.discordId);
   }).pipe(
@@ -136,7 +137,7 @@ export const cancelAggregate = Effect.fnUntraced(function* (
               notificationId: result.aggregate.notificationId,
               guildId,
             })
-            .pipe(Effect.ignore),
+            .pipe(ignorePublicationFailure),
         { concurrency: "unbounded", discard: true },
       ),
       context.publish(result.aggregate, recipients),
