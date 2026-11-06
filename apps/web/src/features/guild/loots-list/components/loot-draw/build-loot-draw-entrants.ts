@@ -1,5 +1,6 @@
 import {
   canWearLootDrawItem,
+  findLootItemOwner,
   lootDrawWinnerTickets,
 } from "@lootlog/domain/loot-draw";
 import {
@@ -16,7 +17,7 @@ export type LootDrawDraftEntrant = LootDrawEntrantDto & {
 };
 
 export type LootDrawSetup = {
-  /** The winner from the game first, then the eligible map players. */
+  /** The winner from the game first, if anybody caught it, then the eligible map players. */
   entrants: LootDrawDraftEntrant[];
   /** The other party members who can wear it, for a draw within the party. */
   partyMembers: LootDrawDraftEntrant[];
@@ -36,15 +37,6 @@ export const lootDrawPlayerKey = (player: {
     ? `character:${player.characterId}`
     : nameKey(player.name);
 
-/** The party member who caught `item`, if anybody did. */
-const findLootDrawWinner = (loot: Loot, item: Item) => {
-  const ownerId = Object.entries(loot.lootShare).find(([, hids]) =>
-    hids.includes(item.hid),
-  )?.[0];
-
-  return loot.players.find(({ id }) => id === ownerId) ?? null;
-};
-
 const fromPartyMember = (
   player: Loot["players"][number],
   source: "WINNER" | "PARTY",
@@ -62,15 +54,9 @@ const fromPartyMember = (
   defaultTickets: tickets,
 });
 
-/** Who enters a draw for `item` before a manager edits it; null when nobody caught it. */
-export const buildLootDrawSetup = (
-  loot: Loot,
-  item: Item,
-): LootDrawSetup | null => {
-  const winner = findLootDrawWinner(loot, item);
-
-  if (!winner) return null;
-
+/** Who enters a draw for `item` before a manager edits it. */
+export const buildLootDrawSetup = (loot: Loot, item: Item): LootDrawSetup => {
+  const winner = findLootItemOwner(loot, item.hid);
   const { bystanders } = buildLootRoster(loot);
 
   const eligible = bystanders.filter((player) =>
@@ -79,11 +65,15 @@ export const buildLootDrawSetup = (
 
   return {
     entrants: [
-      fromPartyMember(
-        winner,
-        "WINNER",
-        lootDrawWinnerTickets(item, loot.players),
-      ),
+      ...(winner
+        ? [
+            fromPartyMember(
+              winner,
+              "WINNER",
+              lootDrawWinnerTickets(item, loot.players),
+            ),
+          ]
+        : []),
       ...eligible.map((player) => ({
         key: lootDrawPlayerKey(player),
         name: player.name,
@@ -104,7 +94,7 @@ export const buildLootDrawSetup = (
     partyMembers: loot.players
       .filter(
         (player) =>
-          player.id !== winner.id && canWearLootDrawItem(item, player),
+          player.id !== winner?.id && canWearLootDrawItem(item, player),
       )
       .map((player) => fromPartyMember(player, "PARTY", 1)),
     ineligibleCount: bystanders.length - eligible.length,

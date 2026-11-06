@@ -30,9 +30,9 @@ import { LootDrawWheel } from "./loot-draw-wheel";
 import type { useLootDraws } from "./use-loot-draws";
 
 /**
- * The draw before it runs: the winner from the game stays, outsiders and
- * party members can be removed or added, anybody's tickets changed, and the
- * wheel shuffled.
+ * The draw before it runs: the winner from the game, if anybody caught it,
+ * stays; anybody else can be removed or added, anybody's tickets changed,
+ * and the wheel shuffled.
  */
 export const LootDrawEditor = ({
   loot,
@@ -77,7 +77,7 @@ export const LootDrawEditor = ({
   const others = entrants.filter(({ source }) => source !== "WINNER");
 
   const mapOutsidersRemoved =
-    setup.entrants.length - 1 >
+    setup.entrants.filter(({ source }) => source === "MAP").length >
     others.filter(({ source }) => source === "MAP").length;
 
   const missingPartyMembers = setup.partyMembers.filter(
@@ -209,11 +209,11 @@ export const LootDrawEditor = ({
       footer={
         <>
           <p className="text-xs text-muted-foreground">
-            {others.length === 0 && t("loots.details.draw.noOutsiders")}
+            {entrants.length < 2 && t("loots.details.draw.notEnoughEntrants")}
           </p>
           <Button
             onClick={spin}
-            disabled={others.length === 0 || createDraw.isPending}
+            disabled={entrants.length < 2 || createDraw.isPending}
             loading={createDraw.isPending}
           >
             <Dices className="size-4" />
