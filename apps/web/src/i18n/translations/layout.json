@@ -21,6 +21,17 @@
     "groups": {
       "account": "Konto",
       "management": "Zarządzanie"
+    },
+    "short": {
+      "loots": "Łupy",
+      "heroSightings": "Herosi",
+      "battles": "Walki",
+      "notifications": "Alerty"
+    },
+    "tabBar": {
+      "ariaLabel": "Sekcje",
+      "more": "Więcej",
+      "expand": "{{section}}. Pokaż zakładki"
     }
   },
   "guildsSelector": {

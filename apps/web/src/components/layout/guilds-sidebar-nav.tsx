@@ -10,7 +10,8 @@ import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
 import { GuildSidebarNavPlaceholder } from "./guild-sidebar-nav-placeholder";
 import { CollapsePresence } from "@/components/common/collapse-presence";
-import { useListEvents, useListPinnedEvents } from "@lootlog/client/main";
+import { useListPinnedEvents } from "@lootlog/client/main";
+import { useActiveEventCount } from "@/hooks/api/use-active-event-count";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMatches } from "@tanstack/react-router";
 import {
@@ -55,19 +56,7 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
     ? (guildId ?? "")
     : "";
 
-  const { data: activeEvents } = useListEvents(
-    {
-      guildId: activeEventsGuildId,
-    },
-    {
-      activeOnly: true,
-    },
-    {
-      query: {
-        enabled: Boolean(activeEventsGuildId),
-      },
-    },
-  );
+  const activeEventCount = useActiveEventCount(activeEventsGuildId);
 
   // Pinned events sit above the items, so the navigation waits for them
   // instead of sliding down when they arrive.
@@ -80,7 +69,6 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
     },
   );
 
-  const activeEventCount = activeEvents?.length ?? 0;
   const hasActiveEvents = activeEventCount > 0;
 
   const menuItems: MenuItem[] = navigation.sidebarItems.map((item) => ({

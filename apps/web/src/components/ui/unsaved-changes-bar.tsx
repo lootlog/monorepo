@@ -88,6 +88,7 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
       {isDirty && (
         <m.div
           key="unsaved-bar"
+          data-slot="unsaved-changes-bar"
           aria-live="polite"
           initial={{ y: "100%" }}
           animate={{ y: 0 }}

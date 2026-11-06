@@ -92,10 +92,7 @@ export function MobileDaySchedule({
           isDaySwipeEnabled && "touch-pan-y",
         )}
       >
-        <div
-          data-slot="compact-schedule-scroll-content"
-          className="pb-[calc(5rem+env(safe-area-inset-bottom))]"
-        >
+        <div data-slot="compact-schedule-scroll-content">
           <m.div
             data-slot="mobile-day-swipe-track"
             className={cn(
