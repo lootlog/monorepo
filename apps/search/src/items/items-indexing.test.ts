@@ -251,9 +251,11 @@ test("a monster standing in many places does not crowd out another monster's dro
   ]);
 });
 
-test("replaces one monster's retired drops without touching other monsters' or unchanged entries", async () => {
+test("replaces one monster's retired drops and drop rates without touching other monsters' or unchanged entries", async () => {
   const fetches: Array<{ filter: string }> = [];
   const written: unknown[] = [];
+
+  const kostuchaRate = { monsterKey: "pl_Kostucha_HERO", drops: 4, kills: 400 };
 
   const stored = [
     { uid: "pl_1_a", id: 1 },
@@ -261,8 +263,14 @@ test("replaces one monster's retired drops without touching other monsters' or u
       uid: "pl_2_a",
       id: 2,
       retiredDropMonsterKeys: ["pl_Nosferatu_HERO", "pl_Kostucha_HERO"],
+      dropRates: [kostuchaRate],
     },
-    { uid: "pl_3_a", id: 3, retiredDropMonsterKeys: ["pl_Nosferatu_HERO"] },
+    {
+      uid: "pl_3_a",
+      id: 3,
+      retiredDropMonsterKeys: ["pl_Nosferatu_HERO"],
+      dropRates: [{ monsterKey: "pl_Nosferatu_HERO", drops: 9, kills: 300 }],
+    },
   ];
 
   const client = new Meilisearch({
@@ -287,25 +295,39 @@ test("replaces one monster's retired drops without touching other monsters' or u
   });
 
   await Effect.runPromise(
-    makeItemsModule(client, logger).markRetiredDrops({
+    makeItemsModule(client, logger).setMonsterDrops({
       monsters: [
         {
           gameVersion: "pl",
           name: "Nosferatu",
           type: "HERO",
           retiredItemIds: [1, 3],
+          dropRates: [
+            { itemId: 2, drops: 12, kills: 300 },
+            { itemId: 3, drops: 9, kills: 300 },
+          ],
         },
       ],
     }),
   );
 
-  expect(fetches[0]?.filter).toBe(
-    'droppedByMonsterKeys = "pl_Nosferatu_HERO" AND (retiredDropMonsterKeys = "pl_Nosferatu_HERO" OR id IN [1, 3])',
-  );
-  // Only the retired field is written, so drops indexed meanwhile survive.
+  expect(fetches[0]?.filter).toBe('droppedByMonsterKeys = "pl_Nosferatu_HERO"');
+  // Only these fields are written, so drops indexed meanwhile survive; the
+  // third item already holds what Nosferatu published.
   expect(written).toEqual([
-    { uid: "pl_1_a", retiredDropMonsterKeys: ["pl_Nosferatu_HERO"] },
-    { uid: "pl_2_a", retiredDropMonsterKeys: ["pl_Kostucha_HERO"] },
+    {
+      uid: "pl_1_a",
+      retiredDropMonsterKeys: ["pl_Nosferatu_HERO"],
+      dropRates: [],
+    },
+    {
+      uid: "pl_2_a",
+      retiredDropMonsterKeys: ["pl_Kostucha_HERO"],
+      dropRates: [
+        kostuchaRate,
+        { monsterKey: "pl_Nosferatu_HERO", drops: 12, kills: 300 },
+      ],
+    },
   ]);
 });
 

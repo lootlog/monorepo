@@ -1,8 +1,4 @@
-/**
- * An item seen at more levels than this takes its looter's level, as
- * Margonem's elastic items (`lvladjust`) do; a rebalanced item keeps a few.
- */
-export const MAX_FIXED_LEVELS = 4;
+import { MAX_FIXED_LEVELS } from "@lootlog/domain/elastic-level";
 
 /**
  * The distinct levels the catalog saw an item at, the lowest kept up to one

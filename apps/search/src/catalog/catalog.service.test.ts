@@ -73,7 +73,7 @@ const kostucha = {
   type: "HERO",
 };
 
-test("lists a monster's drops from any of its identities, marking the monsters that no longer drop them, without worlds or when Lootlog first saw them", async () => {
+test("lists a monster's drops from any of its identities, marking the monsters that no longer drop them and each one's drop rate, without worlds or when Lootlog first saw them", async () => {
   const { catalog, searches } = catalogWith(
     [
       {
@@ -94,6 +94,7 @@ test("lists a monster's drops from any of its identities, marking the monsters t
           stored(kostucha, "template"),
         ],
         retiredDropMonsterKeys: [nosferatu.monsterKey],
+        dropRates: [{ monsterKey: kostucha.monsterKey, drops: 9, kills: 600 }],
       },
     ],
     () => [{ monsterKey: nosferatu.monsterKey }],
@@ -119,6 +120,7 @@ test("lists a monster's drops from any of its identities, marking the monsters t
           icon: "nosferatu.gif",
           type: "HERO",
           retired: true,
+          dropRate: null,
         },
         {
           key: "pl_template_7002_2",
@@ -128,6 +130,7 @@ test("lists a monster's drops from any of its identities, marking the monsters t
           icon: "kostucha.gif",
           type: "HERO",
           retired: false,
+          dropRate: { drops: 9, kills: 600 },
         },
       ],
     }),

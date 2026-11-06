@@ -2,7 +2,7 @@ import { uniqueWorlds } from "#src/shared/unique-worlds";
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { upgradedAttackSpeed } from "@lootlog/domain/item-upgrade";
 import { Effect } from "effect";
-import { chunk } from "es-toolkit";
+import { chunk, groupBy, sortBy } from "es-toolkit";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import {
   buildMeilisearchInFilter,
@@ -18,7 +18,8 @@ import type { AppLogger } from "#src/shared/logger";
 import type { ItemSearchQuery } from "./item-search-query.js";
 import { ITEMS_INDEX } from "./search-index.js";
 import type { IndexItemsCommand } from "./index-items-command.js";
-import type { RetiredDropsCommand } from "./retired-drops-command.js";
+import type { MonsterDropsCommand } from "./monster-drops-command.js";
+import type { ItemRevisionsCommand } from "./item-revisions-command.js";
 import type { ItemHit } from "./item-hit.js";
 import { createItemSearchFields } from "./item-search-fields.js";
 import {
@@ -48,14 +49,46 @@ type IndexedItem = Omit<IndexItem, "droppedBy" | "observedAt"> &
     worlds: string[];
     /** The monsters of `droppedBy` that no longer drop the item. */
     retiredDropMonsterKeys?: string[];
+    /** How often the kills of the monsters of `droppedBy` drop the item. */
+    dropRates?: ItemDropRate[];
+    /** The changes the game made to the item, oldest first. */
+    revisions?: ItemRevisionsCommand["items"][number]["revisions"];
+    /** The day the item's latest change was first looted, to list it by. */
+    changedOn?: string | null;
   };
 
-type RetiredDropsDocument = Pick<
+type ItemRevisionsDocument = Pick<
   IndexedItem,
-  "uid" | "id" | "retiredDropMonsterKeys"
+  "uid" | "id" | "gameVersion" | "revisions" | "changedOn"
 >;
 
-const RETIRED_DROPS_PAGE = 1000;
+/** One monster's drops of an item over the kills that could record them. */
+export type ItemDropRate = {
+  monsterKey: string;
+  drops: number;
+  kills: number;
+};
+
+type MonsterDropsDocument = Pick<
+  IndexedItem,
+  "uid" | "id" | "retiredDropMonsterKeys" | "dropRates"
+>;
+
+type MonsterDropFields = Required<
+  Pick<IndexedItem, "retiredDropMonsterKeys" | "dropRates">
+>;
+
+const DOCUMENTS_PAGE = 1000;
+
+const sameMonsterDrops = (left: MonsterDropFields, right: MonsterDropFields) =>
+  Bun.deepEquals(
+    [...left.retiredDropMonsterKeys].sort(),
+    [...right.retiredDropMonsterKeys].sort(),
+  ) &&
+  Bun.deepEquals(
+    sortBy(left.dropRates, [({ monsterKey }) => monsterKey]),
+    sortBy(right.dropRates, [({ monsterKey }) => monsterKey]),
+  );
 
 /**
  * The retired drops of an item seen dropping again: a monster that drops it
@@ -271,85 +304,159 @@ export const makeItemsModule = (
   });
 
   /**
-   * Replaces each monster's retired drops. Only the retired field is written,
-   * so drops indexed meanwhile are kept; a concurrent drop may restore a
-   * retirement until the next run, never lose a source.
+   * Replaces each monster's retired drops and drop rates on the items it
+   * drops. Only those fields are written, so drops indexed meanwhile are
+   * kept; a concurrent drop may restore a retirement until the next run,
+   * never lose a source.
    */
-  const markRetiredDrops = Effect.fn("SearchItems.markRetiredDrops")(function* (
-    data: RetiredDropsCommand,
+  const setMonsterDrops = Effect.fn("SearchItems.setMonsterDrops")(function* (
+    data: MonsterDropsCommand,
   ) {
     const index = meilisearch.index<IndexedItem>(ITEMS_INDEX);
-    const stored = new Map<string, string[]>();
-    const updated = new Map<string, string[]>();
+    const stored = new Map<string, MonsterDropFields>();
+    const updated = new Map<string, MonsterDropFields>();
 
     for (const monster of data.monsters) {
       const monsterKey = npcMonsterKey(monster);
       const retired = new Set(monster.retiredItemIds);
 
-      // The items to retire, and those retired before that drop again.
-      const affected = [
-        `retiredDropMonsterKeys = ${JSON.stringify(monsterKey)}`,
-        ...(retired.size > 0
-          ? [buildMeilisearchInFilter("id", [...retired])]
-          : []),
-      ].join(" OR ");
+      const rates = new Map(
+        monster.dropRates.map(({ itemId, drops, kills }) => [
+          itemId,
+          { monsterKey, drops, kills },
+        ]),
+      );
 
-      for (let offset = 0; ; offset += RETIRED_DROPS_PAGE) {
+      for (let offset = 0; ; offset += DOCUMENTS_PAGE) {
         const page = yield* attemptMeilisearch(
-          "search.items.retiredDrops.existing",
+          "search.items.monsterDrops.existing",
           () =>
-            index.getDocuments<RetiredDropsDocument>({
-              filter: `droppedByMonsterKeys = ${JSON.stringify(monsterKey)} AND (${affected})`,
-              fields: ["uid", "id", "retiredDropMonsterKeys"],
-              limit: RETIRED_DROPS_PAGE,
+            index.getDocuments<MonsterDropsDocument>({
+              filter: `droppedByMonsterKeys = ${JSON.stringify(monsterKey)}`,
+              fields: ["uid", "id", "retiredDropMonsterKeys", "dropRates"],
+              limit: DOCUMENTS_PAGE,
               offset,
             }),
         );
 
         for (const document of page.results) {
-          const keys = document.retiredDropMonsterKeys ?? [];
+          const fields = {
+            retiredDropMonsterKeys: document.retiredDropMonsterKeys ?? [],
+            dropRates: document.dropRates ?? [],
+          };
 
-          if (!stored.has(document.uid)) stored.set(document.uid, keys);
+          if (!stored.has(document.uid)) stored.set(document.uid, fields);
 
-          const others = (updated.get(document.uid) ?? keys).filter(
-            (key) => key !== monsterKey,
-          );
+          const current = updated.get(document.uid) ?? fields;
+          const rate = rates.get(document.id);
 
-          updated.set(
-            document.uid,
-            retired.has(document.id) ? [...others, monsterKey] : others,
-          );
+          updated.set(document.uid, {
+            retiredDropMonsterKeys: [
+              ...current.retiredDropMonsterKeys.filter(
+                (key) => key !== monsterKey,
+              ),
+              ...(retired.has(document.id) ? [monsterKey] : []),
+            ],
+            dropRates: [
+              ...current.dropRates.filter(
+                (entry) => entry.monsterKey !== monsterKey,
+              ),
+              ...(rate ? [rate] : []),
+            ],
+          });
         }
 
-        if (page.results.length < RETIRED_DROPS_PAGE) break;
+        if (page.results.length < DOCUMENTS_PAGE) break;
       }
     }
 
-    const changed = [...updated].flatMap(([uid, retiredDropMonsterKeys]) =>
-      Bun.deepEquals(
-        [...retiredDropMonsterKeys].sort(),
-        [...(stored.get(uid) ?? [])].sort(),
-      )
+    const changed = [...updated].flatMap(([uid, fields]) => {
+      const before = stored.get(uid);
+
+      return before && sameMonsterDrops(fields, before)
         ? []
-        : [{ uid, retiredDropMonsterKeys }],
-    );
+        : [{ uid, ...fields }];
+    });
 
     for (const batch of chunk(changed, 500)) {
-      yield* completeMeilisearchTask("search.items.retiredDrops.index", () =>
+      yield* completeMeilisearchTask("search.items.monsterDrops.index", () =>
         index.updateDocuments(batch),
       );
     }
   });
 
-  return { getItems, indexItems, markRetiredDrops, searchItems } satisfies {
+  /**
+   * Replaces the changes of each item, on every catalog entry of its edition
+   * and id: a renamed item has one entry per name.
+   */
+  const setItemRevisions = Effect.fn("SearchItems.setItemRevisions")(function* (
+    data: ItemRevisionsCommand,
+  ) {
+    const index = meilisearch.index<IndexedItem>(ITEMS_INDEX);
+
+    const changed: Array<Pick<IndexedItem, "uid" | "revisions" | "changedOn">> =
+      [];
+
+    for (const [gameVersion, items] of Object.entries(
+      groupBy(data.items, (item) => item.gameVersion),
+    )) {
+      const revisionsById = new Map(
+        items.map(({ id, revisions }) => [id, revisions]),
+      );
+
+      for (let offset = 0; ; offset += DOCUMENTS_PAGE) {
+        const page = yield* attemptMeilisearch(
+          "search.items.revisions.existing",
+          () =>
+            index.getDocuments<ItemRevisionsDocument>({
+              filter: `gameVersion = ${JSON.stringify(gameVersion)} AND ${buildMeilisearchInFilter("id", [...revisionsById.keys()])}`,
+              fields: ["uid", "id", "gameVersion", "revisions", "changedOn"],
+              limit: DOCUMENTS_PAGE,
+              offset,
+            }),
+        );
+
+        for (const document of page.results) {
+          const revisions = [...(revisionsById.get(document.id) ?? [])];
+          const changedOn = revisions.at(-1)?.changedBy ?? null;
+
+          if (
+            !Bun.deepEquals(revisions, document.revisions ?? []) ||
+            changedOn !== (document.changedOn ?? null)
+          ) {
+            changed.push({ uid: document.uid, revisions, changedOn });
+          }
+        }
+
+        if (page.results.length < DOCUMENTS_PAGE) break;
+      }
+    }
+
+    for (const batch of chunk(changed, 500)) {
+      yield* completeMeilisearchTask("search.items.revisions.index", () =>
+        index.updateDocuments(batch),
+      );
+    }
+  });
+
+  return {
+    getItems,
+    indexItems,
+    setItemRevisions,
+    setMonsterDrops,
+    searchItems,
+  } satisfies {
     readonly getItems: (
       input: Pick<ItemSearchQuery, "limit" | "search">,
     ) => Effect.Effect<ReadonlyArray<ItemHit>, SearchOperationFailure>;
     readonly indexItems: (
       data: IndexItemsCommand,
     ) => Effect.Effect<void, SearchOperationFailure>;
-    readonly markRetiredDrops: (
-      data: RetiredDropsCommand,
+    readonly setMonsterDrops: (
+      data: MonsterDropsCommand,
+    ) => Effect.Effect<void, SearchOperationFailure>;
+    readonly setItemRevisions: (
+      data: ItemRevisionsCommand,
     ) => Effect.Effect<void, SearchOperationFailure>;
     readonly searchItems: (
       input: ItemSearchQuery,
