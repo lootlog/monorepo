@@ -14,6 +14,10 @@ export const PARTY_READY_ROOM_PARTY_PRESENCE_STATES = [
   "IN_PARTY",
 ] as const;
 
+// A gathering lives this long after it is created or extended. Gatherings
+// form within minutes, so an abandoned one must disappear quickly.
+export const PARTY_GATHERING_LIFETIME_MS = 10 * 60_000;
+
 export type PartyReadyRoomStatus = (typeof PARTY_READY_ROOM_STATUSES)[number];
 
 type PartyReadyRoomPartyPresenceState =
@@ -49,6 +53,7 @@ export interface PartyReadyRoomProjectionBase {
   notificationId: string;
   organizerDiscordId: string;
   organizerCharacter: PartyReadyRoomCharacter;
+  organizerMapName?: string;
   guildIds: string[];
   world: string;
   description?: string;
@@ -112,6 +117,8 @@ const PartyReadyRoomParticipantSchema = Schema.Struct({
 });
 
 export const PartyGatheringNpcSchema = Schema.Struct({
+  // The Margonem NPC instance; a kill report names it to close the gathering.
+  id: Schema.optionalKey(Schema.Number),
   prof: Schema.optionalKey(Schema.String),
   icon: Schema.optionalKey(Schema.String),
   name: Schema.String,
@@ -173,6 +180,7 @@ export const PARTY_OBSERVATION_REFRESH_MS = 45_000;
 
 export const PartyGatheringVolunteerSchema = Schema.Struct({
   ...PartyGatheringCharacterSchema.fields,
+  clan: Schema.optionalKey(PartyReadyRoomClanSchema),
   partyPresence: Schema.Literals(PARTY_READY_ROOM_PARTY_PRESENCE_STATES),
 });
 
@@ -184,6 +192,8 @@ export const PartyGatheringSummarySchema = Schema.Struct({
   organizerDiscordId: Schema.optionalKey(Schema.String),
   organizerLvl: Schema.optionalKey(FiniteNumber),
   organizerProf: Schema.optionalKey(Schema.String),
+  organizerClan: Schema.optionalKey(PartyReadyRoomClanSchema),
+  organizerMapName: Schema.optionalKey(Schema.String),
   applicantCount: NonNegativeSafeInteger,
   inPartyCount: NonNegativeSafeInteger,
   partyMemberCount: Schema.optionalKey(NonNegativeSafeInteger),
@@ -242,6 +252,7 @@ export const PartyReadyRoomAggregateSchema = Schema.Struct({
   notificationId: Schema.String,
   organizerDiscordId: Schema.String,
   organizerCharacter: PartyReadyRoomCharacterSchema,
+  organizerMapName: Schema.optionalKey(Schema.String),
   guildIds: Schema.mutable(Schema.Array(Schema.String)),
   world: Schema.String,
   description: Schema.optionalKey(Schema.String),

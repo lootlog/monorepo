@@ -1,6 +1,6 @@
 ---
 title: Zbiórki
-description: Jak zebrać grupę na potwora w Margonem przez Lootlog. Tworzenie zbiórki, zgłaszanie się, zapraszanie chętnych i ukrywanie zbiórek.
+description: Jak zebrać grupę na potwora w Margonem przez Lootlog. Tworzenie zbiórki, zgłaszanie się, zapraszanie chętnych, przycisk „Idę” i ukrywanie zbiórek.
 ---
 
 Zbiórka to ogłoszenie „zbieram grupę” widoczne dla Twojego Lootloga na
@@ -22,6 +22,24 @@ oknie **Nowa zbiórka** wybierasz Lootlog z listy, domyślnie ten wybrany dla
 postaci. Czat i Szybki czat tworzą zbiórkę w Lootlogu, do którego wysyłają
 wpis. Naraz możesz prowadzić jedną zbiórkę.
 
+## Jak długo trwa zbiórka
+
+Zbiórka trwa **10 minut**. Na dwie minuty przed końcem przy Twojej zbiórce
+pojawia się przycisk **Przedłuż**, który daje kolejne 10 minut. Przedłużyć
+możesz też w każdej chwili z menu zbiórki na czacie i w oknie **Twoja zbiórka**.
+
+Zbiórka kończy się sama, gdy:
+
+- Twój Lootlog zobaczy zabicie potwora, na którego zbierasz, niezależnie od
+  tego, kto go zabił; zabicia widziane przez inne Lootlogi jej nie zamykają.
+  Zbiórkę wysłaną do kilku Lootlogów zamyka zabicie, które zapisało się w
+  każdym z nich, bo powód końca zobaczą wszystkie;
+- minie jej czas;
+- rozłączysz się z grą na dłużej (zobacz [Rozłączenie](#rozłączenie)).
+
+Zbiórkę bez potwora, np. na ustawkę, kończysz sam przyciskiem **Anuluj
+zbiórkę**. Działa od razu, bez potwierdzania.
+
 ## Zgłoś się
 
 Aktywne zbiórki stoją nad polem pisania czatu, najnowsza na górze. Twoja
@@ -35,15 +53,22 @@ Zgłoszenie nie rezerwuje miejsca w grupie Margonem. Organizator sam wybiera i
 zaprasza. Zgłoszenie wycofasz, klikając ponownie zaznaczony przycisk. Do
 kolejnej zbiórki zgłosisz się po wycofaniu obecnego zgłoszenia.
 
+Zgłoszenie należy do konta Margonem, nie do jednej postaci. Gdy przelogujesz
+się na inną postać tego konta, zgłoszenie przechodzi na nią i organizator
+widzi postać, którą grasz. Jeśli nowa postać nie mieści się w zakresie
+poziomów zbiórki albo gra na innym świecie, zgłoszenie zostaje wycofane.
+
 Skrót **Zgłoś się do zbiórki** (domyślnie nieprzypisany) zgłasza do pierwszej
 zbiórki na pasku, a użyty drugi raz wycofuje zgłoszenie.
 
 ## Co pokazuje zbiórka
 
+- postać organizatora: nick, poziom, profesję i klan;
 - cel: grafikę, nazwę, poziom i profesję potwora, lokację i współrzędne, jeśli
   zostały podane, albo opis; zbiórka bez celu i opisu pokazuje **Brak opisu**;
-- organizatora z nazwą z Discorda w kolorze jego roli;
-- licznik osób w grupie, np. `(2/10)`.
+- mapę, na której stoi teraz organizator, i jego nazwę z Discorda w kolorze
+  jego roli;
+- licznik osób w grupie, np. `(2/10)`, i minuty do końca zbiórki.
 
 Licznik pokazuje skład grupy odczytany z gry u organizatora, a nie liczbę
 chętnych. `(—/10)` oznacza, że skład jest jeszcze nieznany. `(~2/10)`
@@ -54,17 +79,38 @@ organizator się rozłączył.
 
 - Ikona **Zaproś zgłoszonych** przy zbiórce zaprasza wszystkich chętnych,
   którzy są jeszcze poza grupą. Skrót: `Shift+I`.
-- **Lista chętnych** w menu zbiórki otwiera okno **Twoja zbiórka**. Plus w
-  wierszu albo dwuklik zaprasza jedną osobę. Prawy przycisk ma **Dodaj do
-  znajomych** i **Usuń ze zbiórki**.
+- **Lista chętnych** w menu zbiórki otwiera okno **Twoja zbiórka** z postacią,
+  poziomem, profesją i klanem każdego chętnego. Plus w wierszu albo dwuklik
+  zaprasza jedną osobę. Prawy przycisk ma **Usuń ze zbiórki**.
 - Osoby, które dołączyły do grupy, znikają z listy chętnych.
-- **Anuluj zbiórkę** kończy ją po potwierdzeniu.
+- **Anuluj zbiórkę** kończy ją od razu.
+
+Margonem pozwala dodać do grupy z dowolnego miejsca tylko członków klanu i
+znajomych. Gracza z klanu sojuszniczego dodasz, gdy jest na tej samej mapie, a
+pozostałych tylko wtedy, gdy stoją obok Ciebie. Dlatego przy chętnych spoza
+klanu i znajomych jest przycisk **Dodaj do znajomych**: po przyjęciu
+zaproszenia do znajomych zaprosisz ich do grupy z każdego miejsca.
 
 Wysłane zaproszenie nie znaczy, że ktoś już dołączył. Lootlog sprawdza to w
 składzie grupy z gry.
 
 Własną zbiórkę zobaczysz i anulujesz także po zmianie postaci lub świata na
 tym samym koncie Margonem. Zapraszać możesz tylko postacią organizatora.
+
+## Idę bez zbiórki
+
+Nie każdy potwór potrzebuje zbiórki. Przy powiadomieniu o potworze jest
+przycisk **Idę** (ikona śladów). Kliknięcie mówi Twojemu Lootlogowi, że już
+idziesz, a pod powiadomieniem pojawia się linia **Idzie (2):** z liczbą osób i
+ich nickami. Najedź na nią, żeby zobaczyć wszystkich z poziomem, profesją i
+klanem. Drugie kliknięcie cofa odpowiedź.
+
+Gracz, który zgłosił potwora, nie widzi własnego powiadomienia, więc dostaje w
+grze komunikat, np. „Szybka Strzała idzie na Orla” albo „… jednak nie idzie”.
+
+Twoją odpowiedź widzą tylko członkowie Twojego Lootloga, którzy dostali to
+powiadomienie. Inne Lootlogi, do których trafiło to samo zgłoszenie, jej nie
+widzą.
 
 ## Ukryj zbiórkę
 

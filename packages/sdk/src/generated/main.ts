@@ -6047,6 +6047,7 @@ export interface CreateVolunteerDto {
 }
 
 export type PartyReadyRoomProjectionDtoOutputNpc = {
+  id?: number | 'Infinity' | '-Infinity' | 'NaN';
   prof?: string;
   icon?: string;
   name: string;
@@ -6123,6 +6124,11 @@ export type PartyReadyRoomProjectionDtoOutputPartyState = {
 }[];
 };
 
+export type PartyReadyRoomProjectionDtoOutputVolunteersItemClan = {
+  id?: number | 'Infinity' | '-Infinity' | 'NaN';
+  name?: string;
+};
+
 export type PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence = typeof PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence[keyof typeof PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence];
 
 
@@ -6144,6 +6150,7 @@ export type PartyReadyRoomProjectionDtoOutputVolunteersItem = {
   lvl: number;
   /** @maxLength 100 */
   prof: string;
+  clan?: PartyReadyRoomProjectionDtoOutputVolunteersItemClan;
   partyPresence: PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence;
 };
 
@@ -6223,6 +6230,7 @@ export interface PartyReadyRoomProjectionDtoOutput {
   notificationId: string;
   organizerDiscordId: string;
   organizerCharacter: PartyReadyRoomProjectionDtoOutputOrganizerCharacter;
+  organizerMapName?: string;
   guildIds: string[];
   world: string;
   description?: string;
@@ -6382,6 +6390,7 @@ export const PartyReadyRoomClientUpdateDtoOutputType = {
 } as const;
 
 export type PartyReadyRoomClientUpdateDtoOutputProjectionNpc = {
+  id?: number | 'Infinity' | '-Infinity' | 'NaN';
   prof?: string;
   icon?: string;
   name: string;
@@ -6458,6 +6467,11 @@ export type PartyReadyRoomClientUpdateDtoOutputProjectionPartyState = {
 }[];
 };
 
+export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemClan = {
+  id?: number | 'Infinity' | '-Infinity' | 'NaN';
+  name?: string;
+};
+
 export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence = typeof PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence];
 
 
@@ -6479,6 +6493,7 @@ export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItem = {
   lvl: number;
   /** @maxLength 100 */
   prof: string;
+  clan?: PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemClan;
   partyPresence: PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence;
 };
 
@@ -6558,6 +6573,7 @@ export type PartyReadyRoomClientUpdateDtoOutputProjection = {
   notificationId: string;
   organizerDiscordId: string;
   organizerCharacter: PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacter;
+  organizerMapName?: string;
   guildIds: string[];
   world: string;
   description?: string;
@@ -6678,6 +6694,12 @@ export interface PartyReadyRoomObservationDto {
      * @maxLength 255
      */
   organizerCharacterId: string;
+  /**
+     * The map the organizer stands on, so applicants know where to go.
+     * @minLength 1
+     * @maxLength 255
+     */
+  organizerMapName?: string;
 }
 
 export interface PartyReadyRoomExpectedRevisionDto {

@@ -59,9 +59,14 @@ export function createReadyRoomPartyReporter(
   function refreshObservation() {
     const observation = readObservation();
 
-    // Display fields belong to the key; HP and the room revision do not.
+    // Display fields and the organizer's map belong to the key; HP and the
+    // room revision do not.
     const key = observation
-      ? JSON.stringify([observation.scope, observation.body.members])
+      ? JSON.stringify([
+          observation.scope,
+          observation.body.members,
+          observation.body.organizerMapName,
+        ])
       : null;
 
     if (pending?.key === key && observation) {

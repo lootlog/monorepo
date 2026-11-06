@@ -189,4 +189,26 @@ export class PartyReadyRoomGroup extends HttpApiGroup.make(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "PartyReadyRoomController_cancel"),
+  HttpApiEndpoint.post(
+    "PartyReadyRoomControllerExtend",
+    "/messaging/party-gathering/:notificationId/extension",
+    {
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(401)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(409)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(422)),
+      ],
+      params: PartyReadyRoomParams,
+      payload: PartyRevisionRequest,
+      success: PartyReadyRoomResponse.pipe(HttpApiSchema.status(201)),
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "PartyReadyRoomController_extend")
+    .annotate(
+      OpenApi.Summary,
+      "Restart the organizer's party gathering lifetime",
+    ),
 ) {}

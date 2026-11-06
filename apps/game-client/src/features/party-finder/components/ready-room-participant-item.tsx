@@ -53,7 +53,14 @@ export function ReadyRoomParticipantItem({
   });
 
   const [relation] = relations;
-  const canAddFriend = relation !== "self" && !relations.includes("friend");
+
+  // Margonem invites clan members and friends from anywhere, everyone else
+  // only when they stand next to the organizer, so befriending is the way to
+  // invite a remote applicant.
+  const needsFriendship =
+    relation !== "self" &&
+    !relations.includes("friend") &&
+    !relations.includes("clan");
 
   const { mutate: removeParticipant, isPending: isRemoving } = useMutation({
     mutationFn: () =>
@@ -108,30 +115,30 @@ export function ReadyRoomParticipantItem({
                 clanName={character.clan?.name}
               />
             </span>
-            <IconButton
-              label={t("actions.invite")}
-              disabled={!canInvite}
-              onClick={invite}
-              onDoubleClick={(event) => event.stopPropagation()}
-            >
-              <Plus aria-hidden="true" className="ll:text-green-300" />
-            </IconButton>
+            <span className="ll:flex ll:shrink-0 ll:items-center">
+              {needsFriendship ? (
+                <IconButton
+                  label={t("actions.addFriend")}
+                  tooltip={t("actions.addFriendHint")}
+                  onClick={() => inviteCharacterToFriends(character.nick)}
+                  onDoubleClick={(event) => event.stopPropagation()}
+                >
+                  <UserPlus aria-hidden="true" />
+                </IconButton>
+              ) : null}
+              <IconButton
+                label={t("actions.invite")}
+                disabled={!canInvite}
+                onClick={invite}
+                onDoubleClick={(event) => event.stopPropagation()}
+              >
+                <Plus aria-hidden="true" className="ll:text-green-300" />
+              </IconButton>
+            </span>
           </ListRow>
         </span>
       </ContextMenuTrigger>
       <ContextMenuContent className="ll:w-44 ll:flex ll:flex-col">
-        {canAddFriend ? (
-          <ContextMenuItem
-            onClick={() => inviteCharacterToFriends(character.nick)}
-          >
-            <UserPlus
-              aria-hidden="true"
-              strokeWidth={1.5}
-              className="ll:mr-2 ll:size-3.5 ll:shrink-0"
-            />
-            {t("actions.addFriend")}
-          </ContextMenuItem>
-        ) : null}
         <ContextMenuItem
           className="ll:text-destructive ll:hover:bg-destructive/15 ll:data-[highlighted]:bg-destructive/15 ll:focus-visible:bg-destructive/15"
           disabled={isRemoving}

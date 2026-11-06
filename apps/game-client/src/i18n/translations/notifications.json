@@ -15,5 +15,13 @@
   },
   "states": {
     "unknownSender": "Nieznany"
+  },
+  "going": {
+    "go": "Idę",
+    "cancel": "Jednak nie idę",
+    "failed": "Nie udało się wysłać odpowiedzi. Spróbuj ponownie.",
+    "list": "Idzie ({{count}}): {{names}}",
+    "reporterJoined": "{{nick}} idzie na {{npc}}",
+    "reporterLeft": "{{nick}} jednak nie idzie na {{npc}}"
   }
 }

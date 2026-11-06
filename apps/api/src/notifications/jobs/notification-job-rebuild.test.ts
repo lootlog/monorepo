@@ -593,6 +593,7 @@ describe("notification job rebuild", () => {
       const published: string[] = [];
 
       const submit = makeAutoTimer(database, {
+        closeKilledNpcGatherings: () => Effect.void,
         get: () => Effect.succeed(null),
         set: () => Effect.void,
         setNx: () => Effect.succeed(true),

@@ -81,6 +81,12 @@ import {
 const DEDUP_TTL_SECONDS = 30;
 
 export interface AutoTimerPorts {
+  readonly closeKilledNpcGatherings: (kill: {
+    readonly guildIds: ReadonlyArray<string>;
+    readonly world: string;
+    readonly npcId: number;
+    readonly location: string;
+  }) => Effect.Effect<unknown, unknown>;
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
   readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
   readonly publishHeroSighting: (
@@ -814,6 +820,19 @@ export const makeAutoTimer = (
         badRequest(ErrorKey.NO_GUILD_ACCEPTS_THIS_TIMER, rejectedGuilds),
       );
     }
+
+    // Every Lootlog that recorded the kill is known only now, and a gathering
+    // shared by several closes only when all of them did. Closing is
+    // idempotent, so a retried report repeats it, and the kill report does not
+    // wait for it.
+    yield* ports
+      .closeKilledNpcGatherings({
+        guildIds: submittedGuilds.map(({ guildId }) => guildId),
+        world: payload.world,
+        npcId: payload.npc.id,
+        location: payload.npc.location,
+      })
+      .pipe(Effect.ignore, Effect.forkDetach);
 
     return { submittedGuilds, rejectedGuilds };
   });

@@ -95,6 +95,7 @@ export const RabbitRoutingKey = {
   GUILDS_NOTIFICATIONS_SEND_DLQ: "guilds.notifications.send.dlq",
   GUILDS_NOTIFICATIONS_SEND_RETRY: "guilds.notifications.send.retry",
   GUILDS_NOTIFICATIONS_VOLUNTEER: "guilds.notifications.volunteer",
+  GUILDS_NOTIFICATIONS_GOING: "guilds.notifications.going",
   GUILDS_NOTIFICATIONS_VOLUNTEER_DLQ: "guilds.notifications.volunteer.dlq",
   GUILDS_NOTIFICATIONS_VOLUNTEER_RETRY: "guilds.notifications.volunteer.retry",
   GUILDS_PARTY_GATHERING: "guilds.party-gathering",

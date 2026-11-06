@@ -77,15 +77,15 @@ the integration.
 Subscribe to a topic for one Organization with `subscribeScope`. Each topic
 needs the matching read permission in that Organization.
 
-| Topic                        | Needs permission to read | Events                                                                                     |
-| ---------------------------- | ------------------------ | ------------------------------------------------------------------------------------------ |
-| `organization.timers`        | Timers                   | `timer.created` (also sent when a timer changes), `timer.deleted`, `hero-sighting.updated` |
-| `organization.loots`         | Loot                     | `loot.created`, `loot.share-updated`, `feed.entry`, `kills.changed`                        |
-| `organization.chat`          | Chat                     | `chat.created`, `chat.updated`, `chat.deleted`, `chat.cleared`                             |
-| `organization.reservations`  | Reservations             | `reservation.created`, `reservation.changed`, `reservation.deleted`                        |
-| `organization.notifications` | Notifications            | `notification.sent`, `party-gathering.updated`, `party-gathering.cancelled`                |
-| `organization.presence`      | Online players           | `presence.snapshot`, `presence.delta`                                                      |
-| `organization.members`       | Administration           | `member-refresh.updated`                                                                   |
+| Topic                        | Needs permission to read | Events                                                                                            |
+| ---------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------- |
+| `organization.timers`        | Timers                   | `timer.created` (also sent when a timer changes), `timer.deleted`, `hero-sighting.updated`        |
+| `organization.loots`         | Loot                     | `loot.created`, `loot.share-updated`, `feed.entry`, `kills.changed`                               |
+| `organization.chat`          | Chat                     | `chat.created`, `chat.updated`, `chat.deleted`, `chat.cleared`                                    |
+| `organization.reservations`  | Reservations             | `reservation.created`, `reservation.changed`, `reservation.deleted`                               |
+| `organization.notifications` | Notifications            | `notification.sent`, `notification.going`, `party-gathering.updated`, `party-gathering.cancelled` |
+| `organization.presence`      | Online players           | `presence.snapshot`, `presence.delta`                                                             |
+| `organization.members`       | Administration           | `member-refresh.updated`                                                                          |
 
 `ServerEvent` in `@lootlog/sdk/realtime` types every event and its payload.
 

@@ -96,6 +96,7 @@ const FORWARDED_EVENT_TYPES = [
   "timer.deleted",
   "hero-sighting.updated",
   "notification.sent",
+  "notification.going",
   "notification.volunteer",
   "member-refresh.updated",
   "party-gathering.state-updated",
