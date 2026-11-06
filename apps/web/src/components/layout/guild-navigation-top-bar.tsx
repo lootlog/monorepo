@@ -1,10 +1,6 @@
 import { useContext, type FC, type Ref } from "react";
-import {
-  getRouteApi,
-  useLocation,
-  useMatches,
-  useParams,
-} from "@tanstack/react-router";
+import { getRouteApi, useMatches, useParams } from "@tanstack/react-router";
+import { usePresentedPathname } from "@/lib/router/use-presented-location";
 import { useTranslation } from "react-i18next";
 import { GuildSearchContext } from "@/contexts/guild-search-context";
 import { AppNavigationTopBar } from "./app-navigation-top-bar";
@@ -125,15 +121,14 @@ export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
 }) => {
   const { t } = useTranslation();
   const { setIsOpen: setIsSearchOpen } = useContext(GuildSearchContext);
-  const location = useLocation();
+  // Breadcrumbs name the page on screen, not the one still loading.
+  const path = usePresentedPathname();
   const params = useParams({ strict: false });
   const guildRouteData = guildRouteApi.useLoaderData();
   const matches = useMatches();
   const guild = guildRouteData?.guild;
 
   const { guildId, memberId, npcId, roleId, docId, reservationId } = params;
-
-  const path = location.pathname;
 
   const routeFlags = getBreadcrumbRouteFlags({
     guildId,

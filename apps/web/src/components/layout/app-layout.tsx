@@ -10,24 +10,25 @@ import { StandaloneShell } from "@/components/layout/standalone-shell";
 import { UserShell } from "@/components/layout/user-shell";
 import { UserSidebarNav } from "@/components/layout/user-sidebar-nav";
 import { SidebarProvider } from "@lootlog/ui/components/sidebar";
-import { Outlet, useLocation, useMatches } from "@tanstack/react-router";
+import { Outlet, useMatches } from "@tanstack/react-router";
+import { usePresentedPathname } from "@/lib/router/use-presented-location";
 import { useTranslation } from "react-i18next";
 import { GlobalModals } from "@/components/common/global-modals";
 import { getRouteErrorStatus } from "@/lib/router/route-errors";
 
 export const AppLayout = () => {
   const { t } = useTranslation();
-  const location = useLocation();
+  // The shell follows the page on screen, which stays until the next loads.
+  const pathname = usePresentedPathname();
 
   const guildRouteMatch = useMatches({
     select: (matches) =>
       matches.find((match) => match.routeId === "/_authenticated/$guildId"),
   });
 
-  const isUserRoute =
-    location.pathname === "/@me" || location.pathname.startsWith("/@me/");
+  const isUserRoute = pathname === "/@me" || pathname.startsWith("/@me/");
 
-  const isStandaloneRoute = location.pathname.startsWith(
+  const isStandaloneRoute = pathname.startsWith(
     "/reservation-sharing/invitations/",
   );
 

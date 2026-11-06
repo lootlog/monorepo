@@ -13,18 +13,14 @@ import {
 } from "@/hooks/utils/use-virtual-infinite-scroll";
 import { lootFromSnapshot, type Loot } from "@/lib/loots/loot-types";
 import {
-  getLootsControllerFetchLootsByGuildIdQueryKey,
-  lootsControllerFetchLootsByGuildId,
-  LootsControllerFetchLootsByGuildIdNpcTypesItem,
-  LootsControllerFetchLootsByGuildIdRaritiesItem,
   useUsersControllerGetCurrentUserAccessibleGuilds,
   type LootPageResponseDto,
-  type LootsControllerFetchLootsByGuildIdParams,
 } from "@lootlog/client/main";
 import {
-  FIRST_PAGE_CURSOR,
-  LOOTS_PAGE_LIMIT,
-  LOOTS_QUERY_GC_TIME_MS,
+  getLootQueryParams,
+  lootListInfiniteQueryOptions,
+} from "./loot-list-query";
+import {
   applyLootSnapshots,
   clearLootPolicyData,
   lootMatchesListParams,
@@ -58,71 +54,13 @@ import {
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-const LOOTS_QUERY_STALE_TIME_MS = 30_000;
-
 const GRID_COLUMNS = 2;
 
 const EMPTY_LOOTS: Loot[] = [];
 
-const EMPTY_PAGE: LootPageResponseDto = {
-  items: EMPTY_LOOTS,
-  nextCursor: null,
-};
-
 const EMPTY_GRID_ROWS: Loot[][] = [];
 
 type LootsInfiniteData = InfiniteData<LootPageResponseDto>;
-
-type LootFilters = ReturnType<typeof useLootsFilters>["filters"];
-
-const parseOptionalNumber = (value: string) =>
-  value.length > 0 ? Number(value) : undefined;
-
-const optionalValues = <Value>(values: Value[]) =>
-  values.length > 0 ? values : undefined;
-
-// The API rejects an unknown value, so one from a stale URL is dropped here.
-const knownValues = <Value extends string>(
-  allowed: Readonly<Record<string, Value>>,
-  values: string[],
-) => {
-  const known: ReadonlyArray<string> = Object.values(allowed);
-
-  return optionalValues(
-    values.filter((value): value is Value => known.includes(value)),
-  );
-};
-
-const optionalText = (value: string | null | undefined) =>
-  value ? value : undefined;
-
-const getLootQueryParams = (
-  filters: LootFilters,
-  world: string | null | undefined,
-): LootsControllerFetchLootsByGuildIdParams => ({
-  limit: LOOTS_PAGE_LIMIT,
-  npcs: optionalValues(filters.npcs),
-  npcTypes: knownValues(
-    LootsControllerFetchLootsByGuildIdNpcTypesItem,
-    filters.npcTypes,
-  ),
-  rarities: knownValues(
-    LootsControllerFetchLootsByGuildIdRaritiesItem,
-    filters.rarities,
-  ),
-  professions: optionalValues(filters.professions),
-  players: optionalValues(filters.players),
-  npcLevelMin: parseOptionalNumber(filters.npcLevelMin),
-  npcLevelMax: parseOptionalNumber(filters.npcLevelMax),
-  itemLevelMin: parseOptionalNumber(filters.itemLevelMin),
-  itemLevelMax: parseOptionalNumber(filters.itemLevelMax),
-  playerLevelMin: parseOptionalNumber(filters.playerLevelMin),
-  playerLevelMax: parseOptionalNumber(filters.playerLevelMax),
-  search: optionalText(filters.search),
-  hid: optionalText(filters.hid),
-  itemNames: optionalValues(filters.itemNames),
-  world: optionalText(world),
-});
 
 const getCurrentGuildId = (
   guilds: Array<{ id: string; vanityUrl?: string | null }> | undefined,
@@ -177,12 +115,12 @@ export const useLiveLootList = () => {
   const currentGuildId = getCurrentGuildId(guilds, guildId);
   const lootQueryParams = getLootQueryParams(filters, world);
 
-  const queryKey = guildId
-    ? getLootsControllerFetchLootsByGuildIdQueryKey(
-        { guildId },
-        lootQueryParams,
-      )
-    : ["loots", "missing-guild"];
+  const lootListQuery = lootListInfiniteQueryOptions(
+    guildId ?? "",
+    lootQueryParams,
+  );
+
+  const { queryKey } = lootListQuery;
 
   const queryIdentity = hashKey(queryKey);
 
@@ -202,26 +140,8 @@ export const useLiveLootList = () => {
     isPlaceholderData,
     refetch,
   } = useInfiniteQuery({
-    queryKey,
-    queryFn: ({ pageParam, signal }) => {
-      if (!guildId) {
-        return Promise.resolve(EMPTY_PAGE);
-      }
-
-      return lootsControllerFetchLootsByGuildId(
-        { guildId },
-        { ...lootQueryParams, cursor: pageParam || undefined },
-        { signal },
-      );
-    },
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    initialPageParam: FIRST_PAGE_CURSOR,
+    ...lootListQuery,
     enabled: !!guildId,
-    staleTime: LOOTS_QUERY_STALE_TIME_MS,
-    gcTime: LOOTS_QUERY_GC_TIME_MS,
-    retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
   });
 
   const scrollsDocument = usePageScrollsDocument();

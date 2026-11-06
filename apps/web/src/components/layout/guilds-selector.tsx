@@ -5,7 +5,7 @@ import { GuildReorderItem } from "@/components/layout/guild-reorder-item";
 import { GuildsRefreshButton } from "@/components/layout/guilds-refresh-button";
 import { GuildsRail } from "@/components/layout/guilds-rail";
 import { LootlogStrip } from "@/components/layout/lootlog-strip";
-import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useRailGuildId } from "@/hooks/context/use-guild-id";
 import { Reorder } from "framer-motion";
 import { useState, useEffect, useLayoutEffect, useRef, type FC } from "react";
 import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
@@ -66,7 +66,11 @@ export const GuildsSelector: FC<GuildsSelectorProps> = ({
   const preferencesQuery = useUserPreferences();
   const hiddenGuildIds = getHiddenGuildIds(preferencesQuery.data);
   const lootUnreadCounts = useLootUnreadCounts();
-  const currentGuildId = useGuildId();
+
+  // A clicked server is marked at once; its page follows once it has loaded.
+  const { guildId: currentGuildId, isOpening: isOpeningGuild } =
+    useRailGuildId();
+
   const [localGuilds, setLocalGuilds] = useState<typeof guilds>();
   const [isDragging, setIsDragging] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
@@ -247,6 +251,7 @@ export const GuildsSelector: FC<GuildsSelectorProps> = ({
                   onSelect={onSelect}
                   isDragging={isDragging}
                   currentGuildId={currentGuildId}
+                  isOpening={isOpeningGuild}
                   unreadLootsCount={lootUnreadCounts[guild.id] ?? 0}
                   isHidden={hiddenGuildIds.has(guild.id)}
                   onToggleHidden={() =>
