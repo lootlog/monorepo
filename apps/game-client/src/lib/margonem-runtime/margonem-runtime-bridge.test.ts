@@ -478,6 +478,29 @@ describe("MargonemRuntimeBridge", () => {
     bridge.cleanup();
   });
 
+  it("consumes a talk intent when Margonem throws on its packet", () => {
+    const failure = new Error("game failed");
+    let fail = true;
+
+    runtimeWindow.successData = vi.fn<RuntimeFunction>(() => {
+      if (fail) throw failure;
+    });
+    testRuntimeWindow._g = vi.fn<RuntimeFunction>();
+    const bridge = new MargonemRuntimeBridge({ interface: "si" });
+    const applied = vi.fn<RuntimeEventHandler>();
+    bridge.subscribeApplied(applied);
+
+    bridge.install();
+    testRuntimeWindow._g("talk&id=501");
+    expect(() => runtimeWindow.successData?.({ h: {} })).toThrow(failure);
+    fail = false;
+    runtimeWindow.successData?.({ h: {} });
+
+    expect(applied).toHaveBeenCalledOnce();
+    expect(applied.mock.calls[0]?.[0].ingress.intent).toBeNull();
+    bridge.cleanup();
+  });
+
   it("uses NI parseJSON and does not emit applied when Margonem throws", () => {
     const failure = new Error("game failed");
 

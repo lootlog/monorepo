@@ -1,10 +1,10 @@
 import { createContext, type ReactNode, useContext } from "react";
-import { useTimersUpdate } from "../hooks/use-timers-update";
+import { useNow } from "@/hooks/ui/use-now";
 
 const TimerClockContext = createContext<number | null>(null);
 
 export const TimerClockProvider = ({ children }: { children: ReactNode }) => {
-  const epoch = useTimersUpdate();
+  const epoch = useNow(1_000);
 
   return (
     <TimerClockContext.Provider value={epoch}>
