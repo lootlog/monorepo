@@ -4,7 +4,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { LogOut, Trash2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { authClient } from "@/lib/auth-client";
 import { useUser } from "@/hooks/api/user/use-user";
 import { useLogout } from "@/hooks/auth/use-logout";
@@ -59,7 +59,7 @@ export const AccountSettings: FC = () => {
         description={t("settings.account.dangerZone.description")}
       >
         <div className="flex flex-wrap items-center gap-2">
-          <ConfirmDeleteDialog
+          <ConfirmDialog
             onConfirm={handleDeleteAccount}
             title={t("settings.account.dangerZone.deleteConfirmTitle")}
             description={t(
@@ -72,6 +72,7 @@ export const AccountSettings: FC = () => {
             confirmButtonLabel={t(
               "settings.account.dangerZone.deleteConfirmButton",
             )}
+            cancelButtonLabel={t("common.cancel")}
             disabled={isDeleteDisabled}
             trigger={
               <Button variant="destructive" disabled={isDeleteDisabled}>

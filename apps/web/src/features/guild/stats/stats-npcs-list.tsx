@@ -28,6 +28,7 @@ import { ResultsSurface } from "@/components/common/results-surface";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { useStatsNpcsListModel } from "./use-stats-npcs-list-model";
 import { formatNumber } from "@/lib/format-number";
@@ -186,7 +187,8 @@ export const StatsNpcsList = () => {
                   to="/$guildId/stats/npcs/$npcId"
                   params={{ guildId, npcId: String(npc.npcId) }}
                   className={cn(
-                    "flex min-w-0 items-center gap-3 py-3 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                    "flex min-w-0 items-center gap-3 py-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                    LIST_TILE_HOVER_CLASS,
                     LIST_TILE_INSET_CLASS,
                   )}
                 >

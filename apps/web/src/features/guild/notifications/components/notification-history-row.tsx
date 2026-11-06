@@ -2,6 +2,7 @@ import { MetaItem } from "@/components/common/meta-item";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import type { NotificationJobsResponseDto } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -37,7 +38,8 @@ export function NotificationHistoryRow({
       <button
         type="button"
         className={cn(
-          "flex w-full items-center gap-3 py-3 text-left outline-none transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset motion-reduce:transition-none",
+          "flex w-full items-center gap-3 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset motion-reduce:transition-none",
+          LIST_TILE_HOVER_CLASS,
           LIST_TILE_INSET_CLASS,
         )}
         onClick={() => openJobDetails(job)}

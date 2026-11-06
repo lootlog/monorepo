@@ -26,6 +26,7 @@ import { ResultsSurface } from "@/components/common/results-surface";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import { useStatsRankingModel } from "./use-stats-ranking-model";
 import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
@@ -190,7 +191,8 @@ export const StatsRanking = () => {
                   to="/$guildId/stats/members/$memberId"
                   params={{ guildId, memberId: String(member.member.id) }}
                   className={cn(
-                    "block py-3 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                    "block py-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                    LIST_TILE_HOVER_CLASS,
                     LIST_TILE_INSET_CLASS,
                     isViewer(member.member.userId) && VIEWER_ROW_CLASS,
                   )}

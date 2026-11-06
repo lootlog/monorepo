@@ -1,6 +1,7 @@
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
+  LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { upperFirst } from "es-toolkit";
@@ -41,7 +42,8 @@ export const BattlePanelBattleCard = ({
     <article
       data-list-tile
       className={cn(
-        "relative py-3 transition-colors hover:bg-muted/30",
+        "relative py-3",
+        LIST_TILE_HOVER_CLASS,
         LIST_TILE_RULE_CLASS,
         LIST_TILE_INSET_CLASS,
         isChecked && "bg-primary/10 ring-1 ring-inset ring-primary/45",

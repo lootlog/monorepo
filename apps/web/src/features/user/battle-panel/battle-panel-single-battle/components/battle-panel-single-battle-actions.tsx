@@ -9,7 +9,7 @@ import {
 
 import { DETAIL_BAR_TOOLBAR_CELL_CLASS } from "@/components/common/detail-bar";
 import { Button } from "@lootlog/ui/components/button";
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -162,7 +162,7 @@ export const BattlePanelSingleBattleActions: FC<
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <ConfirmDeleteDialog
+      <ConfirmDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDeleteClick}

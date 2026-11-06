@@ -1,15 +1,6 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { ListToolbar } from "@/components/common/list-toolbar";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@lootlog/ui/components/alert-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { Button } from "@lootlog/ui/components/button";
 import { Archive, FileText, FileX2, Plus, SearchX } from "lucide-react";
 
@@ -213,46 +204,27 @@ export const GuildDocsListPage = () => {
           onOpenChange={setTrashOpen}
         />
       )}
-      <AlertDialog
+      <ConfirmDialog
         open={documentPendingTrash !== null}
         onOpenChange={(open) => {
-          if (!open && !deleteDocument.isPending) {
-            setDocumentPendingTrash(null);
+          if (!open) setDocumentPendingTrash(null);
+        }}
+        title={t("docs.trash.moveTitle")}
+        description={t("docs.trash.moveDescription", {
+          title: documentPendingTrash?.title ?? "",
+        })}
+        confirmButtonLabel={t("docs.trash.move")}
+        cancelButtonLabel={t("common.cancel")}
+        pending={deleteDocument.isPending}
+        onConfirm={async () => {
+          if (!documentPendingTrash) return;
+
+          // The move reports its own failure; keep the dialog for a retry.
+          if (!(await moveDocumentToTrash(documentPendingTrash))) {
+            throw new Error("The document did not reach the trash.");
           }
         }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("docs.trash.moveTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("docs.trash.moveDescription", {
-                title: documentPendingTrash?.title ?? "",
-              })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteDocument.isPending}>
-              {t("common.cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              render=<Button
-                variant="destructive"
-                loading={deleteDocument.isPending}
-              />
-              disabled={deleteDocument.isPending || !documentPendingTrash}
-              onClick={(event) => {
-                event.preventBaseUIHandler();
-
-                if (documentPendingTrash) {
-                  void moveDocumentToTrash(documentPendingTrash);
-                }
-              }}
-            >
-              {t("docs.trash.move")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      />
     </div>
   );
 };

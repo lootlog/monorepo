@@ -95,6 +95,7 @@ export function DashboardRecentBattles() {
       </StatisticsQueryState>
       <BattleTableDeleteDialogs
         isBulkDeleteDialogOpen={false}
+        isBusy={actions.isRowActionBusy}
         isDeletePending={actions.isDeletePending}
         onBulkDelete={actions.handleBulkDelete}
         onBulkDeleteOpenChange={actions.setIsBulkDeleteDialogOpen}

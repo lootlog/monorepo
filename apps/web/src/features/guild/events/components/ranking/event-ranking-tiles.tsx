@@ -1,6 +1,7 @@
 import {
   getListTileLinkClassName,
   LIST_TILE_ACTIONS_CLASS,
+  LIST_TILE_HOVER_CLASS,
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 import { RankBadge } from "@/components/common/rank-badge";
@@ -56,6 +57,7 @@ export const EventRankingTiles = ({
             className={cn(
               "flex min-h-16 items-center",
               LIST_TILE_RULE_CLASS,
+              LIST_TILE_HOVER_CLASS,
               isCurrentMember && VIEWER_ROW_CLASS,
             )}
           >

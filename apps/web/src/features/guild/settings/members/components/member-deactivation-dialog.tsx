@@ -1,14 +1,4 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@lootlog/ui/components/alert-dialog";
-import { Button } from "@lootlog/ui/components/button";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getMembersControllerGetGuildMembersQueryKey,
@@ -26,7 +16,7 @@ type MemberDeactivationDialogProps = {
   member: Pick<GuildMember, "userId" | "name">;
   onClose: () => void;
   onDeactivated?: (member: GuildMember) => void;
-  finalFocus?: ComponentProps<typeof AlertDialogContent>["finalFocus"];
+  finalFocus?: ComponentProps<typeof ConfirmDialog>["finalFocus"];
 };
 
 export const MemberDeactivationDialog = ({
@@ -71,49 +61,27 @@ export const MemberDeactivationDialog = ({
   });
 
   return (
-    <AlertDialog
+    <ConfirmDialog
       open
       onOpenChange={(open) => {
-        if (!open && !deactivateMemberMutation.isPending) onClose();
+        if (!open) onClose();
       }}
-    >
-      <AlertDialogContent finalFocus={finalFocus}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            {t("settings.members.deactivateConfirmTitle", {
-              name: member.name,
-            })}
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            {t("settings.members.deactivateConfirmDescription")}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={deactivateMemberMutation.isPending}>
-            {t("common.cancel")}
-          </AlertDialogCancel>
-          <AlertDialogAction
-            disabled={deactivateMemberMutation.isPending}
-            render=<Button loading={deactivateMemberMutation.isPending} />
-            onClick={(event) => {
-              event.preventBaseUIHandler();
-
-              if (deactivateMemberMutation.isPending) {
-                return;
-              }
-
-              deactivateMemberMutation.mutate({
-                pathParams: {
-                  guildId,
-                  discordId: member.userId,
-                },
-              });
-            }}
-          >
-            {t("settings.members.deactivate")}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      finalFocus={finalFocus}
+      variant="default"
+      title={t("settings.members.deactivateConfirmTitle", {
+        name: member.name,
+      })}
+      description={t("settings.members.deactivateConfirmDescription")}
+      confirmButtonLabel={t("settings.members.deactivate")}
+      cancelButtonLabel={t("common.cancel")}
+      onConfirm={async () => {
+        await deactivateMemberMutation.mutateAsync({
+          pathParams: {
+            guildId,
+            discordId: member.userId,
+          },
+        });
+      }}
+    />
   );
 };

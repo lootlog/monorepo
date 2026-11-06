@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "@lootlog/ui/components/sonner";
 import { cn } from "cn";
 import { Button } from "@lootlog/ui/components/button";
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
+import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { ItemRarity, resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import {
@@ -147,7 +147,7 @@ export const WatchedItemTile = ({
           </span>
         </div>
         <div className={LIST_TILE_ACTIONS_CLASS}>
-          <ConfirmDeleteDialog
+          <ConfirmDialog
             disabled={deleteWatchedItem.isPending}
             onConfirm={handleDelete}
             title={t("settings.userNotifications.deleteWatchDialog.title")}
