@@ -50,6 +50,7 @@ afterEach(() => {
 const mountActions = (
   grouped = false,
   respond?: (request: Request) => Response | Promise<Response>,
+  resetGuildIds = ["guild-1", "guild-2"],
 ) => {
   const fixture = createTimerHttpFixture(
     respond ??
@@ -67,6 +68,9 @@ const mountActions = (
       { guildId: "guild-1", npcId: 10, timerKey: "timer-1" },
       { guildId: "guild-2", npcId: 10, timerKey: "timer-2" },
       { guildId: "guild-3", npcId: 10 },
+      ...(resetGuildIds.includes("guild-4")
+        ? [{ guildId: "guild-4", npcId: 10, timerKey: "timer-4" }]
+        : []),
     ],
   };
 
@@ -75,7 +79,7 @@ const mountActions = (
   });
 
   const hook = renderHook(
-    () => useTimerActions(timer, "guild-1", ["guild-1", "guild-2"], grouped),
+    () => useTimerActions(timer, "guild-1", resetGuildIds, grouped),
     {
       wrapper: ({ children }: { children: ReactNode }) => (
         <QueryClientProvider client={queryClient}>
@@ -284,7 +288,7 @@ describe("useTimerActions", () => {
         getFixedT("timers")("messages.resetPartialFailure", {
           name: "Tanroth",
           succeeded: 1,
-          failed: 1,
+          total: 2,
         }),
       ]);
       recovering = true;
@@ -314,6 +318,38 @@ describe("useTimerActions", () => {
       );
     },
   );
+
+  it("counts a partial retry against every Lootlog of the timer", async () => {
+    const failing = new Set(["guild-2", "guild-4"]);
+
+    const { result } = mountActions(
+      true,
+      (request) => {
+        const guildId = new URL(request.url).pathname.split("/")[2] ?? "";
+
+        if (request.method === "GET") return Response.json([]);
+
+        if (failing.has(guildId))
+          return Response.json({ message: "unavailable" }, { status: 503 });
+
+        return Response.json(createTimerFixture({ guildId, wasReset: true }));
+      },
+      ["guild-1", "guild-2", "guild-4"],
+    );
+
+    const partial = (succeeded: number) =>
+      getFixedT("timers")("messages.resetPartialFailure", {
+        name: "Tanroth",
+        succeeded,
+        total: 3,
+      });
+
+    await act(() => result.current.handleRestartTimer());
+    expect(messages.at(-1)).toBe(partial(1));
+    failing.delete("guild-2");
+    await act(() => result.current.handleRestartTimer());
+    expect(messages.at(-1)).toBe(partial(2));
+  });
 
   it("deletes once while confirmation is pending and maps a subsequent HTTP failure", async () => {
     let reject = false;
