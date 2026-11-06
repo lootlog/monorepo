@@ -1,6 +1,6 @@
 import type { EnqueuedTaskPromise } from "meilisearch";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Effect, Schema } from "effect";
+import { Effect, Predicate, Schema } from "effect";
 
 export class SearchOperationFailure extends TaggedErrorClass<SearchOperationFailure>()(
   "SearchOperationFailure",
@@ -9,6 +9,21 @@ export class SearchOperationFailure extends TaggedErrorClass<SearchOperationFail
     cause: Schema.Defect(),
   },
 ) {}
+
+const isInvalidRequest = (cause: unknown): boolean =>
+  Predicate.hasProperty(cause, "type") && cause.type === "invalid_request";
+
+/**
+ * A Meilisearch rejection of the request itself, such as an invalid document:
+ * repeating the same items can never succeed. Transport errors, timeouts and
+ * internal or auth failures may pass and stay retryable.
+ */
+export const isPermanentSearchFailure = (
+  error: SearchOperationFailure,
+): boolean =>
+  isInvalidRequest(error.cause) ||
+  (Predicate.hasProperty(error.cause, "cause") &&
+    isInvalidRequest(error.cause.cause));
 
 export const attemptMeilisearch = <A>(
   operation: string,

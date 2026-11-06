@@ -1,4 +1,4 @@
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, UnprocessableDelivery } from "@lootlog/messaging";
 import {
   RabbitRoutingKey,
   makeQueue as queue,
@@ -6,6 +6,7 @@ import {
 import {
   Deferred,
   Effect,
+  Exit,
   Layer,
   Queue,
   Redacted,
@@ -22,8 +23,19 @@ import { IndexPlayersPayload } from "#src/players/index-players-command";
 import { SearchHttpServer } from "#src/http-api/search-http";
 import { SearchOperations } from "#src/http-api/search-operations";
 import { effectLogger } from "#src/shared/logger";
+import {
+  isPermanentSearchFailure,
+  type SearchOperationFailure,
+} from "#src/meilisearch/search-operation-failure";
 
 const batchMessageLimit = 50;
+
+const rejectPermanent = (outcome: Exit.Exit<void, SearchOperationFailure>) =>
+  Exit.mapError(outcome, (error) =>
+    isPermanentSearchFailure(error)
+      ? new UnprocessableDelivery({ cause: error })
+      : error,
+  );
 
 const searchQueues = {
   items: queue("search.items.index", RabbitRoutingKey.SEARCH_ITEMS_INDEX),
@@ -47,32 +59,57 @@ export const SearchConsumers = Layer.effectDiscard(
     const consume = Effect.fn("SearchConsumers.consume")(function* <A>(
       queueName: string,
       schema: Schema.Codec<ReadonlyArray<A>>,
-      index: (items: ReadonlyArray<A>) => Effect.Effect<void, unknown>,
+      index: (
+        items: ReadonlyArray<A>,
+      ) => Effect.Effect<void, SearchOperationFailure>,
     ) {
       const pending = yield* Queue.make<{
         readonly items: ReadonlyArray<A>;
-        readonly completed: Deferred.Deferred<void, unknown>;
+        readonly completed: Deferred.Deferred<
+          void,
+          SearchOperationFailure | UnprocessableDelivery
+        >;
       }>({ capacity: batchMessageLimit });
+
+      const indexUntilSettled = (items: ReadonlyArray<A>) =>
+        Effect.suspend(() => index(items)).pipe(
+          Effect.tapError((error) =>
+            isPermanentSearchFailure(error)
+              ? Effect.void
+              : Effect.logWarning(
+                  "Search indexing failed; retrying the ordered batch",
+                ).pipe(Effect.annotateLogs({ queue: queueName })),
+          ),
+          Effect.retry({
+            schedule: Schedule.spaced("5 seconds"),
+            while: (error) => !isPermanentSearchFailure(error),
+          }),
+        );
 
       yield* Stream.fromQueue(pending).pipe(
         Stream.groupedWithin(batchMessageLimit, "2 seconds"),
         Stream.runForEach((batch) =>
           Effect.gen(function* () {
-            const items = batch.flatMap(({ items }) => items);
-
             const outcome = yield* Effect.exit(
-              Effect.suspend(() => index(items)).pipe(
-                Effect.tapError(() =>
-                  Effect.logWarning(
-                    "Search indexing failed; retrying the ordered batch",
-                  ).pipe(Effect.annotateLogs({ queue: queueName })),
-                ),
-                Effect.retry(Schedule.spaced("5 seconds")),
-              ),
+              indexUntilSettled(batch.flatMap(({ items }) => items)),
             );
 
-            for (const { completed } of batch) {
-              yield* Deferred.done(completed, outcome);
+            if (Exit.isSuccess(outcome) || batch.length === 1) {
+              for (const { completed } of batch) {
+                yield* Deferred.done(completed, rejectPermanent(outcome));
+              }
+
+              return;
+            }
+
+            // One rejected delivery must not hold back or drop its batch:
+            // index each on its own so only the one that cannot succeed is
+            // rejected. Indexing is an upsert, so repeating the rest is safe.
+            for (const { items, completed } of batch) {
+              yield* Deferred.done(
+                completed,
+                rejectPermanent(yield* Effect.exit(indexUntilSettled(items))),
+              );
             }
           }).pipe(
             // The batch loop outlives the consume span; give each batch its own trace.
@@ -111,7 +148,11 @@ export const SearchConsumers = Layer.effectDiscard(
 
           // Keep each delivery unacknowledged until the whole batch succeeds.
           return Effect.gen(function* () {
-            const completed = yield* Deferred.make<void, unknown>();
+            const completed = yield* Deferred.make<
+              void,
+              SearchOperationFailure | UnprocessableDelivery
+            >();
+
             yield* Queue.offer(pending, { items, completed });
             yield* Deferred.await(completed);
           });
