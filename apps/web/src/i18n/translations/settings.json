@@ -1280,12 +1280,6 @@
         "title": "Losowy Kotek 🎲",
         "description": "Losuje wariant przy każdym odświeżeniu"
       }
-    },
-    "announcement": {
-      "title": "Własne motywy",
-      "description": "Ustaw własne kolory, tapetę, czcionkę i zaokrąglenia, a gotowym motywem podziel się linkiem.",
-      "create": "Stwórz motyw",
-      "dismiss": "Ukryj ogłoszenie"
     }
   }
 }

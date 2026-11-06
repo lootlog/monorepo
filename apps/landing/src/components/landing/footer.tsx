@@ -30,6 +30,10 @@ export function LandingFooter() {
               <Link className="landing-footer-link" to="/blog">
                 {t("landing.footer.blog")}
               </Link>
+              <a className="landing-footer-link" href={links.wiki}>
+                {t("landing.footer.wiki")}
+                <ArrowUpRight className="size-3.5" aria-hidden="true" />
+              </a>
               <a className="landing-footer-link" href={links.docs}>
                 {t("landing.footer.docs")}
                 <ArrowUpRight className="size-3.5" aria-hidden="true" />

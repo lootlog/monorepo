@@ -12,7 +12,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
-import { Blocks, ChevronRight, LogOut, X } from "lucide-react";
+import { Blocks, BookOpen, ChevronRight, LogOut, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   SIGNAL_DOT_COLOR,
@@ -20,6 +20,7 @@ import {
   useUserMenu,
 } from "@/components/layout/use-user-menu";
 import { UserSignalAvatar } from "@/components/layout/user-signal-avatar";
+import { WIKI_URL } from "@/config/wiki";
 
 /** A 44px row, inset like the navigation rows above it. */
 const ROW_CLASS =
@@ -165,7 +166,7 @@ export const UserMenuSheet = () => {
           ))}
         </ul>
         <div className="mx-4 my-2 h-px bg-sidebar-border" />
-        <div className="px-2">
+        <div className="flex flex-col gap-0.5 px-2">
           <Button
             variant="ghost"
             className={ROW_CLASS}
@@ -176,6 +177,18 @@ export const UserMenuSheet = () => {
           >
             <Blocks aria-hidden="true" />
             {t("layout.userMenu.installAddon")}
+          </Button>
+          <Button
+            variant="ghost"
+            nativeButton={false}
+            render={
+              <a href={WIKI_URL} target="_blank" rel="noopener noreferrer" />
+            }
+            className={ROW_CLASS}
+          >
+            <BookOpen aria-hidden="true" />
+            {t("layout.userMenu.wiki")}
+            <span className="sr-only">{t("ui.externalLink.newTab")}</span>
           </Button>
         </div>
         <div className="mx-4 my-2 h-px bg-sidebar-border" />
