@@ -1,0 +1,227 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "1907a1b8-9f78-489c-8c95-da1f2dee0842",
+  "prevIds": ["8af7c07e-2dc9-4e0a-baaa-dcb59ac48931"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "EventHeroCheckOutbox"],
+      "writes": [
+        "s|tbl|public.EventHeroCheckOutbox",
+        "n|tbl|public.EventHeroCheckOutbox",
+        "e|tbl|public.EventHeroCheckOutbox",
+        "n|rel|public.EventHeroCheckOutbox",
+        "n|type|public.EventHeroCheckOutbox",
+        "n|rel|public.EventHeroCheckOutbox_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "EventHeroCheckOutbox",
+        "EventHeroCheckOutbox_lastAttemptAt_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.EventHeroCheckOutbox_lastAttemptAt_id_idx",
+        "n|idx|public.EventHeroCheckOutbox_lastAttemptAt_id_idx",
+        "e|idx|public.EventHeroCheckOutbox_lastAttemptAt_id_idx",
+        "n|rel|public.EventHeroCheckOutbox_lastAttemptAt_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.EventHeroCheckOutbox",
+        "n|sch|public",
+        "n|col|public.EventHeroCheckOutbox.lastAttemptAt",
+        "n|col|public.EventHeroCheckOutbox.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": ["table", "public", "EventHeroCheckOutbox"],
+      "writes": [
+        "s|fk|public.EventHeroCheckOutbox.EventHeroCheckOutbox_guildId_fkey",
+        "n|fk|public.EventHeroCheckOutbox.EventHeroCheckOutbox_guildId_fkey",
+        "e|fk|public.EventHeroCheckOutbox.EventHeroCheckOutbox_guildId_fkey",
+        "n|con|public.EventHeroCheckOutbox.EventHeroCheckOutbox_guildId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.EventHeroCheckOutbox",
+        "n|sch|public",
+        "n|tbl|public.Guild",
+        "n|sch|public",
+        "n|col|public.EventHeroCheckOutbox.guildId",
+        "n|col|public.Guild.id",
+        "e|uniqueness|public.Guild.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "EventHeroCheckOutbox",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EventHeroCheckOutbox",
+        "name": "id",
+        "type": "serial",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EventHeroCheckOutbox",
+        "name": "guildId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EventHeroCheckOutbox",
+        "name": "jobId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EventHeroCheckOutbox",
+        "name": "payload",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EventHeroCheckOutbox",
+        "name": "lastAttemptAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EventHeroCheckOutbox",
+        "name": "createdAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EventHeroCheckOutbox",
+        "name": "EventHeroCheckOutbox_lastAttemptAt_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "lastAttemptAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": true,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EventHeroCheckOutbox",
+        "name": "EventHeroCheckOutbox_guildId_fkey",
+        "nameExplicit": true,
+        "columns": ["guildId"],
+        "schemaTo": "public",
+        "tableTo": "Guild",
+        "columnsTo": ["id"],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "EventHeroCheckOutbox",
+        "name": "EventHeroCheckOutbox_pkey",
+        "columns": ["id"],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

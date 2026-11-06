@@ -16,6 +16,7 @@ import {
   timerHistoryEntryTable,
   timerTable,
 } from "#src/database/drizzle/timer.schema";
+import { eventHeroCheckOutboxTable } from "#src/database/drizzle/event-hero-check-outbox.schema";
 import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import { buildTimerKey } from "#src/timers/timer-key";
 import {
@@ -108,7 +109,7 @@ it("limits independent Organization writes to three, settles delivery pairs, and
           releaseDedup: () => Effect.void,
           invalidateList: () => Effect.void,
           publishHeroSighting: () => Effect.void,
-          enqueueEventHeroCheck: () => Effect.void,
+          signalEventHeroChecks: Effect.void,
           withLock: (key, operation) =>
             Effect.gen(function* () {
               const guildId = key.split(":")[2];
@@ -309,7 +310,7 @@ it.each([false, true])(
               }),
             invalidateList: () => Effect.void,
             publishHeroSighting: () => Effect.void,
-            enqueueEventHeroCheck: () => Effect.void,
+            signalEventHeroChecks: Effect.void,
             publish: (routingKey) =>
               Effect.gen(function* () {
                 publications.push(routingKey);
@@ -424,7 +425,6 @@ it("writes a kill within the dedup window of an event respawn window that has no
     );
 
     const publications: string[] = [];
-    const eventHeroIcons: Array<string | undefined> = [];
 
     const create = makeAutoTimer(database, {
       get: () => Effect.succeed(null),
@@ -433,10 +433,7 @@ it("writes a kill within the dedup window of an event respawn window that has no
       releaseDedup: () => Effect.void,
       invalidateList: () => Effect.void,
       publishHeroSighting: () => Effect.void,
-      enqueueEventHeroCheck: (check) =>
-        Effect.sync(() => {
-          eventHeroIcons.push(check.npcIcon);
-        }),
+      signalEventHeroChecks: Effect.void,
       withLock: (_key, operation) => operation,
       publish: (routingKey) =>
         Effect.sync(() => {
@@ -478,7 +475,11 @@ it("writes a kill within the dedup window of an event respawn window that has no
     ).toMatchObject([
       { latestRespBaseSeconds: 60, npc: { icon: "her/hero.png" } },
     ]);
-    expect(eventHeroIcons).toEqual(["her/hero.png"]);
+    expect(
+      (
+        await boundary.run(database.select().from(eventHeroCheckOutboxTable))
+      ).map(({ payload }) => payload.npcIcon),
+    ).toEqual(["her/hero.png"]);
     expect(publications).toEqual([
       RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
       RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
@@ -525,7 +526,7 @@ it.each([false, true])(
         releaseDedup: () => Effect.void,
         invalidateList: () => Effect.void,
         publishHeroSighting: () => Effect.void,
-        enqueueEventHeroCheck: () => Effect.void,
+        signalEventHeroChecks: Effect.void,
         withLock: (_key, operation) => operation,
         publish: (routingKey) =>
           Effect.sync(() => {
@@ -583,6 +584,11 @@ it.each([false, true])(
       );
       expect(
         await boundary.run(database.select().from(timerHistoryEntryTable)),
+      ).toHaveLength(1);
+      // The event hero check committed with the first attempt survives its
+      // failed publication, and the retry does not queue a second one.
+      expect(
+        await boundary.run(database.select().from(eventHeroCheckOutboxTable)),
       ).toHaveLength(1);
       // The failed attempt did not record its result, so its retry publishes
       // again: delivery is at least once instead of possibly never.
@@ -683,7 +689,7 @@ it("keeps one timer per Hero Tracker across hiding places, measuring its respawn
       releaseDedup: () => Effect.void,
       invalidateList: () => Effect.void,
       publishHeroSighting: () => Effect.void,
-      enqueueEventHeroCheck: () => Effect.void,
+      signalEventHeroChecks: Effect.void,
       withLock: (_key, operation) => operation,
       publish: () => Effect.void,
     });
@@ -787,7 +793,7 @@ it("keeps the window of an open Hero Tracker entrance when another player report
       releaseDedup: () => Effect.void,
       invalidateList: () => Effect.void,
       publishHeroSighting: () => Effect.void,
-      enqueueEventHeroCheck: () => Effect.void,
+      signalEventHeroChecks: Effect.void,
       withLock: (_key, operation) => operation,
       publish: (routingKey) =>
         Effect.sync(() => {
@@ -851,7 +857,7 @@ it("rejects a timer for an elite I, which Margonem weighs up to 19", async () =>
       releaseDedup: () => Effect.void,
       invalidateList: () => Effect.die("unused"),
       publishHeroSighting: () => Effect.void,
-      enqueueEventHeroCheck: () => Effect.die("unused"),
+      signalEventHeroChecks: Effect.die("unused"),
       withLock: (_key, operation) => operation,
       publish: () => Effect.die("unused"),
     });
