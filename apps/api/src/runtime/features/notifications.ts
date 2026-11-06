@@ -234,17 +234,15 @@ export const notificationsServicesLive = Layer.effect(
         rules: makeNotificationRuleOperations(database, {
           ensureGuildPermissions: (guildId) =>
             guildSync.getGuildDiscordSyncStatus(guildId).pipe(
-              Effect.flatMap((syncState) =>
-                syncState.hasRequiredPermissions
-                  ? Effect.succeed(syncState)
-                  : Effect.fail(
-                      new ResourceConflictError({
-                        code: NotificationError.DISCORD_BOT_MISSING_REQUIRED_PERMISSIONS,
-                        details: {
-                          missingPermissions: syncState.missingPermissions,
-                        },
-                      }),
-                    ),
+              Effect.filterOrFail(
+                (syncState) => syncState.hasRequiredPermissions,
+                (syncState) =>
+                  new ResourceConflictError({
+                    code: NotificationError.DISCORD_BOT_MISSING_REQUIRED_PERMISSIONS,
+                    details: {
+                      missingPermissions: syncState.missingPermissions,
+                    },
+                  }),
               ),
             ),
           rebuildJobs: rebuild.rebuildRule,

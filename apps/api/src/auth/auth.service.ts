@@ -133,9 +133,7 @@ export class AuthService {
       }
 
       return data;
-    }).pipe(
-      Effect.catch((error) => Effect.fail(this.mapFetchError(userId, error))),
-    );
+    }).pipe(Effect.mapError((error) => this.mapFetchError(userId, error)));
   }
 
   getIdpToken(
@@ -228,9 +226,7 @@ export class AuthService {
       }
 
       return response;
-    }).pipe(
-      Effect.catch((error) => Effect.fail(this.mapTokenError(userId, error))),
-    );
+    }).pipe(Effect.mapError((error) => this.mapTokenError(userId, error)));
   }
 
   /**

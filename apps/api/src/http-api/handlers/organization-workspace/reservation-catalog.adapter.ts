@@ -36,7 +36,7 @@ export const makeReservationCatalogAdapter = (options: {
 }): ReservationCatalogAdapter => {
   const getSpots = Effect.suspend(() =>
     options.cache.getJson(CACHE_KEY, Schema.Unknown).pipe(
-      Effect.catch(() => Effect.succeed(null)),
+      Effect.orElseSucceed(() => null),
       Effect.flatMap((cached) => {
         if (cached !== null) {
           return Effect.try({

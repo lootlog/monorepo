@@ -195,8 +195,8 @@ describe("loot detail concurrent reads", () => {
     );
 
     const requests = Array.from({ length: 100 }, () =>
-      Effect.runPromise(
-        Effect.exit(operations.fetchLootById(guild, policy, [role], 42)),
+      Effect.runPromiseExit(
+        operations.fetchLootById(guild, policy, [role], 42),
       ),
     );
 

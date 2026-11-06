@@ -50,7 +50,7 @@ describe("public system HttpApi handlers", () => {
 
     const [health, maps] = await Effect.runPromise(
       Effect.all([healthCheck(), getMaps()]).pipe(
-        Effect.provide(Layer.succeed(PublicSystemData, data)),
+        Effect.provideService(PublicSystemData, data),
       ),
     );
 
@@ -130,7 +130,7 @@ describe("public system HttpApi handlers", () => {
   it("returns the public PNG with the established cache headers", async () => {
     const response = await Effect.runPromise(
       getPublicStatsCard("guild-a").pipe(
-        Effect.provide(Layer.succeed(PublicSystemData, makeData())),
+        Effect.provideService(PublicSystemData, makeData()),
       ),
     );
 

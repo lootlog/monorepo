@@ -424,10 +424,10 @@ export const makeKillCreation = (
     });
 
     const apiKey = yield* requestApiKeyAccess;
+
     // The personal record and the Organization targets are independent; both
     // finish before the result is read, so neither interrupts the other's
     // write, and a personal dedup failure still prevents every guild write.
-
     const recordPersonal =
       !apiKey || apiKey.personalData
         ? writeOnce(
@@ -445,17 +445,17 @@ export const makeKillCreation = (
               periodStart,
             ),
           ).pipe(
-            Effect.catch((error) =>
-              error.operation === "kills.dedup.user"
-                ? Effect.fail(error)
-                : Effect.sync(() => {
-                    logger.error({
-                      message: "Failed to upsert user kill stats",
-                      error,
-                    });
+            Effect.catchIf(
+              (error) => error.operation !== "kills.dedup.user",
+              (error) =>
+                Effect.sync(() => {
+                  logger.error({
+                    message: "Failed to upsert user kill stats",
+                    error,
+                  });
 
-                    return false;
-                  }),
+                  return false;
+                }),
             ),
             Effect.tap((updated) =>
               updated

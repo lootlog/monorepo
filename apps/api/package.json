@@ -23,7 +23,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "bun --enable-source-maps dist/src/main.js",
     "start:debug": "bun --conditions=development --inspect-wait --watch --enable-source-maps src/main.ts",
-    "lint": "oxlint src test",
+    "lint": "oxlint src test && effect-tsgo diagnostics --project tsconfig.json --severity error",
     "typecheck": "bun check -p tsconfig.json",
     "format": "oxfmt src test",
     "test": "bun --conditions=development test --timeout=30000 --path-ignore-patterns=dist src ./test/database-fixtures.test.ts",
@@ -58,6 +58,7 @@
   },
   "devDependencies": {
     "@effect/sql-pglite": "^4.1.2",
+    "@effect/tsgo": "0.67.3",
     "@electric-sql/pglite": "^0.5.9",
     "@lootlog/typescript-config": "workspace:*",
     "@testcontainers/postgresql": "^12.2.1",

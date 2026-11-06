@@ -3,7 +3,7 @@ import {
   createMemberFixture,
 } from "../../../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
-import { Effect, Layer, Schema } from "effect";
+import { Effect, Schema } from "effect";
 import { decodeDomainJson } from "../../domain-json.schema.js";
 import { Permission } from "@lootlog/schema/permissions";
 import { OrganizationSummary } from "#src/contracts/shared";
@@ -54,7 +54,7 @@ describe("internal guild HttpApi handlers", () => {
 
     const response = await Effect.runPromise(
       getInternalUserPermissions("discord-a", "user-a").pipe(
-        Effect.provide(Layer.succeed(InternalGuildsData, data)),
+        Effect.provideService(InternalGuildsData, data),
       ),
     );
 
@@ -82,7 +82,7 @@ describe("internal guild HttpApi handlers", () => {
 
     const response = await Effect.runPromise(
       getInternalUserPermissions("", "user-a").pipe(
-        Effect.provide(Layer.succeed(InternalGuildsData, data)),
+        Effect.provideService(InternalGuildsData, data),
       ),
     );
 
@@ -99,7 +99,7 @@ describe("internal guild HttpApi handlers", () => {
 
     const response = await Effect.runPromise(
       getInternalGuild("guild-a").pipe(
-        Effect.provide(Layer.succeed(InternalGuildsData, data)),
+        Effect.provideService(InternalGuildsData, data),
       ),
     );
 

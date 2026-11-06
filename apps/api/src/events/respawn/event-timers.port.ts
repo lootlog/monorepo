@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { respawnFromSpawnWindow } from "@lootlog/domain/timers";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect, Predicate, Schema } from "effect";
 import { ExecutionError, type RedlockService } from "#src/redis/redlock";
 import {
   RabbitExchange,
@@ -426,14 +426,12 @@ export const makeEventTimersPort = ({
             input.world,
             timerKey,
           ).pipe(
-            Effect.flatMap((timer) =>
-              timer
-                ? Effect.succeed(timer)
-                : Effect.fail(
-                    new ResourceConflictError({
-                      code: ErrorKey.TIMER_RACE_CONDITION,
-                    }),
-                  ),
+            Effect.filterOrFail(
+              Predicate.isNotNullish,
+              () =>
+                new ResourceConflictError({
+                  code: ErrorKey.TIMER_RACE_CONDITION,
+                }),
             ),
             Effect.mapError(
               (cause) => new EventTimersError({ operation, cause }),

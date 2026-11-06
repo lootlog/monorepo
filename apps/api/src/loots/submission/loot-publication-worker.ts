@@ -13,7 +13,12 @@ export const makeLootPublicationWorker = Effect.fnUntraced(function* (
           Effect.logError("Loot publication dispatch failed", error),
         ),
       );
-      yield* Effect.raceFirst(Queue.take(signals), Effect.sleep("1 second"));
+      yield* Queue.take(signals).pipe(
+        Effect.timeoutOrElse({
+          duration: "1 second",
+          orElse: () => Effect.void,
+        }),
+      );
     }
   });
 
