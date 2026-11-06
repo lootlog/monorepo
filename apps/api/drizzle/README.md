@@ -1059,3 +1059,30 @@ always held the acting User's Discord id, never a `Member.id`. Apply it right
 before deploying the API that reads the new names. Between the two steps the
 running API fails document requests; no other feature reads these columns.
 The HTTP response fields keep their `*MemberId` names.
+
+## Dialog loot NPC repair
+
+Game clients until #1158 (2026-07-23) named a dialog loot after every NPC its
+event removed from the map (`npcs_del`), not after the NPC the player talked
+to. A Zamrożony czarodziej reward could therefore also name a pickaxe, an ice
+pillar or a frost crystal nearby. Current clients send only the dialog's NPC.
+
+`20261106161530_dialog_loot_npc_repair` learns which NPC gives an item from
+dialog loots with exactly one NPC. In a dialog loot with several NPCs, the
+only monster (name and edition) that gives every item of the loot keeps its
+earliest `LootNpc` link and the other links are deleted. Loots where no
+monster or several monsters qualify, such as Niewydobyty minerał with Sterta
+kości, which share their items, keep every NPC. A repeat run deletes nothing.
+
+On the local production copy (2026-11-06) it repaired 18,721 of 21,018
+multi-NPC dialog loots and deleted 19,478 links (11,102 `NPC`, 8,216 `COMMON`,
+156 `ELITE3`, 4 `ELITE`); 2,297 stay ambiguous. It reads for about 15 seconds
+and locks only the deleted rows. Loot visibility requires every NPC of a loot
+to fit a role's levels and types, so roles limited to higher levels now see
+these dialog rewards, which the level-0 objects hid. No titan or hero link is
+deleted.
+
+Live indexing and the search seed now name a dialog's only NPC as its items'
+source. After applying the migration, rebuild the search indexes with
+`bun run seed` in `apps/search`: live indexing only adds sources, so the
+catalog lists earlier dialog sources only after a rebuild.

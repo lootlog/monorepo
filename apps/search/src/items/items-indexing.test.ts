@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { Meilisearch } from "meilisearch";
 import { npcCatalogKey } from "#src/npcs/npcs.service";
+import { mergeItemDropFields, toItemDropFields } from "./item-drops.js";
 import { itemCatalogKey, makeItemsModule } from "./items.service.js";
 
 const logger = { info() {}, warn() {}, error() {} };
@@ -229,6 +230,24 @@ test("keeps an item's earliest sighting, every NPC of its edition it dropped fro
       // Nosferatu dropped it again; Kostucha has not.
       retiredDropMonsterKeys: ["pl_Kostucha_HERO"],
     }),
+  ]);
+});
+
+test("a monster standing in many places does not crowd out another monster's drops", () => {
+  const fields = (drop: ReturnType<typeof npcDrop>) =>
+    toItemDropFields({ ...item(1), droppedBy: drop.indexed });
+
+  // Every Zamrożony czarodziej of a mine is its own catalog identity.
+  const wizards = Array.from({ length: 24 }, (_, index) =>
+    fields(npcDrop(8000 + index, "Zamrożony czarodziej")),
+  ).reduce((stored, incoming) => mergeItemDropFields(incoming, stored));
+
+  const merged = mergeItemDropFields(fields(npcDrop(7100, "Erktos")), wizards);
+
+  expect(merged.droppedByKeys).toHaveLength(25);
+  expect(merged.droppedByMonsterKeys).toEqual([
+    "pl_Zamrożony czarodziej_HERO",
+    "pl_Erktos_HERO",
   ]);
 });
 

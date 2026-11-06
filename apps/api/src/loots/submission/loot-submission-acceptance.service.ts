@@ -705,16 +705,20 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   /**
-   * The NPC a fight's items dropped from, by `DROP_SOURCE_BOSS_TYPES`.
-   * Other sources, such as a lootbox, have none.
+   * The NPC the items came from: a dialog's or a fight's only NPC, or the only
+   * boss of a group fight (`DROP_SOURCE_BOSS_TYPES`). Other sources, such as
+   * a lootbox, have none.
    */
   private findDropSource(
     npcs: AcceptedNpcSnapshot[],
     submission: CreateLootRequest,
   ): AcceptedNpcSnapshot | undefined {
-    if (submission.source !== "FIGHT") return undefined;
+    if (submission.source !== "FIGHT" && submission.source !== "DIALOG")
+      return undefined;
 
     if (npcs.length === 1) return npcs[0];
+
+    if (submission.source === "DIALOG") return undefined;
 
     const bosses = npcs.filter(
       (npc) => npc.type !== null && dropSourceBossTypes.has(npc.type),
