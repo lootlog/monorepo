@@ -1,7 +1,10 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { isString } from "es-toolkit";
 import { createDiagnosticsReport } from "@/lib/diagnostics-report";
-import { showRuntimeFailureNotice } from "@/lib/runtime-failure-notice";
+import {
+  showRuntimeFailureNotice,
+  type RuntimeFailureKind,
+} from "@/lib/runtime-failure-notice";
 import { parseRuntimeFacts } from "./runtime-event-parser";
 import {
   createRuntimeAdapter,
@@ -49,6 +52,8 @@ type BridgeOptions = {
 
 export type RuntimeBridgeHealth = Readonly<{
   adapter: RuntimeInterface | "unknown";
+  /** Observer callbacks that threw since install; each was isolated from the game. */
+  observerFailures: number;
   reason: string | null;
   seam: string | null;
   sequence: number;
@@ -88,6 +93,7 @@ export class MargonemRuntimeBridge {
     wrapper: RuntimeFunction;
   }> = [];
   private sequence = 0;
+  private observerFailures = 0;
   private installRetryCount = 0;
   private installRetryTimeout: ReturnType<typeof setTimeout> | null = null;
   private failureReason: string | null = null;
@@ -207,6 +213,7 @@ export class MargonemRuntimeBridge {
     return Object.freeze({
       adapter:
         this.runtimeInterface ?? this.resolvedAdapter?.interface ?? "unknown",
+      observerFailures: this.observerFailures,
       reason: this.failureReason,
       seam: this.inboundSeam,
       sequence: this.sequence,
@@ -221,6 +228,7 @@ export class MargonemRuntimeBridge {
     this.intentHandlers.clear();
     this.commandHandlers.clear();
     this.sequence = 0;
+    this.observerFailures = 0;
     this.clearInstallRetry();
     this.activeIntent = null;
     this.gameInitCallback = null;
@@ -495,6 +503,8 @@ export class MargonemRuntimeBridge {
   }
 
   private reportObserverFailure(failure: RuntimeObserverFailure): void {
+    this.observerFailures += 1;
+
     try {
       this.onObserverError?.(failure);
     } catch {
@@ -539,7 +549,14 @@ export class MargonemRuntimeBridge {
   }
 }
 
-function scheduleActiveRuntimeTeardown(): void {
+/**
+ * Tears the active Lootlog runtime down after the current game callback and
+ * tells the player why, with diagnostics taken before teardown resets them.
+ */
+export function scheduleRuntimeTeardown(
+  kind: RuntimeFailureKind,
+  failure: string,
+): void {
   const runtimeWindow: Window & {
     __lootlogGameClientRuntime?: { dispose: () => void };
   } = window;
@@ -554,7 +571,7 @@ function scheduleActiveRuntimeTeardown(): void {
   try {
     diagnostics = createDiagnosticsReport({
       bridgeHealth: margonemRuntimeBridge.getHealth(),
-      failure: "game bridge could not attach to Margonem's packet handler",
+      failure,
     });
   } catch {
     // The notice and the teardown must not depend on the report.
@@ -566,13 +583,17 @@ function scheduleActiveRuntimeTeardown(): void {
     try {
       failedRuntime.dispose();
     } finally {
-      showRuntimeFailureNotice("gameConnection", diagnostics);
+      showRuntimeFailureNotice(kind, diagnostics);
     }
   });
 }
 
 export const margonemRuntimeBridge = new MargonemRuntimeBridge({
-  onFatalPipelineError: scheduleActiveRuntimeTeardown,
+  onFatalPipelineError: () =>
+    scheduleRuntimeTeardown(
+      "gameConnection",
+      "game bridge could not attach to Margonem's packet handler",
+    ),
   onObserverError: ({ error, phase }) => {
     if (import.meta.env.DEV) {
       console.warn(`[MargonemRuntimeBridge] ${phase} observer failed:`, error);
