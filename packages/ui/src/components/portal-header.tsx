@@ -13,6 +13,7 @@ import {
   SheetTrigger,
 } from "./sheet";
 import { TextLink } from "./text-link";
+import { cn } from "cn";
 
 export type PortalHeaderLink = {
   id: string;
@@ -33,6 +34,15 @@ type PortalHeaderProps = {
   compactSearch: ReactNode;
   /** Shown before the search on wide screens and at the bottom of the menu. */
   status?: ReactNode;
+  /** The portal's own mark before its name; the Lootlog mark by default. */
+  mark?: ReactNode;
+  /** Controls that stay in the bar at every width, such as the account. */
+  actions?: ReactNode;
+  /**
+   * From which width the links sit in the bar; narrower screens open them
+   * from the menu. A portal with more links moves them later.
+   */
+  inlineFrom?: "md" | "lg";
   labels: {
     skipToContent: string;
     navigation: string;
@@ -40,6 +50,20 @@ type PortalHeaderProps = {
     closeNavigation: string;
   };
 };
+
+// Tailwind needs whole class names, so each breakpoint spells its own.
+const INLINE_CLASS_NAMES = {
+  md: {
+    bar: "hidden md:block",
+    search: "hidden md:contents",
+    menu: "md:hidden",
+  },
+  lg: {
+    bar: "hidden lg:block",
+    search: "hidden lg:contents",
+    menu: "lg:hidden",
+  },
+} as const;
 
 /**
  * The fixed top bar shared by the public documentation portals. Pages offset
@@ -53,8 +77,13 @@ export function PortalHeader({
   search,
   compactSearch,
   status,
+  mark = <LootlogMark className="size-7" />,
+  actions,
+  inlineFrom = "md",
   labels,
 }: PortalHeaderProps) {
+  const inline = INLINE_CLASS_NAMES[inlineFrom];
+
   const [open, setOpen] = useState(false);
 
   const brand = useRender({
@@ -65,7 +94,7 @@ export function PortalHeader({
         "inline-flex shrink-0 items-center gap-2.5 rounded-md py-1 pr-1 outline-none focus-visible:ring-2 focus-visible:ring-ring",
       children: (
         <>
-          <LootlogMark className="size-7" />
+          {mark}
           <span className="text-[0.9375rem] font-semibold tracking-tight text-foreground">
             Lootlog
           </span>
@@ -88,11 +117,11 @@ export function PortalHeader({
       {brand}
       <span
         aria-hidden="true"
-        className="mx-1 hidden h-5 w-px bg-sidebar-border md:block"
+        className={cn("mx-1 h-5 w-px bg-sidebar-border", inline.bar)}
       />
       <HorizontalMenu
         aria-label={labels.navigation}
-        className="hidden h-full md:block"
+        className={cn("h-full", inline.bar)}
       >
         {links.map((link) => (
           <li key={link.id}>
@@ -107,12 +136,12 @@ export function PortalHeader({
         ))}
       </HorizontalMenu>
       <div className="ml-auto flex items-center gap-2 md:gap-3">
-        <div className="hidden md:contents">{search}</div>
+        <div className={inline.search}>{search}</div>
         {status && <div className="hidden lg:contents">{status}</div>}
-        <div className="md:hidden">{compactSearch}</div>
+        <div className={inline.menu}>{compactSearch}</div>
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger
-            render=<Button variant="ghost" size="sm" className="md:hidden" />
+            render=<Button variant="ghost" size="sm" className={inline.menu} />
           >
             {labels.menu}
           </SheetTrigger>
@@ -145,6 +174,7 @@ export function PortalHeader({
             {status && <div className="mt-auto self-start">{status}</div>}
           </SheetContent>
         </Sheet>
+        {actions}
       </div>
     </header>
   );

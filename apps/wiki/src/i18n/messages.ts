@@ -22,6 +22,8 @@ const messages = {
     calculators: "Kalkulatory",
     set: "Mój zestaw",
     breadcrumbs: "Ścieżka strony",
+    menu: "Menu",
+    closeMenu: "Zamknij menu",
     events: "Eventy",
   },
   header: {
