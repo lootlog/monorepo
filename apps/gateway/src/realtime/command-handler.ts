@@ -938,9 +938,9 @@ export class CommandHandler {
       )
         return yield* Effect.fail(new OrganizationAccessDenied());
 
-      yield* withdrawNpcPresence(socket, data.character);
-      socket.data.character = data.character;
-      socket.data.confidence = "reported";
+      // The session keeps its current identity until every fallible step
+      // has passed, so a failed re-join leaves it as it was.
+      let confidence: SessionData["confidence"] = "reported";
       let announceVerified: Effect.Effect<void> = Effect.void;
 
       if (data.character) {
@@ -953,7 +953,7 @@ export class CommandHandler {
         });
 
         if (verification.valid) {
-          socket.data.confidence = "verified";
+          confidence = "verified";
 
           // Other services trust account ownership only from this fact.
           announceVerified = publishAccountVerified({
@@ -983,6 +983,9 @@ export class CommandHandler {
       );
 
       const userGuilds = yield* Effect.fromResult(userGuildsResult);
+      yield* withdrawNpcPresence(socket, data.character);
+      socket.data.character = data.character;
+      socket.data.confidence = confidence;
       const authorizedGuilds = scopedGuilds(socket.data, userGuilds);
 
       if (authorizedGuilds.length === 0) {

@@ -637,6 +637,56 @@ describe("CommandHandler session lifecycle", () => {
     );
   });
 
+  test("a re-join whose permission read fails keeps the joined character and confidence", async () => {
+    let guildsUnavailable = false;
+
+    const { send, guilds } = makeCommandHandler({
+      verifier: { verify: () => Effect.succeed({ valid: true }) },
+    });
+
+    const readGuilds = guilds.getUserGuilds;
+    guilds.getUserGuilds = (...args) =>
+      guildsUnavailable
+        ? Effect.fail(
+            new GuildStoreFailure({ reason: "transport", retryable: true }),
+          )
+        : readGuilds(...args);
+
+    const character = (characterId: string) => ({
+      world: "alpha",
+      name: `Hero ${characterId}`,
+      lvl: 100,
+      icon: "hero.gif",
+      characterId,
+      accountId: "20",
+      prof: "w",
+    });
+
+    const { socket } = newSocket({ platform: "game" });
+    await send(socket, {
+      type: "session.join",
+      data: {
+        world: "alpha",
+        character: character("10"),
+        margonemAccountProof: {},
+      },
+    });
+
+    guildsUnavailable = true;
+    await send(
+      socket,
+      {
+        type: "session.join",
+        data: { world: "alpha", character: character("11") },
+      },
+      "rejoin",
+    );
+
+    expect(socket.data.joined).toBe(true);
+    expect(socket.data.character?.characterId).toBe("10");
+    expect(socket.data.confidence).toBe("verified");
+  });
+
   test("joins over replica capacity get a retry delay without reading permissions", async () => {
     const gate = Promise.withResolvers<void>();
     let requests = 0;

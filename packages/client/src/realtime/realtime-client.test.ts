@@ -116,11 +116,17 @@ const successData = (command: ClientCommand, fields?: SuccessFields) => {
 const respondToLastRequest = (
   socket: TestWebSocket,
   fields?: SuccessFields,
-): void => {
-  const lastRequest = socket.sent.at(-1);
+): void => respondToRequestAt(socket, socket.sent.length - 1, fields);
 
-  if (lastRequest === undefined) throw new Error("Expected a request frame");
-  const request = decodeRealtimeFrame(lastRequest);
+const respondToRequestAt = (
+  socket: TestWebSocket,
+  index: number,
+  fields?: SuccessFields,
+): void => {
+  const sentRequest = socket.sent[index];
+
+  if (sentRequest === undefined) throw new Error("Expected a request frame");
+  const request = decodeRealtimeFrame(sentRequest);
 
   if (!("requestId" in request) || !request.requestId || "status" in request) {
     throw new Error("Expected a request frame");
@@ -657,6 +663,62 @@ describe("RealtimeClient", () => {
     respondToLastRequest(socketAt(sockets, 1));
     await flushMessages();
     expect(client.state).toBe("ready");
+  });
+
+  it("sends scope changes made while a rejoin restores its subscriptions", async () => {
+    const sockets: TestWebSocket[] = [];
+
+    const chat = {
+      topic: "organization.chat",
+      organizationId: "org-1",
+    } as const;
+
+    const loots = {
+      topic: "organization.loots",
+      organizationId: "org-1",
+    } as const;
+
+    const client = new RealtimeClient({
+      url: "https://gateway.example.test",
+      webSocketFactory: () => {
+        const socket = new TestWebSocket();
+        sockets.push(socket);
+
+        return socket;
+      },
+    });
+
+    void client.subscribeScope(chat);
+    client.connect();
+    const socket = socketAt(sockets, 0);
+    socket.open();
+    const joined = client.join(joinData);
+    respondToLastRequest(socket);
+    await flushMessages();
+    expect(frameAt(socket, 1)).toMatchObject({
+      type: "subscription.subscribe",
+      data: chat,
+    });
+
+    void client.subscribeScope(loots);
+    void client.unsubscribeScope(chat);
+    respondToRequestAt(socket, 1);
+    await flushMessages();
+
+    expect(
+      socket.sent.slice(2).map((frame) => decodeRealtimeFrame(frame)),
+    ).toEqual([
+      expect.objectContaining({ type: "subscription.subscribe", data: loots }),
+      expect.objectContaining({ type: "subscription.unsubscribe", data: chat }),
+    ]);
+    expect(client.state).toBe("joining");
+    respondToRequestAt(socket, 2);
+    respondToRequestAt(socket, 3);
+    await flushMessages();
+    await joined;
+    expect(client.state).toBe("ready");
+    expect(socket.sent).toHaveLength(4);
+    client.disconnect();
   });
 
   it("runs the reconnect handler and heartbeats the restored presence session", async () => {

@@ -255,6 +255,9 @@ export function createPageTransport(
 
           return;
         case "state":
+          // A refused join leaves the background client disconnected without
+          // reconnecting, so the next connect() must reach it again.
+          if (message.state === "disconnected") connectionRequested = false;
           setState(message.state);
 
           return;
