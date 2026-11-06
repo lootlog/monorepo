@@ -28,6 +28,18 @@ import { itemStatText } from "@/lib/item-stat-text";
 import { monsterIdentity } from "@/lib/group-items-by-monster";
 import { npcSummary } from "@/lib/npc-summary";
 
+/**
+ * The production wiki, which search results and previews name as each page's
+ * address; development hosts point at it too.
+ */
+export const WIKI_ORIGIN = "https://wiki.lootlog.pl";
+
+/** The address search engines should index a page under, without its options. */
+export const canonicalLink = (path: string) => ({
+  rel: "canonical",
+  href: `${WIKI_ORIGIN}${path}`,
+});
+
 // Common and upgraded items keep the chat's own edge.
 const RARITY_COLORS: Partial<Record<ItemRarity, string>> = LOOT_RARITY_COLORS;
 

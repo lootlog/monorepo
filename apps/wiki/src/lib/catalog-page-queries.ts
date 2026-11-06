@@ -1,29 +1,30 @@
+import { infiniteQueryOptions } from "@tanstack/react-query";
 import {
   catalogControllerGetItems,
-  catalogControllerGetNpcs,
   type CatalogControllerGetItemsParams,
   type CatalogControllerGetNpcsParams,
+  type CatalogItemDtoOutput,
   type CatalogNpcDtoOutput,
-  getCatalogControllerGetItemsQueryOptions,
-  getCatalogControllerGetNpcsQueryOptions,
+  getCatalogControllerGetItemsQueryKey,
 } from "@lootlog/client/search";
 import { catalogSlug } from "@lootlog/domain/catalog-slug";
-import { createIsomorphicFn } from "@tanstack/react-start";
 import {
   isNpcCatalogKey,
   readPageSegment,
   WIKI_GAME_VERSION,
 } from "@/lib/catalog-links";
-import { getQueryClient } from "@/lib/query-client";
+
+// The catalog queries a page and its route loader share, so the loader
+// fills the cache the page reads.
 
 // A template, a legacy and a runtime identity may share an id.
 const NPC_IDENTITIES = 3;
 
 const NPC_DROPS_LIMIT = 96;
 
-// A link preview waits this long for the catalog before the page goes out
-// without one.
-const SERVER_TIMEOUT_MS = 1500;
+const RELATED_LIMIT = 13;
+
+const ITEM_RESULTS_PAGE_SIZE = 48;
 
 /** The item an item page shows, by the id in its URL. */
 export const itemPageQuery = (id: number) =>
@@ -76,38 +77,52 @@ export const npcDropsQuery = (npcKey: string) =>
     limit: NPC_DROPS_LIMIT,
   }) satisfies CatalogControllerGetItemsParams;
 
-/**
- * Catalog items for a route loader. The browser shares the page's query
- * cache, so the page reads what the loader fetched; the server asks the
- * public catalog directly, for the link preview in the page's head.
- */
-export const loadCatalogItems = createIsomorphicFn()
-  .server((params: CatalogControllerGetItemsParams) =>
-    catalogControllerGetItems(params, {
-      apiClient: {
-        baseUrl: process.env.VITE_SEARCH_API_URL,
-        timeoutMs: SERVER_TIMEOUT_MS,
-      },
-    }),
-  )
-  .client((params: CatalogControllerGetItemsParams) =>
-    getQueryClient().ensureQueryData(
-      getCatalogControllerGetItemsQueryOptions(params),
-    ),
-  );
+/** The monster whose other drops an item's page shows. */
+export const relatedDropsSource = (item: CatalogItemDtoOutput) =>
+  item.droppedBy.find(({ retired }) => !retired) ?? item.droppedBy[0];
 
-/** Catalog NPCs for a route loader, as `loadCatalogItems` loads items. */
-export const loadCatalogNpcs = createIsomorphicFn()
-  .server((params: CatalogControllerGetNpcsParams) =>
-    catalogControllerGetNpcs(params, {
-      apiClient: {
-        baseUrl: process.env.VITE_SEARCH_API_URL,
-        timeoutMs: SERVER_TIMEOUT_MS,
-      },
-    }),
-  )
-  .client((params: CatalogControllerGetNpcsParams) =>
-    getQueryClient().ensureQueryData(
-      getCatalogControllerGetNpcsQueryOptions(params),
-    ),
-  );
+export const relatedDropsQuery = (npcKey: string) =>
+  ({
+    droppedBy: npcKey,
+    gameVersion: WIKI_GAME_VERSION,
+    sort: "lvl:desc",
+    limit: RELATED_LIMIT,
+  }) satisfies CatalogControllerGetItemsParams;
+
+export type ItemSearchParams = Omit<
+  CatalogControllerGetItemsParams,
+  "limit" | "offset"
+>;
+
+/** The item search's hits, loaded a page at a time. */
+export const itemResultsQueryOptions = (params: ItemSearchParams) =>
+  infiniteQueryOptions({
+    queryKey: [...getCatalogControllerGetItemsQueryKey(params), "pages"],
+    queryFn: ({ pageParam, signal }) =>
+      catalogControllerGetItems(
+        { ...params, limit: ITEM_RESULTS_PAGE_SIZE, offset: pageParam },
+        { signal },
+      ),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, pages) => {
+      const loaded = pages.reduce((sum, page) => sum + page.hits.length, 0);
+
+      return lastPage.hits.length === ITEM_RESULTS_PAGE_SIZE &&
+        loaded < lastPage.estimatedTotalHits
+        ? loaded
+        : undefined;
+    },
+  });
+
+/**
+ * Starts a page's queries from its route loader. A server render waits for
+ * them, so its HTML carries the content; the browser renders the page at
+ * once and fills it as they arrive, as before a loader existed.
+ */
+export const prefetchPageQueries = async (
+  ...prefetches: ReadonlyArray<Promise<unknown>>
+) => {
+  const settled = Promise.allSettled(prefetches);
+
+  if (typeof window === "undefined") await settled;
+};

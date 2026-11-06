@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import {
   type CatalogItemDtoOutput,
   catalogControllerGetItems,
@@ -15,14 +15,14 @@ const MAX_ITEMS = 1000;
  * Every item of one event, highest level first. The page groups them by
  * monster and rarity, so it needs them all rather than a page at a time.
  */
-export const useEventItems = (eventSlug: string) => {
+export const eventItemsQueryOptions = (eventSlug: string) => {
   const params = {
     gameVersion: WIKI_GAME_VERSION,
     event: eventSlug,
     sort: "lvl:desc",
   } as const;
 
-  return useQuery({
+  return queryOptions({
     queryKey: [...getCatalogControllerGetItemsQueryKey(params), "all"],
     queryFn: async ({ signal }) => {
       const items: CatalogItemDtoOutput[] = [];
@@ -44,3 +44,6 @@ export const useEventItems = (eventSlug: string) => {
     },
   });
 };
+
+export const useEventItems = (eventSlug: string) =>
+  useQuery(eventItemsQueryOptions(eventSlug));

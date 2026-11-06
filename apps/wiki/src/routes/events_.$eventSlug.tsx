@@ -1,21 +1,48 @@
 import { createFileRoute, linkOptions } from "@tanstack/react-router";
 import { orderBy } from "es-toolkit";
-import { itemEventSlug } from "@lootlog/domain/item-events";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { NpcPortrait } from "@/components/common/npc-portrait";
 import { EventMonsterItems } from "@/components/events/event-monster-items";
-import { useEventItems } from "@/hooks/use-event-items";
+import { eventItemsQueryOptions, useEventItems } from "@/hooks/use-event-items";
 import { t } from "@/i18n/messages";
 import { groupItemsByMonster } from "@/lib/group-items-by-monster";
 import { isHeroTrackersEvent } from "@/lib/hero-trackers";
-import { itemEvents } from "@/lib/item-events";
+import { prefetchPageQueries } from "@/lib/catalog-page-queries";
+import { eventNameOf } from "@/lib/item-events";
+import { canonicalLink } from "@/lib/link-preview";
 
 export const Route = createFileRoute("/events_/$eventSlug")({
   component: EventRoute,
-  head: () => ({
-    meta: [{ title: `${t("meta.eventTitle")} | ${t("meta.title")}` }],
+  // The browser renders the page at once, so only a server render names the
+  // event in the title.
+  loader: async ({ params, context: { queryClient } }) => {
+    const query = eventItemsQueryOptions(params.eventSlug);
+
+    await prefetchPageQueries(queryClient.prefetchQuery(query));
+
+    const items = queryClient.getQueryData(query.queryKey);
+
+    return { name: items && eventNameOf(items, params.eventSlug) };
+  },
+  head: ({ loaderData, params }) => ({
+    meta: [
+      {
+        title: `${loaderData?.name ?? t("meta.eventTitle")} | ${t("meta.title")}`,
+      },
+      ...(loaderData?.name
+        ? [
+            {
+              name: "description",
+              content: t("linkPreview.eventDescription", {
+                name: loaderData.name,
+              }),
+            },
+          ]
+        : []),
+    ],
+    links: [canonicalLink(`/events/${params.eventSlug}`)],
   }),
 });
 
@@ -26,9 +53,7 @@ function EventRoute() {
   const { data: items, isError } = useEventItems(eventSlug);
 
   // Any of the event's items names it as the game writes it.
-  const name = itemEvents(items?.[0]?.stat ?? "").find(
-    (label) => itemEventSlug(label) === eventSlug,
-  );
+  const name = eventNameOf(items ?? [], eventSlug);
 
   if (isError) {
     return (

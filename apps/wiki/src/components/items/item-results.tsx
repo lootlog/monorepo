@@ -1,16 +1,13 @@
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
-import {
-  type CatalogControllerGetItemsParams,
-  catalogControllerGetItems,
-  getCatalogControllerGetItemsQueryKey,
-} from "@lootlog/client/search";
 import { Button } from "@lootlog/ui/components/button";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import type { AttackSpeedRanking } from "@/components/catalog/item-attack-speed";
 import { t } from "@/i18n/messages";
-
-const PAGE_SIZE = 48;
+import {
+  itemResultsQueryOptions,
+  type ItemSearchParams,
+} from "@/lib/catalog-page-queries";
 
 // Meilisearch counts hits exactly up to its `maxTotalHits`; a count that
 // reaches it means "at least this many".
@@ -23,7 +20,7 @@ const ATTACK_SPEED_RANKINGS = new Map<string | undefined, AttackSpeedRanking>([
 ]);
 
 type ItemResultsProps = {
-  params: Omit<CatalogControllerGetItemsParams, "limit" | "offset">;
+  params: ItemSearchParams;
   /** The typed phrase, highlighted in item names. */
   query: string;
 };
@@ -32,21 +29,7 @@ type ItemResultsProps = {
 export function ItemResults({ params, query }: ItemResultsProps) {
   const { data, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
-      queryKey: [...getCatalogControllerGetItemsQueryKey(params), "pages"],
-      queryFn: ({ pageParam, signal }) =>
-        catalogControllerGetItems(
-          { ...params, limit: PAGE_SIZE, offset: pageParam },
-          { signal },
-        ),
-      initialPageParam: 0,
-      getNextPageParam: (lastPage, pages) => {
-        const loaded = pages.reduce((sum, page) => sum + page.hits.length, 0);
-
-        return lastPage.hits.length === PAGE_SIZE &&
-          loaded < lastPage.estimatedTotalHits
-          ? loaded
-          : undefined;
-      },
+      ...itemResultsQueryOptions(params),
       placeholderData: keepPreviousData,
     });
 
