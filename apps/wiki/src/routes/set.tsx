@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { EquipmentSetHeader } from "@/components/equipment/equipment-set-header";
 import { EquipmentSetWindow } from "@/components/equipment/equipment-set-window";
 import { SetUpgradeCost } from "@/components/equipment/set-upgrade-cost";
+import { SetSkillTree } from "@/components/skills/set-skill-tree";
 import { useWornItems } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
 
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/set")({
   }),
 });
 
-/** The User's whole set: the character window and every worn item. */
+/** The User's whole set: the character window, its skills and every worn item. */
 function SetRoute() {
   const wornItems = useWornItems();
 
@@ -29,6 +30,7 @@ function SetRoute() {
         <EquipmentSetHeader titleId="set-page-window" />
         <EquipmentSetWindow />
       </section>
+      <SetSkillTree />
       <ArticleSection
         id="set-page-items"
         title={t("setPage.itemsTitle")}
