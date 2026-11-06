@@ -165,7 +165,7 @@ async function renderSelector() {
         <QueryClientProvider client={client}>
           <GlobalContextProvider>
             <ThemeContext.Provider value={TEST_THEME_CONTEXT}>
-              <GuildsSelector />
+              <GuildsSelector orientation="vertical" />
               <Toaster />
             </ThemeContext.Provider>
           </GlobalContextProvider>

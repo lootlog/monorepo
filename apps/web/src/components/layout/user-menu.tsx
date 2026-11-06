@@ -45,8 +45,9 @@ const SIGNAL_DOT_COLOR: Record<LiveSignal, string> = {
 const BAR_GRID =
   "grid h-14 w-full grid-cols-[4rem_minmax(0,1fr)_2.75rem] items-center";
 
+// The phone sheet has no rail to continue, so its avatar cell has no edge.
 const AVATAR_CELL =
-  "flex h-full items-center justify-center border-r border-solid border-sidebar-border";
+  "flex h-full items-center justify-center md:border-r md:border-solid md:border-sidebar-border";
 
 export const UserMenu = () => {
   const { user, isPending } = useUser();

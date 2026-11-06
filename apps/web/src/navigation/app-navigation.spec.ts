@@ -14,6 +14,7 @@ import {
 import { routeTree } from "../routeTree.gen";
 import {
   getOrganizationLandingItemId,
+  hideTabBarSections,
   resolveAppNavigation,
   resolveTabBarSections,
 } from "./app-navigation";
@@ -394,12 +395,19 @@ describe("resolveAppNavigation", () => {
 
   it("fills the phone tab bar with the sections a member may see, the rest under More", () => {
     const sectionIds = (accessPolicy: ReturnType<typeof policy>) => {
-      const { tabs, overflow } = resolveTabBarSections(
-        resolveAppNavigation({
-          matches: matchPage("/guild-1/reservations"),
-          accessPolicy,
-        }).sidebarItems,
-      );
+      const { sidebarItems } = resolveAppNavigation({
+        matches: matchPage("/guild-1/reservations"),
+        accessPolicy,
+      });
+
+      const { tabs, overflow } = resolveTabBarSections(sidebarItems);
+
+      // The More sheet lists exactly what the bar has no tab for.
+      expect(
+        hideTabBarSections(sidebarItems)
+          .filter(({ visible }) => visible)
+          .map(({ id }) => id),
+      ).toEqual(overflow.map(({ id }) => id));
 
       return {
         tabs: tabs.map(({ id }) => id),
