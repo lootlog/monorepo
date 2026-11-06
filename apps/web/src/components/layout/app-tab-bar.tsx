@@ -19,15 +19,16 @@ type AppTabBarProps = {
 
 /**
  * The app's phone navigation: the first sections and "More", which opens the
- * full navigation sheet and shows the open section when it is one of those
- * behind it.
+ * full navigation sheet and is marked current while the open section is one
+ * of those behind it.
  */
 export const AppTabBar = ({ sections, badges, onSearch }: AppTabBarProps) => {
   const { t } = useTranslation();
   const { setOpenMobile } = useSidebar();
 
-  // An open section behind "More" takes the tab's place, so the bar always
-  // shows where the reader is instead of hiding it behind a generic label.
+  // "More" keeps its name and icon even while a section behind it is open,
+  // so it still reads as the way to the rest of the navigation; the page
+  // title and the collapsed pill name the open section.
   const activeOverflow = sections.overflow.find((section) => section.active);
 
   return (
@@ -43,13 +44,12 @@ export const AppTabBar = ({ sections, badges, onSearch }: AppTabBarProps) => {
         render: <Link to={section.href} />,
       }))}
       more={{
-        shortLabel:
-          activeOverflow?.shortLabel ?? t("layout.navigation.tabBar.more"),
-        icon: activeOverflow
-          ? APP_NAVIGATION_ICONS[activeOverflow.id]
-          : Ellipsis,
-        active: activeOverflow !== undefined,
-        activeLabel: activeOverflow?.label,
+        shortLabel: t("layout.navigation.tabBar.more"),
+        icon: Ellipsis,
+        activeSection: activeOverflow && {
+          icon: APP_NAVIGATION_ICONS[activeOverflow.id],
+          label: activeOverflow.label,
+        },
         ariaLabel: activeOverflow
           ? t("layout.navigation.tabBar.moreWithSection", {
               section: activeOverflow.label,
