@@ -6,6 +6,9 @@
 /** `--ease-emphasized`: the curve for every state change. */
 export const EASE_EMPHASIZED = [0.2, 0, 0, 1] as const;
 
+/** `EASE_EMPHASIZED` as a CSS timing function, for Web Animations. */
+export const EASE_EMPHASIZED_CSS = `cubic-bezier(${EASE_EMPHASIZED.join(", ")})`;
+
 /** Durations in seconds, matching Tailwind's `duration-150/200/250`. */
 export const MOTION_DURATION = {
   short: 0.15,

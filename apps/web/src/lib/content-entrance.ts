@@ -1,4 +1,5 @@
 import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
+import { EASE_EMPHASIZED_CSS } from "@/lib/motion";
 
 /** The keyframe every loading placeholder reveals itself with after its delay. */
 const PLACEHOLDER_REVEAL_ANIMATION = "placeholder-in";
@@ -92,16 +93,12 @@ const containsAny = (node: Node, elements: Set<Element>) => {
 
 /** Siblings entering together are staggered, but only the first few. */
 const playEntrances = (siblingGroups: HTMLElement[][]) => {
-  const easing = getComputedStyle(document.documentElement).getPropertyValue(
-    "--ease-emphasized",
-  );
-
   for (const siblings of siblingGroups) {
     siblings.forEach((element, index) => {
       element.animate([{ offset: 0, opacity: 0 }], {
         delay: getStaggerDelay(index),
         duration: FADE_DURATION_MS,
-        easing,
+        easing: EASE_EMPHASIZED_CSS,
         fill: "backwards",
       });
     });
