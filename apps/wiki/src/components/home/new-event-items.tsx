@@ -2,15 +2,12 @@ import { orderBy, uniqBy } from "es-toolkit";
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import { itemEventSlug } from "@lootlog/domain/item-events";
 import { NpcPortrait } from "@/components/common/npc-portrait";
-import { useLatestEvents } from "@/hooks/use-latest-events";
+import { HOME_EVENTS_SHOWN, useLatestEvents } from "@/hooks/use-latest-events";
 import { t } from "@/i18n/messages";
 import { monsterIdentity } from "@/lib/group-items-by-monster";
 import { eventSubtitle } from "@/lib/item-events";
 import { NewItemsCard } from "./new-items-card";
 import { NewItemsCardsSkeleton } from "./new-items-cards-skeleton";
-
-// Two rows of the two-column grid.
-const EVENTS_SHOWN = 4;
 
 /** The event's strongest monster, which pictures it. */
 const eventBoss = (items: readonly CatalogItemDtoOutput[]) =>
@@ -25,7 +22,7 @@ const eventBoss = (items: readonly CatalogItemDtoOutput[]) =>
 
 /** The newest items of the latest events, under each event's name. */
 export function NewEventItems() {
-  const { data: events, isError } = useLatestEvents(EVENTS_SHOWN);
+  const { data: events, isError } = useLatestEvents(HOME_EVENTS_SHOWN);
 
   if (isError) {
     return (
@@ -35,7 +32,7 @@ export function NewEventItems() {
     );
   }
 
-  if (!events) return <NewItemsCardsSkeleton count={EVENTS_SHOWN} />;
+  if (!events) return <NewItemsCardsSkeleton count={HOME_EVENTS_SHOWN} />;
 
   if (events.length === 0) {
     return (

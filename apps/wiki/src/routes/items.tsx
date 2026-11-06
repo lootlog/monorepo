@@ -36,6 +36,11 @@ import {
   toCatalogParams,
   validateItemsSearch,
 } from "@/lib/items-search";
+import {
+  itemResultsQueryOptions,
+  prefetchPageQueries,
+} from "@/lib/catalog-page-queries";
+import { canonicalLink } from "@/lib/link-preview";
 import { findMargonemWorld } from "@/lib/margonem-worlds";
 import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
@@ -112,8 +117,14 @@ const activeFilters = (search: ItemsSearch): ActiveFilter[] => [
 
 export const Route = createFileRoute("/items")({
   component: ItemsRoute,
+  loaderDeps: ({ search }) => ({ params: toCatalogParams(search) }),
+  loader: ({ deps, context: { queryClient } }) =>
+    prefetchPageQueries(
+      queryClient.prefetchInfiniteQuery(itemResultsQueryOptions(deps.params)),
+    ),
   head: () => ({
     meta: [{ title: `${t("meta.itemsTitle")} | ${t("meta.title")}` }],
+    links: [canonicalLink("/items")],
   }),
   validateSearch: validateItemsSearch,
   // A link holds only the filters it sets.

@@ -305,3 +305,36 @@ export type CatalogControllerGetEventsQuery =
 export const CatalogControllerGetEventsQuery = Schema.Struct({
   gameVersion: Schema.optionalKey(CatalogGameVersion),
 });
+
+const CatalogIndexEntryDto_Output = Schema.Struct({
+  id: SafeInteger,
+  name: Schema.String,
+}).annotate({
+  description:
+    "A catalog entry by the id and name its links carry, such as `/items/41392-odzienie-dominujacego-czaru` on the wiki.",
+  identifier: "CatalogIndexEntryDto_Output",
+});
+
+export type CatalogIndexResponseDto_Output =
+  typeof CatalogIndexResponseDto_Output.Type;
+
+export const CatalogIndexResponseDto_Output = Schema.Struct({
+  items: Schema.Array(CatalogIndexEntryDto_Output).annotate({
+    description: "Every item, by id.",
+  }),
+  npcs: Schema.Array(CatalogIndexEntryDto_Output).annotate({
+    description:
+      "Every NPC as it is now, once per monster, as `CatalogControllerGetNpcs` lists it; by id.",
+  }),
+}).annotate({
+  description:
+    "Every item and NPC of the public catalog, unlike its searches, which stop at 1000 hits",
+  identifier: "CatalogIndexResponseDto_Output",
+});
+
+export type CatalogControllerGetIndexQuery =
+  typeof CatalogControllerGetIndexQuery.Type;
+
+export const CatalogControllerGetIndexQuery = Schema.Struct({
+  gameVersion: Schema.optionalKey(CatalogGameVersion),
+});
