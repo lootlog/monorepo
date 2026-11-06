@@ -51,6 +51,8 @@ interface FilterPopoverProps<T = string> {
   label?: string;
   /** The filter narrows the results; in a filter bar its chip takes the accent. */
   active?: boolean;
+  /** Shows the up-down chevron; a phone toolbar's menu goes without it. */
+  indicator?: boolean;
 }
 
 function getSelectedValues<T>(value: T | T[] | undefined): T[] {
@@ -113,6 +115,7 @@ export function FilterPopover<T extends string = string>({
   renderTriggerLabel,
   active,
   label,
+  indicator,
 }: FilterPopoverProps<T>) {
   const [open, setOpen] = useState(false);
   const inFilterBar = useInFilterBar();
@@ -174,7 +177,11 @@ export function FilterPopover<T extends string = string>({
             {Icon && <Icon className={cn("h-4 w-4", iconClassName)} />}
             <span className="truncate text-sm">{triggerLabel}</span>
           </div>
-          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown
+            className={cn("h-4 w-4 shrink-0 opacity-50", {
+              hidden: indicator === false,
+            })}
+          />
         </PopoverTrigger>
       )}
       <PopoverContent
