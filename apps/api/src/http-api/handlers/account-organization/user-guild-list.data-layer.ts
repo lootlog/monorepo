@@ -135,19 +135,20 @@ export const makeUserGuildList = (
 
     if (discordGuildIds.length === 0) return [];
 
-    const guilds = yield* database
-      .select()
-      .from(guildTable)
-      .where(
-        and(
-          inArray(guildTable.id, discordGuildIds),
-          eq(guildTable.active, true),
-        ),
-      );
-
-    const preferredIds = yield* readGuildOrderPreference(
-      database,
-      identity.userId,
+    const [guilds, preferredIds] = yield* Effect.all(
+      [
+        database
+          .select()
+          .from(guildTable)
+          .where(
+            and(
+              inArray(guildTable.id, discordGuildIds),
+              eq(guildTable.active, true),
+            ),
+          ),
+        readGuildOrderPreference(database, identity.userId),
+      ],
+      { concurrency: "unbounded" },
     );
 
     const result = sortGuildsByPreference(guilds, preferredIds);

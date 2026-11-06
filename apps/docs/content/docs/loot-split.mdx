@@ -1,0 +1,64 @@
+---
+title: Podział łupów
+description: Okno Podział łupów pokazuje wybory całej grupy w Margonem, kto chce przedmiot i kto jeszcze nie zaakceptował łupu.
+---
+
+Po walce w grupie gra pokazuje każdemu tylko jego własne wybory. Lootlog
+dzieli się nimi z resztą uczestników, więc od razu widać, kto czego chce i
+kto jeszcze zamula. Działa w nowym i starym interfejsie gry.
+
+Dopóki trwa podział, nikt z grupy nie zaatakuje potwora ani gracza.
+
+## Okno Podział łupów
+
+Okno otwiera się samo przy podziale łupów w grupie. Przy łupie zdobytym
+solo się nie pojawia. Wiersze to uczestnicy, kolumny to przedmioty.
+
+- Wybory wyglądają jak w oknie łupów gry: zielony ptaszek to „Chcę”,
+  czerwony krzyżyk „Nie chcę”, a podwójny ptaszek w żółtej ramce „Bardzo
+  chcę”. Liczba pod kolumną mówi, ilu graczy chce przedmiot.
+- Pasek pod nagłówkiem pokazuje czas do końca podziału.
+- Wybory widać na bieżąco, jeszcze przed akceptacją.
+- Ikona przy nicku pokazuje stan: zaakceptował, wybiera albo **bez danych**.
+  Ci, którzy jeszcze wybierają, są na górze.
+
+### Znaczenie ikon przy graczach
+
+- **Zegar** i „Czas minął: gra przyjęła aktualne wybory”: gracz nie zdążył
+  zaakceptować, więc gra przyjęła jego wybory. Nagłówek pokazuje, ilu takich
+  było (**Po czasie**).
+- **Lejek** i „Zaakceptowane przez filtr łupów”: Filtr łupów gry
+  zaakceptował łup za gracza. Jego wybory są nieznane, ale nikogo nie
+  zatrzymuje. Widać to, gdy gracz też ma Lootloga i jest z Tobą w tym samym
+  Lootlogu.
+- **Bez danych**: gracz nie ma Lootloga albo nie należy do żadnego z Twoich
+  Lootlogów.
+
+## Kilka podziałów naraz
+
+Okno pokazuje każdy trwający podział. Dowódca zaakceptował łup, zebrał nową
+grupę bez zamulającego i zaatakował kolejnego potwora? Zobaczysz oba
+podziały, nowy na górze. Zaczęcie nowej walki przed akceptacją zamyka Twoje
+okno łupów w grze, a gra zalicza wtedy Twoje wybory. Podział znika z okna
+dwie sekundy po rozdzieleniu łupu albo po upływie czasu.
+
+## Kto widzi wybory
+
+Wybory widzą tylko uczestnicy tego podziału, którzy są w tym samym Lootlogu i
+są w nim widoczni ([zakres zbierania](/docs/settings#zakres-zbierania-dla-których-lootlogów-grasz)).
+Twoja akceptacja trafia do innych dopiero, gdy przyjmie ją gra.
+
+Po zerwaniu połączenia z Lootlogiem okno pokazuje ostrzeżenie, bo wybory
+innych mogą być nieaktualne. Po powrocie połączenia Twoje wybory są wysyłane
+ponownie.
+
+## Ustawienia okna
+
+- Okno przesuniesz, zmienisz mu rozmiar i przewiniesz. Zamknięte otworzy się
+  przy następnym podziale.
+- **Ustawienia → Ogólne → Okno podziału łupów** wyłącza okno całkiem.
+- **Ustawienia → Ogólne → Otwieraj tylko przy łupie** ogranicza je do
+  podziałów z przedmiotem unikatowym, heroicznym lub legendarnym.
+
+Twoje wybory trafiają do innych uczestników zawsze, także gdy Twoje okno się
+nie otwiera.

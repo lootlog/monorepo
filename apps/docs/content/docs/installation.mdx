@@ -1,91 +1,105 @@
 ---
-title: Instalacja
-description: Zainstaluj dodatek Lootlog przez Tampermonkey, zaloguj się i potwierdź, że działa w Margonem.
+title: Jak zainstalować Lootlog
+description: Zainstaluj dodatek Lootlog przez Tampermonkey, zaloguj się przez Discord i sprawdź, że działa w Margonem.
 ---
 
-Po tej instrukcji zobaczysz interfejs Lootlog w grze i zalogujesz się przez
-Discord.
+Instalacja zajmuje kilka minut. Na końcu zobaczysz pasek Lootloga w grze i
+będziesz zalogowany przez Discord.
 
-## Zanim zaczniesz
+## Czego potrzebujesz
 
-Potrzebujesz:
+- Przeglądarki z rozszerzeniami, np. Chrome, Firefox, Edge lub Opera.
+- Rozszerzenia [Tampermonkey](https://www.tampermonkey.net/).
+- Konta Discord, którym będziesz się logować.
+- Plików cookie innych firm włączonych dla lootlog.pl. Bez nich dodatek na
+  stronie gry nie zobaczy, że jesteś zalogowany.
 
-- przeglądarki obsługującej rozszerzenia, na przykład Chrome, Firefox, Edge
-  lub Opera;
-- menedżera skryptów
-  [Tampermonkey](https://www.tampermonkey.net/);
-- konta Discord używanego do logowania;
-- włączonych plików cookie innych firm dla lootlog.pl. Bez nich dodatek na
-  stronie gry nie widzi logowania.
+<Callout type="info" title="Rozszerzenie przeglądarki">
+  Lootlog ma też wersję jako rozszerzenie przeglądarki, bez Tampermonkey. Czeka
+  jeszcze na publikację w sklepach Chrome i Firefox, więc na razie zainstaluj
+  skrypt.
+</Callout>
 
 ## Zainstaluj dodatek
 
-### 1. Dodaj Tampermonkey
+<Steps>
+<Step>
+
+### Dodaj Tampermonkey
 
 Zainstaluj Tampermonkey z oficjalnego sklepu rozszerzeń swojej przeglądarki.
-Po instalacji ikona rozszerzenia powinna pojawić się na pasku narzędzi.
+Ikona rozszerzenia pojawi się na pasku narzędzi.
 
-### 2. Otwórz instalator Lootlog
+</Step>
+<Step>
 
-Przejdź na [lootlog.pl](https://lootlog.pl) i wybierz
-**Zainstaluj dodatek**. Tampermonkey otworzy podgląd skryptu.
+### Otwórz skrypt Lootlog
 
-### 3. Potwierdź instalację
+Na [lootlog.pl](https://lootlog.pl/@me) otwórz menu konta na dole panelu
+bocznego i wybierz **Zainstaluj dodatek do gry**. W oknie **Instalacja
+dodatku** przy **Skrypt Tampermonkey** wybierz **Zainstaluj skrypt**.
+Tampermonkey pokaże podgląd skryptu.
 
-W oknie Tampermonkey wybierz **Zainstaluj**. Nie zmieniaj kodu ani zakresu
-stron przed pierwszym uruchomieniem.
+</Step>
+<Step>
 
-### 4. Odśwież Margonem
+### Potwierdź instalację
 
-Otwórz grę lub odśwież jej kartę. Lootlog powinien załadować się razem z
-interfejsem gry.
+W oknie Tampermonkey wybierz **Zainstaluj**. Nie zmieniaj kodu ani listy
+stron, na których działa skrypt.
 
-### 5. Zaloguj się przez Discord
+</Step>
+<Step>
 
-Niezalogowany dodatek pokazuje w grze okno **Logowanie do Lootloga**. Wybierz
-**Otwórz stronę Lootloga**, zaloguj się na stronie przez Discord na właściwe
-konto i wróć do karty gry. Dodatek sam sprawdzi sesję; możesz też wybrać
-**Sprawdź sesję**.
+### Odśwież Margonem
 
-Jeśli po powrocie okno pisze, że dodatek nadal nie widzi sesji, przeglądarka
-blokuje pliki cookie innych firm. Okno pokazuje, co zmienić w twojej
-przeglądarce; szczegóły są w [Pomocy i FAQ](/docs/faq).
+Otwórz grę albo odśwież jej kartę. Lootlog załaduje się razem z interfejsem
+gry.
 
-Okno logowania zamknięte krzyżykiem otworzysz ponownie przyciskiem
-**Zaloguj się do Lootloga** przy pasku szybkiego dostępu.
+</Step>
+<Step>
 
-## Sprawdź rezultat
+### Zaloguj się przez Discord
 
-Instalacja zakończyła się poprawnie, jeżeli:
+Niezalogowany dodatek pokazuje okno **Logowanie do Lootloga**. Wybierz
+**Otwórz stronę Lootloga**, zaloguj się przez Discord na właściwe konto i
+wróć do karty gry. Dodatek sam sprawdzi sesję. Możesz też wybrać **Sprawdź
+sesję**.
 
-- skrypt Lootlog jest włączony na liście Tampermonkey;
-- po odświeżeniu gry widzisz interfejs dodatku;
-- po logowaniu dodatek pokazuje twoje konto;
-- [panel webowy](https://lootlog.pl/@me) otwiera się na tym samym koncie.
+Okno zamknięte krzyżykiem otworzysz przyciskiem **Zaloguj się do Lootloga**
+przy pasku szybkiego dostępu.
 
-<Callout type="success" title="Dodatek działa">
-  Możesz teraz grać normalnie. Lootlog zacznie rejestrować obsługiwane zdarzenia
-  od momentu aktywacji - nie odtwarza danych sprzed instalacji.
-</Callout>
+</Step>
+</Steps>
 
-## Gdy interfejs się nie pojawia
+## Sprawdź, czy działa
+
+- Skrypt Lootlog jest włączony na liście Tampermonkey.
+- Po odświeżeniu gry widzisz pasek szybkiego dostępu Lootloga.
+- Dodatek pokazuje Twoje konto.
+- [Panel webowy](https://lootlog.pl/@me) otwiera się na tym samym koncie.
+
+Lootlog zapisuje zdarzenia od chwili instalacji. Danych sprzed niej nie
+odtworzy.
+
+Dalej: [Pierwsze kroki](/docs/getting-started), czyli dołączenie do Lootloga
+grupy i wybór, gdzie postać wysyła dane.
+
+## Dodatek nie widzi logowania
+
+Jeśli po zalogowaniu okno pisze, że dodatek nadal nie widzi sesji,
+przeglądarka blokuje pliki cookie innych firm. Okno podpowiada, co zmienić w
+Twojej przeglądarce. Instrukcje dla Chrome, Firefoxa, Safari i Brave są w
+[Pomocy](/docs/faq#logowanie-z-gry-nie-działa).
+
+## Pasek Lootloga się nie pojawia
 
 1. Sprawdź, czy skrypt jest włączony w Tampermonkey.
-2. Odśwież grę z pominięciem pamięci podręcznej.
-3. Jeśli w rogu gry pojawił się komunikat **Nie udało się wczytać Lootloga**,
-   skrypt dodatku nie dotarł z serwera Lootloga. Sprawdź połączenie i odśwież
-   grę.
-4. Tymczasowo wyłącz inne skrypty działające na stronie gry i sprawdź
-   potencjalny konflikt.
-5. Jeśli problem pozostaje, opisz przeglądarkę i wykonane kroki na
-   [Discordzie](https://discord.gg/mPcczaeYMu). Gdy dodatek się uruchamia,
+2. Odśwież grę z pominięciem pamięci podręcznej (Ctrl+F5).
+3. Komunikat **Nie udało się wczytać Lootloga** w rogu gry oznacza, że skrypt
+   nie pobrał się z serwera Lootloga. Sprawdź połączenie i odśwież grę.
+4. Wyłącz na chwilę inne skrypty na stronie gry, żeby wykluczyć konflikt.
+5. Dalej nic? Napisz na [Discordzie](https://discord.gg/mPcczaeYMu), jakiej
+   przeglądarki używasz i co już sprawdziłeś. Jeśli dodatek się uruchamia,
    dołącz tekst z przycisku **Kopiuj informacje diagnostyczne** w
    **Ustawienia → Informacje**.
-
-Problemy z samym logowaniem, na przykład komunikat o plikach cookie, opisuje
-[Pomoc i FAQ](/docs/faq) w sekcji **Logowanie z gry nie działa**.
-
-## Następny krok
-
-Przejdź do [Pierwszych kroków](/docs/getting-started), aby połączyć dodatek z
-panelem i sprawdzić pierwszą synchronizację.

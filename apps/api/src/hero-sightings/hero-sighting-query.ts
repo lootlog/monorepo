@@ -48,36 +48,52 @@ export const loadHeroSightings = Effect.fnUntraced(function* (
 ) {
   if (ids.length === 0) return [];
 
-  const rows = yield* database
-    .select({
-      sighting: heroSightingTable,
-      detector,
-      lastSeenBy,
-      detectorCharacter: playerSnapshotTable,
-    })
-    .from(heroSightingTable)
-    .innerJoin(detector, eq(detector.id, heroSightingTable.detectedById))
-    .innerJoin(lastSeenBy, eq(lastSeenBy.id, heroSightingTable.lastSeenById))
-    .leftJoin(
-      playerSnapshotTable,
-      eq(playerSnapshotTable.id, heroSightingTable.detectorCharacterSnapshotId),
-    )
-    .where(inArray(heroSightingTable.id, [...ids]));
-
-  const claimRows = yield* database
-    .select({
-      claim: heroSightingClaimTable,
-      member: memberTable,
-      character: playerSnapshotTable,
-    })
-    .from(heroSightingClaimTable)
-    .innerJoin(memberTable, eq(memberTable.id, heroSightingClaimTable.memberId))
-    .leftJoin(
-      playerSnapshotTable,
-      eq(playerSnapshotTable.id, heroSightingClaimTable.characterSnapshotId),
-    )
-    .where(inArray(heroSightingClaimTable.sightingId, [...ids]))
-    .orderBy(asc(heroSightingClaimTable.createdAt));
+  const [rows, claimRows] = yield* Effect.all(
+    [
+      database
+        .select({
+          sighting: heroSightingTable,
+          detector,
+          lastSeenBy,
+          detectorCharacter: playerSnapshotTable,
+        })
+        .from(heroSightingTable)
+        .innerJoin(detector, eq(detector.id, heroSightingTable.detectedById))
+        .innerJoin(
+          lastSeenBy,
+          eq(lastSeenBy.id, heroSightingTable.lastSeenById),
+        )
+        .leftJoin(
+          playerSnapshotTable,
+          eq(
+            playerSnapshotTable.id,
+            heroSightingTable.detectorCharacterSnapshotId,
+          ),
+        )
+        .where(inArray(heroSightingTable.id, [...ids])),
+      database
+        .select({
+          claim: heroSightingClaimTable,
+          member: memberTable,
+          character: playerSnapshotTable,
+        })
+        .from(heroSightingClaimTable)
+        .innerJoin(
+          memberTable,
+          eq(memberTable.id, heroSightingClaimTable.memberId),
+        )
+        .leftJoin(
+          playerSnapshotTable,
+          eq(
+            playerSnapshotTable.id,
+            heroSightingClaimTable.characterSnapshotId,
+          ),
+        )
+        .where(inArray(heroSightingClaimTable.sightingId, [...ids]))
+        .orderBy(asc(heroSightingClaimTable.createdAt)),
+    ],
+    { concurrency: "unbounded" },
+  );
 
   const claimsBySighting = Map.groupBy(
     claimRows,

@@ -37,35 +37,42 @@ export const indexChangedDocuments = Effect.fn("Search.indexChangedDocuments")(
 
     yield* Metric.update(skipped, documents.length - uniqueDocuments.length);
 
-    const changedDocuments: Document[] = [];
-
-    for (const batch of chunk(uniqueDocuments, 100)) {
-      const stored = yield* attemptMeilisearch(
-        `search.${index.uid}.existing`,
-        () =>
+    // Batches hold disjoint uids, so their reads are independent.
+    const changedBatches = yield* Effect.forEach(
+      chunk(uniqueDocuments, 100),
+      (batch) =>
+        attemptMeilisearch(`search.${index.uid}.existing`, () =>
           index.getDocuments({
             ids: batch.map((document) => document.uid),
             limit: batch.length,
           }),
-      );
+        ).pipe(
+          Effect.flatMap((stored) => {
+            const storedById = new Map(
+              stored.results.map((document) => [document.uid, document]),
+            );
 
-      const storedById = new Map(
-        stored.results.map((document) => [document.uid, document]),
-      );
+            const changed = batch.flatMap((incoming) => {
+              const existing = storedById.get(incoming.uid);
+              const document = merge(incoming, existing);
 
-      const changed = batch.flatMap((incoming) => {
-        const existing = storedById.get(incoming.uid);
-        const document = merge(incoming, existing);
+              return Bun.deepEquals(
+                existing,
+                JSON.parse(JSON.stringify(document)),
+              )
+                ? []
+                : [document];
+            });
 
-        return Bun.deepEquals(existing, JSON.parse(JSON.stringify(document)))
-          ? []
-          : [document];
-      });
+            return Metric.update(skipped, batch.length - changed.length).pipe(
+              Effect.as(changed),
+            );
+          }),
+        ),
+      { concurrency: 4 },
+    );
 
-      yield* Metric.update(skipped, batch.length - changed.length);
-
-      changedDocuments.push(...changed);
-    }
+    const changedDocuments = changedBatches.flat();
 
     for (const batch of chunk(changedDocuments, 500)) {
       yield* completeMeilisearchTask(`search.${index.uid}.index`, () =>

@@ -334,6 +334,7 @@ export class GuildConfigurationData extends Context.Service<
                     ),
                   ],
                   (key) => cache.del(getGuildCacheKey(key)),
+                  { concurrency: "unbounded" },
                 );
 
                 return guild;

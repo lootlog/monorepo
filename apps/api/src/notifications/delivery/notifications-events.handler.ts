@@ -168,10 +168,25 @@ export const makeNotificationsEvents = (options: {
         event.world,
       );
 
-      const guilds = yield* options.findGuilds(event.guildIds).pipe(
-        Effect.withSpan("notifications.guilds.findMany", {
-          attributes: { adapter: "notifications.guilds", retryCount: 0 },
-        }),
+      if (watchedItems.length === 0) return;
+
+      const [guilds, memberships] = yield* Effect.all(
+        [
+          options.findGuilds(event.guildIds).pipe(
+            Effect.withSpan("notifications.guilds.findMany", {
+              attributes: { adapter: "notifications.guilds", retryCount: 0 },
+            }),
+          ),
+          options.matching.activeMemberships(
+            watchedItems
+              .map((item) => item.notificationRule?.ownerId)
+              .filter(
+                (ownerId): ownerId is string => typeof ownerId === "string",
+              ),
+            event.guildIds,
+          ),
+        ],
+        { concurrency: "unbounded" },
       );
 
       const guildNames = new Map(guilds.map((guild) => [guild.id, guild.name]));
@@ -180,13 +195,6 @@ export const makeNotificationsEvents = (options: {
         type: npc.type,
         level: npc.lvl,
       }));
-
-      const memberships = yield* options.matching.activeMemberships(
-        watchedItems
-          .map((item) => item.notificationRule?.ownerId)
-          .filter((ownerId): ownerId is string => typeof ownerId === "string"),
-        event.guildIds,
-      );
 
       yield* Effect.forEach(
         watchedItems,

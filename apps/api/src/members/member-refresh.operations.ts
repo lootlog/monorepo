@@ -58,8 +58,13 @@ export const makeMemberRefresh = (
       .toString(36)
       .slice(2)}`;
 
-    const nextRefreshAt = yield* ports.nextRefreshAt(options.userId);
-    const locked = yield* scheduler.isUserRefreshLocked(options.userId);
+    const [nextRefreshAt, locked] = yield* Effect.all(
+      [
+        ports.nextRefreshAt(options.userId),
+        scheduler.isUserRefreshLocked(options.userId),
+      ],
+      { concurrency: "unbounded" },
+    );
 
     if (
       (nextRefreshAt &&

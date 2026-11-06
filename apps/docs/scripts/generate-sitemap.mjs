@@ -1,4 +1,4 @@
-import { docsPaths } from "../lib/docs-chapters";
+import { docsPaths } from "../lib/docs-paths";
 import { writeSitemap } from "../../../scripts/sitemap.mjs";
 
 await writeSitemap(

@@ -628,27 +628,30 @@ export const makeReservationMutationsDataLayer = (
         data: CreateReservationRequest,
       ) =>
         Effect.gen(function* () {
-          const [spot, guild, audienceGuildIds, member] = yield* Effect.all([
-            ports.catalog.getSpot(spotId),
-            findGuild(context.guildId),
-            visibleReservationGuildIds(database, context.guildId),
-            database
-              .select()
-              .from(memberTable)
-              .where(
-                and(
-                  eq(memberTable.guildId, context.guildId),
-                  eq(memberTable.active, true),
-                  or(
-                    eq(memberTable.globalUserId, context.userId),
-                    eq(memberTable.userId, context.discordId),
+          const [spot, guild, audienceGuildIds, member] = yield* Effect.all(
+            [
+              ports.catalog.getSpot(spotId),
+              findGuild(context.guildId),
+              visibleReservationGuildIds(database, context.guildId),
+              database
+                .select()
+                .from(memberTable)
+                .where(
+                  and(
+                    eq(memberTable.guildId, context.guildId),
+                    eq(memberTable.active, true),
+                    or(
+                      eq(memberTable.globalUserId, context.userId),
+                      eq(memberTable.userId, context.discordId),
+                    ),
                   ),
-                ),
-              )
-              .orderBy(desc(memberTable.updatedAt))
-              .limit(1)
-              .pipe(Effect.map((rows) => rows[0] ?? null)),
-          ]);
+                )
+                .orderBy(desc(memberTable.updatedAt))
+                .limit(1)
+                .pipe(Effect.map((rows) => rows[0] ?? null)),
+            ],
+            { concurrency: "unbounded" },
+          );
 
           if (!member || !guild) {
             return yield* Effect.fail(

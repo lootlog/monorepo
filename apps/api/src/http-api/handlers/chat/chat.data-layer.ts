@@ -156,7 +156,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
             ),
           ),
         ),
-      { discard: true },
+      { concurrency: "unbounded", discard: true },
     );
 
   return {

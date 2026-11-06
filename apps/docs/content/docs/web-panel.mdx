@@ -1,505 +1,99 @@
 ---
 title: Panel webowy
-description: Poznaj układ panelu Lootlog i przełączaj się pomiędzy danymi osobistymi a narzędziami klanu.
+description: Układ panelu Lootlog na lootlog.pl. Strefa osobista, Lootlogi grupy, wybór świata, wyszukiwarka i stan połączenia na żywo.
 ---
 
-Panel pod adresem [lootlog.pl/@me](https://lootlog.pl/@me) porządkuje dane
-zebrane przez dodatek. Logujesz się do niego tym samym kontem Discord.
-
-Na dashboardzie sekcja „Ostatnie walki” pokazuje pięć najnowszych zapisanych
-walk: przeciwników, poziomy, świat, wynik i czas. Kliknij wpis, aby otworzyć
-szczegóły, lub „Pokaż wszystkie”, aby przejść do Panelu walk. Przy wpisie możesz
-udostępnić walkę lub usunąć ją po potwierdzeniu. Dla publicznej walki dostępne
-są kopiowanie linku i wyłączenie udostępniania. Na telefonie
-sekcja znajduje się pod feedem aktywności.
-
-Sekcja „Aktywność” zapamiętuje wybór „Online” lub „Bicia” w tej przeglądarce.
-
-## Dostępność danych obecności
-
-Na liście członków, w szczegółach członka i na mapach wydarzenia panel pokazuje
-komunikat, gdy dane obecności są nieaktualne lub chwilowo niedostępne.
-Po błędzie pobierania ostatnie dostępne dane pozostają widoczne jako nieaktualne.
-Wskazania online i obsady map mogą wtedy być błędne. Panel ponawia pobieranie
-co pięć sekund; możesz też użyć przycisku **Spróbuj ponownie**.
-Po zerwaniu połączenia panel ukrywa wskazania do czasu ponownego połączenia
-i pobrania pełnej listy. Przycisk **Spróbuj ponownie** jest dostępny dopiero
-po nawiązaniu połączenia i dołączeniu do organizacji. Brak wskazania online
-nie potwierdza, że członek jest offline.
-
-Ograniczenie uprawnień usuwa poprzednie dane przed ponownym pobraniem.
-Potwierdzona odmowa dostępu ukrywa obecność i blokuje jej aktualizacje.
-Zmiana uprawnień lub ponowne połączenie ponawia sprawdzenie dostępu.
-
-## Zanim zaczniesz
-
-Najpierw wykonaj [Pierwsze kroki](/docs/getting-started). Bez aktywnego dodatku
-panel nie odtworzy zdarzeń, które miały miejsce wcześniej.
-
-## Nawigacja między sekcjami
-
-Górny pasek pokazuje nazwę otwartej strony. Na stronie szczegółów, np. roli,
-dokumentu albo rankingu eventu, przed nazwą jest przycisk z nazwą strony
-nadrzędnej, który do niej wraca. Na telefonie ten przycisk ma postać strzałki.
-Zakładki sekcji, np. statystyk czy ustawień, mają w pasku nazwę całej sekcji.
-
-Jeśli możesz edytować dokumenty, nazwę otwartego dokumentu zmieniasz wprost w
-górnym pasku; wskazuje to ikona ołówka obok nazwy. Bez prawa edycji pod paskiem
-widać kłódkę z informacją, kto i kiedy ostatnio zmienił dokument. Historia
-dokumentu przechowuje 100 ostatnich wpisów; starsze wersje są usuwane przy
-kolejnych zapisach.
-
-W dokumencie możesz wstawić przedmiot przyciskiem **Przedmiot** w pasku
-narzędzi: wyszukaj go po nazwie albo wklej jego ID z gry (`ITEM#…`). ID
-wklejone wprost do tekstu też zamienia się w przedmiot; jeśli trafił do łupów
-Lootloga, jego nazwa i statystyki uzupełnią się same, a w innym przypadku
-wybierzesz go ołówkiem obok. Po najechaniu na ikonę przedmiotu widać jego
-statystyki, a ID każdy skopiuje jednym kliknięciem. Konkretny przedmiot
-znajdziesz, wklejając jego ID do wyszukiwania na stronie w przeglądarce
-(Ctrl+F / Cmd+F): trafienie pokaże ID pod przedmiotem. Gracza oznaczysz, wpisując `@` i wybierając go z
-listy; oznaczenie pokazuje jego aktualny nick i avatar z Discorda. Przycisk
-**Szablony** wstawia gotowe układy, np. rejestr albo depozyt przedmiotów.
-Szeroka tabela przewija się w bok, zamiast ściskać kolumny.
-
-Gdy w formularzu, np. w ustawieniach, regule powiadomień albo dokumencie, masz
-niezapisane zmiany, u dołu strony pojawia się pasek zapisu. Zmiany zapiszesz
-przyciskiem **Zapisz** albo skrótem ⌘S na Macu lub Ctrl+S na innych systemach.
-
-Pierwsze naciśnięcie Tab odsłania link **Przejdź do treści**. Naciśnij Enter,
-aby ominąć panel boczny i przejść do głównej zawartości.
-
-Ustawienia, statystyki, panel walk i edycja wydarzenia używają wspólnego
-poziomego menu. Aktywna sekcja ma pełne tło w kolorze akcentu motywu.
-Na wąskim ekranie pozycje zawijają się do kolejnych wierszy. Możesz przechodzić
-między nimi klawiszem Tab i otwierać wybraną sekcję klawiszem Enter.
-
-## Wykonywanie akcji
-
-Podczas zapisywania, usuwania lub ręcznego odświeżania danych przycisk pokazuje
-wskaźnik ładowania i nie pozwala ponownie uruchomić tej samej akcji. Jego etykieta
-pozostaje widoczna; w przyciskach bez tekstu wskaźnik zastępuje ikonę.
-Okno potwierdzenia pozostaje otwarte do zakończenia operacji. Po błędzie możesz
-spróbować ponownie albo je zamknąć.
-
-## Strefa osobista
-
-Przy nazwie konta na dole panelu bocznego widzisz stan połączenia z aktualizacjami
-na żywo (WebSocket). Pokazuje go też pierścień wokół awatara:
-
-- **Połączono** (zielony pierścień i kropka) oznacza, że zmiany od innych graczy
-  widzisz od razu.
-- **Łączenie…** (obracający się szary łuk) oznacza, że połączenie jest
-  nawiązywane i nowe zmiany mogą chwilę się spóźniać.
-- **Brak połączenia** (bursztynowy pierścień i kropka) oznacza, że panel nie
-  odbiera obecnie aktualizacji na żywo, a widoczne dane mogą być nieaktualne.
-
-Wskaźnik zmienia się automatycznie po odzyskaniu połączenia. Kliknij pasek konta,
-żeby zobaczyć opis stanu i przejść do ustawień konta, serwerów i wyglądu albo się
-wylogować.
-
-Strefa osobista dotyczy twojego konta i postaci, niezależnie od wybranego
-klanu.
-
-| Widok         | Do czego służy                                       |
-| ------------- | ---------------------------------------------------- |
-| Dashboard     | Twój dzień, feed, najbliższe rezerwacje i aktywność  |
-| Statystyki    | Analiza bić i łupów z filtrem świata i zakresu czasu |
-| Kille         | Historia pokonanych potworów                         |
-| Panel walki   | Analiza obsługiwanych walk PvP                       |
-| Powiadomienia | Komunikaty związane z kontem                         |
-| Ustawienia    | Preferencje i konfiguracja postaci                   |
-
-### Dashboard
-
-Sekcja **Twój dzień** na górze dashboardu pokazuje:
-
-- **Bicia dziś** — liczbę dzisiejszych bić i różnicę względem średniej dnia gry
-  z ostatnich 7 dni,
-- **W grze dziś** — dzisiejszy czas online; gdy dodatek właśnie przesłał dane,
-  zobaczysz **Teraz w grze**, a w innym wypadku średni czas dnia gry z 7 dni,
-- **Passa** — liczbę kolejnych dni z biciami i najdłuższą passę,
-- **Potwór tygodnia** — potwora najczęściej bitego przez Ciebie w ostatnich
-  7 dniach.
-
-Przycisk **Statystyki** otwiera pełne statystyki z ostatnich 7 dni. Łączne
-liczniki bić według typu potwora znajdziesz w zakładce **Przegląd** statystyk.
-
-Pod feedem lub obok niego znajdziesz kompaktowy kalendarz aktywności
-z ostatnich 16 tygodni (112 dni).
-Domyślny widok **Online** pokazuje czas całego konta. Nakładające się sesje
-postaci i światów liczymy tylko raz. Zakładka **Bicia** pokazuje dzienną liczbę
-zarejestrowanych bić.
-
-Najedź na dzień w kalendarzu lub ustaw na nim focus klawiaturą, aby zobaczyć
-łączną aktywność i światy, z których pochodzą zapisy. Dotyczy to obu zakładek.
-Dla czasu online starsze zapisy mogą nie zawierać informacji o świecie;
-podpowiedź zaznacza wtedy niepełny podział. Łączny czas konta nadal nie
-dubluje nakładających się sesji z różnych światów.
-
-Czas online powstaje od rozpoczęcia śledzenia. Na dashboardzie dni bez danych
-mają najniższą intensywność koloru w obu zakładkach, ale ich podpowiedź
-i opis dla czytnika ekranu mówią **Brak danych**, a nie zero. Pod kalendarzem nie ma
-panelu szczegółów dnia. Komunikat o opóźnionym zbieraniu oznacza, że najnowsze
-wartości mogą jeszcze wzrosnąć.
-
-Sekcja **Moje rezerwacje** odróżnia brak rezerwacji od błędu pobierania. Po błędzie
-wybierz **Spróbuj ponownie**. Jeśli wcześniejsze dane są dostępne, pozostają
-widoczne z informacją, że są to ostatnie dostępne dane.
-
-Anulowanie rezerwacji z sekcji **Moje rezerwacje** lub ze strony **Moje rezerwacje** wymaga
-potwierdzenia w oknie dialogowym. Jeśli anulowanie się nie powiedzie, okno
-pozostaje otwarte i możesz spróbować ponownie.
-
-Strona **Moje rezerwacje** ma zakładki **Nadchodzące** i **Historia 30 dni**,
-a link do każdej z nich możesz zapisać lub udostępnić. Pole nad listą zawęża ją
-do rezerwacji, których expowisko lub Lootlog pasuje do wpisanej nazwy.
-
-### Na żywo
-
-Po lewej stronie dashboardu widzisz ostatnie 20 zdarzeń z ostatnich 24 godzin
-z Lootlogów, do których masz dostęp. Zdarzenia układają się na osi czasu
-w sekcjach **Ostatnie 15 minut**, **Ostatnia godzina** i **Wcześniej**. Kolor
-kropki i etykiety oznacza typ potwora: Elita II, Heros, Kolos, Tytan lub
-pozostałe.
-
-Bicie i łup z tej samej walki tworzą jeden wpis. Dodatek wysyła je osobno,
-więc łączymy łup z biciem tego samego potwora na tym samym świecie, jeśli łup
-zapisano od 30 sekund przed do 2 minut po biciu. Bicie bez łupu ma dopisek
-**Bez zapisanego łupu**. Łup, do którego nie pasuje żadne bicie (na przykład
-ze zwykłej elity), ma własny wpis. Bicia tego samego potwora w tym samym
-Lootlogu, świecie i minucie tworzą jeden wpis z licznikiem ×N. Wpis nie
-wskazuje osoby, która zgłosiła bicie.
-
-Wpis pokazuje ikonę i nazwę potwora z poziomem i profesją (jeśli została
-zapisana), typ, avatary Lootlogów, przedmioty oraz świat z lokalizacją, czas
-i liczbę graczy. Przedmioty pokazujemy jako grafiki bez podpisów; najedź na
-ikonę lub przejdź do niej klawiaturą, aby zobaczyć nazwę i statystyki.
-Ten sam łup lub bicie w kilku dostępnych Lootlogach zajmuje jeden wpis ze
-wszystkimi ich avatarami. Nazwę Lootloga zobaczysz w tooltipie po najechaniu
-na avatar lub ustawieniu na nim fokusu klawiaturą. Bicia łączymy między
-Lootlogami tylko wtedy, gdy obejmują dokładnie te same zdarzenia.
-
-Kliknięcie avatara otwiera listę łupów Lootloga. Kliknięcie nazwy potwora
-otwiera łup, a przy biciu bez łupu — statystyki potwora.
-
-Przycisk filtrów w nagłówku feedu otwiera panel, w którym wybierasz, co chcesz
-widzieć:
-
-- **Lootlogi** — domyślnie wszystkie. Odznaczony Lootlog znika z feedu,
-  a Lootlog, do którego dołączysz później, pojawia się automatycznie.
-- **Typ potwora** — Elita II, Heros, Kolos, Tytan i Pozostałe.
-- **Tylko z łupem** — ukrywa bicia, do których nie zapisano łupu.
-
-Filtry i pauzę zapisujemy na Twoim koncie, więc obowiązują na każdym
-urządzeniu. Jeśli żadne zdarzenie nie pasuje do filtrów, wybierz **Wyczyść
-filtry**, aby wrócić do ustawień domyślnych.
-
-Feed rośnie razem z wpisami i przewija się razem ze stroną, a jego nagłówek
-zostaje u góry ekranu. Rezerwacje, ostatnie walki i aktywność znajdują się po
-prawej stronie. Na telefonie feed znajduje się pod rezerwacjami, a nad
-ostatnimi walkami i aktywnością.
-
-Jeżeli przewiniesz stronę poniżej początku feedu, aktualizacje czekają pod
-przyciskiem **Nowe zdarzenia**, który pojawia się pod nagłówkiem feedu. Nie przesuwają automatycznie czytanej listy.
-Przycisk **Wstrzymaj** w nagłówku feedu zatrzymuje aktualizacje, a **Wznów**
-pobiera aktualną listę. Zmiana filtrów pobiera nową listę także podczas pauzy.
-Pauza dotyczy wyłącznie feedu.
-Odświeżenie zachowuje widoczną listę do otrzymania odpowiedzi. Wpisy pobrane
-przez HTTP pojawiają się bez animacji. Nowy wpis z WebSocketu najpierw odsuwa pozostałe
-w dół, a następnie się pojawia. Przy ograniczeniu ruchu w systemie pojawia się od razu.
-Historię pobieramy przy wejściu na dashboard, po dołączeniu sesji do Lootlogów
-(także po ponownym połączeniu) oraz przy wznowieniu. Pierwsze pobranie działa
-również przy niedostępnym połączeniu na żywo. Podczas
-połączenia kompletne wpisy przychodzą przez WebSocket, bez cyklicznego
-odpytywania historii. Kolejne bicia aktualizują licznik istniejącego wpisu.
-Wpisy Lootlogów, do których tracisz dostęp, znikają od razu; pozostałe pozostają
-na ekranie podczas odświeżania.
-Po serii zmian dostępu czekamy 5 sekund od ostatniej zmiany i pobieramy aktualną
-listę, również podczas pauzy. Pozostałe wpisy pozostają na ekranie do otrzymania
-odpowiedzi, a następnie są zastępowane aktualną listą bez przejściowego komunikatu
-o pustym feedzie. Oczekujące aktualizacje są odrzucane. Jeśli pobranie się nie
-powiedzie, poprzednie wpisy zostają ukryte i pojawia się komunikat błędu.
-Aktualizacja live może nie dotrzeć podczas awarii; zapisane bicie pozostaje
-w historii przez 24 godziny i może pojawić się przy kolejnym pobraniu listy.
-
-### Statystyki konta
-
-Otwórz **Statystyki** w menu albo przycisk **Statystyki** w sekcji **Twój dzień** na dashboardzie. W pasku
-filtrów wybierz całe konto lub jeden świat oraz ostatnie **7, 30, 90 albo 365 dni**.
-Domyślny okres to 30 dni. Na telefonie filtry otwierasz okrągłym przyciskiem w rogu
-ekranu. Filtry i zakładka są zapisane w adresie strony, więc pozostają po odświeżeniu.
-
-Na początku paska wybierz **Postać**, aby zobaczyć statystyki jednej postaci
-zamiast całego konta. Wybór postaci ustawia też jej świat, a zmiana świata
-wraca do wszystkich postaci. Bicia osobno dla każdej postaci zapisujemy od
-wdrożenia tej funkcji w październiku 2026 roku. Starsze bicia są tylko w
-statystykach całego konta, dlatego przy postaci strona pokazuje, od kiedy ma
-dane, a wcześniejsze dni oznacza jako brak danych, a nie zero bić. Gdy dwie
-Twoje postacie zgłoszą to samo bicie, liczy się ono raz, dla postaci, która
-zgłosiła je pierwsza.
-
-- **Przegląd:** liczba bić ze zmianą względem poprzedniego okresu i podziałem na
-  tytany, kolosy, herosów, herosów eventowych i elity (Elita III pojawia się,
-  gdy ją bijesz). Kliknij typ, aby zobaczyć jego ranking potworów. Niżej:
-  ulubiony potwór, dzień chwały, passa (obecna i najdłuższa seria dni
-  z biciami), Twoja pora gry, wykres bić dziennie, bicia na każdym świecie
-  (kliknij świat, aby zawęzić do niego statystyki) oraz pięć najczęściej
-  bitych potworów i pięć najczęstszych legend.
-- **Aktywność:** czas online w okresie, średni czas na dzień gry, bicia na
-  godzinę gry i najdłuższy dzień online, wykres czasu online narastająco, siatka
-  dni tygodnia i godzin, kiedy bijesz najwięcej, oraz porównanie bić z tego
-  tygodnia z tymi samymi dniami poprzedniego. Czas online obejmuje najwyżej
-  ostatnie 365 dni. Po wybraniu świata liczy się tylko czas gry na nim, a bicia
-  na godzinę gry pomijają dni, w których starsza wersja dodatku nie zapisała
-  świata. Czas online nie rozróżnia postaci, dlatego przy wybranej postaci
-  bicia na godzinę gry nie są pokazywane.
-- **Potwory:** ranking najczęściej bitych potworów z liczbą legend, które z nich
-  spadły (**Spadło**) i które złapałeś (**Złapane**). Filtr typu potwora zawęża
-  ranking. Przy zerowym wyniku poprzedniego okresu zmiana procentowa nie jest
-  wyliczana.
-- **Łupy:** łupy z walk, w których brała udział Twoja postać: liczba łupów
-  i przedmiotów, przedmioty legendarne (z liczbą złapanych) i heroiczne,
-  wykres w czasie
-  (dzienny do 30 dni, dalej tygodniowy), potwory, z których wypadło najwięcej,
-  pięć najczęstszych legend i **Potwory i legendy**: najczęściej bici bossowie
-  z liczbą bić oraz legend, które z nich spadły i które złapałeś.
-- **Legendy:** wszystkie legendy z okresu z potworem i światem: ile spadło
-  przy Twojej postaci, ile złapałeś i ile razy biłeś tego potwora. Przy
-  wszystkich postaciach kolumna **Złapane przez** pokazuje, które z nich
-  złapały legendę, pod ich obecną nazwą. Kliknij nagłówek kolumny **Spadło**,
-  **Złapane** albo **Bicia potwora**, aby po niej posortować.
-
-  Legendy w zakładkach **Łupy**, **Potwory** i **Legendy** pomijają legendarne
-  błogosławieństwa, ulepszenia i przedmioty jednorazowe; licznik przedmiotów
-  legendarnych liczy wszystkie. Łup należy do najsilniejszego potwora walki,
-  np. do elity II, a nie do jej obstawy.
-
-  Przedmiot jest złapany, gdy podział łupu przypisuje go Twojej postaci albo gdy
-  walczyłeś sam. Liczą się postacie, na których grasz
-  z dodatkiem, oraz tylko łupy, które widzisz w swoich Lootlogach. Łup zapisany
-  w kilku Lootlogach liczy się raz.
-
-Dni i godziny odpowiadają strefie **Europe/Warsaw**, a tydzień zaczyna się
-w poniedziałek. Dzisiejszy dzień jest oznaczony. Porównanie
-okresów obejmuje zakończone godziny po obu stronach; dzienny wykres może już
-uwzględniać bicia z bieżącej godziny. Starsza historia bez dat godzinowych
-pozostaje w licznikach łącznych, lecz nie jest sztucznie rozkładana na dni.
-
-Pod wykresem bić dziennie dostępna jest również tabela danych.
-
-## Strefa organizacji
-
-Po wybraniu klanu nawigacja przełącza się na wspólne dane i narzędzia:
-
-- listę łupów i timery;
-- rezerwacje map;
-- eventy;
-- statystyki i rankingi;
-- dokumenty, czat, powiadomienia i logi aktywności;
-- członków, role oraz konfigurację.
-
-Zakres widocznych pozycji zależy od [roli i uprawnień](/docs/permissions).
-Brak sekcji nie musi oznaczać błędu aplikacji.
-
-### Skrócony link organizacji
-
-W **Ustawienia → Ogólne** możesz ustawić skrócony link, np. `moj-klan`.
-Pod polem zobaczysz podgląd adresu: wielkie litery zamieniają się na małe,
-a odstępy i znaki specjalne na myślniki.
-Adres nie może składać się z samych cyfr, pozostawać pusty po tej zamianie
-ani mieć zarezerwowanej nazwy `battles`. Formularz wskazuje błąd przy polu
-i blokuje zapis. Dostępność nazwy jest sprawdzana podczas zapisywania.
-Aby usunąć skrócony link, wyczyść pole i zapisz ustawienia.
-
-### Lista łupów
-
-Świat wybierasz przy prawej krawędzi górnego paska. Ten sam wybór obowiązuje na
-liście łupów, w timerach, statystykach i logach aktywności, a panel zapamiętuje
-go osobno dla każdej organizacji. Opcja **Wszystkie światy** pokazuje dane ze
-wszystkich światów organizacji; łupy i timery mają wtedy przy sobie nazwę świata.
-Wybór nie trafia do adresu strony, więc wysłany link otworzy się na świecie
-zapamiętanym przez odbiorcę.
-
-W prawym górnym rogu jest wyszukiwarka organizacji. Otworzysz ją polem
-**Szukaj…** albo skrótem **Ctrl + K** (na Macu **⌘ + K**) na każdej stronie
-organizacji. Znajdziesz w niej strony
-panelu, przedmioty, potwory i graczy z wybranego świata, a wyniki zawęzisz do
-jednej grupy. Możesz też wkleić identyfikator HID przedmiotu. Wybrany przedmiot,
-potwór lub gracz otwiera listę łupów z tym filtrem.
-
-Nowe łupy i zmiany podziału pojawiają się na liście na żywo, bez odświeżania
-strony. Jeżeli przewiniesz listę w dół, nowe łupy czekają pod przyciskiem
-z ich liczbą u góry listy i nie przesuwają czytanych wpisów. Kliknij go albo
-wróć na początek listy, aby je zobaczyć. Przy wyszukiwaniu tekstowym nowe łupy
-dochodzą po około pół minuty, gdy lista jest przewinięta na początek.
-
-Serduszko w nagłówku łupu, obok liczby komentarzy, pozwala polubić łup.
-Kliknij je ponownie, aby cofnąć polubienie. Ten sam przycisk jest w oknie
-szczegółów łupu. Liczba obok serduszka mówi, ile osób z Lootloga polubiło
-łup, a po najechaniu na nie zobaczysz, kto to był. Polubić może każdy, kto
-widzi łup. Polubienia innych osób zobaczysz po odświeżeniu listy.
-
-Okno szczegółów łupu pokazuje przy każdym graczu przedmioty, które złapał,
-z nazwą i poziomem. Kilka sztuk tego samego przedmiotu zajmuje jedną linię
-z liczbą sztuk, np. **×3**. Przycisk kopiowania obok przedmiotu kopiuje jego
-identyfikator `ITEM#…`; przy kilku sztukach wybierasz, którego egzemplarza.
-Gracze z grupy, którym nic nie przypadło, są zebrani niżej w sekcji
-**Bez przedmiotów**, a gracze spoza grupy obecni na mapie w sekcji
-**Pozostali na mapie w chwili dropu**. Komentarze są na dole okna, zwinięte;
-kliknij **Komentarze**, aby je rozwinąć i dodać własny. Osoby z uprawnieniem
-`LOOTLOG_LOOTS_ARCHIVE` usuwają łup z menu **⋯** w nagłówku okna.
-
-### Losowanie przedmiotów
-
-Margonem mieści w grupie dziesięciu graczy. Gdy na mapie byli też gracze,
-którym zabrakło miejsca, przedmiot legendarny, którego nie związano na stałe, można rozlosować między nimi a osobą, która
-złapała go w grze. Przycisk z kostką przy przedmiocie w oknie szczegółów łupu
-otwiera losowanie. Prowadzą je osoby z uprawnieniem `LOOTLOG_LOOTS_ARCHIVE`,
-a wynik widzi każdy, kto widzi łup.
-
-Na kole jest zawsze zwycięzca z gry. Domyślnie dostaje tyle losów, ilu graczy
-w grupie ma profesję pasującą do przedmiotu, łącznie z nim, a każdy taki gracz
-spoza grupy jeden los. Poziom graczy nie ma znaczenia.
-
-Przy łupach z walki, w których wypadł przedmiot legendarny, dodatek
-zapisuje graczy obecnych na mapie i podpowiada ich na liście. Przed losowaniem
-możesz usunąć z niej każdego, np. gracza z wrogiej frakcji, dopisać brakującego
-gracza z nickiem i profesją, zmienić liczbę losów
-dowolnego uczestnika oraz potasować koło. Starsze łupy nie mają tej listy,
-więc uczestników spoza grupy dopisujesz ręcznie.
-
-Zwycięzcę wybiera serwer Lootloga, a koło zatrzymuje się na wylosowanym losie.
-Wynik zostaje zapisany razem z uczestnikami, ich losami i osobą, która
-losowała; przy przedmiocie pojawia się nazwa zwycięzcy. Jeśli losowanie trzeba
-powtórzyć, unieważnij wynik z podaniem powodu. Unieważniony wynik zostaje
-w historii, a przedmiot można losować ponownie.
-
-Zmiana filtrów lub świata przewija listę łupów na początek. Po pojawieniu się
-nowych łupów rozwinięty stos przedmiotów w widoku listy i siatki pozostaje przypisany
-do tego samego łupu.
-
-Nad listą łupów jest jej własna wyszukiwarka. Działa jak wyszukiwarka
-organizacji, ale szuka tylko łupów: podpowiada potwory, przedmioty i graczy
-z wybranego świata, rozpoznaje wklejony identyfikator HID i pozwala szukać
-wpisanego tekstu bezpośrednio w zapisanych łupach. Wybrana podpowiedź dodaje
-filtr do listy. Po prawej stronie tego paska, na szerokim ekranie, jest
-przełącznik widoku listy i siatki.
-Filtry są w panelu przy prawej krawędzi ekranu. Przycisk w jego nagłówku
-zwija panel do wąskiego paska z ikonami, a panel zapamiętuje ten wybór. Po
-najechaniu na ikonę zobaczysz jej opis. Ikony **Potwory**, **Przedmioty**
-i **Gracze** otwierają panel na wybranej sekcji, a kropka przy ikonie oznacza
-aktywny filtr w tej sekcji. Szybkie filtry włączysz jednym kliknięciem także
-w zwiniętym pasku; ponowne kliknięcie je wyłącza. Kolejność zaznaczania
-wartości nie zmienia dopasowania do zapisanego filtra ani nie pozwala zapisać
-jego duplikatu. Na węższym ekranie panel
-otwiera się nad listą, a na telefonie okrągłym przyciskiem w prawym dolnym
-rogu ekranu, który pokazuje liczbę aktywnych filtrów.
-
-### Timery
-
-Nowe timery, zmiany czasu odrodzenia i usunięcia pojawiają się na żywo
-dla wybranej organizacji i świata. Przy opcji **Wszystkie światy** panel
-pobiera timery każdego świata osobno, tak jak dodatek, i przy każdym timerze
-pokazuje nazwę świata. Po ponownym połączeniu panel pobiera
-aktualną listę, aby uzupełnić zmiany z czasu rozłączenia.
-
-Świat wybierasz przy prawej krawędzi górnego paska, tak samo jak na liście łupów.
-Podczas pobierania danych nowego świata panel nie pokazuje timerów poprzedniego.
-
-Jeśli pobranie się nie powiedzie, wybierz **Spróbuj ponownie**. Po błędzie
-odświeżania ostatnio pobrane timery pozostają widoczne z ostrzeżeniem,
-że mogą być nieaktualne.
-
-Timery wyglądają i zachowują się tak jak w dodatku w grze i korzystają z jego
-ustawień zapisanych na koncie. Napis jest biały do minimalnego czasu odrodzenia,
-pomarańczowy w oknie odrodzenia, a po maksymalnym czasie czerwony, z ujemnym
-odliczaniem. Po czasie usuwania ustawionym w dodatku (domyślnie 30 sekund)
-timer znika, chyba że w grze wybrano dla niego **Zostaw po wyzerowaniu**. Taki
-timer zostaje na liście z przygaszonym kolorem, pod aktywnymi timerami.
-Wiersze mają kolory, które przypisano potworom w dodatku, a odliczanie
-pokazuje czas do minimalnego albo maksymalnego odrodzenia, zgodnie z
-ustawieniem trybu odliczania.
-
-### Wykryte herosy
-
-Strona **Wykryte herosy** (w menu pod Timerami) pokazuje ostatnie wykrycie
-każdego herosa na wybranym świecie: stan (**Grasuje**, **Pojawi się**,
-**Niepotwierdzony**, **Prawdopodobnie zbity**, **Zbity**), mapę, czas wykrycia
-i ostatniego potwierdzenia, osobę, która wykryła herosa, oraz obstawiających.
-Herosy są pogrupowane według stanu: najpierw grasujące, potem te, które się
-pojawią, niepotwierdzone i nieaktualne. Każde kolejne użycie wykrywacza z tym
-samym wynikiem odświeża czas ostatniego wykrycia. Obok mapy widać timer herosa:
-odliczanie w kolorach z Timerów i okno respawnu. Gdy timer wygasł albo został
-usunięty, wiersz pokazuje, jak dawno to się stało, i ostatnie znane okno. Od
-tego momentu heros mógł się pojawić bez nowego timera. Zmiany pojawiają się na żywo.
-Ikona historii otwiera oś czasu z 20 ostatnimi wykryciami herosa.
-
-Przyciskiem **Obstawiam** zadeklarujesz obstawianie aktualnego wykrycia, a
-przyciskiem **Wycofaj** je wycofasz. Na stronie Timerów timer herosa z
-aktualnym wykryciem pokazuje mapę z wykrycia i liczbę obstawiających.
-
-W powiadomieniach Lootloga możesz dodać regułę **Wykrycie herosa** dla
-wybranego świata. Bot wyśle wiadomość na kanał Discorda, gdy ktoś wykryje
-nowe miejsce herosa, oraz drugi raz, gdy heros pojawi się w wykrytym miejscu.
-Kolejne potwierdzenia tego samego wykrycia nie wysyłają nic. Opcjonalny
-przedział **Poziom herosa od / do** ogranicza regułę do herosów z tego zakresu.
-
-Jak powstają wykrycia, opisuje [Wykryci herosi](/docs/features#wykryci-herosi).
-
-### Gracze na mapie przy legendzie
-
-Jeśli w walce wypadł co najmniej jeden przedmiot legendarny, w szczegółach łupu
-sekcja **Gracze na mapie w chwili dropu** pokazuje liczbę i zapisane postacie:
-ikonę, nick, poziom oraz profesję, jeśli są dostępne. Lista obejmuje także własną postać
-zgłaszającego i jest oddzielona od uczestników walki — obecność na mapie nie oznacza
-udziału w walce.
-
-Organizacja zachowuje pierwszy dostępny zapis dla danego łupu. Kolejne zgłoszenia
-nie łączą list ani nie zastępują zapisu. Dane dotyczą chwili dropu, więc późniejsze
-wejścia, wyjścia i zmiany postaci nie aktualizują tej listy.
-
-Komunikat **Brak danych o graczach na mapie** oznacza, że dodatek nie dostarczył
-wiarygodnej listy, na przykład dla starszego łupu. Nie oznacza pustej mapy.
-Sam łup może zostać zapisany bez tej listy. Dla innych łupów sekcja się nie pojawia.
-
-## Przełączanie kontekstu
-
-Panel zapamiętuje w tej przeglądarce, osobno dla każdego konta, ostatnio
-odwiedzoną przestrzeń: strefę osobistą albo organizację. Po zalogowaniu lub po
-kliknięciu **Otwórz Lootloga** na stronie głównej wrócisz do strefy osobistej albo
-do domyślnej dostępnej sekcji zapamiętanej organizacji. Wylogowanie nie usuwa
-tego wyboru.
-
-Konkretny adres zawsze otwiera wskazany widok. Odświeżenie strony,
-[lootlog.pl/@me](https://lootlog.pl/@me) oraz linki do sekcji, walk i zaproszeń
-nie przenoszą cię do zapamiętanej organizacji.
-Jeśli utracisz dostęp do zapamiętanej organizacji albo zostanie ona usunięta,
-panel otworzy dashboard i zapomni ten wybór. Przy chwilowym błędzie połączenia
-również zobaczysz dashboard, ale zapamiętana organizacja pozostanie bez zmian.
-
-Jeżeli korzystasz z wielu postaci, światów lub klanów:
-
-1. sprawdź aktywne konto w dolnej części nawigacji;
-2. wybierz właściwą organizację albo strefę osobistą;
-3. ustaw filtr świata;
-4. dopiero potem porównuj wyniki.
-
-Każdy klan ma oddzielne dane, role i ustawienia.
-
-## Sprawdź rezultat
-
-Panel jest poprawnie skonfigurowany, gdy pokazuje właściwe konto, pozwala
-zmienić świat i wyświetla sekcje zgodne z twoją rolą.
-
-## Następny krok
-
-- Przejdź do [Analizy walk](/docs/battle-panel), jeśli interesują cię dane
-  PvP.
-- Otwórz [Funkcje organizacji](/docs/clan-features), jeśli pracujesz na danych
-  współdzielonych.
-- Zobacz [Role i uprawnienia](/docs/permissions), gdy brakuje oczekiwanej
-  sekcji.
-
-Statystyki bić odświeżają się także po sygnale nowego bicia organizacji oraz
-po ponownym dołączeniu sesji. Sygnał powoduje pobranie aktualnych wartości konta;
-nie dopisuje użytkownikowi bicia innej osoby. Krótkie serie sygnałów są łączone.
+Panel na [lootlog.pl/@me](https://lootlog.pl/@me) pokazuje dane zebrane przez
+dodatek. Logujesz się tym samym kontem Discord co w grze. Panel nie odtworzy
+zdarzeń sprzed instalacji dodatku.
+
+## Strefa osobista i Lootlogi
+
+Panel ma dwie przestrzenie, które wybierasz na pasku bocznym:
+
+- **strefa osobista** dotyczy Twojego konta i postaci, niezależnie od
+  Lootloga;
+- **Lootlog grupy** pokazuje wspólne dane i narzędzia jednego serwera
+  Discord.
+
+Panel zapamiętuje w przeglądarce ostatnio odwiedzoną przestrzeń i po
+zalogowaniu do niej wraca. Konkretny link, np. do walki albo zaproszenia,
+zawsze otwiera wskazaną stronę.
+
+### Strefa osobista
+
+| Strona            | Do czego służy                                            |
+| ----------------- | --------------------------------------------------------- |
+| **Dashboard**     | Twój dzień, zdarzenia na żywo, rezerwacje, ostatnie walki |
+| **Statystyki**    | Twoje bicia, łupy i legendy                               |
+| **Panel walk**    | Analiza walk PvP                                          |
+| **Powiadomienia** | Twoje powiadomienia i obserwowane przedmioty              |
+| **Ustawienia**    | Konto, widoczność Lootlogów i wygląd panelu               |
+
+Dashboard i statystyki opisuje strona [Dashboard i statystyki](/docs/dashboard),
+walki [Panel walk](/docs/battle-panel), a wygląd [Motywy panelu](/docs/themes).
+
+### Lootlog grupy
+
+| Strona             | Do czego służy                                                   |
+| ------------------ | ---------------------------------------------------------------- |
+| **Lista łupów**    | [Łupy grupy](/docs/loot-list) z wyszukiwarką i filtrami          |
+| **Timery**         | [Timery](/docs/timers#timery-w-panelu-webowym) jak w grze        |
+| **Wykryte herosy** | [Wykrycia herosów](/docs/heroes#wykryte-herosy-w-panelu-webowym) |
+| **Rezerwacje**     | [Rezerwacje expowisk](/docs/reservations)                        |
+| **Dokumenty**      | [Wspólne dokumenty](/docs/clan-features#dokumenty)               |
+| **Eventy**         | [Eventy i rankingi](/docs/events)                                |
+| **Statystyki**     | [Statystyki łupów i bić](/docs/loot-list#statystyki-lootloga)    |
+
+Administratorzy mają dodatkowo grupę **Zarządzanie**: **Logi aktywności**,
+**Powiadomienia** i **Ustawienia**. Lootlog otwiera się na pierwszej stronie,
+do której masz dostęp. Brak strony w menu zwykle oznacza brak
+[uprawnień](/docs/permissions), a nie błąd.
+
+## Wybór świata
+
+Świat wybierasz przy prawej krawędzi górnego paska. Wybór obowiązuje na
+liście łupów, w timerach, wykrytych herosach, statystykach i logach
+aktywności. Panel pamięta go osobno dla każdego Lootloga. **Wszystkie
+światy** pokazuje dane ze wszystkich, z nazwą świata przy wpisach.
+
+Wybór świata nie trafia do adresu strony. Wysłany link otworzy się u odbiorcy
+na jego zapamiętanym świecie.
+
+## Wyszukiwarka
+
+W Lootlogu pole **Szukaj…** w prawym górnym rogu albo skrót `Ctrl+K` (na
+Macu `⌘+K`) otwiera wyszukiwarkę stron panelu, przedmiotów, potworów i
+graczy z wybranego świata. Możesz też wkleić identyfikator przedmiotu.
+Wybrany przedmiot, potwór lub gracz otwiera listę łupów z tym filtrem.
+
+## Połączenie na żywo
+
+Pierścień wokół awatara na dole paska bocznego pokazuje stan aktualizacji na
+żywo:
+
+- **Połączono** (zielony): zmiany od innych widzisz od razu;
+- **Łączenie…** (szary łuk): nowe zmiany mogą się chwilę spóźniać;
+- **Brak połączenia** (bursztynowy): widoczne dane mogą być nieaktualne.
+
+Kliknięcie paska konta pokazuje opis stanu, ustawienia i wylogowanie. Tam
+też jest **Zainstaluj dodatek do gry**.
+
+Gdy dane o obecności graczy są nieaktualne, lista członków i mapy eventu
+pokazują komunikat. Ostatnie dane zostają widoczne jako nieaktualne, a panel
+ponawia pobieranie co pięć sekund. Brak wskazania online nie oznacza, że
+ktoś jest offline.
+
+## Zapisywanie zmian
+
+- Gdy w formularzu masz niezapisane zmiany, u dołu strony pojawia się pasek
+  zapisu. Zapiszesz przyciskiem **Zapisz** albo skrótem `Ctrl+S` (na Macu
+  `⌘S`).
+- Podczas zapisu lub usuwania przycisk pokazuje wskaźnik ładowania. Okno
+  potwierdzenia zostaje otwarte do końca operacji, a po błędzie możesz
+  ponowić.
+
+## Klawiatura
+
+Pierwsze naciśnięcie `Tab` odsłania link **Przejdź do treści**, który omija
+pasek boczny. Zakładki sekcji przełączasz `Tab` i `Enter`.

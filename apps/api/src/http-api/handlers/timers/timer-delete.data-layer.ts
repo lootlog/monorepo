@@ -1,3 +1,4 @@
+import { publishTimerEvents } from "./timer-update-publication.js";
 import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
 import { pruneTimerHistory } from "./timer-history-retention.js";
 import {
@@ -171,8 +172,10 @@ export const makeDeleteTimer = (
     };
 
     yield* ports.invalidateList(access.guild.id);
-    yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_DELETE, payload);
-    yield* ports.publish(RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED, payload);
+    yield* publishTimerEvents(
+      ports.publish(RabbitRoutingKey.GUILDS_TIMERS_DELETE, payload),
+      ports.publish(RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED, payload),
+    );
   });
 
   return (

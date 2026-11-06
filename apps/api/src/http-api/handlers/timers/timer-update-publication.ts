@@ -18,6 +18,19 @@ export interface TimerUpdatePorts {
   ) => Effect.Effect<unknown, unknown>;
 }
 
+/** Publishes the realtime and notification facts together; both are attempted even when one fails. */
+export const publishTimerEvents = Effect.fnUntraced(function* (
+  realtime: Effect.Effect<unknown, unknown>,
+  notifications: Effect.Effect<unknown, unknown>,
+) {
+  const results = yield* Effect.all([realtime, notifications], {
+    concurrency: 2,
+    mode: "result",
+  });
+
+  for (const result of results) yield* Effect.fromResult(result);
+});
+
 export const publishTimerUpdate = Effect.fnUntraced(function* (
   ports: TimerUpdatePorts,
   guildId: string,
@@ -25,8 +38,10 @@ export const publishTimerUpdate = Effect.fnUntraced(function* (
 ) {
   const response = mapTimerResponse(projection);
   yield* ports.invalidateList(guildId);
-  yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response);
-  yield* ports.publish(RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED, response);
+  yield* publishTimerEvents(
+    ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response),
+    ports.publish(RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED, response),
+  );
 
   return response;
 });

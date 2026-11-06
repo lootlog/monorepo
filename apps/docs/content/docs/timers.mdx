@@ -1,0 +1,181 @@
+---
+title: Timery odrodzenia
+description: Jak działają timery Lootlog w Margonem. Odliczanie respawnu, ręczne timery, własne listy, historia, gracze i wrogowie przy timerze.
+---
+
+Gdy ktoś z Lootloga pokona śledzonego potwora, wszyscy dostają timer z
+minimalnym i maksymalnym czasem odrodzenia. Nie trzeba niczego wpisywać ani
+przepisywać na Discorda. Ten sam timer widać w grze, w panelu webowym i w
+komendach `/timery` oraz `/timer` [bota Discord](/docs/discord).
+
+Okno timerów otworzysz kafelkiem **Timery** na pasku szybkiego dostępu albo
+skrótem `Shift+T`.
+
+## Jakie potwory mają timery
+
+- **Tytani**
+- **Herosi**
+- **Herosi eventowi**, czyli herosi z wydarzeń w grze (mają własny filtr
+  typu; jeśli Twój filtr pokazywał herosów, pokazuje też eventowych)
+- **Elity II**
+- **Tropiciele herosów** podczas wydarzenia Tropiciele herosów (opis niżej)
+
+Timer powstaje automatycznie, gdy dodatek rozpozna zabicie. Postać w trybie
+AFK nie wysyła automatycznych timerów, bo zniknięcie potwora z jej ekranu nie
+musi oznaczać zabicia. Dzięki temu nie nadpisze timera dodanego przez kogoś
+innego.
+
+## Jak czytać timer
+
+- Napis jest biały do minimalnego czasu odrodzenia, pomarańczowy w oknie
+  odrodzenia, a po maksymalnym czasie czerwony, z ujemnym odliczaniem.
+- Timer **pulsuje**, gdy jego potwór stoi: ktoś z Lootloga widzi go teraz na
+  mapie. Po najechaniu zobaczysz **Potwór stoi**. Pulsowanie kończy się po
+  zabiciu potwora albo gdy nikt z Lootloga już go nie widzi. Przy wyłączonych
+  animacjach timer jest stale podświetlony.
+- Po wyzerowaniu timer znika po ustawionym czasie (domyślnie 30 sekund).
+  Jeśli wybierzesz dla niego **Zostaw po wyzerowaniu** w menu pod prawym
+  przyciskiem myszy, zostaje na liście, przyciemniony, pod aktywnymi
+  timerami.
+
+### Gracze i wrogowie przy timerze
+
+Przed czasem timera, oddzielone kropką, widać liczby graczy na mapie potwora:
+
+- **zielona** to gracze z tego Lootloga, łącznie z Tobą;
+- **czerwona** to gracze z wrogiego klanu, których ktoś z Lootloga widział na
+  tej mapie w ostatnich 10 sekundach; potem liczba blednie, a po 30 sekundach
+  znika;
+- **pomarańczowa** oznacza, że wszyscy gracze z danej grupy są AFK.
+
+Członkowie Twojego Lootloga nigdy nie są liczeni jako wrogowie. Po najechaniu
+na timer zobaczysz obie listy: nick, poziom, profesję, klan, oznaczenie AFK,
+a przy wrogach także to, ile sekund temu ich widziano.
+
+Liczby wymagają uprawnień do graczy online i ich lokacji. Nie ma ich przy
+timerach bez mapy. Herosi mają je tylko wtedy, gdy mają aktualne
+[wykrycie](/docs/heroes#wykryci-herosi). Po utracie połączenia liczby
+znikają do czasu pobrania aktualnych danych.
+
+### Skąd Lootlog wie o wrogach (AirTagi)
+
+Wrogów zgłasza każdy członek w nowym interfejsie gry, który ma zweryfikowane
+konto Margonem. Wystarczy, że jedna osoba widzi gracza jako wroga swojego
+klanu. Działa to zawsze, nie ma ustawienia.
+
+- Gdy ktoś z Lootloga zobaczy, że wróg opuszcza mapę, a nikt inny go już nie
+  widzi, wróg znika od razu.
+- Wróg, który schował się we mgle wojny, może nadal być na mapie, dlatego
+  blednie i znika po czasie.
+- Profesję wroga widać tylko, gdy zgłosił go zaktualizowany dodatek.
+
+Lootlog nie rysuje znaczników na mapie gry ani na minimapie. Na czerwonych
+mapach (pełne PvP) w nowym interfejsie okno gry **Gracze na mapie** ma pod
+listą sekcję **Widziani przez Lootloga**: wrogów z Twojej mapy, których widzą
+inni członkowie, a Ty nie. Gdy wróg wejdzie w Twój zasięg, przechodzi na
+zwykłą listę gry. Kliknięcie wiersza zaczyna prywatną wiadomość.
+
+## Tropiciele herosów
+
+Podczas wydarzenia **Tropiciele herosów** Lootlog śledzi też tropicieli. Gdy
+ktoś z Lootloga stoi przy tropicielu w chwili jego odkrycia, powstaje timer
+**Tropiciel herosów** (skrót `TH`):
+
+1. Najpierw timer odlicza 20 minut do zamknięcia wejścia do kolosa i świeci
+   na zielono. Po najechaniu zobaczysz godzinę zamknięcia.
+2. Potem odlicza odrodzenie tropiciela, około 90 minut na światach
+   ogólnodostępnych. Na światach prywatnych Lootlog przyjmuje krótszy czas,
+   gdy ktoś z Lootloga zobaczy odejście tropiciela.
+
+Tropiciele mają własny filtr typu i własny kolor w **Wygląd → Kolory NPC**.
+Ich timera nie da się zresetować, bo czas wyznacza gra. Nieaktualny możesz
+usunąć.
+
+## Filtry
+
+Filtry timerów, w tym zakres poziomów, dodatek zapisuje w przeglądarce osobno
+dla każdej postaci i świata. Każdy Lootlog i widok zgrupowanych timerów ma
+własne filtry, tak samo w oknie timerów i pod torbą.
+
+## Własne listy timerów
+
+Timery możesz układać w listy, np. „E2 na event” albo „Herosi 100+”.
+
+1. Kliknij timer prawym przyciskiem myszy i wybierz **Listy**.
+2. Zaznacz listę albo od razu utwórz nową. Jeden potwór może być na kilku
+   listach.
+3. Pod filtrami okna timerów pojawi się rząd przycisków z nazwami list.
+   Kliknięcie włącza lub wyłącza listę. Prawy przycisk pokazuje tylko tę
+   jedną listę.
+
+Nazwy zmienisz, a listy usuniesz w **Ustawienia → Timery → Listy**. Listy są
+zapisane na koncie, więc działają na każdym urządzeniu.
+
+## Ręczne dodawanie, reset i usuwanie
+
+Jeśli znasz czas odrodzenia z innego źródła, dodaj timer ręcznie. Reset i
+usunięcie wymagają potwierdzenia, a okienko pokazuje nazwę potwora i
+Lootlog, którego dotyczy zmiana. Przy grupowaniu usunięcie dotyczy wybranego
+Lootloga, a reset wszystkich Lootlogów, które timer reprezentuje.
+
+Po wybraniu innego świata w oknie timerów zmiany dotyczą wyświetlanego
+świata, a nie tego, na którym grasz.
+
+## Historia timerów: przywróć lub cofnij
+
+Ktoś skasował timer albo odświeżył go przez pomyłkę? Otwórz **Historię** na
+pasku okna timerów. Wyłącz grupowanie i wybierz Lootlog.
+
+- **Przywróć timer** przy wpisie usunięcia przywraca timer z zapisanym czasem
+  odrodzenia. Nie zaczyna odliczania od nowa i nie zastępuje aktywnego
+  timera.
+- **Cofnij odświeżenie** przywraca stan sprzed ostatniego odświeżenia. Jeśli
+  ktoś w międzyczasie zmienił timer, cofnięcie zostanie odrzucone.
+
+Historia pokazuje 10 ostatnich zdarzeń Lootloga, a dla jednego timera 5
+ostatnich wpisów. Timer ręczny i jego historia znikają 7 dni po końcu okna
+odrodzenia. Timerów z aktywnego eventu nie można przywracać ani cofać.
+
+## Wygląd timerów
+
+Standardowe kolory timerów mają wyrównaną jasność. Własne kolory wyglądają
+tak, jak je ustawisz. W kilku kolumnach każdy kafelek ma przy lewej krawędzi
+pasek w swoim kolorze, a w jednej kolumnie kolor pokazuje tło wiersza.
+
+W **Ustawienia → Timery → Wygląd** włączysz **Poprzedni wygląd**, który
+przywraca dawne kolory, obramowania i odstępy timerów, bez przyciemniania
+wygasłych. Działa w oknie timerów i pod torbą.
+
+Timery pod torbą pokazujesz i chowasz tak jak okno timerów, kafelkiem
+**Timery** albo skrótem.
+
+## Timery w panelu webowym
+
+Strona **Timery** w Lootlogu na [lootlog.pl](https://lootlog.pl/@me) wygląda
+i działa jak w grze i korzysta z ustawień zapisanych na Twoim koncie.
+Świat wybierasz w górnym pasku. Przy **Wszystkie światy** każdy timer ma
+nazwę świata. Zmiany pojawiają się na żywo. Jeśli pobranie się nie uda,
+ostatnie timery zostają widoczne z ostrzeżeniem, że mogą być nieaktualne.
+
+<ProductScreenshot
+  src="/screenshots/timers.jpg"
+  alt="Strona Timery w panelu Lootlog z timerami pogrupowanymi na tytanów, herosów, herosów eventowych i elity II, odliczaniem, osobą, która zabiła potwora, i filtrami typu"
+  title="Lootlog · Timery"
+/>
+
+Chcesz przypomnienie przed respawnem na Discordzie? Ustaw regułę
+**Przypomnienie przed spawnem** ([Discord](/docs/discord#reguły-powiadomień)).
+
+## Uprawnienia
+
+| Działanie                | Uprawnienie                  |
+| ------------------------ | ---------------------------- |
+| Odczyt timerów           | `LOOTLOG_TIMERS_READ`        |
+| Timery tytanów           | `LOOTLOG_TIMERS_TITANS_READ` |
+| Timery herosów           | `LOOTLOG_TIMERS_HEROES_READ` |
+| Dodawanie i przywracanie | `LOOTLOG_TIMERS_WRITE`       |
+| Resetowanie              | `LOOTLOG_TIMERS_RESET`       |
+| Usuwanie                 | `LOOTLOG_TIMERS_DELETE`      |
+
+Każda zmiana timera wymaga też dostępu do typu i poziomu potwora. Więcej w
+[Rolach i uprawnieniach](/docs/permissions).

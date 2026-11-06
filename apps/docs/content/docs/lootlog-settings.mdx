@@ -1,0 +1,88 @@
+---
+title: Ustawienia Lootloga
+description: Ustawienia Lootloga grupy w panelu. Skrócony link, publiczna karta statystyk, potwory i zbierane rzadkości, szablony map, zasady rezerwacji i członkowie.
+---
+
+**Ustawienia** Lootloga są w grupie **Zarządzanie** na pasku bocznym i
+widzą je tylko administratorzy. Zmiany dotyczą całego Lootloga, czyli
+wszystkich członków.
+
+| Zakładka          | Co ustawisz                                         |
+| ----------------- | --------------------------------------------------- |
+| **Ogólne**        | skrócony link i publiczny obraz statystyk           |
+| **Role**          | uprawnienia i zakres poziomów ról z Discorda        |
+| **Potwory i NPC** | które rzadkości łupów zbierać z danego potwora      |
+| **Szablony map**  | zestawy map do eventów                              |
+| **Rezerwacje**    | zasady rezerwacji expowisk                          |
+| **Członkowie**    | lista członków, odświeżanie uprawnień, dezaktywacja |
+| **Informacje**    | synchronizacja z Discordem i uprawnienia bota       |
+
+Role opisuje strona [Role i uprawnienia](/docs/permissions).
+
+## Ogólne
+
+### Skrócony link
+
+W polu **Adres Lootloga** ustawisz krótki adres, np. `moj-klan`. Pod polem
+widać podgląd: wielkie litery zamieniają się na małe, a odstępy i znaki
+specjalne na myślniki. Adres nie może składać się z samych cyfr ani być
+nazwą zarezerwowaną, np. `battles`. Zajętą nazwę Lootlog odrzuci przy
+zapisie.
+
+Żeby usunąć skrócony link, wyczyść pole i zapisz. Lootlog zawsze działa też
+pod swoim zwykłym adresem.
+
+### Publiczny obraz statystyk
+
+**Włącz publiczny obraz statystyk** tworzy obrazek PNG z podstawowymi
+statystykami łupów z ostatnich 30 dni. **Kopiuj link** daje adres, który
+możesz wkleić np. na forum. **Odśwież obraz** działa raz na 5 minut. Ten sam
+obraz pokazuje komenda `/karta` [bota](/docs/discord#komendy-bota).
+
+## Potwory i NPC
+
+Każdy potwór ma stronę z sekcją **Zbierane rzadkości**. Wybierz, które
+rzadkości łupów z niego zapisywać. Zbierajcie tylko to, czego używacie, a
+listy i statystyki będą czytelniejsze.
+
+## Szablony map
+
+Szablon zapisuje zestaw map, który dodasz do eventu jednym kliknięciem.
+
+1. Otwórz **Ustawienia → Szablony map** i wybierz **Nowy szablon**.
+2. Wpisz **Nazwę szablonu** i dodaj mapy do **Wybranych map**.
+3. Wybierz **Zapisz szablon**.
+
+Zanim zmienisz używany szablon, uprzedź uczestników eventów.
+
+## Rezerwacje
+
+Tu ustawisz zasady [rezerwacji](/docs/reservations#zasady-rezerwacji):
+minimalną i maksymalną długość, krok siatki, maksymalne wyprzedzenie i limit
+aktywnych rezerwacji gracza na jednym expowisku.
+
+## Członkowie
+
+Członkowie pochodzą z serwera Discord. Przyciski nad listą pokazują
+**Wszyscy**, **Aktywni**, **Nieaktywni**, **Online** i **Problemy** z liczbą
+osób w każdej grupie. **Problemy** to członkowie, których dostęp trzeba
+sprawdzić lub odświeżyć.
+
+- **Odśwież uprawnienia** pobiera z Discorda role jednej osoby, a **Odśwież
+  wszystkich** całej listy.
+- **Dezaktywuj** oznacza członka jako nieaktywnego i czyści jego role do
+  następnego odświeżenia z Discorda. Okno potwierdzenia pokazuje, kogo
+  dotyczy zmiana. Żeby odebrać dostęp na stałe, zabierz rolę albo usuń
+  gracza z serwera Discord.
+
+Jeśli Discord nie potwierdzi, że ktoś jest na serwerze, Lootlog blokuje mu
+dostęp i czyści jego role.
+
+## Informacje
+
+**Status synchronizacji Discorda** mówi, czy Lootlog ma aktualne dane z
+serwera, a **Wymagane uprawnienia** czy bot ma wszystko, czego potrzebuje do
+powiadomień. **Odśwież status** sprawdza to ponownie.
+
+Brak potwierdzenia nie oznacza braku uprawnień. Bota dodaj ponownie dopiero,
+gdy panel potwierdzi, że go nie ma albo brakuje mu uprawnień.
