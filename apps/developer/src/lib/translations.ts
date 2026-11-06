@@ -85,6 +85,12 @@ export const portalText = {
   keys: "API Keys",
   docs: "Docs",
   editOnGitHub: "Edit this page on GitHub",
+  markdownActions: {
+    copy: "Copy for AI",
+    copied: "Copied",
+    copyFailed: "Could not copy",
+    view: "View as Markdown",
+  },
   loading: "Loading…",
   login: "Sign in with Discord",
   logout: "Sign out",

@@ -224,10 +224,13 @@ const makeReadyRoomContext = (
     aggregate: ReadyRoomAggregate,
     recipients: ReadonlyArray<string>,
   ) =>
-    Effect.forEach([...new Set(recipients)], (recipientDiscordId) =>
-      projectionGuildIds(aggregate, recipientDiscordId).pipe(
-        Effect.map((guildIds) => ({ recipientDiscordId, guildIds })),
-      ),
+    Effect.forEach(
+      [...new Set(recipients)],
+      (recipientDiscordId) =>
+        projectionGuildIds(aggregate, recipientDiscordId).pipe(
+          Effect.map((guildIds) => ({ recipientDiscordId, guildIds })),
+        ),
+      { concurrency: 4 },
     );
 
   const publish = (
@@ -257,7 +260,7 @@ const makeReadyRoomContext = (
           })
           .pipe(Effect.ignore);
       },
-      { discard: true },
+      { concurrency: "unbounded", discard: true },
     ).pipe(Effect.andThen(gatheringPublications.publish(aggregate)));
 
   const getLive = (notificationId: string) =>

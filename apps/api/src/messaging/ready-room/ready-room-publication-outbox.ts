@@ -72,7 +72,7 @@ export const makeReadyRoomPublicationOutbox = (
               : envelope,
           );
         },
-        { discard: true },
+        { concurrency: "unbounded", discard: true },
       );
       yield* redis.eval(
         ACKNOWLEDGE_PUBLICATION_SCRIPT,

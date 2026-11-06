@@ -1,4 +1,4 @@
-import { LootlogMark } from "~/components/lootlog-mark";
+import { LootlogMark } from "@lootlog/ui/components/lootlog-mark";
 import { portalText as t } from "~/lib/translations";
 
 const links = [

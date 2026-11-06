@@ -68,7 +68,7 @@ const makeBoundary = (
         Permissions,
         Permissions.of({
           resolveGuildId: (id) => Effect.succeed(id === "vanity" ? "123" : id),
-          getUserGuildPermissions: () => Effect.succeed(capabilities),
+          getUserCapabilities: () => Effect.succeed(() => capabilities),
         }),
       ),
     ),

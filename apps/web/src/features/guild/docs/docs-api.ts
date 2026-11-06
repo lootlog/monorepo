@@ -49,10 +49,10 @@ export const invalidateGuildDocsQueries = async (
   guildId: string,
   docId?: string,
 ) => {
-  await invalidateDocsControllerGetDocuments(queryClient, { guildId });
-  await invalidateDocsControllerGetTrash(queryClient, { guildId });
-
-  if (docId) {
-    await invalidateDocsControllerGetDocument(queryClient, { guildId, docId });
-  }
+  await Promise.all([
+    invalidateDocsControllerGetDocuments(queryClient, { guildId }),
+    invalidateDocsControllerGetTrash(queryClient, { guildId }),
+    docId &&
+      invalidateDocsControllerGetDocument(queryClient, { guildId, docId }),
+  ]);
 };

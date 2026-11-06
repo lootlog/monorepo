@@ -3,7 +3,7 @@ import viteReact from "@vitejs/plugin-react";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { fumadocsMdx } from "fumadocs-mdx/vite";
 import { defineConfig } from "vite";
-import { docsPaths } from "./lib/docs-chapters.ts";
+import { docsMarkdownPaths, docsPaths } from "./lib/docs-paths.ts";
 
 export default defineConfig({
   build: {
@@ -34,7 +34,10 @@ export default defineConfig({
       pages: [
         { path: "/" },
         { path: "/api/search" },
+        { path: "/llms.txt" },
+        { path: "/llms-full.txt" },
         ...docsPaths.map((path) => ({ path })),
+        ...docsMarkdownPaths.map((path) => ({ path })),
       ],
       prerender: {
         failOnError: true,

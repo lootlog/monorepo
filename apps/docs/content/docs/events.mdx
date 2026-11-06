@@ -1,190 +1,125 @@
 ---
 title: Eventy
-description: Twórz eventy klanowe, przypisuj członków do map i rozliczaj aktywność w rankingu.
+description: Eventy na herosy eventowe w Lootlog. Tworzenie eventu, przypisania do map, reguły punktacji obstawki, ranking i historia bić.
 ---
 
-Eventy pomagają koordynować polowania na wielu mapach. Osoba zarządzająca
-przygotowuje zakres wydarzenia, a członkowie przypisują się do obsługiwanych
-celów zgodnie ze swoją rolą.
+Event pomaga obstawić herosów eventowych na wielu mapach naraz. Zarządzający
+dodaje herosów i mapy, członkowie przypisują się do map, a Lootlog sam liczy
+punkty za obstawkę i układa ranking.
 
-## Wymagane uprawnienia
+## Uprawnienia
 
-| Uprawnienie             | Zakres                                       |
+| Uprawnienie             | Co pozwala                                   |
 | ----------------------- | -------------------------------------------- |
-| `LOOTLOG_EVENTS_READ`   | Odczyt eventów, map i rankingów              |
-| `LOOTLOG_EVENTS_WRITE`  | Samodzielne przypisywanie się do map         |
+| `LOOTLOG_EVENTS_READ`   | Oglądanie eventów, map i rankingów           |
+| `LOOTLOG_EVENTS_WRITE`  | Przypisywanie siebie do map                  |
 | `LOOTLOG_EVENTS_MANAGE` | Tworzenie eventów i zarządzanie uczestnikami |
 
-Właściciel lub administrator może dodatkowo wykonywać operacje wynikające z
-nadrzędnej roli.
+Zakres poziomów roli dotyczy też eventów. Zarządzający nie widzi ani nie
+zmienia herosów spoza swojego zakresu. Usunięcie całego eventu albo zmiana
+listy herosów wymaga widoczności wszystkich herosów eventu.
 
 ## Utwórz event
 
-1. Przejdź do **Klan → Eventy**.
-2. Wybierz utworzenie nowego eventu.
-3. Uzupełnij nazwę, czas i obsługiwany cel.
-4. Dodaj mapy ręcznie albo wykorzystaj przygotowany szablon.
-5. Sprawdź konfigurację i zapisz event.
+1. W Lootlogu otwórz **Eventy** i wybierz **Utwórz event**.
+2. Wpisz **Nazwę eventu**, **Świat** oraz daty rozpoczęcia i zakończenia.
+3. Dodaj herosów: **Nazwa herosa** i opcjonalnie **ID NPC**.
+4. Wybierz **Utwórz**.
+5. W oknie **Zarządzaj mapami** dodaj mapy herosów ręcznie albo z
+   [szablonu map](/docs/lootlog-settings#szablony-map).
 
-Po zapisie event powinien być widoczny dla członków z
-`LOOTLOG_EVENTS_READ`.
+Nazwa herosa nie musi być identyczna z grą. Zabicie trafia do herosa także
+wtedy, gdy nazwy różnią się wielkością liter lub znakami diakrytycznymi, np.
+„Doppelgänger” i „Doppelganger”. Od pierwszego zabicia Lootlog rozpoznaje
+herosa po ID NPC, więc punkty działają dalej, nawet gdy gra zmieni nazwę.
 
 ## Strona eventu
 
-Strona eventu ma zakładki **Przegląd**, **Ranking** i **Historia bić**. Nad nimi widać status eventu, świat, czas na przypisanie do
-mapy i daty, a także przyciski **Zasady eventu**, **Podsumowanie eventu** i
-przypinania. Osoba zarządzająca eventem ma obok menu z edycją, zakończeniem
-lub wznowieniem i usunięciem eventu.
+Strona eventu ma zakładki **Przegląd**, **Ranking** i **Historia bić**. Nad
+nimi jest status, świat, czas na przypisanie do mapy, daty oraz przyciski
+**Zasady eventu**, **Podsumowanie eventu** i przypinania. Zarządzający ma
+też menu z edycją, zakończeniem, wznowieniem i usunięciem eventu.
 
-Przegląd pokazuje herosów eventu z timerem, liczbą map i bić oraz kolumną
-**Ty** z Twoim miejscem i punktami w rankingu danego herosa. Pod nimi widać
-ostatnie bicia i ostatnie łupy. Na szerokim ekranie czołówka rankingu stoi po
-prawej i pozostaje widoczna podczas przewijania; na węższym jest pod herosami.
-Kliknij herosa, aby zobaczyć jego mapy, uczestników i przypisania.
+**Przegląd** pokazuje herosów z timerem, liczbą map i bić oraz kolumnę **Ty**
+z Twoim miejscem i punktami. Niżej są ostatnie bicia i łupy, a obok czołówka
+rankingu. Kliknij herosa, żeby zobaczyć jego mapy, uczestników i
+przypisania.
 
-## Przypisz mapy
+Na Discordzie to samo pokażą `/event status`, `/event ranking` i `/event
+podsumowanie` ([Discord](/docs/discord#komendy-bota)).
 
-Osoba z `LOOTLOG_EVENTS_WRITE` może przypisać siebie do dostępnej mapy.
-Zarządzający z `LOOTLOG_EVENTS_MANAGE` może również porządkować przydziały
-pozostałych uczestników.
+## Przypisz się do mapy
 
-Przycisk przypisania odblokowuje się po zakończeniu odliczania. Możesz go użyć
-od razu, bez odświeżania strony. Po końcu okna odrodzenia nowe przypisania są
-zablokowane.
+1. Otwórz herosa na stronie eventu.
+2. Gdy odliczanie się skończy, przycisk przypisania się odblokuje. Nie musisz
+   odświeżać strony.
+3. Przypisz się do wolnej mapy.
 
-Przed zmianą przypisania upewnij się, że nie usuwasz aktywnego członka bez
-uzgodnienia.
+Po końcu okna odrodzenia nowe przypisania są zablokowane. Zarządzający może
+porządkować przypisania innych. Przed zmianą cudzego przypisania uzgodnij to
+z tą osobą.
 
-W oknie **Zarządzaj mapami** zapisane zmiany map i lokacji pojawiają się bez
-ponownego otwierania okna. Podczas zapisywania kolejności lokacji poczekaj
-na zakończenie operacji przed kolejnym przeciągnięciem. Po błędzie wraca
-aktualna kolejność z serwera.
+W oknie **Zarządzaj mapami** zarządzający dodaje mapy i lokacje oraz zmienia
+ich kolejność przeciąganiem.
 
-## Okno bicia i ranking
+## Punkty i ranking
 
-W trakcie aktywnego okna eventu panel pokazuje bieżące przypisania oraz
-dostępne informacje o aktywności. Po rozliczeniu wyniki mogą trafić do
-rankingu uczestników.
+Lootlog liczy punkty z czasu, który członek spędził przypisany do map
+herosa w oknie respawnu. Punkty widać z dokładnością do dwóch miejsc po
+przecinku, np. `1.5`.
 
-Zmiany przypisań, zabójstwa i okna odrodzenia odświeżają widok eventu u
-pozostałych członków. Po przywróceniu połączenia widok pobiera aktualny stan,
-również gdy organizacja używa własnego adresu URL.
+- **Przelicz punkty** przelicza wcześniejsze bicia według bieżących reguł.
+  Zmiana reguł sama tego nie robi. Ręczne korekty zostają.
+- Ręczną korektę punktów robi osoba uprawniona. Historia zmian zapisuje
+  autora i czas.
+- Zmiana nazwy herosa przenosi jego ranking razem z historią korekt.
 
-Okno ręcznego otwierania respawnu za każdym otwarciem proponuje aktualny czas
-i koniec za trzy godziny. Przy kolejnym zamykaniu opcja utworzenia nowego okna
-jest ponownie wyłączona. Po błędzie zapisu wpisane dane pozostają do ponowienia.
-
-W zaawansowanych regułach punktacji wszystkie widoczne pola liczbowe muszą mieć
-poprawną wartość. Puste pole pokazuje błąd i blokuje zapis; nie usuwa warunku
-ani reguły. Aby usunąć warunek, użyj jego przycisku usuwania.
-
-Przy zmianie czasu nakładające się części kolejnych okien liczą się tylko raz.
-Warunek pokrycia okna respawnu uwzględnia także godziny po północy należące do
-przedziału rozpoczętego poprzedniego dnia. Dla przedziału 22:00–06:00 respawn
-od 01:00 do 03:00 ma pokrycie 100%. Godziny odnoszą się do strefy czasowej
-ustawionej w regułach, a czas trwania uwzględnia zmianę czasu.
-Aby przeliczyć wcześniejsze zabójstwa według bieżących reguł, użyj
-**Przelicz punkty**. Ręczne korekty punktów pozostają zachowane.
-
-Punkty są wyświetlane z dokładnością do dwóch miejsc po przecinku, bez końcowych
-zer, np. `1.5` zamiast `1.50`. Format wyświetlania nie zmienia naliczonych punktów.
-
-Ręczna korekta punktów powinna być wykonywana tylko przez osoby uprawnione.
-Historia zmian pomaga ustalić autora i czas korekty.
-
-Okno korekty pozostaje otwarte podczas zapisywania. Po błędzie zachowuje
-wpisaną zmianę punktów i komentarz, więc możesz ponowić zapis. Aktualizacja
-rankingu nie zmienia osoby, której dotyczy otwarta korekta.
-
-<Callout type="warning" title="Zweryfikuj wynik przed korektą">
-  Zmiana punktów wpływa na ranking. Najpierw sprawdź logi i reguły eventu, a
-  dopiero potem wprowadź ręczną wartość.
+<Callout type="warning" title="Zanim poprawisz punkty ręcznie">
+  Korekta zmienia ranking. Najpierw sprawdź historię bicia i reguły eventu.
 </Callout>
 
-Zmiana nazwy herosa przenosi jego ranking pod nową nazwę razem z historią
-korekt. Nie można nadać nazwy, której w tym evencie używa już inny heros lub
-ranking.
+Okno ręcznego otwierania respawnu proponuje aktualny czas i koniec za trzy
+godziny.
 
-Heros nie musi mieć nazwy identycznej z grą. Zabicie trafia do herosa, gdy
-nazwy różnią się tylko wielkością liter lub znakami diakrytycznymi, np.
-„Doppelgänger” i „Doppelganger”. Od tego zabicia Lootlog rozpoznaje herosa po
-ID NPC, więc timer, okno respawnu i punkty działają dalej także wtedy, gdy
-Margonem zmieni nazwę NPC w trakcie eventu.
+## Reguły obstawki
 
-## Reguły obstawki: spóźnienie i wielkość grupy
+Reguły punktacji ustawiasz w edycji eventu.
 
-Reguły są sprawdzane od góry do dołu. Podstawę ustawia ostatnia spełniona
-reguła z listy, a bonusy się sumują. Wyższą podstawę umieść więc niżej niż
-niższą: gracz solo spełnia też warunek grupy do 4 osób, a reguła solo pod nią
-zachowuje mu 3 pkt. Kolejność zmienisz strzałkami przy regule.
+- Reguły są sprawdzane od góry do dołu. **Podstawę** ustawia ostatnia
+  spełniona reguła, a **bonusy** się sumują. Wyższą podstawę umieść niżej niż
+  niższą. Kolejność zmienisz strzałkami.
+- Okno obstawki zaczyna się w minimalnym czasie respawnu i kończy w chwili
+  bicia. Ta sama osoba na kilku mapach to jeden uczestnik, a jej czas nie
+  liczy się podwójnie.
+- Nakładające się części kolejnych okien liczą się raz. Przedział godzin może
+  przechodzić przez północ: dla 22:00–06:00 respawn od 01:00 do 03:00 ma
+  pokrycie 100%. Godziny są w strefie czasowej z reguł.
 
-Okno obstawki zaczyna się w minimalnym czasie respawnu i kończy w chwili bicia.
-Liczy się zaliczony czas przypisania do map herosa. Ta sama osoba na kilku
-mapach lub w kilku wpisach to jeden uczestnik, a jej czas nie liczy się
-podwójnie.
+Najczęstsze warunki:
 
-- **Dołączył od początku respawnu** sprawdza tylko moment pierwszego
-  dołączenia w oknie. Dopuszczalne spóźnienie wpisujesz w minutach i sekundach;
-  0 oznacza brak tolerancji. Długość obstawki sprawdź osobnym warunkiem, np.
-  „% respawnu obstawionego co najmniej 90%”. To samo spóźnienie jest dostępne
-  jako wartość liczbowa **Spóźnienie od początku respawnu**.
-- **Wielkość grupy** liczy osoby razem z ocenianym graczem. Do wyboru są:
-  wszyscy uczestnicy w oknie, obecni przy biciu, uczestnicy z wymaganym
-  udziałem w całym oknie oraz liczebność zmieniająca się w czasie. Ostatni
-  sposób sprawdza, jaki procent własnej obstawki gracz spędził solo lub w grupie
-  danej wielkości. Osoba obecna tylko przez ostatnie 5 minut zwiększa grupę
-  tylko w tych 5 minutach.
+- **Dołączył od początku respawnu** sprawdza moment pierwszego dołączenia w
+  oknie. Dopuszczalne spóźnienie wpisujesz w minutach i sekundach, 0 to brak
+  tolerancji. Długość obstawki sprawdź osobnym warunkiem, np. „% respawnu
+  obstawionego co najmniej 90%”.
+- **Wielkość grupy** liczy osoby razem z ocenianym graczem: wszystkich w
+  oknie, obecnych przy biciu, z wymaganym udziałem w całym oknie albo
+  liczebność zmieniającą się w czasie. Ostatni sposób sprawdza, jaki procent
+  obstawki gracz spędził solo lub w grupie danej wielkości.
 
 Gotowy zestaw **Solo, mała grupa i zwykła podstawa** z menu szablonów ustawia
-reguły 0,5 / 1 / 2 / 3 pkt we właściwej kolejności. Symulator pozwala ułożyć
-obecność kilku uczestników na osi czasu i sprawdzić wynik każdego z nich.
+reguły 0,5 / 1 / 2 / 3 pkt we właściwej kolejności. **Symulator** pozwala
+ułożyć obecność kilku osób na osi czasu i sprawdzić wynik każdej.
 
-Gdy brakuje danych, np. zapisów obecności części uczestników lub początku
-respawnu, warunek nie może zostać oceniony i reguła nie przyznaje punktów.
-Rozwinięty uczestnik bicia pokazuje okno, pierwsze dołączenie, zaliczony czas,
-liczebność w czasie i ocenę każdego warunku według aktualnych reguł. Zmiana
-reguł nie przelicza wcześniejszych bić; użyj **Przelicz punkty**.
+Gdy brakuje danych, np. obecności części uczestników albo początku respawnu,
+warunek nie może być oceniony i reguła nie przyznaje punktów. Puste pole
+liczbowe blokuje zapis reguł.
 
-## Widoczność herosów
+## Historia bić
 
-Zakres poziomów w rolach obejmuje również luki w obstawie,
-lokacje i przypisania. Uprawnienie do zarządzania eventem nie daje dostępu do
-herosów poza tym zakresem. Nie można zmieniać ich map ani okien odrodzenia.
-Usunięcie całego eventu lub zastąpienie listy herosów wymaga widoczności wszystkich
-jego herosów. Administrator ma dostęp do wszystkich poziomów.
+Zakładka **Historia bić** pokazuje najnowsze bicia jako pierwsze. Zawęzisz
+ją do herosa albo do jednego członka. Szczegóły wpisu pokazują punkty, czas
+obstawki i oś czasu: okno, pierwsze dołączenie, zaliczony czas, liczebność i
+ocenę każdego warunku.
 
-## Historia zabójstw
-
-Historia eventu pokazuje najnowsze zabójstwa jako pierwsze. Możesz zawęzić ją
-do herosa albo przejść do historii wybranego członka. Zmiana filtra rozpoczyna
-listę od początku. Kolejne strony zachowują kolejność również wtedy, gdy kilka
-zabójstw zapisano w tej samej chwili.
-
-Liczba uczestników obejmuje osoby, dla których zapisano rozliczenie punktów,
-także jeśli nie były obecne przy samym zabójstwie. Otwórz szczegóły wpisu,
-aby zobaczyć punkty, czas śledzenia i oś czasu. Późne zamknięcie okna nie
-wydłuża czasu naliczania poza koniec respawnu.
-
-Jeśli pobranie historii się nie powiedzie, użyj ponowienia. Błąd pobierania
-kolejnej strony nie usuwa już widocznych wpisów. W szczegółach możesz osobno
-ponowić pobranie osi czasu i powiązanych łupów.
-
-Historia i szczegóły pokazują tylko herosów dostępnych dla Twoich ról. Po
-zmianie uprawnień panel usuwa wcześniejsze dane i pobiera dozwolony zakres
-ponownie. Nowe zabójstwa, korekty punktów i przywrócenie połączenia odświeżają
-historię.
-
-## Sprawdź rezultat
-
-Event jest gotowy, gdy:
-
-- członkowie widzą go w panelu;
-- mapy mają właściwe przypisania;
-- osoby bez uprawnień nie mogą zarządzać konfiguracją;
-- po zakończeniu ranking odzwierciedla przyjęte zasady.
-
-## Następny krok
-
-Przy powtarzalnych eventach przygotuj [szablon map](/docs/settings).
-Jeżeli członek nie widzi właściwych kontrolek, sprawdź
-[Role i uprawnienia](/docs/permissions).
+Liczba uczestników obejmuje osoby z naliczonymi punktami, także nieobecne
+przy samym biciu. Historia pokazuje tylko herosów dostępnych dla Twoich ról.

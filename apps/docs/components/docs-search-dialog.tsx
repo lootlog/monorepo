@@ -4,7 +4,6 @@ import {
   SearchDialog,
   SearchDialogClose,
   SearchDialogContent,
-  SearchDialogFooter,
   SearchDialogHeader,
   SearchDialogIcon,
   SearchDialogInput,
@@ -27,22 +26,14 @@ export function DocsSearchDialog(props: SharedProps) {
       isLoading={query.isLoading}
       {...props}
     >
-      <SearchDialogOverlay className="docs-search-overlay" />
-      <SearchDialogContent className="docs-search-dialog">
-        <SearchDialogHeader className="docs-search-header">
+      <SearchDialogOverlay />
+      <SearchDialogContent>
+        <SearchDialogHeader>
           <SearchDialogIcon />
           <SearchDialogInput autoFocus />
           <SearchDialogClose />
         </SearchDialogHeader>
-        <SearchDialogList
-          className="docs-search-results"
-          items={query.data !== "empty" ? query.data : null}
-        />
-        <SearchDialogFooter className="docs-search-footer">
-          <span>↑↓ wybierz</span>
-          <span>Enter otwórz</span>
-          <span>Esc zamknij</span>
-        </SearchDialogFooter>
+        <SearchDialogList items={query.data !== "empty" ? query.data : null} />
       </SearchDialogContent>
     </SearchDialog>
   );

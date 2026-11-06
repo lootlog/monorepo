@@ -11,11 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as KeysRouteImport } from './routes/keys'
+import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
+import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as ReferenceRouteImport } from './routes/reference'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as DocsSplatRouteImport } from './routes/docs/$'
+import { Route as DocsChar123slugChar125DotmdRouteImport } from './routes/docs/{$slug}[.]md'
 import { Route as OpenapiServiceRouteImport } from './routes/openapi/$service'
 
 const IndexRoute = IndexRouteImport.update({
@@ -26,6 +29,16 @@ const IndexRoute = IndexRouteImport.update({
 const KeysRoute = KeysRouteImport.update({
   id: '/keys',
   path: '/keys',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LlmsFullDottxtRoute = LlmsFullDottxtRouteImport.update({
+  id: '/llms-full.txt',
+  path: '/llms-full.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
+  id: '/llms.txt',
+  path: '/llms.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReferenceRoute = ReferenceRouteImport.update({
@@ -53,6 +66,12 @@ const DocsSplatRoute = DocsSplatRouteImport.update({
   path: '/docs/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocsChar123slugChar125DotmdRoute =
+  DocsChar123slugChar125DotmdRouteImport.update({
+    id: '/docs/{$slug}.md',
+    path: '/docs/{$slug}.md',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const OpenapiServiceRoute = OpenapiServiceRouteImport.update({
   id: '/openapi/$service',
   path: '/openapi/$service',
@@ -62,32 +81,41 @@ const OpenapiServiceRoute = OpenapiServiceRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/keys': typeof KeysRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/reference': typeof ReferenceRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
+  '/docs/{$slug}.md': typeof DocsChar123slugChar125DotmdRoute
   '/openapi/$service': typeof OpenapiServiceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/keys': typeof KeysRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/reference': typeof ReferenceRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
+  '/docs/{$slug}.md': typeof DocsChar123slugChar125DotmdRoute
   '/openapi/$service': typeof OpenapiServiceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/keys': typeof KeysRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/reference': typeof ReferenceRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
+  '/docs/{$slug}.md': typeof DocsChar123slugChar125DotmdRoute
   '/openapi/$service': typeof OpenapiServiceRoute
 }
 export interface FileRouteTypes {
@@ -95,42 +123,54 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/keys'
+    | '/llms-full.txt'
+    | '/llms.txt'
     | '/reference'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/api/search'
     | '/docs/$'
+    | '/docs/{$slug}.md'
     | '/openapi/$service'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/keys'
+    | '/llms-full.txt'
+    | '/llms.txt'
     | '/reference'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/api/search'
     | '/docs/$'
+    | '/docs/{$slug}.md'
     | '/openapi/$service'
   id:
     | '__root__'
     | '/'
     | '/keys'
+    | '/llms-full.txt'
+    | '/llms.txt'
     | '/reference'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/api/search'
     | '/docs/$'
+    | '/docs/{$slug}.md'
     | '/openapi/$service'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   KeysRoute: typeof KeysRoute
+  LlmsFullDottxtRoute: typeof LlmsFullDottxtRoute
+  LlmsDottxtRoute: typeof LlmsDottxtRoute
   ReferenceRoute: typeof ReferenceRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiSearchRoute: typeof ApiSearchRoute
   DocsSplatRoute: typeof DocsSplatRoute
+  DocsChar123slugChar125DotmdRoute: typeof DocsChar123slugChar125DotmdRoute
   OpenapiServiceRoute: typeof OpenapiServiceRoute
 }
 
@@ -148,6 +188,20 @@ declare module '@tanstack/react-router' {
       path: '/keys'
       fullPath: '/keys'
       preLoaderRoute: typeof KeysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/llms-full.txt': {
+      id: '/llms-full.txt'
+      path: '/llms-full.txt'
+      fullPath: '/llms-full.txt'
+      preLoaderRoute: typeof LlmsFullDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/llms.txt': {
+      id: '/llms.txt'
+      path: '/llms.txt'
+      fullPath: '/llms.txt'
+      preLoaderRoute: typeof LlmsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reference': {
@@ -185,6 +239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/docs/{$slug}.md': {
+      id: '/docs/{$slug}.md'
+      path: '/docs/{$slug}.md'
+      fullPath: '/docs/{$slug}.md'
+      preLoaderRoute: typeof DocsChar123slugChar125DotmdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/openapi/$service': {
       id: '/openapi/$service'
       path: '/openapi/$service'
@@ -198,11 +259,14 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   KeysRoute: KeysRoute,
+  LlmsFullDottxtRoute: LlmsFullDottxtRoute,
+  LlmsDottxtRoute: LlmsDottxtRoute,
   ReferenceRoute: ReferenceRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiSearchRoute: ApiSearchRoute,
   DocsSplatRoute: DocsSplatRoute,
+  DocsChar123slugChar125DotmdRoute: DocsChar123slugChar125DotmdRoute,
   OpenapiServiceRoute: OpenapiServiceRoute,
 }
 export const routeTree = rootRouteImport
