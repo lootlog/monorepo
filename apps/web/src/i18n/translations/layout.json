@@ -35,6 +35,10 @@
     }
   },
   "guildsSelector": {
+    "ariaLabel": "Lootlogi",
+    "personal": "Mój panel",
+    "create": "Dodaj",
+    "refresh": "Odśwież",
     "unreadLootsOverflow": "99+",
     "refreshError": "Nie udało się odświeżyć listy Lootlogów.",
     "noAccess": "Brak dostępu"

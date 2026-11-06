@@ -13,6 +13,10 @@ import {
 import { Link, useLocation } from "@tanstack/react-router";
 import { ThemeCircularFrame } from "@/themes/adapters";
 import { RailItemIndicator } from "./rail-item-indicator";
+import {
+  LOOTLOG_STRIP_TILE_CLASS,
+  LootlogStripTile,
+} from "./lootlog-strip-tile";
 import type { MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -22,7 +26,16 @@ const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
   }
 };
 
-export const UserNavItem = () => {
+type UserNavItemProps = {
+  /** `strip` is the labelled tile of the phone sheet. */
+  variant?: "rail" | "strip";
+  onSelect?: () => void;
+};
+
+export const UserNavItem = ({
+  variant = "rail",
+  onSelect,
+}: UserNavItemProps) => {
   const { t } = useTranslation();
   const { data } = useSession();
   const { pathname } = useLocation();
@@ -37,6 +50,26 @@ export const UserNavItem = () => {
       </AvatarFallback>
     </Avatar>
   );
+
+  if (variant === "strip") {
+    return (
+      <Link
+        to={ROUTES.user.dashboard}
+        data-active={isActive || undefined}
+        className={LOOTLOG_STRIP_TILE_CLASS}
+        onClick={onSelect}
+      >
+        <LootlogStripTile
+          label={t("layout.guildsSelector.personal")}
+          isActive={isActive}
+        >
+          <ThemeCircularFrame isActive={isActive}>
+            {avatarElement}
+          </ThemeCircularFrame>
+        </LootlogStripTile>
+      </Link>
+    );
+  }
 
   return (
     <Tooltip>

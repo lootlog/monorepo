@@ -19,8 +19,9 @@ type ScheduleBarProps = {
 export const ScheduleBar = ({ isCompact, children }: ScheduleBarProps) => (
   <header
     data-list-tile
+    data-top-bar-glass
     className={cn(
-      "sticky top-(--page-sticky-top) z-10 flex items-center backdrop-blur-sm",
+      "glass-bar sticky top-(--page-sticky-top) z-10 flex items-center",
       isCompact ? "gap-1" : "gap-2",
       LIST_TILE_RULE_CLASS,
       LIST_TILE_INSET_CLASS,

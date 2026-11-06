@@ -3,13 +3,13 @@ import { GuildNavCreate } from "@/components/layout/guild-nav-create";
 import { GuildNavItem } from "@/components/layout/guild-nav-item";
 import { GuildReorderItem } from "@/components/layout/guild-reorder-item";
 import { GuildsRefreshButton } from "@/components/layout/guilds-refresh-button";
-import { UserNavItem } from "@/components/layout/user-nav-item";
+import { GuildsRail } from "@/components/layout/guilds-rail";
+import { LootlogStrip } from "@/components/layout/lootlog-strip";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Reorder } from "framer-motion";
 import { useState, useEffect, useLayoutEffect, useRef, type FC } from "react";
 import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
 import { useLootUnreadCounts } from "@/contexts/loot-unread-context";
-import { Separator } from "@lootlog/ui/components/separator";
 import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/client/main";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { refreshCurrentUserGuilds } from "@/lib/current-user-guilds";
@@ -23,11 +23,42 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import { RotateCcw } from "lucide-react";
 
+// Rail entries span the rail; strip tiles keep their own width.
+const ORIENTATIONS = {
+  vertical: {
+    variant: "rail",
+    axis: "y",
+    Frame: GuildsRail,
+    groupClassName: "flex flex-col gap-0.5 pt-1 pb-2",
+    itemClassName: "w-full",
+  },
+  horizontal: {
+    variant: "strip",
+    axis: "x",
+    Frame: LootlogStrip,
+    groupClassName: "flex gap-1",
+    itemClassName: undefined,
+  },
+} as const;
+
 const getHiddenGuildIds = (
   preferences: { hiddenGuildIds: string[] } | undefined,
 ) => new Set(preferences?.hiddenGuildIds);
 
-export const GuildsSelector: FC = () => {
+type GuildsSelectorProps = {
+  /**
+   * `horizontal` is the labelled strip that opens the phone navigation
+   * sheet; the desktop rail is vertical.
+   */
+  orientation: "vertical" | "horizontal";
+  /** Called when an entry navigates or opens a dialog. */
+  onSelect?: () => void;
+};
+
+export const GuildsSelector: FC<GuildsSelectorProps> = ({
+  orientation,
+  onSelect,
+}) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const guildsQuery = useUsersControllerGetCurrentUserGuilds();
@@ -168,76 +199,76 @@ export const GuildsSelector: FC = () => {
       ? (localGuilds ?? orderedGuilds)
       : orderedGuilds;
 
-  return (
-    <div className="flex flex-col gap-2 w-16 border-r border-solid border-sidebar-border pt-2 pb-2 h-full overflow-hidden">
-      <UserNavItem />
-      <Separator className="-mt-[1px] bg-sidebar-border" />
-      <div className="flex-1 h-24 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {(guildsQuery.isError && !guilds) ||
-        (preferencesQuery.isError && preferencesQuery.data === undefined) ? (
-          <div className="flex h-12 items-center justify-center">
-            <Button
-              size="icon-lg"
-              variant="ghost"
-              aria-label={t("settings.servers.loadError")}
-              loading={guildsQuery.isFetching || preferencesQuery.isFetching}
-              onClick={() => {
-                void guildsQuery.refetch();
-                void preferencesQuery.refetch();
-              }}
-            >
-              <RotateCcw className="size-4" />
-            </Button>
-          </div>
-        ) : guildsQuery.isLoading ||
-          preferencesQuery.isLoading ||
-          preferencesQuery.data === undefined ? (
-          <GuildsSelectorSkeleton />
-        ) : (
-          <>
-            <Reorder.Group
-              axis="y"
-              values={guildList}
-              onReorder={handleReorder}
-              className="flex flex-col gap-0.5 pt-1 pb-2"
-              as="div"
-            >
-              {guildList.map((guild) => (
-                <GuildReorderItem
-                  key={guild.id}
-                  value={guild}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
-                >
-                  <div className="w-full">
-                    <GuildNavItem
-                      guild={guild}
-                      isDragging={isDragging}
-                      currentGuildId={currentGuildId}
-                      unreadLootsCount={lootUnreadCounts[guild.id] ?? 0}
-                      isHidden={hiddenGuildIds.has(guild.id)}
-                      onToggleHidden={() =>
-                        toggleGuildVisibility(
-                          guild.id,
-                          guild.name,
-                          hiddenGuildIds.has(guild.id),
-                        )
-                      }
-                    />
-                  </div>
-                </GuildReorderItem>
-              ))}
-            </Reorder.Group>
-            <GuildNavCreate />
-            <div className="flex justify-center pb-2">
-              <GuildsRefreshButton
-                isRefreshing={refreshGuilds.isPending}
-                onRefresh={() => refreshGuilds.mutate()}
-              />
-            </div>
-          </>
-        )}
+  const { variant, axis, groupClassName, itemClassName, Frame } =
+    ORIENTATIONS[orientation];
+
+  const content =
+    (guildsQuery.isError && !guilds) ||
+    (preferencesQuery.isError && preferencesQuery.data === undefined) ? (
+      <div className="flex h-12 items-center justify-center">
+        <Button
+          size="icon-lg"
+          variant="ghost"
+          aria-label={t("settings.servers.loadError")}
+          loading={guildsQuery.isFetching || preferencesQuery.isFetching}
+          onClick={() => {
+            void guildsQuery.refetch();
+            void preferencesQuery.refetch();
+          }}
+        >
+          <RotateCcw className="size-4" />
+        </Button>
       </div>
-    </div>
-  );
+    ) : guildsQuery.isLoading ||
+      preferencesQuery.isLoading ||
+      preferencesQuery.data === undefined ? (
+      <GuildsSelectorSkeleton orientation={orientation} />
+    ) : (
+      <>
+        <Reorder.Group
+          axis={axis}
+          values={guildList}
+          onReorder={handleReorder}
+          className={groupClassName}
+          as="div"
+        >
+          {guildList.map((guild) => (
+            <GuildReorderItem
+              key={guild.id}
+              value={guild}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              className={itemClassName}
+            >
+              <div className={itemClassName}>
+                <GuildNavItem
+                  guild={guild}
+                  variant={variant}
+                  onSelect={onSelect}
+                  isDragging={isDragging}
+                  currentGuildId={currentGuildId}
+                  unreadLootsCount={lootUnreadCounts[guild.id] ?? 0}
+                  isHidden={hiddenGuildIds.has(guild.id)}
+                  onToggleHidden={() =>
+                    toggleGuildVisibility(
+                      guild.id,
+                      guild.name,
+                      hiddenGuildIds.has(guild.id),
+                    )
+                  }
+                />
+              </div>
+            </GuildReorderItem>
+          ))}
+        </Reorder.Group>
+        <GuildNavCreate variant={variant} onSelect={onSelect} />
+        <GuildsRefreshButton
+          variant={variant}
+          isRefreshing={refreshGuilds.isPending}
+          onRefresh={() => refreshGuilds.mutate()}
+        />
+      </>
+    );
+
+  return <Frame onSelect={onSelect}>{content}</Frame>;
 };

@@ -89,7 +89,8 @@ export const FilterBar = ({
       <div
         ref={publishFilterBarHeight}
         data-list-tile
-        className="sticky top-(--page-sticky-top) z-20 backdrop-blur-sm"
+        data-top-bar-glass
+        className="glass-bar sticky top-(--page-sticky-top) z-20"
       >
         {hasControls && (
           <div

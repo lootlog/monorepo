@@ -16,14 +16,15 @@ export const LIST_GROUP_HEADING_CLASS =
 
 /**
  * A group heading on a band, so each group, such as a kind of notification
- * rule or a part of a form, reads as its own block. The band is opaque, so a
- * heading pinned while the page scrolls hides what passes under it. It is
- * ruled above and below, so sections stay apart on any screen; the top rule
- * overlaps the rule of whatever ends above it. Add it after
+ * rule or a part of a form, reads as its own block. The band is glass, so a
+ * heading pinned while the page scrolls blurs what passes under it, as the
+ * other pinned bars do (`glass-bar`). It is ruled above and below, so
+ * sections stay apart on any screen; the top rule overlaps the rule of
+ * whatever ends above it. Add it after
  * `LIST_GROUP_HEADING_CLASS`, or pass it to `ListGroupHeading`.
  */
 export const LIST_BAND_HEADING_CLASS =
-  "-mt-px h-10 border-y border-border bg-[color-mix(in_oklab,var(--muted)_45%,var(--background))] text-[13px] text-foreground";
+  "glass-bar -mt-px h-10 border-y border-border text-[13px] text-foreground [--glass-bar-tint:color-mix(in_oklab,var(--muted)_45%,var(--background))]";
 
 /**
  * The hairline under each tile. A tile is isolated, so nothing raised inside

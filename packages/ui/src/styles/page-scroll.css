@@ -141,3 +141,71 @@
     padding-top: 3.5rem;
   }
 }
+
+/*
+ * The top bar and every bar pinned under it (page tabs, filter bars, list
+ * toolbars, band and table headers) share one glass, so content scrolling
+ * under the stack blurs evenly instead of stopping at an opaque bar. Each
+ * bar keeps its own tint through `--glass-bar-tint`. Phones use a clearer,
+ * softer glass, as their floating controls do.
+ * `:root` lifts the rule over the wallpaper cover of `[data-list-tile]`.
+ */
+:root {
+  --glass-bar-cover: 80%;
+  --glass-bar-blur: 16px;
+}
+
+@media (width < 48rem) {
+  :root {
+    --glass-bar-cover: 70%;
+    --glass-bar-blur: 24px;
+  }
+}
+
+:root .glass-bar {
+  background-color: color-mix(
+    in oklab,
+    var(--glass-bar-tint, var(--background)) var(--glass-bar-cover),
+    transparent
+  );
+  backdrop-filter: blur(var(--glass-bar-blur)) saturate(1.5);
+}
+
+/*
+ * On phones the top bar has no rule, so two glass layers meeting under it
+ * would show an edge: each blurs only its own box. The bar pinned flush
+ * under the top bar (`data-top-bar-glass`) therefore draws one glass from
+ * the screen's top edge to its own bottom, and the top bar drops its own.
+ * Bars pinned below page tabs keep their own glass under the tabs' rule.
+ */
+@media (width < 48rem) {
+  :root:has(.app-content-frame [data-top-bar-glass]) [data-app-top-bar] {
+    background-color: transparent;
+    backdrop-filter: none;
+  }
+
+  :root
+    .app-content-frame
+    [data-top-bar-glass]:not([data-page-tabs] ~ *, [data-page-tabs] ~ * *) {
+    background-color: transparent;
+    backdrop-filter: none;
+  }
+
+  .app-content-frame
+    [data-top-bar-glass]:not(
+      [data-page-tabs] ~ *,
+      [data-page-tabs] ~ * *
+    )::before {
+    content: "";
+    position: absolute;
+    inset: calc(-1 * var(--app-bar-sticky-top)) 0 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: color-mix(
+      in oklab,
+      var(--background) var(--glass-bar-cover),
+      transparent
+    );
+    backdrop-filter: blur(var(--glass-bar-blur)) saturate(1.5);
+  }
+}
