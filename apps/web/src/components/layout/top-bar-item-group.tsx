@@ -1,7 +1,7 @@
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import type { ComponentProps } from "react";
 import { cn } from "cn";
-import { GLASS_SURFACE_CLASS } from "./glass-surface";
+import { GLASS_SURFACE_CLASS } from "@lootlog/ui/lib/glass-surface";
 
 /**
  * Related top bar controls. Phones float each group as one glass capsule
