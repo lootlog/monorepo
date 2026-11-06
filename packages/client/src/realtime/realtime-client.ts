@@ -435,14 +435,38 @@ export class RealtimeClient {
     try {
       const result = await joined;
 
-      if (this.socket !== socket) return result;
-      await Promise.all(
-        [...this.subscriptions.values()].map((scope) =>
-          this.request("subscription.subscribe", scope),
-        ),
-      );
+      // Scopes change while their restore is in flight and are only sent
+      // directly once the session is ready, so repeat until the server holds
+      // exactly the current set.
+      const restored = new Map<string, SubscriptionScope>();
 
-      if (this.socket !== socket) return result;
+      for (;;) {
+        if (this.socket !== socket) return result;
+
+        const added = [...this.subscriptions].filter(
+          ([key]) => !restored.has(key),
+        );
+
+        const removed = [...restored].filter(
+          ([key]) => !this.subscriptions.has(key),
+        );
+
+        if (added.length === 0 && removed.length === 0) break;
+
+        for (const [key, scope] of added) restored.set(key, scope);
+
+        for (const [key] of removed) restored.delete(key);
+
+        await Promise.all([
+          ...added.map(([, scope]) =>
+            this.request("subscription.subscribe", scope),
+          ),
+          ...removed.map(([, scope]) =>
+            this.request("subscription.unsubscribe", scope),
+          ),
+        ]);
+      }
+
       this.reconnectAttempt = 0;
       this.setState("ready");
 
