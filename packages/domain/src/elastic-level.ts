@@ -12,6 +12,12 @@ import { itemAtLevel } from "./item-upgrade.js";
 /** The levels Margonem gives an elastic item, whoever loots it. */
 export const ELASTIC_LEVELS = { min: 40, max: 300 } as const;
 
+/**
+ * An item seen at more levels than this takes its looter's level, as elastic
+ * items do; a rebalanced item keeps a few.
+ */
+export const MAX_FIXED_LEVELS = 4;
+
 const LADDER_STEP = 5;
 
 const ARMOR_TYPES = new Set(["ARMOR", "HELMET", "GLOVES", "BOOTS"]);

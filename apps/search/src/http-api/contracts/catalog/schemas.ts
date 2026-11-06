@@ -12,6 +12,7 @@ import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 const CatalogItemSort = Schema.Literals([
   "relevance",
   "id:desc",
+  "changedOn:desc",
   "lvl:asc",
   "lvl:desc",
   "name:asc",
@@ -20,7 +21,7 @@ const CatalogItemSort = Schema.Literals([
   "upgradedAttackSpeed:desc",
 ]).annotate({
   description:
-    "`id:desc` lists the items Margonem added most recently first. `attackSpeed:desc` lists first the items that add the most attack speed to a character with at least 100 agility: their own attack speed plus 0.002 for each point of agility or all attributes. `upgradedAttackSpeed:desc` ranks the same attack speed with each item upgraded to +5 and given the +5 bonus that adds the most of it: attack speed on weapons, agility or all attributes on other pieces.",
+    "`id:desc` lists the items Margonem added most recently first. `changedOn:desc` lists first the items the game changed most recently, by the day their latest revision was first looted; items without a change follow. `attackSpeed:desc` lists first the items that add the most attack speed to a character with at least 100 agility: their own attack speed plus 0.002 for each point of agility or all attributes. `upgradedAttackSpeed:desc` ranks the same attack speed with each item upgraded to +5 and given the +5 bonus that adds the most of it: attack speed on weapons, agility or all attributes on other pieces.",
 });
 
 const Profession = Schema.Literals(["w", "p", "h", "m", "b", "t"]);
@@ -79,9 +80,47 @@ export const CatalogDropSourceDto_Output = Schema.Struct({
     description:
       "Whether the NPC no longer drops the item: Lootlog has recorded its loot far too often since the item's last drop for the gap to be chance.",
   }),
+  dropRate: Schema.Union([
+    Schema.Struct({
+      drops: FiniteNumber.annotate({
+        description: "Kills that dropped the item.",
+      }),
+      kills: FiniteNumber.annotate({
+        description: "Kills that could have recorded the drop.",
+      }),
+    }),
+    Schema.Null,
+  ]).annotate({
+    description:
+      "How often the boss's kills drop the item, counted by the Organizations whose loot settings keep its rarity, from their hourly kill counts on. Lootlog recomputes it daily and gives none for other NPCs or under 100 such kills.",
+  }),
 }).annotate({
   description: "An NPC an item drops from",
   identifier: "CatalogDropSourceDto_Output",
+});
+
+export const CatalogItemRevisionDto_Output = Schema.Struct({
+  name: Schema.String,
+  icon: Schema.String,
+  lvl: FiniteNumber.annotate({
+    description:
+      "The level both revisions have; an elastic item's change is shown at one of its levels.",
+  }),
+  stat: Schema.String,
+  previousName: Schema.String,
+  previousIcon: Schema.String,
+  previousStat: Schema.String,
+  changedAfter: Schema.String.annotate({
+    description:
+      "The day in Poland, as `YYYY-MM-DD`, the old revision was last looted: the game changed the item after it.",
+  }),
+  changedBy: Schema.String.annotate({
+    description:
+      "The day in Poland, as `YYYY-MM-DD`, the new revision was first looted: the game changed the item by then.",
+  }),
+}).annotate({
+  description: "A change the game made to an item",
+  identifier: "CatalogItemRevisionDto_Output",
 });
 
 export const CatalogItemDto_Output = Schema.Struct({
@@ -93,6 +132,10 @@ export const CatalogItemDto_Output = Schema.Struct({
   rarity: Schema.Union([Schema.String, Schema.Null]),
   type: Schema.Union([Schema.String, Schema.Null]),
   droppedBy: Schema.Array(CatalogDropSourceDto_Output),
+  revisions: Schema.Array(CatalogItemRevisionDto_Output).annotate({
+    description:
+      "The changes the game made to the item, oldest first, as Lootlog saw them in loots. Revisions looted side by side, as variants are, are no history and are left out. Lootlog recomputes them daily.",
+  }),
   elasticLevel: Schema.Boolean.annotate({
     description:
       "Whether the item takes the level of the character who loots it, so `lvl` and `stat` describe one of its levels.",

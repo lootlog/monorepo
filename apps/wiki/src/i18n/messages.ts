@@ -316,6 +316,22 @@ const messages = {
     relatedDescription: "Pozostałe przedmioty, które wypadają z tego potwora.",
     relatedAll: "Wszystkie dropy",
   },
+  revisions: {
+    title: "Zmiany w grze",
+    description:
+      "Lootlog widzi zmianę w lootach: podajemy dzień, w którym przedmiot po raz ostatni wypadł w starej wersji, i dzień, w którym po raz pierwszy wypadł w nowej. Gra zmieniła go w tym przedziale.",
+    atLevel: "Na {{level}} poziomie",
+    became: "zmieniono na",
+    none: "Brak",
+    removed: "Usunięto",
+    recentTitle: "Ostatnie zmiany w grze",
+    recentDescription:
+      "Przedmioty, które gra ostatnio zmieniła, z dniem, w którym Lootlog zobaczył nową wersję w lootach.",
+    recentEmpty: "Lootlog nie widział jeszcze zmian przedmiotów.",
+    changeCount: "Zmiany: {{count}}",
+    icon: "Grafika",
+    newIcon: "Nowa grafika",
+  },
   elastic: {
     title: "Poziom zależny od postaci",
     description:
@@ -535,6 +551,10 @@ const messages = {
     noCurrentDrops:
       "Z tego potwora nie wypada już żaden znany Lootlogowi drop.",
     retiredDrop: "Już nie wypada",
+    dropRate: "Szansa {{rate}} · {{drops}} z {{kills}} zabić",
+    dropRateUnknown: "Szansa: za mało zabić",
+    dropRatesDescription:
+      "Szansa to odsetek zabić zapisanych przez Lootlogi, w których przedmiot wypadł. Liczymy tylko Lootlogi, które zapisują przedmioty tej rzadkości, i tylko zabicia od czerwca 2026 r.",
     retiredDropsTitle: "Dawniej wypadało",
     retiredDropsDescription:
       "Lootlog od dawna nie widział tych przedmiotów, choć wielokrotnie zapisywał inny łup z tego potwora. Najpewniej po zmianie łupu już z niego nie wypadają.",

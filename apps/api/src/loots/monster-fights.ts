@@ -1,5 +1,5 @@
 import { DROP_SOURCE_BOSS_TYPES } from "@lootlog/domain/npc-type";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   lootNpcTable,
@@ -8,18 +8,14 @@ import {
 } from "#src/database/drizzle/loot.schema";
 
 /**
- * Every recorded fight of every monster, numbered from the monster's first,
- * with the total its monster has. A monster is its edition, name and type, as
- * the search catalog names it, so a rework that gives it a new id keeps
- * counting its fights. Fights name their only NPC or the only boss among a
- * group, as drop sources do. The game client records a fight only when it
- * drops something above common, so fights are a sample of kills, not every
- * kill.
+ * The NPC each recorded fight's drops come from: its only NPC, or the only
+ * boss among a group, as drop sources name them. Fights before `since`, when
+ * given, are left out.
  */
-export const buildMonsterFights = (database: ApiDatabaseValue) => {
+export const buildFightSources = (database: ApiDatabaseValue, since?: Date) => {
   const isBoss = inArray(npcSnapshotTable.type, [...DROP_SOURCE_BOSS_TYPES]);
 
-  const fightSources = database.$with("fight_sources").as(
+  return database.$with("fight_sources").as(
     database
       .select({
         lootId: lootNpcTable.lootId,
@@ -35,9 +31,27 @@ export const buildMonsterFights = (database: ApiDatabaseValue) => {
         npcSnapshotTable,
         eq(npcSnapshotTable.id, lootNpcTable.npcSnapshotId),
       )
-      .where(eq(lootTable.source, "FIGHT"))
+      .where(
+        and(
+          eq(lootTable.source, "FIGHT"),
+          since === undefined ? undefined : gte(lootTable.createdAt, since),
+        ),
+      )
       .groupBy(lootNpcTable.lootId),
   );
+};
+
+/**
+ * Every recorded fight of every monster, numbered from the monster's first,
+ * with the total its monster has. A monster is its edition, name and type, as
+ * the search catalog names it, so a rework that gives it a new id keeps
+ * counting its fights. Fights name their only NPC or the only boss among a
+ * group, as drop sources do. The game client records a fight only when it
+ * drops something above common, so fights are a sample of kills, not every
+ * kill.
+ */
+export const buildMonsterFights = (database: ApiDatabaseValue) => {
+  const fightSources = buildFightSources(database);
 
   // Columns stay table columns where they can: Drizzle names an aliased
   // expression without its CTE, which the joins below would make ambiguous.

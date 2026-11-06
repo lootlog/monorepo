@@ -4,13 +4,18 @@ import type { PublishOptions } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, ManagedRuntime } from "effect";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
+import { guildKillBucketTable } from "#src/database/drizzle/kill-statistics.schema";
 import {
   itemSnapshotTable,
   lootItemTable,
+  lootlogConfigNpcTable,
+  lootlogConfigTable,
   lootNpcTable,
   lootTable,
   npcSnapshotTable,
+  organizationLootRecordTable,
 } from "#src/database/drizzle/loot.schema";
+import { guildTable } from "#src/database/drizzle/organization.schema";
 import { makeMonsterStatisticsPublisher } from "#src/loots/monster-statistics";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
@@ -118,6 +123,7 @@ it("publishes a monster's maps from its latest fights, the drops it no longer gi
     locations?: Array<{ map: string; share: number }>;
     formerLevels?: Array<{ lvl: number; until: string }>;
     retiredItemIds?: number[];
+    dropRates?: Array<{ itemId: number; drops: number; kills: number }>;
   };
 
   const monster = (routingKey: string) =>
@@ -145,5 +151,172 @@ it("publishes a monster's maps from its latest fights, the drops it no longer gi
     name,
     type: "TITAN",
     retiredItemIds: [1],
+    // No Organization counted the titan's kills.
+    dropRates: [],
   });
+});
+
+it("publishes how often a boss's kills drop each item, over the kills of the Organizations that could record it", async () => {
+  const name = `Heros ${randomUUID()}`;
+  const world = `rates-${randomUUID()}`;
+  // Kill buckets begin long before other suites' data, so they set the window.
+  const bucketsBegin = new Date(Date.UTC(2001, 0, 1));
+  const killedAt = new Date(Date.UTC(2001, 0, 2));
+  const [everything, legendsOnly] = [randomUUID(), randomUUID()];
+
+  const published: PublishOptions[] = [];
+
+  await runtime.runPromise(
+    Effect.gen(function* () {
+      const now = new Date();
+
+      yield* database.insert(guildTable).values(
+        [everything, legendsOnly].map((id) => ({
+          id,
+          name: "Drop rates",
+          ownerId: "owner",
+          updatedAt: now,
+        })),
+      );
+      yield* database
+        .insert(lootlogConfigTable)
+        .values(
+          [everything, legendsOnly].map((id) => ({ id, updatedAt: now })),
+        );
+      yield* database.insert(lootlogConfigNpcTable).values([
+        {
+          lootlogConfigId: everything,
+          npcType: "HERO",
+          allowedRarities: ["UNIQUE", "HEROIC", "LEGENDARY", "UPGRADED"],
+          updatedAt: now,
+        },
+        {
+          lootlogConfigId: legendsOnly,
+          npcType: "HERO",
+          allowedRarities: ["LEGENDARY"],
+          updatedAt: now,
+        },
+      ]);
+      yield* database.insert(guildKillBucketTable).values(
+        [
+          { guildId: everything, kills: 200 },
+          { guildId: legendsOnly, kills: 300 },
+        ].map(({ guildId, kills }) => ({
+          periodStart: bucketsBegin,
+          guildId,
+          world,
+          npcId: 1,
+          npcName: name,
+          npcType: "HERO" as const,
+          npcLvl: 100,
+          kills,
+          lastKilledAt: killedAt,
+        })),
+      );
+
+      const [npc] = yield* database
+        .insert(npcSnapshotTable)
+        .values({ npcId: 1, gameVersion: "pl", name, type: "HERO", lvl: 100 })
+        .returning({ id: npcSnapshotTable.id });
+
+      const [unique, legendary] = yield* database
+        .insert(itemSnapshotTable)
+        .values(
+          (["UNIQUE", "LEGENDARY"] as const).map((rarity, index) => ({
+            itemId: 900_001 + index,
+            gameVersion: "pl" as const,
+            statsHash: randomUUID(),
+            name: `Łup ${rarity}`,
+            icon: "item.gif",
+            rarity,
+            statRaw: "",
+            statsSnapshot: {},
+          })),
+        )
+        .returning({ id: itemSnapshotTable.id });
+
+      const record = (
+        count: number,
+        itemSnapshotId: number,
+        guildIds: ReadonlyArray<string>,
+        foughtAt = killedAt,
+      ) =>
+        Effect.gen(function* () {
+          const loots = yield* database
+            .insert(lootTable)
+            .values(
+              Array.from({ length: count }, () => ({
+                uniqueId: randomUUID(),
+                world,
+                gameVersion: "pl" as const,
+                source: "FIGHT" as const,
+                location: "Grota",
+                createdAt: foughtAt,
+                updatedAt: foughtAt,
+              })),
+            )
+            .returning({ id: lootTable.id });
+
+          yield* database
+            .insert(lootNpcTable)
+            .values(
+              loots.map(({ id }) => ({ lootId: id, npcSnapshotId: npc!.id })),
+            );
+          yield* database.insert(lootItemTable).values(
+            loots.map(({ id }) => ({
+              lootId: id,
+              itemSnapshotId,
+              hid: randomUUID(),
+            })),
+          );
+          yield* database.insert(organizationLootRecordTable).values(
+            loots.flatMap(({ id }) =>
+              guildIds.map((guildId) => ({
+                lootId: id,
+                guildId,
+                updatedAt: now,
+              })),
+            ),
+          );
+        });
+
+      yield* record(20, unique!.id, [everything]);
+      // A kill both Organizations recorded counts in each.
+      yield* record(5, legendary!.id, [everything, legendsOnly]);
+      // Kept by an Organization whose settings now skip uniques.
+      yield* record(3, unique!.id, [legendsOnly]);
+      // Before the first kill bucket, so no kill pairs with it.
+      yield* record(
+        4,
+        unique!.id,
+        [everything],
+        new Date(Date.UTC(2000, 5, 1)),
+      );
+
+      yield* makeMonsterStatisticsPublisher(database, {
+        publish: (message) => Effect.sync(() => void published.push(message)),
+      });
+    }),
+  );
+
+  const rates = published
+    .filter(
+      ({ routingKey }) =>
+        routingKey === RabbitRoutingKey.SEARCH_ITEMS_RETIRED_DROPS,
+    )
+    .flatMap(
+      (
+        message,
+      ): Array<{
+        name: string;
+        dropRates: Array<{ itemId: number; drops: number; kills: number }>;
+      }> => JSON.parse(new TextDecoder().decode(message.content)),
+    )
+    .find((monster) => monster.name === name)?.dropRates;
+
+  expect(rates?.toSorted((a, b) => a.itemId - b.itemId)).toEqual([
+    // Only the Organization that keeps uniques could have recorded one.
+    { itemId: 900_001, drops: 20, kills: 200 },
+    { itemId: 900_002, drops: 10, kills: 500 },
+  ]);
 });
