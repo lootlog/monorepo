@@ -3,6 +3,7 @@ import { useLocation } from "@tanstack/react-router";
 import { cn } from "cn";
 import { EquipmentSetBar } from "@/components/equipment/equipment-set-bar";
 import { EquipmentSetPanel } from "@/components/equipment/equipment-set-panel";
+import { useStickyTop } from "@/hooks/use-sticky-top";
 import { t } from "@/i18n/messages";
 import { WikiHeader } from "./wiki-header";
 
@@ -15,6 +16,7 @@ import { WikiHeader } from "./wiki-header";
 export function WikiLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const showsSet = pathname !== "/";
+  const setSticky = useStickyTop();
 
   return (
     <div className="app-content-frame flex min-h-dvh w-full flex-col bg-background text-foreground">
@@ -36,8 +38,9 @@ export function WikiLayout({ children }: { children: ReactNode }) {
         </main>
         {showsSet ? (
           <aside
+            {...setSticky}
             aria-label={t("equipment.title")}
-            className="sticky top-20 mt-6 hidden rounded-xl border border-border/50 bg-card p-4 lg:block"
+            className="sticky mt-6 hidden rounded-xl border border-border/50 bg-card p-4 lg:block"
           >
             <EquipmentSetPanel />
           </aside>

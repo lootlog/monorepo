@@ -55,7 +55,7 @@ export function ItemInfobox({
       }
       className="[--infobox-accent:var(--item-rarity)]"
       media={
-        <div className="relative flex h-40 items-center justify-center overflow-hidden rounded-lg border border-[color-mix(in_oklab,var(--item-rarity)_30%,var(--border))] bg-[radial-gradient(60%_60%_at_50%_50%,color-mix(in_oklab,var(--item-rarity)_22%,var(--background)),var(--background))]">
+        <div className="relative flex h-32 items-center justify-center overflow-hidden rounded-lg border border-[color-mix(in_oklab,var(--item-rarity)_30%,var(--border))] bg-[radial-gradient(60%_60%_at_50%_50%,color-mix(in_oklab,var(--item-rarity)_22%,var(--background)),var(--background))]">
           <img
             src={itemIconUrl(item.icon)}
             alt={item.name}
