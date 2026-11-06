@@ -1,3 +1,4 @@
+import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { createHash, randomBytes } from "node:crypto";
@@ -122,7 +123,7 @@ export const makeReservationSharingDataLayer = (
       ) =>
         events
           .sharingChanged(sourceGuildId, audienceGuildIds)
-          .pipe(Effect.ignore);
+          .pipe(ignorePublicationFailure);
 
       return ReservationSharingData.of({
         listShares: (guildId) =>

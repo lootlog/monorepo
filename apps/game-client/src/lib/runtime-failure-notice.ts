@@ -2,6 +2,7 @@ import { getFixedT } from "@/i18n/get-fixed-t";
 
 export type RuntimeFailureKind =
   | "gameConnection"
+  | "eventOverload"
   | "extensionReplaced"
   | "extensionInvalidated"
   | "extensionUnavailable";

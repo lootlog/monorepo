@@ -97,6 +97,7 @@ export const createDiagnosticsReport = ({
     `seam=${bridgeHealth.seam ?? "-"}`,
     `reason=${bridgeHealth.reason ?? "-"}`,
     `packets=${bridgeHealth.sequence}`,
+    `observerFailures=${bridgeHealth.observerFailures}`,
   ].join(" ");
 
   return [

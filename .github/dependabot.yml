@@ -1,0 +1,13 @@
+version: 2
+updates:
+  # Workflow actions are pinned to commit SHAs; this keeps them current.
+  - package-ecosystem: github-actions
+    # A plain `/` skips local composite actions, which pin actions too.
+    directories:
+      - /
+      - /.github/actions/setup-bun
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]

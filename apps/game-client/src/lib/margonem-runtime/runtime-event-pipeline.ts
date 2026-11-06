@@ -4,6 +4,7 @@ import type {
 } from "./runtime.types";
 import {
   margonemRuntimeBridge,
+  scheduleRuntimeTeardown,
   type MargonemRuntimeBridge,
 } from "./margonem-runtime-bridge";
 import {
@@ -220,15 +221,8 @@ export class RuntimeEventPipeline {
 }
 
 export const runtimeEventPipeline = new RuntimeEventPipeline({
-  onOverflow: () => {
-    setTimeout(() => {
-      const runtimeWindow: Window & {
-        __lootlogGameClientRuntime?: { dispose: () => void };
-      } = window;
-
-      runtimeWindow.__lootlogGameClientRuntime?.dispose();
-    }, 0);
-  },
+  onOverflow: () =>
+    scheduleRuntimeTeardown("eventOverload", "runtime event queue overflowed"),
   onProcessingError: (error) => {
     console.warn("[RuntimeEventPipeline] Failed to process event:", error);
   },

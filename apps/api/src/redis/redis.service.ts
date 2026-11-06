@@ -398,12 +398,6 @@ export class RedisService {
     );
   }
 
-  async lset(key: string, index: number, value: string): Promise<"OK"> {
-    return await this.run(
-      this.redis.send("LSET", this.prefixKey(key), String(index), value),
-    );
-  }
-
   async lrem(key: string, count: number, value: string): Promise<number> {
     return await this.run(
       this.redis.send("LREM", this.prefixKey(key), String(count), value),

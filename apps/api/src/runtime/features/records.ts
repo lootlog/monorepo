@@ -22,7 +22,7 @@ import {
   makeLootPublicationDispatcher,
   makeLootSnapshotReader,
 } from "#src/loots/submission/loot-publication-outbox";
-import { makeLootPublicationWorker } from "#src/loots/submission/loot-publication-worker";
+import { makeOutboxWorker } from "#src/shared/outbox-worker";
 import { makeLootSubmissionAcceptance } from "#src/loots/submission/loot-submission-acceptance.service";
 import {
   makeLootsOperations,
@@ -82,7 +82,8 @@ export const recordsServicesLive = Layer.effect(
       makeLootSnapshotReader(lootQuery),
     );
 
-    const lootPublications = yield* makeLootPublicationWorker(
+    const lootPublications = yield* makeOutboxWorker(
+      "Loot publication",
       dispatchLootPublications(),
     );
 

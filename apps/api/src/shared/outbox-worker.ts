@@ -1,6 +1,8 @@
 import { Effect, Queue } from "effect";
 
-export const makeLootPublicationWorker = Effect.fnUntraced(function* (
+/** Runs a durable-outbox dispatch on startup, on each signal, and every second as a fallback. */
+export const makeOutboxWorker = Effect.fnUntraced(function* (
+  name: string,
   dispatch: Effect.Effect<void, unknown>,
 ) {
   // A signal is only a hint: the database remains the durable source of work.
@@ -10,7 +12,7 @@ export const makeLootPublicationWorker = Effect.fnUntraced(function* (
     while (true) {
       yield* dispatch.pipe(
         Effect.catch((error) =>
-          Effect.logError("Loot publication dispatch failed", error),
+          Effect.logError(`${name} dispatch failed`, error),
         ),
       );
       yield* Queue.take(signals).pipe(

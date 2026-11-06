@@ -1,12 +1,9 @@
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeJsonCodec } from "#src/redis/redis.service";
 import { EVENT_HERO_KILL_QUEUE } from "#src/events/kills/event-hero-kill-queue.constant";
-import {
-  EVENT_HERO_KILL_JOB_NAME,
-  buildEventHeroKillJobId,
-  createEventHeroKillJobData,
-  getEventHeroKillWindowKey,
-} from "#src/events/kills/event-hero-kill-job";
+import { EVENT_HERO_KILL_JOB_NAME } from "#src/events/kills/event-hero-kill-job";
+import { makeEventHeroCheckDispatcher } from "#src/events/kills/event-hero-check-outbox";
+import { makeOutboxWorker } from "#src/shared/outbox-worker";
 import { RedlockService } from "#src/redis/redlock";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
 import { ErrorKey } from "#src/timers/error-key";
@@ -71,34 +68,27 @@ export const timersData = Layer.unwrap(
     const invalidateList = (guildId: string) =>
       attempt(() => redis.invalidateScopes(`timer:list:${guildId}`));
 
+    const eventHeroChecks = yield* makeOutboxWorker(
+      "Event hero check",
+      makeEventHeroCheckDispatcher(database, ({ jobId, data }) =>
+        attempt(() =>
+          eventHeroKillQueue.add(EVENT_HERO_KILL_JOB_NAME, data, {
+            jobId,
+            attempts: 5,
+            backoff: { type: "exponential", delay: 1000 },
+            removeOnComplete: true,
+            removeOnFail: false,
+          }),
+        ),
+      )(),
+    );
+
+    yield* eventHeroChecks.run.pipe(Effect.forkScoped);
+
     const service = TimersData.makeService({
       ...makeTimerHistory(database),
       createAuto: makeAutoTimer(database, {
-        enqueueEventHeroCheck: (check) => {
-          const windowKey = getEventHeroKillWindowKey(check.timerData);
-
-          const jobId = buildEventHeroKillJobId({
-            guildId: check.guildId,
-            world: check.world,
-            npcId: check.npcId,
-            windowKey,
-            isManualClose: false,
-          });
-
-          return attempt(() =>
-            eventHeroKillQueue.add(
-              EVENT_HERO_KILL_JOB_NAME,
-              createEventHeroKillJobData(check, false),
-              {
-                jobId,
-                attempts: 5,
-                backoff: { type: "exponential", delay: 1000 },
-                removeOnComplete: true,
-                removeOnFail: false,
-              },
-            ),
-          );
-        },
+        signalEventHeroChecks: eventHeroChecks.signal,
         get: (key) => attempt(() => redis.get(key)),
         invalidateList,
         publishHeroSighting: makeHeroSightingPublisher(rabbit),

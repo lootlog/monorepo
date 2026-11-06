@@ -24,28 +24,28 @@ permissions:
   contents: read
 
 jobs:
-  publish:
-    name: Verify and publish @lootlog/sdk
+  # Installing dependencies runs their lifecycle scripts, so verification and
+  # packing hold no publish credential; only the archive reaches the job
+  # that can mint the npm OIDC token.
+  verify:
+    name: Verify and pack @lootlog/sdk
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: npm
     permissions:
       contents: read
-      id-token: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
-          registry-url: https://registry.npmjs.org
           package-manager-cache: false
       - name: Update npm
         run: npm install --global npm@12.0.2
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.4.4
       - name: Validate package and version
@@ -69,7 +69,40 @@ jobs:
       - name: Verify packed consumer and retain archives
         working-directory: packages/sdk
         run: bun run test:package --pack-destination "$RUNNER_TEMP/sdk-package"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sdk-package
+          path: ${{ runner.temp }}/sdk-package/lootlog-sdk-*.tgz
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish @lootlog/sdk
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .node-version
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Update npm
+        run: npm install --global npm@12.0.2
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: sdk-package
+          path: ${{ runner.temp }}/sdk-package
       - name: Publish verified SDK archive
         env:
           DIST_TAG: ${{ inputs.tag }}
-        run: npm publish "$RUNNER_TEMP/sdk-package"/lootlog-sdk-*.tgz --access public --tag "$DIST_TAG" --ignore-scripts
+        run: npm publish "$RUNNER_TEMP"/sdk-package/lootlog-sdk-*.tgz --access public --tag "$DIST_TAG" --ignore-scripts

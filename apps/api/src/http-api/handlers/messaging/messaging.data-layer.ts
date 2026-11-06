@@ -1,3 +1,4 @@
+import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { slidingWindowRateLimitScript } from "@lootlog/database/sliding-window-rate-limit";
 import type { PartyGatheringNpc } from "@lootlog/schema/party-ready-room";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
@@ -306,7 +307,7 @@ export const makeMessagingDataLayer = (
                       ...payload,
                       guildId,
                     })
-                    .pipe(Effect.ignore),
+                    .pipe(ignorePublicationFailure),
                 { concurrency: "unbounded", discard: true },
               );
 
@@ -356,7 +357,7 @@ export const makeMessagingDataLayer = (
                   world: data.world,
                   character: data.character,
                 })
-                .pipe(Effect.ignore);
+                .pipe(ignorePublicationFailure);
             }).pipe(
               Effect.withSpan("MessagingControllerVolunteer", {
                 attributes: { adapter: "Redis/RabbitMessaging", retryCount: 0 },

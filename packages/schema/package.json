@@ -48,7 +48,6 @@
     "./character-aura": "./src/character-aura.ts"
   },
   "scripts": {
-    "build": "tsc --noEmit",
     "lint": "oxlint src",
     "typecheck": "bun check",
     "test": "bun test"

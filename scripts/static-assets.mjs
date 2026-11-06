@@ -14,10 +14,12 @@ export function verifyGeneratedAssetReferences(
     (reference) =>
       new URL(reference, artifactBaseUrl).origin === artifactBaseUrl.origin,
   );
+
   assert.ok(
     references.length > 0,
     `${documentName} does not reference generated CSS or JavaScript`,
   );
+
   for (const reference of references) {
     assert.ok(
       reference.startsWith(`/${namespace}-assets/`),

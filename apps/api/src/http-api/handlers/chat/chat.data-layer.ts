@@ -1,3 +1,4 @@
+import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { Effect, Layer, Schema } from "effect";
 import {
   AccessRequirement,
@@ -32,11 +33,12 @@ export interface ChatRedis {
     start: number,
     stop: number,
   ) => Effect.Effect<ReadonlyArray<string>, unknown>;
-  readonly lset: (
+  /** Atomically replaces the element equal to `previous`; false when it is gone. */
+  readonly replace: (
     key: string,
-    index: number,
-    value: string,
-  ) => Effect.Effect<unknown, unknown>;
+    previous: string,
+    next: string,
+  ) => Effect.Effect<boolean, unknown>;
   readonly lrem: (
     key: string,
     count: number,
@@ -93,13 +95,17 @@ const routingFor = (message: Pick<ChatStoredMessage, "type" | "npc">) => {
 };
 
 export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
-  const rawMessages = (guildId: string) =>
+  const rawElements = (guildId: string) =>
     redis.lrange(messageKey(guildId), 0, -1).pipe(
       Effect.catchIf(
         (error) =>
           error instanceof Error && error.message.includes("WRONGTYPE"),
         () => redis.del(messageKey(guildId)).pipe(Effect.as([])),
       ),
+    );
+
+  const rawMessages = (guildId: string) =>
+    rawElements(guildId).pipe(
       Effect.map((elements) =>
         elements.flatMap((element) => {
           try {
@@ -111,6 +117,9 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
       ),
     );
 
+  // Messages are replaced by value: a concurrent send trims the list and
+  // shifts every index, so writing back by position could overwrite another
+  // member's message.
   const endPartyGatheringMessages = (
     notificationId: string,
     guildIds: ReadonlyArray<string>,
@@ -118,11 +127,19 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
     Effect.forEach(
       guildIds,
       (guildId) =>
-        rawMessages(guildId).pipe(
-          Effect.flatMap((messages) =>
+        rawElements(guildId).pipe(
+          Effect.flatMap((elements) =>
             Effect.forEach(
-              messages.entries(),
-              ([messageIndex, message]) => {
+              elements,
+              (element) => {
+                let message: ChatStoredMessage;
+
+                try {
+                  message = parseStored(element);
+                } catch {
+                  return Effect.void;
+                }
+
                 if (message.partyGathering?.notificationId !== notificationId) {
                   return Effect.void;
                 }
@@ -134,21 +151,23 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
                 };
 
                 return redis
-                  .lset(
+                  .replace(
                     messageKey(guildId),
-                    messageIndex,
+                    element,
                     JSON.stringify(updated),
                   )
                   .pipe(
-                    Effect.flatMap(() =>
-                      events
-                        .publish(RabbitRoutingKey.GUILDS_UPDATE_MESSAGE, {
-                          guildId,
-                          messageId: message.id,
-                          message: updated.message,
-                          routing: routingFor(message),
-                        })
-                        .pipe(Effect.ignore),
+                    Effect.flatMap((replaced) =>
+                      replaced
+                        ? events
+                            .publish(RabbitRoutingKey.GUILDS_UPDATE_MESSAGE, {
+                              guildId,
+                              messageId: message.id,
+                              message: updated.message,
+                              routing: routingFor(message),
+                            })
+                            .pipe(ignorePublicationFailure)
+                        : Effect.void,
                     ),
                   );
               },
@@ -180,7 +199,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
                 redis.ltrim(messageKey(guildId), -CHAT_MESSAGE_LIMIT, -1),
                 events
                   .publish(RabbitRoutingKey.GUILDS_SEND_MESSAGE, message)
-                  .pipe(Effect.ignore),
+                  .pipe(ignorePublicationFailure),
               ],
               { concurrency: "unbounded", discard: true },
             ),
@@ -220,7 +239,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
           yield* redis.del(messageKey(guildId));
           yield* events
             .publish(RabbitRoutingKey.GUILDS_CLEAR_MESSAGES, { guildId })
-            .pipe(Effect.ignore);
+            .pipe(ignorePublicationFailure);
 
           return { success: true };
         }).pipe(Effect.mapError((cause) => new ChatOperationError({ cause }))),
@@ -256,7 +275,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) => {
               messageId,
               routing: routingFor(message),
             })
-            .pipe(Effect.ignore);
+            .pipe(ignorePublicationFailure);
 
           return { success: true };
         }).pipe(Effect.mapError((cause) => new ChatOperationError({ cause }))),
