@@ -259,13 +259,21 @@ export async function createDeploymentPlan(input) {
   if (input.mode === "rollback") return createRollbackPlan(input, targets);
 
   if (input.mode === "release") {
-    const target = targets.find(({ id }) => id === input.target);
+    const requested = new Set(input.targets ?? []);
 
-    if (input.target !== "all" && !target) {
-      throw new Error(`Unknown deployment target: ${input.target}`);
+    const unknown = [...requested].find(
+      (id) => id !== "all" && !targets.some((target) => target.id === id),
+    );
+
+    if (unknown) throw new Error(`Unknown deployment target: ${unknown}`);
+
+    const selectedTargets = requested.has("all")
+      ? targets
+      : targets.filter(({ id }) => requested.has(id));
+
+    if (selectedTargets.length === 0) {
+      throw new Error("Select at least one deployment target");
     }
-
-    const selectedTargets = input.target === "all" ? targets : [target];
 
     if (
       selectedTargets.some(({ id }) => id === "auth") &&
