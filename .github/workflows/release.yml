@@ -110,6 +110,13 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.source_sha }}
+      # Deployment helpers come from the workflow's revision, so releasing or
+      # re-releasing an older source SHA uses the current deployment behavior.
+      - uses: actions/checkout@v7
+        with:
+          path: deployment-tools
+          sparse-checkout: scripts/retry.sh
+          sparse-checkout-cone-mode: false
       - uses: ./.github/actions/setup-bun
         with:
           turbo-cache-scope: release
@@ -208,10 +215,11 @@ jobs:
           state="$INFRA_REPO_PATH/$PRODUCTION_STATE"
           rollback="$RUNNER_TEMP/cloudflare-rollback.jsonl"
           set -o pipefail
+          source deployment-tools/scripts/retry.sh
           # The deployment that serves production now and its commit. A
           # rollback changes it, and idle or skipped deployments never become it.
           live_pages_deployment() {
-            curl --fail-with-body --silent --show-error \
+            retry curl --fail-with-body --silent --show-error \
               --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
               "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$1" |
               jq -r '.result.canonical_deployment // empty | "\(.id) \(.deployment_trigger.metadata.commit_hash)"'
@@ -257,7 +265,7 @@ jobs:
               read -r previous_id _ <<< "$live"
               jq -cn --arg id "$id" --arg kind "$kind" --arg previousId "$previous_id" --arg project "$project" \
                 '{id: $id, kind: $kind, previousId: $previousId, project: $project}' >> "$rollback"
-              bunx wrangler pages deploy "$artifact_path" --project-name "$project" --branch main \
+              retry bunx wrangler pages deploy "$artifact_path" --project-name "$project" --branch main \
                 --commit-hash "$SOURCE_SHA" --commit-message "Deploy $package_name from $SOURCE_SHA" --commit-dirty=false
               # Wrangler can exit before the new deployment serves production.
               for _ in {1..12}; do
@@ -271,17 +279,17 @@ jobs:
                 exit 1
               fi
             else
-              previous_id="$(bunx wrangler deployments list --config "$config_path" --env="" --name "$project" --json | jq -r 'sort_by(.created_on) | last | .versions[] | select(.percentage == 100) | .version_id' | head -n 1)"
+              previous_id="$(retry bunx wrangler deployments list --config "$config_path" --env="" --name "$project" --json | jq -r 'sort_by(.created_on) | last | .versions[] | select(.percentage == 100) | .version_id' | head -n 1)"
               jq -cn --arg configPath "$config_path" --arg id "$id" --arg kind "$kind" --arg previousId "$previous_id" --arg project "$project" \
                 '{configPath: $configPath, id: $id, kind: $kind, previousId: $previousId, project: $project}' >> "$rollback"
               if [[ "$id" == "traffic-splitter" ]]; then
-                bunx wrangler deploy "$artifact_path/index.js" --config "$config_path" --env="" --name "$project" --keep-vars
+                retry bunx wrangler deploy "$artifact_path/index.js" --config "$config_path" --env="" --name "$project" --keep-vars
               elif [[ "$id" == "wiki" ]]; then
-                bunx wrangler deploy "$artifact_path/server/index.js" --config "$config_path" --env="" --name "$project" --assets "$artifact_path/client" --keep-vars
+                retry bunx wrangler deploy "$artifact_path/server/index.js" --config "$config_path" --env="" --name "$project" --assets "$artifact_path/client" --keep-vars
               else
-                bunx wrangler deploy --config "$config_path" --env="" --name "$project" --keep-vars
+                retry bunx wrangler deploy --config "$config_path" --env="" --name "$project" --keep-vars
               fi
-              deployment_id="$(bunx wrangler deployments list --config "$config_path" --env="" --name "$project" --json | jq -r 'sort_by(.created_on) | last | .versions[] | select(.percentage == 100) | .version_id' | head -n 1)"
+              deployment_id="$(retry bunx wrangler deployments list --config "$config_path" --env="" --name "$project" --json | jq -r 'sort_by(.created_on) | last | .versions[] | select(.percentage == 100) | .version_id' | head -n 1)"
             fi
 
             next="$(mktemp)"
@@ -323,6 +331,7 @@ jobs:
         run: |
           rollback="$RUNNER_TEMP/cloudflare-rollback.jsonl"
           [[ -s "$rollback" ]] || exit 0
+          source deployment-tools/scripts/retry.sh
           # One target that cannot be rolled back must not leave the others on
           # the failed release.
           failed=()
@@ -334,12 +343,12 @@ jobs:
               echo "::warning::$project has no earlier live deployment to roll back to"
               failed+=("$project")
             elif [[ "$kind" == "pages" ]]; then
-              curl --fail-with-body --silent --show-error --request POST \
+              retry curl --fail-with-body --silent --show-error --request POST \
                 --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --header "Content-Type: application/json" --data '{}' \
                 "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$project/deployments/$previous_id/rollback" ||
                 failed+=("$project")
             else
-              bunx wrangler rollback "$previous_id" --config "$(jq -r '.configPath' <<< "$item")" \
+              retry bunx wrangler rollback "$previous_id" --config "$(jq -r '.configPath' <<< "$item")" \
                 --env="" --name "$project" --message "Rollback failed release $GITHUB_SHA" --yes ||
                 failed+=("$project")
             fi
