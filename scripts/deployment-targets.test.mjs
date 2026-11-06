@@ -212,32 +212,54 @@ describe("deployment targets", () => {
 
   test("release selection fails closed", async () => {
     await expect(
-      createDeploymentPlan({ mode: "release", target: "unknown" }),
+      createDeploymentPlan({ mode: "release", targets: ["web", "unknown"] }),
     ).rejects.toThrow("Unknown deployment target: unknown");
+    await expect(
+      createDeploymentPlan({ mode: "release", targets: [] }),
+    ).rejects.toThrow("Select at least one deployment target");
   });
 
-  test("release keeps backend and frontend targets independent", async () => {
-    for (const target of ["gateway", "web", "game-client"]) {
-      const plan = await createDeploymentPlan({ mode: "release", target });
-      expect(plan.targets.map(({ id }) => id)).toEqual([target]);
-    }
+  test("release deploys exactly the checked targets", async () => {
+    const plan = await createDeploymentPlan({
+      mode: "release",
+      targets: ["web", "gateway", "game-client"],
+    });
+
+    expect(plan.targets.map(({ id }) => id)).toEqual([
+      "gateway",
+      "web",
+      "game-client",
+    ]);
+  });
+
+  test("every deployment target can be checked in the Release workflow", async () => {
+    const workflow = Bun.YAML.parse(
+      await Bun.file(
+        new URL("../.github/workflows/release.yml", import.meta.url),
+      ).text(),
+    );
+
+    const inputs = workflow.on.workflow_dispatch.inputs;
+    const targets = await loadDeploymentTargets();
+
+    for (const { id } of targets) expect(inputs[id]?.type).toBe("boolean");
   });
 
   test("release requires an explicit Auth migration confirmation", async () => {
     await expect(
-      createDeploymentPlan({ mode: "release", target: "auth" }),
+      createDeploymentPlan({ mode: "release", targets: ["auth"] }),
     ).rejects.toThrow("Auth migration confirmation is required");
     await expect(
       createDeploymentPlan({
         mode: "release",
-        target: "all",
+        targets: ["all"],
         authMigrationConfirmed: false,
       }),
     ).rejects.toThrow("Auth migration confirmation is required");
 
     const plan = await createDeploymentPlan({
       mode: "release",
-      target: "auth",
+      targets: ["auth"],
       authMigrationConfirmed: true,
     });
 
