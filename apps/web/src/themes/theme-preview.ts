@@ -18,9 +18,9 @@ export interface ThemePreview {
 }
 
 const FALLBACK_COLORS: ThemePreview["colors"] = [
-  "#C8F135",
-  "#273321",
-  "#07111F",
+  "#8AB6F7",
+  "#1C2738",
+  "#0E0E0F",
 ];
 
 export const getBuiltInThemePreview = (
