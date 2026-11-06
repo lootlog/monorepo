@@ -24,6 +24,7 @@ import { upperFirst } from "es-toolkit";
 import { useTranslation } from "react-i18next";
 import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { Button } from "@lootlog/ui/components/button";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +38,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
+import { TopBarItemGroup } from "@/components/layout/top-bar-item-group";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { ReservationSettingsInfoDialog } from "./reservation-settings-info-dialog";
 import { ScheduleBar } from "./schedule-bar";
@@ -112,6 +114,7 @@ export function ScheduleHeader({
 }: ScheduleHeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [infoOpen, setInfoOpen] = useState(false);
 
   const { label, shortCompactLabel, compactTitle } = getScheduleDateLabels(
@@ -146,68 +149,69 @@ export function ScheduleHeader({
   const iconButtonSize = compactValue(isCompact, "icon-lg", "icon-sm");
 
   // Touch layouts carry the actions in the app's top bar, as a toolbar's
-  // trailing group: the frequent ones as icons, the rest under "More", and
+  // trailing items: the frequent ones as icons, the rest under "More", and
   // adding a reservation as the one prominent action at the edge.
   const compactActions = (
     <HeaderSlotPortal slot="actions">
       <div
         role="toolbar"
         aria-label={t("reservations.schedule.header.actions")}
-        className="flex items-center gap-1"
+        className="flex items-center gap-2"
       >
-        {todayButton}
-        <ScheduleIconButton
-          label={t("reservations.schedule.header.findNearestSlot")}
-          size="icon"
-          loading={isFindingNearestFreeSlot}
-          onClick={onFindNearestFreeSlot}
-        >
-          <WandSparkles />
-        </ScheduleIconButton>
-        {canManageReservationSettings ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t("reservations.schedule.header.more")}
-                >
-                  <Ellipsis />
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={() => setInfoOpen(true)}>
-                <Info className="size-4" />
-                {t("reservations.schedule.header.info")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={!settingsHref}
-                onClick={() => settingsHref && navigate({ to: settingsHref })}
-              >
-                <Settings className="size-4" />
-                {t("reservations.schedule.header.settings")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          // A single rarer action needs no menu of its own.
+        <TopBarItemGroup>
+          {todayButton}
           <ScheduleIconButton
-            label={t("reservations.schedule.header.info")}
+            label={t("reservations.schedule.header.findNearestSlot")}
             size="icon"
-            onClick={() => setInfoOpen(true)}
+            loading={isFindingNearestFreeSlot}
+            onClick={onFindNearestFreeSlot}
           >
-            <Info />
+            <WandSparkles />
           </ScheduleIconButton>
-        )}
+          {canManageReservationSettings ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t("reservations.schedule.header.more")}
+                  >
+                    <Ellipsis />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => setInfoOpen(true)}>
+                  <Info className="size-4" />
+                  {t("reservations.schedule.header.info")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!settingsHref}
+                  onClick={() => settingsHref && navigate({ to: settingsHref })}
+                >
+                  <Settings className="size-4" />
+                  {t("reservations.schedule.header.settings")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            // A single rarer action needs no menu of its own.
+            <ScheduleIconButton
+              label={t("reservations.schedule.header.info")}
+              size="icon"
+              onClick={() => setInfoOpen(true)}
+            >
+              <Info />
+            </ScheduleIconButton>
+          )}
+        </TopBarItemGroup>
+        {/* The prominent action stands apart from the group, at the edge. */}
         <Button
           type="button"
-          size="icon"
-          // The bar pulls its trailing controls out so ghost glyphs line up
-          // with the page; a filled circle keeps the page's own inset.
-          className="rounded-full max-md:mr-2.5"
+          size={isMobile ? "icon-lg" : "icon"}
+          className="rounded-full"
           onClick={onAddReservation}
           aria-label={t("reservations.schedule.header.addReservation")}
         >

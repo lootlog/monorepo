@@ -4,6 +4,8 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
+import { TopBarItemGroup } from "@/components/layout/top-bar-item-group";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { ScheduleBar } from "./schedule/schedule-bar";
 import { useCompactScheduleLayout } from "./schedule/use-compact-schedule-layout";
 
@@ -14,15 +16,20 @@ import { useCompactScheduleLayout } from "./schedule/use-compact-schedule-layout
 export const ReservationDetailSkeleton = () => {
   const { t } = useTranslation();
   const { containerRef, isCompact } = useCompactScheduleLayout();
+  const isMobile = useIsMobile();
   const iconButton = isCompact ? "size-10" : "size-8";
 
   const actionToolbar = isCompact ? (
     <HeaderSlotPortal slot="actions">
-      <div className="flex items-center gap-1">
-        <Skeleton className="size-9 rounded-lg" />
-        <Skeleton className="size-9 rounded-lg" />
-        <Skeleton className="size-9 rounded-lg" />
-        <Skeleton className="size-9 rounded-full max-md:mr-2.5" />
+      <div className="flex items-center gap-2">
+        <TopBarItemGroup>
+          <Skeleton className="size-9 rounded-full" />
+          <Skeleton className="size-9 rounded-full" />
+          <Skeleton className="size-9 rounded-full" />
+        </TopBarItemGroup>
+        <Skeleton
+          className={cn("rounded-full", isMobile ? "size-10" : "size-9")}
+        />
       </div>
     </HeaderSlotPortal>
   ) : (

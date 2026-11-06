@@ -1,4 +1,5 @@
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
+import { TopBarTitle } from "@/components/layout/top-bar-title";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import type { CSSProperties, ReactNode, Ref } from "react";
 import { DetailBar } from "./detail-bar";
@@ -35,15 +36,9 @@ export const DetailPage = ({
     <h1 className="sr-only">{name}</h1>
     {/* The top bar shows the page's name, so it reads like a document title. */}
     <HeaderSlotPortal slot="title">
-      <span
-        aria-current="page"
-        className="flex h-8 min-w-0 items-center gap-2 px-2 text-sm font-semibold"
-      >
-        {media}
-        <span className="truncate" style={nameStyle}>
-          {name}
-        </span>
-      </span>
+      <TopBarTitle media={media} style={nameStyle}>
+        {name}
+      </TopBarTitle>
     </HeaderSlotPortal>
     <ScrollArea data-under-top-bar ref={scrollRef} className="min-h-0 flex-1">
       <DetailBar meta={meta} actions={actions} />
