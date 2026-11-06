@@ -18,6 +18,8 @@ export type LootDrawDraftEntrant = LootDrawEntrantDto & {
 export type LootDrawSetup = {
   /** The winner from the game first, then the eligible map players. */
   entrants: LootDrawDraftEntrant[];
+  /** The other party members who can wear it, for a draw within the party. */
+  partyMembers: LootDrawDraftEntrant[];
   /** Map players outside the party left out because they cannot wear it. */
   ineligibleCount: number;
   /** False when the loot kept no map players to suggest. */
@@ -43,6 +45,23 @@ const findLootDrawWinner = (loot: Loot, item: Item) => {
   return loot.players.find(({ id }) => id === ownerId) ?? null;
 };
 
+const fromPartyMember = (
+  player: Loot["players"][number],
+  source: "WINNER" | "PARTY",
+  tickets: number,
+): LootDrawDraftEntrant => ({
+  key: lootDrawPlayerKey(player),
+  name: player.name,
+  accountId: player.accountId,
+  characterId: player.characterId,
+  prof: player.prof,
+  lvl: player.lvl,
+  icon: player.icon,
+  source,
+  tickets,
+  defaultTickets: tickets,
+});
+
 /** Who enters a draw for `item` before a manager edits it; null when nobody caught it. */
 export const buildLootDrawSetup = (
   loot: Loot,
@@ -58,22 +77,13 @@ export const buildLootDrawSetup = (
     canWearLootDrawItem(item, player),
   );
 
-  const winnerTickets = lootDrawWinnerTickets(item, loot.players);
-
   return {
     entrants: [
-      {
-        key: lootDrawPlayerKey(winner),
-        name: winner.name,
-        accountId: winner.accountId,
-        characterId: winner.characterId,
-        prof: winner.prof,
-        lvl: winner.lvl,
-        icon: winner.icon,
-        source: "WINNER",
-        tickets: winnerTickets,
-        defaultTickets: winnerTickets,
-      },
+      fromPartyMember(
+        winner,
+        "WINNER",
+        lootDrawWinnerTickets(item, loot.players),
+      ),
       ...eligible.map((player) => ({
         key: lootDrawPlayerKey(player),
         name: player.name,
@@ -91,9 +101,45 @@ export const buildLootDrawSetup = (
         defaultTickets: 1,
       })),
     ],
+    partyMembers: loot.players
+      .filter(
+        (player) =>
+          player.id !== winner.id && canWearLootDrawItem(item, player),
+      )
+      .map((player) => fromPartyMember(player, "PARTY", 1)),
     ineligibleCount: bystanders.length - eligible.length,
     hasMapPlayers: (loot.mapPlayersSnapshot?.length ?? 0) > 0,
   };
+};
+
+/**
+ * `next` with the winner's tickets following the rule: the whole party's
+ * when only outsiders enter, one once party members enter too. Tickets a
+ * manager changed stay as they are.
+ */
+export const withLootDrawWinnerTickets = (
+  loot: Loot,
+  item: Item,
+  next: readonly LootDrawDraftEntrant[],
+) => {
+  const defaultTickets = lootDrawWinnerTickets(
+    item,
+    loot.players,
+    next.some(({ source }) => source === "PARTY"),
+  );
+
+  return next.map((entrant) =>
+    entrant.source === "WINNER"
+      ? {
+          ...entrant,
+          tickets:
+            entrant.tickets === entrant.defaultTickets
+              ? defaultTickets
+              : entrant.tickets,
+          defaultTickets,
+        }
+      : entrant,
+  );
 };
 
 /**

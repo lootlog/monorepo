@@ -22,12 +22,29 @@ const playerKeys = (player: { characterId: number | null; name: string }) =>
     ? [`character:${player.characterId}`, nameKey(player.name)]
     : [nameKey(player.name)];
 
+/** The entrant as the loot records the party member it names. */
+const fromPartyMember = (
+  player: LootDrawLoot["players"][number],
+  source: "WINNER" | "PARTY",
+  tickets: number,
+): LootDrawEntrantRecord => ({
+  name: player.name,
+  accountId: player.accountId,
+  characterId: player.characterId,
+  prof: player.prof,
+  lvl: player.lvl,
+  icon: player.icon,
+  source,
+  tickets,
+});
+
 /**
  * Checks a manager's draw for one of the loot's drawable items. The one WINNER must
- * be the party member who caught it; it is stored as the loot records them.
- * Every other entrant must be outside the party, listed once and able to
- * wear the item. Tickets are the manager's, and the ticket order must hold
- * each entrant's tickets exactly.
+ * be the party member who caught it. PARTY entrants must be other members of
+ * the party; both are stored as the loot records them. MAP and MANUAL
+ * entrants must be outside the party. Everybody but the winner must be listed
+ * once and able to wear the item. Tickets are the manager's, and the ticket
+ * order must hold each entrant's tickets exactly.
  */
 export const buildLootDrawEntrants = (
   loot: LootDrawLoot,
@@ -51,57 +68,62 @@ export const buildLootDrawEntrants = (
 
   const winners = request.entrants.filter(({ source }) => source === "WINNER");
   const [winner] = winners;
-  const ownerKeys = new Set(playerKeys(owner));
+  const ownerKeys = playerKeys(owner);
 
   if (
     winners.length !== 1 ||
     !winner ||
-    !playerKeys(winner).some((key) => ownerKeys.has(key))
+    !playerKeys(winner).some((key) => ownerKeys.includes(key))
   ) {
     return { error: ErrorKey.LOOT_DRAW_WINNER_MISMATCH };
   }
 
   const partyKeys = new Set(loot.players.flatMap(playerKeys));
-  const outsiderKeys = new Set<string>();
+  const enteredKeys = new Set(ownerKeys);
+  const entrants: LootDrawEntrantRecord[] = [];
 
   for (const entrant of request.entrants) {
-    if (entrant.source === "WINNER") continue;
+    if (entrant.source === "WINNER") {
+      entrants.push(fromPartyMember(owner, "WINNER", entrant.tickets));
+      continue;
+    }
 
     const keys = playerKeys(entrant);
 
-    if (keys.some((key) => partyKeys.has(key))) {
-      return { error: ErrorKey.LOOT_DRAW_OUTSIDER_IN_PARTY };
-    }
-
-    if (keys.some((key) => outsiderKeys.has(key))) {
+    if (keys.some((key) => enteredKeys.has(key))) {
       return { error: ErrorKey.LOOT_DRAW_DUPLICATE_OUTSIDER };
     }
 
-    if (!canWearLootDrawItem(item, entrant)) {
+    let record: LootDrawEntrantRecord;
+
+    if (entrant.source === "PARTY") {
+      const member = loot.players.find((player) =>
+        playerKeys(player).some((key) => keys.includes(key)),
+      );
+
+      if (!member) return { error: ErrorKey.LOOT_DRAW_PARTY_MEMBER_NOT_FOUND };
+
+      record = fromPartyMember(member, "PARTY", entrant.tickets);
+      keys.push(...playerKeys(member));
+    } else {
+      if (keys.some((key) => partyKeys.has(key))) {
+        return { error: ErrorKey.LOOT_DRAW_OUTSIDER_IN_PARTY };
+      }
+
+      record = { ...entrant, name: entrant.name.trim() };
+    }
+
+    if (!canWearLootDrawItem(item, record)) {
       return { error: ErrorKey.LOOT_DRAW_OUTSIDER_INELIGIBLE };
     }
 
-    for (const key of keys) outsiderKeys.add(key);
+    for (const key of keys) enteredKeys.add(key);
+    entrants.push(record);
   }
 
   if (!isLootDrawTicketOrder(request.ticketOrder, request.entrants)) {
     return { error: ErrorKey.LOOT_DRAW_INVALID_TICKET_ORDER };
   }
 
-  return {
-    entrants: request.entrants.map((entrant) =>
-      entrant.source === "WINNER"
-        ? {
-            name: owner.name,
-            accountId: owner.accountId,
-            characterId: owner.characterId,
-            prof: owner.prof,
-            lvl: owner.lvl,
-            icon: owner.icon,
-            source: "WINNER",
-            tickets: entrant.tickets,
-          }
-        : { ...entrant, name: entrant.name.trim() },
-    ),
-  };
+  return { entrants };
 };

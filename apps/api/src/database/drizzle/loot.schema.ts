@@ -524,8 +524,11 @@ export type LootDrawEntrantRecord = {
   prof: ProfessionEnum | null;
   lvl: number | null;
   icon: string | null;
-  /** WINNER caught the item in the game; MAP and MANUAL stood outside the party. */
-  source: "WINNER" | "MAP" | "MANUAL";
+  /**
+   * WINNER caught the item in the game and PARTY was another party member;
+   * MAP and MANUAL stood outside the party.
+   */
+  source: "WINNER" | "PARTY" | "MAP" | "MANUAL";
   tickets: number;
 };
 

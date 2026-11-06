@@ -6,6 +6,10 @@
  * every party member of a profession that can wear the item, themselves
  * included, because the game already drew between those; never fewer than
  * one. Each player outside the party of such a profession gets one ticket.
+ *
+ * A Lootlog may also draw for its own reasons, among party members too. Then
+ * the game's draw no longer stands for them: the winner gets one ticket, like
+ * every other party member of such a profession.
  */
 
 export type LootDrawItem = Readonly<{
@@ -47,15 +51,21 @@ export const canWearLootDrawItem = (
   candidate: LootDrawCandidate,
 ) => candidate.prof !== null && item.prof.includes(candidate.prof);
 
-/** The tickets of the player who caught the item, from the whole party. */
+/**
+ * The tickets of the player who caught the item, from the whole party, or one
+ * when other party members enter the draw themselves.
+ */
 export const lootDrawWinnerTickets = (
   item: LootDrawItem,
   party: readonly LootDrawCandidate[],
+  partyEntered = false,
 ) =>
-  Math.max(
-    1,
-    party.filter((member) => canWearLootDrawItem(item, member)).length,
-  );
+  partyEntered
+    ? 1
+    : Math.max(
+        1,
+        party.filter((member) => canWearLootDrawItem(item, member)).length,
+      );
 
 /** The most tickets one entrant may hold, so a wheel stays readable. */
 export const MAX_LOOT_DRAW_TICKETS = 99;

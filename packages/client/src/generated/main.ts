@@ -7811,6 +7811,7 @@ export type LootDrawResponseDtoEntrantsItemSource = typeof LootDrawResponseDtoEn
 
 export const LootDrawResponseDtoEntrantsItemSource = {
   WINNER: 'WINNER',
+  PARTY: 'PARTY',
   MAP: 'MAP',
   MANUAL: 'MANUAL',
 } as const;
@@ -7897,6 +7898,7 @@ export type LootDrawEntrantDtoSource = typeof LootDrawEntrantDtoSource[keyof typ
 
 export const LootDrawEntrantDtoSource = {
   WINNER: 'WINNER',
+  PARTY: 'PARTY',
   MAP: 'MAP',
   MANUAL: 'MANUAL',
 } as const;
@@ -7939,11 +7941,11 @@ export interface CreateLootDrawDto {
   itemHid: string;
   /**
      * @minItems 2
-     * @maxItems 101
+     * @maxItems 110
      */
   entrants: LootDrawEntrantDto[];
   /**
-     * @maxItems 9999
+     * @maxItems 10890
      * @items.minimum 0
      * @items.maximum 9007199254740991
      */
