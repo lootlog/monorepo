@@ -10949,17 +10949,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
         "429":
-          description: Error
+          description: HttpErrorResponse
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "503":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
       description: Tell your Lootlog that you are going to the notification's NPC, or take it back. Members who received the notification see who is going.
       summary: Answer an NPC notification with going
       requestBody:
@@ -25986,54 +25994,54 @@ components:
         notificationId:
           type: string
           minLength: 1
-        going:
+        guilds:
           type: array
           items:
             type: object
             properties:
-              discordId:
+              guildId:
                 type: string
-              characterId:
-                type: string
-              nick:
-                type: string
-              lvl:
-                anyOf:
-                  - type: number
-                  - type: string
-                    enum:
-                      - Infinity
-                      - -Infinity
-                      - NaN
-              prof:
-                type: string
-              icon:
-                type: string
-              clan:
-                type: object
-                properties:
-                  id:
-                    anyOf:
-                      - type: number
-                      - type: string
-                        enum:
-                          - Infinity
-                          - -Infinity
-                          - NaN
-                  name:
-                    type: string
-                additionalProperties: false
+                minLength: 1
+              going:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    userId:
+                      type: string
+                    characterId:
+                      type: string
+                    nick:
+                      type: string
+                    lvl:
+                      type: number
+                    prof:
+                      type: string
+                    icon:
+                      type: string
+                    clan:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        name:
+                          type: string
+                      additionalProperties: false
+                  required:
+                    - userId
+                    - characterId
+                    - nick
+                    - lvl
+                    - prof
+                    - icon
+                  additionalProperties: false
             required:
-              - discordId
-              - characterId
-              - nick
-              - lvl
-              - prof
-              - icon
+              - guildId
+              - going
             additionalProperties: false
       required:
         - notificationId
-        - going
+        - guilds
       additionalProperties: false
     NotificationGoingDto:
       type: object

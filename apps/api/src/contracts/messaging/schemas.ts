@@ -162,7 +162,13 @@ export const NotificationGoingRequest = Schema.Struct({
 
 export const NotificationGoingResponse = Schema.Struct({
   notificationId: NonEmptyString,
-  going: Schema.Array(NotificationGoingPlayerSchema),
+  // Each Lootlog keeps its own answers, the same lists its members receive live.
+  guilds: Schema.Array(
+    Schema.Struct({
+      guildId: NonEmptyString,
+      going: Schema.Array(NotificationGoingPlayerSchema),
+    }),
+  ),
 }).annotate({ identifier: "NotificationGoingResponseDto_Output" });
 
 export type NotificationGoingResponse = typeof NotificationGoingResponse.Type;

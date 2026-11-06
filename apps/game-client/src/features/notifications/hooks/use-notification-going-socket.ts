@@ -8,7 +8,10 @@ import { useSocket } from "@/contexts/socket-context";
 import { useSession } from "@/hooks/auth/use-session";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
-import { useNotificationGoingStore } from "@/store/notification-going.store";
+import {
+  selectNotificationGoing,
+  useNotificationGoingStore,
+} from "@/store/notification-going.store";
 
 const isGoingUpdate = Schema.is(NotificationGoingUpdateSchema);
 
@@ -20,35 +23,45 @@ const isGoingUpdate = Schema.is(NotificationGoingUpdateSchema);
 export const useNotificationGoingSocket = () => {
   const { socket, connected, joined } = useSocket();
   const { data: session } = useSession();
-  const discordId = session?.user?.discordId;
+  const userId = session?.user?.id;
 
   const handleUpdate = useEffectEvent((update: NotificationGoingUpdate) => {
     // The gateway forwards the API's answer list as is; skip a malformed one.
     if (!isGoingUpdate(update)) return;
 
-    const store = useNotificationGoingStore.getState();
+    const ids = [update.notificationId];
 
-    const previous =
-      store.byNotification[update.notificationId]?.byGuild[update.guildId] ??
-      [];
+    // The reporter hears about a player once, even when several of their
+    // Lootlogs list the answer.
+    const previous = selectNotificationGoing(
+      useNotificationGoingStore.getState(),
+      ids,
+    );
 
-    store.setGuildGoing(update.notificationId, update.guildId, update.going);
+    useNotificationGoingStore
+      .getState()
+      .setGuildGoing(update.notificationId, update.guildId, update.going);
 
-    if (!discordId || update.reporterDiscordId !== discordId) return;
+    if (!userId || update.reporterUserId !== userId) return;
+
+    const current = selectNotificationGoing(
+      useNotificationGoingStore.getState(),
+      ids,
+    );
 
     const t = getFixedT("notifications");
-    const before = new Set(previous.map((player) => player.discordId));
-    const after = new Set(update.going.map((player) => player.discordId));
+    const before = new Set(previous.map((player) => player.userId));
+    const after = new Set(current.map((player) => player.userId));
 
-    for (const player of update.going) {
-      if (!before.has(player.discordId))
+    for (const player of current) {
+      if (!before.has(player.userId))
         showRuntimeMessage(
           t("going.reporterJoined", { nick: player.nick, npc: update.npcName }),
         );
     }
 
     for (const player of previous) {
-      if (!after.has(player.discordId))
+      if (!after.has(player.userId))
         showRuntimeMessage(
           t("going.reporterLeft", { nick: player.nick, npc: update.npcName }),
         );

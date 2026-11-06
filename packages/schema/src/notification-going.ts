@@ -1,17 +1,18 @@
 import { Schema } from "effect";
+import { FiniteNumber } from "./http-scalars.js";
 import { NpcRoutingDataSchema } from "./npc-routing.js";
 
 /** A player who answered an NPC notification with "I'm going". */
 export const NotificationGoingPlayerSchema = Schema.Struct({
-  discordId: Schema.String,
+  userId: Schema.String,
   characterId: Schema.String,
   nick: Schema.String,
-  lvl: Schema.Number,
+  lvl: FiniteNumber,
   prof: Schema.String,
   icon: Schema.String,
   clan: Schema.optionalKey(
     Schema.Struct({
-      id: Schema.optionalKey(Schema.Number),
+      id: Schema.optionalKey(FiniteNumber),
       name: Schema.optionalKey(Schema.String),
     }),
   ),
@@ -30,7 +31,7 @@ export const NotificationGoingUpdateSchema = Schema.Struct({
   notificationId: Schema.String,
   // Who reported the NPC: they never see their own notification, so their
   // client tells them who answered.
-  reporterDiscordId: Schema.String,
+  reporterUserId: Schema.String,
   npcName: Schema.String,
   npc: Schema.Struct({ ...NpcRoutingDataSchema.fields, lvl: Schema.Number }),
   going: Schema.Array(NotificationGoingPlayerSchema),

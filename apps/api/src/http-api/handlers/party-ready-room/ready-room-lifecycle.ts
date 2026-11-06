@@ -258,7 +258,8 @@ export const extendRoom = (
   );
 
 export interface ReadyRoomNpcKill {
-  readonly guildId: string;
+  // The Lootlogs that recorded the kill as their own timer.
+  readonly guildIds: ReadonlyArray<string>;
   readonly world: string;
   readonly npcId: number;
   readonly location: string;
@@ -298,20 +299,23 @@ const closeKilledNpcRoom = (
   );
 
 /**
- * Ends the gatherings of one Lootlog for an NPC that Lootlog saw killed. The
- * kill comes from that Lootlog's own timer, so another Organization's kill
- * never closes, or reveals itself through, this one's gatherings.
+ * Ends the gatherings for an NPC that their Lootlogs saw killed. Ending one
+ * tells every Lootlog of the gathering why, so a gathering shared with a
+ * Lootlog that did not record the kill stays open: another Organization's kill
+ * never closes, or reveals itself through, its gatherings.
  */
 export const closeKilledNpcRooms = (
   context: ReadyRoomContext,
   kill: ReadyRoomNpcKill,
-) =>
-  context.repository.findActive([kill.guildId], kill.world).pipe(
+) => {
+  const killedIn = new Set(kill.guildIds);
+
+  return context.repository.findActive(kill.guildIds, kill.world).pipe(
     Effect.flatMap((rooms) =>
       Effect.forEach(
         rooms.filter(
           (room) =>
-            room.guildIds.includes(kill.guildId) &&
+            room.guildIds.every((guildId) => killedIn.has(guildId)) &&
             room.npc?.id === kill.npcId &&
             room.npc.location === kill.location,
         ),
@@ -320,3 +324,4 @@ export const closeKilledNpcRooms = (
       ),
     ),
   );
+};

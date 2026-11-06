@@ -63,6 +63,6 @@ export const selectNotificationGoing = (
       .flatMap((id) =>
         Object.values(state.byNotification[id]?.byGuild ?? {}).flat(),
       )
-      .map((player) => [player.discordId, player]),
+      .map((player) => [player.userId, player]),
   ).values(),
 ];

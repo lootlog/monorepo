@@ -54,9 +54,21 @@ const writeApplication = (
   application: RecordedApplication | null,
 ) => {
   const now = Date.now();
+  const stored = readApplications();
+  const current = stored[accountId];
+
+  // The effect runs on every room update; write only what changed.
+  if (
+    application === null
+      ? current === undefined
+      : current?.characterId === application.characterId &&
+        current.notificationId === application.notificationId &&
+        current.expiresAt === application.expiresAt
+  )
+    return;
 
   const applications = Object.fromEntries(
-    Object.entries(readApplications()).filter(
+    Object.entries(stored).filter(
       ([id, entry]) => id !== accountId && entry.expiresAt > now,
     ),
   );
@@ -69,6 +81,10 @@ const writeApplication = (
     // Storage is a fallback for a slow relog; the live room still works.
   }
 };
+
+// Statuses with which the server refuses the character itself, rather than
+// failing for a moment.
+const REFUSED_STATUSES = new Set([403, 409, 422]);
 
 const fitsLevel = (
   gathering: Pick<PartyGatheringSummary, "minLvl" | "maxLvl">,
@@ -95,6 +111,8 @@ export function useReadyRoomCharacterSwitch(): void {
   const level = useGameStore((state) => state.game?.hero.level);
   const world = useGameStore((state) => state.game?.world);
   const inFlight = useRef(new Set<string>());
+  // Attempts that failed for this character; room updates do not repeat them.
+  const failed = useRef(new Set<string>());
 
   useEffect(() => {
     if (
@@ -107,10 +125,15 @@ export function useReadyRoomCharacterSwitch(): void {
       return;
 
     const run = (notificationId: string, request: () => Promise<void>) => {
-      if (inFlight.current.has(notificationId)) return;
+      const attempt = `${notificationId}:${characterId}`;
+
+      if (inFlight.current.has(notificationId) || failed.current.has(attempt))
+        return;
+
       inFlight.current.add(notificationId);
       void request()
         .catch((error) => {
+          failed.current.add(attempt);
           console.warn("[ReadyRoom] Character switch failed:", error);
         })
         .finally(() => inFlight.current.delete(notificationId));
@@ -152,7 +175,9 @@ export function useReadyRoomCharacterSwitch(): void {
             ),
           );
         } catch (error) {
-          if (previous && getApiErrorStatus(error) === 403)
+          const status = getApiErrorStatus(error);
+
+          if (previous && status !== undefined && REFUSED_STATUSES.has(status))
             return withdraw(notificationId, previous);
 
           throw error;

@@ -24,7 +24,7 @@ it("shares a going answer only with the Lootlogs where the caller reads the noti
   const hashes = new Map<string, Map<string, string>>([
     [
       "notification:hero:going:foreign",
-      new Map([["stranger", JSON.stringify({ discordId: "stranger" })]]),
+      new Map([["stranger", JSON.stringify({ userId: "stranger" })]]),
     ],
   ]);
 
@@ -37,6 +37,7 @@ it("shares a going answer only with the Lootlogs where the caller reads the noti
           key === "notification:hero"
             ? JSON.stringify({
                 discordId: "sender",
+                userId: "sender-user",
                 guildIds: ["mine", "restricted", "foreign"],
                 createdAt,
                 world: "experimental",
@@ -48,6 +49,9 @@ it("shares a going answer only with the Lootlogs where the caller reads the noti
       set: () => Effect.void,
       eval: (_script, keys, args) =>
         Effect.sync(() => {
+          // The sliding-window rate limit accepts every answer here.
+          if (keys[0]?.startsWith("messaging:")) return [1, 0];
+
           const hash = hashes.get(keys[0] ?? "") ?? new Map<string, string>();
           hashes.set(keys[0] ?? "", hash);
 
@@ -71,19 +75,23 @@ it("shares a going answer only with the Lootlogs where the caller reads the noti
       Effect.gen(function* () {
         const messaging = yield* MessagingData;
 
-        return yield* messaging.going("caller", "hero", {
-          world: "experimental",
-          going,
-          character: {
-            accountId: "account",
-            characterId: "character",
-            nick: "Caller",
-            lvl: 120,
-            prof: "m",
-            icon: "icon",
-            clan: { id: 5, name: "Klan" },
+        return yield* messaging.going(
+          { userId: "caller-user", discordId: "caller" },
+          "hero",
+          {
+            world: "experimental",
+            going,
+            character: {
+              accountId: "account",
+              characterId: "character",
+              nick: "Caller",
+              lvl: 120,
+              prof: "m",
+              icon: "icon",
+              clan: { id: 5, name: "Klan" },
+            },
           },
-        });
+        );
       }).pipe(Effect.provide(layer)),
     );
 
@@ -149,18 +157,28 @@ it("shares a going answer only with the Lootlogs where the caller reads the noti
 
     expect(going).toMatchObject({
       notificationId: "hero",
-      going: [{ discordId: "caller", nick: "Caller", clan: { name: "Klan" } }],
+      guilds: [
+        {
+          guildId: "mine",
+          going: [
+            { userId: "caller-user", nick: "Caller", clan: { name: "Klan" } },
+          ],
+        },
+      ],
     });
     expect(published).toHaveLength(1);
     expect(published[0]).toMatchObject({
       guildId: "mine",
-      reporterDiscordId: "sender",
+      reporterUserId: "sender-user",
       npcName: "Heros",
     });
     expect(hashes.get("notification:hero:going:restricted")).toBeUndefined();
     expect(hashes.get("notification:hero:going:foreign")?.size).toBe(1);
 
-    expect(await answer(false)).toEqual({ notificationId: "hero", going: [] });
+    expect(await answer(false)).toEqual({
+      notificationId: "hero",
+      guilds: [{ guildId: "mine", going: [] }],
+    });
     expect(published.at(-1)).toMatchObject({ guildId: "mine", going: [] });
   } finally {
     await databaseBoundary.dispose();
