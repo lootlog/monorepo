@@ -2037,10 +2037,10 @@ describe("durable loot publications", () => {
       await measure("baseline-detail", async () => {
         for (const lootId of lootIds) {
           const values = await runtime.runPromise(
-            Effect.all(
-              clients.map(() =>
+            Effect.forEach(
+              clients,
+              () =>
                 realQuery.fetchLootById(guild, [Permission.OWNER], [], lootId),
-              ),
               { concurrency: "unbounded" },
             ),
           );
@@ -2053,10 +2053,9 @@ describe("durable loot publications", () => {
       await measure("coalesced-legacy-detail", async () => {
         for (const lootId of lootIds) {
           const values = await runtime.runPromise(
-            Effect.all(
-              clients.map(() =>
-                operations.fetchLootById(guild, policy, [], lootId),
-              ),
+            Effect.forEach(
+              clients,
+              () => operations.fetchLootById(guild, policy, [], lootId),
               { concurrency: "unbounded" },
             ),
           );
@@ -2068,12 +2067,12 @@ describe("durable loot publications", () => {
       });
       await measure("batched-first-page-no-cache", async () => {
         const pages = await runtime.runPromise(
-          Effect.all(
-            clients.map(() =>
+          Effect.forEach(
+            clients,
+            () =>
               realQuery.fetchLootsByGuildId(guild, [Permission.OWNER], [], {
                 limit: 20,
               }),
-            ),
             { concurrency: "unbounded" },
           ),
         );

@@ -22,11 +22,11 @@ export const makeManageableGuilds = (
       const apiKey = yield* requestApiKeyAccess;
 
       const guilds = yield* getDiscordGuilds(identity).pipe(
-        Effect.catch((error) =>
-          error instanceof ApplicationError &&
-          error.kind === ApplicationErrorKind.AUTHENTICATION_REQUIRED
-            ? Effect.succeed([])
-            : Effect.fail(error),
+        Effect.catchIf(
+          (error) =>
+            error instanceof ApplicationError &&
+            error.kind === ApplicationErrorKind.AUTHENTICATION_REQUIRED,
+          () => Effect.succeed([]),
         ),
       );
 

@@ -327,12 +327,13 @@ export class GuildConfigurationData extends Context.Service<
 
                 // The row is cached under every key it was looked up by, so a
                 // change must evict the id entry and both vanity entries.
-                yield* Effect.all(
+                yield* Effect.forEach(
                   [
                     ...new Set(
                       compact([guildId, oldGuild?.vanityUrl, guild.vanityUrl]),
                     ),
-                  ].map((key) => cache.del(getGuildCacheKey(key))),
+                  ],
+                  (key) => cache.del(getGuildCacheKey(key)),
                   { concurrency: "unbounded" },
                 );
 

@@ -108,15 +108,12 @@ export const makePublicGuildStatsCard = (options: {
   const useCache = options.environment !== RuntimeEnvironment.LOCAL;
 
   const getCardGuild = (guildId: string) =>
-    options.repository
-      .findActiveGuild(guildId)
-      .pipe(
-        Effect.flatMap((guild) =>
-          guild?.publicStatsCardEnabled
-            ? Effect.succeed(guild)
-            : Effect.fail(new ResourceNotFoundError("Guild not found")),
-        ),
-      );
+    options.repository.findActiveGuild(guildId).pipe(
+      Effect.filterOrFail(
+        (guild) => guild?.publicStatsCardEnabled === true,
+        () => new ResourceNotFoundError("Guild not found"),
+      ),
+    );
 
   const render = (guild: GuildStatsCardGuild, guildId: string) =>
     Effect.gen(function* () {
@@ -198,11 +195,7 @@ export const makePublicGuildStatsCard = (options: {
                 )
               : Effect.void,
           ),
-          Effect.catch((error) =>
-            options.cache
-              .del(cooldownKey)
-              .pipe(Effect.andThen(Effect.fail(error))),
-          ),
+          Effect.tapError(() => options.cache.del(cooldownKey)),
         );
 
         return { nextRefreshAt };
@@ -343,7 +336,7 @@ export class PublicGuildStatsCardImageAdapter {
           this.prepareIcon(Buffer.from(response.body)),
         );
       }),
-      Effect.catch(() => Effect.succeed(null)),
+      Effect.orElseSucceed(() => null),
     );
   }
 

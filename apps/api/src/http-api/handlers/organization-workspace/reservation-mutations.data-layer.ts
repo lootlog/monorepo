@@ -409,10 +409,8 @@ const scheduleReminder = (
         ),
       )
       .pipe(
-        Effect.catch((error) =>
-          cancelReminder(database, ports, options.reservationId).pipe(
-            Effect.andThen(Effect.fail(error)),
-          ),
+        Effect.tapError(() =>
+          cancelReminder(database, ports, options.reservationId),
         ),
       );
   });
@@ -578,7 +576,7 @@ export const makeReservationMutationsDataLayer = (
           discordId: options.discordId,
           startsAt: reservation.startsAt,
           reminderMinutesBefore: reservation.reminderMinutesBefore,
-        }).pipe(Effect.catch(() => Effect.succeed(null)));
+        }).pipe(Effect.orElseSucceed(() => null));
       };
 
       const restoreReservationAndReminder = (options: {
@@ -945,12 +943,12 @@ export const makeReservationMutationsDataLayer = (
                   startsAt: updated.startsAt,
                 }),
               ),
-              Effect.catch((error) =>
+              Effect.tapError(() =>
                 restoreReservationAndReminder({
                   reservation,
                   discordId: options.discordId,
                   previousReminderContext,
-                }).pipe(Effect.andThen(Effect.fail(error))),
+                }),
               ),
             );
           }

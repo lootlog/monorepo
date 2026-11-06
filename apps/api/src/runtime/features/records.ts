@@ -66,8 +66,9 @@ export const recordsServicesLive = Layer.effect(
       database,
       rabbit,
       (organizationIds) =>
-        Effect.all(
-          organizationIds.map((guildId) =>
+        Effect.forEach(
+          organizationIds,
+          (guildId) =>
             Effect.tryPromise({
               try: () =>
                 redis.invalidateScopes(
@@ -76,7 +77,6 @@ export const recordsServicesLive = Layer.effect(
                 ),
               catch: (error) => error,
             }),
-          ),
           { concurrency: "unbounded", discard: true },
         ),
       makeLootSnapshotReader(lootQuery),

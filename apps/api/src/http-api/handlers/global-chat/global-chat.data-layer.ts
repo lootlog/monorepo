@@ -173,8 +173,10 @@ export const makeGlobalChatOperations = (
       .from(timerTable)
       .orderBy(asc(timerTable.world))
       .pipe(
-        Effect.map((rows) => rows.map(({ world }) => world)),
-        Effect.mapError(operationError),
+        Effect.mapBoth({
+          onSuccess: (rows) => rows.map(({ world }) => world),
+          onFailure: operationError,
+        }),
         Effect.cachedWithTTL((exit) =>
           Exit.isSuccess(exit) ? KNOWN_WORLDS_TTL : 0,
         ),
@@ -202,8 +204,10 @@ export const makeGlobalChatOperations = (
         )
         .limit(1)
         .pipe(
-          Effect.map(([mute]) => mute),
-          Effect.mapError(operationError),
+          Effect.mapBoth({
+            onSuccess: ([mute]) => mute,
+            onFailure: operationError,
+          }),
         );
 
     /** The message as every reader sees it; admin status follows the current list. */

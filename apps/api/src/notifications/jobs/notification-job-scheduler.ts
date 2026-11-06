@@ -187,8 +187,10 @@ export const makeNotificationJobScheduler = (
           )
           .limit(1)
           .pipe(
-            Effect.map((rows) => rows.length > 0),
-            Effect.mapError(failure("notifications.scheduler.findDelivered")),
+            Effect.mapBoth({
+              onSuccess: (rows) => rows.length > 0,
+              onFailure: failure("notifications.scheduler.findDelivered"),
+            }),
           )
       : Effect.succeed(false);
 

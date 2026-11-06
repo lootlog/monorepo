@@ -83,14 +83,16 @@ export const makeCharacterAurasData = (
               .where(inArray(userCharacterAuraTable.userId, [...entitled]))
               .orderBy(asc(players.accountId))
               .pipe(
-                Effect.map((rows) => ({
-                  auras: rows.flatMap(({ gameAccountId, auraId }) =>
-                    isCharacterAuraId(auraId)
-                      ? [{ gameAccountId, auraId }]
-                      : [],
-                  ),
-                })),
-                Effect.mapError(operationError),
+                Effect.mapBoth({
+                  onSuccess: (rows) => ({
+                    auras: rows.flatMap(({ gameAccountId, auraId }) =>
+                      isCharacterAuraId(auraId)
+                        ? [{ gameAccountId, auraId }]
+                        : [],
+                    ),
+                  }),
+                  onFailure: operationError,
+                }),
               ),
       getOwnAura,
       updateOwnAura: (userId, auraId) =>

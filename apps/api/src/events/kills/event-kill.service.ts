@@ -764,7 +764,7 @@ export const makeEventKills = (
       // Each routing key has its own gateway queue, so their relative order
       // was never delivered; only the cache invalidation above must precede
       // them.
-      yield* Effect.all(
+      yield* Effect.forEach(
         [
           eventEmitter.emit(RabbitRoutingKey.EVENT_HERO_KILLED, {
             ...scope,
@@ -777,7 +777,8 @@ export const makeEventKills = (
               mapId: map.id,
             }),
           ),
-        ].map((emit) => emit.pipe(Effect.withSpan("rabbit.eventEmitter.emit"))),
+        ],
+        (emit) => emit.pipe(Effect.withSpan("rabbit.eventEmitter.emit")),
         { concurrency: "unbounded", discard: true },
       );
 
