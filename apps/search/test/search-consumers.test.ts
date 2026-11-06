@@ -127,7 +127,8 @@ const setup = async () => {
     SearchOperations,
     SearchOperations.of({
       indexItems: items.indexItems,
-      markRetiredDrops: items.markRetiredDrops,
+      setMonsterDrops: items.setMonsterDrops,
+      setItemRevisions: items.setItemRevisions,
       indexNpcs: npcs.indexNpcs,
       setNpcLocations: npcs.setLocations,
       indexPlayers: players.indexPlayers,

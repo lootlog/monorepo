@@ -4,6 +4,7 @@ import { ChevronRight } from "lucide-react";
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import { cn } from "cn";
 import { ArticleSection } from "@/components/article/article-section";
+import { ItemDropRate } from "@/components/catalog/item-drop-rate";
 import { NpcPortrait } from "@/components/common/npc-portrait";
 import { t } from "@/i18n/messages";
 import { npcPageParams } from "@/lib/catalog-links";
@@ -11,7 +12,8 @@ import { npcSummary } from "@/lib/npc-summary";
 
 /**
  * The monsters the item drops from, each a link with its sprite, kind and
- * level; those that no longer drop it come last.
+ * level, and how often a boss's kills drop it; those that no longer drop it
+ * come last.
  */
 export function ItemDropSources({
   sources,
@@ -52,6 +54,8 @@ export function ItemDropSources({
                     <span className="text-xs text-muted-foreground">
                       {t("catalog.retiredDrop")}
                     </span>
+                  ) : npc.dropRate ? (
+                    <ItemDropRate rate={npc.dropRate} />
                   ) : null}
                 </span>
                 <ChevronRight

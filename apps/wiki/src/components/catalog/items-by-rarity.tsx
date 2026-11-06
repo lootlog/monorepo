@@ -1,5 +1,8 @@
 import { groupBy } from "es-toolkit";
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type {
+  CatalogDropSourceDtoOutput,
+  CatalogItemDtoOutput,
+} from "@lootlog/client/search";
 import {
   ITEM_RARITIES_BY_VALUE,
   resolveItemRarity,
@@ -12,10 +15,16 @@ type ItemsByRarityProps = {
   items: readonly CatalogItemDtoOutput[];
   /** Makes the rarity headings' ids unique on the page. */
   idPrefix: string;
+  /** Shows how often this boss's kills drop each item, on the boss's page. */
+  dropRateOf?: Pick<CatalogDropSourceDtoOutput, "name" | "type">;
 };
 
 /** Items under their rarities, the most valuable first, in the given order within each. */
-export function ItemsByRarity({ items, idPrefix }: ItemsByRarityProps) {
+export function ItemsByRarity({
+  items,
+  idPrefix,
+  dropRateOf,
+}: ItemsByRarityProps) {
   const byRarity = groupBy(items, (item) => resolveItemRarity(item.rarity));
 
   return (
@@ -48,6 +57,7 @@ export function ItemsByRarity({ items, idPrefix }: ItemsByRarityProps) {
               placeholders={0}
               emptyLabel=""
               showSource={false}
+              dropRateOf={dropRateOf}
             />
           </section>,
         ];

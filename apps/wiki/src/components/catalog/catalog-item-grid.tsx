@@ -1,8 +1,12 @@
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type {
+  CatalogDropSourceDtoOutput,
+  CatalogItemDtoOutput,
+} from "@lootlog/client/search";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
 import { t } from "@/i18n/messages";
+import { ITEM_LIST_CLASS } from "@/lib/item-list-layout";
 import { CatalogItemCard } from "./catalog-item-card";
 import type { AttackSpeedRanking } from "./item-attack-speed";
 
@@ -19,11 +23,9 @@ type CatalogItemGridProps = {
   maxLevel?: number;
   /** Shows the attack speed each item adds, for a list ranked by it. */
   attackSpeed?: AttackSpeedRanking;
+  /** Shows how often this boss's kills drop each item, on the boss's page. */
+  dropRateOf?: Pick<CatalogDropSourceDtoOutput, "name" | "type">;
 };
-
-// Item rows are wider than tiles, so a name and its source share a line.
-const ITEM_LIST =
-  "grid grid-cols-[repeat(auto-fill,minmax(min(22rem,100%),1fr))] gap-1.5";
 
 export function CatalogItemGrid({
   items,
@@ -34,6 +36,7 @@ export function CatalogItemGrid({
   highlight,
   maxLevel,
   attackSpeed,
+  dropRateOf,
 }: CatalogItemGridProps) {
   if (isError) {
     return (
@@ -45,7 +48,7 @@ export function CatalogItemGrid({
 
   if (!items) {
     return (
-      <div className={ITEM_LIST} aria-busy="true">
+      <div className={ITEM_LIST_CLASS} aria-busy="true">
         {Array.from({ length: placeholders }, (_, index) => (
           <Skeleton
             key={index}
@@ -66,7 +69,7 @@ export function CatalogItemGrid({
   // One provider lets the rows' tooltips open quickly and hand over at once.
   return (
     <TooltipProvider delay={100}>
-      <ul className={ITEM_LIST}>
+      <ul className={ITEM_LIST_CLASS}>
         {items.map((item) => (
           <li key={item.id}>
             <CatalogItemCard
@@ -75,6 +78,7 @@ export function CatalogItemGrid({
               highlight={highlight}
               maxLevel={maxLevel}
               attackSpeed={attackSpeed}
+              dropRateOf={dropRateOf}
             />
           </li>
         ))}

@@ -502,13 +502,14 @@ paths:
             enum:
               - relevance
               - id:desc
+              - changedOn:desc
               - lvl:asc
               - lvl:desc
               - name:asc
               - name:desc
               - attackSpeed:desc
               - upgradedAttackSpeed:desc
-            description: "`id:desc` lists the items Margonem added most recently first. `attackSpeed:desc` lists first the items that add the most attack speed to a character with at least 100 agility: their own attack speed plus 0.002 for each point of agility or all attributes. `upgradedAttackSpeed:desc` ranks the same attack speed with each item upgraded to +5 and given the +5 bonus that adds the most of it: attack speed on weapons, agility or all attributes on other pieces."
+            description: "`id:desc` lists the items Margonem added most recently first. `changedOn:desc` lists first the items the game changed most recently, by the day their latest revision was first looted; items without a change follow. `attackSpeed:desc` lists first the items that add the most attack speed to a character with at least 100 agility: their own attack speed plus 0.002 for each point of agility or all attributes. `upgradedAttackSpeed:desc` ranks the same attack speed with each item upgraded to +5 and given the +5 bonus that adds the most of it: attack speed on weapons, agility or all attributes on other pieces."
           required: false
         - name: limit
           in: query
@@ -1015,6 +1016,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CatalogDropSourceDto_Output"
+        revisions:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogItemRevisionDto_Output"
+          description: The changes the game made to the item, oldest first, as Lootlog saw them in loots. Revisions looted side by side, as variants are, are no history and are left out. Lootlog recomputes them daily.
         elasticLevel:
           type: boolean
           description: Whether the item takes the level of the character who loots it, so `lvl` and `stat` describe one of its levels.
@@ -1027,8 +1033,44 @@ components:
         - rarity
         - type
         - droppedBy
+        - revisions
         - elasticLevel
       description: A Margonem item in the public catalog
+    CatalogItemRevisionDto_Output:
+      type: object
+      properties:
+        name:
+          type: string
+        icon:
+          type: string
+        lvl:
+          type: number
+          description: The level both revisions have; an elastic item's change is shown at one of its levels.
+        stat:
+          type: string
+        previousName:
+          type: string
+        previousIcon:
+          type: string
+        previousStat:
+          type: string
+        changedAfter:
+          type: string
+          description: "The day in Poland, as `YYYY-MM-DD`, the old revision was last looted: the game changed the item after it."
+        changedBy:
+          type: string
+          description: "The day in Poland, as `YYYY-MM-DD`, the new revision was first looted: the game changed the item by then."
+      required:
+        - name
+        - icon
+        - lvl
+        - stat
+        - previousName
+        - previousIcon
+        - previousStat
+        - changedAfter
+        - changedBy
+      description: A change the game made to an item
     CatalogDropSourceDto_Output:
       type: object
       properties:
@@ -1051,6 +1093,21 @@ components:
         retired:
           type: boolean
           description: "Whether the NPC no longer drops the item: Lootlog has recorded its loot far too often since the item's last drop for the gap to be chance."
+        dropRate:
+          description: How often the boss's kills drop the item, counted by the Organizations whose loot settings keep its rarity, from their hourly kill counts on. Lootlog recomputes it daily and gives none for other NPCs or under 100 such kills.
+          nullable: true
+          type: object
+          properties:
+            drops:
+              type: number
+              description: Kills that dropped the item.
+            kills:
+              type: number
+              description: Kills that could have recorded the drop.
+          required:
+            - drops
+            - kills
+          additionalProperties: false
       required:
         - key
         - id
@@ -1059,6 +1116,7 @@ components:
         - icon
         - type
         - retired
+        - dropRate
       description: An NPC an item drops from
     SearchAllResponseDto_Output:
       type: object

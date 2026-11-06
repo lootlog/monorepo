@@ -13,6 +13,7 @@ import {
   buildMonsterLocationsQuery,
   toMonsterLocations,
 } from "./monster-locations.js";
+import { buildDropRatesQuery, toMonsterDropRates } from "./drop-rates.js";
 import { buildDropStatisticsQuery, toRetiredDrops } from "./retired-drops.js";
 
 const MONSTERS_PER_MESSAGE = 200;
@@ -22,8 +23,9 @@ const MONSTER_STATISTICS_LOCK = 7_316_204;
 
 /**
  * Publishes, for every monster with recorded fights, the items it no longer
- * drops, the maps it is fought on and the levels it had before. Each monster's lists are complete, so
- * search replaces what it held and a redelivery changes nothing.
+ * drops and how often its kills drop each item, the maps it is fought on and
+ * the levels it had before. Each monster's lists are complete, so search
+ * replaces what it held and a redelivery changes nothing.
  */
 export const makeMonsterStatisticsPublisher = (
   database: ApiDatabaseValue,
@@ -44,6 +46,7 @@ export const makeMonsterStatisticsPublisher = (
 
         return {
           drops: yield* buildDropStatisticsQuery(transaction),
+          dropRates: yield* buildDropRatesQuery(transaction),
           locations: yield* buildMonsterLocationsQuery(transaction),
           levels: yield* buildMonsterLevelsQuery(transaction),
         };
@@ -52,7 +55,21 @@ export const makeMonsterStatisticsPublisher = (
 
     if (statistics === null) return;
 
-    const retiredDrops = toRetiredDrops(statistics.drops);
+    const dropRates = new Map(
+      toMonsterDropRates(statistics.dropRates).map((monster) => [
+        JSON.stringify([monster.gameVersion, monster.name, monster.type]),
+        monster.dropRates,
+      ]),
+    );
+
+    // The retired drops message carries each monster's drop rates too.
+    const monsterDrops = toRetiredDrops(statistics.drops).map((monster) => ({
+      ...monster,
+      dropRates:
+        dropRates.get(
+          JSON.stringify([monster.gameVersion, monster.name, monster.type]),
+        ) ?? [],
+    }));
 
     const formerLevels = new Map(
       toMonsterFormerLevels(statistics.levels).map((monster) => [
@@ -89,16 +106,18 @@ export const makeMonsterStatisticsPublisher = (
         { discard: true },
       );
 
-    yield* publish(RabbitRoutingKey.SEARCH_ITEMS_RETIRED_DROPS, retiredDrops);
+    yield* publish(RabbitRoutingKey.SEARCH_ITEMS_RETIRED_DROPS, monsterDrops);
     yield* publish(RabbitRoutingKey.SEARCH_NPCS_LOCATIONS, locations);
 
     yield* Effect.logInfo("Monster statistics published").pipe(
       Effect.annotateLogs({
-        monsters: retiredDrops.length,
-        retired: retiredDrops.reduce(
+        monsters: monsterDrops.length,
+        retired: monsterDrops.reduce(
           (total, { retiredItemIds }) => total + retiredItemIds.length,
           0,
         ),
+        rated: monsterDrops.filter((monster) => monster.dropRates.length > 0)
+          .length,
         located: locations.length,
         rebalanced: locations.filter(
           (monster) => monster.formerLevels.length > 0,

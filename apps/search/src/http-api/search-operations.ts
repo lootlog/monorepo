@@ -12,7 +12,8 @@ import { makeNpcsModule } from "#src/npcs/npcs.service";
 import { makePlayersModule } from "#src/players/players.service";
 import { effectLogger } from "#src/shared/logger";
 import type { IndexItemsCommand } from "#src/items/index-items-command";
-import type { RetiredDropsCommand } from "#src/items/retired-drops-command";
+import type { ItemRevisionsCommand } from "#src/items/item-revisions-command";
+import type { MonsterDropsCommand } from "#src/items/monster-drops-command";
 import type { IndexNpcsCommand } from "#src/npcs/index-npcs-command";
 import type { MonsterLocationsCommand } from "#src/npcs/monster-locations-command";
 import type { IndexPlayersCommand } from "#src/players/index-players-command";
@@ -88,8 +89,11 @@ export interface SearchOperationsValue {
   readonly indexItems: (
     data: IndexItemsCommand,
   ) => Effect.Effect<void, SearchOperationFailureType>;
-  readonly markRetiredDrops: (
-    data: RetiredDropsCommand,
+  readonly setMonsterDrops: (
+    data: MonsterDropsCommand,
+  ) => Effect.Effect<void, SearchOperationFailureType>;
+  readonly setItemRevisions: (
+    data: ItemRevisionsCommand,
   ) => Effect.Effect<void, SearchOperationFailureType>;
   readonly indexNpcs: (
     data: IndexNpcsCommand,
@@ -177,7 +181,8 @@ export class SearchOperations extends Context.Service<
             { concurrency: "unbounded" },
           ),
         indexItems: items.indexItems,
-        markRetiredDrops: items.markRetiredDrops,
+        setMonsterDrops: items.setMonsterDrops,
+        setItemRevisions: items.setItemRevisions,
         indexNpcs: npcs.indexNpcs,
         setNpcLocations: npcs.setLocations,
         indexPlayers: players.indexPlayers,

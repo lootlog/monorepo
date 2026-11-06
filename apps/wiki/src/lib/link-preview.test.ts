@@ -14,6 +14,7 @@ const source = (name: string, retired = false) => ({
   icon: null,
   type: "HERO",
   retired,
+  dropRate: null,
 });
 
 const item = (
@@ -29,6 +30,7 @@ const item = (
   rarity,
   type: null,
   droppedBy,
+  revisions: [],
   elasticLevel: false,
 });
 

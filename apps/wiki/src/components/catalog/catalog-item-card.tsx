@@ -1,4 +1,7 @@
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type {
+  CatalogDropSourceDtoOutput,
+  CatalogItemDtoOutput,
+} from "@lootlog/client/search";
 import { CompareButton } from "@/components/comparison/compare-button";
 import { EquipButton } from "@/components/equipment/equip-button";
 import { useItemForCharacter } from "@/hooks/use-item-for-character";
@@ -11,10 +14,12 @@ import {
 import { CatalogItemTile } from "./catalog-item-tile";
 import { type AttackSpeedRanking, ItemAttackSpeed } from "./item-attack-speed";
 import { ItemDamageTypes } from "./item-damage-types";
+import { ItemDropRate } from "./item-drop-rate";
 import { ItemLegendaryBonus } from "./item-legendary-bonus";
 import { ItemNameLink } from "./item-name-link";
 import { ItemProfessions } from "./item-professions";
 import { ItemSource } from "./item-source";
+import { monsterIdentity } from "@/lib/group-items-by-monster";
 
 type CatalogItemCardProps = {
   item: CatalogItemDtoOutput;
@@ -26,6 +31,8 @@ type CatalogItemCardProps = {
   maxLevel?: number;
   /** Shows the attack speed the item adds, for a list ranked by it. */
   attackSpeed?: AttackSpeedRanking;
+  /** Shows how often this boss's kills drop the item, on the boss's page. */
+  dropRateOf?: Pick<CatalogDropSourceDtoOutput, "name" | "type">;
 };
 
 /**
@@ -41,6 +48,7 @@ export function CatalogItemCard({
   highlight = "",
   maxLevel,
   attackSpeed,
+  dropRateOf,
 }: CatalogItemCardProps) {
   const looted = useItemForCharacter(item, maxLevel);
 
@@ -66,6 +74,16 @@ export function CatalogItemCard({
           <ItemLegendaryBonus stat={shown.stat} />
         </div>
         {showSource ? <ItemSource item={item} /> : null}
+        {dropRateOf ? (
+          <ItemDropRate
+            rate={
+              item.droppedBy.find(
+                (source) =>
+                  monsterIdentity(source) === monsterIdentity(dropRateOf),
+              )?.dropRate ?? null
+            }
+          />
+        ) : null}
       </div>
       <div className="flex shrink-0 gap-1">
         <EquipButton

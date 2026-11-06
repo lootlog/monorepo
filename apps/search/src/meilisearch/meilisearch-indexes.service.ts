@@ -71,6 +71,7 @@ export const searchIndexSettings: IndexSettings = {
       "firstSeenAt",
       "attackSpeed",
       "upgradedAttackSpeed",
+      "changedOn",
     ],
     distinctAttribute: "id",
     // The events list counts every event slug; Meilisearch's default of 100

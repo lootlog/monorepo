@@ -18,6 +18,7 @@ import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
 import { ItemDropSources } from "@/components/items/item-drop-sources";
 import { ItemInfobox } from "@/components/items/item-infobox";
 import { ItemRelatedDrops } from "@/components/items/item-related-drops";
+import { ItemRevisions } from "@/components/items/item-revisions";
 import { ItemElasticLevelSection } from "@/components/items/item-elastic-level-section";
 import { ItemUpgradeSection } from "@/components/items/item-upgrade-section";
 import { renderStatChanges } from "@/components/render-stat-changes";
@@ -308,6 +309,7 @@ function ItemRoute() {
               {t("upgrade.notUpgradable")}
             </p>
           ) : null}
+          <ItemRevisions item={item} />
           <ItemRelatedDrops item={item} />
         </div>
       </div>
