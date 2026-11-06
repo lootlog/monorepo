@@ -21,6 +21,7 @@
   "details": {
     "entranceClosesAt": "Wejście do kolosa otwarte do",
     "minSpawnTime": "Min. czas respawnu",
-    "maxSpawnTime": "Max. czas respawnu"
+    "maxSpawnTime": "Max. czas respawnu",
+    "showOnWiki": "Drop i lokacje na wiki"
   }
 }

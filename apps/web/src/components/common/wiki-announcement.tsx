@@ -1,15 +1,14 @@
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "@tanstack/react-router";
 import { Button } from "@lootlog/ui/components/button";
-import { Palette, X } from "lucide-react";
+import { BookOpen, X } from "lucide-react";
 import { useLocalStorage } from "usehooks-ts";
-import { ROUTES } from "@/config/routes";
+import { WIKI_URL } from "@/config/wiki";
 
-const DISMISSED_STORAGE_KEY =
-  "lootlog:theme-announcement:custom-themes:dismissed";
+const DISMISSED_STORAGE_KEY = "lootlog:announcement:wiki-launch:dismissed";
 
-export const ThemeAnnouncement = () => {
+/** The bar that introduces the wiki until the player opens or hides it. */
+export const WikiAnnouncement = () => {
   const [isDismissed, setIsDismissed] = useLocalStorage(
     DISMISSED_STORAGE_KEY,
     false,
@@ -37,14 +36,14 @@ export const ThemeAnnouncement = () => {
             aria-hidden="true"
             className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-primary"
           >
-            <Palette className="size-4" />
+            <BookOpen className="size-4" />
           </div>
           <div className="flex min-w-0 flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
             <span id={titleId} className="font-semibold whitespace-nowrap">
-              {t("settings.appearance.announcement.title")}
+              {t("layout.wikiAnnouncement.title")}
             </span>
             <span className="truncate text-muted-foreground">
-              {t("settings.appearance.announcement.description")}
+              {t("layout.wikiAnnouncement.description")}
             </span>
           </div>
         </div>
@@ -52,15 +51,18 @@ export const ThemeAnnouncement = () => {
           <Button
             size="sm"
             nativeButton={false}
-            render={<Link to={ROUTES.user.settings.newTheme} />}
+            render={
+              <a href={WIKI_URL} target="_blank" rel="noopener noreferrer" />
+            }
             onClick={handleDismiss}
           >
-            {t("settings.appearance.announcement.create")}
+            {t("layout.wikiAnnouncement.open")}
+            <span className="sr-only">{t("ui.externalLink.newTab")}</span>
           </Button>
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={t("settings.appearance.announcement.dismiss")}
+            aria-label={t("layout.wikiAnnouncement.dismiss")}
             // Its glyph, not its hit area, meets the bar's inset.
             className="-mr-2 text-muted-foreground hover:text-foreground"
             onClick={handleDismiss}

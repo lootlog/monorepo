@@ -2,6 +2,7 @@ import { ArrowUpRight, MessageCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { ClosingCta } from "@/src/components/landing/closing-cta";
+import { EcosystemShowcase } from "@/src/components/landing/ecosystem-showcase";
 import { FaqPanel } from "@/src/components/landing/faq-panel";
 import { GuidesShowcase } from "@/src/components/landing/guides-showcase";
 import { LandingFooter } from "@/src/components/landing/footer";
@@ -24,6 +25,7 @@ export function HomeContent() {
         <ProductProof />
         <HowItWorks />
         <GuidesShowcase />
+        <EcosystemShowcase />
         <TrustRecord />
 
         <section

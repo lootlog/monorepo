@@ -5,7 +5,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@lootlog/ui/components/dropdown-menu";
-import { Blocks, ChevronUp, LogOut } from "lucide-react";
+import { Blocks, BookOpen, ChevronUp, LogOut } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useSidebar } from "@lootlog/ui/components/sidebar";
@@ -18,6 +18,7 @@ import {
   SIGNAL_LABEL_COLOR,
   useUserMenu,
 } from "@/components/layout/use-user-menu";
+import { WIKI_URL } from "@/config/wiki";
 
 /** The avatar column continues the server rail above it. */
 const BAR_GRID =
@@ -151,13 +152,23 @@ export const UserMenu = () => {
           ))}
         </div>
         <DropdownMenuSeparator className="m-0" />
-        <div className="p-1.5">
+        <div className="flex flex-col gap-0.5 p-1.5">
           <DropdownMenuItem
             onClick={openInstallAddon}
             className="rounded-lg px-2.5 py-2"
           >
             <Blocks />
             {t("layout.userMenu.installAddon")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            render={
+              <a href={WIKI_URL} target="_blank" rel="noopener noreferrer" />
+            }
+            className="rounded-lg px-2.5 py-2"
+          >
+            <BookOpen />
+            {t("layout.userMenu.wiki")}
+            <span className="sr-only">{t("ui.externalLink.newTab")}</span>
           </DropdownMenuItem>
         </div>
         <DropdownMenuSeparator className="m-0" />

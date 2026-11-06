@@ -113,6 +113,14 @@ export function LandingHeader() {
       </a>
       <a
         onClick={closeNavigation}
+        href={links.wiki}
+        className={`inline-flex items-center gap-1 ${navigationLinkClassName}`}
+      >
+        {t("landing.header.wiki")}
+        <ArrowUpRight className="size-3.5" aria-hidden="true" />
+      </a>
+      <a
+        onClick={closeNavigation}
         href={links.support}
         target="_blank"
         rel="noopener noreferrer"
