@@ -18,7 +18,7 @@ export const EventOverviewRail = ({
   ranking,
   activity,
 }: EventOverviewRailProps) => (
-  <StatsSectionColumns className="xl:grid-cols-[minmax(0,1fr)_420px]">
+  <StatsSectionColumns fill className="xl:grid-cols-[minmax(0,1fr)_420px]">
     <div className="min-w-0 max-xl:contents">
       <div className="min-w-0 max-xl:order-1">{heroes}</div>
       <div className="min-w-0 max-xl:order-3">{activity}</div>

@@ -118,7 +118,7 @@ export function StatisticsOverview({ data, search }: StatisticsTabProps) {
         <KillAnalyticsTrend title={t("statistics.daily")} data={data.daily} />
         <StatisticsWorldsSection worlds={data.worlds} search={search} />
       </StatsSectionColumns>
-      <StatsSectionColumns className="xl:grid-cols-2">
+      <StatsSectionColumns fill className="xl:grid-cols-2">
         <StatisticsTopNpcs npcs={data.npcs} search={search} />
         <StatisticsTopLegends search={search} />
       </StatsSectionColumns>

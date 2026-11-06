@@ -29,3 +29,26 @@ export const getRankingSelection = <
       : rankings,
   };
 };
+
+/**
+ * The leaders by points, plus the member's own place when it falls outside
+ * them.
+ */
+export const getRankingLeaders = <
+  Ranking extends { totalPoints: number; memberId: number },
+>(
+  rankings: Ranking[],
+  limit: number,
+  currentMemberId: number | undefined,
+) => {
+  const placed = [...rankings]
+    .sort((left, right) => right.totalPoints - left.totalPoints)
+    .map((ranking, index) => ({ ranking, place: index + 1 }));
+
+  return {
+    leaders: placed.slice(0, limit),
+    own: placed
+      .slice(limit)
+      .find(({ ranking }) => ranking.memberId === currentMemberId),
+  };
+};

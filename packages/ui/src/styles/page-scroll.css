@@ -182,25 +182,31 @@
 /*
  * On phones the top bar has no rule, so two glass layers meeting under it
  * would show an edge: each blurs only its own box. The bar pinned flush
- * under the top bar (`data-top-bar-glass`) therefore draws one glass from
- * the screen's top edge to its own bottom, and the top bar drops its own.
- * Bars pinned below page tabs keep their own glass under the tabs' rule.
+ * under the top bar therefore draws one glass from the screen's top edge to
+ * its own bottom, and the top bar drops its own. Only while it is pinned
+ * there (`data-top-bar-glass="pinned"`, set by `observeTopBarGlass`): lower
+ * on the page, the reach would blur the content above it. Bars pinned below
+ * page tabs keep their own glass under the tabs' rule.
  */
 @media (width < 48rem) {
-  :root:has(.app-content-frame [data-top-bar-glass]) [data-app-top-bar] {
+  :root:has(.app-content-frame [data-top-bar-glass="pinned"])
+    [data-app-top-bar] {
     background-color: transparent;
     backdrop-filter: none;
   }
 
   :root
     .app-content-frame
-    [data-top-bar-glass]:not([data-page-tabs] ~ *, [data-page-tabs] ~ * *) {
+    [data-top-bar-glass="pinned"]:not(
+      [data-page-tabs] ~ *,
+      [data-page-tabs] ~ * *
+    ) {
     background-color: transparent;
     backdrop-filter: none;
   }
 
   .app-content-frame
-    [data-top-bar-glass]:not(
+    [data-top-bar-glass="pinned"]:not(
       [data-page-tabs] ~ *,
       [data-page-tabs] ~ * *
     )::before {

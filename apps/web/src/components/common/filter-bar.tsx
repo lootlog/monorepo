@@ -7,6 +7,7 @@ import { FilterChipList, type FilterChip } from "./filter-chip-list";
 import { LIST_TILE_INSET_CLASS, LIST_TILE_RULE_CLASS } from "./list-tile";
 import { RESULTS_TABLE_MEDIA_QUERY } from "./page-sticky-table-header";
 import { FilterBarContext } from "@lootlog/ui/components/filter-bar-context";
+import { observeTopBarGlass } from "@/components/layout/observe-top-bar-glass";
 
 type FilterBarProps = {
   /** Names the group of filters and their panel; a skeleton has none. */
@@ -62,6 +63,16 @@ const publishFilterBarHeight = (bar: HTMLDivElement | null) => {
   };
 };
 
+const attachFilterBar = (bar: HTMLDivElement | null) => {
+  const stopPublishing = publishFilterBarHeight(bar);
+  const stopObserving = observeTopBarGlass(bar);
+
+  return () => {
+    stopPublishing?.();
+    stopObserving?.();
+  };
+};
+
 /**
  * A page's filters as an edge-to-edge bar that stays on top while the page
  * scrolls: a borderless search first, the filters after it, and the active
@@ -87,9 +98,8 @@ export const FilterBar = ({
   return (
     <>
       <div
-        ref={publishFilterBarHeight}
+        ref={attachFilterBar}
         data-list-tile
-        data-top-bar-glass
         className="glass-bar sticky top-(--page-sticky-top) z-20"
       >
         {hasControls && (

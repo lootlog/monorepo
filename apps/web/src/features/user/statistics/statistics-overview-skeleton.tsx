@@ -57,7 +57,7 @@ export function StatisticsOverviewSkeleton() {
           {null}
         </StatsLeaderboardSection>
       </StatsSectionColumns>
-      <StatsSectionColumns className="xl:grid-cols-2">
+      <StatsSectionColumns fill className="xl:grid-cols-2">
         <StatsLeaderboardSection
           title={t("statistics.ranking")}
           isLoading
