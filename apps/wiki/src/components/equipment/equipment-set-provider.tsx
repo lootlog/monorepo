@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { EquipmentSetContext } from "@/contexts/equipment-set-context";
-import { useSetEquipmentPreview } from "@/contexts/equipment-preview-context";
 import { useSharedStoredState } from "@/hooks/use-shared-stored-state";
 import {
   decodeEquipmentSet,
@@ -21,7 +20,6 @@ const STORED_SET = {
 
 export function EquipmentSetProvider({ children }: { children: ReactNode }) {
   const [set, update] = useSharedStoredState(STORED_SET);
-  const setPreview = useSetEquipmentPreview();
 
   return (
     <EquipmentSetContext
@@ -50,7 +48,6 @@ export function EquipmentSetProvider({ children }: { children: ReactNode }) {
                   : upgrades,
             };
           });
-          setPreview(null);
         },
         upgrade: (slotId, upgrade) =>
           update((current) => {

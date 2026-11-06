@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { cn } from "cn";
-import { useAnimatedNumber } from "@/hooks/use-animated-number";
+import { useStatChange } from "@/hooks/use-stat-change";
 
 type EquipmentStatRowProps = {
   label: string;
@@ -8,8 +8,8 @@ type EquipmentStatRowProps = {
   unit: string;
   /** The set's total; absent when no worn item has the stat. */
   total: number | undefined;
-  /** The total with the previewed item worn; null without a preview. */
-  previewTotal: number | undefined | null;
+  /** Whether the set has loaded, so a new total is the User's change. */
+  isLoaded: boolean;
 };
 
 // Attack speed keeps its hundredths; the other stats are whole points.
@@ -21,35 +21,23 @@ const signed = (value: number, unit: string) =>
 
 /**
  * One summed stat as the game's character window draws it: its name and its
- * value. A preview glides the value to the total with the item worn and
- * slides in the change; a stat only the preview has opens its row, so the
- * list grows and shrinks instead of jumping.
+ * value. Equipping, removing or upgrading an item glides the value to the
+ * new total and slides in the change; a stat the set gains or loses opens or
+ * closes its row, so the list grows and shrinks instead of jumping.
  */
 export function EquipmentStatRow({
   label,
   unit,
   total,
-  previewTotal,
+  isLoaded,
 }: EquipmentStatRowProps) {
-  const isPreviewing = previewTotal !== null;
-
-  const target = isPreviewing ? (previewTotal ?? 0) : (total ?? 0);
-  const change = isPreviewing ? target - (total ?? 0) : 0;
-
-  const isVisible =
-    total !== undefined || (isPreviewing && previewTotal !== undefined);
-
-  const value = useAnimatedNumber(target);
+  const isVisible = total !== undefined;
+  const { value: shownValue, change } = useStatChange(total ?? 0, isLoaded);
 
   // The change stays readable while it fades out.
   const [shownChange, setShownChange] = useState(change);
 
   if (change !== 0 && change !== shownChange) setShownChange(change);
-
-  // The animation passes through fractions; whole-point stats stay whole.
-  const shownValue = Number.isInteger(target)
-    ? Math.round(value)
-    : Math.round(value * 100) / 100;
 
   return (
     <div

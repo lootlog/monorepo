@@ -4,6 +4,7 @@ import { ArticleSection } from "@/components/article/article-section";
 import { PageHeader } from "@/components/common/page-header";
 import { EquipmentSetHeader } from "@/components/equipment/equipment-set-header";
 import { EquipmentSetWindow } from "@/components/equipment/equipment-set-window";
+import { SetUpgradeCost } from "@/components/equipment/set-upgrade-cost";
 import { useWornItems } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
 
@@ -40,6 +41,7 @@ function SetRoute() {
           emptyLabel={t("setPage.noItems")}
         />
       </ArticleSection>
+      <SetUpgradeCost />
     </div>
   );
 }

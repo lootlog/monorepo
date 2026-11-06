@@ -11,6 +11,7 @@ const messages = {
     itemTitle: "Przedmiot",
     npcTitle: "Potwór",
     eventTitle: "Event",
+    eventsTitle: "Eventy",
   },
   navigation: {
     ariaLabel: "Wiki",
@@ -68,9 +69,8 @@ const messages = {
     levelPlaceholder: "Lvl",
     empty:
       "Kliknij pusty slot, żeby znaleźć do niego przedmiot. Tu zobaczysz sumę statystyk zestawu.",
-    previewHint:
-      "Najedź na przedmiot, żeby go porównać. Prawy klik w zestawie: ulepszenie.",
-    previewing: "Porównanie: {{item}}",
+    totalsHint:
+      "Najedź na przedmiot, żeby porównać go z założonym. Prawy klik w zestawie: ulepszenie.",
     equip: "Załóż",
     worn: "Założony",
     unequip: "Zdejmij: {{item}}",
@@ -94,6 +94,16 @@ const messages = {
     itemsTitle: "Założone przedmioty",
     noItems:
       "Nie masz jeszcze założonych przedmiotów. Kliknij pusty slot, żeby znaleźć do niego przedmiot.",
+    upgradeCostTitle: "Koszt ulepszenia zestawu",
+    upgradeCostDescription:
+      "Ile kosztuje ulepszenie założonych przedmiotów od +0, razem i z rozbiciem na przedmioty.",
+    upgradeCostTarget: "Ulepszenie do",
+    upgradeCostToSet: "Wybranych poziomów",
+    upgradeCostToMax: "+5 dla wszystkich",
+    upgradeCostNone:
+      "Żaden założony przedmiot nie jest ulepszony. Wybierz „+5 dla wszystkich”, żeby zobaczyć pełny koszt.",
+    upgradeCostNotUpgradable: "Nie da się ulepszyć",
+    upgradeCostItems: "Koszt przedmiotów",
   },
   setStats: {
     sections: {
@@ -185,6 +195,27 @@ const messages = {
     bonusNone: "Bez bonusu",
     bonusChance: "{{chance}} na wylosowanie",
     bonusPicksMax: "Wybór bonusu ulepsza przedmiot do +5.",
+    cost: {
+      title: "Koszt ulepszenia",
+      description:
+        "Punkty ulepszenia dają przepalane składniki. Wejście na +5 zabiera dodatkowo walutę z rozbijania przedmiotów tej rzadkości i złoto. Wartości liczymy ze wzorów z zasad gry i zaokrąglamy do całości.",
+      totalTo: "Razem do +{{level}}",
+      points: "Punkty ulepszenia",
+      pointsValue: "{{value}} pkt",
+      cumulative: "łącznie {{value}}",
+      gold: "Złoto",
+      goldValue: "{{value}} zł",
+      atMaxOnly: "tylko na +5",
+      steps: "Koszt kolejnych poziomów",
+      maxStepExtras: "oraz {{essence}} × {{currency}} i {{gold}}",
+      currency: {
+        COMMON: "Okruchy przeciętności",
+        UNIQUE: "Ekstrakt unikalności",
+        HEROIC: "Przyzmat heroicznej magii",
+        UPGRADED: "Płomień lepszej mocy",
+        LEGENDARY: "Esencja sakryfikacji",
+      },
+    },
     bonusGroups: {
       0: "Częste",
       1: "Rzadsze",
@@ -286,6 +317,8 @@ const messages = {
     npcsDescription: "Szukaj NPC-ów i potworów po nazwie.",
     compareDescription:
       "Zestaw do czterech przedmiotów obok siebie i zobacz, który ma lepsze statystyki.",
+    eventsDescription:
+      "Przeglądaj eventy od najnowszych i przedmioty, które z nich wypadają.",
     setDescription:
       "Złóż ekwipunek postaci, zobacz sumę statystyk jak w grze i udostępnij go linkiem.",
     calculatorsDescription:
@@ -361,6 +394,12 @@ const messages = {
       "Przedmioty z eventu: {{count}}, według potworów i rzadkości.",
     eventOtherItems: "Pozostałe przedmioty",
     eventMonsters: "Potwory eventu",
+    eventsDescription:
+      "Wszystkie eventy, z których Lootlog zna przedmioty, od najnowszych. Otwórz event, żeby zobaczyć jego przedmioty według potworów.",
+    eventsEmpty: "Lootlog nie zna jeszcze przedmiotów eventowych.",
+    eventsWithoutYear: "Bez roku",
+    eventItemCount: "Przedmioty: {{count}}",
+    allEvents: "Wszystkie eventy",
     loadError: "Nie udało się pobrać danych. Spróbuj ponownie.",
   },
   search: {

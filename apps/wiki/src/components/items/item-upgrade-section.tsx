@@ -1,5 +1,6 @@
 import type { CatalogItemDtoOutput } from "@lootlog/client/search";
 import { ArticleSection } from "@/components/article/article-section";
+import { StatTiles } from "@/components/common/stat-tiles";
 import { t } from "@/i18n/messages";
 import {
   type ItemUpgrade,
@@ -9,6 +10,7 @@ import {
 import type { StatChange } from "@/lib/stat-changes";
 import { ItemUpgradeBonusPicker } from "./item-upgrade-bonus-picker";
 import { ItemUpgradeChanges } from "./item-upgrade-changes";
+import { ItemUpgradeCost } from "./item-upgrade-cost";
 import { ItemUpgradeSteps } from "./item-upgrade-steps";
 
 type ItemUpgradeSectionProps = {
@@ -32,7 +34,7 @@ export function ItemUpgradeSection({
   const bonuses = upgradeBonusOptions(item);
 
   const tiles = [
-    { label: t("upgrade.itemLevel"), value: String(item.lvl), extra: null },
+    { label: t("upgrade.itemLevel"), value: String(item.lvl) },
     {
       label: t("upgrade.effectiveLevel"),
       value: String(effectiveLevel),
@@ -41,7 +43,6 @@ export function ItemUpgradeSection({
     {
       label: t("upgrade.changedStats"),
       value: String(changes.length),
-      extra: null,
     },
   ];
 
@@ -63,29 +64,7 @@ export function ItemUpgradeSection({
             })
           }
         />
-        <dl className="grid grid-cols-3 gap-2">
-          {tiles.map(({ label, value, extra }) => (
-            <div
-              key={label}
-              className="flex flex-col gap-1 rounded-lg border border-border bg-card px-3 py-2.5"
-            >
-              <dt className="text-xs text-muted-foreground">{label}</dt>
-              <dd className="flex items-baseline gap-1.5">
-                <span
-                  aria-live="polite"
-                  className="text-xl font-semibold text-foreground tabular-nums"
-                >
-                  {value}
-                </span>
-                {extra ? (
-                  <span className="text-xs font-semibold text-emerald-400 tabular-nums">
-                    {extra}
-                  </span>
-                ) : null}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <StatTiles tiles={tiles} />
       </ArticleSection>
 
       <section
@@ -100,6 +79,8 @@ export function ItemUpgradeSection({
         </h3>
         <ItemUpgradeChanges changes={changes} />
       </section>
+
+      <ItemUpgradeCost item={item} level={upgrade.level} />
 
       {bonuses.length > 0 ? (
         <section

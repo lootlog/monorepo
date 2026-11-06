@@ -114,7 +114,10 @@ export const ItemTile: FC<ItemTileProps> = ({
   const comparedRarity = comparison?.item.rarity ?? ItemRarity.COMMON;
 
   // Side by side where there is room, the item first and then the one it is
-  // compared with, each in its own rarity's frame.
+  // compared with, each in its own rarity's frame. The pair starts at the
+  // trigger, so the item pointed at sits by it and the compared one beyond.
+  const tooltipAlign = comparison ? "start" : undefined;
+
   const tooltipContent = comparison ? (
     <div className="flex flex-col items-start gap-2 sm:flex-row">
       <div
@@ -157,6 +160,7 @@ export const ItemTile: FC<ItemTileProps> = ({
       tooltipContent,
       currentTarget.getBoundingClientRect(),
       {
+        align: tooltipAlign,
         contentClassName: tooltipBorderClassName,
         triggerElement: currentTarget,
       },
@@ -189,7 +193,7 @@ export const ItemTile: FC<ItemTileProps> = ({
         >
           {itemImage}
         </TooltipTrigger>
-        <TooltipContent className={tooltipBorderClassName}>
+        <TooltipContent align={tooltipAlign} className={tooltipBorderClassName}>
           {tooltipContent}
         </TooltipContent>
       </Tooltip>
