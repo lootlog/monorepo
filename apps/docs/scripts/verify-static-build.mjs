@@ -180,11 +180,9 @@ await Promise.all(
 );
 
 await Promise.all(
-  [
-    "brand/favicon.svg",
-    "brand/lootlog-apple-touch.png",
-    "screenshots/dashboard.jpg",
-  ].map((assetPath) => access(path.join(clientDirectory, assetPath))),
+  ["screenshots/dashboard.jpg"].map((assetPath) =>
+    access(path.join(clientDirectory, assetPath)),
+  ),
 );
 
 process.stdout.write("Docs static artifact verified.\n");

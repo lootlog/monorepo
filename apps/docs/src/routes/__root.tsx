@@ -11,6 +11,8 @@ import {
   docsTranslations,
   polishTranslations,
 } from "@/lib/polish-translations";
+import appleTouchIcon from "@/src/assets/apple-touch-icon.png?no-inline";
+import favicon from "@/src/assets/favicon.svg?no-inline";
 import docsCss from "@/src/styles/global.css?url";
 
 export const Route = createRootRoute({
@@ -28,8 +30,9 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: docsCss },
-      { rel: "icon", href: "/brand/favicon.svg", type: "image/svg+xml" },
-      { rel: "apple-touch-icon", href: "/brand/lootlog-apple-touch.png" },
+      // On lootlog.pl the landing page serves /brand, so the icons are assets.
+      { rel: "icon", href: favicon, type: "image/svg+xml" },
+      { rel: "apple-touch-icon", href: appleTouchIcon },
     ],
   }),
   component: RootDocument,
