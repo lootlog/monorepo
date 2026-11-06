@@ -1,5 +1,9 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { useCatalogControllerGetNpcs } from "@lootlog/client/search";
+import {
+  type CatalogControllerGetNpcsParams,
+  getCatalogControllerGetNpcsQueryOptions,
+  useCatalogControllerGetNpcs,
+} from "@lootlog/client/search";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { BasicSearchForm } from "@/components/basic-search-form";
 import { NpcPortrait } from "@/components/common/npc-portrait";
@@ -11,21 +15,39 @@ import { npcPageParams, WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { joinList, splitList } from "@/lib/items-search";
 import { NPC_TYPE_OPTIONS } from "@/lib/npc-types";
 import { useBasicSearchForm } from "./-use-basic-search-form";
+import { prefetchPageQueries } from "@/lib/catalog-page-queries";
+import { canonicalLink } from "@/lib/link-preview";
 import {
   getNpcsRouteSearchParams,
+  type NpcsRouteSearch,
   validateNpcsRouteSearch,
 } from "./-search-route.utils";
 
 const SEARCH_LIMIT = 72;
 
+/** The NPC search's query for the address bar's search. */
+const npcSearchQuery = (search: NpcsRouteSearch) =>
+  ({
+    ...getNpcsRouteSearchParams(search, SEARCH_LIMIT),
+    gameVersion: WIKI_GAME_VERSION,
+  }) satisfies CatalogControllerGetNpcsParams;
+
 export const Route = createFileRoute("/npcs")({
   component: NpcsRoute,
+  loaderDeps: ({ search }) => ({ query: npcSearchQuery(search) }),
+  loader: ({ deps, context: { queryClient } }) =>
+    prefetchPageQueries(
+      queryClient.prefetchQuery(
+        getCatalogControllerGetNpcsQueryOptions(deps.query),
+      ),
+    ),
   head: () => ({
     meta: [
       {
         title: `${t("meta.npcsTitle")} | ${t("meta.title")}`,
       },
     ],
+    links: [canonicalLink("/npcs")],
   }),
   validateSearch: validateNpcsRouteSearch,
 });
@@ -34,12 +56,6 @@ function NpcsRoute() {
   const navigate = Route.useNavigate();
   const search = Route.useSearch();
   const searchForm = useBasicSearchForm(search, navigate);
-
-  const {
-    search: query,
-    types,
-    limit,
-  } = getNpcsRouteSearchParams(search, SEARCH_LIMIT);
 
   const selectedTypes = splitList(search.types);
 
@@ -57,12 +73,7 @@ function NpcsRoute() {
     });
 
   const { data, isError } = useCatalogControllerGetNpcs(
-    {
-      search: query,
-      gameVersion: WIKI_GAME_VERSION,
-      types,
-      limit,
-    },
+    npcSearchQuery(search),
     { query: { placeholderData: (previousData) => previousData } },
   );
 

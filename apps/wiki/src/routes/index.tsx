@@ -1,4 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { getCatalogControllerGetItemsQueryOptions } from "@lootlog/client/search";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { AboutWiki } from "@/components/home/about-wiki";
 import { HeroLineup } from "@/components/home/hero-lineup";
@@ -10,7 +11,14 @@ import { QuickSearches } from "@/components/home/quick-searches";
 import { RecentItemChanges } from "@/components/home/recent-item-changes";
 import { SectionTile } from "@/components/home/section-tile";
 import { SlotSearch } from "@/components/home/slot-search";
+import {
+  HOME_EVENTS_SHOWN,
+  latestEventsQueryOptions,
+} from "@/hooks/use-latest-events";
+import { NEW_BOSS_ITEMS } from "@/hooks/use-new-bosses";
 import { t } from "@/i18n/messages";
+import { prefetchPageQueries } from "@/lib/catalog-page-queries";
+import { canonicalLink } from "@/lib/link-preview";
 import { WIKI_NAVIGATION } from "@/navigation/wiki-navigation";
 
 // The sections that search, which the home page introduces.
@@ -20,12 +28,20 @@ const sections = WIKI_NAVIGATION.flatMap(({ descriptionKey, ...section }) =>
 
 export const Route = createFileRoute("/")({
   component: HomeRoute,
+  loader: ({ context: { queryClient } }) =>
+    prefetchPageQueries(
+      queryClient.prefetchQuery(
+        getCatalogControllerGetItemsQueryOptions(NEW_BOSS_ITEMS),
+      ),
+      queryClient.prefetchQuery(latestEventsQueryOptions(HOME_EVENTS_SHOWN)),
+    ),
   head: () => ({
     meta: [
       {
         title: `${t("meta.homeTitle")} | ${t("meta.title")}`,
       },
     ],
+    links: [canonicalLink("/")],
   }),
 });
 

@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { maxBy, orderBy } from "es-toolkit";
+import { maxBy, orderBy, uniqBy } from "es-toolkit";
 import type { Meilisearch, MultiSearchParams, SearchParams } from "meilisearch";
 import { attemptMeilisearch } from "#src/meilisearch/search-operation-failure";
 import { buildMeilisearchInFilter } from "#src/meilisearch/query-builder";
@@ -13,7 +13,11 @@ import {
   ELASTIC_LEVELS,
   elasticItemLevel,
 } from "@lootlog/domain/elastic-level";
-import { itemEventLabels, itemEventSlug } from "@lootlog/domain/item-events";
+import {
+  isEventEditionAvailableSince,
+  itemEventLabels,
+  itemEventSlug,
+} from "@lootlog/domain/item-events";
 import {
   itemAtLevel,
   itemStatAttackSpeed,
@@ -24,9 +28,11 @@ import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import type { AppLogger } from "#src/shared/logger";
 import type {
   CatalogControllerGetEventsQuery,
+  CatalogControllerGetIndexQuery,
   CatalogControllerGetItemsQuery,
   CatalogControllerGetNpcsQuery,
   CatalogEventsResponseDto_Output,
+  CatalogIndexResponseDto_Output,
   CatalogItemsResponseDto_Output,
   CatalogNpcsResponseDto_Output,
 } from "#src/http-api/contracts/catalog/schemas";
@@ -92,6 +98,9 @@ const ATTACK_SPEED_SORTS = new Map<
   ["attackSpeed:desc", (item) => itemStatAttackSpeed(item.stat)],
   ["upgradedAttackSpeed:desc", (item) => upgradedAttackSpeed(item)],
 ]);
+
+// How many documents the catalog index reads at a time.
+const INDEX_BATCH_SIZE = 5000;
 
 // The most hits one Meilisearch search returns, its `maxTotalHits`.
 const MAX_HITS = 1000;
@@ -178,6 +187,35 @@ export const makeCatalogModule = (
       }),
     ).pipe(Effect.map(({ hits }) => hits[0]?.monsterKey));
 
+  /**
+   * Items a world opened on `since` has: those of no event, and those of an
+   * edition it saw. An item that came back keeps any edition it saw, so the
+   * filter names the editions to keep rather than those to leave out.
+   */
+  const availabilityFilter = (gameVersion: string | undefined, since: string) =>
+    attemptMeilisearch("catalog.items.editions", () =>
+      meilisearch.index(ITEMS_INDEX).search("", {
+        filter: [gameVersionFilter(gameVersion), `statsKeys = "etiquette"`]
+          .filter((filter) => filter !== undefined)
+          .join(" AND "),
+        facets: ["eventSlugs"],
+        limit: 0,
+      }),
+    ).pipe(
+      Effect.map(({ facetDistribution }) => {
+        const seen = Object.keys(facetDistribution?.eventSlugs ?? {}).filter(
+          (slug) => isEventEditionAvailableSince(slug, since),
+        );
+
+        return seen.length === 0
+          ? `NOT statsKeys = "etiquette"`
+          : `(NOT statsKeys = "etiquette" OR ${buildMeilisearchInFilter("eventSlugs", seen)})`;
+      }),
+      Effect.tapError((error) =>
+        Effect.sync(() => logger.error("Catalog editions error", { error })),
+      ),
+    );
+
   const getItems = Effect.fn("Catalog.items")(function* (
     query: CatalogControllerGetItemsQuery,
   ) {
@@ -196,7 +234,15 @@ export const makeCatalogModule = (
         ? undefined
         : yield* findMonsterKey(query.droppedBy);
 
-    const filters = itemFilters(query, monsterKey);
+    const availability =
+      query.availableSince === undefined
+        ? undefined
+        : yield* availabilityFilter(query.gameVersion, query.availableSince);
+
+    const filters = [
+      ...itemFilters(query, monsterKey),
+      ...(availability === undefined ? [] : [availability]),
+    ];
 
     const params: SearchParams = {
       attributesToSearchOn: ["name"],
@@ -519,5 +565,89 @@ export const makeCatalogModule = (
     } satisfies CatalogEventsResponseDto_Output;
   });
 
-  return { getItems, getNpcs, getEvents };
+  /**
+   * Every item and current NPC by id and name. Searches stop at Meilisearch's
+   * `maxTotalHits`, so the documents are read in batches instead.
+   */
+  const getIndex = Effect.fn("Catalog.index")(function* (
+    query: CatalogControllerGetIndexQuery,
+  ) {
+    const readAll = <Document extends Record<string, unknown>>(
+      index: string,
+      filter: string | undefined,
+      fields: Array<Extract<keyof Document, string>>,
+    ) =>
+      Effect.gen(function* () {
+        const documents: Document[] = [];
+
+        for (;;) {
+          const batch = yield* attemptMeilisearch("catalog.index", () =>
+            meilisearch.index<Document>(index).getDocuments({
+              filter,
+              fields,
+              limit: INDEX_BATCH_SIZE,
+              offset: documents.length,
+            }),
+          );
+
+          documents.push(...batch.results);
+
+          if (batch.results.length < INDEX_BATCH_SIZE) return documents;
+        }
+      });
+
+    const gameVersion = gameVersionFilter(query.gameVersion);
+
+    const [items, npcs] = yield* Effect.all(
+      [
+        readAll<Pick<CatalogItemDocument, "id" | "name">>(
+          ITEMS_INDEX,
+          gameVersion,
+          ["id", "name"],
+        ),
+        readAll<
+          Pick<
+            CatalogNpcDocument,
+            | "id"
+            | "name"
+            | "type"
+            | "gameVersion"
+            | "identityNamespace"
+            | "current"
+          >
+        >(
+          NPCS_INDEX,
+          [gameVersion, "current != false"]
+            .filter((filter) => filter !== undefined)
+            .join(" AND "),
+          ["id", "name", "type", "gameVersion", "identityNamespace", "current"],
+        ),
+      ],
+      { concurrency: 2 },
+    ).pipe(
+      Effect.tapError((error) =>
+        Effect.sync(() => logger.error("Catalog index error", { error })),
+      ),
+    );
+
+    // An item id may have several versions; its page shows the first stored,
+    // as this reads them. One NPC id may name several monsters.
+    return {
+      items: orderBy(
+        uniqBy(items, ({ id }) => id).map(({ id, name }) => ({ id, name })),
+        ["id"],
+        ["asc"],
+      ),
+      npcs: orderBy(
+        uniqBy(
+          collapseByNameAndType(npcs),
+          ({ id, name }) => `${id}|${name}`,
+        ).map(({ id, name }) => ({ id, name })),
+        ["id"],
+        ["asc"],
+      ),
+    } satisfies CatalogIndexResponseDto_Output;
+  });
+
+  return { getItems, getNpcs, getEvents, getIndex };
 };

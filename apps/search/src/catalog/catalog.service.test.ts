@@ -290,6 +290,44 @@ test("narrows items to one edition's event drops of a kind of boss that carry th
   );
 });
 
+test("a world's search keeps items of no event and of the editions it saw, including items that came back", async () => {
+  const searches: Array<{ filter?: string; facets?: string[] }> = [];
+
+  const client = new Meilisearch({
+    host: "http://search.invalid",
+    httpClient: (_input, init) => {
+      const body = JSON.parse(String(init?.body));
+
+      searches.push(body);
+
+      return Promise.resolve({
+        hits: [],
+        estimatedTotalHits: 0,
+        facetDistribution: {
+          eventSlugs: {
+            "wielkanoc-2026": 3,
+            "noc-kupaly-2026": 2,
+            "wakacje-2021": 4,
+            "wakacje-2026": 5,
+            "dzien-mlodego-smoka": 6,
+          },
+        },
+      });
+    },
+  });
+
+  await Effect.runPromise(
+    makeCatalogModule(client, logger).getItems({
+      gameVersion: "pl",
+      availableSince: "2026-06-29",
+    }),
+  );
+
+  expect(searches.at(-1)?.filter).toBe(
+    `gameVersion = "pl" AND (NOT statsKeys = "etiquette" OR eventSlugs IN ["wakacje-2026", "dzien-mlodego-smoka"])`,
+  );
+});
+
 test("ranks an elastic item by its attack speed at the searched level, not the one the index last saw", async () => {
   const armor = (id: number, lvl: number, sa: number) => ({
     id,
@@ -409,4 +447,63 @@ test("events take their name from the year the slug names, the latest first", as
       boss: { name: "Nosferatu", icon: "nosferatu.gif" },
     },
   ]);
+});
+
+test("the index reads every document past one batch, each item and monster once", async () => {
+  const fetches: Array<{ index: string; offset: number; filter?: string }> = [];
+
+  // Item 1 comes twice, as a renamed version is stored after the first.
+  const items = [
+    ...Array.from({ length: 5001 }, (_, index) => ({
+      id: 5001 - index,
+      name: `Item ${5001 - index}`,
+    })),
+    { id: 1, name: "Renamed item 1" },
+  ];
+
+  const npcs = [
+    {
+      id: 2,
+      name: "Tanroth",
+      type: "HERO",
+      gameVersion: "pl",
+      identityNamespace: "runtime",
+    },
+    {
+      id: 1,
+      name: "Tanroth",
+      type: "HERO",
+      gameVersion: "pl",
+      identityNamespace: "template",
+    },
+  ];
+
+  const client = new Meilisearch({
+    host: "http://search.invalid",
+    httpClient: (input, init) => {
+      const body = JSON.parse(String(init?.body));
+      const index = String(input).includes("/indexes/npcs/") ? "npcs" : "items";
+      const documents = index === "npcs" ? npcs : items;
+
+      fetches.push({ index, offset: body.offset, filter: body.filter });
+
+      return Promise.resolve({
+        results: documents.slice(body.offset, body.offset + body.limit),
+        offset: body.offset,
+        limit: body.limit,
+        total: documents.length,
+      });
+    },
+  });
+
+  const index = await Effect.runPromise(
+    makeCatalogModule(client, logger).getIndex({ gameVersion: "pl" }),
+  );
+
+  expect(index.items).toHaveLength(5001);
+  expect(index.items[0]).toEqual({ id: 1, name: "Item 1" });
+  expect(index.npcs).toEqual([{ id: 1, name: "Tanroth" }]);
+  expect(fetches.find(({ index }) => index === "npcs")?.filter).toBe(
+    'gameVersion = "pl" AND current != false',
+  );
 });

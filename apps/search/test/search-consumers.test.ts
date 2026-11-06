@@ -139,6 +139,7 @@ const setup = async () => {
       catalogItems: () => Effect.die("unused"),
       catalogNpcs: () => Effect.die("unused"),
       catalogEvents: () => Effect.die("unused"),
+      catalogIndex: () => Effect.die("unused"),
     }),
   );
 

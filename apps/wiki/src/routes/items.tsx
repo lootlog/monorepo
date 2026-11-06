@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { Search, SlidersHorizontal, UserRound } from "lucide-react";
 import { startTransition, useEffect, useState } from "react";
 import { Button } from "@lootlog/ui/components/button";
@@ -36,6 +36,12 @@ import {
   toCatalogParams,
   validateItemsSearch,
 } from "@/lib/items-search";
+import {
+  itemResultsQueryOptions,
+  prefetchPageQueries,
+} from "@/lib/catalog-page-queries";
+import { canonicalLink } from "@/lib/link-preview";
+import { findMargonemWorld } from "@/lib/margonem-worlds";
 import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -66,15 +72,35 @@ const activeFilters = (search: ItemsSearch): ActiveFilter[] => [
   ...(search.slot
     ? [{ key: "slot", label: t(`slots.${search.slot}`), clear: { slot: "" } }]
     : []),
-  ...(search.minLevel || search.maxLevel
+  ...(search.minLevel !== undefined || search.maxLevel !== undefined
     ? [
         {
           key: "level",
           label: t("filters.levelChip", {
-            min: search.minLevel || "1",
-            max: search.maxLevel || "∞",
+            min: search.minLevel ?? 1,
+            max: search.maxLevel ?? "∞",
           }),
-          clear: { minLevel: "", maxLevel: "" },
+          clear: { minLevel: undefined, maxLevel: undefined },
+        },
+      ]
+    : []),
+  ...(search.world
+    ? [
+        {
+          key: "world",
+          label: t("filters.worldChip", {
+            world: findMargonemWorld(search.world)?.name ?? search.world,
+          }),
+          clear: { world: "" },
+        },
+      ]
+    : []),
+  ...(search.events
+    ? [
+        {
+          key: "events",
+          label: t(`filters.eventOptions.${search.events}`),
+          clear: { events: "" },
         },
       ]
     : []),
@@ -91,10 +117,18 @@ const activeFilters = (search: ItemsSearch): ActiveFilter[] => [
 
 export const Route = createFileRoute("/items")({
   component: ItemsRoute,
+  loaderDeps: ({ search }) => ({ params: toCatalogParams(search) }),
+  loader: ({ deps, context: { queryClient } }) =>
+    prefetchPageQueries(
+      queryClient.prefetchInfiniteQuery(itemResultsQueryOptions(deps.params)),
+    ),
   head: () => ({
     meta: [{ title: `${t("meta.itemsTitle")} | ${t("meta.title")}` }],
+    links: [canonicalLink("/items")],
   }),
   validateSearch: validateItemsSearch,
+  // A link holds only the filters it sets.
+  search: { middlewares: [stripSearchParams(EMPTY_ITEMS_SEARCH)] },
 });
 
 function ItemsRoute() {
@@ -138,7 +172,7 @@ function ItemsRoute() {
   // The set's character as filters: its profession and what its level wears.
   const character = {
     professions: set.profession ?? "",
-    maxLevel: set.level === null ? "" : String(set.level),
+    maxLevel: set.level ?? undefined,
   };
 
   const hasCharacter = set.profession !== null || set.level !== null;
@@ -151,16 +185,19 @@ function ItemsRoute() {
   const panel = <ItemsFilterPanel search={search} onChange={change} />;
 
   return (
-    <div className="grid items-start gap-6 py-6 md:grid-cols-[17rem_minmax(0,1fr)]">
+    <div className="grid items-start md:grid-cols-[17rem_minmax(0,1fr)]">
+      {/* Docked under the top bar like the set dock: a rule, not a card. */}
       <aside
         aria-label={t("filters.title")}
-        className="sticky top-20 hidden max-h-[calc(100dvh-6rem)] flex-col overflow-hidden rounded-xl border border-border/50 bg-card md:flex"
+        className="sticky top-14 hidden h-[calc(100dvh-3.5rem-var(--wiki-dock-height,0rem))] flex-col border-r border-sidebar-border md:-ml-6 md:flex"
       >
         <ItemsFiltersHeader count={filters.length} />
-        <div className="min-h-0 overflow-y-auto px-3">{panel}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 [scrollbar-width:thin]">
+          {panel}
+        </div>
       </aside>
 
-      <div className="flex min-w-0 flex-col gap-4">
+      <div className="flex min-w-0 flex-col gap-4 py-6 md:pl-6">
         <h1 className="sr-only">{t("items.title")}</h1>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -211,7 +248,7 @@ function ItemsRoute() {
               onClick={() =>
                 change(
                   isForCharacter
-                    ? { professions: "", maxLevel: "" }
+                    ? { professions: "", maxLevel: undefined }
                     : character,
                 )
               }

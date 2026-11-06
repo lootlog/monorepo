@@ -73,7 +73,20 @@ export function EquipmentSetProvider({ children }: { children: ReactNode }) {
           ),
         clear: () => update(() => EMPTY_EQUIPMENT_SET),
         setCharacter: (character) =>
-          update((current) => ({ ...current, ...character })),
+          update((current) => ({
+            ...current,
+            ...character,
+            skills:
+              character.profession === current.profession ? current.skills : {},
+          })),
+        setSkillRank: (skillId, rank) =>
+          update(
+            ({ skills: { [skillId]: _previous, ...skills }, ...current }) => ({
+              ...current,
+              skills: rank > 0 ? { ...skills, [skillId]: rank } : skills,
+            }),
+          ),
+        resetSkills: () => update((current) => ({ ...current, skills: {} })),
       }}
     >
       {children}

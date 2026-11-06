@@ -8,6 +8,8 @@ type EquipmentStatRowProps = {
   unit: string;
   /** The set's total; absent when no worn item has the stat. */
   total: number | undefined;
+  /** The top of a range the total starts, such as the most damage dealt. */
+  rangeMax?: number;
   /** Whether the set has loaded, so a new total is the User's change. */
   isLoaded: boolean;
 };
@@ -29,10 +31,12 @@ export function EquipmentStatRow({
   label,
   unit,
   total,
+  rangeMax,
   isLoaded,
 }: EquipmentStatRowProps) {
   const isVisible = total !== undefined;
   const { value: shownValue, change } = useStatChange(total ?? 0, isLoaded);
+  const { value: shownMax } = useStatChange(rangeMax ?? 0, isLoaded);
 
   // The change stays readable while it fades out.
   const [shownChange, setShownChange] = useState(change);
@@ -70,6 +74,7 @@ export function EquipmentStatRow({
             </span>
             <span className="font-semibold text-foreground tabular-nums">
               {format(shownValue)}
+              {rangeMax === undefined ? null : `–${format(shownMax)}`}
               {unit}
             </span>
           </dd>

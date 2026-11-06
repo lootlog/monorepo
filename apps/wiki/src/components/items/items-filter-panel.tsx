@@ -1,5 +1,13 @@
 import { Gem } from "lucide-react";
+import { useId } from "react";
 import { LevelRangeInputs } from "@lootlog/ui/components/level-range-inputs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@lootlog/ui/components/select";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import {
   LOOT_RARITY_PILL_CLASS,
@@ -16,13 +24,14 @@ import {
 } from "@/lib/item-options";
 import {
   BOSS_OPTIONS,
+  EVENT_OPTIONS,
   type ItemsSearch,
   joinList,
-  readLevel,
   splitList,
   STAT_OPTIONS,
 } from "@/lib/items-search";
 import { SEARCHABLE_LEGENDARY_BONUSES } from "@/lib/legendary-bonuses";
+import { findMargonemWorld, MARGONEM_WORLDS } from "@/lib/margonem-worlds";
 import { FilterSection } from "./filter-section";
 import { FilterTile } from "@/components/filter-tile";
 
@@ -54,7 +63,9 @@ const TILE_GRID = "grid grid-cols-2 gap-1.5";
  * what to look for.
  */
 export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
-  const listFilter = (key: keyof ItemsSearch) => {
+  const listFilter = (
+    key: "professions" | "rarities" | "bonuses" | "bosses" | "stats" | "types",
+  ) => {
     const values = splitList(search[key]);
 
     return {
@@ -80,15 +91,19 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
   const stats = listFilter("stats");
   const types = listFilter("types");
 
-  const minLevel = readLevel(search.minLevel);
-  const maxLevel = readLevel(search.maxLevel);
+  const { minLevel, maxLevel } = search;
+  const world = findMargonemWorld(search.world);
+  const worldLabelId = useId();
+
+  const worldItems = [
+    { value: "", label: t("filters.anyWorld") },
+    ...MARGONEM_WORLDS.map(({ id, name }) => ({ value: id, label: name })),
+  ];
+
   const selectedSlot = findEquipmentSlotById(search.slot);
 
   const setLevel = (min: number | undefined, max: number | undefined) =>
-    onChange({
-      minLevel: min === undefined ? "" : String(min),
-      maxLevel: max === undefined ? "" : String(max),
-    });
+    onChange({ minLevel: min, maxLevel: max });
 
   return (
     <div className="flex flex-col">
@@ -201,12 +216,8 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
             }}
             minLevel={minLevel}
             maxLevel={maxLevel}
-            onMinLevelChange={(level) =>
-              onChange({ minLevel: level === undefined ? "" : String(level) })
-            }
-            onMaxLevelChange={(level) =>
-              onChange({ maxLevel: level === undefined ? "" : String(level) })
-            }
+            onMinLevelChange={(level) => onChange({ minLevel: level })}
+            onMaxLevelChange={(level) => onChange({ maxLevel: level })}
           />
         </div>
       </FilterSection>
@@ -238,6 +249,64 @@ export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
               />
             );
           })}
+        </div>
+      </FilterSection>
+
+      <FilterSection
+        title={t("filters.events")}
+        count={(search.events ? 1 : 0) + (world ? 1 : 0)}
+        onClear={() => onChange({ events: "", world: "" })}
+        defaultOpen
+      >
+        <div className="flex flex-col gap-3">
+          <div className={TILE_GRID}>
+            {EVENT_OPTIONS.map((value) => (
+              <FilterTile
+                key={value}
+                label={t(`filters.eventOptions.${value}`)}
+                pressed={search.events === value}
+                onPressedChange={(pressed) =>
+                  onChange({ events: pressed ? value : "" })
+                }
+                centered
+              />
+            ))}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span
+              id={worldLabelId}
+              className="text-xs font-medium text-muted-foreground"
+            >
+              {t("filters.world")}
+            </span>
+            <Select
+              value={search.world}
+              onValueChange={(value) => onChange({ world: value ?? "" })}
+              items={worldItems}
+            >
+              <SelectTrigger className="w-full" aria-labelledby={worldLabelId}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {worldItems.map(({ value, label }) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {world ? (
+              <p className="text-xs text-muted-foreground">
+                {t("filters.worldHint", {
+                  date: world.isApproximate
+                    ? t("filters.worldOpenedAbout", {
+                        year: world.openedOn.slice(0, 4),
+                      })
+                    : new Date(world.openedOn).toLocaleDateString("pl-PL"),
+                })}
+              </p>
+            ) : null}
+          </div>
         </div>
       </FilterSection>
 

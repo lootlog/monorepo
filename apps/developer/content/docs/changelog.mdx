@@ -3,6 +3,13 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-06 — Public catalog index
+
+The Search API adds `GET /public/catalog/index`, which works without an API
+key or a session. It lists every item and NPC of the public catalog by `id`
+and `name`, past the 1000 hits its searches stop at: each item once, and each
+NPC as it is now, once per monster, as `GET /public/catalog/npcs` lists it.
+
 ## 2026-11-06 — Public catalog events
 
 The Search API adds `GET /public/catalog/events`, which works without an API

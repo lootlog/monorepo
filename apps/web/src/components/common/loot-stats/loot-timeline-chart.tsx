@@ -8,7 +8,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
 import type { LootStatsResponseDtoOutputTimelineItem } from "@lootlog/client/main";
-import { LOOT_RARITY_CHART_COLORS } from "@lootlog/ui/lib/item-rarity-colors";
+import { LOOT_RARITY_COLORS } from "@lootlog/ui/lib/item-rarity-colors";
 import { getLootRarityChartConfig } from "./loot-rarity-chart-config";
 import { ChartSection } from "@/components/common/chart-section";
 import { CHART_SERIES_ANIMATION } from "@/lib/motion";
@@ -109,8 +109,8 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
             type="monotone"
             dataKey="LEGENDARY"
             stackId="1"
-            stroke={LOOT_RARITY_CHART_COLORS.LEGENDARY}
-            fill={LOOT_RARITY_CHART_COLORS.LEGENDARY}
+            stroke={LOOT_RARITY_COLORS.LEGENDARY}
+            fill={LOOT_RARITY_COLORS.LEGENDARY}
             fillOpacity={0.6}
           />
           <Area
@@ -118,8 +118,8 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
             type="monotone"
             dataKey="HEROIC"
             stackId="1"
-            stroke={LOOT_RARITY_CHART_COLORS.HEROIC}
-            fill={LOOT_RARITY_CHART_COLORS.HEROIC}
+            stroke={LOOT_RARITY_COLORS.HEROIC}
+            fill={LOOT_RARITY_COLORS.HEROIC}
             fillOpacity={0.6}
           />
         </AreaChart>
