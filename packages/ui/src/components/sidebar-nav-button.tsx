@@ -15,6 +15,8 @@ type SidebarNavButtonProps = {
   icon: ReactNode;
   label: string;
   badge?: SidebarNavBadge;
+  /** `touch` is the 44px row of the phone navigation sheet. */
+  size?: "default" | "touch";
   /** Decoration drawn over the button, such as a theme's hover mark. */
   children?: ReactNode;
 };
@@ -26,6 +28,7 @@ export const SidebarNavButton = ({
   icon,
   label,
   badge,
+  size = "default",
   children,
 }: SidebarNavButtonProps) => (
   <Button
@@ -35,6 +38,7 @@ export const SidebarNavButton = ({
     role={link ? "link" : undefined}
     className={cn(
       "justify-between w-full transition-colors duration-200 relative",
+      size === "touch" && "h-11",
       isActive
         ? "!bg-primary/12 font-semibold text-primary hover:!bg-primary/15 hover:text-primary"
         : "font-medium text-muted-foreground hover:text-primary hover:!bg-primary/10",

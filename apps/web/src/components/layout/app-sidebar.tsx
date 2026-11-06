@@ -1,9 +1,11 @@
 import { GuildsSelector } from "@/components/layout/guilds-selector";
 import { UserMenu } from "@/components/layout/user-menu";
+import { AppNavigationSheet } from "@/components/layout/app-navigation-sheet";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  useSidebar,
 } from "@lootlog/ui/components/sidebar";
 import type { ReactNode } from "react";
 import { cn } from "cn";
@@ -20,6 +22,25 @@ export const AppSidebar = ({
   compact = false,
   navigation,
 }: AppSidebarProps) => {
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  // Phones navigate from the tab bar; its "More" opens this sheet, where the
+  // navigation column carries the Lootlog strip instead of the server rail.
+  if (isMobile) {
+    return (
+      <AppNavigationSheet footer={compact ? undefined : <UserMenu />}>
+        {compact || !navigation ? (
+          <GuildsSelector
+            orientation="horizontal"
+            onSelect={() => setOpenMobile(false)}
+          />
+        ) : (
+          navigation
+        )}
+      </AppNavigationSheet>
+    );
+  }
+
   // The shell is a fixed-height column, so the desktop sidebar fills its row
   // instead of the viewport and starts below the announcement bar.
   return (
@@ -29,11 +50,10 @@ export const AppSidebar = ({
         "absolute h-auto bg-sidebar",
         !compact && "border-r border-sidebar-border",
       )}
-      mobileWidth={compact ? COMPACT_SIDEBAR_WIDTH : undefined}
     >
       <SidebarContent className="h-full bg-sidebar">
         <div className="relative flex min-h-0 min-w-0 w-full flex-1 flex-row gap-0 text-sm">
-          <GuildsSelector />
+          <GuildsSelector orientation="vertical" />
           {!compact && (navigation ?? <div className="flex-1 bg-sidebar" />)}
         </div>
       </SidebarContent>

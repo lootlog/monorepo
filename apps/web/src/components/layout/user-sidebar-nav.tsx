@@ -4,17 +4,27 @@ import { SidebarNav } from "./sidebar-nav/sidebar-nav";
 import type { MenuItem } from "./sidebar-nav/types";
 import { useThemeMeta } from "@/themes/use-theme-meta";
 import { useMatches } from "@tanstack/react-router";
-import { resolveAppNavigation } from "@/navigation/app-navigation";
+import {
+  hideTabBarSections,
+  resolveAppNavigation,
+} from "@/navigation/app-navigation";
+import { useSidebar } from "@lootlog/ui/components/sidebar";
 import { APP_NAVIGATION_ICONS } from "@/navigation/app-navigation-icons";
 
 export const UserSidebarNav = () => {
   const { data: session } = useSession();
   const { greetingSuffix } = useThemeMeta();
   const { t } = useTranslation();
+  const { isMobile } = useSidebar();
   const matches = useMatches();
   const navigation = resolveAppNavigation({ matches });
 
-  const menuItems: MenuItem[] = navigation.sidebarItems.map((item) => {
+  // On phones the tab bar holds the first sections, so "More" lists the rest.
+  const sheetItems = isMobile
+    ? hideTabBarSections(navigation.sidebarItems)
+    : navigation.sidebarItems;
+
+  const menuItems: MenuItem[] = sheetItems.map((item) => {
     const Icon = APP_NAVIGATION_ICONS[item.id];
 
     return {

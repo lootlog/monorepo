@@ -15,6 +15,7 @@ import { useActiveEventCount } from "@/hooks/api/use-active-event-count";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMatches } from "@tanstack/react-router";
 import {
+  hideTabBarSections,
   resolveAppNavigation,
   type AppNavigationItemId,
 } from "@/navigation/app-navigation";
@@ -43,7 +44,7 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
 }) => {
   const guildId = useGuildId();
   const { data: accessPolicy } = useGuildPermissions();
-  const { setOpenMobile } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar();
   const { t } = useTranslation();
   const matches = useMatches();
   const navigation = resolveAppNavigation({ matches, accessPolicy });
@@ -71,7 +72,12 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
 
   const hasActiveEvents = activeEventCount > 0;
 
-  const menuItems: MenuItem[] = navigation.sidebarItems.map((item) => ({
+  // On phones the tab bar holds the first sections, so "More" lists the rest.
+  const sheetItems = isMobile
+    ? hideTabBarSections(navigation.sidebarItems)
+    : navigation.sidebarItems;
+
+  const menuItems: MenuItem[] = sheetItems.map((item) => ({
     active: item.active,
     available: true,
     enabled: item.visible,
