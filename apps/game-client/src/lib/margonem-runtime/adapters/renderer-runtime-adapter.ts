@@ -109,6 +109,7 @@ const MAX_CONSECUTIVE_DRAW_FAILURES = 120;
 const makeDrawGuard = (onDisabled?: () => void) => {
   let failures = 0;
   let disabled = false;
+  let reported = false;
 
   // The step and its argument are passed apart so a frame allocates nothing.
   return <A>(step: (argument: A) => void, argument: A) => {
@@ -119,6 +120,13 @@ const makeDrawGuard = (onDisabled?: () => void) => {
       failures = 0;
     } catch (error) {
       failures += 1;
+
+      // The first error is reported so a step that fails and recovers stays
+      // visible; the rest are silent until the step gives up.
+      if (failures === 1 && !reported) {
+        reported = true;
+        console.warn("[Lootlog] Drawing step failed:", error);
+      }
 
       if (failures < MAX_CONSECUTIVE_DRAW_FAILURES) return;
       disabled = true;
@@ -143,8 +151,22 @@ const guardDrawable = (drawable: RuntimeDrawable): RuntimeDrawable => {
 
   const guarded: RuntimeDrawable = {
     draw: (context) => guard(drawInto, context),
-    getOrder: () => drawable.getOrder(),
-    getAlwaysDraw: () => drawable.getAlwaysDraw(),
+    // The game sorts and filters by these every frame, so they fall back
+    // instead of throwing into its renderer.
+    getOrder: () => {
+      try {
+        return drawable.getOrder();
+      } catch {
+        return 0;
+      }
+    },
+    getAlwaysDraw: () => {
+      try {
+        return drawable.getAlwaysDraw();
+      } catch {
+        return false;
+      }
+    },
   };
 
   guardedDrawables.set(drawable, guarded);

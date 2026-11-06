@@ -1,11 +1,12 @@
 import { Effect } from "effect";
 
 /**
- * Settles a realtime publication whose state is already stored, so readers
- * catch up on their next fetch. The failure is still logged: a broker outage
- * must stay visible instead of silently leaving clients stale.
+ * Settles a best-effort realtime publication without failing the request
+ * that already committed its change. The failure is logged because the event
+ * may be lost: some readers refetch stored state, others (such as a
+ * volunteer notice) never see it, so a broker outage must stay visible.
  */
 export const ignorePublicationFailure = Effect.ignore({
   log: "Warn",
-  message: "Best-effort publication failed; readers catch up on next fetch",
+  message: "Best-effort publication failed; realtime delivery may be lost",
 });
