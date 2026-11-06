@@ -297,22 +297,6 @@ export function resolveTabBarSections(
   };
 }
 
-/**
- * The sidebar sections behind a phone tab bar's "More": the sections that
- * already have a tab are hidden, so the sheet lists only what the bar lacks.
- */
-export function hideTabBarSections(
-  sidebarItems: readonly AppNavigationSidebarItem[],
-): AppNavigationSidebarItem[] {
-  const tabIds = new Set(
-    resolveTabBarSections(sidebarItems).tabs.map((item) => item.id),
-  );
-
-  return sidebarItems.map((item) =>
-    tabIds.has(item.id) ? { ...item, visible: false } : item,
-  );
-}
-
 function t(key: string, options?: TOptions) {
   return i18n.t(key, options);
 }
