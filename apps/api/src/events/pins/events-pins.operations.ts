@@ -10,12 +10,14 @@ export const makeEventsPins = (persistence: PinnedEventsPersistence) => ({
   listPinnedEvents: (userId: string, guildData: { id: string }) =>
     Effect.gen(function* () {
       const referenceTime = new Date(yield* Clock.currentTimeMillis);
-      yield* persistence.removeInactive(userId, guildData.id, referenceTime);
+      // The cleanup deletes only pins that the active read excludes.
 
-      const pinnedEvents = yield* persistence.findActive(
-        userId,
-        guildData.id,
-        referenceTime,
+      const [, pinnedEvents] = yield* Effect.all(
+        [
+          persistence.removeInactive(userId, guildData.id, referenceTime),
+          persistence.findActive(userId, guildData.id, referenceTime),
+        ],
+        { concurrency: "unbounded" },
       );
 
       return pinnedEvents.map(({ event, pinnedAt }) => ({

@@ -589,23 +589,31 @@ export class AirTagService {
   ): Effect.Effect<void> {
     const threatMaps = threatMapsKey(event.guildId, event.world);
 
+    // The live publish does not read the snapshot, which serves later
+    // joiners, and a retry after a failed snapshot repeats the revisioned
+    // event.
     return storeCall("air-tag.threat-publish", async () => {
-      await this.redis.command.sadd(threatMaps, String(event.mapId));
-      await this.redis.command.expire(
-        threatMaps,
-        AIR_TAG_MAP_THREAT_TTL_MS / 1_000,
-      );
-      await this.hub.publishToScopes(
-        [{ topic: "organization.presence", organizationId: event.guildId }],
-        { v: 1, type: "air-tag.map-threat-updated", data: event },
-        {
-          // Any world: timers can show a world other than the recipient's own.
-          recipientPlatform: "game",
-          // A sighting reveals which map an observing member is on.
-          organizationId: event.guildId,
-          presenceAudience: "precise",
-        },
-      );
+      await Promise.all([
+        this.redis.command
+          .sadd(threatMaps, String(event.mapId))
+          .then(() =>
+            this.redis.command.expire(
+              threatMaps,
+              AIR_TAG_MAP_THREAT_TTL_MS / 1_000,
+            ),
+          ),
+        this.hub.publishToScopes(
+          [{ topic: "organization.presence", organizationId: event.guildId }],
+          { v: 1, type: "air-tag.map-threat-updated", data: event },
+          {
+            // Any world: timers can show a world other than the recipient's own.
+            recipientPlatform: "game",
+            // A sighting reveals which map an observing member is on.
+            organizationId: event.guildId,
+            presenceAudience: "precise",
+          },
+        ),
+      ]);
     }).pipe(
       // AirTag updates of the same batch must still go out; the list goes out again later.
       Effect.catch((error) =>

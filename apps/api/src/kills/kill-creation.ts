@@ -1,3 +1,4 @@
+import { selectCharacterCatchingGuildIds } from "#src/members/character-catching-guilds";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import {
   selectAccessibleGuilds,
@@ -5,7 +6,7 @@ import {
 } from "#src/members/member-access-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { activityFeedNpcCategory } from "@lootlog/domain/activity-feed";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
@@ -24,7 +25,6 @@ import {
   userKillCharacterTable,
   userKillTotalTable,
 } from "#src/database/drizzle/kill-statistics.schema";
-import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import { getKillNpcId } from "#src/shared/margonem/npc-identity";
 import type { CreateKillRequest } from "#src/contracts/kills/schemas";
@@ -424,93 +424,91 @@ export const makeKillCreation = (
     });
 
     const apiKey = yield* requestApiKeyAccess;
-    let personalUpdated = false;
 
-    if (!apiKey || apiKey.personalData) {
-      personalUpdated = yield* writeOnce(
-        userDedupKey,
-        "kills.dedup.user",
-        incrementUser(
-          input,
-          {
-            characterId: data.characterId,
-            name: data.character?.name ?? null,
-            level: data.character?.lvl ?? null,
-            profession: data.character?.prof ?? null,
-            icon: data.character?.icon ?? null,
-          },
-          periodStart,
-        ),
-      ).pipe(
-        Effect.catchIf(
-          (error) => error.operation !== "kills.dedup.user",
-          (error) =>
-            Effect.sync(() => {
-              logger.error({
-                message: "Failed to upsert user kill stats",
-                error,
-              });
+    // The personal record and the Organization targets are independent; both
+    // finish before the result is read, so neither interrupts the other's
+    // write, and a personal dedup failure still prevents every guild write.
+    const recordPersonal =
+      !apiKey || apiKey.personalData
+        ? writeOnce(
+            userDedupKey,
+            "kills.dedup.user",
+            incrementUser(
+              input,
+              {
+                characterId: data.characterId,
+                name: data.character?.name ?? null,
+                level: data.character?.lvl ?? null,
+                profession: data.character?.prof ?? null,
+                icon: data.character?.icon ?? null,
+              },
+              periodStart,
+            ),
+          ).pipe(
+            Effect.catchIf(
+              (error) => error.operation !== "kills.dedup.user",
+              (error) =>
+                Effect.sync(() => {
+                  logger.error({
+                    message: "Failed to upsert user kill stats",
+                    error,
+                  });
 
-              return false;
-            }),
+                  return false;
+                }),
+            ),
+            Effect.tap((updated) =>
+              updated
+                ? invalidate(`kill-stats:user:${discordId}`)
+                : Effect.void,
+            ),
+          )
+        : Effect.succeed(false);
+
+    const readTargets = Effect.gen(function* () {
+      const [catchingGuildIds, writableGuildRows] = yield* protect(
+        "kills.create.scope",
+        Effect.all(
+          [
+            selectCharacterCatchingGuildIds(database, discordId, data),
+            selectAccessibleGuilds(database, discordId, [
+              Permission.LOOTLOG_LOOTS_WRITE,
+            ]).pipe(
+              Effect.map((rows) => rows.map(({ guild }) => ({ id: guild.id }))),
+            ),
+          ],
+          { concurrency: "unbounded" },
         ),
       );
 
-      if (personalUpdated) {
-        yield* invalidate(`kill-stats:user:${discordId}`);
-      }
-    }
+      const writableGuildIds = new Set(writableGuildRows.map(({ id }) => id));
 
-    const [configs, writableGuildRows] = yield* protect(
-      "kills.create.scope",
-      Effect.all(
-        [
-          database
-            .select({
-              catchingGuildIds:
-                userCharactersLootlogSettingsTable.catchingGuildIds,
-            })
-            .from(userCharactersLootlogSettingsTable)
-            .where(
-              and(
-                eq(userCharactersLootlogSettingsTable.userId, discordId),
-                eq(
-                  userCharactersLootlogSettingsTable.accountId,
-                  data.accountId,
-                ),
-                eq(
-                  userCharactersLootlogSettingsTable.characterId,
-                  data.characterId,
-                ),
-              ),
-            )
-            .orderBy(desc(userCharactersLootlogSettingsTable.createdAt))
-            .limit(1),
-          selectAccessibleGuilds(database, discordId, [
-            Permission.LOOTLOG_LOOTS_WRITE,
-          ]).pipe(
-            Effect.map((rows) => rows.map(({ guild }) => ({ id: guild.id }))),
-          ),
-        ],
-        { concurrency: "unbounded" },
-      ),
+      const guildIds = catchingGuildIds.filter((guildId) =>
+        writableGuildIds.has(guildId),
+      );
+
+      if (guildIds.length === 0) return { guildIds, members: [] };
+
+      const members = yield* protect(
+        "kills.create.members",
+        selectActiveGuildMembers(database, discordId, guildIds),
+      );
+
+      return { guildIds, members };
+    });
+
+    const [personalResult, targetsResult] = yield* Effect.all(
+      [recordPersonal, readTargets],
+      { concurrency: "unbounded", mode: "result" },
     );
 
-    const writableGuildIds = new Set(writableGuildRows.map(({ id }) => id));
-
-    const guildIds = (configs[0]?.catchingGuildIds ?? []).filter((guildId) =>
-      writableGuildIds.has(guildId),
-    );
+    const personalUpdated = yield* Effect.fromResult(personalResult);
+    const { guildIds, members } = yield* Effect.fromResult(targetsResult);
 
     if (guildIds.length === 0)
       return personalUpdated
         ? { updated: 0 }
         : { deduplicated: true, updated: 0 };
-
-    const members = yield* protect(
-      "kills.create.members",
-      selectActiveGuildMembers(database, discordId, guildIds),
-    );
 
     const memberByGuild = new Map(
       members.map((member) => [member.guildId, member]),

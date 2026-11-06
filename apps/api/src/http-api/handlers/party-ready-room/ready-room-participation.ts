@@ -147,15 +147,12 @@ export const joinWithRetry = (
       next.participants[participantId].partyPresence = "IN_PARTY";
     }
 
-    const recipients = yield* context.preparePublication(aggregate, [
-      ...getReadyRoomActiveRecipientDiscordIds(aggregate),
-      discordId,
-    ]);
-
-    const viewerGuildIds = yield* context.projectionGuildIds(
-      aggregate,
-      discordId,
-    );
+    const { recipients, viewerGuildIds } =
+      yield* context.preparePublicationForViewer(
+        aggregate,
+        [...getReadyRoomActiveRecipientDiscordIds(aggregate), discordId],
+        discordId,
+      );
 
     const result = yield* context.repository.join(
       aggregate,
@@ -220,15 +217,12 @@ export const withdrawWithRetry = (
       );
     }
 
-    const recipients = yield* context.preparePublication(
-      aggregate,
-      getReadyRoomActiveRecipientDiscordIds(aggregate),
-    );
-
-    const viewerGuildIds = yield* context.projectionGuildIds(
-      aggregate,
-      discordId,
-    );
+    const { recipients, viewerGuildIds } =
+      yield* context.preparePublicationForViewer(
+        aggregate,
+        getReadyRoomActiveRecipientDiscordIds(aggregate),
+        discordId,
+      );
 
     const result = yield* exitParticipant(context, aggregate, participantId);
 
@@ -283,15 +277,12 @@ export const removeParticipant = (
       );
     }
 
-    const recipients = yield* context.preparePublication(
-      aggregate,
-      getReadyRoomActiveRecipientDiscordIds(aggregate),
-    );
-
-    const viewerGuildIds = yield* context.projectionGuildIds(
-      aggregate,
-      identity.discordId,
-    );
+    const { recipients, viewerGuildIds } =
+      yield* context.preparePublicationForViewer(
+        aggregate,
+        getReadyRoomActiveRecipientDiscordIds(aggregate),
+        identity.discordId,
+      );
 
     const result = yield* exitParticipant(
       context,

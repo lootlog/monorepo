@@ -97,16 +97,18 @@ export const makeMemberDelivery = (
     function* () {
       const pending = yield* store.findPendingMemberIds(cursor);
 
-      for (const { memberId } of pending) {
-        yield* deliver(memberId).pipe(
-          Effect.catch((error) =>
-            Effect.logError("Member sync delivery failed", error),
+      yield* Effect.forEach(
+        pending,
+        ({ memberId }) =>
+          deliver(memberId).pipe(
+            Effect.catch((error) =>
+              Effect.logError("Member sync delivery failed", error),
+            ),
           ),
-        );
-        cursor = memberId;
-      }
+        { concurrency: 4, discard: true },
+      );
 
-      if (pending.length < 25) cursor = 0;
+      cursor = pending.length < 25 ? 0 : (pending.at(-1)?.memberId ?? cursor);
     },
   );
 
