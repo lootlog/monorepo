@@ -91,9 +91,6 @@ export const skillEffectLine = (
   ]);
 
   const text = template.template
-    // The window's comparison with the next rank sits in a span.
-    .replace(/<span>[^<]*<\/span>/g, "")
-    .replace(/<[^>]+>/g, "")
     .replace(/%val\d?%/g, (placeholder) => values.get(placeholder) ?? "")
     .replace(/%damage_mode(?:_lower)?%/g, "");
 
