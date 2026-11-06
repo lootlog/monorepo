@@ -48,49 +48,49 @@ const SidebarMagicCircle = lazy(() =>
 );
 
 const FrozenButton = lazy(() =>
-  import("./rukia/rukia-frost").then((module) => ({
+  import("./rukia/frozen-button").then((module) => ({
     default: module.FrozenButton,
   })),
 );
 
 const FrozenCircle = lazy(() =>
-  import("./rukia/rukia-frost").then((module) => ({
+  import("./rukia/frozen-circle").then((module) => ({
     default: module.FrozenCircle,
   })),
 );
 
 const FrostOverlay = lazy(() =>
-  import("./rukia/rukia-frost").then((module) => ({
+  import("./rukia/frost-overlay").then((module) => ({
     default: module.FrostOverlay,
   })),
 );
 
 const GremoryButton = lazy(() =>
-  import("./rias/rias-effects").then((module) => ({
+  import("./rias/gremory-button").then((module) => ({
     default: module.GremoryButton,
   })),
 );
 
 const GremoryCircle = lazy(() =>
-  import("./rias/rias-effects").then((module) => ({
+  import("./rias/gremory-circle").then((module) => ({
     default: module.GremoryCircle,
   })),
 );
 
 const DestructionOverlay = lazy(() =>
-  import("./rias/rias-effects").then((module) => ({
+  import("./rias/destruction-overlay").then((module) => ({
     default: module.DestructionOverlay,
   })),
 );
 
 const RukiaFrostOverlay = lazy(() =>
-  import("./rukia/rukia-frost").then((module) => ({
+  import("./rukia/global-frost-overlay").then((module) => ({
     default: module.GlobalFrostOverlay,
   })),
 );
 
 const RiasDestructionOverlay = lazy(() =>
-  import("./rias/rias-effects").then((module) => ({
+  import("./rias/global-destruction-overlay").then((module) => ({
     default: module.GlobalDestructionOverlay,
   })),
 );
