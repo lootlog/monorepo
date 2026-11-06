@@ -4,7 +4,6 @@
 @import "shadcn/tailwind.css";
 @import "./scroll-fade.css";
 @import "tw-animate-css";
-@source "../../../../apps/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
 
 @custom-variant dark (&:is(.dark *));
