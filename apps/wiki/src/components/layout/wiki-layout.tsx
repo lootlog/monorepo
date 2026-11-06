@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { useLocation } from "@tanstack/react-router";
 import { cn } from "cn";
 import { EquipmentSetDock } from "@/components/equipment/equipment-set-dock";
-import { t } from "@/i18n/messages";
 import { WikiHeader } from "./wiki-header";
 
 // The home page introduces the wiki and the set page shows the whole set,
@@ -20,12 +19,6 @@ export function WikiLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="app-content-frame flex min-h-dvh w-full flex-col bg-background text-foreground">
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-foreground focus:outline-2 focus:outline-ring"
-      >
-        {t("navigation.skipToContent")}
-      </a>
       <WikiHeader />
       <div
         className={cn(
@@ -33,7 +26,11 @@ export function WikiLayout({ children }: { children: ReactNode }) {
           docksSet && "pb-24",
         )}
       >
-        <main id="main-content" tabIndex={-1} className="min-w-0 outline-none">
+        <main
+          id="portal-content"
+          tabIndex={-1}
+          className="min-w-0 outline-none"
+        >
           {children}
         </main>
       </div>
