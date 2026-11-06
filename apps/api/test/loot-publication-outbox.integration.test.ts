@@ -408,6 +408,54 @@ describe("durable loot publications", () => {
     });
   });
 
+  it("attributes a dialog's items to its only NPC", async () => {
+    const { request } = await seed();
+    const [npc] = request.submission.npcs;
+
+    if (!npc) throw new Error("Expected a seeded NPC");
+
+    const indexed = async (
+      npcs: (typeof request.submission.npcs)[number][],
+    ) => {
+      const result = await runtime.runPromise(
+        acceptance().accept({
+          ...request,
+          submission: {
+            ...request.submission,
+            source: "DIALOG",
+            npcs,
+            loots: request.submission.loots.map((item) => ({
+              ...item,
+              hid: `${item.hid}-${npcs.length}`,
+            })),
+          },
+        }),
+      );
+
+      snapshotTestLootIds.push(result.id);
+
+      return (await publications(result.id)).find(
+        (intent) =>
+          intent.kind === "rabbit" &&
+          intent.routingKey === RabbitRoutingKey.SEARCH_ITEMS_INDEX,
+      );
+    };
+
+    expect(await indexed([npc])).toMatchObject({
+      data: [{ droppedBy: { id: npc.id, name: npc.name } }],
+    });
+
+    // Several NPCs do not tell which one gave the items.
+    const ambiguous = await indexed([
+      npc,
+      { ...npc, id: npc.id + 1, name: "Test pickaxe" },
+    ]);
+
+    expect(ambiguous).toMatchObject({
+      data: [expect.not.objectContaining({ droppedBy: expect.anything() })],
+    });
+  });
+
   it.each([
     ["name", { name: "Renamed hero" }, { name: "Renamed hero" }],
     ["icon", { icon: "revised.png" }, { icon: "revised.png" }],

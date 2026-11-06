@@ -2,7 +2,7 @@ import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
 import { Schema } from "effect";
 
-/** The NPC a fight's items dropped from, in its catalog identity. */
+/** The NPC a dialog or fight's items came from, in its catalog identity. */
 export const IndexDropSource = Schema.Struct({
   id: Schema.Number,
   identityNamespace: NpcIdentityNamespaceSchema,
@@ -27,7 +27,7 @@ export const IndexItem = Schema.Struct({
   gameVersion: GameVersionSchema,
   // When the API accepted the loot; older publishers omit it.
   observedAt: Schema.optional(Schema.String),
-  // Absent for lootboxes, dialogs and fights without one boss.
+  // Absent for lootboxes and for dialogs and fights without one source.
   droppedBy: Schema.optional(IndexDropSource),
 });
 

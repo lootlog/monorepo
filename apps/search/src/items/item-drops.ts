@@ -4,8 +4,12 @@ import { npcCatalogKey, npcMonsterKey } from "#src/npcs/npcs.service";
 import { earliestSeenAt, toSeenAt } from "#src/shared/first-seen";
 import type { IndexItemsCommand } from "./index-items-command.js";
 
-/** An item keeps this many NPCs it drops from; later sources are not added. */
-export const MAX_DROP_SOURCES = 20;
+/**
+ * An item keeps the NPCs of this many monsters it drops from; later monsters
+ * are not added. A monster's every identity counts once: a dialog NPC such as
+ * Zamrożony czarodziej stands in a dozen places.
+ */
+const MAX_DROP_MONSTERS = 20;
 
 /** An NPC an item drops from, as the NPC catalog names it. */
 export type DropSource = {
@@ -80,10 +84,15 @@ export const mergeItemDropFields = (
   stored: Partial<ItemDropFields> | undefined,
 ): ItemDropFields => {
   const sources = new Map<string, DropSource>();
+  const monsters = new Set<string>();
 
   for (const source of [...(stored?.droppedBy ?? []), ...incoming.droppedBy]) {
-    if (!sources.has(source.key) && sources.size < MAX_DROP_SOURCES) {
+    if (
+      !sources.has(source.key) &&
+      (monsters.has(source.monsterKey) || monsters.size < MAX_DROP_MONSTERS)
+    ) {
       sources.set(source.key, source);
+      monsters.add(source.monsterKey);
     }
   }
 
