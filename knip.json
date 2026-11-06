@@ -4,7 +4,7 @@
     ".": {
       "entry": ["tools/**/*.{js,mjs}"],
       "project": ["tools/**/*.{js,mjs}"],
-      "ignoreDependencies": ["k6"]
+      "ignoreDependencies": ["k6", "wrangler"]
     },
     "apps/*": {
       "entry": [
