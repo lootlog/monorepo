@@ -3,7 +3,7 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
-## 2026-11-04 — Correlated realtime commands and no capability negotiation (breaking)
+## 2026-11-06 — SDK 0.4.0, correlated realtime commands and no capability negotiation (breaking)
 
 The realtime gateway closes the connection on a command without a
 `requestId`, and answers every command with a correlated response.
@@ -15,7 +15,12 @@ always carries `changes`.
 An API key connection on an `organization.loots` subscription now also receives
 `feed.entry` and `kills.changed`.
 
-The next SDK release follows this contract. To migrate from 0.3.0:
+A loot's `mapPlayersSnapshot` entries carry an optional `lvl`, the player's
+level when it was observed.
+
+[`@lootlog/sdk@0.4.0`](https://www.npmjs.com/package/@lootlog/sdk/v/0.4.0)
+follows this contract. SDK 0.3.0 clients that call `send()` are disconnected
+by the gateway. To migrate from 0.3.0:
 
 - Replace `RealtimeClient.send()` with `request()`, which sends a `requestId`
   and resolves with the decoded response. `send()` is removed: the gateway
