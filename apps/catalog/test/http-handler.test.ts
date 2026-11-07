@@ -177,7 +177,22 @@ test("reads need the service token or an identity from the edge, and keys stay s
         "x-auth-discord-id": "discord",
       }),
     ).toBe(200);
-    expect(await status("/catalog/items", keyHeaders)).toBe(200);
+
+    // A key reads every catalog read the developer portal lists.
+    for (const path of [
+      "/items",
+      "/npcs",
+      "/catalog/items",
+      "/catalog/npcs",
+      "/catalog/events",
+      "/catalog/index",
+    ]) {
+      expect({ path, status: await status(path, keyHeaders) }).toEqual({
+        path,
+        status: 200,
+      });
+    }
+
     expect(
       await status("/catalog/items", {
         ...keyHeaders,
