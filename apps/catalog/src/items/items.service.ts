@@ -3,7 +3,6 @@ import { upgradedAttackSpeed } from "@lootlog/domain/item-upgrade";
 import { Effect } from "effect";
 import { groupBy, sortBy } from "es-toolkit";
 import type { Meilisearch, SearchParams } from "meilisearch";
-import { getMeilisearchErrorCode } from "@lootlog/meilisearch/query-builder";
 import {
   attemptMeilisearch,
   type SearchOperationFailure,
@@ -237,26 +236,6 @@ export const makeItemsModule = (
       index.search(searchTerm, query),
     ).pipe(
       Effect.map(mapSearchResponse),
-      Effect.catch((error) => {
-        if (
-          getMeilisearchErrorCode(error.cause) ===
-          "invalid_search_attributes_to_search_on"
-        ) {
-          logger.warn(
-            "Items index settings are stale, retrying search without stat attribute",
-            { error },
-          );
-
-          return attemptMeilisearch("search.items.fallback", () =>
-            index.search(searchTerm, {
-              ...query,
-              attributesToSearchOn: ["name"],
-            }),
-          ).pipe(Effect.map(mapSearchResponse));
-        }
-
-        return Effect.fail(error);
-      }),
       Effect.tapError((error) =>
         Effect.sync(() => logger.error("Items search error", { error })),
       ),

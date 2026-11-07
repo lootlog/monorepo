@@ -74,8 +74,9 @@ export type CatalogReads<Npc> = {
 /**
  * The reads and writes one catalog change makes. Saving writes the entries
  * to PostgreSQL and replaces them in the search index before the change
- * commits, so the index never holds an entry the database lost; a failed
- * projection rolls the change back and its deliveries are retried.
+ * commits, so a failed projection rolls the change back and its deliveries
+ * are retried. A commit that fails after the projection leaves the index
+ * ahead of the database until the entry's next change or a rebuild.
  */
 export type CatalogChange<Item, Npc> = {
   readonly itemsByUids: (
