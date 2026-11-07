@@ -13,8 +13,8 @@ import { Clock, Effect, Schema } from "effect";
 import { once } from "es-toolkit";
 import {
   compareNpcsStrongestFirst,
-  DROP_SOURCE_BOSS_TYPES,
   getNpcType,
+  isDropSourceBossType,
   MIN_LOOT_NPC_WT,
 } from "@lootlog/domain/npc-type";
 import {
@@ -117,10 +117,6 @@ const lootNpcIdentity = (npc: CreateLootRequest["npcs"][number]) => {
 
   return { identityNamespace: NpcIdentityNamespace.LEGACY, npcId: npc.id };
 };
-
-const dropSourceBossTypes: ReadonlySet<string> = new Set(
-  DROP_SOURCE_BOSS_TYPES,
-);
 
 const LOOT_LOCK_TTL_MS = 30_000;
 
@@ -723,9 +719,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
     if (submission.source === "DIALOG") return undefined;
 
-    const bosses = npcs.filter(
-      (npc) => npc.type !== null && dropSourceBossTypes.has(npc.type),
-    );
+    const bosses = npcs.filter((npc) => isDropSourceBossType(npc.type));
 
     return bosses.length === 1 ? bosses[0] : undefined;
   }

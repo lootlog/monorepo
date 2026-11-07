@@ -165,6 +165,11 @@ export const recordsServicesLive = Layer.effect(
                 try: () => redis.setNX(key, value, ttlSeconds),
                 catch: (error) => error,
               }),
+            setNxGet: (key, value, ttlSeconds) =>
+              Effect.tryPromise({
+                try: () => redis.setNxGet(key, value, ttlSeconds),
+                catch: (error) => error,
+              }),
           },
           applicationLogger,
           makeGuildKillActivityPublisher(database, rabbit),

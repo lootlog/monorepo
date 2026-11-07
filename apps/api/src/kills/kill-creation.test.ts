@@ -11,6 +11,7 @@ import {
 } from "#src/database/drizzle/organization.schema";
 import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import {
+  bossKillTable,
   userKillBucketTable,
   userKillTotalTable,
   memberKillBucketTable,
@@ -49,6 +50,7 @@ describe("kill creation Effect module", () => {
         invalidateScopes: () => Effect.succeed(0),
         deleteIfValue: () => Effect.succeed(0),
         setNx: () => Effect.succeed(false),
+        setNxGet: () => Effect.succeed(null),
       };
 
       const createKill = makeKillCreation(boundary.database, cache, logger);
@@ -69,6 +71,7 @@ describe("kill creation Effect module", () => {
         invalidateScopes: () => Effect.succeed(0),
         deleteIfValue: () => Effect.succeed(0),
         setNx: () => Effect.fail(new Error("redis unavailable")),
+        setNxGet: () => Effect.succeed(null),
       };
 
       const createKill = makeKillCreation(boundary.database, cache, logger);
@@ -96,6 +99,7 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
 
         return true;
       }),
+    setNxGet: () => Effect.succeed(null),
   };
 
   try {
@@ -188,6 +192,7 @@ it("stores the relative NPC icon when a sender reports its CDN URL", async () =>
     invalidateScopes: () => Effect.succeed(0),
     deleteIfValue: () => Effect.succeed(0),
     setNx: () => Effect.succeed(true),
+    setNxGet: () => Effect.succeed(null),
   };
 
   try {
@@ -257,6 +262,7 @@ it("journals an event hero kill in the Organization activity feed", async () => 
     invalidateScopes: () => Effect.succeed(0),
     deleteIfValue: () => Effect.succeed(0),
     setNx: () => Effect.succeed(true),
+    setNxGet: () => Effect.succeed(null),
   };
 
   try {
@@ -332,6 +338,7 @@ for (const { name, failingTable, failedTotalTable } of [
 
           return true;
         }),
+      setNxGet: () => Effect.succeed(null),
       deleteIfValue: (key, token) =>
         Effect.sync(() => {
           if (claims.get(key) === token) claims.delete(key);
@@ -438,6 +445,7 @@ it("does not release a replacement claim when a failed write outlives its claim"
 
         return true;
       }),
+    setNxGet: () => Effect.succeed(null),
     deleteIfValue: (key, token) =>
       Effect.sync(() => {
         // The original claim expired and another request acquired it before cleanup.
@@ -493,6 +501,7 @@ it("lets another member count a guild kill whose first guild write failed", asyn
 
         return true;
       }),
+    setNxGet: () => Effect.succeed(null),
     deleteIfValue: (key, token) =>
       Effect.sync(() => {
         if (claims.get(key) === token) claims.delete(key);
@@ -581,6 +590,141 @@ it("lets another member count a guild kill whose first guild write failed", asyn
         ({ kills }) => kills,
       ),
     ).toEqual([1, 1]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+it("records a boss kill once for every Organization that reports it", async () => {
+  const boundary = await createDatabaseBoundary();
+  const claims = new Map<string, string>();
+
+  const cache: KillCreationCache = {
+    invalidateScopes: () => Effect.succeed(0),
+    deleteIfValue: () => Effect.succeed(0),
+    setNx: (key, value) =>
+      Effect.sync(() => {
+        if (claims.has(key)) return false;
+        claims.set(key, value);
+
+        return true;
+      }),
+    setNxGet: (key, value) =>
+      Effect.sync(() => {
+        const held = claims.get(key) ?? null;
+
+        if (held === null) claims.set(key, value);
+
+        return held;
+      }),
+  };
+
+  try {
+    const database = boundary.database;
+
+    for (const [id, guildId] of [
+      [1, "123"],
+      [2, "456"],
+      [3, "456"],
+    ] as const) {
+      if (id !== 3)
+        await boundary.run(
+          database
+            .insert(guildTable)
+            .values(
+              createGuildFixture({ id: guildId, ownerId: `discord-${id}` }),
+            ),
+        );
+      await boundary.run(
+        database.insert(memberTable).values(
+          createMemberFixture({
+            id,
+            guildId,
+            userId: `discord-${id}`,
+            globalUserId: `user-${id}`,
+          }),
+        ),
+      );
+      await boundary.run(
+        database.insert(userCharactersLootlogSettingsTable).values({
+          userId: `discord-${id}`,
+          accountId: `account-${id}`,
+          characterId: `character-${id}`,
+          catchingGuildIds: [guildId],
+          updatedAt: new Date(),
+        }),
+      );
+    }
+
+    await boundary.run(
+      database.insert(roleTable).values({
+        id: "writers",
+        guildId: "456",
+        name: "Writers",
+        permissions: [Permission.LOOTLOG_LOOTS_WRITE],
+        updatedAt: new Date(0),
+      }),
+    );
+    await boundary.run(
+      database.insert(memberToRoleTable).values({ A: 3, B: "writers" }),
+    );
+
+    const createKill = makeKillCreation(database, cache, logger);
+
+    const report = (id: 1 | 2 | 3, party?: CreateKillRequest["party"]) => {
+      const request: CreateKillRequest = {
+        ...payload,
+        accountId: `account-${id}`,
+        characterId: `character-${id}`,
+      };
+
+      return boundary.run(
+        createKill(`discord-${id}`, party ? { ...request, party } : request),
+      );
+    };
+
+    // The first report names no party; a later one from the other
+    // Organization does, and its party fills in the kill.
+    await report(1);
+    await report(2, [
+      { prof: "w", lvl: 100, alive: true },
+      { prof: "m", lvl: 100, alive: true },
+    ]);
+    // Another member of the second Organization and a retry of the first
+    // report change nothing.
+    await report(3);
+    await report(1);
+
+    // The first Organization counts the kill again once its claim expires.
+    for (const key of claims.keys())
+      if (key.includes(":guild:123:")) claims.delete(key);
+    await report(1);
+
+    expect(
+      (await boundary.run(database.select().from(guildKillBucketTable)))
+        .map(({ guildId, kills }) => ({ guildId, kills }))
+        .toSorted((a, b) => a.guildId.localeCompare(b.guildId)),
+    ).toEqual([
+      { guildId: "123", kills: 2 },
+      { guildId: "456", kills: 1 },
+    ]);
+    expect(
+      (await boundary.run(database.select().from(bossKillTable))).map(
+        ({ guildIds, partyWarriors, partyMages, partyHunters }) => ({
+          guildIds,
+          partyWarriors,
+          partyMages,
+          partyHunters,
+        }),
+      ),
+    ).toEqual([
+      {
+        guildIds: ["123", "456"],
+        partyWarriors: 1,
+        partyMages: 1,
+        partyHunters: 0,
+      },
+    ]);
   } finally {
     await boundary.dispose();
   }

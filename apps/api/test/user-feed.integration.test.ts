@@ -605,6 +605,7 @@ describe("personal Organization activity feed", () => {
 
             return true;
           }),
+        setNxGet: () => Effect.succeed(null),
       },
       applicationLogger,
       makeGuildKillActivityPublisher(database, {
