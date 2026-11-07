@@ -254,6 +254,68 @@ export interface CatalogNpcsResponseDtoOutput {
   estimatedTotalHits: number;
 }
 
+/**
+ * The strongest monster its highest-level item drops from, which pictures the event; none when Lootlog has not seen that item drop.
+ * @nullable
+ */
+export type CatalogEventDtoOutputBoss = {
+  name: string;
+  /** @nullable */
+  icon: string | null;
+} | null;
+
+/**
+ * A Margonem event whose items are in the public catalog
+ */
+export interface CatalogEventDtoOutput {
+  /** The event's slug, its name and year, such as `halloween-2026`; `CatalogControllerGetItemsQuery.event` lists its items. */
+  slug: string;
+  /** The event as the game writes it, such as `Halloween 2026 r.`. */
+  name: string;
+  /**
+     * The year its name gives; none for an event without one.
+     * @nullable
+     */
+  year: number | null;
+  /** How many catalog items belong to the event. */
+  itemCount: number;
+  /**
+     * The strongest monster its highest-level item drops from, which pictures the event; none when Lootlog has not seen that item drop.
+     * @nullable
+     */
+  boss: CatalogEventDtoOutputBoss;
+}
+
+/**
+ * Public catalog events
+ */
+export interface CatalogEventsResponseDtoOutput {
+  /** The latest year first, then by name. */
+  events: CatalogEventDtoOutput[];
+}
+
+/**
+ * A catalog entry by the id and name its links carry, such as `/items/41392-odzienie-dominujacego-czaru` on the wiki.
+ */
+export interface CatalogIndexEntryDtoOutput {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  name: string;
+}
+
+/**
+ * Every item and NPC of the public catalog, unlike its searches, which stop at 1000 hits
+ */
+export interface CatalogIndexResponseDtoOutput {
+  /** Every item, by id. */
+  items: CatalogIndexEntryDtoOutput[];
+  /** Every NPC as it is now, once per monster, as `CatalogControllerGetNpcs` lists it; by id. */
+  npcs: CatalogIndexEntryDtoOutput[];
+}
+
 export type NpcsControllerGetNpcsParams = {
 /**
  * @items.minimum -9007199254740991
@@ -410,6 +472,60 @@ export type CatalogControllerGetNpcs429 = {
   message: string;
 };
 
+export type CatalogControllerGetEventsParams = {
+/**
+ * Only entries of this game edition.
+ */
+gameVersion?: CatalogControllerGetEventsGameVersion;
+};
+
+export type CatalogControllerGetEventsGameVersion = typeof CatalogControllerGetEventsGameVersion[keyof typeof CatalogControllerGetEventsGameVersion];
+
+
+export const CatalogControllerGetEventsGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+export type CatalogControllerGetEvents401 = {
+  message: string;
+};
+
+export type CatalogControllerGetEvents403 = {
+  message: string;
+};
+
+export type CatalogControllerGetEvents429 = {
+  message: string;
+};
+
+export type CatalogControllerGetIndexParams = {
+/**
+ * Only entries of this game edition.
+ */
+gameVersion?: CatalogControllerGetIndexGameVersion;
+};
+
+export type CatalogControllerGetIndexGameVersion = typeof CatalogControllerGetIndexGameVersion[keyof typeof CatalogControllerGetIndexGameVersion];
+
+
+export const CatalogControllerGetIndexGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+export type CatalogControllerGetIndex401 = {
+  message: string;
+};
+
+export type CatalogControllerGetIndex403 = {
+  message: string;
+};
+
+export type CatalogControllerGetIndex429 = {
+  message: string;
+};
+
 export const getNpcsControllerGetNpcsUrl = (params?: NpcsControllerGetNpcsParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -556,6 +672,68 @@ export const getCatalogControllerGetNpcsUrl = (params?: CatalogControllerGetNpcs
 export const catalogControllerGetNpcs = async (params?: CatalogControllerGetNpcsParams, options?: Parameters<typeof catalogFetch>[1]): Promise<CatalogNpcsResponseDtoOutput> => {
 
   return catalogFetch<CatalogNpcsResponseDtoOutput>(getCatalogControllerGetNpcsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export const getCatalogControllerGetEventsUrl = (params?: CatalogControllerGetEventsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/catalog/events?${stringifiedParams}` : `/catalog/events`
+}
+
+/**
+ * @summary List events in the public catalog
+ */
+export const catalogControllerGetEvents = async (params?: CatalogControllerGetEventsParams, options?: Parameters<typeof catalogFetch>[1]): Promise<CatalogEventsResponseDtoOutput> => {
+
+  return catalogFetch<CatalogEventsResponseDtoOutput>(getCatalogControllerGetEventsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export const getCatalogControllerGetIndexUrl = (params?: CatalogControllerGetIndexParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/catalog/index?${stringifiedParams}` : `/catalog/index`
+}
+
+/**
+ * @summary List every item and NPC in the public catalog
+ */
+export const catalogControllerGetIndex = async (params?: CatalogControllerGetIndexParams, options?: Parameters<typeof catalogFetch>[1]): Promise<CatalogIndexResponseDtoOutput> => {
+
+  return catalogFetch<CatalogIndexResponseDtoOutput>(getCatalogControllerGetIndexUrl(params),
   {
     ...options,
     method: 'GET'
