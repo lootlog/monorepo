@@ -7,14 +7,42 @@
  */
 import { catalogFetch } from '../mutators';
 /**
- * How often the boss's kills drop the item, counted by the Organizations whose loot settings keep its rarity, from their hourly kill counts on. Lootlog recomputes it daily and gives none for other NPCs or under 100 such kills.
+ * `PARTY` when the rolls per kill come from the parties the kills reported; `LOOTS` while too few did, estimated from the parties of recorded loots, which counts every member as a survivor and favours larger parties.
+ */
+export type CatalogDropSourceDtoOutputDropRateBasis = typeof CatalogDropSourceDtoOutputDropRateBasis[keyof typeof CatalogDropSourceDtoOutputDropRateBasis];
+
+
+export const CatalogDropSourceDtoOutputDropRateBasis = {
+  PARTY: 'PARTY',
+  LOOTS: 'LOOTS',
+} as const;
+
+/**
+ * `PERSONAL` when every party member gets a loot of their own over the items of their profession, as from colossi; `SHARED` when the party shares the rolls.
+ */
+export type CatalogDropSourceDtoOutputDropRateLootMode = typeof CatalogDropSourceDtoOutputDropRateLootMode[keyof typeof CatalogDropSourceDtoOutputDropRateLootMode];
+
+
+export const CatalogDropSourceDtoOutputDropRateLootMode = {
+  SHARED: 'SHARED',
+  PERSONAL: 'PERSONAL',
+} as const;
+
+/**
+ * How often the boss drops the item, counted by the Organizations whose loot settings keep its rarity, from their hourly kill counts on. Lootlog recomputes it daily and gives none for other NPCs or under 100 such kills.
  * @nullable
  */
 export type CatalogDropSourceDtoOutputDropRate = {
-  /** Kills that dropped the item. */
+  /** Copies of the item those kills dropped. */
   drops: number;
   /** Kills that could have recorded the drop. */
   kills: number;
+  /** Times those kills rolled the boss's loot for someone who could get the item: Margonem rolls a shared loot once per two survivors (5.5 times for 10 on average), and a personal loot once per party member whose profession wears the item. `drops / rolls` is the chance of one roll. */
+  rolls: number;
+  /** `PARTY` when the rolls per kill come from the parties the kills reported; `LOOTS` while too few did, estimated from the parties of recorded loots, which counts every member as a survivor and favours larger parties. */
+  basis: CatalogDropSourceDtoOutputDropRateBasis;
+  /** `PERSONAL` when every party member gets a loot of their own over the items of their profession, as from colossi; `SHARED` when the party shares the rolls. */
+  lootMode: CatalogDropSourceDtoOutputDropRateLootMode;
 } | null;
 
 /**
@@ -34,7 +62,7 @@ export interface CatalogDropSourceDtoOutput {
   /** Whether the NPC no longer drops the item: Lootlog has recorded its loot far too often since the item's last drop for the gap to be chance. */
   retired: boolean;
   /**
-     * How often the boss's kills drop the item, counted by the Organizations whose loot settings keep its rarity, from their hourly kill counts on. Lootlog recomputes it daily and gives none for other NPCs or under 100 such kills.
+     * How often the boss drops the item, counted by the Organizations whose loot settings keep its rarity, from their hourly kill counts on. Lootlog recomputes it daily and gives none for other NPCs or under 100 such kills.
      * @nullable
      */
   dropRate: CatalogDropSourceDtoOutputDropRate;

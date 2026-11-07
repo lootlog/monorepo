@@ -62,19 +62,35 @@ export const CatalogNpcObservation = Schema.Struct({
 export type CatalogNpcObservation = typeof CatalogNpcObservation.Type;
 
 /**
+ * Whether each party member rolls a loot of their own, over the items of
+ * their profession, or the party shares the boss's rolls.
+ */
+export const CatalogLootMode = Schema.Literals(["SHARED", "PERSONAL"]);
+
+/**
+ * Where the rolls come from: the parties kills reported, or, until enough
+ * did, the parties of recorded loots.
+ */
+export const CatalogLootRollsBasis = Schema.Literals(["PARTY", "LOOTS"]);
+
+/**
  * The items a monster no longer drops and how often its kills drop each
- * item; both lists are all of them.
+ * item; both lists are all of them. `drops` counts copies of the item over
+ * `rolls`, the times its loot was rolled for someone who could get the item.
  */
 export const CatalogMonsterDrops = Schema.Struct({
   gameVersion: GameVersionSchema,
   name: Schema.String,
   type: Schema.NullOr(Schema.String),
   retiredItemIds: Schema.Array(Schema.Number),
+  lootMode: CatalogLootMode,
   dropRates: Schema.Array(
     Schema.Struct({
       itemId: Schema.Number,
       drops: Schema.Number,
       kills: Schema.Number,
+      rolls: Schema.Number,
+      basis: CatalogLootRollsBasis,
     }),
   ),
 });

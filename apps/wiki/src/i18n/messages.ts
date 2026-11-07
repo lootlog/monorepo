@@ -552,10 +552,29 @@ const messages = {
     noCurrentDrops:
       "Z tego potwora nie wypada już żaden znany Lootlogowi drop.",
     retiredDrop: "Już nie wypada",
-    dropRate: "Szansa {{rate}} · {{drops}} z {{kills}} zabić",
+    dropRateShared: "{{rate}} na losowanie · {{party}} w {{size}} os.",
+    dropRateSingle: "Szansa {{rate}}",
+    dropRatePersonal: "{{rate}} na gracza",
+    dropRateEstimate: "ok. {{chance}}",
+    dropRateCounts: "{{drops}} szt. w {{rolls}} losowaniach z {{kills}} zabić",
     dropRateUnknown: "Szansa: za mało zabić",
-    dropRatesDescription:
-      "Szansa to odsetek zabić zapisanych przez Lootlogi, w których przedmiot wypadł. Liczymy tylko Lootlogi, które zapisują przedmioty tej rzadkości, i tylko zabicia od czerwca 2026 r.",
+    dropRateMethod: {
+      title: "Jak liczymy szansę",
+      perRoll:
+        "Szansa na losowanie to liczba sztuk przedmiotu podzielona przez liczbę losowań łupu w zabiciach zapisanych przez Lootlogi. Liczymy tylko Lootlogi, które zapisują przedmioty tej rzadkości, i tylko zabicia od czerwca 2026 r. Zabicie zapisane przez kilka Lootlogów liczy się w każdym z nich razem ze swoim łupem, więc nie zawyża szansy.",
+      shared:
+        "Elity II, herosi, tytani i kolosy przyzywane przez Tropicieli Herosów losują łup raz na dwie osoby, które przeżyły walkę: losowania = min(10, 1 + ⌊(ocalali − 1) / 2 + r⌋), gdzie r to 0 albo 0,5 z równą szansą. Pełna drużyna 10 osób dostaje 5 albo 6 losowań, średnio 5,5. Elity II i herosi losują tylko raz, gdy poziomy w drużynie za bardzo się różnią; tytani tego nie sprawdzają. Elity III losują zawsze raz.",
+      fullParty:
+        "Szansa w pełnej drużynie to prawdopodobieństwo, że przedmiot wypadnie choć raz: 1 − ½ × (1 − p)⁵ − ½ × (1 − p)⁶, gdzie p to szansa na losowanie.",
+      personal:
+        "Pozostałe kolosy dają każdemu członkowi drużyny, także temu, kto zginął, osobne losowanie spośród przedmiotów jego profesji. Szansa na gracza to liczba sztuk podzielona przez liczbę graczy z profesjami, które mogą nosić przedmiot.",
+      estimate:
+        "Skład drużyny dodatek wysyła razem z zabiciem. Dopóki takich zabić jest mniej niż 100, liczbę losowań szacujemy ze składu drużyn w zapisanych łupach i dopisujemy „ok.”. Taki szacunek zaniża szansę, bo duże drużyny częściej coś zdobywają, a z łupu nie widać, kto zginął.",
+      source: "Zasady losowania łupu opisuje",
+      sourceLink: "pomoc Margonem",
+      report: "Jeśli coś się nie zgadza,",
+      reportLink: "napisz na Discordzie Lootloga",
+    },
     retiredDropsTitle: "Dawniej wypadało",
     retiredDropsDescription:
       "Lootlog od dawna nie widział tych przedmiotów, choć wielokrotnie zapisywał inny łup z tego potwora. Najpewniej po zmianie łupu już z niego nie wypadają.",

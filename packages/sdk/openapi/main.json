@@ -38948,6 +38948,28 @@
             "type": "string",
             "minLength": 1
           },
+          "party": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "prof": {
+                  "type": "string",
+                  "description": "Margonem profession shortname, such as `w`."
+                },
+                "lvl": {
+                  "type": "number"
+                },
+                "alive": {
+                  "type": "boolean",
+                  "description": "Whether the member survived the battle."
+                }
+              },
+              "required": ["prof", "lvl", "alive"],
+              "additionalProperties": false
+            },
+            "maxItems": 30
+          },
           "character": {
             "type": "object",
             "properties": {

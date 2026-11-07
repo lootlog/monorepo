@@ -253,6 +253,7 @@ export class BattleEventProcessor {
       // A battle the player left goes on, so its NPCs may still survive.
       ending === "ended" ? topNpc : null,
       game,
+      battleWarriors,
     );
 
     if (!killIntent) {
@@ -384,9 +385,14 @@ export class BattleEventProcessor {
     });
   }
 
+  /**
+   * The party goes with the kill as the battle ended: the survivors decide
+   * how many times the boss's loot is rolled.
+   */
   private resolveKillIntent(
     topNpc: DeadNpc | null,
     game: RuntimeGameSnapshot | null,
+    battleWarriors: BattleWarriorsWithAccountId,
   ): KillIntent | null {
     if (!topNpc || !game) return null;
 
@@ -399,6 +405,17 @@ export class BattleEventProcessor {
       npc: npcWithoutType,
       characterId: game.hero.characterId,
       accountId: game.hero.accountId,
+      party: Object.entries(battleWarriors).flatMap(([key, warrior]) =>
+        key.startsWith("-")
+          ? []
+          : [
+              {
+                prof: warrior.prof,
+                lvl: warrior.lvl,
+                alive: !isWarriorDead(warrior),
+              },
+            ],
+      ),
       character: {
         name: game.hero.name,
         lvl: game.hero.level,

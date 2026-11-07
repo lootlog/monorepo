@@ -55,11 +55,18 @@ type IndexedItem = Omit<IndexItem, "droppedBy" | "observedAt"> &
     changedOn?: string | null;
   };
 
-/** One monster's drops of an item over the kills that could record them. */
+/**
+ * One monster's copies of an item over the kills that could record them and
+ * the loot rolls of those kills. Entries indexed before rolls were counted
+ * have none until the next daily run replaces them.
+ */
 export type ItemDropRate = {
   monsterKey: string;
   drops: number;
   kills: number;
+  rolls?: number;
+  basis?: CatalogMonsterDrops["dropRates"][number]["basis"];
+  lootMode?: CatalogMonsterDrops["lootMode"];
 };
 
 type MonsterDropFields = Required<
@@ -220,9 +227,9 @@ export const makeItemsModule = (write: CatalogWrite, logger: AppLogger) => {
           const retired = new Set(monster.retiredItemIds);
 
           const rates = new Map(
-            monster.dropRates.map(({ itemId, drops, kills }) => [
+            monster.dropRates.map(({ itemId, ...rate }) => [
               itemId,
-              { monsterKey, drops, kills },
+              { monsterKey, ...rate, lootMode: monster.lootMode },
             ]),
           );
 

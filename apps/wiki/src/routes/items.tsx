@@ -41,7 +41,7 @@ import {
   prefetchPageQueries,
 } from "@/lib/catalog-page-queries";
 import { canonicalLink } from "@/lib/link-preview";
-import { findMargonemWorld } from "@/lib/margonem-worlds";
+import { findMargonemWorld } from "@lootlog/domain/margonem-worlds";
 import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
 const SEARCH_DEBOUNCE_MS = 300;

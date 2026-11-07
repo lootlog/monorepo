@@ -87,7 +87,15 @@ const page = (query: { limit?: number; offset?: number }) => ({
 });
 
 const toDropRate = (rate: ItemDropRate | undefined) =>
-  rate ? { drops: rate.drops, kills: rate.kills } : null;
+  rate?.rolls !== undefined && rate.basis && rate.lootMode
+    ? {
+        drops: rate.drops,
+        kills: rate.kills,
+        rolls: rate.rolls,
+        basis: rate.basis,
+        lootMode: rate.lootMode,
+      }
+    : null;
 
 /**
  * An id the game gave to a later item names that item now: of the entries of
