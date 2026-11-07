@@ -24,7 +24,9 @@ const NPC_DROPS_LIMIT = 96;
 
 const RELATED_LIMIT = 13;
 
-const ITEM_RESULTS_PAGE_SIZE = 48;
+// The catalog serves at most 96 per request; a full page fills a large screen
+// before "show more" is needed.
+const ITEM_RESULTS_PAGE_SIZE = 96;
 
 /** The item an item page shows, by the id in its URL. */
 export const itemPageQuery = (id: number) =>
