@@ -123,6 +123,7 @@ it("publishes a monster's maps from its latest fights, the drops it no longer gi
     locations?: Array<{ map: string; share: number }>;
     formerLevels?: Array<{ lvl: number; until: string }>;
     retiredItemIds?: number[];
+    lootMode?: string;
     dropRates?: Array<{ itemId: number; drops: number; kills: number }>;
   };
 
@@ -151,6 +152,7 @@ it("publishes a monster's maps from its latest fights, the drops it no longer gi
     name,
     type: "TITAN",
     retiredItemIds: [1],
+    lootMode: "SHARED",
     // No Organization counted the titan's kills.
     dropRates: [],
   });
@@ -198,10 +200,11 @@ it("publishes how often a boss's kills drop each item, over the kills of the Org
         },
       ]);
       yield* database.insert(guildKillBucketTable).values(
+        // Every kill named its party: 2 rolls a kill for one, 4 for the other.
         [
-          { guildId: everything, kills: 200 },
-          { guildId: legendsOnly, kills: 300 },
-        ].map(({ guildId, kills }) => ({
+          { guildId: everything, kills: 200, lootRolls: 400 },
+          { guildId: legendsOnly, kills: 300, lootRolls: 1200 },
+        ].map(({ guildId, kills, lootRolls }) => ({
           periodStart: bucketsBegin,
           guildId,
           world,
@@ -210,6 +213,8 @@ it("publishes how often a boss's kills drop each item, over the kills of the Org
           npcType: "HERO" as const,
           npcLvl: 100,
           kills,
+          partyKills: kills,
+          lootRolls,
           lastKilledAt: killedAt,
         })),
       );
@@ -309,14 +314,20 @@ it("publishes how often a boss's kills drop each item, over the kills of the Org
         message,
       ): Array<{
         name: string;
-        dropRates: Array<{ itemId: number; drops: number; kills: number }>;
+        dropRates: Array<{
+          itemId: number;
+          drops: number;
+          kills: number;
+          rolls: number;
+          basis: string;
+        }>;
       }> => JSON.parse(new TextDecoder().decode(message.content)),
     )
     .find((monster) => monster.name === name)?.dropRates;
 
   expect(rates?.toSorted((a, b) => a.itemId - b.itemId)).toEqual([
     // Only the Organization that keeps uniques could have recorded one.
-    { itemId: 900_001, drops: 20, kills: 200 },
-    { itemId: 900_002, drops: 10, kills: 500 },
+    { itemId: 900_001, drops: 20, kills: 200, rolls: 400, basis: "PARTY" },
+    { itemId: 900_002, drops: 10, kills: 500, rolls: 1600, basis: "PARTY" },
   ]);
 });

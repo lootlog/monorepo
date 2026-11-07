@@ -254,13 +254,17 @@ test("a new loot of an item keeps its drop rates, retirements and changes", asyn
             name: "Nosferatu",
             type: "HERO",
             retiredItemIds: [],
-            dropRates: [{ itemId: 1, drops: 12, kills: 300 }],
+            lootMode: "SHARED",
+            dropRates: [
+              { itemId: 1, drops: 12, kills: 300, rolls: 900, basis: "PARTY" },
+            ],
           },
           {
             gameVersion: "pl",
             name: "Kostucha",
             type: "HERO",
             retiredItemIds: [1],
+            lootMode: "SHARED",
             dropRates: [],
           },
         ],
@@ -297,7 +301,16 @@ test("a new loot of an item keeps its drop rates, retirements and changes", asyn
 
   expect(await storedItem(uid)).toMatchObject({
     worlds: ["later", "new"],
-    dropRates: [{ monsterKey: "pl_Nosferatu_HERO", drops: 12, kills: 300 }],
+    dropRates: [
+      {
+        monsterKey: "pl_Nosferatu_HERO",
+        drops: 12,
+        kills: 300,
+        rolls: 900,
+        basis: "PARTY",
+        lootMode: "SHARED",
+      },
+    ],
     // Nosferatu dropped it again; Kostucha has not.
     retiredDropMonsterKeys: ["pl_Kostucha_HERO"],
     changedOn: "2026-10-01",
@@ -320,7 +333,10 @@ test("replaces one monster's drop rates without touching another monster's", asy
     name,
     type: "HERO",
     retiredItemIds: [],
-    dropRates: [{ itemId: 2, drops, kills: 400 }],
+    lootMode: "SHARED" as const,
+    dropRates: [
+      { itemId: 2, drops, kills: 400, rolls: 800, basis: "PARTY" as const },
+    ],
   });
 
   await catalog(({ items }) =>
@@ -330,9 +346,16 @@ test("replaces one monster's drop rates without touching another monster's", asy
     items.setMonsterDrops({ monsters: [monster("Nosferatu", 9)] }),
   );
 
+  const rate = {
+    kills: 400,
+    rolls: 800,
+    basis: "PARTY",
+    lootMode: "SHARED",
+  } as const;
+
   expect((await storedItem(itemCatalogKey(item(2))))?.dropRates).toEqual([
-    { monsterKey: "pl_Kostucha_HERO", drops: 4, kills: 400 },
-    { monsterKey: "pl_Nosferatu_HERO", drops: 9, kills: 400 },
+    { monsterKey: "pl_Kostucha_HERO", drops: 4, ...rate },
+    { monsterKey: "pl_Nosferatu_HERO", drops: 9, ...rate },
   ]);
 });
 

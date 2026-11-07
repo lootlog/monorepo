@@ -1,0 +1,244 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "a36d70eb-4219-4547-9d33-85ce47f6ba71",
+  "prevIds": ["a3868e7b-ff34-4878-895c-ebc5c1f5d02f"],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": ["column", "public", "GuildKillBucket", "partyKills"],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyKills",
+        "n|col|public.GuildKillBucket.partyKills",
+        "e|col|public.GuildKillBucket.partyKills"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": ["column", "public", "GuildKillBucket", "lootRolls"],
+      "writes": [
+        "s|col|public.GuildKillBucket.lootRolls",
+        "n|col|public.GuildKillBucket.lootRolls",
+        "e|col|public.GuildKillBucket.lootRolls"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "GuildKillBucket",
+        "partyWarriors"
+      ],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyWarriors",
+        "n|col|public.GuildKillBucket.partyWarriors",
+        "e|col|public.GuildKillBucket.partyWarriors"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "GuildKillBucket",
+        "partyPaladins"
+      ],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyPaladins",
+        "n|col|public.GuildKillBucket.partyPaladins",
+        "e|col|public.GuildKillBucket.partyPaladins"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "GuildKillBucket",
+        "partyBladeDancers"
+      ],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyBladeDancers",
+        "n|col|public.GuildKillBucket.partyBladeDancers",
+        "e|col|public.GuildKillBucket.partyBladeDancers"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": ["column", "public", "GuildKillBucket", "partyMages"],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyMages",
+        "n|col|public.GuildKillBucket.partyMages",
+        "e|col|public.GuildKillBucket.partyMages"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "GuildKillBucket",
+        "partyTrackers"
+      ],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyTrackers",
+        "n|col|public.GuildKillBucket.partyTrackers",
+        "e|col|public.GuildKillBucket.partyTrackers"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "GuildKillBucket",
+        "partyHunters"
+      ],
+      "writes": [
+        "s|col|public.GuildKillBucket.partyHunters",
+        "n|col|public.GuildKillBucket.partyHunters",
+        "e|col|public.GuildKillBucket.partyHunters"
+      ],
+      "reads": ["n|tbl|public.GuildKillBucket", "n|sch|public"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillBucket",
+        "name": "partyKills",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillBucket",
+        "name": "lootRolls",
+        "type": "double precision",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillBucket",
+        "name": "partyWarriors",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillBucket",
+        "name": "partyPaladins",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillBucket",
+        "name": "partyBladeDancers",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillBucket",
+        "name": "partyMages",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillBucket",
+        "name": "partyTrackers",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "GuildKillBucket",
+        "name": "partyHunters",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

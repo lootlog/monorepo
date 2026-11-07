@@ -83,16 +83,28 @@ export const CatalogDropSourceDto_Output = Schema.Struct({
   dropRate: Schema.Union([
     Schema.Struct({
       drops: FiniteNumber.annotate({
-        description: "Kills that dropped the item.",
+        description: "Copies of the item those kills dropped.",
       }),
       kills: FiniteNumber.annotate({
         description: "Kills that could have recorded the drop.",
+      }),
+      rolls: FiniteNumber.annotate({
+        description:
+          "Times those kills rolled the boss's loot for someone who could get the item: Margonem rolls a shared loot once per two survivors (5.5 times for 10 on average), and a personal loot once per party member whose profession wears the item. `drops / rolls` is the chance of one roll.",
+      }),
+      basis: Schema.Literals(["PARTY", "LOOTS"]).annotate({
+        description:
+          "`PARTY` when the rolls per kill come from the parties the kills reported; `LOOTS` while too few did, estimated from the parties of recorded loots, which counts every member as a survivor and favours larger parties.",
+      }),
+      lootMode: Schema.Literals(["SHARED", "PERSONAL"]).annotate({
+        description:
+          "`PERSONAL` when every party member gets a loot of their own over the items of their profession, as from colossi; `SHARED` when the party shares the rolls.",
       }),
     }),
     Schema.Null,
   ]).annotate({
     description:
-      "How often the boss's kills drop the item, counted by the Organizations whose loot settings keep its rarity, from their hourly kill counts on. Lootlog recomputes it daily and gives none for other NPCs or under 100 such kills.",
+      "How often the boss drops the item, counted by the Organizations whose loot settings keep its rarity, from their hourly kill counts on. Lootlog recomputes it daily and gives none for other NPCs or under 100 such kills.",
   }),
 }).annotate({
   description: "An NPC an item drops from",

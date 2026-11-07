@@ -66,6 +66,23 @@ export const CreateKillRequest = Schema.Struct({
   }),
   characterId: NonEmptyString,
   accountId: NonEmptyString,
+  /**
+   * The party as the battle ended, which decides how many times the boss's
+   * loot is rolled; omitted by older Game clients.
+   */
+  party: Schema.optionalKey(
+    Schema.Array(
+      Schema.Struct({
+        prof: Schema.String.annotate({
+          description: "Margonem profession shortname, such as `w`.",
+        }),
+        lvl: FiniteNumber,
+        alive: Schema.Boolean.annotate({
+          description: "Whether the member survived the battle.",
+        }),
+      }),
+    ).check(Schema.isMaxLength(30)),
+  ),
   /** The reporting character, shown when filtering personal statistics by character. */
   character: Schema.optionalKey(
     Schema.Struct({

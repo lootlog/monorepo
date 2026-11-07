@@ -11,6 +11,10 @@ import { Clock, Effect, Schema } from "effect";
 import { activityFeedNpcCategory } from "@lootlog/domain/activity-feed";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { getNpcType } from "@lootlog/domain/npc-type";
+import {
+  getKillLootRolls,
+  type KillLootRolls,
+} from "@lootlog/domain/loot-rolls";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -67,6 +71,8 @@ type KillInput = {
   readonly npcProf: string | null;
   readonly npcIcon: string | null;
   readonly lastKilledAt: Date;
+  /** Unknown when the Game client did not report the party. */
+  readonly lootRolls: KillLootRolls | null;
 };
 
 type CharacterInput = {
@@ -315,6 +321,33 @@ export const makeKillCreation = (
     );
   };
 
+  const partyCounts = ({ lootRolls }: KillInput) => ({
+    partyKills: lootRolls ? 1 : 0,
+    lootRolls: lootRolls?.rolls ?? 0,
+    partyWarriors: lootRolls?.members.w ?? 0,
+    partyPaladins: lootRolls?.members.p ?? 0,
+    partyBladeDancers: lootRolls?.members.b ?? 0,
+    partyMages: lootRolls?.members.m ?? 0,
+    partyTrackers: lootRolls?.members.t ?? 0,
+    partyHunters: lootRolls?.members.h ?? 0,
+  });
+
+  const addPartyCounts = (input: KillInput) => {
+    const counts = partyCounts(input);
+    const table = guildKillBucketTable;
+
+    return {
+      partyKills: sql`${table.partyKills} + ${counts.partyKills}`,
+      lootRolls: sql`${table.lootRolls} + ${counts.lootRolls}`,
+      partyWarriors: sql`${table.partyWarriors} + ${counts.partyWarriors}`,
+      partyPaladins: sql`${table.partyPaladins} + ${counts.partyPaladins}`,
+      partyBladeDancers: sql`${table.partyBladeDancers} + ${counts.partyBladeDancers}`,
+      partyMages: sql`${table.partyMages} + ${counts.partyMages}`,
+      partyTrackers: sql`${table.partyTrackers} + ${counts.partyTrackers}`,
+      partyHunters: sql`${table.partyHunters} + ${counts.partyHunters}`,
+    };
+  };
+
   const incrementGuild = (
     input: KillInput & { readonly guildId: string },
     periodStart: Date,
@@ -354,6 +387,7 @@ export const makeKillCreation = (
                   npcId: input.npcId,
                   ...descriptive(input),
                   kills: 1,
+                  ...partyCounts(input),
                 })
                 .onConflictDoUpdate({
                   target: [
@@ -364,6 +398,7 @@ export const makeKillCreation = (
                   ],
                   set: {
                     kills: sql`${guildKillBucketTable.kills} + 1`,
+                    ...addPartyCounts(input),
                     ...descriptive(input),
                   },
                 }),
@@ -416,6 +451,9 @@ export const makeKillCreation = (
       npcIcon:
         data.npc.icon === undefined ? null : normalizeNpcIcon(data.npc.icon),
       lastKilledAt: killedAt,
+      lootRolls: data.party
+        ? getKillLootRolls({ npcType, world: data.world, party: data.party })
+        : null,
     };
 
     const userDedupKey = buildUserKillDedupKey(discordId, {

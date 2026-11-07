@@ -1,4 +1,5 @@
 import {
+  doublePrecision,
   foreignKey,
   index,
   integer,
@@ -166,7 +167,15 @@ export const memberKillBucketTable = pgTable(
   ],
 );
 
-/** Hourly kills counted once per Organization, however many members reported them. */
+const partyCount = (name: string) => integer(name).notNull().default(0);
+
+/**
+ * Hourly kills counted once per Organization, however many members reported
+ * them. `partyKills` counts the kills whose report named the party; the
+ * columns after it sum, over those kills, the loot rolls the party got on
+ * average (`getKillLootRolls`) and its members of each profession, alive or
+ * dead.
+ */
 export const guildKillBucketTable = pgTable(
   "GuildKillBucket",
   {
@@ -181,6 +190,14 @@ export const guildKillBucketTable = pgTable(
     npcIcon: text("npcIcon"),
     kills: integer("kills").notNull(),
     lastKilledAt: killTime("lastKilledAt").notNull(),
+    partyKills: partyCount("partyKills"),
+    lootRolls: doublePrecision("lootRolls").notNull().default(0),
+    partyWarriors: partyCount("partyWarriors"),
+    partyPaladins: partyCount("partyPaladins"),
+    partyBladeDancers: partyCount("partyBladeDancers"),
+    partyMages: partyCount("partyMages"),
+    partyTrackers: partyCount("partyTrackers"),
+    partyHunters: partyCount("partyHunters"),
   },
   (table) => [
     primaryKey({
