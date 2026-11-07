@@ -1,5 +1,5 @@
 import { Check, Scale } from "lucide-react";
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { Button } from "@lootlog/ui/components/button";
 import { useItemComparison } from "@/contexts/item-comparison-context";
 import { t } from "@/i18n/messages";

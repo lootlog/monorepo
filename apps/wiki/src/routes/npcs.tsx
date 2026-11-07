@@ -3,7 +3,7 @@ import {
   type CatalogControllerGetNpcsParams,
   getCatalogControllerGetNpcsQueryOptions,
   useCatalogControllerGetNpcs,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { BasicSearchForm } from "@/components/basic-search-form";
 import { NpcPortrait } from "@/components/common/npc-portrait";

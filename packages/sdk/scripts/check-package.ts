@@ -60,11 +60,13 @@ import { RealtimeClient, REALTIME_JSON_SUBPROTOCOL } from '@lootlog/sdk/realtime
 import * as activity from '@lootlog/sdk/activity';
 import * as battles from '@lootlog/sdk/battlelog';
 import * as search from '@lootlog/sdk/search';
+import * as catalog from '@lootlog/sdk/catalog';
 import type { LootlogGameClientApi } from '@lootlog/game-client-api';
 import { strict as assert } from 'node:assert';
 assert.ok(Object.keys(activity).length > 0);
 assert.ok(Object.keys(battles).length > 0);
 assert.ok(Object.keys(search).length > 0);
+assert.ok(Object.keys(catalog).length > 0);
 let calls = 0;
 const restore = configureLootlogApi({apiKey:'test-only', fetch: async (input,init) => {
   assert.equal(String(input),'https://api.lootlog.pl/users/@me/guilds');

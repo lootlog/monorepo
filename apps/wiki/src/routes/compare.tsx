@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search, Trash2 } from "lucide-react";
-import { useCatalogControllerGetItems } from "@lootlog/client/search";
+import { useCatalogControllerGetItems } from "@lootlog/client/catalog";
 import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ShareLinkButton } from "@/components/common/share-link-button";

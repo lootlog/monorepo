@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import type { EquipmentSet } from "@/lib/equipment-set";
 import type { EquipmentSlotId } from "@/lib/equipment-slots";
 import type { ItemUpgrade } from "@lootlog/domain/item-upgrade";

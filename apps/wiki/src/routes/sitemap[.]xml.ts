@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   catalogControllerGetEvents,
   catalogControllerGetIndex,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { escape } from "es-toolkit";
 import {
   WIKI_GAME_VERSION,

@@ -144,6 +144,36 @@
         "yaml": "catalog:",
       },
     },
+    "apps/catalog": {
+      "name": "@lootlog/catalog",
+      "version": "0.0.0",
+      "dependencies": {
+        "@effect/platform-bun": "catalog:",
+        "@effect/sql-pg": "catalog:",
+        "@lootlog/database": "workspace:*",
+        "@lootlog/domain": "workspace:*",
+        "@lootlog/instrumentation": "workspace:*",
+        "@lootlog/meilisearch": "workspace:*",
+        "@lootlog/messaging": "workspace:*",
+        "@lootlog/protocol": "workspace:*",
+        "@lootlog/schema": "workspace:*",
+        "drizzle-orm": "catalog:",
+        "effect": "catalog:",
+        "es-toolkit": "catalog:",
+        "meilisearch": "^0.62.0",
+      },
+      "devDependencies": {
+        "@lootlog/typescript-config": "workspace:*",
+        "@testcontainers/postgresql": "^12.2.1",
+        "@types/bun": "catalog:",
+        "@types/node": "catalog:",
+        "@types/pg": "^8.23.1",
+        "drizzle-kit": "catalog:",
+        "pg": "^8.23.1",
+        "typescript": "catalog:",
+        "yaml": "catalog:",
+      },
+    },
     "apps/developer": {
       "name": "@lootlog/developer",
       "version": "0.0.9",
@@ -347,8 +377,8 @@
       "version": "1.0.11",
       "dependencies": {
         "@effect/platform-bun": "catalog:",
-        "@lootlog/domain": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
+        "@lootlog/meilisearch": "workspace:*",
         "@lootlog/messaging": "workspace:*",
         "@lootlog/protocol": "workspace:*",
         "@lootlog/schema": "workspace:*",
@@ -357,11 +387,9 @@
         "meilisearch": "^0.62.0",
       },
       "devDependencies": {
-        "@lootlog/api": "workspace:*",
         "@lootlog/typescript-config": "workspace:*",
         "@types/bun": "catalog:",
         "@types/node": "catalog:",
-        "drizzle-orm": "catalog:",
         "typescript": "catalog:",
         "yaml": "catalog:",
       },
@@ -452,6 +480,7 @@
       "dependencies": {
         "@lootlog/client": "workspace:*",
         "@lootlog/domain": "workspace:*",
+        "@lootlog/protocol": "workspace:*",
         "@lootlog/schema": "workspace:*",
         "@lootlog/ui": "workspace:*",
         "@tanstack/react-query": "catalog:",
@@ -613,6 +642,21 @@
       "version": "1.0.2",
       "devDependencies": {
         "@lootlog/typescript-config": "workspace:*",
+        "typescript": "catalog:",
+      },
+    },
+    "packages/meilisearch": {
+      "name": "@lootlog/meilisearch",
+      "version": "0.0.0",
+      "dependencies": {
+        "@lootlog/messaging": "workspace:*",
+        "effect": "catalog:",
+        "es-toolkit": "catalog:",
+        "meilisearch": "^0.62.0",
+      },
+      "devDependencies": {
+        "@lootlog/typescript-config": "workspace:*",
+        "@types/bun": "catalog:",
         "typescript": "catalog:",
       },
     },
@@ -1421,6 +1465,8 @@
 
     "@lootlog/battlelog": ["@lootlog/battlelog@workspace:apps/battlelog"],
 
+    "@lootlog/catalog": ["@lootlog/catalog@workspace:apps/catalog"],
+
     "@lootlog/cli": ["@lootlog/cli@workspace:packages/cli"],
 
     "@lootlog/client": ["@lootlog/client@workspace:packages/client"],
@@ -1448,6 +1494,8 @@
     "@lootlog/landing": ["@lootlog/landing@workspace:apps/landing"],
 
     "@lootlog/margonem": ["@lootlog/margonem@workspace:packages/margonem"],
+
+    "@lootlog/meilisearch": ["@lootlog/meilisearch@workspace:packages/meilisearch"],
 
     "@lootlog/messaging": ["@lootlog/messaging@workspace:packages/messaging"],
 

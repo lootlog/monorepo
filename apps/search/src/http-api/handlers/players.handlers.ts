@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 import { SearchApi } from "../search-api.js";
 import { SearchOperations } from "../search-operations.js";
-import { runSearchOperation } from "./operation.js";
+import { runSearchOperation } from "@lootlog/meilisearch/search-unavailable";
 
 export const PlayersHandlers = HttpApiBuilder.group(
   SearchApi,

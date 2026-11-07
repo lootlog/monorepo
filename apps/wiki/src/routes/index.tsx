@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { getCatalogControllerGetItemsQueryOptions } from "@lootlog/client/search";
+import { getCatalogControllerGetItemsQueryOptions } from "@lootlog/client/catalog";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { AboutWiki } from "@/components/home/about-wiki";
 import { HeroLineup } from "@/components/home/hero-lineup";

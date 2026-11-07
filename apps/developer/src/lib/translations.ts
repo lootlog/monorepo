@@ -23,7 +23,7 @@ export const portalText = {
   integrationDescription:
     "Server applications use an API key. Margonem add-ons use the Lootlog client the player already runs.",
   httpApiDescription:
-    "REST endpoints for timers, loot, kills, events, battles and search.",
+    "REST endpoints for timers, loot, kills, events, battles, items, NPCs and players.",
   sdkDescription:
     "Typed clients for every service and a realtime client, generated from the services’ OpenAPI documents.",
   realtimeDescription:
@@ -37,7 +37,8 @@ export const portalText = {
   activityDescription:
     "The Organization activity log, Member activity stats and your online time.",
   battlelogDescription: "Recorded Margonem battles and their analytics.",
-  searchDescription: "Players, NPCs and items, including the public catalog.",
+  catalogDescription: "Margonem items and NPCs, and the item and NPC catalog.",
+  searchDescription: "Player search by name.",
   footerProduct: "Lootlog",
   footerUserDocs: "User guide",
   footerGitHub: "GitHub",
@@ -142,5 +143,6 @@ export const portalText = {
   main: "Main API",
   activity: "Activity",
   battlelog: "Battles",
+  catalog: "Catalog",
   search: "Search",
 } as const;

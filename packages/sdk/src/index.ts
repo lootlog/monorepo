@@ -8,7 +8,7 @@ export type LootlogApiOptions = {
   environment?: "production" | "development";
   fetch?: ApiServiceConfig["fetch"];
   baseUrls?: Partial<
-    Record<"main" | "activity" | "battlelog" | "search", string>
+    Record<"main" | "activity" | "battlelog" | "search" | "catalog", string>
   >;
 };
 
@@ -18,7 +18,7 @@ export function configureLootlogApi(options: LootlogApiOptions): () => void {
   const prefix = options.environment === "development" ? "dev-" : "";
 
   const configuration = (
-    service: "main" | "activity" | "battlelog" | "search",
+    service: "main" | "activity" | "battlelog" | "search" | "catalog",
   ): ApiServiceConfig => ({
     baseUrl:
       options.baseUrls?.[service] ??
@@ -33,5 +33,6 @@ export function configureLootlogApi(options: LootlogApiOptions): () => void {
     activity: configuration("activity"),
     battlelog: configuration("battlelog"),
     search: configuration("search"),
+    catalog: configuration("catalog"),
   });
 }

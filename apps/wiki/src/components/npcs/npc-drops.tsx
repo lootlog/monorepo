@@ -1,7 +1,7 @@
 import {
   type CatalogNpcDtoOutput,
   useCatalogControllerGetItems,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { partition } from "es-toolkit";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { ItemsByRarity } from "@/components/catalog/items-by-rarity";

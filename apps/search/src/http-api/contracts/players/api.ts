@@ -1,4 +1,4 @@
-import { SearchUnavailable } from "../search-unavailable.js";
+import { SearchUnavailable } from "@lootlog/meilisearch/search-unavailable";
 /** Endpoints owned by the players HTTP module. */
 import {
   HttpApiEndpoint,

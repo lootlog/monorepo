@@ -1,13 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { Effect, Predicate } from "effect";
 import { Meilisearch, type SearchParams } from "meilisearch";
-import { itemCatalogKey, makeItemsModule } from "#src/items/items.service";
-import {
-  configureMeilisearchIndexes,
-  searchIndexSettings,
-} from "#src/meilisearch/meilisearch-indexes.service";
-import type { NpcHit } from "#src/npcs/npc-hit";
-import { makeNpcsModule } from "#src/npcs/npcs.service";
+import { searchIndexSettings } from "#src/http-api/search-operations";
 import { makePlayersModule } from "#src/players/players.service";
 import type { AppLogger } from "#src/shared/logger";
 
@@ -63,20 +57,6 @@ describe("Search Effect modules", () => {
         world: "berufs",
       }),
     );
-    await Effect.runPromise(
-      makeNpcsModule(client, silentLogger).getNpcs({
-        ids: [1, 2],
-        limit: 10,
-        search: "Hero",
-      }),
-    );
-    await Effect.runPromise(
-      makeItemsModule(client, silentLogger).getItems({
-        limit: 10,
-        search: "Sword",
-      }),
-    );
-
     expect(searches).toEqual([
       {
         term: "",
@@ -84,49 +64,10 @@ describe("Search Effect modules", () => {
           filter: 'name IN ["Player One", "Player Two"] AND world = "berufs"',
         }),
       },
-      {
-        term: "Hero",
-        options: expect.objectContaining({ filter: "id IN [1, 2]" }),
-      },
-      {
-        term: "Sword",
-        options: expect.not.objectContaining({ filter: expect.anything() }),
-      },
     ]);
   });
 
-  test("keeps the first NPC per name and type unless ids are requested", async () => {
-    const first = {
-      id: 7,
-      identityNamespace: "legacy",
-      name: "Hero",
-      icon: "npc.gif",
-      lvl: 100,
-      wt: 80,
-      type: "HERO",
-      margonemType: 2,
-      prof: "w",
-      worlds: ["berufs"],
-      gameVersion: "pl",
-    } satisfies NpcHit;
-
-    const hits = [first, { ...first, id: 8, lvl: 150 }];
-
-    const client = makeClient(() => ({
-      search: () => Promise.resolve({ hits }),
-    }));
-
-    const npcs = makeNpcsModule(client, silentLogger);
-
-    expect(await Effect.runPromise(npcs.getNpcs({ limit: 10 }))).toEqual([
-      first,
-    ]);
-    expect(
-      await Effect.runPromise(npcs.getNpcs({ limit: 10, ids: [7, 8] })),
-    ).toEqual(hits);
-  });
-
-  test("generates stable player and NPC document ids and excludes invalid records", async () => {
+  test("generates stable player document ids and excludes invalid records", async () => {
     const indexed: unknown[] = [];
 
     const client = makeClient((name) => ({
@@ -173,42 +114,8 @@ describe("Search Effect modules", () => {
         ],
       }),
     );
-    await Effect.runPromise(
-      makeNpcsModule(client, silentLogger).indexNpcs({
-        npcs: [
-          {
-            id: 7,
-            name: "Hero",
-            icon: "npc.gif",
-            lvl: 100,
-            wt: 80,
-            type: "hero",
-            margonemType: 2,
-            prof: null,
-            world: "berufs",
-            gameVersion: "pl",
-          },
-          {
-            id: 0,
-            name: "Invalid Hero",
-            icon: "npc.gif",
-            lvl: 100,
-            wt: 80,
-            type: "hero",
-            margonemType: 2,
-            prof: null,
-            world: "berufs",
-            gameVersion: "pl",
-          },
-        ],
-      }),
-    );
-
     expect(indexed[0]).toEqual([
       expect.objectContaining({ uid: "1_PlayerOne_berufs" }),
-    ]);
-    expect(indexed[1]).toEqual([
-      expect.objectContaining({ uid: "pl_7_2", worlds: ["berufs"] }),
     ]);
   });
 
@@ -259,108 +166,5 @@ describe("Search Effect modules", () => {
 
     expect(failure._tag).toBe("SearchOperationFailure");
     expect(failure.operation).toBe("search.players.index");
-  });
-
-  test("merges item worlds before indexing", async () => {
-    let indexedDocuments: unknown;
-
-    const client = makeClient(() => ({
-      getDocuments: () =>
-        Promise.resolve({
-          results: [
-            {
-              uid: itemCatalogKey({ gameVersion: "pl", id: 42, name: "Item" }),
-              worlds: ["jaruna"],
-            },
-          ],
-        }),
-      addDocuments: (
-        documents: ReadonlyArray<{
-          id: string | number;
-          name: string;
-          uid: string;
-        }>,
-      ) => {
-        indexedDocuments = documents;
-
-        return {
-          waitTask: () => Promise.resolve({ uid: 1, status: "succeeded" }),
-        };
-      },
-    }));
-
-    const items = makeItemsModule(client, silentLogger);
-
-    await Effect.runPromise(
-      items.indexItems({
-        items: [
-          {
-            id: 42,
-            name: "Item",
-            icon: "item.gif",
-            stat: "lvl=1",
-            lvl: 1,
-            rarity: null,
-            type: null,
-            world: "berufs",
-            gameVersion: "pl",
-          },
-          {
-            id: 42,
-            name: "Item",
-            icon: "item.gif",
-            stat: "lvl=1",
-            lvl: 1,
-            rarity: null,
-            type: null,
-            world: "gefion",
-            gameVersion: "pl",
-          },
-        ],
-      }),
-    );
-
-    expect(indexedDocuments).toEqual([
-      expect.objectContaining({
-        id: 42,
-        uid: itemCatalogKey({ gameVersion: "pl", id: 42, name: "Item" }),
-        worlds: ["berufs", "gefion", "jaruna"],
-      }),
-    ]);
-  });
-
-  test("creates missing indexes and applies their searchable fields", async () => {
-    const created: string[] = [];
-    const searchable: unknown[] = [];
-    const task = { waitTask: () => Promise.resolve({ status: "succeeded" }) };
-    const client = new Meilisearch({ host: "http://search.invalid" });
-    Object.defineProperties(client, {
-      getIndex: {
-        value: () => Promise.reject({ cause: { code: "index_not_found" } }),
-      },
-      createIndex: {
-        value: (name: string) => {
-          created.push(name);
-
-          return task;
-        },
-      },
-      index: {
-        value: () => ({
-          getSettings: () => Promise.resolve({}),
-          updateSettings: (settings: { searchableAttributes?: string[] }) => {
-            if (settings.searchableAttributes)
-              searchable.push(settings.searchableAttributes);
-
-            return task;
-          },
-        }),
-      },
-    });
-
-    await Effect.runPromise(configureMeilisearchIndexes(client, silentLogger));
-
-    expect(created).toHaveLength(3);
-    expect(searchable).toEqual([["name", "stat"]]);
   });
 });

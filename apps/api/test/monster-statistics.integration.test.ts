@@ -135,7 +135,7 @@ it("publishes a monster's maps from its latest fights, the drops it no longer gi
       .find((entry) => entry.name === name);
 
   // The old map is in the latest 1000 fights; the exit holds under 1% of them.
-  expect(monster(RabbitRoutingKey.SEARCH_NPCS_LOCATIONS)).toEqual({
+  expect(monster(RabbitRoutingKey.CATALOG_NPCS_LOCATIONS)).toEqual({
     gameVersion: "pl",
     name,
     type: "TITAN",
@@ -146,7 +146,7 @@ it("publishes a monster's maps from its latest fights, the drops it no longer gi
     // The day the titan was first fought at its new level.
     formerLevels: [{ lvl: 110, until: "2026-01-11" }],
   });
-  expect(monster(RabbitRoutingKey.SEARCH_ITEMS_RETIRED_DROPS)).toEqual({
+  expect(monster(RabbitRoutingKey.CATALOG_ITEMS_RETIRED_DROPS)).toEqual({
     gameVersion: "pl",
     name,
     type: "TITAN",
@@ -302,7 +302,7 @@ it("publishes how often a boss's kills drop each item, over the kills of the Org
   const rates = published
     .filter(
       ({ routingKey }) =>
-        routingKey === RabbitRoutingKey.SEARCH_ITEMS_RETIRED_DROPS,
+        routingKey === RabbitRoutingKey.CATALOG_ITEMS_RETIRED_DROPS,
     )
     .flatMap(
       (

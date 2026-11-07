@@ -3,7 +3,7 @@ import {
   type CatalogItemDtoOutput,
   catalogControllerGetItems,
   getCatalogControllerGetItemsQueryKey,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 
 const PAGE_SIZE = 96;

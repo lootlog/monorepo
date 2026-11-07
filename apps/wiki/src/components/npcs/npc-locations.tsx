@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, MapPin } from "lucide-react";
-import type { CatalogNpcDtoOutput } from "@lootlog/client/search";
+import type { CatalogNpcDtoOutput } from "@lootlog/client/catalog";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
 import { t } from "@/i18n/messages";

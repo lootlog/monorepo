@@ -1,7 +1,7 @@
 import {
   type CatalogItemDtoOutput,
   useCatalogControllerGetItems,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { itemForCharacter } from "@lootlog/domain/elastic-level";

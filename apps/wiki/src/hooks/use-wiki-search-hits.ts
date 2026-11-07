@@ -2,7 +2,7 @@ import { keepPreviousData } from "@tanstack/react-query";
 import {
   useCatalogControllerGetItems,
   useCatalogControllerGetNpcs,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 

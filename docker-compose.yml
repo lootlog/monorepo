@@ -198,6 +198,44 @@ services:
           memory: 512M
     logging: *default-logging
 
+  catalog-db:
+    image: postgres:17-alpine
+    container_name: "catalog-db"
+    restart: unless-stopped
+    shm_size: 128mb
+    command:
+      - postgres
+      - -c
+      - shared_buffers=64MB
+      - -c
+      - effective_cache_size=192MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=30
+    volumes:
+      - catalog-db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${CATALOG_DB_NAME}
+      POSTGRES_USER: ${CATALOG_DB_USER}
+      POSTGRES_PASSWORD: ${CATALOG_DB_PASSWORD}
+    ports:
+      - "5436:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    logging: *default-logging
+
   meilisearch:
     image: "getmeili/meilisearch:v1.22.2"
     restart: unless-stopped
@@ -298,6 +336,7 @@ volumes:
   redis:
   battle-log-db:
   activity-log-db:
+  catalog-db:
 
 configs:
   rabbitmq-local-resources:

@@ -1,7 +1,7 @@
 import {
   type CatalogControllerGetItemsParams,
   CatalogControllerGetItemsSort,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { findEquipmentSlotById } from "@/lib/equipment-slots";
 import { findMargonemWorld } from "@/lib/margonem-worlds";

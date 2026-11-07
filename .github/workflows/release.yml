@@ -39,6 +39,10 @@ on:
         description: Deploy gateway
         type: boolean
         default: false
+      catalog:
+        description: Deploy catalog
+        type: boolean
+        default: false
       search:
         description: Deploy search
         type: boolean
@@ -145,6 +149,7 @@ jobs:
       WEB_VITE_AUTH_SERVICE_URL: ${{ vars.WEB_VITE_AUTH_SERVICE_URL }}
       WEB_VITE_BATTLELOG_API_URL: ${{ vars.WEB_VITE_BATTLELOG_API_URL }}
       WEB_VITE_BATTLELOG_PUBLIC_URL: ${{ vars.WEB_VITE_BATTLELOG_PUBLIC_URL }}
+      WEB_VITE_CATALOG_API_URL: ${{ vars.WEB_VITE_CATALOG_API_URL }}
       WEB_VITE_DISCORD_BOT_PERMISSIONS: ${{ vars.WEB_VITE_DISCORD_BOT_PERMISSIONS }}
       WEB_VITE_DISCORD_CLIENT_ID: ${{ vars.WEB_VITE_DISCORD_CLIENT_ID }}
       WEB_VITE_GATEWAY_URL: ${{ vars.WEB_VITE_GATEWAY_URL }}
@@ -286,6 +291,7 @@ jobs:
                 export VITE_AUTH_SERVICE_URL="$WEB_VITE_AUTH_SERVICE_URL"
                 export VITE_BATTLELOG_API_URL="$WEB_VITE_BATTLELOG_API_URL"
                 export VITE_BATTLELOG_PUBLIC_URL="$WEB_VITE_BATTLELOG_PUBLIC_URL"
+                export VITE_CATALOG_API_URL="$WEB_VITE_CATALOG_API_URL"
                 export VITE_DISCORD_BOT_PERMISSIONS="$WEB_VITE_DISCORD_BOT_PERMISSIONS"
                 export VITE_DISCORD_CLIENT_ID="$WEB_VITE_DISCORD_CLIENT_ID"
                 export VITE_GATEWAY_URL="$WEB_VITE_GATEWAY_URL"

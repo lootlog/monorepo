@@ -1,5 +1,5 @@
 import { orderBy, uniqBy } from "es-toolkit";
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { itemEventSlug } from "@lootlog/domain/item-events";
 import { NpcPortrait } from "@/components/common/npc-portrait";
 import { HOME_EVENTS_SHOWN, useLatestEvents } from "@/hooks/use-latest-events";

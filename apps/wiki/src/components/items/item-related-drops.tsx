@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import {
   type CatalogItemDtoOutput,
   useCatalogControllerGetItems,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ArticleSection } from "@/components/article/article-section";

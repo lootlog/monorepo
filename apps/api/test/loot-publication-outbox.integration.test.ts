@@ -331,7 +331,7 @@ describe("durable loot publications", () => {
       const search = intents.find(
         (intent) =>
           intent.kind === "rabbit" &&
-          intent.routingKey === RabbitRoutingKey.SEARCH_NPCS_INDEX,
+          intent.routingKey === RabbitRoutingKey.CATALOG_NPCS_INDEX,
       );
 
       const snapshot = saved[0]?.npc;
@@ -395,7 +395,7 @@ describe("durable loot publications", () => {
     const search = (await publications(result.id)).find(
       (intent) =>
         intent.kind === "rabbit" &&
-        intent.routingKey === RabbitRoutingKey.SEARCH_ITEMS_INDEX,
+        intent.routingKey === RabbitRoutingKey.CATALOG_ITEMS_INDEX,
     );
 
     expect(search).toMatchObject({
@@ -437,7 +437,7 @@ describe("durable loot publications", () => {
       return (await publications(result.id)).find(
         (intent) =>
           intent.kind === "rabbit" &&
-          intent.routingKey === RabbitRoutingKey.SEARCH_ITEMS_INDEX,
+          intent.routingKey === RabbitRoutingKey.CATALOG_ITEMS_INDEX,
       );
     };
 
@@ -595,7 +595,7 @@ describe("durable loot publications", () => {
       const search = (await publications(result.id)).find(
         (intent) =>
           intent.kind === "rabbit" &&
-          intent.routingKey === RabbitRoutingKey.SEARCH_NPCS_INDEX,
+          intent.routingKey === RabbitRoutingKey.CATALOG_NPCS_INDEX,
       );
 
       return { link, search };
@@ -681,7 +681,7 @@ describe("durable loot publications", () => {
       const search = (await publications(result.id)).find(
         (intent) =>
           intent.kind === "rabbit" &&
-          intent.routingKey === RabbitRoutingKey.SEARCH_NPCS_INDEX,
+          intent.routingKey === RabbitRoutingKey.CATALOG_NPCS_INDEX,
       );
 
       return { hids, id: result.id, search, stored };
@@ -792,7 +792,7 @@ describe("durable loot publications", () => {
       const search = (await publications(result.id)).find(
         (intent) =>
           intent.kind === "rabbit" &&
-          intent.routingKey === RabbitRoutingKey.SEARCH_ITEMS_INDEX,
+          intent.routingKey === RabbitRoutingKey.CATALOG_ITEMS_INDEX,
       );
 
       return {
@@ -1714,8 +1714,8 @@ describe("durable loot publications", () => {
       [
         RabbitRoutingKey.GUILDS_LOOTS_CREATE,
         RabbitRoutingKey.SEARCH_PLAYERS_INDEX,
-        RabbitRoutingKey.SEARCH_NPCS_INDEX,
-        RabbitRoutingKey.SEARCH_ITEMS_INDEX,
+        RabbitRoutingKey.CATALOG_NPCS_INDEX,
+        RabbitRoutingKey.CATALOG_ITEMS_INDEX,
         RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED,
       ].sort(),
     );

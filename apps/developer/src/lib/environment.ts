@@ -7,6 +7,7 @@ export function getPortalEnvironment(hostname: string) {
       activity: "https://activity.lootlog.pl",
       battlelog: "https://battlelog.lootlog.pl",
       search: "https://search.lootlog.pl",
+      catalog: "https://catalog.lootlog.pl",
     };
   }
 
@@ -18,6 +19,7 @@ export function getPortalEnvironment(hostname: string) {
       activity: "https://dev-activity.lootlog.pl",
       battlelog: "https://dev-battlelog.lootlog.pl",
       search: "https://dev-search.lootlog.pl",
+      catalog: "https://dev-catalog.lootlog.pl",
     };
   }
 
@@ -29,6 +31,7 @@ export function getPortalEnvironment(hostname: string) {
       activity: "http://localhost/api/activity",
       battlelog: "http://localhost/api/battlelog",
       search: "http://localhost/api/search",
+      catalog: "http://localhost/api/catalog",
     };
   }
 

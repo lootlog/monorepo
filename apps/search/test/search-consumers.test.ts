@@ -3,8 +3,6 @@ import { RabbitMessaging, type RabbitChannel } from "@lootlog/messaging";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { Meilisearch } from "meilisearch";
 import { SearchOperations } from "../src/http-api/search-operations.js";
-import { makeItemsModule } from "../src/items/items.service.js";
-import { makeNpcsModule } from "../src/npcs/npcs.service.js";
 import { makePlayersModule } from "../src/players/players.service.js";
 import { SearchConsumers } from "../src/search-application.js";
 
@@ -119,27 +117,13 @@ const setup = async () => {
   });
 
   const logger = { info() {}, warn() {}, error() {} };
-  const items = makeItemsModule(client, logger);
-  const npcs = makeNpcsModule(client, logger);
   const players = makePlayersModule(client, logger);
 
   const operations = Layer.succeed(
     SearchOperations,
     SearchOperations.of({
-      indexItems: items.indexItems,
-      setMonsterDrops: items.setMonsterDrops,
-      setItemRevisions: items.setItemRevisions,
-      indexNpcs: npcs.indexNpcs,
-      setNpcLocations: npcs.setLocations,
       indexPlayers: players.indexPlayers,
       searchPlayers: () => Effect.die("unused"),
-      searchNpcs: () => Effect.die("unused"),
-      searchItems: () => Effect.die("unused"),
-      searchAll: () => Effect.die("unused"),
-      catalogItems: () => Effect.die("unused"),
-      catalogNpcs: () => Effect.die("unused"),
-      catalogEvents: () => Effect.die("unused"),
-      catalogIndex: () => Effect.die("unused"),
     }),
   );
 
@@ -203,55 +187,23 @@ const setup = async () => {
   return { runtime, ack, nack, dispatch, writes, complete, stored };
 };
 
-test("coalesces each index independently and acknowledges only completed Meilisearch tasks", async () => {
+test("coalesces each queue independently and acknowledges only completed Meilisearch tasks", async () => {
   const fixture = await setup();
 
   try {
     for (const id of [1, 2]) {
       fixture.dispatch("search-players-index", [player(id)]);
-      fixture.dispatch("search.items.index", [
-        {
-          id,
-          name: `Item ${id}`,
-          icon: "i.gif",
-          stat: "",
-          lvl: 1,
-          rarity: null,
-          type: null,
-          world: "test",
-          gameVersion: "pl",
-        },
-      ]);
-      fixture.dispatch("search-npcs-index", [
-        {
-          id,
-          name: `Npc ${id}`,
-          icon: "n.gif",
-          prof: null,
-          lvl: 1,
-          wt: 1,
-          type: "COMMON",
-          margonemType: 0,
-          world: "test",
-          gameVersion: "pl",
-        },
-      ]);
+      fixture.dispatch("search.players.replay", [player(id + 10)]);
     }
 
-    await until(() => fixture.writes.length === 3);
-    expect(fixture.writes.map(({ index }) => index).sort()).toEqual([
-      "items",
-      "npcs",
-      "players",
-    ]);
+    await until(() => fixture.writes.length === 2);
     expect(fixture.writes.map(({ documents }) => documents.length)).toEqual([
-      2, 2, 2,
+      2, 2,
     ]);
     expect(fixture.ack).not.toHaveBeenCalled();
     fixture.complete(1);
     fixture.complete(2);
-    fixture.complete(3);
-    await until(() => fixture.ack.mock.calls.length === 6);
+    await until(() => fixture.ack.mock.calls.length === 4);
     expect(fixture.nack).not.toHaveBeenCalled();
   } finally {
     await fixture.runtime.dispose();

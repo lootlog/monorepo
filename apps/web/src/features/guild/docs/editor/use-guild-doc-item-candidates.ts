@@ -1,6 +1,6 @@
 import { useLootItemByHid } from "@/hooks/api/use-loot-item-by-hid";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useCatalogControllerGetItems } from "@lootlog/client/search";
+import { useCatalogControllerGetItems } from "@lootlog/client/catalog";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
   lootItemToGuildDocSnapshot,

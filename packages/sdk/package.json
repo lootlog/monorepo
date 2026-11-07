@@ -42,6 +42,10 @@
       "types": "./dist/search.d.ts",
       "import": "./dist/search.js"
     },
+    "./catalog": {
+      "types": "./dist/catalog.d.ts",
+      "import": "./dist/catalog.js"
+    },
     "./realtime": {
       "types": "./dist/realtime.d.ts",
       "import": "./dist/realtime.js"
