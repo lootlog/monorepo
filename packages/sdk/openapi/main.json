@@ -28642,7 +28642,8 @@
               },
               "prof": {
                 "type": "string",
-                "minLength": 1
+                "minLength": 1,
+                "description": "Margonem profession shortname; omitted for a Hero Tracker, which has none."
               },
               "wt": {
                 "type": "number"
@@ -28668,16 +28669,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "id",
-              "name",
-              "location",
-              "lvl",
-              "prof",
-              "wt",
-              "icon",
-              "type"
-            ],
+            "required": ["id", "name", "location", "lvl", "wt", "icon", "type"],
             "additionalProperties": false
           },
           "partyGathering": {
@@ -28816,7 +28808,8 @@
               },
               "prof": {
                 "type": "string",
-                "minLength": 1
+                "minLength": 1,
+                "description": "Margonem profession shortname; omitted for a Hero Tracker, which has none."
               },
               "wt": {
                 "type": "number"
@@ -28842,16 +28835,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "id",
-              "name",
-              "location",
-              "lvl",
-              "prof",
-              "wt",
-              "icon",
-              "type"
-            ],
+            "required": ["id", "name", "location", "lvl", "wt", "icon", "type"],
             "additionalProperties": false
           },
           "partyGathering": {
