@@ -1,13 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { readCatalogUpstream } from "@/lib/catalog-upstream";
-
-/** The catalog reads the wiki's pages make; anything else stays unreachable. */
-const CATALOG_PATHS = new Set([
-  "catalog/items",
-  "catalog/npcs",
-  "catalog/events",
-  "catalog/index",
-]);
+import {
+  catalogUpstreamUrl,
+  readCatalogUpstream,
+} from "@/lib/catalog-upstream";
 
 // Catalog answers are the same for every reader and change a few times a
 // day, so the edge keeps them briefly instead of asking the cluster again.
@@ -21,16 +16,15 @@ export const Route = createFileRoute("/api/catalog/$")({
   server: {
     handlers: {
       GET: async ({ params, request }) => {
-        const path = params._splat ?? "";
-
-        if (!CATALOG_PATHS.has(path)) {
-          return new Response(null, { status: 404 });
-        }
-
         const { baseUrl, headers } = readCatalogUpstream();
-        const upstream = new URL(path, `${baseUrl.replace(/\/$/, "")}/`);
 
-        upstream.search = new URL(request.url).search;
+        const upstream = catalogUpstreamUrl(
+          baseUrl,
+          params._splat ?? "",
+          new URL(request.url).search,
+        );
+
+        if (!upstream) return new Response(null, { status: 404 });
 
         // The key is the catalog's URL, which carries no credential.
         const key = new Request(upstream);
