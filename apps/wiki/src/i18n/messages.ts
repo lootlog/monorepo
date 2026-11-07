@@ -886,8 +886,8 @@ const messages = {
     heroTrackers: "Tropiciele Herosów",
     type: "Rodzaj",
     elasticLevel: "Jak postać",
-    topLocation: "Najczęściej",
-    locationCount: "Mapy",
+    mapsTitle: "Mapy",
+    allMaps: "Wszystkie mapy ({{count}})",
     historyTitle: "Historia",
   },
   npcTypes: {
