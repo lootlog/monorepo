@@ -42,4 +42,20 @@ export const CATALOG_OPERATIONS = [
     access: "read",
     data: "public",
   },
+  {
+    service: "catalog",
+    method: "GET",
+    path: "/catalog/events",
+    operationId: "CatalogController_getEvents",
+    access: "read",
+    data: "public",
+  },
+  {
+    service: "catalog",
+    method: "GET",
+    path: "/catalog/index",
+    operationId: "CatalogController_getIndex",
+    access: "read",
+    data: "public",
+  },
 ] as const satisfies readonly PublicApiOperation[];
