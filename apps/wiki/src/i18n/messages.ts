@@ -561,7 +561,7 @@ const messages = {
     dropRateMethod: {
       title: "Jak liczymy szansę",
       perRoll:
-        "Szansa na losowanie to liczba sztuk przedmiotu podzielona przez liczbę losowań łupu w zabiciach zapisanych przez Lootlogi. Liczymy tylko Lootlogi, które zapisują przedmioty tej rzadkości, i tylko zabicia od czerwca 2026 r. Zabicie zapisane przez kilka Lootlogów liczy się w każdym z nich razem ze swoim łupem, więc nie zawyża szansy.",
+        "Szansa na losowanie to liczba sztuk przedmiotu podzielona przez liczbę losowań łupu w zabiciach zapisanych przez Lootlogi. Liczymy tylko zabicia, które zapisał choć jeden Lootlog zapisujący przedmioty tej rzadkości, i tylko od listopada 2026 r. Zabicie i jego łup liczą się raz, nawet gdy zapisało je kilka Lootlogów.",
       shared:
         "Elity II, herosi, tytani i kolosy przyzywane przez Tropicieli Herosów losują łup raz na dwie osoby, które przeżyły walkę: losowania = min(10, 1 + ⌊(ocalali − 1) / 2 + r⌋), gdzie r to 0 albo 0,5 z równą szansą. Pełna drużyna 10 osób dostaje 5 albo 6 losowań, średnio 5,5. Elity II i herosi losują tylko raz, gdy poziomy w drużynie za bardzo się różnią; tytani tego nie sprawdzają. Elity III losują zawsze raz.",
       fullParty:

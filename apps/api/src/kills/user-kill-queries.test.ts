@@ -100,6 +100,7 @@ describe("per-character personal kills", () => {
       deleteIfValue: () => Effect.succeed(0),
       setNx: (key) =>
         Effect.sync(() => !claims.has(key) && Boolean(claims.add(key))),
+      setNxGet: () => Effect.succeed(null),
     };
 
     try {
