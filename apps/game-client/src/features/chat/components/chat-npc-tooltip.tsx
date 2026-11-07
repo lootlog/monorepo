@@ -23,7 +23,7 @@ export const ChatNpcTooltip: FC<ChatNpcTooltipProps> = ({
   const showLocation = appearance.showNpcLocationAndCoordinates;
 
   const details = [
-    appearance.showNpcLevel ? `(${npc.lvl}${npc.prof})` : "",
+    appearance.showNpcLevel ? `(${npc.lvl}${npc.prof ?? ""})` : "",
     showLocation ? getChatNpcLocationName(npc) : "",
     showLocation ? getChatNpcCoordinatesLabel(npc) : "",
   ]

@@ -124,3 +124,21 @@ test("event heroes keep the hero settings a player chose until set apart", () =>
     sound: false,
   });
 });
+
+test("a player sending heroes sends Hero Trackers until set apart", () => {
+  const detector = normalizeDetector({
+    HERO: { detect: true, autoSend: true },
+  });
+
+  expect(detector.HERO_TRACKER).toEqual(detector.HERO);
+
+  const separated = normalizeDetector({
+    HERO: { autoSend: true },
+    HERO_TRACKER: { autoSend: false },
+  });
+
+  expect(separated.HERO_TRACKER).toEqual({
+    ...separated.HERO,
+    autoSend: false,
+  });
+});
