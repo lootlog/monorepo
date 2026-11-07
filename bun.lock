@@ -377,7 +377,6 @@
       "version": "1.0.11",
       "dependencies": {
         "@effect/platform-bun": "catalog:",
-        "@lootlog/domain": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
         "@lootlog/meilisearch": "workspace:*",
         "@lootlog/messaging": "workspace:*",
