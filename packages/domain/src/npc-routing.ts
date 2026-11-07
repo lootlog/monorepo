@@ -6,7 +6,7 @@ import {
   type NpcRoutingData,
   type NpcRoutingTier,
 } from "@lootlog/schema/npc-routing";
-import { getNpcType } from "./npc-type.js";
+import { getNpcType, isHeroTrackerName } from "./npc-type.js";
 
 const isNpcTypeEnum = Schema.is(NpcTypeSchema);
 
@@ -21,6 +21,12 @@ export function resolveNpcType(
 
   if (isNpcTypeEnum(npc.type)) {
     return npc.type;
+  }
+
+  // A Hero Tracker reports no weight or profession, which would otherwise
+  // route it as a plain NPC to everyone holding the base permission.
+  if (npc.name && isHeroTrackerName(npc.name)) {
+    return NpcTypeEnum.HERO_TRACKER;
   }
 
   const weight = normalizeNpcWeight(npc.wt);

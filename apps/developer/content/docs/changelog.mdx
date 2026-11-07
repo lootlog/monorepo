@@ -29,6 +29,12 @@ functions, which `@lootlog/sdk/search` no longer exports. `configureLootlogApi`
 accepts `baseUrls.catalog` and points it at `https://catalog.lootlog.pl`, or
 `https://dev-catalog.lootlog.pl` with `environment: "development"`.
 
+## 2026-11-07 — Hero Trackers in chat
+
+An NPC chat message can report a Hero Tracker, whose template has no
+profession. `npc.prof` on chat messages is now optional: it is omitted for a
+Hero Tracker, and present for every other NPC as before.
+
 ## 2026-11-06 — Public catalog index
 
 The Search API adds `GET /public/catalog/index`, which works without an API
