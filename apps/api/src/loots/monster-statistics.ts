@@ -1,3 +1,7 @@
+import type {
+  CatalogMonsterDrops,
+  CatalogMonsterLocations,
+} from "@lootlog/protocol/rabbit/catalog";
 import type { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { sql } from "drizzle-orm";
@@ -63,13 +67,15 @@ export const makeMonsterStatisticsPublisher = (
     );
 
     // The retired drops message carries each monster's drop rates too.
-    const monsterDrops = toRetiredDrops(statistics.drops).map((monster) => ({
-      ...monster,
-      dropRates:
-        dropRates.get(
-          JSON.stringify([monster.gameVersion, monster.name, monster.type]),
-        ) ?? [],
-    }));
+    const monsterDrops = toRetiredDrops(statistics.drops).map(
+      (monster): CatalogMonsterDrops => ({
+        ...monster,
+        dropRates:
+          dropRates.get(
+            JSON.stringify([monster.gameVersion, monster.name, monster.type]),
+          ) ?? [],
+      }),
+    );
 
     const formerLevels = new Map(
       toMonsterFormerLevels(statistics.levels).map((monster) => [
@@ -80,7 +86,7 @@ export const makeMonsterStatisticsPublisher = (
 
     // The locations message carries each monster's former levels too.
     const locations = toMonsterLocations(statistics.locations).map(
-      (monster) => ({
+      (monster): CatalogMonsterLocations => ({
         ...monster,
         formerLevels:
           formerLevels.get(

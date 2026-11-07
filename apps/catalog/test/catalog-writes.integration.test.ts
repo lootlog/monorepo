@@ -137,13 +137,14 @@ const storedNpcs = async () =>
 const item = (id: number, world = "new") => ({
   id,
   name: `Item ${id}`,
-  world,
+  worlds: [world],
   icon: "item.gif",
   stat: "",
   lvl: 1,
   rarity: null,
   type: null,
   gameVersion: "pl" as const,
+  observedAt: "2026-10-01T00:00:00.000Z",
 });
 
 function npcDrop(id: number, name: string) {
@@ -394,6 +395,8 @@ const reuzen = {
   prof: null,
   world: "berufs",
   gameVersion: "pl" as const,
+  lootId: 1,
+  observedAt: "2026-10-01T00:00:00.000Z",
 };
 
 // An older client's entry from before the monster lost eight levels.
@@ -486,7 +489,7 @@ test("the catalog index names an id the game gave to a later item by that item, 
   expect(found.hits[0]).not.toHaveProperty("worlds");
 });
 
-test("a monster's maps and former levels reach each identity and survive new loots and an older publisher", async () => {
+test("a monster's maps and former levels reach each identity and survive new loots", async () => {
   const locations = [{ map: "Grota Martwodrzewów - sala", share: 1 }];
   const formerLevels = [{ lvl: 252, until: "2026-01-15" }];
 
@@ -506,10 +509,6 @@ test("a monster's maps and former levels reach each identity and survive new loo
   );
   await catalog(({ npcs }) =>
     npcs.setLocations({ monsters: [{ ...monster, locations, formerLevels }] }),
-  );
-  // An older publisher sends no former levels.
-  await catalog(({ npcs }) =>
-    npcs.setLocations({ monsters: [{ ...monster, locations }] }),
   );
   await catalog(({ npcs }) =>
     npcs.indexNpcs({ npcs: [{ ...reuzen, lootId: 30, world: "tempest" }] }),

@@ -8,7 +8,7 @@ const level = (
   firstFoughtOn: string,
   recentFights: number,
 ) => ({
-  gameVersion: "pl",
+  gameVersion: "pl" as const,
   name: "Reuzen",
   type: "COLOSSUS",
   lvl,

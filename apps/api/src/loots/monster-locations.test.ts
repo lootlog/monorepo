@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { toMonsterLocations } from "./monster-locations.js";
 
 const fights = (map: string, count: number) => ({
-  gameVersion: "pl",
+  gameVersion: "pl" as const,
   name: "Złoty Roger",
   type: "COLOSSUS",
   map,

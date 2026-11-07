@@ -488,8 +488,7 @@ export const makeCatalogModule = (
       gameVersionFilter(query.gameVersion),
       query.ids?.length ? buildMeilisearchInFilter("id", query.ids) : undefined,
       // A listing shows each monster as it is now; a lookup also finds the
-      // identities of its earlier versions. Entries indexed before the flag
-      // existed have none and count as current.
+      // identities of its earlier versions.
       lookup ? undefined : "current != false",
       query.types?.length
         ? buildMeilisearchInFilter("type", query.types)

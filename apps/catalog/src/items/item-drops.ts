@@ -2,7 +2,7 @@ import type { GameVersion } from "@lootlog/schema/game-version";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import { npcCatalogKey, npcMonsterKey } from "#src/npcs/npcs.service";
 import { earliestSeenAt, toSeenAt } from "#src/shared/first-seen";
-import type { IndexItemsCommand } from "./index-items-command.js";
+import type { CatalogItemObservation } from "@lootlog/protocol/rabbit/catalog";
 
 /**
  * An item keeps the NPCs of this many monsters it drops from; later monsters
@@ -36,7 +36,7 @@ export type ItemDropFields = {
   droppedByTypes: string[];
 };
 
-type IndexItem = IndexItemsCommand["items"][number];
+type IndexItem = CatalogItemObservation;
 
 const toDropSource = (
   npc: NonNullable<IndexItem["droppedBy"]>,

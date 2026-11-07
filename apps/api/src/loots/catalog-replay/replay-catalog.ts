@@ -20,8 +20,11 @@ import {
   RabbitRoutingKey,
   type RabbitRoutingKeyName,
 } from "@lootlog/protocol/rabbit/topology";
-import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
-import { Config, Effect, Layer, Redacted, Schema } from "effect";
+import type {
+  CatalogItemObservation,
+  CatalogNpcObservation,
+} from "@lootlog/protocol/rabbit/catalog";
+import { Config, Effect, Layer, Redacted } from "effect";
 import { chunk, groupBy } from "es-toolkit";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import { makeItemRevisionsPublisher } from "#src/loots/item-revisions-publisher";
@@ -34,10 +37,6 @@ import { buildNpcReplayQuery } from "./npc-replay-query.js";
 import { buildPlayerReplayQuery } from "./player-replay-query.js";
 
 const OBSERVATIONS_PER_MESSAGE = 500;
-
-const decodeIdentityNamespace = Schema.decodeUnknownSync(
-  NpcIdentityNamespaceSchema,
-);
 
 const toObservedAt = (epochMilliseconds: number) =>
   new Date(epochMilliseconds).toISOString();
@@ -75,7 +74,7 @@ const replayItems = Effect.gen(function* () {
   const sourcesBySnapshot = groupBy(sources, (source) => source.itemSnapshotId);
 
   const observations = rows.flatMap(({ snapshotId, firstSeenAt, ...item }) => {
-    const observation = {
+    const observation: CatalogItemObservation = {
       ...item,
       lvl: item.lvl ?? 0,
       observedAt: toObservedAt(firstSeenAt),
@@ -84,12 +83,12 @@ const replayItems = Effect.gen(function* () {
     return [
       observation,
       ...(sourcesBySnapshot[snapshotId] ?? []).map(
-        ({ itemSnapshotId: _itemSnapshotId, identityNamespace, ...npc }) => ({
+        ({
+          itemSnapshotId: _itemSnapshotId,
+          ...npc
+        }): CatalogItemObservation => ({
           ...observation,
-          droppedBy: {
-            ...npc,
-            identityNamespace: decodeIdentityNamespace(identityNamespace),
-          },
+          droppedBy: npc,
         }),
       ),
     ];
@@ -104,9 +103,9 @@ const replayNpcs = Effect.gen(function* () {
 
   yield* publishInOrder(
     RabbitRoutingKey.CATALOG_NPCS_REPLAY,
-    rows.map((npc) => ({
+    rows.map((npc): CatalogNpcObservation => ({
       id: npc.id,
-      identityNamespace: decodeIdentityNamespace(npc.identityNamespace),
+      identityNamespace: npc.identityNamespace,
       name: npc.name,
       type: npc.type ?? "",
       prof: npc.prof,
