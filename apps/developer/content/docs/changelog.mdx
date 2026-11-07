@@ -3,6 +3,14 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-07 — Catalog lookups
+
+- `GET /catalog/npcs` with `keys` ignores `search`: a key names its NPC
+  exactly.
+- `GET /catalog/items` with `ids` and no `sort` returns, for an id the game
+  gave to a newer item, that newer item. `GET /catalog/index` names such an id
+  the same way.
+
 ## 2026-11-07 — Catalog API (breaking)
 
 Items and NPCs move from the Search API to the new Catalog API at

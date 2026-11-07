@@ -5,6 +5,17 @@ import { makeCatalogModule } from "./catalog.service.js";
 
 const logger = { info() {}, warn() {}, error() {} };
 
+type CatalogReads = Parameters<typeof makeCatalogModule>[1];
+
+/** Database reads for tests that make none. */
+const noReads: CatalogReads = {
+  monsterKeyOf: () => Effect.die("unexpected read"),
+  npcsByUids: () => Effect.die("unexpected read"),
+  npcsByMonsterKeys: () => Effect.die("unexpected read"),
+  itemNames: () => Effect.die("unexpected read"),
+  currentNpcNames: () => Effect.die("unexpected read"),
+};
+
 /**
  * A Meilisearch that answers item searches with `hits`, a search for elastic
  * items alone with `elasticHits`, and NPC searches with what `npcs` returns
@@ -14,6 +25,7 @@ const catalogWith = (
   hits: unknown[],
   npcs: (filter: string | undefined) => unknown[] = () => [],
   elasticHits: unknown[] = [],
+  reads: CatalogReads = noReads,
 ) => {
   const searches: Array<{ filter?: string; attributesToRetrieve?: string[] }> =
     [];
@@ -45,7 +57,11 @@ const catalogWith = (
     },
   });
 
-  return { catalog: makeCatalogModule(client, logger), searches, npcSearches };
+  return {
+    catalog: makeCatalogModule(client, reads, logger),
+    searches,
+    npcSearches,
+  };
 };
 
 const nosferatu = {
@@ -97,7 +113,15 @@ test("lists a monster's drops from any of its identities, marking the monsters t
         dropRates: [{ monsterKey: kostucha.monsterKey, drops: 9, kills: 600 }],
       },
     ],
-    () => [{ monsterKey: nosferatu.monsterKey }],
+    undefined,
+    [],
+    {
+      ...noReads,
+      monsterKeyOf: (key) =>
+        Effect.succeed(
+          key === "pl_runtime_9001_2" ? nosferatu.monsterKey : undefined,
+        ),
+    },
   );
 
   const response = await Effect.runPromise(
@@ -271,6 +295,53 @@ test("an old link to a rebalanced monster's former identity shows the monster as
   );
 });
 
+test("an old link by catalog key to a rebalanced monster's former identity shows the monster as it is now, read from the database", async () => {
+  const reuzen = {
+    gameVersion: "pl" as const,
+    monsterKey: "pl_Reuzen_COLOSSUS",
+    name: "Reuzen",
+    icon: "reuzen.gif",
+    type: "COLOSSUS" as const,
+    locations: [],
+    formerLevels: [],
+  };
+
+  const former = {
+    ...reuzen,
+    id: 173652,
+    uid: "pl_173652_2",
+    identityNamespace: "legacy" as const,
+    lvl: 252,
+    current: false,
+  };
+
+  const current = {
+    ...reuzen,
+    id: 306076,
+    uid: "pl_template_306076_2",
+    identityNamespace: "template" as const,
+    lvl: 244,
+    current: true,
+  };
+
+  const { catalog, npcSearches } = catalogWith([], undefined, [], {
+    ...noReads,
+    npcsByUids: (uids) =>
+      Effect.succeed(uids.includes(former.uid) ? [former] : []),
+    npcsByMonsterKeys: () => Effect.succeed([former, current]),
+  });
+
+  const found = await Effect.runPromise(
+    catalog.getNpcs({ gameVersion: "pl", keys: [former.uid] }),
+  );
+
+  expect(found).toEqual({
+    estimatedTotalHits: 1,
+    hits: [expect.objectContaining({ key: current.uid, lvl: 244 })],
+  });
+  expect(npcSearches).toEqual([]);
+});
+
 test("narrows items to one edition's event drops of a kind of boss that carry the required stats and bonuses and lack the excluded ones", async () => {
   const { catalog, searches } = catalogWith([]);
 
@@ -317,7 +388,7 @@ test("a world's search keeps items of no event and of the editions it saw, inclu
   });
 
   await Effect.runPromise(
-    makeCatalogModule(client, logger).getItems({
+    makeCatalogModule(client, noReads, logger).getItems({
       gameVersion: "pl",
       availableSince: "2026-06-29",
     }),
@@ -428,7 +499,7 @@ test("events take their name from the year the slug names, the latest first", as
   });
 
   const { events } = await Effect.runPromise(
-    makeCatalogModule(client, logger).getEvents({ gameVersion: "pl" }),
+    makeCatalogModule(client, noReads, logger).getEvents({ gameVersion: "pl" }),
   );
 
   expect(events).toEqual([
@@ -447,67 +518,4 @@ test("events take their name from the year the slug names, the latest first", as
       boss: { name: "Nosferatu", icon: "nosferatu.gif" },
     },
   ]);
-});
-
-test("the index reads every document past one batch, each item and monster once", async () => {
-  const fetches: Array<{ index: string; offset: number; filter?: string }> = [];
-
-  // Item 1 comes twice, as a renamed version is stored after the first.
-  const items = [
-    ...Array.from({ length: 5001 }, (_, index) => ({
-      id: 5001 - index,
-      name: `Item ${5001 - index}`,
-    })),
-    { id: 1, name: "Renamed item 1" },
-  ];
-
-  const npcs = [
-    {
-      id: 2,
-      name: "Tanroth",
-      type: "HERO",
-      gameVersion: "pl",
-      identityNamespace: "runtime",
-    },
-    {
-      id: 1,
-      name: "Tanroth",
-      type: "HERO",
-      gameVersion: "pl",
-      identityNamespace: "template",
-    },
-  ];
-
-  const client = new Meilisearch({
-    host: "http://search.invalid",
-    httpClient: (input, init) => {
-      const body = JSON.parse(String(init?.body));
-
-      const index = String(input).includes("/indexes/catalog_npcs/")
-        ? "npcs"
-        : "items";
-
-      const documents = index === "npcs" ? npcs : items;
-
-      fetches.push({ index, offset: body.offset, filter: body.filter });
-
-      return Promise.resolve({
-        results: documents.slice(body.offset, body.offset + body.limit),
-        offset: body.offset,
-        limit: body.limit,
-        total: documents.length,
-      });
-    },
-  });
-
-  const index = await Effect.runPromise(
-    makeCatalogModule(client, logger).getIndex({ gameVersion: "pl" }),
-  );
-
-  expect(index.items).toHaveLength(5001);
-  expect(index.items[0]).toEqual({ id: 1, name: "Item 1" });
-  expect(index.npcs).toEqual([{ id: 1, name: "Tanroth" }]);
-  expect(fetches.find(({ index }) => index === "npcs")?.filter).toBe(
-    'gameVersion = "pl" AND current != false',
-  );
 });

@@ -7,6 +7,7 @@ import {
 import { Effect, Layer, ManagedRuntime, Redacted } from "effect";
 import { Meilisearch } from "meilisearch";
 import pg from "pg";
+import { makeCatalogModule } from "#src/catalog/catalog.service";
 import { makeCatalogStore } from "#src/database/catalog-store";
 import { CatalogDatabase } from "#src/database/database";
 import { migrateCatalogDatabase } from "#src/database/migrate";
@@ -100,11 +101,12 @@ const catalog = <A>(
   run: (modules: {
     items: ReturnType<typeof makeItemsModule>;
     npcs: ReturnType<typeof makeNpcsModule>;
+    reads: ReturnType<typeof makeCatalogModule>;
   }) => Effect.Effect<A, unknown>,
 ) =>
   runtime.runPromise(
     Effect.gen(function* () {
-      const { write } = makeCatalogStore<ItemEntry, NpcEntry>(
+      const { read, write } = makeCatalogStore<ItemEntry, NpcEntry>(
         yield* CatalogDatabase,
         meilisearch,
       );
@@ -112,6 +114,7 @@ const catalog = <A>(
       return yield* run({
         items: makeItemsModule(meilisearch, write, logger),
         npcs: makeNpcsModule(meilisearch, write, logger),
+        reads: makeCatalogModule(meilisearch, read, logger),
       });
     }),
   );
@@ -434,6 +437,53 @@ test("a rebalanced monster is current only at its newest level, and an older loo
   expect([...(projected.get(NPCS_INDEX)?.values() ?? [])]).toEqual(
     expect.arrayContaining(await storedNpcs()),
   );
+});
+
+test("the catalog index names an id the game gave to a later item by that item, lists each current monster once, and an old key finds the monster as it is now", async () => {
+  const sethSet = (name: string, observedAt: string) => ({
+    ...item(8450),
+    name,
+    observedAt,
+  });
+
+  await catalog(({ items }) =>
+    items.indexItems({
+      items: [
+        sethSet("Magia mrocznego Seta", "2025-06-17T10:00:00.000Z"),
+        sethSet("Cholewy mrocznej kolaboracji", "2026-09-24T10:00:00.000Z"),
+        item(2),
+        { ...item(3), gameVersion: "en" },
+      ],
+    }),
+  );
+  await catalog(({ npcs }) =>
+    npcs.indexNpcs({ npcs: [{ ...formerReuzen, lootId: 10 }] }),
+  );
+  await catalog(({ npcs }) =>
+    npcs.indexNpcs({ npcs: [{ ...reuzen, lootId: 20 }] }),
+  );
+
+  const index = await catalog(({ reads }) =>
+    reads.getIndex({ gameVersion: "pl" }),
+  );
+
+  expect(index).toEqual({
+    items: [
+      { id: 2, name: "Item 2" },
+      { id: 8450, name: "Cholewy mrocznej kolaboracji" },
+    ],
+    npcs: [{ id: reuzen.id, name: reuzen.name }],
+  });
+
+  const found = await catalog(({ reads }) =>
+    reads.getNpcs({ gameVersion: "pl", keys: [npcCatalogKey(formerReuzen)] }),
+  );
+
+  expect(found.hits).toEqual([
+    expect.objectContaining({ key: npcCatalogKey(reuzen), lvl: reuzen.lvl }),
+  ]);
+  // Only the catalog's fields leave the service.
+  expect(found.hits[0]).not.toHaveProperty("worlds");
 });
 
 test("a monster's maps and former levels reach each identity and survive new loots and an older publisher", async () => {
