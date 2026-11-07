@@ -76,6 +76,7 @@ export function CatalogItemCard({
         {showSource ? <ItemSource item={item} /> : null}
         {dropRateOf ? (
           <ItemDropRate
+            npcType={dropRateOf.type}
             rate={
               item.droppedBy.find(
                 (source) =>

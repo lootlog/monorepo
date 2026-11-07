@@ -4,6 +4,7 @@ import {
 } from "@lootlog/client/catalog";
 import { partition } from "es-toolkit";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
+import { DropRateMethod } from "@/components/catalog/drop-rate-method";
 import { ItemsByRarity } from "@/components/catalog/items-by-rarity";
 import { NpcElasticDropsLevel } from "@/components/npcs/npc-elastic-drops-level";
 import { NpcRetiredDrops } from "@/components/npcs/npc-retired-drops";
@@ -59,11 +60,7 @@ export function NpcDrops({
       {data.hits.some(({ elasticLevel }) => elasticLevel) ? (
         <NpcElasticDropsLevel />
       ) : null}
-      {hasDropRates ? (
-        <p className="max-w-3xl text-sm text-pretty text-muted-foreground">
-          {t("catalog.dropRatesDescription")}
-        </p>
-      ) : null}
+      {hasDropRates ? <DropRateMethod /> : null}
       {current.length > 0 ? (
         <ItemsByRarity
           items={current}

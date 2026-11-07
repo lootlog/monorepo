@@ -4,7 +4,7 @@ import {
 } from "@lootlog/client/catalog";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { findEquipmentSlotById } from "@/lib/equipment-slots";
-import { findMargonemWorld } from "@/lib/margonem-worlds";
+import { findMargonemWorld } from "@lootlog/domain/margonem-worlds";
 
 /**
  * The item search as the address bar holds it, so a link opens the same

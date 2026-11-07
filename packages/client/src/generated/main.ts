@@ -1698,6 +1698,14 @@ export type CreateKillDtoNpc = {
   isHeroFromEvent?: boolean;
 };
 
+export type CreateKillDtoPartyItem = {
+  /** Margonem profession shortname, such as `w`. */
+  prof: string;
+  lvl: number;
+  /** Whether the member survived the battle. */
+  alive: boolean;
+};
+
 export type CreateKillDtoCharacter = {
   /** @minLength 1 */
   name: string;
@@ -1717,6 +1725,8 @@ export interface CreateKillDto {
   characterId: string;
   /** @minLength 1 */
   accountId: string;
+  /** @maxItems 30 */
+  party?: CreateKillDtoPartyItem[];
   character?: CreateKillDtoCharacter;
 }
 

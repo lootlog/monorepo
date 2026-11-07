@@ -31,7 +31,10 @@ import {
   STAT_OPTIONS,
 } from "@/lib/items-search";
 import { SEARCHABLE_LEGENDARY_BONUSES } from "@/lib/legendary-bonuses";
-import { findMargonemWorld, MARGONEM_WORLDS } from "@/lib/margonem-worlds";
+import {
+  findMargonemWorld,
+  MARGONEM_WORLDS,
+} from "@lootlog/domain/margonem-worlds";
 import { FilterSection } from "./filter-section";
 import { FilterTile } from "@/components/filter-tile";
 

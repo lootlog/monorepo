@@ -810,19 +810,37 @@ components:
           type: boolean
           description: "Whether the NPC no longer drops the item: Lootlog has recorded its loot far too often since the item's last drop for the gap to be chance."
         dropRate:
-          description: How often the boss's kills drop the item, counted by the Organizations whose loot settings keep its rarity, from their hourly kill counts on. Lootlog recomputes it daily and gives none for other NPCs or under 100 such kills.
+          description: How often the boss drops the item, counted by the Organizations whose loot settings keep its rarity, from their hourly kill counts on. Lootlog recomputes it daily and gives none for other NPCs or under 100 such kills.
           nullable: true
           type: object
           properties:
             drops:
               type: number
-              description: Kills that dropped the item.
+              description: Copies of the item those kills dropped.
             kills:
               type: number
               description: Kills that could have recorded the drop.
+            rolls:
+              type: number
+              description: "Times those kills rolled the boss's loot for someone who could get the item: Margonem rolls a shared loot once per two survivors (5.5 times for 10 on average), and a personal loot once per party member whose profession wears the item. `drops / rolls` is the chance of one roll."
+            basis:
+              type: string
+              enum:
+                - PARTY
+                - LOOTS
+              description: "`PARTY` when the rolls per kill come from the parties the kills reported; `LOOTS` while too few did, estimated from the parties of recorded loots, which counts every member as a survivor and favours larger parties."
+            lootMode:
+              type: string
+              enum:
+                - SHARED
+                - PERSONAL
+              description: "`PERSONAL` when every party member gets a loot of their own over the items of their profession, as from colossi; `SHARED` when the party shares the rolls."
           required:
             - drops
             - kills
+            - rolls
+            - basis
+            - lootMode
           additionalProperties: false
       required:
         - key
