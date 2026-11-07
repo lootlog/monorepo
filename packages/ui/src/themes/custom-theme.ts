@@ -150,11 +150,47 @@ export const customThemeStyle = (
 export const loadCustomThemeFont = (definition: CustomThemeDefinition) =>
   void CUSTOM_THEME_FONTS[definition.font].load?.();
 
+/** The root's custom properties and wallpaper attributes for a theme's look. */
+export interface ThemeRootAttributes {
+  style: CustomThemeStyle;
+  /** `data-wallpaper`: a picked photo, no wallpaper, or the base's own. */
+  wallpaper: "photo" | "none" | undefined;
+  /** `data-wallpaper-cover`: the wallpaper's cover follows the theme. */
+  wallpaperCover: boolean;
+}
+
 /**
- * Sets a theme's look on the root over its base class: a custom theme's
+ * A theme's look as the root carries it over its base class: a custom theme's
  * tokens and wallpaper, and every theme's font and radius. A built-in theme
- * comes in as `createDefinitionFromBase`, which changes no colour.
+ * comes in as `createDefinitionFromBase`, which changes no colour. The server
+ * renders a page's root from it; `applyThemeToRoot` sets it in the browser.
  */
+export const themeRootAttributes = (
+  definition: CustomThemeDefinition,
+): ThemeRootAttributes => {
+  const style = customThemeStyle(definition);
+  let wallpaper: ThemeRootAttributes["wallpaper"];
+
+  if (definition.wallpaper === "none") {
+    style["--theme-background-image"] = "none";
+    wallpaper = "none";
+  } else if (definition.wallpaper !== "base") {
+    const picked = findWallpaper(definition.wallpaper);
+
+    style["--theme-background-image"] = picked
+      ? `url("${picked.image}")`
+      : "none";
+    wallpaper = picked ? "photo" : "none";
+  }
+
+  return {
+    style,
+    wallpaper,
+    wallpaperCover: definition.wallpaperVisibility !== undefined,
+  };
+};
+
+/** Puts a theme's look on the root, replacing the one it had. */
 export const applyThemeToRoot = (
   root: HTMLElement,
   definition: CustomThemeDefinition,
@@ -163,37 +199,24 @@ export const applyThemeToRoot = (
   delete root.dataset.wallpaper;
   delete root.dataset.wallpaperCover;
 
-  if (definition.wallpaperVisibility !== undefined) {
-    root.dataset.wallpaperCover = "";
-  }
+  const { style, wallpaper, wallpaperCover } = themeRootAttributes(definition);
 
-  for (const [property, value] of Object.entries(
-    customThemeStyle(definition),
-  )) {
+  for (const [property, value] of Object.entries(style)) {
     root.style.setProperty(property, value);
   }
 
+  if (wallpaper) root.dataset.wallpaper = wallpaper;
+
+  if (wallpaperCover) root.dataset.wallpaperCover = "";
+
   loadCustomThemeFont(definition);
-
-  if (definition.wallpaper === "none") {
-    root.style.setProperty("--theme-background-image", "none");
-    root.dataset.wallpaper = "none";
-  } else if (definition.wallpaper !== "base") {
-    const wallpaper = findWallpaper(definition.wallpaper);
-
-    root.style.setProperty(
-      "--theme-background-image",
-      wallpaper ? `url("${wallpaper.image}")` : "none",
-    );
-    root.dataset.wallpaper = wallpaper ? "photo" : "none";
-  }
 };
 
 /**
  * The last applied custom theme, read before React starts so a reload paints
  * it at once instead of flashing the base theme.
  */
-const CUSTOM_THEME_CACHE_KEY = "lootlog-custom-theme";
+export const CUSTOM_THEME_CACHE_KEY = "lootlog-custom-theme";
 
 export const readCachedCustomTheme = (): AppliedCustomTheme | null => {
   try {
