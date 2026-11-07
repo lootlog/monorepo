@@ -15,12 +15,15 @@
  * `POSTGRESQL_CONNECTION_URI`, `MEILISEARCH_HOST` and `MEILISEARCH_API_KEY` set.
  */
 import { SQL } from "bun";
+import { asc, gt } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/bun-sql/postgres";
 import { SEARCH_INDEX_PRIMARY_KEY } from "@lootlog/meilisearch/index-settings";
 import { getMeilisearchErrorCode } from "@lootlog/meilisearch/query-builder";
 import { Config, Effect, Redacted } from "effect";
 import { Meilisearch, type EnqueuedTask, type Task } from "meilisearch";
 import { ITEMS_INDEX } from "#src/items/search-index";
 import { NPCS_INDEX } from "#src/npcs/search-index";
+import { catalogItemTable, catalogNpcTable } from "#src/database/schema";
 import { catalogIndexSettings } from "#src/projection/index-settings";
 
 const ROWS_PER_PAGE = 5_000;
@@ -43,6 +46,8 @@ const config = await Effect.runPromise(
 );
 
 const sql = new SQL({ url: Redacted.value(config.databaseUrl) });
+
+const database = drizzle({ client: sql });
 
 const meilisearch = new Meilisearch({
   host: config.meilisearchHost,
@@ -129,7 +134,10 @@ const toBatches = (documents: ReadonlyArray<object>) => {
 };
 
 /** Reads a table page by page in primary key order into a shadow index. */
-const rebuild = async (indexName: string, table: string) => {
+const rebuild = async (
+  indexName: string,
+  table: typeof catalogItemTable | typeof catalogNpcTable,
+) => {
   const startedAt = performance.now();
   const index = meilisearch.index(rebuildIndexName(indexName));
   const enqueued: EnqueuedTask[] = [];
@@ -137,12 +145,12 @@ const rebuild = async (indexName: string, table: string) => {
   let count = 0;
 
   for (;;) {
-    const rows = await sql<Array<{ uid: string; document: object }>>`
-      SELECT uid, document FROM ${sql(table)}
-      WHERE uid > ${after}
-      ORDER BY uid
-      LIMIT ${ROWS_PER_PAGE}
-    `;
+    const rows = await database
+      .select({ uid: table.uid, document: table.document })
+      .from(table)
+      .where(gt(table.uid, after))
+      .orderBy(asc(table.uid))
+      .limit(ROWS_PER_PAGE);
 
     for (const batch of toBatches(rows.map(({ document }) => document))) {
       enqueued.push(
@@ -189,8 +197,8 @@ const main = async () => {
     );
 
     await Promise.all([
-      rebuild(ITEMS_INDEX, "CatalogItem"),
-      rebuild(NPCS_INDEX, "CatalogNpc"),
+      rebuild(ITEMS_INDEX, catalogItemTable),
+      rebuild(NPCS_INDEX, catalogNpcTable),
     ]);
 
     await waitForTasks([
