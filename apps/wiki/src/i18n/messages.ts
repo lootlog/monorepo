@@ -1,3 +1,4 @@
+import type { CatalogControllerGetItemsSort } from "@lootlog/client/search";
 import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
 
 const messages = {
@@ -646,16 +647,18 @@ const messages = {
     minLevelPlaceholder: "1",
     maxLevelPlaceholder: "300",
     sort: "Sortowanie",
+    // Every sort the catalog offers is listed, so each one needs a label.
     sortOptions: {
       relevance: "Trafność",
       "id:desc": "Najnowsze w grze",
+      "changedOn:desc": "Ostatnio zmienione",
       "lvl:asc": "Poziom rosnąco",
       "lvl:desc": "Poziom malejąco",
       "name:asc": "Nazwa A-Z",
       "name:desc": "Nazwa Z-A",
       "attackSpeed:desc": "Najszybsze",
       "upgradedAttackSpeed:desc": "Najszybsze na +5",
-    },
+    } satisfies Record<CatalogControllerGetItemsSort, string>,
     rarity: "Rzadkość",
     profession: "Profesja",
     professions: {

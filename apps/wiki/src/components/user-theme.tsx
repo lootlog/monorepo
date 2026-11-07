@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import {
   getUserThemesControllerGetThemesQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
@@ -7,6 +7,7 @@ import {
 } from "@lootlog/client/main";
 import {
   findSelectedCustomTheme,
+  type AppliedCustomTheme,
   readCustomThemeId,
   writeCachedCustomTheme,
 } from "@lootlog/ui/themes/custom-theme";
@@ -16,18 +17,26 @@ import {
   resolveStoredSelection,
 } from "@lootlog/ui/themes/resolver";
 import { useSession } from "@/hooks/use-session";
-import { writeThemeCookie } from "@/lib/write-theme-cookie";
+import {
+  writeCustomThemeCookie,
+  writeThemeCookie,
+} from "@/lib/write-theme-cookie";
 
 type UserThemeProps = {
   /** The theme the server rendered the page in. */
   storedSelection: string | null;
+  /** The custom theme's copy the server rendered the page from. */
+  storedCustomTheme: AppliedCustomTheme | null;
 };
 
 /**
  * Paints the wiki in the theme the User picked in the Web app. The wiki only
  * reads the pick; the Web app's appearance settings change it.
  */
-export function UserTheme({ storedSelection }: UserThemeProps) {
+export function UserTheme({
+  storedSelection,
+  storedCustomTheme,
+}: UserThemeProps) {
   const { session } = useSession();
   const isSignedIn = session !== null;
 
@@ -39,9 +48,17 @@ export function UserTheme({ storedSelection }: UserThemeProps) {
     },
   });
 
-  // Signed out, the page keeps the theme it was last shown in.
+  // Signed out, the page keeps the theme it was last shown in, which may be
+  // one the preferences brought in after the server rendered the page.
+  const [shownSelection, setShownSelection] = useState(storedSelection);
+  const preferredSelection = preferences?.theme;
+
+  if (preferredSelection && preferredSelection !== shownSelection) {
+    setShownSelection(preferredSelection);
+  }
+
   const selection = resolveStoredSelection(
-    preferences?.theme ?? storedSelection,
+    preferredSelection ?? shownSelection,
   );
 
   const customThemeId = readCustomThemeId(selection);
@@ -54,7 +71,16 @@ export function UserTheme({ storedSelection }: UserThemeProps) {
     },
   });
 
-  const customTheme = findSelectedCustomTheme(customThemeId, userThemes);
+  // Until the User's themes load, which they never do signed out, the last
+  // applied copy keeps the page as the server rendered it.
+  const customTheme = userThemes
+    ? findSelectedCustomTheme(customThemeId, userThemes)
+    : (findSelectedCustomTheme(customThemeId, undefined) ??
+      findSelectedCustomTheme(
+        customThemeId,
+        storedCustomTheme ? [storedCustomTheme] : [],
+      ));
+
   const definition = customTheme?.definition ?? null;
   const theme = resolveSelectionTheme(selection, definition);
 
@@ -65,9 +91,11 @@ export function UserTheme({ storedSelection }: UserThemeProps) {
   useEffect(() => {
     writeThemeCookie(selection);
 
-    // Keep the cache while the list loads; once it has, it follows the pick.
-    if (customThemeId === null || userThemes) {
+    // Without the list and a copy, keep the stored copy; otherwise it follows
+    // what the page shows.
+    if (customThemeId === null || userThemes || customTheme) {
       writeCachedCustomTheme(customTheme);
+      writeCustomThemeCookie(customTheme);
     }
   }, [selection, customThemeId, customTheme, userThemes]);
 
