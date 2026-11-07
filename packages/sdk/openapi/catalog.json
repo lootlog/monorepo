@@ -805,6 +805,224 @@
         "x-lootlog-access": "read",
         "x-lootlog-data": "public"
       }
+    },
+    "/catalog/events": {
+      "get": {
+        "tags": ["Catalog"],
+        "operationId": "CatalogController_getEvents",
+        "parameters": [
+          {
+            "name": "gameVersion",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["en", "pl"],
+              "description": "Only entries of this game edition."
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogEventsResponseDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUnavailableEncoded"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List events in the public catalog",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-lootlog-access": "read",
+        "x-lootlog-data": "public"
+      }
+    },
+    "/catalog/index": {
+      "get": {
+        "tags": ["Catalog"],
+        "operationId": "CatalogController_getIndex",
+        "parameters": [
+          {
+            "name": "gameVersion",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["en", "pl"],
+              "description": "Only entries of this game edition."
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogIndexResponseDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUnavailableEncoded"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List every item and NPC in the public catalog",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-lootlog-access": "read",
+        "x-lootlog-data": "public"
+      }
     }
   },
   "components": {
@@ -1276,6 +1494,96 @@
           "formerLevels"
         ],
         "description": "A Margonem NPC in the public catalog"
+      },
+      "CatalogEventsResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogEventDto_Output"
+            },
+            "description": "The latest year first, then by name."
+          }
+        },
+        "required": ["events"],
+        "description": "Public catalog events"
+      },
+      "CatalogEventDto_Output": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "The event's slug, its name and year, such as `halloween-2026`; `CatalogControllerGetItemsQuery.event` lists its items."
+          },
+          "name": {
+            "type": "string",
+            "description": "The event as the game writes it, such as `Halloween 2026 r.`."
+          },
+          "year": {
+            "description": "The year its name gives; none for an event without one.",
+            "nullable": true,
+            "type": "number"
+          },
+          "itemCount": {
+            "type": "number",
+            "description": "How many catalog items belong to the event."
+          },
+          "boss": {
+            "description": "The strongest monster its highest-level item drops from, which pictures the event; none when Lootlog has not seen that item drop.",
+            "nullable": true,
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "icon": {
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "required": ["name", "icon"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["slug", "name", "year", "itemCount", "boss"],
+        "description": "A Margonem event whose items are in the public catalog"
+      },
+      "CatalogIndexResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogIndexEntryDto_Output"
+            },
+            "description": "Every item, by id."
+          },
+          "npcs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogIndexEntryDto_Output"
+            },
+            "description": "Every NPC as it is now, once per monster, as `CatalogControllerGetNpcs` lists it; by id."
+          }
+        },
+        "required": ["items", "npcs"],
+        "description": "Every item and NPC of the public catalog, unlike its searches, which stop at 1000 hits"
+      },
+      "CatalogIndexEntryDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "name"],
+        "description": "A catalog entry by the id and name its links carry, such as `/items/41392-odzienie-dominujacego-czaru` on the wiki."
       }
     }
   }
