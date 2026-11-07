@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly VITE_GATEWAY_SOCKET_PATH?: string;
   readonly VITE_API_URL: string;
   readonly VITE_SEARCH_API_URL: string;
+  readonly VITE_CATALOG_API_URL: string;
   readonly VITE_BATTLELOG_API_URL: string;
   readonly VITE_ADDON_INSTALL_URL: string;
   readonly VITE_BATTLELOG_PUBLIC_URL: string;

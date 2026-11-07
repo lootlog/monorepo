@@ -43,14 +43,14 @@ const configuration = {
     preferredSecurityScheme: "apiKey",
     securitySchemes: { apiKey: { value: "" } },
   },
-  sources: (["main", "activity", "battlelog", "search"] as const).map(
-    (service) => ({
-      title: t[service],
-      url: `${import.meta.env.BASE_URL}openapi/${service}.json`,
-      slug: service,
-      agent: { disabled: true },
-    }),
-  ),
+  sources: (
+    ["main", "activity", "battlelog", "catalog", "search"] as const
+  ).map((service) => ({
+    title: t[service],
+    url: `${import.meta.env.BASE_URL}openapi/${service}.json`,
+    slug: service,
+    agent: { disabled: true },
+  })),
 } satisfies AnyApiReferenceConfiguration;
 
 export function ApiReference() {

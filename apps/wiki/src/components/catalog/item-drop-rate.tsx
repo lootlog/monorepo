@@ -1,4 +1,4 @@
-import type { CatalogDropSourceDtoOutput } from "@lootlog/client/search";
+import type { CatalogDropSourceDtoOutput } from "@lootlog/client/catalog";
 import { t } from "@/i18n/messages";
 import { formatDropRate } from "@/lib/drop-rate";
 

@@ -7,9 +7,11 @@ import { useState } from "react";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 
 import {
-  useAllControllerSearchAll,
+  useItemsControllerGetItems,
+  useNpcsControllerGetNpcs,
   type NpcHitDtoOutput,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
+import { usePlayersControllerGetPlayers } from "@lootlog/client/search";
 
 import {
   serializeLootsFilters,
@@ -39,6 +41,9 @@ export type LootSearchCommandProps = {
 type LootFiltersUpdate = Parameters<typeof serializeLootsFilters>[1];
 
 import { allTrue, anyTrue } from "./loot-search-presentation";
+
+// Hits per kind, as the combined search returned.
+const SEARCH_HITS = 10;
 
 export const useLootSearchCommand = ({
   open,
@@ -75,16 +80,29 @@ export const useLootSearchCommand = ({
 
   // Items and monsters are shared by every world; `world` narrows only the
   // characters, whose loots the list shows for the selected world.
-  const searchParams = { search: debouncedLootSearch, world: world || "" };
+  const searchOptions = {
+    query: { enabled: debouncedLootSearch.length >= 2 && !isHidInput },
+  };
 
-  const searchResultsQuery = useAllControllerSearchAll(searchParams, {
-    query: {
-      enabled: debouncedLootSearch.length >= 2 && !isHidInput,
-    },
-  });
+  const itemsQuery = useItemsControllerGetItems(
+    { search: debouncedLootSearch, limit: SEARCH_HITS },
+    searchOptions,
+  );
 
-  const searchResults = searchResultsQuery.data;
-  const isSearchLoading = searchResultsQuery.isLoading;
+  const npcsQuery = useNpcsControllerGetNpcs(
+    { search: debouncedLootSearch, limit: SEARCH_HITS },
+    searchOptions,
+  );
+
+  const playersQuery = usePlayersControllerGetPlayers(
+    { search: debouncedLootSearch, world: world || "", limit: SEARCH_HITS },
+    searchOptions,
+  );
+
+  const searchQueries = [itemsQuery, npcsQuery, playersQuery];
+  const isSearchLoading = searchQueries.some(({ isLoading }) => isLoading);
+  // Any part failing is a search outage: partial hits would read as complete.
+  const isSearchError = searchQueries.some(({ isError }) => isError);
 
   const isHid = !!parsedHid;
 
@@ -168,9 +186,11 @@ export const useLootSearchCommand = ({
 
   // Selecting a hit filters by name, so each name is one option even when
   // several editions or ids share it.
-  const npcResults = uniqBy(searchResults?.npcs ?? [], (npc) => npc.name);
-  const itemResults = uniqBy(searchResults?.items ?? [], (item) => item.name);
-  const playerResults = searchResults?.players ?? [];
+  const npcResults = uniqBy(npcsQuery.data ?? [], (npc) => npc.name);
+
+  const itemResults = uniqBy(itemsQuery.data?.hits ?? [], (item) => item.name);
+
+  const playerResults = playersQuery.data ?? [];
 
   const hasSearchResults = anyTrue(
     npcResults.length > 0,
@@ -200,7 +220,7 @@ export const useLootSearchCommand = ({
     lootSearchTerm.length >= 2,
     Boolean(debouncedLootSearch),
     !showSearchLoading,
-    !searchResultsQuery.isError,
+    !isSearchError,
     Boolean(hasSearchResults),
   );
 
@@ -209,7 +229,7 @@ export const useLootSearchCommand = ({
     lootSearchTerm.length >= 2,
     Boolean(debouncedLootSearch),
     !showSearchLoading,
-    !searchResultsQuery.isError,
+    !isSearchError,
     !hasSearchResults,
   );
 
@@ -228,7 +248,7 @@ export const useLootSearchCommand = ({
     !isHidInput,
     lootSearchTerm.length >= 2,
     !showSearchLoading,
-    searchResultsQuery.isError,
+    isSearchError,
   );
 
   const handleOpenChange = (nextOpen: boolean) => {

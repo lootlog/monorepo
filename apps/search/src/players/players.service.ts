@@ -1,12 +1,12 @@
-import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
+import { indexChangedDocuments } from "@lootlog/meilisearch/index-changed-documents";
 import { Effect } from "effect";
 import { partition } from "es-toolkit";
 import type { Meilisearch } from "meilisearch";
-import { buildMeilisearchNameQuery } from "#src/meilisearch/query-builder";
+import { buildMeilisearchNameQuery } from "@lootlog/meilisearch/query-builder";
 import {
   attemptMeilisearch,
   type SearchOperationFailure,
-} from "#src/meilisearch/search-operation-failure";
+} from "@lootlog/meilisearch/operation-failure";
 import type { AppLogger } from "#src/shared/logger";
 import type { PlayerSearchQuery } from "./player-search-query.js";
 import { PLAYERS_INDEX } from "./search-index.js";

@@ -21,6 +21,7 @@ import { Route as EventsEventSlugRouteImport } from './routes/events_.$eventSlug
 import { Route as ItemsItemSlugRouteImport } from './routes/items_.$itemSlug'
 import { Route as NpcsNpcSlugRouteImport } from './routes/npcs_.$npcSlug'
 import { Route as ThemesSplatRouteImport } from './routes/themes.$'
+import { Route as ApiCatalogSplatRouteImport } from './routes/api.catalog.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -82,6 +83,11 @@ const ThemesSplatRoute = ThemesSplatRouteImport.update({
   path: '/themes/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCatalogSplatRoute = ApiCatalogSplatRouteImport.update({
+  id: '/api/catalog/$',
+  path: '/api/catalog/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/items/$itemSlug': typeof ItemsItemSlugRoute
   '/npcs/$npcSlug': typeof NpcsNpcSlugRoute
   '/themes/$': typeof ThemesSplatRoute
+  '/api/catalog/$': typeof ApiCatalogSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/items/$itemSlug': typeof ItemsItemSlugRoute
   '/npcs/$npcSlug': typeof NpcsNpcSlugRoute
   '/themes/$': typeof ThemesSplatRoute
+  '/api/catalog/$': typeof ApiCatalogSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/items_/$itemSlug': typeof ItemsItemSlugRoute
   '/npcs_/$npcSlug': typeof NpcsNpcSlugRoute
   '/themes/$': typeof ThemesSplatRoute
+  '/api/catalog/$': typeof ApiCatalogSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/items/$itemSlug'
     | '/npcs/$npcSlug'
     | '/themes/$'
+    | '/api/catalog/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/items/$itemSlug'
     | '/npcs/$npcSlug'
     | '/themes/$'
+    | '/api/catalog/$'
   id:
     | '__root__'
     | '/'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/items_/$itemSlug'
     | '/npcs_/$npcSlug'
     | '/themes/$'
+    | '/api/catalog/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -184,6 +196,7 @@ export interface RootRouteChildren {
   ItemsItemSlugRoute: typeof ItemsItemSlugRoute
   NpcsNpcSlugRoute: typeof NpcsNpcSlugRoute
   ThemesSplatRoute: typeof ThemesSplatRoute
+  ApiCatalogSplatRoute: typeof ApiCatalogSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ThemesSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/catalog/$': {
+      id: '/api/catalog/$'
+      path: '/api/catalog/$'
+      fullPath: '/api/catalog/$'
+      preLoaderRoute: typeof ApiCatalogSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -288,6 +308,7 @@ const rootRouteChildren: RootRouteChildren = {
   ItemsItemSlugRoute: ItemsItemSlugRoute,
   NpcsNpcSlugRoute: NpcsNpcSlugRoute,
   ThemesSplatRoute: ThemesSplatRoute,
+  ApiCatalogSplatRoute: ApiCatalogSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

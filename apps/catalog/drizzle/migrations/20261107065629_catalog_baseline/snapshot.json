@@ -1,0 +1,326 @@
+{
+  "type": "base",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "2c7d5d7f-4056-4cf3-b276-89dcf743d523",
+  "prevIds": ["00000000-0000-0000-0000-000000000000"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "CatalogItem"],
+      "writes": [
+        "s|tbl|public.CatalogItem",
+        "n|tbl|public.CatalogItem",
+        "e|tbl|public.CatalogItem",
+        "n|rel|public.CatalogItem",
+        "n|type|public.CatalogItem",
+        "n|rel|public.CatalogItem_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "CatalogNpc"],
+      "writes": [
+        "s|tbl|public.CatalogNpc",
+        "n|tbl|public.CatalogNpc",
+        "e|tbl|public.CatalogNpc",
+        "n|rel|public.CatalogNpc",
+        "n|type|public.CatalogNpc",
+        "n|rel|public.CatalogNpc_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "CatalogItem",
+        "CatalogItem_gameVersion_itemId_idx"
+      ],
+      "writes": [
+        "s|idx|public.CatalogItem_gameVersion_itemId_idx",
+        "n|idx|public.CatalogItem_gameVersion_itemId_idx",
+        "e|idx|public.CatalogItem_gameVersion_itemId_idx",
+        "n|rel|public.CatalogItem_gameVersion_itemId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.CatalogItem",
+        "n|sch|public",
+        "n|col|public.CatalogItem.gameVersion",
+        "n|col|public.CatalogItem.itemId"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "CatalogItem",
+        "CatalogItem_monsterKeys_idx"
+      ],
+      "writes": [
+        "s|idx|public.CatalogItem_monsterKeys_idx",
+        "n|idx|public.CatalogItem_monsterKeys_idx",
+        "e|idx|public.CatalogItem_monsterKeys_idx",
+        "n|rel|public.CatalogItem_monsterKeys_idx"
+      ],
+      "reads": [
+        "n|tbl|public.CatalogItem",
+        "n|sch|public",
+        "n|col|public.CatalogItem.monsterKeys"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "CatalogNpc",
+        "CatalogNpc_monsterKey_idx"
+      ],
+      "writes": [
+        "s|idx|public.CatalogNpc_monsterKey_idx",
+        "n|idx|public.CatalogNpc_monsterKey_idx",
+        "e|idx|public.CatalogNpc_monsterKey_idx",
+        "n|rel|public.CatalogNpc_monsterKey_idx"
+      ],
+      "reads": [
+        "n|tbl|public.CatalogNpc",
+        "n|sch|public",
+        "n|col|public.CatalogNpc.monsterKey"
+      ]
+    }
+  ],
+  "ddl": [
+    {
+      "schema": "public",
+      "name": "CatalogItem",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "CatalogNpc",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogItem",
+      "name": "uid",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogItem",
+      "name": "gameVersion",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogItem",
+      "name": "itemId",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogItem",
+      "name": "monsterKeys",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogItem",
+      "name": "document",
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogItem",
+      "name": "updatedAt",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogNpc",
+      "name": "uid",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogNpc",
+      "name": "monsterKey",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogNpc",
+      "name": "document",
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogNpc",
+      "name": "updatedAt",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogItem",
+      "name": "CatalogItem_gameVersion_itemId_idx",
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "gameVersion",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "itemId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "entityType": "indexes"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogItem",
+      "name": "CatalogItem_monsterKeys_idx",
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "monsterKeys",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "gin",
+      "concurrently": false,
+      "entityType": "indexes"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogNpc",
+      "name": "CatalogNpc_monsterKey_idx",
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "monsterKey",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "entityType": "indexes"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogItem",
+      "name": "CatalogItem_pkey",
+      "columns": ["uid"],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "CatalogNpc",
+      "name": "CatalogNpc_pkey",
+      "columns": ["uid"],
+      "nameExplicit": false,
+      "entityType": "pks"
+    }
+  ]
+}

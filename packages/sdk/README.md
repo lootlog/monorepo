@@ -210,15 +210,16 @@ Return types are inferred, so the annotation is optional. There is no separate
 in `package.json`, `module: "NodeNext"` and `moduleResolution: "NodeNext"` in
 `tsconfig.json`, and install `@types/node`.
 
-| Import                           | Contents                                                                       |
-| -------------------------------- | ------------------------------------------------------------------------------ |
-| `@lootlog/sdk`                   | Authentication and environment configuration                                   |
-| `@lootlog/sdk/main`              | Organizations, timers, loot and main API types                                 |
-| `@lootlog/sdk/activity`          | Activity operations and types                                                  |
-| `@lootlog/sdk/battlelog`         | Battle records and statistics                                                  |
-| `@lootlog/sdk/search`            | Item, NPC and player search                                                    |
-| `@lootlog/sdk/realtime`          | WebSocket client and event types                                               |
-| `@lootlog/sdk/openapi/main.json` | OpenAPI specification; also available for `activity`, `battlelog` and `search` |
+| Import                           | Contents                                                                                  |
+| -------------------------------- | ----------------------------------------------------------------------------------------- |
+| `@lootlog/sdk`                   | Authentication and environment configuration                                              |
+| `@lootlog/sdk/main`              | Organizations, timers, loot and main API types                                            |
+| `@lootlog/sdk/activity`          | Activity operations and types                                                             |
+| `@lootlog/sdk/battlelog`         | Battle records and statistics                                                             |
+| `@lootlog/sdk/search`            | Player search                                                                             |
+| `@lootlog/sdk/catalog`           | Items and NPCs, and the item and NPC catalog                                              |
+| `@lootlog/sdk/realtime`          | WebSocket client and event types                                                          |
+| `@lootlog/sdk/openapi/main.json` | OpenAPI specification; also available for `activity`, `battlelog`, `search` and `catalog` |
 
 For the HTTP examples above, arguments are **path parameters, query parameters,
 request options**. Other operations may accept a body; follow their generated

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { TruncatedText } from "@/components/truncated-text";
 import { t } from "@/i18n/messages";
 import { npcPageParams } from "@/lib/catalog-links";

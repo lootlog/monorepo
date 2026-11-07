@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { itemEventSlug } from "@lootlog/domain/item-events";
 import { itemIconUrl } from "@lootlog/ui/components/item-image";
 import {

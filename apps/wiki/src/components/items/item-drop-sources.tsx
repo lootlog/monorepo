@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { sortBy } from "es-toolkit";
 import { ChevronRight } from "lucide-react";
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { cn } from "cn";
 import { ArticleSection } from "@/components/article/article-section";
 import { ItemDropRate } from "@/components/catalog/item-drop-rate";

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type {
   CatalogItemDtoOutput,
   CatalogNpcDtoOutput,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { NO_UPGRADE } from "@lootlog/domain/item-upgrade";
 import { itemLinkPreview, npcLinkPreview } from "./link-preview";
 

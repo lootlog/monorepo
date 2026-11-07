@@ -15,13 +15,13 @@
     "typecheck": "bun check",
     "test": "bun test",
     "test:watch": "bun test --watch",
-    "openapi:generate": "bun --conditions=development src/openapi/generate-openapi.ts",
-    "seed": "bun src/scripts/seed.ts"
+    "openapi:generate": "bun --conditions=development src/openapi/generate-openapi.ts"
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",
     "@lootlog/domain": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
+    "@lootlog/meilisearch": "workspace:*",
     "@lootlog/messaging": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
@@ -30,11 +30,9 @@
     "meilisearch": "^0.62.0"
   },
   "devDependencies": {
-    "@lootlog/api": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
-    "drizzle-orm": "catalog:",
     "typescript": "catalog:",
     "yaml": "catalog:"
   }

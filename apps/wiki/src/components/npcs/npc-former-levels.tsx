@@ -1,4 +1,4 @@
-import type { CatalogNpcDtoOutput } from "@lootlog/client/search";
+import type { CatalogNpcDtoOutput } from "@lootlog/client/catalog";
 import { t } from "@/i18n/messages";
 
 const dayFormat = new Intl.DateTimeFormat("pl-PL", {

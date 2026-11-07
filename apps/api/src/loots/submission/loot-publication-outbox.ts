@@ -29,8 +29,8 @@ const RabbitPublication = Schema.Union([
     kind: Schema.Literal("rabbit"),
     routingKey: Schema.Literals([
       RabbitRoutingKey.SEARCH_PLAYERS_INDEX,
-      RabbitRoutingKey.SEARCH_NPCS_INDEX,
-      RabbitRoutingKey.SEARCH_ITEMS_INDEX,
+      RabbitRoutingKey.CATALOG_NPCS_INDEX,
+      RabbitRoutingKey.CATALOG_ITEMS_INDEX,
     ]),
     data: Schema.Array(Schema.Unknown),
   }),

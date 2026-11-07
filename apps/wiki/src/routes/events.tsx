@@ -3,7 +3,7 @@ import { groupBy, orderBy } from "es-toolkit";
 import {
   getCatalogControllerGetEventsQueryOptions,
   useCatalogControllerGetEvents,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ArticleSection } from "@/components/article/article-section";
 import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";

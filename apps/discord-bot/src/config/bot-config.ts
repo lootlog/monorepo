@@ -1,4 +1,4 @@
-import { Config, Context, Effect, Layer, type Redacted } from "effect";
+import { Config, Context, Effect, Layer, Redacted } from "effect";
 
 export interface BotConfigValue {
   readonly environment: string;
@@ -8,7 +8,9 @@ export interface BotConfigValue {
   readonly discordBotToken: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly apiServiceUrl: string;
-  readonly searchServiceUrl: string;
+  readonly catalogServiceUrl: string;
+  /** What the bot presents to read the catalog. */
+  readonly catalogServiceToken: Redacted.Redacted<string>;
   readonly gatewayServiceUrl: string;
   readonly webAppUrl: string;
 }
@@ -44,8 +46,16 @@ export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
         apiServiceUrl: Config.String("API_SERVICE_URL").pipe(
           Config.withDefault("http://api:4000"),
         ),
-        searchServiceUrl: Config.String("SEARCH_SERVICE_URL").pipe(
-          Config.withDefault("http://search:4000"),
+        catalogServiceUrl: Config.String("CATALOG_SERVICE_URL").pipe(
+          Config.withDefault("http://catalog:4000"),
+        ),
+        catalogServiceToken: Config.Redacted("CATALOG_SERVICE_TOKEN").pipe(
+          // The local catalog's token; every cluster sets its own.
+          environment === "local"
+            ? Config.withDefault(
+                Redacted.make("local-development-catalog-service-token"),
+              )
+            : (config) => config,
         ),
         gatewayServiceUrl: Config.String("GATEWAY_SERVICE_URL").pipe(
           Config.withDefault("http://gateway:4000"),

@@ -1,4 +1,4 @@
-import type { CatalogItemRevisionDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemRevisionDtoOutput } from "@lootlog/client/catalog";
 import {
   type ItemDisplayValue,
   mapStatsToDisplaySections,

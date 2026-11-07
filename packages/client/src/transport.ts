@@ -5,6 +5,7 @@ const API_SERVICES = [
   "activity",
   "auth",
   "battlelog",
+  "catalog",
   "main",
   "search",
 ] as const;

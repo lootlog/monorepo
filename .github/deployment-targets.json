@@ -45,6 +45,17 @@
     "development": true
   },
   {
+    "id": "catalog",
+    "package": "@lootlog/catalog",
+    "directory": "apps/catalog",
+    "kind": "docker",
+    "dockerfile": "docker/backend.Dockerfile",
+    "image": "kamilwronka7/lootlog-catalog",
+    "imageTitle": "Lootlog Catalog Service",
+    "imageDescription": "Margonem items and NPCs with their own database and search projection",
+    "development": true
+  },
+  {
     "id": "developer",
     "package": "@lootlog/developer",
     "directory": "apps/developer",
@@ -99,7 +110,9 @@
       "project": "lootlog-traffic-splitter-dev",
       "environment": "develop"
     },
-    "production": { "project": "lootlog-route-splitter" },
+    "production": {
+      "project": "lootlog-route-splitter"
+    },
     "order": 0
   },
   {
@@ -108,8 +121,12 @@
     "directory": "apps/landing",
     "kind": "pages",
     "artifactPath": "apps/landing/dist/client",
-    "development": { "project": "lootlog-landing" },
-    "production": { "project": "lootlog-landing" },
+    "development": {
+      "project": "lootlog-landing"
+    },
+    "production": {
+      "project": "lootlog-landing"
+    },
     "order": 10
   },
   {
@@ -118,8 +135,12 @@
     "directory": "apps/web",
     "kind": "pages",
     "artifactPath": "apps/web/dist",
-    "development": { "project": "lootlog-web-monorepo" },
-    "production": { "project": "lootlog-web-monorepo" },
+    "development": {
+      "project": "lootlog-web-monorepo"
+    },
+    "production": {
+      "project": "lootlog-web-monorepo"
+    },
     "order": 10
   },
   {
@@ -128,7 +149,9 @@
     "directory": "apps/game-client",
     "kind": "pages",
     "artifactPath": "apps/game-client/dist/@lootlog",
-    "development": { "project": "lootlog-game-client-monorepo" },
+    "development": {
+      "project": "lootlog-game-client-monorepo"
+    },
     "production": {
       "project": "lootlog-game-client-monorepo",
       "requiredEnvironmentVariables": [
@@ -154,7 +177,9 @@
       "project": "lootlog-docs-develop",
       "environment": "develop"
     },
-    "production": { "project": "lootlog-docs" },
+    "production": {
+      "project": "lootlog-docs"
+    },
     "order": 10
   },
   {
@@ -165,7 +190,9 @@
     "artifactPath": "apps/wiki/dist",
     "configPath": "apps/wiki/wrangler.jsonc",
     "development": false,
-    "production": { "project": "lootlog-wiki" },
+    "production": {
+      "project": "lootlog-wiki"
+    },
     "order": 10
   }
 ]

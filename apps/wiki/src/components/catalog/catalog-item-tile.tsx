@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { CatalogItemDtoOutput } from "@lootlog/client/search";
+import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { ItemTile } from "@lootlog/ui/components/item-tile";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { renderItemStat } from "@/components/render-item-stat";

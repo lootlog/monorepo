@@ -16,7 +16,7 @@ import {
   type WatchedItemResponseDto,
 } from "@lootlog/client/main";
 
-import { useItemsControllerGetItems } from "@lootlog/client/search";
+import { useItemsControllerGetItems } from "@lootlog/client/catalog";
 
 const WatchFormFields = Schema.Struct({
   guildIds: Schema.mutable(Schema.Array(Schema.String)),

@@ -24,6 +24,7 @@
   "dependencies": {
     "@lootlog/client": "workspace:*",
     "@lootlog/domain": "workspace:*",
+    "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "@lootlog/ui": "workspace:*",
     "@tanstack/react-query": "catalog:",

@@ -90,7 +90,7 @@ jobs:
         env:
           POSTGRESQL_CONNECTION_URI: postgresql://drift:drift@127.0.0.1:1/drift
         run: |
-          for app in api auth activity battlelog; do
+          for app in api auth activity battlelog catalog; do
             (cd "apps/$app" && bun run db:generate)
           done
           if [[ -n "$(git status --porcelain -- 'apps/*/drizzle')" ]]; then

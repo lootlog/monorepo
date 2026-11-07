@@ -7,6 +7,7 @@ export default defineConfig({
     activity: "src/generated/activity.ts",
     battlelog: "src/generated/battlelog.ts",
     search: "src/generated/search.ts",
+    catalog: "src/generated/catalog.ts",
     realtime: "../client/src/realtime/index.ts",
   },
   format: ["esm"],

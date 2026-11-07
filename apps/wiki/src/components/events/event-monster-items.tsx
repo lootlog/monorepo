@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type {
   CatalogDropSourceDtoOutput,
   CatalogItemDtoOutput,
-} from "@lootlog/client/search";
+} from "@lootlog/client/catalog";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { NpcPortrait } from "@/components/common/npc-portrait";
 import { ItemsByRarity } from "@/components/catalog/items-by-rarity";

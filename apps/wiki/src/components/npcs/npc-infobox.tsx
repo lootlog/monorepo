@@ -1,4 +1,4 @@
-import type { CatalogNpcDtoOutput } from "@lootlog/client/search";
+import type { CatalogNpcDtoOutput } from "@lootlog/client/catalog";
 import { Infobox } from "@/components/article/infobox";
 import { InfoboxRow } from "@/components/article/infobox-row";
 import { InfoboxSection } from "@/components/article/infobox-section";
